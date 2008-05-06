@@ -3,19 +3,18 @@ package p2.types.operator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import p2.lang.plan.Variable;
 import p2.types.basic.Intermediate;
+import p2.types.basic.Schema;
 import p2.types.basic.TupleSet;
-import p2.types.table.Schema;
 
 public class Aggregate extends Operator {
 	
-	private VariableSchema output;
+	private Schema output;
 	
 	private Set<Variable> requires;
 
-	public Aggregate(String ID, VariableSchema output, Variable aggregate, List<Variable> groupBy) {
+	public Aggregate(String ID, Schema output, Variable aggregate, List<Variable> groupBy) {
 		super(ID);
 		this.output = output;
 		this.requires = new HashSet<Variable>();
@@ -24,13 +23,13 @@ public class Aggregate extends Operator {
 	}
 
 	@Override
-	public Intermediate evaluate(Intermediate tuples) {
+	public TupleSet evaluate(TupleSet tuples) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public VariableSchema schema(VariableSchema input) {
+	public Schema schema(Schema input) {
 		return output;
 	}
 

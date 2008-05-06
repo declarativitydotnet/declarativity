@@ -1,11 +1,10 @@
 package p2.types.operator;
 
 import java.util.Set;
-
 import p2.lang.plan.Variable;
-import p2.types.basic.Intermediate;
-import p2.types.basic.SimpleTupleSet;
+import p2.types.basic.Schema;
 import p2.types.basic.TupleSet;
+import p2.types.basic.Tuple;
 import p2.types.function.Filter;
 
 public class Selection extends Operator {
@@ -14,22 +13,26 @@ public class Selection extends Operator {
 	
 	private Filter filter;
 
-	public Selection(String ID, Filter filter) {
+	public Selection(String ID, Set<Variable> requires, Filter filter) {
 		super(ID);
-		this.requires = filter.requires();
+		this.requires = requires;
 		this.filter = filter;
 	}
 
 	@Override
-	public Intermediate evaluate(Intermediate tuples) {
-		TupleSet result =  new SimpleTupleSet("Operator " + id(), schema((VariableSchema)tuples.schema()));
-		
+	public TupleSet evaluate(TupleSet tuples) {
+		TupleSet result = new TupleSet(tuples.name());
+		for (Tuple tuple : tuples) {
+			if (this.filter.evaluate(tuple)) {
+				result.add(tuple);
+			}
+		}
 		return result;
 	}
 
 	@Override
-	public VariableSchema schema(VariableSchema input) {
-		return input;
+	public Schema schema(Schema input) {
+		return new Schema(input);
 	}
 
 	@Override

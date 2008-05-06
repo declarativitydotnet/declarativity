@@ -9,9 +9,10 @@ define(event, {java.lang.Integer, java.lang.Float, java.lang.Float});
 watchmod(t1, a);
 watchmod(t2, s);
 
-rule1 event(A, B, C) :- t1(@A, F:=$2), t2(@A, B, C, D), 
-                        X:= {{1,2},{3,4}}, B == X[0][0], 
-			A > 0,
+rule1 event(A, B, C) :- t1(@A, F:=$2), 
+			C > 0,
+			t2(@A, B, C, D), 
+                        X:= {{1,2},{3,4}}, 
 			F.toString() == "foobar";
 
 rule2 delete t2(@A, B, C, D) :- event(@A, B, C), 

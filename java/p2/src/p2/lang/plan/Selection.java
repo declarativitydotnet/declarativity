@@ -1,25 +1,29 @@
 package p2.lang.plan;
 
 import java.util.Set;
+
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
-import p2.types.table.Schema;
 
 public class Selection extends Term {
 	
 	public static class SelectionTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1);
 		
-		public static final Schema SCHEMA = 
-			new Schema(new Schema.Entry("ProgramName",  String.class),
-					   new Schema.Entry("RuleName",     String.class),
-					   new Schema.Entry("Position",     Integer.class),
-					   new Schema.Entry("Selection",    Selection.class));
+		public enum Field {PROGRAM, RULE, POSITION, OJBECT};
+		public static final Class[] SCHEMA = {
+			String.class,   // Program name
+			String.class,   // Rule name
+			Integer.class,  // Term position
+			Selection.class // Selection object
+		};
 
-		public SelectionTable(Name name, Schema schema, Integer size, Number lifetime, Key key) {
-			super(name, schema, key);
+		public SelectionTable() {
+			super("selection", PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override

@@ -1,67 +1,34 @@
 package p2.types.table;
 
-import java.lang.reflect.Constructor;
 import java.util.*;
-
-import p2.types.basic.SimpleTupleSet;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
+import p2.types.basic.TypeList;
 import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
-import p2.types.table.Key.Value;
 import xtc.util.SymbolTable;
 
 public abstract class Table implements Iterable<Tuple>, Comparable {
 	public static final Integer INFINITY = Integer.MAX_VALUE;
 
-	public static class Name implements Comparable {
-		public String name;
-		public String object;
-
-		public Name(String name, String object) {
-			this.name = name;
-			this.object = object;
-		}
-
-		public String toString() {
-			return this.name;
-		}
-		
-		public int compareTo(Object o) {
-			String name = (o instanceof Name) ? 
-					      ((Name)o).toString() : 
-					    	  ((o instanceof String) ? (String) o : "");
-			return name.compareTo(toString());
-		}
-
-		public String object() {
-			return this.object;
-		}
-	}
-	
 	public static class Catalog extends ObjectTable {
 		private static final Key PRIMARY_KEY = new Key(0);
 
-		private static final Schema SCHEMA = 
-			new Schema(new Schema.Entry("Name",  Name.class),
-					new Schema.Entry("Schema",   Schema.class),
-					new Schema.Entry("Size",     Integer.class),
-					new Schema.Entry("Lifetime", Integer.class),
-					new Schema.Entry("Key",      Key.class),
-					new Schema.Entry("Table",    Table.class));
+		public enum Field {TABLENAME, SIZE, LIFETIME, KEY, TYPES, OBJECT};
+		private static final Class[] SCHEMA = { 
+			String.class,    // The tablename
+			Integer.class,   // The table size
+			Float.class,    // The lifetime
+			Key.class,       // The primary key
+			TypeList.class,  // The type of each attribute
+			Table.class      // The table object
+		};
 		
 		private SymbolTable symbolTable;
 
-		private Catalog() {
-			super(new Name("catalog", Catalog.class.getName()), SCHEMA, PRIMARY_KEY);
+		public Catalog() {
+			super("catalog", PRIMARY_KEY, new TypeList(SCHEMA));
 			this.symbolTable = new SymbolTable();
-			try {
-				super.insert(new Tuple("catalog", new Name("catalog", Catalog.class.getName()), 
-						              SCHEMA, INFINITY, INFINITY, this));
-			} catch (UpdateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 		}
 		
 		public SymbolTable symbolTable() {
@@ -70,43 +37,42 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 
 		@Override
 		protected Tuple insert(Tuple tuple) throws UpdateException {
-			Table table = null;
-			Name   name   = (Name)   tuple.value(SCHEMA.field("Name"));
-			Schema schema = (Schema) tuple.value(SCHEMA.field("Schema"));
-			try {
-				Class eclass = Class.forName(name.object);
-				Constructor constructor = eclass.getConstructor(String.class, Schema.class, Integer.class, Number.class, Key.class);
-				table = (Table) constructor.newInstance(name.object, 
-						                                name,
-						                                schema,
-						                                tuple.value(SCHEMA.field("Size")),  
-						                                tuple.value(SCHEMA.field("Lifetime")), 
-						                                tuple.value(SCHEMA.field("Key")));
-				symbolTable.root().define(name.toString(), schema.types());
-			} catch (Exception e) {
-				throw new UpdateException(e.toString());
+			Table table = (Table) tuple.value(Field.OBJECT.ordinal());
+			if (table == null) {
+				String   name     = (String) tuple.value(Field.TABLENAME.ordinal());
+				Integer  size     = (Integer) tuple.value(Field.SIZE.ordinal());
+				Float    lifetime = (Float) tuple.value(Field.LIFETIME.ordinal());
+				Key      key      = (Key) tuple.value(Field.KEY.ordinal());
+				TypeList types    = (TypeList) tuple.value(Field.TYPES.ordinal());
+				
+				if (size.intValue() == INFINITY.intValue() && 
+						lifetime.intValue() == INFINITY.intValue()) {
+					table = new RefTable(name, key, types);
+				}
+				else {
+					table = new BasicTable(name, size, lifetime, key, types);
+				}
 			}
+			
 			assert (table != null);
-			tuple.value(SCHEMA.field("Table"), table);
+			tuple.value(Field.OBJECT.ordinal(), table);
 			
 			return super.insert(tuple);
 		}
 		
 	}
 
-	private final static Catalog CATALOG = new Catalog();
-	
 	/* The table name. */
-	private Name name;
+	private String name;
 	
 	/* The number of attributes in this table. */
-	private Schema schema;
+	private TypeList attributeTypes;
 	
 	/* The maximum size of this table. */
 	private Integer size;
 	
 	/* the lifetime of a tuple, in seconds. */
-	private Number lifetime;
+	private Float lifetime;
 	
 	/* The primary key. */
 	private Key key;
@@ -115,16 +81,29 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	
 	private Hashtable<Key, Index> secondary;
 	
-	protected Table(Name name, Schema schema, Integer size, Number lifetime, Key key) {
+	protected Table(String name, Integer size, Float lifetime, Key key, TypeList attributeTypes) {
 		this.name = name;
-		this.schema = schema;
+		this.attributeTypes = attributeTypes;
 		this.size = size;
 		this.lifetime = lifetime;
 		this.key = key;
+		
+		if (p2.core.System.catalog() == null) {
+			/* I am the catalog! */
+			try {
+				insert(new Tuple(name, name, size, lifetime, key, attributeTypes, this));
+			} catch (UpdateException e) {
+				e.printStackTrace();
+				System.exit(0);
+			}
+		}
+		else {
+			Table.register(name, size, lifetime, key, attributeTypes, this);
+		}
 	}
 	
 	public String toString() {
-		String value = "Table: " + name.toString() + ", " + schema.toString() + 
+		String value = "Table: " + name.toString() + ", " + attributeTypes.toString() + 
 		        ", " + size + ", " + lifetime + ", " + key + "\n";
 		for (Tuple t : this) {
 			value += t.toString() + "\n";
@@ -140,38 +119,28 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		return null;
 	}
 	
-	public static Catalog catalog() {
-		return CATALOG;
-	}
-	
-	public static Table create(Name name, Schema schema, Integer size, Integer lifetime, Key key) 
-	throws UpdateException {
-		if (catalog() == null) {
-			throw new UpdateException("Catalog has not been created!");
-		}
+	private static void register(String name, Integer size, Float lifetime, 
+			                     Key key, TypeList types, Table object) { 
 		
-		Tuple tuple = new Tuple(catalog().name().toString(), name, schema, size, lifetime, key);
-		Tuple table = catalog().insert(tuple);
-		if (table != null) {
-			return (Table) table.value(schema.field("Table"));
+		Tuple tuple = new Tuple(p2.core.System.catalog().name(), name, size, lifetime, key, types, object);
+		try {
+			p2.core.System.catalog().insert(tuple);
+		} catch (UpdateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(0);
 		}
-		return null;
-	}
-	
-	public static Table create(Name name, Schema schema, Key key) 
-	throws UpdateException {
-		return create(name, schema, INFINITY, INFINITY, key);
 	}
 	
 	public static boolean drop(String name) throws UpdateException {
-		if (catalog() == null) {
+		if (p2.core.System.catalog() == null) {
 			throw new UpdateException("Catalog has not been created!");
 		}
 		
 		try {
-			TupleSet tuples = catalog().primary().lookup(catalog().key().value(name));
+			TupleSet tuples = p2.core.System.catalog().primary().lookup(p2.core.System.catalog().key().value(name));
 			for (Tuple table : tuples) {
-				return catalog().remove(table);
+				return p2.core.System.catalog().remove(table);
 			}
 		} catch (BadKeyException e) {
 			// TODO Fatal error
@@ -182,9 +151,9 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	
 	public static Table table(String name) {
 		try {
-			TupleSet table = catalog().primary().lookup(catalog().key().value(name));
+			TupleSet table = p2.core.System.catalog().primary().lookup(p2.core.System.catalog().key().value(name));
 			if (table.size() == 1) {
-				return (Table) table.iterator().next().value(Catalog.SCHEMA.field("Table"));
+				return (Table) table.iterator().next().value(Catalog.Field.OBJECT.ordinal());
 			}
 			else if (table.size() > 1) {
 				// TODO Fatal error.
@@ -206,20 +175,14 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 
 	/**
 	 * @return The name of this table. */
-	public Name name() {
+	public String name() {
 		return this.name;
 	}
 	
 	/**
 	 * @return The number of attributes associated with this table. */
-	public Schema schema() {
-		return this.schema;
-	}
-	
-	/**
-	 * @return Field position for the given name. */
-	public int schema(String name) {
-		return schema().field(name);
+	public Class[] types() {
+		return (Class[]) attributeTypes.toArray();
 	}
 	
 	/**
@@ -262,7 +225,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	 * @return All tuples in the table that conflict.
 	 */
 	public final TupleSet conflict(TupleSet tuples) {
-		TupleSet conflicts = new SimpleTupleSet(name().toString(), schema());
+		TupleSet conflicts = new TupleSet(name().toString());
 		for (Tuple t : tuples) {
 			TupleSet conflict = primary().lookup(t);
 			if (conflict != null) {
@@ -278,7 +241,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	 * @throws UpdateException 
 	 **/
 	public final TupleSet insert(TupleSet tuples) throws UpdateException {
-		TupleSet delta = new SimpleTupleSet(name().toString(), schema());
+		TupleSet delta = new TupleSet(name().toString());
 		for (Tuple t : tuples) {
 			Tuple previous = insert(t);
 			if (previous != null && !previous.equals(t)) {
@@ -294,7 +257,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	 * @throws UpdateException 
 	 **/
 	public final TupleSet remove(TupleSet tuples) throws UpdateException {
-		TupleSet delta = new SimpleTupleSet(name().toString(), schema());
+		TupleSet delta = new TupleSet(name().toString());
 		for (Tuple t : tuples) {
 			if (remove(t)) {
 				delta.add(t);

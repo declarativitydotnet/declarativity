@@ -1,7 +1,7 @@
 package p2.lang.plan;
 
+import p2.types.basic.Schema;
 import p2.types.table.Key;
-import p2.types.table.Schema;
 
 public class Table extends Clause {
 	

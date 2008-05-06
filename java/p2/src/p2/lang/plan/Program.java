@@ -5,25 +5,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
-import p2.types.table.Schema;
 
-public class Program {
+public class Program implements Comparable<Program> {
 	
 	public static class ProgramTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);
 		
-		public static final Schema SCHEMA = 
-			new Schema(new Schema.Entry("Name",    String.class),
-					   new Schema.Entry("Owner",   String.class),
-					   new Schema.Entry("Program", Program.class));
+		public enum Field{PROGRAM, OWNER, OBJECT};
+		public static final Class[] SCHEMA =  {
+			String.class,  // Program name
+			String.class,  // Program owner
+			Program.class  // Program object
+		};
 
-		public ProgramTable(Name name, Schema schema, Key key) {
-			super(name, schema, key);
-			// TODO Auto-generated constructor stub
+		public ProgramTable() {
+			super("program", PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -108,5 +110,9 @@ public class Program {
 	
 	public void rule(Rule r) {
 		rules.add(r);
+	}
+
+	public int compareTo(Program o) {
+		return this.name.compareTo(o.name);
 	}
 }

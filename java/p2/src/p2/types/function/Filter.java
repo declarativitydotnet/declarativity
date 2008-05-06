@@ -93,9 +93,8 @@ public class Filter implements TupleFunction<Comparable> {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) >= 0;
 	}
 
-	public Set<Variable> requires() {
-		// TODO Auto-generated method stub
-		return null;
+	public Class returnType() {
+		return Boolean.class;
 	}
 	
 }

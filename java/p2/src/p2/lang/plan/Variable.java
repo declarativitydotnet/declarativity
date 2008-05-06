@@ -3,24 +3,34 @@ package p2.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Variable extends Expression {
-	public final static String DONTCARE = "_";
+import p2.types.basic.Tuple;
+import p2.types.function.TupleFunction;
 
-	private String name;
+public class Variable extends Expression {
+
+	protected String name;
 	
-	private Class type;
+	protected Class type;
 	
 	public Variable(String name, Class type) {
 		this.name = name;
 		this.type = type;
+		position(-1);
 	}
 	
-	public static Variable dontCare(Class type) {
-		return new Variable(DONTCARE, type);
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Variable) {
+			Variable other = (Variable) obj;
+			return name().equals(other.name());
+		}
+		return false;
 	}
 	
-	public boolean isDontCare() {
-		return DONTCARE.equals(this.name);
+	@Override
+	public Variable clone() {
+		Variable variable = new Variable(name, type);
+		return variable;
 	}
 	
 	@Override
@@ -45,12 +55,25 @@ public class Variable extends Expression {
 	public void type(Class type) {
 		this.type = type;
 	}
-
+	
 	@Override
 	public Set<Variable> variables() {
 		Set<Variable> variables = new HashSet<Variable>();
 		variables.add(this);
 		return variables;
+	}
+
+	@Override
+	public TupleFunction function() {
+		return new TupleFunction() {
+			public Object evaluate(Tuple tuple) {
+				return tuple.value(position());
+			}
+
+			public Class returnType() {
+				return type;
+			}
+		};
 	}
 	
 }

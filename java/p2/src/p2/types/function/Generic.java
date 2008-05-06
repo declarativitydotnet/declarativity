@@ -41,9 +41,8 @@ public class Generic<Type> implements TupleFunction<Type> {
 		return null;
 	}
 
-	public Set<Variable> requires() {
-		// TODO Auto-generated method stub
-		return null;
+	public Class returnType() {
+		return method.getReturnType();
 	}
 
 }

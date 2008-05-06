@@ -6,13 +6,6 @@ import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 
 
-/**
- * A function is evaluated on a tuple. It's return
- * type can be anything in general. If the return type
- * is to be added to a tuple then it must be a subtype
- * of Comparable.
- * @param <Type> value of return type.
- */
 public interface TupleFunction<Type> {
 
 	/**
@@ -22,6 +15,9 @@ public interface TupleFunction<Type> {
 	 */
 	public Type evaluate(Tuple tuple);
 	
-	public Set<Variable> requires();
+	/**
+	 * The return type
+	 */
+	public Class returnType();
 	
 }

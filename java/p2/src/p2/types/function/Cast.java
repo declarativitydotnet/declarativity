@@ -16,4 +16,9 @@ public class Cast implements TupleFunction {
 		return null;
 	}
 
+	public Class returnType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

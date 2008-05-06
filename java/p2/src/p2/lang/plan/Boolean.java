@@ -1,15 +1,12 @@
 package p2.lang.plan;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-
+import p2.types.basic.Tuple;
 import p2.types.function.TupleFunction;
 
 
 public class Boolean extends Expression {
-	private static final Map<String, TupleFunction> Operator = new HashMap<String, TupleFunction>();
 
 	public final static String AND     = "&&";
 	public final static String OR      = "||";
@@ -21,19 +18,6 @@ public class Boolean extends Expression {
 	public final static String LESS    = "<";
 	public final static String GREATER = ">";
 	public final static String IN      = "in";
-	
-	static {
-		Operator.put(AND,     null);
-		Operator.put(OR,      null);
-		Operator.put(NOT,     null);
-		Operator.put(EQUAL,   null);
-		Operator.put(NEQUAL,  null);
-		Operator.put(LEQUAL,  null);
-		Operator.put(GEQUAL,  null);
-		Operator.put(LESS,    null);
-		Operator.put(GREATER, null);
-		Operator.put(IN,      null);
-	}
 	
 	private String oper;
 	
@@ -66,5 +50,148 @@ public class Boolean extends Expression {
 			variables.addAll(rhs.variables());
 		}
 		return variables;
+	}
+
+	@Override
+	public TupleFunction<java.lang.Boolean> function() {
+		if (this.oper.equals(AND)) {
+			return new TupleFunction() {
+				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
+				private final TupleFunction<java.lang.Boolean> right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return left.evaluate(tuple) && right.evaluate(tuple);
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(OR)) {
+			return new TupleFunction() {
+				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
+				private final TupleFunction<java.lang.Boolean> right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return left.evaluate(tuple) || right.evaluate(tuple);
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(NOT)) {
+			return new TupleFunction() {
+				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return !left.evaluate(tuple);
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(EQUAL)) {
+			return new TupleFunction() {
+				private final TupleFunction<Comparable> left  = lhs.function();
+				private final TupleFunction<Comparable> right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) == 0;
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(NEQUAL)) {
+			return new TupleFunction() {
+				private final TupleFunction<Comparable> left  = lhs.function();
+				private final TupleFunction<Comparable> right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) != 0;
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(LEQUAL)) {
+			return new TupleFunction() {
+				private final TupleFunction<Comparable> left  = lhs.function();
+				private final TupleFunction<Comparable> right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) <= 0;
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(GEQUAL)) {
+			return new TupleFunction() {
+				private final TupleFunction<Comparable> left  = lhs.function();
+				private final TupleFunction<Comparable> right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) >= 0;
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(LESS)) {
+			return new TupleFunction() {
+				private final TupleFunction<Comparable> left  = lhs.function();
+				private final TupleFunction<Comparable> right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) < 0;
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(GREATER)) {
+			return new TupleFunction() {
+				private final TupleFunction<Comparable> left  = lhs.function();
+				private final TupleFunction<Comparable> right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) > 0;
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		else if (this.oper.equals(IN)) {
+			return new TupleFunction() {
+				private final TupleFunction<Comparable> left  = lhs.function();
+				private final Object right = rhs.function();
+				public java.lang.Boolean evaluate(Tuple tuple) {
+					if (right instanceof Range.Function) {
+						Range.Function range = (Range.Function) right;
+						return range.test(left.evaluate(tuple));
+					}
+					else {
+						Set set = (Set) right;
+						return set.contains(left.evaluate(tuple));
+					}
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+				
+			};
+		}
+		
+		assert(false);
+		return null;
 	}
 }

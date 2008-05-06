@@ -1,6 +1,10 @@
 package p2.lang.plan;
 
+import java.lang.reflect.Array;
 import java.util.Set;
+
+import p2.types.basic.Tuple;
+import p2.types.function.TupleFunction;
 
 public class ArrayIndex extends Expression {
 	
@@ -9,6 +13,7 @@ public class ArrayIndex extends Expression {
 	private Integer index;
 	
 	public ArrayIndex(Expression array, Integer index) {
+		assert(array.type().isArray());
 		this.array = array;
 		this.index = index;
 	}
@@ -26,5 +31,20 @@ public class ArrayIndex extends Expression {
 	@Override
 	public Set<Variable> variables() {
 		return array.variables();
+	}
+
+	@Override
+	public TupleFunction function() {
+		return new TupleFunction() {
+			private final TupleFunction function = array.function();
+			public Object evaluate(Tuple tuple) {
+				return Array.get(function.evaluate(tuple), index);
+			}
+
+			public Class returnType() {
+				return type();
+			}
+			
+		};
 	}
 }

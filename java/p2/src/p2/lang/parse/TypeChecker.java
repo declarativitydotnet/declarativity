@@ -17,6 +17,7 @@ import p2.lang.plan.Aggregate;
 import p2.lang.plan.Alias;
 import p2.lang.plan.ArrayIndex;
 import p2.lang.plan.Assignment;
+import p2.lang.plan.DontCare;
 import p2.lang.plan.Event;
 import p2.lang.plan.Expression;
 import p2.lang.plan.Fact;
@@ -38,9 +39,12 @@ import p2.lang.plan.Value;
 import p2.lang.plan.Variable;
 import p2.lang.plan.ObjectReference;
 import p2.lang.plan.Watch;
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TypeList;
+import p2.types.table.BasicTable;
 import p2.types.table.Key;
-import p2.types.table.Schema;
+import p2.types.table.RefTable;
 import xtc.Constants;
 import xtc.tree.GNode;
 import xtc.tree.Node;
@@ -160,6 +164,23 @@ public final class TypeChecker extends Visitor {
 		}
 	}
 	
+	public void visitClauses(final GNode n) {
+		List<GNode> order = new ArrayList<GNode>();
+		
+		for (GNode node : n.<GNode>getList(0)) {
+			if (node.getName().equals("Table") || node.getName().equals("Event")) {
+				order.add(0, node);
+			}
+			else {
+				order.add(order.size(), node);
+			}
+		}
+		
+		for (GNode node : order) {
+			dispatch(node);
+		}
+	}
+	
 	public Class visitFact(final GNode n) {
 		Class type = (Class) dispatch((Node)n.getNode(0));
 		assert(type == String.class);
@@ -245,13 +266,22 @@ public final class TypeChecker extends Visitor {
 		/************** Table Schema ******************/
 		type = (Class) dispatch(n.getNode(4));
 		if (type == Error.class) return type;
-		assert(type == Schema.class);
-		Schema schema  = (Schema) n.getNode(4).getProperty(Constants.TYPE);
+		assert(type == TypeList.class);
+		TypeList schema  = (TypeList) n.getNode(4).getProperty(Constants.TYPE);
 
-		table.current().define(name.value(), schema.types());
+		table.current().define(name.value(), schema);
 		
-		Table create = new Table(name, size, lifetime, key, schema);
-		create.location(n.getLocation());
+		p2.types.table.Table create;
+		if (size.value().equals(p2.types.table.Table.INFINITY) && 
+				lifetime.value().equals(p2.types.table.Table.INFINITY)) {
+			create = new RefTable(name.value(), key, schema);
+			
+		}
+		else {
+			create = new BasicTable(name.value(), (Integer)size.value(), 
+					                (Number)lifetime.value(), key, schema);
+		}
+
 		n.setProperty(Constants.TYPE, create);
 		return Table.class;
 	}
@@ -271,10 +301,10 @@ public final class TypeChecker extends Visitor {
 		/************** Table Schema ******************/
 		type = (Class) dispatch(n.getNode(1));
 		if (type == Error.class) return type;
-		assert(type == Schema.class);
-		Schema schema  = (Schema) n.getNode(1).getProperty(Constants.TYPE);
+		assert(type == TypeList.class);
+		TypeList schema  = (TypeList) n.getNode(1).getProperty(Constants.TYPE);
 
-		table.current().define(name.value(), schema.types());
+		table.current().define(name.value(), schema);
 		
 		Event event = new Event(name, schema);
 		event.location(n.getLocation());
@@ -304,7 +334,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitSchema(final GNode n) {
-		List<Class> types = new ArrayList<Class>();
+		TypeList types = new TypeList();
 		for (Node attr : n.<Node>getList(0)) {
 			Class type = (Class) dispatch(attr);
 			if (type == Error.class) return Error.class;
@@ -312,8 +342,8 @@ public final class TypeChecker extends Visitor {
 			type = (Class) attr.getProperty(Constants.TYPE);
 			types.add(type);
 		}
-		n.setProperty(Constants.TYPE, new Schema(types));
-		return Schema.class;
+		n.setProperty(Constants.TYPE, types);
+		return TypeList.class;
 	}
 	
 	public Class visitRule(final GNode n) {
@@ -362,7 +392,7 @@ public final class TypeChecker extends Visitor {
 					for (Expression arg : head) {
 						if (arg instanceof Variable) {
 							Variable var = (Variable) arg;
-							if (var.isDontCare()) {
+							if (var instanceof DontCare) {
 								runtime.error("Head predicate in a non-deletion rule " +
 										      "can't contain don't care variable!", n);
 								return Error.class;
@@ -401,10 +431,12 @@ public final class TypeChecker extends Visitor {
 
 		/* All variables mentioned in the head must be in the body. 
 		 * The types must also match. */
+		int position = 0;
 		for (Expression argument : head) {
 			if (argument instanceof Variable) {
 				Variable var = (Variable) argument;
-				if (!var.isDontCare()) {
+				var.position(position);
+				if (var instanceof DontCare) {
 					Class headType = (Class) table.current().lookupLocally(var.name());
 					Class bodyType = (Class) table.current().getParent().lookupLocally(var.name());
 					if (bodyType == null) {
@@ -419,6 +451,7 @@ public final class TypeChecker extends Visitor {
 					}
 				}
 			}
+			position++;
 		}
 
 		n.setProperty(Constants.TYPE, head);
@@ -427,8 +460,18 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitRuleBody(final GNode n) {
 		List<Term> terms = new ArrayList<Term>();
+		List<GNode> order = new ArrayList<GNode>();
 		
-		for (Node term : n.<Node> getList(0)) {
+		for (GNode node : n.<GNode>getList(0)) {
+			if (node.getName().equals("Predicate")) {
+				order.add(0, node); // All predicates checked first
+			}
+			else {
+				order.add(order.size(), node);
+			}
+		}
+		
+		for (Node term : order) {
 			Class type = (Class) dispatch(term);
 			if (type == Error.class) {
 				return type;
@@ -458,7 +501,7 @@ public final class TypeChecker extends Visitor {
 		Value<String> name = (Value<String>) n.getNode(1).getProperty(Constants.TYPE);
 		
 		/* Lookup the schema for the given tuple name. */
-		List<Class> schema = (List<Class>) table.lookup(name.value());
+		TypeList schema = (TypeList) table.lookup(name.value());
 		if (schema == null) {
 			runtime.error("No schema defined for predicate " + name);
 			return Error.class;
@@ -471,16 +514,18 @@ public final class TypeChecker extends Visitor {
 		/* Type check each tuple argument according to the schema. */
 		for (int index = 0; index < schema.size(); index++) {
 			Expression param = parameters.size() <= index ? 
-					           Variable.dontCare(schema.get(index)) : parameters.get(index);
+					           new DontCare(schema.get(index)) : parameters.get(index);
 			if (Alias.class.isAssignableFrom(param.getClass())) {
 				Alias alias = (Alias) param;
-				if (alias.field() < index) {
+				if (alias.position() < index) {
 					runtime.error("Alias fields must be in numeric order!");
 					return Error.class;
 				}
 				/* Fill in missing variables with tmp variables. */
-				while (index < alias.field()) {
-					arguments.add(Variable.dontCare(schema.get(index++)));
+				while (index < alias.position()) {
+					Variable dontcare = new DontCare(schema.get(index));
+					dontcare.position(index++);
+					arguments.add(dontcare);
 				}
 			}
 			
@@ -491,6 +536,7 @@ public final class TypeChecker extends Visitor {
 					/* Fill in type using the schema. */
 					var.type(schema.get(index));
 				}
+				var.position(index);
 				
 				/* Map variable to its type. */
 				table.current().define(var.name(), var.type());
@@ -1119,9 +1165,9 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitVariable(final GNode n) {
 		Class type =  (Class)  table.current().lookup(n.getString(0));
-		if (Variable.DONTCARE.equals(n.getString(0))) {
+		if (DontCare.DONTCARE.equals(n.getString(0))) {
 			/* Generate a fake variable for all don't cares. */
-			n.setProperty(Constants.TYPE, Variable.dontCare(null));
+			n.setProperty(Constants.TYPE, new DontCare(null));
 		}
 		else {
 			n.setProperty(Constants.TYPE, new Variable(n.getString(0), type));

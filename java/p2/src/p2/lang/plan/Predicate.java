@@ -4,27 +4,27 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
-import p2.types.operator.VariableSchema;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
-import p2.types.table.Schema;
 
 public class Predicate extends Term implements Iterable<Expression> {
 	
 	public static class PredicateTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1);
 		
-		public static final Schema SCHEMA = 
-			new Schema(new Schema.Entry("ProgramName",  String.class),
-					   new Schema.Entry("RuleName",     String.class),
-					   new Schema.Entry("Position",     Integer.class),
-					   new Schema.Entry("Predicate",    Predicate.class));
+		public static final Class[] SCHEMA =  {
+			String.class,   // program name
+			String.class,   // rule name
+			Integer.class,  // position
+			Predicate.class // predicate object
+		};
 
-		public PredicateTable(Name name, Schema schema, Key key) {
-			super(name, schema, key);
+		public PredicateTable() {
+			super("predicate", PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -48,7 +48,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private List<Expression> arguments;
 	
-	private VariableSchema schema;
+	private Schema schema;
 	
 	public Predicate(boolean notin, String name, String event, List<Expression> arguments) {
 		this.table = null;
@@ -58,7 +58,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.arguments = arguments;
 	}
 	
-	public VariableSchema schema() {
+	public Schema schema() {
 		return schema;
 	}
 	

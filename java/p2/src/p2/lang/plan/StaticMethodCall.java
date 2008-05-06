@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import p2.types.function.TupleFunction;
+
 public class StaticMethodCall extends Expression {
 	
 	private Class type;
@@ -60,6 +62,12 @@ public class StaticMethodCall extends Expression {
 			variables.addAll(arg.variables());
 		}
 		return variables;
+	}
+
+	@Override
+	public TupleFunction function() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

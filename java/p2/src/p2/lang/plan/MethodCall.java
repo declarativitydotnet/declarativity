@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import p2.types.function.TupleFunction;
+
 public class MethodCall extends Expression {
 	
 	private Expression object;
@@ -26,7 +28,6 @@ public class MethodCall extends Expression {
 	
 	@Override
 	public String toString() {
-		System.err.println("METHOD OBJECT: " + object.getClass());
 		String value = method.getName() + "(";
 		if (arguments.size() == 0) {
 			return object.toString() + "." + value + ")";
@@ -46,6 +47,12 @@ public class MethodCall extends Expression {
 			variables.addAll(arg.variables());
 		}
 		return variables;
+	}
+
+	@Override
+	public TupleFunction function() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

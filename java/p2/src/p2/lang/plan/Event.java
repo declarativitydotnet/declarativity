@@ -1,14 +1,14 @@
 package p2.lang.plan;
 
-import p2.types.table.Schema;
+import p2.types.basic.TypeList;
 
 public class Event extends Clause {
 	
-	private Value name;
+	private Value<String> name;
 	
-	private Schema schema;
+	private TypeList schema;
 	
-	public Event(Value name, Schema schema) {
+	public Event(Value<String> name, TypeList schema) {
 		this.name = name;
 		this.schema = schema;
 	}

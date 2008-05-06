@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import p2.types.function.BasicMath;
 import p2.types.function.TupleFunction;
 
 
@@ -65,5 +66,10 @@ public class Math extends Expression {
 			variables.addAll(rhs.variables());
 		}
 		return variables;
+	}
+
+	@Override
+	public TupleFunction function() {
+		return BasicMath.function(oper, lhs.function(), rhs.function());
 	}
 }

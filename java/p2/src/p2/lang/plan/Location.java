@@ -8,6 +8,10 @@ public class Location extends Variable {
 		super(name, type);
 	}
 	
+	public Location clone() {
+		return new Location(name(), type());
+	}
+	
 	public String toString() {
 		return "@" + super.toString();
 	}

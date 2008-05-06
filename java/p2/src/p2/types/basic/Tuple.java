@@ -1,13 +1,16 @@
 package p2.types.basic;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-import p2.types.table.Schema;
+import p2.lang.plan.Variable;
 
-public class Tuple implements Comparable {
+
+public class Tuple {
 	
 	protected String name;
 	
@@ -19,15 +22,11 @@ public class Tuple implements Comparable {
 	
 	protected boolean frozen;
 	
-	public Tuple(String name) {
-		this.name = name;
-		this.values = new ArrayList<Comparable>();
-		this.refCount = new Long(1);
-		this.frozen = false;
-	}
+	protected Schema schema;
 	
 	public Tuple(String name, Comparable... values) {
 		this.name = name;
+		this.schema = null;
 		this.values = new ArrayList<Comparable>();
 		this.refCount = new Long(1);
 		this.frozen = false;
@@ -39,13 +38,35 @@ public class Tuple implements Comparable {
 	
 	public Tuple(String name, List<Comparable> values) {
 		this.name = name;
+		this.schema = null;
 		this.values = values;
 		this.refCount = new Long(1);
 		this.frozen = false;
 	}
 	
+	public Tuple(String name) {
+		this.name = name;
+		this.schema = new Schema(name);
+		this.values = values;
+		this.refCount = new Long(1);
+		this.frozen = false;
+	}
+	
+	@Override
+	public Tuple clone() {
+		Tuple copy = new Tuple(name());
+		copy.values = this.values;
+		copy.schema = this.schema;
+		return copy;
+	}
+	
+	public void append(Variable variable, Comparable value) {
+		this.values.add(value);
+		this.schema.append(variable);
+	}
+	
 	public String toString() {
-		String value = "<" + name();
+		String value = name() + "<";
 		for (Comparable element : values) {
 			value += ", " + element.toString();
 		}
@@ -55,6 +76,14 @@ public class Tuple implements Comparable {
 	
 	public String name() {
 		return this.name;
+	}
+	
+	public Schema schema() {
+		return this.schema;
+	}
+	
+	public void schema(Schema schema) {
+		this.schema = schema;
 	}
 	
 	public int compareTo(Object o) {
@@ -105,6 +134,32 @@ public class Tuple implements Comparable {
 		values.set(field, value);
 	}
 	
+	public Comparable value(String name) {
+		if (this.schema != null) {
+			return value(this.schema.position(name));
+		}
+		return null;
+	}
+	
+	public void value(Variable variable, Comparable value) {
+		if (this.schema != null) {
+			int position = this.schema.position(variable.name());
+			if (position < 0) {
+				append(variable, value);
+			}
+			else {
+				value(position, value);
+			}
+		}
+	}
+	
+	public Class type(String name) {
+		if (this.schema != null) {
+			return this.schema.type(name);
+		}
+		return null;
+	}
+	
 	public void refCount(Long value) {
 		this.refCount = value;
 	}
@@ -129,30 +184,34 @@ public class Tuple implements Comparable {
 		return this.frozen;
 	}
 	
-	public static List<Comparable> project(Tuple t, Integer[] fields) {
-		List<Comparable> values = new ArrayList<Comparable>();
-		for (Integer field : fields) {
-			values.add(t.value(field));
-		}
-		return values;
-	}
-	
-	public static Tuple join(Tuple outer, Tuple inner, Integer[] innerJoinFields) {
-		String name = "(" + outer.name() + ") join " + inner.name();
-		Tuple join = new Tuple(name);
-		for (int i = 1; i < outer.size(); i++) {
-			join.value(join.size(), outer.value(i));
-		}
-		for (int i = 1; i < inner.size(); i++) {
-			for (Integer field : innerJoinFields) {
-				if (field.intValue() == i) {
-					continue;
+	public Tuple join(Tuple inner) {
+		Tuple join = this.clone();
+		
+		for (Variable variable : join.schema().variables()) {
+			if (inner.schema().contains(variable)) {
+				if (!join.value(name).equals(inner.value(name))) {
+					return null; // Tuples do not join
 				}
 			}
-			// Not part of the join key, append to join tuple.
-			join.value(join.size(), inner.value(i));
+			else {
+				join.append(inner.schema().variable(name), inner.value(name));
+			}
 		}
+		
 		return join;
 	}
-
+	
+	public Tuple project(Schema schema) {
+		Tuple projection = new Tuple(name());
+		
+		for (Variable variable : this.schema.variables()) {
+			if (schema.contains(variable)) {
+				projection.append(variable, value(variable.name()));
+			}
+			else {
+				// TODO exception.
+			}
+		}
+		return projection;
+	}
 }

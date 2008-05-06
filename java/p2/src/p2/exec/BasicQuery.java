@@ -1,8 +1,10 @@
 package p2.exec;
 
+import java.util.HashSet;
 import java.util.List;
 
 import p2.lang.plan.Predicate;
+import p2.types.basic.Intermediate;
 import p2.types.basic.TupleSet;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
@@ -26,7 +28,6 @@ public class BasicQuery extends Query {
 	@Override
 	public TupleSet evaluate(TupleSet input) {
 		assert(input.name().equals(input.name()));
-		input.schema(this.input.schema());
 		
 		for (Operator oper : body) {
 			input = (TupleSet) oper.evaluate(input);

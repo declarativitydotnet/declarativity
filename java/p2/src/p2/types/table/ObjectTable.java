@@ -1,12 +1,14 @@
 package p2.types.table;
 
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 
 public abstract class ObjectTable extends RefTable {
 	
-	protected ObjectTable(Table.Name name, Schema schema, Key key) {
-		super(name, schema, Catalog.INFINITY, Catalog.INFINITY, key);
+	protected ObjectTable(String name, Key key, TypeList types) {
+		super(name, key, types);
 	}
 
 	@Override

@@ -3,6 +3,9 @@ package p2.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import p2.types.basic.Tuple;
+import p2.types.function.TupleFunction;
+
 public class IfThenElse extends Expression {
 	
 	private Class type;
@@ -39,6 +42,23 @@ public class IfThenElse extends Expression {
 		variables.addAll(thenexpr.variables());
 		variables.addAll(elseexpr.variables());
 		return variables;
+	}
+
+	@Override
+	public TupleFunction function() {
+		return new TupleFunction() {
+			private final TupleFunction<java.lang.Boolean> test = ifexpr.function();
+			private final TupleFunction thencase = thenexpr.function();
+			private final TupleFunction elsecase = elseexpr.function();
+			public Object evaluate(Tuple tuple) {
+				return test.evaluate(tuple).equals(java.lang.Boolean.TRUE) ? 
+						thencase.evaluate(tuple) : elsecase.evaluate(tuple);
+			}
+
+			public Class returnType() {
+				return type();
+			}
+		};
 	}
 
 }

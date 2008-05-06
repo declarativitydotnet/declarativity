@@ -4,14 +4,16 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Vector;
 
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
+import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 
 public class RefTable extends Table {
 	
-	public RefTable(Table.Name name, Schema schema, Integer size, Number lifetime, Key key) {
-		super(name, schema, Catalog.INFINITY, Catalog.INFINITY, key);
+	public RefTable(String name, Key key, TypeList types) {
+		super(name, Catalog.INFINITY, Catalog.INFINITY.floatValue(), key, types);
 	}
 	
 	@Override

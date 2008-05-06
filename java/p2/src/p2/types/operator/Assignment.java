@@ -4,12 +4,10 @@ import java.util.Set;
 
 import p2.lang.plan.Variable;
 import p2.types.basic.Intermediate;
-import p2.types.basic.OrderedTupleSet;
-import p2.types.basic.SimpleTupleSet;
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.function.TupleFunction;
-import p2.types.table.Schema;
 
 public class Assignment extends Operator {
 	
@@ -27,15 +25,20 @@ public class Assignment extends Operator {
 	}
 
 	@Override
-	public Intermediate evaluate(Intermediate tuples) {
-		// TODO Auto-generated method stub
-		return null;
+	public TupleSet evaluate(TupleSet tuples) {
+		for (Tuple tuple : tuples) {
+			tuple.value(variable, this.function.evaluate(tuple));
+		}
+		return tuples;
 	}
 
-	@Override
-	public VariableSchema schema(VariableSchema input) {
-		// TODO Auto-generated method stub
-		return null;
+	public Schema schema(Schema input) {
+		input = new Schema(input);
+		if (input.contains(this.variable)) {
+			return input;
+		}
+		input.append(this.variable);
+		return input;
 	}
 
 	@Override

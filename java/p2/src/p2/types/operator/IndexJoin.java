@@ -5,12 +5,11 @@ import java.util.Set;
 import p2.lang.plan.Predicate;
 import p2.lang.plan.Variable;
 import p2.types.basic.Intermediate;
-import p2.types.basic.SimpleTupleSet;
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.table.Index;
 import p2.types.table.Key;
-import p2.types.table.Schema;
 
 public class IndexJoin extends Operator {
 	
@@ -28,10 +27,9 @@ public class IndexJoin extends Operator {
 	}
 	
 	@Override
-	public Intermediate evaluate(Intermediate tuples) {
-		TupleSet result = new SimpleTupleSet("Operator " + id(), schema((VariableSchema)tuples.schema()));
+	public TupleSet evaluate(TupleSet tuples) {
 		
-		return result;
+		return tuples;
 	}
 
 	@Override
@@ -41,8 +39,8 @@ public class IndexJoin extends Operator {
 	}
 
 	@Override
-	public VariableSchema schema(VariableSchema input) {
-		return predicate.schema().join(input);
+	public Schema schema(Schema input) {
+		return null;
 	}
 
 }

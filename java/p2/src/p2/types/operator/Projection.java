@@ -3,44 +3,40 @@ package p2.types.operator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import p2.lang.plan.Predicate;
 import p2.lang.plan.Variable;
 import p2.types.basic.Intermediate;
-import p2.types.basic.OrderedTupleSet;
-import p2.types.basic.SimpleTupleSet;
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.table.Schema;
 
 
 public class Projection extends Operator {
 	
 	private Predicate predicate;
 	
-	private List<Variable> variables;
-
-	public Projection(String ID, Predicate predicate, List<Variable> variables) {
+	public Projection(String ID, Predicate predicate) {
 		super(ID);
 		this.predicate = predicate;
-		this.variables = variables;
 	}
 
 	@Override
-	public Intermediate evaluate(Intermediate tuples) {
-		TupleSet result = new SimpleTupleSet("Operator " + id(), schema((VariableSchema)tuples.schema()));
-		
+	public TupleSet evaluate(TupleSet tuples) {
+		TupleSet result = new TupleSet(tuples.name());
+		for (Tuple tuple : tuples) {
+			result.add(tuple.project(this.predicate.schema()));
+		}
 		return result;
 	}
 
 	@Override
-	public VariableSchema schema(VariableSchema input) {
-		return predicate.schema().project(input, variables);
+	public Schema schema(Schema input) {
+		return this.predicate.schema();
 	}
 
 	@Override
 	public Set<Variable> requires() {
-		return new HashSet<Variable>(variables);
+		return this.predicate.requires();
 	}
 	
 	public Predicate predicate() {

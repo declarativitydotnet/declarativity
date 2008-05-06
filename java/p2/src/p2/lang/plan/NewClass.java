@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import p2.types.function.TupleFunction;
+
 public class NewClass extends Expression {
 	
 	private Class type;
@@ -50,5 +52,11 @@ public class NewClass extends Expression {
 	
 	public void arguments(List<Expression> arguments) {
 		this.arguments = arguments;
+	}
+
+	@Override
+	public TupleFunction function() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

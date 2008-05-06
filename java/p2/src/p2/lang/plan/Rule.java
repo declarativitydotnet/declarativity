@@ -2,24 +2,27 @@ package p2.lang.plan;
 
 import java.util.List;
 
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
-import p2.types.table.Schema;
 
 public class Rule extends Clause {
 	
 	public static class RuleTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1);
 		
-		public static final Schema SCHEMA = 
-			new Schema(new Schema.Entry("ProgramName", String.class),
-					   new Schema.Entry("RuleName",    String.class),
-					   new Schema.Entry("Rule",        Rule.class));
+		public enum Field {PROGRAM, RULENAME, OBJECT};
+		public static final Class[] SCHEMA =  {
+			String.class,    // Program name
+			String.class,    // Rule name
+			Rule.class      // Rule object
+		};
 
-		public RuleTable(Name name, Schema schema, Integer size, Number lifetime, Key key) {
-			super(name, schema, key);
+		public RuleTable() {
+			super("rule", PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
