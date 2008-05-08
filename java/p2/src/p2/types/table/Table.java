@@ -6,6 +6,7 @@ import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
+import p2.types.table.Index.IndexTable;
 import xtc.util.SymbolTable;
 
 public abstract class Table implements Iterable<Tuple>, Comparable {
@@ -24,17 +25,10 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 			Table.class      // The table object
 		};
 		
-		private SymbolTable symbolTable;
-
 		public Catalog() {
 			super("catalog", PRIMARY_KEY, new TypeList(SCHEMA));
-			this.symbolTable = new SymbolTable();
 		}
 		
-		public SymbolTable symbolTable() {
-			return this.symbolTable;
-		}
-
 		@Override
 		protected Tuple insert(Tuple tuple) throws UpdateException {
 			Table table = (Table) tuple.value(Field.OBJECT.ordinal());
@@ -62,6 +56,9 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		
 	}
 
+	public static IndexTable index = null;
+	public static Catalog catalog  = null;
+	
 	/* The table name. */
 	private String name;
 	
@@ -87,32 +84,36 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		this.size = size;
 		this.lifetime = lifetime;
 		this.key = key;
+		this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
+		this.secondary = new Hashtable<Key, Index>();
 		
-		if (p2.core.System.catalog() == null) {
-			/* I am the catalog! */
-			try {
-				insert(new Tuple(name, name, size, lifetime, key, attributeTypes, this));
-			} catch (UpdateException e) {
-				e.printStackTrace();
-				System.exit(0);
-			}
+		if (catalog != null) {
+			Table.register(name, size, lifetime, key, attributeTypes, this);
 		}
 		else {
-			Table.register(name, size, lifetime, key, attributeTypes, this);
+			catalog = (Catalog) this;
+			index   = new IndexTable();
 		}
 	}
 	
+	public static void initialize() {
+		new Catalog();
+	}
+	
 	public String toString() {
-		String value = "Table: " + name.toString() + ", " + attributeTypes.toString() + 
-		        ", " + size + ", " + lifetime + ", " + key + "\n";
+		String value = name.toString() + ", " + attributeTypes.toString() + 
+		        ", " + size + ", " + lifetime + ", keys(" + key + "), {" +
+		        attributeTypes.toString() + "}";
 		for (Tuple t : this) {
 			value += t.toString() + "\n";
 		}
 		return value;
 	}
 	
+	public abstract boolean isEvent();
+	
 	public Iterator<Tuple> iterator() {
-		return primary().tuples();
+		return primary().iterator();
 	}
 	
 	public SymbolTable symbolTable() {
@@ -122,9 +123,9 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	private static void register(String name, Integer size, Float lifetime, 
 			                     Key key, TypeList types, Table object) { 
 		
-		Tuple tuple = new Tuple(p2.core.System.catalog().name(), name, size, lifetime, key, types, object);
+		Tuple tuple = new Tuple(catalog.name(), name, size, lifetime, key, types, object);
 		try {
-			p2.core.System.catalog().insert(tuple);
+			catalog.insert(tuple);
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -133,14 +134,10 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	}
 	
 	public static boolean drop(String name) throws UpdateException {
-		if (p2.core.System.catalog() == null) {
-			throw new UpdateException("Catalog has not been created!");
-		}
-		
 		try {
-			TupleSet tuples = p2.core.System.catalog().primary().lookup(p2.core.System.catalog().key().value(name));
+			TupleSet tuples = catalog.primary().lookup(catalog.key().value(name));
 			for (Tuple table : tuples) {
-				return p2.core.System.catalog().remove(table);
+				return catalog.remove(table);
 			}
 		} catch (BadKeyException e) {
 			// TODO Fatal error
@@ -182,7 +179,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	/**
 	 * @return The number of attributes associated with this table. */
 	public Class[] types() {
-		return (Class[]) attributeTypes.toArray();
+		return (Class[]) attributeTypes.toArray(new Class[attributeTypes.size()]);
 	}
 	
 	/**

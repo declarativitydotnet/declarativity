@@ -11,6 +11,9 @@ import p2.lang.plan.Variable;
 
 
 public class Tuple {
+	private static Long idGen = new Long(0);
+	
+	protected String id;
 	
 	protected String name;
 	
@@ -24,12 +27,15 @@ public class Tuple {
 	
 	protected Schema schema;
 	
+	
 	public Tuple(String name, Comparable... values) {
 		this.name = name;
 		this.schema = null;
 		this.values = new ArrayList<Comparable>();
 		this.refCount = new Long(1);
 		this.frozen = false;
+		this.id = idGen.toString();
+		idGen += 1L;
 		
 		for (Comparable value : values) {
 			this.values.add(value);
@@ -42,14 +48,18 @@ public class Tuple {
 		this.values = values;
 		this.refCount = new Long(1);
 		this.frozen = false;
+		this.id = idGen.toString();
+		idGen += 1L;
 	}
 	
 	public Tuple(String name) {
 		this.name = name;
 		this.schema = new Schema(name);
-		this.values = values;
+		this.values = new ArrayList<Comparable>();;
 		this.refCount = new Long(1);
 		this.frozen = false;
+		this.id = idGen.toString();
+		idGen += 1L;
 	}
 	
 	@Override
@@ -60,6 +70,10 @@ public class Tuple {
 		return copy;
 	}
 	
+	public String id() {
+		return this.id;
+	}
+	
 	public void append(Variable variable, Comparable value) {
 		this.values.add(value);
 		this.schema.append(variable);
@@ -68,7 +82,7 @@ public class Tuple {
 	public String toString() {
 		String value = name() + "<";
 		for (Comparable element : values) {
-			value += ", " + element.toString();
+			value += ", " + (element == null ? "null" : element.toString());
 		}
 		value += ">";
 		return value;

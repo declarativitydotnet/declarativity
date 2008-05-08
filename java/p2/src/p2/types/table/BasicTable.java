@@ -19,14 +19,17 @@ public class BasicTable extends Table {
 	
 	@Override
 	protected Tuple insert(Tuple t) throws UpdateException {
+		Tuple previous = null;
 		for (Tuple lookup : primary().lookup(t)) {
 			if (lookup.equals(t)) {
 				// TODO update tuple timestamp.
 				return null;
 			}
+			previous = lookup;
+			primary().remove(lookup);
 		}
 		
-		Tuple previous = primary().insert(t);
+		primary().insert(t);
 		for (Index i : secondary().values()) {
 			i.insert(t);
 		}
@@ -44,6 +47,11 @@ public class BasicTable extends Table {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	@Override
+	public boolean isEvent() {
 		return false;
 	}
 

@@ -40,19 +40,27 @@ public class RefTable extends Table {
 
 	@Override
 	protected Tuple insert(Tuple t) throws UpdateException {
+		Tuple previous = null;
 		for (Tuple lookup : primary().lookup(t)) {
 			if (lookup.equals(t)) {
 				lookup.refCount(lookup.refCount().longValue() + 1);
-				return lookup; 
+				return null; 
 			}
+			primary().remove(lookup);
+			previous = lookup;
 		}
 		
 		t.refCount(1L);
 		
-		Tuple previous = primary().insert(t);
+		primary().insert(t);
 		for (Index i : secondary().values()) {
 			i.insert(t);
 		}
 		return previous;
+	}
+
+	@Override
+	public boolean isEvent() {
+		return false;
 	}
 }

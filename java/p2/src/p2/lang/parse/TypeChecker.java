@@ -33,7 +33,6 @@ import p2.lang.plan.StaticReference;
 import p2.lang.plan.Rule;
 import p2.lang.plan.Selection;
 import p2.lang.plan.StaticMethodCall;
-import p2.lang.plan.Table;
 import p2.lang.plan.Term;
 import p2.lang.plan.Value;
 import p2.lang.plan.Variable;
@@ -43,7 +42,9 @@ import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.table.BasicTable;
+import p2.types.table.EventTable;
 import p2.types.table.Key;
+import p2.types.table.Table;
 import p2.types.table.RefTable;
 import xtc.Constants;
 import xtc.tree.GNode;
@@ -84,9 +85,6 @@ public final class TypeChecker extends Visitor {
 	
 	private Set<String> ruleNames;
 
-	/** A static counter for temporary variable names */
-	private static int tmpNameCount = 0;
-
 	/**
 	 * Create a new Overlog analyzer.
 	 *
@@ -101,7 +99,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public void prepare() {
-		this.table = new SymbolTable(); //p2.types.table.Table.catalog().symbolTable();
+		this.table = new SymbolTable(); 
 		this.ruleNames = new HashSet<String>();
 	}
 
@@ -205,8 +203,9 @@ public final class TypeChecker extends Visitor {
 		Class type = (Class) dispatch((Node)n.getNode(0));
 		assert(type == Value.class);
 		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
+		Table table = Table.table(name.value());
 		
-		if (!table.isDefined(name.value())) {
+		if (table == null) {
 			runtime.error("Watch statement refers to unknown table/event name " + name.value());
 			return Error.class;
 		}
@@ -269,13 +268,10 @@ public final class TypeChecker extends Visitor {
 		assert(type == TypeList.class);
 		TypeList schema  = (TypeList) n.getNode(4).getProperty(Constants.TYPE);
 
-		table.current().define(name.value(), schema);
-		
-		p2.types.table.Table create;
+		Table create;
 		if (size.value().equals(p2.types.table.Table.INFINITY) && 
 				lifetime.value().equals(p2.types.table.Table.INFINITY)) {
 			create = new RefTable(name.value(), key, schema);
-			
 		}
 		else {
 			create = new BasicTable(name.value(), (Integer)size.value(), 
@@ -304,12 +300,9 @@ public final class TypeChecker extends Visitor {
 		assert(type == TypeList.class);
 		TypeList schema  = (TypeList) n.getNode(1).getProperty(Constants.TYPE);
 
-		table.current().define(name.value(), schema);
-		
-		Event event = new Event(name, schema);
-		event.location(n.getLocation());
+		EventTable event = new EventTable(name.toString(), schema);
 		n.setProperty(Constants.TYPE, event);
-		return Event.class;
+		return Table.class;
 	}
 	
 	public Class visitKeys(final GNode n) {
@@ -424,7 +417,7 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Can't apply notin to head predicate!", n);
 			return Error.class;
 		}
-		else if (head.event() != null) {
+		else if (head.event() != Predicate.EventModifier.NONE) {
 			runtime.error("Can't apply event modifier to rule head!", n);
 			return Error.class;
 		}
@@ -480,7 +473,7 @@ public final class TypeChecker extends Visitor {
 			Term t = (Term) term.getProperty(Constants.TYPE);
 			if (t instanceof Predicate) {
 				Predicate p = (Predicate) t;
-				if (p.event() != null && p.notin()) {
+				if (p.event() != Predicate.EventModifier.NONE && p.notin()) {
 					runtime.error("Can't apply notin to event predicate!",n);
 					return Error.class;
 				}
@@ -501,11 +494,16 @@ public final class TypeChecker extends Visitor {
 		Value<String> name = (Value<String>) n.getNode(1).getProperty(Constants.TYPE);
 		
 		/* Lookup the schema for the given tuple name. */
-		TypeList schema = (TypeList) table.lookup(name.value());
-		if (schema == null) {
-			runtime.error("No schema defined for predicate " + name);
+		Table ptable = Table.table(name.toString());
+		if (ptable == null) {
+			runtime.error("No catalog definition for predicate " + name);
 			return Error.class;
 		}
+		else if (ptable instanceof EventTable) {
+			event = "receive";
+		}
+		TypeList schema = new TypeList(ptable.types());
+		
 		
 		type = (Class) dispatch(n.getNode(3));
 		assert(type == List.class);
@@ -553,8 +551,22 @@ public final class TypeChecker extends Visitor {
 			
 			arguments.add(param);
 		}
-
-		Predicate pred = new Predicate(notin, name.value(), event, arguments);
+		
+		Predicate pred;
+		Predicate.EventModifier emodifier = Predicate.EventModifier.NONE;
+		if (!(ptable instanceof EventTable) && event != null) {
+			if ("insert".equals(event)) {
+				emodifier = Predicate.EventModifier.INSERT;
+			}
+			else if ("delete".equals(event)) {
+				emodifier = Predicate.EventModifier.DELETE;
+			}
+			else {
+				runtime.error("Unknown event modifier " + event + " on predicate " + name.value(), n);
+			}
+		}
+		
+		pred = new Predicate(notin, name.value(), emodifier, arguments);
 		pred.location(n.getLocation());
 		n.setProperty(Constants.TYPE, pred);
 		return Predicate.class;

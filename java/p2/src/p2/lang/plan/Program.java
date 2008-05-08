@@ -9,8 +9,10 @@ import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
+import p2.types.table.EventTable;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.Table;
 
 public class Program implements Comparable<Program> {
 	
@@ -43,7 +45,7 @@ public class Program implements Comparable<Program> {
 	
 	private List<Table> tables;
 	
-	private List<Event> events;
+	private List<EventTable> events;
 	
 	private List<Watch> watches;
 	
@@ -54,7 +56,7 @@ public class Program implements Comparable<Program> {
 	public Program(String name) {
 		this.name    = name;
 		this.tables  = new ArrayList<Table>();
-		this.events  = new ArrayList<Event>();
+		this.events  = new ArrayList<EventTable>();
 		this.watches = new ArrayList<Watch>();
 		this.facts   = new ArrayList<Fact>();
 		this.rules   = new ArrayList<Rule>();
@@ -66,7 +68,7 @@ public class Program implements Comparable<Program> {
 		for (Table t : tables) {
 			value += t + "\n";
 		}
-		for (Event e : events) {
+		for (EventTable e : events) {
 			value += e + "\n";
 		}
 		for (Watch w : watches) {
@@ -96,7 +98,7 @@ public class Program implements Comparable<Program> {
 		tables.add(t);
 	}
 	
-	public void event(Event e) {
+	public void event(EventTable e) {
 		events.add(e);
 	}
 	

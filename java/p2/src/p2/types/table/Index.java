@@ -11,7 +11,7 @@ import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 
 
-public abstract class Index implements Comparable {
+public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	
 	public static class IndexTable extends ObjectTable {
 		private static final Key PRIMARY_KEY = new Key(0,1); 
@@ -49,7 +49,6 @@ public abstract class Index implements Comparable {
 
 		@Override
 		public boolean remove(Tuple tuple) throws UpdateException {
-			// TODO Auto-generated method stub
 			return super.remove(tuple);
 		}
 
@@ -64,12 +63,23 @@ public abstract class Index implements Comparable {
 	
 	private Type type;
 	
-	private static IndexTable INDEX = null;
-	
 	public Index(Table table, Key key, Type type) {
 		this.table = table;
 		this.key = key;
 		this.type = type;
+		IndexTable iTable = p2.core.System.index();
+		if (iTable != null) {
+			try {
+				iTable.insert(new Tuple(iTable.name(), table.name(), key, type, this.getClass().getName(), this));
+			} catch (UpdateException e) {
+				e.printStackTrace();
+				// TODO error
+			}
+		}
+	}
+	
+	public int compareTo(Index i) {
+		return table().name().compareTo(i.table().name());
 	}
 	
 	public Table table() {
@@ -85,18 +95,18 @@ public abstract class Index implements Comparable {
 	}
 	
 	/* An iterator over all tuple values. */
-	public abstract Iterator<Tuple> tuples();
+	public abstract Iterator<Tuple> iterator();
 	
 	/* Uses the index key as the lookup key and
 	 * the values from the given tuple. */
 	public abstract TupleSet lookup(Tuple t);
 	
-	public abstract TupleSet lookup(Key.Value key);
+	public abstract TupleSet lookup(Key.Value value);
 	
 	/* Index the given tuple. */
-	public abstract Tuple insert(Tuple t);
+	public abstract void insert(Tuple t);
 	
 	/* Remove the tuple from the index. */
 	public abstract void remove(Tuple t);
-	
+
 }

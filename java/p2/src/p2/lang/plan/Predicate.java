@@ -10,8 +10,10 @@ import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.Table;
 
 public class Predicate extends Term implements Iterable<Expression> {
+	public enum EventModifier{NONE, INSERT, DELETE};
 	
 	public static class PredicateTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1);
@@ -19,6 +21,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		public static final Class[] SCHEMA =  {
 			String.class,   // program name
 			String.class,   // rule name
+			String.class,   // event modifier
 			Integer.class,  // position
 			Predicate.class // predicate object
 		};
@@ -44,13 +47,13 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private String name;
 	
-	private String event;
+	private EventModifier event;
 	
 	private List<Expression> arguments;
 	
 	private Schema schema;
 	
-	public Predicate(boolean notin, String name, String event, List<Expression> arguments) {
+	public Predicate(boolean notin, String name, EventModifier event, List<Expression> arguments) {
 		this.table = null;
 		this.notin = notin;
 		this.name = name;
@@ -66,15 +69,15 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.table = table;
 	}
 	
-	public p2.types.table.Table table() {
-		return this.table.object();
+	public Table table() {
+		return this.table;
 	}
 	
 	public boolean notin() {
 		return this.notin;
 	}
 	
-	public String event() {
+	public EventModifier event() {
 		return this.event;
 	}
 	

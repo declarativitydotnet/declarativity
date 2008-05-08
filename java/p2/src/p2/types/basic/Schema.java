@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import p2.lang.plan.Variable;
+import p2.types.table.Key;
 
 
 public class Schema {

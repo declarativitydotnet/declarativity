@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.Reader;
 
 import p2.lang.plan.*;
+import p2.types.table.EventTable;
+import p2.types.table.Table;
 
 import xtc.Constants;
 import xtc.parser.ParseException;
@@ -70,11 +72,11 @@ public class Overlog extends Tool {
 	  for (Node clause : node.<Node>getList(0)) {
 		  if (clause.getName().equals("Table")) {
 			  typeChecker.analyze(clause);
-			  this.program.table((p2.lang.plan.Table)clause.getProperty(Constants.TYPE));
+			  this.program.table((Table)clause.getProperty(Constants.TYPE));
 		  }
 		  else if (clause.getName().equals("Event")) {
 			  typeChecker.analyze(clause);
-			  this.program.event((Event)clause.getProperty(Constants.TYPE));
+			  this.program.event((EventTable)clause.getProperty(Constants.TYPE));
 		  }
 	  }
 	  
@@ -106,7 +108,7 @@ public class Overlog extends Tool {
    * @param args The command line arguments.
    */
   public static void main(String[] args) {
-	  // p2.core.System.initialize();
+	  p2.core.System.initialize();
       new Overlog().run(args);
   }
 }
