@@ -1,0 +1,224 @@
+namespace cascades {
+  materialize(branch, infinity, 10000, keys(2,3,4)).
+  materialize(cost, infinity, 10000, keys(2,3,4)).
+  materialize(complete, infinity, 10000, keys(2,3)).
+  materialize(rules, infinity, 10000, keys(2,3)).
+  materialize(assigns, infinity, 10000, keys(2,3)).
+  materialize(selects, infinity, 10000, keys(2,3)).
+  
+  countAssigns(@A, Pid, Rid) :-
+     programEvent(@A, Pid, _, _, _, _, _, _, _),
+     ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  assigns(@A, Pid, Rid, a_count<*>) :-
+     countAssigns(@A, Pid, Rid),
+     ::sys::assign(@A, Aid, Rid, Var, Value, Pos).
+
+  initBranch(@A, Pid, Rid) :-
+     programEvent(@A, Pid, _, _, _, _, _, _, _),
+     ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  getPreds(@A, Pid, Rid, a_mklist<PredID>) :-
+    initBranch(@A, Pid, Rid),
+    ::sys::predicate(@A, PredID, Rid, _, _, _, _, _, Pos, _, _),
+    Pos > 0.
+
+  getSelects(@A, Pid, Rid, Preds, a_mklist<Sid>) :-
+    getPreds(@A, Pid, Rid, Preds),
+    ::sys::select(@A, Sid, Rid, _, _, _).
+
+  selects(@A, Pid, Rid, Selects) :-
+    getSelects(@A, Pid, Rid, Preds, Selects).
+
+  computePlan(@A, Pid, Rid, f_cons(Selects, Preds)) :-
+    getSelects(@A, Pid, Rid, Preds, Selects).
+    /* f_size(Preds) + f_size(Selects) > 1. */
+
+  rules(@A, Pid, Rid) :- computePlan(@A, Pid, Rid, Plan),
+                         f_size(Plan) > 1.
+
+  bestCost(@A, Pid, Rid, Plan, Bound) :-
+     winner(@A, Pid, Rid, GroupID, _, _, _),
+     branch(@A, Pid, Rid, GroupID, Pos, Plan, Bound),
+     ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+     assigns(@A, Pid, Rid, Assigns),
+     Bound != infinity,
+     f_size(Plan) + Assigns + 1 == Terms.
+
+  addAssigns(@A, Pid, Rid, Plan, Bound) :-
+     bestCost(@A, Pid, Rid, Plan, Bound).
+
+  addAssigns(@A, Pid, Rid, Plan, Bound) :-
+        addAssigns(@A, Pid, Rid, Plan, Bound), 
+        ::sys::assign(@A, Aid, Rid, Var, _, _),
+        f_contains(Aid, Plan) == false,
+        Plan := f_cons(Aid, Plan). 
+
+  complete(@A, Pid, Rid, Plan, Bound) :-
+        addAssigns(@A, Pid, Rid, Plan, Bound), 
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+        f_size(Plan) + 1 == Terms.
+
+  completeUpdate(@A, Pid) :-
+    complete(@A, Pid, Rid, Plan, Bound).
+
+  watchmod(countComplete, "s").
+  countComplete(@A, Pid, a_count<*>) :-
+    completeUpdate(@A, Pid),
+    complete(@A, Pid, Rid, Plan, Bound).
+
+  checkFinish(@A, Pid, Complete, a_count<*>) :-
+    countComplete(@A, Pid, Complete),
+    rules(@A, Pid, Rid).
+
+  ::sys::program_add(@A, Pid, Name, Rewrite, "cascades", Text, Msg, P2DL, Src) :-
+    checkFinish(@A, Pid, Complete, Rules),
+    Complete >= Rules,
+    ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  branch(@A, Pid, Rid, f_group(Plan), 0, Plan, Bound) :-
+    computePlan(@A, Pid, Rid, Plan),
+    f_size(Plan) > 1, Bound := infinity.
+
+  computeCost(@A, Pid, Rid, Plan, Bound) :-
+     branch(@A, Pid, Rid, GroupID, Pos, Plan, Bound),
+     Plan   := f_removepos(Pos, Plan).
+
+  branch(@A, Pid, Rid, GroupID, Pos+1, Plan, Bound) :-
+     winner(@A, Pid, Rid, GroupID, _, _, Cost),
+     branch(@A, Pid, Rid, GroupID, Pos, Plan, Bound),
+     Pos + 1 < f_size(Plan),
+     Bound := (Bound == infinity ? Cost : (Cost < Bound ? Cost : Bound)).
+     
+  branch(@A, Pid, Rid, f_group(Plan), 0, Plan, Bound) :-
+     computeCost(@A, Pid, Rid, Plan, Bound),
+     notin cost(@A, Pid, Rid, Plan, _, _, _),
+     f_size(Plan) > 0.
+
+  determineWinner(@A, Pid, Rid, f_group(Plan), Schema, Card) :-
+     computeCost(@A, Pid, Rid, Plan, Bound),
+     cost(@A, Pid, Rid, Plan, Schema, Card, Cost).
+
+  winner(@A, Pid, Rid, f_group(Plan), null, 9999999, 999999) :-
+     computeCost(@A, Pid, Rid, Plan, Bound),
+     selects(@A, Pid, Rid, Selects),
+     f_size(Plan) == 1,
+     f_contains(f_car(Plan), Selects) == false. 
+
+  cost(@A, Pid, Rid, Plan, Schema, Card, Cost) :-
+     computeCost(@A, Pid, Rid, Plan, Bound),
+     ::sys::predicate(@A, PredID, Rid, _, Tablename, _, _, Schema, Pos, _, _),
+     ::sys::table(@A, _, Tablename, _, _, _, Card, _, _),
+     f_size(Plan) == 1,
+     f_car(Plan) == PredID,
+     Pos > 0,
+     Cost := Card.
+
+  cost(@A, Pid, Rid, Plan, Schema, 1, 1) :-
+     computeCost(@A, Pid, Rid, Plan, Bound),
+     ::sys::predicate(@A, PredID, Rid, _, Tablename, _, _, Schema, Pos, _, _),
+     notin ::sys::table(@A, _, Tablename, _, _, _, _, _, _),
+     f_size(Plan) == 1,
+     f_car(Plan) == PredID,
+     Pos > 0.
+
+  /* Blow up the cost of joining with an event later in the plan. */
+  cost(@A, Pid, Rid, Plan, f_merge(Schema, PredSchema), Card*Card, WinCost*WinCost) :-
+     winner(@A, Pid, Rid, GroupID, Schema, Card, WinCost),
+     branch(@A, Pid, Rid, GroupID, BranchPos, Plan, Bound),
+     ::sys::predicate(@A, PredID, Rid, _, Tablename, _, _, PredSchema, Pos, _, _),
+     notin ::sys::table(@A, _, Tablename, _, _, _, _, _, _),
+     Pos > 0,
+     f_contains(PredID, Plan) == false,
+     Plan := f_cons(Plan, PredID).
+
+  /* Push a prior winner back up when we prune NLJ. */
+  winner(@A, Pid, Rid, GroupID, f_merge(Schema, PredSchema), Card, Bound) :-
+     winner(@A, Pid, Rid, GroupID, Schema, Card, WinCost),
+     branch(@A, Pid, Rid, GroupID, BranchPos, Plan, Bound),
+     ::sys::predicate(@A, PredID, Rid, _, Tablename, _, _, PredSchema, Pos, _, _),
+     ::sys::table(@A, _, Tablename, _, _, _, Card2, _, _),
+     Bound != infinity,
+     Bound < (WinCost + (f_selectivity(Schema, PredSchema)*Card*Card2)),
+     GroupID := f_group(f_cons(Plan, PredID)),
+     Plan := f_cons(Plan, PredID),
+     Card := f_selectivity(Schema, PredSchema) * Card * Card2.
+
+  /* Nested loops join cost. */
+  cost(@A, Pid, Rid, Plan, f_merge(Schema, PredSchema), Card, Cost) :-
+     winner(@A, Pid, Rid, GroupID, Schema, Card, WinCost),
+     branch(@A, Pid, Rid, GroupID, BranchPos, Plan, Bound),
+     ::sys::predicate(@A, PredID, Rid, _, Tablename, _, _, PredSchema, Pos, _, _),
+     ::sys::table(@A, _, Tablename, _, _, _, Card2, _, _),
+     Pos > 0,
+     f_contains(PredID, Plan) == false,
+     Bound == infinity || WinCost + (f_selectivity(Schema, PredSchema)*Card*Card2) < Bound,
+     Card := f_selectivity(Schema, PredSchema) * Card * Card2,
+     Cost := WinCost + (f_selectivity(Schema, PredSchema)*Card*Card2),
+     Plan := f_cons(Plan, PredID).
+
+  /* Index Nested loops join cost. */
+  cost(@A, Pid, Rid, Plan, f_merge(Schema, PredSchema), Card, Cost) :-
+     winner(@A, Pid, Rid, GroupID, Schema, Card, WinCost),
+     branch(@A, Pid, Rid, GroupID, BranchPos, Plan, Bound),
+     ::sys::predicate(@A, PredID, Rid, _, Tablename, _, _, PredSchema, Pos, _, _),
+     ::sys::table(@A, _, Tablename, _, _, _, TCard, _, _),
+     ::sys::index(@A, Iid, Tablename, _, _, Selectivity),
+     Pos > 0,
+     f_contains(PredID, Plan) == false,
+     Bound == infinity || (WinCost + (Card * (Selectivity * TCard))) < Bound,
+     Plan   := f_cons(Plan, PredID),
+     Card   := Card * (Selectivity * TCard),
+     Cost   := WinCost + (Card * (Selectivity * TCard)).
+
+  /* Include the next selection predicate */
+  cost(@A, Pid, Rid, Plan, Schema, Card, Cost) :-
+     winner(@A, Pid, Rid, GroupID, Schema, Card, WinCost),
+     branch(@A, Pid, Rid, GroupID, _, Plan, Bound),
+     ::sys::select(@A, Sid, Rid, Bool, _, _),
+     f_contains(Sid, Plan) == false,
+     Bound == infinity || WinCost < Bound,
+     Cost := WinCost,
+     Cost := (f_filter(Schema, Bool) == true ? WinCost : WinCost*WinCost),
+     Card := Card / 3,
+     Plan := f_cons(Plan, Sid).
+
+  costUpdate(@A, Pid, Rid, GroupID, Schema, Card) :-
+    cost(@A, Pid, Rid, Plan, Schema, Card, Cost),
+    GroupID := f_group(Plan).
+
+  /* Guard against cost overflow. */
+  countValidCost(@A, Pid, Rid, GroupID, Schema, Card, a_count<Cost>) :-
+     costUpdate(@A, Pid, Rid, GroupID, Schema, Card),
+     cost(@A, Pid, Rid, Plan, _, _, Cost),
+     Cost > 0,
+     f_group(Plan) == GroupID.
+
+  determineWinner(@A, Pid, Rid, GroupID, Schema, Card) :-
+     countValidCost(@A, Pid, Rid, GroupID, Schema, Card, Count),
+     Count > 0.
+
+  winner(@A, Pid, Rid, GroupID, Schema, Card, a_min<Cost>) :-
+     determineWinner(@A, Pid, Rid, GroupID, Schema, Card),
+     cost(@A, Pid, Rid, Plan, _, _, Cost),
+     Cost > 0.
+
+/*
+  printPlan(@A, Pid, Rid, Size, Plan, Print, Cost) :-
+    cost(@A, Pid, Rid, Plan, Schema, Card, Cost),
+    Size := f_size(Plan), Print := null.
+     
+  printPlan(@A, Pid, Rid, Size, Plan, Print, Cost) :-
+     printPlan(@A, Pid, Rid, Size, Plan, Print, Cost),
+     ::sys::predicate(@A, PredID, Rid, _, Tablename, _, _, _, _, _, _),
+     f_size(Plan) > 0,
+     PredID == f_car(Plan),
+     Plan := f_cdr(Plan),
+     Print := f_cons(Print, Tablename).
+
+  watchmod(printer, "s").
+  printer(@A, Pid, Rid, Print, Cost) :-
+     printPlan(@A, Pid, Rid, Size, Plan, Print, Cost),
+     Print != null, f_size(Print) == 3.
+*/
+}

@@ -1,55 +1,25 @@
-namespace dummyWatch {
+namespace cast {
   
-  /* This rewrite finishes in a single dataflow fixpoint. So simply reinject 
-     the program tuple into the dataflow with its status updated to this
-     rewrite. */
-  dw0 ::sys::program_add(@A, Pid, Name, Rewrite, "dummyWatch", Text, Msg, P2DL, Src) :-
+  c1 ::sys::program_add(@A, Pid, Name, Rewrite, "cast", Text, Msg, P2DL, Src) :-
         programEvent(@A, Pid, _, _, _, _, _, _, _),
         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
 
-
-  /* Generate special watch events from universal modifier */
-  uni1 recvWatch(@A, Pid, Name) :-
+  c2 checkRule(@A, Pid, Rid, a_count<*>) :-
         programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, ""),
-	notin ::sys::table(@A, Tid, Name, _, _, _, _, _, _).
+        ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+        ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, HAttr, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, _, EAttr, _, _, _),
+        f_getattr("Location", HAttr) != f_getattr("Location", EAttr). 
 
-  uni2 insertWatch(@A, Pid, Name) :-
-        programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, ""),
-	::sys::table(@A, Tid, Name, _, _, _, _, _, _).
-
-  uni3 deleteWatch(@A, Pid, Name) :-
-        programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, ""),
-	::sys::table(@A, Tid, Name, _, _, _, _, _, _).
-
-
-
-  /* Find all recv watch events. */
-  dw1a recvWatch(@A, Pid, Name) :-
-        programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, "c"),
-	notin ::sys::table(@A, Tid, Name, _, _, _, _, _, _).
-
-  dw1b insertWatch(@A, Pid, Name) :-
-        programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, "i"),
-	::sys::table(@A, Tid, Name, _, _, _, _, _, _).
-
-  dw1c deleteWatch(@A, Pid, Name) :-
-        programEvent(@A, Pid, _, _, _, _, _, _, _),
-        ::sys::watch(@A, Wid, Pid, Name, "d"),
-	::sys::table(@A, Tid, Name, _, _, _, _, _, _).
-
-
-
-
-
-
+  c3 rewrite(@A, Pid, Rid, a_min<Freq>) :-
+            checkRule(@A, Pid, Rid, Joins),
+            ::sys::predicate(@A, PredID, Rid, _, _, _, _, _, _, _, _),
+            ::sys::table(@A, Tid, Name, _, _, _, _, _, _),
+            ::sys::updateStats(@A, Tid, Freq),
+            Freq < THRESHHOLD.
 
   /* Count all rules that have recv watches as the event. */
-  dw2a eventRuleCount(@A, Pid, Name, a_COUNT<*>) :-
+  c2 eventRuleCount(@A, Pid, Name, a_COUNT<*>) :-
         recvWatch(@A, Pid, Name),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, Name, _, "RECV", _, _, _, _).
@@ -57,17 +27,13 @@ namespace dummyWatch {
   dw2b insertRuleCount(@A, Pid, Name, a_COUNT<*>) :-
         insertWatch(@A, Pid, Name),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
-        ::sys::predicate(@A, PredID, Rid, _, Name, _, ECA, _, _, _, _),
-        ECA == "DELTA_INSERT" || ECA == "INSERT".
+        ::sys::predicate(@A, PredID, Rid, _, Name, _, "DELTA_INSERT", _, _, _, _).
   
   dw2c deleteRuleCount(@A, Pid, Name, a_COUNT<*>) :-
         deleteWatch(@A, Pid, Name),
         ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
         ::sys::predicate(@A, PredID, Rid, _, Name, _, "DELTA_DELETE", _, _, _, _).
   
-
-
-
   /* If there are no rules that have this recv watch event we trigger the rewrite. */
   dw3a doDummyEventRule(@A, Pid, Name, f_idgen(), f_idgen()) :-
         eventRuleCount(@A, Pid, Name, 0).
@@ -78,43 +44,31 @@ namespace dummyWatch {
   dw3c doDummyDeleteRule(@A, Pid, Name, f_idgen(), f_idgen()) :-
         deleteRuleCount(@A, Pid, Name, 0).
 
-
-
-
   /* Generate dummy rule. 
      dummy_Name drop(@A) :- Name(@A). */
-  dw4a ::sys::rule(@A, Rid, Pid, "dummyEvent_"+Name, HeadFid, null, false, 2, false) :-
+  dw4a ::sys::rule(@A, Rid, Pid, "dummyEvent_" + Name, HeadFid, null, false, 2, false) :-
         doDummyEventRule(@A, Pid, Name, Rid, HeadFid).
 
-
-
-
   /* Generate dummy rule. 
      dummy_Name drop(@A) :- Name(@A). */
-  dw4b ::sys::rule(@A, Rid, Pid, "dummyInsert_"+Name, HeadFid, null, false, 2, false) :-
+  dw4b ::sys::rule(@A, Rid, Pid, "dummyInsert_" + Name, HeadFid, null, false, 2, false) :-
         doDummyInsertRule(@A, Pid, Name, Rid, HeadFid).
 
-  dw4c ::sys::rule(@A, Rid, Pid, "dummyDelete_"+Name, HeadFid, null, false, 2, false) :-
+  dw4c ::sys::rule(@A, Rid, Pid, "dummyDelete_" + Name, HeadFid, null, false, 2, false) :-
         doDummyDeleteRule(@A, Pid, Name, Rid, HeadFid).
 
-
-
-
   /* The dummy head predicate: drop(@A) */
-  dw5a ::sys::predicate(@A, HeadFid, Rid, false, Name, null, "DROP", Schema, 0, null, false) :-
+  dw5a ::sys::predicate(@A, HeadFid, Rid, false, "dropEvent_"+Name, null, "DROP", Schema, 0, null, false) :-
         doDummyEventRule(@A, Pid, Name, Rid, HeadFid),
-        Name := Name + "_dropEvent",
         Schema := f_cons(f_mktype("Location", "A"), null).
 
   /* The dummy head predicate: drop(@A) */
-  dw5b ::sys::predicate(@A, HeadFid, Rid, false, Name, null, "DROP", Schema, 0, null, false) :-
+  dw5b ::sys::predicate(@A, HeadFid, Rid, false, "dropInsert_"+Name, null, "DROP", Schema, 0, null, false) :-
         doDummyInsertRule(@A, Pid, Name, Rid, HeadFid),
-        Name := Name + "_dropInsert",
         Schema := f_cons(f_mktype("Location", "A"), null).
 
-  dw5c ::sys::predicate(@A, HeadFid, Rid, false, Name, null, "DROP", Schema, 0, null, false) :-
+  dw5c ::sys::predicate(@A, HeadFid, Rid, false, "dropDelete_"+Name, null, "DROP", Schema, 0, null, false) :-
         doDummyDeleteRule(@A, Pid, Name, Rid, HeadFid),
-        Name := Name + "_dropDelete",
         Schema := f_cons(f_mktype("Location", "A"), null).
 
   /* Event predicate being watched: Name(@A) */

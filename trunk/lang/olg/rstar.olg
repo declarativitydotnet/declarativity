@@ -1,0 +1,237 @@
+namespace rstar {
+
+  /* Key (Pid, Rid, Method). */
+  materialize(plan, infinity, infinity, keys(4)).
+
+  /* Key (Pid, Rid, Method). */
+  materialize(bestPlan, infinity, infinity, keys(4)).
+
+  materialize(optimize, infinity, infinity, keys(2)).
+  materialize(newPlan, infinity, infinity, keys(2,3,4)).
+  materialize(rules, infinity, 1, keys(2)).
+  materialize(rulesComplete, infinity, infinity, keys(2)).
+  materialize(finalize, infinity, infinity, keys(2,3)).
+  materialize(terminate, infinity, infinity, keys(2)).
+
+  begin optimize(@A, Pid) :- programEvent(@A, Pid, _, _, _, _, _, _, _).
+
+  end delete optimize(@A, Pid) :- 
+        complete(@A, Pid, Count),
+        rules(@A, Pid, Count),       
+        optimize(@A, Pid).
+
+  /* Count # rules in the program. */
+  i0 rules(@A, Pid, a_count<Rid>) :-
+       programEvent(@A, Pid, _, _, _, _, _, _, _),
+       ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  /* Check for completion every couple of seconds. */
+  i1 checkComplete(@A, Pid) :-
+       periodic(@A, E, 10), optimize(@A, Pid).
+  
+  /* We're done when all rules have a bestPlan.size == # terms. */
+  i2 complete(@A, Pid, a_count<Rid>) :-
+       checkComplete(@A, Pid),
+       rulesComplete(@A, Pid, Rid).
+
+  /* Finalize iff complete.Count == rules.Count 
+   * && we're optimizing Pid. */
+  i3a finalize(@A, Pid, Rid, Terms) :-
+      complete(@A, Pid, Count),
+      rules(@A, Pid, Count),       
+      optimize(@A, Pid),
+      ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _).
+
+  i3b finish(@A, Pid, Rid, Terms) :- finalize(@A, Pid, Rid, Terms).
+
+  /* Select the min cost best plan out of
+   * plans with size == rule Terms. */
+  i4 bestPlanSelect(@A, Pid, Rid, Terms, a_min<Cost>) :-
+       finish(@A, Pid, Rid, Terms),
+       bestPlan(@A, Pid, Rid, PlanID, _, _, Cost),
+       plan(@A, Pid, Rid, PlanID, _, _, Plan, _, _, _, _, _),
+       f_size(Plan) == Terms - 1.
+
+  i5 commitPlan(@A, Pid, Rid, a_min<PlanID>) :-
+       bestPlanSelect(@A, Pid, Rid, Terms, Cost),
+       bestPlan(@A, Pid, Rid, PlanID, _, _, Cost),
+       plan(@A, Pid, Rid, PlanID, _, _, Plan, _, _, _, _, _),
+       f_size(Plan) == Terms - 1.
+
+  i6 rulesComplete(@A, Pid, Rid) :-
+       bestPlanUpdate(@A, Pid, Rid, PlanID),
+       ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+       plan(@A, Pid, Rid, PlanID, _, _, Plan, _, _, _, _, _),
+       f_size(Plan) == Terms - 1.
+
+  /***********************************************************************/
+  /* Termination rule. */
+  t0 terminate(@A, Pid) :- finish(@A, Pid, Rid, Terms).
+
+  t1 signalTerminate(@A, Pid) :- terminate(@A, Pid).
+
+  t2 ::sys::program_add(@A, Pid, Name, Rewrite, "rstar", Text, Msg, P2DL, Src) :-
+        signalTerminate(@A, Pid),
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  /***********************************************************************/
+  /* Start the optimization process */
+  
+  watchmod(plan, "i").
+  /* Get the program event and seed the optimization with the event predicate. */
+  o1a plan(@A, Pid, Rid, f_idgen(), null, PredID, Plan, Method, Schema, Pos, Card, Cost, Remote) :-
+            programEvent(@A, Pid, _, _, _, _, _, _, _),
+            ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+            ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, Schema, Pos, _, _),
+            ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, HeadSchema, HeadPos, _, _),
+            HeadPos == 0,
+            Pos == 1, Tid == null,
+            Plan   := f_cons(PredID, null),
+            Schema := Schema,
+            Card   := 1,
+            Cost   := 1,
+            Remote := f_tovar(f_getattr("Location", HeadSchema)),
+            Method := "Local".
+
+  o1b plan(@A, Pid, Rid, f_idgen(), null, PredID, Plan, Method, Schema, 1, Card, Cost, Remote) :-
+            programEvent(@A, Pid, _, _, _, _, _, _, _),
+            ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+            ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, Schema, Pos, _, _),
+            ::sys::table(@A, Tid, _, _, _, _, TCard, _, _),
+            ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, HeadSchema, HeadPos, _, _),
+            /* f_contains(f_tovar(f_getattr("Location", HeadSchema)), Schema) == true, */
+            HeadPos == 0, Pos > 0,
+            Plan   := f_cons(PredID, null),
+            Schema := Schema,
+            Card   := TCard,
+            Cost   := TCard,
+            Remote := f_tovar(f_getattr("Location", HeadSchema)),
+            Method := "Local".
+
+  /***********************************************************************/
+  /* Detect an update to the local plan table */
+  pu1 newPlan(@A, Pid, Rid, f_size(Plan)) :- 
+        plan(@A, Pid, Rid, PlanID, SubPlanID, _, Plan, _, _, _, _, _, _).
+
+  pu2 planUpdate(@A, Pid, Rid, Size) :- 
+        newPlan(@A, Pid, Rid, Size).
+
+  /***********************************************************************/
+  /* A new best LOCAL plan. */
+  bp1 bestCostPlan(@A, Pid, Rid, Size, a_min<Cost>) :-
+        planUpdate(@A, Pid, Rid, Size),
+        plan(@A, Pid, Rid, _, _, _, Plan, Method, _, _, _, Cost, _),
+        Size > 1,
+        f_size(Plan) == Size,
+        Method == "Local".
+        
+  /* Pick the minimum cost over all equivalent plans. */
+  bp2 bestCostPlan(@A, Pid, Rid, Size, a_min<Cost>) :-
+        planUpdate(@A, Pid, Rid, Size),
+        plan(@A, Pid, Rid, _, _, _, Plan1, _, _, _, _, Cost, _),
+        plan(@A, Pid, Rid, _, _, _, Plan2, _, _, _, _, _, _),
+        Size > 1,
+        f_equivalent(Plan1, Plan2) == true,
+        f_size(Plan1) == Size.
+
+  bp3 bestCostPlan(@A, Pid, Rid, Size, Cost) :-
+        planUpdate(@A, Pid, Rid, Size),
+        plan(@A, Pid, Rid, _, _, _, Plan, _, _, _, _, Cost, _),
+        f_size(Plan) == Size,
+        Size == 1.
+
+  bp4 bestPlan(@A, Pid, Rid, PlanID, SubPlanID, Method, Cost) :-
+       bestCostPlan(@A, Pid, Rid, Size, Cost),
+       plan(@A, Pid, Rid, PlanID, SubPlanID, _, Plan, Method, _, _, _, Cost, _),
+       f_size(Plan) == Size.
+
+  bp5 bestPlanUpdate(@A, Pid, Rid, PlanID) :-
+        bestPlan(@A, Pid, Rid, PlanID, SubPlanID, Method, Cost).
+
+  /***********************************************************************/
+  /* Always generate a Local join plan rule. */
+  o2 plan(@A, Pid, Rid, f_idgen(), PlanID, PredID, Plan, Method, Schema, Pos+1, Card, Cost, Remote) :-
+        bestPlanUpdate(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, _, Plan, Method, OuterSchema, Pos, Card, Cost, Remote),
+        ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, Schema, PredPos, _, _),
+        ::sys::table(@A, Tid, _, _, _, _, TCard, _, _),
+        PredPos > 0, Method == "Local",
+        f_contains(PredID, Plan) == false,
+        Schema := f_merge(OuterSchema, Schema),
+        Plan := f_cons(PredID, Plan),
+        /* Card := f_selectivity(OuterSchema, Schema) * Card * TCard, */
+        Card := Card * TCard,
+        Cost := Cost + Card.
+
+  /***********************************************************************/
+  /* Ship join plan rule. */
+  o3 plan(@A, Pid, Rid, f_idgen(), PlanID, PredID, Plan, Method, Schema, Pos+1, Card, Cost, Remote) :-
+        bestPlanUpdate(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, _, Plan, Method, OuterSchema, Pos, Card, Cost, Remote),
+        ::sys::predicate(@A, PredID, Rid, _, _, Tid, _, Schema, PredPos, _, _),
+        ::sys::table(@A, Tid, _, _, _, _, TCard, _, _),
+        PredPos > 0,
+        f_contains(Remote, f_merge(OuterSchema, Schema)) == true,
+        f_contains(PredID, Plan) == false,
+        Schema := f_merge(OuterSchema, Schema),
+        Plan   := f_cons(PredID, Plan),
+        Cost   := Cost + TCard,
+        /* Card   := (Method == "Local" ? (f_selectivity(OuterSchema, Schema))*TCard*Card : Card),
+*/
+        Card   := (Method == "Local" ? TCard*Card : Card),
+        Method := (Method == "Local" ? "Ship" : "Remote").
+
+  /***********************************************************************/
+  /* Perform next selection? */
+  o4 plan(@A, Pid, Rid, f_idgen(), PlanID, Sid, Plan, Method, Schema, Pos+1, Card, Cost, Remote) :-
+        bestPlanUpdate(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, _, Plan, Method, Schema, Pos, Card, Cost, Remote),
+        ::sys::select(@A, Sid, Rid, Bool, _, _),
+        f_contains(Sid, Plan) == false,
+        f_filter(Schema, Bool) == true,
+        Card := (Method == "Local" ? Card / 3 : Card),
+        Plan := f_cons(Sid, Plan). 
+        
+
+  /***********************************************************************/
+  /* Add assignment? */
+  o5 plan(@A, Pid, Rid, f_idgen(), PlanID, Aid, Plan, Method, Schema, Pos+1, Card, Cost, Remote) :-
+        bestPlanUpdate(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, _, Plan, Method, Schema, Pos, Card, Cost, Remote),
+        ::sys::assign(@A, Aid, Rid, Var, Value, _),
+        f_contains(Aid, Plan) == false,
+        Schema    := f_assignschema(Schema, Var),
+        Cost      := 99999999999999999999999999999999,
+        Card      := Card,
+        Plan      := f_cons(Aid, Plan). 
+        
+  /***********************************************************************/
+  /* Update the predicate and selection tables with the new position and access method. */
+  u0 commitPlan(@A, Pid, Rid, SubPlanID) :-
+       commitPlan(@A, Pid, Rid, PlanID),
+       plan(@A, Pid, Rid, PlanID, SubPlanID, _, _, _, _, _, _, _, _),
+       SubPlanID != null.
+  
+  watchmod(foo, "s").
+  test foo(@A, Name, Pos, Method, PlanID, SubPlanID) :-
+        commitPlan(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, SubPlanID, PredID, _, Method, _, Pos, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, _, _, New).
+
+  /* Update the predicate and selection tables with the new position and access method. */
+  u1 ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, Method, New) :-
+        commitPlan(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, PredID, _, Method, _, Pos, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, _, _, New).
+
+  u2 ::sys::select(@A, Sid, Rid, Bool, Pos, Method) :-
+        commitPlan(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, Sid, _, Method, _, Pos, _, _, _),
+        ::sys::select(@A, Sid, Rid, Bool, _, _).
+
+  u3 ::sys::assign(@A, Aid, Rid, Var, Value, Pos) :-
+        commitPlanEvent(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, Aid, _, _, _, Pos, _, _, _),
+        ::sys::assign(@A, Aid, Rid, Var, Value, _).
+
+}

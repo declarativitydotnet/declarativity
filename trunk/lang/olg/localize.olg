@@ -136,7 +136,7 @@ namespace localize {
   /* Generate the new local join rules. */
  
   /* Create the new rule. Could be done multiple times but always the same tuple. */
-  g1 ::sys::rule(@A, NewRid, Pid, NewName, HeadFid, null, false, NewPos, false) :-
+  g1 ::sys::rule(@A, NewRid, Pid, NewName, HeadFid, null, false, NewPos+1, false) :-
         prebreak(@A, Pid, Rid, Pos, NewRid, NewPos, _, HeadFid, _, _, _, _,_),
         NewName := "intermediateRule_" + f_tostr(NewRid).
 

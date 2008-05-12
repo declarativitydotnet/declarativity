@@ -1,0 +1,203 @@
+namespace wireless {
+  materialize(cycle1, 1, infinity, keys(1,2)).
+  materialize(cycle2, 1, infinity, keys(1,2)).
+  
+  i1 cycle1(@A, Pid) :- programEvent(@A, Pid, _, _, _, _, _, _, _).
+  i2 cycle2(@A, Pid) :- cycle1(@A, Pid).
+  i3 done(@A, Pid)   :- cycle2(@A, Pid).
+
+  i0 ::sys::program_add(@A, Pid, Name, Rewrite, "wireless", Text, Msg, P2DL, Src) :-
+        done(@A, Pid),
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  i1 countRule(@A, Pid, Rid) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  i2 countLocalVar(@A, Pid, Rid, a_countdistinct<Attr>) :-
+        countRule(@A, Pid, Rid),
+        ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, _, Attributes, _, _, _),
+        Attr := f_getattr("Location", Attributes), 
+        PredID != HeadPredID.
+
+  i3 rewrite(@A, Pid, Rid, Name, f_tovar(f_getattr("Location", HAttr)), 
+               f_tovar(f_getattr("Location", EAttr))) :-
+        countLocalVar(@A, Pid, Rid, Count),
+        ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+        ::sys::predicate(@A, HeadPredID, Rid, _, Name, _, _, HAttr, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, _, _, _, EAttr, Pos, _, _),
+        f_getattr("Location", HAttr) != f_getattr("Location", EAttr),
+        Pos == 1, Count == 1. 
+
+
+  /*************************************************************************************/
+  /* Make buffer rule. */
+  br1 bufferRule(@A, Pid, Rid, Name + "_buffer", Schema, f_idgen(), f_idgen(), f_idgen()) :-
+         rewrite(@A, Pid, Rid, Name, RLoc, LLoc), 
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, Rid, Notin, Name, _, _, Schema, _, AM, New),
+         Schema := f_cons(f_mktype("Location", f_tostr(LLoc)), f_cdr(Schema)),
+         Schema := f_cons(Schema, RLoc).
+
+  br2 ::sys::rule(@A, NewRid, Pid, Name + "_buffer", NewHeadID, null, false, Terms, false) :-
+         buferRule(@A, Pid, Rid, _, Schema, NewRid, NewHeadID, BTid), 
+         ::sys::rule(@A, Rid, Pid,Name, _, _, _, Terms, _).
+
+  br3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name + "_buffer", 
+                       BTid, "INSERT", Schema, 0, null, false) :-
+         buferRule(@A, Pid, Rid, Name, Schema, NewRid, NewHeadID, BTid). 
+
+  br4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, ECA, Schema, Pos, AM, New) :-
+         buferRule(@A, Pid, Rid, _, _, NewRid, _, _), 
+         ::sys::predicate(@A, _, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+         Pos > 0.
+
+  br5 ::sys::table(@A, BTid, Name, infinity, infinity, f_createKey(Schema), 0, null, Pid) :-
+         buferRule(@A, Pid, Rid, Name, Schema, NewRid, NewHeadID, BTid). 
+
+  /*************************************************************************************/
+  /* Flush buffer rule. */
+
+  fb1 flushBuffer(@A, Pid, Rid, Schema, f_idgen(), f_idgen()) :-
+         rewrite(@A, Pid, Rid, Name, RLoc, LLoc), 
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, Schema, _, _, _),
+         Schema := f_cons(f_mktype("Location", f_tostr(LLoc)), f_cdr(Schema)).
+
+  fb2 ::sys::rule(@A, NewRid, Pid, Name + "_flush_buffer", NewHeadID, null, false, 3, false) :-
+       flushBuffer(@A, Pid, Rid, Schema, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  fb3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, null, "SEND", Schema, 0, null, false) :-
+       flushBuffer(@A, Pid, Rid, Schema, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+       ::sys::predicate(@A, HeadPredID, Rid, _, Name, _, _, _, _, _, _),
+       Name := Name + "_flush_buffer".
+
+  fb4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, "periodic", null, "RECV", Schema, 1, null, false) :-
+       flushBuffer(@A, Pid, Rid, Schema, NewRid, NewHeadID),
+       Schema := f_cons(f_cons(f_car(Schema), f_mktype("Variable", "$E")), f_mktype("Value", 5)).
+
+  fb5 ::sys::predicate(@A, f_idgen(), NewRid, false, Name + "_buffer", 
+                       null, "PROBE", Schema, 2, null, false) :-
+       flushBuffer(@A, Pid, Rid, Schema, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+       ::sys::predicate(@A, HeadPredID, Rid, _, Name, _, _, _, _, _, _).
+
+  /*************************************************************************************/
+  /* Count distinct locations. */
+
+  cd1 countDistinct(@A, Pid, Rid, Name, RLoc, Schema, f_idgen(), f_idgen()) :-
+         rewrite(@A, Pid, Rid, Name, RLoc, LLoc), 
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, Schema, _, _, _),
+         Schema := f_cons(f_mktype("Location", f_tostr(LLoc)), f_cdr(Schema)).
+
+  cd2 ::sys::rule(@A, NewRid, Pid, Name + "_dest_count", NewHeadID, null, false, 3, false) :-
+       countDistinct(@A, Pid, Rid, _, RLoc, Schema, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  cd3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, null, "SEND", Schema, 0, null, false) :-
+       flushBuffer(@A, Pid, Rid, Name, RLoc, Schema, NewRid, NewHeadID),
+       Schema := f_cons(Schema, f_mkagg(RLoc, "COUNTDISTINCT")).
+       Name := Name + "_dest_count".
+
+  cd4 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, null, "RECV", Schema, 1, null, false) :-
+       flushBuffer(@A, Pid, Rid, Name, _, Schema, NewRid, NewHeadID),
+       Name := Name + "_flush_buffer".
+
+  cd5 ::sys::predicate(@A, f_idgen(), NewRid, false, Name + "_buffer", 
+                       null, "PROBE", Schema, 2, null, false) :-
+       flushBuffer(@A, Pid, Rid, Name, RLoc, Schema, NewRid, NewHeadID),
+       Schema := f_cons(Schema, RLoc).
+
+  /*************************************************************************************/
+  /* Send trigger rule. */
+
+  cd1 triggerRule(@A, Pid, Rid, Name, LLoc, Schema, f_idgen(), f_idgen()) :-
+         rewrite(@A, Pid, Rid, Name, RLoc, LLoc), 
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, Schema, _, _, _),
+         Schema := f_cons(f_mktype("Location", f_tostr(LLoc)), f_cdr(Schema)).
+
+  cd2 ::sys::rule(@A, NewRid, Pid, Name + "_send", NewHeadID, null, false, 3, false) :-
+       triggerRule(@A, Pid, Rid, _, _, _, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  cd3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, null, "SEND", Schema, 0, null, false) :-
+       triggerRule(@A, Pid, Rid, Name, _, _, NewRid, NewHeadID),
+       Schema := f_cons(Schema, 
+                   f_math("*", f_mktype("Variable", "D"), 
+                               f_math("+", f_mktype("Variable", "S"), f_mktype("Variable", "R")))),
+       Schema := f_cons(Schema, 
+                   f_math("+", f_mktype("Variable", "S"), 
+                               f_math("*", f_mktype("Variable", "N"), f_mktype("Variable", "R")))),
+       Name := Name + "_send".
+
+  /* make predicate: name_dest_count(@B,...,D), where D = # destinations. */
+  cd4 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, null, "RECV", Schema, 1, null, false) :-
+       triggerRule(@A, Pid, Rid, Name, _, _, NewRid, _),
+       Schema := f_cons(Schema, f_mktype("Variable", "D")),
+       Name := Name + "_dest_count".
+
+  /* make predicate: sys::network(@A, N, S, R)
+     N = network size, S = send cost, R = receive cost. */
+  cd5 ::sys::predicate(@A, f_idgen(), NewRid, false, "sys::network", 
+                       null, "PROBE", Schema, 2, null, false) :-
+       triggerRule(@A, Pid, Rid, _, LLoc, _, NewRid, _),
+       Schema := f_cons(f_cons(f_mktype("Location", f_tostr(LLoc)), 
+                               f_mktype("Variable", "N")),
+                        f_cons(f_mktype("Variable", "S"), 
+                               f_mktype("Variable", "R"))).
+
+  /*************************************************************************************/
+  /* Create broadcast rule. */
+
+  br1 broadcastRule(@A, Pid, Rid, Name, Schema, f_idgen(), f_idgen()) :-
+         rewrite(@A, Pid, Rid, Name, RLoc, LLoc), 
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, Schema, _, _, _),
+         Schema := f_cons(f_mktype("Location", f_tostr(LLoc)), f_cdr(Schema)).
+
+  br2 ::sys::rule(@A, NewRid, Pid, Name + "_broadcast", 
+                  NewHeadID, null, false, 4, false) :-
+       broadcastRule(@A, Pid, Rid, Name, Schema, NewRid, NewHeadID),
+       ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  br3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name + "_broadcast", 
+                       RLTid, "SEND", Schema, 0, null, false) :-
+       broadcastRule(@A, Pid, Rid, Name, Schema, NewRid, NewHeadID),
+       Schema := f_cons(f_cons(f_mktype("Location", "BADDR"), f_cdr(Schema)),
+                        f_mkagg("MKSET", RLoc)).
+
+
+  /*************************************************************************************/
+  /* Update the table identifier. */
+  p0 ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New) :-
+        done(@A, Pid),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, TmpTid, ECA, Schema, Pos, AM, New),
+        ::sys::table(@A, Tid, Name, _, _, _, _, _, _),
+        Pos > 0, TmpTid == null.
+
+  /* Update the position of any predicate that has an invalid position. */
+  p1 predUpdate(@A, PredID, Rid) :-
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+        Pos < 0.
+
+  /* Determine the maximum position. */
+  p2 maxPos(@A, PredID, Rid, a_max<Pos>) :- 
+       predUpdate(@A, PredID, Rid),
+       ::sys::predicate(@A, _, Rid, _, _, _, _, _, Pos, _, _).
+
+  /* Update the predicate postion. */
+  p3 ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos+1, AM, New) :-
+       maxPos(@A, PredID, Rid, Pos),
+       ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, OldPos, AM, New).
+
+  /* Update the number of terms in the rule. */
+  p4 ::sys::rule(@A, Rid, Pid, RName, HeadPredID, P2DL, Delete, Pos + 2, New) :-
+       maxPos(@A, PredID, Rid, Pos),
+       ::sys::rule(@A, Rid, Pid, RName, HeadPredID, P2DL, Delete, Terms, New).
+}

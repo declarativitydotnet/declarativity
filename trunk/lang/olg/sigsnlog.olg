@@ -1,0 +1,16 @@
+namespace sigsnlog {
+
+  materialize(rewrite, infinity, infinity, keys(2,3)).
+
+  end ::sys::program_add(@A, Pid, Name, Rewrite, "sigsnlog", Text, Msg, P2DL, Src) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _).
+
+  d1 rewrite(@A, Pid, Rid, 
+             f_getattr("Location", Schema1), f_getattr("Location", Schema2)) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+        ::sys::predicate(@A, _, Rid, _, _, _, _, Schema1, Pos1, _, _),
+        ::sys::predicate(@A, _, Rid, _, _, _, _, Schema2, Pos2, _, _),
+        f_getattr("Location", Schema1) != f_getattr("Location", Schema2),
+        Terms > 2, Pos1 == 0, Pos2 == 1.
+}

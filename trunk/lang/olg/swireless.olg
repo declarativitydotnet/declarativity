@@ -1,0 +1,76 @@
+namespace wireless {
+  
+  br0 ::sys::program_add(@A, Pid, Name, Rewrite, "wireless", Text, Msg, P2DL, Src) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  br1 checkRule(@A, Pid, Rid) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  br2 checkRewrite(@A, Pid, Rid, PredID) :-
+        checkRule(@A, Pid, Rid),
+        ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+        ::sys::predicate(@A, HeadPredID, Rid, _, _, _, _, HAttr, _, _, _),
+        ::sys::predicate(@A, PredID, Rid, _, Name, _, _, EAttr, _, _, _),
+        f_getattr("Location", HAttr) != f_getattr("Location", EAttr),
+        Name == "sys::wireless::link". 
+
+  br3 rewrite(@A, Pid, Rid, PredID, a_countdistinct<B>) :-
+       checkRewrite(@A, Pid, Rid, PredID), ::sys::wireless::link(@A, B).
+
+  /* Convert rule to broadcast. */
+  br4 convertRule(@A, Pid, Rid, PredID) :-
+         rewrite(@A, Pid, Rid, PredID, Dests), 
+         ::sys::network(@A, NetSize, SendCost, RecvCost),
+         (SendCost + (NetSize*RecvCost)) < (Dests * (SendCost + RecvCost)).
+
+  /* Update the term count of the rule to include the sys::wireless::broadcast predicate. */
+  br5 ::sys::rule(@A, Rid, Pid, Name, HeadPredID, P2DL, Delete, Terms+1, New) :-
+         convertRule(@A, Pid, Rid, _),
+         ::sys::rule(@A, Rid, Pid, Name, HeadPredID, P2DL, Delete, Terms, New).
+
+  /* Add the sys::wireless::broadcast predicate in the last rule position. */
+  br6 ::sys::predicate(@A, f_idgen(), Rid, Notin, "sys::wireless::broadcast", Tid, "PROBE", Schema, Terms, AM, New) :-
+         convertRule(@A, Pid, Rid, PredID),
+         ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+         ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+         Schema := f_cons(f_car(Schema), f_mktype("Variable", "BROADCAST")).
+
+  /* Add an aggregation attribute to the head predicate, and change the name. */
+  br7 ::sys::predicate(@A, HeadPredID, Rid, Notin, Name + "_broadcast", null, ECA, Schema, Pos, AM, New) :-
+         convertRule(@A, Pid, Rid, PredID),
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, AM, New),
+         Schema := f_cons(Schema, f_mkagg("MKSET", f_tovar(f_getattr("Location", Schema)))),
+         Schema := f_cons(f_mktype("Location", "BROADCAST"), f_cdr(Schema)).
+
+ 
+  br8 broadcastRecv(@A, Pid, Rid, f_idgen(), f_idgen()) :-
+         convertRule(@A, Pid, Rid, _).
+
+  br9 ::sys::rule(@A, NewRid, Pid, Name + "_broadcast", NewHeadPredID, null, false, 3, false) :-
+        broadcastRecv(@A, Pid, Rid, NewRid, NewHeadPredID),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  /* Move old head predicate to the new receive rule. */
+  br10 ::sys::predicate(@A, NewHeadPredID, NewRid, Notin, Name, Tid, ECA, Schema, 0, AM, New) :-
+         broadcastRecv(@A, Pid, Rid, NewRid, NewHeadPredID),
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, Rid, Notin, Name, Tid, ECA, Schema, 0, AM, New).
+
+  br11 ::sys::predicate(@A, f_idgen(), NewRid, false, Name + "_broadcast", null, null, Schema, 1, null, false) :-
+         broadcastRecv(@A, Pid, Rid, NewRid, NewHeadPredID),
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, Rid, _, Name, _, _, Schema, _, _, _),
+         Schema := f_cons(Schema, f_mktype("Variable", "$Dest")).
+
+  br12 ::sys::select(@A, f_idgen(), NewRid, Bool, 2, null) :-
+         broadcastRecv(@A, Pid, Rid, NewRid, _),
+         ::sys::rule(@A, Rid, Pid, _, HeadPredID, _, _, _, _),
+         ::sys::predicate(@A, HeadPredID, _, _, _, _, _, Schema, _, _, _),
+         Bool := f_mkbool("in", f_mktype("Variable", f_tostr(f_tovar(f_car(Schema)))), 
+                                f_mktype("Variable", "$Dest")). 
+
+
+}

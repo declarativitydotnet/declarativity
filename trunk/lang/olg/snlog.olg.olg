@@ -1,0 +1,119 @@
+namespace snlog {
+
+  materialize(rewrite, infinity, infinity, keys(2,3)).
+
+  end ::sys::program_add(@A, Pid, Name, Rewrite, "rstarCommit", Text, Msg, P2DL, Src) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _).
+
+  d1 check(@A, Pid, Rid, f_getattr("Location", Schema1), f_getattr("Location", Schema2)) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+        ::sys::predicate(@A, _, Rid, _, _, _, _, Schema1, Pos1, _, _),
+        ::sys::predicate(@A, _, Rid, _, _, _, _, Schema2, Pos2, _, _),
+        f_getattr("Location", Schema1) != f_getattr("Location", Schema2).
+        Terms > 2, Pos1 == 0, Pos2 == 1.
+  
+  d2 rewrite(@A, Rid, Pid, Remote, Local) :-
+        check(@A, Pid, Rid, Remote, Local),
+        ::sys::predicate(@A, _, Rid, _, _, _, _, _, Pos, Method, _),
+        Method == "Remote".
+  
+
+  /***************************************************************************************/
+  cd countDistinctRule(@A, Rid, Pid, Remote, Local, f_idgen(), f_idgen(), f_idgen()) :-
+       rewrite(@A, Rid, Pid, Remote, Local).
+
+
+  cd1 ::sys::rule(@A, NewRid, Pid, Name + "_CD", NewHeadID, null, false, Terms, null) :-
+        countDistinctRule(@A, Rid, Pid, Remote, Local, NewRid, NewHeadID, NewTid),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, Terms, _).
+
+  cd2 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, NewTid, null, Schema, 0, null, null) :-
+        countDistinctRule(@A, Rid, Pid, Remote, Local, NewRid, NewHeadID, NewTid),
+        Schema := f_cons(Local, f_tovar(Remote)).
+  
+  cd3 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, null, Schema, Pos, null, null) :-
+        countDistinctRule(@A, Rid, Pid, Remote, Local, NewRid, NewHeadID, NewTid),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, null, Schema, Pos, null, null),
+        Pos > 0.
+
+  cd4 ::sys::table(@A, NewTid, Name + "_CD", infinity, infinity, f_cons(1, 2), 0, null, Pid) :-
+        countDistinctRule(@A, Rid, Pid, Remote, Local, NewRid, NewHeadID, NewTid),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  /***************************************************************************************/
+  /* Name_Buffer(@A, ...) :- pred1(@A,...), ..., predn(@A, ...). */
+
+  bc1a prefixBufferSchema(@A, Rid, Pid, Remote, Local, a_schema<Schema>) :-
+         rewrite(@A, Rid, Pid, Remote, Local),
+         ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, ECA, Schema, Pos, _, _),
+         Pos > 0, Method != "Remote".
+
+
+  bc1b prefixBufferRule(@A, Rid, Pid, Remote, Local, BufferSchema, f_idgen(), f_idgen(), f_idgen()) :-
+         prefixBufferSchema(@A, Rid, Pid, Remote, Local, BufferSchema).
+
+  bc2 ::sys::rule(@A, NewRid, Pid, Name + "_Buffer", NewHeadID, null, false, Terms, null) :-
+        prefixBufferRule(@A, Rid, Pid, Remote, Local, _, NewRid, NewHeadID, NewTid),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, Terms, _).
+
+  bc3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, NewTid, null, BufferSchema, 0, null, null) :-
+        prefixBufferRule(@A, Rid, Pid, Remote, Local, BufferSchema, NewRid, NewHeadID, NewTid).
+  
+  bc4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, null, Schema, Pos, null, null) :-
+        prefixBufferRule(@A, Rid, Pid, Remote, Local, _, NewRid, NewHeadID, NewTid),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, Method, Schema, Pos, null, null),
+        Method != "Remote", Pos > 0.
+
+  bc5 ::sys::table(@A, NewTid, Name + "_Buffer", infinity, infinity, 
+                   f_createKey(BufferSchema), 0, null, Pid) :-
+        prefixBufferRule(@A, Rid, Pid, Remote, Local, BufferSchema, NewRid, NewHeadID, NewTid),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+
+  /***************************************************************************************/
+
+  br1 remoteBufferRule(@A, Rid, Pid, Remote, Local, PredID, f_idgen(), f_idgen(), f_idgen()) :-
+         rewrite(@A, Rid, Pid, Remote, Local),
+         ::sys::predicate(@A, PredID, Rid, _, Name, Tid, Method, Schema, Pos, null, null),
+         Method == "Remote", Pos > 0.
+
+  br2 ::sys::rule(@A, NewRid, Pid, Name + "_Buffer" + f_tostr(PredID), NewHeadID, 
+                  null, false, 2, null) :-
+        remoteBufferRule(@A, Rid, Pid, Remote, Local, PredID, NewRid, NewHeadID, NewTid),
+        ::sys::predicate(@A, PredID, Rid, _, Name, _, _, _, _, _, _).
+
+  br3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name + "_Buffer" + f_tostr(PredID), 
+                      NewTid, null, BufferSchema, 0, null, null) :-
+        remoteBufferRule(@A, Rid, Pid, Remote, Local, PredID, NewRid, NewHeadID, NewTid).
+  
+  br4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, null, Schema, 1, null, null) :-
+        remoteBufferRule(@A, Rid, _, Remote, Local, PredID, NewRid, NewHeadID, NewTid),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, Method, Schema, Pos, null, null).
+
+  br5 ::sys::table(@A, NewTid, Name + "_Buffer" + f_tostr(PredID), infinity, infinity, 
+                   f_createKey(Schema), 0, null, Pid) :-
+        remoteBufferRule(@A, Rid, Pid, Remote, Local, PredID, NewRid, NewHeadID, NewTid),
+        ::sys::predicate(@A, PredID, Rid, Notin, Name, Tid, Method, Schema, Pos, null, null).
+
+  /***************************************************************************************/
+  /* Name_BufferCount(@A, COUNT<*>) :- Name_Buffer(@A,...). */
+ 
+  cb1 countBufferPrefix(@A, Rid, Pid, Remote, Local, f_idgen(), f_idgen(), f_idgen()) :-
+        prefixBufferRule(@A, Rid, Pid, Remote, Local, _, _, _, _).
+
+  bc2 ::sys::rule(@A, NewRid, Pid, Name + "_BufferCount", NewHeadID, null, false, 2, null) :-
+        countBufferPrefix(@A, Rid, Pid, Remote, Local, NewRid, NewHeadID, NewTid),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+
+  bc3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name + "_BufferCount", NewTid, null, Schema, 0, null, null) :-
+        countBufferPrefix(@A, Rid, Pid, Remote, Local, NewRid, NewHeadID, NewTid),
+        Schema := f_cons(Local, f_mkagg("COUNT", null)).
+  
+  bc4 ::sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, null, Schema, Pos, null, null) :-
+        countBufferPrefix(@A, Rid, Pid, Remote, Local, NewRid, NewHeadID, NewTid),
+
+  bc5 ::sys::table(@A, NewTid, Name + "_BufferCount", infinity, 1, f_cons(1, null), 0, null, Pid) :-
+        countBufferPrefix(@A, Rid, Pid, Remote, Local, NewRid, NewHeadID, NewTid),
+        ::sys::rule(@A, Rid, Pid, Name, _, _, _, _, _).
+}

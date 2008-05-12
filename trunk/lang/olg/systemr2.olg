@@ -1,0 +1,432 @@
+namespace systemr {
+
+  materialize(plan, 10000, infinity, keys(4)).
+  materialize(bestPlan, infinity, infinity, keys(4)).
+  materialize(rules, 10000, infinity, keys(2)).
+  materialize(completeBestPlans, 10000, infinity, keys(2)).
+  materialize(assigns, 10000, infinity, keys(2, 3)).
+  materialize(thetaPredicates, 10000, infinity, keys(2, 3, 4)).
+  materialize(commitPlan, infinity, infinity, keys(2, 3)).
+  materialize(finishedRules, infinity, infinity, keys(2, 3)).
+  materialize(prunePlan, infinity, infinity, keys(2,3)).
+  materialize(bestPrunePlan, infinity, infinity, keys(2,3)).
+
+  i0 counter(@A, Pid, Rid) :-
+       programEvent(@A, Pid, _, _, _, _, _, _, _),
+       ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  i1 assigns(@A, Pid, Rid, a_count<*>) :-
+       counter(@A, Pid, Rid),
+       ::sys::assign(@A, Aid, Rid, Var, Value, Pos).
+
+  i3 initPrune(@A, Pid, Rid) :- 
+       programEvent(@A, Pid, _, _, _, _, _, _, _),
+       ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _).
+
+  watchmod(rules, "i").
+  i2 rules(@A, Pid, a_count<Rid>) :-
+       programEvent(@A, Pid, _, _, _, _, _, _, _),
+       ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+       Terms < 5.
+
+  i4 startPlan(@A, Pid, Rid) :- assigns(@A, Pid, Rid, Count).
+
+  /***********************************************************************/
+  /** PRUNE CANDIDATE */
+  initPC1 collectPredicate(@A, Pid, Rid, a_mklist<PredID>) :-
+           initPrune(@A, Pid, Rid),
+           ::sys::predicate(@A, PredID, Rid, _, _, _, _, _, Pos, _, _),
+           Pos > 1.
+
+  initPC2 collectSelect(@A, Pid, Rid, Preds, a_mklist<Sid>) :-
+            collectPredicate(@A, Pid, Rid, Preds),
+            ::sys::select(@A, Sid, Rid, _, _, _).
+
+  initPC3 pruneCandidate(@A, Pid, Rid, Order, Schema, 1, 1) :-
+           collectSelect(@A, Pid, Rid, Preds, Selects),
+           ::sys::predicate(@A, PredID, Rid, _, _, _, _, Schema, 1, _, _),
+           Order := f_cons(Preds, Selects).
+
+  pc1 pruneCandidate(@A, Pid, Rid, f_cdr(Order), Schema, Card, Cost) :-
+        pruneCandidate(@A, Pid, Rid, Order, OuterSchema, OuterCard, OuterCost),
+        ::sys::predicate(@A, PredID, Rid, _, Tablename, _, _, PredSchema, PredPos, _, _),
+        ::sys::table(@A, _, Tablename, _, _, _, TCard, _, _),
+        ::sys::index(@A, Iid, Tablename, Key, Type, Selectivity),
+        f_size(Order) > 0,
+        PredID == f_car(Order),
+        f_indexMatch(OuterSchema, PredSchema, Key) == true,
+        Schema := f_merge(OuterSchema, PredSchema),
+        Card   := OuterCard * (Selectivity * TCard),
+        Cost   := OuterCost + (OuterCard * (Selectivity * TCard)).
+
+  pc2 pruneCandidate(@A, Pid, Rid, f_cdr(Order), Schema, Card, Cost) :-
+        pruneCandidate(@A, Pid, Rid, Order, OuterSchema, OuterCard, OuterCost),
+        ::sys::predicate(@A, PredID, Rid, _, Name, _, _, PredSchema, F_Pos, _, _),
+        ::sys::table(@A, _, Name, _, _, _, T_Card, _, _),
+        f_size(Order) > 0,
+        PredID == f_car(Order),
+        Cost   := OuterCost + (OuterCard * T_Card),
+        Card   := OuterCard * T_Card / 10,
+        Schema := f_merge(OuterSchema, PredSchema).
+
+  pc3 pruneCandidate(@A, Pid, Rid, f_cdr(Order), Schema, Card, Cost) :-
+        pruneCandidate(@A, Pid, Rid, Order, Schema, OuterCard, OuterCost),
+        ::sys::select(@A, Sid, Rid, S_Bool, _, _),
+        f_size(Order) > 0,
+        Sid == f_car(Order),
+        Cost      := OuterCost,
+        Card      := OuterCard / 3.
+
+  pc4 prunePlan(@A, Pid, Rid, Card, Cost) :-
+        pruneCandidate(@A, Pid, Rid, Order, Card, Cost).
+
+  pc5 prunePlanUpdate(@A, Pid, Rid) :- prunePlan(@A, Pid, Rid, Card, Cost).
+
+  watchmod(bestPrunePlan, "i").
+  pc5 bestPrunePlan(@A, Pid, Rid, a_min<Cost>) :-
+        prunePlanUpdate(@A, Pid, Rid),
+        prunePlan(@A, Pid, Rid, Card, Cost).
+
+  /***********************************************************************/
+  watchmod(completeBestPlans, "i").
+  f0 completeBestPlansUpdate(@A, Pid, Count) :-
+      completeBestPlans(@A, Pid, Count).       
+
+  f1 finalize(@A, Pid) :-
+      completeBestPlansUpdate(@A, Pid, CCount),
+      rules(@A, Pid, Count), Count <= CCount.
+
+/*
+  f2 selectPlan(@A, Pid, Rid, Plan) :-
+        finalize(@A, Pid),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+        bestPlan(@A, Pid, Rid, _, Plan, _),
+        f_size(Plan) == Terms - 1U.
+
+  f3 bestPlanSelect(@A, Pid, Rid, Plan1, a_min<Cost>) :-
+       selectPlan(@A, Pid, Rid, Plan1),
+       bestPlan(@A, Pid, Rid, PlanID, Plan2, Cost),
+       f_equivalent(Plan1, Plan2) == true.
+
+  f4 commitPlan(@A, Pid, Rid, PlanID) :-
+       bestPlanSelect(@A, Pid, Rid, Plan1, Cost),
+       bestPlan(@A, Pid, Rid, PlanID, Plan2, Cost),
+       f_equivalent(Plan1, Plan2) == true.
+
+  f5 commitPlanEvent(@A, Pid, Rid, PlanID) :-
+       commitPlan(@A, Pid, Rid, PlanID).
+*/
+
+  /***********************************************************************/
+  /* Termination rules. */
+
+/*
+  t0 planCommit(@A, Pid) :- commitPlan(@A, Pid, Rid, PlanID).
+
+  t1 committedPlans(@A, Pid, a_count<Rid>) :- 
+       planCommit(@A, Pid), commitPlan(@A, Pid, Rid, PlanID).
+
+  t2 ::sys::program_add(@A, Pid, Name, Rewrite, "systemr", Text, Msg, P2DL, Src) :-
+         finalize(@A, Pid) :-
+         committedPlans(@A, Pid, CCount),
+         rules(@A, Pid, Count),
+         Count <= CCount,
+         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+*/
+
+  t2 ::sys::program_add(@A, Pid, Name, Rewrite, "systemr", Text, Msg, P2DL, Src) :-
+         finalize(@A, Pid),
+         ::sys::program(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+
+  /***********************************************************************/
+  /* Start the optimization process */
+/*
+  theta1 thetaPredicates(@A, Pid, Rid, Sid, Bool) :-
+        programEvent(@A, Pid, _, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, _, _, _, _, _, _),
+        ::sys::select(@A, Sid, Rid, Bool, _, _),
+        f_istheta(Bool) == true.
+*/
+
+  
+  /* Get the program event and seed the optimization with the event predicate. */
+  o1a plan(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, 
+            Plan, Schema, Card, Cost, Pos, AM, Sort) :-
+            startPlan(@A, Pid, Rid),
+            ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+            ::sys::predicate(@A, Fid, Rid, _, _, _, _, Schema, Pos, _, _),
+            Terms < 7,
+            Pos == 1,
+            PlanID    := f_idgen(),
+            SubPlanID := null,
+            Type      := "Predicate",
+            TypeID    := Fid,
+            Plan      := f_cons(Fid, null),
+            Schema    := Schema,
+            Card      := 1,
+            Cost      := 1,
+            Pos       := 1U,
+            AM        := "EVENT",
+            Sort      := null.
+
+  o1c addAssigns(@A, Pid, Rid, PlanID) :-
+              planUpdate(@A, Pid, Rid, PlanID, Plan, _),
+              assigns(@A, Pid, Rid, Count),
+              ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+              f_size(Plan) + 1 >= Terms - Count.
+
+  /***********************************************************************/
+  /* Detect an update to the local plan table */
+  o2 planUpdate(@A, Pid, Rid, PlanID, Plan, Sort) :- 
+        plan(@A, Pid, Rid, PlanID, _, _, _, Plan, _, _, Cost, _, _, Sort),
+        bestPrunePlan(@A, Pid, Rid, PruneCost),
+        Cost <= PruneCost.
+
+  /***********************************************************************/
+  /* A new best plan write. */
+  bp0 bestPlanUpdate(@A, Pid, Rid, PlanID) :-
+       bestPlan(@A, Pid, Rid, PlanID, _, _).
+
+/*
+  bpcheck computeBestCost(@A, Pid, Rid, Size) :-
+            planUpdate(@A, Pid, Rid, _, Plan, _).
+*/
+
+  /* Pick the minimum cost over the plans with the max size. */
+  bp1 bestCostPlan(@A, Pid, Rid, Plan1, Sort1, a_min<Cost>) :-
+        planUpdate(@A, Pid, Rid, _, Plan1, Sort1),
+        plan(@A, Pid, Rid, _, _, _, _, Plan2, _, _, Cost, _, _, Sort2),
+        f_equivalent(Plan1, Plan2) == true,
+        Sort1 == Sort2.
+
+  bp2 bestPlan(@A, Pid, Rid, PlanID, Plan2, Cost) :-
+       bestCostPlan(@A, Pid, Rid, Plan1, Sort1, Cost),
+       plan(@A, Pid, Rid, PlanID, _, _, _, Plan2, _, _, Cost, _, _, Sort2),
+       notin bestPlan(@A, Pid, Rid, PlanID, _, _),
+       f_equivalent(Plan1, Plan2) == true,
+       Sort1 == Sort2.
+
+  /* Keep a count of the number of rules with best plans. */
+  bp3 completeBestPlans(@A, Pid, a_countdistinct<Rid>) :-
+              bestPlanUpdate(@A, Pid, _, _),
+              bestPlan(@A, Pid, Rid, _, Plan2, Cost),
+              ::sys::rule(@A, Rid, Pid, _, _, _, _, Terms, _),
+              f_size(Plan2) == Terms - 1.
+
+  fr1 finishedRules(@A, Pid, Rid, RName) :-
+        planUpdate(@A, Pid, _, _, _, _),
+        plan(@A, Pid, Rid, _, _, _, _, Plan, _, _, _, _, _, _),
+        ::sys::rule(@A, Rid, Pid, RName, _, _, _, Terms, _),
+        f_size(Plan) + 1 == Terms.
+
+  fr4 finishedRulesUpdate(@A, Pid, Rid, RName) :-
+        finishedRules(@A, Pid, Rid, RName).
+
+  delete plan(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, Plan, Schema, 
+              Card, Cost, Pos, AM, Sort) :-
+           bestPlanUpdate(@A, Pid, Rid, _),
+           bestPlan(@A, Pid, Rid, _, BestPlan, _),
+           plan(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, Plan, Schema, 
+                 Card, Cost, Pos, AM, Sort),
+           f_size(Plan) < f_size(BestPlan).
+/*
+  watchmod(printNotFinish, "s").
+  fr2 printNotFinish(@A, Pid, RName, Terms, f_size(Plan), Plan, AM) :- 
+        planUpdate(@A, Pid, Rid, PlanID, _, _),
+        plan(@A, Pid, Rid, PlanID, _, _, _, Plan, _, _, _, _, AM, _),
+        ::sys::rule(@A, Rid, Pid, RName, _, _, _, Terms, _),
+        notin finishedRules(@A, Pid, Rid, RName).
+
+  fr2 printNotFinish(@A, Pid, RName, Terms, f_size(Plan)) :- 
+        finishedRulesUpdate(@A, Pid, _, _),
+        ::sys::rule(@A, Rid, Pid, RName, _, _, _, Terms, _),
+        plan(@A, Pid, Rid, PlanID, _, _, _, Plan, _, _, _, _, _, _),
+        notin finishedRules(@A, Pid, Rid, RName).
+*/
+
+  watchmod(printFinish, "s").
+  fr3 printFinish(@A, Pid, a_count<*>) :- 
+        finishedRulesUpdate(@A, Pid, _, _),
+        finishedRules(@A, Pid, Rid, RName).
+  
+
+  /***********************************************************************/
+  /* Search for the an index join */
+  o4 plan(@A, Pid, Rid, f_idgen(), PlanID, "Predicate", Fid, 
+          f_cons(Fid, OuterPlan), f_merge(OuterSchema,PredSchema), 
+          Card, Cost, OuterPos+1U, f_cons(Type, Iid), null) :-
+        bestPlanUpdate(@A, Pid, Rid, PlanID),
+        notin commitPlan(@A, Pid, Rid, _),
+        plan(@A, Pid, Rid, PlanID, _, _, _, OuterPlan, OuterSchema, 
+             OuterCard, OuterCost, OuterPos, _, _),
+        ::sys::predicate(@A, Fid, Rid, _, Tablename, _, _, PredSchema, PredPos, _, _),
+        ::sys::table(@A, _, Tablename, _, _, _, TCard, _, _),
+        ::sys::index(@A, Iid, Tablename, Key, Type, Selectivity),
+        PredPos > 1,
+        f_contains(Fid, OuterPlan) == false,
+        f_indexMatch(OuterSchema, PredSchema, Key) == true,
+        Card   := OuterCard * (Selectivity * TCard),
+        Cost   := OuterCost + (OuterCard * (Selectivity * TCard)).
+
+  /***********************************************************************/
+  /* Check for a theta join. */
+/*
+  o5a checkThetaJoin(@A, Pid, Rid, PlanID, Plan, Fid, Tid, Iid) :-
+        bestPlanUpdate(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, _, _, Plan, _, _, _, _, _, _),
+        ::sys::predicate(@A, Fid, Rid, _, Tablename, _, _, _, Pos, _, _),
+        ::sys::table(@A, Tid, Tablename, _, _, _, _, _, _),
+        ::sys::index(@A, Iid, Tablename, _, Type, _),
+        Pos > 1U,
+        Type == "Range",
+        f_contains(Fid, Plan) == false.
+
+  o5b thetaJoin(@A, Pid, Rid, PlanID, Fid, Tid, Iid, a_mklist<Sid>) :-
+        checkThetaJoin(@A, Pid, Rid, PlanID, Plan, Fid, Tid, Iid),
+        ::sys::predicate(@A, Fid, Rid, _, Tablename, Tid, _, Schema, Pos, _, _),
+        ::sys::table(@A, Tid, Tablename, _, _, _, _, _, _),
+        ::sys::index(@A, Iid, Tablename, Key, Type, _),
+        thetaPredicates(@A, Pid, Rid, Sid, Bool),
+        f_project(Key, Schema) == f_variables(Bool),
+        f_contains(Sid, Plan) == false.
+
+
+  o5c plan(@A, Pid, Rid, f_idgen(), PlanID, "ThetaJoin", Fid, 
+           NewPlan, Schema, Card, Cost, OuterPos+1U, AM, Sort) :-
+        thetaJoin(@A, Pid, Rid, PlanID, Fid, Tid, Iid, PredIDs),
+        plan(@A, Pid, Rid, PlanID, _, _, _, OuterPlan, OuterSchema, 
+             OuterCard, OuterCost, OuterPos, _, _),
+        ::sys::predicate(@A, Fid, Rid, _, Tablename, _, _, FSchema, _, _, _),
+        ::sys::table(@A, Tid, Tablename, _, _, _, T_Card, _, _),
+        ::sys::index(@A, Iid, Tablename, Key, Type, _),
+        f_size(PredIDs) > 0,
+        Card   := OuterCard * (T_Card / (3*f_size(PredIDs))),
+        Cost   := OuterCost + (OuterCard * (T_Card / (3*f_size(PredIDs)))),
+        NewPlan:= f_cons(PredIDs, f_cons(Fid, OuterPlan)),
+        Schema := f_merge(OuterSchema, FSchema),
+        AM     := f_cons(f_cons(Type, Iid), PredIDs),
+        Sort   := f_car(f_project(Key, FSchema)). 
+*/
+
+  /***********************************************************************/
+  /* Make a scan for this table predicate. */
+  o6 plan(@A, Pid, Rid, f_idgen(), PlanID, "Predicate", Fid, 
+          NewPlan, Schema, Card, Cost, OuterPos+1U, AM, null) :-
+        bestPlanUpdate(@A, Pid, Rid, PlanID),
+        notin commitPlan(@A, Pid, Rid, _),
+        plan(@A, Pid, Rid, PlanID, _, _, _, OuterPlan, OuterSchema, OuterCard, OuterCost, OuterPos, _, _),
+        ::sys::predicate(@A, Fid, Rid, _, Name, _, _, F_Schema, F_Pos, _, _),
+        ::sys::table(@A, _, Name, _, _, _, T_Card, _, _),
+        F_Pos > 1,
+        f_contains(Fid, OuterPlan) == false,
+        Cost   := OuterCost + (OuterCard * T_Card),
+        Card   := OuterCard * T_Card / 10,
+        NewPlan:= f_cons(Fid, OuterPlan), 
+        Schema := f_merge(OuterSchema, F_Schema),
+        AM     := f_cons("SCAN", null). 
+
+  /***********************************************************************/
+  /* Merge join access method for this table predicate. */
+  o7 plan(@A, Pid, Rid, f_idgen(), PlanID, "Predicate", 
+          Fid, NewPlan, Schema, Card, Cost, OuterPos+1U, AM, Sort) :-
+        bestPlanUpdate(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, _, _, OuterPlan, OuterSchema, OuterCard, OuterCost, OuterPos, _, OuterSort),
+        notin commitPlan(@A, Pid, Rid, _),
+        ::sys::predicate(@A, Fid, Rid, _, Name, _, _, FSchema, FPos, _, _),
+        ::sys::table(@A, _, Name, _, _, _, TCard, TSort, _),
+        FPos > 1,
+        f_contains(Fid, OuterPlan) == false,
+        f_sortattr(OuterSchema, OuterSort, FSchema, f_project(TSort, FSchema)) != null,
+        Sort   := f_sortattr(OuterSchema, OuterSort, FSchema, f_project(TSort, FSchema)),
+        Cost   := OuterCost + (OuterSort != Sort ? 3*OuterCard : 0) + 
+                              (f_project(TSort, FSchema) != Sort ? 3*TCard : 0),
+        Card   := OuterCard * TCard / 10,
+        NewPlan:= f_cons(Fid, OuterPlan), 
+        Schema := f_merge(OuterSchema, FSchema),
+        AM     := f_cons("MERGE", null).
+
+  /***********************************************************************/
+  /* Perform next selection? */
+  o8 plan(@A, Pid, Rid, f_idgen(), PlanID, "Select", Sid, 
+          NewPlan, Schema, Card, Cost, OuterPos+1U, AM, Sort) :-
+      bestPlanUpdate(@A, Pid, Rid, PlanID),
+      notin commitPlan(@A, Pid, Rid, _),
+      plan(@A, Pid, Rid, PlanID, _, _, _, OuterPlan, OuterSchema, OuterCard, OuterCost, OuterPos, _, Sort),
+      ::sys::select(@A, Sid, Rid, S_Bool, _, _),
+      f_contains(Sid, OuterPlan) == false,
+      f_filter(OuterSchema, S_Bool) == true,
+      Cost      := OuterCost,
+      Card      := OuterCard / 3,
+      NewPlan   := f_cons(Sid, OuterPlan), 
+      Schema    := OuterSchema,
+      AM        := f_cons("FILTER", null). 
+
+  /***********************************************************************/
+  /* Add assignment? */
+  o9 plan(@A, Pid, Rid, f_idgen(), PlanID, "Assign", Aid, Plan, Schema, OuterCard, OuterCost, OuterPos+1U, AM, Sort) :-
+        addAssigns(@A, Pid, Rid, PlanID),
+        notin commitPlan(@A, Pid, Rid, _),
+        plan(@A, Pid, Rid, PlanID, _, _, _, OuterPlan, OuterSchema, OuterCard, OuterCost, OuterPos, _, Sort),
+        ::sys::assign(@A, Aid, Rid, Var, _, _),
+        f_contains(Aid, OuterPlan) == false,
+        Plan      := f_cons(Aid, OuterPlan), 
+        Schema    := f_assignschema(OuterSchema, Var),
+        AM        := f_cons("ASSIGN", null). 
+
+  /***********************************************************************/
+  /* Update the predicate and selection tables with the new position and access method. */
+/*
+  u0 commitPlanEvent(@A, Pid, Rid, SubPlanID) :-
+       commitPlanEvent(@A, Pid, Rid, PlanID),
+       plan(@A, Pid, Rid, PlanID, SubPlanID, _, _, _, _, _, _, _, _, _),
+       SubPlanID != null.
+*/
+  
+  /* Update the predicate and selection tables with the new position and access method. */
+/*
+  u1a ::sys::predicate(@A, Fid, Rid, Notin, Name, TID, ECA, Schema, Pos, AM, New) :-
+        commitPlanEvent(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, Type, TypeID, _, _, _, _, Pos, AM, _),
+        ::sys::predicate(@A, Fid, Rid, Notin, Name, TID, ECA, Schema, _, _, New),
+        Type == "Predicate", TypeID == Fid.
+
+  u1b ::sys::predicate(@A, Fid, Rid, Notin, Name, TID, ECA, Schema, Pos, AM, New) :-
+        commitPlanEvent(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, Type, TypeID, _, _, _, _, Pos, AM, _),
+        ::sys::predicate(@A, Fid, Rid, Notin, Name, TID, ECA, Schema, _, _, New),
+        Type == "ThetaJoin", TypeID == Fid.
+
+  u2a ::sys::select(@A, Sid, Rid, Bool, Pos, AM) :-
+        commitPlanEvent(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, "Select", Sid, _, _, _, _, Pos, AM, _),
+        ::sys::select(@A, Sid, Rid, Bool, _, _).
+*/
+
+  /* In validate the selection by assigning it a negative valued position. */
+/*
+  u2b ::sys::select(@A, Sid, Rid, Bool, -1, null) :-
+        commitPlanEvent(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, "castassign", Sid, _, _, _, _, _, _, _),
+        ::sys::select(@A, Sid, Rid, Bool, _, _).
+*/
+
+  /* In validate the selection by assigning it a negative valued position. */
+/*
+  u2c ::sys::select(@A, Sid, Rid, Bool, -1, null) :-
+        commitPlanEvent(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, "ThetaJoin", Fid, _, _, _, _, _, AM, _),
+        ::sys::select(@A, Sid, Rid, Bool, _, _),
+        f_contains(Sid, AM) == true.
+
+  u3 ::sys::assign(@A, Aid, Rid, Var, Value, Pos) :-
+        commitPlanEvent(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, "Assign", Aid, _, _, _, _, Pos, _, _),
+        ::sys::assign(@A, Aid, Rid, Var, Value, _).
+
+  u4 ::sys::assign(@A, f_idgen(), Rid, Var, Value, Pos) :-
+        commitPlanEvent(@A, Pid, Rid, PlanID),
+        plan(@A, Pid, Rid, PlanID, _, "castassign", Sid, _, _, _, _, Pos, AM, _),
+        Var := f_car(AM), Value := f_car(f_cdr(AM)).
+*/
+
+}

@@ -18,7 +18,7 @@ namespace error {
        done(@A, Pid),
        notin error(@A, Pid, _, _, _, _),
        ::sys::program(@A, Pid, Name, Rewrite, _, Text, Msg, P2DL, Src).
-  
+
   d6 ::sys::error(@Src, Pid, Name, A, Code, Desc) :-
        finalize(@A, Pid),
        error(@A, Pid, Name, Src, Code, Desc).
