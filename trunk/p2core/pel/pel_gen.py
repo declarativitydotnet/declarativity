@@ -138,7 +138,7 @@ for op, ar, va, desc in [
   ("strfind", 2,"STR_FIND",     "Find the first string into the second"),
 
   ("status",     2, "O_STATUS", "Extract the overlog program status of a program attribute."),
-  ("selectivity",3, "O_SELECT", "Compute the selectivity of a join."),
+  ("selectivity",2, "O_SELECT", "Compute the selectivity of a join."),
   ("rangeAM",    2, "O_RANGEAM","Determine if a range access method can be used."),
   ("filter",     2, "O_FILTER", "Determine if a filter can be applied to the schema."),
 
@@ -159,7 +159,9 @@ for op, ar, va, desc in [
   ("variables",1, "L_VARIABLES", "Extracts all variables from a math or boolean expression."),
   ("merge",2,   "L_MERGE",      "Merge two argument lists according join operation."),
   ("removevar",2,   "L_REMOVEVAR", "removes any instance of the first arg in the list."),
+  ("removepos",2,   "L_REMOVEPOS", "removes the position from the list."),
   ("equivalent",2,"L_EQUIVALENT","Checks if the two plans are equivalent."),
+  ("group",1,"L_GROUP","Makes group signature out of plan."),
   ("prefix",2,   "L_PREFIX",      "Is the first list a prefix of the second?"),
   ("sortattr",4,   "L_SORTATTR", "REturn sort attributes ."),
   ("project",2,   "L_PROJECT",  "Project the schema (arg 2) onto the fields in arg 1."),

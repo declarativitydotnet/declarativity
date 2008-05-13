@@ -437,6 +437,9 @@ namespace compile {
            relative to the global namespace */
         name = _name.substr(2, _name.length()-2);
       }
+      else if (_name == "periodic") {
+        name = _name;
+      }
       else {
         name = ns + _name;
       }

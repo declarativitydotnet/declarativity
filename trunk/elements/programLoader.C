@@ -72,6 +72,9 @@ ProgramLoader::ProgramLoader(TuplePtr args)
   LOAD("delta",      source + "/olg/delta.olg",      "mview",   NULL);
   LOAD("dummyWatch", source + "/olg/dummyWatch.olg", "gevent", NULL);
 
+  LOAD("stats", source + "/olg/stats.olg", "error", NULL);
+  LOAD("systemr", source + "/olg/systemr.olg", "stats", NULL);
+
 /*
   LOAD("sys", source + "/olg/sys.olg", "", NULL);
   LOAD("histogram", source + "/olg/histogram.olg", "parse", NULL);
@@ -210,7 +213,7 @@ ProgramLoader::loader()
   if (programText != "") {
     /* Do nothing. */
   }
-  else if (false && defs) {
+  else if (defs) {
     programText = P2::preprocessReadOverLogProgram(filename,
                                                    filename,
                                                    *defs);

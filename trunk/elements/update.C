@@ -39,6 +39,10 @@ Update::Update(TuplePtr args)
     _pullCB(0)
 {
   CommonTablePtr table = Plumber::catalog()->table(Val_Str::cast((*args)[3]));
+  if (!table) {
+    TELL_ERROR << "Table does not exist! " << (*args)[3]->toString() << std::endl;
+    assert(0);
+  }
 
   // Connect this element's listener to the table for updates
   table->updateListener(boost::bind(&Update::listener, this, _1));

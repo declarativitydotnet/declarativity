@@ -44,7 +44,7 @@ void seaPlan(ostringstream& oss, string hostname, string port)
    * ends with a PP+Demux towards the inner rule strands
    * */
   oss << "\tgraph seaInput(1,1,\"l/h\",\"/\") { \n"
-      << "\t\tinput -> PullPush(\"ExtDRRPP\",100) -> Queue(\"extQ\",1000,\"external\") -> "
+      << "\t\tinput -> PullPush(\"ExtDRRPP\",100) -> Queue(\"extQ\",0,\"external\") -> "
       << "Switch(\"ExtQGateSwitch\",1,true) -> output;\n"
       << "\t};\n\n"; 
 }
@@ -57,11 +57,11 @@ void netPlan(ostringstream& stub, string hostname,
        << "\t\tUnmarshalField(\"unmarshal\", 1) ->\n"
        << "\t\tPelTransform(\"unRoute\", \"$1 unboxPop\") ->\n"
        << "\t\tDefrag(\"defrag\") -> PullPush(\"defrag_pull\", 0) ->\n"
-       << "\t\tPelTransform(\"unPackage\", \"$0 pop $8 pop\") -> Queue(\"netQ\", 1000) -> output;\n"
+       << "\t\tPelTransform(\"unPackage\", \"$0 pop $8 pop\") -> Queue(\"netQ\") -> output;\n"
        << "\t}; /**END OF NETIN SUBGRAPH*/\n\n";
 
   stub << "\tgraph netOut(1,1,\"h/h\",\"/\") {\n"
-       << "\t\tnetOutQ = Queue(\"netout_queue\",0);\n";
+       << "\t\tnetOutQ = Queue(\"netout_queue\");\n";
   stub << "\t\theader  = PelTransform(\"source\", \"$0 pop \\\""
                                     << hostname <<":" << port
                                     << "\\\" pop swallow unbox drop "
@@ -107,13 +107,13 @@ string stub(string hostname, string port, TransportConf conf)
 	  //in theory, internal queue must be made infinite to avoid deadlock
  	  //to be absolutely sure.
        << "\tseaInput -> [0]intQMux -> PelTransform(\"unpackage\", \"$1 unboxPop\") -> "
-       << "\tQueue(\"intQ\", 100000,\"internal\") -> PullPush(\"IntQPP\",0) -> "
+       << "\tQueue(\"intQ\", 0,\"internal\") -> PullPush(\"IntQPP\",0) -> "
        << "\tintDemux[0] -> "
        << "Discard(\"discard\");\n"
           //start the rule output process
        << "\tintDRR -> PullPush(\"SEAOutputPP\",0) -> intExtDemux;\n"
 	  //External events to commitbuf, to netOut
-       << "\tintExtDemux[1] -> CommitBuf(\"NetCommitBuf\") -> netOut;\n"
+       << "\tintExtDemux[1] -> CommitBuf(\"NetCommitBuf\") -> Bandwidth(\"out\") -> netOut;\n"
           //internal events to internal mux
        << "\tintExtDemux[0] -> [1]intQMux;\n";
 
@@ -121,7 +121,7 @@ string stub(string hostname, string port, TransportConf conf)
   stub << "\tintDemux[+ \"" << PROGRAM << "\"] -> "
        << "CompileStage(\"compileStage\") -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+       << "Queue(\"csQ\") -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"" << ERROR_STREAM << "\"] -> "
        << "PelTransform(\"errorStreamPel\",  \"\\\"" << PERROR << "\\\" pop swallow unbox drop popall\") -> " 
@@ -134,28 +134,32 @@ string stub(string hostname, string port, TransportConf conf)
 
   stub << "\tintDemux[+ \"parse::programEvent\"] -> ParseContext(\"parse\") -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+       << "Queue(\"csQ\") -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"eca::programEvent\"]   -> EcaContext(\"eca\") -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+       << "Queue(\"csQ\") -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"debug::programEvent\"] -> DebugContext(\"debug\") -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+       << "Queue(\"csQ\") -> [+]extDRR;\n";
+
+  stub << "\tintDemux[+ \"snlog::programEvent\"] -> SnlogContext(\"snlog\") -> "
+       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
+       << "Queue(\"csQ\") -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"planner::programEvent\"] -> "
        << "PlannerContext(\"planner\", \"main\", \"intDemux\", \"intDRR\", \"extDRR\") -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+       << "Queue(\"csQ\") -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"p2dl::programEvent\"] -> P2DLContext(\"p2dl\") -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+       << "Queue(\"csQ\") -> [+]extDRR;\n";
 
   stub << "\tintDemux[+ \"installed::programEvent\"] -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\", 10) -> [+]extDRR;\n";
+       << "Queue(\"csQ\") -> [+]extDRR;\n";
 
   if(conf & TERMINAL) {
     stub << "\t\tProgramLoader(\"loader\") -> Insert2(\"ctInsert\", \"" << PROGRAM << "\");\n";

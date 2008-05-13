@@ -41,7 +41,7 @@ r2 path(@X,Y,C,P) :- link(@X,Z,C1),
 		     P1:=f_append(X),
 		     P:=f_concat(P1,P2).
 
-r3 bestPathCost(@X,Y,min<C>) :- path(@X,Y,C,P).
+r3 bestPathCost(@X,Y,a_min<C>) :- path(@X,Y,C,P).
 
 r4 bestPath(@X,Y,C,P) :- bestPathCost(@X,Y,C), path(@X,Y,C,P).
 

@@ -109,6 +109,7 @@ INCLUDE_DIRECTORIES(
                     ${CMAKE_CURRENT_SOURCE_DIR}/p2cpp
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/debug
+                    ${CMAKE_CURRENT_SOURCE_DIR}/lang/snlog
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/eca
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/p2dl
                     ${CMAKE_CURRENT_SOURCE_DIR}/lang/parse
@@ -137,6 +138,7 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS}
 		${P2_BINARY_DIR}/p2cpp
 		${P2_BINARY_DIR}/lang
 		${P2_BINARY_DIR}/lang/debug
+		${P2_BINARY_DIR}/lang/snlog
 		${P2_BINARY_DIR}/lang/eca
 		${P2_BINARY_DIR}/lang/p2dl
 		${P2_BINARY_DIR}/lang/parse
@@ -167,6 +169,7 @@ SET(COMMON_LIBRARIES p2core
 					 p2compound
 					 p2secure
 					 p2debug
+					 p2snlog
 					 p2planner 
 					 p2planner2 
 					 p2dl

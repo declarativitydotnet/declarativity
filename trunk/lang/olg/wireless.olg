@@ -100,7 +100,7 @@ namespace wireless {
 
   cd3 ::sys::predicate(@A, NewHeadID, NewRid, false, Name, null, "SEND", Schema, 0, null, false) :-
        flushBuffer(@A, Pid, Rid, Name, RLoc, Schema, NewRid, NewHeadID),
-       Schema := f_cons(Schema, f_mkagg(RLoc, "COUNTDISTINCT")).
+       Schema := f_cons(Schema, f_mkagg(RLoc, "COUNTDISTINCT")),
        Name := Name + "_dest_count".
 
   cd4 ::sys::predicate(@A, f_idgen(), NewRid, false, Name, null, "RECV", Schema, 1, null, false) :-

@@ -735,6 +735,30 @@ DEF_OP(L_EQUIVALENT) {
    stackPush(Val_Int64::mk(compile::namestracker::equivalent(plan1, plan2)));
 }
 
+DEF_OP(L_GROUP) {
+   ListPtr plan = Val_List::cast(stackTop());
+   stackPop();
+   std::vector<int> elements;
+   for (ValPtrList::const_iterator iter = plan->begin();
+        iter != plan->end(); iter++) {
+     string value = (*iter)->toString();
+     elements.push_back(std::atoi(value.c_str()));
+   }
+
+   ostringstream value;
+   while (elements.size() > 0) {
+     int index = 0;
+     for (int i = 1; i < (int) elements.size(); i++) {
+       if (elements[i] < elements[index]) {
+         index = i;
+       }
+     }
+     value << elements[index];
+     elements.erase(elements.begin() + index);
+   }
+   stackPush(Val_Str::mk(value.str()));
+}
+
 DEF_OP(L_MERGE) { 
    ValuePtr val1 = stackTop(); stackPop();
    ValuePtr val2 = stackTop(); stackPop();
@@ -766,6 +790,32 @@ DEF_OP(L_REMOVEVAR) {
   }
   stackPush(Val_List::mk(newList));
 }
+
+DEF_OP(L_REMOVEPOS) {
+  ValuePtr second = stackTop(); stackPop();
+  ValuePtr first = stackTop(); stackPop();
+
+  ListPtr list = Val_List::cast(first);
+  if (!list) {
+    TELL_ERROR << "PEL CONTAINS: " 
+               << second->toString() << " in " 
+               << first->toString() << std::endl;
+    error = PE_BAD_LIST_FIELD;
+    return;
+  }
+
+  ListPtr newList = List::mk();
+  int position = Val_Int64::cast(second);
+  for (ValPtrList::const_iterator iter = list->begin();
+       iter != list->end(); iter++) {
+    if (position != 0) {
+      newList->append(*iter);
+    }
+    position--;
+  }
+  stackPush(Val_List::mk(newList));
+}
+
 
 DEF_OP(L_ASSIGNSCHEMA) { 
    ValuePtr first = stackTop(); stackPop();
@@ -1723,9 +1773,19 @@ DEF_OP(O_STATUS) {
 }
 
 DEF_OP(O_SELECT) {
-  ValuePtr third  = stackTop(); stackPop();
   ValuePtr second = stackTop(); stackPop();
   ValuePtr first  = stackTop(); stackPop();
+
+  ListPtr outer = Val_List::cast(first);
+  ListPtr inner = Val_List::cast(second);
+
+  CommonTable::Key joinKey;
+  CommonTable::Key indexKey;
+  CommonTable::Key baseKey;
+
+  compile::namestracker::joinKeys(outer, inner, joinKey, indexKey, baseKey); 
+
+  stackPush(Val_Double::mk(1.0 - (joinKey.size()/(joinKey.size() + baseKey.size() + 1.0))));
 }
 
 DEF_OP(O_RANGEAM) {

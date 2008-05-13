@@ -178,7 +178,7 @@ namespace compile {
         if (watched(input, "c")) {
           stage_oss << " -> Print(\"RecvEvent: STAGE:" << processor << "(" << input << ")\")"; 
         }
-        stage_oss << " ->  Queue(\"stageQueue\", 1000) ->\n\t"
+        stage_oss << " ->  Queue(\"stageQueue\") ->\n\t"
                   << "Stage(\"stage_" << processor << "\", \"" << processor << "\") ->\n\t"
                   << "PelTransform(\"formatStage\", \"\\\"" << output << "\\\" pop swallow unbox drop popall\") -> ";
         if (watched(output, "s")) {
@@ -362,10 +362,10 @@ namespace compile {
       if (epd.inputs && apd.outputs) {
         if (doAggwrap) {
           oss << "\t" << aggwrap.str(); // Create the aggwrap
-          oss << "\tinput -> Queue(\"aggQueue\", 10000) -> PullPush(\"aggInput\", 0) ->";
+          oss << "\tinput -> Queue(\"aggQueue\") -> PullPush(\"aggInput\", 0) ->";
           oss << "\taggwrap[1] -> event -> condition -> ";
           oss << "PullPush(\"aggpp\", 0) -> [1]aggwrap -> ";
-          oss << "Queue(\"actionBuf\", 10000) -> action -> output;\n";
+          oss << "Queue(\"actionBuf\") -> action -> output;\n";
           oss << "\tcondition[1] -> [2]aggwrap;\n};\n"; // End signal
         }
         else {
@@ -527,7 +527,7 @@ namespace compile {
 
       if (eventType == "RECV") {
         oss << indent << "graph event(1, 1, \"h/l\", \"-/-\") {\n";
-        oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\", 1000) -> \n"; 
+        oss << indent << "\tinput -> " << "Queue(\"" << eventName << "\") -> \n"; 
         if (watched(eventName, "c")) {
           oss << indent << "\tPrint(\"RecvEvent: RULE "
               << (*rule)[catalog->attribute(RULE, "NAME")]->toString() << "\") ->\n"; 
@@ -607,6 +607,17 @@ namespace compile {
       ListPtr headSchema  = Val_List::cast((*head)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
       int     aggPosition = namestracker::aggregation(headSchema);
       bool    filter      = false;
+      string filterGraphName = "";
+      string termGraphName   = "";
+
+      ListPtr tupleSchema = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")])->clone();
+      /** Get rid of any non-variable attributes associated with periodic. */
+      if ((*event)[catalog->attribute(FUNCTOR, "NAME")]->toString() == "periodic") {
+        while ((*Val_Tuple::cast(tupleSchema->back()))[TNAME]->toString() != VAR &&
+               (*Val_Tuple::cast(tupleSchema->back()))[TNAME]->toString() != LOC) {
+          tupleSchema->pop_back();
+        }
+      }
   
       if (aggPosition >= 0 &&
           (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString() == "RECV") {
@@ -617,69 +628,62 @@ namespace compile {
         oss << indent << "graph condition(1, 1, \"l/l\", \"-/-\") {\n";  
       }
 
-      ostringstream termName;
-      termName << "terms_" << _nameCounter++;
-      // The tuple schema begins with the event schema... Compute it.
-      if (filter) {
-        oss << indent << "\tgraph " << termName.str() << "(1, 2, \"l/lh\", \"-/--\") {\n";  
-      }
-      else {
-        oss << indent << "\tgraph " << termName.str() << "(1, 1, \"l/l\", \"-/-\") {\n";  
-      }
-
-      ListPtr tupleSchema = Val_List::cast((*event)[catalog->attribute(FUNCTOR, "ATTRIBUTES")])->clone();
-      /** Get rid of any non-variable attributes associated with periodic. */
-      if ((*event)[catalog->attribute(FUNCTOR, "NAME")]->toString() == "periodic") {
-        while ((*Val_Tuple::cast(tupleSchema->back()))[TNAME]->toString() != VAR &&
-               (*Val_Tuple::cast(tupleSchema->back()))[TNAME]->toString() != LOC) {
-          tupleSchema->pop_back();
+      if ((*event)[catalog->attribute(FUNCTOR, "ECA")]->toString() == "RECV") {
+        ostringstream termName;
+        termName << "terms_" << _nameCounter++;
+        termGraphName = termName.str();
+        // The tuple schema begins with the event schema... Compute it.
+        if (filter) {
+          oss << indent << "\tgraph " << termName.str() << "(1, 2, \"l/lh\", \"-/--\") {\n";  
         }
-      }
+        else {
+          oss << indent << "\tgraph " << termName.str() << "(1, 1, \"l/l\", \"-/-\") {\n";  
+        }
 
-      headSchema = canonicalizeAssign(terms, headSchema);
-      head = head->clone();
-      head->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(headSchema));
+        headSchema = canonicalizeAssign(terms, headSchema);
+        head = head->clone();
+        head->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(headSchema));
 
-      std::deque<string> graphNames;
-      string filterGraphName = "";
-      for (uint i = 2; i < terms.size(); i++) {
-        TuplePtr term = terms.at(i);
-        string graphName;
-        if ((*term)[0]->toString() == FUNCTOR) {
-          ListPtr schema = Val_List::cast((*term)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
-          schema = canonicalizeSelection(terms, schema);
-          term = term->clone();
-          term->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
-          graphName = probe(oss, indent + "\t\t", catalog, term, tupleSchema, filter);
-          if ((*term)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_Int64::mk(false)) {
-              tupleSchema = namestracker::merge(tupleSchema, schema);
+        std::deque<string> graphNames;
+        for (uint i = 2; i < terms.size(); i++) {
+          TuplePtr term = terms.at(i);
+          string graphName;
+          if ((*term)[0]->toString() == FUNCTOR) {
+            ListPtr schema = Val_List::cast((*term)[catalog->attribute(FUNCTOR, "ATTRIBUTES")]);
+            schema = canonicalizeSelection(terms, schema);
+            term = term->clone();
+            term->set(catalog->attribute(FUNCTOR, "ATTRIBUTES"), Val_List::mk(schema));
+            graphName = probe(oss, indent + "\t\t", catalog, term, tupleSchema, filter);
+            if ((*term)[catalog->attribute(FUNCTOR, "NOTIN")] == Val_Int64::mk(false)) {
+                tupleSchema = namestracker::merge(tupleSchema, schema);
+            }
+            if (filter) 
+              filterGraphName = graphName;
+            filter  = false;
           }
-          if (filter) 
-            filterGraphName = graphName;
-          filter  = false;
+          else if ((*term)[0]->toString() == ASSIGN) {
+            graphName = assign(oss, indent + "\t\t", catalog, term, tupleSchema);
+          }
+          else if ((*term)[0]->toString() == SELECT) {
+            graphName = select(oss, indent + "\t\t", catalog, term, tupleSchema);
+          }
+          else
+            throw planner::Exception("Unknown term type: " + (*term)[1]->toString());
+          graphNames.push_back(graphName);
         }
-        else if ((*term)[0]->toString() == ASSIGN) {
-          graphName = assign(oss, indent + "\t\t", catalog, term, tupleSchema);
-        }
-        else if ((*term)[0]->toString() == SELECT) {
-          graphName = select(oss, indent + "\t\t", catalog, term, tupleSchema);
-        }
-        else
-          throw planner::Exception("Unknown term type: " + (*term)[1]->toString());
-        graphNames.push_back(graphName);
-      }
 
-      if (aggPosition >= 0 && filterGraphName != "") {
-        oss << indent << "\t\t" << filterGraphName << "[1] -> [1]output;\n";
-      } 
+        if (aggPosition >= 0 && filterGraphName != "") {
+          oss << indent << "\t\t" << filterGraphName << "[1] -> [1]output;\n";
+        } 
 
-      oss << indent << "\t\tinput";
-      for (std::deque<string>::const_iterator i = graphNames.begin();
-           i != graphNames.end(); i++) {
-        oss << " -> " << *i; 
+        oss << indent << "\t\tinput";
+        for (std::deque<string>::const_iterator i = graphNames.begin();
+             i != graphNames.end(); i++) {
+          oss << " -> " << *i; 
+        }
+        oss << indent << " -> output;\n";
+        oss << indent << "\t};\n";
       }
-      oss << indent << " -> output;\n";
-      oss << indent << "\t};\n";
   
       // Ensure that the tuple schema conforms to the head schema
       TELL_INFO << "HEAD SCHEMA FOR HEAD "
@@ -693,27 +697,19 @@ namespace compile {
         ValuePtr arg = *iter;
         TuplePtr argTp = Val_Tuple::cast(arg);
 
-        if ((*argTp)[0]->toString() == AGG &&
-            (*event)[catalog->attribute(FUNCTOR, "ECA")]->toString() == "INSERT") {
-          /* An Aggregation element is planned in this case, which will always place
-             the aggregate value in the last position. */
-          pel << "$" << (tupleSchema->size() + 1) << " pop ";
+        int pos = namestracker::position(tupleSchema, arg);
+        if (pos >= 0) {
+          pel << "$" << (pos + 1) << " pop ";
+        }
+        else if ((*argTp)[0]->toString() == AGG && (*argTp)[2] == Val_Null::mk()) {
+          /* This field is handled by the Aggwrap element. */
         }
         else {
-          int pos = namestracker::position(tupleSchema, arg);
-          if (pos >= 0) {
-            pel << "$" << (pos + 1) << " pop ";
-          }
-          else if ((*argTp)[0]->toString() == AGG && (*argTp)[2] == Val_Null::mk()) {
-            /* This field is handled by the Aggwrap element. */
-          }
-          else {
-            throw planner::Exception("ERROR Rule: " +
-                                     (*rule)[catalog->attribute(RULE, "NAME")]->toString() +
-                                     "\n\tUnknown variable: " + 
-                                      arg->toString() + "\n\tSCHEMA: " + 
-                                      tupleSchema->toString());
-          }
+          throw planner::Exception("ERROR Rule: " +
+                                   (*rule)[catalog->attribute(RULE, "NAME")]->toString() +
+                                   "\n\tUnknown variable: " + 
+                                    arg->toString() + "\n\tSCHEMA: " + 
+                                    tupleSchema->toString());
         }
       }
       TELL_INFO << "\tPEL: " << pel.str() << std::endl;
@@ -728,9 +724,14 @@ namespace compile {
       oss << "output;\n";
       oss << indent << "\t};\n";
   
-      oss << indent << "\tinput -> " << termName.str() << " -> project -> output;\n";
+      if (termGraphName != "") {
+        oss << indent << "\tinput -> " << termGraphName << " -> project -> output;\n";
+      }
+      else {
+        oss << indent << "\tinput -> project -> output;\n";
+      }
       if (aggPosition >= 0 && filterGraphName != "") {
-        oss << indent << "\t\t" << termName.str() << "[1] -> [1]output;\n";
+        oss << indent << "\t\t" << termGraphName << "[1] -> [1]output;\n";
       } 
       oss << indent << "};\n";
       return (Context::PortDesc) {1, "a", "x", 1, "a", "x"};

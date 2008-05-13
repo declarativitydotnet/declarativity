@@ -44,7 +44,7 @@ Queue::Queue(TuplePtr args)
     _stateProxy(new IStateful()),
     _pullCB(0),
     _pushCB(0),
-    _size(Val_Int64::cast((*args)[3])),
+    _size(args->size() > 3 ? Val_Int64::cast((*args)[3]): 0),
     _type(args->size() > 4 ? Val_Str::cast((*args)[4]) : "basic")
 {
 }

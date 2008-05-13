@@ -25,6 +25,7 @@
 #include "rewrite0Context.h"
 #include "rewrite1Context.h"
 #include "rewrite2Context.h"
+#include "snlog.h"
 
 
 void
@@ -38,6 +39,7 @@ LangLoader::loadElements()
   compile::eca::Context::ensureInit();
   compile::p2dl::Context::ensureInit();
   compile::debug::Context::ensureInit();
+  compile::snlog::Context::ensureInit();
   compile::parse::Context::ensureInit();
   compile::planner::Context::ensureInit();
 }

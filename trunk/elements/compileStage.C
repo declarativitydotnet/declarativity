@@ -68,7 +68,7 @@ TuplePtr CompileStage::simple_action(TuplePtr p)
   TuplePtr program = p->clone(nextStage->toString() + "::programEvent");
   program->set(catalog->attribute(PROGRAM, "STATUS"), nextStage);
 
-  // std::cerr << "NEXT STAGE: " << nextStage->toString() << std::endl;
+  std::cerr << "NEXT STAGE: " << nextStage->toString() << std::endl;
 
   CommonTablePtr statusTbl = catalog->table(COMPILE_STATUS);
   Iter = statusTbl->lookup(CommonTable::theKey(CommonTable::KEY1), program);
@@ -149,15 +149,8 @@ CompileStage::initialize()
   const int stageCount = 7;
   string stages[] = {"compile", 
 		     "parse", 
-		     /*
-		     "secure", 
-		     "compound", 
-		     "rewrite0", 
-		     "rewrite1", 
-		     "rewrite2",
-		     */ 
-		     "eca", 
 		     "debug", 
+		     "eca", 
 		     "planner", 
 		     "p2dl", 
 		     "installed"};
