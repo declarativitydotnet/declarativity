@@ -144,10 +144,6 @@ string stub(string hostname, string port, TransportConf conf)
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
        << "Queue(\"csQ\") -> [+]extDRR;\n";
 
-  stub << "\tintDemux[+ \"snlog::programEvent\"] -> SnlogContext(\"snlog\") -> "
-       << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
-       << "Queue(\"csQ\") -> [+]extDRR;\n";
-
   stub << "\tintDemux[+ \"planner::programEvent\"] -> "
        << "PlannerContext(\"planner\", \"main\", \"intDemux\", \"intDRR\", \"extDRR\") -> "
        << "PelTransform(\"package\", \"\\\"" << hostname << ":" << port << "\\\" pop swallow pop\") -> " 
