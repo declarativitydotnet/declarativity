@@ -10,7 +10,7 @@ public class EventTable extends Table {
 		super(name, 0, 0f, new Key(), attributeTypes);
 	}
 
-	protected Tuple insert(Tuple t) throws UpdateException {
+	protected boolean insert(Tuple t) throws UpdateException {
 		throw new UpdateException("Can't insert tuple in event table");
 	}
 

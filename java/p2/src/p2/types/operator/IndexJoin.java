@@ -13,17 +13,14 @@ import p2.types.basic.TupleSet;
 import p2.types.table.Index;
 import p2.types.table.Key;
 
-public class IndexJoin extends Operator {
-	
-	private Predicate predicate;
+public class IndexJoin extends Join {
 	
 	private Index index;
 	
 	private List<String> names;
 	
-	public IndexJoin(String ID, Predicate predicate, Index index) {
-		super(ID);
-		this.predicate = predicate;
+	public IndexJoin(Predicate predicate, Index index) {
+		super(predicate);
 		this.index = index;
 		this.names = new ArrayList<String>();
 		List<Variable> variables = predicate.schema().variables();
@@ -31,6 +28,11 @@ public class IndexJoin extends Operator {
 			this.names.add(variables.get(i).name());
 		}
 		
+	}
+	
+	@Override
+	public String toString() {
+		return "INDEX JOIN PREDICATAE[" + predicate.toString() + "]";
 	}
 	
 	@Override
@@ -56,16 +58,4 @@ public class IndexJoin extends Operator {
 		}
 		return result;
 	}
-
-	@Override
-	public Set<Variable> requires() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Schema schema(Schema outer) {
-		return outer.join(predicate.schema());
-	}
-
 }

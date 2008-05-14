@@ -1,14 +1,55 @@
 package p2.lang.plan;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import p2.exec.Query;
+import p2.types.basic.Tuple;
+import p2.types.basic.TypeList;
+import p2.types.exception.PlannerException;
+import p2.types.exception.RuntimeException;
+import p2.types.exception.UpdateException;
+import p2.types.function.TupleFunction;
+import p2.types.table.Key;
+import p2.types.table.ObjectTable;
 
 public class Fact extends Clause {
 	
-	public String name;
+	public static class FactTable extends ObjectTable {
+		public static final Key PRIMARY_KEY = new Key();
+		
+		public enum Field {PROGRAM, TUPLENAME, TUPLE};
+		public static final Class[] SCHEMA =  {
+			String.class,    // Program name
+			String.class,    // Tuple name
+			Tuple.class      // Tuple object
+		};
+
+		public FactTable() {
+			super("fact", PRIMARY_KEY, new TypeList(SCHEMA));
+		}
+		
+		@Override
+		protected boolean insert(Tuple tuple) throws UpdateException {
+			return super.insert(tuple);
+		}
+		
+		@Override
+		protected boolean remove(Tuple tuple) throws UpdateException {
+			return super.remove(tuple);
+		}
+	}
 	
-	public List<Value> arguments;
+	private static final FactTable table = new FactTable();
 	
-	public Fact(String name, List<Value> arguments) {
+	private String program;
+	
+	private String name;
+	
+	private List<Expression> arguments;
+	
+	public Fact(xtc.tree.Location location, String name, List<Expression> arguments) {
+		super(location);
 		this.name = name;
 		this.arguments = arguments;
 	}
@@ -22,6 +63,23 @@ public class Fact extends Clause {
 			value += ", "  + arguments.get(i);
 		}
 		return value + ").";
+	}
+
+	@Override
+	public void set(String program) throws UpdateException {
+		List<Comparable> values = new ArrayList<Comparable>();
+		for (Expression argument : this.arguments) {
+			TupleFunction<Comparable> function = argument.function();
+			try {
+				values.add(function.evaluate(null));
+			} catch (RuntimeException e) {
+				e.printStackTrace();
+				throw new UpdateException(e.toString());
+			}
+		}
+		
+		Tuple fact = new Tuple(name, values);
+		this.table.force(new Tuple(this.table.name(), program, name, fact));
 	}
 
 }

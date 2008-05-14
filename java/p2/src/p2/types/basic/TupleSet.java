@@ -5,10 +5,14 @@ import java.util.Set;
 
 
 public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
+	private static long ids = 0L;
+	
+	private String id;
 	
 	private String name;
 	
 	public TupleSet(String name) {
+		this.id = "TupleSet:" + ids++;
 		this.name = name;
 	}
 	
@@ -27,10 +31,7 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 	 * are equal.
 	 */
 	public int compareTo(TupleSet tuples) {
-		if (tuples.containsAll(this)) {
-			return 0;
-		}
-		return name().compareTo(tuples.name());
+		return this.id.compareTo(tuples.id);
 	}
 }
 	

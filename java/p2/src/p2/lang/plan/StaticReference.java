@@ -6,6 +6,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import p2.types.basic.Tuple;
+import p2.types.exception.RuntimeException;
+import p2.types.function.TupleFunction;
+
 public class StaticReference extends Reference {
 	
 	private Field field;
@@ -18,5 +22,31 @@ public class StaticReference extends Reference {
 	
 	public Field field() {
 		return this.field;
+	}
+
+	@Override
+	public TupleFunction function() {
+		return new TupleFunction() {
+			public Object evaluate(Tuple tuple) throws RuntimeException {
+				try {
+					return StaticReference.this.field.get(null);
+				} catch (Exception e) {
+					throw new RuntimeException(e.toString());
+				}
+			}
+			public Class returnType() {
+				return StaticReference.this.field.getType();
+			}
+		};
+	}
+
+	@Override
+	public Set<Variable> variables() {
+		return new HashSet<Variable>();
+	}
+
+	@Override
+	public Expression object() {
+		return null;
 	}
 }

@@ -13,6 +13,19 @@ import p2.types.exception.UpdateException;
 
 public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	
+	private class Listener extends Table.Callback {
+		public void deletion(TupleSet tuples) {
+			for (Tuple tuple : tuples) {
+				remove(tuple);
+			}
+		}
+		public void insertion(TupleSet tuples) {
+			for (Tuple tuple : tuples) {
+				insert(tuple);
+			}
+		}
+	}
+	
 	public static class IndexTable extends ObjectTable {
 		private static final Key PRIMARY_KEY = new Key(0,1); 
 		
@@ -30,7 +43,7 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws UpdateException {
+		public boolean insert(Tuple tuple) throws UpdateException {
 			if (tuple.value(Field.OBJECT.ordinal()) == null) {
 				try {
 					Class ctype = Class.forName((String)tuple.value(Field.CLASSNAME.ordinal()));
@@ -67,15 +80,16 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		this.table = table;
 		this.key = key;
 		this.type = type;
-		IndexTable iTable = p2.core.System.index();
+		IndexTable iTable = Table.index();
 		if (iTable != null) {
 			try {
 				iTable.insert(new Tuple(iTable.name(), table.name(), key, type, this.getClass().getName(), this));
 			} catch (UpdateException e) {
 				e.printStackTrace();
-				// TODO error
+				System.exit(1);
 			}
 		}
+		this.table.register(new Listener());
 	}
 	
 	public int compareTo(Index i) {
@@ -94,6 +108,11 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		return key;
 	}
 	
+	/**
+	 * Clear out all tuples from this index.
+	 */
+	public abstract void clear();
+	
 	/* An iterator over all tuple values. */
 	public abstract Iterator<Tuple> iterator();
 	
@@ -104,9 +123,9 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	public abstract TupleSet lookup(Key.Value value);
 	
 	/* Index the given tuple. */
-	public abstract void insert(Tuple t);
+	protected abstract void insert(Tuple t);
 	
 	/* Remove the tuple from the index. */
-	public abstract void remove(Tuple t);
+	protected abstract void remove(Tuple t);
 
 }

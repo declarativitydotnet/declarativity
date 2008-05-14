@@ -1,11 +1,17 @@
 package p2.lang.plan;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import p2.exec.BasicQuery;
+import p2.exec.Query;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
+import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
+import p2.types.operator.Operator;
+import p2.types.operator.Projection;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 
@@ -16,8 +22,9 @@ public class Rule extends Clause {
 		
 		public enum Field {PROGRAM, RULENAME, OBJECT};
 		public static final Class[] SCHEMA =  {
-			String.class,    // Program name
-			String.class,    // Rule name
+			String.class,   // Program name
+			String.class,   // Rule name
+			Boolean.class,  // deletion rule?
 			Rule.class      // Rule object
 		};
 
@@ -26,7 +33,7 @@ public class Rule extends Clause {
 		}
 		
 		@Override
-		protected Tuple insert(Tuple tuple) throws UpdateException {
+		protected boolean insert(Tuple tuple) throws UpdateException {
 			return super.insert(tuple);
 		}
 		
@@ -36,6 +43,10 @@ public class Rule extends Clause {
 		}
 	}
 	
+	private static RuleTable table = new RuleTable();
+	
+	private String program;
+	
 	private String name;
 	
 	private java.lang.Boolean deletion;
@@ -44,7 +55,8 @@ public class Rule extends Clause {
 	
 	private List<Term> body;
 	
-	public Rule(String name, java.lang.Boolean deletion, Predicate head, List<Term> body) {
+	public Rule(xtc.tree.Location location, String name, java.lang.Boolean deletion, Predicate head, List<Term> body) {
+		super(location);
 		this.name = name;
 		this.deletion = deletion;
 		this.head = head;
@@ -65,4 +77,57 @@ public class Rule extends Clause {
 		}
 		return value;
 	}
+	
+	@Override
+	public void set(String program) throws UpdateException {
+		Tuple me = new Tuple(this.table.name(), program, name, deletion, this);
+		this.table.force(me);
+	}
+
+	public List<Query> query() throws PlannerException {
+		/* First search for an event predicate. */
+		Predicate event = null;
+		for (Term term : body) {
+			if (term instanceof Predicate) {
+				Predicate pred = (Predicate) term;
+				if (pred.event() != Predicate.EventModifier.NONE) {
+					if (event != null) {
+						throw new PlannerException("Multiple event predicates in rule " + name);
+					}
+					/* Plan a query with this event predicate as input. */
+					event = pred;
+				}
+			}
+		}
+		
+		List<Query> queries = new ArrayList<Query>();
+		if (event != null) {
+			List<Operator> operators = new ArrayList<Operator>();
+			for (Term term : body) {
+				if (!term.equals(event)) {
+					operators.add(term.operator());
+				}
+			}
+			queries.add(new BasicQuery(program, name, deletion, event, new Projection(this.head), operators));
+		}
+		else {
+			/* Perform delta rewrite. */
+			for (Term term1 : body) {
+				if (!(term1 instanceof Predicate)) {
+					continue;
+				}
+				Predicate delta = (Predicate) term1;
+				List<Operator> operators = new ArrayList<Operator>();
+				for (Term term2 : body) {
+					if (!term2.equals(delta)) {
+						operators.add(term2.operator());
+					}
+				}
+				queries.add(new BasicQuery(program, name, deletion, delta, new Projection(this.head), operators));
+			}
+			
+		}
+		return queries;
+	}
+	
 }

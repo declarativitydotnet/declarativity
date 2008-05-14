@@ -3,6 +3,7 @@ package p2.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 import p2.types.basic.Tuple;
+import p2.types.exception.RuntimeException;
 import p2.types.function.TupleFunction;
 
 
@@ -58,7 +59,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
 				private final TupleFunction<java.lang.Boolean> right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return left.evaluate(tuple) && right.evaluate(tuple);
 				}
 				public Class returnType() {
@@ -71,7 +72,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
 				private final TupleFunction<java.lang.Boolean> right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return left.evaluate(tuple) || right.evaluate(tuple);
 				}
 				public Class returnType() {
@@ -83,7 +84,7 @@ public class Boolean extends Expression {
 		else if (this.oper.equals(NOT)) {
 			return new TupleFunction() {
 				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return !left.evaluate(tuple);
 				}
 				public Class returnType() {
@@ -96,7 +97,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<Comparable> left  = lhs.function();
 				private final TupleFunction<Comparable> right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) == 0;
 				}
 				public Class returnType() {
@@ -109,7 +110,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<Comparable> left  = lhs.function();
 				private final TupleFunction<Comparable> right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) != 0;
 				}
 				public Class returnType() {
@@ -122,7 +123,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<Comparable> left  = lhs.function();
 				private final TupleFunction<Comparable> right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) <= 0;
 				}
 				public Class returnType() {
@@ -135,7 +136,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<Comparable> left  = lhs.function();
 				private final TupleFunction<Comparable> right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) >= 0;
 				}
 				public Class returnType() {
@@ -148,7 +149,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<Comparable> left  = lhs.function();
 				private final TupleFunction<Comparable> right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) < 0;
 				}
 				public Class returnType() {
@@ -161,7 +162,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<Comparable> left  = lhs.function();
 				private final TupleFunction<Comparable> right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) > 0;
 				}
 				public Class returnType() {
@@ -174,7 +175,7 @@ public class Boolean extends Expression {
 			return new TupleFunction() {
 				private final TupleFunction<Comparable> left  = lhs.function();
 				private final Object right = rhs.function();
-				public java.lang.Boolean evaluate(Tuple tuple) {
+				public java.lang.Boolean evaluate(Tuple tuple) throws RuntimeException {
 					if (right instanceof Range.Function) {
 						Range.Function range = (Range.Function) right;
 						return range.test(left.evaluate(tuple));

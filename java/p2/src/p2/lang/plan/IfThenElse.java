@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
+import p2.types.exception.RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class IfThenElse extends Expression {
@@ -50,7 +51,7 @@ public class IfThenElse extends Expression {
 			private final TupleFunction<java.lang.Boolean> test = ifexpr.function();
 			private final TupleFunction thencase = thenexpr.function();
 			private final TupleFunction elsecase = elseexpr.function();
-			public Object evaluate(Tuple tuple) {
+			public Object evaluate(Tuple tuple) throws RuntimeException {
 				return test.evaluate(tuple).equals(java.lang.Boolean.TRUE) ? 
 						thencase.evaluate(tuple) : elsecase.evaluate(tuple);
 			}

@@ -1,10 +1,13 @@
 package p2.lang.plan;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import p2.types.basic.Tuple;
+import p2.types.exception.RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class MethodCall extends Expression {
@@ -51,8 +54,32 @@ public class MethodCall extends Expression {
 
 	@Override
 	public TupleFunction function() {
-		// TODO Auto-generated method stub
-		return null;
+		final TupleFunction objectFunction = this.object.function();
+		final List<TupleFunction> argFunctions = new ArrayList<TupleFunction>();
+		for (Expression argument : this.arguments) {
+			argFunctions.add(argument.function());
+		}
+		
+		return new TupleFunction() {
+			public Object evaluate(Tuple tuple) throws RuntimeException {
+				Object instance = objectFunction.evaluate(tuple);
+				Object[] arguments = new Object[MethodCall.this.arguments.size()];
+				int index = 0;
+				for (TupleFunction argFunction : argFunctions) {
+					arguments[index++] = argFunction.evaluate(tuple);
+				}
+				try {
+					return MethodCall.this.method.invoke(instance, arguments);
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new RuntimeException(e.toString());
+				}
+			}
+
+			public Class returnType() {
+				return type();
+			}
+		};
 	}
 
 }

@@ -19,9 +19,15 @@ Node Clause =
     <Rule>   Rule
   / <Fact>   Fact
   / <Define> Definition
+  / <Import> Import
   / <Watch>  Watch
   ;
   
+  
+//----------------------------  Import  --------------------------------------/
+
+generic Import = void:"import":Word TypeName;
+
 //----------------------------  Fact  --------------------------------------/
 
 generic Fact = TupleName void:"(":Symbol ConstantList void:")":Symbol;

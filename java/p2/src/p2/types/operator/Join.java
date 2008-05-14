@@ -9,21 +9,21 @@ import p2.types.basic.Schema;
 
 public abstract class Join extends Operator {
 	
-	private Predicate predicate;
+	protected Predicate predicate;
 
-	public Join(String ID, Predicate predicate) {
-		super(ID);
+	public Join(Predicate predicate) {
+		super(predicate.program(), predicate.rule(), predicate.position());
 		this.predicate = predicate;
+	}
+	
+	@Override
+	public Schema schema(Schema input) {
+		return input.join(predicate.schema());
 	}
 
 	@Override
 	public Set<Variable> requires() {
 		return predicate.requires();
-	}
-
-	@Override
-	public Schema schema(Schema input) {
-		return null;
 	}
 
 }

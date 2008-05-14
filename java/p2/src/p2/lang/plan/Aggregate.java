@@ -20,4 +20,8 @@ public class Aggregate extends Variable {
 	public String toString() {
 		return this.function + "<" + super.toString() + ">";
 	}
+	
+	public String functionName() {
+		return this.function;
+	}
 }

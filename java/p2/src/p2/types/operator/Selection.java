@@ -5,25 +5,30 @@ import p2.lang.plan.Variable;
 import p2.types.basic.Schema;
 import p2.types.basic.TupleSet;
 import p2.types.basic.Tuple;
+import p2.types.exception.RuntimeException;
 import p2.types.function.Filter;
+import p2.types.function.TupleFunction;
 
 public class Selection extends Operator {
 	
-	private Set<Variable> requires;
+	private p2.lang.plan.Selection selection;
 	
-	private Filter filter;
-
-	public Selection(String ID, Set<Variable> requires, Filter filter) {
-		super(ID);
-		this.requires = requires;
-		this.filter = filter;
+	public Selection(p2.lang.plan.Selection selection) {
+		super(selection.program(), selection.rule(), selection.position());
+		this.selection = selection;
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) {
+	public String toString() {
+		return "SELECTION [" + this.selection + "]";
+	}
+	
+	@Override
+	public TupleSet evaluate(TupleSet tuples) throws RuntimeException {
 		TupleSet result = new TupleSet(tuples.name());
+		TupleFunction<java.lang.Boolean> filter = this.selection.predicate().function();
 		for (Tuple tuple : tuples) {
-			if (this.filter.evaluate(tuple)) {
+			if (java.lang.Boolean.TRUE.equals(filter.evaluate(tuple))) {
 				result.add(tuple);
 			}
 		}
@@ -37,7 +42,7 @@ public class Selection extends Operator {
 
 	@Override
 	public Set<Variable> requires() {
-		return this.requires;
+		return this.selection.predicate().variables();
 	}
 
 }

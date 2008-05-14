@@ -10,7 +10,8 @@ import p2.types.exception.BadKeyException;
 
 
 public class Key implements Comparable<Key>, Iterable<Integer> {
-	public class Value {
+	
+	public static class Value {
 		private Vector<Comparable> values;
 		public Value(Vector<Comparable> values) {
 			this.values = values;

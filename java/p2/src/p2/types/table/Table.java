@@ -10,6 +10,16 @@ import p2.types.table.Index.IndexTable;
 import xtc.util.SymbolTable;
 
 public abstract class Table implements Iterable<Tuple>, Comparable {
+	public static abstract class Callback {
+		private static long ids = 0L;
+		
+		private Long id = new Long(ids++);
+		public int hashCode() { return id.hashCode(); }
+		
+		public abstract void insertion(TupleSet tuples);
+		public abstract void deletion(TupleSet tuples);
+	}
+	
 	public static final Integer INFINITY = Integer.MAX_VALUE;
 
 	public static class Catalog extends ObjectTable {
@@ -19,7 +29,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		private static final Class[] SCHEMA = { 
 			String.class,    // The tablename
 			Integer.class,   // The table size
-			Float.class,    // The lifetime
+			Float.class,     // The lifetime
 			Key.class,       // The primary key
 			TypeList.class,  // The type of each attribute
 			Table.class      // The table object
@@ -30,7 +40,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		}
 		
 		@Override
-		protected Tuple insert(Tuple tuple) throws UpdateException {
+		protected boolean insert(Tuple tuple) throws UpdateException {
 			Table table = (Table) tuple.value(Field.OBJECT.ordinal());
 			if (table == null) {
 				String   name     = (String) tuple.value(Field.TABLENAME.ordinal());
@@ -60,23 +70,27 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	public static Catalog catalog  = null;
 	
 	/* The table name. */
-	private String name;
+	protected String name;
 	
 	/* The number of attributes in this table. */
-	private TypeList attributeTypes;
+	protected TypeList attributeTypes;
 	
 	/* The maximum size of this table. */
-	private Integer size;
+	protected Integer size;
 	
 	/* the lifetime of a tuple, in seconds. */
-	private Float lifetime;
+	protected Float lifetime;
 	
 	/* The primary key. */
-	private Key key;
+	protected Key key;
 	
-	private Index primary;
+	protected TupleSet tuples;
 	
-	private Hashtable<Key, Index> secondary;
+	protected Index primary;
+	
+	protected Hashtable<Key, Index> secondary;
+	
+	private final Set<Callback> callbacks;
 	
 	protected Table(String name, Integer size, Float lifetime, Key key, TypeList attributeTypes) {
 		this.name = name;
@@ -84,6 +98,8 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		this.size = size;
 		this.lifetime = lifetime;
 		this.key = key;
+		this.tuples = new TupleSet(name);
+		this.callbacks = new HashSet<Callback>();
 		this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
 		this.secondary = new Hashtable<Key, Index>();
 		
@@ -96,8 +112,16 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		}
 	}
 	
-	public static void initialize() {
+	public final static void initialize() {
 		new Catalog();
+	}
+	
+	public final static Catalog catalog() {
+		return Table.catalog;
+	}
+	
+	public final static IndexTable index() {
+		return Table.index;
 	}
 	
 	public String toString() {
@@ -110,22 +134,29 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		return value;
 	}
 	
+	/**
+	 * Register a new callback on table updates.
+	 * @param callback
+	 */
+	public void register(Callback callback) {
+		this.callbacks.add(callback);
+	}
+	
+	public void unregister(Callback callback) {
+		this.callbacks.remove(callback);
+	}
+	
 	public abstract boolean isEvent();
 	
 	public Iterator<Tuple> iterator() {
-		return primary().iterator();
-	}
-	
-	public SymbolTable symbolTable() {
-		return null;
+		return this.tuples.iterator();
 	}
 	
 	private static void register(String name, Integer size, Float lifetime, 
 			                     Key key, TypeList types, Table object) { 
-		
 		Tuple tuple = new Tuple(catalog.name(), name, size, lifetime, key, types, object);
 		try {
-			catalog.insert(tuple);
+			catalog.force(tuple);
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -148,7 +179,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	
 	public static Table table(String name) {
 		try {
-			TupleSet table = p2.core.System.catalog().primary().lookup(p2.core.System.catalog().key().value(name));
+			TupleSet table = catalog.primary().lookup(catalog.key().value(name));
 			if (table.size() == 1) {
 				return (Table) table.iterator().next().value(Catalog.Field.OBJECT.ordinal());
 			}
@@ -240,11 +271,17 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	public final TupleSet insert(TupleSet tuples) throws UpdateException {
 		TupleSet delta = new TupleSet(name().toString());
 		for (Tuple t : tuples) {
-			Tuple previous = insert(t);
-			if (previous != null && !previous.equals(t)) {
+			t = t.clone();
+			if (insert(t)) {
 				delta.add(t);
 			}
 		}
+		
+		for (Callback callback : this.callbacks) {
+			callback.insertion(delta);
+		}
+		
+		this.tuples.addAll(delta);
 		return delta;
 	}
 	
@@ -260,16 +297,30 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 				delta.add(t);
 			}
 		}
+		this.tuples.removeAll(delta);
+		
+		for (Callback callback : this.callbacks) {
+			callback.deletion(delta);
+		}
+		
 		return delta;
+	}
+	
+	public final void force(Tuple tuple) throws UpdateException {
+		TupleSet conflicts = primary().lookup(tuple);
+		TupleSet forced = new TupleSet(tuple.name());
+		forced.add(tuple);
+		insert(forced);
+		remove(conflicts);
 	}
 	
 	/**
 	 * Signal to table below to actually perform the insertion.
 	 * @param t Tuple to be inserted.
-	 * @return Tuple removed from primary key violation, null if none.
+	 * @return true if insertion occurred, false otherwise.
 	 * @exception UpdateException Any problems that occurred.
 	 */
-	protected abstract Tuple insert(Tuple t) throws UpdateException;
+	protected abstract boolean insert(Tuple t) throws UpdateException;
 	
 	/**
 	 * Signal to table below to actually perform the deletion.

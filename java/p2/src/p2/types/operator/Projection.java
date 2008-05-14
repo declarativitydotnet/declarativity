@@ -15,9 +15,14 @@ public class Projection extends Operator {
 	
 	private Predicate predicate;
 	
-	public Projection(String ID, Predicate predicate) {
-		super(ID);
+	public Projection(Predicate predicate) {
+		super(predicate.program(), predicate.rule(), predicate.position());
 		this.predicate = predicate;
+	}
+	
+	@Override
+	public String toString() {
+		return "PROJECTION PREDICATE[" + predicate.toString() + "]";
 	}
 
 	@Override

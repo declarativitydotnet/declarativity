@@ -1,10 +1,14 @@
 package p2.lang.plan;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import p2.types.basic.Tuple;
+import p2.types.exception.RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class NewClass extends Expression {
@@ -56,7 +60,29 @@ public class NewClass extends Expression {
 
 	@Override
 	public TupleFunction function() {
-		// TODO Auto-generated method stub
-		return null;
+		final List<TupleFunction> argFunctions = new ArrayList<TupleFunction>();
+		for (Expression argument : this.arguments) {
+			argFunctions.add(argument.function());
+		}
+		
+		return new TupleFunction() {
+			public Object evaluate(Tuple tuple) throws RuntimeException {
+				Object[] arguments = new Object[NewClass.this.arguments.size()];
+				int index = 0;
+				for (TupleFunction argFunction : argFunctions) {
+					arguments[index++] = argFunction.evaluate(tuple);
+				}
+				try {
+					return NewClass.this.constructor.newInstance(arguments);
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new RuntimeException(e.toString());
+				}
+			}
+
+			public Class returnType() {
+				return type();
+			}
+		};
 	}
 }

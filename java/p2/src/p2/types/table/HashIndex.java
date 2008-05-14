@@ -28,9 +28,14 @@ public class HashIndex extends Index {
 		}
 		return out;
 	}
+	
+	@Override
+	public void clear() {
+		this.map.clear();
+	}
 
 	@Override
-	public void insert(Tuple t) {
+	protected void insert(Tuple t) {
 		Key.Value key = key().value(t);
 		if (this.map.containsKey(key)) {
 			this.map.get(key).add(t);
@@ -56,7 +61,7 @@ public class HashIndex extends Index {
 	}
 
 	@Override
-	public void remove(Tuple t) {
+	protected void remove(Tuple t) {
 		Key.Value key = key().value(t);
 		if (this.map.containsKey(key)) {
 			this.map.get(key).remove(t);

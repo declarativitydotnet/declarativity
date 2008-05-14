@@ -1,19 +1,16 @@
 package p2.types.basic;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
-
 import p2.lang.plan.Variable;
 
 
-public class Tuple {
+public class Tuple implements Comparable<Tuple> {
 	private static Long idGen = new Long(0);
 	
 	protected String id;
+	
+	protected String code;
 	
 	protected String name;
 	
@@ -29,20 +26,29 @@ public class Tuple {
 	
 	
 	public Tuple(String name, Comparable... values) {
-		this.name = name;
-		this.schema = null;
-		this.values = new ArrayList<Comparable>();
-		this.refCount = new Long(1);
-		this.frozen = false;
-		this.id = idGen.toString();
-		idGen += 1L;
-		
+		List<Comparable> valueList = new ArrayList<Comparable>();
 		for (Comparable value : values) {
-			this.values.add(value);
+			valueList.add(value);
 		}
+		initialize(name, valueList);
 	}
 	
 	public Tuple(String name, List<Comparable> values) {
+		initialize(name, values);
+	}
+	
+	public Tuple(String name) {
+		initialize(name, null);
+	}
+	
+	@Override
+	public Tuple clone() {
+		Tuple copy = new Tuple(name(), this.values);
+		copy.schema = this.schema;
+		return copy;
+	}
+	
+	private void initialize(String name, List<Comparable> values) {
 		this.name = name;
 		this.schema = null;
 		this.values = values;
@@ -50,24 +56,6 @@ public class Tuple {
 		this.frozen = false;
 		this.id = idGen.toString();
 		idGen += 1L;
-	}
-	
-	public Tuple(String name) {
-		this.name = name;
-		this.schema = new Schema(name);
-		this.values = new ArrayList<Comparable>();;
-		this.refCount = new Long(1);
-		this.frozen = false;
-		this.id = idGen.toString();
-		idGen += 1L;
-	}
-	
-	@Override
-	public Tuple clone() {
-		Tuple copy = new Tuple(name());
-		copy.values = this.values;
-		copy.schema = this.schema;
-		return copy;
 	}
 	
 	public String id() {
@@ -100,8 +88,7 @@ public class Tuple {
 		this.schema = schema;
 	}
 	
-	public int compareTo(Object o) {
-		if (o instanceof Tuple) {
+	public int compareTo(Tuple o) {
 			Tuple other = (Tuple) o;
 			if (values.size() < other.values.size()) {
 				return -1;
@@ -118,8 +105,6 @@ public class Tuple {
 				}
 				return 0;
 			}
-		}
-		return hashCode() < o.hashCode() ? -1 : 1;
 	}
 	
 	@Override
@@ -129,7 +114,11 @@ public class Tuple {
 	
 	@Override
 	public int hashCode() {
-		return values.hashCode();
+		String code = "";
+		for (Comparable value : this.values) {
+			code += Integer.toString(value.hashCode());
+		}
+		return code.hashCode();
 	}
 	
 	/* The number of attributes in this tuple. */
@@ -216,7 +205,7 @@ public class Tuple {
 	}
 	
 	public Tuple project(Schema schema) {
-		Tuple projection = new Tuple(name());
+		Tuple projection = new Tuple(schema.name());
 		
 		for (Variable variable : this.schema.variables()) {
 			if (schema.contains(variable)) {

@@ -1,0 +1,96 @@
+/* Define evaluate table. */
+define(evaluate, infinity, infinity, keys(1,2), {String, String, TupleSet});
+define(runnable, {String, String});
+define(strata, {String, Long, Integer});
+
+priority("Runtime", "clock",      0);
+priority("Runtime", "schedule",   0);
+priority("Runtime", "priority",   0);
+priority("Runtime", "strata",     1);
+priority("Runtime", "runnable",   1);
+priority("Runtime", "evaluate",   1);
+priority("Runtime", "driver",     1);
+
+/* Call the fixpoint driver/evaluator to evaluate tuple set. */
+driver(Program, TupleName, TupleSet) :-
+	evaluate(Program, TupleName, TupleSet).
+
+delete evaluate(Program, TupleName, TupleSet) :-
+	driver(Program, TupleName, TupleSet).
+
+/* Evaluate runnable tuples with the given name
+   scheduled in the current clock. */
+evaluate(Program, TupleName, TupleSet) :-
+	runnable(Program, TupleName),
+	clock(Program, Time),
+	schedule(Time, Program, TupleName, Event, TupleSet).
+
+/* Delete what has been evaluated in the curent clock. */
+delete schedule(Time, Program, TupleName, Event, TupleSet) :-
+	runnable(Program, TupleName),
+	clock(Program, Time),
+	schedule(Time, Program, TupleName, Event, TupleSet).
+
+/* Identify the runnable tuples. */
+runnable(Program, TupleName) :-
+	strata(Program, Time, Priority),
+	priority(Program, TupleName, Priority),
+	schedule(Time, Program, TupleName, Event, TupleSet).
+
+/* Determine the current strata in the current time for all 
+   programs that have something scheduled. */
+strata(Program, Time, min<Priority>) :-
+	clock(Program, Time),
+	schedule(Time, Program, TupleName, Event, TupleSet),
+	priority(Program, TupleName, Priority).
+
+
+/*******************************************************************/
+/*** Compiler configuration                                      **/
+/*** TODO: Add general stage installation table */
+
+define(priority, infinity, infinity, keys(0,1), {String, String, Integer});
+define(dependency, infinity, infinity, keys(0,1,2), {String, String, String});
+
+priority("Runtime", "compiler",   0);
+priority("Runtime", "compile",    0);
+priority("Runtime", "rule",       0);
+priority("Runtime", "predicate",  0);
+priority("Runtime", "planner",    0);
+priority("Runtime", "dependency", 1);
+priority("Runtime", "priority",   2);
+
+/* Compile the program. */
+compiler(Program, File, null) :-
+	compile(Program, File).
+
+/* Plan the program. */
+planner(Program, Object) :-
+	compiler(Program, File, Object).
+
+/* Rule part tables have been filled in by compiler. */
+/* Determine R/G graph dependencies. */
+dependency(Program, Head.name(), Body.name()) :-
+	planner(Program, _),
+	rule(Program, Rule, _),
+	predicate(Program, Rule, 0, Head), /* Position == 0 */
+	predicate(Program, Rule, Pos, Body), Pos > 0.
+
+/* Initialize all predicates to stratum 0. */
+priority(Program, Pred.name(), 0) :-
+	planner(Program, _),
+	rule(Program, Rule, _),
+	predicate(Program, Rule, Pos, Pred).
+
+/* Bubble up predicates in the stratum chain. */
+priority(Program, Head, Priority) :-
+	priority(Program, Head, HPriority),
+	priority(Program, Body, BPriority),
+	dependency(Program, Head, Body),
+	notin dependency(Program, Body, Head),
+	HPriority <= BPriority,
+	Priority := BPriority + 1
+
+
+
+

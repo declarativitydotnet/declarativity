@@ -1,10 +1,14 @@
-package p2.lang.plan;
+package p2.core;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
-
+import p2.exec.Query;
+import p2.lang.plan.Fact;
+import p2.lang.plan.Rule;
+import p2.lang.plan.Watch;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
@@ -31,7 +35,7 @@ public class Program implements Comparable<Program> {
 		}
 		
 		@Override
-		protected Tuple insert(Tuple tuple) throws UpdateException {
+		protected boolean insert(Tuple tuple) throws UpdateException {
 			return super.insert(tuple);
 		}
 		
@@ -43,9 +47,7 @@ public class Program implements Comparable<Program> {
 	
 	private String name;
 	
-	private List<Table> tables;
-	
-	private List<EventTable> events;
+	private List<Table> definitions;
 	
 	private List<Watch> watches;
 	
@@ -53,34 +55,34 @@ public class Program implements Comparable<Program> {
 	
 	private List<Rule> rules;
 	
+	private Hashtable<String, Set<Query>> queries;
+	
+	private List<Table> references;
+	
 	public Program(String name) {
-		this.name    = name;
-		this.tables  = new ArrayList<Table>();
-		this.events  = new ArrayList<EventTable>();
-		this.watches = new ArrayList<Watch>();
-		this.facts   = new ArrayList<Fact>();
-		this.rules   = new ArrayList<Rule>();
+		this.name        = name;
+		this.definitions = new ArrayList<Table>();
 	}
 	
 	@Override
 	public String toString() {
-		String value = "Program " + name + "\n";
-		for (Table t : tables) {
-			value += t + "\n";
-		}
-		for (EventTable e : events) {
-			value += e + "\n";
-		}
-		for (Watch w : watches) {
-			value += w + "\n";
-		}
-		for (Fact f : facts) {
-			value += f + "\n";
-		}
-		for (Rule r : rules) {
-			value += r + "\n";
-		}
-		return value;
+		return this.name;
+	}
+	
+	public int compareTo(Program o) {
+		return this.name.compareTo(o.name);
+	}
+	
+	public String name() {
+		return this.name;
+	}
+	
+	public Hashtable<String, Set<Query>> queries() {
+		return this.queries;
+	}
+	
+	public Hashtable<String, Table> tables() {
+		return null;
 	}
 	
 	public Set<String> plan() {
@@ -89,32 +91,10 @@ public class Program implements Comparable<Program> {
 		return tuples;
 	}
 	
-	public Tuple evaluate(Tuple eval) {
-		
-		return null;
+	public void definition(Table t) {
+		definitions.add(t);
 	}
 	
-	public void table(Table t) {
-		tables.add(t);
-	}
-	
-	public void event(EventTable e) {
-		events.add(e);
-	}
-	
-	public void watch(Watch w) {
-		watches.add(w);
-	}
-	
-	public void fact(Fact f) {
-		facts.add(f);
-	}
-	
-	public void rule(Rule r) {
-		rules.add(r);
-	}
 
-	public int compareTo(Program o) {
-		return this.name.compareTo(o.name);
-	}
+
 }

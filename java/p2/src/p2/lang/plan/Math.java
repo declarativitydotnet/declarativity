@@ -10,7 +10,6 @@ import p2.types.function.TupleFunction;
 
 
 public class Math extends Expression {
-	private static final Map<String, TupleFunction> Operator = new HashMap<String, TupleFunction>();
 	
 	public final static String ADD    = "+";
 	public final static String INC    = "++";
@@ -23,18 +22,7 @@ public class Math extends Expression {
 	public final static String LSHIFT = "<<";
 	public final static String RSHIFT = ">>";
 
-	static {
-		Operator.put(ADD,    null);
-		Operator.put(INC,    null);
-		Operator.put(MINUS,  null);
-		Operator.put(DEC,    null);
-		Operator.put(TIMES,  null);
-		Operator.put(DIVIDE, null);
-		Operator.put(MOD,    null);
-		Operator.put(POW,    null);
-		Operator.put(LSHIFT, null);
-		Operator.put(RSHIFT, null);
-	}
+
 	
 	private String oper;
 	

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,12 +17,12 @@ import p2.lang.plan.Alias;
 import p2.lang.plan.ArrayIndex;
 import p2.lang.plan.Assignment;
 import p2.lang.plan.DontCare;
-import p2.lang.plan.Event;
 import p2.lang.plan.Expression;
 import p2.lang.plan.Fact;
 import p2.lang.plan.IfThenElse;
 import p2.lang.plan.Location;
 import p2.lang.plan.MethodCall;
+import p2.lang.plan.UnknownReference;
 import p2.lang.plan.NewClass;
 import p2.lang.plan.Null;
 import p2.lang.plan.Predicate;
@@ -38,8 +37,6 @@ import p2.lang.plan.Value;
 import p2.lang.plan.Variable;
 import p2.lang.plan.ObjectReference;
 import p2.lang.plan.Watch;
-import p2.types.basic.Schema;
-import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.table.BasicTable;
 import p2.types.table.EventTable;
@@ -50,7 +47,6 @@ import xtc.Constants;
 import xtc.tree.GNode;
 import xtc.tree.Node;
 import xtc.tree.Visitor;
-import xtc.util.Pair;
 import xtc.util.SymbolTable;
 import xtc.util.Runtime;
 
@@ -73,8 +69,8 @@ public final class TypeChecker extends Visitor {
 		NAME_TO_BASETYPE.put("void", Void.class);
 	}
 
-	public static Class primitive(String name) {
-		return NAME_TO_BASETYPE.get(name);
+	public static Class type(String name) {
+		return NAME_TO_BASETYPE.containsKey(name) ? NAME_TO_BASETYPE.get(name) : null;
 	}
 
 	/** The runtime. */
@@ -162,21 +158,19 @@ public final class TypeChecker extends Visitor {
 		}
 	}
 	
-	public void visitClauses(final GNode n) {
-		List<GNode> order = new ArrayList<GNode>();
-		
-		for (GNode node : n.<GNode>getList(0)) {
-			if (node.getName().equals("Table") || node.getName().equals("Event")) {
-				order.add(0, node);
-			}
-			else {
-				order.add(order.size(), node);
-			}
+	public Class visitImport(final GNode n) {
+		Class type = (Class) dispatch((Node)n.getNode(0));
+		if (type == Error.class) return Error.class;
+		else if (type != Class.class) {
+			runtime.error("Expected class type at import statement!", n);
+			return Error.class;
 		}
+		type = (Class) n.getNode(0).getProperty(Constants.TYPE);
 		
-		for (GNode node : order) {
-			dispatch(node);
-		}
+		type = (Class) n.getNode(0).getProperty(Constants.TYPE);
+		NAME_TO_BASETYPE.put(type.getSimpleName(), type);
+		n.setProperty(Constants.TYPE, type);
+		return Class.class;
 	}
 	
 	public Class visitFact(final GNode n) {
@@ -184,17 +178,21 @@ public final class TypeChecker extends Visitor {
 		assert(type == String.class);
 		String name = (String) n.getNode(0).getProperty(Constants.TYPE);
 		
-		List<Value> args = new ArrayList<Value>();
+		List<Expression> args = new ArrayList<Expression>();
 		if (n.size() != 0) {
 			for (Node arg : n.<Node> getList(1)) {
 				Class t = (Class) dispatch(arg);
-				assert(Value.class.isAssignableFrom(t));
-				args.add((Value)arg.getProperty(Constants.TYPE));
+				assert(Expression.class.isAssignableFrom(t));
+				Expression expr = (Expression) arg.getProperty(Constants.TYPE);
+				if (expr.variables().size() > 0) {
+					runtime.error("Facts are not allowed to contain variables!", n);
+					return Error.class;
+				}
+				args.add(expr);
 			}
 		}
 		
-		Fact fact = new Fact(name, args);
-		fact.location(n.getLocation());
+		Fact fact = new Fact(n.getLocation(), name, args);
 		n.setProperty(Constants.TYPE, fact);
 		return Fact.class;
 	}
@@ -211,8 +209,7 @@ public final class TypeChecker extends Visitor {
 		}
 		String modifier = n.size() > 1 ? n.getString(1) : "";
 		
-		Watch watch = new Watch(name.value(), modifier);
-		watch.location(n.getLocation());
+		Watch watch = new Watch(n.getLocation(), name.value(), modifier);
 		n.setProperty(Constants.TYPE, watch);
 		return Watch.class;
 	}
@@ -400,8 +397,7 @@ public final class TypeChecker extends Visitor {
 			table.exit();
 		}
 		
-		Rule rule = new Rule(name, deletion, head, body);
-		rule.location(n.getLocation());
+		Rule rule = new Rule(n.getLocation(), name, deletion, head, body);
 		n.setProperty(Constants.TYPE, rule);
 		return Rule.class;
 	}
@@ -983,17 +979,26 @@ public final class TypeChecker extends Visitor {
 		
 		if (type == Reference.class) {
 			Reference ref = (Reference) n.getNode(0).getProperty(Constants.TYPE);
+			System.err.println("REFERENCE " + ref.toString());
 			if (ref.object() != null || ref.type() != null) {
 				runtime.error("Undefined reference " + ref.toString(), n);
 				return Error.class;
 			}
 			String name = ref.toString() + "." + n.getString(1);
+			
+			System.err.println("CHECK " + name);
+			if (type(name) != null) {
+				type = type(name);
+				n.setProperty(Constants.TYPE, type);
+				return Class.class;
+			}
+			
 			try {
 				type = Class.forName(name);
 				n.setProperty(Constants.TYPE, type);
 				return Class.class;
 			} catch (ClassNotFoundException e) {
-				n.setProperty(Constants.TYPE, new Reference(name));
+				n.setProperty(Constants.TYPE, new UnknownReference(null, null, name));
 				return Reference.class;
 			}
 		}
@@ -1006,7 +1011,7 @@ public final class TypeChecker extends Visitor {
 				n.setProperty(Constants.TYPE, new ObjectReference(expr, field));
 				return ObjectReference.class;
 			} catch (Exception e) { 
-				n.setProperty(Constants.TYPE, new Reference(expr, name));
+				n.setProperty(Constants.TYPE, new UnknownReference(expr, null, name));
 				return Reference.class;
 			}
 		}
@@ -1035,7 +1040,7 @@ public final class TypeChecker extends Visitor {
 				return StaticReference.class;
 			} catch (Exception e) {
 				/* It must be a method at this point. Punt to higher ground. */
-				n.setProperty(Constants.TYPE, new Reference(type, name));
+				n.setProperty(Constants.TYPE, new UnknownReference(null, type, name));
 				return Reference.class;
 			}
 		}
@@ -1047,7 +1052,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitReferenceName(final GNode n) {
-		n.setProperty(Constants.TYPE, new Reference(n.getString(0)));
+		n.setProperty(Constants.TYPE, new UnknownReference(null, null, n.getString(0)));
 		return Reference.class;
 	}
 	
@@ -1160,7 +1165,13 @@ public final class TypeChecker extends Visitor {
 			for (Object c : n.getList(1)) {
 				name  += "." + c.toString();
 			}
-			Class type = Class.forName(name);
+			Class type = Error.class;
+			if (type(name) != null) {
+				type = type(name);
+			}
+			else {
+				type = Class.forName(name);
+			}
 			n.setProperty(Constants.TYPE, type);
 			return Class.class;
 		} catch (ClassNotFoundException e) {
@@ -1170,21 +1181,28 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitPrimitiveType(final GNode n) {
-		Class type = primitive(n.getString(0));
+		Class type = type(n.getString(0));
 		n.setProperty(Constants.TYPE, type);
 		return Class.class;
 	}
 
 	public Class visitVariable(final GNode n) {
-		Class type =  (Class)  table.current().lookup(n.getString(0));
-		if (DontCare.DONTCARE.equals(n.getString(0))) {
-			/* Generate a fake variable for all don't cares. */
-			n.setProperty(Constants.TYPE, new DontCare(null));
+		String name = n.getString(0);
+		if (type(name) != null) {
+			n.setProperty(Constants.TYPE, type(name));
+			return Class.class;
 		}
 		else {
-			n.setProperty(Constants.TYPE, new Variable(n.getString(0), type));
+			Class type =  (Class)  table.current().lookup(n.getString(0));
+			if (DontCare.DONTCARE.equals(n.getString(0))) {
+				/* Generate a fake variable for all don't cares. */
+				n.setProperty(Constants.TYPE, new DontCare(null));
+			}
+			else {
+				n.setProperty(Constants.TYPE, new Variable(n.getString(0), type));
+			}
+			return Variable.class;
 		}
-		return Variable.class;
 	}
 
 	public Class visitLocation(final GNode n) {

@@ -12,7 +12,7 @@ public abstract class ObjectTable extends RefTable {
 	}
 
 	@Override
-	protected Tuple insert(Tuple tuple) throws UpdateException {
+	protected boolean insert(Tuple tuple) throws UpdateException {
 		return super.insert(tuple);
 	}
 	

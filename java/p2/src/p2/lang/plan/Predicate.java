@@ -4,10 +4,15 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import p2.lang.plan.Selection.SelectionTable.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
+import p2.types.operator.AntiScanJoin;
+import p2.types.operator.Operator;
+import p2.types.operator.ScanJoin;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
@@ -15,15 +20,15 @@ import p2.types.table.Table;
 public class Predicate extends Term implements Iterable<Expression> {
 	public enum EventModifier{NONE, INSERT, DELETE};
 	
+	public enum Field{PROGRAM, RULE, POSITION, EVENT, OBJECT};
 	public static class PredicateTable extends ObjectTable {
-		public static final Key PRIMARY_KEY = new Key(0,1);
+		public static final Key PRIMARY_KEY = new Key(0,1,2);
 		
 		public static final Class[] SCHEMA =  {
-			String.class,   // program name
-			String.class,   // rule name
-			String.class,   // event modifier
-			Integer.class,  // position
-			Predicate.class // predicate object
+			String.class,     // program name
+			String.class,     // rule name
+			Integer.class,    // position
+			Predicate.class   // predicate object
 		};
 
 		public PredicateTable() {
@@ -31,7 +36,14 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 		
 		@Override
-		protected Tuple insert(Tuple tuple) throws UpdateException {
+		protected boolean insert(Tuple tuple) throws UpdateException {
+			Predicate object = (Predicate) tuple.value(Field.OBJECT.ordinal());
+			if (object == null) {
+				throw new UpdateException("Predicate object null");
+			}
+			object.program   = (String) tuple.value(Field.PROGRAM.ordinal());
+			object.rule      = (String) tuple.value(Field.RULE.ordinal());
+			object.position  = (Integer) tuple.value(Field.POSITION.ordinal());
 			return super.insert(tuple);
 		}
 		
@@ -41,7 +53,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 	}
 	
-	private Table table;
+	private final static PredicateTable table = new PredicateTable();
 	
 	private boolean notin;
 	
@@ -49,28 +61,20 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private EventModifier event;
 	
-	private List<Expression> arguments;
+	private Arguments arguments;
 	
 	private Schema schema;
 	
 	public Predicate(boolean notin, String name, EventModifier event, List<Expression> arguments) {
-		this.table = null;
+		super();
 		this.notin = notin;
 		this.name = name;
 		this.event = event;
-		this.arguments = arguments;
+		this.arguments = new Arguments(this, arguments);
 	}
 	
 	public Schema schema() {
 		return schema;
-	}
-	
-	public void table(Table table) {
-		this.table = table;
-	}
-	
-	public Table table() {
-		return this.table;
 	}
 	
 	public boolean notin() {
@@ -111,6 +115,26 @@ public class Predicate extends Term implements Iterable<Expression> {
 			}
 		}
 		return variables;
+	}
+
+	@Override
+	public Operator operator() {
+		// TODO Add code that searches for an index join
+		
+		if (notin) {
+			return new AntiScanJoin(this);
+		}
+		return new ScanJoin(this);
+	}
+
+	@Override
+	public void set(String program, String rule, Integer position) {
+		Tuple me = new Tuple(this.table.name(), program, rule, position, this);
+		try {
+			this.table.force(me);
+		} catch (UpdateException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }

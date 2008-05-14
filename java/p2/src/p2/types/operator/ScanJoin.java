@@ -10,16 +10,18 @@ import p2.types.table.Table;
 
 import java.util.Set;
 
-public class ScanJoin extends Operator {
-	
-	private Predicate predicate;
+public class ScanJoin extends Join {
 	
 	private Table table;
 	
-	public ScanJoin(String ID, Predicate predicate) {
-		super(ID);
-		this.predicate = predicate;
+	public ScanJoin(Predicate predicate) {
+		super(predicate);
 		this.table = Table.table(predicate.name());
+	}
+	
+	@Override
+	public String toString() {
+		return "NEST LOOP JOIN: PREDICATE[" + this.predicate  + "]";
 	}
 	
 	@Override
@@ -38,14 +40,5 @@ public class ScanJoin extends Operator {
 		return result;
 	}
 
-	@Override
-	public Schema schema(Schema input) {
-		return input.join(predicate.schema());
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return predicate.requires();
-	}
 
 }

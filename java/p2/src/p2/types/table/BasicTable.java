@@ -18,36 +18,13 @@ public class BasicTable extends Table {
 	}
 	
 	@Override
-	protected Tuple insert(Tuple t) throws UpdateException {
-		Tuple previous = null;
-		for (Tuple lookup : primary().lookup(t)) {
-			if (lookup.equals(t)) {
-				// TODO update tuple timestamp.
-				return null;
-			}
-			previous = lookup;
-			primary().remove(lookup);
-		}
-		
-		primary().insert(t);
-		for (Index i : secondary().values()) {
-			i.insert(t);
-		}
-		return previous;
+	protected boolean insert(Tuple t) throws UpdateException {
+		return !this.tuples.contains(t);
 	}
 	
 	@Override
 	protected boolean remove(Tuple t) throws UpdateException {
-		for (Tuple tmp : primary().lookup(t)) {
-			if (tmp.equals(t)) {
-				primary().remove(t);
-				for (Index i : secondary().values()) {
-					i.remove(t);
-				}
-				return true;
-			}
-		}
-		return false;
+		return this.tuples.contains(t);
 	}
 
 	@Override

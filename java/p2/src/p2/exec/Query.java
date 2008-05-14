@@ -1,9 +1,11 @@
 package p2.exec;
 
+import p2.lang.plan.Predicate;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
@@ -17,9 +19,10 @@ public abstract class Query implements Comparable<Query> {
 		public enum Field{PROGRAM, DELETE, INPUT, OUTPUT, OBJECT};
 		public static final Class[] SCHEMA = {
 			String.class,  // Program name
-			String.class,  // Rule name 
+			String.class,  // Name 
 			Boolean.class, // Delete rule/query?
 			String.class,  // Input tuple name
+			String.class,  // Event modifier
 			String.class,  // Output tuple name
 			Query.class    // The query object
 		};
@@ -28,16 +31,31 @@ public abstract class Query implements Comparable<Query> {
 			super("query", PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
-		protected Tuple insert(Tuple tuple) throws UpdateException {
+		protected boolean insert(Tuple tuple) throws UpdateException {
 			return super.insert(tuple);
 		}
 	}
 	
-	public Query(String program, String rule, Boolean delete, String input, String output) {
+	private String program;
+	
+	private String rule;
+	
+	private Boolean delete;
+	
+	private Predicate input;
+	
+	private Predicate output;
+	
+	public Query(String program, String rule, Boolean delete, Predicate input, Predicate output) {
+		this.program = program;
+		this.rule = rule;
+		this.delete = delete;
+		this.input = input;
+		this.output = output;
 		try {
 			p2.core.System.query().insert(
 					new Tuple(p2.core.System.query().name(), program, rule, 
-							  delete, input, output, this));
+							  delete, input.event().toString(), output.event().toString()));
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -49,5 +67,25 @@ public abstract class Query implements Comparable<Query> {
 					this.hashCode() > q.hashCode() ? 1 : 0;
 	}
 	
-	public abstract TupleSet evaluate(TupleSet input);
+	public String program() {
+		return this.program;
+	}
+	
+	public String rule() {
+		return this.rule;
+	}
+	
+	public boolean delete() {
+		return this.delete;
+	}
+	
+	public Predicate input() {
+		return this.input;
+	}
+	
+	public Predicate output() {
+		return this.output;
+	}
+	
+	public abstract TupleSet evaluate(TupleSet input) throws RuntimeException;
 }

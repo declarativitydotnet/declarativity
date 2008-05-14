@@ -1,6 +1,7 @@
 package p2.types.function;
 
 import p2.types.basic.Tuple;
+import p2.types.exception.RuntimeException;
 
 public abstract class Aggregate implements TupleFunction<Comparable> {
 	
@@ -9,44 +10,50 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	public static final String COUNT = "count";
 	public static final String AVG   = "avg";
 	
-	public static Aggregate function(String name, TupleFunction<Comparable> accessor) {
-		if (MIN.equals(name)) {
-			return new Min(accessor);
+	public abstract Tuple result();
+	
+	public static Aggregate function(p2.lang.plan.Aggregate agg) {
+		if (MIN.equals(agg.functionName())) {
+			return new Min(agg);
 		}
-		else if (MAX.equals(name)) {
-			return new Max(accessor);
+		else if (MAX.equals(agg.functionName())) {
+			return new Max(agg);
 		}
-		else if (COUNT.equals(name)) {
-			return new Count(accessor);
+		else if (COUNT.equals(agg.functionName())) {
+			return new Count(agg);
 		}
-		else if (AVG.equals(name)) {
-			return new Avg(accessor);
+		else if (AVG.equals(agg.functionName())) {
+			return new Avg(agg);
 		}
 		
 		return null;
 	}
 	
-	public abstract void reset();
-
 	public static class Min extends Aggregate {
+		private Tuple result;
 		private Comparable current;
 		private TupleFunction<Comparable> accessor;
+		private p2.lang.plan.Aggregate variable;
 		
-		public Min(TupleFunction<Comparable> accessor) {
+		public Min(p2.lang.plan.Aggregate variable) {
+			this.result = null;
 			this.current = null;
-			this.accessor = accessor;
+			this.accessor = variable.function();
+			this.variable = variable;
 		}
 		
-		public void reset() {
-			this.current = null;
+		public Tuple result() {
+			return this.result.clone();
 		}
 		
-		public Comparable evaluate(Tuple tuple) {
+		public Comparable evaluate(Tuple tuple) throws RuntimeException {
 			Comparable value = accessor.evaluate(tuple);
 			if (current == null || this.current.compareTo(value) > 0) {
 				this.current = value;
+				this.result = tuple;
+				return value;
 			}
-			return this.current;
+			return null;
 		}
 
 		public Class returnType() {
@@ -55,45 +62,62 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	}
 	
 	public static class Max extends Aggregate {
+		private Tuple result;
 		private Comparable current;
 		private TupleFunction<Comparable> accessor;
+		private p2.lang.plan.Aggregate variable;
 		
-		public Max(TupleFunction<Comparable> accessor) {
+		public Max(p2.lang.plan.Aggregate variable) {
+			this.result = null;
 			this.current = null;
-			this.accessor = accessor;
+			this.accessor = variable.function();
+			this.variable = variable;
 		}
 		
-		public void reset() {
-			this.current = null;
+		public Tuple result() {
+			return this.result.clone();
 		}
 		
-		public Comparable evaluate(Tuple tuple) {
+		public Comparable evaluate(Tuple tuple) throws RuntimeException {
 			Comparable value = accessor.evaluate(tuple);
 			if (current == null || this.current.compareTo(value) < 0) {
 				this.current = value;
+				this.result = tuple;
+				return value;
 			}
-			return this.current;
+			return null;
 		}
 
 		public Class returnType() {
-			return accessor == null ? Integer.class : accessor.returnType();
+			return accessor.returnType();
 		}
 	}
 	
 	public static class Count extends Aggregate {
+		private Tuple result;
 		private Integer current;
 		private TupleFunction<Comparable> accessor;
+		private p2.lang.plan.Aggregate variable;
 		
-		public Count(TupleFunction<Comparable> accessor) {
+		public Count(p2.lang.plan.Aggregate variable) {
+			this.result = null;
 			this.current = new Integer(0);
-			this.accessor = accessor;
+			this.accessor = variable.function();
+			this.variable = variable;
 		}
 		
-		public void reset() {
-			this.current = new Integer(0);
+		public Tuple result() {
+			if (this.result != null) {
+				this.result = this.result.clone();
+				int position = this.variable.position();
+				this.result.value(position, this.current);
+				return this.result;
+			}
+			return null;
 		}
 		
 		public Comparable evaluate(Tuple tuple) {
+			this.result = tuple;
 			this.current += 1;
 			return this.current;
 		}
@@ -104,30 +128,40 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	}
 	
 	public static class Avg extends Aggregate {
+		private Tuple result;
 		private Float sum;
 		private Float count;
 		private TupleFunction<Comparable> accessor;
+		private p2.lang.plan.Aggregate variable;
 		
-		public Avg(TupleFunction<Comparable> accessor) {
+		public Avg(p2.lang.plan.Aggregate variable) {
+			this.result = null;
 			this.sum = new Float(0);
 			this.count = new Float(0);
-			this.accessor = accessor;
+			this.accessor = variable.function();
+			this.variable = variable;
 		}
 		
-		public void reset() {
-			this.sum = new Float(0);
-			this.count = new Float(0);
+		public Tuple result() {
+			if (this.result != null) {
+				this.result = this.result.clone();
+				int position = this.variable.position();
+				this.result.value(position, this.sum / this.count);
+				return this.result;
+			}
+			return null;
 		}
 		
-		public Comparable evaluate(Tuple tuple) {
-			Number value = (Number) accessor.evaluate(tuple);
+		public Comparable evaluate(Tuple tuple) throws RuntimeException {
+			this.result = tuple;
+			Number value = (Number) this.accessor.evaluate(tuple);
 			this.sum += value.floatValue();
 			this.count += 1.0;
 			return this.sum / this.count;
 		}
 
 		public Class returnType() {
-			return accessor.returnType();
+			return Float.class;
 		}
 	}
 }

@@ -1,11 +1,13 @@
 package p2.lang.plan;
 
 import java.util.Set;
-
+import p2.lang.plan.Predicate.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
+import p2.types.operator.Operator;
+import p2.types.operator.Assign;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 
@@ -27,7 +29,14 @@ public class Assignment extends Term {
 		}
 		
 		@Override
-		protected Tuple insert(Tuple tuple) throws UpdateException {
+		protected boolean insert(Tuple tuple) throws UpdateException {
+			Assignment object = (Assignment) tuple.value(Field.OBJECT.ordinal());
+			if (object == null) {
+				throw new UpdateException("Assignment object null");
+			}
+			object.program   = (String) tuple.value(Field.PROGRAM.ordinal());
+			object.rule      = (String) tuple.value(Field.RULE.ordinal());
+			object.position  = (Integer) tuple.value(Field.POSITION.ordinal());
 			return super.insert(tuple);
 		}
 		
@@ -36,6 +45,8 @@ public class Assignment extends Term {
 			return super.remove(tuple);
 		}
 	}
+	
+	private final static AssignmentTable table = new AssignmentTable();
 	
 	private Variable variable;
 	
@@ -53,6 +64,29 @@ public class Assignment extends Term {
 	@Override
 	public Set<Variable> requires() {
 		return value.variables();
+	}
+	
+	public Variable variable() {
+		return this.variable;
+	}
+	
+	public Expression value() {
+		return this.value();
+	}
+
+	@Override
+	public Operator operator() {
+		return new Assign(this);
+	}
+
+	@Override
+	public void set(String program, String rule, Integer position) {
+		Tuple me = new Tuple(this.table.name(), program, rule, position, this);
+		try {
+			this.table.force(me);
+		} catch (UpdateException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

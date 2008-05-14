@@ -2,7 +2,7 @@ package p2.lang.plan;
 
 import java.util.HashSet;
 import java.util.Set;
-
+import p2.types.exception.RuntimeException;
 import p2.types.basic.Tuple;
 import p2.types.function.TupleFunction;
 
@@ -66,8 +66,10 @@ public class Variable extends Expression {
 	@Override
 	public TupleFunction function() {
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) {
-				return tuple.value(position());
+			public Object evaluate(Tuple tuple) throws RuntimeException {
+				if (tuple == null || !tuple.schema().contains(Variable.this))
+					throw new RuntimeException("Varaible " + this + " not in tuple " + tuple);
+				return tuple.value(name());
 			}
 
 			public Class returnType() {
