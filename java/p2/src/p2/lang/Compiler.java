@@ -1,11 +1,10 @@
-package p2.exec;
+package p2.lang;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-import p2.core.Program;
 import p2.lang.parse.Parser;
 import p2.lang.parse.TypeChecker;
 import p2.lang.plan.*;
@@ -31,44 +30,44 @@ public class Compiler extends Tool {
 	public static class CompileTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);
 
-		public enum Field{NAME, FILE, PROGRAM};
+		public enum Field{NAME, OWNER, FILE, PROGRAM};
 		public static final Class[] SCHEMA = {
 			String.class,  // Program name
+			String.class,  // Program owner
 			String.class,  // Program file
 			Program.class  // The program object
 		};
 
 		public CompileTable() {
-			super("compile", PRIMARY_KEY, new TypeList(SCHEMA));
+			super("compiler", PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 
 		protected boolean insert(Tuple tuple) throws UpdateException {
-			Compiler compiler = new Compiler((String)tuple.value(Field.FILE.ordinal()));
-			tuple.value(Field.PROGRAM.ordinal(), compiler.program());
+			String name  = (String) tuple.value(Field.NAME.ordinal());
+			String owner = (String) tuple.value(Field.OWNER.ordinal());
+			String file  = (String) tuple.value(Field.FILE.ordinal());
+			Compiler compiler = new Compiler();
+			tuple.value(Field.PROGRAM.ordinal(), compiler.program(name, owner, file));
 			return super.insert(tuple);
 		}
 	}
 
 
-	private TypeChecker typeChecker;
-
 	private Program program;
+	
+	private TypeChecker typeChecker;
 
 	/** Create a new driver for Overlog. */
 	public Compiler() {
-		this.program = null;
-		typeChecker = new TypeChecker(this.runtime);
+		typeChecker = null;
 	}
 	
-	public Compiler(String file) {
-		this.program = null;
+	public Program program(String name, String owner, String file) {
+		this.program = new Program(name, owner);
 		typeChecker = new TypeChecker(this.runtime);
 		String[] args = new String[1];
 		args[0] = file;
 		run(args);
-	}
-
-	public Program program() {
 		return this.program;
 	}
 	
@@ -97,7 +96,6 @@ public class Compiler extends Tool {
 	public Node parse(Reader in, File file) throws IOException, ParseException {
 		try {
 			Parser parser = new Parser(in, file.toString(), (int)file.length());
-			this.program = new Program(file.getName());
 			return (Node)parser.value(parser.pProgram(0));
 		} catch (ParseException e) {
 			System.err.println(e.getMessage());

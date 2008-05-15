@@ -1,4 +1,4 @@
-package p2.exec;
+package p2.core;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ public class Schedule extends ObjectTable {
 	
 	public static final Key PRIMARY_KEY = new Key();
 	
-	public enum Field {TIME, NAME, EVENT, SET};
+	public enum Field {TIME, PROGRAM, TUPLENAME, EVENT, SET};
 	public static final Class[] SCHEMA = { 
 		Long.class,     // Time
 		String.class,   // Program name

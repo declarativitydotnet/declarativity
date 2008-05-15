@@ -43,8 +43,6 @@ public class Rule extends Clause {
 		}
 	}
 	
-	private static RuleTable table = new RuleTable();
-	
 	private String program;
 	
 	private String name;
@@ -80,8 +78,8 @@ public class Rule extends Clause {
 	
 	@Override
 	public void set(String program) throws UpdateException {
-		Tuple me = new Tuple(this.table.name(), program, name, deletion, this);
-		this.table.force(me);
+		Tuple me = new Tuple(Program.rule.name(), program, name, deletion, this);
+		Program.rule.force(me);
 	}
 
 	public List<Query> query() throws PlannerException {

@@ -20,7 +20,7 @@ public class Value<Type> extends Expression {
 	
 	@Override
 	public Class type() {
-		return this.value.getClass();
+		return this.value == null ? null : this.value.getClass();
 	}
 	
 	@Override

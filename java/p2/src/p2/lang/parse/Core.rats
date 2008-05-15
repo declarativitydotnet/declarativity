@@ -30,13 +30,14 @@ generic Import = void:"import":Word TypeName;
 
 //----------------------------  Fact  --------------------------------------/
 
-generic Fact = TupleName void:"(":Symbol ConstantList void:")":Symbol;
+generic Fact = TupleName void:"(":Symbol ExpressionList void:")":Symbol;
 
 
 //----------------------------  Rules  --------------------------------------/
 
 generic Rule = 
-    Name ("delete":Word)? RuleHead void:":-":Symbol RuleBody 
+      null ("delete":Word)? RuleHead void:":-":Symbol RuleBody 
+    / Name ("delete":Word)? RuleHead void:":-":Symbol RuleBody 
     ;
 
 generic RuleHead = Predicate;

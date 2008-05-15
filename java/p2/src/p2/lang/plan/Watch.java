@@ -8,7 +8,7 @@ import p2.types.table.ObjectTable;
 
 public class Watch extends Clause {
 	
-	private static class WatchTable extends ObjectTable {
+	public static class WatchTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key();
 
 		public enum Field {PROGRAM, TUPLENAME, MODIFIER, OBJECT};
@@ -37,8 +37,6 @@ public class Watch extends Clause {
 		}
 	}
 	
-	private static final WatchTable table = new WatchTable();
-	
 	private String program;
 	
 	private String name;
@@ -57,6 +55,6 @@ public class Watch extends Clause {
 
 	@Override
 	public void set(String program) throws UpdateException {
-		this.table.force(new Tuple(this.table.name(), program, name, modifier, this));
+		Program.watch.force(new Tuple(Program.watch.name(), program, name, modifier, this));
 	}
 }

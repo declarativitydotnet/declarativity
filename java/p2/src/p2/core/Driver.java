@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import p2.exec.Query;
-import p2.exec.Schedule;
 import p2.lang.plan.Predicate;
+import p2.lang.plan.Program;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
@@ -18,16 +18,30 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 
-public class Driver extends ObjectTable {
-	public static final Key PRIMARY_KEY = new Key(0,1);
+public class Driver {
 	
-	public enum Field{PROGRAM, TUPLENAME, TUPLESET};
-	public static final Class[] SCHEMA =  {
-		String.class,   // Program name
-		String.class,   // Tuple name
-		TupleSet.class  // TupleSet to evaluate
-	};
 
+	public static class DriverTable extends ObjectTable {
+		public static final Key PRIMARY_KEY = new Key(0,1);
+
+		public enum Field{PROGRAM, TUPLENAME, TUPLESET};
+		public static final Class[] SCHEMA =  {
+			String.class,   // Program name
+			String.class,   // Tuple name
+			TupleSet.class  // TupleSet to evaluate
+		};
+
+		public DriverTable() {
+			super("driver", PRIMARY_KEY, new TypeList(SCHEMA));
+		}
+
+		protected boolean insert(Tuple tuple) throws UpdateException {
+			String   name   = (String) tuple.value(Field.PROGRAM.ordinal());
+			TupleSet tuples = (TupleSet) tuple.value(Field.TUPLESET.ordinal());
+			p2.core.System.driver().evaluate(System.program(name), tuples);
+			return true;  // Don't store the tuple
+		}
+	}
 
 	/** The system logical clock. */
 	private static Clock clock = new Clock("localhost");
@@ -38,19 +52,10 @@ public class Driver extends ObjectTable {
 	private Schedule scheduleTable;
 	
 	public Driver(Program runtime, Schedule schedule) {
-		super("driver", PRIMARY_KEY, new TypeList(SCHEMA));
 		this.runtime = runtime;
 		this.scheduleTable = schedule;
 	}
 	
-	protected boolean insert(Tuple tuple) throws UpdateException {
-		String   name   = (String) tuple.value(Field.PROGRAM.ordinal());
-		TupleSet tuples = (TupleSet) tuple.value(Field.TUPLESET.ordinal());
-		evaluate(System.program(name), tuples);
-		return true;  // Don't store the tuple
-	}
-	
-
 
 	public void run() {
 		// TODO Schedule all facts for time 0.

@@ -28,6 +28,7 @@ generic TupleName =
 generic Variable = 
        name:Name &{ name.length() > 0 && Character.isUpperCase(name.charAt(0)) }
     /  "_":Symbol
+    /  "*":Symbol
     ;
 				  
 
@@ -35,10 +36,9 @@ generic Location = void:'@' Variable;
 
 generic Aggregate = Name void:'<' AggregateVariable void:'>';
 
-String AggregateVariable =
+Node AggregateVariable =
     <LocationVariable>  Location
   / <Variable>          Variable
-  / <Star>              '*' Spacing { yyValue = null; }
   ;
 
 generic AttributePosition = void:'$' [0-9]+ Spacing;

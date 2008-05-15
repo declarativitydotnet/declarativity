@@ -40,8 +40,6 @@ public class Fact extends Clause {
 		}
 	}
 	
-	private static final FactTable table = new FactTable();
-	
 	private String program;
 	
 	private String name;
@@ -79,7 +77,7 @@ public class Fact extends Clause {
 		}
 		
 		Tuple fact = new Tuple(name, values);
-		this.table.force(new Tuple(this.table.name(), program, name, fact));
+		Program.fact.force(new Tuple(Program.fact.name(), program, name, fact));
 	}
 
 }

@@ -53,8 +53,6 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 	}
 	
-	private final static PredicateTable table = new PredicateTable();
-	
 	private boolean notin;
 	
 	private String name;
@@ -129,9 +127,9 @@ public class Predicate extends Term implements Iterable<Expression> {
 
 	@Override
 	public void set(String program, String rule, Integer position) {
-		Tuple me = new Tuple(this.table.name(), program, rule, position, this);
+		Tuple me = new Tuple(Program.predicate.name(), program, rule, position, this);
 		try {
-			this.table.force(me);
+			Program.predicate.force(me);
 		} catch (UpdateException e) {
 			e.printStackTrace();
 		}

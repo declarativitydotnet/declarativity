@@ -41,8 +41,6 @@ public class Selection extends Term {
 		}
 	}
 	
-	private static final SelectionTable table = new SelectionTable();
-	
 	private Boolean predicate;
 	
 	public Selection(Boolean predicate) {
@@ -72,9 +70,9 @@ public class Selection extends Term {
 
 	@Override
 	public void set(String program, String rule, Integer position) {
-		Tuple tuple = new Tuple(table.name(), program, rule, position, this);
+		Tuple tuple = new Tuple(Program.selection.name(), program, rule, position, this);
 		try {
-			this.table.force(tuple);
+			Program.selection.force(tuple);
 		} catch (UpdateException e) {
 			e.printStackTrace();
 			System.exit(1);

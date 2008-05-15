@@ -68,10 +68,12 @@ public final class TypeChecker extends Visitor {
 		NAME_TO_BASETYPE.put("short", Short.class);
 		NAME_TO_BASETYPE.put("void", Void.class);
 	}
-
+	
 	public static Class type(String name) {
 		return NAME_TO_BASETYPE.containsKey(name) ? NAME_TO_BASETYPE.get(name) : null;
 	}
+	
+	private Long uniqueID;
 
 	/** The runtime. */
 	protected Runtime runtime;
@@ -97,6 +99,7 @@ public final class TypeChecker extends Visitor {
 	public void prepare() {
 		this.table = new SymbolTable(); 
 		this.ruleNames = new HashSet<String>();
+		this.uniqueID = 0L;
 	}
 
 	/**
@@ -126,11 +129,17 @@ public final class TypeChecker extends Visitor {
 			return lub(x.getSuperclass(), y);
 		}
 	}
+	
+	private boolean subtype(Class superType, Class subType) {
+		if (subType == null) return true;
+		else return superType.isAssignableFrom(subType);
+	}
 
 	// =========================================================================
 
 	private p2.lang.plan.Boolean ensureBooleanValue(Expression expr) {
-		if (Void.class == expr.type()) {
+		if (expr.type() == null || expr.type() == Void.class) {
+			runtime.error("Can't ensure boolean value from void class");
 			return null; // Can't do it for void expression type
 		}
 		else if (Number.class.isAssignableFrom(expr.type())) {
@@ -141,7 +150,7 @@ public final class TypeChecker extends Visitor {
 		else if (!Boolean.class.isAssignableFrom(expr.type())) {
 			/* expr != null*/
 			return new p2.lang.plan.Boolean(p2.lang.plan.Boolean.NEQUAL,
-									    expr, Null.NULLV);
+									    expr, new Null());
 		}
 		return (p2.lang.plan.Boolean) expr;
 	}
@@ -175,14 +184,14 @@ public final class TypeChecker extends Visitor {
 	
 	public Class visitFact(final GNode n) {
 		Class type = (Class) dispatch((Node)n.getNode(0));
-		assert(type == String.class);
-		String name = (String) n.getNode(0).getProperty(Constants.TYPE);
+		assert(type == Value.class);
+		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
 		
 		List<Expression> args = new ArrayList<Expression>();
 		if (n.size() != 0) {
 			for (Node arg : n.<Node> getList(1)) {
 				Class t = (Class) dispatch(arg);
-				assert(Expression.class.isAssignableFrom(t));
+				assert(subtype(Expression.class, t));
 				Expression expr = (Expression) arg.getProperty(Constants.TYPE);
 				if (expr.variables().size() > 0) {
 					runtime.error("Facts are not allowed to contain variables!", n);
@@ -192,7 +201,7 @@ public final class TypeChecker extends Visitor {
 			}
 		}
 		
-		Fact fact = new Fact(n.getLocation(), name, args);
+		Fact fact = new Fact(n.getLocation(), name.value(), args);
 		n.setProperty(Constants.TYPE, fact);
 		return Fact.class;
 	}
@@ -234,7 +243,7 @@ public final class TypeChecker extends Visitor {
 		
 		assert(type == Value.class);
 		Value size = (Value) n.getNode(1).getProperty(Constants.TYPE);
-		if (!Integer.class.isAssignableFrom(size.type())) {
+		if (size.type() == null || !Integer.class.isAssignableFrom(size.type())) {
 			runtime.error("Table size type is " + type.getClass() + " must be type " + Integer.class);
 			return Error.class;
 		}
@@ -247,7 +256,7 @@ public final class TypeChecker extends Visitor {
 	    assert(type == Value.class);	
 	    
 		Value lifetime = (Value) n.getNode(2).getProperty(Constants.TYPE);
-		if (!Number.class.isAssignableFrom(lifetime.type())) {
+		if (lifetime.type() == null || !Number.class.isAssignableFrom(lifetime.type())) {
 			runtime.error("Lifetime type " + type + 
 					" not allowed! Must be subtype of " + Number.class);
 			return Error.class;
@@ -303,16 +312,17 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitKeys(final GNode n) {
-		Integer[] keys = new Integer[n.size()];
+		List<Node> keyList = n.<Node>getList(0).list();
+		Integer[] keys = new Integer[keyList.size()];
 		int index = 0;
-		if (n.size() > 0) {
-			for (Node k : n.<Node>getList(0)) {
+		if (keyList.size() > 0) {
+			for (Node k : keyList) {
 				Class type = (Class) dispatch(k);
 				if (type == Error.class) return Error.class;
 				assert(type == Value.class);
 				
 				Value key  = (Value) k.getProperty(Constants.TYPE);
-				if (!Integer.class.isAssignableFrom(key.type())) {
+				if (key.type() == null || !Integer.class.isAssignableFrom(key.type())) {
 					runtime.error("Key must be of type Integer! type = " + key);
 					return Error.class;
 				}
@@ -337,11 +347,13 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitRule(final GNode n) {
+		String name;
 		if (n.getString(0) == null) {
-			runtime.error("All rules must define a rule name!");
-			return Error.class;
+			name = "Rule" + this.uniqueID++;
 		}
-		String name = n.getString(0);
+		else { 
+			name = n.getString(0);
+		}
 		
 		if (ruleNames.contains(name)) {
 			runtime.error("Multiple rule names defined as " 
@@ -538,7 +550,7 @@ public final class TypeChecker extends Visitor {
 			}
 
 			/* Ensure the type matches the schema definition. */
-			if (!schema.get(index).isAssignableFrom(param.type())) {
+			if (!subtype(schema.get(index), param.type())) {
 				runtime.error("Predicate " + name.value() + " argument " + index
 						+ " type " + param.type() + " does not match type " 
 						+ schema.get(index) + " in schema.", n);
@@ -591,11 +603,11 @@ public final class TypeChecker extends Visitor {
 		assert(Expression.class.isAssignableFrom(type));
 		Expression expr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
-		if (var.type() == null) {
+		if (expr.type() != null && var.type() == null) {
 			var.type(expr.type());
 			table.current().define(var.name(), expr.type());
 		}
-		else if (!var.type().isAssignableFrom(expr.type())) {
+		else if (!subtype(var.type(), expr.type())) {
 			runtime.error("Assignment type mismatch: variable " + var.name() + 
 					" of type " + var.type() + 
 					" cannot be assigned a value of type " + expr.type());
@@ -624,6 +636,11 @@ public final class TypeChecker extends Visitor {
 	public Class visitExpression(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
 		if (type == Error.class) return Error.class;
+		else if (!Expression.class.isAssignableFrom(type)) {
+			runtime.error("Expected expression type but got type " + 
+					      type + " instead.",n);
+			return Error.class;
+		}
 		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		expr.location(n.getLocation()); // Set the location of this expression.
 		n.setProperty(Constants.TYPE, n.getNode(0).getProperty(Constants.TYPE));
@@ -977,6 +994,17 @@ public final class TypeChecker extends Visitor {
 		Class type = (Class) dispatch(n.getNode(0));
 		if (type == Error.class) return Error.class;
 		
+		if (type == Variable.class) {
+			Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
+			if (type(var.name()) != null) {
+				runtime.warning("Assuming " + var.name() + 
+						        " is not a variable but rather refers the class type of " + 
+						        type(var.name()), n);
+				n.setProperty(Constants.TYPE, type(var.name()));
+				return Class.class;
+			}
+		}
+		
 		if (type == Reference.class) {
 			Reference ref = (Reference) n.getNode(0).getProperty(Constants.TYPE);
 			System.err.println("REFERENCE " + ref.toString());
@@ -1123,6 +1151,7 @@ public final class TypeChecker extends Visitor {
 		if (n.size() != 0) {
 			for (Node arg : n.<Node> getList(0)) {
 				Class t = (Class) dispatch(arg);
+				if (t == Error.class) return Error.class;
 				assert(Expression.class.isAssignableFrom(t));
 				args.add((Expression)arg.getProperty(Constants.TYPE));
 			}
@@ -1187,22 +1216,15 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitVariable(final GNode n) {
-		String name = n.getString(0);
-		if (type(name) != null) {
-			n.setProperty(Constants.TYPE, type(name));
-			return Class.class;
+		Class type =  (Class)  table.current().lookup(n.getString(0));
+		if (DontCare.DONTCARE.equals(n.getString(0))) {
+			/* Generate a fake variable for all don't cares. */
+			n.setProperty(Constants.TYPE, new DontCare(null));
 		}
 		else {
-			Class type =  (Class)  table.current().lookup(n.getString(0));
-			if (DontCare.DONTCARE.equals(n.getString(0))) {
-				/* Generate a fake variable for all don't cares. */
-				n.setProperty(Constants.TYPE, new DontCare(null));
-			}
-			else {
-				n.setProperty(Constants.TYPE, new Variable(n.getString(0), type));
-			}
-			return Variable.class;
+			n.setProperty(Constants.TYPE, new Variable(n.getString(0), type));
 		}
+		return Variable.class;
 	}
 
 	public Class visitLocation(final GNode n) {
@@ -1269,7 +1291,7 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitNullConstant(final GNode n) {
-		n.setProperty(Constants.TYPE, Null.NULLV);
+		n.setProperty(Constants.TYPE, new Null());
 		return Value.class;
 	}
 

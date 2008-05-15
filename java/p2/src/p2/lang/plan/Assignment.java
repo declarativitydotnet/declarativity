@@ -46,8 +46,6 @@ public class Assignment extends Term {
 		}
 	}
 	
-	private final static AssignmentTable table = new AssignmentTable();
-	
 	private Variable variable;
 	
 	private Expression value;
@@ -81,9 +79,9 @@ public class Assignment extends Term {
 
 	@Override
 	public void set(String program, String rule, Integer position) {
-		Tuple me = new Tuple(this.table.name(), program, rule, position, this);
+		Tuple me = new Tuple(Program.assignment.name(), program, rule, position, this);
 		try {
-			this.table.force(me);
+			Program.assignment.force(me);
 		} catch (UpdateException e) {
 			e.printStackTrace();
 		}

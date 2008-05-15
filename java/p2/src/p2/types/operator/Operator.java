@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import p2.core.Program;
+import p2.lang.plan.Program;
 import p2.lang.plan.Variable;
 import p2.types.basic.Intermediate;
 import p2.types.basic.Schema;
