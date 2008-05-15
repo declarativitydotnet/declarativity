@@ -18,6 +18,7 @@ import p2.lang.plan.Assignment.AssignmentTable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
@@ -63,10 +64,19 @@ public class Program implements Comparable<Program> {
 	
 	private Set<Table> definitions;
 	
+	private Hashtable<String, Set<Query>> queries;
+	
+	private Hashtable<String, TupleSet> facts;
+	
+	private Hashtable<String, Table> tables;
+	
 	public Program(String name, String owner) {
-		this.name  = name;
-		this.owner = owner;
+		this.name        = name;
+		this.owner       = owner;
 		this.definitions = new HashSet<Table>();
+		this.queries     = new Hashtable<String, Set<Query>>();
+		this.facts       = new Hashtable<String, TupleSet>();
+		this.tables      = new Hashtable<String, Table>();
 		try {
 			program.force(new Tuple(program.name(), name, owner, this));
 		} catch (UpdateException e) {
@@ -79,8 +89,47 @@ public class Program implements Comparable<Program> {
 		this.definitions.add(table);
 	}
 	
-	public void plan() {
+	public void plan() throws PlannerException {
+		this.queries.clear();
+		this.facts.clear();
+		this.tables.clear();
 		
+		/* First plan out all the rules. */
+		TupleSet rules = rule.secondary().get(
+				new Key(RuleTable.Field.PROGRAM.ordinal())).lookup(
+						new Key.Value(this.name));
+		
+		for (Tuple tuple : rules) {
+			Rule rule = (Rule) tuple.value(RuleTable.Field.OBJECT.ordinal());
+			Table table = Table.table(rule.head().name());
+			if (!table.isEvent() && !this.tables.containsKey(table.name())) {
+				this.tables.put(table.name(), table); // Cache all hard tables that a written.
+			}
+			
+			/* Store all planned queries from a given rule. 
+			 * NOTE: delta rules can produce > 1 query. */
+			for (Query query : rule.query()) {
+				if (!queries.containsKey(query.input().name())) {
+					queries.put(query.input().name(), new HashSet<Query>());
+				}
+				queries.get(query.input().name()).add(query);
+			}
+		}
+		
+		/* Accumulate all facts. */
+		TupleSet facts = fact.secondary().get(
+				new Key(FactTable.Field.PROGRAM.ordinal())).lookup(
+						new Key.Value(this.name));
+		
+		for (Tuple tuple : facts) {
+			Tuple fact = (Tuple) tuple.value(FactTable.Field.TUPLE.ordinal());
+			if (!this.facts.containsKey(fact.name())) {
+				this.facts.put(fact.name(), new TupleSet(fact.name()));
+			}
+			this.facts.get(fact.name()).add(fact);
+		}
+		
+		/* TODO Register all watch statements. */
 	}
 
 	public int compareTo(Program o) {
@@ -88,13 +137,11 @@ public class Program implements Comparable<Program> {
 	}
 
 	public Hashtable<String, Set<Query>> queries() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.queries;
 	}
 
 	public Hashtable<String, Table> tables() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.tables;
 	}
 
 	public String name() {

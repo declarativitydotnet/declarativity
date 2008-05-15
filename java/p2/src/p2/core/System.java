@@ -7,6 +7,7 @@ import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
 import p2.lang.Compiler.CompileTable;
 import p2.lang.plan.Program;
+import p2.types.exception.PlannerException;
 import p2.types.table.Table;
 
 public class System {
@@ -22,6 +23,9 @@ public class System {
 	
 	private static Schedule schedule;
 	
+	/** The system logical clock. */
+	private static Clock clock;
+	
 	private static Hashtable<String, Program> programs;
 	
 	public static void initialize() {
@@ -30,6 +34,7 @@ public class System {
 		compile     = new CompileTable();
 		driverTable = new DriverTable();
 		schedule    = new Schedule();
+		clock       = new Clock("localhost");
 		programs    = new Hashtable<String, Program>();
 	}
 	
@@ -46,8 +51,15 @@ public class System {
 	}
 	
 	private static void bootstrap() {
-		p2.lang.Compiler compiler = new p2.lang.Compiler();
-		driver = new Driver(compiler.program("runtime", "system", RUNTIME), schedule);
+		java.lang.System.err.println("BOOSTRAP");
+		p2.lang.Compiler compiler = new p2.lang.Compiler("runtime", "system", RUNTIME);
+		try {
+			compiler.program().plan();
+		} catch (PlannerException e) {
+			e.printStackTrace();
+			java.lang.System.exit(1);
+		}
+		driver = new Driver(compiler.program(), schedule, clock);
 	}
 	
 	public static void main(String[] args) {

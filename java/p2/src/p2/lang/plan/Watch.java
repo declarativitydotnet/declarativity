@@ -1,8 +1,11 @@
 package p2.lang.plan;
 
+import p2.lang.plan.Rule.RuleTable.Field;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
+import p2.types.table.HashIndex;
+import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 
@@ -21,6 +24,9 @@ public class Watch extends Clause {
 
 		public WatchTable() {
 			super("watch", PRIMARY_KEY, new TypeList(SCHEMA));
+			Key programKey = new Key(Field.PROGRAM.ordinal());
+			Index index = new HashIndex(this, programKey, Index.Type.SECONDARY);
+			this.secondary.put(programKey, index);
 		}
 
 		@Override

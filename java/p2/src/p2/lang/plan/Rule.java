@@ -12,6 +12,8 @@ import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
+import p2.types.table.HashIndex;
+import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 
@@ -20,7 +22,7 @@ public class Rule extends Clause {
 	public static class RuleTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1);
 		
-		public enum Field {PROGRAM, RULENAME, OBJECT};
+		public enum Field {PROGRAM, RULENAME, DELETION, OBJECT};
 		public static final Class[] SCHEMA =  {
 			String.class,   // Program name
 			String.class,   // Rule name
@@ -30,6 +32,9 @@ public class Rule extends Clause {
 
 		public RuleTable() {
 			super("rule", PRIMARY_KEY, new TypeList(SCHEMA));
+			Key programKey = new Key(Field.PROGRAM.ordinal());
+			Index index = new HashIndex(this, programKey, Index.Type.SECONDARY);
+			this.secondary.put(programKey, index);
 		}
 		
 		@Override
@@ -74,6 +79,14 @@ public class Rule extends Clause {
 			}
 		}
 		return value;
+	}
+	
+	public Predicate head() {
+		return this.head;
+	}
+	
+	public List<Term> body() {
+		return this.body;
 	}
 	
 	@Override

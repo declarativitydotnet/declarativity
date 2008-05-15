@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import p2.exec.Query;
+import p2.lang.plan.Rule.RuleTable.Field;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.PlannerException;
 import p2.types.exception.RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.function.TupleFunction;
+import p2.types.table.HashIndex;
+import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 
@@ -27,6 +30,9 @@ public class Fact extends Clause {
 
 		public FactTable() {
 			super("fact", PRIMARY_KEY, new TypeList(SCHEMA));
+			Key programKey = new Key(Field.PROGRAM.ordinal());
+			Index index = new HashIndex(this, programKey, Index.Type.SECONDARY);
+			this.secondary.put(programKey, index);
 		}
 		
 		@Override

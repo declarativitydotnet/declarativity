@@ -43,25 +43,25 @@ public class Driver {
 		}
 	}
 
-	/** The system logical clock. */
-	private static Clock clock = new Clock("localhost");
-
 	/** The schedule queue. */
 	private Program runtime;
 	
-	private Schedule scheduleTable;
+	private Schedule schedule;
 	
-	public Driver(Program runtime, Schedule schedule) {
+	private Clock clock;
+	
+	public Driver(Program runtime, Schedule schedule, Clock clock) {
 		this.runtime = runtime;
-		this.scheduleTable = schedule;
+		this.schedule = schedule;
+		this.clock = clock;
 	}
 	
 
 	public void run() {
 		// TODO Schedule all facts for time 0.
 		
-		final TupleSet scheduleInsertions = new TupleSet(scheduleTable.name());
-		scheduleTable.register(new Table.Callback() {
+		final TupleSet scheduleInsertions = new TupleSet(schedule.name());
+		schedule.register(new Table.Callback() {
 			public void deletion(TupleSet tuples) { /* Don't care. */ }
 			public void insertion(TupleSet tuples) {
 				scheduleInsertions.addAll(tuples);
@@ -70,17 +70,17 @@ public class Driver {
 		
 		Hashtable<String, TupleSet> insertions = new Hashtable<String, TupleSet>();
 		while (true) {
-			if (scheduleTable.size() == 0) {
+			if (schedule.size() == 0) {
 				// TODO Register callback, go to sleep
 			}
 			try {
 				/* Evaluate queries that run off the start clock. */
-				TupleSet clock = this.clock.set(scheduleTable.min());
+				TupleSet clock = this.clock.set(schedule.min());
 				evaluate(this.runtime, clock); // Eval new clock
 				
 				/* Schedule until nothing left in this clock. */
 				while (scheduleInsertions.size() > 0) {
-					TupleSet scheduled = new TupleSet(scheduleTable.name());
+					TupleSet scheduled = new TupleSet(schedule.name());
 					scheduled.addAll(scheduleInsertions);
 					scheduleInsertions.clear();
 					evaluate(this.runtime, scheduled);
@@ -175,8 +175,8 @@ public class Driver {
 								delta.addAll(result);
 							}
 							else {
-								scheduleTable.schedule(clock.current(), program.name(), 
-									                   Predicate.EventModifier.INSERT.toString(), result);
+								schedule.add(clock.current(), program.name(), 
+									         Predicate.EventModifier.INSERT.toString(), result);
 							}
 							update(deletions, conflicts);
 						} catch (UpdateException e) {

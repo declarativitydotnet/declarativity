@@ -36,7 +36,7 @@ public class Schedule extends ObjectTable {
 		return this.min;
 	}
 	
-	public void schedule(Long clock, String program, String event, TupleSet tuples) {
+	public void add(Long clock, String program, String event, TupleSet tuples) {
 		try {
 			insert(new Tuple(name(), clock, program, tuples.name(), event, tuples));
 		} catch (UpdateException e) {

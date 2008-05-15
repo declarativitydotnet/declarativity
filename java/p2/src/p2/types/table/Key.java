@@ -17,6 +17,13 @@ public class Key implements Comparable<Key>, Iterable<Integer> {
 			this.values = values;
 		}
 		
+		public Value(Comparable... values) {
+			this.values = new Vector<Comparable>();
+			for (Comparable value : values) {
+				this.values.add(value);
+			}
+		}
+		
 		@Override
 		public boolean equals(Object other) {
 			return toString().equals(other.toString());
@@ -39,6 +46,19 @@ public class Key implements Comparable<Key>, Iterable<Integer> {
 		for (Integer i : attr) {
 			this.attributes.add(i);
 		}
+	}
+	
+	@Override
+	public int hashCode() {
+		return toString().hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Key) {
+			return toString().equals(((Key)o).toString());
+		}
+		return false;
 	}
 	
 	@Override

@@ -46,28 +46,31 @@ public class Compiler extends Tool {
 			String name  = (String) tuple.value(Field.NAME.ordinal());
 			String owner = (String) tuple.value(Field.OWNER.ordinal());
 			String file  = (String) tuple.value(Field.FILE.ordinal());
-			Compiler compiler = new Compiler();
-			tuple.value(Field.PROGRAM.ordinal(), compiler.program(name, owner, file));
+			Compiler compiler = new Compiler(name, owner, file);
+			tuple.value(Field.PROGRAM.ordinal(), compiler.program());
 			return super.insert(tuple);
 		}
 	}
 
 
+	private String file;
+	
 	private Program program;
 	
 	private TypeChecker typeChecker;
 
 	/** Create a new driver for Overlog. */
-	public Compiler() {
-		typeChecker = null;
+	public Compiler(String name, String owner, String file) {
+		this.program = new Program(name, owner);
+		this.file = file;
+		typeChecker = new TypeChecker(this.runtime);
+		String[] args = new String[2];
+		args[0] = "-no-exit";
+		args[1] = file;
+		run(args);
 	}
 	
-	public Program program(String name, String owner, String file) {
-		this.program = new Program(name, owner);
-		typeChecker = new TypeChecker(this.runtime);
-		String[] args = new String[1];
-		args[0] = file;
-		run(args);
+	public Program program() {
 		return this.program;
 	}
 	
@@ -90,7 +93,6 @@ public class Compiler extends Tool {
 		"Print the program's AST in source form.").
 		bool("printSymbolTable", "printSymbolTable", false,
 		"Print the program's symbol table.");
-
 	}
 
 	public Node parse(Reader in, File file) throws IOException, ParseException {
@@ -137,20 +139,8 @@ public class Compiler extends Tool {
 				typeChecker.analyze(clause);
 			}
 		}
-		System.err.println(program);
-
 		if (runtime.test("printAST")) {
 			runtime.console().format(node).pln().flush();
 		}
-	}
-
-	/**
-	 * Run the driver with the specified command line arguments.
-	 *
-	 * @param args The command line arguments.
-	 */
-	public static void main(String[] args) {
-		p2.core.System.initialize();
-		new Compiler().run(args);
 	}
 }
