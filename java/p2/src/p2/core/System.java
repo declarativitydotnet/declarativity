@@ -55,11 +55,20 @@ public class System {
 		p2.lang.Compiler compiler = new p2.lang.Compiler("runtime", "system", RUNTIME);
 		try {
 			compiler.program().plan();
+			java.lang.System.err.println(compiler.program().toString());
 		} catch (PlannerException e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
 		driver = new Driver(compiler.program(), schedule, clock);
+		Thread runtime = new Thread(driver);
+		runtime.start();
+		try {
+			runtime.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public static void main(String[] args) {

@@ -85,6 +85,23 @@ public class Program implements Comparable<Program> {
 		}
 	}
 	
+	public String toString() {
+		String program = "PROGRAM " + this.name + "\n";
+		program += "\n============= PROGRAM FACTS ================\n";
+		for (TupleSet factSet : facts.values()) {
+			for (Tuple fact : factSet) {
+				program += fact.toString() + "\n";
+			}
+		}
+		program += "\n============= PROGRAM QUERIES ==============\n";
+		for (String input : queries.keySet()) {
+			for (Query query : queries.get(input)) {
+				program += query.toString() + "\n";
+			}
+		}
+		return program;
+	}
+	
 	public void definition(Table table) {
 		this.definitions.add(table);
 	}
@@ -142,6 +159,10 @@ public class Program implements Comparable<Program> {
 
 	public Hashtable<String, Table> tables() {
 		return this.tables;
+	}
+	
+	public Hashtable<String, TupleSet> facts() {
+		return this.facts;
 	}
 
 	public String name() {

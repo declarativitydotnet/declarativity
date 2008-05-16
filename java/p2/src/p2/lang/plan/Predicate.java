@@ -28,6 +28,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 			String.class,     // program name
 			String.class,     // rule name
 			Integer.class,    // position
+			String.class,     // Event
 			Predicate.class   // predicate object
 		};
 
@@ -127,7 +128,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 
 	@Override
 	public void set(String program, String rule, Integer position) {
-		Tuple me = new Tuple(Program.predicate.name(), program, rule, position, this);
+		Tuple me = new Tuple(Program.predicate.name(), program, rule, position, event.toString(), this);
 		try {
 			Program.predicate.force(me);
 		} catch (UpdateException e) {

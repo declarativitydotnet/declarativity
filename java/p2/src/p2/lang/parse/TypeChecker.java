@@ -974,7 +974,8 @@ public final class TypeChecker extends Visitor {
 				}
 			}
 		} catch (Exception e) {
-			runtime.error("Method error: " + e.toString(), n);
+			runtime.error("Method error: on " + 
+					      context.toString() + ": " + e.toString(), n);
 			return Error.class;
 		}
 		

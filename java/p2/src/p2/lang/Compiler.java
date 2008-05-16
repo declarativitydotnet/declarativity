@@ -137,6 +137,13 @@ public class Compiler extends Tool {
 			    clause.getName().equals("Fact") ||
 			    clause.getName().equals("Watch")) {
 				typeChecker.analyze(clause);
+				Clause c = (Clause) clause.getProperty(Constants.TYPE);
+				try {
+					c.set(this.program.name());
+				} catch (UpdateException e) {
+					e.printStackTrace();
+					runtime.error(e.toString());
+				}
 			}
 		}
 		if (runtime.test("printAST")) {

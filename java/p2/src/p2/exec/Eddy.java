@@ -24,6 +24,16 @@ public class Eddy extends Query {
 		this.body = body;
 	}
 	
+	@Override
+	public String toString() {
+		String query = "EDDY: input " + input().toString();
+		for (Operator oper : body) {
+			query += " -> " + oper.toString();
+		}
+		query += " -> " + head.toString();
+		return query;
+	}
+	
 	public TupleSet evaluate(TupleSet input) {
 		
 		return null;

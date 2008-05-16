@@ -18,9 +18,8 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 
-public class Driver {
+public class Driver implements Runnable {
 	
-
 	public static class DriverTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1);
 
@@ -58,21 +57,41 @@ public class Driver {
 	
 
 	public void run() {
-		// TODO Schedule all facts for time 0.
-		
 		final TupleSet scheduleInsertions = new TupleSet(schedule.name());
 		schedule.register(new Table.Callback() {
 			public void deletion(TupleSet tuples) { /* Don't care. */ }
 			public void insertion(TupleSet tuples) {
-				scheduleInsertions.addAll(tuples);
+				synchronized (scheduleInsertions) {
+					scheduleInsertions.addAll(tuples);
+					scheduleInsertions.notify();
+				}
 			}
 		});
 		
+		for (TupleSet fact : this.runtime.facts().values()) {
+			try {
+				schedule.insert(
+						new Tuple(schedule.name(), clock.current(), runtime.name(), 
+								  fact.name(), Predicate.EventModifier.INSERT.toString(), fact));
+			} catch (UpdateException e) {
+				e.printStackTrace();
+				java.lang.System.exit(1);
+			}
+		}
+		
 		Hashtable<String, TupleSet> insertions = new Hashtable<String, TupleSet>();
 		while (true) {
-			if (schedule.size() == 0) {
-				// TODO Register callback, go to sleep
+			synchronized (scheduleInsertions) {
+				if (scheduleInsertions.size() == 0) {
+					try {
+						scheduleInsertions.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						java.lang.System.exit(1);
+					}
+				}
 			}
+			
 			try {
 				/* Evaluate queries that run off the start clock. */
 				TupleSet clock = this.clock.set(schedule.min());

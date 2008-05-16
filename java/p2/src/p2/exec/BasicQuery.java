@@ -19,6 +19,17 @@ public class BasicQuery extends Query {
 		this.head = head;
 		this.body = body;
 	}
+	
+	@Override
+	public String toString() {
+		String query = "Basic Query Rule + " + rule() + 
+		               ": input " + input().toString();
+		for (Operator oper : body) {
+			query += " -> " + oper.toString();
+		}
+		query += " -> " + head.toString();
+		return query;
+	}
 
 	@Override
 	public TupleSet evaluate(TupleSet input) throws RuntimeException {

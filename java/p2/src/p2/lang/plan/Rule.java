@@ -91,6 +91,11 @@ public class Rule extends Clause {
 	
 	@Override
 	public void set(String program) throws UpdateException {
+		this.head.set(program, this.name, 0);
+		for (int i = 0; i < this.body.size(); i++) {
+			this.body.get(i).set(program, this.name, i+1);
+		}
+		
 		Tuple me = new Tuple(Program.rule.name(), program, name, deletion, this);
 		Program.rule.force(me);
 	}
@@ -127,6 +132,11 @@ public class Rule extends Clause {
 				if (!(term1 instanceof Predicate)) {
 					continue;
 				}
+				else {
+					Predicate pred = (Predicate) term1;
+					if (pred.notin()) continue;
+				}
+				
 				Predicate delta = (Predicate) term1;
 				List<Operator> operators = new ArrayList<Operator>();
 				for (Term term2 : body) {

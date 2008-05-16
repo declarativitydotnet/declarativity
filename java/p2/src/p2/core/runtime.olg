@@ -82,14 +82,14 @@ planned(Program) :-
 dependency(Program, Head.name(), Body.name()) :-
 	planned(Program),
 	rule(Program, Rule, _),
-	predicate(Program, Rule, 0, Head), /* Position == 0 */
-	predicate(Program, Rule, Pos, Body), Pos > 0;
+	predicate(Program, Rule, 0, Event, Head), /* Position == 0 */
+	predicate(Program, Rule, Pos, Event, Body), Pos > 0;
 
 /* Initialize all predicates to stratum 0. */
 priority(Program, Pred.name(), 0) :-
 	planned(Program),
 	rule(Program, Rule, _),
-	predicate(Program, Rule, Pos, Pred);
+	predicate(Program, Rule, Pos, Event, Pred);
 
 /* Bubble up predicates in the stratum chain. */
 priority(Program, Head, Priority) :-
