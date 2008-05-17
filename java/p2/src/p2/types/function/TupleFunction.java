@@ -4,7 +4,7 @@ import java.util.Set;
 
 import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 
 
 public interface TupleFunction<Type> {
@@ -13,9 +13,9 @@ public interface TupleFunction<Type> {
 	 * Evaluate the function on the given tuple.
 	 * @param tuple  The tuple argument.
 	 * @return The object value of the function evaluation.
-	 * @throws RuntimeException 
+	 * @throws P2RuntimeException 
 	 */
-	public Type evaluate(Tuple tuple) throws RuntimeException;
+	public Type evaluate(Tuple tuple) throws P2RuntimeException;
 	
 	/**
 	 * The return type

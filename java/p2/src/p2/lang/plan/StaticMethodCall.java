@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class StaticMethodCall extends Expression {
@@ -75,7 +75,7 @@ public class StaticMethodCall extends Expression {
 		}
 		
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws RuntimeException {
+			public Object evaluate(Tuple tuple) throws P2RuntimeException {
 				Object[] arguments = new Object[StaticMethodCall.this.arguments.size()];
 				int index = 0;
 				for (TupleFunction argFunction : argFunctions) {
@@ -85,7 +85,7 @@ public class StaticMethodCall extends Expression {
 					return StaticMethodCall.this.method.invoke(null, arguments);
 				} catch (Exception e) {
 					e.printStackTrace();
-					throw new RuntimeException(e.toString());
+					throw new P2RuntimeException(e.toString());
 				}
 			}
 

@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class Range extends Expression {
@@ -118,7 +118,7 @@ public class Range extends Expression {
 			private final TupleFunction startFn = begin.function();
 			private final TupleFunction endFn   = end.function();
 
-			public Function evaluate(Tuple tuple) throws RuntimeException {
+			public Function evaluate(Tuple tuple) throws P2RuntimeException {
 				Comparable start = (Comparable)startFn.evaluate(tuple);
 				Comparable end   = (Comparable)endFn.evaluate(tuple);
 				if (oper == Operator.CC)

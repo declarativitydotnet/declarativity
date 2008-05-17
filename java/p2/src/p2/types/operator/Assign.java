@@ -7,7 +7,7 @@ import p2.types.basic.Intermediate;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class Assign extends Operator {
@@ -25,7 +25,7 @@ public class Assign extends Operator {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws RuntimeException {
+	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		Variable variable = assignment.variable();
 		TupleFunction<Comparable> function = assignment.value().function();
 		for (Tuple tuple : tuples) {

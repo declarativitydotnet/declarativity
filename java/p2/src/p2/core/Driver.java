@@ -12,7 +12,7 @@ import p2.lang.plan.Program;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
@@ -61,18 +61,39 @@ public class Driver implements Runnable {
 		schedule.register(new Table.Callback() {
 			public void deletion(TupleSet tuples) { /* Don't care. */ }
 			public void insertion(TupleSet tuples) {
-				synchronized (scheduleInsertions) {
+				synchronized (schedule) {
 					scheduleInsertions.addAll(tuples);
-					scheduleInsertions.notify();
+					schedule.notify();
 				}
 			}
 		});
 		
+		TupleSet factSchedule = new TupleSet(schedule.name());
 		for (TupleSet fact : this.runtime.facts().values()) {
+			Table table = Table.table(fact.name());
 			try {
-				schedule.insert(
+				if (!table.isEvent()) {
+					TupleSet delta = table.insert(fact);
+					if (delta.size() > 0) {
+						factSchedule.add(
+							new Tuple(schedule.name(), clock.current(), runtime.name(), 
+									  delta.name(), Predicate.EventModifier.INSERT.toString(), delta));
+					}
+				}
+				else {
+					factSchedule.add(
 						new Tuple(schedule.name(), clock.current(), runtime.name(), 
-								  fact.name(), Predicate.EventModifier.INSERT.toString(), fact));
+								  fact.name(), Predicate.EventModifier.NONE.toString(), fact));
+				}
+			} catch (UpdateException e) {
+				e.printStackTrace();
+				java.lang.System.exit(0);
+			}
+		}
+		
+		if (factSchedule.size() > 0) {
+			try {
+				schedule.insert(factSchedule);
 			} catch (UpdateException e) {
 				e.printStackTrace();
 				java.lang.System.exit(1);
@@ -81,10 +102,11 @@ public class Driver implements Runnable {
 		
 		Hashtable<String, TupleSet> insertions = new Hashtable<String, TupleSet>();
 		while (true) {
-			synchronized (scheduleInsertions) {
-				if (scheduleInsertions.size() == 0) {
+			synchronized (schedule) {
+				if (schedule.size() == 0) {
 					try {
-						scheduleInsertions.wait();
+						java.lang.System.err.println("Nothing scheduled at this time.");
+						schedule.wait();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 						java.lang.System.exit(1);
@@ -93,9 +115,14 @@ public class Driver implements Runnable {
 			}
 			
 			try {
+				assert(this.clock.current() < schedule.min());
+				
+				// java.lang.System.err.println("CURRENT CLOCK " + clock.current() + " MIN SCHEDULED TIME " + schedule.min());
 				/* Evaluate queries that run off the start clock. */
-				TupleSet clock = this.clock.set(schedule.min());
-				evaluate(this.runtime, clock); // Eval new clock
+				if (this.clock.current() < schedule.min()) {
+					TupleSet clock = this.clock.set(schedule.min());
+					evaluate(this.runtime, clock); // Eval new clock
+				}
 				
 				/* Schedule until nothing left in this clock. */
 				while (scheduleInsertions.size() > 0) {
@@ -121,7 +148,7 @@ public class Driver implements Runnable {
 		
 		try {
 			evaluate(program, insertion, deletions);
-		} catch (RuntimeException e) {
+		} catch (P2RuntimeException e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
@@ -146,7 +173,7 @@ public class Driver implements Runnable {
 					} catch (UpdateException e) {
 						e.printStackTrace();
 						java.lang.System.exit(0);
-					} catch (RuntimeException e) {
+					} catch (P2RuntimeException e) {
 						e.printStackTrace();
 						java.lang.System.exit(0);
 					}
@@ -156,20 +183,17 @@ public class Driver implements Runnable {
 	}
 	
 	/**
-	 * Fixed point evaluation of all events in the event queue.
-	 * @param queries All queries to run events against.
-	 * @param tables All tables that queries produce results on.
-	 * @param eventQ The event queue.
-	 * @param insertions The insertions that occur during FP.
-	 * @param deletions The deletions that occur (will not be committed).
-	 * @throws RuntimeException 
+	 * Fixed point evaluation of all events in the event set.
+	 * @throws P2RuntimeException 
 	 */
 	private void evaluate(Program program, 
 			              TupleSet eventSet, 
-			              Hashtable<String, TupleSet> deletions) throws RuntimeException {
+			              Hashtable<String, TupleSet> deletions) throws P2RuntimeException {
 		Hashtable<String, Set<Query>> queries = program.queries(); 
 		Hashtable<String, Table>      tables  = program.tables();
 		TupleSet                      delta   = new TupleSet(eventSet.name());
+		
+		java.lang.System.err.println("EVALUATING PROGRAM " + program.name() + " on tupleset " + eventSet.name());
 		
 		for ( ; !eventSet.isEmpty(); eventSet = delta) {
 			if (!queries.containsKey(eventSet.name())) {

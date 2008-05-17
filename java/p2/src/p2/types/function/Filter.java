@@ -4,7 +4,7 @@ import java.util.Set;
 
 import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 
 public class Filter implements TupleFunction<Comparable> {
 	public enum Operator{NOT, AND, OR, EQ, NEQ, LTHAN, GTHAN, LEQ, GEQ};
@@ -21,7 +21,7 @@ public class Filter implements TupleFunction<Comparable> {
 		this.rhs = rhs;
 	}
 
-	public Boolean evaluate(Tuple tuple) throws RuntimeException {
+	public Boolean evaluate(Tuple tuple) throws P2RuntimeException {
 		switch (oper) {
 		case NOT:   return not(tuple);
 		case AND:   return and(tuple);
@@ -58,39 +58,39 @@ public class Filter implements TupleFunction<Comparable> {
 		return Boolean.TRUE;
 	}
 	
-	private Boolean not(Tuple tuple) throws RuntimeException {
+	private Boolean not(Tuple tuple) throws P2RuntimeException {
 		return !value(this.lhs.evaluate(tuple));
 	}
 	
-	private Boolean and(Tuple tuple) throws RuntimeException {
+	private Boolean and(Tuple tuple) throws P2RuntimeException {
 		return value(this.lhs.evaluate(tuple)) && value(this.rhs.evaluate(tuple));
 	}
 	
-	private Boolean or(Tuple tuple) throws RuntimeException {
+	private Boolean or(Tuple tuple) throws P2RuntimeException {
 		return value(this.lhs.evaluate(tuple)) || value(this.rhs.evaluate(tuple));
 	}
 	
-	private Boolean eq(Tuple tuple) throws RuntimeException {
+	private Boolean eq(Tuple tuple) throws P2RuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) == 0;
 	}
 	
-	private Boolean neq(Tuple tuple) throws RuntimeException {
+	private Boolean neq(Tuple tuple) throws P2RuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) != 0;
 	}
 	
-	private Boolean lthan(Tuple tuple) throws RuntimeException {
+	private Boolean lthan(Tuple tuple) throws P2RuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) < 0;
 	}
 	
-	private Boolean gthan(Tuple tuple) throws RuntimeException {
+	private Boolean gthan(Tuple tuple) throws P2RuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) > 0;
 	}
 	
-	private Boolean leq(Tuple tuple) throws RuntimeException {
+	private Boolean leq(Tuple tuple) throws P2RuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) <= 0;
 	}
 	
-	private Boolean geq(Tuple tuple) throws RuntimeException {
+	private Boolean geq(Tuple tuple) throws P2RuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) >= 0;
 	}
 

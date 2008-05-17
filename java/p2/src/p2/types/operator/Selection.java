@@ -5,7 +5,7 @@ import p2.lang.plan.Variable;
 import p2.types.basic.Schema;
 import p2.types.basic.TupleSet;
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.Filter;
 import p2.types.function.TupleFunction;
 
@@ -24,7 +24,7 @@ public class Selection extends Operator {
 	}
 	
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws RuntimeException {
+	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		TupleSet result = new TupleSet(tuples.name());
 		TupleFunction<java.lang.Boolean> filter = this.selection.predicate().function();
 		for (Tuple tuple : tuples) {

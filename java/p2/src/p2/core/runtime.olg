@@ -8,13 +8,13 @@ define(evaluate, infinity, infinity, keys(0,1), {String, String, TupleSet});
 define(runnable, {String, String});
 define(strata, {String, Long, Integer});
 
-priority("Runtime", "clock",      0);
-priority("Runtime", "schedule",   0);
-priority("Runtime", "priority",   0);
-priority("Runtime", "strata",     1);
-priority("Runtime", "runnable",   1);
-priority("Runtime", "evaluate",   1);
-priority("Runtime", "driver",     1);
+priority("runtime", "clock",      0);
+priority("runtime", "schedule",   0);
+priority("runtime", "priority",   0);
+priority("runtime", "strata",     0);
+priority("runtime", "runnable",   0);
+priority("runtime", "evaluate",   0);
+priority("runtime", "driver",     0);
 
 /* Call the fixpoint driver/evaluator to evaluate tuple set. */
 driver(Program, TupleName, TupleSet) :-
@@ -27,13 +27,13 @@ delete evaluate(Program, TupleName, TupleSet) :-
    scheduled in the current clock. */
 evaluate(Program, TupleName, TupleSet) :-
 	runnable(Program, TupleName),
-	clock(Program, Time),
+	clock(Location, Time),
 	schedule(Time, Program, TupleName, Event, TupleSet);
 
 /* Delete what has been evaluated in the curent clock. */
 delete schedule(Time, Program, TupleName, Event, TupleSet) :-
 	runnable(Program, TupleName),
-	clock(Program, Time),
+	clock(Location, Time),
 	schedule(Time, Program, TupleName, Event, TupleSet);
 
 /* Identify the runnable tuples. */
@@ -44,8 +44,8 @@ runnable(Program, TupleName) :-
 
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
-strata(Program, Time, min<Priority>) :-
-	clock(Program, Time),
+strata strata(Program, Time, min<Priority>) :-
+	clock(Location, Time),
 	schedule(Time, Program, TupleName, Event, TupleSet),
 	priority(Program, TupleName, Priority);
 
@@ -60,13 +60,15 @@ define(planned, {String});
 define(compile, {String, String, String});
 
 
-priority("Runtime", "compiler",   0);
-priority("Runtime", "compile",    0);
-priority("Runtime", "rule",       0);
-priority("Runtime", "predicate",  0);
-priority("Runtime", "planned",    0);
-priority("Runtime", "dependency", 1);
-priority("Runtime", "priority",   2);
+priority("runtime", "compiler",   0);
+priority("runtime", "compile",    0);
+priority("runtime", "rule",       0);
+priority("runtime", "predicate",  0);
+priority("runtime", "planned",    0);
+priority("runtime", "dependency", 0);
+priority("runtime", "priority",   0);
+
+planned("runtime");
 
 /* Compile the program. */
 compiler(Program, Owner, File, null) :-

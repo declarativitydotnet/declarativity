@@ -6,7 +6,7 @@ import java.util.Set;
 
 import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.TypeException;
 
 
@@ -27,7 +27,7 @@ public class Generic<Type> implements TupleFunction<Type> {
 		this.args = args;
 	}
 	
-	public Type evaluate(Tuple tuple) throws RuntimeException {
+	public Type evaluate(Tuple tuple) throws P2RuntimeException {
 		Object obj = this.obj != null ? this.obj.evaluate(tuple) : null;
 		Object[] args = new Object[this.args.length];
 		for (int i = 0; i < this.args.length; i++) {

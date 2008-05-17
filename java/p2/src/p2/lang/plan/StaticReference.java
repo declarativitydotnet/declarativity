@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class StaticReference extends Reference {
@@ -27,11 +27,11 @@ public class StaticReference extends Reference {
 	@Override
 	public TupleFunction function() {
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws RuntimeException {
+			public Object evaluate(Tuple tuple) throws P2RuntimeException {
 				try {
 					return StaticReference.this.field.get(null);
 				} catch (Exception e) {
-					throw new RuntimeException(e.toString());
+					throw new P2RuntimeException(e.toString());
 				}
 			}
 			public Class returnType() {

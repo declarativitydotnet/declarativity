@@ -24,7 +24,13 @@ public class Clock extends ObjectTable {
 	public Clock(String location) {
 		super("clock", PRIMARY_KEY, new TypeList(SCHEMA));
 		this.location = location;
-		clock = new Long(0);
+		this.clock = -1L;
+		try {
+			set(0L);
+		} catch (UpdateException e) {
+			e.printStackTrace();
+			java.lang.System.exit(0);
+		}
 	}
 	
 	public Long current() {
@@ -32,7 +38,7 @@ public class Clock extends ObjectTable {
 	}
 	
 	public TupleSet set(Long clock) throws UpdateException {
-		if (clock.longValue() > this.clock.longValue()) {
+		if (clock > this.clock) {
 			this.clock = clock;
 			force(new Tuple(name(), location, clock));
 			return this.tuples;

@@ -5,6 +5,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
+import p2.lang.plan.DontCare;
 import p2.lang.plan.Variable;
 import p2.types.table.Key;
 
@@ -38,18 +39,24 @@ public class Schema {
 		return this.name;
 	}
 	
+	public int size() {
+		return this.variables.size();
+	}
+	
 	public void append(Variable variable) {
 		variable.position(this.variables.size());
-		this.variables.put(variable.name(), variable);
+		if (!(variable instanceof DontCare)) {
+			this.variables.put(variable.name(), variable);
+		}
 	}
 	
 	public boolean contains(Variable variable) {
-		return this.variables.contains(variable.name());
+		return this.variables.containsKey(variable.name());
 	}
 	
 	@Override
 	public String toString() {
-		return null;
+		return name() + variables().toString();
 	}
 	
 	
@@ -71,7 +78,7 @@ public class Schema {
 		for (int position = 0; position < this.variables.size(); position++) {
 			for (Variable variable : this.variables.values()) {
 				if (variable.position() == position) {
-					variables.add(variable);
+					variables.add(variable.clone());
 					break;
 				}
 			}
@@ -88,14 +95,20 @@ public class Schema {
 	}
 	
 	public final int position(String name) {
-		return this.variables.contains(name) ?
+		return this.variables.containsKey(name) ?
 				this.variables.get(name).position() : -1;
 	}
 	
-	public final Schema join(Schema inner) {
-		Schema join = new Schema(this);
+	public final Schema join(String name, Schema inner) {
+		Schema join = new Schema(name);
 		for (Variable variable : this.variables()) {
-			if (!inner.contains(variable)) {
+			if (!(variable instanceof DontCare)) {
+				join.append(variable);
+			}
+		}
+		
+		for (Variable variable : inner.variables()) {
+			if (!(variable instanceof DontCare) && !join.contains(variable)) {
 				join.append(variable);
 			}
 		}

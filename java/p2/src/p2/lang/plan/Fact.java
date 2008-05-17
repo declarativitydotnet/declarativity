@@ -8,7 +8,7 @@ import p2.lang.plan.Rule.RuleTable.Field;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.PlannerException;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.function.TupleFunction;
 import p2.types.table.HashIndex;
@@ -76,7 +76,7 @@ public class Fact extends Clause {
 			TupleFunction<Comparable> function = argument.function();
 			try {
 				values.add(function.evaluate(null));
-			} catch (RuntimeException e) {
+			} catch (P2RuntimeException e) {
 				e.printStackTrace();
 				throw new UpdateException(e.toString());
 			}

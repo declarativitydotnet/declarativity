@@ -379,6 +379,23 @@ public final class TypeChecker extends Visitor {
 			}
 			assert(type == List.class);
 			body = (List<Term>) n.getNode(3).getProperty(Constants.TYPE);
+			
+			for (Term t : body) {
+				if (t instanceof Predicate) {
+					Predicate p = (Predicate) t;
+					for (Expression arg : p) {
+						if (!(arg instanceof Variable) && arg.variables().size() > 0) {
+							runtime.error("Body predicates arguments must be strictly " +
+									"variables or some expression that does not contain variables.",n);
+							return Error.class;
+						}
+						else if (arg instanceof Aggregate) {
+							runtime.error("Body predicate can't contain aggregates!",n);
+							return Error.class;
+						}
+					}
+				}
+			}
 				
 
 			table.enter("Head:" + name);
@@ -546,7 +563,6 @@ public final class TypeChecker extends Visitor {
 				
 				/* Map variable to its type. */
 				table.current().define(var.name(), var.type());
-				
 			}
 
 			/* Ensure the type matches the schema definition. */
@@ -1277,7 +1293,10 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitStringConstant(final GNode n) {
-		n.setProperty(Constants.TYPE, new Value<String>(n.getString(0)));
+		String value = n.getString(0);
+		if (value.length() == 2) value = "";
+		else value = value.substring(1, value.length()-1);
+		n.setProperty(Constants.TYPE, new Value<String>(value));
 		return Value.class;
 	}
 

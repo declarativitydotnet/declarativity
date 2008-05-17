@@ -9,6 +9,7 @@ import p2.types.basic.Intermediate;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
+import p2.types.exception.P2RuntimeException;
 
 
 public class Projection extends Operator {
@@ -26,7 +27,7 @@ public class Projection extends Operator {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) {
+	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		TupleSet result = new TupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
 			result.add(tuple.project(this.predicate.schema()));

@@ -1,7 +1,7 @@
 package p2.types.function;
 
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 
 public abstract class Aggregate implements TupleFunction<Comparable> {
 	
@@ -46,7 +46,7 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return this.result.clone();
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws RuntimeException {
+		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
 			Comparable value = accessor.evaluate(tuple);
 			if (current == null || this.current.compareTo(value) > 0) {
 				this.current = value;
@@ -78,7 +78,7 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return this.result.clone();
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws RuntimeException {
+		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
 			Comparable value = accessor.evaluate(tuple);
 			if (current == null || this.current.compareTo(value) < 0) {
 				this.current = value;
@@ -152,7 +152,7 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return null;
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws RuntimeException {
+		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
 			this.result = tuple;
 			Number value = (Number) this.accessor.evaluate(tuple);
 			this.sum += value.floatValue();

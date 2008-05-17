@@ -2,8 +2,9 @@ package p2.exec;
 
 import java.util.List;
 import p2.lang.plan.Predicate;
+import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
 
@@ -22,7 +23,7 @@ public class BasicQuery extends Query {
 	
 	@Override
 	public String toString() {
-		String query = "Basic Query Rule + " + rule() + 
+		String query = "Basic Query Rule " + rule() + 
 		               ": input " + input().toString();
 		for (Operator oper : body) {
 			query += " -> " + oper.toString();
@@ -32,13 +33,24 @@ public class BasicQuery extends Query {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet input) throws RuntimeException {
+	public TupleSet evaluate(TupleSet input) throws P2RuntimeException {
 		assert(input.name().equals(input.name()));
+		System.err.println("Evaluate Query " + rule() + " input predicate " + input().toString());
+		
+		for (Tuple tuple : input) {
+			tuple.schema(input().schema());
+		}
 		
 		for (Operator oper : body) {
+			System.err.println("\tApply operator " + oper + " input tuple set = " + input);
 			input = (TupleSet) oper.evaluate(input);
+			System.err.println("\tRESULT " + input);
 		}
-		return (TupleSet) head.evaluate(input);
+		System.err.println("\tApply operator " + head);
+		
+		input = head.evaluate(input);
+		System.err.println("FINAL RESULT " + input);
+		return input;
 	}
 
 }

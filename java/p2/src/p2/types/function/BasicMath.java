@@ -6,7 +6,7 @@ import java.util.Set;
 
 import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.TypeException;
 
 public class BasicMath {
@@ -65,7 +65,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws RuntimeException {
+		public Object evaluate(Tuple tuple) throws P2RuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -97,7 +97,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws RuntimeException {
+		public Object evaluate(Tuple tuple) throws P2RuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -129,7 +129,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws RuntimeException {
+		public Object evaluate(Tuple tuple) throws P2RuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -163,7 +163,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws RuntimeException {
+		public Object evaluate(Tuple tuple) throws P2RuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -197,7 +197,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws RuntimeException {
+		public Object evaluate(Tuple tuple) throws P2RuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -231,7 +231,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws RuntimeException {
+		public Object evaluate(Tuple tuple) throws P2RuntimeException {
 			Set lhs = (Set) this.lhs.evaluate(tuple);
 			Set rhs = (Set) this.rhs.evaluate(tuple);
 			Set result = new HashSet();
@@ -270,7 +270,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws RuntimeException {
+		public Object evaluate(Tuple tuple) throws P2RuntimeException {
 			String lhs = (String) this.lhs.evaluate(tuple);
 			String rhs = (String) this.rhs.evaluate(tuple);
 			switch (oper) {

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class NewClass extends Expression {
@@ -66,7 +66,7 @@ public class NewClass extends Expression {
 		}
 		
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws RuntimeException {
+			public Object evaluate(Tuple tuple) throws P2RuntimeException {
 				Object[] arguments = new Object[NewClass.this.arguments.size()];
 				int index = 0;
 				for (TupleFunction argFunction : argFunctions) {
@@ -76,7 +76,7 @@ public class NewClass extends Expression {
 					return NewClass.this.constructor.newInstance(arguments);
 				} catch (Exception e) {
 					e.printStackTrace();
-					throw new RuntimeException(e.toString());
+					throw new P2RuntimeException(e.toString());
 				}
 			}
 

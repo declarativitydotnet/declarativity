@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 public abstract class Reference extends Expression {

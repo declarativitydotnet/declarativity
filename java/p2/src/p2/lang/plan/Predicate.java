@@ -88,6 +88,9 @@ public class Predicate extends Term implements Iterable<Expression> {
 		return this.name;
 	}
 
+	/**
+	 * An iterator over the predicate arguments.
+	 */
 	public Iterator<Expression> iterator() {
 		return this.arguments.iterator();
 	}
@@ -133,6 +136,16 @@ public class Predicate extends Term implements Iterable<Expression> {
 			Program.predicate.force(me);
 		} catch (UpdateException e) {
 			e.printStackTrace();
+		}
+		
+		this.schema = new Schema(name());
+		for (Expression arg : this) {
+			if (arg instanceof Variable) {
+				this.schema.append((Variable) arg);
+			}
+			else {
+				this.schema.append(new DontCare(arg.type()));
+			}
 		}
 	}
 	

@@ -2,7 +2,10 @@ package p2.types.basic;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import p2.lang.plan.DontCare;
 import p2.lang.plan.Variable;
+import p2.types.exception.P2RuntimeException;
 
 
 public class Tuple implements Comparable<Tuple> {
@@ -38,7 +41,8 @@ public class Tuple implements Comparable<Tuple> {
 	}
 	
 	public Tuple(String name) {
-		initialize(name, null);
+		initialize(name, new ArrayList<Comparable>());
+		this.schema = new Schema(name);
 	}
 	
 	@Override
@@ -69,8 +73,12 @@ public class Tuple implements Comparable<Tuple> {
 	
 	public String toString() {
 		String value = name() + "<";
-		for (Comparable element : values) {
-			value += ", " + (element == null ? "null" : element.toString());
+		if (values.size() > 0) {
+			value += values.get(0);
+			for (int i = 1; i < values.size(); i++) {
+				Comparable element = values.get(i);
+				value += ", " + (element == null ? "null" : element.toString());
+			}
 		}
 		value += ">";
 		return value;
@@ -84,7 +92,15 @@ public class Tuple implements Comparable<Tuple> {
 		return this.schema;
 	}
 	
-	public void schema(Schema schema) {
+	public void schema(Schema schema) throws P2RuntimeException {
+		if (schema.size() != size()) {
+			throw new P2RuntimeException("Schema assignment does not match tuple arity! " +
+					                   "tuple name = " +  name() + " schema " + schema);
+		}
+		else if (!schema.name().equals(name())) {
+			throw new P2RuntimeException("Schema assignment does not match tuple name " + 
+					                    name() + "! " + schema);
+		}
 		this.schema = schema;
 	}
 	
@@ -187,32 +203,63 @@ public class Tuple implements Comparable<Tuple> {
 		return this.frozen;
 	}
 	
-	public Tuple join(Tuple inner) {
-		Tuple join = this.clone();
+	public Tuple join(String name, Tuple inner) throws P2RuntimeException {
+		Tuple join = new Tuple(name);
+		// System.err.println("\tPERFORM " + name + ": outer schema " + schema() + " inner schema " + inner.schema());
 		
-		for (Variable variable : join.schema().variables()) {
-			if (inner.schema().contains(variable)) {
-				if (!join.value(name).equals(inner.value(name))) {
+		/* Take care of all join variables first. */
+		for (Variable variable : schema().variables()) {
+			if (variable instanceof DontCare) {
+				continue;
+			}
+			else if (inner.schema().contains(variable)) {
+				// System.err.println("\t\tVARIABLE MATCH " + variable);
+				if (!value(variable.name()).equals(inner.value(variable.name()))) {
+					/*
+					System.err.println("\t\t\tVALUE FAIL " + 
+							variable + " outer = " + value(variable.name()) + 
+							" inner = " + inner.value(variable.name()));
+							*/
 					return null; // Tuples do not join
+				}
+				else {
+					/*
+					System.err.println("\t\t\tVALUE MATCH " + 
+							variable + " outer = " + value(variable.name()) + 
+							" inner = " + inner.value(variable.name()));
+							*/
+					join.append(variable, value(variable.name()));
 				}
 			}
 			else {
-				join.append(inner.schema().variable(name), inner.value(name));
+				/* Inner does not contain variable so just add it. */
+				join.append(variable, value(variable.name()));
 			}
 		}
 		
+		/* Append any variables from the inner that do 
+		 * not match join variable. */
+		for (Variable variable : inner.schema().variables()) {
+			if (variable instanceof DontCare) {
+				continue;
+			}
+			else if (!join.schema().contains(variable)) {
+				join.append(variable, inner.value(variable.name()));
+			}
+		}
 		return join;
 	}
 	
-	public Tuple project(Schema schema) {
+	public Tuple project(Schema schema) throws P2RuntimeException {
 		Tuple projection = new Tuple(schema.name());
 		
-		for (Variable variable : this.schema.variables()) {
-			if (schema.contains(variable)) {
+		for (Variable variable : schema.variables()) {
+			if (this.schema.contains(variable)) {
 				projection.append(variable, value(variable.name()));
 			}
 			else {
-				// TODO exception.
+				throw new P2RuntimeException("Unknown variable " + variable + 
+						                     " in schema projection of tuple " + toString());
 			}
 		}
 		return projection;

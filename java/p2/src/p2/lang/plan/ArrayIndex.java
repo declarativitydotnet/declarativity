@@ -4,7 +4,7 @@ import java.lang.reflect.Array;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class ArrayIndex extends Expression {
@@ -38,7 +38,7 @@ public class ArrayIndex extends Expression {
 	public TupleFunction function() {
 		return new TupleFunction() {
 			private final TupleFunction function = array.function();
-			public Object evaluate(Tuple tuple) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, RuntimeException {
+			public Object evaluate(Tuple tuple) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, P2RuntimeException {
 				return Array.get(function.evaluate(tuple), index);
 			}
 

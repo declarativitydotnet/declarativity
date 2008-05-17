@@ -12,7 +12,7 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.PlannerException;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
@@ -73,7 +73,7 @@ public abstract class Operator implements Comparable<Operator> {
 	@Override
 	public abstract String toString();
 	
-	public abstract TupleSet evaluate(TupleSet tuples) throws RuntimeException;
+	public abstract TupleSet evaluate(TupleSet tuples) throws P2RuntimeException;
 
 	public abstract Schema schema(Schema input);
 	

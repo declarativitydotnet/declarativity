@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 public class ObjectReference extends Reference {
@@ -36,12 +36,12 @@ public class ObjectReference extends Reference {
 	public TupleFunction function() {
 		final TupleFunction objectFunction = this.object.function();
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws RuntimeException {
+			public Object evaluate(Tuple tuple) throws P2RuntimeException {
 				try {
 					Object instance = objectFunction.evaluate(tuple);
 					return ObjectReference.this.field.get(instance);
 				} catch (Exception e) {
-					throw new RuntimeException(e.toString());
+					throw new P2RuntimeException(e.toString());
 				}
 			}
 			public Class returnType() {

@@ -5,7 +5,7 @@ import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
-import p2.types.exception.RuntimeException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
@@ -89,5 +89,5 @@ public abstract class Query implements Comparable<Query> {
 		return this.output;
 	}
 	
-	public abstract TupleSet evaluate(TupleSet input) throws RuntimeException;
+	public abstract TupleSet evaluate(TupleSet input) throws P2RuntimeException;
 }
