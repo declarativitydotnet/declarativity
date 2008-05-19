@@ -37,7 +37,7 @@ delete schedule(Time, Program, TupleName, Event, TupleSet) :-
 	schedule(Time, Program, TupleName, Event, TupleSet);
 
 /* Identify the runnable tuples. */
-runnable(Program, TupleName) :-
+runnable runnable(Program, TupleName) :-
 	strata(Program, Time, Priority),
 	priority(Program, TupleName, Priority),
 	schedule(Time, Program, TupleName, Event, TupleSet);

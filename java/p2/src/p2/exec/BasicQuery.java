@@ -35,18 +35,15 @@ public class BasicQuery extends Query {
 	@Override
 	public TupleSet evaluate(TupleSet input) throws P2RuntimeException {
 		assert(input.name().equals(input.name()));
-		System.err.println("Evaluate Query " + rule() + " input predicate " + input().toString());
+		System.err.println("Evaluate Query " + rule() + " input " + input);
 		
 		for (Tuple tuple : input) {
 			tuple.schema(input().schema());
 		}
 		
 		for (Operator oper : body) {
-			System.err.println("\tApply operator " + oper + " input tuple set = " + input);
 			input = (TupleSet) oper.evaluate(input);
-			System.err.println("\tRESULT " + input);
 		}
-		System.err.println("\tApply operator " + head);
 		
 		input = head.evaluate(input);
 		System.err.println("FINAL RESULT " + input);

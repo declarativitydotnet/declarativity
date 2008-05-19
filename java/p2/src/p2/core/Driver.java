@@ -126,6 +126,7 @@ public class Driver implements Runnable {
 				
 				/* Schedule until nothing left in this clock. */
 				while (scheduleInsertions.size() > 0) {
+					java.lang.System.err.println("SCHEDULE INSERTIONS: " + scheduleInsertions);
 					TupleSet scheduled = new TupleSet(schedule.name());
 					scheduled.addAll(scheduleInsertions);
 					scheduleInsertions.clear();
@@ -154,31 +155,33 @@ public class Driver implements Runnable {
 		}
 
 		while (deletions.size() > 0) {
+			Hashtable<String, TupleSet> delta = new Hashtable<String, TupleSet>();
+			
 			for (String name : deletions.keySet()) {
-				TupleSet runnable = deletions.remove(name);
-				if (!queries.containsKey(runnable.name())) {
-					// TODO log unknown tuple set
-					java.lang.System.err.println("Unknown tuple set " + runnable.name());
-					continue;
-				}
-
-				Set<Query> querySet = queries.get(runnable.name());
-				for (Query query : querySet) {
-					try {
-						TupleSet result = query.evaluate(runnable);
-						TupleSet delta = tables.get(result.name()).remove(result);
-						if (tables.containsKey(delta.name()))
-								update(deletions, delta);
-						// TODO Consider schedule
-					} catch (UpdateException e) {
-						e.printStackTrace();
-						java.lang.System.exit(0);
-					} catch (P2RuntimeException e) {
-						e.printStackTrace();
-						java.lang.System.exit(0);
+				Table table = tables.get(name);
+				try {
+					java.lang.System.err.println("REMOVE FROM TABLE " + name + " TUPLES " + deletions.get(name));
+					TupleSet deletionDelta = table.remove(deletions.get(name));
+					if (deletionDelta.size() > 0) {
+						Set<Query> querySet = queries.get(name);
+						for (Query query : querySet) {
+							TupleSet result = query.evaluate(deletionDelta);
+							if (tables.containsKey(result.name())) {
+								/* These tuples must be delete in order
+								 * to provide proper view maintenance. */
+								update(delta, result); 
+							}
+						}
 					}
+				} catch (UpdateException e) {
+					e.printStackTrace();
+					java.lang.System.exit(1);
+				} catch (P2RuntimeException e) {
+					e.printStackTrace();
+					java.lang.System.exit(1);
 				}
 			}
+			deletions = delta;
 		}
 	}
 	
@@ -187,25 +190,24 @@ public class Driver implements Runnable {
 	 * @throws P2RuntimeException 
 	 */
 	private void evaluate(Program program, 
-			              TupleSet eventSet, 
+			              TupleSet tuples, 
 			              Hashtable<String, TupleSet> deletions) throws P2RuntimeException {
 		Hashtable<String, Set<Query>> queries = program.queries(); 
 		Hashtable<String, Table>      tables  = program.tables();
-		TupleSet                      delta   = new TupleSet(eventSet.name());
 		
-		java.lang.System.err.println("EVALUATING PROGRAM " + program.name() + " on tupleset " + eventSet.name());
+		java.lang.System.err.println("EVALUATING PROGRAM " + program.name() + " on tupleset " + tuples);
+		if (!queries.containsKey(tuples.name())) {
+			// TODO log unknown tuple set
+			java.lang.System.err.println("Unknown tuple set " + tuples.name() + 
+					                     " in program " + program);
+			return;
+		}
 		
-		for ( ; !eventSet.isEmpty(); eventSet = delta) {
-			if (!queries.containsKey(eventSet.name())) {
-				// TODO log unknown tuple set
-				java.lang.System.err.println("Unknown tuple set " + eventSet.name() + 
-						                     " in program " + program);
-				continue;
-			}
-
-			Set<Query> querySet = queries.get(eventSet.name());
+		while (!tuples.isEmpty()) {
+			TupleSet delta = new TupleSet(tuples.name());
+			Set<Query> querySet = queries.get(tuples.name());
 			for (Query query : querySet) {
-				TupleSet result = query.evaluate(eventSet);
+				TupleSet result = query.evaluate(tuples);
 				if (tables.containsKey(result.name())) {
 					if (query.delete()) {
 						update(deletions, result);
@@ -214,8 +216,8 @@ public class Driver implements Runnable {
 						try {
 							TupleSet conflicts = tables.get(result.name()).conflict(result);
 							result = tables.get(result.name()).insert(result);
-							if (delta.name().equals(eventSet.name())) {
-								delta.addAll(result);
+							if (delta.name().equals(result.name())) {
+								delta.addAll(result); // Keep evaluating recursive rule.
 							}
 							else {
 								schedule.add(clock.current(), program.name(), 
@@ -229,10 +231,13 @@ public class Driver implements Runnable {
 					}
 				}
 				else {
+					java.lang.System.err.println("EVALUATE EVENT RESULT: " + result);
 					/* Fixpoint evaluation on event */
 					evaluate(program, result, deletions);
 				}
 			}
+			tuples.clear();
+			tuples.addAll(delta);
 		}
 		
 	}

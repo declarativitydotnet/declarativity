@@ -23,14 +23,15 @@ public class Projection extends Operator {
 	
 	@Override
 	public String toString() {
-		return "PROJECTION PREDICATE[" + predicate.toString() + "]";
+		return "PROJECTION PREDICATE[" + predicate.name() + "]";
 	}
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
-		TupleSet result = new TupleSet(tuples.name());
+		TupleSet result = new TupleSet(predicate.name());
 		for (Tuple tuple : tuples) {
-			result.add(tuple.project(this.predicate.schema()));
+			Tuple projection = tuple.project(this.predicate.schema());
+			result.add(projection);
 		}
 		return result;
 	}
