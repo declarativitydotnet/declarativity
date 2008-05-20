@@ -10,6 +10,7 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
+import p2.types.operator.Aggregation;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
 import p2.types.table.HashIndex;
@@ -58,12 +59,22 @@ public class Rule extends Clause {
 	
 	private List<Term> body;
 	
+	private boolean aggregation;
+	
 	public Rule(xtc.tree.Location location, String name, java.lang.Boolean deletion, Predicate head, List<Term> body) {
 		super(location);
 		this.name = name;
 		this.deletion = deletion;
 		this.head = head;
 		this.body = body;
+		this.aggregation = false;
+		for (Expression arg : head) {
+			if (arg instanceof Aggregate) {
+				/* assertion: only 1 aggregate. */
+				assert(this.aggregation == false);
+				this.aggregation = true;
+			}
+		}
 	}
 	
 	@Override
@@ -124,7 +135,15 @@ public class Rule extends Clause {
 					operators.add(term.operator());
 				}
 			}
-			queries.add(new BasicQuery(program, name, deletion, event, new Projection(this.head), operators));
+			
+			if (this.aggregation) {
+				queries.add(new BasicQuery(program, name, deletion, event, 
+						                   new Projection(this.head), operators, 
+						                   new Aggregation(this.head)));
+			}
+			else {
+				queries.add(new BasicQuery(program, name, deletion, event, new Projection(this.head), operators));
+			}
 		}
 		else {
 			/* Perform delta rewrite. */
@@ -144,7 +163,16 @@ public class Rule extends Clause {
 						operators.add(term2.operator());
 					}
 				}
-				queries.add(new BasicQuery(program, name, deletion, delta, new Projection(this.head), operators));
+				
+				if (this.aggregation) {
+					queries.add(new BasicQuery(program, name, deletion, delta, 
+							                   new Projection(this.head), operators, 
+							                   new Aggregation(this.head)));
+				}
+				else {
+					queries.add(new BasicQuery(program, name, deletion, delta, 
+							                   new Projection(this.head), operators));
+				}
 			}
 			
 		}

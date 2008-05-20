@@ -5,10 +5,13 @@ import p2.lang.plan.Predicate;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
+import p2.types.operator.Aggregation;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
 
 public class BasicQuery extends Query {
+	
+	private Aggregation aggregation;
 	
 	private Projection head;
 	
@@ -17,8 +20,18 @@ public class BasicQuery extends Query {
 	public BasicQuery(String program, String rule, Boolean delete,
 					  Predicate input, Projection head, List<Operator> body) {
 		super(program, rule, delete, input, head.predicate());
-		this.head = head;
-		this.body = body;
+		this.aggregation = null;
+		this.head        = head;
+		this.body        = body;
+	}
+	
+	public BasicQuery(String program, String rule, Boolean delete,
+			  Predicate input, Projection head, List<Operator> body, 
+			  Aggregation aggregation) {
+		super(program, rule, delete, input, head.predicate());
+		this.aggregation = aggregation;
+		this.head        = head;
+		this.body        = body;
 	}
 	
 	@Override
@@ -45,7 +58,7 @@ public class BasicQuery extends Query {
 		}
 		
 		input = head.evaluate(input);
-		return input;
+		return aggregation == null ? input : aggregation.evaluate(input);
 	}
 
 }
