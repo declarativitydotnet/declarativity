@@ -147,7 +147,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 				this.schema.append((Variable) arg);
 			}
 			else {
-				throw new UpdateException("Predicate " + name() + " still contains non-variable argument!");
+				this.schema.append(new DontCare(arg.type()));
 			}
 		}
 	}

@@ -66,12 +66,7 @@ public class Variable extends Expression {
 	public TupleFunction function() {
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws P2RuntimeException {
-				if (position() < 0) {
-					return tuple.value(name());
-				}
-				else {
-					return tuple.value(position());
-				}
+				return tuple.value(name());
 			}
 
 			public Class returnType() {

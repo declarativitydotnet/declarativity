@@ -386,12 +386,7 @@ public final class TypeChecker extends Visitor {
 				if (t instanceof Predicate) {
 					Predicate p = (Predicate) t;
 					for (Expression arg : p) {
-						if (!(arg instanceof Variable) && arg.variables().size() > 0) {
-							runtime.error("Body predicates arguments must be strictly " +
-									"variables or some expression that does not contain variables.",n);
-							return Error.class;
-						}
-						else if (arg instanceof Aggregate) {
+						if (arg instanceof Aggregate) {
 							runtime.error("Body predicate can't contain aggregates!",n);
 							return Error.class;
 						}
@@ -568,6 +563,16 @@ public final class TypeChecker extends Visitor {
 				
 				/* Map variable to its type. */
 				table.current().define(var.name(), var.type());
+			}
+			else if (param.variables().size() > 0) {
+				for (Variable var : param.variables()) {
+					if (!table.current().isDefined(var.name())) {
+						runtime.error("Body predicate contains an argument expression based " +
+								"that depends on variable " + var.name() + ", which is not" +
+										"defined by some left hand side predicate!", n);
+						return Error.class;
+					}
+				}
 			}
 
 			/* Ensure the type matches the schema definition. */
