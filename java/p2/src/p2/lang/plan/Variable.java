@@ -29,9 +29,7 @@ public class Variable extends Expression {
 	
 	@Override
 	public Variable clone() {
-		Variable variable = new Variable(name, type);
-		variable.position(position());
-		return variable;
+		return new Variable(name, type);
 	}
 	
 	@Override
@@ -41,7 +39,7 @@ public class Variable extends Expression {
 	
 	@Override
 	public String toString() {
-		return name();
+		return name() + ":" + position();
 	}
 	
 	public String name() {
@@ -68,7 +66,12 @@ public class Variable extends Expression {
 	public TupleFunction function() {
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws P2RuntimeException {
-				return tuple.value(position());
+				if (position() < 0) {
+					return tuple.value(name());
+				}
+				else {
+					return tuple.value(position());
+				}
 			}
 
 			public Class returnType() {

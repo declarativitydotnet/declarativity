@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -380,6 +381,7 @@ public final class TypeChecker extends Visitor {
 			assert(type == List.class);
 			body = (List<Term>) n.getNode(3).getProperty(Constants.TYPE);
 			
+			List<Term> additionalSelections = new ArrayList<Term>();
 			for (Term t : body) {
 				if (t instanceof Predicate) {
 					Predicate p = (Predicate) t;
@@ -396,6 +398,7 @@ public final class TypeChecker extends Visitor {
 					}
 				}
 			}
+			body.addAll(additionalSelections);
 				
 
 			table.enter("Head:" + name);
@@ -407,18 +410,6 @@ public final class TypeChecker extends Visitor {
 				}
 				assert (type == Predicate.class);
 				head = (Predicate) n.getNode(2).getProperty(Constants.TYPE);
-				if (!deletion) {
-					for (Expression arg : head) {
-						if (arg instanceof Variable) {
-							Variable var = (Variable) arg;
-							if (var instanceof DontCare) {
-								runtime.error("Head predicate in a non-deletion rule " +
-										      "can't contain don't care variable!", n);
-								return Error.class;
-							}
-						}
-					}
-				}
 			} finally {
 				table.exit();
 			}
@@ -455,6 +446,11 @@ public final class TypeChecker extends Visitor {
 				Variable var = (Variable) argument;
 				var.position(position);
 				if (var instanceof DontCare) {
+					runtime.error("Head predicate in a non-deletion rule " +
+							      "can't contain don't care variable!", n);
+					return Error.class;
+				}
+				else {
 					Class headType = (Class) table.current().lookupLocally(var.name());
 					Class bodyType = (Class) table.current().getParent().lookupLocally(var.name());
 					if (bodyType == null) {
@@ -478,34 +474,36 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitRuleBody(final GNode n) {
 		List<Term> terms = new ArrayList<Term>();
-		List<GNode> order = new ArrayList<GNode>();
+		List<GNode> other = new ArrayList<GNode>();
 		
 		for (GNode node : n.<GNode>getList(0)) {
 			if (node.getName().equals("Predicate")) {
-				order.add(0, node); // All predicates checked first
-			}
-			else {
-				order.add(order.size(), node);
-			}
-		}
-		
-		for (Node term : order) {
-			Class type = (Class) dispatch(term);
-			if (type == Error.class) {
-				return type;
-			}
-			assert(Term.class.isAssignableFrom(type));
-			Term t = (Term) term.getProperty(Constants.TYPE);
-			if (t instanceof Predicate) {
-				Predicate p = (Predicate) t;
+				Class type = (Class) dispatch(node);
+				if (type == Error.class) {
+					return type;
+				}
+				assert(Term.class.isAssignableFrom(type));
+				Predicate p = (Predicate) node.getProperty(Constants.TYPE);
 				if (p.event() != Predicate.EventModifier.NONE && p.notin()) {
 					runtime.error("Can't apply notin to event predicate!",n);
 					return Error.class;
 				}
+				terms.add(p);
 			}
-			terms.add(t);
+			else {
+				other.add(node);
+			}
 		}
-
+		
+		for (GNode node : other) {
+			Class type = (Class) dispatch(node);
+			if (type == Error.class) {
+				return type;
+			}
+			assert(Term.class.isAssignableFrom(type));
+			terms.add((Term)node.getProperty(Constants.TYPE));
+		}
+		
 		n.setProperty(Constants.TYPE, terms);
 		return List.class;
 	}
@@ -531,9 +529,16 @@ public final class TypeChecker extends Visitor {
 		
 		
 		type = (Class) dispatch(n.getNode(3));
-		assert(type == List.class);
+		if (type == Error.class) 
+			return Error.class;
 		List<Expression> parameters = (List<Expression>) n.getNode(3).getProperty(Constants.TYPE);
 		List<Expression> arguments = new ArrayList<Expression>();
+		
+		if (schema.size() != parameters.size()) {
+			runtime.warning("Schema size mismatch on predicate " + 
+					         name + ". Will try to fill in missing values with don's cares",n);
+		}
+		
 		/* Type check each tuple argument according to the schema. */
 		for (int index = 0; index < schema.size(); index++) {
 			Expression param = parameters.size() <= index ? 
@@ -1024,14 +1029,12 @@ public final class TypeChecker extends Visitor {
 		
 		if (type == Reference.class) {
 			Reference ref = (Reference) n.getNode(0).getProperty(Constants.TYPE);
-			System.err.println("REFERENCE " + ref.toString());
 			if (ref.object() != null || ref.type() != null) {
 				runtime.error("Undefined reference " + ref.toString(), n);
 				return Error.class;
 			}
 			String name = ref.toString() + "." + n.getString(1);
 			
-			System.err.println("CHECK " + name);
 			if (type(name) != null) {
 				type = type(name);
 				n.setProperty(Constants.TYPE, type);
@@ -1168,7 +1171,9 @@ public final class TypeChecker extends Visitor {
 		if (n.size() != 0) {
 			for (Node arg : n.<Node> getList(0)) {
 				Class t = (Class) dispatch(arg);
-				if (t == Error.class) return Error.class;
+				if (t == Error.class) { 
+					return Error.class;
+				}
 				assert(Expression.class.isAssignableFrom(t));
 				args.add((Expression)arg.getProperty(Constants.TYPE));
 			}

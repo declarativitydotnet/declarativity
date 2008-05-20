@@ -119,8 +119,13 @@ public class Program implements Comparable<Program> {
 		for (Tuple tuple : rules) {
 			Rule rule = (Rule) tuple.value(RuleTable.Field.OBJECT.ordinal());
 			Table table = Table.table(rule.head().name());
+			System.err.println("CHECK TABLE " + table.name());
 			if (!table.isEvent() && !this.tables.containsKey(table.name())) {
+				System.err.println("\tIS TABLE");
 				this.tables.put(table.name(), table); // Cache all hard tables that a written.
+			}
+			else {
+				System.err.println("\tIS EVENT");
 			}
 			
 			/* Store all planned queries from a given rule. 

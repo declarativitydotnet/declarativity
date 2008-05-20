@@ -249,19 +249,4 @@ public class Tuple implements Comparable<Tuple> {
 		}
 		return join;
 	}
-	
-	public Tuple project(Schema schema) throws P2RuntimeException {
-		Tuple projection = new Tuple(schema.name());
-		
-		for (Variable variable : schema.variables()) {
-			if (this.schema.contains(variable)) {
-				projection.append(variable, value(variable.name()));
-			}
-			else {
-				throw new P2RuntimeException("Unknown variable " + variable + 
-						                     " in schema projection of tuple " + toString());
-			}
-		}
-		return projection;
-	}
 }

@@ -28,10 +28,16 @@ public class AntiScanJoin extends Join {
 		for (Tuple outer : tuples) {
 			boolean success = false;
 			for (Tuple inner : this.table) {
-				Tuple join = outer.join(result.name(), inner);
-				if (join != null) {
+				if (!validate(outer, inner)) {
 					success = true;
 					break;
+				}
+				else {
+					Tuple join = outer.join(result.name(), inner);
+					if (join != null) {
+						success = true;
+						break;
+					}
 				}
 			}
 			if (!success) result.add(outer);

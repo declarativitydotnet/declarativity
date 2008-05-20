@@ -47,7 +47,7 @@ public class System {
 	}
 	
 	public static Program program(String name) {
-		return programs.contains(name) ? programs.get(name) : null;
+		return programs.containsKey(name) ? programs.get(name) : null;
 	}
 	
 	private static void bootstrap() {
@@ -60,6 +60,7 @@ public class System {
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
+		programs.put(compiler.program().name(), compiler.program());
 		driver = new Driver(compiler.program(), schedule, clock);
 		Thread runtime = new Thread(driver);
 		runtime.start();

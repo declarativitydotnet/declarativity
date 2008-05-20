@@ -3,7 +3,6 @@ package p2.types.operator;
 import java.util.Set;
 
 import p2.lang.plan.Variable;
-import p2.types.basic.Intermediate;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;

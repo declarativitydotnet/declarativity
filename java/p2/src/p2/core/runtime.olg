@@ -3,8 +3,8 @@ import java.lang.Integer;
 import java.lang.Long;
 import p2.types.basic.TupleSet;
 
-/* Define evaluate table. */
-define(evaluate, infinity, infinity, keys(0,1), {String, String, TupleSet});
+/* Define runtime events. */
+define(evaluate, {String, String, TupleSet});
 define(runnable, {String, String});
 define(strata, {String, Long, Integer});
 
@@ -16,25 +16,17 @@ priority("runtime", "runnable",   0);
 priority("runtime", "evaluate",   0);
 priority("runtime", "driver",     0);
 
-/* Call the fixpoint driver/evaluator to evaluate tuple set. */
-driver(Program, TupleName, TupleSet) :-
-	evaluate(Program, TupleName, TupleSet);
-
-delete evaluate(Program, TupleName, TupleSet) :-
-	driver(Program, TupleName, TupleSet);
-
-/* Evaluate runnable tuples with the given name
-   scheduled in the current clock. */
-evaluate(Program, TupleName, TupleSet) :-
+/* Call the fixpoint driver/evaluator to evaluate runnable tuple set. */
+driver driver(Program, TupleName, TupleSet) :-
 	runnable(Program, TupleName),
 	clock(Location, Time),
 	schedule(Time, Program, TupleName, Event, TupleSet);
 
 /* Delete what has been evaluated in the curent clock. */
-delete schedule(Time, Program, TupleName, Event, TupleSet) :-
-	runnable(Program, TupleName),
-	clock(Location, Time),
-	schedule(Time, Program, TupleName, Event, TupleSet);
+cleanup delete schedule(Time, Program, TupleName, Event, TupleSet) :-
+					runnable(Program, TupleName),
+					clock(Location, Time),
+					schedule(Time, Program, TupleName, Event, TupleSet);
 
 /* Identify the runnable tuples. */
 runnable runnable(Program, TupleName) :-
@@ -88,10 +80,11 @@ dependency(Program, Head.name(), Body.name()) :-
 	predicate(Program, Rule, Pos, Event, Body), Pos > 0;
 
 /* Initialize all predicates to stratum 0. */
-priority(Program, Pred.name(), 0) :-
+planned priority(Program, Pred.name(), 0) :-
 	planned(Program),
 	rule(Program, Rule, _),
-	predicate(Program, Rule, Pos, Event, Pred);
+	predicate(Program, Rule, Pos, Event, Pred),
+	notin priority(Program, Pred.name(), _);
 
 /* Bubble up predicates in the stratum chain. */
 priority(Program, Head, Priority) :-

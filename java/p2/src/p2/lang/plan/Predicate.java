@@ -1,6 +1,7 @@
 package p2.lang.plan;
 
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +10,7 @@ import p2.lang.plan.Selection.SelectionTable.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
+import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.operator.AntiScanJoin;
 import p2.types.operator.Operator;
@@ -97,6 +99,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	@Override
 	public String toString() {
+		assert(schema.size() == arguments.size());
 		String value = (notin ? "notin " : "") + name + "(";
 		if (arguments.size() == 0) {
 			return value + ")";
@@ -128,9 +131,9 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 		return new ScanJoin(this);
 	}
-
+	
 	@Override
-	public void set(String program, String rule, Integer position) {
+	public void set(String program, String rule, Integer position) throws UpdateException {
 		Tuple me = new Tuple(Program.predicate.name(), program, rule, position, event.toString(), this);
 		try {
 			Program.predicate.force(me);
@@ -139,12 +142,12 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 		
 		this.schema = new Schema(name());
-		for (Expression arg : this) {
+		for (Expression arg : arguments) {
 			if (arg instanceof Variable) {
 				this.schema.append((Variable) arg);
 			}
 			else {
-				this.schema.append(new DontCare(arg.type()));
+				throw new UpdateException("Predicate " + name() + " still contains non-variable argument!");
 			}
 		}
 	}

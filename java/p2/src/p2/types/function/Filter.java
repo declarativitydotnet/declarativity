@@ -9,11 +9,11 @@ import p2.types.exception.P2RuntimeException;
 public class Filter implements TupleFunction<Comparable> {
 	public enum Operator{NOT, AND, OR, EQ, NEQ, LTHAN, GTHAN, LEQ, GEQ};
 	
-	private Operator oper;
+	protected Operator oper;
 	
-	private TupleFunction<Comparable> lhs;
+	protected TupleFunction<Comparable> lhs;
 	
-	private TupleFunction<Comparable> rhs;
+	protected TupleFunction<Comparable> rhs;
 	
 	public Filter(Operator oper, TupleFunction<Comparable> lhs, TupleFunction<Comparable> rhs) {
 		this.oper = oper;
@@ -71,6 +71,7 @@ public class Filter implements TupleFunction<Comparable> {
 	}
 	
 	private Boolean eq(Tuple tuple) throws P2RuntimeException {
+		System.err.println("FILTER: " + lhs.evaluate(tuple) + " == " + rhs.evaluate(tuple));
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) == 0;
 	}
 	

@@ -33,12 +33,13 @@ public class Driver implements Runnable {
 		public DriverTable() {
 			super("driver", PRIMARY_KEY, new TypeList(SCHEMA));
 		}
-
+		
 		protected boolean insert(Tuple tuple) throws UpdateException {
+			java.lang.System.err.println("DRIVER TUPLE: " + tuple);
 			String   name   = (String) tuple.value(Field.PROGRAM.ordinal());
 			TupleSet tuples = (TupleSet) tuple.value(Field.TUPLESET.ordinal());
 			p2.core.System.driver().evaluate(System.program(name), tuples);
-			return true;  // Don't store the tuple
+			return true; // Do not store this tuple.
 		}
 	}
 
@@ -61,6 +62,7 @@ public class Driver implements Runnable {
 		schedule.register(new Table.Callback() {
 			public void deletion(TupleSet tuples) { /* Don't care. */ }
 			public void insertion(TupleSet tuples) {
+				java.lang.System.err.println("SCHEDULE INSERTION HANDLER " + tuples);
 				synchronized (schedule) {
 					scheduleInsertions.addAll(tuples);
 					schedule.notify();
@@ -126,11 +128,19 @@ public class Driver implements Runnable {
 				
 				/* Schedule until nothing left in this clock. */
 				while (scheduleInsertions.size() > 0) {
-					java.lang.System.err.println("SCHEDULE INSERTIONS: " + scheduleInsertions);
+					java.lang.System.err.println("EXECUTE SCHEDULE INSERTIONS: " + scheduleInsertions);
 					TupleSet scheduled = new TupleSet(schedule.name());
 					scheduled.addAll(scheduleInsertions);
 					scheduleInsertions.clear();
-					evaluate(this.runtime, scheduled);
+					Hashtable<String, TupleSet> continuations = evaluate(this.runtime, scheduled);
+					TupleSet reschedule = new TupleSet(schedule.name());
+					for (TupleSet continuation : continuations.values()) {
+						reschedule.add(new Tuple(schedule.name(), clock.current(), runtime.name(),
+								                 continuation.name(), 
+								                 Predicate.EventModifier.INSERT.toString(),
+								                 continuation));
+					}
+					schedule.insert(reschedule);
 				}
 			} catch (UpdateException e) {
 				// TODO Auto-generated catch block
@@ -142,18 +152,20 @@ public class Driver implements Runnable {
 	/** 
 	 * Run fixpoint evaluation for a single strata. 
 	 */
-	private void evaluate(Program program, TupleSet insertion) {
-		Hashtable<String, Set<Query>> queries = program.queries();
-		Hashtable<String, Table>      tables  = program.tables();
-		Hashtable<String, TupleSet> deletions = new Hashtable<String, TupleSet>();
+	private Hashtable<String, TupleSet> evaluate(Program program, TupleSet insertion) {
+		Hashtable<String, Set<Query>> queries       = program.queries();
+		Hashtable<String, Table>      tables        = program.tables();
+		Hashtable<String, TupleSet>   deletions     = new Hashtable<String, TupleSet>();
+		Hashtable<String, TupleSet>   continuations = new Hashtable<String, TupleSet>();
 		
 		try {
-			evaluate(program, insertion, deletions);
+			evaluate(program, insertion, deletions, continuations);
 		} catch (P2RuntimeException e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
 
+		java.lang.System.err.println("APPLY DELETIONS: " + deletions.keySet());
 		while (deletions.size() > 0) {
 			Hashtable<String, TupleSet> delta = new Hashtable<String, TupleSet>();
 			
@@ -183,6 +195,7 @@ public class Driver implements Runnable {
 			}
 			deletions = delta;
 		}
+		return continuations;
 	}
 	
 	/**
@@ -191,7 +204,8 @@ public class Driver implements Runnable {
 	 */
 	private void evaluate(Program program, 
 			              TupleSet tuples, 
-			              Hashtable<String, TupleSet> deletions) throws P2RuntimeException {
+			              Hashtable<String, TupleSet> deletions,
+			              Hashtable<String, TupleSet> continuations) throws P2RuntimeException {
 		Hashtable<String, Set<Query>> queries = program.queries(); 
 		Hashtable<String, Table>      tables  = program.tables();
 		
@@ -208,6 +222,14 @@ public class Driver implements Runnable {
 			Set<Query> querySet = queries.get(tuples.name());
 			for (Query query : querySet) {
 				TupleSet result = query.evaluate(tuples);
+				if (result.size() == 0) continue;
+				java.lang.System.err.println("============================");
+				java.lang.System.err.println("======= EVALUATE ===========");
+				java.lang.System.err.println("QUERY: " + query);
+				java.lang.System.err.println("INPUT: " + tuples);
+				java.lang.System.err.println("OUTPUT: " + result);
+				if (result.size() == 0) continue;
+				
 				if (tables.containsKey(result.name())) {
 					if (query.delete()) {
 						update(deletions, result);
@@ -220,8 +242,12 @@ public class Driver implements Runnable {
 								delta.addAll(result); // Keep evaluating recursive rule.
 							}
 							else {
-								schedule.add(clock.current(), program.name(), 
-									         Predicate.EventModifier.INSERT.toString(), result);
+								if (!continuations.containsKey(result.name())) {
+									continuations.put(result.name(), result);
+								}
+								else {
+									continuations.get(result.name()).addAll(result);
+								}
 							}
 							update(deletions, conflicts);
 						} catch (UpdateException e) {
@@ -233,7 +259,7 @@ public class Driver implements Runnable {
 				else {
 					java.lang.System.err.println("EVALUATE EVENT RESULT: " + result);
 					/* Fixpoint evaluation on event */
-					evaluate(program, result, deletions);
+					evaluate(program, result, deletions, continuations);
 				}
 			}
 			tuples.clear();

@@ -36,13 +36,6 @@ public class Schedule extends ObjectTable {
 		return this.min;
 	}
 	
-	public void add(Long clock, String program, String event, TupleSet tuples) {
-		try {
-			insert(new Tuple(name(), clock, program, tuples.name(), event, tuples));
-		} catch (UpdateException e) {
-			e.printStackTrace();
-		}
-	}
 	
 	@Override
 	protected boolean insert(Tuple tuple) throws UpdateException {

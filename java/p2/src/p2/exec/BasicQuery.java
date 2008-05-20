@@ -35,7 +35,6 @@ public class BasicQuery extends Query {
 	@Override
 	public TupleSet evaluate(TupleSet input) throws P2RuntimeException {
 		assert(input.name().equals(input.name()));
-		System.err.println("Evaluate Query " + rule() + " input " + input);
 		
 		for (Tuple tuple : input) {
 			tuple.schema(input().schema());
@@ -46,7 +45,6 @@ public class BasicQuery extends Query {
 		}
 		
 		input = head.evaluate(input);
-		System.err.println("FINAL RESULT " + input);
 		return input;
 	}
 

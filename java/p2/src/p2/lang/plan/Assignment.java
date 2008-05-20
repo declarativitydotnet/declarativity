@@ -69,7 +69,7 @@ public class Assignment extends Term {
 	}
 	
 	public Expression value() {
-		return this.value();
+		return this.value;
 	}
 
 	@Override

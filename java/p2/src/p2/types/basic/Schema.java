@@ -45,9 +45,7 @@ public class Schema {
 	
 	public void append(Variable variable) {
 		variable.position(this.variables.size());
-		if (!(variable instanceof DontCare)) {
-			this.variables.put(variable.name(), variable);
-		}
+		this.variables.put(variable.name(), variable);
 	}
 	
 	public boolean contains(Variable variable) {

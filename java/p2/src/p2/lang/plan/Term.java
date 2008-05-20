@@ -2,6 +2,8 @@ package p2.lang.plan;
 
 import java.util.Set;
 
+import p2.types.exception.PlannerException;
+import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
 
 public abstract class Term implements Comparable<Term> {
@@ -59,7 +61,7 @@ public abstract class Term implements Comparable<Term> {
 	
 	public abstract Set<Variable> requires();
 	
-	public abstract void set(String program, String rule, Integer position);
+	public abstract void set(String program, String rule, Integer position) throws UpdateException;
 	
 	public abstract Operator operator();
 }
