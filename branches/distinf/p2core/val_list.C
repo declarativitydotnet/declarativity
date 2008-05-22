@@ -95,12 +95,14 @@ string Val_List::toConfString() const
 // List comparison. For now, all members of the Val_List class are 
 // equal, since this needs to be declared but doesn't really apply to 
 // this particular type --ACR
+// Stano: the typecode comparison was flipped. this probably needs to be
+// fixed in other places as well.
 int Val_List::compareTo(ValuePtr other) const
 {
   if(other->typeCode() < Value::LIST) {
-    return -1;
+    return +1;
   } else if(other->typeCode() > Value::LIST) {
-    return 1;
+    return -1;
   } else {
     return L->compareTo(cast(other));
   }
