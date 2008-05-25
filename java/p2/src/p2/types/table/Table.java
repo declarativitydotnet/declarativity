@@ -1,15 +1,19 @@
 package p2.types.table;
 
 import java.util.*;
+
+import p2.lang.plan.Aggregate;
+import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.BadKeyException;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Index.IndexTable;
 import xtc.util.SymbolTable;
 
-public abstract class Table implements Iterable<Tuple>, Comparable {
+public abstract class Table implements Comparable<Table> {
 	public static abstract class Callback {
 		private static long ids = 0L;
 		
@@ -25,9 +29,10 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	public static class Catalog extends ObjectTable {
 		private static final Key PRIMARY_KEY = new Key(0);
 
-		public enum Field {TABLENAME, SIZE, LIFETIME, KEY, TYPES, OBJECT};
+		public enum Field {TABLENAME, TYPE, SIZE, LIFETIME, KEY, TYPES, OBJECT};
 		private static final Class[] SCHEMA = { 
 			String.class,    // The tablename
+			String.class,    // Table type
 			Integer.class,   // The table size
 			Float.class,     // The lifetime
 			Key.class,       // The primary key
@@ -44,17 +49,23 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 			Table table = (Table) tuple.value(Field.OBJECT.ordinal());
 			if (table == null) {
 				String   name     = (String) tuple.value(Field.TABLENAME.ordinal());
+				String   type     = (String) tuple.value(Field.TYPE.ordinal());
 				Integer  size     = (Integer) tuple.value(Field.SIZE.ordinal());
 				Float    lifetime = (Float) tuple.value(Field.LIFETIME.ordinal());
 				Key      key      = (Key) tuple.value(Field.KEY.ordinal());
 				TypeList types    = (TypeList) tuple.value(Field.TYPES.ordinal());
-				
-				if (size.intValue() == INFINITY.intValue() && 
-						lifetime.intValue() == INFINITY.intValue()) {
-					table = new RefTable(name, key, types);
+
+				if (type.equals(Type.TABLE.toString())) {
+					if (size.intValue() == INFINITY.intValue() && 
+							lifetime.intValue() == INFINITY.intValue()) {
+						table = new RefTable(name, key, types);
+					}
+					else {
+						table = new BasicTable(name, size, lifetime, key, types);
+					}
 				}
 				else {
-					table = new BasicTable(name, size, lifetime, key, types);
+					throw new UpdateException("Don't know how to create table type " + type);
 				}
 			}
 			
@@ -65,9 +76,32 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		}
 		
 	}
+	
+	public static abstract class Aggregate {
+		
+		protected Table table;
+		
+		public Aggregate(Table table) {
+			this.table = table;
+		}
+		
+		public abstract void insert(TupleSet tuples) throws P2RuntimeException;
+		
+		public abstract void delete(TupleSet tuples) throws P2RuntimeException;
+
+		public abstract Class type();
+
+		public abstract TupleSet tuples();
+	}
 
 	public static IndexTable index = null;
 	public static Catalog catalog  = null;
+	
+	public enum Event{NONE, INSERT, DELETE};
+	
+	public enum Type{TABLE, EVENT, FUNCTION};
+	
+	protected Type type;
 	
 	/* The table name. */
 	protected String name;
@@ -81,39 +115,49 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	/* the lifetime of a tuple, in seconds. */
 	protected Float lifetime;
 	
-	/* The primary key. */
 	protected Key key;
-	
-	protected TupleSet tuples;
-	
-	protected Index primary;
-	
-	protected Hashtable<Key, Index> secondary;
 	
 	private final Set<Callback> callbacks;
 	
-	protected Table(String name, Integer size, Float lifetime, Key key, TypeList attributeTypes) {
+	private Aggregate aggregate;
+	
+	protected Table(String name, Type type, Integer size, Float lifetime, Key key, TypeList attributeTypes) {
 		this.name = name;
+		this.type = type;
 		this.attributeTypes = attributeTypes;
 		this.size = size;
 		this.lifetime = lifetime;
 		this.key = key;
-		this.tuples = new TupleSet(name);
 		this.callbacks = new HashSet<Callback>();
-		this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
-		this.secondary = new Hashtable<Key, Index>();
+		this.aggregate = null;
 		
 		if (catalog != null) {
-			Table.register(name, size, lifetime, key, attributeTypes, this);
-		}
-		else {
-			catalog = (Catalog) this;
-			index   = new IndexTable();
+			Table.register(name, type, size, lifetime, key, attributeTypes, this);
 		}
 	}
 	
+	@Override
+	public String toString() {
+		String value = name.toString() + ", " + attributeTypes.toString() + 
+		        ", " + size + ", " + lifetime + ", keys(" + key + "), {" +
+		        attributeTypes.toString() + "}";
+		if (tuples() != null) {
+		for (Tuple t : tuples()) {
+			value += t.toString() + "\n";
+		}
+		}
+		return value;
+	}
+	
+	public abstract Integer cardinality();
+	
+	public Type type() {
+		return this.type;
+	}
+	
 	public final static void initialize() {
-		new Catalog();
+		catalog = new Catalog();
+		index   = new IndexTable();
 	}
 	
 	public final static Catalog catalog() {
@@ -124,14 +168,12 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		return Table.index;
 	}
 	
-	public String toString() {
-		String value = name.toString() + ", " + attributeTypes.toString() + 
-		        ", " + size + ", " + lifetime + ", keys(" + key + "), {" +
-		        attributeTypes.toString() + "}";
-		for (Tuple t : this) {
-			value += t.toString() + "\n";
-		}
-		return value;
+	public void aggregate(Aggregate aggregate) {
+		this.aggregate = aggregate;
+	}
+	
+	public Aggregate aggregate() {
+		return this.aggregate;
 	}
 	
 	/**
@@ -146,17 +188,13 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		this.callbacks.remove(callback);
 	}
 	
-	public abstract boolean isEvent();
-	
-	public Iterator<Tuple> iterator() {
-		return this.tuples.iterator();
-	}
-	
-	private static void register(String name, Integer size, Float lifetime, 
+	private static void register(String name, Type type, Integer size, Float lifetime, 
 			                     Key key, TypeList types, Table object) { 
-		Tuple tuple = new Tuple(catalog.name(), name, size, lifetime, key, types, object);
+		Tuple tuple = new Tuple(catalog.name(), name, type.toString(), size, lifetime, key, types, object);
+		TupleSet set = new TupleSet(catalog.name());
+		set.add(tuple);
 		try {
-			catalog.force(tuple);
+			catalog.insert(set);
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -168,7 +206,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		try {
 			TupleSet tuples = catalog.primary().lookup(catalog.key().value(name));
 			for (Tuple table : tuples) {
-				return catalog.remove(table);
+				return catalog.delete(table);
 			}
 		} catch (BadKeyException e) {
 			// TODO Fatal error
@@ -194,11 +232,8 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	}
 	
 
-	public int compareTo(Object o) {
-		if (o instanceof Table) {
-			return name().compareTo(((Table)o).name());
-		}
-		return hashCode() < o.hashCode() ? -1 : 1;
+	public int compareTo(Table o) {
+		return name().compareTo(o.name());
 	}
 
 	/**
@@ -225,9 +260,9 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 		return this.lifetime;
 	}
 	
-	/**
-	 * @return The attribute position(s) that make up the primary key. 
-	 */
+	
+	public abstract TupleSet tuples();
+	
 	public Key key() {
 		return this.key;
 	}
@@ -235,32 +270,20 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	/**
 	 * @return The primary index.
 	 */
-	public final Index primary() {
-		return this.primary;
-	}
+	public abstract Index primary();
 	
 	/**
 	 * @return All defined secondary indices.
 	 */
-	public final Hashtable<Key, Index> secondary() {
-		return this.secondary;
-	}
-	
-	/**
-	 * Get all current tuples that have a primary key
-	 * conflict with the tuple set passed argument.
-	 * @param tuples Tuples to test for conflicts
-	 * @return All tuples in the table that conflict.
-	 */
-	public final TupleSet conflict(TupleSet tuples) {
-		TupleSet conflicts = new TupleSet(name().toString());
-		for (Tuple t : tuples) {
-			TupleSet conflict = primary().lookup(t);
-			if (conflict != null) {
-				conflicts.addAll(conflict);
-			}
+	public abstract Hashtable<Key, Index> secondary();
+
+	public void force(Tuple tuple) throws UpdateException {
+		TupleSet set = new TupleSet(name());
+		set.add(tuple);
+		if (primary() != null) {
+			delete(primary().lookup(tuple));
 		}
-		return conflicts;
+		insert(set);
 	}
 	
 	/**
@@ -268,7 +291,7 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	 * @return The delta set of tuples.
 	 * @throws UpdateException 
 	 **/
-	public final TupleSet insert(TupleSet tuples) throws UpdateException {
+	public TupleSet insert(TupleSet tuples) throws UpdateException {
 		TupleSet delta = new TupleSet(name().toString());
 		for (Tuple t : tuples) {
 			t = t.clone();
@@ -281,7 +304,13 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 			callback.insertion(delta);
 		}
 		
-		this.tuples.addAll(delta);
+		if (this.aggregate != null) {
+			try {
+				this.aggregate.insert(tuples);
+			} catch (P2RuntimeException e) {
+				throw new UpdateException(e.toString());
+			}
+		}
 		return delta;
 	}
 	
@@ -290,28 +319,27 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	 * Note: This will only schedule the removal of committed tuples.
 	 * @throws UpdateException 
 	 **/
-	public final TupleSet remove(TupleSet tuples) throws UpdateException {
+	public TupleSet delete(TupleSet tuples) throws UpdateException {
 		TupleSet delta = new TupleSet(name().toString());
 		for (Tuple t : tuples) {
-			if (remove(t)) {
+			t = t.clone();
+			if (delete(t)) {
 				delta.add(t);
 			}
 		}
-		this.tuples.removeAll(delta);
 		
 		for (Callback callback : this.callbacks) {
 			callback.deletion(delta);
 		}
 		
+		if (this.aggregate != null) {
+			try {
+				this.aggregate.delete(tuples);
+			} catch (P2RuntimeException e) {
+				throw new UpdateException(e.toString());
+			}
+		}
 		return delta;
-	}
-	
-	public final void force(Tuple tuple) throws UpdateException {
-		TupleSet conflicts = primary().lookup(tuple);
-		TupleSet forced = new TupleSet(tuple.name());
-		forced.add(tuple);
-		insert(forced);
-		remove(conflicts);
 	}
 	
 	/**
@@ -327,5 +355,5 @@ public abstract class Table implements Iterable<Tuple>, Comparable {
 	 * @param t Tuple to be deleted.
 	 * @throws UpdateException 
 	 */
-	protected abstract boolean remove(Tuple t) throws UpdateException;
+	protected abstract boolean delete(Tuple t) throws UpdateException;
 }

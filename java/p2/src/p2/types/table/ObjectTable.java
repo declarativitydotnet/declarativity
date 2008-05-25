@@ -17,8 +17,8 @@ public abstract class ObjectTable extends RefTable {
 	}
 	
 	@Override
-	protected boolean remove(Tuple tuple) throws UpdateException {
-		return super.remove(tuple);
+	protected boolean delete(Tuple tuple) throws UpdateException {
+		return super.delete(tuple);
 	}
 
 }

@@ -23,8 +23,8 @@ public class HashIndex extends Index {
 	@Override
 	public String toString() {
 		String out = "Index " + table().name() + "\n";
-		for (Tuple tuple : this) {
-			out += tuple + "\n";
+		if (map != null) {
+			out += map.toString() + "\n";
 		}
 		return out;
 	}

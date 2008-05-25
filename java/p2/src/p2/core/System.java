@@ -2,11 +2,12 @@ package p2.core;
 
 import java.util.Hashtable;
 
-import p2.core.Driver.DriverTable;
+import p2.core.Driver.Evaluate;
 import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
 import p2.lang.Compiler.CompileTable;
 import p2.lang.plan.Program;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.PlannerException;
 import p2.types.table.Table;
 
@@ -17,7 +18,7 @@ public class System {
 	
 	private static CompileTable compile;
 	
-	private static DriverTable driverTable;
+	private static Evaluate evaluator;
 	
 	private static Driver driver;
 	
@@ -30,16 +31,16 @@ public class System {
 	
 	public static void initialize() {
 		Table.initialize();
-		query       = new QueryTable();
-		compile     = new CompileTable();
-		driverTable = new DriverTable();
-		schedule    = new Schedule();
-		clock       = new Clock("localhost");
-		programs    = new Hashtable<String, Program>();
+		query      = new QueryTable();
+		compile    = new CompileTable();
+		evaluator  = new Evaluate();
+		schedule   = new Schedule();
+		clock      = new Clock("localhost");
+		programs   = new Hashtable<String, Program>();
 	}
 	
-	public static Driver driver() {
-		return driver;
+	public static Evaluate evaluator() {
+		return evaluator;
 	}
 	
 	public static QueryTable query() {
@@ -52,16 +53,18 @@ public class System {
 	
 	private static void bootstrap() {
 		java.lang.System.err.println("BOOSTRAP");
-		p2.lang.Compiler compiler = new p2.lang.Compiler("runtime", "system", RUNTIME);
 		try {
+			p2.lang.Compiler compiler = new p2.lang.Compiler("runtime", "system", RUNTIME);
 			compiler.program().plan();
 			java.lang.System.err.println(compiler.program().toString());
+			programs.put(compiler.program().name(), compiler.program());
+			driver = new Driver(compiler.program(), schedule, clock);
 		} catch (PlannerException e) {
-			e.printStackTrace();
+			java.lang.System.exit(1);
+		} catch (P2RuntimeException e) {
 			java.lang.System.exit(1);
 		}
-		programs.put(compiler.program().name(), compiler.program());
-		driver = new Driver(compiler.program(), schedule, clock);
+		
 		Thread runtime = new Thread(driver);
 		runtime.start();
 		try {

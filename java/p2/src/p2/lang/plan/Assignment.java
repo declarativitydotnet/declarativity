@@ -4,6 +4,7 @@ import java.util.Set;
 import p2.lang.plan.Predicate.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
@@ -41,8 +42,8 @@ public class Assignment extends Term {
 		}
 		
 		@Override
-		protected boolean remove(Tuple tuple) throws UpdateException {
-			return super.remove(tuple);
+		protected boolean delete(Tuple tuple) throws UpdateException {
+			return super.delete(tuple);
 		}
 	}
 	
@@ -78,13 +79,8 @@ public class Assignment extends Term {
 	}
 
 	@Override
-	public void set(String program, String rule, Integer position) {
-		Tuple me = new Tuple(Program.assignment.name(), program, rule, position, this);
-		try {
-			Program.assignment.force(me);
-		} catch (UpdateException e) {
-			e.printStackTrace();
-		}
+	public void set(String program, String rule, Integer position) throws UpdateException {
+		Program.assignment.force(new Tuple(Program.assignment.name(), program, rule, position, this));
 	}
 
 }

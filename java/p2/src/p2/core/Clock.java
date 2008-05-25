@@ -25,24 +25,26 @@ public class Clock extends ObjectTable {
 		super("clock", PRIMARY_KEY, new TypeList(SCHEMA));
 		this.location = location;
 		this.clock = -1L;
-		try {
-			set(0L);
-		} catch (UpdateException e) {
-			e.printStackTrace();
-			java.lang.System.exit(0);
-		}
 	}
 	
 	public Long current() {
 		return this.clock;
 	}
 	
-	public TupleSet set(Long clock) throws UpdateException {
-		if (clock > this.clock) {
-			this.clock = clock;
-			force(new Tuple(name(), location, clock));
-			return this.tuples;
+	@Override
+	public boolean insert(Tuple tuple) throws UpdateException {
+		Long time = (Long) tuple.value(Field.CLOCK.ordinal());
+		if (time < this.clock) {
+			throw new UpdateException("Invalid clock time " +  time + 
+					                  " current clock value = " + this.clock);
 		}
-		return null;
+		this.clock = time;
+		return super.insert(tuple);
+	}
+	
+	public TupleSet time(Long time) {
+		TupleSet me = new TupleSet(name());
+		me.add(new Tuple(name(), location, time));
+		return me;
 	}
 }

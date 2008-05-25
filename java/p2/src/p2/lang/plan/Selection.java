@@ -69,13 +69,7 @@ public class Selection extends Term {
 	}
 
 	@Override
-	public void set(String program, String rule, Integer position) {
-		Tuple tuple = new Tuple(Program.selection.name(), program, rule, position, this);
-		try {
-			Program.selection.force(tuple);
-		} catch (UpdateException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+	public void set(String program, String rule, Integer position) throws UpdateException {
+		Program.selection.force(new Tuple(Program.selection.name(), program, rule, position, this));
 	}
 }

@@ -9,6 +9,7 @@ import java.util.Set;
 import p2.lang.plan.Selection.SelectionTable.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
@@ -20,8 +21,6 @@ import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 
 public class Predicate extends Term implements Iterable<Expression> {
-	public enum EventModifier{NONE, INSERT, DELETE};
-	
 	public enum Field{PROGRAM, RULE, POSITION, EVENT, OBJECT};
 	public static class PredicateTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
@@ -51,8 +50,8 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 		
 		@Override
-		protected boolean remove(Tuple tuple) throws UpdateException {
-			return super.remove(tuple);
+		protected boolean delete(Tuple tuple) throws UpdateException {
+			return super.delete(tuple);
 		}
 	}
 	
@@ -60,13 +59,13 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private String name;
 	
-	private EventModifier event;
+	private Table.Event event;
 	
 	private Arguments arguments;
 	
 	private Schema schema;
 	
-	public Predicate(boolean notin, String name, EventModifier event, List<Expression> arguments) {
+	public Predicate(boolean notin, String name, Table.Event event, List<Expression> arguments) {
 		super();
 		this.notin = notin;
 		this.name = name;
@@ -82,7 +81,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		return this.notin;
 	}
 	
-	public EventModifier event() {
+	public Table.Event event() {
 		return this.event;
 	}
 	
@@ -115,7 +114,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	public Set<Variable> requires() {
 		Set<Variable> variables = new HashSet<Variable>();
 		for (Expression arg : arguments) {
-			if (!Variable.class.isAssignableFrom(arg.getClass())) {
+			if (!(arg instanceof Variable)) {
 				variables.addAll(arg.variables());
 			}
 		}
@@ -134,12 +133,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	@Override
 	public void set(String program, String rule, Integer position) throws UpdateException {
-		Tuple me = new Tuple(Program.predicate.name(), program, rule, position, event.toString(), this);
-		try {
-			Program.predicate.force(me);
-		} catch (UpdateException e) {
-			e.printStackTrace();
-		}
+		Program.predicate.force(new Tuple(Program.predicate.name(), program, rule, position, event.toString(), this));
 		
 		this.schema = new Schema(name());
 		for (Expression arg : arguments) {

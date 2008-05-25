@@ -67,8 +67,10 @@ public class Tuple implements Comparable<Tuple> {
 	}
 	
 	public void append(Variable variable, Comparable value) {
-		this.values.add(value);
+		variable = variable.clone();
+		variable.position(this.schema.size());
 		this.schema.append(variable);
+		this.values.add(value);
 	}
 	
 	public String toString() {
@@ -132,7 +134,7 @@ public class Tuple implements Comparable<Tuple> {
 	public int hashCode() {
 		String code = "";
 		for (Comparable value : this.values) {
-			code += Integer.toString(value.hashCode());
+			code += Integer.toString(value == null ? "null".hashCode() : value.hashCode());
 		}
 		return code.hashCode();
 	}

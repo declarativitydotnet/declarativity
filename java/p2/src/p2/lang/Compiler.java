@@ -10,6 +10,7 @@ import p2.lang.parse.TypeChecker;
 import p2.lang.plan.*;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.EventTable;
 import p2.types.table.Key;
@@ -46,9 +47,15 @@ public class Compiler extends Tool {
 			String name  = (String) tuple.value(Field.NAME.ordinal());
 			String owner = (String) tuple.value(Field.OWNER.ordinal());
 			String file  = (String) tuple.value(Field.FILE.ordinal());
-			Compiler compiler = new Compiler(name, owner, file);
-			tuple.value(Field.PROGRAM.ordinal(), compiler.program());
-			return super.insert(tuple);
+			try {
+				Compiler compiler = new Compiler(name, owner, file);
+				tuple.value(Field.PROGRAM.ordinal(), compiler.program());
+				return super.insert(tuple);
+			} catch (P2RuntimeException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new UpdateException(e.toString());
+			}
 		}
 	}
 
@@ -60,7 +67,7 @@ public class Compiler extends Tool {
 	private TypeChecker typeChecker;
 
 	/** Create a new driver for Overlog. */
-	public Compiler(String name, String owner, String file) {
+	public Compiler(String name, String owner, String file) throws P2RuntimeException {
 		this.program = new Program(name, owner);
 		this.file = file;
 		typeChecker = new TypeChecker(this.runtime);
@@ -68,6 +75,19 @@ public class Compiler extends Tool {
 		args[0] = "-no-exit";
 		args[1] = file;
 		run(args);
+		
+		if (runtime.errorCount() > 0) {
+			for (Table table : this.program.definitions()) {
+				try {
+					Table.drop(table.name());
+				} catch (UpdateException e) {
+					e.printStackTrace();
+				}
+			}
+			throw new P2RuntimeException("Compilation of program " + name + 
+					                     " resulted in " + this.runtime.errorCount() + 
+					                     " errors.");
+		}
 	}
 	
 	public Program program() {
@@ -116,6 +136,7 @@ public class Compiler extends Tool {
 		for (Node clause : node.<Node>getList(0)) {
 			if (clause.getName().equals("Import")) {
 				typeChecker.analyze(clause);
+				if (runtime.errorCount() > 0) return;
 			}
 		}
 
@@ -123,10 +144,12 @@ public class Compiler extends Tool {
 		for (Node clause : node.<Node>getList(0)) {
 			if (clause.getName().equals("Table")) {
 				typeChecker.analyze(clause);
+				if (runtime.errorCount() > 0) return;
 				this.program.definition((Table)clause.getProperty(Constants.TYPE));
 			}
 			else if (clause.getName().equals("Event")) {
 				typeChecker.analyze(clause);
+				if (runtime.errorCount() > 0) return;
 				this.program.definition((Table)clause.getProperty(Constants.TYPE));
 			}
 		}
@@ -137,6 +160,7 @@ public class Compiler extends Tool {
 			    clause.getName().equals("Fact") ||
 			    clause.getName().equals("Watch")) {
 				typeChecker.analyze(clause);
+				if (runtime.errorCount() > 0) return;
 				Clause c = (Clause) clause.getProperty(Constants.TYPE);
 				try {
 					c.set(this.program.name());

@@ -21,6 +21,23 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 		this.addAll(tuples);
 	}
 	
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof TupleSet) {
+			return ((TupleSet)o).id.equals(this.id);
+		}
+		return false;
+	}
+	
+	public TupleSet clone() {
+		return new TupleSet(name, this);
+	}
+	
 	public String name() {
 		return this.name;
 	}

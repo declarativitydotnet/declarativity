@@ -26,9 +26,10 @@ public class ScanJoin extends Join {
 				                       " JOIN " + 
 				                       predicate.name());
 		for (Tuple outer : tuples) {
-			for (Tuple inner : this.table) {
+			for (Tuple inner : this.table.tuples()) {
+				inner.schema(this.predicate.schema());
+				
 				if (validate(outer, inner)) {
-					inner.schema(this.predicate.schema());
 					Tuple join = outer.join(result.name(), inner);
 					if (join != null) {
 						result.add(join);

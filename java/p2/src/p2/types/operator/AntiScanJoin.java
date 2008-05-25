@@ -27,7 +27,8 @@ public class AntiScanJoin extends Join {
 				                       predicate.name());
 		for (Tuple outer : tuples) {
 			boolean success = false;
-			for (Tuple inner : this.table) {
+			for (Tuple inner : this.table.tuples()) {
+				inner.schema(this.predicate.schema());
 				if (!validate(outer, inner)) {
 					success = true;
 					break;
@@ -35,6 +36,11 @@ public class AntiScanJoin extends Join {
 				else {
 					Tuple join = outer.join(result.name(), inner);
 					if (join != null) {
+						/*
+						System.err.println("ANTIJOIN SCHEMA: outer = " + outer.schema() + " inner = " + inner.schema());
+						System.err.println("ANTIJOIN TUPLE: outer = " + outer + " inner = " + inner);
+						System.err.println("ANTIJOIN RESULT: " + join);
+						*/
 						success = true;
 						break;
 					}

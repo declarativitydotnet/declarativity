@@ -14,15 +14,15 @@ import p2.types.table.Table;
 public abstract class Query implements Comparable<Query> {
 
 	public static class QueryTable extends ObjectTable {
-		public static final Key PRIMARY_KEY = new Key(0,1,2);
+		public static final Key PRIMARY_KEY = new Key();
 		
-		public enum Field{PROGRAM, DELETE, INPUT, OUTPUT, OBJECT};
+		public enum Field{PROGRAM, RULE, DELETE, EVENT, INPUT, OUTPUT, OBJECT};
 		public static final Class[] SCHEMA = {
 			String.class,  // Program name
-			String.class,  // Name 
+			String.class,  // Rule name
 			Boolean.class, // Delete rule/query?
-			String.class,  // Input tuple name
 			String.class,  // Event modifier
+			String.class,  // Input tuple name
 			String.class,  // Output tuple name
 			Query.class    // The query object
 		};
@@ -42,6 +42,8 @@ public abstract class Query implements Comparable<Query> {
 	
 	private Boolean delete;
 	
+	private Table.Event event;
+	
 	private Predicate input;
 	
 	private Predicate output;
@@ -50,16 +52,21 @@ public abstract class Query implements Comparable<Query> {
 		this.program = program;
 		this.rule = rule;
 		this.delete = delete;
+		this.event  = input.event();
 		this.input = input;
 		this.output = output;
 		try {
-			p2.core.System.query().insert(
-					new Tuple(p2.core.System.query().name(), program, rule, 
-							  delete, input.event().toString(), output.event().toString()));
+			p2.core.System.query().force(
+					new Tuple(p2.core.System.query().name(), program, rule,  delete, 
+							  event.toString(), input.name(), output.name(), this));
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public Table.Event event() {
+		return this.event;
 	}
 	
 	public abstract String toString();

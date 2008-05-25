@@ -1,22 +1,27 @@
 package p2.lang.plan;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import p2.exec.BasicQuery;
 import p2.exec.Query;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
-import p2.types.operator.Aggregation;
+import p2.types.operator.EventFilter;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
+import p2.types.table.AggregateImpl;
 import p2.types.table.HashIndex;
 import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.Table;
 
 public class Rule extends Clause {
 	
@@ -44,8 +49,8 @@ public class Rule extends Clause {
 		}
 		
 		@Override
-		protected boolean remove(Tuple tuple) throws UpdateException {
-			return super.remove(tuple);
+		protected boolean delete(Tuple tuple) throws UpdateException {
+			return super.delete(tuple);
 		}
 	}
 	
@@ -92,6 +97,16 @@ public class Rule extends Clause {
 		return value;
 	}
 	
+	public int compareTo(Clause o) {
+		if (o instanceof Rule) {
+			Rule other = (Rule) o;
+			String otherName = other.program + ":" + other.name;
+			String myName    = this.program + ":" + this.name;
+			return otherName.compareTo(myName);
+		}
+		return -1;
+	}
+	
 	public Predicate head() {
 		return this.head;
 	}
@@ -107,17 +122,19 @@ public class Rule extends Clause {
 			this.body.get(i).set(program, this.name, i+1);
 		}
 		
-		Tuple me = new Tuple(Program.rule.name(), program, name, deletion, this);
-		Program.rule.force(me);
+		Program.rule.force(new Tuple(Program.rule.name(), program, name, deletion, this));
 	}
 
 	public List<Query> query() throws PlannerException {
 		/* First search for an event predicate. */
-		Predicate event = null;
+		Predicate event   = null;
+		Function function = null;
 		for (Term term : body) {
 			if (term instanceof Predicate) {
 				Predicate pred = (Predicate) term;
-				if (pred.event() != Predicate.EventModifier.NONE) {
+				Table table = Table.table(pred.name());
+				if (table.type() == Table.Type.EVENT ||
+				    pred.event() != Table.Event.NONE) {
 					if (event != null) {
 						throw new PlannerException("Multiple event predicates in rule " + name);
 					}
@@ -125,54 +142,67 @@ public class Rule extends Clause {
 					event = pred;
 				}
 			}
+			else if (term instanceof Function) {
+				function = (Function) term;
+				event = function.predicate();
+				
+			}
 		}
 		
 		List<Query> queries = new ArrayList<Query>();
 		if (event != null) {
 			List<Operator> operators = new ArrayList<Operator>();
+			
+			EventFilter efilter = new EventFilter(event);
+			if (efilter.filters() > 0) {
+				operators.add(efilter);
+			}
+			
+			/* Table function go first to immediately evaluate 
+			 * input event tuples. */
+			if (function != null) {
+				operators.add(function.operator());
+			}
+			
+			/* Add all remaining terms in the rule body. */
 			for (Term term : body) {
 				if (!term.equals(event)) {
 					operators.add(term.operator());
 				}
 			}
 			
-			if (this.aggregation) {
-				queries.add(new BasicQuery(program, name, deletion, event, 
-						                   new Projection(this.head), operators, 
-						                   new Aggregation(this.head)));
-			}
-			else {
-				queries.add(new BasicQuery(program, name, deletion, event, new Projection(this.head), operators));
-			}
+			queries.add(new BasicQuery(program, name, deletion, event, new Projection(this.head), operators));
 		}
 		else {
 			/* Perform delta rewrite. */
+			Set<String> eventPredicates = new HashSet<String>();
 			for (Term term1 : body) {
 				if (!(term1 instanceof Predicate)) {
 					continue;
 				}
 				else {
 					Predicate pred = (Predicate) term1;
-					if (pred.notin()) continue;
+					if (pred.notin() || eventPredicates.contains(pred.name())) {
+						continue;
+					}
+					eventPredicates.add(pred.name());
 				}
 				
 				Predicate delta = (Predicate) term1;
 				List<Operator> operators = new ArrayList<Operator>();
+				EventFilter efilter = new EventFilter(delta);
+				if (efilter.filters() > 0) {
+					operators.add(efilter);
+				}
+				
 				for (Term term2 : body) {
 					if (!term2.equals(delta)) {
 						operators.add(term2.operator());
 					}
 				}
 				
-				if (this.aggregation) {
-					queries.add(new BasicQuery(program, name, deletion, delta, 
-							                   new Projection(this.head), operators, 
-							                   new Aggregation(this.head)));
-				}
-				else {
-					queries.add(new BasicQuery(program, name, deletion, delta, 
-							                   new Projection(this.head), operators));
-				}
+				queries.add(new BasicQuery(program, name, deletion, delta, 
+							               new Projection(this.head), operators));
 			}
 			
 		}

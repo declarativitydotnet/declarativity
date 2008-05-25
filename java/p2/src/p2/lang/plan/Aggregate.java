@@ -5,6 +5,7 @@ import p2.types.function.TupleFunction;
 
 
 public class Aggregate extends Variable {
+	public final String STAR = "*";
 	
 	private String function;
 	

@@ -4,42 +4,33 @@ import java.lang.Long;
 import p2.types.basic.TupleSet;
 
 /* Define runtime events. */
-define(evaluate, {String, String, TupleSet});
-define(runnable, {String, String});
+define(runnable, {String, String, TupleSet, TupleSet});
 define(strata, {String, Long, Integer});
 
-priority("runtime", "clock",      0);
-priority("runtime", "schedule",   0);
-priority("runtime", "priority",   0);
-priority("runtime", "strata",     0);
-priority("runtime", "runnable",   0);
-priority("runtime", "evaluate",   0);
-priority("runtime", "driver",     0);
-
-/* Call the fixpoint driver/evaluator to evaluate runnable tuple set. */
-driver driver(Program, TupleName, TupleSet) :-
-	runnable(Program, TupleName),
-	clock(Location, Time),
-	schedule(Time, Program, TupleName, Event, TupleSet);
+next schedule(Time, Program, TupleName, Insertions, Deletions) :-
+	evaluate(runnable(Program, TupleName, Insertions, Deletions)),
+	clock(Location, Time);
 
 /* Delete what has been evaluated in the curent clock. */
-cleanup delete schedule(Time, Program, TupleName, Event, TupleSet) :-
-					runnable(Program, TupleName),
-					clock(Location, Time),
-					schedule(Time, Program, TupleName, Event, TupleSet);
+cleanup delete schedule(Time, Program, TupleName, Insertions, Deletions) :-
+					runnable(Program, TupleName, Insertions, Deletions),
+					clock(Location, Time);
 
 /* Identify the runnable tuples. */
-runnable runnable(Program, TupleName) :-
+runnable runnable(Program, TupleName, Insertions, Deletions) :-
 	strata(Program, Time, Priority),
 	priority(Program, TupleName, Priority),
-	schedule(Time, Program, TupleName, Event, TupleSet);
+	schedule(Time, Program, TupleName, Insertions, Deletions);
 
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
 strata strata(Program, Time, min<Priority>) :-
 	clock(Location, Time),
-	schedule(Time, Program, TupleName, Event, TupleSet),
+	schedule(Time, Program, TupleName, Insertions, Deletions),
 	priority(Program, TupleName, Priority);
+
+/*******************************************************************/
+/*** Periodic scheduler                                           **/
 
 
 /*******************************************************************/
@@ -50,15 +41,6 @@ define(priority, infinity, infinity, keys(0,1), {String, String, Integer});
 define(dependency, infinity, infinity, keys(0,1,2), {String, String, String});
 define(planned, {String});
 define(compile, {String, String, String});
-
-
-priority("runtime", "compiler",   0);
-priority("runtime", "compile",    0);
-priority("runtime", "rule",       0);
-priority("runtime", "predicate",  0);
-priority("runtime", "planned",    0);
-priority("runtime", "dependency", 0);
-priority("runtime", "priority",   0);
 
 planned("runtime");
 
@@ -77,23 +59,24 @@ dependency(Program, Head.name(), Body.name()) :-
 	planned(Program),
 	rule(Program, Rule, _),
 	predicate(Program, Rule, 0, Event, Head), /* Position == 0 */
-	predicate(Program, Rule, Pos, Event, Body), Pos > 0;
-
+	predicate(Program, Rule, Pos, Event, Body), 
+	Head != Body, Pos > 0;
+	
 /* Initialize all predicates to stratum 0. */
-planned priority(Program, Pred.name(), 0) :-
-	planned(Program),
-	rule(Program, Rule, _),
-	predicate(Program, Rule, Pos, Event, Pred),
-	notin priority(Program, Pred.name(), _);
+init priority(Program, Pred.name(), 0) :-
+		planned(Program),
+		rule(Program, Rule, _),
+		predicate(Program, Rule, Pos, Event, Pred),
+		notin priority(Program, Pred.name(), _);
 
 /* Bubble up predicates in the stratum chain. */
-priority(Program, Head, Priority) :-
-	priority(Program, Head, HPriority),
-	priority(Program, Body, BPriority),
-	dependency(Program, Head, Body),
-	notin dependency(Program, Body, Head),
-	HPriority <= BPriority,
-	Priority := BPriority + 1;
+bubble priority(Program, Head, Priority) :-
+		priority(Program, Head, HPriority),
+		priority(Program, Body, BPriority),
+		dependency(Program, Head, Body),
+		notin dependency(Program, Body, Head),
+		HPriority <= BPriority,
+		Priority := BPriority + 1;
 
 
 

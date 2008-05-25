@@ -12,24 +12,52 @@ import p2.types.exception.UpdateException;
 
 
 public class BasicTable extends Table {
+	/* The primary key. */
+	protected Key key;
+	
+	protected TupleSet tuples;
+	
+	protected Index primary;
+	
+	protected Hashtable<Key, Index> secondary;
 	
 	public BasicTable(String name, Integer size, Number lifetime, Key key, TypeList types) {
-		super(name, size, lifetime.floatValue(), key, types);
+		super(name, Type.TABLE, size, lifetime.floatValue(), key, types);
+		this.key = key;
+		this.tuples = new TupleSet(name);
+		this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
+		this.secondary = new Hashtable<Key, Index>();
+	}
+	
+	@Override
+	public TupleSet tuples() {
+		return this.tuples == null ? new TupleSet(name()) : this.tuples.clone();
+
 	}
 	
 	@Override
 	protected boolean insert(Tuple t) throws UpdateException {
-		return !this.tuples.contains(t);
+		return this.tuples.add(t);
 	}
 	
 	@Override
-	protected boolean remove(Tuple t) throws UpdateException {
-		return this.tuples.contains(t);
+	protected boolean delete(Tuple t) throws UpdateException {
+		return this.tuples.remove(t);
 	}
 
 	@Override
-	public boolean isEvent() {
-		return false;
+	public Index primary() {
+		return this.primary;
+	}
+
+	@Override
+	public Hashtable<Key, Index> secondary() {
+		return this.secondary;
+	}
+
+	@Override
+	public Integer cardinality() {
+		return this.tuples().size();
 	}
 
 }

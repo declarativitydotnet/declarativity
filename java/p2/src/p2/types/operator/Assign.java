@@ -14,7 +14,7 @@ public class Assign extends Operator {
 	private p2.lang.plan.Assignment assignment;
 	
 	public Assign(p2.lang.plan.Assignment assignment) {
-		super(assignment.program(), assignment.rule(), assignment.position());
+		super(assignment.program(), assignment.rule());
 		this.assignment = assignment;
 	}
 	

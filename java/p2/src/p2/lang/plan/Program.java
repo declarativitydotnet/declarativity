@@ -9,6 +9,7 @@ import java.util.Set;
 import p2.types.table.Table;
 import p2.exec.Query;
 import p2.lang.plan.Fact.FactTable;
+import p2.lang.plan.Function.TableFunction;
 import p2.lang.plan.Program.ProgramTable;
 import p2.lang.plan.Rule.RuleTable;
 import p2.lang.plan.Selection.SelectionTable;
@@ -45,8 +46,8 @@ public class Program implements Comparable<Program> {
 		}
 		
 		@Override
-		protected boolean remove(Tuple tuple) throws UpdateException {
-			return super.remove(tuple);
+		protected boolean delete(Tuple tuple) throws UpdateException {
+			return super.delete(tuple);
 		}
 	}
 	
@@ -55,6 +56,7 @@ public class Program implements Comparable<Program> {
 	static final WatchTable      watch      = new WatchTable();
 	static final FactTable       fact       = new FactTable();
 	static final PredicateTable  predicate  = new PredicateTable();
+	static final TableFunction   tfunction  = new TableFunction();
 	static final SelectionTable  selection  = new SelectionTable();
 	static final AssignmentTable assignment = new AssignmentTable();
 	
@@ -68,20 +70,17 @@ public class Program implements Comparable<Program> {
 	
 	private Hashtable<String, TupleSet> facts;
 	
-	private Hashtable<String, Table> tables;
-	
 	public Program(String name, String owner) {
 		this.name        = name;
 		this.owner       = owner;
 		this.definitions = new HashSet<Table>();
 		this.queries     = new Hashtable<String, Set<Query>>();
 		this.facts       = new Hashtable<String, TupleSet>();
-		this.tables      = new Hashtable<String, Table>();
 		try {
 			program.force(new Tuple(program.name(), name, owner, this));
 		} catch (UpdateException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			java.lang.System.exit(1);
 		}
 	}
 	
@@ -106,10 +105,13 @@ public class Program implements Comparable<Program> {
 		this.definitions.add(table);
 	}
 	
+	public List<Table> definitions() {
+		return this.definitions();
+	}
+	
 	public void plan() throws PlannerException {
 		this.queries.clear();
 		this.facts.clear();
-		this.tables.clear();
 		
 		/* First plan out all the rules. */
 		TupleSet rules = rule.secondary().get(
@@ -118,10 +120,6 @@ public class Program implements Comparable<Program> {
 		
 		for (Tuple tuple : rules) {
 			Rule rule = (Rule) tuple.value(RuleTable.Field.OBJECT.ordinal());
-			Table table = Table.table(rule.head().name());
-			if (!table.isEvent() && !this.tables.containsKey(table.name())) {
-				this.tables.put(table.name(), table); // Cache all hard tables that a written.
-			}
 			
 			/* Store all planned queries from a given rule. 
 			 * NOTE: delta rules can produce > 1 query. */
@@ -157,10 +155,6 @@ public class Program implements Comparable<Program> {
 		return this.queries;
 	}
 
-	public Hashtable<String, Table> tables() {
-		return this.tables;
-	}
-	
 	public Hashtable<String, TupleSet> facts() {
 		return this.facts;
 	}

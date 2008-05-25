@@ -50,14 +50,13 @@ public abstract class Join extends Operator {
 			}
 			
 			if (this.rhs instanceof TableField) {
-				rvalue = this.lhs.evaluate(inner);
+				rvalue = this.rhs.evaluate(inner);
 			}
 			else {
-				rvalue = this.lhs.evaluate(outer);
+				rvalue = this.rhs.evaluate(outer);
 			}
 			return lvalue.compareTo(rvalue) == 0;
 		}
-		
 	}
 	
 	protected Predicate predicate;
@@ -65,7 +64,7 @@ public abstract class Join extends Operator {
 	private List<JoinFilter> filters;
 	
 	public Join(Predicate predicate) {
-		super(predicate.program(), predicate.rule(), predicate.position());
+		super(predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.filters = filters(predicate);
 	}

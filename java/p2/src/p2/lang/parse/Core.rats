@@ -47,7 +47,8 @@ generic RuleBody = TermList;
 Pair<Node> TermList =  Term (void:",":Symbol Term)* ;
 
 Node Term =
-    Predicate
+	TableFunction
+  / Predicate
   / Assignment
   / Selection
   ;
@@ -81,6 +82,12 @@ generic Watch =
   ;
 
 transient String WatchFlow = [a-zA-Z]+;
+
+//----------------------------  TableFunction  --------------------------------------/
+
+generic TableFunction = 
+     TupleName void:"(":Symbol Predicate void:")":Symbol
+     ;
 
 //----------------------------  Predicate  --------------------------------------/
 

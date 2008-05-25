@@ -14,7 +14,7 @@ public class Selection extends Operator {
 	private p2.lang.plan.Selection selection;
 	
 	public Selection(p2.lang.plan.Selection selection) {
-		super(selection.program(), selection.rule(), selection.position());
+		super(selection.program(), selection.rule());
 		this.selection = selection;
 	}
 

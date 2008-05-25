@@ -9,6 +9,7 @@ import p2.types.operator.Operator;
 import p2.types.operator.Projection;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.Table;
 
 public class Eddy extends Query {
 
@@ -16,9 +17,8 @@ public class Eddy extends Query {
 	
 	private List<Operator> body;
 
-	public Eddy(String program, String rule, Boolean delete, 
-			    Predicate input, Projection output, 
-			    List<Operator> body) {
+	public Eddy(String program, String rule, Boolean delete,
+			    Predicate input, Projection output,  List<Operator> body) {
 		super(program, rule, delete, input, output.predicate());
 		this.head = output;
 		this.body = body;

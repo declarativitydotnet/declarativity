@@ -6,6 +6,7 @@ import java.util.List;
 import p2.exec.Query;
 import p2.lang.plan.Rule.RuleTable.Field;
 import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.PlannerException;
 import p2.types.exception.P2RuntimeException;
@@ -41,8 +42,8 @@ public class Fact extends Clause {
 		}
 		
 		@Override
-		protected boolean remove(Tuple tuple) throws UpdateException {
-			return super.remove(tuple);
+		protected boolean delete(Tuple tuple) throws UpdateException {
+			return super.delete(tuple);
 		}
 	}
 	
@@ -82,8 +83,7 @@ public class Fact extends Clause {
 			}
 		}
 		
-		Tuple fact = new Tuple(name, values);
-		Program.fact.force(new Tuple(Program.fact.name(), program, name, fact));
+		Program.fact.force(new Tuple(Program.fact.name(), program, name, new Tuple(name, values)));
 	}
 
 }

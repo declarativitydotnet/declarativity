@@ -64,4 +64,5 @@ public abstract class Term implements Comparable<Term> {
 	public abstract void set(String program, String rule, Integer position) throws UpdateException;
 	
 	public abstract Operator operator();
+
 }

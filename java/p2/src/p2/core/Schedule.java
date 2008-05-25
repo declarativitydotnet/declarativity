@@ -14,15 +14,15 @@ import p2.types.table.ObjectTable;
 
 public class Schedule extends ObjectTable {
 	
-	public static final Key PRIMARY_KEY = new Key();
+	public static final Key PRIMARY_KEY = new Key(0,1,2);
 	
-	public enum Field {TIME, PROGRAM, TUPLENAME, EVENT, SET};
+	public enum Field {TIME, PROGRAM, TUPLENAME, INSERTIONS, DELETIONS};
 	public static final Class[] SCHEMA = { 
 		Long.class,     // Time
 		String.class,   // Program name
 		String.class,   // Tuple name
-		String.class,   // Event description
-		TupleSet.class  // Tuple set
+		TupleSet.class, // Insertion tuple set
+		TupleSet.class  // Deletion tuple set
 	};
 	
 	private Long min;
@@ -36,19 +36,22 @@ public class Schedule extends ObjectTable {
 		return this.min;
 	}
 	
+	@Override
+	public TupleSet delete(TupleSet tuples) throws UpdateException {
+		TupleSet delta = super.delete(tuples);
+		this.min = 0L;
+		for (Tuple tuple : tuples()) {
+			min = min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
+					min : (Long) tuple.value(Field.TIME.ordinal());
+		}
+		return delta;
+	}
 	
 	@Override
 	protected boolean insert(Tuple tuple) throws UpdateException {
-		TupleSet previous = primary().lookup(tuple);
-		if (previous != null) {
-			TupleSet newSet = (TupleSet) tuple.value(Field.SET.ordinal());
-			for (Tuple prev : previous) {
-				TupleSet prevSet = (TupleSet) tuple.value(Field.SET.ordinal());
-				prevSet.addAll(newSet);
-			}
-		}
 		min = min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
 				min : (Long) tuple.value(Field.TIME.ordinal());
 		return super.insert(tuple);
 	}
+	
 }

@@ -61,8 +61,8 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		}
 
 		@Override
-		public boolean remove(Tuple tuple) throws UpdateException {
-			return super.remove(tuple);
+		public boolean delete(Tuple tuple) throws UpdateException {
+			return super.delete(tuple);
 		}
 
 	}
@@ -91,6 +91,8 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		}
 		this.table.register(new Listener());
 	}
+	
+	public abstract String toString();
 	
 	public int compareTo(Index i) {
 		return table().name().compareTo(i.table().name());

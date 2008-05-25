@@ -14,32 +14,201 @@ import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
+import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 
 public class Driver implements Runnable {
 	
-	public static class DriverTable extends ObjectTable {
-		public static final Key PRIMARY_KEY = new Key(0,1);
-
-		public enum Field{PROGRAM, TUPLENAME, TUPLESET};
+	public static class Evaluate extends p2.types.table.Function {
+		private static class UpdateState {
+			public Hashtable<String, TupleSet> insertions;
+			public Hashtable<String, TupleSet> deletions;
+			public UpdateState() {
+				this.insertions = new Hashtable<String, TupleSet>();
+				this.deletions  = new Hashtable<String, TupleSet>();
+			}
+		}
+		
+		private static class TupleSetContainer {
+			public TupleSet insertions;
+			public TupleSet deletions;
+			public TupleSetContainer(String name) {
+				insertions = new TupleSet(name);
+				deletions = new TupleSet(name);
+			}
+		}
+		
+		public enum Field{PROGRAM, TUPLENAME, INSERTIONS, DELETIONS};
 		public static final Class[] SCHEMA =  {
 			String.class,   // Program name
 			String.class,   // Tuple name
-			TupleSet.class  // TupleSet to evaluate
+			TupleSet.class, // Insertion tuple set
+			TupleSet.class  // Deletions tuple set
 		};
 
-		public DriverTable() {
-			super("driver", PRIMARY_KEY, new TypeList(SCHEMA));
+		public Evaluate() {
+			super("evaluate", new TypeList(SCHEMA));
 		}
 		
-		protected boolean insert(Tuple tuple) throws UpdateException {
-			java.lang.System.err.println("DRIVER TUPLE: " + tuple);
-			String   name   = (String) tuple.value(Field.PROGRAM.ordinal());
-			TupleSet tuples = (TupleSet) tuple.value(Field.TUPLESET.ordinal());
-			p2.core.System.driver().evaluate(System.program(name), tuples);
-			return true; // Do not store this tuple.
+		public TupleSet insert(TupleSet tuples) throws UpdateException {
+			Hashtable<String, Hashtable<String, TupleSetContainer>> evaluations = 
+				new Hashtable<String, Hashtable<String, TupleSetContainer>>();
+			
+			for (Tuple tuple : tuples) {
+				String program = (String) tuple.value(Field.PROGRAM.ordinal());
+				String tupleName = (String) tuple.value(Field.TUPLENAME.ordinal());
+				
+				if (!evaluations.containsKey(program)) {
+					evaluations.put(program, new Hashtable<String, TupleSetContainer>());
+				}
+				
+				if (!evaluations.get(program).containsKey(tupleName)) {
+					evaluations.get(program).put(tupleName, new TupleSetContainer(tupleName));
+				}
+				TupleSet insertions  = (TupleSet) tuple.value(Field.INSERTIONS.ordinal());
+				TupleSet deletions   = (TupleSet) tuple.value(Field.DELETIONS.ordinal());
+				evaluations.get(program).get(tupleName).insertions.addAll(insertions);
+				evaluations.get(program).get(tupleName).deletions.addAll(deletions);
+			}
+			
+			TupleSet delta = new TupleSet(name());
+			for (String program : evaluations.keySet()) {
+				for (String tupleName : evaluations.get(program).keySet()) {
+					delta.addAll(
+							evaluate(System.program(program), 
+									 evaluations.get(program).get(tupleName).insertions, 
+									 evaluations.get(program).get(tupleName).deletions)); 
+				}
+			}
+			java.lang.System.err.println("EVALUATION RESULT: " + delta);
+			
+			return delta;
+		}
+		
+		private TupleSet evaluate(Program program, TupleSet insertions, TupleSet deletions) {
+			Hashtable<String, Set<Query>> queries  = program.queries();
+			Hashtable<String, Tuple> continuations = new Hashtable<String, Tuple>();
+			java.lang.System.err.println("EVALUATE: INSERTIONS " + insertions + " DELETIONS: " + deletions);
+			try {
+				while (insertions.size() > 0) {
+					TupleSet delta = new TupleSet(insertions.name());
+					Table table = Table.table(insertions.name());
+					if (table.primary() != null) {
+						for (Tuple insert : insertions) {
+							deletions.addAll(table.primary().lookup(insert));
+						}
+					}
+					insertions = table.insert(insertions);
+					if (table.aggregate() != null) {
+						insertions = table.aggregate().tuples();
+					}
+					java.lang.System.err.println("\tINSERTION DELTAS " + insertions);
+					
+					if (insertions.size() == 0) continue;
+					
+					Set<Query> querySet = queries.get(insertions.name());
+					if (querySet == null) break;
+					
+					for (Query query : querySet) {
+						if (query.event() != Table.Event.DELETE) {
+							java.lang.System.err.println("\tRUN QUERY " + query.rule() + " input " + insertions);
+							TupleSet result = query.evaluate(insertions);
+							java.lang.System.err.println("\tQUERY " + query.rule() + " result " + result);
+							if (result.size() == 0) { 
+								continue;
+							}
+							else if (result.name().equals(insertions.name())) {
+								delta.addAll(result);
+							}
+							else {
+								continuation(continuations, program, Table.Event.INSERT, result);
+							}
+						}
+					}
+					insertions = delta;
+				}
+			} catch (P2RuntimeException e) {
+				e.printStackTrace();
+				java.lang.System.exit(1);
+			} catch (UpdateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			try {
+				while (deletions.size() > 0) {
+					TupleSet delta = new TupleSet(deletions.name());
+					Table table = Table.table(deletions.name());
+					if (table.type() == Table.Type.TABLE) {
+						deletions = table.delete(deletions);
+					}
+					else {
+						java.lang.System.err.println("Can't delete tuples from non table type");
+						java.lang.System.exit(0);
+					}
+					
+					/* Put the updated table aggregate in the inserts queue. */
+					if (table.aggregate() != null) {
+						if (continuations.containsKey(table.name())) {
+							continuations.remove(table.name());
+						}
+						continuation(continuations, program, Table.Event.INSERT, table.aggregate().tuples());
+					}
+
+					if (deletions.size() == 0) continue;
+
+					Set<Query> querySet = queries.get(delta.name());
+					if (querySet == null) break;
+					for (Query query : querySet) {
+						if (query.event() != Table.Event.INSERT) {
+							TupleSet result = query.evaluate(insertions);
+							if (result.size() == 0) { 
+								continue;
+							}
+							else if (result.name().equals(insertions.name())) {
+								delta.addAll(result);
+							}
+							else {
+								continuation(continuations, program, Table.Event.DELETE, result);
+							}
+						}
+					}
+					insertions = delta;
+				}
+			} catch (P2RuntimeException e) {
+				e.printStackTrace();
+				java.lang.System.exit(1);
+			} catch (UpdateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			TupleSet delta = new TupleSet(name());
+			for (Tuple continuation : continuations.values()) {
+				delta.add(continuation);
+			}
+			return delta;
+		}
+		
+		private void continuation(Hashtable<String, Tuple> continuations, Program program, Table.Event event, TupleSet result) {
+			if (!continuations.containsKey(result.name())) {
+				Tuple tuple = new Tuple(name(), program.name(), result.name(), 
+						                new TupleSet(result.name()), new TupleSet(result.name()));
+				continuations.put(result.name(), tuple);
+			}
+			
+			if (event == Table.Event.INSERT) {
+				TupleSet insertions = (TupleSet) continuations.get(result.name()).value(Field.INSERTIONS.ordinal());
+				insertions.addAll(result);
+			}
+			else {
+				TupleSet deletions = (TupleSet) continuations.get(result.name()).value(Field.DELETIONS.ordinal());
+				deletions.addAll(result);
+				
+			}
+			
 		}
 	}
 
@@ -58,54 +227,20 @@ public class Driver implements Runnable {
 	
 
 	public void run() {
-		final TupleSet scheduleInsertions = new TupleSet(schedule.name());
-		schedule.register(new Table.Callback() {
-			public void deletion(TupleSet tuples) { /* Don't care. */ }
-			public void insertion(TupleSet tuples) {
-				java.lang.System.err.println("SCHEDULE INSERTION HANDLER " + tuples);
-				synchronized (schedule) {
-					scheduleInsertions.addAll(tuples);
-					schedule.notify();
-				}
-			}
-		});
-		
-		TupleSet factSchedule = new TupleSet(schedule.name());
+		/* Schedule all runtime program facts. */
 		for (TupleSet fact : this.runtime.facts().values()) {
-			Table table = Table.table(fact.name());
 			try {
-				if (!table.isEvent()) {
-					TupleSet delta = table.insert(fact);
-					if (delta.size() > 0) {
-						factSchedule.add(
-							new Tuple(schedule.name(), clock.current(), runtime.name(), 
-									  delta.name(), Predicate.EventModifier.INSERT.toString(), delta));
-					}
-				}
-				else {
-					factSchedule.add(
-						new Tuple(schedule.name(), clock.current(), runtime.name(), 
-								  fact.name(), Predicate.EventModifier.NONE.toString(), fact));
-				}
-			} catch (UpdateException e) {
-				e.printStackTrace();
-				java.lang.System.exit(0);
-			}
-		}
-		
-		if (factSchedule.size() > 0) {
-			try {
-				schedule.insert(factSchedule);
+				evaluate(fact);
 			} catch (UpdateException e) {
 				e.printStackTrace();
 				java.lang.System.exit(1);
 			}
 		}
 		
-		Hashtable<String, TupleSet> insertions = new Hashtable<String, TupleSet>();
+		
 		while (true) {
 			synchronized (schedule) {
-				if (schedule.size() == 0) {
+				if (schedule.cardinality() == 0) {
 					try {
 						java.lang.System.err.println("Nothing scheduled at this time.");
 						schedule.wait();
@@ -114,166 +249,33 @@ public class Driver implements Runnable {
 						java.lang.System.exit(1);
 					}
 				}
+				else {
+					java.lang.System.err.println("SCHEDULE cardinality = " + schedule.cardinality() + ", " + schedule);
+				}
 			}
 			
 			try {
 				assert(this.clock.current() < schedule.min());
+				TupleSet clock = this.clock.time(schedule.min());
 				
-				// java.lang.System.err.println("CURRENT CLOCK " + clock.current() + " MIN SCHEDULED TIME " + schedule.min());
-				/* Evaluate queries that run off the start clock. */
-				if (this.clock.current() < schedule.min()) {
-					TupleSet clock = this.clock.set(schedule.min());
-					evaluate(this.runtime, clock); // Eval new clock
-				}
-				
-				/* Schedule until nothing left in this clock. */
-				while (scheduleInsertions.size() > 0) {
-					java.lang.System.err.println("EXECUTE SCHEDULE INSERTIONS: " + scheduleInsertions);
-					TupleSet scheduled = new TupleSet(schedule.name());
-					scheduled.addAll(scheduleInsertions);
-					scheduleInsertions.clear();
-					Hashtable<String, TupleSet> continuations = evaluate(this.runtime, scheduled);
-					TupleSet reschedule = new TupleSet(schedule.name());
-					for (TupleSet continuation : continuations.values()) {
-						reschedule.add(new Tuple(schedule.name(), clock.current(), runtime.name(),
-								                 continuation.name(), 
-								                 Predicate.EventModifier.INSERT.toString(),
-								                 continuation));
-					}
-					schedule.insert(reschedule);
-				}
+				/* Evaluate until nothing left in this clock. */
+				evaluate(clock);
 			} catch (UpdateException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 	}
-
-	/** 
-	 * Run fixpoint evaluation for a single strata. 
-	 */
-	private Hashtable<String, TupleSet> evaluate(Program program, TupleSet insertion) {
-		Hashtable<String, Set<Query>> queries       = program.queries();
-		Hashtable<String, Table>      tables        = program.tables();
-		Hashtable<String, TupleSet>   deletions     = new Hashtable<String, TupleSet>();
-		Hashtable<String, TupleSet>   continuations = new Hashtable<String, TupleSet>();
-		
-		try {
-			evaluate(program, insertion, deletions, continuations);
-		} catch (P2RuntimeException e) {
-			e.printStackTrace();
-			java.lang.System.exit(1);
-		}
-
-		java.lang.System.err.println("APPLY DELETIONS: " + deletions.keySet());
-		while (deletions.size() > 0) {
-			Hashtable<String, TupleSet> delta = new Hashtable<String, TupleSet>();
-			
-			for (String name : deletions.keySet()) {
-				Table table = tables.get(name);
-				try {
-					java.lang.System.err.println("REMOVE FROM TABLE " + name + " TUPLES " + deletions.get(name));
-					TupleSet deletionDelta = table.remove(deletions.get(name));
-					if (deletionDelta.size() > 0) {
-						Set<Query> querySet = queries.get(name);
-						for (Query query : querySet) {
-							TupleSet result = query.evaluate(deletionDelta);
-							if (tables.containsKey(result.name())) {
-								/* These tuples must be delete in order
-								 * to provide proper view maintenance. */
-								update(delta, result); 
-							}
-						}
-					}
-				} catch (UpdateException e) {
-					e.printStackTrace();
-					java.lang.System.exit(1);
-				} catch (P2RuntimeException e) {
-					e.printStackTrace();
-					java.lang.System.exit(1);
-				}
-			}
-			deletions = delta;
-		}
-		return continuations;
-	}
 	
-	/**
-	 * Fixed point evaluation of all events in the event set.
-	 * @throws P2RuntimeException 
-	 */
-	private void evaluate(Program program, 
-			              TupleSet tuples, 
-			              Hashtable<String, TupleSet> deletions,
-			              Hashtable<String, TupleSet> continuations) throws P2RuntimeException {
-		Hashtable<String, Set<Query>> queries = program.queries(); 
-		Hashtable<String, Table>      tables  = program.tables();
-		
-		java.lang.System.err.println("EVALUATING PROGRAM " + program.name() + " on tupleset " + tuples);
-		if (!queries.containsKey(tuples.name())) {
-			// TODO log unknown tuple set
-			java.lang.System.err.println("Unknown tuple set " + tuples.name() + 
-					                     " in program " + program);
-			return;
+	private void evaluate(TupleSet tuples) throws UpdateException {
+		TupleSet evaluation = new TupleSet(System.evaluator().name());
+		evaluation.add(new Tuple(System.evaluator().name(), runtime.name(), 
+								 tuples.name(), tuples, new TupleSet(tuples.name())));
+		/* Evaluate until nothing left in this clock. */
+		while (evaluation.size() > 0) {
+			evaluation = System.evaluator().insert(evaluation);
 		}
-		
-		while (!tuples.isEmpty()) {
-			TupleSet delta = new TupleSet(tuples.name());
-			Set<Query> querySet = queries.get(tuples.name());
-			for (Query query : querySet) {
-				TupleSet result = query.evaluate(tuples);
-				if (result.size() == 0) continue;
-				java.lang.System.err.println("============================");
-				java.lang.System.err.println("======= EVALUATE ===========");
-				java.lang.System.err.println("QUERY: " + query);
-				java.lang.System.err.println("INPUT: " + tuples);
-				java.lang.System.err.println("OUTPUT: " + result);
-				if (result.size() == 0) continue;
-				
-				if (tables.containsKey(result.name())) {
-					if (query.delete()) {
-						update(deletions, result);
-					}
-					else {
-						try {
-							TupleSet conflicts = tables.get(result.name()).conflict(result);
-							result = tables.get(result.name()).insert(result);
-							if (delta.name().equals(result.name())) {
-								delta.addAll(result); // Keep evaluating recursive rule.
-							}
-							else {
-								if (!continuations.containsKey(result.name())) {
-									continuations.put(result.name(), result);
-								}
-								else {
-									continuations.get(result.name()).addAll(result);
-								}
-							}
-							update(deletions, conflicts);
-						} catch (UpdateException e) {
-							e.printStackTrace();
-							java.lang.System.exit(0);
-						}
-					}
-				}
-				else {
-					java.lang.System.err.println("EVALUATE EVENT RESULT: " + result);
-					/* Fixpoint evaluation on event */
-					evaluate(program, result, deletions, continuations);
-				}
-			}
-			tuples.clear();
-			tuples.addAll(delta);
-		}
-		
 	}
 
-	private void update(Hashtable<String, TupleSet> buffer, TupleSet result) {
-		if (buffer.containsKey(result.name())) {
-			buffer.get(result.name()).addAll(result);
-		}
-		else {
-			buffer.put(result.name(), result);
-		}
-	}
+
 }

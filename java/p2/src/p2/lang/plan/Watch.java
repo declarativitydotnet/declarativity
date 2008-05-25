@@ -1,7 +1,7 @@
 package p2.lang.plan;
 
-import p2.lang.plan.Rule.RuleTable.Field;
 import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.table.HashIndex;
@@ -38,8 +38,8 @@ public class Watch extends Clause {
 		}
 
 		@Override
-		protected boolean remove(Tuple tuple) throws UpdateException {
-			return super.remove(tuple);
+		protected boolean delete(Tuple tuple) throws UpdateException {
+			return super.delete(tuple);
 		}
 	}
 	

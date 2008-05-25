@@ -5,13 +5,14 @@ import p2.lang.plan.Predicate;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
-import p2.types.operator.Aggregation;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
+import p2.types.table.AggregateImpl;
+import p2.types.table.Table;
 
 public class BasicQuery extends Query {
 	
-	private Aggregation aggregation;
+	private AggregateImpl aggregation;
 	
 	private Projection head;
 	
@@ -21,15 +22,6 @@ public class BasicQuery extends Query {
 					  Predicate input, Projection head, List<Operator> body) {
 		super(program, rule, delete, input, head.predicate());
 		this.aggregation = null;
-		this.head        = head;
-		this.body        = body;
-	}
-	
-	public BasicQuery(String program, String rule, Boolean delete,
-			  Predicate input, Projection head, List<Operator> body, 
-			  Aggregation aggregation) {
-		super(program, rule, delete, input, head.predicate());
-		this.aggregation = aggregation;
 		this.head        = head;
 		this.body        = body;
 	}
@@ -47,7 +39,10 @@ public class BasicQuery extends Query {
 
 	@Override
 	public TupleSet evaluate(TupleSet input) throws P2RuntimeException {
-		assert(input.name().equals(input.name()));
+		if (!input.name().equals(input().name())) {
+			throw new P2RuntimeException("Query expects input " + input().name() + 
+					                     " but got input tuples " + input.name());
+		}
 		
 		for (Tuple tuple : input) {
 			tuple.schema(input().schema());
@@ -57,8 +52,7 @@ public class BasicQuery extends Query {
 			input = (TupleSet) oper.evaluate(input);
 		}
 		
-		input = head.evaluate(input);
-		return aggregation == null ? input : aggregation.evaluate(input);
+		return head.evaluate(input);
 	}
 
 }

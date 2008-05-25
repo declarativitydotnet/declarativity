@@ -5,6 +5,30 @@ import p2.types.exception.P2RuntimeException;
 
 public abstract class Aggregate implements TupleFunction<Comparable> {
 	
+	private static class Accessor implements TupleFunction<Comparable> {
+		private Integer position;
+		
+		private Class type;
+		
+		public Accessor(p2.lang.plan.Aggregate aggregate) {
+			this.position = aggregate.position();
+			this.type     = aggregate.type();
+		}
+		
+		public Integer position() {
+			return this.position;
+		}
+
+		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
+			return tuple.value(this.position);
+		}
+
+		public Class returnType() {
+			return this.type;
+		}
+		
+	}
+	
 	public static final String MIN   = "min";
 	public static final String MAX   = "max";
 	public static final String COUNT = "count";
@@ -12,18 +36,18 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	
 	public abstract Tuple result();
 	
-	public static Aggregate function(p2.lang.plan.Aggregate agg) {
-		if (MIN.equals(agg.functionName())) {
-			return new Min(agg);
+	public static Aggregate function(p2.lang.plan.Aggregate aggregate) {
+		if (MIN.equals(aggregate.functionName())) {
+			return new Min(new Accessor(aggregate));
 		}
-		else if (MAX.equals(agg.functionName())) {
-			return new Max(agg);
+		else if (MAX.equals(aggregate.functionName())) {
+			return new Max(new Accessor(aggregate));
 		}
-		else if (COUNT.equals(agg.functionName())) {
-			return new Count(agg);
+		else if (COUNT.equals(aggregate.functionName())) {
+			return new Count(new Accessor(aggregate));
 		}
-		else if (AVG.equals(agg.functionName())) {
-			return new Avg(agg);
+		else if (AVG.equals(aggregate.functionName())) {
+			return new Avg(new Accessor(aggregate));
 		}
 		
 		return null;
@@ -32,14 +56,12 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	public static class Min extends Aggregate {
 		private Tuple result;
 		private Comparable current;
-		private TupleFunction<Comparable> accessor;
-		private p2.lang.plan.Aggregate variable;
+		private Accessor accessor;
 		
-		public Min(p2.lang.plan.Aggregate variable) {
+		public Min(Accessor accessor) {
 			this.result = null;
 			this.current = null;
-			this.accessor = variable.function();
-			this.variable = variable;
+			this.accessor = accessor;
 		}
 		
 		public Tuple result() {
@@ -64,14 +86,12 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	public static class Max extends Aggregate {
 		private Tuple result;
 		private Comparable current;
-		private TupleFunction<Comparable> accessor;
-		private p2.lang.plan.Aggregate variable;
+		private Accessor accessor;
 		
-		public Max(p2.lang.plan.Aggregate variable) {
+		public Max(Accessor accessor) {
 			this.result = null;
 			this.current = null;
-			this.accessor = variable.function();
-			this.variable = variable;
+			this.accessor = accessor;
 		}
 		
 		public Tuple result() {
@@ -96,21 +116,18 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	public static class Count extends Aggregate {
 		private Tuple result;
 		private Integer current;
-		private TupleFunction<Comparable> accessor;
-		private p2.lang.plan.Aggregate variable;
+		private Accessor accessor;
 		
-		public Count(p2.lang.plan.Aggregate variable) {
+		public Count(Accessor accessor) {
 			this.result = null;
 			this.current = new Integer(0);
-			this.accessor = variable.function();
-			this.variable = variable;
+			this.accessor = accessor;
 		}
 		
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
-				int position = this.variable.position();
-				this.result.value(position, this.current);
+				this.result.value(accessor.position(), this.current);
 				return this.result;
 			}
 			return null;
@@ -131,22 +148,19 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		private Tuple result;
 		private Float sum;
 		private Float count;
-		private TupleFunction<Comparable> accessor;
-		private p2.lang.plan.Aggregate variable;
+		private Accessor accessor;
 		
-		public Avg(p2.lang.plan.Aggregate variable) {
+		public Avg(Accessor accessor) {
 			this.result = null;
 			this.sum = new Float(0);
 			this.count = new Float(0);
-			this.accessor = variable.function();
-			this.variable = variable;
+			this.accessor = accessor;
 		}
 		
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
-				int position = this.variable.position();
-				this.result.value(position, this.sum / this.count);
+				this.result.value(accessor.position(), this.sum / this.count);
 				return this.result;
 			}
 			return null;

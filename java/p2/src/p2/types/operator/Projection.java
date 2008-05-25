@@ -19,7 +19,7 @@ public class Projection extends Operator {
 	List<TupleFunction<Comparable>> accessors = new ArrayList<TupleFunction<Comparable>>();
 	
 	public Projection(Predicate predicate) {
-		super(predicate.program(), predicate.rule(), predicate.position());
+		super(predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		
 		for (p2.lang.plan.Expression arg : predicate) {

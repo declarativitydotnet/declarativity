@@ -29,13 +29,12 @@ public abstract class Operator implements Comparable<Operator> {
 	public static class OperatorTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(2);
 		
-		public enum Field {PROGRAM, RULE, ID, SELECTIVITY, PRIORITY, OBJECT};
+		public enum Field {PROGRAM, RULE, ID, SELECTIVITY, OBJECT};
 		public static final Class[] SCHEMA = { 
 			String.class,   // Program name
 			String.class,   // Rule name
 			String.class,   // Operator identifier
 			Float.class,    // Selectivity
-			Integer.class,  // Position priority
 			Operator.class  // Operator object
 		};
 
@@ -53,11 +52,11 @@ public abstract class Operator implements Comparable<Operator> {
 	
 	private final String identifier;
 	
-	public Operator(String program, String rule, Integer position) {
+	public Operator(String program, String rule) {
 		this.identifier = Operator.newID();
 		try {
 			Tuple me = new Tuple(Operator.table.name(), program, rule, 
-							     this.identifier, null, position, this);
+							     this.identifier, null, this);
 			Operator.table.insert(me);
 		} catch (UpdateException e) {
 			e.printStackTrace();

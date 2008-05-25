@@ -39,7 +39,7 @@ public class Variable extends Expression {
 	
 	@Override
 	public String toString() {
-		return name() + ":" + position();
+		return (position() >= 0) ? name() + ":" + position() : name();
 	}
 	
 	public String name() {

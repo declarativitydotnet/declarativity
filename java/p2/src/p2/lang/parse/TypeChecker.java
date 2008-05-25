@@ -10,9 +10,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import p2.core.Periodic;
 import p2.lang.plan.Aggregate;
 import p2.lang.plan.Alias;
 import p2.lang.plan.ArrayIndex;
@@ -39,6 +42,7 @@ import p2.lang.plan.Variable;
 import p2.lang.plan.ObjectReference;
 import p2.lang.plan.Watch;
 import p2.types.basic.TypeList;
+import p2.types.table.AggregateImpl;
 import p2.types.table.BasicTable;
 import p2.types.table.EventTable;
 import p2.types.table.Key;
@@ -335,7 +339,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitSchema(final GNode n) {
-		TypeList types = new TypeList();
+		List<Class> types = new ArrayList<Class>();
 		for (Node attr : n.<Node>getList(0)) {
 			Class type = (Class) dispatch(attr);
 			if (type == Error.class) return Error.class;
@@ -343,7 +347,7 @@ public final class TypeChecker extends Visitor {
 			type = (Class) attr.getProperty(Constants.TYPE);
 			types.add(type);
 		}
-		n.setProperty(Constants.TYPE, types);
+		n.setProperty(Constants.TYPE, new TypeList(types));
 		return TypeList.class;
 	}
 	
@@ -428,7 +432,7 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Can't apply notin to head predicate!", n);
 			return Error.class;
 		}
-		else if (head.event() != Predicate.EventModifier.NONE) {
+		else if (head.event() != Table.Event.NONE) {
 			runtime.error("Can't apply event modifier to rule head!", n);
 			return Error.class;
 		}
@@ -445,10 +449,27 @@ public final class TypeChecker extends Visitor {
 							      "can't contain don't care variable!", n);
 					return Error.class;
 				}
+				else if (var instanceof Aggregate) {
+					Table table = Table.table(head.name());
+					if (table.aggregate() != null) {
+						runtime.error("Multiple aggregates detected on predicate " + head, n);
+						return Error.class;
+					}
+					Table.Aggregate aggregate = new AggregateImpl(table, head);
+					table.aggregate(aggregate);
+					Class[] types = table.types();
+					if (types[var.position()] != aggregate.type()) {
+						runtime.error("Aggregate type "+ aggregate.type() + 
+								      " does not match head type " + types[var.position()] + "!", n);
+						return Error.class;
+					}
+				}
 				else {
 					Class headType = (Class) table.current().lookupLocally(var.name());
 					Class bodyType = (Class) table.current().getParent().lookupLocally(var.name());
 					if (bodyType == null) {
+						for (Iterator<String> name = table.current().getParent().symbols(); name.hasNext(); )
+							System.err.println(name.next());
 						runtime.error("Head variable " + var
 								+ " not defined in rule body.");
 						return Error.class;
@@ -472,14 +493,22 @@ public final class TypeChecker extends Visitor {
 		List<GNode> other = new ArrayList<GNode>();
 		
 		for (GNode node : n.<GNode>getList(0)) {
-			if (node.getName().equals("Predicate")) {
+			if (node.getName().equals("TableFunction")) {
 				Class type = (Class) dispatch(node);
 				if (type == Error.class) {
 					return type;
 				}
-				assert(Term.class.isAssignableFrom(type));
+				p2.lang.plan.Function f = 
+					(p2.lang.plan.Function) node.getProperty(Constants.TYPE);
+				terms.add(0, f);
+			}
+			else if (node.getName().equals("Predicate")) {
+				Class type = (Class) dispatch(node);
+				if (type == Error.class) {
+					return type;
+				}
 				Predicate p = (Predicate) node.getProperty(Constants.TYPE);
-				if (p.event() != Predicate.EventModifier.NONE && p.notin()) {
+				if (p.event() != Table.Event.NONE && p.notin()) {
 					runtime.error("Can't apply notin to event predicate!",n);
 					return Error.class;
 				}
@@ -502,6 +531,42 @@ public final class TypeChecker extends Visitor {
 		n.setProperty(Constants.TYPE, terms);
 		return List.class;
 	}
+	
+	public Class visitTableFunction(final GNode n) {
+		Class type = (Class) dispatch(n.getNode(0));
+		assert(type == Value.class);
+		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
+		
+		type = (Class) dispatch(n.getNode(1));
+		if (type == Error.class) return Error.class;
+		assert(type == Predicate.class);
+		Predicate predicate = (Predicate) n.getNode(1).getProperty(Constants.TYPE);
+		
+		Table table = Table.table(name.toString());
+		if (table == null || table.type() != Table.Type.FUNCTION) {
+			runtime.error("Unknown table function " + name, n);
+			return Error.class;
+		}
+		else {
+			/* Make sure predicate schema matches table function schema. */
+			Class[] types = table.types();
+			int index = 0;
+			for (Expression arg : predicate) {
+				if (types[index] != arg.type()) {
+					runtime.error("Predicate argument position " + index + " does not match table function type!",n);
+					return Error.class;
+				}
+				index++;
+			}
+			if (types.length != index) {
+				runtime.error("Predicate schema types must match table function types!",n);
+				return Error.class;
+			}
+		}
+		
+		n.setProperty(Constants.TYPE, new p2.lang.plan.Function(table, predicate));
+		return p2.lang.plan.Function.class;
+	}
 
 	public Class visitPredicate(final GNode n) {
 		boolean notin = n.getString(0) != null;
@@ -517,90 +582,124 @@ public final class TypeChecker extends Visitor {
 			runtime.error("No catalog definition for predicate " + name);
 			return Error.class;
 		}
-		else if (ptable instanceof EventTable) {
-			event = "receive";
-		}
-		TypeList schema = new TypeList(ptable.types());
 		
-		
-		type = (Class) dispatch(n.getNode(3));
-		if (type == Error.class) 
-			return Error.class;
-		List<Expression> parameters = (List<Expression>) n.getNode(3).getProperty(Constants.TYPE);
-		List<Expression> arguments = new ArrayList<Expression>();
-		
-		if (schema.size() != parameters.size()) {
-			runtime.warning("Schema size mismatch on predicate " + 
-					         name + ". Will try to fill in missing values with don's cares",n);
-		}
-		
-		/* Type check each tuple argument according to the schema. */
-		for (int index = 0; index < schema.size(); index++) {
-			Expression param = parameters.size() <= index ? 
-					           new DontCare(schema.get(index)) : parameters.get(index);
-			if (Alias.class.isAssignableFrom(param.getClass())) {
-				Alias alias = (Alias) param;
-				if (alias.position() < index) {
-					runtime.error("Alias fields must be in numeric order!");
-					return Error.class;
-				}
-				/* Fill in missing variables with tmp variables. */
-				while (index < alias.position()) {
-					Variable dontcare = new DontCare(schema.get(index));
-					dontcare.position(index++);
-					arguments.add(dontcare);
-				}
-			}
-			
-			if (Variable.class.isAssignableFrom(param.getClass())) {
-				/* Only look in the current scope. */
-				Variable var = (Variable) param;
-				if (var.type() == null) {
-					/* Fill in type using the schema. */
-					var.type(schema.get(index));
-				}
-				var.position(index);
-				
-				/* Map variable to its type. */
-				table.current().define(var.name(), var.type());
-			}
-			else if (param.variables().size() > 0) {
-				for (Variable var : param.variables()) {
-					if (!table.current().isDefined(var.name())) {
-						runtime.error("Body predicate contains an argument expression based " +
-								"that depends on variable " + var.name() + ", which is not" +
-										"defined by some left hand side predicate!", n);
-						return Error.class;
-					}
-				}
-			}
-
-			/* Ensure the type matches the schema definition. */
-			if (!subtype(schema.get(index), param.type())) {
-				runtime.error("Predicate " + name.value() + " argument " + index
-						+ " type " + param.type() + " does not match type " 
-						+ schema.get(index) + " in schema.", n);
-				return Error.class;
-			}
-			
-			arguments.add(param);
-		}
-		
-		Predicate pred;
-		Predicate.EventModifier emodifier = Predicate.EventModifier.NONE;
+		Table.Event tableEvent = Table.Event.NONE;
 		if (!(ptable instanceof EventTable) && event != null) {
 			if ("insert".equals(event)) {
-				emodifier = Predicate.EventModifier.INSERT;
+				tableEvent = Table.Event.INSERT;
 			}
 			else if ("delete".equals(event)) {
-				emodifier = Predicate.EventModifier.DELETE;
+				tableEvent = Table.Event.DELETE;
 			}
 			else {
 				runtime.error("Unknown event modifier " + event + " on predicate " + name.value(), n);
 			}
 		}
 		
-		pred = new Predicate(notin, name.value(), emodifier, arguments);
+		TypeList schema = new TypeList(ptable.types());
+		type = (Class) dispatch(n.getNode(3));
+		if (type == Error.class) 
+			return Error.class;
+		List<Expression> parameters = (List<Expression>) n.getNode(3).getProperty(Constants.TYPE);
+		List<Expression> arguments = new ArrayList<Expression>();
+		
+		if (schema.size() < parameters.size()) {
+			runtime.error("Schema size mismatch on predicate " +  name ,n);
+			return Error.class;
+		}
+		
+		if ("periodic".equals(name.value())) {
+			if (parameters.size() < 1 || parameters.size() > Periodic.SCHEMA.length) {
+				runtime.error("Too many arguments to periodic predicate", n);
+				return Error.class;
+			}
+			else if (!(parameters.get(0) instanceof Variable)) {
+				runtime.error("First parameter to periodic predicate must be a Variable", n);
+				return Error.class;
+			}
+			
+			int index = 1;
+			for ( ; index < parameters.size(); index++) {
+				if (!Number.class.isAssignableFrom(parameters.get(index).type())) {
+					runtime.error("Parameter " + index + " to periodic predicate must be a Numeric", n);
+					return Error.class;
+				}
+			}
+			
+			if (index == 1) {
+				parameters.add(new Value(new Long(0)));    // Period
+				index++;
+			}
+			if (index == 2) {
+				parameters.add(new Value(Long.MAX_VALUE)); // TTL
+				index++;
+			}
+			if (index == 3) {
+				parameters.add(new Value(new Long(0)));    // Count
+				index++;
+			}
+			tableEvent = Table.Event.INSERT;
+		}
+		else {
+			/* Type check each tuple argument according to the schema. */
+			for (int index = 0; index < schema.size(); index++) {
+				Expression param = parameters.size() <= index ? 
+						new DontCare(schema.get(index)) : parameters.get(index);
+				if (Alias.class.isAssignableFrom(param.getClass())) {
+					Alias alias = (Alias) param;
+					if (alias.position() < index) {
+						runtime.error("Alias fields must be in numeric order!");
+						return Error.class;
+					}
+					/* Fill in missing variables with tmp variables. */
+					while (index < alias.position()) {
+						Variable dontcare = new DontCare(schema.get(index));
+						dontcare.position(index++);
+						arguments.add(dontcare);
+					}
+				}
+
+				if (Variable.class.isAssignableFrom(param.getClass())) {
+					/* Only look in the current scope. */
+					Variable var = (Variable) param;
+					if (var.type() == null) {
+						/* Fill in type using the schema. */
+						var.type(schema.get(index));
+					}
+
+					/* Map variable to its type. */
+					table.current().define(var.name(), var.type());
+				}
+				else if (param.variables().size() > 0) {
+					for (Variable var : param.variables()) {
+						if (!table.current().isDefined(var.name())) {
+							runtime.error("Body predicate contains an argument expression based " +
+									"that depends on variable " + var.name() + ", which is not" +
+									"defined by some left hand side predicate!", n);
+							return Error.class;
+						}
+					}
+				}
+
+				/* Ensure the type matches the schema definition. */
+				if (!subtype(schema.get(index), param.type())) {
+					runtime.error("Predicate " + name.value() + " argument " + index
+									+ " type " + param.type() + " does not match type " 
+									+ schema.get(index) + " in schema.", n);
+					return Error.class;
+				}
+
+				param.position(index);
+				arguments.add(param);
+			}
+		}
+		
+		if (schema.size() != arguments.size()) {
+			runtime.error("Schema size mismatch on predicate " +  name ,n);
+			return Error.class;
+		}
+		
+		Predicate pred = new Predicate(notin, name.value(), tableEvent, arguments);
 		pred.location(n.getLocation());
 		n.setProperty(Constants.TYPE, pred);
 		return Predicate.class;
