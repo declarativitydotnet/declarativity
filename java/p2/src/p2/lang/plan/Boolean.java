@@ -176,8 +176,8 @@ public class Boolean extends Expression {
 				private final TupleFunction<Comparable> left  = lhs.function();
 				private final Object right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
-					if (right instanceof Range.Function) {
-						Range.Function range = (Range.Function) right;
+					if (right instanceof TupleFunction) {
+						Range.Function range = (Range.Function) ((TupleFunction)right).evaluate(tuple);
 						return range.test(left.evaluate(tuple));
 					}
 					else {

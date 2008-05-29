@@ -7,8 +7,11 @@ import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
 import p2.lang.Compiler.CompileTable;
 import p2.lang.plan.Program;
+import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.PlannerException;
+import p2.types.exception.UpdateException;
 import p2.types.table.Table;
 
 public class System {
@@ -27,6 +30,8 @@ public class System {
 	/** The system logical clock. */
 	private static Clock clock;
 	
+	private static Periodic periodic;
+	
 	private static Hashtable<String, Program> programs;
 	
 	public static void initialize() {
@@ -36,7 +41,12 @@ public class System {
 		evaluator  = new Evaluate();
 		schedule   = new Schedule();
 		clock      = new Clock("localhost");
+		periodic   = new Periodic(schedule);
 		programs   = new Hashtable<String, Program>();
+	}
+	
+	public static Clock clock() {
+		return clock;
 	}
 	
 	public static Evaluate evaluator() {
@@ -47,36 +57,53 @@ public class System {
 		return query;
 	}
 	
+	public static Periodic periodic() {
+		return periodic;
+	}
+	
 	public static Program program(String name) {
 		return programs.containsKey(name) ? programs.get(name) : null;
 	}
 	
-	private static void bootstrap() {
-		java.lang.System.err.println("BOOSTRAP");
+	public static void program(String name, Program program) {
+		programs.put(name, program);
+	}
+	
+	public static boolean install(String runtime, String name, String owner, String file) {
+		synchronized (schedule) {
+			TupleSet compileSet = new TupleSet(compile.name());
+			compileSet.add(new Tuple(compile.name(), name, owner, file, clock.current() + 1L, null));
+			try {
+				schedule.force(new Tuple(schedule.name(), clock.current() + 1L, runtime, compileSet.name(), compileSet, null));
+			} catch (UpdateException e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private static void bootstrap(String name, String owner) {
 		try {
-			p2.lang.Compiler compiler = new p2.lang.Compiler("runtime", "system", RUNTIME);
+			Program program = new Program(name, owner);
+			p2.lang.Compiler compiler = new p2.lang.Compiler(program, RUNTIME);
 			compiler.program().plan();
-			java.lang.System.err.println(compiler.program().toString());
-			programs.put(compiler.program().name(), compiler.program());
-			driver = new Driver(compiler.program(), schedule, clock);
-		} catch (PlannerException e) {
-			java.lang.System.exit(1);
-		} catch (P2RuntimeException e) {
-			java.lang.System.exit(1);
-		}
-		
-		Thread runtime = new Thread(driver);
-		runtime.start();
-		try {
-			runtime.join();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
 			e.printStackTrace();
+			java.lang.System.exit(1);
 		}
+
+		driver = new Driver(program("runtime"), schedule, clock);
 	}
 	
 	public static void main(String[] args) {
 		initialize();
-		bootstrap();
+		bootstrap("runtime", "system");
+		java.lang.System.err.println("ARGS " + args);
+		if (args.length > 0) {
+			install("runtime", "command", "none", args[0]);
+		}
+		
+		driver.run();
 	}
 }

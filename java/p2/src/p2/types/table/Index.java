@@ -8,6 +8,7 @@ import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
 
 
@@ -120,9 +121,9 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	
 	/* Uses the index key as the lookup key and
 	 * the values from the given tuple. */
-	public abstract TupleSet lookup(Tuple t);
+	public abstract TupleSet lookup(Tuple t) throws BadKeyException;
 	
-	public abstract TupleSet lookup(Key.Value value);
+	public abstract TupleSet lookup(Comparable... values) throws BadKeyException;
 	
 	/* Index the given tuple. */
 	protected abstract void insert(Tuple t);

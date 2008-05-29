@@ -29,21 +29,9 @@ public class AntiScanJoin extends Join {
 			boolean success = false;
 			for (Tuple inner : this.table.tuples()) {
 				inner.schema(this.predicate.schema());
-				if (!validate(outer, inner)) {
+				if (validate(outer, inner) && outer.join(result.name(), inner) != null) {
 					success = true;
 					break;
-				}
-				else {
-					Tuple join = outer.join(result.name(), inner);
-					if (join != null) {
-						/*
-						System.err.println("ANTIJOIN SCHEMA: outer = " + outer.schema() + " inner = " + inner.schema());
-						System.err.println("ANTIJOIN TUPLE: outer = " + outer + " inner = " + inner);
-						System.err.println("ANTIJOIN RESULT: " + join);
-						*/
-						success = true;
-						break;
-					}
 				}
 			}
 			if (!success) result.add(outer);

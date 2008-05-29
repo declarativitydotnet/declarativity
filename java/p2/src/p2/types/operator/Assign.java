@@ -27,14 +27,17 @@ public class Assign extends Operator {
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		Variable variable = assignment.variable();
 		TupleFunction<Comparable> function = assignment.value().function();
+		TupleSet deltas = new TupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
-			tuple.value(variable, function.evaluate(tuple));
+			Tuple delta = tuple.clone();
+			delta.value(variable, function.evaluate(delta));
+			deltas.add(delta);
 		}
-		return tuples;
+		return deltas;
 	}
 	
 	public Schema schema(Schema input) {
-		input = new Schema(input);
+		input = input.clone();
 		if (input.contains(this.assignment.variable())) {
 			return input;
 		}

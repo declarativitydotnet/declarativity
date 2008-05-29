@@ -67,6 +67,7 @@ public class Function extends Term {
 	@Override
 	public void set(String program, String rule, Integer position)
 			throws UpdateException {
+		predicate.set(program, rule, position);
 		Program.tfunction.force(new Tuple(Program.tfunction.name(), program, rule, position, 
 				                          function.name(), predicate.name(), this));
 	}

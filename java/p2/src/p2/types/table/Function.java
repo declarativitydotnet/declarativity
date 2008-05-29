@@ -14,7 +14,7 @@ public abstract class Function extends Table {
 	}
 	
 	@Override 
-	public abstract TupleSet insert(TupleSet tuples) throws UpdateException;
+	public abstract TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException;
 
 	@Override
 	protected final boolean insert(Tuple t) throws UpdateException {

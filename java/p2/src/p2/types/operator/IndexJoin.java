@@ -7,6 +7,7 @@ import p2.lang.plan.Predicate;
 import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
+import p2.types.exception.BadKeyException;
 import p2.types.exception.P2RuntimeException;
 import p2.types.table.Index;
 import p2.types.table.Key;
@@ -46,14 +47,18 @@ public class IndexJoin extends Join {
 				}
 				key.add(position);
 			}
-			Key.Value value = key.value(outer);
-			for (Tuple inner : this.index.lookup(value)) {
-				if (validate(outer, inner)) {
-					Tuple join = outer.join(result.name(), inner);
-					if (join != null) {
-						result.add(join);
+			Tuple value = key.project(outer);
+			try {
+				for (Tuple inner : this.index.lookup(value)) {
+					if (validate(outer, inner)) {
+						Tuple join = outer.join(result.name(), inner);
+						if (join != null) {
+							result.add(join);
+						}
 					}
 				}
+			} catch (BadKeyException e) {
+				throw new P2RuntimeException(e.toString());
 			}
 		}
 		return result;

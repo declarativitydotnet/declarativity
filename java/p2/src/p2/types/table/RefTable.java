@@ -9,6 +9,7 @@ import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Table.Callback;
 
@@ -37,20 +38,20 @@ public class RefTable extends Table {
 	@Override
 	protected boolean delete(Tuple t) throws UpdateException {
 		if (this.tuples.contains(t)) {
-			TupleSet lookup = primary().lookup(t);
-			assert(lookup.size() <= 1);
+			TupleSet lookup;
+			try {
+				lookup = primary().lookup(t);
+			} catch (BadKeyException e) {
+				throw new UpdateException(e.toString());
+			}
 		
 			for (Tuple l : lookup) {
-				if (l.equals(t) && l.frozen()) {
+				if (l.equals(t)) {
 					if (l.refCount() > 1L) {
 						l.refCount(l.refCount() - 1L);
 						return false; // The tuple has not been deleted yet.
 					}
-					primary().remove(t);
-					for (Index i : secondary().values()) {
-						i.remove(t);
-					}
-					return true; // The tuple was deleted.
+					return this.tuples.remove(t);
 				}
 			}
 		}
@@ -61,11 +62,15 @@ public class RefTable extends Table {
 	@Override
 	protected boolean insert(Tuple t) throws UpdateException {
 		if (this.tuples.contains(t)) {
-			for (Tuple lookup : primary().lookup(t)) {
-				if (lookup.equals(t)) {
-					lookup.refCount(lookup.refCount().longValue() + 1);
-					return false; 
+			try {
+				for (Tuple lookup : primary().lookup(t)) {
+					if (lookup.equals(t)) {
+						lookup.refCount(lookup.refCount().longValue() + 1);
+						return false; 
+					}
 				}
+			} catch (BadKeyException e) {
+				throw new UpdateException(e.toString());
 			}
 		}
 		this.tuples.add(t.clone());

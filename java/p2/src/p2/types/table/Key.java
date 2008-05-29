@@ -11,34 +11,6 @@ import p2.types.exception.BadKeyException;
 
 public class Key implements Comparable<Key>, Iterable<Integer> {
 	
-	public static class Value {
-		private Vector<Comparable> values;
-		public Value(Vector<Comparable> values) {
-			this.values = values;
-		}
-		
-		public Value(Comparable... values) {
-			this.values = new Vector<Comparable>();
-			for (Comparable value : values) {
-				this.values.add(value);
-			}
-		}
-		
-		@Override
-		public boolean equals(Object other) {
-			return toString().equals(other.toString());
-		}
-		
-		@Override
-		public int hashCode() {
-			return toString().hashCode();
-		}
-		
-		public String toString() {
-			return this.values.toString();
-		}
-	}
-
 	private List<Integer> attributes;
 
 	public Key(Integer... attr) {
@@ -46,6 +18,10 @@ public class Key implements Comparable<Key>, Iterable<Integer> {
 		for (Integer i : attr) {
 			this.attributes.add(i);
 		}
+	}
+	
+	public Key(List<Integer> attr) {
+		this.attributes = attr;
 	}
 	
 	@Override
@@ -71,32 +47,28 @@ public class Key implements Comparable<Key>, Iterable<Integer> {
 		return value;
 	}
 	
+	public int size() {
+		return this.attributes.size();
+	}
+	
 	public void add(Integer field) {
 		this.attributes.add(field);
 	}
 	
-	public Value value(Tuple tuple) {
-		Vector<Comparable> values = new Vector<Comparable>();
+	public Tuple project(Tuple tuple) {
 		if (empty()) {
-			values.add("TupleID:" + tuple.id());
+			return tuple;
 		}
 		else {
+			List<Comparable> values = new ArrayList<Comparable>();
 			for (Integer attr : attributes) {
 				values.add(tuple.value(attr));
 			}
+
+			Tuple project = new Tuple(tuple.name(), values);
+			project.id(tuple.id());
+			return project;
 		}
-		return new Value(values);
-	}
-	
-	public Value value(Comparable...values) throws BadKeyException {
-		if (values.length != attributes.size()) {
-			throw new BadKeyException("Key value mismatch!");
-		}
-		Vector<Comparable> keyValues = new Vector<Comparable>();
-		for (Comparable c : values) {
-			keyValues.add(c);
-		}
-		return new Value(keyValues);
 	}
 	
 	public boolean empty() {

@@ -7,12 +7,12 @@ import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
-import p2.types.table.AggregateImpl;
+import p2.types.table.Aggregation;
 import p2.types.table.Table;
 
 public class BasicQuery extends Query {
 	
-	private AggregateImpl aggregation;
+	private Aggregation aggregation;
 	
 	private Projection head;
 	
@@ -21,6 +21,10 @@ public class BasicQuery extends Query {
 	public BasicQuery(String program, String rule, Boolean delete,
 					  Predicate input, Projection head, List<Operator> body) {
 		super(program, rule, delete, input, head.predicate());
+		if (input.schema() == null) {
+			System.err.println("INPUT NULL SCHEMA " + input.name());
+			input.schema().size();
+		}
 		this.aggregation = null;
 		this.head        = head;
 		this.body        = body;
@@ -45,7 +49,7 @@ public class BasicQuery extends Query {
 		}
 		
 		for (Tuple tuple : input) {
-			tuple.schema(input().schema());
+			tuple.schema(input().schema().clone());
 		}
 		
 		for (Operator oper : body) {

@@ -23,8 +23,6 @@ public class Tuple implements Comparable<Tuple> {
 	
 	protected Long refCount;
 	
-	protected boolean frozen;
-	
 	protected Schema schema;
 	
 	
@@ -48,22 +46,26 @@ public class Tuple implements Comparable<Tuple> {
 	@Override
 	public Tuple clone() {
 		Tuple copy = new Tuple(name(), this.values);
-		copy.schema = this.schema;
+		copy.schema = this.schema != null ? this.schema.clone() : null;
+		copy.id     = this.id;
 		return copy;
 	}
 	
 	private void initialize(String name, List<Comparable> values) {
 		this.name = name;
 		this.schema = null;
-		this.values = values;
+		this.values = new ArrayList<Comparable>(values);
 		this.refCount = new Long(1);
-		this.frozen = false;
 		this.id = idGen.toString();
 		idGen += 1L;
 	}
 	
 	public String id() {
 		return this.id;
+	}
+	
+	public void id(String id) {
+		this.id = id;
 	}
 	
 	public void append(Variable variable, Comparable value) {
@@ -90,6 +92,10 @@ public class Tuple implements Comparable<Tuple> {
 		return this.name;
 	}
 	
+	public void name(String name) {
+		this.name = name;
+	}
+	
 	public Schema schema() {
 		return this.schema;
 	}
@@ -106,23 +112,18 @@ public class Tuple implements Comparable<Tuple> {
 		this.schema = schema;
 	}
 	
-	public int compareTo(Tuple o) {
-			Tuple other = (Tuple) o;
-			if (values.size() < other.values.size()) {
-				return -1;
-			}
-			else if (other.values.size() < values.size()) {
-				return 1;
-			}
-			else {
-				for (int i = 0; i < values.size(); i++) {
-					int valueCompare = values.get(i).compareTo(other.values.get(i));
-					if (valueCompare != 0) {
-						return valueCompare;
-					}
-				}
-				return 0;
-			}
+	public int compareTo(Tuple other) {
+		if (values.size() < other.values.size()) {
+			return -1;
+		}
+		else if (other.values.size() < values.size()) {
+			return 1;
+		}
+		else {
+			int code = other.hashCode();
+			int me    = hashCode();
+			return me < code ? -1 : me > code ? 1 : 0;
+		}
 	}
 	
 	@Override
@@ -132,11 +133,16 @@ public class Tuple implements Comparable<Tuple> {
 	
 	@Override
 	public int hashCode() {
-		String code = "";
-		for (Comparable value : this.values) {
-			code += Integer.toString(value == null ? "null".hashCode() : value.hashCode());
+		if (this.values.size() > 0) {
+			String code = "";
+			for (Comparable value : this.values) {
+				code += Integer.toString(value == null ? "null".hashCode() : value.hashCode());
+			}
+			return code.hashCode();
 		}
-		return code.hashCode();
+		else {
+			return id.hashCode();
+		}
 	}
 	
 	/* The number of attributes in this tuple. */
@@ -195,14 +201,6 @@ public class Tuple implements Comparable<Tuple> {
 	
 	public Long timestamp() {
 		return this.timestamp;
-	}
-	
-	public void frozen(boolean value) {
-		this.frozen = value;
-	}
-	
-	public boolean frozen() {
-		return this.frozen;
 	}
 	
 	public Tuple join(String name, Tuple inner) throws P2RuntimeException {

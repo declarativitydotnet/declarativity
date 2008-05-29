@@ -85,6 +85,10 @@ public class Predicate extends Term implements Iterable<Expression> {
 		return this.event;
 	}
 	
+	void event(Table.Event event) {
+		this.event = event;
+	}
+	
 	public String name() {
 		return this.name;
 	}
@@ -94,6 +98,14 @@ public class Predicate extends Term implements Iterable<Expression> {
 	 */
 	public Iterator<Expression> iterator() {
 		return this.arguments.iterator();
+	}
+	
+	public Expression argument(Integer i) {
+		return this.arguments.get(i);
+	}
+	
+	public int arguments() {
+		return this.arguments.size();
 	}
 	
 	@Override

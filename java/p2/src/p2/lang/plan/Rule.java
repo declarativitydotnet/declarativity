@@ -7,21 +7,25 @@ import java.util.Set;
 
 import p2.exec.BasicQuery;
 import p2.exec.Query;
+import p2.lang.plan.Predicate.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.P2RuntimeException;
 import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
+import p2.types.function.TupleFunction;
 import p2.types.operator.EventFilter;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
-import p2.types.table.AggregateImpl;
+import p2.types.table.Aggregation;
 import p2.types.table.HashIndex;
 import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
+import p2.core.Periodic;
 
 public class Rule extends Clause {
 	
@@ -30,10 +34,10 @@ public class Rule extends Clause {
 		
 		public enum Field {PROGRAM, RULENAME, DELETION, OBJECT};
 		public static final Class[] SCHEMA =  {
-			String.class,   // Program name
-			String.class,   // Rule name
-			Boolean.class,  // deletion rule?
-			Rule.class      // Rule object
+			String.class,             // Program name
+			String.class,             // Rule name
+			java.lang.Boolean.class,  // deletion rule?
+			Rule.class                // Rule object
 		};
 
 		public RuleTable() {
@@ -45,6 +49,13 @@ public class Rule extends Clause {
 		
 		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
+			Rule object = (Rule) tuple.value(Field.OBJECT.ordinal());
+			if (object == null) {
+				throw new UpdateException("Predicate object null");
+			}
+			object.program   = (String) tuple.value(Field.PROGRAM.ordinal());
+			object.name      = (String) tuple.value(Field.RULENAME.ordinal());
+			object.deletion  = (java.lang.Boolean) tuple.value(Field.DELETION.ordinal());
 			return super.insert(tuple);
 		}
 		
@@ -125,13 +136,14 @@ public class Rule extends Clause {
 		Program.rule.force(new Tuple(Program.rule.name(), program, name, deletion, this));
 	}
 
-	public List<Query> query() throws PlannerException {
+	public List<Query> query(TupleSet periodics) throws PlannerException {
 		/* First search for an event predicate. */
 		Predicate event   = null;
 		Function function = null;
 		for (Term term : body) {
 			if (term instanceof Predicate) {
 				Predicate pred = (Predicate) term;
+
 				Table table = Table.table(pred.name());
 				if (table.type() == Table.Type.EVENT ||
 				    pred.event() != Table.Event.NONE) {
@@ -145,6 +157,7 @@ public class Rule extends Clause {
 			else if (term instanceof Function) {
 				function = (Function) term;
 				event = function.predicate();
+				event.event(Table.Event.INSERT);
 				
 			}
 		}
@@ -153,21 +166,50 @@ public class Rule extends Clause {
 		if (event != null) {
 			List<Operator> operators = new ArrayList<Operator>();
 			
-			EventFilter efilter = new EventFilter(event);
-			if (efilter.filters() > 0) {
+			if (!this.program.equals("runtime") && periodics.name().equals(event.name())) {
+				Long period = (Long) ((Value) event.argument(Periodic.Field.PERIOD.ordinal())).value();
+				Long ttl    = (Long) ((Value) event.argument(Periodic.Field.TTL.ordinal())).value();
+				Long count  = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
+				List<Comparable> values = new ArrayList<Comparable>();
+				values.add(event.identifier());
+				for (int i = 1; i < event.arguments(); i++) {
+					values.add(((Value<Comparable>) event.argument(i)).value());
+				}
+				periodics.add(new Tuple(periodics.name(), values));
+				
+				final String identifier = event.identifier();
+				TupleFunction<java.lang.Boolean> periodicFilter = new TupleFunction<java.lang.Boolean>() {
+					public java.lang.Boolean evaluate(Tuple tuple)
+							throws P2RuntimeException {
+						return identifier.equals((String)tuple.value(Periodic.Field.IDENTIFIER.ordinal()));
+					}
+					public Class returnType() {
+						return java.lang.Boolean.class;
+					}
+				};
+				EventFilter efilter = new EventFilter(event, periodicFilter);
 				operators.add(efilter);
 			}
-			
-			/* Table function go first to immediately evaluate 
-			 * input event tuples. */
-			if (function != null) {
-				operators.add(function.operator());
+			else {
+				EventFilter efilter = new EventFilter(event);
+				if (efilter.filters() > 0) {
+					operators.add(efilter);
+				}
 			}
 			
-			/* Add all remaining terms in the rule body. */
-			for (Term term : body) {
-				if (!term.equals(event)) {
-					operators.add(term.operator());
+			if (function != null) {
+				operators.add(function.operator());
+				for (Term term : body) {
+					if (!term.equals(function)) {
+						operators.add(term.operator());
+					}
+				}
+			}
+			else {
+				for (Term term : body) {
+					if (!term.equals(event)) {
+						operators.add(term.operator());
+					}
 				}
 			}
 			

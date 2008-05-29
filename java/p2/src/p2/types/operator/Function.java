@@ -5,6 +5,7 @@ import java.util.Set;
 import p2.lang.plan.Predicate;
 import p2.lang.plan.Variable;
 import p2.types.basic.Schema;
+import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
@@ -25,7 +26,12 @@ public class Function extends Operator {
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		try {
-			return this.function.insert(tuples);
+			Schema schema = new Schema(function.name(), predicate.schema().variables());
+			TupleSet result = this.function.insert(tuples, null);
+			for (Tuple tuple : result) {
+				tuple.schema(schema);
+			}
+			return result;
 		} catch (UpdateException e) {
 			e.printStackTrace();
 			throw new P2RuntimeException(e.toString());
@@ -39,7 +45,7 @@ public class Function extends Operator {
 
 	@Override
 	public Schema schema(Schema input) {
-		return predicate.schema();
+		return new Schema(function.name(), predicate.schema().variables());
 	}
 
 	@Override

@@ -29,10 +29,11 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		
 	}
 	
-	public static final String MIN   = "min";
-	public static final String MAX   = "max";
-	public static final String COUNT = "count";
-	public static final String AVG   = "avg";
+	public static final String MIN      = "min";
+	public static final String MAX      = "max";
+	public static final String COUNT    = "count";
+	public static final String AVG      = "avg";
+	public static final String TUPLESET = "tupleset";
 	
 	public abstract Tuple result();
 	
@@ -49,7 +50,26 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		else if (AVG.equals(aggregate.functionName())) {
 			return new Avg(new Accessor(aggregate));
 		}
+		else if (TUPLESET.equals(aggregate.functionName())) {
+			return new TupleSet(new Accessor(aggregate));
+		}
 		
+		return null;
+	}
+	
+	public static Class type(String function, Class type) {
+		if (MIN.equals(function) || MAX.equals(function)) {
+			return type;
+		}
+		else if (COUNT.equals(function)) {
+			return Integer.class;
+		}
+		else if (AVG.equals(function)) {
+			return Float.class;
+		}
+		else if (TUPLESET.equals(function)) {
+			return p2.types.basic.TupleSet.class;
+		}
 		return null;
 	}
 	
@@ -176,6 +196,40 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 
 		public Class returnType() {
 			return Float.class;
+		}
+	}
+	
+	public static class TupleSet extends Aggregate {
+		private Tuple result;
+		private p2.types.basic.TupleSet tupleset;
+		private Accessor accessor;
+		
+		public TupleSet(Accessor accessor) {
+			this.result = null;
+			this.tupleset = null;
+			this.accessor = accessor;
+		}
+		
+		public Tuple result() {
+			if (this.result != null) {
+				this.result = this.result.clone();
+				this.result.value(accessor.position(), this.tupleset);
+				return this.result;
+			}
+			return null;
+		}
+		
+		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
+			this.result = tuple;
+			if (this.tupleset == null) {
+				this.tupleset = new p2.types.basic.TupleSet(tuple.name());
+			}
+			this.tupleset.add((Tuple) this.accessor.evaluate(tuple));
+			return this.tupleset;
+		}
+
+		public Class returnType() {
+			return p2.types.basic.TupleSet.class;
 		}
 	}
 }

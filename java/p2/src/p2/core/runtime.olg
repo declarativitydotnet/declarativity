@@ -32,6 +32,19 @@ strata strata(Program, Time, min<Priority>) :-
 /*******************************************************************/
 /*** Periodic scheduler                                           **/
 
+/* Run next periodic. */
+schedule periodic(Id, Period, TTL, Count+1, Time+Period, Program) :-
+			clock#insert(Location, Time),
+			periodic(Id, Period, TTL, Count, Time, Program),
+			Count <= TTL;
+			
+initperiodic periodic(Id, Period, TTL, Count, Time + Offset, Program) :-
+				planned(Program, Time),
+				periodic(Id, Period, TTL, Count, Offset, Program);
+	
+/* Delete the previous period. */
+periodic delete periodic(Id, Period, TTL, Count-1, Time-Period, Program) :-
+   			       periodicScheduler(periodic(Id, Period, TTL, Count, Time, Program));
 
 /*******************************************************************/
 /*** Compiler configuration                                      **/
@@ -39,32 +52,34 @@ strata strata(Program, Time, min<Priority>) :-
 
 define(priority, infinity, infinity, keys(0,1), {String, String, Integer});
 define(dependency, infinity, infinity, keys(0,1,2), {String, String, String});
-define(planned, {String});
-define(compile, {String, String, String});
+define(planned, {String, Long});
+define(scheduleFact, {Long, String, String, TupleSet});
 
-planned("runtime");
+planned("runtime", 0L);
 
-/* Compile the program. */
-compiler(Program, Owner, File, null) :-
-	compile(Program, Owner, File);
-
-/* Plan the program. */
-planned(Program) :-
-	compiler(Program, Owner, File, Object),
+planned(Program, Time) :-
+	compiler(Program, Owner, File, Time, Object),
 	Object.plan();
+	
+scheduleFact(Time, Program, TupleName, tupleset<Tuple>) :-
+	planned(Program, Time), Program != "runtime",
+	fact(Program, TupleName, Tuple);
+	
+schedule(Time, Program, TupleName, Facts, null) :-
+	scheduleFact(Time, Program, TupleName, Facts);
 
 /* Rule part tables have been filled in by compiler. */
 /* Determine R/G graph dependencies. */
 dependency(Program, Head.name(), Body.name()) :-
-	planned(Program),
+	planned(Program, Time),
 	rule(Program, Rule, _),
 	predicate(Program, Rule, 0, Event, Head), /* Position == 0 */
 	predicate(Program, Rule, Pos, Event, Body), 
-	Head != Body, Pos > 0;
+	Head.name() != Body.name(), Pos > 0;
 	
 /* Initialize all predicates to stratum 0. */
 init priority(Program, Pred.name(), 0) :-
-		planned(Program),
+		planned(Program, Time),
 		rule(Program, Rule, _),
 		predicate(Program, Rule, Pos, Event, Pred),
 		notin priority(Program, Pred.name(), _);

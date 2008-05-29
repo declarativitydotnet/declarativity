@@ -77,23 +77,6 @@ public abstract class Table implements Comparable<Table> {
 		
 	}
 	
-	public static abstract class Aggregate {
-		
-		protected Table table;
-		
-		public Aggregate(Table table) {
-			this.table = table;
-		}
-		
-		public abstract void insert(TupleSet tuples) throws P2RuntimeException;
-		
-		public abstract void delete(TupleSet tuples) throws P2RuntimeException;
-
-		public abstract Class type();
-
-		public abstract TupleSet tuples();
-	}
-
 	public static IndexTable index = null;
 	public static Catalog catalog  = null;
 	
@@ -117,7 +100,7 @@ public abstract class Table implements Comparable<Table> {
 	
 	protected Key key;
 	
-	private final Set<Callback> callbacks;
+	protected final Set<Callback> callbacks;
 	
 	private Aggregate aggregate;
 	
@@ -168,14 +151,6 @@ public abstract class Table implements Comparable<Table> {
 		return Table.index;
 	}
 	
-	public void aggregate(Aggregate aggregate) {
-		this.aggregate = aggregate;
-	}
-	
-	public Aggregate aggregate() {
-		return this.aggregate;
-	}
-	
 	/**
 	 * Register a new callback on table updates.
 	 * @param callback
@@ -191,10 +166,8 @@ public abstract class Table implements Comparable<Table> {
 	private static void register(String name, Type type, Integer size, Float lifetime, 
 			                     Key key, TypeList types, Table object) { 
 		Tuple tuple = new Tuple(catalog.name(), name, type.toString(), size, lifetime, key, types, object);
-		TupleSet set = new TupleSet(catalog.name());
-		set.add(tuple);
 		try {
-			catalog.insert(set);
+			catalog.force(tuple);
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -204,10 +177,9 @@ public abstract class Table implements Comparable<Table> {
 	
 	public static boolean drop(String name) throws UpdateException {
 		try {
-			TupleSet tuples = catalog.primary().lookup(catalog.key().value(name));
-			for (Tuple table : tuples) {
-				return catalog.delete(table);
-			}
+			TupleSet tuples = catalog.primary().lookup(name);
+			catalog.delete(tuples);
+			tuples = catalog.primary().lookup(name);
 		} catch (BadKeyException e) {
 			// TODO Fatal error
 			e.printStackTrace();
@@ -217,12 +189,13 @@ public abstract class Table implements Comparable<Table> {
 	
 	public static Table table(String name) {
 		try {
-			TupleSet table = catalog.primary().lookup(catalog.key().value(name));
+			TupleSet table = catalog.primary().lookup(name);
 			if (table.size() == 1) {
 				return (Table) table.iterator().next().value(Catalog.Field.OBJECT.ordinal());
 			}
 			else if (table.size() > 1) {
-				// TODO Fatal error.
+				System.err.println("More than one " + name + " table defined!");
+				System.exit(1);
 			}
 		} catch (BadKeyException e) {
 			// TODO Fatal error.
@@ -278,12 +251,11 @@ public abstract class Table implements Comparable<Table> {
 	public abstract Hashtable<Key, Index> secondary();
 
 	public void force(Tuple tuple) throws UpdateException {
-		TupleSet set = new TupleSet(name());
-		set.add(tuple);
-		if (primary() != null) {
-			delete(primary().lookup(tuple));
-		}
-		insert(set);
+		TupleSet insertion = new TupleSet(name());
+		insertion.add(tuple);
+		TupleSet conflicts = new TupleSet(name());
+		insert(insertion, conflicts);
+		delete(conflicts);
 	}
 	
 	/**
@@ -291,26 +263,27 @@ public abstract class Table implements Comparable<Table> {
 	 * @return The delta set of tuples.
 	 * @throws UpdateException 
 	 **/
-	public TupleSet insert(TupleSet tuples) throws UpdateException {
+	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 		TupleSet delta = new TupleSet(name().toString());
 		for (Tuple t : tuples) {
 			t = t.clone();
 			if (insert(t)) {
 				delta.add(t);
+				if (conflicts != null && primary() != null) {
+					try {
+						conflicts.addAll(primary().lookup(t));
+					} catch (BadKeyException e) {
+						throw new UpdateException(e.toString());
+					}
+				}
 			}
 		}
+		
 		
 		for (Callback callback : this.callbacks) {
 			callback.insertion(delta);
 		}
 		
-		if (this.aggregate != null) {
-			try {
-				this.aggregate.insert(tuples);
-			} catch (P2RuntimeException e) {
-				throw new UpdateException(e.toString());
-			}
-		}
 		return delta;
 	}
 	
@@ -332,13 +305,6 @@ public abstract class Table implements Comparable<Table> {
 			callback.deletion(delta);
 		}
 		
-		if (this.aggregate != null) {
-			try {
-				this.aggregate.delete(tuples);
-			} catch (P2RuntimeException e) {
-				throw new UpdateException(e.toString());
-			}
-		}
 		return delta;
 	}
 	

@@ -39,13 +39,13 @@ public class EventFilter extends Operator {
 	
 	private Predicate predicate;
 	
-	private List<Filter> filters;
+	private List<TupleFunction<Boolean>> filters;
 	
 
 	public EventFilter(Predicate predicate) {
 		super(predicate.program(), predicate.rule());
 		this.predicate = predicate;
-		this.filters = new ArrayList<Filter>();
+		this.filters = new ArrayList<TupleFunction<Boolean>>();
 		
 		for (p2.lang.plan.Expression arg : predicate) {
 			assert(arg.position() >= 0);
@@ -54,6 +54,13 @@ public class EventFilter extends Operator {
 				this.filters.add(new Filter(arg.position(), arg.function()));
 			}
 		}
+	}
+	
+	public EventFilter(Predicate predicate, TupleFunction<Boolean> filter) {
+		super(predicate.program(), predicate.rule());
+		this.predicate = predicate;
+		this.filters = new ArrayList<TupleFunction<Boolean>>();
+		this.filters.add(filter);
 	}
 
 	@Override
@@ -66,7 +73,7 @@ public class EventFilter extends Operator {
 			
 			for (Tuple tuple : tuples) {
 				boolean valid = true;
-				for (Filter filter : this.filters) {
+				for (TupleFunction<Boolean> filter : this.filters) {
 					valid = filter.evaluate(tuple);
 					if (!valid) break;
 				}

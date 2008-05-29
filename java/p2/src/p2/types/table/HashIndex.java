@@ -1,23 +1,25 @@
 package p2.types.table;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.table.Key.Value;
+import p2.types.exception.BadKeyException;
 
 public class HashIndex extends Index {
 	
-	private Map<Key.Value, TupleSet> map;
+	private Map<Tuple, TupleSet> map;
 
 	public HashIndex(Table table, Key key, Type type) {
 		super(table, key, type);
-		map = new HashMap<Key.Value, TupleSet>();
+		map = new HashMap<Tuple, TupleSet>();
 	}
 	
 	@Override
@@ -36,7 +38,7 @@ public class HashIndex extends Index {
 
 	@Override
 	protected void insert(Tuple t) {
-		Key.Value key = key().value(t);
+		Tuple key = key().project(t);
 		if (this.map.containsKey(key)) {
 			this.map.get(key).add(t);
 		}
@@ -49,20 +51,17 @@ public class HashIndex extends Index {
 
 	@Override
 	public TupleSet lookup(Tuple t) {
-		return lookup(key().value(t));
-	}
-
-	@Override
-	public TupleSet lookup(Key.Value key) {
-		if (this.map.containsKey(key)) {
-			return this.map.get(key);
+		if (t.name().equals(table().name())) {
+			t = key().project(t);
 		}
-		return new TupleSet(table().name());
+		return this.map.containsKey(t) ? 
+				this.map.get(t) : new TupleSet(table().name());
 	}
 
 	@Override
 	protected void remove(Tuple t) {
-		Key.Value key = key().value(t);
+		Tuple key = key().project(t);
+		
 		if (this.map.containsKey(key)) {
 			this.map.get(key).remove(t);
 		}
@@ -75,5 +74,19 @@ public class HashIndex extends Index {
 			tuples.addAll(set);
 		}
 		return tuples.iterator();
+	}
+
+	@Override
+	public TupleSet lookup(Comparable... values) throws BadKeyException {
+		if (values.length != key().size()) {
+			throw new BadKeyException("Value length does not match key size!");
+		}
+		
+		List<Comparable> keyValues = new ArrayList<Comparable>();
+		for (Comparable value : values) {
+			keyValues.add(value);
+		}
+		Tuple key = new Tuple(table().name(), keyValues);
+		return this.map.get(key);
 	}
 }

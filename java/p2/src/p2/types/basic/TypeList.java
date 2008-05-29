@@ -18,6 +18,8 @@ public class TypeList extends ArrayList<Class> implements Comparable<TypeList> {
 		addAll(types);
 	}
 	
+	public TypeList() {}
+	
 	public boolean equals(Object o) {
 		if (o instanceof TypeList) {
 			return ((TypeList)o).compareTo(this) == 0;

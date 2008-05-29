@@ -25,8 +25,9 @@ public class ScanJoin extends Join {
 		TupleSet result = new TupleSet(tuples.name() + 
 				                       " JOIN " + 
 				                       predicate.name());
+		TupleSet innerTuples = this.table.tuples();
 		for (Tuple outer : tuples) {
-			for (Tuple inner : this.table.tuples()) {
+			for (Tuple inner : innerTuples) {
 				inner.schema(this.predicate.schema());
 				
 				if (validate(outer, inner)) {

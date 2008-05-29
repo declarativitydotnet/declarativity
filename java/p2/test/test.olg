@@ -3,24 +3,15 @@ import java.lang.Float;
 import p2.types.table.Index;
 
 define(t1, infinity, infinity, keys(1), 
- {int, string, int, int[5][6]});
+ {string, string, string});
 
-define(t2, infinity, infinity, keys(), 
- {Integer, Float, Float, Float });
+define(event, {String, Float, Float});
 
-define(event, {Integer, Float, Float});
+t1("test", "this", "fact");
 
-watchmod(t1, a);
-watchmod(t2, s);
+rule1 event(Id, 1.0, 2.0) :-  periodic(Id, 2L);
 
-rule1 event(A, B, C) :- t1(@A, F:=$2), 
-			C > 0,
-			t2(@A, B, C, D), 
-                        X:= {{1,2},{3,4}}, 
-			F.toString() == "foobar";
-
-rule2 delete t2(@A, B, C, D) :- event(@A, B, C), 
-                                notin t2(@A, B, C, 2.0), 
-				F := Index.Type.SECONDARY.toString(),
-                                C in [1, 5],
-                                D := C < 2 ? (C < 1 ? 0f : 2.0) : 1.0;
+rule2 t1(A, B, C) :- event(A, X, Y), 
+                     Y in [1.0, 5.0],
+                     B := X.toString(),
+                     C := Y.toString();

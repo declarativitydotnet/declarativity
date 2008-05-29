@@ -29,7 +29,9 @@ public class Variable extends Expression {
 	
 	@Override
 	public Variable clone() {
-		return new Variable(name, type);
+		Variable variable = new Variable(name, type);
+		variable.position(this.position());
+		return variable;
 	}
 	
 	@Override

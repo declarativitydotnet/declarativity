@@ -21,7 +21,11 @@ public abstract class Term implements Comparable<Term> {
 		this.program  = null;
 		this.rule     = null;
 		this.position = null;
-		this.identifer = "Term:" + identifier++;
+		this.identifer = "tid:" + identifier++;
+	}
+	
+	public String identifier() {
+		return this.identifer;
 	}
 	
 	public void location(xtc.tree.Location location) {

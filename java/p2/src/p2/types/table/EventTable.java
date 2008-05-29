@@ -14,10 +14,12 @@ public class EventTable extends Table {
 		super(name, Type.EVENT, 0, 0f, null, types);
 	}
 	
-	public TupleSet insert(TupleSet tuples) throws UpdateException {
+	@Override
+	public TupleSet insert(TupleSet tuples, TupleSet deletions) throws UpdateException {
 		return tuples;
 	}
 	
+	@Override
 	public TupleSet delete(TupleSet tuples) throws UpdateException {
 		return tuples;
 	}

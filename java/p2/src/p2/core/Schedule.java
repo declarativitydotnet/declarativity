@@ -14,7 +14,7 @@ import p2.types.table.ObjectTable;
 
 public class Schedule extends ObjectTable {
 	
-	public static final Key PRIMARY_KEY = new Key(0,1,2);
+	public static final Key PRIMARY_KEY = new Key();
 	
 	public enum Field {TIME, PROGRAM, TUPLENAME, INSERTIONS, DELETIONS};
 	public static final Class[] SCHEMA = { 
@@ -39,10 +39,10 @@ public class Schedule extends ObjectTable {
 	@Override
 	public TupleSet delete(TupleSet tuples) throws UpdateException {
 		TupleSet delta = super.delete(tuples);
-		this.min = 0L;
+		this.min = -1L;
 		for (Tuple tuple : tuples()) {
-			min = min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
-					min : (Long) tuple.value(Field.TIME.ordinal());
+			min = min >= 0 && min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
+						min : (Long) tuple.value(Field.TIME.ordinal());
 		}
 		return delta;
 	}

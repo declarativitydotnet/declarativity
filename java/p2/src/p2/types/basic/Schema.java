@@ -25,7 +25,7 @@ public class Schema {
 		}
 	}
 	
-	public Schema(Schema schema) {
+	private Schema(Schema schema) {
 		this.name = schema.name;
 		this.variables = (Hashtable) schema.variables.clone();
 	}
@@ -33,6 +33,10 @@ public class Schema {
 	public Schema(String name) {
 		this.name = name;
 		this.variables = new Hashtable<String, Variable>();
+	}
+	
+	public Schema clone() {
+		return new Schema(this);
 	}
 	
 	public String name() {

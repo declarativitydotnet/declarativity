@@ -6,6 +6,7 @@ import Symbol;
 
 Node Constant = 
     FloatConstant Spacing
+  / LongConstant Spacing
   / IntegerConstant Spacing
   / StringConstant Spacing
   / BooleanConstant Spacing
@@ -35,11 +36,14 @@ generic IntegerConstant =
     HexConstant 
   / DecimalConstant ;
   
+generic LongConstant =
+	DecimalConstant LongTypeSuffix;
+  
 Pair<Node> IntegerList = IntegerConstant (void:',' IntegerConstant)*;
 
 transient String HexConstant =  HexNumeral     HexTypeSuffix? ;
 
-transient String DecimalConstant = '-'? DecimalNumeral IntegerTypeSuffix?  ;
+transient String DecimalConstant = '-'? DecimalNumeral;
 
 transient String DecimalNumeral    = '0' / NonZeroDigit Digit* ;
 transient String NonZeroDigit      = [1-9] ;
@@ -48,7 +52,7 @@ transient String Digit             = [0-9] ;
 transient String HexNumeral        = '0' [xX] HexDigit+ ;
 transient String HexDigit          = [0-9a-fA-F] ;
 
-transient String IntegerTypeSuffix = [lL] ;
+transient String LongTypeSuffix = [lL] ;
 transient String HexTypeSuffix = [UI] ;
 
 generic StringConstant   = CharacterSequence;

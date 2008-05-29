@@ -26,6 +26,7 @@ import p2.lang.plan.Fact;
 import p2.lang.plan.IfThenElse;
 import p2.lang.plan.Location;
 import p2.lang.plan.MethodCall;
+import p2.lang.plan.Program;
 import p2.lang.plan.UnknownReference;
 import p2.lang.plan.NewClass;
 import p2.lang.plan.Null;
@@ -42,7 +43,8 @@ import p2.lang.plan.Variable;
 import p2.lang.plan.ObjectReference;
 import p2.lang.plan.Watch;
 import p2.types.basic.TypeList;
-import p2.types.table.AggregateImpl;
+import p2.types.exception.UpdateException;
+import p2.types.table.Aggregation;
 import p2.types.table.BasicTable;
 import p2.types.table.EventTable;
 import p2.types.table.Key;
@@ -82,6 +84,8 @@ public final class TypeChecker extends Visitor {
 
 	/** The runtime. */
 	protected Runtime runtime;
+	
+	protected Program program;
 
 	/** The symbol table. */
 	protected SymbolTable table;
@@ -93,8 +97,9 @@ public final class TypeChecker extends Visitor {
 	 *
 	 * @param runtime The runtime.
 	 */
-	public TypeChecker(Runtime runtime) {
+	public TypeChecker(Runtime runtime, Program program) {
 		this.runtime = runtime;
+		this.program = program;
 	}
 	
 	public SymbolTable table() {
@@ -156,6 +161,10 @@ public final class TypeChecker extends Visitor {
 			/* expr != null*/
 			return new p2.lang.plan.Boolean(p2.lang.plan.Boolean.NEQUAL,
 									    expr, new Null());
+		}
+		else if (!p2.lang.plan.Boolean.class.isAssignableFrom(expr.getClass())) {
+			return new p2.lang.plan.Boolean(p2.lang.plan.Boolean.EQUAL, expr, 
+									    new Value<java.lang.Boolean>(java.lang.Boolean.TRUE));
 		}
 		return (p2.lang.plan.Boolean) expr;
 	}
@@ -288,6 +297,8 @@ public final class TypeChecker extends Visitor {
 			create = new BasicTable(name.value(), (Integer)size.value(), 
 					                (Number)lifetime.value(), key, schema);
 		}
+		this.program.definition(create);
+
 
 		n.setProperty(Constants.TYPE, create);
 		return Table.class;
@@ -451,14 +462,23 @@ public final class TypeChecker extends Visitor {
 				}
 				else if (var instanceof Aggregate) {
 					Table table = Table.table(head.name());
-					if (table.aggregate() != null) {
-						runtime.error("Multiple aggregates detected on predicate " + head, n);
+					if (table instanceof Aggregation) {
+						runtime.error("Table aggregates must be unique!", n);
 						return Error.class;
 					}
-					Table.Aggregate aggregate = new AggregateImpl(table, head);
-					table.aggregate(aggregate);
+					
+					try {
+						/* Drop the previous table. */
+						Table.drop(table.name());
+					} catch (UpdateException e) {
+						runtime.error(e.toString());
+						return Error.class;
+					}
+					Table aggregate = new Aggregation(head, table.type());
+					this.program.definition(aggregate);
+					
 					Class[] types = table.types();
-					if (types[var.position()] != aggregate.type()) {
+					if (types[var.position()] != var.type()) {
 						runtime.error("Aggregate type "+ aggregate.type() + 
 								      " does not match head type " + types[var.position()] + "!", n);
 						return Error.class;
@@ -603,12 +623,8 @@ public final class TypeChecker extends Visitor {
 		List<Expression> parameters = (List<Expression>) n.getNode(3).getProperty(Constants.TYPE);
 		List<Expression> arguments = new ArrayList<Expression>();
 		
-		if (schema.size() < parameters.size()) {
-			runtime.error("Schema size mismatch on predicate " +  name ,n);
-			return Error.class;
-		}
-		
-		if ("periodic".equals(name.value())) {
+
+		if (!"runtime".equals(this.program.name()) && "periodic".equals(name.value())) {
 			if (parameters.size() < 1 || parameters.size() > Periodic.SCHEMA.length) {
 				runtime.error("Too many arguments to periodic predicate", n);
 				return Error.class;
@@ -620,78 +636,113 @@ public final class TypeChecker extends Visitor {
 			
 			int index = 1;
 			for ( ; index < parameters.size(); index++) {
-				if (!Number.class.isAssignableFrom(parameters.get(index).type())) {
-					runtime.error("Parameter " + index + " to periodic predicate must be a Numeric", n);
+				if (!(parameters.get(index) instanceof Value) ||
+						!Number.class.isAssignableFrom(parameters.get(index).type())) {
+					runtime.error("Parameter " + index + 
+							      " to periodic predicate must be a Numeric value!", n);
 					return Error.class;
 				}
 			}
 			
-			if (index == 1) {
-				parameters.add(new Value(new Long(0)));    // Period
+			if (index == Periodic.Field.PERIOD.ordinal()) { // Period
+				parameters.add(new Value<Long>(1L));
 				index++;
 			}
-			if (index == 2) {
-				parameters.add(new Value(Long.MAX_VALUE)); // TTL
+			else {
+				Long period = ((Value<Long>)parameters.get(Periodic.Field.PERIOD.ordinal())).value();
+				if (period < 1) {
+					runtime.warning("Periodic period must be > 1. Setting to 1",n);
+					period = 1L;
+				}
+				parameters.set(Periodic.Field.PERIOD.ordinal(), 
+						new Value<Long>(period));
+				
+			}
+			
+			if (index == Periodic.Field.TTL.ordinal()) { // TTL or Max execution count
+				parameters.add(new Value<Long>(Long.MAX_VALUE));
 				index++;
 			}
-			if (index == 3) {
-				parameters.add(new Value(new Long(0)));    // Count
+			
+			if (index == Periodic.Field.COUNT.ordinal()) { // Execution Count
+				parameters.add(new Value<Long>(new Long(0)));
+				index++;
+			}
+			
+			if (index == Periodic.Field.TIME.ordinal()) { // Start time
+				parameters.add(new Value<Long>(1L));
+				index++;
+			}
+			else {
+				Long offset = ((Value<Long>)parameters.get(Periodic.Field.TIME.ordinal())).value();
+				if (offset < 1) {
+					runtime.warning("Periodic offset must be > 1. Setting to 1",n);
+					parameters.set(Periodic.Field.PERIOD.ordinal(),  new Value<Long>(1L));
+				}
+			}
+			
+			if (index == Periodic.Field.PROGRAM.ordinal()) { // Program name
+				parameters.add(new Value<String>(this.program.name()));
 				index++;
 			}
 			tableEvent = Table.Event.INSERT;
 		}
-		else {
-			/* Type check each tuple argument according to the schema. */
-			for (int index = 0; index < schema.size(); index++) {
-				Expression param = parameters.size() <= index ? 
-						new DontCare(schema.get(index)) : parameters.get(index);
-				if (Alias.class.isAssignableFrom(param.getClass())) {
-					Alias alias = (Alias) param;
-					if (alias.position() < index) {
-						runtime.error("Alias fields must be in numeric order!");
-						return Error.class;
-					}
-					/* Fill in missing variables with tmp variables. */
-					while (index < alias.position()) {
-						Variable dontcare = new DontCare(schema.get(index));
-						dontcare.position(index++);
-						arguments.add(dontcare);
-					}
-				}
-
-				if (Variable.class.isAssignableFrom(param.getClass())) {
-					/* Only look in the current scope. */
-					Variable var = (Variable) param;
-					if (var.type() == null) {
-						/* Fill in type using the schema. */
-						var.type(schema.get(index));
-					}
-
-					/* Map variable to its type. */
-					table.current().define(var.name(), var.type());
-				}
-				else if (param.variables().size() > 0) {
-					for (Variable var : param.variables()) {
-						if (!table.current().isDefined(var.name())) {
-							runtime.error("Body predicate contains an argument expression based " +
-									"that depends on variable " + var.name() + ", which is not" +
-									"defined by some left hand side predicate!", n);
-							return Error.class;
-						}
-					}
-				}
-
-				/* Ensure the type matches the schema definition. */
-				if (!subtype(schema.get(index), param.type())) {
-					runtime.error("Predicate " + name.value() + " argument " + index
-									+ " type " + param.type() + " does not match type " 
-									+ schema.get(index) + " in schema.", n);
+		else if (schema.size() < parameters.size()) {
+			runtime.error("Program " + program.name() + ": Schema size mismatch on predicate " +  name ,n);
+			return Error.class;
+		}
+		
+		
+		/* Type check each tuple argument according to the schema. */
+		for (int index = 0; index < schema.size(); index++) {
+			Expression param = parameters.size() <= index ? 
+					new DontCare(schema.get(index)) : parameters.get(index);
+			if (Alias.class.isAssignableFrom(param.getClass())) {
+				Alias alias = (Alias) param;
+				if (alias.position() < index) {
+					runtime.error("Alias fields must be in numeric order!");
 					return Error.class;
 				}
-
-				param.position(index);
-				arguments.add(param);
+				/* Fill in missing variables with tmp variables. */
+				while (index < alias.position()) {
+					Variable dontcare = new DontCare(schema.get(index));
+					dontcare.position(index++);
+					arguments.add(dontcare);
+				}
 			}
+
+			if (Variable.class.isAssignableFrom(param.getClass())) {
+				/* Only look in the current scope. */
+				Variable var = (Variable) param;
+				if (var.type() == null) {
+					/* Fill in type using the schema. */
+					var.type(schema.get(index));
+				}
+
+				/* Map variable to its type. */
+				table.current().define(var.name(), var.type());
+			}
+			else if (param.variables().size() > 0) {
+				for (Variable var : param.variables()) {
+					if (!table.current().isDefined(var.name())) {
+						runtime.error("Body predicate contains an argument expression based " +
+									"that depends on variable " + var.name() + ", which is not" +
+									"defined by some left hand side predicate!", n);
+						return Error.class;
+					}
+				}
+			}
+
+			/* Ensure the type matches the schema definition. */
+			if (!subtype(schema.get(index), param.type())) {
+				runtime.error("Predicate " + name.value() + " argument " + index
+								+ " type " + param.type() + " does not match type " 
+								+ schema.get(index) + " in schema.", n);
+				return Error.class;
+			}
+
+			param.position(index);
+			arguments.add(param);
 		}
 		
 		if (schema.size() != arguments.size()) {
@@ -1084,12 +1135,12 @@ public final class TypeChecker extends Visitor {
 				}
 				else if (reference.object() != null) {
 					Expression object = reference.object();
-				    Method method = object.type().getDeclaredMethod(reference.toString(), types);
+				    Method method = object.type().getMethod(reference.toString(), types);
 				    n.setProperty(Constants.TYPE, new MethodCall(object, method, arguments));
 				    return MethodCall.class;
 				}
 				else {
-					Method method = reference.type().getDeclaredMethod(reference.toString(), types);
+					Method method = reference.type().getMethod(reference.toString(), types);
 					if (method.getModifiers() != Modifier.STATIC) {
 						runtime.error("Expected method " + reference.toString() + " to be static!", n);
 						return Error.class;
@@ -1362,14 +1413,18 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitAggregate(final GNode n) {
+		String function = n.getString(0);
+		
 		if (n.getNode(1) == null) {
-			n.setProperty(Constants.TYPE, new Aggregate(null, n.getString(0), null));
+			n.setProperty(Constants.TYPE, 
+					new Aggregate(null, function, p2.types.function.Aggregate.type(function, null)));
 		}
 		else {
 			Class type = (Class) dispatch(n.getNode(1));
 			assert (type == Variable.class);
 			Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
-			n.setProperty(Constants.TYPE, new Aggregate(var.name(), n.getString(0), var.type()));
+			n.setProperty(Constants.TYPE, 
+					new Aggregate(var.name(), function, p2.types.function.Aggregate.type(function, var.type())));
 		}
 		return Aggregate.class;
 	}
@@ -1398,6 +1453,11 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitIntegerConstant(final GNode n) {
 		n.setProperty(Constants.TYPE, new Value<Integer>(Integer.parseInt(n.getString(0))));
+		return Value.class;
+	}
+	
+	public Class visitLongConstant(final GNode n) {
+		n.setProperty(Constants.TYPE, new Value<Long>(Long.parseLong(n.getString(0))));
 		return Value.class;
 	}
 

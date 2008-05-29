@@ -37,7 +37,7 @@ public class Selection extends Operator {
 
 	@Override
 	public Schema schema(Schema input) {
-		return new Schema(input);
+		return input.clone();
 	}
 
 	@Override

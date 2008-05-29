@@ -31,11 +31,12 @@ public class Compiler extends Tool {
 	public static class CompileTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);
 
-		public enum Field{NAME, OWNER, FILE, PROGRAM};
+		public enum Field{NAME, OWNER, FILE, START, PROGRAM};
 		public static final Class[] SCHEMA = {
 			String.class,  // Program name
 			String.class,  // Program owner
 			String.class,  // Program file
+			Long.class,    // Start time
 			Program.class  // The program object
 		};
 
@@ -44,18 +45,22 @@ public class Compiler extends Tool {
 		}
 
 		protected boolean insert(Tuple tuple) throws UpdateException {
-			String name  = (String) tuple.value(Field.NAME.ordinal());
-			String owner = (String) tuple.value(Field.OWNER.ordinal());
-			String file  = (String) tuple.value(Field.FILE.ordinal());
-			try {
-				Compiler compiler = new Compiler(name, owner, file);
-				tuple.value(Field.PROGRAM.ordinal(), compiler.program());
-				return super.insert(tuple);
-			} catch (P2RuntimeException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw new UpdateException(e.toString());
+			Program program = (Program) tuple.value(Field.PROGRAM.ordinal());
+			if (program == null) {
+				String name  = (String) tuple.value(Field.NAME.ordinal());
+				String owner = (String) tuple.value(Field.OWNER.ordinal());
+				String file  = (String) tuple.value(Field.FILE.ordinal());
+				try {
+					program = new Program(name, owner);
+					Compiler compiler = new Compiler(program, file);
+					tuple.value(Field.PROGRAM.ordinal(), program);
+				} catch (P2RuntimeException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					throw new UpdateException(e.toString());
+				}
 			}
+			return super.insert(tuple);
 		}
 	}
 
@@ -67,13 +72,11 @@ public class Compiler extends Tool {
 	private TypeChecker typeChecker;
 
 	/** Create a new driver for Overlog. */
-	public Compiler(String name, String owner, String file) throws P2RuntimeException {
-		this.program = new Program(name, owner);
+	public Compiler(Program program, String file) throws P2RuntimeException {
+		this.program = program;
 		this.file = file;
-		typeChecker = new TypeChecker(this.runtime);
-		String[] args = new String[2];
-		args[0] = "-no-exit";
-		args[1] = file;
+		typeChecker = new TypeChecker(this.runtime, this.program);
+		String[] args = {"-no-exit", "-silent", file};
 		run(args);
 		
 		if (runtime.errorCount() > 0) {
@@ -84,7 +87,7 @@ public class Compiler extends Tool {
 					e.printStackTrace();
 				}
 			}
-			throw new P2RuntimeException("Compilation of program " + name + 
+			throw new P2RuntimeException("Compilation of program " + program.name() + 
 					                     " resulted in " + this.runtime.errorCount() + 
 					                     " errors.");
 		}
@@ -104,15 +107,6 @@ public class Compiler extends Tool {
 
 	public void init() {
 		super.init();
-		runtime.
-		bool("optionTypeAnalyze", "optionTypeAnalyze", false,
-		"Analyze the program's AST.").
-		bool("printAST", "printAST", false,
-		"Print the program's AST in generic form.").
-		bool("printSource", "printSource", false,
-		"Print the program's AST in source form.").
-		bool("printSymbolTable", "printSymbolTable", false,
-		"Print the program's symbol table.");
 	}
 
 	public Node parse(Reader in, File file) throws IOException, ParseException {
@@ -145,12 +139,10 @@ public class Compiler extends Tool {
 			if (clause.getName().equals("Table")) {
 				typeChecker.analyze(clause);
 				if (runtime.errorCount() > 0) return;
-				this.program.definition((Table)clause.getProperty(Constants.TYPE));
 			}
 			else if (clause.getName().equals("Event")) {
 				typeChecker.analyze(clause);
 				if (runtime.errorCount() > 0) return;
-				this.program.definition((Table)clause.getProperty(Constants.TYPE));
 			}
 		}
 
@@ -169,9 +161,6 @@ public class Compiler extends Tool {
 					runtime.error(e.toString());
 				}
 			}
-		}
-		if (runtime.test("printAST")) {
-			runtime.console().format(node).pln().flush();
 		}
 	}
 }
