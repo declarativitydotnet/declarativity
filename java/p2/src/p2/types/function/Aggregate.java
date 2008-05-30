@@ -37,6 +37,8 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	
 	public abstract Tuple result();
 	
+	public abstract void reset();
+	
 	public static Aggregate function(p2.lang.plan.Aggregate aggregate) {
 		if (MIN.equals(aggregate.functionName())) {
 			return new Min(new Accessor(aggregate));
@@ -88,6 +90,11 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return this.result.clone();
 		}
 		
+		public void reset() {
+			this.result = null;
+			this.current = null;
+		}
+		
 		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
 			Comparable value = accessor.evaluate(tuple);
 			if (current == null || this.current.compareTo(value) > 0) {
@@ -116,6 +123,11 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		
 		public Tuple result() {
 			return this.result.clone();
+		}
+		
+		public void reset() {
+			this.result = null;
+			this.current = null;
 		}
 		
 		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
@@ -153,6 +165,11 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return null;
 		}
 		
+		public void reset() {
+			this.result = null;
+			this.current = new Integer(0);
+		}
+		
 		public Comparable evaluate(Tuple tuple) {
 			this.result = tuple;
 			this.current += 1;
@@ -186,6 +203,12 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return null;
 		}
 		
+		public void reset() {
+			this.result = null;
+			this.sum = 0F;
+			this.count = 0F;
+		}
+		
 		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
 			this.result = tuple;
 			Number value = (Number) this.accessor.evaluate(tuple);
@@ -217,6 +240,11 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 				return this.result;
 			}
 			return null;
+		}
+		
+		public void reset() {
+			this.result = null;
+			this.tupleset = null;
 		}
 		
 		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {

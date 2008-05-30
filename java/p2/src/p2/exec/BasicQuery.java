@@ -21,10 +21,6 @@ public class BasicQuery extends Query {
 	public BasicQuery(String program, String rule, Boolean delete,
 					  Predicate input, Projection head, List<Operator> body) {
 		super(program, rule, delete, input, head.predicate());
-		if (input.schema() == null) {
-			System.err.println("INPUT NULL SCHEMA " + input.name());
-			input.schema().size();
-		}
 		this.aggregation = null;
 		this.head        = head;
 		this.body        = body;

@@ -31,12 +31,11 @@ public class Compiler extends Tool {
 	public static class CompileTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);
 
-		public enum Field{NAME, OWNER, FILE, START, PROGRAM};
+		public enum Field{NAME, OWNER, FILE, PROGRAM};
 		public static final Class[] SCHEMA = {
 			String.class,  // Program name
 			String.class,  // Program owner
 			String.class,  // Program file
-			Long.class,    // Start time
 			Program.class  // The program object
 		};
 

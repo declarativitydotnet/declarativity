@@ -26,10 +26,9 @@ public class Function extends Operator {
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		try {
-			Schema schema = new Schema(function.name(), predicate.schema().variables());
 			TupleSet result = this.function.insert(tuples, null);
 			for (Tuple tuple : result) {
-				tuple.schema(schema);
+				tuple.schema(predicate.schema().clone());
 			}
 			return result;
 		} catch (UpdateException e) {
@@ -45,7 +44,7 @@ public class Function extends Operator {
 
 	@Override
 	public Schema schema(Schema input) {
-		return new Schema(function.name(), predicate.schema().variables());
+		return predicate.schema().clone();
 	}
 
 	@Override

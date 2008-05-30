@@ -71,10 +71,10 @@ public class System {
 	
 	public static boolean install(String runtime, String name, String owner, String file) {
 		synchronized (schedule) {
-			TupleSet compileSet = new TupleSet(compile.name());
-			compileSet.add(new Tuple(compile.name(), name, owner, file, clock.current() + 1L, null));
+			TupleSet compilation = new TupleSet(compile.name());
+			compilation.add(new Tuple(compile.name(), name, owner, file, null));
 			try {
-				schedule.force(new Tuple(schedule.name(), clock.current() + 1L, runtime, compileSet.name(), compileSet, null));
+				driver.evaluate(compilation, clock.current());
 			} catch (UpdateException e) {
 				e.printStackTrace();
 				return false;
@@ -88,12 +88,13 @@ public class System {
 			Program program = new Program(name, owner);
 			p2.lang.Compiler compiler = new p2.lang.Compiler(program, RUNTIME);
 			compiler.program().plan();
+			clock.insert(clock.time(0L), null);
 		} catch (Exception e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
 
-		driver = new Driver(program("runtime"), schedule, clock);
+		driver = new Driver(program("runtime"), schedule, periodic, clock);
 	}
 	
 	public static void main(String[] args) {
@@ -103,7 +104,6 @@ public class System {
 		if (args.length > 0) {
 			install("runtime", "command", "none", args[0]);
 		}
-		
 		driver.run();
 	}
 }

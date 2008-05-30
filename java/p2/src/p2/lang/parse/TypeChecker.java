@@ -461,10 +461,15 @@ public final class TypeChecker extends Visitor {
 					return Error.class;
 				}
 				else if (var instanceof Aggregate) {
+					Aggregate agg = (Aggregate) var;
 					Table table = Table.table(head.name());
 					if (table instanceof Aggregation) {
-						runtime.error("Table aggregates must be unique!", n);
-						return Error.class;
+						Aggregation aggregation = (Aggregation) table;
+						if (!agg.functionName().equals(aggregation.variable().functionName()) ||
+								!agg.name().equals(aggregation.variable().name())) {
+							runtime.error("Table aggregates must be unique!", n);
+							return Error.class;
+						}
 					}
 					
 					try {
@@ -670,14 +675,14 @@ public final class TypeChecker extends Visitor {
 			}
 			
 			if (index == Periodic.Field.TIME.ordinal()) { // Start time
-				parameters.add(new Value<Long>(1L));
+				parameters.add(new Value<Long>(0L));
 				index++;
 			}
 			else {
 				Long offset = ((Value<Long>)parameters.get(Periodic.Field.TIME.ordinal())).value();
-				if (offset < 1) {
-					runtime.warning("Periodic offset must be > 1. Setting to 1",n);
-					parameters.set(Periodic.Field.PERIOD.ordinal(),  new Value<Long>(1L));
+				if (offset < 0) {
+					runtime.warning("Periodic offset must be > 0. Setting to 0",n);
+					parameters.set(Periodic.Field.PERIOD.ordinal(),  new Value<Long>(0L));
 				}
 			}
 			

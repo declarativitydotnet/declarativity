@@ -25,33 +25,17 @@ public class Schedule extends ObjectTable {
 		TupleSet.class  // Deletion tuple set
 	};
 	
-	private Long min;
-
 	public Schedule() {
 		super("schedule", PRIMARY_KEY, new TypeList(SCHEMA));
-		this.min = new Long(0);
 	}
 	
 	public Long min() {
-		return this.min;
-	}
-	
-	@Override
-	public TupleSet delete(TupleSet tuples) throws UpdateException {
-		TupleSet delta = super.delete(tuples);
-		this.min = -1L;
+		Long min = Long.MAX_VALUE;
 		for (Tuple tuple : tuples()) {
-			min = min >= 0 && min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
+			min = min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
 						min : (Long) tuple.value(Field.TIME.ordinal());
 		}
-		return delta;
-	}
-	
-	@Override
-	protected boolean insert(Tuple tuple) throws UpdateException {
-		min = min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
-				min : (Long) tuple.value(Field.TIME.ordinal());
-		return super.insert(tuple);
+		return min;
 	}
 	
 }

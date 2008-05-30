@@ -24,7 +24,7 @@ public class Clock extends ObjectTable {
 	public Clock(String location) {
 		super("clock", PRIMARY_KEY, new TypeList(SCHEMA));
 		this.location = location;
-		this.clock = 0L;
+		this.clock = -1L;
 	}
 	
 	public Long current() {

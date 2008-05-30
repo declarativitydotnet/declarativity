@@ -5,10 +5,10 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 
-public abstract class ObjectTable extends RefTable {
+public abstract class ObjectTable extends BasicTable {
 	
 	protected ObjectTable(String name, Key key, TypeList types) {
-		super(name, key, types);
+		super(name, Table.INFINITY, Table.INFINITY, key, types);
 	}
 
 	@Override

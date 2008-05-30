@@ -6,6 +6,7 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
+import p2.types.table.BasicTable;
 import p2.types.table.Function;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
@@ -26,22 +27,20 @@ public class Periodic extends ObjectTable {
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts)
 				throws UpdateException {
 			
-			java.lang.System.err.println("INSERT INTO PERIODIC SCHEDULE " + tuples);
 			TupleSet schedule = new TupleSet(this.schedule.name());
 			TupleSet deltas   = new TupleSet(name());
 			for (Tuple tuple : tuples) {
 				String program = (String) tuple.value(Periodic.Field.PROGRAM.ordinal());
 				Long   time    = (Long) tuple.value(Periodic.Field.TIME.ordinal());
-				TupleSet periodic = new TupleSet(tuples.name());
-				periodic.add(tuple);
-				schedule.add(new Tuple(this.schedule.name(), time, program, periodic.name(), periodic, null));
-				Tuple delta = tuple.clone();
-				delta.name(name());
-				deltas.add(delta);
+				TupleSet periodics = new TupleSet(System.periodic().name());
+				Tuple periodic = tuple.clone();
+				periodic.name(System.periodic().name());
+				periodics.add(periodic);
+				schedule.add(new Tuple(this.schedule.name(), time, program, periodics.name(), periodics, null));
+				deltas.add(tuple.clone());
 			}
 			
 			if (schedule.size() > 0) {
-				java.lang.System.err.println("SCHEDULE PERIODICS " + schedule);
 				this.schedule.insert(schedule, conflicts);
 			}
 			
@@ -63,16 +62,18 @@ public class Periodic extends ObjectTable {
 	};
 	
 	private Scheduler scheduler;
-
+	
 	public Periodic(Table schedule) {
 		super("periodic", PRIMARY_KEY, new TypeList(SCHEMA));
 		this.scheduler = new Scheduler(schedule);
 	}
 	
-	protected boolean insert(Tuple tuple) throws UpdateException {
-		Long ttl   = (Long) tuple.value(Field.TTL.ordinal());
-		Long count = (Long) tuple.value(Field.COUNT.ordinal());
-		Long start = (Long) tuple.value(Field.TIME.ordinal());
-		return super.insert(tuple);
+	public Long min() {
+		Long min = Long.MAX_VALUE;
+		for (Tuple current : tuples) {
+			Long time = (Long) current.value(Field.TIME.ordinal());
+			min = min < time  ? min : time;
+		}
+		return min;
 	}
 }

@@ -4,21 +4,19 @@ import java.lang.Long;
 import p2.types.basic.TupleSet;
 
 /* Define runtime events. */
-define(runnable, {String, String, TupleSet, TupleSet});
-define(strata, {String, Long, Integer});
+define(runnable, {String, Long, String, TupleSet, TupleSet});
+define(strata, infinity, infinity, keys(0,1), {String, Long, Integer});
 
 next schedule(Time, Program, TupleName, Insertions, Deletions) :-
-	evaluate(runnable(Program, TupleName, Insertions, Deletions)),
-	clock(Location, Time);
+	evaluate(runnable(Program, Time, TupleName, Insertions, Deletions));
 
 /* Delete what has been evaluated in the curent clock. */
 cleanup delete schedule(Time, Program, TupleName, Insertions, Deletions) :-
-					runnable(Program, TupleName, Insertions, Deletions),
-					clock(Location, Time);
+					runnable(Program, Time, TupleName, Insertions, Deletions);
 
 /* Identify the runnable tuples. */
-runnable runnable(Program, TupleName, Insertions, Deletions) :-
-	strata(Program, Time, Priority),
+runnable runnable(Program, Time, TupleName, Insertions, Deletions) :-
+	strata#insert(Program, Time, Priority),
 	priority(Program, TupleName, Priority),
 	schedule(Time, Program, TupleName, Insertions, Deletions);
 
@@ -28,37 +26,39 @@ strata strata(Program, Time, min<Priority>) :-
 	clock(Location, Time),
 	schedule(Time, Program, TupleName, Insertions, Deletions),
 	priority(Program, TupleName, Priority);
-
+	
 /*******************************************************************/
 /*** Periodic scheduler                                           **/
 
-/* Run next periodic. */
-schedule periodic(Id, Period, TTL, Count+1, Time+Period, Program) :-
-			clock#insert(Location, Time),
+define(schedulePeriodic, {String, Long, Long, Long, Long, String});
+
+/* Schedule next periodic. */
+schedulePeriodic(Id, Period, TTL, Count+1, Time + Period, Program) :-
+			runnable(Program, Time, "periodic", _, _),
 			periodic(Id, Period, TTL, Count, Time, Program),
 			Count <= TTL;
 			
-initperiodic periodic(Id, Period, TTL, Count, Time + Offset, Program) :-
-				planned(Program, Time),
-				periodic(Id, Period, TTL, Count, Offset, Program);
+schedulePeriodic(Id, Period, TTL, Count+1, Time+Offset, Program) :-
+		planned(Program, Time),
+		periodic(Id, Period, TTL, Count, Offset, Program);
 	
-/* Delete the previous period. */
-periodic delete periodic(Id, Period, TTL, Count-1, Time-Period, Program) :-
-   			       periodicScheduler(periodic(Id, Period, TTL, Count, Time, Program));
+/* Schedule the periodic and update its execution count. */
+schedulePeriodic periodic(Id, Period, TTL, Count, Time, Program) :-
+       				periodicScheduler(schedulePeriodic(Id, Period, TTL, Count, Time, Program));
 
 /*******************************************************************/
 /*** Compiler configuration                                      **/
 /*** TODO: Add general stage installation table */
 
 define(priority, infinity, infinity, keys(0,1), {String, String, Integer});
+define(priorityUpdate, {String, String, Integer});
 define(dependency, infinity, infinity, keys(0,1,2), {String, String, String});
 define(planned, {String, Long});
 define(scheduleFact, {Long, String, String, TupleSet});
 
-planned("runtime", 0L);
-
-planned(Program, Time) :-
-	compiler(Program, Owner, File, Time, Object),
+planned(Program, Time+1) :-
+	compiler#insert(Program, Owner, File, Object),
+	clock(Location, Time),
 	Object.plan();
 	
 scheduleFact(Time, Program, TupleName, tupleset<Tuple>) :-
@@ -85,13 +85,16 @@ init priority(Program, Pred.name(), 0) :-
 		notin priority(Program, Pred.name(), _);
 
 /* Bubble up predicates in the stratum chain. */
-bubble priority(Program, Head, Priority) :-
+bubble priorityUpdate(Program, Head, Priority) :-
 		priority(Program, Head, HPriority),
 		priority(Program, Body, BPriority),
 		dependency(Program, Head, Body),
 		notin dependency(Program, Body, Head),
 		HPriority <= BPriority,
 		Priority := BPriority + 1;
+		
+update priority(Program, Head, Priority) :-
+		priorityUpdate(Program, Head, Priority);
 
 
 
