@@ -32,15 +32,15 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		
 		public enum Field {TABLENAME, KEY, TYPE, CLASSNAME, OBJECT};
 		private static final Class[] SCHEMA = { 
-			String.class, // table name
-			Key.class,    // key
-			Type.class,   // the type
-			String.class, // the class type
-			Index.class   // the object
+			TableName.class, // table name
+			Key.class,       // key
+			Type.class,      // the type
+			String.class,    // the class type
+			Index.class      // the object
 		};
 		
 		public IndexTable() {
-			super("index", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "index"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -49,7 +49,10 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 				try {
 					Class ctype = Class.forName((String)tuple.value(Field.CLASSNAME.ordinal()));
 					Constructor constructor = ctype.getConstructor(Table.class, Key.class, Type.class);
-					Table table = Table.table((String)tuple.value(Field.TABLENAME.ordinal()));
+					TableName name  = (TableName) tuple.value(Field.TABLENAME.ordinal());
+					Table table = Table.table(name);
+					
+					/* Create the index object. */
 					Key key = (Key) tuple.value(Field.KEY.ordinal());
 					Type type = (Type)tuple.value(Field.TYPE.ordinal());
 					Index index = (Index) constructor.newInstance(table, key, type);
@@ -84,7 +87,7 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		IndexTable iTable = Table.index();
 		if (iTable != null) {
 			try {
-				iTable.insert(new Tuple(iTable.name(), table.name(), key, type, this.getClass().getName(), this));
+				iTable.insert(new Tuple(table.name(), key, type, this.getClass().getName(), this));
 			} catch (UpdateException e) {
 				e.printStackTrace();
 				System.exit(1);
@@ -122,6 +125,8 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	/* Uses the index key as the lookup key and
 	 * the values from the given tuple. */
 	public abstract TupleSet lookup(Tuple t) throws BadKeyException;
+	
+	public abstract TupleSet lookup(Key key, Tuple t);
 	
 	public abstract TupleSet lookup(Comparable... values) throws BadKeyException;
 	

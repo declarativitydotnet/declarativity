@@ -23,7 +23,7 @@ public class RefTable extends Table {
 	
 	protected Hashtable<Key, Index> secondary;
 	
-	public RefTable(String name, Key key, TypeList types) {
+	public RefTable(TableName name, Key key, TypeList types) {
 		super(name, Type.TABLE, Catalog.INFINITY, Catalog.INFINITY.floatValue(), key, types);
 		this.key = key;
 		this.tuples = new TupleSet(name);

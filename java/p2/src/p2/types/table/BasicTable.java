@@ -21,7 +21,7 @@ public class BasicTable extends Table {
 	
 	protected Hashtable<Key, Index> secondary;
 	
-	public BasicTable(String name, Integer size, Number lifetime, Key key, TypeList types) {
+	public BasicTable(TableName name, Integer size, Number lifetime, Key key, TypeList types) {
 		super(name, Type.TABLE, size, lifetime.floatValue(), key, types);
 		this.key = key;
 		this.tuples = new TupleSet(name);

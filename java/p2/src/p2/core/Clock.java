@@ -7,6 +7,7 @@ import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.TableName;
 
 public class Clock extends ObjectTable {
 	public static final Key PRIMARY_KEY = new Key(0);
@@ -22,7 +23,7 @@ public class Clock extends ObjectTable {
 	private Long clock;
 
 	public Clock(String location) {
-		super("clock", PRIMARY_KEY, new TypeList(SCHEMA));
+		super(new TableName(GLOBALSCOPE, "clock"), PRIMARY_KEY, new TypeList(SCHEMA));
 		this.location = location;
 		this.clock = -1L;
 	}
@@ -44,7 +45,7 @@ public class Clock extends ObjectTable {
 	
 	public TupleSet time(Long time) {
 		TupleSet me = new TupleSet(name());
-		me.add(new Tuple(name(), location, time));
+		me.add(new Tuple(location, time));
 		return me;
 	}
 }

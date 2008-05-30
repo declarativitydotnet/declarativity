@@ -14,6 +14,9 @@ import p2.types.table.Index.IndexTable;
 import xtc.util.SymbolTable;
 
 public abstract class Table implements Comparable<Table> {
+	public static final Integer INFINITY    = Integer.MAX_VALUE;
+	public static final String  GLOBALSCOPE = "global";
+	
 	public static abstract class Callback {
 		private static long ids = 0L;
 		
@@ -24,14 +27,13 @@ public abstract class Table implements Comparable<Table> {
 		public abstract void deletion(TupleSet tuples);
 	}
 	
-	public static final Integer INFINITY = Integer.MAX_VALUE;
 
 	public static class Catalog extends ObjectTable {
 		private static final Key PRIMARY_KEY = new Key(0);
 
 		public enum Field {TABLENAME, TYPE, SIZE, LIFETIME, KEY, TYPES, OBJECT};
 		private static final Class[] SCHEMA = { 
-			String.class,    // The tablename
+			TableName.class, // Name
 			String.class,    // Table type
 			Integer.class,   // The table size
 			Float.class,     // The lifetime
@@ -41,14 +43,14 @@ public abstract class Table implements Comparable<Table> {
 		};
 		
 		public Catalog() {
-			super("catalog", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "catalog"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Table table = (Table) tuple.value(Field.OBJECT.ordinal());
 			if (table == null) {
-				String   name     = (String) tuple.value(Field.TABLENAME.ordinal());
+				TableName name    = (TableName) tuple.value(Field.TABLENAME.ordinal());
 				String   type     = (String) tuple.value(Field.TYPE.ordinal());
 				Integer  size     = (Integer) tuple.value(Field.SIZE.ordinal());
 				Float    lifetime = (Float) tuple.value(Field.LIFETIME.ordinal());
@@ -87,7 +89,7 @@ public abstract class Table implements Comparable<Table> {
 	protected Type type;
 	
 	/* The table name. */
-	protected String name;
+	protected TableName name;
 	
 	/* The number of attributes in this table. */
 	protected TypeList attributeTypes;
@@ -102,9 +104,7 @@ public abstract class Table implements Comparable<Table> {
 	
 	protected final Set<Callback> callbacks;
 	
-	private Aggregate aggregate;
-	
-	protected Table(String name, Type type, Integer size, Float lifetime, Key key, TypeList attributeTypes) {
+	protected Table(TableName name, Type type, Integer size, Float lifetime, Key key, TypeList attributeTypes) {
 		this.name = name;
 		this.type = type;
 		this.attributeTypes = attributeTypes;
@@ -112,7 +112,6 @@ public abstract class Table implements Comparable<Table> {
 		this.lifetime = lifetime;
 		this.key = key;
 		this.callbacks = new HashSet<Callback>();
-		this.aggregate = null;
 		
 		if (catalog != null) {
 			Table.register(name, type, size, lifetime, key, attributeTypes, this);
@@ -163,9 +162,10 @@ public abstract class Table implements Comparable<Table> {
 		this.callbacks.remove(callback);
 	}
 	
-	private static void register(String name, Type type, Integer size, Float lifetime, 
+	private static void register(TableName name, Type type, 
+								 Integer size, Float lifetime, 
 			                     Key key, TypeList types, Table object) { 
-		Tuple tuple = new Tuple(catalog.name(), name, type.toString(), size, lifetime, key, types, object);
+		Tuple tuple = new Tuple(name, type.toString(), size, lifetime, key, types, object);
 		try {
 			catalog.force(tuple);
 		} catch (UpdateException e) {
@@ -175,11 +175,10 @@ public abstract class Table implements Comparable<Table> {
 		}
 	}
 	
-	public static boolean drop(String name) throws UpdateException {
+	public static boolean drop(TableName name) throws UpdateException {
 		try {
 			TupleSet tuples = catalog.primary().lookup(name);
-			catalog.delete(tuples);
-			tuples = catalog.primary().lookup(name);
+			return catalog.delete(tuples).size() > 0;
 		} catch (BadKeyException e) {
 			// TODO Fatal error
 			e.printStackTrace();
@@ -187,10 +186,13 @@ public abstract class Table implements Comparable<Table> {
 		return false;
 	}
 	
-	public static Table table(String name) {
+	public static Table table(TableName name) {
 		try {
 			TupleSet table = catalog.primary().lookup(name);
-			if (table.size() == 1) {
+			if (table == null) {
+				return null;
+			}
+			else if (table.size() == 1) {
 				return (Table) table.iterator().next().value(Catalog.Field.OBJECT.ordinal());
 			}
 			else if (table.size() > 1) {
@@ -209,9 +211,10 @@ public abstract class Table implements Comparable<Table> {
 		return name().compareTo(o.name());
 	}
 
+	
 	/**
 	 * @return The name of this table. */
-	public String name() {
+	public TableName name() {
 		return this.name;
 	}
 	
@@ -264,7 +267,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException 
 	 **/
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-		TupleSet delta = new TupleSet(name().toString());
+		TupleSet delta = new TupleSet(name());
 		for (Tuple t : tuples) {
 			t = t.clone();
 			if (insert(t)) {
@@ -293,7 +296,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException 
 	 **/
 	public TupleSet delete(TupleSet tuples) throws UpdateException {
-		TupleSet delta = new TupleSet(name().toString());
+		TupleSet delta = new TupleSet(name());
 		for (Tuple t : tuples) {
 			t = t.clone();
 			if (delete(t)) {

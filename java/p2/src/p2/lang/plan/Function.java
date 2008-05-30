@@ -12,10 +12,11 @@ import p2.types.operator.Operator;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
+import p2.types.table.TableName;
 
 public class Function extends Term {
 	
-	public enum Field{PROGRAM, RULE, POSITION, NAME, PREDICATE, OBJECT};
+	public enum Field{PROGRAM, RULE, POSITION, NAME, OBJECT};
 	public static class TableFunction extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
 		
@@ -24,12 +25,11 @@ public class Function extends Term {
 			String.class,    // rule name
 			Integer.class,   // position
 			String.class,    // function name
-			String.class,    // predicate name
 			Function.class   // function object
 		};
 
 		public TableFunction() {
-			super("function", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "function"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -68,8 +68,8 @@ public class Function extends Term {
 	public void set(String program, String rule, Integer position)
 			throws UpdateException {
 		predicate.set(program, rule, position);
-		Program.tfunction.force(new Tuple(Program.tfunction.name(), program, rule, position, 
-				                          function.name(), predicate.name(), this));
+		Program.tfunction.force(new Tuple(program, rule, position, 
+				                          function.name(), this));
 	}
 
 	@Override

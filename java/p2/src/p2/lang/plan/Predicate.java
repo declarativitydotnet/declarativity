@@ -18,6 +18,7 @@ import p2.types.operator.Operator;
 import p2.types.operator.ScanJoin;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.TableName;
 import p2.types.table.Table;
 
 public class Predicate extends Term implements Iterable<Expression> {
@@ -34,7 +35,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		};
 
 		public PredicateTable() {
-			super("predicate", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "predicate"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -57,7 +58,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private boolean notin;
 	
-	private String name;
+	private TableName name;
 	
 	private Table.Event event;
 	
@@ -65,7 +66,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private Schema schema;
 	
-	public Predicate(boolean notin, String name, Table.Event event, List<Expression> arguments) {
+	public Predicate(boolean notin, TableName name, Table.Event event, List<Expression> arguments) {
 		super();
 		this.notin = notin;
 		this.name = name;
@@ -89,7 +90,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.event = event;
 	}
 	
-	public String name() {
+	public TableName name() {
 		return this.name;
 	}
 
@@ -145,7 +146,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	@Override
 	public void set(String program, String rule, Integer position) throws UpdateException {
-		Program.predicate.force(new Tuple(Program.predicate.name(), program, rule, position, event.toString(), this));
+		Program.predicate.force(new Tuple(program, rule, position, event.toString(), this));
 		
 		this.schema = new Schema(name());
 		for (Expression arg : arguments) {

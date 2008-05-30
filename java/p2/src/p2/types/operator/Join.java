@@ -70,8 +70,8 @@ public abstract class Join extends Operator {
 	}
 	
 	@Override
-	public Schema schema(Schema input) {
-		return input.join(input.name() + " JOIN " + predicate.name(), predicate.schema());
+	public Schema schema(Schema outer) {
+		return outer.join(predicate.schema());
 	}
 
 	@Override

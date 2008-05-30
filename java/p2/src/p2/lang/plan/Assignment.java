@@ -11,6 +11,7 @@ import p2.types.operator.Operator;
 import p2.types.operator.Assign;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.TableName;
 
 public class Assignment extends Term {
 	
@@ -26,7 +27,7 @@ public class Assignment extends Term {
 		};
 
 		public AssignmentTable() {
-			super("assignment", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "assignment"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -80,7 +81,7 @@ public class Assignment extends Term {
 
 	@Override
 	public void set(String program, String rule, Integer position) throws UpdateException {
-		Program.assignment.force(new Tuple(Program.assignment.name(), program, rule, position, this));
+		Program.assignment.force(new Tuple(program, rule, position, this));
 	}
 
 }

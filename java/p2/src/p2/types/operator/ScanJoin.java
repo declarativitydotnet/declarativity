@@ -22,16 +22,14 @@ public class ScanJoin extends Join {
 	
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
-		TupleSet result = new TupleSet(tuples.name() + 
-				                       " JOIN " + 
-				                       predicate.name());
+		TupleSet result = new TupleSet();
 		TupleSet innerTuples = this.table.tuples();
 		for (Tuple outer : tuples) {
 			for (Tuple inner : innerTuples) {
 				inner.schema(this.predicate.schema());
 				
 				if (validate(outer, inner)) {
-					Tuple join = outer.join(result.name(), inner);
+					Tuple join = outer.join(inner);
 					if (join != null) {
 						result.add(join);
 					}

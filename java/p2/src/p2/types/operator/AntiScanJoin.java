@@ -22,14 +22,12 @@ public class AntiScanJoin extends Join {
 	
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
-		TupleSet result = new TupleSet(tuples.name() + 
-				                       " ANTIJOIN " + 
-				                       predicate.name());
+		TupleSet result = new TupleSet();
 		for (Tuple outer : tuples) {
 			boolean success = false;
 			for (Tuple inner : this.table.tuples()) {
 				inner.schema(this.predicate.schema());
-				if (validate(outer, inner) && outer.join(result.name(), inner) != null) {
+				if (validate(outer, inner) && outer.join(inner) != null) {
 					success = true;
 					break;
 				}

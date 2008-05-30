@@ -15,8 +15,6 @@ public class Tuple implements Comparable<Tuple> {
 	
 	protected String code;
 	
-	protected String name;
-	
 	protected List<Comparable> values;
 	
 	protected Long timestamp;
@@ -26,37 +24,36 @@ public class Tuple implements Comparable<Tuple> {
 	protected Schema schema;
 	
 	
-	public Tuple(String name, Comparable... values) {
-		List<Comparable> valueList = new ArrayList<Comparable>();
+	public Tuple(Comparable... values) {
+		initialize();
+		this.values = new ArrayList<Comparable>();
 		for (Comparable value : values) {
-			valueList.add(value);
+			this.values.add(value);
 		}
-		initialize(name, valueList);
 	}
 	
-	public Tuple(String name, List<Comparable> values) {
-		initialize(name, values);
+	public Tuple(List<Comparable> values) {
+		initialize();
+		this.values = new ArrayList<Comparable>(values);
 	}
 	
-	public Tuple(String name) {
-		initialize(name, new ArrayList<Comparable>());
-		this.schema = new Schema(name);
+	public Tuple() {
+		initialize();
+		this.values = new ArrayList<Comparable>();
 	}
 	
 	@Override
 	public Tuple clone() {
-		Tuple copy = new Tuple(name(), this.values);
+		Tuple copy = new Tuple(this.values);
 		copy.schema = this.schema != null ? this.schema.clone() : null;
 		copy.id     = this.id;
 		return copy;
 	}
 	
-	private void initialize(String name, List<Comparable> values) {
-		this.name = name;
-		this.schema = null;
-		this.values = new ArrayList<Comparable>(values);
+	private void initialize() {
+		this.schema   = new Schema();
 		this.refCount = new Long(1);
-		this.id = idGen.toString();
+		this.id       = idGen.toString();
 		idGen += 1L;
 	}
 	
@@ -76,7 +73,7 @@ public class Tuple implements Comparable<Tuple> {
 	}
 	
 	public String toString() {
-		String value = name() + "<";
+		String value = "<";
 		if (values.size() > 0) {
 			value += values.get(0);
 			for (int i = 1; i < values.size(); i++) {
@@ -88,14 +85,6 @@ public class Tuple implements Comparable<Tuple> {
 		return value;
 	}
 	
-	public String name() {
-		return this.name;
-	}
-	
-	public void name(String name) {
-		this.name = name;
-	}
-	
 	public Schema schema() {
 		return this.schema;
 	}
@@ -103,40 +92,44 @@ public class Tuple implements Comparable<Tuple> {
 	public void schema(Schema schema) throws P2RuntimeException {
 		if (schema.size() != size()) {
 			throw new P2RuntimeException("Schema assignment does not match tuple arity! " +
-					                   "tuple name = " +  name() + " schema " + schema);
-		}
-		else if (!schema.name().equals(name())) {
-			throw new P2RuntimeException("Schema assignment does not match tuple name " + 
-					                    name() + "! " + schema);
+					                     " schema " + schema);
 		}
 		this.schema = schema;
 	}
 	
 	public int compareTo(Tuple other) {
-		if (values.size() < other.values.size()) {
-			return -1;
-		}
-		else if (other.values.size() < values.size()) {
-			return 1;
-		}
+		if (this.values.size() == 0) 
+			return this.id.compareTo(other.id);
 		else {
-			int code = other.hashCode();
-			int me    = hashCode();
-			return me < code ? -1 : me > code ? 1 : 0;
+			if (size() != other.size()) {
+				return -1;
+			}
+			for (int i = 0; i < size(); i++) {
+				if (values.get(i) == null || other.values.get(i) == null) {
+					if (values.get(i) != other.values.get(i)) {
+						return -1;
+					}
+				}
+				else if (values.get(i).compareTo(other.values.get(i)) != 0) {
+					return values.get(i).compareTo(other.values.get(i));
+				}
+			}
 		}
+		return 0;
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof Tuple && ((Tuple)obj).compareTo(this) == 0;
+		return obj instanceof Tuple && 
+				((Tuple)obj).compareTo(this) == 0;
 	}
 	
 	@Override
 	public int hashCode() {
 		if (this.values.size() > 0) {
 			String code = "";
-			for (Comparable value : this.values) {
-				code += Integer.toString(value == null ? "null".hashCode() : value.hashCode());
+			for (Comparable value : values) {
+				code += value == null ? "null".hashCode() : value.hashCode();
 			}
 			return code.hashCode();
 		}
@@ -169,22 +162,17 @@ public class Tuple implements Comparable<Tuple> {
 	}
 	
 	public void value(Variable variable, Comparable value) {
-		if (this.schema != null) {
-			int position = this.schema.position(variable.name());
-			if (position < 0) {
-				append(variable, value);
-			}
-			else {
-				value(position, value);
-			}
+		int position = this.schema.position(variable.name());
+		if (position < 0) {
+			append(variable, value);
+		}
+		else {
+			value(position, value);
 		}
 	}
 	
 	public Class type(String name) {
-		if (this.schema != null) {
-			return this.schema.type(name);
-		}
-		return null;
+		return this.schema.type(name);
 	}
 	
 	public void refCount(Long value) {
@@ -203,9 +191,8 @@ public class Tuple implements Comparable<Tuple> {
 		return this.timestamp;
 	}
 	
-	public Tuple join(String name, Tuple inner) throws P2RuntimeException {
-		Tuple join = new Tuple(name);
-		// System.err.println("\tPERFORM " + name + ": outer schema " + schema() + " inner schema " + inner.schema());
+	public Tuple join(Tuple inner) throws P2RuntimeException {
+		Tuple join = new Tuple();
 		
 		/* Take care of all join variables first. */
 		for (Variable variable : schema().variables()) {
@@ -213,21 +200,10 @@ public class Tuple implements Comparable<Tuple> {
 				continue;
 			}
 			else if (inner.schema().contains(variable)) {
-				// System.err.println("\t\tVARIABLE MATCH " + variable);
 				if (!value(variable.name()).equals(inner.value(variable.name()))) {
-					/*
-					System.err.println("\t\t\tVALUE FAIL " + 
-							variable + " outer = " + value(variable.name()) + 
-							" inner = " + inner.value(variable.name()));
-							*/
 					return null; // Tuples do not join
 				}
 				else {
-					/*
-					System.err.println("\t\t\tVALUE MATCH " + 
-							variable + " outer = " + value(variable.name()) + 
-							" inner = " + inner.value(variable.name()));
-							*/
 					join.append(variable, value(variable.name()));
 				}
 			}

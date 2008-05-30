@@ -250,7 +250,7 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
 			this.result = tuple;
 			if (this.tupleset == null) {
-				this.tupleset = new p2.types.basic.TupleSet(tuple.name());
+				this.tupleset = new p2.types.basic.TupleSet();
 			}
 			this.tupleset.add((Tuple) this.accessor.evaluate(tuple));
 			return this.tupleset;

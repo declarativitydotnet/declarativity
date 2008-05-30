@@ -51,11 +51,16 @@ public class HashIndex extends Index {
 
 	@Override
 	public TupleSet lookup(Tuple t) {
-		if (t.name().equals(table().name())) {
-			t = key().project(t);
-		}
-		return this.map.containsKey(t) ? 
-				this.map.get(t) : new TupleSet(table().name());
+		Tuple key = key().project(t);
+		return this.map.containsKey(key) ? 
+				this.map.get(key) : new TupleSet(table().name());
+	}
+	
+	@Override
+	public TupleSet lookup(Key key, Tuple t) {
+		Tuple k = key.project(t);
+		return this.map.containsKey(k) ? 
+				this.map.get(k) : new TupleSet(table().name());
 	}
 
 	@Override
@@ -86,7 +91,7 @@ public class HashIndex extends Index {
 		for (Comparable value : values) {
 			keyValues.add(value);
 		}
-		Tuple key = new Tuple(table().name(), keyValues);
+		Tuple key = new Tuple(keyValues);
 		return this.map.get(key);
 	}
 }

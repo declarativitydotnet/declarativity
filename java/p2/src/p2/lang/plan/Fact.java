@@ -16,21 +16,22 @@ import p2.types.table.HashIndex;
 import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.TableName;
 
 public class Fact extends Clause {
 	
 	public static class FactTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key();
 		
-		public enum Field {PROGRAM, TUPLENAME, TUPLE};
+		public enum Field {PROGRAM, TABLENAME, TUPLE};
 		public static final Class[] SCHEMA =  {
 			String.class,    // Program name
-			String.class,    // Tuple name
+			TableName.class, // Table name
 			Tuple.class      // Tuple object
 		};
 
 		public FactTable() {
-			super("fact", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "fact"), PRIMARY_KEY, new TypeList(SCHEMA));
 			Key programKey = new Key(Field.PROGRAM.ordinal());
 			Index index = new HashIndex(this, programKey, Index.Type.SECONDARY);
 			this.secondary.put(programKey, index);
@@ -49,11 +50,11 @@ public class Fact extends Clause {
 	
 	private String program;
 	
-	private String name;
+	private TableName name;
 	
 	private List<Expression> arguments;
 	
-	public Fact(xtc.tree.Location location, String name, List<Expression> arguments) {
+	public Fact(xtc.tree.Location location, TableName name, List<Expression> arguments) {
 		super(location);
 		this.name = name;
 		this.arguments = arguments;
@@ -83,7 +84,7 @@ public class Fact extends Clause {
 			}
 		}
 		
-		Program.fact.force(new Tuple(Program.fact.name(), program, name, new Tuple(name, values)));
+		Program.fact.force(new Tuple(program, name, new Tuple(values)));
 	}
 
 }

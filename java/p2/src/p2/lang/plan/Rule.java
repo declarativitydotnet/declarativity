@@ -25,6 +25,7 @@ import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
+import p2.types.table.TableName;
 import p2.core.Periodic;
 
 public class Rule extends Clause {
@@ -41,7 +42,7 @@ public class Rule extends Clause {
 		};
 
 		public RuleTable() {
-			super("rule", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "rule"), PRIMARY_KEY, new TypeList(SCHEMA));
 			Key programKey = new Key(Field.PROGRAM.ordinal());
 			Index index = new HashIndex(this, programKey, Index.Type.SECONDARY);
 			this.secondary.put(programKey, index);
@@ -133,7 +134,7 @@ public class Rule extends Clause {
 			this.body.get(i).set(program, this.name, i+1);
 		}
 		
-		Program.rule.force(new Tuple(Program.rule.name(), program, name, deletion, this));
+		Program.rule.force(new Tuple(program, name, deletion, this));
 	}
 
 	public List<Query> query(TupleSet periodics) throws PlannerException {
@@ -166,7 +167,7 @@ public class Rule extends Clause {
 		if (event != null) {
 			List<Operator> operators = new ArrayList<Operator>();
 			
-			if (!this.program.equals("runtime") && periodics.name().equals(event.name())) {
+			if (event.name().name.equals("periodic") && ! event.name().scope.equals(Table.GLOBALSCOPE)) {
 				Long period = (Long) ((Value) event.argument(Periodic.Field.PERIOD.ordinal())).value();
 				Long ttl    = (Long) ((Value) event.argument(Periodic.Field.TTL.ordinal())).value();
 				Long count  = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
@@ -175,7 +176,7 @@ public class Rule extends Clause {
 				for (int i = 1; i < event.arguments(); i++) {
 					values.add(((Value<Comparable>) event.argument(i)).value());
 				}
-				periodics.add(new Tuple(periodics.name(), values));
+				periodics.add(new Tuple(values));
 				
 				final String identifier = event.identifier();
 				TupleFunction<java.lang.Boolean> periodicFilter = new TupleFunction<java.lang.Boolean>() {
@@ -217,7 +218,7 @@ public class Rule extends Clause {
 		}
 		else {
 			/* Perform delta rewrite. */
-			Set<String> eventPredicates = new HashSet<String>();
+			Set<TableName> eventPredicates = new HashSet<TableName>();
 			for (Term term1 : body) {
 				if (!(term1 instanceof Predicate)) {
 					continue;

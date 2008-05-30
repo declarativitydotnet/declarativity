@@ -72,7 +72,7 @@ public class System {
 	public static boolean install(String runtime, String name, String owner, String file) {
 		synchronized (schedule) {
 			TupleSet compilation = new TupleSet(compile.name());
-			compilation.add(new Tuple(compile.name(), name, owner, file, null));
+			compilation.add(new Tuple(name, owner, file, null));
 			try {
 				driver.evaluate(compilation, clock.current());
 			} catch (UpdateException e) {

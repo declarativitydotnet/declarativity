@@ -10,7 +10,7 @@ import p2.types.exception.UpdateException;
 
 public class EventTable extends Table {
 
-	public EventTable(String name, TypeList types) {
+	public EventTable(TableName name, TypeList types) {
 		super(name, Type.EVENT, 0, 0f, null, types);
 	}
 	

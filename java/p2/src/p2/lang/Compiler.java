@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
+import p2.core.Periodic;
 import p2.lang.parse.Parser;
 import p2.lang.parse.TypeChecker;
 import p2.lang.plan.*;
@@ -16,6 +17,7 @@ import p2.types.table.EventTable;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
+import p2.types.table.TableName;
 
 import xtc.Constants;
 import xtc.parser.ParseException;
@@ -40,7 +42,7 @@ public class Compiler extends Tool {
 		};
 
 		public CompileTable() {
-			super("compiler", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "compiler"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 
 		protected boolean insert(Tuple tuple) throws UpdateException {
@@ -144,6 +146,10 @@ public class Compiler extends Tool {
 				if (runtime.errorCount() > 0) return;
 			}
 		}
+		
+		/* All programs define a local periodic event table. */
+		TableName periodic = new TableName(program.name(), "periodic");
+		program.definition(new EventTable(periodic, new TypeList(Periodic.SCHEMA)));
 
 		/* Evaluate all other clauses. */
 		for (Node clause : node.<Node>getList(0)) {

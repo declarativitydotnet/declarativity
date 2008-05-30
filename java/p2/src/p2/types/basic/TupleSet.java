@@ -3,20 +3,26 @@ package p2.types.basic;
 import java.util.HashSet;
 import java.util.Set;
 
+import p2.types.table.TableName;
+
 
 public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 	private static long ids = 0L;
 	
 	private String id;
 	
-	private String name;
+	private TableName name;
 	
-	public TupleSet(String name) {
+	public TupleSet() {
+		this(null);
+	}
+	
+	public TupleSet(TableName name) {
 		this.id = "TupleSet:" + ids++;
 		this.name = name;
 	}
 	
-	public TupleSet(String name, Set<Tuple> tuples) {
+	public TupleSet(TableName name, Set<Tuple> tuples) {
 		this.name = name;
 		this.addAll(tuples);
 	}
@@ -38,7 +44,7 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 		return new TupleSet(name, this);
 	}
 	
-	public String name() {
+	public TableName name() {
 		return this.name;
 	}
 
@@ -50,5 +56,7 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 	public int compareTo(TupleSet tuples) {
 		return this.id.compareTo(tuples.id);
 	}
+	
+	
 }
 	

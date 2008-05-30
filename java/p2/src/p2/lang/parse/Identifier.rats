@@ -20,7 +20,7 @@ String EventType =
    / <Delete> "delete":Word
    ;
 
-generic TupleName = 
+generic TableName = 
        Name void:"::":Symbol name:Name &{ name.length() > 0 && Character.isLowerCase(name.charAt(0)) }
     /  name:Name &{ name.length() > 0 && Character.isLowerCase(name.charAt(0)) }
     ;

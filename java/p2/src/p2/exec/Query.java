@@ -10,6 +10,7 @@ import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
+import p2.types.table.TableName;
 
 public abstract class Query implements Comparable<Query> {
 
@@ -18,17 +19,17 @@ public abstract class Query implements Comparable<Query> {
 		
 		public enum Field{PROGRAM, RULE, DELETE, EVENT, INPUT, OUTPUT, OBJECT};
 		public static final Class[] SCHEMA = {
-			String.class,  // Program name
-			String.class,  // Rule name
-			Boolean.class, // Delete rule/query?
-			String.class,  // Event modifier
-			String.class,  // Input tuple name
-			String.class,  // Output tuple name
-			Query.class    // The query object
+			String.class,     // Program name
+			String.class,     // Rule name
+			Boolean.class,    // Delete rule/query?
+			String.class,     // Event modifier
+			TableName.class,  // Input table name
+			TableName.class,  // Output table name
+			Query.class       // The query object
 		};
 		
 		public QueryTable() {
-			super("query", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "query"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		protected boolean insert(Tuple tuple) throws UpdateException {
@@ -57,7 +58,7 @@ public abstract class Query implements Comparable<Query> {
 		this.output = output;
 		try {
 			p2.core.System.query().force(
-					new Tuple(p2.core.System.query().name(), program, rule,  delete, 
+					new Tuple(program, rule,  delete, 
 							  event.toString(), input.name(), output.name(), this));
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block

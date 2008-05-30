@@ -10,6 +10,7 @@ import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.TableName;
 
 public class Selection extends Term {
 	
@@ -25,7 +26,7 @@ public class Selection extends Term {
 		};
 
 		public SelectionTable() {
-			super("selection", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "selection"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -70,6 +71,6 @@ public class Selection extends Term {
 
 	@Override
 	public void set(String program, String rule, Integer position) throws UpdateException {
-		Program.selection.force(new Tuple(Program.selection.name(), program, rule, position, this));
+		Program.selection.force(new Tuple(program, rule, position, this));
 	}
 }

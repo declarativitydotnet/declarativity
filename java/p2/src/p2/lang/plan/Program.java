@@ -25,6 +25,7 @@ import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.TableName;
 
 public class Program implements Comparable<Program> {
 	
@@ -39,7 +40,7 @@ public class Program implements Comparable<Program> {
 		};
 
 		public ProgramTable() {
-			super("program", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "program"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -68,7 +69,7 @@ public class Program implements Comparable<Program> {
 	
 	private Set<Table> definitions;
 	
-	private Hashtable<String, Set<Query>> queries;
+	private Hashtable<TableName, Set<Query>> queries;
 	
 	private TupleSet periodics;
 	
@@ -76,10 +77,10 @@ public class Program implements Comparable<Program> {
 		this.name        = name;
 		this.owner       = owner;
 		this.definitions = new HashSet<Table>();
-		this.queries     = new Hashtable<String, Set<Query>>();
+		this.queries     = new Hashtable<TableName, Set<Query>>();
 		this.periodics   = new TupleSet(p2.core.System.periodic().name());
 		try {
-			program.force(new Tuple(program.name(), name, owner, this));
+			program.force(new Tuple(name, owner, this));
 			p2.core.System.program(name, this);
 		} catch (UpdateException e) {
 			e.printStackTrace();
@@ -120,10 +121,11 @@ public class Program implements Comparable<Program> {
 				/* Store all planned queries from a given rule. 
 				 * NOTE: delta rules can produce > 1 query. */
 				for (Query query : rule.query(this.periodics)) {
+					Predicate input = query.input();
 					if (!queries.containsKey(query.input().name())) {
-						queries.put(query.input().name(), new HashSet<Query>());
+						queries.put(input.name(), new HashSet<Query>());
 					}
-					queries.get(query.input().name()).add(query);
+					queries.get(input.name()).add(query);
 				}
 				
 			}
@@ -150,8 +152,8 @@ public class Program implements Comparable<Program> {
 		return this.name.compareTo(o.name);
 	}
 
-	public Hashtable<String, Set<Query>> queries() {
-		return this.queries;
+	public Set<Query> queries(TableName name) {
+		return this.queries.get(name);
 	}
 
 	public TupleSet periodics() {
@@ -161,4 +163,6 @@ public class Program implements Comparable<Program> {
 	public String name() {
 		return this.name;
 	}
+	
 }
+

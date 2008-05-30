@@ -36,7 +36,7 @@ public class IndexJoin extends Join {
 	
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
-		TupleSet result = new TupleSet("(" + tuples.name() + " join " + predicate.name() + ")");
+		TupleSet result = new TupleSet();
 		for (Tuple outer : tuples) {
 			Key key = new Key();
 			for (String name : this.names) {
@@ -47,18 +47,14 @@ public class IndexJoin extends Join {
 				}
 				key.add(position);
 			}
-			Tuple value = key.project(outer);
-			try {
-				for (Tuple inner : this.index.lookup(value)) {
-					if (validate(outer, inner)) {
-						Tuple join = outer.join(result.name(), inner);
-						if (join != null) {
-							result.add(join);
-						}
+			
+			for (Tuple inner : this.index.lookup(key, outer)) {
+				if (validate(outer, inner)) {
+					Tuple join = outer.join(inner);
+					if (join != null) {
+						result.add(join);
 					}
 				}
-			} catch (BadKeyException e) {
-				throw new P2RuntimeException(e.toString());
 			}
 		}
 		return result;

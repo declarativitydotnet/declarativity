@@ -11,6 +11,7 @@ import p2.types.table.Function;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
+import p2.types.table.TableName;
 
 public class Periodic extends ObjectTable {
 	
@@ -32,11 +33,9 @@ public class Periodic extends ObjectTable {
 			for (Tuple tuple : tuples) {
 				String program = (String) tuple.value(Periodic.Field.PROGRAM.ordinal());
 				Long   time    = (Long) tuple.value(Periodic.Field.TIME.ordinal());
-				TupleSet periodics = new TupleSet(System.periodic().name());
-				Tuple periodic = tuple.clone();
-				periodic.name(System.periodic().name());
-				periodics.add(periodic);
-				schedule.add(new Tuple(this.schedule.name(), time, program, periodics.name(), periodics, null));
+				TupleSet periodics = new TupleSet(new TableName(program, "periodic"));
+				periodics.add(tuple.clone());
+				schedule.add(new Tuple(time, program, periodics.name(), periodics, null));
 				deltas.add(tuple.clone());
 			}
 			
@@ -64,7 +63,7 @@ public class Periodic extends ObjectTable {
 	private Scheduler scheduler;
 	
 	public Periodic(Table schedule) {
-		super("periodic", PRIMARY_KEY, new TypeList(SCHEMA));
+		super(new TableName(GLOBALSCOPE, "periodic"), PRIMARY_KEY, new TypeList(SCHEMA));
 		this.scheduler = new Scheduler(schedule);
 	}
 	

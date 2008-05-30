@@ -40,7 +40,7 @@ public class Projection extends Operator {
 			for (TupleFunction<Comparable> accessor : accessors) {
 				values.add(accessor.evaluate(tuple));
 			}
-			Tuple projection = new Tuple(predicate.name(), values);
+			Tuple projection = new Tuple(values);
 			projection.schema(predicate.schema());
 			result.add(projection);
 		}

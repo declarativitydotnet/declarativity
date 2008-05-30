@@ -7,7 +7,7 @@ import p2.types.exception.UpdateException;
 
 public abstract class ObjectTable extends BasicTable {
 	
-	protected ObjectTable(String name, Key key, TypeList types) {
+	protected ObjectTable(TableName name, Key key, TypeList types) {
 		super(name, Table.INFINITY, Table.INFINITY, key, types);
 	}
 

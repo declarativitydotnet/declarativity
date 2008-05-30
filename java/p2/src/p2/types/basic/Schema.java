@@ -8,16 +8,26 @@ import java.util.List;
 import p2.lang.plan.DontCare;
 import p2.lang.plan.Variable;
 import p2.types.table.Key;
+import p2.types.table.TableName;
 
 
 public class Schema {
 	
-	protected String name;
+	protected TableName name;
 	
 	protected Hashtable<String, Variable> variables;
 
+	public Schema() {
+		this.name = null;
+		this.variables = new Hashtable<String, Variable>();
+	}
 
-	public Schema(String name, List<Variable> variables) {
+	public Schema(TableName name) {
+		this.name = name;
+		this.variables = new Hashtable<String, Variable>();
+	}
+	
+	public Schema(TableName name, List<Variable> variables) {
 		this.name = name;
 		this.variables = new Hashtable<String, Variable>();
 		for (Variable variable : variables) {
@@ -30,16 +40,11 @@ public class Schema {
 		this.variables = (Hashtable) schema.variables.clone();
 	}
 	
-	public Schema(String name) {
-		this.name = name;
-		this.variables = new Hashtable<String, Variable>();
-	}
-	
 	public Schema clone() {
 		return new Schema(this);
 	}
 	
-	public String name() {
+	public TableName name() {
 		return this.name;
 	}
 	
@@ -58,7 +63,7 @@ public class Schema {
 	
 	@Override
 	public String toString() {
-		return name() + variables().toString();
+		return variables().toString();
 	}
 	
 	
@@ -101,8 +106,8 @@ public class Schema {
 				this.variables.get(name).position() : -1;
 	}
 	
-	public final Schema join(String name, Schema inner) {
-		Schema join = new Schema(name);
+	public final Schema join(Schema inner) {
+		Schema join = new Schema();
 		for (Variable variable : this.variables()) {
 			if (!(variable instanceof DontCare)) {
 				join.append(variable);

@@ -15,6 +15,7 @@ import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
+import p2.types.table.TableName;
 
 
 public abstract class Operator implements Comparable<Operator> {
@@ -39,7 +40,7 @@ public abstract class Operator implements Comparable<Operator> {
 		};
 
 		public OperatorTable() {
-			super("operator", PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "operator"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override

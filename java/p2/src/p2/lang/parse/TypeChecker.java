@@ -50,6 +50,7 @@ import p2.types.table.EventTable;
 import p2.types.table.Key;
 import p2.types.table.Table;
 import p2.types.table.RefTable;
+import p2.types.table.TableName;
 import xtc.Constants;
 import xtc.tree.GNode;
 import xtc.tree.Node;
@@ -198,8 +199,18 @@ public final class TypeChecker extends Visitor {
 	
 	public Class visitFact(final GNode n) {
 		Class type = (Class) dispatch((Node)n.getNode(0));
-		assert(type == Value.class);
-		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
+		assert(type == TableName.class);
+		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
+		if (name.scope == null) {
+			name.scope = program.name();
+			if (Table.table(name) == null) {
+				name.scope = Table.GLOBALSCOPE;
+			}
+		}
+		if (Table.table(name) == null) {
+			runtime.error("No table defined for fact " + name, n);
+			return Error.class;
+		}
 		
 		List<Expression> args = new ArrayList<Expression>();
 		if (n.size() != 0) {
@@ -215,24 +226,30 @@ public final class TypeChecker extends Visitor {
 			}
 		}
 		
-		Fact fact = new Fact(n.getLocation(), name.value(), args);
+		Fact fact = new Fact(n.getLocation(), name, args);
 		n.setProperty(Constants.TYPE, fact);
 		return Fact.class;
 	}
 	
 	public Class visitWatch(final GNode n) {
 		Class type = (Class) dispatch((Node)n.getNode(0));
-		assert(type == Value.class);
-		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
-		Table table = Table.table(name.value());
+		assert(type == TableName.class);
 		
-		if (table == null) {
-			runtime.error("Watch statement refers to unknown table/event name " + name.value());
+		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
+		if (name.scope == null) {
+			name.scope = program.name();
+			if (Table.table(name) == null) {
+				name.scope = Table.GLOBALSCOPE;
+			}
+		}
+		
+		if (Table.table(name) == null) {
+			runtime.error("Watch statement refers to unknown table/event name " + name, n);
 			return Error.class;
 		}
 		String modifier = n.size() > 1 ? n.getString(1) : "";
 		
-		Watch watch = new Watch(n.getLocation(), name.value(), modifier);
+		Watch watch = new Watch(n.getLocation(), name, modifier);
 		n.setProperty(Constants.TYPE, watch);
 		return Watch.class;
 	}
@@ -242,12 +259,16 @@ public final class TypeChecker extends Visitor {
 
 		/************** Table Name ******************/
 		type = (Class) dispatch(n.getNode(0));
-		if (n.getNode(0).size() > 1) {
+		assert(type == TableName.class);
+		
+		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
+		if (name.scope == null) {
+			name.scope = program.name();
+		}
+		else {
 			runtime.error("Dot specificed names not allowd in definition statement! " + n.getNode(0));
 			return Error.class;
 		}
-		assert(type == Value.class);
-		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
 
 		/************** Table Size ******************/
 		type = (Class) dispatch(n.getNode(1));
@@ -291,10 +312,10 @@ public final class TypeChecker extends Visitor {
 		Table create;
 		if (size.value().equals(p2.types.table.Table.INFINITY) && 
 				lifetime.value().equals(p2.types.table.Table.INFINITY)) {
-			create = new RefTable(name.value(), key, schema);
+			create = new RefTable(name, key, schema);
 		}
 		else {
-			create = new BasicTable(name.value(), (Integer)size.value(), 
+			create = new BasicTable(name, (Integer)size.value(), 
 					                (Number)lifetime.value(), key, schema);
 		}
 		this.program.definition(create);
@@ -310,11 +331,16 @@ public final class TypeChecker extends Visitor {
 
 		/************** Event Name ******************/
 		type = (Class) dispatch(n.getNode(0));
-		if (n.getNode(0).size() > 1) {
+		if (type == Error.class) return Error.class;
+		assert(type == TableName.class);
+		
+		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
+		if (name.scope == null) {
+			name.scope = program.name();
+		} else {
 			runtime.error("Dot specificed names not allowed in definition statement! " + n.getNode(0));
 			return Error.class;
 		}
-		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
 		
 		/************** Table Schema ******************/
 		type = (Class) dispatch(n.getNode(1));
@@ -322,7 +348,7 @@ public final class TypeChecker extends Visitor {
 		assert(type == TypeList.class);
 		TypeList schema  = (TypeList) n.getNode(1).getProperty(Constants.TYPE);
 
-		EventTable event = new EventTable(name.toString(), schema);
+		EventTable event = new EventTable(name, schema);
 		n.setProperty(Constants.TYPE, event);
 		return Table.class;
 	}
@@ -559,15 +585,18 @@ public final class TypeChecker extends Visitor {
 	
 	public Class visitTableFunction(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		assert(type == Value.class);
-		Value<String> name = (Value<String>) n.getNode(0).getProperty(Constants.TYPE);
+		assert(type == TableName.class);
+		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
+		if (name.scope == null) {
+			name.scope = Table.GLOBALSCOPE;
+		}
 		
 		type = (Class) dispatch(n.getNode(1));
 		if (type == Error.class) return Error.class;
 		assert(type == Predicate.class);
 		Predicate predicate = (Predicate) n.getNode(1).getProperty(Constants.TYPE);
 		
-		Table table = Table.table(name.toString());
+		Table table = Table.table(name);
 		if (table == null || table.type() != Table.Type.FUNCTION) {
 			runtime.error("Unknown table function " + name, n);
 			return Error.class;
@@ -598,13 +627,19 @@ public final class TypeChecker extends Visitor {
 		String event = n.getString(2);
 		
 		Class type = (Class) dispatch(n.getNode(1));
-		assert(type == Value.class);
-		Value<String> name = (Value<String>) n.getNode(1).getProperty(Constants.TYPE);
+		assert(type == TableName.class);
+		TableName name = (TableName) n.getNode(1).getProperty(Constants.TYPE);
+		if (name.scope == null) {
+			name.scope = program.name();
+			if (Table.table(name) == null) {
+				name.scope = Table.GLOBALSCOPE;
+			}
+		}
 		
 		/* Lookup the schema for the given tuple name. */
-		Table ptable = Table.table(name.toString());
+		Table ptable = Table.table(name);
 		if (ptable == null) {
-			runtime.error("No catalog definition for predicate " + name);
+			runtime.error("No catalog definition for predicate " + name, n);
 			return Error.class;
 		}
 		
@@ -617,7 +652,7 @@ public final class TypeChecker extends Visitor {
 				tableEvent = Table.Event.DELETE;
 			}
 			else {
-				runtime.error("Unknown event modifier " + event + " on predicate " + name.value(), n);
+				runtime.error("Unknown event modifier " + event + " on predicate " + name, n);
 			}
 		}
 		
@@ -629,7 +664,7 @@ public final class TypeChecker extends Visitor {
 		List<Expression> arguments = new ArrayList<Expression>();
 		
 
-		if (!"runtime".equals(this.program.name()) && "periodic".equals(name.value())) {
+		if (!"runtime".equals(this.program.name()) && "periodic".equals(name.name)) {
 			if (parameters.size() < 1 || parameters.size() > Periodic.SCHEMA.length) {
 				runtime.error("Too many arguments to periodic predicate", n);
 				return Error.class;
@@ -740,7 +775,7 @@ public final class TypeChecker extends Visitor {
 
 			/* Ensure the type matches the schema definition. */
 			if (!subtype(schema.get(index), param.type())) {
-				runtime.error("Predicate " + name.value() + " argument " + index
+				runtime.error("Predicate " + name + " argument " + index
 								+ " type " + param.type() + " does not match type " 
 								+ schema.get(index) + " in schema.", n);
 				return Error.class;
@@ -755,17 +790,18 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		
-		Predicate pred = new Predicate(notin, name.value(), tableEvent, arguments);
+		Predicate pred = new Predicate(notin, name, tableEvent, arguments);
 		pred.location(n.getLocation());
 		n.setProperty(Constants.TYPE, pred);
 		return Predicate.class;
 	}
 
-	public Class visitTupleName(final GNode n) {
-		String name = n.size() > 1 ? n.getString(0) + "." + n.getString(1)
-				                   : n.getString(0);
-		n.setProperty(Constants.TYPE, new Value<String>(name));
-		return Value.class;
+	public Class visitTableName(final GNode n) {
+		String scope = n.size() > 1 ? n.getString(0) : null;
+		String name  = n.size() > 1 ? n.getString(1) : n.getString(0);
+		
+		n.setProperty(Constants.TYPE, new TableName(scope, name));
+		return TableName.class;
 	}
 
 	public Class visitAssignment(final GNode n) {

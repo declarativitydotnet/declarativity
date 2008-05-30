@@ -65,7 +65,7 @@ public class Key implements Comparable<Key>, Iterable<Integer> {
 				values.add(tuple.value(attr));
 			}
 
-			Tuple project = new Tuple(tuple.name(), values);
+			Tuple project = new Tuple(values);
 			project.id(tuple.id());
 			return project;
 		}

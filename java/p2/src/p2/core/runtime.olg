@@ -2,30 +2,31 @@ import java.lang.String;
 import java.lang.Integer;
 import java.lang.Long;
 import p2.types.basic.TupleSet;
+import p2.types.table.TableName;
 
 /* Define runtime events. */
-define(runnable, {String, Long, String, TupleSet, TupleSet});
+define(runnable, {Long, String, TableName, TupleSet, TupleSet});
 define(strata, infinity, infinity, keys(0,1), {String, Long, Integer});
 
-next schedule(Time, Program, TupleName, Insertions, Deletions) :-
-	evaluate(runnable(Program, Time, TupleName, Insertions, Deletions));
+next schedule(Time, Program, Name, Insertions, Deletions) :-
+	evaluate(runnable(Time, Program, Name, Insertions, Deletions));
 
 /* Delete what has been evaluated in the curent clock. */
-cleanup delete schedule(Time, Program, TupleName, Insertions, Deletions) :-
-					runnable(Program, Time, TupleName, Insertions, Deletions);
+cleanup delete schedule(Time, Program, Name, Insertions, Deletions) :-
+					runnable(Time, Program, Name, Insertions, Deletions);
 
 /* Identify the runnable tuples. */
-runnable runnable(Program, Time, TupleName, Insertions, Deletions) :-
+runnable runnable(Time, Program, Name, Insertions, Deletions) :-
 	strata#insert(Program, Time, Priority),
-	priority(Program, TupleName, Priority),
-	schedule(Time, Program, TupleName, Insertions, Deletions);
+	priority(Program, Name, Priority),
+	schedule(Time, Program, Name, Insertions, Deletions);
 
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
 strata strata(Program, Time, min<Priority>) :-
 	clock(Location, Time),
-	schedule(Time, Program, TupleName, Insertions, Deletions),
-	priority(Program, TupleName, Priority);
+	schedule(Time, Program, Name, Insertions, Deletions),
+	priority(Program, Name, Priority);
 	
 /*******************************************************************/
 /*** Periodic scheduler                                           **/
@@ -34,39 +35,39 @@ define(schedulePeriodic, {String, Long, Long, Long, Long, String});
 
 /* Schedule next periodic. */
 schedulePeriodic(Id, Period, TTL, Count+1, Time + Period, Program) :-
-			runnable(Program, Time, "periodic", _, _),
-			periodic(Id, Period, TTL, Count, Time, Program),
+			clock#insert(Location, Time),
+			global::periodic(Id, Period, TTL, Count, Time, Program),
 			Count <= TTL;
 			
 schedulePeriodic(Id, Period, TTL, Count+1, Time+Offset, Program) :-
 		planned(Program, Time),
-		periodic(Id, Period, TTL, Count, Offset, Program);
+		global::periodic(Id, Period, TTL, Count, Offset, Program);
 	
 /* Schedule the periodic and update its execution count. */
-schedulePeriodic periodic(Id, Period, TTL, Count, Time, Program) :-
+schedulePeriodic global::periodic(Id, Period, TTL, Count, Time, Program) :-
        				periodicScheduler(schedulePeriodic(Id, Period, TTL, Count, Time, Program));
 
 /*******************************************************************/
 /*** Compiler configuration                                      **/
 /*** TODO: Add general stage installation table */
 
-define(priority, infinity, infinity, keys(0,1), {String, String, Integer});
-define(priorityUpdate, {String, String, Integer});
-define(dependency, infinity, infinity, keys(0,1,2), {String, String, String});
+define(priority, infinity, infinity, keys(0,1), {String, TableName, Integer});
+define(priorityUpdate, {String, TableName, Integer});
+define(dependency, infinity, infinity, keys(0,1,2), {String, TableName, TableName});
 define(planned, {String, Long});
-define(scheduleFact, {Long, String, String, TupleSet});
+define(scheduleFact, {Long, String, TableName, TupleSet});
 
 planned(Program, Time+1) :-
 	compiler#insert(Program, Owner, File, Object),
 	clock(Location, Time),
 	Object.plan();
 	
-scheduleFact(Time, Program, TupleName, tupleset<Tuple>) :-
+scheduleFact(Time, Program, Name, tupleset<Tuple>) :-
 	planned(Program, Time), Program != "runtime",
-	fact(Program, TupleName, Tuple);
+	fact(Program, Name, Tuple);
 	
-schedule(Time, Program, TupleName, Facts, null) :-
-	scheduleFact(Time, Program, TupleName, Facts);
+schedule(Time, Program, Name, Facts, null) :-
+	scheduleFact(Time, Program, Name, Facts);
 
 /* Rule part tables have been filled in by compiler. */
 /* Determine R/G graph dependencies. */

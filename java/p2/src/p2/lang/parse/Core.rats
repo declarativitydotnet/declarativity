@@ -30,7 +30,7 @@ generic Import = void:"import":Word TypeName;
 
 //----------------------------  Fact  --------------------------------------/
 
-generic Fact = TupleName void:"(":Symbol ExpressionList void:")":Symbol;
+generic Fact = TableName void:"(":Symbol ExpressionList void:")":Symbol;
 
 
 //----------------------------  Rules  --------------------------------------/
@@ -56,11 +56,11 @@ Node Term =
 //----------------------------  Definition  ---------------------------/
 
 generic Definition =
-    <Table> void:"define":Word void:"(":Symbol TupleName void:",":Symbol
+    <Table> void:"define":Word void:"(":Symbol TableName void:",":Symbol
             Constant void:",":Symbol Constant void:",":Symbol Keys 
             void:",":Symbol Schema void:")":Symbol 
             @Table
-  / <Event> void:"define":Word void:"(":Symbol TupleName
+  / <Event> void:"define":Word void:"(":Symbol TableName
             void:",":Symbol Schema void:")":Symbol 
             @Event
   ; 
@@ -77,8 +77,8 @@ Pair<Node> TypeDefList = Type (void:",":Symbol Type)* ;
 //----------------------------  Watch  --------------------------------------/
 
 generic Watch =
-    <Global> void:"watch":Word void:"(":Symbol TupleName void:")":Symbol
-  / <Flow> void:"watchmod":Word void:"(":Symbol TupleName void:",":Symbol WatchFlow Spacing void:")":Symbol
+    <Global> void:"watch":Word void:"(":Symbol TableName void:")":Symbol
+  / <Flow> void:"watchmod":Word void:"(":Symbol TableName void:",":Symbol WatchFlow Spacing void:")":Symbol
   ;
 
 transient String WatchFlow = [a-zA-Z]+;
@@ -86,13 +86,13 @@ transient String WatchFlow = [a-zA-Z]+;
 //----------------------------  TableFunction  --------------------------------------/
 
 generic TableFunction = 
-     TupleName void:"(":Symbol Predicate void:")":Symbol
+     TableName void:"(":Symbol Predicate void:")":Symbol
      ;
 
 //----------------------------  Predicate  --------------------------------------/
 
 generic Predicate = 
-      ("notin":Word)? TupleName EventModifier? Arguments
+      ("notin":Word)? TableName EventModifier? Arguments
       ;
 
 //----------------------------  Assignment  ---------------------------------/

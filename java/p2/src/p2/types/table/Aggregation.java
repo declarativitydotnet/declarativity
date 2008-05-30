@@ -67,8 +67,10 @@ public class Aggregation extends Table {
 	@Override
 	public TupleSet tuples() {
 		TupleSet current = new TupleSet(name());
-		for (Aggregate aggregate : aggregates.values()) {
-			current.add(aggregate.result());
+		if (aggregates != null) {
+			for (Aggregate aggregate : aggregates.values()) {
+				current.add(aggregate.result());
+			}
 		}
 		return current;
 	}
