@@ -128,6 +128,7 @@ public:
     MATRIX,
     GAUSSIAN_FACTOR,
     TABLE_FACTOR,
+    KMEANS,
     /* NEW TYPE DEFINITIONS GO ABOVE HERE */    
     TYPES
   };

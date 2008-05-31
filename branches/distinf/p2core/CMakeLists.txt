@@ -14,7 +14,8 @@
 #
 SUBDIRS(pel)
 
-ADD_LIBRARY(p2core 
+ADD_LIBRARY(p2core
+ 		val_kmeans.C
 	    val_factor.C
             val_gaussian_factor.C
 	    val_table_factor.C
