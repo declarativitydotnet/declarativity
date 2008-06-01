@@ -83,6 +83,11 @@ public class Aggregation extends Table {
 			insert(tuple);
 		}
 		
+		if (deletions != null && deletions.size() > 0) {
+			delete(deletions);
+			deletions.clear();
+		}
+		
 		TupleSet current = tuples();
 		
 		if (deletions != null) {
@@ -137,7 +142,9 @@ public class Aggregation extends Table {
 	public boolean delete(Tuple tuple) throws UpdateException {
 		Tuple key = key().project(tuple);
 		TupleSet group = tuples.get(key);
-		assert(group.size() > 0); // Should have at least this tuple
+		if (group == null) {
+			return false;
+		}
 		group.remove(tuple);
 		
 		if (group.size() == 0) {

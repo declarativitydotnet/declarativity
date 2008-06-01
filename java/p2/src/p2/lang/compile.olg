@@ -1,0 +1,53 @@
+program compile;
+
+import p2.lang.plan.Program;
+
+/*******************************************************************/
+/*** Table definitions ***/
+define(dependency, infinity, infinity, keys(0,1,2), {String, TableName, TableName});
+define(config, {String, Program});
+
+/*******************************************************************/
+/*** Facts that initialize priority with this programs predicates ***/
+
+runtime::priority("compile", new TableName("global", "compiler"),  0);
+runtime::priority("compile", new TableName("global", "predicate"), 0);
+runtime::priority("compile", new TableName("global", "rule"),      0);
+
+runtime::priority("compile", new TableName("compile", "config"),     0);
+runtime::priority("compile", new TableName("compile", "dependency"), 1);
+runtime::priority("compile", new TableName("runtime", "priority"),   2);
+
+
+/*******************************************************************/
+/*** Compile rules: Initialize program priority/strata **/
+
+/* Determine R/G graph dependencies. */
+dependency(ProgramName, Head.name(), Body.name()) :-
+	config(ProgramName, Object),
+	rule(ProgramName, Rule, _),
+	predicate(ProgramName, Rule, 0, Event, Head), /* Position == 0 */
+	predicate(ProgramName, Rule, Pos, Event, Body), 
+	Head.name() != Body.name(), Pos > 0;
+	
+/* Transitive closure over the dependency graph. */
+dependency(ProgramName, Ancestor, Child) :-
+	dependency(ProgramName, Ancestor, Descendant),
+	dependency(ProgramName, Descendant, Child),
+	Ancestor != Child;
+	
+/* Initialize all predicates to stratum 0. */
+runtime::priority(ProgramName, Pred.name(), 0) :-
+	config(ProgramName, Object),
+	rule(ProgramName, Rule, _),
+	predicate(ProgramName, Rule, Pos, Event, Pred);
+
+/* Bubble up predicates in the stratum chain. */
+runtime::priority(ProgramName, Head, Priority) :-
+	runtime::priority(ProgramName, Head, HPriority),
+	runtime::priority(ProgramName, Body, BPriority),
+	dependency(ProgramName, Head, Body),
+	notin dependency(ProgramName, Body, Head),
+	HPriority <= BPriority,
+	Priority := BPriority + 1;
+		

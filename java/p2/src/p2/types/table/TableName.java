@@ -15,7 +15,7 @@ public class TableName implements Comparable<TableName> {
 	}
 	
 	public String toString() {
-		return scope + "." + name;
+		return scope + "::" + name;
 	}
 	
 	public boolean equals(Object o) {

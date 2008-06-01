@@ -95,6 +95,7 @@ public class System {
 		}
 
 		driver = new Driver(program("runtime"), schedule, periodic, clock);
+		install("runtime", "compile", "system", Compiler.FILENAME);
 	}
 	
 	public static void main(String[] args) {

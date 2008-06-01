@@ -1,3 +1,5 @@
+program test;
+
 import java.lang.Integer;
 import java.lang.Float;
 import p2.types.table.Index;

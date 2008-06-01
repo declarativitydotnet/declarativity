@@ -118,25 +118,10 @@ public class Driver implements Runnable {
 
 			Table table = Table.table(name);
 			try {
-				insertions = table.insert(insertions, deletions);
-				if (table instanceof Aggregation && deletions.size() > 0) {
-					deletions.remove(insertions);
-					if (deletions.size() > 0) {
-						TupleSet updates = table.delete(deletions);
-						insertions.addAll(updates);
-						deletions.clear();
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				java.lang.System.exit(0);
-			}
-
-			try {
-				while (insertions.size() > 0) {
-					java.lang.System.err.println("\tINSERTIONS " + name + ": " + insertions);
-
-					if (insertions.size() == 0) continue;
+				do { 
+					insertions = table.insert(insertions, deletions);
+					java.lang.System.err.println("\tINSERTION DELTAS " + name + ": " + insertions);
+					if (insertions.size() == 0) break;
 
 					Set<Query> querySet = program.queries(insertions.name());
 					if (querySet == null) break;
@@ -145,8 +130,8 @@ public class Driver implements Runnable {
 					for (Query query : querySet) {
 						if (query.event() != Table.Event.DELETE) {
 							TupleSet result = query.evaluate(insertions);
-							java.lang.System.err.println("\tRUN QUERY " + query.rule() + " input " + insertions);
-							java.lang.System.err.println("\tQUERY " + query.rule() + " result " + result);
+							java.lang.System.err.println("\t\tRUN QUERY " + query.rule() + " input " + insertions);
+							java.lang.System.err.println("\t\tQUERY " + query.rule() + " result " + result);
 
 							if (result.size() == 0) { 
 								continue;
@@ -169,14 +154,8 @@ public class Driver implements Runnable {
 							}
 						}
 					}
-
-					if (delta.size() > 0) {
-						insertions = table.insert(delta, deletions);
-					}
-					else {
-						insertions.clear();
-					}
-				}
+					insertions = delta;
+				} while (insertions.size() > 0);
 			}
 			catch (Exception e) {
 				e.printStackTrace();
@@ -185,41 +164,36 @@ public class Driver implements Runnable {
 
 
 			try {
-				while (deletions.size() > 0) {
+				if (!(table instanceof Aggregation) && deletions.size() > 0) {
 					if (table.type() == Table.Type.TABLE) {
 						java.lang.System.err.println("\tDELETING TUPLES " + name + ": " + deletions);
 						deletions = table.delete(deletions);
-						java.lang.System.err.println("\tTABLE POST DELETION " + table.tuples());
+						java.lang.System.err.println("\t\tTABLE POST DELETION " + table.tuples());
 					}
 					else {
 						java.lang.System.err.println("Can't delete tuples from non table type");
 						java.lang.System.exit(0);
 					}
 
-					if (deletions.size() == 0) continue;
-
 					TupleSet delta = new TupleSet(deletions.name());
 					Set<Query> queries = program.queries(delta.name());
-					if (queries == null) break;
 
-					for (Query query : queries) {
-						if (query.event() != Table.Event.INSERT) {
-							TupleSet result = query.evaluate(deletions);
-							if (result.size() == 0) { 
-								continue;
-							}
-							else if (result.name().equals(deletions.name())) {
-								delta.addAll(result);
-							}
-							else {
-								Table t = Table.table(result.name());
-								if (t.type() == Table.Type.TABLE) {
-									continuation(continuations, time, program.name(), Table.Event.DELETE, result);
+					if (queries != null) {
+						for (Query query : queries) {
+							if (query.event() != Table.Event.INSERT) {
+								TupleSet result = query.evaluate(deletions);
+								if (result.size() == 0) { 
+									continue;
+								}
+								else if (!result.name().equals(deletions.name())) {
+									Table t = Table.table(result.name());
+									if (t.type() == Table.Type.TABLE) {
+										continuation(continuations, time, program.name(), Table.Event.DELETE, result);
+									}
 								}
 							}
 						}
 					}
-					deletions = delta;
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

@@ -11,7 +11,13 @@ import Literal;
  * A statement is a clause followed by a period, 
  */
 
-public Node Program = Spacing Clauses EndOfFile ;
+public generic Program = ProgramName Spacing Clauses EndOfFile ;
+
+//----------------------------  ProgramName ---------------------------------/
+
+String ProgramName = void:"program":Word Word void:";":Symbol ;
+
+//----------------------------  Clauses ---------------------------------/
 
 generic Clauses = (Clause void:";":Symbol)* ;
 

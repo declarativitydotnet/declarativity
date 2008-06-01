@@ -58,7 +58,7 @@ public abstract class Query implements Comparable<Query> {
 		this.output = output;
 		try {
 			p2.core.System.query().force(
-					new Tuple(program, rule,  delete, 
+					new Tuple(program, rule, delete, 
 							  event.toString(), input.name(), output.name(), this));
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block

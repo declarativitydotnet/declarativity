@@ -42,6 +42,7 @@ import p2.lang.plan.Value;
 import p2.lang.plan.Variable;
 import p2.lang.plan.ObjectReference;
 import p2.lang.plan.Watch;
+import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.table.Aggregation;
@@ -522,7 +523,7 @@ public final class TypeChecker extends Visitor {
 						for (Iterator<String> name = table.current().getParent().symbols(); name.hasNext(); )
 							System.err.println(name.next());
 						runtime.error("Head variable " + var
-								+ " not defined in rule body.");
+								+ " not defined in rule body.", n);
 						return Error.class;
 					} else if (!headType.isAssignableFrom(bodyType)) {
 						runtime.error("Type mismatch: Head variable " + var
@@ -876,7 +877,19 @@ public final class TypeChecker extends Visitor {
 		Expression thenexpr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 		Expression elseexpr = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 		
-		if (ensureBooleanValue(ifexpr) == null) {
+		if (ifexpr.type() == null) {
+			runtime.error("Undefined expression " + ifexpr, n);
+			return Error.class;
+		}
+		else if (thenexpr.type() == null) {
+			runtime.error("Undefined expression " + thenexpr, n);
+			return Error.class;
+		}
+		else if (elseexpr.type() == null) {
+			runtime.error("Undefined expression " + elseexpr, n);
+			return Error.class;
+		}
+		else if (ensureBooleanValue(ifexpr) == null) {
 			runtime.error("Cannot evaluate type " + ifexpr.type()
 					+ " in a logical or expression", n);
 			return Error.class;
@@ -891,14 +904,22 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitLogicalOrExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
-		Class rtype = (Class) dispatch(n.getNode(2));
+		Class rtype = (Class) dispatch(n.getNode(1));
 		assert(Expression.class.isAssignableFrom(ltype) && 
 			   Expression.class.isAssignableFrom(rtype));
 		
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
-		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
+		Expression rhs = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
-		if (ensureBooleanValue(lhs) == null) {
+		if (lhs.type() == null) {
+			runtime.error("Undefined expression " + lhs, n);
+			return Error.class;
+		}
+		else if (rhs.type() == null) {
+			runtime.error("Undefined expression " + rhs, n);
+			return Error.class;
+		}
+		else if (ensureBooleanValue(lhs) == null) {
 			runtime.error("Cannot evaluate type " + lhs.type()
 					+ " in a logical or expression", n);
 			return Error.class;
@@ -916,14 +937,22 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitLogicalAndExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
-		Class rtype = (Class) dispatch(n.getNode(2));
+		Class rtype = (Class) dispatch(n.getNode(1));
 		assert(Expression.class.isAssignableFrom(ltype) && 
 			   Expression.class.isAssignableFrom(rtype));
 		
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
-		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
+		Expression rhs = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
-		if (ensureBooleanValue(lhs) == null) {
+		if (lhs.type() == null) {
+			runtime.error("Undefined expression " + lhs, n);
+			return Error.class;
+		}
+		else if (rhs.type() == null) {
+			runtime.error("Undefined expression " + rhs, n);
+			return Error.class;
+		}
+		else if (ensureBooleanValue(lhs) == null) {
 			runtime.error("Cannot evaluate type " + lhs.type()
 					+ " in a logical and expression", n);
 			return Error.class;
@@ -953,7 +982,15 @@ public final class TypeChecker extends Visitor {
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
-		if (Void.class == lhs.type()) {
+		if (lhs.type() == null) {
+			runtime.error("Undefined expression " + lhs, n);
+			return Error.class;
+		}
+		else if (rhs.type() == null) {
+			runtime.error("Undefined expression " + rhs, n);
+			return Error.class;
+		}
+		else if (Void.class == lhs.type()) {
 			runtime.error("Cannot evaluate type " + lhs.type()
 					+ " in a logical and expression", n);
 			return Error.class;
@@ -981,7 +1018,15 @@ public final class TypeChecker extends Visitor {
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
-		if (Void.class == lhs.type()) {
+		if (lhs.type() == null) {
+			runtime.error("Undefined expression " + lhs, n);
+			return Error.class;
+		}
+		else if (rhs.type() == null) {
+			runtime.error("Undefined expression " + rhs, n);
+			return Error.class;
+		}
+		else if (Void.class == lhs.type()) {
 			runtime.error("Cannot evaluate type " + lhs.type()
 					+ " in a logical and expression", n);
 			return Error.class;
@@ -1048,7 +1093,15 @@ public final class TypeChecker extends Visitor {
 		Expression begin = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 		Expression end   = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 		
-		if (begin.type() != end.type()) {
+		if (begin.type() == null) {
+			runtime.error("Undefined expression " + begin, n);
+			return Error.class;
+		}
+		else if (end.type() == null) {
+			runtime.error("Undefined expression " + end, n);
+			return Error.class;
+		}
+		else if (begin.type() != end.type()) {
 			runtime.error("Type error: range begin type " + begin.type() + 
 					      " != range end type" + end.type());
 			return Error.class;
@@ -1091,7 +1144,15 @@ public final class TypeChecker extends Visitor {
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 		
-		if (lhs.type() == Integer.class && rhs.type() == Integer.class) {
+		if (lhs.type() == null) {
+			runtime.error("Undefined expression " + lhs, n);
+			return Error.class;
+		}
+		else if (rhs.type() == null) {
+			runtime.error("Undefined expression " + rhs, n);
+			return Error.class;
+		}
+		else if (lhs.type() == Integer.class && rhs.type() == Integer.class) {
 			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
 			return p2.lang.plan.Math.class;
 		} else {
@@ -1111,8 +1172,16 @@ public final class TypeChecker extends Visitor {
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
-		if (Number.class.isAssignableFrom(lhs.type()) && 
-			Number.class.isAssignableFrom(rhs.type())) {
+		if (lhs.type() == null) {
+			runtime.error("Undefined expression " + lhs, n);
+			return Error.class;
+		}
+		else if (rhs.type() == null) {
+			runtime.error("Undefined expression " + rhs, n);
+			return Error.class;
+		}
+		else if (Number.class.isAssignableFrom(lhs.type()) && 
+			     Number.class.isAssignableFrom(rhs.type())) {
 			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
 			return p2.lang.plan.Math.class;
 		}
@@ -1131,7 +1200,15 @@ public final class TypeChecker extends Visitor {
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
-		if (Number.class.isAssignableFrom(lhs.type()) && 
+		if (lhs.type() == null) {
+			runtime.error("Undefined expression " + lhs, n);
+			return Error.class;
+		}
+		else if (rhs.type() == null) {
+			runtime.error("Undefined expression " + rhs, n);
+			return Error.class;
+		}
+		else if (Number.class.isAssignableFrom(lhs.type()) && 
 			Number.class.isAssignableFrom(rhs.type())) {
 			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
 			return p2.lang.plan.Math.class;
@@ -1191,8 +1268,8 @@ public final class TypeChecker extends Visitor {
 				}
 			}
 		} catch (Exception e) {
-			runtime.error("Method error: on " + 
-					      context.toString() + ": " + e.toString(), n);
+			e.printStackTrace();
+			runtime.error("Method error: on " +  context.toString() + ": " + e.toString(), n);
 			return Error.class;
 		}
 		
@@ -1203,6 +1280,7 @@ public final class TypeChecker extends Visitor {
 	public Class visitNewClass(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
 		if (type == Error.class) return Error.class;
+		type = (Class) n.getNode(0).getProperty(Constants.TYPE);
 		
 		n.setProperty(Constants.TYPE, new NewClass(type));
 		return NewClass.class;
@@ -1422,7 +1500,7 @@ public final class TypeChecker extends Visitor {
 			n.setProperty(Constants.TYPE, type);
 			return Class.class;
 		} catch (ClassNotFoundException e) {
-			runtime.error("Bad class type: " + n.getString(0));
+			runtime.error(e.toString(), n);
 		}
 		return Error.class;
 	}

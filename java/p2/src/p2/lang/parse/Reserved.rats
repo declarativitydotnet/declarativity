@@ -6,6 +6,7 @@ body {
   static {
     add(OVERLOG_KEYWORDS, new String[] {
       "delete",      
+      "public",      
       "true",       
       "false", 
       "in",     

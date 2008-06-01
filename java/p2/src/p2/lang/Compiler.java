@@ -29,6 +29,7 @@ import xtc.util.Tool;
  * The driver for processesing the Overlog language.
  */
 public class Compiler extends Tool {
+	public static final String FILENAME = "src/p2/lang/compile.olg";
 
 	public static class CompileTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);
@@ -127,8 +128,11 @@ public class Compiler extends Tool {
 		runtime.console().format(node).pln().flush();
 		typeChecker.prepare();
 		
+		String name = node.getString(0);
+		System.err.println("PROGRAM NAME " + name);
+		
 		/* First evaluate all import statements. */
-		for (Node clause : node.<Node>getList(0)) {
+		for (Node clause : node.getNode(1).<Node>getList(0)) {
 			if (clause.getName().equals("Import")) {
 				typeChecker.analyze(clause);
 				if (runtime.errorCount() > 0) return;
@@ -136,7 +140,7 @@ public class Compiler extends Tool {
 		}
 
 		/* Next evaluate all table and event declarations. */ 
-		for (Node clause : node.<Node>getList(0)) {
+		for (Node clause : node.getNode(1).<Node>getList(0)) {
 			if (clause.getName().equals("Table")) {
 				typeChecker.analyze(clause);
 				if (runtime.errorCount() > 0) return;
@@ -152,7 +156,7 @@ public class Compiler extends Tool {
 		program.definition(new EventTable(periodic, new TypeList(Periodic.SCHEMA)));
 
 		/* Evaluate all other clauses. */
-		for (Node clause : node.<Node>getList(0)) {
+		for (Node clause : node.getNode(1).<Node>getList(0)) {
 			if (clause.getName().equals("Rule") ||
 			    clause.getName().equals("Fact") ||
 			    clause.getName().equals("Watch")) {

@@ -1,26 +1,30 @@
+program runtime;
+
 import java.lang.String;
 import java.lang.Integer;
 import java.lang.Long;
 import p2.types.basic.TupleSet;
+import p2.types.basic.Tuple;
 import p2.types.table.TableName;
 
 /* Define runtime events. */
 define(runnable, {Long, String, TableName, TupleSet, TupleSet});
 define(strata, infinity, infinity, keys(0,1), {String, Long, Integer});
+define(priority, infinity, infinity, keys(0,1), {String, TableName, Integer});
 
 next schedule(Time, Program, Name, Insertions, Deletions) :-
 	evaluate(runnable(Time, Program, Name, Insertions, Deletions));
 
-/* Delete what has been evaluated in the curent clock. */
+/* Delete what has been evaluated in the current clock. */
 cleanup delete schedule(Time, Program, Name, Insertions, Deletions) :-
 					runnable(Time, Program, Name, Insertions, Deletions);
 
 /* Identify the runnable tuples. */
 runnable runnable(Time, Program, Name, Insertions, Deletions) :-
-	strata#insert(Program, Time, Priority),
-	priority(Program, Name, Priority),
-	schedule(Time, Program, Name, Insertions, Deletions);
-
+	strata(Program, Time, Priority),
+	schedule(Time, Program, Name, Insertions, Deletions),
+	priority(Program, Name, Priority);
+	
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
 strata strata(Program, Time, min<Priority>) :-
@@ -34,68 +38,42 @@ strata strata(Program, Time, min<Priority>) :-
 define(schedulePeriodic, {String, Long, Long, Long, Long, String});
 
 /* Schedule next periodic. */
-schedulePeriodic(Id, Period, TTL, Count+1, Time + Period, Program) :-
-			clock#insert(Location, Time),
-			global::periodic(Id, Period, TTL, Count, Time, Program),
-			Count <= TTL;
+schedulePeriodic(Id, Period, TTL, Count+1, Time+Period, Program) :-
+		clock#insert(Location, Time),
+		global::periodic(Id, Period, TTL, Count, Time, Program),
+		Count <= TTL;
 			
-schedulePeriodic(Id, Period, TTL, Count+1, Time+Offset, Program) :-
-		planned(Program, Time),
+schedulePeriodic(Id, Period, TTL, Count+1, Time+1+Offset, Program) :-
+		compiler#insert(Program, Owner, File, Object),
+		clock(Location, Time),
 		global::periodic(Id, Period, TTL, Count, Offset, Program);
 	
 /* Schedule the periodic and update its execution count. */
 schedulePeriodic global::periodic(Id, Period, TTL, Count, Time, Program) :-
        				periodicScheduler(schedulePeriodic(Id, Period, TTL, Count, Time, Program));
 
+
 /*******************************************************************/
-/*** Compiler configuration                                      **/
-/*** TODO: Add general stage installation table */
+/*** Fact scheduler */
 
-define(priority, infinity, infinity, keys(0,1), {String, TableName, Integer});
-define(priorityUpdate, {String, TableName, Integer});
-define(dependency, infinity, infinity, keys(0,1,2), {String, TableName, TableName});
-define(planned, {String, Long});
-define(scheduleFact, {Long, String, TableName, TupleSet});
+define(facts, {String, TableName, TupleSet});
 
-planned(Program, Time+1) :-
-	compiler#insert(Program, Owner, File, Object),
-	clock(Location, Time),
-	Object.plan();
+install facts(Program, Name, tupleset<Tuple>) :-
+			compiler#insert(Program, Owner, File, Object),
+			fact(Program, Name, Tuple);
 	
-scheduleFact(Time, Program, Name, tupleset<Tuple>) :-
-	planned(Program, Time), Program != "runtime",
-	fact(Program, Name, Tuple);
+runfacts runnable(Time, Program, Name, Facts, null) :-
+			facts(Program, Name, Facts),
+			clock(Location, Time);
 	
-schedule(Time, Program, Name, Facts, null) :-
-	scheduleFact(Time, Program, Name, Facts);
+/*******************************************************************/
+/*** Schedule compile */
 
-/* Rule part tables have been filled in by compiler. */
-/* Determine R/G graph dependencies. */
-dependency(Program, Head.name(), Body.name()) :-
-	planned(Program, Time),
-	rule(Program, Rule, _),
-	predicate(Program, Rule, 0, Event, Head), /* Position == 0 */
-	predicate(Program, Rule, Pos, Event, Body), 
-	Head.name() != Body.name(), Pos > 0;
-	
-/* Initialize all predicates to stratum 0. */
-init priority(Program, Pred.name(), 0) :-
-		planned(Program, Time),
-		rule(Program, Rule, _),
-		predicate(Program, Rule, Pos, Event, Pred),
-		notin priority(Program, Pred.name(), _);
-
-/* Bubble up predicates in the stratum chain. */
-bubble priorityUpdate(Program, Head, Priority) :-
-		priority(Program, Head, HPriority),
-		priority(Program, Body, BPriority),
-		dependency(Program, Head, Body),
-		notin dependency(Program, Body, Head),
-		HPriority <= BPriority,
-		Priority := BPriority + 1;
-		
-update priority(Program, Head, Priority) :-
-		priorityUpdate(Program, Head, Priority);
+config runnable(Time, "compile", Set.name(), Set, null) :-
+		compiler#insert(Program, Owner, File, Object),
+		clock(Location, Time),
+		Object.plan() && Program != "compile",
+		Set := new TupleSet(new TableName("compile", "config"), Object.tuple());
 
 
 

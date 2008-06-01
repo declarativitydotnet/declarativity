@@ -14,7 +14,7 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 	private TableName name;
 	
 	public TupleSet() {
-		this(null);
+		this((TableName)null);
 	}
 	
 	public TupleSet(TableName name) {
@@ -23,8 +23,15 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 	}
 	
 	public TupleSet(TableName name, Set<Tuple> tuples) {
+		this.id = "TupleSet:" + ids++;
 		this.name = name;
 		this.addAll(tuples);
+	}
+	
+	public TupleSet(TableName name, Tuple tuple) {
+		this.id = "TupleSet:" + ids++;
+		this.name = name;
+		this.add(tuple);
 	}
 	
 	@Override

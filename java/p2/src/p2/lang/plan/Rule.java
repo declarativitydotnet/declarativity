@@ -78,7 +78,9 @@ public class Rule extends Clause {
 	
 	private boolean aggregation;
 	
-	public Rule(xtc.tree.Location location, String name, java.lang.Boolean deletion, Predicate head, List<Term> body) {
+	public Rule(xtc.tree.Location location, String name, 
+			    java.lang.Boolean deletion, 
+			    Predicate head, List<Term> body) {
 		super(location);
 		this.name = name;
 		this.deletion = deletion;
@@ -149,7 +151,8 @@ public class Rule extends Clause {
 				if (table.type() == Table.Type.EVENT ||
 				    pred.event() != Table.Event.NONE) {
 					if (event != null) {
-						throw new PlannerException("Multiple event predicates in rule " + name);
+						throw new PlannerException("Multiple event predicates in rule " + name + 
+								                   " location " + pred.location());
 					}
 					/* Plan a query with this event predicate as input. */
 					event = pred;

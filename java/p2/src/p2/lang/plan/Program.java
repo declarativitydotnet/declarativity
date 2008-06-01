@@ -88,6 +88,10 @@ public class Program implements Comparable<Program> {
 		}
 	}
 	
+	public Tuple tuple() {
+		return new Tuple(name, this);
+	}
+	
 	public String toString() {
 		return "PROGRAM " + this.name;
 	}

@@ -140,6 +140,9 @@ public abstract class Table implements Comparable<Table> {
 	public final static void initialize() {
 		catalog = new Catalog();
 		index   = new IndexTable();
+		
+		Table.register(catalog.name(), catalog.type(), catalog.size(), catalog.lifetime().floatValue(), 
+				       catalog.key(), new TypeList(catalog.types()), catalog);
 	}
 	
 	public final static Catalog catalog() {
@@ -282,9 +285,10 @@ public abstract class Table implements Comparable<Table> {
 			}
 		}
 		
-		
-		for (Callback callback : this.callbacks) {
-			callback.insertion(delta);
+		if (delta.size() > 0) {
+			for (Callback callback : this.callbacks) {
+				callback.insertion(delta);
+			}
 		}
 		
 		return delta;
@@ -304,8 +308,10 @@ public abstract class Table implements Comparable<Table> {
 			}
 		}
 		
-		for (Callback callback : this.callbacks) {
-			callback.deletion(delta);
+		if (delta.size() > 0) {
+			for (Callback callback : this.callbacks) {
+				callback.deletion(delta);
+			}
 		}
 		
 		return delta;
