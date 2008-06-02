@@ -69,9 +69,9 @@ ValuePtr Val_Gaussian_Mixture::mk()
   return ValuePtr(new Val_Gaussian_Mixture());
 }
 
-ValuePtr Val_Gaussian_Mixture::mk(const mixture_type& factor)
+ValuePtr Val_Gaussian_Mixture::mk(const mixture_type& m)
 {
-  return ValuePtr(new Val_Gaussian_Mixture(factor));
+  return ValuePtr(new Val_Gaussian_Mixture(m));
 }
 
 string Val_Gaussian_Mixture::toString() const
@@ -89,5 +89,25 @@ string Val_Gaussian_Mixture::toConfString() const
 // Matrix comparison. Follow rules from Tuple
 int Val_Gaussian_Mixture::compareTo(ValuePtr other) const
 {
+  // ****** To do
   return 1;
 }
+
+ValuePtr Val_Gaussian_Mixture::mk(string filename, int64_t dim, int64_t var, double regul) {
+  size_t k = 2;
+  boost::mt19937 rng;
+  var_vector v = u.new_vector_variables(var, dim); // var variables of dim dimensions
+  array_data<> data = load_plain< array_data<> >(filename, v);
+  em_engine engine(&data, k);
+  mixture_type m = engine.initialize(rng, regul);
+  return mk(m);
+}
+
+ValuePtr Val_Gaussian_Mixture::emupdate(ValuePtr other) {
+  mixture_type * m = Val_Gaussian_Mixture::cast(other);
+  double log_lik = engine.expectation(m);
+  m = engine.maximization(regul);
+  return mk(m);
+}
+
+
