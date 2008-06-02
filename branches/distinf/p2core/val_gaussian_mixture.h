@@ -29,6 +29,8 @@
 #include <prl/factor/table_factor.hpp>
 #include <prl/factor/mixture.hpp>
 #include "prl/detail/shortcuts_def.hpp"
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 using namespace std;
 using namespace prl;

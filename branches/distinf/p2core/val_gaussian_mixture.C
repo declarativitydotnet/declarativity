@@ -9,9 +9,16 @@
  * 
  */
 
+// The archive classes must come before any export definitions.
+#include <sstream>
+
+#include "oper.h"
 #include "val_null.h"
+#include "val_str.h"
 #include "val_gaussian_mixture.h"
 #include "val_int64.h"
+
+#include "prl/detail/shortcuts_def.hpp"
 
 
 class OperGaussianMixture : public opr::OperCompare<Val_Gaussian_Mixture> {
@@ -39,14 +46,22 @@ Val_Gaussian_Mixture::cast(ValuePtr v)
 // Marshal/Unmarshal essentially copied from Val_Tuple
 void Val_Gaussian_Mixture::xdr_marshal_subtype( XDR *x )
 {
-  //to write
+  // Serialize the mixture factor into a string text archive
+  stringstream ss;
+  boost::archive::text_oarchive oa(ss);
+  oa << const_cast<const Val_Gaussian_Mixture*>(this)->mixture;
+  // Now marshal the string
+  Val_Str(ss.str()).xdr_marshal_subtype(x);
 }
 
 ValuePtr Val_Gaussian_Mixture::xdr_unmarshal( XDR *x )
 {
-  int64_t kmeans;
-  xdr_int64_t(x, &kmeans);
-  return mk(kmeans);
+  // Create the archive and deserialize its content
+  std::stringstream ss(Val_Str::xdr_unmarshal(x)->toString());
+  boost::archive::text_iarchive ia(ss);
+  mixture_type mixture;
+  ia >> mixture;
+  return mk(mixture);
 }
 
 ValuePtr Val_Gaussian_Mixture::mk()
@@ -62,7 +77,7 @@ ValuePtr Val_Gaussian_Mixture::mk(const mixture_type& factor)
 string Val_Gaussian_Mixture::toString() const
 {
   ostringstream s;
-  s << "To do";
+  s << mixture;
   return s.str();
 }
 
