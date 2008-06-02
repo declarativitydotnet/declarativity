@@ -9,6 +9,13 @@ define(t1, infinity, infinity, keys(1),
 
 define(event, {String, Float, Float});
 
+define(update, {String, String, String});
+
+watch(periodic, r);
+watch(event, r);
+watch(t1, i);
+watch(update, s);
+
 t1("test", "this", "fact");
 
 rule1 event(Id, 1.0, 2.0) :-  periodic(Id, 2L);
@@ -17,3 +24,7 @@ rule2 t1(A, B, C) :- event(A, X, Y),
                      Y in [1.0, 5.0],
                      B := X.toString(),
                      C := Y.toString();
+                     
+update(A, B, C) :- t1(A, B, C);
+
+event(C, 2.3, 3.4) :- update(A, B, C);

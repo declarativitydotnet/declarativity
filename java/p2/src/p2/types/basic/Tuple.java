@@ -200,7 +200,14 @@ public class Tuple implements Comparable<Tuple> {
 				continue;
 			}
 			else if (inner.schema().contains(variable)) {
-				if (!value(variable.name()).equals(inner.value(variable.name()))) {
+				Comparable outerValue = value(variable.name());
+				Comparable innerValue = inner.value(variable.name());
+				if (outerValue == null || innerValue == null) {
+					if (outerValue == innerValue) {
+						join.append(variable, null);
+					}
+				}
+				else if (!value(variable.name()).equals(inner.value(variable.name()))) {
 					return null; // Tuples do not join
 				}
 				else {

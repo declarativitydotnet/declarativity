@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.List;
 
 import p2.core.Periodic;
 import p2.lang.parse.Parser;
@@ -49,13 +50,12 @@ public class Compiler extends Tool {
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Program program = (Program) tuple.value(Field.PROGRAM.ordinal());
 			if (program == null) {
-				String name  = (String) tuple.value(Field.NAME.ordinal());
 				String owner = (String) tuple.value(Field.OWNER.ordinal());
 				String file  = (String) tuple.value(Field.FILE.ordinal());
 				try {
-					program = new Program(name, owner);
-					Compiler compiler = new Compiler(program, file);
-					tuple.value(Field.PROGRAM.ordinal(), program);
+					Compiler compiler = new Compiler(owner, file);
+					tuple.value(Field.NAME.ordinal(), compiler.program.name());
+					tuple.value(Field.PROGRAM.ordinal(), compiler.program);
 				} catch (P2RuntimeException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -67,6 +67,8 @@ public class Compiler extends Tool {
 	}
 
 
+	private String owner;
+	
 	private String file;
 	
 	private Program program;
@@ -74,8 +76,8 @@ public class Compiler extends Tool {
 	private TypeChecker typeChecker;
 
 	/** Create a new driver for Overlog. */
-	public Compiler(Program program, String file) throws P2RuntimeException {
-		this.program = program;
+	public Compiler(String owner, String file) throws P2RuntimeException {
+		this.owner = owner;
 		this.file = file;
 		typeChecker = new TypeChecker(this.runtime, this.program);
 		String[] args = {"-no-exit", "-silent", file};
@@ -124,12 +126,13 @@ public class Compiler extends Tool {
 	}
 
 	public void process(Node node) {
-		// Perform type checking.
-		runtime.console().format(node).pln().flush();
-		typeChecker.prepare();
-		
 		String name = node.getString(0);
-		System.err.println("PROGRAM NAME " + name);
+		
+		// Perform type checking.
+		// runtime.console().format(node).pln().flush();
+		this.program = new Program(name, owner);
+		TypeChecker typeChecker = new TypeChecker(this.runtime, this.program);
+		typeChecker.prepare();
 		
 		/* First evaluate all import statements. */
 		for (Node clause : node.getNode(1).<Node>getList(0)) {
@@ -158,13 +161,22 @@ public class Compiler extends Tool {
 		/* Evaluate all other clauses. */
 		for (Node clause : node.getNode(1).<Node>getList(0)) {
 			if (clause.getName().equals("Rule") ||
-			    clause.getName().equals("Fact") ||
-			    clause.getName().equals("Watch")) {
+					clause.getName().equals("Fact") ||
+					clause.getName().equals("Watch")) {
 				typeChecker.analyze(clause);
 				if (runtime.errorCount() > 0) return;
-				Clause c = (Clause) clause.getProperty(Constants.TYPE);
 				try {
-					c.set(this.program.name());
+					if (clause.getName().equals("Watch")) {
+						List<Watch> watches = (List<Watch>) clause.getProperty(Constants.TYPE);
+						for (Watch watch : watches) {
+							watch.set(this.program.name());
+						}
+
+					}
+					else {
+						Clause c = (Clause) clause.getProperty(Constants.TYPE);
+						c.set(this.program.name());
+					}
 				} catch (UpdateException e) {
 					e.printStackTrace();
 					runtime.error(e.toString());

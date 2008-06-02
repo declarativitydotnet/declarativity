@@ -2,24 +2,16 @@ package p2.core;
 
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 import p2.exec.Query;
-import p2.lang.plan.Predicate;
 import p2.lang.plan.Program;
-import p2.lang.plan.Fact.FactTable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
-import p2.types.exception.BadKeyException;
-import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
+import p2.types.operator.Operator;
+import p2.types.operator.Watch;
 import p2.types.table.Aggregation;
-import p2.types.table.Index;
-import p2.types.table.Key;
-import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 import p2.types.table.TableName;
 
@@ -114,24 +106,37 @@ public class Driver implements Runnable {
 		
 		private TupleSet evaluate(Long time, Program program, TableName name, TupleSet insertions, TupleSet deletions) {
 			Hashtable<String, Tuple> continuations = new Hashtable<String, Tuple>();
-			java.lang.System.err.println("EVALUATE PROGRAM " + program.name() + " " + name + ": INSERTIONS " + insertions + " DELETIONS " + deletions);
+			// java.lang.System.err.println("EVALUATE PROGRAM " + program.name() + " " + name + ": INSERTIONS " + insertions + " DELETIONS " + deletions);
 
 			Table table = Table.table(name);
+			Operator watchAdd    = Program.watch.watched(program.name(), name, Watch.Modifier.ADD);
+			Operator watchInsert = Program.watch.watched(program.name(), name, Watch.Modifier.INSERT);
+			Operator watchRemove = Program.watch.watched(program.name(), name, Watch.Modifier.ERASE);
+			Operator watchDelete = Program.watch.watched(program.name(), name, Watch.Modifier.DELETE);
 			try {
 				do { 
+					if (watchAdd != null) {
+						watchAdd.evaluate(insertions);
+					}
+					
 					insertions = table.insert(insertions, deletions);
-					java.lang.System.err.println("\tINSERTION DELTAS " + name + ": " + insertions);
 					if (insertions.size() == 0) break;
+					
+					if (watchInsert != null) {
+						watchInsert.evaluate(insertions);
+					}
 
 					Set<Query> querySet = program.queries(insertions.name());
-					if (querySet == null) break;
+					if (querySet == null) {
+						break;
+					}
 
 					TupleSet delta = new TupleSet(insertions.name());
 					for (Query query : querySet) {
 						if (query.event() != Table.Event.DELETE) {
 							TupleSet result = query.evaluate(insertions);
-							java.lang.System.err.println("\t\tRUN QUERY " + query.rule() + " input " + insertions);
-							java.lang.System.err.println("\t\tQUERY " + query.rule() + " result " + result);
+							// java.lang.System.err.println("\t\tRUN QUERY " + query.rule() + " input " + insertions);
+							// java.lang.System.err.println("\t\tQUERY " + query.rule() + " result " + result);
 
 							if (result.size() == 0) { 
 								continue;
@@ -166,9 +171,13 @@ public class Driver implements Runnable {
 			try {
 				if (!(table instanceof Aggregation) && deletions.size() > 0) {
 					if (table.type() == Table.Type.TABLE) {
-						java.lang.System.err.println("\tDELETING TUPLES " + name + ": " + deletions);
+						if (watchRemove != null) {
+							watchRemove.evaluate(deletions);
+						}
 						deletions = table.delete(deletions);
-						java.lang.System.err.println("\t\tTABLE POST DELETION " + table.tuples());
+						if (watchDelete != null) {
+							watchDelete.evaluate(deletions);
+						}
 					}
 					else {
 						java.lang.System.err.println("Can't delete tuples from non table type");
@@ -205,7 +214,7 @@ public class Driver implements Runnable {
 				delta.add(continuation);
 			}
 
-			java.lang.System.err.println("==================== RESULT " + name + ": " + delta + "\n\n");
+			// java.lang.System.err.println("==================== RESULT " + name + ": " + delta + "\n\n");
 
 			return delta;
 		}
@@ -231,6 +240,13 @@ public class Driver implements Runnable {
 		}
 	}
 
+	public interface Task {
+		public TupleSet tuples();
+	}
+	
+	/* Tasks that the driver needs to execute during the next clock. */
+	private Set<Task> tasks;
+	
 	/** The schedule queue. */
 	private Program runtime;
 
@@ -241,12 +257,16 @@ public class Driver implements Runnable {
 	private Clock clock;
 
 	public Driver(Program runtime, Schedule schedule, Periodic periodic, Clock clock) {
+		this.tasks = new HashSet<Task>();
 		this.runtime = runtime;
 		this.schedule = schedule;
 		this.periodic = periodic;
 		this.clock = clock;
 	}
 
+	public void task(Task task) {
+		this.tasks.add(task);
+	}
 
 	public void run() {
 		while (true) {
@@ -256,14 +276,20 @@ public class Driver implements Runnable {
 				if (schedule.cardinality() > 0) {
 					min = min < schedule.min() ? min : schedule.min();
 				}
-				
-				if (min == Long.MAX_VALUE) {
-					continue;
+				else if (tasks.size() > 0) {
+					min = clock.current() + 1L;
 				}
-				else {
+				
+				if (min < Long.MAX_VALUE) {
 					try {
 						java.lang.System.err.println("============================ EVALUATE =============================");
-						evaluate(clock.time(min), min);
+						java.lang.System.err.println("SCHEDULE " + schedule);
+						evaluate(clock.time(min));
+						
+						for (Task task : tasks) {
+							evaluate(task.tuples());
+						}
+						tasks.clear();
 						java.lang.System.err.println("============================ ======== =============================");
 					} catch (UpdateException e) {
 						e.printStackTrace();
@@ -272,15 +298,15 @@ public class Driver implements Runnable {
 			}
 			
 			try {
-				Thread.sleep(5);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) { }
 			
 		}
 	}
 	
-	public void evaluate(TupleSet tuples, Long clock) throws UpdateException {
+	public void evaluate(TupleSet tuples) throws UpdateException {
 		TupleSet evaluation = new TupleSet(System.evaluator().name());
-		evaluation.add(new Tuple(clock, runtime.name(), tuples.name(), tuples, 
+		evaluation.add(new Tuple(clock.current(), runtime.name(), tuples.name(), tuples, 
 								 new TupleSet(tuples.name())));
 		/* Evaluate until nothing left in this clock. */
 		while (evaluation.size() > 0) {

@@ -34,6 +34,9 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 		this.add(tuple);
 	}
 	
+	public String toString() {
+		return this.id + super.toString();
+	}
 	@Override
 	public int hashCode() {
 		return id.hashCode();

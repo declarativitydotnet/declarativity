@@ -1,9 +1,13 @@
 package p2.lang.plan;
 
+import java.util.Hashtable;
+
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
+import p2.types.operator.Operator;
 import p2.types.table.HashIndex;
 import p2.types.table.Index;
 import p2.types.table.Key;
@@ -13,28 +17,22 @@ import p2.types.table.TableName;
 public class Watch extends Clause {
 	
 	public static class WatchTable extends ObjectTable {
-		public static final Key PRIMARY_KEY = new Key();
+		public static final Key PRIMARY_KEY = new Key(0,1,2);
 
-		public enum Field {PROGRAM, SCOPE, TUPLENAME, MODIFIER, OBJECT};
+		public enum Field {PROGRAM, TABLENAME, MODIFIER, OPERATOR};
 		public static final Class[] SCHEMA =  {
-			String.class,    // Program name
-			TableName.class, // Table name
-			String.class,    // Modifier
-			Watch.class      // Object
+			String.class,                             // Program name
+			TableName.class,                          // Table name
+			p2.types.operator.Watch.Modifier.class,   // Modifier
+			p2.types.operator.Watch.class             // Operator
 		};
 
 		public WatchTable() {
 			super(new TableName(GLOBALSCOPE, "watch"), PRIMARY_KEY, new TypeList(SCHEMA));
-			Key programKey = new Key(Field.PROGRAM.ordinal());
-			Index index = new HashIndex(this, programKey, Index.Type.SECONDARY);
-			this.secondary.put(programKey, index);
 		}
 
 		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
-			String program = (String) tuple.value(Field.PROGRAM.ordinal());
-			Watch object = (Watch) tuple.value(Field.OBJECT.ordinal());
-			object.program = program;
 			return super.insert(tuple);
 		}
 
@@ -42,15 +40,28 @@ public class Watch extends Clause {
 		protected boolean delete(Tuple tuple) throws UpdateException {
 			return super.delete(tuple);
 		}
+		
+		public Operator watched(String program, TableName name, p2.types.operator.Watch.Modifier modifier) {
+			Tuple key = new Tuple(program, name, modifier);
+			try {
+				TupleSet tuples = Program.watch.primary().lookup(key);
+				if (tuples.size() > 0) {
+					return (Operator) tuples.iterator().next().value(Field.OPERATOR.ordinal());
+				}
+			} catch (BadKeyException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 	}
 	
 	private String program;
 	
 	private TableName name;
 	
-	private String modifier;
+	private p2.types.operator.Watch.Modifier modifier;
 
-	public Watch(xtc.tree.Location location, TableName name, String modifier) {
+	public Watch(xtc.tree.Location location, TableName name, p2.types.operator.Watch.Modifier modifier) {
 		super(location);
 		this.name = name;
 		this.modifier = modifier;
@@ -62,6 +73,8 @@ public class Watch extends Clause {
 
 	@Override
 	public void set(String program) throws UpdateException {
-		Program.watch.force(new Tuple(program, name, modifier, this));
+		Program.watch.force(
+				new Tuple(program, name, modifier, 
+						  new p2.types.operator.Watch(program, null, name, modifier)));
 	}
 }

@@ -248,10 +248,19 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Watch statement refers to unknown table/event name " + name, n);
 			return Error.class;
 		}
-		String modifier = n.size() > 1 ? n.getString(1) : "";
+		String modifier = n.size() > 1 ? n.getString(1) : null;
 		
-		Watch watch = new Watch(n.getLocation(), name, modifier);
-		n.setProperty(Constants.TYPE, watch);
+		List<Watch> watches = new ArrayList<Watch>();
+		if (modifier == null) {
+			watches.add(new Watch(n.getLocation(), name, p2.types.operator.Watch.Modifier.NONE));
+		}
+		else {
+			for (char mod : modifier.toCharArray()) {
+				watches.add(new Watch(n.getLocation(), name, p2.types.operator.Watch.modifiers.get(mod)));
+			}
+			
+		}
+		n.setProperty(Constants.TYPE, watches);
 		return Watch.class;
 	}
 	
@@ -401,8 +410,11 @@ public final class TypeChecker extends Visitor {
 		if (ruleNames.contains(name)) {
 			runtime.error("Multiple rule names defined as " 
 					+ name + ". Rule name must be unique!");
+			java.lang.System.exit(0);
 			return Error.class;
 		}
+		ruleNames.add(name);
+		
 		Boolean deletion = n.getString(1) != null;
 		
 		

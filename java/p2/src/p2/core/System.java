@@ -69,41 +69,40 @@ public class System {
 		programs.put(name, program);
 	}
 	
-	public static boolean install(String runtime, String name, String owner, String file) {
-		synchronized (schedule) {
-			TupleSet compilation = new TupleSet(compile.name());
-			compilation.add(new Tuple(name, owner, file, null));
-			try {
-				driver.evaluate(compilation, clock.current());
-			} catch (UpdateException e) {
-				e.printStackTrace();
-				return false;
-			}
+	public static void install(String owner, String file) {
+		synchronized (driver) {
+			final TupleSet compilation = new TupleSet(compile.name());
+			compilation.add(new Tuple(null, owner, file, null));
+			driver.task(new Driver.Task() {
+				public TupleSet tuples() {
+					return compilation;
+				}
+			});
 		}
-		return true;
 	}
 	
-	private static void bootstrap(String name, String owner) {
+	private static void bootstrap() {
 		try {
-			Program program = new Program(name, owner);
-			p2.lang.Compiler compiler = new p2.lang.Compiler(program, RUNTIME);
+			p2.lang.Compiler compiler = new p2.lang.Compiler("system", RUNTIME);
 			compiler.program().plan();
 			clock.insert(clock.time(0L), null);
+			
+			driver = new Driver(program("runtime"), schedule, periodic, clock);
+			
+			TupleSet compilation = new TupleSet(compile.name());
+			compilation.add(new Tuple(null, "system", Compiler.FILENAME, null));
+			driver.evaluate(compilation);
 		} catch (Exception e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
-
-		driver = new Driver(program("runtime"), schedule, periodic, clock);
-		install("runtime", "compile", "system", Compiler.FILENAME);
 	}
 	
 	public static void main(String[] args) {
 		initialize();
-		bootstrap("runtime", "system");
-		java.lang.System.err.println("ARGS " + args);
+		bootstrap();
 		if (args.length > 0) {
-			install("runtime", "command", "none", args[0]);
+			install("user", args[0]);
 		}
 		driver.run();
 	}

@@ -76,6 +76,8 @@ public class Aggregation extends Table {
 	}
 	
 	public TupleSet insert(TupleSet insertions, TupleSet deletions) throws UpdateException {
+		deletions.removeAll(insertions);
+		
 		TupleSet previous = tuples();
 		
 		/* Perform aggregation. */

@@ -8,7 +8,7 @@ import p2.types.table.Table;
 
 public class ScanJoin extends Join {
 	
-	private Table table;
+	public Table table;
 	
 	public ScanJoin(Predicate predicate) {
 		super(predicate);
@@ -26,7 +26,7 @@ public class ScanJoin extends Join {
 		TupleSet innerTuples = this.table.tuples();
 		for (Tuple outer : tuples) {
 			for (Tuple inner : innerTuples) {
-				inner.schema(this.predicate.schema());
+				inner.schema(this.predicate.schema().clone());
 				
 				if (validate(outer, inner)) {
 					Tuple join = outer.join(inner);

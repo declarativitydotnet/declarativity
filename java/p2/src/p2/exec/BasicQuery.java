@@ -7,22 +7,21 @@ import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
+import p2.types.operator.ScanJoin;
 import p2.types.table.Aggregation;
 import p2.types.table.Table;
+import p2.types.table.TableName;
 
 public class BasicQuery extends Query {
 	
 	private Aggregation aggregation;
 	
-	private Projection head;
-	
 	private List<Operator> body;
 
 	public BasicQuery(String program, String rule, Boolean delete,
-					  Predicate input, Projection head, List<Operator> body) {
-		super(program, rule, delete, input, head.predicate());
+					  Predicate event, Predicate head, List<Operator> body) {
+		super(program, rule, delete, event, head);
 		this.aggregation = null;
-		this.head        = head;
 		this.body        = body;
 	}
 	
@@ -33,7 +32,7 @@ public class BasicQuery extends Query {
 		for (Operator oper : body) {
 			query += " -> " + oper.toString();
 		}
-		query += " -> " + head.toString();
+		query += " -> " + output().toString();
 		return query;
 	}
 
@@ -44,15 +43,18 @@ public class BasicQuery extends Query {
 					                     " but got input tuples " + input.name());
 		}
 		
+		TupleSet tuples = new TupleSet(input.name());
 		for (Tuple tuple : input) {
+			tuple = tuple.clone();
 			tuple.schema(input().schema().clone());
+			tuples.add(tuple);
 		}
 		
 		for (Operator oper : body) {
-			input = (TupleSet) oper.evaluate(input);
+			tuples = (TupleSet) oper.evaluate(tuples);
 		}
 		
-		return head.evaluate(input);
+		return tuples;
 	}
 
 }

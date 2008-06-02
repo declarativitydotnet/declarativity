@@ -23,10 +23,10 @@ generic Clauses = (Clause void:";":Symbol)* ;
 
 Node Clause =
     <Rule>   Rule
+  / <Watch>  Watch
   / <Fact>   Fact
   / <Define> Definition
   / <Import> Import
-  / <Watch>  Watch
   ;
   
   
@@ -84,10 +84,10 @@ Pair<Node> TypeDefList = Type (void:",":Symbol Type)* ;
 
 generic Watch =
     <Global> void:"watch":Word void:"(":Symbol TableName void:")":Symbol
-  / <Flow> void:"watchmod":Word void:"(":Symbol TableName void:",":Symbol WatchFlow Spacing void:")":Symbol
+  / <Flow>   void:"watch":Word void:"(":Symbol TableName void:",":Symbol WatchFlow Spacing void:")":Symbol
   ;
 
-transient String WatchFlow = [a-zA-Z]+;
+transient String WatchFlow = [taeidrs]+;
 
 //----------------------------  TableFunction  --------------------------------------/
 

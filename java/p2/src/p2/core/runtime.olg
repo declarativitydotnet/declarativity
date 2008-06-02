@@ -23,6 +23,7 @@ cleanup delete schedule(Time, Program, Name, Insertions, Deletions) :-
 runnable runnable(Time, Program, Name, Insertions, Deletions) :-
 	strata(Program, Time, Priority),
 	schedule(Time, Program, Name, Insertions, Deletions),
+	schedule(Time, Program, Name, Insertions, Deletions),
 	priority(Program, Name, Priority);
 	
 /* Determine the current strata in the current time for all 
@@ -38,19 +39,21 @@ strata strata(Program, Time, min<Priority>) :-
 define(schedulePeriodic, {String, Long, Long, Long, Long, String});
 
 /* Schedule next periodic. */
+renewPeriodic
 schedulePeriodic(Id, Period, TTL, Count+1, Time+Period, Program) :-
-		clock#insert(Location, Time),
-		global::periodic(Id, Period, TTL, Count, Time, Program),
-		Count <= TTL;
+	clock#insert(Location, Time),
+	global::periodic(Id, Period, TTL, Count, Time, Program),
+	Count <= TTL;
 			
+initPeriodic 
 schedulePeriodic(Id, Period, TTL, Count+1, Time+1+Offset, Program) :-
-		compiler#insert(Program, Owner, File, Object),
-		clock(Location, Time),
-		global::periodic(Id, Period, TTL, Count, Offset, Program);
+	config(Time, Program, Object),
+	global::periodic(Id, Period, TTL, Count, Offset, Program);
 	
 /* Schedule the periodic and update its execution count. */
-schedulePeriodic global::periodic(Id, Period, TTL, Count, Time, Program) :-
-       				periodicScheduler(schedulePeriodic(Id, Period, TTL, Count, Time, Program));
+schedulePeriodic 
+global::periodic(Id, Period, TTL, Count, Time, Program) :-
+	periodicScheduler(schedulePeriodic(Id, Period, TTL, Count, Time, Program));
 
 
 /*******************************************************************/
@@ -58,23 +61,35 @@ schedulePeriodic global::periodic(Id, Period, TTL, Count, Time, Program) :-
 
 define(facts, {String, TableName, TupleSet});
 
-install facts(Program, Name, tupleset<Tuple>) :-
-			compiler#insert(Program, Owner, File, Object),
-			fact(Program, Name, Tuple);
+collectFacts 
+facts(Program, Name, tupleset<Tuple>) :-
+	compiler#insert(Program, Owner, File, Object),
+	fact(Program, Name, Tuple);
 	
-runfacts runnable(Time, Program, Name, Facts, null) :-
-			facts(Program, Name, Facts),
-			clock(Location, Time);
+installFacts1 
+runnable(Time, Program, Name, Facts, null) :-
+	facts(Program, Name, Facts), Program == "compile",
+	clock(Location, Time);
+	
+installFacts2 
+schedule(Time+1, Program, Name, Facts, null) :-
+	facts(Program, Name, Facts), Program != "compile",
+	clock(Location, Time);
 	
 /*******************************************************************/
 /*** Schedule compile */
 
-config runnable(Time, "compile", Set.name(), Set, null) :-
-		compiler#insert(Program, Owner, File, Object),
-		clock(Location, Time),
-		Object.plan() && Program != "compile",
-		Set := new TupleSet(new TableName("compile", "config"), Object.tuple());
+define(config, {Long, String, p2.lang.plan.Program});
 
-
-
-
+configProgram 
+config(Time, Program, Object) :-
+	compiler#insert(Program, Owner, File, Object),
+	clock(Location, Time),
+	Object.plan();
+		
+compileConfig 
+runnable(Time, "compile", Tuples.name(), Tuples, null) :-
+	config(Time, Program, Object),
+	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
+	
+	

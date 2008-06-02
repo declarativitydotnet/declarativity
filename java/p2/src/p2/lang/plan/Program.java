@@ -138,7 +138,6 @@ public class Program implements Comparable<Program> {
 				for (Tuple tuple : this.periodics) {
 					p2.core.System.periodic().force(tuple);
 				}
-				System.err.println("PERIODIC TABLE " + periodics);
 			}
 		} catch (BadKeyException e) {
 			e.printStackTrace();

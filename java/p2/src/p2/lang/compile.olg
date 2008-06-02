@@ -21,6 +21,7 @@ runtime::priority("compile", new TableName("runtime", "priority"),   2);
 
 /*******************************************************************/
 /*** Compile rules: Initialize program priority/strata **/
+watch(runtime::priority, i);
 
 /* Determine R/G graph dependencies. */
 dependency(ProgramName, Head.name(), Body.name()) :-

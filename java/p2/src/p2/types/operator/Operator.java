@@ -53,8 +53,14 @@ public abstract class Operator implements Comparable<Operator> {
 	
 	private final String identifier;
 	
+	protected String program;
+	
+	protected String rule;
+	
 	public Operator(String program, String rule) {
 		this.identifier = Operator.newID();
+		this.program = program;
+		this.rule = rule;
 		try {
 			Tuple me = new Tuple(Operator.table.name(), program, rule, 
 							     this.identifier, null, this);

@@ -12,6 +12,7 @@ import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.BadKeyException;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
@@ -201,6 +202,12 @@ public class Rule extends Clause {
 				}
 			}
 			
+			if (Program.watch.watched(program, event.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
+				operators.add(
+						new p2.types.operator.Watch(program, name, event.name(), 
+								                    p2.types.operator.Watch.Modifier.RECEIVE));
+			}
+			
 			if (function != null) {
 				operators.add(function.operator());
 				for (Term term : body) {
@@ -217,7 +224,15 @@ public class Rule extends Clause {
 				}
 			}
 			
-			queries.add(new BasicQuery(program, name, deletion, event, new Projection(this.head), operators));
+			operators.add(new Projection(this.head));
+			
+			if (Program.watch.watched(program, this.head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
+				operators.add(
+						new p2.types.operator.Watch(program, name, this.head.name(), 
+								                    p2.types.operator.Watch.Modifier.SEND));
+			}
+			
+			queries.add(new BasicQuery(program, name, deletion, event, this.head, operators));
 		}
 		else {
 			/* Perform delta rewrite. */
@@ -241,18 +256,31 @@ public class Rule extends Clause {
 					operators.add(efilter);
 				}
 				
+				if (Program.watch.watched(program, delta.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
+					operators.add(
+							new p2.types.operator.Watch(program, name, delta.name(), 
+									                    p2.types.operator.Watch.Modifier.RECEIVE));
+				}
+				
 				for (Term term2 : body) {
 					if (!term2.equals(delta)) {
 						operators.add(term2.operator());
 					}
 				}
 				
-				queries.add(new BasicQuery(program, name, deletion, delta, 
-							               new Projection(this.head), operators));
+				operators.add(new Projection(this.head));
+				if (Program.watch.watched(program, this.head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
+					operators.add(
+							new p2.types.operator.Watch(program, name, this.head.name(), 
+									                    p2.types.operator.Watch.Modifier.SEND));
+				}
+				
+				queries.add(new BasicQuery(program, name, deletion, delta, this.head, operators));
 			}
 			
 		}
 		return queries;
 	}
 	
+
 }
