@@ -59,6 +59,10 @@
 #include <boost/random/lagged_fibonacci.hpp>
 #include <boost/random/exponential_distribution.hpp>
 
+#include <boost/random/mersenne_twister.hpp>
+#include <prl/learning/em_mog.hpp>
+#include <prl/datastructure/array_dataset.hpp>
+
 #include <pstade/oven/algorithm.hpp>
 
 #include "prl/detail/shortcuts_def.hpp"

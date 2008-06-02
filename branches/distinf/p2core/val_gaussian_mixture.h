@@ -16,31 +16,20 @@
 #define __VAL_GAUSSIAN_MIXTURE_H__
  
 #include "value.h"
+#include "val_factor.h"
 #include "oper.h"
 #include <iostream>
 #include <string>
 
-#include <prl/variable.hpp>
-#include <prl/assignment.hpp>
-#include <prl/numeric.hpp>
 #include <prl/math/bindings/lapack.hpp>
-#include <prl/datastructure/array_dataset.hpp>
 #include <prl/factor/gaussian_factors.hpp>
-#include <prl/factor/table_factor.hpp>
 #include <prl/factor/mixture.hpp>
-#include "prl/detail/shortcuts_def.hpp"
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/lexical_cast.hpp>
-#include <prl/learning/em_mog.hpp>
-
 
 using namespace std;
 using namespace prl;
 
- 
-class Val_Gaussian_Mixture : public Value {    
+
+class Val_Gaussian_Mixture : public Val_Factor {
 
 public:
   //! The matrix representation
@@ -53,15 +42,14 @@ public:
   typedef moment_gaussian<matrix_type, vector_type> factor_type;
   
   typedef mixture< factor_type > mixture_type;
-  typedef em_mog< array_data<> > em_engine;
   
   // Required fields for all concrete types.
   // The type name
   const Value::TypeCode typeCode() const { return Value::GAUSSIAN_MIXTURE; };
   const char *typeName() const { return "gaussian_mixture"; };
-  // Print the matrix as a string.
+
+  // Print the mixture as a string.
   string toString() const ;
-  virtual string toConfString() const;
 
   // Marshal/unmarshal a matrix.
   void xdr_marshal_subtype( XDR *x );
@@ -69,14 +57,6 @@ public:
 
   // Constructors
   Val_Gaussian_Mixture() {};
-  Val_Gaussian_Mixture(string filename, int64_t dim, int64_t var, double regul) {
-    size_t k = 2;
-    boost::mt19937 rng;
-    var_vector v = u.new_vector_variables(var, dim); // var variables of dim dimensions
-    array_data<> data = load_plain< array_data<> >(filename, v);
-    engine(&data, k);
-    mixture = engine.initialize(rng, regul);
-  }
   Val_Gaussian_Mixture(const mixture_type& mixture) : mixture(mixture) { }
   virtual ~Val_Gaussian_Mixture() {};
 
@@ -85,7 +65,6 @@ public:
   // Factory
   static ValuePtr mk();
   static ValuePtr mk(const mixture_type& mixture);
-  static ValuePtr mk(string filename, int64_t dim, int64_t var, double regul); 
   
   // strict comparison
   int compareTo(ValuePtr v) const;
@@ -95,17 +74,17 @@ public:
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
          
   static const opr::Oper* oper_;
-  
-  //! The set of all variables known to this host.
-  static prl::universe u;
-  
-  //! Performs an iteration of EM and updates the estimates
-  ValuePtr emupdate();
+
+  prl::domain arguments() const;
+
+  ValuePtr multiply(ValuePtr other) const;
+
+  ValuePtr marginal(ListPtr retain) const;
+
+  ValuePtr normalize() const;
   
 private:
   mixture_type mixture;
-  double regul;
-  em_engine engine;
 };
 
 
