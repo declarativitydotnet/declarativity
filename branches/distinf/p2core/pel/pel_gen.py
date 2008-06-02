@@ -98,6 +98,7 @@ for op, ar, va, desc in [
   ("values", 1, "FACTOR_VALUES", "returns the values of a factor as a vector"),
   ("norm1", 2, "FACTOR_NORM1", "returns the sum of absolute differences between two factors"),
   ("norminf", 2, "FACTOR_NORM_INF", "returns the maximum of absolute differences between two factors"),
+  ("eminit", 3, "EM_INIT", "initializes the estimate gaussian mixture factor"),
  
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

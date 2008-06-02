@@ -47,6 +47,7 @@
 #include "val_matrix.h"
 #include "val_gaussian_factor.h"
 #include "val_table_factor.h"
+#include "val_gaussian_mixture.h"
 #include "oper.h"
 #include "loop.h"
 #include "set.h"
@@ -1232,6 +1233,24 @@ DEF_OP(FACTOR_NORM_INF) {
   stackPush(Val_Double::mk(norm_inf(x, y)));
 }
 
+// DEF_OP(EM_INIT) {
+//   using namespace prl;
+//   //! The vector representation
+//   typedef prl::math::bindings::lapack::double_vector vector_type;
+//   typedef em_mog< array_data<> > em_engine;
+//   
+//   int64_t var = pop_signed();
+//   int64_t dim = pop_signed();
+//   string filename = pop_string();
+//   size_t k = 2;
+//   double regul = 1e-8;
+//   boost::mt19937 rng;
+//   universe u;
+//   var_vector v = u.new_vector_variables(var, dim); // var variables of dim dimensions
+//   array_data<> data = load_plain< array_data<> >(filename, v);
+//   em_engine engine(&data, k);
+//   stackPush(Val_Gaussian_Mixture::mk(engine.initialize(rng, regul)));
+// }
 
 //
 // Experiment control
