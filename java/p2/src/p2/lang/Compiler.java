@@ -30,7 +30,9 @@ import xtc.util.Tool;
  * The driver for processesing the Overlog language.
  */
 public class Compiler extends Tool {
-	public static final String FILENAME = "src/p2/lang/compile.olg";
+	public static final String[] FILES =  {
+		"src/p2/lang/compile.olg", 
+		"src/p2/lang/stratachecker.olg"};
 
 	public static class CompileTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);

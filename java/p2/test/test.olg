@@ -11,10 +11,12 @@ define(event, {String, Float, Float});
 
 define(update, {String, String, String});
 
+/*
 watch(periodic, r);
 watch(event, r);
 watch(t1, i);
 watch(update, s);
+*/
 
 t1("test", "this", "fact");
 
@@ -27,4 +29,4 @@ rule2 t1(A, B, C) :- event(A, X, Y),
                      
 update(A, B, C) :- t1(A, B, C);
 
-event(C, 2.3, 3.4) :- update(A, B, C);
+event(C, 2.3, 3.4) :- update(A, B, C), notin t1(A, B, C);

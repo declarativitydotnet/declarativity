@@ -1,0 +1,33 @@
+program strataChecker;
+
+import p2.types.table.TableName;
+import java.lang.String;
+import java.lang.Integer;
+
+define(error, {String, TableName, TableName});
+
+watch(compile::checkStrata, r);
+watch(error, s);
+
+/* Verify strata for notin predicates. */
+public
+error(ProgramName, Parent.name(), Child.name()) :-
+	compile::checkStrata(ProgramName, Predicates),
+	predicate(ProgramName, Rule, 0, Event, Parent), 
+	predicate(ProgramName, Rule, Pos, Event, Child), 
+	Pos > 0, Child.notin(),
+	runtime::priority(ProgramName, Parent.name(), ParentStrata),
+	runtime::priority(ProgramName, Child.name(), ChildStrata),
+	ParentStrata <= ChildStrata;
+	
+/* Verify strata for aggregation predicates. */
+public
+error(ProgramName, Parent, Head.name()) :-
+	compile::checkStrata(ProgramName, Predicates),
+	predicate(ProgramName, Rule, 0, Event, Head), 
+	Head.containsAggregation(),
+	compile::dependency(ProgramName, Parent, Head.name()),
+	runtime::priority(ProgramName, Head.name(), HeadPriority),
+	runtime::priority(ProgramName, Parent, ParentPriority),
+	ParentPriority <= HeadPriority;
+	

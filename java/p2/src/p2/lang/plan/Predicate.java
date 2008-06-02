@@ -93,6 +93,15 @@ public class Predicate extends Term implements Iterable<Expression> {
 	public TableName name() {
 		return this.name;
 	}
+	
+	public boolean containsAggregation() {
+		for (Expression e : arguments) {
+			if (e instanceof Aggregate) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * An iterator over the predicate arguments.

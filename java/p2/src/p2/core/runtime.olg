@@ -11,16 +11,30 @@ import p2.types.table.TableName;
 define(runnable, {Long, String, TableName, TupleSet, TupleSet});
 define(strata, infinity, infinity, keys(0,1), {String, Long, Integer});
 define(priority, infinity, infinity, keys(0,1), {String, TableName, Integer});
+define(delta, {Long, String, TableName, TupleSet, TupleSet});
 
-next schedule(Time, Program, Name, Insertions, Deletions) :-
+reschedule
+schedule(Time, Program, Name, Insertions, Deletions) :-
+	delta(Time, Program, Name, Insertions, Deletions);
+
+schedulePublic
+schedule(Time, Program2, Name, Insertions, Deletions) :-
+	delta(Time, Program1, Name, Insertions, Deletions),
+	query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
+	Public && Input == Name;
+
+evaluate 
+delta(Time, Program, Name, Insertions, Deletions) :-
 	evaluate(runnable(Time, Program, Name, Insertions, Deletions));
 
 /* Delete what has been evaluated in the current clock. */
-cleanup delete schedule(Time, Program, Name, Insertions, Deletions) :-
-					runnable(Time, Program, Name, Insertions, Deletions);
+cleanup 
+delete schedule(Time, Program, Name, Insertions, Deletions) :-
+	runnable(Time, Program, Name, Insertions, Deletions);
 
 /* Identify the runnable tuples. */
-runnable runnable(Time, Program, Name, Insertions, Deletions) :-
+runnable 
+runnable(Time, Program, Name, Insertions, Deletions) :-
 	strata(Program, Time, Priority),
 	schedule(Time, Program, Name, Insertions, Deletions),
 	schedule(Time, Program, Name, Insertions, Deletions),
@@ -28,7 +42,8 @@ runnable runnable(Time, Program, Name, Insertions, Deletions) :-
 	
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
-strata strata(Program, Time, min<Priority>) :-
+strata 
+strata(Program, Time, min<Priority>) :-
 	clock(Location, Time),
 	schedule(Time, Program, Name, Insertions, Deletions),
 	priority(Program, Name, Priority);
@@ -63,7 +78,7 @@ define(facts, {String, TableName, TupleSet});
 
 collectFacts 
 facts(Program, Name, tupleset<Tuple>) :-
-	compiler#insert(Program, Owner, File, Object),
+	config(Time, Program, Object),
 	fact(Program, Name, Tuple);
 	
 installFacts1 

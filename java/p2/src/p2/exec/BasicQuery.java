@@ -18,9 +18,9 @@ public class BasicQuery extends Query {
 	
 	private List<Operator> body;
 
-	public BasicQuery(String program, String rule, Boolean delete,
+	public BasicQuery(String program, String rule, Boolean isPublic, Boolean isDelete,
 					  Predicate event, Predicate head, List<Operator> body) {
-		super(program, rule, delete, event, head);
+		super(program, rule, isPublic, isDelete, event, head);
 		this.aggregation = null;
 		this.body        = body;
 	}

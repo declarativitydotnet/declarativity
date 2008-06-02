@@ -1,11 +1,12 @@
 package p2.lang.plan;
 
 import p2.types.basic.Tuple;
+import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
 
 
 public class Aggregate extends Variable {
-	public final String STAR = "*";
+	public static final String STAR = "*";
 	
 	private String function;
 	
@@ -24,5 +25,18 @@ public class Aggregate extends Variable {
 	
 	public String functionName() {
 		return this.function;
+	}
+	
+	@Override
+	public TupleFunction function() {
+		return new TupleFunction() {
+			public Object evaluate(Tuple tuple) throws P2RuntimeException {
+				return name().equals(STAR) ? tuple.value(position()) : tuple.value(name());
+			}
+
+			public Class returnType() {
+				return type;
+			}
+		};
 	}
 }

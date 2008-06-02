@@ -17,10 +17,11 @@ public abstract class Query implements Comparable<Query> {
 	public static class QueryTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key();
 		
-		public enum Field{PROGRAM, RULE, DELETE, EVENT, INPUT, OUTPUT, OBJECT};
+		public enum Field{PROGRAM, RULE, PUBLIC, DELETE, EVENT, INPUT, OUTPUT, OBJECT};
 		public static final Class[] SCHEMA = {
 			String.class,     // Program name
 			String.class,     // Rule name
+			Boolean.class,    // Public query?
 			Boolean.class,    // Delete rule/query?
 			String.class,     // Event modifier
 			TableName.class,  // Input table name
@@ -41,7 +42,9 @@ public abstract class Query implements Comparable<Query> {
 	
 	private String rule;
 	
-	private Boolean delete;
+	private Boolean isPublic;
+	
+	private Boolean isDelete;
 	
 	private Table.Event event;
 	
@@ -49,16 +52,17 @@ public abstract class Query implements Comparable<Query> {
 	
 	private Predicate output;
 	
-	public Query(String program, String rule, Boolean delete, Predicate input, Predicate output) {
+	public Query(String program, String rule, Boolean isPublic, Boolean isDelete, Predicate input, Predicate output) {
 		this.program = program;
 		this.rule = rule;
-		this.delete = delete;
+		this.isPublic = isPublic;
+		this.isDelete = isDelete;
 		this.event  = input.event();
 		this.input = input;
 		this.output = output;
 		try {
 			p2.core.System.query().force(
-					new Tuple(program, rule, delete, 
+					new Tuple(program, rule, isPublic, isDelete, 
 							  event.toString(), input.name(), output.name(), this));
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block
@@ -85,8 +89,12 @@ public abstract class Query implements Comparable<Query> {
 		return this.rule;
 	}
 	
-	public boolean delete() {
-		return this.delete;
+	public boolean isDelete() {
+		return this.isDelete;
+	}
+	
+	public boolean isPublic() {
+		return this.isPublic;
 	}
 	
 	public Predicate input() {

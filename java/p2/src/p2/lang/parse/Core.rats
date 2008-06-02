@@ -42,8 +42,8 @@ generic Fact = TableName void:"(":Symbol ExpressionList void:")":Symbol;
 //----------------------------  Rules  --------------------------------------/
 
 generic Rule = 
-      null ("delete":Word)? RuleHead void:":-":Symbol RuleBody 
-    / Name ("delete":Word)? RuleHead void:":-":Symbol RuleBody 
+      ("public":Word)? null ("delete":Word)? RuleHead void:":-":Symbol RuleBody 
+    / ("public":Word)? Name ("delete":Word)? RuleHead void:":-":Symbol RuleBody 
     ;
 
 generic RuleHead = Predicate;

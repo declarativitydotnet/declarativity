@@ -34,11 +34,12 @@ public class Rule extends Clause {
 	public static class RuleTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0,1);
 		
-		public enum Field {PROGRAM, RULENAME, DELETION, OBJECT};
+		public enum Field {PROGRAM, RULENAME, PUBLIC, DELETE, OBJECT};
 		public static final Class[] SCHEMA =  {
 			String.class,             // Program name
 			String.class,             // Rule name
-			java.lang.Boolean.class,  // deletion rule?
+			java.lang.Boolean.class,  // public rule?
+			java.lang.Boolean.class,  // delete rule?
 			Rule.class                // Rule object
 		};
 
@@ -57,7 +58,8 @@ public class Rule extends Clause {
 			}
 			object.program   = (String) tuple.value(Field.PROGRAM.ordinal());
 			object.name      = (String) tuple.value(Field.RULENAME.ordinal());
-			object.deletion  = (java.lang.Boolean) tuple.value(Field.DELETION.ordinal());
+			object.isPublic  = (java.lang.Boolean) tuple.value(Field.PUBLIC.ordinal());
+			object.isDelete  = (java.lang.Boolean) tuple.value(Field.DELETE.ordinal());
 			return super.insert(tuple);
 		}
 		
@@ -71,7 +73,9 @@ public class Rule extends Clause {
 	
 	private String name;
 	
-	private java.lang.Boolean deletion;
+	private java.lang.Boolean isDelete;
+	
+	private java.lang.Boolean isPublic;
 	
 	private Predicate head;
 	
@@ -80,11 +84,12 @@ public class Rule extends Clause {
 	private boolean aggregation;
 	
 	public Rule(xtc.tree.Location location, String name, 
-			    java.lang.Boolean deletion, 
+			    java.lang.Boolean isPublic, java.lang.Boolean isDelete, 
 			    Predicate head, List<Term> body) {
 		super(location);
 		this.name = name;
-		this.deletion = deletion;
+		this.isPublic = isPublic;
+		this.isDelete = isDelete;
 		this.head = head;
 		this.body = body;
 		this.aggregation = false;
@@ -99,7 +104,8 @@ public class Rule extends Clause {
 	
 	@Override
 	public String toString() {
-		String value = name + (deletion ? " delete " : " ") + head + " :- \n";
+		String value = (isPublic ? "public " : "") + name + 
+		               (isDelete ? " delete " : " ") + head + " :- \n";
 		for (int i = 0; i < body.size(); i++) {
 			value += "\t" + body.get(i);
 			if (i + 1 < body.size()) {
@@ -137,7 +143,7 @@ public class Rule extends Clause {
 			this.body.get(i).set(program, this.name, i+1);
 		}
 		
-		Program.rule.force(new Tuple(program, name, deletion, this));
+		Program.rule.force(new Tuple(program, name, isPublic, isDelete, this));
 	}
 
 	public List<Query> query(TupleSet periodics) throws PlannerException {
@@ -232,7 +238,7 @@ public class Rule extends Clause {
 								                    p2.types.operator.Watch.Modifier.SEND));
 			}
 			
-			queries.add(new BasicQuery(program, name, deletion, event, this.head, operators));
+			queries.add(new BasicQuery(program, name, isPublic, isDelete, event, this.head, operators));
 		}
 		else {
 			/* Perform delta rewrite. */
@@ -275,7 +281,7 @@ public class Rule extends Clause {
 									                    p2.types.operator.Watch.Modifier.SEND));
 				}
 				
-				queries.add(new BasicQuery(program, name, deletion, delta, this.head, operators));
+				queries.add(new BasicQuery(program, name, isPublic, isDelete, delta, this.head, operators));
 			}
 			
 		}

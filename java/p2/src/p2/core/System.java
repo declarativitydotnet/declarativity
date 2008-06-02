@@ -89,9 +89,11 @@ public class System {
 			
 			driver = new Driver(program("runtime"), schedule, periodic, clock);
 			
-			TupleSet compilation = new TupleSet(compile.name());
-			compilation.add(new Tuple(null, "system", Compiler.FILENAME, null));
-			driver.evaluate(compilation);
+			for (String file : Compiler.FILES) {
+				TupleSet compilation = new TupleSet(compile.name());
+				compilation.add(new Tuple(null, "system", file, null));
+				driver.evaluate(compilation);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
@@ -101,9 +103,8 @@ public class System {
 	public static void main(String[] args) {
 		initialize();
 		bootstrap();
-		if (args.length > 0) {
-			install("user", args[0]);
-		}
+		for (int i = 0; i < args.length; i++)
+			install("user", args[i]);
 		driver.run();
 	}
 }

@@ -1,7 +1,9 @@
 package p2.core;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 import p2.exec.Query;
 import p2.lang.plan.Program;
@@ -142,7 +144,7 @@ public class Driver implements Runnable {
 								continue;
 							}
 							else if (result.name().equals(insertions.name())) {
-								if (query.delete()) {
+								if (query.isDelete()) {
 									deletions.addAll(result);
 								}
 								else {
@@ -150,7 +152,7 @@ public class Driver implements Runnable {
 								}
 							}
 							else {
-								if (query.delete()) {
+								if (query.isDelete()) {
 									continuation(continuations, time, program.name(), Table.Event.DELETE, result);
 								}
 								else {
@@ -245,7 +247,7 @@ public class Driver implements Runnable {
 	}
 	
 	/* Tasks that the driver needs to execute during the next clock. */
-	private Set<Task> tasks;
+	private List<Task> tasks;
 	
 	/** The schedule queue. */
 	private Program runtime;
@@ -257,7 +259,7 @@ public class Driver implements Runnable {
 	private Clock clock;
 
 	public Driver(Program runtime, Schedule schedule, Periodic periodic, Clock clock) {
-		this.tasks = new HashSet<Task>();
+		this.tasks = new ArrayList<Task>();
 		this.runtime = runtime;
 		this.schedule = schedule;
 		this.periodic = periodic;
@@ -282,15 +284,14 @@ public class Driver implements Runnable {
 				
 				if (min < Long.MAX_VALUE) {
 					try {
-						java.lang.System.err.println("============================ EVALUATE =============================");
-						java.lang.System.err.println("SCHEDULE " + schedule);
+						java.lang.System.err.println("============================ EVALUATE CLOCK[" + min + "] =============================");
 						evaluate(clock.time(min));
 						
 						for (Task task : tasks) {
 							evaluate(task.tuples());
 						}
 						tasks.clear();
-						java.lang.System.err.println("============================ ======== =============================");
+						java.lang.System.err.println("============================ ========================== =============================");
 					} catch (UpdateException e) {
 						e.printStackTrace();
 					}
