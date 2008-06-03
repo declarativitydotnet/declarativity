@@ -355,4 +355,5 @@ FUNCTIONDEF("f_emEngine", 4, "emengine")
 FUNCTIONDEF("f_emInit", 1, "eminit")
 FUNCTIONDEF("f_emUpdate", 2, "emupdate")
 FUNCTIONDEF("f_emLocalUpdate", 2, "emlocalupdate")
+FUNCTIONDEF("f_mNormalize", 2, "mNormalize")
 #undef FUNCTIONDEF
