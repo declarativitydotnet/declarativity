@@ -1,0 +1,26 @@
+program path;
+
+import java.lang.String;
+import java.lang.Integer;
+
+define(link, infinity, infinity, keys(0,1), {String, String});
+define(path, infinity, infinity, keys(1), {String, String, Integer});
+define(shortestPath, {String, String, Integer});
+
+/* 1 -> 2 -> 3 -> 4 */
+link("1", "2");
+link("2", "3");
+link("3", "4");
+
+/* 5 -> 6 -> 7 -> 8 -> 9 */
+link("5", "6");
+link("6", "7");
+link("7", "8");
+link("8", "9");
+
+watch(path, i);
+watch(shortestPath, i);
+
+path(Source, Destination, 1) :- link(Source, Destination);
+path(Source, Destination, Hops+1) :- path(Source, Intermediate, Hops), link(Intermediate, Destination);
+shortestPath(Source, Destination, min<Hops>) :- path(Source, Destination, Hops);

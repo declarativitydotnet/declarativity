@@ -11,9 +11,6 @@ define(event, {String, Float, Float});
 
 define(update, {String, String, String});
 
-watch(event, r);
-watch(periodic, i);
-
 /*
 watch(periodic, r);
 watch(event, r);
