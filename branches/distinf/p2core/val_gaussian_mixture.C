@@ -108,7 +108,8 @@ int Val_Gaussian_Mixture::compareTo(ValuePtr other) const
   else if(other->typeCode() > Value::GAUSSIAN_MIXTURE)
     return 1;
   else
-    assert(false); // we should not be comparing Gaussian Mixtures for now
+    // we only support equality comparisons for now
+    return mixture != Val_Gaussian_Mixture::cast(other);
 }
 
 prl::domain Val_Gaussian_Mixture::arguments() const
