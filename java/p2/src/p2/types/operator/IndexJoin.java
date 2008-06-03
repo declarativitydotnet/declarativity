@@ -5,6 +5,7 @@ import java.util.List;
 
 import p2.lang.plan.Predicate;
 import p2.lang.plan.Variable;
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.BadKeyException;
@@ -14,19 +15,14 @@ import p2.types.table.Key;
 
 public class IndexJoin extends Join {
 	
+	private Key lookupKey;
+	
 	private Index index;
 	
-	private List<String> names;
-	
-	public IndexJoin(Predicate predicate, Index index) {
-		super(predicate);
+	public IndexJoin(Predicate predicate, Schema input, Key lookupKey, Index index) {
+		super(predicate, input);
+		this.lookupKey = lookupKey;
 		this.index = index;
-		this.names = new ArrayList<String>();
-		List<Variable> variables = predicate.schema().variables();
-		for (Integer i : index.key()) {
-			this.names.add(variables.get(i).name());
-		}
-		
 	}
 	
 	@Override
@@ -38,18 +34,9 @@ public class IndexJoin extends Join {
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		TupleSet result = new TupleSet();
 		for (Tuple outer : tuples) {
-			Key key = new Key();
-			for (String name : this.names) {
-				int position = outer.schema().position(name);
-				if (position < 0) {
-					throw new P2RuntimeException("Variable " + name + 
-							" does not exist in probe tuple schema " + outer.schema());
-				}
-				key.add(position);
-			}
-			
-			for (Tuple inner : this.index.lookup(key, outer)) {
+			for (Tuple inner : this.index.lookup(this.lookupKey, outer)) {
 				if (validate(outer, inner)) {
+					inner.schema(this.predicate.schema().clone());
 					Tuple join = outer.join(inner);
 					if (join != null) {
 						result.add(join);

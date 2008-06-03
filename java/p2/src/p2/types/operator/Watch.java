@@ -72,8 +72,8 @@ public class Watch extends Operator {
 	}
 
 	@Override
-	public Schema schema(Schema input) {
-		return input;
+	public Schema schema() {
+		return null;
 	}
 
 	@Override

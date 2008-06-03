@@ -90,8 +90,8 @@ public class EventFilter extends Operator {
 	}
 
 	@Override
-	public Schema schema(Schema input) {
-		return this.predicate.schema();
+	public Schema schema() {
+		return this.predicate.schema().clone();
 	}
 
 	@Override

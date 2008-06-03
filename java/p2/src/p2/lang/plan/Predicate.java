@@ -14,8 +14,11 @@ import p2.types.basic.TypeList;
 import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.operator.AntiScanJoin;
+import p2.types.operator.IndexJoin;
 import p2.types.operator.Operator;
 import p2.types.operator.ScanJoin;
+import p2.types.table.HashIndex;
+import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
@@ -144,13 +147,42 @@ public class Predicate extends Term implements Iterable<Expression> {
 	}
 
 	@Override
-	public Operator operator() {
-		// TODO Add code that searches for an index join
+	public Operator operator(Schema input) {
+		/* Determine the join and lookup keys. */
+		Key lookupKey = new Key();
+		Key indexKey  = new Key();
+		for (Variable var : this.schema.variables()) {
+			if (input.contains(var)) {
+				indexKey.add(var.position());
+				lookupKey.add(input.variable(var.name()).position());
+			}
+		}
 		
 		if (notin) {
-			return new AntiScanJoin(this);
+			return new AntiScanJoin(this, input);
 		}
-		return new ScanJoin(this);
+		
+		Table table = Table.table(this.name);
+		Index index = null;
+		if (indexKey.size() > 0) {
+			if (table.primary().key().equals(indexKey)) {
+				index = table.primary();
+			}
+			else if (table.secondary().contains(indexKey)) {
+				index = table.secondary().get(indexKey);
+			}
+			else {
+				index = new HashIndex(table, indexKey, Index.Type.SECONDARY);
+				table.secondary().put(indexKey, index);
+			}
+		}
+		
+		if (index != null) {
+			return new IndexJoin(this, input, lookupKey, index);
+		}
+		else {
+			return new ScanJoin(this, input);
+		}
 	}
 	
 	@Override

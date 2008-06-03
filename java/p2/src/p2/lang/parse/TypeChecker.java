@@ -1095,8 +1095,10 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitRangeExpression(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(1));
+		if (type == Error.class) return Error.class;
 		assert(Expression.class.isAssignableFrom(type));
 		type = (Class) dispatch(n.getNode(2));
+		if (type == Error.class) return Error.class;
 		assert(Expression.class.isAssignableFrom(type));
 		
 		Expression begin = (Expression) n.getNode(1).getProperty(Constants.TYPE);
@@ -1147,6 +1149,7 @@ public final class TypeChecker extends Visitor {
 		String oper = n.getString(1);
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
+		if (ltype == Error.class || rtype == Error.class) return Error.class;
 		assert(Expression.class.isAssignableFrom(ltype) && 
 			   Expression.class.isAssignableFrom(rtype));
 		
@@ -1174,6 +1177,7 @@ public final class TypeChecker extends Visitor {
 	public Class visitAdditiveExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
+		if (ltype == Error.class || rtype == Error.class) return Error.class;
 		assert(Expression.class.isAssignableFrom(ltype) && 
 			   Expression.class.isAssignableFrom(rtype));
 		
@@ -1194,6 +1198,16 @@ public final class TypeChecker extends Visitor {
 			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
 			return p2.lang.plan.Math.class;
 		}
+		else if (String.class.isAssignableFrom(lhs.type()) && 
+			     String.class.isAssignableFrom(rhs.type())) {
+			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
+			return p2.lang.plan.Math.class;
+		}
+		else if (Set.class.isAssignableFrom(lhs.type()) && 
+			     Set.class.isAssignableFrom(rhs.type())) {
+			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
+			return p2.lang.plan.Math.class;
+		}
 		runtime.error("Type mismatch: " + lhs.type() + 
 				" " + oper + " " + rhs.type(), n);
 		return Error.class;
@@ -1202,6 +1216,7 @@ public final class TypeChecker extends Visitor {
 	public Class visitMultiplicativeExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
+		if (ltype == Error.class || rtype == Error.class) return Error.class;
 		assert(Expression.class.isAssignableFrom(ltype) && 
 			   Expression.class.isAssignableFrom(rtype));
 		

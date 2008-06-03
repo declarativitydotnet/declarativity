@@ -1,6 +1,7 @@
 package p2.types.operator;
 
 import p2.lang.plan.Predicate;
+import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
@@ -10,8 +11,8 @@ public class ScanJoin extends Join {
 	
 	public Table table;
 	
-	public ScanJoin(Predicate predicate) {
-		super(predicate);
+	public ScanJoin(Predicate predicate, Schema input) {
+		super(predicate, input);
 		this.table = Table.table(predicate.name());
 	}
 	

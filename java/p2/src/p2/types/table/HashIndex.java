@@ -20,6 +20,9 @@ public class HashIndex extends Index {
 	public HashIndex(Table table, Key key, Type type) {
 		super(table, key, type);
 		map = new HashMap<Tuple, TupleSet>();
+		for (Tuple tuple : table.tuples()) {
+			insert(tuple);
+		}
 	}
 	
 	@Override

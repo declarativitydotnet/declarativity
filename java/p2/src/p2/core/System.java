@@ -32,6 +32,8 @@ public class System {
 	
 	private static Periodic periodic;
 	
+	private static Log log;
+	
 	private static Hashtable<String, Program> programs;
 	
 	public static void initialize() {
@@ -42,6 +44,7 @@ public class System {
 		schedule   = new Schedule();
 		clock      = new Clock("localhost");
 		periodic   = new Periodic(schedule);
+		log        = new Log(java.lang.System.err);
 		programs   = new Hashtable<String, Program>();
 	}
 	

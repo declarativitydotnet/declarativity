@@ -13,9 +13,16 @@ public class Assign extends Operator {
 	
 	private p2.lang.plan.Assignment assignment;
 	
-	public Assign(p2.lang.plan.Assignment assignment) {
+	private Schema schema;
+	
+	public Assign(p2.lang.plan.Assignment assignment, Schema input) {
 		super(assignment.program(), assignment.rule());
 		this.assignment = assignment;
+		this.schema = input.clone();
+		
+		if (!this.schema.contains(this.assignment.variable())) {
+			this.schema.append(this.assignment.variable());
+		}
 	}
 	
 	@Override
@@ -36,13 +43,9 @@ public class Assign extends Operator {
 		return deltas;
 	}
 	
-	public Schema schema(Schema input) {
-		input = input.clone();
-		if (input.contains(this.assignment.variable())) {
-			return input;
-		}
-		input.append(this.assignment.variable());
-		return input;
+	@Override
+	public Schema schema() {
+		return this.schema;
 	}
 
 	@Override

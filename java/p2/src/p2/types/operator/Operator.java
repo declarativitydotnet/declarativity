@@ -80,7 +80,7 @@ public abstract class Operator implements Comparable<Operator> {
 	
 	public abstract TupleSet evaluate(TupleSet tuples) throws P2RuntimeException;
 
-	public abstract Schema schema(Schema input);
+	public abstract Schema schema();
 	
 	public abstract Set<Variable> requires();
 }

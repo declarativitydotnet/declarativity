@@ -13,9 +13,12 @@ public class Selection extends Operator {
 	
 	private p2.lang.plan.Selection selection;
 	
-	public Selection(p2.lang.plan.Selection selection) {
+	private Schema schema;
+	
+	public Selection(p2.lang.plan.Selection selection, Schema input) {
 		super(selection.program(), selection.rule());
 		this.selection = selection;
+		this.schema = input.clone();
 	}
 
 	@Override
@@ -36,8 +39,8 @@ public class Selection extends Operator {
 	}
 
 	@Override
-	public Schema schema(Schema input) {
-		return input.clone();
+	public Schema schema() {
+		return this.schema;
 	}
 
 	@Override

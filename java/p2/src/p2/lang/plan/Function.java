@@ -55,7 +55,7 @@ public class Function extends Term {
 	}
 
 	@Override
-	public Operator operator() {
+	public Operator operator(Schema input) {
 		return new p2.types.operator.Function(function, predicate);
 	}
 

@@ -43,7 +43,7 @@ public class Function extends Operator {
 	}
 
 	@Override
-	public Schema schema(Schema input) {
+	public Schema schema() {
 		return predicate.schema().clone();
 	}
 

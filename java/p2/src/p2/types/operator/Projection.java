@@ -48,7 +48,7 @@ public class Projection extends Operator {
 	}
 
 	@Override
-	public Schema schema(Schema input) {
+	public Schema schema() {
 		return this.predicate.schema();
 	}
 

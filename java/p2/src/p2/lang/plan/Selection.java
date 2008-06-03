@@ -65,8 +65,8 @@ public class Selection extends Term {
 	}
 
 	@Override
-	public Operator operator() {
-		return new p2.types.operator.Selection(this);
+	public Operator operator(Schema input) {
+		return new p2.types.operator.Selection(this, input);
 	}
 
 	@Override

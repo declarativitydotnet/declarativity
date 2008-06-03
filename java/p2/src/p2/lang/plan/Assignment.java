@@ -75,8 +75,8 @@ public class Assignment extends Term {
 	}
 
 	@Override
-	public Operator operator() {
-		return new Assign(this);
+	public Operator operator(Schema input) {
+		return new Assign(this, input);
 	}
 
 	@Override

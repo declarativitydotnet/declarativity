@@ -61,17 +61,21 @@ public abstract class Join extends Operator {
 	
 	protected Predicate predicate;
 	
+	protected Schema schema;
+	
 	private List<JoinFilter> filters;
 	
-	public Join(Predicate predicate) {
+	public Join(Predicate predicate, Schema input) {
 		super(predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.filters = filters(predicate);
+		this.schema = input.join(predicate.schema());
+		
 	}
 	
 	@Override
-	public Schema schema(Schema outer) {
-		return outer.join(predicate.schema());
+	public Schema schema() {
+		return this.schema;
 	}
 
 	@Override

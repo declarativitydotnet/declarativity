@@ -215,17 +215,23 @@ public class Rule extends Clause {
 			}
 			
 			if (function != null) {
-				operators.add(function.operator());
+				Schema schema = function.predicate().schema().clone();
+				operators.add(function.operator(schema));
 				for (Term term : body) {
 					if (!term.equals(function)) {
-						operators.add(term.operator());
+						Operator oper = term.operator(schema);
+						operators.add(oper);
+						schema = oper.schema();
 					}
 				}
 			}
 			else {
+				Schema schema = event.schema().clone();
 				for (Term term : body) {
 					if (!term.equals(event)) {
-						operators.add(term.operator());
+						Operator oper = term.operator(schema);
+						operators.add(oper);
+						schema = oper.schema();
 					}
 				}
 			}
@@ -268,9 +274,12 @@ public class Rule extends Clause {
 									                    p2.types.operator.Watch.Modifier.RECEIVE));
 				}
 				
+				Schema schema = delta.schema().clone();
 				for (Term term2 : body) {
 					if (!term2.equals(delta)) {
-						operators.add(term2.operator());
+						Operator oper = term2.operator(schema);
+						operators.add(oper);
+						schema = oper.schema();
 					}
 				}
 				
