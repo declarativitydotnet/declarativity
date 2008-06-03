@@ -73,6 +73,9 @@ boost::lagged_fibonacci607 rng_fibonacci;
 using namespace opr;
 typedef Val_Gaussian_Factor::canonical_gaussian canonical_gaussian;
 
+typedef prl::em_mog< prl::array_data<> > em_type;
+em_type* em_engine = NULL; 
+
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
 
 struct JumpTableEnt_t {
@@ -1233,24 +1236,49 @@ DEF_OP(FACTOR_NORM_INF) {
   stackPush(Val_Double::mk(norm_inf(x, y)));
 }
 
-// DEF_OP(EM_INIT) {
-//   using namespace prl;
-//   //! The vector representation
-//   typedef prl::math::bindings::lapack::double_vector vector_type;
-//   typedef em_mog< array_data<> > em_engine;
-//   
-//   int64_t var = pop_signed();
-//   int64_t dim = pop_signed();
-//   string filename = pop_string();
-//   size_t k = 2;
-//   double regul = 1e-8;
-//   boost::mt19937 rng;
-//   universe u;
-//   var_vector v = u.new_vector_variables(var, dim); // var variables of dim dimensions
-//   array_data<> data = load_plain< array_data<> >(filename, v);
-//   em_engine engine(&data, k);
-//   stackPush(Val_Gaussian_Mixture::mk(engine.initialize(rng, regul)));
-// }
+// Takes four arguments:
+// the filename, the variable name, the dimension, the number of clusters
+DEF_OP(EM_ENGINE) {
+  using namespace prl;
+
+  //! The vector representation
+  typedef math::bindings::lapack::double_vector vector_type;
+  
+  string filename = pop_string();
+  string varname = pop_string();
+  int64_t vardim = pop_signed();
+  int64_t k = pop_signed();
+
+  var_vector v;
+  v.push_back(Val_Factor::registerVectorVariable(varname, vardim));
+  
+  array_data<>* data = new array_data<>(load_plain<array_data<> >(filename, v));
+  assert(em_engine == NULL);
+  em_engine = new em_type(data, k);
+  stackPush(Val_Int64::mk(1));
+}
+
+typedef Val_Gaussian_Mixture::mixture_type mixture_type;
+
+// Takes one argument: the regularization parameter
+DEF_OP(EM_INIT) {
+  double regul = pop_double();
+  boost::mt19937 rng;
+  assert(em_engine != NULL);
+  mixture_type mixture(em_engine->initialize(rng, regul));
+  stackPush(Val_Gaussian_Mixture::mk(mixture));
+}
+
+// Takes the current mixture and regularization 
+// and returns the mixture after one update
+DEF_OP(EM_UPDATE) {
+  ValuePtr val = stackTop(); stackPop();
+  double regul = pop_double();
+  mixture_type mixture = Val_Gaussian_Mixture::cast(val);
+  assert(em_engine != NULL);
+  em_engine->expectation(mixture);
+  stackPush(Val_Gaussian_Mixture::mk(em_engine->maximization(regul)));
+}
 
 //
 // Experiment control

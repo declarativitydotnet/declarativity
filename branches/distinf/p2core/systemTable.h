@@ -350,6 +350,8 @@ FUNCTIONDEF("f_timerRestart", 0, "timerRestart")
 FUNCTIONDEF("f_timerElapsed", 0, "timerElapsed")
 FUNCTIONDEF("f_toDouble", 1, "->dbl")
 FUNCTIONDEF("f_toInt", 1, "->i64")
-FUNCTIONDEF("f_emInit", 3, "eminit")
- 
+FUNCTIONDEF("f_emEngine", 4, "emengine")
+FUNCTIONDEF("f_emInit", 1, "eminit")
+FUNCTIONDEF("f_emUpdate", 2, "emupdate")
+
 #undef FUNCTIONDEF

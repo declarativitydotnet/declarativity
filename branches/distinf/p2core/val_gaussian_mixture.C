@@ -23,6 +23,7 @@
 
 #include "prl/detail/shortcuts_def.hpp"
 
+using namespace std;
 
 class OperGaussianMixture : public opr::OperCompare<Val_Gaussian_Mixture> {
 };

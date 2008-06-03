@@ -25,23 +25,19 @@
 #include <prl/factor/gaussian_factors.hpp>
 #include <prl/factor/mixture.hpp>
 
-using namespace std;
-using namespace prl;
-
-
 class Val_Gaussian_Mixture : public Val_Factor {
 
 public:
   //! The matrix representation
-  typedef math::bindings::lapack::double_matrix matrix_type;
+  typedef prl::math::bindings::lapack::double_matrix matrix_type;
 
   //! The vector representation
-  typedef math::bindings::lapack::double_vector vector_type;
+  typedef prl::math::bindings::lapack::double_vector vector_type;
 
   //! The type of factors stored in this value
-  typedef moment_gaussian<matrix_type, vector_type> factor_type;
+  typedef prl::moment_gaussian<matrix_type, vector_type> factor_type;
   
-  typedef mixture< factor_type > mixture_type;
+  typedef prl::mixture< factor_type > mixture_type;
   
   // Required fields for all concrete types.
   // The type name
