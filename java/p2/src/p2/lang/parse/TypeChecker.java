@@ -786,8 +786,8 @@ public final class TypeChecker extends Visitor {
 
 			/* Ensure the type matches the schema definition. */
 			if (!subtype(schema.get(index), param.type())) {
-				runtime.error("Predicate " + name + " argument " + index
-								+ " type " + param.type() + " does not match type " 
+				runtime.error("Predicate " + name + " argument " + param.getClass() + " " + param
+								+ " has type " + param.type() + " does not match type " 
 								+ schema.get(index) + " in schema.", n);
 				return Error.class;
 			}
@@ -1321,8 +1321,8 @@ public final class TypeChecker extends Visitor {
 				runtime.warning("Assuming " + var.name() + 
 						        " is not a variable but rather refers the class type of " + 
 						        type(var.name()), n);
-				n.setProperty(Constants.TYPE, type(var.name()));
-				return Class.class;
+				n.getNode(0).setProperty(Constants.TYPE, type(var.name()));
+				type = Class.class;
 			}
 		}
 		
@@ -1369,7 +1369,7 @@ public final class TypeChecker extends Visitor {
 			
 			/* Check if it's a subclass. */
 			for (Class sub : type.getClasses()) {
-				if (sub.getCanonicalName().equals(type.getName() + "." + name)) {
+				if (sub.getSimpleName().equals(name)) {
 					n.setProperty(Constants.TYPE, sub);
 					return Class.class;
 				}

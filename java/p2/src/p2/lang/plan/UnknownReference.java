@@ -1,5 +1,6 @@
 package p2.lang.plan;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import p2.types.function.TupleFunction;
@@ -24,6 +25,6 @@ public class UnknownReference extends Reference {
 
 	@Override
 	public Set<Variable> variables() {
-		return object != null ? object.variables() : null;
+		return object != null ? object.variables() : new HashSet<Variable>();
 	}
 }

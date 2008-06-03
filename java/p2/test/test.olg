@@ -12,7 +12,7 @@ define(event, {String, Float, Float});
 define(update, {String, String, String});
 
 watch(event, r);
-watch(t1, i);
+watch(periodic, i);
 
 /*
 watch(periodic, r);
@@ -23,15 +23,23 @@ watch(update, s);
 
 t1("test", "this", "fact");
 
+r1
 event(Id, 1.0, 2.0) :-  periodic(Id, 2L);
 
+r2
 event(Id, 5.0, 5.0) :- periodic(Id, 3L, 1L, 4L);
 
+r3
 t1(A, B, C) :- event(A, X, Y), 
                      Y in [1.0, 5.0],
                      B := X.toString(),
                      C := Y.toString();
                      
+r4
 update(A, B, C) :- t1(A, B, C);
 
-event(C, 2.3, 3.4) :- update(A, B, C), notin t1(A, B, C);
+r5
+event(C, 2.3, 3.4) :- 
+	update(A, B, C), notin t1(A, B, C);
+	
+	

@@ -1,5 +1,6 @@
 program strataChecker;
 
+import p2.core.Log;
 import p2.types.table.TableName;
 import java.lang.String;
 import java.lang.Integer;
@@ -29,7 +30,7 @@ error(Program, Rule, Parent, ParentStrata, Head.name(), HeadStrata) :-
 	ParentStrata <= HeadStrata;
 	
 	
-log(Time, Program, Rule, Msg) :-
+log(Time, Program, Rule, Log.Type.WARNING, Msg) :-
 	error(Program, Rule, Parent, ParentStrata, Child, ChildStrata),
 	clock(Location, Time),
 	Msg := "Strata error: Predicate " + 

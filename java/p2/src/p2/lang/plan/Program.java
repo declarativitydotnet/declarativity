@@ -147,8 +147,6 @@ public class Program implements Comparable<Program> {
 			return false;
 		}
 		return true;
-
-		/* TODO Register all watch statements. */
 	}
 
 	public int compareTo(Program o) {

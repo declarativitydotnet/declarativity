@@ -21,7 +21,7 @@ schedulePublic
 schedule(Time, Program2, Name, Insertions, Deletions) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
 	query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
-	Public && Input == Name;
+	Public && Input == Name, Program1 != Program2;
 
 evaluate 
 delta(Time, Program, Name, Insertions, Deletions) :-
@@ -35,8 +35,7 @@ delete schedule(Time, Program, Name, Insertions, Deletions) :-
 /* Identify the runnable tuples. */
 runnable 
 runnable(Time, Program, Name, Insertions, Deletions) :-
-	strata(Program, Time, Priority),
-	schedule(Time, Program, Name, Insertions, Deletions),
+	strata#insert(Program, Time, Priority),
 	schedule(Time, Program, Name, Insertions, Deletions),
 	priority(Program, Name, Priority);
 	
