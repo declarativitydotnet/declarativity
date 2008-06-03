@@ -11,6 +11,9 @@ define(event, {String, Float, Float});
 
 define(update, {String, String, String});
 
+watch(event, r);
+watch(t1, i);
+
 /*
 watch(periodic, r);
 watch(event, r);
@@ -20,9 +23,11 @@ watch(update, s);
 
 t1("test", "this", "fact");
 
-rule1 event(Id, 1.0, 2.0) :-  periodic(Id, 2L);
+event(Id, 1.0, 2.0) :-  periodic(Id, 2L);
 
-rule2 t1(A, B, C) :- event(A, X, Y), 
+event(Id, 5.0, 5.0) :- periodic(Id, 3L, 1L, 4L);
+
+t1(A, B, C) :- event(A, X, Y), 
                      Y in [1.0, 5.0],
                      B := X.toString(),
                      C := Y.toString();

@@ -714,11 +714,6 @@ public final class TypeChecker extends Visitor {
 				index++;
 			}
 			
-			if (index == Periodic.Field.COUNT.ordinal()) { // Execution Count
-				parameters.add(new Value<Long>(new Long(0)));
-				index++;
-			}
-			
 			if (index == Periodic.Field.TIME.ordinal()) { // Start time
 				parameters.add(new Value<Long>(0L));
 				index++;
@@ -731,6 +726,12 @@ public final class TypeChecker extends Visitor {
 				}
 			}
 			
+			if (index == Periodic.Field.COUNT.ordinal()) { // Execution Count
+				parameters.add(new Value<Long>(new Long(0)));
+				index++;
+			}
+			
+
 			if (index == Periodic.Field.PROGRAM.ordinal()) { // Program name
 				parameters.add(new Value<String>(this.program.name()));
 				index++;

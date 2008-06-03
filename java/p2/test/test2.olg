@@ -1,0 +1,14 @@
+program test2;
+
+import java.lang.String;
+
+define(t2, infinity, infinity, keys(1), 
+ {string, string, string});
+
+/*
+watch(t2, i);
+watch(test::update, r);
+*/
+
+public
+t2(A, B, C) :- test::update(A, B, C);

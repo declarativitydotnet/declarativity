@@ -50,13 +50,13 @@ public class Periodic extends ObjectTable {
 	
 	public static final Key PRIMARY_KEY = new Key(0);
 	
-	public enum Field {IDENTIFIER, PERIOD, TTL, COUNT, TIME, PROGRAM};
+	public enum Field {IDENTIFIER, PERIOD, TTL, TIME, COUNT, PROGRAM};
 	public static final Class[] SCHEMA = { 
 		String.class, // Identifier
 		Long.class,   // Period
 		Long.class,   // TTL
-		Long.class,   // Count
 		Long.class,   // Time
+		Long.class,   // Count
 		String.class  // Program
 	};
 	
