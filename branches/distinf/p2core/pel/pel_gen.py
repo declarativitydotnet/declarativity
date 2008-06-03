@@ -103,6 +103,7 @@ for op, ar, va, desc in [
   ("eminit", 1, "EM_INIT", "initializes the estimate gaussian mixture factor"),
   ("emupdate", 2, "EM_UPDATE", "performs one EM update"),
   ("emlocalupdate", 2, "EM_LOCAL_UPDATE", "performs local EM update"),
+  ("mNormalize", 2, "M_NORMALIZE", "normalizes mixture"),
 
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

@@ -1310,6 +1310,25 @@ DEF_OP(EM_LOCAL_UPDATE) {
   stackPush(Val_Gaussian_Mixture::mk(em_engine->local_maximization()));
 }
 
+DEF_OP(M_NORMALIZE) {
+  using namespace prl;
+  ValuePtr val = stackTop(); stackPop();
+  double regul = pop_double();
+  mixture_type mixture = Val_Gaussian_Mixture::cast(val);
+  assert(em_engine != NULL);
+
+  // Normalize the component parameters
+  for(size_t i = 0; i < mixture.size(); i++) {
+    double norm = mixture[i].norm_constant();
+    mixture[i].mean() /= norm;
+    mixture[i].covariance() /= norm;
+    mixture[i].covariance() +=
+      identity_matrix<double>(mixture[i].size()) * regul;
+  }
+
+  mixture.normalize();
+  stackPush(Val_Gaussian_Mixture::mk(mixture));
+}
 //
 // Experiment control
 //
