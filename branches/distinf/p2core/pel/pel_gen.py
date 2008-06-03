@@ -98,9 +98,11 @@ for op, ar, va, desc in [
   ("values", 1, "FACTOR_VALUES", "returns the values of a factor as a vector"),
   ("norm1", 2, "FACTOR_NORM1", "returns the sum of absolute differences between two factors"),
   ("norminf", 2, "FACTOR_NORM_INF", "returns the maximum of absolute differences between two factors"),
+  ("addparams", 2, "ADD_PARAMS", "adds parameters of two mixture statistixs"),
   ("emengine", 4, "EM_ENGINE", "initializes the expectation maximization engine"),
   ("eminit", 1, "EM_INIT", "initializes the estimate gaussian mixture factor"),
   ("emupdate", 2, "EM_UPDATE", "performs one EM update"),
+  ("emlocalupdate", 2, "EM_LOCAL_UPDATE", "performs local EM update"),
 
   ("not",1, 	"NOT",          "Boolean negation"),
   ("and",2,	"AND",          "Boolean AND"),

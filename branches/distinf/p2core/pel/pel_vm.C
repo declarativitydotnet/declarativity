@@ -1236,6 +1236,15 @@ DEF_OP(FACTOR_NORM_INF) {
   stackPush(Val_Double::mk(norm_inf(x, y)));
 }
 
+typedef Val_Gaussian_Mixture::mixture_type mixture_type;
+
+// Takes two mixture aggregates and combines their parameters
+DEF_OP(ADD_PARAMS) {
+  mixture_type m1 = Val_Gaussian_Mixture::cast(stackTop()); stackPop();
+  mixture_type m2 = Val_Gaussian_Mixture::cast(stackTop()); stackPop();
+  stackPush(Val_Gaussian_Mixture::mk(m1.add_parameters(m2)));
+}           
+
 // Takes four arguments:
 // the filename, the variable name, the dimension, the number of clusters
 DEF_OP(EM_ENGINE) {
@@ -1258,8 +1267,6 @@ DEF_OP(EM_ENGINE) {
   stackPush(Val_Int64::mk(1));
 }
 
-typedef Val_Gaussian_Mixture::mixture_type mixture_type;
-
 // Takes one argument: the regularization parameter
 DEF_OP(EM_INIT) {
   double regul = pop_double();
@@ -1278,6 +1285,29 @@ DEF_OP(EM_UPDATE) {
   assert(em_engine != NULL);
   em_engine->expectation(mixture);
   stackPush(Val_Gaussian_Mixture::mk(em_engine->maximization(regul)));
+}
+
+// Takes the aggregate mixture and regularization and
+// and returns the local mixture aggregate
+DEF_OP(EM_LOCAL_UPDATE) {
+  using namespace prl;
+  ValuePtr val = stackTop(); stackPop();
+  double regul = pop_double();
+  mixture_type mixture = Val_Gaussian_Mixture::cast(val);
+  assert(em_engine != NULL);
+
+  // Normalize the component parameters
+  for(size_t i = 0; i < mixture.size(); i++) {
+    double norm = mixture[i].norm_constant();
+    mixture[i].mean() /= norm;
+    mixture[i].covariance() /= norm;
+    mixture[i].covariance() +=
+      identity_matrix<double>(mixture[i].size()) * regul;
+  }
+
+  mixture.normalize();
+  em_engine->expectation(mixture);
+  stackPush(Val_Gaussian_Mixture::mk(em_engine->local_maximization()));
 }
 
 //
