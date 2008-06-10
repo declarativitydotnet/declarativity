@@ -23,7 +23,7 @@
 #include "aggCountDistinct.h"
 #include "aggSum.h"
 #include "aggAvg.h"
-
+#include "aggUnion.h"
 
 
 void
@@ -38,5 +38,6 @@ AggFuncLoader::loadAggFunctions()
   AggCountDistinct::ensureInit();
   AggSum::ensureInit();
   AggAvg::ensureInit();
+  AggUnion::ensureInit();
 }
 
