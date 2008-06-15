@@ -62,7 +62,7 @@ public:
   
   // Casting methods; only relevant to extract underlying matrix.
   static MatrixPtr cast(ValuePtr v);
-  static doubleMatrix doubleCast(ValuePtr v);
+  static doubleMatrix cast_double(ValuePtr v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate matrix entries

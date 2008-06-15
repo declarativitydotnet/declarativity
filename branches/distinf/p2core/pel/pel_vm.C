@@ -1174,7 +1174,6 @@ DEF_OP(F_NORMALIZE) {
   stackPush(Val_Factor::mk(Val_Factor::cast(factor).normalize()));
 }
 
-
 DEF_OP(F_MEAN) {
   ValuePtr factor = stackTop(); stackPop();
   moment_gaussian mg = Val_Factor::cast(factor).as<moment_gaussian>();
@@ -1214,66 +1213,6 @@ DEF_OP(F_NORM_INF) {
   ValuePtr f2 = stackTop(); stackPop();
   double result = norm_inf(Val_Factor::cast(f1), Val_Factor::cast(f2));
   stackPush(Val_Double::mk(result));
-}
-
-
-
-  
-  
-
-DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
-  /* popping order varlist, mat, vec */
-  ListPtr varlist = Val_List::cast(stackTop()); stackPop();
-  ValuePtr lambda = stackTop(); stackPop();
-  ValuePtr eta    = stackTop(); stackPop();
-  switch(lambda->typeCode()) {
-  case Value::MATRIX: {
-    stackPush(Val_Gaussian_Factor::mk(varlist, 
-                                      Val_Matrix::cast(lambda),
-                                      Val_Vector::cast(eta)));
-    break;
-  }
-  case Value::STR: {
-    std::vector<prl::variable_h> vars = Val_Factor::lookupVars(varlist);
-    canonical_gaussian f(vars, 0);
-    std::vector<double> entriesl(parse_entries(lambda->toString()));
-    std::vector<double> entriese(parse_entries(eta->toString()));
-    assert(entriesl.size() == f.inf_matrix().data().size());
-    assert(entriese.size() == f.inf_vector().data().size());
-    pstade::oven::copy(entriesl, f.inf_matrix().data().begin());
-    pstade::oven::copy(entriese, f.inf_vector().data().begin());
-    stackPush(Val_Gaussian_Factor::mk(f));
-    break;
-  }
-  default:
-    assert(false); // Unknown format
-  }
-}
-
-DEF_OP(FACTOR_DEFAULT_CANONICAL_FACTOR) {
-  stackPush(Val_Gaussian_Factor::mk());
-}
-
-DEF_OP(CREATE_TABLE_FACTOR) {
-  ListPtr var_list = Val_List::cast(stackTop()); stackPop();
-  ValuePtr values = stackTop(); stackPop();
-  switch(values->typeCode()) {
-  case Value::MATRIX: {
-    stackPush(Val_Table_Factor::mk(var_list, Val_Matrix::cast(values)));
-    break;
-  }
-  case Value::STR: {
-    std::vector<prl::variable_h> vars = Val_Factor::lookupVars(var_list);
-    table_factor_type f(vars, 0);
-    std::vector<double> entries(parse_entries(values->toString()));
-    assert(entries.size() == f.size());
-    pstade::oven::copy(entries, f.values().first);
-    stackPush(Val_Table_Factor::mk(f));
-    break;
-  }
-  default:
-    assert(false); // Unknown format
-  }
 }
 
 /*

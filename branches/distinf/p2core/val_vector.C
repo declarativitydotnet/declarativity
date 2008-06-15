@@ -14,6 +14,9 @@
 #include "val_int64.h"
 #include "val_list.h"
 
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
+
 class OperVector : public opr::OperCompare<Val_Vector> {
 };
 
@@ -47,6 +50,41 @@ VectorPtr Val_Vector::cast(ValuePtr v)
   }
 }
 
+
+doubleVector Val_Vector::cast_double(ValuePtr v)
+{
+  switch(v->typeCode()) {
+  case Value::VECTOR:
+    {
+      doubleVector result(size());
+      VectorPtr vec = (static_cast<Val_Vector *>(v.get()))->V;
+      std::transform(vec->begin(), vec->end(), result->begin(), 
+                     Val_Double::cast_t());
+      return result;
+    }
+
+  case Value::STR:
+    {
+      typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
+      std::string str = v->toString();
+      tokenizer items(str, boost::char_separator<char>("_"));
+      size_t nitems = std::distance(items.begin(), items.end());
+      size_t i = 0;
+      doubleVector result(nitems);
+      for(tokenizer::iterator it = items.begin(), it != items.end(), ++it)
+        result[i] = boost::lexical_cast<double>(*it);
+      return result;
+    }
+
+  default:
+    {
+      throw Value::TypeError(v->typeCode(),
+			     v->typeName(),
+			     Value::VECTOR,
+			     "vector");      
+    }
+  }
+}
 
 // Marshal/Unmarshal essentially copied from Val_Tuple
 void Val_Vector::xdr_marshal_subtype( XDR *x )

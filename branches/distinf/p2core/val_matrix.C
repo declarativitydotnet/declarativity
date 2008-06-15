@@ -14,6 +14,9 @@
 #include "val_int64.h"
 #include "val_list.h"
 
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
+
 class OperMatrix : public opr::OperCompare<Val_Matrix> {
 };
 
@@ -21,12 +24,12 @@ const opr::Oper* Val_Matrix::oper_ = new OperMatrix();
 
 ValuePtr Val_Matrix::transpose() {
 
-        uint32_t sz1 = size1();
-        uint32_t sz2 = size2();
-
-        MatrixPtr mp(new ublas::matrix<ValuePtr>(sz2, sz1));
-        (*mp) = trans((*M));
-        return Val_Matrix::mk(mp);
+  uint32_t sz1 = size1();
+  uint32_t sz2 = size2();
+  
+  MatrixPtr mp(new ublas::matrix<ValuePtr>(sz2, sz1));
+  (*mp) = trans((*M));
+  return Val_Matrix::mk(mp);
 }
 
 MatrixPtr Val_Matrix::cast(ValuePtr v)
@@ -64,14 +67,14 @@ MatrixPtr Val_Matrix::cast(ValuePtr v)
 }
 
 
-doubleMatrix Val_Matrix::doubleCast(ValuePtr v)
+doubleMatrix Val_Matrix::cast_double(ValuePtr v)
 {
   switch(v->typeCode()) {
   case Value::MATRIX:
     {
       doubleMatrix result(size1(), size2());
       std::transform(M->data().begin(), M->data().end(), result().begin(),
-                     ValuePtr2double());
+                     Val_Double::cast_t());
       return result;
     }
 
@@ -84,34 +87,28 @@ doubleMatrix Val_Matrix::doubleCast(ValuePtr v)
       bool first_row = true;
       size_t nrows = std::count(str.begin(), str.end(), ";") + 1;
       size_t ncols = 0;
+      size_t i = 0;
       tokenizer rows(str, boost::char_separator<char>(";"));
 
       for(tokenizer::iterator it = rows.begin(), it != rows.end(); ++it) {
+        assert(i < nrows);
+        tokenizer items(*it, boost::char_separator<char>("_"));
         if (first_row) { // count the number of columns
-          tokenizer cols(str, boost::char_separator<char>("_"));
-          ncols = std::distance(cols.begin(), cols.end());
+          ncols = std::distance(items.begin(), items.end());
           m.resize(nrows, ncols);
+          first_row = false;
         }
-        tokenizer items(str, boost::char_separator<char>("_"));
+        // parse the entries of i-th row
         for(tokenizer::iterator jt = items.begin(), jt != items.end(); ++jt) {
+          assert(j < ncols);
+          m(i, j++) = boost::lexical_cast<double>(*jt);
+        }
+        i++;
       }
-        
 
-      
-      
-      tokenizer rows(v->toString(), sep);
-      std::vector<double> entries;
-      foreach(const string& token, tokens)
-        entries.push_back(boost::lexical_cast<double>(token));
-      return entries;
+      return m;
     }
-
-
-
-      boost::char_separator<char> row_sep(";");
-      boost::char_separator<char> col_sep("_");
-
-
+      
   default:
     throw Value::TypeError(v->typeCode(),
                            v->typeName(),

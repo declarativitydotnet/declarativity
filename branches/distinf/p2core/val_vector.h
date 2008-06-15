@@ -57,7 +57,7 @@ public:
   
   // Casting methods; only relevant to extract underlying vector.
   static VectorPtr cast(ValuePtr v);
-  static doubleVector cast(ValuePtr v);
+  static doubleVector cast_double(ValuePtr v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate vector entries

@@ -164,7 +164,7 @@ class Val_Factor : public Value {
 
 // Free functions
 //! Converts a list of variable names to a vector of variable handles
-prl::var_vector varVector(ValuePtr vars);
+prl::var_vector toVarVector(ValuePtr vars);
 
 //! Converts a list of variable names to a domain
 prl::domain toDomain(ValuePtr vars);
@@ -172,10 +172,5 @@ prl::domain toDomain(ValuePtr vars);
 //! Converts a list of variable names and values to an assignment
 prl::assignment toAssignment(ValuePtr vars, ValuePtr vals);
 
-//! Converts a textual representation of a vector to a double vector
-double_vector parseVector(ValuePtr text);
-
-//! Converts a textual representation of a matrix to a double matrix
-double_matrix parseMatrix(ValuePtr text);
 
 #endif /* __VAL_FACTOR_H_*/

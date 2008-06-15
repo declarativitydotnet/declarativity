@@ -48,6 +48,11 @@ public:
   // Casting
   static double cast(ValuePtr v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
+
+  //! A functor that transforms a ValuePtr to a double
+  struct cast_t {
+    double operator()(const ValuePtr p) { return Val_Double::cast(p); }
+  };
   
   static const opr::Oper* oper_;
 private:

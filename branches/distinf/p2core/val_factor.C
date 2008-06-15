@@ -328,18 +328,7 @@ ValuePtr Val_Gaussian_Factor::covariance() const
 /////////////////////////////////////////////////////////
 // Free functions
 ////////////////////////////////////////////////////////
-std::vector<double> parseDoubles(const std::string& str) {
-  typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
-  boost::char_separator<char> sep("_");
-  
-  tokenizer tokens(str, sep);
-  std::vector<double> entries;
-  foreach(const string& token, tokens)
-    entries.push_back(boost::lexical_cast<double>(token));
-  return entries;
-}
-
-prl::var_vector varVector(ValuePtr vars) {
+prl::var_vector toVarVector(ValuePtr vars) {
   return Val_Factor::lookupVars(Val_List::cast(vars));
 }
 
@@ -372,28 +361,3 @@ prl::assignment toAssignment(ValuePtr vars, ValuePtr vals) {
   }
   return a;
 }
-
-//! Converts a value to a double vector
-double_vector doubleVector(ValuePtr v) {
-  switch(v->typeCode()) {
-  case Value::Double:
-    double_vector vec(1);
-    vec[0] = Val_Double::cast(v);
-    return vec;
-  case Value::Vector:
-    VectorPtr vp = Val_Vector::cast(v);
-    double_vector vec(
-
-  VectorPtr vector_ptr(new ValPtrVector(factor.size()));
-  moment_gaussian mg(factor.as<moment_gaussian>());
-  transform(mg.mean().data(), vector_ptr->data().begin(),
-            double2ValuePtr());
-  return Val_Vector::mk(vector_ptr);
-
-
-    
-  switch(val->
-}
-
-//! Converts a textual representation of a matrix to a double matrix
-double_matrix doubleMatrix(ValuePtr val);
