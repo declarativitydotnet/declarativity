@@ -22,6 +22,7 @@
 
 typedef boost::shared_ptr< boost::numeric::ublas::vector< ValuePtr > > VectorPtr;
 typedef boost::numeric::ublas::vector< ValuePtr > ValPtrVector;
+typedef boost::numeric::ublas::vector< double > doubleVector;
 
 class Val_Vector : public Value {    
 
@@ -56,6 +57,7 @@ public:
   
   // Casting methods; only relevant to extract underlying vector.
   static VectorPtr cast(ValuePtr v);
+  static doubleVector cast(ValuePtr v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate vector entries

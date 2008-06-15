@@ -64,6 +64,63 @@ MatrixPtr Val_Matrix::cast(ValuePtr v)
 }
 
 
+doubleMatrix Val_Matrix::doubleCast(ValuePtr v)
+{
+  switch(v->typeCode()) {
+  case Value::MATRIX:
+    {
+      doubleMatrix result(size1(), size2());
+      std::transform(M->data().begin(), M->data().end(), result().begin(),
+                     ValuePtr2double());
+      return result;
+    }
+
+  case Value::STR:
+    {
+      typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
+
+      std::string str(v->toString());
+      doubleMatrix m;
+      bool first_row = true;
+      size_t nrows = std::count(str.begin(), str.end(), ";") + 1;
+      size_t ncols = 0;
+      tokenizer rows(str, boost::char_separator<char>(";"));
+
+      for(tokenizer::iterator it = rows.begin(), it != rows.end(); ++it) {
+        if (first_row) { // count the number of columns
+          tokenizer cols(str, boost::char_separator<char>("_"));
+          ncols = std::distance(cols.begin(), cols.end());
+          m.resize(nrows, ncols);
+        }
+        tokenizer items(str, boost::char_separator<char>("_"));
+        for(tokenizer::iterator jt = items.begin(), jt != items.end(); ++jt) {
+      }
+        
+
+      
+      
+      tokenizer rows(v->toString(), sep);
+      std::vector<double> entries;
+      foreach(const string& token, tokens)
+        entries.push_back(boost::lexical_cast<double>(token));
+      return entries;
+    }
+
+
+
+      boost::char_separator<char> row_sep(";");
+      boost::char_separator<char> col_sep("_");
+
+
+  default:
+    throw Value::TypeError(v->typeCode(),
+                           v->typeName(),
+                           Value::MATRIX,
+                           "matrix");      
+  }
+}
+
+
 // Marshal/Unmarshal essentially copied from Val_Tuple
 void Val_Matrix::xdr_marshal_subtype( XDR *x )
 {

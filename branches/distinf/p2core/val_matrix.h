@@ -24,6 +24,7 @@ namespace ublas = boost::numeric::ublas;
 
 typedef boost::shared_ptr< ublas::matrix< ValuePtr > > MatrixPtr;
 typedef ublas::matrix< ValuePtr > ValPtrMatrix;
+typedef ublas::matrix< double > doubleMatrix;
 
 class Val_Matrix : public Value {    
 
@@ -61,6 +62,7 @@ public:
   
   // Casting methods; only relevant to extract underlying matrix.
   static MatrixPtr cast(ValuePtr v);
+  static doubleMatrix doubleCast(ValuePtr v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // manipulate matrix entries

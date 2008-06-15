@@ -1112,7 +1112,7 @@ DEF_OP(F_CANONICAL_GAUSSIAN) {
   ValuePtr vars = stackTop(); stackPop();
   ValuePtr inf_matrix = stackTop(); stackPop();
   ValuePtr inf_vector = stackTop(); stackPop();
-  canonical_gaussian cg(toVarVector(vars), 
+  canonical_gaussian cg(toVarVector(vars),
                         Val_Matrix::cast_double(inf_matrix),
                         Val_Vector::cast_double(inf_vector));
   stackPush(Val_Factor::mk(cg));
@@ -1130,7 +1130,7 @@ DEF_OP(F_MOMENT_GAUSSIAN) {
 
 DEF_OP(F_ARGUMENTS) {
   ValuePtr factor = stackTop(); stackPop();
-  stackPush(varNames(Val_Factor::cast(factor).arguments()));
+  stackPush(Val_Factor::names(Val_Factor::cast(factor).arguments()));
 }
 
 DEF_OP(F_PROD) {
@@ -1202,7 +1202,7 @@ DEF_OP(F_WEIGHTED_UPDATE) {
                                            Val_Factor::cast(f2), alpha)));
 }
 
-DEF_OP(F_NORM1) {
+DEF_OP(F_NORM_1) {
   ValuePtr f1 = stackTop(); stackPop();
   ValuePtr f2 = stackTop(); stackPop();
   double result = norm_1(Val_Factor::cast(f1), Val_Factor::cast(f2));
@@ -1215,6 +1215,8 @@ DEF_OP(F_NORM_INF) {
   double result = norm_inf(Val_Factor::cast(f1), Val_Factor::cast(f2));
   stackPush(Val_Double::mk(result));
 }
+
+
 
   
   
