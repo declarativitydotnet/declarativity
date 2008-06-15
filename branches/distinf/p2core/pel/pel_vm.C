@@ -1084,10 +1084,8 @@ DEF_OP(M_TRANSPOSE) {
 
 
 /* Factor operations */
-
-DEF_OP(FACTOR_REGISTERVAR) {
+DEF_OP(F_REGISTERVAR) {
   //pushing order(name, type, size)
-
   string name = pop_string();
   string type = pop_string();
   std::size_t size = pop_signed();
@@ -1098,52 +1096,128 @@ DEF_OP(FACTOR_REGISTERVAR) {
   stackPush(Val_Int64::mk(1));
 }
 
-DEF_OP(COMBINE) {
-  ValuePtr val1 = stackTop(); stackPop();
-  ValuePtr val2 = stackTop(); stackPop();
-  stackPush(dynamic_cast<Val_Factor*>(val1.get())->multiply(val2));
+DEF_OP(F_FACTOR) {
+  ValuePtr val = stackTop(); stackPop();
+  stackPush(Val_Factor::mk(Val_Factor::cast(f)));
 }
 
-DEF_OP(COMBINE_ALL) {
-  ValuePtr val1 = stackTop(); stackPop();
-  ListPtr list = Val_List::cast(val1);
+DEF_OP(F_TABLE_FACTOR) {
+  ValuePtr vars = stackTop(); stackPop();
+  ValuePtr vals = stackTop(); stackPop();
+  table_factor f(toVarVector(vars), Val_Vector::cast_double(vals));
+  stackPush(Val_Factor::mk(f));
+}
+
+DEF_OP(F_CANONICAL_GAUSSIAN) {
+  ValuePtr vars = stackTop(); stackPop();
+  ValuePtr inf_matrix = stackTop(); stackPop();
+  ValuePtr inf_vector = stackTop(); stackPop();
+  canonical_gaussian cg(toVarVector(vars), 
+                        Val_Matrix::cast_double(inf_matrix),
+                        Val_Vector::cast_double(inf_vector));
+  stackPush(Val_Factor::mk(cg));
+}
+
+DEF_OP(F_MOMENT_GAUSSIAN) {
+  ValuePtr vars = stackTop(); stackPop();
+  ValuePtr mean = stackTop(); stackPop();
+  Valueptr cov = stackTop(); stackPop();
+  moment_gaussian mg(toVarVector(vars),
+                     Val_Vector::cast_double(mean),
+                     Val_Vector::cast_double(cov));
+  stackPush(Val_Factor::mk(mg));
+}
+
+DEF_OP(F_ARGUMENTS) {
+  ValuePtr factor = stackTop(); stackPop();
+  stackPush(varNames(Val_Factor::cast(factor).arguments()));
+}
+
+DEF_OP(F_PROD) {
+  ListPtr list = Val_List::cast(stackTop()); stackPop();
   
-  assert(list->size()!=0);
-  ValuePtr product = list->front();
-  ValPtrList::const_iterator iter = ++(list->begin()), end = list->end();
-  while(iter != end) 
-    product = dynamic_cast<Val_Factor*>(product.get())->multiply(*(iter++));
-  stackPush(product);
+  polymorphic_factor result(1);
+  for(ValPtrList::const_iterator it = list->begin(), it != list->end(); ++it)
+    product *= Val_Factor::cast(*it);
+
+  stackPush(Val_Factor::mk(result));
 }
 
-DEF_OP(COLLAPSE) {
-  using namespace std;
-  ValuePtr val1 = stackTop(); stackPop();
-  ValuePtr val2 = stackTop(); stackPop();
-  //cerr << "COLLAPSE: " << val1->toString() << ',' << val2->toString() << endl;
-  ListPtr varlist = Val_List::cast(val2);
-  ValuePtr marginal = dynamic_cast<Val_Factor*>(val1.get())->marginal(varlist);
-  //cerr << "RESULT: " << marginal->toString() << endl;
-  stackPush(marginal);
+DEF_OP(F_MARGINAL) {
+  ValuePtr factor = stackTop(); stackPop();
+  ValuePtr retain = stackTop(); stackPop();
+  stackPush(Val_Factor::mk(Val_Factor::cast(factor).marginal(toDomain(retain))));
 }
 
-DEF_OP(WEIGHTED_UPDATE) {
-  const table_factor_type& f1 = Val_Table_Factor::cast(stackTop()); stackPop();
-  const table_factor_type& f2 = Val_Table_Factor::cast(stackTop()); stackPop();
+DEF_OP(F_MAXIMUM) {
+  ValuePtr factor = stackTop(); stackPop();
+  ValuePtr retain = stackTop(); stackPop();
+  stackPush(Val_Factor::mk(Val_Factor::cast(factor).maximum(toDomain(retain))));
+}
+
+DEF_OP(F_MINIMUM) {
+  ValuePtr factor = stackTop(); stackPop();
+  ValuePtr retain = stackTop(); stackPop();
+  stackPush(Val_Factor::mk(Val_Factor::cast(factor).minimum(toDomain(retain))));
+}
+
+DEF_OP(F_RESTRICT) {
+  ValuePtr factor = stackTop(); stackPop();
+  ValuePtr vars = stackTop(); stackPop();
+  ValuePtr vals = stackTop(); stackPop();
+  prl::asignment a = Val_Factor::toAssignment(vars, vals);
+  stackPush(Val_Factor::mk(Val_Factor::cast(factor).restrict(a)));
+}
+
+DEF_OP(F_NORMALIZE) {
+  ValuePtr factor = stackTop(); stackPop();
+  stackPush(Val_Factor::mk(Val_Factor::cast(factor).normalize()));
+}
+
+
+DEF_OP(F_MEAN) {
+  ValuePtr factor = stackTop(); stackPop();
+  moment_gaussian mg = Val_Factor::cast(factor).as<moment_gaussian>();
+  stackPush(Val_Vector::mk(mg.mean()));
+}
+
+DEF_OP(F_COVARIANCE) {
+  ValuePtr factor = stackTop(); stackPop();
+  moment_gaussian mg = Val_Factor::cast(factor).as<moment_gaussian>();
+  stackPush(Val_Matrix::mk(mg.covariance()));
+}
+
+DEF_OP(F_VALUES) {
+  ValuePtr factor = stackTop(); stackPop();
+  table_factor f = Val_Factor::cast(factor).as<table_factor>();
+  std::vector<double> values(f.values().begin(), f.values().end());
+  stackPush(Val_Vector::mk(values));
+}
+
+DEF_OP(F_WEIGHTED_UPDATE) {
+  ValuePtr f1 = stackTop(); stackPop();
+  ValuePtr f2 = stackTop(); stackPop();
   double alpha = pop_double();
-  stackPush(Val_Table_Factor::mk(weighted_update(f1, f2, alpha)));
-} 
-
-std::vector<double> parse_entries(const std::string& str) {
-  typedef boost::tokenizer< boost::char_separator<char> > tokenizer;
-  boost::char_separator<char> sep("_");
-  
-  tokenizer tokens(str, sep);
-  std::vector<double> entries;
-  foreach(const string& token, tokens)
-    entries.push_back(boost::lexical_cast<double>(token));
-  return entries;
+  stackPush(Val_Factor::mk(weighted_update(Val_Factor::cast(f1),
+                                           Val_Factor::cast(f2), alpha)));
 }
+
+DEF_OP(F_NORM1) {
+  ValuePtr f1 = stackTop(); stackPop();
+  ValuePtr f2 = stackTop(); stackPop();
+  double result = norm_1(Val_Factor::cast(f1), Val_Factor::cast(f2));
+  stackPush(Val_Double::mk(result));
+}
+
+DEF_OP(F_NORM_INF) {
+  ValuePtr f1 = stackTop(); stackPop();
+  ValuePtr f2 = stackTop(); stackPop();
+  double result = norm_inf(Val_Factor::cast(f1), Val_Factor::cast(f2));
+  stackPush(Val_Double::mk(result));
+}
+
+  
+  
 
 DEF_OP(FACTOR_CREATE_CANONICAL_FACTOR) {
   /* popping order varlist, mat, vec */
@@ -1200,41 +1274,7 @@ DEF_OP(CREATE_TABLE_FACTOR) {
   }
 }
 
-DEF_OP(DEFAULT_TABLE_FACTOR) {
-  stackPush(Val_Table_Factor::mk());
-}
-	    
-DEF_OP(FACTOR_GAUSS_MEAN) {
-  ValuePtr val = stackTop(); stackPop();
-  stackPush(dynamic_cast<Val_Gaussian_Factor*>(val.get())->mean());
-}
-
-DEF_OP(FACTOR_GAUSS_COV) {
-  ValuePtr val = stackTop(); stackPop();
-  stackPush(dynamic_cast<Val_Gaussian_Factor*>(val.get())->covariance());
-}
-
-DEF_OP(FACTOR_NORMALIZE) {
-  ValuePtr val = stackTop(); stackPop();
-  stackPush(dynamic_cast<Val_Factor*>(val.get())->normalize());
-}
-
-DEF_OP(FACTOR_VALUES) {
-  ValuePtr val = stackTop(); stackPop();
-  stackPush(dynamic_cast<Val_Table_Factor*>(val.get())->values());
-}
-
-DEF_OP(FACTOR_NORM1) {
-  const table_factor_type& x = Val_Table_Factor::cast(stackTop()); stackPop();
-  const table_factor_type& y = Val_Table_Factor::cast(stackTop()); stackPop();
-  stackPush(Val_Double::mk(norm_1(x, y)));
-}
-
-DEF_OP(FACTOR_NORM_INF) {
-  const table_factor_type& x = Val_Table_Factor::cast(stackTop()); stackPop();
-  const table_factor_type& y = Val_Table_Factor::cast(stackTop()); stackPop();
-  stackPush(Val_Double::mk(norm_inf(x, y)));
-}
+/*
 
 typedef Val_Gaussian_Mixture::mixture_type mixture_type;
 
@@ -1309,6 +1349,7 @@ DEF_OP(EM_LOCAL_UPDATE) {
   em_engine->expectation(mixture);
   stackPush(Val_Gaussian_Mixture::mk(em_engine->local_maximization()));
 }
+*/
 
 DEF_OP(M_NORMALIZE) {
   using namespace prl;
