@@ -42,6 +42,12 @@ public:
   // Factory
   static ValuePtr mk(double d) { ValuePtr p(new Val_Double(d)); return p; };
 
+  //! A functor that transforms a double to a pointer to Val_Double
+  struct mk_t {
+   ValuePtr operator()(double x) { return Val_Double::mk(x); }
+  };
+  
+
   // Strict comparison
   int compareTo(ValuePtr) const;
 

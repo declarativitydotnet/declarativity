@@ -43,11 +43,15 @@ public:
   // Constructors
   Val_Vector(VectorPtr vp) : V(vp) {};
   Val_Vector(uint64_t &size) { VectorPtr p(new ValPtrVector(size)); V = p;}
+  Val_Vector(const doubleVector& vec);
+  Val_Vector(const std::vector<double>& vec);
   virtual ~Val_Vector() {};
 
   // Factory
   static ValuePtr mk(VectorPtr vp) { ValuePtr p(new Val_Vector(vp)); return p; };
   static ValuePtr mk2(uint64_t &size) { ValuePtr p(new Val_Vector(size)); return p; };
+  static ValuePtr mk(const doubleVector& vec) { ValuePtr p(new Val_Vector(vec)); return p; }
+  static ValuePtr mk(const std::vector<double>& vec) { ValuePtr p(new Val_Vector(vec)); return p; }
   
   // strict comparison
   int compareTo(ValuePtr v) const;

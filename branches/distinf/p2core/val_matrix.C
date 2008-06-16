@@ -13,6 +13,9 @@
 #include "val_matrix.h"
 #include "val_int64.h"
 #include "val_list.h"
+#include "val_double.h"
+
+#include <algorithm>
 
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
@@ -21,6 +24,12 @@ class OperMatrix : public opr::OperCompare<Val_Matrix> {
 };
 
 const opr::Oper* Val_Matrix::oper_ = new OperMatrix();
+
+Val_Matrix::Val_Matrix(const doubleMatrix& mat)
+  : M(new ValPtrMatrix(mat.size1(), mat.size2())) {
+  std::transform(mat.data().begin(), mat.data().end(), M->data().begin(),
+                 Val_Double::mk_t());
+}
 
 ValuePtr Val_Matrix::transpose() {
 
@@ -72,8 +81,9 @@ doubleMatrix Val_Matrix::cast_double(ValuePtr v)
   switch(v->typeCode()) {
   case Value::MATRIX:
     {
-      doubleMatrix result(size1(), size2());
-      std::transform(M->data().begin(), M->data().end(), result().begin(),
+      MatrixPtr M = static_cast<Val_Matrix *>(v.get())->M;
+      doubleMatrix result(M->size1(), M->size2());
+      std::transform(M->data().begin(), M->data().end(), result.data().begin(),
                      Val_Double::cast_t());
       return result;
     }
@@ -85,12 +95,12 @@ doubleMatrix Val_Matrix::cast_double(ValuePtr v)
       std::string str(v->toString());
       doubleMatrix m;
       bool first_row = true;
-      size_t nrows = std::count(str.begin(), str.end(), ";") + 1;
+      size_t nrows = std::count(str.begin(), str.end(), ';') + 1;
       size_t ncols = 0;
       size_t i = 0;
       tokenizer rows(str, boost::char_separator<char>(";"));
 
-      for(tokenizer::iterator it = rows.begin(), it != rows.end(); ++it) {
+      for(tokenizer::iterator it = rows.begin(); it != rows.end(); ++it) {
         assert(i < nrows);
         tokenizer items(*it, boost::char_separator<char>("_"));
         if (first_row) { // count the number of columns
@@ -99,7 +109,8 @@ doubleMatrix Val_Matrix::cast_double(ValuePtr v)
           first_row = false;
         }
         // parse the entries of i-th row
-        for(tokenizer::iterator jt = items.begin(), jt != items.end(); ++jt) {
+        size_t j = 0;
+        for(tokenizer::iterator jt = items.begin(); jt != items.end(); ++jt) {
           assert(j < ncols);
           m(i, j++) = boost::lexical_cast<double>(*jt);
         }

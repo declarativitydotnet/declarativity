@@ -45,9 +45,7 @@
 #include "val_set.h"
 #include "val_vector.h"
 #include "val_matrix.h"
-#include "val_gaussian_factor.h"
-#include "val_table_factor.h"
-#include "val_gaussian_mixture.h"
+#include "val_factor.h"
 #include "oper.h"
 #include "loop.h"
 #include "set.h"
@@ -58,23 +56,43 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/random/lagged_fibonacci.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include <boost/random/exponential_distribution.hpp>
 
-#include <boost/random/mersenne_twister.hpp>
-#include <prl/learning/em_mog.hpp>
+#include <prl/factor/table_factor.hpp>
+#include <prl/factor/gaussian_factors.hpp>
+#include <prl/factor/mixture.hpp>
 #include <prl/datastructure/array_dataset.hpp>
+#include <prl/learning/em_mog.hpp>
 
 #include <pstade/oven/algorithm.hpp>
 
-#include "prl/detail/shortcuts_def.hpp"
+//! The matrix representation
+typedef prl::math::bindings::lapack::double_matrix matrix_type;
+
+//! The vector representation
+typedef prl::math::bindings::lapack::double_vector vector_type;
+
+//! A constant factor
+typedef prl::constant_factor<> constant_factor;
+
+//! A table factor
+typedef prl::table_factor<> table_factor;
+
+//! The type of factors stored in this value
+typedef prl::canonical_gaussian<matrix_type, vector_type> canonical_gaussian;
+
+//! The moment Gaussian factor type (used for mean, covariance)
+typedef prl::moment_gaussian<matrix_type, vector_type> moment_gaussian;
+
+//! EM engine
+typedef prl::em_mog< prl::array_data<> > em_type;
+em_type* em_engine = NULL; 
+
 
 boost::lagged_fibonacci607 rng_fibonacci;
 
 using namespace opr;
-typedef Val_Gaussian_Factor::canonical_gaussian canonical_gaussian;
-
-typedef prl::em_mog< prl::array_data<> > em_type;
-em_type* em_engine = NULL; 
 
 typedef void(Pel_VM::*Op_fn_t)(u_int32_t);
 
@@ -1084,7 +1102,7 @@ DEF_OP(M_TRANSPOSE) {
 
 
 /* Factor operations */
-DEF_OP(F_REGISTERVAR) {
+DEF_OP(F_REGISTER_VARIABLE) {
   //pushing order(name, type, size)
   string name = pop_string();
   string type = pop_string();
@@ -1097,14 +1115,15 @@ DEF_OP(F_REGISTERVAR) {
 }
 
 DEF_OP(F_FACTOR) {
-  ValuePtr val = stackTop(); stackPop();
-  stackPush(Val_Factor::mk(Val_Factor::cast(f)));
+  ValuePtr value = stackTop(); stackPop();
+  stackPush(Val_Factor::mk(Val_Factor::cast(value)));
 }
 
 DEF_OP(F_TABLE_FACTOR) {
   ValuePtr vars = stackTop(); stackPop();
   ValuePtr vals = stackTop(); stackPop();
-  table_factor f(toVarVector(vars), Val_Vector::cast_double(vals));
+  table_factor f = 
+    make_dense_table_factor(toVarVector(vars), Val_Vector::cast_double(vals));
   stackPush(Val_Factor::mk(f));
 }
 
@@ -1121,10 +1140,10 @@ DEF_OP(F_CANONICAL_GAUSSIAN) {
 DEF_OP(F_MOMENT_GAUSSIAN) {
   ValuePtr vars = stackTop(); stackPop();
   ValuePtr mean = stackTop(); stackPop();
-  Valueptr cov = stackTop(); stackPop();
+  ValuePtr cov = stackTop(); stackPop();
   moment_gaussian mg(toVarVector(vars),
                      Val_Vector::cast_double(mean),
-                     Val_Vector::cast_double(cov));
+                     Val_Matrix::cast_double(cov));
   stackPush(Val_Factor::mk(mg));
 }
 
@@ -1137,8 +1156,8 @@ DEF_OP(F_PROD) {
   ListPtr list = Val_List::cast(stackTop()); stackPop();
   
   polymorphic_factor result(1);
-  for(ValPtrList::const_iterator it = list->begin(), it != list->end(); ++it)
-    product *= Val_Factor::cast(*it);
+  for(ValPtrList::const_iterator it = list->begin(); it != list->end(); ++it)
+    result *= Val_Factor::cast(*it);
 
   stackPush(Val_Factor::mk(result));
 }
@@ -1165,7 +1184,7 @@ DEF_OP(F_RESTRICT) {
   ValuePtr factor = stackTop(); stackPop();
   ValuePtr vars = stackTop(); stackPop();
   ValuePtr vals = stackTop(); stackPop();
-  prl::asignment a = Val_Factor::toAssignment(vars, vals);
+  prl::assignment a = toAssignment(vars, vals);
   stackPush(Val_Factor::mk(Val_Factor::cast(factor).restrict(a)));
 }
 
@@ -1176,20 +1195,20 @@ DEF_OP(F_NORMALIZE) {
 
 DEF_OP(F_MEAN) {
   ValuePtr factor = stackTop(); stackPop();
-  moment_gaussian mg = Val_Factor::cast(factor).as<moment_gaussian>();
+  moment_gaussian mg = Val_Factor::cast(factor).get<moment_gaussian>();
   stackPush(Val_Vector::mk(mg.mean()));
 }
 
 DEF_OP(F_COVARIANCE) {
   ValuePtr factor = stackTop(); stackPop();
-  moment_gaussian mg = Val_Factor::cast(factor).as<moment_gaussian>();
+  moment_gaussian mg = Val_Factor::cast(factor).get<moment_gaussian>();
   stackPush(Val_Matrix::mk(mg.covariance()));
 }
 
 DEF_OP(F_VALUES) {
   ValuePtr factor = stackTop(); stackPop();
-  table_factor f = Val_Factor::cast(factor).as<table_factor>();
-  std::vector<double> values(f.values().begin(), f.values().end());
+  table_factor f = Val_Factor::cast(factor).get<table_factor>();
+  std::vector<double> values(f.values().first, f.values().second);
   stackPush(Val_Vector::mk(values));
 }
 
@@ -1290,7 +1309,6 @@ DEF_OP(EM_LOCAL_UPDATE) {
   em_engine->expectation(mixture);
   stackPush(Val_Gaussian_Mixture::mk(em_engine->local_maximization()));
 }
-*/
 
 DEF_OP(M_NORMALIZE) {
   using namespace prl;
@@ -1311,6 +1329,8 @@ DEF_OP(M_NORMALIZE) {
   mixture.normalize();
   stackPush(Val_Gaussian_Mixture::mk(mixture));
 }
+*/
+
 //
 // Experiment control
 //
@@ -1970,8 +1990,8 @@ DEF_OP(STR_TOK) {
   tokenizer tokens(str, boost::char_separator<char>(sep.c_str()));
   ListPtr list = List::mk();
 
-  foreach(const string& token, tokens) 
-    list->append(Val_Str::mk(token));
+  for(tokenizer::iterator it = tokens.begin(); it != tokens.end(); ++it)
+    list->append(Val_Str::mk(*it));
   stackPush(Val_List::mk(list));
 }
 

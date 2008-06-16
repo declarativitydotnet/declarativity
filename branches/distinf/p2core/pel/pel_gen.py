@@ -83,7 +83,7 @@ for op, ar, va, desc in [
   ("matrixtranspose", 1, "M_TRANSPOSE", "Inverse a matrix"),
   ("initzero", 2, "M_INITMATZERO", "Create a zero matrix of arg1 by arg2"),   
 
-  ("registervar", 3, "F_REGISTERVAR", "register variable with type, size and name information"),
+  ("register_variable", 3, "F_REGISTER_VARIABLE", "register variable with type, size and name information"),
   ("factor", 1, "F_FACTOR", "convert a double to a factor"),
   ("table_factor", 2, "F_TABLE_FACTOR", "creates a table factor with a sequence of variable names and values"),
   ("canonical_gaussian", 3, "F_CANONICAL_GAUSSIAN", "creates a canonical gaussian with a sequence of variable names, information matrix, and vector"),
@@ -99,9 +99,10 @@ for op, ar, va, desc in [
   ("covariance", 1, "F_COVARIANCE", "returns the covariance of a factor convertible to a moment_gaussian"),
   ("values", 1, "F_VALUES", "returns the values of a factor convertible to a table_factor"),
   ("weighted_update", 3, "F_WEIGHTED_UPDATE", "mixes two factors"),
-  ("norm_1", 2, "F_NORM1", "returns the sum of absolute differences between two factors"),
+  ("norm_1", 2, "F_NORM_1", "returns the sum of absolute differences between two factors"),
   ("norm_inf", 2, "F_NORM_INF", "returns the maximum of absolute differences between two factors"),
-  ("mNormalize", 2, "M_NORMALIZE", "normalizes mixture"),
+
+#  ("mNormalize", 2, "M_NORMALIZE", "normalizes mixture"),
 
 #   ("addparams", 2, "ADD_PARAMS", "adds parameters of two mixture statistixs"),
 #   ("emengine", 4, "EM_ENGINE", "initializes the expectation maximization engine"),

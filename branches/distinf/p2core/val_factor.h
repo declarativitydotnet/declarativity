@@ -58,15 +58,16 @@ class Val_Factor : public Value {
 
   // Constructors
   Val_Factor() { }
-  ~Val_Factor() { };
+  Val_Factor(const polymorphic_factor& f) : factor(f) { }
+  Val_Factor(const prl::factor& f) : factor(f) {}
+  ~Val_Factor() { }
 
   static ValuePtr mk();
-  static ValuePtr mk(const factor& f);
+  static ValuePtr mk(const prl::factor& f);
   static ValuePtr mk(const polymorphic_factor& f);
-  static ValuePtr mk(ListPtr args, MatrixPtr values); // creates a table factor
 
   // Casts
-  static polymorphic_factor<double> cast(ValuePtr v);
+  static polymorphic_factor cast(ValuePtr v);
   const ValuePtr toMe(ValuePtr other) const { return mk(cast(other)); }
 
   // String representation. What exactly is toConfString()?
@@ -91,67 +92,19 @@ class Val_Factor : public Value {
   // Comparison
   int compareTo(ValuePtr v) const;
 
-  // Accessors
-  //! What exactly are we supposed to return here? Why is this important?
+  //! Returns the number of arguments
   unsigned int size() const;
-
-  //! Returns the list of arguments of this factor
-  domain arguments() const;
-
-  //! Returns a list of argument names
-  ValuePtr arg_names() const;
-
-  //! Computes a marginal of a subset of variables
-  ValuePtr marginal(ListPtr retain) const;
-  
-  //! Computes a maximum over a subset of variables
-  ValuePtr maximum(ListPtr retain) const;
-
-  //! Computes a minimum over a subset of variables
-  ValuePtr minimum(ListPtr retain) const;
-
-  //! Restricts the factor to an assignment of variables to values
-  ValuePtr restrict(ListPtr variables, ListPtr values) const;
-  
-  //! Computes a normalized version of a factor
-  ValuePtr normalize() const;
-
-  //! Returns the values of a discrete factor as a vector
-  ValuePtr values() const;
-
-  /**
-   * Returns the mean of the distribution represented by this factor
-   * @return a pointer to a Val_Vector object that represents the mean
-   * @note throws an assertion violation / exception if the
-   *       factor is not convertible to a Gaussian or not normalizable.
-   */
-  ValuePtr mean() const;
-
-  /**
-   * Returns the covariance of the distirbution represented by this factor
-   * @return a pointer to a Val_Matrix object that represents the covariance
-   * @note throws an assertion violation / exception if the
-   *       factor is not convertible to a Gaussian or not normalizable.
-   */
-  ValuePtr covariance() const;
 
   //! Converts a list of variable names to a vector of variable handles
   static std::vector<variable_h> 
     lookupVars(ListPtr list_ptr, bool ignore_missing = false);
 
+  //! Returns the names for a set of variables as a list
+  static ValuePtr names(const domain& args);
+
  private:
-  //! A functor that transforms a ValuePtr to a double
-  struct ValuePtr2double {
-    double operator()(const ValuePtr p) { return Val_Double::cast(p); }
-  };
-
-  //! A functor that transforms a double to a pointer to Val_Double
-  struct double2ValuePtr {
-    ValuePtr operator()(const double& x) { return Val_Double::mk(x); }
-  };
-
   //! The underlying factor
-  polymorphic_factor f;
+  polymorphic_factor factor;
 
   //! The set of all variables known to this host.
   static prl::universe u;
@@ -159,6 +112,10 @@ class Val_Factor : public Value {
   //! The variable corresponding to each name
   static named_var_map named_var;
 
+  //! True if the polymorphic factor classes have been registered
+  static bool registered;
+
+  //! The mutex used for registering variables
   static boost::mutex mutex;
 };
 

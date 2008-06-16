@@ -45,10 +45,12 @@ public:
   // Constructors
   Val_Matrix(MatrixPtr mp) : M(mp) {};
   Val_Matrix(uint64_t &size1, uint64_t &size2) { MatrixPtr p(new ValPtrMatrix(size1,size2)); M = p;}
+  Val_Matrix(const doubleMatrix& mat);
   virtual ~Val_Matrix() {};
 
   // Factory
   static ValuePtr mk(MatrixPtr mp) { ValuePtr p(new Val_Matrix(mp)); return p; };
+  static ValuePtr mk(const doubleMatrix& mat) { ValuePtr p(new Val_Matrix(mat)); return p; }
   static ValuePtr mk2(uint64_t &size1, uint64_t &size2) { ValuePtr p(new Val_Matrix(size1,size2)); return p; };
   
   // strict comparison

@@ -13,6 +13,9 @@
 #include "val_vector.h"
 #include "val_int64.h"
 #include "val_list.h"
+#include "val_double.h"
+
+#include <algorithm>
 
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
@@ -22,9 +25,18 @@ class OperVector : public opr::OperCompare<Val_Vector> {
 
 const opr::Oper* Val_Vector::oper_ = new OperVector();
 
+Val_Vector::Val_Vector(const doubleVector& vec)
+  : V(new ValPtrVector(vec.size())) {
+  std::transform(vec.begin(), vec.end(), V->begin(), Val_Double::mk_t());
+}
+
+Val_Vector::Val_Vector(const std::vector<double>& vec)
+  : V(new ValPtrVector(vec.size())) {
+  std::transform(vec.begin(), vec.end(), V->begin(), Val_Double::mk_t());
+}
+
 VectorPtr Val_Vector::cast(ValuePtr v)
 {
-   
   switch(v->typeCode()) {
   case Value::VECTOR:
     {
@@ -56,9 +68,9 @@ doubleVector Val_Vector::cast_double(ValuePtr v)
   switch(v->typeCode()) {
   case Value::VECTOR:
     {
-      doubleVector result(size());
-      VectorPtr vec = (static_cast<Val_Vector *>(v.get()))->V;
-      std::transform(vec->begin(), vec->end(), result->begin(), 
+      VectorPtr V = (static_cast<Val_Vector *>(v.get()))->V;
+      doubleVector result(V->size());
+      std::transform(V->begin(), V->end(), result.begin(), 
                      Val_Double::cast_t());
       return result;
     }
@@ -71,8 +83,8 @@ doubleVector Val_Vector::cast_double(ValuePtr v)
       size_t nitems = std::distance(items.begin(), items.end());
       size_t i = 0;
       doubleVector result(nitems);
-      for(tokenizer::iterator it = items.begin(), it != items.end(), ++it)
-        result[i] = boost::lexical_cast<double>(*it);
+      for(tokenizer::iterator it = items.begin(); it != items.end(); ++it)
+        result[i++] = boost::lexical_cast<double>(*it);
       return result;
     }
 
