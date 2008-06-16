@@ -1152,7 +1152,7 @@ DEF_OP(F_ARGUMENTS) {
   stackPush(Val_Factor::names(Val_Factor::cast(factor).arguments()));
 }
 
-DEF_OP(F_PROD) {
+DEF_OP(F_PRODUCT) {
   ListPtr list = Val_List::cast(stackTop()); stackPop();
   
   polymorphic_factor result(1);

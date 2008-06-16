@@ -89,7 +89,7 @@ for op, ar, va, desc in [
   ("canonical_gaussian", 3, "F_CANONICAL_GAUSSIAN", "creates a canonical gaussian with a sequence of variable names, information matrix, and vector"),
   ("moment_gaussian", 3, "F_MOMENT_GAUSSIAN", "creates a moment gaussian with a sequence of variable names, mean, and covariance matrix"),
   ("arguments", 1, "F_ARGUMENTS", "returns the argument set of a factor"),
-  ("prod", 1, "F_PROD", "compute a product of a list of factors"),
+  ("product", 1, "F_PRODUCT", "compute a product of a list of factors"),
   ("marginal", 2, "F_MARGINAL", "compute a marginal over a set of variables"),
   ("maximum",  2, "F_MAXIMUM", "compute the maximum over a set of variables"),
   ("minimum,", 2, "F_MINIMUM", "compute the minimum over a set of variables"),
