@@ -176,6 +176,7 @@ ValuePtr Val_Factor::names(const domain& args) {
 // Factor type registration
 ////////////////////////////////////////////////////////
 struct factor_registration {
+
   factor_registration() {
     using namespace std;
 
@@ -193,6 +194,7 @@ struct factor_registration {
     polymorphic::register_binary<constant_factor, canonical_gaussian>();
     polymorphic::register_binary<moment_gaussian, canonical_gaussian>();
   }
+
 } register_factors;
 
 /////////////////////////////////////////////////////////
@@ -269,8 +271,7 @@ void Val_Factor::xdr_marshal_subtype(XDR * x)
   // Serialize the factor into a string text archive
   std::stringstream ss;
   boost::archive::text_oarchive oa(ss);
-  assert(false);
-  // oa << factor; 
+  oa << const_cast<const Val_Factor*>(this)->factor;
   // std::cerr << "Serialized: " << ss.str() << std::endl;
 
   // Now marshal the string
