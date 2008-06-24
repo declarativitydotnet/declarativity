@@ -11,7 +11,7 @@ import p2.types.exception.UpdateException;
 public class EventTable extends Table {
 
 	public EventTable(TableName name, TypeList types) {
-		super(name, Type.EVENT, 0, 0f, null, types);
+		super(name, Type.EVENT, null, types);
 	}
 	
 	@Override

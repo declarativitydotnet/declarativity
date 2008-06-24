@@ -14,7 +14,6 @@ import p2.types.table.Index.IndexTable;
 import xtc.util.SymbolTable;
 
 public abstract class Table implements Comparable<Table> {
-	public static final Integer INFINITY    = Integer.MAX_VALUE;
 	public static final String  GLOBALSCOPE = "global";
 	
 	public static abstract class Callback {
@@ -31,12 +30,10 @@ public abstract class Table implements Comparable<Table> {
 	public static class Catalog extends ObjectTable {
 		private static final Key PRIMARY_KEY = new Key(0);
 
-		public enum Field {TABLENAME, TYPE, SIZE, LIFETIME, KEY, TYPES, OBJECT};
+		public enum Field {TABLENAME, TYPE, KEY, TYPES, OBJECT};
 		private static final Class[] SCHEMA = { 
 			TableName.class, // Name
 			String.class,    // Table type
-			Integer.class,   // The table size
-			Float.class,     // The lifetime
 			Key.class,       // The primary key
 			TypeList.class,  // The type of each attribute
 			Table.class      // The table object
@@ -52,19 +49,11 @@ public abstract class Table implements Comparable<Table> {
 			if (table == null) {
 				TableName name    = (TableName) tuple.value(Field.TABLENAME.ordinal());
 				String   type     = (String) tuple.value(Field.TYPE.ordinal());
-				Integer  size     = (Integer) tuple.value(Field.SIZE.ordinal());
-				Float    lifetime = (Float) tuple.value(Field.LIFETIME.ordinal());
 				Key      key      = (Key) tuple.value(Field.KEY.ordinal());
 				TypeList types    = (TypeList) tuple.value(Field.TYPES.ordinal());
 
 				if (type.equals(Type.TABLE.toString())) {
-					if (size.intValue() == INFINITY.intValue() && 
-							lifetime.intValue() == INFINITY.intValue()) {
-						table = new RefTable(name, key, types);
-					}
-					else {
-						table = new BasicTable(name, size, lifetime, key, types);
-					}
+					table = new RefTable(name, key, types);
 				}
 				else {
 					throw new UpdateException("Don't know how to create table type " + type);
@@ -94,35 +83,26 @@ public abstract class Table implements Comparable<Table> {
 	/* The number of attributes in this table. */
 	protected TypeList attributeTypes;
 	
-	/* The maximum size of this table. */
-	protected Integer size;
-	
-	/* the lifetime of a tuple, in seconds. */
-	protected Float lifetime;
-	
 	protected Key key;
 	
 	protected final Set<Callback> callbacks;
 	
-	protected Table(TableName name, Type type, Integer size, Float lifetime, Key key, TypeList attributeTypes) {
+	protected Table(TableName name, Type type, Key key, TypeList attributeTypes) {
 		this.name = name;
 		this.type = type;
 		this.attributeTypes = attributeTypes;
-		this.size = size;
-		this.lifetime = lifetime;
 		this.key = key;
 		this.callbacks = new HashSet<Callback>();
 		
 		if (catalog != null) {
-			Table.register(name, type, size, lifetime, key, attributeTypes, this);
+			Table.register(name, type, key, attributeTypes, this);
 		}
 	}
 	
 	@Override
 	public String toString() {
 		String value = name.toString() + ", " + attributeTypes.toString() + 
-		        ", " + size + ", " + lifetime + ", keys(" + key + "), {" +
-		        attributeTypes.toString() + "}";
+		               ", keys(" + key + "), {" + attributeTypes.toString() + "}";
 		if (tuples() != null) {
 		for (Tuple t : tuples()) {
 			value += t.toString() + "\n";
@@ -141,8 +121,7 @@ public abstract class Table implements Comparable<Table> {
 		catalog = new Catalog();
 		index   = new IndexTable();
 		
-		Table.register(catalog.name(), catalog.type(), catalog.size(), catalog.lifetime().floatValue(), 
-				       catalog.key(), new TypeList(catalog.types()), catalog);
+		Table.register(catalog.name(), catalog.type(), catalog.key(), new TypeList(catalog.types()), catalog);
 	}
 	
 	public final static Catalog catalog() {
@@ -166,9 +145,8 @@ public abstract class Table implements Comparable<Table> {
 	}
 	
 	private static void register(TableName name, Type type, 
-								 Integer size, Float lifetime, 
 			                     Key key, TypeList types, Table object) { 
-		Tuple tuple = new Tuple(name, type.toString(), size, lifetime, key, types, object);
+		Tuple tuple = new Tuple(name, type.toString(), key, types, object);
 		try {
 			catalog.force(tuple);
 		} catch (UpdateException e) {
@@ -226,19 +204,6 @@ public abstract class Table implements Comparable<Table> {
 	public Class[] types() {
 		return (Class[]) attributeTypes.toArray(new Class[attributeTypes.size()]);
 	}
-	
-	/**
-	 * @return The maximum size of this table. */
-	public Integer size() {
-		return this.size;
-	}
-	
-	/**
-	 * @return The maximum lifetime of a tuple in seconds. */
-	public Number lifetime() {
-		return this.lifetime;
-	}
-	
 	
 	public abstract TupleSet tuples();
 	

@@ -24,7 +24,7 @@ public class RefTable extends Table {
 	protected Hashtable<Key, Index> secondary;
 	
 	public RefTable(TableName name, Key key, TypeList types) {
-		super(name, Type.TABLE, Catalog.INFINITY, Catalog.INFINITY.floatValue(), key, types);
+		super(name, Type.TABLE, key, types);
 		this.key = key;
 		this.tuples = new TupleSet(name);
 		this.primary = new HashIndex(this, key, Index.Type.PRIMARY);

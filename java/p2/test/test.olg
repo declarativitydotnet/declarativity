@@ -4,8 +4,7 @@ import java.lang.Integer;
 import java.lang.Float;
 import p2.types.table.Index;
 
-define(t1, infinity, infinity, keys(1), 
- {string, string, string});
+define(t1, keys(1), {string, string, string});
 
 define(event, {String, Float, Float});
 

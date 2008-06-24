@@ -171,39 +171,44 @@ public class Driver implements Runnable {
 
 
 			try {
-				if (!(table instanceof Aggregation) && deletions.size() > 0) {
-					if (table.type() == Table.Type.TABLE) {
-						if (watchRemove != null) {
-							watchRemove.evaluate(deletions);
+				if (!(table instanceof Aggregation)) {
+					while(deletions.size() > 0) {
+						if (table.type() == Table.Type.TABLE) {
+							if (watchRemove != null) {
+								watchRemove.evaluate(deletions);
+							}
+							deletions = table.delete(deletions);
+							if (watchDelete != null) {
+								watchDelete.evaluate(deletions);
+							}
 						}
-						deletions = table.delete(deletions);
-						if (watchDelete != null) {
-							watchDelete.evaluate(deletions);
+						else {
+							java.lang.System.err.println("Can't delete tuples from non table type");
+							java.lang.System.exit(0);
 						}
-					}
-					else {
-						java.lang.System.err.println("Can't delete tuples from non table type");
-						java.lang.System.exit(0);
-					}
 
-					TupleSet delta = new TupleSet(deletions.name());
-					Set<Query> queries = program.queries(delta.name());
-
-					if (queries != null) {
-						for (Query query : queries) {
-							if (query.event() != Table.Event.INSERT) {
-								TupleSet result = query.evaluate(deletions);
-								if (result.size() == 0) { 
-									continue;
-								}
-								else if (!result.name().equals(deletions.name())) {
-									Table t = Table.table(result.name());
-									if (t.type() == Table.Type.TABLE) {
-										continuation(continuations, time, program.name(), Table.Event.DELETE, result);
+						TupleSet delta = new TupleSet(deletions.name());
+						Set<Query> queries = program.queries(delta.name());
+						if (queries != null) {
+							for (Query query : queries) {
+								if (query.event() != Table.Event.INSERT) {
+									TupleSet result = query.evaluate(deletions);
+									if (result.size() == 0) { 
+										continue;
+									}
+									else if (!result.name().equals(deletions.name())) {
+										Table t = Table.table(result.name());
+										if (t.type() == Table.Type.TABLE) {
+											continuation(continuations, time, program.name(), Table.Event.DELETE, result);
+										}
+									}
+									else {
+										delta.addAll(result);
 									}
 								}
 							}
 						}
+						deletions = delta;
 					}
 				}
 			} catch (Exception e) {

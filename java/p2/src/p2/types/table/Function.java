@@ -10,7 +10,7 @@ import p2.types.exception.UpdateException;
 public abstract class Function extends Table {
 
 	public Function(String name, TypeList types) {
-		super(new TableName(GLOBALSCOPE, name), Type.FUNCTION, 0, 0f, null, types);
+		super(new TableName(GLOBALSCOPE, name), Type.FUNCTION, null, types);
 	}
 	
 	@Override 

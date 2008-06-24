@@ -63,8 +63,7 @@ Node Term =
 
 generic Definition =
     <Table> void:"define":Word void:"(":Symbol TableName void:",":Symbol
-            Constant void:",":Symbol Constant void:",":Symbol Keys 
-            void:",":Symbol Schema void:")":Symbol 
+            Keys void:",":Symbol Schema void:")":Symbol 
             @Table
   / <Event> void:"define":Word void:"(":Symbol TableName
             void:",":Symbol Schema void:")":Symbol 
@@ -186,13 +185,18 @@ String MultiplicativeOperator =
   ;
 
 Node UnaryExpression =
-    <LogicalNot> LogicalNegationExpression
+	<Cast>       CastExpression
+  / <LogicalNot> LogicalNegationExpression
   / <Inclusive>  InclusiveExpression
   / <Base>       yyValue:PostfixExpression
   ;
 
 generic LogicalNegationExpression =
   void:"!":Symbol UnaryExpression
+  ;
+  
+generic CastExpression =
+  void:"(":Symbol Type void:")":Symbol UnaryExpression
   ;
 
 generic InclusiveExpression =

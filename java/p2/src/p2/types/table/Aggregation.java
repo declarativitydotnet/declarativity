@@ -26,7 +26,7 @@ public class Aggregation extends Table {
 	protected Hashtable<Key, Index> secondary;
 	
 	public Aggregation(Predicate predicate, Table.Type type) {
-		super(predicate.name(), type, Integer.MAX_VALUE, Float.MAX_VALUE, key(predicate), types(predicate));
+		super(predicate.name(), type, key(predicate), types(predicate));
 		this.tuples = new Hashtable<Tuple, TupleSet>();
 		this.aggregates = new Hashtable<Tuple, Aggregate>();
 		if (type == Table.Type.TABLE) {

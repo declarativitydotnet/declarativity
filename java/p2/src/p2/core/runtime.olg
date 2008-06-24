@@ -9,8 +9,8 @@ import p2.types.table.TableName;
 
 /* Define runtime events. */
 define(runnable, {Long, String, TableName, TupleSet, TupleSet});
-define(strata, infinity, infinity, keys(0,1), {String, Long, Integer});
-define(priority, infinity, infinity, keys(0,1), {String, TableName, Integer});
+define(strata, keys(0,1), {String, Long, Integer});
+define(priority, keys(0,1), {String, TableName, Integer});
 define(delta, {Long, String, TableName, TupleSet, TupleSet});
 
 reschedule
@@ -19,7 +19,7 @@ schedule(Time, Program, Name, Insertions, Deletions) :-
 
 schedulePublic
 schedule(Time, Program2, Name, Insertions, Deletions) :-
-	delta(Time, Program1, Name, Insertions, Deletions),
+	delta(Time, Program1, Name, Insertions, (TupleSet) Deletions),
 	query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
 	Public && Input == Name, Program1 != Program2;
 

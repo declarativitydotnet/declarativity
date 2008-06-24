@@ -5,7 +5,7 @@ import java.lang.Integer;
 
 /*******************************************************************/
 /*** Table definitions ***/
-define(dependency, infinity, infinity, keys(0,1,2), {String, TableName, TableName});
+define(dependency, keys(0,1,2), {String, TableName, TableName});
 define(priorityUpdate, {String, TableName, Integer});
 define(config, {String, Program});
 define(checkStrata, {String, Integer});
@@ -35,8 +35,8 @@ checkStrata(Program, count<*>) :-
 dependency(ProgramName, Head.name(), Body.name()) :-
 	config(ProgramName, Object),
 	rule(ProgramName, Rule, _),
-	predicate(ProgramName, Rule, 0, Event, Head), /* Position == 0 */
-	predicate(ProgramName, Rule, Pos, Event, Body), 
+	predicate(ProgramName, Rule, 0, _, Head), /* Position == 0 */
+	predicate(ProgramName, Rule, Pos, _, Body), 
 	Head.name() != Body.name(), Pos > 0,
 	ProgramName != "compile";
 	

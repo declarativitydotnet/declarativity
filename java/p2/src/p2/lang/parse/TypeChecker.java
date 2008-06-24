@@ -20,6 +20,7 @@ import p2.lang.plan.Aggregate;
 import p2.lang.plan.Alias;
 import p2.lang.plan.ArrayIndex;
 import p2.lang.plan.Assignment;
+import p2.lang.plan.Cast;
 import p2.lang.plan.DontCare;
 import p2.lang.plan.Expression;
 import p2.lang.plan.Fact;
@@ -281,57 +282,21 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 
-		/************** Table Size ******************/
-		type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) {
-			return Error.class;
-		}
-		
-		assert(type == Value.class);
-		Value size = (Value) n.getNode(1).getProperty(Constants.TYPE);
-		if (size.type() == null || !Integer.class.isAssignableFrom(size.type())) {
-			runtime.error("Table size type is " + type.getClass() + " must be type " + Integer.class);
-			return Error.class;
-		}
-
-		/************** Table Lifetime ******************/
-		type = (Class) dispatch(n.getNode(2));
-		if (type == Error.class) {
-			return Error.class;
-		}
-	    assert(type == Value.class);	
-	    
-		Value lifetime = (Value) n.getNode(2).getProperty(Constants.TYPE);
-		if (lifetime.type() == null || !Number.class.isAssignableFrom(lifetime.type())) {
-			runtime.error("Lifetime type " + type + 
-					" not allowed! Must be subtype of " + Number.class);
-			return Error.class;
-		}
-
 		/************** Table Primary Key ******************/
-		type = (Class) dispatch(n.getNode(3));
+		type = (Class) dispatch(n.getNode(1));
 		if (type == Error.class) return type;
 		assert (type == Key.class);
-		Key key  = (Key) n.getNode(3).getProperty(Constants.TYPE);
+		Key key  = (Key) n.getNode(1).getProperty(Constants.TYPE);
 
+		
 		/************** Table Schema ******************/
-		type = (Class) dispatch(n.getNode(4));
+		type = (Class) dispatch(n.getNode(2));
 		if (type == Error.class) return type;
 		assert(type == TypeList.class);
-		TypeList schema  = (TypeList) n.getNode(4).getProperty(Constants.TYPE);
+		TypeList schema  = (TypeList) n.getNode(2).getProperty(Constants.TYPE);
 
-		Table create;
-		if (size.value().equals(p2.types.table.Table.INFINITY) && 
-				lifetime.value().equals(p2.types.table.Table.INFINITY)) {
-			create = new RefTable(name, key, schema);
-		}
-		else {
-			create = new BasicTable(name, (Integer)size.value(), 
-					                (Number)lifetime.value(), key, schema);
-		}
+		Table create = new RefTable(name, key, schema);
 		this.program.definition(create);
-
-
 		n.setProperty(Constants.TYPE, create);
 		return Table.class;
 	}
@@ -748,7 +713,13 @@ public final class TypeChecker extends Visitor {
 		for (int index = 0; index < schema.size(); index++) {
 			Expression param = parameters.size() <= index ? 
 					new DontCare(schema.get(index)) : parameters.get(index);
-			if (Alias.class.isAssignableFrom(param.getClass())) {
+			Class paramType = param.type();
+			
+			if (param instanceof Cast) {
+				param = ((Cast)param).expression();
+			}
+			
+			if (param instanceof Alias) {
 				Alias alias = (Alias) param;
 				if (alias.position() < index) {
 					runtime.error("Alias fields must be in numeric order!");
@@ -762,9 +733,10 @@ public final class TypeChecker extends Visitor {
 				}
 			}
 
-			if (Variable.class.isAssignableFrom(param.getClass())) {
+			if (param instanceof Variable) {
 				/* Only look in the current scope. */
 				Variable var = (Variable) param;
+				var.type(paramType);
 				if (var.type() == null) {
 					/* Fill in type using the schema. */
 					var.type(schema.get(index));
@@ -772,6 +744,7 @@ public final class TypeChecker extends Visitor {
 
 				/* Map variable to its type. */
 				table.current().define(var.name(), var.type());
+				paramType = var.type();
 			}
 			else if (param.variables().size() > 0) {
 				for (Variable var : param.variables()) {
@@ -785,7 +758,7 @@ public final class TypeChecker extends Visitor {
 			}
 
 			/* Ensure the type matches the schema definition. */
-			if (!subtype(schema.get(index), param.type())) {
+			if (!subtype(schema.get(index), paramType)) {
 				runtime.error("Predicate " + name + " argument " + param.getClass() + " " + param
 								+ " has type " + param.type() + " does not match type " 
 								+ schema.get(index) + " in schema.", n);
@@ -1064,6 +1037,24 @@ public final class TypeChecker extends Visitor {
 		n.setProperty(Constants.TYPE, 
 				new p2.lang.plan.Boolean(p2.lang.plan.Boolean.NOT, ensureBooleanValue(expr), null));
 		return p2.lang.plan.Boolean.class;
+	}
+	
+	public Class visitCastExpression(final GNode n) {
+		Class type = (Class) dispatch(n.getNode(0));
+		if (type == Error.class) return Error.class;
+		type = (Class) dispatch(n.getNode(1));
+		if (type == Error.class) return Error.class;
+		
+		Class cast = (Class) n.getNode(0).getProperty(Constants.TYPE);
+		Expression expr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
+		
+		if (expr.type() != null && !subtype(expr.type(), cast)) {
+			runtime.error("CAST ERROR: Expression type " + expr.type() + " is not a supertype of " + cast + ".", n);
+			return Error.class;
+		}
+		
+		n.setProperty(Constants.TYPE, new Cast(cast, expr));
+		return Cast.class;
 	}
 
 	public Class visitInclusiveExpression(final GNode n) {
