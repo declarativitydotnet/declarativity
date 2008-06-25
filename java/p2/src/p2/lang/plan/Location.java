@@ -9,7 +9,9 @@ public class Location extends Variable {
 	}
 	
 	public Location clone() {
-		return new Location(name(), type());
+		Location clone = new Location(name(), type());
+		clone.position(this.position());
+		return clone;
 	}
 	
 	public String toString() {
