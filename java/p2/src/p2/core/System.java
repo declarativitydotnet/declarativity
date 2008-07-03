@@ -15,11 +15,13 @@ import p2.types.exception.UpdateException;
 import p2.types.table.Table;
 
 public class System {
-	private static String RUNTIME = "src/p2/core/runtime.olg";
+	private static String RUNTIME = "/Users/tcondie/workspace/P2/src/p2/core/runtime.olg";
+			
+	private static boolean initialized = false;
+	
+	private static Thread system;
 	
 	private static QueryTable query;
-	
-	private static CompileTable compile;
 	
 	private static Evaluate evaluator;
 	
@@ -35,18 +37,6 @@ public class System {
 	private static Log log;
 	
 	private static Hashtable<String, Program> programs;
-	
-	public static void initialize() {
-		Table.initialize();
-		query      = new QueryTable();
-		compile    = new CompileTable();
-		evaluator  = new Evaluate();
-		schedule   = new Schedule();
-		clock      = new Clock("localhost");
-		periodic   = new Periodic(schedule);
-		log        = new Log(java.lang.System.err);
-		programs   = new Hashtable<String, Program>();
-	}
 	
 	public static Clock clock() {
 		return clock;
@@ -73,19 +63,39 @@ public class System {
 	}
 	
 	public static void install(String owner, String file) {
+		final TupleSet compilation = new TupleSet(Compiler.compiler.name());
+		compilation.add(new Tuple(null, owner, file, null));
+		schedule(compilation, "runtime");
+	}
+	
+	public static void schedule(final TupleSet tuples, final String program) {
 		synchronized (driver) {
-			final TupleSet compilation = new TupleSet(compile.name());
-			compilation.add(new Tuple(null, owner, file, null));
 			driver.task(new Driver.Task() {
 				public TupleSet tuples() {
-					return compilation;
+					return tuples;
+				}
+
+				public String program() {
+					return program;
 				}
 			});
 		}
 	}
 	
-	private static void bootstrap() {
+	public static void bootstrap() {
+		if (initialized) return;
+		
 		try {
+			Table.initialize();
+			Compiler.initialize();
+			query      = new QueryTable();
+			evaluator  = new Evaluate();
+			schedule   = new Schedule();
+			clock      = new Clock("localhost");
+			periodic   = new Periodic(schedule);
+			log        = new Log(java.lang.System.err);
+			programs   = new Hashtable<String, Program>();
+			
 			p2.lang.Compiler compiler = new p2.lang.Compiler("system", RUNTIME);
 			compiler.program().plan();
 			clock.insert(clock.time(0L), null);
@@ -93,21 +103,21 @@ public class System {
 			driver = new Driver(program("runtime"), schedule, periodic, clock);
 			
 			for (String file : Compiler.FILES) {
-				TupleSet compilation = new TupleSet(compile.name());
-				compilation.add(new Tuple(null, "system", file, null));
-				driver.evaluate(compilation);
+				install("system", file);
 			}
+			
+			system = new Thread(driver);
+			system.start();
 		} catch (Exception e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
+		initialized = true;
 	}
 	
 	public static void main(String[] args) {
-		initialize();
 		bootstrap();
 		for (int i = 0; i < args.length; i++)
 			install("user", args[i]);
-		driver.run();
 	}
 }

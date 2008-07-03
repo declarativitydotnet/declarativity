@@ -26,6 +26,7 @@ import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
+import p2.lang.Compiler;
 
 public class Program implements Comparable<Program> {
 	
@@ -54,15 +55,6 @@ public class Program implements Comparable<Program> {
 		}
 	}
 	
-	public static final ProgramTable    program    = new ProgramTable();
-	public static final RuleTable       rule       = new RuleTable();
-	public static final WatchTable      watch      = new WatchTable();
-	public static final FactTable       fact       = new FactTable();
-	public static final PredicateTable  predicate  = new PredicateTable();
-	public static final TableFunction   tfunction  = new TableFunction();
-	public static final SelectionTable  selection  = new SelectionTable();
-	public static final AssignmentTable assignment = new AssignmentTable();
-	
 	private String name;
 	
 	private String owner;
@@ -80,7 +72,7 @@ public class Program implements Comparable<Program> {
 		this.queries     = new Hashtable<TableName, Set<Query>>();
 		this.periodics   = new TupleSet(p2.core.System.periodic().name());
 		try {
-			program.force(new Tuple(name, owner, this));
+			Compiler.programs.force(new Tuple(name, owner, this));
 			p2.core.System.program(name, this);
 		} catch (UpdateException e) {
 			e.printStackTrace();
@@ -116,7 +108,7 @@ public class Program implements Comparable<Program> {
 
 		try {
 			/* First plan out all the rules. */
-			TupleSet rules = rule.secondary().get(
+			TupleSet rules = Compiler.rule.secondary().get(
 					new Key(RuleTable.Field.PROGRAM.ordinal())).lookup(this.name);
 
 			for (Tuple tuple : rules) {

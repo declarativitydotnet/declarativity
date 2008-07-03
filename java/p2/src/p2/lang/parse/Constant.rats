@@ -9,9 +9,9 @@ Node Constant =
   / LongConstant Spacing
   / IntegerConstant Spacing
   / StringConstant Spacing
+  / NullConstant Spacing
   / BooleanConstant Spacing
   / InfinityConstant Spacing
-  / NullConstant Spacing
   / Vector Spacing
   / Matrix Spacing
   ;
@@ -72,7 +72,7 @@ generic InfinityConstant =
   ;
 
 generic NullConstant =
-  void:"null":Word
+  "null":Word
   ;
   
 Node Vector = IntVector / FloatVector;

@@ -1,17 +1,14 @@
 package p2.lang.plan;
 
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import p2.lang.plan.Selection.SelectionTable.Field;
+import p2.lang.Compiler;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
-import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.operator.AntiScanJoin;
 import p2.types.operator.IndexJoin;
@@ -187,7 +184,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	@Override
 	public void set(String program, String rule, Integer position) throws UpdateException {
-		Program.predicate.force(new Tuple(program, rule, position, event.toString(), this));
+		Compiler.predicate.force(new Tuple(program, rule, position, event.toString(), this));
 		
 		this.schema = new Schema(name());
 		for (Expression arg : arguments) {

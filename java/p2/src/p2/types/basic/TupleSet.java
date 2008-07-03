@@ -1,5 +1,6 @@
 package p2.types.basic;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,8 +36,14 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
 	}
 	
 	public String toString() {
-		return this.id + super.toString();
+		String tuples = name + "[\n";
+		for (Tuple tuple : this) {
+			tuples += "\t" + tuple + "\n";
+		}
+		tuples += "]\n";
+		return tuples;
 	}
+	
 	@Override
 	public int hashCode() {
 		return id.hashCode();

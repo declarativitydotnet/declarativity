@@ -17,11 +17,8 @@ public class Log extends ObjectTable {
 	
 	public enum Type{INFO, WARNING, ERROR};
 	
-	public enum Field{CLOCK, PROGRAM, RULE, TYPE, MESSAGE};
+	public enum Field{TYPE, MESSAGE};
 	public static final Class[] SCHEMA = {
-		Long.class,    // Clock value 
-		String.class,  // Program name
-		String.class,  // Rule name
 		Enum.class,    // Message type
 		String.class   // Log message
 	};
@@ -35,10 +32,7 @@ public class Log extends ObjectTable {
 	
 	@Override
 	public boolean insert(Tuple tuple) throws UpdateException {
-		String log = "CLOCK[" + tuple.value(Field.CLOCK.ordinal()) + "], ";
-		log       += "PROGRAM[" + tuple.value(Field.PROGRAM.ordinal()) + "], ";
-		log       += "RULE[" + tuple.value(Field.RULE.ordinal()) + "], ";
-		log       += "TYPE[" + tuple.value(Field.TYPE.ordinal()) + "], ";
+		String log = "LOGTYPE [" + tuple.value(Field.TYPE.ordinal()) + "], ";
 		log       += tuple.value(Field.MESSAGE.ordinal()) + "\n";
 		
 		try {

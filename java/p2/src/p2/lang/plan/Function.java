@@ -1,7 +1,7 @@
 package p2.lang.plan;
 
 import java.util.Set;
-
+import p2.lang.Compiler;
 import p2.lang.plan.Predicate.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
@@ -68,7 +68,7 @@ public class Function extends Term {
 	public void set(String program, String rule, Integer position)
 			throws UpdateException {
 		predicate.set(program, rule, position);
-		Program.tfunction.force(new Tuple(program, rule, position, 
+		Compiler.tfunction.force(new Tuple(program, rule, position, 
 				                          function.name(), this));
 	}
 

@@ -10,6 +10,14 @@ import p2.core.Periodic;
 import p2.lang.parse.Parser;
 import p2.lang.parse.TypeChecker;
 import p2.lang.plan.*;
+import p2.lang.plan.Program.ProgramTable;
+import p2.lang.plan.Assignment.AssignmentTable;
+import p2.lang.plan.Fact.FactTable;
+import p2.lang.plan.Function.TableFunction;
+import p2.lang.plan.Predicate.PredicateTable;
+import p2.lang.plan.Rule.RuleTable;
+import p2.lang.plan.Selection.SelectionTable;
+import p2.lang.plan.Watch.WatchTable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.P2RuntimeException;
@@ -31,8 +39,8 @@ import xtc.util.Tool;
  */
 public class Compiler extends Tool {
 	public static final String[] FILES =  {
-		"src/p2/lang/compile.olg", 
-		"src/p2/lang/stratachecker.olg"};
+		"/Users/tcondie/workspace/P2/src/p2/lang/compile.olg", 
+		"/Users/tcondie/workspace/P2/src/p2/lang/stratachecker.olg"};
 
 	public static class CompileTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);
@@ -68,6 +76,27 @@ public class Compiler extends Tool {
 		}
 	}
 
+	public static CompileTable    compiler;
+	public static ProgramTable    programs;
+	public static RuleTable       rule;
+	public static WatchTable      watch;
+	public static FactTable       fact;
+	public static PredicateTable  predicate;
+	public static TableFunction   tfunction;
+	public static SelectionTable  selection;
+	public static AssignmentTable assignment;
+	
+	public static final void initialize() {
+		compiler   = new CompileTable();
+		programs   = new ProgramTable();
+		rule       = new RuleTable();
+		watch      = new WatchTable();
+		fact       = new FactTable();
+		predicate  = new PredicateTable();
+		tfunction  = new TableFunction();
+		selection  = new SelectionTable();
+		assignment = new AssignmentTable();
+	}
 
 	private String owner;
 	

@@ -62,7 +62,6 @@ public abstract class Table implements Comparable<Table> {
 			
 			assert (table != null);
 			tuple.value(Field.OBJECT.ordinal(), table);
-			
 			return super.insert(tuple);
 		}
 		
@@ -103,11 +102,6 @@ public abstract class Table implements Comparable<Table> {
 	public String toString() {
 		String value = name.toString() + ", " + attributeTypes.toString() + 
 		               ", keys(" + key + "), {" + attributeTypes.toString() + "}";
-		if (tuples() != null) {
-		for (Tuple t : tuples()) {
-			value += t.toString() + "\n";
-		}
-		}
 		return value;
 	}
 	

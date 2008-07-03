@@ -52,6 +52,12 @@ runtime::priority(ProgramName, Pred.name(), 0) :-
 	rule(ProgramName, Rule, _),
 	predicate(ProgramName, Rule, Pos, Event, Pred),
 	ProgramName != "compile";
+	
+runtime::priority(ProgramName, TableName, 0) :-
+	config(ProgramName, Object),
+	fact(ProgramName, TableName, Tuple),
+	ProgramName != "compile";
+
 
 /* Bubble up predicates in the stratum chain. */
 priorityUpdate(ProgramName, Head, max<Priority>) :-

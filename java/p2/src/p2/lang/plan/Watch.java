@@ -13,6 +13,7 @@ import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
+import p2.lang.Compiler;
 
 public class Watch extends Clause {
 	
@@ -44,7 +45,7 @@ public class Watch extends Clause {
 		public Operator watched(String program, TableName name, p2.types.operator.Watch.Modifier modifier) {
 			Tuple key = new Tuple(program, name, modifier);
 			try {
-				TupleSet tuples = Program.watch.primary().lookup(key);
+				TupleSet tuples = Compiler.watch.primary().lookup(key);
 				if (tuples.size() > 0) {
 					return (Operator) tuples.iterator().next().value(Field.OPERATOR.ordinal());
 				}
@@ -73,7 +74,7 @@ public class Watch extends Clause {
 
 	@Override
 	public void set(String program) throws UpdateException {
-		Program.watch.force(
+		Compiler.watch.force(
 				new Tuple(program, name, modifier, 
 						  new p2.types.operator.Watch(program, null, name, modifier)));
 	}

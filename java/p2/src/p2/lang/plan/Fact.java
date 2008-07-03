@@ -17,6 +17,7 @@ import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
+import p2.lang.Compiler;
 
 public class Fact extends Clause {
 	
@@ -84,7 +85,7 @@ public class Fact extends Clause {
 			}
 		}
 		
-		Program.fact.force(new Tuple(program, name, new Tuple(values)));
+		Compiler.fact.force(new Tuple(program, name, new Tuple(values)));
 	}
 
 }

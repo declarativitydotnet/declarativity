@@ -16,6 +16,7 @@ import p2.types.operator.Watch;
 import p2.types.table.Aggregation;
 import p2.types.table.Table;
 import p2.types.table.TableName;
+import p2.lang.Compiler;
 
 public class Driver implements Runnable {
 	
@@ -111,10 +112,10 @@ public class Driver implements Runnable {
 			// java.lang.System.err.println("EVALUATE PROGRAM " + program.name() + " " + name + ": INSERTIONS " + insertions + " DELETIONS " + deletions);
 
 			Table table = Table.table(name);
-			Operator watchAdd    = Program.watch.watched(program.name(), name, Watch.Modifier.ADD);
-			Operator watchInsert = Program.watch.watched(program.name(), name, Watch.Modifier.INSERT);
-			Operator watchRemove = Program.watch.watched(program.name(), name, Watch.Modifier.ERASE);
-			Operator watchDelete = Program.watch.watched(program.name(), name, Watch.Modifier.DELETE);
+			Operator watchAdd    = Compiler.watch.watched(program.name(), name, Watch.Modifier.ADD);
+			Operator watchInsert = Compiler.watch.watched(program.name(), name, Watch.Modifier.INSERT);
+			Operator watchRemove = Compiler.watch.watched(program.name(), name, Watch.Modifier.ERASE);
+			Operator watchDelete = Compiler.watch.watched(program.name(), name, Watch.Modifier.DELETE);
 			try {
 				do { 
 					if (watchAdd != null) {
@@ -249,6 +250,8 @@ public class Driver implements Runnable {
 
 	public interface Task {
 		public TupleSet tuples();
+		
+		public String program();
 	}
 	
 	/* Tasks that the driver needs to execute during the next clock. */
@@ -290,10 +293,10 @@ public class Driver implements Runnable {
 				if (min < Long.MAX_VALUE) {
 					try {
 						java.lang.System.err.println("============================ EVALUATE CLOCK[" + min + "] =============================");
-						evaluate(clock.time(min));
+						evaluate(clock.time(min), runtime.name());
 						
 						for (Task task : tasks) {
-							evaluate(task.tuples());
+							evaluate(task.tuples(), task.program());
 						}
 						tasks.clear();
 						java.lang.System.err.println("============================ ========================== =============================");
@@ -310,9 +313,9 @@ public class Driver implements Runnable {
 		}
 	}
 	
-	public void evaluate(TupleSet tuples) throws UpdateException {
+	public void evaluate(TupleSet tuples, String program) throws UpdateException {
 		TupleSet evaluation = new TupleSet(System.evaluator().name());
-		evaluation.add(new Tuple(clock.current(), runtime.name(), tuples.name(), tuples, 
+		evaluation.add(new Tuple(clock.current(), program, tuples.name(), tuples, 
 								 new TupleSet(tuples.name())));
 		/* Evaluate until nothing left in this clock. */
 		while (evaluation.size() > 0) {

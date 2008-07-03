@@ -1,5 +1,6 @@
 package p2.lang.plan;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -69,7 +70,14 @@ public class MethodCall extends Expression {
 					arguments[index++] = argFunction.evaluate(tuple);
 				}
 				try {
-					return MethodCall.this.method.invoke(instance, arguments);
+					try {
+						return MethodCall.this.method.invoke(instance, arguments);
+					} catch (InvocationTargetException e) {
+						System.err.println(e.getTargetException().getMessage());
+						e.getTargetException().printStackTrace();
+						System.exit(0);
+					}
+					return null;
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new P2RuntimeException(e.toString());

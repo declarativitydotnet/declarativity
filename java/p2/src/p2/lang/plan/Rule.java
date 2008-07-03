@@ -28,6 +28,7 @@ import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 import p2.types.table.TableName;
 import p2.core.Periodic;
+import p2.lang.Compiler;
 
 public class Rule extends Clause {
 	
@@ -143,7 +144,7 @@ public class Rule extends Clause {
 			this.body.get(i).set(program, this.name, i+1);
 		}
 		
-		Program.rule.force(new Tuple(program, name, isPublic, isDelete, this));
+		Compiler.rule.force(new Tuple(program, name, isPublic, isDelete, this));
 	}
 
 	public List<Query> query(TupleSet periodics) throws PlannerException {
@@ -208,7 +209,7 @@ public class Rule extends Clause {
 				}
 			}
 			
-			if (Program.watch.watched(program, event.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
+			if (Compiler.watch.watched(program, event.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
 				operators.add(
 						new p2.types.operator.Watch(program, name, event.name(), 
 								                    p2.types.operator.Watch.Modifier.RECEIVE));
@@ -238,7 +239,7 @@ public class Rule extends Clause {
 			
 			operators.add(new Projection(this.head));
 			
-			if (Program.watch.watched(program, this.head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
+			if (Compiler.watch.watched(program, this.head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
 				operators.add(
 						new p2.types.operator.Watch(program, name, this.head.name(), 
 								                    p2.types.operator.Watch.Modifier.SEND));
@@ -268,7 +269,7 @@ public class Rule extends Clause {
 					operators.add(efilter);
 				}
 				
-				if (Program.watch.watched(program, delta.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
+				if (Compiler.watch.watched(program, delta.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
 					operators.add(
 							new p2.types.operator.Watch(program, name, delta.name(), 
 									                    p2.types.operator.Watch.Modifier.RECEIVE));
@@ -284,7 +285,7 @@ public class Rule extends Clause {
 				}
 				
 				operators.add(new Projection(this.head));
-				if (Program.watch.watched(program, this.head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
+				if (Compiler.watch.watched(program, this.head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
 					operators.add(
 							new p2.types.operator.Watch(program, name, this.head.name(), 
 									                    p2.types.operator.Watch.Modifier.SEND));

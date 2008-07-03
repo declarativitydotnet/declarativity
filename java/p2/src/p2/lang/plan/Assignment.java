@@ -12,6 +12,7 @@ import p2.types.operator.Assign;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
+import p2.lang.Compiler;
 
 public class Assignment extends Term {
 	
@@ -81,7 +82,7 @@ public class Assignment extends Term {
 
 	@Override
 	public void set(String program, String rule, Integer position) throws UpdateException {
-		Program.assignment.force(new Tuple(program, rule, position, this));
+		Compiler.assignment.force(new Tuple(program, rule, position, this));
 	}
 
 }

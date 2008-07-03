@@ -4,13 +4,13 @@ import java.util.Set;
 
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
+import p2.lang.Compiler;
 
 public class Selection extends Term {
 	
@@ -71,6 +71,6 @@ public class Selection extends Term {
 
 	@Override
 	public void set(String program, String rule, Integer position) throws UpdateException {
-		Program.selection.force(new Tuple(program, rule, position, this));
+		Compiler.selection.force(new Tuple(program, rule, position, this));
 	}
 }

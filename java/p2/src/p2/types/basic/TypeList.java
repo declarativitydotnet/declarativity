@@ -1,24 +1,22 @@
 package p2.types.basic;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
-public class TypeList extends ArrayList<Class> implements Comparable<TypeList> {
+public class TypeList extends ValueList<Class> {
 	
-	public TypeList(Class[] types) {
-		for (Class type : types) {
-			add(type);
+	public TypeList() {
+		super();
+	}
+	
+	public TypeList(Class[] values) {
+		for (Class value : values) {
+			add(value);
 		}
 	}
 	
-	public TypeList(List<Class> types) {
-		addAll(types);
+	public TypeList(List<Class> values) {
+		addAll(values);
 	}
-	
-	public TypeList() {}
 	
 	public boolean equals(Object o) {
 		if (o instanceof TypeList) {

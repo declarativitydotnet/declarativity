@@ -145,7 +145,11 @@ public final class TypeChecker extends Visitor {
 	
 	private boolean subtype(Class superType, Class subType) {
 		if (subType == null) return true;
-		else return superType.isAssignableFrom(subType);
+		
+		if (type(superType.getSimpleName()) != null) superType = type(superType.getSimpleName()); 
+		if (type(subType.getSimpleName()) != null) subType = type(subType.getSimpleName()); 
+		
+		return superType == subType || superType.isAssignableFrom(subType);
 	}
 
 	// =========================================================================
@@ -965,11 +969,11 @@ public final class TypeChecker extends Visitor {
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
-		if (lhs.type() == null) {
+		if (ltype != Null.class && lhs.type() == null) {
 			runtime.error("Undefined expression " + lhs, n);
 			return Error.class;
 		}
-		else if (rhs.type() == null) {
+		else if (rtype != Null.class && rhs.type() == null) {
 			runtime.error("Undefined expression " + rhs, n);
 			return Error.class;
 		}
@@ -1001,11 +1005,11 @@ public final class TypeChecker extends Visitor {
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
-		if (lhs.type() == null) {
+		if (ltype != Null.class && lhs.type() == null) {
 			runtime.error("Undefined expression " + lhs, n);
 			return Error.class;
 		}
-		else if (rhs.type() == null) {
+		else if (rtype != Null.class && rhs.type() == null) {
 			runtime.error("Undefined expression " + rhs, n);
 			return Error.class;
 		}
@@ -1269,6 +1273,11 @@ public final class TypeChecker extends Visitor {
 				}
 				else if (reference.object() != null) {
 					Expression object = reference.object();
+					if (object.type() == null) {
+						runtime.error("Undefined expression object: " + object, n);
+						return Error.class;
+					}
+					
 				    Method method = object.type().getMethod(reference.toString(), types);
 				    n.setProperty(Constants.TYPE, new MethodCall(object, method, arguments));
 				    return MethodCall.class;
@@ -1616,7 +1625,7 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitNullConstant(final GNode n) {
 		n.setProperty(Constants.TYPE, new Null());
-		return Value.class;
+		return Null.class;
 	}
 
 	public Class visitInfinityConstant(final GNode n) {
