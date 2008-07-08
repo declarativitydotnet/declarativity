@@ -45,7 +45,7 @@ SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_SOURCE_DIR}/pel_opcode_decls.gen.h $
 FIND_PACKAGE(FLEX)
 FLEX_TARGET(PelLexer ${P2_SOURCE_DIR}/p2core/pel/pel_lexer.lex ${CMAKE_CURRENT_BINARY_DIR}/pel_lexer.C)
 
-TARGET_LINK_LIBRARIES(p2pel boost_regex-mt-1_35 boost_date_time-mt-1_35 crypto ssl) 
+TARGET_LINK_LIBRARIES(p2pel boost_regex${TOOLSET}-mt-1_35 boost_date_time${TOOLSET}-mt-1_35 crypto ssl) 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

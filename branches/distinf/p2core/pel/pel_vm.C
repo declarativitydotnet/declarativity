@@ -86,8 +86,8 @@ typedef prl::canonical_gaussian<matrix_type, vector_type> canonical_gaussian;
 typedef prl::moment_gaussian<matrix_type, vector_type> moment_gaussian;
 
 //! EM engine
-typedef prl::em_mog< prl::array_data<> > em_type;
-em_type* em_engine = NULL; 
+//typedef prl::em_mog< prl::array_data<> > em_type;
+//em_type* em_engine = NULL; 
 
 
 boost::lagged_fibonacci607 rng_fibonacci;

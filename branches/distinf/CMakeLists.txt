@@ -184,6 +184,46 @@ SET(COMMON_LIBRARIES1 p2core
 
 SET(COMMON_LIBRARIES ${COMMON_LIBRARIES1} ${COMMON_LIBRARIES1} ${COMMON_LIBRARIES1})
 
+
+# Detect Boost suffix
+if(${CMAKE_SYSTEM} MATCHES Darwin)
+
+  set(TOOLSET "")
+
+else (${CMAKE_SYSTEM} MATCHES Darwin)
+
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    exec_program(${CMAKE_CXX_COMPILER} ARGS --version
+      OUTPUT_VARIABLE CXX_COMPILER_VERSION)
+    if (CXX_COMPILER_VERSION MATCHES ".*3\\.4.*")
+      set(TOOLSET "-gcc34")
+    elseif (CXX_COMPILER_VERSION MATCHES ".*4\\.0.*")
+      set(TOOLSET "-gcc40")
+    elseif (CXX_COMPILER_VERSION MATCHES ".*4\\.1.*")
+      set(TOOLSET "-gcc41")
+    elseif (CXX_COMPILER_VERSION MATCHES ".*4\\.2.*")
+      set(TOOLSET "-gcc42")
+    elseif (CXX_COMPILER_VERSION MATCHES ".*4\\.3.*")
+      set(TOOLSET "-gcc43")
+    endif (CXX_COMPILER_VERSION MATCHES ".*3\\.4.*")
+  endif(CMAKE_COMPILER_IS_GNUCXX)
+  if (MSVC60)
+    set(TOOLSET "-vc6")
+  elseif (MSVC70)
+    set(TOOLSET "-vc7")
+  elseif (MSVC71)
+    set(TOOLSET "-vc71")
+  elseif (MSVC80)
+    set(TOOLSET "-vc80")
+  elseif (MSVC90)
+    set(TOOLSET "-vc90")
+  elseif (BORLAND)
+    set(TOOLSET "-borland")  
+  endif (MSVC60)
+  
+endif(${CMAKE_SYSTEM} MATCHES Darwin)
+
+
 #Default build type and some variables (PM)
 SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -gdwarf-2 -DTRACE_OFF")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -gdwarf-2 -DTRACE_OFF")
