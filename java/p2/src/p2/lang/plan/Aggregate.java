@@ -31,7 +31,7 @@ public class Aggregate extends Variable {
 	public TupleFunction function() {
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws P2RuntimeException {
-				return name().equals(STAR) ? tuple.value(position()) : tuple.value(name());
+				return name().equals(STAR) ? tuple.id() : tuple.value(name());
 			}
 
 			public Class returnType() {
