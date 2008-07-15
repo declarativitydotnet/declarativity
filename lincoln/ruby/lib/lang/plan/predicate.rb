@@ -101,9 +101,9 @@ class Predicate < Term
 		if @arguments.length == 0
 			return value + ")"
 		end
-		value += arguments[0].to_s
+		value += argument(0).to_s
 		(1..@arguments.length).each do |i|
-			value += ", " + arguments[i]
+			value += ", " + argument(i).to_s
 		end
 		return value + ")"
 	end

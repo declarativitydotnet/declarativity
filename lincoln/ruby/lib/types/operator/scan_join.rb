@@ -8,7 +8,7 @@ class ScanJoin < Join
 	end
 	
 	def to_s
-		return "NEST LOOP JOIN: PREDICATE[" + @predicate  + "]"
+		return "NEST LOOP JOIN: PREDICATE[" + @predicate.to_s  + "]"
 	end
 	
 	def evaluate(tuples) #TupleSet

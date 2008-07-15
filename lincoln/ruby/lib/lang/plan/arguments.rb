@@ -20,10 +20,17 @@ class Arguments
     return @predicate.<=>(a.predicate);
   end
   
+  def length
+    return @args.length
+  end
+  
   def each
     @args.each do |a|
       yield a
     end
   end
 
+  def [](i)
+    return @args[i]
+  end
 end

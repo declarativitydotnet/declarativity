@@ -1,6 +1,7 @@
 require "lib/types/table/table"
 require "lib/types/table/index_table"
 require "lib/types/operator/scan_join"
+require "lib/types/operator/index_join"
 require "lib/lang/plan/boolean"
 require "lib/lang/plan/selection_term"
 require 'lib/types/function/filter'
@@ -21,7 +22,7 @@ class TestJoin < Test::Unit::TestCase
     v2.position = 1
     schema1 = Schema.new("schema1", [v,v2])
     t1.schema = schema1
-    
+
     t2 = Tuple.new(1, "hellerstein")
     v3 = Variable.new("id", Integer)
     v3.position = 0
@@ -38,7 +39,25 @@ class TestJoin < Test::Unit::TestCase
 
 
     test_join(table2, schema2, t1, t2, v)
-    test_scan_join(table1, schema1, ts, schema2, ts2)
+    
+    pred = Predicate.new(false,table1.name, table1, schema1.variables)
+    pred.set("myprog", "r3", 1) 
+    
+    sj = ScanJoin.new(pred, schema1)
+    test_real_join(sj, table1, schema1, ts, schema2, ts2)
+    assert_equal(sj.to_s, "NEST LOOP JOIN: PREDICATE[Firstname(id:0, name:1, )]")
+
+    # reset the tables and tuplesets and repeat the experiment with index join
+    table1 = BasicTable.new('Firstname', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
+    ts = TupleSet.new('fnames', t1)
+    table1.insert(ts, nil)
+    table2 = EventTable.new('Lastname', [Integer, String])
+    ts2 = TupleSet.new('lnames', t2)
+    
+    ij = IndexJoin.new(pred, schema1, Key.new(0), table1.primary)
+    test_real_join(ij, table1, schema1, ts, schema2, ts2)
+    assert_equal(ij.to_s, "INDEX JOIN: PREDICATE[Firstname(id:0, name:1, )]")
+    
   end
 
   # all we're doing here is testing that the Join operators checks 
@@ -59,7 +78,7 @@ class TestJoin < Test::Unit::TestCase
     pred2.set("myprog", "r2", 1)
     join2 = Join.new(pred2, schema)
     assert_equal(join2.validate(t1,t2), false)
-    
+
     # test repeated variable
     constant2 = Value.new("jones")
     constant2.position = 1
@@ -67,22 +86,46 @@ class TestJoin < Test::Unit::TestCase
     pred2.set("myprog", "r2", 1)
     join2 = Join.new(pred2, schema)
     assert(join2.validate(t1,t2))
-    
+
     #coverage
     assert_equal(join2.filters(pred2)[0].lhs.returnType, join2.filters(pred2)[0].rhs.returnType)
     assert_equal(join2.schema.variables, schema.variables)
     assert_equal(join2.requires, {})    
   end 
-  
-  def test_scan_join(basic_table, basic_schema, ts1, event_schema, ts2)
-    pred = Predicate.new(false,basic_table.name,basic_table, basic_schema.variables)
-    pred.set("myprog", "r3", 1) 
-    sj = ScanJoin.new(pred, basic_schema)
-    assert_equal(sj.evaluate(ts2).tups.length, 1)
-    assert_equal(sj.evaluate(ts2).tups[0].values, [1, "hellerstein", "joe"])    
+
+  def test_real_join(join, basic_table, basic_schema, ts1, event_schema, ts2)
+    # 1 tuple on each side, should join to produce one tuple 
+    assert_equal(join.evaluate(ts2).tups.length, 1)
+    assert_equal(join.evaluate(ts2).tups[0].values, [1, "hellerstein", "joe"])    
+
+    # add another copy of the matching tuple to ts2, should join to produce 2 tuples
     ts2 << ts2.tups[0]
-    assert_equal(sj.evaluate(ts2).tups.length, 2)
+    assert_equal(join.evaluate(ts2).tups.length, 2)
+
+    # add another copy of the matching tuple to basic_table, should join to produce 4
     basic_table.insert(ts1, nil)
-    assert_equal(sj.evaluate(ts2).tups.length, 4)
+    assert_equal(join.evaluate(ts2).tups.length, 4)
+
+    # add a non-matching tuple to ts2, should not change output
+    t3 = Tuple.new(2, "sacks")
+    t3.schema = event_schema
+    ts2 << t3
+    assert_equal(join.evaluate(ts2).tups.length, 4)
+
+    # add a  tuple to basic_table that natches t3, should create one more output
+    t4 = Tuple.new(2, "adene")
+    t4.schema = basic_schema
+    ts4 = TupleSet.new("test", t4)
+    basic_table.insert(ts4, nil)
+    assert_equal(join.evaluate(ts2).tups.length, 5)
+    assert_equal(join.evaluate(ts2).tups[4].values, [2, "sacks", "adene"])
+    
+    # add a non-matching tuple to basic_table, should not change output
+    t5 = Tuple.new(3, "smith")
+    t5.schema = basic_schema
+    ts5 = TupleSet.new("test", t5)
+    basic_table.insert(ts5, nil)
+    assert_equal(join.evaluate(ts2).tups.length, 5)
   end
+  
 end
