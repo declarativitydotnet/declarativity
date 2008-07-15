@@ -1,0 +1,3 @@
+class BadKeyException < StandardError
+
+end

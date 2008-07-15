@@ -1,0 +1,3 @@
+class UpdateException < StandardError
+
+end
