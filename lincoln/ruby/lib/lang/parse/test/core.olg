@@ -1,0 +1,223 @@
+grammar Overlog
+       	rule Program
+		  ProgramName Spacing Clauses #EndOfFile   
+	end
+     	rule ProgramName
+		  'program' Word ';'
+	end
+     	rule Clauses
+		     (Clause ';')*
+	end
+  	rule Clause
+		     Rule  /     Watch  /     Fact  /     Definition  /     Import   
+	end
+     	rule Import
+		  'import' TypeName   
+	end
+     	rule Fact
+		  TableName '(' ExpressionList ')'   
+	end
+     	rule Rule
+		     ('public'   )?      ('delete'   )?  RuleHead ':-' RuleBody  /     ('public'   )?  Name    ('delete'   )?  RuleHead ':-' RuleBody   
+	end
+  	rule RuleHead
+		  Predicate   
+	end
+  	rule RuleBody
+		  TermList   
+	end
+     	rule TermList
+		  Term    (',' Term   )*    
+	end
+  	rule Term
+		  TableFunction  /  Predicate  /  Assignment  /  Selection   
+	end
+     	rule Definition
+		     'define' '(' TableName ',' Keys ',' Schema ')' Table  /     'define' '(' TableName ',' Schema ')' Event   
+	end
+  	rule Keys
+		     'keys' '(' IntegerList ')'  /     'keys' '(' ')'   
+	end
+  	rule Schema
+		  '{' TypeDefList '}'   
+	end
+     	rule TypeDefList
+		  Type    (',' Type   )*    
+	end
+     	rule Watch
+		     'watch' '(' TableName ')'  /     'watch' '(' TableName ',' WatchFlow Spacing ')'   
+	end
+   	rule WatchFlow
+		  [taeidrs]+    
+	end
+     	rule TableFunction
+		  TableName '(' Predicate ')'   
+	end
+     	rule Predicate
+		     ('notin'   )?  TableName EventModifier?  Arguments   
+	end
+     	rule Assignment
+		  Variable ':=' Expression   
+	end
+     	rule Selection
+		  Expression   
+	end
+     	rule Expression
+		  IfElseExpression   
+	end
+     	rule ExpressionList
+		  Expression    (',' Expression   )*    
+	end
+   	rule IfElseExpression
+		     LogicalOrExpression '?' Expression ':' Expression  /     LogicalOrExpressionLogicalOrExpression    
+	end
+   	rule LogicalOrExpression
+		     LogicalOrExpression '||' LogicalAndExpression  /     LogicalAndExpressionLogicalAndExpression    
+	end
+   	rule LogicalAndExpression
+		     LogicalAndExpression '&&' EqualityExpression  /     EqualityExpressionEqualityExpression    
+	end
+   	rule EqualityExpression
+		     EqualityExpression EqualityOperator InequalityExpression  /     InequalityExpressionInequalityExpression    
+	end
+  	rule EqualityOperator
+		     '=='  /     '!='  /     '<>'   
+	end
+   	rule InequalityExpression
+		  InequalityExpression InequalityOperator ShiftExpression  /  ShiftExpressionShiftExpression    
+	end
+  	rule InequalityOperator
+		     '<'  /     '>'  /     '<='  /     '>='   
+	end
+   	rule ShiftExpression
+		     ShiftExpression ShiftOperator AdditiveExpression  /     AdditiveExpressionAdditiveExpression    
+	end
+  	rule ShiftOperator
+		     '<<'  /     '>>'   
+	end
+   	rule AdditiveExpression
+		     AdditiveExpression AdditiveOperator MultiplicativeExpression  /     MultiplicativeExpressionMultiplicativeExpression    
+	end
+  	rule AdditiveOperator
+		     '+'  /     '-'   
+	end
+   	rule MultiplicativeExpression
+		     MultiplicativeExpression MultiplicativeOperator UnaryExpression  /     UnaryExpressionUnaryExpression    
+	end
+  	rule MultiplicativeOperator
+		     '*'  /     '/'  /     '%'   
+	end
+  	rule UnaryExpression
+		     CastExpression  /     LogicalNegationExpression  /     InclusiveExpression  /     PostfixExpressionPostfixExpression    
+	end
+  	rule LogicalNegationExpression
+		  '!' UnaryExpression   
+	end
+  	rule CastExpression
+		  '(' Type ')' UnaryExpression   
+	end
+  	rule InclusiveExpression
+		  PrimaryExpression 'in' RangeExpression  /  PrimaryExpression 'in' Variable   
+	end
+  	rule RangeExpression
+		  LeftRangeOperator Expression ',' Expression RightRangeOperator   
+	end
+  	rule LeftRangeOperator
+		     '['  /     '('   
+	end
+  	rule RightRangeOperator
+		     ']'  /     ')'   
+	end
+  	rule PostfixExpression
+		     PostfixExpression '.' Name Reference  /     PostfixExpression Arguments Method  /     PostfixExpression '[' Constant ']' ArrayIndex  /     PostfixExpression '++' Increment  /     PostfixExpression '--' Decrement  /     PrimaryExpression   
+	end
+  	rule PrimaryExpression
+		     Alias Spacing  /     Variable Spacing  /     Location Spacing  /     NewClass Spacing  /     Aggregate Spacing  /     ReferenceName Spacing  /     Constant Spacing  /     '(' Expression ')'   
+	end
+   	rule Arguments
+		     '(' ExpressionList ')'  /     '(' ')'   
+	end
+  	rule NewClass
+		  'new' TypeName   
+	end
+  	rule ReferenceName
+		  Name   
+	end
+     	rule Alias
+		  Variable ':=' '$' IntegerConstant   
+	end
+     	rule Name
+		  Word
+	end
+  	rule Word
+		  Spacing WordCharacters Spacing   
+	end
+	rule WordCharacters
+		[a-zA-Z0-9]*
+	end
+   	rule Spacing
+		     (Space  /  LineTerminator  /  TraditionalComment  /  EndOfLineComment)*    
+	end
+   	rule Space
+		  #' '  /  '\t'  /  '\f'   
+		[ \t\n\f]
+	end
+   	rule TraditionalComment
+		  '/*'    ('*' !'/'  /  !'*'  .   )*  '*/'   
+	end
+   	rule EndOfLineComment
+		  '//'    (![\n\r]  .   )*     (LineTerminator ) ##  /  &EndOfFile   )   
+	end
+   	rule LineTerminator
+		  '\r' '\n'  /  '\r'  /  '\n'   
+	end
+   	rule EndOfFile
+		  !.   
+	end
+## from java:  Identifier(Spacing, Symbol, Reserved) 
+     	rule Name
+		  Word   
+	end
+  	rule Word
+		  Spacing WordCharacters Spacing   
+	end
+  	rule EventModifier
+		  '#' EventType   
+	end
+  	rule EventType
+		     'insert'  /     'delete'   
+	end
+  	rule TableName
+		  Name '::' Name  /  Name
+	end
+  	rule Variable
+		  Name   /  '_'  /  '*'   
+	end
+  	rule Location
+		  '@' Variable   
+	end
+  	rule Aggregate
+		  Name '<' AggregateVariable '>'   
+	end
+  	rule AggregateVariable
+		     Location  /     Variable   
+	end
+  	rule AttributePosition
+		  '$' [0-9]+  Spacing   
+	end
+  	rule Type
+		     TypeName Dimensions?  Spacing   
+	end
+  	rule TypeName
+		     PrimitiveType  /     ClassType   
+	end
+  	rule PrimitiveType
+		     'byte'  /     'short'  /     'char'  /     'string'  /     'int'  /     'long'  /     'float'  /     'double'  /     'boolean'   
+	end
+  	rule Dimensions
+		     ('[' [0-9]*  ']'   )+    
+	end
+  	rule ClassType
+		  Name    ('.' Name   )*    
+	end
+ end

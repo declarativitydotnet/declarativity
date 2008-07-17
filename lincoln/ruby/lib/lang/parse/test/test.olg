@@ -1,0 +1,6 @@
+program foobar;
+foo(A,B,C) :- bar(A,B,C);
+
+head(One,Two,Assign) :- pred(One,Three),
+		 	Two := One + 2,
+			Three == "you";

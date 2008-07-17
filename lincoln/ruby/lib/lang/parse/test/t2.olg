@@ -1,0 +1,5 @@
+program foo;
+
+head(One,Two,Assign) :- pred(One,Three),
+		 	Two := One + 2,
+			Three == "you";

@@ -1,0 +1,168 @@
+require "rubygems"
+require "treetop"
+require "core.rb"
+#require "olg.rb"
+
+require 'lib/types/table/object_table.rb'
+require 'lib/lang/plan/predicate.rb'
+
+require "Treewalker.rb"
+
+
+def termtab(rule,pred,term,type)
+	reprule = rule.nil? ? -1 : rule[1]
+	reppred = pred.nil? ? -1 : pred[1]
+	if (term.respond_to?(:to_int)) then
+		data = term
+	else 
+		data = '"' + term + '"'
+	end
+	print "terms("+[reprule,reppred,data,type].join(",")+");\n"
+end
+
+def predtab(rule,pred)
+	if (!rule.nil?) then
+		print "predicate("+[rule[1],pred[1],pred[0]].join(",")+");\n"
+	end
+end
+
+def tabtab(pred)
+	if (!pred.nil?) then
+		print "define("+pred.join(",")+"\n"
+	end
+end
+
+def facttab(pred)
+	if (!pred.nil?) then
+		print "fact("+pred.join(",")+");\n"
+	end 
+end
+
+# um... symbol tables?
+@@state = Hash.new
+@@ids = Hash.new
+
+
+@@predicates = Predicate::PredicateTable.new
+
+
+# local modules
+
+class VisitGeneric < Treewalker::Handler
+	def semantic(text)
+		#print "generic semantic action for "+self.token+" =  "+text+"\n"
+		#print "set "+self.token+" = "+text+"\n"
+		if (@@ids[self.token].nil?) then
+			@@ids[self.token] = 0
+		else
+			#print "lookit "+self.token+" aka "+@@ids[self.token].to_s+"\n"
+			@@ids[self.token] = @@ids[self.token] + 1
+		end
+		@@state[self.token] = [text,@@ids[self.token]]
+		#@@state[self.token] = text
+
+
+	end
+end
+
+class VisitPredicate < VisitGeneric
+	def semantic(text)
+		#@@state["currpred"] = text
+		print "I am now visiting predicate "+text+"\n"
+		super(text)
+		predtab(@@state["orule"],@@state["predname"]);
+		# insert, generate key for predicate.
+	end
+end
+
+
+class VisitConstant < VisitGeneric
+	def semantic(text)
+		#print "constant "+text+"\n"
+		#print "type is "+text.class.to_s+"\n"
+		super(text)
+		termtab(@@state["orule"],@@state["predname"],text,"const")
+	end
+end
+
+class VisitVariable < VisitGeneric
+	def semantic(text)
+		#print "Variable "+text+"\n"
+		#print "rule "+@@state["orule"] +",pred "+@@state["head"]+" Variable "+text+"\n"
+		termtab(@@state["orule"],@@state["predname"],text,"var")
+		# insert into term table
+	end
+end
+
+class VisitFact < VisitGeneric
+	def semantic(text)
+		#print "Fact: 
+		super(text)
+		facttab(@@state["predname"])
+	end
+end
+
+
+class VisitTable < VisitGeneric
+	def semantic(text)
+		#print "Fact: "
+		super(text)
+		tabtab(@@state["table"])
+	end
+end
+
+class VisitAssignment < VisitGeneric
+	def semantic(text)
+		#print "Variable "+text+"\n"
+		#print "rule "+@@state["orule"] +", pred "+@@state["head"]+" Variable "+text+"\n"
+		#insert into term table
+	end
+end
+
+
+
+prog = ''
+while line = STDIN.gets
+	prog = prog + line
+end
+
+parser = OverlogParser.new
+result = parser.parse(prog)
+if result
+  puts 'success'
+else
+  puts 'failure'
+	raise RuntimeError.new(parser.failure_reason)
+	exit
+end
+
+
+#ve = VisitExpression.new
+vg = VisitGeneric.new
+vc = VisitConstant.new
+vp = VisitPredicate.new
+vv = VisitVariable.new
+vf = VisitFact.new
+vt = VisitTable.new
+
+sky = Treewalker.new(result)
+
+#sky.add_handler("term","print",1)
+sky.add_handler("expression",vg,1)
+#sky.add_handler("prename",vg,1)
+sky.add_handler("clause",vg,1)
+sky.add_handler("orule",vg,1)
+sky.add_handler("head",vg,1)
+sky.add_handler("predname",vp,1)
+sky.add_handler("selection",vg,1)
+sky.add_handler("assignment",vg,1)
+
+sky.add_handler("variable",vv,1)
+sky.add_handler("constant",vc,1)
+
+sky.add_handler("table",vt,1)
+
+sky.add_handler("fact",vf,1)
+
+
+sky.walk()

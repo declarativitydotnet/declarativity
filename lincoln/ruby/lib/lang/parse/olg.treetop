@@ -1,0 +1,199 @@
+grammar Overlog
+rule start
+	 program 
+end
+rule program
+	 progname? space (statement space)+ 
+end
+rule statement
+	 define / fact / orule 
+end
+rule fact
+	 head stop 
+		{ 
+			def fact 
+				return head.text_value
+			end
+		}
+end
+rule orule
+	 delete? head infers body  stop
+		{
+			def orule
+				return head.text_value+" " +body.text_value
+			end
+		}		
+end
+rule delete
+	 'delete' space 
+end
+rule head
+	 predicate  
+	{
+		def head
+			return pn
+		end
+	}		 
+end
+rule body
+	 clause (comma clause)* 
+end
+rule clause
+	 predicate / assignment / selection 
+end
+rule expression
+	 aggregate / keys / block / infix / opar expression cpar 
+end
+rule infix
+	 term (op expression)? 
+end
+
+rule keys 
+	'keys' space '(' list ')'
+end
+rule block
+	'{' space list space '}'
+		{
+			def block
+				return list
+			end
+		}
+end
+rule selection
+	 expression  
+		{ 
+			def selection
+				return text_value
+			end 
+		}
+end
+rule assignment
+	 variable assign expression   
+		{ 
+			def assignment 
+				return variable.text_value,expression.text_value
+			end 
+		}
+end
+rule predicate
+	 predname  '(' list ')' 
+	{ 
+		def pn
+			return predname
+		end 
+	} 
+	
+end
+rule predname
+	 [a-z] [a-zA-Z0-9]*    
+end
+rule list
+	 expression (comma expression)* 
+end
+rule term
+	 variable / constant
+end
+
+rule constant
+	( numconstant / strconstant / barestr )
+		{
+			def constant
+				return text_value
+			end
+		}
+end
+rule variable
+	 location? [A-Z] [a-zA-Z0-9]*
+		{ 
+			def variable
+				return text_value;
+			end
+		} 
+end
+rule location
+	 '@' 
+end
+rule numconstant
+	 long / float / integer 
+end
+rule integer
+	 [0-9]+  
+end
+rule long
+	 [0-9]+ 'L' 
+end
+rule float
+	 [0-9]+ '.' [0-9]+ 
+end
+rule strconstant
+	 '"' [a-zA-Z0-9]+ '"'  
+end
+rule barestr
+	 [a-zA-Z0-9_]+ 
+end
+rule aggregate
+	 barestr bag 
+end
+rule bag
+	 '<' space variable space '>' 
+end
+rule opar
+	 space '(' space 
+end
+rule cpar
+	 space ')' space 
+end
+rule infers
+	 space ':-' space 
+end
+rule assign
+	 space ':=' space 
+end
+rule comma
+	 space ',' space 
+end
+rule stop
+	 space ';' space 
+end
+rule op
+	 space operator space 
+end
+rule space
+	 [ \n\r\t]* linecomment? 
+end
+rule linecomment
+	 commentstr  [^\n]+  '\n' 
+end
+rule commentstr
+	 '#' / '//' / '/*' 
+end
+rule operator
+	 (arithop / eqop )
+end
+rule eqop
+	 '>' / '<' / '==' / '>=' / '<='  
+end
+rule arithop
+	 '+' / '-' / '*' / '/' / '^' 
+end
+rule progname
+	 'program' space term stop  
+end
+rule define
+	 'import' [^;]+ stop / definekind table stop
+end
+rule definekind
+	 'materialize' / 'define' / 'import' 
+end
+
+rule table
+	'(' list ')'
+		{
+			def table
+				return text_value
+			end
+		}
+end
+
+
+end

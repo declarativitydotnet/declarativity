@@ -1,0 +1,400 @@
+grammar Overlog
+       	rule Program
+		  ProgramName Spacing Clauses #EndOfFile   
+	end
+     	rule ProgramName
+		  'program' Spacing Word ';'
+	end
+     	rule Clauses
+		     (Clause semicolon)*
+	end
+
+	rule semicolon
+		Spacing ';' Spacing
+	end
+  	rule Clause
+		     Rule  /     Watch  /     Fact  /     Definition  /     Import   
+
+			{ puts "CLAUSE" } 
+	end
+     	rule Import
+		  'import' TypeName   
+	end
+     	rule Fact
+		  TableName opar ExpressionList cpar
+			{
+				def Fact
+					return self.TableName.text_value
+				end
+			}
+	end
+     	rule Rule
+		     ('public'   )?  ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody  /     ('public'   )?  Name    ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody   
+			{ 
+				def Rule
+					return self
+				end 
+			}
+	end
+  	rule RuleHead
+		  Predicate   
+	end
+  	rule RuleBody
+		  TermList   
+	end
+     	rule TermList
+		  Term    (Comma Term   )*    
+	end
+  	rule Term
+		  TableFunction  /  Predicate  /  Assignment  /  Selection   
+	end
+     	rule Definition
+		     'define' opar TableName Comma Keys Comma Schema cpar /     'define' opar TableName Comma Schema cpar 
+	end
+	rule opar
+		Spacing '(' Spacing
+	end
+	rule cpar
+		Spacing ')' Spacing
+	end
+  	rule Keys
+		     'keys' '(' IntegerList ')'  /     'keys' '(' ')'   
+	end
+  	rule Schema
+		  '{' TypeDefList '}'   
+	end
+     	rule TypeDefList
+		  Type    (Comma Type   )*    
+	end
+     	rule Watch
+		     'watch' opar TableName cpar  /     'watch' opar TableName Comma WatchFlow Spacing cpar	
+			{
+				def Watch
+					return self
+				end 
+			}
+	end
+   	rule WatchFlow
+		  [taeidrs]+    
+	end
+     	rule TableFunction
+		  TableName opar Predicate cpar  
+	end
+     	rule Predicate
+		     ('notin'   )?  TableName EventModifier?  Arguments   
+				{
+					def Predicate
+						return self.TableName
+					end
+				}
+	end
+     	rule Assignment
+		  Variable Spacing ':=' Spacing Expression
+			{
+				def Assignment
+					return self
+				end
+			}
+	end
+     	rule Selection
+		  Expression   
+			{
+				def Selection
+					return self
+				end 
+			}
+	end
+     	rule Expression
+		  IfElseExpression
+	end
+     	rule ExpressionList
+		  Expression    (Comma Expression)*    
+	end
+   	rule IfElseExpression
+		     LogicalOrExpression '?' Expression ':' Expression  /     LogicalOrExpression
+	end
+
+# this left-recursion stuff is killing me.
+#   	rule LogicalOrExpression
+#		     LogicalOrExpression '||' LogicalAndExpression  /     LogicalAndExpression
+#	end
+
+   	rule LogicalOrExpression
+		     LogicalAndExpression / LogicalOrExpression '||' LogicalAndExpression  #/     LogicalAndExpression
+	end
+   	rule LogicalAndExpression
+		     EqualityExpression / LogicalAndExpression '&&' EqualityExpression  #/     EqualityExpression
+	end
+   	rule EqualityExpression
+			# again
+		     #InequalityExpression / EqualityExpression eqop InequalityExpression  #/     InequalityExpression
+		     InequalityExpression eqop EqualityExpression /     InequalityExpression
+		
+	end
+	rule eqop
+		Spacing EqualityOperator Spacing
+	end
+  	rule EqualityOperator
+		     '=='  /     '!='  /     '<>'   
+	end
+   	rule InequalityExpression
+		  #ShiftExpression / InequalityExpression InequalityOperator ShiftExpression  #/  ShiftExpression
+		  ShiftExpression InequalityOperator InequalityExpression /  ShiftExpression
+	end
+  	rule InequalityOperator
+		     '<'  /     '>'  /     '<='  /     '>='   
+	end
+   	rule ShiftExpression
+		     AdditiveExpression / ShiftExpression ShiftOperator AdditiveExpression  #/     AdditiveExpression
+	end
+  	rule ShiftOperator
+		     '<<'  /     '>>'   
+	end
+   	rule AdditiveExpression
+		## NOTE: I had to totally invert this and will probably have to do so for all these left-recursive constructs.
+		     #MultiplicativeExpression / AdditiveExpression Spacing AdditiveOperator Spacing MultiplicativeExpression  #/     MultiplicativeExpression
+		     MultiplicativeExpression AdditiveOperator AdditiveExpression  /     MultiplicativeExpression
+			{ puts "plusE" }
+	end
+  	rule AdditiveOperator
+		     Spacing '+'  Spacing /     '-'   
+			{ puts "plusssss" }
+	end
+   	rule MultiplicativeExpression
+		     UnaryExpression /  MultiplicativeExpression MultiplicativeOperator UnaryExpression  #/     UnaryExpression
+			{ puts "multi" }
+	end
+  	rule MultiplicativeOperator
+		     '*'  /     '/'  /     '%'   
+	end
+  	rule UnaryExpression
+		     CastExpression  /     LogicalNegationExpression  /     InclusiveExpression  /     PostfixExpression
+			{ puts "uni" }
+	end
+  	rule LogicalNegationExpression
+		  '!' UnaryExpression   
+	end
+  	rule CastExpression
+		  '(' Type ')' UnaryExpression   
+	end
+  	rule InclusiveExpression
+		  PrimaryExpression 'in' RangeExpression  /  PrimaryExpression 'in' Variable   
+	end
+  	rule RangeExpression
+		  LeftRangeOperator Expression ',' Expression RightRangeOperator   
+	end
+  	rule LeftRangeOperator
+		     '['  /     '('   
+	end
+  	rule RightRangeOperator
+		     ']'  /     ')'   
+	end
+  	rule PostfixExpression
+		     PrimaryExpression / PostfixExpression '.' Name Reference  /     PostfixExpression Arguments Method  /     PostfixExpression '[' Constant ']' ArrayIndex  /     PostfixExpression '++' Increment  /     PostfixExpression '--' Decrement  #/     PrimaryExpression   
+
+			{ puts "postfix" }
+	end
+  	rule PrimaryExpression
+		    Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  ReferenceName Spacing  # / Constant Spacing  
+
+			/     opar Expression cpar 
+				{ puts "primary" }
+	end
+   	rule Arguments
+		     opar ExpressionList cpar  /     opar cpar   
+	end
+  	rule NewClass
+		  'new' TypeName   
+	end
+  	rule ReferenceName
+		  Name   
+	end
+     	rule Alias
+		  Variable ':=' '$' IntegerConstant   
+	end
+     	rule Name
+		  Word
+	end
+  	rule Word
+		  Spacing WordCharacters Spacing   
+	end
+	rule WordCharacters
+		[a-zA-Z0-9_]*
+	end
+   	rule Spacing
+		     (Space  /  LineTerminator  /  TraditionalComment  /  EndOfLineComment)*    
+	end
+   	rule Space
+		#' '  /  '\t'  /  '\f'   
+		[ \t\f]
+	end
+   	rule TraditionalComment
+		  '/*'    ('*' !'/'  /  !'*'  .   )*  '*/'   
+	end
+   	rule EndOfLineComment
+		  '//'    (![\n\r]  .   )*     (LineTerminator ) ##  /  &EndOfFile   )   
+	end
+   	rule LineTerminator
+		  #'\r' '\n'  /  '\r'  /  '\n'   
+		 '\r\n' / Newline
+	end
+	rule Newline
+		[\r\n]
+	end
+   	rule EndOfFile
+		  !.   
+	end
+
+	rule Comma
+		Spacing "," Spacing
+	end 
+     	rule Name
+		  Word   
+	end
+  	rule Word
+		  Spacing WordCharacters Spacing   
+	end
+  	rule EventModifier
+		  '#' EventType   
+	end
+  	rule EventType
+		     'insert'  /     'delete'   
+	end
+  	rule TableName
+		  Name '::' Name  /  Name
+	end
+  	rule Variable
+		  Name   /  '_'  /  '*'   
+	end
+  	rule Location
+		  '@' Variable   
+	end
+  	rule Aggregate
+		  Name '<' AggregateVariable '>'   
+	end
+  	rule AggregateVariable
+		     Location  /     Variable   
+	end
+  	rule AttributePosition
+		  '$' [0-9]+  Spacing   
+	end
+  	rule Type
+		     TypeName Dimensions?  Spacing   
+	end
+  	rule TypeName
+		     PrimitiveType  /     ClassType   
+	end
+  	rule PrimitiveType
+		     'byte'  /     'short'  /     'char'  /     'string'  /     'int'  /     'long'  /     'float'  /     'double'  /     'boolean'   
+	end
+  	rule Dimensions
+		     ('[' [0-9]*  ']'   )+    
+	end
+  	rule ClassType
+		  Name    ('.' Name   )*    
+	end
+     	rule Constant
+		 StringConstant Spacing / FloatConstant Spacing  /  LongConstant Spacing  /  IntegerConstant Spacing  /   NullConstant Spacing  /  BooleanConstant Spacing  /  InfinityConstant Spacing  /  Vector Spacing  /  Matrix Spacing   
+
+		{ puts "Constant" } 
+	end
+     	rule ConstantList
+		  Constant    (',' Constant   )*    
+	end
+  	rule FloatConstant
+		  FloatingPointString   
+	end
+     	rule FloatList
+		  FloatConstant    (',' FloatConstant   )*    
+	end
+  	rule FloatingPointString
+		  Digit+  '.' Digit+  Exponent?  FloatTypeSuffix?   /  '.' Digit+  Exponent?  FloatTypeSuffix?   /  Digit+  Exponent FloatTypeSuffix?   /  Digit+  Exponent?  FloatTypeSuffix   
+	end
+   	rule Exponent
+		  [eE] [+\-]?  Digit+    
+	end
+   	rule FloatTypeSuffix
+		  [fFdD]   
+	end
+  	rule IntegerConstant
+		  HexConstant  /  DecimalConstant   
+			{ puts "IntegerConstant" }
+	end
+  	rule LongConstant
+		  DecimalConstant LongTypeSuffix   
+	end
+     	rule IntegerList
+		  IntegerConstant    (',' IntegerConstant   )*    
+	end
+   	rule HexConstant
+		  HexNumeral HexTypeSuffix?    
+	end
+   	rule DecimalConstant
+		  '-'?  DecimalNumeral   
+			{ puts "DecimalConstant" } 
+	end
+   	rule DecimalNumeral
+		  '0'  /  NonZeroDigit Digit*    
+	end
+   	rule NonZeroDigit
+		  [1-9]   
+			{ puts "digit" }
+	end
+   	rule Digit
+		  [0-9]   
+	end
+   	rule HexNumeral
+		  '0' [xX] HexDigit+    
+	end
+   	rule HexDigit
+		  [0-9a-fA-F]   
+	end
+   	rule LongTypeSuffix
+		  [lL]   
+	end
+   	rule HexTypeSuffix
+		  [UI]   
+	end
+  	rule StringConstant
+		  CharacterSequence   
+	end
+  	rule CharacterSequence
+		  ["]    (EscapeSequence  /  !["\\]  . )*  ["]   
+	end
+   	rule EscapeSequence
+		  '\\' [btnfr"'\\]   
+	end
+  	rule BooleanConstant
+		  'true'  /  'false'   
+	end
+  	rule InfinityConstant
+		  'infinity'   
+	end
+  	rule NullConstant
+		  'null'   
+	end
+  	rule Vector
+		  IntVector  /  FloatVector   
+	end
+  	rule IntVector
+		  '{' IntegerList '}'   
+	end
+  	rule FloatVector
+		  '{' FloatList '}'   
+	end
+  	rule Matrix
+		  IntMatrix  /  FloatMatrix   
+	end
+  	rule IntMatrix
+		  '{' IntMatrixEntries '}'   
+	end
+  	rule FloatMatrix
+		  '{' FloatMatrixEntries '}'   
+	end
+     	rule IntMatrixEntries
+		  IntVector    (',' IntVector   )*    
+	end
+     	rule FloatMatrixEntries
+		  FloatVector    (',' FloatVector   )*    
+	end
+ end

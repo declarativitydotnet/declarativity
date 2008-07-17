@@ -1,0 +1,25 @@
+program path;
+
+link("1","2");
+link("2","3");
+link("3","4");
+link("2","4");
+
+link("5","6");
+link("6","7");
+link("7","8");
+link("8","9");
+
+watch(link, d);
+watch(path, id);
+watch(shortestPath, di);
+
+path(Source, Destination, 1) :- link(Source, Destination);
+
+path(Source,Destination,Hops + 2) :-
+	path(Source, Intermediate, Hops), link(Intermediate, Destination);
+
+shortestPath(Source, Destination, min<Hops>) :- 
+	path(Source, Destination, Hops);
+
+delete link("2", "4") :- periodic(Id, 1L, 1L, 5L);

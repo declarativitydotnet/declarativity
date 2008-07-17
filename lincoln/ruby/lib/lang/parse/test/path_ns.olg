@@ -1,0 +1,12 @@
+foo(A,B,C,Dee,EiEEE,Eff) :- bar(B,C,D),bof(C,D),
+			    bam(Dee,EiEEE,Eff),
+			    B < C,
+			 A == 10;
+
+
+path(A,B,C) :- link(A,B),
+		C := 1;
+
+path(A,B,C) :- link(A,Z),
+		path(Z,B,Cost),
+		C := C - 1;
