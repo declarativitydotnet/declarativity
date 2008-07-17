@@ -154,22 +154,18 @@ grammar Overlog
 		## NOTE: I had to totally invert this and will probably have to do so for all these left-recursive constructs.
 		     #MultiplicativeExpression / AdditiveExpression Spacing AdditiveOperator Spacing MultiplicativeExpression  #/     MultiplicativeExpression
 		     MultiplicativeExpression AdditiveOperator AdditiveExpression  /     MultiplicativeExpression
-			{ puts "plusE" }
 	end
   	rule AdditiveOperator
 		     Spacing '+'  Spacing /     '-'   
-			{ puts "plusssss" }
 	end
    	rule MultiplicativeExpression
 		     UnaryExpression /  MultiplicativeExpression MultiplicativeOperator UnaryExpression  #/     UnaryExpression
-			{ puts "multi" }
 	end
   	rule MultiplicativeOperator
 		     '*'  /     '/'  /     '%'   
 	end
   	rule UnaryExpression
 		     CastExpression  /     LogicalNegationExpression  /     InclusiveExpression  /     PostfixExpression
-			{ puts "uni" }
 	end
   	rule LogicalNegationExpression
 		  '!' UnaryExpression   
@@ -192,7 +188,6 @@ grammar Overlog
   	rule PostfixExpression
 		     PrimaryExpression / PostfixExpression '.' Name Reference  /     PostfixExpression Arguments Method  /     PostfixExpression '[' Constant ']' ArrayIndex  /     PostfixExpression '++' Increment  /     PostfixExpression '--' Decrement  #/     PrimaryExpression   
 
-			{ puts "postfix" }
 	end
   	rule PrimaryExpression
 		    (Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  ReferenceName Spacing  # / Constant Spacing  
@@ -299,7 +294,6 @@ grammar Overlog
      	rule Constant
 		 StringConstant Spacing / FloatConstant Spacing  /  LongConstant Spacing  /  IntegerConstant Spacing  /   NullConstant Spacing  /  BooleanConstant Spacing  /  InfinityConstant Spacing  /  Vector Spacing  /  Matrix Spacing   
 
-		{ puts "Constant" } 
 	end
      	rule ConstantList
 		  Constant    (',' Constant   )*    
@@ -321,7 +315,6 @@ grammar Overlog
 	end
   	rule IntegerConstant
 		  HexConstant  /  DecimalConstant   
-			{ puts "IntegerConstant" }
 	end
   	rule LongConstant
 		  DecimalConstant LongTypeSuffix   
@@ -334,14 +327,12 @@ grammar Overlog
 	end
    	rule DecimalConstant
 		  '-'?  DecimalNumeral   
-			{ puts "DecimalConstant" } 
 	end
    	rule DecimalNumeral
 		  '0'  /  NonZeroDigit Digit*    
 	end
    	rule NonZeroDigit
 		  [1-9]   
-			{ puts "digit" }
 	end
    	rule Digit
 		  [0-9]   

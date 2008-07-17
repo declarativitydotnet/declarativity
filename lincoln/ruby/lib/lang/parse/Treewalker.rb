@@ -1,4 +1,4 @@
-#
+# a general Treetop walker that fires off callbacks registered by the caller.
 
 class Treewalker
 	class Handler
@@ -7,17 +7,11 @@ class Treewalker
 			#@func = func
 			#@recurse = recurse
 		end
-
 		def semantic
 			# not implemented
 			raise "not implemented at base class"
 			
 		end
-
-		def recurse
-			return @recurse
-		end
-	
 		def set_token(str)
 			@token = str
 		end
@@ -37,8 +31,6 @@ class Treewalker
 		if @hash[string] then
 			print "hmm, already have a handler for this term\n"
 		else
-			#print "\tinit "+string+ "\n"
-			#handler = Handler.new(string,func,recurse)
 			func.set_token(string)
 			@hash[string] = func
 		end
@@ -52,9 +44,7 @@ class Treewalker
 	end
 
 	def handle(elem)
-		#puts "elem: " + elem.text_value
 		# this sucks
-
 		@hash.each do |k|
 			meth = "elem."+k[0]
 			stm = "defined? "+meth
@@ -64,12 +54,11 @@ class Treewalker
 				h = k[1]
 				h.set_token(k[0])
 
-				sem = defined? p.text_value ? p.text_value : p.to_s
+				sem = (defined? p.text_value) ? p.text_value : p.to_s
 				h.semantic(sem)
 				if (@verbose == 'v') then  
-					print k[0]+ ": ("+p.text_value+")\n"
+					print k[0]+ ": ("+sem+")\n"
 				end 
-				h.semantic(p.text_value)
 				
 			end 
 		end
