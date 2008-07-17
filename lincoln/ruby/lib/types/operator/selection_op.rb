@@ -21,9 +21,7 @@ class SelectionOp < Operator
     return result
   end
 
-  def schema
-    @schema
-  end
+  attr_reader :schema
 
   def requires
     @selection.predicate.variables

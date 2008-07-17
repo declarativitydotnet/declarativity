@@ -3,9 +3,7 @@ class Value < Expression
 		@value = value
 	end
 	
-	def value
-		@value
-	end
+	attr_reader :value
 	
 	def type
 		return (@value.nil? ? nil : @value.class)

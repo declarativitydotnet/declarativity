@@ -4,6 +4,8 @@ require 'lib/types/basic/tuple'
 
 class Join < Operator 
 
+  attr_reader :schema
+  
   class TableField < TupleFunction
     include Comparable
 
@@ -27,13 +29,7 @@ class Join < Operator
       @rhs = rhs;
     end
 
-    def lhs
-      @lhs
-    end
-    
-    def rhs
-      @rhs
-    end
+    attr_reader :lhs, :rhs
     
     def evaluate(outer, inner)
       if (@lhs.class <= TableField)
@@ -56,10 +52,6 @@ class Join < Operator
     @predicate = predicate
     @filters = filters(predicate)
     @schema = input.join(predicate.schema)
-  end
-
-  def schema
-    @schema;
   end
 
   def requires

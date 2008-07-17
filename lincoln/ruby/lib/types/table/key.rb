@@ -7,9 +7,7 @@ class Key
     attrs.each {|a| @attributes << a}
   end
   
-  def attributes
-    @attributes
-  end
+  attr_reader :attributes
   
   def ==(o)
     return false unless o.class == Key 

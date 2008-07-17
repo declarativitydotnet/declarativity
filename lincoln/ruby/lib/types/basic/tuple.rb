@@ -19,14 +19,9 @@ class Tuple
     @tid = @@idGen.to_s
     @@idGen += 1
   end
-
-  def tid
-    return @tid
-  end
-
-  def tid= (i)
-    @tid = i.to_s
-  end
+  
+  attr_accessor :tid, :count
+  attr_reader :schema, :values
 
   def append (var, val)
     var = var.clone
@@ -46,10 +41,6 @@ class Tuple
     end
   end
 
-  def schema
-    @schema
-  end
-  
   def schema=(s)
     if s.size != size then
 #      require 'ruby-debug'; debugger
@@ -86,10 +77,6 @@ class Tuple
     return @values.length
   end
   
-  def values
-    @values
-  end
-  
   def value(i)
     if i.class <= Numeric
       return values[i]
@@ -113,14 +100,6 @@ class Tuple
   
   def type(name)
     @schema.type(name)
-  end
-  
-  def count=(value)
-    @count = value
-  end
-  
-  def count
-    @count
   end
   
   def timestamp=(value)

@@ -23,5 +23,9 @@ class TestSchema < Test::Unit::TestCase
     assert_equal(s.type("f"), Float)
     assert_not_equal(s.size,t.size)
     assert_equal(t.join(s).variables, s.variables)
+
+    news = Schema.new("new", nil)
+    news.set_schema(s)
+    assert_equal(s.name, news.name)
   end
 end

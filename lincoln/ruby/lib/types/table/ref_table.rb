@@ -1,5 +1,6 @@
 require "lib/types/table/hash_index"
 require "lib/types/exception/bad_key_exception"
+require "lib/types/table/table"
 
 class RefTable < Table
   def initialize(name, key, types)
@@ -13,14 +14,8 @@ class RefTable < Table
   def tuples
     return (@tuples.nil? ? TupleSet.new(name) : @tuples)
   end
-
-  def primary
-    @primary
-  end
-
-  def secondary
-    @secondary
-  end
+  
+  attr_reader :primary, :secondary
 
   def cardinality
     @tuples.size

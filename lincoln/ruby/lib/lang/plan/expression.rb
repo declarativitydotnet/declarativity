@@ -1,19 +1,5 @@
 class Expression
-  def position
-    @position
-  end
-  def position=(i)
-    @position = i
-  end
-  
-  
-  def location=(l) 
-    @location = l
-  end
-  
-  def location() 
-    @location
-  end
+  attr_accessor :position, :location
 
   def to_s
     throw "Abstract method Expression.to_s not subclassed"

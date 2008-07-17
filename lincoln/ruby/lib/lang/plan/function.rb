@@ -1,3 +1,4 @@
+require 'lib/lang/plan/term'
 class Function < Term 
   class Field
     PROGRAM = 0
@@ -26,8 +27,8 @@ class Function < Term
 			raise UpdateException, "Predicate object null" if object.nil?
 			
 			object.program   = tuple.value(Field.PROGRAM)
-			object.rule      = (String) tuple.value(Field.RULE)
-			object.position  = (Integer) tuple.value(Field.POSITION)
+			object.rule      = tuple.value(Field.RULE)
+			object.position  = tuple.value(Field.POSITION)
 			return super(tuple)
 		end
 	end
@@ -54,7 +55,5 @@ class Function < Term
 		@function.name + "(" + @predicate.to_s + ")"
 	end
 	
-	def predicate
-		@predicate;
-	end
+	attr_reader :predicate
 end

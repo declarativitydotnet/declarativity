@@ -1,6 +1,6 @@
-require "lib/types/table/table.rb"
+require "lib/types/table/table"
 require "lib/types/basic/tuple_set"
-require "lib/types/table/hash_index.rb"
+require "lib/types/table/hash_index"
 
 class BasicTable < Table
   def initialize(name, size, lifetime, key, types)
@@ -15,14 +15,8 @@ class BasicTable < Table
     return (@tuples.nil? ? TupleSet.new(name) : @tuples.clone)
   end
   
-  def primary
-    @primary
-  end
+  attr_reader :primary, :secondary
 
-  def secondary
-     @secondary
-   end
-  
   def cardinality
     @tuples.size
   end

@@ -1,4 +1,7 @@
 require 'lib/types/function/tuple_function'
+
+### This code may not be needed in Ruby!  Check soon, and delete if dead.
+
 class Filter < TupleFunction
   include Comparable 
   

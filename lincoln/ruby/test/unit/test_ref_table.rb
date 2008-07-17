@@ -6,7 +6,8 @@ require "rubygems"
 
 class TestRefTable < Test::Unit::TestCase
   def default_test
-    $catalog = Catalog.new
+    sys = System.new
+    sys.init
     
     rt = RefTable.new("Family", Key.new(0), [Integer, String])
     dd = Tuple.new(1, "Dahlia")

@@ -49,26 +49,9 @@ class Predicate < Term
 		@event = event;
 		@arguments = Arguments.new(self, arguments);
 	end
-	
-	def schema
-		@schema
-	end
-	
-  def notin
-		@notin
-	end
-	
-	def event
-		@event
-	end
-	
-	def event=(e) 
-		@event = e
-	end
-	
-	def name
-		@name
-	end
+
+	attr_reader :schema, :notin, :name
+	attr_accessor :event
 	
 	def containsAggregation
 		arguments.each do |e|

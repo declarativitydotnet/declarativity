@@ -10,8 +10,8 @@ require "rubygems"
 
 class TestTable < Test::Unit::TestCase
   def default_test
-    $catalog = Catalog.new
-    $index = IndexTable.new
+    sys = System.new
+    sys.init
 
     t = Table.new('Orli', 10, Table::INFINITY, Table::INFINITY, Key.new(0), [Integer, String])
     
@@ -25,8 +25,9 @@ class TestTable < Test::Unit::TestCase
     assert_equal(t.size, Table::INFINITY)
     assert_equal(t.lifetime, Table::INFINITY)
 
-    # silly coverage for unregister
+    # silly coverage 
     t.unregister(Callback.new(t))
+    assert_equal(t.index, $index)
     
     assert_raise(RuntimeError){t.insert_tup(Tuple.new(1, 'hi'))}
     assert_raise(RuntimeError){t.delete_tup(Tuple.new(1, 'hi'))}

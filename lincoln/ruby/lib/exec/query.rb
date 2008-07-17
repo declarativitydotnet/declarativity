@@ -15,7 +15,7 @@ class Query
 		  OBJECT = 8
 	  end
 	  
-		@@SCHEMA = [String, String, Boolean, Boolean, String, TableName, TableName, Query]
+		@@SCHEMA = [String, String, Integer, Integer, String, TableName, TableName, Query]
       # String.class,     // Program name
       # String.class,     // Rule name
       # Boolean.class,    // Public query?
@@ -31,7 +31,7 @@ class Query
 		
   end
 		
-	def initialize(program, rule, isPublic?, isDelete?, input, output) {
+	def initialize(program, rule, isPublic, isDelete, input, output)
 		@program = program
 		@rule = rule
 		@isPublic = isPublic
@@ -39,12 +39,10 @@ class Query
 		@event  = input.event()
 		@input = input
 		@output = output
-	  System.query.force(Tuple.new(@program, @rule, @isPublic, @isDelete, @event.to_s, @input.name, @output.name, self)
+	  System.query.force(Tuple.new(@program, @rule, @isPublic, @isDelete, @event.to_s, @input.name, @output.name, self))
   end	
 	
-	def event() 
-		@event
-	end
+	attr_reader :event, :program, :rule, :isDelete, :isPublic, :input, :output
 	
 	def to_s
 	  throw "Query.to_s must be subclassed"
@@ -52,30 +50,6 @@ class Query
 	
 	def <=>(q)
 		return self.object_id < q.object_id ? -1 : (object_id > q.object_id ? 1 : 0)
-	end
-	
-	def program
-		@program
-	end
-	
-	def rule
-		@rule
-	end
-	
-	def isDelete
-		@isDelete
-	end
-	
-	def isPublic
-		@isPublic
-	end
-	
-	def input()
-		@input
-	end
-	
-	def output
-		@output
 	end
 	
 	def evaluate(input)

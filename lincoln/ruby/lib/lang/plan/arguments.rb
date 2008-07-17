@@ -2,14 +2,12 @@ class Arguments
   include Comparable
   include Enumerable
 
+  attr_reader :predicate
+
   def initialize(predicate,arguments) 
     @args = Array.new
     @predicate = predicate
     arguments.each{|a| @args << a}
-  end
-
-  def predicate
-    @predicate
   end
 
   def to_s

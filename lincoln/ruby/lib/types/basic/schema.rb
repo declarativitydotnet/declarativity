@@ -20,9 +20,8 @@ class Schema
   def ==(s)
     return (@name == s.name && variables == s.variables)
   end
-  def name
-    @name
-  end
+  
+  attr_reader :name
 
   def size
     @variables.length

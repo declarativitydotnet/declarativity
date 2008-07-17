@@ -54,9 +54,7 @@ class Program
 		@definitions << table
 	end
 	
-	def definitions
-		@definitions
-	end
+	attr_reader :definitions, :periodics, :name
 	
   def plan
     @queries.clear
@@ -91,14 +89,6 @@ class Program
 
 	def queries(name)
 		@queries[name]
-	end
-
-	def periodics
-		@periodics;
-	end
-
-  def name
-		@name
 	end
 end
 

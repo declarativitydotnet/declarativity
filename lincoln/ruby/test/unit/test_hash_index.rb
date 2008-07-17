@@ -8,7 +8,8 @@ require "rubygems"
 
 class TestHashIndex < Test::Unit::TestCase
   def default_test
-    $catalog = Catalog.new
+    sys = System.new
+    sys.init
 
     bt = BasicTable.new('Orli', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
     ts = TupleSet.new('test', Tuple.new(1, 'hi'))

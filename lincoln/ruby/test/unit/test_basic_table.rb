@@ -3,12 +3,12 @@ require "lib/types/basic/tuple_set"
 require "lib/types/basic/tuple"
 require "lib/types/table/key"
 require "lib/types/table/catalog"
+require "lib/core/system"
 require "test/unit"
 require "rubygems"
 
 class TestBasicTable < Test::Unit::TestCase
   def default_test
-    $catalog = Catalog.new
 
     bt = BasicTable.new('Orli', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
     testtup1 = Tuple.new(1, 'hi')

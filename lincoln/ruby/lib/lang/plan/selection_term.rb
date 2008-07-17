@@ -43,9 +43,7 @@ class SelectionTerm < Term
     return predicate.variables
   end
 
-  def predicate
-    return @predicate
-  end
+  attr_reader :predicate
 
   def operator(input)
     return Selection.new(self, input)

@@ -9,8 +9,8 @@ require 'lib/lang/plan/value'
 require "test/unit"
 
 class TestSelectionOp < Test::Unit::TestCase
-  $catalog = Catalog.new
-  $index = IndexTable.new
+  sys = System.new
+  sys.init
 
   def default_test
     constant_expr_test

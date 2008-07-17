@@ -17,16 +17,10 @@ class TupleSet
     @id
   end
   
-  def tups
-    @tups
-  end
-  
+  attr_reader :tups, :name
+
   def size
     @tups.length
-  end
-  
-  def name
-    @name
   end
   
   def to_s

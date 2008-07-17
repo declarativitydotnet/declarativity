@@ -10,9 +10,9 @@ require "rubygems"
 
 class TestIndex < Test::Unit::TestCase
   def default_test
-    $catalog = Catalog.new
-    $index = IndexTable.new
-
+    sys = System.new
+    sys.init
+    
     bt = BasicTable.new('Orli', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
     bti = Index.new(bt, Key.new(0), Index::Type::SECONDARY)
     

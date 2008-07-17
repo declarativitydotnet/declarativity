@@ -7,8 +7,9 @@ require "rubygems"
 
 class TestCatalog < Test::Unit::TestCase
   def default_test
-    $catalog = Catalog.new
-    $index = IndexTable.new
+    sys = System.new
+    sys.init
+    initial_card = $catalog.cardinality
     
     otup = Tuple.new("Orli", Table::Type::TABLE, Table::INFINITY,
                      Table::INFINITY, (0), TypeList.new([Integer,Float]),
@@ -24,10 +25,9 @@ class TestCatalog < Test::Unit::TestCase
     
     assert_raise(RuntimeError) {$catalog.insert(ts, nil)}
     
-    # catalog now has 5 entries:
-    # 1 for the catalog
-    # 2 each for Orli and Dahlia since we had the last field of their
+    # catalog now has 4 new entries, 2 each for Orli and Dahlia.
+    # It's 2 each because we had the last field of their
     #    Catalog insertion tuples set to nil
-    assert_equal($catalog.cardinality, 5) 
+    assert_equal($catalog.cardinality, 4 + initial_card) 
   end
 end

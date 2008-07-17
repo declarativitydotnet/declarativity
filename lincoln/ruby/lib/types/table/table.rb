@@ -1,5 +1,5 @@
-require "lib/types/table/table.rb"
-require "lib/types/exception/update_exception.rb"
+require "lib/types/exception/update_exception"
+require 'lib/types/basic/tuple'
 
 class Table
   GLOBALSCOPE = "global"
@@ -15,13 +15,13 @@ class Table
     @callbacks = Array.new    
 
     if (not catalog.nil?) then
-      register(name, type, size, lifetime, key, attributeTypes, self)
+      Table.register(name, type, size, lifetime, key, attributeTypes, self)
     end
   end
 
-  def init
+  def Table.init
     $catalog = Catalog.new
-    $index = Index.new
+    $index = IndexTable.new
     register($catalog.name, $catalog.type, $catalog.size, $catalog.lifetime, $catalog.key, TypeList.new($catalog.types), $catalog)
   end
   
@@ -61,9 +61,16 @@ class Table
     raise "No subclass definition for cardinality"
   end
 
-  def type
-    @type
+  attr_reader :type, :name, :size, :lifetime, :key
+  
+  def types
+    @attributeTypes
   end
+
+  def tuples
+    raise "subclass method for Table.tuples not defined"
+  end
+  
 
   # register a new callback on table updates
   def register_callback(callback)
@@ -74,9 +81,9 @@ class Table
     @callbacks.delete(callback)
   end
 
-  def register(name, type, size, lifetime, key, types, object)
+  def Table.register(name, type, size, lifetime, key, types, object)
     tuple = Tuple.new(name, type.to_s, size, lifetime, key, types, object)
-    catalog.force(tuple)
+    $catalog.force(tuple)
   end
 
   def drop
@@ -95,29 +102,6 @@ class Table
     return (name <=> (o.name))
   end
 
-  def name
-    @name
-  end
-
-  def types
-    @attributeTypes
-  end
-
-  def size
-    @size
-  end
-
-  def lifetime
-    @lifetime
-  end
-
-  def tuples
-    raise "subclass method for Table.tuples not defined"
-  end
-
-  def key
-    @key
-  end
 
   def primary
     raise "subclass method for Table.primary not defined"

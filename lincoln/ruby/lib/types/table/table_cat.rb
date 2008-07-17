@@ -7,17 +7,7 @@ class TableCat
   @catalog = nil
   @index = nil
 
-  def table
-    return @table
-  end
-
-  def catalog
-    return @catalog
-  end
-  
-  def index
-    return @index
-  end
+  attr_reader :table, :catalog, :index
 
   def init
     @table = Table.new

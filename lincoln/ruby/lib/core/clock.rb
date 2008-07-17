@@ -9,7 +9,7 @@ class Clock < ObjectTable
 	@@SCHEMA = [String, Integer] # location, clockvalue
 	
 	def initialize(location)
-		super(TableName.new(@@GLOBALSCOPE, "clock"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "clock"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		@location = location;
 		@clock = -1
 	end

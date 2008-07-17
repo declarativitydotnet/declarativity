@@ -49,9 +49,7 @@ class Operator
     @@table.insert_tup(me)
   end
   
-  def identifier
-    @identifier
-  end
+  attr_reader :identifier
 
   def <=>(o)
     return (@identifier <=> o.identifier)

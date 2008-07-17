@@ -1,7 +1,9 @@
+require 'lib/lang/plan/function'
+
 class Periodic < ObjectTable 
 	
 	class Scheduler < Function
-		def initialize(schedule) {
+		def initialize(schedule) 
 			super("periodicScheduler", TypeList.new(Periodic.schema))
 			@schedule = schedule
 		end
@@ -44,11 +46,11 @@ class Periodic < ObjectTable
 
   # give class variable access to the Schedule nested class
 	def Periodic.schema
-	  @@SCHEMA
+	  @SCHEMA
   end
   
 	def initialize(schedule)
-		super(TableName.new(GLOBALSCOPE, "periodic"), @@PRIMARY_KEY,  TypeList.new(SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "periodic"), @@PRIMARY_KEY,  TypeList.new(@SCHEMA))
 		@scheduler = Scheduler.new(schedule)
 	end
 	

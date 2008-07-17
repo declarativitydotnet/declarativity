@@ -24,7 +24,7 @@ class Log < ObjectTable
     # String.class   // Log message
 
 	def initialize(stream)
-		super(TableName.new(Table.GLOBALSCOPE, "log"), @@PRIMARY_KEY, TypeList.new(SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "log"), @@PRIMARY_KEY, TypeList.new(@SCHEMA))
 		@stream = stream
 	end
 	

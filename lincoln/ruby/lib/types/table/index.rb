@@ -36,17 +36,8 @@ class Index
     return @table.name <=> i.table.name
   end
 
-  def table
-    @table
-  end
+  attr_reader :table, :key, :type
 
-  def key
-    @key
-  end
-
-  def type
-    @type
-  end
 
   def clear
     raise "subclass method for Index.clear not defined"

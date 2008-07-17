@@ -11,17 +11,8 @@ class Term
 		@@identifier += 1
 	end
 	
-	def identifier
-		@identifer
-	end
-	
-	def location
-	  @location
-  end
-  
-	def location=(location)
-		@location = location
-	end
+	attr_reader :identifier, :program, :rule, :position
+	attr_accessor :location
 		
   def ==(o) 
 		if (o.class <= Term)
@@ -32,18 +23,6 @@ class Term
 	
 	def <=>(o)
 		@identifer.<=>(o.identifer)
-	end
-	
-	def program
-		@program
-	end
-	
-	def rule
-		@rule
-	end
-	
-	def position
-		@position;
 	end
 	
 	def to_s

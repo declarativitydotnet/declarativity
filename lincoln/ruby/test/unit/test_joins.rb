@@ -11,8 +11,8 @@ require 'lib/lang/plan/predicate'
 require "test/unit"
 
 class TestJoin < Test::Unit::TestCase
-  $catalog = Catalog.new
-  $index = IndexTable.new
+  sys = System.new
+  sys.init
 
   def default_test
     t1 = Tuple.new(1, "joe")

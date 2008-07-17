@@ -17,18 +17,9 @@ class Variable < Expression
     v.position = position
     return v
   end
-
-  def name
-    return @name
-  end
-
-  def type
-    return @type
-  end
-
-  def type=(t)
-    @type = t
-  end
+  
+  attr_reader :name
+  attr_accessor :type
 
   def to_s
     position >= 0 ? name + ":" + position.to_s : name

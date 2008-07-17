@@ -3,18 +3,8 @@ class TableName
     @scope = scope
     @name = name
   end
-  def scope
-    @scope
-  end
-  def name
-    @name
-  end
-  def scope=(new_scope)
-    @scope = new_scope
-  end
-  def name=(new_name)
-    @name = new_name
-  end
+  
+  attr_accessor :scope, :name
   def ==(o)
     return (o.class == TableName and o.to_s == to_s)
   end
