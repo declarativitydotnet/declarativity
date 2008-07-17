@@ -23,7 +23,7 @@ class Predicate < Term
 		]
 
 		def initialize
-			super(TableName.new(GLOBALSCOPE, "predicate"), @@PRIMARY_KEY,  TypeList.new(SCHEMA))
+			super(TableName.new(GLOBALSCOPE, "predicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		end
 		
     def insert(tuple)
