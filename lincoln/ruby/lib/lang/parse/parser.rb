@@ -32,13 +32,14 @@ end
 
 
 #ve = VisitExpression.new
+
 vg = VisitGeneric.new
 vf = VisitFact.new
 vp = VisitPredicate.new
 vv = VisitVariable.new
 vc = VisitConstant.new
-
 vs = VisitSelection.new
+vr = VisitRule.new
 
 sky = Treewalker.new(result)
 
@@ -50,6 +51,8 @@ sky.add_handler("Location",vg,1)
 
 sky.add_handler("Watch",vg,1)
 sky.add_handler("Expression",vg,1)
+
+sky.add_handler("PrimaryExpression",vg,1)
 sky.add_handler("Predicate",vp,1)
 
 sky.add_handler("Fact",vf,1)
@@ -60,7 +63,7 @@ sky.add_handler("TableName",vg,1)
 sky.add_handler("Keys",vg,1)
 sky.add_handler("Schema",vg,1)
 
-sky.add_handler("RuleBody",vg,1)
+sky.add_handler("Rule",vr,1)
 
 sky.add_handler("Selection",vs,1)
 sky.add_handler("Assignment",vg,1)
@@ -80,4 +83,4 @@ sky.add_handler("Periodic",vg,1)
 
 
 
-sky.walk()
+sky.walk("n")

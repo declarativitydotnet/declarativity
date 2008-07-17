@@ -15,7 +15,7 @@ grammar Overlog
   	rule Clause
 		     Rule  /     Watch  /     Fact  /     Definition  /     Import   
 
-			{ puts "CLAUSE" } 
+			
 	end
      	rule Import
 		  'import' TypeName   
@@ -29,7 +29,7 @@ grammar Overlog
 			}
 	end
      	rule Rule
-		     ('public'   )?  ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody  /     ('public'   )?  Name    ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody   
+		     (('public'   )?  ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody  /     ('public'   )?  Name    ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody   )
 			{ 
 				def Rule
 					return self
@@ -195,10 +195,13 @@ grammar Overlog
 			{ puts "postfix" }
 	end
   	rule PrimaryExpression
-		    Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  ReferenceName Spacing  # / Constant Spacing  
-
-			/     opar Expression cpar 
-				{ puts "primary" }
+		    (Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  ReferenceName Spacing  # / Constant Spacing  
+			/     opar Expression cpar )
+				{
+					def PrimaryExpression
+						return self
+					end
+				}
 	end
    	rule Arguments
 		     opar ExpressionList cpar  /     opar cpar   

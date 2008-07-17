@@ -64,13 +64,12 @@ class Treewalker
 				h = k[1]
 				h.set_token(k[0])
 
-				if (defined? p.text_value) 
-					#print k[0]+ ": ("+p.text_value+")\n"
-					h.semantic(p.text_value)
-				else
-					#print k[0]+ ": ["+p.to_s+"]\n"
-					h.semantic(p.to_s)
-				end
+				sem = defined? p.text_value ? p.text_value : p.to_s
+				h.semantic(sem)
+				if (@verbose == 'v') then  
+					print k[0]+ ": ("+p.text_value+")\n"
+				end 
+				h.semantic(p.text_value)
 				
 			end 
 		end
@@ -87,7 +86,8 @@ class Treewalker
 		end
 	end
 
-	def walk
+	def walk(verbose)
+		@verbose = verbose
 		mywalk(@tree)
 	end
 
