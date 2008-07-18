@@ -15,11 +15,13 @@
 #include "stageLoader.h"
 #include "tokenizer.h"
 #include "CSVstage.h"
+#include "PRLstage.h"
 
 void
 StageLoader::loadStages()
 {
   Tokenizer::ensureInit();
   CSVstage::ensureInit();
+  PRLstage::ensureInit();
 }
 
