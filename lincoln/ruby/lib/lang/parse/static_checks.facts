@@ -1,0 +1,46 @@
+program unify;
+
+import java.lang.String;
+import java.lang.Integer;
+
+/* Initialize all paths with link 
+path(Source, Destination, 1) :- link(Source, Destination);
+
+ Transitive closure over path, link. 
+path(Source, Destination, H) :- 
+	path(Source, Intermediate, Hops), link(Intermediate, Destination),
+	H := Hops + 1;
+
+ Compute shortest paths. 
+shortestPath(Source, Destination, min<Hops>) :- 
+	path(Source, Destination, Hops);
+*/
+
+predicate(0,0,3,"path",0);
+terms(0,0,"Source",0,"var");
+terms(0,0,"Destination",1,"var");
+terms(0,0,"1",2,"const");
+
+predicate(0,1,2,"link",0);
+terms(0,1,"Source",0,"var");
+terms(0,1,"Destination",1,"var");
+
+
+predicate(1,0,3,"path",0);
+terms(1,0,"Source",0,"var");
+terms(1,0,"Destination",1,"var");
+terms(1,0,"H",2,"var");
+terms(1,0,"Foo",3,"var");
+
+predicate(1,1,3,"path",0);
+terms(1,1,"Source",0,"var");
+terms(1,1,"Intermediate",1,"var");
+terms(1,1,"Hops",2,"var");
+
+predicate(1,2,2,"link",0);
+terms(1,2,"Intermediate",0,"var");
+terms(1,2,"Destination",1,"var");
+
+assign(1,0,"H","Hops + 1");
+assign(0,-1,"","");
+

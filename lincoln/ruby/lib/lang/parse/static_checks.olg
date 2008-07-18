@@ -1,0 +1,122 @@
+program unify;
+
+import java.lang.String;
+import java.lang.Integer;
+
+
+
+
+//rule,predicate,arity,name,notin
+define(predicate,keys(0,1),{Integer,Integer,Integer,String,Integer});
+// rule,predicate,name,position,type
+define(terms,keys(0,1,2,3),{Integer,Integer,String,Integer,String});
+// rule,id,varname,expression
+define(assign,keys(0,1),{Integer,Integer,String,String});
+define(join,keys(0,1,2,3),{Integer,String,Integer,Integer,Integer,Integer});
+define(prettyJoin,keys(0,1,2),{Integer,String,String,String,Integer,Integer});
+
+define(headTerms,keys(0,1),{Integer,String});
+define(bodyTerms,keys(0,1),{Integer,String});
+
+define(constantInHead,keys(0,1,2),{Integer,String,Integer});
+define(maxAssign,keys(0),{Integer,Integer});
+define(assign,keys(0,1),{Integer,Integer,String,String});
+
+define(dependency,keys(0,1),{String,String,Integer});
+
+// rule,predid,cnt
+define(tupleCnt,keys(0,1),{Integer,Integer,Integer});
+define(inBody,keys(0,1),{Integer,String});
+define(error,keys(0,1,2),{Integer,String,String,Integer});
+
+
+watch(prettyJoin,id);
+watch(assign,id);
+watch(error,id);
+watch(dependency,id);
+
+
+/***  SAFETY ***/
+inBody(Rule,Name) :- terms(Rule,Id,Name,Pos,Type),
+						Id > 0,
+						predicate(Rule,_,_,_,Notin),
+						Notin == 0;
+
+inBody(Rule,Name) :- assign(Rule,Id,Name,Expr);	
+
+headTerms(Rule,Name) :- terms(Rule,0,Name,Pos,Type), 
+						Type == "var",
+						/* necessary to ensure that inBody has reached fixpoint */
+						periodic(Id,4L,4L,4L);
+						
+															 				
+error(Rule,Name,"Unsafe: unbound variable in head",-1) :- 
+								headTerms(Rule,Name),
+								notin inBody(Rule,Name);		 				
+
+
+/***  ARITY ***/
+tupleCnt(Rule,Pred,count<Pos>) :- terms(Rule,Pred,Name,Pos,Type);
+
+error(Rule,Name,"arity error",Cnt) :- tupleCnt(Rule,Pred,Cnt),
+									predicate(Rule,Pred,Arity,Name,Notin),
+									Arity < Cnt;
+
+
+
+/***  DEPENDENCIES ***/
+/* we do not group by rule -- going across rules is the whole point */
+dependency(A,B,Notin) :-  predicate(Rule,0,_,A,_),
+						predicate(Rule,Ordinal,_,B,Notin),	
+						Ordinal > 0;
+						
+/* transitive closure... any negative dependencies propagate.	*/			
+dependency(A,B,Notin) :- predicate(Rule,0,_,A,_),
+						predicate(Rule,Ordinal,_,C,Notin1),
+						dependency(B,C,Notin2),	
+						Ordinal > 0,
+						Notin := (Notin1 || Notin2) ? 1 : 0;						
+					
+					
+
+/***  EQUIJOINS ****/
+
+join(Rule,Name,Pred1,Pred2,Pos1,Pos2) :- terms(Rule,Pred1,Name,Pos1,Type),
+									terms(Rule,Pred2,Name,Pos2,Type),
+									Pred1 < Pred2;
+									
+/* views! */
+prettyJoin(Rule,Name,Pred1,Pred2,Pos1,Pos2) :- join(Rule, Name,Pn1,Pn2,Pos1,Pos2),
+										  predicate(Rule,Pn1,Arity1,Pred1,Notin),
+										  predicate(Rule,Pn2,Arity2,Pred2,Notin2);
+
+
+
+/***   Head Rewrite (under construction)
+
+constantInHead(Rule,Name,Position) :- terms(Rule,0,Name,Position,Type),
+									Type == "const";	  									
+
+delete terms(Rule,Predicate,Name,Pos,Type) :- constantInHead(Rule,Name,Pos),	
+												terms(Rule,Predicate,OldName,Pos,Type),
+											 	Type == "const",
+											 	assign(Rule,Id,"RW1",Rhs);
+											 	
+maxAssign(Rule,max<Id>) :- assign(Rule,Id,_,_);
+
+assign(Rule,Id,"RW1",Name) :- constantInHead(Rule,Name,Position),
+				  				maxAssign(Rule,Max),
+				  				Id := Max + 1,
+				 				periodic(Iid,1L,1L,1L,1L);
+
+terms(Rule,Predicate,"RW1",Pos,"var") :- constantInHead(Rule,Name,Pos),	
+											terms(Rule,Predicate,OldName,Pos,Type),
+											 Type == "const",
+											 assign(Rule,Id,"RW1",Rhs);
+
+
+*/
+
+											
+
+													

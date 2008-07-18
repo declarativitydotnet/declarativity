@@ -51,7 +51,7 @@ sky.add_handler("Keys",vg,1)
 sky.add_handler("Schema",vg,1)
 sky.add_handler("Rule",VisitRule.new,1)
 sky.add_handler("Selection",VisitSelection.new,1)
-sky.add_handler("Assignment",vg,1)
+sky.add_handler("Assignment",VisitAssignment.new, 1)
 
 sky.add_handler("Variable",VisitVariable.new,1)
 sky.add_handler("Constant",VisitConstant.new,1)
