@@ -16,10 +16,10 @@ watch(shortestPath, di);
 
 path(Source, Destination, 1) :- link(Source, Destination);
 
-path(Source,Destination,Hops + 2) :-
-	path(Source, Intermediate, Hops), link(Intermediate, Destination);
+path(Source,Destination,H) :-
+	path(Source, Intermediate, Hops), link(Intermediate, Destination), H := Hops+2;
 
 shortestPath(Source, Destination, min<Hops>) :- 
 	path(Source, Destination, Hops);
 
-delete link("2", "4") :- periodic(Id, 1L, 1L, 5L);
+//delete link("2","4") :- periodic(Id, 1L, 1L, 5L);

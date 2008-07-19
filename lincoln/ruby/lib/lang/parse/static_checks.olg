@@ -1,17 +1,36 @@
-program unify;
+program foo;
 
 import java.lang.String;
 import java.lang.Integer;
 
 
 
-
+/******* old 
 //rule,predicate,arity,name,notin
 define(predicate,keys(0,1),{Integer,Integer,Integer,String,Integer});
 // rule,predicate,name,position,type
 define(terms,keys(0,1,2,3),{Integer,Integer,String,Integer,String});
 // rule,id,varname,expression
 define(assign,keys(0,1),{Integer,Integer,String,String});
+
+*****  new: ****/
+// rule, predicate, position, name, type
+define(terms,keys(0,1,2,3),{Integer,Integer,Integer,String,Integer});
+// id,name
+define(table,keys(0),{Integer,String});
+// rule,id,name
+define(predicate,keys(0,1),{Integer,Integer,String,Integer});
+// table,id,name
+define(column,keys(0,1),{Integer,Integer,String});
+// table,id
+define(index,keys(0,1),{Integer,Integer});
+// rule,id,expression
+define(assign,keys(0,1),{Integer,Integer,String});
+// rule,id,expression
+define(select,keys(0,1),{Integer,Integer,String});
+// rule,id,info,type
+define(objects,keys(0,1),{Integer,Integer,String,String});
+
 define(join,keys(0,1,2,3),{Integer,String,Integer,Integer,Integer,Integer});
 define(prettyJoin,keys(0,1,2),{Integer,String,String,String,Integer,Integer});
 
@@ -20,7 +39,9 @@ define(bodyTerms,keys(0,1),{Integer,String});
 
 define(constantInHead,keys(0,1,2),{Integer,String,Integer});
 define(maxAssign,keys(0),{Integer,Integer});
-define(assign,keys(0,1),{Integer,Integer,String,String});
+// tablename, type (-1 = schema, otherwise rule for predicate)
+define(colCnt,keys(0,1),{String,Integer});
+define(predCnt,keys(0,1,2),{String,Integer,Integer,Integer});
 
 define(dependency,keys(0,1),{String,String,Integer});
 
@@ -34,17 +55,29 @@ watch(prettyJoin,id);
 watch(assign,id);
 watch(error,id);
 watch(dependency,id);
+watch(table,id);
+watch(colCnt,id);
+watch(predCnt,id);
+//watch(terms,id);
+//watch(objects,id);
+//watch(predicate,id);
+//watch(headTerms,id);
+//watch(inBody,id);
 
 
 /***  SAFETY ***/
-inBody(Rule,Name) :- terms(Rule,Id,Name,Pos,Type),
-						Id > 0,
-						predicate(Rule,_,_,_,Notin),
+inBody(Rule,Name) :- terms(Rule,Id,Pos,Name,Type),
+						// get back to ordinals starting with 1!
+						Id > 1,
+						predicate(Rule,Id,_,Notin),
 						Notin == 0;
 
-inBody(Rule,Name) :- assign(Rule,Id,Name,Expr);	
+inBody(Rule,Name) :- assign(Rule,Id,Expr),
+					 terms(Rule,Id,Pos,Name,Type),
+					 Pos > 0;
+					 
 
-headTerms(Rule,Name) :- terms(Rule,0,Name,Pos,Type), 
+headTerms(Rule,Name) :- terms(Rule,1,Pos,Name,Type), 
 						Type == "var",
 						/* necessary to ensure that inBody has reached fixpoint */
 						periodic(Id,4L,4L,4L);
@@ -54,69 +87,54 @@ error(Rule,Name,"Unsafe: unbound variable in head",-1) :-
 								headTerms(Rule,Name),
 								notin inBody(Rule,Name);		 				
 
+// ARITY
 
-/***  ARITY ***/
-tupleCnt(Rule,Pred,count<Pos>) :- terms(Rule,Pred,Name,Pos,Type);
-
-error(Rule,Name,"arity error",Cnt) :- tupleCnt(Rule,Pred,Cnt),
-									predicate(Rule,Pred,Arity,Name,Notin),
-									Arity < Cnt;
-
-
-
-/***  DEPENDENCIES ***/
-/* we do not group by rule -- going across rules is the whole point */
-dependency(A,B,Notin) :-  predicate(Rule,0,_,A,_),
-						predicate(Rule,Ordinal,_,B,Notin),	
-						Ordinal > 0;
+// schema
+colCnt(Name,count<*>) :- table(Table,Name),
+						column(Table,Ord,Column);
 						
-/* transitive closure... any negative dependencies propagate.	*/			
-dependency(A,B,Notin) :- predicate(Rule,0,_,A,_),
-						predicate(Rule,Ordinal,_,C,Notin1),
-						dependency(B,C,Notin2),	
-						Ordinal > 0,
+predCnt(Pname,Rule,Id,count<*>) :- terms(Rule,Id,Pos,Name,Type),
+										predicate(Rule,Id,Pname,Notin);					
+
+
+error(-1,Name,"Schema - Predicate arity mismatch",Cnt2) :- colCnt(Name,Cnt1),
+												predCnt(Name,_,_,Cnt2),
+												Cnt1 != Cnt2;
+
+// this one is clearly redundant in the java version.  but in the c++ p2, 
+// there can be undeclared event tables that nevertheless need to self-agree
+// in arity.												
+error(-1,Name,"Predicate - Predicate arity mismatch",Cnt2) :- predCnt(Name,_,_,Cnt1),
+															  predCnt(Name,_,_,Cnt2),
+															  Cnt1 != Cnt2;											
+																								
+//  DEPENDENCIES
+// we do not group by rule -- going across rules is the whole point
+dependency(A,B,Notin) :-  predicate(Rule,1,A,_),
+						predicate(Rule,Ordinal,B,Notin),	
+						Ordinal > 1;
+						
+// transitive closure... any negative dependencies propagate.				
+dependency(A,B,Notin) :- predicate(Rule,1,A,_),
+						predicate(Rule,Ordinal,C,Notin1),
+						dependency(C,B,Notin2),	
+						Ordinal > 1,
 						Notin := (Notin1 || Notin2) ? 1 : 0;						
 					
 					
 
-/***  EQUIJOINS ****/
+//  EQUIJOINS 
 
-join(Rule,Name,Pred1,Pred2,Pos1,Pos2) :- terms(Rule,Pred1,Name,Pos1,Type),
-									terms(Rule,Pred2,Name,Pos2,Type),
+join(Rule,Name,Pred1,Pred2,Pos1,Pos2) :- terms(Rule,Pred1,Pos1,Name,Type),
+									terms(Rule,Pred2,Pos2,Name,Type),
 									Pred1 < Pred2;
 									
-/* views! */
+
 prettyJoin(Rule,Name,Pred1,Pred2,Pos1,Pos2) :- join(Rule, Name,Pn1,Pn2,Pos1,Pos2),
-										  predicate(Rule,Pn1,Arity1,Pred1,Notin),
-										  predicate(Rule,Pn2,Arity2,Pred2,Notin2);
+										  predicate(Rule,Pn1,Pred1,Notin),
+										  predicate(Rule,Pn2,Pred2,Notin2);
 
 
 
-/***   Head Rewrite (under construction)
 
-constantInHead(Rule,Name,Position) :- terms(Rule,0,Name,Position,Type),
-									Type == "const";	  									
-
-delete terms(Rule,Predicate,Name,Pos,Type) :- constantInHead(Rule,Name,Pos),	
-												terms(Rule,Predicate,OldName,Pos,Type),
-											 	Type == "const",
-											 	assign(Rule,Id,"RW1",Rhs);
-											 	
-maxAssign(Rule,max<Id>) :- assign(Rule,Id,_,_);
-
-assign(Rule,Id,"RW1",Name) :- constantInHead(Rule,Name,Position),
-				  				maxAssign(Rule,Max),
-				  				Id := Max + 1,
-				 				periodic(Iid,1L,1L,1L,1L);
-
-terms(Rule,Predicate,"RW1",Pos,"var") :- constantInHead(Rule,Name,Pos),	
-											terms(Rule,Predicate,OldName,Pos,Type),
-											 Type == "const",
-											 assign(Rule,Id,"RW1",Rhs);
-
-
-*/
-
-											
-
-													
+												

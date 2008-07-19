@@ -29,7 +29,7 @@ class Treewalker
 	def add_handler(string,func,recurse)
 
 		if @hash[string] then
-			print "hmm, already have a handler for this term\n"
+			print "hmm, already have a handler for this term: "+string+"\n"
 		else
 			func.set_token(string)
 			@hash[string] = func
@@ -46,6 +46,7 @@ class Treewalker
 	def handle(elem)
 		# this sucks
 		@hash.each do |k|
+			# arr, I lost me meth!
 			meth = "elem."+k[0]
 			stm = "defined? "+meth
 			if (eval(stm)) then
@@ -55,7 +56,7 @@ class Treewalker
 				h.set_token(k[0])
 
 				sem = (defined? p.text_value) ? p.text_value : p.to_s
-				h.semantic(sem)
+				h.semantic(sem,p)
 				if (@verbose == 'v') then  
 					print k[0]+ ": ("+sem+")\n"
 				end 
@@ -63,7 +64,6 @@ class Treewalker
 			end 
 		end
 	end
-
 	def mywalk(node)
 		if (defined? node.elements) then
 			node.elements.each do |elem|
@@ -74,7 +74,6 @@ class Treewalker
 			end
 		end
 	end
-
 	def walk(verbose)
 		@verbose = verbose
 		mywalk(@tree)

@@ -16,13 +16,34 @@ require "Treewalker.rb"
 @@predicates = Predicate::PredicateTable.new
 
 
+# had to.  will revisit.
+def suck_nums(node)
+	#puts node.inspect
+	returns  = Array.new
+	if (defined? node.DecimalNumeral) then
+		returns << node.DecimalNumeral.text_value
+	else 
+		returns = Array.new
+		if (!node.elements.nil?) then
+			node.elements.each do |e|
+				list = suck_nums(e)
+				if (!list.empty?) then
+					returns.concat(list)
+				end
+			end	
+		end
+	end
+	return returns
+end
+
+
 # local modules
 
 class VisitGeneric < Treewalker::Handler
 	def initialize
 		@@ids["_Object"] = 0
 	end 
-	def semantic(text)
+	def semantic(text,obj)
 		#print "generic semantic action for "+self.token+" =  "+text+"\n"
 		#print "set "+self.token+" = "+text+"\n"
 		if (@@ids[self.token].nil?) then
@@ -35,40 +56,44 @@ class VisitGeneric < Treewalker::Handler
 end
 
 class VisitPredicate < VisitGeneric
-	def semantic(text)
-		super(text)
+	def semantic(text,obj)
+		super(text,obj)
+
+		@@ids["_Object"] = @@ids["_Object"] + 1
 		predtab(@@state["Rule"],@@state["Predicate"],@@ids["_Object"]);
 		@@ids["PrimaryExpression"] = 0
-		@@ids["_Object"] = @@ids["_Object"] + 1
-		#@@state["_Object"] == [text,@@ids["_Object"]]
+		objtab(@@state["Rule"],@@ids["_Object"],@@state["Predicate"],"predicate")
 	end
 end
 
 class VisitConstant < VisitGeneric
-	def semantic(text)
+	def semantic(text,obj)
 		#print "constant "+text+"\n"
 		#print "type is "+text.class.to_s+"\n"
-		super(text)
+		super(text,obj)
+		## WHOA!
+		t = text.gsub('"',"")
 		#termtab(@@state["Rule"],@@state["_Object"],@@state["PrimaryExpression"],text,'"const"')
-		termtab(@@state["Rule"],@@ids["_Object"],@@state["PrimaryExpression"],text,'"const"')
+		termtab(@@state["Rule"],@@ids["_Object"],@@state["PrimaryExpression"],t,'"const"')
+		
 	end
 end
 
 class VisitVariable < VisitGeneric
-	def semantic(text)
+	def semantic(text,obj)
 		#print "Variable ("+text+")\n"
 		#print "rule "+@@state["orule"] +",pred "+@@state["head"]+" Variable "+text+"\n"
 
-		super(text)
+		super(text,obj)
 		termtab(@@state["Rule"],@@ids["_Object"],@@state["PrimaryExpression"],text,'"var"')
 		# insert into term table
 	end
 end
 
 class VisitFact < VisitGeneric
-	def semantic(text)
+	def semantic(text,obj)
 		#print "Fact: 
-		super(text)
+		super(text,obj)
 		facttab(text,@@ids["_Object"])
 		@@ids["PrimaryExpression"] = 0 ###= @@ids["Predicate"] = 0
 		@@ids["_Object"] = @@ids["_Object"] + 1
@@ -76,40 +101,65 @@ class VisitFact < VisitGeneric
 end
 
 class VisitRule < VisitGeneric
-	def semantic(text)
-		super(text)
+	def semantic(text,obj)
+		
+		t = text.gsub('"',"")
+		super(t,obj)
 		ruletab(@@state["Rule"])
 		@@ids["Predicate"] = @@ids["PrimaryExpression"] = @@ids["_Object"] = 0
 	end
 end
 
 class VisitTable < VisitGeneric
-	def semantic(text)
-		print "Fact: "
-		super(text)
-		tabtab(@@state["table"])
-		@@ids["_Object"] = @@ids["_Object"] + 1
+	def semantic(text,obj)
+		super(text,obj)
+		#print obj.Keys.inspect
+		#print "TABLE("+text+"\n"
+		tabtab(@@state["TableName"])
+		#@@ids["_Object"] = @@ids["_Object"] + 1
 	end
 end
 
+class VisitColumn < VisitGeneric
+	def semantic(text,obj)
+		super(text,obj)	
+		#print "\tCOL: "+text+"\n"	
+		coltab(@@ids["TableName"],@@ids["Type"],text);
+	end
+end
+class VisitIndex < VisitGeneric
+	def semantic(text,obj)
+		super(text,obj)
+		suck_nums(obj).each do |indx|
+			#print "\tINDEX: "+indx+"\n"
+			indxtab(@@ids["TableName"],indx)
+		end
+	end
+end
+
+
+
 class VisitAssignment < VisitGeneric
-	def semantic(text)
-		#print "Variable "+text+"\n"
-		#print "rule "+@@state["orule"] +", pred "+@@state["head"]+" Variable "+text+"\n"
-		#insert into term table
-		print "Assignment: "+text+"\n"
+	def semantic(text,obj)
 		@@ids["_Object"] = @@ids["_Object"] + 1
-		@@ids["PrimaryExpression"] = 0 
-		#@@state["_Object"] == [text,@@ids["_Object"]]
+		@@ids["PrimaryExpression"] = 0
+	
+			
+		t = obj.Variable.text_value.gsub('"','\"')
+
+		objtab(@@state["Rule"],@@ids["_Object"],@@state["Assignment"],"assignment")
+		assigntab(@@state["Rule"],@@ids["_Object"],t)
 	end
 end
 
 
 class VisitSelection < VisitGeneric
-	def semantic(text)
-		print "Selection: "+text+"\n"
+	def semantic(text,obj)
 		@@ids["_Object"] = @@ids["_Object"] + 1
 		@@ids["PrimaryExpression"] = 0 
+		objtab(@@state["Rule"],@@ids["_Object"],@@state["Selection"],"selection")
+		t = text.gsub('"','\"')
+		selecttab(@@state["Rule"],@@ids["_Object"],t)
 	end
 end
 

@@ -1,3 +1,16 @@
+# this grammar is mostly auto-generated from the rats! grammar of the java implementation of P2.
+# rats!, treetop and peg/leg are all implementations of packrat parsers, which are memoizing
+# parsers for Parsing Expression Grammars (PEGs).
+# syntax-directed translation (rats! -> treetop) was performed using a PEG grammar in the peg/leg
+# syntax.  the grammar recognizes a rats! grammar and outputs an equivalent treetop grammar.
+#
+# unfortunately, the evaluation strategy for treetop programs seems to differ significantly from
+# that of rats!.  the auto-generated grammar contained numerous instances of left-recursive rules
+# that caused stack overflows in ruby.  these all had to be manually re-written to remove
+# left-recursion. (note: these rewrites need to be carefully reread: the operator precedence is
+# likely thrown off)
+
+
 grammar Overlog
        	rule Program
 		  ProgramName Spacing Clauses #EndOfFile   
@@ -18,7 +31,7 @@ grammar Overlog
 			
 	end
      	rule Import
-		  'import' TypeName   
+		  'import' Spacing TypeName   
 	end
      	rule Fact
 		  TableName opar ExpressionList cpar
@@ -29,7 +42,7 @@ grammar Overlog
 			}
 	end
      	rule Rule
-		     (('public'   )?  ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody  /     ('public'   )?  Name    ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody   )
+		     (('public'   )?  ('delete' Spacing)?  RuleHead Spacing ':-' Spacing RuleBody  /     ('public'   )?  Name    ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody   )
 			{ 
 				def Rule
 					return self
@@ -49,7 +62,12 @@ grammar Overlog
 		  TableFunction  /  Predicate  /  Assignment  /  Selection   
 	end
      	rule Definition
-		     'define' opar TableName Comma Keys Comma Schema cpar /     'define' opar TableName Comma Schema cpar 
+		     ('define' opar TableName Comma Keys Comma Schema cpar /     'define' opar TableName Comma Schema cpar )
+			{
+				def Definition
+					return self
+				end			
+			}
 	end
 	rule opar
 		Spacing '(' Spacing
@@ -138,8 +156,11 @@ grammar Overlog
 		     '=='  /     '!='  /     '<>'   
 	end
    	rule InequalityExpression
-		  #ShiftExpression / InequalityExpression InequalityOperator ShiftExpression  #/  ShiftExpression
-		  ShiftExpression InequalityOperator InequalityExpression /  ShiftExpression
+		  #ShiftExpression / InequalityExpression ineq ShiftExpression  #/  ShiftExpression
+		  ShiftExpression ineq InequalityExpression /  ShiftExpression
+	end
+	rule ineq
+		Spacing InequalityOperator Spacing
 	end
   	rule InequalityOperator
 		     '<'  /     '>'  /     '<='  /     '>='   
@@ -214,7 +235,12 @@ grammar Overlog
 		  Word
 	end
   	rule Word
-		  Spacing WordCharacters Spacing   
+		  Spacing (WordCharacters) Spacing   
+			{
+				def Word
+					return self
+				end 
+			}
 	end
 	rule WordCharacters
 		[a-zA-Z0-9_]*
@@ -250,7 +276,8 @@ grammar Overlog
 		  Word   
 	end
   	rule Word
-		  Spacing WordCharacters Spacing   
+		  #Spacing WordCharacters Spacing   
+			WordCharacters
 	end
   	rule EventModifier
 		  '#' EventType   

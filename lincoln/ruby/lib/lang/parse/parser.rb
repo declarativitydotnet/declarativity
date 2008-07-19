@@ -7,10 +7,10 @@ require 'lib/types/table/object_table.rb'
 require 'lib/lang/plan/predicate.rb'
 
 require "Treewalker.rb"
-
 require 'local_tw.rb'
-
 require 'output.rb'
+
+verbose = 'n'
 
 prog = ''
 while line = STDIN.gets
@@ -20,7 +20,7 @@ end
 parser = OverlogParser.new
 result = parser.parse(prog)
 if result
-  puts 'success'
+  #puts 'success'
 else
   puts 'failure'
 	raise RuntimeError.new(parser.failure_reason)
@@ -45,9 +45,8 @@ sky.add_handler("Watch",vg,1)
 sky.add_handler("PrimaryExpression",vg,1)
 sky.add_handler("Predicate",VisitPredicate.new,1)
 sky.add_handler("Fact",VisitFact.new,1)
-sky.add_handler("Definition",vg,1)
+sky.add_handler("Definition",VisitTable.new,1)
 sky.add_handler("TableName",vg,1)
-sky.add_handler("Keys",vg,1)
 sky.add_handler("Schema",vg,1)
 sky.add_handler("Rule",VisitRule.new,1)
 sky.add_handler("Selection",VisitSelection.new,1)
@@ -64,8 +63,10 @@ sky.add_handler("AggregateVariable",vg,1)
 #sky.add_handler("Arguments",vg,1)
 
 sky.add_handler("Periodic",vg,1)
+sky.add_handler("Table",VisitTable.new,1)
+sky.add_handler("Type",VisitColumn.new,1)
+sky.add_handler("Keys",VisitIndex.new,1)
 
 
-
-
-sky.walk("n")
+init_output("foo")
+sky.walk(verbose)
