@@ -41,7 +41,7 @@ end
 
 class VisitGeneric < Treewalker::Handler
 	def initialize
-		@@ids["_Object"] = 0
+		@@ids["_Object"] = -1
 	end 
 	def semantic(text,obj)
 		#print "generic semantic action for "+self.token+" =  "+text+"\n"
@@ -61,7 +61,7 @@ class VisitPredicate < VisitGeneric
 
 		@@ids["_Object"] = @@ids["_Object"] + 1
 		predtab(@@state["Rule"],@@state["Predicate"],@@ids["_Object"]);
-		@@ids["PrimaryExpression"] = 0
+		@@ids["PrimaryExpression"] = -1
 		objtab(@@state["Rule"],@@ids["_Object"],@@state["Predicate"],"predicate")
 	end
 end
@@ -95,7 +95,7 @@ class VisitFact < VisitGeneric
 		#print "Fact: 
 		super(text,obj)
 		facttab(text,@@ids["_Object"])
-		@@ids["PrimaryExpression"] = 0 ###= @@ids["Predicate"] = 0
+		@@ids["PrimaryExpression"] = -1 ###= @@ids["Predicate"] = -1
 		@@ids["_Object"] = @@ids["_Object"] + 1
 	end
 end
@@ -106,7 +106,7 @@ class VisitRule < VisitGeneric
 		t = text.gsub('"',"")
 		super(t,obj)
 		ruletab(@@state["Rule"])
-		@@ids["Predicate"] = @@ids["PrimaryExpression"] = @@ids["_Object"] = 0
+		@@ids["Predicate"] = @@ids["PrimaryExpression"] = @@ids["_Object"] = -1
 	end
 end
 
@@ -142,7 +142,7 @@ end
 class VisitAssignment < VisitGeneric
 	def semantic(text,obj)
 		@@ids["_Object"] = @@ids["_Object"] + 1
-		@@ids["PrimaryExpression"] = 0
+		@@ids["PrimaryExpression"] = -1
 	
 			
 		t = obj.Variable.text_value.gsub('"','\"')
@@ -156,10 +156,28 @@ end
 class VisitSelection < VisitGeneric
 	def semantic(text,obj)
 		@@ids["_Object"] = @@ids["_Object"] + 1
-		@@ids["PrimaryExpression"] = 0 
+		@@ids["PrimaryExpression"] =  -1
 		objtab(@@state["Rule"],@@ids["_Object"],@@state["Selection"],"selection")
 		t = text.gsub('"','\"')
 		selecttab(@@state["Rule"],@@ids["_Object"],t)
+	end
+end
+
+
+class VisitExpression < VisitGeneric
+	def semantic(text,obj)
+		#puts obj.inspect
+		if (!defined? obj.PrimaryExpression) then
+			# this is no good!!!
+			old =@@state["PrimaryExpression"]
+			@@state["PrimaryExpression"] = [old[0],old[1]+1]
+			termtab(@@state["Rule"],@@ids["_Object"],@@state["PrimaryExpression"],text,'"expr"')
+			@@ids["_Object"] = @@ids["_Object"] + 1
+			@@ids["PrimaryExpression"] =  -1
+			objtab(@@state["Rule"],@@ids["_Object"],@@state["Selection"],"expression")
+			t = text.gsub('"','\"')
+			exprtab(@@state["Rule"],@@ids["_Object"],t)
+		end
 	end
 end
 

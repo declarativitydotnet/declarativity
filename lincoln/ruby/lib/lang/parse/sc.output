@@ -1,0 +1,23 @@
+============================ EVALUATE CLOCK[7] =============================
+Program static_checks [CLOCK 7] INSERT: static_checks::dependency
+	SCHEMA: [A:0, B:1, Notin:2]
+	<path, link, 0>
+	<shortestPath, path, 0>
+	<path, path, 0>
+	<link, periodic, 0>
+Program static_checks [CLOCK 7] INSERT: static_checks::dependency
+	SCHEMA: [A:0, B:1, Notin:2]
+	<path, periodic, 0>
+	<shortestPath, link, 0>
+Program static_checks [CLOCK 7] INSERT: static_checks::dependency
+	SCHEMA: [A:0, B:1, Notin:2]
+	<shortestPath, periodic, 0>
+Program static_checks [CLOCK 7] INSERT: static_checks::prettyJoin
+	SCHEMA: [Rule:0, Name:1, Pred1:2, Pred2:3, Pos1:4, Pos2:5]
+	<2, Destination, shortestPath, path, 1, 1>
+	<1, Source, path, path, 0, 0>
+	<1, Intermediate, path, link, 1, 0>
+	<2, Source, shortestPath, path, 0, 0>
+	<0, Destination, path, link, 1, 1>
+	<0, Source, path, link, 0, 0>
+	<1, Destination, path, link, 1, 1>

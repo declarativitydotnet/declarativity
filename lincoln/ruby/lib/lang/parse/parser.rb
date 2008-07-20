@@ -1,3 +1,5 @@
+#!/usr/bin/ruby
+
 require "rubygems"
 require "treetop"
 require "core.rb"
@@ -41,7 +43,7 @@ vg = VisitGeneric.new
 sky.add_handler("Word",vg,1)
 sky.add_handler("Location",vg,1)
 sky.add_handler("Watch",vg,1)
-#sky.add_handler("Expression",vg,1)
+sky.add_handler("Expression",VisitExpression.new,1)
 sky.add_handler("PrimaryExpression",vg,1)
 sky.add_handler("Predicate",VisitPredicate.new,1)
 sky.add_handler("Fact",VisitFact.new,1)
@@ -68,5 +70,5 @@ sky.add_handler("Type",VisitColumn.new,1)
 sky.add_handler("Keys",VisitIndex.new,1)
 
 
-init_output("foo")
+init_output("static_checks")
 sky.walk(verbose)

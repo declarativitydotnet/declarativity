@@ -1,35 +1,29 @@
-program foo;
+program static_checks;
 
 import java.lang.String;
 import java.lang.Integer;
 
 
 
-/******* old 
-//rule,predicate,arity,name,notin
-define(predicate,keys(0,1),{Integer,Integer,Integer,String,Integer});
-// rule,predicate,name,position,type
-define(terms,keys(0,1,2,3),{Integer,Integer,String,Integer,String});
-// rule,id,varname,expression
-define(assign,keys(0,1),{Integer,Integer,String,String});
 
-*****  new: ****/
-// rule, predicate, position, name, type
+// (rule, predicate, position, name, type)
 define(terms,keys(0,1,2,3),{Integer,Integer,Integer,String,Integer});
-// id,name
+// (id,name)
 define(table,keys(0),{Integer,String});
-// rule,id,name
+// (rule,id,name)
 define(predicate,keys(0,1),{Integer,Integer,String,Integer});
-// table,id,name
+// (table,id,name)
 define(column,keys(0,1),{Integer,Integer,String});
-// table,id
+// (table,id)
 define(index,keys(0,1),{Integer,Integer});
-// rule,id,expression
+// (rule,id,expression)
 define(assign,keys(0,1),{Integer,Integer,String});
-// rule,id,expression
+// (rule,id,expression)
 define(select,keys(0,1),{Integer,Integer,String});
-// rule,id,info,type
+// (rule,id,info,type)
 define(objects,keys(0,1),{Integer,Integer,String,String});
+// (rule,id,expression)
+define(expression,keys(0,1),{Integer,Integer,String});
 
 define(join,keys(0,1,2,3),{Integer,String,Integer,Integer,Integer,Integer});
 define(prettyJoin,keys(0,1,2),{Integer,String,String,String,Integer,Integer});
@@ -45,19 +39,19 @@ define(predCnt,keys(0,1,2),{String,Integer,Integer,Integer});
 
 define(dependency,keys(0,1),{String,String,Integer});
 
-// rule,predid,cnt
+// (rule,predid,cnt)
 define(tupleCnt,keys(0,1),{Integer,Integer,Integer});
 define(inBody,keys(0,1),{Integer,String});
 define(error,keys(0,1,2),{Integer,String,String,Integer});
 
 
 watch(prettyJoin,id);
-watch(assign,id);
+//watch(assign,id);
 watch(error,id);
 watch(dependency,id);
-watch(table,id);
-watch(colCnt,id);
-watch(predCnt,id);
+//watch(table,id);
+//watch(colCnt,id);
+//watch(predCnt,id);
 //watch(terms,id);
 //watch(objects,id);
 //watch(predicate,id);
@@ -65,10 +59,11 @@ watch(predCnt,id);
 //watch(inBody,id);
 
 
+
 /***  SAFETY ***/
 inBody(Rule,Name) :- terms(Rule,Id,Pos,Name,Type),
-						// get back to ordinals starting with 1!
-						Id > 1,
+						//// get back to ordinals starting with 1!
+						Id > 0,
 						predicate(Rule,Id,_,Notin),
 						Notin == 0;
 
@@ -77,7 +72,7 @@ inBody(Rule,Name) :- assign(Rule,Id,Expr),
 					 Pos > 0;
 					 
 
-headTerms(Rule,Name) :- terms(Rule,1,Pos,Name,Type), 
+headTerms(Rule,Name) :- terms(Rule,0,Pos,Name,Type), 
 						Type == "var",
 						/* necessary to ensure that inBody has reached fixpoint */
 						periodic(Id,4L,4L,4L);
@@ -110,15 +105,15 @@ error(-1,Name,"Predicate - Predicate arity mismatch",Cnt2) :- predCnt(Name,_,_,C
 																								
 //  DEPENDENCIES
 // we do not group by rule -- going across rules is the whole point
-dependency(A,B,Notin) :-  predicate(Rule,1,A,_),
+dependency(A,B,Notin) :-  predicate(Rule,0,A,_),
 						predicate(Rule,Ordinal,B,Notin),	
-						Ordinal > 1;
+						Ordinal > 0;
 						
 // transitive closure... any negative dependencies propagate.				
-dependency(A,B,Notin) :- predicate(Rule,1,A,_),
+dependency(A,B,Notin) :- predicate(Rule,0,A,_),
 						predicate(Rule,Ordinal,C,Notin1),
 						dependency(C,B,Notin2),	
-						Ordinal > 1,
+						Ordinal > 0,
 						Notin := (Notin1 || Notin2) ? 1 : 0;						
 					
 					
