@@ -1,3 +1,4 @@
+require 'lib/types/table/object_table'
 class Program
   include Comparable
 	
@@ -13,7 +14,7 @@ class Program
 		@@SCHEMA =  [String, String, Program]
 
 		def initialize
-			super(TableName.new(@@GLOBALSCOPE, "program"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA));
+			super(TableName.new(GLOBALSCOPE, "program"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA));
 		end
 	end
 	
