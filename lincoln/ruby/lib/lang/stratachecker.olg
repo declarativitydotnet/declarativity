@@ -1,0 +1,39 @@
+program strataChecker;
+
+import p2.core.Log;
+import p2.types.table.TableName;
+import java.lang.String;
+import java.lang.Integer;
+
+define(error, {String, String, TableName, Integer, TableName, Integer});
+
+/* Verify strata for notin predicates. */
+public
+error(Program, Rule, Parent.name(), ParentStrata, Child.name(), ChildStrata) :-
+	compile::checkStrata(Program, Predicates),
+	predicate(Program, Rule, 0, Event, Parent), 
+	predicate(Program, Rule, Pos, Event, Child), 
+	Pos > 0, Child.notin(),
+	runtime::priority(Program, Parent.name(), ParentStrata),
+	runtime::priority(Program, Child.name(), ChildStrata),
+	ParentStrata <= ChildStrata;
+	
+/* Verify strata for aggregation predicates. */
+public
+error(Program, Rule, Parent, ParentStrata, Head.name(), HeadStrata) :-
+	compile::checkStrata(Program, Predicates),
+	predicate(Program, Rule, 0, Event, Head), 
+	Head.containsAggregation(),
+	compile::dependency(Program, Parent, Head.name()),
+	runtime::priority(Program, Head.name(), HeadStrata),
+	runtime::priority(Program, Parent, ParentStrata),
+	ParentStrata <= HeadStrata;
+	
+	
+log(Log.Type.WARNING, Msg) :-
+	error(Program, Rule, Parent, ParentStrata, Child, ChildStrata),
+	clock(Location, Time),
+	Msg := "Program " + Program + ", RULE " + Rule +
+	       ": strata error Predicate " + 
+	       Parent.toString() + " is assigned to strata " + ParentStrata.toString() + 
+	       " but depends on predicate " + Child.toString() + " in strata " + ChildStrata.toString();

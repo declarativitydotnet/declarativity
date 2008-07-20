@@ -36,7 +36,7 @@ class Periodic < ObjectTable
 	  PROGRAM = 5
   end
   
-	@SCHEMA = [String, Integer, Integer, Integer, Integer, String]
+	@@SCHEMA = [String, Integer, Integer, Integer, Integer, String]
     # String.class, // Identifier
     # Long.class,   // Period
     # Long.class,   // TTL
@@ -46,11 +46,11 @@ class Periodic < ObjectTable
 
   # give class variable access to the Schedule nested class
 	def Periodic.schema
-	  @SCHEMA
+	  @@SCHEMA
   end
   
 	def initialize(schedule)
-		super(TableName.new(GLOBALSCOPE, "periodic"), @@PRIMARY_KEY,  TypeList.new(@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "periodic"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		@scheduler = Scheduler.new(schedule)
 	end
 	
