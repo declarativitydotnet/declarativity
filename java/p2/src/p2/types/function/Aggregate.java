@@ -33,6 +33,7 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	public static final String MAX      = "max";
 	public static final String COUNT    = "count";
 	public static final String AVG      = "avg";
+	public static final String SUMSTR   = "sumstr";
 	public static final String TUPLESET = "tupleset";
 	
 	public abstract Tuple result();
@@ -51,6 +52,9 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		}
 		else if (AVG.equals(aggregate.functionName())) {
 			return new Avg(new Accessor(aggregate));
+		}
+		else if (SUMSTR.equals(aggregate.functionName())) {
+			return new SumStr(new Accessor(aggregate));
 		}
 		else if (TUPLESET.equals(aggregate.functionName())) {
 			return new TupleSet(new Accessor(aggregate));
@@ -87,7 +91,7 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		}
 		
 		public Tuple result() {
-			return this.result.clone();
+			return this.result == null ? null : this.result.clone();
 		}
 		
 		public void reset() {
@@ -122,7 +126,7 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		}
 		
 		public Tuple result() {
-			return this.result.clone();
+			return this.result == null ? null : this.result.clone();
 		}
 		
 		public void reset() {
@@ -166,7 +170,6 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		}
 		
 		public void reset() {
-			this.result = null;
 			this.current = new Integer(0);
 		}
 		
@@ -219,6 +222,47 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 
 		public Class returnType() {
 			return Float.class;
+		}
+	}
+	
+	public static class SumStr extends Aggregate {
+		private Tuple result;
+		private String current;
+		private Accessor accessor;
+		
+		public SumStr(Accessor accessor) {
+			this.current = null;
+			this.accessor = accessor;
+		}
+		
+		public Tuple result() {
+			if (this.result != null) {
+				this.result = this.result.clone();
+				this.result.value(accessor.position(), this.current);
+				return this.result;
+			}
+			return null;
+		}
+		
+		public void reset() {
+			this.result = null;
+			this.current = null;
+		}
+		
+		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
+			this.result = tuple;
+			if (this.current == null) {
+				this.current = (String) this.accessor.evaluate(tuple);
+			}
+			else {
+				this.current += (String) this.accessor.evaluate(tuple);
+			}
+			
+			return this.current;
+		}
+
+		public Class returnType() {
+			return String.class;
 		}
 	}
 	

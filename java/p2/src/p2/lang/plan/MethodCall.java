@@ -76,6 +76,9 @@ public class MethodCall extends Expression {
 						System.err.println(e.getTargetException().getMessage());
 						e.getTargetException().printStackTrace();
 						System.exit(0);
+					} catch (Exception e) {
+						System.err.println(e + ": method invocation " + MethodCall.this.method.toString());
+						System.exit(0);
 					}
 					return null;
 				} catch (Exception e) {

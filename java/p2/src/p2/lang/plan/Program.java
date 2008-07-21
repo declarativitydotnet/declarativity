@@ -110,6 +110,11 @@ public class Program implements Comparable<Program> {
 			/* First plan out all the rules. */
 			TupleSet rules = Compiler.rule.secondary().get(
 					new Key(RuleTable.Field.PROGRAM.ordinal())).lookup(this.name);
+			
+			if (rules == null) {
+				System.err.println("Warning: Program " + this.name + " does not have any rules!?");
+				return true;
+			}
 
 			for (Tuple tuple : rules) {
 				Rule rule = (Rule) tuple.value(RuleTable.Field.OBJECT.ordinal());

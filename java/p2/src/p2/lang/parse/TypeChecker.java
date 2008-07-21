@@ -134,7 +134,16 @@ public final class TypeChecker extends Visitor {
 	 * @param y the second type
 	 */
 	private Class lub(final Class x, final Class y) {
-		if (x.isAssignableFrom(y)) {
+		if (x == y) {
+			return x;
+		}
+		else if (y == null) {
+			return x;
+		}
+		else if (x == null) {
+			return y;
+		}
+		else if (x.isAssignableFrom(y)) {
 			return x;
 		} else if (y.isAssignableFrom(x)) {
 			return y;
@@ -148,6 +157,12 @@ public final class TypeChecker extends Visitor {
 		
 		if (type(superType.getSimpleName()) != null) superType = type(superType.getSimpleName()); 
 		if (type(subType.getSimpleName()) != null) subType = type(subType.getSimpleName()); 
+		
+		for (Class inter : subType.getInterfaces()) {
+			if (superType == inter || superType.isAssignableFrom(subType)) {
+				return true;
+			}
+		}
 		
 		return superType == subType || superType.isAssignableFrom(subType);
 	}
@@ -868,11 +883,11 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Undefined expression " + ifexpr, n);
 			return Error.class;
 		}
-		else if (thenexpr.type() == null) {
+		else if (thentype != Null.class && thenexpr.type() == null) {
 			runtime.error("Undefined expression " + thenexpr, n);
 			return Error.class;
 		}
-		else if (elseexpr.type() == null) {
+		else if (elsetype != Null.class && elseexpr.type() == null) {
 			runtime.error("Undefined expression " + elseexpr, n);
 			return Error.class;
 		}
@@ -1052,7 +1067,7 @@ public final class TypeChecker extends Visitor {
 		Class cast = (Class) n.getNode(0).getProperty(Constants.TYPE);
 		Expression expr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 		
-		if (expr.type() != null && !subtype(expr.type(), cast)) {
+		if (expr.type() != null && !(subtype(expr.type(), cast) || subtype(cast, expr.type()))) {
 			runtime.error("CAST ERROR: Expression type " + expr.type() + " is not a supertype of " + cast + ".", n);
 			return Error.class;
 		}

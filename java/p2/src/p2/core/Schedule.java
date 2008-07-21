@@ -17,7 +17,7 @@ public class Schedule extends ObjectTable {
 	
 	public static final Key PRIMARY_KEY = new Key();
 	
-	public enum Field {TIME, PROGRAM, INSERTIONS, DELETIONS};
+	public enum Field {TIME, PROGRAM, TABLENAME, INSERTIONS, DELETIONS};
 	public static final Class[] SCHEMA = { 
 		Long.class,      // Time
 		String.class,    // Program name

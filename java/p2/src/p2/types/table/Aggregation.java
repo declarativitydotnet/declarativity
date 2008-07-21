@@ -69,7 +69,9 @@ public class Aggregation extends Table {
 		TupleSet current = new TupleSet(name());
 		if (aggregates != null) {
 			for (Aggregate aggregate : aggregates.values()) {
-				current.add(aggregate.result());
+				if (aggregate.result() != null) {
+					current.add(aggregate.result());
+				}
 			}
 		}
 		return current;
@@ -149,29 +151,25 @@ public class Aggregation extends Table {
 		}
 		group.remove(tuple);
 		
-		if (group.size() == 0) {
-			tuples.remove(key);
+		/* Recompute aggregate of tuple group. */
+		Aggregate function = aggregates.get(key);
+		Tuple previous = function.result();
+		function.reset();
+		for (Tuple t : group) {
+			try {
+				function.evaluate(t);
+			} catch (P2RuntimeException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
+		}
+		
+		/* Did deletion caused an aggregate change? */
+		if (function.result() == null) {
 			aggregates.remove(key);
 			return true;
 		}
-		else {
-			Aggregate function = aggregates.get(key);
-			if (function.result().equals(tuple)) {
-				/* Recompute aggregate of tuple group. */
-				function.reset();
-				for (Tuple t : group) {
-					try {
-						function.evaluate(t);
-					} catch (P2RuntimeException e) {
-						e.printStackTrace();
-						System.exit(1);
-					}
-				}
-				/* Did deletion caused an aggregate change? */
-				return !function.result().equals(tuple);
-			}
-		}
-		return false; // Aggregate remains unchanged.
+		return !function.result().equals(previous);
 	}
 
 	@Override

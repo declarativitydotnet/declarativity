@@ -29,8 +29,10 @@ public class BasicQuery extends Query {
 	public String toString() {
 		String query = "Basic Query Rule " + rule() + 
 		               ": input " + input().toString();
-		for (Operator oper : body) {
-			query += " -> " + oper.toString();
+		if (body != null) {
+			for (Operator oper : body) {
+				query += " -> " + oper.toString();
+			}
 		}
 		query += " -> " + output().toString();
 		return query;

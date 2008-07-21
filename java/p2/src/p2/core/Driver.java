@@ -14,6 +14,7 @@ import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
 import p2.types.operator.Watch;
 import p2.types.table.Aggregation;
+import p2.types.table.EventTable;
 import p2.types.table.Table;
 import p2.types.table.TableName;
 import p2.lang.Compiler;
@@ -101,6 +102,10 @@ public class Driver implements Runnable {
 			
 			TupleSet delta = new TupleSet(name());
 			for (EvalState state : evaluations.values()) {
+				if (System.program(state.program) == null) {
+					java.lang.System.err.println("ERROR: Unknown program " + state.program);
+					java.lang.System.exit(0);
+				}
 				delta.addAll(evaluate(state.time, System.program(state.program),
 								      state.name, state.insertions, state.deletions));
 			}
@@ -109,8 +114,7 @@ public class Driver implements Runnable {
 		
 		private TupleSet evaluate(Long time, Program program, TableName name, TupleSet insertions, TupleSet deletions) {
 			Hashtable<String, Tuple> continuations = new Hashtable<String, Tuple>();
-			// java.lang.System.err.println("EVALUATE PROGRAM " + program.name() + " " + name + ": INSERTIONS " + insertions + " DELETIONS " + deletions);
-
+			
 			Table table = Table.table(name);
 			Operator watchAdd    = Compiler.watch.watched(program.name(), name, Watch.Modifier.ADD);
 			Operator watchInsert = Compiler.watch.watched(program.name(), name, Watch.Modifier.INSERT);
@@ -123,6 +127,7 @@ public class Driver implements Runnable {
 					}
 					
 					insertions = table.insert(insertions, deletions);
+					
 					if (insertions.size() == 0) break;
 					
 					if (watchInsert != null) {
@@ -192,7 +197,8 @@ public class Driver implements Runnable {
 						Set<Query> queries = program.queries(delta.name());
 						if (queries != null) {
 							for (Query query : queries) {
-								if (query.event() != Table.Event.INSERT) {
+								Table output = Table.table(query.output().name());
+								if (!(output instanceof EventTable) && query.event() != Table.Event.INSERT) {
 									TupleSet result = query.evaluate(deletions);
 									if (result.size() == 0) { 
 										continue;
@@ -281,35 +287,54 @@ public class Driver implements Runnable {
 	public void run() {
 		while (true) {
 			synchronized (this) {
-				Long min = Long.MAX_VALUE;
-				
-				if (schedule.cardinality() > 0) {
-					min = min < schedule.min() ? min : schedule.min();
-				}
-				else if (tasks.size() > 0) {
-					min = clock.current() + 1L;
-				}
-				
-				if (min < Long.MAX_VALUE) {
-					try {
-						java.lang.System.err.println("============================ EVALUATE CLOCK[" + min + "] =============================");
-						evaluate(clock.time(min), runtime.name());
-						
-						for (Task task : tasks) {
-							evaluate(task.tuples(), task.program());
-						}
-						tasks.clear();
-						java.lang.System.err.println("============================ ========================== =============================");
-					} catch (UpdateException e) {
-						e.printStackTrace();
+				TupleSet insertions = new TupleSet(schedule.name());
+				TupleSet deletions  = new TupleSet(schedule.name());
+				List<Task> scheduled = new ArrayList<Task>();
+				for (Task task : tasks) {
+					if (!task.program().equals("runtime")) {
+						insertions.add(
+								new Tuple(clock.current()+1L, task.program(), task.tuples().name(),
+										task.tuples(), new TupleSet(task.tuples().name())));
+						scheduled.add(task);
 					}
 				}
+				tasks.removeAll(scheduled);
+
+				if (insertions.size() > 0) {
+					try {
+						schedule.insert(insertions, deletions);
+					} catch (UpdateException e) {
+						e.printStackTrace();
+						java.lang.System.exit(0);
+					}
+				}
+
+
+				try {
+					java.lang.System.err.println("============================ EVALUATE TASK QUEUE =======================");
+					for (Task task : tasks) {
+						evaluate(task.tuples(), task.program());
+					}
+					tasks.clear();
+					java.lang.System.err.println("============================ ========================== =============================");
+
+					if (schedule.cardinality() > 0) {
+						java.lang.System.err.println("============================ EVALUATE SCHEDULE CLOCK[" + schedule.min() + "] =============================");
+						// java.lang.System.err.println("SCHEDULE: " + schedule.tuples());
+						evaluate(clock.time(schedule.min()), runtime.name());
+						java.lang.System.err.println("============================ ========================== =============================");
+					}
+				} catch (UpdateException e) {
+					e.printStackTrace();
+				}
+
+				try {
+					Thread.sleep(1000);
+					while (this.tasks.size() == 0 && schedule.cardinality() == 0) {
+						this.wait(1000);
+					}
+				} catch (InterruptedException e) { }
 			}
-			
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) { }
-			
 		}
 	}
 	

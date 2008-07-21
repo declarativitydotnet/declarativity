@@ -92,7 +92,7 @@ public class Tuple implements Comparable<Tuple> {
 	public void schema(Schema schema) throws P2RuntimeException {
 		if (schema.size() != size()) {
 			throw new P2RuntimeException("Schema assignment does not match tuple arity! " +
-					                     " schema " + schema);
+					                     " Tuple: " + schema.name() + "< " + this + "> size =? " + size());
 		}
 		this.schema = schema;
 	}

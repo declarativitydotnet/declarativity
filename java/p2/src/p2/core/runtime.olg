@@ -16,12 +16,12 @@ define(delta, {Long, String, TableName, TupleSet, TupleSet});
 reschedule
 schedule(Time, Program, Name, Insertions, Deletions) :-
 	delta(Time, Program, Name, Insertions, Deletions);
-
+	
 schedulePublic
 schedule(Time, Program2, Name, Insertions, Deletions) :-
-	delta(Time, Program1, Name, Insertions, (TupleSet) Deletions),
+	delta(Time, Program1, Name, Insertions, Deletions),
 	query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
-	Public && Input == Name, Program1 != Program2;
+	Public == true && Input == Name, Program1 != Program2;
 
 evaluate 
 delta(Time, Program, Name, Insertions, Deletions) :-
@@ -46,6 +46,14 @@ strata(Program, Time, min<Priority>) :-
 	clock(Location, Time),
 	schedule(Time, Program, Name, Insertions, Deletions),
 	priority(Program, Name, Priority);
+
+/* This case handles those programs that do not have a query
+    (and hence no priority) for the tuple 'Name'. */
+runnable(Time, Program, Name, Insertions, Deletions) :-
+	clock(Location, Time),
+	schedule(Time, Program, Name, Insertions, Deletions),
+	notin priority(Program, Name, Priority);
+	
 	
 /*******************************************************************/
 /*** Periodic scheduler                                           **/
