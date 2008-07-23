@@ -2,21 +2,21 @@ require 'lib/types/table/catalog'
 require 'lib/types/table/index_table'
 require 'lib/exec/query'
 require 'lib/core/schedule'
+require 'lib/core/driver'
 require 'lib/core/clock'
 require 'lib/core/periodic'
 require 'lib/core/log'
+require 'lib/lang/compiler'
 require 'open3'
 
 class System
 	@@RUNTIME = "src/p2/core/runtime.olg"
-	
-	attr_reader :clock, :evaluator, :query, :periodic
-	
+		
 	def init
 		Table.init
 		@@query      = Query::QueryTable.new
-#		@@compile    = CompileTable.new  ## add back once parser/compiler in place
-#		@@evaluator  = Driver::Evaluate.new  ## add back once driver in place
+		@@compile    = Compiler::CompileTable.new  ## add back once parser/compiler in place
+		@@evaluator  = Driver::Evaluate.new  ## add back once driver in place
 		@@schedule   = Schedule.new
 		@@clock      = Clock.new("localhost")
 		@@periodic   = Periodic.new(@schedule)
@@ -40,12 +40,12 @@ class System
     @@periodic
   end
   
-	def program(name)
-		@programs.has_key?(name) ? programs[name] : nil
+	def System.program(name)
+		@@programs.has_key?(name) ? programs[name] : nil
 	end
 	
-	def program_np(name, program)
-		@programs[name] = program
+	def System.program_np(name, program)
+		@@programs[name] = program
 	end
 	
   # public static void install(String owner, String file) {

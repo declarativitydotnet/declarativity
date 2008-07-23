@@ -1,3 +1,4 @@
+require 'lib/lang/plan/function'
 require 'monitor'
 
 class Driver < Monitor
@@ -41,8 +42,8 @@ class Driver < Monitor
     # TupleSet.class,   // Insertion tuple set
     # TupleSet.class    // Deletions tuple set
 
-    def Evaluate 
-      super.evaluate(TypeList.new(@@SCHEMA))
+    def initialize 
+      super("evaluate", TypeList.new(@@SCHEMA))
     end
 
     def insert(tuples, conflicts)
@@ -70,7 +71,7 @@ class Driver < Monitor
       delta = TupleSet.new(name)
 
       evaluations.values.each do |state|
-        delta << evaluate(state.time, System.program(state.program),								         state.name, state.insertions, state.deletions))
+        delta << evaluate(state.time, System.program(state.program), state.name, state.insertions, state.deletions)
       end
       return delta
     end
@@ -82,7 +83,8 @@ class Driver < Monitor
       watchInsert = Compiler.watch.watched(program.name, name, Watch.Modifier.INSERT)
       watchRemove = Compiler.watch.watched(program.name, name, Watch.Modifier.ERASE)
       watchDelete = Compiler.watch.watched(program.name, name, Watch.Modifier.DELETE)
-      do  
+      insertions = []
+      begin  
         watchAdd.evaluate(insertions) unless watchAdd.nil?
 
         insertions = table.insert(insertions, deletions)
@@ -93,34 +95,35 @@ class Driver < Monitor
         querySet = program.queries(insertions.name)
         break if querySet.nil?
 
-        delta = TupleSet(insertions.name.new)
-        querySet.each	|query|
-        result = query.evaluate(insertions) if (query.event != Table.Event.DELETE) 
-        #// java.lang.System.err.println("\t\tRUN QUERY " + query.rule + " input " + insertions)
-        #// java.lang.System.err.println("\t\tQUERY " + query.rule + " result " + result)
-
-        if (result.size == 0) then
-          continue
-        elsif (result.name == insertions.name) then
-          if (query.isDelete) then
-            deletions << result
-          else 
-            delta << result
-          end
-        else 
-          if (query.isDelete) then
-            continuation(continuations, time, program.name, Table.Event.DELETE, result)
-          else 
-            continuation(continuations, time, program.name, Table.Event.INSERT, result)
+        delta = TupleSet.new(insertions.name)
+        querySet.each	do |query|
+          if (query.event != Table::Event::DELETE) then
+            result = query.evaluate(insertions) 
+            #// java.lang.System.err.println("\t\tRUN QUERY " + query.rule + " input " + insertions)
+            #// java.lang.System.err.println("\t\tQUERY " + query.rule + " result " + result)
+            if (result.size == 0) then 
+              continue
+            elsif (result.name == insertions.name) then
+              if (query.isDelete) then
+                deletions << result
+              else 
+                delta << result
+              end
+            else 
+              if (query.isDelete) then
+                continuation(continuations, time, program.name, Table::Event::DELETE, result)
+              else 
+                continuation(continuations, time, program.name, Table::Event::INSERT, result)
+              end
+            end
           end
         end
-      end
-    end
-    insertions = delta
-    while (insertions.size > 0)
-      if !(table <= Aggregation) then 
-        while(deletions.size > 0) 
-          if (table.type == Table.Type.TABLE) then
+        insertions = delta
+      end while insertions.size > 0
+
+      if !(table.class <= Aggregation) then
+        while deletions.size > 0
+          if (table.type == Table::Type::TABLE) then
             watchRemove.evaluate(deletions) if !watchRemove.nil?
             deletions = table.delete(deletions)
             watchDelete.evaluate(deletions) if !watchDelete.nil?
@@ -128,47 +131,50 @@ class Driver < Monitor
             raise "Can't delete tuples from non table type"
             exit
           end
-          TupleSet delta = TupleSet(deletions.name.new)
+          delta = TupleSet.new(deletions.name.new)
           queries = program.queries(delta.name)
           if !queries.nil? then
-            queries.each |query|
-            if (query.event != Table.Event.INSERT) 
-              TupleSet result = query.evaluate(deletions)
-              if (result.size == 0) then
-                continue
-              elsif (!result.name.equals(deletions.name)) 
-                Table t = Table.table(result.name)
-                if (t.type == Table.Type.TABLE) then
-                  continuation(continuations, time, program.name, Table.Event.DELETE, result)
+            queries.each do |query|
+              output = Table.new(query.output.name)
+              if !(output.class <= EventTable) and query.event != Table::Event::Insert
+                result = query.evaluate(deletions)
+                if (result.size == 0) then
+                  continue
+                elsif (!result.name.equals(deletions.name)) 
+                  Table t = Table.table(result.name)
+                  if (t.type == Table::Type::TABLE) then
+                    continuation(continuations, time, program.name, Table::Event::DELETE, result)
+                  end
+                else 
+                  delta << result
                 end
-              else 
-                delta << result
               end
             end
+            deletions = delta
           end
-          deletions = delta
         end
-      end
-      TupleSet delta = TupleSet.new(name)
-      continuation.values.each { |c| delta << c }
-      #// java.lang.System.err.println("==================== RESULT " + name + ": " + delta + "\n\n")
-      return delta
-    end
 
-    def continuation(continuations, time, program, event, result) 
-      key = program.to_s + "." + result.name
-
-      if (!continuations.containsKey(key)) 
-        tuple = Tuple(time, program, result.name.new, TupleSet(result.name.new), TupleSet(result.name.new))
-        continuations.put(key, tuple)
+        delta = TupleSet.new(name)
+        continuation.values.each { |c| delta << c }
+        #// java.lang.System.err.println("==================== RESULT " + name + ": " + delta + "\n\n")
+        return delta
       end
 
-      if (event == Table.Event.INSERT) 
-        insertions = (TupleSet) continuations.get(key).value(Field::INSERTIONS)
-        insertions << result
-      else 
-        deletions = (TupleSet) continuations.get(key).value(Field::DELETIONS)
-        deletions << result
+      def continuation(continuations, time, program, event, result) 
+        key = program.to_s + "." + result.name
+
+        if (!continuations.containsKey(key)) 
+          tuple = Tuple(time, program, result.name.new, TupleSet(result.name.new), TupleSet(result.name.new))
+          continuations.put(key, tuple)
+        end
+
+        if (event == Table.Event.INSERT) 
+          insertions = continuations[key].value(Field::INSERTIONS)
+          insertions << result
+        else 
+          deletions = continuations[key].value(Field::DELETIONS)
+          deletions << result
+        end
       end
     end
   end
@@ -232,7 +238,7 @@ class Driver < Monitor
     end
     threads.each {|t| t.join}
   end
-  
+
   def evaluate(tuples, program) 
     evaluation = TupleSet(System.evaluator.name.new)
     evaluation << Tuple.new(clock.current, program, tuples.name, tuples, 

@@ -45,7 +45,7 @@ class TestJoin < Test::Unit::TestCase
     
     sj = ScanJoin.new(pred, schema1)
     test_real_join(sj, table1, schema1, ts, schema2, ts2)
-    assert_equal(sj.to_s, "NEST LOOP JOIN: PREDICATE[Firstname(id:0, name:1, )]")
+    assert_equal(sj.to_s, "NEST LOOP JOIN: PREDICATE[Firstname(id:0, name:1)]")
 
     # reset the tables and tuplesets and repeat the experiment with index join
     table1 = BasicTable.new('Firstname', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
@@ -56,7 +56,7 @@ class TestJoin < Test::Unit::TestCase
     
     ij = IndexJoin.new(pred, schema1, Key.new(0), table1.primary)
     test_real_join(ij, table1, schema1, ts, schema2, ts2)
-    assert_equal(ij.to_s, "INDEX JOIN: PREDICATE[Firstname(id:0, name:1, )]")
+    assert_equal(ij.to_s, "INDEX JOIN: PREDICATE[Firstname(id:0, name:1)]")
     
   end
 
