@@ -23,7 +23,7 @@ class Schedule < ObjectTable
   def min
     curmin = exp(2^Bignum-1)
     tuples.each do |tuple|
-      curmin = curmin < (tuple.value(Field.TIME)) ? curmin : tuple.value(Field.TIME)
+      curmin = curmin < (tuple.value(Field::TIME)) ? curmin : tuple.value(Field::TIME)
     end
     return curmin
   end

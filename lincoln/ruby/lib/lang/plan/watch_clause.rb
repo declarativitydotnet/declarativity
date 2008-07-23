@@ -23,7 +23,7 @@ class WatchClause < Clause
 			key = Tuple.new(program, name, modifier)
 			tuples = Compiler.watch.primary.lookup(key)
 			if (tuples.size() > 0) then
-					return tuples.iterator.next.value(Field.OPERATOR)
+					return tuples.iterator.next.value(Field::OPERATOR)
 			end
 		end
 	end

@@ -74,12 +74,12 @@ class Join < Operator
         var = arg
         if (positions[var.name])
           prev = positions[var.name]
-          filters << JoinFilter.new(TableField.new(prev.type, prev.position), TableField.new(var.type, prev.position))
+          filters << JoinFilter.new(TableField::new(prev.type, prev.position), TableField::new(var.type, prev.position))
         else 
           positions[var.name] = var
         end
       else 
-        filters << JoinFilter.new(TableField.new(arg.class, arg.position), arg.function)
+        filters << JoinFilter.new(TableField::new(arg.class, arg.position), arg.function)
       end
     end
 #    require 'ruby-debug'; debugger

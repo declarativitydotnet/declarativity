@@ -62,10 +62,10 @@ class Program
     @periodics.clear
 
     # First plan out all the rules
-    rules = rule.secondary[Key.new(RuleTable.Field.PROGRAM).lookup(@name)]
+    rules = rule.secondary[Key.new(RuleTable.Field::PROGRAM).lookup(@name)]
 
     rules.each do |tuple| 
-      rule = tuple.value(RuleTable.Field.OBJECT)
+      rule = tuple.value(RuleTable.Field::OBJECT)
 
       # Store all planned queries from a given rule. 
       # NOTE: delta rules can produce > 1 query. 

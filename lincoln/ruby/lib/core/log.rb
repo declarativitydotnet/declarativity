@@ -29,11 +29,11 @@ class Log < ObjectTable
 	end
 	
   def insert(tuple)
-		log =     "CLOCK[" + tuple.value(Field.CLOCK) + "], ";
-		log       += "PROGRAM[" + tuple.value(Field.PROGRAM) + "], ";
-		log       += "RULE[" + tuple.value(Field.RULE) + "], ";
-		log       += "TYPE[" + tuple.value(Field.TYPE) + "], ";
-		log       += tuple.value(Field.MESSAGE) + "\n";
+		log =     "CLOCK[" + tuple.value(Field::CLOCK) + "], ";
+		log       += "PROGRAM[" + tuple.value(Field::PROGRAM) + "], ";
+		log       += "RULE[" + tuple.value(Field::RULE) + "], ";
+		log       += "TYPE[" + tuple.value(Field::TYPE) + "], ";
+		log       += tuple.value(Field::MESSAGE) + "\n";
 		
 		@stream << log
 		return super.insert(tuple);

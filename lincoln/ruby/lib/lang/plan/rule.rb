@@ -24,18 +24,18 @@ class Rule < Clause
 
 		def initialize
 			super(TableName.new(GLOBALSCOPE, "rule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-			programKey = Key.new(Field.PROGRAM)
+			programKey = Key.new(Field::PROGRAM)
 			index = HashIndex.new(self, programKey, Index.Type.SECONDARY)
 			@secondary.put(programKey, index)
 		end
 		
     def insert(tuple)
-			object = tuple.value(Field.OBJECT)
+			object = tuple.value(Field::OBJECT)
 		  raise UpdateException,"Predicate object null" if object.nil?
-			object.program   = tuple.value(Field.PROGRAM)
-			object.name      = tuple.value(Field.RULENAME)
-			object.isPublic  = tuple.value(Field.PUBLIC)
-			object.isDelete  = tuple.value(Field.DELETE)
+			object.program   = tuple.value(Field::PROGRAM)
+			object.name      = tuple.value(Field::RULENAME)
+			object.isPublic  = tuple.value(Field::PUBLIC)
+			object.isDelete  = tuple.value(Field::DELETE)
 			return super.insert(tuple)
 		end
 		
@@ -113,9 +113,9 @@ class Rule < Clause
 			operators = Array.new
 			
 			if (event.name.name == "periodic") && !(event.name.scope == Table.GLOBALSCOPE)  then
-				period = event.argument(Periodic.Field.PERIOD).value
-				ttl    = event.argument(Periodic.Field.TTL).value
-				count  = event.argument(Periodic.Field.COUNT).value
+				period = event.argument(Periodic.Field::PERIOD).value
+				ttl    = event.argument(Periodic.Field::TTL).value
+				count  = event.argument(Periodic.Field::COUNT).value
 				values = Array.new
 				values << event.identifier
 				(1..event.arguments).each {|i| values << event.argument(i).value }
@@ -125,7 +125,7 @@ class Rule < Clause
 
         # set up a periodic filter by sending a lambda evaluate function to a TupleFunction
 				doit = lambda do |t|
-          return identifier == tuple.value(Periodic.Field.IDENTIFIER)
+          return identifier == tuple.value(Periodic.Field::IDENTIFIER)
         end
         periodicFilter = Class.new(TupleFunction)
 

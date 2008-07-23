@@ -49,9 +49,9 @@ class Driver < Monitor
       evaluations = Hash.new
 
       tuples.each do |tuple| 
-        time    = tuple.value(Field.TIME)
-        program = tuple.value(Field.PROGRAM)
-        name = tuple.value(Field.TABLENAME)
+        time    = tuple.value(Field::TIME)
+        program = tuple.value(Field::PROGRAM)
+        name = tuple.value(Field::TABLENAME)
         state = EvalState.new(time, program, name)
 
         if !(evaluations.includes? state) 
@@ -60,8 +60,8 @@ class Driver < Monitor
           state = evaluations.get(state)
         end
 
-        insertions  = tuple.value(Field.INSERTIONS)
-        deletions   = tuple.value(Field.DELETIONS)
+        insertions  = tuple.value(Field::INSERTIONS)
+        deletions   = tuple.value(Field::DELETIONS)
 
         state.insertions << insertions unless insertions.nil?
         state.deletions << deletions unless deletions.nil?
@@ -164,10 +164,10 @@ class Driver < Monitor
       end
 
       if (event == Table.Event.INSERT) 
-        insertions = (TupleSet) continuations.get(key).value(Field.INSERTIONS)
+        insertions = (TupleSet) continuations.get(key).value(Field::INSERTIONS)
         insertions << result
       else 
-        deletions = (TupleSet) continuations.get(key).value(Field.DELETIONS)
+        deletions = (TupleSet) continuations.get(key).value(Field::DELETIONS)
         deletions << result
       end
     end

@@ -12,8 +12,8 @@ class Periodic < ObjectTable
 			@schedule =  TupleSet.new(@schedule.name)
 			deltas   = TupleSet.new(name);
 			tuples.each do |tuple|
-				program = tuple.value(Periodic.Field.PROGRAM)
-				time    = tuple.value(Periodic.Field.TIME)
+				program = tuple.value(Periodic.Field::PROGRAM)
+				time    = tuple.value(Periodic.Field::TIME)
 				periodics = TupleSet.new(TableName.new(program, "periodic"))
 				periodics << tuple.clone
 				schedule << Tuple.new(time, program, periodics.name, periodics, nil)
@@ -57,7 +57,7 @@ class Periodic < ObjectTable
 	def min
 		curmin = exp(2,Bignum.size) - 1
 		tuples.each do |current|
-			time = current.value(Field.TIME)
+			time = current.value(Field::TIME)
 			curmin = curmin < time  ? curmin : time
 		end
 		return min

@@ -15,7 +15,7 @@ class Fact < Clause
 
 		def initialize
 			super(TableName.new(GLOBALSCOPE, "fact"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
-			programKey = Key.new(Field.PROGRAM)
+			programKey = Key.new(Field::PROGRAM)
 			index = HashIndex.new(self, programKey, Index.Type.SECONDARY)
 			@secondary.put(programKey, index)
 		end
