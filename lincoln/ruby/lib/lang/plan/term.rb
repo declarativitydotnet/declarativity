@@ -22,7 +22,8 @@ class Term
 	end
 	
 	def <=>(o)
-		@identifer.<=>(o.identifer)
+	  require 'ruby-debug'; debugger
+    return (@identifer<=>(o.identifer))
 	end
 	
 	def to_s

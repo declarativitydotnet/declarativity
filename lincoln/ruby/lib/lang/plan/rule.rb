@@ -92,7 +92,7 @@ class Rule < Clause
 		event   = nil
 		function = nil
 		body.each do |term|
-			if (term < Predicate)
+			if (term.class < Predicate)
         table = Table.table(term.name)
 				if (table.type == Table.Type.EVENT || term.event != Table.Event.NONE) 
 					if (!event.nil?)
@@ -102,7 +102,7 @@ class Rule < Clause
 					# Plan a query with this event predicate as input.
 					event = term
 				end
-			elsif (term < Function) then
+			elsif (term.class < Function) then
 				event = term.predicate
 				event.event(Table.Event.INSERT)
 			end
@@ -181,8 +181,8 @@ class Rule < Clause
 			# Perform delta rewrite.
 			eventPredicates = Hash.new
 			body.each do |term1|
-				continue unless term1 <= Predicate
-				continue if (term1.notin || eventPredicates.includes?(term1.name))
+				next unless term1 <= Predicate
+				next if (term1.notin || eventPredicates.includes?(term1.name))
 				eventPredicates << term1.name
 				
 				delta = term1

@@ -23,6 +23,7 @@ class TestRule < Test::Unit::TestCase
     body = [link]
     r = Rule.new(1, 'r1', true, false,  head, body)
     
-    assert_equal(r.to_s, nil)
+    assert_equal(r.to_s, "public r1 head(from:0, to:1, cost:2) :- \n\tlink(from:0, to:1, cost:2);\n\t;\n")
+    assert_equal(r.query(nil))
   end
 end
