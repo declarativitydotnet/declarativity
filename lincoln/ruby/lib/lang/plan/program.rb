@@ -1,4 +1,11 @@
 require 'lib/types/table/object_table'
+require 'lib/lang/plan/watch_clause'
+require 'lib/lang/plan/fact'
+require 'lib/lang/plan/predicate'
+require 'lib/lang/plan/function'
+require 'lib/lang/plan/assignment'
+require 'lib/lang/plan/rule'
+
 class Program
   include Comparable
 	
@@ -19,14 +26,18 @@ class Program
 	end
 	
   @@program = ProgramTable.new
-  @@rule = RuleTable.new
-  @@watch = WatchTable.new
-  @@fact = FactTable.new
-  @@predicate = PredicateTable.new
-  @@tfunction = TableFunction.new
-  @@selection = RuleTable.new
-  @@assignment = AssignmentTable.new
-                        
+#  @@rule = Rule::RuleTable.new
+  @@watch = WatchClause::WatchTable.new
+  @@fact = Fact::FactTable.new
+  @@predicate = Predicate::PredicateTable.new
+  @@tfunction = Function::TableFunction.new
+#  @@selection = Rule::RuleTable.new
+  @@assignment = Assignment::AssignmentTable.new
+  
+  def Program.watch
+    @@watch
+  end    
+              
 	def initialize(name, owner) 
 		@name        = name
 		@owner       = owner

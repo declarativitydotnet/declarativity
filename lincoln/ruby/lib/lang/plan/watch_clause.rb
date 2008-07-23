@@ -1,3 +1,6 @@
+require 'lib/lang/plan/clause'
+require 'lib/types/table/object_table'
+require 'lib/types/operator/watch_op'
 class WatchClause < Clause
 	
 	class WatchTable < ObjectTable
@@ -9,7 +12,7 @@ class WatchClause < Clause
 		  MODIFIER=3, 
 		  OPERATOR=4
 	  end
-		@@SCHEMA =  [String, TableName, Watch.Modifier, Watch]
+		@@SCHEMA =  [String, TableName, WatchOp::Modifier, WatchOp]
       # String.class,                             // Program name
       # TableName.class,                          // Table name
       # p2.types.operator.Watch.Modifier.class,   // Modifier
@@ -21,7 +24,7 @@ class WatchClause < Clause
 		
 		def watched(program, name, modifier)
 			key = Tuple.new(program, name, modifier)
-			tuples = Compiler.watch.primary.lookup(key)
+			tuples = Program.watch.primary.lookup(key)
 			if (tuples.size() > 0) then
 					return tuples.iterator.next.value(Field::OPERATOR)
 			end

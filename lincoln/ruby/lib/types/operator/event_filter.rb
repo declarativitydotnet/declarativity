@@ -1,3 +1,5 @@
+require 'lib/types/operator/operator'
+require 'lib/types/function/tuple_function'
 class EventFilter < Operator
 	class Filter < TupleFunction
 		def initialize (position,  function)
@@ -23,8 +25,8 @@ class EventFilter < Operator
 		@filters = Array.new
 		
 		predicate.each do |arg|
-			assert(arg.position >= 0)
-			this.filters << Filter.new(arg.position, arg.function) unless arg <= Variable
+			raise unless arg.position >= 0
+			this.filters << Filter.new(arg.position, arg.function) unless arg.class <= Variable
 	  end
 	end
 	
@@ -41,9 +43,9 @@ class EventFilter < Operator
 			valid = true
 			@filters.each do |filter|
 				valid = filter.evaluate(tuple)
-				if (!valid) break
+				break if (!valid)
 			end
-			if (valid) result << tuple
+			result << tuple if (valid) 
 		end	
 		return result;
   end

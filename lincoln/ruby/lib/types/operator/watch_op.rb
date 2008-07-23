@@ -1,4 +1,5 @@
-class Watch < Operator
+require 'lib/types/operator/operator'
+class WatchOp < Operator
 	class Modifier
 	  NONE=0 
 	  TRACE=1
@@ -7,17 +8,17 @@ class Watch < Operator
 	  INSERT=4
 	  DELETE=5
 	  RECEIVE=6
-	  SEND
+	  SEND=7
   end
 	@@modifiers = Hash.new
 	
-	@@modifiers[:t] = Modifier.TRACE)
-  @@modifiers[:a] = Modifier.ADD)
-	@@modifiers[:e] = Modifier.ERASE)
-	@@modifiers[:i] = Modifier.INSERT)
-	@@modifiers[:d] = Modifier.DELETE)
-	@@modifiers[:r] = Modifier.RECEIVE)
-	@@modifiers[:s] = Modifier.SEND)
+	@@modifiers[:t] = Modifier::TRACE
+  @@modifiers[:a] = Modifier::ADD
+	@@modifiers[:e] = Modifier::ERASE
+	@@modifiers[:i] = Modifier::INSERT
+	@@modifiers[:d] = Modifier::DELETE
+	@@modifiers[:r] = Modifier::RECEIVE
+	@@modifiers[:s] = Modifier::SEND
 	
 	
 	def initialize(program, rule, name, modifier) 
@@ -27,7 +28,7 @@ class Watch < Operator
 		@stream = STDERR
 	end
 	
-	def new_prnms(program, rule, name, modifier, stream) {
+	def new_prnms(program, rule, name, modifier, stream)
 		super(program, rule)
 		@name = name
 		@modifier = modifier
@@ -37,7 +38,7 @@ class Watch < Operator
   def evaluate(tuples)
 		return tuples if tuples.size == 0
 		
-		header = "Program " + program.to_s + " [CLOCK " + System.clock.current + "] " + modifier.to_s + ": " + name
+		header = "Program " + program.to_s + " [CLOCK " + System.clock.current + "] " + Modifier::to_s + ": " + name
 				        
 		header += " Rule " + rule unless this.rule.nil?
 		header += "\n\tSCHEMA: " + tuples.iterator.next.schema

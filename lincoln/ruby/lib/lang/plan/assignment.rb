@@ -21,7 +21,7 @@ class Assignment < Term
 		
 		def insert(tuple)
 			object = tuple.value(Field::OBJECT)
-			raise UpdateException "Assignment object nil" if object.nil?
+			raise UpdateException, "Assignment object nil" if object.nil?
 			object.program   = tuple.value(Field::PROGRAM)
 			object.rule      = tuple.value(Field::RULE)
 			object.position  = tuple.value(Field::POSITION)

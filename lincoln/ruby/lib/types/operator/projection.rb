@@ -1,12 +1,11 @@
 class Projection < Operator
-	@accessors = ArrayList.new
-	
 	def initialize (predicate)
 		super(predicate.program, predicate.rule)
 		@predicate = predicate
-		
+
+  	@accessors = Array.new		
 		predicate.each do |arg| 
-			accessors << arg.function
+			@accessors << arg.function
 		end
 	end
 	
@@ -18,9 +17,9 @@ class Projection < Operator
 		result = TupleSet.new(@predicate.name)
 		tuples.each do |tuple|
 			values = Array.new
-			accessors.each { |a| values << a.evaluate(tuple) }
-			projection = Tuple.new(values)
-			projection.schema(@predicate.schema)
+			@accessors.each { |a| values << a.evaluate(tuple) }
+			projection = Tuple.new(*values)
+			projection.schema = @predicate.schema
 			result << projection
 		end
 		return result
@@ -35,4 +34,4 @@ class Projection < Operator
 	end
 	
 	attr_reader :predicate
-}
+end

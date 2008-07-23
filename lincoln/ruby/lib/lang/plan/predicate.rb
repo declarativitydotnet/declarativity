@@ -81,7 +81,7 @@ class Predicate < Term
 	end
 	
   def to_s
-		value = (notin ? "notin " : "") + name + "("
+		value = (notin ? "notin " : "") + name.to_s + "("
 		if @arguments.length == 0
 			return value + ")"
 		end

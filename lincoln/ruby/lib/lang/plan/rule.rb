@@ -1,7 +1,12 @@
+require 'lib/lang/compiler'
 require 'lib/lang/plan/clause'
 require 'lib/lang/plan/boolean'
+require 'lib/types/operator/watch_op'
+require 'lib/types/operator/projection'
 require 'lib/lang/plan/aggregate'
 require 'lib/types/table/object_table'
+require 'lib/types/operator/event_filter'
+require 'lib/exec/basic_query'
 
 class Rule < Clause
 	
@@ -145,8 +150,8 @@ class Rule < Clause
 				end
 			end
 			
-			if !(Compiler.watch.watched(program, event.name, Watch.Modifier.RECEIVE).nil?) then
-				operators << Watch.new(program, name, event.name, p2.types.operator.Watch.Modifier.RECEIVE)
+			if !(Program.watch.watched(@program, event.name, WatchOp::Modifier::RECEIVE).nil?) then
+				operators << Watch.new(@program, name, event.name, WatchOp::Modifier::RECEIVE)
 			end
 			
 			if !(function.nil?) then
@@ -172,17 +177,17 @@ class Rule < Clause
 			
 			operators << Projection.new(@head)
 			
-			if !(Compiler.watch.watched(program, @head.name, Watch.Modifier.SEND).nil?)
-				operators << Watch.new(program, name, @head.name, p2.types.operator.Watch.Modifier.SEND)
+			if !(Program.watch.watched(@program, @head.name, WatchOp::Modifier::SEND).nil?)
+				operators << Watch.new(@program, name, @head.name, p2.types.operator.WatchOp::Modifier::SEND)
 			end
 			
-			queries << BasicQuery.new(program, name, isPublic, isDelete, event, @head, operators)
+			queries << BasicQuery.new(@program, name, isPublic, isDelete, event, @head, operators)
 		else 
 			# Perform delta rewrite.
-			eventPredicates = Hash.new
+			eventPredicates = Array.new
 			body.each do |term1|
-				next unless term1 <= Predicate
-				next if (term1.notin || eventPredicates.includes?(term1.name))
+				next unless term1.class <= Predicate
+				next if (term1.notin || eventPredicates.include?(term1.name))
 				eventPredicates << term1.name
 				
 				delta = term1
@@ -190,8 +195,8 @@ class Rule < Clause
 				efilter = EventFilter.new(delta)
 				operators << efilter if (efilter.filters > 0) 
 
-				if !(Compiler.watch.watched(program, delta.name, Watch.Modifier.RECEIVE)).nil? then
-					operators << Watch.new(program, name, delta.name, Watch.Modifier.RECEIVE)
+				if !(Program.watch.watched(@program, delta.name, WatchOp::Modifier::RECEIVE)).nil? then
+					operators << Watch.new(@program, name, delta.name, WatchOp::Modifier::RECEIVE)
 				end
 				
 				schema = delta.schema.clone
@@ -204,11 +209,11 @@ class Rule < Clause
 				end
 				
 				operators << Projection.new(@head)
-				if (!(Compiler.watch.watched(program, @head.name, Watch.Modifier.SEND).nil?)) then
-					operators << Watch.new(program, name, @head.name, Watch.Modifier.SEND)
+				if (!(Program.watch.watched(@program, @head.name, WatchOp::Modifier::SEND).nil?)) then
+					operators << Watch.new(@program, @name, @head.name, WatchOp::Modifier::SEND)
         end
 				
-				queries << BasicQuery.new(program, name, isPublic, isDelete, delta, @head, operators)
+				queries << BasicQuery.new(@program, @name, @isPublic, @isDelete, delta, @head, operators)
 			end
 			
 		end

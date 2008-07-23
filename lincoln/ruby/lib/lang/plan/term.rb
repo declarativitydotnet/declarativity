@@ -7,13 +7,13 @@ class Term
 		@program  = nil
 		@rule     = nil
 		@position = nil
-		@identifer = "tid:" + @@identifier.to_s
+		@identifier = "tid:" + @@identifier.to_s
 		@@identifier += 1
 	end
 	
-	attr_reader :identifier, :program, :rule, :position
+	attr_reader :program, :rule, :position, :identifier
 	attr_accessor :location
-		
+	  	
   def ==(o) 
 		if (o.class <= Term)
 			return ((self<=>o) == 0)
@@ -22,8 +22,7 @@ class Term
 	end
 	
 	def <=>(o)
-	  require 'ruby-debug'; debugger
-    return (@identifer<=>(o.identifer))
+    return (@identifier<=>(o.identifier))
 	end
 	
 	def to_s

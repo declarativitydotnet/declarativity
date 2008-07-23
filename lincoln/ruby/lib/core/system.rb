@@ -14,16 +14,32 @@ class System
 	
 	def init
 		Table.init
-		@query      = Query::QueryTable.new
-#		@compile    = CompileTable.new  ## add back once parser/compiler in place
-#		@evaluator  = Driver::Evaluate.new  ## add back once driver in place
-		@schedule   = Schedule.new
-		@clock      = Clock.new("localhost")
-		@periodic   = Periodic.new(@schedule)
-		@log        = Log.new($stderr)
-		@programs   = Hash.new
+		@@query      = Query::QueryTable.new
+#		@@compile    = CompileTable.new  ## add back once parser/compiler in place
+#		@@evaluator  = Driver::Evaluate.new  ## add back once driver in place
+		@@schedule   = Schedule.new
+		@@clock      = Clock.new("localhost")
+		@@periodic   = Periodic.new(@schedule)
+		@@log        = Log.new($stderr)
+		@@programs   = Hash.new
 	end
 	
+  def System.clock
+	  @@clock
+  end
+
+  def System.evaluator
+	  @@evaluator
+  end
+
+	def System.query
+	  @@query
+  end
+  
+  def System.periodic
+    @@periodic
+  end
+  
 	def program(name)
 		@programs.has_key?(name) ? programs[name] : nil
 	end

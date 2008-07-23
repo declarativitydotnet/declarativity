@@ -1,3 +1,4 @@
+require 'lib/core/system'
 class Query
   include Comparable
 

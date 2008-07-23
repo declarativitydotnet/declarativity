@@ -1,6 +1,8 @@
 # The driver for processesing the Overlog language.
-
-class Compiler < Tool {
+require 'lib/types/basic/tuple'
+require 'lib/types/table/object_table'
+require 'lib/lang/plan/program'
+class Compiler # in java, this is a subclass of xtc.util.Tool
 	@@FILES =  ["/Users/joeh/devel/lincoln/ruby/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lang/stratachecker.olg"]
 
 	class CompileTable < ObjectTable
@@ -22,7 +24,7 @@ class Compiler < Tool {
 			super(TableName.new(GLOBALSCOPE, "compiler"), @@PRIMARY_KEY, TypeList.new(@SCHEMA))
 		end
 
-		def insert(Tuple tuple)
+		def insert(tuple)
 			program = tuple.value(Field::PROGRAM)
 			if (program.nil?)
 				owner = tuple.value(Field::OWNER)
@@ -60,7 +62,7 @@ class Compiler < Tool {
     end
   end	
   
-  attr_reader :program
+  attr_reader :program, :watch
 	
   def getName 
 		return "OverLog Compiler"
@@ -74,9 +76,9 @@ class Compiler < Tool {
 		super.init
 	end
 
-	def parse(in, file)
-		parser = new Parser(in, file.to_s, file.length)
-		return (Node)parser.value(parser.pProgram(0))
+	def parse(input, file)
+		parser = new Parser(input, file.to_s, file.length)
+		return parser.value(parser.program(0))
   end
 
 	def process(node)
@@ -109,7 +111,7 @@ class Compiler < Tool {
 		
 		# All programs define a local periodic event table
 		periodic = TableName.new(program.name, "periodic")
-		program.definition(EventTable.new(periodic, new TypeList(Periodic.SCHEMA)))
+		program.definition(EventTable.new(periodic, TypeList.new(Periodic::SCHEMA)))
 
 		# Evaluate all other clauses.
 		node.getNode(1).<Node>getList(0) do |clause|
