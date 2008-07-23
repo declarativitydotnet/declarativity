@@ -1,3 +1,4 @@
+require 'lib/lang/plan/variable'
 class Aggregate < Variable 
 	@@STAR = '*'
 	

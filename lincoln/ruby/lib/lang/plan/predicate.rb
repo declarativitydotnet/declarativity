@@ -1,5 +1,6 @@
 require 'lib/lang/plan/term'
 require 'lib/lang/plan/dont_care'
+require 'lib/lang/plan/arguments'
 
 class Predicate < Term 
   include Enumerable
@@ -44,10 +45,10 @@ class Predicate < Term
 	
 	def initialize(notin, name, event, arguments) 
 		super()
-		@notin = notin;
-		@name = name;
-		@event = event;
-		@arguments = Arguments.new(self, arguments);
+		@notin = notin
+		@name = name
+		@event = event
+		@arguments = Arguments.new(self, arguments)
 	end
 
 	attr_reader :schema, :notin, :name
@@ -85,9 +86,10 @@ class Predicate < Term
 			return value + ")"
 		end
 		value += argument(0).to_s
-		(1..@arguments.length).each do |i|
+		(1..@arguments.length-1).each do |i|
 			value += ", " + argument(i).to_s
 		end
+		value += argument(@arguments.length).to_s
 		return value + ")"
 	end
 
@@ -137,9 +139,8 @@ class Predicate < Term
 	end
 	
 	def set(program, rule, position) 
-## postpone til we get the catalog tables and $program variable going
-#		$program.predicate.force(Tuple.new($program, rule, position, event.toString(), this))
-		
+# very mysterious
+#    Program.predicate.force(Tuple.new(program, rule, position, event.toString(), this))
 		@schema = Schema.new(name, nil)
 		@arguments.each do |arg|
 			if (arg.class <= Variable) then

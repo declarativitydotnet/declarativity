@@ -1,4 +1,4 @@
-class WatchTerm < Clause
+class WatchClause < Clause
 	
 	class WatchTable < ObjectTable
 		@@PRIMARY_KEY = Key.new(0,1,2)

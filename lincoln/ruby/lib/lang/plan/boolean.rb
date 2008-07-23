@@ -1,3 +1,4 @@
+require 'lib/lang/plan/expression'
 class Boolean < Expression 
   def initialize(oper, lhs, rhs)
     @oper = oper

@@ -17,4 +17,4 @@ class Clause
 	def set(program) 
 	  raise "Clause.set needs to be subclassed"
   end
-}
+end

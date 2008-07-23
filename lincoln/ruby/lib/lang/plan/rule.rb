@@ -1,3 +1,8 @@
+require 'lib/lang/plan/clause'
+require 'lib/lang/plan/boolean'
+require 'lib/lang/plan/aggregate'
+require 'lib/types/table/object_table'
+
 class Rule < Clause
 	
 	class RuleTable < ObjectTable
@@ -48,7 +53,7 @@ class Rule < Clause
 		@body = body
 		@aggregation = false
 		head.each do |arg|
-			if (arg <= Aggregate)
+			if (arg.type <= Aggregate)
 				# assertion: only 1 aggregate.
 				assert(@aggregation == false)
 				@aggregation = true
@@ -57,10 +62,10 @@ class Rule < Clause
 	end
 	
 	def to_s
-		value = (isPublic ? "public " : "") + name + (isDelete ? " delete " : " ") + head.to_s + " :- \n"
-		(0..body.length).each do |i|
-			value += "\t" + body[i]
-			value += (i + 1 < body.length) ? ",\n" : ";\n"
+		value = (@isPublic ? "public " : "") + @name + (@isDelete ? " delete " : " ") + head.to_s + " :- \n"
+		(0..@body.length).each do |i|
+			value += "\t" + @body[i].to_s
+			value += (i + 1 < @body.length) ? ",\n" : ";\n"
 		end
 		return value
 	end
@@ -78,20 +83,19 @@ class Rule < Clause
 
 	def set(program)
 		@head.set(program, @name, 0)
-		(0..@body.size) { |i| @body[i].set(program, @name, i+1) }
+		@body.each_with_index { |b, i| b.set(program, @name, i+1) }
 		Compiler.rule.force(Tuple.new(program, name, isPublic, isDelete, this))
 	end
 
-	def query(TupleSet periodics)
+	def query(periodics)
 		# First search for an event predicate.
 		event   = nil
 		function = nil
 		body.each do |term|
 			if (term < Predicate)
         table = Table.table(term.name)
-				if (table.type == Table.Type.EVENT ||
-				    term.event != Table.Event.NONE) {
-					if (!event.nil?) {
+				if (table.type == Table.Type.EVENT || term.event != Table.Event.NONE) 
+					if (!event.nil?)
 						raise PlannerException, "Multiple event predicates in rule " + name + 
 								                   " location " + term.location
 					end
@@ -110,11 +114,11 @@ class Rule < Clause
 			
 			if (event.name.name == "periodic") && !(event.name.scope == Table.GLOBALSCOPE)  then
 				period = event.argument(Periodic.Field.PERIOD).value
-				ttl    = event.argument(Periodic.Field.TTL)).value
-				count  = event.argument(Periodic.Field.COUNT)).value
+				ttl    = event.argument(Periodic.Field.TTL).value
+				count  = event.argument(Periodic.Field.COUNT).value
 				values = Array.new
 				values << event.identifier
-				(1..event.arguments) {|i| values << event.argument(i).value }
+				(1..event.arguments).each {|i| values << event.argument(i).value }
 				periodics << Tuple.new(values)
 				
 				identifier = event.identifier
@@ -142,7 +146,7 @@ class Rule < Clause
 			end
 			
 			if !(Compiler.watch.watched(program, event.name, Watch.Modifier.RECEIVE).nil?) then
-				operators << Watch.new(program, name, event.name, p2.types.operator.Watch.Modifier.RECEIVE))
+				operators << Watch.new(program, name, event.name, p2.types.operator.Watch.Modifier.RECEIVE)
 			end
 			
 			if !(function.nil?) then
@@ -201,10 +205,10 @@ class Rule < Clause
 				
 				operators << Projection.new(@head)
 				if (!(Compiler.watch.watched(program, @head.name, Watch.Modifier.SEND).nil?)) then
-					operators << new p2.types.operator.Watch(program, name, @head.name, Watch.Modifier.SEND))
+					operators << Watch.new(program, name, @head.name, Watch.Modifier.SEND)
         end
 				
-				queries << BasicQuery.new(program, name, isPublic, isDelete, delta, @head, operators))
+				queries << BasicQuery.new(program, name, isPublic, isDelete, delta, @head, operators)
 			end
 			
 		end
