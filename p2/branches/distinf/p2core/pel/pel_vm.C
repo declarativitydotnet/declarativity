@@ -62,8 +62,7 @@
 #include <prl/factor/table_factor.hpp>
 #include <prl/factor/gaussian_factors.hpp>
 #include <prl/factor/mixture.hpp>
-#include <prl/datastructure/array_dataset.hpp>
-#include <prl/learning/em_mog.hpp>
+#include <prl/math/bindings/lapack.hpp>
 
 #include <pstade/oven/algorithm.hpp>
 

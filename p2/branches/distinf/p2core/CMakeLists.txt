@@ -15,10 +15,7 @@
 SUBDIRS(pel)
 
 ADD_LIBRARY(p2core
-#            val_gaussian_mixture.C
 	    val_factor.C
-#           val_gaussian_factor.C
-#	    val_table_factor.C
             CSVlex.C
             ID.C 
             aggFactory.C 
@@ -59,6 +56,13 @@ ADD_LIBRARY(p2core
             value.C 
             xdrbuf.C 
 )
+
+find_package(LibXml++)
+
+add_definitions(${LIBXMLPP_DEFINITIONS})
+include_directories(${LIBXMLPP_INCLUDE_DIR})
+link_libraries(${LIBXMLPP_LIBRARIES})
+link_directories(${LIBXMLPP_LINK_DIR})
 
 TARGET_LINK_LIBRARIES(p2core blas lapack boost_regex${TOOLSET}-mt-1_35 boost_serialization${TOOLSET}-mt-1_35 boost_date_time${TOOLSET}-mt-1_35 crypto ssl boost_thread${TOOLSET}-mt-1_35) 
 

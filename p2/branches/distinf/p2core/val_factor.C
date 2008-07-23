@@ -23,10 +23,11 @@
 #include <iostream>
 
 #include <prl/global.hpp>
-#include <prl/factor/constant_factor.hpp>
-#include <prl/factor/table_factor.hpp>
-#include <prl/factor/gaussian_factors.hpp>
+#include <prl/factor/xml/constant_factor.hpp>
+#include <prl/factor/xml/table_factor.hpp>
+#include <prl/factor/xml/gaussian_factors.hpp>
 #include <prl/factor/mixture.hpp>
+#include <prl/factor/decomposable_fragment.hpp>
 #include <prl/math/bindings/lapack.hpp>
 
 #include <pstade/oven/algorithm.hpp>
@@ -56,6 +57,8 @@ typedef prl::canonical_gaussian<matrix_type, vector_type> canonical_gaussian;
 //! The moment Gaussian factor type (used for mean, covariance)
 typedef prl::moment_gaussian<matrix_type, vector_type> moment_gaussian;
 
+//! A decomposable fragment over Gaussians
+typedef prl::decomposable_fragment<canonical_gaussian> fragment_gaussian;
 
 /////////////////////////////////////////////////////////
 // Arithmetic operations
@@ -187,12 +190,17 @@ struct factor_registration {
     polymorphic::register_factor<table_factor>();
     polymorphic::register_factor<canonical_gaussian>();
     polymorphic::register_factor<moment_gaussian>();
+    polymorphic::register_factor<fragment_gaussian>();
     
     polymorphic::register_binary<constant_factor, constant_factor>();
     polymorphic::register_binary<constant_factor, table_factor>();
     polymorphic::register_binary<constant_factor, moment_gaussian>();
     polymorphic::register_binary<constant_factor, canonical_gaussian>();
     polymorphic::register_binary<moment_gaussian, canonical_gaussian>();
+
+    polymorphic::register_binary<fragment_gaussian, constant_factor>();
+    polymorphic::register_binary<fragment_gaussian, canonical_gaussian>();
+    polymorphic::register_binary<fragment_gaussian, fragment_gaussian>();
   }
 
 } register_factors;

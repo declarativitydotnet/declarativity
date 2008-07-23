@@ -101,13 +101,14 @@ class Val_Factor : public Value {
 
   //! Returns the names for a set of variables as a list
   static ValuePtr names(const domain& args);
+  
+ public:
+  //! The set of all variables known to this host. (public for now)
+  static prl::universe u;
 
  private:
   //! The underlying factor
   polymorphic_factor factor;
-
-  //! The set of all variables known to this host.
-  static prl::universe u;
 
   //! The variable corresponding to each name
   static named_var_map named_var;

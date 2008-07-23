@@ -1,4 +1,3 @@
-// -*- c-basic-offset: 2; related-file-name: "CSVstage.C" -*-
 /*
  * @(#)$$
  *
