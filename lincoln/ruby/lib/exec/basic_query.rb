@@ -1,5 +1,5 @@
 require 'lib/exec/query'
-require 'lib/types/exception/p2_runtime_exception'
+require 'lib/types/exception/dataflow_runtime_exception'
 class BasicQuery < Query
 
   def initialize(program, rule, isPublic, isDelete, event, head, body)
@@ -20,7 +20,7 @@ class BasicQuery < Query
 
   def evaluate(inval)
     if (@input.name != inval.name) then
-      raise P2RuntimeException, "Query expects input " + inval.name.to_s + 
+      raise DataflowRuntimeException, "Query expects input " + inval.name.to_s + 
       " but got input tuples " + @input.name.to_s
     end
 

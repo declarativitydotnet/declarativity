@@ -1,0 +1,3 @@
+class DataflowRuntimeException < StandardError
+
+end
