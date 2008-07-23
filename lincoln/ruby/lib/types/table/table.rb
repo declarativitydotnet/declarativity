@@ -7,7 +7,7 @@ class Table
 
   def initialize(name, type, size, lifetime, key, attributeTypes)
     @name = name
-    @type = type
+    @table_type = type
     @attributeTypes = attributeTypes
     @size = size
     @lifetime = lifetime
@@ -22,7 +22,7 @@ class Table
   def Table.init
     $catalog = Catalog.new
     $index = IndexTable.new
-    register($catalog.name, $catalog.type, $catalog.size, $catalog.lifetime, $catalog.key, TypeList.new($catalog.types), $catalog)
+    register($catalog.name, $catalog.table_type, $catalog.size, $catalog.lifetime, $catalog.key, TypeList.new($catalog.types), $catalog)
   end
   
   def catalog
@@ -39,7 +39,7 @@ class Table
     DELETE = 3
   end
 
-  module Type
+  module TableType
     TABLE = 1
     EVENT = 2
     FUNCTION = 3
@@ -61,7 +61,7 @@ class Table
     raise "No subclass definition for cardinality"
   end
 
-  attr_reader :type, :name, :size, :lifetime, :key
+  attr_reader :table_type, :name, :size, :lifetime, :key
   
   def types
     @attributeTypes
@@ -91,7 +91,7 @@ class Table
     return (catalog.delete(tuples.tups).size > 0)
   end
 
-  def Table.table(name)
+  def Table.find_table(name)
     tables = $catalog.primary.lookup_vals(name)
     return nil if tables.nil?
     return tables.tups[0].value(Catalog::Field::OBJECT) if tables.size == 1

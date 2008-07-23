@@ -5,7 +5,7 @@ require "lib/types/table/object_table"
 
 class IndexTable < ObjectTable
   @@PRIMARY_KEY = Key.new(0,1)
-  @@SCHEMA = [TableName, Key, Type, String, Index]
+  @@SCHEMA = [TableName, Key, TableType, String, Index]
   class Field
     TABLENAME = 0
     KEY = 1
@@ -15,7 +15,7 @@ class IndexTable < ObjectTable
   end
 
   def initialize
-    super(TableName.new(GLOBALSCOPE, "index"), Table::Type::TABLE, TypeList.new(@@SCHEMA))
+    super(TableName.new(GLOBALSCOPE, "index"), Table::TableType::TABLE, TypeList.new(@@SCHEMA))
   end
 
   

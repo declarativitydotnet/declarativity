@@ -27,6 +27,10 @@ class TupleSet
     @id + super
   end
   
+  def hash
+    @id.hash
+  end
+  
   def delete(tup)
     @tups.delete(tup)
   end

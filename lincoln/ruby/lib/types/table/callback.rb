@@ -9,6 +9,10 @@ class Callback
     @@ids += 1
   end
 
+  def hash
+    @id.hash
+  end
+
   def insertion(tuples)
    raise "Callback with no insertion implementation"
   end

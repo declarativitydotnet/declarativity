@@ -1,6 +1,7 @@
 require 'lib/types/table/object_table'
 require 'lib/lang/plan/term'
 require 'lib/types/table/key'
+require 'lib/types/operator/selection_op'
 class SelectionTerm < Term 	
   class SelectionTable < ObjectTable 
     @@PRIMARY_KEY = Key.new(0,1,2)
@@ -46,7 +47,7 @@ class SelectionTerm < Term
   attr_reader :predicate
 
   def operator(input)
-    return Selection.new(self, input)
+    return SelectionOp.new(self, input)
   end
 
   def set(program, rule, position) 

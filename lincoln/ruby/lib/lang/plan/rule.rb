@@ -97,9 +97,10 @@ class Rule < Clause
 		event   = nil
 		function = nil
 		body.each do |term|
-			if (term.class < Predicate)
-        table = Table.table(term.name)
-				if (table.type == Table.Type.EVENT || term.event != Table.Event.NONE) 
+			if (term.class <= Predicate)
+        require 'ruby-debug'; debugger
+        table = Table.find_table(term.name)
+				if (table.table_type == Table::TableType::EVENT || term.event != Table::Event::NONE) 
 					if (!event.nil?)
 						raise PlannerException, "Multiple event predicates in rule " + name + 
 								                   " location " + term.location

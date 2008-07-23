@@ -72,6 +72,16 @@ class Tuple
     (o.class == Tuple) && ((o <=> self) == 0);
   end
   
+  def hash
+    if (@values.size > 0) then
+      code = ""
+      @values.each { |value| code += (value.nil? ? "nil".hash : value.hash) }
+      return code.hash
+    else
+      return @tid.hash
+    end
+  end
+  
   def size() 
     return @values.length
   end

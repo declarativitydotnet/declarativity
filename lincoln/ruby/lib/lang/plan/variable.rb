@@ -21,6 +21,10 @@ class Variable < Expression
   attr_reader :name
   attr_accessor :type
 
+  def hash
+    @name.hash
+  end
+  
   def to_s
     position >= 0 ? name + ":" + position.to_s : name
   end

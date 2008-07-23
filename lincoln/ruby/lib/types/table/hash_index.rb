@@ -1,6 +1,8 @@
 require "lib/types/table/index.rb"
 
 class HashIndex < Index
+  attr_reader :map
+  
   def initialize(table, key, type)
     super(table, key, type)
     @map = Hash.new
@@ -46,7 +48,7 @@ class HashIndex < Index
     end
     
     keyValues = Array.new
-    values.map {|v| keyValues << v}
+    values.each {|v| keyValues << v}
     the_key = Tuple.new(*keyValues)
     return @map[the_key.values]
   end

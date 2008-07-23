@@ -9,6 +9,10 @@ class Key
   
   attr_reader :attributes
   
+  def hash
+    to_s.hash
+  end
+  
   def ==(o)
     return false unless o.class == Key 
     return (to_s == o.to_s)

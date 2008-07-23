@@ -33,12 +33,10 @@ class TypeList
       return 1
     else
       (0..(size-1)).each do |i|
-        if self[i] < o[i]
+        if self[i].hash < o[i].hash
           return -1
-        elsif self[i] > o[i]
+        elsif self[i].hash > o[i].hash
           return 1
-        elsif (self[i] < o[i]) == nil
-          return -1
         end
       end
       return 0

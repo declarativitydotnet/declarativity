@@ -50,7 +50,7 @@ class Query
   end
 	
 	def <=>(q)
-		return self.object_id < q.object_id ? -1 : (object_id > q.object_id ? 1 : 0)
+		return hash < q.hash ? -1 : (hash > q.hash ? 1 : 0)
 	end
 	
 	def evaluate(input)

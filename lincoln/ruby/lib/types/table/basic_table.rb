@@ -5,7 +5,7 @@ require "lib/types/table/hash_index"
 class BasicTable < Table
   def initialize(name, size, lifetime, key, types)
     @tuples = TupleSet.new(name, nil)
-    super(name, Type::TABLE, size, lifetime.to_f, key, types)
+    super(name, TableType::TABLE, size, lifetime.to_f, key, types)
     @key = key
     @primary = HashIndex.new(self, key, Index::Type::PRIMARY)
     @secondary = Hash.new

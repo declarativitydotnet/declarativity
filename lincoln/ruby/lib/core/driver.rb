@@ -19,6 +19,10 @@ class Driver < Monitor
         @deletions = TupleSet.new(name)
       end
 
+      def hash
+        to_s.hash
+      end
+      
       def ==(o) 
         return (o <= EvalState && (to_s == o.to_s))
       end
