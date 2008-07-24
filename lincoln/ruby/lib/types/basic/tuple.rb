@@ -107,8 +107,8 @@ class Tuple
     end
   end
   
-  def type(name)
-    @schema.type(name)
+  def tuple_type(name)
+    @schema.schema_type(name)
   end
   
   def timestamp=(value)

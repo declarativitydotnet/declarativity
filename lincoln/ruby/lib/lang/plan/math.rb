@@ -19,8 +19,8 @@ class Math < Expression
 		@rhs = rhs
 	end
 
-	def type
-		return lhs.type
+	def expr_type
+		return lhs.class
 	end
 	
 	def to_s

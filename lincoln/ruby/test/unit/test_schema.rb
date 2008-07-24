@@ -20,7 +20,7 @@ class TestSchema < Test::Unit::TestCase
     assert_equal(s.name, "s1")
     assert_equal(s.to_s, "(i:1,s:2,f:3)")
     assert_equal(s.variable("f"),v)
-    assert_equal(s.type("f"), Float)
+    assert_equal(s.schema_type("f"), Float)
     assert_not_equal(s.size,t.size)
     assert_equal(t.join(s).variables, s.variables)
 

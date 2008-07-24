@@ -13,7 +13,7 @@ class TableCat
     @table = Table.new
     @catalog = Catalog.new
     @index = Index::IndexTable.new
-    register(catalog.name, catalog.type, catalog.size, catalog.lifetime.to_f, catalog.key, TypeList.new(Table.types), catalog)
+    register(catalog.name, catalog.table_type, catalog.size, catalog.lifetime.to_f, catalog.key, TypeList.new(Table.types), catalog)
   end
   
   def table(name)

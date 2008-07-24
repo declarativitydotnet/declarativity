@@ -35,7 +35,7 @@ class TestTuple < Test::Unit::TestCase
     assert_equal(@t.value(0), @t.value("eid"))   
     assert_equal(@t.value(1), @t.value("name"))   
     assert_equal(@t.value(2), @t.value("ssn"))  
-    assert_equal(@t.type("eid"), Integer) 
+    assert_equal(@t.tuple_type("eid"), Integer) 
     assert_equal(@t.count, 1)
     @t.count = 0
     assert_equal(@t.count, 0)

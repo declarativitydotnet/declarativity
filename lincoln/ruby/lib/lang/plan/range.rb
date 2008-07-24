@@ -53,8 +53,8 @@ class Range < Expression
 		@end = end
 	end
 
-	def type
-		begin.type
+	def expr_type
+		begin.class
 	end
 	
 	def to_s

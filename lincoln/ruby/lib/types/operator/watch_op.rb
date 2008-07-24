@@ -40,7 +40,7 @@ class WatchOp < Operator
 		
 		header = "Program " + program.to_s + " [CLOCK " + System.clock.current + "] " + Modifier::to_s + ": " + name
 				        
-		header += " Rule " + rule unless this.rule.nil?
+		header += " Rule " + rule unless @rule.nil?
 		header += "\n\tSCHEMA: " + tuples.iterator.next.schema
 		
 		stream.puts(header)

@@ -20,6 +20,6 @@ class Function < Operator
 	end
 
   def to_s
-		return this.function.name + "(" + predicate.to_s + ")"
+		return @function.name + "(" + predicate.to_s + ")"
 	end
 end

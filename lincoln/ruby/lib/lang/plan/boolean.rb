@@ -6,7 +6,7 @@ class Boolean < Expression
     @rhs = rhs
   end
 
-  def type
+  def expr_type
     return Boolean
   end
 
@@ -17,9 +17,9 @@ class Boolean < Expression
 
   def variables
     variables = Array.new
-    @lhs.variables.map{|v| variables << v}
+    @lhs.variables.each{|v| variables << v}
     if (!@rhs.nil?) then
-      @rhs.variables.map{|v| variables << v}
+      @rhs.variables.each{|v| variables << v}
     end
     return variables;
   end

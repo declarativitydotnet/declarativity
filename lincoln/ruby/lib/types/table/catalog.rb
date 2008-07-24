@@ -42,7 +42,7 @@ class Catalog < ObjectTable
         key      = tuple.value(Field::KEY)
         types    = tuple.value(Field::TYPES)
 
-        if (type == Type::TABLE)
+        if (type == TableType::TABLE)
           if (size.to_f == INFINITY) and (lifetime.to_f == INFINITY)
             table = RefTable.new(name,key,types)
           else

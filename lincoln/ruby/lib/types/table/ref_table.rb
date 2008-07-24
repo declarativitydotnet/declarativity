@@ -4,7 +4,7 @@ require "lib/types/table/table"
 
 class RefTable < Table
   def initialize(name, key, types)
-    super(name, Type::TABLE, INFINITY, INFINITY, key, types)
+    super(name, TableType::TABLE, INFINITY, INFINITY, key, types)
     @key = key
     @tuples = TupleSet.new(name, nil)
     @primary = HashIndex.new(self, key, Index::Type::PRIMARY)

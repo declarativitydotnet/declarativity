@@ -19,7 +19,7 @@ class Index
   def initialize(table, key, type)
     @table = table
     @key = key
-    @type = type
+    @index_type = type
 
     iTable = $index
     unless iTable.nil? 
@@ -36,7 +36,7 @@ class Index
     return @table.name <=> i.table.name
   end
 
-  attr_reader :table, :key, :type
+  attr_reader :table, :key, :index_type
 
 
   def clear

@@ -82,8 +82,8 @@ class Program
       # NOTE: delta rules can produce > 1 query. 
       rule.query(@periodics).each do |query|
         input = query.input
-        queries.put(input.name, Array.new) if !queries.containsKey(query.input.name)
-        queries[input.name] << query
+        @queries[input.name] = Array.new if !@queries.has_key?(query.input.name)
+        @queries[input.name] << query
       end
 
     end

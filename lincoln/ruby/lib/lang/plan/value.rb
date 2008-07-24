@@ -5,7 +5,7 @@ class Value < Expression
 	
 	attr_reader :value
 	
-	def type
+	def expr_type
 		return (@value.nil? ? nil : @value.class)
 	end
 	

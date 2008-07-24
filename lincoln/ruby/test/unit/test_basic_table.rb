@@ -24,7 +24,7 @@ class TestBasicTable < Test::Unit::TestCase
     assert_equal(bt.to_s, "Orli, IntegerString, 10, Infinity, keys(0), {IntegerString}<1, hi>\n<2, bye>\n")
     assert_equal(bt.delete(ts).tups, [testtup1, testtup2])
     assert_equal(bt.to_s, "Orli, IntegerString, 10, Infinity, keys(0), {IntegerString}")
-    assert_equal(bt.type, Table::Type::TABLE)    
+    assert_equal(bt.table_type, Table::TableType::TABLE)    
     
     # Todo: check persistence of BasicTable
   end

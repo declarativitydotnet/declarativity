@@ -11,15 +11,15 @@ class TestCatalog < Test::Unit::TestCase
     sys.init
     initial_card = $catalog.cardinality
     
-    otup = Tuple.new("Orli", Table::Type::TABLE, Table::INFINITY,
+    otup = Tuple.new("Orli", Table::TableType::TABLE, Table::INFINITY,
                      Table::INFINITY, (0), TypeList.new([Integer,Float]),
                       nil)     
-    dtup = Tuple.new("Dahlia", Table::Type::TABLE, Table::INFINITY, 50, (0),
+    dtup = Tuple.new("Dahlia", Table::TableType::TABLE, Table::INFINITY, 50, (0),
                       TypeList.new([Integer,Float]), nil)
     ts = TupleSet.new("tests", otup, dtup)
     $catalog.insert(ts, nil)
     
-    atup = Tuple.new("Adene", Table::Type::EVENT, Table::INFINITY, 50, (0),
+    atup = Tuple.new("Adene", Table::TableType::EVENT, Table::INFINITY, 50, (0),
                       TypeList.new([Integer,Float]), nil)
     ts = TupleSet.new("moretests", atup)
     

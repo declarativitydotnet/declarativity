@@ -21,7 +21,7 @@ class Clock < ObjectTable
 	def insert(tuple)
 		time = tuple.value(Field::CLOCK)
 		if (time < @clock) then
-			throw UpdateException, "Invalid clock time " +  time.to_s + " current clock value = " + this.clock.to_s
+			throw UpdateException, "Invalid clock time " +  time.to_s + " current clock value = " + @clock.to_s
 		end
 		@clock = time
 		return super.insert(tuple)

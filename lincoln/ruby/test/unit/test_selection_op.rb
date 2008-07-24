@@ -46,14 +46,14 @@ class TestSelectionOp < Test::Unit::TestCase
     
     # miscellaneous tests for coverage
     assert_equal(seloplt.requires, [])
-    assert_equal(boollt.type, boollt.function.returnType)
+    assert_equal(boollt.expr_type, boollt.function.returnType)
   end
   def variable_expr_test
     t = Tuple.new(1, "joe")
     v = Variable.new("id", Integer)
     v.position = 0
     v2 = Variable.new("name", Numeric)
-    v2.type = String
+    v2.expr_type = String
     assert_equal(v2.function.returnType, String)
     v2.position = 1
     schemey = Schema.new("schemey", [v,v2])
@@ -63,8 +63,8 @@ class TestSelectionOp < Test::Unit::TestCase
     assert_equal(v2.function.evaluate(t), "joe")
     
     one = Value.new(1)
-    assert((one.type < v.type) || (v.type < one.type))
-    assert_equal(one.function.returnType, one.type)
+    assert((one.expr_type < v.expr_type) || (v.expr_type < one.expr_type))
+    assert_equal(one.function.returnType, one.expr_type)
     
     booleq = Boolean.new("==", v, Value.new(1))
     seltermeq = SelectionTerm.new(booleq)

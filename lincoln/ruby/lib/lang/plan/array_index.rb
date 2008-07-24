@@ -5,9 +5,9 @@ class ArrayIndex < Expression
 		@index = index
 	end
 	
-  class type
-    return @array.type.getComponentType
-  end
+  # def array_type
+  #   return @array.type.getComponentType
+  # end
 	
 	def to_s
 		return "(" + @array.to_s + ")[" + @index.to_s + "]"

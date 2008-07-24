@@ -97,7 +97,7 @@ class Predicate < Term
 		variables = Hash.new
 		@arguments.each do |a|
 			if (!(a.class <= Variable)) then
-			  a.variables.map{|v| variables << v}
+			  a.variables.each{|v| variables << v}
 			end
 		end
 		return variables
@@ -118,23 +118,23 @@ class Predicate < Term
 			return AntiScanJoin.new(this, input)
 		end
 		
-		table = Table.new(@name)
+		table = Table.find_table(@name)
 		index = nil
 		if (indexKey.size > 0) then
 			if (table.primary.key == indexKey) then
 				index = table.primary
-			elsif (table.secondary.contains(indexKey))
+			elsif (table.secondary.has_key?(indexKey))
 				index = table.secondary.get(indexKey)
 			else
-				index = HashIndex.new(table, indexKey, Index.Type.SECONDARY)
-				table.secondary.put(indexKey, index)
+				index = HashIndex.new(table, indexKey, Index::Type::SECONDARY)
+				table.secondary[indexKey] = index
 			end
 		end
 		
 		if !index.nil? then
-			return IndexJoin.new(this, input, lookupKey, index)
+			return IndexJoin.new(self, input, lookupKey, index)
 		else
-			return ScanJoin.new(this, input)
+			return ScanJoin.new(self, input)
 		end
 	end
 	

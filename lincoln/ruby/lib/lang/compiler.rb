@@ -53,12 +53,12 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 	def Compiler(owner, file)
 		@owner = owner
 		@file = file
-		typeChecker = TypeChecker.new(this.runtime, this.program)
+		typeChecker = TypeChecker.new(@runtime, @program)
 		args = ["-no-exit", "-silent", file]
 		run(args)
 		
 		if (runtime.errorCount > 0) then
-			this.program.definitions.each { |table| Table.drop(table.name) }
+			@program.definitions.each { |table| Table.drop(table.name) }
     end
   end	
   
@@ -87,7 +87,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     # Perform type checking.
     # runtime.console.format(node).pln.flush
 		@program = Program.new(name, owner)
-		@typeChecker = TypeChecker.new(this.runtime, this.program)
+		@typeChecker = TypeChecker.new(@runtime, @program)
 		@typeChecker.prepare
 		
 		# First evaluate all import statements.
@@ -120,10 +120,10 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 				return if (runtime.errorCount > 0)
 				if (clause.getName == "Watch") then
 					watches = clause.getProperty(Constants.TYPE)
-					watches.each { |w| w.set(this.program.name) }
+					watches.each { |w| w.set(@program.name) }
 			  else
 				  c = clause.getProperty(Constants.TYPE)
-				  c.set(this.program.name)
+				  c.set(@program.name)
 			  end
 		  end
 		end

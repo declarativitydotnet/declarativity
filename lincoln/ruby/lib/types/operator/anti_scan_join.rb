@@ -13,7 +13,7 @@ class AntiScanJoin < Join
 		tuples.each do |outer|
 			success = false
 			@table.tuples.each do |inner|
-				inner.schema = this.predicate.schema
+				inner.schema = @predicate.schema
 				if (validate(outer, inner) && !(outer.join(inner).nil?))
 					success = true
 					break

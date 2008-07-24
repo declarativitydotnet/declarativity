@@ -48,7 +48,7 @@ class Schema
   def types
     out = Array.new
     @variables.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
-      out << a[1].type  if a[1].position >= 0 
+      out << a[1].expr_type  if a[1].position >= 0 
     end
     out
   end
@@ -65,8 +65,8 @@ class Schema
     @variables[name]
   end
 
-  def type(name)
-    @variables[name].type
+  def schema_type(name)
+    @variables[name].expr_type
   end
 
   def position(name)

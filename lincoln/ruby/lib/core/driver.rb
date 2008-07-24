@@ -127,7 +127,7 @@ class Driver < Monitor
 
       if !(table.class <= Aggregation) then
         while deletions.size > 0
-          if (table.type == Table::Type::TABLE) then
+          if (table.table_type == Table::TableType::TABLE) then
             watchRemove.evaluate(deletions) if !watchRemove.nil?
             deletions = table.delete(deletions)
             watchDelete.evaluate(deletions) if !watchDelete.nil?
@@ -140,13 +140,13 @@ class Driver < Monitor
           if !queries.nil? then
             queries.each do |query|
               output = Table.new(query.output.name)
-              if !(output.class <= EventTable) and query.event != Table::Event::Insert
+              if !(output.class <= EventTable) and query.event != Table::Event::INSERT
                 result = query.evaluate(deletions)
                 if (result.size == 0) then
                   continue
                 elsif (!result.name.equals(deletions.name)) 
                   Table t = Table.table(result.name)
-                  if (t.type == Table::Type::TABLE) then
+                  if (t.table_type == Table::TableType::TABLE) then
                     continuation(continuations, time, program.name, Table::Event::DELETE, result)
                   end
                 else 

@@ -58,7 +58,7 @@ class Rule < Clause
 		@body = body
 		@aggregation = false
 		head.each do |arg|
-			if (arg.type <= Aggregate)
+			if (arg.class <= Aggregate)
 				# assertion: only 1 aggregate.
 				assert(@aggregation == false)
 				@aggregation = true
@@ -98,7 +98,6 @@ class Rule < Clause
 		function = nil
 		body.each do |term|
 			if (term.class <= Predicate)
-        require 'ruby-debug'; debugger
         table = Table.find_table(term.name)
 				if (table.table_type == Table::TableType::EVENT || term.event != Table::Event::NONE) 
 					if (!event.nil?)
@@ -179,7 +178,7 @@ class Rule < Clause
 			operators << Projection.new(@head)
 			
 			if !(Program.watch.watched(@program, @head.name, WatchOp::Modifier::SEND).nil?)
-				operators << Watch.new(@program, name, @head.name, p2.types.operator.WatchOp::Modifier::SEND)
+				operators << Watch.new(@program, name, @head.name, WatchOp::Modifier::SEND)
 			end
 			
 			queries << BasicQuery.new(@program, name, isPublic, isDelete, event, @head, operators)
@@ -188,7 +187,7 @@ class Rule < Clause
 			eventPredicates = Array.new
 			body.each do |term1|
 				next unless term1.class <= Predicate
-				next if (term1.notin || eventPredicates.include?(term1.name))
+				next if (term1.notin)
 				eventPredicates << term1.name
 				
 				delta = term1

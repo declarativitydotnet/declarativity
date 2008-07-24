@@ -6,7 +6,7 @@ class HashIndex < Index
   def initialize(table, key, type)
     super(table, key, type)
     @map = Hash.new
-    table.tuples.map {|t| insert(t)}
+    table.tuples.each {|t| insert(t)}
   end
   
   def to_s
@@ -22,7 +22,7 @@ class HashIndex < Index
   end
   
   def insert(t)
-    k = @key.project(t).values
+    k = @key.project(t).values.hash
     if @map.has_key?(k)
       @map[k] << t
     else
@@ -33,12 +33,12 @@ class HashIndex < Index
   end
   
   def lookup(t)
-    k = @key.project(t).values
+    k = @key.project(t).values.hash
     return @map.has_key?(k) ? @map[k] : TupleSet.new(table.name, nil)
   end
   
   def lookup_kt(the_key, t)
-    k = the_key.project(t).values
+    k = the_key.project(t).values.hash
     @map.has_key?(k) ? @map[k] : TupleSet.new(table.name, nil)
   end
   
@@ -50,7 +50,7 @@ class HashIndex < Index
     keyValues = Array.new
     values.each {|v| keyValues << v}
     the_key = Tuple.new(*keyValues)
-    return @map[the_key.values]
+    return @map[the_key.values.hash]
   end
   
   def delete(t)

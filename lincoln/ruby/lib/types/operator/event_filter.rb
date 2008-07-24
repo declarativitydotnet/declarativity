@@ -26,7 +26,7 @@ class EventFilter < Operator
 		
 		predicate.each do |arg|
 			raise unless arg.position >= 0
-			this.filters << Filter.new(arg.position, arg.function) unless arg.class <= Variable
+			@filters << Filter.new(arg.position, arg.function) unless arg.class <= Variable
 	  end
 	end
 	
@@ -51,15 +51,15 @@ class EventFilter < Operator
   end
 
 	def requires
-		this.predicate.requires
+		@predicate.requires
 	end
 
 	def schema
-		this.predicate.schema.clone
+		@predicate.schema.clone
 	end
 
 	def toString
-		return "EVENT FILTER " + predicate.to_s + ": FILTERS " + this.filters.to_s
+		return "EVENT FILTER " + predicate.to_s + ": FILTERS " + @filters.to_s
 	end
 	
 	def filters

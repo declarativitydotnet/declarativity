@@ -4,7 +4,7 @@ require 'lib/types/table/table'
 class ScanJoin < Join 
 	def initialize(predicate, input)
 		super(predicate, input)
-		@table = Table::table(predicate.name)
+		@table = Table.find_table(predicate.name)
 	end
 	
 	def to_s

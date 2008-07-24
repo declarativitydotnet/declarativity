@@ -26,7 +26,7 @@ class TestIndex < Test::Unit::TestCase
     assert_raise(RuntimeError){bti.remove(Tuple.new(1))}
     
     assert_equal(bti.key.attributes, [0])
-    assert_equal(bti.type, Index::Type::SECONDARY)
+    assert_equal(bti.index_type, Index::Type::SECONDARY)
     assert_equal(bti <=> bti, 0)
     
     btii = IndexTable.new

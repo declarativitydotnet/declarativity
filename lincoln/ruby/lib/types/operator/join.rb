@@ -74,7 +74,7 @@ class Join < Operator
         var = arg
         if (positions[var.name])
           prev = positions[var.name]
-          filters << JoinFilter.new(TableField::new(prev.type, prev.position), TableField::new(var.type, prev.position))
+          filters << JoinFilter.new(TableField::new(prev.expr_type, prev.position), TableField::new(var.expr_type, prev.position))
         else 
           positions[var.name] = var
         end

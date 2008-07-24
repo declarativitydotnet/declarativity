@@ -24,7 +24,7 @@ class IndexTable < ObjectTable
       begin
         ctype = tuple.value(Field::CLASSNAME)
         name = tuple.value(Field::TABLENAME)
-        if (table = self.table(name)).nil?
+        if (table = Table.find_table(name)).nil?
           raise UpdateException, "can't create index; table " + name.to_s + " not found in catalog"
         end
         # create the index object

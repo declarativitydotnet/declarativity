@@ -10,8 +10,8 @@ class TestSystem < Test::Unit::TestCase
     
     # dorky coverage
     assert_equal(System.clock.current, -1)
-    assert_equal(System.query.type, 1)
-    assert_equal(System.periodic.type, 1)
+    assert_equal(System.query.table_type, 1)
+    assert_equal(System.periodic.table_type, 1)
     assert_equal(System.program("chord"), nil)
     assert_equal(System.program_np("chord", nil), nil)
 

@@ -1,10 +1,10 @@
 class Assign < Operator
   def initialize (assignment, input)
 		super(assignment.program, assignment.rule)
-		this.assignment = assignment
-		this.schema = input.clone
+		@assignment = assignment
+		@schema = input.clone
 
-		this.schema.append(this.assignment.variable) unless this.schema.includes? this.assignment.variable 
+		@schema.append(@assignment.variable) unless @schema.includes? @assignment.variable 
 	end
 	
 	def to_s

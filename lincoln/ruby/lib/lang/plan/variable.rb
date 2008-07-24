@@ -2,7 +2,7 @@ require "lib/lang/plan/expression"
 class Variable < Expression
   def initialize(name, type)
     @name = name
-    @type = type
+    @expr_type = type
     @position = -1
   end 
 
@@ -13,13 +13,13 @@ class Variable < Expression
   end
 
   def clone
-    v = Variable.new(name,type)
+    v = Variable.new(name,expr_type)
     v.position = position
     return v
   end
   
   attr_reader :name
-  attr_accessor :type
+  attr_accessor :expr_type
 
   def hash
     @name.hash
@@ -45,7 +45,7 @@ class Variable < Expression
     end
 
     r_lam = lambda do
-      return @type
+      return @expr_type
     end
 
     tmpClass = Class.new(TupleFunction)

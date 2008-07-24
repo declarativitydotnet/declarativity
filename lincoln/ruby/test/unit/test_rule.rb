@@ -2,6 +2,7 @@ require 'lib/lang/plan/rule'
 require 'lib/lang/plan/predicate'
 require 'lib/lang/plan/value'
 require 'lib/lang/plan/selection_term'
+require 'lib/types/table/table'
 require 'lib/core/system'
 require "test/unit"
 require "rubygems"
@@ -20,9 +21,7 @@ class TestRule < Test::Unit::TestCase
     v3.position = 2
     v4 = Variable.new("annotation", String)
     v4.position = 3
-    link = Predicate.new(false, TableName.new(nil, "link"), nil, [v1, v2, v3, v4])
-    link.set('testprog', 'r1', 1)
-
+    
     t1 = Tuple.new(1,2,0.5, "first")
     t2 = Tuple.new(2,3,1.0, "second")
     schema1 = Schema.new("schema1", [v1,v2,v3,v4])
@@ -30,28 +29,58 @@ class TestRule < Test::Unit::TestCase
     t2.schema = schema1
     tn = TableName.new(nil, "link")
     ts = TupleSet.new(tn, t1, t2)
-    require 'ruby-debug'; debugger
-    table = BasicTable.new(tn, 4, Table::INFINITY, Key.new(1), [Integer,Integer,Float,String])
-      
+    table = BasicTable.new(tn, Table::INFINITY, Table::INFINITY, Key.new(1,2), [Integer,Integer,Float,String])
+    
     # simple projection rule
-    head = Predicate.new(false, TableName.new(nil,"head"), nil, [v1, v2, v3])
-    head.set('testprog', 'r1', 0)
+    link = Predicate.new(false, tn, Table::Event::NONE, [v1, v2, v3, v4])
+    link.set('testprog', 'r1', 1)
+    path = Predicate.new(false, TableName.new(nil,"path"), Table::Event::NONE, [v1, v2, v3])
+    path.set('testprog', 'r1', 0)
     body = [link]
-    r = Rule.new(1, 'r1', true, false,  head, body)
-    assert_equal(r.to_s, "public r1 ::head(from:0, to:1, cost:2) :- \n\t::link(from:0, to:1, cost:2, annotation:3);\n\t;\n") 
+    r = Rule.new(1, 'r1', true, false,  path, body)
+    assert_equal(r.to_s, "public r1 ::path(from:0, to:1, cost:2) :- \n\t::link(from:0, to:1, cost:2, annotation:3);\n\t;\n") 
     result = r.query(nil)[0].evaluate(ts)
+    assert_equal(result.tups.length, 2)
     assert_equal(result.tups[0].values, [1,2,0.5])
     assert_equal(result.tups[1].values, [2,3,1.0])
     
-    # selection rule
-    bool = Boolean.new("==", v2, Value.new(1))
-    selterm = SelectionTerm.new(bool)
-    body = [link, selterm]
+    # # selection rule
+    # bool = Boolean.new("==", v2, Value.new(2))
+    # selterm = SelectionTerm.new(bool)
+    # body = [link, selterm]
+    # 
+    # r = Rule.new(1, 'r1', true, false,  path, body)
+    # result = r.query(nil)[0].evaluate(ts)
+    # assert_equal(result.size, 1)
+    # assert_equal(result.tups[0].values, [1,2,0.5])
     
-    r = Rule.new(1, 'r1', true, false,  head, body)
-    require 'ruby-debug'; debugger
-    result = r.query(nil)[0].evaluate(ts)
+    # self-join rule
+    # first insert tuple t1 into link
+    table.insert(TupleSet.new(tn, t1),nil)
+    
+    tn2 = TableName.new(nil, "path")
+    table2 = BasicTable.new(tn2, Table::INFINITY, Table::INFINITY, Key.new(1,2), [Integer,Integer,Float])
+    v5 = Variable.new("to", Integer)
+    v5.position = 0
+    v6 = Variable.new("to2", Integer)
+    v6.position = 1
+    v7 = Variable.new("cost2", Float)
+    v7.position = 2
+    v8 = Variable.new("note2", String)
+    v8.position = 3
+    link2 = Predicate.new(false, TableName.new(nil,"link"), Table::Event::NONE, [v5, v6, v7, v8])
+    link2.set('testprog', 'r2', 1)
+
+    body = [link, link2]
+
+    path3 = Predicate.new(false, TableName.new(nil,"path"), Table::Event::NONE, [v1, v6, v7])
+    path3.set('testprog', 'r2', 0)
+    
+    r2 = Rule.new(1, 'r2', true, false, path3, body)
+    # now run with a delta containing tuple t2, and the second delta-rewrite should find t1
+    query = r2.query(nil)
+    result = query[1].evaluate(TupleSet.new(tn, t2))
     assert_equal(result.size, 1)
-    assert_equal(result.tups[0].values, [1,2,0.5])
+    
   end
 end
