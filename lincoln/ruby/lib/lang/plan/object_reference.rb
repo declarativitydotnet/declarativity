@@ -1,6 +1,6 @@
 class ObjectReference < Reference
 	
-  def initialize(object, field) {
+  def initialize(object, field)
 		super(field.class, object.to_s + "." + field.name)
 		@object = object
 		@field = field

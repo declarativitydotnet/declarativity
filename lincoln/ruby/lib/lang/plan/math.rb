@@ -13,7 +13,7 @@ class Math < Expression
 
 
 	
-  def initialize(oper, lhs, rhs) {
+  def initialize(oper, lhs, rhs)
 		@oper = oper
 		@lhs = lhs
 		@rhs = rhs
