@@ -1,0 +1,75 @@
+grammar Ddl
+
+rule program
+	(s statement)*
+end
+
+rule statement
+	'create' s 'table' s tablename opar collist cpar keys? acabo
+end
+
+rule collist
+	column (comma column)*
+end
+
+rule column
+	colname s dtype
+end
+
+rule colname
+	[a-zA-Z0-9]+
+end
+
+
+rule tablename
+	[a-zA-Z0-9]+
+end
+rule dtype
+	'String' / 'Integer' / 'Float' / 'Object'
+end	
+
+rule keys
+	s 'keys' opar keylist cpar
+end
+
+rule keylist
+	numlist / strlist
+end
+
+rule numlist
+	num (comma num)*
+end
+
+rule strlist
+	str (comma str)*
+end
+
+rule num
+	[0-9]+
+end
+
+rule str
+	[a-zA-Z0-9]+
+end
+
+rule comma
+	s ',' s
+end
+
+rule acabo
+	s ';' s
+end
+
+rule opar
+	s '(' s
+end
+
+rule cpar 
+	s ')' s
+end
+
+rule s
+	[ \t\n]*
+end
+
+end

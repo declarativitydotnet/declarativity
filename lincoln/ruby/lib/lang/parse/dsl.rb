@@ -1,0 +1,105 @@
+#!/usr/bin/ruby
+
+require "rubygems"
+require "treetop"
+require 'Treewalker.rb'
+require 'ddl.rb'
+
+$current = Hash.new
+$tables = Hash.new
+$types = Hash.new
+$keys = Hash.new
+
+class Visit < Treewalker::Handler
+	def semantic(text,obj)
+		$current[self.token] = text
+	end
+end
+
+class VTable < Visit
+	def semantic(text,obj)
+		$tables[text] = Array.new
+		$types[text] = Array.new
+		$keys[text] = Array.new
+		super(text,obj)
+	end
+end
+
+class VCol < Visit
+	def semantic(text,obj)
+		#print "current of "+$current["tablename"]+"\n"
+		$tables[$current["tablename"]] << text
+		super(text,obj)
+	end 
+end
+
+class VType < Visit
+	def semantic(text,obj)
+		super(text,obj)
+		$types[$current["tablename"]] << text
+	end
+end
+
+class VNum < Visit
+	def semantic(text,obj)
+		super(text,obj)
+		$keys[$current["tablename"]] << text
+	end
+		
+end
+
+
+prog = ''
+while line = STDIN.gets
+	prog = prog + line
+end
+
+
+parser = DdlParser.new
+tree = parser.parse(prog)
+if !tree
+      puts 'failure'
+     raise RuntimeError.new(parser.failure_reason)
+end
+
+sky = Treewalker.new(tree)
+
+v = Visit.new
+
+sky.add_handler("tablename",VTable.new,1)
+sky.add_handler("colname",VCol.new,1)
+sky.add_handler("dtype",VType.new,1)
+
+
+sky.add_handler("num",VNum.new,1)
+
+sky.walk("n")
+
+print "require 'lib/types/table/object_table'\n"
+$tables.each do |table, arr|
+	print "class "+table+"Table < ObjectTable\n"
+	if ($keys[table].size > 0) then
+		print "\t@@PRIMARY_KEY = Key.new("+$keys[table].join(",")+")\n"
+	else
+		print "\t@@PRIMARY_KEY = Key.new("+(0..arr.size-1).to_a.join(",")+")\n"
+	end
+
+	print "\tclass Field\n"
+	(0..arr.size-1).each do |i|
+		print "\t\t"+arr[i]+"="+i.to_s+"\n"
+	end
+	print "\n\tend\n"
+	print "\t@@SCHEMA = ["+$types[table].join(",")+"]\n"
+
+	print "\tdef initialize\n"
+        print "\t\tsuper(TableName.new(GLOBALSCOPE, \""+table+"\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
+	print "\tend\n"
+
+	print "\tdef schema_of\n"
+	(0..arr.size-1).each do |i|
+		print "\t\t"+ arr[i]+" = Variable.new(\""+arr[i]+"\","+$types[table][i]+")\n"
+	end
+	print "\t\treturn Schema.new(\""+table+"\",["+arr.join(",")+"])\n"
+	print "\tend\n"
+	print "end\n"
+end

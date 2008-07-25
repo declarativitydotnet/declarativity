@@ -220,7 +220,12 @@ grammar Overlog
 				}
 	end
    	rule Arguments
-		     opar ExpressionList cpar  /     opar cpar   
+		     opar (ExpressionList) cpar  /     opar cpar   
+			{
+				def Arguments 
+					return self
+				end
+			}
 	end
   	rule NewClass
 		  'new' TypeName   
@@ -240,6 +245,9 @@ grammar Overlog
 				def Word
 					return self
 				end 
+				def value 
+					return text_value
+				end
 			}
 	end
 	rule WordCharacters
@@ -261,6 +269,12 @@ grammar Overlog
    	rule LineTerminator
 		  #'\r' '\n'  /  '\r'  /  '\n'   
 		 '\r\n' / Newline
+			{
+				def LineTerminator
+					#@@lines = @@lines + 1
+					return self
+				end
+			}
 	end
 	rule Newline
 		[\r\n]

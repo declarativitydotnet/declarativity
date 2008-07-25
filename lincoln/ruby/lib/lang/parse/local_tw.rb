@@ -5,126 +5,157 @@ require "treetop"
 require "core.rb"
 #require "olg.rb"
 
+require "procedural.rb"
+require 'lib/types/basic/Tuple.rb'
 require "Treewalker.rb"
-
 
 # um... symbol tables?
 @@state = Hash.new
-@@ids = Hash.new
+@@positions = Hash.new
+@@current = Hash.new
+@@lines = 0
 
-
-@@predicates = Predicate::PredicateTable.new
-
-
-# had to.  will revisit.
-def suck_nums(node)
-	#puts node.inspect
-	returns  = Array.new
-	if (defined? node.DecimalNumeral) then
-		returns << node.DecimalNumeral.text_value
-	else 
-		returns = Array.new
-		if (!node.elements.nil?) then
-			node.elements.each do |e|
-				list = suck_nums(e)
-				if (!list.empty?) then
-					returns.concat(list)
-				end
-			end	
-		end
-	end
-	return returns
-end
-
+class OverlogCompiler
 
 # local modules
 
 class VisitGeneric < Treewalker::Handler
-	def initialize
-		@@ids["_Object"] = -1
+	def initialize()
+		@@positions["_Universal"] = @@positions["_Termpos"] = @@positions["_Exprpos"] = @@positions["_Primpos"] = @@positions["Rule"] = 0
 	end 
 	def semantic(text,obj)
-		#print "generic semantic action for "+self.token+" =  "+text+"\n"
-		#print "set "+self.token+" = "+text+"\n"
-		if (@@ids[self.token].nil?) then
-			@@ids[self.token] = 0
+		@@positions["_Universal"] = @@positions["_Universal"] + 1
+		if (@@positions[self.token].nil?) then
+			@@positions[self.token] = 0
 		else
-			@@ids[self.token] = @@ids[self.token] + 1
+			@@positions[self.token] = @@positions[self.token] + 1
 		end
-		@@state[self.token] = [text,@@ids[self.token]]
+		@@state[self.token] = [text,@@positions[self.token]]
 	end
 end
 
-class VisitPredicate < VisitGeneric
+class VisitBase < VisitGeneric
 	def semantic(text,obj)
 		super(text,obj)
-
-		@@ids["_Object"] = @@ids["_Object"] + 1
-		predtab(@@state["Rule"],@@state["Predicate"],@@ids["_Object"]);
-		@@ids["PrimaryExpression"] = -1
-		objtab(@@state["Rule"],@@ids["_Object"],@@state["Predicate"],"predicate")
+		@@positions["_Termpos"] = @@positions["_Primpos"] = @@positions["_Exprpos"] = -1
 	end
 end
 
-class VisitConstant < VisitGeneric
+class VisitIExpression < VisitGeneric
+	def initialize(expt)
+		@ext = expt
+		super()
+	end
 	def semantic(text,obj)
-		#print "constant "+text+"\n"
-		#print "type is "+text.class.to_s+"\n"
 		super(text,obj)
-		## WHOA!
+		@@positions["_Exprpos"] = @@positions["_Exprpos"] + 1
+		@@positions["_Primpos"] = -1
+		print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text,"expr","??"])
+		@ext.insert(TupleSet.new("expression",Tuple.new(@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],'"'+text+'"',"expr","??")),nil)
+		@@current["expression"] =  @@positions["_Universal"]
+	end
+end
+
+class VisitTerm < VisitGeneric
+	def initialize(pt)
+		super()
+		@termt = pt
+	end
+	def semantic(text,obj)
+		super(text,obj)
+		@@positions["_Primpos"] = @@positions["_Exprpos"] = -1
+		@@positions["_Termpos"] = @@positions["_Termpos"] + 1
+		@@current["term"] = @@positions["_Universal"]
+		print "\n"
+		print_table("term",[@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text])
+		@termt.insert(TupleSet.new("term",Tuple.new(@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)),nil)
+		@@positions["_Universal"] = @@positions["_Universal"] + 1
+	end
+end
+
+class VisitPexp < VisitGeneric
+	def semantic(text,obj)
+		super(text,obj)
+		@@positions["_Primpos"] = @@positions["_Primpos"] + 1
+	end
+end
+
+
+
+# "real" subclasses
+class VisitPredicate < VisitTerm
+	def initialize (pt,term)
+		super(term)
+		@pt = pt
+	end
+	def semantic(text,obj)
+		super(text,obj)
+		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
+		result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"],nil)),nil)
+
+	end
+end
+
+class VisitConstant < VisitPexp
+	def initialize (pt)
+		super()
+		@pet = pt
+	end
+	def semantic(text,obj)
+		super(text,obj)
 		t = text.gsub('"',"")
-		#termtab(@@state["Rule"],@@state["_Object"],@@state["PrimaryExpression"],text,'"const"')
-		termtab(@@state["Rule"],@@ids["_Object"],@@state["PrimaryExpression"],t,'"const"')
-		
+		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??"])
+
+		@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"var","??")),nil)
 	end
 end
 
-class VisitVariable < VisitGeneric
-	def semantic(text,obj)
-		#print "Variable ("+text+")\n"
-		#print "rule "+@@state["orule"] +",pred "+@@state["head"]+" Variable "+text+"\n"
+class VisitVariable < VisitPexp
+	def initialize (pt)
+		super()
+		@pet = pt
+	end
 
+	def semantic(text,obj)
 		super(text,obj)
-		termtab(@@state["Rule"],@@ids["_Object"],@@state["PrimaryExpression"],text,'"var"')
-		# insert into term table
+		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??"])
+		@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+text+'"',"var","??")),nil)
 	end
 end
 
-class VisitFact < VisitGeneric
+class VisitFact < VisitTerm
+	def initialize (facts,terms)
+		@ft = facts
+		super(terms)
+	end
 	def semantic(text,obj)
-		#print "Fact: 
+		@@positions["_Termpos"] = @@positions["_Primpos"] = -1
 		super(text,obj)
-		facttab(text,@@ids["_Object"])
-		@@ids["PrimaryExpression"] = -1 ###= @@ids["Predicate"] = -1
-		@@ids["_Object"] = @@ids["_Object"] + 1
+		print_table("fact",[@@positions["_Universal"],@@current["term"],'"'+text+'"'])
+		@ft.insert(TupleSet.new("fact",Tuple.new(@@positions["_Universal"],@@current["term"],text)),nil)
 	end
 end
 
-class VisitRule < VisitGeneric
+class VisitRule < VisitBase
 	def semantic(text,obj)
-		
 		t = text.gsub('"',"")
-		super(t,obj)
-		ruletab(@@state["Rule"])
-		@@ids["Predicate"] = @@ids["PrimaryExpression"] = @@ids["_Object"] = -1
+		super(text,obj)
+		print_table("rule",[@@positions["_Universal"],@@positions["Program"],'"'+t+'"',-1,nil,nil])
 	end
 end
 
-class VisitTable < VisitGeneric
+class VisitTable < VisitBase
 	def semantic(text,obj)
 		super(text,obj)
-		#print obj.Keys.inspect
-		#print "TABLE("+text+"\n"
-		tabtab(@@state["TableName"])
-		#@@ids["_Object"] = @@ids["_Object"] + 1
+		print_table("table",[@@positions["_Universal"],text])
 	end
 end
 
 class VisitColumn < VisitGeneric
 	def semantic(text,obj)
 		super(text,obj)	
-		#print "\tCOL: "+text+"\n"	
-		coltab(@@ids["TableName"],@@ids["Type"],text);
+		#coltab(@@positions["TableName"],@@positions["Type"],text);
+		print_table("columns",[@@positions["TableName"],@@positions["Type"],'"'+text+'"'])
 	end
 end
 class VisitIndex < VisitGeneric
@@ -132,53 +163,128 @@ class VisitIndex < VisitGeneric
 		super(text,obj)
 		suck_nums(obj).each do |indx|
 			#print "\tINDEX: "+indx+"\n"
-			indxtab(@@ids["TableName"],indx)
+			indxtab(@@positions["TableName"],indx)
 		end
 	end
 end
 
 
 
-class VisitAssignment < VisitGeneric
+class VisitAssignment < VisitTerm
+	def initialize(ass,term)
+		@pt = ass
+		super(term)
+	end
 	def semantic(text,obj)
-		@@ids["_Object"] = @@ids["_Object"] + 1
-		@@ids["PrimaryExpression"] = -1
-	
-			
+		super(text,obj)
 		t = obj.Variable.text_value.gsub('"','\"')
-
-		objtab(@@state["Rule"],@@ids["_Object"],@@state["Assignment"],"assignment")
-		assigntab(@@state["Rule"],@@ids["_Object"],t)
+		print_table("assign",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
 	end
 end
 
 
-class VisitSelection < VisitGeneric
+class VisitSelection < VisitTerm
+	def initialize(sel,term)
+		@pt = sel
+		super(term)
+	end
 	def semantic(text,obj)
-		@@ids["_Object"] = @@ids["_Object"] + 1
-		@@ids["PrimaryExpression"] =  -1
-		objtab(@@state["Rule"],@@ids["_Object"],@@state["Selection"],"selection")
+		super(text,obj)
+		print_table("select",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
 		t = text.gsub('"','\"')
-		selecttab(@@state["Rule"],@@ids["_Object"],t)
 	end
 end
 
 
-class VisitExpression < VisitGeneric
+class VisitExpression < VisitIExpression
 	def semantic(text,obj)
-		#puts obj.inspect
-		if (!defined? obj.PrimaryExpression) then
-			# this is no good!!!
-			old =@@state["PrimaryExpression"]
-			@@state["PrimaryExpression"] = [old[0],old[1]+1]
-			termtab(@@state["Rule"],@@ids["_Object"],@@state["PrimaryExpression"],text,'"expr"')
-			@@ids["_Object"] = @@ids["_Object"] + 1
-			@@ids["PrimaryExpression"] =  -1
-			objtab(@@state["Rule"],@@ids["_Object"],@@state["Selection"],"expression")
-			t = text.gsub('"','\"')
-			exprtab(@@state["Rule"],@@ids["_Object"],t)
-		end
+		#if (!defined? obj.PrimaryExpression) then
+			super(text,obj)
+			#print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text,"expr","??"])
+		#end
 	end
 end
 
 
+class VisitNewline < VisitGeneric
+	def semantic(text,obj)
+		@@lines = @@lines + 1
+	end
+end
+
+
+# class body
+
+	def initialize(rules,terms,preds,pexps,exps,facts)
+
+		@ruletable = rules
+		@termtable = terms
+		@predicatetable = preds
+		@pextable = pexps
+		@extable = exps
+		@facttable = facts
+
+
+		# reinitialize these awful globals, fingers crossed for good garbage collection.
+		@@state = Hash.new
+		@@positions = Hash.new
+		@@current = Hash.new
+		@@lines = 0
+	end
+
+	def parse(prog)
+		parser = OverlogParser.new
+		@tree = parser.parse(prog)
+		if @tree
+			puts 'success'
+			
+		else
+			puts 'failure'
+			raise RuntimeError.new(parser.failure_reason)
+		end 
+	end
+
+	def analyze
+
+		sky = Treewalker.new(@tree)
+
+		vg = VisitGeneric.new
+
+		sky.add_handler("Word",vg,1)
+		sky.add_handler("Location",vg,1)
+		sky.add_handler("Watch",vg,1)
+		sky.add_handler("Expression",VisitExpression.new(@extable),1)
+		sky.add_handler("PrimaryExpression",vg,1)
+		sky.add_handler("Predicate",VisitPredicate.new(@predicatetable,@termtable),1)
+		sky.add_handler("Fact",VisitFact.new(@facttable,@termtable),1)
+		sky.add_handler("Definition",VisitTable.new,1)
+		sky.add_handler("TableName",vg,1)
+		sky.add_handler("Schema",vg,1)
+		sky.add_handler("Rule",VisitRule.new,1)
+		sky.add_handler("Selection",VisitSelection.new(nil,@termtable),1)
+		sky.add_handler("Assignment",VisitAssignment.new(nil,@termtable), 1)
+		
+		sky.add_handler("Variable",VisitVariable.new(@pextable),1)
+		sky.add_handler("Constant",VisitConstant.new(@pextable),1)
+
+
+		sky.add_handler("Aggregate",vg,1)
+		sky.add_handler("Name",vg,1)
+		sky.add_handler("AggregateVariable",vg,1)
+
+		#sky.add_handler("Arguments",vg,1)
+
+		sky.add_handler("Periodic",vg,1)
+		sky.add_handler("Table",VisitTable.new,1)
+		sky.add_handler("Type",VisitColumn.new,1)
+		sky.add_handler("Keys",VisitIndex.new,1)
+
+		sky.add_handler("LineTerminator",VisitNewline.new,1)
+
+		sky.add_handler("Program",vg,1)
+
+		#init_output("static_checks")
+		sky.walk("n")
+		
+	end
+end
