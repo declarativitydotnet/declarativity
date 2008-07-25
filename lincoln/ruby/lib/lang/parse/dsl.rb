@@ -1,5 +1,8 @@
 #!/usr/bin/ruby
 
+# convert SQL-DDL-style "create table" statements to ruby ObjectTable classes with equivalent definitions.
+# ie ruby dsl.rb < create.sql > schema.rb
+
 require "rubygems"
 require "treetop"
 require 'Treewalker.rb'
@@ -86,13 +89,16 @@ $tables.each do |table, arr|
 
 	print "\tclass Field\n"
 	(0..arr.size-1).each do |i|
-		print "\t\t"+arr[i]+"="+i.to_s+"\n"
+		print "\t\t"+arr[i].upcase+"="+i.to_s+"\n"
 	end
 	print "\n\tend\n"
 	print "\t@@SCHEMA = ["+$types[table].join(",")+"]\n"
 
 	print "\tdef initialize\n"
-        print "\t\tsuper(TableName.new(GLOBALSCOPE, \""+table+"\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
+        print "\t\tsuper(TableName.new(GLOBALSCOPE, \""+table+"Table\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
+	print "\t\tprogramKey = Key.new(Field::" + arr[0].upcase+")\n"
+	print "\t\tindex = HashIndex.new(self, programKey, Index::Type::SECONDARY)\n"
+	print "\t\t@secondary[programKey] = index\n"
 	print "\tend\n"
 
 	print "\tdef schema_of\n"

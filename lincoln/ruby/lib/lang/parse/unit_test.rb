@@ -13,13 +13,47 @@ require 'lib/types/table/basic_table.rb'
 require "lib/types/operator/scan_join"
 
 class TestParse < Test::Unit::TestCase
-	def default_test
 
+$catalog = Catalog.new
+$index = IndexTable.new
+	def default_test
 		#test_fact
 		#test_preds
 
-
 		exit
+
+	end
+
+	def test_foo
+		t1 = Tuple.new(1, "joe")
+    v = Variable.new("id", Integer)
+    v.position = 0
+    v2 = Variable.new("name", String)
+    v2.position = 1
+    schema1 = Schema.new("schema1", [v,v2])
+    t1.schema = schema1
+
+    t2 = Tuple.new(1, "hellerstein")
+    v3 = Variable.new("id", Integer)
+    v3.position = 0
+    v4 = Variable.new("lastname", String)
+    v4.position = 1
+    schema2 = Schema.new("schema2", [v3,v4])
+    t2.schema = schema2
+
+    table1 = BasicTable.new('Firstname', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
+    ts = TupleSet.new('fnames', t1)
+    table1.insert(ts, nil)
+    #table2 = EventTable.new('Lastname', [Integer, String])
+    #ts2 = TupleSet.new('lnames', t2)
+
+
+    pred = Predicate.new(false,table1.name, table1, schema1.variables)
+    pred.set("myprog", "r3", 1) 
+    
+    sj = ScanJoin.new(pred, schema1)
+
+	puts sj.inspect
 
 	end
 
@@ -27,8 +61,12 @@ class TestParse < Test::Unit::TestCase
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
 		schema = @preds.schema_of
+
+		print "preds.name is "+@preds.name.to_s+"\n"
 		pred = Predicate.new(false,@preds.name, @preds, schema.variables)
-		pred.set("myprog", "r3", 1) 
+
+		
+		pred.set("global", "r3", 1) 
 		sj = ScanJoin.new(pred, schema)	
 	end
 
