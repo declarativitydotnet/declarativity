@@ -13,7 +13,7 @@ class TestSystem < Test::Unit::TestCase
     assert_equal(System.query.table_type, 1)
     assert_equal(System.periodic.table_type, 1)
     assert_equal(System.program("chord"), nil)
-    assert_equal(System.program_np("chord", nil), nil)
+    assert_equal(System.install_program("chord", nil), nil)
 
     # sys.bootstrap
     # sys.main

@@ -1,3 +1,4 @@
+require 'lib/types/operator/join'
 class IndexJoin < Join
 	
 	def initialize (predicate, input, lookupKey, index)

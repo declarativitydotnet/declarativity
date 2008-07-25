@@ -9,14 +9,18 @@ class Key
   
   attr_reader :attributes
   
-  def hash
-    to_s.hash
+  def eql?(o)
+    o.is_a?(Key) && attributes == o.attributes
   end
   
-  def ==(o)
-    return false unless o.class == Key 
-    return (to_s == o.to_s)
+  def hash
+    return @attributes.hash
   end
+  
+  # def ==(o)
+  #   return false unless o.class == Key 
+  #   return (hash == o.hash)
+  # end
   
   def to_s
     if @attributes.length == 0 then

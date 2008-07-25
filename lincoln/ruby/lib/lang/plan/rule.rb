@@ -30,24 +30,26 @@ class Rule < Clause
 		def initialize
 			super(TableName.new(GLOBALSCOPE, "rule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 			programKey = Key.new(Field::PROGRAM)
-			index = HashIndex.new(self, programKey, Index.Type.SECONDARY)
-			@secondary.put(programKey, index)
+			index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+			@secondary[programKey.hash] = index
 		end
 		
-    def insert(tuple)
+    def insert_tup(tuple)
 			object = tuple.value(Field::OBJECT)
-		  raise UpdateException,"Predicate object null" if object.nil?
+		  raise UpdateException,"Rule object null" if object.nil?
 			object.program   = tuple.value(Field::PROGRAM)
 			object.name      = tuple.value(Field::RULENAME)
 			object.isPublic  = tuple.value(Field::PUBLIC)
 			object.isDelete  = tuple.value(Field::DELETE)
-			return super.insert(tuple)
+			return super(tuple)
 		end
 		
 		def delete(tuple)
-			super.delete(tuple)
+			super(tuple)
 		end
 	end
+
+	attr_accessor :program, :name, :isPublic, :isDelete
 	
   def initialize(location, name, isPublic, isDelete,  head, body)
 		super(location)
@@ -89,7 +91,7 @@ class Rule < Clause
 	def set(program)
 		@head.set(program, @name, 0)
 		@body.each_with_index { |b, i| b.set(program, @name, i+1) }
-		Compiler.rule.force(Tuple.new(program, name, isPublic, isDelete, this))
+		Compiler.rule.force(Tuple.new(program, @name, @isPublic, @isDelete, self))
 	end
 
 	def query(periodics)

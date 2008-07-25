@@ -35,6 +35,10 @@ class TupleSet
     @tups.delete(tup)
   end
   
+  def clear
+    @tups = Array.new
+  end
+  
   def <<(tup)
     @tups << tup
   end

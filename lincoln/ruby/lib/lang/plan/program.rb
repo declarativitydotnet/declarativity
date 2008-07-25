@@ -37,15 +37,19 @@ class Program
   def Program.watch
     @@watch
   end    
+  
+  def Program.predicate
+    @@predicate
+  end
               
 	def initialize(name, owner) 
 		@name        = name
 		@owner       = owner
 		@definitions = Array.new
 		@queries     = Hash.new
-		@periodics   = TupleSet.new($system.periodic.name)
+		@periodics   = TupleSet.new(System.periodic.name)
 		@@program.force(Tuple.new(@name, @owner, self))
-		$system.program_put(name, self)
+		System.install_program(name, self)
   end	
   
 	def tuple
@@ -66,30 +70,31 @@ class Program
 		@definitions << table
 	end
 	
-	attr_reader :definitions, :periodics, :name
+	attr_reader :definitions, :periodics, :name, :queries
 	
   def plan
-    @queries.clear
+    @queries = Hash.new
     @periodics.clear
 
     # First plan out all the rules
-    rules = rule.secondary[Key.new(RuleTable.Field::PROGRAM).lookup(@name)]
+    hash_index = Compiler.rule.secondary[Key.new(Rule::RuleTable::Field::PROGRAM).hash]
+    rules = hash_index.lookup_vals(@name)
 
     rules.each do |tuple| 
-      rule = tuple.value(RuleTable.Field::OBJECT)
+      rule = tuple.value(Rule::RuleTable::Field::OBJECT)
 
       # Store all planned queries from a given rule. 
       # NOTE: delta rules can produce > 1 query. 
       rule.query(@periodics).each do |query|
         input = query.input
-        @queries[input.name] = Array.new if !@queries.has_key?(query.input.name)
-        @queries[input.name] << query
+        @queries[input.name.hash] = Array.new if !@queries.has_key?(query.input.name.hash)
+        @queries[input.name.hash] << query
       end
 
     end
     if (periodics.size > 0) then
       @periodics.each do |tuple|
-        $system.periodic.force(tuple)
+        System.periodic.force(tuple)
       end
     end
     return true;
@@ -99,8 +104,8 @@ class Program
 		@name.<=>(o.name)
 	end
 
-	def queries(name)
-		@queries[name]
+	def get_queries(name)
+		@queries[name.hash]
 	end
 end
 

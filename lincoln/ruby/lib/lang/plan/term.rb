@@ -11,8 +11,8 @@ class Term
 		@@identifier += 1
 	end
 	
-	attr_reader :program, :rule, :position, :identifier
-	attr_accessor :location
+	attr_reader :identifier
+	attr_accessor :location, :program, :rule, :position
 	  	
   def ==(o) 
 		if (o.class <= Term)

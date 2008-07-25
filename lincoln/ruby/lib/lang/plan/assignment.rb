@@ -53,6 +53,6 @@ class Assignment < Term
 	end
 
 	def set(program, rule, position)
-		Compiler.assignment.force(Tuple.new(program, rule, position, this))
+		Compiler.assignment.force(Tuple.new(program, rule, position, self))
 	end
 end

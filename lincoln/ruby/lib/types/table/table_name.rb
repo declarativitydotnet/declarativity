@@ -16,6 +16,10 @@ class TableName
     return to_s.hash
   end
   
+  def eql?(o)
+    o.is_a? TableName && to_s == o.to_s
+  end
+  
   def to_s
     scope.to_s + "::" + name.to_s
   end

@@ -19,7 +19,7 @@ class Fact < Clause
 			super(TableName.new(GLOBALSCOPE, "fact"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
 			programKey = Key.new(Field::PROGRAM)
 			index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
-			@secondary[programKey] = index
+			@secondary[programKey.hash] = index
 		end
 		
 		def insert(tuple)

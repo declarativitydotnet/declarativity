@@ -60,9 +60,9 @@ class Driver < Monitor
         state = EvalState.new(time, program, name)
 
         if !(evaluations.includes? state) 
-          evaluations.put(state, state)
+          evaluations[state] = state
         else 
-          state = evaluations.get(state)
+          state = evaluations[state]
         end
 
         insertions  = tuple.value(Field::INSERTIONS)
@@ -96,7 +96,7 @@ class Driver < Monitor
 
         watchInsert.evaluate(insertions) unless watchInsert.nil?
 
-        querySet = program.queries(insertions.name)
+        querySet = program.get_queries(insertions.name)
         break if querySet.nil?
 
         delta = TupleSet.new(insertions.name)
@@ -136,7 +136,7 @@ class Driver < Monitor
             exit
           end
           delta = TupleSet.new(deletions.name.new)
-          queries = program.queries(delta.name)
+          queries = program.get_queries(delta.name)
           if !queries.nil? then
             queries.each do |query|
               output = Table.new(query.output.name)

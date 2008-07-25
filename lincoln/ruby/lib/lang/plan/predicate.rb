@@ -1,6 +1,8 @@
 require 'lib/lang/plan/term'
 require 'lib/lang/plan/dont_care'
 require 'lib/lang/plan/arguments'
+require 'lib/types/operator/index_join'
+require 'lib/types/operator/scan_join'
 
 class Predicate < Term 
   include Enumerable
@@ -27,7 +29,7 @@ class Predicate < Term
 			super(TableName.new(GLOBALSCOPE, "predicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		end
 		
-    def insert(tuple)
+    def insert_tup(tuple)
 			object = tuple.value(Field::OBJECT)
 			if (object.nil?) then
 				throw UpdateException, "Predicate object null"
@@ -115,7 +117,7 @@ class Predicate < Term
 		end
 		
 		if (@notin) then
-			return AntiScanJoin.new(this, input)
+			return AntiScanJoin.new(self, input)
 		end
 		
 		table = Table.find_table(@name)
@@ -124,10 +126,10 @@ class Predicate < Term
 			if (table.primary.key == indexKey) then
 				index = table.primary
 			elsif (table.secondary.has_key?(indexKey))
-				index = table.secondary.get(indexKey)
+				index = table.secondary[indexKey.hash]
 			else
 				index = HashIndex.new(table, indexKey, Index::Type::SECONDARY)
-				table.secondary[indexKey] = index
+				table.secondary[indexKey.hash] = index
 			end
 		end
 		
@@ -139,8 +141,7 @@ class Predicate < Term
 	end
 	
 	def set(program, rule, position) 
-# very mysterious
-#    Program.predicate.force(Tuple.new(program, rule, position, event.toString(), this))
+    Program.predicate.force(Tuple.new(program, rule, position, event.to_s, self))
 		@schema = Schema.new(name, nil)
 		@arguments.each do |arg|
 			if (arg.class <= Variable) then

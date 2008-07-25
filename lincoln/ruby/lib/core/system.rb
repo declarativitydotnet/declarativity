@@ -44,7 +44,7 @@ class System
 		@@programs.has_key?(name) ? programs[name] : nil
 	end
 	
-	def System.program_np(name, program)
+	def System.install_program(name, program)
 		@@programs[name] = program
 	end
 	

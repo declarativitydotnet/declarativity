@@ -1,3 +1,4 @@
+require 'lib/lang/plan/program'
 require 'lib/lang/plan/rule'
 require 'lib/lang/plan/predicate'
 require 'lib/lang/plan/value'
@@ -11,6 +12,8 @@ class TestRule < Test::Unit::TestCase
   def default_test
     sys = System.new
     sys.init
+
+    p = Program.new("testprog", "jmh")
 
     # set up a table link(from, to, cost, annotation)
     v1 = Variable.new("from", Integer)
@@ -30,6 +33,7 @@ class TestRule < Test::Unit::TestCase
     tn = TableName.new(nil, "link")
     ts = TupleSet.new(tn, t1, t2)
     table = BasicTable.new(tn, Table::INFINITY, Table::INFINITY, Key.new(1,2), [Integer,Integer,Float,String])
+    p.definition(table)
     
     # simple projection rule
     link = Predicate.new(false, tn, Table::Event::NONE, [v1, v2, v3, v4])
@@ -38,8 +42,11 @@ class TestRule < Test::Unit::TestCase
     path.set('testprog', 'r1', 0)
     body = [link]
     r = Rule.new(1, 'r1', true, false,  path, body)
+    r.set('testprog')
     assert_equal(r.to_s, "public r1 ::path(from:0, to:1, cost:2) :- \n\t::link(from:0, to:1, cost:2, annotation:3);\n\t;\n") 
-    result = r.query(nil)[0].evaluate(ts)
+    p.plan
+    assert_equal(p.get_queries(tn)[0].rule.to_s, "r1")
+    result = p.get_queries(tn)[0].evaluate(ts)
     assert_equal(result.tups.length, 2)
     assert_equal(result.tups[0].values, [1,2,0.5])
     assert_equal(result.tups[1].values, [2,3,1.0])
@@ -77,10 +84,16 @@ class TestRule < Test::Unit::TestCase
     path3.set('testprog', 'r2', 0)
     
     r2 = Rule.new(1, 'r2', true, false, path3, body)
-    # now run with a delta containing tuple t2, and the second delta-rewrite should find t1
-    query = r2.query(nil)
-    result = query[1].evaluate(TupleSet.new(tn, t2))
-    assert_equal(result.size, 1)
+    r2.set('testprog')
     
+    p.plan
+    #### ADD TESTS HERE TO MAKE SURE THE PROGRAM OBJECT LOOKS GOOD
+    # require 'ruby-debug'; debugger
+    # 
+    # # now run with a delta containing tuple t2, and the second delta-rewrite should find t1
+    # query = r2.query(nil)
+    # result = query[1].evaluate(TupleSet.new(tn, t2))
+    # assert_equal(result.size, 1)
+    #     
   end
 end
