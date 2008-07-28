@@ -1,0 +1,189 @@
+require 'lib/types/table/object_table'
+class ColumnTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		COLUMNID=0
+		TABLEID=1
+		DATATYPE=2
+
+	end
+	@@SCHEMA = [Integer,Integer,String]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "ColumnTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::COLUMNID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		columnid = Variable.new("columnid",Integer)
+		tableid = Variable.new("tableid",Integer)
+		datatype = Variable.new("datatype",String)
+		return Schema.new("Column",[columnid,tableid,datatype])
+	end
+end
+class TermTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		TERMID=0
+		RULEID=1
+		POSITION=2
+		TEXT=3
+
+	end
+	@@SCHEMA = [Integer,Integer,Integer,String]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "TermTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::TERMID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		termid = Variable.new("termid",Integer)
+		ruleid = Variable.new("ruleid",Integer)
+		position = Variable.new("position",Integer)
+		text = Variable.new("text",String)
+		return Schema.new("Term",[termid,ruleid,position,text])
+	end
+end
+class TableTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		TABLEID=0
+		TABLENAME=1
+
+	end
+	@@SCHEMA = [Integer,String]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "TableTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::TABLEID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		tableid = Variable.new("tableid",Integer)
+		tablename = Variable.new("tablename",String)
+		return Schema.new("Table",[tableid,tablename])
+	end
+end
+class PrimaryExpressionTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		PRIMARYEXPRESSIONID=0
+		TERMID=1
+		POSITION=2
+		TEXT=3
+		TYPE=4
+		DATATYPE=5
+
+	end
+	@@SCHEMA = [Integer,Integer,Integer,String,String,String]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "PrimaryExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::PRIMARYEXPRESSIONID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		primaryexpressionid = Variable.new("primaryexpressionid",Integer)
+		termid = Variable.new("termid",Integer)
+		position = Variable.new("position",Integer)
+		text = Variable.new("text",String)
+		type = Variable.new("type",String)
+		datatype = Variable.new("datatype",String)
+		return Schema.new("PrimaryExpression",[primaryexpressionid,termid,position,text,type,datatype])
+	end
+end
+class FactTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		FACTID=0
+		PROGRAMID=1
+		TABLENAME=2
+
+	end
+	@@SCHEMA = [Integer,Integer,String]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "FactTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::FACTID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		factid = Variable.new("factid",Integer)
+		programid = Variable.new("programid",Integer)
+		tablename = Variable.new("tablename",String)
+		return Schema.new("Fact",[factid,programid,tablename])
+	end
+end
+class PredicateTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		PREDICATEID=0
+		TERMID=1
+		POSITION=2
+		TEXT=3
+
+	end
+	@@SCHEMA = [Integer,Integer,Integer,String]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "PredicateTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::PREDICATEID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		predicateid = Variable.new("predicateid",Integer)
+		termid = Variable.new("termid",Integer)
+		position = Variable.new("position",Integer)
+		text = Variable.new("text",String)
+		return Schema.new("Predicate",[predicateid,termid,position,text])
+	end
+end
+class MyIndexTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		INDEXID=0
+		TABLEID=1
+		COLUMNID=2
+
+	end
+	@@SCHEMA = [Integer,Integer,Integer]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyIndexTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::INDEXID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		indexid = Variable.new("indexid",Integer)
+		tableid = Variable.new("tableid",Integer)
+		columnid = Variable.new("columnid",Integer)
+		return Schema.new("MyIndex",[indexid,tableid,columnid])
+	end
+end
+class ExpressionTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		EXPRESSIONID=0
+		TERMID=1
+		TABLENAME=2
+		POSITION=3
+		EVENT=4
+
+	end
+	@@SCHEMA = [Integer,Integer,String,Integer,String]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "ExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::EXPRESSIONID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		expressionid = Variable.new("expressionid",Integer)
+		termid = Variable.new("termid",Integer)
+		tablename = Variable.new("tablename",String)
+		position = Variable.new("position",Integer)
+		event = Variable.new("event",String)
+		return Schema.new("Expression",[expressionid,termid,tablename,position,event])
+	end
+end
