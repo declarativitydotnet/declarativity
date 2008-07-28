@@ -16,10 +16,10 @@
 
 
 grammar Overlog
-       	rule Program
-		  Programname Spacing Clauses #EndOfFile   
+       	rule pprogram
+		  pprogramname Spacing Clauses #EndOfFile   
 	end
-     	rule Programname
+     	rule pprogramname
 		  'program' Spacing Word ';'
 	end
      	rule Clauses
