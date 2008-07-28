@@ -1,11 +1,11 @@
-create table Term (
+table Term (
 	termid Integer,
 	ruleid Integer,
 	term_pos Integer,
 	term_txt String
 ) keys (0);
 
-create table Predicate (
+table Predicate (
 	predicateid Integer,
 	termid Integer,
 	pred_pos Integer,
@@ -14,7 +14,7 @@ create table Predicate (
 ) 
 keys(0);
 
-create table PrimaryExpression (
+table PrimaryExpression (
 	primaryexpressionid Integer,
 	termid Integer,
 	p_pos Integer,
@@ -23,32 +23,37 @@ create table PrimaryExpression (
 	datatype String
 ) keys (0);
 
-create table Expression (
+table Expression (
 	expressionid Integer,
 	termid Integer,
 	expr_pos Integer,
 	expr_text String
 ) keys(0);
 
-create table Fact (
+table Fact (
 	factid Integer,
 	programid Integer,
 	tablename String
 ) keys(0);
 
-create table Table (
+table Table (
 	tableid Integer,
 	tablename String
 ) keys(0);
 
-create table Column (
+table Column (
 	columnid Integer,
 	tableid Integer,
 	datatype String
 ) keys(0);
 
-create table MyIndex (
+table MyIndex (
 	indexid Integer,
 	tableid Integer,
 	indx_pos Integer
+) keys(0);
+
+table Program (
+	programid Integer,
+	owner String
 ) keys(0);
