@@ -16,8 +16,11 @@ class ColumnTable < ObjectTable
 	end
 	def schema_of
 		columnid = Variable.new("columnid",Integer)
+		columnid.position=0
 		tableid = Variable.new("tableid",Integer)
+		tableid.position=1
 		datatype = Variable.new("datatype",String)
+		datatype.position=2
 		return Schema.new("Column",[columnid,tableid,datatype])
 	end
 end
@@ -39,9 +42,13 @@ class TermTable < ObjectTable
 	end
 	def schema_of
 		termid = Variable.new("termid",Integer)
+		termid.position=0
 		ruleid = Variable.new("ruleid",Integer)
+		ruleid.position=1
 		position = Variable.new("position",Integer)
+		position.position=2
 		text = Variable.new("text",String)
+		text.position=3
 		return Schema.new("Term",[termid,ruleid,position,text])
 	end
 end
@@ -61,7 +68,9 @@ class TableTable < ObjectTable
 	end
 	def schema_of
 		tableid = Variable.new("tableid",Integer)
+		tableid.position=0
 		tablename = Variable.new("tablename",String)
+		tablename.position=1
 		return Schema.new("Table",[tableid,tablename])
 	end
 end
@@ -85,11 +94,17 @@ class PrimaryExpressionTable < ObjectTable
 	end
 	def schema_of
 		primaryexpressionid = Variable.new("primaryexpressionid",Integer)
+		primaryexpressionid.position=0
 		termid = Variable.new("termid",Integer)
+		termid.position=1
 		position = Variable.new("position",Integer)
+		position.position=2
 		text = Variable.new("text",String)
+		text.position=3
 		type = Variable.new("type",String)
+		type.position=4
 		datatype = Variable.new("datatype",String)
+		datatype.position=5
 		return Schema.new("PrimaryExpression",[primaryexpressionid,termid,position,text,type,datatype])
 	end
 end
@@ -110,8 +125,11 @@ class FactTable < ObjectTable
 	end
 	def schema_of
 		factid = Variable.new("factid",Integer)
+		factid.position=0
 		programid = Variable.new("programid",Integer)
+		programid.position=1
 		tablename = Variable.new("tablename",String)
+		tablename.position=2
 		return Schema.new("Fact",[factid,programid,tablename])
 	end
 end
@@ -133,9 +151,13 @@ class PredicateTable < ObjectTable
 	end
 	def schema_of
 		predicateid = Variable.new("predicateid",Integer)
+		predicateid.position=0
 		termid = Variable.new("termid",Integer)
+		termid.position=1
 		position = Variable.new("position",Integer)
+		position.position=2
 		text = Variable.new("text",String)
+		text.position=3
 		return Schema.new("Predicate",[predicateid,termid,position,text])
 	end
 end
@@ -144,7 +166,7 @@ class MyIndexTable < ObjectTable
 	class Field
 		INDEXID=0
 		TABLEID=1
-		COLUMNID=2
+		POSITION=2
 
 	end
 	@@SCHEMA = [Integer,Integer,Integer]
@@ -156,9 +178,12 @@ class MyIndexTable < ObjectTable
 	end
 	def schema_of
 		indexid = Variable.new("indexid",Integer)
+		indexid.position=0
 		tableid = Variable.new("tableid",Integer)
-		columnid = Variable.new("columnid",Integer)
-		return Schema.new("MyIndex",[indexid,tableid,columnid])
+		tableid.position=1
+		position = Variable.new("position",Integer)
+		position.position=2
+		return Schema.new("MyIndex",[indexid,tableid,position])
 	end
 end
 class ExpressionTable < ObjectTable
@@ -180,10 +205,15 @@ class ExpressionTable < ObjectTable
 	end
 	def schema_of
 		expressionid = Variable.new("expressionid",Integer)
+		expressionid.position=0
 		termid = Variable.new("termid",Integer)
+		termid.position=1
 		tablename = Variable.new("tablename",String)
+		tablename.position=2
 		position = Variable.new("position",Integer)
+		position.position=3
 		event = Variable.new("event",String)
+		event.position=4
 		return Schema.new("Expression",[expressionid,termid,tablename,position,event])
 	end
 end

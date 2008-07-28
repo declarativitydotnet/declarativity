@@ -104,6 +104,7 @@ $tables.each do |table, arr|
 	print "\tdef schema_of\n"
 	(0..arr.size-1).each do |i|
 		print "\t\t"+ arr[i]+" = Variable.new(\""+arr[i]+"\","+$types[table][i]+")\n"
+		print "\t\t"+arr[i]+".position="+i.to_s+"\n"
 	end
 	print "\t\treturn Schema.new(\""+table+"\",["+arr.join(",")+"])\n"
 	print "\tend\n"
