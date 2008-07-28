@@ -39,7 +39,7 @@ $index = IndexTable.new
 			print "TUP: "+t.to_s+"\n"
 		
 		end
-		assert_equal(res.tups.length, 4)
+		assert_equal(2, res.tups.length)
 	end
 		
 	def test_deletion
