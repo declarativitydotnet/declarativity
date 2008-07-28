@@ -1,15 +1,26 @@
+# require 'lib/lang/plan/program'
+# require 'lib/lang/plan/rule'
+# require 'lib/lang/plan/predicate'
+# require 'lib/lang/plan/value'
+# require 'lib/lang/plan/native_expression'
+# require 'lib/lang/plan/selection_term'
+# require 'lib/types/table/table'
+# require 'lib/core/system'
+# require "test/unit"
+# require "rubygems"
+
+require 'lib/lang/compiler'
 require 'lib/lang/plan/program'
-require 'lib/lang/plan/rule'
-require 'lib/lang/plan/predicate'
+require "lib/types/table/table"
+require "lib/lang/plan/selection_term"
 require 'lib/lang/plan/value'
-require 'lib/lang/plan/native_expression'
-require 'lib/lang/plan/selection_term'
-require 'lib/types/table/table'
+require 'lib/lang/plan/predicate'
 require 'lib/core/system'
 require "test/unit"
-require "rubygems"
+require 'lib/lang/plan/native_expression'
 
-class TestRule < Test::Unit::TestCase
+
+class TestProgram < Test::Unit::TestCase
   def default_test
     sys = System.new
     sys.init

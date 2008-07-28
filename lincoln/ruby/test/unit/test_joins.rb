@@ -1,5 +1,6 @@
 require "lib/types/table/table"
 require "lib/types/table/index_table"
+require "lib/types/table/event_table"
 require "lib/types/operator/scan_join"
 require "lib/types/operator/index_join"
 require "lib/lang/plan/boolean"
@@ -8,6 +9,7 @@ require 'lib/types/function/filter'
 require 'lib/lang/plan/arguments'
 require 'lib/lang/plan/value'
 require 'lib/lang/plan/predicate'
+require 'lib/core/system'
 require "test/unit"
 
 class TestJoin < Test::Unit::TestCase

@@ -1,10 +1,11 @@
 # The driver for processesing the Overlog language.
 require 'lib/types/basic/tuple'
 require 'lib/types/table/object_table'
-require 'lib/lang/plan/program'
 require 'lib/lang/plan/watch_clause'
 require 'lib/lang/plan/selection_term'
 require 'lib/lang/plan/function'
+require "lib/lang/plan/program"
+
 class Compiler # in java, this is a subclass of xtc.util.Tool
   @@FILES =  ["/Users/joeh/devel/lincoln/ruby/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lang/stratachecker.olg"]
 
@@ -17,6 +18,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
       FILE=2
       PROGRAM=3
     end
+    
     @@SCHEMA = [String,String,String,Program]
     # String.class,  // Program name
     # String.class,  // Program owner

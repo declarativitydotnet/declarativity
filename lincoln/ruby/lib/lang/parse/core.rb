@@ -19,11 +19,11 @@ module Overlog
   include Treetop::Runtime
 
   def root
-    @root || :Program
+    @root || :pprogram
   end
 
-  module Program0
-    def Programname
+  module Pprogram0
+    def pprogramname
       elements[0]
     end
 
@@ -36,16 +36,16 @@ module Overlog
     end
   end
 
-  def _nt_Program
+  def _nt_pprogram
     start_index = index
-    if node_cache[:Program].has_key?(index)
-      cached = node_cache[:Program][index]
+    if node_cache[:pprogram].has_key?(index)
+      cached = node_cache[:pprogram][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0, s0 = index, []
-    r1 = _nt_Programname
+    r1 = _nt_pprogramname
     s0 << r1
     if r1
       r2 = _nt_Spacing
@@ -57,18 +57,18 @@ module Overlog
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(Program0)
+      r0.extend(Pprogram0)
     else
       self.index = i0
       r0 = nil
     end
 
-    node_cache[:Program][start_index] = r0
+    node_cache[:pprogram][start_index] = r0
 
     return r0
   end
 
-  module Programname0
+  module Pprogramname0
     def Spacing
       elements[1]
     end
@@ -79,10 +79,10 @@ module Overlog
 
   end
 
-  def _nt_Programname
+  def _nt_pprogramname
     start_index = index
-    if node_cache[:Programname].has_key?(index)
-      cached = node_cache[:Programname][index]
+    if node_cache[:pprogramname].has_key?(index)
+      cached = node_cache[:pprogramname][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -116,13 +116,13 @@ module Overlog
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(Programname0)
+      r0.extend(Pprogramname0)
     else
       self.index = i0
       r0 = nil
     end
 
-    node_cache[:Programname][start_index] = r0
+    node_cache[:pprogramname][start_index] = r0
 
     return r0
   end

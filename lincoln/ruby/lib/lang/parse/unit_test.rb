@@ -1,14 +1,15 @@
 require "test/unit"
 
-require 'local_tw.rb'
-require 'Treewalker.rb'
+require 'lib/lang/parse/local_tw.rb'
+require 'lib/lang/parse/Treewalker.rb'
 
-require 'schema.rb'
+require 'lib/lang/parse/schema.rb'
 
 require 'lib/types/table/object_table.rb'
-#require 'lib/lang/plan/predicate.rb'
+require 'lib/lang/plan/predicate.rb'
+require 'lib/lang/compiler'
 #require 'lib/lang/plan/program.rb'
-#require 'lib/lang/plan/rule.rb'
+require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
 
 require 'lib/types/table/index_table.rb'
@@ -21,31 +22,21 @@ class TestParse < Test::Unit::TestCase
 $catalog = Catalog.new
 $index = IndexTable.new
 	def test_join1
-		return
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
-		schema = @terms.schema_of
-
-		print "preds.name is "+@preds.name.to_s+"\n"
-		pred  = Predicate.new(false,@terms.name,@terms,schema.variables)
-		pred.set("global", "r3", 1) 
-		sj = ScanJoin.new(pred, schema)	
+		# set up schema table's predicate
+		require 'ruby-debug'; debugger
+		term_schema = @terms.schema_of
+		print "terms.name is "+@terms.name.to_s+"\n"
+		term_pred  = Predicate.new(false,@terms.name,@terms,term_schema.variables)
+		term_pred.set("global", "r3", 1)
 		
-		@preds.tuples.each do |t| 
-			#puts schema.to_s
-			print "TUP: "+t.to_s+"\n"
-			t.schema=@preds.schema_of
-			#puts t.schema.to_s
-			print "FOO\n"
-			ts = TupleSet.new("some set" ,t)
-			print "TS: "+ts.to_s+"\n"
-			res = sj.evaluate(ts)
-			puts res.inspect
-		end
-		
-		
+		sj = ScanJoin.new(term_pred, @preds.schema_of)	
+		ts = TupleSet.new("pred", *@preds.tuples)
+		res = sj.evaluate(ts)
+		assert_equal(res.tups.length, 4)
 	end
-
+		
 	def test_deletion
 		prep("program foo;\ndelete path(A,B,_) :- path(B,Z,C);\n")
 	end

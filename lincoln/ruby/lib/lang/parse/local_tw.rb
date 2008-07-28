@@ -2,12 +2,12 @@
 
 require "rubygems"
 require "treetop"
-require "core.rb"
+require "lib/lang/parse/core.rb"
 #require "olg.rb"
 
-require "procedural.rb"
-require 'lib/types/basic/Tuple.rb'
-require "Treewalker.rb"
+require "lib/lang/parse/procedural.rb"
+require 'lib/types/basic/tuple'
+require "lib/lang/parse/Treewalker.rb"
 
 # um... symbol tables?
 @@state = Hash.new
