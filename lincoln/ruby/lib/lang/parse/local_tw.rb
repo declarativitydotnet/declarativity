@@ -14,12 +14,22 @@ require "Treewalker.rb"
 @@positions = Hash.new
 @@current = Hash.new
 @@lines = 0
+@@verbose = 0 
 
 class OverlogCompiler
+
+
 
 # local modules
 
 class VisitGeneric < Treewalker::Handler
+
+	def print_table(name,tuple)
+		if (@@verbose.eql?("v")) then
+			print name+"("+tuple.join(",")+");\n"
+		end
+	end
+
 	def initialize()
 		@@positions["_Universal"] = @@positions["_Termpos"] = @@positions["_Exprpos"] = @@positions["_Primpos"] = @@positions["Rule"] = 0
 	end 
@@ -81,7 +91,6 @@ class VisitPexp < VisitGeneric
 end
 
 
-
 # "real" subclasses
 class VisitPredicate < VisitTerm
 	def initialize (pt,term)
@@ -91,7 +100,9 @@ class VisitPredicate < VisitTerm
 	def semantic(text,obj)
 		super(text,obj)
 		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
-		result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"],nil)),nil)
+		result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])),nil)
+
+		#print "PRED ARGS: "+obj.args.to_s+"\n"
 
 	end
 end
@@ -106,7 +117,7 @@ class VisitConstant < VisitPexp
 		t = text.gsub('"',"")
 		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??"])
 
-		@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"var","??")),nil)
+		@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??")),nil)
 	end
 end
 
@@ -136,34 +147,71 @@ class VisitFact < VisitTerm
 	end
 end
 
+class VisitAggregate < VisitGeneric
+
+	def initialize (pt)
+		super()
+		@pet = pt
+	end
+	def semantic(text,obj)
+		super(text,obj)
+		t = text.gsub('"',"")
+		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"agg_func","??"])
+
+		@pet.insert(TupleSet.new("function",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+obj.func.text_value+'"',"agg_func","??")),nil)
+	end
+end
+
 class VisitRule < VisitBase
 	def semantic(text,obj)
 		t = text.gsub('"',"")
 		super(text,obj)
+
+		#puts obj.elements.inspect
+		if (defined? obj.elements.deleter) then
+			print "OBJ DELETE!!!! ("+ obj.elements.deleter.to_s+")\n"
+		end
 		print_table("rule",[@@positions["_Universal"],@@positions["Program"],'"'+t+'"',-1,nil,nil])
 	end
 end
 
 class VisitTable < VisitBase
+	def initialize(pt)
+		@tt = pt
+	end
 	def semantic(text,obj)
 		super(text,obj)
 		print_table("table",[@@positions["_Universal"],text])
+		@@current["table"] = @@positions["_Universal"]
+		@tt.insert(TupleSet.new("table",Tuple.new(@@positions["_Universal"],text)),nil)
 	end
 end
 
 class VisitColumn < VisitGeneric
+	def initialize(col)
+		@col = col
+	end	
 	def semantic(text,obj)
 		super(text,obj)	
 		#coltab(@@positions["TableName"],@@positions["Type"],text);
 		print_table("columns",[@@positions["TableName"],@@positions["Type"],'"'+text+'"'])
+		@col.insert(TupleSet.new("column",Tuple.new(@@current["table"],@@positions["_Universal"],text)),nil)
 	end
 end
+
 class VisitIndex < VisitGeneric
+	def initialize(ix)
+		@ix = ix
+	end
 	def semantic(text,obj)
-		super(text,obj)
 		suck_nums(obj).each do |indx|
-			#print "\tINDEX: "+indx+"\n"
-			indxtab(@@positions["TableName"],indx)
+			print "\tINDEX: "+indx+" at "+@@current["table"].to_s+"\n"
+			#indxtab(@@positions["TableName"],indx)
+			print_table("index",[@@positions["TableName"],indx])
+
+			puts @ix.to_s
+			super(text,obj)
+			@ix.insert(TupleSet.new("index",Tuple.new(@@positions["_Universal"],@@current["table"],indx)),nil)
 		end
 	end
 end
@@ -215,7 +263,8 @@ end
 
 # class body
 
-	def initialize(rules,terms,preds,pexps,exps,facts)
+
+	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices)
 
 		@ruletable = rules
 		@termtable = terms
@@ -223,6 +272,9 @@ end
 		@pextable = pexps
 		@extable = exps
 		@facttable = facts
+		@tabletable = tables
+		@columntable = columns
+		@indextable = indices
 
 
 		# reinitialize these awful globals, fingers crossed for good garbage collection.
@@ -231,14 +283,14 @@ end
 		@@current = Hash.new
 		@@lines = 0
 	end
+	def verbose=(v)
+		@@verbose = v
+	end	
 
 	def parse(prog)
 		parser = OverlogParser.new
 		@tree = parser.parse(prog)
-		if @tree
-			puts 'success'
-			
-		else
+		if !@tree
 			puts 'failure'
 			raise RuntimeError.new(parser.failure_reason)
 		end 
@@ -253,11 +305,11 @@ end
 		sky.add_handler("Word",vg,1)
 		sky.add_handler("Location",vg,1)
 		sky.add_handler("Watch",vg,1)
-		sky.add_handler("Expression",VisitExpression.new(@extable),1)
-		sky.add_handler("PrimaryExpression",vg,1)
+		sky.add_handler("expression",VisitExpression.new(@extable),1)
+		sky.add_handler("Primaryexpression",vg,1)
 		sky.add_handler("Predicate",VisitPredicate.new(@predicatetable,@termtable),1)
 		sky.add_handler("Fact",VisitFact.new(@facttable,@termtable),1)
-		sky.add_handler("Definition",VisitTable.new,1)
+		sky.add_handler("Definition",VisitTable.new(@tabletable),1)
 		sky.add_handler("TableName",vg,1)
 		sky.add_handler("Schema",vg,1)
 		sky.add_handler("Rule",VisitRule.new,1)
@@ -268,16 +320,16 @@ end
 		sky.add_handler("Constant",VisitConstant.new(@pextable),1)
 
 
-		sky.add_handler("Aggregate",vg,1)
+		sky.add_handler("Aggregate",VisitAggregate.new(@pextable),1)
 		sky.add_handler("Name",vg,1)
-		sky.add_handler("AggregateVariable",vg,1)
+		sky.add_handler("AggregateVariable",VisitVariable.new(@pextable),1)
 
 		#sky.add_handler("Arguments",vg,1)
 
 		sky.add_handler("Periodic",vg,1)
-		sky.add_handler("Table",VisitTable.new,1)
-		sky.add_handler("Type",VisitColumn.new,1)
-		sky.add_handler("Keys",VisitIndex.new,1)
+		sky.add_handler("Table",VisitTable.new(@tabletable),1)
+		sky.add_handler("Type",VisitColumn.new(@columntable),1)
+		sky.add_handler("Keys",VisitIndex.new(@indextable),1)
 
 		sky.add_handler("LineTerminator",VisitNewline.new,1)
 

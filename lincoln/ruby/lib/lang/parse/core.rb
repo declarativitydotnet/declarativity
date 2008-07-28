@@ -1,6 +1,6 @@
 # this grammar is mostly auto-generated from the rats! grammar of the java implementation of P2.
 # rats!, treetop and peg/leg are all implementations of packrat parsers, which are memoizing
-# parsers for Parsing Expression Grammars (PEGs).
+# parsers for Parsing expression Grammars (PEGs).
 # syntax-directed translation (rats! -> treetop) was performed using a PEG grammar in the peg/leg
 # syntax.  the grammar recognizes a rats! grammar and outputs an equivalent treetop grammar.
 #
@@ -9,6 +9,10 @@
 # that caused stack overflows in ruby.  these all had to be manually re-written to remove
 # left-recursion. (note: these rewrites need to be carefully reread: the operator precedence is
 # likely thrown off)
+
+# also, PEG rules with uppercase first letters causes namespace issues in ruby.  before I figured this
+# out, I was unable to descend below a nonterminal semantic element, and structured the code in 
+# some odd ways to work around this (see the semantic block for "name" (previously "Name"))
 
 
 module Overlog
@@ -19,7 +23,7 @@ module Overlog
   end
 
   module Program0
-    def ProgramName
+    def Programname
       elements[0]
     end
 
@@ -41,7 +45,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_ProgramName
+    r1 = _nt_Programname
     s0 << r1
     if r1
       r2 = _nt_Spacing
@@ -64,7 +68,7 @@ module Overlog
     return r0
   end
 
-  module ProgramName0
+  module Programname0
     def Spacing
       elements[1]
     end
@@ -75,10 +79,10 @@ module Overlog
 
   end
 
-  def _nt_ProgramName
+  def _nt_Programname
     start_index = index
-    if node_cache[:ProgramName].has_key?(index)
-      cached = node_cache[:ProgramName][index]
+    if node_cache[:Programname].has_key?(index)
+      cached = node_cache[:Programname][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -112,13 +116,13 @@ module Overlog
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(ProgramName0)
+      r0.extend(Programname0)
     else
       self.index = i0
       r0 = nil
     end
 
-    node_cache[:ProgramName][start_index] = r0
+    node_cache[:Programname][start_index] = r0
 
     return r0
   end
@@ -265,7 +269,7 @@ module Overlog
       elements[1]
     end
 
-    def TypeName
+    def Typename
       elements[2]
     end
   end
@@ -291,7 +295,7 @@ module Overlog
       r2 = _nt_Spacing
       s0 << r2
       if r2
-        r3 = _nt_TypeName
+        r3 = _nt_Typename
         s0 << r3
       end
     end
@@ -309,7 +313,7 @@ module Overlog
   end
 
   module Fact0
-    def TableName
+    def Tablename
       elements[0]
     end
 
@@ -317,7 +321,7 @@ module Overlog
       elements[1]
     end
 
-    def ExpressionList
+    def expressionList
       elements[2]
     end
 
@@ -328,7 +332,7 @@ module Overlog
 
   module Fact1
 				def Fact
-					return self.TableName.text_value
+					return self.Tablename.text_value
 				end
   end
 
@@ -341,13 +345,13 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_TableName
+    r1 = _nt_Tablename
     s0 << r1
     if r1
       r2 = _nt_opar
       s0 << r2
       if r2
-        r3 = _nt_ExpressionList
+        r3 = _nt_expressionList
         s0 << r3
         if r3
           r4 = _nt_cpar
@@ -370,13 +374,7 @@ module Overlog
   end
 
   module Rule0
-    def Spacing
-      elements[1]
-    end
-  end
-
-  module Rule1
-    def RuleHead
+    def rulehead
       elements[2]
     end
 
@@ -393,12 +391,12 @@ module Overlog
     end
   end
 
-  module Rule2
-    def Name
+  module Rule1
+    def name
       elements[1]
     end
 
-    def RuleHead
+    def rulehead
       elements[3]
     end
 
@@ -415,10 +413,11 @@ module Overlog
     end
   end
 
-  module Rule3
+  module Rule2
  
 				def Rule
 					return self
+					#return [rulehead.text_value,deleter.text_value]
 				end
   end
 
@@ -446,26 +445,7 @@ module Overlog
     end
     s1 << r2
     if r2
-      i5, s5 = index, []
-      if input.index('delete', index) == index
-        r6 = (SyntaxNode).new(input, index...(index + 6))
-        @index += 6
-      else
-        terminal_parse_failure('delete')
-        r6 = nil
-      end
-      s5 << r6
-      if r6
-        r7 = _nt_Spacing
-        s5 << r7
-      end
-      if s5.last
-        r5 = (SyntaxNode).new(input, i5...index, s5)
-        r5.extend(Rule0)
-      else
-        self.index = i5
-        r5 = nil
-      end
+      r5 = _nt_deleter
       if r5
         r4 = r5
       else
@@ -473,26 +453,26 @@ module Overlog
       end
       s1 << r4
       if r4
-        r8 = _nt_RuleHead
-        s1 << r8
-        if r8
-          r9 = _nt_Spacing
-          s1 << r9
-          if r9
+        r6 = _nt_rulehead
+        s1 << r6
+        if r6
+          r7 = _nt_Spacing
+          s1 << r7
+          if r7
             if input.index(':-', index) == index
-              r10 = (SyntaxNode).new(input, index...(index + 2))
+              r8 = (SyntaxNode).new(input, index...(index + 2))
               @index += 2
             else
               terminal_parse_failure(':-')
-              r10 = nil
+              r8 = nil
             end
-            s1 << r10
-            if r10
-              r11 = _nt_Spacing
-              s1 << r11
-              if r11
-                r12 = _nt_RuleBody
-                s1 << r12
+            s1 << r8
+            if r8
+              r9 = _nt_Spacing
+              s1 << r9
+              if r9
+                r10 = _nt_RuleBody
+                s1 << r10
               end
             end
           end
@@ -501,67 +481,61 @@ module Overlog
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(Rule1)
+      r1.extend(Rule0)
     else
       self.index = i1
       r1 = nil
     end
     if r1
       r0 = r1
-      r0.extend(Rule3)
+      r0.extend(Rule2)
     else
-      i13, s13 = index, []
+      i11, s11 = index, []
       if input.index('public', index) == index
-        r15 = (SyntaxNode).new(input, index...(index + 6))
+        r13 = (SyntaxNode).new(input, index...(index + 6))
         @index += 6
       else
         terminal_parse_failure('public')
-        r15 = nil
+        r13 = nil
       end
-      if r15
-        r14 = r15
+      if r13
+        r12 = r13
       else
-        r14 = SyntaxNode.new(input, index...index)
+        r12 = SyntaxNode.new(input, index...index)
       end
-      s13 << r14
-      if r14
-        r16 = _nt_Name
-        s13 << r16
-        if r16
-          if input.index('delete', index) == index
-            r18 = (SyntaxNode).new(input, index...(index + 6))
-            @index += 6
+      s11 << r12
+      if r12
+        r14 = _nt_name
+        s11 << r14
+        if r14
+          r16 = _nt_deleter
+          if r16
+            r15 = r16
           else
-            terminal_parse_failure('delete')
-            r18 = nil
+            r15 = SyntaxNode.new(input, index...index)
           end
-          if r18
-            r17 = r18
-          else
-            r17 = SyntaxNode.new(input, index...index)
-          end
-          s13 << r17
-          if r17
-            r19 = _nt_RuleHead
-            s13 << r19
-            if r19
-              r20 = _nt_Spacing
-              s13 << r20
-              if r20
+          s11 << r15
+          if r15
+            r17 = _nt_rulehead
+            s11 << r17
+            if r17
+              r18 = _nt_Spacing
+              s11 << r18
+              if r18
                 if input.index(':-', index) == index
-                  r21 = (SyntaxNode).new(input, index...(index + 2))
+                  r19 = (SyntaxNode).new(input, index...(index + 2))
                   @index += 2
                 else
                   terminal_parse_failure(':-')
-                  r21 = nil
+                  r19 = nil
                 end
-                s13 << r21
-                if r21
-                  r22 = _nt_Spacing
-                  s13 << r22
-                  if r22
-                    r23 = _nt_RuleBody
-                    s13 << r23
+                s11 << r19
+                if r19
+                  r20 = _nt_Spacing
+                  s11 << r20
+                  if r20
+                    r21 = _nt_RuleBody
+                    s11 << r21
                   end
                 end
               end
@@ -569,16 +543,16 @@ module Overlog
           end
         end
       end
-      if s13.last
-        r13 = (SyntaxNode).new(input, i13...index, s13)
-        r13.extend(Rule2)
+      if s11.last
+        r11 = (SyntaxNode).new(input, i11...index, s11)
+        r11.extend(Rule1)
       else
-        self.index = i13
-        r13 = nil
+        self.index = i11
+        r11 = nil
       end
-      if r13
-        r0 = r13
-        r0.extend(Rule3)
+      if r11
+        r0 = r11
+        r0.extend(Rule2)
       else
         self.index = i0
         r0 = nil
@@ -590,17 +564,65 @@ module Overlog
     return r0
   end
 
-  def _nt_RuleHead
+  module Deleter0
+    def Spacing
+      elements[0]
+    end
+
+    def Spacing
+      elements[2]
+    end
+  end
+
+  def _nt_deleter
     start_index = index
-    if node_cache[:RuleHead].has_key?(index)
-      cached = node_cache[:RuleHead][index]
+    if node_cache[:deleter].has_key?(index)
+      cached = node_cache[:deleter][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_Spacing
+    s0 << r1
+    if r1
+      if input.index('delete', index) == index
+        r2 = (SyntaxNode).new(input, index...(index + 6))
+        @index += 6
+      else
+        terminal_parse_failure('delete')
+        r2 = nil
+      end
+      s0 << r2
+      if r2
+        r3 = _nt_Spacing
+        s0 << r3
+      end
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Deleter0)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:deleter][start_index] = r0
+
+    return r0
+  end
+
+  def _nt_rulehead
+    start_index = index
+    if node_cache[:rulehead].has_key?(index)
+      cached = node_cache[:rulehead][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     r0 = _nt_Predicate
 
-    node_cache[:RuleHead][start_index] = r0
+    node_cache[:rulehead][start_index] = r0
 
     return r0
   end
@@ -729,7 +751,7 @@ module Overlog
       elements[1]
     end
 
-    def TableName
+    def Tablename
       elements[2]
     end
 
@@ -759,7 +781,7 @@ module Overlog
       elements[1]
     end
 
-    def TableName
+    def Tablename
       elements[2]
     end
 
@@ -804,7 +826,7 @@ module Overlog
       r3 = _nt_opar
       s1 << r3
       if r3
-        r4 = _nt_TableName
+        r4 = _nt_Tablename
         s1 << r4
         if r4
           r5 = _nt_Comma
@@ -852,7 +874,7 @@ module Overlog
         r12 = _nt_opar
         s10 << r12
         if r12
-          r13 = _nt_TableName
+          r13 = _nt_Tablename
           s10 << r13
           if r13
             r14 = _nt_Comma
@@ -1219,7 +1241,7 @@ module Overlog
       elements[1]
     end
 
-    def TableName
+    def Tablename
       elements[2]
     end
 
@@ -1233,7 +1255,7 @@ module Overlog
       elements[1]
     end
 
-    def TableName
+    def Tablename
       elements[2]
     end
 
@@ -1282,7 +1304,7 @@ module Overlog
       r3 = _nt_opar
       s1 << r3
       if r3
-        r4 = _nt_TableName
+        r4 = _nt_Tablename
         s1 << r4
         if r4
           r5 = _nt_cpar
@@ -1313,7 +1335,7 @@ module Overlog
         r8 = _nt_opar
         s6 << r8
         if r8
-          r9 = _nt_TableName
+          r9 = _nt_Tablename
           s6 << r9
           if r9
             r10 = _nt_Comma
@@ -1389,7 +1411,7 @@ module Overlog
   end
 
   module TableFunction0
-    def TableName
+    def Tablename
       elements[0]
     end
 
@@ -1415,7 +1437,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_TableName
+    r1 = _nt_Tablename
     s0 << r1
     if r1
       r2 = _nt_opar
@@ -1443,18 +1465,22 @@ module Overlog
   end
 
   module Predicate0
-    def TableName
+    def Tablename
       elements[1]
     end
 
-    def Arguments
+    def arguments
       elements[3]
     end
   end
 
   module Predicate1
 					def Predicate
-						return self.TableName
+						return self.Tablename
+						#return arguments.value
+					end
+					def args
+						return arguments.value
 					end
   end
 
@@ -1481,7 +1507,7 @@ module Overlog
     end
     s0 << r1
     if r1
-      r3 = _nt_TableName
+      r3 = _nt_Tablename
       s0 << r3
       if r3
         r5 = _nt_EventModifier
@@ -1492,7 +1518,7 @@ module Overlog
         end
         s0 << r4
         if r4
-          r6 = _nt_Arguments
+          r6 = _nt_arguments
           s0 << r6
         end
       end
@@ -1524,7 +1550,7 @@ module Overlog
       elements[3]
     end
 
-    def Expression
+    def expression
       elements[4]
     end
   end
@@ -1562,7 +1588,7 @@ module Overlog
           r4 = _nt_Spacing
           s0 << r4
           if r4
-            r5 = _nt_Expression
+            r5 = _nt_expression
             s0 << r5
           end
         end
@@ -1596,7 +1622,7 @@ module Overlog
       return cached
     end
 
-    r0 = _nt_Expression
+    r0 = _nt_expression
     r0.extend(Selection0)
 
     node_cache[:Selection][start_index] = r0
@@ -1604,17 +1630,25 @@ module Overlog
     return r0
   end
 
-  def _nt_Expression
+  module Expression0
+			def value 
+				return text_value
+
+			end
+  end
+
+  def _nt_expression
     start_index = index
-    if node_cache[:Expression].has_key?(index)
-      cached = node_cache[:Expression][index]
+    if node_cache[:expression].has_key?(index)
+      cached = node_cache[:expression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
-    r0 = _nt_IfElseExpression
+    r0 = _nt_IfElseexpression
+    r0.extend(Expression0)
 
-    node_cache[:Expression][start_index] = r0
+    node_cache[:expression][start_index] = r0
 
     return r0
   end
@@ -1624,28 +1658,34 @@ module Overlog
       elements[0]
     end
 
-    def Expression
+    def expression
       elements[1]
     end
   end
 
   module ExpressionList1
-    def Expression
+    def expression
       elements[0]
     end
 
   end
 
-  def _nt_ExpressionList
+  module ExpressionList2
+			def value 
+				return 
+			end
+  end
+
+  def _nt_expressionList
     start_index = index
-    if node_cache[:ExpressionList].has_key?(index)
-      cached = node_cache[:ExpressionList][index]
+    if node_cache[:expressionList].has_key?(index)
+      cached = node_cache[:expressionList][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0, s0 = index, []
-    r1 = _nt_Expression
+    r1 = _nt_expression
     s0 << r1
     if r1
       s2, i2 = [], index
@@ -1654,7 +1694,7 @@ module Overlog
         r4 = _nt_Comma
         s3 << r4
         if r4
-          r5 = _nt_Expression
+          r5 = _nt_expression
           s3 << r5
         end
         if s3.last
@@ -1676,41 +1716,42 @@ module Overlog
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
       r0.extend(ExpressionList1)
+      r0.extend(ExpressionList2)
     else
       self.index = i0
       r0 = nil
     end
 
-    node_cache[:ExpressionList][start_index] = r0
+    node_cache[:expressionList][start_index] = r0
 
     return r0
   end
 
-  module IfElseExpression0
-    def LogicalOrExpression
+  module IfElseexpression0
+    def LogicalOrexpression
       elements[0]
     end
 
-    def Expression
+    def expression
       elements[2]
     end
 
-    def Expression
+    def expression
       elements[4]
     end
   end
 
-  def _nt_IfElseExpression
+  def _nt_IfElseexpression
     start_index = index
-    if node_cache[:IfElseExpression].has_key?(index)
-      cached = node_cache[:IfElseExpression][index]
+    if node_cache[:IfElseexpression].has_key?(index)
+      cached = node_cache[:IfElseexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_LogicalOrExpression
+    r2 = _nt_LogicalOrexpression
     s1 << r2
     if r2
       if input.index('?', index) == index
@@ -1722,7 +1763,7 @@ module Overlog
       end
       s1 << r3
       if r3
-        r4 = _nt_Expression
+        r4 = _nt_expression
         s1 << r4
         if r4
           if input.index(':', index) == index
@@ -1734,7 +1775,7 @@ module Overlog
           end
           s1 << r5
           if r5
-            r6 = _nt_Expression
+            r6 = _nt_expression
             s1 << r6
           end
         end
@@ -1742,7 +1783,7 @@ module Overlog
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(IfElseExpression0)
+      r1.extend(IfElseexpression0)
     else
       self.index = i1
       r1 = nil
@@ -1750,7 +1791,7 @@ module Overlog
     if r1
       r0 = r1
     else
-      r7 = _nt_LogicalOrExpression
+      r7 = _nt_LogicalOrexpression
       if r7
         r0 = r7
       else
@@ -1759,36 +1800,36 @@ module Overlog
       end
     end
 
-    node_cache[:IfElseExpression][start_index] = r0
+    node_cache[:IfElseexpression][start_index] = r0
 
     return r0
   end
 
-  module LogicalOrExpression0
-    def LogicalOrExpression
+  module LogicalOrexpression0
+    def LogicalOrexpression
       elements[0]
     end
 
-    def LogicalAndExpression
+    def LogicalAndexpression
       elements[2]
     end
   end
 
-  def _nt_LogicalOrExpression
+  def _nt_LogicalOrexpression
     start_index = index
-    if node_cache[:LogicalOrExpression].has_key?(index)
-      cached = node_cache[:LogicalOrExpression][index]
+    if node_cache[:LogicalOrexpression].has_key?(index)
+      cached = node_cache[:LogicalOrexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
-    r1 = _nt_LogicalAndExpression
+    r1 = _nt_LogicalAndexpression
     if r1
       r0 = r1
     else
       i2, s2 = index, []
-      r3 = _nt_LogicalOrExpression
+      r3 = _nt_LogicalOrexpression
       s2 << r3
       if r3
         if input.index('||', index) == index
@@ -1800,13 +1841,13 @@ module Overlog
         end
         s2 << r4
         if r4
-          r5 = _nt_LogicalAndExpression
+          r5 = _nt_LogicalAndexpression
           s2 << r5
         end
       end
       if s2.last
         r2 = (SyntaxNode).new(input, i2...index, s2)
-        r2.extend(LogicalOrExpression0)
+        r2.extend(LogicalOrexpression0)
       else
         self.index = i2
         r2 = nil
@@ -1819,36 +1860,36 @@ module Overlog
       end
     end
 
-    node_cache[:LogicalOrExpression][start_index] = r0
+    node_cache[:LogicalOrexpression][start_index] = r0
 
     return r0
   end
 
-  module LogicalAndExpression0
-    def LogicalAndExpression
+  module LogicalAndexpression0
+    def LogicalAndexpression
       elements[0]
     end
 
-    def EqualityExpression
+    def Equalityexpression
       elements[2]
     end
   end
 
-  def _nt_LogicalAndExpression
+  def _nt_LogicalAndexpression
     start_index = index
-    if node_cache[:LogicalAndExpression].has_key?(index)
-      cached = node_cache[:LogicalAndExpression][index]
+    if node_cache[:LogicalAndexpression].has_key?(index)
+      cached = node_cache[:LogicalAndexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
-    r1 = _nt_EqualityExpression
+    r1 = _nt_Equalityexpression
     if r1
       r0 = r1
     else
       i2, s2 = index, []
-      r3 = _nt_LogicalAndExpression
+      r3 = _nt_LogicalAndexpression
       s2 << r3
       if r3
         if input.index('&&', index) == index
@@ -1860,13 +1901,13 @@ module Overlog
         end
         s2 << r4
         if r4
-          r5 = _nt_EqualityExpression
+          r5 = _nt_Equalityexpression
           s2 << r5
         end
       end
       if s2.last
         r2 = (SyntaxNode).new(input, i2...index, s2)
-        r2.extend(LogicalAndExpression0)
+        r2.extend(LogicalAndexpression0)
       else
         self.index = i2
         r2 = nil
@@ -1879,13 +1920,13 @@ module Overlog
       end
     end
 
-    node_cache[:LogicalAndExpression][start_index] = r0
+    node_cache[:LogicalAndexpression][start_index] = r0
 
     return r0
   end
 
-  module EqualityExpression0
-    def InequalityExpression
+  module Equalityexpression0
+    def Inequalityexpression
       elements[0]
     end
 
@@ -1893,34 +1934,34 @@ module Overlog
       elements[1]
     end
 
-    def EqualityExpression
+    def Equalityexpression
       elements[2]
     end
   end
 
-  def _nt_EqualityExpression
+  def _nt_Equalityexpression
     start_index = index
-    if node_cache[:EqualityExpression].has_key?(index)
-      cached = node_cache[:EqualityExpression][index]
+    if node_cache[:Equalityexpression].has_key?(index)
+      cached = node_cache[:Equalityexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_InequalityExpression
+    r2 = _nt_Inequalityexpression
     s1 << r2
     if r2
       r3 = _nt_eqop
       s1 << r3
       if r3
-        r4 = _nt_EqualityExpression
+        r4 = _nt_Equalityexpression
         s1 << r4
       end
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(EqualityExpression0)
+      r1.extend(Equalityexpression0)
     else
       self.index = i1
       r1 = nil
@@ -1928,7 +1969,7 @@ module Overlog
     if r1
       r0 = r1
     else
-      r5 = _nt_InequalityExpression
+      r5 = _nt_Inequalityexpression
       if r5
         r0 = r5
       else
@@ -1937,7 +1978,7 @@ module Overlog
       end
     end
 
-    node_cache[:EqualityExpression][start_index] = r0
+    node_cache[:Equalityexpression][start_index] = r0
 
     return r0
   end
@@ -2038,8 +2079,8 @@ module Overlog
     return r0
   end
 
-  module InequalityExpression0
-    def ShiftExpression
+  module Inequalityexpression0
+    def Shiftexpression
       elements[0]
     end
 
@@ -2047,34 +2088,34 @@ module Overlog
       elements[1]
     end
 
-    def InequalityExpression
+    def Inequalityexpression
       elements[2]
     end
   end
 
-  def _nt_InequalityExpression
+  def _nt_Inequalityexpression
     start_index = index
-    if node_cache[:InequalityExpression].has_key?(index)
-      cached = node_cache[:InequalityExpression][index]
+    if node_cache[:Inequalityexpression].has_key?(index)
+      cached = node_cache[:Inequalityexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_ShiftExpression
+    r2 = _nt_Shiftexpression
     s1 << r2
     if r2
       r3 = _nt_ineq
       s1 << r3
       if r3
-        r4 = _nt_InequalityExpression
+        r4 = _nt_Inequalityexpression
         s1 << r4
       end
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(InequalityExpression0)
+      r1.extend(Inequalityexpression0)
     else
       self.index = i1
       r1 = nil
@@ -2082,7 +2123,7 @@ module Overlog
     if r1
       r0 = r1
     else
-      r5 = _nt_ShiftExpression
+      r5 = _nt_Shiftexpression
       if r5
         r0 = r5
       else
@@ -2091,7 +2132,7 @@ module Overlog
       end
     end
 
-    node_cache[:InequalityExpression][start_index] = r0
+    node_cache[:Inequalityexpression][start_index] = r0
 
     return r0
   end
@@ -2203,8 +2244,8 @@ module Overlog
     return r0
   end
 
-  module ShiftExpression0
-    def ShiftExpression
+  module Shiftexpression0
+    def Shiftexpression
       elements[0]
     end
 
@@ -2212,38 +2253,38 @@ module Overlog
       elements[1]
     end
 
-    def AdditiveExpression
+    def Additiveexpression
       elements[2]
     end
   end
 
-  def _nt_ShiftExpression
+  def _nt_Shiftexpression
     start_index = index
-    if node_cache[:ShiftExpression].has_key?(index)
-      cached = node_cache[:ShiftExpression][index]
+    if node_cache[:Shiftexpression].has_key?(index)
+      cached = node_cache[:Shiftexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
-    r1 = _nt_AdditiveExpression
+    r1 = _nt_Additiveexpression
     if r1
       r0 = r1
     else
       i2, s2 = index, []
-      r3 = _nt_ShiftExpression
+      r3 = _nt_Shiftexpression
       s2 << r3
       if r3
         r4 = _nt_ShiftOperator
         s2 << r4
         if r4
-          r5 = _nt_AdditiveExpression
+          r5 = _nt_Additiveexpression
           s2 << r5
         end
       end
       if s2.last
         r2 = (SyntaxNode).new(input, i2...index, s2)
-        r2.extend(ShiftExpression0)
+        r2.extend(Shiftexpression0)
       else
         self.index = i2
         r2 = nil
@@ -2256,7 +2297,7 @@ module Overlog
       end
     end
 
-    node_cache[:ShiftExpression][start_index] = r0
+    node_cache[:Shiftexpression][start_index] = r0
 
     return r0
   end
@@ -2300,43 +2341,43 @@ module Overlog
     return r0
   end
 
-  module AdditiveExpression0
-    def MultiplicativeExpression
+  module Additiveexpression0
+    def Multiplicativeexpression
       elements[0]
     end
 
-    def AdditiveOperator
+    def addop
       elements[1]
     end
 
-    def AdditiveExpression
+    def Additiveexpression
       elements[2]
     end
   end
 
-  def _nt_AdditiveExpression
+  def _nt_Additiveexpression
     start_index = index
-    if node_cache[:AdditiveExpression].has_key?(index)
-      cached = node_cache[:AdditiveExpression][index]
+    if node_cache[:Additiveexpression].has_key?(index)
+      cached = node_cache[:Additiveexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_MultiplicativeExpression
+    r2 = _nt_Multiplicativeexpression
     s1 << r2
     if r2
-      r3 = _nt_AdditiveOperator
+      r3 = _nt_addop
       s1 << r3
       if r3
-        r4 = _nt_AdditiveExpression
+        r4 = _nt_Additiveexpression
         s1 << r4
       end
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(AdditiveExpression0)
+      r1.extend(Additiveexpression0)
     else
       self.index = i1
       r1 = nil
@@ -2344,7 +2385,7 @@ module Overlog
     if r1
       r0 = r1
     else
-      r5 = _nt_MultiplicativeExpression
+      r5 = _nt_Multiplicativeexpression
       if r5
         r0 = r5
       else
@@ -2353,7 +2394,7 @@ module Overlog
       end
     end
 
-    node_cache[:AdditiveExpression][start_index] = r0
+    node_cache[:Additiveexpression][start_index] = r0
 
     return r0
   end
@@ -2424,8 +2465,66 @@ module Overlog
     return r0
   end
 
-  module MultiplicativeExpression0
-    def MultiplicativeExpression
+  module Multiplicativeexpression0
+    def Unaryexpression
+      elements[0]
+    end
+
+    def multop
+      elements[1]
+    end
+
+    def Multiplicativeexpression
+      elements[2]
+    end
+  end
+
+  def _nt_Multiplicativeexpression
+    start_index = index
+    if node_cache[:Multiplicativeexpression].has_key?(index)
+      cached = node_cache[:Multiplicativeexpression][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    r2 = _nt_Unaryexpression
+    s1 << r2
+    if r2
+      r3 = _nt_multop
+      s1 << r3
+      if r3
+        r4 = _nt_Multiplicativeexpression
+        s1 << r4
+      end
+    end
+    if s1.last
+      r1 = (SyntaxNode).new(input, i1...index, s1)
+      r1.extend(Multiplicativeexpression0)
+    else
+      self.index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      r5 = _nt_Unaryexpression
+      if r5
+        r0 = r5
+      else
+        self.index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:Multiplicativeexpression][start_index] = r0
+
+    return r0
+  end
+
+  module Multop0
+    def Spacing
       elements[0]
     end
 
@@ -2433,51 +2532,85 @@ module Overlog
       elements[1]
     end
 
-    def UnaryExpression
+    def Spacing
       elements[2]
     end
   end
 
-  def _nt_MultiplicativeExpression
+  def _nt_multop
     start_index = index
-    if node_cache[:MultiplicativeExpression].has_key?(index)
-      cached = node_cache[:MultiplicativeExpression][index]
+    if node_cache[:multop].has_key?(index)
+      cached = node_cache[:multop][index]
       @index = cached.interval.end if cached
       return cached
     end
 
-    i0 = index
-    r1 = _nt_UnaryExpression
+    i0, s0 = index, []
+    r1 = _nt_Spacing
+    s0 << r1
     if r1
-      r0 = r1
-    else
-      i2, s2 = index, []
-      r3 = _nt_MultiplicativeExpression
-      s2 << r3
-      if r3
-        r4 = _nt_MultiplicativeOperator
-        s2 << r4
-        if r4
-          r5 = _nt_UnaryExpression
-          s2 << r5
-        end
-      end
-      if s2.last
-        r2 = (SyntaxNode).new(input, i2...index, s2)
-        r2.extend(MultiplicativeExpression0)
-      else
-        self.index = i2
-        r2 = nil
-      end
+      r2 = _nt_MultiplicativeOperator
+      s0 << r2
       if r2
-        r0 = r2
-      else
-        self.index = i0
-        r0 = nil
+        r3 = _nt_Spacing
+        s0 << r3
       end
     end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Multop0)
+    else
+      self.index = i0
+      r0 = nil
+    end
 
-    node_cache[:MultiplicativeExpression][start_index] = r0
+    node_cache[:multop][start_index] = r0
+
+    return r0
+  end
+
+  module Addop0
+    def Spacing
+      elements[0]
+    end
+
+    def AdditiveOperator
+      elements[1]
+    end
+
+    def Spacing
+      elements[2]
+    end
+  end
+
+  def _nt_addop
+    start_index = index
+    if node_cache[:addop].has_key?(index)
+      cached = node_cache[:addop][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_Spacing
+    s0 << r1
+    if r1
+      r2 = _nt_AdditiveOperator
+      s0 << r2
+      if r2
+        r3 = _nt_Spacing
+        s0 << r3
+      end
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Addop0)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:addop][start_index] = r0
 
     return r0
   end
@@ -2532,28 +2665,28 @@ module Overlog
     return r0
   end
 
-  def _nt_UnaryExpression
+  def _nt_Unaryexpression
     start_index = index
-    if node_cache[:UnaryExpression].has_key?(index)
-      cached = node_cache[:UnaryExpression][index]
+    if node_cache[:Unaryexpression].has_key?(index)
+      cached = node_cache[:Unaryexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
-    r1 = _nt_CastExpression
+    r1 = _nt_Castexpression
     if r1
       r0 = r1
     else
-      r2 = _nt_LogicalNegationExpression
+      r2 = _nt_LogicalNegationexpression
       if r2
         r0 = r2
       else
-        r3 = _nt_InclusiveExpression
+        r3 = _nt_Inclusiveexpression
         if r3
           r0 = r3
         else
-          r4 = _nt_PostfixExpression
+          r4 = _nt_Postfixexpression
           if r4
             r0 = r4
           else
@@ -2564,21 +2697,21 @@ module Overlog
       end
     end
 
-    node_cache[:UnaryExpression][start_index] = r0
+    node_cache[:Unaryexpression][start_index] = r0
 
     return r0
   end
 
-  module LogicalNegationExpression0
-    def UnaryExpression
+  module LogicalNegationexpression0
+    def Unaryexpression
       elements[1]
     end
   end
 
-  def _nt_LogicalNegationExpression
+  def _nt_LogicalNegationexpression
     start_index = index
-    if node_cache[:LogicalNegationExpression].has_key?(index)
-      cached = node_cache[:LogicalNegationExpression][index]
+    if node_cache[:LogicalNegationexpression].has_key?(index)
+      cached = node_cache[:LogicalNegationexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -2593,36 +2726,36 @@ module Overlog
     end
     s0 << r1
     if r1
-      r2 = _nt_UnaryExpression
+      r2 = _nt_Unaryexpression
       s0 << r2
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(LogicalNegationExpression0)
+      r0.extend(LogicalNegationexpression0)
     else
       self.index = i0
       r0 = nil
     end
 
-    node_cache[:LogicalNegationExpression][start_index] = r0
+    node_cache[:LogicalNegationexpression][start_index] = r0
 
     return r0
   end
 
-  module CastExpression0
+  module Castexpression0
     def Type
       elements[1]
     end
 
-    def UnaryExpression
+    def Unaryexpression
       elements[3]
     end
   end
 
-  def _nt_CastExpression
+  def _nt_Castexpression
     start_index = index
-    if node_cache[:CastExpression].has_key?(index)
-      cached = node_cache[:CastExpression][index]
+    if node_cache[:Castexpression].has_key?(index)
+      cached = node_cache[:Castexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -2649,36 +2782,36 @@ module Overlog
         end
         s0 << r3
         if r3
-          r4 = _nt_UnaryExpression
+          r4 = _nt_Unaryexpression
           s0 << r4
         end
       end
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(CastExpression0)
+      r0.extend(Castexpression0)
     else
       self.index = i0
       r0 = nil
     end
 
-    node_cache[:CastExpression][start_index] = r0
+    node_cache[:Castexpression][start_index] = r0
 
     return r0
   end
 
-  module InclusiveExpression0
-    def PrimaryExpression
+  module Inclusiveexpression0
+    def Primaryexpression
       elements[0]
     end
 
-    def RangeExpression
+    def Rangeexpression
       elements[2]
     end
   end
 
-  module InclusiveExpression1
-    def PrimaryExpression
+  module Inclusiveexpression1
+    def Primaryexpression
       elements[0]
     end
 
@@ -2687,17 +2820,17 @@ module Overlog
     end
   end
 
-  def _nt_InclusiveExpression
+  def _nt_Inclusiveexpression
     start_index = index
-    if node_cache[:InclusiveExpression].has_key?(index)
-      cached = node_cache[:InclusiveExpression][index]
+    if node_cache[:Inclusiveexpression].has_key?(index)
+      cached = node_cache[:Inclusiveexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_PrimaryExpression
+    r2 = _nt_Primaryexpression
     s1 << r2
     if r2
       if input.index('in', index) == index
@@ -2709,13 +2842,13 @@ module Overlog
       end
       s1 << r3
       if r3
-        r4 = _nt_RangeExpression
+        r4 = _nt_Rangeexpression
         s1 << r4
       end
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(InclusiveExpression0)
+      r1.extend(Inclusiveexpression0)
     else
       self.index = i1
       r1 = nil
@@ -2724,7 +2857,7 @@ module Overlog
       r0 = r1
     else
       i5, s5 = index, []
-      r6 = _nt_PrimaryExpression
+      r6 = _nt_Primaryexpression
       s5 << r6
       if r6
         if input.index('in', index) == index
@@ -2742,7 +2875,7 @@ module Overlog
       end
       if s5.last
         r5 = (SyntaxNode).new(input, i5...index, s5)
-        r5.extend(InclusiveExpression1)
+        r5.extend(Inclusiveexpression1)
       else
         self.index = i5
         r5 = nil
@@ -2755,21 +2888,21 @@ module Overlog
       end
     end
 
-    node_cache[:InclusiveExpression][start_index] = r0
+    node_cache[:Inclusiveexpression][start_index] = r0
 
     return r0
   end
 
-  module RangeExpression0
+  module Rangeexpression0
     def LeftRangeOperator
       elements[0]
     end
 
-    def Expression
+    def expression
       elements[1]
     end
 
-    def Expression
+    def expression
       elements[3]
     end
 
@@ -2778,10 +2911,10 @@ module Overlog
     end
   end
 
-  def _nt_RangeExpression
+  def _nt_Rangeexpression
     start_index = index
-    if node_cache[:RangeExpression].has_key?(index)
-      cached = node_cache[:RangeExpression][index]
+    if node_cache[:Rangeexpression].has_key?(index)
+      cached = node_cache[:Rangeexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -2790,7 +2923,7 @@ module Overlog
     r1 = _nt_LeftRangeOperator
     s0 << r1
     if r1
-      r2 = _nt_Expression
+      r2 = _nt_expression
       s0 << r2
       if r2
         if input.index(',', index) == index
@@ -2802,7 +2935,7 @@ module Overlog
         end
         s0 << r3
         if r3
-          r4 = _nt_Expression
+          r4 = _nt_expression
           s0 << r4
           if r4
             r5 = _nt_RightRangeOperator
@@ -2813,13 +2946,13 @@ module Overlog
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(RangeExpression0)
+      r0.extend(Rangeexpression0)
     else
       self.index = i0
       r0 = nil
     end
 
-    node_cache[:RangeExpression][start_index] = r0
+    node_cache[:Rangeexpression][start_index] = r0
 
     return r0
   end
@@ -2902,12 +3035,12 @@ module Overlog
     return r0
   end
 
-  module PostfixExpression0
-    def PostfixExpression
+  module Postfixexpression0
+    def Postfixexpression
       elements[0]
     end
 
-    def Name
+    def name
       elements[2]
     end
 
@@ -2916,12 +3049,12 @@ module Overlog
     end
   end
 
-  module PostfixExpression1
-    def PostfixExpression
+  module Postfixexpression1
+    def Postfixexpression
       elements[0]
     end
 
-    def Arguments
+    def arguments
       elements[1]
     end
 
@@ -2930,8 +3063,8 @@ module Overlog
     end
   end
 
-  module PostfixExpression2
-    def PostfixExpression
+  module Postfixexpression2
+    def Postfixexpression
       elements[0]
     end
 
@@ -2944,8 +3077,8 @@ module Overlog
     end
   end
 
-  module PostfixExpression3
-    def PostfixExpression
+  module Postfixexpression3
+    def Postfixexpression
       elements[0]
     end
 
@@ -2954,8 +3087,8 @@ module Overlog
     end
   end
 
-  module PostfixExpression4
-    def PostfixExpression
+  module Postfixexpression4
+    def Postfixexpression
       elements[0]
     end
 
@@ -2964,21 +3097,21 @@ module Overlog
     end
   end
 
-  def _nt_PostfixExpression
+  def _nt_Postfixexpression
     start_index = index
-    if node_cache[:PostfixExpression].has_key?(index)
-      cached = node_cache[:PostfixExpression][index]
+    if node_cache[:Postfixexpression].has_key?(index)
+      cached = node_cache[:Postfixexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
-    r1 = _nt_PrimaryExpression
+    r1 = _nt_Primaryexpression
     if r1
       r0 = r1
     else
       i2, s2 = index, []
-      r3 = _nt_PostfixExpression
+      r3 = _nt_Postfixexpression
       s2 << r3
       if r3
         if input.index('.', index) == index
@@ -2990,7 +3123,7 @@ module Overlog
         end
         s2 << r4
         if r4
-          r5 = _nt_Name
+          r5 = _nt_name
           s2 << r5
           if r5
             r6 = _nt_Reference
@@ -3000,7 +3133,7 @@ module Overlog
       end
       if s2.last
         r2 = (SyntaxNode).new(input, i2...index, s2)
-        r2.extend(PostfixExpression0)
+        r2.extend(Postfixexpression0)
       else
         self.index = i2
         r2 = nil
@@ -3009,10 +3142,10 @@ module Overlog
         r0 = r2
       else
         i7, s7 = index, []
-        r8 = _nt_PostfixExpression
+        r8 = _nt_Postfixexpression
         s7 << r8
         if r8
-          r9 = _nt_Arguments
+          r9 = _nt_arguments
           s7 << r9
           if r9
             r10 = _nt_Method
@@ -3021,7 +3154,7 @@ module Overlog
         end
         if s7.last
           r7 = (SyntaxNode).new(input, i7...index, s7)
-          r7.extend(PostfixExpression1)
+          r7.extend(Postfixexpression1)
         else
           self.index = i7
           r7 = nil
@@ -3030,7 +3163,7 @@ module Overlog
           r0 = r7
         else
           i11, s11 = index, []
-          r12 = _nt_PostfixExpression
+          r12 = _nt_Postfixexpression
           s11 << r12
           if r12
             if input.index('[', index) == index
@@ -3062,7 +3195,7 @@ module Overlog
           end
           if s11.last
             r11 = (SyntaxNode).new(input, i11...index, s11)
-            r11.extend(PostfixExpression2)
+            r11.extend(Postfixexpression2)
           else
             self.index = i11
             r11 = nil
@@ -3071,7 +3204,7 @@ module Overlog
             r0 = r11
           else
             i17, s17 = index, []
-            r18 = _nt_PostfixExpression
+            r18 = _nt_Postfixexpression
             s17 << r18
             if r18
               if input.index('++', index) == index
@@ -3089,7 +3222,7 @@ module Overlog
             end
             if s17.last
               r17 = (SyntaxNode).new(input, i17...index, s17)
-              r17.extend(PostfixExpression3)
+              r17.extend(Postfixexpression3)
             else
               self.index = i17
               r17 = nil
@@ -3098,7 +3231,7 @@ module Overlog
               r0 = r17
             else
               i21, s21 = index, []
-              r22 = _nt_PostfixExpression
+              r22 = _nt_Postfixexpression
               s21 << r22
               if r22
                 if input.index('--', index) == index
@@ -3116,7 +3249,7 @@ module Overlog
               end
               if s21.last
                 r21 = (SyntaxNode).new(input, i21...index, s21)
-                r21.extend(PostfixExpression4)
+                r21.extend(Postfixexpression4)
               else
                 self.index = i21
                 r21 = nil
@@ -3133,12 +3266,12 @@ module Overlog
       end
     end
 
-    node_cache[:PostfixExpression][start_index] = r0
+    node_cache[:Postfixexpression][start_index] = r0
 
     return r0
   end
 
-  module PrimaryExpression0
+  module Primaryexpression0
     def Location
       elements[0]
     end
@@ -3148,7 +3281,7 @@ module Overlog
     end
   end
 
-  module PrimaryExpression1
+  module Primaryexpression1
     def Aggregate
       elements[0]
     end
@@ -3158,7 +3291,21 @@ module Overlog
     end
   end
 
-  module PrimaryExpression2
+  module Primaryexpression2
+    def opar
+      elements[0]
+    end
+
+    def expression
+      elements[1]
+    end
+
+    def cpar
+      elements[2]
+    end
+  end
+
+  module Primaryexpression3
     def Constant
       elements[0]
     end
@@ -3168,7 +3315,7 @@ module Overlog
     end
   end
 
-  module PrimaryExpression3
+  module Primaryexpression4
     def Alias
       elements[0]
     end
@@ -3178,7 +3325,7 @@ module Overlog
     end
   end
 
-  module PrimaryExpression4
+  module Primaryexpression5
     def Variable
       elements[0]
     end
@@ -3188,7 +3335,7 @@ module Overlog
     end
   end
 
-  module PrimaryExpression5
+  module Primaryexpression6
     def NewClass
       elements[0]
     end
@@ -3198,8 +3345,8 @@ module Overlog
     end
   end
 
-  module PrimaryExpression6
-    def ReferenceName
+  module Primaryexpression7
+    def Referencename
       elements[0]
     end
 
@@ -3208,30 +3355,16 @@ module Overlog
     end
   end
 
-  module PrimaryExpression7
-    def opar
-      elements[0]
-    end
-
-    def Expression
-      elements[1]
-    end
-
-    def cpar
-      elements[2]
-    end
-  end
-
-  module PrimaryExpression8
-					def PrimaryExpression
+  module Primaryexpression8
+					def Primaryexpression
 						return self
 					end
   end
 
-  def _nt_PrimaryExpression
+  def _nt_Primaryexpression
     start_index = index
-    if node_cache[:PrimaryExpression].has_key?(index)
-      cached = node_cache[:PrimaryExpression][index]
+    if node_cache[:Primaryexpression].has_key?(index)
+      cached = node_cache[:Primaryexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -3246,14 +3379,14 @@ module Overlog
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(PrimaryExpression0)
+      r1.extend(Primaryexpression0)
     else
       self.index = i1
       r1 = nil
     end
     if r1
       r0 = r1
-      r0.extend(PrimaryExpression8)
+      r0.extend(Primaryexpression8)
     else
       i4, s4 = index, []
       r5 = _nt_Aggregate
@@ -3264,126 +3397,126 @@ module Overlog
       end
       if s4.last
         r4 = (SyntaxNode).new(input, i4...index, s4)
-        r4.extend(PrimaryExpression1)
+        r4.extend(Primaryexpression1)
       else
         self.index = i4
         r4 = nil
       end
       if r4
         r0 = r4
-        r0.extend(PrimaryExpression8)
+        r0.extend(Primaryexpression8)
       else
         i7, s7 = index, []
-        r8 = _nt_Constant
+        r8 = _nt_opar
         s7 << r8
         if r8
-          r9 = _nt_Spacing
+          r9 = _nt_expression
           s7 << r9
+          if r9
+            r10 = _nt_cpar
+            s7 << r10
+          end
         end
         if s7.last
           r7 = (SyntaxNode).new(input, i7...index, s7)
-          r7.extend(PrimaryExpression2)
+          r7.extend(Primaryexpression2)
         else
           self.index = i7
           r7 = nil
         end
         if r7
           r0 = r7
-          r0.extend(PrimaryExpression8)
+          r0.extend(Primaryexpression8)
         else
-          i10, s10 = index, []
-          r11 = _nt_Alias
-          s10 << r11
+          i11, s11 = index, []
+          r12 = _nt_Constant
+          s11 << r12
+          if r12
+            r13 = _nt_Spacing
+            s11 << r13
+          end
+          if s11.last
+            r11 = (SyntaxNode).new(input, i11...index, s11)
+            r11.extend(Primaryexpression3)
+          else
+            self.index = i11
+            r11 = nil
+          end
           if r11
-            r12 = _nt_Spacing
-            s10 << r12
-          end
-          if s10.last
-            r10 = (SyntaxNode).new(input, i10...index, s10)
-            r10.extend(PrimaryExpression3)
+            r0 = r11
+            r0.extend(Primaryexpression8)
           else
-            self.index = i10
-            r10 = nil
-          end
-          if r10
-            r0 = r10
-            r0.extend(PrimaryExpression8)
-          else
-            i13, s13 = index, []
-            r14 = _nt_Variable
-            s13 << r14
+            i14, s14 = index, []
+            r15 = _nt_Alias
+            s14 << r15
+            if r15
+              r16 = _nt_Spacing
+              s14 << r16
+            end
+            if s14.last
+              r14 = (SyntaxNode).new(input, i14...index, s14)
+              r14.extend(Primaryexpression4)
+            else
+              self.index = i14
+              r14 = nil
+            end
             if r14
-              r15 = _nt_Spacing
-              s13 << r15
-            end
-            if s13.last
-              r13 = (SyntaxNode).new(input, i13...index, s13)
-              r13.extend(PrimaryExpression4)
+              r0 = r14
+              r0.extend(Primaryexpression8)
             else
-              self.index = i13
-              r13 = nil
-            end
-            if r13
-              r0 = r13
-              r0.extend(PrimaryExpression8)
-            else
-              i16, s16 = index, []
-              r17 = _nt_NewClass
-              s16 << r17
+              i17, s17 = index, []
+              r18 = _nt_Variable
+              s17 << r18
+              if r18
+                r19 = _nt_Spacing
+                s17 << r19
+              end
+              if s17.last
+                r17 = (SyntaxNode).new(input, i17...index, s17)
+                r17.extend(Primaryexpression5)
+              else
+                self.index = i17
+                r17 = nil
+              end
               if r17
-                r18 = _nt_Spacing
-                s16 << r18
-              end
-              if s16.last
-                r16 = (SyntaxNode).new(input, i16...index, s16)
-                r16.extend(PrimaryExpression5)
+                r0 = r17
+                r0.extend(Primaryexpression8)
               else
-                self.index = i16
-                r16 = nil
-              end
-              if r16
-                r0 = r16
-                r0.extend(PrimaryExpression8)
-              else
-                i19, s19 = index, []
-                r20 = _nt_ReferenceName
-                s19 << r20
+                i20, s20 = index, []
+                r21 = _nt_NewClass
+                s20 << r21
+                if r21
+                  r22 = _nt_Spacing
+                  s20 << r22
+                end
+                if s20.last
+                  r20 = (SyntaxNode).new(input, i20...index, s20)
+                  r20.extend(Primaryexpression6)
+                else
+                  self.index = i20
+                  r20 = nil
+                end
                 if r20
-                  r21 = _nt_Spacing
-                  s19 << r21
-                end
-                if s19.last
-                  r19 = (SyntaxNode).new(input, i19...index, s19)
-                  r19.extend(PrimaryExpression6)
+                  r0 = r20
+                  r0.extend(Primaryexpression8)
                 else
-                  self.index = i19
-                  r19 = nil
-                end
-                if r19
-                  r0 = r19
-                  r0.extend(PrimaryExpression8)
-                else
-                  i22, s22 = index, []
-                  r23 = _nt_opar
-                  s22 << r23
-                  if r23
-                    r24 = _nt_Expression
-                    s22 << r24
-                    if r24
-                      r25 = _nt_cpar
-                      s22 << r25
-                    end
+                  i23, s23 = index, []
+                  r24 = _nt_Referencename
+                  s23 << r24
+                  if r24
+                    r25 = _nt_Spacing
+                    s23 << r25
                   end
-                  if s22.last
-                    r22 = (SyntaxNode).new(input, i22...index, s22)
-                    r22.extend(PrimaryExpression7)
+                  if s23.last
+                    r23 = (SyntaxNode).new(input, i23...index, s23)
+                    r23.extend(Primaryexpression7)
                   else
-                    self.index = i22
-                    r22 = nil
+                    self.index = i23
+                    r23 = nil
                   end
-                  if r22
-                    r0 = r22
-                    r0.extend(PrimaryExpression8)
+                  if r23
+                    r0 = r23
+                    r0.extend(Primaryexpression8)
                   else
                     self.index = i0
                     r0 = nil
@@ -3396,7 +3529,7 @@ module Overlog
       end
     end
 
-    node_cache[:PrimaryExpression][start_index] = r0
+    node_cache[:Primaryexpression][start_index] = r0
 
     return r0
   end
@@ -3422,15 +3555,18 @@ module Overlog
   end
 
   module Arguments2
-				def Arguments 
-					return self
+				#def arguments 
+				#	return self
+				#end
+				def value 	
+					return expressionList.value
 				end
   end
 
-  def _nt_Arguments
+  def _nt_arguments
     start_index = index
-    if node_cache[:Arguments].has_key?(index)
-      cached = node_cache[:Arguments][index]
+    if node_cache[:arguments].has_key?(index)
+      cached = node_cache[:arguments][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -3440,7 +3576,7 @@ module Overlog
     r2 = _nt_opar
     s1 << r2
     if r2
-      r3 = _nt_ExpressionList
+      r3 = _nt_expressionList
       s1 << r3
       if r3
         r4 = _nt_cpar
@@ -3480,13 +3616,13 @@ module Overlog
       end
     end
 
-    node_cache[:Arguments][start_index] = r0
+    node_cache[:arguments][start_index] = r0
 
     return r0
   end
 
   module NewClass0
-    def TypeName
+    def Typename
       elements[1]
     end
   end
@@ -3509,7 +3645,7 @@ module Overlog
     end
     s0 << r1
     if r1
-      r2 = _nt_TypeName
+      r2 = _nt_Typename
       s0 << r2
     end
     if s0.last
@@ -3525,17 +3661,17 @@ module Overlog
     return r0
   end
 
-  def _nt_ReferenceName
+  def _nt_Referencename
     start_index = index
-    if node_cache[:ReferenceName].has_key?(index)
-      cached = node_cache[:ReferenceName][index]
+    if node_cache[:Referencename].has_key?(index)
+      cached = node_cache[:Referencename][index]
       @index = cached.interval.end if cached
       return cached
     end
 
-    r0 = _nt_Name
+    r0 = _nt_name
 
-    node_cache[:ReferenceName][start_index] = r0
+    node_cache[:Referencename][start_index] = r0
 
     return r0
   end
@@ -3598,17 +3734,17 @@ module Overlog
     return r0
   end
 
-  def _nt_Name
+  def _nt_name
     start_index = index
-    if node_cache[:Name].has_key?(index)
-      cached = node_cache[:Name][index]
+    if node_cache[:name].has_key?(index)
+      cached = node_cache[:name][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     r0 = _nt_Word
 
-    node_cache[:Name][start_index] = r0
+    node_cache[:name][start_index] = r0
 
     return r0
   end
@@ -4119,17 +4255,17 @@ module Overlog
     return r0
   end
 
-  def _nt_Name
+  def _nt_name
     start_index = index
-    if node_cache[:Name].has_key?(index)
-      cached = node_cache[:Name][index]
+    if node_cache[:name].has_key?(index)
+      cached = node_cache[:name][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     r0 = _nt_Word
 
-    node_cache[:Name][start_index] = r0
+    node_cache[:name][start_index] = r0
 
     return r0
   end
@@ -4228,27 +4364,27 @@ module Overlog
     return r0
   end
 
-  module TableName0
-    def Name
+  module Tablename0
+    def name
       elements[0]
     end
 
-    def Name
+    def name
       elements[2]
     end
   end
 
-  def _nt_TableName
+  def _nt_Tablename
     start_index = index
-    if node_cache[:TableName].has_key?(index)
-      cached = node_cache[:TableName][index]
+    if node_cache[:Tablename].has_key?(index)
+      cached = node_cache[:Tablename][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_Name
+    r2 = _nt_name
     s1 << r2
     if r2
       if input.index('::', index) == index
@@ -4260,13 +4396,13 @@ module Overlog
       end
       s1 << r3
       if r3
-        r4 = _nt_Name
+        r4 = _nt_name
         s1 << r4
       end
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(TableName0)
+      r1.extend(Tablename0)
     else
       self.index = i1
       r1 = nil
@@ -4274,7 +4410,7 @@ module Overlog
     if r1
       r0 = r1
     else
-      r5 = _nt_Name
+      r5 = _nt_name
       if r5
         r0 = r5
       else
@@ -4283,7 +4419,7 @@ module Overlog
       end
     end
 
-    node_cache[:TableName][start_index] = r0
+    node_cache[:Tablename][start_index] = r0
 
     return r0
   end
@@ -4297,7 +4433,7 @@ module Overlog
     end
 
     i0 = index
-    r1 = _nt_Name
+    r1 = _nt_name
     if r1
       r0 = r1
     else
@@ -4373,7 +4509,7 @@ module Overlog
   end
 
   module Aggregate0
-    def Name
+    def name
       elements[0]
     end
 
@@ -4381,6 +4517,12 @@ module Overlog
       elements[2]
     end
 
+  end
+
+  module Aggregate1
+			def func
+				return name
+			end
   end
 
   def _nt_Aggregate
@@ -4392,7 +4534,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_Name
+    r1 = _nt_name
     s0 << r1
     if r1
       if input.index('<', index) == index
@@ -4421,6 +4563,7 @@ module Overlog
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
       r0.extend(Aggregate0)
+      r0.extend(Aggregate1)
     else
       self.index = i0
       r0 = nil
@@ -4522,7 +4665,7 @@ module Overlog
   end
 
   module Type0
-    def TypeName
+    def Typename
       elements[0]
     end
 
@@ -4540,7 +4683,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_TypeName
+    r1 = _nt_Typename
     s0 << r1
     if r1
       r3 = _nt_Dimensions
@@ -4568,10 +4711,10 @@ module Overlog
     return r0
   end
 
-  def _nt_TypeName
+  def _nt_Typename
     start_index = index
-    if node_cache[:TypeName].has_key?(index)
-      cached = node_cache[:TypeName][index]
+    if node_cache[:Typename].has_key?(index)
+      cached = node_cache[:Typename][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -4590,7 +4733,7 @@ module Overlog
       end
     end
 
-    node_cache[:TypeName][start_index] = r0
+    node_cache[:Typename][start_index] = r0
 
     return r0
   end
@@ -4787,13 +4930,13 @@ module Overlog
   end
 
   module ClassType0
-    def Name
+    def name
       elements[1]
     end
   end
 
   module ClassType1
-    def Name
+    def name
       elements[0]
     end
 
@@ -4808,7 +4951,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_Name
+    r1 = _nt_name
     s0 << r1
     if r1
       s2, i2 = [], index
@@ -4823,7 +4966,7 @@ module Overlog
         end
         s3 << r4
         if r4
-          r5 = _nt_Name
+          r5 = _nt_name
           s3 << r5
         end
         if s3.last

@@ -2,97 +2,139 @@ require "test/unit"
 
 require 'local_tw.rb'
 require 'Treewalker.rb'
-#require 'termtab.rb'
 
 require 'schema.rb'
 
 require 'lib/types/table/object_table.rb'
-require 'lib/lang/plan/predicate.rb'
-require 'lib/lang/plan/rule.rb'
+#require 'lib/lang/plan/predicate.rb'
+#require 'lib/lang/plan/program.rb'
+#require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
+
+require 'lib/types/table/index_table.rb'
+
+require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
 
 class TestParse < Test::Unit::TestCase
 
 $catalog = Catalog.new
 $index = IndexTable.new
-	def default_test
-		#test_fact
-		#test_preds
-
-		exit
-
-	end
-
-	def test_foo
-		t1 = Tuple.new(1, "joe")
-    v = Variable.new("id", Integer)
-    v.position = 0
-    v2 = Variable.new("name", String)
-    v2.position = 1
-    schema1 = Schema.new("schema1", [v,v2])
-    t1.schema = schema1
-
-    t2 = Tuple.new(1, "hellerstein")
-    v3 = Variable.new("id", Integer)
-    v3.position = 0
-    v4 = Variable.new("lastname", String)
-    v4.position = 1
-    schema2 = Schema.new("schema2", [v3,v4])
-    t2.schema = schema2
-
-    table1 = BasicTable.new('Firstname', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
-    ts = TupleSet.new('fnames', t1)
-    table1.insert(ts, nil)
-    #table2 = EventTable.new('Lastname', [Integer, String])
-    #ts2 = TupleSet.new('lnames', t2)
-
-
-    pred = Predicate.new(false,table1.name, table1, schema1.variables)
-    pred.set("myprog", "r3", 1) 
-    
-    sj = ScanJoin.new(pred, schema1)
-
-	puts sj.inspect
-
-	end
-
 	def test_join1
+		return
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
-		schema = @preds.schema_of
+		schema = @terms.schema_of
 
 		print "preds.name is "+@preds.name.to_s+"\n"
-		pred = Predicate.new(false,@preds.name, @preds, schema.variables)
-
-		
+		pred  = Predicate.new(false,@terms.name,@terms,schema.variables)
 		pred.set("global", "r3", 1) 
 		sj = ScanJoin.new(pred, schema)	
+		
+		@preds.tuples.each do |t| 
+			#puts schema.to_s
+			print "TUP: "+t.to_s+"\n"
+			t.schema=@preds.schema_of
+			#puts t.schema.to_s
+			print "FOO\n"
+			ts = TupleSet.new("some set" ,t)
+			print "TS: "+ts.to_s+"\n"
+			res = sj.evaluate(ts)
+			puts res.inspect
+		end
+		
+		
+	end
+
+	def test_deletion
+		prep("program foo;\ndelete path(A,B,_) :- path(B,Z,C);\n")
+	end
+
+	def test_aggregation
+		prep("program foo;\nshortestPath(A,B,min<C>) :- path(A,B,C);\n")
+		puts @expr
+		puts @pexpr
+			
+	end
+
+
+	def test_materialize
+		prep("program foo;\ndefine(path,keys(0,1),{String,String,Integer});\npath(\"a\",\"b\");\n")
+		
+		# we should have a table entry
+		assert_equal(@tables.cardinality,1)		
+		# with 3 columns
+		assert_equal(@columns.cardinality,3)
+		# and 2 index entries
+		assert_equal(@indices.cardinality,2)
+	end
+
+	def test_expr
+		prep("program foo;\nfoo(A,B,B + 1) :- bar(A,B);\n")
+
+		#puts @preds
+		#puts @expr
+		#puts @pexpr
+		# there are 2 expression in predicate foo, but 3 primary expressions
+		assert_equal(@pexpr.cardinality,6)
+		assert_equal(@expr.cardinality,5)
+		foundconst = 0
+		@pexpr.tuples.each do |t|
+			# don't forget to fix the quotes
+			if t.values[3].eql?("\"1\"") then
+				# we have an integer constant here. 
+				assert_equal(t.values[4],"const")
+				foundconst = 1
+			end
+		end
+		# fallthrough
+		assert_equal(foundconst,1)
+	
+	end
+
+	def test_arbitrary_expr
+		prep("program foo;\nfoo(A,B,(B + 1) / (A-B*A) / 2) :- bar(A,B);\n")
+		puts @expr
+		puts @pexpr
+		# there are still only 3 arguments to foo and 2 to bar.
+		#assert_equal(@expr.cardinality,5)
+		# however, we are dealing with 10 primaryexpressions
+		#assert_equal(@pexpr.cardinality,10)
+
 	end
 
 	def test_preds
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 
-
+		
 		@preds.tuples.each do |t|
 			name = t.values[2]
 			if (name.eql?("bar")) then
-				assert_equal(t.to_s,"<13, 12, bar, 1, null>")
+				assert_equal(t.to_s,"<12, 11, bar, 1>")
 			elsif (name.eql?("foo")) then
-				assert_equal(t.to_s,"<4, 3, foo, 0, null>")
+				assert_equal(t.to_s,"<4, 3, foo, 0>")
 			else
 				assert_error("buh?")
 			end
 		end
-
+		# there should be a 1-1 between primaryexpressions and expressions.
+		assert_equal(@pexpr.cardinality,@expr.cardinality)
+		# (it should be 4)
+		assert_equal(@pexpr.cardinality,4)
 	end
 
 	def rei
+		$catalog = Catalog.new
+		$index = IndexTable.new
+
 		@preds = PredicateTable.new
 		@terms = TermTable.new
 		@pexpr = PrimaryExpressionTable.new
 		@expr = ExpressionTable.new
 		@facts = FactTable.new
+		@tables = TableTable.new
+		@columns = ColumnTable.new
+		@indices = MyIndexTable.new
 	end
 	
 	def test_fact
@@ -116,7 +158,8 @@ $index = IndexTable.new
 
 	def prep(utterance)
 		rei
-		compiler = OverlogCompiler.new(nil,@terms,@preds,@pexpr,@expr,@facts)
+		compiler = OverlogCompiler.new(nil,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices)
+		compiler.verbose = 'y'
 		compiler.parse(utterance)
 		compiler.analyze
 	end

@@ -1,7 +1,3 @@
-def print_table(name,tuple)
-        print name+"("+tuple.join(",")+");\n"
-end
-
 
 # had to.  will revisit.
 def suck_nums(node)

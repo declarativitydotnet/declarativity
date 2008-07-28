@@ -3,7 +3,6 @@ create table Term (
 	ruleid Integer,
 	position Integer,
 	text String
-
 ) keys (0);
 
 create table Predicate (
@@ -36,4 +35,21 @@ create table Fact (
 	factid Integer,
 	programid Integer,
 	tablename String
+) keys(0);
+
+create table Table (
+	tableid Integer,
+	tablename String
+) keys(0);
+
+create table Column (
+	columnid Integer,
+	tableid Integer,
+	datatype String
+) keys(0);
+
+create table MyIndex (
+	indexid Integer,
+	tableid Integer,
+	position Integer
 ) keys(0);

@@ -1,6 +1,6 @@
 # this grammar is mostly auto-generated from the rats! grammar of the java implementation of P2.
 # rats!, treetop and peg/leg are all implementations of packrat parsers, which are memoizing
-# parsers for Parsing Expression Grammars (PEGs).
+# parsers for Parsing expression Grammars (PEGs).
 # syntax-directed translation (rats! -> treetop) was performed using a PEG grammar in the peg/leg
 # syntax.  the grammar recognizes a rats! grammar and outputs an equivalent treetop grammar.
 #
@@ -10,12 +10,16 @@
 # left-recursion. (note: these rewrites need to be carefully reread: the operator precedence is
 # likely thrown off)
 
+# also, PEG rules with uppercase first letters causes namespace issues in ruby.  before I figured this
+# out, I was unable to descend below a nonterminal semantic element, and structured the code in 
+# some odd ways to work around this (see the semantic block for "name" (previously "Name"))
+
 
 grammar Overlog
        	rule Program
-		  ProgramName Spacing Clauses #EndOfFile   
+		  Programname Spacing Clauses #EndOfFile   
 	end
-     	rule ProgramName
+     	rule Programname
 		  'program' Spacing Word ';'
 	end
      	rule Clauses
@@ -31,25 +35,29 @@ grammar Overlog
 			
 	end
      	rule Import
-		  'import' Spacing TypeName   
+		  'import' Spacing Typename   
 	end
      	rule Fact
-		  TableName opar ExpressionList cpar
+		  Tablename opar expressionList cpar
 			{
 				def Fact
-					return self.TableName.text_value
+					return self.Tablename.text_value
 				end
 			}
 	end
      	rule Rule
-		     (('public'   )?  ('delete' Spacing)?  RuleHead Spacing ':-' Spacing RuleBody  /     ('public'   )?  Name    ('delete'   )?  RuleHead Spacing ':-' Spacing RuleBody   )
+		     (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name    deleter?  rulehead Spacing ':-' Spacing RuleBody   )
 			{ 
 				def Rule
 					return self
+					#return [rulehead.text_value,deleter.text_value]
 				end 
 			}
 	end
-  	rule RuleHead
+	rule deleter
+		Spacing 'delete' Spacing	
+	end
+  	rule rulehead
 		  Predicate   
 	end
   	rule RuleBody
@@ -62,7 +70,7 @@ grammar Overlog
 		  TableFunction  /  Predicate  /  Assignment  /  Selection   
 	end
      	rule Definition
-		     ('define' opar TableName Comma Keys Comma Schema cpar /     'define' opar TableName Comma Schema cpar )
+		     ('define' opar Tablename Comma Keys Comma Schema cpar /     'define' opar Tablename Comma Schema cpar )
 			{
 				def Definition
 					return self
@@ -85,7 +93,7 @@ grammar Overlog
 		  Type    (Comma Type   )*    
 	end
      	rule Watch
-		     'watch' opar TableName cpar  /     'watch' opar TableName Comma WatchFlow Spacing cpar	
+		     'watch' opar Tablename cpar  /     'watch' opar Tablename Comma WatchFlow Spacing cpar	
 			{
 				def Watch
 					return self
@@ -96,18 +104,22 @@ grammar Overlog
 		  [taeidrs]+    
 	end
      	rule TableFunction
-		  TableName opar Predicate cpar  
+		  Tablename opar Predicate cpar  
 	end
      	rule Predicate
-		     ('notin'   )?  TableName EventModifier?  Arguments   
+		     ('notin'   )?  Tablename EventModifier?  arguments   
 				{
 					def Predicate
-						return self.TableName
+						return self.Tablename
+						#return arguments.value
+					end
+					def args
+						return arguments.value
 					end
 				}
 	end
      	rule Assignment
-		  Variable Spacing ':=' Spacing Expression
+		  Variable Spacing ':=' Spacing expression
 			{
 				def Assignment
 					return self
@@ -115,38 +127,49 @@ grammar Overlog
 			}
 	end
      	rule Selection
-		  Expression   
+		  expression   
 			{
 				def Selection
 					return self
 				end 
 			}
 	end
-     	rule Expression
-		  IfElseExpression
+     	rule expression
+		  IfElseexpression
+			{
+			def value 
+				return text_value
+
+			end
+			}
 	end
-     	rule ExpressionList
-		  Expression    (Comma Expression)*    
+     	rule expressionList
+		  expression    (Comma expression)*    
+		{
+			def value 
+				return 
+			end
+		}
 	end
-   	rule IfElseExpression
-		     LogicalOrExpression '?' Expression ':' Expression  /     LogicalOrExpression
+   	rule IfElseexpression
+		     LogicalOrexpression '?' expression ':' expression  /     LogicalOrexpression
 	end
 
 # this left-recursion stuff is killing me.
-#   	rule LogicalOrExpression
-#		     LogicalOrExpression '||' LogicalAndExpression  /     LogicalAndExpression
+#   	rule LogicalOrexpression
+#		     LogicalOrexpression '||' LogicalAndexpression  /     LogicalAndexpression
 #	end
 
-   	rule LogicalOrExpression
-		     LogicalAndExpression / LogicalOrExpression '||' LogicalAndExpression  #/     LogicalAndExpression
+   	rule LogicalOrexpression
+		     LogicalAndexpression / LogicalOrexpression '||' LogicalAndexpression  #/     LogicalAndexpression
 	end
-   	rule LogicalAndExpression
-		     EqualityExpression / LogicalAndExpression '&&' EqualityExpression  #/     EqualityExpression
+   	rule LogicalAndexpression
+		     Equalityexpression / LogicalAndexpression '&&' Equalityexpression  #/     Equalityexpression
 	end
-   	rule EqualityExpression
+   	rule Equalityexpression
 			# again
-		     #InequalityExpression / EqualityExpression eqop InequalityExpression  #/     InequalityExpression
-		     InequalityExpression eqop EqualityExpression /     InequalityExpression
+		     #Inequalityexpression / Equalityexpression eqop Inequalityexpression  #/     Inequalityexpression
+		     Inequalityexpression eqop Equalityexpression /     Inequalityexpression
 		
 	end
 	rule eqop
@@ -155,9 +178,9 @@ grammar Overlog
   	rule EqualityOperator
 		     '=='  /     '!='  /     '<>'   
 	end
-   	rule InequalityExpression
-		  #ShiftExpression / InequalityExpression ineq ShiftExpression  #/  ShiftExpression
-		  ShiftExpression ineq InequalityExpression /  ShiftExpression
+   	rule Inequalityexpression
+		  #Shiftexpression / Inequalityexpression ineq Shiftexpression  #/  Shiftexpression
+		  Shiftexpression ineq Inequalityexpression /  Shiftexpression
 	end
 	rule ineq
 		Spacing InequalityOperator Spacing
@@ -165,40 +188,47 @@ grammar Overlog
   	rule InequalityOperator
 		     '<'  /     '>'  /     '<='  /     '>='   
 	end
-   	rule ShiftExpression
-		     AdditiveExpression / ShiftExpression ShiftOperator AdditiveExpression  #/     AdditiveExpression
+   	rule Shiftexpression
+		     Additiveexpression / Shiftexpression ShiftOperator Additiveexpression  #/     Additiveexpression
 	end
   	rule ShiftOperator
 		     '<<'  /     '>>'   
 	end
-   	rule AdditiveExpression
+   	rule Additiveexpression
 		## NOTE: I had to totally invert this and will probably have to do so for all these left-recursive constructs.
-		     #MultiplicativeExpression / AdditiveExpression Spacing AdditiveOperator Spacing MultiplicativeExpression  #/     MultiplicativeExpression
-		     MultiplicativeExpression AdditiveOperator AdditiveExpression  /     MultiplicativeExpression
+		     #Multiplicativeexpression / Additiveexpression Spacing AdditiveOperator Spacing Multiplicativeexpression  #/     Multiplicativeexpression
+		     Multiplicativeexpression addop Additiveexpression  /     Multiplicativeexpression
 	end
   	rule AdditiveOperator
 		     Spacing '+'  Spacing /     '-'   
 	end
-   	rule MultiplicativeExpression
-		     UnaryExpression /  MultiplicativeExpression MultiplicativeOperator UnaryExpression  #/     UnaryExpression
+   	rule Multiplicativeexpression
+		     #Unaryexpression /  Multiplicativeexpression multop Unaryexpression  #/     Unaryexpression
+			Unaryexpression multop Multiplicativeexpression / Unaryexpression
+	end
+	rule multop
+		Spacing MultiplicativeOperator Spacing
+	end
+	rule addop
+		Spacing AdditiveOperator Spacing
 	end
   	rule MultiplicativeOperator
 		     '*'  /     '/'  /     '%'   
 	end
-  	rule UnaryExpression
-		     CastExpression  /     LogicalNegationExpression  /     InclusiveExpression  /     PostfixExpression
+  	rule Unaryexpression
+		     Castexpression  /     LogicalNegationexpression  /     Inclusiveexpression  /     Postfixexpression
 	end
-  	rule LogicalNegationExpression
-		  '!' UnaryExpression   
+  	rule LogicalNegationexpression
+		  '!' Unaryexpression   
 	end
-  	rule CastExpression
-		  '(' Type ')' UnaryExpression   
+  	rule Castexpression
+		  '(' Type ')' Unaryexpression   
 	end
-  	rule InclusiveExpression
-		  PrimaryExpression 'in' RangeExpression  /  PrimaryExpression 'in' Variable   
+  	rule Inclusiveexpression
+		  Primaryexpression 'in' Rangeexpression  /  Primaryexpression 'in' Variable   
 	end
-  	rule RangeExpression
-		  LeftRangeOperator Expression ',' Expression RightRangeOperator   
+  	rule Rangeexpression
+		  LeftRangeOperator expression ',' expression RightRangeOperator   
 	end
   	rule LeftRangeOperator
 		     '['  /     '('   
@@ -206,37 +236,42 @@ grammar Overlog
   	rule RightRangeOperator
 		     ']'  /     ')'   
 	end
-  	rule PostfixExpression
-		     PrimaryExpression / PostfixExpression '.' Name Reference  /     PostfixExpression Arguments Method  /     PostfixExpression '[' Constant ']' ArrayIndex  /     PostfixExpression '++' Increment  /     PostfixExpression '--' Decrement  #/     PrimaryExpression   
+  	rule Postfixexpression
+		     Primaryexpression / Postfixexpression '.' name Reference  /     Postfixexpression arguments Method  /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     Primaryexpression   
 
 	end
-  	rule PrimaryExpression
-		    (Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  ReferenceName Spacing  # / Constant Spacing  
-			/     opar Expression cpar )
+  	rule Primaryexpression
+		    #(Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  Referencename Spacing  # / Constant Spacing  
+		#	/     opar expression cpar )
+
+		    (Location Spacing / Aggregate Spacing / opar expression cpar / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  Referencename Spacing)
 				{
-					def PrimaryExpression
+					def Primaryexpression
 						return self
 					end
 				}
 	end
-   	rule Arguments
-		     opar (ExpressionList) cpar  /     opar cpar   
+   	rule arguments
+		     opar (expressionList) cpar  /     opar cpar   
 			{
-				def Arguments 
-					return self
+				#def arguments 
+				#	return self
+				#end
+				def value 	
+					return expressionList.value
 				end
 			}
 	end
   	rule NewClass
-		  'new' TypeName   
+		  'new' Typename   
 	end
-  	rule ReferenceName
-		  Name   
+  	rule Referencename
+		  name   
 	end
      	rule Alias
 		  Variable ':=' '$' IntegerConstant   
 	end
-     	rule Name
+     	rule name
 		  Word
 	end
   	rule Word
@@ -286,7 +321,7 @@ grammar Overlog
 	rule Comma
 		Spacing "," Spacing
 	end 
-     	rule Name
+     	rule name
 		  Word   
 	end
   	rule Word
@@ -299,17 +334,23 @@ grammar Overlog
   	rule EventType
 		     'insert'  /     'delete'   
 	end
-  	rule TableName
-		  Name '::' Name  /  Name
+  	rule Tablename
+		  name '::' name  /  name
 	end
   	rule Variable
-		  Name   /  '_'  /  '*'   
+		  name   /  '_'  /  '*'   
 	end
   	rule Location
 		  '@' Variable   
 	end
   	rule Aggregate
-		  Name '<' AggregateVariable '>'   
+		  name '<' AggregateVariable '>'   
+		{
+			def func
+				return name
+			end
+			
+		}
 	end
   	rule AggregateVariable
 		     Location  /     Variable   
@@ -318,9 +359,9 @@ grammar Overlog
 		  '$' [0-9]+  Spacing   
 	end
   	rule Type
-		     TypeName Dimensions?  Spacing   
+		     Typename Dimensions?  Spacing   
 	end
-  	rule TypeName
+  	rule Typename
 		     PrimitiveType  /     ClassType   
 	end
   	rule PrimitiveType
@@ -330,7 +371,7 @@ grammar Overlog
 		     ('[' [0-9]*  ']'   )+    
 	end
   	rule ClassType
-		  Name    ('.' Name   )*    
+		  name    ('.' name   )*    
 	end
      	rule Constant
 		 StringConstant Spacing / FloatConstant Spacing  /  LongConstant Spacing  /  IntegerConstant Spacing  /   NullConstant Spacing  /  BooleanConstant Spacing  /  InfinityConstant Spacing  /  Vector Spacing  /  Matrix Spacing   
