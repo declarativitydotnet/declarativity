@@ -1,59 +1,57 @@
 table Term (
-	termid Integer,
+	+termid Integer,
 	ruleid Integer,
 	term_pos Integer,
 	term_txt String
-) keys (0);
+);
 
 table Predicate (
-	predicateid Integer,
+	+predicateid Integer,
 	termid Integer,
 	pred_pos Integer,
 	pred_txt String
-
-) 
-keys(0);
+);
 
 table PrimaryExpression (
-	primaryexpressionid Integer,
+	+primaryexpressionid Integer,
 	termid Integer,
 	p_pos Integer,
 	p_txt String,
 	type String,
 	datatype String
-) keys (0);
+);
 
 table Expression (
-	expressionid Integer,
+	+expressionid Integer,
 	termid Integer,
 	expr_pos Integer,
 	expr_text String
-) keys(0);
+);
 
 table Fact (
-	factid Integer,
+	+factid Integer,
 	programid Integer,
 	tablename String
-) keys(0);
+);
 
 table Table (
-	tableid Integer,
+	+tableid Integer,
 	tablename String
-) keys(0);
+);
 
 table Column (
-	columnid Integer,
+	+columnid Integer,
 	tableid Integer,
 	datatype String
-) keys(0);
+);
 
 table MyIndex (
-	indexid Integer,
+	+indexid Integer,
 	tableid Integer,
 	indx_pos Integer
-) keys(0);
+);
 
 table Program (
-	programid Integer,
+	+programid Integer,
 	owner String
-) keys(0);
+);

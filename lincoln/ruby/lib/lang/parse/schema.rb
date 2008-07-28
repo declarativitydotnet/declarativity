@@ -74,6 +74,28 @@ class TableTable < ObjectTable
 		return Schema.new("Table",[tableid,tablename])
 	end
 end
+class ProgramTable < ObjectTable
+	@@PRIMARY_KEY = Key.new(0,1)
+	class Field
+		PROGRAMID=0
+		OWNER=1
+
+	end
+	@@SCHEMA = [Integer,String]
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "ProgramTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		programKey = Key.new(Field::PROGRAMID)
+		index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+		@secondary[programKey] = index
+	end
+	def schema_of
+		programid = Variable.new("programid",Integer)
+		programid.position=0
+		owner = Variable.new("owner",String)
+		owner.position=1
+		return Schema.new("Program",[programid,owner])
+	end
+end
 class PrimaryExpressionTable < ObjectTable
 	@@PRIMARY_KEY = Key.new(0)
 	class Field

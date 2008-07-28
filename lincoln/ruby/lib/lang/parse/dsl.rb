@@ -24,6 +24,7 @@ class VTable < Visit
 		$tables[text] = Array.new
 		$types[text] = Array.new
 		$keys[text] = Array.new
+		$position = 0
 		super(text,obj)
 	end
 end
@@ -31,9 +32,17 @@ end
 class VCol < Visit
 	def semantic(text,obj)
 		#print "current of "+$current["tablename"]+"\n"
-		$tables[$current["tablename"]] << text
+		$tables[$current["tablename"]] << text.delete('+')
+		$position += 1
 		super(text,obj)
 	end 
+end
+
+class VKey < Visit
+  def semantic(text,obj)
+    $keys[$current["tablename"]] << $position-1
+    super(text,obj)
+  end
 end
 
 class VType < Visit
@@ -70,7 +79,8 @@ sky = Treewalker.new(tree)
 v = Visit.new
 
 sky.add_handler("tablename",VTable.new,1)
-sky.add_handler("colname",VCol.new,1)
+sky.add_handler("key_colname",VCol.new,1)
+sky.add_handler("key_modifier",VKey.new,1)
 sky.add_handler("dtype",VType.new,1)
 
 

@@ -5,7 +5,7 @@ rule program
 end
 
 rule statement
-	'create' s 'table' s tablename opar collist cpar keys? acabo
+	'table' s tablename opar collist cpar keys? acabo
 end
 
 rule collist
@@ -13,17 +13,21 @@ rule collist
 end
 
 rule column
-	colname s dtype
+	key_colname s dtype
+end
+
+rule key_colname
+	 colname / key_modifier colname 
 end
 
 rule colname
 	[a-zA-Z0-9_]+
 end
 
-
 rule tablename
 	[a-zA-Z0-9]+
 end
+
 rule dtype
 	'String' / 'Integer' / 'Float' / 'Object'
 end	
@@ -58,6 +62,10 @@ end
 
 rule acabo
 	s ';' s
+end
+
+rule key_modifier
+	'+'
 end
 
 rule opar

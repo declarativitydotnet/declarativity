@@ -57,28 +57,24 @@ module Ddl
       elements[1]
     end
 
-    def s
-      elements[3]
-    end
-
     def tablename
-      elements[4]
+      elements[2]
     end
 
     def opar
-      elements[5]
+      elements[3]
     end
 
     def collist
-      elements[6]
+      elements[4]
     end
 
     def cpar
-      elements[7]
+      elements[5]
     end
 
     def acabo
-      elements[9]
+      elements[7]
     end
   end
 
@@ -91,11 +87,11 @@ module Ddl
     end
 
     i0, s0 = index, []
-    if input.index('create', index) == index
-      r1 = (SyntaxNode).new(input, index...(index + 6))
-      @index += 6
+    if input.index('table', index) == index
+      r1 = (SyntaxNode).new(input, index...(index + 5))
+      @index += 5
     else
-      terminal_parse_failure('create')
+      terminal_parse_failure('table')
       r1 = nil
     end
     s0 << r1
@@ -103,42 +99,28 @@ module Ddl
       r2 = _nt_s
       s0 << r2
       if r2
-        if input.index('table', index) == index
-          r3 = (SyntaxNode).new(input, index...(index + 5))
-          @index += 5
-        else
-          terminal_parse_failure('table')
-          r3 = nil
-        end
+        r3 = _nt_tablename
         s0 << r3
         if r3
-          r4 = _nt_s
+          r4 = _nt_opar
           s0 << r4
           if r4
-            r5 = _nt_tablename
+            r5 = _nt_collist
             s0 << r5
             if r5
-              r6 = _nt_opar
+              r6 = _nt_cpar
               s0 << r6
               if r6
-                r7 = _nt_collist
+                r8 = _nt_keys
+                if r8
+                  r7 = r8
+                else
+                  r7 = SyntaxNode.new(input, index...index)
+                end
                 s0 << r7
                 if r7
-                  r8 = _nt_cpar
-                  s0 << r8
-                  if r8
-                    r10 = _nt_keys
-                    if r10
-                      r9 = r10
-                    else
-                      r9 = SyntaxNode.new(input, index...index)
-                    end
-                    s0 << r9
-                    if r9
-                      r11 = _nt_acabo
-                      s0 << r11
-                    end
-                  end
+                  r9 = _nt_acabo
+                  s0 << r9
                 end
               end
             end
@@ -227,7 +209,7 @@ module Ddl
   end
 
   module Column0
-    def colname
+    def key_colname
       elements[0]
     end
 
@@ -249,7 +231,7 @@ module Ddl
     end
 
     i0, s0 = index, []
-    r1 = _nt_colname
+    r1 = _nt_key_colname
     s0 << r1
     if r1
       r2 = _nt_s
@@ -268,6 +250,56 @@ module Ddl
     end
 
     node_cache[:column][start_index] = r0
+
+    return r0
+  end
+
+  module KeyColname0
+    def key_modifier
+      elements[0]
+    end
+
+    def colname
+      elements[1]
+    end
+  end
+
+  def _nt_key_colname
+    start_index = index
+    if node_cache[:key_colname].has_key?(index)
+      cached = node_cache[:key_colname][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0 = index
+    r1 = _nt_colname
+    if r1
+      r0 = r1
+    else
+      i2, s2 = index, []
+      r3 = _nt_key_modifier
+      s2 << r3
+      if r3
+        r4 = _nt_colname
+        s2 << r4
+      end
+      if s2.last
+        r2 = (SyntaxNode).new(input, i2...index, s2)
+        r2.extend(KeyColname0)
+      else
+        self.index = i2
+        r2 = nil
+      end
+      if r2
+        r0 = r2
+      else
+        self.index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:key_colname][start_index] = r0
 
     return r0
   end
@@ -786,6 +818,27 @@ module Ddl
     end
 
     node_cache[:acabo][start_index] = r0
+
+    return r0
+  end
+
+  def _nt_key_modifier
+    start_index = index
+    if node_cache[:key_modifier].has_key?(index)
+      cached = node_cache[:key_modifier][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    if input.index('+', index) == index
+      r0 = (SyntaxNode).new(input, index...(index + 1))
+      @index += 1
+    else
+      terminal_parse_failure('+')
+      r0 = nil
+    end
+
+    node_cache[:key_modifier][start_index] = r0
 
     return r0
   end
