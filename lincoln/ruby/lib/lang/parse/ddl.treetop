@@ -17,7 +17,7 @@ rule column
 end
 
 rule colname
-	[a-zA-Z0-9]+
+	[a-zA-Z0-9_]+
 end
 
 

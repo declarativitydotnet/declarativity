@@ -2,14 +2,14 @@ create table Term (
 	termid Integer,
 	ruleid Integer,
 	position Integer,
-	text String
+	term_txt String
 ) keys (0);
 
 create table Predicate (
 	predicateid Integer,
 	termid Integer,
 	position Integer,
-	text String
+	pred_txt String
 
 ) 
 keys(0);
@@ -18,7 +18,7 @@ create table PrimaryExpression (
 	primaryexpressionid Integer,
 	termid Integer,
 	position Integer,
-	text String,
+	p_txt String,
 	type String,
 	datatype String
 ) keys (0);
@@ -27,7 +27,7 @@ create table Expression (
 	expressionid Integer,
 	termid Integer,
 	position Integer,
-	text String
+	expr_text String
 ) keys(0);
 
 create table Fact (
