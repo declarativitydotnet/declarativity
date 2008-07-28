@@ -1,4 +1,8 @@
-require 'lib/lang/compiler'
+## Due to cyclic dependency yuckage,
+# if you require this file, you will first 
+# need to require lib/lang/compiler in the same file
+
+#require 'lib/lang/compiler'
 require 'lib/lang/plan/clause'
 require 'lib/lang/plan/boolean'
 require 'lib/types/operator/watch_op'
