@@ -191,12 +191,11 @@ class ExpressionTable < ObjectTable
 	class Field
 		EXPRESSIONID=0
 		TERMID=1
-		TABLENAME=2
-		POSITION=3
-		EVENT=4
+		POSITION=2
+		TEXT=3
 
 	end
-	@@SCHEMA = [Integer,Integer,String,Integer,String]
+	@@SCHEMA = [Integer,Integer,Integer,String]
 	def initialize
 		super(TableName.new(GLOBALSCOPE, "ExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		programKey = Key.new(Field::EXPRESSIONID)
@@ -208,12 +207,10 @@ class ExpressionTable < ObjectTable
 		expressionid.position=0
 		termid = Variable.new("termid",Integer)
 		termid.position=1
-		tablename = Variable.new("tablename",String)
-		tablename.position=2
 		position = Variable.new("position",Integer)
-		position.position=3
-		event = Variable.new("event",String)
-		event.position=4
-		return Schema.new("Expression",[expressionid,termid,tablename,position,event])
+		position.position=2
+		text = Variable.new("text",String)
+		text.position=3
+		return Schema.new("Expression",[expressionid,termid,position,text])
 	end
 end

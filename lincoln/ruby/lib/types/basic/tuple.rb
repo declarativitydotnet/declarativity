@@ -43,7 +43,7 @@ class Tuple
 
   def schema=(s)
     if s.size != size then
-      raise "Schema assignment does not match tuple arity!  schema " + s.to_s
+      raise "Schema assignment does not match tuple arity!  schema " + s.to_s+" (vs. tuple size "+size.to_s+")"
     end
     @schema = s
   end

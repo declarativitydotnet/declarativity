@@ -25,7 +25,7 @@ $index = IndexTable.new
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
 		# set up schema table's predicate
-		require 'ruby-debug'; debugger
+		#require 'ruby-debug'; debugger
 		term_schema = @terms.schema_of
 		print "terms.name is "+@terms.name.to_s+"\n"
 		term_pred  = Predicate.new(false,@terms.name,@terms,term_schema.variables)
@@ -34,6 +34,11 @@ $index = IndexTable.new
 		sj = ScanJoin.new(term_pred, @preds.schema_of)	
 		ts = TupleSet.new("pred", *@preds.tuples)
 		res = sj.evaluate(ts)
+
+		res.tups.each do |t|
+			print "TUP: "+t.to_s+"\n"
+		
+		end
 		assert_equal(res.tups.length, 4)
 	end
 		

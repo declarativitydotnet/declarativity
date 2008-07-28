@@ -61,7 +61,8 @@ class VisitIExpression < VisitGeneric
 		@@positions["_Exprpos"] = @@positions["_Exprpos"] + 1
 		@@positions["_Primpos"] = -1
 		print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text,"expr","??"])
-		@ext.insert(TupleSet.new("expression",Tuple.new(@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],'"'+text+'"',"expr","??")),nil)
+		#@ext.insert(TupleSet.new("expression",Tuple.new(@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],'"'+text+'"',"expr","??")),nil)
+		otabinsert(@ext,@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text)
 		@@current["expression"] =  @@positions["_Universal"]
 	end
 end
@@ -78,7 +79,8 @@ class VisitTerm < VisitGeneric
 		@@current["term"] = @@positions["_Universal"]
 		print "\n"
 		print_table("term",[@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text])
-		@termt.insert(TupleSet.new("term",Tuple.new(@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)),nil)
+		#@termt.insert(TupleSet.new("term",Tuple.new(@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)),nil)
+		otabinsert(@termt,@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)
 		@@positions["_Universal"] = @@positions["_Universal"] + 1
 	end
 end
@@ -100,8 +102,8 @@ class VisitPredicate < VisitTerm
 	def semantic(text,obj)
 		super(text,obj)
 		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
-		result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])),nil)
-
+		#result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])),nil)
+		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])
 		#print "PRED ARGS: "+obj.args.to_s+"\n"
 
 	end
@@ -117,7 +119,8 @@ class VisitConstant < VisitPexp
 		t = text.gsub('"',"")
 		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??"])
 
-		@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??")),nil)
+		#@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??")),nil)
+		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??")
 	end
 end
 
@@ -130,7 +133,8 @@ class VisitVariable < VisitPexp
 	def semantic(text,obj)
 		super(text,obj)
 		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??"])
-		@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+text+'"',"var","??")),nil)
+		#@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+text+'"',"var","??")),nil)
+		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+text+'"',"var","??")
 	end
 end
 
@@ -143,7 +147,8 @@ class VisitFact < VisitTerm
 		@@positions["_Termpos"] = @@positions["_Primpos"] = -1
 		super(text,obj)
 		print_table("fact",[@@positions["_Universal"],@@current["term"],'"'+text+'"'])
-		@ft.insert(TupleSet.new("fact",Tuple.new(@@positions["_Universal"],@@current["term"],text)),nil)
+		#@ft.insert(TupleSet.new("fact",Tuple.new(@@positions["_Universal"],@@current["term"],text)),nil)
+		otabinsert(@ft,@@positions["_Universal"],@@current["term"],text)
 	end
 end
 
@@ -158,7 +163,8 @@ class VisitAggregate < VisitGeneric
 		t = text.gsub('"',"")
 		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"agg_func","??"])
 
-		@pet.insert(TupleSet.new("function",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+obj.func.text_value+'"',"agg_func","??")),nil)
+		#@pet.insert(TupleSet.new("function",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+obj.func.text_value+'"',"agg_func","??")),nil)
+		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+obj.func.text_value+'"',"agg_func","??")
 	end
 end
 
@@ -183,7 +189,8 @@ class VisitTable < VisitBase
 		super(text,obj)
 		print_table("table",[@@positions["_Universal"],text])
 		@@current["table"] = @@positions["_Universal"]
-		@tt.insert(TupleSet.new("table",Tuple.new(@@positions["_Universal"],text)),nil)
+		#@tt.insert(TupleSet.new("table",Tuple.new(@@positions["_Universal"],text)),nil)
+		otabinsert(@tt,@@positions["_Universal"],text)
 	end
 end
 
@@ -195,7 +202,8 @@ class VisitColumn < VisitGeneric
 		super(text,obj)	
 		#coltab(@@positions["TableName"],@@positions["Type"],text);
 		print_table("columns",[@@positions["TableName"],@@positions["Type"],'"'+text+'"'])
-		@col.insert(TupleSet.new("column",Tuple.new(@@current["table"],@@positions["_Universal"],text)),nil)
+		#@col.insert(TupleSet.new("column",Tuple.new(@@current["table"],@@positions["_Universal"],text)),nil)
+		otabinsert(@col,@@current["table"],@@positions["_Universal"],text)
 	end
 end
 
@@ -211,7 +219,8 @@ class VisitIndex < VisitGeneric
 
 			puts @ix.to_s
 			super(text,obj)
-			@ix.insert(TupleSet.new("index",Tuple.new(@@positions["_Universal"],@@current["table"],indx)),nil)
+			#@ix.insert(TupleSet.new("index",Tuple.new(@@positions["_Universal"],@@current["table"],indx)),nil)
+			otabinsert(@ix,@@positions["_Universal"],@@current["table"],indx)
 		end
 	end
 end

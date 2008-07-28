@@ -19,4 +19,17 @@ def suck_nums(node)
 end
 
 
+# this one makes a little sense
+
+def otabinsert(otab,*set)
+	tup = Tuple.new(*set)
+
+	tup.schema = otab.schema_of
+
+	#print "TUPLE: "+tup.inspect+"\n"
+	ts = TupleSet.new(otab.name.to_s,tup)
+	otab.insert(ts,nil)
+end
+
+
 

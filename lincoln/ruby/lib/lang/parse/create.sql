@@ -26,9 +26,8 @@ create table PrimaryExpression (
 create table Expression (
 	expressionid Integer,
 	termid Integer,
-	tablename String,
 	position Integer,
-	event String
+	text String
 ) keys(0);
 
 create table Fact (

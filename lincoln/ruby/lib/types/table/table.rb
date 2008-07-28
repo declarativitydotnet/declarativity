@@ -95,7 +95,7 @@ class Table
     tables = $catalog.primary.lookup_vals(name)
     return nil if tables.nil?
     return tables.tups[0].value(Catalog::Field::OBJECT) if tables.size == 1
-    throw "More than one " + name + " table defined!"
+    throw "More than one " + name.to_s + " table defined!"
   end
 
   def <=>(o)
