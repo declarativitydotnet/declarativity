@@ -39,7 +39,7 @@ class NativeExpression < Expression
       return elam.call(tuple)
     end
     tmpClass.send :define_method, :returnType do 
-      return tlam 
+      return tlam.call
     end
     retval = tmpClass.new
     return retval

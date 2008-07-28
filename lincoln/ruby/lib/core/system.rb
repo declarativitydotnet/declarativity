@@ -48,19 +48,33 @@ class System
 		@@programs[name] = program
 	end
 	
-  # public static void install(String owner, String file) {
-  #   synchronized (driver) {
-  #     final TupleSet compilation = new TupleSet(compile.name());
-  #     compilation.add(new Tuple(null, owner, file, null));
-  #     driver.task(new Driver.Task() {
-  #       public TupleSet tuples() {
-  #         return compilation;
-  #       }
-  #     });
-  #   }
-  # }	
+  def install(owner, file)
+    compilation = TupleSet.new(Compiler::compiler.name)
+    compilation << Tuple.new(nil, owner, file, nil)
+    schedule(compilation, "runtime")
+  end
+  
+  def schedule(tuples, program)
+    driver.synchronize do
+      tmpClass = Class.new(Driver::Task)
+      tlam = lambda { return tuples }
+      plam = lambda { return program }
+
+      tmpClass.send :define_method, :tuples do
+        return tlam.call
+      end
+      
+      tmpClass.send :define_method, :program do
+        return plam.call
+      end
+  
+      driver.task(tmpClass.new)
+    end
+  end
+  
+  
   def bootstrap
-		compiler = Compiler.new("system", RUNTIME);
+		compiler = Compiler.new("system", @@RUNTIME);
 		compiler.program.plan
 		clock.insert(clock.time(0), nil)
 			

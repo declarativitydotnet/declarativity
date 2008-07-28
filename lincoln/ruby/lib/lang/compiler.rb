@@ -56,13 +56,14 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
   def initialize(owner, file)
     @owner = owner
     @file = file
-    typeChecker = TypeChecker.new(@runtime, @program)
-    args = ["-no-exit", "-silent", file]
-    run(args)
+#    typeChecker = TypeChecker.new(@runtime, @program)
+    # This is an XTC-ism
+    # args = ["-no-exit", "-silent", file]
+    # run(args)
 
-    if (runtime.errorCount > 0) then
-      @program.definitions.each { |table| Table.drop(table.name) }
-    end
+   # if (runtime.errorCount > 0) then
+  #    @program.definitions.each { |table| Table.drop(table.name) }
+  #  end
   end	
   
   def Compiler.rule
