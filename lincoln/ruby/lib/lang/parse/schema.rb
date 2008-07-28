@@ -29,7 +29,7 @@ class TermTable < ObjectTable
 	class Field
 		TERMID=0
 		RULEID=1
-		POSITION=2
+		TERM_POS=2
 		TERM_TXT=3
 
 	end
@@ -45,11 +45,11 @@ class TermTable < ObjectTable
 		termid.position=0
 		ruleid = Variable.new("ruleid",Integer)
 		ruleid.position=1
-		position = Variable.new("position",Integer)
-		position.position=2
+		term_pos = Variable.new("term_pos",Integer)
+		term_pos.position=2
 		term_txt = Variable.new("term_txt",String)
 		term_txt.position=3
-		return Schema.new("Term",[termid,ruleid,position,term_txt])
+		return Schema.new("Term",[termid,ruleid,term_pos,term_txt])
 	end
 end
 class TableTable < ObjectTable
@@ -79,7 +79,7 @@ class PrimaryExpressionTable < ObjectTable
 	class Field
 		PRIMARYEXPRESSIONID=0
 		TERMID=1
-		POSITION=2
+		P_POS=2
 		P_TXT=3
 		TYPE=4
 		DATATYPE=5
@@ -97,15 +97,15 @@ class PrimaryExpressionTable < ObjectTable
 		primaryexpressionid.position=0
 		termid = Variable.new("termid",Integer)
 		termid.position=1
-		position = Variable.new("position",Integer)
-		position.position=2
+		p_pos = Variable.new("p_pos",Integer)
+		p_pos.position=2
 		p_txt = Variable.new("p_txt",String)
 		p_txt.position=3
 		type = Variable.new("type",String)
 		type.position=4
 		datatype = Variable.new("datatype",String)
 		datatype.position=5
-		return Schema.new("PrimaryExpression",[primaryexpressionid,termid,position,p_txt,type,datatype])
+		return Schema.new("PrimaryExpression",[primaryexpressionid,termid,p_pos,p_txt,type,datatype])
 	end
 end
 class FactTable < ObjectTable
@@ -138,7 +138,7 @@ class PredicateTable < ObjectTable
 	class Field
 		PREDICATEID=0
 		TERMID=1
-		POSITION=2
+		PRED_POS=2
 		PRED_TXT=3
 
 	end
@@ -154,11 +154,11 @@ class PredicateTable < ObjectTable
 		predicateid.position=0
 		termid = Variable.new("termid",Integer)
 		termid.position=1
-		position = Variable.new("position",Integer)
-		position.position=2
+		pred_pos = Variable.new("pred_pos",Integer)
+		pred_pos.position=2
 		pred_txt = Variable.new("pred_txt",String)
 		pred_txt.position=3
-		return Schema.new("Predicate",[predicateid,termid,position,pred_txt])
+		return Schema.new("Predicate",[predicateid,termid,pred_pos,pred_txt])
 	end
 end
 class MyIndexTable < ObjectTable
@@ -166,7 +166,7 @@ class MyIndexTable < ObjectTable
 	class Field
 		INDEXID=0
 		TABLEID=1
-		POSITION=2
+		INDX_POS=2
 
 	end
 	@@SCHEMA = [Integer,Integer,Integer]
@@ -181,9 +181,9 @@ class MyIndexTable < ObjectTable
 		indexid.position=0
 		tableid = Variable.new("tableid",Integer)
 		tableid.position=1
-		position = Variable.new("position",Integer)
-		position.position=2
-		return Schema.new("MyIndex",[indexid,tableid,position])
+		indx_pos = Variable.new("indx_pos",Integer)
+		indx_pos.position=2
+		return Schema.new("MyIndex",[indexid,tableid,indx_pos])
 	end
 end
 class ExpressionTable < ObjectTable
@@ -191,7 +191,7 @@ class ExpressionTable < ObjectTable
 	class Field
 		EXPRESSIONID=0
 		TERMID=1
-		POSITION=2
+		EXPR_POS=2
 		EXPR_TEXT=3
 
 	end
@@ -207,10 +207,10 @@ class ExpressionTable < ObjectTable
 		expressionid.position=0
 		termid = Variable.new("termid",Integer)
 		termid.position=1
-		position = Variable.new("position",Integer)
-		position.position=2
+		expr_pos = Variable.new("expr_pos",Integer)
+		expr_pos.position=2
 		expr_text = Variable.new("expr_text",String)
 		expr_text.position=3
-		return Schema.new("Expression",[expressionid,termid,position,expr_text])
+		return Schema.new("Expression",[expressionid,termid,expr_pos,expr_text])
 	end
 end

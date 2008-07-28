@@ -1,14 +1,14 @@
 create table Term (
 	termid Integer,
 	ruleid Integer,
-	position Integer,
+	term_pos Integer,
 	term_txt String
 ) keys (0);
 
 create table Predicate (
 	predicateid Integer,
 	termid Integer,
-	position Integer,
+	pred_pos Integer,
 	pred_txt String
 
 ) 
@@ -17,7 +17,7 @@ keys(0);
 create table PrimaryExpression (
 	primaryexpressionid Integer,
 	termid Integer,
-	position Integer,
+	p_pos Integer,
 	p_txt String,
 	type String,
 	datatype String
@@ -26,7 +26,7 @@ create table PrimaryExpression (
 create table Expression (
 	expressionid Integer,
 	termid Integer,
-	position Integer,
+	expr_pos Integer,
 	expr_text String
 ) keys(0);
 
@@ -50,5 +50,5 @@ create table Column (
 create table MyIndex (
 	indexid Integer,
 	tableid Integer,
-	position Integer
+	indx_pos Integer
 ) keys(0);
