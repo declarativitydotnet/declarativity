@@ -5,10 +5,10 @@ require "treetop"
 require "core.rb"
 #require "olg.rb"
 
-require 'lib/types/table/object_table.rb'
-require 'lib/lang/plan/predicate.rb'
-require 'lib/lang/plan/rule.rb'
-require 'lib/types/table/basic_table.rb'
+#require 'lib/types/table/object_table.rb'
+#require 'lib/lang/plan/predicate.rb'
+#require 'lib/lang/plan/rule.rb'
+#require 'lib/types/table/basic_table.rb'
 require 'termtab'
 
 require "TreeWalker.rb"

@@ -53,5 +53,6 @@ table MyIndex (
 
 table Program (
 	+programid Integer,
+	programname String,
 	owner String
 );

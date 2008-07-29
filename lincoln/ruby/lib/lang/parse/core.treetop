@@ -20,7 +20,12 @@ grammar Overlog
 		  pprogramname Spacing Clauses #EndOfFile   
 	end
      	rule pprogramname
-		  'program' Spacing Word ';'
+		  'program' Spacing word ';'
+			{
+				def pprogramname
+					return word.text_value
+				end
+			}
 	end
      	rule Clauses
 		     (Clause semicolon)*
@@ -272,12 +277,12 @@ grammar Overlog
 		  Variable ':=' '$' IntegerConstant   
 	end
      	rule name
-		  Word
+		  word
 	end
-  	rule Word
-		  Spacing (WordCharacters) Spacing   
+  	rule word
+		  Spacing (wordCharacters) Spacing   
 			{
-				def Word
+				def word
 					return self
 				end 
 				def value 
@@ -285,7 +290,7 @@ grammar Overlog
 				end
 			}
 	end
-	rule WordCharacters
+	rule wordCharacters
 		[a-zA-Z0-9_]*
 	end
    	rule Spacing
@@ -322,11 +327,11 @@ grammar Overlog
 		Spacing "," Spacing
 	end 
      	rule name
-		  Word   
+		  word   
 	end
-  	rule Word
-		  #Spacing WordCharacters Spacing   
-			WordCharacters
+  	rule word
+		  #Spacing wordCharacters Spacing   
+			wordCharacters
 	end
   	rule EventModifier
 		  '#' EventType   

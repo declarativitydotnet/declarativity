@@ -73,10 +73,16 @@ module Overlog
       elements[1]
     end
 
-    def Word
+    def word
       elements[2]
     end
 
+  end
+
+  module Pprogramname1
+				def pprogramname
+					return word.text_value
+				end
   end
 
   def _nt_pprogramname
@@ -100,7 +106,7 @@ module Overlog
       r2 = _nt_Spacing
       s0 << r2
       if r2
-        r3 = _nt_Word
+        r3 = _nt_word
         s0 << r3
         if r3
           if input.index(';', index) == index
@@ -117,6 +123,7 @@ module Overlog
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
       r0.extend(Pprogramname0)
+      r0.extend(Pprogramname1)
     else
       self.index = i0
       r0 = nil
@@ -3742,7 +3749,7 @@ module Overlog
       return cached
     end
 
-    r0 = _nt_Word
+    r0 = _nt_word
 
     node_cache[:name][start_index] = r0
 
@@ -3760,7 +3767,7 @@ module Overlog
   end
 
   module Word1
-				def Word
+				def word
 					return self
 				end 
 				def value 
@@ -3768,10 +3775,10 @@ module Overlog
 				end
   end
 
-  def _nt_Word
+  def _nt_word
     start_index = index
-    if node_cache[:Word].has_key?(index)
-      cached = node_cache[:Word][index]
+    if node_cache[:word].has_key?(index)
+      cached = node_cache[:word][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -3780,7 +3787,7 @@ module Overlog
     r1 = _nt_Spacing
     s0 << r1
     if r1
-      r2 = _nt_WordCharacters
+      r2 = _nt_wordCharacters
       s0 << r2
       if r2
         r3 = _nt_Spacing
@@ -3796,15 +3803,15 @@ module Overlog
       r0 = nil
     end
 
-    node_cache[:Word][start_index] = r0
+    node_cache[:word][start_index] = r0
 
     return r0
   end
 
-  def _nt_WordCharacters
+  def _nt_wordCharacters
     start_index = index
-    if node_cache[:WordCharacters].has_key?(index)
-      cached = node_cache[:WordCharacters][index]
+    if node_cache[:wordCharacters].has_key?(index)
+      cached = node_cache[:wordCharacters][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -3825,7 +3832,7 @@ module Overlog
     end
     r0 = SyntaxNode.new(input, i0...index, s0)
 
-    node_cache[:WordCharacters][start_index] = r0
+    node_cache[:wordCharacters][start_index] = r0
 
     return r0
   end
@@ -4263,24 +4270,24 @@ module Overlog
       return cached
     end
 
-    r0 = _nt_Word
+    r0 = _nt_word
 
     node_cache[:name][start_index] = r0
 
     return r0
   end
 
-  def _nt_Word
+  def _nt_word
     start_index = index
-    if node_cache[:Word].has_key?(index)
-      cached = node_cache[:Word][index]
+    if node_cache[:word].has_key?(index)
+      cached = node_cache[:word][index]
       @index = cached.interval.end if cached
       return cached
     end
 
-    r0 = _nt_WordCharacters
+    r0 = _nt_wordCharacters
 
-    node_cache[:Word][start_index] = r0
+    node_cache[:word][start_index] = r0
 
     return r0
   end

@@ -94,6 +94,17 @@ end
 
 
 # "real" subclasses
+
+class VisitProgram < VisitBase
+	def initialize(pt)
+		@prt = pt
+	end
+	def semantic(text,obj)
+		super(text,obj)
+		otabinsert(@prt,@@positions["_Universal"],nil,text)
+	end
+end
+
 class VisitPredicate < VisitTerm
 	def initialize (pt,term)
 		super(term)
@@ -273,7 +284,7 @@ end
 # class body
 
 
-	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices)
+	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs)
 
 		@ruletable = rules
 		@termtable = terms
@@ -284,6 +295,7 @@ end
 		@tabletable = tables
 		@columntable = columns
 		@indextable = indices
+		@programtable = programs
 
 
 		# reinitialize these awful globals, fingers crossed for good garbage collection.
@@ -311,6 +323,7 @@ end
 
 		vg = VisitGeneric.new
 
+		sky.add_handler("pprogramname",VisitProgram.new(@programtable),1)
 		sky.add_handler("Word",vg,1)
 		sky.add_handler("Location",vg,1)
 		sky.add_handler("Watch",vg,1)

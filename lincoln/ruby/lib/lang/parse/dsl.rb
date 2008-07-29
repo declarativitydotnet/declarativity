@@ -5,7 +5,7 @@
 
 require "rubygems"
 require "treetop"
-require 'TreeWalker.rb'
+require 'tree_walker.rb'
 require 'ddl.rb'
 
 $current = Hash.new

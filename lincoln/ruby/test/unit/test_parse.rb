@@ -8,7 +8,7 @@ require 'lib/lang/parse/schema.rb'
 require 'lib/types/table/object_table.rb'
 require 'lib/lang/plan/predicate.rb'
 require 'lib/lang/compiler'
-#require 'lib/lang/plan/program.rb'
+require 'lib/lang/plan/program.rb'
 require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
 
@@ -21,6 +21,10 @@ class TestParse < Test::Unit::TestCase
 
 $catalog = Catalog.new
 $index = IndexTable.new
+
+	def test_program
+		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
+	end
 	def test_join1
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
@@ -40,6 +44,11 @@ $index = IndexTable.new
 		
 		end
 		assert_equal(2, res.tups.length)
+	end
+
+	def test_program
+		prep("program foo;\npath(A,B,_) :- path(B,Z,C);\n")
+		assert_equal(1,@programs.cardinality)
 	end
 		
 	def test_deletion
@@ -131,6 +140,7 @@ $index = IndexTable.new
 		@tables = TableTable.new
 		@columns = ColumnTable.new
 		@indices = MyIndexTable.new
+		@programs = ProgramTable.new
 	end
 	
 	def test_fact
@@ -154,7 +164,7 @@ $index = IndexTable.new
 
 	def prep(utterance)
 		rei
-		compiler = OverlogCompiler.new(nil,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices)
+		compiler = OverlogCompiler.new(nil,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs)
 		compiler.verbose = 'y'
 		compiler.parse(utterance)
 		compiler.analyze
