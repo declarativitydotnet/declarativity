@@ -7,12 +7,12 @@ require 'lib/lang/parse/schema.rb'
 
 require 'lib/types/table/object_table.rb'
 require 'lib/lang/plan/predicate.rb'
-require 'lib/lang/compiler'
+#require 'lib/lang/compiler.rb'
 #require 'lib/lang/plan/program.rb'
-require 'lib/lang/plan/rule.rb'
+#require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
 
-require 'lib/types/table/index_table.rb'
+#require 'lib/types/table/index_table.rb'
 
 require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
@@ -197,8 +197,10 @@ $index = IndexTable.new
 
 		puts @programs
 		puts @facts
+
+		print "ALLO\n"
 		assert_equal(tups.size,1)
-		assert_equal(tups[0].to_s,"<1, null, foo>")
+		assert_equal(tups[0].to_s,"<1, nil, foo>")
 
 		
 		tups = Array.new

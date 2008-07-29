@@ -48,54 +48,6 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
 	end
 end
 
-class ColumnTable < ObjectTable
-include ColumnTableMixin if defined? ColumnTableMixin
-	@@PRIMARY_KEY = Key.new(0)
-	class Field
-		COLUMNID=0
-		TABLEID=1
-		DATATYPE=2
-	end
-	@@SCHEMA = [Integer,Integer,String]
-
-	def initialize
-		super(TableName.new(GLOBALSCOPE, "ColumnTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		if defined? ColumnTableMixin and ColumnTableMixin.methods.include? 'initialize_mixin'
-			 then initialize_mixin 
-		end
-	end
-
-	def field(name)
-
-		eval('Field::'+name)
-
-	end
-	def scope
-
-		GLOBALSCOPE
-
-	end
-	def pkey
-
-		@@PRIMARY_KEY
-
-	end
-	def schema
-
-		@@SCHEMA
-
-	end
-	def schema_of
-		columnid = Variable.new("columnid",Integer)
-		columnid.position=0
-		tableid = Variable.new("tableid",Integer)
-		tableid.position=1
-		datatype = Variable.new("datatype",String)
-		datatype.position=2
-		return Schema.new("Column",[columnid,tableid,datatype])
-	end
-end
-
 class CompilerTable < ObjectTable
 include CompilerTableMixin if defined? CompilerTableMixin
 	@@PRIMARY_KEY = Key.new(0)
@@ -144,57 +96,6 @@ include CompilerTableMixin if defined? CompilerTableMixin
 		program = Variable.new("program",String)
 		program.position=3
 		return Schema.new("Compiler",[name,owner,file,program])
-	end
-end
-
-class ExpressionTable < ObjectTable
-include ExpressionTableMixin if defined? ExpressionTableMixin
-	@@PRIMARY_KEY = Key.new(0)
-	class Field
-		EXPRESSIONID=0
-		TERMID=1
-		EXPR_POS=2
-		EXPR_TEXT=3
-	end
-	@@SCHEMA = [Integer,Integer,Integer,String]
-
-	def initialize
-		super(TableName.new(GLOBALSCOPE, "ExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		if defined? ExpressionTableMixin and ExpressionTableMixin.methods.include? 'initialize_mixin'
-			 then initialize_mixin 
-		end
-	end
-
-	def field(name)
-
-		eval('Field::'+name)
-
-	end
-	def scope
-
-		GLOBALSCOPE
-
-	end
-	def pkey
-
-		@@PRIMARY_KEY
-
-	end
-	def schema
-
-		@@SCHEMA
-
-	end
-	def schema_of
-		expressionid = Variable.new("expressionid",Integer)
-		expressionid.position=0
-		termid = Variable.new("termid",Integer)
-		termid.position=1
-		expr_pos = Variable.new("expr_pos",Integer)
-		expr_pos.position=2
-		expr_text = Variable.new("expr_text",String)
-		expr_text.position=3
-		return Schema.new("Expression",[expressionid,termid,expr_pos,expr_text])
 	end
 end
 
@@ -297,6 +198,105 @@ include IndexTableMixin if defined? IndexTableMixin
 		object = Variable.new("object",String)
 		object.position=4
 		return Schema.new("Index",[tablename,key,type,classname,object])
+	end
+end
+
+class MyColumnTable < ObjectTable
+include MyColumnTableMixin if defined? MyColumnTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		COLUMNID=0
+		TABLEID=1
+		DATATYPE=2
+	end
+	@@SCHEMA = [Integer,Integer,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyColumnTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MyColumnTableMixin and MyColumnTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		columnid = Variable.new("columnid",Integer)
+		columnid.position=0
+		tableid = Variable.new("tableid",Integer)
+		tableid.position=1
+		datatype = Variable.new("datatype",String)
+		datatype.position=2
+		return Schema.new("MyColumn",[columnid,tableid,datatype])
+	end
+end
+
+class MyExpressionTable < ObjectTable
+include MyExpressionTableMixin if defined? MyExpressionTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		EXPRESSIONID=0
+		TERMID=1
+		EXPR_POS=2
+		EXPR_TEXT=3
+	end
+	@@SCHEMA = [Integer,Integer,Integer,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MyExpressionTableMixin and MyExpressionTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		expressionid = Variable.new("expressionid",Integer)
+		expressionid.position=0
+		termid = Variable.new("termid",Integer)
+		termid.position=1
+		expr_pos = Variable.new("expr_pos",Integer)
+		expr_pos.position=2
+		expr_text = Variable.new("expr_text",String)
+		expr_text.position=3
+		return Schema.new("MyExpression",[expressionid,termid,expr_pos,expr_text])
 	end
 end
 
@@ -447,6 +447,261 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
 	end
 end
 
+class MyPrimaryExpressionTable < ObjectTable
+include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		PRIMARYEXPRESSIONID=0
+		TERMID=1
+		P_POS=2
+		P_TXT=3
+		TYPE=4
+		DATATYPE=5
+	end
+	@@SCHEMA = [Integer,Integer,Integer,String,String,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyPrimaryExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MyPrimaryExpressionTableMixin and MyPrimaryExpressionTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		primaryexpressionid = Variable.new("primaryexpressionid",Integer)
+		primaryexpressionid.position=0
+		termid = Variable.new("termid",Integer)
+		termid.position=1
+		p_pos = Variable.new("p_pos",Integer)
+		p_pos.position=2
+		p_txt = Variable.new("p_txt",String)
+		p_txt.position=3
+		type = Variable.new("type",String)
+		type.position=4
+		datatype = Variable.new("datatype",String)
+		datatype.position=5
+		return Schema.new("MyPrimaryExpression",[primaryexpressionid,termid,p_pos,p_txt,type,datatype])
+	end
+end
+
+class MyProgramTable < ObjectTable
+include MyProgramTableMixin if defined? MyProgramTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		PROGRAM=0
+		OWNER=1
+		OBJECT=2
+	end
+	@@SCHEMA = [Integer,String,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyProgramTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MyProgramTableMixin and MyProgramTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		program = Variable.new("program",Integer)
+		program.position=0
+		owner = Variable.new("owner",String)
+		owner.position=1
+		object = Variable.new("object",String)
+		object.position=2
+		return Schema.new("MyProgram",[program,owner,object])
+	end
+end
+
+class MyRuleTable < ObjectTable
+include MyRuleTableMixin if defined? MyRuleTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		RULEID=0
+		PROGRAMID=1
+		RULENAME=2
+		PUBLIC=3
+		DELETE=4
+	end
+	@@SCHEMA = [Integer,Integer,String,Integer,Integer]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyRuleTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MyRuleTableMixin and MyRuleTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		ruleid = Variable.new("ruleid",Integer)
+		ruleid.position=0
+		programid = Variable.new("programid",Integer)
+		programid.position=1
+		rulename = Variable.new("rulename",String)
+		rulename.position=2
+		public = Variable.new("public",Integer)
+		public.position=3
+		delete = Variable.new("delete",Integer)
+		delete.position=4
+		return Schema.new("MyRule",[ruleid,programid,rulename,public,delete])
+	end
+end
+
+class MyTableTable < ObjectTable
+include MyTableTableMixin if defined? MyTableTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		TABLEID=0
+		TABLENAME=1
+	end
+	@@SCHEMA = [Integer,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyTableTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MyTableTableMixin and MyTableTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		tableid = Variable.new("tableid",Integer)
+		tableid.position=0
+		tablename = Variable.new("tablename",String)
+		tablename.position=1
+		return Schema.new("MyTable",[tableid,tablename])
+	end
+end
+
+class MyTermTable < ObjectTable
+include MyTermTableMixin if defined? MyTermTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		TERMID=0
+		RULEID=1
+		TERM_POS=2
+		TERM_TXT=3
+	end
+	@@SCHEMA = [Integer,Integer,Integer,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyTermTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MyTermTableMixin and MyTermTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		termid = Variable.new("termid",Integer)
+		termid.position=0
+		ruleid = Variable.new("ruleid",Integer)
+		ruleid.position=1
+		term_pos = Variable.new("term_pos",Integer)
+		term_pos.position=2
+		term_txt = Variable.new("term_txt",String)
+		term_txt.position=3
+		return Schema.new("MyTerm",[termid,ruleid,term_pos,term_txt])
+	end
+end
+
 class OperatorTable < ObjectTable
 include OperatorTableMixin if defined? OperatorTableMixin
 	@@PRIMARY_KEY = Key.new(2)
@@ -549,111 +804,6 @@ include PredicateTableMixin if defined? PredicateTableMixin
 		object = Variable.new("object",String)
 		object.position=4
 		return Schema.new("Predicate",[program,rule,position,event,object])
-	end
-end
-
-class PrimaryExpressionTable < ObjectTable
-include PrimaryExpressionTableMixin if defined? PrimaryExpressionTableMixin
-	@@PRIMARY_KEY = Key.new(0)
-	class Field
-		PRIMARYEXPRESSIONID=0
-		TERMID=1
-		P_POS=2
-		P_TXT=3
-		TYPE=4
-		DATATYPE=5
-	end
-	@@SCHEMA = [Integer,Integer,Integer,String,String,String]
-
-	def initialize
-		super(TableName.new(GLOBALSCOPE, "PrimaryExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		if defined? PrimaryExpressionTableMixin and PrimaryExpressionTableMixin.methods.include? 'initialize_mixin'
-			 then initialize_mixin 
-		end
-	end
-
-	def field(name)
-
-		eval('Field::'+name)
-
-	end
-	def scope
-
-		GLOBALSCOPE
-
-	end
-	def pkey
-
-		@@PRIMARY_KEY
-
-	end
-	def schema
-
-		@@SCHEMA
-
-	end
-	def schema_of
-		primaryexpressionid = Variable.new("primaryexpressionid",Integer)
-		primaryexpressionid.position=0
-		termid = Variable.new("termid",Integer)
-		termid.position=1
-		p_pos = Variable.new("p_pos",Integer)
-		p_pos.position=2
-		p_txt = Variable.new("p_txt",String)
-		p_txt.position=3
-		type = Variable.new("type",String)
-		type.position=4
-		datatype = Variable.new("datatype",String)
-		datatype.position=5
-		return Schema.new("PrimaryExpression",[primaryexpressionid,termid,p_pos,p_txt,type,datatype])
-	end
-end
-
-class ProgramTable < ObjectTable
-include ProgramTableMixin if defined? ProgramTableMixin
-	@@PRIMARY_KEY = Key.new(0)
-	class Field
-		PROGRAM=0
-		OWNER=1
-		OBJECT=2
-	end
-	@@SCHEMA = [Integer,String,String]
-
-	def initialize
-		super(TableName.new(GLOBALSCOPE, "ProgramTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		if defined? ProgramTableMixin and ProgramTableMixin.methods.include? 'initialize_mixin'
-			 then initialize_mixin 
-		end
-	end
-
-	def field(name)
-
-		eval('Field::'+name)
-
-	end
-	def scope
-
-		GLOBALSCOPE
-
-	end
-	def pkey
-
-		@@PRIMARY_KEY
-
-	end
-	def schema
-
-		@@SCHEMA
-
-	end
-	def schema_of
-		program = Variable.new("program",Integer)
-		program.position=0
-		owner = Variable.new("owner",String)
-		owner.position=1
-		object = Variable.new("object",String)
-		object.position=2
-		return Schema.new("Program",[program,owner,object])
 	end
 end
 
@@ -822,102 +972,6 @@ include SelectionTableMixin if defined? SelectionTableMixin
 		object = Variable.new("object",String)
 		object.position=3
 		return Schema.new("Selection",[program,rule,position,object])
-	end
-end
-
-class TableTable < ObjectTable
-include TableTableMixin if defined? TableTableMixin
-	@@PRIMARY_KEY = Key.new(0)
-	class Field
-		TABLEID=0
-		TABLENAME=1
-	end
-	@@SCHEMA = [Integer,String]
-
-	def initialize
-		super(TableName.new(GLOBALSCOPE, "TableTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		if defined? TableTableMixin and TableTableMixin.methods.include? 'initialize_mixin'
-			 then initialize_mixin 
-		end
-	end
-
-	def field(name)
-
-		eval('Field::'+name)
-
-	end
-	def scope
-
-		GLOBALSCOPE
-
-	end
-	def pkey
-
-		@@PRIMARY_KEY
-
-	end
-	def schema
-
-		@@SCHEMA
-
-	end
-	def schema_of
-		tableid = Variable.new("tableid",Integer)
-		tableid.position=0
-		tablename = Variable.new("tablename",String)
-		tablename.position=1
-		return Schema.new("Table",[tableid,tablename])
-	end
-end
-
-class TermTable < ObjectTable
-include TermTableMixin if defined? TermTableMixin
-	@@PRIMARY_KEY = Key.new(0)
-	class Field
-		TERMID=0
-		RULEID=1
-		TERM_POS=2
-		TERM_TXT=3
-	end
-	@@SCHEMA = [Integer,Integer,Integer,String]
-
-	def initialize
-		super(TableName.new(GLOBALSCOPE, "TermTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		if defined? TermTableMixin and TermTableMixin.methods.include? 'initialize_mixin'
-			 then initialize_mixin 
-		end
-	end
-
-	def field(name)
-
-		eval('Field::'+name)
-
-	end
-	def scope
-
-		GLOBALSCOPE
-
-	end
-	def pkey
-
-		@@PRIMARY_KEY
-
-	end
-	def schema
-
-		@@SCHEMA
-
-	end
-	def schema_of
-		termid = Variable.new("termid",Integer)
-		termid.position=0
-		ruleid = Variable.new("ruleid",Integer)
-		ruleid.position=1
-		term_pos = Variable.new("term_pos",Integer)
-		term_pos.position=2
-		term_txt = Variable.new("term_txt",String)
-		term_txt.position=3
-		return Schema.new("Term",[termid,ruleid,term_pos,term_txt])
 	end
 end
 

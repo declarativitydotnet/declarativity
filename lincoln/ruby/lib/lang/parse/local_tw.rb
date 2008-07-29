@@ -78,7 +78,7 @@ class VisitTerm < VisitGeneric
 		@@positions["_Termpos"] = @@positions["_Termpos"] + 1
 		@@current["term"] = @@positions["_Universal"]
 		print "\n"
-		print_table("term",[@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text])
+		print_table("term",[@@positions["_Universal"],@@current["rule"],@@positions["_Termpos"],text])
 		#@termt.insert(TupleSet.new("term",Tuple.new(@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)),nil)
 		otabinsert(@termt,@@positions["_Universal"],@@current["rule"],@@positions["_Termpos"],text)
 		@@positions["_Universal"] = @@positions["_Universal"] + 1
@@ -100,6 +100,7 @@ class VisitProgram < VisitBase
 		@prt = pt
 	end
 	def semantic(text,obj)
+		print "VISIT PROGRAM\n"
 		super(text,obj)
 		otabinsert(@prt,@@positions["_Universal"],nil,text)
 		@@current["program"] = @@positions["_Universal"]
@@ -116,7 +117,7 @@ class VisitPredicate < VisitTerm
 		super(text,obj)
 		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
 		#result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])),nil)
-		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"], nil)
+		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])
 		#print "PRED ARGS: "+obj.args.to_s+"\n"
 
 	end
@@ -292,7 +293,7 @@ end
 # class body
 
 
-	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices)
+	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs)
 
 		@ruletable = rules
 		@termtable = terms
@@ -303,7 +304,7 @@ end
 		@tabletable = tables
 		@columntable = columns
 		@indextable = indices
-
+		@programtable = programs
 
 		# reinitialize these awful globals, fingers crossed for good garbage collection.
 		@@state = Hash.new
@@ -361,7 +362,7 @@ end
 
 		sky.add_handler("LineTerminator",VisitNewline.new,1)
 
-		sky.add_handler("Program",vg,1)
+		sky.add_handler("pprogramname",VisitProgram.new(@programtable),1)
 
 		#init_output("static_checks")
 		sky.walk("n")

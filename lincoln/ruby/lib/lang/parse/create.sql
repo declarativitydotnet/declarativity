@@ -1,4 +1,4 @@
-table Term (
+table MyTerm (
 	+termid Integer,
 	ruleid Integer,
 	term_pos Integer,
@@ -20,7 +20,7 @@ table Predicate (
   object String
 );
 
-table PrimaryExpression (
+table MyPrimaryExpression (
 	+primaryexpressionid Integer,
 	termid Integer,
 	p_pos Integer,
@@ -29,7 +29,7 @@ table PrimaryExpression (
 	datatype String
 );
 
-table Expression (
+table MyExpression (
 	+expressionid Integer,
 	termid Integer,
 	expr_pos Integer,
@@ -48,12 +48,12 @@ table Fact (
 	tuple Tuple
 );
 
-table Table (
+table MyTable (
   +tableid Integer,
   tablename String
 );
 
-table Column (
+table MyColumn (
 	+columnid Integer,
 	tableid Integer,
 	datatype String
@@ -74,7 +74,7 @@ table Index (
   object String
 );
 
-table Program (
+table MyProgram (
 	+program Integer,
 	owner String,
 	object String
@@ -139,4 +139,3 @@ table Watch (
   +tablename String,
   +modifier String
 );
->>>>>>> .r2046
