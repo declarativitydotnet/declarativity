@@ -1,6 +1,9 @@
+require 'lib/lang/plan/object_from_catalog'
 class Assignment < Term
 	
 	class AssignmentTable < ObjectTable
+    include ObjectFromCatalog
+    
 		@@PRIMARY_KEY = Key.new(0,1)
 		
 		class Field 
@@ -19,18 +22,6 @@ class Assignment < Term
 			super(TableName.new(GLOBALSCOPE, "assignment"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
 		end
 		
-		def insert(tuple)
-			object = tuple.value(Field::OBJECT)
-			raise UpdateException, "Assignment object nil" if object.nil?
-			object.program   = tuple.value(Field::PROGRAM)
-			object.rule      = tuple.value(Field::RULE)
-			object.position  = tuple.value(Field::POSITION)
-			return super.insert(tuple)
-		end
-		
-		def delete(tuple)
-			return super(tuple)
-		end
 	end
 	
 	def initialize(variable, value) 

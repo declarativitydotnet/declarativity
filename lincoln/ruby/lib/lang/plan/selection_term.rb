@@ -2,8 +2,10 @@ require 'lib/types/table/object_table'
 require 'lib/lang/plan/term'
 require 'lib/types/table/key'
 require 'lib/types/operator/selection_op'
+require 'lib/lang/plan/object_from_catalog'
 class SelectionTerm < Term 	
   class SelectionTable < ObjectTable 
+    include ObjectFromCatalog
     @@PRIMARY_KEY = Key.new(0,1,2)
 
     class Field 
@@ -17,17 +19,6 @@ class SelectionTerm < Term
 
     def initialize
       super(TableName.new(GLOBALSCOPE, "selection"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-    end
-
-    def insert(tuple)
-      object = tuple.value(Field::OBJECT)
-      if (object.nil?) then
-        throw UpdateException, "Selection object null!"
-      end
-      object.program  = tuple.value(Field::PROGRAM);
-      object.rule     = tuple.value(Field::RULE);
-      object.position = tuple.value(Field::POSITION);
-      return super.insert(tuple);
     end
   end
 

@@ -1,7 +1,7 @@
 require "test/unit"
 
 require 'lib/lang/parse/local_tw.rb'
-require 'lib/lang/parse/Treewalker.rb'
+require 'lib/lang/parse/tree_walker.rb'
 
 require 'lib/lang/parse/schema.rb'
 

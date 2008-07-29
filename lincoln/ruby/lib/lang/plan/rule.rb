@@ -8,20 +8,24 @@ require 'lib/lang/plan/boolean'
 require 'lib/types/operator/watch_op'
 require 'lib/types/operator/projection'
 require 'lib/lang/plan/aggregate'
+require 'lib/lang/plan/object_from_catalog'
 require 'lib/types/table/object_table'
 require 'lib/types/operator/event_filter'
 require 'lib/exec/basic_query'
+require 'lib/types/exception/planner_exception'
 
 class Rule < Clause
 	
 	class RuleTable < ObjectTable
+	  include ObjectFromCatalog
+	  
 		@@PRIMARY_KEY = Key.new(0,1)
 		
 		class Field 
 		  PROGRAM=0
-		  RULENAME=1
-		  PUBLIC=2
-		  DELETE=3
+		  NAME=1
+		  IS_PUBLIC=2
+		  IS_DELETE=3
 		  OBJECT=4
 	  end
 		@@SCHEMA =  [String,String,Boolean,Boolean,Rule]
@@ -36,20 +40,6 @@ class Rule < Clause
 			programKey = Key.new(Field::PROGRAM)
 			index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
 			@secondary[programKey.hash] = index
-		end
-		
-    def insert_tup(tuple)
-			object = tuple.value(Field::OBJECT)
-		  raise UpdateException,"Rule object null" if object.nil?
-			object.program   = tuple.value(Field::PROGRAM)
-			object.name      = tuple.value(Field::RULENAME)
-			object.isPublic  = tuple.value(Field::PUBLIC)
-			object.isDelete  = tuple.value(Field::DELETE)
-			return super(tuple)
-		end
-		
-		def delete(tuple)
-			super(tuple)
 		end
 	end
 
@@ -107,8 +97,10 @@ class Rule < Clause
         table = Table.find_table(term.name)
 				if (table.table_type == Table::TableType::EVENT || term.event != Table::Event::NONE) 
 					if (!event.nil?)
-						raise PlannerException, "Multiple event predicates in rule " + name + 
-								                   " location " + term.location
+					  require 'ruby-debug'; debugger
+  				  
+						raise PlannerException, "Multiple event predicates in rule " + name.to_s + 
+								                   " location " + term.location.to_s
 					end
 					# Plan a query with this event predicate as input.
 					event = term

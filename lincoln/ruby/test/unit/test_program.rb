@@ -101,14 +101,14 @@ class TestProgram < Test::Unit::TestCase
     v8 = Variable.new("Note2", String)
     v8.position = 3
     link2 = Predicate.new(false, TableName.new(nil,"link"), Table::Event::NONE, [v5, v6, v7, v8])
-    link2.set('testprog', 'r3', 1)
+    link2.set('testprog', 'l2', 1)
 
     body = [link, link2]
     
     e = NativeExpression.new("+", v3, v7)
 
     path3 = Predicate.new(false, TableName.new(nil,"path"), Table::Event::NONE, [v1, v6, e])
-    path3.set('testprog', 'r3', 0)
+    path3.set('testprog', 'p3', 0)
     
     r3 = Rule.new(1, 'r3', true, false, path3, body)
     r3.set('testprog')

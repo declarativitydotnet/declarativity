@@ -11,7 +11,7 @@ require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
 require 'termtab'
 
-require "Treewalker.rb"
+require "TreeWalker.rb"
 require 'local_tw.rb'
 require 'moutput.rb'
 

@@ -1,4 +1,4 @@
-# Treewalker callbacks specific to parsing Overlog programs
+# TreeWalker callbacks specific to parsing Overlog programs
 
 require "rubygems"
 require "treetop"
@@ -7,7 +7,7 @@ require "lib/lang/parse/core.rb"
 
 require "lib/lang/parse/procedural.rb"
 require 'lib/types/basic/tuple'
-require "lib/lang/parse/Treewalker.rb"
+require "lib/lang/parse/tree_walker.rb"
 
 # um... symbol tables?
 @@state = Hash.new
@@ -22,7 +22,7 @@ class OverlogCompiler
 
 # local modules
 
-class VisitGeneric < Treewalker::Handler
+class VisitGeneric < TreeWalker::Handler
 
 	def print_table(name,tuple)
 		if (@@verbose.eql?("v")) then
@@ -307,7 +307,7 @@ end
 
 	def analyze
 
-		sky = Treewalker.new(@tree)
+		sky = TreeWalker.new(@tree)
 
 		vg = VisitGeneric.new
 

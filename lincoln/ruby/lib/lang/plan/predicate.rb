@@ -3,18 +3,22 @@ require 'lib/lang/plan/dont_care'
 require 'lib/lang/plan/arguments'
 require 'lib/types/operator/index_join'
 require 'lib/types/operator/scan_join'
+require 'lib/lang/plan/object_from_catalog'
 
 class Predicate < Term 
   include Enumerable
-  class Field
-    PROGRAM = 0
-    RULE = 1
-    POSITION = 2 
-    EVENT = 3
-    OBJECT = 4
-  end
   
 	class PredicateTable < ObjectTable
+	  include ObjectFromCatalog
+
+    class Field
+      PROGRAM = 0
+      RULE = 1
+      POSITION = 2 
+      EVENT = 3
+      OBJECT = 4
+    end
+	  
 		@@PRIMARY_KEY = Key.new(0,1,2)
 		
 		@@SCHEMA =  [
@@ -27,21 +31,6 @@ class Predicate < Term
 
 		def initialize
 			super(TableName.new(GLOBALSCOPE, "predicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		end
-		
-    def insert_tup(tuple)
-			object = tuple.value(Field::OBJECT)
-			if (object.nil?) then
-				throw UpdateException, "Predicate object null"
-			end
-			object.program   = tuple.value(Field::PROGRAM)
-			object.rule      = tuple.value(Field::RULE)
-			object.position  = tuple.value(Field::POSITION)
-			return super(tuple);
-		end
-		
-    def delete(tuple) 
-			return super(tuple)
 		end
 	end
 	
@@ -141,7 +130,8 @@ class Predicate < Term
 	end
 	
 	def set(program, rule, position) 
-    Program.predicate.force(Tuple.new(program, rule, position, event.to_s, self))
+#    Program.predicate.force(Tuple.new(program, rule, position, event.to_s, self))
+    Program.predicate.force(Tuple.new(program, rule, position, event, self))
 		@schema = Schema.new(name, nil)
 		@arguments.each do |arg|
 			if (arg.class <= Variable) then

@@ -29,7 +29,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
       super(TableName.new(GLOBALSCOPE, "compiler"), @@PRIMARY_KEY, TypeList.new(@SCHEMA))
     end
 
-    def insert(tuple)
+    def insert_tup(tuple)
       program = tuple.value(Field::PROGRAM)
       if (program.nil?)
         owner = tuple.value(Field::OWNER)

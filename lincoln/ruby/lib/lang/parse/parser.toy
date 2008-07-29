@@ -6,7 +6,7 @@ require "core.rb"
 require 'lib/types/table/object_table.rb'
 require 'lib/lang/plan/predicate.rb'
 
-require "Treewalker.rb"
+require "TreeWalker.rb"
 
 
 def termtab(rule,pred,term,type)
@@ -48,7 +48,7 @@ end
 
 # local modules
 
-class VisitGeneric < Treewalker::Handler
+class VisitGeneric < TreeWalker::Handler
 	def semantic(text)
 		#print "generic semantic action for "+self.token+" =  "+text+"\n"
 		#print "set "+self.token+" = "+text+"\n"
@@ -145,7 +145,7 @@ vv = VisitVariable.new
 vf = VisitFact.new
 vt = VisitTable.new
 
-sky = Treewalker.new(result)
+sky = TreeWalker.new(result)
 
 #sky.add_handler("term","print",1)
 sky.add_handler("expression",vg,1)

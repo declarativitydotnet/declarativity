@@ -5,7 +5,7 @@
 
 require "rubygems"
 require "treetop"
-require 'Treewalker.rb'
+require 'TreeWalker.rb'
 require 'ddl.rb'
 
 $current = Hash.new
@@ -13,7 +13,7 @@ $tables = Hash.new
 $types = Hash.new
 $keys = Hash.new
 
-class Visit < Treewalker::Handler
+class Visit < TreeWalker::Handler
 	def semantic(text,obj)
 		$current[self.token] = text
 	end
@@ -74,7 +74,7 @@ if !tree
      raise RuntimeError.new(parser.failure_reason)
 end
 
-sky = Treewalker.new(tree)
+sky = TreeWalker.new(tree)
 
 v = Visit.new
 

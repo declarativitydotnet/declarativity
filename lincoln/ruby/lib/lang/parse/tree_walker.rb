@@ -1,6 +1,6 @@
 # a general Treetop walker that fires off callbacks registered by the caller.
 
-class Treewalker
+class TreeWalker
 	class Handler
 		def initialize()	
 			#@term = string
