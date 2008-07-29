@@ -32,4 +32,16 @@ def otabinsert(otab,*set)
 end
 
 
+# carpal tunnel
+def predoftable(table)
+        schema = table.schema_of
+        return Predicate.new(false,table.name,table,schema.variables)
+
+end
+
+def joinwith(pred,table)
+        sj = ScanJoin.new(pred,table.schema_of)
+        ts = TupleSet.new("terms",*table.tuples)
+        return sj.evaluate(ts)
+end
 

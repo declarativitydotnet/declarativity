@@ -80,7 +80,7 @@ class VisitTerm < VisitGeneric
 		print "\n"
 		print_table("term",[@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text])
 		#@termt.insert(TupleSet.new("term",Tuple.new(@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)),nil)
-		otabinsert(@termt,@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)
+		otabinsert(@termt,@@positions["_Universal"],@@current["rule"],@@positions["_Termpos"],text)
 		@@positions["_Universal"] = @@positions["_Universal"] + 1
 	end
 end
@@ -94,6 +94,19 @@ end
 
 
 # "real" subclasses
+
+class VisitProgram < VisitBase
+	def initialize(pt)
+		@prt = pt
+	end
+	def semantic(text,obj)
+		super(text,obj)
+		otabinsert(@prt,@@positions["_Universal"],nil,text)
+		@@current["program"] = @@positions["_Universal"]
+
+	end
+end
+
 class VisitPredicate < VisitTerm
 	def initialize (pt,term)
 		super(term)
@@ -146,9 +159,9 @@ class VisitFact < VisitTerm
 	def semantic(text,obj)
 		@@positions["_Termpos"] = @@positions["_Primpos"] = -1
 		super(text,obj)
-		print_table("fact",[@@positions["_Universal"],@@current["term"],'"'+text+'"'])
+		print_table("fact",[@@positions["_Universal"],@@current["program"],'"'+text+'"'])
 		#@ft.insert(TupleSet.new("fact",Tuple.new(@@positions["_Universal"],@@current["term"],text)),nil)
-		otabinsert(@ft,@@positions["_Universal"],@@current["term"],text)
+		otabinsert(@ft,@@positions["_Universal"],@@current["program"],text)
 	end
 end
 
@@ -169,6 +182,10 @@ class VisitAggregate < VisitGeneric
 end
 
 class VisitRule < VisitBase
+	def initialize (pt)
+		super()
+		@rt = pt
+	end
 	def semantic(text,obj)
 		t = text.gsub('"',"")
 		super(text,obj)
@@ -178,6 +195,8 @@ class VisitRule < VisitBase
 			print "OBJ DELETE!!!! ("+ obj.elements.deleter.to_s+")\n"
 		end
 		print_table("rule",[@@positions["_Universal"],@@positions["Program"],'"'+t+'"',-1,nil,nil])
+		otabinsert(@rt,@@positions["_Universal"],@@current["program"],text,nil,nil)
+		@@current["rule"] = @@positions["_Universal"]
 	end
 end
 
@@ -321,7 +340,7 @@ end
 		sky.add_handler("Definition",VisitTable.new(@tabletable),1)
 		sky.add_handler("TableName",vg,1)
 		sky.add_handler("Schema",vg,1)
-		sky.add_handler("Rule",VisitRule.new,1)
+		sky.add_handler("Rule",VisitRule.new(@ruletable),1)
 		sky.add_handler("Selection",VisitSelection.new(nil,@termtable),1)
 		sky.add_handler("Assignment",VisitAssignment.new(nil,@termtable), 1)
 		

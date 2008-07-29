@@ -80,6 +80,14 @@ table Program (
 	object String
 );
 
+table MyRule (
+	+ruleid Integer,
+	programid Integer,
+	rulename String,
+	public Integer,
+	delete Integer
+); 
+
 table Query (
 	  program String,
 	  rule String,
@@ -131,3 +139,4 @@ table Watch (
   +tablename String,
   +modifier String
 );
+>>>>>>> .r2046
