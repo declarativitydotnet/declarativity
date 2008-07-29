@@ -1,29 +1,5 @@
 require 'lib/lang/plan/object_from_catalog'
 class Assignment < Term
-	
-	class AssignmentTable < ObjectTable
-    include ObjectFromCatalog
-    
-		@@PRIMARY_KEY = Key.new(0,1)
-		
-		class Field 
-		  PROGRAM=1 
-		  RULE=2 
-		  POSITION=3 
-		  OBJECT=4
-	  end
-		@@SCHEMA = [String, String, Integer, Assignment]
-      # String.class,    // Program name
-      # String.class,    // Rule name
-      # Integer.class,   // Rule position
-      # Assignment.class // Assignment object
-
-		def initialize
-			super(TableName.new(GLOBALSCOPE, "assignment"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
-		end
-		
-	end
-	
 	def initialize(variable, value) 
 		@variable = variable
 		@value = value

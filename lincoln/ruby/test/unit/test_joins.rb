@@ -9,6 +9,7 @@ require 'lib/types/function/filter'
 require 'lib/lang/plan/arguments'
 require 'lib/lang/plan/value'
 require 'lib/lang/plan/predicate'
+require 'lib/lang/parse/schema'
 require 'lib/core/system'
 require "test/unit"
 

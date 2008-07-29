@@ -34,7 +34,7 @@ class Tuple
     unless values.length <= 0
       out = "<";
       values.each do |v|
-        out << (v.nil? ? "null" : v.to_s) + ", "
+        out << (v.nil? ? "nil" : v.to_s) + ", "
       end
       out[out.length - 2] = ">"
       out.rstrip
@@ -43,6 +43,7 @@ class Tuple
 
   def schema=(s)
     if s.size != size then
+#      require 'ruby-debug'; debugger
       raise "Schema assignment does not match tuple arity!  schema " + s.to_s+" (vs. tuple size "+size.to_s+")"
     end
     @schema = s

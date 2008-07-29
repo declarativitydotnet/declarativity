@@ -1,36 +1,6 @@
 require 'lib/lang/plan/clause'
 require 'lib/types/table/hash_index'
-class Fact < Clause
-	
-	class FactTable < ObjectTable
-		@@PRIMARY_KEY = Key.new()
-		
-		class Field 
-		  PROGRAM=0
-		  TABLENAME=1
-		  TUPLE=2
-	  end
-		@@SCHEMA =  [String, TableName, Tuple]
-      # String.class,    // Program name
-      # TableName.class, // Table name
-      # Tuple.class      // Tuple object
-
-		def initialize
-			super(TableName.new(GLOBALSCOPE, "fact"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
-			programKey = Key.new(Field::PROGRAM)
-			index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
-			@secondary[programKey.hash] = index
-		end
-		
-		def insert(tuple)
-			super(tuple)
-		end
-		
-		def delete(tuple)
-			super(tuple)
-		end
-	end
-	
+class Fact < Clause	
 	def initialize(location, name, arguments)
 		super(location)
 		@name = name

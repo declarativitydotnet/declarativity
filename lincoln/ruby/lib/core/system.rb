@@ -14,8 +14,8 @@ class System
 		
 	def init
 		Table.init
-		@@query      = Query::QueryTable.new
-		@@compile    = Compiler::CompileTable.new  ## add back once parser/compiler in place
+		@@query      = QueryTable.new
+		@@compile    = CompilerTable.new  ## add back once parser/compiler in place
 		@@evaluator  = Driver::Evaluate.new  ## add back once driver in place
 		@@schedule   = Schedule.new
 		@@clock      = Clock.new("localhost")

@@ -1,4 +1,5 @@
 # The driver for processesing the Overlog language.
+require "lib/lang/parse/schema"
 require 'lib/types/basic/tuple'
 require 'lib/types/table/object_table'
 require 'lib/lang/plan/watch_clause'
@@ -9,48 +10,15 @@ require "lib/lang/plan/program"
 class Compiler # in java, this is a subclass of xtc.util.Tool
   @@FILES =  ["/Users/joeh/devel/lincoln/ruby/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lang/stratachecker.olg"]
 
-  class CompileTable < ObjectTable
-    @@PRIMARY_KEY = Key.new(0)
-
-    class Field
-      NAME=0
-      OWNER=1 
-      FILE=2
-      PROGRAM=3
-    end
-    
-    @@SCHEMA = [String,String,String,Program]
-    # String.class,  // Program name
-    # String.class,  // Program owner
-    # String.class,  // Program file
-    # Program.class  // The program object
-
-    def initialize
-      super(TableName.new(GLOBALSCOPE, "compiler"), @@PRIMARY_KEY, TypeList.new(@SCHEMA))
-    end
-
-    def insert_tup(tuple)
-      program = tuple.value(Field::PROGRAM)
-      if (program.nil?)
-        owner = tuple.value(Field::OWNER)
-        file  = tuple.value(Field::FILE)
-        compiler = Compiler.new(owner, file)
-        tuple.value(Field::NAME, compiler.program.name)
-        tuple.value(Field::PROGRAM, compiler.program)
-      end
-      return super(tuple)
-    end
-  end
-
-  @@compiler   = CompileTable.new
-  @@programs   = Program::ProgramTable.new
-  @@rule       = Rule::RuleTable.new
-  @@watch      = WatchClause::WatchTable.new
-  @@fact       = Fact::FactTable.new
-  @@predicate  = Predicate::PredicateTable.new
+  @@compiler   = CompilerTable.new
+  @@programs   = ProgramTable.new
+  @@rule       = RuleTable.new
+  @@watch      = WatchTable.new
+  @@fact       = FactTable.new
+  @@predicate  = PredicateTable.new
   @@tfunction  = Function::TableFunction.new
-  @@selection  = SelectionTerm::SelectionTable.new
-  @@assignment = Assignment::AssignmentTable.new
+  @@selection  = SelectionTable.new
+  @@assignment = AssignmentTable.new
 
   # Create a new driver for Overlog.
   def initialize(owner, file)

@@ -4,35 +4,10 @@ require 'lib/lang/plan/arguments'
 require 'lib/types/operator/index_join'
 require 'lib/types/operator/scan_join'
 require 'lib/lang/plan/object_from_catalog'
+#require 'lib/lang/parse/schema.rb'
 
 class Predicate < Term 
   include Enumerable
-  
-	class PredicateTable < ObjectTable
-	  include ObjectFromCatalog
-
-    class Field
-      PROGRAM = 0
-      RULE = 1
-      POSITION = 2 
-      EVENT = 3
-      OBJECT = 4
-    end
-	  
-		@@PRIMARY_KEY = Key.new(0,1,2)
-		
-		@@SCHEMA =  [
-			String.class,     # program name
-			String.class,     # rule name
-			Integer.class,    # position
-			String.class,     # Event
-			Predicate.class   # predicate object
-		]
-
-		def initialize
-			super(TableName.new(GLOBALSCOPE, "predicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		end
-	end
 	
 	def initialize(notin, name, event, arguments) 
 		super()

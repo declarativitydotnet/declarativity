@@ -13,36 +13,9 @@ require 'lib/types/table/object_table'
 require 'lib/types/operator/event_filter'
 require 'lib/exec/basic_query'
 require 'lib/types/exception/planner_exception'
+require 'lib/lang/parse/schema'
 
 class Rule < Clause
-	
-	class RuleTable < ObjectTable
-	  include ObjectFromCatalog
-	  
-		@@PRIMARY_KEY = Key.new(0,1)
-		
-		class Field 
-		  PROGRAM=0
-		  NAME=1
-		  IS_PUBLIC=2
-		  IS_DELETE=3
-		  OBJECT=4
-	  end
-		@@SCHEMA =  [String,String,Boolean,Boolean,Rule]
-      # String.class,             // Program name
-      # String.class,             // Rule name
-      # java.lang.Boolean.class,  // public rule?
-      # java.lang.Boolean.class,  // delete rule?
-      # Rule.class                // Rule object
-
-		def initialize
-			super(TableName.new(GLOBALSCOPE, "rule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-			programKey = Key.new(Field::PROGRAM)
-			index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
-			@secondary[programKey.hash] = index
-		end
-	end
-
 	attr_accessor :program, :name, :isPublic, :isDelete
 	
   def initialize(location, name, isPublic, isDelete,  head, body)

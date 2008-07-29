@@ -5,34 +5,19 @@ require 'lib/lang/plan/predicate'
 require 'lib/lang/plan/function'
 require 'lib/lang/plan/assignment'
 require 'lib/lang/plan/rule'
+require 'lib/lang/parse/schema'
 
 class Program
   include Comparable
-	
-  class ProgramTable < ObjectTable
-		@@PRIMARY_KEY = Key.new(0)
 		
-    class Field
-      PROGRAM = 0
-      OWNER = 1
-      OBJECT = 2
-    end
-    
-		@@SCHEMA =  [String, String, Program]
-
-		def initialize
-			super(TableName.new(GLOBALSCOPE, "program"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA));
-		end
-	end
-	
   @@program = ProgramTable.new
 #  @@rule = Rule::RuleTable.new
-  @@watch = WatchClause::WatchTable.new
-  @@fact = Fact::FactTable.new
-  @@predicate = Predicate::PredicateTable.new
+  @@watch = WatchTable.new
+  @@fact = FactTable.new
+  @@predicate = PredicateTable.new
   @@tfunction = Function::TableFunction.new
 #  @@selection = Rule::RuleTable.new
-  @@assignment = Assignment::AssignmentTable.new
+  @@assignment = AssignmentTable.new
   
   def Program.watch
     @@watch
@@ -77,11 +62,12 @@ class Program
     @periodics.clear
 
     # First plan out all the rules
-    hash_index = Compiler.rule.secondary[Key.new(Rule::RuleTable::Field::PROGRAM).hash]
+    hash_index = Compiler.rule.secondary[Key.new(RuleTable::Field::PROGRAM).hash]
+    require 'ruby-debug'; debugger
     rules = hash_index.lookup_vals(@name)
 
     rules.each do |tuple| 
-      rule = tuple.value(Rule::RuleTable::Field::OBJECT)
+      rule = tuple.value(RuleTable::Field::OBJECT)
 
       # Store all planned queries from a given rule. 
       # NOTE: delta rules can produce > 1 query. 

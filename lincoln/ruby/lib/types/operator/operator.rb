@@ -2,6 +2,8 @@ require 'lib/types/table/table_name'
 require 'lib/types/table/object_table'
 require 'lib/types/table/key'
 require 'lib/types/basic/type_list'
+require 'lib/lang/parse/schema'
+
 class Operator
   include Comparable
 
@@ -11,33 +13,6 @@ class Operator
     @@id += 1
     return identifier
   end 
-
-  class OperatorTable < ObjectTable
-    @@PRIMARY_KEY = Key.new(2)
-    class Field
-      PROGRAM = 0
-      RULE = 1
-      ID = 2
-      SELECTIVITY = 3
-      OBJECT = 4
-    end
-
-    @@SCHEMA = [
-      String.class,    # Program Name
-      String.class,    # Rule Name
-      String.class,    # Operator ID
-      Float.class,     # Selectivity
-      Operator.class   # The Operator object
-    ]
-
-    def initialize
-      super(TableName.new(GLOBALSCOPE, "operator"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
-    end
-
-    # def insert(tuple)
-    #   return super(tuple)
-    # end
-  end
 
   @@table = OperatorTable.new
 
