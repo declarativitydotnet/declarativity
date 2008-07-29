@@ -338,6 +338,9 @@ module Ddl
     return r0
   end
 
+  module Tablename0
+  end
+
   def _nt_tablename
     start_index = index
     if node_cache[:tablename].has_key?(index)
@@ -346,25 +349,98 @@ module Ddl
       return cached
     end
 
-    s0, i0 = [], index
+    i0 = index
+    i1, s1 = index, []
+    s2, i2 = [], index
     loop do
       if input.index(Regexp.new('[a-zA-Z0-9]'), index) == index
-        r1 = (SyntaxNode).new(input, index...(index + 1))
+        r3 = (SyntaxNode).new(input, index...(index + 1))
         @index += 1
       else
-        r1 = nil
+        r3 = nil
       end
-      if r1
-        s0 << r1
+      if r3
+        s2 << r3
       else
         break
       end
     end
-    if s0.empty?
-      self.index = i0
-      r0 = nil
+    if s2.empty?
+      self.index = i2
+      r2 = nil
     else
-      r0 = SyntaxNode.new(input, i0...index, s0)
+      r2 = SyntaxNode.new(input, i2...index, s2)
+    end
+    s1 << r2
+    if r2
+      if input.index('::', index) == index
+        r4 = (SyntaxNode).new(input, index...(index + 2))
+        @index += 2
+      else
+        terminal_parse_failure('::')
+        r4 = nil
+      end
+      s1 << r4
+      if r4
+        s5, i5 = [], index
+        loop do
+          if input.index(Regexp.new('[a-zA-Z0-9]'), index) == index
+            r6 = (SyntaxNode).new(input, index...(index + 1))
+            @index += 1
+          else
+            r6 = nil
+          end
+          if r6
+            s5 << r6
+          else
+            break
+          end
+        end
+        if s5.empty?
+          self.index = i5
+          r5 = nil
+        else
+          r5 = SyntaxNode.new(input, i5...index, s5)
+        end
+        s1 << r5
+      end
+    end
+    if s1.last
+      r1 = (SyntaxNode).new(input, i1...index, s1)
+      r1.extend(Tablename0)
+    else
+      self.index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      s7, i7 = [], index
+      loop do
+        if input.index(Regexp.new('[a-zA-Z0-9]'), index) == index
+          r8 = (SyntaxNode).new(input, index...(index + 1))
+          @index += 1
+        else
+          r8 = nil
+        end
+        if r8
+          s7 << r8
+        else
+          break
+        end
+      end
+      if s7.empty?
+        self.index = i7
+        r7 = nil
+      else
+        r7 = SyntaxNode.new(input, i7...index, s7)
+      end
+      if r7
+        r0 = r7
+      else
+        self.index = i0
+        r0 = nil
+      end
     end
 
     node_cache[:tablename][start_index] = r0
@@ -421,8 +497,129 @@ module Ddl
           if r4
             r0 = r4
           else
-            self.index = i0
-            r0 = nil
+            if input.index('TableName', index) == index
+              r5 = (SyntaxNode).new(input, index...(index + 9))
+              @index += 9
+            else
+              terminal_parse_failure('TableName')
+              r5 = nil
+            end
+            if r5
+              r0 = r5
+            else
+              if input.index('TableType', index) == index
+                r6 = (SyntaxNode).new(input, index...(index + 9))
+                @index += 9
+              else
+                terminal_parse_failure('TableType')
+                r6 = nil
+              end
+              if r6
+                r0 = r6
+              else
+                if input.index('Tuple', index) == index
+                  r7 = (SyntaxNode).new(input, index...(index + 5))
+                  @index += 5
+                else
+                  terminal_parse_failure('Tuple')
+                  r7 = nil
+                end
+                if r7
+                  r0 = r7
+                else
+                  if input.index('Boolean', index) == index
+                    r8 = (SyntaxNode).new(input, index...(index + 7))
+                    @index += 7
+                  else
+                    terminal_parse_failure('Boolean')
+                    r8 = nil
+                  end
+                  if r8
+                    r0 = r8
+                  else
+                    if input.index('Key', index) == index
+                      r9 = (SyntaxNode).new(input, index...(index + 3))
+                      @index += 3
+                    else
+                      terminal_parse_failure('Key')
+                      r9 = nil
+                    end
+                    if r9
+                      r0 = r9
+                    else
+                      if input.index('Index', index) == index
+                        r10 = (SyntaxNode).new(input, index...(index + 5))
+                        @index += 5
+                      else
+                        terminal_parse_failure('Index')
+                        r10 = nil
+                      end
+                      if r10
+                        r0 = r10
+                      else
+                        if input.index('SelectionTerm', index) == index
+                          r11 = (SyntaxNode).new(input, index...(index + 13))
+                          @index += 13
+                        else
+                          terminal_parse_failure('SelectionTerm')
+                          r11 = nil
+                        end
+                        if r11
+                          r0 = r11
+                        else
+                          if input.index('Query', index) == index
+                            r12 = (SyntaxNode).new(input, index...(index + 5))
+                            @index += 5
+                          else
+                            terminal_parse_failure('Query')
+                            r12 = nil
+                          end
+                          if r12
+                            r0 = r12
+                          else
+                            if input.index('Program', index) == index
+                              r13 = (SyntaxNode).new(input, index...(index + 7))
+                              @index += 7
+                            else
+                              terminal_parse_failure('Program')
+                              r13 = nil
+                            end
+                            if r13
+                              r0 = r13
+                            else
+                              if input.index('Predicate', index) == index
+                                r14 = (SyntaxNode).new(input, index...(index + 9))
+                                @index += 9
+                              else
+                                terminal_parse_failure('Predicate')
+                                r14 = nil
+                              end
+                              if r14
+                                r0 = r14
+                              else
+                                if input.index("WatchOp::Modifier", index) == index
+                                  r15 = (SyntaxNode).new(input, index...(index + 17))
+                                  @index += 17
+                                else
+                                  terminal_parse_failure("WatchOp::Modifier")
+                                  r15 = nil
+                                end
+                                if r15
+                                  r0 = r15
+                                else
+                                  self.index = i0
+                                  r0 = nil
+                                end
+                              end
+                            end
+                          end
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
           end
         end
       end

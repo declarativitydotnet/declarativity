@@ -25,11 +25,11 @@ rule colname
 end
 
 rule tablename
-	[a-zA-Z0-9]+
+	[a-zA-Z0-9]+ '::' [a-zA-Z0-9]+ / [a-zA-Z0-9]+
 end
 
 rule dtype
-	'String' / 'Integer' / 'Float' / 'Object'
+	'String' / 'Integer' / 'Float' / 'Object' / 'TableName' / 'TableType' / 'Tuple' / 'Boolean' / 'Key' / 'Index' / 'SelectionTerm' / 'Query' / 'Program' / 'Predicate' / "WatchOp::Modifier"
 end	
 
 rule keys
