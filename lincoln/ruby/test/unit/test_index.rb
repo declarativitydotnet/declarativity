@@ -33,7 +33,6 @@ class TestIndex < Test::Unit::TestCase
     
     # attempt to insert an index tuple or a non-existent table
     assert_raise(UpdateException) do 
-      require 'ruby-debug'; debugger
       btii.insert_tup(Tuple.new("Test", Key.new(0), Integer, Index, nil))
     end
     

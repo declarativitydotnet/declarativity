@@ -18,6 +18,8 @@ require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
 
 class TestParse < Test::Unit::TestCase
+  def test_default
+  end
   # 
   # $catalog = Catalog.new
   # $index = IndexTable.new

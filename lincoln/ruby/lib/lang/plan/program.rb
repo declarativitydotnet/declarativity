@@ -63,7 +63,6 @@ class Program
 
     # First plan out all the rules
     hash_index = Compiler.rule.secondary[Key.new(RuleTable::Field::PROGRAM).hash]
-    require 'ruby-debug'; debugger
     rules = hash_index.lookup_vals(@name)
 
     rules.each do |tuple| 
