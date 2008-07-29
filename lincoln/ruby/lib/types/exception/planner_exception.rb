@@ -1,0 +1,3 @@
+class PlannerException < StandardError
+
+end
