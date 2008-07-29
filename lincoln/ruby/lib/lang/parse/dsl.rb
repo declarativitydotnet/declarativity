@@ -89,34 +89,58 @@ sky.add_handler("num",VNum.new,1)
 sky.walk("n")
 
 print "require 'lib/types/table/object_table'\n"
-$tables.each do |table, arr|
+print "require 'lib/lang/parse/catalog_mixins'\n"
+# print "require 'lib/lang/plan/predicate'\n"
+# print "require 'lib/lang/plan/selection_term'\n"
+# print "require 'lib/lang/plan/program'\n"
+$tables.sort.each do |table, arr|
+  mixin = table+"TableMixin"
 	print "class "+table+"Table < ObjectTable\n"
+  print "include "+mixin+" if defined? "+mixin+"\n"
 	if ($keys[table].size > 0) then
 		print "\t@@PRIMARY_KEY = Key.new("+$keys[table].join(",")+")\n"
 	else
-		print "\t@@PRIMARY_KEY = Key.new("+(0..arr.size-1).to_a.join(",")+")\n"
+		# print "\t@@PRIMARY_KEY = Key.new("+(0..arr.size-1).to_a.join(",")+")\n"
+		print "\t@@PRIMARY_KEY = Key.new\n"
 	end
 
 	print "\tclass Field\n"
 	(0..arr.size-1).each do |i|
 		print "\t\t"+arr[i].upcase+"="+i.to_s+"\n"
 	end
-	print "\n\tend\n"
+	print "\tend\n"
 	print "\t@@SCHEMA = ["+$types[table].join(",")+"]\n"
 
-	print "\tdef initialize\n"
+	print "\n\tdef initialize\n"
         print "\t\tsuper(TableName.new(GLOBALSCOPE, \""+table+"Table\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
-	print "\t\tprogramKey = Key.new(Field::" + arr[0].upcase+")\n"
-	print "\t\tindex = HashIndex.new(self, programKey, Index::Type::SECONDARY)\n"
-	print "\t\t@secondary[programKey] = index\n"
+        print "\t\tif defined? "+mixin+" and "+mixin+".methods.include? 'initialize_mixin'\n\t\t\t then initialize_mixin \n\t\tend\n"
+  # print "\t\tprogramKey = Key.new(Field::" + arr[0].upcase+")\n"
+  # print "\t\tindex = HashIndex.new(self, programKey, Index::Type::SECONDARY)\n"
+  # print "\t\t@secondary[programKey] = index\n"
 	print "\tend\n"
 
-	print "\tdef schema_of\n"
+  print "\n\tdef field(name)\n"
+  print "\n\t\teval('Field::'+name)\n"
+  print "\n\tend"
+  
+  print "\n\tdef scope\n"
+  print "\n\t\tGLOBALSCOPE\n"
+  print "\n\tend"
+  
+  print "\n\tdef pkey\n"
+  print "\n\t\t@@PRIMARY_KEY\n"
+  print "\n\tend"
+
+  print "\n\tdef schema\n"
+  print "\n\t\t@@SCHEMA\n"
+  print "\n\tend"
+  
+	print "\n\tdef schema_of\n"
 	(0..arr.size-1).each do |i|
 		print "\t\t"+ arr[i]+" = Variable.new(\""+arr[i]+"\","+$types[table][i]+")\n"
 		print "\t\t"+arr[i]+".position="+i.to_s+"\n"
 	end
 	print "\t\treturn Schema.new(\""+table+"\",["+arr.join(",")+"])\n"
 	print "\tend\n"
-	print "end\n"
+	print "end\n\n"
 end

@@ -5,10 +5,10 @@ require "treetop"
 require "core.rb"
 #require "olg.rb"
 
-#require 'lib/types/table/object_table.rb'
-#require 'lib/lang/plan/predicate.rb'
-#require 'lib/lang/plan/rule.rb'
-#require 'lib/types/table/basic_table.rb'
+require 'lib/types/table/object_table.rb'
+require 'lib/lang/plan/predicate.rb'
+require 'lib/lang/plan/rule.rb'
+require 'lib/types/table/basic_table.rb'
 require 'termtab'
 
 require "TreeWalker.rb"
@@ -37,14 +37,14 @@ compiler = OverlogCompiler.new(nil,terms,preds,pexpr,expr)
 compiler.parse(prog)
 compiler.analyze()
 
-puts terms.to_s
-print "=====================\n"
+#puts terms.to_s
+# print "=====================\n"
 
-puts preds.to_s
-print "=====================\n"
-puts expr.to_s
-print "=====================\n"
+#puts preds.to_s
+#print "=====================\n"
+#puts expr.to_s
+#print "=====================\n"
 
-puts pexpr.to_s
-print "=====================\n"
-print "=====================\n"
+#puts pexpr.to_s
+#print "=====================\n"
+#print "=====================\n"

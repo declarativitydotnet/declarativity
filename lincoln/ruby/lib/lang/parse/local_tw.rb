@@ -94,17 +94,6 @@ end
 
 
 # "real" subclasses
-
-class VisitProgram < VisitBase
-	def initialize(pt)
-		@prt = pt
-	end
-	def semantic(text,obj)
-		super(text,obj)
-		otabinsert(@prt,@@positions["_Universal"],nil,text)
-	end
-end
-
 class VisitPredicate < VisitTerm
 	def initialize (pt,term)
 		super(term)
@@ -114,7 +103,7 @@ class VisitPredicate < VisitTerm
 		super(text,obj)
 		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
 		#result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])),nil)
-		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])
+		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"], nil)
 		#print "PRED ARGS: "+obj.args.to_s+"\n"
 
 	end
@@ -284,7 +273,7 @@ end
 # class body
 
 
-	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs)
+	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices)
 
 		@ruletable = rules
 		@termtable = terms
@@ -295,7 +284,6 @@ end
 		@tabletable = tables
 		@columntable = columns
 		@indextable = indices
-		@programtable = programs
 
 
 		# reinitialize these awful globals, fingers crossed for good garbage collection.
@@ -323,7 +311,6 @@ end
 
 		vg = VisitGeneric.new
 
-		sky.add_handler("pprogramname",VisitProgram.new(@programtable),1)
 		sky.add_handler("Word",vg,1)
 		sky.add_handler("Location",vg,1)
 		sky.add_handler("Watch",vg,1)
