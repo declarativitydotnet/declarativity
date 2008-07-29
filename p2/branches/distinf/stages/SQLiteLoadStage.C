@@ -22,6 +22,7 @@
 #include "val_int64.h"
 #include "val_double.h"
 #include "val_factor.h"
+#include "val_set.h"
 
 #include <prl/xml_oarchive.hpp>
 #include <prl/factor/xml/polymorphic_factor.hpp>
@@ -53,14 +54,31 @@ typedef prl::moment_gaussian<matrix_type, vector_type> moment_gaussian;
 //! A decomposable fragment over Gaussians
 typedef prl::decomposable_fragment<canonical_gaussian> fragment_gaussian;
 
+namespace prl {
+  map<std::string, xml_iarchive::deserializer*> xml_iarchive::deserializers;
+}
+
+struct archive_registration {
+
+  archive_registration() {
+    using namespace std;
+    using prl::xml_iarchive;
+    cerr << "Registering the types with archive" << endl;
+    xml_iarchive::register_type<prl::domain>("domain");
+    xml_iarchive::register_type<constant_factor>("constant_factor");
+    xml_iarchive::register_type<table_factor>("table_factor");
+    xml_iarchive::register_type<canonical_gaussian>("canonical_gaussian");
+    //xml_iarchive::register_type<mixture_gaussian>("mixture_gaussian");
+    xml_iarchive::register_type<fragment_gaussian>("decomposable_fragment");
+  }
+
+} register_types;
+
+
+
 SQLiteLoadStage::SQLiteLoadStage(Stage* myStage) 
   : Stage::Processor(myStage), db(NULL), stmt(NULL) {
   using prl::xml_iarchive;
-  xml_iarchive::register_type<constant_factor>("constant_factor");
-  xml_iarchive::register_type<table_factor>("table_factor");
-  xml_iarchive::register_type<canonical_gaussian>("canonical_gaussian");
-  //xml_iarchive::register_type<mixture_gaussian>("mixture_gaussian");
-  xml_iarchive::register_type<fragment_gaussian>("decomposable_fragment");
 }
 
 SQLiteLoadStage::~SQLiteLoadStage() {
@@ -159,11 +177,18 @@ TuplePtr SQLiteLoadStage::loadRow() {
       break;
     case SQLITE_BLOB: {
       using namespace prl;
-      prl::polymorphic_factor<double> factor;
       const unsigned char* blob = sqlite3_column_text(stmt, i);
       xml_iarchive in(blob, sqlite3_column_bytes(stmt, i), Val_Factor::u);
-      in >> factor;
-      result->append(Val_Factor::mk(factor));
+      serializable_object* obj = in.read();
+      if (typeid(*obj) == typeid(domain)) {
+        SetPtr s(Val_Set::cast(Val_Factor::names(*dynamic_cast<domain*>(obj))));
+        result->append(Val_Set::mk(s));
+      } else {
+        prl::factor* f = dynamic_cast<prl::factor*>(obj);
+        assert(f != NULL);
+        result->append(Val_Factor::mk(*f));
+      }
+      delete obj;
       break;
     }
     case SQLITE_NULL:
@@ -183,3 +208,4 @@ TuplePtr SQLiteLoadStage::loadRow() {
 // This is necessary for the class to register itself with the
 // factory.
 DEFINE_STAGE_INITS(SQLiteLoadStage,"SQLiteLoad")
+

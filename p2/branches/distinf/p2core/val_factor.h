@@ -27,6 +27,7 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include <prl/variable.hpp>
+#include <prl/named_universe.hpp>
 #include <prl/factor/polymorphic_factor.hpp>
 
 typedef prl::polymorphic_factor<double> polymorphic_factor;
@@ -104,20 +105,12 @@ class Val_Factor : public Value {
   
  public:
   //! The set of all variables known to this host. (public for now)
-  static prl::universe u;
+  static prl::named_universe u;
 
  private:
   //! The underlying factor
   polymorphic_factor factor;
 
-  //! The variable corresponding to each name
-  static named_var_map named_var;
-
-  //! True if the polymorphic factor classes have been registered
-  static bool registered;
-
-  //! The mutex used for registering variables
-  static boost::mutex mutex;
 };
 
 // Free functions

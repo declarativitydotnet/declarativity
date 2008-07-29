@@ -15,7 +15,6 @@
 #include "stageLoader.h"
 #include "tokenizer.h"
 #include "CSVstage.h"
-#include "PRLstage.h"
 #include "SQLiteSaveStage.h"
 #include "SQLiteLoadStage.h"
 
@@ -24,7 +23,6 @@ StageLoader::loadStages()
 {
   Tokenizer::ensureInit();
   CSVstage::ensureInit();
-  PRLstage::ensureInit();
   SQLiteSaveStage::ensureInit();
   SQLiteLoadStage::ensureInit();
 }

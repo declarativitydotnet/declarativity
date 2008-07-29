@@ -89,13 +89,7 @@ const opr::Oper* Val_Factor::oper_ = new OperFactor();
 ////////////////////////////////////////////////////////
 
 // The universe of all variables
-prl::universe Val_Factor::u;
-
-// The variable that corresponds to each name
-Val_Factor::named_var_map Val_Factor::named_var;
-
-// Mutex for variable registration
-boost::mutex Val_Factor::mutex;
+prl::named_universe Val_Factor::u;
 
 prl::variable_h
 Val_Factor::registerVariable(const std::string& name, std::size_t size,
@@ -113,56 +107,24 @@ Val_Factor::registerVariable(const std::string& name, std::size_t size,
 prl::variable_h 
 Val_Factor::registerVectorVariable(const std::string& name, std::size_t size)
 {
-  boost::mutex::scoped_lock scoped_lock(mutex);
-  using namespace std;
-  variable_h v;
-  if (named_var.contains(name)) {
-    v = named_var[name];
-    assert(v->as_vector().size() == size);
-  } else {
-    v = u.new_vector_variable(name, size);
-    named_var[name] = v;
-    TELL_WARN << "Registered variable " << v << endl;
-    // cerr << "Registered new variable " << v << endl;
-  }
-  // cerr << "New list of variables: " << named_var << endl;
-  return v;
+  return u.new_vector_variable(name, size);
 }
 
 prl::variable_h
 Val_Factor::registerFiniteVariable(const std::string& name, std::size_t size)
 {
-  boost::mutex::scoped_lock scoped_lock(mutex);
-  using namespace std;
-  variable_h v;
-  if (named_var.contains(name)) {
-    v = named_var[name];
-    assert(v->size() == size);
-  } else {
-    v = u.new_finite_variable(name, size);
-    named_var[name] = v;
-    TELL_WARN << "Registered variable " << v << endl;
-    // cerr << "Registered new variable " << v << endl;
-  }
-  // cerr << "New list of variables: " << named_var << endl;
-  return v;
+  return u.new_finite_variable(name, size);
 }
 
 std::vector<prl::variable_h>
 Val_Factor::lookupVars(ListPtr list_ptr, bool ignore_missing) {
-  boost::mutex::scoped_lock scoped_lock(mutex);
   // using namespace std;
   std::vector<variable_h> vars;
   vars.reserve(list_ptr->size());
   // cout << named_var << endl;
   foreach(ValuePtr val_ptr, std::make_pair(list_ptr->begin(),list_ptr->end())) {
     std::string name = val_ptr->toString();
-    if (named_var.contains(name)) 
-      vars.push_back(named_var.get(val_ptr->toString()));
-    else if (!ignore_missing) {
-      std::cerr << "Cannot find variable named " << name << std::endl;
-      assert(false);
-    }
+    vars.push_back(u[name]);
   }
   return vars;
 }
@@ -301,7 +263,6 @@ ValuePtr Val_Factor::xdr_unmarshal(XDR * x)
   // cerr << "Unmarshaled " << factor << endl;
   foreach(variable_h v, factor.arguments()) {
     subst_map[v] = registerVariable(v->name(), v->size(), v->type());
-    // cerr << "(v,subst_map[v])=" << v << "," << subst_map[v] << endl;
     assert(v != subst_map[v]);
   }
   factor.subst_args(subst_map);

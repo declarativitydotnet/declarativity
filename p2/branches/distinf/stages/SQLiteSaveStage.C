@@ -22,8 +22,10 @@
 #include "val_double.h"
 #include "val_time.h"
 #include "val_factor.h"
+#include "val_list.h"
+#include "val_set.h"
 
-#include <prl/xml_oarchive.hpp>
+#include <prl/xml_ostringarchive.hpp>
 #include <prl/factor/xml/polymorphic_factor.hpp>
 
 
@@ -133,13 +135,19 @@ void SQLiteSaveStage::saveRow(TuplePtr tuple) {
       case Value::TIME_DURATION: // duration in seconds
         sqlite3_bind_double(stmt, i-1, Val_Double::cast(value));
         break;
+      case Value::LIST:
+      case Value::SET: { // treat as a set of variables 
+        prl::xml_ostringarchive archive;
+        archive << toDomain(value);
+        std::string str = archive.str();
+        sqlite3_bind_blob(stmt, i-1, str.c_str(), str.size(), SQLITE_TRANSIENT);
+        break;
+      }
       case Value::FACTOR: { // eventually could compress
-        std::ostringstream out;
-        {
-          prl::xml_oarchive archive(out);
-          archive << Val_Factor::cast(value);
-        }
-        sqlite3_bind_text(stmt, i-1, out.str().c_str(), -1, SQLITE_TRANSIENT);
+        prl::xml_ostringarchive archive;
+        archive << Val_Factor::cast(value);
+        std::string str = archive.str();
+        sqlite3_bind_blob(stmt, i-1, str.c_str(), str.size(), SQLITE_TRANSIENT);
         break;
       }
       default:
@@ -150,7 +158,10 @@ void SQLiteSaveStage::saveRow(TuplePtr tuple) {
     }
 
     // execute the insert command
-    sqlite3_step(stmt);
+    int rc = sqlite3_step(stmt);
+    if (rc) {
+      STAGE_WARN("sqlite3_set returned " << rc);
+    }
   }
 }
 

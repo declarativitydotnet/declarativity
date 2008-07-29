@@ -10,7 +10,6 @@ ADD_LIBRARY(p2stages
             stageLoader.C
             tokenizer.C
             CSVstage.C 
-            PRLstage.C 
             SQLiteLoadStage.C
             SQLiteSaveStage.C)
 

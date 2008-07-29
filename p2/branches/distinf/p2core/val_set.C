@@ -12,6 +12,7 @@
 #include "val_null.h"
 #include "val_set.h"
 #include "val_vector.h"
+#include "val_list.h"
 #include "val_int64.h"
 
 class OperSet : public opr::OperCompare<Val_Set> {
@@ -94,6 +95,12 @@ SetPtr Val_Set::cast(ValuePtr v)
   case Value::VECTOR:
     {
       VectorPtr vp = Val_Vector::cast(v);
+      ValPtrSet set(vp->begin(), vp->end());
+      return SetPtr(new Set(set));
+    }
+  case Value::LIST:
+    {
+      ListPtr vp = Val_List::cast(v);
       ValPtrSet set(vp->begin(), vp->end());
       return SetPtr(new Set(set));
     }
