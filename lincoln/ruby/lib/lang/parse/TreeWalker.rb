@@ -29,7 +29,7 @@ class TreeWalker
 	def add_handler(string,func,recurse)
 
 		if @hash[string] then
-			print "hmm, already have a handler for this term: "+string+"\n"
+			# print "hmm, already have a handler for this term: "+string+"\n"
 		else
 			func.set_token(string)
 			@hash[string] = func
@@ -38,8 +38,8 @@ class TreeWalker
 
 	def handlers
 		@hash.each do |k|
-			puts k
-			puts @hash[k]
+			# puts k
+			# puts @hash[k]
 		end
 	end
 
