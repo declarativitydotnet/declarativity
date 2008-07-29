@@ -1,5 +1,4 @@
 require "lib/types/table/table"
-require "lib/types/table/index_table"
 require "lib/types/basic/tuple"
 require "lib/types/table/key"
 require "lib/types/table/catalog"

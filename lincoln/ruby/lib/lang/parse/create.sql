@@ -80,6 +80,12 @@ table MyProgram (
 	object String
 );
 
+table Program (
+	+program String,
+	owner String,
+	object String
+);
+
 table MyRule (
 	+ruleid Integer,
 	programid Integer,

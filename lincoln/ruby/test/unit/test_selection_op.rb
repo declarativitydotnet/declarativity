@@ -1,5 +1,4 @@
 require "lib/types/table/table"
-require "lib/types/table/index_table"
 require "lib/types/operator/selection_op"
 require "lib/lang/plan/boolean"
 require "lib/lang/plan/selection_term"

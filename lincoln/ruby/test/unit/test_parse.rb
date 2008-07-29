@@ -11,9 +11,6 @@ require 'lib/lang/plan/predicate.rb'
 #require 'lib/lang/plan/program.rb'
 #require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
-
-#require 'lib/types/table/index_table.rb'
-
 require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
 

@@ -1,5 +1,4 @@
 require 'lib/types/table/catalog'
-require 'lib/types/table/index_table'
 require 'lib/exec/query'
 require 'lib/core/schedule'
 require 'lib/core/driver'

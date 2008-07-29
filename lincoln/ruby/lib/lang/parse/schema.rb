@@ -807,6 +807,54 @@ include PredicateTableMixin if defined? PredicateTableMixin
 	end
 end
 
+class ProgramTable < ObjectTable
+include ProgramTableMixin if defined? ProgramTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		PROGRAM=0
+		OWNER=1
+		OBJECT=2
+	end
+	@@SCHEMA = [String,String,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "ProgramTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? ProgramTableMixin and ProgramTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		program = Variable.new("program",String)
+		program.position=0
+		owner = Variable.new("owner",String)
+		owner.position=1
+		object = Variable.new("object",String)
+		object.position=2
+		return Schema.new("Program",[program,owner,object])
+	end
+end
+
 class QueryTable < ObjectTable
 include QueryTableMixin if defined? QueryTableMixin
 	@@PRIMARY_KEY = Key.new

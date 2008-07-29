@@ -1,5 +1,4 @@
 require "lib/types/table/table"
-require "lib/types/table/index_table"
 require "lib/types/table/event_table"
 require "lib/types/operator/scan_join"
 require "lib/types/operator/index_join"
