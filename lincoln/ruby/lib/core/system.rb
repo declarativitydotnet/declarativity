@@ -9,6 +9,8 @@ require 'lib/lang/compiler'
 require 'open3'
 
 class System
+	#  temporary (pa)
+	@@periodic = Periodic.new(@schedule)
 	@@RUNTIME = "src/p2/core/runtime.olg"
 		
 	def init
