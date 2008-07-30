@@ -207,9 +207,10 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
 	class Field
 		COLUMNID=0
 		TABLEID=1
-		DATATYPE=2
+		COL_POS=2
+		DATATYPE=3
 	end
-	@@SCHEMA = [Integer,Integer,String]
+	@@SCHEMA = [Integer,Integer,Integer,String]
 
 	def initialize
 		super(TableName.new(GLOBALSCOPE, "MyColumnTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
@@ -243,9 +244,11 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
 		columnid.position=0
 		tableid = Variable.new("tableid",Integer)
 		tableid.position=1
+		col_pos = Variable.new("col_pos",Integer)
+		col_pos.position=2
 		datatype = Variable.new("datatype",String)
-		datatype.position=2
-		return Schema.new("MyColumn",[columnid,tableid,datatype])
+		datatype.position=3
+		return Schema.new("MyColumn",[columnid,tableid,col_pos,datatype])
 	end
 end
 
@@ -354,7 +357,7 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
 	class Field
 		INDEXID=0
 		TABLEID=1
-		INDX_POS=2
+		COL_POS=2
 	end
 	@@SCHEMA = [Integer,Integer,Integer]
 
@@ -390,9 +393,9 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
 		indexid.position=0
 		tableid = Variable.new("tableid",Integer)
 		tableid.position=1
-		indx_pos = Variable.new("indx_pos",Integer)
-		indx_pos.position=2
-		return Schema.new("MyIndex",[indexid,tableid,indx_pos])
+		col_pos = Variable.new("col_pos",Integer)
+		col_pos.position=2
+		return Schema.new("MyIndex",[indexid,tableid,col_pos])
 	end
 end
 
@@ -452,7 +455,7 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
 	@@PRIMARY_KEY = Key.new(0)
 	class Field
 		PRIMARYEXPRESSIONID=0
-		TERMID=1
+		EXPRESSIONID=1
 		P_POS=2
 		P_TXT=3
 		TYPE=4
@@ -490,8 +493,8 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
 	def schema_of
 		primaryexpressionid = Variable.new("primaryexpressionid",Integer)
 		primaryexpressionid.position=0
-		termid = Variable.new("termid",Integer)
-		termid.position=1
+		expressionid = Variable.new("expressionid",Integer)
+		expressionid.position=1
 		p_pos = Variable.new("p_pos",Integer)
 		p_pos.position=2
 		p_txt = Variable.new("p_txt",String)
@@ -500,7 +503,7 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
 		type.position=4
 		datatype = Variable.new("datatype",String)
 		datatype.position=5
-		return Schema.new("MyPrimaryExpression",[primaryexpressionid,termid,p_pos,p_txt,type,datatype])
+		return Schema.new("MyPrimaryExpression",[primaryexpressionid,expressionid,p_pos,p_txt,type,datatype])
 	end
 end
 
@@ -508,9 +511,9 @@ class MyProgramTable < ObjectTable
 include MyProgramTableMixin if defined? MyProgramTableMixin
 	@@PRIMARY_KEY = Key.new(0)
 	class Field
-		PROGRAM=0
+		PROGRAMID=0
 		OWNER=1
-		OBJECT=2
+		PROGRAM_NAME=2
 	end
 	@@SCHEMA = [Integer,String,String]
 
@@ -542,13 +545,13 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
 
 	end
 	def schema_of
-		program = Variable.new("program",Integer)
-		program.position=0
+		programid = Variable.new("programid",Integer)
+		programid.position=0
 		owner = Variable.new("owner",String)
 		owner.position=1
-		object = Variable.new("object",String)
-		object.position=2
-		return Schema.new("MyProgram",[program,owner,object])
+		program_name = Variable.new("program_name",String)
+		program_name.position=2
+		return Schema.new("MyProgram",[programid,owner,program_name])
 	end
 end
 

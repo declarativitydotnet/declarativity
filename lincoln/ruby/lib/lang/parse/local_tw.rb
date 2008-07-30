@@ -57,13 +57,14 @@ class VisitIExpression < VisitGeneric
 		super()
 	end
 	def semantic(text,obj)
-		super(text,obj)
 		@@positions["_Exprpos"] = @@positions["_Exprpos"] + 1
 		@@positions["_Primpos"] = -1
 		print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text,"expr","??"])
 		#@ext.insert(TupleSet.new("expression",Tuple.new(@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],'"'+text+'"',"expr","??")),nil)
 		otabinsert(@ext,@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text)
 		@@current["expression"] =  @@positions["_Universal"]
+
+		super(text,obj)
 	end
 end
 
@@ -100,7 +101,6 @@ class VisitProgram < VisitBase
 		@prt = pt
 	end
 	def semantic(text,obj)
-		print "VISIT PROGRAM\n"
 		super(text,obj)
 		otabinsert(@prt,@@positions["_Universal"],nil,text)
 		@@current["program"] = @@positions["_Universal"]
@@ -117,7 +117,8 @@ class VisitPredicate < VisitTerm
 		super(text,obj)
 		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
 		#result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])),nil)
-		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])
+		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],@@state["Predicate"][0])
+
 		#print "PRED ARGS: "+obj.args.to_s+"\n"
 
 	end
@@ -134,7 +135,7 @@ class VisitConstant < VisitPexp
 		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??"])
 
 		#@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??")),nil)
-		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??")
+		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],t,"const","??")
 	end
 end
 
@@ -148,7 +149,7 @@ class VisitVariable < VisitPexp
 		super(text,obj)
 		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??"])
 		#@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+text+'"',"var","??")),nil)
-		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+text+'"',"var","??")
+		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??")
 	end
 end
 
@@ -214,7 +215,8 @@ class VisitTable < VisitBase
 	end
 end
 
-class VisitColumn < VisitGeneric
+# not really true, but a shortcut
+class VisitColumn < VisitPexp
 	def initialize(col)
 		@col = col
 	end	
@@ -223,7 +225,7 @@ class VisitColumn < VisitGeneric
 		#coltab(@@positions["TableName"],@@positions["Type"],text);
 		print_table("columns",[@@positions["TableName"],@@positions["Type"],'"'+text+'"'])
 		#@col.insert(TupleSet.new("column",Tuple.new(@@current["table"],@@positions["_Universal"],text)),nil)
-		otabinsert(@col,@@current["table"],@@positions["_Universal"],text)
+		otabinsert(@col,@@positions["_Universal"],@@current["table"],@@positions["_Primpos"],text)
 	end
 end
 
@@ -340,6 +342,8 @@ end
 		sky.add_handler("Fact",VisitFact.new(@facttable,@termtable),1)
 		sky.add_handler("Definition",VisitTable.new(@tabletable),1)
 		sky.add_handler("TableName",vg,1)
+		#sky.add_handler("TableName",VisitTable.new(@tabletable),1)
+		
 		sky.add_handler("Schema",vg,1)
 		sky.add_handler("Rule",VisitRule.new(@ruletable),1)
 		sky.add_handler("Selection",VisitSelection.new(nil,@termtable),1)

@@ -43,10 +43,10 @@ grammar Overlog
 		  'import' Spacing Typename   
 	end
      	rule Fact
-		  Tablename opar expressionList cpar
+		  tablename opar expressionList cpar
 			{
 				def Fact
-					return self.Tablename.text_value
+					return self.tablename.text_value
 				end
 			}
 	end
@@ -75,10 +75,10 @@ grammar Overlog
 		  TableFunction  /  Predicate  /  Assignment  /  Selection   
 	end
      	rule Definition
-		     ('define' opar Tablename Comma Keys Comma Schema cpar /     'define' opar Tablename Comma Schema cpar )
+		     ('define' opar tablename Comma Keys Comma Schema cpar /     'define' opar tablename Comma Schema cpar )
 			{
 				def Definition
-					return self
+					return tablename.text_value
 				end			
 			}
 	end
@@ -98,7 +98,7 @@ grammar Overlog
 		  Type    (Comma Type   )*    
 	end
      	rule Watch
-		     'watch' opar Tablename cpar  /     'watch' opar Tablename Comma WatchFlow Spacing cpar	
+		     'watch' opar tablename cpar  /     'watch' opar tablename Comma WatchFlow Spacing cpar	
 			{
 				def Watch
 					return self
@@ -109,13 +109,13 @@ grammar Overlog
 		  [taeidrs]+    
 	end
      	rule TableFunction
-		  Tablename opar Predicate cpar  
+		  tablename opar Predicate cpar  
 	end
      	rule Predicate
-		     ('notin'   )?  Tablename EventModifier?  arguments   
+		     ('notin'   )?  tablename EventModifier?  arguments   
 				{
 					def Predicate
-						return self.Tablename
+						return self.tablename
 						#return arguments.value
 					end
 					def args
@@ -339,8 +339,8 @@ grammar Overlog
   	rule EventType
 		     'insert'  /     'delete'   
 	end
-  	rule Tablename
-		  name '::' name  /  name
+  	rule tablename
+		  (name '::' name  /  name )
 	end
   	rule Variable
 		  name   /  '_'  /  '*'   

@@ -320,7 +320,7 @@ module Overlog
   end
 
   module Fact0
-    def Tablename
+    def tablename
       elements[0]
     end
 
@@ -339,7 +339,7 @@ module Overlog
 
   module Fact1
 				def Fact
-					return self.Tablename.text_value
+					return self.tablename.text_value
 				end
   end
 
@@ -352,7 +352,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_Tablename
+    r1 = _nt_tablename
     s0 << r1
     if r1
       r2 = _nt_opar
@@ -758,7 +758,7 @@ module Overlog
       elements[1]
     end
 
-    def Tablename
+    def tablename
       elements[2]
     end
 
@@ -788,7 +788,7 @@ module Overlog
       elements[1]
     end
 
-    def Tablename
+    def tablename
       elements[2]
     end
 
@@ -807,7 +807,7 @@ module Overlog
 
   module Definition2
 				def Definition
-					return self
+					return tablename.text_value
 				end
   end
 
@@ -833,7 +833,7 @@ module Overlog
       r3 = _nt_opar
       s1 << r3
       if r3
-        r4 = _nt_Tablename
+        r4 = _nt_tablename
         s1 << r4
         if r4
           r5 = _nt_Comma
@@ -881,7 +881,7 @@ module Overlog
         r12 = _nt_opar
         s10 << r12
         if r12
-          r13 = _nt_Tablename
+          r13 = _nt_tablename
           s10 << r13
           if r13
             r14 = _nt_Comma
@@ -1248,7 +1248,7 @@ module Overlog
       elements[1]
     end
 
-    def Tablename
+    def tablename
       elements[2]
     end
 
@@ -1262,7 +1262,7 @@ module Overlog
       elements[1]
     end
 
-    def Tablename
+    def tablename
       elements[2]
     end
 
@@ -1311,7 +1311,7 @@ module Overlog
       r3 = _nt_opar
       s1 << r3
       if r3
-        r4 = _nt_Tablename
+        r4 = _nt_tablename
         s1 << r4
         if r4
           r5 = _nt_cpar
@@ -1342,7 +1342,7 @@ module Overlog
         r8 = _nt_opar
         s6 << r8
         if r8
-          r9 = _nt_Tablename
+          r9 = _nt_tablename
           s6 << r9
           if r9
             r10 = _nt_Comma
@@ -1418,7 +1418,7 @@ module Overlog
   end
 
   module TableFunction0
-    def Tablename
+    def tablename
       elements[0]
     end
 
@@ -1444,7 +1444,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_Tablename
+    r1 = _nt_tablename
     s0 << r1
     if r1
       r2 = _nt_opar
@@ -1472,7 +1472,7 @@ module Overlog
   end
 
   module Predicate0
-    def Tablename
+    def tablename
       elements[1]
     end
 
@@ -1483,7 +1483,7 @@ module Overlog
 
   module Predicate1
 					def Predicate
-						return self.Tablename
+						return self.tablename
 						#return arguments.value
 					end
 					def args
@@ -1514,7 +1514,7 @@ module Overlog
     end
     s0 << r1
     if r1
-      r3 = _nt_Tablename
+      r3 = _nt_tablename
       s0 << r3
       if r3
         r5 = _nt_EventModifier
@@ -4381,10 +4381,10 @@ module Overlog
     end
   end
 
-  def _nt_Tablename
+  def _nt_tablename
     start_index = index
-    if node_cache[:Tablename].has_key?(index)
-      cached = node_cache[:Tablename][index]
+    if node_cache[:tablename].has_key?(index)
+      cached = node_cache[:tablename][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -4426,7 +4426,7 @@ module Overlog
       end
     end
 
-    node_cache[:Tablename][start_index] = r0
+    node_cache[:tablename][start_index] = r0
 
     return r0
   end

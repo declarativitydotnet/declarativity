@@ -22,7 +22,7 @@ table Predicate (
 
 table MyPrimaryExpression (
 	+primaryexpressionid Integer,
-	termid Integer,
+	expressionid Integer,
 	p_pos Integer,
 	p_txt String,
 	type String,
@@ -56,13 +56,14 @@ table MyTable (
 table MyColumn (
 	+columnid Integer,
 	tableid Integer,
+	col_pos Integer,
 	datatype String
 );
 
 table MyIndex (
 	+indexid Integer,
 	tableid Integer,
-	indx_pos Integer
+	col_pos Integer
 );
 
 
@@ -75,9 +76,9 @@ table Index (
 );
 
 table MyProgram (
-	+program Integer,
+	+programid Integer,
 	owner String,
-	object String
+	program_name String
 );
 
 table Program (
