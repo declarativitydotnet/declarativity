@@ -25,6 +25,8 @@ class EventFilter < Operator
 		@filters = Array.new
 		
 		predicate.each do |arg|
+			#puts predicate.inspect
+			#print "POSITION: "+arg.position.to_s+"\n"
 			raise unless arg.position >= 0
 			@filters << Filter.new(arg.position, arg.function) unless arg.class <= Variable
 	  end
