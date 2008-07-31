@@ -154,6 +154,12 @@ struct factor_registration {
     polymorphic::register_factor<moment_gaussian>();
     polymorphic::register_factor<fragment_gaussian>();
     
+    (void)prl::type_info<constant_factor>::init;
+    (void)prl::type_info<table_factor>::init;
+    (void)prl::type_info<canonical_gaussian>::init;
+    (void)prl::type_info<moment_gaussian>::init;
+    (void)prl::type_info<fragment_gaussian>::init;
+
     polymorphic::register_binary<constant_factor, constant_factor>();
     polymorphic::register_binary<constant_factor, table_factor>();
     polymorphic::register_binary<constant_factor, moment_gaussian>();
@@ -226,10 +232,10 @@ int Val_Factor::compareTo(ValuePtr other) const
     return 1;
   else {
     polymorphic_factor otherf = Val_Factor::cast(other);
-//     if (factor < otherf) 
-//       return -1;
-//     else 
-    return factor != otherf;
+    if (factor < otherf) 
+      return -1;
+    else 
+      return factor != otherf;
     // std::cerr << "Invoked compareTo: " << result << std::endl;
   }
 }
