@@ -512,7 +512,7 @@ eventLoop()
 
     try {
       fileDescriptorCatchup(waitDuration);
-    } catch (std::exception e) {
+    } catch (const std::exception& e) {
       LOOP_ERROR("fileDescriptorCatchup exception in loop: '"
                  << e.what()
                  << "'");
