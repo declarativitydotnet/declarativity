@@ -27,7 +27,7 @@
 #include <prl/factor/xml/table_factor.hpp>
 #include <prl/factor/xml/gaussian_factors.hpp>
 #include <prl/factor/mixture.hpp>
-#include <prl/factor/decomposable_fragment.hpp>
+#include <prl/factor/xml/decomposable_fragment.hpp>
 #include <prl/math/bindings/lapack.hpp>
 
 #include <pstade/oven/algorithm.hpp>
