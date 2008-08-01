@@ -33,8 +33,9 @@ class TestParse < Test::Unit::TestCase
   def test_default
   end
 
-$catalog = Catalog.new
-$index = IndexTable.new
+#$catalog = nil
+#$catalog = Catalog.new
+#$index = IndexTable.new
 	def test_default
 		test_program
 	end
@@ -141,8 +142,12 @@ $index = IndexTable.new
 	end
 
 	def rei
+		$catalog = nil
+		$index = nil
 		$catalog = Catalog.new
 		$index = IndexTable.new
+		#sys = System.new
+		#sys.init
 
 		@preds = MyPredicateTable.new
 		@terms = MyTermTable.new
@@ -154,6 +159,8 @@ $index = IndexTable.new
 		@indices = MyIndexTable.new
 		@programs = MyProgramTable.new
 		@rules = MyRuleTable.new
+		@selects = MySelectionTable.new
+		@assigns = MyAssignmentTable.new
 	end
 	
 	def test_fact
@@ -182,7 +189,7 @@ $index = IndexTable.new
 
 	def prep(utterance)
 		rei
-		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs)
+		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@selects,@assigns)
 		compiler.verbose = 'y'
 		compiler.parse(utterance)
 		compiler.analyze

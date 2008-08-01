@@ -18,6 +18,7 @@ require 'lib/lang/plan/predicate'
 require 'lib/core/system'
 require "test/unit"
 require 'lib/lang/plan/native_expression'
+require 'lib/lang/plan/arbitrary_expression'
 
 
 class TestProgram < Test::Unit::TestCase
@@ -106,6 +107,7 @@ class TestProgram < Test::Unit::TestCase
     body = [link, link2]
     
     e = NativeExpression.new("+", v3, v7)
+#	e = ArbitraryExpression.new("Cost + Cost2",v3,v7)
 
     path3 = Predicate.new(false, TableName.new(nil,"path"), Table::Event::NONE, [v1, v6, e])
     path3.set('testprog', 'p3', 0)

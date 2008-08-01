@@ -29,6 +29,20 @@ table MyPrimaryExpression (
 	datatype String
 );
 
+table MyAssignment (
+	+assignmentid Integer,
+	termid Integer,
+	assign_pos Integer,
+	assign_txt String
+);
+
+table MySelection (
+	+selectionid Integer,
+	termid Integer,
+	select_pos Integer,
+	select_txt String
+);
+
 table MyExpression (
 	+expressionid Integer,
 	termid Integer,

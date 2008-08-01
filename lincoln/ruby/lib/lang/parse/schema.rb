@@ -201,6 +201,57 @@ include IndexTableMixin if defined? IndexTableMixin
 	end
 end
 
+class MyAssignmentTable < ObjectTable
+include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		ASSIGNMENTID=0
+		TERMID=1
+		ASSIGN_POS=2
+		ASSIGN_TXT=3
+	end
+	@@SCHEMA = [Integer,Integer,Integer,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MyAssignmentTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MyAssignmentTableMixin and MyAssignmentTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		assignmentid = Variable.new("assignmentid",Integer)
+		assignmentid.position=0
+		termid = Variable.new("termid",Integer)
+		termid.position=1
+		assign_pos = Variable.new("assign_pos",Integer)
+		assign_pos.position=2
+		assign_txt = Variable.new("assign_txt",String)
+		assign_txt.position=3
+		return Schema.new("MyAssignment",[assignmentid,termid,assign_pos,assign_txt])
+	end
+end
+
 class MyColumnTable < ObjectTable
 include MyColumnTableMixin if defined? MyColumnTableMixin
 	@@PRIMARY_KEY = Key.new(0)
@@ -606,6 +657,57 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
 		delete = Variable.new("delete",Integer)
 		delete.position=4
 		return Schema.new("MyRule",[ruleid,programid,rulename,public,delete])
+	end
+end
+
+class MySelectionTable < ObjectTable
+include MySelectionTableMixin if defined? MySelectionTableMixin
+	@@PRIMARY_KEY = Key.new(0)
+	class Field
+		SELECTIONID=0
+		TERMID=1
+		SELECT_POS=2
+		SELECT_TXT=3
+	end
+	@@SCHEMA = [Integer,Integer,Integer,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "MySelectionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? MySelectionTableMixin and MySelectionTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		selectionid = Variable.new("selectionid",Integer)
+		selectionid.position=0
+		termid = Variable.new("termid",Integer)
+		termid.position=1
+		select_pos = Variable.new("select_pos",Integer)
+		select_pos.position=2
+		select_txt = Variable.new("select_txt",String)
+		select_txt.position=3
+		return Schema.new("MySelection",[selectionid,termid,select_pos,select_txt])
 	end
 end
 

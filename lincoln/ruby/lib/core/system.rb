@@ -11,6 +11,7 @@ require 'open3'
 class System
 	#  temporary (pa)
 	@@periodic = Periodic.new(@schedule)
+	@@programs = Hash.new
 	@@RUNTIME = "src/p2/core/runtime.olg"
 		
 	def init

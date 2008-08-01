@@ -78,7 +78,7 @@ class VisitTerm < VisitGeneric
 		@@positions["_Primpos"] = @@positions["_Exprpos"] = -1
 		@@positions["_Termpos"] = @@positions["_Termpos"] + 1
 		@@current["term"] = @@positions["_Universal"]
-		print "\n"
+		#nprint "\n"
 		print_table("term",[@@positions["_Universal"],@@current["rule"],@@positions["_Termpos"],text])
 		#@termt.insert(TupleSet.new("term",Tuple.new(@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)),nil)
 		otabinsert(@termt,@@positions["_Universal"],@@current["rule"],@@positions["_Termpos"],text)
@@ -192,7 +192,6 @@ class VisitRule < VisitBase
 		t = text.gsub('"',"")
 		super(text,obj)
 
-		#puts obj.elements.inspect
 		if (defined? obj.elements.deleter) then
 			print "OBJ DELETE!!!! ("+ obj.elements.deleter.to_s+")\n"
 		end
@@ -235,11 +234,10 @@ class VisitIndex < VisitGeneric
 	end
 	def semantic(text,obj)
 		suck_nums(obj).each do |indx|
-			print "\tINDEX: "+indx+" at "+@@current["table"].to_s+"\n"
+			#print "\tINDEX: "+indx+" at "+@@current["table"].to_s+"\n"
 			#indxtab(@@positions["TableName"],indx)
 			print_table("index",[@@positions["TableName"],indx])
 
-			puts @ix.to_s
 			super(text,obj)
 			#@ix.insert(TupleSet.new("index",Tuple.new(@@positions["_Universal"],@@current["table"],indx)),nil)
 			otabinsert(@ix,@@positions["_Universal"],@@current["table"],indx)
@@ -251,26 +249,28 @@ end
 
 class VisitAssignment < VisitTerm
 	def initialize(ass,term)
-		@pt = ass
+		@at = ass
 		super(term)
 	end
 	def semantic(text,obj)
 		super(text,obj)
 		t = obj.Variable.text_value.gsub('"','\"')
 		print_table("assign",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
+		otabinsert(@at,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text)
 	end
 end
 
 
 class VisitSelection < VisitTerm
 	def initialize(sel,term)
-		@pt = sel
+		@st = sel
 		super(term)
 	end
 	def semantic(text,obj)
 		super(text,obj)
 		print_table("select",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
 		t = text.gsub('"','\"')
+		otabinsert(@st,@@positions["_Universal"], @@current["term"], @@positions["_Termpos"],text)
 	end
 end
 
@@ -295,7 +295,7 @@ end
 # class body
 
 
-	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs)
+	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,selects,assigns)
 
 		@ruletable = rules
 		@termtable = terms
@@ -307,6 +307,8 @@ end
 		@columntable = columns
 		@indextable = indices
 		@programtable = programs
+		@selecttable = selects
+		@assigntable = assigns
 
 		# reinitialize these awful globals, fingers crossed for good garbage collection.
 		@@state = Hash.new
@@ -322,7 +324,6 @@ end
 		parser = OverlogParser.new
 		@tree = parser.parse(prog)
 		if !@tree
-			puts 'failure'
 			raise RuntimeError.new(parser.failure_reason)
 		end 
 	end
@@ -346,8 +347,8 @@ end
 		
 		sky.add_handler("Schema",vg,1)
 		sky.add_handler("Rule",VisitRule.new(@ruletable),1)
-		sky.add_handler("Selection",VisitSelection.new(nil,@termtable),1)
-		sky.add_handler("Assignment",VisitAssignment.new(nil,@termtable), 1)
+		sky.add_handler("Selection",VisitSelection.new(@selecttable,@termtable),1)
+		sky.add_handler("Assignment",VisitAssignment.new(@assigntable,@termtable), 1)
 		
 		sky.add_handler("Variable",VisitVariable.new(@pextable),1)
 		sky.add_handler("Constant",VisitConstant.new(@pextable),1)

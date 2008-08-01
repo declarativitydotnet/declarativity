@@ -14,163 +14,83 @@ require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
 require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
+require "lib/lang/plan/arbitrary_expression.rb"
 
-
-def predoftable(table)
-        schema = table.schema_of
-        p = Predicate.new(false,table.name,table,schema.variables)
-	p.set("global","r1",1)
-	return p
-end
-
-def lcl_pretty_print(tuple)
-	(0..tuple.size-1).each do |i|
-		print "\t["+i.to_s+"] "+tuple.schema.variables[i].name+" = "+tuple.values[i].to_s+"\n"
-	end
-end
 
 
 class TestParse < Test::Unit::TestCase
   def test_default
   end
-
-	def test_default
-		test_prog
-	end
 	def test_prog
-
-
 		sys = System.new
 		sys.init
 
-		# create my tables locally.
-		rei
-
 		utterance = "program foo;\ndefine(path,keys(0,1),{String,String});\ndefine(link,keys(0,1),{String,String});\npath(A,B) :- link(A,B);\n"
+		cooked_program = prep(utterance)
+
+		tn  = TableName.new(nil,"link")
+		queries = cooked_program.get_queries(tn)
+
+		# what do we expect?  just the 1 delta-rewritten version of this rule.
+		#print "query count = "+queries.length.to_s+"\n"
+		assert_equal(1,queries.length)
+
+		# create some real data
+		tuple = Tuple.new("here","there")
+		ts = TupleSet.new(tn,tuple)
+		result = queries[0].evaluate(ts)
 		
-		planner = OverlogPlanner.new(utterance,@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs)
-		cooked_program = planner.plan
-		puts cooked_program.inspect
-
-
-########################
-		return
-########################
-# the below monolith now encapsulated in OverlogPlanner
-		prep("program foo;\ndefine(path,keys(0,1),{String,String});\ndefine(link,keys(0,1),{String,String});\npath(A,B) :- link(A,B);\n")
-
-		# rules proper
-		p_rule = predoftable(@rules)
+		# we should get this right back.
+		assert_equal("<here, there>",result.tups[0].to_s)
+	end
 	
-		sj = ScanJoin.new(p_rule,@programs.schema_of)
-		ts = TupleSet.new("prog",*@programs.tuples)
-		res = sj.evaluate(ts)
+	def test_prog2
+		$catalog = nil
+		sys = System.new
+		sys.init
 
+		#P2
+		utterance = "program foo;\ndefine(path,keys(0,1),{String,String});\ndefine(link,keys(0,1),{String,String});\npath(A,C,Cost) :- link(A,B),path(B,C),Cost := 50;\n"
+		cooked_program = prep(utterance)
+
+		puts @assigns
+
+		tn  = TableName.new(nil,"link")
+		print "get queries:\n"
+		queries = cooked_program.get_queries(tn)
+
+		# what do we expect?  just the 1 delta-rewritten version of this rule.
+		print "query count = "+queries.length.to_s+"\n"
+		queries.each do  |q|
+			print "query: "+q.to_s+"\n"
+		end
+		#assert_equal(1,queries.length)
+
+		# create some real data
+		tuple = Tuple.new("here","there")
+		ts = TupleSet.new(tn,tuple)
+		result = queries[0].evaluate(ts)
+		#result2 = queries[1].evaluate(result)
 		
-		# ts points to my programs tuples.  for now, I'm going to assume there's only ever one row in here.
-		program = ts.tups[0]
-		progname = program.value("program_name")
-		print "progname is "+progname+"\n"
-		p = Program.new(progname,"your mother")
+		# we should get this right back.
+		assert_equal("<here, there>",result.tups[0].to_s)
+		
+		result.each do |t|
+			print "RESS::\n"
+			puts t
+		end
+		#puts cooked_program.inspect
 
-		# materializations... later
-
-		puts @tables
-		puts @columns
-		puts @indices
-		@tables.tuples.each do |table| 
-			print "\ttable "+table.value("tablename").to_s+"\n"
-			p_cols = predoftable(@columns)
-
-			scols = ScanJoin.new(p_cols,table.schema)
-			rescols = scols.evaluate(TupleSet.new("cols",table))
-
-			cols = Array.new
-			# SORT!
-			rescols.each do |col|
-				cols << col.value("datatype")
-			end
 			
-			p_indx = predoftable(@indices)
-			sindx = ScanJoin.new(p_indx,table.schema)
-			resindx = sindx.evaluate(TupleSet.new("cols",table))
 		
-			indxs = Array.new	
-			resindx.each do |col|
-				indxs << col.value("col_pos")
-			end 		
-
-			typestr = '[' + cols.join(",") + ']'
-			indxstr = 'Key.new(' + indxs.join(",") + ')'
-
-			print "typestr "+typestr +", indxstr "+indxstr+"\n"
-
-			typething = eval(typestr)
-			indxthing = eval(indxstr)
-			
-			table = BasicTable.new(TableName.new(nil,table.value("tablename").to_s),Table::INFINITY, Table::INFINITY,indxthing,typething)
-			p.definition(table)			
-		end
-
-		res.tups.each do |rule|
-		
-			p_term = predoftable(@terms)
-			sterm = ScanJoin.new(p_term,rule.schema)
-			resterm = sterm.evaluate(TupleSet.new("rule",rule))
-
-		
-			p_pred = predoftable(@preds)
-			spred = ScanJoin.new(p_pred,resterm.tups[0].schema)
-			respred = spred.evaluate(resterm)
-		
-			body = Array.new
-			head = nil
-			respred.tups.each do |pred|
-				# skip the head, for now
-
-				print "predicate "+pred.value("pred_txt").to_s+"\n"
-				
-				# a row for each predicate.  let's grab the vars
-				p_expr = predoftable(@expr)
-				sexpr = ScanJoin.new(p_expr,pred.schema)
-				resexpr = sexpr.evaluate(TupleSet.new("p",pred))
-				p_var = predoftable(@pexpr)
-				spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
-				respexpr = spexpr.evaluate(resexpr)
+	end
 	
-				args = Array.new
-				respexpr.tups.each do |var|
-					print "\t"+var.value("p_txt")+"\n"
-					thisvar = Variable.new(var.value("p_txt"),String)
-					thisvar.position = var.value("p_pos")
-					args << thisvar
-				end
-				thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
-				thispred.set(progname,"r2",1)
-				if (pred.value("pred_pos") == 0) then
-					head = thispred
-				else
-					body << thispred
-				end
-			end
 
-		
-			# location?  extract rulename!  isPublic, isDelete
-			rule = Rule.new(1,"r2",true,false,head,body)
-			rule.set(progname)
-			puts rule.inspect
-		end
-
-		puts p.inspect
-		puts p.to_s
-
-		p.plan
-
-		p.queries.each do |query|
-			print "QUERY\n"
-			puts query.inspect
-	
-		end
+	def prep(utterance)
+		rei
+		planner = OverlogPlanner.new(utterance,@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@selects,@assigns)
+		planner.plan
+		return planner.program
 	end
 
 	def rei
@@ -184,14 +104,10 @@ class TestParse < Test::Unit::TestCase
 		@indices = MyIndexTable.new
 		@programs = MyProgramTable.new
 		@rules = MyRuleTable.new
+		@selects = MySelectionTable.new
+		@assigns = MyAssignmentTable.new
 	end
 	
-	def prep(utterance)
-		rei
-		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs)
-		compiler.verbose = 'y'
-		compiler.parse(utterance)
-		compiler.analyze
-	end
+	
 	
 end

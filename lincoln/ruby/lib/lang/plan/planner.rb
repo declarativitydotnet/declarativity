@@ -24,8 +24,11 @@ class OverlogPlanner
 		return p
 	end
 
+	def program
+		return @program
+	end
 
-	def initialize(utterance,rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs)
+	def initialize(utterance,rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects)
                 @rules = rules
                 @terms = terms
                 @preds = preds
@@ -36,9 +39,11 @@ class OverlogPlanner
                 @columns = columns
                 @indices = indices
                 @programs = programs
+		@assigns = assigns
+		@selects = selects
 
 			
-		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs)
+		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects)
                 #compiler.verbose = 'y'
                 compiler.parse(utterance)
                 compiler.analyze
@@ -53,7 +58,6 @@ class OverlogPlanner
 		# ts points to my programs tuples.  for now, I'm going to assume there's only ever one row in here.
 		program = ts.tups[0]
 		@progname = program.value("program_name")
-		print "progname is "+@progname+"\n"
 		return Program.new(@progname,"your mother")
 	end
 
@@ -61,18 +65,15 @@ class OverlogPlanner
 		plan_materializations
 		plan_rules
 
+		#require 'ruby-debug'; debugger
 		@program.plan
-		@program.queries.each do |query|
-			print "QUERY\n"
-			puts query.inspect
-	
-		end
+
+		#puts @program.get_query(Tablename.new(nil,"path"))
 		return @program
 	end
 
 	def plan_materializations
 		@tables.tuples.each do |table| 
-			print "\ttable "+table.value("tablename").to_s+"\n"
 			p_cols = predoftable(@columns)
 
 			scols = ScanJoin.new(p_cols,table.schema)
@@ -96,7 +97,6 @@ class OverlogPlanner
 			typestr = '[' + cols.join(",") + ']'
 			indxstr = 'Key.new(' + indxs.join(",") + ')'
 
-			print "typestr "+typestr +", indxstr "+indxstr+"\n"
 
 			typething = eval(typestr)
 			indxthing = eval(indxstr)
@@ -121,48 +121,57 @@ class OverlogPlanner
 			sterm = ScanJoin.new(p_term,rule.schema)
 			resterm = sterm.evaluate(TupleSet.new("rule",rule))
 
+			print "RESTERM\n"
+			puts resterm.tups.to_s
+			body = plan_preds(resterm,"r2")
+			head = body.shift
 		
-			p_pred = predoftable(@preds)
-			spred = ScanJoin.new(p_pred,resterm.tups[0].schema)
-			respred = spred.evaluate(resterm)
-		
-			body = Array.new
-			head = nil
-			respred.tups.each do |pred|
-				# skip the head, for now
-
-				print "predicate "+pred.value("pred_txt").to_s+"\n"
-				
-				# a row for each predicate.  let's grab the vars
-				p_expr = predoftable(@expr)
-				sexpr = ScanJoin.new(p_expr,pred.schema)
-				resexpr = sexpr.evaluate(TupleSet.new("p",pred))
-				p_var = predoftable(@pexpr)
-				spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
-				respexpr = spexpr.evaluate(resexpr)
-	
-				args = Array.new
-				respexpr.tups.each do |var|
-					print "\t"+var.value("p_txt")+"\n"
-					thisvar = Variable.new(var.value("p_txt"),String)
-					thisvar.position = var.value("p_pos")
-					args << thisvar
-				end
-				thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
-				thispred.set(@progname,"r2",1)
-				if (pred.value("pred_pos") == 0) then
-					head = thispred
-				else
-					body << thispred
-				end
-			end
-
+			
 		
 			# location?  extract rulename!  isPublic, isDelete
 			rule = Rule.new(1,"r2",true,false,head,body)
 			rule.set(@progname)
-			puts rule.inspect
 		end
 	end
+	def plan_preds(resterm,rulename)
+		# resterm is a joinable resultset of terms for the current rule.
 
+		p_pred = predoftable(@preds)
+		spred = ScanJoin.new(p_pred,resterm.tups[0].schema)
+		respred = spred.evaluate(resterm)
+	
+		predicates = Array.new
+		respred.tups.each do |pred|
+			# skip the head, for now
+		
+			# a row for each predicate.  let's grab the vars
+			p_expr = predoftable(@expr)
+			sexpr = ScanJoin.new(p_expr,pred.schema)
+			resexpr = sexpr.evaluate(TupleSet.new("p",pred))
+			p_var = predoftable(@pexpr)
+			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
+			respexpr = spexpr.evaluate(resexpr)
+
+			args = Array.new
+			respexpr.tups.each do |var|
+				if (var.value("type").eql?("var")) then
+					thisvar = Variable.new(var.value("p_txt"),String)
+					thisvar.position = var.value("expr_pos")
+				elsif (var.value("type").eql?("const")) then
+					thisvar = Value.new(var.value("p_txt"))
+				else
+					#function?
+					raise("unhandled type "+var.value("type"))
+				end
+				args << thisvar
+			end
+			thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
+			# 2 things about the below.  1.) get rulenames working!  2.) I think the p2 system uses positions starting at 1.
+			thispred.set(@progname,rulename,pred.value("pred_pos"))
+			predicates << thispred
+		end
+		return predicates
+	end
 end
+
+
