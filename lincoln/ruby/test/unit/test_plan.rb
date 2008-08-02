@@ -19,7 +19,7 @@ require "lib/lang/plan/arbitrary_expression.rb"
 require 'lib/lang/parse/procedural.rb'
 
 
-class TestParse < Test::Unit::TestCase
+class TestPlan < Test::Unit::TestCase
   def test_default
   end
 	def test_prog
@@ -51,7 +51,12 @@ class TestParse < Test::Unit::TestCase
 		sys.init
 
 		#P2
-		utterance = "program foo;\ndefine(path,keys(0,1),{String,String});\ndefine(link,keys(0,1),{String,String});\npath(A,C,Cost) :- link(A,B),path(B,C),Cost := 50;\n"
+		utterance = "program foo;
+				define(path,keys(0,1),{String,String});
+				define(link,keys(0,1),{String,String});
+				path(A,B,Cost) :- link(A,B),Cost := 1;
+				path(A,B,Cost) :- link(A,Z), path(Z,B,C), Cost := C + 1;
+"
 		cooked_program = prep(utterance)
 
 		puts @assigns
@@ -70,6 +75,8 @@ class TestParse < Test::Unit::TestCase
 		# create some real data
 		tuple = Tuple.new("here","there")
 		ts = TupleSet.new(tn,tuple)
+
+		
 		result = queries[0].evaluate(ts)
 		#result2 = queries[1].evaluate(result)
 		

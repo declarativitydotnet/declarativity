@@ -9,7 +9,7 @@ class Assignment < Term
 	end
 	
 	def to_s
-		return @variable.to_s + " := " + @value.to_s
+		return "ASSIGNMENT["+@variable.to_s + " := " + @value.to_s+"]"
 	end
 
 	def requires

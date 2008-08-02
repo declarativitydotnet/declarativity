@@ -13,8 +13,8 @@ class Assign < Operator
 	end
 
   def evaluate(tuples)
-		variable = assignment.variable
-		function = assignment.value.function
+		variable = @assignment.variable
+		function = @assignment.value.function
 		deltas = TupleSet.new(tuples.name)
 		tuples.each do |tuple|
 			delta = tuple.clone

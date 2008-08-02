@@ -195,8 +195,14 @@ class VisitRule < VisitBase
 		if (defined? obj.elements.deleter) then
 			print "OBJ DELETE!!!! ("+ obj.elements.deleter.to_s+")\n"
 		end
+		if (defined? obj.name) then
+			name = obj.name.text_value
+		else 
+			name = text.hash.to_s
+		end
+		
 		print_table("rule",[@@positions["_Universal"],@@positions["Program"],'"'+t+'"',-1,nil,nil])
-		otabinsert(@rt,@@positions["_Universal"],@@current["program"],text,nil,nil)
+		otabinsert(@rt,@@positions["_Universal"],@@current["program"],name,nil,nil)
 		@@current["rule"] = @@positions["_Universal"]
 	end
 end

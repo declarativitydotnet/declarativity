@@ -172,8 +172,6 @@ class Rule < Clause
 				
 				schema = delta.schema.clone
 				body.each do |term2| 
-					print "TEST term2: "+term2.to_s+"\n"
-					print "v DELTA: "+delta.to_s+"\n"
 					if !(term2 == delta) then
 						oper = term2.operator(schema)
 						operators << oper

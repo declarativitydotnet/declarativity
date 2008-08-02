@@ -122,19 +122,18 @@ class OverlogPlanner
 			p_term = predoftable(@terms)
 			sterm = ScanJoin.new(p_term,rule.schema)
 			resterm = sterm.evaluate(TupleSet.new("rule",rule))
-
-			print "RESTERM\n"
-			puts resterm.tups.to_s
-			body = plan_preds(resterm,"r2")
+			
+			rulename = rule.value("rulename")
+			body = plan_preds(resterm,rulename)
 			head = body.shift
-			assigns = plan_assignments(resterm,"r2")	
+			assigns = plan_assignments(resterm,rulename)	
 			assigns.each do |a|
 				print "\t\t"+a.inspect+"\n"
 				body << a	
 			end
 		
 			# location?  extract rulename!  isPublic, isDelete
-			rule = Rule.new(1,"r2",true,false,head,body)
+			rule = Rule.new(1,rulename,true,false,head,body)
 			rule.set(@progname)
 			puts rule.inspect
 			print "------------\n"
