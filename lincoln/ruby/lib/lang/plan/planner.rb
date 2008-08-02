@@ -11,6 +11,7 @@ require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
 require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
+require "lib/lang/plan/value.rb"
 
 
 
@@ -65,6 +66,7 @@ class OverlogPlanner
 		plan_materializations
 		plan_rules
 
+		puts @program
 		#require 'ruby-debug'; debugger
 		@program.plan
 
@@ -81,7 +83,7 @@ class OverlogPlanner
 
 			cols = Array.new
 			# SORT!
-			rescols.each do |col|
+			rescols.tups.each do |col|
 				cols << col.value("datatype")
 			end
 			
@@ -125,12 +127,19 @@ class OverlogPlanner
 			puts resterm.tups.to_s
 			body = plan_preds(resterm,"r2")
 			head = body.shift
-		
-			
+			assigns = plan_assignments(resterm,"r2")	
+			assigns.each do |a|
+				print "\t\t"+a.inspect+"\n"
+				body << a	
+			end
 		
 			# location?  extract rulename!  isPublic, isDelete
 			rule = Rule.new(1,"r2",true,false,head,body)
 			rule.set(@progname)
+			puts rule.inspect
+			print "------------\n"
+			puts rule.to_s
+			print "============\n"
 		end
 	end
 	def plan_preds(resterm,rulename)
@@ -172,6 +181,57 @@ class OverlogPlanner
 		end
 		return predicates
 	end
+
+	def plan_assignments(resterm,rulename)
+		# resterm is a joinable resultset of terms for the current rule.
+
+	
+		p_assign = predoftable(@assigns)
+		sassign = ScanJoin.new(p_assign,resterm.tups[0].schema)
+		resassign = sassign.evaluate(resterm)
+	
+		assignments = Array.new
+
+		resassign.tups.each do |ass|
+			lhs_txt = ass.value("lhs")
+			eval_expr = ass.value("assign_txt")
+
+			#print "eval_expr is "+eval_expr+"->>"+lhs+"\n"
+	
+			p_expr = predoftable(@expr)
+			sexpr = ScanJoin.new(p_expr,ass.schema)
+			resexpr = sexpr.evaluate(TupleSet.new("p",ass))
+			p_var = predoftable(@pexpr)
+			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
+			respexpr = spexpr.evaluate(resexpr)
+
+			args = Array.new
+			respexpr.tups.each do |var|
+				if (var.value("type").eql?("var")) then
+					# danger: all vars are strings....
+					thisvar = Variable.new(var.value("p_txt"),String)
+					thisvar.position = var.value("expr_pos")
+					args << thisvar
+				elsif (var.value("type").eql?("const")) then
+					# consts are already in the expression!
+					#thisvar = Value.new(var.value("p_txt"))
+				else
+					#function?
+					raise("unhandled type "+var.value("type"))
+				end
+			end
+			
+			lhs = Variable.new(lhs_txt,String)
+			lhs.position = 0
+			expr = ArbitraryExpression.new(eval_expr,args)
+			thisassign = Assignment.new(lhs,expr)
+			thisassign.set(@progname,rulename,ass.value("assign_pos"))
+			assignments << thisassign
+		end
+		return assignments 
+	end
+
+
 end
 
 

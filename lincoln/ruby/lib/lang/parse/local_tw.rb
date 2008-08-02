@@ -254,9 +254,13 @@ class VisitAssignment < VisitTerm
 	end
 	def semantic(text,obj)
 		super(text,obj)
-		t = obj.Variable.text_value.gsub('"','\"')
+		t = obj.variable.text_value.gsub('"','\"')
+
+		print "ASSIGN\n"
+		puts obj.variable.text_value
+		puts obj.expression.text_value
 		print_table("assign",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
-		otabinsert(@at,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text)
+		otabinsert(@at,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],obj.variable.text_value,obj.expression.text_value)
 	end
 end
 
@@ -295,7 +299,7 @@ end
 # class body
 
 
-	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,selects,assigns)
+	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects)
 
 		@ruletable = rules
 		@termtable = terms
@@ -350,7 +354,7 @@ end
 		sky.add_handler("Selection",VisitSelection.new(@selecttable,@termtable),1)
 		sky.add_handler("Assignment",VisitAssignment.new(@assigntable,@termtable), 1)
 		
-		sky.add_handler("Variable",VisitVariable.new(@pextable),1)
+		sky.add_handler("variable",VisitVariable.new(@pextable),1)
 		sky.add_handler("Constant",VisitConstant.new(@pextable),1)
 
 

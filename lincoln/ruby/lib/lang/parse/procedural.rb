@@ -45,3 +45,11 @@ def joinwith(pred,table)
         return sj.evaluate(ts)
 end
 
+
+def lcl_pretty_print(tuple)
+        (0..tuple.size-1).each do |i|
+                print "\t["+i.to_s+"] "+tuple.schema.variables[i].name+" = "+tuple.values[i].to_s+"\n"
+        end
+	print "--------------------\n"
+end
+

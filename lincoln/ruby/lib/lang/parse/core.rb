@@ -1545,7 +1545,7 @@ module Overlog
   end
 
   module Assignment0
-    def Variable
+    def variable
       elements[0]
     end
 
@@ -1577,7 +1577,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_Variable
+    r1 = _nt_variable
     s0 << r1
     if r1
       r2 = _nt_Spacing
@@ -2822,7 +2822,7 @@ module Overlog
       elements[0]
     end
 
-    def Variable
+    def variable
       elements[2]
     end
   end
@@ -2876,7 +2876,7 @@ module Overlog
         end
         s5 << r7
         if r7
-          r8 = _nt_Variable
+          r8 = _nt_variable
           s5 << r8
         end
       end
@@ -3333,7 +3333,7 @@ module Overlog
   end
 
   module Primaryexpression5
-    def Variable
+    def variable
       elements[0]
     end
 
@@ -3472,7 +3472,7 @@ module Overlog
               r0.extend(Primaryexpression8)
             else
               i17, s17 = index, []
-              r18 = _nt_Variable
+              r18 = _nt_variable
               s17 << r18
               if r18
                 r19 = _nt_Spacing
@@ -3684,7 +3684,7 @@ module Overlog
   end
 
   module Alias0
-    def Variable
+    def variable
       elements[0]
     end
 
@@ -3702,7 +3702,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_Variable
+    r1 = _nt_variable
     s0 << r1
     if r1
       if input.index(':=', index) == index
@@ -4431,10 +4431,10 @@ module Overlog
     return r0
   end
 
-  def _nt_Variable
+  def _nt_variable
     start_index = index
-    if node_cache[:Variable].has_key?(index)
-      cached = node_cache[:Variable][index]
+    if node_cache[:variable].has_key?(index)
+      cached = node_cache[:variable][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -4470,13 +4470,13 @@ module Overlog
       end
     end
 
-    node_cache[:Variable][start_index] = r0
+    node_cache[:variable][start_index] = r0
 
     return r0
   end
 
   module Location0
-    def Variable
+    def variable
       elements[1]
     end
   end
@@ -4499,7 +4499,7 @@ module Overlog
     end
     s0 << r1
     if r1
-      r2 = _nt_Variable
+      r2 = _nt_variable
       s0 << r2
     end
     if s0.last
@@ -4520,7 +4520,7 @@ module Overlog
       elements[0]
     end
 
-    def AggregateVariable
+    def Aggregatevariable
       elements[2]
     end
 
@@ -4553,7 +4553,7 @@ module Overlog
       end
       s0 << r2
       if r2
-        r3 = _nt_AggregateVariable
+        r3 = _nt_Aggregatevariable
         s0 << r3
         if r3
           if input.index('>', index) == index
@@ -4581,10 +4581,10 @@ module Overlog
     return r0
   end
 
-  def _nt_AggregateVariable
+  def _nt_Aggregatevariable
     start_index = index
-    if node_cache[:AggregateVariable].has_key?(index)
-      cached = node_cache[:AggregateVariable][index]
+    if node_cache[:Aggregatevariable].has_key?(index)
+      cached = node_cache[:Aggregatevariable][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -4594,7 +4594,7 @@ module Overlog
     if r1
       r0 = r1
     else
-      r2 = _nt_Variable
+      r2 = _nt_variable
       if r2
         r0 = r2
       else
@@ -4603,7 +4603,7 @@ module Overlog
       end
     end
 
-    node_cache[:AggregateVariable][start_index] = r0
+    node_cache[:Aggregatevariable][start_index] = r0
 
     return r0
   end

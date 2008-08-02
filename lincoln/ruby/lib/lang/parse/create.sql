@@ -33,6 +33,7 @@ table MyAssignment (
 	+assignmentid Integer,
 	termid Integer,
 	assign_pos Integer,
+	lhs String,
 	assign_txt String
 );
 
@@ -137,7 +138,8 @@ table Compiler (
 table Assignment (
 	+program String,
 	+rule String,
-  position Integer
+  position Integer,
+ object String
 );
 
 table Rule (

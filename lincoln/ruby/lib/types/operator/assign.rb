@@ -4,7 +4,8 @@ class Assign < Operator
 		@assignment = assignment
 		@schema = input.clone
 
-		@schema.append(@assignment.variable) unless @schema.includes? @assignment.variable 
+		#@schema.append(@assignment.variable) unless @schema.includes? @assignment.variable 
+		@schema << @assignment.variable unless @schema.contains @assignment.variable 
 	end
 	
 	def to_s

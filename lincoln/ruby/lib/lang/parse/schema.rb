@@ -7,8 +7,9 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
 		PROGRAM=0
 		RULE=1
 		POSITION=2
+		OBJECT=3
 	end
-	@@SCHEMA = [String,String,Integer]
+	@@SCHEMA = [String,String,Integer,String]
 
 	def initialize
 		super(TableName.new(GLOBALSCOPE, "AssignmentTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
@@ -44,7 +45,9 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
 		rule.position=1
 		position = Variable.new("position",Integer)
 		position.position=2
-		return Schema.new("Assignment",[program,rule,position])
+		object = Variable.new("object",String)
+		object.position=3
+		return Schema.new("Assignment",[program,rule,position,object])
 	end
 end
 
@@ -208,9 +211,10 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
 		ASSIGNMENTID=0
 		TERMID=1
 		ASSIGN_POS=2
-		ASSIGN_TXT=3
+		LHS=3
+		ASSIGN_TXT=4
 	end
-	@@SCHEMA = [Integer,Integer,Integer,String]
+	@@SCHEMA = [Integer,Integer,Integer,String,String]
 
 	def initialize
 		super(TableName.new(GLOBALSCOPE, "MyAssignmentTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
@@ -246,9 +250,11 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
 		termid.position=1
 		assign_pos = Variable.new("assign_pos",Integer)
 		assign_pos.position=2
+		lhs = Variable.new("lhs",String)
+		lhs.position=3
 		assign_txt = Variable.new("assign_txt",String)
-		assign_txt.position=3
-		return Schema.new("MyAssignment",[assignmentid,termid,assign_pos,assign_txt])
+		assign_txt.position=4
+		return Schema.new("MyAssignment",[assignmentid,termid,assign_pos,lhs,assign_txt])
 	end
 end
 

@@ -16,6 +16,7 @@ require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
 require "lib/lang/plan/arbitrary_expression.rb"
 
+require 'lib/lang/parse/procedural.rb'
 
 
 class TestParse < Test::Unit::TestCase
@@ -88,7 +89,7 @@ class TestParse < Test::Unit::TestCase
 
 	def prep(utterance)
 		rei
-		planner = OverlogPlanner.new(utterance,@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@selects,@assigns)
+		planner = OverlogPlanner.new(utterance,@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects)
 		planner.plan
 		return planner.program
 	end

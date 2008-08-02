@@ -124,7 +124,7 @@ grammar Overlog
 				}
 	end
      	rule Assignment
-		  Variable Spacing ':=' Spacing expression
+		  variable Spacing ':=' Spacing expression
 			{
 				def Assignment
 					return self
@@ -230,7 +230,7 @@ grammar Overlog
 		  '(' Type ')' Unaryexpression   
 	end
   	rule Inclusiveexpression
-		  Primaryexpression 'in' Rangeexpression  /  Primaryexpression 'in' Variable   
+		  Primaryexpression 'in' Rangeexpression  /  Primaryexpression 'in' variable   
 	end
   	rule Rangeexpression
 		  LeftRangeOperator expression ',' expression RightRangeOperator   
@@ -246,10 +246,10 @@ grammar Overlog
 
 	end
   	rule Primaryexpression
-		    #(Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  Referencename Spacing  # / Constant Spacing  
+		    #(Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     variable Spacing  /     NewClass Spacing  /  Referencename Spacing  # / Constant Spacing  
 		#	/     opar expression cpar )
 
-		    (Location Spacing / Aggregate Spacing / opar expression cpar / Constant Spacing / Alias Spacing  /     Variable Spacing  /     NewClass Spacing  /  Referencename Spacing)
+		    (Location Spacing / Aggregate Spacing / opar expression cpar / Constant Spacing / Alias Spacing  /     variable Spacing  /     NewClass Spacing  /  Referencename Spacing)
 				{
 					def Primaryexpression
 						return self
@@ -274,7 +274,7 @@ grammar Overlog
 		  name   
 	end
      	rule Alias
-		  Variable ':=' '$' IntegerConstant   
+		  variable ':=' '$' IntegerConstant   
 	end
      	rule name
 		  word
@@ -342,14 +342,14 @@ grammar Overlog
   	rule tablename
 		  (name '::' name  /  name )
 	end
-  	rule Variable
+  	rule variable
 		  name   /  '_'  /  '*'   
 	end
   	rule Location
-		  '@' Variable   
+		  '@' variable   
 	end
   	rule Aggregate
-		  name '<' AggregateVariable '>'   
+		  name '<' Aggregatevariable '>'   
 		{
 			def func
 				return name
@@ -357,8 +357,8 @@ grammar Overlog
 			
 		}
 	end
-  	rule AggregateVariable
-		     Location  /     Variable   
+  	rule Aggregatevariable
+		     Location  /     variable   
 	end
   	rule AttributePosition
 		  '$' [0-9]+  Spacing   

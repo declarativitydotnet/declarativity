@@ -38,6 +38,11 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     @@rule
   end
 
+  # (pa) had to to make it work.
+  def Compiler.assignment
+    @@assignment
+  end
+
   attr_reader :program, :watch
 
   def getName 

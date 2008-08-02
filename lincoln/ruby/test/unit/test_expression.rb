@@ -32,7 +32,7 @@ class TestParse < Test::Unit::TestCase
 
 		tup = Tuple.new(4,2,3)
 		tup.schema = schema
-		ax = ArbitraryExpression.new("((A + B) / C)",a,b,c)
+		ax = ArbitraryExpression.new("((A + B) / C)",[a,b,c])
 		foo = ax.function()
 		assert_equal(2,foo.evaluate(tup))
 
@@ -42,13 +42,27 @@ class TestParse < Test::Unit::TestCase
 		nx2 = NativeExpression.new("/",nx,c)
 		f1 = nx2.function
 
-		print "YO:\n"
 		puts f1.evaluate(tup)
 	
 		assert_equal(f1.evaluate(tup),foo.evaluate(tup))
-		
 
+		
+		ax = ArbitraryExpression.new("(A == 4) ? B : C",[a,b,c])
+
+		func = ax.function
+
+		print "YO:\n"
+		assert_equal(2,func.evaluate(tup))
 			
+		tup2 = Tuple.new(1,2,3)
+		tup2.schema = schema
+
+		puts func.evaluate(tup2)
+
+		# the value of an expression over a constant damn well ought to be the value of that constant.
+		ax = ArbitraryExpression.new("25",[a,b,c])
+		func = ax.function
+		assert_equal(25,func.evaluate(tup))
 		
 	end
 	
