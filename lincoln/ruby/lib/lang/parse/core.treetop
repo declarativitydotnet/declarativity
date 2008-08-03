@@ -146,6 +146,9 @@ grammar Overlog
 				return text_value
 
 			end
+			def expression
+				return self
+			end
 			}
 	end
      	rule expressionList
@@ -230,7 +233,7 @@ grammar Overlog
 		  '(' Type ')' Unaryexpression   
 	end
   	rule Inclusiveexpression
-		  Primaryexpression 'in' Rangeexpression  /  Primaryexpression 'in' variable   
+		  primaryexpression 'in' Rangeexpression  /  primaryexpression 'in' variable   
 	end
   	rule Rangeexpression
 		  LeftRangeOperator expression ',' expression RightRangeOperator   
@@ -242,16 +245,16 @@ grammar Overlog
 		     ']'  /     ')'   
 	end
   	rule Postfixexpression
-		     Primaryexpression / Postfixexpression '.' name Reference  /     Postfixexpression arguments Method  /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     Primaryexpression   
+		     primaryexpression / Postfixexpression '.' name Reference  /     Postfixexpression arguments Method  /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     primaryexpression   
 
 	end
-  	rule Primaryexpression
+  	rule primaryexpression
 		    #(Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     variable Spacing  /     NewClass Spacing  /  Referencename Spacing  # / Constant Spacing  
 		#	/     opar expression cpar )
 
 		    (Location Spacing / Aggregate Spacing / opar expression cpar / Constant Spacing / Alias Spacing  /     variable Spacing  /     NewClass Spacing  /  Referencename Spacing)
 				{
-					def Primaryexpression
+					def primaryexpression
 						return self
 					end
 				}

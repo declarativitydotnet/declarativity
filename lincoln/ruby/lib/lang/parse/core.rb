@@ -1642,6 +1642,9 @@ module Overlog
 				return text_value
 
 			end
+			def expression
+				return self
+			end
   end
 
   def _nt_expression
@@ -2808,7 +2811,7 @@ module Overlog
   end
 
   module Inclusiveexpression0
-    def Primaryexpression
+    def primaryexpression
       elements[0]
     end
 
@@ -2818,7 +2821,7 @@ module Overlog
   end
 
   module Inclusiveexpression1
-    def Primaryexpression
+    def primaryexpression
       elements[0]
     end
 
@@ -2837,7 +2840,7 @@ module Overlog
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_Primaryexpression
+    r2 = _nt_primaryexpression
     s1 << r2
     if r2
       if input.index('in', index) == index
@@ -2864,7 +2867,7 @@ module Overlog
       r0 = r1
     else
       i5, s5 = index, []
-      r6 = _nt_Primaryexpression
+      r6 = _nt_primaryexpression
       s5 << r6
       if r6
         if input.index('in', index) == index
@@ -3113,7 +3116,7 @@ module Overlog
     end
 
     i0 = index
-    r1 = _nt_Primaryexpression
+    r1 = _nt_primaryexpression
     if r1
       r0 = r1
     else
@@ -3363,15 +3366,15 @@ module Overlog
   end
 
   module Primaryexpression8
-					def Primaryexpression
+					def primaryexpression
 						return self
 					end
   end
 
-  def _nt_Primaryexpression
+  def _nt_primaryexpression
     start_index = index
-    if node_cache[:Primaryexpression].has_key?(index)
-      cached = node_cache[:Primaryexpression][index]
+    if node_cache[:primaryexpression].has_key?(index)
+      cached = node_cache[:primaryexpression][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -3536,7 +3539,7 @@ module Overlog
       end
     end
 
-    node_cache[:Primaryexpression][start_index] = r0
+    node_cache[:primaryexpression][start_index] = r0
 
     return r0
   end

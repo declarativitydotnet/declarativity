@@ -53,6 +53,7 @@ end
 
 class VisitIExpression < VisitGeneric
 	def initialize(expt)
+		print "init over "+expt.to_s+"\n"
 		@ext = expt
 		super()
 	end
@@ -86,7 +87,7 @@ class VisitTerm < VisitGeneric
 	end
 end
 
-class VisitPexp < VisitGeneric
+class VisitPexp < VisitIExpression
 	def semantic(text,obj)
 		super(text,obj)
 		@@positions["_Primpos"] = @@positions["_Primpos"] + 1
@@ -125,8 +126,8 @@ class VisitPredicate < VisitTerm
 end
 
 class VisitConstant < VisitPexp
-	def initialize (pt)
-		super()
+	def initialize (pt,et)
+		super(et)
 		@pet = pt
 	end
 	def semantic(text,obj)
@@ -140,8 +141,8 @@ class VisitConstant < VisitPexp
 end
 
 class VisitVariable < VisitPexp
-	def initialize (pt)
-		super()
+	def initialize (pt,et)
+		super(et)
 		@pet = pt
 	end
 
@@ -220,13 +221,13 @@ class VisitTable < VisitBase
 	end
 end
 
-# not really true, but a shortcut
-class VisitColumn < VisitPexp
+class VisitColumn < VisitGeneric
 	def initialize(col)
 		@col = col
 	end	
 	def semantic(text,obj)
 		super(text,obj)	
+		@@positions["_Primpos"] = @@positions["_Primpos"] + 1
 		#coltab(@@positions["TableName"],@@positions["Type"],text);
 		print_table("columns",[@@positions["TableName"],@@positions["Type"],'"'+text+'"'])
 		#@col.insert(TupleSet.new("column",Tuple.new(@@current["table"],@@positions["_Universal"],text)),nil)
@@ -277,6 +278,7 @@ class VisitSelection < VisitTerm
 		super(term)
 	end
 	def semantic(text,obj)
+		print "\t\tSELECTION: "+text+"\n"
 		super(text,obj)
 		print_table("select",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
 		t = text.gsub('"','\"')
@@ -287,10 +289,14 @@ end
 
 class VisitExpression < VisitIExpression
 	def semantic(text,obj)
-		#if (!defined? obj.PrimaryExpression) then
+		if (!defined? obj.primaryexpression) then
+			print "\t\tEXPRESSION: "+text+"\n"
 			super(text,obj)
 			#print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text,"expr","??"])
-		#end
+
+		else 
+			#print "\t\t\tFUCK ALL THAT\n"
+		end
 	end
 end
 
@@ -348,7 +354,7 @@ end
 		sky.add_handler("Location",vg,1)
 		sky.add_handler("Watch",vg,1)
 		sky.add_handler("expression",VisitExpression.new(@extable),1)
-		sky.add_handler("Primaryexpression",vg,1)
+		sky.add_handler("primaryexpression",vg,1)
 		sky.add_handler("Predicate",VisitPredicate.new(@predicatetable,@termtable),1)
 		sky.add_handler("Fact",VisitFact.new(@facttable,@termtable),1)
 		sky.add_handler("Definition",VisitTable.new(@tabletable),1)
@@ -360,13 +366,13 @@ end
 		sky.add_handler("Selection",VisitSelection.new(@selecttable,@termtable),1)
 		sky.add_handler("Assignment",VisitAssignment.new(@assigntable,@termtable), 1)
 		
-		sky.add_handler("variable",VisitVariable.new(@pextable),1)
-		sky.add_handler("Constant",VisitConstant.new(@pextable),1)
+		sky.add_handler("variable",VisitVariable.new(@pextable,@extable),1)
+		sky.add_handler("Constant",VisitConstant.new(@pextable,@extable),1)
 
 
 		sky.add_handler("Aggregate",VisitAggregate.new(@pextable),1)
 		sky.add_handler("Name",vg,1)
-		sky.add_handler("AggregateVariable",VisitVariable.new(@pextable),1)
+		sky.add_handler("AggregateVariable",VisitVariable.new(@pextable,@extable),1)
 
 		#sky.add_handler("Arguments",vg,1)
 

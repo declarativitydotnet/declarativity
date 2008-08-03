@@ -20,7 +20,7 @@ require 'lib/lang/parse/procedural.rb'
 
 
 class TestPlan < Test::Unit::TestCase
-	def test_oldprogtests
+	def test_oldprog1
 		sys = System.new
 		sys.init
 		utterance = "program path;

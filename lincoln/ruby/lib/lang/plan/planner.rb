@@ -128,27 +128,25 @@ class OverlogPlanner
 			assigns.each do |a|
 				body << a	
 			end
+			selects = plan_selections(resterm,rulename)
+			selects.each do |s|
+				body << s
+			end
 		
 			# location?  extract rulename!  isPublic, isDelete
 			rule = Rule.new(1,rulename,true,false,head,body)
 			rule.set(@progname)
 		end
 	end
-	def plan_preds(resterm,rulename)
-		# resterm is a joinable resultset of terms for the current rule.
 
-		p_pred = predoftable(@preds)
-		spred = ScanJoin.new(p_pred,resterm.tups[0].schema)
-		respred = spred.evaluate(resterm)
-	
-		predicates = Array.new
-		respred.tups.each do |pred|
-			# skip the head, for now
-		
-			# a row for each predicate.  let's grab the vars
+	def get_vars(it)
 			p_expr = predoftable(@expr)
-			sexpr = ScanJoin.new(p_expr,pred.schema)
-			resexpr = sexpr.evaluate(TupleSet.new("p",pred))
+			sexpr = ScanJoin.new(p_expr,it.schema)
+			print "it.s = "+it.schema.to_s+"\n"
+			resexpr = sexpr.evaluate(TupleSet.new("p",it))
+			print "ACK\n"
+			puts resexpr.tups
+			print "_____________\n"
 			p_var = predoftable(@pexpr)
 			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
 			respexpr = spexpr.evaluate(resexpr)
@@ -166,6 +164,22 @@ class OverlogPlanner
 				end
 				args << thisvar
 			end
+		return args
+	end
+
+	def plan_preds(resterm,rulename)
+		# resterm is a joinable resultset of terms for the current rule.
+
+		p_pred = predoftable(@preds)
+		spred = ScanJoin.new(p_pred,resterm.tups[0].schema)
+		respred = spred.evaluate(resterm)
+	
+		predicates = Array.new
+		respred.tups.each do |pred|
+			# skip the head, for now
+		
+			# a row for each predicate.  let's grab the vars
+			args = get_vars(pred)
 			thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
 			# 2 things about the below.  1.) get rulenames working!  2.) I think the p2 system uses positions starting at 1.
 			thispred.set(@progname,rulename,pred.value("pred_pos"))
@@ -190,28 +204,7 @@ class OverlogPlanner
 
 			#print "eval_expr is "+eval_expr+"->>"+lhs+"\n"
 	
-			p_expr = predoftable(@expr)
-			sexpr = ScanJoin.new(p_expr,ass.schema)
-			resexpr = sexpr.evaluate(TupleSet.new("p",ass))
-			p_var = predoftable(@pexpr)
-			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
-			respexpr = spexpr.evaluate(resexpr)
-
-			args = Array.new
-			respexpr.tups.each do |var|
-				if (var.value("type").eql?("var")) then
-					# danger: all vars are strings....
-					thisvar = Variable.new(var.value("p_txt"),String)
-					thisvar.position = var.value("expr_pos")
-					args << thisvar
-				elsif (var.value("type").eql?("const")) then
-					# consts are already in the expression!
-					#thisvar = Value.new(var.value("p_txt"))
-				else
-					#function?
-					raise("unhandled type "+var.value("type"))
-				end
-			end
+			args = get_vars(ass)
 			
 			lhs = Variable.new(lhs_txt,String)
 			lhs.position = 0
@@ -223,6 +216,41 @@ class OverlogPlanner
 		return assignments 
 	end
 
+	def plan_selections(resterm,rulename)
+		# resterm is a joinable resultset of terms for the current rule.
+
+
+		print "TERMS---------\n"
+		puts @terms
+		print "SELS ---------\n"
+		puts @selects
+		print "EXPRS ---------\n"
+		puts @expr
+
+		p_select = predoftable(@selects)
+		sselect = ScanJoin.new(p_select,resterm.tups[0].schema)
+		resselect = sselect.evaluate(resterm)
+	
+		selections = Array.new
+
+		resselect.tups.each do |sel|
+			eval_expr = sel.value("select_txt")
+
+			print "bluh; "+sel.to_s+"\n"
+			print "expr; "+eval_expr+"\n"
+			puts @expr
+			print "schema: "+sel.schema.to_s+"\n"
+			print "CROCKA---------------\n"
+			args = get_vars(sel)
+			print "SNAP------------------\n"
+			
+			expr = ArbitraryExpression.new(eval_expr,args)
+			thisselect = SelectionTerm.new(expr)
+			thisselect.set(@progname,rulename,sel.value("select_pos"))
+			selections << thisselect
+		end
+		return selections 
+	end
 
 end
 
