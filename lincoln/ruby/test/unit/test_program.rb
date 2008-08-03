@@ -110,8 +110,9 @@ class TestProgram < Test::Unit::TestCase
 
     body = [link, link2]
     
-    #e = NativeExpression.new("+", v3, v7)
-    e = ArbitraryExpression.new("Cost + Cost2",[v3,v7])
+    e = NativeExpression.new("+", v3, v7)
+    # this one would work fine, were it not for idiosyncratic differences in pretty-printing.
+    #e = ArbitraryExpression.new("Cost + Cost2",[v3,v7])
 
     path3 = Predicate.new(false, TableName.new(nil,"path"), Table::Event::NONE, [v1, v6, e])
     path3.set('testprog', 'p3', 0)
