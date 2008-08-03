@@ -53,7 +53,6 @@ end
 
 class VisitIExpression < VisitGeneric
 	def initialize(expt)
-		print "init over "+expt.to_s+"\n"
 		@ext = expt
 		super()
 	end
@@ -278,7 +277,6 @@ class VisitSelection < VisitTerm
 		super(term)
 	end
 	def semantic(text,obj)
-		print "\t\tSELECTION: "+text+"\n"
 		super(text,obj)
 		print_table("select",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
 		t = text.gsub('"','\"')
@@ -290,7 +288,6 @@ end
 class VisitExpression < VisitIExpression
 	def semantic(text,obj)
 		if (!defined? obj.primaryexpression) then
-			print "\t\tEXPRESSION: "+text+"\n"
 			super(text,obj)
 			#print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text,"expr","??"])
 

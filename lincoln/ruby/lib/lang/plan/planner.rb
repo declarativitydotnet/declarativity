@@ -16,8 +16,6 @@ require "lib/lang/plan/value.rb"
 
 
 class OverlogPlanner
-
-
 	def predoftable(table)
 	        schema = table.schema_of
 	        p = Predicate.new(false,table.name,table,schema.variables)
@@ -81,7 +79,7 @@ class OverlogPlanner
 
 			cols = Array.new
 			# SORT!
-			rescols.tups.each do |col|
+			rescols.order_by("col_pos") do |col|
 				cols << col.value("datatype")
 			end
 			
@@ -90,7 +88,7 @@ class OverlogPlanner
 			resindx = sindx.evaluate(TupleSet.new("cols",table))
 		
 			indxs = Array.new	
-			resindx.each do |col|
+			resindx.order_by("col_pos") do |col|
 				indxs << col.value("col_pos")
 			end 		
 
@@ -115,6 +113,7 @@ class OverlogPlanner
 		# save res as a member variable: I'll want to reuse it.
 		res = sj.evaluate(ts)
 
+		# need to put an ordering over the rules!
 		res.tups.each do |rule|
 		
 			p_term = predoftable(@terms)
@@ -123,6 +122,9 @@ class OverlogPlanner
 			
 			rulename = rule.value("rulename")
 			body = plan_preds(resterm,rulename)
+		##	body = plan_whatever(resterm,rulename,@preds,"pred_pos",pred_block)
+
+
 			head = body.shift
 			assigns = plan_assignments(resterm,rulename)	
 			assigns.each do |a|
@@ -142,17 +144,13 @@ class OverlogPlanner
 	def get_vars(it)
 			p_expr = predoftable(@expr)
 			sexpr = ScanJoin.new(p_expr,it.schema)
-			print "it.s = "+it.schema.to_s+"\n"
 			resexpr = sexpr.evaluate(TupleSet.new("p",it))
-			print "ACK\n"
-			puts resexpr.tups
-			print "_____________\n"
 			p_var = predoftable(@pexpr)
 			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
 			respexpr = spexpr.evaluate(resexpr)
 
 			args = Array.new
-			respexpr.tups.each do |var|
+			respexpr.order_by("p_pos") do |var|
 				if (var.value("type").eql?("var")) then
 					thisvar = Variable.new(var.value("p_txt"),String)
 					thisvar.position = var.value("expr_pos")
@@ -167,6 +165,38 @@ class OverlogPlanner
 		return args
 	end
 
+	def pred_block
+		ret  = lambda do |pred,args|
+			thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
+			thispred.set(@progname,rulename,pred.value("pred_pos"))
+		end
+		return ret
+	end
+
+
+	def plan_whatever(resterm,rulename,entity,sorter,block)
+		# resterm is a joinable resultset of terms for the current rule.
+
+		p_pred = predoftable(entity)
+		spred = ScanJoin.new(p_pred,resterm.tups[0].schema)
+		respred = spred.evaluate(resterm)
+	
+		predicates = Array.new
+		respred.order_by(sorter) do |pred|
+			# skip the head, for now
+		
+			# a row for each predicate.  let's grab the vars
+			args = get_vars(pred)
+			#thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
+			# 2 things about the below.  1.) get rulenames working!  2.) I think the p2 system uses positions starting at 1.
+			#thispred.set(@progname,rulename,pred.value("pred_pos"))
+			thispred = block(pred,args)
+			predicates << thispred
+		end
+		return predicates
+	end
+
+
 	def plan_preds(resterm,rulename)
 		# resterm is a joinable resultset of terms for the current rule.
 
@@ -175,7 +205,7 @@ class OverlogPlanner
 		respred = spred.evaluate(resterm)
 	
 		predicates = Array.new
-		respred.tups.each do |pred|
+		respred.order_by("term_pos") do |pred|
 			# skip the head, for now
 		
 			# a row for each predicate.  let's grab the vars
@@ -198,11 +228,10 @@ class OverlogPlanner
 	
 		assignments = Array.new
 
-		resassign.tups.each do |ass|
+		resassign.order_by("assign_pos") do |ass|
 			lhs_txt = ass.value("lhs")
 			eval_expr = ass.value("assign_txt")
 
-			#print "eval_expr is "+eval_expr+"->>"+lhs+"\n"
 	
 			args = get_vars(ass)
 			
@@ -220,29 +249,16 @@ class OverlogPlanner
 		# resterm is a joinable resultset of terms for the current rule.
 
 
-		print "TERMS---------\n"
-		puts @terms
-		print "SELS ---------\n"
-		puts @selects
-		print "EXPRS ---------\n"
-		puts @expr
-
 		p_select = predoftable(@selects)
 		sselect = ScanJoin.new(p_select,resterm.tups[0].schema)
 		resselect = sselect.evaluate(resterm)
 	
 		selections = Array.new
 
-		resselect.tups.each do |sel|
+		resselect.order_by("select_pos") do |sel|
 			eval_expr = sel.value("select_txt")
 
-			print "bluh; "+sel.to_s+"\n"
-			print "expr; "+eval_expr+"\n"
-			puts @expr
-			print "schema: "+sel.schema.to_s+"\n"
-			print "CROCKA---------------\n"
 			args = get_vars(sel)
-			print "SNAP------------------\n"
 			
 			expr = ArbitraryExpression.new(eval_expr,args)
 			thisselect = SelectionTerm.new(expr)

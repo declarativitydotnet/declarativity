@@ -57,6 +57,12 @@ class TupleSet
   def <=>(o)
     return (self == o) ? 0 : 1
   end
+
+  def order_by(col_name)
+     @tups.sort{ |a,b| a.value(col_name) <=> b.value(col_name)}.each do |t|
+        yield t
+     end
+  end
   
   def each
     @tups.each do |t|

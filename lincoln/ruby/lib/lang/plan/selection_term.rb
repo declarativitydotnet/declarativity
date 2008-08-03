@@ -24,6 +24,6 @@ class SelectionTerm < Term
   end
 
   def set(program, rule, position) 
-    @@Program.selection.force(Tuple.new(program, rule, position, self))
+    Program.selection.force(Tuple.new(program, rule, position, self))
   end
 end

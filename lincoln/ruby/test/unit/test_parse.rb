@@ -45,7 +45,6 @@ class TestParse < Test::Unit::TestCase
 		# set up schema table's predicate
 		#require 'ruby-debug'; debugger
 		term_schema = @terms.schema_of
-		print "terms.name is "+@terms.name.to_s+"\n"
 		term_pred  = Predicate.new(false,@terms.name,@terms,term_schema.variables)
 		term_pred.set("global", "r3", 1)
 		
@@ -93,9 +92,9 @@ class TestParse < Test::Unit::TestCase
 		#puts @preds
 		#puts @expr
 		#puts @pexpr
-		# there are 2 expression in predicate foo, but 3 primary expressions
+		# there are 2 expressions in program foo, but 6 primary expressions
 		assert_equal(@pexpr.cardinality,6)
-		assert_equal(@expr.cardinality,5)
+		assert_equal(@expr.cardinality,8)
 		foundconst = 0
 		@pexpr.tuples.each do |t|
 			# don't forget to fix the quotes
@@ -128,7 +127,7 @@ class TestParse < Test::Unit::TestCase
 		@preds.tuples.each do |t|
 			name = t.values[3]
 			if (name.eql?("bar")) then
-				assert_equal(t.to_s,"<12, 11, 1, bar>")
+				assert_equal(t.to_s,"<10, 9, 1, bar>")
 			elsif (name.eql?("foo")) then
 				assert_equal(t.to_s,"<4, 3, 0, foo>")
 			else
@@ -170,17 +169,11 @@ class TestParse < Test::Unit::TestCase
 			tups << t
 		end	
 
-		puts @programs
-		puts @facts
-
-		print "ALLO\n"
 		assert_equal(tups.size,1)
 		assert_equal(tups[0].to_s,"<1, nil, foo>")
-
 		
 		tups = Array.new
 		@facts.tuples.each do |t|
-			print "FACT: "+t.to_s+"\n"
 			tups << t
 		end	
 		assert_equal(tups.size,1)

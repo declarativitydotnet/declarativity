@@ -16,7 +16,7 @@ class Program
   @@fact = FactTable.new
   @@predicate = PredicateTable.new
   @@tfunction = Function::TableFunction.new
-#  @@selection = Rule::RuleTable.new
+  @@selection = SelectionTable.new
   @@assignment = AssignmentTable.new
   
   def Program.watch
@@ -25,6 +25,9 @@ class Program
   
   def Program.predicate
     @@predicate
+  end
+  def Program.selection
+    @@selection
   end
               
 	def initialize(name, owner) 

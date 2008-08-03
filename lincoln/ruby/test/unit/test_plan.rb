@@ -99,14 +99,11 @@ class TestPlan < Test::Unit::TestCase
 		#puts @assigns
 
 		tn  = TableName.new(nil,"link")
-		print "get queries:\n"
+		#print "get queries:\n"
 		queries = cooked_program.get_queries(tn)
 
 		# what do we expect?  just the 1 delta-rewritten version of this rule.
-		print "query count = "+queries.length.to_s+"\n"
-		queries.each do  |q|
-			print "query: "+q.to_s+"\n"
-		end
+		#print "query count = "+queries.length.to_s+"\n"
 		#assert_equal(1,queries.length)
 
 		# create some real data
@@ -121,8 +118,6 @@ class TestPlan < Test::Unit::TestCase
 		assert_equal("<here, there>",result.tups[0].to_s)
 		
 		result.each do |t|
-			#print "RESS::\n"
-			#puts t
 		end
 		#puts cooked_program.inspect
 

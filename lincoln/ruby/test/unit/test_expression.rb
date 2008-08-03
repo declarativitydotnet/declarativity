@@ -55,13 +55,12 @@ class TestExpression < Test::Unit::TestCase
 
 		func = ax.function
 
-		print "YO:\n"
 		assert_equal(2,func.evaluate(tup))
 			
 		tup2 = Tuple.new(1,2,3)
 		tup2.schema = schema
 
-		puts func.evaluate(tup2)
+		#puts func.evaluate(tup2)
 
 		# the value of an expression over a constant damn well ought to be the value of that constant.
 		ax = ArbitraryExpression.new("25",[a,b,c])
