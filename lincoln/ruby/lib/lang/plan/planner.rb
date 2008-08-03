@@ -66,8 +66,6 @@ class OverlogPlanner
 		plan_materializations
 		plan_rules
 
-		puts @program
-		#require 'ruby-debug'; debugger
 		@program.plan
 
 		#puts @program.get_query(Tablename.new(nil,"path"))
@@ -128,17 +126,12 @@ class OverlogPlanner
 			head = body.shift
 			assigns = plan_assignments(resterm,rulename)	
 			assigns.each do |a|
-				print "\t\t"+a.inspect+"\n"
 				body << a	
 			end
 		
 			# location?  extract rulename!  isPublic, isDelete
 			rule = Rule.new(1,rulename,true,false,head,body)
 			rule.set(@progname)
-			puts rule.inspect
-			print "------------\n"
-			puts rule.to_s
-			print "============\n"
 		end
 	end
 	def plan_preds(resterm,rulename)

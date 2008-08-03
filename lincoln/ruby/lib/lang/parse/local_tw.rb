@@ -262,9 +262,9 @@ class VisitAssignment < VisitTerm
 		super(text,obj)
 		t = obj.variable.text_value.gsub('"','\"')
 
-		print "ASSIGN\n"
-		puts obj.variable.text_value
-		puts obj.expression.text_value
+		#print "ASSIGN\n"
+		#puts obj.variable.text_value
+		#puts obj.expression.text_value
 		print_table("assign",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
 		otabinsert(@at,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],obj.variable.text_value,obj.expression.text_value)
 	end

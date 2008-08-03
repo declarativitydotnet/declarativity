@@ -15,7 +15,7 @@ class ArbitraryExpression < Expression
   end
 
   def to_s
-    return @expr
+    return "(" + @expr + ")"
   end
 
   def variables
@@ -27,7 +27,7 @@ class ArbitraryExpression < Expression
 
 	subexpr = ''
 	@variables.each do |v|	
-		print "\tcheck "+v.to_s+"("+v.name+")\n"
+		#print "\tcheck "+v.to_s+"("+v.name+")\n"
 		if t.schema.contains(v) then
 			# uh-oh
 			#print "sub into ("+@expr+") <- "+t.value(v.name).to_s+"\n"
@@ -51,7 +51,7 @@ class ArbitraryExpression < Expression
 	end
 
 	subexpr = subexpr + @expr
-	print "expr is "+subexpr+"\n"
+	#print "expr is "+subexpr+"\n"
 	return eval(subexpr)
     end
     

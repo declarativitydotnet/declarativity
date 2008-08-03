@@ -74,7 +74,11 @@ class TestProgram < Test::Unit::TestCase
     # 
     # We won't add this rule to the program p, we'll just invoke it directly.
     ####
-    bool = Boolean.new("==", v2, Value.new(2))
+
+    #bool = Boolean.new("==", v2, Value.new(2))
+    # ArbitraryExpressions can replace all expressions... but it means we parse twice.
+    bool = ArbitraryExpression.new("To == 2",[v2])
+
     selterm = SelectionTerm.new(bool)
     body = [link, selterm]
     
@@ -106,8 +110,8 @@ class TestProgram < Test::Unit::TestCase
 
     body = [link, link2]
     
-    e = NativeExpression.new("+", v3, v7)
-#	e = ArbitraryExpression.new("Cost + Cost2",v3,v7)
+    #e = NativeExpression.new("+", v3, v7)
+    e = ArbitraryExpression.new("Cost + Cost2",[v3,v7])
 
     path3 = Predicate.new(false, TableName.new(nil,"path"), Table::Event::NONE, [v1, v6, e])
     path3.set('testprog', 'p3', 0)

@@ -19,7 +19,7 @@ require "lib/lang/plan/native_expression.rb"
 
 
 
-class TestParse < Test::Unit::TestCase
+class TestExpression < Test::Unit::TestCase
 	def test_prog
 
 		a = Variable.new("A",Integer)
@@ -41,10 +41,14 @@ class TestParse < Test::Unit::TestCase
 		nx = NativeExpression.new("+",a,b)
 		nx2 = NativeExpression.new("/",nx,c)
 		f1 = nx2.function
-
-		puts f1.evaluate(tup)
-	
 		assert_equal(f1.evaluate(tup),foo.evaluate(tup))
+
+		# binding an expressions over some variables, but leaving others free is no good
+		badtup = Tuple.new(4,2)
+		badschema = Schema.new("you",[a,b])
+		badtup.schema = badschema
+		assert_raise(RuntimeError) {foo.evaluate(badtup) } 
+	
 
 		
 		ax = ArbitraryExpression.new("(A == 4) ? B : C",[a,b,c])
@@ -63,6 +67,8 @@ class TestParse < Test::Unit::TestCase
 		ax = ArbitraryExpression.new("25",[a,b,c])
 		func = ax.function
 		assert_equal(25,func.evaluate(tup))
+
+		
 		
 	end
 	

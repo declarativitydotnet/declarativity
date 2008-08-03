@@ -20,8 +20,45 @@ require 'lib/lang/parse/procedural.rb'
 
 
 class TestPlan < Test::Unit::TestCase
-  def test_default
-  end
+	def test_oldprogtests
+		sys = System.new
+		sys.init
+		utterance = "program path;
+				define(link,keys(0,1),{String,String,Integer,String});
+				path(From,To,Cost) :- link(From,To,Cost,Annotation);
+"
+
+		prog = prep(utterance)
+
+		# we need to manually construct a schema spec; we can't infer it from link (materialized by the overlog above) 
+		# because link is empty, and schema belong to tuples, not tables (not that link's fields have no names)
+		t1 = Tuple.new("1","2","10","first")
+		t2 = Tuple.new("2","3","5","second")
+
+		# ... from test_program
+		v1 = Variable.new("From", Integer)
+		v1.position = 0
+		v2 = Variable.new("To", Integer)
+		v2.position = 1
+		v3 = Variable.new("Cost", Float)
+		v3.position = 2
+		v4 = Variable.new("Annotation", String)
+		v4.position = 3   
+
+		schema1 = Schema.new("schema1", [v1,v2,v3,v4])
+		t1.schema = schema1
+		t2.schema = schema1
+		tn = TableName.new(nil, "link")
+		tn = TableName.new(nil,"link")
+		ts = TupleSet.new(tn, t1, t2)
+		# ... ok, done with test_program
+
+		result = prog.get_queries(tn)[0].evaluate(ts)
+		assert_equal(result.tups.length, 2)
+		assert_equal(result.tups[0].values, ["1","2","10"])
+		assert_equal(result.tups[1].values, ["2","3","5"])
+	end
+
 	def test_prog
 		sys = System.new
 		sys.init
@@ -59,7 +96,7 @@ class TestPlan < Test::Unit::TestCase
 "
 		cooked_program = prep(utterance)
 
-		puts @assigns
+		#puts @assigns
 
 		tn  = TableName.new(nil,"link")
 		print "get queries:\n"
@@ -84,8 +121,8 @@ class TestPlan < Test::Unit::TestCase
 		assert_equal("<here, there>",result.tups[0].to_s)
 		
 		result.each do |t|
-			print "RESS::\n"
-			puts t
+			#print "RESS::\n"
+			#puts t
 		end
 		#puts cooked_program.inspect
 

@@ -23,8 +23,6 @@ class Assignment < Term
 	end
 
 	def set(program, rule, position)
-		print "var: "+@variable.to_s+"\n"
-		print "expr: "+@value.to_s+"\n"
 		Compiler.assignment.force(Tuple.new(program, rule, position, self))
 	end
 
