@@ -241,12 +241,15 @@ public abstract class Table implements Comparable<Table> {
 						throw new UpdateException(e.toString());
 					}
 				}
-			}
-		}
-		
-		if (delta.size() > 0) {
-			for (Callback callback : this.callbacks) {
-				callback.insertion(delta);
+				
+				/* Update the indices here so that primary key
+				 * conflicts from within the tupleset will show up
+				 * during this method call.  */
+				TupleSet insertion = new TupleSet(name());
+				insertion.add(t);
+				for (Callback callback : this.callbacks) {
+					callback.insertion(insertion);
+				}
 			}
 		}
 		

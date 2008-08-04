@@ -34,13 +34,6 @@ generic Variable =
 
 generic Location = void:'@' Variable;
 
-generic Aggregate = Name void:'<' AggregateVariable void:'>';
-
-Node AggregateVariable =
-    <LocationVariable>  Location
-  / <Variable>          Variable
-  ;
-
 generic AttributePosition = void:'$' [0-9]+ Spacing;
 
 generic Type =

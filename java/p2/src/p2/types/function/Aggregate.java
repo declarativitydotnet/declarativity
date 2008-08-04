@@ -26,7 +26,6 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		public Class returnType() {
 			return this.type;
 		}
-		
 	}
 	
 	public static final String MIN      = "min";
@@ -41,7 +40,10 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	public abstract void reset();
 	
 	public static Aggregate function(p2.lang.plan.Aggregate aggregate) {
-		if (MIN.equals(aggregate.functionName())) {
+		if (aggregate instanceof p2.lang.plan.GenericAggregate) {
+			return new Generic(new Accessor(aggregate));
+		}
+		else if (MIN.equals(aggregate.functionName())) {
 			return new Min(new Accessor(aggregate));
 		}
 		else if (MAX.equals(aggregate.functionName())) {
@@ -77,6 +79,41 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return p2.types.basic.TupleSet.class;
 		}
 		return null;
+	}
+	
+	public static class Generic extends Aggregate {
+		private Tuple result;
+		private Comparable current;
+		private Accessor accessor;
+		
+		public Generic(Accessor accessor) {
+			this.result = null;
+			this.current = null;
+			this.accessor = accessor;
+		}
+		
+		public Tuple result() {
+			return this.result == null ? null : this.result.clone();
+		}
+		
+		public void reset() {
+			this.result = null;
+			this.current = null;
+		}
+		
+		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
+			Comparable value = accessor.evaluate(tuple);
+			if (current == null || this.current.compareTo(value) != 0) {
+				this.current = value;
+				this.result = tuple;
+				return value;
+			}
+			return null;
+		}
+
+		public Class returnType() {
+			return accessor.returnType();
+		}
 	}
 	
 	public static class Min extends Aggregate {

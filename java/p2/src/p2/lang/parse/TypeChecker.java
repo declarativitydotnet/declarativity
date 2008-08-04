@@ -24,6 +24,7 @@ import p2.lang.plan.Cast;
 import p2.lang.plan.DontCare;
 import p2.lang.plan.Expression;
 import p2.lang.plan.Fact;
+import p2.lang.plan.GenericAggregate;
 import p2.lang.plan.IfThenElse;
 import p2.lang.plan.Location;
 import p2.lang.plan.MethodCall;
@@ -181,7 +182,6 @@ public final class TypeChecker extends Visitor {
 		}
 		else if (expr.type() != boolean.class && !Boolean.class.isAssignableFrom(expr.type())) {
 			/* expr != null*/
-			System.err.println("!= NULL " + expr.type());
 			return new p2.lang.plan.Boolean(p2.lang.plan.Boolean.NEQUAL,
 									    expr, new Null());
 		}
@@ -1574,16 +1574,28 @@ public final class TypeChecker extends Visitor {
 	public Class visitAggregate(final GNode n) {
 		String function = n.getString(0);
 		
-		if (n.getNode(1) == null) {
-			n.setProperty(Constants.TYPE, 
-					new Aggregate(null, function, p2.types.function.Aggregate.type(function, null)));
+		if ("generic".equals(function)) {
+			Class type = (Class) dispatch(n.getNode(1));
+			
+			if (type != MethodCall.class) {
+				runtime.error("Generic function must be a method call!!", n);
+				return Error.class;
+			}
+			MethodCall method = (MethodCall) n.getNode(1).getProperty(Constants.TYPE);
+			n.setProperty(Constants.TYPE, new GenericAggregate(method));
 		}
 		else {
-			Class type = (Class) dispatch(n.getNode(1));
-			assert (type == Variable.class);
-			Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
-			n.setProperty(Constants.TYPE, 
-					new Aggregate(var.name(), function, p2.types.function.Aggregate.type(function, var.type())));
+			if (n.getNode(1) == null) {
+				n.setProperty(Constants.TYPE, 
+						new Aggregate(null, function, p2.types.function.Aggregate.type(function, null)));
+			}
+			else {
+				Class type = (Class) dispatch(n.getNode(1));
+				assert (type == Variable.class);
+				Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
+				n.setProperty(Constants.TYPE, 
+						new Aggregate(var.name(), function, p2.types.function.Aggregate.type(function, var.type())));
+			}
 		}
 		return Aggregate.class;
 	}

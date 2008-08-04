@@ -25,9 +25,17 @@ public class MethodCall extends Expression {
 		this.arguments = arguments;
 	}
 
+	public Expression object() {
+		return this.object;
+	}
+	
+	public Method method() {
+		return this.method;
+	}
+	
 	@Override
 	public Class type() {
-		return method.getReturnType();
+		return method.getReturnType() == Void.class ? this.object.type() : method.getReturnType();
 	}
 	
 	@Override
@@ -71,7 +79,13 @@ public class MethodCall extends Expression {
 				}
 				try {
 					try {
-						return MethodCall.this.method.invoke(instance, arguments);
+						if (MethodCall.this.method.getReturnType() == void.class) {
+							MethodCall.this.method.invoke(instance, arguments);
+							return instance;
+						}
+						else {
+							return MethodCall.this.method.invoke(instance, arguments);
+						}
 					} catch (InvocationTargetException e) {
 						System.err.println(e.getTargetException().getMessage());
 						e.getTargetException().printStackTrace();

@@ -251,6 +251,15 @@ generic NewClass = void:"new":Word TypeName;
 
 generic ReferenceName = Name;
 
+generic Aggregate = 
+     <Generic> "generic":Word void:'<' PostfixExpression void:'>'
+   / <Basic>   Name void:'<' AggregateVariable void:'>'
+   ;
+
+Node AggregateVariable =
+    <LocationVariable>  Location
+  / <Variable>          Variable
+  ;
 
 //----------------------------  Alias  ----------------------------------/
 

@@ -249,17 +249,9 @@ public class Rule extends Clause {
 		}
 		else {
 			/* Perform delta rewrite. */
-			Set<TableName> eventPredicates = new HashSet<TableName>();
 			for (Term term1 : body) {
-				if (!(term1 instanceof Predicate)) {
+				if (!(term1 instanceof Predicate) || ((Predicate)term1).notin()) {
 					continue;
-				}
-				else {
-					Predicate pred = (Predicate) term1;
-					if (pred.notin() || eventPredicates.contains(pred.name())) {
-						continue;
-					}
-					eventPredicates.add(pred.name());
 				}
 				
 				Predicate delta = (Predicate) term1;
