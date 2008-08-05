@@ -22,13 +22,13 @@
 #include "val_double.h"
 #include "val_list.h"
 
-#include <boost/thread/mutex.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+// #include <boost/thread/mutex.hpp>
+// #include <boost/archive/text_iarchive.hpp>
+// #include <boost/archive/text_oarchive.hpp>
 
 #include <prl/variable.hpp>
 #include <prl/named_universe.hpp>
-#include <prl/factor/polymorphic_factor.hpp>
+#include <prl/factor/xml/polymorphic_factor.hpp>
 
 typedef prl::polymorphic_factor<double> polymorphic_factor;
 

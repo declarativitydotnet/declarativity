@@ -18,6 +18,7 @@
 #include "val_matrix.h"
 #include "val_vector.h"
 #include "val_str.h"
+#include "val_set.h"
 #include "val_int64.h"
 
 #include <iostream>
@@ -29,6 +30,10 @@
 #include <prl/factor/mixture.hpp>
 #include <prl/factor/xml/decomposable_fragment.hpp>
 #include <prl/math/bindings/lapack.hpp>
+
+#include <prl/xml_oarchive.hpp>
+#include <prl/xml_ostringarchive.hpp>
+#include <prl/xml_iarchive.hpp>
 
 #include <pstade/oven/algorithm.hpp>
 
@@ -131,10 +136,10 @@ Val_Factor::lookupVars(ListPtr list_ptr, bool ignore_missing) {
 
 //! Returns the names for a set of variables as a list of strings
 ValuePtr Val_Factor::names(const domain& args) {
-  ValPtrList list;
+  ValPtrSet set;
   foreach(variable_h v, args)
-    list.push_back(Val_Str::mk(v->name()));
-  return Val_List::mk(ListPtr(new List(list)));
+    set.insert(Val_Str::mk(v->name()));
+  return Val_Set::mk(SetPtr(new Set(set)));
 }
 
 /////////////////////////////////////////////////////////
@@ -244,14 +249,16 @@ void Val_Factor::xdr_marshal_subtype(XDR * x)
 {
   // std::cerr << "Serializing " << factor << std::endl;
 
-  // Serialize the factor into a string text archive
-  std::stringstream ss;
-  boost::archive::text_oarchive oa(ss);
-  oa << const_cast<const Val_Factor*>(this)->factor;
-  // std::cerr << "Serialized: " << ss.str() << std::endl;
-
+//   // Serialize the factor into a string text archive
+//   std::stringstream ss;
+//   boost::archive::text_oarchive oa(ss);
+//   oa << const_cast<const Val_Factor*>(this)->factor;
+//   // std::cerr << "Serialized: " << ss.str() << std::endl;
+  prl::xml_ostringarchive archive;
+  archive << factor;
+  
   // Now marshal the string
-  Val_Str(ss.str()).xdr_marshal_subtype(x);
+  Val_Str(archive.str()).xdr_marshal_subtype(x);
 }
 
 ValuePtr Val_Factor::xdr_unmarshal(XDR * x)
@@ -259,25 +266,46 @@ ValuePtr Val_Factor::xdr_unmarshal(XDR * x)
   using namespace std;
 
   // Create the archive and deserialize its content
-  std::stringstream ss(Val_Str::xdr_unmarshal(x)->toString());
-  boost::archive::text_iarchive ia(ss);
-  polymorphic_factor factor;
-  ia >> factor;
+  string str = Val_Str::xdr_unmarshal(x)->toString();
+  prl::xml_iarchive archive(str.c_str(), str.size(), u);
 
-  // Match the factor's variables against the current list
-  prl::var_map subst_map;
-  // cerr << "Unmarshaled " << factor << endl;
-  foreach(variable_h v, factor.arguments()) {
-    subst_map[v] = registerVariable(v->name(), v->size(), v->type());
-    assert(v != subst_map[v]);
-  }
-  factor.subst_args(subst_map);
+  polymorphic_factor f;
+  archive >> f;
 
-  // Delete the variable objects created during deserialization
-  foreach(prl::var_map::value_type& p, subst_map) delete p.first;
+  return mk(f);
+
+//   boost::archive::text_iarchive ia(ss);
+//   polymorphic_factor factor;
+//   ia >> factor;
+
+//   // Match the factor's variables against the current list
+//   prl::var_map subst_map;
+
+//   // For now, handle decomposable fragments differently
+//   domain vars = factor.arguments();
+//   if (typeid(factor.rep()) == typeid(fragment_gaussian)) {
+//     const fragment_gaussian& fragment = 
+//       dynamic_cast<const fragment_gaussian&>(factor.rep());
+//     assert(&fragment);
+//     foreach(domain clique, fragment.cliques())
+//       vars.insert(clique);
+//     if (vars.size()>4) {
+//       std::cout << "[[" << str << "]]" << endl;
+//     }
+//   }
+
+//   // cerr << "Unmarshaled " << factor << endl;
+//   foreach(variable_h v, vars) {
+//     subst_map[v] = registerVariable(v->name(), v->size(), v->type());
+//     assert(v != subst_map[v]);
+//   }
+//   factor.subst_args(subst_map);
+
+//   // Delete the variable objects created during deserialization
+//   foreach(prl::var_map::value_type& p, subst_map) delete p.first;
   
-  // cerr << "Deserialized " << factor << endl;
-  return mk(factor);
+//   // cerr << "Deserialized " << factor << endl;
+//   return mk(factor);
 }
 
 
