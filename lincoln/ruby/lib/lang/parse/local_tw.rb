@@ -333,13 +333,16 @@ end
 		@@verbose = v
 	end	
 
+  attr_reader :parser, :tree
+
 	def parse(prog)
-		parser = OverlogParser.new
+		@parser = OverlogParser.new
 		@tree = parser.parse(prog)
 		if !@tree
 			raise RuntimeError.new(parser.failure_reason)
 		end 
 	end
+      
 
 	def analyze
 

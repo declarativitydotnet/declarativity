@@ -6,12 +6,13 @@ require 'lib/lang/plan/watch_clause'
 require 'lib/lang/plan/selection_term'
 require 'lib/lang/plan/function'
 require "lib/lang/plan/program"
+require 'lib/lang/parse/local_tw'
 
 class Compiler # in java, this is a subclass of xtc.util.Tool
   @@FILES =  ["/Users/joeh/devel/lincoln/ruby/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lang/stratachecker.olg"]
 
   @@compiler   = CompilerTable.new
-  @@programs   = ProgramTable.new
+#  @@programs   = ProgramTable.new
   @@rule       = RuleTable.new
   @@watch      = WatchTable.new
   @@fact       = FactTable.new
@@ -19,11 +20,38 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
   @@tfunction  = Function::TableFunction.new
   @@selection  = SelectionTable.new
   @@assignment = AssignmentTable.new
-
+  @@preds = MyPredicateTable.new
+	@@terms = MyTermTable.new
+	@@pexpr = MyPrimaryExpressionTable.new
+	@@expr = MyExpressionTable.new
+	@@facts = MyFactTable.new
+	@@tables = MyTableTable.new
+	@@columns = MyColumnTable.new
+	@@indices = MyIndexTable.new
+	@@programs = MyProgramTable.new
+	@@rules = MyRuleTable.new
+	@@selects = MySelectionTable.new
+	@@assigns = MyAssignmentTable.new
+  
+  
   # Create a new driver for Overlog.
   def initialize(owner, file)
     @owner = owner
     @file = file
+    ## Now, we initialize an OverlogCompiler object
+    compiler = OverlogCompiler.new(@@rules,@@terms,@@preds,@@pexpr,@@expr,@@facts,@@tables,@@columns,@@indices,@@programs,@@assigns,@@selects)
+    utterance = ''
+    # compiler.verbose = "v"
+    File.open(file) do |f|
+      f.each_line { |l| utterance << l }
+    end
+		compiler.parse(utterance)
+		compiler.analyze
+		require 'ruby-debug';debugger
+		programname = compiler.tree.elements[0].pprogramname
+		@program = Program.new(programname, owner);
+		
+    
 #    typeChecker = TypeChecker.new(@runtime, @program)
     # This is an XTC-ism
     # args = ["-no-exit", "-silent", file]
@@ -52,11 +80,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
   def getCopy 
     return Constants.FULL_COPY
   end
-
-  def init 
-    super.init
-  end
-
+  
   def parse(input, file)
     parser = new Parser(input, file.to_s, file.length)
     return parser.value(parser.program(0))

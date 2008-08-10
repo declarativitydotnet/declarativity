@@ -51,7 +51,7 @@ grammar Overlog
 			}
 	end
      	rule Rule
-		     (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name    deleter?  rulehead Spacing ':-' Spacing RuleBody   )
+		     (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name  Spacing  deleter?  rulehead Spacing ':-' Spacing RuleBody   )
 			{ 
 				def Rule
 					return self
@@ -112,7 +112,7 @@ grammar Overlog
 		  tablename opar Predicate cpar  
 	end
      	rule Predicate
-		     ('notin'   )?  tablename EventModifier?  arguments   
+		     ('notin'  Spacing )?  tablename EventModifier?  arguments   
 				{
 					def Predicate
 						return self.tablename

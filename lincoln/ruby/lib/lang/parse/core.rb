@@ -403,20 +403,24 @@ module Overlog
       elements[1]
     end
 
-    def rulehead
-      elements[3]
+    def Spacing
+      elements[2]
     end
 
-    def Spacing
+    def rulehead
       elements[4]
     end
 
     def Spacing
-      elements[6]
+      elements[5]
+    end
+
+    def Spacing
+      elements[7]
     end
 
     def RuleBody
-      elements[7]
+      elements[8]
     end
   end
 
@@ -515,34 +519,38 @@ module Overlog
         r14 = _nt_name
         s11 << r14
         if r14
-          r16 = _nt_deleter
-          if r16
-            r15 = r16
-          else
-            r15 = SyntaxNode.new(input, index...index)
-          end
+          r15 = _nt_Spacing
           s11 << r15
           if r15
-            r17 = _nt_rulehead
-            s11 << r17
+            r17 = _nt_deleter
             if r17
-              r18 = _nt_Spacing
+              r16 = r17
+            else
+              r16 = SyntaxNode.new(input, index...index)
+            end
+            s11 << r16
+            if r16
+              r18 = _nt_rulehead
               s11 << r18
               if r18
-                if input.index(':-', index) == index
-                  r19 = (SyntaxNode).new(input, index...(index + 2))
-                  @index += 2
-                else
-                  terminal_parse_failure(':-')
-                  r19 = nil
-                end
+                r19 = _nt_Spacing
                 s11 << r19
                 if r19
-                  r20 = _nt_Spacing
+                  if input.index(':-', index) == index
+                    r20 = (SyntaxNode).new(input, index...(index + 2))
+                    @index += 2
+                  else
+                    terminal_parse_failure(':-')
+                    r20 = nil
+                  end
                   s11 << r20
                   if r20
-                    r21 = _nt_RuleBody
+                    r21 = _nt_Spacing
                     s11 << r21
+                    if r21
+                      r22 = _nt_RuleBody
+                      s11 << r22
+                    end
                   end
                 end
               end
@@ -1472,6 +1480,12 @@ module Overlog
   end
 
   module Predicate0
+    def Spacing
+      elements[1]
+    end
+  end
+
+  module Predicate1
     def tablename
       elements[1]
     end
@@ -1481,7 +1495,7 @@ module Overlog
     end
   end
 
-  module Predicate1
+  module Predicate2
 					def Predicate
 						return self.tablename
 						#return arguments.value
@@ -1500,11 +1514,24 @@ module Overlog
     end
 
     i0, s0 = index, []
+    i2, s2 = index, []
     if input.index('notin', index) == index
-      r2 = (SyntaxNode).new(input, index...(index + 5))
+      r3 = (SyntaxNode).new(input, index...(index + 5))
       @index += 5
     else
       terminal_parse_failure('notin')
+      r3 = nil
+    end
+    s2 << r3
+    if r3
+      r4 = _nt_Spacing
+      s2 << r4
+    end
+    if s2.last
+      r2 = (SyntaxNode).new(input, i2...index, s2)
+      r2.extend(Predicate0)
+    else
+      self.index = i2
       r2 = nil
     end
     if r2
@@ -1514,26 +1541,26 @@ module Overlog
     end
     s0 << r1
     if r1
-      r3 = _nt_tablename
-      s0 << r3
-      if r3
-        r5 = _nt_EventModifier
-        if r5
-          r4 = r5
+      r5 = _nt_tablename
+      s0 << r5
+      if r5
+        r7 = _nt_EventModifier
+        if r7
+          r6 = r7
         else
-          r4 = SyntaxNode.new(input, index...index)
+          r6 = SyntaxNode.new(input, index...index)
         end
-        s0 << r4
-        if r4
-          r6 = _nt_arguments
-          s0 << r6
+        s0 << r6
+        if r6
+          r8 = _nt_arguments
+          s0 << r8
         end
       end
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(Predicate0)
       r0.extend(Predicate1)
+      r0.extend(Predicate2)
     else
       self.index = i0
       r0 = nil

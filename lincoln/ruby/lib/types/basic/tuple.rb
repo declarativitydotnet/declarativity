@@ -44,7 +44,11 @@ class Tuple
   def schema=(s)
     if s.size != size then
 #      require 'ruby-debug'; debugger
-      raise "Schema assignment does not match tuple arity!  schema " + s.to_s+" (vs. tuple size "+size.to_s+")"
+      err = "Schema assignment does not match tuple arity!  schema " + s.to_s+" (vs. tuple values ["
+      values.each {|v| err <<  v.to_s + ", " }
+      err[err.length-1] = "]" 
+      err << ": length "+size.to_s+")"
+      raise err
     end
     @schema = s
   end
