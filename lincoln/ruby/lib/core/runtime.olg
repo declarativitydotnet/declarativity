@@ -1,10 +1,10 @@
 program runtime;
 
 /* Define runtime events. */
-define(runnable, {Long, String, TableName, TupleSet, TupleSet});
-define(strata, keys(0,1), {String, Long, Integer});
+define(runnable, {Float, String, TableName, TupleSet, TupleSet});
+define(strata, keys(0,1), {String, Float, Integer});
 define(priority, keys(0,1), {String, TableName, Integer});
-define(delta, {Long, String, TableName, TupleSet, TupleSet});
+define(delta, {Float, String, TableName, TupleSet, TupleSet});
 
 reschedule
 schedule(Time, Program, Name, Insertions, Deletions) :-
@@ -17,9 +17,12 @@ schedule(Time, Program2, Name, Insertions, Deletions) :-
 	/* next line changed to remove && expression, which doesn't parse right */
 	Public == true, Input == Name, Program1 != Program2;
 
+/* Illegal Overlog!  Need to special-case
 evaluate 
 delta(Time, Program, Name, Insertions, Deletions) :-
 	evaluate(runnable(Time, Program, Name, Insertions, Deletions));
+*/
+
 
 /* Delete what has been evaluated in the current clock. */
 cleanup 
@@ -52,7 +55,7 @@ runnable(Time, Program, Name, Insertions, Deletions) :-
 /*******************************************************************/
 /*** Periodic scheduler                                           **/
 
-define(schedulePeriodic, {String, Long, Long, Long, Long, String});
+define(schedulePeriodic, {String, Float, Float, Float, Float, String});
 
 /* Schedule next periodic. */
 renewPeriodic
@@ -96,7 +99,7 @@ schedule(Time+1, Program, Name, Facts, null) :-
 /*** Schedule compile */
 
 /**  JAVA-SPECIFIC GUNK BELOW
-define(config, {Long, String, p2.lang.plan.Program});
+define(config, {Float, String, p2.lang.plan.Program});
 
 configProgram 
 config(Time, Program, Object) :-

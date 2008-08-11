@@ -1,7 +1,9 @@
 program compile;
 
-import p2.lang.plan.Program;
-import java.lang.Integer;
+/* 
+   import p2.lang.plan.Program;
+   import java.lang.Integer;
+*/
 
 /*******************************************************************/
 /*** Table definitions ***/

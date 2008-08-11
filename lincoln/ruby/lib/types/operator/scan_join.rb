@@ -5,6 +5,7 @@ class ScanJoin < Join
 	def initialize(predicate, input)
 		super(predicate, input)
 		@table = Table.find_table(predicate.name)
+		raise "ScanJoin initialization failed: couldn't find table " + predicate.name.to_s if @table.nil?
 	end
 	
 	def to_s

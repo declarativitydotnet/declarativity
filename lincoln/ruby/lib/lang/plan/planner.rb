@@ -12,7 +12,7 @@ require 'lib/types/table/basic_table.rb'
 require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
 require "lib/lang/plan/value.rb"
-
+require "lib/lang/plan/arbitrary_expression.rb"
 
 
 class OverlogPlanner
