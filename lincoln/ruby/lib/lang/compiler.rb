@@ -11,6 +11,28 @@ require 'lib/lang/plan/planner'
 class Compiler # in java, this is a subclass of xtc.util.Tool
   @@FILES =  ["/Users/joeh/devel/lincoln/ruby/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lang/stratachecker.olg"]
   
+    @@compiler   = CompilerTable.new
+  #  @@programs   = ProgramTable.new
+    @@rule       = RuleTable.new
+    @@watch      = WatchTable.new
+    @@fact       = FactTable.new
+    @@predicate  = PredicateTable.new
+    @@tfunction  = Function::TableFunction.new
+    @@selection  = SelectionTable.new
+    @@assignment = AssignmentTable.new
+    @@preds = MyPredicateTable.new
+  	@@terms = MyTermTable.new
+  	@@pexpr = MyPrimaryExpressionTable.new
+  	@@expr = MyExpressionTable.new
+  	@@facts = MyFactTable.new
+  	@@tables = MyTableTable.new
+  	@@columns = MyColumnTable.new
+  	@@indices = MyIndexTable.new
+  	@@programs = MyProgramTable.new
+  	@@rules = MyRuleTable.new
+  	@@selects = MySelectionTable.new
+  	@@assigns = MyAssignmentTable.new
+  
   # Create a new driver for Overlog.
   def initialize(owner, file)
     @owner = owner
@@ -19,6 +41,9 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     File.open(file) do |f|
       f.each_line { |l| utterance << l }
     end
+    # not quiet sure why, but this call here to "init_catalog" seems to be
+    # needed.  Requires more investigation, would be nice to chuck this (and 
+    # the init_catalog method)
     init_catalog
 		planner = OverlogPlanner.new(utterance,@@rules,@@terms,@@preds,@@pexpr,@@expr,@@facts,@@tables,@@columns,@@indices,@@programs,@@assigns,@@selects)
 		planner.plan
