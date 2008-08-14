@@ -1,6 +1,6 @@
+require 'lib/lang/plan/aggregate'
 require 'lib/types/basic/tuple_set'
 require 'lib/types/function/tuple_function'
-require 'lib/lang/plan/aggregate'
 
 class AggregateFunction < TupleFunction	
   class Accessor < TupleFunction
@@ -29,6 +29,7 @@ class AggregateFunction < TupleFunction
 
 
   def function(aggregate)
+	print "ayo\n"
     retval = case aggregate.functionName
     when @@MIN: Min.new(Accessor.new(aggregate))
     when @@MAX: Max.new(Accessor.new(aggregate))

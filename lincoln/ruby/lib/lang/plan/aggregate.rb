@@ -1,11 +1,16 @@
 require 'lib/lang/plan/variable'
+
+#suppressed
+#require 'lib/types/function/aggregate_fn.rb'
 class Aggregate < Variable 
 	@@STAR = '*'
 	
 	def initialize(name, function, type)
 		super(name, type)
+		# temporarily suppressed for a clean checkin...
+		#aggFunc = new AggregateFunction
+		#@function = aggFunc.function(function)
 		@function = function
-		#print "AGGin(name,func,type): #{name} #{function} #{type}\n"
 	end
 	
 	def clone

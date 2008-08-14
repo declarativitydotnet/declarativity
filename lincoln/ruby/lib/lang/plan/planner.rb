@@ -153,30 +153,30 @@ class OverlogPlanner
 
 			args = Array.new
 
-			af = ""
+			aggFunc = ""
 			#respexpr.order_by("p_pos") do |var|
 			#puts @pexpr
 			respexpr.each do |var|
-				if (!af.eql?("")) then
+				if (!aggFunc.eql?("")) then
 					if (!var.value("type").eql?("var")) then
 						raise
-					end	
-					thisvar = Aggregate.new(var.value("p_txt"),af,String)
-					#print "AGGRO: "+var.value("p_txt")+", #{af}\n"
-					#thisvar = Aggregate.new(Variable.new(var.value("p_txt")),af,String);
-					af = ""
-				elsif (var.value("type").eql?("var")) then
-					thisvar = Variable.new(var.value("p_txt"),String)
-					thisvar.position = var.value("expr_pos")
-				elsif (var.value("type").eql?("const")) then
-					thisvar = Value.new(var.value("p_txt"))
-				elsif (var.value("type").eql?("agg_func")) then
-					af = var.value("p_txt")	
-					#print "AGGRO set: #{af}\n"
-					next
-				else
-					#function?
-					raise("unhandled type "+var.value("type"))
+					end
+					thisvar = Aggregate.new(var.value("p_txt"),aggFunc,String)
+					aggFunc = ""
+				else 
+					case var.value("type")
+						when "var"
+							thisvar = Variable.new(var.value("p_txt"),String)
+							thisvar.position = var.value("expr_pos")
+						when "const"
+							thisvar = Value.new(var.value("p_txt"))
+						when "agg_func"
+							aggFunc = var.value("p_txt")	
+							next
+		
+					else
+						raise("unhandled type "+var.value("type"))
+					end
 				end
 				args << thisvar
 			end
