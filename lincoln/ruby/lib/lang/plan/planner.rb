@@ -45,7 +45,9 @@ class OverlogPlanner
 		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects)
                 #compiler.verbose = 'y'
                 compiler.parse(utterance)
+
                 compiler.analyze
+	
 		# now our tables are populated.
 
 		@program = plan_program
@@ -61,12 +63,10 @@ class OverlogPlanner
 	end
 
 	def plan
-		plan_materializations
+		plan_materializations 
 		plan_rules
-
 		@program.plan
 
-		#puts @program.get_query(Tablename.new(nil,"path"))
 		return @program
 	end
 
@@ -136,6 +136,7 @@ class OverlogPlanner
 			end
 		
 			# location?  extract rulename!  isPublic, isDelete
+			#d = rule.value("delete").eql?("1")
 			rule = Rule.new(1,rulename,true,false,head,body)
 			rule.set(@progname)
 		end
@@ -143,31 +144,42 @@ class OverlogPlanner
 
 	def get_vars(it)
 			p_expr = predoftable(@expr)
+			# performance hurts!  these need to be index joins
 			sexpr = ScanJoin.new(p_expr,it.schema)
 			resexpr = sexpr.evaluate(TupleSet.new("p",it))
 			p_var = predoftable(@pexpr)
 			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
 			respexpr = spexpr.evaluate(resexpr)
 
-      args = Array.new
-      respexpr.order_by("p_pos") do |var|
-        case var.value("type")
-          when "var"
-            thisvar = Variable.new(var.value("p_txt"),String)
-            thisvar.position = var.value("expr_pos")
-          when "const": thisvar = Value.new(var.value("p_txt"))
-          when "agg_func"
-            # this is a hack: we get the whole aggregate string, and 
-            # pass the expression in it (hope it's a Variable!) 
-            # as the first arg to Aggregate.new.  This should be handled
-            # better during parsing.
-            pieces = var.value("p_txt").delete(">").split("<")
-            thisvar = Variable.new(pieces[1], String)
-            thisvar.position = var.value("expr_pos")
-          else raise("unhandled type "+var.value("type"))
-        end
-        args << thisvar
-      end
+			args = Array.new
+
+			af = ""
+			#respexpr.order_by("p_pos") do |var|
+			#puts @pexpr
+			respexpr.each do |var|
+				if (!af.eql?("")) then
+					if (!var.value("type").eql?("var")) then
+						raise
+					end	
+					thisvar = Aggregate.new(var.value("p_txt"),af,String)
+					#print "AGGRO: "+var.value("p_txt")+", #{af}\n"
+					#thisvar = Aggregate.new(Variable.new(var.value("p_txt")),af,String);
+					af = ""
+				elsif (var.value("type").eql?("var")) then
+					thisvar = Variable.new(var.value("p_txt"),String)
+					thisvar.position = var.value("expr_pos")
+				elsif (var.value("type").eql?("const")) then
+					thisvar = Value.new(var.value("p_txt"))
+				elsif (var.value("type").eql?("agg_func")) then
+					af = var.value("p_txt")	
+					#print "AGGRO set: #{af}\n"
+					next
+				else
+					#function?
+					raise("unhandled type "+var.value("type"))
+				end
+				args << thisvar
+			end
 		return args
 	end
 
@@ -211,7 +223,8 @@ class OverlogPlanner
 		respred = spred.evaluate(resterm)
 	
 		predicates = Array.new
-		respred.order_by("term_pos") do |pred|
+		#respred.order_by("term_pos") do |pred|
+		respred.each do |pred|
 			# skip the head, for now
 		
 			# a row for each predicate.  let's grab the vars

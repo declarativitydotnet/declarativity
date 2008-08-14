@@ -51,16 +51,30 @@ grammar Overlog
 			}
 	end
      	rule Rule
-		     (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name  Spacing  deleter?  rulehead Spacing ':-' Spacing RuleBody   )
+		#     (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name  Spacing  deleter?  rulehead Spacing ':-' Spacing RuleBody   )
+		# reimagined rule:
+		( 'public' )? name? deleter rulehead followsfrom RuleBody
 			{ 
 				def Rule
 					return self
-					#return [rulehead.text_value,deleter.text_value]
 				end 
 			}
 	end
+	rule followsfrom
+		Spacing ':-' Spacing
+	end
 	rule deleter
-		Spacing 'delete' Spacing	
+		Spacing ( 'delete' )? Spacing	
+			{
+				def delete
+					if !(text_value.eql?("")) then
+						return true
+					else
+						print "the TEXT_VALUE was #{text_value}\n"
+						return false
+					end
+				end
+			}
 	end
   	rule rulehead
 		  Predicate   
@@ -352,7 +366,7 @@ grammar Overlog
 		  '@' variable   
 	end
   	rule Aggregate
-		  name '<' Aggregatevariable '>'   
+		  name '<' aggregatevariable '>'   
 		{
 			def func
 				return name
@@ -360,7 +374,7 @@ grammar Overlog
 			
 		}
 	end
-  	rule Aggregatevariable
+  	rule aggregatevariable
 		     Location  /     variable   
 	end
   	rule AttributePosition

@@ -5,6 +5,7 @@ class Aggregate < Variable
 	def initialize(name, function, type)
 		super(name, type)
 		@function = function
+		#print "AGGin(name,func,type): #{name} #{function} #{type}\n"
 	end
 	
 	def clone
@@ -34,7 +35,10 @@ class Aggregate < Variable
     tmpClass.send :define_method, :evaluate do |tuple|
       doit.call(tuple)
     end
-    tmpClass.send :define_method, :returnType do 
+
+	#(pa) an initialization like this appeared in rule.rb...	
+    periodicFilter = Class.new(TupleFunction)
+    periodicFilter.send :define_method, :returnType do 
       rlam.call
     end
   

@@ -381,54 +381,27 @@ module Overlog
   end
 
   module Rule0
-    def rulehead
+    def deleter
       elements[2]
     end
 
-    def Spacing
+    def rulehead
       elements[3]
     end
 
-    def Spacing
-      elements[5]
+    def followsfrom
+      elements[4]
     end
 
     def RuleBody
-      elements[6]
+      elements[5]
     end
   end
 
   module Rule1
-    def name
-      elements[1]
-    end
-
-    def Spacing
-      elements[2]
-    end
-
-    def rulehead
-      elements[4]
-    end
-
-    def Spacing
-      elements[5]
-    end
-
-    def Spacing
-      elements[7]
-    end
-
-    def RuleBody
-      elements[8]
-    end
-  end
-
-  module Rule2
  
 				def Rule
 					return self
-					#return [rulehead.text_value,deleter.text_value]
 				end
   end
 
@@ -440,141 +413,103 @@ module Overlog
       return cached
     end
 
-    i0 = index
-    i1, s1 = index, []
+    i0, s0 = index, []
     if input.index('public', index) == index
-      r3 = (SyntaxNode).new(input, index...(index + 6))
+      r2 = (SyntaxNode).new(input, index...(index + 6))
       @index += 6
     else
       terminal_parse_failure('public')
-      r3 = nil
+      r2 = nil
     end
-    if r3
-      r2 = r3
-    else
-      r2 = SyntaxNode.new(input, index...index)
-    end
-    s1 << r2
     if r2
-      r5 = _nt_deleter
-      if r5
-        r4 = r5
-      else
-        r4 = SyntaxNode.new(input, index...index)
-      end
-      s1 << r4
-      if r4
-        r6 = _nt_rulehead
-        s1 << r6
-        if r6
-          r7 = _nt_Spacing
-          s1 << r7
-          if r7
-            if input.index(':-', index) == index
-              r8 = (SyntaxNode).new(input, index...(index + 2))
-              @index += 2
-            else
-              terminal_parse_failure(':-')
-              r8 = nil
-            end
-            s1 << r8
-            if r8
-              r9 = _nt_Spacing
-              s1 << r9
-              if r9
-                r10 = _nt_RuleBody
-                s1 << r10
-              end
-            end
-          end
-        end
-      end
-    end
-    if s1.last
-      r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(Rule0)
+      r1 = r2
     else
-      self.index = i1
-      r1 = nil
+      r1 = SyntaxNode.new(input, index...index)
     end
+    s0 << r1
     if r1
-      r0 = r1
-      r0.extend(Rule2)
-    else
-      i11, s11 = index, []
-      if input.index('public', index) == index
-        r13 = (SyntaxNode).new(input, index...(index + 6))
-        @index += 6
+      r4 = _nt_name
+      if r4
+        r3 = r4
       else
-        terminal_parse_failure('public')
-        r13 = nil
+        r3 = SyntaxNode.new(input, index...index)
       end
-      if r13
-        r12 = r13
-      else
-        r12 = SyntaxNode.new(input, index...index)
-      end
-      s11 << r12
-      if r12
-        r14 = _nt_name
-        s11 << r14
-        if r14
-          r15 = _nt_Spacing
-          s11 << r15
-          if r15
-            r17 = _nt_deleter
-            if r17
-              r16 = r17
-            else
-              r16 = SyntaxNode.new(input, index...index)
-            end
-            s11 << r16
-            if r16
-              r18 = _nt_rulehead
-              s11 << r18
-              if r18
-                r19 = _nt_Spacing
-                s11 << r19
-                if r19
-                  if input.index(':-', index) == index
-                    r20 = (SyntaxNode).new(input, index...(index + 2))
-                    @index += 2
-                  else
-                    terminal_parse_failure(':-')
-                    r20 = nil
-                  end
-                  s11 << r20
-                  if r20
-                    r21 = _nt_Spacing
-                    s11 << r21
-                    if r21
-                      r22 = _nt_RuleBody
-                      s11 << r22
-                    end
-                  end
-                end
-              end
+      s0 << r3
+      if r3
+        r5 = _nt_deleter
+        s0 << r5
+        if r5
+          r6 = _nt_rulehead
+          s0 << r6
+          if r6
+            r7 = _nt_followsfrom
+            s0 << r7
+            if r7
+              r8 = _nt_RuleBody
+              s0 << r8
             end
           end
         end
       end
-      if s11.last
-        r11 = (SyntaxNode).new(input, i11...index, s11)
-        r11.extend(Rule1)
-      else
-        self.index = i11
-        r11 = nil
-      end
-      if r11
-        r0 = r11
-        r0.extend(Rule2)
-      else
-        self.index = i0
-        r0 = nil
-      end
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Rule0)
+      r0.extend(Rule1)
+    else
+      self.index = i0
+      r0 = nil
     end
 
     node_cache[:Rule][start_index] = r0
+
+    return r0
+  end
+
+  module Followsfrom0
+    def Spacing
+      elements[0]
+    end
+
+    def Spacing
+      elements[2]
+    end
+  end
+
+  def _nt_followsfrom
+    start_index = index
+    if node_cache[:followsfrom].has_key?(index)
+      cached = node_cache[:followsfrom][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_Spacing
+    s0 << r1
+    if r1
+      if input.index(':-', index) == index
+        r2 = (SyntaxNode).new(input, index...(index + 2))
+        @index += 2
+      else
+        terminal_parse_failure(':-')
+        r2 = nil
+      end
+      s0 << r2
+      if r2
+        r3 = _nt_Spacing
+        s0 << r3
+      end
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Followsfrom0)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:followsfrom][start_index] = r0
 
     return r0
   end
@@ -587,6 +522,17 @@ module Overlog
     def Spacing
       elements[2]
     end
+  end
+
+  module Deleter1
+				def delete
+					if !(text_value.eql?("")) then
+						return true
+					else
+						print "the TEXT_VALUE was #{text_value}\n"
+						return false
+					end
+				end
   end
 
   def _nt_deleter
@@ -602,21 +548,27 @@ module Overlog
     s0 << r1
     if r1
       if input.index('delete', index) == index
-        r2 = (SyntaxNode).new(input, index...(index + 6))
+        r3 = (SyntaxNode).new(input, index...(index + 6))
         @index += 6
       else
         terminal_parse_failure('delete')
-        r2 = nil
+        r3 = nil
+      end
+      if r3
+        r2 = r3
+      else
+        r2 = SyntaxNode.new(input, index...index)
       end
       s0 << r2
       if r2
-        r3 = _nt_Spacing
-        s0 << r3
+        r4 = _nt_Spacing
+        s0 << r4
       end
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
       r0.extend(Deleter0)
+      r0.extend(Deleter1)
     else
       self.index = i0
       r0 = nil
@@ -4550,7 +4502,7 @@ module Overlog
       elements[0]
     end
 
-    def Aggregatevariable
+    def aggregatevariable
       elements[2]
     end
 
@@ -4587,7 +4539,7 @@ module Overlog
       end
       s0 << r2
       if r2
-        r3 = _nt_Aggregatevariable
+        r3 = _nt_aggregatevariable
         s0 << r3
         if r3
           if input.index('>', index) == index
@@ -4615,10 +4567,10 @@ module Overlog
     return r0
   end
 
-  def _nt_Aggregatevariable
+  def _nt_aggregatevariable
     start_index = index
-    if node_cache[:Aggregatevariable].has_key?(index)
-      cached = node_cache[:Aggregatevariable][index]
+    if node_cache[:aggregatevariable].has_key?(index)
+      cached = node_cache[:aggregatevariable][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -4637,7 +4589,7 @@ module Overlog
       end
     end
 
-    node_cache[:Aggregatevariable][start_index] = r0
+    node_cache[:aggregatevariable][start_index] = r0
 
     return r0
   end

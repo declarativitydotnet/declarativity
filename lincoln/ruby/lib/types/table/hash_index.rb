@@ -10,7 +10,7 @@ class HashIndex < Index
   end
   
   def to_s
-    out = "Index " + table.name + "\n"
+    out = "Index " + table.name.to_s + "\n"
     unless @map.nil?
       out += @map.to_s + "\n"
     end
