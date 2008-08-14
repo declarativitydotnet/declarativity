@@ -22,23 +22,23 @@ class Aggregate < Variable
 	def function
 	  # set up a TupleFunction and send it a lambda for evaluate 
 		doit = lambda do |t|
-      return (name == STAR ? t.id : t.value(name))
+      return (name == @@STAR ? t.id : t.value(name))
     end
     
     r_lam = lambda do
       return @type
     end
 
-    retval = Class.new(TupleFunction)
+    tmpClass = Class.new(TupleFunction)
 
-    retval.send :define_method, :evaluate do |tuple|
+    tmpClass.send :define_method, :evaluate do |tuple|
       doit.call(tuple)
     end
-    periodicFilter.send :define_method, :returnType do 
+    tmpClass.send :define_method, :returnType do 
       rlam.call
     end
   
-	  return retval
+	  return tmpClass.new
   end
 end
 

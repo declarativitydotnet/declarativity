@@ -17,7 +17,12 @@ class Projection < Operator
 		result = TupleSet.new(@predicate.name)
 		tuples.each do |tuple|
 			values = Array.new
-			@accessors.each { |a| values << a.evaluate(tuple) }
+			@accessors.each do |a|
+			  if not (a.methods.include? "evaluate")
+          raise "no evaluate method for tuple accessor" 
+        end
+			  values << a.evaluate(tuple)
+		  end
 			projection = Tuple.new(*values)
 			projection.schema = @predicate.schema
 			result << projection

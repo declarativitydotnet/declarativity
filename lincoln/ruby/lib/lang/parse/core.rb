@@ -4560,6 +4560,10 @@ module Overlog
 			def func
 				return name
 			end
+			
+			def arg
+			  return Aggregatevariable.elements
+		  end
   end
 
   def _nt_Aggregate

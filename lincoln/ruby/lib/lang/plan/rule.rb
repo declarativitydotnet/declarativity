@@ -29,7 +29,7 @@ class Rule < Clause
 		head.each do |arg|
 			if (arg.class <= Aggregate)
 				# assertion: only 1 aggregate.
-				assert(@aggregation == false)
+				raise "only 1 agg allowed" if @aggregation == true
 				@aggregation = true
 			end
 		end
@@ -69,9 +69,7 @@ class Rule < Clause
 			if (term.class <= Predicate)
         table = Table.find_table(term.name)
 				if (table.table_type == Table::TableType::EVENT || term.event != Table::Event::NONE) 
-					if (!event.nil?)
-					  require 'ruby-debug'; debugger
-  				  
+					if (!event.nil?)  				  
 						raise PlannerException, "Multiple event predicates in rule " + name.to_s + 
 								                   " location " + term.location.to_s
 					end

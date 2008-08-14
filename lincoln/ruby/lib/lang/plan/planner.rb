@@ -149,19 +149,25 @@ class OverlogPlanner
 			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
 			respexpr = spexpr.evaluate(resexpr)
 
-			args = Array.new
-			respexpr.order_by("p_pos") do |var|
-				if (var.value("type").eql?("var")) then
-					thisvar = Variable.new(var.value("p_txt"),String)
-					thisvar.position = var.value("expr_pos")
-				elsif (var.value("type").eql?("const")) then
-					thisvar = Value.new(var.value("p_txt"))
-				else
-					#function?
-					raise("unhandled type "+var.value("type"))
-				end
-				args << thisvar
-			end
+      args = Array.new
+      respexpr.order_by("p_pos") do |var|
+        case var.value("type")
+          when "var"
+            thisvar = Variable.new(var.value("p_txt"),String)
+            thisvar.position = var.value("expr_pos")
+          when "const": thisvar = Value.new(var.value("p_txt"))
+          when "agg_func"
+            # this is a hack: we get the whole aggregate string, and 
+            # pass the expression in it (hope it's a Variable!) 
+            # as the first arg to Aggregate.new.  This should be handled
+            # better during parsing.
+            pieces = var.value("p_txt").delete(">").split("<")
+            thisvar = Variable.new(pieces[1], String)
+            thisvar.position = var.value("expr_pos")
+          else raise("unhandled type "+var.value("type"))
+        end
+        args << thisvar
+      end
 		return args
 	end
 

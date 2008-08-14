@@ -30,29 +30,7 @@ class TestPlan < Test::Unit::TestCase
 
 		prog = prep(utterance)
 
-		# we need to manually construct a schema spec; we can't infer it from link (materialized by the overlog above) 
-		# because link is empty, and schema belong to tuples, not tables (not that link's fields have no names)
-		t1 = Tuple.new("1","2","10","first")
-		t2 = Tuple.new("2","3","5","second")
-
-		# ... from test_program
-		v1 = Variable.new("From", Integer)
-		v1.position = 0
-		v2 = Variable.new("To", Integer)
-		v2.position = 1
-		v3 = Variable.new("Cost", Float)
-		v3.position = 2
-		v4 = Variable.new("Annotation", String)
-		v4.position = 3   
-
-		schema1 = Schema.new("schema1", [v1,v2,v3,v4])
-		t1.schema = schema1
-		t2.schema = schema1
-		tn = TableName.new(nil, "link")
-		tn = TableName.new(nil,"link")
-		ts = TupleSet.new(tn, t1, t2)
-		# ... ok, done with test_program
-
+    tn, ts = gen_link_tuples
 		result = prog.get_queries(tn)[0].evaluate(ts)
 		assert_equal(result.tups.length, 2)
 		assert_equal(result.tups[0].values, ["1","2","10"])
@@ -81,6 +59,30 @@ class TestPlan < Test::Unit::TestCase
 		# we should get this right back.
 		assert_equal("<here, there>",result.tups[0].to_s)
 	end
+	
+	def gen_link_tuples
+	  # we need to manually construct a schema spec; we can't infer it from link (materialized by the overlog above) 
+		# because link is empty, and schema belong to tuples, not tables (not that link's fields have no names)
+		t1 = Tuple.new("1","2","10","first")
+		t2 = Tuple.new("2","3","5","second")
+
+		# ... from test_program
+		v1 = Variable.new("From", Integer)
+		v1.position = 0
+		v2 = Variable.new("To", Integer)
+		v2.position = 1
+		v3 = Variable.new("Cost", Float)
+		v3.position = 2
+		v4 = Variable.new("Annotation", String)
+		v4.position = 3   
+
+		schema1 = Schema.new("schema1", [v1,v2,v3,v4])
+		t1.schema = schema1
+		t2.schema = schema1
+		tn = TableName.new(nil, "link")
+		tn = TableName.new(nil,"link")
+		return tn, TupleSet.new(tn, t1, t2)		
+  end
 	
 	def test_prog2
 		$catalog = nil
@@ -120,11 +122,27 @@ class TestPlan < Test::Unit::TestCase
 		result.each do |t|
 		end
 		#puts cooked_program.inspect
-
-			
-		
 	end
 	
+  def test_agg
+    $catalog = nil
+    sys = System.new
+    sys.init
+    utterance = "program agg_test;
+    define(link,keys(0,1),{String,String,Integer,String});
+    min_cost(From,To,min<Cost>) :- link(From,To,Cost,Annotation);
+    counter(From,To,count<Cost>) :- link(From,To,Cost,Annotation);"
+    prog = prep(utterance)
+    tn, ts = gen_link_tuples
+    result = prog.get_queries(tn)[0].evaluate(ts)
+		assert_equal(result.tups.length, 2)
+		assert_equal(result.tups[0].values, ["1","2","10"])
+		assert_equal(result.tups[1].values, ["2","3","5"])
+    result = prog.get_queries(tn)[1].evaluate(ts)
+		assert_equal(result.tups.length, 2)
+		assert_equal(result.tups[0].values, ["1","2","1"])
+		assert_equal(result.tups[1].values, ["2","3","1"])
+  end
 
 	def prep(utterance)
 		rei
