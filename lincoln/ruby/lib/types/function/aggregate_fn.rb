@@ -74,7 +74,7 @@ class AggregateFunction < TupleFunction
     end
 
     def evaluate(tuple)
-      value = accessor.evaluate(tuple)
+      value = @accessor.evaluate(tuple)
       if (@current.nil? || prefer_new(@current, value)) # > 0
         @current = value
         @result = tuple

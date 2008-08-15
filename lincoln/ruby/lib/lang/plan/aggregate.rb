@@ -24,30 +24,7 @@ class Aggregate < Variable
 	end
 	
 	def function
-		print "set up #{@name}\n"
-	  # set up a TupleFunction and send it a lambda for evaluate 
-		doit = lambda do |t|
-			print "lookup "+@name.to_s+"\n"
-      return (@name == @@STAR ? t.id : t.value(@name))
-    end
-    
-    r_lam = lambda do
-      return @type
-    end
-
-    tmpClass = Class.new(TupleFunction)
-
-    tmpClass.send :define_method, :evaluate do |tuple|
-      doit.call(tuple)
-    end
-
-	#(pa) an initialization like this appeared in rule.rb...	
-    periodicFilter = Class.new(TupleFunction)
-    periodicFilter.send :define_method, :returnType do 
-      rlam.call
-    end
-  
-	  return tmpClass.new
+    return AggregateFunction.function(self)
   end
 end
 

@@ -140,8 +140,8 @@ class TestPlan < Test::Unit::TestCase
 		assert_equal(result.tups[1].values, ["2","3","5"])
     result = prog.get_queries(tn)[1].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["1","2","1"])
-		assert_equal(result.tups[1].values, ["2","3","1"])
+		assert_equal(result.tups[0].values, ["1","2",1])
+		assert_equal(result.tups[1].values, ["2","3",2])
   end
 
 	def prep(utterance)

@@ -164,7 +164,8 @@ class OverlogPlanner
 					end
 					# fix that string stuff!
 					aggObj = Aggregate.new(var.value("p_txt"),aggFunc,AggregateFunction.type(aggFunc,String))
-					thisvar = AggregateFunction.function(aggObj)
+#					thisvar = AggregateFunction.function(aggObj)
+          thisvar = aggObj
 					thisvar.position = var.value("expr_pos")
 					puts thisvar.inspect
 					aggFunc = ""
