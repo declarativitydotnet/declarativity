@@ -22,6 +22,8 @@ module Overlog
     @root || :pprogram
   end
 
+  include Ddl
+
   module Pprogram0
     def pprogramname
       elements[0]
@@ -258,8 +260,13 @@ module Overlog
             if r5
               r0 = r5
             else
-              self.index = i0
-              r0 = nil
+              r6 = _nt_statement
+              if r6
+                r0 = r6
+              else
+                self.index = i0
+                r0 = nil
+              end
             end
           end
         end
@@ -267,6 +274,21 @@ module Overlog
     end
 
     node_cache[:Clause][start_index] = r0
+
+    return r0
+  end
+
+  def _nt_statement
+    start_index = index
+    if node_cache[:statement].has_key?(index)
+      cached = node_cache[:statement][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    r0 = super
+
+    node_cache[:statement][start_index] = r0
 
     return r0
   end
@@ -320,7 +342,7 @@ module Overlog
   end
 
   module Fact0
-    def tablename
+    def ptablename
       elements[0]
     end
 
@@ -339,7 +361,7 @@ module Overlog
 
   module Fact1
 				def Fact
-					return self.tablename.text_value
+					return self.ptablename.text_value
 				end
   end
 
@@ -352,7 +374,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_tablename
+    r1 = _nt_ptablename
     s0 << r1
     if r1
       r2 = _nt_opar
@@ -718,7 +740,7 @@ module Overlog
       elements[1]
     end
 
-    def tablename
+    def ptablename
       elements[2]
     end
 
@@ -748,7 +770,7 @@ module Overlog
       elements[1]
     end
 
-    def tablename
+    def ptablename
       elements[2]
     end
 
@@ -767,7 +789,7 @@ module Overlog
 
   module Definition2
 				def Definition
-					return tablename.text_value
+					return ptablename.text_value
 				end
   end
 
@@ -793,7 +815,7 @@ module Overlog
       r3 = _nt_opar
       s1 << r3
       if r3
-        r4 = _nt_tablename
+        r4 = _nt_ptablename
         s1 << r4
         if r4
           r5 = _nt_Comma
@@ -841,7 +863,7 @@ module Overlog
         r12 = _nt_opar
         s10 << r12
         if r12
-          r13 = _nt_tablename
+          r13 = _nt_ptablename
           s10 << r13
           if r13
             r14 = _nt_Comma
@@ -1208,7 +1230,7 @@ module Overlog
       elements[1]
     end
 
-    def tablename
+    def ptablename
       elements[2]
     end
 
@@ -1222,7 +1244,7 @@ module Overlog
       elements[1]
     end
 
-    def tablename
+    def ptablename
       elements[2]
     end
 
@@ -1271,7 +1293,7 @@ module Overlog
       r3 = _nt_opar
       s1 << r3
       if r3
-        r4 = _nt_tablename
+        r4 = _nt_ptablename
         s1 << r4
         if r4
           r5 = _nt_cpar
@@ -1302,7 +1324,7 @@ module Overlog
         r8 = _nt_opar
         s6 << r8
         if r8
-          r9 = _nt_tablename
+          r9 = _nt_ptablename
           s6 << r9
           if r9
             r10 = _nt_Comma
@@ -1378,7 +1400,7 @@ module Overlog
   end
 
   module TableFunction0
-    def tablename
+    def ptablename
       elements[0]
     end
 
@@ -1404,7 +1426,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_tablename
+    r1 = _nt_ptablename
     s0 << r1
     if r1
       r2 = _nt_opar
@@ -1438,7 +1460,7 @@ module Overlog
   end
 
   module Predicate1
-    def tablename
+    def ptablename
       elements[1]
     end
 
@@ -1449,7 +1471,7 @@ module Overlog
 
   module Predicate2
 					def Predicate
-						return self.tablename
+						return self.ptablename
 						#return arguments.value
 					end
 					def args
@@ -1493,7 +1515,7 @@ module Overlog
     end
     s0 << r1
     if r1
-      r5 = _nt_tablename
+      r5 = _nt_ptablename
       s0 << r5
       if r5
         r7 = _nt_EventModifier
@@ -4353,7 +4375,7 @@ module Overlog
     return r0
   end
 
-  module Tablename0
+  module Ptablename0
     def name
       elements[0]
     end
@@ -4363,10 +4385,10 @@ module Overlog
     end
   end
 
-  def _nt_tablename
+  def _nt_ptablename
     start_index = index
-    if node_cache[:tablename].has_key?(index)
-      cached = node_cache[:tablename][index]
+    if node_cache[:ptablename].has_key?(index)
+      cached = node_cache[:ptablename][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -4391,7 +4413,7 @@ module Overlog
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(Tablename0)
+      r1.extend(Ptablename0)
     else
       self.index = i1
       r1 = nil
@@ -4408,7 +4430,7 @@ module Overlog
       end
     end
 
-    node_cache[:tablename][start_index] = r0
+    node_cache[:ptablename][start_index] = r0
 
     return r0
   end
@@ -4512,10 +4534,6 @@ module Overlog
 			def func
 				return name
 			end
-			
-			def arg
-			  return Aggregatevariable.elements
-		  end
   end
 
   def _nt_Aggregate

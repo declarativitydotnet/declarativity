@@ -73,9 +73,6 @@ module Ddl
       elements[5]
     end
 
-    def acabo
-      elements[7]
-    end
   end
 
   def _nt_statement
@@ -118,10 +115,6 @@ module Ddl
                   r7 = SyntaxNode.new(input, index...index)
                 end
                 s0 << r7
-                if r7
-                  r9 = _nt_acabo
-                  s0 << r9
-                end
               end
             end
           end

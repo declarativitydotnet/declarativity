@@ -80,7 +80,7 @@ class TestParse < Test::Unit::TestCase
 
 
 	def test_materialize
-		prep("program foo;\ndefine(path,keys(0,1),{String,String,Integer});\npath(\"a\",\"b\");\n")
+		prep("program foo;\ndefine(path,keys(0,1),{String,String,Integer});\npath(\"a\",\"b\",2);\n")
 		
 		# we should have a table entry
 		assert_equal(@tables.cardinality,1)		
@@ -88,6 +88,19 @@ class TestParse < Test::Unit::TestCase
 		assert_equal(@columns.cardinality,3)
 		# and 2 index entries
 		assert_equal(@indices.cardinality,2)
+
+		# AND, this statement should be equivalent
+		prep("program foo;
+			table path(
+				+From String,
+				+To String,
+				Cost Integer
+			);
+			path(\"a\",\"b\",2);
+")
+
+		assert_equal(@tables.cardinality,1)		
+		assert_equal(@columns.cardinality,3)
 	end
 
 	def test_expr

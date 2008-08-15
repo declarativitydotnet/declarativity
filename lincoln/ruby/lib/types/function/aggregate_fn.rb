@@ -31,7 +31,6 @@ class AggregateFunction < TupleFunction
 
 
   def AggregateFunction.function(aggregate)
-	print "ayo\n"
     retval = case aggregate.functionName
     when @@MIN: Min.new(Accessor.new(aggregate))
     when @@MAX: Max.new(Accessor.new(aggregate))

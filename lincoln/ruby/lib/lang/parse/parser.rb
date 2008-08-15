@@ -2,6 +2,7 @@
 
 require "rubygems"
 require "treetop"
+require "ddl.rb"
 require "core.rb"
 #require "olg.rb"
 

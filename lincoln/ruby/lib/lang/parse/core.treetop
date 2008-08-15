@@ -16,6 +16,8 @@
 
 
 grammar Overlog
+
+include Ddl
        	rule pprogram
 		  pprogramname Spacing Clauses #EndOfFile   
 	end
@@ -35,18 +37,21 @@ grammar Overlog
 		Spacing ';' Spacing
 	end
   	rule Clause
-		     Rule  /     Watch  /     Fact  /     Definition  /     Import   
+		     Rule  /     Watch  /     Fact  /     Definition  /  Import   / statement
 
 			
+	end
+	rule statement
+		super
 	end
      	rule Import
 		  'import' Spacing Typename   
 	end
      	rule Fact
-		  tablename opar expressionList cpar
+		  ptablename opar expressionList cpar
 			{
 				def Fact
-					return self.tablename.text_value
+					return self.ptablename.text_value
 				end
 			}
 	end
@@ -89,10 +94,10 @@ grammar Overlog
 		  TableFunction  /  Predicate  /  Assignment  /  Selection   
 	end
      	rule Definition
-		     ('define' opar tablename Comma Keys Comma Schema cpar /     'define' opar tablename Comma Schema cpar )
+		     ('define' opar ptablename Comma Keys Comma Schema cpar /     'define' opar ptablename Comma Schema cpar )
 			{
 				def Definition
-					return tablename.text_value
+					return ptablename.text_value
 				end			
 			}
 	end
@@ -112,7 +117,7 @@ grammar Overlog
 		  Type    (Comma Type   )*    
 	end
      	rule Watch
-		     'watch' opar tablename cpar  /     'watch' opar tablename Comma WatchFlow Spacing cpar	
+		     'watch' opar ptablename cpar  /     'watch' opar ptablename Comma WatchFlow Spacing cpar	
 			{
 				def Watch
 					return self
@@ -123,13 +128,13 @@ grammar Overlog
 		  [taeidrs]+    
 	end
      	rule TableFunction
-		  tablename opar Predicate cpar  
+		  ptablename opar Predicate cpar  
 	end
      	rule Predicate
-		     ('notin'  Spacing )?  tablename EventModifier?  arguments   
+		     ('notin'  Spacing )?  ptablename EventModifier?  arguments   
 				{
 					def Predicate
-						return self.tablename
+						return self.ptablename
 						#return arguments.value
 					end
 					def args
@@ -356,7 +361,7 @@ grammar Overlog
   	rule EventType
 		     'insert'  /     'delete'   
 	end
-  	rule tablename
+  	rule ptablename
 		  (name '::' name  /  name )
 	end
   	rule variable

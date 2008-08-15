@@ -66,11 +66,24 @@ class OverlogPlanner
 	def plan
 		plan_materializations 
 		plan_rules
+		plan_facts
 		@program.plan
 
 		return @program
 	end
 
+	def plan_facts
+		f_cols = predoftable(@expr)
+		
+		@facts.tuples.each do |fact|
+			#puts fact
+			tuple = get_vars(fact)
+			tuple.each do |t|
+			#	print "\t#{t}\n"
+			end
+			#print "-----\n"
+		end
+	end
 	def plan_materializations
 		@tables.tuples.each do |table| 
 			p_cols = predoftable(@columns)
@@ -168,9 +181,8 @@ class OverlogPlanner
 					# fix that string stuff!
 					aggObj = Aggregate.new(var.value("p_txt"),aggFunc,AggregateFunction.type(aggFunc,String))
 #					thisvar = AggregateFunction.function(aggObj)
-          thisvar = aggObj
+          				thisvar = aggObj
 					thisvar.position = var.value("expr_pos")
-					puts thisvar.inspect
 					aggFunc = ""
 				else 
 					case var.value("type")

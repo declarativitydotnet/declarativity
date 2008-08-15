@@ -5,7 +5,7 @@ rule program
 end
 
 rule statement
-	'table' s tablename opar collist cpar keys? acabo
+	'table' s tablename opar collist cpar keys? 
 end
 
 rule collist

@@ -6,12 +6,10 @@ class Aggregate < Variable
 	
 	def initialize(name, function, type)
 		super(name, type)
-		print "init name = #{@name}\n"
 		@function = function
 	end
 	
 	def clone
-		print "CLONE\n"
 		Aggregate.new(@name, @function, type)
 	end
 

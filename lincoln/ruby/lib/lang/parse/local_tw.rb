@@ -2,7 +2,10 @@
 
 require "rubygems"
 require "treetop"
+
+require "lib/lang/parse/ddl.rb"
 require "lib/lang/parse/core.rb"
+
 #require "olg.rb"
 
 require "lib/lang/parse/procedural.rb"
@@ -243,6 +246,17 @@ class VisitColumn < VisitGeneric
 	end
 end
 
+class VisitSQLIndex < VisitGeneric
+
+	def initialize(ix)
+		@ix = ix
+	end
+	def semantic(text,obj)
+		otabinsert(@ix,@@positions["_Universal"],@@current["table"],@@positions["_Primpos"])
+	end
+
+end
+
 class VisitIndex < VisitGeneric
 	def initialize(ix)
 		@ix = ix
@@ -389,6 +403,10 @@ end
 		sky.add_handler("Table",VisitTable.new(@tabletable),1)
 		sky.add_handler("Type",VisitColumn.new(@columntable),1)
 		sky.add_handler("Keys",VisitIndex.new(@indextable),1)
+
+		sky.add_handler("tablename",VisitTable.new(@tabletable),1)
+		sky.add_handler("dtype",VisitColumn.new(@columntable),1)
+		sky.add_handler("key_modifier",VisitSQLIndex.new(@indextable),1)
 
 		sky.add_handler("LineTerminator",VisitNewline.new,1)
 
