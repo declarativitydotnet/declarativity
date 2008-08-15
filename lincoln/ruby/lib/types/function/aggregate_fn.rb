@@ -57,7 +57,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
-  class Exemplary < AggregateFunction
+  class Exemplary
     def initialize(accessor)
       @result = nil
       @current = nil
@@ -106,7 +106,7 @@ class AggregateFunction < TupleFunction
   end
 
 
-  class Count < AggregateFunction	
+  class Count	
     def initialize(accessor)
       @result = nil
       @current = 0
@@ -135,7 +135,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
-  class Avg < AggregateFunction
+  class Avg
     def initialize(accessor)
       @result = nil
       @sum = @count = 0
@@ -157,7 +157,7 @@ class AggregateFunction < TupleFunction
 
     def evaluate(tuple)
       @result = tuple
-      @sum += @accessor.evaluate(tuple)*1.0
+      @sum += @accessor.evaluate(tuple).to_f*1.0
       @count += 1.0
       return @sum / @count
     end
@@ -167,7 +167,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
-  class SumStr < AggregateFunction 
+  class SumStr 
     def initialize(accessor)
       @current = nil
       @accessor = accessor
@@ -200,7 +200,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
-  class MakeSet < AggregateFunction
+  class MakeSet
     def initialize(accessor)
       @result = nil
       @tupleset = nil

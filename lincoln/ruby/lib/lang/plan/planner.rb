@@ -148,6 +148,9 @@ class OverlogPlanner
 			# performance hurts!  these need to be index joins
 			sexpr = ScanJoin.new(p_expr,it.schema)
 			resexpr = sexpr.evaluate(TupleSet.new("p",it))
+			if resexpr.tups == []
+			  require 'ruby-debug'; debugger
+			end
 			p_var = predoftable(@pexpr)
 			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
 			respexpr = spexpr.evaluate(resexpr)

@@ -130,14 +130,14 @@ class TestPlan < Test::Unit::TestCase
     sys.init
     utterance = "program agg_test;
     define(link,keys(0,1),{String,String,Integer,String});
-    min_cost(From,To,min<Cost>) :- link(From,To,Cost,Annotation);
+    min_cost(From,To,avg<Cost>) :- link(From,To,Cost,Annotation);
     counter(From,To,count<Cost>) :- link(From,To,Cost,Annotation);"
     prog = prep(utterance)
     tn, ts = gen_link_tuples
     result = prog.get_queries(tn)[0].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["1","2","10"])
-		assert_equal(result.tups[1].values, ["2","3","5"])
+		assert_equal(result.tups[0].values, ["1","2",10.0])
+		assert_equal(result.tups[1].values, ["2","3",7.5])
     result = prog.get_queries(tn)[1].evaluate(ts)
 		assert_equal(result.tups.length, 2)
 		assert_equal(result.tups[0].values, ["1","2",1])
