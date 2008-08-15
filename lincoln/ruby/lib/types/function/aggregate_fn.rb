@@ -2,12 +2,12 @@ require 'lib/types/basic/tuple_set'
 require 'lib/types/function/tuple_function'
 require 'lib/lang/plan/aggregate'
 
-class AggregateFunction < TupleFunction	
+class AggregateFunction < TupleFunction	  
   class Accessor < TupleFunction
     def initialize(aggregate)
       @position = aggregate.position
       @type     = aggregate.class
-	@name = aggregate.name
+#	    @name     = aggregate.name
     end
 
     attr_reader :position
@@ -57,7 +57,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
-  class Exemplary < Aggregate
+  class Exemplary < AggregateFunction
     def initialize(accessor)
       @result = nil
       @current = nil
@@ -106,7 +106,7 @@ class AggregateFunction < TupleFunction
   end
 
 
-  class Count < Aggregate		
+  class Count < AggregateFunction	
     def initialize(accessor)
       @result = nil
       @current = 0
@@ -135,7 +135,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
-  class Avg < Aggregate
+  class Avg < AggregateFunction
     def initialize(accessor)
       @result = nil
       @sum = @count = 0
@@ -167,7 +167,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
-  class SumStr < Aggregate 
+  class SumStr < AggregateFunction 
     def initialize(accessor)
       @current = nil
       @accessor = accessor
@@ -200,7 +200,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
-  class MakeSet < Aggregate
+  class MakeSet < AggregateFunction
     def initialize(accessor)
       @result = nil
       @tupleset = nil
