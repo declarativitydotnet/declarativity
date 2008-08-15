@@ -1,20 +1,18 @@
+
 require 'lib/lang/plan/variable'
 
-#suppressed
-#require 'lib/types/function/aggregate_fn.rb'
 class Aggregate < Variable 
 	@@STAR = '*'
 	
 	def initialize(name, function, type)
 		super(name, type)
-		# temporarily suppressed for a clean checkin...
-		#aggFunc = new AggregateFunction
-		#@function = aggFunc.function(function)
+		print "init name = #{@name}\n"
 		@function = function
 	end
 	
 	def clone
-		Aggregate.new(name, function, type)
+		print "CLONE\n"
+		Aggregate.new(@name, @function, type)
 	end
 
 	def to_s
@@ -26,9 +24,11 @@ class Aggregate < Variable
 	end
 	
 	def function
+		print "set up #{@name}\n"
 	  # set up a TupleFunction and send it a lambda for evaluate 
 		doit = lambda do |t|
-      return (name == @@STAR ? t.id : t.value(name))
+			print "lookup "+@name.to_s+"\n"
+      return (@name == @@STAR ? t.id : t.value(@name))
     end
     
     r_lam = lambda do

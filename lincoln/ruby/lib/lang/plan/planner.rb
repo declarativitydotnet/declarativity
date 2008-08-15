@@ -13,6 +13,7 @@ require 'lib/types/table/catalog.rb'
 require "lib/types/operator/scan_join"
 require "lib/lang/plan/value.rb"
 require "lib/lang/plan/arbitrary_expression.rb"
+require "lib/types/function/aggregate_fn.rb"
 
 
 class OverlogPlanner
@@ -161,7 +162,11 @@ class OverlogPlanner
 					if (!var.value("type").eql?("var")) then
 						raise
 					end
-					thisvar = Aggregate.new(var.value("p_txt"),aggFunc,String)
+					# fix that string stuff!
+					aggObj = Aggregate.new(var.value("p_txt"),aggFunc,AggregateFunction.type(aggFunc,String))
+					thisvar = AggregateFunction.function(aggObj)
+					thisvar.position = var.value("expr_pos")
+					puts thisvar.inspect
 					aggFunc = ""
 				else 
 					case var.value("type")

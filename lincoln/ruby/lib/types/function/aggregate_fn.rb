@@ -1,12 +1,13 @@
-require 'lib/lang/plan/aggregate'
 require 'lib/types/basic/tuple_set'
 require 'lib/types/function/tuple_function'
+require 'lib/lang/plan/aggregate'
 
 class AggregateFunction < TupleFunction	
   class Accessor < TupleFunction
     def initialize(aggregate)
       @position = aggregate.position
-      @type     = aggregate.type
+      @type     = aggregate.class
+	@name = aggregate.name
     end
 
     attr_reader :position
@@ -20,6 +21,7 @@ class AggregateFunction < TupleFunction
     end
   end
 
+
   @@MIN      = "min"
   @@MAX      = "max"
   @@COUNT    = "count"
@@ -28,7 +30,7 @@ class AggregateFunction < TupleFunction
   @@MAKESET  = "tupleset"
 
 
-  def function(aggregate)
+  def AggregateFunction.function(aggregate)
 	print "ayo\n"
     retval = case aggregate.functionName
     when @@MIN: Min.new(Accessor.new(aggregate))

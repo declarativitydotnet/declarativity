@@ -134,6 +134,7 @@ class AggregationTable < Table
 		tuples.get(thekey).add(tuple)
 		
 		if (!@aggregates.containsKey(thekey))
+			#print "ok, calling function over a non-constructed aggregate\n"
 			@aggregates.put(thekey, Aggregate.function(@aggregate))
 		end
     @aggregates.get(thekey).evaluate(tuple)
