@@ -135,7 +135,7 @@ include Ddl
 				{
 					def Predicate
 						return self.ptablename
-						#return arguments.value
+						#return self
 					end
 					def args
 						return arguments.value
@@ -362,7 +362,10 @@ include Ddl
 		     'insert'  /     'delete'   
 	end
   	rule ptablename
-		  (name '::' name  /  name )
+		  (scope '::' name  /  name )
+	end
+	rule scope
+		name
 	end
   	rule variable
 		  name   /  '_'  /  '*'   

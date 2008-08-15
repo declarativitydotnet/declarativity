@@ -24,6 +24,18 @@ class OverlogPlanner
 		return p
 	end
 
+
+	def get_scope(pred)
+		scopeName = pred.to_s.split("::")
+		scope = nil
+		tname = pred
+		unless (scopeName[1].nil?) then
+			scope = scopeName[0]
+			tname = scopeName[1]
+		end
+		return [scope,tname]
+	end
+
 	def program
 		return @program
 	end
@@ -112,8 +124,12 @@ class OverlogPlanner
 
 			typething = eval(typestr)
 			indxthing = eval(indxstr)
+
+			(scope,tname) = get_scope(table.value("tablename"))
+
+			#nnnprint "scope #{scope}, tname #{tname}\n"
 			
-			table = BasicTable.new(TableName.new(nil,table.value("tablename").to_s),Table::INFINITY, Table::INFINITY,indxthing,typething)
+			table = BasicTable.new(TableName.new(scope,tname),Table::INFINITY, Table::INFINITY,indxthing,typething)
 			@program.definition(table)			
 		end
 	end
@@ -226,6 +242,8 @@ class OverlogPlanner
 		
 			# a row for each predicate.  let's grab the vars
 			args = get_vars(pred)
+			
+	
 			#thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
 			# 2 things about the below.  1.) get rulenames working!  2.) I think the p2 system uses positions starting at 1.
 			#thispred.set(@progname,rulename,pred.value("pred_pos"))
@@ -250,7 +268,10 @@ class OverlogPlanner
 		
 			# a row for each predicate.  let's grab the vars
 			args = get_vars(pred)
-			thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
+
+			(scope,tname) = get_scope(pred.value("pred_txt"))
+			
+			thispred = Predicate.new(false,TableName.new(scope,tname),Table::Event::NONE,args)
 			# 2 things about the below.  1.) get rulenames working!  2.) I think the p2 system uses positions starting at 1.
 			thispred.set(@progname,rulename,pred.value("pred_pos"))
 			predicates << thispred

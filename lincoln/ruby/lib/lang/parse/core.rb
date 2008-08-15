@@ -1472,7 +1472,7 @@ module Overlog
   module Predicate2
 					def Predicate
 						return self.ptablename
-						#return arguments.value
+						#return self
 					end
 					def args
 						return arguments.value
@@ -4376,7 +4376,7 @@ module Overlog
   end
 
   module Ptablename0
-    def name
+    def scope
       elements[0]
     end
 
@@ -4395,7 +4395,7 @@ module Overlog
 
     i0 = index
     i1, s1 = index, []
-    r2 = _nt_name
+    r2 = _nt_scope
     s1 << r2
     if r2
       if input.index('::', index) == index
@@ -4431,6 +4431,21 @@ module Overlog
     end
 
     node_cache[:ptablename][start_index] = r0
+
+    return r0
+  end
+
+  def _nt_scope
+    start_index = index
+    if node_cache[:scope].has_key?(index)
+      cached = node_cache[:scope][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    r0 = _nt_name
+
+    node_cache[:scope][start_index] = r0
 
     return r0
   end

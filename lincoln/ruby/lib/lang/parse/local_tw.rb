@@ -118,6 +118,19 @@ class VisitPredicate < VisitTerm
 	end
 	def semantic(text,obj)
 		super(text,obj)
+		#return if (text.eql?(""))
+		#print "VP text: #{text}\n"
+		#print "text #{@@state["Predicate"][0]}\n"
+		#print "pred name #{obj.name.text_value}\n"
+		
+		#puts obj.inspect
+		#if (defined? obj.scope) then
+		#	print "SCOPE #{obj.scope}\n"
+		#end	
+		#if defined? obj.name then
+		#	print "NAME #{obj.name.text_value}\n"
+		#end
+		
 		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
 		#result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])),nil)
 		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],@@state["Predicate"][0])
