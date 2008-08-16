@@ -203,7 +203,7 @@ class VisitRule < VisitBase
 		t = text.gsub('"',"")
 		super(text,obj)
 
-		if obj.deleter then
+		if obj.deleter.delete then
 			d = 1
 		else
 			d = 0

@@ -615,12 +615,12 @@ module Overlog
 
   module Deleter1
 				def delete
-					if !(text_value.eql?("")) then
-						return true
-					else
-						print "the TEXT_VALUE was #{text_value}\n"
-						return false
-					end
+					#if text_value.eql?("") then
+					#	return false
+					#else
+					#	return true
+					#end
+					return !text_value.eql?("")
 				end
   end
 

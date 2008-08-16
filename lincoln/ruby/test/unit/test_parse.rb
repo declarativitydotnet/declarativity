@@ -30,9 +30,6 @@ end
 
 
 class TestParse < Test::Unit::TestCase
-	def test_default
-		test_program
-	end
 	def test_join1
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
@@ -52,11 +49,12 @@ class TestParse < Test::Unit::TestCase
 	def test_program
 		prep("program foo;\npath(A,B,_) :- path(B,Z,C);\n")
 		assert_equal(1,@programs.cardinality)
+		assert_equal(0,@rules.tuples.tups[0].value("delete"))
+
 	end
 		
 	def test_deletion
 		prep("program foo;\ndelete path(A,B,_) :- path(B,Z,C);\n")
-
 		assert_equal(1,@rules.tuples.tups[0].value("delete"))
 
 		

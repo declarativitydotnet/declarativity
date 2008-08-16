@@ -2,6 +2,7 @@
 class ArbitraryExpression < Expression
 
   def initialize(expr,variables)
+	#@expr = expr.gsub(/([^"a-zA-Z0-9_])([A-Z])/,'\1v\2')
 	@expr = expr.gsub(/\b([A-Z])/,'v\1')
 	@variables = Array.new
 	variables.each do |v|

@@ -62,6 +62,25 @@ class TreeWalker
 			end 
 		end
 	end
+
+	def handle_fast(elem)
+		elem.methods.each do |m|
+			k = @hash[m.to_s]
+			if !k.nil? then 
+				#puts m.inspect
+				p = eval("elem."+m.to_s)
+				k.set_token(m.to_s)
+				
+				sem = (defined? p.text_value) ? p.text_value : p.to_s
+				k.semantic(sem,p)
+				if (@verbose == 'v') then  
+					print m.to_s+ ": ("+sem+")\n"
+				end 
+				
+				
+			end
+		end
+	end
 	def mywalk(node)
 		if (defined? node.elements) then
 			node.elements.each do |elem|

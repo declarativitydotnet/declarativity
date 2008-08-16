@@ -1,11 +1,8 @@
 require 'lib/lang/parse/local_tw.rb'
 require 'lib/lang/parse/tree_walker.rb'
-
 require 'lib/lang/parse/schema.rb'
-
 require 'lib/types/table/object_table.rb'
 require 'lib/lang/plan/predicate.rb'
-#require 'lib/lang/compiler.rb'
 require 'lib/lang/plan/program.rb'
 require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
@@ -23,7 +20,6 @@ class OverlogPlanner
 		p.set("global","r1",1)
 		return p
 	end
-
 
 	def get_scope(pred)
 		scopeName = pred.to_s.split("::")
@@ -87,17 +83,13 @@ class OverlogPlanner
 	end
 
 	def plan_facts
-
 		@facts.tuples.each do |fact|
 			tab = fact.value("tablename")
 			lookup = '::'+tab
 			table = Table.find_table('::'+tab)
 			raise("#{tab} not found in catalog") if table.nil?
 
-			p_term = predoftable(@terms)
-			sterm = ScanJoin.new(p_term,fact.schema)
-			resterm = sterm.evaluate(TupleSet.new("fact",fact))
-
+			resterm = join_of(@terms,TupleSet.new("fact",fact))
 			resterm.each do |t| 
 				vars = get_vars(t)
 				varNames = Array.new
@@ -110,21 +102,14 @@ class OverlogPlanner
 	end
 	def plan_materializations
 		@tables.tuples.each do |table| 
-			p_cols = predoftable(@columns)
-
-			scols = ScanJoin.new(p_cols,table.schema)
-			rescols = scols.evaluate(TupleSet.new("cols",table))
-
+			rescols = join_of(@columns,TupleSet.new("cols",table))
 			cols = Array.new
 			# SORT!
 			rescols.order_by("col_pos") do |col|
 				cols << col.value("datatype")
 			end
 			
-			p_indx = predoftable(@indices)
-			sindx = ScanJoin.new(p_indx,table.schema)
-			resindx = sindx.evaluate(TupleSet.new("cols",table))
-		
+			resindx = join_of(@indices,TupleSet.new("cols",table))
 			indxs = Array.new	
 			resindx.order_by("col_pos") do |col|
 				indxs << col.value("col_pos")
@@ -132,15 +117,12 @@ class OverlogPlanner
 
 			typestr = '[' + cols.join(",") + ']'
 			indxstr = 'Key.new(' + indxs.join(",") + ')'
-
-
 			typething = eval(typestr)
 			indxthing = eval(indxstr)
 
 			(scope,tname) = get_scope(table.value("tablename"))
-
-			#nnnprint "scope #{scope}, tname #{tname}\n"
-			
+		
+			# TABLE TYPE AND LIFETIME UNIMPLEMENTED...
 			table = BasicTable.new(TableName.new(scope,tname),Table::INFINITY, Table::INFINITY,indxthing,typething)
 			
 			@program.definition(table)			
@@ -149,24 +131,14 @@ class OverlogPlanner
 
 	def plan_rules
 
-		p_rule = predoftable(@rules)
-	
-		sj = ScanJoin.new(p_rule,@programs.schema_of)
-		ts = TupleSet.new("prog",*@programs.tuples)
 		# save res as a member variable: I'll want to reuse it.
-		res = sj.evaluate(ts)
+		res = join_of(@rules,TupleSet.new("prog",*@programs.tuples))
 
 		# need to put an ordering over the rules!
 		res.tups.each do |rule|
-		
-			p_term = predoftable(@terms)
-			sterm = ScanJoin.new(p_term,rule.schema)
-			resterm = sterm.evaluate(TupleSet.new("rule",rule))
-			
+			resterm = join_of(@terms,TupleSet.new("rule",rule))
 			rulename = rule.value("rulename")
 			body = plan_preds(resterm,rulename)
-		##	body = plan_whatever(resterm,rulename,@preds,"pred_pos",pred_block)
-
 
 			head = body.shift
 			assigns = plan_assignments(resterm,rulename)	
@@ -178,39 +150,39 @@ class OverlogPlanner
 				body << s
 			end
 		
-			# location?  extract rulename!  isPublic, isDelete
-			#d = rule.value("delete").eql?("1")
-			rule = Rule.new(1,rulename,true,false,head,body)
+			# location? rulename, isPublic, isDelete, head, body
+			d = rule.value("delete").eql?("1")
+			rule = Rule.new(1,rulename,true,d,head,body)
 			rule.set(@progname)
 		end
 	end
 
+	def join_of(tab,ts)
+		pred = predoftable(tab)
+		# performance hurts!  these need to be index joins
+		# but unfortunately, since we are moving through the space top-down, we cannot rely 
+		# on primary keys for this join.  I don't know yet how to use secondary keys, but we
+		# should do so on the FKs to do this search efficiently.
+		# top-down is preferable to bottom up because, although we need to scan the whole tree anyway,
+		# we have an order of evaluation that we need to follow (materializations, facts, rules)
+		# and top-down search avoids repeating inferences.
+		sexpr = ScanJoin.new(pred,ts.tups[0].schema)
+		return sexpr.evaluate(ts)
+	end
+
 	def get_vars(it)
-			p_expr = predoftable(@expr)
-			# performance hurts!  these need to be index joins
-			sexpr = ScanJoin.new(p_expr,it.schema)
-			resexpr = sexpr.evaluate(TupleSet.new("p",it))
-			if resexpr.tups == []
-			  require 'ruby-debug'; debugger
-			end
-			p_var = predoftable(@pexpr)
-			spexpr = ScanJoin.new(p_var,resexpr.tups[0].schema)
-			respexpr = spexpr.evaluate(resexpr)
+			resexpr = join_of(@expr,TupleSet.new("p",it))
+			respexpr = join_of(@pexpr,resexpr)
 
 			args = Array.new
-
 			aggFunc = ""
-			#respexpr.order_by("p_pos") do |var|
-			#puts @pexpr
-			respexpr.each do |var|
+			respexpr.order_by("p_pos") do |var|
 				if (!aggFunc.eql?("")) then
 					if (!var.value("type").eql?("var")) then
 						raise
 					end
 					# fix that string stuff!
-					aggObj = Aggregate.new(var.value("p_txt"),aggFunc,AggregateFunction.type(aggFunc,String))
-#					thisvar = AggregateFunction.function(aggObj)
-          				thisvar = aggObj
+					thisvar = Aggregate.new(var.value("p_txt"),aggFunc,AggregateFunction.type(aggFunc,String))
 					thisvar.position = var.value("expr_pos")
 					aggFunc = ""
 				else 
@@ -241,51 +213,20 @@ class OverlogPlanner
 		return ret
 	end
 
-
-	def plan_whatever(resterm,rulename,entity,sorter,block)
-		# resterm is a joinable resultset of terms for the current rule.
-
-		p_pred = predoftable(entity)
-		spred = ScanJoin.new(p_pred,resterm.tups[0].schema)
-		respred = spred.evaluate(resterm)
-	
-		predicates = Array.new
-		respred.order_by(sorter) do |pred|
-			# skip the head, for now
-		
-			# a row for each predicate.  let's grab the vars
-			args = get_vars(pred)
-			
-	
-			#thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
-			# 2 things about the below.  1.) get rulenames working!  2.) I think the p2 system uses positions starting at 1.
-			#thispred.set(@progname,rulename,pred.value("pred_pos"))
-			thispred = block(pred,args)
-			predicates << thispred
-		end
-		return predicates
-	end
-
-
 	def plan_preds(resterm,rulename)
 		# resterm is a joinable resultset of terms for the current rule.
-
-		p_pred = predoftable(@preds)
-		spred = ScanJoin.new(p_pred,resterm.tups[0].schema)
-		respred = spred.evaluate(resterm)
-	
+		respred = join_of(@preds,resterm)
 		predicates = Array.new
-		#respred.order_by("term_pos") do |pred|
-		respred.each do |pred|
+		respred.order_by("term_pos") do |pred|
 			# skip the head, for now
 		
 			# a row for each predicate.  let's grab the vars
 			args = get_vars(pred)
-
 			(scope,tname) = get_scope(pred.value("pred_txt"))
 			
+			# notin, name, event, arguments
 			thispred = Predicate.new(false,TableName.new(scope,tname),Table::Event::NONE,args)
-			# 2 things about the below.  1.) get rulenames working!  2.) I think the p2 system uses positions starting at 1.
+			# I think the p2 system uses positions starting at 1.
 			thispred.set(@progname,rulename,pred.value("pred_pos"))
 			predicates << thispred
 		end
@@ -293,25 +234,17 @@ class OverlogPlanner
 	end
 
 	def plan_assignments(resterm,rulename)
-		# resterm is a joinable resultset of terms for the current rule.
-
-	
-		p_assign = predoftable(@assigns)
-		sassign = ScanJoin.new(p_assign,resterm.tups[0].schema)
-		resassign = sassign.evaluate(resterm)
+		resassign = join_of(@assigns,resterm)
 	
 		assignments = Array.new
-
 		resassign.order_by("assign_pos") do |ass|
 			lhs_txt = ass.value("lhs")
 			eval_expr = ass.value("assign_txt")
-
-	
 			args = get_vars(ass)
-			
 			lhs = Variable.new(lhs_txt,String)
 			lhs.position = 0
 			expr = ArbitraryExpression.new(eval_expr,args)
+
 			thisassign = Assignment.new(lhs,expr)
 			thisassign.set(@progname,rulename,ass.value("assign_pos"))
 			assignments << thisassign
@@ -320,20 +253,12 @@ class OverlogPlanner
 	end
 
 	def plan_selections(resterm,rulename)
-		# resterm is a joinable resultset of terms for the current rule.
-
-
-		p_select = predoftable(@selects)
-		sselect = ScanJoin.new(p_select,resterm.tups[0].schema)
-		resselect = sselect.evaluate(resterm)
+		resselect = join_of(@selects,resterm)
 	
 		selections = Array.new
-
 		resselect.order_by("select_pos") do |sel|
 			eval_expr = sel.value("select_txt")
-
 			args = get_vars(sel)
-			
 			expr = ArbitraryExpression.new(eval_expr,args)
 			thisselect = SelectionTerm.new(expr)
 			thisselect.set(@progname,rulename,sel.value("select_pos"))
