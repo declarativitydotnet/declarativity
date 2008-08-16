@@ -44,13 +44,11 @@ class TreeWalker
 	end
 
 	def handle(elem)
-		# this sucks
+		# this needs to be reversed: foreach method, probe hash.
 		@hash.each do |k|
-			# arr, I lost me meth!
 			meth = "elem."+k[0]
 			stm = "defined? "+meth
 			if (eval(stm)) then
-					
 				p = eval(meth)
 				h = k[1]
 				h.set_token(k[0])
@@ -68,6 +66,7 @@ class TreeWalker
 		if (defined? node.elements) then
 			node.elements.each do |elem|
 				ptr = handle(elem)
+				# depth first...?
 				if (elem.nonterminal?) then
 					mywalk(elem)	
 				end

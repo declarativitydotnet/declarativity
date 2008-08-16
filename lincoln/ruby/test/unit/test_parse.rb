@@ -30,12 +30,6 @@ end
 
 
 class TestParse < Test::Unit::TestCase
-  def test_default
-  end
-
-#$catalog = nil
-#$catalog = Catalog.new
-#$index = IndexTable.new
 	def test_default
 		test_program
 	end
@@ -52,9 +46,6 @@ class TestParse < Test::Unit::TestCase
 		ts = TupleSet.new("pred", *@preds.tuples)
 		res = sj.evaluate(ts)
 
-		#res.tups.each do |t|
-		#	print "TUP: "+t.to_s+"\n"
-		#end
 		assert_equal(2, res.tups.length)
 	end
 
@@ -73,8 +64,6 @@ class TestParse < Test::Unit::TestCase
 
 	def test_aggregation
 		prep("program foo;\nshortestPath(A,B,min<C>) :- path(A,B,C);\n")
-		#nnputs @expr
-		#puts @pexpr
 			
 	end
 
@@ -106,34 +95,28 @@ class TestParse < Test::Unit::TestCase
 	def test_expr
 		prep("program foo;\nfoo(A,B,B + 1) :- bar(A,B);\n")
 
-		#puts @preds
-		#puts @expr
-		#puts @pexpr
 		# there are 2 expressions in program foo, but 6 primary expressions
 		assert_equal(@pexpr.cardinality,6)
 		assert_equal(@expr.cardinality,8)
 		foundconst = 0
 		@pexpr.tuples.each do |t|
 			# don't forget to fix the quotes
-			if t.values[3].eql?("\"1\"") then
+			if t.values[3].eql?("1") then
 				# we have an integer constant here. 
 				assert_equal(t.values[4],"const")
 				foundconst = 1
 			end
 		end
 		# fallthrough
-		#assert_equal(foundconst,1)
+		assert_equal(foundconst,1)
 	
 	end
 
 	def test_arbitrary_expr
 		prep("program foo;\nfoo(A,B,(B + 1) / (A-B*A) / 2) :- bar(A,B);\n")
-		#puts @expr
-		#puts @pexpr
-		# there are still only 3 arguments to foo and 2 to bar.
-		#assert_equal(@expr.cardinality,5)
+		assert_equal(@expr.cardinality,16)
 		# however, we are dealing with 10 primaryexpressions
-		#assert_equal(@pexpr.cardinality,10)
+		assert_equal(@pexpr.cardinality,10)
 
 	end
 
@@ -148,9 +131,7 @@ class TestParse < Test::Unit::TestCase
 			elsif (name.eql?("foo")) then
 				assert_equal(t.to_s,"<4, 3, 0, foo>")
 			else
-				#assert_error("buh?")
-
-				#print "buf? #{name}\n"
+				raise("buh?")
 			end
 		end
 		# there should be a 1-1 between primaryexpressions and expressions.
@@ -164,8 +145,6 @@ class TestParse < Test::Unit::TestCase
 		$index = nil
 		$catalog = Catalog.new
 		$index = IndexTable.new
-		#sys = System.new
-		#sys.init
 
 		@preds = MyPredicateTable.new
 		@terms = MyTermTable.new

@@ -123,6 +123,8 @@ class VisitPredicate < VisitTerm
 			puts obj.inspect
 		end
 		#print "VP text: #{text}\n"
+
+		#print "tn #{obj.ptablename.to_s}\n"
 		#print "text #{@@state["Predicate"][0]}\n"
 		#print "pred name #{obj.name.text_value}\n"
 		
@@ -329,9 +331,6 @@ class VisitExpression < VisitIExpression
 		if (!defined? obj.primaryexpression) then
 			super(text,obj)
 			#print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text,"expr","??"])
-
-		else 
-			#print "\t\t\tFUCK ALL THAT\n"
 		end
 	end
 end

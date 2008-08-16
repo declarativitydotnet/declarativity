@@ -56,9 +56,9 @@ include Ddl
 			}
 	end
      	rule Rule
-		#     (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name  Spacing  deleter?  rulehead Spacing ':-' Spacing RuleBody   )
+		  #   (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name  Spacing  deleter?  rulehead Spacing ':-' Spacing RuleBody   )
 		# reimagined rule:
-		( 'public' )? name? deleter rulehead followsfrom RuleBody
+		(( 'public' )? deleter rulehead followsfrom RuleBody / ( 'public' )? name? deleter rulehead followsfrom RuleBody  ) 
 			{ 
 				def Rule
 					return self
@@ -131,7 +131,7 @@ include Ddl
 		  ptablename opar Predicate cpar  
 	end
      	rule Predicate
-		     ('notin'  Spacing )?  ptablename EventModifier?  arguments   
+		    notin? ptablename EventModifier?  arguments   
 				{
 					def Predicate
 						return self.ptablename
@@ -141,6 +141,10 @@ include Ddl
 						return arguments.value
 					end
 				}
+	end
+	rule notin
+		# DON'T FORGET THIS
+		Spacing ( 'notin' ) Spacing
 	end
      	rule Assignment
 		  variable Spacing ':=' Spacing expression
