@@ -118,7 +118,10 @@ class VisitPredicate < VisitTerm
 	end
 	def semantic(text,obj)
 		super(text,obj)
-		#return if (text.eql?(""))
+		if (text.eql?("")) then
+			print "EMPTY\n"
+			puts obj.inspect
+		end
 		#print "VP text: #{text}\n"
 		#print "text #{@@state["Predicate"][0]}\n"
 		#print "pred name #{obj.name.text_value}\n"
