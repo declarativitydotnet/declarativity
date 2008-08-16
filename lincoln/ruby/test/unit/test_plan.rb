@@ -21,18 +21,6 @@ require 'lib/lang/parse/procedural.rb'
 
 class TestPlan < Test::Unit::TestCase
 	
-	def test_facts
-		sys = System.new
-		sys.init
-		utterance = "program path;
-				define(link,keys(0,1),{String,String,Integer,String});
-				path(From,To,Cost) :- link(From,To,Cost,Annotation);
-				link(\"A\",\"B\",3,\"link 1\");
-				link(\"B\",\"C\",2,\"link 2\");
-"
-
-		prog = prep(utterance)
-	end
 
 	def test_materialization
 		
@@ -208,6 +196,24 @@ class TestPlan < Test::Unit::TestCase
 		@assigns = MyAssignmentTable.new
 	end
 	
-	
-	
+	def test_facts
+		sys = System.new
+		sys.init
+		utterance = "program path;
+				define(link,keys(0,1),{String,String,Integer,String});
+				link(\"A\",\"B\",3,\"link 1\");
+				link(\"B\",\"C\",2,\"link 2\");
+				path(From,To,Cost) :- link(From,To,Cost,Annotation);
+"
+
+		prog = prep(utterance)
+		p = prog.plan
+
+		link = Table.find_table("::link")
+		
+		assert_equal("<A, B, 3, link 1>",link.tuples.tups[0].to_s)
+		assert_equal("<B, C, 2, link 2>",link.tuples.tups[1].to_s)
+		
+	end
+
 end

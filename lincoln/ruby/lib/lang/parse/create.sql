@@ -53,7 +53,7 @@ table MyExpression (
 
 table MyFact (
 	+factid Integer,
-	programid Integer,
+	termid Integer,
 	tablename String
 )
 

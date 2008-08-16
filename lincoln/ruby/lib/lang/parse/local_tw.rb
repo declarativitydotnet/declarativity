@@ -122,25 +122,9 @@ class VisitPredicate < VisitTerm
 			print "EMPTY\n"
 			puts obj.inspect
 		end
-		#print "VP text: #{text}\n"
-
-		#print "tn #{obj.ptablename.to_s}\n"
-		#print "text #{@@state["Predicate"][0]}\n"
-		#print "pred name #{obj.name.text_value}\n"
-		
-		#puts obj.inspect
-		#if (defined? obj.scope) then
-		#	print "SCOPE #{obj.scope}\n"
-		#end	
-		#if defined? obj.name then
-		#	print "NAME #{obj.name.text_value}\n"
-		#end
 		
 		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
-		#result = @pt.insert(TupleSet.new("predicate",Tuple.new(@@positions["_Universal"],@@current["term"],@@state["Predicate"][0],@@positions["_Termpos"])),nil)
 		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],@@state["Predicate"][0])
-
-		#print "PRED ARGS: "+obj.args.to_s+"\n"
 
 	end
 end
@@ -155,7 +139,6 @@ class VisitConstant < VisitPexp
 		t = text.gsub('"',"")
 		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??"])
 
-		#@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??")),nil)
 		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],t,"const","??")
 	end
 end
@@ -184,7 +167,8 @@ class VisitFact < VisitTerm
 		super(text,obj)
 		print_table("fact",[@@positions["_Universal"],@@current["program"],'"'+text+'"'])
 		#@ft.insert(TupleSet.new("fact",Tuple.new(@@positions["_Universal"],@@current["term"],text)),nil)
-		otabinsert(@ft,@@positions["_Universal"],@@current["program"],text)
+		#otabinsert(@ft,@@positions["_Universal"],@@current["program"],text)
+		otabinsert(@ft,@@positions["_Universal"],@@current["term"],text)
 	end
 end
 

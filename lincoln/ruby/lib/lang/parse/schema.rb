@@ -365,7 +365,7 @@ include MyFactTableMixin if defined? MyFactTableMixin
 	@@PRIMARY_KEY = Key.new(0)
 	class Field
 		FACTID=0
-		PROGRAMID=1
+		TERMID=1
 		TABLENAME=2
 	end
 	@@SCHEMA = [Integer,Integer,String]
@@ -400,11 +400,11 @@ include MyFactTableMixin if defined? MyFactTableMixin
 	def schema_of
 		factid = Variable.new("factid",Integer)
 		factid.position=0
-		programid = Variable.new("programid",Integer)
-		programid.position=1
+		termid = Variable.new("termid",Integer)
+		termid.position=1
 		tablename = Variable.new("tablename",String)
 		tablename.position=2
-		return Schema.new("MyFact",[factid,programid,tablename])
+		return Schema.new("MyFact",[factid,termid,tablename])
 	end
 end
 

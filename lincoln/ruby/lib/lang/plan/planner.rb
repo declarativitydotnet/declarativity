@@ -76,24 +76,36 @@ class OverlogPlanner
 	end
 
 	def plan
+
 		plan_materializations 
 		plan_rules
 		plan_facts
 		@program.plan
 
+
 		return @program
 	end
 
 	def plan_facts
-		f_cols = predoftable(@expr)
-		
+
 		@facts.tuples.each do |fact|
-			#puts fact
-			tuple = get_vars(fact)
-			tuple.each do |t|
-			#	print "\t#{t}\n"
+			tab = fact.value("tablename")
+			lookup = '::'+tab
+			table = Table.find_table('::'+tab)
+			raise("#{tab} not found in catalog") if table.nil?
+
+			p_term = predoftable(@terms)
+			sterm = ScanJoin.new(p_term,fact.schema)
+			resterm = sterm.evaluate(TupleSet.new("fact",fact))
+
+			resterm.each do |t| 
+				vars = get_vars(t)
+				varNames = Array.new
+				vars.each do |v|
+					varNames << v.value
+				end
+				table.insert(TupleSet.new("fact",Tuple.new(*varNames)),nil)
 			end
-			#print "-----\n"
 		end
 	end
 	def plan_materializations
@@ -130,6 +142,7 @@ class OverlogPlanner
 			#nnnprint "scope #{scope}, tname #{tname}\n"
 			
 			table = BasicTable.new(TableName.new(scope,tname),Table::INFINITY, Table::INFINITY,indxthing,typething)
+			
 			@program.definition(table)			
 		end
 	end

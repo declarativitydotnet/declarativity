@@ -14,7 +14,9 @@ class Table
     @key = key
     @callbacks = Array.new    
 
-    if (not catalog.nil?) then
+	# (pa) catalog->$catalog
+    if (not $catalog.nil?) then
+	#print "REGISTER #{name}\n"
       Table.register(name, type, size, lifetime, key, attributeTypes, self)
     end
   end

@@ -175,7 +175,8 @@ class TestParse < Test::Unit::TestCase
 			tups << t
 		end	
 		assert_equal(tups.size,1)
-		assert_equal(tups[0].to_s,"<3, 1, path>")
+		assert_equal(tups[0].values[2],"path")
+		
 	end
 
 	def prep(utterance)
