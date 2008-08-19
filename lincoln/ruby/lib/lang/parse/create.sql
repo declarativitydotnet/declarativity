@@ -9,7 +9,8 @@ table MyPredicate (
 	+predicateid Integer,
 	termid Integer,
 	pred_pos Integer,
-	pred_txt String
+	pred_txt String,
+	event_mod String
 )
 
 table Predicate (
@@ -47,6 +48,7 @@ table MySelection (
 table MyExpression (
 	+expressionid Integer,
 	termid Integer,
+	arg_pos Integer,
 	expr_pos Integer,
 	expr_text String
 )

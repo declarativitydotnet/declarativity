@@ -1,4 +1,4 @@
-# this grammar is mostly auto-generated from the rats! grammar of the java implementation of P2.
+#@ this grammar is mostly auto-generated from the rats! grammar of the java implementation of P2.
 # rats!, treetop and peg/leg are all implementations of packrat parsers, which are memoizing
 # parsers for Parsing expression Grammars (PEGs).
 # syntax-directed translation (rats! -> treetop) was performed using a PEG grammar in the peg/leg
@@ -82,7 +82,7 @@ include Ddl
 			}
 	end
   	rule rulehead
-		  Predicate   
+		  predicate   
 	end
   	rule RuleBody
 		  TermList   
@@ -91,7 +91,7 @@ include Ddl
 		  Term    (Comma Term   )*    
 	end
   	rule Term
-		  TableFunction  /  Predicate  /  Assignment  /  Selection   
+		  TableFunction  /  predicate  /  Assignment  /  Selection   
 	end
      	rule Definition
 		     ('define' opar ptablename Comma Keys Comma Schema cpar /     'define' opar ptablename Comma Schema cpar )
@@ -128,23 +128,28 @@ include Ddl
 		  [taeidrs]+    
 	end
      	rule TableFunction
-		  ptablename opar Predicate cpar  
+		  ptablename opar predicate cpar  
 	end
-     	rule Predicate
-		    notin? ptablename EventModifier?  arguments   
+     	rule predicate
+		    notin? ptablename eventModifier  arguments   
 				{
-					def Predicate
-						return self.ptablename
-						#return self
+					def predicate
+						#return self.ptablename
+						return self
 					end
-					def args
-						return arguments.value
-					end
+					#def args
+					#	return arguments.value
+					#end
 				}
 	end
 	rule notin
 		# DON'T FORGET THIS
 		Spacing ( 'notin' ) Spacing
+		{
+			def naught
+				return !text_value.eql?("")
+			end
+		}
 	end
      	rule Assignment
 		  variable Spacing ':=' Spacing expression
@@ -169,19 +174,24 @@ include Ddl
 				return text_value
 
 			end
-			def expression
-				return self
-			end
 			}
 	end
      	rule expressionList
-		  expression    (Comma expression)*    
+		  uExpression    (Comma uExpression)*    
 		{
 			def value 
 				return 
 			end
 		}
 	end
+	rule uExpression
+		expression
+		{
+			#@def uExpression
+			#	return self
+			#end
+		}
+	end	
    	rule IfElseexpression
 		     LogicalOrexpression '?' expression ':' expression  /     LogicalOrexpression
 	end
@@ -288,8 +298,11 @@ include Ddl
 				#def arguments 
 				#	return self
 				#end
-				def value 	
-					return expressionList.value
+				#def value 	
+				#	return expressionList.value
+				#end
+				def args
+					return expressionList
 				end
 			}
 	end
@@ -359,10 +372,10 @@ include Ddl
 		  #Spacing wordCharacters Spacing   
 			wordCharacters
 	end
-  	rule EventModifier
-		  '#' EventType   
+  	rule eventModifier
+		  ('#' eventType)?   
 	end
-  	rule EventType
+  	rule eventType
 		     'insert'  /     'delete'   
 	end
   	rule ptablename

@@ -75,6 +75,10 @@ class OverlogPlanner
 
 		plan_materializations 
 		plan_rules
+		#bottom_up
+
+		#return		
+
 		plan_facts
 		@program.plan
 
@@ -102,6 +106,7 @@ class OverlogPlanner
 	end
 	def plan_materializations
 		@tables.tuples.each do |table| 
+
 			rescols = join_of(@columns,TupleSet.new("cols",table))
 			cols = Array.new
 			# SORT!
@@ -127,6 +132,51 @@ class OverlogPlanner
 			
 			@program.definition(table)			
 		end
+	end
+
+	def bottom_up
+		# real bottom-up goes out the window, of course, if we have multiple programs in our state tables at once.
+		
+		#set = join_of(@expr,
+		#		join_of(@terms,
+		#			join_of(@programs,TupleSet.new("rules",*@rules.tuples))))
+	
+		#set = indxjoin_of(@terms,
+
+	
+	#	set =	indxjoin_of(@terms,@pexpr.schema.size + MyExpressionTable::Field::TERMID,
+	#			indxjoin_of(@expr,MyPrimaryExpressionTable::Field::EXPRESSIONID,TupleSet.new("pexpr",*@pexpr.tuples)))
+
+		allPrimaryExpressions = TupleSet.new("pexpr",*@pexpr.tuples)
+		allExpressions = indxjoin_of(@expr,"expressionid",allPrimaryExpressions)
+		allTerms = indxjoin_of(@terms,"termid",allExpressions)
+		allRules = indxjoin_of(@rules,"ruleid",allTerms)
+		allPrograms = indxjoin_of(@programs,"programid",allRules)
+		
+
+		#allPreds = join_of(@preds,allTerms)
+		plan_pred
+		
+		
+
+		set = allPrograms
+
+		#set =	join_of(@expr,TupleSet.new("pexpr",*@pexpr.tuples))
+		puts set.tups[0].schema
+		set.each do |s|
+			puts s.to_s
+		end
+
+		
+		#puts set
+		
+	end
+
+	def plan_bu_preds(set)
+		allPreds = join_of(@preds,allTerms)
+
+		
+
 	end
 
 	def plan_rules
@@ -166,11 +216,19 @@ class OverlogPlanner
 		# top-down is preferable to bottom up because, although we need to scan the whole tree anyway,
 		# we have an order of evaluation that we need to follow (materializations, facts, rules)
 		# and top-down search avoids repeating inferences.
+
 		sexpr = ScanJoin.new(pred,ts.tups[0].schema)
 		return sexpr.evaluate(ts)
 	end
 
-	def get_vars(it)
+	def indxjoin_of(tab,key,ts)
+		example = ts.tups[0].schema
+		pred = predoftable(tab)
+		sexpr = IndexJoin.new(pred,example,Key.new(example.position(key)),tab.primary)
+		return sexpr.evaluate(ts)
+	end
+
+	def get_vars(it)	
 			resexpr = join_of(@expr,TupleSet.new("p",it))
 			respexpr = join_of(@pexpr,resexpr)
 
@@ -205,27 +263,32 @@ class OverlogPlanner
 		return args
 	end
 
-	def pred_block
-		ret  = lambda do |pred,args|
-			thispred = Predicate.new(false,TableName.new(nil,pred.value("pred_txt")),Table::Event::NONE,args)
-			thispred.set(@progname,rulename,pred.value("pred_pos"))
-		end
-		return ret
-	end
-
 	def plan_preds(resterm,rulename)
 		# resterm is a joinable resultset of terms for the current rule.
+
 		respred = join_of(@preds,resterm)
 		predicates = Array.new
-		respred.order_by("term_pos") do |pred|
+		#respred.order_by("term_pos") do |pred|
+		respred.each do |pred|
 			# skip the head, for now
 		
 			# a row for each predicate.  let's grab the vars
 			args = get_vars(pred)
 			(scope,tname) = get_scope(pred.value("pred_txt"))
+
+			case pred.value("event_mod") 
+				when "insert"
+					event = Table::Event::INSERT
+				when "delete"
+					event = Table::Event::DELETE
+				when ""
+					event = Table::Event::NONE
+			else
+				raise "unknown event type: #{pred.value("event_mod")}\n"
+			end
 			
 			# notin, name, event, arguments
-			thispred = Predicate.new(false,TableName.new(scope,tname),Table::Event::NONE,args)
+			thispred = Predicate.new(false,TableName.new(scope,tname),event,args)
 			# I think the p2 system uses positions starting at 1.
 			thispred.set(@progname,rulename,pred.value("pred_pos"))
 			predicates << thispred

@@ -30,6 +30,18 @@ end
 
 
 class TestParse < Test::Unit::TestCase
+	def test_predarg
+		prep("program foo;
+			path(A,B) :- link(A,(B+C)/17,27*B);
+
+")
+
+		@expr.tuples.each do |e|
+			# there are only three args to the largest predicate
+			assert_operator(e.value("arg_pos"),:<,3)
+		end
+	end
+
 	def test_join1
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
@@ -94,8 +106,8 @@ class TestParse < Test::Unit::TestCase
 		prep("program foo;\nfoo(A,B,B + 1) :- bar(A,B);\n")
 
 		# there are 2 expressions in program foo, but 6 primary expressions
-		assert_equal(@pexpr.cardinality,6)
-		assert_equal(@expr.cardinality,8)
+		assert_equal(6,@pexpr.cardinality)
+		assert_equal(6,@expr.cardinality)
 		foundconst = 0
 		@pexpr.tuples.each do |t|
 			# don't forget to fix the quotes
@@ -112,7 +124,7 @@ class TestParse < Test::Unit::TestCase
 
 	def test_arbitrary_expr
 		prep("program foo;\nfoo(A,B,(B + 1) / (A-B*A) / 2) :- bar(A,B);\n")
-		assert_equal(@expr.cardinality,16)
+		assert_equal(@expr.cardinality,12)
 		# however, we are dealing with 10 primaryexpressions
 		assert_equal(@pexpr.cardinality,10)
 
@@ -125,9 +137,9 @@ class TestParse < Test::Unit::TestCase
 		@preds.tuples.each do |t|
 			name = t.values[3]
 			if (name.eql?("bar")) then
-				assert_equal(t.to_s,"<10, 9, 1, bar>")
+				assert_equal(t.to_s,"<12, 11, 1, bar, >")
 			elsif (name.eql?("foo")) then
-				assert_equal(t.to_s,"<4, 3, 0, foo>")
+				assert_equal(t.to_s,"<4, 3, 0, foo, >")
 			else
 				raise("buh?")
 			end

@@ -26,15 +26,8 @@ class OverlogCompiler
 # local modules
 
 class VisitGeneric < TreeWalker::Handler
-
-	def print_table(name,tuple)
-		if (@@verbose.eql?("v")) then
-			print name+"("+tuple.join(",")+");\n"
-		end
-	end
-
 	def initialize()
-		@@positions["_Universal"] = @@positions["_Termpos"] = @@positions["_Exprpos"] = @@positions["_Primpos"] = @@positions["Rule"] = 0
+		@@positions["_Universal"] = @@positions["_Termpos"] = @@positions["_Exprpos"] = @@positions["_Primpos"] = @@positions["Rule"] = @@positions["_Predarg"] = 0
 	end 
 	def semantic(text,obj)
 		@@positions["_Universal"] = @@positions["_Universal"] + 1
@@ -62,11 +55,10 @@ class VisitIExpression < VisitGeneric
 	def semantic(text,obj)
 		@@positions["_Exprpos"] = @@positions["_Exprpos"] + 1
 		@@positions["_Primpos"] = -1
-		print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text,"expr","??"])
-		#@ext.insert(TupleSet.new("expression",Tuple.new(@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],'"'+text+'"',"expr","??")),nil)
-		otabinsert(@ext,@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text)
-		@@current["expression"] =  @@positions["_Universal"]
+		otabinsert(@ext,@@positions["_Universal"],@@current["term"],@@positions["_Predarg"],@@positions["_Exprpos"],text)
+		#otabinsert(@ext,@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text)
 
+		@@current["expression"] =  @@positions["_Universal"]
 		super(text,obj)
 	end
 end
@@ -78,12 +70,9 @@ class VisitTerm < VisitGeneric
 	end
 	def semantic(text,obj)
 		super(text,obj)
-		@@positions["_Primpos"] = @@positions["_Exprpos"] = -1
+		@@positions["_Primpos"] = @@positions["_Predarg"] =  @@positions["_Exprpos"] = -1
 		@@positions["_Termpos"] = @@positions["_Termpos"] + 1
 		@@current["term"] = @@positions["_Universal"]
-		#nprint "\n"
-		print_table("term",[@@positions["_Universal"],@@current["rule"],@@positions["_Termpos"],text])
-		#@termt.insert(TupleSet.new("term",Tuple.new(@@positions["_Universal"],@@positions["Rule"],@@positions["_Termpos"],text)),nil)
 		otabinsert(@termt,@@positions["_Universal"],@@current["rule"],@@positions["_Termpos"],text)
 		@@positions["_Universal"] = @@positions["_Universal"] + 1
 	end
@@ -118,14 +107,19 @@ class VisitPredicate < VisitTerm
 	end
 	def semantic(text,obj)
 		super(text,obj)
-		if (text.eql?("")) then
-			print "EMPTY\n"
-			puts obj.inspect
-		end
-		
-		print_table("predicate",[@@positions["_Universal"],@@current["term"],'"'+@@state["Predicate"][0]+'"',@@positions["_Termpos"],nil])
-		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],@@state["Predicate"][0])
 
+		#puts obj.inspect
+		eventMod = obj.eventModifier.eql?("") ? nil : obj.eventModifier.text_value
+			
+		#otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],@@state["Predicate"][0])
+		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],obj.ptablename.text_value,eventMod)
+	end
+end
+
+class VisitPredArg < VisitGeneric
+	def semantic(text,obj)
+		super(text,obj)
+		@@positions["_Predarg"] = @@positions["_Predarg"] + 1
 	end
 end
 
@@ -135,10 +129,8 @@ class VisitConstant < VisitPexp
 		@pet = pt
 	end
 	def semantic(text,obj)
-		super(text,obj)
 		t = text.gsub('"',"")
-		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"const","??"])
-
+		super(t,obj)
 		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],t,"const","??")
 	end
 end
@@ -151,8 +143,6 @@ class VisitVariable < VisitPexp
 
 	def semantic(text,obj)
 		super(text,obj)
-		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??"])
-		#@pet.insert(TupleSet.new("variable",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+text+'"',"var","??")),nil)
 		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??")
 	end
 end
@@ -163,11 +153,9 @@ class VisitFact < VisitTerm
 		super(terms)
 	end
 	def semantic(text,obj)
-		@@positions["_Termpos"] = @@positions["_Primpos"] = -1
+		#@@positions["_Termpos"] = @@positions["_Primpos"] = -1
+		@@positions["_Termpos"] = -1
 		super(text,obj)
-		print_table("fact",[@@positions["_Universal"],@@current["program"],'"'+text+'"'])
-		#@ft.insert(TupleSet.new("fact",Tuple.new(@@positions["_Universal"],@@current["term"],text)),nil)
-		#otabinsert(@ft,@@positions["_Universal"],@@current["program"],text)
 		otabinsert(@ft,@@positions["_Universal"],@@current["term"],text)
 	end
 end
@@ -181,9 +169,6 @@ class VisitAggregate < VisitVariable
 	def semantic(text,obj)
 		#super(text,obj)
 		t = text.gsub('"',"")
-		print_table("primaryExpression",[@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+t+'"',"agg_func","??"])
-
-		#@pet.insert(TupleSet.new("function",Tuple.new(@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],'"'+obj.func.text_value+'"',"agg_func","??")),nil)
 		otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],obj.func.text_value,"agg_func","??")
 
 		super(obj.aggregatevariable.text_value,obj.aggregatevariable)
@@ -215,7 +200,6 @@ class VisitRule < VisitBase
 			name = text.hash.to_s
 		end
 		
-		print_table("rule",[@@positions["_Universal"],@@positions["Program"],'"'+t+'"',-1,nil,d])
 		otabinsert(@rt,@@positions["_Universal"],@@current["program"],name,nil,d)
 		@@current["rule"] = @@positions["_Universal"]
 	end
@@ -227,7 +211,6 @@ class VisitTable < VisitBase
 	end
 	def semantic(text,obj)
 		super(text,obj)
-		print_table("table",[@@positions["_Universal"],text])
 		@@current["table"] = @@positions["_Universal"]
 		#@tt.insert(TupleSet.new("table",Tuple.new(@@positions["_Universal"],text)),nil)
 		otabinsert(@tt,@@positions["_Universal"],text)
@@ -241,9 +224,6 @@ class VisitColumn < VisitGeneric
 	def semantic(text,obj)
 		super(text,obj)	
 		@@positions["_Primpos"] = @@positions["_Primpos"] + 1
-		#coltab(@@positions["TableName"],@@positions["Type"],text);
-		print_table("columns",[@@positions["TableName"],@@positions["Type"],'"'+text+'"'])
-		#@col.insert(TupleSet.new("column",Tuple.new(@@current["table"],@@positions["_Universal"],text)),nil)
 		otabinsert(@col,@@positions["_Universal"],@@current["table"],@@positions["_Primpos"],text)
 	end
 end
@@ -265,12 +245,7 @@ class VisitIndex < VisitGeneric
 	end
 	def semantic(text,obj)
 		suck_nums(obj).each do |indx|
-			#print "\tINDEX: "+indx+" at "+@@current["table"].to_s+"\n"
-			#indxtab(@@positions["TableName"],indx)
-			print_table("index",[@@positions["TableName"],indx])
-
 			super(text,obj)
-			#@ix.insert(TupleSet.new("index",Tuple.new(@@positions["_Universal"],@@current["table"],indx)),nil)
 			otabinsert(@ix,@@positions["_Universal"],@@current["table"],indx)
 		end
 	end
@@ -286,11 +261,6 @@ class VisitAssignment < VisitTerm
 	def semantic(text,obj)
 		super(text,obj)
 		t = obj.variable.text_value.gsub('"','\"')
-
-		#print "ASSIGN\n"
-		#puts obj.variable.text_value
-		#puts obj.expression.text_value
-		print_table("assign",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
 		otabinsert(@at,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],obj.variable.text_value,obj.expression.text_value)
 	end
 end
@@ -303,7 +273,6 @@ class VisitSelection < VisitTerm
 	end
 	def semantic(text,obj)
 		super(text,obj)
-		print_table("select",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text])
 		t = text.gsub('"','\"')
 		otabinsert(@st,@@positions["_Universal"], @@current["term"], @@positions["_Termpos"],text)
 	end
@@ -314,7 +283,6 @@ class VisitExpression < VisitIExpression
 	def semantic(text,obj)
 		if (!defined? obj.primaryexpression) then
 			super(text,obj)
-			#print_table("expression",[@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],text,"expr","??"])
 		end
 	end
 end
@@ -377,7 +345,7 @@ end
 		sky.add_handler("Watch",vg,1)
 		sky.add_handler("expression",VisitExpression.new(@extable),1)
 		sky.add_handler("primaryexpression",vg,1)
-		sky.add_handler("Predicate",VisitPredicate.new(@predicatetable,@termtable),1)
+		sky.add_handler("predicate",VisitPredicate.new(@predicatetable,@termtable),1)
 		sky.add_handler("Fact",VisitFact.new(@facttable,@termtable),1)
 		sky.add_handler("Definition",VisitTable.new(@tabletable),1)
 		sky.add_handler("TableName",vg,1)
@@ -410,6 +378,8 @@ end
 		sky.add_handler("LineTerminator",VisitNewline.new,1)
 
 		sky.add_handler("pprogramname",VisitProgram.new(@programtable),1)
+
+		sky.add_handler("uExpression",VisitPredArg.new,1)
 
 		#init_output("static_checks")
 		sky.walk("n")

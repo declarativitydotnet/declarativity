@@ -315,10 +315,11 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
 	class Field
 		EXPRESSIONID=0
 		TERMID=1
-		EXPR_POS=2
-		EXPR_TEXT=3
+		ARG_POS=2
+		EXPR_POS=3
+		EXPR_TEXT=4
 	end
-	@@SCHEMA = [Integer,Integer,Integer,String]
+	@@SCHEMA = [Integer,Integer,Integer,Integer,String]
 
 	def initialize
 		super(TableName.new(GLOBALSCOPE, "MyExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
@@ -352,11 +353,13 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
 		expressionid.position=0
 		termid = Variable.new("termid",Integer)
 		termid.position=1
+		arg_pos = Variable.new("arg_pos",Integer)
+		arg_pos.position=2
 		expr_pos = Variable.new("expr_pos",Integer)
-		expr_pos.position=2
+		expr_pos.position=3
 		expr_text = Variable.new("expr_text",String)
-		expr_text.position=3
-		return Schema.new("MyExpression",[expressionid,termid,expr_pos,expr_text])
+		expr_text.position=4
+		return Schema.new("MyExpression",[expressionid,termid,arg_pos,expr_pos,expr_text])
 	end
 end
 
@@ -464,8 +467,9 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
 		TERMID=1
 		PRED_POS=2
 		PRED_TXT=3
+		EVENT_MOD=4
 	end
-	@@SCHEMA = [Integer,Integer,Integer,String]
+	@@SCHEMA = [Integer,Integer,Integer,String,String]
 
 	def initialize
 		super(TableName.new(GLOBALSCOPE, "MyPredicateTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
@@ -503,7 +507,9 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
 		pred_pos.position=2
 		pred_txt = Variable.new("pred_txt",String)
 		pred_txt.position=3
-		return Schema.new("MyPredicate",[predicateid,termid,pred_pos,pred_txt])
+		event_mod = Variable.new("event_mod",String)
+		event_mod.position=4
+		return Schema.new("MyPredicate",[predicateid,termid,pred_pos,pred_txt,event_mod])
 	end
 end
 

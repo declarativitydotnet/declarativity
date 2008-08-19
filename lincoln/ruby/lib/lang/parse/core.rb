@@ -1,4 +1,4 @@
-# this grammar is mostly auto-generated from the rats! grammar of the java implementation of P2.
+#@ this grammar is mostly auto-generated from the rats! grammar of the java implementation of P2.
 # rats!, treetop and peg/leg are all implementations of packrat parsers, which are memoizing
 # parsers for Parsing expression Grammars (PEGs).
 # syntax-directed translation (rats! -> treetop) was performed using a PEG grammar in the peg/leg
@@ -676,7 +676,7 @@ module Overlog
       return cached
     end
 
-    r0 = _nt_Predicate
+    r0 = _nt_predicate
 
     node_cache[:rulehead][start_index] = r0
 
@@ -778,7 +778,7 @@ module Overlog
     if r1
       r0 = r1
     else
-      r2 = _nt_Predicate
+      r2 = _nt_predicate
       if r2
         r0 = r2
       else
@@ -1475,7 +1475,7 @@ module Overlog
       elements[1]
     end
 
-    def Predicate
+    def predicate
       elements[2]
     end
 
@@ -1499,7 +1499,7 @@ module Overlog
       r2 = _nt_opar
       s0 << r2
       if r2
-        r3 = _nt_Predicate
+        r3 = _nt_predicate
         s0 << r3
         if r3
           r4 = _nt_cpar
@@ -1525,25 +1525,29 @@ module Overlog
       elements[1]
     end
 
+    def eventModifier
+      elements[2]
+    end
+
     def arguments
       elements[3]
     end
   end
 
   module Predicate1
-					def Predicate
-						return self.ptablename
-						#return self
+					def predicate
+						#return self.ptablename
+						return self
 					end
-					def args
-						return arguments.value
-					end
+					#def args
+					#	return arguments.value
+					#end
   end
 
-  def _nt_Predicate
+  def _nt_predicate
     start_index = index
-    if node_cache[:Predicate].has_key?(index)
-      cached = node_cache[:Predicate][index]
+    if node_cache[:predicate].has_key?(index)
+      cached = node_cache[:predicate][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -1560,16 +1564,11 @@ module Overlog
       r3 = _nt_ptablename
       s0 << r3
       if r3
-        r5 = _nt_EventModifier
-        if r5
-          r4 = r5
-        else
-          r4 = SyntaxNode.new(input, index...index)
-        end
+        r4 = _nt_eventModifier
         s0 << r4
         if r4
-          r6 = _nt_arguments
-          s0 << r6
+          r5 = _nt_arguments
+          s0 << r5
         end
       end
     end
@@ -1582,7 +1581,7 @@ module Overlog
       r0 = nil
     end
 
-    node_cache[:Predicate][start_index] = r0
+    node_cache[:predicate][start_index] = r0
 
     return r0
   end
@@ -1595,6 +1594,12 @@ module Overlog
     def Spacing
       elements[2]
     end
+  end
+
+  module Notin1
+			def naught
+				return !text_value.eql?("")
+			end
   end
 
   def _nt_notin
@@ -1625,6 +1630,7 @@ module Overlog
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
       r0.extend(Notin0)
+      r0.extend(Notin1)
     else
       self.index = i0
       r0 = nil
@@ -1733,9 +1739,6 @@ module Overlog
 				return text_value
 
 			end
-			def expression
-				return self
-			end
   end
 
   def _nt_expression
@@ -1759,13 +1762,13 @@ module Overlog
       elements[0]
     end
 
-    def expression
+    def uExpression
       elements[1]
     end
   end
 
   module ExpressionList1
-    def expression
+    def uExpression
       elements[0]
     end
 
@@ -1786,7 +1789,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_expression
+    r1 = _nt_uExpression
     s0 << r1
     if r1
       s2, i2 = [], index
@@ -1795,7 +1798,7 @@ module Overlog
         r4 = _nt_Comma
         s3 << r4
         if r4
-          r5 = _nt_expression
+          r5 = _nt_uExpression
           s3 << r5
         end
         if s3.last
@@ -1824,6 +1827,28 @@ module Overlog
     end
 
     node_cache[:expressionList][start_index] = r0
+
+    return r0
+  end
+
+  module UExpression0
+			#@def uExpression
+			#	return self
+			#end
+  end
+
+  def _nt_uExpression
+    start_index = index
+    if node_cache[:uExpression].has_key?(index)
+      cached = node_cache[:uExpression][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    r0 = _nt_expression
+    r0.extend(UExpression0)
+
+    node_cache[:uExpression][start_index] = r0
 
     return r0
   end
@@ -3659,8 +3684,11 @@ module Overlog
 				#def arguments 
 				#	return self
 				#end
-				def value 	
-					return expressionList.value
+				#def value 	
+				#	return expressionList.value
+				#end
+				def args
+					return expressionList
 				end
   end
 
@@ -4387,49 +4415,54 @@ module Overlog
   end
 
   module EventModifier0
-    def EventType
+    def eventType
       elements[1]
     end
   end
 
-  def _nt_EventModifier
+  def _nt_eventModifier
     start_index = index
-    if node_cache[:EventModifier].has_key?(index)
-      cached = node_cache[:EventModifier][index]
+    if node_cache[:eventModifier].has_key?(index)
+      cached = node_cache[:eventModifier][index]
       @index = cached.interval.end if cached
       return cached
     end
 
-    i0, s0 = index, []
+    i1, s1 = index, []
     if input.index('#', index) == index
-      r1 = (SyntaxNode).new(input, index...(index + 1))
+      r2 = (SyntaxNode).new(input, index...(index + 1))
       @index += 1
     else
       terminal_parse_failure('#')
+      r2 = nil
+    end
+    s1 << r2
+    if r2
+      r3 = _nt_eventType
+      s1 << r3
+    end
+    if s1.last
+      r1 = (SyntaxNode).new(input, i1...index, s1)
+      r1.extend(EventModifier0)
+    else
+      self.index = i1
       r1 = nil
     end
-    s0 << r1
     if r1
-      r2 = _nt_EventType
-      s0 << r2
-    end
-    if s0.last
-      r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(EventModifier0)
+      r0 = r1
     else
-      self.index = i0
-      r0 = nil
+      r0 = SyntaxNode.new(input, index...index)
     end
 
-    node_cache[:EventModifier][start_index] = r0
+    node_cache[:eventModifier][start_index] = r0
 
     return r0
   end
 
-  def _nt_EventType
+  def _nt_eventType
     start_index = index
-    if node_cache[:EventType].has_key?(index)
-      cached = node_cache[:EventType][index]
+    if node_cache[:eventType].has_key?(index)
+      cached = node_cache[:eventType][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -4460,7 +4493,7 @@ module Overlog
       end
     end
 
-    node_cache[:EventType][start_index] = r0
+    node_cache[:eventType][start_index] = r0
 
     return r0
   end

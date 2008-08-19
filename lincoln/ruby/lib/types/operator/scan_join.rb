@@ -27,6 +27,7 @@ class ScanJoin < Join
 				end
 			end
 		end
+
 		return result
 	end
 

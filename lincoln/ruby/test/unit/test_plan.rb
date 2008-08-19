@@ -21,35 +21,53 @@ require 'lib/lang/parse/procedural.rb'
 
 class TestPlan < Test::Unit::TestCase
 	
+	def test_notin
+		sys = System.new
+		sys.init
+		utterance = "program path;
 
-	def test_materialization
+"
+
 		
+	end
+	def test_materialization
 		sys = System.new
 		sys.init
 		utterance = "program path;
 				define(link,keys(0,1),{String,String,Integer,String});
+                                path(A,B,C,D) :- link(A,B,C,D);
 "
 		
 		prog = prep(utterance)
 		assert_equal("0,1",prog.definitions[0].key.attributes.join(","))
 		assert_equal("String,String,Integer,String",prog.definitions[0].types.join(","))
 
-		# DRY?  yes yes I know.
-		# but we're illustrating equivalence.  the assertions should
-		# be encapsulated in a function, but in this test framework
-		# all subroutines are automatically executed!
-		utterance = "program path;
-				table path(
-          				+From String,
-          				+To String,
-          				Cost Integer
-          			);
+	end
+
+        def test_materialization2
+                # DRY?  yes yes I know.
+                # but we're illustrating equivalence.  the assertions should
+                # be encapsulated in a function, but in this test framework
+                # all subroutines are automatically executed!
+
+                sys = System.new
+                sys.init
+                utterance = "program path;
+                                table link(
+                                        +From String,
+                                        +To String,
+                                        Cost Integer,
+                                        Annotation String
+                                );
+                                path(A,B,C,D) :- link(A,B,C,D);
 
 "
+                prog = prep(utterance)
+                assert_equal("0,1",prog.definitions[0].key.attributes.join(","))
+                assert_equal("String,String,Integer,String",prog.definitions[0].types.join(","))
+        end
 
-		assert_equal("0,1",prog.definitions[0].key.attributes.join(","))
-		assert_equal("String,String,Integer,String",prog.definitions[0].types.join(","))
-	end
+
 	def test_oldprog1
 		sys = System.new
 		sys.init
