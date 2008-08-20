@@ -94,8 +94,9 @@ print "require 'lib/lang/parse/catalog_mixins'\n"
 # print "require 'lib/lang/plan/selection_term'\n"
 # print "require 'lib/lang/plan/program'\n"
 $tables.sort.each do |table, arr|
-  mixin = table+"TableMixin"
-	print "class "+table+"Table < ObjectTable\n"
+  tableCap = table[0..0].capitalize + table[1..table.length]
+  mixin = tableCap+"TableMixin"
+	print "class "+tableCap+"Table < ObjectTable\n"
   print "include "+mixin+" if defined? "+mixin+"\n"
 	if ($keys[table].size > 0) then
 		print "\t@@PRIMARY_KEY = Key.new("+$keys[table].join(",")+")\n"
@@ -112,7 +113,7 @@ $tables.sort.each do |table, arr|
 	print "\t@@SCHEMA = ["+$types[table].join(",")+"]\n"
 
 	print "\n\tdef initialize\n"
-        print "\t\tsuper(TableName.new(GLOBALSCOPE, \""+table+"Table\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
+        print "\t\tsuper(TableName.new(GLOBALSCOPE, \""+table+"\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
         print "\t\tif defined? "+mixin+" and "+mixin+".methods.include? 'initialize_mixin'\n\t\t\t then initialize_mixin \n\t\tend\n"
   # print "\t\tprogramKey = Key.new(Field::" + arr[0].upcase+")\n"
   # print "\t\tindex = HashIndex.new(self, programKey, Index::Type::SECONDARY)\n"
@@ -140,7 +141,7 @@ $tables.sort.each do |table, arr|
 		print "\t\t"+ arr[i]+" = Variable.new(\""+arr[i]+"\","+$types[table][i]+")\n"
 		print "\t\t"+arr[i]+".position="+i.to_s+"\n"
 	end
-	print "\t\treturn Schema.new(\""+table+"\",["+arr.join(",")+"])\n"
+	print "\t\treturn Schema.new(\""+tableCap+"\",["+arr.join(",")+"])\n"
 	print "\tend\n"
 	print "end\n\n"
 end

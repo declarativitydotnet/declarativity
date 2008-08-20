@@ -23,7 +23,6 @@ end
 
 def otabinsert(otab,*set)
 	tup = Tuple.new(*set)
-
 	tup.schema = otab.schema_of
 
 	#print "TUPLE: "+tup.inspect+"\n"

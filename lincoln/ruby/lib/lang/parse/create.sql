@@ -112,7 +112,7 @@ table MyRule (
 	delete Integer
 ) 
 
-table Query (
+table query (
 	  program String,
 	  rule String,
 	  public Integer,

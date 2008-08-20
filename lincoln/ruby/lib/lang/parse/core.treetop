@@ -37,15 +37,20 @@ include Ddl
 		Spacing ';' Spacing
 	end
   	rule Clause
-		     Rule  /     Watch  /     Fact  /     Definition  /  Import   / statement
+		     Rule  /     Watch  /     Fact  /     Definition  /  Require   / statement
 
 			
 	end
 	rule statement
 		super
 	end
-     	rule Import
-		  'import' Spacing Typename   
+     	rule Require
+		  'require' Spacing DoubleQuote Filename DoubleQuote
+		  {
+		    def Require
+		      return self.Filename
+	      end
+		  }
 	end
      	rule Fact
 		  ptablename opar expressionList cpar
@@ -339,6 +344,9 @@ include Ddl
 		#' '  /  '\t'  /  '\f'   
 		[ \t\f]
 	end
+	  rule DoubleQuote
+	  '"'
+  end
    	rule TraditionalComment
 		  '/*'    ('*' !'/'  /  !'*'  .   )*  '*/'   
 	end
@@ -374,6 +382,11 @@ include Ddl
 	end
   	rule eventModifier
 		  ('#' eventType)?   
+		  {
+		    def eventModifier
+		      return self.eventType
+	      end
+      }
 	end
   	rule eventType
 		     'insert'  /     'delete'   
@@ -411,6 +424,9 @@ include Ddl
   	rule Typename
 		     PrimitiveType  /     ClassType   
 	end
+  	rule Filename
+		     name ('/' name)*
+	end
   	rule PrimitiveType
 		     'byte'  /     'short'  /     'char'  /     'string'  /     'int'  /     'long'  /     'float'  /     'double'  /     'boolean'   
 	end
@@ -418,7 +434,7 @@ include Ddl
 		     ('[' [0-9]*  ']'   )+    
 	end
   	rule ClassType
-		  name    ('.' name   )*    
+		  name    ('::' name   )*    
 	end
      	rule Constant
 		 StringConstant Spacing / FloatConstant Spacing  /  LongConstant Spacing  /  IntegerConstant Spacing  /   NullConstant Spacing  /  BooleanConstant Spacing  /  InfinityConstant Spacing  /  Vector Spacing  /  Matrix Spacing   
@@ -494,7 +510,7 @@ include Ddl
 		  'infinity'   
 	end
   	rule NullConstant
-		  'null'   
+		  'null' / 'nil'   
 	end
   	rule Vector
 		  IntVector  /  FloatVector   

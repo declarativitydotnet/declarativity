@@ -7,13 +7,13 @@ define(priority, keys(0,1), {String, TableName, Integer});
 define(delta, {Float, String, TableName, TupleSet, TupleSet});
 
 reschedule
-schedule(Time, Program, Name, Insertions, Deletions) :-
+global::schedule(Time, Program, Name, Insertions, Deletions) :-
 	delta(Time, Program, Name, Insertions, Deletions);
 	
 schedulePublic 
-schedule(Time, Program2, Name, Insertions, Deletions) :-
+global::schedule(Time, Program2, Name, Insertions, Deletions) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
-	query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
+	global::query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
 	/* next line changed to remove && expression, which doesn't parse right */
 	Public == true, Input == Name, Program1 != Program2;
 
@@ -26,29 +26,29 @@ delta(Time, Program, Name, Insertions, Deletions) :-
 
 /* Delete what has been evaluated in the current clock. */
 cleanup 
-delete schedule(Time, Program, Name, Insertions, Deletions) :-
+delete global::schedule(Time, Program, Name, Insertions, Deletions) :-
 	runnable(Time, Program, Name, Insertions, Deletions);
 
 /* Identify the runnable tuples. */
 runnable 
 runnable(Time, Program, Name, Insertions, Deletions) :-
 	strata#insert(Program, Time, Priority),
-	schedule(Time, Program, Name, Insertions, Deletions),
+	global::schedule(Time, Program, Name, Insertions, Deletions),
 	priority(Program, Name, Priority);
 	
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
 strata 
 strata(Program, Time, min<Priority>) :-
-	clock(Location, Time),
-	schedule(Time, Program, Name, Insertions, Deletions),
+	global::clock(Location, Time),
+	global::schedule(Time, Program, Name, Insertions, Deletions),
 	priority(Program, Name, Priority);
 
 /* This case handles those programs that do not have a query
     (and hence no priority) for the tuple 'Name'. */
 runnable(Time, Program, Name, Insertions, Deletions) :-
-	clock(Location, Time),
-	schedule(Time, Program, Name, Insertions, Deletions),
+	global::clock(Location, Time),
+	global::schedule(Time, Program, Name, Insertions, Deletions),
 	notin priority(Program, Name, Priority);
 	
 	
@@ -60,7 +60,7 @@ define(schedulePeriodic, {String, Float, Float, Float, Float, String});
 /* Schedule next periodic. */
 renewPeriodic
 schedulePeriodic(Id, Period, TTL, Time+Period, Count+1, Program) :-
-	clock#insert(Location, Time),
+	global::clock#insert(Location, Time),
 	global::periodic(Id, Period, TTL, Time, Count, Program),
 	Count < TTL;
 			
@@ -69,11 +69,13 @@ schedulePeriodic(Id, Period, TTL, Time+1+Offset, Count+1, Program) :-
 	config(Time, Program, Object),
 	global::periodic(Id, Period, TTL, Offset, Count, Program);
 	
+/* THIS NEXT WON'T PARSE YET DUE TO NESTED TUPLES */
 /* Schedule the periodic and update its execution count. */
+/* 
 schedulePeriodic 
 global::periodic(Id, Period, TTL, Time, Count, Program) :-
 	periodicScheduler(schedulePeriodic(Id, Period, TTL, Time, Count, Program));
-
+*/
 
 /*******************************************************************/
 /*** Fact scheduler */
@@ -88,27 +90,38 @@ facts(Program, Name, tupleset<Tuple>) :-
 installFacts1 
 runnable(Time, Program, Name, Facts, null) :-
 	facts(Program, Name, Facts), Program == "compile",
-	clock(Location, Time);
+	global::clock(Location, Time);
 	
 installFacts2 
-schedule(Time+1, Program, Name, Facts, null) :-
+global::schedule(Time+1, Program, Name, Facts, null) :-
 	facts(Program, Name, Facts), Program != "compile",
-	clock(Location, Time);
+	global::clock(Location, Time);
 	
 /*******************************************************************/
 /*** Schedule compile */
 
-/**  JAVA-SPECIFIC GUNK BELOW
-define(config, {Float, String, p2.lang.plan.Program});
+/* define(config, {Float, String, p2.lang.plan.Program}); */
+define(config, {Float, String, Program});
 
 configProgram 
-config(Time, Program, Object) :-
-	compiler#insert(Program, Owner, File, Object),
-	clock(Location, Time),
-	Object.plan();
-		
+/* config(Time, Program, Object) :- 
+	compiler#insert(Program, Owner, File, Object), 
+	global::clock(Location, Time),
+	Object.plan(); */
+
+	config(Time, Program, Object) :- 
+		compiler#insert(Program, Owner, File, Object), 
+		global::clock(Location, Time);
+						
+/*
 compileConfig 
 runnable(Time, "compile", Tuples.name(), Tuples, null) :-
 	config(Time, Program, Object),
 	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
-**/
+*/
+compileConfig 
+runnable(String, "compile", Name, Tuples, nil) :-
+	config(Time, Program, Object),
+	Tuples := TupleSet.new(TableName.new("compile", "config"), Object.tuple()),
+	Name = Tuples.name();
+

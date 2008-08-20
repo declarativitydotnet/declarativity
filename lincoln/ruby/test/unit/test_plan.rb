@@ -81,8 +81,8 @@ class TestPlan < Test::Unit::TestCase
     tn, ts = gen_link_tuples
 		result = prog.get_queries(tn)[0].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["1","2","10"])
-		assert_equal(result.tups[1].values, ["2","3","5"])
+		assert_equal(result.tups[0].values, ["N1","N2",10])
+		assert_equal(result.tups[1].values, ["N2","N3",5])
 	end
 
 	def test_prog
@@ -111,13 +111,13 @@ class TestPlan < Test::Unit::TestCase
 	def gen_link_tuples
 	  # we need to manually construct a schema spec; we can't infer it from link (materialized by the overlog above) 
 		# because link is empty, and schema belong to tuples, not tables (not that link's fields have no names)
-		t1 = Tuple.new("1","2","10","first")
-		t2 = Tuple.new("2","3","5","second")
+		t1 = Tuple.new("N1","N2",10,"first")
+		t2 = Tuple.new("N2","N3",5,"second")
 
 		# ... from test_program
-		v1 = Variable.new("From", Integer)
+		v1 = Variable.new("From", String)
 		v1.position = 0
-		v2 = Variable.new("To", Integer)
+		v2 = Variable.new("To", String)
 		v2.position = 1
 		v3 = Variable.new("Cost", Float)
 		v3.position = 2
@@ -139,7 +139,7 @@ class TestPlan < Test::Unit::TestCase
 
 		#P2
 		utterance = "program foo;
-				define(path,keys(0,1),{String,String});
+				define(path,keys(0,1),{String,String,Integer});
 				define(link,keys(0,1),{String,String});
 				path(A,B,Cost) :- link(A,B),Cost := 1;
 				path(A,B,Cost) :- link(A,Z), path(Z,B,C), Cost := C + 1;
@@ -184,12 +184,54 @@ class TestPlan < Test::Unit::TestCase
     tn, ts = gen_link_tuples
     result = prog.get_queries(tn)[0].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["1","2",10.0])
-		assert_equal(result.tups[1].values, ["2","3",7.5])
+		assert_equal(result.tups[0].values, ["N1","N2",10.0])
+		assert_equal(result.tups[1].values, ["N2","N3",7.5])
     result = prog.get_queries(tn)[1].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["1","2",1])
-		assert_equal(result.tups[1].values, ["2","3",2])
+		assert_equal(result.tups[0].values, ["N1","N2",1])
+		assert_equal(result.tups[1].values, ["N2","N3",2])
+  end
+
+  def test_event
+    $catalog = nil
+    sys = System.new
+    sys.init
+    utterance = "program test_event;
+				define(link,keys(0,1),{String,String,Integer,String});
+				define(delta,keys(0,1),{String,String,Integer,String});
+				define(epsilon,keys(0,1),{String,String,Integer,String});
+				delta(A,B,C,D) :- link#insert(A,B,C,D);
+				epsilon(A,B,C,D) :- link#delete(A,B,C,D);				
+				"
+		prog = prep(utterance)
+		tn, ts = gen_link_tuples
+		
+		result = prog.get_queries(tn)[0].evaluate(ts)
+		assert_equal(result.tups.length, 2)
+		assert_equal(result.tups[0].values, ["N1","N2",10,"first"])
+		assert_equal(result.tups[1].values, ["N2","N3",5,"second"])
+		
+		# Should be 0 tuples in epsilon!  Doesn't currently work.
+		# assert_equal(0, result.tups.length)
+	end
+
+  def test_require
+    $catalog = nil
+    sys = System.new
+    sys.init
+    utterance = "program reqtest;
+      require \"webrick\";
+      define(link,keys(0,1),{String, String, Integer, Tuple});
+      define(path,keys(0,1),{String, String, Integer, Tuple});
+      path(A,B,C,T) :- link(A, B, C, T);
+    "
+    prog = prep(utterance)
+    tn, ts = gen_link_tuples
+
+		result = prog.get_queries(tn)[0].evaluate(ts)
+		assert_equal(result.tups.length, 2)
+		assert_equal(result.tups[0].values, ["N1","N2",10,"first"])
+		assert_equal(result.tups[1].values, ["N2","N3",5,"second"])
   end
 
 	def prep(utterance)

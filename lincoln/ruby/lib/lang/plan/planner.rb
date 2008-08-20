@@ -281,7 +281,7 @@ class OverlogPlanner
 					event = Table::Event::INSERT
 				when "delete"
 					event = Table::Event::DELETE
-				when ""
+				when "", nil
 					event = Table::Event::NONE
 			else
 				raise "unknown event type: #{pred.value("event_mod")}\n"

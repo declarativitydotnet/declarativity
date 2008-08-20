@@ -68,6 +68,9 @@ class Rule < Clause
 		body.each do |term|
 			if (term.class <= Predicate)
         table = Table.find_table(term.name)
+        if table.nil?
+          raise "Table " + term.name.to_s + " not found in catalog" 
+        end
 				if (table.table_type == Table::TableType::EVENT || term.event != Table::Event::NONE) 
 					if (!event.nil?)  				  
 						raise PlannerException, "Multiple event predicates in rule " + name.to_s + 

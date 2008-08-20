@@ -109,8 +109,7 @@ class VisitPredicate < VisitTerm
 		super(text,obj)
 
 		#puts obj.inspect
-		eventMod = obj.eventModifier.eql?("") ? nil : obj.eventModifier.text_value
-			
+		eventMod = obj.eventModifier.text_value.eql?("") ? nil : obj.eventModifier.elements[1].text_value
 		#otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],@@state["Predicate"][0])
 		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],obj.ptablename.text_value,eventMod)
 	end
@@ -294,6 +293,12 @@ class VisitNewline < VisitGeneric
 	end
 end
 
+class VisitRequire < VisitGeneric
+  def semantic(text,obj)
+    require text
+    super(text,obj)
+  end
+end
 
 # class body
 
@@ -343,6 +348,7 @@ end
 		sky.add_handler("Word",vg,1)
 		sky.add_handler("Location",vg,1)
 		sky.add_handler("Watch",vg,1)
+		sky.add_handler("Require", VisitRequire.new,1)
 		sky.add_handler("expression",VisitExpression.new(@extable),1)
 		sky.add_handler("primaryexpression",vg,1)
 		sky.add_handler("predicate",VisitPredicate.new(@predicatetable,@termtable),1)

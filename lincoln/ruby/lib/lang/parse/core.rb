@@ -256,7 +256,7 @@ module Overlog
           if r4
             r0 = r4
           else
-            r5 = _nt_Import
+            r5 = _nt_Require
             if r5
               r0 = r5
             else
@@ -293,30 +293,44 @@ module Overlog
     return r0
   end
 
-  module Import0
+  module Require0
     def Spacing
       elements[1]
     end
 
-    def Typename
+    def DoubleQuote
       elements[2]
+    end
+
+    def Filename
+      elements[3]
+    end
+
+    def DoubleQuote
+      elements[4]
     end
   end
 
-  def _nt_Import
+  module Require1
+		    def Require
+		      return self.Filename
+	      end
+  end
+
+  def _nt_Require
     start_index = index
-    if node_cache[:Import].has_key?(index)
-      cached = node_cache[:Import][index]
+    if node_cache[:Require].has_key?(index)
+      cached = node_cache[:Require][index]
       @index = cached.interval.end if cached
       return cached
     end
 
     i0, s0 = index, []
-    if input.index('import', index) == index
-      r1 = (SyntaxNode).new(input, index...(index + 6))
-      @index += 6
+    if input.index('require', index) == index
+      r1 = (SyntaxNode).new(input, index...(index + 7))
+      @index += 7
     else
-      terminal_parse_failure('import')
+      terminal_parse_failure('require')
       r1 = nil
     end
     s0 << r1
@@ -324,19 +338,28 @@ module Overlog
       r2 = _nt_Spacing
       s0 << r2
       if r2
-        r3 = _nt_Typename
+        r3 = _nt_DoubleQuote
         s0 << r3
+        if r3
+          r4 = _nt_Filename
+          s0 << r4
+          if r4
+            r5 = _nt_DoubleQuote
+            s0 << r5
+          end
+        end
       end
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
-      r0.extend(Import0)
+      r0.extend(Require0)
+      r0.extend(Require1)
     else
       self.index = i0
       r0 = nil
     end
 
-    node_cache[:Import][start_index] = r0
+    node_cache[:Require][start_index] = r0
 
     return r0
   end
@@ -4025,6 +4048,27 @@ module Overlog
     return r0
   end
 
+  def _nt_DoubleQuote
+    start_index = index
+    if node_cache[:DoubleQuote].has_key?(index)
+      cached = node_cache[:DoubleQuote][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    if input.index('"', index) == index
+      r0 = (SyntaxNode).new(input, index...(index + 1))
+      @index += 1
+    else
+      terminal_parse_failure('"')
+      r0 = nil
+    end
+
+    node_cache[:DoubleQuote][start_index] = r0
+
+    return r0
+  end
+
   module TraditionalComment0
   end
 
@@ -4418,6 +4462,12 @@ module Overlog
     def eventType
       elements[1]
     end
+  end
+
+  module EventModifier1
+		    def eventModifier
+		      return self.eventType
+	      end
   end
 
   def _nt_eventModifier
@@ -4887,6 +4937,75 @@ module Overlog
     return r0
   end
 
+  module Filename0
+    def name
+      elements[1]
+    end
+  end
+
+  module Filename1
+    def name
+      elements[0]
+    end
+
+  end
+
+  def _nt_Filename
+    start_index = index
+    if node_cache[:Filename].has_key?(index)
+      cached = node_cache[:Filename][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_name
+    s0 << r1
+    if r1
+      s2, i2 = [], index
+      loop do
+        i3, s3 = index, []
+        if input.index('/', index) == index
+          r4 = (SyntaxNode).new(input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure('/')
+          r4 = nil
+        end
+        s3 << r4
+        if r4
+          r5 = _nt_name
+          s3 << r5
+        end
+        if s3.last
+          r3 = (SyntaxNode).new(input, i3...index, s3)
+          r3.extend(Filename0)
+        else
+          self.index = i3
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
+      end
+      r2 = SyntaxNode.new(input, i2...index, s2)
+      s0 << r2
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Filename1)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:Filename][start_index] = r0
+
+    return r0
+  end
+
   def _nt_PrimitiveType
     start_index = index
     if node_cache[:PrimitiveType].has_key?(index)
@@ -5106,11 +5225,11 @@ module Overlog
       s2, i2 = [], index
       loop do
         i3, s3 = index, []
-        if input.index('.', index) == index
-          r4 = (SyntaxNode).new(input, index...(index + 1))
-          @index += 1
+        if input.index('::', index) == index
+          r4 = (SyntaxNode).new(input, index...(index + 2))
+          @index += 2
         else
-          terminal_parse_failure('.')
+          terminal_parse_failure('::')
           r4 = nil
         end
         s3 << r4
@@ -6567,12 +6686,30 @@ module Overlog
       return cached
     end
 
+    i0 = index
     if input.index('null', index) == index
-      r0 = (SyntaxNode).new(input, index...(index + 4))
+      r1 = (SyntaxNode).new(input, index...(index + 4))
       @index += 4
     else
       terminal_parse_failure('null')
-      r0 = nil
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      if input.index('nil', index) == index
+        r2 = (SyntaxNode).new(input, index...(index + 3))
+        @index += 3
+      else
+        terminal_parse_failure('nil')
+        r2 = nil
+      end
+      if r2
+        r0 = r2
+      else
+        self.index = i0
+        r0 = nil
+      end
     end
 
     node_cache[:NullConstant][start_index] = r0

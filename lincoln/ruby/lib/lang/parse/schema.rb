@@ -12,7 +12,7 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
 	@@SCHEMA = [String,String,Integer,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "AssignmentTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Assignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? AssignmentTableMixin and AssignmentTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -63,7 +63,7 @@ include CompilerTableMixin if defined? CompilerTableMixin
 	@@SCHEMA = [String,String,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "CompilerTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Compiler"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? CompilerTableMixin and CompilerTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -113,7 +113,7 @@ include FactTableMixin if defined? FactTableMixin
 	@@SCHEMA = [String,TableName,Tuple]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "FactTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Fact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? FactTableMixin and FactTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -163,7 +163,7 @@ include IndexTableMixin if defined? IndexTableMixin
 	@@SCHEMA = [TableName,Key,TableType,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "IndexTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Index"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? IndexTableMixin and IndexTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -217,7 +217,7 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
 	@@SCHEMA = [Integer,Integer,Integer,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyAssignmentTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyAssignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyAssignmentTableMixin and MyAssignmentTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -270,7 +270,7 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
 	@@SCHEMA = [Integer,Integer,Integer,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyColumnTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyColumn"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyColumnTableMixin and MyColumnTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -322,7 +322,7 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
 	@@SCHEMA = [Integer,Integer,Integer,Integer,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyExpressionTableMixin and MyExpressionTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -374,7 +374,7 @@ include MyFactTableMixin if defined? MyFactTableMixin
 	@@SCHEMA = [Integer,Integer,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyFactTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyFact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyFactTableMixin and MyFactTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -422,7 +422,7 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
 	@@SCHEMA = [Integer,Integer,Integer]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyIndexTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyIndex"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyIndexTableMixin and MyIndexTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -472,7 +472,7 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
 	@@SCHEMA = [Integer,Integer,Integer,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyPredicateTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyPredicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyPredicateTableMixin and MyPredicateTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -527,7 +527,7 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
 	@@SCHEMA = [Integer,Integer,Integer,String,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyPrimaryExpressionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyPrimaryExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyPrimaryExpressionTableMixin and MyPrimaryExpressionTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -581,7 +581,7 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
 	@@SCHEMA = [Integer,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyProgramTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyProgram"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyProgramTableMixin and MyProgramTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -631,7 +631,7 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
 	@@SCHEMA = [Integer,Integer,String,Integer,Integer]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyRuleTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyRule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyRuleTableMixin and MyRuleTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -684,7 +684,7 @@ include MySelectionTableMixin if defined? MySelectionTableMixin
 	@@SCHEMA = [Integer,Integer,Integer,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MySelectionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MySelection"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MySelectionTableMixin and MySelectionTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -733,7 +733,7 @@ include MyTableTableMixin if defined? MyTableTableMixin
 	@@SCHEMA = [Integer,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyTableTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyTableTableMixin and MyTableTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -780,7 +780,7 @@ include MyTermTableMixin if defined? MyTermTableMixin
 	@@SCHEMA = [Integer,Integer,Integer,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "MyTermTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "MyTerm"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? MyTermTableMixin and MyTermTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -831,7 +831,7 @@ include OperatorTableMixin if defined? OperatorTableMixin
 	@@SCHEMA = [String,String,String,Float]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "OperatorTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Operator"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? OperatorTableMixin and OperatorTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -883,7 +883,7 @@ include PredicateTableMixin if defined? PredicateTableMixin
 	@@SCHEMA = [String,String,Integer,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "PredicateTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Predicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? PredicateTableMixin and PredicateTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -935,7 +935,7 @@ include ProgramTableMixin if defined? ProgramTableMixin
 	@@SCHEMA = [String,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "ProgramTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Program"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? ProgramTableMixin and ProgramTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -972,69 +972,6 @@ include ProgramTableMixin if defined? ProgramTableMixin
 	end
 end
 
-class QueryTable < ObjectTable
-include QueryTableMixin if defined? QueryTableMixin
-	@@PRIMARY_KEY = Key.new
-	class Field
-		PROGRAM=0
-		RULE=1
-		PUBLIC=2
-		DELETE=3
-		EVENT=4
-		INPUT=5
-		OUTPUT=6
-		OBJECT=7
-	end
-	@@SCHEMA = [String,String,Integer,Integer,String,TableName,TableName,String]
-
-	def initialize
-		super(TableName.new(GLOBALSCOPE, "QueryTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		if defined? QueryTableMixin and QueryTableMixin.methods.include? 'initialize_mixin'
-			 then initialize_mixin 
-		end
-	end
-
-	def field(name)
-
-		eval('Field::'+name)
-
-	end
-	def scope
-
-		GLOBALSCOPE
-
-	end
-	def pkey
-
-		@@PRIMARY_KEY
-
-	end
-	def schema
-
-		@@SCHEMA
-
-	end
-	def schema_of
-		program = Variable.new("program",String)
-		program.position=0
-		rule = Variable.new("rule",String)
-		rule.position=1
-		public = Variable.new("public",Integer)
-		public.position=2
-		delete = Variable.new("delete",Integer)
-		delete.position=3
-		event = Variable.new("event",String)
-		event.position=4
-		input = Variable.new("input",TableName)
-		input.position=5
-		output = Variable.new("output",TableName)
-		output.position=6
-		object = Variable.new("object",String)
-		object.position=7
-		return Schema.new("Query",[program,rule,public,delete,event,input,output,object])
-	end
-end
-
 class RuleTable < ObjectTable
 include RuleTableMixin if defined? RuleTableMixin
 	@@PRIMARY_KEY = Key.new(0,1)
@@ -1048,7 +985,7 @@ include RuleTableMixin if defined? RuleTableMixin
 	@@SCHEMA = [String,String,String,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "RuleTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Rule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? RuleTableMixin and RuleTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -1101,7 +1038,7 @@ include SelectionTableMixin if defined? SelectionTableMixin
 	@@SCHEMA = [String,String,Integer,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "SelectionTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Selection"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? SelectionTableMixin and SelectionTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -1151,7 +1088,7 @@ include WatchTableMixin if defined? WatchTableMixin
 	@@SCHEMA = [String,String,String]
 
 	def initialize
-		super(TableName.new(GLOBALSCOPE, "WatchTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		super(TableName.new(GLOBALSCOPE, "Watch"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		if defined? WatchTableMixin and WatchTableMixin.methods.include? 'initialize_mixin'
 			 then initialize_mixin 
 		end
@@ -1185,6 +1122,69 @@ include WatchTableMixin if defined? WatchTableMixin
 		modifier = Variable.new("modifier",String)
 		modifier.position=2
 		return Schema.new("Watch",[program,tablename,modifier])
+	end
+end
+
+class QueryTable < ObjectTable
+include QueryTableMixin if defined? QueryTableMixin
+	@@PRIMARY_KEY = Key.new
+	class Field
+		PROGRAM=0
+		RULE=1
+		PUBLIC=2
+		DELETE=3
+		EVENT=4
+		INPUT=5
+		OUTPUT=6
+		OBJECT=7
+	end
+	@@SCHEMA = [String,String,Integer,Integer,String,TableName,TableName,String]
+
+	def initialize
+		super(TableName.new(GLOBALSCOPE, "query"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		if defined? QueryTableMixin and QueryTableMixin.methods.include? 'initialize_mixin'
+			 then initialize_mixin 
+		end
+	end
+
+	def field(name)
+
+		eval('Field::'+name)
+
+	end
+	def scope
+
+		GLOBALSCOPE
+
+	end
+	def pkey
+
+		@@PRIMARY_KEY
+
+	end
+	def schema
+
+		@@SCHEMA
+
+	end
+	def schema_of
+		program = Variable.new("program",String)
+		program.position=0
+		rule = Variable.new("rule",String)
+		rule.position=1
+		public = Variable.new("public",Integer)
+		public.position=2
+		delete = Variable.new("delete",Integer)
+		delete.position=3
+		event = Variable.new("event",String)
+		event.position=4
+		input = Variable.new("input",TableName)
+		input.position=5
+		output = Variable.new("output",TableName)
+		output.position=6
+		object = Variable.new("object",String)
+		object.position=7
+		return Schema.new("Query",[program,rule,public,delete,event,input,output,object])
 	end
 end
 
