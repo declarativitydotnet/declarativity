@@ -128,7 +128,18 @@ class OverlogPlanner
 			(scope,tname) = get_scope(table.value("tablename"))
 		
 			# TABLE TYPE AND LIFETIME UNIMPLEMENTED...
-			table = BasicTable.new(TableName.new(scope,tname),Table::INFINITY, Table::INFINITY,indxthing,typething)
+			#table = BasicTable.new(TableName.new(scope,tname),Table::INFINITY, Table::INFINITY,indxthing,typething)
+
+			# hackensack
+			tn = table.value("tablename")
+			if tn.eql?("periodic") then
+				print "periodic, sucker!\n"
+				table = EventTable.new(TableName.new(nil,tn),typething)
+			else
+				#print "tn=#{tn}\n" 
+				(scope,tname) = get_scope(tn)
+				table = RefTable.new(TableName.new(scope,tname),indxthing,typething)
+			end
 			
 			@program.definition(table)			
 		end
@@ -155,7 +166,7 @@ class OverlogPlanner
 		
 
 		#allPreds = join_of(@preds,allTerms)
-		plan_pred
+		plan_preds(allPrograms,nil)
 		
 		
 
@@ -289,6 +300,8 @@ class OverlogPlanner
 			
 			# notin, name, event, arguments
 			thispred = Predicate.new(false,TableName.new(scope,tname),event,args)
+			#puts thispred.inspect
+
 			# I think the p2 system uses positions starting at 1.
 			thispred.set(@progname,rulename,pred.value("pred_pos"))
 			predicates << thispred

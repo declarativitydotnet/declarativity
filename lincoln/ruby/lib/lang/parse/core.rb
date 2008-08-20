@@ -2823,19 +2823,19 @@ module Overlog
     end
 
     i0 = index
-    r1 = _nt_Castexpression
+    r1 = _nt_Postfixexpression
     if r1
       r0 = r1
     else
-      r2 = _nt_LogicalNegationexpression
+      r2 = _nt_Castexpression
       if r2
         r0 = r2
       else
-        r3 = _nt_Inclusiveexpression
+        r3 = _nt_LogicalNegationexpression
         if r3
           r0 = r3
         else
-          r4 = _nt_Postfixexpression
+          r4 = _nt_Inclusiveexpression
           if r4
             r0 = r4
           else
@@ -3185,7 +3185,7 @@ module Overlog
   end
 
   module Postfixexpression0
-    def Postfixexpression
+    def primaryexpression
       elements[0]
     end
 
@@ -3193,9 +3193,6 @@ module Overlog
       elements[2]
     end
 
-    def Reference
-      elements[3]
-    end
   end
 
   module Postfixexpression1
@@ -3205,10 +3202,6 @@ module Overlog
 
     def arguments
       elements[1]
-    end
-
-    def Method
-      elements[2]
     end
   end
 
@@ -3255,61 +3248,62 @@ module Overlog
     end
 
     i0 = index
-    r1 = _nt_primaryexpression
+    i1, s1 = index, []
+    r2 = _nt_primaryexpression
+    s1 << r2
+    if r2
+      if input.index('.', index) == index
+        r3 = (SyntaxNode).new(input, index...(index + 1))
+        @index += 1
+      else
+        terminal_parse_failure('.')
+        r3 = nil
+      end
+      s1 << r3
+      if r3
+        r4 = _nt_name
+        s1 << r4
+        if r4
+          r6 = _nt_arguments
+          if r6
+            r5 = r6
+          else
+            r5 = SyntaxNode.new(input, index...index)
+          end
+          s1 << r5
+        end
+      end
+    end
+    if s1.last
+      r1 = (SyntaxNode).new(input, i1...index, s1)
+      r1.extend(Postfixexpression0)
+    else
+      self.index = i1
+      r1 = nil
+    end
     if r1
       r0 = r1
     else
-      i2, s2 = index, []
-      r3 = _nt_Postfixexpression
-      s2 << r3
-      if r3
-        if input.index('.', index) == index
-          r4 = (SyntaxNode).new(input, index...(index + 1))
-          @index += 1
+      r7 = _nt_primaryexpression
+      if r7
+        r0 = r7
+      else
+        i8, s8 = index, []
+        r9 = _nt_Postfixexpression
+        s8 << r9
+        if r9
+          r10 = _nt_arguments
+          s8 << r10
+        end
+        if s8.last
+          r8 = (SyntaxNode).new(input, i8...index, s8)
+          r8.extend(Postfixexpression1)
         else
-          terminal_parse_failure('.')
-          r4 = nil
+          self.index = i8
+          r8 = nil
         end
-        s2 << r4
-        if r4
-          r5 = _nt_name
-          s2 << r5
-          if r5
-            r6 = _nt_Reference
-            s2 << r6
-          end
-        end
-      end
-      if s2.last
-        r2 = (SyntaxNode).new(input, i2...index, s2)
-        r2.extend(Postfixexpression0)
-      else
-        self.index = i2
-        r2 = nil
-      end
-      if r2
-        r0 = r2
-      else
-        i7, s7 = index, []
-        r8 = _nt_Postfixexpression
-        s7 << r8
         if r8
-          r9 = _nt_arguments
-          s7 << r9
-          if r9
-            r10 = _nt_Method
-            s7 << r10
-          end
-        end
-        if s7.last
-          r7 = (SyntaxNode).new(input, i7...index, s7)
-          r7.extend(Postfixexpression1)
-        else
-          self.index = i7
-          r7 = nil
-        end
-        if r7
-          r0 = r7
+          r0 = r8
         else
           i11, s11 = index, []
           r12 = _nt_Postfixexpression

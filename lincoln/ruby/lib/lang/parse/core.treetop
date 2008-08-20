@@ -262,7 +262,8 @@ include Ddl
 		     '*'  /     '/'  /     '%'   
 	end
   	rule Unaryexpression
-		     Castexpression  /     LogicalNegationexpression  /     Inclusiveexpression  /     Postfixexpression
+		     #Castexpression  /     LogicalNegationexpression  /     Inclusiveexpression  /     Postfixexpression
+			Postfixexpression / Castexpression  /     LogicalNegationexpression  /     Inclusiveexpression
 	end
   	rule LogicalNegationexpression
 		  '!' Unaryexpression   
@@ -283,7 +284,11 @@ include Ddl
 		     ']'  /     ')'   
 	end
   	rule Postfixexpression
-		     primaryexpression / Postfixexpression '.' name Reference  /     Postfixexpression arguments Method  /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     primaryexpression   
+		     #primaryexpression / Postfixexpression '.' name Reference  /     Postfixexpression arguments Method  /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     primaryexpression   
+
+		     #primaryexpression / Postfixexpression '.' name  /     Postfixexpression arguments /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     primaryexpression   
+
+		     primaryexpression '.' name arguments? / primaryexpression /  Postfixexpression arguments /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     primaryexpression   
 
 	end
   	rule primaryexpression

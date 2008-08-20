@@ -212,7 +212,13 @@ class TestPlan < Test::Unit::TestCase
 		assert_equal(result.tups[1].values, ["N2","N3",5,"second"])
 		
 		# Should be 0 tuples in epsilon!  Doesn't currently work.
-		# assert_equal(0, result.tups.length)
+
+		#prog.get_queries(tn).each do |q|
+		#	puts q.inspect
+		#end
+
+		r2 = prog.get_queries(tn)[1].evaluate(ts)
+		#assert_equal(0, r2.tups.length)
 	end
 
   def test_require
