@@ -75,6 +75,7 @@ class OverlogPlanner
 
 		plan_materializations 
 		plan_rules
+		#
 		#bottom_up
 
 		#return		
@@ -153,42 +154,64 @@ class OverlogPlanner
 		allTerms = indxjoin_of(@terms,"termid",allExpressions)
 		allRules = indxjoin_of(@rules,"ruleid",allTerms)
 		allPrograms = indxjoin_of(@programs,"programid",allRules)
-		
 
-		#allPreds = join_of(@preds,allTerms)
-		plan_bu_preds(allPrograms)
-		
-		
-
-		set = allPrograms
-
-		#set =	join_of(@expr,TupleSet.new("pexpr",*@pexpr.tuples))
-		puts set.tups[0].schema
-		set.each do |s|
-			puts s.to_s
-		end
-
-		
-		#puts set
-		
-	end
-
-	def plan_bu_preds(set)
-
-		
-		hi = HashIndex.new(@preds,Key.new(1),Integer)
-
-		puts hi.inspect
-
-		set.each do |pex|
-			#puts pex
-			#print "term: #{pex.value("termid")}\n"
-			relRec = hi.lookup(Tuple.new(pex.value("termid")))
-
-			print "+++++++\n"
-			puts relRec.tups
+		aggFunc = ''
+		allPrograms.each do |var|
+			if (!aggFunc.eql?("")) then
+				if (!var.value("type").eql?("var")) then
+					raise
+				end
+				# fix that string stuff!
+				thisvar = Aggregate.new(var.value("p_txt"),aggFunc,AggregateFunction.type(aggFunc,String))
+				thisvar.position = var.value("expr_pos")
+				aggFunc = ""
+			else 
+				case var.value("type")
+					when "var"
+						thisvar = Variable.new(var.value("p_txt"),String)
+						thisvar.position = var.value("expr_pos")
+					when "const"
+						thisvar = Value.new(var.value("p_txt"))
+					when "agg_func"
+						aggFunc = var.value("p_txt")	
+						next
 	
-			print "----------------------\n"
+				else
+					raise("unhandled type "+var.value("type"))
+				end
+			end
+			(type,name) = termtype(var)	
+			args << thisvar
+		end
+	
+	end
+	
+	def termtype(context)
+
+		# some metadata
+		terms = { 
+			"pred" => [@preds, "pred_txt"],
+			"select" => [@selects,"select_txt"],
+			"assign" => [@assigns,"assign_txt"]
+		}
+		
+		terms.keys do |term|
+			print "index over #{terms[term][0]}\n"
+			hi = HashIndex.new(terms[term][0],Key.new(1),Integer)
+
+			print "now tup is #{context}\n"
+			relRec = hi.lookup(Tuple.new(nil,context.value("termid")))
+			raise "more than one term matching" if (relRec.tups.size > 1)
+
+			tup = relRec.tups[0]
+			unless tup.nil?
+				print "term is #{term}\n"
+				print "TAB #{term.name} : \n"
+				print "actual name is #{tup.value(terms[term][1])}\n"
+
+				
+				#return (term,tup.value(terms[term][1]))
+			end
 		end
 
 	end
