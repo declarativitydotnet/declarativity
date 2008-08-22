@@ -147,16 +147,6 @@ class OverlogPlanner
 
 	def bottom_up
 		# real bottom-up goes out the window, of course, if we have multiple programs in our state tables at once.
-		
-		#set = join_of(@expr,
-		#		join_of(@terms,
-		#			join_of(@programs,TupleSet.new("rules",*@rules.tuples))))
-	
-		#set = indxjoin_of(@terms,
-
-	
-	#	set =	indxjoin_of(@terms,@pexpr.schema.size + MyExpressionTable::Field::TERMID,
-	#			indxjoin_of(@expr,MyPrimaryExpressionTable::Field::EXPRESSIONID,TupleSet.new("pexpr",*@pexpr.tuples)))
 
 		allPrimaryExpressions = TupleSet.new("pexpr",*@pexpr.tuples)
 		allExpressions = indxjoin_of(@expr,"expressionid",allPrimaryExpressions)
@@ -166,7 +156,7 @@ class OverlogPlanner
 		
 
 		#allPreds = join_of(@preds,allTerms)
-		plan_preds(allPrograms,nil)
+		plan_bu_preds(allPrograms)
 		
 		
 
@@ -184,9 +174,22 @@ class OverlogPlanner
 	end
 
 	def plan_bu_preds(set)
-		allPreds = join_of(@preds,allTerms)
 
 		
+		hi = HashIndex.new(@preds,Key.new(1),Integer)
+
+		puts hi.inspect
+
+		set.each do |pex|
+			#puts pex
+			#print "term: #{pex.value("termid")}\n"
+			relRec = hi.lookup(Tuple.new(pex.value("termid")))
+
+			print "+++++++\n"
+			puts relRec.tups
+	
+			print "----------------------\n"
+		end
 
 	end
 
