@@ -95,6 +95,7 @@ class Tuple
     if i.class <= Numeric
       return values[i]
     else
+	raise("field "+i.to_s+" does not exist in tuple") if @schema.position(i).nil?
       return values[@schema.position(i)]
     end
   end  
