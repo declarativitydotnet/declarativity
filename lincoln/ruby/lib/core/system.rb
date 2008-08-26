@@ -78,7 +78,7 @@ class System
   def bootstrap
 		compiler = Compiler.new("system", @@RUNTIME);
 		compiler.program.plan
-		@@clock.insert(@@clock.time(0), nil)
+		@@clock.insert_tup(@@clock.time(0))
 			
 		driver = Driver.new(program("runtime"), @@schedule, @@periodic, @@clock);
 			

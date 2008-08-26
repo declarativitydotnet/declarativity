@@ -95,11 +95,7 @@ class Tuple
     if i.class <= Numeric
       return values[i]
     else
-      if @schema.position(i).nil?
-        require 'ruby-debug'; debugger
-        print "position "+ i + " not in tuple " + to_s 
-        return nil
-      end
+      raise("field "+i.to_s+" does not exist in tuple") if @schema.position(i).nil?
       return values[@schema.position(i)]
     end
   end  
