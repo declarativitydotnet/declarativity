@@ -89,7 +89,7 @@ sky.add_handler("num",VNum.new,1)
 sky.walk("n")
 
 print "require 'lib/types/table/object_table'\n"
-print "require 'lib/lang/parse/catalog_mixins'\n"
+print "require 'lib/lang/parse/compiler_mixins'\n"
 # print "require 'lib/lang/plan/predicate'\n"
 # print "require 'lib/lang/plan/selection_term'\n"
 # print "require 'lib/lang/plan/program'\n"

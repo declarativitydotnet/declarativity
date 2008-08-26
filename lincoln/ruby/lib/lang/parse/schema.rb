@@ -1,5 +1,5 @@
 require 'lib/types/table/object_table'
-require 'lib/lang/parse/catalog_mixins'
+require 'lib/lang/parse/compiler_mixins'
 class MyAssignmentTable < ObjectTable
 include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
 	@@PRIMARY_KEY = Key.new(0)
