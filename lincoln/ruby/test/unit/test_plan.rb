@@ -41,6 +41,7 @@ class TestPlan < Test::Unit::TestCase
 		t1.schema = schema1
 		t2.schema = schema1
 		tn = TableName.new(nil, "link")
+		assert_equal(1,1)
 		return tn, TupleSet.new(tn, t1, t2)		
 	end
 	

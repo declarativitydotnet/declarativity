@@ -1,3 +1,6 @@
+## Catalog initialization should be a result of some metacompiled
+## code,not hardwired here.  
+
 # The driver for processesing the Overlog language.
 require "lib/lang/parse/schema"
 require 'lib/types/basic/tuple'

@@ -26,6 +26,7 @@ class TestProgram < Test::Unit::TestCase
     $catalog=nil; $index=nil
     sys = System.new
     sys.init
+    Compiler.init_catalog
 
     p = Program.new("testprog", "jmh")
 
