@@ -9,6 +9,7 @@ require "rubygems"
 
 class TestTable < Test::Unit::TestCase
   def default_test
+    $catalog=nil; $index=nil
     sys = System.new
     sys.init
 

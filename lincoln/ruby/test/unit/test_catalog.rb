@@ -6,6 +6,7 @@ require "rubygems"
 
 class TestCatalog < Test::Unit::TestCase
   def default_test
+    $catalog=nil; $index=nil
     sys = System.new
     sys.init
     initial_card = $catalog.cardinality

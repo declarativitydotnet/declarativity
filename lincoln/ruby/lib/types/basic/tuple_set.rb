@@ -58,30 +58,12 @@ class TupleSet
     return (self == o) ? 0 : 1
   end
 
-  def order_by(*col_names)
-     @tups.sort { |a,b| 
-		retval = last = nil
-		col_names.each do |c|
-			ac = a.value(c)
-			bc = b.value(c)
-			raise("can't order by unknown column set #{c}") if ac.nil?
-			if ((ac <=> bc) != 0) then
-				retval = (ac <=> bc)
-				break;
-			end
-			last = c
-		end
-
-		# fallthrough
-		if retval.nil? then	
-			retval =  a.value(last) <=> b.value(last)
-		end
-		retval
-	}.each do |t|
+  def order_by(col_name)
+     @tups.sort{ |a,b| a.value(col_name) <=> b.value(col_name)}.each do |t|
         yield t
      end
   end
-
+  
   def each
     @tups.each do |t|
       yield t

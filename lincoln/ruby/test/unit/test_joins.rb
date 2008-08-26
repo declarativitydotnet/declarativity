@@ -13,6 +13,7 @@ require 'lib/core/system'
 require "test/unit"
 
 class TestJoin < Test::Unit::TestCase
+  $catalog=nil; $index=nil
   sys = System.new
   sys.init
 
@@ -49,6 +50,10 @@ class TestJoin < Test::Unit::TestCase
     test_real_join(sj, table1, schema1, ts, schema2, ts2)
     assert_equal(sj.to_s, "NEST LOOP JOIN: PREDICATE[Firstname(id:0, name:1)]")
 
+    $catalog=nil; $index=nil
+    sys = System.new
+    sys.init
+    
     # reset the tables and tuplesets and repeat the experiment with index join
     table1 = BasicTable.new('Firstname', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
     ts = TupleSet.new('fnames', t1)
@@ -100,12 +105,28 @@ class TestJoin < Test::Unit::TestCase
     assert_equal(join.evaluate(ts2).tups.length, 1)
     assert_equal(join.evaluate(ts2).tups[0].values, [1, "hellerstein", "joe"])    
 
-    # add another copy of the matching tuple to ts2, should join to produce 2 tuples
-    ts2 << ts2.tups[0]
+    # add another matching tuple to ts2, should join to produce 2 tuples
+    tmatch = Tuple.new(1, "huckenfluster")
+    v3 = Variable.new("id", Integer)
+    v3.position = 0
+    v4 = Variable.new("lastname", String)
+    v4.position = 1
+    schema2 = Schema.new("schema2", [v3,v4])
+    tmatch.schema = schema2
+    ts2 << tmatch
     assert_equal(join.evaluate(ts2).tups.length, 2)
 
-    # add another copy of the matching tuple to basic_table, should join to produce 4
-    basic_table.insert(ts1, nil)
+    # add another matching tuple to basic_table, should join to produce 4
+    ttablematch = Tuple.new(1, "sally")
+    v = Variable.new("id", Integer)
+    v.position = 0
+    v2 = Variable.new("name", String)
+    v2.position = 1
+    schema1 = Schema.new("schema1", [v,v2])
+    ttablematch.schema = schema1
+    
+    
+    basic_table.insert(TupleSet.new("stuff", ttablematch), nil)
     assert_equal(join.evaluate(ts2).tups.length, 4)
 
     # add a non-matching tuple to ts2, should not change output
@@ -120,7 +141,9 @@ class TestJoin < Test::Unit::TestCase
     ts4 = TupleSet.new("test", t4)
     basic_table.insert(ts4, nil)
     assert_equal(join.evaluate(ts2).tups.length, 5)
-    assert_equal(join.evaluate(ts2).tups[4].values, [2, "sacks", "adene"])
+    join.evaluate(ts2).tups.each do |t|
+      assert_equal(t.values, [2, "sacks", "adene"]) if t.values[0] == 2
+    end
     
     # add a non-matching tuple to basic_table, should not change output
     t5 = Tuple.new(3, "smith")

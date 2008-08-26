@@ -304,7 +304,6 @@ end
 
 
 	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects)
-
 		@ruletable = rules
 		@termtable = terms
 		@predicatetable = preds

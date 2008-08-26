@@ -317,7 +317,7 @@ include Ddl
 			}
 	end
   	rule NewClass
-		  'new' Typename   
+		  Typename  '.new' 
 	end
   	rule Referencename
 		  name   

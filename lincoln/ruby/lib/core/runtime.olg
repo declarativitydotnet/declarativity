@@ -1,5 +1,9 @@
 program runtime;
 
+require "lib/types/basic/tuple_set";
+require "lib/types/basic/tuple";
+require "lib/types/table/table_name";
+
 /* Define runtime events. */
 define(runnable, {Float, String, TableName, TupleSet, TupleSet});
 define(strata, keys(0,1), {String, Float, Integer});
@@ -85,7 +89,7 @@ define(facts, {String, TableName, TupleSet});
 collectFacts 
 facts(Program, Name, tupleset<Tuple>) :-
 	config(Time, Program, Object),
-	fact(Program, Name, Tuple);
+	global::fact(Program, Name, Tuple);
 	
 installFacts1 
 runnable(Time, Program, Name, Facts, null) :-
@@ -105,12 +109,12 @@ define(config, {Float, String, Program});
 
 configProgram 
 /* config(Time, Program, Object) :- 
-	compiler#insert(Program, Owner, File, Object), 
+	global::compiler#insert(Program, Owner, File, Object), 
 	global::clock(Location, Time),
 	Object.plan(); */
 
 	config(Time, Program, Object) :- 
-		compiler#insert(Program, Owner, File, Object), 
+		global::compiler#insert(Program, Owner, File, Object), 
 		global::clock(Location, Time);
 						
 /*
@@ -123,5 +127,5 @@ compileConfig
 runnable(String, "compile", Name, Tuples, nil) :-
 	config(Time, Program, Object),
 	Tuples := TupleSet.new(TableName.new("compile", "config"), Object.tuple()),
-	Name = Tuples.name();
+	Name := Tuples.name();
 

@@ -8,12 +8,13 @@ require "rubygems"
 
 class TestHashIndex < Test::Unit::TestCase
   def default_test
+    $catalog=nil; $index=nil
     sys = System.new
     sys.init
 
     bt = BasicTable.new('Orli', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
     ts = TupleSet.new('test', Tuple.new(1, 'hi'))
-    assert_equal(bt.insert(ts, nil).tups, ts.tups)
+    assert_equal(bt.insert(ts, nil).tups.to_a, ts.tups.to_a)
     
     assert(bt.primary.to_s =~ /Index Orli\n1TupleSet.*/)
     bt.primary.clear

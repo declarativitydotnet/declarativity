@@ -6,6 +6,7 @@ require "rubygems"
 
 class TestEventTable < Test::Unit::TestCase
   def default_test
+    $catalog=nil; $index=nil
     et = EventTable.new('Orli', [Integer, String])
     ts = TupleSet.new('test', Tuple.new(1, 'hi'), Tuple.new(2, 'bye'))
     assert_equal(et.delete(ts).size, 2)

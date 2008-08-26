@@ -23,6 +23,7 @@ require 'lib/lang/plan/arbitrary_expression'
 
 class TestProgram < Test::Unit::TestCase
   def default_test
+    $catalog=nil; $index=nil
     sys = System.new
     sys.init
 

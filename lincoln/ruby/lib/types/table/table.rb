@@ -83,6 +83,14 @@ class Table
   end
 
   def Table.register(name, type, size, lifetime, key, types, object)
+    # make sure table wasn't already registered!
+    unless $catalog.primary.lookup_vals(name).nil?
+      #temporarily disabling error output
+      # print "table " + name.to_s + " already registered\n"
+      # puts caller.join("\n\t")
+      return
+    end
+    
     tuple = Tuple.new(name, type.to_s, size, lifetime, key, types, object)
     $catalog.force(tuple)
   end
@@ -93,10 +101,11 @@ class Table
   end
 
   def Table.find_table(name)
+    raise "Catalog missing" if $catalog.nil?
     tables = $catalog.primary.lookup_vals(name)
     return nil if tables.nil?
     return tables.tups[0].value(Catalog::Field::OBJECT) if tables.size == 1
-    throw "More than one " + name.to_s + " table defined!"
+    throw tables.size.to_s + " tables named " + name.to_s + " defined!"
   end
 
   def <=>(o)

@@ -3769,8 +3769,9 @@ module Overlog
 
   module NewClass0
     def Typename
-      elements[1]
+      elements[0]
     end
+
   end
 
   def _nt_NewClass
@@ -3782,16 +3783,16 @@ module Overlog
     end
 
     i0, s0 = index, []
-    if input.index('new', index) == index
-      r1 = (SyntaxNode).new(input, index...(index + 3))
-      @index += 3
-    else
-      terminal_parse_failure('new')
-      r1 = nil
-    end
+    r1 = _nt_Typename
     s0 << r1
     if r1
-      r2 = _nt_Typename
+      if input.index('.new', index) == index
+        r2 = (SyntaxNode).new(input, index...(index + 4))
+        @index += 4
+      else
+        terminal_parse_failure('.new')
+        r2 = nil
+      end
       s0 << r2
     end
     if s0.last

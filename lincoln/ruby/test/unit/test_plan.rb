@@ -8,7 +8,7 @@ require 'lib/lang/parse/schema.rb'
 require 'lib/lang/plan/planner.rb'
 require 'lib/types/table/object_table.rb'
 require 'lib/lang/plan/predicate.rb'
-#require 'lib/lang/compiler.rb'
+#require 'lib/lang/@rb'
 require 'lib/lang/plan/program.rb'
 require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
@@ -22,8 +22,8 @@ require 'lib/lang/parse/procedural.rb'
 class TestPlan < Test::Unit::TestCase
 	
 	def test_notin
-		sys = System.new
-		sys.init
+    $catalog=nil; $index=nil
+    sys=System.new; sys.init
 		utterance = "program path;
 
 "
@@ -31,13 +31,12 @@ class TestPlan < Test::Unit::TestCase
 		
 	end
 	def test_materialization
-		sys = System.new
-		sys.init
+		$catalog=nil; $index=nil
+    sys=System.new; sys.init
 		utterance = "program path;
 				define(link,keys(0,1),{String,String,Integer,String});
                                 path(A,B,C,D) :- link(A,B,C,D);
 "
-		
 		prog = prep(utterance)
 		assert_equal("0,1",prog.definitions[0].key.attributes.join(","))
 		assert_equal("String,String,Integer,String",prog.definitions[0].types.join(","))
@@ -51,6 +50,8 @@ class TestPlan < Test::Unit::TestCase
                 # all subroutines are automatically executed!
 
                 sys = System.new
+                $catalog=nil
+                $index=nil
                 sys.init
                 utterance = "program path;
                                 table link(
@@ -69,13 +70,12 @@ class TestPlan < Test::Unit::TestCase
 
 
 	def test_oldprog1
-		sys = System.new
-		sys.init
+		$catalog=nil; $index=nil
+    sys=System.new; sys.init
 		utterance = "program path;
 				define(link,keys(0,1),{String,String,Integer,String});
 				path(From,To,Cost) :- link(From,To,Cost,Annotation);
 "
-
 		prog = prep(utterance)
 
     tn, ts = gen_link_tuples
@@ -86,8 +86,8 @@ class TestPlan < Test::Unit::TestCase
 	end
 
 	def test_prog
-		sys = System.new
-		sys.init
+		$catalog=nil; $index=nil
+    sys=System.new; sys.init
 
 		utterance = "program foo;\ndefine(path,keys(0,1),{String,String});\ndefine(link,keys(0,1),{String,String});\npath(A,B) :- link(A,B);\n"
 		cooked_program = prep(utterance)
@@ -128,14 +128,12 @@ class TestPlan < Test::Unit::TestCase
 		t1.schema = schema1
 		t2.schema = schema1
 		tn = TableName.new(nil, "link")
-		tn = TableName.new(nil,"link")
 		return tn, TupleSet.new(tn, t1, t2)		
   end
 	
 	def test_prog2
-		$catalog = nil
-		sys = System.new
-		sys.init
+    $catalog=nil
+    sys=System.new; sys.init
 
 		#P2
 		utterance = "program foo;
@@ -173,7 +171,7 @@ class TestPlan < Test::Unit::TestCase
 	end
 	
   def test_agg
-    $catalog = nil
+    $catalog=nil
     sys = System.new
     sys.init
     utterance = "program agg_test;
@@ -193,7 +191,8 @@ class TestPlan < Test::Unit::TestCase
   end
 
   def test_event
-    $catalog = nil
+    $catalog=nil
+    $index=nil
     sys = System.new
     sys.init
     utterance = "program test_event;
@@ -222,7 +221,8 @@ class TestPlan < Test::Unit::TestCase
 	end
 
   def test_require
-    $catalog = nil
+    $catalog=nil
+    $index=nil
     sys = System.new
     sys.init
     utterance = "program reqtest;
@@ -242,12 +242,13 @@ class TestPlan < Test::Unit::TestCase
 
 	def prep(utterance)
 		rei
+		Compiler.init_catalog
 		planner = OverlogPlanner.new(utterance,@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects)
 		planner.plan
 		return planner.program
 	end
 
-	def rei
+	def rei	  
 		@preds = MyPredicateTable.new
 		@terms = MyTermTable.new
 		@pexpr = MyPrimaryExpressionTable.new
@@ -263,15 +264,14 @@ class TestPlan < Test::Unit::TestCase
 	end
 	
 	def test_facts
-		sys = System.new
-		sys.init
+		$catalog=nil; $index=nil
+    sys=System.new; sys.init
 		utterance = "program path;
 				define(link,keys(0,1),{String,String,Integer,String});
 				link(\"A\",\"B\",3,\"link 1\");
 				link(\"B\",\"C\",2,\"link 2\");
 				path(From,To,Cost) :- link(From,To,Cost,Annotation);
 "
-
 		prog = prep(utterance)
 		p = prog.plan
 

@@ -78,19 +78,19 @@ class System
   def bootstrap
 		compiler = Compiler.new("system", @@RUNTIME);
 		compiler.program.plan
-		clock.insert(clock.time(0), nil)
+		@@clock.insert(@@clock.time(0), nil)
 			
-		driver = Driver.new(program("runtime"), schedule, periodic, clock);
+		driver = Driver.new(program("runtime"), @@schedule, @@periodic, @@clock);
 			
 		Compiler.FILES.each do |file|
-			compilation = TupleSet.new(@compile.name)
+			compilation = TupleSet.new(@@compile.name)
 			compilation << Tuple.new(null, "system", file, null)
-			driver.evaluate(compilation);
+			driver.evaluate(compilation)
 		end
+		Thread.new { driver }
 	end
 	
 	def main(args)
-		init
 		bootstrap
 		args.each_with_index { |a, i| install("user", args[i]) }
 		driver.run()

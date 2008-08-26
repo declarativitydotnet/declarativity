@@ -13,7 +13,7 @@ table MyPredicate (
 	event_mod String
 )
 
-table Predicate (
+table predicate (
   +program String,
   +rule String,
   +position Integer, 
@@ -59,7 +59,7 @@ table MyFact (
 	tablename String
 )
 
-table Fact (
+table fact (
 	program String, 
   tablename TableName,
 	tuple Tuple
@@ -84,7 +84,7 @@ table MyIndex (
 )
 
 
-table Index (
+table index (
   +tablename TableName,
   +key Key,
   type TableType,
@@ -98,7 +98,7 @@ table MyProgram (
 	program_name String
 )
 
-table Program (
+table program (
 	+program String,
 	owner String,
 	object String
@@ -123,28 +123,28 @@ table query (
 	  object String
 )
 
-table Operator (
+table operator (
   program String,
   rule String,
   +id String,
   selectivity Float
 )
 
-table Compiler (
+table compiler (
   +name String,
   owner String,
   file String,
   program String  
 )
 
-table Assignment (
+table assignment (
 	+program String,
 	+rule String,
   position Integer,
  object String
 )
 
-table Rule (
+table rule (
   +program String,
   +name String,
   is_public String, 
@@ -152,14 +152,14 @@ table Rule (
   object String
 )
 
-table Selection (
+table selection (
   +program String,
   +rule String,
   +position Integer,
   object String
 )
 
-table Watch (
+table watch (
   +program String,
   +tablename String,
   +modifier String

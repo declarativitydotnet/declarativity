@@ -80,7 +80,7 @@ class Tuple
   def hash
     if (@values.size > 0) then
       code = ""
-      @values.each { |value| code += (value.nil? ? "nil".hash : value.hash) }
+      @values.each { |value| code += (value.nil? ? "nil".to_s : value.to_s) }
       return code.hash
     else
       return @tid.hash
@@ -95,7 +95,11 @@ class Tuple
     if i.class <= Numeric
       return values[i]
     else
-	raise("field "+i.to_s+" does not exist in tuple") if @schema.position(i).nil?
+      if @schema.position(i).nil?
+        require 'ruby-debug'; debugger
+        print "position "+ i + " not in tuple " + to_s 
+        return nil
+      end
       return values[@schema.position(i)]
     end
   end  

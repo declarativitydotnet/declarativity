@@ -1,13 +1,15 @@
 require "lib/core/system"
 require "lib/types/table/table"
 require 'test/unit'
+require 'lib/lang/compiler'  # require to initialize catalog tables
 require "rubygems"
 
 class TestSystem < Test::Unit::TestCase
   def default_test
+    $catalog = nil
+    $index = nil
     sys = System.new
     sys.init
-    
     # dorky coverage
     assert_equal(System.clock.current, -1)
     assert_equal(System.query.table_type, 1)

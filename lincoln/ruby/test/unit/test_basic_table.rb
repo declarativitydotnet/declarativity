@@ -15,14 +15,14 @@ class TestBasicTable < Test::Unit::TestCase
     testtup2 = Tuple.new(2, 'bye')
     ts = TupleSet.new('test', testtup1, testtup2)
     assert_equal(bt.cardinality, 0)
-    assert_equal(bt.delete(ts).tups, [])
+    assert_equal(bt.delete(ts).tups.to_a, [])
     assert_equal(bt.insert(ts, nil).tups, ts.tups)
     assert(!bt.primary.nil?)
     assert(!bt.secondary.nil?)
     assert_equal(bt.tuples.nil?, false)
     assert_equal(bt.cardinality, 2)
-    assert_equal(bt.to_s, "Orli, IntegerString, 10, Infinity, keys(0), {IntegerString}<1, hi>\n<2, bye>\n")
-    assert_equal(bt.delete(ts).tups, [testtup1, testtup2])
+    bt.tuples.tups.each { |t| assert((t.values == [1, "hi"]) || (t.values == [2, "bye"])) }
+    assert_equal([testtup1, testtup2], bt.delete(ts).tups)
     assert_equal(bt.to_s, "Orli, IntegerString, 10, Infinity, keys(0), {IntegerString}")
     assert_equal(bt.table_type, Table::TableType::TABLE)    
     

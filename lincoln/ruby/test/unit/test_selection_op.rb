@@ -5,9 +5,11 @@ require "lib/lang/plan/selection_term"
 require 'lib/types/function/filter'
 require 'lib/lang/plan/arguments'
 require 'lib/lang/plan/value'
+require 'lib/core/system'
 require "test/unit"
 
 class TestSelectionOp < Test::Unit::TestCase
+  $catalog=nil; $index=nil
   sys = System.new
   sys.init
 
