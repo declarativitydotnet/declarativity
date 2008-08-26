@@ -86,6 +86,10 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
   end
 
   attr_reader :program, :watch
+  def Compiler.files
+    @@FILES
+  end
+  
   def Compiler.compiler
     @@compiler
   end

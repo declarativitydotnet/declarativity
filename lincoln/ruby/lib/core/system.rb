@@ -43,7 +43,7 @@ class System
   end
   
 	def System.program(name)
-		@@programs.has_key?(name) ? programs[name] : nil
+		@@programs.has_key?(name) ? @@programs[name] : nil
 	end
 	
 	def System.install_program(name, program)
@@ -57,7 +57,7 @@ class System
   end
   
   def schedule(tuples, program)
-    driver.synchronize do
+    @driver.synchronize do
       tmpClass = Class.new(Driver::Task)
       tlam = lambda { return tuples }
       plam = lambda { return program }
@@ -70,24 +70,22 @@ class System
         return plam.call
       end
   
-      driver.task(tmpClass.new)
+      @driver.task(tmpClass.new)
     end
   end
   
   
   def bootstrap
+    return if defined? @@initialized
 		compiler = Compiler.new("system", @@RUNTIME);
 		compiler.program.plan
-		@@clock.insert_tup(@@clock.time(0))
+		@@clock.insert(@@clock.time(0),nil)
 			
-		driver = Driver.new(program("runtime"), @@schedule, @@periodic, @@clock);
+		@driver = Driver.new(System.program("runtime"), @@schedule, @@periodic, @@clock);
 			
-		Compiler.FILES.each do |file|
-			compilation = TupleSet.new(@@compile.name)
-			compilation << Tuple.new(null, "system", file, null)
-			driver.evaluate(compilation)
-		end
-		Thread.new { driver }
+		Compiler.files.each {|file| install("system", file)}
+		Thread.new { @driver }
+		@@initialized = TRUE
 	end
 	
 	def main(args)

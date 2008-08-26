@@ -85,9 +85,8 @@ class Table
   def Table.register(name, type, size, lifetime, key, types, object)
     # make sure table wasn't already registered!
     unless $catalog.primary.lookup_vals(name).nil?
-      #temporarily disabling error output
-      # print "table " + name.to_s + " already registered\n"
-      # puts caller.join("\n\t")
+#      print "table " + name.to_s + " already registered\n"
+#      puts caller.join("\n\t")
       return
     end
     

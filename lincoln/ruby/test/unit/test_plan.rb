@@ -21,6 +21,52 @@ require 'lib/lang/parse/procedural.rb'
 
 class TestPlan < Test::Unit::TestCase
 	
+	def gen_link_tuples
+	  # we need to manually construct a schema spec; we can't infer it from link (materialized by the overlog above) 
+		# because link is empty, and schema belong to tuples, not tables (not that link's fields have no names)
+		t1 = Tuple.new("N1","N2",10,"first")
+		t2 = Tuple.new("N2","N3",5,"second")
+
+		# ... from test_program
+		v1 = Variable.new("From", String)
+		v1.position = 0
+		v2 = Variable.new("To", String)
+		v2.position = 1
+		v3 = Variable.new("Cost", Float)
+		v3.position = 2
+		v4 = Variable.new("Annotation", String)
+		v4.position = 3   
+
+		schema1 = Schema.new("schema1", [v1,v2,v3,v4])
+		t1.schema = schema1
+		t2.schema = schema1
+		tn = TableName.new(nil, "link")
+		return tn, TupleSet.new(tn, t1, t2)		
+	end
+	
+	def prep(utterance)
+		rei
+		Compiler.init_catalog
+		planner = OverlogPlanner.new(utterance,@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects)
+		planner.plan
+		return planner.program
+	end
+
+	def rei	  
+		@preds = MyPredicateTable.new
+		@terms = MyTermTable.new
+		@pexpr = MyPrimaryExpressionTable.new
+		@expr = MyExpressionTable.new
+		@facts = MyFactTable.new
+		@tables = MyTableTable.new
+		@columns = MyColumnTable.new
+		@indices = MyIndexTable.new
+		@programs = MyProgramTable.new
+		@rules = MyRuleTable.new
+		@selects = MySelectionTable.new
+		@assigns = MyAssignmentTable.new
+	end
+	
 	def test_notin
     $catalog=nil; $index=nil
     sys=System.new; sys.init
@@ -107,29 +153,6 @@ class TestPlan < Test::Unit::TestCase
 		# we should get this right back.
 		assert_equal("<here, there>",result.tups[0].to_s)
 	end
-	
-	def gen_link_tuples
-	  # we need to manually construct a schema spec; we can't infer it from link (materialized by the overlog above) 
-		# because link is empty, and schema belong to tuples, not tables (not that link's fields have no names)
-		t1 = Tuple.new("N1","N2",10,"first")
-		t2 = Tuple.new("N2","N3",5,"second")
-
-		# ... from test_program
-		v1 = Variable.new("From", String)
-		v1.position = 0
-		v2 = Variable.new("To", String)
-		v2.position = 1
-		v3 = Variable.new("Cost", Float)
-		v3.position = 2
-		v4 = Variable.new("Annotation", String)
-		v4.position = 3   
-
-		schema1 = Schema.new("schema1", [v1,v2,v3,v4])
-		t1.schema = schema1
-		t2.schema = schema1
-		tn = TableName.new(nil, "link")
-		return tn, TupleSet.new(tn, t1, t2)		
-  end
 	
 	def test_prog2
     $catalog=nil
@@ -240,29 +263,6 @@ class TestPlan < Test::Unit::TestCase
 		assert_equal(result.tups[1].values, ["N2","N3",5,"second"])
   end
 
-	def prep(utterance)
-		rei
-		Compiler.init_catalog
-		planner = OverlogPlanner.new(utterance,@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects)
-		planner.plan
-		return planner.program
-	end
-
-	def rei	  
-		@preds = MyPredicateTable.new
-		@terms = MyTermTable.new
-		@pexpr = MyPrimaryExpressionTable.new
-		@expr = MyExpressionTable.new
-		@facts = MyFactTable.new
-		@tables = MyTableTable.new
-		@columns = MyColumnTable.new
-		@indices = MyIndexTable.new
-		@programs = MyProgramTable.new
-		@rules = MyRuleTable.new
-		@selects = MySelectionTable.new
-		@assigns = MyAssignmentTable.new
-	end
-	
 	def test_facts
 		$catalog=nil; $index=nil
     sys=System.new; sys.init

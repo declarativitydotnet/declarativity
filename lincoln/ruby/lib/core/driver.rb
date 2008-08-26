@@ -207,6 +207,7 @@ class Driver < Monitor
     @schedule = schedule
     @periodic = periodic
     @clock = clock
+    super() # initialize the monitor stuff
   end
 
   def task(t) 
