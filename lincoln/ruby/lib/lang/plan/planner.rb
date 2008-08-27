@@ -323,29 +323,11 @@ class OverlogPlanner
 
 		# facts still new to be planned the new way.
 		# it'll be faster and we can remove a ton of artifacts.
-		plan_facts
+		##plan_facts
 		@program.plan
 		return @program
 	end
 
-	def plan_facts
-		@facts.tuples.each do |fact|
-			tab = fact.value("tablename")
-			lookup = '::'+tab
-			table = Table.find_table('::'+tab)
-			raise("#{tab} not found in catalog") if table.nil?
-
-			resterm = join_of(@terms,TupleSet.new("fact",fact))
-			resterm.each do |t| 
-				vars = get_vars(t)
-				varNames = Array.new
-				vars.each do |v|
-					varNames << v.value
-				end
-				table.insert(TupleSet.new("fact",Tuple.new(*varNames)),nil)
-			end
-		end
-	end
 	def plan_materializations
 		@tables.tuples.each do |table| 
 
@@ -409,6 +391,38 @@ class OverlogPlanner
 		return retSet
 	end
 
+	def bu_facts(ts)
+		# assumes one program in parse tables at a time!
+		factIndx = HashIndex.new(@facts,Key.new(1),Integer)
+
+		fields = Hash.new
+		ts.order_by("termid","expr_pos") do |tup|
+			relRec = factIndx.lookup(Tuple.new(nil,tup.value("termid")))
+			case relRec.size
+				when 0:
+					next
+				when 1:
+					exemplary = relRec.tups[0]
+			else
+				raise("duplicate fact?")
+			end
+
+			fields[exemplary.value("tablename")] = Hash.new if fields[exemplary.value("tablename")].nil?
+			fields[exemplary.value("tablename")][tup.value("termid")] = Array.new if fields[exemplary.value("tablename")][tup.value("termid")].nil?
+			raise("fact args must be constants") unless tup.value("type").eql?("const")
+			fields[exemplary.value("tablename")][tup.value("termid")] <<  tup.value("p_txt")
+		end
+		fields.each_key do |tab|
+			lookup = '::'+tab
+			table = Table.find_table('::'+tab)
+			raise("#{tab} not found in catalog") if table.nil?
+
+			fields[tab].keys.sort.each  do |term|
+				table.insert(TupleSet.new("fact",Tuple.new(*fields[tab][term])),nil)
+			end
+		end
+	end 
+
 	def bottom_up
 		# real bottom-up goes out the window, of course, if we have multiple programs in our state tables at once.
 
@@ -417,6 +431,9 @@ class OverlogPlanner
 		allPrimaryExpressions = TupleSet.new("pexpr",*@pexpr.tuples)
 		allExpressions = indxjoin_of(@expr,"expressionid",allPrimaryExpressions)
 		allTerms = indxjoin_of(@terms,"termid",allExpressions)
+
+
+		bu_facts(allTerms)
 		allRules = indxjoin_of(@rules,"ruleid",allTerms)
 		allPrograms = indxjoin_of(@programs,"programid",allRules)
 
@@ -427,56 +444,6 @@ class OverlogPlanner
 			#puts e
 		end
 		
-	end
-
-	def termtype(context,index,projStr)
-
-		relRec = index.lookup(Tuple.new(nil,context.value("termid")))
-
-		case relRec.tups.size
-			when 0
-				return nil
-			when 1
-				tup = relRec.tups[0]
-				#universalName = Variable.new("_term_name",String)
-				#universalName.position = 0
-				tup.append(Variable.new("_term_name",String),tup.value(projStr))
-				# project out the fields we'll need to 
-				# construct the term
-				pKey = SchemaKey.new(projStr,"event_mod","_term_name")
-				projection = pKey.project(tup)
-				return projection	
-		else
-			raise("buh?")
-		end
-	end
-
-	def plan_rules
-
-		# save res as a member variable: I'll want to reuse it.
-		res = join_of(@rules,TupleSet.new("prog",*@programs.tuples))
-
-		# need to put an ordering over the rules!
-		res.tups.each do |rule|
-			resterm = join_of(@terms,TupleSet.new("rule",rule))
-			rulename = rule.value("rulename")
-			body = plan_preds(resterm,rulename)
-
-			head = body.shift
-			assigns = plan_assignments(resterm,rulename)	
-			assigns.each do |a|
-				body << a	
-			end
-			selects = plan_selections(resterm,rulename)
-			selects.each do |s|
-				body << s
-			end
-		
-			# location? rulename, isPublic, isDelete, head, body
-			d = rule.value("delete").eql?("1")
-			rule = Rule.new(1,rulename,true,d,head,body)
-			rule.set(@progname)
-		end
 	end
 
 	def join_of(tab,ts)
@@ -499,111 +466,4 @@ class OverlogPlanner
 		sexpr = IndexJoin.new(pred,example,Key.new(example.position(key)),tab.primary)
 		return sexpr.evaluate(ts)
 	end
-
-	def get_vars(it)	
-			resexpr = join_of(@expr,TupleSet.new("p",it))
-			respexpr = join_of(@pexpr,resexpr)
-
-			args = Array.new
-			aggFunc = ""
-			respexpr.order_by("p_pos") do |var|
-				if (!aggFunc.eql?("")) then
-					if (!var.value("type").eql?("var")) then
-						raise
-					end
-					# fix that string stuff!
-					thisvar = Aggregate.new(var.value("p_txt"),aggFunc,AggregateFunction.type(aggFunc,String))
-					thisvar.position = var.value("expr_pos")
-					aggFunc = ""
-				else 
-					case var.value("type")
-						when "var"
-							thisvar = Variable.new(var.value("p_txt"),String)
-							thisvar.position = var.value("expr_pos")
-						when "const"
-							thisvar = Value.new(var.value("p_txt"))
-						when "agg_func"
-							aggFunc = var.value("p_txt")	
-							next
-		
-					else
-						raise("unhandled type "+var.value("type"))
-					end
-				end
-				args << thisvar
-			end
-		return args
-	end
-
-	def plan_preds(resterm,rulename)
-		# resterm is a joinable resultset of terms for the current rule.
-
-		respred = join_of(@preds,resterm)
-		predicates = Array.new
-		#respred.order_by("term_pos") do |pred|
-		respred.each do |pred|
-			# skip the head, for now
-		
-			# a row for each predicate.  let's grab the vars
-			args = get_vars(pred)
-			(scope,tname) = get_scope(pred.value("pred_txt"))
-
-			case pred.value("event_mod") 
-				when "insert"
-					event = Table::Event::INSERT
-				when "delete"
-					event = Table::Event::DELETE
-				when "", nil
-					event = Table::Event::NONE
-			else
-				raise "unknown event type: #{pred.value("event_mod")}\n"
-			end
-			
-			# notin, name, event, arguments
-			thispred = Predicate.new(false,TableName.new(scope,tname),event,args)
-			#puts thispred.inspect
-
-			# I think the p2 system uses positions starting at 1.
-			thispred.set(@progname,rulename,pred.value("pred_pos"))
-			predicates << thispred
-		end
-		return predicates
-	end
-
-	def plan_assignments(resterm,rulename)
-		resassign = join_of(@assigns,resterm)
-	
-		assignments = Array.new
-		resassign.order_by("assign_pos") do |ass|
-			lhs_txt = ass.value("lhs")
-			eval_expr = ass.value("assign_txt")
-			args = get_vars(ass)
-			lhs = Variable.new(lhs_txt,String)
-			lhs.position = 0
-			expr = ArbitraryExpression.new(eval_expr,args)
-
-			thisassign = Assignment.new(lhs,expr)
-			thisassign.set(@progname,rulename,ass.value("assign_pos"))
-			assignments << thisassign
-		end
-		return assignments 
-	end
-
-	def plan_selections(resterm,rulename)
-		resselect = join_of(@selects,resterm)
-	
-		selections = Array.new
-		resselect.order_by("select_pos") do |sel|
-			eval_expr = sel.value("select_txt")
-			args = get_vars(sel)
-			expr = ArbitraryExpression.new(eval_expr,args)
-			thisselect = SelectionTerm.new(expr)
-			thisselect.set(@progname,rulename,sel.value("select_pos"))
-			selections << thisselect
-		end
-		return selections 
-	end
-
 end
-
-
