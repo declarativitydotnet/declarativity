@@ -84,7 +84,8 @@ class TreeWalker
 	def mywalk(node)
 		if (defined? node.elements) then
 			node.elements.each do |elem|
-				ptr = handle_fast(elem)
+			# should be using handle_fast...
+				ptr = handle(elem)
 				# depth first...?
 				if (elem.nonterminal?) then
 					mywalk(elem)	
