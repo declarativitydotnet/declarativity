@@ -1,7 +1,12 @@
 #!/usr/bin/ruby
 
 # convert SQL-DDL-style "create table" statements to ruby ObjectTable classes with equivalent definitions.
-# ie ruby dsl.rb < create.sql > schema.rb
+# the "--compiler" flag generates CompilerCatalogTable classes.
+
+# e.g.:
+#    ruby gencatalog.rb < bootstrap.sql > schema.rb
+#    ruby gencatalog.rb --compiler < compiler.sql >> schema.rb
+
 
 require "rubygems"
 require "treetop"
@@ -93,7 +98,7 @@ print "require 'lib/lang/parse/compiler_mixins'\n"
 # print "require 'lib/lang/plan/predicate'\n"
 # print "require 'lib/lang/plan/selection_term'\n"
 # print "require 'lib/lang/plan/program'\n"
-if ARGV.include? "compiler" then
+if ARGV.include? "--compiler" then
   print "class CompilerCatalogTable < ObjectTable\n"
   # print "  def register(obj)\n"
   # print "    defined?(@@classes) ? @@classes[obj.class.hash] = obj.class : @@classes = {obj.class.hash => obj.class}\n"
@@ -109,7 +114,7 @@ $tables.sort.each do |table, arr|
   tableCap = table[0..0].capitalize + table[1..table.length]
   mixin = tableCap+"TableMixin"
 	print "class "+tableCap+"Table < "
-	print (ARGV.include? "compiler") ? "CompilerCatalogTable\n" : "ObjectTable\n"
+	print (ARGV.include? "--compiler") ? "CompilerCatalogTable\n" : "ObjectTable\n"
   print "include "+mixin+" if defined? "+mixin+"\n"
 	if ($keys[table].size > 0) then
 		print "  @@PRIMARY_KEY = Key.new("+$keys[table].join(",")+")\n"
@@ -125,7 +130,7 @@ $tables.sort.each do |table, arr|
 	print "  end\n"
 	print "  @@SCHEMA = ["+$types[table].join(",")+"]\n"
 
-  print "  @@classes[self] = 1" if ARGV.include? "compiler"
+  print "  @@classes[self] = 1" if ARGV.include? "--compiler"
 
 	print "\n  def initialize\n"
         print "    super(TableName.new(GLOBALSCOPE, \""+table+"\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
