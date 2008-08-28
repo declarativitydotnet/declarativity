@@ -42,6 +42,7 @@ runnable(Time, Program, Name, Insertions, Deletions) :-
 	
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
+/* JMH asks: When/how does one stratum end and the next begin? */
 strata 
 strata(Program, Time, min<Priority>) :-
 	global::clock(Location, Time),
@@ -50,6 +51,7 @@ strata(Program, Time, min<Priority>) :-
 
 /* This case handles those programs that do not have a query
     (and hence no priority) for the tuple 'Name'. */
+/* JMH asks: when is this logic needed? At initialization of the program?? */
 runnable(Time, Program, Name, Insertions, Deletions) :-
 	global::clock(Location, Time),
 	global::schedule(Time, Program, Name, Insertions, Deletions),
@@ -62,6 +64,8 @@ runnable(Time, Program, Name, Insertions, Deletions) :-
 define(schedulePeriodic, {String, Float, Float, Float, Float, String});
 
 /* Schedule next periodic. */
+/* Seems that periodics never seem to get "garbage collected" after their TTL
+   expires -- JMH */
 renewPeriodic
 schedulePeriodic(Id, Period, TTL, Time+Period, Count+1, Program) :-
 	global::clock#insert(Location, Time),
@@ -104,25 +108,14 @@ global::schedule(Time+1, Program, Name, Facts, null) :-
 /*******************************************************************/
 /*** Schedule compile */
 
-/* define(config, {Float, String, p2.lang.plan.Program}); */
 define(config, {Float, String, Program});
 
-configProgram 
-/* config(Time, Program, Object) :- 
+/*configProgram 
+  config(Time, Program, Object) :- 
 	global::compiler#insert(Program, Owner, File, Object), 
 	global::clock(Location, Time),
 	Object.plan(); */
 
-	config(Time, Program, Object) :- 
-		global::compiler#insert(Program, Owner, File, Object), 
-		global::clock(Location, Time);
-						
-/*
-compileConfig 
-runnable(Time, "compile", Tuples.name(), Tuples, null) :-
-	config(Time, Program, Object),
-	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
-*/
 compileConfig 
 runnable(String, "compile", Name, Tuples, nil) :-
 	config(Time, Program, Object),
