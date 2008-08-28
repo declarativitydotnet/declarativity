@@ -13,14 +13,6 @@ table MyPredicate (
 	event_mod String
 )
 
-table predicate (
-  +program String,
-  +rule String,
-  +position Integer, 
-  event String,
-  object String
-)
-
 table MyPrimaryExpression (
 	+primaryexpressionid Integer,
 	expressionid Integer,
@@ -59,12 +51,6 @@ table MyFact (
 	tablename String
 )
 
-table fact (
-	program String, 
-  tablename TableName,
-	tuple Tuple
-)
-
 table MyTable (
   +tableid Integer,
   tablename String
@@ -83,25 +69,10 @@ table MyIndex (
 	col_pos Integer
 )
 
-
-table index (
-  +tablename TableName,
-  +key Key,
-  type TableType,
-  classname String,
-  object String
-)
-
 table MyProgram (
 	+programid Integer,
 	owner String,
 	program_name String
-)
-
-table program (
-	+program String,
-	owner String,
-	object String
 )
 
 table MyRule (
@@ -111,31 +82,6 @@ table MyRule (
 	public Integer,
 	delete Integer
 ) 
-
-table query (
-	  program String,
-	  rule String,
-	  public Integer,
-	  delete Integer,
-	  event String,
-	  input TableName,
-	  output TableName,
-	  object String
-)
-
-table operator (
-  program String,
-  rule String,
-  +id String,
-  selectivity Float
-)
-
-table compiler (
-  +name String,
-  owner String,
-  file String,
-  program String  
-)
 
 table assignment (
 	+program String,
@@ -152,15 +98,17 @@ table rule (
   object String
 )
 
-table selection (
-  +program String,
-  +rule String,
-  +position Integer,
-  object String
+
+table fact (
+	program String, 
+  tablename TableName,
+	tuple Tuple
 )
 
-table watch (
-  +program String,
-  +tablename String,
-  +modifier String
+table compiler (
+  +name String,
+  owner String,
+  file String,
+  program String  
 )
+

@@ -86,7 +86,7 @@ class Table
     # make sure table wasn't already registered!
     unless $catalog.primary.lookup_vals(name).nil?
 #      print "table " + name.to_s + " already registered\n"
-#      puts caller.join("\n\t")
+#     puts caller.join("\n\t")
       return
     end
     

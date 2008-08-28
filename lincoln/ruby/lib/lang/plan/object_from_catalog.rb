@@ -3,6 +3,7 @@ module ObjectFromCatalog
   def camelize(str)
     str = str.split('_')
     retval = str[0]
+    retval[0] = retval.downcase[0]
     str[1..str.length].each { |s| retval += s.to_s.capitalize }
     return retval
   end

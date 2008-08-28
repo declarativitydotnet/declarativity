@@ -1,44 +1,7 @@
 # custom declarations for catalog classes
 # that are not fully defined automatically
 
-## The following module is reused in a bunch of places.  
-## Upon tuple insertion, it sets up the object field of 
-## tuple with a class instance created from the
-## descriptions in the catalog tuple.
-## i.e. it will set up the Foo.object attribute of tuple to be
-## an instance of the Foo class whose instance vars are filled in from
-## the tuple's fields
-module ObjectFromCatalog
-  def camelize(str)
-    str = str.split('_')
-    retval = str[0]
-    str[1..str.length].each { |s| retval += s.to_s.capitalize }
-    return retval
-  end
-  
-  def constants
-    retval = Array.new
-    classname =self.class.to_s + "::Field"
-    consts = eval(classname).constants
-    consts.each do |c|
-      str = classname + "::" + c
-      retval << [c, eval(str)]
-    end
-    return retval
-  end
-
-  def insert_tup(tuple)
-    # needs to be done through eval since nested Field is class-dependent
-	  object_position = eval self.class.to_s + "::Field::OBJECT"
-    object = tuple.value(object_position)
-    raise UpdateException, "Object nil in catalog tuple" if object.nil?
-    constants.each do |c|
-      method = camelize(c[0].downcase) + "="
-      object.send method.to_sym, tuple.value(c[1]) unless c[0] == 'OBJECT'
-    end
-    return super(tuple)
-  end
-end
+require 'lib/lang/plan/object_from_catalog'
 
 ####
 #### Below here are mixins that customize catalog classes

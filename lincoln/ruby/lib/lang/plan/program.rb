@@ -10,14 +10,14 @@ require 'lib/lang/parse/schema'
 class Program
   include Comparable
 		
-  @@program = ProgramTable.new
+  @@program = MyProgramTable.new
 #  @@rule = Rule::RuleTable.new
   @@watch = WatchTable.new
-  @@fact = FactTable.new
-  @@predicate = PredicateTable.new
+  @@fact = MyFactTable.new
+  @@predicate = MyPredicateTable.new
   @@tfunction = Function::TableFunction.new
-  @@selection = SelectionTable.new
-  @@assignment = AssignmentTable.new
+  @@selection = MySelectionTable.new
+  @@assignment = MyAssignmentTable.new
   
   def Program.watch
     @@watch
