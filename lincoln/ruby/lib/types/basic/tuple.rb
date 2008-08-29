@@ -12,6 +12,14 @@ class Tuple
       @values << v
     end
   end
+  
+  # def clone
+  #   t = Tuple.new(*values)
+  #   t.schema = schema
+  #   t.count = count
+  #   t.tid = tid
+  #   return t
+  # end
 
   def init
     @schema = Schema.new(nil,nil)
@@ -20,8 +28,8 @@ class Tuple
     @@idGen += 1
   end
   
-  attr_accessor :tid, :count
-  attr_reader :schema, :values
+  attr_accessor :tid, :count, :schema
+  attr_reader :values
 
   def append (var, val)
     var = var.clone

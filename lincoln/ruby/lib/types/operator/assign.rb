@@ -18,7 +18,7 @@ class Assign < Operator
 		deltas = TupleSet.new(tuples.name)
 		tuples.each do |tuple|
 			delta = tuple.clone
-			delta.value(variable, function.evaluate(delta))
+			delta.set_value(variable, function.evaluate(delta))
 			deltas << delta
 		end
 		return deltas

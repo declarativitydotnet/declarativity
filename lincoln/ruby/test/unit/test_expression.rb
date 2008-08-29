@@ -33,7 +33,7 @@ class TestExpression < Test::Unit::TestCase
 		tup = Tuple.new(4,2,3)
 		tup.schema = schema
 		ax = ArbitraryExpression.new("((A + B) / C)",[a,b,c])
-
+		
 		assert_nil(ax.expr_type)
 		assert_equal("(((vA + vB) / vC))",ax.to_s)
 		assert_equal("A:0B:1C:2",ax.variables.to_s)
@@ -53,7 +53,7 @@ class TestExpression < Test::Unit::TestCase
 		badtup = Tuple.new(4,2)
 		badschema = Schema.new("you",[a,b])
 		badtup.schema = badschema
-		assert_raise(RuntimeError) {foo.evaluate(badtup) } 
+		assert_raise(NameError) {foo.evaluate(badtup) } 
 	
 
 		

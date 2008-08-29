@@ -2,14 +2,14 @@
 class ArbitraryExpression < Expression
 
   def initialize(expr,variables)
-	@expr = expr
-	@variables = Array.new
-	variables.each do |v|
-		@variables << v
-		if v.class == Variable then
-			@expr = @expr.gsub(/\b#{v.name}/,'v'+v.name)		
-		end
-	end
+    @expr = expr
+    @variables = Array.new
+    variables.each do |v|
+      @variables << v
+      if v.class == Variable then
+        @expr = @expr.gsub(/\b#{v.name}/,'v'+v.name)		
+      end
+    end
   end
 
   def expr_type
@@ -21,32 +21,38 @@ class ArbitraryExpression < Expression
   end
 
   def variables
-	@variables
+    @variables
   end
 
   def function
     elam = lambda do |t|
 
-	subexpr = ''
-	@variables.each do |v|	
-		if t.schema.contains(v) then
-			# substitution is stupid: how many times are we gonna parse this thing??
-			# instead, take advantage of rubiismo:
-			subexpr = subexpr + "v"+v.name + " = "+t.value(v.name).to_s+"\n"
-		else
-			# I guess we have a problem if we have unbound variables...
-			raise
-		end	
-	end
-
-	subexpr = subexpr + @expr
-	return eval(subexpr)
+      subexpr = ''
+      @variables.each_with_index do |v, i|	
+        if v.class == Variable 
+          if t.schema.contains(v) then
+            # substitution is stupid: how many times are we gonna parse this thing??
+            # instead, take advantage of rubiismo:
+            subexpr = subexpr + "v"+v.name + " = "+t.value(v.name).to_s+"\n"
+          elsif defined?(@variables[i+1]) and @variables[i+1].class == Value
+            # unbound variables had better belong to assignments
+            # which show up as a Variable followed by a Value
+            subexpr = subexpr + "v"+v.name + " = "+@variables[i+1].value.to_s+"\n"
+          end
+        elsif (v.class == Value)
+          next
+        else
+          raise "unable to resolve a PrimaryExpression"
+        end
+      end
+      subexpr = subexpr + @expr
+      return eval(subexpr)
     end
-    
+
     tlam = lambda do
       return expr_type
     end
-    
+
     tmpClass = Class.new(TupleFunction)
 
     tmpClass.send :define_method, :evaluate do |tuple|

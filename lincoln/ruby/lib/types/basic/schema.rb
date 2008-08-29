@@ -11,6 +11,10 @@ class Schema
       end 
     end
   end
+    
+  def clone
+    Schema.new(@name,@variables.values)
+  end
   
   def set_schema(schema)
     @name = schema.name
@@ -52,7 +56,7 @@ class Schema
     end
     out
   end
-
+  
   def variables
     out = Array.new
     @variables.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
