@@ -16,7 +16,7 @@ class TestHashIndex < Test::Unit::TestCase
     ts = TupleSet.new('test', Tuple.new(1, 'hi'))
     assert_equal(bt.insert(ts, nil).tups.to_a, ts.tups.to_a)
     
-    assert(bt.primary.to_s =~ /Index Orli\n1TupleSet.*/)
+    assert(bt.primary.to_s =~ /Index Orli\n[0-9]*TupleSet.*/)
     bt.primary.clear
     assert_equal(bt.primary.to_s, "Index Orli\n\n")    
     

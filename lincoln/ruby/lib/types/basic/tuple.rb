@@ -8,18 +8,16 @@ class Tuple
   def initialize(*values)
     init
     @values = Array.new
-    values.each do |v|
-      @values << v
-    end
+    values.each {|v| @values << v}
+    @values
   end
   
-  # def clone
-  #   t = Tuple.new(*values)
-  #   t.schema = schema
-  #   t.count = count
-  #   t.tid = tid
-  #   return t
-  # end
+  def clone
+    t = super
+    t.values = @values.clone
+    @values.freeze
+    return t
+  end
 
   def init
     @schema = Schema.new(nil,nil)
@@ -28,8 +26,7 @@ class Tuple
     @@idGen += 1
   end
   
-  attr_accessor :tid, :count, :schema
-  attr_reader :values
+  attr_accessor :tid, :count, :schema, :values
 
   def append (var, val)
     var = var.clone
@@ -96,6 +93,9 @@ class Tuple
   end
   
   def size() 
+    if @values.class == Fixnum
+      require 'ruby-debug'; debugger
+    end
     return @values.length
   end
   

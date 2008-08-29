@@ -167,7 +167,8 @@ class TestPlan < Test::Unit::TestCase
 				define(path,keys(0,1),{String,String,Integer});
 				define(link,keys(0,1),{String,String});
 				path(A,B,Cost) :- link(A,B),Cost := 1;
-				path(A,B,Cost) :- link(A,Z), path(Z,B,C), Cost := C + 1;"
+				path(A,B,Cost) :- link(A,Z), path(Z,B,C), Cost := C + 1;
+				path(\"there\", \"elsewhere\", 1);"
 		cooked_program = prep(utterance)
 
 		#puts @assigns
@@ -180,16 +181,16 @@ class TestPlan < Test::Unit::TestCase
 		#print "query count = "+queries.length.to_s+"\n"
 		#assert_equal(1,queries.length)
 
-		# create some real data
+		# create some driver data
 		tuple = Tuple.new("here","there")
 		ts = TupleSet.new(tn,tuple)
 
 		result = queries[0].evaluate(ts)
-		#result2 = queries[1].evaluate(ts)
+		result2 = queries[1].evaluate(ts)
 		
 		# we should get this right back.
 		assert_equal(["here", "there", 1], result.tups[0].values)
-		#assert_equal(["here", "there", 1], result2.tups[0].values)
+		assert_equal(["here", "elsewhere", 2], result2.tups[0].values)
 		
 		result.each do |t|
 		end

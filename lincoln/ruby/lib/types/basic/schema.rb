@@ -4,21 +4,25 @@ require "rubygems"
 class Schema
   def initialize(name, vars)
     @name = name;
-    @variables = Hash.new
+    @variable_set = Hash.new
     unless vars.nil?
       vars.each do |v|
-        @variables[v.name] = v
+        @variable_set[v.name] = v
       end 
     end
   end
     
+  attr_accessor :variable_set
+    
   def clone
-    Schema.new(@name,@variables.values)
+    s = super
+    s.variable_set = @variable_set.clone
+    return s
   end
   
   def set_schema(schema)
     @name = schema.name
-    @variables = schema.variables.clone
+    @variable_set = schema.variables.clone
   end
 
   def ==(s)
@@ -28,20 +32,20 @@ class Schema
   attr_reader :name
 
   def size
-    @variables.length
+    @variable_set.length
   end
 
   def <<(v)
-    @variables[v.name] = v 
+    @variable_set[v.name] = v 
   end
 
   def contains(v)
-    not @variables[v.name].nil?
+    not @variable_set[v.name].nil?
   end
 
   def to_s
     out = "("
-    @variables.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
+    @variable_set.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
       out << a[1].to_s + ","
     end
     out[out.length-1] = ")"     if out.length > 1
@@ -51,7 +55,7 @@ class Schema
 
   def types
     out = Array.new
-    @variables.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
+    @variable_set.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
       out << a[1].expr_type  if a[1].position >= 0 
     end
     out
@@ -59,18 +63,18 @@ class Schema
   
   def variables
     out = Array.new
-    @variables.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
+    @variable_set.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
       out << a[1].clone if a[1].position >= 0 
     end
     out
   end
 
   def variable (name)
-    @variables[name]
+    @variable_set[name]
   end
 
   def schema_type(name)
-    @variables[name].expr_type
+    @variable_set[name].expr_type
   end
 
   def position(name)
