@@ -48,7 +48,7 @@ class TestPlan < Test::Unit::TestCase
 	def prep(utterance)
 		rei
 		Compiler.init_catalog
-		planner = OverlogPlanner.new(utterance,@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
+		planner = OverlogPlanner.new(utterance)
 		planner.plan
 		return planner.program
 	end

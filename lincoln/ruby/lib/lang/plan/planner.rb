@@ -279,24 +279,35 @@ class OverlogPlanner
 		return @program
 	end
 
-	def initialize(utterance,rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects,tfuncs)
-                @rules = rules
-                @terms = terms
-                @preds = preds
-                @pexpr = pexps
-                @expr = exps
-                @facts = facts
-                @tables = tables
-                @columns = columns
-                @indices = indices
-                @programs = programs
-		@assigns = assigns
-		@selects = selects
-		@tfuncs = tfuncs
+	def thook(name)
+		tn = TableName.new("global",name)
+		ret = Table.find_table(tn)
+		raise("parser table #{name} not found in catalog") if ret.nil?
+		return ret
+	end
 
-			
+	def catalog_tables
+		@rules = thook("MyRule")
+		@terms = thook("MyTerm")
+		@preds = thook("MyPredicate")
+		@pexpr = thook("MyPrimaryExpression")
+		@expr = thook("MyExpression")
+		@facts = thook("MyFact")
+		@tables = thook("MyTable")
+		@columns = thook("MyColumn")
+		@indices = thook("MyIndex")
+		@programs = thook("MyProgram")
+		@assigns = thook("MyAssignment")
+		@selects = thook("MySelection")
+		@tfuncs = thook("MyTableFunction")
+	end
+
+	def initialize(utterance)
+		# lookup the catalog tables and store references to them in instance variables.
+		catalog_tables
+		
+		# the choice about whether to pass these references as args, or repeat the lookup above in the compiler, is somewhat arbitrary	
 		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
-                #compiler.verbose = 'y'
                 compiler.parse(utterance)
 
                 compiler.analyze
