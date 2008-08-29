@@ -1,8 +1,14 @@
-require 'lib/lang/plan/function'
+require 'lib/types/table/table_function'
+require 'lib/types/basic/tuple_set'
+require 'lib/types/table/aggregation_table'
+require 'lib/types/table/event_table'
 require 'monitor'
 
 class Driver < Monitor
-  class Evaluate < Function
+  Infinity = 1.0/0
+  @@threads = []
+  
+  class Evaluate < TableFunction
     class UpdateState
       def initialize
         @insertions = Hash.new
@@ -18,6 +24,8 @@ class Driver < Monitor
         @insertions = TupleSet.new(name)
         @deletions = TupleSet.new(name)
       end
+      
+      attr_reader :insertions, :deletions, :time, :program, :name
 
       def hash
         to_s.hash
@@ -28,7 +36,7 @@ class Driver < Monitor
       end
 
       def to_s
-        return @program + ":" + @time.toString + ":" +  @name
+        return @program + ":" + @time.to_s + ":" +  @name.to_s
       end
     end
 
@@ -59,7 +67,7 @@ class Driver < Monitor
         name = tuple.value(Field::TABLENAME)
         state = EvalState.new(time, program, name)
 
-        if !(evaluations.includes? state) 
+        if !(evaluations.has_key? state) 
           evaluations[state] = state
         else 
           state = evaluations[state]
@@ -75,26 +83,27 @@ class Driver < Monitor
       delta = TupleSet.new(name)
 
       evaluations.values.each do |state|
-        delta << evaluate(state.time, System.program(state.program), state.name, state.insertions, state.deletions)
+        results = evaluate(state.time, System.program(state.program), state.name, state.insertions, state.deletions)
+        results.each {|t| delta << t}
       end
       return delta
     end
 
     def evaluate(time, program, name, insertions, deletions) 
       continuations = Hash.new
-      table = Table.table(name)
-      watchAdd    = Compiler.watch.watched(program.name, name, Watch.Modifier.ADD)
-      watchInsert = Compiler.watch.watched(program.name, name, Watch.Modifier.INSERT)
-      watchRemove = Compiler.watch.watched(program.name, name, Watch.Modifier.ERASE)
-      watchDelete = Compiler.watch.watched(program.name, name, Watch.Modifier.DELETE)
+      table = Table.find_table(name)
+      # watchAdd    = Compiler.myWatch.watched(program.name, name, Watch.Modifier.ADD)
+      # watchInsert = Compiler.myWatch.watched(program.name, name, Watch.Modifier.INSERT)
+      # watchRemove = Compiler.myWatch.watched(program.name, name, Watch.Modifier.ERASE)
+      # watchDelete = Compiler.myWatch.watched(program.name, name, Watch.Modifier.DELETE)
       insertions = []
       begin  
-        watchAdd.evaluate(insertions) unless watchAdd.nil?
+        # watchAdd.evaluate(insertions) unless watchAdd.nil?
 
         insertions = table.insert(insertions, deletions)
         break if insertions.size == 0
 
-        watchInsert.evaluate(insertions) unless watchInsert.nil?
+        # watchInsert.evaluate(insertions) unless watchInsert.nil?
 
         querySet = program.get_queries(insertions.name)
         break if querySet.nil?
@@ -125,25 +134,25 @@ class Driver < Monitor
         insertions = delta
       end while insertions.size > 0
 
-      if !(table.class <= Aggregation) then
+      if !(table.class <= AggregationTable) then
         while deletions.size > 0
           if (table.table_type == Table::TableType::TABLE) then
-            watchRemove.evaluate(deletions) if !watchRemove.nil?
+            # watchRemove.evaluate(deletions) if !watchRemove.nil?
             deletions = table.delete(deletions)
-            watchDelete.evaluate(deletions) if !watchDelete.nil?
+            # watchDelete.evaluate(deletions) if !watchDelete.nil?
           else 
             raise "Can't delete tuples from non table type"
             exit
           end
-          delta = TupleSet.new(deletions.name.new)
+          delta = TupleSet.new(deletions.name)
           queries = program.get_queries(delta.name)
           if !queries.nil? then
             queries.each do |query|
-              output = Table.new(query.output.name)
+              output = Table.find_table(query.output.name)
               if !(output.class <= EventTable) and query.event != Table::Event::INSERT
                 result = query.evaluate(deletions)
                 if (result.size == 0) then
-                  continue
+                  next
                 elsif (!result.name.equals(deletions.name)) 
                   Table t = Table.table(result.name)
                   if (t.table_type == Table::TableType::TABLE) then
@@ -159,7 +168,7 @@ class Driver < Monitor
         end
 
         delta = TupleSet.new(name)
-        continuation.values.each { |c| delta << c }
+        continuations.values.each { |c| delta << c }
         #// java.lang.System.err.println("==================== RESULT " + name + ": " + delta + "\n\n")
         return delta
       end
@@ -215,42 +224,41 @@ class Driver < Monitor
   end
 
   def run 
-    threads = []
-    threads << Thread.new() do
-      while (true) 
+    @@threads << Thread.new() do
+       while (true) 
         synchronize do
-          min = INFINITY
+          min = Infinity
 
-          if (schedule.cardinality > 0) 
-            min = (min < schedule.min ? min : schedule.min)
-          elsif (tasks.size > 0) 
-            min = clock.current + 1
+          if (@schedule.cardinality > 0) 
+            min = (min < @schedule.min ? min : @schedule.min)
+          elsif (@tasks.size > 0) 
+            min = @clock.current + 1
           end
 
-          if (min < INFINITY) 
-            puts("============================ EVALUATE CLOCK[" + min + "] =============================")
-            evaluate(clock.time(min), runtime.name)
+          if (min < Infinity) 
+            puts("============================ EVALUATE CLOCK[" + min.to_s + "] =============================")
+            evaluate(@clock.time(min), @runtime.name)
 
-            tasks.each { |t| evaluate(task.tuples, task.program) }
-            tasks.clear
+            @tasks.each { |t| evaluate(t.tuples, t.program) }
+            @tasks.clear
             puts("============================ ========================== =============================")
           end
           #     try {      
-          Thread.sleep(1000)
+          sleep(1)
           #     end catch (InterruptedException e)  end
         end
-      end
-    end
-    threads.each {|t| t.join}
+       end
+     end
+     require 'ruby-debug'; debugger
+    @@threads.each {|t| t.join}
   end
 
   def evaluate(tuples, program) 
-    evaluation = TupleSet(System.evaluator.name.new)
-    evaluation << Tuple.new(clock.current, program, tuples.name, tuples, 
-    TupleSet.new(tuples.name))
+    evaluation = TupleSet.new(System.evaluator.name)
+    evaluation << Tuple.new(@clock.current, program, tuples.name, tuples, TupleSet.new(tuples.name))
     # Evaluate until nothing left in this clock.
     while (evaluation.size > 0) 
-      evaluation = System.evaluator.insert(evaluation, null)
+      evaluation = System.evaluator.insert(evaluation, nil)
     end
   end
 end

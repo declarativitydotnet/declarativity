@@ -48,7 +48,7 @@ class Function < Term
 
 	def set(program, rule, position)
 		@predicate.set(program, rule, position)
-		$program.tfunction.force(Tuple.new(program, rule, position, function.name, self))
+		$program.tfunction.force(Tuple.new(program, rule, position, @function.name, self))
 	end
 
 	def to_s 

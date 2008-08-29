@@ -90,7 +90,7 @@ class System
 	
 	def main(args)
 		bootstrap
-		args.each_with_index { |a, i| install("user", args[i]) }
-		driver.run()
+		args.each { |a| install("user", a) }
+		@driver.run()
 	end
 end
