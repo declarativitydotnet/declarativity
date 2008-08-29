@@ -446,6 +446,10 @@ class OverlogPlanner
 		
 	end
 
+	def OverlogPlanner.scanjoin(tab,ts)
+		return join_of(tab,ts)
+	end
+
 	def join_of(tab,ts)
 		pred = predoftable(tab)
 		# performance hurts!  these need to be index joins

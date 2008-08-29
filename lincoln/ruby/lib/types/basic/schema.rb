@@ -78,6 +78,7 @@ class Schema
     self.variables.each do |v|
       joined << v
     end
+
     inner.variables.each do |v|
       unless joined.contains(v)
         joined << v
