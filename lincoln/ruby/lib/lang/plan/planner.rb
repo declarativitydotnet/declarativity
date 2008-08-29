@@ -279,7 +279,7 @@ class OverlogPlanner
 		return @program
 	end
 
-	def initialize(utterance,rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects)
+	def initialize(utterance,rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects,tfuncs)
                 @rules = rules
                 @terms = terms
                 @preds = preds
@@ -292,9 +292,10 @@ class OverlogPlanner
                 @programs = programs
 		@assigns = assigns
 		@selects = selects
+		@tfuncs = tfuncs
 
 			
-		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects)
+		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
                 #compiler.verbose = 'y'
                 compiler.parse(utterance)
 

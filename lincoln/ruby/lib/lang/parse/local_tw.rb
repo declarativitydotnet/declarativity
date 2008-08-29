@@ -110,9 +110,21 @@ class VisitPredicate < VisitTerm
 
 		#puts obj.inspect
 		eventMod = obj.eventModifier.text_value.eql?("") ? nil : obj.eventModifier.elements[1].text_value
+		@@current["predicate"] = @@positions["_Universal"]
 		#otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],@@state["Predicate"][0])
 		otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],obj.ptablename.text_value,eventMod)
 	end
+end
+
+class VisitTableFunction < VisitTerm
+  def initialize(tft,term)
+    super(term)
+    @tft = tft
+  end
+  def semantic(text,obj)
+    super(text,obj)
+    otabinsert(@tft, @@positions["_Universal"], @@current["term"], obj.ptablename.text_value, @@current["predicate"])    
+  end
 end
 
 class VisitPredArg < VisitGeneric
@@ -303,7 +315,7 @@ end
 # class body
 
 
-	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects)
+	def initialize(rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects,tfuncs)
 		@ruletable = rules
 		@termtable = terms
 		@predicatetable = preds
@@ -316,6 +328,7 @@ end
 		@programtable = programs
 		@selecttable = selects
 		@assigntable = assigns
+		@tablefunctiontable = tfuncs
 
 		# reinitialize these awful globals, fingers crossed for good garbage collection.
 		@@state = Hash.new
@@ -351,6 +364,7 @@ end
 		sky.add_handler("expression",VisitExpression.new(@extable),1)
 		sky.add_handler("primaryexpression",vg,1)
 		sky.add_handler("predicate",VisitPredicate.new(@predicatetable,@termtable),1)
+		sky.add_handler("TableFunction",VisitTableFunction.new(@tablefunctiontable,@termtable),1)
 		sky.add_handler("Fact",VisitFact.new(@facttable,@termtable),1)
 		sky.add_handler("Definition",VisitTable.new(@tabletable),1)
 		sky.add_handler("TableName",vg,1)

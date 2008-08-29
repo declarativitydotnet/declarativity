@@ -21,11 +21,9 @@ global::schedule(Time, Program2, Name, Insertions, Deletions) :-
 	/* next line changed to remove && expression, which doesn't parse right */
 	Public == true, Input == Name, Program1 != Program2;
 
-/* Illegal Overlog!  Need to special-case
 evaluate 
 delta(Time, Program, Name, Insertions, Deletions) :-
 	evaluate(runnable(Time, Program, Name, Insertions, Deletions));
-*/
 
 
 /* Delete what has been evaluated in the current clock. */
@@ -77,13 +75,11 @@ schedulePeriodic(Id, Period, TTL, Time+1+Offset, Count+1, Program) :-
 	config(Time, Program, Object),
 	global::periodic(Id, Period, TTL, Offset, Count, Program);
 	
-/* THIS NEXT WON'T PARSE YET DUE TO NESTED TUPLES */
 /* Schedule the periodic and update its execution count. */
-/* 
 schedulePeriodic 
 global::periodic(Id, Period, TTL, Time, Count, Program) :-
 	periodicScheduler(schedulePeriodic(Id, Period, TTL, Time, Count, Program));
-*/
+
 
 /*******************************************************************/
 /*** Fact scheduler */
@@ -110,11 +106,11 @@ global::schedule(Time+1, Program, Name, Facts, null) :-
 
 define(config, {Float, String, Program});
 
-/*configProgram 
+configProgram 
   config(Time, Program, Object) :- 
 	global::compiler#insert(Program, Owner, File, Object), 
 	global::clock(Location, Time),
-	Object.plan(); */
+	Object.plan();
 
 compileConfig 
 runnable(String, "compile", Name, Tuples, nil) :-

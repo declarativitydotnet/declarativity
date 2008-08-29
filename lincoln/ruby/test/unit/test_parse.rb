@@ -168,6 +168,7 @@ class TestParse < Test::Unit::TestCase
 		@rules = MyRuleTable.new
 		@selects = MySelectionTable.new
 		@assigns = MyAssignmentTable.new
+		@tfuncs = MyTableFunctionTable.new
 	end
 	
 	def test_fact
@@ -191,7 +192,7 @@ class TestParse < Test::Unit::TestCase
 
 	def prep(utterance)
 		rei
-		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@selects,@assigns)
+		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@selects,@assigns,@tfuncs)
 		compiler.verbose = 'y'
 		compiler.parse(utterance)
 		compiler.analyze

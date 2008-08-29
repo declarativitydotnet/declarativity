@@ -1507,6 +1507,12 @@ module Overlog
     end
   end
 
+  module TableFunction1
+		    def TableFunction
+		      return self
+	      end
+  end
+
   def _nt_TableFunction
     start_index = index
     if node_cache[:TableFunction].has_key?(index)
@@ -1533,6 +1539,7 @@ module Overlog
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
       r0.extend(TableFunction0)
+      r0.extend(TableFunction1)
     else
       self.index = i0
       r0 = nil

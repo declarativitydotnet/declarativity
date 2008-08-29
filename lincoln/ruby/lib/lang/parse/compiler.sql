@@ -13,6 +13,13 @@ table MyPredicate (
 	event_mod String
 )
 
+table MyTableFunction (
+	+tablefunid Integer,
+	termid Integer,
+	function String,
+	nested_predicate_id Intege
+)
+
 table MyPrimaryExpression (
 	+primaryexpressionid Integer,
 	expressionid Integer,

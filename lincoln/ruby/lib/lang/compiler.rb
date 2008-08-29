@@ -29,7 +29,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     # needed.  Requires more investigation, would be nice to chuck this (and 
     # the init_catalog method)
     Compiler.init_catalog
-    planner = OverlogPlanner.new(utterance,@@myRule,@@myTerm,@@myPredicate,@@myPrimaryExpression,@@myExpression,myFact,@@myTable,@@myColumn,@@myIndex,@@myProgram,@@myAssignment,@@mySelection)
+    planner = OverlogPlanner.new(utterance,@@myRule,@@myTerm,@@myPredicate,@@myPrimaryExpression,@@myExpression,myFact,@@myTable,@@myColumn,@@myIndex,@@myProgram,@@myAssignment,@@mySelection,@@myTableFunction)
     planner.plan
     @program = planner.program		
 

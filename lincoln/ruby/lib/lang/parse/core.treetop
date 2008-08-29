@@ -134,6 +134,11 @@ include Ddl
 	end
      	rule TableFunction
 		  ptablename opar predicate cpar  
+		  {
+		    def TableFunction
+		      return self
+	      end
+		  }
 	end
      	rule predicate
 		    notin? ptablename eventModifier  arguments   
