@@ -15,15 +15,15 @@ define(checkStrata, {String, Integer});
 /*******************************************************************/
 /*** Facts that initialize priority with this programs predicates ***/
 
-runtime::priority("compile", new TableName("global", "compiler"),  0);
-runtime::priority("compile", new TableName("global", "predicate"), 0);
-runtime::priority("compile", new TableName("global", "rule"),      0);
+runtime::priority("compile", TableName.new("global", "compiler"),  0);
+runtime::priority("compile", TableName.new("global", "predicate"), 0);
+runtime::priority("compile", TableName.new("global", "rule"),      0);
 
-runtime::priority("compile", new TableName("compile", "config"),         0);
-runtime::priority("compile", new TableName("compile", "dependency"),     1);
-runtime::priority("compile", new TableName("compile", "priorityUpdate"), 2);
-runtime::priority("compile", new TableName("runtime", "priority"),       3);
-runtime::priority("compile", new TableName("compile", "checkStrata"),    4);
+runtime::priority("compile", TableName.new("compile", "config"),         0);
+runtime::priority("compile", TableName.new("compile", "dependency"),     1);
+runtime::priority("compile", TableName.new("compile", "priorityUpdate"), 2);
+runtime::priority("compile", TableName.new("runtime", "priority"),       3);
+runtime::priority("compile", TableName.new("compile", "checkStrata"),    4);
 
 
 /*******************************************************************/

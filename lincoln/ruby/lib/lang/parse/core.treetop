@@ -237,7 +237,7 @@ include Ddl
 		Spacing InequalityOperator Spacing
 	end
   	rule InequalityOperator
-		     '<'  /     '>'  /     '<='  /     '>='   
+		     '<='  /     '>='   / '<'  /     '>'
 	end
    	rule Shiftexpression
 		     Additiveexpression / Shiftexpression ShiftOperator Additiveexpression  #/     Additiveexpression

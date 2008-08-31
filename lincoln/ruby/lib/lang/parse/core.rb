@@ -2348,41 +2348,41 @@ module Overlog
     end
 
     i0 = index
-    if input.index('<', index) == index
-      r1 = (SyntaxNode).new(input, index...(index + 1))
-      @index += 1
+    if input.index('<=', index) == index
+      r1 = (SyntaxNode).new(input, index...(index + 2))
+      @index += 2
     else
-      terminal_parse_failure('<')
+      terminal_parse_failure('<=')
       r1 = nil
     end
     if r1
       r0 = r1
     else
-      if input.index('>', index) == index
-        r2 = (SyntaxNode).new(input, index...(index + 1))
-        @index += 1
+      if input.index('>=', index) == index
+        r2 = (SyntaxNode).new(input, index...(index + 2))
+        @index += 2
       else
-        terminal_parse_failure('>')
+        terminal_parse_failure('>=')
         r2 = nil
       end
       if r2
         r0 = r2
       else
-        if input.index('<=', index) == index
-          r3 = (SyntaxNode).new(input, index...(index + 2))
-          @index += 2
+        if input.index('<', index) == index
+          r3 = (SyntaxNode).new(input, index...(index + 1))
+          @index += 1
         else
-          terminal_parse_failure('<=')
+          terminal_parse_failure('<')
           r3 = nil
         end
         if r3
           r0 = r3
         else
-          if input.index('>=', index) == index
-            r4 = (SyntaxNode).new(input, index...(index + 2))
-            @index += 2
+          if input.index('>', index) == index
+            r4 = (SyntaxNode).new(input, index...(index + 1))
+            @index += 1
           else
-            terminal_parse_failure('>=')
+            terminal_parse_failure('>')
             r4 = nil
           end
           if r4

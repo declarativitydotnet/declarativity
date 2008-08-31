@@ -15,7 +15,7 @@ require 'lib/lang/plan/object_from_catalog'
 
 class Compiler # in java, this is a subclass of xtc.util.Tool
   extend ObjectFromCatalog
-  @@FILES =  ["/Users/joeh/devel/lincoln/ruby/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lang/stratachecker.olg"]
+  @@FILES =  ["/Users/joeh/devel/lincoln/ruby/lib/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lib/lang/stratachecker.olg"]
 
   # Create a new driver for Overlog.
   def initialize(owner, file)

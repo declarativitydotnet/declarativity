@@ -421,7 +421,10 @@ class OverlogPlanner
 
 			fields[exemplary.value("tablename")] = Hash.new if fields[exemplary.value("tablename")].nil?
 			fields[exemplary.value("tablename")][tup.value("termid")] = Array.new if fields[exemplary.value("tablename")][tup.value("termid")].nil?
-			raise("fact args must be constants") unless tup.value("type").eql?("const")
+      unless tup.value("type").eql?("const")
+        require 'ruby-debug'; debugger
+			  raise("fact args must be constants, instead is type " + tup.value("type").to_s)
+		  end
 			fields[exemplary.value("tablename")][tup.value("termid")] <<  tup.value("p_txt")
 		end
 		fields.each_key do |tab|

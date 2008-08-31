@@ -97,7 +97,7 @@ class Driver < Monitor
       watchInsert = Compiler.watch.watched(program.name, name, WatchOp::Modifier::INSERT)
       watchRemove = Compiler.watch.watched(program.name, name, WatchOp::Modifier::ERASE)
       watchDelete = Compiler.watch.watched(program.name, name, WatchOp::Modifier::DELETE)
-      insertions = []
+
       begin  
         watchAdd.evaluate(insertions) unless watchAdd.nil?
 
@@ -113,10 +113,10 @@ class Driver < Monitor
         querySet.each	do |query|
           if (query.event != Table::Event::DELETE) then
             result = query.evaluate(insertions) 
-            puts("\t\tRUN QUERY " + query.rule + " input " + insertions)
-            puts("\t\tQUERY " + query.rule + " result " + result)
+            puts("\t\tRUN QUERY " + query.rule.to_s + " input " + insertions.to_s)
+            puts("\t\tQUERY " + query.rule.to_s + " result " + result.to_s)
             if (result.size == 0) then 
-              continue
+              next
             elsif (result.name == insertions.name) then
               if (query.isDelete) then
                 deletions << result

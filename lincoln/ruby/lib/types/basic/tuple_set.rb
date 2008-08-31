@@ -39,8 +39,12 @@ class TupleSet
     @tups = Array.new
   end
   
-  def <<(tup)
-    @tups << tup
+  def <<(o)
+    case o.class.name
+      when 'TupleSet': o.each {|t| @tups << t }
+      when 'Tuple': @tups << o
+      else raise "inserting a " + o.class.name + " object into TupleSet"
+    end
   end
   
   def ==(o)
