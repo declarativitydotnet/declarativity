@@ -1,4 +1,15 @@
 
+        def get_scope(pred,program)
+                scopeName = pred.to_s.split("::")
+                scope = program
+                tname = pred
+                unless (scopeName[1].nil?) then
+                        scope = scopeName[0]
+                        tname = scopeName[1]
+                end
+                return [scope,tname]
+        end
+
 # had to.  will revisit.
 def suck_nums(node)
         returns  = Array.new

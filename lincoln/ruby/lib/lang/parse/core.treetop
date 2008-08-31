@@ -311,9 +311,9 @@ include Ddl
 
 		    (Location Spacing / Aggregate Spacing / opar expression cpar / Constant Spacing / Alias Spacing  /     variable Spacing  /     NewClass Spacing  /  Referencename Spacing)
 				{
-					def primaryexpression
-						return self
-					end
+					#def primaryexpression
+					#	return self
+					#end
 				}
 	end
    	rule arguments

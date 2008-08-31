@@ -58,7 +58,7 @@ class TreeWalker
 				if (@verbose == 'v') then  
 					print k[0]+ ": ("+sem+")\n"
 				end 
-				
+				#print "INTER: #{k[0]}\n"	
 			end 
 		end
 	end
@@ -76,6 +76,7 @@ class TreeWalker
 				if (@verbose == 'v') then  
 					print m.to_s+ ": ("+sem+")\n"
 				end 
+				#print "INTER: #{m.to_s}\n"
 				
 				
 			end

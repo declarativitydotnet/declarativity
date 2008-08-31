@@ -51,6 +51,7 @@ class System
 	end
 	
   def install(owner, file)
+	##print "\t\tINSTALL #{file}\n"
     compilation = TupleSet.new(Compiler::compiler.name)
     compilation << Tuple.new(nil, owner, file, nil)
     schedule(compilation, "runtime")
@@ -90,6 +91,12 @@ class System
 	
 	def main(args)
 		bootstrap
+		##print "BOOTSTRAP done. should have table in scope\n"
+		tabn = Table.find_table(TableName.new("runtime","priority"))
+		#$catalog.tuples.each do |c|
+		#	puts c
+		#end
+		##print "FOUND (#{tabn})\n"
 		args.each { |a| install("user", a) }
 		@driver.run()
 	end

@@ -13,12 +13,16 @@ require "lib/lang/plan/value.rb"
 require "lib/lang/plan/arbitrary_expression.rb"
 require "lib/types/function/aggregate_fn.rb"
 require "lib/lang/plan/watch_clause.rb"
+require "lib/lang/parse/procedural.rb"
 
+require 'benchmark'
 
 class OverlogPlanner
+
 	class PlanProjector
-		def initialize(ts)
+		def initialize(programname,ts)
 			@tuples = ts
+			@progname = programname
 		end
 
 		def proj_cat(tup,obj,type,func)
@@ -120,16 +124,16 @@ class OverlogPlanner
 		end
 
 
-		def get_scope(pred)
-			scopeName = pred.to_s.split("::")
-			scope = nil
-			tname = pred
-			unless (scopeName[1].nil?) then
-				scope = scopeName[0]
-				tname = scopeName[1]
-			end
-			return [scope,tname]
-		end
+		#def get_scope(pred)
+		#	scopeName = pred.to_s.split("::")
+		#	scope = nil
+		#	tname = pred
+		#	unless (scopeName[1].nil?) then
+		#		scope = scopeName[0]
+		#		tname = scopeName[1]
+		#	end
+		#	return [scope,tname]
+		#end
 		
 		def get_preds(ts)
 			pHash,aHash = accumulate_vars(ts,"pred_txt","event_mod","pred_pos")
@@ -138,7 +142,7 @@ class OverlogPlanner
 
 			pHash.each_key do |k|
 				pred = pHash[k]
-				(scope,tname) = get_scope(pred.value("pred_txt"))
+				(scope,tname) = get_scope(pred.value("pred_txt"),@progname)
 				case pred.value("event_mod") 
 					when "insert"
 						event = Table::Event::INSERT
@@ -265,9 +269,9 @@ class OverlogPlanner
 		return p
 	end
 
-	def get_scope(pred)
+	def get_scope(pred,program)
 		scopeName = pred.to_s.split("::")
-		scope = nil
+		scope = program
 		tname = pred
 		unless (scopeName[1].nil?) then
 			scope = scopeName[0]
@@ -310,9 +314,14 @@ class OverlogPlanner
 		
 		# the choice about whether to pass these references as args, or repeat the lookup above in the compiler, is somewhat arbitrary	
 		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
-                compiler.parse(utterance)
 
-                compiler.analyze
+		
+                parseTime  = Benchmark.measure { compiler.parse(utterance) }
+
+                walkTime = Benchmark.measure { compiler.analyze }
+
+		#print "parsetime #{parseTime}\n"
+		#print "walktime #{walkTime}\n"
 	
 		# now our tables are populated.
 
@@ -363,19 +372,16 @@ class OverlogPlanner
 			typething = eval(typestr)
 			indxthing = eval(indxstr)
 
-			(scope,tname) = get_scope(table.value("tablename"))
-		
-			# TABLE TYPE AND LIFETIME UNIMPLEMENTED...
-			#table = BasicTable.new(TableName.new(scope,tname),Table::INFINITY, Table::INFINITY,indxthing,typething)
+			(scope,tname) = get_scope(table.value("tablename"),@progname)
 
 			# hackensack
 			tn = table.value("tablename")
 			if tn.eql?("periodic") then
 				print "periodic, sucker!\n"
-				tableObj = EventTable.new(TableName.new(nil,tn),typething)
+				tableObj = EventTable.new(TableName.new(scope,tn),typething)
 			else
 				#print "tn=#{tn}\n" 
-				(scope,tname) = get_scope(tn)
+				(scope,tname) = get_scope(tn,@progname)
 				tableObj = RefTable.new(TableName.new(scope,tname),indxthing,typething)
 			end		
 			@program.definition(tableObj)			
@@ -402,6 +408,8 @@ class OverlogPlanner
 					when 1
 						retSet << tup.join(relRec.tups[0])
 				else
+					print "looked up #{tup.value("termid")}\n"
+					print "somehow found #{relRec.tups}\n"
 					raise("bad; more than one term matching termid")
 				end
 			end
@@ -427,15 +435,18 @@ class OverlogPlanner
 
 			fields[exemplary.value("tablename")] = Hash.new if fields[exemplary.value("tablename")].nil?
 			fields[exemplary.value("tablename")][tup.value("termid")] = Array.new if fields[exemplary.value("tablename")][tup.value("termid")].nil?
-      unless tup.value("type").eql?("const")
-        require 'ruby-debug'; debugger
-			  raise("fact args must be constants, instead is type " + tup.value("type").to_s)
-		  end
+      #unless tup.value("type").eql?("const")
+       # require 'ruby-debug'; debugger
+	#		  raise("fact args must be constants, instead is type " + tup.value("type").to_s)
+	#	  end
 			fields[exemplary.value("tablename")][tup.value("termid")] <<  tup.value("p_txt")
 		end
 		fields.each_key do |tab|
-			lookup = '::'+tab
-			table = Table.find_table('::'+tab)
+			#lookup = '::'+tab
+			#table = Table.find_table(@progname+'::'+tab)
+			
+			(scope,tname) = get_scope(tab,@progname)
+			table = Table.find_table(TableName.new(scope,tname))
 			raise("#{tab} not found in catalog") if table.nil?
 
 			fields[tab].keys.sort.each  do |term|
@@ -460,7 +471,7 @@ class OverlogPlanner
 
 		fullSet = add_terms(allPrograms)	
 
-		planMaster = PlanProgram.new(fullSet)
+		planMaster = PlanProgram.new(@progname,fullSet)
 		planMaster.emit.each do |e|
 			#puts e
 		end
