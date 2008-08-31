@@ -19,6 +19,6 @@ class TestSystem < Test::Unit::TestCase
     assert_equal(System.install_program("chord", nil), nil)
 
     sys.bootstrap
-    # sys.main('olg/path.olg')
+    sys.main('olg/path.olg')
   end
 end

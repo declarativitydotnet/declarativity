@@ -1,5 +1,175 @@
 require 'lib/types/table/object_table'
 require 'lib/lang/parse/compiler_mixins'
+class IndexTable < ObjectTable
+include IndexTableMixin if defined? IndexTableMixin
+  @@PRIMARY_KEY = Key.new(0,1)
+  class Field
+    TABLENAME=0
+    KEY=1
+    TYPE=2
+    CLASSNAME=3
+    OBJECT=4
+  end
+  @@SCHEMA = [TableName,Key,TableType,String,String]
+
+  def initialize
+    super(TableName.new(GLOBALSCOPE, "index"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? IndexTableMixin and IndexTableMixin.methods.include? 'initialize_mixin'
+       then initialize_mixin 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    GLOBALSCOPE
+
+  end
+  def pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    tablename = Variable.new("tablename",TableName)
+    tablename.position=0
+    key = Variable.new("key",Key)
+    key.position=1
+    type = Variable.new("type",TableType)
+    type.position=2
+    classname = Variable.new("classname",String)
+    classname.position=3
+    object = Variable.new("object",String)
+    object.position=4
+    return Schema.new("Index",[tablename,key,type,classname,object])
+  end
+end
+
+class OperatorTable < ObjectTable
+include OperatorTableMixin if defined? OperatorTableMixin
+  @@PRIMARY_KEY = Key.new(2)
+  class Field
+    PROGRAM=0
+    RULE=1
+    ID=2
+    SELECTIVITY=3
+  end
+  @@SCHEMA = [String,String,String,Float]
+
+  def initialize
+    super(TableName.new(GLOBALSCOPE, "operator"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? OperatorTableMixin and OperatorTableMixin.methods.include? 'initialize_mixin'
+       then initialize_mixin 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    GLOBALSCOPE
+
+  end
+  def pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    program = Variable.new("program",String)
+    program.position=0
+    rule = Variable.new("rule",String)
+    rule.position=1
+    id = Variable.new("id",String)
+    id.position=2
+    selectivity = Variable.new("selectivity",Float)
+    selectivity.position=3
+    return Schema.new("Operator",[program,rule,id,selectivity])
+  end
+end
+
+class QueryTable < ObjectTable
+include QueryTableMixin if defined? QueryTableMixin
+  @@PRIMARY_KEY = Key.new
+  class Field
+    PROGRAM=0
+    RULE=1
+    PUBLIC=2
+    DELETE=3
+    EVENT=4
+    INPUT=5
+    OUTPUT=6
+    OBJECT=7
+  end
+  @@SCHEMA = [String,String,Integer,Integer,String,TableName,TableName,String]
+
+  def initialize
+    super(TableName.new(GLOBALSCOPE, "query"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? QueryTableMixin and QueryTableMixin.methods.include? 'initialize_mixin'
+       then initialize_mixin 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    GLOBALSCOPE
+
+  end
+  def pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    program = Variable.new("program",String)
+    program.position=0
+    rule = Variable.new("rule",String)
+    rule.position=1
+    public = Variable.new("public",Integer)
+    public.position=2
+    delete = Variable.new("delete",Integer)
+    delete.position=3
+    event = Variable.new("event",String)
+    event.position=4
+    input = Variable.new("input",TableName)
+    input.position=5
+    output = Variable.new("output",TableName)
+    output.position=6
+    object = Variable.new("object",String)
+    object.position=7
+    return Schema.new("Query",[program,rule,public,delete,event,input,output,object])
+  end
+end
+
+require 'lib/types/table/object_table'
+require 'lib/lang/parse/compiler_mixins'
 class CompilerCatalogTable < ObjectTable
   @@classes = Hash.new  def CompilerCatalogTable.classes
     @@classes.keys
@@ -876,177 +1046,7 @@ include RuleTableMixin if defined? RuleTableMixin
   end
 end
 
-require 'lib/types/table/object_table'
-require 'lib/lang/parse/compiler_mixins'
-class IndexTable < ObjectTable
-include IndexTableMixin if defined? IndexTableMixin
-  @@PRIMARY_KEY = Key.new(0,1)
-  class Field
-    TABLENAME=0
-    KEY=1
-    TYPE=2
-    CLASSNAME=3
-    OBJECT=4
-  end
-  @@SCHEMA = [TableName,Key,TableType,String,String]
-
-  def initialize
-    super(TableName.new(GLOBALSCOPE, "index"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-    if defined? IndexTableMixin and IndexTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
-    end
-  end
-
-  def field(name)
-
-    eval('Field::'+name)
-
-  end
-  def scope
-
-    GLOBALSCOPE
-
-  end
-  def pkey
-
-    @@PRIMARY_KEY
-
-  end
-  def schema
-
-    @@SCHEMA
-
-  end
-  def schema_of
-    tablename = Variable.new("tablename",TableName)
-    tablename.position=0
-    key = Variable.new("key",Key)
-    key.position=1
-    type = Variable.new("type",TableType)
-    type.position=2
-    classname = Variable.new("classname",String)
-    classname.position=3
-    object = Variable.new("object",String)
-    object.position=4
-    return Schema.new("Index",[tablename,key,type,classname,object])
-  end
-end
-
-class OperatorTable < ObjectTable
-include OperatorTableMixin if defined? OperatorTableMixin
-  @@PRIMARY_KEY = Key.new(2)
-  class Field
-    PROGRAM=0
-    RULE=1
-    ID=2
-    SELECTIVITY=3
-  end
-  @@SCHEMA = [String,String,String,Float]
-
-  def initialize
-    super(TableName.new(GLOBALSCOPE, "operator"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-    if defined? OperatorTableMixin and OperatorTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
-    end
-  end
-
-  def field(name)
-
-    eval('Field::'+name)
-
-  end
-  def scope
-
-    GLOBALSCOPE
-
-  end
-  def pkey
-
-    @@PRIMARY_KEY
-
-  end
-  def schema
-
-    @@SCHEMA
-
-  end
-  def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    rule = Variable.new("rule",String)
-    rule.position=1
-    id = Variable.new("id",String)
-    id.position=2
-    selectivity = Variable.new("selectivity",Float)
-    selectivity.position=3
-    return Schema.new("Operator",[program,rule,id,selectivity])
-  end
-end
-
-class QueryTable < ObjectTable
-include QueryTableMixin if defined? QueryTableMixin
-  @@PRIMARY_KEY = Key.new
-  class Field
-    PROGRAM=0
-    RULE=1
-    PUBLIC=2
-    DELETE=3
-    EVENT=4
-    INPUT=5
-    OUTPUT=6
-    OBJECT=7
-  end
-  @@SCHEMA = [String,String,Integer,Integer,String,TableName,TableName,String]
-
-  def initialize
-    super(TableName.new(GLOBALSCOPE, "query"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-    if defined? QueryTableMixin and QueryTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
-    end
-  end
-
-  def field(name)
-
-    eval('Field::'+name)
-
-  end
-  def scope
-
-    GLOBALSCOPE
-
-  end
-  def pkey
-
-    @@PRIMARY_KEY
-
-  end
-  def schema
-
-    @@SCHEMA
-
-  end
-  def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    rule = Variable.new("rule",String)
-    rule.position=1
-    public = Variable.new("public",Integer)
-    public.position=2
-    delete = Variable.new("delete",Integer)
-    delete.position=3
-    event = Variable.new("event",String)
-    event.position=4
-    input = Variable.new("input",TableName)
-    input.position=5
-    output = Variable.new("output",TableName)
-    output.position=6
-    object = Variable.new("object",String)
-    object.position=7
-    return Schema.new("Query",[program,rule,public,delete,event,input,output,object])
-  end
-end
-
-class WatchTable < ObjectTable
+class WatchTable < CompilerCatalogTable
 include WatchTableMixin if defined? WatchTableMixin
   @@PRIMARY_KEY = Key.new(0,1,2)
   class Field
@@ -1055,7 +1055,7 @@ include WatchTableMixin if defined? WatchTableMixin
     MODIFIER=2
   end
   @@SCHEMA = [String,String,String]
-
+  @@classes[self] = 1
   def initialize
     super(TableName.new(GLOBALSCOPE, "watch"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? WatchTableMixin and WatchTableMixin.methods.include? 'initialize_mixin'

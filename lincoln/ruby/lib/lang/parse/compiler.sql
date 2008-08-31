@@ -17,7 +17,7 @@ table MyTableFunction (
 	+tablefunid Integer,
 	termid Integer,
 	function String,
-	nested_predicate_id Intege
+	nested_predicate_id Integer
 )
 
 table MyPrimaryExpression (
@@ -119,3 +119,8 @@ table compiler (
   program String  
 )
 
+table watch (
+  +program String,
+  +tablename String,
+  +modifier String
+)

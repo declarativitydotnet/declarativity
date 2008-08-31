@@ -69,7 +69,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     cattr_reader(@@syms)
   end
 
-  attr_reader :program, :watch
+  attr_reader :program
   
   def Compiler.files
     @@FILES

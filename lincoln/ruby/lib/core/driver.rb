@@ -2,6 +2,7 @@ require 'lib/types/table/table_function'
 require 'lib/types/basic/tuple_set'
 require 'lib/types/table/aggregation_table'
 require 'lib/types/table/event_table'
+require 'lib/types/operator/watch_op'
 require 'monitor'
 
 class Driver < Monitor
@@ -92,18 +93,18 @@ class Driver < Monitor
     def evaluate(time, program, name, insertions, deletions) 
       continuations = Hash.new
       table = Table.find_table(name)
-      # watchAdd    = Compiler.myWatch.watched(program.name, name, Watch.Modifier.ADD)
-      # watchInsert = Compiler.myWatch.watched(program.name, name, Watch.Modifier.INSERT)
-      # watchRemove = Compiler.myWatch.watched(program.name, name, Watch.Modifier.ERASE)
-      # watchDelete = Compiler.myWatch.watched(program.name, name, Watch.Modifier.DELETE)
+      watchAdd    = Compiler.watch.watched(program.name, name, WatchOp::Modifier::ADD)
+      watchInsert = Compiler.watch.watched(program.name, name, WatchOp::Modifier::INSERT)
+      watchRemove = Compiler.watch.watched(program.name, name, WatchOp::Modifier::ERASE)
+      watchDelete = Compiler.watch.watched(program.name, name, WatchOp::Modifier::DELETE)
       insertions = []
       begin  
-        # watchAdd.evaluate(insertions) unless watchAdd.nil?
+        watchAdd.evaluate(insertions) unless watchAdd.nil?
 
         insertions = table.insert(insertions, deletions)
         break if insertions.size == 0
 
-        # watchInsert.evaluate(insertions) unless watchInsert.nil?
+        watchInsert.evaluate(insertions) unless watchInsert.nil?
 
         querySet = program.get_queries(insertions.name)
         break if querySet.nil?
@@ -112,8 +113,8 @@ class Driver < Monitor
         querySet.each	do |query|
           if (query.event != Table::Event::DELETE) then
             result = query.evaluate(insertions) 
-            #// java.lang.System.err.println("\t\tRUN QUERY " + query.rule + " input " + insertions)
-            #// java.lang.System.err.println("\t\tQUERY " + query.rule + " result " + result)
+            puts("\t\tRUN QUERY " + query.rule + " input " + insertions)
+            puts("\t\tQUERY " + query.rule + " result " + result)
             if (result.size == 0) then 
               continue
             elsif (result.name == insertions.name) then
@@ -137,9 +138,9 @@ class Driver < Monitor
       if !(table.class <= AggregationTable) then
         while deletions.size > 0
           if (table.table_type == Table::TableType::TABLE) then
-            # watchRemove.evaluate(deletions) if !watchRemove.nil?
+            watchRemove.evaluate(deletions) if !watchRemove.nil?
             deletions = table.delete(deletions)
-            # watchDelete.evaluate(deletions) if !watchDelete.nil?
+            watchDelete.evaluate(deletions) if !watchDelete.nil?
           else 
             raise "Can't delete tuples from non table type"
             exit
@@ -169,7 +170,7 @@ class Driver < Monitor
 
         delta = TupleSet.new(name)
         continuations.values.each { |c| delta << c }
-        #// java.lang.System.err.println("==================== RESULT " + name + ": " + delta + "\n\n")
+        puts("==================== RESULT " + name.to_s + ": " + delta.to_s + "\n\n")
         return delta
       end
 
@@ -249,7 +250,6 @@ class Driver < Monitor
         end
        end
      end
-     require 'ruby-debug'; debugger
     @@threads.each {|t| t.join}
   end
 

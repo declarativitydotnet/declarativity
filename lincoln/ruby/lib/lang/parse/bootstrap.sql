@@ -24,9 +24,4 @@ table operator (
   selectivity Float
 )
 
-table watch (
-  +program String,
-  +tablename String,
-  +modifier String
-)
 
