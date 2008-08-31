@@ -1324,38 +1324,16 @@ module Overlog
       elements[2]
     end
 
-    def cpar
+    def watchword
       elements[3]
+    end
+
+    def cpar
+      elements[4]
     end
   end
 
   module Watch1
-    def opar
-      elements[1]
-    end
-
-    def ptablename
-      elements[2]
-    end
-
-    def Comma
-      elements[3]
-    end
-
-    def WatchFlow
-      elements[4]
-    end
-
-    def Spacing
-      elements[5]
-    end
-
-    def cpar
-      elements[6]
-    end
-  end
-
-  module Watch2
 				def Watch
 					return self
 				end
@@ -1369,85 +1347,38 @@ module Overlog
       return cached
     end
 
-    i0 = index
-    i1, s1 = index, []
+    i0, s0 = index, []
     if input.index('watch', index) == index
-      r2 = (SyntaxNode).new(input, index...(index + 5))
+      r1 = (SyntaxNode).new(input, index...(index + 5))
       @index += 5
     else
       terminal_parse_failure('watch')
-      r2 = nil
-    end
-    s1 << r2
-    if r2
-      r3 = _nt_opar
-      s1 << r3
-      if r3
-        r4 = _nt_ptablename
-        s1 << r4
-        if r4
-          r5 = _nt_cpar
-          s1 << r5
-        end
-      end
-    end
-    if s1.last
-      r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(Watch0)
-    else
-      self.index = i1
       r1 = nil
     end
+    s0 << r1
     if r1
-      r0 = r1
-    else
-      i6, s6 = index, []
-      if input.index('watch', index) == index
-        r7 = (SyntaxNode).new(input, index...(index + 5))
-        @index += 5
-      else
-        terminal_parse_failure('watch')
-        r7 = nil
-      end
-      s6 << r7
-      if r7
-        r8 = _nt_opar
-        s6 << r8
-        if r8
-          r9 = _nt_ptablename
-          s6 << r9
-          if r9
-            r10 = _nt_Comma
-            s6 << r10
-            if r10
-              r11 = _nt_WatchFlow
-              s6 << r11
-              if r11
-                r12 = _nt_Spacing
-                s6 << r12
-                if r12
-                  r13 = _nt_cpar
-                  s6 << r13
-                end
-              end
-            end
+      r2 = _nt_opar
+      s0 << r2
+      if r2
+        r3 = _nt_ptablename
+        s0 << r3
+        if r3
+          r4 = _nt_watchword
+          s0 << r4
+          if r4
+            r5 = _nt_cpar
+            s0 << r5
           end
         end
       end
-      if s6.last
-        r6 = (SyntaxNode).new(input, i6...index, s6)
-        r6.extend(Watch1)
-        r6.extend(Watch2)
-      else
-        self.index = i6
-        r6 = nil
-      end
-      if r6
-        r0 = r6
-      else
-        self.index = i0
-        r0 = nil
-      end
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Watch0)
+      r0.extend(Watch1)
+    else
+      self.index = i0
+      r0 = nil
     end
 
     node_cache[:Watch][start_index] = r0
@@ -1455,10 +1386,59 @@ module Overlog
     return r0
   end
 
-  def _nt_WatchFlow
+  module Watchword0
+    def Comma
+      elements[0]
+    end
+
+    def watchFlow
+      elements[1]
+    end
+  end
+
+  module Watchword1
+			def text
+				return watchFlow.text_value
+			end
+  end
+
+  def _nt_watchword
     start_index = index
-    if node_cache[:WatchFlow].has_key?(index)
-      cached = node_cache[:WatchFlow][index]
+    if node_cache[:watchword].has_key?(index)
+      cached = node_cache[:watchword][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i1, s1 = index, []
+    r2 = _nt_Comma
+    s1 << r2
+    if r2
+      r3 = _nt_watchFlow
+      s1 << r3
+    end
+    if s1.last
+      r1 = (SyntaxNode).new(input, i1...index, s1)
+      r1.extend(Watchword0)
+    else
+      self.index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      r0 = SyntaxNode.new(input, index...index)
+    end
+
+    node_cache[:watchword][start_index] = r0
+
+    return r0
+  end
+
+  def _nt_watchFlow
+    start_index = index
+    if node_cache[:watchFlow].has_key?(index)
+      cached = node_cache[:watchFlow][index]
       @index = cached.interval.end if cached
       return cached
     end
@@ -1484,7 +1464,7 @@ module Overlog
       r0 = SyntaxNode.new(input, i0...index, s0)
     end
 
-    node_cache[:WatchFlow][start_index] = r0
+    node_cache[:watchFlow][start_index] = r0
 
     return r0
   end

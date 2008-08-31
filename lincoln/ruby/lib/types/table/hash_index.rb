@@ -6,7 +6,9 @@ class HashIndex < Index
   def initialize(table, key, type)
     super(table, key, type)
     @map = Hash.new
-    table.tuples.each {|t| insert(t)}
+    ##table.tuples.each {|t| insert(t);  print "table #{table}, inserting #{t}\n";}
+
+    table.tuples.each {|t| insert(t)  }
   end
   
   def to_s
@@ -39,6 +41,9 @@ class HashIndex < Index
   
   def lookup_kt(the_key, t)
     k = the_key.project(t).values.hash
+	#print "LOOKUP #{the_key.project(t)} (hashes to #{k})\n"
+	#print "__________________\nWITHING #{@map.keys.join(",")}\n"
+#$	#print "AKA 
     @map.has_key?(k) ? @map[k] : TupleSet.new(table.name, nil)
   end
   

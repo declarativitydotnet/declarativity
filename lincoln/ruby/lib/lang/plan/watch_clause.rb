@@ -13,6 +13,8 @@ class WatchClause < Clause
 	end
 
 	def set(program)
-		Compiler.watch.force(Tuple.new(program, name, modifier, Watch.new(program, null, name, modifier)))
+		###Compiler.watch.force(Tuple.new(program, name, modifier, Watch.new(program, null, name, modifier)))
+
+		Program.watch.force(Tuple.new(program, @name, @modifier, WatchOp.new(program, nil, @name, @modifier)))
 	end
 end

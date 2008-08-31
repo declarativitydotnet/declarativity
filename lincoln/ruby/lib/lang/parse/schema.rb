@@ -701,8 +701,9 @@ include MyTableTableMixin if defined? MyTableTableMixin
   class Field
     TABLEID=0
     TABLENAME=1
+    WATCH=2
   end
-  @@SCHEMA = [Integer,String]
+  @@SCHEMA = [Integer,String,String]
   @@classes[self] = 1
   def initialize
     super(TableName.new(GLOBALSCOPE, "MyTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
@@ -736,7 +737,9 @@ include MyTableTableMixin if defined? MyTableTableMixin
     tableid.position=0
     tablename = Variable.new("tablename",String)
     tablename.position=1
-    return Schema.new("MyTable",[tableid,tablename])
+    watch = Variable.new("watch",String)
+    watch.position=2
+    return Schema.new("MyTable",[tableid,tablename,watch])
   end
 end
 

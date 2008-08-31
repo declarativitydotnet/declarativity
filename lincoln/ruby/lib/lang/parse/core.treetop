@@ -122,14 +122,23 @@ include Ddl
 		  Type    (Comma Type   )*    
 	end
      	rule Watch
-		     'watch' opar ptablename cpar  /     'watch' opar ptablename Comma WatchFlow Spacing cpar	
+		     #('watch' opar ptablename cpar  /     'watch' opar ptablename watchword Spacing cpar)
+			'watch' opar ptablename watchword cpar
 			{
 				def Watch
 					return self
 				end 
 			}
 	end
-   	rule WatchFlow
+	rule watchword
+		(Comma watchFlow)?
+		{
+			def text
+				return watchFlow.text_value
+			end	
+		}
+	end
+   	rule watchFlow
 		  [taeidrs]+    
 	end
      	rule TableFunction

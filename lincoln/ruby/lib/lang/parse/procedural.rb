@@ -34,6 +34,7 @@ end
 # carpal tunnel
 def predoftable(table)
         schema = table.schema_of
+	print "SCHEMA IS #{schema}\n"
         return Predicate.new(false,table.name,table,schema.variables)
 
 end

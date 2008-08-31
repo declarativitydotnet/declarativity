@@ -60,7 +60,8 @@ table MyFact (
 
 table MyTable (
   +tableid Integer,
-  tablename String
+  tablename String,
+  watch String
 )
 
 table MyColumn (

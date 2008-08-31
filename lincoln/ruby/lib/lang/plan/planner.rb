@@ -12,6 +12,7 @@ require "lib/types/operator/scan_join"
 require "lib/lang/plan/value.rb"
 require "lib/lang/plan/arbitrary_expression.rb"
 require "lib/types/function/aggregate_fn.rb"
+require "lib/lang/plan/watch_clause.rb"
 
 
 class OverlogPlanner
@@ -305,6 +306,7 @@ class OverlogPlanner
 	def initialize(utterance)
 		# lookup the catalog tables and store references to them in instance variables.
 		catalog_tables
+
 		
 		# the choice about whether to pass these references as args, or repeat the lookup above in the compiler, is somewhat arbitrary	
 		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
@@ -370,14 +372,18 @@ class OverlogPlanner
 			tn = table.value("tablename")
 			if tn.eql?("periodic") then
 				print "periodic, sucker!\n"
-				table = EventTable.new(TableName.new(nil,tn),typething)
+				tableObj = EventTable.new(TableName.new(nil,tn),typething)
 			else
 				#print "tn=#{tn}\n" 
 				(scope,tname) = get_scope(tn)
-				table = RefTable.new(TableName.new(scope,tname),indxthing,typething)
+				tableObj = RefTable.new(TableName.new(scope,tname),indxthing,typething)
+			end		
+			@program.definition(tableObj)			
+	
+			if (!table.value("watch").nil?) then
+				watch  = WatchClause.new(1,table.value("tablename"),table.value("watch"))
+				watch.set(@program.name)
 			end
-			
-			@program.definition(table)			
 		end
 	end
 

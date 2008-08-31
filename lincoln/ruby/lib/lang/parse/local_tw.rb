@@ -171,6 +171,30 @@ class VisitFact < VisitTerm
 	end
 end
 
+class VisitWatch < VisitTerm
+	def initialize (tabs,terms)
+		@tabs =	tabs 
+		super(terms)
+	end
+	def semantic(text,obj)
+		@@positions["_Termpos"] = -1
+		super(text,obj)
+		# the table must already exist.  Recreating this index is costly.  replace soon.
+		tabtab = Table.find_table(TableName.new("global","MyTable"))
+		raise("no tabletable") if tabtab.nil?
+		hi = HashIndex.new(tabtab,Key.new(1),String)
+		tab = hi.lookup(Tuple.new(nil,obj.ptablename.text_value))
+		ptr = tab.tups[0].clone
+		tabtab.delete(tab.tups)
+
+		otabinsert(tabtab,ptr.value("tableid"),ptr.value("tablename"),obj.watchword.watchFlow.text_value)
+		
+		
+	end
+end
+
+
+
 class VisitAggregate < VisitVariable
 
 	def initialize (pt,et)
@@ -224,7 +248,7 @@ class VisitTable < VisitBase
 		super(text,obj)
 		@@current["table"] = @@positions["_Universal"]
 		#@tt.insert(TupleSet.new("table",Tuple.new(@@positions["_Universal"],text)),nil)
-		otabinsert(@tt,@@positions["_Universal"],text)
+		otabinsert(@tt,@@positions["_Universal"],text,nil)
 	end
 end
 
@@ -359,7 +383,7 @@ end
 
 		sky.add_handler("Word",vg,1)
 		sky.add_handler("Location",vg,1)
-		sky.add_handler("Watch",vg,1)
+		sky.add_handler("Watch",VisitWatch.new(@tabletable,@termtable),1)
 		sky.add_handler("Require", VisitRequire.new,1)
 		sky.add_handler("expression",VisitExpression.new(@extable),1)
 		sky.add_handler("primaryexpression",vg,1)

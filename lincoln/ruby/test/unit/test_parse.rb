@@ -30,6 +30,14 @@ end
 
 
 class TestParse < Test::Unit::TestCase
+	def test_watch
+		prep("program foo;
+			define(arg,keys(0,1),{String,String,Integer});
+			watch(arg,id);
+			arg(A,B,C) :- link(A,B), C := 1;
+")
+
+	end
 	def test_predarg
 		prep("program foo;
 			path(A,B) :- link(A,(B+C)/17,27*B);
@@ -192,7 +200,7 @@ class TestParse < Test::Unit::TestCase
 
 	def prep(utterance)
 		rei
-		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@selects,@assigns,@tfuncs)
+		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
 		compiler.verbose = 'y'
 		compiler.parse(utterance)
 		compiler.analyze

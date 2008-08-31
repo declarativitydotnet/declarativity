@@ -46,6 +46,7 @@ class TestPlan < Test::Unit::TestCase
 	end
 	
 	def prep(utterance)
+
 		rei
 		Compiler.init_catalog
 		planner = OverlogPlanner.new(utterance)
@@ -76,6 +77,14 @@ class TestPlan < Test::Unit::TestCase
 
 "
 
+		
+	end
+	def test_watch
+                prep("program foo;
+                        define(arg,keys(0,1),{String,String,Integer});
+                        watch(arg,id);
+                        arg(A,B,C) :- link(A,B), C := 1;
+")
 		
 	end
 	def test_materialization
