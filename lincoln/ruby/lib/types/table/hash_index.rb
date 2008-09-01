@@ -59,7 +59,7 @@ class HashIndex < Index
   end
   
   def delete(t)
-    k = @key.project(t).values
+    k = @key.project(t).values.hash
     if @map.has_key?(k) then
       @map[k].delete(t)
     end
