@@ -95,6 +95,7 @@ class Table
   end
 
   def drop
+    require 'ruby-debug'; debugger
     tuples = catalog.primary.lookup_vals(name)
     return (catalog.delete(tuples.tups).size > 0)
   end
@@ -102,7 +103,7 @@ class Table
   def Table.find_table(name)
     raise "Catalog missing" if $catalog.nil?
     tables = $catalog.primary.lookup_vals(name)
-    return nil if tables.nil?
+    return nil if tables.nil? or tables.size == 0
     return tables.tups[0].value(Catalog::Field::OBJECT) if tables.size == 1
     throw tables.size.to_s + " tables named " + name.to_s + " defined!"
   end
