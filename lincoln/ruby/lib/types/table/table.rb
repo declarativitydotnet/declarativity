@@ -95,7 +95,6 @@ class Table
   end
 
   def drop
-    require 'ruby-debug'; debugger
     tuples = catalog.primary.lookup_vals(name)
     return (catalog.delete(tuples.tups).size > 0)
   end
