@@ -31,7 +31,8 @@ class Operator
   end
 
   def to_s
-    raise "subclass method for Operator.to_s not defined"
+    #raise "subclass method for Operator.to_s not defined"
+	return "some Operator"
   end
 
   def evaluate(tuples)

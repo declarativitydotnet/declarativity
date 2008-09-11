@@ -1,6 +1,7 @@
 require "lib/types/table/catalog"
 require "lib/types/table/table"
 require "lib/types/basic/tuple"
+require 'lib/core/system.rb'
 require "test/unit"
 require "rubygems"
 

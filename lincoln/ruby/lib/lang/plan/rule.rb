@@ -152,7 +152,7 @@ class Rule < Clause
 			if !(Program.watch.watched(@program, @head.name, WatchOp::Modifier::SEND).nil?)
 				operators << Watch.new(@program, name, @head.name, WatchOp::Modifier::SEND)
 			end
-			
+		
 			queries << BasicQuery.new(@program, name, isPublic, isDelete, event, @head, operators)
 		else 
 			# Perform delta rewrite.

@@ -22,7 +22,7 @@ class Tuple
   def init
     @schema = Schema.new(nil,nil)
     @count = 1
-    @tid = @@idGen.to_s
+    @tid = @@idGen
     @@idGen += 1
   end
   
@@ -37,7 +37,7 @@ class Tuple
 
   def to_s
     unless values.length <= 0
-      out = "<";
+      out = "<"
       values.each do |v|
         out << (v.nil? ? "nil" : v.to_s) + ", "
       end
@@ -83,19 +83,17 @@ class Tuple
   end
   
   def hash
-    if (@values.size > 0) then
-      code = ""
-      @values.each { |value| code += (value.nil? ? "nil".to_s : value.to_s) }
-      return code.hash
-    else
-      return @tid.hash
-    end
+     if (@values.size > 0) then
+       code = ""
+       @values.each { |value| code += (value.nil? ? "nil".to_s : value.to_s) }
+       return code.hash
+     else
+       return @tid
+     end
+    #return @tid
   end
   
   def size() 
-    if @values.class == Fixnum
-      require 'ruby-debug'; debugger
-    end
     return @values.length
   end
   
@@ -103,7 +101,10 @@ class Tuple
     if i.class <= Numeric
       return values[i]
     else
-      raise("field "+i.to_s+" does not exist in tuple") if @schema.position(i).nil?
+      if @schema.position(i).nil?
+        require 'ruby-debug'; debugger
+        raise("field "+i.to_s+" does not exist in tuple") 
+      end
       return values[@schema.position(i)]
     end
   end  

@@ -236,8 +236,8 @@ class OverlogPlanner
 
 			pHash.each_key do |rule|
 				context = pHash[rule]
-				body = aHash[rule]
 
+				body = aHash[rule]
 				head = body.shift
 
                         	d = context.value("delete").eql?("1")
@@ -353,7 +353,6 @@ class OverlogPlanner
 
 	def plan_materializations
 		@tables.tuples.each do |table| 
-
 			rescols = join_of(@columns,TupleSet.new("cols",table))
 			cols = Array.new
 			# SORT!
@@ -491,7 +490,7 @@ class OverlogPlanner
 		# top-down is preferable to bottom up because, although we need to scan the whole tree anyway,
 		# we have an order of evaluation that we need to follow (materializations, facts, rules)
 		# and top-down search avoids repeating inferences.
-
+		
 		sexpr = ScanJoin.new(pred,ts.tups[0].schema)
 		return sexpr.evaluate(ts)
 	end

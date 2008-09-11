@@ -82,7 +82,7 @@ class TestPlan < Test::Unit::TestCase
 	def test_watch
                 prep("program foo;
                         define(arg,keys(0,1),{String,String,Integer});
-                        watch(arg,id);
+                        //watch(arg,id);
                         arg(A,B,C) :- link(A,B), C := 1;
 ")
 		

@@ -3,9 +3,9 @@ require 'lib/types/exception/dataflow_runtime_exception'
 class BasicQuery < Query
 
   def initialize(program, rule, isPublic, isDelete, event, head, body)
-    super(program, rule, isPublic, isDelete, event, head)
     @aggregation = nil
     @body        = body
+    super(program, rule, isPublic, isDelete, event, head)
   end
 
   def to_s

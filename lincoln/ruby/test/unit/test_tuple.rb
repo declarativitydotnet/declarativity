@@ -42,6 +42,7 @@ class TestTuple < Test::Unit::TestCase
     @t.count = 1
     @t.timestamp = Time.now
     assert_not_equal(@t.timestamp, Time.now)
+
   end
   
   def test_compare_and_join
