@@ -220,12 +220,16 @@ class TestPlan < Test::Unit::TestCase
     tn, ts = gen_link_tuples("agg_test")
     result = prog.get_queries(tn)[0].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["N1","N2",10.0])
-		assert_equal(result.tups[1].values, ["N2","N3",7.5])
+		result.tups.each do |t|
+			assert(t.values == ["N1","N2",10.0] || t.values == ["N2","N3",7.5])
+		end
+		#assert_equal(result.tups[0].values, ["N1","N2",10.0])
+		#assert_equal(result.tups[1].values, ["N2","N3",7.5])
     result = prog.get_queries(tn)[1].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["N1","N2",1])
-		assert_equal(result.tups[1].values, ["N2","N3",2])
+		result.tups.each do |t|
+			assert(t.values == ["N1","N2",1] || t.values == ["N2","N3",2])
+		end
   end
 
   def test_event
@@ -245,8 +249,10 @@ class TestPlan < Test::Unit::TestCase
 		
 		result = prog.get_queries(tn)[0].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["N1","N2",10,"first"])
-		assert_equal(result.tups[1].values, ["N2","N3",5,"second"])
+		result.tups.each do |t|
+			assert(t.values == ["N1","N2",10,"first"] || t.values == ["N2","N3",5,"second"])
+		end		
+
 		
 		# Should be 0 tuples in epsilon!  Doesn't currently work.
 
@@ -274,8 +280,9 @@ class TestPlan < Test::Unit::TestCase
 
 		result = prog.get_queries(tn)[0].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		assert_equal(result.tups[0].values, ["N1","N2",10,"first"])
-		assert_equal(result.tups[1].values, ["N2","N3",5,"second"])
+		result.tups.each do |t|
+			assert( (t.values == ["N1","N2",10,"first"]) || (t.values == ["N2","N3",5,"second"])) 
+		end
   end
 
 	def test_facts
@@ -291,9 +298,10 @@ class TestPlan < Test::Unit::TestCase
 		p = prog.plan
 
 		link = Table.find_table("path::link")
-		
-		assert_equal("<A, B, 3, link 1>",link.tuples.tups[0].to_s)
-		assert_equal("<B, C, 2, link 2>",link.tuples.tups[1].to_s)
+	
+		link.tuples.tups.each do |t|
+			assert(t.to_s == "<A, B, 3, link 1>" || t.to_s == "<B, C, 2, link 2>")
+		end		
 		
 	end
 

@@ -11,8 +11,6 @@ class TestTupleSet < Test::Unit::TestCase
     tn = TableName.new("global","JoeSet")
     ts = TupleSet.new(tn, *a)
 
-	puts ts.inspect
-	print "str: *#{ts.to_s}*\n"
 
     assert_equal(ts.size, ts.tups.length)
     assert_equal(2,ts.tups.length)

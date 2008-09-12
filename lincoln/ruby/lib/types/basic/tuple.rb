@@ -1,4 +1,9 @@
 require 'lib/types/basic/schema'
+require 'lib/types/basic/tuple'
+require 'lib/lang/plan/variable'
+require 'lib/lang/plan/value'
+require 'lib/types/table/table_name'
+
 require "rubygems"
 
 class Tuple
@@ -85,7 +90,19 @@ class Tuple
   def hash
      if (@values.size > 0) then
        code = ""
-       @values.each { |value| code += (value.nil? ? "nil".to_s : value.to_s) }
+       @values.each do |value| 
+		#code += (value.nil? ? "nil".to_s : value.to_s) 
+		if value.nil? 
+			code += "nil"
+		elsif (value.class == Tuple) || (value.class == TupleSet) || (value.class == Index) || (value.class == Table)
+			# stop; enough is enough
+			code += value.object_id.to_s
+		else
+			code += value.to_s
+		end
+		
+			
+ 	end
        return code.hash
      else
        return @tid
