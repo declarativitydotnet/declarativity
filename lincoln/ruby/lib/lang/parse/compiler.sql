@@ -113,13 +113,6 @@ table fact (
 	tuple Tuple
 )
 
-table compiler (
-  +name String,
-  owner String,
-  file String,
-  program String  
-)
-
 table watch (
   +program String,
   +tablename String,

@@ -5,6 +5,8 @@ class Table
   GLOBALSCOPE = "global"
   INFINITY = 1.0/0
 
+  attr_reader name
+  
   def initialize(name, type, size, lifetime, key, attributeTypes)
     @name = name
     @table_type = type

@@ -25,3 +25,9 @@ table operator (
 )
 
 
+table compiler (
+  +name String,
+  owner String,
+  file String,
+  program String  
+)

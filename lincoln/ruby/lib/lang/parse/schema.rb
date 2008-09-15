@@ -1,6 +1,64 @@
 require 'lib/types/table/object_table'
 require 'lib/lang/parse/compiler_mixins'
-class IndexTable < ObjectTable
+class BootstrapCatalogTable < ObjectTable
+  @@classes = Hash.new
+  def BootstrapCatalogTable.classes
+    @@classes.keys
+  end
+end
+
+class CompilerTable < BootstrapCatalogTable
+include CompilerTableMixin if defined? CompilerTableMixin
+  @@PRIMARY_KEY = Key.new(0)
+  class Field
+    NAME=0
+    OWNER=1
+    FILE=2
+    PROGRAM=3
+  end
+  @@SCHEMA = [String,String,String,String]
+  @@classes[self] = 1
+  def initialize
+    super(TableName.new(GLOBALSCOPE, "compiler"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? CompilerTableMixin and CompilerTableMixin.methods.include? 'initialize_mixin'
+       then initialize_mixin 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    GLOBALSCOPE
+
+  end
+  def pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    name = Variable.new("name",String)
+    name.position=0
+    owner = Variable.new("owner",String)
+    owner.position=1
+    file = Variable.new("file",String)
+    file.position=2
+    program = Variable.new("program",String)
+    program.position=3
+    return Schema.new("Compiler",[name,owner,file,program])
+  end
+end
+
+class IndexTable < BootstrapCatalogTable
 include IndexTableMixin if defined? IndexTableMixin
   @@PRIMARY_KEY = Key.new(0,1)
   class Field
@@ -11,7 +69,7 @@ include IndexTableMixin if defined? IndexTableMixin
     OBJECT=4
   end
   @@SCHEMA = [TableName,Key,TableType,String,String]
-
+  @@classes[self] = 1
   def initialize
     super(TableName.new(GLOBALSCOPE, "index"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? IndexTableMixin and IndexTableMixin.methods.include? 'initialize_mixin'
@@ -54,7 +112,7 @@ include IndexTableMixin if defined? IndexTableMixin
   end
 end
 
-class OperatorTable < ObjectTable
+class OperatorTable < BootstrapCatalogTable
 include OperatorTableMixin if defined? OperatorTableMixin
   @@PRIMARY_KEY = Key.new(2)
   class Field
@@ -64,7 +122,7 @@ include OperatorTableMixin if defined? OperatorTableMixin
     SELECTIVITY=3
   end
   @@SCHEMA = [String,String,String,Float]
-
+  @@classes[self] = 1
   def initialize
     super(TableName.new(GLOBALSCOPE, "operator"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? OperatorTableMixin and OperatorTableMixin.methods.include? 'initialize_mixin'
@@ -105,7 +163,7 @@ include OperatorTableMixin if defined? OperatorTableMixin
   end
 end
 
-class QueryTable < ObjectTable
+class QueryTable < BootstrapCatalogTable
 include QueryTableMixin if defined? QueryTableMixin
   @@PRIMARY_KEY = Key.new
   class Field
@@ -119,7 +177,7 @@ include QueryTableMixin if defined? QueryTableMixin
     OBJECT=7
   end
   @@SCHEMA = [String,String,Integer,Integer,String,TableName,TableName,String]
-
+  @@classes[self] = 1
   def initialize
     super(TableName.new(GLOBALSCOPE, "query"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? QueryTableMixin and QueryTableMixin.methods.include? 'initialize_mixin'
@@ -171,7 +229,8 @@ end
 require 'lib/types/table/object_table'
 require 'lib/lang/parse/compiler_mixins'
 class CompilerCatalogTable < ObjectTable
-  @@classes = Hash.new  def CompilerCatalogTable.classes
+  @@classes = Hash.new
+  def CompilerCatalogTable.classes
     @@classes.keys
   end
 end
@@ -893,57 +952,6 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
     object = Variable.new("object",String)
     object.position=3
     return Schema.new("Assignment",[program,rule,position,object])
-  end
-end
-
-class CompilerTable < CompilerCatalogTable
-include CompilerTableMixin if defined? CompilerTableMixin
-  @@PRIMARY_KEY = Key.new(0)
-  class Field
-    NAME=0
-    OWNER=1
-    FILE=2
-    PROGRAM=3
-  end
-  @@SCHEMA = [String,String,String,String]
-  @@classes[self] = 1
-  def initialize
-    super(TableName.new(GLOBALSCOPE, "compiler"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-    if defined? CompilerTableMixin and CompilerTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
-    end
-  end
-
-  def field(name)
-
-    eval('Field::'+name)
-
-  end
-  def scope
-
-    GLOBALSCOPE
-
-  end
-  def pkey
-
-    @@PRIMARY_KEY
-
-  end
-  def schema
-
-    @@SCHEMA
-
-  end
-  def schema_of
-    name = Variable.new("name",String)
-    name.position=0
-    owner = Variable.new("owner",String)
-    owner.position=1
-    file = Variable.new("file",String)
-    file.position=2
-    program = Variable.new("program",String)
-    program.position=3
-    return Schema.new("Compiler",[name,owner,file,program])
   end
 end
 

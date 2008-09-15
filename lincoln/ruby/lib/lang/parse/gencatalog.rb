@@ -12,6 +12,7 @@ require "rubygems"
 require "treetop"
 require 'tree_walker.rb'
 require 'ddl.rb'
+require 'getoptlong'
 
 $current = Hash.new
 $tables = Hash.new
@@ -65,6 +66,31 @@ class VNum < Visit
 		
 end
 
+def printusage
+  print "gencatalog: generates object definitions from table statements."
+  print "Usage: ruby gencatalog.rb -c [classname]"
+  print "POSIX options                   GNU long options"
+  print "     -c                             --class"
+  print "Examples:"
+  print "ruby gencatalog.rb -c Bootstrap < bootstrap.sql > schema.rb"
+  print "ruby gencatalog.rb --class Compiler < compiler.sql >> schema.rb"
+end
+
+opts = GetoptLong.new(
+  [ "--class", "-c", GetoptLong::REQUIRED_ARGUMENT]
+)
+
+classname = ""
+
+opts.each do |opt, arg|
+#  puts "Option: #{opt}, arg #{arg.inspect}"
+  classname = arg.to_s if (opt == "--class" or opt == "-c")
+end
+
+if classname == "" then
+  printusage
+  exit
+end
 
 prog = ''
 while line = STDIN.gets
@@ -95,26 +121,17 @@ sky.walk("n")
 
 print "require 'lib/types/table/object_table'\n"
 print "require 'lib/lang/parse/compiler_mixins'\n"
-# print "require 'lib/lang/plan/predicate'\n"
-# print "require 'lib/lang/plan/selection_term'\n"
-# print "require 'lib/lang/plan/program'\n"
-if ARGV.include? "--compiler" then
-  print "class CompilerCatalogTable < ObjectTable\n"
-  # print "  def register(obj)\n"
-  # print "    defined?(@@classes) ? @@classes[obj.class.hash] = obj.class : @@classes = {obj.class.hash => obj.class}\n"
-  # print "  end\n"
-  print "  @@classes = Hash.new"
-  print "  def CompilerCatalogTable.classes\n"
-  print "    @@classes.keys\n"
-  print "  end\n"
-  print "end\n\n"
-end
+print "class " + classname.capitalize + "CatalogTable < ObjectTable\n"
+print "  @@classes = Hash.new\n"
+print "  def " + classname.capitalize + "CatalogTable.classes\n"
+print "    @@classes.keys\n"
+print "  end\n"
+print "end\n\n"
 
 $tables.sort.each do |table, arr|
   tableCap = table[0..0].capitalize + table[1..table.length]
   mixin = tableCap+"TableMixin"
-	print "class "+tableCap+"Table < "
-	print (ARGV.include? "--compiler") ? "CompilerCatalogTable\n" : "ObjectTable\n"
+	print "class "+tableCap+"Table < " + classname.capitalize + "CatalogTable\n"
   print "include "+mixin+" if defined? "+mixin+"\n"
 	if ($keys[table].size > 0) then
 		print "  @@PRIMARY_KEY = Key.new("+$keys[table].join(",")+")\n"
@@ -130,7 +147,7 @@ $tables.sort.each do |table, arr|
 	print "  end\n"
 	print "  @@SCHEMA = ["+$types[table].join(",")+"]\n"
 
-  print "  @@classes[self] = 1" if ARGV.include? "--compiler"
+  print "  @@classes[self] = 1"
 
 	print "\n  def initialize\n"
         print "    super(TableName.new(GLOBALSCOPE, \""+table+"\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"

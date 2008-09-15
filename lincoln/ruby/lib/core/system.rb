@@ -52,7 +52,7 @@ class System
 	
   def install(owner, file)
 	##print "\t\tINSTALL #{file}\n"
-    compilation = TupleSet.new(Compiler::compiler.name)
+    compilation = TupleSet.new(@@compile.name)
     compilation << Tuple.new(nil, owner, file, nil)
     schedule(compilation, "runtime")
   end
