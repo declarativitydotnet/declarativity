@@ -46,17 +46,27 @@ class UnsortedTupleSet
     @tups = Hash.new
   end
   
+  def UnsortedTupleSet=(ts)
+    return self.class.new(ts.name, ts.tups)
+  end
+  
+  def +(ts)
+    retval = self.class.new(name, tups)
+    ts.each {|t| retval << t}
+    return retval
+  end
+  
   def <<(o)
     case o.class.name
-#      when 'TupleSet': o.each {|t| @tups << t }
-      when 'TupleSet': o.each {|t| @tups[t.hash]  = t}
-      when 'Array': o.each {|t| @tups[t.hash]  = t}
-#      when 'Tuple': @tups << o
-      when 'Tuple':
-         @tups[o.hash] = o
-      else 
-	puts o.inspect	
-	raise "inserting a " + o.class.name + " object into TupleSet"
+      #      when 'TupleSet': o.each {|t| @tups << t }
+    when 'TupleSet', 'Array': 
+      require 'ruby-debug'; debugger
+      raise "using << rather than += to add a collection into a TupleSet"
+    when 'Tuple':
+      @tups[o.hash] = o
+    else 
+      puts o.inspect	
+      raise "inserting a " + o.class.name + " object into TupleSet"
     end
   end
   
@@ -125,10 +135,27 @@ class TupleSet < UnsortedTupleSet
     @positions = Array.new
   end
 
+
+  # def TupleSet=(ts)
+  #   return TupleSet.new(ts.name, ts.tups)
+  # end
+  # 
+  # 
   def <<(o)
-	@positions << o.hash
-	@back_ptrs[o.hash] = @positions.length-1
-	super(o)
+    case o.class.name
+    when 'TupleSet','Array': o.each do |t| 
+      require 'ruby-debug'; debugger
+      raise "using << rather than += to add a collection into a TupleSet"
+    end
+    when 'Tuple':
+      @tups[o.hash] = o
+      @positions << o.hash
+      @back_ptrs[o.hash] = @positions.length-1
+      super(o)
+    else 
+      puts o.inspect	
+      raise "inserting a " + o.class.name + " object into TupleSet"
+    end
   end
 
   def each # return them in order of position!

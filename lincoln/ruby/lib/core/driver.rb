@@ -26,7 +26,8 @@ class Driver < Monitor
         @deletions = TupleSet.new(name)
       end
       
-      attr_reader :insertions, :deletions, :time, :program, :name
+      attr_reader :time, :program, :name
+      attr_accessor :insertions, :deletions
 
       def hash
         to_s.hash
@@ -77,8 +78,8 @@ class Driver < Monitor
         insertions  = tuple.value(Field::INSERTIONS)
         deletions   = tuple.value(Field::DELETIONS)
 
-        state.insertions << insertions unless insertions.nil?
-        state.deletions << deletions unless deletions.nil?
+        state.insertions += insertions unless insertions.nil?
+        state.deletions += deletions unless deletions.nil?
       end
 
       delta = TupleSet.new(name)
@@ -119,9 +120,9 @@ class Driver < Monitor
               next
             elsif (result.name == insertions.name) then
               if (query.isDelete) then
-                deletions << result
+                deletions += result
               else 
-                delta << result
+                delta += result
               end
             else 
               if (query.isDelete) then
@@ -160,7 +161,7 @@ class Driver < Monitor
                     continuation(continuations, time, program.name, Table::Event::DELETE, result)
                   end
                 else 
-                  delta << result
+                  delta += result
                 end
               end
             end
@@ -184,10 +185,10 @@ class Driver < Monitor
 
         if (event == Table.Event.INSERT) 
           insertions = continuations[key].value(Field::INSERTIONS)
-          insertions << result
+          insertions += result
         else 
           deletions = continuations[key].value(Field::DELETIONS)
-          deletions << result
+          deletions += result
         end
       end
     end

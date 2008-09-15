@@ -128,7 +128,7 @@ class Table
       t = t.clone
       if (insert_tup(t)) then
         delta << t
-        conflicts << primary.lookup(t) unless (conflicts.nil? or primary.nil?)
+        conflicts += primary.lookup(t) unless (conflicts.nil? or primary.nil?)
       end
     end
     if (delta.size > 0) then
