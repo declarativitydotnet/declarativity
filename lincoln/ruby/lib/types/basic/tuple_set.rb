@@ -162,7 +162,7 @@ class TupleSet < UnsortedTupleSet
     #raise "uh oh tupleset!" unless @positions.length == @tups.length
     #raise "uh oh tupleset!" unless @positions.length == @tup_pos.length
     @positions.each do |p|
-      yield @tups[p]
+      yield @tups[p] unless @tups[p].nil?
     end
   end
 end

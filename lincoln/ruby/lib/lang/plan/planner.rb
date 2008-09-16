@@ -515,6 +515,10 @@ class OverlogPlanner
 		# we have an order of evaluation that we need to follow (materializations, facts, rules)
 		# and top-down search avoids repeating inferences.
 		
+		if ts.tups[0].nil?
+		  require 'ruby-debug'; debugger
+		  return nil
+	  end
 		sexpr = ScanJoin.new(pred,ts.tups[0].schema)
 		return sexpr.evaluate(ts)
 	end
