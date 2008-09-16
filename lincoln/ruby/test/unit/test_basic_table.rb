@@ -26,7 +26,7 @@ class TestBasicTable < Test::Unit::TestCase
 	deletions = bt.delete(ts).tups
 	assert(deletions == [testtup1,testtup2] || [testtup2,testtup1])
     # what's with the newlines?  can't be bothered with it now...
-    assert_equal(bt.to_s, "Orli, IntegerString, 10, Infinity, keys(0), {IntegerString}\n\n")
+    assert_equal(bt.to_s, "Orli, IntegerString, 10, Infinity, keys(0), {IntegerString}\n\n\n")
     assert_equal(bt.table_type, Table::TableType::TABLE)    
     
     # Todo: check persistence of BasicTable

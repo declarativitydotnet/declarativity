@@ -407,9 +407,23 @@ class OverlogPlanner
 					when 1
 						retSet << tup.join(relRec.tups[0])
 				else
-					print "looked up #{tup.value("termid")}\n"
-					print "somehow found #{relRec.tups}\n"
-					raise("bad; more than one term matching termid")
+				  require 'ruby-debug'; debugger
+				  BootstrapCatalogTable.classes.each do |c|
+  				  table = c.name[0..(c.name.rindex("Table")-1)]
+            table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
+            t = Table.find_table(table_name)
+            t.dump_to_tmp_csv unless t.nil?
+			    end
+				  CompilerCatalogTable.classes.each do |c|
+				    table = c.name[0..(c.name.rindex("Table")-1)]
+            table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
+            t = Table.find_table(table_name)
+            t.dump_to_tmp_csv unless t.nil?
+			    end			    
+				  # $catalog.dump_to_tmp_csv
+          # print "looked up #{tup.value("termid")}\n"
+          # print "somehow found #{relRec.tups}\n"
+					raise("looked up #{tup.value("termid")}, somehow found #{relRec.tups}.  Should only find one match")
 				end
 			end
 		end

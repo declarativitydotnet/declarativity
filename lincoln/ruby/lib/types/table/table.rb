@@ -1,5 +1,8 @@
 require "lib/types/exception/update_exception"
 require 'lib/types/basic/tuple'
+require 'csv'
+require 'fileutils'
+require 'tmpdir'
 
 class Table
   GLOBALSCOPE = "global"
@@ -51,7 +54,7 @@ class Table
   def to_s
     value = @name.to_s + ", " + @attributeTypes.to_s + 
     ", " + @size.to_s + ", " + @lifetime.to_s + ", keys(" + @key.to_s + "), {" +
-    @attributeTypes.to_s + "}"
+    @attributeTypes.to_s + "}\n"
     if (not tuples.nil?) then
       tuples.each do |t|
         value += t.to_s + "\n"
@@ -69,7 +72,7 @@ class Table
   def types
     @attributeTypes
   end
-
+  
   def tuples
     raise "subclass method for Table.tuples not defined"
   end
@@ -169,5 +172,15 @@ class Table
 
   def delete_tup(tuple)
     raise "subclass method for AbstractTable.delete_tup(tuple) not defined"
+  end
+  
+  def dump_to_tmp_csv
+    dir = "/tmp/lincoln"+Process.pid.to_s
+    Dir.mkdir(dir) unless File.exist?(dir) 
+    outfile = File.open(dir + "/" + name.to_s+".csv", "w")
+    CSV::Writer.generate(outfile, ',') do |csv|
+      csv << tuples.tups[0].schema.variables unless (tuples.tups[0].nil? or tuples.tups[0].schema.nil?)
+      tuples.each  {|t| csv << t.values}
+    end
   end
 end

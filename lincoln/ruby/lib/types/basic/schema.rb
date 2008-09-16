@@ -44,12 +44,16 @@ class Schema
   end
 
   def to_s
-    out = "("
+     out = ""
+#    out = "("
+    i = 0
     @variable_set.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
-      out << a[1].to_s + ","
+      out << "," if i > 0
+      i += 1
+      out << a[1].to_s
     end
-    out[out.length-1] = ")"     if out.length > 1
-    out << ")"       if out.length == 1
+ #   out[out.length-1] = ")"     if out.length > 1
+#    out << ")"       if out.length == 1
     out
   end
 

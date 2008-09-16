@@ -16,7 +16,7 @@ class TestEventTable < Test::Unit::TestCase
     assert(et.secondary.nil?)
     assert(et.tuples.nil?)
     assert_equal(et.cardinality, 0)
-    assert_equal(et.to_s, "Orli, IntegerString, 0, 0, keys(), {IntegerString}")
+    assert_equal(et.to_s, "Orli, IntegerString, 0, 0, keys(), {IntegerString}\n")
     assert_equal(et.table_type, Table::TableType::EVENT)
     
     # todo: check semantics of Event table are correct (no persistence)
