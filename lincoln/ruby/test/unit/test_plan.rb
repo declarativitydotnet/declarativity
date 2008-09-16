@@ -80,8 +80,11 @@ class TestPlan < Test::Unit::TestCase
 		
 	end
 	def test_watch
+		$catalog=nil; $index=nil
+    sys=System.new; sys.init
                 prep("program foo;
                         define(arg,keys(0,1),{String,String,Integer});
+                        define(link,keys(0,1),{String,String,Integer});
                         //watch(arg,id);
                         arg(A,B,C) :- link(A,B), C := 1;
 ")

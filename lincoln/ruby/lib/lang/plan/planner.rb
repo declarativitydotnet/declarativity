@@ -288,10 +288,13 @@ class OverlogPlanner
 		tn = TableName.new("global",name)
 		ret = Table.find_table(tn)
 		raise("parser table #{name} not found in catalog") if ret.nil?
+
+		ret.delete(ret.tuples)
 		return ret
 	end
 
 	def catalog_tables
+		#this function is heinous: fix later by enumerating these:
 		@rules = thook("MyRule")
 		@terms = thook("MyTerm")
 		@preds = thook("MyPredicate")
@@ -324,7 +327,7 @@ class OverlogPlanner
 		#print "walktime #{walkTime}\n"
 	
 		# now our tables are populated.
-
+			
 		@program = plan_program
 	end
 
@@ -332,7 +335,7 @@ class OverlogPlanner
 		ts = TupleSet.new("prog",*@programs.tuples)
 
 		# ts points to my programs tuples.  for now, I'm going to assume there's only ever one row in here.
-		program = ts.tups[0]
+		program = @programs.tuples.tups[0]
 		@progname = program.value("program_name")
 		return Program.new(@progname,"your mother")
 	end
@@ -376,7 +379,6 @@ class OverlogPlanner
 			# hackensack
 			tn = table.value("tablename")
 			if tn.eql?("periodic") then
-				print "periodic, sucker!\n"
 				tableObj = EventTable.new(TableName.new(scope,tn),typething)
 			else
 				#print "tn=#{tn}\n" 
@@ -407,22 +409,30 @@ class OverlogPlanner
 					when 1
 						retSet << tup.join(relRec.tups[0])
 				else
-				  require 'ruby-debug'; debugger
-				  BootstrapCatalogTable.classes.each do |c|
-  				  table = c.name[0..(c.name.rindex("Table")-1)]
-            table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
-            t = Table.find_table(table_name)
-            t.dump_to_tmp_csv unless t.nil?
-			    end
-				  CompilerCatalogTable.classes.each do |c|
-				    table = c.name[0..(c.name.rindex("Table")-1)]
-            table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
-            t = Table.find_table(table_name)
-            t.dump_to_tmp_csv unless t.nil?
-			    end			    
+				  #require 'ruby-debug'; debugger
+
+		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"MyTerm")).dump_to_tmp_csv
+		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"MyPredicate")).dump_to_tmp_csv
+		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"MyProgram")).dump_to_tmp_csv
+				
+		#		  BootstrapCatalogTable.classes.each do |c|
+  		#		  table = c.name[0..(c.name.rindex("Table")-1)]
+         #   table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
+         #   t = Table.find_table(table_name)
+		##print "dump #{t}\n"
+         #   t.dump_to_tmp_csv unless t.nil?
+	#		    end
+	#			  CompilerCatalogTable.classes.each do |c|
+	#			    table = c.name[0..(c.name.rindex("Table")-1)]
+         #   table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
+         #   t = Table.find_table(table_name)
+         #   t.dump_to_tmp_csv unless t.nil?
+	#		    end			    
 				  # $catalog.dump_to_tmp_csv
           # print "looked up #{tup.value("termid")}\n"
           # print "somehow found #{relRec.tups}\n"
+
+
 					raise("looked up #{tup.value("termid")}, somehow found #{relRec.tups}.  Should only find one match")
 				end
 			end
