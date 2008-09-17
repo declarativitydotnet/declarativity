@@ -17,7 +17,7 @@ global::schedule(Time, Program, Name, Insertions, Deletions) :-
 schedulePublic 
 global::schedule(Time, Program2, Name, Insertions, Deletions) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
-	global::query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
+	bootstrap::query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
 	/* next line changed to remove && expression, which doesn't parse right */
 	Public == true, Input == Name, Program1 != Program2;
 
@@ -89,16 +89,16 @@ define(facts, {String, TableName, TupleSet});
 collectFacts 
 facts(Program, Name, tupleset<Tuple>) :-
 	config(Time, Program, Object),
-	global::fact(Program, Name, Tuple);
+	compiler::fact(Program, Name, Tuple);
 	
 installFacts1 
 runnable(Time, Program, Name, Facts, null) :-
-	facts(Program, Name, Facts), Program == "compile",
+	facts(Program, Name, Facts), Program == "compiler",
 	global::clock(Location, Time);
 	
 installFacts2 
 global::schedule(Time+1, Program, Name, Facts, null) :-
-	facts(Program, Name, Facts), Program != "compile",
+	facts(Program, Name, Facts), Program != "compiler",
 	global::clock(Location, Time);
 	
 /*******************************************************************/
@@ -108,13 +108,13 @@ define(config, {Float, String, Program});
 
 configProgram 
   config(Time, Program, Object) :- 
-	global::compiler#insert(Program, Owner, File, Object), 
+	bootstrap::compiler#insert(Program, Owner, File, Object), 
 	global::clock(Location, Time),
 	Object.plan();
 
 compileConfig 
-runnable(String, "compile", Name, Tuples, nil) :-
+runnable(String, "compiler", Name, Tuples, nil) :-
 	config(Time, Program, Object),
-	Tuples := TupleSet.new(TableName.new("compile", "config"), Object.tuple()),
+	Tuples := TupleSet.new(TableName.new("compiler", "config"), Object.tuple()),
 	Name := Tuples.name();
 

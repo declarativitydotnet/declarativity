@@ -1,4 +1,4 @@
-program compile;
+program compiler;
 
 /* 
    import p2.lang.plan.Program;
@@ -15,15 +15,15 @@ define(checkStrata, {String, Integer});
 /*******************************************************************/
 /*** Facts that initialize priority with this programs predicates ***/
 
-runtime::priority("compile", TableName.new("global", "compiler"),  0);
-runtime::priority("compile", TableName.new("global", "predicate"), 0);
-runtime::priority("compile", TableName.new("global", "rule"),      0);
+runtime::priority("compiler", TableName.new("bootstrap", "compiler"),  0);
+runtime::priority("compiler", TableName.new("global", "predicate"), 0);
+runtime::priority("compiler", TableName.new("compiler", "rule"),      0);
 
-runtime::priority("compile", TableName.new("compile", "config"),         0);
-runtime::priority("compile", TableName.new("compile", "dependency"),     1);
-runtime::priority("compile", TableName.new("compile", "priorityUpdate"), 2);
-runtime::priority("compile", TableName.new("runtime", "priority"),       3);
-runtime::priority("compile", TableName.new("compile", "checkStrata"),    4);
+runtime::priority("compiler", TableName.new("compiler", "config"),         0);
+runtime::priority("compiler", TableName.new("compiler", "dependency"),     1);
+runtime::priority("compiler", TableName.new("compiler", "priorityUpdate"), 2);
+runtime::priority("compiler", TableName.new("runtime", "priority"),       3);
+runtime::priority("compiler", TableName.new("compiler", "checkStrata"),    4);
 
 
 /*******************************************************************/
@@ -40,7 +40,7 @@ dependency(ProgramName, Head.name(), Body.name()) :-
 	predicate(ProgramName, Rule, 0, _, Head), /* Position == 0 */
 	predicate(ProgramName, Rule, Pos, _, Body), 
 	Head.name() != Body.name(), Pos > 0,
-	ProgramName != "compile";
+	ProgramName != "compiler";
 	
 /* Transitive closure over the dependency graph. */
 dependency(ProgramName, Ancestor, Child) :-
@@ -53,12 +53,12 @@ runtime::priority(ProgramName, Pred.name(), 0) :-
 	config(ProgramName, Object),
 	rule(ProgramName, Rule, _),
 	predicate(ProgramName, Rule, Pos, Event, Pred),
-	ProgramName != "compile";
+	ProgramName != "compiler";
 	
 runtime::priority(ProgramName, TableName, 0) :-
 	config(ProgramName, Object),
 	fact(ProgramName, TableName, Tuple),
-	ProgramName != "compile";
+	ProgramName != "compiler";
 
 
 /* Bubble up predicates in the stratum chain. */

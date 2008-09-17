@@ -230,24 +230,24 @@ class OverlogPlanner
 			end
 			return pHash,aHash		
 		end
-		def emit
-			ret = TupleSet.new("rules",nil)
-			pHash,aHash = accumulate_terms(super)
+    def emit
+      ret = TupleSet.new("rules",nil)
+      pHash,aHash = accumulate_terms(super)
 
-			pHash.each_key do |rule|
-				context = pHash[rule]
+      pHash.each_key do |rule|
+        context = pHash[rule]
 
-				body = aHash[rule]
-				head = body.shift
+        body = aHash[rule]
+        head = body.shift
 
-                        	d = context.value("delete").eql?("1")
-                        	ruleObj = Rule.new(1,context.value("rulename"),true,d,head,body)
-                        	ruleObj.set(context.value("program_name"))
+        d = context.value("delete").eql?("1")
+        ruleObj = Rule.new(1,context.value("rulename"),true,d,head,body)
+        ruleObj.set(context.value("program_name"))
 
-				ret << proj_cat(pHash[rule],ruleObj,"_rule_obj",method(:project_rule))
-			end
-			return ret
-		end
+        ret << proj_cat(pHash[rule],ruleObj,"_rule_obj",method(:project_rule))
+      end
+      return ret
+    end
 	end
 	class PlanProgram < PlanRule
 		def project_program(tup,*extras)
@@ -285,7 +285,7 @@ class OverlogPlanner
 	end
 
 	def thook(name)
-		tn = TableName.new("global",name)
+		tn = TableName.new(CompilerCatalogTable::COMPILERSCOPE,name)
 		ret = Table.find_table(tn)
 		raise("parser table #{name} not found in catalog") if ret.nil?
 
@@ -431,7 +431,6 @@ class OverlogPlanner
 				  # $catalog.dump_to_tmp_csv
           # print "looked up #{tup.value("termid")}\n"
           # print "somehow found #{relRec.tups}\n"
-
 
 					raise("looked up #{tup.value("termid")}, somehow found #{relRec.tups}.  Should only find one match")
 				end

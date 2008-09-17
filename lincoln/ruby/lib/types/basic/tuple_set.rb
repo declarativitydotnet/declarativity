@@ -125,7 +125,15 @@ class TupleSet < UnsortedTupleSet
   def delete(tup)
 	res = super(tup)
 	if res.eql?(tup) then
-		@positions.delete_at(@back_ptrs[tup.hash])
+	  pos = @back_ptrs[tup.hash]
+		@positions.delete_at(pos)
+		(pos..@positions.length-1).each do |i|
+		  unless @back_ptrs[@positions[i]] == i+1
+		    require 'ruby-debug'; debugger
+		    raise "tupleset bug" 
+	    end
+		  @back_ptrs[@positions[i]] = i
+	  end
 	end
 	return res
   end
@@ -158,6 +166,12 @@ class TupleSet < UnsortedTupleSet
     end
   end
 
+  def tups
+    out = Array.new
+    each {|t| out << t}
+    return out
+  end
+  
   def each # return them in order of position!
     #raise "uh oh tupleset!" unless @positions.length == @tups.length
     #raise "uh oh tupleset!" unless @positions.length == @tup_pos.length

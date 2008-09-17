@@ -3,6 +3,7 @@ require 'lib/types/basic/tuple'
 require 'lib/lang/plan/variable'
 require 'lib/lang/plan/value'
 require 'lib/types/table/table_name'
+require 'lib/types/table/index'
 
 require "rubygems"
 
@@ -41,14 +42,24 @@ class Tuple
   end
 
   def to_s
-    unless values.length <= 0
-      out = "<"
-      values.each do |v|
-        out << (v.nil? ? "nil" : v.to_s) + ", "
+    out = "<"
+    if (@values.size > 0) then
+      @values.each_with_index do |value, i|
+        out += ", " unless i == 0 
+        #out += (value.nil? ? "nil".to_s : value.to_s) 
+        if value.nil? 
+          out += "nil"
+        elsif (value.class <= Tuple) || (value.class <= UnsortedTupleSet) || (value.class <= Index) || (value.class <= Table)
+          # stop; enough is enough
+          out += "InternalObject:#{value.object_id.to_s}"
+        else
+          out += value.to_s
+        end
       end
-      out[out.length - 2] = ">"
-      out.rstrip
+    else
+      out += @tid.to_s
     end
+    return out + ">"
   end
 
   def schema=(s)
@@ -88,24 +99,7 @@ class Tuple
   end
   
   def hash
-    if (@values.size > 0) then
-      code = ""
-      @values.each do |value| 
-        #code += (value.nil? ? "nil".to_s : value.to_s) 
-        if value.nil? 
-          code += "nil"
-        elsif (value.class <= Tuple) || (value.class <= UnsortedTupleSet) || (value.class <= Index) || (value.class <= Table)
-          # stop; enough is enough
-          code += value.object_id.to_s
-        else
-          code += value.to_s
-        end
-      end
-      return code.hash
-    else
-      return @tid
-    end
-    #return @tid
+    return to_s.hash
   end
   
   def size() 

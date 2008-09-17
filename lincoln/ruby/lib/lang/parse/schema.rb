@@ -2,6 +2,7 @@ require 'lib/types/table/object_table'
 require 'lib/lang/parse/compiler_mixins'
 class BootstrapCatalogTable < ObjectTable
   @@classes = Hash.new
+  BOOTSTRAPSCOPE = 'bootstrap'
   def BootstrapCatalogTable.classes
     @@classes.keys
   end
@@ -19,7 +20,7 @@ include CompilerTableMixin if defined? CompilerTableMixin
   @@SCHEMA = [String,String,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "compiler"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(BOOTSTRAPSCOPE, "compiler"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? CompilerTableMixin and CompilerTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -32,7 +33,7 @@ include CompilerTableMixin if defined? CompilerTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    BOOTSTRAPSCOPE
 
   end
   def pkey
@@ -71,7 +72,7 @@ include IndexTableMixin if defined? IndexTableMixin
   @@SCHEMA = [TableName,Key,TableType,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "index"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(BOOTSTRAPSCOPE, "index"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? IndexTableMixin and IndexTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -84,7 +85,7 @@ include IndexTableMixin if defined? IndexTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    BOOTSTRAPSCOPE
 
   end
   def pkey
@@ -124,7 +125,7 @@ include OperatorTableMixin if defined? OperatorTableMixin
   @@SCHEMA = [String,String,String,Float]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "operator"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(BOOTSTRAPSCOPE, "operator"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? OperatorTableMixin and OperatorTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -137,7 +138,7 @@ include OperatorTableMixin if defined? OperatorTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    BOOTSTRAPSCOPE
 
   end
   def pkey
@@ -179,7 +180,7 @@ include QueryTableMixin if defined? QueryTableMixin
   @@SCHEMA = [String,String,Integer,Integer,String,TableName,TableName,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "query"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(BOOTSTRAPSCOPE, "query"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? QueryTableMixin and QueryTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -192,7 +193,7 @@ include QueryTableMixin if defined? QueryTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    BOOTSTRAPSCOPE
 
   end
   def pkey
@@ -230,6 +231,7 @@ require 'lib/types/table/object_table'
 require 'lib/lang/parse/compiler_mixins'
 class CompilerCatalogTable < ObjectTable
   @@classes = Hash.new
+  COMPILERSCOPE = 'compiler'
   def CompilerCatalogTable.classes
     @@classes.keys
   end
@@ -248,7 +250,7 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyAssignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyAssignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyAssignmentTableMixin and MyAssignmentTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -261,7 +263,7 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -301,7 +303,7 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyColumn"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyColumn"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyColumnTableMixin and MyColumnTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -314,7 +316,7 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -353,7 +355,7 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
   @@SCHEMA = [Integer,Integer,Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyExpressionTableMixin and MyExpressionTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -366,7 +368,7 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -405,7 +407,7 @@ include MyFactTableMixin if defined? MyFactTableMixin
   @@SCHEMA = [Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyFact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyFact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyFactTableMixin and MyFactTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -418,7 +420,7 @@ include MyFactTableMixin if defined? MyFactTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -453,7 +455,7 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
   @@SCHEMA = [Integer,Integer,Integer]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyIndex"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyIndex"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyIndexTableMixin and MyIndexTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -466,7 +468,7 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -503,7 +505,7 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyPredicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyPredicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyPredicateTableMixin and MyPredicateTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -516,7 +518,7 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -558,7 +560,7 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyPrimaryExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyPrimaryExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyPrimaryExpressionTableMixin and MyPrimaryExpressionTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -571,7 +573,7 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -612,7 +614,7 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
   @@SCHEMA = [Integer,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyProgram"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyProgram"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyProgramTableMixin and MyProgramTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -625,7 +627,7 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -662,7 +664,7 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
   @@SCHEMA = [Integer,Integer,String,Integer,Integer]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyRule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyRule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyRuleTableMixin and MyRuleTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -675,7 +677,7 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -715,7 +717,7 @@ include MySelectionTableMixin if defined? MySelectionTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MySelection"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MySelection"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MySelectionTableMixin and MySelectionTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -728,7 +730,7 @@ include MySelectionTableMixin if defined? MySelectionTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -765,7 +767,7 @@ include MyTableTableMixin if defined? MyTableTableMixin
   @@SCHEMA = [Integer,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTableTableMixin and MyTableTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -778,7 +780,7 @@ include MyTableTableMixin if defined? MyTableTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -814,7 +816,7 @@ include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
   @@SCHEMA = [Integer,Integer,String,Integer]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyTableFunction"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyTableFunction"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTableFunctionTableMixin and MyTableFunctionTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -827,7 +829,7 @@ include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -865,7 +867,7 @@ include MyTermTableMixin if defined? MyTermTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "MyTerm"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "MyTerm"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTermTableMixin and MyTermTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -878,7 +880,7 @@ include MyTermTableMixin if defined? MyTermTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -916,7 +918,7 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
   @@SCHEMA = [String,String,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "assignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "assignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? AssignmentTableMixin and AssignmentTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -929,7 +931,7 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -966,7 +968,7 @@ include FactTableMixin if defined? FactTableMixin
   @@SCHEMA = [String,TableName,Tuple]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "fact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "fact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? FactTableMixin and FactTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -979,7 +981,7 @@ include FactTableMixin if defined? FactTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -1016,7 +1018,7 @@ include RuleTableMixin if defined? RuleTableMixin
   @@SCHEMA = [String,String,String,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "rule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "rule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? RuleTableMixin and RuleTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -1029,7 +1031,7 @@ include RuleTableMixin if defined? RuleTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey
@@ -1068,7 +1070,7 @@ include WatchTableMixin if defined? WatchTableMixin
   @@SCHEMA = [String,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(GLOBALSCOPE, "watch"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "watch"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? WatchTableMixin and WatchTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -1081,7 +1083,7 @@ include WatchTableMixin if defined? WatchTableMixin
   end
   def scope
 
-    GLOBALSCOPE
+    COMPILERSCOPE
 
   end
   def pkey

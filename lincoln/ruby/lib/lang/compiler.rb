@@ -17,7 +17,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
   extend ObjectFromCatalog
   ##@@FILES =  ["/Users/joeh/devel/lincoln/ruby/lib/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lib/lang/stratachecker.olg"]
 
-  @@FILES =  ["lib/lang/compile.olg", "lib/lang/stratachecker.olg"]
+  @@FILES =  ["lib/lang/compiler.olg", "lib/lang/stratachecker.olg"]
 
   # Create a new driver for Overlog.
   def initialize(owner, file)
@@ -27,7 +27,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     File.open(file) do |f|
       f.each_line { |l| utterance << l }
     end
-    # not quiet sure why, but this call here to "init_catalog" seems to be
+    # not quite sure why, but this call here to "init_catalog" seems to be
     # needed.  Requires more investigation, would be nice to chuck this (and 
     # the init_catalog method)
     Compiler.init_catalog
@@ -59,8 +59,11 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     @@syms = Array.new
     CompilerCatalogTable.classes.each do |c|
       table = c.name[0..(c.name.rindex("Table")-1)]
-      table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
+      table_name = TableName.new(CompilerCatalogTable::COMPILERSCOPE,table.downcase)
       t = Table.find_table(table_name)
+      # if table.downcase == "rule" and (not t.nil?)
+      #   require 'ruby-debug'; debugger
+      # end
       t.drop unless t.nil?
       varname = camelize(table)
       str = "@@"+ varname + " = " + c.name + ".new" 

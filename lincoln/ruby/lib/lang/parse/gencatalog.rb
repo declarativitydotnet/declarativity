@@ -123,6 +123,8 @@ print "require 'lib/types/table/object_table'\n"
 print "require 'lib/lang/parse/compiler_mixins'\n"
 print "class " + classname.capitalize + "CatalogTable < ObjectTable\n"
 print "  @@classes = Hash.new\n"
+scope = classname.upcase + "SCOPE"
+print "  #{scope} = '#{classname}'\n"
 print "  def " + classname.capitalize + "CatalogTable.classes\n"
 print "    @@classes.keys\n"
 print "  end\n"
@@ -150,7 +152,7 @@ $tables.sort.each do |table, arr|
   print "  @@classes[self] = 1"
 
 	print "\n  def initialize\n"
-        print "    super(TableName.new(GLOBALSCOPE, \""+table+"\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
+        print "    super(TableName.new(#{scope}, \""+table+"\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
         print "    if defined? "+mixin+" and "+mixin+".methods.include? 'initialize_mixin'\n       then initialize_mixin \n    end\n"
   # print "    programKey = Key.new(Field::" + arr[0].upcase+")\n"
   # print "    index = HashIndex.new(self, programKey, Index::Type::SECONDARY)\n"
@@ -162,7 +164,7 @@ $tables.sort.each do |table, arr|
   print "\n  end"
   
   print "\n  def scope\n"
-  print "\n    GLOBALSCOPE\n"
+  print "\n    #{scope}\n"
   print "\n  end"
   
   print "\n  def pkey\n"

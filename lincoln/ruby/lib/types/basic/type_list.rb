@@ -2,6 +2,10 @@ class TypeList
   include Comparable
   
   def initialize(types)
+    unless types.class <= Array
+      require 'ruby-debug'; debugger
+      raise "invalid type to TypeList.new"
+    end
     @types = types
   end
   
@@ -14,6 +18,9 @@ class TypeList
   end
   
   def size
+    unless defined? @types.length
+      require 'ruby-debug'; debugger
+    end
     return @types.length
   end
   

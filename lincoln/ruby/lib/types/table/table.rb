@@ -28,7 +28,7 @@ class Table
   def Table.init
     $catalog = Catalog.new
     $index = IndexTable.new
-    register($catalog.name, $catalog.table_type, $catalog.size, $catalog.lifetime, $catalog.key, TypeList.new($catalog.types), $catalog)
+    register($catalog.name, $catalog.table_type, $catalog.size, $catalog.lifetime, $catalog.key, $catalog.types.clone, $catalog)
   end
   
   def catalog
@@ -144,7 +144,7 @@ class Table
   def delete(tuples)
     delta = TupleSet.new(name)
     tuples.each do |t|
-      t = t.clone
+#      t = t.clone
       if (delete_tup(t)) then
         delta << t
       end
