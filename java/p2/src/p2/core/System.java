@@ -1,25 +1,22 @@
 package p2.core;
 
+import java.net.URL;
 import java.util.Hashtable;
 
 import p2.core.Driver.Evaluate;
 import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
-import p2.lang.Compiler.CompileTable;
 import p2.lang.plan.Program;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.exception.P2RuntimeException;
-import p2.types.exception.PlannerException;
-import p2.types.exception.UpdateException;
 import p2.types.table.Table;
 
 public class System {
-	private static String RUNTIME = "/Users/tcondie/workspace/P2/src/p2/core/runtime.olg";
-			
 	private static boolean initialized = false;
 	
 	private static Thread system;
+	
+	private static p2.net.Manager netManager;
 	
 	private static QueryTable query;
 	
@@ -96,7 +93,8 @@ public class System {
 			log        = new Log(java.lang.System.err);
 			programs   = new Hashtable<String, Program>();
 			
-			p2.lang.Compiler compiler = new p2.lang.Compiler("system", RUNTIME);
+	        URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
+			p2.lang.Compiler compiler = new p2.lang.Compiler("system", runtimeFile.getPath());
 			compiler.program().plan();
 			clock.insert(clock.time(0L), null);
 			
@@ -108,6 +106,8 @@ public class System {
 			
 			system = new Thread(driver);
 			system.start();
+			
+			netManager = new p2.net.Manager(10000);
 		} catch (Exception e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
@@ -116,8 +116,10 @@ public class System {
 	}
 	
 	public static void main(String[] args) {
+		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg"));
 		bootstrap();
 		for (int i = 0; i < args.length; i++)
 			install("user", args[i]);
 	}
+
 }
