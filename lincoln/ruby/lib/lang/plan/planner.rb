@@ -49,6 +49,7 @@ class OverlogPlanner
 			def eat(var)
 				if (!@aggFunc.nil?) then
 					if (!var.value("type").eql?("var")) then
+					  require 'ruby-debug'; debugger
 						raise("can't aggregate over non-variable ("+var.value("type")+")")
 					end
 					# fix that string stuff!
@@ -289,7 +290,7 @@ class OverlogPlanner
 		ret = Table.find_table(tn)
 		raise("parser table #{name} not found in catalog") if ret.nil?
 
-		ret.delete(ret.tuples)
+    ret.clear
 		return ret
 	end
 

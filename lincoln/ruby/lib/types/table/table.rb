@@ -141,6 +141,10 @@ class Table
     return delta
   end
   
+  def clear
+    @tuples.clear
+  end
+  
   def delete(tuples)
     delta = TupleSet.new(name)
     tuples.each do |t|

@@ -139,6 +139,7 @@ class TupleSet < UnsortedTupleSet
   end
 
   def clear
+    super
     @back_ptrs = Hash.new
     @positions = Array.new
   end
