@@ -180,7 +180,7 @@ class VisitWatch < VisitTerm
 		@@positions["_Termpos"] = -1
 		super(text,obj)
 		# the table must already exist.  Recreating this index is costly.  replace soon.
-		tabtab = Table.find_table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"MyTable"))
+		tabtab = Table.find_table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myTable"))
 		if tabtab.nil?
 		  require 'ruby-debug'; debugger
 		  raise("no tabletable, requesting watch on #{obj.ptablename.text_value}") 

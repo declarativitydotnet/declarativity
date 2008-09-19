@@ -57,13 +57,18 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     @@syms = Array.new
     CompilerCatalogTable.classes.each do |c|
       table = c.name[0..(c.name.rindex("Table")-1)]
+      table[0] = table[0..0].downcase
       table_name = TableName.new(CompilerCatalogTable::COMPILERSCOPE,table)
       t = Table.find_table(table_name)
       # if table.downcase == "rule" and (not t.nil?)
       #   require 'ruby-debug'; debugger
       # end
-      unless t.nil?
+     unless t.nil?
         t.drop 
+        unless $catalog.primary.lookup_vals(table_name).size == 0
+          require 'ruby-debug; debugger'
+          raise 'table {table_name} still lurking in catalog after delete'
+        end
         raise "drop failed" unless Table.find_table(table_name).nil?
       end
       varname = camelize(table)

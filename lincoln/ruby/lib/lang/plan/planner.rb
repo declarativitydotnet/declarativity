@@ -296,19 +296,19 @@ class OverlogPlanner
 
 	def catalog_tables
 		#this function is heinous: fix later by enumerating these:
-		@rules = thook("MyRule")
-		@terms = thook("MyTerm")
-		@preds = thook("MyPredicate")
-		@pexpr = thook("MyPrimaryExpression")
-		@expr = thook("MyExpression")
-		@facts = thook("MyFact")
-		@tables = thook("MyTable")
-		@columns = thook("MyColumn")
-		@indices = thook("MyIndex")
-		@programs = thook("MyProgram")
-		@assigns = thook("MyAssignment")
-		@selects = thook("MySelection")
-		@tfuncs = thook("MyTableFunction")
+		@rules = thook("myRule")
+		@terms = thook("myTerm")
+		@preds = thook("myPredicate")
+		@pexpr = thook("myPrimaryExpression")
+		@expr = thook("myExpression")
+		@facts = thook("myFact")
+		@tables = thook("myTable")
+		@columns = thook("myColumn")
+		@indices = thook("myIndex")
+		@programs = thook("myProgram")
+		@assigns = thook("myAssignment")
+		@selects = thook("mySelection")
+		@tfuncs = thook("myTableFunction")
 		thook("assignment")
 		thook("rule")
 		thook("fact")
@@ -416,9 +416,9 @@ class OverlogPlanner
 				else
 				  #require 'ruby-debug'; debugger
 
-		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"MyTerm")).dump_to_tmp_csv
-		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"MyPredicate")).dump_to_tmp_csv
-		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"MyProgram")).dump_to_tmp_csv
+		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"myTerm")).dump_to_tmp_csv
+		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"myPredicate")).dump_to_tmp_csv
+		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"myProgram")).dump_to_tmp_csv
 				
 		#		  BootstrapCatalogTable.classes.each do |c|
   		#		  table = c.name[0..(c.name.rindex("Table")-1)]

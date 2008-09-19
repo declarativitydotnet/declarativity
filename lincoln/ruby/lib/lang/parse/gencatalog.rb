@@ -85,6 +85,7 @@ classname = ""
 opts.each do |opt, arg|
 #  puts "Option: #{opt}, arg #{arg.inspect}"
   classname = arg.to_s if (opt == "--class" or opt == "-c")
+  classname[0] = classname[0..0].downcase
 end
 
 if classname == "" then

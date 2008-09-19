@@ -250,7 +250,7 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyAssignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myAssignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyAssignmentTableMixin and MyAssignmentTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -287,7 +287,7 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
     lhs.position=3
     assign_txt = Variable.new("assign_txt",String)
     assign_txt.position=4
-    return Schema.new("MyAssignment",[assignmentid,termid,assign_pos,lhs,assign_txt])
+    return Schema.new("myAssignment",[assignmentid,termid,assign_pos,lhs,assign_txt])
   end
 end
 
@@ -303,7 +303,7 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyColumn"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myColumn"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyColumnTableMixin and MyColumnTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -338,7 +338,7 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
     col_pos.position=2
     datatype = Variable.new("datatype",String)
     datatype.position=3
-    return Schema.new("MyColumn",[columnid,tableid,col_pos,datatype])
+    return Schema.new("myColumn",[columnid,tableid,col_pos,datatype])
   end
 end
 
@@ -355,7 +355,7 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
   @@SCHEMA = [Integer,Integer,Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyExpressionTableMixin and MyExpressionTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -392,7 +392,7 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
     expr_pos.position=3
     expr_text = Variable.new("expr_text",String)
     expr_text.position=4
-    return Schema.new("MyExpression",[expressionid,termid,arg_pos,expr_pos,expr_text])
+    return Schema.new("myExpression",[expressionid,termid,arg_pos,expr_pos,expr_text])
   end
 end
 
@@ -407,7 +407,7 @@ include MyFactTableMixin if defined? MyFactTableMixin
   @@SCHEMA = [Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyFact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myFact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyFactTableMixin and MyFactTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -440,7 +440,7 @@ include MyFactTableMixin if defined? MyFactTableMixin
     termid.position=1
     tablename = Variable.new("tablename",String)
     tablename.position=2
-    return Schema.new("MyFact",[factid,termid,tablename])
+    return Schema.new("myFact",[factid,termid,tablename])
   end
 end
 
@@ -455,7 +455,7 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
   @@SCHEMA = [Integer,Integer,Integer]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyIndex"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myIndex"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyIndexTableMixin and MyIndexTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -488,7 +488,7 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
     tableid.position=1
     col_pos = Variable.new("col_pos",Integer)
     col_pos.position=2
-    return Schema.new("MyIndex",[indexid,tableid,col_pos])
+    return Schema.new("myIndex",[indexid,tableid,col_pos])
   end
 end
 
@@ -505,7 +505,7 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyPredicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myPredicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyPredicateTableMixin and MyPredicateTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -542,7 +542,7 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
     pred_txt.position=3
     event_mod = Variable.new("event_mod",String)
     event_mod.position=4
-    return Schema.new("MyPredicate",[predicateid,termid,pred_pos,pred_txt,event_mod])
+    return Schema.new("myPredicate",[predicateid,termid,pred_pos,pred_txt,event_mod])
   end
 end
 
@@ -560,7 +560,7 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyPrimaryExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myPrimaryExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyPrimaryExpressionTableMixin and MyPrimaryExpressionTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -599,7 +599,7 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
     type.position=4
     datatype = Variable.new("datatype",String)
     datatype.position=5
-    return Schema.new("MyPrimaryExpression",[primaryexpressionid,expressionid,p_pos,p_txt,type,datatype])
+    return Schema.new("myPrimaryExpression",[primaryexpressionid,expressionid,p_pos,p_txt,type,datatype])
   end
 end
 
@@ -614,7 +614,7 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
   @@SCHEMA = [Integer,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyProgram"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myProgram"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyProgramTableMixin and MyProgramTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -647,7 +647,7 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
     owner.position=1
     program_name = Variable.new("program_name",String)
     program_name.position=2
-    return Schema.new("MyProgram",[programid,owner,program_name])
+    return Schema.new("myProgram",[programid,owner,program_name])
   end
 end
 
@@ -664,7 +664,7 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
   @@SCHEMA = [Integer,Integer,String,Integer,Integer]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyRule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myRule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyRuleTableMixin and MyRuleTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -701,7 +701,7 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
     public.position=3
     delete = Variable.new("delete",Integer)
     delete.position=4
-    return Schema.new("MyRule",[ruleid,programid,rulename,public,delete])
+    return Schema.new("myRule",[ruleid,programid,rulename,public,delete])
   end
 end
 
@@ -717,7 +717,7 @@ include MySelectionTableMixin if defined? MySelectionTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MySelection"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "mySelection"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MySelectionTableMixin and MySelectionTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -752,7 +752,7 @@ include MySelectionTableMixin if defined? MySelectionTableMixin
     select_pos.position=2
     select_txt = Variable.new("select_txt",String)
     select_txt.position=3
-    return Schema.new("MySelection",[selectionid,termid,select_pos,select_txt])
+    return Schema.new("mySelection",[selectionid,termid,select_pos,select_txt])
   end
 end
 
@@ -767,7 +767,7 @@ include MyTableTableMixin if defined? MyTableTableMixin
   @@SCHEMA = [Integer,String,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTableTableMixin and MyTableTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -800,7 +800,7 @@ include MyTableTableMixin if defined? MyTableTableMixin
     tablename.position=1
     watch = Variable.new("watch",String)
     watch.position=2
-    return Schema.new("MyTable",[tableid,tablename,watch])
+    return Schema.new("myTable",[tableid,tablename,watch])
   end
 end
 
@@ -816,7 +816,7 @@ include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
   @@SCHEMA = [Integer,Integer,String,Integer]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyTableFunction"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myTableFunction"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTableFunctionTableMixin and MyTableFunctionTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -851,7 +851,7 @@ include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
     function.position=2
     nested_predicate_id = Variable.new("nested_predicate_id",Integer)
     nested_predicate_id.position=3
-    return Schema.new("MyTableFunction",[tablefunid,termid,function,nested_predicate_id])
+    return Schema.new("myTableFunction",[tablefunid,termid,function,nested_predicate_id])
   end
 end
 
@@ -867,7 +867,7 @@ include MyTermTableMixin if defined? MyTermTableMixin
   @@SCHEMA = [Integer,Integer,Integer,String]
   @@classes[self] = 1
   def initialize
-    super(TableName.new(COMPILERSCOPE, "MyTerm"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    super(TableName.new(COMPILERSCOPE, "myTerm"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTermTableMixin and MyTermTableMixin.methods.include? 'initialize_mixin'
        then initialize_mixin 
     end
@@ -902,7 +902,7 @@ include MyTermTableMixin if defined? MyTermTableMixin
     term_pos.position=2
     term_txt = Variable.new("term_txt",String)
     term_txt.position=3
-    return Schema.new("MyTerm",[termid,ruleid,term_pos,term_txt])
+    return Schema.new("myTerm",[termid,ruleid,term_pos,term_txt])
   end
 end
 
