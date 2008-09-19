@@ -143,6 +143,7 @@ class Table
   
   def clear
     @tuples.clear
+    @callbacks.each {|c| c.clear}
   end
   
   def delete(tuples)

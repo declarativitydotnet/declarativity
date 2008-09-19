@@ -12,6 +12,10 @@ class Callback
   def hash
     @id.hash
   end
+  
+  def clear
+    @table.clear
+  end
 
   def insertion(tuples)
    raise "Callback with no insertion implementation"
