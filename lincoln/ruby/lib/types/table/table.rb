@@ -89,9 +89,9 @@ class Table
 
   def Table.register(name, type, size, lifetime, key, types, object)
     # make sure table wasn't already registered!
-    unless $catalog.primary.lookup_vals(name).nil?
-#      print "table " + name.to_s + " already registered\n"
-#     puts caller.join("\n\t")
+    tups = $catalog.primary.lookup_vals(name)
+    unless tups.nil? or tups.size == 0
+      raise "table " + name.to_s + " already registered\n"
       return
     end
     
@@ -101,7 +101,11 @@ class Table
 
   def drop
     tuples = catalog.primary.lookup_vals(name)
-    return (catalog.delete(tuples.tups).size > 0)
+    retval = (catalog.delete(tuples.tups).size > 0)
+    tuples = catalog.primary.lookup_vals(name)
+    unless tuples.nil? or tuples.size == 0
+      raise "Table.drop failed" 
+    end
   end
 
   def Table.find_table(name)
@@ -158,7 +162,13 @@ class Table
     if (delta.size > 0) then
       @callbacks.each {|c| c.deletion(delta)}
     end
-
+    
+    delta.each do |t|
+      matches = primary.lookup(t)
+      unless matches.nil? or matches.size == 0
+        raise "deleted tuple still in primary index" 
+      end
+    end
     return delta
   end
 

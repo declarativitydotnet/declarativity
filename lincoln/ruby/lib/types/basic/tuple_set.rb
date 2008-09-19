@@ -124,7 +124,7 @@ class TupleSet < UnsortedTupleSet
 
   def delete(tup)
 	res = super(tup)
-	if res.eql?(tup) then
+	if res == tup then
 	  pos = @back_ptrs[tup.hash]
 		@positions.delete_at(pos)
 		(pos..@positions.length-1).each do |i|

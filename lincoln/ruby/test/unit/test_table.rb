@@ -42,8 +42,11 @@ class TestTable < Test::Unit::TestCase
 	ts = TupleSet.new("bar",tup,tup1,tup2)
 	indx = HashIndex.new(tab,Key.new(1),String)
 	tab.insert(ts,nil)
+	ts2 = TupleSet.new("purge",tup2)
 	
 	assert_equal(3,tab.tuples.size)
+	tab.delete(ts2)
+	assert_equal(2,tab.tuples.size)
 	tab.clear
 	assert_equal(0,tab.tuples.size)
 	res = indx.lookup(Tuple.new(nil,"two"))

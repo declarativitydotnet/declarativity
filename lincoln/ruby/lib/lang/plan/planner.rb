@@ -309,6 +309,10 @@ class OverlogPlanner
 		@assigns = thook("MyAssignment")
 		@selects = thook("MySelection")
 		@tfuncs = thook("MyTableFunction")
+		thook("assignment")
+		thook("rule")
+		thook("fact")
+		thook("watch")
 	end
 
 	def initialize(utterance)

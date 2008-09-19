@@ -27,9 +27,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     File.open(file) do |f|
       f.each_line { |l| utterance << l }
     end
-    # not quite sure why, but this call here to "init_catalog" seems to be
-    # needed.  Requires more investigation, would be nice to chuck this (and 
-    # the init_catalog method)
+    # Since this is a new compiler, we need to wipe out any old compiler catalog stuff
     Compiler.init_catalog
     planner = OverlogPlanner.new(utterance)
     planner.plan
@@ -59,12 +57,15 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     @@syms = Array.new
     CompilerCatalogTable.classes.each do |c|
       table = c.name[0..(c.name.rindex("Table")-1)]
-      table_name = TableName.new(CompilerCatalogTable::COMPILERSCOPE,table.downcase)
+      table_name = TableName.new(CompilerCatalogTable::COMPILERSCOPE,table)
       t = Table.find_table(table_name)
       # if table.downcase == "rule" and (not t.nil?)
       #   require 'ruby-debug'; debugger
       # end
-      t.drop unless t.nil?
+      unless t.nil?
+        t.drop 
+        raise "drop failed" unless Table.find_table(table_name).nil?
+      end
       varname = camelize(table)
       str = "@@"+ varname + " = " + c.name + ".new" 
 #      print "\t"+str+"\n"
