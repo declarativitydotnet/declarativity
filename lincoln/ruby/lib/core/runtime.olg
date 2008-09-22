@@ -113,11 +113,12 @@ configProgram
 	Obj.plan;
 
 compileConfig 
-runnable(String, "compiler", Name, Tuples, nil) :-
+runnable(Time, "compiler", Name, Tuples, null) :-
 	config(Time, Program, Object),
 	Tn := TableName.new("compiler", "config"),
 	On := Object.tuple(),
 	Tuples := TupleSet.new(Tn,On),
 	/*Tuples := TupleSet.new(TableName.new("compiler", "config"), Object.tuple()),*/
-	Name := Tuples.name();
+/*	Name := Tuples.name(); */
+	Name := "Omigosh";
 

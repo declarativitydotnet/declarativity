@@ -6,7 +6,6 @@ class ScanJoin < Join
 		super(predicate, input)
 		@table = Table.find_table(predicate.name)
 		if @table.nil?
-      require 'ruby-debug'; debugger
 		  raise "ScanJoin initialization failed: couldn't find table " + predicate.name.to_s 
 	  end
 	end

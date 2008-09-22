@@ -111,7 +111,6 @@ class Tuple
       return values[i]
     else
       if @schema.position(i).nil?
-        require 'ruby-debug'; debugger
         raise("field "+i.to_s+" does not exist in tuple") 
       end
       return values[@schema.position(i)]

@@ -67,6 +67,9 @@ class Driver < Monitor
         time    = tuple.value(Field::TIME)
         program = tuple.value(Field::PROGRAM)
         name = tuple.value(Field::TABLENAME)
+        unless name.class <= String or name.class <= TableName
+          require 'ruby-debug'; debugger
+        end
         state = EvalState.new(time, program, name)
 
         if !(evaluations.has_key? state) 
@@ -187,7 +190,7 @@ class Driver < Monitor
       key = program.to_s + "." + result.name.to_s
 
       if (!continuations.has_key?(key)) 
-        tuple = Tuple.new(time, program, TupleSet.new(result.name), TupleSet.new(result.name), TupleSet.new(result.name))
+        tuple = Tuple.new(time, program, result.name, TupleSet.new(result.name), TupleSet.new(result.name))
         continuations[key] = tuple
       end
 

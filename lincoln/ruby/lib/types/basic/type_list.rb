@@ -3,7 +3,6 @@ class TypeList
   
   def initialize(types)
     unless types.class <= Array
-      require 'ruby-debug'; debugger
       raise "invalid type to TypeList.new"
     end
     @types = types
@@ -19,7 +18,7 @@ class TypeList
   
   def size
     unless defined? @types.length
-      require 'ruby-debug'; debugger
+#      require 'ruby-debug'; debugger
     end
     return @types.length
   end

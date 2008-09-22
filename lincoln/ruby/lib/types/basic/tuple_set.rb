@@ -6,6 +6,9 @@ class UnsortedTupleSet
   
   @@ids = 0
   def initialize(name, *tuples)
+    unless name.class <= TableName or name.class <= String
+      raise "bad name for TupleSet"
+    end
     @id = "TupleSet:" + @@ids.to_s
     @@ids += 1
 #    @tups = Array.new
@@ -153,7 +156,6 @@ class TupleSet < UnsortedTupleSet
   def <<(o)
     case o.class.name
     when 'TupleSet','Array': o.each do |t| 
-      require 'ruby-debug'; debugger
       raise "using << rather than += to add a collection into a TupleSet"
     end
     when 'Tuple':

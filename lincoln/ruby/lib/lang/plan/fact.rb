@@ -22,6 +22,9 @@ class Fact < Clause
       values << function.evaluate(nil)
 		end
 		
+		unless name.class <= TableName or name.class <= String
+		  require 'ruby-debug'; debugger
+	  end
 		Compiler.fact.force(Tuple.new(program, name, Tuple.new(values)))
 	end
 

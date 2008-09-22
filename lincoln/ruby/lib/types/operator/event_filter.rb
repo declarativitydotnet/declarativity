@@ -28,7 +28,7 @@ class EventFilter < Operator
 			#puts predicate.inspect
 			#print "POSITION: "+arg.position.to_s+"\n"
 			require 'ruby-debug'; 
-			debugger if arg.nil? or arg.position.nil?
+#			debugger if arg.nil? or arg.position.nil?
 			raise unless arg.position >= 0
 			@filters << Filter.new(arg.position, arg.function) unless arg.class <= Variable
 	  end
