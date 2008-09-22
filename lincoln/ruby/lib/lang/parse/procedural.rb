@@ -11,6 +11,14 @@
         end
 
 # had to.  will revisit.
+
+       def ctab_lookup(name)
+                tn = TableName.new(CompilerCatalogTable::COMPILERSCOPE,name)
+                ret = Table.find_table(tn)
+                raise("parser table #{name} not found in catalog") if ret.nil?
+                return ret
+        end
+
 def suck_nums(node)
         returns  = Array.new
         if (defined? node.DecimalNumeral) then

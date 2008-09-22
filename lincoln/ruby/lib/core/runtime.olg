@@ -110,7 +110,7 @@ configProgram
   config(Time, Program, Obj) :- 
 	bootstrap::compiler#insert(Program, Owner, File, Obj), 
 	global::clock(Location, Time),
-	Obj.plan();
+	Obj.plan;
 
 compileConfig 
 runnable(String, "compiler", Name, Tuples, nil) :-

@@ -404,6 +404,8 @@ end
 		
 		sky.add_handler("variable",VisitVariable.new(@pextable,@extable),1)
 		sky.add_handler("Constant",VisitConstant.new(@pextable,@extable),1)
+	
+		#sky.add_handler("name",vg,1)
 
 
 		sky.add_handler("Aggregate",VisitAggregate.new(@pextable,@extable),1)

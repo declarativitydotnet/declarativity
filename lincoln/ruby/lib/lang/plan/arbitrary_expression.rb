@@ -5,9 +5,14 @@ class ArbitraryExpression < Expression
     @expr = expr
     @variables = Array.new
     variables.each do |v|
-      @variables << v
+     # @variables << v
       if v.class == Variable then
-        @expr = @expr.gsub(/\b#{v.name}/,'v'+v.name)		
+	unless v.name == ""
+        	@expr = @expr.gsub(/\b#{v.name}/,'v'+v.name)
+		@variables << v
+	end
+      else 
+       @variables << v
       end
     end
   end
@@ -29,7 +34,8 @@ class ArbitraryExpression < Expression
 
       subexpr = ''
       @variables.each_with_index do |v, i|	
-        if v.class == Variable 
+        if v.class == Variable
+	  ##next if v.name == ""
           if t.schema.contains(v) then
             # substitution is stupid: how many times are we gonna parse this thing??
             # instead, take advantage of rubiismo:
@@ -46,7 +52,8 @@ class ArbitraryExpression < Expression
         end
       end
       subexpr = subexpr + @expr
-      require 'ruby-debug'; debugger
+      ##require 'ruby-debug'; debugger
+      print "EXPR : #{subexpr}\n"
       return eval(subexpr)
     end
 

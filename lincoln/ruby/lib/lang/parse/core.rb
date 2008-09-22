@@ -3172,17 +3172,6 @@ module Overlog
   end
 
   module Postfixexpression0
-    def primaryexpression
-      elements[0]
-    end
-
-    def name
-      elements[2]
-    end
-
-  end
-
-  module Postfixexpression1
     def Postfixexpression
       elements[0]
     end
@@ -3192,7 +3181,7 @@ module Overlog
     end
   end
 
-  module Postfixexpression2
+  module Postfixexpression1
     def Postfixexpression
       elements[0]
     end
@@ -3206,7 +3195,7 @@ module Overlog
     end
   end
 
-  module Postfixexpression3
+  module Postfixexpression2
     def Postfixexpression
       elements[0]
     end
@@ -3216,7 +3205,7 @@ module Overlog
     end
   end
 
-  module Postfixexpression4
+  module Postfixexpression3
     def Postfixexpression
       elements[0]
     end
@@ -3235,157 +3224,125 @@ module Overlog
     end
 
     i0 = index
-    i1, s1 = index, []
-    r2 = _nt_primaryexpression
-    s1 << r2
-    if r2
-      if input.index('.', index) == index
-        r3 = (SyntaxNode).new(input, index...(index + 1))
-        @index += 1
-      else
-        terminal_parse_failure('.')
-        r3 = nil
-      end
-      s1 << r3
-      if r3
-        r4 = _nt_name
-        s1 << r4
-        if r4
-          r6 = _nt_arguments
-          if r6
-            r5 = r6
-          else
-            r5 = SyntaxNode.new(input, index...index)
-          end
-          s1 << r5
-        end
-      end
-    end
-    if s1.last
-      r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(Postfixexpression0)
-    else
-      self.index = i1
-      r1 = nil
-    end
+    r1 = _nt_methodcall
     if r1
       r0 = r1
     else
-      r7 = _nt_primaryexpression
-      if r7
-        r0 = r7
+      r2 = _nt_primaryexpression
+      if r2
+        r0 = r2
       else
-        i8, s8 = index, []
-        r9 = _nt_Postfixexpression
-        s8 << r9
-        if r9
-          r10 = _nt_arguments
-          s8 << r10
+        i3, s3 = index, []
+        r4 = _nt_Postfixexpression
+        s3 << r4
+        if r4
+          r5 = _nt_arguments
+          s3 << r5
         end
-        if s8.last
-          r8 = (SyntaxNode).new(input, i8...index, s8)
-          r8.extend(Postfixexpression1)
+        if s3.last
+          r3 = (SyntaxNode).new(input, i3...index, s3)
+          r3.extend(Postfixexpression0)
         else
-          self.index = i8
-          r8 = nil
+          self.index = i3
+          r3 = nil
         end
-        if r8
-          r0 = r8
+        if r3
+          r0 = r3
         else
-          i11, s11 = index, []
-          r12 = _nt_Postfixexpression
-          s11 << r12
-          if r12
+          i6, s6 = index, []
+          r7 = _nt_Postfixexpression
+          s6 << r7
+          if r7
             if input.index('[', index) == index
-              r13 = (SyntaxNode).new(input, index...(index + 1))
+              r8 = (SyntaxNode).new(input, index...(index + 1))
               @index += 1
             else
               terminal_parse_failure('[')
-              r13 = nil
+              r8 = nil
             end
-            s11 << r13
-            if r13
-              r14 = _nt_Constant
-              s11 << r14
-              if r14
+            s6 << r8
+            if r8
+              r9 = _nt_Constant
+              s6 << r9
+              if r9
                 if input.index(']', index) == index
-                  r15 = (SyntaxNode).new(input, index...(index + 1))
+                  r10 = (SyntaxNode).new(input, index...(index + 1))
                   @index += 1
                 else
                   terminal_parse_failure(']')
-                  r15 = nil
+                  r10 = nil
                 end
-                s11 << r15
-                if r15
-                  r16 = _nt_ArrayIndex
-                  s11 << r16
+                s6 << r10
+                if r10
+                  r11 = _nt_ArrayIndex
+                  s6 << r11
                 end
               end
             end
           end
-          if s11.last
-            r11 = (SyntaxNode).new(input, i11...index, s11)
-            r11.extend(Postfixexpression2)
+          if s6.last
+            r6 = (SyntaxNode).new(input, i6...index, s6)
+            r6.extend(Postfixexpression1)
           else
-            self.index = i11
-            r11 = nil
+            self.index = i6
+            r6 = nil
           end
-          if r11
-            r0 = r11
+          if r6
+            r0 = r6
           else
-            i17, s17 = index, []
-            r18 = _nt_Postfixexpression
-            s17 << r18
-            if r18
+            i12, s12 = index, []
+            r13 = _nt_Postfixexpression
+            s12 << r13
+            if r13
               if input.index('++', index) == index
-                r19 = (SyntaxNode).new(input, index...(index + 2))
+                r14 = (SyntaxNode).new(input, index...(index + 2))
                 @index += 2
               else
                 terminal_parse_failure('++')
-                r19 = nil
+                r14 = nil
               end
-              s17 << r19
-              if r19
-                r20 = _nt_Increment
-                s17 << r20
+              s12 << r14
+              if r14
+                r15 = _nt_Increment
+                s12 << r15
               end
             end
-            if s17.last
-              r17 = (SyntaxNode).new(input, i17...index, s17)
-              r17.extend(Postfixexpression3)
+            if s12.last
+              r12 = (SyntaxNode).new(input, i12...index, s12)
+              r12.extend(Postfixexpression2)
             else
-              self.index = i17
-              r17 = nil
+              self.index = i12
+              r12 = nil
             end
-            if r17
-              r0 = r17
+            if r12
+              r0 = r12
             else
-              i21, s21 = index, []
-              r22 = _nt_Postfixexpression
-              s21 << r22
-              if r22
+              i16, s16 = index, []
+              r17 = _nt_Postfixexpression
+              s16 << r17
+              if r17
                 if input.index('--', index) == index
-                  r23 = (SyntaxNode).new(input, index...(index + 2))
+                  r18 = (SyntaxNode).new(input, index...(index + 2))
                   @index += 2
                 else
                   terminal_parse_failure('--')
-                  r23 = nil
+                  r18 = nil
                 end
-                s21 << r23
-                if r23
-                  r24 = _nt_Decrement
-                  s21 << r24
+                s16 << r18
+                if r18
+                  r19 = _nt_Decrement
+                  s16 << r19
                 end
               end
-              if s21.last
-                r21 = (SyntaxNode).new(input, i21...index, s21)
-                r21.extend(Postfixexpression4)
+              if s16.last
+                r16 = (SyntaxNode).new(input, i16...index, s16)
+                r16.extend(Postfixexpression3)
               else
-                self.index = i21
-                r21 = nil
+                self.index = i16
+                r16 = nil
               end
-              if r21
-                r0 = r21
+              if r16
+                r0 = r16
               else
                 self.index = i0
                 r0 = nil
@@ -3397,6 +3354,64 @@ module Overlog
     end
 
     node_cache[:Postfixexpression][start_index] = r0
+
+    return r0
+  end
+
+  module Methodcall0
+    def name
+      elements[0]
+    end
+
+    def name
+      elements[2]
+    end
+
+  end
+
+  def _nt_methodcall
+    start_index = index
+    if node_cache[:methodcall].has_key?(index)
+      cached = node_cache[:methodcall][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_name
+    s0 << r1
+    if r1
+      if input.index('.', index) == index
+        r2 = (SyntaxNode).new(input, index...(index + 1))
+        @index += 1
+      else
+        terminal_parse_failure('.')
+        r2 = nil
+      end
+      s0 << r2
+      if r2
+        r3 = _nt_name
+        s0 << r3
+        if r3
+          r5 = _nt_arguments
+          if r5
+            r4 = r5
+          else
+            r4 = SyntaxNode.new(input, index...index)
+          end
+          s0 << r4
+        end
+      end
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Methodcall0)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:methodcall][start_index] = r0
 
     return r0
   end
@@ -3486,9 +3501,9 @@ module Overlog
   end
 
   module Primaryexpression8
-					def primaryexpression
-						return self
-					end
+					#def primaryexpression
+					#	return self
+					#end
   end
 
   def _nt_primaryexpression

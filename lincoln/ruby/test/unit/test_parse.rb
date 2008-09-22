@@ -145,7 +145,8 @@ class TestParse < Test::Unit::TestCase
 		@preds.tuples.each do |t|
 			name = t.values[3]
 			if (name.eql?("bar")) then
-				assert_equal(t.values,[12, 11, 1, "bar", nil])
+				##assert_equal(t.values,[12, 11, 1, "bar", nil])
+				assert_equal(t.values,[10, 9, 1, "bar", nil])
 			elsif (name.eql?("foo")) then
 				assert_equal(t.values,[4, 3, 0, "foo", nil])
 			else
