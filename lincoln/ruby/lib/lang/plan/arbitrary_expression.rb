@@ -46,6 +46,7 @@ class ArbitraryExpression < Expression
         end
       end
       subexpr = subexpr + @expr
+      require 'ruby-debug'; debugger
       return eval(subexpr)
     end
 

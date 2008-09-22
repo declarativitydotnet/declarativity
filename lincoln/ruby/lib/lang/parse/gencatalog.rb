@@ -84,8 +84,9 @@ classname = ""
 
 opts.each do |opt, arg|
 #  puts "Option: #{opt}, arg #{arg.inspect}"
-  classname = arg.to_s if (opt == "--class" or opt == "-c")
-  classname[0] = classname[0..0].downcase
+  if (opt == "--class" or opt == "-c")
+    classname = arg.to_s
+  end
 end
 
 if classname == "" then
@@ -152,8 +153,10 @@ $tables.sort.each do |table, arr|
 
   print "  @@classes[self] = 1"
 
+  tableStr = table[0..0].downcase + table[1..table.length]
+  
 	print "\n  def initialize\n"
-        print "    super(TableName.new(#{scope}, \""+table+"\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
+        print "    super(TableName.new(#{scope}, \"#{tableStr}\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
         print "    if defined? "+mixin+" and "+mixin+".methods.include? 'initialize_mixin'\n       then initialize_mixin \n    end\n"
   # print "    programKey = Key.new(Field::" + arr[0].upcase+")\n"
   # print "    index = HashIndex.new(self, programKey, Index::Type::SECONDARY)\n"

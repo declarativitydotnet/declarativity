@@ -19,8 +19,8 @@ module CompilerTableMixin
       owner = tuple.value(field("OWNER"))
       file  = tuple.value(field("FILE"))
       compiler = Compiler.new(owner, file)
-      tuple.value(field("NAME"), compiler.program.name)
-      tuple.value(field("PROGRAM"), compiler.program)
+      tuple.set_value(field("NAME"), compiler.program.name)
+      tuple.set_value(field("PROGRAM"), compiler.program)
     end
     return super(tuple)
   end

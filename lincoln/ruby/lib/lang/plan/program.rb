@@ -14,7 +14,7 @@ class Program
 #  @@rule = Rule::RuleTable.new
   @@watch = WatchTable.new
   @@fact = MyFactTable.new
-  @@predicate = MyPredicateTable.new
+  @@predicate = PredicateTable.new
   @@tfunction = Function::TableFunction.new
   @@selection = MySelectionTable.new
   @@assignment = MyAssignmentTable.new

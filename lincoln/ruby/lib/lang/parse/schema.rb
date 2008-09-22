@@ -287,7 +287,7 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
     lhs.position=3
     assign_txt = Variable.new("assign_txt",String)
     assign_txt.position=4
-    return Schema.new("myAssignment",[assignmentid,termid,assign_pos,lhs,assign_txt])
+    return Schema.new("MyAssignment",[assignmentid,termid,assign_pos,lhs,assign_txt])
   end
 end
 
@@ -338,7 +338,7 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
     col_pos.position=2
     datatype = Variable.new("datatype",String)
     datatype.position=3
-    return Schema.new("myColumn",[columnid,tableid,col_pos,datatype])
+    return Schema.new("MyColumn",[columnid,tableid,col_pos,datatype])
   end
 end
 
@@ -392,7 +392,7 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
     expr_pos.position=3
     expr_text = Variable.new("expr_text",String)
     expr_text.position=4
-    return Schema.new("myExpression",[expressionid,termid,arg_pos,expr_pos,expr_text])
+    return Schema.new("MyExpression",[expressionid,termid,arg_pos,expr_pos,expr_text])
   end
 end
 
@@ -440,7 +440,7 @@ include MyFactTableMixin if defined? MyFactTableMixin
     termid.position=1
     tablename = Variable.new("tablename",String)
     tablename.position=2
-    return Schema.new("myFact",[factid,termid,tablename])
+    return Schema.new("MyFact",[factid,termid,tablename])
   end
 end
 
@@ -488,7 +488,7 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
     tableid.position=1
     col_pos = Variable.new("col_pos",Integer)
     col_pos.position=2
-    return Schema.new("myIndex",[indexid,tableid,col_pos])
+    return Schema.new("MyIndex",[indexid,tableid,col_pos])
   end
 end
 
@@ -542,7 +542,7 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
     pred_txt.position=3
     event_mod = Variable.new("event_mod",String)
     event_mod.position=4
-    return Schema.new("myPredicate",[predicateid,termid,pred_pos,pred_txt,event_mod])
+    return Schema.new("MyPredicate",[predicateid,termid,pred_pos,pred_txt,event_mod])
   end
 end
 
@@ -599,7 +599,7 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
     type.position=4
     datatype = Variable.new("datatype",String)
     datatype.position=5
-    return Schema.new("myPrimaryExpression",[primaryexpressionid,expressionid,p_pos,p_txt,type,datatype])
+    return Schema.new("MyPrimaryExpression",[primaryexpressionid,expressionid,p_pos,p_txt,type,datatype])
   end
 end
 
@@ -647,7 +647,7 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
     owner.position=1
     program_name = Variable.new("program_name",String)
     program_name.position=2
-    return Schema.new("myProgram",[programid,owner,program_name])
+    return Schema.new("MyProgram",[programid,owner,program_name])
   end
 end
 
@@ -701,7 +701,7 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
     public.position=3
     delete = Variable.new("delete",Integer)
     delete.position=4
-    return Schema.new("myRule",[ruleid,programid,rulename,public,delete])
+    return Schema.new("MyRule",[ruleid,programid,rulename,public,delete])
   end
 end
 
@@ -752,7 +752,7 @@ include MySelectionTableMixin if defined? MySelectionTableMixin
     select_pos.position=2
     select_txt = Variable.new("select_txt",String)
     select_txt.position=3
-    return Schema.new("mySelection",[selectionid,termid,select_pos,select_txt])
+    return Schema.new("MySelection",[selectionid,termid,select_pos,select_txt])
   end
 end
 
@@ -800,7 +800,7 @@ include MyTableTableMixin if defined? MyTableTableMixin
     tablename.position=1
     watch = Variable.new("watch",String)
     watch.position=2
-    return Schema.new("myTable",[tableid,tablename,watch])
+    return Schema.new("MyTable",[tableid,tablename,watch])
   end
 end
 
@@ -851,7 +851,7 @@ include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
     function.position=2
     nested_predicate_id = Variable.new("nested_predicate_id",Integer)
     nested_predicate_id.position=3
-    return Schema.new("myTableFunction",[tablefunid,termid,function,nested_predicate_id])
+    return Schema.new("MyTableFunction",[tablefunid,termid,function,nested_predicate_id])
   end
 end
 
@@ -902,7 +902,7 @@ include MyTermTableMixin if defined? MyTermTableMixin
     term_pos.position=2
     term_txt = Variable.new("term_txt",String)
     term_txt.position=3
-    return Schema.new("myTerm",[termid,ruleid,term_pos,term_txt])
+    return Schema.new("MyTerm",[termid,ruleid,term_pos,term_txt])
   end
 end
 
@@ -1002,6 +1002,60 @@ include FactTableMixin if defined? FactTableMixin
     tuple = Variable.new("tuple",Tuple)
     tuple.position=2
     return Schema.new("Fact",[program,tablename,tuple])
+  end
+end
+
+class PredicateTable < CompilerCatalogTable
+include PredicateTableMixin if defined? PredicateTableMixin
+  @@PRIMARY_KEY = Key.new(0,1,2)
+  class Field
+    PROGRAM=0
+    RULE=1
+    POSITION=2
+    EVENT=3
+    OBJECT=4
+  end
+  @@SCHEMA = [String,String,Integer,String,String]
+  @@classes[self] = 1
+  def initialize
+    super(TableName.new(COMPILERSCOPE, "predicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? PredicateTableMixin and PredicateTableMixin.methods.include? 'initialize_mixin'
+       then initialize_mixin 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    COMPILERSCOPE
+
+  end
+  def pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    program = Variable.new("program",String)
+    program.position=0
+    rule = Variable.new("rule",String)
+    rule.position=1
+    position = Variable.new("position",Integer)
+    position.position=2
+    event = Variable.new("event",String)
+    event.position=3
+    object = Variable.new("object",String)
+    object.position=4
+    return Schema.new("Predicate",[program,rule,position,event,object])
   end
 end
 

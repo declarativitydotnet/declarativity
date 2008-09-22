@@ -118,3 +118,11 @@ table watch (
   +tablename String,
   +modifier String
 )
+
+table predicate (
+        +program String,
+        +rule String,
+        +position Integer,
+        event String,
+        object String
+)

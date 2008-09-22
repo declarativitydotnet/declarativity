@@ -63,6 +63,7 @@ class OverlogPlanner
 							thisvar.position = var.value("expr_pos")
 						when "const"
 							thisvar = Value.new(var.value("p_txt"))
+							thisvar.position = var.value("expr_pos")
 						when "agg_func"
 							@aggFunc = var.value("p_txt")	
 							thisvar = nil

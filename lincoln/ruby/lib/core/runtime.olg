@@ -107,10 +107,10 @@ global::schedule(Time+1, Program, Name, Facts, null) :-
 define(config, {Float, String, Program});
 
 configProgram 
-  config(Time, Program, Object) :- 
-	bootstrap::compiler#insert(Program, Owner, File, Object), 
+  config(Time, Program, Obj) :- 
+	bootstrap::compiler#insert(Program, Owner, File, Obj), 
 	global::clock(Location, Time),
-	Object.plan();
+	Obj.plan();
 
 compileConfig 
 runnable(String, "compiler", Name, Tuples, nil) :-
