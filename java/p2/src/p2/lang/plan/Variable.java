@@ -12,10 +12,29 @@ public class Variable extends Expression {
 	
 	protected Class type;
 	
+	private boolean location;
+	
 	public Variable(String name, Class type) {
 		this.name = name;
 		this.type = type;
 		position(-1);
+	}
+	
+	public Variable(String name, Class type, boolean location) {
+		this(name, type);
+		this.location = location;
+	}
+	
+	/**
+	 * Is this variable a location variable?
+	 * @return true if so, false otherwise
+	 */
+	public boolean loc() {
+		return this.location;
+	}
+	
+	public void loc(boolean loc) {
+		this.location = loc;
 	}
 	
 	@Override
@@ -31,6 +50,7 @@ public class Variable extends Expression {
 	public Variable clone() {
 		Variable variable = new Variable(name, type);
 		variable.position(this.position());
+		variable.location = this.location;
 		return variable;
 	}
 	
@@ -41,7 +61,8 @@ public class Variable extends Expression {
 	
 	@Override
 	public String toString() {
-		return (position() >= 0) ? name() + ":" + position() : name();
+		String var = (position() >= 0) ? name() + ":" + position() : name();
+		return this.location ? "@" + var : var;
 	}
 	
 	public String name() {

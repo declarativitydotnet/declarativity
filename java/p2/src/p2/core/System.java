@@ -62,14 +62,18 @@ public class System {
 	public static void install(String owner, String file) {
 		final TupleSet compilation = new TupleSet(Compiler.compiler.name());
 		compilation.add(new Tuple(null, owner, file, null));
-		schedule(compilation, "runtime");
+		schedule("runtime", compilation, new TupleSet(Compiler.compiler.name()));
 	}
 	
-	public static void schedule(final TupleSet tuples, final String program) {
+	public static void schedule(final String program, final TupleSet insertions, final TupleSet deletions) {
 		synchronized (driver) {
 			driver.task(new Driver.Task() {
-				public TupleSet tuples() {
-					return tuples;
+				public TupleSet insertions() {
+					return insertions;
+				}
+				
+				public TupleSet deletions() {
+					return deletions;
 				}
 
 				public String program() {
@@ -79,7 +83,7 @@ public class System {
 		}
 	}
 	
-	public static void bootstrap() {
+	public static void bootstrap(Integer port) {
 		if (initialized) return;
 		
 		try {
@@ -92,6 +96,7 @@ public class System {
 			periodic   = new Periodic(schedule);
 			log        = new Log(java.lang.System.err);
 			programs   = new Hashtable<String, Program>();
+			netManager = new p2.net.Manager(port);
 			
 	        URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
 			p2.lang.Compiler compiler = new p2.lang.Compiler("system", runtimeFile.getPath());
@@ -107,7 +112,6 @@ public class System {
 			system = new Thread(driver);
 			system.start();
 			
-			netManager = new p2.net.Manager(10000);
 		} catch (Exception e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
@@ -117,8 +121,8 @@ public class System {
 	
 	public static void main(String[] args) {
 		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg"));
-		bootstrap();
-		for (int i = 0; i < args.length; i++)
+		bootstrap(Integer.parseInt(args[0]));
+		for (int i = 1; i < args.length; i++)
 			install("user", args[i]);
 	}
 

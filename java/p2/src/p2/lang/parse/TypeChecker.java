@@ -24,9 +24,9 @@ import p2.lang.plan.Cast;
 import p2.lang.plan.DontCare;
 import p2.lang.plan.Expression;
 import p2.lang.plan.Fact;
+import p2.lang.plan.Function;
 import p2.lang.plan.GenericAggregate;
 import p2.lang.plan.IfThenElse;
-import p2.lang.plan.Location;
 import p2.lang.plan.MethodCall;
 import p2.lang.plan.Program;
 import p2.lang.plan.UnknownReference;
@@ -416,7 +416,7 @@ public final class TypeChecker extends Visitor {
 			assert(type == List.class);
 			body = (List<Term>) n.getNode(4).getProperty(Constants.TYPE);
 			
-			List<Term> additionalSelections = new ArrayList<Term>();
+			Term event = null;
 			for (Term t : body) {
 				if (t instanceof Predicate) {
 					Predicate p = (Predicate) t;
@@ -426,11 +426,25 @@ public final class TypeChecker extends Visitor {
 							return Error.class;
 						}
 					}
+					
+					Table table = Table.table(p.name());
+					if (table.type() == Table.Type.EVENT ||
+					    p.event() != Table.Event.NONE) {
+						if (event != null) {
+							runtime.error("Multiple event predicates in rule body!", n);
+							return Error.class;
+						}
+						event = p;
+					}
 				}
+				/*
+				else if (t instanceof Function) {
+					Function f = (Function) t;
+					event = f.predicate();
+				}
+				*/
 			}
-			body.addAll(additionalSelections);
-				
-
+			
 			table.enter("Head:" + name);
 			try {
 				/* Evaluate the head. */
@@ -811,7 +825,7 @@ public final class TypeChecker extends Visitor {
 		/* Variable. */
 		Class type = (Class) dispatch(n.getNode(0));
 		if (type == Error.class) return Error.class;
-		if (!(type == Variable.class || type == Location.class)) {
+		if (!(type == Variable.class)) {
 			runtime.error("Cannot assign to type " + type + 
 					" must be of type Variable or Location variable!");
 			return Error.class;
@@ -1568,8 +1582,8 @@ public final class TypeChecker extends Visitor {
 		Class type = (Class) dispatch(n.getNode(0));
 		assert (type == Variable.class);
 		Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
-		n.setProperty(Constants.TYPE, new Location(var.name(), var.type()));
-		return Location.class;
+		n.setProperty(Constants.TYPE, new Variable(var.name(), var.type(), true));
+		return Variable.class;
 	}
 
 	public Class visitAggregate(final GNode n) {

@@ -54,6 +54,30 @@ runnable(Time, Program, Name, Insertions, Deletions) :-
 	schedule(Time, Program, Name, Insertions, Deletions),
 	notin priority(Program, Name, Priority);
 	
+/*******************************************************************/
+/*** Network scheduler                                           **/
+import p2.net.Packet;
+
+define(networkSend, {String, String, String});
+
+delete network::buffer(Protocol, Address, Program, Insertions, Deletions) :-
+	networkSend(Protocol, Address, Program),
+	network::buffer(Protocol, Address, Program, Insertions, Deletions),
+	network::tcp(Address, Channel),
+	Channel.send(new Packet(Program, Insertions, Deletions));
+
+networkSend(Protocol, Address, Program) :-
+	clock(Location, Time),
+	network::buffer(Protocol, Address, Program, Insertions, Deletions),
+	Protocol == "TCP",
+	network::tcp(Address, Channel);
+	
+network::tcp(Address, null) :-
+	clock(Location, Time),
+	network::buffer(Protocol, Address, _, _, _),
+	Protocol == "TCP",
+	notin network::tcp(Address, _);
+
 	
 /*******************************************************************/
 /*** Periodic scheduler                                           **/

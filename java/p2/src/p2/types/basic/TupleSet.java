@@ -1,5 +1,6 @@
 package p2.types.basic;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -7,7 +8,7 @@ import java.util.Set;
 import p2.types.table.TableName;
 
 
-public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet> {
+public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Serializable {
 	private static long ids = 0L;
 	
 	private String id;

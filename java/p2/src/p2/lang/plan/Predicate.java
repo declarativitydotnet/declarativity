@@ -74,6 +74,24 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.arguments = new Arguments(this, arguments);
 	}
 	
+	public Predicate(boolean notin, TableName name, Table.Event event, Schema schema) {
+		super();
+		this.notin = notin;
+		this.name = name;
+		this.event = event;
+		this.schema = schema;
+		this.arguments = new Arguments(this, (List) schema.variables());
+	}
+	
+	protected Predicate(Predicate pred) {
+		super();
+		this.notin     = pred.notin;
+		this.name      = pred.name;
+		this.event     = pred.event;
+		this.arguments = pred.arguments;
+		this.schema    = pred.schema;
+	}
+	
 	public Schema schema() {
 		return schema;
 	}
@@ -92,6 +110,15 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	public TableName name() {
 		return this.name;
+	}
+	
+	public Variable locationVariable() {
+		for (Expression argument : this) {
+			if (argument instanceof Variable && ((Variable)argument).loc()) {
+				return (Variable) argument;
+			}
+		}
+		return null;
 	}
 	
 	public boolean containsAggregation() {

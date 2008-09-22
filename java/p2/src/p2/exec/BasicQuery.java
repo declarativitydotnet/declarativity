@@ -28,21 +28,20 @@ public class BasicQuery extends Query {
 	@Override
 	public String toString() {
 		String query = "Basic Query Rule " + rule() + 
-		               ": input " + input().toString();
+		               ": event " + input().toString();
 		if (body != null) {
 			for (Operator oper : body) {
 				query += " -> " + oper.toString();
 			}
 		}
-		query += " -> " + output().toString();
 		return query;
 	}
 
 	@Override
 	public TupleSet evaluate(TupleSet input) throws P2RuntimeException {
 		if (!input.name().equals(input().name())) {
-			throw new P2RuntimeException("Query expects input " + input().name() + 
-					                     " but got input tuples " + input.name());
+			throw new P2RuntimeException("Query expects event " + input().name() + 
+					                     " but got event " + input.name());
 		}
 		
 		TupleSet tuples = new TupleSet(input.name());

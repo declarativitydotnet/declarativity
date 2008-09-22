@@ -14,7 +14,7 @@ import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 import p2.types.table.TableName;
 
-public class Function extends Term {
+public class Function extends Predicate {
 	
 	public enum Field{PROGRAM, RULE, POSITION, NAME, OBJECT};
 	public static class TableFunction extends ObjectTable {
@@ -38,8 +38,6 @@ public class Function extends Term {
 			if (object == null) {
 				throw new UpdateException("Predicate object null");
 			}
-			object.program   = (String) tuple.value(Field.PROGRAM.ordinal());
-			object.rule      = (String) tuple.value(Field.RULE.ordinal());
 			object.position  = (Integer) tuple.value(Field.POSITION.ordinal());
 			return super.insert(tuple);
 		}
@@ -47,38 +45,27 @@ public class Function extends Term {
 	
 	private Table function;
 	
-	private Predicate predicate;
-	
 	public Function(Table function, Predicate predicate) {
+		super(predicate);
 		this.function = function;
-		this.predicate = predicate;
 	}
 
 	@Override
 	public Operator operator(Schema input) {
-		return new p2.types.operator.Function(function, predicate);
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return this.predicate.requires();
+		return new p2.types.operator.Function(function, this);
 	}
 
 	@Override
 	public void set(String program, String rule, Integer position)
 			throws UpdateException {
-		predicate.set(program, rule, position);
+		super.set(program, rule, position);
 		Compiler.tfunction.force(new Tuple(program, rule, position, 
 				                          function.name(), this));
 	}
 
 	@Override
 	public String toString() {
-		return function.name() + "(" + predicate + ")";
+		return function.name() + "(" + super.toString() + ")";
 	}
 	
-	public Predicate predicate() {
-		return this.predicate;
-	}
-
 }

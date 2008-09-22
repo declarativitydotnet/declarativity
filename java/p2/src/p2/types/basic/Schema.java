@@ -85,7 +85,7 @@ public class Schema {
 		for (int position = 0; position < this.variables.size(); position++) {
 			for (Variable variable : this.variables.values()) {
 				if (variable.position() == position) {
-					variables.add(variable.clone());
+					variables.add(variable);
 					break;
 				}
 			}
@@ -94,7 +94,7 @@ public class Schema {
 	}
 	
 	public final Variable variable(String name) {
-		return this.variables.get(name).clone();
+		return this.variables.get(name);
 	}
 	
 	public final Class type(String name) {
@@ -110,13 +110,13 @@ public class Schema {
 		Schema join = new Schema();
 		for (Variable variable : this.variables()) {
 			if (!(variable instanceof DontCare)) {
-				join.append(variable);
+				join.append(variable.clone());
 			}
 		}
 		
 		for (Variable variable : inner.variables()) {
 			if (!(variable instanceof DontCare) && !join.contains(variable)) {
-				join.append(variable);
+				join.append(variable.clone());
 			}
 		}
 		return join;

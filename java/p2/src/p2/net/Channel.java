@@ -14,6 +14,8 @@ public abstract class Channel implements Comparable<Channel> {
 		return this.id.compareTo(o.id);
 	}
 	
-	public abstract boolean send(TupleSet tuples);
+	public abstract boolean send(Packet packet);
+	
+	public abstract void close();
 
 }

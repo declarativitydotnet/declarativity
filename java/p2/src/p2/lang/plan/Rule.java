@@ -2,6 +2,7 @@ package p2.lang.plan;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
@@ -20,7 +21,9 @@ import p2.types.function.TupleFunction;
 import p2.types.operator.EventFilter;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
+import p2.types.operator.RemoteBuffer;
 import p2.types.table.Aggregation;
+import p2.types.table.EventTable;
 import p2.types.table.HashIndex;
 import p2.types.table.Index;
 import p2.types.table.Key;
@@ -83,6 +86,7 @@ public class Rule extends Clause {
 	private List<Term> body;
 	
 	private boolean aggregation;
+	
 	
 	public Rule(xtc.tree.Location location, String name, 
 			    java.lang.Boolean isPublic, java.lang.Boolean isDelete, 
@@ -150,7 +154,8 @@ public class Rule extends Clause {
 	public List<Query> query(TupleSet periodics) throws PlannerException {
 		/* First search for an event predicate. */
 		Predicate event   = null;
-		Function function = null;
+		Variable locVariable = null;
+		
 		for (Term term : body) {
 			if (term instanceof Predicate) {
 				Predicate pred = (Predicate) term;
@@ -165,130 +170,205 @@ public class Rule extends Clause {
 					/* Plan a query with this event predicate as input. */
 					event = pred;
 				}
-			}
-			else if (term instanceof Function) {
-				function = (Function) term;
-				event = function.predicate();
-				event.event(Table.Event.INSERT);
-				
+			
+				if (event instanceof Function) {
+					event.event(Table.Event.INSERT);
+				}
 			}
 		}
 		
 		List<Query> queries = new ArrayList<Query>();
 		if (event != null) {
-			List<Operator> operators = new ArrayList<Operator>();
-			
-			if (event.name().name.equals("periodic") && ! event.name().scope.equals(Table.GLOBALSCOPE)) {
-				Long period = (Long) ((Value) event.argument(Periodic.Field.PERIOD.ordinal())).value();
-				Long ttl    = (Long) ((Value) event.argument(Periodic.Field.TTL.ordinal())).value();
-				Long count  = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
-				List<Comparable> values = new ArrayList<Comparable>();
-				values.add(event.identifier());
-				for (int i = 1; i < event.arguments(); i++) {
-					values.add(((Value<Comparable>) event.argument(i)).value());
-				}
-				periodics.add(new Tuple(values));
-				
-				final String identifier = event.identifier();
-				TupleFunction<java.lang.Boolean> periodicFilter = new TupleFunction<java.lang.Boolean>() {
-					public java.lang.Boolean evaluate(Tuple tuple)
-							throws P2RuntimeException {
-						return identifier.equals((String)tuple.value(Periodic.Field.IDENTIFIER.ordinal()));
-					}
-					public Class returnType() {
-						return java.lang.Boolean.class;
-					}
-				};
-				EventFilter efilter = new EventFilter(event, periodicFilter);
-				operators.add(efilter);
-			}
-			else {
-				EventFilter efilter = new EventFilter(event);
-				if (efilter.filters() > 0) {
-					operators.add(efilter);
-				}
-			}
-			
-			if (Compiler.watch.watched(program, event.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
-				operators.add(
-						new p2.types.operator.Watch(program, name, event.name(), 
-								                    p2.types.operator.Watch.Modifier.RECEIVE));
-			}
-			
-			if (function != null) {
-				Schema schema = function.predicate().schema().clone();
-				operators.add(function.operator(schema));
-				for (Term term : body) {
-					if (!term.equals(function)) {
-						Operator oper = term.operator(schema);
-						operators.add(oper);
-						schema = oper.schema();
-					}
-				}
-			}
-			else {
-				Schema schema = event.schema().clone();
-				for (Term term : body) {
-					if (!term.equals(event)) {
-						Operator oper = term.operator(schema);
-						operators.add(oper);
-						schema = oper.schema();
-					}
-				}
-			}
-			
-			operators.add(new Projection(this.head));
-			
-			if (Compiler.watch.watched(program, this.head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
-				operators.add(
-						new p2.types.operator.Watch(program, name, this.head.name(), 
-								                    p2.types.operator.Watch.Modifier.SEND));
-			}
-			
-			queries.add(new BasicQuery(program, name, isPublic, isDelete, event, this.head, operators));
+			return query(periodics, head, event, body);
 		}
 		else {
-			/* Perform delta rewrite. */
-			for (Term term1 : body) {
-				if (!(term1 instanceof Predicate) || ((Predicate)term1).notin()) {
-					continue;
-				}
-				
-				Predicate delta = (Predicate) term1;
-				List<Operator> operators = new ArrayList<Operator>();
-				EventFilter efilter = new EventFilter(delta);
-				if (efilter.filters() > 0) {
-					operators.add(efilter);
-				}
-				
-				if (Compiler.watch.watched(program, delta.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
-					operators.add(
-							new p2.types.operator.Watch(program, name, delta.name(), 
-									                    p2.types.operator.Watch.Modifier.RECEIVE));
-				}
-				
-				Schema schema = delta.schema().clone();
-				for (Term term2 : body) {
-					if (!term2.equals(delta)) {
-						Operator oper = term2.operator(schema);
-						operators.add(oper);
-						schema = oper.schema();
-					}
-				}
-				
-				operators.add(new Projection(this.head));
-				if (Compiler.watch.watched(program, this.head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
-					operators.add(
-							new p2.types.operator.Watch(program, name, this.head.name(), 
-									                    p2.types.operator.Watch.Modifier.SEND));
-				}
-				
-				queries.add(new BasicQuery(program, name, isPublic, isDelete, delta, this.head, operators));
+			return mviewQuery(head, body);
+		}
+	}
+	
+	private List<Query> mviewQuery(Predicate head, List<Term> body) throws PlannerException {
+		List<Query> queries = new ArrayList<Query>();
+		/* Perform delta rewrite. */
+		for (Term term1 : body) {
+			if (!(term1 instanceof Predicate) || ((Predicate)term1).notin()) {
+				continue;
 			}
 			
+			Predicate delta = (Predicate) term1;
+			queries.addAll(query(null, head, delta, body));
 		}
 		return queries;
 	}
 	
+	private List<Query> localize(TupleSet periodics, Predicate head, Predicate event, List<Term> body) throws PlannerException {
+		List<Query> queries = new ArrayList<Query>();
+		
+		/* Group all predicate terms by the location variable. */
+		Hashtable<String, List<Term>> groupByLocation = new Hashtable<String, List<Term>>();
+		List<Term> remainder = new ArrayList<Term>(); // Remaining terms.
+		for (Term t : body) {
+			if (t instanceof Predicate) {
+				Predicate p = (Predicate) t;
+				String loc = p.locationVariable().name();
+				if (!groupByLocation.contains(loc)) {
+					groupByLocation.put(loc, new ArrayList<Term>());
+				}
+				groupByLocation.get(loc).add(p);
+			}
+			else {
+				remainder.add(t);
+			}
+		}
+		
+		/* Create the set of localized rules. */
+		/* Grab the location variable representing from the event for this 
+		 * rule group. The orginal event will be the first group. Subsequent 
+		 * groups will be triggered off the intermediate event predicates
+		 * created during the localization process. The final group will 
+		 * project onto the orginal head predicate. */
+		while(groupByLocation.size() > 0) {
+			String location           = event.locationVariable().name();
+			Schema intermediateSchema = event.schema();
+			String intermediateName   = new String(this.name + "_intermediate_" + event.name().name);
+		
+			/* Get the set of predicates in this location group. */
+			List<Term> intermediateBody = groupByLocation.get(location);
+			groupByLocation.remove(location);
+
+			if (groupByLocation.size() > 0) {
+				for (Term t : intermediateBody) {
+					Predicate p = (Predicate) t;
+					intermediateSchema = intermediateSchema.join(p.schema());
+				}
+				
+				/* Turn off location variable(s) in intermediate schema. */
+				for (Variable v : intermediateSchema.variables()) {
+					v.loc(false);
+				}
+				
+				/* Locate the next location variable from remaining groups. 
+				 * The location variable must appear in the schema of the intermediate
+				 * schema (That is we need to know its value). */
+				for (String loc : groupByLocation.keySet()) {
+					Variable var = intermediateSchema.variable(loc);
+					if (var != null) {
+						var.loc(true); // Make this the location variable.
+						break;
+					}
+				}
+			
+				EventTable
+				intermediateEvent = new EventTable(new TableName(this.program, intermediateName), 
+					                           new TypeList(intermediateSchema.types()));
+				Predicate intermediate = new Predicate(false, intermediateEvent.name(), Table.Event.NONE, intermediateSchema);
+				intermediate.program  = event.program();
+				intermediate.rule     = event.rule();
+				intermediate.position = 0;
+				
+				/* Create a query with the intermediate as the head predicate. */
+				queries.addAll(query(periodics, intermediate, event, intermediateBody));
+				
+				/* the intermediate predicate will be the event predicate in the next (localized) rule. */
+				event = intermediate;
+			}
+			else {
+				/* This is the final group that projects back to the orginal head. */
+				intermediateBody.addAll(remainder); // Tack on any remainder terms (e.g., selections, assignments).
+				queries.addAll(query(periodics, head, event, intermediateBody));
+			}
+		}
+		return queries;
+	}
+
+	
+	private List<Query> query(TupleSet periodics, Predicate head, Predicate event, List<Term> body) throws PlannerException {
+		List<Query>    query     = new ArrayList<Query>();
+		List<Operator> operators = new ArrayList<Operator>();
+		
+		Variable loc = event.locationVariable();
+		for (Term t : body) {
+			if (t instanceof Predicate) {
+				Predicate p = (Predicate) t;
+				if (loc == null) {
+					if (p.locationVariable() != null) {
+						throw new PlannerException("Can't mix location variables in a local rule!");
+					}
+				}
+				else if (!loc.equals(p.locationVariable())) {
+					return localize(periodics, head, event, body);
+				}
+			}
+		}
+		
+		
+		if (event.name().name.equals("periodic") && 
+				! event.name().scope.equals(Table.GLOBALSCOPE)) {
+			Long period = (Long) ((Value) event.argument(Periodic.Field.PERIOD.ordinal())).value();
+			Long ttl    = (Long) ((Value) event.argument(Periodic.Field.TTL.ordinal())).value();
+			Long count  = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
+			List<Comparable> values = new ArrayList<Comparable>();
+			values.add(event.identifier());
+			for (int i = 1; i < event.arguments(); i++) {
+				values.add(((Value<Comparable>) event.argument(i)).value());
+			}
+			periodics.add(new Tuple(values));
+			
+			final String identifier = event.identifier();
+			TupleFunction<java.lang.Boolean> periodicFilter = new TupleFunction<java.lang.Boolean>() {
+				public java.lang.Boolean evaluate(Tuple tuple)
+						throws P2RuntimeException {
+					return identifier.equals((String)tuple.value(Periodic.Field.IDENTIFIER.ordinal()));
+				}
+				public Class returnType() {
+					return java.lang.Boolean.class;
+				}
+			};
+			EventFilter efilter = new EventFilter(event, periodicFilter);
+			operators.add(efilter);
+		}
+		else {
+			EventFilter efilter = new EventFilter(event);
+			if (efilter.filters() > 0) {
+				operators.add(efilter);
+			}
+		}
+		
+		if (Compiler.watch.watched(program, event.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
+			operators.add(
+					new p2.types.operator.Watch(program, name, event.name(), 
+							                    p2.types.operator.Watch.Modifier.RECEIVE));
+		}
+		
+		if (event instanceof Function) {
+			operators.add(event.operator(event.schema().clone()));
+		}
+		
+		Schema schema = event.schema().clone();
+		for (Term term : body) {
+			if (!term.equals(event)) {
+				Operator oper = term.operator(schema);
+				operators.add(oper);
+				schema = oper.schema();
+			}
+		}
+		
+		operators.add(new Projection(head));
+		
+		if (Compiler.watch.watched(program, head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
+			operators.add(
+					new p2.types.operator.Watch(program, name, head.name(), 
+							                    p2.types.operator.Watch.Modifier.SEND));
+		}
+		
+		Variable headLoc  = head.locationVariable();
+		Variable eventLoc = event.locationVariable();
+		if (headLoc != null && eventLoc != null && !headLoc.equals(eventLoc)) {
+			/* Plan remote buffer operator. */
+			operators.add(new RemoteBuffer("TCP", head, isDelete));
+		}
+		
+		query.add(new BasicQuery(program, name, isPublic, isDelete, event, head, operators));
+		return query;
+	}
 
 }

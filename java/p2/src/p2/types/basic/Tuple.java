@@ -1,5 +1,9 @@
 package p2.types.basic;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +12,7 @@ import p2.lang.plan.Variable;
 import p2.types.exception.P2RuntimeException;
 
 
-public class Tuple implements Comparable<Tuple> {
+public class Tuple implements Comparable<Tuple>, Serializable {
 	private static Long idGen = new Long(0);
 	
 	protected String id;
@@ -40,6 +44,17 @@ public class Tuple implements Comparable<Tuple> {
 	public Tuple() {
 		initialize();
 		this.values = new ArrayList<Comparable>();
+	}
+	
+	private void writeObject(ObjectOutputStream out) 
+		throws IOException {
+		out.writeObject(values);
+	} 
+	
+	private void readObject(ObjectInputStream in) 
+		throws IOException, ClassNotFoundException {
+		List<Comparable> values = (List) in.readObject();
+		this.values = values;
 	}
 	
 	@Override

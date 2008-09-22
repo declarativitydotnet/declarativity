@@ -255,7 +255,9 @@ public class Driver implements Runnable {
 	}
 
 	public interface Task {
-		public TupleSet tuples();
+		public TupleSet insertions();
+		
+		public TupleSet deletions();
 		
 		public String program();
 	}
@@ -293,8 +295,9 @@ public class Driver implements Runnable {
 				for (Task task : tasks) {
 					if (!task.program().equals("runtime")) {
 						insertions.add(
-								new Tuple(clock.current()+1L, task.program(), task.tuples().name(),
-										task.tuples(), new TupleSet(task.tuples().name())));
+								new Tuple(clock.current()+1L, task.program(), 
+										  task.insertions().name(),
+										  task.insertions(),task.deletions()));
 						scheduled.add(task);
 					}
 				}
@@ -313,24 +316,22 @@ public class Driver implements Runnable {
 				try {
 					java.lang.System.err.println("============================ EVALUATE TASK QUEUE =======================");
 					for (Task task : tasks) {
-						evaluate(task.tuples(), task.program());
+						evaluate(task.program(), task.insertions(), task.deletions());
 					}
 					tasks.clear();
 					java.lang.System.err.println("============================ ========================== =============================");
 
-					if (schedule.cardinality() > 0) {
-						java.lang.System.err.println("============================ EVALUATE SCHEDULE CLOCK[" + schedule.min() + "] =============================");
-						// java.lang.System.err.println("SCHEDULE: " + schedule.tuples());
-						evaluate(clock.time(schedule.min()), runtime.name());
-						java.lang.System.err.println("============================ ========================== =============================");
-					}
+					Long time = p2.net.Manager.buffer.cardinality() > 0 ? clock.current() + 1L : schedule.min();
+					java.lang.System.err.println("============================ EVALUATE SCHEDULE CLOCK[" + time + "] =============================");
+					evaluate(runtime.name(), clock.time(time), new TupleSet(clock.name()));
+					java.lang.System.err.println("============================ ========================== =============================");
 				} catch (UpdateException e) {
 					e.printStackTrace();
 				}
 
 				try {
 					Thread.sleep(1000);
-					while (this.tasks.size() == 0 && schedule.cardinality() == 0) {
+					while (this.tasks.size() == 0 && schedule.cardinality() == 0 && p2.net.Manager.buffer.cardinality() == 0) {
 						this.wait(1000);
 					}
 				} catch (InterruptedException e) { }
@@ -338,10 +339,9 @@ public class Driver implements Runnable {
 		}
 	}
 	
-	public void evaluate(TupleSet tuples, String program) throws UpdateException {
+	public void evaluate(String program, TupleSet insertions, TupleSet deletions) throws UpdateException {
 		TupleSet evaluation = new TupleSet(System.evaluator().name());
-		evaluation.add(new Tuple(clock.current(), program, tuples.name(), tuples, 
-								 new TupleSet(tuples.name())));
+		evaluation.add(new Tuple(clock.current(), program, insertions.name(), insertions, deletions)); 
 		/* Evaluate until nothing left in this clock. */
 		while (evaluation.size() > 0) {
 			evaluation = System.evaluator().insert(evaluation, null);
