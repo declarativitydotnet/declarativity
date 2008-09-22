@@ -53,7 +53,6 @@ class ArbitraryExpression < Expression
       end
       subexpr = subexpr + @expr
       ##require 'ruby-debug'; debugger
-      print "EXPR : #{subexpr}\n"
       return eval(subexpr)
     end
 
