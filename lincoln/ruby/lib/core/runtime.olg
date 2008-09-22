@@ -115,6 +115,9 @@ configProgram
 compileConfig 
 runnable(String, "compiler", Name, Tuples, nil) :-
 	config(Time, Program, Object),
-	Tuples := TupleSet.new(TableName.new("compiler", "config"), Object.tuple()),
+	Tn := TableName.new("compiler", "config"),
+	On := Object.tuple(),
+	Tuples := TupleSet.new(Tn,On),
+	/*Tuples := TupleSet.new(TableName.new("compiler", "config"), Object.tuple()),*/
 	Name := Tuples.name();
 

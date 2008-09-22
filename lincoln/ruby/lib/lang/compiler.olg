@@ -39,7 +39,10 @@ dependency(ProgramName, Head.name(), Body.name()) :-
 	rule(ProgramName, Rule, _),
 	predicate(ProgramName, Rule, 0, _, Head), /* Position == 0 */
 	predicate(ProgramName, Rule, Pos, _, Body), 
-	Head.name() != Body.name(), Pos > 0,
+	Hn := Head.name(),
+	Bn := Body.name(),
+	Hn != Bn, 
+	Pos > 0,
 	ProgramName != "compiler";
 	
 /* Transitive closure over the dependency graph. */
