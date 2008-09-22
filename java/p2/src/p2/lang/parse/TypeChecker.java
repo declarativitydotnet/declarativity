@@ -1299,10 +1299,11 @@ public final class TypeChecker extends Visitor {
 				}
 				else {
 					Method method = reference.type().getMethod(reference.toString(), types);
-					if (method.getModifiers() != Modifier.STATIC) {
-						runtime.error("Expected method " + reference.toString() + " to be static!", n);
-						return Error.class;
-					}
+			// XXX there should be a check here, but this check fails on static method invocations.
+			//		if (method.getModifiers() != Modifier.STATIC) {
+			//			runtime.error("Expected method " + reference.toString() + " to be static!", n);
+			//			return Error.class;
+			//		}
 					n.setProperty(Constants.TYPE, new StaticMethodCall(reference.type(), method, arguments));
 					return StaticMethodCall.class;
 				}
