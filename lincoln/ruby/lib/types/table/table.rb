@@ -91,7 +91,6 @@ class Table
     # make sure table wasn't already registered!
     tups = $catalog.primary.lookup_vals(name)
     unless tups.nil? or tups.size == 0
-      require 'ruby-debug'; debugger
       raise "table " + name.to_s + " already registered\n"
       return
     end

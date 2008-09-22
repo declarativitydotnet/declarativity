@@ -19,6 +19,6 @@ class TestSystem < Test::Unit::TestCase
     assert_equal(System.install_program("chord", nil), nil)
 
     #sys.bootstrap # gets called from main
-    sys.main('olg/path.olg')
+    sys.main('/Network/Servers/project.eecs.berkeley.edu/proj/db/a/home1/jmh/devel/lincoln/ruby/test/unit/olg/path.olg')
   end
 end

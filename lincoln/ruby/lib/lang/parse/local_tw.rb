@@ -187,6 +187,9 @@ class VisitWatch < VisitTerm
 	  end
 		hi = HashIndex.new(tabtab,Key.new(1),String)
 		tab = hi.lookup(Tuple.new(nil,obj.ptablename.text_value))
+		if tab.tups[0].nil?
+		  require 'ruby-debug'; debugger
+	  end
 		ptr = tab.tups[0].clone
 		tabtab.delete(tab.tups)
 

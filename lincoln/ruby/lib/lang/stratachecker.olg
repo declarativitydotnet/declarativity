@@ -12,8 +12,8 @@ define(error, {String, String, TableName, Integer, TableName, Integer});
 public
 error(Program, Rule, Parent.name(), ParentStrata, Child.name(), ChildStrata) :-
 	compiler::checkStrata(Program, Predicates),
-	predicate(Program, Rule, 0, Event, Parent), 
-	predicate(Program, Rule, Pos, Event, Child), 
+	compiler::predicate(Program, Rule, 0, Event, Parent), 
+	compiler::predicate(Program, Rule, Pos, Event, Child), 
 	Pos > 0, Child.notin(),
 	runtime::priority(Program, Parent.name(), ParentStrata),
 	runtime::priority(Program, Child.name(), ChildStrata),
@@ -23,7 +23,7 @@ error(Program, Rule, Parent.name(), ParentStrata, Child.name(), ChildStrata) :-
 public
 error(Program, Rule, Parent, ParentStrata, Head.name(), HeadStrata) :-
 	compiler::checkStrata(Program, Predicates),
-	predicate(Program, Rule, 0, Event, Head), 
+	compiler::predicate(Program, Rule, 0, Event, Head), 
 	Head.containsAggregation(),
 	compiler::dependency(Program, Parent, Head.name()),
 	runtime::priority(Program, Head.name(), HeadStrata),
@@ -33,8 +33,9 @@ error(Program, Rule, Parent, ParentStrata, Head.name(), HeadStrata) :-
 	
 log("WARNING", Msg) :-
 	error(Program, Rule, Parent, ParentStrata, Child, ChildStrata),
-	clock(Location, Time),
-	Msg := "Program " + Program + ", RULE " + Rule +
+	global::clock(Location, Time),
+/*	Msg := "Program " + Program + ", RULE " + Rule +
 	       ": strata error Predicate " + 
 	       Parent.toString() + " is assigned to strata " + ParentStrata.toString() + 
-	       " but depends on predicate " + Child.toString() + " in strata " + ChildStrata.toString();
+	       " but depends on predicate " + Child.toString() + " in strata " + ChildStrata.toString()
+	*/ Msg:="MSG is bad for you";

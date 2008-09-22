@@ -1,5 +1,8 @@
 program path;
 
+define(link, keys(0,1), {String,String});
+define(path, keys(0,1), {String,String,Integer});
+define(shortestPath, keys(0,1), {String,String,Integer});
 link("1","2");
 link("2","3");
 link("3","4");
