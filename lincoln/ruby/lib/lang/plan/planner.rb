@@ -183,7 +183,6 @@ class OverlogPlanner
 			return ret
 		end
 		def get_selects(ts)
-
 			pHash,aHash = accumulate_vars(ts,"select_txt","select_pos")
 			ret = TupleSet.new("selects",nil)
 			pHash.each_key do |k|

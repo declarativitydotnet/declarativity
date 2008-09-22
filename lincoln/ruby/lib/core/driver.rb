@@ -8,12 +8,12 @@ require 'monitor'
 class Driver < Monitor
   Infinity = 1.0/0
   @@threads = []
-  
+
   class Evaluate < TableFunction
     class UpdateState
       def initialize
         @insertions = Hash.new
-        @deletions  = Haseh.new
+        @deletions  = Hash.new
       end
     end
 
@@ -25,14 +25,14 @@ class Driver < Monitor
         @insertions = TupleSet.new(name)
         @deletions = TupleSet.new(name)
       end
-      
+
       attr_reader :time, :program, :name
       attr_accessor :insertions, :deletions
 
       def hash
         to_s.hash
       end
-      
+
       def ==(o) 
         return (o <= EvalState && (to_s == o.to_s))
       end
@@ -85,6 +85,9 @@ class Driver < Monitor
       delta = TupleSet.new(name)
 
       evaluations.values.each do |state|
+        if state.name.class != TableName
+          require 'ruby-debug'; debugger
+        end
         results = evaluate(state.time, System.program(state.program), state.name, state.insertions, state.deletions)
         results.each {|t| delta << t}
       end
@@ -94,6 +97,10 @@ class Driver < Monitor
     def evaluate(time, program, name, insertions, deletions) 
       continuations = Hash.new
       table = Table.find_table(name)
+      if table.nil?
+        require 'ruby-debug'; debugger
+        raise "Table #{name} not found"
+      end
       watchAdd    = Compiler.watch.watched(program.name, name, WatchOp::Modifier::ADD)
       watchInsert = Compiler.watch.watched(program.name, name, WatchOp::Modifier::INSERT)
       watchRemove = Compiler.watch.watched(program.name, name, WatchOp::Modifier::ERASE)
@@ -174,22 +181,22 @@ class Driver < Monitor
         puts("==================== RESULT " + name.to_s + ": " + delta.to_s + "\n\n")
         return delta
       end
+    end
 
-      def continuation(continuations, time, program, event, result) 
-        key = program.to_s + "." + result.name
+    def continuation(continuations, time, program, event, result) 
+      key = program.to_s + "." + result.name.to_s
 
-        if (!continuations.containsKey(key)) 
-          tuple = Tuple(time, program, result.name.new, TupleSet(result.name.new), TupleSet(result.name.new))
-          continuations.put(key, tuple)
-        end
+      if (!continuations.has_key?(key)) 
+        tuple = Tuple.new(time, program, TupleSet.new(result.name), TupleSet.new(result.name), TupleSet.new(result.name))
+        continuations[key] = tuple
+      end
 
-        if (event == Table.Event.INSERT) 
-          insertions = continuations[key].value(Field::INSERTIONS)
-          insertions += result
-        else 
-          deletions = continuations[key].value(Field::DELETIONS)
-          deletions += result
-        end
+      if (event == Table::Event::INSERT) 
+        insertions = continuations[key].value(Field::INSERTIONS)
+        insertions += result
+      else 
+        deletions = continuations[key].value(Field::DELETIONS)
+        deletions += result
       end
     end
   end
@@ -227,7 +234,7 @@ class Driver < Monitor
 
   def run 
     @@threads << Thread.new() do
-       while (true) 
+      while (true) 
         synchronize do
           min = Infinity
 
@@ -249,8 +256,8 @@ class Driver < Monitor
           sleep(1)
           #     end catch (InterruptedException e)  end
         end
-       end
-     end
+      end
+    end
     @@threads.each {|t| t.join}
   end
 

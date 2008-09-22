@@ -6,30 +6,30 @@ class ArbitraryExpression < Expression
     @variables = Array.new
     sides = expr.split(".")
     case sides.size 
-	when 0
-	when 1 
-		# good
-	when 2
-		if variables.size != 1
-			#raise("object.method can only be bound over one variable (object)")
-		end
-		@obj = sides[0]
-		@method = sides[1]
+    when 0
+    when 1 
+      # good
+    when 2
+      if variables.size != 1
+        #raise("object.method can only be bound over one variable (object)")
+      end
+      @obj = sides[0]
+      @method = sides[1]
     else	
-	print "size #{sides.size}\n"
-	print "expr #{expr}\n"
-	raise("only one object.method per expression allowed")
+      print "size #{sides.size}\n"
+      print "expr #{expr}\n"
+      raise("only one object.method per expression allowed")
     end
 
     variables.each do |v|
-     # @variables << v
+      # @variables << v
       if v.class == Variable then
-	unless v.name == ""
-        	@expr = @expr.gsub(/\b#{v.name}/,'v'+v.name)
-		@variables << v
-	end
+        unless v.name == ""
+          @expr = @expr.gsub(/\b#{v.name}/,'v'+v.name)
+          @variables << v
+        end
       else 
-       @variables << v
+        @variables << v
       end
     end
   end
@@ -51,23 +51,23 @@ class ArbitraryExpression < Expression
 
       subexpr = ''
       unless @method.nil? 
-      	value = t.value(@variables[0].name)
-       	if value.class == Program then
-		if @variables.size > 1 then
-			return value.send(@method,@variables[1..@variables.size-1])		
-		else
-			return value.send(@method)
-		end
-	end
+        value = t.value(@variables[0].name)
+        # if value.class == Program then
+        if @variables.size > 1 then
+          return value.send(@method,*@variables[1..@variables.size-1])		
+        else
+          return value.send(@method)
+        end
+        # end
       end
       @variables.each_with_index do |v, i|	
         if v.class == Variable
           if t.schema.contains(v) then
             # substitution is stupid: how many times are we gonna parse this thing??
             # instead, take advantage of rubiismo:
-	    value = t.value(v.name)
-		# workaround
-            	subexpr = subexpr + "v"+v.name + " = "+t.value(v.name).to_s+"\n"
+            value = t.value(v.name)
+            # workaround
+            subexpr = subexpr + "v"+v.name + " = "+t.value(v.name).to_s+"\n"
           elsif defined?(@variables[i+1]) and @variables[i+1].class == Value
             # unbound variables had better belong to assignments
             # which show up as a Variable followed by a Value
@@ -81,7 +81,7 @@ class ArbitraryExpression < Expression
       end
       subexpr = subexpr + @expr
       ##require 'ruby-debug'; debugger
-	##print "EVAL: #{subexpr}\n"
+      ##print "EVAL: #{subexpr}\n"
       return eval(subexpr)
     end
 
