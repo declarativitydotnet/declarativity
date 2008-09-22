@@ -39,7 +39,11 @@ class ArbitraryExpression < Expression
           if t.schema.contains(v) then
             # substitution is stupid: how many times are we gonna parse this thing??
             # instead, take advantage of rubiismo:
+	    value = t.value(v.name)
             subexpr = subexpr + "v"+v.name + " = "+t.value(v.name).to_s+"\n"
+	
+	   # crap, this doesn't work
+	   #subexpr = subexpr + "v"+v.name + " = value\n"
           elsif defined?(@variables[i+1]) and @variables[i+1].class == Value
             # unbound variables had better belong to assignments
             # which show up as a Variable followed by a Value
@@ -53,6 +57,7 @@ class ArbitraryExpression < Expression
       end
       subexpr = subexpr + @expr
       ##require 'ruby-debug'; debugger
+	##print "EVAL: #{subexpr}\n"
       return eval(subexpr)
     end
 

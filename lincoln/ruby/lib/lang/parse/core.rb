@@ -3359,7 +3359,7 @@ module Overlog
   end
 
   module Methodcall0
-    def name
+    def primaryexpression
       elements[0]
     end
 
@@ -3378,7 +3378,7 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r1 = _nt_name
+    r1 = _nt_primaryexpression
     s0 << r1
     if r1
       if input.index('.', index) == index

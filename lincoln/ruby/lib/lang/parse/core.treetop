@@ -307,8 +307,8 @@ include Ddl
 		    methodcall / primaryexpression /  Postfixexpression arguments /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     primaryexpression   
 	end
 	rule methodcall
-		##primaryexpression '.' name arguments?
-		name '.' name arguments?
+		primaryexpression '.' name arguments?
+		##name '.' name arguments?
 	end	
   	rule primaryexpression
 		    #(Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     variable Spacing  /     NewClass Spacing  /  Referencename Spacing  # / Constant Spacing  
