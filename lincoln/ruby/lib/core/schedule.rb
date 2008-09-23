@@ -27,4 +27,9 @@ class Schedule < ObjectTable
     end
     return curmin
   end
+  
+  def insert(t)
+    require 'ruby-debug'; debugger
+    super(t)
+  end
 end

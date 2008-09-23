@@ -112,6 +112,8 @@ configProgram
 	global::clock(Location, Time),
 	Obj.plan;
 
+watch (config, id);
+
 compileConfig 
 runnable(Time, "compiler", Name, Tuples, null) :-
 	config(Time, Program, Object),
