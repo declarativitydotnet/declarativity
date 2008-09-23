@@ -321,7 +321,7 @@ public class Driver implements Runnable {
 					tasks.clear();
 					java.lang.System.err.println("============================ ========================== =============================");
 
-					Long time = p2.net.Manager.buffer.cardinality() > 0 ? clock.current() + 1L : schedule.min();
+					Long time = p2.net.Manager.buffer().cardinality() > 0 ? clock.current() + 1L : schedule.min();
 					java.lang.System.err.println("============================ EVALUATE SCHEDULE CLOCK[" + time + "] =============================");
 					evaluate(runtime.name(), clock.time(time), new TupleSet(clock.name()));
 					java.lang.System.err.println("============================ ========================== =============================");
@@ -331,7 +331,7 @@ public class Driver implements Runnable {
 
 				try {
 					Thread.sleep(1000);
-					while (this.tasks.size() == 0 && schedule.cardinality() == 0 && p2.net.Manager.buffer.cardinality() == 0) {
+					while (this.tasks.size() == 0 && schedule.cardinality() == 0 && p2.net.Manager.buffer().cardinality() == 0) {
 						this.wait(1000);
 					}
 				} catch (InterruptedException e) { }

@@ -11,10 +11,7 @@ define(pong, {String, String, String});
 define(link, keys(0,1), {String, String});
 
 
-t1("localhost:10001", "pingme");
-
-watch(ping, rs);
-watch(pong, s);
+t1("tcp:localhost:10001", "pingme");
 
 r2
 ping(@B, A, Id) :- doping(@A, B, Id), t1(@B, C), C == "pingme";

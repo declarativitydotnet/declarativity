@@ -17,85 +17,74 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 
-public class TCP extends ObjectTable {
+public class TCP extends Server {
 	
-	private static class Server implements Runnable {
-
-		private ServerSocket server;
+	private Manager manager;
 		
-		private Hashtable<String, Thread> connections;
+	private ServerSocket server;
 		
-		public Server(Integer port) throws IOException {
-			this.server = new ServerSocket(port);
-			this.connections = new Hashtable<String, Thread>();
-		}
-		
-		public void run() {
-			while (true) {
-				try {
-					Socket socket = this.server.accept();
-					Thread thread = new Thread(new Connection(socket));
-					thread.start();
-					connections.put(socket.getInetAddress().toString(), thread);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+	public TCP(Manager manager, Integer port) throws IOException {
+		this.manager = manager;
+		this.server = new ServerSocket(port);
+	}
+	
+	public void run() {
+		while (true) {
+			try {
+				Socket socket = this.server.accept();
+				Connection channel = new Connection(socket);
+				manager.start(channel);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return;
 			}
 		}
 	}
 	
-	private static class Connection implements Runnable {
+	@Override
+	public Channel channel(String address) {
+		try {
+			return new Connection(address);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	private static class Connection extends Channel {
 		private Socket socket;
 		private ObjectInputStream iss;
-
-		public Connection(Socket socket) throws IOException {
-			this.socket = socket;
-			this.iss = new ObjectInputStream(socket.getInputStream());
-		}
-
-		public void run() {
-			while(true) {
-				try {
-					Packet packet = (Packet) this.iss.readObject();
-					p2.core.System.schedule(packet.program(), packet.insertions(), packet.deletions());
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(0);
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				} catch (Exception e) {
-					e.printStackTrace();
-					System.exit(0);
-				}
-				
-			}
-		}
-	}
-	
-	private static class TCPChannel extends Channel {
-		
-		private Socket socket;
-		
 		private ObjectOutputStream oss;
-		
-		public TCPChannel(String address) throws Exception {
+
+		public Connection(String address) 
+			throws UnknownHostException, IOException {
 			super(address);
 			String  host = address.substring(0, address.indexOf(':'));
-			Integer port = Integer.parseInt(address.substring(address.indexOf(':') + 1));
+			Integer port = Integer.parseInt(address.substring(address.indexOf(':')+1));
 			this.socket = new Socket(host, port);
-			this.oss = new ObjectOutputStream(this.socket.getOutputStream());
+			this.oss    = new ObjectOutputStream(this.socket.getOutputStream());
+			this.iss    = new ObjectInputStream(this.socket.getInputStream());
 		}
-
+		
+		public Connection(Socket socket) throws IOException {
+			super(socket.getInetAddress().toString());
+			this.socket = socket;
+			this.oss    = new ObjectOutputStream(this.socket.getOutputStream());
+			this.iss    = new ObjectInputStream(socket.getInputStream());
+		}
+		
+		@Override
+		public String address() {
+			return this.socket.getInetAddress().toString();
+		}
+		
 		@Override
 		public boolean send(Packet packet) {
 			try {
 				if (this.socket.isClosed()) {
-					System.err.println("\tSOCKET CLOSED");
 					return false;
 				}
 				
 				this.oss.writeObject(packet);
-				this.oss.flush();
 			} catch (IOException e) {
 				return false;
 			}
@@ -105,56 +94,27 @@ public class TCP extends ObjectTable {
 		@Override
 		public void close() {
 			try {
-				System.err.println("CLOSE SOCKET " + socket.getPort());
 				socket.close();
 			} catch (IOException e) { }
 		}
-		
-	}
-	
-	public static final Key PRIMARY_KEY = new Key(0);
-	
-	public enum Field{DESTINATION, CHANNEL};
-	public static final Class[] SCHEMA = {
-		String.class,   // Destination Location
-		Channel.class   // Channel
-	};
-	
-	private Thread server;
-	
-	public TCP(Integer port) throws IOException {
-		super(new TableName("network", "tcp"), PRIMARY_KEY, new TypeList(SCHEMA));
-		server = new Thread(new Server(port));
-		server.start();
-	}
-	
-	
-	@Override
-	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-		for (Tuple tuple : tuples) {
-			String address = (String) tuple.value(Field.DESTINATION.ordinal());
-			try {
-				TCPChannel channel = new TCPChannel(address);
-				tuple.value(Field.CHANNEL.ordinal(), channel);
-			} catch (Exception e) {
-				throw new UpdateException(e.toString());
+
+		public void run() {
+			while(true) {
+				try {
+					Packet packet = (Packet) this.iss.readObject();
+					p2.core.System.schedule(packet.program(), packet.insertions(), packet.deletions());
+				} catch (IOException e) {
+					close();
+					return;
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+					System.exit(0);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(0);
+				}
 			}
 		}
-		
-		return super.insert(tuples, conflicts);
 	}
-	
-	@Override
-	public boolean delete(Tuple tuple) throws UpdateException {
-		if (super.delete(tuple)) {
-			TCPChannel channel = (TCPChannel) tuple.value(Field.CHANNEL.ordinal());
-			if (channel != null) {
-				channel.close();
-			}
-			return true;
-		}
-		return false;
-	}
-	
 
 }

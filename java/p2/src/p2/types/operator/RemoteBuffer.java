@@ -19,17 +19,14 @@ import p2.types.function.TupleFunction;
 
 public class RemoteBuffer extends Operator {
 
-	private String protocol;
-	
 	private Predicate predicate;
 	
 	private boolean deletion;
 	
 	private TupleFunction<Comparable> addressAccessor;
 	
-	public RemoteBuffer(String protocol, Predicate predicate, boolean deletion) {
+	public RemoteBuffer(Predicate predicate, boolean deletion) {
 		super(predicate.program(), predicate.rule());
-		this.protocol = protocol;
 		this.predicate = predicate;
 		this.deletion = deletion;
 		
@@ -66,12 +63,14 @@ public class RemoteBuffer extends Operator {
 		for (String address : groupByAddress.keySet()) {
 			Tuple remote = null; 
 			try {
-				TupleSet lookup = p2.net.Manager.buffer.primary().lookup(this.protocol, address, this.program);
+				String protocol = address.substring(0, address.indexOf(':'));
+				String location = address.substring(address.indexOf(':') + 1);
+				TupleSet lookup = p2.net.Manager.buffer().primary().lookup(protocol, location, this.program);
 				if (lookup != null && lookup.size() > 0) {
 					remote = lookup.iterator().next();
 				}
 				else {
-			        remote = new Tuple(this.protocol, address, this.program,
+			        remote = new Tuple(protocol, location, this.program,
 					                   new TupleSet(predicate.name()), new TupleSet(predicate.name()));
 				}
 			} catch (BadKeyException e) {
@@ -90,7 +89,7 @@ public class RemoteBuffer extends Operator {
 			
 			
 			try {
-				p2.net.Manager.buffer.force(remote);
+				p2.net.Manager.buffer().force(remote);
 			} catch (UpdateException e) {
 				e.printStackTrace();
 				System.exit(0);

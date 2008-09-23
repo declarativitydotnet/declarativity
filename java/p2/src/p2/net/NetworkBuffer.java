@@ -15,7 +15,7 @@ public class NetworkBuffer extends ObjectTable {
 	
 	public enum Field{PROTOCOL, ADDRESS, PROGRAM, INSERTION, DELETION};
 	public static final Class[] SCHEMA = {
-		String.class,   // PROTOCOL
+		String.class,   // Protocol
 		String.class,   // Destination address 
 		String.class,   // Program
 		TupleSet.class, // Insertion Payload

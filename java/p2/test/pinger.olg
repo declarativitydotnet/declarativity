@@ -12,12 +12,10 @@ define(gotpong, {String, String, String});
 define(link, keys(0,1), {String, String});
 
 
-t1("localhost:10001", "pingme");
-link("localhost:10000", "localhost:10001");
+t1("tcp:localhost:10001", "pingme");
+link("tcp:localhost:10000", "tcp:localhost:10001");
 
-watch(ping, rs);
 watch(gotpong, s);
-watch(pong, r);
 
 r1 
 doping(A, B, Id) :-  periodic(Id, 2L), link(A, B);

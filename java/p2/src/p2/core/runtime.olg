@@ -63,20 +63,18 @@ define(networkSend, {String, String, String});
 delete network::buffer(Protocol, Address, Program, Insertions, Deletions) :-
 	networkSend(Protocol, Address, Program),
 	network::buffer(Protocol, Address, Program, Insertions, Deletions),
-	network::tcp(Address, Channel),
+	network::connection(Protocol, Address, Channel),
 	Channel.send(new Packet(Program, Insertions, Deletions));
 
 networkSend(Protocol, Address, Program) :-
 	clock(Location, Time),
 	network::buffer(Protocol, Address, Program, Insertions, Deletions),
-	Protocol == "TCP",
-	network::tcp(Address, Channel);
+	network::connection(Protocol, Address, Channel);
 	
-network::tcp(Address, null) :-
+network::connection(Protocol, Address, null) :-
 	clock(Location, Time),
 	network::buffer(Protocol, Address, _, _, _),
-	Protocol == "TCP",
-	notin network::tcp(Address, _);
+	notin network::connection(Protocol, Address, _);
 
 	
 /*******************************************************************/

@@ -364,7 +364,7 @@ public class Rule extends Clause {
 		Variable eventLoc = event.locationVariable();
 		if (headLoc != null && eventLoc != null && !headLoc.equals(eventLoc)) {
 			/* Plan remote buffer operator. */
-			operators.add(new RemoteBuffer("TCP", head, isDelete));
+			operators.add(new RemoteBuffer(head, isDelete));
 		}
 		
 		query.add(new BasicQuery(program, name, isPublic, isDelete, event, head, operators));
