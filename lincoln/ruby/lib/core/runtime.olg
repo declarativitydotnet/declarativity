@@ -119,6 +119,6 @@ runnable(Time, "compiler", Name, Tuples, null) :-
 	On := Object.tuple(),
 	Tuples := TupleSet.new(Tn,On),
 	/*Tuples := TupleSet.new(TableName.new("compiler", "config"), Object.tuple()),*/
-/*	Name := Tuples.name(); */
-	Name := "Omigosh";
+  Name := Tuples.name();
+
 
