@@ -473,7 +473,9 @@ class OverlogPlanner
 			raise("#{tab} not found in catalog") if table.nil?
 
 			fields[tab].keys.sort.each  do |term|
-				table.insert(TupleSet.new("fact",Tuple.new(*fields[tab][term])),nil)
+			  ## The line below commented out because facts should get installed by the
+			  ## overlog runtime logic, as part of scheduling.  
+				#table.insert(TupleSet.new("fact",Tuple.new(*fields[tab][term])),nil)
         vars = Array.new
         fields[tab][term].each do |v|
           vars << Value.new(v)
