@@ -14,5 +14,9 @@ public class ValueList<T>
 			return -1;
 		}
 	}
+	
+	public void insert(T o) {
+		super.add(o);
+	}
 
 }

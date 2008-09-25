@@ -1,10 +1,9 @@
 package p2.net;
 
-import java.io.Serializable;
-
 import p2.types.basic.TupleSet;
 
-public class Packet implements Serializable {
+public class Application extends Message {
+	private static Long ids = 0L;
 
 	private String program;
 	
@@ -12,7 +11,8 @@ public class Packet implements Serializable {
 	
 	private TupleSet deletions;
 	
-	public Packet(String program, TupleSet insertions, TupleSet deletions) {
+	public Application(String program, TupleSet insertions, TupleSet deletions) {
+		super(ids++);
 		this.program = program;
 		this.insertions = insertions;
 		this.deletions = deletions;

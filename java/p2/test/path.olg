@@ -1,11 +1,18 @@
 program path;
 
+import java.lang.Object;
 import java.lang.String;
 import java.lang.Integer;
+
+import p2.types.basic.ValueList;
 
 define(link, keys(0,1), {String, String});
 define(path, keys(0,1,2), {String, String, Integer});
 define(shortestPath, keys(0,1), {String, String, Integer});
+
+define(allpaths, {String, String, ValueList});
+define(pathPrinter, {String, String, ValueList});
+define(computeAll, {String, String, ValueList});
 
 /* 1 -> 2 -> 3 -> 4 */
 link("1", "2");
@@ -22,6 +29,7 @@ link("8", "9");
 watch(link, d);
 watch(path, id);
 watch(shortestPath, di);
+watch(allpaths, r);
 
 /* Initialize all paths with link */
 path(Source, Destination, 1) :- link(Source, Destination);
@@ -33,5 +41,15 @@ path(Source, Destination, Hops+1) :-
 /* Compute shortest paths. */
 shortestPath(Source, Destination, min<Hops>) :- 
 	path(Source, Destination, Hops);
+	
+computeAll(Source, Destination, new ValueList()) :-
+	shortestPath(Source, Destination, Hops);
+	
+allpaths(Source, Destination, generic<Values.insert((Object)Hops)>) :-
+	computeAll(Source, Destination, Values),
+	path(Source, Destination, Hops);
+	
+pathPrinter(Source, Destination, Paths) :-
+	allpaths(Source, Destination, Paths);
 
 delete link("2", "4") :- periodic(Id, 1L, 1L, 5L);

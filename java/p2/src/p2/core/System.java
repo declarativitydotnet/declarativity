@@ -8,6 +8,7 @@ import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
 import p2.lang.plan.Program;
 import p2.net.TCP;
+import p2.net.udp.UDP;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.table.Table;
@@ -100,6 +101,7 @@ public class System {
 			netManager = new p2.net.Manager();
 			
 			netManager.server("tcp", new TCP(netManager, port));
+			netManager.server("udp", new UDP(netManager, port+1));
 			
 	        URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
 			p2.lang.Compiler compiler = new p2.lang.Compiler("system", runtimeFile.getPath());

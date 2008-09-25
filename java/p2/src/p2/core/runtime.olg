@@ -56,7 +56,8 @@ runnable(Time, Program, Name, Insertions, Deletions) :-
 	
 /*******************************************************************/
 /*** Network scheduler                                           **/
-import p2.net.Packet;
+import p2.net.Message;
+import p2.net.Application;
 
 define(networkSend, {String, String, String});
 
@@ -64,7 +65,7 @@ delete network::buffer(Protocol, Address, Program, Insertions, Deletions) :-
 	networkSend(Protocol, Address, Program),
 	network::buffer(Protocol, Address, Program, Insertions, Deletions),
 	network::connection(Protocol, Address, Channel),
-	Channel.send(new Packet(Program, Insertions, Deletions));
+	Channel.send((Message) new Application(Program, Insertions, Deletions));
 
 networkSend(Protocol, Address, Program) :-
 	clock(Location, Time),

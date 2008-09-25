@@ -22,18 +22,23 @@ public class TCP extends Server {
 	private Manager manager;
 		
 	private ServerSocket server;
+	
+	private Hashtable<String, Thread> channels;
 		
 	public TCP(Manager manager, Integer port) throws IOException {
 		this.manager = manager;
 		this.server = new ServerSocket(port);
+		this.channels = new Hashtable<String, Thread>();
 	}
 	
 	public void run() {
 		while (true) {
 			try {
-				Socket socket = this.server.accept();
+				Socket     socket  = this.server.accept();
 				Connection channel = new Connection(socket);
-				manager.start(channel);
+				Thread     thread  = new Thread(channel);
+				thread.start();
+				channels.put(channel.address(), thread);
 			} catch (IOException e) {
 				e.printStackTrace();
 				return;
@@ -42,22 +47,34 @@ public class TCP extends Server {
 	}
 	
 	@Override
-	public Channel channel(String address) {
+	public Channel open(String address) {
 		try {
-			return new Connection(address);
+			Connection channel = new Connection(address);
+			Thread thread = new Thread(channel);
+			thread.start();
+			channels.put(channel.address(), thread);
+			return channel;
 		} catch (Exception e) {
 			return null;
 		}
 	}
 	
-	private static class Connection extends Channel {
+	@Override
+	public void close(Channel channel) {
+		if (channels.containsKey(channel.address())) {
+			channels.get(channel.address()).interrupt();
+			channels.remove(channel.address());
+		}
+	}
+	
+	private static class Connection extends Channel implements Runnable {
 		private Socket socket;
 		private ObjectInputStream iss;
 		private ObjectOutputStream oss;
 
 		public Connection(String address) 
 			throws UnknownHostException, IOException {
-			super(address);
+			super("tcp", address);
 			String  host = address.substring(0, address.indexOf(':'));
 			Integer port = Integer.parseInt(address.substring(address.indexOf(':')+1));
 			this.socket = new Socket(host, port);
@@ -66,19 +83,14 @@ public class TCP extends Server {
 		}
 		
 		public Connection(Socket socket) throws IOException {
-			super(socket.getInetAddress().toString());
+			super("tcp", socket.getInetAddress().toString());
 			this.socket = socket;
 			this.oss    = new ObjectOutputStream(this.socket.getOutputStream());
 			this.iss    = new ObjectInputStream(socket.getInputStream());
 		}
 		
 		@Override
-		public String address() {
-			return this.socket.getInetAddress().toString();
-		}
-		
-		@Override
-		public boolean send(Packet packet) {
+		public boolean send(Message packet) {
 			try {
 				if (this.socket.isClosed()) {
 					return false;
@@ -101,7 +113,7 @@ public class TCP extends Server {
 		public void run() {
 			while(true) {
 				try {
-					Packet packet = (Packet) this.iss.readObject();
+					Application packet = (Application) this.iss.readObject();
 					p2.core.System.schedule(packet.program(), packet.insertions(), packet.deletions());
 				} catch (IOException e) {
 					close();

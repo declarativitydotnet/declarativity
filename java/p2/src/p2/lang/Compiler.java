@@ -39,8 +39,9 @@ import xtc.util.Tool;
  */
 public class Compiler extends Tool {
 	public static final String[] FILES =  {
-		"/Users/tcondie/workspace/P2/src/p2/lang/compile.olg", 
-		"/Users/tcondie/workspace/P2/src/p2/lang/stratachecker.olg"};
+		ClassLoader.getSystemClassLoader().getResource("p2/lang/compile.olg").getPath(),
+		ClassLoader.getSystemClassLoader().getResource("p2/lang/stratachecker.olg").getPath()
+	};
 
 	public static class CompileTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);

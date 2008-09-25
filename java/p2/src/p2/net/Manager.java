@@ -14,13 +14,10 @@ public final class Manager {
 	
 	private Hashtable<String, Thread> serverThreads; 
 	
-	private Hashtable<String, Thread> channels;
-	
 	public Manager() throws IOException {
 		this.connection    = new Connection(this);
 		this.servers       = new Hashtable<String, Server>();
 		this.serverThreads = new Hashtable<String, Thread>();
-		this.channels      = new Hashtable<String, Thread>();
 	}
 	
 	public final static NetworkBuffer buffer() {
@@ -41,25 +38,12 @@ public final class Manager {
 		}
 		
 		try {
-			Channel channel = servers.get(protocol).channel(address);
-			return start(channel) ? channel : null;
+			Channel channel = servers.get(protocol).open(address);
+			return channel;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
-	}
-	
-	public boolean start(Channel channel) {
-		if (channels.containsKey(channel.address())) {
-			return false; // Channel already started.
-		}
-		
-		Thread thread = new Thread(channel);
-		thread.start();
-		synchronized (channel) {
-			channels.put(channel.address(), thread);
-		}
-		return true;
 	}
 	
 	/**
@@ -67,12 +51,11 @@ public final class Manager {
 	 * @param channel Connection channel to be stopped. 
 	 */
 	public void close(Channel channel) {
-		channel.close();
-		synchronized (channels) {
-			if (channels.containsKey(channel.address())) {
-				channels.get(channel.address()).interrupt();
-				channels.remove(channel.address());
-			}
+		if (!servers.containsKey(channel.protocol())) {
+			System.err.println("ERROR: Unknown protocol " + channel.protocol());
+			return;
 		}
+		
+		servers.get(channel.protocol()).close(channel);
 	}
 }

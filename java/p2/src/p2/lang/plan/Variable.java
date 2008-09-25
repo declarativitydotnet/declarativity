@@ -89,7 +89,13 @@ public class Variable extends Expression {
 	public TupleFunction function() {
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws P2RuntimeException {
-				return tuple.value(name());
+				try {
+					return tuple.value(name());
+				} catch (Exception e) {
+					System.err.println("UNKNOWN VARIABLE NAME " + name() + " IN TUPLE SCHEMA " + tuple.schema());
+					e.printStackTrace();
+					throw new P2RuntimeException (e.toString());
+				}
 			}
 
 			public Class returnType() {
