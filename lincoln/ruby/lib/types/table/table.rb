@@ -20,7 +20,7 @@ class Table
     @callbacks = Array.new    
 
 	# (pa) catalog->$catalog
-    if (not $catalog.nil?) then
+    if not $catalog.nil?
       Table.register(name, type, size, lifetime, key, attributeTypes, self)
     end
   end
@@ -55,12 +55,12 @@ class Table
     value = @name.to_s + ", " + @attributeTypes.to_s + 
     ", " + @size.to_s + ", " + @lifetime.to_s + ", keys(" + @key.to_s + "), {" +
     @attributeTypes.to_s + "}\n"
-    if (not tuples.nil?) then
+    if not tuples.nil?
       tuples.each do |t|
         value += t.to_s + "\n"
       end
     end
-    return value;
+    return value
   end
 
   def cardinality
@@ -133,12 +133,12 @@ class Table
     delta = TupleSet.new(name, nil)
     tuples.each do |t|
       t = t.clone
-      if (insert_tup(t)) then
+      if insert_tup(t)
         delta << t
         conflicts += primary.lookup(t) unless (conflicts.nil? or primary.nil?)
       end
     end
-    if (delta.size > 0) then
+    if delta.size > 0
       @callbacks.each {|c| c.insertion(delta)}
     end
 
@@ -154,12 +154,12 @@ class Table
     delta = TupleSet.new(name)
     tuples.each do |t|
 #      t = t.clone
-      if (delete_tup(t)) then
+      if delete_tup(t)
         delta << t
       end
     end
 
-    if (delta.size > 0) then
+    if delta.size > 0
       @callbacks.each {|c| c.deletion(delta)}
     end
     

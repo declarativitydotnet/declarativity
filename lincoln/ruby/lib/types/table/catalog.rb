@@ -34,7 +34,7 @@ class Catalog < ObjectTable
   protected
     def insert_tup(tuple)
       table = tuple.value(Field::OBJECT)
-      if (table.nil?)
+      if table.nil?
         name = tuple.value(Field::TABLENAME)
         type = tuple.value(Field::TYPE)
         size = tuple.value(Field::SIZE)
@@ -42,7 +42,7 @@ class Catalog < ObjectTable
         key      = tuple.value(Field::KEY)
         types    = tuple.value(Field::TYPES)
 
-        if (type == TableType::TABLE)
+        if type == TableType::TABLE
           if (size.to_f == INFINITY) and (lifetime.to_f == INFINITY)
             table = RefTable.new(name,key,types)
           else

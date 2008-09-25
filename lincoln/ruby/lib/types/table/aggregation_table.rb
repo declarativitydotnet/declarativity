@@ -9,9 +9,9 @@ class AggregationTable < Table
     end
 
     predicate.each do |arg|
-      if (arg.class < Aggregate)
+      if arg.class < Aggregate
         @aggregate = arg
-        break;
+        break
       end
     end
   end
@@ -56,7 +56,7 @@ class AggregationTable < Table
     # Perform aggregation.
     insertions.each { |tuple| insert(tuple) }
 
-    if (!deletions.nil? && deletions.size > 0)
+    if !deletions.nil? && deletions.size > 0
       delete(deletions)
       deletions.clear
     end
@@ -77,9 +77,9 @@ class AggregationTable < Table
       c.deletion(deletions)
     end
 
-    if (type == Table.Type.EVENT)
+    if type == Table.Type.EVENT
       @tuples.clear
-      @aggregates.clear()
+      @aggregates.clear
     end
     return delta
   end

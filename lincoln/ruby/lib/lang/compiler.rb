@@ -110,7 +110,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 
     # First evaluate all import statements.
     node.getNode(1).<Node>getList(0).each do |clause|
-      if (clause.getName == "Import") then
+      if clause.getName == "Import"
         typeChecker.analyze(clause)
         return if (runtime.errorCount > 0)
       end
@@ -118,12 +118,12 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 
     # Next evaluate all table and event declarations.
     node.getNode(1).<Node>getList(0).each do |clause|
-      if (clause.getName.equals("Table")) then
+      if clause.getName.equals("Table")
         typeChecker.analyze(clause)
-        return if (runtime.errorCount > 0)
-      elsif (clause.getName.equals("Event")) then
+        return if runtime.errorCount > 0
+      elsif clause.getName.equals("Event")
         typeChecker.analyze(clause)
-        return if (runtime.errorCount > 0)
+        return if runtime.errorCount > 0
       end
     end
 
@@ -133,10 +133,10 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 
     # Evaluate all other clauses.
     node.getNode(1).<Node>getList(0) do |clause|
-      if (clause.getName == "Rule" or clause.getName == "Fact" or clause.getName == "Watch") then
+      if (clause.getName == "Rule" or clause.getName == "Fact" or clause.getName == "Watch")
         typeChecker.analyze(clause)
-        return if (runtime.errorCount > 0)
-        if (clause.getName == "Watch") then
+        return if runtime.errorCount > 0
+        if clause.getName == "Watch"
           watches = clause.getProperty(Constants.TYPE)
           watches.each { |w| w.set(@program.name) }
         else

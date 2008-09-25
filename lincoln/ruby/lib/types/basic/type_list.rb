@@ -38,7 +38,7 @@ class TypeList
     elsif size > o.size
       return 1
     else
-      (0..(size-1)).each do |i|
+      0.upto(size - 1) do |i|
         if self[i].hash < o[i].hash
           return -1
         elsif self[i].hash > o[i].hash

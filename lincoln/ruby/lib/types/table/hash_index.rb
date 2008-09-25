@@ -20,7 +20,7 @@ class HashIndex < Index
   end
   
   def clear
-    @map = Hash.new
+    @map.clear
   end
   
   def insert(t)
@@ -48,7 +48,7 @@ class HashIndex < Index
   end
   
   def lookup_vals(*values)
-    if (values.length != @key.size)
+    if values.length != @key.size
       throw "Value length does not match key size!"
     end
     
@@ -60,10 +60,8 @@ class HashIndex < Index
   
   def delete(t)
     k = @key.project(t).values.hash
-    if @map.has_key?(k) then
+    if @map.has_key?(k)
       @map[k].delete(t)
     end
   end
-  
-  
 end

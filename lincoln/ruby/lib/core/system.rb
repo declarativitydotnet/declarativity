@@ -42,13 +42,13 @@ class System
     @@periodic
   end
   
-	def System.program(name)
-		@@programs.has_key?(name) ? @@programs[name] : nil
-	end
+  def System.program(name)
+    @@programs.has_key?(name) ? @@programs[name] : nil
+  end
 	
-	def System.install_program(name, program)
-		@@programs[name] = program
-	end
+  def System.install_program(name, program)
+    @@programs[name] = program
+  end
 	
   def install(owner, file)
 	##print "\t\tINSTALL #{file}\n"
@@ -73,31 +73,30 @@ class System
   
       @driver.task(tmpClass.new)
     end
-  end
-  
+  end  
   
   def bootstrap
     return if defined? @@initialized
-		compiler = Compiler.new("system", @@RUNTIME);
-		compiler.program.plan
-		@@clock.insert(@@clock.time(0),nil)
+    compiler = Compiler.new("system", @@RUNTIME);
+    compiler.program.plan
+    @@clock.insert(@@clock.time(0),nil)
 			
-		@driver = Driver.new(System.program("runtime"), @@schedule, @@periodic, @@clock);
+    @driver = Driver.new(System.program("runtime"), @@schedule, @@periodic, @@clock);
 			
-		Compiler.files.each {|file| install("system", file)}
-		Thread.new { @driver }
-		@@initialized = TRUE
+    Compiler.files.each {|file| install("system", file)}
+    Thread.new { @driver }
+    @@initialized = TRUE
 	end
 	
-	def main(args)
-		bootstrap
-		##print "BOOTSTRAP done. should have table in scope\n"
-		tabn = Table.find_table(TableName.new("runtime","priority"))
-		#$catalog.tuples.each do |c|
-		#	puts c
-		#end
-		##print "FOUND (#{tabn})\n"
-		args.each { |a| install("user", a) }
-		@driver.run()
-	end
+  def main(args)
+    bootstrap
+    ##print "BOOTSTRAP done. should have table in scope\n"
+    tabn = Table.find_table(TableName.new("runtime","priority"))
+    #$catalog.tuples.each do |c|
+    #	puts c
+    #end
+    ##print "FOUND (#{tabn})\n"
+    args.each { |a| install("user", a) }
+    @driver.run()
+  end
 end

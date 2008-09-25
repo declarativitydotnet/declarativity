@@ -17,7 +17,7 @@ class Driver < Monitor
       end
     end
 
-    class EvalState 
+    class EvalState
       def initialize(time, program, name)
         @time    = time
         @program = program
@@ -121,23 +121,23 @@ class Driver < Monitor
         break if querySet.nil?
 
         delta = TupleSet.new(insertions.name)
-        querySet.each	do |query|
-          if (query.event != Table::Event::DELETE) then
+        querySet.each do |query|
+          if query.event != Table::Event::DELETE
             puts("\t\tRUN QUERY " + query.rule.to_s + " input " + insertions.tups.to_s)
             puts("\t\t\t Plan #{query.to_s}")
             result = query.evaluate(insertions) 
             puts("\t\tQUERY " + query.rule.to_s + " result " + result.tups.to_s)
             # require 'ruby-debug'; debugger
-            if (result.size == 0) then 
+            if result.size == 0
               next
-            elsif (result.name == insertions.name) then
-              if (query.isDelete) then
+            elsif result.name == insertions.name
+              if query.isDelete
                 deletions.addAll(result)
-              else 
+              else
                 delta.addAll(result)
               end
             else 
-              if (query.isDelete) then
+              if query.isDelete
                 continuation(continuations, time, program.name, Table::Event::DELETE, result)
               else 
                 continuation(continuations, time, program.name, Table::Event::INSERT, result)
@@ -148,28 +148,28 @@ class Driver < Monitor
         insertions = delta
       end while insertions.size > 0
 
-      if !(table.class <= AggregationTable) then
+      if !(table.class <= AggregationTable)
         while deletions.size > 0
-          if (table.table_type == Table::TableType::TABLE) then
-            watchRemove.evaluate(deletions) if !watchRemove.nil?
+          if table.table_type == Table::TableType::TABLE
+            watchRemove.evaluate(deletions) unless watchRemove.nil?
             deletions = table.delete(deletions)
-            watchDelete.evaluate(deletions) if !watchDelete.nil?
-          else 
+            watchDelete.evaluate(deletions) unless watchDelete.nil?
+          else
             raise "Can't delete tuples from non table type"
             exit
           end
           delta = TupleSet.new(deletions.name)
           queries = program.get_queries(delta.name)
-          if !queries.nil? then
+          if not queries.nil?
             queries.each do |query|
               output = Table.find_table(query.output.name)
               if !(output.class <= EventTable) and query.event != Table::Event::INSERT
                 result = query.evaluate(deletions)
-                if (result.size == 0) then
+                if result.size == 0
                   next
-                elsif (!result.name.equals(deletions.name)) 
+                elsif not result.name.equals(deletions.name)
                   Table t = Table.table(result.name)
-                  if (t.table_type == Table::TableType::TABLE) then
+                  if t.table_type == Table::TableType::TABLE
                     continuation(continuations, time, program.name, Table::Event::DELETE, result)
                   end
                 else 
@@ -191,12 +191,12 @@ class Driver < Monitor
     def continuation(continuations, time, program, event, result) 
       key = program.to_s + "." + result.name.to_s
 
-      if (!continuations.has_key?(key)) 
+      if not continuations.has_key?(key)
         tuple = Tuple.new(time, program, result.name, TupleSet.new(result.name), TupleSet.new(result.name))
         continuations[key] = tuple
       end
 
-      if (event == Table::Event::INSERT) 
+      if event == Table::Event::INSERT 
         insertions = continuations[key].value(Field::INSERTIONS)
         insertions.addAll(result)
       else 
@@ -243,13 +243,13 @@ class Driver < Monitor
         synchronize do
           min = Infinity
 
-          if (@schedule.cardinality > 0) 
+          if @schedule.cardinality > 0
             min = (min < @schedule.min ? min : @schedule.min)
-          elsif (@tasks.size > 0) 
+          elsif @tasks.size > 0
             min = @clock.current + 1
           end
 
-          if (min < Infinity) 
+          if min < Infinity
             puts("============================ EVALUATE CLOCK[" + min.to_s + "] =============================")
             evaluate(@clock.time(min), @runtime.name)
 
@@ -270,7 +270,7 @@ class Driver < Monitor
     evaluation = TupleSet.new(System.evaluator.name)
     evaluation << Tuple.new(@clock.current, program, tuples.name, tuples, TupleSet.new(tuples.name))
     # Evaluate until nothing left in this clock.
-    while (evaluation.size > 0) 
+    while evaluation.size > 0
       evaluation = System.evaluator.insert(evaluation, nil)
     end
   end

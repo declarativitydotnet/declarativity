@@ -23,14 +23,14 @@ class Key
   # end
   
   def to_s
-    if @attributes.length == 0 then
+    if @attributes.length == 0
       return "None"
     end
     value = String.new
     @attributes.each do |a|
       value << a.to_s + ", "
     end
-    if value != "" then
+    if value != ""
       value[value.length-2] = ""
     end
     return value.rstrip
@@ -67,14 +67,14 @@ class Key
   end
   
   def <=>(o)
-    if attributes.size < o.attributes.size then
+    if attributes.size < o.attributes.size
       return -1
-    elsif @attributes.size > o.attributes.size then
+    elsif @attributes.size > o.attributes.size
       return 1
     else
       attributes.each_with_index do |a,i|
         value = (a <=> o.attributes[i])
-        if value != 0 then
+        if value != 0
           return value
         end
       end

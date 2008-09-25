@@ -10,7 +10,7 @@ class Periodic < ObjectTable
 
 		def insert(tuples, conflicts)
 			@schedule =  TupleSet.new(@schedule.name)
-			deltas   = TupleSet.new(name);
+			deltas   = TupleSet.new(name)
 			tuples.each do |tuple|
 				program = tuple.value(Periodic.Field::PROGRAM)
 				time    = tuple.value(Periodic.Field::TIME)
@@ -21,7 +21,7 @@ class Periodic < ObjectTable
 			end
 			
 			@schedule.insert(schedule, conflicts) unless schedule.size <= 0
-			return deltas;
+			return deltas
 		end
 	end
 	
