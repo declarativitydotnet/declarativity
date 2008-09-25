@@ -2,20 +2,20 @@ require 'lib/types/operator/operator'
 require 'lib/types/function/tuple_function'
 class EventFilter < Operator
 	class Filter < TupleFunction
-		def initialize (position,  function)
+		def initialize(position, function)
 			@position = position
 			@function = function
 		end
 
 		def evaluate(tuple)
 			fvalue = function.evaluate(tuple)
-			tvalue = tuple.value(position)
+			tvalue = tuple.value(@position)
 			
 			return (fvalue == tvalue || ((fvalue <=> tvalue) == 0))
 		end
 
 		def returnType
-			return function.returnType
+			return @function.returnType
 		end
 	end
 	
@@ -27,7 +27,7 @@ class EventFilter < Operator
 		predicate.each do |arg|
 			#puts predicate.inspect
 			#print "POSITION: "+arg.position.to_s+"\n"
-			require 'ruby-debug'; 
+			require 'ruby-debug'
 #			debugger if arg.nil? or arg.position.nil?
 			raise unless arg.position >= 0
 			@filters << Filter.new(arg.position, arg.function) unless arg.class <= Variable
@@ -36,22 +36,22 @@ class EventFilter < Operator
 	
 	def new_pf(predicate, filter)
 		super(predicate.program, predicate.rule)
-		@predicate = predicate;
+		@predicate = predicate
 		@filters = [filter]
   end
   
   def evaluate(tuples)
-		return tuples if (filters.size() == 0)
+		return tuples if filters.size() == 0
 		result = TupleSet.new(tuples.name)
 		tuples.each do |tuple|
 			valid = true
 			@filters.each do |filter|
 				valid = filter.evaluate(tuple)
-				break if (!valid)
+				break if not valid
 			end
-			result << tuple if (valid) 
-		end	
-		return result;
+			result << tuple if valid
+		end
+		return result
   end
 
 	def requires
