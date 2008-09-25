@@ -43,7 +43,7 @@ class Tuple
 
   def to_s
     out = "<"
-    if (@values.size > 0) then
+    if @values.size > 0
       @values.each_with_index do |value, i|
         out += ", " unless i == 0 
         #out += (value.nil? ? "nil".to_s : value.to_s) 
@@ -63,7 +63,7 @@ class Tuple
   end
 
   def schema=(s)
-    if s.size != size then
+    if s.size != size
 #      require 'ruby-debug'; debugger
       err = "Schema assignment does not match tuple arity!  schema " + s.to_s+" (vs. tuple values ["
       values.each {|v| err <<  v.to_s + ", " }
@@ -75,20 +75,15 @@ class Tuple
   end
   
   def <=>(o)
-    if (@values.size == 0)
-      return (tid <=> o.tid)
-    else
-      if size != o.size then
-        return -1
-      end
-      (0..(@values.size-1)).each do |i|
-        if ((@values[i].nil? || o.values[i].nil?)) then 
-          if @values[i] != o.values[i] then
-            return -1
-          end
-        elsif (@values[i] <=> o.values[i]) != 0 then
-          return @values[i] <=> o.values[i]
+    return -1 if size != o.size
+
+    0.upto(@values.size - 1) do |i|
+      if (@values[i].nil? || o.values[i].nil?)
+        if @values[i] != o.values[i]
+          return -1
         end
+      elsif (@values[i] <=> o.values[i]) != 0
+        return @values[i] <=> o.values[i]
       end
     end
     return 0
@@ -122,7 +117,7 @@ class Tuple
       @values[i] = value
     elsif i.class == Variable
       pos = @schema.position(i.name)
-      if pos.nil? or pos < 0 then
+      if pos.nil? or pos < 0
         append(i, value)
       else
         set_value(pos, value)

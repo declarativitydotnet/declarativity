@@ -44,9 +44,11 @@ class TestTuple < Test::Unit::TestCase
   def test_compare_and_join
     assert_equal(@t <=> @t, 0)
     # 0-length tuples
-    s = t = Tuple.new
-    assert_equal(s <=> t, 0)
-    assert(s==t)
+    s = Tuple.new
+    t = Tuple.new
+    assert_equal(s, t)
+    assert_equal(s.join(t), s)
+    assert_equal(t.join(s), s)
     assert_equal(s.join(t).size, 0)
 
     # different sized tuples
