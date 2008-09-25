@@ -10,6 +10,6 @@ class Expression
   end
     
   def function
-    throw "Abstract method Expression.to_s not subclassed"
+    throw "Abstract method Expression.function not subclassed"
   end
 end
