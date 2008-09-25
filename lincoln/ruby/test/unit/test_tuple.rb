@@ -5,8 +5,7 @@ require "rubygems"
 class TestTuple < Test::Unit::TestCase
   def setup
     @t = Tuple.new(1, "Joe")
-    a = [Variable.new("eid", Integer)]
-    a[0].position=0
+    a = [Variable.new("eid", Integer, 0)]
     
     # test schema not matching tuple arity
     assert_raise(RuntimeError) {
@@ -15,15 +14,13 @@ class TestTuple < Test::Unit::TestCase
     }
     
     # now get schema array to match tuple arity
-    a << Variable.new("name", String)
-    a[1].position=1
+    a << Variable.new("name", String, 1)
     assert_nothing_raised(RuntimeError) {
       s2 = Schema.new("emp", a)
       @t.schema = s2
     }
     
-    v = Variable.new("ssn", Integer)
-    v.position=2
+    v = Variable.new("ssn", Integer, 2)
     @t.append(v, 123456789)
     assert_equal(@t.to_s, "<1, Joe, 123456789>")
   end
@@ -53,17 +50,14 @@ class TestTuple < Test::Unit::TestCase
     assert_equal(s.join(t).size, 0)
 
     # different sized tuples
-    c1 = Variable.new("eid", Integer)
-    c1.position = 0
+    c1 = Variable.new("eid", Integer, 0)
     t.append(c1, 1)
     assert_equal(@t <=> t, -1)
     
     # same sizes, differing values
-    c2 = Variable.new("name", String)
-    c2.position = 1
+    c2 = Variable.new("name", String, 1)
     t.append(c2, "Joe")
-    c3 = Variable.new("ssn", Integer)
-    c3.position = 2
+    c3 = Variable.new("ssn", Integer, 2)
     t.append(c3, 123456790)
     t.schema = Schema.new("Gosh", [c1, c2, c3])
     assert_equal(@t <=> t, -1)
@@ -94,8 +88,7 @@ class TestTuple < Test::Unit::TestCase
   def test_join_symmetry
     t1 = Tuple.new
     t2 = Tuple.new
-    c1 = Variable.new("x", Integer)
-    c1.position = 1
+    c1 = Variable.new("x", Integer, 1)
     t1.append(c1, nil)
 
     assert_equal(t2.join(t1), t1)
@@ -104,8 +97,7 @@ class TestTuple < Test::Unit::TestCase
     assert_not_equal(t1.join(t2), t2)
 
     t2.append(c1.clone, nil)
-    c2 = Variable.new("y", String)
-    c2.position = 2
+    c2 = Variable.new("y", String, 2)
     t1.append(c2, "xyz")
 
     assert_equal(t1.join(t2), t1)

@@ -28,14 +28,10 @@ class TestPlan < Test::Unit::TestCase
 		t2 = Tuple.new("N2","N3",5,"second")
 
 		# ... from test_program
-		v1 = Variable.new("From", String)
-		v1.position = 0
-		v2 = Variable.new("To", String)
-		v2.position = 1
-		v3 = Variable.new("Cost", Float)
-		v3.position = 2
-		v4 = Variable.new("Annotation", String)
-		v4.position = 3   
+		v1 = Variable.new("From", String, 0)
+		v2 = Variable.new("To", String, 1)
+		v3 = Variable.new("Cost", Float, 2)
+		v4 = Variable.new("Annotation", String, 3)
 
 		schema1 = Schema.new("schema1", [v1,v2,v3,v4])
 		t1.schema = schema1

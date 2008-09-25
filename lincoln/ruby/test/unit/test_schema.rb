@@ -3,13 +3,10 @@ require "test/unit"
 
 class TestSchema < Test::Unit::TestCase
   def test_simple
-    a = [Variable.new("i", Integer), Variable.new("s", String), ]
-    a[0].position = 1
-    a[1].position = 2
+    a = [Variable.new("i", Integer, 1), Variable.new("s", String, 2)]
     s = Schema.new("s1", a)
     t = Schema.new(s.name,s.variables)
-    v = Variable.new("f", Float)
-    v.position = 3
+    v = Variable.new("f", Float, 3)
     s << v
     
     assert(s.contains(v))

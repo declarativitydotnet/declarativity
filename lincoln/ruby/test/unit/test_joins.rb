@@ -19,19 +19,15 @@ class TestJoin < Test::Unit::TestCase
 
   def default_test
     t1 = Tuple.new(1, "joe")
-    v = Variable.new("id", Integer)
-    v.position = 0
-    v2 = Variable.new("name", String)
-    v2.position = 1
-    schema1 = Schema.new("schema1", [v,v2])
+    v = Variable.new("id", Integer, 0)
+    v2 = Variable.new("name", String, 1)
+    schema1 = Schema.new("schema1", [v, v2])
     t1.schema = schema1
 
     t2 = Tuple.new(1, "hellerstein")
-    v3 = Variable.new("id", Integer)
-    v3.position = 0
-    v4 = Variable.new("lastname", String)
-    v4.position = 1
-    schema2 = Schema.new("schema2", [v3,v4])
+    v3 = Variable.new("id", Integer, 0)
+    v4 = Variable.new("lastname", String, 1)
+    schema2 = Schema.new("schema2", [v3, v4])
     t2.schema = schema2
 
     table1 = BasicTable.new('Firstname', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
@@ -107,22 +103,18 @@ class TestJoin < Test::Unit::TestCase
 
     # add another matching tuple to ts2, should join to produce 2 tuples
     tmatch = Tuple.new(1, "huckenfluster")
-    v3 = Variable.new("id", Integer)
-    v3.position = 0
-    v4 = Variable.new("lastname", String)
-    v4.position = 1
-    schema2 = Schema.new("schema2", [v3,v4])
+    v3 = Variable.new("id", Integer, 0)
+    v4 = Variable.new("lastname", String, 1)
+    schema2 = Schema.new("schema2", [v3, v4])
     tmatch.schema = schema2
     ts2 << tmatch
     assert_equal(join.evaluate(ts2).tups.length, 2)
 
     # add another matching tuple to basic_table, should join to produce 4
     ttablematch = Tuple.new(1, "sally")
-    v = Variable.new("id", Integer)
-    v.position = 0
-    v2 = Variable.new("name", String)
-    v2.position = 1
-    schema1 = Schema.new("schema1", [v,v2])
+    v = Variable.new("id", Integer, 0)
+    v2 = Variable.new("name", String, 1)
+    schema1 = Schema.new("schema1", [v, v2])
     ttablematch.schema = schema1
     
     
@@ -152,5 +144,4 @@ class TestJoin < Test::Unit::TestCase
     basic_table.insert(ts5, nil)
     assert_equal(join.evaluate(ts2).tups.length, 5)
   end
-  
 end

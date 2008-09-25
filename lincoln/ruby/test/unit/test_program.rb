@@ -33,14 +33,10 @@ class TestProgram < Test::Unit::TestCase
     ####
     # set up a table link(from, to, cost, annotation)
     ####
-    v1 = Variable.new("From", Integer)
-    v1.position = 0
-    v2 = Variable.new("To", Integer)
-    v2.position = 1
-    v3 = Variable.new("Cost", Float)
-    v3.position = 2
-    v4 = Variable.new("Annotation", String)
-    v4.position = 3   
+    v1 = Variable.new("From", Integer, 0)
+    v2 = Variable.new("To", Integer, 1)
+    v3 = Variable.new("Cost", Float, 2)
+    v4 = Variable.new("Annotation", String, 3)
     t1 = Tuple.new(1,2,0.5, "first")
     t2 = Tuple.new(2,3,1.0, "second")
     schema1 = Schema.new("schema1", [v1,v2,v3,v4])
@@ -99,14 +95,10 @@ class TestProgram < Test::Unit::TestCase
     
     tn2 = TableName.new(nil, "path")
     table2 = BasicTable.new(tn2, Table::INFINITY, Table::INFINITY, Key.new(1,2), [Integer,Integer,Float])
-    v5 = Variable.new("To", Integer)
-    v5.position = 0
-    v6 = Variable.new("To2", Integer)
-    v6.position = 1
-    v7 = Variable.new("Cost2", Float)
-    v7.position = 2
-    v8 = Variable.new("Note2", String)
-    v8.position = 3
+    v5 = Variable.new("To", Integer, 0)
+    v6 = Variable.new("To2", Integer, 1)
+    v7 = Variable.new("Cost2", Float, 2)
+    v8 = Variable.new("Note2", String, 3)
     link2 = Predicate.new(false, TableName.new(nil,"link"), Table::Event::NONE, [v5, v6, v7, v8])
     link2.set('testprog', 'l2', 1)
 

@@ -1,21 +1,20 @@
 require "lib/lang/plan/expression"
+
 class Variable < Expression
-  def initialize(name, type)
+  def initialize(name, type, position=-1)
     @name = name
     @expr_type = type
-    @position = -1
-  end 
+    @position = position
+  end
 
   def ==(o)
-    if o.class == Variable then
-      return (o.name == name)
+    if o.class == Variable
+      return o.name == @name
     end
   end
 
   def clone
-    v = Variable.new(name,expr_type)
-    v.position = position
-    return v
+    Variable.new(@name, @expr_type, @position)
   end
   
   attr_reader :name
@@ -26,13 +25,11 @@ class Variable < Expression
   end
   
   def to_s
-    position >= 0 ? name + ":" + position.to_s : name
+    @position >= 0 ? @name + ":" + @position.to_s : @name
   end
 
   def variables
-    v = Array.new
-    v << self
-    return v
+    [self]
   end
 
   def function
