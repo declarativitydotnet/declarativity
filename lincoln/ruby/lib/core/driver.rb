@@ -81,8 +81,8 @@ class Driver < Monitor
         insertions  = tuple.value(Field::INSERTIONS)
         deletions   = tuple.value(Field::DELETIONS)
 
-        state.insertions += insertions unless insertions.nil?
-        state.deletions += deletions unless deletions.nil?
+        state.insertions.addAll(insertions)
+        state.deletions.addAll(deletions)
       end
 
       delta = TupleSet.new(name)
@@ -127,14 +127,14 @@ class Driver < Monitor
             puts("\t\tRUN QUERY " + query.rule.to_s + " input " + insertions.tups.to_s)
 #            puts("\t\t\t Plan #{query.to_s}")
             puts("\t\tQUERY " + query.rule.to_s + " result " + result.tups.to_s)
-            require 'ruby-debug'; debugger
+            # require 'ruby-debug'; debugger
             if (result.size == 0) then 
               next
             elsif (result.name == insertions.name) then
               if (query.isDelete) then
-                deletions += result
+                deletions.addAll(result)
               else 
-                delta += result
+                delta.addAll(result)
               end
             else 
               if (query.isDelete) then
@@ -173,7 +173,7 @@ class Driver < Monitor
                     continuation(continuations, time, program.name, Table::Event::DELETE, result)
                   end
                 else 
-                  delta += result
+                  delta.addAll(result)
                 end
               end
             end
@@ -198,10 +198,10 @@ class Driver < Monitor
 
       if (event == Table::Event::INSERT) 
         insertions = continuations[key].value(Field::INSERTIONS)
-        insertions += result
+        insertions.addAll(result)
       else 
         deletions = continuations[key].value(Field::DELETIONS)
-        deletions += result
+        deletions.addAll(result)
       end
     end
   end

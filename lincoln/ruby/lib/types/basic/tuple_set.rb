@@ -64,13 +64,18 @@ class UnsortedTupleSet
       #      when 'TupleSet': o.each {|t| @tups << t }
     when 'TupleSet', 'Array': 
       require 'ruby-debug'; debugger
-      raise "using << rather than += to add a collection into a TupleSet"
+      raise "using << rather than addAll to add a collection into a TupleSet"
     when 'Tuple':
       @tups[o.hash] = o
     else 
       puts o.inspect	
       raise "inserting a " + o.class.name + " object into TupleSet"
     end
+  end
+  
+  def addAll(ts)
+    ts.each {|t| self << t} unless ts.nil?
+    return self
   end
   
   def ==(o)
@@ -156,7 +161,7 @@ class TupleSet < UnsortedTupleSet
   def <<(o)
     case o.class.name
     when 'TupleSet','Array': o.each do |t| 
-      raise "using << rather than += to add a collection into a TupleSet"
+      raise "using << rather than addAll to add a collection into a TupleSet"
     end
     when 'Tuple':
       @tups[o.hash] = o
