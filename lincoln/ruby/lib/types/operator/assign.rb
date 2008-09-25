@@ -15,7 +15,7 @@ class Assign < Operator
   def evaluate(tuples)
 		variable = @assignment.variable
 		function = @assignment.value.function
-		require 'ruby-debug'; debugger
+#		require 'ruby-debug'; debugger
 		deltas = TupleSet.new(tuples.name)
 		tuples.each do |tuple|
 			delta = tuple.clone
