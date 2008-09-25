@@ -123,9 +123,9 @@ class Driver < Monitor
         delta = TupleSet.new(insertions.name)
         querySet.each	do |query|
           if (query.event != Table::Event::DELETE) then
-            result = query.evaluate(insertions) 
             puts("\t\tRUN QUERY " + query.rule.to_s + " input " + insertions.tups.to_s)
-#            puts("\t\t\t Plan #{query.to_s}")
+            puts("\t\t\t Plan #{query.to_s}")
+            result = query.evaluate(insertions) 
             puts("\t\tQUERY " + query.rule.to_s + " result " + result.tups.to_s)
             # require 'ruby-debug'; debugger
             if (result.size == 0) then 
