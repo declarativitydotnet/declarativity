@@ -60,7 +60,7 @@ class Schema
   def types
     out = Array.new
     @variable_set.sort{|a,b| a[1].position<=>b[1].position}.each do |a|
-      out << a[1].expr_type  if a[1].position >= 0 
+      out << a[1].expr_type if a[1].position >= 0 
     end
     out
   end
@@ -73,7 +73,7 @@ class Schema
     out
   end
 
-  def variable (name)
+  def variable(name)
     @variable_set[name]
   end
 

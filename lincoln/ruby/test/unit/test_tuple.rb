@@ -14,7 +14,7 @@ class TestTuple < Test::Unit::TestCase
       @t.schema = s
     }
     
-    #now get schema array to match tuple arity
+    # now get schema array to match tuple arity
     a << Variable.new("name", String)
     a[1].position=1
     assert_nothing_raised(RuntimeError) {
@@ -42,7 +42,6 @@ class TestTuple < Test::Unit::TestCase
     @t.count = 1
     @t.timestamp = Time.now
     assert_not_equal(@t.timestamp, Time.now)
-
   end
   
   def test_compare_and_join
@@ -51,7 +50,8 @@ class TestTuple < Test::Unit::TestCase
     s = t = Tuple.new
     assert_equal(s <=> t, 0)
     assert(s==t)
-    
+    assert_equal(s.join(t).size, 0)
+
     # different sized tuples
     c1 = Variable.new("eid", Integer)
     c1.position = 0
@@ -79,16 +79,42 @@ class TestTuple < Test::Unit::TestCase
     t.schema.variable("hobby").position = 3
     
     # test join
-    assert_equal(@t.join(t), nil) # join fails due to nil in t.ssn
+    assert_nil(@t.join(t)) # join fails due to nil in t.ssn
     t.set_value(2, 123456790)
-    assert_equal(@t.join(t), nil) # join fails due to mismatch on values in ssn
+    assert_nil(@t.join(t)) # join fails due to mismatch on values in ssn
     t.set_value(2, 123456789)
-    assert_equal(@t.join(t).size, 4) # join succeeds 
-    assert_equal(t.join(@t).size, 4) # join succeeds 
+    assert_equal(@t.join(t).size, 4) # join succeeds
+    assert_equal(t.join(@t).size, 4) # join succeeds
     t.set_value(1, nil)
     @t.set_value(1, nil)
-    assert_equal(@t.join(t).size, 4) # join succeeds 
+    assert_equal(@t.join(t).size, 4) # join succeeds
     @t.set_value("name", "Joe")
   end
-  
+
+  def test_join_symmetry
+    t1 = Tuple.new
+    t2 = Tuple.new
+    c1 = Variable.new("x", Integer)
+    c1.position = 1
+    t1.append(c1, nil)
+
+    assert_equal(t2.join(t1), t1)
+    assert_equal(t1.join(t2), t1)
+    assert_not_equal(t2.join(t1), t2)
+    assert_not_equal(t1.join(t2), t2)
+
+    t2.append(c1.clone, nil)
+    c2 = Variable.new("y", String)
+    c2.position = 2
+    t1.append(c2, "xyz")
+
+    assert_equal(t1.join(t2), t1)
+    assert_equal(t2.join(t1), t1)
+    assert_not_equal(t1.join(t2), t2)
+    assert_not_equal(t2.join(t1), t2)
+
+    t2.append(c2, nil)
+    assert_nil(t1.join(t2))
+    assert_nil(t2.join(t1))
   end
+end

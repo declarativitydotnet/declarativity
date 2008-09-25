@@ -26,7 +26,7 @@ class Tuple
   end
 
   def init
-    @schema = Schema.new(nil,nil)
+    @schema = Schema.new(nil, nil)
     @count = 1
     @tid = @@idGen
     @@idGen += 1
@@ -34,7 +34,7 @@ class Tuple
   
   attr_accessor :tid, :count, :schema, :values
 
-  def append (var, val)
+  def append(var, val)
     var = var.clone
     var.position = schema.size
     @schema << var
@@ -95,14 +95,14 @@ class Tuple
   end
 
   def ==(o)
-    (o.class == Tuple) && ((o <=> self) == 0);
+    (o.class == Tuple) && ((o <=> self) == 0)
   end
   
   def hash
     return to_s.hash
   end
   
-  def size() 
+  def size
     return @values.length
   end
   
@@ -142,44 +142,34 @@ class Tuple
     @timestamp
   end
   
-  def join (inner)
+  def join(inner)
     jointup = Tuple.new
     
     # take care of all join variables first
     @schema.variables.each do |v|
-      # if (variable instanceof DontCare) {
-      #   continue;
-      # }
-		  if (inner.schema.contains(v)) then
-		    outerval = value(v.name)
-		    innerval = inner.value(v.name)
-		    if (outerval.nil? or innerval.nil?) then
-		      if (outerval == innerval) then
-		        jointup.append(v, nil)
-	        else
-	          return nil # tuples do not join
-	        end
-        elsif not (value(v.name)==inner.value(v.name))
-          return nil # tuples do not join
-        else
-          jointup.append(v, value(v.name))
-        end
-	    else
-	      # inner does not contain variable, so just add it
-	      jointup.append(v, value(v.name))
+      outerval = value(v.name)
+
+      # If the inner does not contain this variable, just add it
+      if not inner.schema.contains(v)
+        jointup.append(v, outerval)
+        next
+      end
+
+      if outerval == inner.value(v.name)
+        jointup.append(v, outerval)
+      else
+        return nil      # join does not match
       end
     end
 
-    # Append any variables from the inner that do 
-		# not match join variable.
-		inner.schema.variables.each do |v|
-      # if (variable instanceof DontCare) {
-      #   continue;
-      # }
-			if (!jointup.schema.contains(v))
-			  jointup.append(v, inner.value(v.name))
-		  end
-	  end
-	  return jointup
+    # Append any variables from the inner that do not match join
+    # variable.
+    inner.schema.variables.each do |v|
+      if not jointup.schema.contains(v)
+        jointup.append(v, inner.value(v.name))
+      end
+    end
+
+    return jointup
   end
 end
