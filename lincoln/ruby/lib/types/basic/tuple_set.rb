@@ -126,21 +126,21 @@ class TupleSet < UnsortedTupleSet
     @back_ptrs = Hash.new
     super(name,nil)
     unless tuples[0] == nil
-	tuples.each { |t| self << t } 
+      tuples.each { |t| self << t }
     end
   end
 
   def delete(tup)
 	res = super(tup)
-	if res == tup then
+	if res == tup
 	  pos = @back_ptrs[tup.hash]
-		@positions.delete_at(pos)
-		(pos..@positions.length-1).each do |i|
-		  unless @back_ptrs[@positions[i]] == i+1
-		    require 'ruby-debug'; debugger
-		    raise "tupleset bug" 
+      @positions.delete_at(pos)
+      pos.upto(@positions.length - 1) do |i|
+        unless @back_ptrs[@positions[i]] == i+1
+          require 'ruby-debug'; debugger
+          raise "tupleset bug" 
 	    end
-		  @back_ptrs[@positions[i]] = i
+        @back_ptrs[@positions[i]] = i
 	  end
 	end
 	return res
@@ -151,7 +151,6 @@ class TupleSet < UnsortedTupleSet
     @back_ptrs = Hash.new
     @positions = Array.new
   end
-
 
   # def TupleSet=(ts)
   #   return TupleSet.new(ts.name, ts.tups)
