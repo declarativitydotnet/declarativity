@@ -16,15 +16,15 @@ require "lib/types/operator/scan_join"
 
 
 def predoftable(table)
-        schema = table.schema_of
-        p = Predicate.new(false,table.name,table,schema.variables)
-	p.set("global","r1",1)
-	return p
+    schema = table.schema_of
+    p = Predicate.new(false,table.name,table,schema.variables)
+    p.set("global","r1",1)
+    return p
 end
 
 def lcl_pretty_print(tuple)
-	(0..tuple.size-1).each do |i|
-		print "\t["+i.to_s+"] "+tuple.schema.variables[i].name+" = "+tuple.values[i].to_s+"\n"
+	0.upto(tuple.size - 1) do |i|
+		print "\t[#{i}] #{tuple.schema.variables[i].name} = #{tuple.values[i]}\n"
 	end
 end
 
@@ -116,18 +116,17 @@ class TestParse < Test::Unit::TestCase
 		# there are 2 expressions in program foo, but 6 primary expressions
 		assert_equal(6,@pexpr.cardinality)
 		assert_equal(6,@expr.cardinality)
-		foundconst = 0
+		foundconst = false
 		@pexpr.tuples.each do |t|
 			# don't forget to fix the quotes
-			if t.values[3].eql?("1") then
+			if t.values[3].eql?("1")
 				# we have an integer constant here. 
 				assert_equal(t.values[4],"const")
-				foundconst = 1
+				foundconst = true
 			end
 		end
 		# fallthrough
-		assert_equal(foundconst,1)
-	
+		assert_equal(foundconst, true)
 	end
 
 	def test_arbitrary_expr
@@ -135,7 +134,6 @@ class TestParse < Test::Unit::TestCase
 		assert_equal(@expr.cardinality,12)
 		# however, we are dealing with 10 primaryexpressions
 		assert_equal(@pexpr.cardinality,10)
-
 	end
 
 	def test_preds
@@ -144,10 +142,10 @@ class TestParse < Test::Unit::TestCase
 		
 		@preds.tuples.each do |t|
 			name = t.values[3]
-			if (name.eql?("bar")) then
+			if name.eql?("bar")
 				##assert_equal(t.values,[12, 11, 1, "bar", nil])
 				assert_equal(t.values,[10, 9, 1, "bar", nil])
-			elsif (name.eql?("foo")) then
+			elsif name.eql?("foo")
 				assert_equal(t.values,[4, 3, 0, "foo", nil])
 			else
 				raise("buh?")
@@ -195,8 +193,7 @@ class TestParse < Test::Unit::TestCase
 			tups << t
 		end	
 		assert_equal(tups.size,1)
-		assert_equal(tups[0].values[2],"path")
-		
+		assert_equal(tups[0].values[2],"path")		
 	end
 
 	def prep(utterance)
@@ -206,5 +203,4 @@ class TestParse < Test::Unit::TestCase
 		compiler.parse(utterance)
 		compiler.analyze
 	end
-	
 end
