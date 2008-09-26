@@ -51,6 +51,7 @@ class ArbitraryExpression < Expression
 
       subexpr = ''
       unless @method.nil? 
+        require 'ruby-debug'; debugger
         value = t.value(@variables[0].name)
         # if value.class == Program then
         if @variables.size > 1 then

@@ -166,6 +166,7 @@ class OverlogPlanner
 			return ret
 		end
 		def get_assigns(ts)
+		  # require 'ruby-debug'; debugger
 			pHash,aHash = accumulate_vars(ts,"assign_txt","lhs","assign_pos")
 			ret = TupleSet.new("assigns",nil)
 			pHash.each_key do |k|
