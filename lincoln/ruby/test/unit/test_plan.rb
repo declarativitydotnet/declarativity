@@ -312,17 +312,14 @@ class TestPlan < Test::Unit::TestCase
     sys=System.new; sys.init
 		utterance = "program path;
 		      define(link,keys(0,1),{String,String,Integer,String});
-	        echo(B) :- link(F,T,C,A), B := 2;"
+	        echo(X) :- link(F,T,C,A), B := Array.new(), X:= B.push(2);"
 	  prog = prep(utterance)
     tn, ts = gen_link_tuples("path")
 
-    require 'ruby-debug'; debugger
     assert(!prog.get_queries(tn).nil?)
 		result = prog.get_queries(tn)[0].evaluate(ts)
 		assert_equal(result.tups.length, 2)
-		result.tups.each do |t|
-			assert( (t.values == ["N1","N2",10,"first"]) || (t.values == ["N2","N3",5,"second"])) 
-		end    
+		assert_equal(result.tups[0].values, [[2]])
     
   end
 end

@@ -52,7 +52,13 @@ class ArbitraryExpression < Expression
       subexpr = ''
       unless @method.nil? 
         require 'ruby-debug'; debugger
-        value = t.value(@variables[0].name)
+        if t.schema.contains(@variables[0])
+          value = t.value(@variables[0].name)
+        else
+          # this is not an attribute of the tuple.  Hopefully this is a Ruby class name
+          # Put a try/catch thingy around me.
+          value = eval(@variables[0].name)
+        end
         # if value.class == Program then
         if @variables.size > 1 then
           return value.send(@method,*@variables[1..@variables.size-1])		
