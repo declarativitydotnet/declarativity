@@ -175,7 +175,10 @@ class OverlogPlanner
 				eval_expr = ass.value("assign_txt")
 				lhs = Variable.new(lhs_txt,String)
 				lhs.position = 0
-				expr = ArbitraryExpression.new(eval_expr,aHash[k])
+        # this is an assignment.  our first variable is the lhs; we don't want to
+        # associate this with the expression on the rhs.
+        exprArgs = aHash[k][1..aHash[k].length]
+				expr = ArbitraryExpression.new(eval_expr,exprArgs)
 
 				thisassign = Assignment.new(lhs,expr)
 				thisassign.set(ass.value("program_name"),ass.value("rulename"),ass.value("assign_pos"))

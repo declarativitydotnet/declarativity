@@ -4,6 +4,7 @@ class ArbitraryExpression < Expression
   def initialize(expr,variables)
     @expr = expr
     @variables = Array.new
+    # this whole bit is horribly hacktastic
     sides = expr.split(".")
     case sides.size 
     when 0
@@ -14,10 +15,9 @@ class ArbitraryExpression < Expression
         #raise("object.method can only be bound over one variable (object)")
       end
       @obj = sides[0]
-      @method = sides[1]
+      wholemeth = sides[1].split("(")
+      @method = wholemeth[0]
     else	
-      print "size #{sides.size}\n"
-      print "expr #{expr}\n"
       raise("only one object.method per expression allowed")
     end
 
@@ -51,7 +51,7 @@ class ArbitraryExpression < Expression
 
       subexpr = ''
       unless @method.nil? 
-        require 'ruby-debug'; debugger
+        ##require 'ruby-debug'; debugger
         if t.schema.contains(@variables[0])
           value = t.value(@variables[0].name)
         else
@@ -63,7 +63,10 @@ class ArbitraryExpression < Expression
         if @variables.size > 1 then
           return value.send(@method,*@variables[1..@variables.size-1])		
         else
+          # FIX ME
+          ####foo = @method.gsub(/[()]/,"")
           return value.send(@method)
+         #### return value.send(foo)
         end
         # end
       end

@@ -314,6 +314,8 @@ class TestPlan < Test::Unit::TestCase
 		      define(link,keys(0,1),{String,String,Integer,String});
 	        echo(X) :- link(F,T,C,A), B := Array.new(), X:= B.push(2);"
 	  prog = prep(utterance)
+
+    ##require 'ruby-debug'; debugger
     tn, ts = gen_link_tuples("path")
 
     assert(!prog.get_queries(tn).nil?)

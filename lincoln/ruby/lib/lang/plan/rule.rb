@@ -70,7 +70,7 @@ class Rule < Clause
         table = Table.find_table(term.name)
         if table.nil?
           print $catalog.to_s
-          require 'ruby-debug'; debugger
+          ###require 'ruby-debug'; debugger
           raise "Table " + term.name.to_s + " not found in catalog" 
         end
 				if (table.table_type == Table::TableType::EVENT || term.event != Table::Event::NONE) 
