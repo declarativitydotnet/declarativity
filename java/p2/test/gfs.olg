@@ -1,0 +1,67 @@
+program gfs;
+
+import java.util.ArrayList;
+
+// fileid, filename,path, chunk
+define(file,keys(0),{Integer,String,Integer,Integer});
+// pathid, dirname, parent
+define(path,keys(0),{Integer,String,Integer});
+define(lookupPath,keys(0),{Integer,String,Integer});
+
+define(request,{String,String,Integer});
+define(loggedRequest,{Integer,String,String,Integer});
+define(chopRequest,keys(0,1),{Integer,Integer,String,String});
+define(work,{Integer,String});
+define(ids,keys(0),{Integer});
+define(pos,keys(0,1),{Integer,Integer});
+define(localWork,keys(0,1,2),{Integer,Integer,Integer});
+//define(localWork,{Integer,Integer,Integer});
+
+watch(chopRequest,id);
+//watch(request,id);
+watch(work,id);
+//watch(ids,id);
+watch(loggedRequest,id);
+watch(pos,id);
+
+
+ids(0);
+pos(-1,-1);
+
+path(0,"",-1);
+path(1,"home",0);
+path(2,"peter",1);
+
+file(0,"foo.txt",2,64);
+
+
+request("/home/peter/foo.txt","tcp:localhost:10001",0) :- periodic(Id,2L,1L);
+loggedRequest(Id,File,Host,ChunkNo) :- request(File,Host,ChunkNo),
+				 ids(Id);
+
+ids(Id+1) :- loggedRequest(Id,_,_,_);
+pos(Id,0) :- loggedRequest(Id,_,_,_);
+pos(Id,Pos+1) :- chopRequest(Id,Pos,_,_);
+
+work(Id,Work) :- loggedRequest(Id,Work,_,_);
+//localWork(Id,CurrPath,Parent) :- loggedRequest(Id,Work,_,_),
+//						   CurrPath := -1,
+//						   Parent := -1;
+
+ 
+work(Id,Work) :- chopRequest(Id,Pos,Car,Work),
+        periodic(Id2,5L),
+				Pos := Work.indexOf("/"),
+				Pos > -1;
+
+chopRequest(Id,Pos,Car,Cdr) :- work(Id,Whole),
+          pos(Id,Pos),
+					Str := new String(Whole),
+					Car := Str.split("/")[0],
+					Offset := new Integer(Str.indexOf("/")),
+					NewOffset := Offset + 1,
+					Cdr := Str.substring(NewOffset.intValue(),Str.length());
+		
+//localWork(Id,CurrPath,Parent) :- chopRequest(Id,Car,Cdr),
+//						   localWork(Id,OldPath,CurrPath),
+               

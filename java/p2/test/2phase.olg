@@ -1,0 +1,91 @@
+program twopc;
+
+import java.lang.String;
+import java.lang.Integer;
+
+define(cantick,{String,String});
+define(prepare,keys(0,2),{String,String,String});
+define(peers,keys(0,1),{String,String});
+define(vote,keys(0,2),{String,String,String,String});
+define(commit,keys(0,2),{String,String,String});
+define(abort,keys(0,1,2),{String,String,String});
+define(peerCnt,keys(0),{String,Integer});
+define(yesCnt,keys(0),{String,String,Integer});
+define(ack,keys(0,2),{String,String,String});
+define(commitReady,keys(0),{String,String});
+define(tick,keys(0),{String,String,Integer});
+
+peers("tcp:localhost:10000","tcp:localhost:10001");
+
+watch(vote,id);
+watch(prepare,id);
+watch(ack,id);
+watch(commit,id);
+watch(abort,id);
+watch(commitReady,id);
+watch(yesCnt,id);
+watch(peerCnt,id);
+//watch(tick,id);
+
+//commitReady("tcp:localhost:10001","1234") :- periodic(Id,1L,1L,5L,2L);
+
+commitReady(Commander,"1234") :- periodic(Id,1L,1L,5L,2L),
+                              peers(Commander,_);
+
+//commitReady("tcp:localhost:10001","abcd") :- periodic(Id,1L,1L,30L,2L);
+
+/* a per-transaction timer that starts at zero when a transaction begins */
+tick(Commander,Xact,C) :- commitReady(Commander,Xact), C := 0;
+cantick(Commander,Id) :- periodic(Id,2L,1000L),peers(Commander,Peer);
+tick(Commander,Xact,C) :- cantick(Commander,Id), tick(Commander,Xact,Count), C := Count + 1;
+
+
+prepare(@Peer,Xact,Commander) :- peers(@Commander,Peer),
+				 commitReady(@Commander,Xact);
+
+/* we assume a native function f_apply that, for a given transaction Xact,
+   aquires resources, performs works, writes redo and undo reports success
+   or failure.
+
+vote(@Commander,Xact,Peer,Vote) :- prepare(@Peer,Xact,Commander),
+			      	   Vote := f_apply(@Peer,Xact);
+			      	   
+
+  for the demo, we hardcode the function's return
+*/
+vote(@Commander,Xact,Peer,Vote) :- prepare(@Peer,Xact,Commander),				
+					   // SOME FUNCTION			   
+			      	   Vote := "Y";
+			      	   
+/* we either get a yes from everyone, and send everyone a commit request */
+commit(@Peer,Xact,Commander) :- peerCnt(@Commander,Cnt),
+			      	yesCnt(@Commander,Xact,Ycnt),
+			      	Cnt == Ycnt,
+					peers(@Commander,Peer);
+										
+/* or we get a no from someone, and send everyone an abort request */
+abort(@Peer,Xact,Commander) :- vote(@Commander,Xact,SomePeer,Vote),
+			       Vote == "N",
+			       peers(@Commander,Peer);
+
+/* we might also timeout... */
+
+/*
+abort(@Peer,Xact,Commander) :- tick(@Commander,Xact,Agg), 
+							  commitReady(@Commander,Xact),
+							   Agg > 10, 
+							   peers(@Commander,Peer),
+							   notin commit(Peer,Xact,Commander);
+*/	
+				
+ack(@Commander,Xact,Peer) :- commit(@Peer,Xact,Commander); /*,
+			f_commit(@Peer,Xact); */
+
+ack(@Commander,Xact,Peer) :- abort(@Peer,Xact,Commander); /*,
+			f_undo(@Peer,Xact); */
+						
+/* helper aggs */
+peerCnt(Commander,count<Peer>) :- peers(Commander,Peer);
+
+yesCnt(Commander,Xact,count<Peer>) :- vote(Commander,Xact,Peer,Vote),
+				       Vote == "Y";
