@@ -50,11 +50,11 @@ class UnsortedTupleSet
   end
   
   def UnsortedTupleSet=(ts)
-    return self.class.new(ts.name, ts.tups)
+    return self.class.new(ts.name, *ts.tups)
   end
   
   def +(ts)
-    retval = self.class.new(name, tups)
+    retval = self.class.new(name, *tups)
     ts.each {|t| retval << t}
     return retval
   end
@@ -160,6 +160,7 @@ class TupleSet < UnsortedTupleSet
   def <<(o)
     case o.class.name
     when 'TupleSet','Array': o.each do |t| 
+      require 'ruby-debug';debugger
       raise "using << rather than addAll to add a collection into a TupleSet"
     end
     when 'Tuple':

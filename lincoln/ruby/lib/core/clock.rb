@@ -1,3 +1,4 @@
+require 'lib/types/exception/update_exception'
 class Clock < ObjectTable 
 	@@PRIMARY_KEY = Key.new(0)
 	
@@ -21,7 +22,7 @@ class Clock < ObjectTable
 	def insert_tup(tuple)
 		time = tuple.value(Field::CLOCK)
 		if (time < @clock) then
-			throw UpdateException, "Invalid clock time " +  time.to_s + " current clock value = " + @clock.to_s
+			raise UpdateException, "Invalid clock time " +  time.to_s + " current clock value = " + @clock.to_s
 		end
 		@clock = time
 		return super(tuple)

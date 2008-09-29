@@ -312,7 +312,7 @@ class TestPlan < Test::Unit::TestCase
     sys=System.new; sys.init
 		utterance = "program path;
 		      define(link,keys(0,1),{String,String,Integer,String});
-	        echo(X) :- link(F,T,C,A), B := Array.new(), X:= B.push(2);"
+	        echo(X) :- link(F,T,C,A), B := Array.new(), J := 2, X:= B.push(J);"
 	  prog = prep(utterance)
 
     ##require 'ruby-debug'; debugger

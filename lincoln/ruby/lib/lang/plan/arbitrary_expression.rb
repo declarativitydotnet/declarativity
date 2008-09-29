@@ -46,6 +46,17 @@ class ArbitraryExpression < Expression
     @variables
   end
 
+  def wrap_for_eval(s)
+    return s
+    if s.class <= String
+      val = "\"" + s + "\""
+      print "WRAP #{s} => #{val}"
+      return 
+    else
+      return s
+    end
+  end
+  
   def function
     elam = lambda do |t|
 
@@ -53,7 +64,7 @@ class ArbitraryExpression < Expression
       unless @method.nil? 
         ##require 'ruby-debug'; debugger
         if t.schema.contains(@variables[0])
-          value = t.value(@variables[0].name)
+         value = t.value(@variables[0].name)
         else
           # this is not an attribute of the tuple.  Hopefully this is a Ruby class name
           # Put a try/catch thingy around me.
@@ -61,7 +72,17 @@ class ArbitraryExpression < Expression
         end
         # if value.class == Program then
         if @variables.size > 1 then
-          return value.send(@method,*@variables[1..@variables.size-1])		
+          args = []
+          @variables[1..@variables.size-1].each do |v|
+            if v.class == Value
+#              args << wrap_for_eval(v.value)
+              args << v.value
+            elsif v.class == Variable
+#              args << wrap_for_eval(t.value(v.name))
+              args << t.value(v.name)
+            end
+          end
+          return value.send(@method,*args)		
         else
           # FIX ME
           ####foo = @method.gsub(/[()]/,"")
@@ -75,13 +96,18 @@ class ArbitraryExpression < Expression
           if t.schema.contains(v) then
             # substitution is stupid: how many times are we gonna parse this thing??
             # instead, take advantage of rubiismo:
+#            value = wrap_for_eval(t.value(v.name))
             value = t.value(v.name)
             # workaround
-            subexpr = subexpr + "v"+v.name + " = "+t.value(v.name).to_s+"\n"
+            subexpr = subexpr + "v"+v.name + " = \""+value+"\"\n"
+ #           print "SUBEXPR: #{subexpr}\n"
           elsif defined?(@variables[i+1]) and @variables[i+1].class == Value
             # unbound variables had better belong to assignments
             # which show up as a Variable followed by a Value
-            subexpr = subexpr + "v"+v.name + " = "+@variables[i+1].value.to_s+"\n"
+#            value = wrap_for_eval(@variables[i+1].value)
+            value = @variables[i+1].value
+            subexpr = subexpr + "v"+v.name + " = \""+value.to_s+"\"\n"
+#            print "SUBEXPR: #{subexpr}\n"
           end
         elsif (v.class == Value)
           next
@@ -91,7 +117,7 @@ class ArbitraryExpression < Expression
       end
       subexpr = subexpr + @expr
       ##require 'ruby-debug'; debugger
-      ##print "EVAL: #{subexpr}\n"
+#      print "EVAL: #{subexpr}\n"
       return eval(subexpr)
     end
 

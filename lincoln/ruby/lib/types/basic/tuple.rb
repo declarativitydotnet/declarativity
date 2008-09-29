@@ -21,7 +21,10 @@ class Tuple
   def clone
     t = super
     t.values = @values.clone
-    @values.freeze
+    # can't freeze here.  Ruby clone copies the freeze state, so this would mean that
+    # the next call to clone would return a frozen t.values.  Not nice.
+#    @values.freeze  
+    require 'ruby-debug'; debugger if t.values.frozen?
     return t
   end
 
@@ -38,6 +41,7 @@ class Tuple
     var = var.clone
     var.position = schema.size
     @schema << var
+    require 'ruby-debug'; debugger if @values.frozen?
     @values << val
   end
 

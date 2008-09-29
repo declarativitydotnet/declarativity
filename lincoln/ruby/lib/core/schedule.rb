@@ -3,10 +3,10 @@ class Schedule < ObjectTable
   @@PRIMARY_KEY = Key.new()
 
   class Field 
-    TIME = 1
-    PROGRAM = 2
-    INSERTIONS = 3
-    DELETIONS = 4
+    TIME = 0
+    PROGRAM = 1
+    INSERTIONS = 2
+    DELETIONS = 3
   end
 
   @@SCHEMA = [Integer, String, TableName, TupleSet, TupleSet]
@@ -21,15 +21,18 @@ class Schedule < ObjectTable
   end
 
   def min
-    curmin = exp(2^Bignum-1)
+    curmin = nil
     tuples.each do |tuple|
-      curmin = curmin < (tuple.value(Field::TIME)) ? curmin : tuple.value(Field::TIME)
+      curmin = (!curmin.nil? and curmin < (tuple.value(Field::TIME))) ? curmin : tuple.value(Field::TIME)
+      if curmin.class == String
+        require 'ruby-debug'; debugger
+        print curmin
+      end
     end
     return curmin
   end
   
-  def insert(t)
-    require 'ruby-debug'; debugger
-    super(t)
+  def insert(t, c)
+    super(t, c)
   end
 end

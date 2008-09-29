@@ -124,7 +124,7 @@ class Driver < Monitor
         querySet.each do |query|
           if query.event != Table::Event::DELETE
             puts("\t\tRUN QUERY " + query.rule.to_s + " input " + insertions.tups.to_s)
-            puts("\t\t\t Plan #{query.to_s}")
+#            puts("\t\t\t Plan #{query.to_s}")
             result = query.evaluate(insertions) 
             puts("\t\tQUERY " + query.rule.to_s + " result " + result.tups.to_s)
             # require 'ruby-debug'; debugger
@@ -244,6 +244,9 @@ class Driver < Monitor
           min = Infinity
 
           if @schedule.cardinality > 0
+            if min.class == String or @schedule.min.class == String
+              require 'ruby-debug'; debugger
+            end
             min = (min < @schedule.min ? min : @schedule.min)
           elsif @tasks.size > 0
             min = @clock.current + 1
