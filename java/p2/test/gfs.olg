@@ -11,9 +11,10 @@ define(lookupPath,keys(0),{Integer,String,Integer});
 define(request,{String,String,Integer});
 define(loggedRequest,{Integer,String,String,Integer});
 define(chopRequest,keys(0,1),{Integer,Integer,String,String});
-define(work,{Integer,String});
+//define(work,keys(0),{Integer,String,Integer});
+define(work,{Integer,String,Integer});
 define(ids,keys(0),{Integer});
-define(pos,keys(0,1),{Integer,Integer});
+define(pos,keys(0),{Integer,Integer});
 define(localWork,keys(0,1,2),{Integer,Integer,Integer});
 //define(localWork,{Integer,Integer,Integer});
 
@@ -41,27 +42,20 @@ loggedRequest(Id,File,Host,ChunkNo) :- request(File,Host,ChunkNo),
 
 ids(Id+1) :- loggedRequest(Id,_,_,_);
 pos(Id,0) :- loggedRequest(Id,_,_,_);
-pos(Id,Pos+1) :- chopRequest(Id,Pos,_,_);
+//pos(Id,Pos+1) :- work(Id,_,Pos);
+pos(Id,Pos+1) :- pos(Id,Pos), work(Id,_,_);
 
-work(Id,Work) :- loggedRequest(Id,Work,_,_);
-//localWork(Id,CurrPath,Parent) :- loggedRequest(Id,Work,_,_),
-//						   CurrPath := -1,
-//						   Parent := -1;
+work(Id,Work,0) :- loggedRequest(Id,Work,_,_);
 
  
-work(Id,Work) :- chopRequest(Id,Pos,Car,Work),
-        periodic(Id2,5L),
-				Pos := Work.indexOf("/"),
-				Pos > -1;
+work(Id,Work,Pos) :- chopRequest(Id,PPos,Car,Work),
+        pos(Id,Pos),
+				Loc := Work.indexOf("/"),
+				Loc > -1;
 
-chopRequest(Id,Pos,Car,Cdr) :- work(Id,Whole),
-          pos(Id,Pos),
+chopRequest(Id,Pos,Car,Cdr) :- work(Id,Whole,Pos),
 					Str := new String(Whole),
 					Car := Str.split("/")[0],
 					Offset := new Integer(Str.indexOf("/")),
 					NewOffset := Offset + 1,
 					Cdr := Str.substring(NewOffset.intValue(),Str.length());
-		
-//localWork(Id,CurrPath,Parent) :- chopRequest(Id,Car,Cdr),
-//						   localWork(Id,OldPath,CurrPath),
-               

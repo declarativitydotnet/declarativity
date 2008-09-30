@@ -808,6 +808,7 @@ public final class TypeChecker extends Visitor {
 		}
 		
 		Predicate pred = new Predicate(notin, name, tableEvent, arguments);
+		
 		pred.location(n.getLocation());
 		n.setProperty(Constants.TYPE, pred);
 		return Predicate.class;
