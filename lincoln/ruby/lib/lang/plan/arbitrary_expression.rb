@@ -49,7 +49,11 @@ class ArbitraryExpression < Expression
   def wrap_for_eval(s)
     return s
     if s.class <= String
-      val = "\"" + s + "\""
+      if s =~ /[0-9.]+/ 
+        val = s
+      else
+        val = "\"" + s + "\""
+      end
       print "WRAP #{s} => #{val}"
       return 
     else
@@ -59,7 +63,7 @@ class ArbitraryExpression < Expression
   
   def function
     elam = lambda do |t|
-
+     #print "EXPR #{@expr}\n"
       subexpr = ''
       unless @method.nil? 
         ##require 'ruby-debug'; debugger
@@ -99,8 +103,8 @@ class ArbitraryExpression < Expression
 #            value = wrap_for_eval(t.value(v.name))
             value = t.value(v.name)
             # workaround
-            subexpr = subexpr + "v"+v.name + " = \""+value+"\"\n"
- #           print "SUBEXPR: #{subexpr}\n"
+            ##subexpr = subexpr + "v"+v.name + " = \""+value.to_s+"\"\n"
+            subexpr = subexpr + "v"+v.name + " = "+value.to_s+"\n"
           elsif defined?(@variables[i+1]) and @variables[i+1].class == Value
             # unbound variables had better belong to assignments
             # which show up as a Variable followed by a Value
@@ -117,7 +121,7 @@ class ArbitraryExpression < Expression
       end
       subexpr = subexpr + @expr
       ##require 'ruby-debug'; debugger
-#      print "EVAL: #{subexpr}\n"
+      #nprint "EVAL: #{subexpr}\n"
       return eval(subexpr)
     end
 
