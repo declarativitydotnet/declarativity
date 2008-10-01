@@ -18,12 +18,58 @@ define(pos,keys(0),{Integer,Integer});
 define(localWork,keys(0,1,2),{Integer,Integer,Integer});
 //define(localWork,{Integer,Integer,Integer});
 
+define(sendLocation,{String,String,Integer,Integer,Integer});
+define(sendChunk,{String,String,Integer,Integer,Integer,Integer,Integer});
+
+
 watch(chopRequest,id);
 //watch(request,id);
 watch(work,id);
 //watch(ids,id);
 watch(loggedRequest,id);
 watch(pos,id);
+
+
+/* broadcast data */
+define(sendLocation,{String,String,Integer,Integer,Integer});
+// chunkid,fileid,chunkord,hwm,version
+define(sendChunk,{String,String,Integer,Integer,Integer,Integer,Integer});
+
+watch(sendLocation,id);
+watch(sendChunk,id);
+
+realDistance(@Master,Chunk1,Chunk2,Ddiff,Sudiff,Rdiff,Sdiff) :-
+                  chunkserver(@Master,Location2,_),
+                  location(@Master,Location1,DS1,SN1,R1,S1),
+                  location(@Master,Location2,DS2,SN2,R2,S2),
+                  Ddiff = f_abs(DS1 - DS2),
+                  Sudiff = f_abs(SN1 - SN2),
+                  Rdiff = f_abs(R1 - R2),
+                  Sdiff = f_abs(S1 - S2);
+
+
+distance(@Master,Client,ChunkServer,Distance) :- realDistance(@Master,Client,ChunkServer,Ddiff,Sudiff,Rdiff,Sdiff),
+                  Ddiff != 0,
+                  Distance := Ddiff;
+
+
+distance(@Master,Client,ChunkServer,Distance) :- realDistance(@Master,Client,ChunkServer,Ddiff,Sudiff,Rdiff,Sdiff),
+                  Ddiff == 0,
+                  Sudiff != 0
+                  Distance := Sudiff;
+
+
+distance(@Master,Client,ChunkServer,Distance) :- realDistance(@Master,Client,ChunkServer,Ddiff,Sudiff,Rdiff,Sdiff),
+                  Ddiff == 0,
+                  Sudiff == 0
+                  Rdiff != 0
+                  Distance := Rdiff;
+
+
+
+
+
+/* forget about fs for a minute.... */
 
 
 ids(0);

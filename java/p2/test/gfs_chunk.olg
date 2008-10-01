@@ -1,0 +1,39 @@
+program gfs;
+
+import java.util.ArrayList;
+
+define(file,keys(0),{Integer,String,Integer,Integer});
+// chunkid,fileid,chunkord,hwm,version
+define(chunk,keys(0),{Integer,Integer,Integer,Integer,Integer});
+define(chunkInfo,{String,Integer,Integer,Integer,Integer,Integer});
+// me, datacenter, rack, switch
+define(location,keys(0),{String,Integer,Integer,Integer});
+define(master,keys(0),{String,String});
+define(sendLocation,{String,String,Integer,Integer,Integer});
+define(sendChunk,{String,String,Integer,Integer,Integer,Integer,Integer});
+define(me,keys(0),{String});
+
+master("tcp:localhost:10001","tcp:localhost:10000");
+location("tcp:localhost:10001",1,1,1);
+
+chunk(1,1,0,64000,0);
+chunk(2,1,1,128,0);
+
+chunk(3,2,0,64000,0);
+chunk(4,2,1,64000,0);
+chunk(5,2,2,128,1);
+
+chunkInfo(Me,ChunkId,FileId,ChunkOrd,HWM,Version) :- 
+            chunk(ChunkId,FileId,ChunkOrd,HWM,Version),
+            periodic(Id,5L),
+            master(Me,Master);
+
+
+// when I wake up, I send all my chunk and location info to the master
+sendLocation(@Master,Me,DataCenter,Rack,Switch) :-
+            master(@Me,Master),
+            location(@Me,DataCenter,Rack,Switch);
+
+sendChunk(@Master,Me,ChunkId,FileId,ChunkOrd,HWM,Version) :-
+            master(@Me,Master),
+            chunkInfo(@Me,ChunkId,FileId,ChunkOrd,HWM,Version);
