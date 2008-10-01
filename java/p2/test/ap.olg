@@ -1,0 +1,349 @@
+program af;
+
+import java.lang.Double;
+import java.lang.Integer;
+
+/**********************************************************************
+  AFFINITY PROPAGATION
+ **********************************************************************/
+ 
+/*node, Var, CandidateExemplar, value
+  node, i, k, value */
+define(availability,  keys(1,2),{String,String,String,Double,Integer});
+
+/*node, Var, CandidateExemplar, value, iterationNumber
+  node, i, k, value */
+define(sentAvailability, keys(1,2),{String,String,String,Double,Integer});
+
+/*node, LocalVar, CandidateExemplar, value
+  node, i, k, value */
+define(responsibility,keys(1,2),{String,String,String,Double,Integer});
+
+/*node, LocalVar, CandidateExemplar, value, iterationNumber
+  node, i, k, value */
+define(sentResponsibility, keys(1,2),{String,String,String,Double,Integer});
+
+/*node, LocalVar, CandidateExemplar, value
+  node, i, k, value */
+define(similarity, keys(1,2),{String,String,String,String});
+
+/* The identifier of each node: Node, NodeId, Time */
+// pa -- but time is not in the definition shown by the rules...
+define(identifier, keys(0),{String,Integer});
+
+/* node, Var, CandidateExemplar, max(Responsibility, 0)*/
+define(rp, keys(1,2),{String,String,String,Integer,Integer});
+
+
+/* in the p2 version, we need also to define our event tables */
+// node, localvar, whocares (the 3rd value is NEVER used in the code)
+define(localVariable,{String,String,String});
+
+
+/**********************************************************************
+  Init messages
+ **********************************************************************/
+define(me,keys(0),{String,Integer});
+
+//fix me
+identifier(Node, MyId) :- 
+        periodic(Rid, 1L,1L), 
+        MyId := 1234,
+        Node := "tcp:localhost:10000";
+
+/* initializing everything to 0 */
+/*availability of candidate exemplars for each local variable*/
+init_availibility
+availability(Node, LocalVar, CandidateExemplar, Availability, ItNum) :-
+        similarity(Node, LocalVar, CandidateExemplar, Similarity),
+        localVariable(Node, LocalVar, _),
+        ItNum := 0,
+        Availability := new Double("0.0");
+
+/*sent availability from candidate exemplars to variables*/
+init_sentAvailibility        
+sentAvailability(Node, Var, CandidateExemplar, Availability, ItNum) :-
+        similarity(Node, CandidateExemplar, Var, Similarity),
+        localVariable(Node, CandidateExemplar, _),
+        ItNum :=0,
+        Availability := new Double("0.0");
+
+/*responsibility of candidate exemplars for variables*/
+init_responsibility
+responsibility(Node, Var, CandidateExemplar, Responsibility, ItNum) :-
+        similarity(Node, Var, CandidateExemplar, Similarity),
+        localVariable(Node, CandidateExemplar, _),
+        ItNum := 0,
+        Responsibility := new Double("0.0");
+        
+     
+/*respnsibility sent from local variable to candidate exemplars*/
+inti_sentResponsibility
+sentResponsibility(Node, LocalVar, CandidateExemplar, Responsibility, ItNum) :-
+        similarity(Node, LocalVar, CandidateExemplar, Similarity),
+        localVariable(Node, LocalVar, _),
+        ItNum := 0,
+        Responsibility := new Double("0.0");
+
+        
+/**********************************************************************
+  Timer messages
+ **********************************************************************/
+define(timer, infinity, 1, keys(1)).
+ 
+timer(@Node, T, F) :- 
+        started(@Node),
+        T := f_now(),
+        F := "R".
+        
+rEvent(@Node) :-
+        periodic(@Node, E, 1),
+        timer(@Node, T, F),
+        f_now() > T + AP_EPOCH,
+        F == "R".
+
+timer(@Node, T, F) :- 
+        rEvent(@Node),
+        T := f_now(),
+        F := "A".
+        
+aEvent(@Node) :-
+        periodic(@Node, E, 1),
+        timer(@Node, T, F),
+        f_now() > T + AP_EPOCH,
+        F == "A". 
+
+timer(@Node, T, F) :- 
+        aEvent(@Node),
+        T := f_now(),
+        F := "R".
+
+watchmod(rEvent, "s"). 
+watchmod(aEvent, "s").        
+/**********************************************************************
+  Compute the new responsibility
+  Responsibility is sent from a local "variable" to a remote "candidate exemplar"
+ **********************************************************************/
+
+/* responsibility updates for each local variable */
+rUpdate(@Node, LocalVar) :-
+        rEvent(@Node),
+        localVariable(@Node, LocalVar, _).
+
+/*Sequential iterations logic*/
+/*repEpoch(@Node, Now, CurrTime, TimeStep) :-
+        periodic(@Node, E, 1),
+        rTimer(@Node, TimeStep, Now),
+        CurrTime := f_now(),
+        CurrTime-Now > TimeStep.
+
+rTimer(@Node, TimeStep, CurrTime) :- 
+        repEpoch(@Node, Now, CurrTime, TimeStep),
+        TimeStep :=  f_timeDuration(AP_EPOCH*2),
+        CurrTime := f_now().
+                
+rUpdate(@Node, LocalVar) :-
+        repEpoch(@Node, Now, CurrTime, TimeStep),
+        localVariable(@Node, LocalVar, _).*/
+        
+
+/**********************************************************************
+  Responsibility calculation
+ **********************************************************************/
+
+/*ordered set of similarity + availability*/
+asSet(@Node, LocalVar, a_MkSet<AS>) :- 
+        rUpdate(@Node, LocalVar),
+        availability(@Node, LocalVar, CandidateExemplar, Availability, _),
+        similarity(@Node, LocalVar, CandidateExemplar, Similarity),
+        AS := f_toDouble(0.0) + Availability + Similarity.
+        
+/*getting 2 highest members of ASSet*/
+maxAS1Details(@Node, LocalVar, CandidateExemplar, MaxAS1, MaxAS2) :-
+        asSet(@Node, LocalVar, ASSet),
+        f_size(ASSet) > 1,
+        MaxAS1 := f_last(ASSet),
+        MaxAS2 := f_last(f_removeLast(ASSet)),
+        availability(@Node, LocalVar, CandidateExemplar, Availability, _),
+        similarity(@Node, LocalVar, CandidateExemplar, Similarity),
+        MaxAS1 == Availability + Similarity.
+        
+        /*getting 2 highest members of ASSet*/
+responsibilityEvent(@Node, LocalVar, LocalVar, DampResponsibility, ItNum) :-                       
+        asSet(@Node, LocalVar, ASSet),
+        f_size(ASSet) == 1,
+        similarity(@Node, LocalVar, CandidateExemplar, Similarity),
+        sentResponsibility(@Node, LocalVar, LocalVar, OldResponsibility, ItNum), 
+        NewResponsibility := Similarity,
+        DampResponsibility :=  f_toDouble(1.0 - DAMP_F) * NewResponsibility + DAMP_F * OldResponsibility.
+
+/*details of candidate exemplars that have largest and second largest similarity + availability*/
+allMaxDetails(@Node, LocalVar, CandidateExemplar1, MaxAS1, CandidateExemplar, MaxAS2) :- 
+        maxAS1Details(@Node, LocalVar, CandidateExemplar1 , MaxAS1, MaxAS2),
+        availability(@Node, LocalVar, CandidateExemplar, Availability, _),
+        similarity(@Node, LocalVar, CandidateExemplar, Similarity),
+        MaxAS2 == Availability + Similarity.
+
+/* responsibility sent to candidate exemplar */
+responsibilityEvent(@Node, LocalVar, CandidateExemplar, DampResponsibility, ItNum)  :-
+        allMaxDetails(@Node, LocalVar, CandidateExemplar1, MaxAS1, CandidateExemplar2, MaxAS2),
+        similarity(@Node, LocalVar, CandidateExemplar, Similarity),
+        sentResponsibility(@Node, LocalVar, CandidateExemplar, OldResponsibility, ItNum), 
+        NewResponsibility := Similarity - MaxAS1,
+        DampResponsibility :=  f_toDouble(1.0 - DAMP_F) * NewResponsibility + DAMP_F * OldResponsibility,
+        CandidateExemplar != CandidateExemplar1.
+        
+responsibilityEvent(@Node, LocalVar, CandidateExemplar, DampResponsibility, ItNum)  :-
+        allMaxDetails(@Node, LocalVar, CandidateExemplar1, MaxAS1, CandidateExemplar2, MaxAS2),
+        similarity(@Node, LocalVar, CandidateExemplar, Similarity),
+        sentResponsibility(@Node, LocalVar, CandidateExemplar, OldResponsibility, ItNum), 
+        NewResponsibility := Similarity - MaxAS2,
+        DampResponsibility :=  f_toDouble(1.0 - DAMP_F) * NewResponsibility + DAMP_F * OldResponsibility,
+        CandidateExemplar == CandidateExemplar1.
+
+/* Sending reponsibility of local variable to candidate exemplar*/ 
+responsibility(@CandidateExemplarNode, LocalVar, CandidateExemplar, Responsibility, NewItNum)  :-
+        responsibilityEvent(@Node, LocalVar, CandidateExemplar, Responsibility,ItNum),
+        variable(@Node, CandidateExemplar, CandidateExemplarNode),
+        NewItNum := f_toInt(1 + ItNum),
+        CandidateExemplar != "Done".
+        
+sentResponsibility(@Node, LocalVar, CandidateExemplar, Responsibility, NewItNum)  :-
+        responsibilityEvent(@Node, LocalVar, CandidateExemplar, Responsibility, ItNum),
+        NewItNum := f_toInt(1 + ItNum).
+
+/**********************************************************************
+  Store max(responsibility, 0) for each responsibility sent from
+  variables to candiateExemplars
+ **********************************************************************/
+
+rpEvent(@Node, Var, CandidateExemplar, Responsibility) :-
+        responsibility(@Node, Var, CandidateExemplar, Responsibility, _).
+
+rp(@Node, Var, CandidateExemplar, RP) :-
+        rpEvent(@Node, Var, CandidateExemplar, Responsibility),
+        RP := f_max(Responsibility, f_toDouble(0.0)).
+        
+        
+/**********************************************************************
+  Compute availability
+  Availiblity is sent from a local "candidate exemplar" to a remote "variables"
+ **********************************************************************/
+
+/* Calculate availability of candiate exemplar for each variable*/
+aUpdate(@Node, CandidateExemplar, Var) :-
+        aEvent(@Node),
+        localVariable(@Node, CandidateExemplar, _),
+        similarity(@Node, CandiateExemplar, Var, _),
+        Var != "Done",
+        CandidateExemplar != "Done".
+
+/*Sequential iterations logic*/                
+/*availEpoch(@Node, Now, CurrTime, TimeStep) :-
+        periodic(@Node, E, 1),
+        aTimer(@Node, TimeStep, Now),
+        CurrTime := f_now(),
+        CurrTime-Now > TimeStep.
+
+aTimer(@Node, TimeStep, CurrTime) :- 
+        availEpoch(@Node, Now, CurrTime, TimeStep),
+        TimeStep :=  f_timeDuration(AP_EPOCH*2),
+        CurrTime := f_now().
+
+aUpdate(@Node, CandidateExemplar, Var) :-
+        availEpoch(@Node, Now, CurrTime, TimeStep),
+        localVariable(@Node, CandidateExemplar, _),
+        similarity(@Node, CandiateExemplar, Var, _),
+        Var != "Done",
+        CandidateExemplar != "Done".  */
+
+sumRp(@Node, Var, CandidateExemplar, a_SUM<RP>) :-
+        aUpdate(@Node, CandidateExemplar, Var),
+        rp(@Node, OtherVar, CandidateExemplar, RP),
+        OtherVar != Var,
+        OtherVar != CandidateExemplar.
+                 
+availabilityCalc(@Node, Var, CandidateExemplar, DampAvailability, ItNum) :-
+        sumRp(@Node, Var, CandidateExemplar, SumRP),
+        sentAvailability(@Node, Var, CandidateExemplar, OldAvailability, ItNum),
+        responsibility(@Node, CandidateExemplar, CandidateExemplar, Responsibility, _),
+        Availability := SumRP + Responsibility,
+        NewAvailability := f_min(Availability, f_toDouble(0.0)),
+        DampAvailability := f_toDouble(1.0 - DAMP_F) * NewAvailability + DAMP_F * OldAvailability,
+        Var != CandidateExemplar.
+
+availabilityCalc(@Node, CandidateExemplar, CandidateExemplar, DampAvailability, ItNum) :-
+        sumRp(@Node, Var, CandidateExemplar, SumRP),
+        sentAvailability(@Node, Var, CandidateExemplar, OldAvailability, ItNum),
+        DampAvailability := f_toDouble(1.0 - DAMP_F) * SumRP + DAMP_F * OldAvailability,
+        Var == CandidateExemplar.
+
+availability(@VarNode, Var, CandidateExemplar, Availability, NewItNum)  :-
+        availabilityCalc(@Node, Var, CandidateExemplar, Availability, ItNum),
+        variable(@Node, Var, VarNode),
+        /*Availability >= THRESHOLD_A,
+        similarity(@Node, K, I, Similarity),
+        Similarity >= THRESHOLD_S,*/
+        NewItNum := f_toInt(1 + ItNum),
+        Var != "Done".
+
+sentAvailability(@Node, Var, CandidateExemplar, Availability, NewItNum) :-
+        availabilityCalc(@Node, Var, CandidateExemplar, Availability, ItNum),
+        NewItNum := f_toInt(1 + ItNum).
+  
+/**********************************************************************
+ Compute exemplars
+ **********************************************************************/  
+ 
+eUpdate(@Node, LocalVar) :- 
+         periodic(@Node, E, 1),
+         started(@Node, StartTime),
+         localVariable(@Node, LocalVar, _),
+         LocalVar != "Done",
+         Time := f_now(),
+         Time - StartTime > EXPERIMENT_DURATION - 1.        
+                     
+/*eUpdate(@Node, LocalVar) :-
+        started(@Node),
+        periodic(@Node, E, AP_EPOCH),
+        localVariable(@Node, LocalVar, _),
+        LocalVar != "Done".*/
+
+exemplarCalc(@Node, LocalVar, a_MAX<Sum>) :- 
+        eUpdate(@Node, LocalVar),
+        availability(@Node, LocalVar, CandidateExemplar, Availability, _),
+        sentResponsibility(@Node, LocalVar, CandidateExemplar, Responsibility, _),
+        Sum := f_toDouble(0.0) + Availability + Responsibility.
+
+exemplar(@Node, LocalVar, a_MkSet<CandidateExemplar>, MaxSum) :-
+        exemplarCalc(@Node, LocalVar, MaxSum),
+        availability(@Node, LocalVar, CandidateExemplar, Availability, _),
+        sentResponsibility(@Node, LocalVar, CandidateExemplar, Responsibility, _),
+        MaxSum == Availability + Responsibility.
+        
+
+
+/**********************************************************************
+ Required print elements
+ **********************************************************************/
+watchmod(identifier, "i").
+watchmod(sentAvailability, "i").   
+watchmod(sentResponsibility, "i").
+watchmod(exemplar, "s").
+watchmod(maxExemplar, "s").
+
+
+watchmod(aUpdate, "c").
+watchmod(rUpdate, "c").
+watchmod(availability, "i").
+watchmod(responsibility, "ia").
+watchmod(asSet, "s").
+/*watchmod(allMaxDetails, "s").*/
+watchmod(responsibilityEvent, "s").
+/*watchmod(availabilityCalc, "s").*/
+/*watchmod(rp, "i").
+watchmod(sumRp, "c").*/
+/*watchmod(availEpoch, "s").
+
+watchmod(repEpoch, "s").*/
+
