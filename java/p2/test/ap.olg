@@ -2,6 +2,7 @@ program af;
 
 import java.lang.Double;
 import java.lang.Integer;
+import java.lang.System;
 
 /**********************************************************************
   AFFINITY PROPAGATION
@@ -89,56 +90,77 @@ sentResponsibility(Node, LocalVar, CandidateExemplar, Responsibility, ItNum) :-
 /**********************************************************************
   Timer messages
  **********************************************************************/
-define(timer, infinity, 1, keys(1)).
+define(timer, keys(0),{String,Integer,String});
+// need this event table
+define(started,{String,Integer});
+define(rEvent,{String});
+define(aEvent,{String});
  
-timer(@Node, T, F) :- 
-        started(@Node),
-        T := f_now(),
-        F := "R".
+timer(Node, T, F) :- 
+        started(Node,_),
+        F := "R",
+        Millis := new Long(System.currentTimeMillis()),
+        Secs := Millis / 1000L,
+        T := Secs.intValue();
+
+
         
-rEvent(@Node) :-
-        periodic(@Node, E, 1),
-        timer(@Node, T, F),
-        f_now() > T + AP_EPOCH,
-        F == "R".
+rEvent(Node) :-
+        periodic(E, 1L),
+        timer(Node, T, F),
+        Millis := new Long(System.currentTimeMillis()),
+        Secs := Millis / 1000L,
+        Now := Secs.intValue(),
+        //Now > T + AP_EPOCH,
+        Now > T + 12345,
+        F == "R";
 
-timer(@Node, T, F) :- 
-        rEvent(@Node),
-        T := f_now(),
-        F := "A".
+timer(Node, T, F) :- 
+        rEvent(Node),
+        Millis := new Long(System.currentTimeMillis()),
+        Secs := Millis / 1000L,
+        T := Secs.intValue(),
+        F := "A";
         
-aEvent(@Node) :-
-        periodic(@Node, E, 1),
-        timer(@Node, T, F),
-        f_now() > T + AP_EPOCH,
-        F == "A". 
+aEvent(Node) :-
+        periodic(E, 1L),
+        timer(Node, T, F),
+        Millis := new Long(System.currentTimeMillis()),
+        Secs := Millis / 1000L,
+        Now := Secs.intValue(),
+        //Now > T + AP_EPOCH,
+        Now > T + 12345,
+        F == "A"; 
 
-timer(@Node, T, F) :- 
-        aEvent(@Node),
-        T := f_now(),
-        F := "R".
+timer(Node, T, F) :- 
+        aEvent(Node),
+        Millis := new Long(System.currentTimeMillis()),
+        Secs := Millis / 1000L,
+        T := Secs.intValue(),
+        F := "R";
 
-watchmod(rEvent, "s"). 
-watchmod(aEvent, "s").        
+watchmod(rEvent, "s");
+watchmod(aEvent, "s");       
 /**********************************************************************
   Compute the new responsibility
   Responsibility is sent from a local "variable" to a remote "candidate exemplar"
  **********************************************************************/
 
 /* responsibility updates for each local variable */
-rUpdate(@Node, LocalVar) :-
-        rEvent(@Node),
-        localVariable(@Node, LocalVar, _).
+rUpdate(Node, LocalVar) :-
+        rEvent(Node),
+        localVariable(Node, LocalVar, _).
 
 /*Sequential iterations logic*/
-/*repEpoch(@Node, Now, CurrTime, TimeStep) :-
-        periodic(@Node, E, 1),
-        rTimer(@Node, TimeStep, Now),
+// pa -- the below appears to be commented out
+/*repEpoch(Node, Now, CurrTime, TimeStep) :-
+        periodic(Id, 1L),
+        rTimer(Node, TimeStep, Now),
         CurrTime := f_now(),
         CurrTime-Now > TimeStep.
 
-rTimer(@Node, TimeStep, CurrTime) :- 
-        repEpoch(@Node, Now, CurrTime, TimeStep),
+rTimer(Node, TimeStep, CurrTime) :- 
+        repEpoch(Node, Now, CurrTime, TimeStep),
         TimeStep :=  f_timeDuration(AP_EPOCH*2),
         CurrTime := f_now().
                 
