@@ -47,18 +47,20 @@ class ArbitraryExpression < Expression
   end
 
   def wrap_for_eval(s)
-    return s
     if s.class <= String
       if s =~ /[0-9.]+/ 
         val = s
       else
         val = "\"" + s + "\""
       end
-      print "WRAP #{s} => #{val}"
+#      print "WRAP #{s} => #{val}"
       return 
+    elsif s.class <= TableName
+      val = "\"" + s.to_s + "\""
     else
-      return s
+      val = s
     end
+    return val
   end
   
   def function
@@ -100,16 +102,17 @@ class ArbitraryExpression < Expression
           if t.schema.contains(v) then
             # substitution is stupid: how many times are we gonna parse this thing??
             # instead, take advantage of rubiismo:
-#            value = wrap_for_eval(t.value(v.name))
-            value = t.value(v.name)
+            value = wrap_for_eval(t.value(v.name))
+#            value = t.value(v.name)
             # workaround
             ##subexpr = subexpr + "v"+v.name + " = \""+value.to_s+"\"\n"
+#            require 'ruby-debug'; debugger unless value.class == TrueClass
             subexpr = subexpr + "v"+v.name + " = "+value.to_s+"\n"
           elsif defined?(@variables[i+1]) and @variables[i+1].class == Value
             # unbound variables had better belong to assignments
             # which show up as a Variable followed by a Value
-#            value = wrap_for_eval(@variables[i+1].value)
-            value = @variables[i+1].value
+            value = wrap_for_eval(@variables[i+1].value)
+#            value = @variables[i+1].value
             subexpr = subexpr + "v"+v.name + " = \""+value.to_s+"\"\n"
 #            print "SUBEXPR: #{subexpr}\n"
           end
@@ -121,7 +124,7 @@ class ArbitraryExpression < Expression
       end
       subexpr = subexpr + @expr
       ##require 'ruby-debug'; debugger
-      #nprint "EVAL: #{subexpr}\n"
+#      print "EVAL: #{subexpr}\n"
       return eval(subexpr)
     end
 
