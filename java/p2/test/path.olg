@@ -26,10 +26,9 @@ link("6", "7");
 link("7", "8");
 link("8", "9");
 
-watch(link, ae);
-watch(path, a);
+watch(path, ae);
 watch(shortestPath, ae);
-watch(allpaths, a);
+watch(computeAll, s);
 
 /* Initialize all paths with link */
 init
@@ -48,7 +47,6 @@ shortestPath(Source, Destination, min<Hops>) :-
 computeAll(Source) :-
 	shortestPath(Source, Destination, Hops);
 	
-watch(computeAll, r);
 allpaths(Source, generic<(new ValueList()).insert((Object)Destination)>) :-
 	computeAll(Bla),
 	path(Source, Destination, Hops);
