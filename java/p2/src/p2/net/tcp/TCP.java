@@ -1,14 +1,22 @@
-package p2.net;
+package p2.net.tcp;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Hashtable;
 
+import p2.net.Address;
+import p2.net.IP;
+import p2.net.NetworkMessage;
+import p2.net.Channel;
+import p2.net.Network;
+import p2.net.Message;
+import p2.net.Server;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
@@ -18,36 +26,46 @@ import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 
 public class TCP extends Server {
+	private static final TableName ReceiveMessage = new TableName("tcp", "receive");
 	
-	private Manager manager;
-		
+	private Network manager;
+	
 	private ServerSocket server;
 	
-	private Hashtable<String, Thread> channels;
+	private Hashtable<Address, Thread> channels;
 		
-	public TCP(Manager manager, Integer port) throws IOException {
+	public TCP(Network manager, Integer port) throws IOException, UpdateException {
 		this.manager = manager;
 		this.server = new ServerSocket(port);
-		this.channels = new Hashtable<String, Thread>();
+		this.channels = new Hashtable<Address, Thread>();
+		p2.core.System.install("TCP",
+				ClassLoader.getSystemClassLoader().getResource("p2/net/tcp/tcp.olg").getPath());
 	}
 	
 	public void run() {
 		while (true) {
+			Connection channel = null;
 			try {
-				Socket     socket  = this.server.accept();
-				Connection channel = new Connection(socket);
-				Thread     thread  = new Thread(channel);
+				Socket socket = this.server.accept();
+				
+				channel = new Connection(socket);
+				manager.connection().register(channel);
+				
+				Thread thread  = new Thread(channel);
 				thread.start();
 				channels.put(channel.address(), thread);
 			} catch (IOException e) {
+				if (channel != null) channel.close();
 				e.printStackTrace();
-				return;
+			} catch (UpdateException e) {
+				if (channel != null) channel.close();
+				e.printStackTrace();
 			}
 		}
 	}
 	
 	@Override
-	public Channel open(String address) {
+	public Channel open(Address address) {
 		try {
 			Connection channel = new Connection(address);
 			Thread thread = new Thread(channel);
@@ -55,6 +73,7 @@ public class TCP extends Server {
 			channels.put(channel.address(), thread);
 			return channel;
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -67,23 +86,22 @@ public class TCP extends Server {
 		}
 	}
 	
-	private static class Connection extends Channel implements Runnable {
+	private class Connection extends Channel implements Runnable {
 		private Socket socket;
 		private ObjectInputStream iss;
 		private ObjectOutputStream oss;
 
-		public Connection(String address) 
+		public Connection(Address address) 
 			throws UnknownHostException, IOException {
 			super("tcp", address);
-			String  host = address.substring(0, address.indexOf(':'));
-			Integer port = Integer.parseInt(address.substring(address.indexOf(':')+1));
-			this.socket = new Socket(host, port);
+			IP ip = (IP) address;
+			this.socket = new Socket(ip.address(), ip.port());
 			this.oss    = new ObjectOutputStream(this.socket.getOutputStream());
 			this.iss    = new ObjectInputStream(this.socket.getInputStream());
 		}
 		
 		public Connection(Socket socket) throws IOException {
-			super("tcp", socket.getInetAddress().toString());
+			super("tcp", new IP(socket.getInetAddress(), socket.getPort()));
 			this.socket = socket;
 			this.oss    = new ObjectOutputStream(this.socket.getOutputStream());
 			this.iss    = new ObjectInputStream(socket.getInputStream());
@@ -95,7 +113,6 @@ public class TCP extends Server {
 				if (this.socket.isClosed()) {
 					return false;
 				}
-				
 				this.oss.writeObject(packet);
 			} catch (IOException e) {
 				return false;
@@ -113,10 +130,16 @@ public class TCP extends Server {
 		public void run() {
 			while(true) {
 				try {
-					Application packet = (Application) this.iss.readObject();
-					p2.core.System.schedule(packet.program(), packet.insertions(), packet.deletions());
+					Message message = (Message) this.iss.readObject();
+					IP address = new IP(this.socket.getInetAddress(), this.socket.getPort());
+					Tuple tuple = new Tuple(address, message);
+					p2.core.System.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
 				} catch (IOException e) {
-					close();
+					try {
+						TCP.this.manager.connection().unregister(this);
+					} catch (UpdateException e1) {
+						e1.printStackTrace();
+					}
 					return;
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();

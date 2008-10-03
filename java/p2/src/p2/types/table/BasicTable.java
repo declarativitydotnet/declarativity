@@ -31,8 +31,14 @@ public class BasicTable extends Table {
 	
 	@Override
 	public TupleSet tuples() {
+		try {
 		return this.tuples == null ? new TupleSet(name()) : this.tuples.clone();
-
+		} catch (Exception e) {
+			System.err.println("TABLE " + name() + " ERROR: " + e);
+			e.printStackTrace();
+			System.exit(0);
+		}
+		return null;
 	}
 	
 	@Override

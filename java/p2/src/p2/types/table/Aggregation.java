@@ -15,9 +15,11 @@ import p2.types.function.Aggregate;
 
 public class Aggregation extends Table {
 	
-	private Hashtable<Tuple,TupleSet> tuples;
+	/* Stores base tuples in aggregate functions. */
+	private Hashtable<Tuple, Aggregate> baseTuples;
 	
-	private Hashtable<Tuple, Aggregate> aggregates;
+	/* Stores aggregate values derrived from base tuples and aggregate functions. */
+	private TupleSet aggregateTuples;
 	
 	private p2.lang.plan.Aggregate aggregate;
 	
@@ -27,18 +29,19 @@ public class Aggregation extends Table {
 	
 	public Aggregation(Predicate predicate, Table.Type type) {
 		super(predicate.name(), type, key(predicate), types(predicate));
-		this.tuples = new Hashtable<Tuple, TupleSet>();
-		this.aggregates = new Hashtable<Tuple, Aggregate>();
-		if (type == Table.Type.TABLE) {
-			this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
-			this.secondary = new Hashtable<Key, Index>();
-		}
+		this.baseTuples = new Hashtable<Tuple, Aggregate>();
+		this.aggregateTuples = new TupleSet(name());
 		
 		for (p2.lang.plan.Expression arg : predicate) {
 			if (arg instanceof p2.lang.plan.Aggregate) {
 				this.aggregate = (p2.lang.plan.Aggregate) arg;
 				break;
 			}
+		}
+		
+		if (type == Table.Type.TABLE) {
+			this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
+			this.secondary = new Hashtable<Key, Index>();
 		}
 	}
 	
@@ -66,141 +69,105 @@ public class Aggregation extends Table {
 	
 	@Override
 	public TupleSet tuples() {
-		TupleSet current = new TupleSet(name());
-		if (aggregates != null) {
-			for (Aggregate aggregate : aggregates.values()) {
-				if (aggregate.result() != null) {
-					current.add(aggregate.result());
-				}
-			}
+		return this.aggregateTuples.clone();
+	}
+	
+	private TupleSet values() {
+		TupleSet values = new TupleSet(name());
+		for (Aggregate value : baseTuples.values()) {
+			values.add(value.result());
 		}
-		return current;
+		return values;
 	}
 	
 	public TupleSet insert(TupleSet insertions, TupleSet deletions) throws UpdateException {
-		deletions.removeAll(insertions);
+		if (deletions.size() > 0) {
+			TupleSet intersection = deletions.clone();
+			intersection.retainAll(insertions);
 		
-		TupleSet previous = tuples();
-		
-		/* Perform aggregation. */
-		for (Tuple tuple : insertions) {
-			insert(tuple);
-		}
-		
-		if (deletions != null && deletions.size() > 0) {
-			delete(deletions);
+			insertions.removeAll(intersection);
+			deletions.removeAll(intersection);
+			TupleSet delta = delete(deletions);
 			deletions.clear();
+			deletions.addAll(delta);
 		}
 		
-		TupleSet current = tuples();
+
 		
-		if (deletions != null) {
-			deletions.addAll(previous);    // Add all previous tuples
-			deletions.removeAll(current);  // Remove all current tuples
+		
+		for (Tuple tuple : insertions) {
+			Tuple key = key().project(tuple);
+			if (!baseTuples.containsKey(key)) {
+				baseTuples.put(key, Aggregate.function(this.aggregate));
+			}
+			try {
+				baseTuples.get(key).insert(tuple);
+			} catch (P2RuntimeException e) {
+				e.printStackTrace();
+				System.exit(0);
+			}
 		}
 		
-		TupleSet delta = new TupleSet(name());
-		delta.addAll(current); // Add all current tuples
-		delta.removeAll(previous); // Remove those that existed before
-		
-		for (Callback callback : callbacks) {
-			callback.insertion(delta);
-			callback.deletion(deletions);
-		}
+		TupleSet delta = values();
+		delta.removeAll(tuples());  // Only those newly inserted tuples remain.
+		delta.removeAll(deletions);
 		
 		if (type() == Table.Type.EVENT) {
-			this.tuples.clear();
-			this.aggregates.clear();
+			this.baseTuples.clear();
+			this.aggregateTuples.clear();
+			return delta;
 		}
-		return delta;
+		insertions = super.insert(delta, deletions);
+		return insertions;
 	}
 	
 	@Override
+	public boolean insert(Tuple tuple) throws UpdateException {
+		return this.aggregateTuples.add(tuple);
+	}
+	
 	public TupleSet delete(TupleSet deletions) throws UpdateException {
-		TupleSet previous = tuples();
-		
-		/* Perform deletions. */
-		for (Tuple tuple : deletions) {
-			delete(tuple);
+		if (type() == Table.Type.EVENT) {
+			throw new UpdateException("Aggregation table " + name() + " is an event table!");
 		}
 		
-		TupleSet current = tuples();
-		
-		TupleSet updates = new TupleSet(name());
-		updates.addAll(previous);    // Add all previous tuples
-		updates.removeAll(current);  // Remove all current tuples
+		for (Tuple tuple : deletions) {
+			Tuple key = key().project(tuple);
+			if (this.baseTuples.containsKey(key)) {
+				try {
+					this.baseTuples.get(key).delete(tuple);
+					if (this.baseTuples.get(key).tuples().size() == 0) {
+						this.baseTuples.remove(key);
+					}
+				} catch (P2RuntimeException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 		
 		TupleSet delta = new TupleSet(name());
-		delta.addAll(current);     // Add all current tuples
-		delta.removeAll(previous); // Remove those that existed before
+		delta.addAll(tuples());
 		
-		for (Callback callback : callbacks) {
-			callback.insertion(delta);
-			callback.deletion(updates);
-		}
-		
-		return delta;
+		delta.removeAll(values());  // removed = tuples that don't exist in after.
+		return super.delete(delta); // signal indices that we've removed these tuples.
 	}
 	
 	@Override
 	public boolean delete(Tuple tuple) throws UpdateException {
-		Tuple key = key().project(tuple);
-		TupleSet group = tuples.get(key);
-		if (group == null) {
-			return false;
-		}
-		group.remove(tuple);
-		
-		/* Recompute aggregate of tuple group. */
-		Aggregate function = aggregates.get(key);
-		Tuple previous = function.result();
-		function.reset();
-		for (Tuple t : group) {
-			try {
-				function.evaluate(t);
-			} catch (P2RuntimeException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-		}
-		
-		/* Did deletion caused an aggregate change? */
-		if (function.result() == null) {
-			aggregates.remove(key);
-			return true;
-		}
-		return !function.result().equals(previous);
+		return this.aggregateTuples.remove(tuple);
 	}
 
-	@Override
-	public boolean insert(Tuple tuple) throws UpdateException {
-		Tuple key = key().project(tuple);
-		if (!tuples.containsKey(key)) {
-			tuples.put(key, new TupleSet(name()));
-		}
-		tuples.get(key).add(tuple);
-		
-		if (!aggregates.containsKey(key)) {
-			aggregates.put(key, Aggregate.function(this.aggregate));
-		}
-		try {
-			aggregates.get(key).evaluate(tuple);
-		} catch (P2RuntimeException e) {
-			throw new UpdateException(e.toString());
-		}
-		return true;
-	}
 
 	@Override
 	public Integer cardinality() {
-		return this.tuples.size();
+		return this.aggregateTuples.size();
 	}
 
 	@Override
 	public Index primary() {
 		return this.primary;
 	}
-
+	
 	@Override
 	public Hashtable<Key, Index> secondary() {
 		return this.secondary;

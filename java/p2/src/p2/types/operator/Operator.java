@@ -75,6 +75,10 @@ public abstract class Operator implements Comparable<Operator> {
 		return this.identifier.compareTo(o.identifier);
 	}
 	
+	public void rule(String rule) {
+		this.rule = rule;
+	}
+	
 	@Override
 	public abstract String toString();
 	

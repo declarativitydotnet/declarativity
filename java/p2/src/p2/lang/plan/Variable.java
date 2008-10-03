@@ -93,6 +93,7 @@ public class Variable extends Expression {
 					return tuple.value(name());
 				} catch (Exception e) {
 					System.err.println("UNKNOWN VARIABLE NAME " + name() + " IN TUPLE SCHEMA " + tuple.schema());
+					System.err.println("ASSUMED POSITION " + position());
 					e.printStackTrace();
 					throw new P2RuntimeException (e.toString());
 				}

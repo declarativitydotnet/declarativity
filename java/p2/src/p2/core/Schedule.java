@@ -6,6 +6,7 @@ import java.util.List;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
 import p2.types.table.Index;

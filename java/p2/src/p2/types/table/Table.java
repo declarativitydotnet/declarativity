@@ -53,7 +53,7 @@ public abstract class Table implements Comparable<Table> {
 				TypeList types    = (TypeList) tuple.value(Field.TYPES.ordinal());
 
 				if (type.equals(Type.TABLE.toString())) {
-					table = new RefTable(name, key, types);
+					table = new BasicTable(name, key, types);
 				}
 				else {
 					throw new UpdateException("Don't know how to create table type " + type);

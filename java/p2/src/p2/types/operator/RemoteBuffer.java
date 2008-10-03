@@ -8,6 +8,8 @@ import java.util.Set;
 import p2.lang.plan.Predicate;
 import p2.lang.plan.Rule;
 import p2.lang.plan.Variable;
+import p2.net.IP;
+import p2.net.NetworkMessage;
 import p2.net.NetworkBuffer;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
@@ -16,6 +18,7 @@ import p2.types.exception.BadKeyException;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.function.TupleFunction;
+import p2.types.table.TableName;
 
 public class RemoteBuffer extends Operator {
 
@@ -61,39 +64,23 @@ public class RemoteBuffer extends Operator {
 		}
 		
 		for (String address : groupByAddress.keySet()) {
-			Tuple remote = null; 
-			try {
-				String protocol = address.substring(0, address.indexOf(':'));
-				String location = address.substring(address.indexOf(':') + 1);
-				TupleSet lookup = p2.net.Manager.buffer().primary().lookup(protocol, location, this.program);
-				if (lookup != null && lookup.size() > 0) {
-					remote = lookup.iterator().next();
-				}
-				else {
-			        remote = new Tuple(protocol, location, this.program,
-					                   new TupleSet(predicate.name()), new TupleSet(predicate.name()));
-				}
-			} catch (BadKeyException e) {
-				e.printStackTrace();
-				System.exit(0);
-			}
+			String protocol = address.substring(0, address.indexOf(':'));
+			String location = address.substring(address.indexOf(':') + 1);
+	        Tuple remote = new Tuple("network", "send", new IP(location), 
+			        		         new NetworkMessage(protocol, this.program, predicate.name(), 
+			         		                      		new TupleSet(predicate.name()), 
+			        		        		            new TupleSet(predicate.name())));
 			
+			NetworkMessage message = (NetworkMessage) remote.value(NetworkBuffer.Field.MESSAGE.ordinal());
 			if (this.deletion) {
-				TupleSet d = (TupleSet) remote.value(NetworkBuffer.Field.DELETION.ordinal());
-				d.addAll(groupByAddress.get(address));
+				message.deletions().addAll(groupByAddress.get(address));
 			}
 			else {
-				TupleSet i = (TupleSet) remote.value(NetworkBuffer.Field.INSERTION.ordinal());
-				i.addAll(groupByAddress.get(address));
+				message.insertions().addAll(groupByAddress.get(address));
 			}
 			
-			
-			try {
-				p2.net.Manager.buffer().force(remote);
-			} catch (UpdateException e) {
-				e.printStackTrace();
-				System.exit(0);
-			}
+			TableName bufferName = p2.net.Network.bufferName();
+			p2.core.System.schedule("network", bufferName, new TupleSet(bufferName, remote), new TupleSet(bufferName));
 		}
 		
 		return new TupleSet(this.predicate.name());

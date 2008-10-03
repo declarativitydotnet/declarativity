@@ -52,7 +52,6 @@ import p2.types.table.BasicTable;
 import p2.types.table.EventTable;
 import p2.types.table.Key;
 import p2.types.table.Table;
-import p2.types.table.RefTable;
 import p2.types.table.TableName;
 import xtc.Constants;
 import xtc.tree.GNode;
@@ -314,7 +313,7 @@ public final class TypeChecker extends Visitor {
 		assert(type == TypeList.class);
 		TypeList schema  = (TypeList) n.getNode(2).getProperty(Constants.TYPE);
 
-		Table create = new RefTable(name, key, schema);
+		Table create = new BasicTable(name, key, schema);
 		this.program.definition(create);
 		n.setProperty(Constants.TYPE, create);
 		return Table.class;
@@ -349,7 +348,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitKeys(final GNode n) {
-		List<Node> keyList = n.<Node>getList(0).list();
+		List<Node> keyList = n.size() == 0 ? new ArrayList<Node>() : n.<Node>getList(0).list();
 		Integer[] keys = new Integer[keyList.size()];
 		int index = 0;
 		if (keyList.size() > 0) {
@@ -1603,14 +1602,19 @@ public final class TypeChecker extends Visitor {
 		else {
 			if (n.getNode(1) == null) {
 				n.setProperty(Constants.TYPE, 
-						new Aggregate(null, function, p2.types.function.Aggregate.type(function, null)));
+						new Aggregate((String)null, function, p2.types.function.Aggregate.type(function, null)));
 			}
 			else {
 				Class type = (Class) dispatch(n.getNode(1));
-				assert (type == Variable.class);
-				Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
-				n.setProperty(Constants.TYPE, 
-						new Aggregate(var.name(), function, p2.types.function.Aggregate.type(function, var.type())));
+				if (type == Variable.class) {
+					Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
+					n.setProperty(Constants.TYPE, 
+							new Aggregate(var.name(), function, p2.types.function.Aggregate.type(function, var.type())));
+				} else if (type == MethodCall.class) {
+					MethodCall method = (MethodCall) n.getNode(1).getProperty(Constants.TYPE);
+					n.setProperty(Constants.TYPE,  
+							new Aggregate(method, function, p2.types.function.Aggregate.type(function, method.type())));
+				}
 			}
 		}
 		return Aggregate.class;

@@ -106,28 +106,24 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	
 	public void schema(Schema schema) throws P2RuntimeException {
 		if (schema.size() != size()) {
-			throw new P2RuntimeException("Schema assignment does not match tuple arity! " +
-					                     " Tuple: " + schema.name() + "< " + this + "> size =? " + size());
+			throw new P2RuntimeException("Schema " + schema.name() + schema + " does not match tuple arity! " +
+					                     " Tuple: " + this + " size =? " + size());
 		}
 		this.schema = schema;
 	}
 	
 	public int compareTo(Tuple other) {
-		if (this.values.size() == 0) 
-			return this.id.compareTo(other.id);
-		else {
-			if (size() != other.size()) {
-				return -1;
+		if (size() != other.size()) {
+			return -1;
+		}
+		for (int i = 0; i < size(); i++) {
+			if (values.get(i) == null || other.values.get(i) == null) {
+				if (values.get(i) != other.values.get(i)) {
+					return -1;
+				}
 			}
-			for (int i = 0; i < size(); i++) {
-				if (values.get(i) == null || other.values.get(i) == null) {
-					if (values.get(i) != other.values.get(i)) {
-						return -1;
-					}
-				}
-				else if (values.get(i).compareTo(other.values.get(i)) != 0) {
-					return values.get(i).compareTo(other.values.get(i));
-				}
+			else if (values.get(i).compareTo(other.values.get(i)) != 0) {
+				return values.get(i).compareTo(other.values.get(i));
 			}
 		}
 		return 0;

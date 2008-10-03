@@ -10,13 +10,22 @@ public class Aggregate extends Variable {
 	
 	private String function;
 	
+	private MethodCall method;
+	
 	public Aggregate(String name, String function, Class type) {
 		super(name, type);
 		this.function = function;
+		this.method = null;
+	}
+	
+	public Aggregate(MethodCall method, String function, Class type) {
+		this((method == null ? null : method.method().getName()), function, type);
+		this.method = method;
 	}
 	
 	public Aggregate clone() {
-		return new Aggregate(name(), function, type());
+		return this.method == null ? new Aggregate(name(), function, type()) :
+									 new Aggregate(method, function, type());
 	}
 
 	public String toString() {
@@ -29,7 +38,8 @@ public class Aggregate extends Variable {
 	
 	@Override
 	public TupleFunction function() {
-		return new TupleFunction() {
+		return this.method != null ?  method.function() :
+			new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws P2RuntimeException {
 				return name().equals(STAR) ? tuple.id() : tuple.value(name());
 			}

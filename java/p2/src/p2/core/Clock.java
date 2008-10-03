@@ -4,6 +4,7 @@ import p2.exec.Query;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
+import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
@@ -22,17 +23,20 @@ public class Clock extends ObjectTable {
 	
 	private Long clock;
 
-	public Clock(String location) {
+	public Clock(String location) throws UpdateException {
 		super(new TableName(GLOBALSCOPE, "clock"), PRIMARY_KEY, new TypeList(SCHEMA));
 		this.location = location;
-		this.clock = -1L;
+		this.clock = 0L;
 	}
 	
 	public Long current() {
 		return this.clock;
 	}
 	
-	@Override
+	public TupleSet time(Long time) {
+		return new TupleSet(name(), new Tuple(location, time));
+	}
+	
 	public boolean insert(Tuple tuple) throws UpdateException {
 		Long time = (Long) tuple.value(Field.CLOCK.ordinal());
 		if (time < this.clock) {
@@ -43,9 +47,7 @@ public class Clock extends ObjectTable {
 		return super.insert(tuple);
 	}
 	
-	public TupleSet time(Long time) {
-		TupleSet me = new TupleSet(name());
-		me.add(new Tuple(location, time));
-		return me;
+	public boolean delete(Tuple tuple) throws UpdateException {
+		return super.delete(tuple);
 	}
 }

@@ -1,9 +1,21 @@
 package p2.types.function;
 
+import p2.lang.plan.GenericAggregate;
 import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 
-public abstract class Aggregate implements TupleFunction<Comparable> {
+public abstract class Aggregate {
+	
+	public abstract Tuple insert(Tuple tuple) throws P2RuntimeException;
+	
+	public abstract Tuple delete(Tuple tuple) throws P2RuntimeException;
+	
+	public abstract Tuple result();
+	
+	public abstract TupleSet tuples();
+	
+	public abstract Class returnType();
 	
 	private static class Accessor implements TupleFunction<Comparable> {
 		private Integer position;
@@ -35,13 +47,9 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	public static final String SUMSTR   = "sumstr";
 	public static final String TUPLESET = "tupleset";
 	
-	public abstract Tuple result();
-	
-	public abstract void reset();
-	
 	public static Aggregate function(p2.lang.plan.Aggregate aggregate) {
-		if (aggregate instanceof p2.lang.plan.GenericAggregate) {
-			return new Generic(new Accessor(aggregate));
+		if (aggregate instanceof GenericAggregate) {
+			return new Generic((GenericAggregate) aggregate);
 		}
 		else if (MIN.equals(aggregate.functionName())) {
 			return new Min(new Accessor(aggregate));
@@ -56,10 +64,10 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return new Avg(new Accessor(aggregate));
 		}
 		else if (SUMSTR.equals(aggregate.functionName())) {
-			return new SumStr(new Accessor(aggregate));
+			return new ConcatString(new Accessor(aggregate));
 		}
 		else if (TUPLESET.equals(aggregate.functionName())) {
-			return new TupleSet(new Accessor(aggregate));
+			return new TupleCollection(new Accessor(aggregate));
 		}
 		
 		return null;
@@ -82,76 +90,124 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 	}
 	
 	public static class Generic extends Aggregate {
+		private TupleSet tuples;
 		private Tuple result;
 		private Comparable current;
-		private Accessor accessor;
+		private GenericAggregate aggregate;
 		
-		public Generic(Accessor accessor) {
+		public Generic(GenericAggregate aggregate) {
+			this.aggregate = aggregate;
+			reset();
+		}
+		
+		private void reset() {
+			this.tuples = new TupleSet();
 			this.result = null;
 			this.current = null;
-			this.accessor = accessor;
 		}
 		
 		public Tuple result() {
 			return this.result == null ? null : this.result.clone();
 		}
 		
-		public void reset() {
-			this.result = null;
-			this.current = null;
+		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+			if (this.current == null) {
+				this.current = (Comparable) this.aggregate.function().evaluate(tuple);
+			}
+			this.aggregate.function(this.current).evaluate(tuple);
+			this.tuples.add(tuple);
+			this.result = tuple.clone();
+			this.result.value(this.aggregate.position(), this.current);
+			return this.result;
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
-			Comparable value = accessor.evaluate(tuple);
-			if (current == null || this.current.compareTo(value) != 0) {
-				this.current = value;
-				this.result = tuple;
-				return value;
+		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.remove(tuple)) {
+				TupleSet tuples = this.tuples;
+				reset();
+				Tuple last = null;
+				for (Tuple copy : tuples) {
+					last = insert(copy);
+				}
+				return last;
 			}
 			return null;
 		}
 
 		public Class returnType() {
-			return accessor.returnType();
+			return this.aggregate.type();
+		}
+
+		@Override
+		public TupleSet tuples() {
+			return this.tuples.clone();
 		}
 	}
 	
 	public static class Min extends Aggregate {
+		private TupleSet tuples;
 		private Tuple result;
 		private Comparable current;
 		private Accessor accessor;
 		
 		public Min(Accessor accessor) {
-			this.result = null;
-			this.current = null;
 			this.accessor = accessor;
+			reset();
 		}
 		
+		private void reset() {
+			this.result = null;
+			this.current = null;
+			this.tuples = new TupleSet();
+		}
+		
+		@Override
+		public TupleSet tuples() {
+			return this.tuples.clone();
+		}
+		
+		@Override
 		public Tuple result() {
 			return this.result == null ? null : this.result.clone();
 		}
 		
-		public void reset() {
-			this.result = null;
-			this.current = null;
+		@Override
+		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.add(tuple)) {
+				Comparable value = accessor.evaluate(tuple);
+				if (current == null || this.current.compareTo(value) > 0) {
+					this.current = value;
+					this.result = tuple;
+					return result;
+				}
+			}
+			return null;
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
-			Comparable value = accessor.evaluate(tuple);
-			if (current == null || this.current.compareTo(value) > 0) {
-				this.current = value;
-				this.result = tuple;
-				return value;
+		@Override
+		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.remove(tuple)) {
+				Comparable value = accessor.evaluate(tuple);
+				if (this.current.compareTo(value) == 0) {
+					TupleSet tuples = this.tuples;
+					reset();
+					for (Tuple copy : tuples) {
+						insert(copy);
+					}
+					return result();
+				}
 			}
 			return null;
 		}
 
+		@Override
 		public Class returnType() {
 			return accessor.returnType();
 		}
 	}
 	
 	public static class Max extends Aggregate {
+		private TupleSet tuples;
 		private Tuple result;
 		private Comparable current;
 		private Accessor accessor;
@@ -159,6 +215,7 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		public Max(Accessor accessor) {
 			this.result = null;
 			this.current = null;
+			this.tuples = new TupleSet();
 			this.accessor = accessor;
 		}
 		
@@ -166,17 +223,32 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 			return this.result == null ? null : this.result.clone();
 		}
 		
-		public void reset() {
-			this.result = null;
-			this.current = null;
+		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.add(tuple)) {
+				Comparable value = accessor.evaluate(tuple);
+				if (current == null || this.current.compareTo(value) < 0) {
+					this.current = value;
+					this.result = tuple;
+					return result;
+				}
+			}
+			return null;
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
-			Comparable value = accessor.evaluate(tuple);
-			if (current == null || this.current.compareTo(value) < 0) {
-				this.current = value;
-				this.result = tuple;
-				return value;
+		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.contains(tuple)) {
+				this.tuples.remove(tuple);
+				Comparable value = accessor.evaluate(tuple);
+				if (this.current.compareTo(value) == 0) {
+					TupleSet tuples = this.tuples;
+					this.tuples = new TupleSet();
+					this.current = null;
+					this.result  = null;
+					for (Tuple copy : tuples) {
+						insert(copy);
+					}
+					return result();
+				}
 			}
 			return null;
 		}
@@ -184,92 +256,123 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		public Class returnType() {
 			return accessor.returnType();
 		}
+		
+		@Override
+		public TupleSet tuples() {
+			return this.tuples.clone();
+		}
 	}
 	
 	public static class Count extends Aggregate {
+		private TupleSet tuples;
 		private Tuple result;
-		private Integer current;
 		private Accessor accessor;
 		
 		public Count(Accessor accessor) {
+			this.tuples = new TupleSet();
 			this.result = null;
-			this.current = new Integer(0);
 			this.accessor = accessor;
 		}
 		
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
-				this.result.value(accessor.position(), this.current);
+				this.result.value(accessor.position(), this.tuples.size());
 				return this.result;
 			}
 			return null;
 		}
 		
-		public void reset() {
-			this.current = new Integer(0);
+		public Tuple insert(Tuple tuple) {
+			if (this.tuples.add(tuple)) {
+				this.result = tuple;
+				return result();
+			}
+			return null;
 		}
 		
-		public Comparable evaluate(Tuple tuple) {
+		public Tuple delete(Tuple tuple) {
 			this.result = tuple;
-			this.current += 1;
-			return this.current;
+			this.tuples.remove(tuple);
+			return result();
 		}
 
 		public Class returnType() {
 			return Integer.class;
 		}
+		
+		@Override
+		public TupleSet tuples() {
+			return this.tuples.clone();
+		}
 	}
 	
 	public static class Avg extends Aggregate {
+		private TupleSet tuples;
 		private Tuple result;
 		private Float sum;
-		private Float count;
 		private Accessor accessor;
 		
 		public Avg(Accessor accessor) {
-			this.result = null;
-			this.sum = new Float(0);
-			this.count = new Float(0);
 			this.accessor = accessor;
+			reset();
 		}
 		
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
-				this.result.value(accessor.position(), this.sum / this.count);
+				this.result.value(accessor.position(), this.sum / (float)this.tuples.size());
 				return this.result;
 			}
 			return null;
 		}
 		
 		public void reset() {
+			this.tuples = new TupleSet();
 			this.result = null;
 			this.sum = 0F;
-			this.count = 0F;
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
-			this.result = tuple;
-			Number value = (Number) this.accessor.evaluate(tuple);
-			this.sum += value.floatValue();
-			this.count += 1.0;
-			return this.sum / this.count;
+		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.add(tuple)) {
+				this.result = tuple;
+				Number value = (Number) this.accessor.evaluate(tuple);
+				this.sum += value.floatValue();
+				return result();
+			}
+			return null;
+		}
+		
+		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.remove(tuple)) {
+				this.tuples.add(tuple);
+				this.result = tuple;
+				Number value = (Number) this.accessor.evaluate(tuple);
+				this.sum -= value.floatValue();
+				return result();
+			}
+			return null;
 		}
 
 		public Class returnType() {
 			return Float.class;
 		}
+		
+		@Override
+		public TupleSet tuples() {
+			return this.tuples.clone();
+		}
 	}
 	
-	public static class SumStr extends Aggregate {
+	public static class ConcatString extends Aggregate {
+		private TupleSet tuples;
 		private Tuple result;
 		private String current;
 		private Accessor accessor;
 		
-		public SumStr(Accessor accessor) {
-			this.current = null;
+		public ConcatString(Accessor accessor) {
 			this.accessor = accessor;
+			reset();
 		}
 		
 		public Tuple result() {
@@ -282,63 +385,94 @@ public abstract class Aggregate implements TupleFunction<Comparable> {
 		}
 		
 		public void reset() {
+			this.tuples = new TupleSet();
 			this.result = null;
 			this.current = null;
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
-			this.result = tuple;
-			if (this.current == null) {
-				this.current = (String) this.accessor.evaluate(tuple);
+		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.add(tuple)) {
+				this.result = tuple;
+				if (this.current == null) {
+					this.current = (String) this.accessor.evaluate(tuple);
+				}
+				else {
+					this.current += (String) this.accessor.evaluate(tuple);
+				}
+				return result();
 			}
-			else {
-				this.current += (String) this.accessor.evaluate(tuple);
+			return null;
+		}
+		
+		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.remove(tuple)) {
+				TupleSet tuples = this.tuples;
+				reset();
+				for (Tuple copy : tuples) {
+					insert(copy);
+				}
+				return result();
 			}
-			
-			return this.current;
+			return null;
 		}
 
 		public Class returnType() {
 			return String.class;
 		}
+		
+		@Override
+		public TupleSet tuples() {
+			return this.tuples.clone();
+		}
 	}
 	
-	public static class TupleSet extends Aggregate {
-		private Tuple result;
-		private p2.types.basic.TupleSet tupleset;
+	public static class TupleCollection extends Aggregate {
+		private TupleSet tuples;
+		private Tuple    result;
+		private TupleSet nestedSet;
 		private Accessor accessor;
 		
-		public TupleSet(Accessor accessor) {
-			this.result = null;
-			this.tupleset = null;
+		public TupleCollection(Accessor accessor) {
 			this.accessor = accessor;
+			this.tuples = new TupleSet();
+			this.nestedSet = new TupleSet();
+			this.result = null;
 		}
 		
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
-				this.result.value(accessor.position(), this.tupleset);
+				this.result.value(accessor.position(), this.nestedSet.clone());
 				return this.result;
 			}
 			return null;
 		}
 		
-		public void reset() {
-			this.result = null;
-			this.tupleset = null;
+		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.add(tuple)) {
+				this.result = tuple;
+				this.nestedSet.add((Tuple) this.accessor.evaluate(tuple));
+				return result();
+			}
+			return null;
 		}
 		
-		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
-			this.result = tuple;
-			if (this.tupleset == null) {
-				this.tupleset = new p2.types.basic.TupleSet();
+		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+			if (this.tuples.remove(tuple)) {
+				this.result = tuple;
+				this.nestedSet.remove((Tuple) this.accessor.evaluate(tuple));
+				return result();
 			}
-			this.tupleset.add((Tuple) this.accessor.evaluate(tuple));
-			return this.tupleset;
+			return null;
 		}
 
 		public Class returnType() {
-			return p2.types.basic.TupleSet.class;
+			return TupleSet.class;
+		}
+		
+		@Override
+		public TupleSet tuples() {
+			return this.tuples.clone();
 		}
 	}
 }

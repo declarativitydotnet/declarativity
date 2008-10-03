@@ -76,6 +76,11 @@ public abstract class Query implements Comparable<Query> {
 	
 	public abstract String toString();
 	
+	public boolean equals(Object o) {
+		return o instanceof Query &&
+				compareTo((Query)o) == 0;
+	}
+	
 	public int compareTo(Query q) {
 		return this.hashCode() < q.hashCode() ? -1 :
 					this.hashCode() > q.hashCode() ? 1 : 0;

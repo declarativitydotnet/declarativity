@@ -10,26 +10,27 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+import p2.net.Address;
 import p2.net.Channel;
-import p2.net.Manager;
-import p2.net.Application;
+import p2.net.IP;
+import p2.net.Network;
+import p2.net.NetworkMessage;
 import p2.net.Message;
 import p2.net.Server;
 import p2.types.basic.Tuple;
+import p2.types.basic.TupleSet;
 import p2.types.exception.UpdateException;
+import p2.types.table.TableName;
 
 public class UDP extends Server {
+	private static final TableName UDPMessage = new TableName("udp", "message");
+	
 	public static final int max_packet  = 1500;
 	public static final int max_payload = 1400;
 	
-	private static final UDPBuffer buffer = new UDPBuffer();
-	
-	private Manager manager;
-	
 	private DatagramSocket server;
 		
-	public UDP(Manager manager, Integer port) throws IOException {
-		this.manager = manager;
+	public UDP(Integer port) throws IOException {
 		this.server = new DatagramSocket(port);
 	}
 	
@@ -40,20 +41,17 @@ public class UDP extends Server {
 		while (true) {
 			try {
 				byte[] buf = new byte[max_packet];
-				DatagramPacket dpacket = new DatagramPacket(buf, buf.length);
-				server.receive(dpacket);
+				DatagramPacket packet = new DatagramPacket(buf, buf.length);
+				server.receive(packet);
 				
-				ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(buf));
 				try {
-					UDPPacket udpPacket = (UDPPacket) input.readObject();
-					Tuple tuple = new Tuple(dpacket.getAddress().toString(), udpPacket.id, 
-							                udpPacket.offset, udpPacket.fragments, udpPacket.payload);
-					buffer.force(tuple);
+					ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(buf));
+					Message message = (Message) input.readObject();
+					Tuple tuple = new Tuple("receive", new IP(packet.getAddress(), packet.getPort()), message);
+					p2.core.System.schedule("tcp", UDPMessage, new TupleSet(UDPMessage, tuple), new TupleSet(UDPMessage));
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 					System.exit(0);
-				} catch (UpdateException e) {
-					e.printStackTrace();
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -62,7 +60,7 @@ public class UDP extends Server {
 	}
 	
 	@Override
-	public Channel open(String address) {
+	public Channel open(Address address) {
 		try {
 			return new Connection(address);
 		} catch (Exception e) {
@@ -72,74 +70,43 @@ public class UDP extends Server {
 	
 	@Override
 	public void close(Channel channel) {
-		// TODO Auto-generated method stub
+		channel.close();
 	}
 	
 	private static class Connection extends Channel {
-		private long ids;
-		
 		private DatagramSocket socket;
 		
-		private String host;
+		private IP address;
 		
-		private Integer port;
-
-		public Connection(String address) throws SocketException { 
+		public Connection(Address address) throws SocketException { 
 			super("udp", address);
-			this.ids    = 0;
 			this.socket = new DatagramSocket();
-			this.host   = address.substring(0, address.indexOf(':'));
-			this.port   = Integer.parseInt(address.substring(address.indexOf(':')+1));
+			this.address = (IP) address;
 		}
 		
 		@Override
-		public String address() {
-			return this.socket.getInetAddress().toString();
+		public Address address() {
+			return this.address;
 		}
 		
 		@Override
 		public boolean send(Message message) {
 			try {
-				if (message instanceof UDPPacket) {
-					send(message);
+				ByteArrayOutputStream data = new ByteArrayOutputStream(UDP.max_packet);
+				ObjectOutputStream oss = new ObjectOutputStream(data);
+				oss.writeObject(message);
+				if (data.size() > UDP.max_packet) {
+					System.err.println("UDP packet exceeds maximum allowable size!");
+					return false;
 				}
-				else {
-					ByteArrayOutputStream obstream = new ByteArrayOutputStream(UDP.max_payload);
-					ObjectOutputStream    ostream = new ObjectOutputStream(obstream);
-					ostream.writeObject(message);
-
-					byte [] payload = obstream.toByteArray();
-					if (payload.length > UDP.max_payload) {
-						int fragments = (payload.length / UDP.max_payload) + 1;
-						for (int offset = 0; offset < fragments; offset++) {
-							byte [] frag = new byte[UDP.max_payload];
-							System.arraycopy(payload, offset*UDP.max_payload, frag, 0, UDP.max_payload);
-							buffer(ids, offset, fragments, new UDPByteBuffer(frag));
-						}
-						this.ids++;
-					}
-					else {
-						buffer(ids++, 0, 1, new UDPByteBuffer(payload));
-					}
-				}
+				
+				DatagramPacket dgram = new DatagramPacket(data.toByteArray(), data.size());
+				this.socket.send(dgram);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return false;
 			}
 			return true;
-		}
-		
-		private void buffer(long id, int offset, int fragments, UDPByteBuffer payload) throws UpdateException {
-			Tuple tuple = new Tuple("send", address(), id, offset, fragments, payload);
-			UDP.buffer.force(tuple);
-		}
-		
-		private void send(UDPPacket packet) throws IOException {
-			ByteArrayOutputStream data = new ByteArrayOutputStream(UDP.max_packet);
-			ObjectOutputStream oss = new ObjectOutputStream(data);
-			oss.writeObject(packet);
-			DatagramPacket dgram = new DatagramPacket(data.toByteArray(), data.size());
-			this.socket.send(dgram);
 		}
 		
 		@Override

@@ -1,5 +1,6 @@
 program runtime;
 
+import p2.core.System;
 import java.lang.String;
 import java.lang.Integer;
 import java.lang.Long;
@@ -7,77 +8,120 @@ import p2.types.basic.TupleSet;
 import p2.types.basic.Tuple;
 import p2.types.table.TableName;
 
-/* Define runtime events. */
-define(runnable, {Long, String, TableName, TupleSet, TupleSet});
-define(strata, keys(0,1), {String, Long, Integer});
-define(priority, keys(0,1), {String, TableName, Integer});
-define(delta, {Long, String, TableName, TupleSet, TupleSet});
+/* Schedules things from the schedule queue (attaches strata to each tuple). */
+define(queue, {Long, Integer, String, TableName, TupleSet, TupleSet});
 
-reschedule
+/* Insertion queue: (Time, ID, Strata, ProgramName, TableName, Tuples) */
+define(insertionQueue, keys(1), {Long, Long, Integer, String, TableName, TupleSet});
+
+/* Deletion queue: (Time, ID, ProgramName, TableName, Tuples) */
+define(deletionQueue,  keys(1), {Long, Long, String, TableName, TupleSet});
+
+/* Evaluator output: evaluation(Time, ID, ProgramName, TableName, Insertions, Deletions) */
+define(evaluation, {Long, Long, String, TableName, TupleSet, TupleSet});
+
+/* Evaluator input: execute(Time, ID, ProgramName, TableName, Insertions, Deletions) */
+define(execute,    {Long, Long, String, TableName, TupleSet, TupleSet});
+
+/* Committer output: delta(Time, ID, ProgramName, TableName, Insertions, Deletions) */ 
+define(delta, {Long, Long, String, TableName, TupleSet, TupleSet});
+
+/* Committer input: runnable(Time, ID, ProgramName, TableName, Insertions, Deletions) */ 
+define(runnable,   {Long, Long, String, TableName, TupleSet, TupleSet});
+
+/* Current strata: strata(Program, Time, Strata) */
+define(strata,  keys(0,1), {String, Long, Integer});
+
+/* Predicate/TableName priority/strata: priority(Program, TableName, Strata) */
+define(priority, keys(0,1), {String, TableName, Integer});
+
+/* Remove insertion post evaluation. */
+delete
+insertionQueue(Time, Id, Strata, Program, Name, Insertions) :-
+	evaluation(_, Id, _, _, _, _),
+	insertionQueue(Time, Id, Strata, Program, Name, Insertions);
+
+/* Remove deletion post evaluation. */
+delete
+deletionQueue(Time, Id, Program, Name, Insertions) :-
+	evaluation(_, Id, _, _, _, _),
+	deletionQueue(Time, Id, Program, Name, Insertions);
+
+/* Reschedule delta. */
 schedule(Time, Program, Name, Insertions, Deletions) :-
-	delta(Time, Program, Name, Insertions, Deletions);
+	evaluation(Time, Id, Program, Name, Insertions, Deletions),
+	Insertions.size() > 0 || Deletions.size() > 0;
 	
-schedulePublic
-schedule(Time, Program2, Name, Insertions, Deletions) :-
-	delta(Time, Program1, Name, Insertions, Deletions),
+/* Evaluate the program with the given insertions OR deletions. */
+evaluator
+evaluation(Time, Id, Program, Name, Insertions, Deletions) :-
+	evaluator(execute(Time, Id, Program, Name, Insertions, Deletions));
+	
+/* NOTE: We do not schedule public deletions!! */
+publicEval
+execute(Time, Id, Program2, Name, Insertions, null) :-
+	delta(Time, Id, Program1, Name, Insertions, Deletions),
 	query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
 	Public == true && Input == Name, Program1 != Program2;
 
-evaluate 
-delta(Time, Program, Name, Insertions, Deletions) :-
-	evaluate(runnable(Time, Program, Name, Insertions, Deletions));
+/* Execute on the intended program. */
+localEval
+execute(Time, Id, Program, Name, Insertions, Deletions) :-
+	delta(Time, Id, Program, Name, Insertions, Deletions);
 
-/* Delete what has been evaluated in the current clock. */
-cleanup 
-delete schedule(Time, Program, Name, Insertions, Deletions) :-
-	runnable(Time, Program, Name, Insertions, Deletions);
+/* Commit the insertions OR deletions, pass deltas to evaluator. */
+commit 
+delta(Time, Id, Program, Name, Insertions, Deletions) :-
+	committer(runnable(Time, Id, Program, Name, Insertions, Deletions));
 
 /* Identify the runnable tuples. */
-runnable 
-runnable(Time, Program, Name, Insertions, Deletions) :-
-	strata#insert(Program, Time, Priority),
-	schedule(Time, Program, Name, Insertions, Deletions),
-	priority(Program, Name, Priority);
-	
+insertion_runnable 
+runnable(Time, Id, Program, Name, Insertions, null) :-
+	strata(Program, Time, Strata),
+	insertionQueue(Time, Id, Strata, Program, Name, Insertions);
+
+/* Execute all deletions when insertion count goes to 0. 
+   Deletions executed and deletions deltas scheduled for 
+   next clock. */
+deletion_runnable 
+runnable(Time+1, Id, Program, Name, null, Deletions) :-
+	deletionQueue(Time, Id, Program, Name, Deletions);
+
+
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
 strata 
-strata(Program, Time, min<Priority>) :-
+strata(Program, Time, min<Strata>) :-
+	insertionQueue(Time, Id, Strata, Program, Name, Insertions);
+
+init_insertion_queue
+insertionQueue(Time, Id, Strata, Program, Name, Insertions) :-
+	queue(Time, Strata, Program, Name, Insertions, Deletions),
+	Id := System.idgen();
+	
+init_deletion_queue
+deletionQueue(Time, Id, Program, Name, Deletions) :-
+	queue(Time, Strata, Program, Name, Insertions, Deletions),
+	Deletions != null && Deletions.size() > 0,
+	Id := System.idgen();
+	
+/* Queue up scheduled items in current clock. */
+queue(Time, Strata, Program, Name, Insertions, Deletions) :-
 	clock(Location, Time),
 	schedule(Time, Program, Name, Insertions, Deletions),
-	priority(Program, Name, Priority);
-
-/* This case handles those programs that do not have a query
-    (and hence no priority) for the tuple 'Name'. */
-runnable(Time, Program, Name, Insertions, Deletions) :-
+	priority(Program, Name, Strata);
+	
+queue(Time, 0, Program, Name, Insertions, Deletions) :-
 	clock(Location, Time),
 	schedule(Time, Program, Name, Insertions, Deletions),
-	notin priority(Program, Name, Priority);
-	
-/*******************************************************************/
-/*** Network scheduler                                           **/
-import p2.net.Message;
-import p2.net.Application;
+	notin priority(Program, Name, _);
 
-define(networkSend, {String, String, String});
+/* Clean up queued programs. */
+delete
+schedule(Time, Program, Name, Insertions, Deletions) :-
+	clock#delete(Location, Time),
+	schedule(Time, Program, Name, Insertions, Deletions);
 
-delete network::buffer(Protocol, Address, Program, Insertions, Deletions) :-
-	networkSend(Protocol, Address, Program),
-	network::buffer(Protocol, Address, Program, Insertions, Deletions),
-	network::connection(Protocol, Address, Channel),
-	Channel.send((Message) new Application(Program, Insertions, Deletions));
-
-networkSend(Protocol, Address, Program) :-
-	clock(Location, Time),
-	network::buffer(Protocol, Address, Program, Insertions, Deletions),
-	network::connection(Protocol, Address, Channel);
-	
-network::connection(Protocol, Address, null) :-
-	clock(Location, Time),
-	network::buffer(Protocol, Address, _, _, _),
-	notin network::connection(Protocol, Address, _);
-
-	
 /*******************************************************************/
 /*** Periodic scheduler                                           **/
 
@@ -111,14 +155,16 @@ facts(Program, Name, tupleset<Tuple>) :-
 	config(Time, Program, Object),
 	fact(Program, Name, Tuple);
 	
-installFacts1 
-runnable(Time, Program, Name, Facts, null) :-
-	facts(Program, Name, Facts), Program == "compile",
+installFacts 
+queue(Time, 0, Program, Name, Facts, null) :-
+	facts(Program, Name, Facts), Program == "compiler",
+	Facts.name(Name),
 	clock(Location, Time);
 	
 installFacts2 
 schedule(Time+1, Program, Name, Facts, null) :-
 	facts(Program, Name, Facts), Program != "compile",
+	Facts.name(Name),
 	clock(Location, Time);
 	
 /*******************************************************************/
@@ -133,7 +179,7 @@ config(Time, Program, Object) :-
 	Object.plan();
 		
 compileConfig 
-runnable(Time, "compile", Tuples.name(), Tuples, null) :-
+schedule(Time, "compile", Tuples.name(), Tuples, null) :-
 	config(Time, Program, Object),
 	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
 	

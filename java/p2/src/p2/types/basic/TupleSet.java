@@ -1,6 +1,7 @@
 package p2.types.basic;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -17,6 +18,12 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	
 	public TupleSet() {
 		this((TableName)null);
+	}
+	
+	private TupleSet(TupleSet clone) {
+		this.id = clone.id;
+		this.name = clone.name;
+		this.addAll(clone);
 	}
 	
 	public TupleSet(TableName name) {
@@ -37,11 +44,11 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	}
 	
 	public String toString() {
-		String tuples = name + "[\n";
+		String tuples = name + "[";
 		for (Tuple tuple : this) {
-			tuples += "\t" + tuple + "\n";
+			tuples += tuple + ", ";
 		}
-		tuples += "]\n";
+		tuples += "]";
 		return tuples;
 	}
 	
@@ -59,11 +66,29 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	}
 	
 	public TupleSet clone() {
-		return new TupleSet(name, this);
+		return new TupleSet(this);
+	}
+	
+	public String id() {
+		return this.id;
 	}
 	
 	public TableName name() {
 		return this.name;
+	}
+	
+	public boolean name(TableName name) {
+		this.name = name;
+		return true;
+	}
+	
+	@Override
+	public boolean addAll(Collection<? extends Tuple> tuples) {
+		super.addAll(tuples);
+		if (this.size() > 1000) {
+			System.err.println("TUPLE SET " + name() + " SIZE = " + size());
+		}
+		return true;
 	}
 
 	/**

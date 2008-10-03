@@ -254,6 +254,7 @@ generic ReferenceName = Name;
 generic Aggregate = 
      <Generic> "generic":Word void:'<' PostfixExpression void:'>'
    / <Basic>   Name void:'<' AggregateVariable void:'>'
+   / <Basic2>  Name void:'<' PostfixExpression void:'>'
    ;
 
 Node AggregateVariable =

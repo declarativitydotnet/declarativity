@@ -308,7 +308,7 @@ public class Rule extends Clause {
 			Long count  = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
 			List<Comparable> values = new ArrayList<Comparable>();
 			values.add(event.identifier());
-			for (int i = 1; i < event.arguments(); i++) {
+			for (int i = 1; i < event.arguments().size(); i++) {
 				values.add(((Value<Comparable>) event.argument(i)).value());
 			}
 			periodics.add(new Tuple(values));

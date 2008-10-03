@@ -27,13 +27,14 @@ public class BasicQuery extends Query {
 	
 	@Override
 	public String toString() {
-		String query = "Basic Query Rule " + rule() + 
-		               ": event " + input().toString();
+		String query = "QUERY RULE: " + rule() +  " ||: EVENT " + input().toString();
+		/*
 		if (body != null) {
 			for (Operator oper : body) {
 				query += " -> " + oper.toString();
 			}
 		}
+		*/
 		return query;
 	}
 

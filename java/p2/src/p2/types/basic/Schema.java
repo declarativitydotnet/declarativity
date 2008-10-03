@@ -29,6 +29,9 @@ public class Schema {
 	
 	public Schema(TableName name, List<Variable> variables) {
 		this.name = name;
+		for (int i = 0; i < variables.size(); i++) {
+			variables.get(i).position(i);
+		}
 		this.variables = new Hashtable<String, Variable>();
 		for (Variable variable : variables) {
 			this.variables.put(variable.name(), variable);

@@ -82,6 +82,7 @@ public class StaticMethodCall extends Expression {
 					arguments[index++] = argFunction.evaluate(tuple);
 				}
 				try {
+					// System.err.println("STATIC METHOD CALL " + StaticMethodCall.this.method.getName());
 					return StaticMethodCall.this.method.invoke(null, arguments);
 				} catch (Exception e) {
 					e.printStackTrace();

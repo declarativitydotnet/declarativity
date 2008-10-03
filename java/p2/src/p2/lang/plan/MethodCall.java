@@ -33,6 +33,10 @@ public class MethodCall extends Expression {
 		return this.method;
 	}
 	
+	public List<Expression> arguments() {
+		return this.arguments;
+	}
+	
 	@Override
 	public Class type() {
 		return method.getReturnType() == Void.class ? this.object.type() : method.getReturnType();

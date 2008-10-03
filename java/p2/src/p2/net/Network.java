@@ -4,8 +4,14 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.Hashtable;
 
+import p2.net.tcp.TCP;
+import p2.net.udp.UDP;
+import p2.types.basic.Tuple;
+import p2.types.exception.UpdateException;
+import p2.types.table.TableName;
 
-public final class Manager {
+
+public final class Network {
 	private static final NetworkBuffer buffer = new NetworkBuffer();
 	
 	private Connection connection;
@@ -14,14 +20,30 @@ public final class Manager {
 	
 	private Hashtable<String, Thread> serverThreads; 
 	
-	public Manager() throws IOException {
+	public Network() throws IOException {
 		this.connection    = new Connection(this);
 		this.servers       = new Hashtable<String, Server>();
 		this.serverThreads = new Hashtable<String, Thread>();
 	}
 	
-	public final static NetworkBuffer buffer() {
-		return buffer;
+	public final void install(Integer port) throws IOException, UpdateException {
+		/* Install protocols */
+		server("tcp", new TCP(this, port));
+		/*
+		server("udp", new UDP(this, port+1));
+		*/
+		
+		/* Install network layer application */
+		p2.core.System.install("network",
+				ClassLoader.getSystemClassLoader().getResource("p2/net/network.olg").getPath());
+	}
+	
+	public final static Tuple tuple(String direction, Address address, Message message) {
+		return new Tuple(direction, address, message);
+	}
+	
+	public final static TableName bufferName() {
+		return buffer.name();
 	}
 	
 	public void server(String protocol, Server server) {
@@ -31,7 +53,7 @@ public final class Manager {
 		this.serverThreads.put(protocol, thread);
 	}
 	
-	public Channel create(String protocol, String address) {
+	public Channel create(String protocol, Address address) {
 		if (!servers.containsKey(protocol)) {
 			System.err.println("ERROR: Unknown protocol " + protocol);
 			return null;
@@ -44,6 +66,15 @@ public final class Manager {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	/**
+	 * Get the connection table. The purpose of this
+	 * method is for the TCP server to register/unregister new connections.
+	 * @return The connection table.
+	 */
+	public Connection connection() {
+		return this.connection;
 	}
 	
 	/**

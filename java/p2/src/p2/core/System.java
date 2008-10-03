@@ -3,26 +3,29 @@ package p2.core;
 import java.net.URL;
 import java.util.Hashtable;
 
-import p2.core.Driver.Evaluate;
 import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
 import p2.lang.plan.Program;
-import p2.net.TCP;
-import p2.net.udp.UDP;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
+import p2.types.exception.UpdateException;
 import p2.types.table.Table;
+import p2.types.table.TableName;
 
 public class System {
 	private static boolean initialized = false;
 	
+	private static Long idgenerator = 0L;
+	
+	public static Long idgen() {
+		return idgenerator++;
+	}
+	
 	private static Thread system;
 	
-	private static p2.net.Manager netManager;
+	private static p2.net.Network netManager;
 	
 	private static QueryTable query;
-	
-	private static Evaluate evaluator;
 	
 	private static Driver driver;
 	
@@ -41,10 +44,6 @@ public class System {
 		return clock;
 	}
 	
-	public static Evaluate evaluator() {
-		return evaluator;
-	}
-	
 	public static QueryTable query() {
 		return query;
 	}
@@ -61,13 +60,14 @@ public class System {
 		programs.put(name, program);
 	}
 	
-	public static void install(String owner, String file) {
-		final TupleSet compilation = new TupleSet(Compiler.compiler.name());
+	public static void install(String owner, String file) throws UpdateException {
+		TupleSet compilation = new TupleSet(Compiler.compiler.name());
 		compilation.add(new Tuple(null, owner, file, null));
-		schedule("runtime", compilation, new TupleSet(Compiler.compiler.name()));
+		schedule("runtime", Compiler.compiler.name(), compilation, new TupleSet(Compiler.compiler.name()));
 	}
 	
-	public static void schedule(final String program, final TupleSet insertions, final TupleSet deletions) {
+	public static void schedule(final String program, final TableName name, 
+			                    final TupleSet insertions, final TupleSet deletions) {
 		synchronized (driver) {
 			driver.task(new Driver.Task() {
 				public TupleSet insertions() {
@@ -81,54 +81,59 @@ public class System {
 				public String program() {
 					return program;
 				}
+
+				public TableName name() {
+					return name;
+				}
 			});
+			driver.notify();
 		}
 	}
 	
-	public static void bootstrap(Integer port) {
+	public static void bootstrap(Integer port, String program) {
 		if (initialized) return;
 		
 		try {
 			Table.initialize();
 			Compiler.initialize();
 			query      = new QueryTable();
-			evaluator  = new Evaluate();
 			schedule   = new Schedule();
 			clock      = new Clock("localhost");
 			periodic   = new Periodic(schedule);
 			log        = new Log(java.lang.System.err);
 			programs   = new Hashtable<String, Program>();
-			netManager = new p2.net.Manager();
-			
-			netManager.server("tcp", new TCP(netManager, port));
-			netManager.server("udp", new UDP(netManager, port+1));
+			// netManager = new p2.net.Network();
+			driver = new Driver(schedule, periodic, clock);
 			
 	        URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
 			p2.lang.Compiler compiler = new p2.lang.Compiler("system", runtimeFile.getPath());
 			compiler.program().plan();
-			clock.insert(clock.time(0L), null);
-			
-			driver = new Driver(program("runtime"), schedule, periodic, clock);
+			driver.runtime(program("runtime"));
 			
 			for (String file : Compiler.FILES) {
 				install("system", file);
 			}
 			
+			/*
+			netManager.install(port);
+			*/
+			
+			install("user", program);
+			
 			system = new Thread(driver);
 			system.start();
-			
+			system.join();
 		} catch (Exception e) {
+			java.lang.System.err.println("BOOTSTRAP ERROR");
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
 		initialized = true;
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws UpdateException {
 		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg"));
-		bootstrap(Integer.parseInt(args[0]));
-		for (int i = 1; i < args.length; i++)
-			install("user", args[i]);
+		bootstrap(Integer.parseInt(args[0]), args[1]);
 	}
 
 }

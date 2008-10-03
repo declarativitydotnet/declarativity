@@ -141,8 +141,8 @@ public class Predicate extends Term implements Iterable<Expression> {
 		return this.arguments.get(i);
 	}
 	
-	public int arguments() {
-		return this.arguments.size();
+	public List<Expression> arguments() {
+		return this.arguments;
 	}
 	
 	@Override

@@ -1,14 +1,12 @@
 package p2.net;
 
-import p2.types.basic.TupleSet;
-
 public abstract class Channel implements Comparable<Channel> {
 	
 	private String protocol;
 	
-	private String address;
+	private Address address;
 	
-	protected Channel(String protocol, String address) {
+	protected Channel(String protocol, Address address) {
 		this.protocol = protocol;
 		this.address = address;
 	}
@@ -29,7 +27,7 @@ public abstract class Channel implements Comparable<Channel> {
 		return this.protocol;
 	}
 	
-	public String address() {
+	public Address address() {
 		return this.address;
 	}
 	
