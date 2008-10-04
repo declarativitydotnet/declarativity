@@ -11,7 +11,7 @@ define(config, {String, Program});
 define(checkStrata, {String, Integer});
 
 /*******************************************************************/
-/*** Facts that initialize priority with this programs predicates ***/
+/*** Facts that initialize priority with this program's predicates ***/
 
 runtime::priority("compile", new TableName("global", "compiler"),  0);
 runtime::priority("compile", new TableName("global", "predicate"), 0);
