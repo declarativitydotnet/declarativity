@@ -1,10 +1,6 @@
 package p2.core;
 
-import java.io.IOException;
 import java.net.URL;
-import java.util.Hashtable;
-
-import p2.core.Driver.Task;
 import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
 import p2.lang.plan.Program;
@@ -12,7 +8,6 @@ import p2.net.Network;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
-import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Table;
 import p2.types.table.TableName;
@@ -43,7 +38,7 @@ public class Runtime implements System {
 	
 	private Log log;
 	
-	private Runtime() throws UpdateException, IOException {
+	private Runtime() {
 		query      = new QueryTable();
 		schedule   = new Schedule();
 		clock      = new Clock("localhost");
@@ -168,5 +163,4 @@ public class Runtime implements System {
 		}
 		system.thread().join();
 	}
-
 }
