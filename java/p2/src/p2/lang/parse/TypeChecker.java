@@ -163,6 +163,17 @@ public final class TypeChecker extends Visitor {
 		
 		return superType == subType || superType.isAssignableFrom(subType);
 	}
+	
+	private boolean typeCoercion(Class[] formalTypes, Class[] argumentTypes) {
+		if (argumentTypes.length != formalTypes.length) return false;
+		
+		for (int i = 0; i < argumentTypes.length; i++) {
+			if (!subtype(formalTypes[i], argumentTypes[i]))  {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	// =========================================================================
 
@@ -486,8 +497,7 @@ public final class TypeChecker extends Visitor {
 				Variable var = (Variable) argument;
 				var.position(position);
 				if (var instanceof DontCare) {
-					runtime.error("Head predicate in a non-deletion rule " +
-							      "can't contain don't care variable!", n);
+					runtime.error("Head predicate can't contain don't care variable!", n);
 					return Error.class;
 				}
 				else if (var instanceof Aggregate) {
@@ -1285,7 +1295,18 @@ public final class TypeChecker extends Visitor {
 			Class [] types = parameterTypes.toArray(new Class[parameterTypes.size()]);
 			if (type == NewClass.class) {
 				NewClass newclass = (NewClass) context;
-				Constructor constructor = newclass.type().getConstructor(types);
+				Constructor[] constructors = newclass.type().getConstructors();
+				Constructor constructor = null;
+				for (Constructor c : newclass.type().getConstructors()) {
+					if (typeCoercion(c.getParameterTypes(), types)) {
+						constructor = c;
+						break;
+					}
+				}
+				if (constructor == null) {
+					runtime.error("Undefined constructor " + newclass.type() + types);
+					return Error.class;
+				}
 				newclass.constructor(constructor);
 				newclass.arguments(arguments);
 				n.setProperty(Constants.TYPE, newclass);
@@ -1303,18 +1324,37 @@ public final class TypeChecker extends Visitor {
 						runtime.error("Undefined expression object: " + object, n);
 						return Error.class;
 					}
+					Method method = null;
+					for (Method m : object.type().getMethods()) {
+						if (m.getName().equals(reference.toString()) &&
+								m.getModifiers() != Modifier.STATIC  &&
+								typeCoercion(m.getParameterTypes(), types)) {
+							method = m;
+							break;
+						}
+					}
+					if (method == null) {
+						runtime.error("Undefined method " + object.type() + "." + reference.toString() + types.toString());
+						return Error.class;
+					}
 					
-				    Method method = object.type().getMethod(reference.toString(), types);
 				    n.setProperty(Constants.TYPE, new MethodCall(object, method, arguments));
 				    return MethodCall.class;
 				}
 				else {
-					Method method = reference.type().getMethod(reference.toString(), types);
-			// XXX there should be a check here, but this check fails on static method invocations.
-			//		if (method.getModifiers() != Modifier.STATIC) {
-			//			runtime.error("Expected method " + reference.toString() + " to be static!", n);
-			//			return Error.class;
-			//		}
+					Method method = null;
+					for (Method m : reference.type().getMethods()) {
+						if (m.getName().equals(reference.toString()) &&
+								m.getModifiers() == Modifier.STATIC  &&
+								typeCoercion(m.getParameterTypes(), types)) {
+							method = m;
+							break;
+						}
+					}
+					if (method == null) {
+						runtime.error("Undefined method " + reference.type() + "." + reference.toString() + types);
+						return Error.class;
+					}
 					n.setProperty(Constants.TYPE, new StaticMethodCall(reference.type(), method, arguments));
 					return StaticMethodCall.class;
 				}

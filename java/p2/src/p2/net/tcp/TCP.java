@@ -32,7 +32,7 @@ public class TCP extends Server {
 		this.manager = manager;
 		this.server = new ServerSocket(port);
 		this.channels = new Hashtable<Address, Thread>();
-		p2.core.System.install("TCP",
+		p2.core.Runtime.runtime().install("system",
 				ClassLoader.getSystemClassLoader().getResource("p2/net/tcp/tcp.olg").getPath());
 	}
 	
@@ -127,7 +127,7 @@ public class TCP extends Server {
 					Message message = (Message) this.iss.readObject();
 					IP address = new IP(this.socket.getInetAddress(), this.socket.getPort());
 					Tuple tuple = new Tuple(address, message);
-					p2.core.System.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
+					p2.core.Runtime.runtime().schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
 				} catch (IOException e) {
 					try {
 						TCP.this.manager.connection().unregister(this);

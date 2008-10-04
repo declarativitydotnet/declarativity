@@ -25,7 +25,7 @@ public class Watch extends Clause {
 		};
 
 		public WatchTable() {
-			super(new TableName(GLOBALSCOPE, "watch"), PRIMARY_KEY, new TypeList(SCHEMA));
+			super(new TableName(GLOBALSCOPE, "watches"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 
 		@Override

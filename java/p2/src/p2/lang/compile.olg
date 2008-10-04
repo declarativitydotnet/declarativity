@@ -77,3 +77,59 @@ runtime::priority(ProgramName, Pred, Priority) :-
 	priorityUpdate(ProgramName, Pred, Priority);
 	
 	
+/*******************************************************************/
+/*** Compile uninstall program **/
+import java.lang.Boolean;
+	
+define(uninstall, {String, Boolean});
+define(hardUninstall, {String});
+
+delete
+program(Program, Owner, Object) :-
+	uninstall(Program, _),
+	program(Program, Owner, Object),
+	Owner != "system";
+	
+hardUninstall(Program) :-
+	uninstall(Program, Hard),
+	program(Program, Owner, Object),
+	Owner != "system";
+
+delete
+runtime::priority(Program, Pred, Priority) :-
+	hardUninstall(Program),
+	runtime::priority(Program, Pred, Priority);	
+
+delete
+query(Program, Rule, Public, Delete, Event, Input, Output, Object) :-
+	hardUninstall(Program),
+	query(Program, Rule, Public, Delete, Event, Input, Output, Object);
+	
+delete
+rule(Program, Rule, Public, Delete, Object) :-	
+	hardUninstall(Program),
+	rule(Program, Rule, Public, Delete, Object);
+	
+delete
+predicate(Program, Rule, Position, Event, Object) :-
+	hardUninstall(Program),
+	predicate(Program, Rule, Position, Event, Object);
+	
+delete
+selection(Program, Rule, Position, Object) :-
+	hardUninstall(Program),
+	selection(Program, Rule, Position, Object);
+
+delete
+assignment(Program, Rule, Position, Object) :-
+	hardUninstall(Program),
+	assignment(Program, Rule, Position, Object);
+
+delete
+watches(Program, Tablename, Modifier, Operator) :-
+	hardUninstall(Program),
+	watches(Program, Tablename, Modifier, Operator);
+	
+	
+	
+	

@@ -27,12 +27,10 @@ public final class Network {
 	public final void install(Integer port) throws IOException, UpdateException {
 		/* Install protocols */
 		server("tcp", new TCP(this, port));
-		/*
-		server("udp", new UDP(this, port+1));
-		*/
+		// server("udp", new UDP(port+1));
 		
 		/* Install network layer application */
-		p2.core.System.install("network",
+		p2.core.Runtime.runtime().install("network",
 				ClassLoader.getSystemClassLoader().getResource("p2/net/network.olg").getPath());
 	}
 	

@@ -16,6 +16,7 @@ import p2.net.Message;
 import p2.net.Server;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
+import p2.types.exception.UpdateException;
 import p2.types.table.TableName;
 
 public class UDP extends Server {
@@ -26,8 +27,10 @@ public class UDP extends Server {
 	
 	private DatagramSocket server;
 		
-	public UDP(Integer port) throws IOException {
+	public UDP(Integer port) throws IOException, UpdateException {
 		this.server = new DatagramSocket(port);
+		p2.core.Runtime.runtime().install("system",
+				ClassLoader.getSystemClassLoader().getResource("p2/net/udp/udp.olg").getPath());
 	}
 	
 	/**
@@ -44,7 +47,7 @@ public class UDP extends Server {
 					ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(buf));
 					Message message = (Message) input.readObject();
 					Tuple tuple = new Tuple("receive", new IP(packet.getAddress(), packet.getPort()), message);
-					p2.core.System.schedule("tcp", UDPMessage, new TupleSet(UDPMessage, tuple), new TupleSet(UDPMessage));
+					p2.core.Runtime.runtime().schedule("tcp", UDPMessage, new TupleSet(UDPMessage, tuple), new TupleSet(UDPMessage));
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 					System.exit(0);

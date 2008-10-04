@@ -51,7 +51,7 @@ public class Watch extends Operator {
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		if (tuples.size() == 0) return tuples;
 		
-		String header = "Program " + program + " [CLOCK " + p2.core.System.clock().current() + "] " + 
+		String header = "Program " + program + " [CLOCK " + p2.core.Runtime.runtime().clock().current() + "] " + 
 				        modifier.toString() + ": " + name;
 				        
 		if (this.rule != null) {

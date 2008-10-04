@@ -166,18 +166,20 @@ public class Driver implements Runnable {
 			TupleSet delta = new TupleSet(name());
 			for (Tuple tuple : tuples) {
 				Long      time       = (Long)      tuple.value(Field.TIME.ordinal());
-				String    program    = (String)    tuple.value(Field.PROGRAM.ordinal());
+				String    programName= (String)    tuple.value(Field.PROGRAM.ordinal());
 				TableName name       = (TableName) tuple.value(Field.TABLENAME.ordinal());
 				TupleSet  insertions = (TupleSet)  tuple.value(Field.INSERTIONS.ordinal());
 				TupleSet  deletions  = (TupleSet)  tuple.value(Field.DELETIONS.ordinal());
 				if (deletions == null) deletions = new TupleSet(name);
-				TupleSet  result     = evaluate(time, System.program(program), name, insertions, deletions);
+				Program program = Runtime.runtime().program(programName);
 				
-				if (result.size() == 0) {
-					Tuple empty = new Tuple(time, program, name, new TupleSet(name), new TupleSet(name));
-					result.add(empty);
+				if (program != null) {
+					TupleSet  result = evaluate(time, program, name, insertions, deletions);
+					delta.addAll(result);
 				}
-				delta.addAll(result);
+				else {
+					java.lang.System.err.println("EVALUATOR ERROR: unknown program " + programName + "!");
+				}
 			}
 			return delta;
 		}
@@ -352,6 +354,7 @@ public class Driver implements Runnable {
 					java.lang.System.err.println("============================ ========================== =============================");
 				} catch (UpdateException e) {
 					e.printStackTrace();
+					java.lang.System.exit(1);
 				}
 
 				/* Check for new tasks or schedules, if none wait. */

@@ -60,7 +60,7 @@ public abstract class Query implements Comparable<Query> {
 		this.input = input;
 		this.output = output;
 		try {
-			p2.core.System.query().force(
+			p2.core.Runtime.runtime().query().force(
 					new Tuple(program, rule, isPublic, isDelete, 
 							  event.toString(), input.name(), output.name(), this));
 		} catch (UpdateException e) {

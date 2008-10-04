@@ -60,10 +60,9 @@ public class Program implements Comparable<Program> {
 		this.owner       = owner;
 		this.definitions = new HashSet<Table>();
 		this.queries     = new Hashtable<TableName, Set<Query>>();
-		this.periodics   = new TupleSet(p2.core.System.periodic().name());
+		this.periodics   = new TupleSet(p2.core.Runtime.runtime().periodic().name());
 		try {
 			Compiler.programs.force(new Tuple(name, owner, this));
-			p2.core.System.program(name, this);
 		} catch (UpdateException e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
@@ -123,7 +122,7 @@ public class Program implements Comparable<Program> {
 
 			if (periodics.size() > 0) {
 				for (Tuple tuple : this.periodics) {
-					p2.core.System.periodic().force(tuple);
+					p2.core.Runtime.runtime().periodic().force(tuple);
 				}
 			}
 		} catch (BadKeyException e) {
