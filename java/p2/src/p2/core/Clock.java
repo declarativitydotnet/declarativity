@@ -21,7 +21,7 @@ public class Clock extends ObjectTable {
 	
 	private Long clock;
 
-	public Clock(String location) throws UpdateException {
+	public Clock(String location) {
 		super(new TableName(GLOBALSCOPE, "clock"), PRIMARY_KEY, new TypeList(SCHEMA));
 		this.location = location;
 		this.clock = 0L;

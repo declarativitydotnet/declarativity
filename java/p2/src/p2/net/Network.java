@@ -18,7 +18,7 @@ public final class Network {
 	
 	private Hashtable<String, Thread> serverThreads; 
 	
-	public Network() throws IOException {
+	public Network() {
 		this.connection    = new Connection(this);
 		this.servers       = new Hashtable<String, Server>();
 		this.serverThreads = new Hashtable<String, Thread>();

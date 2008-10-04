@@ -3,7 +3,6 @@ package p2.types.function;
 import java.lang.reflect.Method;
 import p2.types.basic.Tuple;
 import p2.types.exception.P2RuntimeException;
-import p2.types.exception.TypeException;
 
 
 public class Generic<Type> implements TupleFunction<Type> {
@@ -17,7 +16,7 @@ public class Generic<Type> implements TupleFunction<Type> {
 	/* The arguments to the generic function. */
 	private TupleFunction<Object>[] args;
 
-	public Generic(TupleFunction<Object> obj, Method method, TupleFunction<Object>... args) throws TypeException {
+	public Generic(TupleFunction<Object> obj, Method method, TupleFunction<Object>... args) {
 		this.obj = obj;
 		this.method = method;
 		this.args = args;

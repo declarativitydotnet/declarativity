@@ -202,7 +202,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		return this.timestamp;
 	}
 	
-	public Tuple join(Tuple inner) throws P2RuntimeException {
+	public Tuple join(Tuple inner) {
 		Tuple join = new Tuple();
 		
 		/* Take care of all join variables first. */
