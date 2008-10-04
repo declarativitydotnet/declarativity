@@ -2,9 +2,6 @@ package p2.lang.plan;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-
-import p2.types.function.TupleFunction;
 
 public class Arguments extends ArrayList<Expression> implements Comparable<Arguments> {
 

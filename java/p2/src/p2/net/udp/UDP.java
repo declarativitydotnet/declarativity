@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -13,13 +12,10 @@ import java.net.SocketException;
 import p2.net.Address;
 import p2.net.Channel;
 import p2.net.IP;
-import p2.net.Network;
-import p2.net.NetworkMessage;
 import p2.net.Message;
 import p2.net.Server;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.exception.UpdateException;
 import p2.types.table.TableName;
 
 public class UDP extends Server {

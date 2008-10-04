@@ -3,12 +3,8 @@ package p2.lang.plan;
 import java.util.ArrayList;
 import java.util.List;
 
-import p2.exec.Query;
-import p2.lang.plan.Rule.RuleTable.Field;
 import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
-import p2.types.exception.PlannerException;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.function.TupleFunction;

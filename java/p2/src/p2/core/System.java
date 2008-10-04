@@ -3,7 +3,6 @@ package p2.core;
 import java.net.URL;
 import java.util.Hashtable;
 
-import p2.core.Driver.Task;
 import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
 import p2.lang.plan.Program;

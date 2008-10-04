@@ -6,7 +6,6 @@ import p2.types.basic.Schema;
 import p2.types.basic.TupleSet;
 import p2.types.basic.Tuple;
 import p2.types.exception.P2RuntimeException;
-import p2.types.function.Filter;
 import p2.types.function.TupleFunction;
 
 public class Selection extends Operator {

@@ -1,9 +1,6 @@
 package p2.types.table;
 
 import java.io.Serializable;
-import java.util.Set;
-
-import p2.types.function.TupleFunction;
 
 public class TableName implements Comparable<TableName>, Serializable {
 	

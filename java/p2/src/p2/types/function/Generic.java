@@ -1,10 +1,6 @@
 package p2.types.function;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Set;
-
-import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.TypeException;

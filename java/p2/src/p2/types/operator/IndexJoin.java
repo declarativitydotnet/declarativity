@@ -1,14 +1,9 @@
 package p2.types.operator;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import p2.lang.plan.Predicate;
-import p2.lang.plan.Variable;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.exception.BadKeyException;
 import p2.types.exception.P2RuntimeException;
 import p2.types.table.Index;
 import p2.types.table.Key;

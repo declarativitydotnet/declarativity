@@ -3,7 +3,6 @@ package p2.lang;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.util.List;
 
 import p2.core.Periodic;

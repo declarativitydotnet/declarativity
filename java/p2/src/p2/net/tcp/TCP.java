@@ -3,8 +3,6 @@ package p2.net.tcp;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -12,17 +10,13 @@ import java.util.Hashtable;
 
 import p2.net.Address;
 import p2.net.IP;
-import p2.net.NetworkMessage;
 import p2.net.Channel;
 import p2.net.Network;
 import p2.net.Message;
 import p2.net.Server;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
-import p2.types.table.Key;
-import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 
 public class TCP extends Server {

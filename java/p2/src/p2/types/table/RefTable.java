@@ -1,17 +1,11 @@
 package p2.types.table;
 
-import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Vector;
-
-import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
-import p2.types.table.Table.Callback;
 
 public class RefTable extends Table {
 	/* The primary key. */

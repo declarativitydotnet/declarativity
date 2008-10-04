@@ -6,11 +6,7 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.operator.Operator;
-import p2.types.operator.Projection;
-import p2.types.operator.ScanJoin;
 import p2.types.table.Aggregation;
-import p2.types.table.Table;
-import p2.types.table.TableName;
 
 public class BasicQuery extends Query {
 	

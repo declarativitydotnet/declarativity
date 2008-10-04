@@ -1,15 +1,8 @@
 package p2.core;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
-import p2.types.exception.BadKeyException;
-import p2.types.exception.UpdateException;
-import p2.types.operator.Operator;
-import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;

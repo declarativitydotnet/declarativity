@@ -1,8 +1,6 @@
 package p2.lang.plan;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import p2.types.function.BasicMath;

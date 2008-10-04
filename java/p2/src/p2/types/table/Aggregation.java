@@ -1,14 +1,11 @@
 package p2.types.table;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 import p2.lang.plan.Predicate;
-import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
-import p2.types.exception.BadKeyException;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.function.Aggregate;

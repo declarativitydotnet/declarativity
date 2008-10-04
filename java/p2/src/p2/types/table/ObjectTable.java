@@ -1,6 +1,5 @@
 package p2.types.table;
 
-import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;

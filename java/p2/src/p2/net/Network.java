@@ -1,11 +1,9 @@
 package p2.net;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.Hashtable;
 
 import p2.net.tcp.TCP;
-import p2.net.udp.UDP;
 import p2.types.basic.Tuple;
 import p2.types.exception.UpdateException;
 import p2.types.table.TableName;

@@ -1,8 +1,6 @@
 package p2.core;
 
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
@@ -12,12 +10,10 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.P2RuntimeException;
-import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
 import p2.types.operator.Watch;
 import p2.types.table.Aggregation;
-import p2.types.table.EventTable;
 import p2.types.table.Table;
 import p2.types.table.TableName;
 import p2.lang.Compiler;

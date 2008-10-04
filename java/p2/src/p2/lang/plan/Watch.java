@@ -1,15 +1,11 @@
 package p2.lang.plan;
 
-import java.util.Hashtable;
-
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
-import p2.types.table.HashIndex;
-import p2.types.table.Index;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;

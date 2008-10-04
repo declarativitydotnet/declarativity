@@ -4,10 +4,8 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 import p2.types.exception.P2RuntimeException;
-import p2.types.exception.TypeException;
 
 public class BasicMath {
 	public enum Operator{UPLUS, UMINUS, PLUS, MINUS, TIMES, DIVIDE, MOD, POW, LSHIFT, RSHIFT};

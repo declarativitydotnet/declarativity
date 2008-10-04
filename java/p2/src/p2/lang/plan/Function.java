@@ -1,11 +1,8 @@
 package p2.lang.plan;
 
-import java.util.Set;
 import p2.lang.Compiler;
-import p2.lang.plan.Predicate.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;

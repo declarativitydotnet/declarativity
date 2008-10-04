@@ -1,19 +1,14 @@
 package p2.lang.plan;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Set;
-
 import p2.exec.BasicQuery;
 import p2.exec.Query;
-import p2.lang.plan.Predicate.Field;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
-import p2.types.exception.BadKeyException;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
@@ -22,7 +17,6 @@ import p2.types.operator.EventFilter;
 import p2.types.operator.Operator;
 import p2.types.operator.Projection;
 import p2.types.operator.RemoteBuffer;
-import p2.types.table.Aggregation;
 import p2.types.table.EventTable;
 import p2.types.table.HashIndex;
 import p2.types.table.Index;

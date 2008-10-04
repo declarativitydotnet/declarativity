@@ -2,12 +2,10 @@ package p2.types.basic;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 
 import p2.lang.plan.DontCare;
 import p2.lang.plan.Variable;
-import p2.types.table.Key;
 import p2.types.table.TableName;
 
 

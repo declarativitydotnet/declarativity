@@ -2,16 +2,12 @@ package p2.types.table;
 
 import java.util.*;
 
-import p2.lang.plan.Aggregate;
-import p2.lang.plan.Variable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.BadKeyException;
-import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Index.IndexTable;
-import xtc.util.SymbolTable;
 
 public abstract class Table implements Comparable<Table> {
 	public static final String  GLOBALSCOPE = "global";

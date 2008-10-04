@@ -3,10 +3,7 @@ package p2.types.table;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
-
 import p2.types.basic.Tuple;
-import p2.types.exception.BadKeyException;
 
 
 public class Key implements Comparable<Key>, Iterable<Integer> {

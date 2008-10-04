@@ -1,22 +1,12 @@
 package p2.lang.plan;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Set;
 
 import p2.types.table.Table;
-import p2.core.Clock;
 import p2.exec.Query;
-import p2.lang.plan.Fact.FactTable;
-import p2.lang.plan.Function.TableFunction;
-import p2.lang.plan.Program.ProgramTable;
 import p2.lang.plan.Rule.RuleTable;
-import p2.lang.plan.Selection.SelectionTable;
-import p2.lang.plan.Predicate.PredicateTable;
-import p2.lang.plan.Watch.WatchTable;
-import p2.lang.plan.Assignment.AssignmentTable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;

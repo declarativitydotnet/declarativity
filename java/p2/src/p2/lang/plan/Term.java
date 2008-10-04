@@ -3,7 +3,6 @@ package p2.lang.plan;
 import java.util.Set;
 
 import p2.types.basic.Schema;
-import p2.types.exception.PlannerException;
 import p2.types.exception.UpdateException;
 import p2.types.operator.Operator;
 

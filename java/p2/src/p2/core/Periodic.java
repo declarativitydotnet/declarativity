@@ -1,12 +1,9 @@
 package p2.core;
 
-import java.util.Hashtable;
-
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
-import p2.types.table.BasicTable;
 import p2.types.table.Function;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;

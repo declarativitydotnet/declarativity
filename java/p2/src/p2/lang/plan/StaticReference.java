@@ -1,9 +1,7 @@
 package p2.lang.plan;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import p2.types.basic.Tuple;

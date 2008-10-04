@@ -2,9 +2,6 @@ package p2.types.table;
 
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
-import java.util.Vector;
-
-import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;

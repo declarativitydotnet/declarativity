@@ -1,12 +1,9 @@
 package p2.types.operator;
 
-import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Set;
 
 import p2.lang.plan.Predicate;
-import p2.lang.plan.Rule;
 import p2.lang.plan.Variable;
 import p2.net.IP;
 import p2.net.NetworkMessage;
@@ -14,7 +11,6 @@ import p2.net.NetworkBuffer;
 import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
-import p2.types.exception.BadKeyException;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.function.TupleFunction;
