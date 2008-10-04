@@ -34,7 +34,7 @@ import xtc.util.Tool;
 
 
 /**
- * The driver for processesing the Overlog language.
+ * The driver for processing the Overlog language.
  */
 public class Compiler extends Tool {
 	public static final String[] FILES =  {
@@ -202,7 +202,6 @@ public class Compiler extends Tool {
 						for (Watch watch : watches) {
 							watch.set(this.program.name());
 						}
-
 					}
 					else {
 						Clause c = (Clause) clause.getProperty(Constants.TYPE);
