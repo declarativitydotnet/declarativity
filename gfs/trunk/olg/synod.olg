@@ -1,0 +1,168 @@
+program synod;
+
+import java.lang.String;
+import java.lang.Integer;
+
+define(decreeRequest,{String,String});
+define(lastTried,keys(0),{String,Integer});
+define(prevVote,keys(0),{String,Integer,String});
+define(nextBal,keys(0),{String,Integer});
+define(node,keys(0),{String});
+define(parliament,keys(0,1),{String,String});
+define(nextBallot,keys(0,1),{String,Integer,String});
+define(sendNextBallot,keys(0,1,3),{String,Integer,String,String});
+define(lastVote,keys(0,1,4),{String,Integer,Integer,String,String});
+define(sendLastVote,keys(0,1,4),{String,Integer,Integer,String,String});
+define(beginBallot,keys(0,1),{String, Integer,String});
+define(sendBeginBallot,keys(0,1),{String, Integer,String,String});
+define(vote,keys(0,1),{String, Integer,String});
+define(sendVote,keys(0,1,3),{String, Integer,String,String});
+define(decree,keys(0,1),{String, Integer,String});
+define(success,keys(0,1),{String, Integer,String});
+
+define(maxPrevBallot,keys(0),{String,Integer});
+define(priestCnt,keys(0),{String,Integer});
+define(lastVoteCnt,keys(0,1),{String,Integer,Integer});
+define(quorum,keys(0,1),{String,Integer});
+define(voteCnt,keys(0,1),{String,Integer,Integer});
+
+lastTried(Lord,-1) :- parliament(Lord,Priest);
+prevVote(Lord,-1,"none") :- parliament(Lord,Priest);						
+nextBal(Lord,-1) :- parliament(Lord,Priest);
+
+/* PAXOS global invariants:
+
+	let B be a set of ballots with the following components:
+	
+		B.dec - A decree (the one being voted on). 
+		B.qrm - A nonempty set of priests (the ballotÕs quorum). 
+		B.vot - A set of priests (the ones who cast votes for the decree). 
+		B.bal - A ballot number. 
+	 
+	
+	Consistency is guaranteed and progress is possible if:
+	
+	B1(B) - Each ballot in B has a unique ballot number. 
+	B2(B) - The quorums of any two ballots in B have at least one priest in common. 
+	B3(B) - For every ballot B in B, if any priest in BÕs quorum voted in an earlier 
+			ballot in B, then the decree of B equals the decree of the latest of those 
+			earlier ballots. 
+*/
+						
+
+
+/* 
+1. Priest p chooses a new ballot number b greater than lastTried [p], sets lastTried [p] 
+to b, and sends a NextBallot (b) message to some set of priests. 
+*/
+ 
+lastTried(Priest,Bnum) :- lastTried(Priest,Old),
+ 							  nextBallot(Priest,Bnum,Decree),
+ 							  Bnum >= Old;
+
+/* decree #2 will roll through later */
+
+
+nextBallot(Priest,Ballot,Decree) :- ///periodic(Id,2L,1L,120L,120L),
+                    decreeRequest(Priest,Decree),
+ 									  lastTried(Priest,Old),
+ 									  Ballot := Old + 1;
+ 
+sendNextBallot(@Peer,Ballot,Decree,Priest) :- 	nextBallot(@Priest,Ballot,Decree),
+ 												parliament(@Priest,Peer);
+ 												
+
+
+/*
+2. Upon receipt of a NextBallot (b) message from p with b > nextBal [q], priest q 
+sets nextBal [q] to b and sends a LastVote (b, v) message to p, where v equals 
+prevVote [q]. (A NextBallot (b) message is ignored if b ² nextBal [q].) 
+*/
+
+
+nextBal(Priest,Ballot) :-  nextBal(Priest,Old),
+ 							lastVote(Priest,Ballot,OldBallot,Decree),
+ 							Ballot >= Old;						
+ 
+lastVote(Priest,Ballot,OldBallot,OldDecree,Peer) :- sendNextBallot(Priest,Ballot,Decree,Peer),
+ 											prevVote(Priest,OldBallot,OldDecree),
+ 											Ballot >= OldBallot;
+ 											
+sendLastVote(@Lord,Ballot,OldBallot,Decree,Priest) :-
+ 									lastVote(@Priest,Ballot,OldBallot,Decree,Lord);
+
+/*
+3.  After receiving a LastVote (b, v) message from every priest in some majority 
+set Q, where b = lastTried [p], priest p initiates a new ballot with number b, 
+quorum Q, and decree d, where d is chosen to satisfy B3. He then sends a 
+BeginBallot (b, d) message to every priest in Q. 
+*/
+
+/* for quorum handling, aggregates are difficult to avoid... */
+priestCnt(Lord,count<*>) :- parliament(Lord,Priest);
+lastVoteCnt(Lord,Ballot,count<Priest>) :- sendLastVote(Lord,Ballot,Foo,Bar,Priest);
+maxPrevBallot(Lord,max<OldBallot>) :- sendLastVote(Lord,Ballot,OldBallot,Decree,Priest);
+
+quorum(Lord,Ballot) :- priestCnt(Lord,Pcnt),
+						lastVoteCnt(Lord,Ballot,Vcnt),
+						Vcnt > ( Pcnt / 2 );
+					
+
+beginBallot(Lord,Ballot,OldDecree) :- quorum(Lord,Ballot),
+									maxPrevBallot(Lord,MaxB),
+									nextBallot(Lord,Ballot,Decree),
+									sendLastVote(Lord,Ballot,MaxB,OldDecree,Priest),
+									MaxB != -1;
+
+beginBallot(Lord,Ballot,Decree) :- quorum(Lord,Ballot),
+									maxPrevBallot(Lord,MaxB),
+									sendLastVote(Lord,Ballot,MaxB,OldDecree,Priest),
+									MaxB == -1,
+									nextBallot(Lord,Ballot,Decree);	
+									
+sendBeginBallot(@Priest,Ballot,Decree,Lord) :- beginBallot(@Lord,Ballot,Decree),
+									parliament(@Lord,Priest);									
+									
+/* 
+4. Upon receipt of a BeginBallot (b,d) message with b = nextBal [q], priest q casts 
+his vote in ballot number b, sets prevVote [q] to this v
+ote, and sends a Voted (b, q) 
+message to p. (A BeginBallot (b, d) message is ignored if b = nextBal [q].)
+*/									
+
+
+
+
+vote(Priest,Ballot,Decree) :- sendBeginBallot(Priest,Ballot,Decree,Lord),
+							   nextBal(Priest,OldB),
+							   Ballot == OldB;
+									
+prevVote(Priest,Ballot,Decree) :- prevVote(Priest,Old),
+								   lastVote(Priest,Ballot,OldBallot,Decree),
+								   vote(Priest,Ballot,Decree),
+								   ///periodic(Id,4L,4L,4L),
+									Ballot >= Old;				
+									
+sendVote(@Lord,Ballot,Decree,Priest) :- vote(@Priest,Ballot,Decree),
+										sendBeginBallot(@Priest,Ballot,Decree,Lord);
+										
+/*
+If p has received a Voted (b, q) message from every priest q in Q (the quorum 
+for ballot number b), where b = lastTried [p], then he writes d (the decree of 
+that ballot) in his ledger and sends a Success (d) message to every priest.
+*/										
+
+voteCnt(Lord,Ballot,count<Priest>) :- sendVote(Lord,Ballot,Decree,Priest);
+												
+
+decree(Lord,Ballot,Decree) :- lastTried(Lord,Ballot),
+							   voteCnt(Lord,Ballot,Votes),
+							   // this is |quorum| 
+							   lastVoteCnt(Lord,Ballot,Votes),
+							   beginBallot(Lord,Ballot,Decree);
+							   
+success(@Priest,Ballot,Decree) :- 	decree(@Lord,Ballot,Decree),
+									// we interpret "every" to mean a broadcast.
+									parliament(@Lord,Priest);
+									
+												   																																						 																									  
