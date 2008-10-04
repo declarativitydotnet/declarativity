@@ -245,7 +245,7 @@ class OverlogPlanner
         body = aHash[rule]
         head = body.shift
 
-        d = context.value("delete").eql?("1")
+        d = (context.value("delete") == 1)
         ruleObj = Rule.new(1,context.value("rulename"),true,d,head,body)
         ruleObj.set(context.value("program_name"))
 
