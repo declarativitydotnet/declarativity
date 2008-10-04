@@ -36,9 +36,6 @@ send(Protocol, Location, Msg) :-
 	Layer == "network", Direction == "send",
 	Protocol := ((NetworkMessage) Msg).protocol();
 
-watch(network::buffer, rs);
-watch(send, s);
-
 network::buffer(Protocol, "send", Location, Msg) :-
 	send(Protocol, Location, Msg);
 	

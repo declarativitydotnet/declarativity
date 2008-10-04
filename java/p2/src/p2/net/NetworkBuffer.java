@@ -30,26 +30,12 @@ public class NetworkBuffer extends ObjectTable {
 	
 	@Override
 	public boolean insert(Tuple tuple) throws UpdateException {
-		if (super.insert(tuple)) {
-			System.err.println("INSSERTION SUCCESS: " + tuple);
-			return true;
-		}
-		else {
-			System.err.println("INSERTION FAIL " + tuple);
-			return false;
-		}
+		return super.insert(tuple);
 	}
 	
 	@Override
 	public boolean delete(Tuple tuple) throws UpdateException {
-		if (super.delete(tuple)) {
-			System.err.println("DELETION SUCCESS: " + tuple);
-			return true;
-		}
-		else {
-			System.err.println("DELETION FAIL " + tuple);
-			return false;
-		}
+		return super.delete(tuple);
 	}
 
 }

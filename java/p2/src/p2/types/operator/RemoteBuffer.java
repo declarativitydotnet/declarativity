@@ -80,7 +80,11 @@ public class RemoteBuffer extends Operator {
 			}
 			
 			TableName bufferName = p2.net.Network.bufferName();
-			p2.core.System.schedule("network", bufferName, new TupleSet(bufferName, remote), new TupleSet(bufferName));
+			try {
+				p2.core.System.schedule("network", bufferName, new TupleSet(bufferName, remote), new TupleSet(bufferName));
+			} catch (UpdateException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		return new TupleSet(this.predicate.name());

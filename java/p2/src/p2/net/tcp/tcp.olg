@@ -8,9 +8,11 @@ import p2.net.Address;
 define(receive, {Address, Message});
 define(send,    {Address, Message});
 
+/*
 watch(send, s);
 watch(receive, r);
 watch(network::buffer, isr);
+*/
 
 /******* Message send  */
 public

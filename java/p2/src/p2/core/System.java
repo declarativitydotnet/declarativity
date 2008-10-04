@@ -3,6 +3,7 @@ package p2.core;
 import java.net.URL;
 import java.util.Hashtable;
 
+import p2.core.Driver.Task;
 import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
 import p2.lang.plan.Program;
@@ -67,8 +68,9 @@ public class System {
 	}
 	
 	public static void schedule(final String program, final TableName name, 
-			                    final TupleSet insertions, final TupleSet deletions) {
+			                    final TupleSet insertions, final TupleSet deletions) throws UpdateException {
 		synchronized (driver) {
+			if (program.equals("runtime")) {
 			driver.task(new Driver.Task() {
 				public TupleSet insertions() {
 					return insertions;
@@ -86,6 +88,12 @@ public class System {
 					return name;
 				}
 			});
+			}
+			else {
+				Tuple tuple = new Tuple(clock.current() + 1L, program, name, 
+						                insertions, deletions);
+				schedule.force(tuple);
+			}
 			driver.notify();
 		}
 	}
@@ -102,7 +110,7 @@ public class System {
 			periodic   = new Periodic(schedule);
 			log        = new Log(java.lang.System.err);
 			programs   = new Hashtable<String, Program>();
-			// netManager = new p2.net.Network();
+			netManager = new p2.net.Network();
 			driver = new Driver(schedule, periodic, clock);
 			
 	        URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
@@ -114,9 +122,7 @@ public class System {
 				install("system", file);
 			}
 			
-			/*
 			netManager.install(port);
-			*/
 			
 			install("user", program);
 			
