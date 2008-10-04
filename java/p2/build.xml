@@ -5,8 +5,8 @@
   </description>
 
   <property name="src" location="src"/>
-  <property name="build" location="build"/>
-  <property name="dist"  location="dist"/>
+  <property name="build" location="ant-build"/>
+  <property name="dist"  location="ant-dist"/>
   <property name="lib" location="lib"/>
 
   <target name="init">
@@ -20,7 +20,9 @@
 
   <target name="dist" depends="compile" description="generate a JAR file">
     <mkdir dir="${dist}"/>
-    <jar jarfile="${dist}/p2.jar" basedir="${build}"/>
+  	<!-- Include the OLG files needed by the runtime in the JAR -->
+    <jar jarfile="${dist}/p2.jar" basedir="${build}"
+    	 includes="../${src}/**/*.olg"/>
   </target>
 
   <target name="clean" description="clean up">
