@@ -1,5 +1,6 @@
 package p2.core;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
@@ -52,7 +53,7 @@ public class Runtime implements System {
 	public void start(Integer port) throws P2RuntimeException {
 		try {
 			URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
-			p2.lang.Compiler compiler = new p2.lang.Compiler("system", runtimeFile.getPath());
+			p2.lang.Compiler compiler = new p2.lang.Compiler("system", runtimeFile);
 			compiler.program().plan();
 			driver.runtime(program("runtime"));
 			network.install(port);
@@ -89,9 +90,9 @@ public class Runtime implements System {
 		}
 	}
 	
-	public void install(String owner, String file) throws UpdateException {
+	public void install(String owner, URL file) throws UpdateException {
 		TupleSet compilation = new TupleSet(Compiler.compiler.name());
-		compilation.add(new Tuple(null, owner, file, null));
+		compilation.add(new Tuple(null, owner, file.toString(), null));
 		schedule("runtime", Compiler.compiler.name(), compilation, new TupleSet(Compiler.compiler.name()));
 	}
 	
@@ -142,7 +143,7 @@ public class Runtime implements System {
 			runtime = new Runtime();
 			runtime.start(port);
 
-			for (String file : Compiler.FILES) {
+			for (URL file : Compiler.FILES) {
 				runtime.install("system", file);
 			}
 			
@@ -155,11 +156,12 @@ public class Runtime implements System {
 		return null;
 	}
 	
-	public static void main(String[] args) throws UpdateException, InterruptedException {
+	public static void main(String[] args) throws UpdateException, InterruptedException, MalformedURLException {
 		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg"));
 		Runtime system = (Runtime) bootstrap(Integer.parseInt(args[0]));
 		for (int i = 1; i < args.length; i++) {
-			system.install("user", args[i]);
+			URL url = new URL("file", "", args[i]);
+			system.install("user", url);
 		}
 		system.thread().join();
 	}

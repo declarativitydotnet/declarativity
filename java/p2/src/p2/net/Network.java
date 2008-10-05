@@ -31,7 +31,7 @@ public final class Network {
 		
 		/* Install network layer application */
 		p2.core.Runtime.runtime().install("network",
-				ClassLoader.getSystemClassLoader().getResource("p2/net/network.olg").getPath());
+				ClassLoader.getSystemClassLoader().getResource("p2/net/network.olg"));
 	}
 	
 	public final static Tuple tuple(String direction, Address address, Message message) {

@@ -182,5 +182,3 @@ compileConfig
 schedule(Time, "compile", Tuples.name(), Tuples, null) :-
 	config(Time, Program, Object),
 	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
-	
-	

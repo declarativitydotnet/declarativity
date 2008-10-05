@@ -33,7 +33,7 @@ public class TCP extends Server {
 		this.server = new ServerSocket(port);
 		this.channels = new Hashtable<Address, Thread>();
 		p2.core.Runtime.runtime().install("system",
-				ClassLoader.getSystemClassLoader().getResource("p2/net/tcp/tcp.olg").getPath());
+				ClassLoader.getSystemClassLoader().getResource("p2/net/tcp/tcp.olg"));
 	}
 	
 	public void run() {

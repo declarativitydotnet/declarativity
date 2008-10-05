@@ -1,5 +1,7 @@
 package p2.core;
 
+import java.net.URL;
+
 import p2.types.basic.TupleSet;
 import p2.types.exception.UpdateException;
 import p2.types.table.TableName;
@@ -19,7 +21,7 @@ public interface System {
 	 * @throws UpdateException compilation/installation problems
 	 */
 	public void install(String owner, 
-						String file) throws UpdateException;
+						URL file) throws UpdateException;
 
 	/**
 	 * Uninstall program.

@@ -30,7 +30,7 @@ public class UDP extends Server {
 	public UDP(Integer port) throws IOException, UpdateException {
 		this.server = new DatagramSocket(port);
 		p2.core.Runtime.runtime().install("system",
-				ClassLoader.getSystemClassLoader().getResource("p2/net/udp/udp.olg").getPath());
+				ClassLoader.getSystemClassLoader().getResource("p2/net/udp/udp.olg"));
 	}
 	
 	/**
