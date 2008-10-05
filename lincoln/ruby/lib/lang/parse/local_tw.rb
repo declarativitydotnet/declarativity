@@ -238,7 +238,7 @@ class VisitRule < VisitBase
 		if (defined? obj.name) then
 			name = obj.name.text_value
 		else 
-			name = text.hash.to_s
+			name = text[0..10].gsub(/\n/,' ') + "..."
 		end
 		
 		otabinsert(@rt,@@positions["_Universal"],@@current["program"],name,nil,d)

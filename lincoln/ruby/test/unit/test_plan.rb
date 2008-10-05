@@ -284,6 +284,30 @@ class TestPlan < Test::Unit::TestCase
 			assert( (t.values == ["N1","N2",10,"first"]) || (t.values == ["N2","N3",5,"second"])) 
 		end
   end
+  
+  def test_delete
+    $catalog=nil
+    $index=nil
+    sys = System.new
+    sys.init
+    utterance = "program deltest;
+      define(link,keys(0,1),{String, String, Integer, Tuple});
+      define(path,keys(0,1),{String, String, Integer, Tuple});
+      path(A,B,C,T) :- link(A, B, C, T);
+      delete link(A,B,C,T) :- link(A,B,C,T), C > 5;
+    "
+    prog = prep(utterance)
+    tn, ts = gen_link_tuples("deltest")
+
+		result = prog.get_queries(tn)[1].evaluate(ts)
+		assert_equal(result.tups.length, 2)
+		result.tups.each do |t|
+			assert( (t.values == ["N1","N2",10,"first"]) || (t.values == ["N2","N3",5,"second"])) 
+		end
+		result = prog.get_queries(tn)[0].evaluate(ts)
+		assert_equal(result.tups.length, 1)
+		assert_equal(result.tups[0].values, ["N1","N2",10,"first"])
+  end
 
 	def test_facts
 		$catalog=nil; $index=nil

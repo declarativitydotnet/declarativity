@@ -124,7 +124,7 @@ class Driver < Monitor
         querySet.each do |query|
           if query.event != Table::Event::DELETE
             puts("\t\tRUN QUERY " + query.rule.to_s + " input " + insertions.tups.to_s)
-#            puts("\t\t\t Plan #{query.to_s}")
+            #            puts("\t\t\t Plan #{query.to_s}")
             result = query.evaluate(insertions) 
             puts("\t\tQUERY " + query.rule.to_s + " result " + result.tups.to_s)
             # require 'ruby-debug'; debugger
@@ -255,9 +255,9 @@ class Driver < Monitor
           if min < Infinity
             puts("============================ EVALUATE CLOCK[" + min.to_s + "] =============================")
             # @schedule.dump_to_tmp_csv
-            # print @schedule.to_s
+#            print "SCHEDULE: " + @schedule.to_s
             evaluate(@clock.time(min), @runtime.name)
-#            print @tasks.to_s
+            #            print @tasks.to_s
             @tasks.each { |t| evaluate(t.tuples, t.program) }
             @tasks.clear
             puts("============================ ========================== =============================")
