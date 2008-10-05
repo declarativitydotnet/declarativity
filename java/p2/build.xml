@@ -36,6 +36,10 @@
       <fileset dir="${src}" includes="**/*.olg"/>
       <!-- Include the RATS runtime files we just expanded above -->
       <fileset dir="${dist}/rats_tmp" includes="xtc/**"/>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}"/>
+        <attribute name="Main-Class" value="p2.core.Runtime"/>
+      </manifest>
     </jar>
   	<delete dir="${dist}/rats_tmp"/>
   </target>

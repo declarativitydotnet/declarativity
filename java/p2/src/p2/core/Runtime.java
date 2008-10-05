@@ -157,6 +157,10 @@ public class Runtime implements System {
 	}
 	
 	public static void main(String[] args) throws UpdateException, InterruptedException, MalformedURLException {
+		if (args.length != 2) {
+			java.lang.System.out.println("Usage: p2.core.System port program");
+			java.lang.System.exit(1);
+		}
 		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg"));
 		Runtime system = (Runtime) bootstrap(Integer.parseInt(args[0]));
 		for (int i = 1; i < args.length; i++) {
