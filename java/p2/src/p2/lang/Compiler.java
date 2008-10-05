@@ -39,19 +39,17 @@ import xtc.util.Runtime;
  */
 public class Compiler {
 	public static final URL[] FILES = {
-			ClassLoader.getSystemClassLoader().getResource(
-					"p2/lang/compile.olg"),
-			ClassLoader.getSystemClassLoader().getResource(
-					"p2/lang/stratachecker.olg") };
+			ClassLoader.getSystemClassLoader().getResource("p2/lang/compile.olg"),
+			ClassLoader.getSystemClassLoader().getResource("p2/lang/stratachecker.olg")
+		};
 
 	public static class CompileTable extends ObjectTable {
 		public static final Key PRIMARY_KEY = new Key(0);
 
-		public enum Field {
-			NAME, OWNER, FILE, PROGRAM
-		};
+		public enum Field {NAME, OWNER, FILE, PROGRAM};
 
-		public static final Class[] SCHEMA = { String.class, // Program name
+		public static final Class[] SCHEMA = {
+				String.class, // Program name
 				String.class, // Program owner
 				String.class, // Program file
 				Program.class // The program object
@@ -137,14 +135,6 @@ public class Compiler {
 
 	public Program program() {
 		return this.program;
-	}
-
-	public String getName() {
-		return "OverLog Compiler";
-	}
-
-	public String getCopy() {
-		return Constants.FULL_COPY;
 	}
 
 	public Node parse(URL input) {
