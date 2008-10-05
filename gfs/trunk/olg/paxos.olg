@@ -1,0 +1,152 @@
+program paxos;
+
+import java.lang.String;
+import java.lang.Integer;
+
+import java.lang.System;
+
+define(decreeRequest,keys(0,1,2),{String,String,String});
+define(lastTried,keys(0),{String,Integer});
+define(prevVote,keys(0),{String,Integer,String});
+define(nextBal,keys(0),{String,Integer});
+define(node,keys(0),{String});
+define(parliament,keys(0,1),{String,String});
+define(prepare,keys(0,1),{String,Integer,String});
+define(sendPrepare,keys(0,1,3),{String,Integer,String,String});
+define(lastPromise,keys(0,1,4),{String,Integer,Integer,String,String});
+define(sendPromise,keys(0,1,4),{String,Integer,Integer,String,String});
+define(acceptRequest,keys(0,1),{String, Integer,String});
+define(sendBeginBallot,keys(0,1),{String, Integer,String,String});
+define(accept,keys(0,1),{String, Integer,String});
+define(sendAccept,keys(0,1,3),{String, Integer,String,String});
+define(decree,keys(0,1),{String, Integer,String});
+define(success,keys(0,1),{String, Integer,String,String});
+
+define(maxPrevBallot,keys(0),{String,Integer});
+define(priestCnt,keys(0),{String,Integer});
+define(lastPromiseCnt,keys(0,1),{String,Integer,Integer});
+define(quorum,keys(0,1),{String,Integer});
+define(acceptCnt,keys(0,1),{String,Integer,Integer});
+
+define(reply,keys(0,1),{String,Integer,String});
+
+
+lastTried(Lord,-1) :- parliament(Lord,Priest);
+prevVote(Lord,-1,"none") :- parliament(Lord,Priest);						
+nextBal(Lord,-1) :- parliament(Lord,Priest);
+
+//watch(prepare,id);
+
+//watch(sendPrepare,id);
+//watch(lastTried,id);
+//watch(parliament,id);
+//watch(sendPromise,id);
+//watch(priestCnt,id);
+//watch(lastPromiseCnt,id);
+watch(quorum,id);
+watch(decree,id);
+watch(acceptCnt,id);
+watch(sendAccept,id);
+watch(accept,id);
+watch(success,id);
+watch(decreeRequest,id);
+ 
+lastTried(Priest,Bnum) :- lastTried(Priest,Old),
+ 							  prepare#insert(Priest,Bnum,Decree),
+ 							  Bnum >= Old;
+
+
+prepare(Priest,Ballot,Decree) :- 
+                    decreeRequest#insert(Priest,Decree,From),
+ 									  lastTried(Priest,Old),
+ 									  Ballot := Old + 1;
+ 
+sendPrepare(@Peer,Ballot,Decree,Priest) :- 	prepare(@Priest,Ballot,Decree),
+ 												parliament(@Priest,Peer);
+ 												
+nextBal(Priest,Ballot) :-  nextBal(Priest,Old),
+ 							lastPromise#insert(Priest,Ballot,OldBallot,Decree),
+ 							Ballot >= Old;						
+ 
+lastPromise(Priest,Ballot,OldBallot,OldDecree,Peer) :- sendPrepare(Priest,Ballot,Decree,Peer),
+ 											prevVote(Priest,OldBallot,OldDecree),
+ 											Ballot >= OldBallot;
+ 											
+sendPromise(@Lord,Ballot,OldBallot,Decree,Priest) :-
+ 									lastPromise(@Priest,Ballot,OldBallot,Decree,Lord);
+
+/* for quorum handling, aggregates are difficult to avoid... */
+priestCnt(Lord,count<*>) :- parliament(Lord,Priest);
+lastPromiseCnt(Lord,Ballot,count<Priest>) :- sendPromise#insert(Lord,Ballot,Foo,Bar,Priest);
+maxPrevBallot(Lord,max<OldBallot>) :- sendPromise(Lord,Ballot,OldBallot,Decree,Priest);
+
+
+quorum(Lord,Ballot) :- priestCnt(Lord,Pcnt),
+						lastPromiseCnt(Lord,Ballot,Vcnt),
+						Vcnt > ( Pcnt / 2 );
+
+//define(qdone,{String,Integer});
+//qdone(Lord,Ballot) :- quorum(Lord,Ballot);
+
+//watch(maxPrevBallot,id);
+//watch(acceptRequest,id);
+//watch(accept,id);
+//watch(sendBeginBallot,id);
+//watch(nextBal,id);
+
+
+acceptRequest(Lord,Ballot,OldDecree) :- quorum#insert(Lord,Ballot),
+									maxPrevBallot(Lord,MaxB),
+									prepare(Lord,Ballot,Decree),
+									sendPromise(Lord,Ballot,MaxB,OldDecree,Priest),
+									MaxB != -1;
+
+acceptRequest(Lord,Ballot,Decree) :- quorum(Lord,Ballot),
+									maxPrevBallot(Lord,MaxB),
+									sendPromise(Lord,Ballot,MaxB,OldDecree,Priest),
+									MaxB == -1,
+									prepare(Lord,Ballot,Decree);	
+									
+sendBeginBallot(@Priest,Ballot,Decree,Lord) :- acceptRequest(@Lord,Ballot,Decree),
+									parliament(@Lord,Priest);									
+									
+accept(Priest,Ballot,Decree) :- sendBeginBallot(Priest,Ballot,Decree,Lord),
+							   nextBal(Priest,OldB),
+							   Ballot == OldB;
+									
+prevVote(Priest,Ballot,Decree) :- prevVote(Priest,Old),
+								   lastPromise(Priest,Ballot,OldBallot,Decree),
+								   accept(Priest,Ballot,Decree),
+								   ///periodic(Id,4L,4L,4L),
+									Ballot >= Old;				
+									
+sendAccept(@Lord,Ballot,Decree,Priest) :- accept(@Priest,Ballot,Decree),
+										sendBeginBallot(@Priest,Ballot,Decree,Lord);
+										
+acceptCnt(Lord,Ballot,count<Priest>) :- sendAccept(Lord,Ballot,Decree,Priest);
+												
+watch(lastPromiseCnt,id);
+watch(acceptRequest,id);
+
+
+decree(Lord,Ballot,Decree) :- lastTried(Lord,Ballot),
+							   acceptCnt(Lord,Ballot,Votes),
+							   // this is |quorum| 
+							   lastPromiseCnt(Lord,Ballot,Votes),
+							   acceptRequest(Lord,Ballot,Decree);
+							   
+success(@Priest,Ballot,Decree,From) :- 	decree#insert(@Lord,Ballot,Decree),
+                  // this might be a mistake. 
+                  decreeRequest(@Lord,Decree,From),
+									// we interpret "every" to mean a broadcast.
+
+									parliament(@Lord,Priest);
+
+// any learner can reply to the client.  or set-wise, they all can...
+watch(reply,id);
+reply(@Client,Ballot,Decree) :- success(@Me,Ballot,Decree,Client);
+
+
+//watch(done,id);								
+define(done,{Integer,String});	
+done(Ballot,Decree) :-	reply(Priest,Ballot,Decree);								
