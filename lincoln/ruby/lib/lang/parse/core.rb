@@ -426,24 +426,10 @@ module Overlog
   end
 
   module Rule0
-    def deleter
+    def rname
       elements[1]
     end
 
-    def rulehead
-      elements[2]
-    end
-
-    def followsfrom
-      elements[3]
-    end
-
-    def RuleBody
-      elements[4]
-    end
-  end
-
-  module Rule1
     def deleter
       elements[2]
     end
@@ -461,7 +447,7 @@ module Overlog
     end
   end
 
-  module Rule2
+  module Rule1
  
 				def Rule
 					return self
@@ -476,104 +462,103 @@ module Overlog
       return cached
     end
 
-    i0 = index
-    i1, s1 = index, []
+    i0, s0 = index, []
     if input.index('public', index) == index
-      r3 = (SyntaxNode).new(input, index...(index + 6))
+      r2 = (SyntaxNode).new(input, index...(index + 6))
       @index += 6
     else
       terminal_parse_failure('public')
-      r3 = nil
+      r2 = nil
     end
-    if r3
-      r2 = r3
-    else
-      r2 = SyntaxNode.new(input, index...index)
-    end
-    s1 << r2
     if r2
-      r4 = _nt_deleter
-      s1 << r4
-      if r4
-        r5 = _nt_rulehead
-        s1 << r5
-        if r5
-          r6 = _nt_followsfrom
-          s1 << r6
-          if r6
-            r7 = _nt_RuleBody
-            s1 << r7
+      r1 = r2
+    else
+      r1 = SyntaxNode.new(input, index...index)
+    end
+    s0 << r1
+    if r1
+      r3 = _nt_rname
+      s0 << r3
+      if r3
+        r4 = _nt_deleter
+        s0 << r4
+        if r4
+          r5 = _nt_rulehead
+          s0 << r5
+          if r5
+            r6 = _nt_followsfrom
+            s0 << r6
+            if r6
+              r7 = _nt_RuleBody
+              s0 << r7
+            end
           end
         end
       end
     end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Rule0)
+      r0.extend(Rule1)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:Rule][start_index] = r0
+
+    return r0
+  end
+
+  module Rname0
+    def name
+      elements[0]
+    end
+
+  end
+
+  def _nt_rname
+    start_index = index
+    if node_cache[:rname].has_key?(index)
+      cached = node_cache[:rname][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i1, s1 = index, []
+    r2 = _nt_name
+    s1 << r2
+    if r2
+      i3 = index
+      if input.index('(', index) == index
+        r4 = (SyntaxNode).new(input, index...(index + 1))
+        @index += 1
+      else
+        terminal_parse_failure('(')
+        r4 = nil
+      end
+      if r4
+        r3 = nil
+      else
+        self.index = i3
+        r3 = SyntaxNode.new(input, index...index)
+      end
+      s1 << r3
+    end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)
-      r1.extend(Rule0)
+      r1.extend(Rname0)
     else
       self.index = i1
       r1 = nil
     end
     if r1
       r0 = r1
-      r0.extend(Rule2)
     else
-      i8, s8 = index, []
-      if input.index('public', index) == index
-        r10 = (SyntaxNode).new(input, index...(index + 6))
-        @index += 6
-      else
-        terminal_parse_failure('public')
-        r10 = nil
-      end
-      if r10
-        r9 = r10
-      else
-        r9 = SyntaxNode.new(input, index...index)
-      end
-      s8 << r9
-      if r9
-        r12 = _nt_name
-        if r12
-          r11 = r12
-        else
-          r11 = SyntaxNode.new(input, index...index)
-        end
-        s8 << r11
-        if r11
-          r13 = _nt_deleter
-          s8 << r13
-          if r13
-            r14 = _nt_rulehead
-            s8 << r14
-            if r14
-              r15 = _nt_followsfrom
-              s8 << r15
-              if r15
-                r16 = _nt_RuleBody
-                s8 << r16
-              end
-            end
-          end
-        end
-      end
-      if s8.last
-        r8 = (SyntaxNode).new(input, i8...index, s8)
-        r8.extend(Rule1)
-      else
-        self.index = i8
-        r8 = nil
-      end
-      if r8
-        r0 = r8
-        r0.extend(Rule2)
-      else
-        self.index = i0
-        r0 = nil
-      end
+      r0 = SyntaxNode.new(input, index...index)
     end
 
-    node_cache[:Rule][start_index] = r0
+    node_cache[:rname][start_index] = r0
 
     return r0
   end

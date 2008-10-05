@@ -235,8 +235,8 @@ class VisitRule < VisitBase
 			d = 0
 		end
 		# rule name.
-		if (defined? obj.name) then
-			name = obj.name.text_value
+		if (defined? obj.rname) then
+			name = obj.rname.text_value
 		else 
 			name = text[0..10].gsub(/\n/,' ') + "..."
 		end

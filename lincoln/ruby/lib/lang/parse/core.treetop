@@ -63,13 +63,18 @@ include Ddl
      	rule Rule
 		  #   (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name  Spacing  deleter?  rulehead Spacing ':-' Spacing RuleBody   )
 		# reimagined rule:
-		(( 'public' )? deleter rulehead followsfrom RuleBody / ( 'public' )? name? deleter rulehead followsfrom RuleBody  ) 
+		##(( 'public' )? rname deleter rulehead followsfrom RuleBody / ( 'public' )? name? deleter rulehead followsfrom RuleBody  ) 
+
+	 ( 'public' )? rname deleter rulehead followsfrom RuleBody   
 			{ 
 				def Rule
 					return self
 				end 
 			}
 	end
+  rule rname
+    ( name !'(' )?
+  end
 	rule followsfrom
 		Spacing ':-' Spacing
 	end

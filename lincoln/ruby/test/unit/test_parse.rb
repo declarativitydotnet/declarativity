@@ -136,6 +136,16 @@ class TestParse < Test::Unit::TestCase
 		assert_equal(@pexpr.cardinality,10)
 	end
 
+  def test_named_rule
+    prep("program foo;
+          rule1
+          foo(A,B) :- bar(A,B);
+")
+    ruletup = @rules.tuples.tups[0]
+    assert_equal("rule1",ruletup.value("rulename"))
+    
+  end
+
 	def test_preds
 		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 
@@ -148,6 +158,7 @@ class TestParse < Test::Unit::TestCase
 			elsif name.eql?("foo")
 				assert_equal(t.values,[4, 3, 0, "foo", nil])
 			else
+        puts @preds
 				raise("buh?")
 			end
 		end
