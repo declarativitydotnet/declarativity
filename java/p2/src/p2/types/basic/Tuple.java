@@ -137,16 +137,17 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	
 	@Override
 	public int hashCode() {
-		if (this.values.size() > 0) {
-			String code = "";
-			for (Comparable value : values) {
-				code += value == null ? "null".hashCode() : value.hashCode();
-			}
-			return code.hashCode();
+		if (this.values.size() == 0)
+				return id.hashCode();
+
+		StringBuilder sb = new StringBuilder();
+		for (Comparable value : values) {
+			if (value == null)
+				sb.append("null".hashCode());
+			else
+				sb.append(value.hashCode());
 		}
-		else {
-			return id.hashCode();
-		}
+		return sb.toString().hashCode();
 	}
 	
 	/* The number of attributes in this tuple. */
