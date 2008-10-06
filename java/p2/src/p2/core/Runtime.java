@@ -39,7 +39,10 @@ public class Runtime implements System {
 	
 	private Log log;
 	
-	private Runtime() {
+	Runtime() {
+		Table.initialize();
+		Compiler.initialize();
+
 		query      = new QueryTable();
 		schedule   = new Schedule();
 		clock      = new Clock("localhost");
@@ -50,7 +53,7 @@ public class Runtime implements System {
 		thread     = new Thread(driver);
 	}
 	
-	public void start(Integer port) throws P2RuntimeException {
+	public void start(int port) throws P2RuntimeException {
 		try {
 			URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
 			p2.lang.Compiler compiler = new p2.lang.Compiler("system", runtimeFile);
@@ -101,7 +104,7 @@ public class Runtime implements System {
 		schedule("compile", uninstall.name(), uninstall, null);
 	}
 	
-	public void schedule(final String program, final TableName name, 
+	public void schedule(final String program, final TableName name,
 			             final TupleSet insertions, final TupleSet deletions) throws UpdateException {
 		synchronized (driver) {
 			if (program.equals("runtime")) {
@@ -136,37 +139,33 @@ public class Runtime implements System {
 		return runtime;
 	}
 	
-	public static System bootstrap(Integer port) {
+	public void bootstrap(int port) {
 		try {
-			Table.initialize();
-			Compiler.initialize();
-			runtime = new Runtime();
-			runtime.start(port);
+			start(port);
 
 			for (URL file : Compiler.FILES) {
-				runtime.install("system", file);
+				install("system", file);
 			}
-			
-			return runtime;
 		} catch (Exception e) {
 			java.lang.System.err.println("BOOTSTRAP ERROR");
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
-		return null;
 	}
 	
-	public static void main(String[] args) throws UpdateException, InterruptedException, MalformedURLException {
+	public static void main(String[] args) throws UpdateException, MalformedURLException {
 		if (args.length != 2) {
 			java.lang.System.out.println("Usage: p2.core.System port program");
 			java.lang.System.exit(1);
 		}
 		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg"));
-		Runtime system = (Runtime) bootstrap(Integer.parseInt(args[0]));
+		
+		// Initialize the global Runtime
+		runtime = (Runtime) SystemFactory.makeSystem();
+		runtime.bootstrap(Integer.parseInt(args[0]));
 		for (int i = 1; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);
-			system.install("user", url);
+			runtime.install("user", url);
 		}
-		system.thread().join();
 	}
 }
