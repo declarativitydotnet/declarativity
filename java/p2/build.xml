@@ -8,13 +8,33 @@
   <property name="build" location="ant-build"/>
   <property name="dist"  location="ant-dist"/>
   <property name="lib" location="lib"/>
+  <property name="parser-dir" location="${src}/p2/lang/parse"/>
 
   <target name="init">
     <tstamp/>
     <mkdir dir="${build}"/>
   </target>
 
-  <target name="compile" depends="init" description="compile the source">
+  <!-- Check if we need to re-run Rats -->
+  <target name="rats-freshness">
+    <uptodate property="rats.up-to-date"
+              srcfile="${parser-dir}/Parser.rats"
+              targetfile="${parser-dir}/Parser.java"/>
+  </target>
+
+  <target name="rats" depends="rats-freshness" unless="rats.up-to-date">
+    <echo message="Regenerating Overlog parser using Rats..."/>
+
+    <java classname="xtc.parser.Rats" classpath="${lib}/xtc.jar" >
+      <arg line="-in ${parser-dir}"/>
+      <arg line="-out ${parser-dir}"/>
+      <arg value="-lgpl"/>
+      <arg value="-no-exit"/>
+      <arg value="${parser-dir}/Parser.rats"/>
+    </java>
+  </target>
+
+  <target name="compile" depends="init,rats" description="compile the source">
     <javac srcdir="${src}" classpath="${lib}/xtc.jar" destdir="${build}" debug="yes"/>
   </target>
 
