@@ -12,13 +12,13 @@ public interface System {
 	 * 
 	 * @param port The network port to use
 	 */
-	public void bootstrap(int port);
+	void bootstrap(int port);
 
 	/**
 	 * Get the system clock.
 	 * @return The current system (logical) clock
 	 */
-	public Clock clock();
+	Clock clock();
 	
 	/**
 	 * Install program file into runtime.
@@ -26,15 +26,14 @@ public interface System {
 	 * @param file File containing program text.
 	 * @throws UpdateException compilation/installation problems
 	 */
-	public void install(String owner, 
-						URL file) throws UpdateException;
+	void install(String owner, URL file) throws UpdateException;
 
 	/**
 	 * Uninstall program.
 	 * @param program Program name
 	 * @throws UpdateException Uninstall problems
 	 */
-	public void uninstall(String program) throws UpdateException;
+	void uninstall(String program) throws UpdateException;
 
 	/**
 	 * Schedule a set of tuples to be evaluated by a given program.
@@ -44,8 +43,8 @@ public interface System {
 	 * @param deletions Set of tuples to delete and evaluate
 	 * @throws UpdateException
 	 */
-	public void schedule(String program, 
-						 TableName name, 
-                         TupleSet insertions, 
-                         TupleSet deletions) throws UpdateException;
+	void schedule(String program,
+				  TableName name,
+				  TupleSet insertions,
+				  TupleSet deletions) throws UpdateException;
 }
