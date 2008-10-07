@@ -35,4 +35,14 @@ class Schedule < ObjectTable
   def insert(t, c)
     super(t, c)
   end
+  
+  def delete(tups)
+    require 'ruby-debug'; debugger
+    super(tups)
+  end
+  
+  def delete_tup(tup)
+    require 'ruby-debug'; debugger
+    super(tup)
+  end
 end

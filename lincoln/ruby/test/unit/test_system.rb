@@ -19,6 +19,6 @@ class TestSystem < Test::Unit::TestCase
     assert_equal(System.install_program("chord", nil), nil)
 
     sys.bootstrap # gets called from main
-    #sys.main('test/unit/olg/path.olg')
+    # sys.main('test/unit/olg/path.olg')
   end
 end

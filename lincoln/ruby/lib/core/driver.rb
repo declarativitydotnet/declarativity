@@ -81,6 +81,7 @@ class Driver < Monitor
         insertions  = tuple.value(Field::INSERTIONS)
         deletions   = tuple.value(Field::DELETIONS)
 
+        require 'ruby-debug'; debugger if deletions.size > 0
         state.insertions.addAll(insertions)
         state.deletions.addAll(deletions)
       end
@@ -124,10 +125,10 @@ class Driver < Monitor
         querySet.each do |query|
           if query.event != Table::Event::DELETE
             puts("\t\tRUN QUERY " + query.rule.to_s + " input " + insertions.tups.to_s)
+            require 'ruby-debug'; debugger if query.rule.to_s == "cleanup"
             #            puts("\t\t\t Plan #{query.to_s}")
             result = query.evaluate(insertions) 
             puts("\t\tQUERY " + query.rule.to_s + " result " + result.tups.to_s)
-            # require 'ruby-debug'; debugger
             if result.size == 0
               next
             elsif result.name == insertions.name
@@ -152,6 +153,7 @@ class Driver < Monitor
         while deletions.size > 0
           if table.table_type == Table::TableType::TABLE
             watchRemove.evaluate(deletions) unless watchRemove.nil?
+            require 'ruby-debug'; debugger
             deletions = table.delete(deletions)
             watchDelete.evaluate(deletions) unless watchDelete.nil?
           else
@@ -242,7 +244,6 @@ class Driver < Monitor
       while (true) 
         synchronize do
           min = Infinity
-
           if @schedule.cardinality > 0
             if min.class == String or @schedule.min.class == String
               require 'ruby-debug'; debugger
@@ -255,7 +256,7 @@ class Driver < Monitor
           if min < Infinity
             puts("============================ EVALUATE CLOCK[" + min.to_s + "] =============================")
             # @schedule.dump_to_tmp_csv
-#            print "SCHEDULE: " + @schedule.to_s
+            print "SCHEDULE: " + @schedule.to_s
             evaluate(@clock.time(min), @runtime.name)
             #            print @tasks.to_s
             @tasks.each { |t| evaluate(t.tuples, t.program) }

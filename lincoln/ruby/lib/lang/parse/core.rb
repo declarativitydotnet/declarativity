@@ -628,7 +628,7 @@ module Overlog
 					#else
 					#	return true
 					#end
-					return !text_value.eql?("")
+					return !text_value.strip.eql?("")
 				end
   end
 
