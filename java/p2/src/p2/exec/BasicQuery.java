@@ -6,18 +6,13 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.operator.Operator;
-import p2.types.table.Aggregation;
 
 public class BasicQuery extends Query {
-	
-	private Aggregation aggregation;
-	
 	private List<Operator> body;
 
 	public BasicQuery(String program, String rule, Boolean isPublic, Boolean isDelete,
 					  Predicate event, Predicate head, List<Operator> body) {
 		super(program, rule, isPublic, isDelete, event, head);
-		this.aggregation = null;
 		this.body        = body;
 	}
 	

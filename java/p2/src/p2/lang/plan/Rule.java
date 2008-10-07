@@ -148,7 +148,6 @@ public class Rule extends Clause {
 	public List<Query> query(TupleSet periodics) throws PlannerException {
 		/* First search for an event predicate. */
 		Predicate event   = null;
-		Variable locVariable = null;
 		
 		for (Term term : body) {
 			if (term instanceof Predicate) {
@@ -170,8 +169,7 @@ public class Rule extends Clause {
 				}
 			}
 		}
-		
-		List<Query> queries = new ArrayList<Query>();
+
 		if (event != null) {
 			return query(periodics, head, event, body);
 		}

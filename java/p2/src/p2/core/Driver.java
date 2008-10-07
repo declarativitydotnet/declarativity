@@ -312,18 +312,15 @@ public class Driver implements Runnable {
 
 	private Schedule schedule;
 
-	private Periodic periodic;
-
 	private Clock clock;
 	
 	public Evaluator evaluator;
 	
 	private Flusher flusher;
 
-	public Driver(Schedule schedule, Periodic periodic, Clock clock) {
+	public Driver(Schedule schedule, Clock clock) {
 		this.tasks = new ArrayList<Task>();
 		this.schedule = schedule;
-		this.periodic = periodic;
 		this.clock = clock;
 		this.evaluator = new Evaluator();
 		this.flusher = new Flusher();

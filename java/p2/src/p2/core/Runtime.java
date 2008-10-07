@@ -37,6 +37,8 @@ public class Runtime implements System {
 	
 	private Periodic periodic;
 	
+	private Log log;
+	
 	Runtime() {
 		Table.initialize();
 		Compiler.initialize();
@@ -45,8 +47,9 @@ public class Runtime implements System {
 		schedule   = new Schedule();
 		clock      = new Clock("localhost");
 		periodic   = new Periodic(schedule);
+		log        = new Log(java.lang.System.err);
 		network    = new Network();
-		driver     = new Driver(schedule, periodic, clock);
+		driver     = new Driver(schedule, clock);
 		thread     = new Thread(driver);
 	}
 	

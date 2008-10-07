@@ -52,8 +52,6 @@ public class Watch extends Clause {
 		}
 	}
 	
-	private String program;
-	
 	private TableName name;
 	
 	private p2.types.operator.Watch.Modifier modifier;

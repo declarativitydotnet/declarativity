@@ -44,9 +44,7 @@ public class Fact extends Clause {
 			return super.delete(tuple);
 		}
 	}
-	
-	private String program;
-	
+
 	private TableName name;
 	
 	private List<Expression> arguments;

@@ -1297,7 +1297,7 @@ public final class TypeChecker extends Visitor {
 				NewClass newclass = (NewClass) context;
 				Constructor[] constructors = newclass.type().getConstructors();
 				Constructor constructor = null;
-				for (Constructor c : newclass.type().getConstructors()) {
+				for (Constructor c : constructors) {
 					if (typeCoercion(c.getParameterTypes(), types)) {
 						constructor = c;
 						break;
