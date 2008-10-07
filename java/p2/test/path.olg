@@ -14,17 +14,25 @@ define(allpaths, {String, ValueList});
 define(pathPrinter, {String, ValueList});
 define(computeAll, {String});
 
+load("test/link.data", link);
+
+watch(link, i);
+
 /* 1 -> 2 -> 3 -> 4 */
+/*
 link("1", "2");
 link("2", "3");
 link("3", "4");
 link("2", "4");
+*/
 
 /* 5 -> 6 -> 7 -> 8 -> 9 */
+/*
 link("5", "6");
 link("6", "7");
 link("7", "8");
 link("8", "9");
+*/
 
 watch(path, ae);
 watch(shortestPath, ae);
@@ -47,7 +55,7 @@ shortestPath(Source, Destination, min<Hops>) :-
 computeAll(Source) :-
 	shortestPath(Source, Destination, Hops);
 	
-allpaths(Source, generic<(new ValueList()).insert((Object)Destination)>) :-
+allpaths(Source, generic<(new ValueList()).insert(Destination)>) :-
 	computeAll(Bla),
 	path(Source, Destination, Hops);
 	

@@ -24,11 +24,19 @@ generic Clauses = (Clause void:";":Symbol)* ;
 Node Clause =
     <Rule>   Rule
   / <Watch>  Watch
+  / <Load>   Load
   / <Fact>   Fact
-  / <Define> Definition
   / <Import> Import
+  / <Define> Definition
   ;
   
+//----------------------------  Load  --------------------------------------/
+
+generic Load = 
+    void:"load":Word  void:"(":Symbol StringConstant void:",":Symbol TableName void:")":Symbol
+  / void:"load":Word  void:"(":Symbol StringConstant void:",":Symbol TableName void:",":Symbol StringConstant void:")":Symbol
+  ;
+
   
 //----------------------------  Import  --------------------------------------/
 

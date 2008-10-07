@@ -1,5 +1,6 @@
 package p2.lang.parse;
 
+import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -25,6 +26,7 @@ import p2.lang.plan.Expression;
 import p2.lang.plan.Fact;
 import p2.lang.plan.GenericAggregate;
 import p2.lang.plan.IfThenElse;
+import p2.lang.plan.Load;
 import p2.lang.plan.MethodCall;
 import p2.lang.plan.Program;
 import p2.lang.plan.UnknownReference;
@@ -224,6 +226,43 @@ public final class TypeChecker extends Visitor {
 		NAME_TO_BASETYPE.put(type.getSimpleName(), type);
 		n.setProperty(Constants.TYPE, type);
 		return Class.class;
+	}
+	
+	public Class visitLoad(final GNode n) {
+		Class type = (Class) dispatch((Node)n.getNode(0));
+		assert(type == Value.class);
+		Value<String> fileName = (Value) n.getNode(0).getProperty(Constants.TYPE);
+		File file = new File(fileName.value());
+		
+		type = (Class) dispatch((Node)n.getNode(1));
+		assert(type == TableName.class);
+		TableName name = (TableName) n.getNode(1).getProperty(Constants.TYPE);
+		
+		String delim = null;
+		if (n.size() > 2) {
+			type = (Class) dispatch((Node)n.getNode(2));
+			Value<String> delimValue = (Value) n.getNode(2).getProperty(Constants.TYPE);
+		    delim = delimValue.value();
+		}
+		
+		if (name.scope == null) {
+			name.scope = program.name();
+			if (Table.table(name) == null) {
+				name.scope = Table.GLOBALSCOPE;
+			}
+		}
+		if (Table.table(name) == null) {
+			runtime.error("No table definition found for load on " + name, n);
+			return Error.class;
+		}
+		else if (!file.exists()) {
+			runtime.warning("Loader: unknown file " + file.getAbsolutePath(), n);
+			return null;
+		}
+		
+		Load loader = new Load(n.getLocation(), file, name, delim);
+		n.setProperty(Constants.TYPE, loader);
+		return Load.class;
 	}
 	
 	public Class visitFact(final GNode n) {

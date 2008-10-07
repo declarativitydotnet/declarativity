@@ -218,6 +218,7 @@ public class Compiler {
 		for (Node clause : node.getNode(1).<Node> getList(0)) {
 			if (clause.getName().equals("Rule")
 					|| clause.getName().equals("Fact")
+					|| clause.getName().equals("Load")
 					|| clause.getName().equals("Watch")) {
 				typeChecker.analyze(clause);
 				if (runtime.errorCount() > 0)
@@ -230,6 +231,7 @@ public class Compiler {
 						}
 					} else {
 						Clause c = (Clause) clause.getProperty(Constants.TYPE);
+						if (c == null) continue;
 						c.set(this.program.name());
 					}
 				} catch (UpdateException e) {
