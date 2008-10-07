@@ -53,7 +53,7 @@ public class Runtime implements System {
 	public void start(int port) throws P2RuntimeException {
 		try {
 			URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
-			p2.lang.Compiler compiler = new p2.lang.Compiler("system", runtimeFile);
+			Compiler compiler = new Compiler("system", runtimeFile);
 			compiler.program().plan();
 			driver.runtime(program("runtime"));
 			network.install(port);
