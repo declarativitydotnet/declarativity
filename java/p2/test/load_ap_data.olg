@@ -1,0 +1,107 @@
+program ap;
+
+import java.lang.Double;
+
+/** Stage to read CSV */
+//stage("CSVtuple", varFile, inputVariable).
+//stage("CSVtuple", similarityFile, inputSimilarity).
+/*May put that as a scalar value that is a constant*/
+//stage("CSVtuple", preferenceFile, inputPreference).
+
+define(inputPreference,keys(0,1),{String,Integer,Double});
+define(inputSimilarity,keys(0,1,2),{String,Integer,Integer,Double});
+define(inputVariable,keys(0,1),{String,Integer,Integer});
+define(inputPreferenceL,{Integer,Double});
+define(inputSimilarityL,{Integer,Integer,Double});
+define(inputVariableL,{Integer,Integer});
+
+/*
+define(inputPreference,keys(0,1),{String,String,String});
+define(inputSimilarity,keys(0,1,2),{String,String,String,String});
+define(inputVariable,keys(0,1),{String,String,String});
+define(inputPreferenceL,{String,String});
+define(inputSimilarityL,{String,String,String});
+define(inputVariableL,{String,String});
+*/
+
+define(node,{String,Integer,String});
+define(variable,keys(0,1,2),{String,Integer,String});
+
+define(localVariable,keys(0,1,2),{String,Integer,String});
+
+define(similarity, keys(1,2),{String,Integer,Integer,Double});
+define(preference,{String,Integer,Double});
+
+
+define(damping,keys(0),{Double});
+define(epoch,keys(0),{Integer});
+define(myid,keys(0),{String,Integer});
+define(duration,keys(0),{Integer});
+
+damping(5678.0);
+epoch(10);
+myid("tcp:localhost:10000",10000);
+duration(100);
+
+
+load("test/archive/2D-5-preference-5.csv",inputPreferenceL);
+//load("test/archive/2D-5-similarity-5.csv",inputSimilarityL);
+//load("test/archive/2D-5-vars-5.csv",inputVariableL);
+
+// fix me
+define(me,keys(0),{String});
+me("tcp:localhost:10000");
+
+inputPreference(Node,Source,Preference) :- me(Node), inputPreferenceL(Source,Preference);
+inputSimilarity(Node,Source,Target,S) :- me(Node), inputSimilarityL(Source,Target,S);
+inputVariable(Node,VarNodeId,Var) :- me(Node), inputVariableL(VarNodeId,Var);
+
+
+/** Invoke the CSVtuple stage */
+/*
+varFile(@Node, Filename) :- nodesLoaded(@Node), Filename := VARS_FILE.
+
+variablesLoaded(@Node) :-
+	variable(@Node, Var, VarNode), Var == "Done".
+
+similarityFile(@Node, Filename) :- variablesLoaded(@Node), Filename := SIMILARITY_FILE.
+preferenceFile(@Node, Filename) :- variablesLoaded(@Node), Filename := PREFERENCE_FILE
+*/
+
+/* The set of variables and the associated nodes: node, var, nodeCarryingVar */
+//materialize(variable, infinity, infinity, keys(1,2)).
+//materialize(localVariable, infinity, infinity, keys(1,2)).
+
+/*global var table*/
+variable(Node, Var, VarNode) :- 
+	inputVariable(Node, VarNodeId, Var),
+        node(Node, VarNodeId, VarNode);
+        
+localVariable(Node, Var, VarNode) :- 
+	inputVariable(Node, VarNodeId, Var),
+        node(Node, VarNodeId, VarNode),
+        myid(Id),
+        VarNodeId == Id;
+        
+similarity(Node, Source, Target, S) :- 
+	inputSimilarity(Node, Source, Target, Similarity),
+	localVariable(Node, Source, _),
+	//S := f_toDouble(Similarity),
+  S := new Double(Similarity);
+        
+preference(Node, Source, P) :- 
+	inputPreference(Node, Source, Preference),
+        localVariable(Node, Source, _),
+	      P := new Double("0.0") + new Double(Preference);
+
+similarity(Node, Source, Source, P) :-
+        preference(Node, Source, Preference),
+        P := new Double("0.0") + new Double(Preference);
+        
+watch(similarity, id);
+watch(variable, i);
+watch(localVariable, i);
+watch(preference, s);
+/*watchmod(inputSimilarity, "c").*/
+
+
