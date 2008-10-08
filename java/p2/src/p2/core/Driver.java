@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import p2.exec.Query;
 import p2.lang.plan.Program;
+import p2.lang.plan.Watch.WatchTable;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
@@ -87,9 +88,12 @@ public class Driver implements Runnable {
 			TupleSet.class,   // Insertion tuple set
 			TupleSet.class    // Deletions tuple set
 		};
+		
+		private Runtime context; 
 
-		public Flusher() {
+		public Flusher(Runtime context) {
 			super("flusher", new TypeList(SCHEMA));
+			this.context = context;
 		}
 		
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
@@ -108,12 +112,13 @@ public class Driver implements Runnable {
 					continue;
 				}
 				
-				Table table = Table.table(name);
+				WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
+				Table table = context.catalog().table(name);
 				if (insertions.size() > 0 || table instanceof Aggregation) {
 					insertions = table.insert(insertions, deletions);
 					
 					if (table instanceof Aggregation) {
-						Operator watchRemove = Compiler.watch.watched(program, name, Watch.Modifier.ERASE);
+						Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
 						if (watchRemove != null) {
 							try { watchRemove.evaluate(deletions);
 							} catch (P2RuntimeException e) { }
@@ -125,7 +130,7 @@ public class Driver implements Runnable {
 					
 					deletions = table.delete(deletions);
 					
-					Operator watchRemove = Compiler.watch.watched(program, name, Watch.Modifier.ERASE);
+					Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
 					if (watchRemove != null) {
 						try { watchRemove.evaluate(deletions);
 						} catch (P2RuntimeException e) { }
@@ -133,7 +138,7 @@ public class Driver implements Runnable {
 				}
 				
 				if (insertions.size() > 0) {
-					Operator watchAdd = Compiler.watch.watched(program, name, Watch.Modifier.ADD);
+					Operator watchAdd = watch.watched(program, name, Watch.Modifier.ADD);
 					if (watchAdd != null) {
 						try { watchAdd.evaluate(insertions);
 						} catch (P2RuntimeException e) { }
@@ -157,9 +162,12 @@ public class Driver implements Runnable {
 			TupleSet.class,   // Insertion tuple set
 			TupleSet.class    // Deletions tuple set
 		};
+		
+		private Runtime context;
 
-		public Evaluator() {
+		public Evaluator(Runtime context) {
 			super("evaluator", new TypeList(SCHEMA));
+			this.context = context;
 		}
 		
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
@@ -171,7 +179,7 @@ public class Driver implements Runnable {
 				TupleSet  insertions = (TupleSet)  tuple.value(Field.INSERTIONS.ordinal());
 				TupleSet  deletions  = (TupleSet)  tuple.value(Field.DELETIONS.ordinal());
 				if (deletions == null) deletions = new TupleSet(name);
-				Program program = Runtime.runtime().program(programName);
+				Program program = context.program(programName);
 				
 				if (program != null) {
 					TupleSet  result = evaluate(time, program, name, insertions, deletions);
@@ -188,8 +196,9 @@ public class Driver implements Runnable {
 		throws UpdateException {
 			Hashtable<String, Tuple> continuations = new Hashtable<String, Tuple>();
 
-			Operator watchInsert = Compiler.watch.watched(program.name(), name, Watch.Modifier.INSERT);
-			Operator watchDelete = Compiler.watch.watched(program.name(), name, Watch.Modifier.DELETE);
+			WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
+			Operator watchInsert = watch.watched(program.name(), name, Watch.Modifier.INSERT);
+			Operator watchDelete = watch.watched(program.name(), name, Watch.Modifier.DELETE);
 
 			Set<Query> querySet = program.queries(name);
 			if (querySet == null) {
@@ -229,7 +238,7 @@ public class Driver implements Runnable {
 			}
 			else if (deletions.size() > 0) {
 				for (Query query : querySet) {
-					Table output = Table.table(query.output().name());
+					Table output = context.catalog().table(query.output().name());
 					if (query.event() == Table.Event.DELETE ||
 							(output.type() == Table.Type.TABLE && query.event() != Table.Event.INSERT)) {
 						if (watchDelete != null) {
@@ -318,12 +327,15 @@ public class Driver implements Runnable {
 	
 	private Flusher flusher;
 
-	public Driver(Schedule schedule, Clock clock) {
+	public Driver(Runtime context, Schedule schedule, Clock clock) {
 		this.tasks = new ArrayList<Task>();
 		this.schedule = schedule;
 		this.clock = clock;
-		this.evaluator = new Evaluator();
-		this.flusher = new Flusher();
+		this.evaluator = new Evaluator(context);
+		this.flusher = new Flusher(context);
+		
+		context.catalog().register(this.evaluator);
+		context.catalog().register(this.flusher);
 	}
 	
 	public void runtime(Program runtime) {

@@ -11,6 +11,7 @@ import p2.types.basic.TupleSet;
 import p2.types.basic.Tuple;
 import p2.types.exception.P2RuntimeException;
 import p2.types.table.TableName;
+import p2.core.Runtime;
 
 public class Watch extends Operator {
 	public static enum Modifier{NONE, TRACE, ADD, ERASE, INSERT, DELETE, RECEIVE, SEND};
@@ -33,15 +34,15 @@ public class Watch extends Operator {
 	
 	private PrintStream stream;
 
-	public Watch(String program, String rule, TableName name, Modifier modifier) {
-		super(program, rule);
+	public Watch(Runtime context, String program, String rule, TableName name, Modifier modifier) {
+		super(context, program, rule);
 		this.name = name;
 		this.modifier = modifier;
 		this.stream = System.err;
 	}
 	
-	public Watch(String program, String rule, TableName name, Modifier modifier, PrintStream stream) {
-		super(program, rule);
+	public Watch(Runtime context, String program, String rule, TableName name, Modifier modifier, PrintStream stream) {
+		super(context, program, rule);
 		this.name = name;
 		this.modifier = modifier;
 		this.stream = stream;
@@ -51,7 +52,7 @@ public class Watch extends Operator {
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		if (tuples.size() == 0) return tuples;
 		
-		String header = "Program " + program + " [CLOCK " + p2.core.Runtime.runtime().clock().current() + "] " + 
+		String header = "Program " + program + " [CLOCK " + context.clock().current() + "] " + 
 				        modifier.toString() + ": " + name;
 				        
 		if (this.rule != null) {

@@ -10,6 +10,7 @@ import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Table;
+import p2.core.Runtime;
 
 public class Function extends Operator {
 	
@@ -17,8 +18,8 @@ public class Function extends Operator {
 	
 	private Predicate predicate;
 
-	public Function(Table function, Predicate predicate) {
-		super(predicate.program(), predicate.rule());
+	public Function(Runtime context, Table function, Predicate predicate) {
+		super(context, predicate.program(), predicate.rule());
 		this.function = function;
 		this.predicate = predicate;
 	}

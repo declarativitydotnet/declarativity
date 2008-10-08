@@ -14,10 +14,12 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 import p2.lang.Compiler;
+import p2.core.Runtime;
 
 public class Fact extends Clause {
 	
 	public static class FactTable extends ObjectTable {
+		public final static TableName TABLENAME = new TableName(GLOBALSCOPE, "fact");
 		public static final Key PRIMARY_KEY = new Key();
 		
 		public enum Field {PROGRAM, TABLENAME, TUPLE};
@@ -27,10 +29,10 @@ public class Fact extends Clause {
 			Tuple.class      // Tuple object
 		};
 
-		public FactTable() {
-			super(new TableName(GLOBALSCOPE, "fact"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public FactTable(Runtime context) {
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 			Key programKey = new Key(Field.PROGRAM.ordinal());
-			Index index = new HashIndex(this, programKey, Index.Type.SECONDARY);
+			Index index = new HashIndex(context, this, programKey, Index.Type.SECONDARY);
 			this.secondary.put(programKey, index);
 		}
 		
@@ -67,7 +69,7 @@ public class Fact extends Clause {
 	}
 
 	@Override
-	public void set(String program) throws UpdateException {
+	public void set(Runtime context, String program) throws UpdateException {
 		List<Comparable> values = new ArrayList<Comparable>();
 		for (Expression argument : this.arguments) {
 			TupleFunction<Comparable> function = argument.function();
@@ -79,7 +81,7 @@ public class Fact extends Clause {
 			}
 		}
 		
-		Compiler.fact.force(new Tuple(program, name, new Tuple(values)));
+		context.catalog().table(FactTable.TABLENAME).force(new Tuple(program, name, new Tuple(values)));
 	}
 
 }

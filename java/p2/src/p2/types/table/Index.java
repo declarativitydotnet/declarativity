@@ -1,5 +1,6 @@
 package p2.types.table;
 
+import p2.core.Runtime;
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import p2.types.basic.Tuple;
@@ -25,6 +26,9 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	}
 	
 	public static class IndexTable extends ObjectTable {
+		private Runtime context;
+		
+		private static final TableName TABLENAME = new TableName(GLOBALSCOPE, "index");
 		private static final Key PRIMARY_KEY = new Key(0,1); 
 		
 		public enum Field {TABLENAME, KEY, TYPE, CLASSNAME, OBJECT};
@@ -36,8 +40,9 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 			Index.class      // the object
 		};
 		
-		public IndexTable() {
-			super(new TableName(GLOBALSCOPE, "index"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public IndexTable(Runtime context) {
+			super(context, new TableName(GLOBALSCOPE, "index"), PRIMARY_KEY, new TypeList(SCHEMA));
+			this.context = context;
 		}
 		
 		@Override
@@ -47,7 +52,7 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 					Class ctype = Class.forName((String)tuple.value(Field.CLASSNAME.ordinal()));
 					Constructor constructor = ctype.getConstructor(Table.class, Key.class, Type.class);
 					TableName name  = (TableName) tuple.value(Field.TABLENAME.ordinal());
-					Table table = Table.table(name);
+					Table table = context.catalog().table(name);
 					
 					/* Create the index object. */
 					Key key = (Key) tuple.value(Field.KEY.ordinal());
@@ -77,14 +82,16 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	
 	private Type type;
 	
-	public Index(Table table, Key key, Type type) {
+	public Index(Runtime context, Table table, Key key, Type type) {
 		this.table = table;
 		this.key = key;
 		this.type = type;
-		IndexTable iTable = Table.index();
-		if (iTable != null) {
+		if (context.catalog() != null) {
 			try {
-				iTable.insert(new Tuple(table.name(), key, type, this.getClass().getName(), this));
+				IndexTable iTable = context.catalog().index();
+				if (iTable != null) {
+					iTable.insert(new Tuple(table.name(), key, type, this.getClass().getName(), this));
+				}
 			} catch (UpdateException e) {
 				e.printStackTrace();
 				System.exit(1);

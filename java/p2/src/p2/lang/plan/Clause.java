@@ -1,5 +1,6 @@
 package p2.lang.plan;
 
+import p2.core.Runtime;
 import p2.types.exception.UpdateException;
 
 public abstract class Clause implements Comparable<Clause> {
@@ -20,5 +21,6 @@ public abstract class Clause implements Comparable<Clause> {
 	@Override
 	public abstract String toString();
 	
-	public abstract void set(String program) throws UpdateException;
+	public abstract void set(Runtime context, String program) throws UpdateException;
+
 }

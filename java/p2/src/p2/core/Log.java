@@ -13,6 +13,7 @@ import p2.types.table.TableName;
 
 public class Log extends ObjectTable {
 	
+	public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "log");
 	public static final Key PRIMARY_KEY = new Key();
 	
 	public enum Type{INFO, WARNING, ERROR};
@@ -25,8 +26,8 @@ public class Log extends ObjectTable {
 
 	private FilterOutputStream stream;
 	
-	public Log(FilterOutputStream stream) {
-		super(new TableName(Table.GLOBALSCOPE, "log"), PRIMARY_KEY, new TypeList(SCHEMA));
+	public Log(Runtime context, FilterOutputStream stream) {
+		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		this.stream = stream;
 	}
 	

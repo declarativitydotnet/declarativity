@@ -18,9 +18,12 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.UpdateException;
 import p2.types.table.TableName;
+import p2.core.Runtime;
 
 public class TCP extends Server {
 	private static final TableName ReceiveMessage = new TableName("tcp", "receive");
+	
+	private Runtime context;
 	
 	private Network manager;
 	
@@ -28,11 +31,12 @@ public class TCP extends Server {
 	
 	private Hashtable<Address, Thread> channels;
 		
-	public TCP(Network manager, Integer port) throws IOException, UpdateException {
+	public TCP(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
+		this.context = context;
 		this.manager = manager;
 		this.server = new ServerSocket(port);
 		this.channels = new Hashtable<Address, Thread>();
-		p2.core.Runtime.runtime().install("system",
+		context.install("system",
 				ClassLoader.getSystemClassLoader().getResource("p2/net/tcp/tcp.olg"));
 	}
 	
@@ -127,7 +131,7 @@ public class TCP extends Server {
 					Message message = (Message) this.iss.readObject();
 					IP address = new IP(this.socket.getInetAddress(), this.socket.getPort());
 					Tuple tuple = new Tuple(address, message);
-					p2.core.Runtime.runtime().schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
+					context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
 				} catch (IOException e) {
 					try {
 						TCP.this.manager.connection().unregister(this);

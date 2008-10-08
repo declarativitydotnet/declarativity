@@ -8,6 +8,7 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
+import p2.core.Runtime;
 
 public class Assign extends Operator {
 	
@@ -15,8 +16,8 @@ public class Assign extends Operator {
 	
 	private Schema schema;
 	
-	public Assign(p2.lang.plan.Assignment assignment, Schema input) {
-		super(assignment.program(), assignment.rule());
+	public Assign(Runtime context, p2.lang.plan.Assignment assignment, Schema input) {
+		super(context, assignment.program(), assignment.rule());
 		this.assignment = assignment;
 		this.schema = input.clone();
 		

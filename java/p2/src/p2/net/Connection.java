@@ -8,6 +8,7 @@ import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
+import p2.core.Runtime;
 
 public class Connection extends ObjectTable {
 
@@ -22,8 +23,8 @@ public class Connection extends ObjectTable {
 	
 	private Network manager;
 	
-	protected Connection(Network manager) {
-		super(new TableName("network", "connection"), PRIMARY_KEY, new TypeList(SCHEMA));
+	protected Connection(Runtime context, Network manager) {
+		super(context, new TableName("network", "connection"), PRIMARY_KEY, new TypeList(SCHEMA));
 		this.manager = manager;
 	}
 	

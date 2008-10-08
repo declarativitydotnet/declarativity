@@ -10,13 +10,17 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 import p2.lang.Compiler;
+import p2.core.Runtime;
 
 public class Watch extends Clause {
 	
 	public static class WatchTable extends ObjectTable {
+		public final static TableName TABLENAME = new TableName(GLOBALSCOPE, "watches");
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
-
 		public enum Field {PROGRAM, TABLENAME, MODIFIER, OPERATOR};
+		
+		private Runtime context;
+		
 		public static final Class[] SCHEMA =  {
 			String.class,                             // Program name
 			TableName.class,                          // Table name
@@ -24,8 +28,9 @@ public class Watch extends Clause {
 			p2.types.operator.Watch.class             // Operator
 		};
 
-		public WatchTable() {
-			super(new TableName(GLOBALSCOPE, "watches"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public WatchTable(Runtime context) {
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+			this.context = context;
 		}
 
 		@Override
@@ -41,7 +46,7 @@ public class Watch extends Clause {
 		public Operator watched(String program, TableName name, p2.types.operator.Watch.Modifier modifier) {
 			Tuple key = new Tuple(program, name, modifier);
 			try {
-				TupleSet tuples = Compiler.watch.primary().lookup(key);
+				TupleSet tuples = primary().lookup(key);
 				if (tuples.size() > 0) {
 					return (Operator) tuples.iterator().next().value(Field.OPERATOR.ordinal());
 				}
@@ -67,9 +72,9 @@ public class Watch extends Clause {
 	}
 
 	@Override
-	public void set(String program) throws UpdateException {
-		Compiler.watch.force(
+	public void set(Runtime context, String program) throws UpdateException {
+		context.catalog().table(WatchTable.TABLENAME).force(
 				new Tuple(program, name, modifier, 
-						  new p2.types.operator.Watch(program, null, name, modifier)));
+						  new p2.types.operator.Watch(context, program, null, name, modifier)));
 	}
 }

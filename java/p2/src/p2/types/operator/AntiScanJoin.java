@@ -6,14 +6,16 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.table.Table;
+import p2.core.Runtime;
+import p2.core.Runtime;
 
 public class AntiScanJoin extends Join {
 
 	private Table table;
 	
-	public AntiScanJoin(Predicate predicate, Schema input) {
-		super(predicate, input);
-		this.table = Table.table(predicate.name());
+	public AntiScanJoin(Runtime context, Predicate predicate, Schema input) {
+		super(context, predicate, input);
+		this.table = context.catalog().table(predicate.name());
 	}
 
 	@Override

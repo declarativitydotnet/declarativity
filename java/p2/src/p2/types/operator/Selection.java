@@ -7,6 +7,7 @@ import p2.types.basic.TupleSet;
 import p2.types.basic.Tuple;
 import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
+import p2.core.Runtime;
 
 public class Selection extends Operator {
 	
@@ -14,8 +15,8 @@ public class Selection extends Operator {
 	
 	private Schema schema;
 	
-	public Selection(p2.lang.plan.Selection selection, Schema input) {
-		super(selection.program(), selection.rule());
+	public Selection(Runtime context, p2.lang.plan.Selection selection, Schema input) {
+		super(context, selection.program(), selection.rule());
 		this.selection = selection;
 		this.schema = input.clone();
 	}

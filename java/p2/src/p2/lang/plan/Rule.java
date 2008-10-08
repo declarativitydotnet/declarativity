@@ -26,11 +26,16 @@ import p2.types.table.Table;
 import p2.types.table.TableName;
 import p2.core.Periodic;
 import p2.lang.Compiler;
+import p2.lang.plan.Watch.WatchTable;
+import p2.core.Runtime;
+import p2.core.Runtime;
 
 public class Rule extends Clause {
 	
 	public static class RuleTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "rule");
 		public static final Key PRIMARY_KEY = new Key(0,1);
+		
 		
 		public enum Field {PROGRAM, RULENAME, PUBLIC, DELETE, OBJECT};
 		public static final Class[] SCHEMA =  {
@@ -41,10 +46,10 @@ public class Rule extends Clause {
 			Rule.class                // Rule object
 		};
 
-		public RuleTable() {
-			super(new TableName(GLOBALSCOPE, "rule"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public RuleTable(Runtime context) {
+			super(context, new TableName(GLOBALSCOPE, "rule"), PRIMARY_KEY, new TypeList(SCHEMA));
 			Key programKey = new Key(Field.PROGRAM.ordinal());
-			Index index = new HashIndex(this, programKey, Index.Type.SECONDARY);
+			Index index = new HashIndex(context, this, programKey, Index.Type.SECONDARY);
 			this.secondary.put(programKey, index);
 		}
 		
@@ -136,16 +141,16 @@ public class Rule extends Clause {
 	}
 	
 	@Override
-	public void set(String program) throws UpdateException {
-		this.head.set(program, this.name, 0);
+	public void set(Runtime context, String program) throws UpdateException {
+		this.head.set(context, program, this.name, 0);
 		for (int i = 0; i < this.body.size(); i++) {
-			this.body.get(i).set(program, this.name, i+1);
+			this.body.get(i).set(context, program, this.name, i+1);
 		}
 		
-		Compiler.rule.force(new Tuple(program, name, isPublic, isDelete, this));
+		context.catalog().table(RuleTable.TABLENAME).force(new Tuple(program, name, isPublic, isDelete, this));
 	}
 
-	public List<Query> query(TupleSet periodics) throws PlannerException {
+	public List<Query> query(Runtime context, TupleSet periodics) throws PlannerException {
 		/* First search for an event predicate. */
 		Predicate event   = null;
 		
@@ -153,7 +158,7 @@ public class Rule extends Clause {
 			if (term instanceof Predicate) {
 				Predicate pred = (Predicate) term;
 
-				Table table = Table.table(pred.name());
+				Table table = context.catalog().table(pred.name());
 				if (table.type() == Table.Type.EVENT ||
 				    pred.event() != Table.Event.NONE) {
 					if (event != null) {
@@ -171,14 +176,14 @@ public class Rule extends Clause {
 		}
 
 		if (event != null) {
-			return query(periodics, head, event, body);
+			return query(context, periodics, head, event, body);
 		}
 		else {
-			return mviewQuery(head, body);
+			return mviewQuery(context, head, body);
 		}
 	}
 	
-	private List<Query> mviewQuery(Predicate head, List<Term> body) throws PlannerException {
+	private List<Query> mviewQuery(Runtime context, Predicate head, List<Term> body) throws PlannerException {
 		List<Query> queries = new ArrayList<Query>();
 		/* Perform delta rewrite. */
 		for (Term term1 : body) {
@@ -187,12 +192,12 @@ public class Rule extends Clause {
 			}
 			
 			Predicate delta = (Predicate) term1;
-			queries.addAll(query(null, head, delta, body));
+			queries.addAll(query(context, null, head, delta, body));
 		}
 		return queries;
 	}
 	
-	private List<Query> localize(TupleSet periodics, Predicate head, Predicate event, List<Term> body) throws PlannerException {
+	private List<Query> localize(Runtime context, TupleSet periodics, Predicate head, Predicate event, List<Term> body) throws PlannerException {
 		List<Query> queries = new ArrayList<Query>();
 		
 		/* Group all predicate terms by the location variable. */
@@ -251,14 +256,15 @@ public class Rule extends Clause {
 			
 				EventTable
 				intermediateEvent = new EventTable(new TableName(this.program, intermediateName), 
-					                           new TypeList(intermediateSchema.types()));
+					                               new TypeList(intermediateSchema.types()));
+				context.catalog().register(intermediateEvent);
 				Predicate intermediate = new Predicate(false, intermediateEvent.name(), Table.Event.NONE, intermediateSchema);
 				intermediate.program  = event.program();
 				intermediate.rule     = event.rule();
 				intermediate.position = 0;
 				
 				/* Create a query with the intermediate as the head predicate. */
-				queries.addAll(query(periodics, intermediate, event, intermediateBody));
+				queries.addAll(query(context, periodics, intermediate, event, intermediateBody));
 				
 				/* the intermediate predicate will be the event predicate in the next (localized) rule. */
 				event = intermediate;
@@ -266,14 +272,14 @@ public class Rule extends Clause {
 			else {
 				/* This is the final group that projects back to the orginal head. */
 				intermediateBody.addAll(remainder); // Tack on any remainder terms (e.g., selections, assignments).
-				queries.addAll(query(periodics, head, event, intermediateBody));
+				queries.addAll(query(context, periodics, head, event, intermediateBody));
 			}
 		}
 		return queries;
 	}
 
 	
-	private List<Query> query(TupleSet periodics, Predicate head, Predicate event, List<Term> body) throws PlannerException {
+	private List<Query> query(Runtime context, TupleSet periodics, Predicate head, Predicate event, List<Term> body) throws PlannerException {
 		List<Query>    query     = new ArrayList<Query>();
 		List<Operator> operators = new ArrayList<Operator>();
 		
@@ -287,7 +293,7 @@ public class Rule extends Clause {
 					}
 				}
 				else if (!loc.equals(p.locationVariable())) {
-					return localize(periodics, head, event, body);
+					return localize(context, periodics, head, event, body);
 				}
 			}
 		}
@@ -315,40 +321,41 @@ public class Rule extends Clause {
 					return java.lang.Boolean.class;
 				}
 			};
-			EventFilter efilter = new EventFilter(event, periodicFilter);
+			EventFilter efilter = new EventFilter(context, event, periodicFilter);
 			operators.add(efilter);
 		}
 		else {
-			EventFilter efilter = new EventFilter(event);
+			EventFilter efilter = new EventFilter(context, event);
 			if (efilter.filters() > 0) {
 				operators.add(efilter);
 			}
 		}
 		
-		if (Compiler.watch.watched(program, event.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
+		WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
+		if (watch.watched(program, event.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
 			operators.add(
-					new p2.types.operator.Watch(program, name, event.name(), 
+					new p2.types.operator.Watch(context, program, name, event.name(), 
 							                    p2.types.operator.Watch.Modifier.RECEIVE));
 		}
 		
 		if (event instanceof Function) {
-			operators.add(event.operator(event.schema().clone()));
+			operators.add(event.operator(context, event.schema().clone()));
 		}
 		
 		Schema schema = event.schema().clone();
 		for (Term term : body) {
 			if (!term.equals(event)) {
-				Operator oper = term.operator(schema);
+				Operator oper = term.operator(context, schema);
 				operators.add(oper);
 				schema = oper.schema();
 			}
 		}
 		
-		operators.add(new Projection(head));
+		operators.add(new Projection(context, head));
 		
-		if (Compiler.watch.watched(program, head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
+		if (watch.watched(program, head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
 			operators.add(
-					new p2.types.operator.Watch(program, name, head.name(), 
+					new p2.types.operator.Watch(context, program, name, head.name(), 
 							                    p2.types.operator.Watch.Modifier.SEND));
 		}
 		
@@ -356,10 +363,10 @@ public class Rule extends Clause {
 		Variable eventLoc = event.locationVariable();
 		if (headLoc != null && eventLoc != null && !headLoc.equals(eventLoc)) {
 			/* Plan remote buffer operator. */
-			operators.add(new RemoteBuffer(head, isDelete));
+			operators.add(new RemoteBuffer(context, head, isDelete));
 		}
 		
-		query.add(new BasicQuery(program, name, isPublic, isDelete, event, head, operators));
+		query.add(new BasicQuery(context, program, name, isPublic, isDelete, event, head, operators));
 		return query;
 	}
 

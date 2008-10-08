@@ -7,10 +7,12 @@ import p2.net.tcp.TCP;
 import p2.types.basic.Tuple;
 import p2.types.exception.UpdateException;
 import p2.types.table.TableName;
-
+import p2.core.Runtime;
 
 public final class Network {
-	private static final NetworkBuffer buffer = new NetworkBuffer();
+	private Runtime context;
+	
+	private NetworkBuffer buffer;
 	
 	private Connection connection;
 	
@@ -18,19 +20,24 @@ public final class Network {
 	
 	private Hashtable<String, Thread> serverThreads; 
 	
-	public Network() {
-		this.connection    = new Connection(this);
+	public Network(Runtime context) {
+		this.context       = context;
+		this.buffer        = new NetworkBuffer(context);
+		this.connection    = new Connection(context, this);
 		this.servers       = new Hashtable<String, Server>();
 		this.serverThreads = new Hashtable<String, Thread>();
+		
+		context.catalog().register(this.buffer);
+		context.catalog().register(this.connection);
 	}
 	
 	public final void install(Integer port) throws IOException, UpdateException {
 		/* Install protocols */
-		server("tcp", new TCP(this, port));
+		server("tcp", new TCP(context, this, port));
 		// server("udp", new UDP(port+1));
 		
 		/* Install network layer application */
-		p2.core.Runtime.runtime().install("network",
+		context.install("network",
 				ClassLoader.getSystemClassLoader().getResource("p2/net/network.olg"));
 	}
 	
@@ -38,8 +45,8 @@ public final class Network {
 		return new Tuple(direction, address, message);
 	}
 	
-	public final static TableName bufferName() {
-		return buffer.name();
+	public NetworkBuffer buffer() {
+		return this.buffer;
 	}
 	
 	public void server(String protocol, Server server) {

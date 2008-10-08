@@ -11,10 +11,12 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 import p2.lang.Compiler;
+import p2.core.Runtime;
 
 public class Selection extends Term {
 	
 	public static class SelectionTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "selection");
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
 		
 		public enum Field {PROGRAM, RULE, POSITION, OBJECT};
@@ -25,8 +27,8 @@ public class Selection extends Term {
 			Selection.class // Selection object
 		};
 
-		public SelectionTable() {
-			super(new TableName(GLOBALSCOPE, "selection"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public SelectionTable(Runtime context) {
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -65,12 +67,12 @@ public class Selection extends Term {
 	}
 
 	@Override
-	public Operator operator(Schema input) {
-		return new p2.types.operator.Selection(this, input);
+	public Operator operator(Runtime context, Schema input) {
+		return new p2.types.operator.Selection(context, this, input);
 	}
 
 	@Override
-	public void set(String program, String rule, Integer position) throws UpdateException {
-		Compiler.selection.force(new Tuple(program, rule, position, this));
+	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
+		context.catalog().table(SelectionTable.TABLENAME).force(new Tuple(program, rule, position, this));
 	}
 }

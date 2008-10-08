@@ -45,6 +45,7 @@ public class Periodic extends ObjectTable {
 		
 	}
 	
+	public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "periodic");
 	public static final Key PRIMARY_KEY = new Key(0);
 	
 	public enum Field {IDENTIFIER, PERIOD, TTL, TIME, COUNT, PROGRAM};
@@ -57,11 +58,9 @@ public class Periodic extends ObjectTable {
 		String.class  // Program
 	};
 	
-	private Scheduler scheduler;
-	
-	public Periodic(Table schedule) {
-		super(new TableName(GLOBALSCOPE, "periodic"), PRIMARY_KEY, new TypeList(SCHEMA));
-		this.scheduler = new Scheduler(schedule);
+	public Periodic(Runtime context, Table schedule) {
+		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		context.catalog().register(new Scheduler(schedule));
 	}
 	
 	public Long min() {

@@ -44,8 +44,8 @@ public class Compiler {
 		};
 
 	public static class CompileTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "compiler");
 		public static final Key PRIMARY_KEY = new Key(0);
-
 		public enum Field {NAME, OWNER, FILE, PROGRAM};
 
 		public static final Class[] SCHEMA = {
@@ -54,10 +54,12 @@ public class Compiler {
 				String.class, // Program file
 				Program.class // The program object
 		};
+		
+		private p2.core.Runtime context;
 
-		public CompileTable() {
-			super(new TableName(GLOBALSCOPE, "compiler"), PRIMARY_KEY,
-					new TypeList(SCHEMA));
+		public CompileTable(p2.core.Runtime context) {
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+			this.context = context;
 		}
 
 		protected boolean insert(Tuple tuple) throws UpdateException {
@@ -67,7 +69,7 @@ public class Compiler {
 				String file = (String) tuple.value(Field.FILE.ordinal());
 				try {
 					URL fileURL = new URL(file);
-					Compiler compiler = new Compiler(owner, fileURL);
+					Compiler compiler = new Compiler(context, owner, fileURL);
 					tuple.value(Field.NAME.ordinal(), compiler.program.name());
 					tuple.value(Field.PROGRAM.ordinal(), compiler.program);
 				} catch (P2RuntimeException e) {
@@ -83,28 +85,20 @@ public class Compiler {
 		}
 	}
 
-	public static CompileTable compiler;
-	public static ProgramTable programs;
-	public static RuleTable rule;
-	public static WatchTable watch;
-	public static FactTable fact;
-	public static PredicateTable predicate;
-	public static TableFunction tfunction;
-	public static SelectionTable selection;
-	public static AssignmentTable assignment;
-
-	public static final void initialize() {
-		compiler = new CompileTable();
-		programs = new ProgramTable();
-		rule = new RuleTable();
-		watch = new WatchTable();
-		fact = new FactTable();
-		predicate = new PredicateTable();
-		tfunction = new TableFunction();
-		selection = new SelectionTable();
-		assignment = new AssignmentTable();
+	public static final void initialize(p2.core.Runtime context) {
+		context.catalog().register(new CompileTable(context));
+		context.catalog().register(new ProgramTable(context));
+		context.catalog().register(new RuleTable(context));
+		context.catalog().register(new WatchTable(context));
+		context.catalog().register(new FactTable(context));
+		context.catalog().register(new PredicateTable(context));
+		context.catalog().register(new TableFunction(context));
+		context.catalog().register(new SelectionTable(context));
+		context.catalog().register(new AssignmentTable(context));
 	}
 
+	private p2.core.Runtime context;
+	
 	private String owner;
 
 	private Program program;
@@ -112,7 +106,8 @@ public class Compiler {
 	private Runtime runtime = new Runtime();
 
 	/** Create a new driver for Overlog. */
-	public Compiler(String owner, URL input) throws P2RuntimeException {
+	public Compiler(p2.core.Runtime context, String owner, URL input) throws P2RuntimeException {
+		this.context = context;
 		this.owner = owner;
 		this.runtime = new Runtime();
 
@@ -122,7 +117,7 @@ public class Compiler {
 		if (this.runtime.errorCount() > 0) {
 			for (Table table : this.program.definitions()) {
 				try {
-					Table.drop(table.name());
+					context.catalog().drop(table.name());
 				} catch (UpdateException e) {
 					e.printStackTrace();
 				}
@@ -183,8 +178,8 @@ public class Compiler {
 
 		// Perform type checking.
 		// runtime.console().format(node).pln().flush();
-		this.program = new Program(name, owner);
-		TypeChecker typeChecker = new TypeChecker(this.runtime, this.program);
+		this.program = new Program(context, name, owner);
+		TypeChecker typeChecker = new TypeChecker(context, this.runtime, this.program);
 		typeChecker.prepare();
 
 		/* First evaluate all import statements. */
@@ -211,8 +206,9 @@ public class Compiler {
 
 		/* All programs define a local periodic event table. */
 		TableName periodic = new TableName(program.name(), "periodic");
-		program.definition(new EventTable(periodic, new TypeList(
-				Periodic.SCHEMA)));
+		Table eventTable = new EventTable(periodic, new TypeList(Periodic.SCHEMA));
+		context.catalog().register(eventTable);
+		program.definition(eventTable);
 
 		/* Evaluate all other clauses. */
 		for (Node clause : node.getNode(1).<Node> getList(0)) {
@@ -227,12 +223,12 @@ public class Compiler {
 					if (clause.getName().equals("Watch")) {
 						List<Watch> watches = (List<Watch>) clause.getProperty(Constants.TYPE);
 						for (Watch watch : watches) {
-							watch.set(this.program.name());
+							watch.set(context, this.program.name());
 						}
 					} else {
 						Clause c = (Clause) clause.getProperty(Constants.TYPE);
 						if (c == null) continue;
-						c.set(this.program.name());
+						c.set(context, this.program.name());
 					}
 				} catch (UpdateException e) {
 					e.printStackTrace();

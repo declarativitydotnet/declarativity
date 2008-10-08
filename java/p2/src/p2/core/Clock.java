@@ -7,8 +7,10 @@ import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
+import p2.core.Runtime;
 
 public class Clock extends ObjectTable {
+	public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "clock");
 	public static final Key PRIMARY_KEY = new Key(0);
 	
 	public enum Field{LOCATION, CLOCK};
@@ -21,8 +23,8 @@ public class Clock extends ObjectTable {
 	
 	private Long clock;
 
-	public Clock(String location) {
-		super(new TableName(GLOBALSCOPE, "clock"), PRIMARY_KEY, new TypeList(SCHEMA));
+	public Clock(Runtime context, String location) {
+		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		this.location = location;
 		this.clock = 0L;
 	}

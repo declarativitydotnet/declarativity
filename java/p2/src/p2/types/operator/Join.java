@@ -10,6 +10,7 @@ import p2.types.basic.Schema;
 import p2.types.basic.Tuple;
 import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
+import p2.core.Runtime;
 
 public abstract class Join extends Operator {
 	
@@ -65,8 +66,8 @@ public abstract class Join extends Operator {
 	
 	private List<JoinFilter> filters;
 	
-	public Join(Predicate predicate, Schema input) {
-		super(predicate.program(), predicate.rule());
+	public Join(Runtime context, Predicate predicate, Schema input) {
+		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.filters = filters(predicate);
 		this.schema = input.join(predicate.schema());

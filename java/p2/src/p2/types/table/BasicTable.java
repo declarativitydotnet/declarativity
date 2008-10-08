@@ -5,7 +5,7 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.UpdateException;
-
+import p2.core.Runtime;
 
 public class BasicTable extends Table {
 	/* The primary key. */
@@ -17,11 +17,11 @@ public class BasicTable extends Table {
 	
 	protected Hashtable<Key, Index> secondary;
 	
-	public BasicTable(TableName name, Key key, TypeList types) {
+	public BasicTable(Runtime context, TableName name, Key key, TypeList types) {
 		super(name, Type.TABLE, key, types);
 		this.key = key;
 		this.tuples = new TupleSet(name);
-		this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
+		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
 		this.secondary = new Hashtable<Key, Index>();
 	}
 	

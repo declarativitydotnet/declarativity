@@ -9,6 +9,7 @@ import p2.types.table.TableName;
 
 public class Schedule extends ObjectTable {
 	
+	public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "schedule");
 	public static final Key PRIMARY_KEY = new Key();
 	
 	public enum Field {TIME, PROGRAM, TABLENAME, INSERTIONS, DELETIONS};
@@ -20,8 +21,8 @@ public class Schedule extends ObjectTable {
 		TupleSet.class   // Deletion tuple set
 	};
 	
-	public Schedule() {
-		super(new TableName(GLOBALSCOPE, "schedule"), PRIMARY_KEY, new TypeList(SCHEMA));
+	public Schedule(Runtime context) {
+		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 	}
 	
 	public Long min() {

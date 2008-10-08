@@ -11,7 +11,7 @@ import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
-
+import p2.core.Runtime;
 
 public abstract class Operator implements Comparable<Operator> {
 	
@@ -23,6 +23,7 @@ public abstract class Operator implements Comparable<Operator> {
 	}
 	
 	public static class OperatorTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "operator");
 		public static final Key PRIMARY_KEY = new Key(2);
 		
 		public enum Field {PROGRAM, RULE, ID, SELECTIVITY, OBJECT};
@@ -34,8 +35,8 @@ public abstract class Operator implements Comparable<Operator> {
 			Operator.class  // Operator object
 		};
 
-		public OperatorTable() {
-			super(new TableName(GLOBALSCOPE, "operator"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public OperatorTable(Runtime context) {
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -44,22 +45,23 @@ public abstract class Operator implements Comparable<Operator> {
 		}
 	}
 	
-	private final static OperatorTable table = new OperatorTable();
-	
 	private final String identifier;
+	
+	protected Runtime context;
 	
 	protected String program;
 	
 	protected String rule;
 	
-	public Operator(String program, String rule) {
+	public Operator(Runtime context, String program, String rule) {
 		this.identifier = Operator.newID();
+		this.context = context;
 		this.program = program;
 		this.rule = rule;
 		try {
-			Tuple me = new Tuple(Operator.table.name(), program, rule, 
+			Tuple me = new Tuple(OperatorTable.TABLENAME, program, rule, 
 							     this.identifier, null, this);
-			Operator.table.insert(me);
+			context.catalog().table(OperatorTable.TABLENAME).force(me);
 		} catch (UpdateException e) {
 			e.printStackTrace();
 			System.exit(0);

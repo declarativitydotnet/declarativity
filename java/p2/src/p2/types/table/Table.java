@@ -2,11 +2,13 @@ package p2.types.table;
 
 import java.util.*;
 
+import p2.core.Runtime;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
 import p2.types.exception.BadKeyException;
 import p2.types.exception.UpdateException;
+import p2.types.operator.Operator.OperatorTable;
 import p2.types.table.Index.IndexTable;
 
 public abstract class Table implements Comparable<Table> {
@@ -24,6 +26,10 @@ public abstract class Table implements Comparable<Table> {
 	
 
 	public static class Catalog extends ObjectTable {
+		private Runtime context;
+		
+		private IndexTable index;
+		
 		private static final Key PRIMARY_KEY = new Key(0);
 
 		public enum Field {TABLENAME, TYPE, KEY, TYPES, OBJECT};
@@ -35,8 +41,10 @@ public abstract class Table implements Comparable<Table> {
 			Table.class      // The table object
 		};
 		
-		public Catalog() {
-			super(new TableName(GLOBALSCOPE, "catalog"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public Catalog(Runtime context) {
+			super(context, new TableName(GLOBALSCOPE, "catalog"), PRIMARY_KEY, new TypeList(SCHEMA));
+			this.context = context;
+			this.index = null;
 		}
 		
 		@Override
@@ -49,22 +57,66 @@ public abstract class Table implements Comparable<Table> {
 				TypeList types    = (TypeList) tuple.value(Field.TYPES.ordinal());
 
 				if (type.equals(Type.TABLE.toString())) {
-					table = new BasicTable(name, key, types);
+					table = new BasicTable(context, name, key, types);
 				}
 				else {
 					throw new UpdateException("Don't know how to create table type " + type);
 				}
 			}
 			
-			assert (table != null);
 			tuple.value(Field.OBJECT.ordinal(), table);
 			return super.insert(tuple);
 		}
 		
+		public IndexTable index() {
+			return this.index;
+		}
+		
+		public void index(IndexTable index) {
+			this.index = index;
+		}
+		
+		public boolean drop(TableName name) throws UpdateException {
+			try {
+				TupleSet tuples = primary().lookup(name);
+				return delete(tuples).size() > 0;
+			} catch (BadKeyException e) {
+				e.printStackTrace();
+			}
+			return false;
+		}
+		
+		public Table table(TableName name) {
+			try {
+				TupleSet table = primary().lookup(name);
+				if (table == null) {
+					return null;
+				}
+				else if (table.size() == 1) {
+					return (Table) table.iterator().next().value(Catalog.Field.OBJECT.ordinal());
+				}
+				else if (table.size() > 1) {
+					System.err.println("More than one " + name + " table defined!");
+					System.exit(1);
+				}
+			} catch (BadKeyException e) {
+				// TODO Fatal error.
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+		public boolean register(Table table) {
+			Tuple tuple = new Tuple(table.name(), table.type().toString(), table.key(), new TypeList(table.types()), table);
+			try {
+				force(tuple);
+				return true;
+			} catch (UpdateException e) {
+				e.printStackTrace();
+			}
+			return false;
+		}
 	}
-	
-	public static IndexTable index = null;
-	public static Catalog catalog  = null;
 	
 	public enum Event{NONE, INSERT, DELETE};
 	
@@ -88,11 +140,16 @@ public abstract class Table implements Comparable<Table> {
 		this.attributeTypes = attributeTypes;
 		this.key = key;
 		this.callbacks = new HashSet<Callback>();
-		
-		if (catalog != null) {
-			Table.register(name, type, key, attributeTypes, this);
-		}
 	}
+	
+	public final static Catalog initialize(Runtime context) {
+		Catalog catalog = new Catalog(context);
+		catalog.register(new IndexTable(context));
+		catalog.register(catalog);
+		catalog.register(new OperatorTable(context));
+		return catalog;
+	}
+	
 	
 	@Override
 	public String toString() {
@@ -107,21 +164,6 @@ public abstract class Table implements Comparable<Table> {
 		return this.type;
 	}
 	
-	public final static void initialize() {
-		catalog = new Catalog();
-		index   = new IndexTable();
-		
-		Table.register(catalog.name(), catalog.type(), catalog.key(), new TypeList(catalog.types()), catalog);
-	}
-	
-	public final static Catalog catalog() {
-		return Table.catalog;
-	}
-	
-	public final static IndexTable index() {
-		return Table.index;
-	}
-	
 	/**
 	 * Register a new callback on table updates.
 	 * @param callback
@@ -134,50 +176,7 @@ public abstract class Table implements Comparable<Table> {
 		this.callbacks.remove(callback);
 	}
 	
-	private static void register(TableName name, Type type, 
-			                     Key key, TypeList types, Table object) { 
-		Tuple tuple = new Tuple(name, type.toString(), key, types, object);
-		try {
-			catalog.force(tuple);
-		} catch (UpdateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			System.exit(0);
-		}
-	}
 	
-	public static boolean drop(TableName name) throws UpdateException {
-		try {
-			TupleSet tuples = catalog.primary().lookup(name);
-			return catalog.delete(tuples).size() > 0;
-		} catch (BadKeyException e) {
-			// TODO Fatal error
-			e.printStackTrace();
-		}
-		return false;
-	}
-	
-	public static Table table(TableName name) {
-		try {
-			TupleSet table = catalog.primary().lookup(name);
-			if (table == null) {
-				return null;
-			}
-			else if (table.size() == 1) {
-				return (Table) table.iterator().next().value(Catalog.Field.OBJECT.ordinal());
-			}
-			else if (table.size() > 1) {
-				System.err.println("More than one " + name + " table defined!");
-				System.exit(1);
-			}
-		} catch (BadKeyException e) {
-			// TODO Fatal error.
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-
 	public int compareTo(Table o) {
 		return name().compareTo(o.name());
 	}

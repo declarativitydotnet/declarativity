@@ -11,13 +11,14 @@ import java.util.Set;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.BadKeyException;
+import p2.core.Runtime;
 
 public class HashIndex extends Index {
 	
 	private Map<Tuple, TupleSet> map;
 
-	public HashIndex(Table table, Key key, Type type) {
-		super(table, key, type);
+	public HashIndex(Runtime context, Table table, Key key, Type type) {
+		super(context, table, key, type);
 		map = new HashMap<Tuple, TupleSet>();
 		for (Tuple tuple : table.tuples()) {
 			insert(tuple);

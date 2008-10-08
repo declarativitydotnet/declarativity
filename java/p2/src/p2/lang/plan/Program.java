@@ -17,10 +17,13 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 import p2.lang.Compiler;
+import p2.core.Periodic;
+import p2.core.Runtime;
 
 public class Program implements Comparable<Program> {
 	
 	public static class ProgramTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "program");
 		public static final Key PRIMARY_KEY = new Key(0);
 		
 		public enum Field{PROGRAM, OWNER, OBJECT};
@@ -30,8 +33,8 @@ public class Program implements Comparable<Program> {
 			Program.class  // Program object
 		};
 
-		public ProgramTable() {
-			super(new TableName(GLOBALSCOPE, "program"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public ProgramTable(Runtime context) {
+			super(context, new TableName(GLOBALSCOPE, "program"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -45,6 +48,8 @@ public class Program implements Comparable<Program> {
 		}
 	}
 	
+	private Runtime context;
+	
 	private String name;
 	
 	private String owner;
@@ -55,14 +60,15 @@ public class Program implements Comparable<Program> {
 	
 	private TupleSet periodics;
 	
-	public Program(String name, String owner) {
+	public Program(Runtime context, String name, String owner) {
+		this.context     = context;
 		this.name        = name;
 		this.owner       = owner;
 		this.definitions = new HashSet<Table>();
 		this.queries     = new Hashtable<TableName, Set<Query>>();
-		this.periodics   = new TupleSet(p2.core.Runtime.runtime().periodic().name());
+		this.periodics   = new TupleSet(Periodic.TABLENAME);
 		try {
-			Compiler.programs.force(new Tuple(name, owner, this));
+			context.catalog().table(ProgramTable.TABLENAME).force(new Tuple(name, owner, this));
 		} catch (UpdateException e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
@@ -97,7 +103,7 @@ public class Program implements Comparable<Program> {
 
 		try {
 			/* First plan out all the rules. */
-			TupleSet rules = Compiler.rule.secondary().get(
+			TupleSet rules = context.catalog().table(RuleTable.TABLENAME).secondary().get(
 					new Key(RuleTable.Field.PROGRAM.ordinal())).lookup(this.name);
 			
 			if (rules == null) {
@@ -110,7 +116,7 @@ public class Program implements Comparable<Program> {
 
 				/* Store all planned queries from a given rule. 
 				 * NOTE: delta rules can produce > 1 query. */
-				for (Query query : rule.query(this.periodics)) {
+				for (Query query : rule.query(context, this.periodics)) {
 					Predicate input = query.input();
 					if (!queries.containsKey(query.input().name())) {
 						queries.put(input.name(), new HashSet<Query>());
@@ -122,7 +128,7 @@ public class Program implements Comparable<Program> {
 
 			if (periodics.size() > 0) {
 				for (Tuple tuple : this.periodics) {
-					p2.core.Runtime.runtime().periodic().force(tuple);
+					context.catalog().table(Periodic.TABLENAME).force(tuple);
 				}
 			}
 		} catch (BadKeyException e) {

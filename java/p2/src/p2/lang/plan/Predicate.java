@@ -20,10 +20,12 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 import p2.types.table.Table;
+import p2.core.Runtime;
 
 public class Predicate extends Term implements Iterable<Expression> {
 	public enum Field{PROGRAM, RULE, POSITION, EVENT, OBJECT};
 	public static class PredicateTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "predicate");
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
 		
 		public static final Class[] SCHEMA =  {
@@ -34,8 +36,8 @@ public class Predicate extends Term implements Iterable<Expression> {
 			Predicate.class   // predicate object
 		};
 
-		public PredicateTable() {
-			super(new TableName(GLOBALSCOPE, "predicate"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public PredicateTable(Runtime context) {
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -171,7 +173,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	}
 
 	@Override
-	public Operator operator(Schema input) {
+	public Operator operator(Runtime context, Schema input) {
 		/* Determine the join and lookup keys. */
 		Key lookupKey = new Key();
 		Key indexKey  = new Key();
@@ -183,10 +185,10 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 		
 		if (notin) {
-			return new AntiScanJoin(this, input);
+			return new AntiScanJoin(context, this, input);
 		}
 		
-		Table table = Table.table(this.name);
+		Table table = context.catalog().table(this.name);
 		Index index = null;
 		if (indexKey.size() > 0) {
 			if (table.primary().key().equals(indexKey)) {
@@ -196,22 +198,22 @@ public class Predicate extends Term implements Iterable<Expression> {
 				index = table.secondary().get(indexKey);
 			}
 			else {
-				index = new HashIndex(table, indexKey, Index.Type.SECONDARY);
+				index = new HashIndex(context, table, indexKey, Index.Type.SECONDARY);
 				table.secondary().put(indexKey, index);
 			}
 		}
 		
 		if (index != null) {
-			return new IndexJoin(this, input, lookupKey, index);
+			return new IndexJoin(context, this, input, lookupKey, index);
 		}
 		else {
-			return new ScanJoin(this, input);
+			return new ScanJoin(context, this, input);
 		}
 	}
 	
 	@Override
-	public void set(String program, String rule, Integer position) throws UpdateException {
-		Compiler.predicate.force(new Tuple(program, rule, position, event.toString(), this));
+	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
+		context.catalog().table(PredicateTable.TABLENAME).force(new Tuple(program, rule, position, event.toString(), this));
 		
 		this.schema = new Schema(name());
 		for (Expression arg : arguments) {

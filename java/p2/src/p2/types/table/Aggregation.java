@@ -9,6 +9,7 @@ import p2.types.basic.TypeList;
 import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.function.Aggregate;
+import p2.core.Runtime;
 
 public class Aggregation extends Table {
 	
@@ -24,7 +25,7 @@ public class Aggregation extends Table {
 	
 	protected Hashtable<Key, Index> secondary;
 	
-	public Aggregation(Predicate predicate, Table.Type type) {
+	public Aggregation(Runtime context, Predicate predicate, Table.Type type) {
 		super(predicate.name(), type, key(predicate), types(predicate));
 		this.baseTuples = new Hashtable<Tuple, Aggregate>();
 		this.aggregateTuples = new TupleSet(name());
@@ -37,7 +38,7 @@ public class Aggregation extends Table {
 		}
 		
 		if (type == Table.Type.TABLE) {
-			this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
+			this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
 			this.secondary = new Hashtable<Key, Index>();
 		}
 	}

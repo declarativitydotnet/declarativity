@@ -2,6 +2,7 @@ package p2.types.table;
 
 import java.util.Hashtable;
 
+import p2.core.Runtime;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;

@@ -10,11 +10,13 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 import p2.types.table.TableName;
+import p2.core.Runtime;
 
 public class Function extends Predicate {
 	
 	public enum Field{PROGRAM, RULE, POSITION, NAME, OBJECT};
 	public static class TableFunction extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "function");
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
 		
 		public static final Class[] SCHEMA =  {
@@ -25,8 +27,8 @@ public class Function extends Predicate {
 			Function.class   // function object
 		};
 
-		public TableFunction() {
-			super(new TableName(GLOBALSCOPE, "function"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public TableFunction(Runtime context) {
+			super(context, new TableName(GLOBALSCOPE, "function"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -48,15 +50,15 @@ public class Function extends Predicate {
 	}
 
 	@Override
-	public Operator operator(Schema input) {
-		return new p2.types.operator.Function(function, this);
+	public Operator operator(Runtime context, Schema input) {
+		return new p2.types.operator.Function(context, function, this);
 	}
 
 	@Override
-	public void set(String program, String rule, Integer position)
+	public void set(Runtime context, String program, String rule, Integer position)
 			throws UpdateException {
-		super.set(program, rule, position);
-		Compiler.tfunction.force(new Tuple(program, rule, position, 
+		super.set(context, program, rule, position);
+		context.catalog().table(TableFunction.TABLENAME).force(new Tuple(program, rule, position, 
 				                          function.name(), this));
 	}
 

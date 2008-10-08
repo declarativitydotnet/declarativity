@@ -6,14 +6,15 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.operator.Operator;
+import p2.core.Runtime;
 
 public class BasicQuery extends Query {
 	private List<Operator> body;
 
-	public BasicQuery(String program, String rule, Boolean isPublic, Boolean isDelete,
+	public BasicQuery(Runtime context, String program, String rule, Boolean isPublic, Boolean isDelete,
 					  Predicate event, Predicate head, List<Operator> body) {
-		super(program, rule, isPublic, isDelete, event, head);
-		this.body        = body;
+		super(context, program, rule, isPublic, isDelete, event, head);
+		this.body = body;
 	}
 	
 	@Override

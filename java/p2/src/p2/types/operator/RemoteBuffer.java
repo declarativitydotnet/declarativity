@@ -15,6 +15,7 @@ import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.function.TupleFunction;
 import p2.types.table.TableName;
+import p2.core.Runtime;
 
 public class RemoteBuffer extends Operator {
 
@@ -24,8 +25,8 @@ public class RemoteBuffer extends Operator {
 	
 	private TupleFunction<Comparable> addressAccessor;
 	
-	public RemoteBuffer(Predicate predicate, boolean deletion) {
-		super(predicate.program(), predicate.rule());
+	public RemoteBuffer(Runtime context, Predicate predicate, boolean deletion) {
+		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.deletion = deletion;
 		
@@ -75,9 +76,9 @@ public class RemoteBuffer extends Operator {
 				message.insertions().addAll(groupByAddress.get(address));
 			}
 			
-			TableName bufferName = p2.net.Network.bufferName();
+			TableName bufferName = context.network().buffer().name();
 			try {
-				p2.core.Runtime.runtime().schedule("network", bufferName, new TupleSet(bufferName, remote), new TupleSet(bufferName));
+				context.schedule("network", bufferName, new TupleSet(bufferName, remote), new TupleSet(bufferName));
 			} catch (UpdateException e) {
 				e.printStackTrace();
 			}

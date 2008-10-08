@@ -11,10 +11,12 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
 import p2.lang.Compiler;
+import p2.core.Runtime;
 
 public class Assignment extends Term {
 	
 	public static class AssignmentTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "assignment");
 		public static final Key PRIMARY_KEY = new Key(0,1);
 		
 		public enum Field {PROGRAM, RULE, POSITION, OBJECT};
@@ -25,8 +27,8 @@ public class Assignment extends Term {
 			Assignment.class // Assignment object
 		};
 
-		public AssignmentTable() {
-			super(new TableName(GLOBALSCOPE, "assignment"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public AssignmentTable(Runtime context) {
+			super(context, new TableName(GLOBALSCOPE, "assignment"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		@Override
@@ -74,13 +76,13 @@ public class Assignment extends Term {
 	}
 
 	@Override
-	public Operator operator(Schema input) {
-		return new Assign(this, input);
+	public Operator operator(Runtime context, Schema input) {
+		return new Assign(context, this, input);
 	}
 
 	@Override
-	public void set(String program, String rule, Integer position) throws UpdateException {
-		Compiler.assignment.force(new Tuple(program, rule, position, this));
+	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
+		context.catalog().table(AssignmentTable.TABLENAME).force(new Tuple(program, rule, position, this));
 	}
 
 }

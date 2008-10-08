@@ -1,6 +1,8 @@
 package p2.types.table;
 
 import java.util.Hashtable;
+
+import p2.core.Runtime;
 import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.basic.TypeList;
@@ -17,11 +19,11 @@ public class RefTable extends Table {
 	
 	protected Hashtable<Key, Index> secondary;
 	
-	public RefTable(TableName name, Key key, TypeList types) {
+	public RefTable(Runtime context, TableName name, Key key, TypeList types) {
 		super(name, Type.TABLE, key, types);
 		this.key = key;
 		this.tuples = new TupleSet(name);
-		this.primary = new HashIndex(this, key, Index.Type.PRIMARY);
+		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
 		this.secondary = new Hashtable<Key, Index>();
 	}
 	

@@ -6,14 +6,15 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.table.Table;
+import p2.core.Runtime;
 
 public class ScanJoin extends Join {
 	
 	public Table table;
 	
-	public ScanJoin(Predicate predicate, Schema input) {
-		super(predicate, input);
-		this.table = Table.table(predicate.name());
+	public ScanJoin(Runtime context, Predicate predicate, Schema input) {
+		super(context, predicate, input);
+		this.table = context.catalog().table(predicate.name());
 	}
 	
 	@Override

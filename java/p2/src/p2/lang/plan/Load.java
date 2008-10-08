@@ -10,11 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import p2.lang.Compiler;
+import p2.lang.plan.Fact.FactTable;
 import p2.types.basic.Tuple;
 import p2.types.exception.UpdateException;
 import p2.types.table.Table;
 import p2.types.table.TableName;
 import xtc.tree.Location;
+import p2.core.Runtime;
 
 public class Load extends Clause {
 	private final static String DEFAULT_DELIM = ",";
@@ -25,22 +27,22 @@ public class Load extends Clause {
 	
 	private String delim;
 
-	public Load(Location location, File file, TableName name, String delim) {
+	public Load(Location location, File file, Table table, String delim) {
 		super(location);
 		this.file = file;
-		this.table = Table.table(name);
+		this.table = table;
 		this.delim = delim == null ? DEFAULT_DELIM : delim;
 	}
 
 	@Override
-	public void set(String program) throws UpdateException {
+	public void set(Runtime context, String program) throws UpdateException {
 		try {
 			BufferedReader in = new BufferedReader(new FileReader(this.file));
 			for (String line = in.readLine(); line != null; line = in.readLine()) {
 				if (line.startsWith("//")) continue;
 				else if (line.length() == 0) continue;
 				String[] values = line.split(this.delim);
-				Compiler.fact.force(new Tuple(program, table.name(), tuple(values)));
+				context.catalog().table(FactTable.TABLENAME).force(new Tuple(program, table.name(), tuple(values)));
 			}
 		} catch (FileNotFoundException e) {
 			throw new UpdateException(e.toString());

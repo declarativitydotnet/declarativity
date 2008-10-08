@@ -10,10 +10,12 @@ import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.Table;
 import p2.types.table.TableName;
+import p2.core.Runtime;
 
 public abstract class Query implements Comparable<Query> {
 
 	public static class QueryTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "query");
 		public static final Key PRIMARY_KEY = new Key();
 		
 		public enum Field{PROGRAM, RULE, PUBLIC, DELETE, EVENT, INPUT, OUTPUT, OBJECT};
@@ -28,8 +30,8 @@ public abstract class Query implements Comparable<Query> {
 			Query.class       // The query object
 		};
 		
-		public QueryTable() {
-			super(new TableName(GLOBALSCOPE, "query"), PRIMARY_KEY, new TypeList(SCHEMA));
+		public QueryTable(Runtime context) {
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
 		protected boolean insert(Tuple tuple) throws UpdateException {
@@ -51,7 +53,8 @@ public abstract class Query implements Comparable<Query> {
 	
 	private Predicate output;
 	
-	public Query(String program, String rule, Boolean isPublic, Boolean isDelete, Predicate input, Predicate output) {
+	public Query(Runtime context, String program, String rule, Boolean isPublic, Boolean isDelete, 
+			     Predicate input, Predicate output) {
 		this.program = program;
 		this.rule = rule;
 		this.isPublic = isPublic;
@@ -60,7 +63,7 @@ public abstract class Query implements Comparable<Query> {
 		this.input = input;
 		this.output = output;
 		try {
-			p2.core.Runtime.runtime().query().force(
+			context.catalog().table(QueryTable.TABLENAME).force(
 					new Tuple(program, rule, isPublic, isDelete, 
 							  event.toString(), input.name(), output.name(), this));
 		} catch (UpdateException e) {

@@ -14,7 +14,7 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
-
+import p2.core.Runtime;
 
 public class Projection extends Operator {
 	
@@ -22,8 +22,8 @@ public class Projection extends Operator {
 	
 	List<TupleFunction<Comparable>> accessors = new ArrayList<TupleFunction<Comparable>>();
 	
-	public Projection(Predicate predicate) {
-		super(predicate.program(), predicate.rule());
+	public Projection(Runtime context, Predicate predicate) {
+		super(context, predicate.program(), predicate.rule());
 		
 		List<Variable>   projection = new ArrayList<Variable>();
 		List<Variable>   variables  = predicate.schema().variables();

@@ -84,8 +84,11 @@ public final class TypeChecker extends Visitor {
 	
 	private Long uniqueID;
 
+	/** The runtime context */
+	protected p2.core.Runtime context;
+	
 	/** The runtime. */
-	protected Runtime runtime;
+	protected xtc.util.Runtime runtime;
 	
 	protected Program program;
 
@@ -99,7 +102,8 @@ public final class TypeChecker extends Visitor {
 	 *
 	 * @param runtime The runtime.
 	 */
-	public TypeChecker(Runtime runtime, Program program) {
+	public TypeChecker(p2.core.Runtime context, xtc.util.Runtime runtime, Program program) {
+		this.context = context;
 		this.runtime = runtime;
 		this.program = program;
 	}
@@ -247,11 +251,11 @@ public final class TypeChecker extends Visitor {
 		
 		if (name.scope == null) {
 			name.scope = program.name();
-			if (Table.table(name) == null) {
+			if (context.catalog().table(name) == null) {
 				name.scope = Table.GLOBALSCOPE;
 			}
 		}
-		if (Table.table(name) == null) {
+		if (context.catalog().table(name) == null) {
 			runtime.error("No table definition found for load on " + name, n);
 			return Error.class;
 		}
@@ -260,7 +264,7 @@ public final class TypeChecker extends Visitor {
 			return null;
 		}
 		
-		Load loader = new Load(n.getLocation(), file, name, delim);
+		Load loader = new Load(n.getLocation(), file, context.catalog().table(name), delim);
 		n.setProperty(Constants.TYPE, loader);
 		return Load.class;
 	}
@@ -271,11 +275,11 @@ public final class TypeChecker extends Visitor {
 		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
 		if (name.scope == null) {
 			name.scope = program.name();
-			if (Table.table(name) == null) {
+			if (context.catalog().table(name) == null) {
 				name.scope = Table.GLOBALSCOPE;
 			}
 		}
-		if (Table.table(name) == null) {
+		if (context.catalog().table(name) == null) {
 			runtime.error("No table defined for fact " + name, n);
 			return Error.class;
 		}
@@ -306,12 +310,12 @@ public final class TypeChecker extends Visitor {
 		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
 		if (name.scope == null) {
 			name.scope = program.name();
-			if (Table.table(name) == null) {
+			if (context.catalog().table(name) == null) {
 				name.scope = Table.GLOBALSCOPE;
 			}
 		}
 		
-		if (Table.table(name) == null) {
+		if (context.catalog().table(name) == null) {
 			runtime.error("Watch statement refers to unknown table/event name " + name, n);
 			return Error.class;
 		}
@@ -360,7 +364,8 @@ public final class TypeChecker extends Visitor {
 		assert(type == TypeList.class);
 		TypeList schema  = (TypeList) n.getNode(2).getProperty(Constants.TYPE);
 
-		Table create = new BasicTable(name, key, schema);
+		Table create = new BasicTable(context, name, key, schema);
+		context.catalog().register(create);
 		this.program.definition(create);
 		n.setProperty(Constants.TYPE, create);
 		return Table.class;
@@ -390,6 +395,7 @@ public final class TypeChecker extends Visitor {
 		TypeList schema  = (TypeList) n.getNode(1).getProperty(Constants.TYPE);
 
 		EventTable event = new EventTable(name, schema);
+		context.catalog().register(event);
 		n.setProperty(Constants.TYPE, event);
 		return Table.class;
 	}
@@ -473,7 +479,7 @@ public final class TypeChecker extends Visitor {
 						}
 					}
 					
-					Table table = Table.table(p.name());
+					Table table = context.catalog().table(p.name());
 					if (table.type() == Table.Type.EVENT ||
 					    p.event() != Table.Event.NONE) {
 						if (event != null) {
@@ -541,7 +547,7 @@ public final class TypeChecker extends Visitor {
 				}
 				else if (var instanceof Aggregate) {
 					Aggregate agg = (Aggregate) var;
-					Table table = Table.table(head.name());
+					Table table = context.catalog().table(head.name());
 					if (table instanceof Aggregation) {
 						Aggregation aggregation = (Aggregation) table;
 						if (!agg.functionName().equals(aggregation.variable().functionName()) ||
@@ -553,12 +559,13 @@ public final class TypeChecker extends Visitor {
 					
 					try {
 						/* Drop the previous table. */
-						Table.drop(table.name());
+						context.catalog().drop(table.name());
 					} catch (UpdateException e) {
 						runtime.error(e.toString());
 						return Error.class;
 					}
-					Table aggregate = new Aggregation(head, table.type());
+					Table aggregate = new Aggregation(context, head, table.type());
+					context.catalog().register(aggregate);
 					this.program.definition(aggregate);
 					
 					Class[] types = table.types();
@@ -649,7 +656,7 @@ public final class TypeChecker extends Visitor {
 		assert(type == Predicate.class);
 		Predicate predicate = (Predicate) n.getNode(1).getProperty(Constants.TYPE);
 		
-		Table table = Table.table(name);
+		Table table = context.catalog().table(name);
 		if (table == null || table.type() != Table.Type.FUNCTION) {
 			runtime.error("Unknown table function " + name, n);
 			return Error.class;
@@ -684,13 +691,13 @@ public final class TypeChecker extends Visitor {
 		TableName name = (TableName) n.getNode(1).getProperty(Constants.TYPE);
 		if (name.scope == null) {
 			name.scope = program.name();
-			if (Table.table(name) == null) {
+			if (context.catalog().table(name) == null) {
 				name.scope = Table.GLOBALSCOPE;
 			}
 		}
 		
 		/* Lookup the schema for the given tuple name. */
-		Table ptable = Table.table(name);
+		Table ptable = context.catalog().table(name);
 		if (ptable == null) {
 			runtime.error("No catalog definition for predicate " + name, n);
 			return Error.class;
@@ -1366,7 +1373,6 @@ public final class TypeChecker extends Visitor {
 					Method method = null;
 					for (Method m : object.type().getMethods()) {
 						if (m.getName().equals(reference.toString()) &&
-								m.getModifiers() != Modifier.STATIC  &&
 								typeCoercion(m.getParameterTypes(), types)) {
 							method = m;
 							break;
@@ -1384,7 +1390,6 @@ public final class TypeChecker extends Visitor {
 					Method method = null;
 					for (Method m : reference.type().getMethods()) {
 						if (m.getName().equals(reference.toString()) &&
-								m.getModifiers() == Modifier.STATIC  &&
 								typeCoercion(m.getParameterTypes(), types)) {
 							method = m;
 							break;

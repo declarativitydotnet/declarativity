@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import p2.exec.Query.QueryTable;
 import p2.lang.Compiler;
+import p2.lang.Compiler.CompileTable;
 import p2.lang.plan.Program;
 import p2.net.Network;
 import p2.types.basic.Tuple;
@@ -12,6 +13,7 @@ import p2.types.exception.P2RuntimeException;
 import p2.types.exception.UpdateException;
 import p2.types.table.Table;
 import p2.types.table.TableName;
+import p2.types.table.Table.Catalog;
 
 public class Runtime implements System {
 	private static Runtime runtime;
@@ -24,9 +26,9 @@ public class Runtime implements System {
 	
 	private Thread thread;
 	
-	private Network network;
+	private Catalog catalog;
 	
-	private QueryTable query;
+	private Network network;
 	
 	private Driver driver;
 	
@@ -35,56 +37,43 @@ public class Runtime implements System {
 	/** The system logical clock. */
 	private Clock clock;
 	
-	private Periodic periodic;
-	
-	private Log log;
-	
 	Runtime() {
-		Table.initialize();
-		Compiler.initialize();
+		this.catalog = Table.initialize(this);
+		Compiler.initialize(this);
 
-		query      = new QueryTable();
-		schedule   = new Schedule();
-		clock      = new Clock("localhost");
-		periodic   = new Periodic(schedule);
-		log        = new Log(java.lang.System.err);
-		network    = new Network();
-		driver     = new Driver(schedule, clock);
-		thread     = new Thread(driver);
-	}
-	
-	public void start(int port) throws P2RuntimeException {
-		try {
-			URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
-			Compiler compiler = new Compiler("system", runtimeFile);
-			compiler.program().plan();
-			driver.runtime(program("runtime"));
-			network.install(port);
-			thread.start();
-		} catch (Exception e) {
-			throw new P2RuntimeException(e.toString());
-		}
+		this.schedule = new Schedule(this);
+		this.clock    = new Clock(this, "localhost");
+		this.catalog.register(this.schedule);
+		this.catalog.register(this.clock);
+		
+		this.catalog.register(new QueryTable(this));
+		this.catalog.register(new Periodic(this, schedule));
+		this.catalog.register(new Log(this, java.lang.System.err));
+		
+		this.network    = new Network(this);
+		this.driver     = new Driver(this, schedule, clock);
+		this.thread     = new Thread(driver);
 	}
 	
 	public Thread thread() {
 		return this.thread;
 	}
 	
+	public Catalog catalog() {
+		return this.catalog;
+	}
+	
+	public Network network() {
+		return this.network;
+	}
+	
 	public Clock clock() {
 		return this.clock;
 	}
 	
-	public QueryTable query() {
-		return this.query;
-	}
-	
-	public Periodic periodic() {
-		return this.periodic;
-	}
-	
 	public Program program(String name) {
 		try {
-			TupleSet program = Table.table(new TableName(Table.GLOBALSCOPE, "program")).primary().lookup(name);
+			TupleSet program = catalog().table(new TableName(Table.GLOBALSCOPE, "program")).primary().lookup(name);
 			if (program.size() == 0) return null;
 			Tuple tuple = program.iterator().next();
 			return (Program) tuple.value(Program.ProgramTable.Field.OBJECT.ordinal());
@@ -94,9 +83,9 @@ public class Runtime implements System {
 	}
 	
 	public void install(String owner, URL file) throws UpdateException {
-		TupleSet compilation = new TupleSet(Compiler.compiler.name());
+		TupleSet compilation = new TupleSet(CompileTable.TABLENAME);
 		compilation.add(new Tuple(null, owner, file.toString(), null));
-		schedule("runtime", Compiler.compiler.name(), compilation, new TupleSet(Compiler.compiler.name()));
+		schedule("runtime", CompileTable.TABLENAME, compilation, new TupleSet(CompileTable.TABLENAME));
 	}
 	
 	public void uninstall(String program) throws UpdateException {
@@ -135,13 +124,18 @@ public class Runtime implements System {
 		}
 	}
 	
-	public static Runtime runtime() {
-		return runtime;
-	}
-	
 	public void bootstrap(int port) {
 		try {
-			start(port);
+			try {
+				URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
+				Compiler compiler = new Compiler(this, "system", runtimeFile);
+				compiler.program().plan();
+				driver.runtime(program("runtime"));
+				network.install(port);
+				thread.start();
+			} catch (Exception e) {
+				throw new P2RuntimeException(e.toString());
+			}
 
 			for (URL file : Compiler.FILES) {
 				install("system", file);

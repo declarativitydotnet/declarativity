@@ -11,6 +11,7 @@ import p2.types.basic.Tuple;
 import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.function.TupleFunction;
+import p2.core.Runtime;
 
 public class EventFilter extends Operator {
 	private class Filter implements TupleFunction<Boolean> {
@@ -41,8 +42,8 @@ public class EventFilter extends Operator {
 	private List<TupleFunction<Boolean>> filters;
 	
 
-	public EventFilter(Predicate predicate) {
-		super(predicate.program(), predicate.rule());
+	public EventFilter(Runtime context, Predicate predicate) {
+		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.filters = new ArrayList<TupleFunction<Boolean>>();
 		
@@ -55,8 +56,8 @@ public class EventFilter extends Operator {
 		}
 	}
 	
-	public EventFilter(Predicate predicate, TupleFunction<Boolean> filter) {
-		super(predicate.program(), predicate.rule());
+	public EventFilter(Runtime context, Predicate predicate, TupleFunction<Boolean> filter) {
+		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.filters = new ArrayList<TupleFunction<Boolean>>();
 		this.filters.add(filter);

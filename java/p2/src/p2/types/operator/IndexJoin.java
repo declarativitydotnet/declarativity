@@ -7,6 +7,7 @@ import p2.types.basic.TupleSet;
 import p2.types.exception.P2RuntimeException;
 import p2.types.table.Index;
 import p2.types.table.Key;
+import p2.core.Runtime;
 
 public class IndexJoin extends Join {
 	
@@ -14,8 +15,8 @@ public class IndexJoin extends Join {
 	
 	private Index index;
 	
-	public IndexJoin(Predicate predicate, Schema input, Key lookupKey, Index index) {
-		super(predicate, input);
+	public IndexJoin(Runtime context, Predicate predicate, Schema input, Key lookupKey, Index index) {
+		super(context, predicate, input);
 		this.lookupKey = lookupKey;
 		this.index = index;
 	}

@@ -7,6 +7,7 @@ import p2.types.exception.UpdateException;
 import p2.types.table.Key;
 import p2.types.table.ObjectTable;
 import p2.types.table.TableName;
+import p2.core.Runtime;
 
 public class NetworkBuffer extends ObjectTable {
 	
@@ -20,8 +21,8 @@ public class NetworkBuffer extends ObjectTable {
 		Message.class   // Message
 	};
 	
-	public NetworkBuffer() {
-		super(new TableName("network", "buffer"), PRIMARY_KEY, new TypeList(SCHEMA));
+	public NetworkBuffer(Runtime context) {
+		super(context, new TableName("network", "buffer"), PRIMARY_KEY, new TypeList(SCHEMA));
 	}
 	
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
