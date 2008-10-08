@@ -5,9 +5,9 @@ import java.lang.Long;
 import java.lang.String;
 import java.lang.System;
 
-import p2.types.basic.TupleSet;
-import p2.types.basic.Tuple;
-import p2.types.table.TableName;
+import jol.types.basic.TupleSet;
+import jol.types.basic.Tuple;
+import jol.types.table.TableName;
 
 define(counter, keys(0,1), {Integer, Long});
 define(stat, keys(0,1,2), {String, Integer, Long});
