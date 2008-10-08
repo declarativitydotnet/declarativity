@@ -183,20 +183,35 @@ public abstract class Table implements Comparable<Table> {
 		}
 	}
 	
+	/** The table type enumeration. 
+	 * TABLE: A materialized table (stores tuples)
+	 * EVENT: Does not store the tuples inserted.
+	 * FUNCTION: A table function. (no tuple storage)
+	 */
 	public enum Type{TABLE, EVENT, FUNCTION};
 	
+	/** The table type. */
 	protected Type type;
 	
-	/* The table name. */
+	/** The table name. */
 	protected TableName name;
 	
-	/* The number of attributes in this table. */
+	/** The type of each attribute in this table. */
 	protected TypeList attributeTypes;
 	
+	/** The primary for this table. */
 	protected Key key;
 	
+	/** The set of callbacks registered on this table. */
 	protected final Set<Callback> callbacks;
 	
+	/**
+	 * Constructs a new table object. (no catalog registration)
+	 * @param name The name of the table.
+	 * @param type The table type.
+	 * @param key The primary key of this table. 
+	 * @param attributeTypes The type of each attribute. 
+	 */
 	protected Table(TableName name, Type type, Key key, TypeList attributeTypes) {
 		this.name = name;
 		this.type = type;
@@ -205,6 +220,11 @@ public abstract class Table implements Comparable<Table> {
 		this.callbacks = new HashSet<Callback>();
 	}
 	
+	/**
+	 * Called to initialize a new Catalog under the given runtime context.
+	 * @param context The runtime context.
+	 * @return A new Catalog object.
+	 */
 	public final static Catalog initialize(Runtime context) {
 		Catalog catalog = new Catalog(context);
 		catalog.register(new IndexTable(context));
@@ -221,58 +241,92 @@ public abstract class Table implements Comparable<Table> {
 		return value;
 	}
 	
+	/**
+	 * The number of tuples stored in this table.
+	 * @return Number of stored tuples.
+	 */
 	public abstract Integer cardinality();
 	
+	/**
+	 * The table type.
+	 * @return The table type.
+	 */
 	public Type type() {
 		return this.type;
 	}
 	
 	/**
 	 * Register a new callback on table updates.
-	 * @param callback
+	 * @param callback The callback to register.
 	 */
 	public void register(Callback callback) {
 		this.callbacks.add(callback);
 	}
 	
+	/**
+	 * Unregister a the given callback.
+	 * @param callback The callback to deallocate.
+	 */
 	public void unregister(Callback callback) {
 		this.callbacks.remove(callback);
 	}
 	
 	
+	/**
+	 * Compare this table name to the other.
+	 */
 	public int compareTo(Table o) {
 		return name().compareTo(o.name());
 	}
 
 	
 	/**
+	 * Get the table name.
 	 * @return The name of this table. */
 	public TableName name() {
 		return this.name;
 	}
 	
 	/**
+	 * Get the type of each attribute (in schema order). 
 	 * @return The number of attributes associated with this table. */
 	public Class[] types() {
 		return (Class[]) attributeTypes.toArray(new Class[attributeTypes.size()]);
 	}
 	
+	/**
+	 * The set of stored tuples.
+	 * @return A reference to the set of stored tuples.
+	 */
 	public abstract TupleSet tuples();
 	
+	/**
+	 * The primary key.
+	 * @return The primary key object.
+	 */
 	public Key key() {
 		return this.key;
 	}
 	
 	/**
+	 * The primary index.
 	 * @return The primary index.
 	 */
 	public abstract Index primary();
 	
 	/**
+	 * A hashtable of all defined secnodary indices.
 	 * @return All defined secondary indices.
 	 */
 	public abstract Hashtable<Key, Index> secondary();
 
+	/**
+	 * Force insert the given tuple. This method is
+	 * provided as a way to insure the insertion of a tuple.
+	 * The routine sidesteps the delta Datalog semantics.
+	 * @param tuple The tuple to force insert.
+	 * @throws UpdateException Bad tuple.
+	 */
 	public void force(Tuple tuple) throws UpdateException {
 		TupleSet insertion = new TupleSet(name());
 		insertion.add(tuple);
@@ -282,7 +336,11 @@ public abstract class Table implements Comparable<Table> {
 	}
 	
 	/**
-	 * Insert a tuple into this table. 
+	 * Insert a set of tuples into this table. Primary key conflicts
+	 * are not removed from the table but rather returned in the
+	 * the @param conflicts argument.
+	 * @param tuples The tuples to be inserted.
+	 * @param conflicts Any primary key conflicts that arise.
 	 * @return The delta set of tuples.
 	 * @throws UpdateException 
 	 **/
@@ -315,8 +373,9 @@ public abstract class Table implements Comparable<Table> {
 	}
 	
 	/**
-	 * Remove this tuple from the table. 
-	 * Note: This will only schedule the removal of committed tuples.
+	 * Remove the set of tuples from the table. 
+	 * @return The delta set of the delete tuples 
+	 * (a.k.a. the tuples that were actually deleted by this operation.)
 	 * @throws UpdateException 
 	 **/
 	public TupleSet delete(TupleSet tuples) throws UpdateException {

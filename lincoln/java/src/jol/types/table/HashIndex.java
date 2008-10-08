@@ -13,10 +13,27 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.core.Runtime;
 
+/**
+ *  A hash implementation of an index. The key values are
+ *  hashed using the {@link Tuple#hashCode()} value of the
+ *  projected tuple.
+ *  NOTE: Hash collisions are not handled by this structure.
+ *  A user of this class must apply a further selection, which
+ *  the query processor already does via the join operation.
+ */
 public class HashIndex extends Index {
 	
+	/** A map containing the set of tuples with the same key. */
 	private Map<Tuple, TupleSet> map;
 
+	/**
+	 * Create a new hash index. All tuples currently in
+	 * the table will be added to the index by this constructor.
+	 * @param context The runtime context.
+	 * @param table The table that is to be indexed.
+	 * @param key The key used to index the table.
+	 * @param type The index type.
+	 */
 	public HashIndex(Runtime context, Table table, Key key, Type type) {
 		super(context, table, key, type);
 		map = new HashMap<Tuple, TupleSet>();

@@ -2,6 +2,8 @@ package jol.types.table;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ArrayList;
+
+import sun.awt.windows.ThemeReader;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -11,20 +13,55 @@ import jol.types.exception.UpdateException;
 import jol.types.function.Aggregate;
 import jol.core.Runtime;
 
+/**
+ * A table aggregation.
+ * 
+ *  Table aggregations maintain all tuples inserted into the table and
+ *  remove those tuples on deletion. However, the tuples that are made
+ *  visible to the outside world are the aggregate values generated 
+ *  by set of resident tuples. A table aggregation is created if a
+ *  predicate refering to the table contains an aggregation. The
+ *  aggregate function is registered with this table object. The
+ *  aggregate function determines the value of the aggregate value.
+ *  Deletions to this table may cause new tuples to appear. For instance
+ *  if the aggregation function is a min and the tuple containing the
+ *  min value is deleted then a new tuple could appear with a different
+ *  (greater) min valued aggregate. The semantics of table aggregations
+ *  are handled by the {@link jol.core.Driver.Flusher#insert(Tuple)}
+ *  method. 
+ *  
+ *  TYPE: Aggregations type can be either materialized {@link Table.Type#TABLE} or
+ *  event {@link Table.Type#EVENT}. An event type aggregation performs
+ *  its aggregation only on the set of tuples passed into the {@link #insert(Tuple)} method.
+ *  A materialized type aggregation maintains aggregate values over a stored set of
+ *  tuples. Storage insert/delete semantics follow that of {@link jol.types.table.BasicTable}.
+ *  
+ *  PRIMARY KEY: The primary key of an Aggregate table is the GroupBy columns identified
+ *  by the predicate containing the aggregation.
+ */
 public class Aggregation extends Table {
 	
-	/* Stores base tuples in aggregate functions. */
+	/** Stores base tuples in aggregate functions. */
 	private Hashtable<Tuple, Aggregate> baseTuples;
 	
-	/* Stores aggregate values derrived from base tuples and aggregate functions. */
+	/** Stores aggregate values derived from base tuples and aggregate functions. */
 	private TupleSet aggregateTuples;
 	
+	/** The aggregate attribute */
 	private jol.lang.plan.Aggregate aggregate;
 	
+	/** The primary key. */
 	protected Index primary;
 	
+	/** The secondary indices. */
 	protected Hashtable<Key, Index> secondary;
 	
+	/**
+	 * Create a new Aggregation table.
+	 * @param context The runtime context.
+	 * @param predicate The predicate containing the GroupBy/Aggregation
+	 * @param type The type of aggregation.
+	 */
 	public Aggregation(Runtime context, Predicate predicate, Table.Type type) {
 		super(predicate.name(), type, key(predicate), types(predicate));
 		this.baseTuples = new Hashtable<Tuple, Aggregate>();
@@ -43,10 +80,19 @@ public class Aggregation extends Table {
 		}
 	}
 	
+	/**
+	 * The aggregate variable taken from the predicate.
+	 * @return The aggregate variable object.
+	 */
 	public jol.lang.plan.Aggregate variable() {
 		return this.aggregate;
 	}
 	
+	/**
+	 * Determines the key based on the predicate.
+	 * @param predicate The predicate defining the aggregate variable.
+	 * @return A key the contains the GroupBy columns.
+	 */
 	private static Key key(Predicate predicate) {
 		List<Integer> key = new ArrayList<Integer>();
 		for (jol.lang.plan.Expression arg : predicate) {
@@ -57,6 +103,11 @@ public class Aggregation extends Table {
 		return new Key(key);
 	}
 	
+	/**
+	 * Extract the type of each attribute from the predicate.
+	 * @param predicate The predicate containing the aggregate variable.
+	 * @return An ordered list of types.
+	 */
 	private static TypeList types(Predicate predicate) {
 		TypeList types = new TypeList();
 		for (jol.lang.plan.Expression arg : predicate) {
@@ -70,6 +121,11 @@ public class Aggregation extends Table {
 		return this.aggregateTuples.clone();
 	}
 	
+	/**
+	 * Returns the (base) set of tuples contained in this table.
+	 * @return The set of tuples that exist in this table after
+	 * all insert/delete calls.
+	 */
 	private TupleSet values() {
 		TupleSet values = new TupleSet(name());
 		for (Aggregate value : baseTuples.values()) {
@@ -78,6 +134,13 @@ public class Aggregation extends Table {
 		return values;
 	}
 	
+	@Override
+	/**
+	 * The semantics of this method is somewhat different than that of 
+	 * regular tables. Insertions are applied as usual. However, deletions 
+	 * are applied during this operation, which may generate new insertions that
+	 * become part of the delta set. 
+	 */
 	public TupleSet insert(TupleSet insertions, TupleSet deletions) throws UpdateException {
 		if (deletions.size() > 0) {
 			TupleSet intersection = deletions.clone();
@@ -89,9 +152,6 @@ public class Aggregation extends Table {
 			deletions.clear();
 			deletions.addAll(delta);
 		}
-		
-
-		
 		
 		for (Tuple tuple : insertions) {
 			Tuple key = key().project(tuple);
@@ -124,6 +184,8 @@ public class Aggregation extends Table {
 		return this.aggregateTuples.add(tuple);
 	}
 	
+	@Override
+	/** Should only be called from within this Class.  */
 	public TupleSet delete(TupleSet deletions) throws UpdateException {
 		if (type() == Table.Type.EVENT) {
 			throw new UpdateException("Aggregation table " + name() + " is an event table!");

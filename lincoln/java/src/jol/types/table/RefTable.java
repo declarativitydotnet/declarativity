@@ -9,24 +9,41 @@ import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 
+/**
+ * A RefCount Table (RefTable).
+ * Tables of this type maintain a reference count on
+ * each stored tuple. Insertions into this table create
+ * a new tuple with a refcount of 1 or increment the refcount
+ * of a preexisting tuple. Deletions into this table decrement
+ * the refcount of the deleted tuple and remove that tuple if
+ * the refcount goes to 0.
+ *
+ */
 public class RefTable extends Table {
-	/* The primary key. */
-	protected Key key;
-	
+	/** The set of tuples stored by this table instance. */
 	protected TupleSet tuples;
 	
+	/** A reference to the primary index. */
 	protected Index primary;
 	
+	/** A map to all secondary indices. */
 	protected Hashtable<Key, Index> secondary;
 	
+	/**
+	 * Create a new RefCounted Table.
+	 * @param context The runtime context.
+	 * @param name The name of the table.
+	 * @param key The primary key.
+	 * @param types The list of attribute types.
+	 */
 	public RefTable(Runtime context, TableName name, Key key, TypeList types) {
 		super(name, Type.TABLE, key, types);
-		this.key = key;
 		this.tuples = new TupleSet(name);
 		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
 		this.secondary = new Hashtable<Key, Index>();
 	}
 	
+	@Override
 	public TupleSet tuples() {
 		return this.tuples == null ? new TupleSet(name()) : this.tuples.clone();
 	}

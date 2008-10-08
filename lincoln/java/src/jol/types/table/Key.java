@@ -5,11 +5,21 @@ import java.util.Iterator;
 import java.util.List;
 import jol.types.basic.Tuple;
 
-
+/**
+ * Identifies a set of attributes that make up some key
+ * of a table.
+ * An object of this type must be defined/created in order
+ * to create an index (primary or secondary) of a table.
+ */
 public class Key implements Comparable<Key>, Iterable<Integer> {
 	
+	/** List of integers that refer to the key attribute positions */
 	private List<Integer> attributes;
 
+	/**
+	 * Create a new key with the given attribute positions.
+	 * @param attr An array of the integer positions.
+	 */
 	public Key(Integer... attr) {
 		this.attributes = new ArrayList<Integer>();
 		for (Integer i : attr) {
@@ -17,6 +27,10 @@ public class Key implements Comparable<Key>, Iterable<Integer> {
 		}
 	}
 	
+	/**
+	 * Create a new key with the given attribute positions.
+	 * @param attr A list of the integer position.
+	 */
 	public Key(List<Integer> attr) {
 		this.attributes = attr;
 	}
@@ -44,14 +58,29 @@ public class Key implements Comparable<Key>, Iterable<Integer> {
 		return value;
 	}
 	
+	/**
+	 * The number of attribute positions.
+	 * @return The number of attribute positions.
+	 */
 	public int size() {
 		return this.attributes.size();
 	}
 	
-	public void add(Integer field) {
-		this.attributes.add(field);
+	/**
+	 * Add a new integer position to the end of this key.
+	 * @param position The integer position to be added.
+	 */
+	public void add(Integer position) {
+		this.attributes.add(position);
 	}
 	
+	/**
+	 * Extract, from the tuple argument, the values
+	 * at the integer positions represented by this key object.
+	 * @param tuple The tuple containing the values to be extracted.
+	 * @return A new tuple object containing only the extracted values 
+	 * in key positional order.
+	 */
 	public Tuple project(Tuple tuple) {
 		if (empty()) {
 			return tuple;

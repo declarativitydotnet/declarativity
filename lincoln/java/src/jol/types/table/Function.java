@@ -8,8 +8,28 @@ import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
+/**
+ * The table function interface.
+ * 
+ * Table functions accept {@link TupleSet} arguments and apply some
+ * function over that set of tuples. A delta set of tuples are returned
+ * as the function value. The name of the table function is accessible from
+ * a program by applying the table function to a predicate argument. The table
+ * function will be called with any delta tuples that result on the given
+ * predicate argument. A rule in a program that contains a table function
+ * will only trigger off of insertions/deletions from the predicate given
+ * as argument to the table function.
+ */
 public abstract class Function extends Table {
 
+	/**
+	 * Create a new table function with the given name in the
+	 * global namespace.
+	 * @param name The name of the table function.
+	 * @param types The list of types this table function assumes. Should
+	 * be the same as the types given by the predicate over which this
+	 * table function is to be applied.
+	 */
 	public Function(String name, TypeList types) {
 		super(new TableName(GLOBALSCOPE, name), Type.FUNCTION, null, types);
 	}
@@ -42,6 +62,7 @@ public abstract class Function extends Table {
 		return null;
 	}
 	
+	@Override
 	public Integer cardinality() {
 		return 0;
 	}
