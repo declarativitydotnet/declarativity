@@ -1,4 +1,4 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -9,14 +9,14 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
-import p2.lang.Compiler;
-import p2.lang.plan.Fact.FactTable;
-import p2.types.basic.Tuple;
-import p2.types.exception.UpdateException;
-import p2.types.table.Table;
-import p2.types.table.TableName;
+import jol.lang.Compiler;
+import jol.lang.plan.Fact.FactTable;
+import jol.types.basic.Tuple;
+import jol.types.exception.UpdateException;
+import jol.types.table.Table;
+import jol.types.table.TableName;
 import xtc.tree.Location;
-import p2.core.Runtime;
+import jol.core.Runtime;
 
 public class Load extends Clause {
 	private final static String DEFAULT_DELIM = ",";

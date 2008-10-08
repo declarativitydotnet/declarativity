@@ -1,13 +1,13 @@
-package p2.core;
+package jol.core;
 
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.basic.TypeList;
-import p2.types.exception.UpdateException;
-import p2.types.table.Key;
-import p2.types.table.ObjectTable;
-import p2.types.table.TableName;
-import p2.core.Runtime;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
+import jol.types.exception.UpdateException;
+import jol.types.table.Key;
+import jol.types.table.ObjectTable;
+import jol.types.table.TableName;
+import jol.core.Runtime;
 
 /**
  * The system clock. 

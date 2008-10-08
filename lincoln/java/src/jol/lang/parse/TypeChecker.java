@@ -1,4 +1,4 @@
-package p2.lang.parse;
+package jol.lang.parse;
 
 import java.io.File;
 import java.lang.reflect.Array;
@@ -15,43 +15,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import p2.core.Periodic;
-import p2.lang.plan.Aggregate;
-import p2.lang.plan.Alias;
-import p2.lang.plan.ArrayIndex;
-import p2.lang.plan.Assignment;
-import p2.lang.plan.Cast;
-import p2.lang.plan.DontCare;
-import p2.lang.plan.Expression;
-import p2.lang.plan.Fact;
-import p2.lang.plan.GenericAggregate;
-import p2.lang.plan.IfThenElse;
-import p2.lang.plan.Load;
-import p2.lang.plan.MethodCall;
-import p2.lang.plan.Program;
-import p2.lang.plan.UnknownReference;
-import p2.lang.plan.NewClass;
-import p2.lang.plan.Null;
-import p2.lang.plan.Predicate;
-import p2.lang.plan.Range;
-import p2.lang.plan.Reference;
-import p2.lang.plan.StaticReference;
-import p2.lang.plan.Rule;
-import p2.lang.plan.Selection;
-import p2.lang.plan.StaticMethodCall;
-import p2.lang.plan.Term;
-import p2.lang.plan.Value;
-import p2.lang.plan.Variable;
-import p2.lang.plan.ObjectReference;
-import p2.lang.plan.Watch;
-import p2.types.basic.TypeList;
-import p2.types.exception.UpdateException;
-import p2.types.table.Aggregation;
-import p2.types.table.BasicTable;
-import p2.types.table.EventTable;
-import p2.types.table.Key;
-import p2.types.table.Table;
-import p2.types.table.TableName;
+import jol.core.Periodic;
+import jol.lang.plan.Aggregate;
+import jol.lang.plan.Alias;
+import jol.lang.plan.ArrayIndex;
+import jol.lang.plan.Assignment;
+import jol.lang.plan.Cast;
+import jol.lang.plan.DontCare;
+import jol.lang.plan.Expression;
+import jol.lang.plan.Fact;
+import jol.lang.plan.GenericAggregate;
+import jol.lang.plan.IfThenElse;
+import jol.lang.plan.Load;
+import jol.lang.plan.MethodCall;
+import jol.lang.plan.Program;
+import jol.lang.plan.UnknownReference;
+import jol.lang.plan.NewClass;
+import jol.lang.plan.Null;
+import jol.lang.plan.Predicate;
+import jol.lang.plan.Range;
+import jol.lang.plan.Reference;
+import jol.lang.plan.StaticReference;
+import jol.lang.plan.Rule;
+import jol.lang.plan.Selection;
+import jol.lang.plan.StaticMethodCall;
+import jol.lang.plan.Term;
+import jol.lang.plan.Value;
+import jol.lang.plan.Variable;
+import jol.lang.plan.ObjectReference;
+import jol.lang.plan.Watch;
+import jol.types.basic.TypeList;
+import jol.types.exception.UpdateException;
+import jol.types.table.Aggregation;
+import jol.types.table.BasicTable;
+import jol.types.table.EventTable;
+import jol.types.table.Key;
+import jol.types.table.Table;
+import jol.types.table.TableName;
 import xtc.Constants;
 import xtc.tree.GNode;
 import xtc.tree.Node;
@@ -85,7 +85,7 @@ public final class TypeChecker extends Visitor {
 	private Long uniqueID;
 
 	/** The runtime context */
-	protected p2.core.Runtime context;
+	protected jol.core.Runtime context;
 	
 	/** The runtime. */
 	protected xtc.util.Runtime runtime;
@@ -102,7 +102,7 @@ public final class TypeChecker extends Visitor {
 	 *
 	 * @param runtime The runtime.
 	 */
-	public TypeChecker(p2.core.Runtime context, xtc.util.Runtime runtime, Program program) {
+	public TypeChecker(jol.core.Runtime context, xtc.util.Runtime runtime, Program program) {
 		this.context = context;
 		this.runtime = runtime;
 		this.program = program;
@@ -183,26 +183,26 @@ public final class TypeChecker extends Visitor {
 
 	// =========================================================================
 
-	private p2.lang.plan.Boolean ensureBooleanValue(Expression expr) {
+	private jol.lang.plan.Boolean ensureBooleanValue(Expression expr) {
 		if (expr.type() == null || expr.type() == Void.class) {
 			runtime.error("Can't ensure boolean value from void class");
 			return null; // Can't do it for void expression type
 		}
 		else if (Number.class.isAssignableFrom(expr.type())) {
 			/* expr != 0 */
-			return new p2.lang.plan.Boolean(p2.lang.plan.Boolean.NEQUAL,
+			return new jol.lang.plan.Boolean(jol.lang.plan.Boolean.NEQUAL,
 					                    expr, new Value<Number>(0));
 		}
 		else if (expr.type() != boolean.class && !Boolean.class.isAssignableFrom(expr.type())) {
 			/* expr != null*/
-			return new p2.lang.plan.Boolean(p2.lang.plan.Boolean.NEQUAL,
+			return new jol.lang.plan.Boolean(jol.lang.plan.Boolean.NEQUAL,
 									    expr, new Null());
 		}
-		else if (!p2.lang.plan.Boolean.class.isAssignableFrom(expr.getClass())) {
-			return new p2.lang.plan.Boolean(p2.lang.plan.Boolean.EQUAL, expr, 
+		else if (!jol.lang.plan.Boolean.class.isAssignableFrom(expr.getClass())) {
+			return new jol.lang.plan.Boolean(jol.lang.plan.Boolean.EQUAL, expr, 
 									    new Value<java.lang.Boolean>(java.lang.Boolean.TRUE));
 		}
-		return (p2.lang.plan.Boolean) expr;
+		return (jol.lang.plan.Boolean) expr;
 	}
 	/**
 	 * Visit all nodes in the AST.
@@ -323,11 +323,11 @@ public final class TypeChecker extends Visitor {
 		
 		List<Watch> watches = new ArrayList<Watch>();
 		if (modifier == null) {
-			watches.add(new Watch(n.getLocation(), name, p2.types.operator.Watch.Modifier.NONE));
+			watches.add(new Watch(n.getLocation(), name, jol.types.operator.Watch.Modifier.NONE));
 		}
 		else {
 			for (char mod : modifier.toCharArray()) {
-				watches.add(new Watch(n.getLocation(), name, p2.types.operator.Watch.modifiers.get(mod)));
+				watches.add(new Watch(n.getLocation(), name, jol.types.operator.Watch.modifiers.get(mod)));
 			}
 			
 		}
@@ -609,8 +609,8 @@ public final class TypeChecker extends Visitor {
 				if (type == Error.class) {
 					return type;
 				}
-				p2.lang.plan.Function f = 
-					(p2.lang.plan.Function) node.getProperty(Constants.TYPE);
+				jol.lang.plan.Function f = 
+					(jol.lang.plan.Function) node.getProperty(Constants.TYPE);
 				terms.add(0, f);
 			}
 			else if (node.getName().equals("Predicate")) {
@@ -678,8 +678,8 @@ public final class TypeChecker extends Visitor {
 			}
 		}
 		
-		n.setProperty(Constants.TYPE, new p2.lang.plan.Function(table, predicate));
-		return p2.lang.plan.Function.class;
+		n.setProperty(Constants.TYPE, new jol.lang.plan.Function(table, predicate));
+		return jol.lang.plan.Function.class;
 	}
 
 	public Class visitPredicate(final GNode n) {
@@ -998,10 +998,10 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, 
-			new p2.lang.plan.Boolean(p2.lang.plan.Boolean.OR, 
+			new jol.lang.plan.Boolean(jol.lang.plan.Boolean.OR, 
 					ensureBooleanValue(lhs), 
 					ensureBooleanValue(rhs)));
-		return p2.lang.plan.Boolean.class;
+		return jol.lang.plan.Boolean.class;
 	}
 
 	public Class visitLogicalAndExpression(final GNode n) {
@@ -1031,10 +1031,10 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, 
-			new p2.lang.plan.Boolean(p2.lang.plan.Boolean.AND, 
+			new jol.lang.plan.Boolean(jol.lang.plan.Boolean.AND, 
 					ensureBooleanValue(lhs), 
 					ensureBooleanValue(rhs)));
-		return p2.lang.plan.Boolean.class;
+		return jol.lang.plan.Boolean.class;
 	}
 
 	public Class visitEqualityExpression(final GNode n) {
@@ -1069,8 +1069,8 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, 
-			new p2.lang.plan.Boolean(oper,  lhs,  rhs));
-		return p2.lang.plan.Boolean.class;
+			new jol.lang.plan.Boolean(oper,  lhs,  rhs));
+		return jol.lang.plan.Boolean.class;
 	}
 	
 	public Class visitInequalityExpression(final GNode n) {
@@ -1105,8 +1105,8 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, 
-			new p2.lang.plan.Boolean(oper,  lhs,  rhs));
-		return p2.lang.plan.Boolean.class;
+			new jol.lang.plan.Boolean(oper,  lhs,  rhs));
+		return jol.lang.plan.Boolean.class;
 	}
 	
 	public Class visitLogicalNegationExpression(final GNode n) {
@@ -1121,8 +1121,8 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		} 
 		n.setProperty(Constants.TYPE, 
-				new p2.lang.plan.Boolean(p2.lang.plan.Boolean.NOT, ensureBooleanValue(expr), null));
-		return p2.lang.plan.Boolean.class;
+				new jol.lang.plan.Boolean(jol.lang.plan.Boolean.NOT, ensureBooleanValue(expr), null));
+		return jol.lang.plan.Boolean.class;
 	}
 	
 	public Class visitCastExpression(final GNode n) {
@@ -1162,8 +1162,8 @@ public final class TypeChecker extends Visitor {
 		
 		Expression expr = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 		if (Range.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(expr.type())) {
-			n.setProperty(Constants.TYPE, new p2.lang.plan.Boolean(p2.lang.plan.Boolean.IN, variable, expr));
-			return p2.lang.plan.Boolean.class;
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Boolean(jol.lang.plan.Boolean.IN, variable, expr));
+			return jol.lang.plan.Boolean.class;
 		}
 
 		runtime.error("Type error: right hand side of IN operator must be " +
@@ -1243,8 +1243,8 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		else if (lhs.type() == Integer.class && rhs.type() == Integer.class) {
-			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
-			return p2.lang.plan.Math.class;
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			return jol.lang.plan.Math.class;
 		} else {
 			runtime.error("Cannot shift type " + lhs.type() + 
 					" using type " + rhs.type(), n);
@@ -1273,18 +1273,18 @@ public final class TypeChecker extends Visitor {
 		}
 		else if (Number.class.isAssignableFrom(lhs.type()) && 
 			     Number.class.isAssignableFrom(rhs.type())) {
-			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
-			return p2.lang.plan.Math.class;
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			return jol.lang.plan.Math.class;
 		}
 		else if (String.class.isAssignableFrom(lhs.type()) && 
 			     String.class.isAssignableFrom(rhs.type())) {
-			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
-			return p2.lang.plan.Math.class;
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			return jol.lang.plan.Math.class;
 		}
 		else if (Set.class.isAssignableFrom(lhs.type()) && 
 			     Set.class.isAssignableFrom(rhs.type())) {
-			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
-			return p2.lang.plan.Math.class;
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			return jol.lang.plan.Math.class;
 		}
 		runtime.error("Type mismatch: " + lhs.type() + 
 				" " + oper + " " + rhs.type(), n);
@@ -1312,8 +1312,8 @@ public final class TypeChecker extends Visitor {
 		}
 		else if (Number.class.isAssignableFrom(lhs.type()) && 
 			Number.class.isAssignableFrom(rhs.type())) {
-			n.setProperty(Constants.TYPE, new p2.lang.plan.Math(oper, lhs, rhs));
-			return p2.lang.plan.Math.class;
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			return jol.lang.plan.Math.class;
 		}
 		runtime.error("Type mismatch: " + lhs.type() + 
 				" " + oper + " " + rhs.type(), n);
@@ -1552,8 +1552,8 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Expression " + expr + 
 					" type must be numberic in increment expression.");
 		}
-		n.setProperty(Constants.TYPE, new p2.lang.plan.Math(p2.lang.plan.Math.INC, expr, null));
-		return p2.lang.plan.Math.class;
+		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(jol.lang.plan.Math.INC, expr, null));
+		return jol.lang.plan.Math.class;
 	}
 	
 	public Class visitDecrement(final GNode n) {
@@ -1570,8 +1570,8 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Expression " + expr + 
 					" type must be numberic in decrement expression.");
 		}
-		n.setProperty(Constants.TYPE, new p2.lang.plan.Math(p2.lang.plan.Math.DEC, expr, null));
-		return p2.lang.plan.Math.class;
+		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(jol.lang.plan.Math.DEC, expr, null));
+		return jol.lang.plan.Math.class;
 	}
 	
 	
@@ -1683,18 +1683,18 @@ public final class TypeChecker extends Visitor {
 		else {
 			if (n.getNode(1) == null) {
 				n.setProperty(Constants.TYPE, 
-						new Aggregate((String)null, function, p2.types.function.Aggregate.type(function, null)));
+						new Aggregate((String)null, function, jol.types.function.Aggregate.type(function, null)));
 			}
 			else {
 				Class type = (Class) dispatch(n.getNode(1));
 				if (type == Variable.class) {
 					Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
 					n.setProperty(Constants.TYPE, 
-							new Aggregate(var.name(), function, p2.types.function.Aggregate.type(function, var.type())));
+							new Aggregate(var.name(), function, jol.types.function.Aggregate.type(function, var.type())));
 				} else if (type == MethodCall.class) {
 					MethodCall method = (MethodCall) n.getNode(1).getProperty(Constants.TYPE);
 					n.setProperty(Constants.TYPE,  
-							new Aggregate(method, function, p2.types.function.Aggregate.type(function, method.type())));
+							new Aggregate(method, function, jol.types.function.Aggregate.type(function, method.type())));
 				}
 			}
 		}

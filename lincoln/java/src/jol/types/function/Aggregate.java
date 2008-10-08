@@ -1,9 +1,9 @@
-package p2.types.function;
+package jol.types.function;
 
-import p2.lang.plan.GenericAggregate;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.P2RuntimeException;
+import jol.lang.plan.GenericAggregate;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.P2RuntimeException;
 
 public abstract class Aggregate {
 	
@@ -22,7 +22,7 @@ public abstract class Aggregate {
 		
 		private Class type;
 		
-		public Accessor(p2.lang.plan.Aggregate aggregate) {
+		public Accessor(jol.lang.plan.Aggregate aggregate) {
 			this.position = aggregate.position();
 			this.type     = aggregate.type();
 		}
@@ -47,7 +47,7 @@ public abstract class Aggregate {
 	public static final String SUMSTR   = "sumstr";
 	public static final String TUPLESET = "tupleset";
 	
-	public static Aggregate function(p2.lang.plan.Aggregate aggregate) {
+	public static Aggregate function(jol.lang.plan.Aggregate aggregate) {
 		if (aggregate instanceof GenericAggregate) {
 			return new Generic((GenericAggregate) aggregate);
 		}
@@ -84,7 +84,7 @@ public abstract class Aggregate {
 			return Float.class;
 		}
 		else if (TUPLESET.equals(function)) {
-			return p2.types.basic.TupleSet.class;
+			return jol.types.basic.TupleSet.class;
 		}
 		return null;
 	}

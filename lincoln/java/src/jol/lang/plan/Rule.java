@@ -1,34 +1,33 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import p2.exec.BasicQuery;
-import p2.exec.Query;
-import p2.types.basic.Schema;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.basic.TypeList;
-import p2.types.exception.P2RuntimeException;
-import p2.types.exception.PlannerException;
-import p2.types.exception.UpdateException;
-import p2.types.function.TupleFunction;
-import p2.types.operator.EventFilter;
-import p2.types.operator.Operator;
-import p2.types.operator.Projection;
-import p2.types.operator.RemoteBuffer;
-import p2.types.table.EventTable;
-import p2.types.table.HashIndex;
-import p2.types.table.Index;
-import p2.types.table.Key;
-import p2.types.table.ObjectTable;
-import p2.types.table.Table;
-import p2.types.table.TableName;
-import p2.core.Periodic;
-import p2.lang.Compiler;
-import p2.lang.plan.Watch.WatchTable;
-import p2.core.Runtime;
-import p2.core.Runtime;
+import jol.exec.BasicQuery;
+import jol.exec.Query;
+import jol.types.basic.Schema;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
+import jol.types.exception.P2RuntimeException;
+import jol.types.exception.PlannerException;
+import jol.types.exception.UpdateException;
+import jol.types.function.TupleFunction;
+import jol.types.operator.EventFilter;
+import jol.types.operator.Operator;
+import jol.types.operator.Projection;
+import jol.types.operator.RemoteBuffer;
+import jol.types.table.EventTable;
+import jol.types.table.HashIndex;
+import jol.types.table.Index;
+import jol.types.table.Key;
+import jol.types.table.ObjectTable;
+import jol.types.table.Table;
+import jol.types.table.TableName;
+import jol.core.Periodic;
+import jol.lang.Compiler;
+import jol.lang.plan.Watch.WatchTable;
+import jol.core.Runtime;
 
 public class Rule extends Clause {
 	
@@ -332,10 +331,10 @@ public class Rule extends Clause {
 		}
 		
 		WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
-		if (watch.watched(program, event.name(), p2.types.operator.Watch.Modifier.RECEIVE) != null) {
+		if (watch.watched(program, event.name(), jol.types.operator.Watch.Modifier.RECEIVE) != null) {
 			operators.add(
-					new p2.types.operator.Watch(context, program, name, event.name(), 
-							                    p2.types.operator.Watch.Modifier.RECEIVE));
+					new jol.types.operator.Watch(context, program, name, event.name(), 
+							                    jol.types.operator.Watch.Modifier.RECEIVE));
 		}
 		
 		if (event instanceof Function) {
@@ -353,10 +352,10 @@ public class Rule extends Clause {
 		
 		operators.add(new Projection(context, head));
 		
-		if (watch.watched(program, head.name(), p2.types.operator.Watch.Modifier.SEND) != null) {
+		if (watch.watched(program, head.name(), jol.types.operator.Watch.Modifier.SEND) != null) {
 			operators.add(
-					new p2.types.operator.Watch(context, program, name, head.name(), 
-							                    p2.types.operator.Watch.Modifier.SEND));
+					new jol.types.operator.Watch(context, program, name, head.name(), 
+							                    jol.types.operator.Watch.Modifier.SEND));
 		}
 		
 		Variable headLoc  = head.locationVariable();

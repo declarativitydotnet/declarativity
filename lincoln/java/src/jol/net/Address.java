@@ -1,4 +1,4 @@
-package p2.net;
+package jol.net;
 
 public abstract class Address implements Comparable<Address> {
 	

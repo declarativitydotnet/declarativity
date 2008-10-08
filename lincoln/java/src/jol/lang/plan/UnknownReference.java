@@ -1,9 +1,9 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import p2.types.function.TupleFunction;
+import jol.types.function.TupleFunction;
 
 public class UnknownReference extends Reference {
 

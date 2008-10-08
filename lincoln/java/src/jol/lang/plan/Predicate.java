@@ -1,26 +1,26 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import p2.lang.Compiler;
-import p2.types.basic.Schema;
-import p2.types.basic.Tuple;
-import p2.types.basic.TypeList;
-import p2.types.exception.UpdateException;
-import p2.types.operator.AntiScanJoin;
-import p2.types.operator.IndexJoin;
-import p2.types.operator.Operator;
-import p2.types.operator.ScanJoin;
-import p2.types.table.HashIndex;
-import p2.types.table.Index;
-import p2.types.table.Key;
-import p2.types.table.ObjectTable;
-import p2.types.table.TableName;
-import p2.types.table.Table;
-import p2.core.Runtime;
+import jol.lang.Compiler;
+import jol.types.basic.Schema;
+import jol.types.basic.Tuple;
+import jol.types.basic.TypeList;
+import jol.types.exception.UpdateException;
+import jol.types.operator.AntiScanJoin;
+import jol.types.operator.IndexJoin;
+import jol.types.operator.Operator;
+import jol.types.operator.ScanJoin;
+import jol.types.table.HashIndex;
+import jol.types.table.Index;
+import jol.types.table.Key;
+import jol.types.table.ObjectTable;
+import jol.types.table.TableName;
+import jol.types.table.Table;
+import jol.core.Runtime;
 
 public class Predicate extends Term implements Iterable<Expression> {
 	public enum Field{PROGRAM, RULE, POSITION, EVENT, OBJECT};

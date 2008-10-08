@@ -1,11 +1,11 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import p2.types.basic.Tuple;
-import p2.types.exception.P2RuntimeException;
-import p2.types.function.TupleFunction;
+import jol.types.basic.Tuple;
+import jol.types.exception.P2RuntimeException;
+import jol.types.function.TupleFunction;
 
 public class Range extends Expression {
 	

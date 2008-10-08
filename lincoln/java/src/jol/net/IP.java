@@ -1,4 +1,4 @@
-package p2.net;
+package jol.net;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

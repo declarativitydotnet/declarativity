@@ -1,4 +1,4 @@
-package p2.net.udp;
+package jol.net.udp;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -9,16 +9,16 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
-import p2.net.Address;
-import p2.net.Channel;
-import p2.net.IP;
-import p2.net.Message;
-import p2.net.Server;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.UpdateException;
-import p2.types.table.TableName;
-import p2.core.Runtime;
+import jol.net.Address;
+import jol.net.Channel;
+import jol.net.IP;
+import jol.net.Message;
+import jol.net.Server;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.UpdateException;
+import jol.types.table.TableName;
+import jol.core.Runtime;
 
 public class UDP extends Server {
 	private static final TableName UDPMessage = new TableName("udp", "message");
@@ -34,7 +34,7 @@ public class UDP extends Server {
 		this.context = context;
 		this.server = new DatagramSocket(port);
 		context.install("system",
-				ClassLoader.getSystemClassLoader().getResource("p2/net/udp/udp.olg"));
+				ClassLoader.getSystemClassLoader().getResource("jol/net/udp/udp.olg"));
 	}
 	
 	/**

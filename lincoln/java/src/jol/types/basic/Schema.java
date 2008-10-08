@@ -1,12 +1,12 @@
-package p2.types.basic;
+package jol.types.basic;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-import p2.lang.plan.DontCare;
-import p2.lang.plan.Variable;
-import p2.types.table.TableName;
+import jol.lang.plan.DontCare;
+import jol.lang.plan.Variable;
+import jol.types.table.TableName;
 
 
 public class Schema {

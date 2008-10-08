@@ -1,12 +1,12 @@
-package p2.exec;
+package jol.exec;
 
 import java.util.List;
-import p2.lang.plan.Predicate;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.P2RuntimeException;
-import p2.types.operator.Operator;
-import p2.core.Runtime;
+import jol.lang.plan.Predicate;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.P2RuntimeException;
+import jol.types.operator.Operator;
+import jol.core.Runtime;
 
 public class BasicQuery extends Query {
 	private List<Operator> body;

@@ -1,7 +1,7 @@
-package p2.types.function;
+package jol.types.function;
 
-import p2.lang.plan.Variable;
-import p2.types.basic.TupleSet;
+import jol.lang.plan.Variable;
+import jol.types.basic.TupleSet;
 import java.util.Set;
 
 public interface SetFunction<Type> {

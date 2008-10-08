@@ -1,4 +1,4 @@
-package p2.net.tcp;
+package jol.net.tcp;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -8,17 +8,17 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Hashtable;
 
-import p2.net.Address;
-import p2.net.IP;
-import p2.net.Channel;
-import p2.net.Network;
-import p2.net.Message;
-import p2.net.Server;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.UpdateException;
-import p2.types.table.TableName;
-import p2.core.Runtime;
+import jol.net.Address;
+import jol.net.IP;
+import jol.net.Channel;
+import jol.net.Network;
+import jol.net.Message;
+import jol.net.Server;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.UpdateException;
+import jol.types.table.TableName;
+import jol.core.Runtime;
 
 public class TCP extends Server {
 	private static final TableName ReceiveMessage = new TableName("tcp", "receive");
@@ -37,7 +37,7 @@ public class TCP extends Server {
 		this.server = new ServerSocket(port);
 		this.channels = new Hashtable<Address, Thread>();
 		context.install("system",
-				ClassLoader.getSystemClassLoader().getResource("p2/net/tcp/tcp.olg"));
+				ClassLoader.getSystemClassLoader().getResource("jol/net/tcp/tcp.olg"));
 	}
 	
 	public void run() {

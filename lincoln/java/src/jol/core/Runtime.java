@@ -1,19 +1,19 @@
-package p2.core;
+package jol.core;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import p2.exec.Query.QueryTable;
-import p2.lang.Compiler;
-import p2.lang.Compiler.CompileTable;
-import p2.lang.plan.Program;
-import p2.net.Network;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.P2RuntimeException;
-import p2.types.exception.UpdateException;
-import p2.types.table.Table;
-import p2.types.table.TableName;
-import p2.types.table.Table.Catalog;
+import jol.exec.Query.QueryTable;
+import jol.lang.Compiler;
+import jol.lang.Compiler.CompileTable;
+import jol.lang.plan.Program;
+import jol.net.Network;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.P2RuntimeException;
+import jol.types.exception.UpdateException;
+import jol.types.table.Table;
+import jol.types.table.TableName;
+import jol.types.table.Table.Catalog;
 
 public class Runtime implements System {
 	private static Runtime runtime;
@@ -127,7 +127,7 @@ public class Runtime implements System {
 	public void bootstrap(int port) {
 		try {
 			try {
-				URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg");
+				URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("jol/core/runtime.olg");
 				Compiler compiler = new Compiler(this, "system", runtimeFile);
 				compiler.program().plan();
 				driver.runtime(program("runtime"));
@@ -149,10 +149,10 @@ public class Runtime implements System {
 	
 	public static void main(String[] args) throws UpdateException, MalformedURLException {
 		if (args.length != 2) {
-			java.lang.System.out.println("Usage: p2.core.System port program");
+			java.lang.System.out.println("Usage: jol.core.Runtime port program");
 			java.lang.System.exit(1);
 		}
-		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("p2/core/runtime.olg"));
+		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("jol/core/runtime.olg"));
 		
 		// Initialize the global Runtime
 		runtime = (Runtime) SystemFactory.makeSystem();

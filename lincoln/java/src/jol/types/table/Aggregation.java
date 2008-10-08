@@ -1,15 +1,15 @@
-package p2.types.table;
+package jol.types.table;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.ArrayList;
-import p2.lang.plan.Predicate;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.basic.TypeList;
-import p2.types.exception.P2RuntimeException;
-import p2.types.exception.UpdateException;
-import p2.types.function.Aggregate;
-import p2.core.Runtime;
+import jol.lang.plan.Predicate;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
+import jol.types.exception.P2RuntimeException;
+import jol.types.exception.UpdateException;
+import jol.types.function.Aggregate;
+import jol.core.Runtime;
 
 public class Aggregation extends Table {
 	
@@ -19,7 +19,7 @@ public class Aggregation extends Table {
 	/* Stores aggregate values derrived from base tuples and aggregate functions. */
 	private TupleSet aggregateTuples;
 	
-	private p2.lang.plan.Aggregate aggregate;
+	private jol.lang.plan.Aggregate aggregate;
 	
 	protected Index primary;
 	
@@ -30,9 +30,9 @@ public class Aggregation extends Table {
 		this.baseTuples = new Hashtable<Tuple, Aggregate>();
 		this.aggregateTuples = new TupleSet(name());
 		
-		for (p2.lang.plan.Expression arg : predicate) {
-			if (arg instanceof p2.lang.plan.Aggregate) {
-				this.aggregate = (p2.lang.plan.Aggregate) arg;
+		for (jol.lang.plan.Expression arg : predicate) {
+			if (arg instanceof jol.lang.plan.Aggregate) {
+				this.aggregate = (jol.lang.plan.Aggregate) arg;
 				break;
 			}
 		}
@@ -43,14 +43,14 @@ public class Aggregation extends Table {
 		}
 	}
 	
-	public p2.lang.plan.Aggregate variable() {
+	public jol.lang.plan.Aggregate variable() {
 		return this.aggregate;
 	}
 	
 	private static Key key(Predicate predicate) {
 		List<Integer> key = new ArrayList<Integer>();
-		for (p2.lang.plan.Expression arg : predicate) {
-			if (!(arg instanceof p2.lang.plan.Aggregate)) {
+		for (jol.lang.plan.Expression arg : predicate) {
+			if (!(arg instanceof jol.lang.plan.Aggregate)) {
 				key.add(arg.position());
 			}
 		}
@@ -59,7 +59,7 @@ public class Aggregation extends Table {
 	
 	private static TypeList types(Predicate predicate) {
 		TypeList types = new TypeList();
-		for (p2.lang.plan.Expression arg : predicate) {
+		for (jol.lang.plan.Expression arg : predicate) {
 			types.add(arg.type());
 		}
 		return types;

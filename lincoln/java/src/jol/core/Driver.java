@@ -1,23 +1,23 @@
-package p2.core;
+package jol.core;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
-import p2.exec.Query;
-import p2.lang.plan.Program;
-import p2.lang.plan.Watch.WatchTable;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.basic.TypeList;
-import p2.types.exception.P2RuntimeException;
-import p2.types.exception.UpdateException;
-import p2.types.operator.Operator;
-import p2.types.operator.Watch;
-import p2.types.table.Aggregation;
-import p2.types.table.Table;
-import p2.types.table.TableName;
-import p2.lang.Compiler;
+import jol.exec.Query;
+import jol.lang.plan.Program;
+import jol.lang.plan.Watch.WatchTable;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
+import jol.types.exception.P2RuntimeException;
+import jol.types.exception.UpdateException;
+import jol.types.operator.Operator;
+import jol.types.operator.Watch;
+import jol.types.table.Aggregation;
+import jol.types.table.Table;
+import jol.types.table.TableName;
+import jol.lang.Compiler;
 
 /**
  * The main driver loop that executes query objects {@link Query}.
@@ -31,7 +31,7 @@ public class Driver implements Runnable {
 	 * should be executed by the query objects {@link Query}.
 	 *
 	 */
-	public static class Flusher extends p2.types.table.Function {
+	public static class Flusher extends jol.types.table.Function {
 		private static class ScheduleUnit {
 			public Long time;
 			public String program;
@@ -163,7 +163,7 @@ public class Driver implements Runnable {
 		}
 	}
 	
-	public static class Evaluator extends p2.types.table.Function {
+	public static class Evaluator extends jol.types.table.Function {
 		public enum Field{TIME, PROGRAM, TABLENAME, INSERTIONS, DELETIONS};
 		public static final Class[] SCHEMA =  {
 			Long.class,       // Evaluation time

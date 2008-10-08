@@ -1,22 +1,22 @@
-package p2.types.operator;
+package jol.types.operator;
 
 import java.util.Set;
 
-import p2.lang.plan.Variable;
-import p2.types.basic.Schema;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.P2RuntimeException;
-import p2.types.function.TupleFunction;
-import p2.core.Runtime;
+import jol.lang.plan.Variable;
+import jol.types.basic.Schema;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.P2RuntimeException;
+import jol.types.function.TupleFunction;
+import jol.core.Runtime;
 
 public class Assign extends Operator {
 	
-	private p2.lang.plan.Assignment assignment;
+	private jol.lang.plan.Assignment assignment;
 	
 	private Schema schema;
 	
-	public Assign(Runtime context, p2.lang.plan.Assignment assignment, Schema input) {
+	public Assign(Runtime context, jol.lang.plan.Assignment assignment, Schema input) {
 		super(context, assignment.program(), assignment.rule());
 		this.assignment = assignment;
 		this.schema = input.clone();

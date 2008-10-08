@@ -1,21 +1,21 @@
-package p2.types.operator;
+package jol.types.operator;
 
 import java.util.Hashtable;
 import java.util.Set;
 
-import p2.lang.plan.Predicate;
-import p2.lang.plan.Variable;
-import p2.net.IP;
-import p2.net.NetworkMessage;
-import p2.net.NetworkBuffer;
-import p2.types.basic.Schema;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.P2RuntimeException;
-import p2.types.exception.UpdateException;
-import p2.types.function.TupleFunction;
-import p2.types.table.TableName;
-import p2.core.Runtime;
+import jol.lang.plan.Predicate;
+import jol.lang.plan.Variable;
+import jol.net.IP;
+import jol.net.NetworkMessage;
+import jol.net.NetworkBuffer;
+import jol.types.basic.Schema;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.P2RuntimeException;
+import jol.types.exception.UpdateException;
+import jol.types.function.TupleFunction;
+import jol.types.table.TableName;
+import jol.core.Runtime;
 
 public class RemoteBuffer extends Operator {
 
@@ -30,7 +30,7 @@ public class RemoteBuffer extends Operator {
 		this.predicate = predicate;
 		this.deletion = deletion;
 		
-		for (p2.lang.plan.Expression arg : predicate) {
+		for (jol.lang.plan.Expression arg : predicate) {
 			if (arg instanceof Variable) {
 				Variable var = (Variable) arg;
 				if (var.loc()) {

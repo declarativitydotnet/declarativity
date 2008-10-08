@@ -1,15 +1,15 @@
-package p2.types.table;
+package jol.types.table;
 
 import java.util.*;
 
-import p2.core.Runtime;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.basic.TypeList;
-import p2.types.exception.BadKeyException;
-import p2.types.exception.UpdateException;
-import p2.types.operator.Operator.OperatorTable;
-import p2.types.table.Index.IndexTable;
+import jol.core.Runtime;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
+import jol.types.exception.BadKeyException;
+import jol.types.exception.UpdateException;
+import jol.types.operator.Operator.OperatorTable;
+import jol.types.table.Index.IndexTable;
 
 public abstract class Table implements Comparable<Table> {
 	public static final String  GLOBALSCOPE = "global";

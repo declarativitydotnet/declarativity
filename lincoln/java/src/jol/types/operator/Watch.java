@@ -1,17 +1,17 @@
-package p2.types.operator;
+package jol.types.operator;
 
 import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import p2.lang.plan.Variable;
-import p2.types.basic.Schema;
-import p2.types.basic.TupleSet;
-import p2.types.basic.Tuple;
-import p2.types.exception.P2RuntimeException;
-import p2.types.table.TableName;
-import p2.core.Runtime;
+import jol.lang.plan.Variable;
+import jol.types.basic.Schema;
+import jol.types.basic.TupleSet;
+import jol.types.basic.Tuple;
+import jol.types.exception.P2RuntimeException;
+import jol.types.table.TableName;
+import jol.core.Runtime;
 
 public class Watch extends Operator {
 	public static enum Modifier{NONE, TRACE, ADD, ERASE, INSERT, DELETE, RECEIVE, SEND};

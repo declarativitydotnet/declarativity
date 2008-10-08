@@ -1,4 +1,4 @@
-package p2.types.basic;
+package jol.types.basic;
 
 import java.util.ArrayList;
 

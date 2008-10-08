@@ -1,4 +1,4 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
 import java.util.ArrayList;
 import java.util.List;

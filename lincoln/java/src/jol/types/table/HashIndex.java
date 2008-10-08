@@ -1,4 +1,4 @@
-package p2.types.table;
+package jol.types.table;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.BadKeyException;
-import p2.core.Runtime;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.BadKeyException;
+import jol.core.Runtime;
 
 public class HashIndex extends Index {
 	

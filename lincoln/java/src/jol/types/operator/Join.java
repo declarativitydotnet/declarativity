@@ -1,16 +1,16 @@
-package p2.types.operator;
+package jol.types.operator;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
-import p2.lang.plan.Predicate;
-import p2.lang.plan.Variable;
-import p2.types.basic.Schema;
-import p2.types.basic.Tuple;
-import p2.types.exception.P2RuntimeException;
-import p2.types.function.TupleFunction;
-import p2.core.Runtime;
+import jol.lang.plan.Predicate;
+import jol.lang.plan.Variable;
+import jol.types.basic.Schema;
+import jol.types.basic.Tuple;
+import jol.types.exception.P2RuntimeException;
+import jol.types.function.TupleFunction;
+import jol.core.Runtime;
 
 public abstract class Join extends Operator {
 	
@@ -97,7 +97,7 @@ public abstract class Join extends Operator {
 		List<JoinFilter> filters = new ArrayList<JoinFilter>();
 		
 		Hashtable<String, Variable> positions = new Hashtable<String, Variable>();
-		for (p2.lang.plan.Expression arg : predicate) {
+		for (jol.lang.plan.Expression arg : predicate) {
 			assert(arg.position() >= 0);
 			
 			if (arg instanceof Variable) {

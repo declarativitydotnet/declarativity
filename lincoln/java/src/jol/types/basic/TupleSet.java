@@ -1,11 +1,11 @@
-package p2.types.basic;
+package jol.types.basic;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import p2.types.table.TableName;
+import jol.types.table.TableName;
 
 
 public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Serializable {

@@ -1,4 +1,4 @@
-package p2.types.exception;
+package jol.types.exception;
 
 import java.lang.reflect.Type;
 

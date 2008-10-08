@@ -1,13 +1,13 @@
-package p2.net;
+package jol.net;
 
 import java.io.IOException;
 import java.util.Hashtable;
 
-import p2.net.tcp.TCP;
-import p2.types.basic.Tuple;
-import p2.types.exception.UpdateException;
-import p2.types.table.TableName;
-import p2.core.Runtime;
+import jol.net.tcp.TCP;
+import jol.types.basic.Tuple;
+import jol.types.exception.UpdateException;
+import jol.types.table.TableName;
+import jol.core.Runtime;
 
 public final class Network {
 	private Runtime context;
@@ -38,7 +38,7 @@ public final class Network {
 		
 		/* Install network layer application */
 		context.install("network",
-				ClassLoader.getSystemClassLoader().getResource("p2/net/network.olg"));
+				ClassLoader.getSystemClassLoader().getResource("jol/net/network.olg"));
 	}
 	
 	public final static Tuple tuple(String direction, Address address, Message message) {

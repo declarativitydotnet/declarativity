@@ -1,4 +1,4 @@
-package p2.lang;
+package jol.lang;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,27 +8,27 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import p2.core.Periodic;
-import p2.lang.parse.Parser;
-import p2.lang.parse.TypeChecker;
-import p2.lang.plan.*;
-import p2.lang.plan.Program.ProgramTable;
-import p2.lang.plan.Assignment.AssignmentTable;
-import p2.lang.plan.Fact.FactTable;
-import p2.lang.plan.Function.TableFunction;
-import p2.lang.plan.Predicate.PredicateTable;
-import p2.lang.plan.Rule.RuleTable;
-import p2.lang.plan.Selection.SelectionTable;
-import p2.lang.plan.Watch.WatchTable;
-import p2.types.basic.Tuple;
-import p2.types.basic.TypeList;
-import p2.types.exception.P2RuntimeException;
-import p2.types.exception.UpdateException;
-import p2.types.table.EventTable;
-import p2.types.table.Key;
-import p2.types.table.ObjectTable;
-import p2.types.table.Table;
-import p2.types.table.TableName;
+import jol.core.Periodic;
+import jol.lang.parse.Parser;
+import jol.lang.parse.TypeChecker;
+import jol.lang.plan.*;
+import jol.lang.plan.Program.ProgramTable;
+import jol.lang.plan.Assignment.AssignmentTable;
+import jol.lang.plan.Fact.FactTable;
+import jol.lang.plan.Function.TableFunction;
+import jol.lang.plan.Predicate.PredicateTable;
+import jol.lang.plan.Rule.RuleTable;
+import jol.lang.plan.Selection.SelectionTable;
+import jol.lang.plan.Watch.WatchTable;
+import jol.types.basic.Tuple;
+import jol.types.basic.TypeList;
+import jol.types.exception.P2RuntimeException;
+import jol.types.exception.UpdateException;
+import jol.types.table.EventTable;
+import jol.types.table.Key;
+import jol.types.table.ObjectTable;
+import jol.types.table.Table;
+import jol.types.table.TableName;
 
 import xtc.Constants;
 import xtc.tree.Node;
@@ -39,8 +39,8 @@ import xtc.util.Runtime;
  */
 public class Compiler {
 	public static final URL[] FILES = {
-			ClassLoader.getSystemClassLoader().getResource("p2/lang/compile.olg"),
-			ClassLoader.getSystemClassLoader().getResource("p2/lang/stratachecker.olg")
+			ClassLoader.getSystemClassLoader().getResource("jol/lang/compile.olg"),
+			ClassLoader.getSystemClassLoader().getResource("jol/lang/stratachecker.olg")
 		};
 
 	public static class CompileTable extends ObjectTable {
@@ -55,9 +55,9 @@ public class Compiler {
 				Program.class // The program object
 		};
 		
-		private p2.core.Runtime context;
+		private jol.core.Runtime context;
 
-		public CompileTable(p2.core.Runtime context) {
+		public CompileTable(jol.core.Runtime context) {
 			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 			this.context = context;
 		}
@@ -85,7 +85,7 @@ public class Compiler {
 		}
 	}
 
-	public static final void initialize(p2.core.Runtime context) {
+	public static final void initialize(jol.core.Runtime context) {
 		context.catalog().register(new CompileTable(context));
 		context.catalog().register(new ProgramTable(context));
 		context.catalog().register(new RuleTable(context));
@@ -97,7 +97,7 @@ public class Compiler {
 		context.catalog().register(new AssignmentTable(context));
 	}
 
-	private p2.core.Runtime context;
+	private jol.core.Runtime context;
 	
 	private String owner;
 
@@ -106,7 +106,7 @@ public class Compiler {
 	private Runtime runtime = new Runtime();
 
 	/** Create a new driver for Overlog. */
-	public Compiler(p2.core.Runtime context, String owner, URL input) throws P2RuntimeException {
+	public Compiler(jol.core.Runtime context, String owner, URL input) throws P2RuntimeException {
 		this.context = context;
 		this.owner = owner;
 		this.runtime = new Runtime();

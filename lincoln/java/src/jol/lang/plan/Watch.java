@@ -1,16 +1,16 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.basic.TypeList;
-import p2.types.exception.BadKeyException;
-import p2.types.exception.UpdateException;
-import p2.types.operator.Operator;
-import p2.types.table.Key;
-import p2.types.table.ObjectTable;
-import p2.types.table.TableName;
-import p2.lang.Compiler;
-import p2.core.Runtime;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
+import jol.types.exception.BadKeyException;
+import jol.types.exception.UpdateException;
+import jol.types.operator.Operator;
+import jol.types.table.Key;
+import jol.types.table.ObjectTable;
+import jol.types.table.TableName;
+import jol.lang.Compiler;
+import jol.core.Runtime;
 
 public class Watch extends Clause {
 	
@@ -24,8 +24,8 @@ public class Watch extends Clause {
 		public static final Class[] SCHEMA =  {
 			String.class,                             // Program name
 			TableName.class,                          // Table name
-			p2.types.operator.Watch.Modifier.class,   // Modifier
-			p2.types.operator.Watch.class             // Operator
+			jol.types.operator.Watch.Modifier.class,   // Modifier
+			jol.types.operator.Watch.class             // Operator
 		};
 
 		public WatchTable(Runtime context) {
@@ -43,7 +43,7 @@ public class Watch extends Clause {
 			return super.delete(tuple);
 		}
 		
-		public Operator watched(String program, TableName name, p2.types.operator.Watch.Modifier modifier) {
+		public Operator watched(String program, TableName name, jol.types.operator.Watch.Modifier modifier) {
 			Tuple key = new Tuple(program, name, modifier);
 			try {
 				TupleSet tuples = primary().lookup(key);
@@ -59,9 +59,9 @@ public class Watch extends Clause {
 	
 	private TableName name;
 	
-	private p2.types.operator.Watch.Modifier modifier;
+	private jol.types.operator.Watch.Modifier modifier;
 
-	public Watch(xtc.tree.Location location, TableName name, p2.types.operator.Watch.Modifier modifier) {
+	public Watch(xtc.tree.Location location, TableName name, jol.types.operator.Watch.Modifier modifier) {
 		super(location);
 		this.name = name;
 		this.modifier = modifier;
@@ -75,6 +75,6 @@ public class Watch extends Clause {
 	public void set(Runtime context, String program) throws UpdateException {
 		context.catalog().table(WatchTable.TABLENAME).force(
 				new Tuple(program, name, modifier, 
-						  new p2.types.operator.Watch(context, program, null, name, modifier)));
+						  new jol.types.operator.Watch(context, program, null, name, modifier)));
 	}
 }

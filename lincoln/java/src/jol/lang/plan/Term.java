@@ -1,11 +1,11 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
 import java.util.Set;
 
-import p2.core.Runtime;
-import p2.types.basic.Schema;
-import p2.types.exception.UpdateException;
-import p2.types.operator.Operator;
+import jol.core.Runtime;
+import jol.types.basic.Schema;
+import jol.types.exception.UpdateException;
+import jol.types.operator.Operator;
 
 public abstract class Term implements Comparable<Term> {
 	private static long identifier = 0;

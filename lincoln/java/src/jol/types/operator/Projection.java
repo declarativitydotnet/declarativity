@@ -1,20 +1,20 @@
-package p2.types.operator;
+package jol.types.operator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import p2.lang.plan.Expression;
-import p2.lang.plan.GenericAggregate;
-import p2.lang.plan.Predicate;
-import p2.lang.plan.Variable;
-import p2.types.basic.Schema;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.P2RuntimeException;
-import p2.types.function.TupleFunction;
-import p2.core.Runtime;
+import jol.lang.plan.Expression;
+import jol.lang.plan.GenericAggregate;
+import jol.lang.plan.Predicate;
+import jol.lang.plan.Variable;
+import jol.types.basic.Schema;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.P2RuntimeException;
+import jol.types.function.TupleFunction;
+import jol.core.Runtime;
 
 public class Projection extends Operator {
 	

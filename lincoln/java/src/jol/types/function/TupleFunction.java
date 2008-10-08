@@ -1,7 +1,7 @@
-package p2.types.function;
+package jol.types.function;
 
-import p2.types.basic.Tuple;
-import p2.types.exception.P2RuntimeException;
+import jol.types.basic.Tuple;
+import jol.types.exception.P2RuntimeException;
 
 
 public interface TupleFunction<Type> {

@@ -1,8 +1,8 @@
-package p2.types.function;
+package jol.types.function;
 
 import java.util.Set;
 
-import p2.types.basic.Tuple;
+import jol.types.basic.Tuple;
 
 public class Cast implements TupleFunction {
 

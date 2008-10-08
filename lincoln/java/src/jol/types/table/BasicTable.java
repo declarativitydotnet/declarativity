@@ -1,11 +1,11 @@
-package p2.types.table;
+package jol.types.table;
 
 import java.util.Hashtable;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.basic.TypeList;
-import p2.types.exception.UpdateException;
-import p2.core.Runtime;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
+import jol.types.exception.UpdateException;
+import jol.core.Runtime;
 
 public class BasicTable extends Table {
 	/* The primary key. */

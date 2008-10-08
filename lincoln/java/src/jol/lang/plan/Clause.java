@@ -1,7 +1,7 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
-import p2.core.Runtime;
-import p2.types.exception.UpdateException;
+import jol.core.Runtime;
+import jol.types.exception.UpdateException;
 
 public abstract class Clause implements Comparable<Clause> {
 	private xtc.tree.Location location;

@@ -1,20 +1,20 @@
-package p2.lang.plan;
+package jol.lang.plan;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import p2.types.basic.Tuple;
-import p2.types.basic.TypeList;
-import p2.types.exception.P2RuntimeException;
-import p2.types.exception.UpdateException;
-import p2.types.function.TupleFunction;
-import p2.types.table.HashIndex;
-import p2.types.table.Index;
-import p2.types.table.Key;
-import p2.types.table.ObjectTable;
-import p2.types.table.TableName;
-import p2.lang.Compiler;
-import p2.core.Runtime;
+import jol.types.basic.Tuple;
+import jol.types.basic.TypeList;
+import jol.types.exception.P2RuntimeException;
+import jol.types.exception.UpdateException;
+import jol.types.function.TupleFunction;
+import jol.types.table.HashIndex;
+import jol.types.table.Index;
+import jol.types.table.Key;
+import jol.types.table.ObjectTable;
+import jol.types.table.TableName;
+import jol.lang.Compiler;
+import jol.core.Runtime;
 
 public class Fact extends Clause {
 	

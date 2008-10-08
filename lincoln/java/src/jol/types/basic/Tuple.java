@@ -1,4 +1,4 @@
-package p2.types.basic;
+package jol.types.basic;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -7,9 +7,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import p2.lang.plan.DontCare;
-import p2.lang.plan.Variable;
-import p2.types.exception.P2RuntimeException;
+import jol.lang.plan.DontCare;
+import jol.lang.plan.Variable;
+import jol.types.exception.P2RuntimeException;
 
 
 public class Tuple implements Comparable<Tuple>, Serializable {

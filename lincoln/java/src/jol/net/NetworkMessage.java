@@ -1,7 +1,7 @@
-package p2.net;
+package jol.net;
 
-import p2.types.basic.TupleSet;
-import p2.types.table.TableName;
+import jol.types.basic.TupleSet;
+import jol.types.table.TableName;
 
 public class NetworkMessage extends Message {
 	private static Long ids = 0L;

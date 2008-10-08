@@ -1,10 +1,10 @@
-package p2.core;
+package jol.core;
 
 import java.net.URL;
 
-import p2.types.basic.TupleSet;
-import p2.types.exception.UpdateException;
-import p2.types.table.TableName;
+import jol.types.basic.TupleSet;
+import jol.types.exception.UpdateException;
+import jol.types.table.TableName;
 
 public interface System {
 	/**

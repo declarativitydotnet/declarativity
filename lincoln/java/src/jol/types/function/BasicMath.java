@@ -1,11 +1,11 @@
-package p2.types.function;
+package jol.types.function;
 
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-import p2.types.basic.Tuple;
-import p2.types.exception.P2RuntimeException;
+import jol.types.basic.Tuple;
+import jol.types.exception.P2RuntimeException;
 
 public class BasicMath {
 	public enum Operator{UPLUS, UMINUS, PLUS, MINUS, TIMES, DIVIDE, MOD, POW, LSHIFT, RSHIFT};

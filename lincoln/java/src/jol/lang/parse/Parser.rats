@@ -1,4 +1,4 @@
-module p2.lang.parse.Parser;
+module jol.lang.parse.Parser;
 
 instantiate Spacing;
 

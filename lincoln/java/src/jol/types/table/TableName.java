@@ -1,4 +1,4 @@
-package p2.types.table;
+package jol.types.table;
 
 import java.io.Serializable;
 

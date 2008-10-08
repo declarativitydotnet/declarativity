@@ -1,4 +1,4 @@
-package p2.core;
+package jol.core;
 
 public class SystemFactory {
 	public static System makeSystem()

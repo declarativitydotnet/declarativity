@@ -1,9 +1,9 @@
-package p2.types.table;
+package jol.types.table;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import p2.types.basic.Tuple;
+import jol.types.basic.Tuple;
 
 
 public class Key implements Comparable<Key>, Iterable<Integer> {

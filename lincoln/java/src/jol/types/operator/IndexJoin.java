@@ -1,13 +1,13 @@
-package p2.types.operator;
+package jol.types.operator;
 
-import p2.lang.plan.Predicate;
-import p2.types.basic.Schema;
-import p2.types.basic.Tuple;
-import p2.types.basic.TupleSet;
-import p2.types.exception.P2RuntimeException;
-import p2.types.table.Index;
-import p2.types.table.Key;
-import p2.core.Runtime;
+import jol.lang.plan.Predicate;
+import jol.types.basic.Schema;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.P2RuntimeException;
+import jol.types.table.Index;
+import jol.types.table.Key;
+import jol.core.Runtime;
 
 public class IndexJoin extends Join {
 	
