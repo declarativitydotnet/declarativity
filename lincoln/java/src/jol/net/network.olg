@@ -1,7 +1,7 @@
 program network;
 
-import p2.net.NetworkMessage;
-import p2.net.Address;
+import jol.net.NetworkMessage;
+import jol.net.Address;
 
 /* The message queue: message(Direction, Location, NetworkMessage) */
 define(receive, {Long, Message});

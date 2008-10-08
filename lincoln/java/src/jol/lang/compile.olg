@@ -1,6 +1,6 @@
 program compile;
 
-import p2.lang.plan.Program;
+import jol.lang.plan.Program;
 import java.lang.Integer;
 
 /*******************************************************************/

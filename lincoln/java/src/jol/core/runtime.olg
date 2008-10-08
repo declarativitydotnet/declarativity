@@ -1,12 +1,11 @@
 program runtime;
 
-import p2.core.System;
 import java.lang.String;
 import java.lang.Integer;
 import java.lang.Long;
-import p2.types.basic.TupleSet;
-import p2.types.basic.Tuple;
-import p2.types.table.TableName;
+import jol.types.basic.TupleSet;
+import jol.types.basic.Tuple;
+import jol.types.table.TableName;
 
 /* Schedules things from the schedule queue (attaches strata to each tuple). */
 define(queue, {Long, Integer, String, TableName, TupleSet, TupleSet});
@@ -170,7 +169,7 @@ schedule(Time+1, Program, Name, Facts, null) :-
 /*******************************************************************/
 /*** Schedule compile */
 
-define(config, {Long, String, p2.lang.plan.Program});
+define(config, {Long, String, jol.lang.plan.Program});
 
 configProgram 
 config(Time, Program, Object) :-

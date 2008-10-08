@@ -1,8 +1,8 @@
 program tcp;
 
-import p2.net.Network;
-import p2.net.Message;
-import p2.net.Address;
+import jol.net.Network;
+import jol.net.Message;
+import jol.net.Address;
 
 /* Message receive tuples are sent via Java (see TCP.java). */
 define(receive, {Address, Message});
