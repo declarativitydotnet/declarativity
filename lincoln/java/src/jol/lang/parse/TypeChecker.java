@@ -121,7 +121,7 @@ public final class TypeChecker extends Visitor {
 	/**
 	 * Analyze the specified translation unit.
 	 *
-	 * @param root The translation unit.
+	 * @param node The root node.
 	 * @return The corresponding symbol table.
 	 */
 	public Node analyze(Node node) {
