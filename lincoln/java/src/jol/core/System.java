@@ -8,13 +8,6 @@ import jol.types.table.TableName;
 
 public interface System {
 	/**
-	 * Initialize this instance of the P2 runtime.
-	 * 
-	 * @param port The network port to use
-	 */
-	void bootstrap(int port);
-
-	/**
 	 * Get the system clock.
 	 * @return The current system (logical) clock
 	 */

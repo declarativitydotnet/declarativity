@@ -15,27 +15,53 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
 
+/**
+ * The system runtime.
+ * Contains a reference to all state in an instance of the
+ * OverLog library. 
+ * A call to the {@link Runtime#bootstrap(int)} will create
+ * a new runtime object and run it in a separate thread.
+ * 
+ * Implements the {@link System} interface through which
+ * outside programs interact with the OverLog library.
+ */
 public class Runtime implements System {
+	/** Used to grab a quick identifier. */
 	private static Long idgenerator = 0L;
 	
+	/**
+	 * @return A new unique system identifier.
+	 */
 	public static Long idgen() {
 		return idgenerator++;
 	}
 	
+	/** The thread that the runtime executes in.
+	 * Created and started in {link bootstrap(int)}. */
 	private Thread thread;
 	
+	/** The system catalog contain all table references. */
 	private Catalog catalog;
 	
+	/** The network object that manages communication over
+	 * various protocols. */
 	private Network network;
 	
+	/** The driver for the the query processor engine. */
 	private Driver driver;
 	
+	/** A table that contains all tuples waiting to be
+	 * executed by the query processor {@link Driver}. */
 	private Schedule schedule;
 	
 	/** The system logical clock. */
 	private Clock clock;
 	
-	Runtime() {
+	/**
+	 * Creates a new runtime.
+	 * Called from {@link bootstrap(int)}.
+	 */
+	private Runtime() {
 		this.catalog = Table.initialize(this);
 		Compiler.initialize(this);
 
@@ -53,22 +79,39 @@ public class Runtime implements System {
 		this.thread     = new Thread(driver);
 	}
 	
+	/**
+	 * @return The query processor (Driver) thread.
+	 */
 	public Thread thread() {
 		return this.thread;
 	}
 	
+	/**
+	 * @return The system catalog {@link Table.Catalog}.
+	 */
 	public Catalog catalog() {
 		return this.catalog;
 	}
 	
+	/**
+	 * @return The network manager {@link Network}.
+	 */
 	public Network network() {
 		return this.network;
 	}
 	
+	/**
+	 * @return The system clock {@link Clock}.
+	 */
 	public Clock clock() {
 		return this.clock;
 	}
-	
+
+	/**
+	 * Retrieve the program object of an install program.
+	 * @param name The name of the program {@link Program}.
+	 * @return The program object or null if !exists
+	 */
 	public Program program(String name) {
 		try {
 			TupleSet program = catalog().table(new TableName(Table.GLOBALSCOPE, "program")).primary().lookup(name);
@@ -80,17 +123,33 @@ public class Runtime implements System {
 		}
 	}
 	
+	/**
+	 * Install the program contained in the given file under the given owner.
+	 * @param owner The owner of the program.
+	 * @param file The file containing the program text.
+	 */
 	public void install(String owner, URL file) throws UpdateException {
 		TupleSet compilation = new TupleSet(CompileTable.TABLENAME);
 		compilation.add(new Tuple(null, owner, file.toString(), null));
 		schedule("runtime", CompileTable.TABLENAME, compilation, new TupleSet(CompileTable.TABLENAME));
 	}
 	
-	public void uninstall(String program) throws UpdateException {
-		TupleSet uninstall = new TupleSet(new TableName("compiler", "uninstall"), new Tuple(program, true));
+	/**
+	 * Uninstall a program.
+	 * @param name The program name.
+	 */
+	public void uninstall(String name) throws UpdateException {
+		TupleSet uninstall = new TupleSet(new TableName("compiler", "uninstall"), new Tuple(name, true));
 		schedule("compile", uninstall.name(), uninstall, null);
 	}
 	
+	/**
+	 *  Schedule a set of insertion/deletion tuples.
+	 *  @param program The program that should execute the delta tuples
+	 *  @param name The table name w.r.t. the tuple insertions/deletions.
+	 *  @param insertions The set of tuples to be inserted and deltas executed.
+	 *  @param deletions The set of tuples to be deleted and deltas executed.
+	 */
 	public void schedule(final String program, final TableName name,
 			             final TupleSet insertions, final TupleSet deletions) throws UpdateException {
 		synchronized (driver) {
@@ -122,39 +181,39 @@ public class Runtime implements System {
 		}
 	}
 	
-	public void bootstrap(int port) {
+	/**
+	 * Creates a new runtime object that listens on the given network port.
+	 * @param port The network port that this runtime listens on.
+	 * @return A new runtime object.
+	 * @throws P2RuntimeException If something went wrong during bootstrap.
+	 */
+	public static System create(int port) throws P2RuntimeException {
 		try {
-			try {
-				URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("jol/core/runtime.olg");
-				Compiler compiler = new Compiler(this, "system", runtimeFile);
-				compiler.program().plan();
-				driver.runtime(program("runtime"));
-				network.install(port);
-				thread.start();
-			} catch (Exception e) {
-				throw new P2RuntimeException(e.toString());
-			}
+			Runtime runtime = new Runtime();
+			URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("jol/core/runtime.olg");
+			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
+			compiler.program().plan();
+			runtime.driver.runtime(runtime.program("runtime"));
+			runtime.network.install(port);
+			runtime.thread.start();
 
 			for (URL file : Compiler.FILES) {
-				install("system", file);
+				runtime.install("system", file);
 			}
+			return runtime;
 		} catch (Exception e) {
-			java.lang.System.err.println("BOOTSTRAP ERROR");
-			e.printStackTrace();
-			java.lang.System.exit(1);
+			throw new P2RuntimeException(e.toString());
 		}
 	}
 	
-	public static void main(String[] args) throws UpdateException, MalformedURLException {
-		if (args.length != 2) {
+	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, P2RuntimeException {
+		if (args.length < 2) {
 			java.lang.System.out.println("Usage: jol.core.Runtime port program");
 			java.lang.System.exit(1);
 		}
-		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("jol/core/runtime.olg"));
 		
 		// Initialize the global Runtime
-		Runtime runtime = (Runtime) SystemFactory.makeSystem();
-		runtime.bootstrap(Integer.parseInt(args[0]));
+		Runtime runtime = (Runtime) Runtime.create(Integer.parseInt(args[0]));
 		for (int i = 1; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);
 			runtime.install("user", url);
