@@ -19,8 +19,18 @@ import p2.types.table.Table;
 import p2.types.table.TableName;
 import p2.lang.Compiler;
 
+/**
+ * The main driver loop that executes query objects {@link Query}.
+ */
 public class Driver implements Runnable {
 	
+	/**
+	 * A table function that flushes {@link TupleSet} objects to
+	 * the respective tables. The flush operation generates a new
+	 * {@link TupleSet} object containing the delta tuple set, which
+	 * should be executed by the query objects {@link Query}.
+	 *
+	 */
 	public static class Flusher extends p2.types.table.Function {
 		private static class ScheduleUnit {
 			public Long time;
