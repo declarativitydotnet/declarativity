@@ -1,0 +1,23 @@
+program test;
+
+import java.lang.Integer;
+import java.lang.Float;
+import p2.types.table.Index;
+
+define(t1, keys(0), {String, String});
+define(doping, {String, String, String});
+define(ping, {String, String, String});
+define(pong, {String, String, String});
+define(link, keys(0,1), {String, String});
+
+
+t1("tcp:localhost:10001", "pingme");
+
+watch(pong, s);
+watch(ping, r);
+r2
+ping(@B, A, Id) :- doping(@A, B, Id), t1(@B, C), C == "pingme";
+
+r3
+pong(@A, B, Id) :- ping(@B, A, Id);
+
