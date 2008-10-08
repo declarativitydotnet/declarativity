@@ -159,7 +159,7 @@ public class Rule extends Clause {
 
 				Table table = context.catalog().table(pred.name());
 				if (table.type() == Table.Type.EVENT ||
-				    pred.event() != Table.Event.NONE) {
+				    pred.event() != Predicate.Event.NONE) {
 					if (event != null) {
 						throw new PlannerException("Multiple event predicates in rule " + name + 
 								                   " location " + pred.location());
@@ -169,7 +169,7 @@ public class Rule extends Clause {
 				}
 			
 				if (event instanceof Function) {
-					event.event(Table.Event.INSERT);
+					event.event(Predicate.Event.INSERT);
 				}
 			}
 		}
@@ -257,7 +257,7 @@ public class Rule extends Clause {
 				intermediateEvent = new EventTable(new TableName(this.program, intermediateName), 
 					                               new TypeList(intermediateSchema.types()));
 				context.catalog().register(intermediateEvent);
-				Predicate intermediate = new Predicate(false, intermediateEvent.name(), Table.Event.NONE, intermediateSchema);
+				Predicate intermediate = new Predicate(false, intermediateEvent.name(), Predicate.Event.NONE, intermediateSchema);
 				intermediate.program  = event.program();
 				intermediate.rule     = event.rule();
 				intermediate.position = 0;

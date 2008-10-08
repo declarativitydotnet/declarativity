@@ -481,7 +481,7 @@ public final class TypeChecker extends Visitor {
 					
 					Table table = context.catalog().table(p.name());
 					if (table.type() == Table.Type.EVENT ||
-					    p.event() != Table.Event.NONE) {
+					    p.event() != Predicate.Event.NONE) {
 						if (event != null) {
 							runtime.error("Multiple event predicates in rule body!", n);
 							return Error.class;
@@ -529,7 +529,7 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Can't apply notin to head predicate!", n);
 			return Error.class;
 		}
-		else if (head.event() != Table.Event.NONE) {
+		else if (head.event() != Predicate.Event.NONE) {
 			runtime.error("Can't apply event modifier to rule head!", n);
 			return Error.class;
 		}
@@ -619,7 +619,7 @@ public final class TypeChecker extends Visitor {
 					return type;
 				}
 				Predicate p = (Predicate) node.getProperty(Constants.TYPE);
-				if (p.event() != Table.Event.NONE && p.notin()) {
+				if (p.event() != Predicate.Event.NONE && p.notin()) {
 					runtime.error("Can't apply notin to event predicate!",n);
 					return Error.class;
 				}
@@ -703,13 +703,13 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		
-		Table.Event tableEvent = Table.Event.NONE;
+		Predicate.Event tableEvent = Predicate.Event.NONE;
 		if (!(ptable instanceof EventTable) && event != null) {
 			if ("insert".equals(event)) {
-				tableEvent = Table.Event.INSERT;
+				tableEvent = Predicate.Event.INSERT;
 			}
 			else if ("delete".equals(event)) {
-				tableEvent = Table.Event.DELETE;
+				tableEvent = Predicate.Event.DELETE;
 			}
 			else {
 				runtime.error("Unknown event modifier " + event + " on predicate " + name, n);
@@ -786,7 +786,7 @@ public final class TypeChecker extends Visitor {
 				parameters.add(new Value<String>(this.program.name()));
 				index++;
 			}
-			tableEvent = Table.Event.INSERT;
+			tableEvent = Predicate.Event.INSERT;
 		}
 		else if (schema.size() < parameters.size()) {
 			runtime.error("Program " + program.name() + ": Schema size mismatch on predicate " +  name ,n);

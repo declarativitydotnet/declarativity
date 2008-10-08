@@ -47,7 +47,7 @@ public abstract class Query implements Comparable<Query> {
 	
 	private Boolean isDelete;
 	
-	private Table.Event event;
+	private Predicate.Event event;
 	
 	private Predicate input;
 	
@@ -72,7 +72,7 @@ public abstract class Query implements Comparable<Query> {
 		}
 	}
 	
-	public Table.Event event() {
+	public Predicate.Event event() {
 		return this.event;
 	}
 	

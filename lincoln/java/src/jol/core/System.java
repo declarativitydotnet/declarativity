@@ -10,7 +10,7 @@ import jol.types.table.TableName;
  * The interface to the System.
  * User programs interact with the OverLog library
  * via this interface. Such an interface to the system
- * is obtained via the {link Runtime#boostrap(int)} method.
+ * is obtained via the {link jol.core.Runtime#bootstrap(int)} method.
  */
 public interface System {
 	/**

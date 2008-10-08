@@ -11,28 +11,64 @@ import jol.types.exception.UpdateException;
 import jol.types.operator.Operator.OperatorTable;
 import jol.types.table.Index.IndexTable;
 
+/**
+ * The interface that all table types must extend.
+ * 
+ * A table is responsible for the storage of tuples
+ * with a specific schema. Tables provide insertion
+ * and deletion methods that are called by the
+ * query processor. Insertion and deletion calls
+ * store or remove the passed in tuples and return
+ * those tuples that actually modified the state of 
+ * the table as delta sets.
+ */
 public abstract class Table implements Comparable<Table> {
+	/** The name of the global scope. */
 	public static final String  GLOBALSCOPE = "global";
 	
+	/**
+	 * Listeners can be established on tables that are
+	 * called whenever a set of tuples has been inserted
+	 * or deleted. The most common client of the callback
+	 * interface is the index structures that assist with
+	 * table lookups.
+	 */
 	public static abstract class Callback {
+		/** Callback identifier. */
 		private static long ids = 0L;
 		
 		private Long id = new Long(ids++);
+		@Override
 		public int hashCode() { return id.hashCode(); }
 		
+		/** The set of tuples that were inserted into the table. */
 		public abstract void insertion(TupleSet tuples);
+		
+		/** The set of tuples that were deleted from the table. */
 		public abstract void deletion(TupleSet tuples);
 	}
 	
 
+	/**
+	 * The system catalog.
+	 * This is a special table that stores references to all
+	 * other tables (including itself) created by the runtime
+	 * and the various user programs. 
+	 */
 	public static class Catalog extends ObjectTable {
+		/** The runtime context. */
 		private Runtime context;
 		
+		/** The index table. */
 		private IndexTable index;
 		
+		/** The primary key: The name of the table. */
 		private static final Key PRIMARY_KEY = new Key(0);
 
+		/** The fields that make up a table tuple. */
 		public enum Field {TABLENAME, TYPE, KEY, TYPES, OBJECT};
+		
+		/** The type of each field in a table tuple. */
 		private static final Class[] SCHEMA = { 
 			TableName.class, // Name
 			String.class,    // Table type
@@ -41,6 +77,10 @@ public abstract class Table implements Comparable<Table> {
 			Table.class      // The table object
 		};
 		
+		/**
+		 * Create a new catalog.
+		 * @param context The runtime context.
+		 */
 		public Catalog(Runtime context) {
 			super(context, new TableName(GLOBALSCOPE, "catalog"), PRIMARY_KEY, new TypeList(SCHEMA));
 			this.context = context;
@@ -68,24 +108,44 @@ public abstract class Table implements Comparable<Table> {
 			return super.insert(tuple);
 		}
 		
-		public IndexTable index() {
+		/**
+		 * The index table.
+		 * @return The index table.
+		 */
+		IndexTable index() {
 			return this.index;
 		}
 		
-		public void index(IndexTable index) {
+		/**
+		 * Set the index table.
+		 * @param index The index table.
+		 */
+		void index(IndexTable index) {
 			this.index = index;
 		}
 		
+		/**
+		 * Drop the table with the given name.
+		 * @param name The name of the table.
+		 * @return true if table was dropped, false otherwise.
+		 * @throws UpdateException
+		 */
 		public boolean drop(TableName name) throws UpdateException {
 			try {
 				TupleSet tuples = primary().lookup(name);
 				return delete(tuples).size() > 0;
 			} catch (BadKeyException e) {
 				e.printStackTrace();
+				System.exit(0);
 			}
 			return false;
 		}
 		
+		/**
+		 * Get the table object with the given name.
+		 * @param name The name of the table.
+		 * @return The table object or null if !exist.
+		 */
 		public Table table(TableName name) {
 			try {
 				TupleSet table = primary().lookup(name);
@@ -106,6 +166,11 @@ public abstract class Table implements Comparable<Table> {
 			return null;
 		}
 		
+		/**
+		 * Register the given table with the catalog.
+		 * @param table The table to be registered.
+		 * @return true if table registration suceeds, false otherwise.
+		 */
 		public boolean register(Table table) {
 			Tuple tuple = new Tuple(table.name(), table.type().toString(), table.key(), new TypeList(table.types()), table);
 			try {
@@ -117,8 +182,6 @@ public abstract class Table implements Comparable<Table> {
 			return false;
 		}
 	}
-	
-	public enum Event{NONE, INSERT, DELETE};
 	
 	public enum Type{TABLE, EVENT, FUNCTION};
 	

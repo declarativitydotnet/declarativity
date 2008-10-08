@@ -19,7 +19,7 @@ import jol.types.table.Table.Catalog;
  * The system runtime.
  * Contains a reference to all state in an instance of the
  * OverLog library. 
- * A call to the {@link Runtime#bootstrap(int)} will create
+ * A call to the {@link Runtime#create(int)} will create
  * a new runtime object and run it in a separate thread.
  * 
  * Implements the {@link System} interface through which
@@ -87,7 +87,7 @@ public class Runtime implements System {
 	}
 	
 	/**
-	 * @return The system catalog {@link Table.Catalog}.
+	 * @return The system catalog {@link Catalog}.
 	 */
 	public Catalog catalog() {
 		return this.catalog;
