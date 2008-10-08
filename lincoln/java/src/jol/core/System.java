@@ -6,6 +6,12 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 
+/**
+ * The interface to the System.
+ * User programs interact with the OverLog library
+ * via this interface. Such an interface to the system
+ * is obtained via the {link Runtime#boostrap(int)} method.
+ */
 public interface System {
 	/**
 	 * Get the system clock.
