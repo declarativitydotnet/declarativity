@@ -73,7 +73,13 @@ public class Driver implements Runnable {
 			}
 		}
 		
-		public TupleSet aggregate(TupleSet tuples) {
+		/**
+		 * Aggregates the set of tuples into groups
+		 * of tuples that are flushed into the same table.
+		 * @param tuples The set of tuples to be flushed
+		 * @return Aggregated set of tuples.
+		 */
+		private TupleSet aggregate(TupleSet tuples) {
 			Hashtable<ScheduleUnit, ScheduleUnit> units = new Hashtable<ScheduleUnit, ScheduleUnit>();
 			for (Tuple tuple : tuples) {
 				ScheduleUnit unit = new ScheduleUnit(tuple);
@@ -90,7 +96,10 @@ public class Driver implements Runnable {
 			return aggregate;
 		}
 		
+		/** The attribute fields expected by this table function. */
 		public enum Field{TIME, PROGRAM, TABLENAME, INSERTIONS, DELETIONS};
+		
+		/** The attribute types execpted by this table function. */
 		public static final Class[] SCHEMA =  {
 			Long.class,       // Time
 			String.class,     // Program name
@@ -99,13 +108,19 @@ public class Driver implements Runnable {
 			TupleSet.class    // Deletions tuple set
 		};
 		
+		/** The runtime context. */
 		private Runtime context; 
 
+		/** 
+		 * Creates a new flusher table function.
+		 * @param context The runtime context. 
+		 */
 		public Flusher(Runtime context) {
 			super("flusher", new TypeList(SCHEMA));
 			this.context = context;
 		}
 		
+		@Override
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 			TupleSet delta = new TupleSet(name());
 			for (Tuple tuple : aggregate(tuples)) {
@@ -163,8 +178,26 @@ public class Driver implements Runnable {
 		}
 	}
 	
+	/**
+	 * Table function represents the query processor that evaluates 
+	 * tuples using the query objects install by the runtime programs.
+	 * The tuple format that this function expects is as follows:
+	 * <Time, Program, TableName, Insertions, Deletions>
+	 * Time: The evaluation time (usually taken from the system clock).
+	 * Program: The program whose query objects are to evaluate the tuples.
+	 * TableName: The name of the table to which the tuples refer.
+	 * Insertions: Contains a set of tuples that represent the delta set
+	 * of an insertion into the respective table.
+	 * Deletions: Contains a set of tuples representing the delta set
+	 * of a deletion from the respective table.
+	 * NOTE: Deletions are not evaluated unless there are no insertions
+	 * The return value of this table function contains a set of tuples
+	 * that represent the output of the query evaluations. 
+	 */
 	public static class Evaluator extends jol.types.table.Function {
+		/** The fields expected by this table function. */
 		public enum Field{TIME, PROGRAM, TABLENAME, INSERTIONS, DELETIONS};
+		/** The field types expected by this table function. */
 		public static final Class[] SCHEMA =  {
 			Long.class,       // Evaluation time
 			String.class,     // Program name
@@ -173,13 +206,19 @@ public class Driver implements Runnable {
 			TupleSet.class    // Deletions tuple set
 		};
 		
+		/** The runtime context. */
 		private Runtime context;
 
+		/**
+		 * Creates a new evaluated based on the given runtime.
+		 * @param context The runtime context. 
+		 */
 		public Evaluator(Runtime context) {
 			super("evaluator", new TypeList(SCHEMA));
 			this.context = context;
 		}
 		
+		@Override
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 			TupleSet delta = new TupleSet(name());
 			for (Tuple tuple : tuples) {
@@ -202,6 +241,18 @@ public class Driver implements Runnable {
 			return delta;
 		}
 		
+		/** 
+		 * Evaluates the given insertions/deletions against the program queries.
+		 * @param time The current time.
+		 * @param program The program whose queries will evaluate the tuples.
+		 * @param name The name of the table to which the tuples refer.
+		 * @param insertions A delta set of tuple insertions.
+		 * @param deletions A delta set of tuple deletions.
+		 * @return The result of the query evaluation. NOTE: if insertions.size() > 0 then
+		 * deletions will not be evaluated but rather deferred until a call is made with
+		 * insertions.size() == 0.
+		 * @throws UpdateException On evaluation error.
+		 */
 		private TupleSet evaluate(Long time, Program program, TableName name, TupleSet insertions, TupleSet deletions) 
 		throws UpdateException {
 			Hashtable<String, Tuple> continuations = new Hashtable<String, Tuple>();
@@ -291,6 +342,14 @@ public class Driver implements Runnable {
 			return delta;
 		}
 
+		/**
+		 * Helper routine that packages up result tuples grouped by (time, program, tablename).
+		 * @param continuations Hashtable containing the tuple groups
+		 * @param time Current time.
+		 * @param program Program that evaluated the tuples.
+		 * @param event Indicates whether the tuples are insertions or deletions.
+		 * @param result The result tuples taken from the output of a query.
+		 */
 		private void continuation(Hashtable<String, Tuple> continuations, Long time,
 				                  String program, Table.Event event, TupleSet result) {
 			String key = program + "." + result.name();
@@ -313,30 +372,47 @@ public class Driver implements Runnable {
 		}
 	}
 
+	/**
+	 * Tasks are used to inject tuples into the schedule.
+	 */
 	public interface Task {
+		/** Insertion tuples */
 		public TupleSet insertions();
 		
+		/** Deletion tuples. */
 		public TupleSet deletions();
 		
+		/** The program name that should evaluate the tuples. */
 		public String program();
 
+		/** The name of the table to which the tuples belong. */
 		public TableName name();
 	}
 	
-	/* Tasks that the driver needs to execute during the next clock. */
+	/** Tasks that the driver needs to execute during the next clock. */
 	private List<Task> tasks;
 	
-	/** The schedule queue. */
+	/** The runtime program */
 	private Program runtime;
 
+	/** The table containing all tuples that need to be scheduled/executed. */
 	private Schedule schedule;
 
+	/** The sytem clock. */
 	private Clock clock;
 	
+	/** The evaluator table function. */
 	public Evaluator evaluator;
 	
+	/** The flusher table function. */
 	private Flusher flusher;
 
+	/**
+	 * Creates a new driver.
+	 * @param context The runtime context.
+	 * @param schedule The schedule table.
+	 * @param clock The system clock table.
+	 */
 	public Driver(Runtime context, Schedule schedule, Clock clock) {
 		this.tasks = new ArrayList<Task>();
 		this.schedule = schedule;
@@ -348,14 +424,34 @@ public class Driver implements Runnable {
 		context.catalog().register(this.flusher);
 	}
 	
+	/**
+	 * Set the runtime program.
+	 * @param runtime The runtime program. 
+	 */
 	public void runtime(Program runtime) {
 		this.runtime = runtime;
 	}
 
+	/**
+	 * Add a task to the task queue. This will be evaluated
+	 * on the next clock tick.
+	 * @param task The task to be added.
+	 */
 	public void task(Task task) {
 		this.tasks.add(task);
 	}
 
+	/**
+	 * The main driver loop.
+	 * The loop is responsible for 1. updating the clock 2. scheduling tasks.
+	 * Driver algorithm:
+	 * 	loop forever {
+	 * 		update to new clock value;
+	 * 		evaluate (insertion of clock value);
+	 * 		evaluate (all tasks);
+	 * 		evaluate (deletion of clock value);
+	 * 	}
+	 */
 	public void run() {
 		TupleSet time = clock.time(0L);
 		while (true) {
@@ -392,7 +488,17 @@ public class Driver implements Runnable {
 		}
 	}
 	
-	public void evaluate(String program, TableName name, TupleSet insertions, TupleSet deletions) throws UpdateException {
+	/**
+	 * Helper function that calls the flusher and evaluator table functions.
+	 * This function will evaluate the passed in tuples to fixedpoint (until
+	 * no further tuples exist to evaluate).
+	 * @param program The program that should be executed.
+	 * @param name The table name to which the tuples refer.
+	 * @param insertions The set of insertions to evaluate.
+	 * @param deletions The set of deletions to evaluate.
+	 * @throws UpdateException
+	 */
+	private void evaluate(String program, TableName name, TupleSet insertions, TupleSet deletions) throws UpdateException {
 		TupleSet insert = new TupleSet();
 		TupleSet delete = new TupleSet();
 		insert.add(new Tuple(clock.current(), program, name, insertions, deletions)); 

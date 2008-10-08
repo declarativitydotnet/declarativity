@@ -10,6 +10,15 @@ import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 
+/**
+ * The periodic table stores all registered periodics.
+ * Programs can remove periodics by simply deleting from
+ * this table. The compiler will translate all periodic
+ * statements within the program into a tuple entry that
+ * is registered in this table. The runtime schedules
+ * periodics from the tuple entries in this table.
+ *
+ */
 public class Periodic extends ObjectTable {
 	
 	public static class Scheduler extends Function {

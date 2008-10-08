@@ -16,8 +16,6 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
 
 public class Runtime implements System {
-	private static Runtime runtime;
-	
 	private static Long idgenerator = 0L;
 	
 	public static Long idgen() {
@@ -155,7 +153,7 @@ public class Runtime implements System {
 		java.lang.System.err.println(ClassLoader.getSystemClassLoader().getResource("jol/core/runtime.olg"));
 		
 		// Initialize the global Runtime
-		runtime = (Runtime) SystemFactory.makeSystem();
+		Runtime runtime = (Runtime) SystemFactory.makeSystem();
 		runtime.bootstrap(Integer.parseInt(args[0]));
 		for (int i = 1; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);

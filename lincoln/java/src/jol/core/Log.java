@@ -11,6 +11,11 @@ import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 
+/**
+ * A table that stores log entries. This
+ * table can be referred to from within
+ * the OverLog language.
+ */
 public class Log extends ObjectTable {
 	
 	public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "log");
