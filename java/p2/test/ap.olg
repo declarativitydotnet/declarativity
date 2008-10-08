@@ -1,4 +1,4 @@
-program af;
+program ap;
 
 import java.lang.Double;
 import java.lang.Integer;
@@ -10,19 +10,6 @@ import java.util.Arrays;
 import java.lang.Object;
 import p2.types.basic.ValueList;
 
-/*** PARAMETERS
-
-***/
-define(damping,keys(0),{Double});
-define(epoch,keys(0),{Integer});
-define(myid,keys(0),{String,Integer});
-define(duration,keys(0),{Integer});
-
-damping(5678.0);
-epoch(9876);
-myid("tcp:localhost:10000",1234);
-duration(100);
-
 
 /**********************************************************************
   AFFINITY PROPAGATION
@@ -30,34 +17,30 @@ duration(100);
  
 /*node, Var, CandidateExemplar, value
   node, i, k, value */
-define(availability,  keys(1,2),{String,String,String,Double,Integer});
+define(availability,  keys(1,2),{String,Integer,Integer,Double,Integer});
 
 /*node, Var, CandidateExemplar, value, iterationNumber
   node, i, k, value */
-define(sentAvailability, keys(1,2),{String,String,String,Double,Integer});
+define(sentAvailability, keys(1,2),{String,Integer,Integer,Double,Integer});
 
 /*node, LocalVar, CandidateExemplar, value
   node, i, k, value */
-define(responsibility,keys(1,2),{String,String,String,Double,Integer});
+define(responsibility,keys(1,2),{String,Integer,Integer,Double,Integer});
 
 /*node, LocalVar, CandidateExemplar, value, iterationNumber
   node, i, k, value */
-define(sentResponsibility, keys(1,2),{String,String,String,Double,Integer});
+define(sentResponsibility, keys(1,2),{String,Integer,Integer,Double,Integer});
 
-/*node, LocalVar, CandidateExemplar, value
-  node, i, k, value */
-define(similarity, keys(1,2),{String,String,String,Double});
 
 /* The identifier of each node: Node, NodeId, Time */
 // pa -- but time is not in the definition shown by the rules...
 define(identifier, keys(0),{String,Integer});
 
 /* node, Var, CandidateExemplar, max(Responsibility, 0)*/
-define(rp, keys(1,2),{String,String,String,Double});
+define(rp, keys(1,2),{String,Integer,Integer,Double});
 
 
 /* in the p2 version, we need also to define our event tables */
-define(localVariable,keys(0),{String,String,String});
 
 
 /**********************************************************************
@@ -164,7 +147,7 @@ watch(aEvent, s);
   Responsibility is sent from a local "variable" to a remote "candidate exemplar"
  **********************************************************************/
 
-define(rUpdate,{String,String});
+define(rUpdate,{String,Integer});
 
 /* responsibility updates for each local variable */
 rUpdate(Node, LocalVar) :-
@@ -193,11 +176,11 @@ rUpdate(@Node, LocalVar) :-
   Responsibility calculation
  **********************************************************************/
 
-define(asSet,{String,String,ValueList});
-define(maxAS1Details,{String,String,String,Double,Double});
-define(responsibilityEvent,{String,String,String, Double,Integer});
-define(allMaxDetails,{String,String,String,Double,String,Double}); 
-define(variable,keys(0),{String,String,String});
+define(asSet,{String,Integer,ValueList});
+define(maxAS1Details,{String,Integer,Integer,Double,Double});
+define(responsibilityEvent,{String,Integer,Integer, Double,Integer});
+define(allMaxDetails,{String,Integer,Integer,Double,Integer,Double}); 
+//define(variable,keys(0),{String,String,String});
 
 
 /*ordered set of similarity + availability*/
@@ -271,7 +254,7 @@ sentResponsibility(Node, LocalVar, CandidateExemplar, Responsibility, NewItNum) 
   variables to candiateExemplars
  **********************************************************************/
 
-define(rpEvent,{String,String,String,Double});
+define(rpEvent,{String,Integer,Integer,Double});
 
 rpEvent(Node, Var, CandidateExemplar, Responsibility) :-
         responsibility(Node, Var, CandidateExemplar, Responsibility, _);
@@ -287,9 +270,9 @@ rp(Node, Var, CandidateExemplar, RP) :-
   Availiblity is sent from a local "candidate exemplar" to a remote "variables"
  **********************************************************************/
 
-define(aUpdate,{String,String,String});
-define(sumRp,{String,String,String,Double});
-define(availabilityCalc,{String,String,String,Double,Integer});
+define(aUpdate,{String,Integer,Integer});
+define(sumRp,{String,Integer,Integer,Double});
+define(availabilityCalc,{String,Integer,Integer,Double,Integer});
 
 /* Calculate availability of candiate exemplar for each variable*/
 aUpdate(Node, CandidateExemplar, Var) :-
@@ -359,9 +342,9 @@ sentAvailability(Node, Var, CandidateExemplar, Availability, NewItNum) :-
  Compute exemplars
  **********************************************************************/  
 
-define(exemplar,{String,String,ValueList,Double});
-define(eUpdate,{String,String});
-define(exemplarCalc,{String,String,Double});
+define(exemplar,{String,Integer,ValueList,Double});
+define(eUpdate,{String,Integer});
+define(exemplarCalc,{String,Integer,Double});
  
 eUpdate(Node, LocalVar) :- 
          periodic(E, 1L),
