@@ -398,7 +398,7 @@ public class Driver implements Runnable {
 	/** The table containing all tuples that need to be scheduled/executed. */
 	private Schedule schedule;
 
-	/** The sytem clock. */
+	/** The system clock. */
 	private Clock clock;
 	
 	/** The evaluator table function. */
