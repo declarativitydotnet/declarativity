@@ -44,7 +44,7 @@ prepare(@Peer,Xact,Commander) :- peers(@Commander,Peer),
 				 commitReady(@Commander,Xact);
 
 /* we assume a native function f_apply that, for a given transaction Xact,
-   aquires resources, performs works, writes redo and undo reports success
+   acquires resources, performs works, writes redo and undo reports success
    or failure.
 
 vote(@Commander,Xact,Peer,Vote) :- prepare(@Peer,Xact,Commander),
