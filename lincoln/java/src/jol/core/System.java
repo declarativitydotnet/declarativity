@@ -37,7 +37,7 @@ public interface System {
 	/**
 	 * Schedule a set of tuples to be evaluated by a given program.
 	 * @param program Program name
-	 * @param name Tuple name
+	 * @param name Table name
 	 * @param insertions Set of tuples to insert and evaluate
 	 * @param deletions Set of tuples to delete and evaluate
 	 * @throws UpdateException
