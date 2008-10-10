@@ -7,6 +7,7 @@
   <property name="src" location="src"/>
   <property name="build" location="build"/>
   <property name="dist"  location="dist"/>
+  <property name="lib" location="lib"/>
 
   <target name="init">
     <tstamp/>
@@ -14,7 +15,7 @@
   </target>
 
   <target name="compile" depends="init" description="compile the source">
-    <javac srcdir="${src}" destdir="${build}"/>
+    <javac srcdir="${src}" destdir="${build}" classpath="${lib}/jol.jar"/>
   </target>
 
   <target name="dist" depends="compile" description="generate a JAR file">
