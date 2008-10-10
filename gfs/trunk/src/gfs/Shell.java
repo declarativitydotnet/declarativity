@@ -3,7 +3,13 @@ package gfs;
 import java.util.Arrays;
 import java.util.List;
 
+import jol.core.Runtime;
+import jol.core.System;
+import jol.types.exception.P2RuntimeException;
+
 public class Shell {
+	private static System system;
+
     /*
      * TODO:
      *  (1) connect to an instance of P2
@@ -11,14 +17,15 @@ public class Shell {
      *  (3) inject the appropriate inserts into P2; wait for the results to come back
      *  (4) return results to stdout
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws P2RuntimeException {
         List<String> argList = Arrays.asList(args);
 
         if (argList.size() == 0)
             usage();
 
-        String op = args[0];
-        argList.remove(0);
+        system = Runtime.create(123);
+
+        String op = argList.remove(0);
 
         if (op.equals("cat"))
             doConcatenate(argList);
@@ -34,6 +41,15 @@ public class Shell {
     {
         if (args.size() == 0)
             usage();
+        
+        /*
+         * TODO:
+         * (1) For each file to list, add an entry into the "outgoing concat requests" table
+         * (2) Register a callback on the "concat responses" table to listen for responses
+         */
+        for (String file : args) {
+        	;
+        }
     }
 
     private static void doCreateDir(List<String> args)
@@ -47,8 +63,8 @@ public class Shell {
     }
 
     private static void usage() {
-        System.out.println("Usage: java gfs.Shell op_name args");
-        System.out.println("Where op_name = {cat,mkdir,write}");
-        System.exit(0);
+        java.lang.System.out.println("Usage: java gfs.Shell op_name args");
+        java.lang.System.out.println("Where op_name = {cat,mkdir,write}");
+        java.lang.System.exit(0);
     }
 }
