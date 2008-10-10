@@ -18,7 +18,6 @@ import jol.types.operator.Watch;
 import jol.types.table.Aggregation;
 import jol.types.table.Table;
 import jol.types.table.TableName;
-import jol.lang.Compiler;
 
 /**
  * The main driver loop that executes query objects {@link Query}.

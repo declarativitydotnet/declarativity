@@ -6,7 +6,6 @@ import java.util.Hashtable;
 import jol.net.tcp.TCP;
 import jol.types.basic.Tuple;
 import jol.types.exception.UpdateException;
-import jol.types.table.TableName;
 import jol.core.Runtime;
 
 public final class Network {

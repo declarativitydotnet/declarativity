@@ -10,7 +10,6 @@ import jol.types.operator.Operator;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
-import jol.lang.Compiler;
 import jol.core.Runtime;
 
 public class Selection extends Term {

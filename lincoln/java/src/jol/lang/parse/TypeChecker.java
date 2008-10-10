@@ -57,7 +57,6 @@ import xtc.tree.GNode;
 import xtc.tree.Node;
 import xtc.tree.Visitor;
 import xtc.util.SymbolTable;
-import xtc.util.Runtime;
 
 /**
  * A visitor to type check Overlog programs.

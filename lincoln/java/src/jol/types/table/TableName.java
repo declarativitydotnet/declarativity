@@ -10,7 +10,8 @@ import java.io.Serializable;
  *
  */
 public class TableName implements Comparable<TableName>, Serializable {
-	
+	private static final long serialVersionUID = 1L;
+
 	/** The scope of the table. */
 	public String scope;
 	

@@ -16,7 +16,6 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
-import jol.lang.Compiler;
 import jol.core.Periodic;
 import jol.core.Runtime;
 

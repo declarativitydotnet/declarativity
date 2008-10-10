@@ -9,7 +9,6 @@ import jol.types.operator.Operator;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
-import jol.lang.Compiler;
 import jol.core.Runtime;
 
 public class Watch extends Clause {
@@ -22,8 +21,8 @@ public class Watch extends Clause {
 		private Runtime context;
 		
 		public static final Class[] SCHEMA =  {
-			String.class,                             // Program name
-			TableName.class,                          // Table name
+			String.class,                              // Program name
+			TableName.class,                           // Table name
 			jol.types.operator.Watch.Modifier.class,   // Modifier
 			jol.types.operator.Watch.class             // Operator
 		};

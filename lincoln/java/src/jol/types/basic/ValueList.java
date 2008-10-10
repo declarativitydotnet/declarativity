@@ -2,9 +2,9 @@ package jol.types.basic;
 
 import java.util.ArrayList;
 
-public class ValueList<T> 
-	extends ArrayList<T> implements Comparable<ValueList> {
-	
+public class ValueList<T> extends ArrayList<T> implements Comparable<ValueList> {
+	private static final long serialVersionUID = 1L;
+
 	public int compareTo(ValueList o) {
 		if (o.equals(this)) {
 			return 0;
@@ -17,5 +17,4 @@ public class ValueList<T>
 	public void insert(T o) {
 		super.add(o);
 	}
-
 }

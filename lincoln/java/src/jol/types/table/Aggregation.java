@@ -3,7 +3,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.ArrayList;
 
-import sun.awt.windows.ThemeReader;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;

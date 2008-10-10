@@ -4,6 +4,8 @@ import jol.types.basic.TupleSet;
 import jol.types.table.TableName;
 
 public class NetworkMessage extends Message {
+	private static final long serialVersionUID = 1L;
+
 	private static Long ids = 0L;
 	
 	private String protocol;

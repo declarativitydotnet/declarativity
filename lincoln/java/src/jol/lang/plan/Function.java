@@ -1,6 +1,5 @@
 package jol.lang.plan;
 
-import jol.lang.Compiler;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;

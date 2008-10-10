@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import jol.lang.Compiler;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;

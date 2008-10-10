@@ -25,7 +25,6 @@ import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.core.Periodic;
-import jol.lang.Compiler;
 import jol.lang.plan.Watch.WatchTable;
 import jol.core.Runtime;
 

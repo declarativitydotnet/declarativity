@@ -13,6 +13,8 @@ import jol.types.exception.P2RuntimeException;
 
 
 public class Tuple implements Comparable<Tuple>, Serializable {
+	private static final long serialVersionUID = 1L;
+
 	private static Long idGen = new Long(0);
 	
 	protected String id;

@@ -8,7 +8,6 @@ import jol.types.exception.P2RuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
-import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.core.Runtime;
 

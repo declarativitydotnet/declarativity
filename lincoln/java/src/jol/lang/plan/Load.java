@@ -9,12 +9,10 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
-import jol.lang.Compiler;
 import jol.lang.plan.Fact.FactTable;
 import jol.types.basic.Tuple;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
-import jol.types.table.TableName;
 import xtc.tree.Location;
 import jol.core.Runtime;
 

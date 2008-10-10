@@ -4,6 +4,11 @@ import java.util.List;
 
 public class TypeList extends ValueList<Class> {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public TypeList() {
 		super();
 	}

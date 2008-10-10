@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Arguments extends ArrayList<Expression> implements Comparable<Arguments> {
+	private static final long serialVersionUID = 1L;
 
 	private Predicate predicate;
 	

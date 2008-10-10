@@ -9,6 +9,8 @@ import jol.types.table.TableName;
 
 
 public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Serializable {
+	private static final long serialVersionUID = 1L;
+
 	private static long ids = 0L;
 	
 	private String id;

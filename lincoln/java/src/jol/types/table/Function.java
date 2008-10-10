@@ -2,7 +2,6 @@ package jol.types.table;
 
 import java.util.Hashtable;
 
-import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;

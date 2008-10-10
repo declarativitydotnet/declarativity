@@ -1,6 +1,7 @@
 package jol.types.exception;
 
 public class BadKeyException extends Exception {
+	private static final long serialVersionUID = 1L;
 
 	public BadKeyException() {
 		super("Bad Key");
@@ -20,5 +21,4 @@ public class BadKeyException extends Exception {
 		super(message, cause);
 		// TODO Auto-generated constructor stub
 	}
-
 }
