@@ -37,7 +37,7 @@ public class Runtime implements System {
 	}
 	
 	/** The thread that the runtime executes in.
-	 * Created and started in {link bootstrap(int)}. */
+	 * Created and started in {@link create(int)}. */
 	private Thread thread;
 	
 	/** The system catalog contain all table references. */
@@ -58,8 +58,7 @@ public class Runtime implements System {
 	private Clock clock;
 	
 	/**
-	 * Creates a new runtime.
-	 * Called from {@link bootstrap(int)}.
+	 * Creates a new runtime. Called from {@link create(int)}.
 	 */
 	private Runtime() {
 		this.catalog = Table.initialize(this);
@@ -145,7 +144,7 @@ public class Runtime implements System {
 	
 	/**
 	 *  Schedule a set of insertion/deletion tuples.
-	 *  @param program The program that should execute the delta tuples
+	 *  @param program The program that should execute the delta tuples.
 	 *  @param name The table name w.r.t. the tuple insertions/deletions.
 	 *  @param insertions The set of tuples to be inserted and deltas executed.
 	 *  @param deletions The set of tuples to be deleted and deltas executed.
