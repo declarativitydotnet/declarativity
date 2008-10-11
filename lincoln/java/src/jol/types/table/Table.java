@@ -315,7 +315,7 @@ public abstract class Table implements Comparable<Table> {
 	public abstract Index primary();
 	
 	/**
-	 * A hashtable of all defined secnodary indices.
+	 * A hashtable of all defined secondary indices.
 	 * @return All defined secondary indices.
 	 */
 	public abstract Hashtable<Key, Index> secondary();
