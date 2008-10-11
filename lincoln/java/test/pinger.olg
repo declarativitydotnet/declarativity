@@ -1,14 +1,17 @@
 program test;
 
 import java.lang.Integer;
+import java.lang.Long;
 import java.lang.Float;
+
+import jol.core.Runtime;
 import jol.types.table.Index;
 
 define(t1, keys(0), {String, String});
-define(doping, {String, String, String});
-define(ping, {String, String, String});
-define(pong, {String, String, String});
-define(gotpong, {String, String, String});
+define(doping, {String, String, Long});
+define(ping, {String, String, Long});
+define(pong, {String, String, Long});
+define(gotpong, {String, String, Long});
 define(link, keys(0,1), {String, String});
 
 
@@ -19,7 +22,7 @@ watch(gotpong, s);
 watch(doping, s);
 
 r1 
-doping(A, B, Id) :-  periodic(Id, 2L, 200L), link(A, B);
+doping(A, B, Runtime.idgen()) :-  periodic(Id, 2L, 10L), link(A, B);
 
 r2
 ping(@B, A, Id) :- doping(@A, B, Id), t1(@B, C), C == "pingme";

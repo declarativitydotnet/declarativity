@@ -18,14 +18,11 @@ public final class Network {
 	
 	private Hashtable<String, Server> servers; 
 	
-	private Hashtable<String, Thread> serverThreads; 
-	
 	public Network(Runtime context) {
 		this.context       = context;
 		this.buffer        = new NetworkBuffer(context);
 		this.connection    = new Connection(context, this);
 		this.servers       = new Hashtable<String, Server>();
-		this.serverThreads = new Hashtable<String, Thread>();
 		
 		context.catalog().register(this.buffer);
 		context.catalog().register(this.connection);
@@ -33,7 +30,7 @@ public final class Network {
 	
 	public final void install(Integer port) throws IOException, UpdateException {
 		/* Install protocols */
-		server("tcp", new TCP(context, this, port));
+		server("tcp", new TCPNIO(context, this, port));
 		// server("udp", new UDP(port+1));
 		
 		/* Install network layer application */
@@ -50,10 +47,8 @@ public final class Network {
 	}
 	
 	public void server(String protocol, Server server) {
-		Thread thread = new Thread(server);
-		thread.start();
+		server.start();
 		this.servers.put(protocol, server);
-		this.serverThreads.put(protocol, thread);
 	}
 	
 	public Channel create(String protocol, Address address) {

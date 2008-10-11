@@ -29,15 +29,25 @@ public class TCP extends Server {
 	
 	private ServerSocket server;
 	
+	private ThreadGroup threads;
+	
 	private Hashtable<Address, Thread> channels;
 		
 	public TCP(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
 		this.context = context;
 		this.manager = manager;
 		this.server = new ServerSocket(port);
+		this.threads = new ThreadGroup("TCP");
 		this.channels = new Hashtable<Address, Thread>();
 		context.install("system",
 				ClassLoader.getSystemClassLoader().getResource("jol/net/tcp/tcp.olg"));
+	}
+	
+	@Override
+	public void interrupt() {
+		super.interrupt();
+		this.threads.interrupt();
+		this.threads.destroy();
 	}
 	
 	public void run() {
@@ -49,7 +59,7 @@ public class TCP extends Server {
 				channel = new Connection(socket);
 				manager.connection().register(channel);
 				
-				Thread thread  = new Thread(channel);
+				Thread thread  = new Thread(this.threads, channel);
 				thread.start();
 				channels.put(channel.address(), thread);
 			} catch (IOException e) {
@@ -66,7 +76,7 @@ public class TCP extends Server {
 	public Channel open(Address address) {
 		try {
 			Connection channel = new Connection(address);
-			Thread thread = new Thread(channel);
+			Thread thread = new Thread(this.threads, channel);
 			thread.start();
 			channels.put(channel.address(), thread);
 			return channel;

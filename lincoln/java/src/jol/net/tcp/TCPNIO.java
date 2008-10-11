@@ -19,6 +19,8 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import jol.net.Address;
 import jol.net.IP;
@@ -43,6 +45,8 @@ public class TCPNIO extends Server {
 	
 	private Selector selector;
 	
+	private ExecutorService executor;
+	
 	private Hashtable<String, Connection> connections;
 		
 	public TCPNIO(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
@@ -50,6 +54,7 @@ public class TCPNIO extends Server {
 		this.manager = manager;
 		this.server = ServerSocketChannel.open();
 		this.selector = SelectorProvider.provider().openSelector();
+		this.executor = Executors.newFixedThreadPool(4);
 		this.connections = new Hashtable<String, Connection>();
 		context.install("system", ClassLoader.getSystemClassLoader().getResource("jol/net/tcp/tcp.olg"));
 		
@@ -58,6 +63,13 @@ public class TCPNIO extends Server {
 		this.server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
 	
+	@Override
+	public void interrupt() {
+		super.interrupt();
+		executor.shutdown();
+	}
+	
+	@Override
 	public void run() {
 		while (true) {
 			try {
@@ -83,8 +95,12 @@ public class TCPNIO extends Server {
 					}
 					else if (key.isReadable()) {
 						String connectionKey = ((SocketChannel)key.channel()).socket().toString();
-						Connection connection = this.connections.get(connectionKey);
-						connection.receive();
+						final Connection connection = this.connections.get(connectionKey);
+						executor.execute(new Runnable() {
+							public void run() {
+								connection.receive();
+							}
+						});
 					}
 				}
 			} catch (IOException e) {
@@ -147,8 +163,8 @@ public class TCPNIO extends Server {
 		
 		@Override
 		public boolean send(Message packet) {
-			synchronized (buffer) {
-				try {
+			try {
+				synchronized (buffer) {
 					if (!this.channel.isConnected()) {
 						return false;
 					}
@@ -160,11 +176,12 @@ public class TCPNIO extends Server {
 					buffer.put(bstream.toByteArray());
 					buffer.flip();
 					writeFully(this.buffer, this.channel);
-				} catch (IOException e) {
-					return false;
 				}
-				return true;
+				// System.err.println("FINISH SEND PACKET " + packet.id());
+			} catch (IOException e) {
+				return false;
 			}
+			return true;
 		}
 		
 		@Override
@@ -175,8 +192,9 @@ public class TCPNIO extends Server {
 		}
 
 		public void receive() {
-			synchronized (buffer) {
-				try {
+			try {
+				Message message = null;
+				synchronized (buffer) {
 					this.buffer.clear();
 					this.buffer.limit(Integer.SIZE / Byte.SIZE);
 					readFully(this.buffer, this.channel);
@@ -187,20 +205,21 @@ public class TCPNIO extends Server {
 					readFully(this.buffer, this.channel);
 
 					ObjectInputStream istream = new ObjectInputStream(new ByteArrayInputStream(this.buffer.array()));
-					Message message = (Message) istream.readObject();
-					IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
-					Tuple tuple = new Tuple(address, message);
-					context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
-				} catch (IOException e) {
-					e.printStackTrace();
-					return;
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-					System.exit(0);
-				} catch (Exception e) {
-					e.printStackTrace();
-					System.exit(0);
+					message = (Message) istream.readObject();
 				}
+				// System.err.println("RECEIVE MESSAGE " + message.id() + " COMPLETE!");
+				IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
+				Tuple tuple = new Tuple(address, message);
+				context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
+			} catch (IOException e) {
+				e.printStackTrace();
+				return;
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+				System.exit(0);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(0);
 			}
 		}
 		
