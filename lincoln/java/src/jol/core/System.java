@@ -5,12 +5,13 @@ import java.net.URL;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
+import jol.types.table.Table.Catalog;
 
 /**
  * The interface to the System.
  * User programs interact with the OverLog library
  * via this interface. Such an interface to the system
- * is obtained via the {link jol.core.Runtime#bootstrap(int)} method.
+ * is obtained via the {@link jol.core.Runtime#create(int)} static method.
  */
 public interface System {
 	/**
@@ -19,6 +20,12 @@ public interface System {
 	 */
 	Clock clock();
 	
+	/**
+	 * Get the system catalog.
+	 * @return The system catalog {@link Catalog}.
+	 */
+	Catalog catalog();
+
 	/**
 	 * Install program file into runtime.
 	 * @param owner Program owner.

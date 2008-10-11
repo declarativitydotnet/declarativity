@@ -84,7 +84,7 @@ public class Runtime implements System {
 	public Thread thread() {
 		return this.thread;
 	}
-	
+
 	/**
 	 * @return The system catalog {@link Catalog}.
 	 */
