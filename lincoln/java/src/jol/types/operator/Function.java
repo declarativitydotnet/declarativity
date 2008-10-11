@@ -12,12 +12,23 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.core.Runtime;
 
+/**
+ * Applies a table function operator to the input stream.
+ */
 public class Function extends Operator {
 	
+	/** The table function. */
 	private Table function;
 	
+	/** The predicate used as argument to the table function. */
 	private Predicate predicate;
 
+	/**
+	 * Create a new table function operator.
+	 * @param context The runtime context.
+	 * @param function The table function.
+	 * @param predicate The predicate argument.
+	 */
 	public Function(Runtime context, Table function, Predicate predicate) {
 		super(context, predicate.program(), predicate.rule());
 		this.function = function;

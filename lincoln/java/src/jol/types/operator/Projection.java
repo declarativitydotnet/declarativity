@@ -16,12 +16,23 @@ import jol.types.exception.P2RuntimeException;
 import jol.types.function.TupleFunction;
 import jol.core.Runtime;
 
+/**
+ * A Projection operator "projects" the input tuples onto a subset of
+ * attributes defined by the given predicate (head) schema.
+ */
 public class Projection extends Operator {
 	
+	/** The projection schema. */
 	private Schema schema;
 	
+	/** The field accessors of the projection. */
 	List<TupleFunction<Comparable>> accessors = new ArrayList<TupleFunction<Comparable>>();
 	
+	/**
+	 * Create a new projection operator
+	 * @param context THe runtime context.
+	 * @param predicate The predicate whose schema we project to.
+	 */
 	public Projection(Runtime context, Predicate predicate) {
 		super(context, predicate.program(), predicate.rule());
 		

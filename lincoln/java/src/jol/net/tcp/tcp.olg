@@ -9,11 +9,6 @@ import jol.net.Address;
 define(receive, {Address, Message});
 define(send,    {Address, Message, Channel});
 
-watch(send, s);
-watch(receive, r);
-watch(network::buffer, i);
-watch(network::connection, i);
-
 /******* Message send  */
 public
 send(Location, Msg, Connection) :-

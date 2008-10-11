@@ -13,8 +13,15 @@ import jol.types.exception.P2RuntimeException;
 import jol.types.table.TableName;
 import jol.core.Runtime;
 
+/**
+ * Watch operators print the input tuples to some PrintStream before
+ * passing the same set of tuples to the output.
+ */
 public class Watch extends Operator {
+	/** The type of watches that exist in the system. */
 	public static enum Modifier{NONE, TRACE, ADD, ERASE, INSERT, DELETE, RECEIVE, SEND};
+	
+	/** A map from the watch character to the Modifier type. */
 	public static final Hashtable<Character, Modifier> modifiers = new Hashtable<Character, Modifier>();
 	
 	static {
@@ -28,19 +35,38 @@ public class Watch extends Operator {
 	};
 	
 	
+	/** The table name that this watch operator is assigned. */
 	private TableName name;
 	
+	/** The Modifier type of this watch operators. */
 	private Modifier modifier;
 	
+	/** The print stream that this watch operators sends to. */
 	private PrintStream stream;
 
+	/**
+	 * Create a new watch operator.
+	 * stderr is used as the print stream.
+	 * @param context The runtime context.
+	 * @param program The program name 
+	 * @param rule The rule name
+	 * @param name The table name.
+	 * @param modifier The modifier type.
+	 */
 	public Watch(Runtime context, String program, String rule, TableName name, Modifier modifier) {
-		super(context, program, rule);
-		this.name = name;
-		this.modifier = modifier;
-		this.stream = System.err;
+		this(context, program, rule, name, modifier, System.err);
 	}
 	
+	/**
+	 * Create a new watch operator.
+	 * stderr is used as the print stream.
+	 * @param context The runtime context.
+	 * @param program The program name 
+	 * @param rule The rule name
+	 * @param name The table name.
+	 * @param modifier The modifier type.
+	 * @param stream the print stream.
+	 */
 	public Watch(Runtime context, String program, String rule, TableName name, Modifier modifier, PrintStream stream) {
 		super(context, program, rule);
 		this.name = name;

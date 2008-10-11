@@ -8,42 +8,72 @@ import java.util.Set;
 import jol.types.table.TableName;
 
 
+/**
+ * A tuple set is a set contain for tuples that belong to the same relation.
+ */
 public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Serializable {
+	/** Identifier generator. */
 	private static final long serialVersionUID = 1L;
 
 	private static long ids = 0L;
 	
+	/** Tuple set identifier. */
 	private String id;
 	
+	/** Table name to which the tuples of this set belong. */
 	private TableName name;
 	
+	/**
+	 * Create an empty tuple set.
+	 */
 	public TupleSet() {
 		this((TableName)null);
 	}
 	
+	/** 
+	 * Copy constructor.
+	 * @param clone The set to copy.
+	 */
 	private TupleSet(TupleSet clone) {
 		this.id = clone.id;
 		this.name = clone.name;
 		this.addAll(clone);
 	}
 	
+	/**
+	 * Empty tuple set that references a given table name.
+	 * @param name The table name to reference.
+	 */
 	public TupleSet(TableName name) {
 		this.id = "TupleSet:" + ids++;
 		this.name = name;
 	}
 	
+	/**
+	 * Initialize the tuple set to contain the passed in tuples
+	 * that reference the given table name.
+	 * @param name The table name.
+	 * @param tuples The tuples to initialize.
+	 */
 	public TupleSet(TableName name, Set<Tuple> tuples) {
 		this.id = "TupleSet:" + ids++;
 		this.name = name;
 		this.addAll(tuples);
 	}
 	
+	/**
+	 * Create a tuple set referencing the given table name containing
+	 * the single tuple.
+	 * @param name The table name.
+	 * @param tuple A single tuple that will make up this set.
+	 */
 	public TupleSet(TableName name, Tuple tuple) {
 		this.id = "TupleSet:" + ids++;
 		this.name = name;
 		this.add(tuple);
 	}
 	
+	@Override
 	public String toString() {
 		String tuples = name + "[";
 		for (Tuple tuple : this) {
@@ -66,18 +96,33 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 		return false;
 	}
 	
+	@Override
 	public TupleSet clone() {
 		return new TupleSet(this);
 	}
 	
+	/**
+	 * The tuple set identifier.
+	 * @return The identifier assigned to this tuple set.
+	 */
 	public String id() {
 		return this.id;
 	}
 	
+	/**
+	 * The name of the table that the tuples belonging to this set are
+	 * part of.
+	 * @return The table name.
+	 */
 	public TableName name() {
 		return this.name;
 	}
 	
+	/**
+	 *  Set the table name.
+	 * @param name the table name.
+	 * @return true
+	 */
 	public boolean name(TableName name) {
 		this.name = name;
 		return true;
@@ -93,9 +138,10 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	}
 
 	/**
-	 * The only meaningful response to this
-	 * method is to determine if the two sets
-	 * are equal.
+	 * Comparison for tuple identifiers.
+	 * 
+	 * NOTE: This method does NOT perform set comparison 
+	 * (other methods will perform that action {@link #containsAll(Collection)}).
 	 */
 	public int compareTo(TupleSet tuples) {
 		return this.id.compareTo(tuples.id);

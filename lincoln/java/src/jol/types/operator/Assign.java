@@ -10,12 +10,25 @@ import jol.types.exception.P2RuntimeException;
 import jol.types.function.TupleFunction;
 import jol.core.Runtime;
 
+/**
+ * An Assign operator assigns some constant value to some attribute position
+ * in the input tuples. The output tuples will contain the assigned value.
+ *
+ */
 public class Assign extends Operator {
 	
+	/** The assignment predicate. */
 	private jol.lang.plan.Assignment assignment;
 	
+	/** The output schema. */
 	private Schema schema;
 	
+	/**
+	 * Create a new assign operator.
+	 * @param context The runtime context.
+	 * @param assignment The assignment predicate.
+	 * @param input The input schema.
+	 */
 	public Assign(Runtime context, jol.lang.plan.Assignment assignment, Schema input) {
 		super(context, assignment.program(), assignment.rule());
 		this.assignment = assignment;
@@ -53,5 +66,4 @@ public class Assign extends Operator {
 	public Set<Variable> requires() {
 		return this.assignment.requires();
 	}
-	
 }

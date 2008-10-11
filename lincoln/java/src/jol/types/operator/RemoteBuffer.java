@@ -17,14 +17,28 @@ import jol.types.function.TupleFunction;
 import jol.types.table.TableName;
 import jol.core.Runtime;
 
+/**
+ * A RemoteBuffer takes the input tuples and inserts them
+ * into the {@link NetworkBuffer}. The operator sends an
+ * empty TupleSet to the output.
+ */
 public class RemoteBuffer extends Operator {
 
+	/** The head predicate that identifies the location attribute. */
 	private Predicate predicate;
 	
+	/** Indicates whether the tuples represent a delete operation. */
 	private boolean deletion;
 	
+	/** An accessor to the loction/address attribute value. */
 	private TupleFunction<Comparable> addressAccessor;
 	
+	/** 
+	 * Create a new RemoteBuffer operator object.
+	 * @param context The runtime context.
+	 * @param predicate The (head) predicate with the remote location attribute.
+	 * @param deletion true if tuples represent a delete operation.
+	 */
 	public RemoteBuffer(Runtime context, Predicate predicate, boolean deletion) {
 		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;

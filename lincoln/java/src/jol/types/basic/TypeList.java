@@ -2,6 +2,10 @@ package jol.types.basic;
 
 import java.util.List;
 
+/**
+ * Simple data structure that stores an ordered list
+ * of types.
+ */
 public class TypeList extends ValueList<Class> {
 	
 	/**

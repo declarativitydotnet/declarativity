@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 
 import jol.net.tcp.TCP;
+import jol.net.tcp.TCPNIO;
 import jol.types.basic.Tuple;
 import jol.types.exception.UpdateException;
 import jol.core.Runtime;

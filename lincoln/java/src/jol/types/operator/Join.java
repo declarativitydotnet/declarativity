@@ -12,34 +12,69 @@ import jol.types.exception.P2RuntimeException;
 import jol.types.function.TupleFunction;
 import jol.core.Runtime;
 
+/**
+ * The interface to all join operators.
+ */
 public abstract class Join extends Operator {
 	
+	/**
+	 * A table function used to extract values from tuples 
+	 * taken from a specific {@link jol.types.table.Table} object.
+	 *
+	 */
 	private class TableField implements TupleFunction<Comparable> {
+		/** The field type. */
 		private Class type;
+		/** The field position within the tuple. */
 		private Integer position;
+		/**
+		 * Create a new TableField.
+		 * @param type The field type.
+		 * @param position The field position.
+		 */
 		public TableField(Class type, Integer position) { 
 			this.type = type;
 			this.position=position; 
 		}
+		/** Extracts the value from the tuple field position. */
 		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
 			return tuple.value(this.position);
 		}
+		/** The type of value returned by {@link #evaluate(Tuple)}. */
 		public Class returnType() {
 			return this.type;
 		}
 	}
 	
+	/**
+	 * Evaluates a single join attribute.
+	 */
 	private class JoinFilter {
+		/** Left hand side value accessor. */
 		private TupleFunction<Comparable> lhs;
 		
+		/** Right hand side value accessor. */
 		private TupleFunction<Comparable> rhs;
 
+		/**
+		 * Create a new join filter. 
+		 * @param lhs The left hand side accessor.
+		 * @param rhs The right hand side accessor.
+		 */
 		private JoinFilter(TupleFunction<Comparable> lhs, 
 				           TupleFunction<Comparable> rhs) {
 			this.lhs = lhs;
 			this.rhs = rhs;
 		}
 		
+		/**
+		 * Evaluate a tuple from the outer relation and a tuple 
+		 * from the inner relation along a single join attribute.
+		 * @param outer Tuple from the outer.
+		 * @param inner Tuple from the inner.
+		 * @return true if join succeeds, false otherwise.
+		 * @throws P2RuntimeException
+		 */
 		public Boolean evaluate(Tuple outer, Tuple inner) throws P2RuntimeException {
 			Comparable lvalue = null;
 			Comparable rvalue = null;
@@ -60,12 +95,21 @@ public abstract class Join extends Operator {
 		}
 	}
 	
+	/** The predicate of the table being joined with the input tuples. */
 	protected Predicate predicate;
 	
+	/** The output schema. */
 	protected Schema schema;
 	
+	/** A list of join filters, one for each common join attribute. */
 	private List<JoinFilter> filters;
 	
+	/**
+	 * Create a new join operator.
+	 * @param context The runtime context.
+	 * @param predicate The predicate representing the table being joined.
+	 * @param input The schema of the input tuples that are to be joined with the (inner) table.
+	 */
 	public Join(Runtime context, Predicate predicate, Schema input) {
 		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
@@ -84,6 +128,13 @@ public abstract class Join extends Operator {
 		return predicate.requires();
 	}
 	
+	/**
+	 * Apply all join filters.
+	 * @param outer Tuple from the outer relation.
+	 * @param inner Tuple from the inner relation.
+	 * @return true if all join filters succeed, false otherwise.
+	 * @throws P2RuntimeException
+	 */
 	protected Boolean validate(Tuple outer, Tuple inner) throws P2RuntimeException {
 		for (JoinFilter filter : filters) {
 			if (filter.evaluate(outer, inner) == Boolean.FALSE) {
@@ -93,6 +144,13 @@ public abstract class Join extends Operator {
 		return true;
 	}
 	
+	/**
+	 * Create a list of join filters based on the predicate schema
+	 * and the input tuple schema. A filter will be created for each
+	 * variable that matches between these two schemas.
+	 * @param predicate The predicate that references the inner table.
+	 * @return A list of join filters.
+	 */
 	private List<JoinFilter> filters(Predicate predicate) {
 		List<JoinFilter> filters = new ArrayList<JoinFilter>();
 		

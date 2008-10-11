@@ -11,7 +11,7 @@ import jol.types.table.TableName;
 import jol.core.Runtime;
 
 public class Connection extends ObjectTable {
-
+	
 	public static final Key PRIMARY_KEY = new Key(0,1);
 	
 	public enum Field{PROTOCOL, ADDRESS, CHANNEL};

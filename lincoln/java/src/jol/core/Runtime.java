@@ -201,6 +201,7 @@ public class Runtime implements System {
 			}
 			return runtime;
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new P2RuntimeException(e.toString());
 		}
 	}

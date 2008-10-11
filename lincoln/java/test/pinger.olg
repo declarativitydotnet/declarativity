@@ -19,7 +19,7 @@ watch(gotpong, s);
 watch(doping, s);
 
 r1 
-doping(A, B, Id) :-  periodic(Id, 2L, 2L), link(A, B);
+doping(A, B, Id) :-  periodic(Id, 2L, 200L), link(A, B);
 
 r2
 ping(@B, A, Id) :- doping(@A, B, Id), t1(@B, C), C == "pingme";

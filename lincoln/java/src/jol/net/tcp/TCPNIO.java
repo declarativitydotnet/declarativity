@@ -16,7 +16,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import jol.net.Address;
 import jol.net.IP;
@@ -47,7 +49,7 @@ public class TCPNIO extends Server {
 		this.context = context;
 		this.manager = manager;
 		this.server = ServerSocketChannel.open();
-		this.selector = Selector.open();
+		this.selector = SelectorProvider.provider().openSelector();
 		this.connections = new Hashtable<String, Connection>();
 		context.install("system", ClassLoader.getSystemClassLoader().getResource("jol/net/tcp/tcp.olg"));
 		
@@ -57,22 +59,29 @@ public class TCPNIO extends Server {
 	}
 	
 	public void run() {
-		int keys = 0;
 		while (true) {
 			try {
-				while ((keys = this.selector.select(10)) == 0) ;
+				for (int keys = 0; keys == 0; keys = this.selector.select(10)) ;
 				
-				for (SelectionKey key : this.selector.selectedKeys()) {
-					if (key.isAcceptable() && key.channel() instanceof ServerSocketChannel) {
-						ServerSocketChannel server = (ServerSocketChannel) key.channel();
-						SocketChannel channel = server.accept();
+		        // Iterate over the set of keys for which events are available
+		        Iterator selectedKeys = this.selector.selectedKeys().iterator();
+		        while (selectedKeys.hasNext()) {
+		          SelectionKey key = (SelectionKey) selectedKeys.next();
+		          selectedKeys.remove();
+
+					if (!key.isValid()) {
+						continue;
+					}
+					if (key.isAcceptable()) {
+						ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
+						SocketChannel channel = ssc.accept();
 						if (channel != null) {
 							Connection connection = new Connection(channel);
 							manager.connection().register(connection);
 							register (connection);
 						}
 					}
-					else if (key.isReadable() && key.channel() instanceof SocketChannel) {
+					else if (key.isReadable()) {
 						String connectionKey = ((SocketChannel)key.channel()).socket().toString();
 						Connection connection = this.connections.get(connectionKey);
 						connection.receive();
@@ -121,12 +130,14 @@ public class TCPNIO extends Server {
 	}
 	
 	private class Connection extends Channel {
+		private ByteBuffer buffer;
 		private SocketChannel channel;
 
 		public Connection(SocketChannel channel) throws IOException {
 			super("tcp", new IP(channel.socket().getInetAddress(), channel.socket().getPort()));
+			this.buffer = ByteBuffer.allocate(10000);
 			this.channel = channel;
-			channel.configureBlocking(false);
+			this.channel.configureBlocking(false);
 		}
 		
 		@Override 
@@ -136,21 +147,24 @@ public class TCPNIO extends Server {
 		
 		@Override
 		public boolean send(Message packet) {
-			try {
-				if (!this.channel.isConnected()) {
+			synchronized (buffer) {
+				try {
+					if (!this.channel.isConnected()) {
+						return false;
+					}
+					this.buffer.clear();
+					ByteArrayOutputStream bstream = new ByteArrayOutputStream();
+					ObjectOutputStream ostream = new ObjectOutputStream(bstream);
+					ostream.writeObject(packet);
+					buffer.putInt(bstream.size());
+					buffer.put(bstream.toByteArray());
+					buffer.flip();
+					writeFully(this.buffer, this.channel);
+				} catch (IOException e) {
 					return false;
 				}
-				ByteArrayOutputStream bstream = new ByteArrayOutputStream();
-				ObjectOutputStream ostream = new ObjectOutputStream(bstream);
-				ostream.writeObject(packet);
-				ByteBuffer buffer = ByteBuffer.allocate(bstream.size());
-				buffer.put(bstream.toByteArray());
-				buffer.flip();
-				this.channel.write(buffer);
-			} catch (IOException e) {
-				return false;
+				return true;
 			}
-			return true;
 		}
 		
 		@Override
@@ -161,30 +175,48 @@ public class TCPNIO extends Server {
 		}
 
 		public void receive() {
-			try {
-				ByteBuffer buffer = ByteBuffer.allocate(256);
-				int bytes = this.channel.read(buffer);
-				System.err.println("READ " + bytes + " BYTES FROM CHANNEL");
-				ObjectInputStream istream = new ObjectInputStream(new ByteArrayInputStream(buffer.array()));
-				Message message = (Message) istream.readObject();
-				IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
-				Tuple tuple = new Tuple(address, message);
-				context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
-			} catch (IOException e) {
+			synchronized (buffer) {
 				try {
-					TCPNIO.this.manager.connection().unregister(this);
-				} catch (UpdateException e1) {
-					e1.printStackTrace();
+					this.buffer.clear();
+					this.buffer.limit(Integer.SIZE / Byte.SIZE);
+					readFully(this.buffer, this.channel);
+
+					int length = this.buffer.getInt(0);
+					this.buffer.clear();
+					this.buffer.limit(length);
+					readFully(this.buffer, this.channel);
+
+					ObjectInputStream istream = new ObjectInputStream(new ByteArrayInputStream(this.buffer.array()));
+					Message message = (Message) istream.readObject();
+					IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
+					Tuple tuple = new Tuple(address, message);
+					context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
+				} catch (IOException e) {
+					e.printStackTrace();
+					return;
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+					System.exit(0);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(0);
 				}
-				return;
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-				System.exit(0);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(0);
 			}
 		}
+		
+	    private void writeFully(ByteBuffer buf, SocketChannel socket) throws IOException {
+	        int len = buf.limit() - buf.position();
+	        while (len > 0) {
+	            len -= socket.write(buf);
+	        }
+	    }
+	 
+	    private void readFully(ByteBuffer buf, SocketChannel socket) throws IOException {
+	        int len = buf.limit() - buf.position();
+	        while (len > 0) {
+	            len -= socket.read(buf);
+	        }
+	    }
 	}
 
 }

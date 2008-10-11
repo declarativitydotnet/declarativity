@@ -13,8 +13,6 @@ define(link, keys(0,1), {String, String});
 
 t1("tcp:localhost:10001", "pingme");
 
-watch(pong, s);
-watch(ping, r);
 r2
 ping(@B, A, Id) :- doping(@A, B, Id), t1(@B, C), C == "pingme";
 
