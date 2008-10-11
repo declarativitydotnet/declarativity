@@ -29,9 +29,7 @@ public class Runtime implements System {
 	/** Used to grab a quick identifier. */
 	private static Long idgenerator = 0L;
 	
-	/**
-	 * @return A new unique system identifier.
-	 */
+	/** @return A new unique system identifier. */
 	public static Long idgen() {
 		return idgenerator++;
 	}
