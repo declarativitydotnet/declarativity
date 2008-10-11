@@ -1,0 +1,8 @@
+program gfs;
+
+// Request ID, Filename
+define(cat_requests,{Integer,String});
+
+// Request ID, File contents
+define(cat_responses,{Integer,String});
+
