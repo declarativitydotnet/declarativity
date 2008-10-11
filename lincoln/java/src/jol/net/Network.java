@@ -38,6 +38,21 @@ public final class Network {
 				ClassLoader.getSystemClassLoader().getResource("jol/net/network.olg"));
 	}
 	
+	/**
+	 * Shutdown all network connections.
+	 */
+	public final void shutdown() {
+		for (Server server : servers.values()) {
+			server.interrupt();
+		}
+		try {
+			this.connection.delete(this.connection.tuples());
+			this.buffer.delete(this.buffer.tuples());
+		} catch (UpdateException e) {
+			// TODO Log error.
+		}
+	}
+	
 	public final static Tuple tuple(String direction, Address address, Message message) {
 		return new Tuple(direction, address, message);
 	}

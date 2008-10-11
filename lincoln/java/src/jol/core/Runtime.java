@@ -78,6 +78,15 @@ public class Runtime implements System {
 		this.thread     = new Thread(driver);
 	}
 	
+	public void shutdown() {
+		synchronized (driver) {
+			this.thread.interrupt();
+			if (this.network != null) {
+				this.network.shutdown();
+			}
+		}
+	}
+	
 	/**
 	 * @return The query processor (Driver) thread.
 	 */
