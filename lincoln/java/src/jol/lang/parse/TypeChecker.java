@@ -723,9 +723,11 @@ public final class TypeChecker extends Visitor {
 		List<Expression> arguments = new ArrayList<Expression>();
 		
 
-		if (!"runtime".equals(this.program.name()) && "periodic".equals(name.name)) {
+		if (!"runtime".equals(this.program.name()) && 
+				"periodic".equals(name.name) &&
+				!Table.GLOBALSCOPE.equals(name.scope)) {
 			if (parameters.size() < 1 || parameters.size() > Periodic.SCHEMA.length) {
-				runtime.error("Too many arguments to periodic predicate", n);
+				runtime.error("Wrong arguments to periodic predicate", n);
 				return Error.class;
 			}
 			else if (!(parameters.get(0) instanceof Variable)) {
@@ -733,58 +735,6 @@ public final class TypeChecker extends Visitor {
 				return Error.class;
 			}
 			
-			int index = 1;
-			for ( ; index < parameters.size(); index++) {
-				if (!(parameters.get(index) instanceof Value) ||
-						!Number.class.isAssignableFrom(parameters.get(index).type())) {
-					runtime.error("Parameter " + index + 
-							      " to periodic predicate must be a Numeric value!", n);
-					return Error.class;
-				}
-			}
-			
-			if (index == Periodic.Field.PERIOD.ordinal()) { // Period
-				parameters.add(new Value<Long>(1L));
-				index++;
-			}
-			else {
-				Long period = ((Value<Long>)parameters.get(Periodic.Field.PERIOD.ordinal())).value();
-				if (period < 1) {
-					runtime.warning("Periodic period must be > 1. Setting to 1",n);
-					period = 1L;
-				}
-				parameters.set(Periodic.Field.PERIOD.ordinal(), 
-						new Value<Long>(period));
-				
-			}
-			
-			if (index == Periodic.Field.TTL.ordinal()) { // TTL or Max execution count
-				parameters.add(new Value<Long>(Long.MAX_VALUE));
-				index++;
-			}
-			
-			if (index == Periodic.Field.TIME.ordinal()) { // Start time
-				parameters.add(new Value<Long>(0L));
-				index++;
-			}
-			else {
-				Long offset = ((Value<Long>)parameters.get(Periodic.Field.TIME.ordinal())).value();
-				if (offset < 0) {
-					runtime.warning("Periodic offset must be > 0. Setting to 0",n);
-					parameters.set(Periodic.Field.PERIOD.ordinal(),  new Value<Long>(0L));
-				}
-			}
-			
-			if (index == Periodic.Field.COUNT.ordinal()) { // Execution Count
-				parameters.add(new Value<Long>(new Long(0)));
-				index++;
-			}
-			
-
-			if (index == Periodic.Field.PROGRAM.ordinal()) { // Program name
-				parameters.add(new Value<String>(this.program.name()));
-				index++;
-			}
 			tableEvent = Predicate.Event.INSERT;
 		}
 		else if (schema.size() < parameters.size()) {

@@ -297,19 +297,40 @@ public class Rule extends Clause {
 		}
 		
 		
-		if (event.name().name.equals("periodic") && event.arguments().size() > 1 &&
+		if (event.name().name.equals("periodic") &&
 				! event.name().scope.equals(Table.GLOBALSCOPE)) {
-			Long period = (Long) ((Value) event.argument(Periodic.Field.PERIOD.ordinal())).value();
-			Long ttl    = (Long) ((Value) event.argument(Periodic.Field.TTL.ordinal())).value();
-			Long count  = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
-			List<Comparable> values = new ArrayList<Comparable>();
-			values.add(Runtime.idgen().toString());
-			for (int i = 1; i < event.arguments().size(); i++) {
-				values.add(((Value<Comparable>) event.argument(i)).value());
+			Long period    = 1L;
+			Long ttl       = 1L;
+			Long start     = 0L;
+			Long count     = 0L;
+			String program = this.program;
+			
+			if (event.argument(Periodic.Field.PERIOD.ordinal()) instanceof Value) {
+				period = (Long) ((Value) event.argument(Periodic.Field.PERIOD.ordinal())).value();
 			}
+			if (event.argument(Periodic.Field.TTL.ordinal()) instanceof Value) {
+				ttl = (Long) ((Value) event.argument(Periodic.Field.TTL.ordinal())).value();
+			}
+			if (event.argument(Periodic.Field.TIME.ordinal()) instanceof Value) {
+				start = (Long) ((Value) event.argument(Periodic.Field.TIME.ordinal())).value();
+			}
+			if (event.argument(Periodic.Field.COUNT.ordinal()) instanceof Value) {
+				count = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
+			}
+			if (event.argument(Periodic.Field.PROGRAM.ordinal()) instanceof Value) {
+				program = (String) ((Value) event.argument(Periodic.Field.PROGRAM.ordinal())).value();
+			}
+			
+			List<Comparable> values = new ArrayList<Comparable>();
+			final String identifier = Runtime.idgen().toString();
+			values.add(identifier);
+			values.add(period);
+			values.add(ttl);
+			values.add(start);
+			values.add(count);
+			values.add(program);
 			periodics.add(new Tuple(values));
 			
-			final String identifier = event.identifier();
 			TupleFunction<java.lang.Boolean> periodicFilter = new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple)
 						throws P2RuntimeException {

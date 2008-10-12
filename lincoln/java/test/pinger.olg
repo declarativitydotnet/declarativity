@@ -19,10 +19,32 @@ t1("tcp:localhost:10001", "pingme");
 link("tcp:localhost:10000", "tcp:localhost:10001");
 
 watch(gotpong, s);
-watch(doping, s);
+watch(doping, rs);
+watch(periodic, sr);
+
+define(run, {String, Long, String});
+define(deletePeriodic, {String});
+
+deletePeriodic(Id) :-
+	run(Id, Count, Program),
+	Count == 5L;
+
+delete
+global::periodic(Id, Period, TTL, Start, Count, Program) :-
+	deletePeriodic(Id),
+	global::periodic(Id, Period, TTL, Start, Count, Program);
+
+/* Register a new periodic with the system. 
+ * NOTE: The fact that Count and Program are variables means that 
+ *       they will be given default values (0 and "test", respectively). 
+ *       It is possible to give all variables in your periodic. The default
+ *       values will be period 1, ttl 1, startTime 0, count 0, program "test".
+ */
+r0
+run(Id, Count, Program) :- periodic(Id, 2L, 10L, 0L, Count, Program);
 
 r1 
-doping(A, B, Runtime.idgen()) :-  periodic(Id, 2L, 10L), link(A, B);
+doping(A, B, Runtime.idgen()) :-  run(Id, Count, Program), link(A, B);
 
 r2
 ping(@B, A, Id) :- doping(@A, B, Id), t1(@B, C), C == "pingme";
