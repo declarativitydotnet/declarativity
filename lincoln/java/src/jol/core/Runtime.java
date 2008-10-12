@@ -1,7 +1,18 @@
 package jol.core;
 
+import java.lang.reflect.Field;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+
 import jol.exec.Query.QueryTable;
 import jol.lang.Compiler;
 import jol.lang.Compiler.CompileTable;
@@ -35,7 +46,7 @@ public class Runtime implements System {
 	}
 	
 	/** The thread that the runtime executes in.
-	 * Created and started in {@link create(int)}. */
+	 * Created and started in {#link #create(int)}. */
 	private Thread thread;
 	
 	/** The system catalog contain all table references. */
@@ -55,9 +66,7 @@ public class Runtime implements System {
 	/** The system logical clock. */
 	private Clock clock;
 	
-	/**
-	 * Creates a new runtime. Called from {@link create(int)}.
-	 */
+	/** Creates a new runtime. Called from {#link #create(int)}. */
 	private Runtime() {
 		this.catalog = Table.initialize(this);
 		Compiler.initialize(this);
@@ -214,6 +223,7 @@ public class Runtime implements System {
 	}
 	
 	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, P2RuntimeException {
+
 		if (args.length < 2) {
 			java.lang.System.out.println("Usage: jol.core.Runtime port program");
 			java.lang.System.exit(1);

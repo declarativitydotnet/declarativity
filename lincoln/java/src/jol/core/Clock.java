@@ -66,7 +66,7 @@ public class Clock extends ObjectTable {
 	
 	/**
 	 * Updates the clock to the time indicated in the tuple.
-	 * @param tuple Contains the new clock value contained in the {@value Field#CLOCK}.
+	 * @param tuple Contains the new clock value. 
 	 */
 	@Override
 	public boolean insert(Tuple tuple) throws UpdateException {

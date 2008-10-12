@@ -297,13 +297,13 @@ public class Rule extends Clause {
 		}
 		
 		
-		if (event.name().name.equals("periodic") && 
+		if (event.name().name.equals("periodic") && event.arguments().size() > 1 &&
 				! event.name().scope.equals(Table.GLOBALSCOPE)) {
 			Long period = (Long) ((Value) event.argument(Periodic.Field.PERIOD.ordinal())).value();
 			Long ttl    = (Long) ((Value) event.argument(Periodic.Field.TTL.ordinal())).value();
 			Long count  = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
 			List<Comparable> values = new ArrayList<Comparable>();
-			values.add(event.identifier());
+			values.add(Runtime.idgen().toString());
 			for (int i = 1; i < event.arguments().size(); i++) {
 				values.add(((Value<Comparable>) event.argument(i)).value());
 			}

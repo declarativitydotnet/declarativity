@@ -37,8 +37,8 @@ public class Periodic extends ObjectTable {
 			TupleSet schedule = new TupleSet(this.schedule.name());
 			TupleSet deltas   = new TupleSet(name());
 			for (Tuple tuple : tuples) {
-				String program = (String) tuple.value(Periodic.Field.PROGRAM.ordinal());
-				Long   time    = (Long) tuple.value(Periodic.Field.TIME.ordinal());
+				String program    = (String) tuple.value(Periodic.Field.PROGRAM.ordinal());
+				Long   time       = (Long) tuple.value(Periodic.Field.TIME.ordinal());
 				TupleSet periodics = new TupleSet(new TableName(program, "periodic"));
 				periodics.add(tuple.clone());
 				schedule.add(new Tuple(time, program, periodics.name(), periodics, null));
@@ -70,6 +70,16 @@ public class Periodic extends ObjectTable {
 	public Periodic(Runtime context, Table schedule) {
 		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		context.catalog().register(new Scheduler(schedule));
+	}
+	
+	@Override
+	public boolean insert(Tuple tuple) throws UpdateException {
+		String identifier = (String) tuple.value(Field.IDENTIFIER.ordinal());
+		if (identifier == null) {
+			tuple.value(Field.IDENTIFIER.ordinal(), Runtime.idgen().toString());
+		}
+		
+		return super.insert(tuple);
 	}
 	
 	public Long min() {
