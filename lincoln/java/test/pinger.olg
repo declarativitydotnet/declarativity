@@ -19,15 +19,14 @@ t1("tcp:localhost:10001", "pingme");
 link("tcp:localhost:10000", "tcp:localhost:10001");
 
 watch(gotpong, s);
-watch(doping, rs);
-watch(periodic, sr);
+watch(doping, s);
 
 define(run, {String, Long, String});
 define(deletePeriodic, {String});
 
 deletePeriodic(Id) :-
 	run(Id, Count, Program),
-	Count == 5L;
+	Count == 4L;
 
 delete
 global::periodic(Id, Period, TTL, Start, Count, Program) :-
@@ -41,7 +40,7 @@ global::periodic(Id, Period, TTL, Start, Count, Program) :-
  *       values will be period 1, ttl 1, startTime 0, count 0, program "test".
  */
 r0
-run(Id, Count, Program) :- periodic(Id, 2L, 10L, 0L, Count, Program);
+run(Id, Count, Program) :- periodic(Id, 2L, 10L, Start, Count, Program);
 
 r1 
 doping(A, B, Runtime.idgen()) :-  run(Id, Count, Program), link(A, B);

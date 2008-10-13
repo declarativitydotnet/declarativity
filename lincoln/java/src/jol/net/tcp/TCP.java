@@ -34,6 +34,7 @@ public class TCP extends Server {
 	private Hashtable<Address, Thread> channels;
 		
 	public TCP(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
+		super("TCP Server");
 		this.context = context;
 		this.manager = manager;
 		this.server = new ServerSocket(port);

@@ -31,6 +31,7 @@ public class UDP extends Server {
 	private DatagramSocket server;
 		
 	public UDP(Runtime context, Integer port) throws IOException, UpdateException {
+		super("UDP Server");
 		this.context = context;
 		this.server = new DatagramSocket(port);
 		context.install("system",

@@ -17,8 +17,10 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -35,32 +37,38 @@ import jol.types.table.TableName;
 import jol.core.Runtime;
 
 public class TCPNIO extends Server {
+	/** The name of the receive message predicate (tcp::receive). */
 	private static final TableName ReceiveMessage = new TableName("tcp", "receive");
+	
+	/** The maximum number of times we will read/write a socket channel with no progress. */
+	private static final int MAX_SOCKET_ATTEMPTS = 10;
 	
 	private Runtime context;
 	
 	private Network manager;
-	
-	private ServerSocketChannel server;
 	
 	private Selector selector;
 	
 	private ExecutorService executor;
 	
 	private Hashtable<String, Connection> connections;
+	
+	private List<Connection> newConnections;
 		
 	public TCPNIO(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
+		super("TCPNIO Server");
 		this.context = context;
 		this.manager = manager;
-		this.server = ServerSocketChannel.open();
 		this.selector = SelectorProvider.provider().openSelector();
 		this.executor = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
 		this.connections = new Hashtable<String, Connection>();
+		this.newConnections = new ArrayList<Connection>();
 		context.install("system", ClassLoader.getSystemClassLoader().getResource("jol/net/tcp/tcp.olg"));
 		
-		this.server.configureBlocking(false);
-		this.server.socket().bind(new InetSocketAddress(port));
-		this.server.register(this.selector, SelectionKey.OP_ACCEPT);
+		ServerSocketChannel server = ServerSocketChannel.open();
+		server.configureBlocking(false);
+		server.socket().bind(new InetSocketAddress(port));
+		server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
 	
 	@Override
@@ -73,17 +81,23 @@ public class TCPNIO extends Server {
 	public void run() {
 		while (true) {
 			try {
-				for (int keys = 0; keys == 0; keys = this.selector.select(10)) ;
+				this.selector.select();
+				
+				synchronized (newConnections) {
+					for (Connection connection : newConnections) {
+						connections.put(connection.toString(), connection);
+						connection.channel.register(this.selector, SelectionKey.OP_READ);
+					}
+					newConnections.clear();
+				}
 				
 		        // Iterate over the set of keys for which events are available
-		        Iterator selectedKeys = this.selector.selectedKeys().iterator();
-		        while (selectedKeys.hasNext()) {
-		          SelectionKey key = (SelectionKey) selectedKeys.next();
-		          selectedKeys.remove();
-
-					if (!key.isValid()) {
-						continue;
-					}
+				Iterator<SelectionKey> iter = this.selector.selectedKeys().iterator();
+				while (iter.hasNext()) {
+					SelectionKey key = iter.next();
+					iter.remove();
+					if (!key.isValid()) { continue; }
+					
 					if (key.isAcceptable()) {
 						ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
 						SocketChannel channel = ssc.accept();
@@ -135,14 +149,16 @@ public class TCPNIO extends Server {
 		if (channel instanceof Connection) {
 			Connection connection = (Connection) channel;
 			if (this.connections.containsKey(connection.toString())) {
-				this.connections.remove(connection.toString());
+					this.connections.remove(connection.toString());
 			}
 		}
 	}
 	
 	private void register(Connection connection) throws ClosedChannelException {
-		connections.put(connection.toString(), connection);
-		connection.channel.register(this.selector, SelectionKey.OP_READ);
+		synchronized (newConnections) {
+			newConnections.add(connection);
+			this.selector.wakeup();
+		}
 	}
 	
 	private class Connection extends Channel {
@@ -175,9 +191,8 @@ public class TCPNIO extends Server {
 					buffer.putInt(bstream.size());
 					buffer.put(bstream.toByteArray());
 					buffer.flip();
-					writeFully(this.buffer, this.channel);
+					write(this.buffer, this.channel);
 				}
-				// System.err.println("FINISH SEND PACKET " + packet.id());
 			} catch (IOException e) {
 				return false;
 			}
@@ -191,23 +206,26 @@ public class TCPNIO extends Server {
 			} catch (IOException e) { }
 		}
 
-		public void receive() {
+		/** Helper method that receives a single message from the socket channel. 
+		 * Will demarshall the message and schedule the message with
+		 * the TCP program as a {#link {@link TCPNIO#ReceiveMessage}} tuple. */
+		private void receive() {
 			try {
 				Message message = null;
 				synchronized (buffer) {
 					this.buffer.clear();
 					this.buffer.limit(Integer.SIZE / Byte.SIZE);
-					readFully(this.buffer, this.channel);
+					int bytes = read(this.buffer, this.channel, true);
+					if (bytes == 0) return;
 
 					int length = this.buffer.getInt(0);
 					this.buffer.clear();
 					this.buffer.limit(length);
-					readFully(this.buffer, this.channel);
+					read(this.buffer, this.channel, false);
 
 					ObjectInputStream istream = new ObjectInputStream(new ByteArrayInputStream(this.buffer.array()));
 					message = (Message) istream.readObject();
 				}
-				// System.err.println("RECEIVE MESSAGE " + message.id() + " COMPLETE!");
 				IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
 				Tuple tuple = new Tuple(address, message);
 				context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
@@ -218,23 +236,59 @@ public class TCPNIO extends Server {
 				e.printStackTrace();
 				System.exit(0);
 			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(0);
+				try {
+					TCPNIO.this.manager.connection().unregister(this);
+				} catch (UpdateException e1) {
+					e1.printStackTrace();
+					System.exit(0);
+				}
 			}
 		}
 		
-	    private void writeFully(ByteBuffer buf, SocketChannel socket) throws IOException {
+		/**
+		 * Method will write ALL data contained in the byte buffer.
+		 * This method will not return until the entire buffer has been written
+		 * to the socket channel.
+		 * @param buf The data buffer.
+		 * @param socket The socket channel.
+		 * @throws IOException
+		 */
+	    private void write(ByteBuffer buf, SocketChannel socket) throws IOException {
 	        int len = buf.limit() - buf.position();
 	        while (len > 0) {
 	            len -= socket.write(buf);
 	        }
 	    }
 	 
-	    private void readFully(ByteBuffer buf, SocketChannel socket) throws IOException {
-	        int len = buf.limit() - buf.position();
-	        while (len > 0) {
-	            len -= socket.read(buf);
-	        }
+	    /**
+	     * Read data from the socket channel and place it into the buffer. The 
+	     * amount that is to be read is taken from the current buffer position
+	     * and limit. That is, length_to_read = buf.limit() - buf.position().
+	     * This method will continue to read from the socket until this amount of
+	     * data has been received UNLESS the third parameter is set to true.
+	     * @param buf The buffer that will contain the data after this call.
+	     * @param socket The socket channel that will be read.
+	     * @param once If true then only 1 attempt will be made to read from the socket,
+	     * otherwise an infinite number of attempts will be made to read (buf.limit() - buf.position())
+	     * bytes from the socket channel.
+	     * @return The number of bytes read.
+	     * @throws IOException
+	     */
+	    private int read(ByteBuffer buf, SocketChannel socket, boolean once) throws IOException {
+	    	int read = 0;
+	    	int attempts = 0;
+	        int total = buf.limit() - buf.position();
+	        do {
+	            int bytes = socket.read(buf);
+	            if (bytes == 0) attempts++;
+	            else attempts = 0;
+	            
+	            if (attempts > MAX_SOCKET_ATTEMPTS) {
+	            	throw new IOException("TCPNIO: read from socket " + attempts + " times with no progress");
+	            }
+	            read += bytes;
+	        } while (!once && read < total);
+	        return read;
 	    }
 	}
 
