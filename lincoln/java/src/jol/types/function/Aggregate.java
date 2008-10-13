@@ -5,7 +5,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.P2RuntimeException;
 
-public abstract class Aggregate {
+public abstract class Aggregate<C extends Comparable<C>> {
 	
 	public abstract Tuple insert(Tuple tuple) throws P2RuntimeException;
 	
@@ -17,7 +17,7 @@ public abstract class Aggregate {
 	
 	public abstract Class returnType();
 	
-	private static class Accessor implements TupleFunction<Comparable> {
+	private static class Accessor<C extends Comparable<C>> implements TupleFunction<C> {
 		private Integer position;
 		
 		private Class type;
@@ -31,8 +31,8 @@ public abstract class Aggregate {
 			return this.position;
 		}
 
-		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
-			return tuple.value(this.position);
+		public C evaluate(Tuple tuple) throws P2RuntimeException {
+			return (C) tuple.value(this.position);
 		}
 
 		public Class returnType() {
@@ -89,10 +89,10 @@ public abstract class Aggregate {
 		return null;
 	}
 	
-	public static class Generic extends Aggregate {
+	public static class Generic<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private Tuple result;
-		private Comparable current;
+		private Comparable<?> current;
 		private GenericAggregate aggregate;
 		
 		public Generic(GenericAggregate aggregate) {
@@ -112,7 +112,7 @@ public abstract class Aggregate {
 		
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.current == null) {
-				this.current = (Comparable) this.aggregate.function().evaluate(tuple);
+				this.current = (Comparable<?>) this.aggregate.function().evaluate(tuple);
 			}
 			this.aggregate.function(this.current).evaluate(tuple);
 			this.tuples.add(tuple);
@@ -144,13 +144,13 @@ public abstract class Aggregate {
 		}
 	}
 	
-	public static class Min extends Aggregate {
+	public static class Min<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private Tuple result;
-		private Comparable current;
-		private Accessor accessor;
+		private C current;
+		private Accessor<C> accessor;
 		
-		public Min(Accessor accessor) {
+		public Min(Accessor<C> accessor) {
 			this.accessor = accessor;
 			reset();
 		}
@@ -174,7 +174,7 @@ public abstract class Aggregate {
 		@Override
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.add(tuple)) {
-				Comparable value = accessor.evaluate(tuple);
+				C value = accessor.evaluate(tuple);
 				if (current == null || this.current.compareTo(value) > 0) {
 					this.current = value;
 					this.result = tuple;
@@ -187,7 +187,7 @@ public abstract class Aggregate {
 		@Override
 		public Tuple delete(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.remove(tuple)) {
-				Comparable value = accessor.evaluate(tuple);
+				C  value = accessor.evaluate(tuple);
 				if (this.current.compareTo(value) == 0) {
 					TupleSet tuples = this.tuples;
 					reset();
@@ -206,13 +206,13 @@ public abstract class Aggregate {
 		}
 	}
 	
-	public static class Max extends Aggregate {
+	public static class Max<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private Tuple result;
-		private Comparable current;
-		private Accessor accessor;
+		private C current;
+		private Accessor<C> accessor;
 		
-		public Max(Accessor accessor) {
+		public Max(Accessor<C> accessor) {
 			this.result = null;
 			this.current = null;
 			this.tuples = new TupleSet();
@@ -225,7 +225,7 @@ public abstract class Aggregate {
 		
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.add(tuple)) {
-				Comparable value = accessor.evaluate(tuple);
+				C value = accessor.evaluate(tuple);
 				if (current == null || this.current.compareTo(value) < 0) {
 					this.current = value;
 					this.result = tuple;
@@ -238,7 +238,7 @@ public abstract class Aggregate {
 		public Tuple delete(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.contains(tuple)) {
 				this.tuples.remove(tuple);
-				Comparable value = accessor.evaluate(tuple);
+				C value = accessor.evaluate(tuple);
 				if (this.current.compareTo(value) == 0) {
 					TupleSet tuples = this.tuples;
 					this.tuples = new TupleSet();
@@ -263,12 +263,12 @@ public abstract class Aggregate {
 		}
 	}
 	
-	public static class Count extends Aggregate {
+	public static class Count<C extends Comparable<C>> extends Aggregate<C>{
 		private TupleSet tuples;
 		private Tuple result;
-		private Accessor accessor;
+		private Accessor<C> accessor;
 		
-		public Count(Accessor accessor) {
+		public Count(Accessor<C> accessor) {
 			this.tuples = new TupleSet();
 			this.result = null;
 			this.accessor = accessor;
@@ -307,13 +307,13 @@ public abstract class Aggregate {
 		}
 	}
 	
-	public static class Avg extends Aggregate {
+	public static class Avg<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private Tuple result;
 		private Float sum;
-		private Accessor accessor;
+		private Accessor<C> accessor;
 		
-		public Avg(Accessor accessor) {
+		public Avg(Accessor<C> accessor) {
 			this.accessor = accessor;
 			reset();
 		}
@@ -364,13 +364,13 @@ public abstract class Aggregate {
 		}
 	}
 	
-	public static class ConcatString extends Aggregate {
+	public static class ConcatString<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private Tuple result;
 		private String current;
-		private Accessor accessor;
+		private Accessor<C> accessor;
 		
-		public ConcatString(Accessor accessor) {
+		public ConcatString(Accessor<C> accessor) {
 			this.accessor = accessor;
 			reset();
 		}
@@ -426,13 +426,13 @@ public abstract class Aggregate {
 		}
 	}
 	
-	public static class TupleCollection extends Aggregate {
+	public static class TupleCollection<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private Tuple    result;
 		private TupleSet nestedSet;
-		private Accessor accessor;
+		private Accessor<C> accessor;
 		
-		public TupleCollection(Accessor accessor) {
+		public TupleCollection(Accessor<C> accessor) {
 			this.accessor = accessor;
 			this.tuples = new TupleSet();
 			this.nestedSet = new TupleSet();

@@ -7,60 +7,59 @@ import jol.types.basic.Tuple;
 import jol.types.exception.P2RuntimeException;
 import jol.types.function.TupleFunction;
 
-public class Range extends Expression {
+public class Range<C extends Comparable<C>> extends Expression {
 	
-	public interface Function {
-		public boolean test(Comparable test);
+	public interface Function<C extends Comparable<C>>{
+		public boolean test(C test);
 	}
 	
-	private class FunctionCC implements Function {
-		private Comparable begin;
-		private Comparable end;
-		public FunctionCC(Comparable begin, Comparable end) {
+	private class FunctionCC implements Function<C> {
+		private C begin;
+		private C end;
+		public FunctionCC(C begin, C end) {
 			this.begin = begin;
 			this.end = end;
 		}
-		public boolean test(Comparable test) {
+		public boolean test(C test) {
 			return begin.compareTo(test) <= 0 &&
 				   test.compareTo(end) <= 0;
 		}
-
 	}
 	
-	private class FunctionOC implements Function {
-		private Comparable begin;
-		private Comparable end;
-		public FunctionOC(Comparable begin, Comparable end) {
+	private class FunctionOC implements Function<C> {
+		private C begin;
+		private C end;
+		public FunctionOC(C begin, C end) {
 			this.begin = begin;
 			this.end = end;
 		}
-		public boolean test(Comparable test) {
+		public boolean test(C test) {
 			return begin.compareTo(test) < 0 &&
 				   test.compareTo(end) <= 0;
 		}
 	}
 	
-	private class FunctionCO implements Function {
-		private Comparable begin;
-		private Comparable end;
-		public FunctionCO(Comparable begin, Comparable end) {
+	private class FunctionCO implements Function<C> {
+		private C begin;
+		private C end;
+		public FunctionCO(C begin, C end) {
 			this.begin = begin;
 			this.end = end;
 		}
-		public boolean test(Comparable test) {
+		public boolean test(C test) {
 			return begin.compareTo(test) <= 0 &&
 				   test.compareTo(end) < 0;
 		}
 	}
 	
-	private class FunctionOO implements Function {
-		private Comparable begin;
-		private Comparable end;
-		public FunctionOO(Comparable begin, Comparable end) {
+	private class FunctionOO implements Function<C> {
+		private C begin;
+		private C end;
+		public FunctionOO(C begin, C end) {
 			this.begin = begin;
 			this.end = end;
 		}
-		public boolean test(Comparable test) {
+		public boolean test(C test) {
 			return begin.compareTo(test) < 0 &&
 				   test.compareTo(end) < 0;
 		}
@@ -119,8 +118,8 @@ public class Range extends Expression {
 			private final TupleFunction endFn   = end.function();
 
 			public Function evaluate(Tuple tuple) throws P2RuntimeException {
-				Comparable start = (Comparable)startFn.evaluate(tuple);
-				Comparable end   = (Comparable)endFn.evaluate(tuple);
+				C start = (C)startFn.evaluate(tuple);
+				C end   = (C)endFn.evaluate(tuple);
 				if (oper == Operator.CC)
 					return new FunctionCC(start, end);
 				if (oper == Operator.OC)

@@ -28,21 +28,21 @@ import jol.lang.plan.GenericAggregate;
 import jol.lang.plan.IfThenElse;
 import jol.lang.plan.Load;
 import jol.lang.plan.MethodCall;
-import jol.lang.plan.Program;
-import jol.lang.plan.UnknownReference;
 import jol.lang.plan.NewClass;
 import jol.lang.plan.Null;
+import jol.lang.plan.ObjectReference;
 import jol.lang.plan.Predicate;
+import jol.lang.plan.Program;
 import jol.lang.plan.Range;
 import jol.lang.plan.Reference;
-import jol.lang.plan.StaticReference;
 import jol.lang.plan.Rule;
 import jol.lang.plan.Selection;
 import jol.lang.plan.StaticMethodCall;
+import jol.lang.plan.StaticReference;
 import jol.lang.plan.Term;
+import jol.lang.plan.UnknownReference;
 import jol.lang.plan.Value;
 import jol.lang.plan.Variable;
-import jol.lang.plan.ObjectReference;
 import jol.lang.plan.Watch;
 import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
@@ -234,8 +234,8 @@ public final class TypeChecker extends Visitor {
 	public Class visitLoad(final GNode n) {
 		Class type = (Class) dispatch((Node)n.getNode(0));
 		assert(type == Value.class);
-		Value<String> fileName = (Value) n.getNode(0).getProperty(Constants.TYPE);
-		File file = new File(fileName.value());
+		Value<?> fileName = (Value<?>) n.getNode(0).getProperty(Constants.TYPE);
+		File file = new File((String)fileName.value());
 		
 		type = (Class) dispatch((Node)n.getNode(1));
 		assert(type == TableName.class);
@@ -244,8 +244,8 @@ public final class TypeChecker extends Visitor {
 		String delim = null;
 		if (n.size() > 2) {
 			type = (Class) dispatch((Node)n.getNode(2));
-			Value<String> delimValue = (Value) n.getNode(2).getProperty(Constants.TYPE);
-		    delim = delimValue.value();
+			Value<?> delimValue = (Value<?>) n.getNode(2).getProperty(Constants.TYPE);
+		    delim = (String)delimValue.value();
 		}
 		
 		if (name.scope == null) {
@@ -409,12 +409,12 @@ public final class TypeChecker extends Visitor {
 				if (type == Error.class) return Error.class;
 				assert(type == Value.class);
 				
-				Value key  = (Value) k.getProperty(Constants.TYPE);
+				Value<?> key  = (Value<?>) k.getProperty(Constants.TYPE);
 				if (key.type() == null || !Integer.class.isAssignableFrom(key.type())) {
 					runtime.error("Key must be of type Integer! type = " + key);
 					return Error.class;
 				}
-				keys[index++] = ((Value<Integer>) key).value();
+				keys[index++] = (Integer)key.value();
 			}
 		}
 		n.setProperty(Constants.TYPE, new Key(keys));

@@ -15,7 +15,7 @@ import jol.core.Runtime;
  * in the input tuples. The output tuples will contain the assigned value.
  *
  */
-public class Assign extends Operator {
+public class Assign<C extends Comparable<C> > extends Operator {
 	
 	/** The assignment predicate. */
 	private jol.lang.plan.Assignment assignment;
@@ -47,7 +47,7 @@ public class Assign extends Operator {
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		Variable variable = assignment.variable();
-		TupleFunction<Comparable> function = assignment.value().function();
+		TupleFunction<C> function = assignment.value().function();
 		TupleSet deltas = new TupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
 			Tuple delta = tuple.clone();
