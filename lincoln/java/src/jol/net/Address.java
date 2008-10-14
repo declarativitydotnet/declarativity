@@ -1,5 +1,8 @@
 package jol.net;
 
+/**
+ * An interface to all address types.
+ */
 public abstract class Address implements Comparable<Address> {
 	
 	@Override

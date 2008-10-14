@@ -8,6 +8,9 @@ import jol.types.exception.P2RuntimeException;
 import jol.types.operator.Operator;
 import jol.core.Runtime;
 
+/**
+ * Implements a query using a fixed chain of operators.
+ */
 public class BasicQuery extends Query {
 	private List<Operator> body;
 

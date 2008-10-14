@@ -9,6 +9,17 @@ import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 import jol.core.Runtime;
 
+/**
+ * The network buffer holds all messages that are 
+ * sent via the network.
+ * 
+ * <p>
+ * This buffer table holds all messages regardless of
+ * protocol. This allows protocol implementation to layer
+ * themselves with one another, using this table to pass
+ * message between layers. The top layer must always
+ * be the network layer, implemented by {@link Network} manager.
+ */
 public class NetworkBuffer extends ObjectTable {
 	
 	public static final Key PRIMARY_KEY = new Key(2,3);

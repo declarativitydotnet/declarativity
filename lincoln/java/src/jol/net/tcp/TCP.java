@@ -90,6 +90,7 @@ public class TCP extends Server {
 	@Override
 	public void close(Channel channel) {
 		if (channels.containsKey(channel.address())) {
+			((Connection)channel).close();
 			channels.get(channel.address()).interrupt();
 			channels.remove(channel.address());
 		}
@@ -129,8 +130,7 @@ public class TCP extends Server {
 			return true;
 		}
 		
-		@Override
-		public void close() {
+		private void close() {
 			try {
 				socket.close();
 			} catch (IOException e) { }

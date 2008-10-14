@@ -148,6 +148,7 @@ public class TCPNIO extends Server {
 	public void close(Channel channel) {
 		if (channel instanceof Connection) {
 			Connection connection = (Connection) channel;
+			connection.close();
 			if (this.connections.containsKey(connection.toString())) {
 					this.connections.remove(connection.toString());
 			}
@@ -199,8 +200,7 @@ public class TCPNIO extends Server {
 			return true;
 		}
 		
-		@Override
-		public void close() {
+		private void close() {
 			try {
 				this.channel.close();
 			} catch (IOException e) { }

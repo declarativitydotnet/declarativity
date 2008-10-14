@@ -2,7 +2,10 @@ package jol.net;
 
 import java.io.Serializable;
 
-public class Message implements Comparable<Message>, Serializable {
+/**
+ * The interface class for messages.
+ */
+public abstract class Message implements Comparable<Message>, Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	private Long id;

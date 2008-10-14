@@ -11,6 +11,26 @@ import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 import jol.core.Runtime;
 
+/**
+ * The interface to all query objects.
+ * 
+ * <p>
+ * A query object is responsible for implementing a full
+ * select/project/join OverLog query. Query objects
+ * contain a set of {@link Operator} objects that perform
+ * the work. The query object is responsible for driving
+ * these operators when supplied with a set of input tuples.
+ * 
+ * <p>
+ * A query is executed based on a single event. The event
+ * represents the input tuple set that will be given to the
+ * query. The query object will perform the query using the
+ * set of operators that implement the query semantics. The
+ * final output will be a projection onto some predicate.
+ * The query object will NOT perform any table insertions or
+ * deletions!
+ * 
+ */
 public abstract class Query implements Comparable<Query> {
 
 	public static class QueryTable extends ObjectTable {

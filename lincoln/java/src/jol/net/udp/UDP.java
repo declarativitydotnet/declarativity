@@ -74,7 +74,7 @@ public class UDP extends Server {
 	
 	@Override
 	public void close(Channel channel) {
-		channel.close();
+		((Connection)channel).close();
 	}
 	
 	private static class Connection extends Channel {
@@ -113,8 +113,7 @@ public class UDP extends Server {
 			return true;
 		}
 		
-		@Override
-		public void close() {
+		private void close() {
 			socket.close();
 		}
 	}
