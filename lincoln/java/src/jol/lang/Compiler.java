@@ -193,11 +193,9 @@ public class Compiler {
 
 		/* Next evaluate all table and event declarations. */
 		for (Node clause : node.getNode(1).<Node> getList(0)) {
-			if (clause.getName().equals("Table")) {
-				typeChecker.analyze(clause);
-				if (runtime.errorCount() > 0)
-					return;
-			} else if (clause.getName().equals("Event")) {
+			if (clause.getName().equals("Table") ||
+			    clause.getName().equals("Event") ||
+			    clause.getName().equals("Timer")) {
 				typeChecker.analyze(clause);
 				if (runtime.errorCount() > 0)
 					return;

@@ -14,6 +14,11 @@ define(allpaths, {String, ValueList});
 define(pathPrinter, {String, ValueList});
 define(computeAll, {String});
 
+/* Fire a time 10 seconds following program start time.
+   The period is set to 0, which means I only want it to
+   fire once. */
+timer(newlink, 10000, 0);
+
 /* 1 -> 2 -> 3 -> 4 */
 link("1", "2");
 link("2", "3");
@@ -29,6 +34,9 @@ link("8", "9");
 watch(path, ae);
 watch(shortestPath, ae);
 watch(allpaths, r);
+
+/* Add the link 9 -> 10 when newlink fires */
+link("9", "10") :- newlink(Delay, Period, Timer);
 
 /* Initialize all paths with link */
 init

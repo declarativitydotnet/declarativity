@@ -44,6 +44,8 @@ import jol.lang.plan.UnknownReference;
 import jol.lang.plan.Value;
 import jol.lang.plan.Variable;
 import jol.lang.plan.Watch;
+import jol.lang.plan.Fact.FactTable;
+import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 import jol.types.table.Aggregation;
@@ -52,6 +54,7 @@ import jol.types.table.EventTable;
 import jol.types.table.Key;
 import jol.types.table.Table;
 import jol.types.table.TableName;
+import jol.types.table.TimerTable;
 import xtc.Constants;
 import xtc.tree.GNode;
 import xtc.tree.Node;
@@ -396,6 +399,43 @@ public final class TypeChecker extends Visitor {
 		EventTable event = new EventTable(name, schema);
 		context.catalog().register(event);
 		n.setProperty(Constants.TYPE, event);
+		return Table.class;
+	}
+	
+	public Class visitTimer(final GNode n) {
+		Class type;
+
+		/************** Event Name ******************/
+		type = (Class) dispatch(n.getNode(0));
+		if (type == Error.class) return Error.class;
+		
+		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
+		if (name.scope == null) {
+			name.scope = program.name();
+		} else {
+			runtime.error("Dot specificed names not allowed in definition statement! " + n.getNode(0));
+			return Error.class;
+		}
+		
+		type = (Class) dispatch(n.getNode(1));
+		if (type == Error.class) return Error.class;
+		Value<Integer> delay = (Value) n.getNode(1).getProperty(Constants.TYPE);
+		
+		type = (Class) dispatch(n.getNode(2));
+		if (type == Error.class) return Error.class;
+		Value<Integer> period = (Value) n.getNode(2).getProperty(Constants.TYPE);
+
+		try {
+			TimerTable timer = new TimerTable(context, program.name(), name, delay.value().longValue(), period.value().longValue());
+			/* Create a fact that will insert the timer into the timer table, basically starting the timer. */
+			context.catalog().table(FactTable.TABLENAME).force(
+					new Tuple(program.name(), name, new Tuple(delay.value().longValue(), period.value().longValue(), null)));
+			context.catalog().register(timer);
+			n.setProperty(Constants.TYPE, timer);
+		} catch (UpdateException e) {
+			runtime.error("Unable to schedule initial " + name + " timer!", n);
+			return Error.class;
+		}
 		return Table.class;
 	}
 	

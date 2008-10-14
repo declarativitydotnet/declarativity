@@ -13,6 +13,8 @@ body {
       "infinity",
       "keys",       
       "define", 
+      "timer", 
+      "load", 
       "null",        
       "watch"       
     });

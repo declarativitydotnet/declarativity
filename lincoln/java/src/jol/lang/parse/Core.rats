@@ -24,6 +24,7 @@ generic Clauses = (Clause void:";":Symbol)* ;
 Node Clause =
     <Rule>   Rule
   / <Watch>  Watch
+  / <Timer>  Timer
   / <Load>   Load
   / <Fact>   Fact
   / <Import> Import
@@ -66,6 +67,13 @@ Node Term =
   / Assignment
   / Selection
   ;
+
+//----------------------------   Timer  ---------------------------/
+
+generic Timer =
+    void:"timer":Word void:"(":Symbol TableName void:",":Symbol
+    IntegerConstant void:",":Symbol IntegerConstant void:")":Symbol 
+    ;
 
 //----------------------------  Definition  ---------------------------/
 

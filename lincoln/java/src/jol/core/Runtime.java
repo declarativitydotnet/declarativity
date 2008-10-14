@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -66,6 +67,9 @@ public class Runtime implements System {
 	/** The system logical clock. */
 	private Clock clock;
 	
+	/** The system physical clock. */
+	private Timer timer;
+	
 	/** Creates a new runtime. Called from {#link #create(int)}. */
 	private Runtime() {
 		this.catalog = Table.initialize(this);
@@ -83,6 +87,7 @@ public class Runtime implements System {
 		this.network    = new Network(this);
 		this.driver     = new Driver(this, schedule, clock);
 		this.thread     = new Thread(driver);
+		this.timer      = new Timer("Timer", true);
 	}
 	
 	public void shutdown() {
@@ -120,6 +125,14 @@ public class Runtime implements System {
 	 */
 	public Clock clock() {
 		return this.clock;
+	}
+	
+	/**
+	 * Get the system physical timer clock.
+	 * @return The system timer.
+	 */
+	public Timer timer() {
+		return this.timer;
 	}
 
 	/**

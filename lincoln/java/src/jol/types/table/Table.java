@@ -188,7 +188,7 @@ public abstract class Table implements Comparable<Table> {
 	 * EVENT: Does not store the tuples inserted.
 	 * FUNCTION: A table function. (no tuple storage)
 	 */
-	public enum Type{TABLE, EVENT, FUNCTION};
+	public enum Type{TABLE, EVENT, FUNCTION, TIMER};
 	
 	/** The table type. */
 	protected Type type;
