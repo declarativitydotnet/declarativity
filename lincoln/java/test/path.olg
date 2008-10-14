@@ -3,6 +3,7 @@ program path;
 import java.lang.Object;
 import java.lang.String;
 import java.lang.Integer;
+import jol.core.Runtime;
 
 import jol.types.basic.ValueList;
 
@@ -35,8 +36,13 @@ watch(path, ae);
 watch(shortestPath, ae);
 watch(allpaths, r);
 
+watch(newlink, ra);
+
 /* Add the link 9 -> 10 when newlink fires */
-link("9", "10") :- newlink(Delay, Period, Timer);
+link("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
+
+newlink(null, 5000, null) :- newlink(Delay, Period, Timer), Period == 0L;
+
 
 /* Initialize all paths with link */
 init

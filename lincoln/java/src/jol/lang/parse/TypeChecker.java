@@ -832,11 +832,25 @@ public final class TypeChecker extends Visitor {
 			}
 
 			/* Ensure the type matches the schema definition. */
-			if (!subtype(schema.get(index), paramType)) {
-				runtime.error("Predicate " + name + " argument " + param.getClass() + " " + param
-								+ " has type " + param.type() + " does not match type " 
-								+ schema.get(index) + " in schema.", n);
-				return Error.class;
+			if (!subtype(schema.get(index), paramType)) { 
+				if (param instanceof Value && 
+						Number.class.isAssignableFrom(schema.get(index)) &&
+						Number.class.isAssignableFrom(param.type())) {
+					Number number = (Number) ((Value)param).value();
+					try {
+						Constructor<Number> cons = schema.get(index).getConstructor(String.class);
+						param = new Value<Number>(cons.newInstance(number.toString())); 
+					} catch (Exception e) {
+						e.printStackTrace();
+						return Error.class;
+					}
+				}
+				else {
+					runtime.error("Predicate " + name + " argument " + param.getClass() + " " + param
+									+ " has type " + param.type() + " does not match type " 
+									+ schema.get(index) + " in schema.", n);
+					return Error.class;
+				}
 			}
 
 			param.position(index);
