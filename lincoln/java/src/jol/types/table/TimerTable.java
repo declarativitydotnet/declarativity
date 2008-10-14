@@ -17,13 +17,13 @@ import jol.types.table.Table.Type;
  * 
  * <p>
  * A timer table is created for each timer declaration made in the sytem.
- * A timer is created in the program using the following syntax: <br>
+ * A timer is created in the program using the following syntax:<br>
  * <pre>
  * 		timer(<b>Name</b>, <b>Delay</b>, <b>Period</b>);
  * </pre> <br>
  * <b>Name:</b> String valued name to which the timer maybe referred in a rule.<br>
- * <b>Delay:</b> The delay in milliseconds that the timer should begin. <br>
- * <b>Period:</b> The period at which the timer should trigger named events. <br>
+ * <b>Delay:</b> The delay in milliseconds that the timer should begin.<br>
+ * <b>Period:</b> The period at which the timer should trigger named events.<br>
  * 
  * <p>
  * A program references the timer in a rule by naming a predicate the
@@ -35,7 +35,7 @@ import jol.types.table.Table.Type;
  * <code>
  * <pre>
  * Example:
- * - New timer 'newlink' that fires one time 10seconds after the program starts.
+ * - New timer 'newlink' that fires one time 10 seconds after the program starts.
  * timer(newlink, 10000, 0); 
  * 
  * - Add a new link from node 9 to some random node when newlink fires.
