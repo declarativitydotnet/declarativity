@@ -3,6 +3,7 @@ package jol.types.table;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
 import jol.types.basic.Tuple;
 
 /**
@@ -97,6 +98,46 @@ public class Key implements Comparable<Key>, Iterable<Integer> {
 		}
 	}
 	
+	public Tuple projectValue(Tuple tuple) {
+		List<Comparable> values = new ArrayList<Comparable>();
+		
+		for(int i = 0; i < attributes.size(); i++) {
+			if(!attributes.contains(i)) {
+				values.add(tuple.value(i));
+			}
+		}
+
+		Tuple project = new Tuple(values);
+		project.id(tuple.id());
+		return project;
+	}
+	
+	public Tuple reconstruct(Tuple projectedKey, Tuple projectedValue) {
+		int len = projectedKey.size() + projectedValue.size();
+		List<Comparable> tuple= new ArrayList<Comparable>();
+		int k = 0;
+		
+		assert(attributes.size() == projectedKey.size());
+		
+		for(Integer i: attributes) {
+			while(tuple.size() <= i) { tuple.add(null); }
+			tuple.set(i,projectedKey.value(k));
+			k++;
+		}
+		int v = 0;
+		for(int i = 0; i < len; i++) {
+			if(!attributes.contains(i)) {
+				while(tuple.size() <= i) { tuple.add(null); }
+				tuple.set(i,projectedValue.value(v));
+				v++;
+			}
+		}
+		Tuple t = new Tuple(tuple);
+		t.id(projectedKey.id());
+		assert(t.id().equals(projectedValue.id()));
+		return t;
+	}
+
 	public boolean empty() {
 		return attributes.size() == 0;
 	}
