@@ -4,9 +4,11 @@ import java.lang.String;
 import java.lang.Integer;
 
 import java.lang.System;
+import jol.core.Runtime;
 
-define(decreeRequest,keys(0,1,2),{String,String,String});
-//define(decreeRequest,{String,String,String});
+//define(decreeRequest,keys(0,1,2),{String,String,String});
+define(decreeRequest,{String,String,String});
+define(storedDecreeRequest,keys(0,1,2,3),{String,String,String,Long});
 define(lastTried,keys(0),{String,Integer});
 define(prevVote,keys(0),{String,Integer,String});
 define(nextBal,keys(0),{String,Integer});
@@ -16,7 +18,8 @@ define(prepare,keys(0,1),{String,Integer,String});
 define(sendPrepare,keys(0,1,3),{String,Integer,String,String});
 define(lastPromise,keys(0,1,4),{String,Integer,Integer,String,String});
 define(sendPromise,keys(0,1,4),{String,Integer,Integer,String,String});
-define(acceptRequest,keys(0,1),{String, Integer,String});
+define(receivedPromise,keys(0,1,4),{String,Integer,Integer,String,String});
+define(acceptRequest,keys(0,1),{String, Integer,String,Integer});
 define(sendBeginBallot,keys(0,1),{String, Integer,String,String});
 define(accept,keys(0,1),{String, Integer,String});
 define(sendAccept,keys(0,1,3),{String, Integer,String,String});
@@ -37,16 +40,17 @@ lastTried(Lord,-1) :- parliament(Lord,Priest);
 prevVote(Lord,-1,"none") :- parliament(Lord,Priest);						
 nextBal(Lord,-1) :- parliament(Lord,Priest);
 
+/**/
 watch(tick,id);
-
-//watch(prepare,id);
-
+watch(prepare,id);
 watch(sendPrepare,ad);
 watch(lastTried,ad);
-//watch(parliament,id);
-//watch(sendPromise,id);
-//watch(priestCnt,id);
+watch(parliament,id);
+watch(sendPromise,ad);
+watch(priestCnt,id);
 watch(lastPromiseCnt,ad);
+watch(lastPromise,ad);
+/**/
 watch(quorum,a);
 watch(decree,ia);
 watch(acceptCnt,ad);
@@ -54,6 +58,12 @@ watch(sendAccept,ad);
 watch(accept,ad);
 watch(success,ad);
 watch(decreeRequest,ad);
+
+watch(maxPrevBallot,adi);
+watch(acceptRequest,ad);
+watch(receivedPromise,ad);
+
+watch(prevVote,ad);	
 
 
 /***  subroutine, really, for figuring out cohort membership from the environment.
@@ -66,9 +76,6 @@ ident(A,P) :- A := new Integer(System.getenv("ME")),
               periodic(Id,1L,1L,1L);
 
 define(fake,keys(0,1),{Integer,Integer});
-watch(fake,a);
-watch(ident,a);
-watch(parliament,a);
 
 fake(A,0) :- ident(A,P),B := A;
 fake(A,O+1) :- ident(A,P),
@@ -87,9 +94,10 @@ lastTried(Priest,Bnum) :- lastTried(Priest,Old),
  							  prepare#insert(Priest,Bnum,Decree),
  							  Bnum >= Old;
 
+storedDecreeRequest(A,B,C,Id) :- decreeRequest#insert(A,B,C), Id := Runtime.idgen();
 
 prepare(Priest,Ballot,Decree) :- 
-                    decreeRequest#insert(Priest,Decree,From),
+                    decreeRequest(Priest,Decree,From),
  									  lastTried(Priest,Old),
  									  Ballot := Old + 1;
 
@@ -114,7 +122,8 @@ sendPromise(@Lord,Ballot,OldBallot,Decree,Priest) :-
 
 /* for quorum handling, aggregates are difficult to avoid... */
 priestCnt(Lord,count<*>) :- parliament(Lord,Priest);
-lastPromiseCnt(Lord,Ballot,count<Priest>) :- sendPromise#insert(Lord,Ballot,Foo,Bar,Priest);
+lastPromiseCnt(Lord,Ballot,count<Priest>) :- sendPromise(Lord,Ballot,Foo,Bar,Priest);
+
 maxPrevBallot(Lord,max<OldBallot>) :- sendPromise(Lord,Ballot,OldBallot,Decree,Priest);
 
 
@@ -122,51 +131,36 @@ quorum(Lord,Ballot) :- priestCnt(Lord,Pcnt),
 						lastPromiseCnt(Lord,Ballot,Vcnt),
 						Vcnt > ( Pcnt / 2 );
 
-//define(qdone,{String,Integer});
-//qdone(Lord,Ballot) :- quorum(Lord,Ballot);
-
-watch(maxPrevBallot,ad);
-watch(acceptRequest,ad);
-watch(accept,ad);
-watch(sendBeginBallot,ad);
-watch(nextBal,ad);
-
-
-acceptRequest(Lord,Ballot,OldDecree) :- quorum#insert(Lord,Ballot),
+acceptRequest(Lord,Ballot,OldDecree,MaxB) :- quorum(Lord,Ballot),
 									maxPrevBallot(Lord,MaxB),
 									prepare(Lord,Ballot,Decree),
 									sendPromise(Lord,Ballot,MaxB,OldDecree,Priest),
 									MaxB != -1;
 
-acceptRequest(Lord,Ballot,Decree) :- quorum(Lord,Ballot),
+acceptRequest(Lord,Ballot,Decree,-1) :- quorum(Lord,Ballot),
 									maxPrevBallot(Lord,MaxB),
 									sendPromise(Lord,Ballot,MaxB,OldDecree,Priest),
 									MaxB == -1,
 									prepare(Lord,Ballot,Decree);	
 									
-sendBeginBallot(@Priest,Ballot,Decree,Lord) :- acceptRequest(@Lord,Ballot,Decree),
+sendBeginBallot(@Priest,Ballot,Decree,Lord) :- acceptRequest(@Lord,Ballot,Decree,Kind),
 									parliament(@Lord,Priest);									
 									
 accept(Priest,Ballot,Decree) :- sendBeginBallot(Priest,Ballot,Decree,Lord),
 							   nextBal(Priest,OldB),
 							   Ballot == OldB;
-									
-prevVote(Priest,Ballot,Decree) :- prevVote(Priest,Old),
-								   lastPromise(Priest,Ballot,OldBallot,Decree),
-								   accept(Priest,Ballot,Decree),
-									Ballot >= Old;				
+								
+
+prevVote(Priest,Ballot,Decree) :- prevVote(Priest,Old,OD),
+								   lastPromise(Priest,Ballot,OldBallot,OldDecree),
+								   accept#insert(Priest,Ballot,Decree),
+									 Ballot >= Old;				
 									
 sendAccept(@Lord,Ballot,Decree,Priest) :- accept(@Priest,Ballot,Decree),
 										sendBeginBallot(@Priest,Ballot,Decree,Lord);
 										
 acceptCnt(Lord,Ballot,count<Priest>) :- sendAccept(Lord,Ballot,Decree,Priest);
 												
-watch(lastPromiseCnt,id);
-watch(acceptRequest,id);
-
-watch(success,ad);
-
-
 decree(Lord,Ballot,Decree) :- lastTried(Lord,Ballot),
 							   acceptCnt(Lord,Ballot,Votes),
 							   // this is |quorum| 
@@ -175,7 +169,7 @@ decree(Lord,Ballot,Decree) :- lastTried(Lord,Ballot),
 							   
 success(@Priest,Ballot,Decree,From) :- 	decree#insert(@Lord,Ballot,Decree),
                   // this might be a mistake. 
-                  decreeRequest(@Lord,Decree,From),
+                  storedDecreeRequest(@Lord,Decree,From,_),
 									// we interpret "every" to mean a broadcast.
 									parliament(@Lord,Priest);
 
@@ -183,24 +177,3 @@ success(@Priest,Ballot,Decree,From) :- 	decree#insert(@Lord,Ballot,Decree),
 watch(reply,id);
 reply(@Client,Decree,"passed") :- success(@Me,Ballot,Decree,Client);
 
-define(bogus,{String,String,String});
-
-//bogus(Lord,From,Decree) :- decreeRequest(Lord,Decree,From),
-//                  tick(Lord,Decree,C),
-                  //notin decree(Lord,Ballot,Decree),
-//                  C > 5;
-
-//reply(@Client,Decree,"not passed") :- bogus(@Lord,Client,Decree);
-
-
-
-//watch(done,id);								
-/*
-define(done,{Integer,String});	
-done(-100,Decree) :-	reply(Priest,Decree,_);								
-
-define(ticker,{String,Integer});
-
-ticker(A,B) :- tick(A,_,B);
-
-*/
