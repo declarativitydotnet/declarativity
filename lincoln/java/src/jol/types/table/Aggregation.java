@@ -1,5 +1,6 @@
 package jol.types.table;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -116,8 +117,8 @@ public class Aggregation extends Table {
 	}
 	
 	@Override
-	public TupleSet tuples() {
-		return this.aggregateTuples.clone();
+	public Iterator<Tuple> tuples() {
+		return (this.aggregateTuples.clone()).iterator();
 	}
 	
 	/**

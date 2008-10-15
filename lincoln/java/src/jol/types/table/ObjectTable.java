@@ -32,5 +32,4 @@ public abstract class ObjectTable extends RefTable {
 	protected boolean delete(Tuple tuple) throws UpdateException {
 		return super.delete(tuple);
 	}
-
 }

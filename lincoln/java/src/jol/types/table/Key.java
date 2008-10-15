@@ -1,5 +1,6 @@
 package jol.types.table;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -12,7 +13,7 @@ import jol.types.basic.Tuple;
  * An object of this type must be defined/created in order
  * to create an index (primary or secondary) of a table.
  */
-public class Key implements Comparable<Key>, Iterable<Integer> {
+public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 	
 	/** List of integers that refer to the key attribute positions */
 	private List<Integer> attributes;

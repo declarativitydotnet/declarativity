@@ -1,5 +1,7 @@
 package jol.core;
 
+import java.util.Iterator;
+
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
@@ -49,7 +51,9 @@ public class Schedule extends ObjectTable {
 	 */
 	public Long min() {
 		Long min = Long.MAX_VALUE;
-		for (Tuple tuple : tuples()) {
+		Iterator<Tuple> it = tuples();
+		while(it.hasNext()) {
+			Tuple tuple = it.next();
 			min = min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
 						min : (Long) tuple.value(Field.TIME.ordinal());
 		}

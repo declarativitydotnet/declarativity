@@ -3,6 +3,7 @@ package jol.types.basic;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import jol.types.table.TableName;
@@ -128,13 +129,22 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 		return true;
 	}
 	
+	boolean warnedAboutBigTable = false;
 	@Override
 	public boolean addAll(Collection<? extends Tuple> tuples) {
 		super.addAll(tuples);
-		if (this.size() > 1000) {
-			System.err.println("TUPLE SET " + name() + " SIZE = " + size());
+		if (this.size() > 1000 && !warnedAboutBigTable) {
+			warnedAboutBigTable = true;
+			System.err.println("TUPLE SET " + name() + " has exceeded 1000 tuples");
 		}
 		return true;
+	}
+	public boolean addAll(Iterator<? extends Tuple> tuples) {
+		while(tuples.hasNext()) add(tuples.next());
+		return true;
+	}
+	public void removeAll(Iterator<? extends Tuple> tuples) {
+		while(tuples.hasNext()) remove(tuples.next());
 	}
 
 	/**
@@ -146,7 +156,5 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	public int compareTo(TupleSet tuples) {
 		return this.id.compareTo(tuples.id);
 	}
-	
-	
 }
 	

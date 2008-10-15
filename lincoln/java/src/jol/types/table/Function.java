@@ -1,6 +1,7 @@
 package jol.types.table;
 
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -57,7 +58,7 @@ public abstract class Function extends Table {
 	}
 
 	@Override
-	public TupleSet tuples() {
+	public Iterator<Tuple> tuples() {
 		return null;
 	}
 	

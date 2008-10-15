@@ -134,13 +134,14 @@ public abstract class Table implements Comparable<Table> {
 			try {
 				TupleSet tuples = primary().lookup(name);
 				return delete(tuples).size() > 0;
+					
 			} catch (BadKeyException e) {
 				e.printStackTrace();
 				System.exit(0);
 			}
 			return false;
 		}
-		
+
 		/**
 		 * Get the table object with the given name.
 		 * @param name The name of the table.
@@ -149,6 +150,7 @@ public abstract class Table implements Comparable<Table> {
 		public Table table(TableName name) {
 			try {
 				TupleSet table = primary().lookup(name);
+				
 				if (table == null) {
 					return null;
 				}
@@ -298,7 +300,7 @@ public abstract class Table implements Comparable<Table> {
 	 * The set of stored tuples.
 	 * @return A reference to the set of stored tuples.
 	 */
-	public abstract TupleSet tuples();
+	public abstract Iterator<Tuple> tuples();
 	
 	/**
 	 * The primary key.
@@ -379,8 +381,12 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException 
 	 **/
 	public TupleSet delete(TupleSet tuples) throws UpdateException {
+		return delete(tuples.iterator());
+	}
+	public TupleSet delete(Iterator<Tuple> tuples) throws UpdateException {
 		TupleSet delta = new TupleSet(name());
-		for (Tuple t : tuples) {
+		while(tuples.hasNext()) {
+			Tuple t = tuples.next();
 			t = t.clone();
 			if (delete(t)) {
 				delta.add(t);
@@ -395,7 +401,7 @@ public abstract class Table implements Comparable<Table> {
 		
 		return delta;
 	}
-	
+
 	/**
 	 * Signal to table below to actually perform the insertion.
 	 * @param t Tuple to be inserted.

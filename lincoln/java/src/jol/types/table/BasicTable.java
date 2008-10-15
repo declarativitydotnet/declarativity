@@ -1,6 +1,8 @@
 package jol.types.table;
 
 import java.util.Hashtable;
+import java.util.Iterator;
+
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
@@ -43,9 +45,9 @@ public class BasicTable extends Table {
 	}
 	
 	@Override
-	public TupleSet tuples() {
+	public Iterator<Tuple> tuples() {
 		try {
-		return this.tuples == null ? new TupleSet(name()) : this.tuples.clone();
+		return (this.tuples == null ? new TupleSet(name()) : this.tuples.clone()).iterator();
 		} catch (Exception e) {
 			System.err.println("TABLE " + name() + " ERROR: " + e);
 			e.printStackTrace();
@@ -76,6 +78,6 @@ public class BasicTable extends Table {
 
 	@Override
 	public Integer cardinality() {
-		return this.tuples().size();
+		return this.tuples == null ? 0 : this.tuples.size();
 	}
 }

@@ -37,8 +37,9 @@ public class HashIndex extends Index {
 	public HashIndex(Runtime context, Table table, Key key, Type type) {
 		super(context, table, key, type);
 		map = new HashMap<Tuple, TupleSet>();
-		for (Tuple tuple : table.tuples()) {
-			insert(tuple);
+		Iterator<Tuple> it = table.tuples();
+		while(it.hasNext()) {
+			insert(it.next());
 		}
 	}
 	

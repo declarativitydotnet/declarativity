@@ -1,6 +1,8 @@
 package jol.types.table;
 
 import java.util.Hashtable;
+import java.util.Iterator;
+
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
@@ -61,7 +63,7 @@ public class EventTable extends Table {
 	}
 
 	/** @return null */
-	public TupleSet tuples() {
+	public Iterator<Tuple> tuples() {
 		return null;
 	}
 

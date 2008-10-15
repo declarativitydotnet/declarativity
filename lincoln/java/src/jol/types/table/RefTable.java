@@ -1,6 +1,7 @@
 package jol.types.table;
 
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
@@ -44,8 +45,8 @@ public class RefTable extends Table {
 	}
 	
 	@Override
-	public TupleSet tuples() {
-		return this.tuples == null ? new TupleSet(name()) : this.tuples.clone();
+	public Iterator<Tuple> tuples() {
+		return (this.tuples == null ? new TupleSet(name()) : this.tuples.clone()).iterator();
 	}
 	
 	@Override
