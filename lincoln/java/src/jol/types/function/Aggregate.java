@@ -64,10 +64,10 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return new Avg(new Accessor(aggregate));
 		}
 		else if (SUMSTR.equals(aggregate.functionName())) {
-			return new ConcatString(new Accessor(aggregate));
+			return new ConcatString(new Accessor<String>(aggregate));
 		}
 		else if (TUPLESET.equals(aggregate.functionName())) {
-			return new TupleCollection(new Accessor(aggregate));
+			return new TupleCollection(new Accessor<Tuple>(aggregate));
 		}
 		
 		return null;

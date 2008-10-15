@@ -39,10 +39,10 @@ import jol.core.Runtime;
  *  PRIMARY KEY: The primary key of an Aggregate table is the GroupBy columns identified
  *  by the predicate containing the aggregation.
  */
-public class Aggregation extends Table {
+public class Aggregation<C extends Comparable<C>> extends Table {
 	
 	/** Stores base tuples in aggregate functions. */
-	private Hashtable<Tuple, Aggregate> baseTuples;
+	private Hashtable<Tuple, Aggregate<C>> baseTuples;
 	
 	/** Stores aggregate values derived from base tuples and aggregate functions. */
 	private TupleSet aggregateTuples;
@@ -64,7 +64,7 @@ public class Aggregation extends Table {
 	 */
 	public Aggregation(Runtime context, Predicate predicate, Table.Type type) {
 		super(predicate.name(), type, key(predicate), types(predicate));
-		this.baseTuples = new Hashtable<Tuple, Aggregate>();
+		this.baseTuples = new Hashtable<Tuple, Aggregate<C>>();
 		this.aggregateTuples = new TupleSet(name());
 		
 		for (jol.lang.plan.Expression arg : predicate) {
@@ -128,7 +128,7 @@ public class Aggregation extends Table {
 	 */
 	private TupleSet values() {
 		TupleSet values = new TupleSet(name());
-		for (Aggregate value : baseTuples.values()) {
+		for (Aggregate<C> value : baseTuples.values()) {
 			values.add(value.result());
 		}
 		return values;
