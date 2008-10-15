@@ -11,11 +11,17 @@ import jol.lang.plan.Program;
 import jol.net.Network;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
 import jol.types.exception.P2RuntimeException;
 import jol.types.exception.UpdateException;
+import jol.types.table.Key;
+import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
+
+import com.sun.org.apache.bcel.internal.generic.Type;
+
 
 /**
  * The system runtime.
@@ -73,6 +79,7 @@ public class Runtime implements System {
 		this.catalog.register(new QueryTable(this));
 		this.catalog.register(new Periodic(this, schedule));
 		this.catalog.register(new Log(this, java.lang.System.err));
+		this.catalog.register(StasisTable.getCatalog(this));
 		
 		this.network    = new Network(this);
 		this.driver     = new Driver(this, schedule, clock);
