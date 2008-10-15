@@ -1,0 +1,71 @@
+program path;
+
+import java.lang.Object;
+import java.lang.String;
+import java.lang.Integer;
+import jol.core.Runtime;
+
+import jol.types.basic.ValueList;
+
+define(stasisLink, keys(0,1), {String, String});
+define(stasisPath, keys(0,1,2), {String, String, Integer});
+define(stasisShortestPath, keys(0,1), {String, String, Integer});
+
+define(stasisAllPaths, {String, ValueList});
+define(stasisPathPrinter, {String, ValueList});
+define(stasisComputeAll, {String});
+
+/* Fire a time 10 seconds following program start time.
+   The period is set to 0, which means I only want it to
+   fire once. */
+timer(newlink, 10000, 0);
+
+/* 1 -> 2 -> 3 -> 4 */
+stasisLink("1", "2");
+stasisLink("2", "3");
+stasisLink("3", "4");
+stasisLink("2", "4");
+
+/* 5 -> 6 -> 7 -> 8 -> 9 */
+stasisLink("5", "6");
+stasisLink("6", "7");
+stasisLink("7", "8");
+stasisLink("8", "9");
+
+watch(stasisPath, ae);
+watch(stasisShortestPath, ae);
+watch(stasisAllPaths, r);
+
+watch(newlink, ra);
+
+/* Add the link 9 -> 10 when newlink fires */
+stasisLink("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
+
+newlink(null, 5000, null) :- newlink(Delay, Period, Timer), Period == 0L;
+
+
+/* Initialize all paths with link */
+init
+stasisPath(Source, Destination, 1) :- stasisLink(Source, Destination);
+
+/* Transitive closure over stasisPath, stasisLink. */
+trans
+stasisPath(Source, Destination, Hops+1) :- 
+	stasisPath(Source, Intermediate, Hops), stasisLink(Intermediate, Destination);
+
+/* Compute shortest paths. */
+stasisShortestPath
+stasisShortestPath(Source, Destination, min<Hops>) :- 
+	stasisPath(Source, Destination, Hops);
+	
+stasisComputeAll(Source) :-
+	stasisShortestPath(Source, Destination, Hops);
+	
+stasisAllPaths(Source, generic<(new ValueList()).insert((Object)Destination)>) :-
+	stasisComputeAll(Bla),
+	stasisPath(Source, Destination, Hops);
+	
+stasisPathPrinter(Source, Paths) :-
+	stasisAllPaths(Source, Paths);
+
+delete stasisLink("2", "4") :- periodic(Id, 1L, 1L, 5L);

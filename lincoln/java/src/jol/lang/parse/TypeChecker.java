@@ -52,6 +52,7 @@ import jol.types.table.Aggregation;
 import jol.types.table.BasicTable;
 import jol.types.table.EventTable;
 import jol.types.table.Key;
+import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.TimerTable;
@@ -365,8 +366,12 @@ public final class TypeChecker extends Visitor {
 		if (type == Error.class) return type;
 		assert(type == TypeList.class);
 		TypeList schema  = (TypeList) n.getNode(2).getProperty(Constants.TYPE);
-
-		Table create = new BasicTable(context, name, key, schema);
+		Table create;
+		if(name.name.startsWith("stasis")) {
+			create = new StasisTable(context, name, key, schema);
+		} else {
+			create = new BasicTable(context, name, key, schema);
+		}
 		context.catalog().register(create);
 		this.program.definition(create);
 		n.setProperty(Constants.TYPE, create);
