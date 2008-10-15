@@ -92,7 +92,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public static class Generic<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private Tuple result;
-		private Comparable<?> current;
+		private C current;
 		private GenericAggregate aggregate;
 		
 		public Generic(GenericAggregate aggregate) {
@@ -112,7 +112,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.current == null) {
-				this.current = (Comparable<?>) this.aggregate.function().evaluate(tuple);
+			    this.current = (C)this.aggregate.function().evaluate(tuple);
 			}
 			this.aggregate.function(this.current).evaluate(tuple);
 			this.tuples.add(tuple);
@@ -364,13 +364,13 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 	
-	public static class ConcatString<C extends Comparable<C>> extends Aggregate<C> {
+	public static class ConcatString extends Aggregate<String> {
 		private TupleSet tuples;
 		private Tuple result;
 		private String current;
-		private Accessor<C> accessor;
+		private Accessor<String> accessor;
 		
-		public ConcatString(Accessor<C> accessor) {
+		public ConcatString(Accessor<String> accessor) {
 			this.accessor = accessor;
 			reset();
 		}
@@ -394,10 +394,10 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
 				if (this.current == null) {
-					this.current = (String) this.accessor.evaluate(tuple);
+					this.current = this.accessor.evaluate(tuple);
 				}
 				else {
-					this.current += (String) this.accessor.evaluate(tuple);
+					this.current += this.accessor.evaluate(tuple);
 				}
 				return result();
 			}
@@ -426,13 +426,13 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 	
-	public static class TupleCollection<C extends Comparable<C>> extends Aggregate<C> {
+	public static class TupleCollection extends Aggregate<Tuple> {
 		private TupleSet tuples;
 		private Tuple    result;
 		private TupleSet nestedSet;
-		private Accessor<C> accessor;
+		private Accessor<Tuple> accessor;
 		
-		public TupleCollection(Accessor<C> accessor) {
+		public TupleCollection(Accessor<Tuple> accessor) {
 			this.accessor = accessor;
 			this.tuples = new TupleSet();
 			this.nestedSet = new TupleSet();
@@ -451,7 +451,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
-				this.nestedSet.add((Tuple) this.accessor.evaluate(tuple));
+				this.nestedSet.add(this.accessor.evaluate(tuple));
 				return result();
 			}
 			return null;
@@ -460,7 +460,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public Tuple delete(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.remove(tuple)) {
 				this.result = tuple;
-				this.nestedSet.remove((Tuple) this.accessor.evaluate(tuple));
+				this.nestedSet.remove(this.accessor.evaluate(tuple));
 				return result();
 			}
 			return null;
