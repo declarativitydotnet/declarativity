@@ -2,6 +2,7 @@ package gfs;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
 import jol.core.System;
@@ -15,6 +16,7 @@ import jol.types.table.Table.Callback;
 
 public class Shell {
 	private static System system;
+	private static int id = 1;
 
     /*
      * TODO:
@@ -44,15 +46,30 @@ public class Shell {
             usage();
     }
 
+    /*
+     * XXX: consider parallel evaluation
+     */
     private static void doConcatenate(List<String> args) throws UpdateException
     {
         if (args.size() == 0)
             usage();
-
+        
+        for (String file : args)
+        	doCatFile(file);
+    }
+    
+    private static void doCatFile(String file) throws UpdateException
+    {
+    	final int request_id = generateId();
+    	final SynchronousQueue<String> content_queue = new SynchronousQueue<String>();
+    	
+    	// Create the request tuple
         TableName tblName = new TableName("gfs", "cat_requests");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(request_id, file));
+        
         // Register callback to listen for responses
-        Table responseTbl = system.catalog().table(tblName);
-        responseTbl.register(new Callback(){
+        Callback response_callback = new Callback() {
 			@Override
 			public void deletion(TupleSet tuples) {
 				;
@@ -60,26 +77,37 @@ public class Shell {
 
 			@Override
 			public void insertion(TupleSet tuples) {
-				;
-			}        	
-        });
-        /*
-         * TODO:
-         * (1) For each file to list, add an entry into the "outgoing requests" table
-         *   => How do we identify an outgoing request, such that it is (a) distinct
-         *      from any other concurrent requests in the system (b) in the callback,
-         *      we can identify which response tuple is for which request
-         *   
-         * (2) Register a callback on the "concat responses" table to listen for responses
-         */
-        TupleSet reqs = new TupleSet(tblName);
-        for (String file : args) {
-        	reqs.add(new Tuple(1, file));
-        }
-        system.schedule("gfs", tblName, reqs, null);
+				for (Tuple t : tuples)
+				{
+					if (t.value("request_id").equals(request_id))
+					{
+						String response_contents = (String) t.value("contents");
+						content_queue.add(response_contents);
+					}
+				}
+			}
+        };
+        Table responseTbl = system.catalog().table(tblName);
+        responseTbl.register(response_callback);
+        
+        // Do the insert
+        system.schedule("gfs", tblName, req, null);
+        
+        // Wait for the response
+        String contents = content_queue.remove();
+        responseTbl.unregister(response_callback);
+        
+        java.lang.System.out.println("File name: " + file);
+        java.lang.System.out.println("Contents:");
+        java.lang.System.out.println(contents);
+        java.lang.System.out.println("=============");
     }
 
-    private static void doCreateDir(List<String> args)
+    private static int generateId() {
+    	return id++;
+	}
+
+	private static void doCreateDir(List<String> args)
     {
         ;
     }
