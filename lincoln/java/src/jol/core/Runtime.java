@@ -20,9 +20,6 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
 
-import com.sun.org.apache.bcel.internal.generic.Type;
-
-
 /**
  * The system runtime.
  * Contains a reference to all state in an instance of the
