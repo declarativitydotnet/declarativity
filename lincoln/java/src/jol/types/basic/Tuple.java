@@ -7,10 +7,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import jol.lang.plan.DontCare;
@@ -83,54 +81,139 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		fromBytes(b);
 	}
 	
-	private final static int INT = 1;
-	private final static int STRING = 2;
-	private final static int OTHER = 3;
+	private final static int OBJECT = 0;
+	private final static int STRING = 1;
+	private final static int INT = 2;
+	private final static int LONG = 3;
+	private final static int SHORT = 4;
+	private final static int BOOLEAN = 5;
+	private final static int CHAR = 6;
+	private final static int BYTE = 7;
+	private final static int FLOAT = 8;
+	private final static int DOUBLE = 9;
+	
+	private boolean warned = false;
+	
 	public byte[] toBytes() throws IOException {
 		ByteArrayOutputStream ret = new ByteArrayOutputStream();
 		DataOutputStream out = new DataOutputStream(ret);
 		out.writeShort(values.size());
 		for(Object o : values) {
-			if(o instanceof Integer) {
-				out.writeByte(INT);
-				out.writeInt((Integer)o);
-			} else if (o instanceof String) {
+			if (o instanceof String) {
 				out.writeByte(STRING);
 				out.writeUTF((String)o);
+			} else if(o instanceof Integer) {
+					out.writeByte(INT);
+					out.writeInt((Integer)o);
+			} else if (o instanceof Long) {
+				out.writeByte(LONG);
+				out.writeLong((Long)o);
+			} else if(o instanceof Short) {
+				out.writeByte(SHORT);
+				out.writeShort((Short)o);
+			} else if(o instanceof Boolean) {
+				out.writeByte(BOOLEAN);
+				out.writeBoolean((Boolean)o);
+			} else if (o instanceof Character) {
+				out.writeByte(CHAR);
+				out.writeChar((Character)o);
+			} else if (o instanceof Byte) {
+				out.writeByte(BYTE);
+				out.writeByte((Byte)o);
+			} else if (o instanceof Float) {
+				out.writeByte(FLOAT);
+				out.writeFloat((Float)o);
+			} else if (o instanceof Double) {
+				out.writeByte(DOUBLE);
+				out.writeDouble((Double)o);
 			} else {
-				out.writeByte(OTHER);
-				throw new IOException("Can't serialize " + o.getClass().toString() + " safely.");
+				if(!warned) {
+					System.out.println("sending non-primitive: " + o.getClass().toString());
+					warned = true;
+				}
+				out.writeByte(OBJECT);
+				ByteArrayOutputStream subret = new ByteArrayOutputStream();
+				ObjectOutputStream oout = new ObjectOutputStream(subret);
+				oout.writeObject(o);
+				oout.close();
+				byte[] bytes = subret.toByteArray();
+				out.writeInt(bytes.length);
+				out.write(bytes);
 			}
 		}
+		out.close();
 		return ret.toByteArray();
 	}
+	
 	public void fromBytes(byte[] bytes) throws IOException {
 		DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
 		short size = in.readShort();
 		values = new ArrayList<Comparable>(size);
 		for(int i = 0; i < size; i++) {
 			int type = in.readByte();
-			if(type == INT) {
-				values.add(in.readInt());
-			} else if (type == STRING) {
+			if (type == STRING) {
 				values.add(in.readUTF());
+			} else if(type == INT) {
+				values.add(in.readInt());
+			} else if(type == LONG) {
+				values.add(in.readLong());
+			} else if(type == SHORT) {
+				values.add(in.readShort());
+			} else if(type == BOOLEAN) {
+				values.add(in.readBoolean());
+			} else if(type == CHAR) {
+				values.add(in.readChar());
+			} else if(type == BYTE) {
+				values.add(in.readByte());
+			} else if(type == FLOAT) {
+				values.add(in.readFloat());
+			} else if(type == DOUBLE) {
+				values.add(in.readDouble());
+			} else if (type == OBJECT) {
+				int len = in.readInt();
+				byte[] obytes = new byte[len];
+				in.readFully(obytes);
+				ObjectInputStream oin = new ObjectInputStream(
+										  new ByteArrayInputStream(obytes));
+				
+				try {
+					values.add((Comparable)oin.readObject());
+				} catch (ClassNotFoundException e) {
+					throw new IOException("Couldn't deserialize object in column " + i +
+										  " of tuple (partial value is: " + toString() + ")", e);
+				}
 			} else {
 				throw new IOException("Can't read type " + type + ".");
 			}
 		}
 	}
 	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.writeObject(values);
+		// Use serialization routines that are optimized for single tuples.
+		// (This causes the network to use these routines, which doesn't
+		// do much for performance, but helps test these routines.)
+		byte[] bytes = toBytes();
+		out.writeInt(bytes.length);
+		out.write(bytes);
+
+		// This would perform normal java serialization if it weren't
+		// commented out.
+
+		//out.writeObject(values);
 	}
-	private void readObject(ObjectInputStream in) 
-		throws IOException {
-		try {
-			values = (ArrayList<Comparable>)in.readObject();
-		} catch (ClassNotFoundException e) {
-			// This method can only throw IOException, or these methods won't
-			// be called by serialization stuff.
-			throw new IOException("Couldn't read serialized object", e);
-		}
+	private void readObject(ObjectInputStream in) throws IOException {
+		// Custom tuple serializer
+		byte[] bytes = new byte[in.readInt()];
+		in.readFully(bytes);
+		fromBytes(bytes);
+
+		// Version that would use Java serialization 
+//		try {
+//			values = (ArrayList<Comparable>)in.readObject();
+//		} catch (ClassNotFoundException e) {
+//			// This method can only throw IOException, or these methods won't
+//			// be called by serialization stuff.
+//			throw new IOException("Couldn't read serialized object", e);
+//		}
 	}
 	
 	@Override
