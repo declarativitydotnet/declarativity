@@ -12,22 +12,27 @@ define(abort,keys(0,1,2),{String,String,String});
 define(peerCnt,keys(0),{String,Integer});
 define(yesCnt,keys(0),{String,String,Integer});
 define(ack,keys(0,2),{String,String,String});
-define(commitReady,keys(0),{String,String});
+define(commitReady,{String,String});
 define(tick,keys(0),{String,String,Integer});
+define(storedCommitReady,keys(0),{String,String});
 
-peers("tcp:localhost:10000","tcp:localhost:10001");
+peers("tcp:localhost:10000","tcp:localhost:10000");
 
 watch(vote,id);
 watch(prepare,id);
-watch(ack,id);
-watch(commit,id);
-watch(abort,id);
+watch(ack,ad);
+watch(commit,ad);
+watch(abort,ad);
 watch(commitReady,id);
 watch(yesCnt,id);
 watch(peerCnt,id);
-//watch(tick,id);
+//watch(tick,ad);
+
+timer(ticker,1000,1000);
 
 //commitReady("tcp:localhost:10001","1234") :- periodic(Id,1L,1L,5L,2L);
+
+storedCommitReady(A,B) :- commitReady(A,B);
 
 commitReady(Commander,"1234") :- periodic(Id,1L,1L,5L,2L),
                               peers(Commander,_);
@@ -36,9 +41,8 @@ commitReady(Commander,"1234") :- periodic(Id,1L,1L,5L,2L),
 
 /* a per-transaction timer that starts at zero when a transaction begins */
 tick(Commander,Xact,C) :- commitReady(Commander,Xact), C := 0;
-cantick(Commander,Id) :- periodic(Id,2L,1000L),peers(Commander,Peer);
-tick(Commander,Xact,C) :- cantick(Commander,Id), tick(Commander,Xact,Count), C := Count + 1;
-
+//cantick(Commander,Id) :- ticker(_,_,_), peers(Commander,Peer);
+tick(Commander,Xact,C) :- ticker#insert(_,_,_) , tick(Commander,Xact,Count), C := Count + 1;
 
 prepare(@Peer,Xact,Commander) :- peers(@Commander,Peer),
 				 commitReady(@Commander,Xact);
@@ -53,6 +57,7 @@ vote(@Commander,Xact,Peer,Vote) :- prepare(@Peer,Xact,Commander),
 
   for the demo, we hardcode the function's return
 */
+
 vote(@Commander,Xact,Peer,Vote) :- prepare(@Peer,Xact,Commander),				
 					   // SOME FUNCTION			   
 			      	   Vote := "Y";
@@ -69,14 +74,11 @@ abort(@Peer,Xact,Commander) :- vote(@Commander,Xact,SomePeer,Vote),
 			       peers(@Commander,Peer);
 
 /* we might also timeout... */
-
-/*
-abort(@Peer,Xact,Commander) :- tick(@Commander,Xact,Agg), 
-							  commitReady(@Commander,Xact),
+abort(@Peer,Xact,Commander) :- tick#insert(@Commander,Xact,Agg), 
+							  storedCommitReady(@Commander,Xact),
 							   Agg > 10, 
 							   peers(@Commander,Peer),
-							   notin commit(Peer,Xact,Commander);
-*/	
+							   notin commit(Peer,Xact,@Commander);
 				
 ack(@Commander,Xact,Peer) :- commit(@Peer,Xact,Commander); /*,
 			f_commit(@Peer,Xact); */
