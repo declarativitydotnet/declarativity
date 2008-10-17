@@ -35,7 +35,7 @@ public class HashIndex extends Index {
 	 * @param type The index type.
 	 */
 	public HashIndex(Runtime context, Table table, Key key, Type type) {
-		super(context, table, key, type);
+		super(context, table, key, type, true);
 		map = new HashMap<Tuple, TupleSet>();
 		Iterator<Tuple> it = table.tuples();
 		while(it.hasNext()) {

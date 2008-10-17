@@ -12,7 +12,7 @@ import jol.types.exception.UpdateException;
 /**
  * The interface to an index structure.
  * 
- * An index is responible for looking up tuples by some
+ * An index is responsible for looking up tuples by some
  * subset of tuple values identified by the index key {@link Key}.
  */
 public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
@@ -121,8 +121,10 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	 * @param table The table being indexed.
 	 * @param key The key used to index the table.
 	 * @param type The type of index being created.
+	 * @param registerListener If true, the index's insert() and delete() methods will be called when the table state changes.
 	 */
-	public Index(Runtime context, Table table, Key key, Type type) {
+	public Index(Runtime context, Table table, Key key, Type type,
+			boolean registerListener) {
 		this.table = table;
 		this.key = key;
 		this.type = type;
@@ -136,7 +138,9 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 				e.printStackTrace();
 			}
 		}
-		this.table.register(new Listener());
+		if(registerListener) {
+			this.table.register(new Listener());
+		}
 	}
 	
 	@Override

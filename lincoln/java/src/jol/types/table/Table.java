@@ -351,15 +351,22 @@ public abstract class Table implements Comparable<Table> {
 		TupleSet delta = new TupleSet(name());
 		for (Tuple t : tuples) {
 			t = t.clone();
+			
+			Set<Tuple> oldvals = null;
+			try {
+				if(conflicts != null && primary() != null) {
+					oldvals = primary().lookupByKey(primary().key().project(t));
+			 	}
+			} catch (BadKeyException e) {
+				throw new UpdateException("couldn't insert", e);
+			}
+
 			if (insert(t)) {
 				delta.add(t);
+
 				if (conflicts != null && primary() != null) {
-					try {
-						conflicts.addAll(primary().lookupByKey(primary().key().project(t)));
-					} catch (BadKeyException e) {
-						throw new UpdateException("couldn't insert", e);
-					}
-				}
+						conflicts.addAll(oldvals); 
+				} 
 				
 				/* Update the indices here so that primary key
 				 * conflicts from within the tupleset will show up

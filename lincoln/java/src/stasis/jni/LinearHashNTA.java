@@ -38,6 +38,12 @@ public class LinearHashNTA extends StasisTable {
 	}
 
 	@Override
+	protected byte[] lookup(byte[] keybytes) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
 	protected Iterator<byte[][]> tupleBytes() {
 		// TODO Auto-generated method stub
 		return null;
@@ -64,4 +70,5 @@ public class LinearHashNTA extends StasisTable {
 	
 	private native byte[][]
 	stasisJniLinearHashNTANext(long page, long slot, byte[] it);
+
 }

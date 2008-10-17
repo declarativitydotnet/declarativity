@@ -8,7 +8,9 @@ import java.util.Iterator;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
+import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import stasis.jni.JavaHashtable;
 
@@ -73,7 +75,44 @@ public abstract class StasisTable extends Table {
 		appendObject(key);
 		appendObject(attributeTypes);
 		schemaBytes = objectBytes();
-		primary = new StasisIndex(context,this, this.key, Index.Type.PRIMARY);
+		
+		primary = new Index(context,this, this.key, Index.Type.PRIMARY, false) {
+			@Override
+			protected void insert(Tuple t) {
+				throw new UnsupportedOperationException("Can't directly maniuplate clustered indices");
+			}
+
+			@Override
+			public Iterator<Tuple> iterator() {
+				return table().tuples(); 
+			}
+
+			@Override
+			public TupleSet lookupByKey(Tuple key) throws BadKeyException {
+				try {
+					byte[] valbytes = ((StasisTable)table()).lookup(key.toBytes());
+					TupleSet ret = new TupleSet();
+					if(valbytes != null) {
+						Tuple t = key().reconstruct(key, new Tuple(valbytes));
+						ret.add(t);
+					}
+					return ret;
+				} catch (IOException e) {
+					throw new IllegalStateException("can't happen");
+				}
+			}
+
+			@Override
+			protected void remove(Tuple t) {
+				throw new UnsupportedOperationException("Can't directly maniuplate clustered indices");
+			}
+
+			@Override
+			public String toString() {
+				return "instance of " + getClass().toString();
+			}
+			
+		};
 	}
 
 	private static TableName CATALOG_NAME = new TableName("Stasis", "Catalog");
@@ -142,7 +181,7 @@ public abstract class StasisTable extends Table {
 	}
 
 	
-	private StasisIndex primary;
+	private Index primary;
 	private Hashtable<Key, Index> secondary = new Hashtable<Key, Index>();
 
 	@Override
@@ -164,5 +203,6 @@ public abstract class StasisTable extends Table {
 	public abstract Integer cardinality();
     protected abstract boolean remove(byte[] keybytes, byte[] valbytes) throws UpdateException;
 	protected abstract boolean add(byte[] keybytes, byte[] valbytes) throws UpdateException;
+	protected abstract byte[] lookup(byte[] keybytes);
 	protected abstract Iterator<byte[][]> tupleBytes();
 }
