@@ -174,11 +174,6 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		return key;
 	}
 	
-	/**
-	 * Clear out all tuples from this index.
-	 */
-	public abstract void clear();
-	
 	/** An iterator over all tuple values. */
 	public abstract Iterator<Tuple> iterator();
 	
@@ -186,19 +181,10 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	 * Uses the index key as the lookup key and
 	 * the values from the given tuple. 
 	 * @param t A tuple to look up 
-	 * (assumed to be a tuple from the reference table) 
+	 * (assumed to be a pre-projected key) 
 	 * @return A set containing the lookup result.
 	 */
-	public abstract TupleSet lookup(Tuple t) throws BadKeyException;
-	
-	/**
-	 * Lookup a tuple in the given index using the given key
-	 * as the tuple value projector. 
-	 * @param key The key that should be used to project the tuple values.
-	 * @param t The tuple whose values are used to perform a lookup.
-	 * @return A set containing the lookup result.
-	 */
-	public abstract TupleSet lookup(Key key, Tuple t);
+	public abstract TupleSet lookupByKey(Tuple t) throws BadKeyException;
 	
 	/**
 	 * Quick way to lookup a set of values. The arity of the
@@ -208,7 +194,10 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	 * @return A set containing the lookup result.
 	 * @throws BadKeyException If the argument values do not match the key.
 	 */
-	public abstract TupleSet lookup(Comparable... values) throws BadKeyException;
+	public TupleSet lookupByKey(Comparable... keyValues) throws BadKeyException 
+	{
+		return lookupByKey(new Tuple(keyValues));
+	}
 	
 	/** Index the given tuple. */
 	protected abstract void insert(Tuple t);

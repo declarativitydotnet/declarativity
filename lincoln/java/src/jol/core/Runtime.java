@@ -74,8 +74,7 @@ public class Runtime implements System {
 		this.catalog.register(new QueryTable(this));
 		this.catalog.register(new Periodic(this, schedule));
 		this.catalog.register(new Log(this, java.lang.System.err));
-		this.catalog.register(StasisTable.getCatalog(this));
-		
+
 		this.network    = new Network(this);
 		this.driver     = new Driver(this, schedule, clock);
 		this.thread     = new Thread(driver);
@@ -134,7 +133,7 @@ public class Runtime implements System {
 	 */
 	public Program program(String name) {
 		try {
-			TupleSet program = catalog().table(new TableName(Table.GLOBALSCOPE, "program")).primary().lookup(name);
+			TupleSet program = catalog().table(new TableName(Table.GLOBALSCOPE, "program")).primary().lookupByKey(name);
 			if (program.size() == 0) return null;
 			Tuple tuple = program.iterator().next();
 			return (Program) tuple.value(Program.ProgramTable.Field.OBJECT.ordinal());

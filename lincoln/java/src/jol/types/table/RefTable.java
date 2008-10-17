@@ -54,7 +54,7 @@ public class RefTable extends Table {
 		if (this.tuples.contains(t)) {
 			TupleSet lookup;
 			try {
-				lookup = primary().lookup(t);
+				lookup = primary().lookupByKey(primary().key().project(t));
 			} catch (BadKeyException e) {
 				throw new UpdateException(e.toString());
 			}
@@ -77,7 +77,7 @@ public class RefTable extends Table {
 	protected boolean insert(Tuple t) throws UpdateException {
 		if (this.tuples.contains(t)) {
 			try {
-				for (Tuple lookup : primary().lookup(t)) {
+				for (Tuple lookup : primary().lookupByKey(primary().key().project(t))) {
 					if (lookup.equals(t)) {
 						lookup.refCount(lookup.refCount().longValue() + 1);
 						return false; 

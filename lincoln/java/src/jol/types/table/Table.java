@@ -132,7 +132,7 @@ public abstract class Table implements Comparable<Table> {
 		 */
 		public boolean drop(TableName name) throws UpdateException {
 			try {
-				TupleSet tuples = primary().lookup(name);
+				TupleSet tuples = primary().lookupByKey(name);
 				return delete(tuples).size() > 0;
 					
 			} catch (BadKeyException e) {
@@ -149,7 +149,7 @@ public abstract class Table implements Comparable<Table> {
 		 */
 		public Table table(TableName name) {
 			try {
-				TupleSet table = primary().lookup(name);
+				TupleSet table = primary().lookupByKey(name);
 				
 				if (table == null) {
 					return null;
@@ -175,6 +175,7 @@ public abstract class Table implements Comparable<Table> {
 		 */
 		public boolean register(Table table) {
 			Tuple tuple = new Tuple(table.name(), table.type().toString(), table.key(), new TypeList(table.types()), table);
+
 			try {
 				force(tuple);
 				return true;
@@ -354,9 +355,9 @@ public abstract class Table implements Comparable<Table> {
 				delta.add(t);
 				if (conflicts != null && primary() != null) {
 					try {
-						conflicts.addAll(primary().lookup(t));
+						conflicts.addAll(primary().lookupByKey(primary().key().project(t)));
 					} catch (BadKeyException e) {
-						throw new UpdateException(e.toString());
+						throw new UpdateException("couldn't insert", e);
 					}
 				}
 				
@@ -385,6 +386,7 @@ public abstract class Table implements Comparable<Table> {
 	}
 	public TupleSet delete(Iterator<Tuple> tuples) throws UpdateException {
 		TupleSet delta = new TupleSet(name());
+
 		while(tuples.hasNext()) {
 			Tuple t = tuples.next();
 			t = t.clone();

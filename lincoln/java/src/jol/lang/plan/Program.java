@@ -103,7 +103,7 @@ public class Program implements Comparable<Program> {
 		try {
 			/* First plan out all the rules. */
 			TupleSet rules = context.catalog().table(RuleTable.TABLENAME).secondary().get(
-					new Key(RuleTable.Field.PROGRAM.ordinal())).lookup(this.name);
+					new Key(RuleTable.Field.PROGRAM.ordinal())).lookupByKey(this.name);
 			
 			if (rules == null) {
 				System.err.println("Warning: Program " + this.name + " does not have any rules!?");

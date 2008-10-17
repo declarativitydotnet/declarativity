@@ -61,7 +61,7 @@ public class Connection extends ObjectTable {
 	
 	public void unregister(Channel channel) throws UpdateException {
 		try {
-			TupleSet channels = primary().lookup(channel.protocol(), channel.address());
+			TupleSet channels = primary().lookupByKey(channel.protocol(), channel.address());
 			for (Tuple connection : channels) {
 				delete(connection);
 			}

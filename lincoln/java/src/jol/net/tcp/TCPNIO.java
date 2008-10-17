@@ -239,7 +239,7 @@ public class TCPNIO extends Server {
 				}
 			}
 		}
-		
+		private int totalWritten = 0;
 		/**
 		 * Method will write ALL data contained in the byte buffer.
 		 * This method will not return until the entire buffer has been written
@@ -250,9 +250,13 @@ public class TCPNIO extends Server {
 		 */
 	    private void write(ByteBuffer buf, SocketChannel socket) throws IOException {
 	        int len = buf.limit() - buf.position();
+	        totalWritten += len;
+	        
 	        while (len > 0) {
 	            len -= socket.write(buf);
 	        }
+	        
+	        System.out.println("TCPNIO: Wrote " + totalWritten + " bytes so far");
 	    }
 	 
 	    /**

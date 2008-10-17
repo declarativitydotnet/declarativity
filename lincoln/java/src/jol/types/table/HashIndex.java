@@ -53,11 +53,6 @@ public class HashIndex extends Index {
 	}
 	
 	@Override
-	public void clear() {
-		this.map.clear();
-	}
-
-	@Override
 	protected void insert(Tuple t) {
 		Tuple key = key().project(t);
 		if (this.map.containsKey(key)) {
@@ -71,17 +66,13 @@ public class HashIndex extends Index {
 	}
 
 	@Override
-	public TupleSet lookup(Tuple t) {
-		Tuple key = key().project(t);
+	public TupleSet lookupByKey(Tuple key) throws BadKeyException {
+		if(key.size() != key().size() && key().size() > 0) {
+			throw new BadKeyException("Key had wrong number of columns.  " +
+					"Saw: " + key.size() + " expected: " + key().size() + " key: " + key().toString());
+		}
 		return this.map.containsKey(key) ? 
 				this.map.get(key) : new TupleSet(table().name());
-	}
-	
-	@Override
-	public TupleSet lookup(Key key, Tuple t) {
-		Tuple k = key.project(t);
-		return this.map.containsKey(k) ? 
-				this.map.get(k) : new TupleSet(table().name());
 	}
 
 	@Override
@@ -100,19 +91,5 @@ public class HashIndex extends Index {
 			tuples.addAll(set);
 		}
 		return tuples.iterator();
-	}
-
-	@Override
-	public TupleSet lookup(Comparable... values) throws BadKeyException {
-		if (values.length != key().size()) {
-			throw new BadKeyException("Value length does not match key size!");
-		}
-		
-		List<Comparable> keyValues = new ArrayList<Comparable>();
-		for (Comparable value : values) {
-			keyValues.add(value);
-		}
-		Tuple key = new Tuple(keyValues);
-		return this.map.get(key);
 	}
 }

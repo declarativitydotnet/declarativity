@@ -6,4 +6,8 @@ public class P2RuntimeException extends Exception {
 	public P2RuntimeException(String error) {
 		super(error);
 	}
+
+	public P2RuntimeException(String error, Exception e) {
+		super(error, e);
+	}
 }

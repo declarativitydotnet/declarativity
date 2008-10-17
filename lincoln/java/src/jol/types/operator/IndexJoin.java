@@ -1,9 +1,12 @@
 package jol.types.operator;
 
+import java.util.Iterator;
+
 import jol.lang.plan.Predicate;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.exception.BadKeyException;
 import jol.types.exception.P2RuntimeException;
 import jol.types.table.Index;
 import jol.types.table.Key;
@@ -42,18 +45,22 @@ public class IndexJoin extends Join {
 	
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
-		TupleSet result = new TupleSet();
-		for (Tuple outer : tuples) {
-			for (Tuple inner : this.index.lookup(this.lookupKey, outer)) {
-				if (validate(outer, inner)) {
-					inner.schema(this.predicate.schema().clone());
-					Tuple join = outer.join(inner);
-					if (join != null) {
-						result.add(join);
+		try {
+			TupleSet result = new TupleSet();
+			for (Tuple outer : tuples) {
+				for(Tuple inner : this.index.lookupByKey(lookupKey.project(outer))) {
+					if (validate(outer, inner)) {
+						inner.schema(this.predicate.schema().clone());
+						Tuple join = outer.join(inner);
+						if (join != null) {
+							result.add(join);
+						}
 					}
 				}
 			}
+			return result;
+		} catch (BadKeyException e) {
+			throw new P2RuntimeException("index join failed!", e);
 		}
-		return result;
 	}
 }

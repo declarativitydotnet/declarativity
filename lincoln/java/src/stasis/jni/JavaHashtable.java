@@ -4,13 +4,20 @@ import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Iterator;
 
+import jol.core.Runtime;
+import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
-public class LinearHash {
+import jol.types.table.Key;
+import jol.types.table.StasisTable;
+import jol.types.table.TableName;
+
+public class JavaHashtable extends StasisTable {
 	private static Hashtable<byte[], byte[]> catalog;
 	private static Hashtable<byte[], Hashtable<byte[], byte[]>> tables;
 
-	public static void initialize(byte [] catalogName, byte[] catalogSchema) {
+	public static void initialize(byte [] catalogName,
+								  byte[] catalogSchema) {
 		assert(catalog == null);
 	
 		catalog = new Hashtable<byte[],byte[]>();
@@ -21,7 +28,15 @@ public class LinearHash {
 	
 	private final Hashtable<byte[], byte[]> tbl;
 	
-	public LinearHash(byte[] name, byte[] schema) {
+	public JavaHashtable(Runtime context, TableName tableName, Key key,
+			TypeList attributeTypes) {
+		super(context,tableName,key,attributeTypes);
+		byte[] name = super.nameBytes;
+		byte[] schema = super.schemaBytes;
+		
+		if(catalog == null)
+			initialize(CATALOG_NAME_BYTES, CATALOG_SCHEMA_BYTES);
+		
 		if(catalog.contains(name)) {
 			assert(Arrays.equals(schema, catalog.get(name)));
 		} else {
@@ -31,7 +46,8 @@ public class LinearHash {
 		this.tbl = tables.get(name);
 	}
 
-	public boolean remove(byte[] keybytes, byte[] valbytes) throws UpdateException {
+	public boolean remove(byte[] keybytes, byte[] valbytes)
+	 throws UpdateException {
 		byte[] oldvalbytes = tbl.remove(keybytes);
 		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
 			throw new UpdateException("primary key violation");
@@ -39,7 +55,8 @@ public class LinearHash {
 		return oldvalbytes != null;
 	}
 
-	public boolean add(byte[] keybytes, byte[] valbytes) throws UpdateException {
+	public boolean add(byte[] keybytes, byte[] valbytes)
+	 throws UpdateException {
 		byte[] oldvalbytes = tbl.put(keybytes, valbytes);
 		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
 			throw new UpdateException("primary key violation");
@@ -51,14 +68,15 @@ public class LinearHash {
 		return tbl.size();
 	}
 
-	public Iterator<byte[][]> tuples() {
+	public Iterator<byte[][]> tupleBytes() {
 		return new Iterator<byte[][]>() {
 			Iterator<byte[]> it = tbl.keySet().iterator();
-
+			@Override
 			public boolean hasNext() {
 				return it.hasNext();
 			}
 
+			@Override
 			public byte[][] next() {
 				byte[] ret = it.next();
 				if(ret == null) { return null; }
@@ -68,6 +86,7 @@ public class LinearHash {
 				return retarray;
 			}
 
+			@Override
 			public void remove() {
 				it.remove();
 			}

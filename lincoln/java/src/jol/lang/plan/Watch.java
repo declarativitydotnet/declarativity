@@ -45,7 +45,7 @@ public class Watch extends Clause {
 		public Operator watched(String program, TableName name, jol.types.operator.Watch.Modifier modifier) {
 			Tuple key = new Tuple(program, name, modifier);
 			try {
-				TupleSet tuples = primary().lookup(key);
+				TupleSet tuples = primary().lookupByKey(primary().key().project(key));
 				if (tuples.size() > 0) {
 					return (Operator) tuples.iterator().next().value(Field.OPERATOR.ordinal());
 				}
