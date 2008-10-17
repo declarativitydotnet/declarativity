@@ -98,20 +98,20 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		ByteArrayOutputStream ret = new ByteArrayOutputStream();
 		DataOutputStream out = new DataOutputStream(ret);
 		out.writeShort(values.size());
-		for(Object o : values) {
+		for (Object o : values) {
 			if (o instanceof String) {
 				out.writeByte(STRING);
 				out.writeUTF((String)o);
-			} else if(o instanceof Integer) {
-					out.writeByte(INT);
-					out.writeInt((Integer)o);
+			} else if (o instanceof Integer) {
+				out.writeByte(INT);
+				out.writeInt((Integer)o);
 			} else if (o instanceof Long) {
 				out.writeByte(LONG);
 				out.writeLong((Long)o);
-			} else if(o instanceof Short) {
+			} else if (o instanceof Short) {
 				out.writeByte(SHORT);
 				out.writeShort((Short)o);
-			} else if(o instanceof Boolean) {
+			} else if (o instanceof Boolean) {
 				out.writeByte(BOOLEAN);
 				out.writeBoolean((Boolean)o);
 			} else if (o instanceof Character) {
@@ -127,7 +127,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 				out.writeByte(DOUBLE);
 				out.writeDouble((Double)o);
 			} else {
-				if(!warned) {
+				if (!warned) {
 					System.out.println("sending non-primitive: " + o.getClass().toString());
 					warned = true;
 				}
