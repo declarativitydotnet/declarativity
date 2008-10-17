@@ -72,12 +72,11 @@ public class JavaHashtable extends StasisTable {
 	public Iterator<byte[][]> tupleBytes() {
 		return new Iterator<byte[][]>() {
 			Iterator<byte[]> it = tbl.keySet().iterator();
-			@Override
+
 			public boolean hasNext() {
 				return it.hasNext();
 			}
 
-			@Override
 			public byte[][] next() {
 				byte[] ret = it.next();
 				if(ret == null) { return null; }
@@ -87,7 +86,6 @@ public class JavaHashtable extends StasisTable {
 				return retarray;
 			}
 
-			@Override
 			public void remove() {
 				it.remove();
 			}
