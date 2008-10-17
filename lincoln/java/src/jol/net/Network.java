@@ -12,9 +12,8 @@ import jol.core.Runtime;
  * The Network manager class. 
  * 
  * <p>
- * The network manager is responsible for the initialization 
- * and maintenance of all networking components.
- *
+ * The network manager is responsible for the initialization and
+ * maintenance of all networking components.
  */
 public final class Network {
 	private Runtime context;
