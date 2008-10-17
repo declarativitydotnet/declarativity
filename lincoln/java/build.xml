@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="jol" default="dist" basedir=".">
   <description>
-    An Ant build file for the Lincoln Java implementation.
+    An Ant build file for the Java Overlog Library (JOL) implementation.
   </description>
 
   <property name="src" location="src"/>
@@ -41,11 +41,11 @@
   <target name="dist" depends="compile" description="generate a JAR file">
     <mkdir dir="${dist}"/>
   	<!--
-  	  We want to redistribute the contents of the Rats JAR file with the
+  	  We want to redistribute the contents of the XTC JAR file with the
   	  JOL JAR. Since the default Java classloader doesn't support nested
   	  JAR files, it seems the easiest way to do this is to expand the
-  	  Rats JAR and add its contents to our JAR. XXX: This makes us GPL,
-  	  by contamination. The full Rats JAR is also pretty large. It would
+  	  XTC JAR and add its contents to our JAR. XXX: This makes us GPL,
+  	  by contamination. The full XTC JAR is also pretty large. It would
   	  be better to depend only on LGPL'd Rats files.
   	-->
   	<mkdir dir="${dist}/rats_tmp"/>
