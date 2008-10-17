@@ -149,25 +149,25 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
 		short size = in.readShort();
 		values = new ArrayList<Comparable>(size);
-		for(int i = 0; i < size; i++) {
+		for (int i = 0; i < size; i++) {
 			int type = in.readByte();
 			if (type == STRING) {
 				values.add(in.readUTF());
-			} else if(type == INT) {
+			} else if (type == INT) {
 				values.add(in.readInt());
-			} else if(type == LONG) {
+			} else if (type == LONG) {
 				values.add(in.readLong());
-			} else if(type == SHORT) {
+			} else if (type == SHORT) {
 				values.add(in.readShort());
-			} else if(type == BOOLEAN) {
+			} else if (type == BOOLEAN) {
 				values.add(in.readBoolean());
-			} else if(type == CHAR) {
+			} else if (type == CHAR) {
 				values.add(in.readChar());
-			} else if(type == BYTE) {
+			} else if (type == BYTE) {
 				values.add(in.readByte());
-			} else if(type == FLOAT) {
+			} else if (type == FLOAT) {
 				values.add(in.readFloat());
-			} else if(type == DOUBLE) {
+			} else if (type == DOUBLE) {
 				values.add(in.readDouble());
 			} else if (type == OBJECT) {
 				int len = in.readInt();
@@ -177,10 +177,10 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 										  new ByteArrayInputStream(obytes));
 				
 				try {
-					values.add((Comparable)oin.readObject());
+					values.add((Comparable) oin.readObject());
 				} catch (ClassNotFoundException e) {
 					throw new IOException("Couldn't deserialize object in column " + i +
-										  " of tuple (partial value is: " + toString() + ")", e);
+										  " of tuple (partial value is: " + toString() + ")");
 				}
 			} else {
 				throw new IOException("Can't read type " + type + ".");

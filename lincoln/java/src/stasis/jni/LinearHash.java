@@ -54,12 +54,11 @@ public class LinearHash {
 	public Iterator<byte[][]> tuples() {
 		return new Iterator<byte[][]>() {
 			Iterator<byte[]> it = tbl.keySet().iterator();
-			@Override
+
 			public boolean hasNext() {
 				return it.hasNext();
 			}
 
-			@Override
 			public byte[][] next() {
 				byte[] ret = it.next();
 				if(ret == null) { return null; }
@@ -69,7 +68,6 @@ public class LinearHash {
 				return retarray;
 			}
 
-			@Override
 			public void remove() {
 				it.remove();
 			}

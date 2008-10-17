@@ -33,23 +33,20 @@ public class StasisIndex extends Index {
 	public Iterator<Tuple> iterator() {
 		return new Iterator<Tuple>() {
 			Iterator<Tuple> ks = idx.keySet().iterator();
-			@Override
+
 			public boolean hasNext() {
 				return ks.hasNext();
 			}
 
-			@Override
 			public Tuple next() {
 				Tuple next = ks.next();
 				if(next == null) return null;
 				return key.reconstruct(next, idx.get(next));
 			}
 
-			@Override
 			public void remove() {
 				ks.remove();
-			}
-		
+			}		
 		};
 	}
 

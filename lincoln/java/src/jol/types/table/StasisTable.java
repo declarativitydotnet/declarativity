@@ -127,12 +127,10 @@ public class StasisTable extends Table {
 		return new Iterator<Tuple>() {
 			Iterator<byte[][]> it = tbl.tuples();
 
-			@Override
 			public boolean hasNext() {
 				return it.hasNext();
 			}
 
-			@Override
 			public Tuple next() {
 				byte[][] o = it.next();
 				try {
@@ -146,7 +144,6 @@ public class StasisTable extends Table {
 				}
 			}
 
-			@Override
 			public void remove() {
 				it.remove();
 			}
