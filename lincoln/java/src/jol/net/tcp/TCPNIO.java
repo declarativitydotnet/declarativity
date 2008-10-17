@@ -6,12 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -155,7 +150,7 @@ public class TCPNIO extends Server {
 		}
 	}
 	
-	private void register(Connection connection) throws ClosedChannelException {
+	private void register(Connection connection) {
 		synchronized (newConnections) {
 			newConnections.add(connection);
 			this.selector.wakeup();

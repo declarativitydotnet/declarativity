@@ -14,7 +14,8 @@ import jol.types.basic.Tuple;
  * to create an index (primary or secondary) of a table.
  */
 public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
-	
+	private static final long serialVersionUID = 1L;
+
 	/** List of integers that refer to the key attribute positions */
 	private List<Integer> attributes;
 

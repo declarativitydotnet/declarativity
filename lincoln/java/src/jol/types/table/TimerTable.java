@@ -9,7 +9,6 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
-import jol.types.table.Table.Type;
 
 /**
  * The TimerTable.
