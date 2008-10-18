@@ -4,12 +4,13 @@
     An Ant build file for the Java Overlog Library (JOL) implementation.
   </description>
 
-  <property name="src" location="src"/>
   <property name="build" location="ant-build"/>
-  <property name="doc" location="doc"/>
   <property name="dist"  location="ant-dist"/>
+  <property name="doc" location="doc"/>
   <property name="lib" location="lib"/>
   <property name="parser-dir" location="${src}/jol/lang/parse"/>
+  <property name="src" location="src"/>
+  <property name="test" location="test"/>
 
   <target name="init">
     <tstamp/>
@@ -36,7 +37,17 @@
   </target>
 
   <target name="compile" depends="init,rats" description="compile the source">
-    <javac srcdir="${src}" classpath="${lib}/xtc.jar" destdir="${build}" debug="yes"/>
+    <javac destdir="${build}" debug="yes">
+      <classpath>
+        <pathelement location="${lib}/xtc.jar"/>
+        <pathelement location="${lib}/junit.jar"/>
+      </classpath>
+
+      <src>
+        <pathelement location="${src}"/>
+        <pathelement location="${test}"/>
+      </src>
+    </javac>
   </target>
 
   <target name="dist" depends="compile" description="generate a JAR file">
@@ -68,6 +79,22 @@
   <target name="doc" description="generate Javadoc documentation">
     <javadoc destdir="${doc}" sourcepath="${src}" classpath="${lib}/xtc.jar">
     </javadoc>
+  </target>
+
+  <target name="test" description="run JUnit tests">
+    <junit printsummary="yes">
+      <classpath>
+        <pathelement location="${lib}/junit.jar"/>
+      </classpath>
+
+      <formatter type="plain"/>
+
+      <batchtest>
+        <fileset dir="${test}">
+          <include name="**/*Test.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
   </target>
 
   <target name="clean" description="clean up">
