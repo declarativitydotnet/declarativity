@@ -133,6 +133,12 @@ public class Driver implements Runnable {
 				if (insertions == null) insertions = new TupleSet(name);
 				if (deletions == null)  deletions = new TupleSet(name);
 				
+				if (time < context.clock().current()) {
+					java.lang.System.err.println("ERROR: Evaluating schedule tuple with time = " + 
+							                      time + " < current clock " + context.clock().current() +
+							                      ": PROGRAM " + program + " TUPLE NAME " + name);
+				}
+				
 				if (insertions.size() == 0 && deletions.size() == 0) {
 					continue;
 				}
@@ -459,19 +465,20 @@ public class Driver implements Runnable {
 	 * 	}
 	 */
 	public void run() {
-		TupleSet time = clock.time(0L);
+		long clockValue = 0L;
 		while (true) {
 			synchronized (this) {
 				try {
+					TupleSet time = clock.time(clockValue);
 					java.lang.System.err.println("============================     EVALUATE SCHEDULE     =============================");
-					evaluate(runtime.name(), time.name(), time, null); // Clock insert current
+					evaluate(clockValue, runtime.name(), time.name(), time, null); // Clock insert current
 					
 					/* Evaluate task queue. */
 					for (Task task : tasks) {
-						evaluate(task.program(), task.name(), task.insertions(), task.deletions());
+						evaluate(clockValue, task.program(), task.name(), task.insertions(), task.deletions());
 					}
 					tasks.clear(); // Clear task queue.
-					evaluate(runtime.name(), time.name(), null, time); // Clock delete current
+					evaluate(clockValue, runtime.name(), time.name(), null, time); // Clock delete current
 					java.lang.System.err.println("============================ ========================== =============================");
 				} catch (UpdateException e) {
 					e.printStackTrace();
@@ -485,10 +492,10 @@ public class Driver implements Runnable {
 					} catch (InterruptedException e) { }
 				}
 				if (schedule.cardinality() > 0) {
-					time = clock.time(schedule.min());
+					clockValue = schedule.min();
 				}
 				else {
-					time = clock.time(clock.current() + 1);
+					clockValue = clockValue + 1;
 				}
 			}
 		}
@@ -497,17 +504,22 @@ public class Driver implements Runnable {
 	/**
 	 * Helper function that calls the flusher and evaluator table functions.
 	 * This function will evaluate the passed in tuples to fixedpoint (until
-	 * no further tuples exist to evaluate).
-	 * @param program The program that should be executed.
+	 * no further tuples exist to evaluate). The program that this routine 
+	 * drivers should only be the runtime.
+	 * @param program The program that should be executed (only runtime).
 	 * @param name The table name to which the tuples refer.
 	 * @param insertions The set of insertions to evaluate.
 	 * @param deletions The set of deletions to evaluate.
 	 * @throws UpdateException
 	 */
-	private void evaluate(String program, TableName name, TupleSet insertions, TupleSet deletions) throws UpdateException {
+	private void evaluate(Long time, String program, TableName name, TupleSet insertions, TupleSet deletions) throws UpdateException {
+		if (!program.equals(runtime.name())) {
+			throw new UpdateException("ERROR: routine only used for evaluating the " + runtime.name() + " program");
+		}
+		
 		TupleSet insert = new TupleSet();
 		TupleSet delete = new TupleSet();
-		insert.add(new Tuple(clock.current(), program, name, insertions, deletions)); 
+		insert.add(new Tuple(time, program, name, insertions, deletions)); 
 		/* Evaluate until nothing remains. */
 		while (insert.size() > 0 || delete.size() > 0) {
 			TupleSet delta = null;
