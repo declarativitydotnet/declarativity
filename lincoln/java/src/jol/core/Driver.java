@@ -136,6 +136,7 @@ public class Driver implements Runnable {
 				if (insertions.size() == 0 && deletions.size() == 0) {
 					continue;
 				}
+
 				
 				WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
 				Table table = context.catalog().table(name);
@@ -150,15 +151,18 @@ public class Driver implements Runnable {
 						}
 					}
 				}
-				else { 
-					if (table.type() != Table.Type.TABLE) return new TupleSet(name);
+				else if (deletions.size() > 0) { 
+					if (table.type() != Table.Type.TABLE) {
+						deletions.clear();
+					}
+					else {
+						deletions = table.delete(deletions);
 					
-					deletions = table.delete(deletions);
-					
-					Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
-					if (watchRemove != null) {
-						try { watchRemove.evaluate(deletions);
-						} catch (P2RuntimeException e) { }
+						Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
+						if (watchRemove != null) {
+							try { watchRemove.evaluate(deletions);
+							} catch (P2RuntimeException e) { }
+						}
 					}
 				}
 				
@@ -262,69 +266,71 @@ public class Driver implements Runnable {
 			Operator watchDelete = watch.watched(program.name(), name, Watch.Modifier.DELETE);
 
 			Set<Query> querySet = program.queries(name);
-			if (querySet == null) {
-				return new TupleSet(name); // Done
-			}
-			
 			if (insertions.size() > 0) {
-				/* We're not going to deal with the deletions yet. */
-				continuation(continuations, time, program.name(), Predicate.Event.DELETE, deletions);
+				if (deletions.size() > 0) {
+					/* We're not going to deal with the deletions yet. */
+					continuation(continuations, time, program.name(), Predicate.Event.DELETE, deletions);
+				}
 
-				for (Query query : querySet) {
-					if (query.event() != Predicate.Event.DELETE) {
-						if (watchInsert != null) {
-							try { watchInsert.rule(query.rule()); watchInsert.evaluate(insertions);
-							} catch (P2RuntimeException e) { 
-								java.lang.System.err.println("WATCH INSERTION FAILURE ON " + name + "!");
+				if (querySet != null) {
+					for (Query query : querySet) {
+						if (query.event() != Predicate.Event.DELETE) {
+							if (watchInsert != null) {
+								try { watchInsert.rule(query.rule()); watchInsert.evaluate(insertions);
+								} catch (P2RuntimeException e) { 
+									java.lang.System.err.println("WATCH INSERTION FAILURE ON " + name + "!");
+								}
 							}
-						}
-						
-						TupleSet result = null;
-						try {
-							result = query.evaluate(insertions);
-							if (result.size() == 0) continue;
-						} catch (P2RuntimeException e) {
-							e.printStackTrace();
-							java.lang.System.exit(0);
-						}
 
-						if (query.isDelete()) {
-							continuation(continuations, time, program.name(), Predicate.Event.DELETE, result);
-						}
-						else {
-							continuation(continuations, time, program.name(), Predicate.Event.INSERT, result);
+							TupleSet result = null;
+							try {
+								result = query.evaluate(insertions);
+								if (result.size() == 0) continue;
+							} catch (P2RuntimeException e) {
+								e.printStackTrace();
+								java.lang.System.exit(0);
+							}
+
+							if (query.isDelete()) {
+								continuation(continuations, time, program.name(), Predicate.Event.DELETE, result);
+							}
+							else {
+								continuation(continuations, time, program.name(), Predicate.Event.INSERT, result);
+							}
 						}
 					}
 				}
 			}
 			else if (deletions.size() > 0) {
-				for (Query query : querySet) {
-					Table output = context.catalog().table(query.output().name());
-					if (query.event() == Predicate.Event.DELETE ||
-							(output.type() == Table.Type.TABLE && query.event() != Predicate.Event.INSERT)) {
-						if (watchDelete != null) {
-							try { watchDelete.rule(query.rule()); watchDelete.evaluate(deletions);
-							} catch (P2RuntimeException e) { }
-						}
-						
-						TupleSet result = null;
-						try {
-							result = query.evaluate(deletions);
-							if (result.size() == 0) continue;
-						} catch (P2RuntimeException e) {
-							e.printStackTrace();
-							java.lang.System.exit(0);
-						}
-						
-						if (!query.isDelete() && output.type() == Table.Type.EVENT) {
-							/* Query is not a delete and it's output type is an event. */
-							continuation(continuations, time, program.name(), Predicate.Event.INSERT, result);
-						}
-						else if (output.type() == Table.Type.TABLE) {
-							continuation(continuations, time, program.name(), Predicate.Event.DELETE, result);
-						}
-						else {
-							throw new UpdateException("Query " + query + " is trying to delete from table " + output.name() + "?");
+				if (querySet != null) {
+					for (Query query : querySet) {
+						Table output = context.catalog().table(query.output().name());
+						if (query.event() == Predicate.Event.DELETE ||
+								(output.type() == Table.Type.TABLE && query.event() != Predicate.Event.INSERT)) {
+							if (watchDelete != null) {
+								try { watchDelete.rule(query.rule()); watchDelete.evaluate(deletions);
+								} catch (P2RuntimeException e) { }
+							}
+
+							TupleSet result = null;
+							try {
+								result = query.evaluate(deletions);
+								if (result.size() == 0) continue;
+							} catch (P2RuntimeException e) {
+								e.printStackTrace();
+								java.lang.System.exit(0);
+							}
+
+							if (!query.isDelete() && output.type() == Table.Type.EVENT) {
+								/* Query is not a delete and it's output type is an event. */
+								continuation(continuations, time, program.name(), Predicate.Event.INSERT, result);
+							}
+							else if (output.type() == Table.Type.TABLE) {
+								continuation(continuations, time, program.name(), Predicate.Event.DELETE, result);
+							}
+							else {
+								throw new UpdateException("Query " + query + " is trying to delete from table " + output.name() + "?");
+							}
 						}
 					}
 				}

@@ -378,7 +378,6 @@ public abstract class Table implements Comparable<Table> {
 				}
 			}
 		}
-		
 		return delta;
 	}
 	
