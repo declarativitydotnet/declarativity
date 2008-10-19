@@ -514,31 +514,46 @@ public class Driver implements Runnable {
 	 */
 	private void evaluate(Long time, String program, TableName name, TupleSet insertions, TupleSet deletions) throws UpdateException {
 		if (!program.equals(runtime.name())) {
-			throw new UpdateException("ERROR: routine only used for evaluating the " + runtime.name() + " program");
+			throw new UpdateException("ERROR: routine only used for evaluating the " + 
+					                  runtime.name() + " program");
 		}
 		
 		TupleSet insert = new TupleSet();
 		TupleSet delete = new TupleSet();
 		insert.add(new Tuple(time, program, name, insertions, deletions)); 
+		
 		/* Evaluate until nothing remains. */
 		while (insert.size() > 0 || delete.size() > 0) {
 			TupleSet delta = null;
 			while(insert.size() > 0) {
 				delta = flusher.insert(insert, null);
 				delta = evaluator.insert(delta, null);
-				insert.clear();
+				insert.clear(); // Clear out evaluated insertions
+				/* Split delta into sets of insertions and deletions */
 				split(delta, insert, delete);
 			}
 			
 			while(delete.size() > 0) {
 				delta = flusher.insert(delete, null);
 				delta = evaluator.insert(delta, null);
-				delete.clear();
+				delete.clear(); // Clear out evaluated deletions
+				/* Split delta into sets of insertions and deletions. 
+				 * NOTE: A rule that explicitly listens for a deletion event
+				 * will deduce insertion tuples if the rule is NOT a deletion rule. */
 				split(delta, insert, delete);
 			}
 		}
 	}
 	
+	/**
+	 * Helper routine for dividing insertion tuples and deletion tuples.
+	 * The evaluate routine will evaluate all insertion tuples before
+	 * deletion tuples, and keeping these things separate makes that
+	 * job easier.
+	 * @param tuples The tuples that should be divided up.
+	 * @param insertions Where the insertions will go.
+	 * @param deletions Where the deletions will go.
+	 */
 	private void split(TupleSet tuples, TupleSet insertions, TupleSet deletions) {
 		for (Tuple tuple : tuples) {
 			Tuple insert = tuple.clone();
