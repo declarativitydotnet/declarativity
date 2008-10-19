@@ -77,7 +77,7 @@ public class BasicTable extends Table {
 	}
 
 	@Override
-	public Integer cardinality() {
-		return this.tuples == null ? 0 : this.tuples.size();
+	public Long cardinality() {
+		return this.tuples == null ? 0 : (long)this.tuples.size();
 	}
 }

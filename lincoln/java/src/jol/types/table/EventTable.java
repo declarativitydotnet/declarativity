@@ -69,8 +69,8 @@ public class EventTable extends Table {
 
 	@Override
 	/** @return 0 */
-	public Integer cardinality() {
-		return 0;
+	public Long cardinality() {
+		return 0L;
 	}
 
 }

@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 
 import jol.core.Runtime;
+import jol.lang.plan.Variable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
@@ -29,7 +30,7 @@ public abstract class StasisTable extends Table {
     	serializer = s;
     }
     
-    private static  byte[] toBytes(Object o) {
+    protected static  byte[] toBytes(Object o) {
 		appendObject(o);
 		return objectBytes();
 	}
@@ -115,17 +116,20 @@ public abstract class StasisTable extends Table {
 		};
 	}
 
-	private static TableName CATALOG_NAME = new TableName("Stasis", "Catalog");
-	private static Key CATALOG_KEY = new Key(0);
-	private static TypeList CATALOG_COLTYPES = new TypeList(new Class[] { String.class, Long.class, Long.class} );
+	protected static TableName CATALOG_NAME = new TableName("Stasis", "Catalog");
+	protected static Key CATALOG_KEY = new Key(0);
+	protected static TypeList CATALOG_COLTYPES = new TypeList(new Class[] { String.class, Long.class, Long.class} );
+	protected static Tuple CATALOG_SCHEMA;
 	protected static byte[] CATALOG_SCHEMA_BYTES;
 	protected static byte[] CATALOG_NAME_BYTES; 
 	private static Runtime runtime;
 	
 	static { 
-		appendObject(CATALOG_KEY);
-		appendObject(CATALOG_COLTYPES);
-		CATALOG_SCHEMA_BYTES = objectBytes();
+		CATALOG_SCHEMA.append(new Variable("Page", Long.class), new Long(1));
+		CATALOG_SCHEMA.append(new Variable("Slot", Long.class), new Long(1));
+		CATALOG_SCHEMA.append(new Variable("Key", Key.class), CATALOG_KEY);
+		CATALOG_SCHEMA.append(new Variable("Types", TypeList.class), CATALOG_COLTYPES);
+		CATALOG_SCHEMA_BYTES = toBytes(CATALOG_SCHEMA);
 		CATALOG_NAME_BYTES = toBytes(CATALOG_NAME);
 	}
 	
@@ -200,7 +204,7 @@ public abstract class StasisTable extends Table {
 		StasisTable.runtime = runtime;
 	}
 
-	public abstract Integer cardinality();
+	public abstract Long cardinality();
     protected abstract boolean remove(byte[] keybytes, byte[] valbytes) throws UpdateException;
 	protected abstract boolean add(byte[] keybytes, byte[] valbytes) throws UpdateException;
 	protected abstract byte[] lookup(byte[] keybytes);

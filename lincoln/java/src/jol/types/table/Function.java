@@ -63,8 +63,8 @@ public abstract class Function extends Table {
 	}
 	
 	@Override
-	public Integer cardinality() {
-		return 0;
+	public Long cardinality() {
+		return 0L;
 	}
 
 }

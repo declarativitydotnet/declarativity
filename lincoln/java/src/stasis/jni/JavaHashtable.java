@@ -6,7 +6,6 @@ import java.util.Iterator;
 
 import jol.core.Runtime;
 import jol.types.basic.TypeList;
-import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 
 import jol.types.table.Key;
@@ -65,8 +64,8 @@ public class JavaHashtable extends StasisTable {
 		return oldvalbytes == null;
 	}
 
-	public Integer cardinality() {
-		return tbl.size();
+	public Long cardinality() {
+		return (long)tbl.size();
 	}
 
 	public Iterator<byte[][]> tupleBytes() {

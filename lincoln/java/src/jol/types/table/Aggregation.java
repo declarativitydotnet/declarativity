@@ -219,8 +219,8 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 
 
 	@Override
-	public Integer cardinality() {
-		return this.aggregateTuples.size();
+	public Long cardinality() {
+		return (long)this.aggregateTuples.size();
 	}
 
 	@Override

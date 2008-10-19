@@ -107,7 +107,7 @@ public class TimerTable extends Table {
 	}
 
 	@Override
-	public Integer cardinality() { return 1; }
+	public Long cardinality() { return 1L; }
 
 	@Override
 	protected boolean delete(Tuple t) throws UpdateException {

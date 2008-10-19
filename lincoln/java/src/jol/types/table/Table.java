@@ -248,7 +248,7 @@ public abstract class Table implements Comparable<Table> {
 	 * The number of tuples stored in this table.
 	 * @return Number of stored tuples.
 	 */
-	public abstract Integer cardinality();
+	public abstract Long cardinality();
 	
 	/**
 	 * The table type.

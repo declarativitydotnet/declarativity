@@ -102,8 +102,8 @@ public class RefTable extends Table {
 	}
 
 	@Override
-	public Integer cardinality() {
-		return this.tuples.size();
+	public Long cardinality() {
+		return (long)this.tuples.size();
 	}
 
 }
