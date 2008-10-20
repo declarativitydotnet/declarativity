@@ -6,14 +6,12 @@ import java.lang.System;
 
 // z = heartbeat timer = 3secs
 timer(zTimer,2000,2000);
-// c = check timer = 10secs
-//timer(cTimer,0,10000);
 
-define(alive,keys(0),{String});
+define(alive,keys(0),{String,Integer});
 define(parliament,keys(0,1),{String,String});
 define(threshold,keys(0),{Long});
 
-// 12 seconds: very generous
+// very generous
 threshold(9L);
 
 define(heartbeat,{String,String});
@@ -46,10 +44,18 @@ beatLog(Me,Him,Time) :-
 
 
 // the next two rules are synchronized on the cTimer
+define(round,keys(0),{Integer});
+watch(round,ae);
+round(0) :- periodic(Id,1L,1L,1L);
+round(R+1) :-
+  round(R),
+  alive#insert(Him,R);
+  
 
-alive(Him) :- 
+alive(Him,Round) :- 
   beatLog(Me,Him,Time),
   zTimer(_,_,_),
+  round(Round),
   threshold(Thresh),
   Now := new Long(System.currentTimeMillis()),
   (Now - Time) < Thresh;
@@ -61,6 +67,7 @@ beatLog(Me,Him,Time) :-
   Now := new Long(System.currentTimeMillis()),
   beatLog(Me,Him,Time),
   (Now - Time) > 10000L; // 10 secs: soft state: NOT a critical parameter as long as it is high enough.
+
 
 
 

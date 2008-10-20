@@ -79,10 +79,10 @@ storedDecreeRequest(A,B,C,Id) :- decreeRequest#insert(A,B,C), Id := Runtime.idge
 instance(Lord,I+1) :- instance(Lord,I), storedDecreeRequest#insert(Lord,B,C);
 	
 prepare(Priest,Ballot,Decree) :- 
-	decreeRequest#insert(Priest,Decree,From),
+	decreeRequest(Priest,Decree,From),
 	lastTried(Priest,Old),
 	// if we don't already have a quorum
-  instance(Priest,0),
+  //instance(Priest,0),
 	Ballot := Old + 1;
 	
 	/* a per-transaction timer that starts at zero when a transaction begins */
@@ -134,11 +134,14 @@ acceptRequest(Lord,OldB+1,Decree,OldB) :-
 	quorum(Lord,OldB);
 	*/
 
+/*
 acceptRequest(Lord,OldB,Decree,OldB) :-
-  decreeRequest(Lord,Decree,From,_),
+  decreeRequest(Lord,Decree,From),
+  quorum(Lord,OldB),
   instance(Lord,I),
   I > 0;
-	
+*/	
+
 sendBeginBallot(@Priest,Ballot,Decree,Lord) :- acceptRequest(@Lord,Ballot,Decree,Kind),
 	parliament(@Lord,Priest);
 	
