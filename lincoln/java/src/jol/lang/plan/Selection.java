@@ -43,7 +43,7 @@ public class Selection extends Term {
 		}
 	}
 	
-	private Boolean predicate;
+	private Boolean<?> predicate;
 	
 	public Selection(Boolean predicate) {
 		super();

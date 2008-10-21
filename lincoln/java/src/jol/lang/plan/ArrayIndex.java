@@ -9,11 +9,11 @@ import jol.types.function.TupleFunction;
 
 public class ArrayIndex extends Expression {
 	
-	private Expression array;
+	private Expression<Variable> array;
 	
 	private Integer index;
 	
-	public ArrayIndex(Expression array, Integer index) {
+	public ArrayIndex(Expression<Variable> array, Integer index) {
 		assert(array.type().isArray());
 		this.array = array;
 		this.index = index;

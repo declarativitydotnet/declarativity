@@ -4,7 +4,7 @@ import java.util.Set;
 
 import jol.types.function.TupleFunction;
 
-public abstract class Expression {
+public abstract class Expression<C> {
 	
 	private xtc.tree.Location location;
 	
@@ -32,10 +32,10 @@ public abstract class Expression {
 	/**
 	 * @return The java type of the expression value.
 	 */
-	public abstract Class type();
+	public abstract Class<C> type();
 	
 	public abstract Set<Variable> variables();
 	
-	public abstract TupleFunction function();
+	public abstract TupleFunction<C> function();
 	
 }

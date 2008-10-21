@@ -74,11 +74,11 @@ public class Range<C extends Comparable<C>> extends Expression {
 	
 	private Operator oper;
 	
-	private Expression begin;
+	private Expression<C> begin;
 	
-	private Expression end;
+	private Expression<C> end;
 
-	public Range(Operator oper, Expression begin, Expression end) {
+	public Range(Operator oper, Expression<C> begin, Expression<C> end) {
 		this.oper = oper;
 		this.begin = begin;
 		this.end = end;
@@ -114,8 +114,8 @@ public class Range<C extends Comparable<C>> extends Expression {
 	@Override
 	public TupleFunction function() {
 		return new TupleFunction() {
-			private final TupleFunction startFn = begin.function();
-			private final TupleFunction endFn   = end.function();
+			private final TupleFunction<C> startFn = begin.function();
+			private final TupleFunction<C> endFn   = end.function();
 
 			public Function evaluate(Tuple tuple) throws P2RuntimeException {
 				C start = (C)startFn.evaluate(tuple);

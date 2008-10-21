@@ -7,7 +7,7 @@ import jol.types.function.TupleFunction;
 
 public class UnknownReference extends Reference {
 
-	private Expression object;
+	private Expression<?> object;
 	
 	public UnknownReference(Expression object, Class type, String name) {
 		super(type, name);

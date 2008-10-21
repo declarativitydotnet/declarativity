@@ -4,13 +4,13 @@ import java.util.Set;
 
 import jol.types.function.TupleFunction;
 
-public class Cast extends Expression {
+public class Cast<C> extends Expression {
 
-	private Class type;
+	private Class<C> type;
 	
-	private Expression expression;
+	private Expression<?> expression;
 	
-	public Cast(Class type, Expression expression) {
+	public Cast(Class<C> type, Expression expression) {
 		this.type = type;
 		this.expression = expression;
 	}
@@ -26,7 +26,7 @@ public class Cast extends Expression {
 	}
 
 	@Override
-	public Class type() {
+	public Class<C> type() {
 		return type;
 	}
 
@@ -35,7 +35,7 @@ public class Cast extends Expression {
 		return this.expression.variables();
 	}
 	
-	public Expression expression() {
+	public Expression<?> expression() {
 		return this.expression;
 	}
 

@@ -1,6 +1,6 @@
 package jol.lang.plan;
 
-public class Null extends Value {
+public class Null extends Value<Object> {
 	
 	public Null() {
 		super(null);

@@ -140,7 +140,7 @@ public final class TypeChecker extends Visitor {
 	 * @param x the first type
 	 * @param y the second type
 	 */
-	private Class lub(final Class x, final Class y) {
+	private Class<?> lub(final Class<?> x, final Class<?> y) {
 		if (x == y) {
 			return x;
 		}
@@ -159,7 +159,7 @@ public final class TypeChecker extends Visitor {
 		}
 	}
 	
-	private boolean subtype(Class superType, Class subType) {
+	private boolean subtype(Class<?> superType, Class<?> subType) {
 		if (subType == null) return true;
 		
 		if (type(superType.getSimpleName()) != null) superType = type(superType.getSimpleName()); 
@@ -187,7 +187,7 @@ public final class TypeChecker extends Visitor {
 
 	// =========================================================================
 
-	private jol.lang.plan.Boolean ensureBooleanValue(Expression expr) {
+	private jol.lang.plan.Boolean<?> ensureBooleanValue(Expression expr) {
 		if (expr.type() == null || expr.type() == Void.class) {
 			runtime.error("Can't ensure boolean value from void class");
 			return null; // Can't do it for void expression type
@@ -518,7 +518,7 @@ public final class TypeChecker extends Visitor {
 				return Error.class;
 			}
 			assert(type == List.class);
-			body = (List<Term>) n.getNode(4).getProperty(Constants.TYPE);
+			body = (List) n.getNode(4).getProperty(Constants.TYPE);
 			
 			Term event = null;
 			for (Term t : body) {
@@ -628,8 +628,8 @@ public final class TypeChecker extends Visitor {
 					}
 				}
 				else {
-					Class headType = (Class) table.current().lookupLocally(var.name());
-					Class bodyType = (Class) table.current().getParent().lookupLocally(var.name());
+					Class<?> headType = (Class) table.current().lookupLocally(var.name());
+					Class<?> bodyType = (Class) table.current().getParent().lookupLocally(var.name());
 					if (bodyType == null) {
 						for (Iterator<String> name = table.current().getParent().symbols(); name.hasNext(); )
 							System.err.println(name.next());
@@ -798,7 +798,7 @@ public final class TypeChecker extends Visitor {
 		
 		/* Type check each tuple argument according to the schema. */
 		for (int index = 0; index < schema.size(); index++) {
-			Expression param = parameters.size() <= index ? 
+			Expression<?> param = parameters.size() <= index ? 
 					new DontCare(schema.get(index)) : parameters.get(index);
 			Class paramType = param.type();
 			
@@ -851,8 +851,8 @@ public final class TypeChecker extends Visitor {
 						Number.class.isAssignableFrom(param.type())) {
 					Number number = (Number) ((Value)param).value();
 					try {
-						Constructor<Number> cons = schema.get(index).getConstructor(String.class);
-						param = new Value<Number>(cons.newInstance(number.toString())); 
+						Constructor<?> cons = ((Class<?>)schema.get(index)).getConstructor(String.class);
+						param = new Value<Number>((Number)cons.newInstance(number.toString())); 
 					} catch (Exception e) {
 						e.printStackTrace();
 						return Error.class;
@@ -1014,7 +1014,7 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, 
-			new jol.lang.plan.Boolean(jol.lang.plan.Boolean.OR, 
+			new jol.lang.plan.Boolean<java.lang.Boolean>(jol.lang.plan.Boolean.OR, 
 					ensureBooleanValue(lhs), 
 					ensureBooleanValue(rhs)));
 		return jol.lang.plan.Boolean.class;

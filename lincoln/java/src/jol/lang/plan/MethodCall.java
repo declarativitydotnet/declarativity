@@ -13,7 +13,7 @@ import jol.types.function.TupleFunction;
 
 public class MethodCall extends Expression {
 	
-	private Expression object;
+	private Expression<?> object;
 	
 	private Method method;
 	
@@ -59,7 +59,7 @@ public class MethodCall extends Expression {
 	public Set<Variable> variables() {
 		Set<Variable> variables = new HashSet<Variable>();
 		variables.addAll(object.variables());
-		for (Expression arg : arguments) {
+		for (Expression<?> arg : arguments) {
 			variables.addAll(arg.variables());
 		}
 		return variables;

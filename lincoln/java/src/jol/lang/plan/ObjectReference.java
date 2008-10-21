@@ -9,11 +9,11 @@ import jol.types.function.TupleFunction;
 
 public class ObjectReference extends Reference {
 	
-	private Expression object;
+	private Expression<Object> object;
 	
 	private Field field;
 	
-	public ObjectReference(Expression object, Field field) {
+	public ObjectReference(Expression<Object> object, Field field) {
 		super(field.isEnumConstant() ? Enum.class : field.getType(), 
 			  object.toString() + "." + field.getName());
 		this.object = object;

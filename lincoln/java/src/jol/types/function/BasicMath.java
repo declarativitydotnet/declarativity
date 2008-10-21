@@ -52,7 +52,7 @@ public class BasicMath {
 		return null;
 	}
 
-	public static class DoubleEval implements TupleFunction {
+	public static class DoubleEval implements TupleFunction<java.lang.Double> {
 		private Operator oper;
 		private TupleFunction lhs;
 		private TupleFunction rhs;
@@ -63,7 +63,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws P2RuntimeException {
+		public java.lang.Double evaluate(Tuple tuple) throws P2RuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {

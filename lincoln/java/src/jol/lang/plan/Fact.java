@@ -72,9 +72,9 @@ public class Fact extends Clause {
 	public void set(Runtime context, String program) throws UpdateException {
 		List<Comparable> values = new ArrayList<Comparable>();
 		for (Expression argument : this.arguments) {
-			TupleFunction<Comparable> function = argument.function();
+			TupleFunction function = argument.function();
 			try {
-				values.add(function.evaluate(null));
+				values.add((Comparable)function.evaluate(null));
 			} catch (P2RuntimeException e) {
 				e.printStackTrace();
 				throw new UpdateException(e.toString());

@@ -60,7 +60,7 @@ public class Schema {
 	 */
 	private Schema(Schema schema) {
 		this.name = schema.name;
-		this.variables = (Hashtable) schema.variables.clone();
+		this.variables = new Hashtable<String, Variable>(schema.variables);
 	}
 	
 	@Override

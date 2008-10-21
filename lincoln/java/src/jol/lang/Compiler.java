@@ -220,9 +220,9 @@ public class Compiler {
 					return;
 				try {
 					if (clause.getName().equals("Watch")) {
-						List<Watch> watches = (List<Watch>) clause.getProperty(Constants.TYPE);
-						for (Watch watch : watches) {
-							watch.set(context, this.program.name());
+						List watches = (List) clause.getProperty(Constants.TYPE);
+						for (Object watch : watches) {
+							((Watch)watch).set(context, this.program.name());
 						}
 					} else {
 						Clause c = (Clause) clause.getProperty(Constants.TYPE);

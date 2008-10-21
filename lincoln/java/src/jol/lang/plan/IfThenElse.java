@@ -11,11 +11,11 @@ public class IfThenElse extends Expression {
 	
 	private Class type;
 	
-	private Boolean ifexpr;
+	private Boolean<?> ifexpr;
 	
-	private Expression thenexpr;
+	private Expression<?> thenexpr;
 	
-	private Expression elseexpr;
+	private Expression<?> elseexpr;
 
 	public IfThenElse(Class type, Boolean ifexpr, Expression thenexpr, Expression elseexpr) {
 		this.type = type;

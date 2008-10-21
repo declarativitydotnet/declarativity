@@ -43,7 +43,7 @@ public class NewClass extends Expression {
 	@Override
 	public Set<Variable> variables() {
 		Set<Variable> variables = new HashSet<Variable>();
-		for (Expression arg : arguments) {
+		for (Expression<?> arg : arguments) {
 			variables.addAll(arg.variables());
 		}
 		return variables;

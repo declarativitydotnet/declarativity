@@ -8,7 +8,7 @@ public class Arguments extends ArrayList<Expression> implements Comparable<Argum
 
 	private Predicate predicate;
 	
-	public Arguments(Predicate predicate, List<Expression> arguments) {
+	public Arguments(Predicate predicate, List<? extends Expression> arguments) {
 		super(arguments.size());
 		this.predicate = predicate;
 		addAll(arguments);

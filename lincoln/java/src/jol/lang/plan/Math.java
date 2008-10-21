@@ -7,7 +7,7 @@ import jol.types.function.BasicMath;
 import jol.types.function.TupleFunction;
 
 
-public class Math extends Expression {
+public class Math<N extends java.lang.Number> extends Expression<N> {
 	
 	public final static String ADD    = "+";
 	public final static String INC    = "++";
@@ -24,18 +24,18 @@ public class Math extends Expression {
 	
 	private String oper;
 	
-	private Expression lhs;
+	private Expression<N> lhs;
 	
-	private Expression rhs;
+	private Expression<N> rhs;
 	
-	public Math(String oper, Expression lhs, Expression rhs) {
+	public Math(String oper, Expression<N> lhs, Expression<N> rhs) {
 		this.oper = oper;
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}
 
 	@Override
-	public Class type() {
+	public Class<N> type() {
 		return lhs.type();
 	}
 	
@@ -55,7 +55,7 @@ public class Math extends Expression {
 	}
 
 	@Override
-	public TupleFunction function() {
+	public TupleFunction<N> function() {
 		return BasicMath.function(oper, lhs.function(), rhs.function());
 	}
 }

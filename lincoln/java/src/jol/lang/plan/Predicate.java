@@ -83,7 +83,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.name = name;
 		this.event = event;
 		this.schema = schema;
-		this.arguments = new Arguments(this, (List) schema.variables());
+		this.arguments = new Arguments(this, schema.variables());
 	}
 	
 	protected Predicate(Predicate pred) {
@@ -165,7 +165,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	@Override
 	public Set<Variable> requires() {
 		Set<Variable> variables = new HashSet<Variable>();
-		for (Expression arg : arguments) {
+		for (Expression<?> arg : arguments) {
 			if (!(arg instanceof Variable)) {
 				variables.addAll(arg.variables());
 			}

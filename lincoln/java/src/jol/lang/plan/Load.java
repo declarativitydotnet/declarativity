@@ -62,7 +62,7 @@ public class Load extends Clause {
 		return new Tuple(attributes);
 	}
 	
-	private Comparable value(Class type, String value) throws UpdateException {
+	private Comparable value(Class<?> type, String value) throws UpdateException {
 		if (type == String.class) {
 			return value.equals("null") ? null : value.trim();
 		}
