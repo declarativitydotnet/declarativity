@@ -56,11 +56,11 @@ public class Boolean extends Expression {
 	@Override
 	public TupleFunction<java.lang.Boolean> function() {
 		if (this.oper.equals(AND)) {
-			return new TupleFunction() {
-				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
-				private final TupleFunction<java.lang.Boolean> right = rhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
+				private final TupleFunction right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
-					return left.evaluate(tuple) && right.evaluate(tuple);
+					return (java.lang.Boolean)left.evaluate(tuple) && (java.lang.Boolean)right.evaluate(tuple);
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -69,11 +69,11 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(OR)) {
-			return new TupleFunction() {
-				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
-				private final TupleFunction<java.lang.Boolean> right = rhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
+				private final TupleFunction right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
-					return left.evaluate(tuple) || right.evaluate(tuple);
+					return (java.lang.Boolean)left.evaluate(tuple) || (java.lang.Boolean)right.evaluate(tuple);
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -82,10 +82,10 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(NOT)) {
-			return new TupleFunction() {
-				private final TupleFunction<java.lang.Boolean> left  = lhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
-					return !left.evaluate(tuple);
+					return !(java.lang.Boolean)left.evaluate(tuple);
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -94,13 +94,13 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(EQUAL)) {
-			return new TupleFunction() {
-				private final TupleFunction<Comparable> left  = lhs.function();
-				private final TupleFunction<Comparable> right = rhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
+				private final TupleFunction right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
 					/* Evaluate only once!! */
-					Comparable l = left.evaluate(tuple); 
-					Comparable r = right.evaluate(tuple);
+					Comparable l = (Comparable)left.evaluate(tuple); 
+					Comparable r = (Comparable)right.evaluate(tuple);
 					if (l == null || r == null) return l == r;
 					else return l.compareTo(r) == 0;
 				}
@@ -111,13 +111,13 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(NEQUAL)) {
-			return new TupleFunction() {
-				private final TupleFunction<Comparable> left  = lhs.function();
-				private final TupleFunction<Comparable> right = rhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
+				private final TupleFunction right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
 					/* Evaluate only once!! */
-					Comparable l = left.evaluate(tuple);
-					Comparable r = right.evaluate(tuple);
+					Comparable l = (Comparable)left.evaluate(tuple);
+					Comparable r = (Comparable)right.evaluate(tuple);
 					if (l == null || r == null) return l != r;
 					else return l.compareTo(r) != 0;
 				}
@@ -128,11 +128,11 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(LEQUAL)) {
-			return new TupleFunction() {
-				private final TupleFunction<Comparable> left  = lhs.function();
-				private final TupleFunction<Comparable> right = rhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
+				private final TupleFunction right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
-					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) <= 0;
+					return ((Comparable)left.evaluate(tuple)).compareTo((Comparable)right.evaluate(tuple)) <= 0;
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -141,11 +141,11 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(GEQUAL)) {
-			return new TupleFunction() {
-				private final TupleFunction<Comparable> left  = lhs.function();
-				private final TupleFunction<Comparable> right = rhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
+				private final TupleFunction right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
-					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) >= 0;
+					return ((Comparable)left.evaluate(tuple)).compareTo((Comparable)right.evaluate(tuple)) >= 0;
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -154,11 +154,11 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(LESS)) {
-			return new TupleFunction() {
-				private final TupleFunction<Comparable> left  = lhs.function();
-				private final TupleFunction<Comparable> right = rhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
+				private final TupleFunction right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
-					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) < 0;
+					return ((Comparable)left.evaluate(tuple)).compareTo((Comparable)right.evaluate(tuple)) < 0;
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -167,11 +167,11 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(GREATER)) {
-			return new TupleFunction() {
-				private final TupleFunction<Comparable> left  = lhs.function();
-				private final TupleFunction<Comparable> right = rhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
+				private final TupleFunction right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
-					return left.evaluate(tuple).compareTo(right.evaluate(tuple)) > 0;
+					return ((Comparable)left.evaluate(tuple)).compareTo((Comparable)right.evaluate(tuple)) > 0;
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -180,13 +180,13 @@ public class Boolean extends Expression {
 			};
 		}
 		else if (this.oper.equals(IN)) {
-			return new TupleFunction() {
-				private final TupleFunction<Comparable> left  = lhs.function();
+			return new TupleFunction<java.lang.Boolean>() {
+				private final TupleFunction left  = lhs.function();
 				private final Object right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws P2RuntimeException {
 					if (right instanceof TupleFunction) {
 						Range.Function range = (Range.Function) ((TupleFunction)right).evaluate(tuple);
-						return range.test(left.evaluate(tuple));
+						return range.test((Comparable)left.evaluate(tuple));
 					}
 					else {
 						Set set = (Set) right;
