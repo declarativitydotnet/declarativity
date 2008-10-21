@@ -11,9 +11,9 @@ define(stasisLink, keys(0,1), {String, String});
 define(stasisPath, keys(0,1,2), {String, String, Integer});
 define(stasisShortestPath, keys(0,1), {String, String, Integer});
 
-define(stasisAllPaths, {String, ValueList});
-define(stasisPathPrinter, {String, ValueList});
-define(stasisComputeAll, {String});
+define(allPaths, {String, ValueList});
+define(pathPrinter, {String, ValueList});
+define(computeAll, {String});
 
 /* Fire a time 10 seconds following program start time.
    The period is set to 0, which means I only want it to
@@ -34,7 +34,7 @@ stasisLink("8", "9");
 
 watch(stasisPath, ae);
 watch(stasisShortestPath, ae);
-watch(stasisAllPaths, r);
+watch(allPaths, r);
 
 watch(newlink, ra);
 
@@ -58,14 +58,14 @@ stasisShortestPath
 stasisShortestPath(Source, Destination, min<Hops>) :- 
 	stasisPath(Source, Destination, Hops);
 	
-stasisComputeAll(Source) :-
+computeAll(Source) :-
 	stasisShortestPath(Source, Destination, Hops);
 	
-stasisAllPaths(Source, generic<(new ValueList()).insert((Object)Destination)>) :-
-	stasisComputeAll(Bla),
+allPaths(Source, generic<(new ValueList()).insert((Object)Destination)>) :-
+	computeAll(Bla),
 	stasisPath(Source, Destination, Hops);
 	
-stasisPathPrinter(Source, Paths) :-
-	stasisAllPaths(Source, Paths);
+pathPrinter(Source, Paths) :-
+	allPaths(Source, Paths);
 
 delete stasisLink("2", "4") :- periodic(Id, 1L, 1L, 5L);
