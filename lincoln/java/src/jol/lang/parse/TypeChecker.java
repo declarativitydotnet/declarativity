@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import stasis.jni.JavaHashtable;
 import stasis.jni.LinearHashNTA;
 
 import jol.core.Periodic;
@@ -55,7 +54,6 @@ import jol.types.table.Aggregation;
 import jol.types.table.BasicTable;
 import jol.types.table.EventTable;
 import jol.types.table.Key;
-import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.TimerTable;

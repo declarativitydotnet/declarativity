@@ -1,7 +1,6 @@
 package jol.types.operator;
 
-import java.util.Iterator;
-
+import jol.core.Runtime;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
@@ -10,7 +9,6 @@ import jol.types.exception.BadKeyException;
 import jol.types.exception.P2RuntimeException;
 import jol.types.table.Index;
 import jol.types.table.Key;
-import jol.core.Runtime;
 
 /**
  * An index join uses an index to reduce the number of tuples
