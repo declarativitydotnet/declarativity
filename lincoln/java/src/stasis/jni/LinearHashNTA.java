@@ -1,13 +1,14 @@
 package stasis.jni;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 
 import jol.core.Runtime;
 import jol.lang.plan.Variable;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
+import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.StasisTable;
@@ -17,39 +18,50 @@ public class LinearHashNTA extends StasisTable {
 	static LinearHashNTA catalog = null;
 
     protected Tuple header;
-    private long page;
-    private long slot;
+    private long[] rootRid;
+    private long[] rid;
     
-	protected  void registerTable(long xid, byte[] name, byte[] schema, long page, long slot)
-		throws UpdateException {
-		catalog.add(name,schema);
-	}
-    protected byte[] registerTable(long xid, TableName name, long page, long slot, Key key, TypeList type) throws UpdateException {
+    protected Tuple registerTable(TableName name, Key key, TypeList type) throws UpdateException {
 		Tuple header = new Tuple();
-		header.append(new Variable("Page", Long.class), page);
-		header.append(new Variable("Slot", Long.class), slot);
+		header.append(new Variable("Page", Long.class), rid[0]);
+		header.append(new Variable("Slot", Long.class), rid[1]);
 		header.append(new Variable("Key", Key.class), key);
 		header.append(new Variable("Types", TypeList.class), attributeTypes);
-		try {
-			byte[] headerBytes = header.toBytes();
-			registerTable(xid, toBytes(name), headerBytes, 1, 1);
-			return headerBytes;
-		} catch(IOException e) { 
-			throw new IllegalStateException(e);
-		}
+			
+		Tuple nameTup = new Tuple();
+		nameTup.append(new Variable("Name", TableName.class),name);
+		
+		Tuple row = catalog.key().reconstruct(nameTup, header);
+		catalog.insert(row);
+		
+		return row;
+		
     }
-	
-    protected LinearHashNTA(Runtime context, long xid) throws UpdateException {
+    static boolean ranOnce = false;
+    protected LinearHashNTA(Runtime context) throws UpdateException {
 		super(context, CATALOG_NAME, CATALOG_KEY, CATALOG_COLTYPES);
-		long type = Stasis.record_type_read(xid, 1, 1);
+    	key = new Key(0);
+    	if(!ranOnce) {
+    		Stasis.init();
+    		ranOnce = true;
+    	}
+    	long xid = Stasis.begin();
+		rootRid = Stasis.root_record();
+		long type = Stasis.record_type(xid, rootRid);
 		if(type == -1) {
-			long[] ret = Stasis.hash_create(xid);
-			if(ret[0] != 1 || ret[1] != 1) {
+			rid = Stasis.hash_create(xid);
+			if(rid[0] != rootRid[0] || rid[1] != rootRid[1]) {
+				Stasis.abort(xid);
 				throw new IllegalStateException();
 			}
-			registerTable(xid, CATALOG_NAME_BYTES, CATALOG_SCHEMA_BYTES, 1, 1);
+		} else {
+			rid = new long[3];
+			rid[0] = rootRid[0];
+			rid[1] = rootRid[1];
+			rid[2] = 56L; // XXX hack!
 		}
 		header = CATALOG_SCHEMA;
+		Stasis.commit(xid);
 	}
     
 	public LinearHashNTA(Runtime context, TableName name, Key key,
@@ -57,110 +69,137 @@ public class LinearHashNTA extends StasisTable {
 		super(context, name, key, attributeTypes);
 
 		if(catalog == null) {
-			catalog = new LinearHashNTA(context, -1);  // open catalog based on recordid
+			catalog = new LinearHashNTA(context);  // open catalog based on recordid
+			catalog.registerTable(CATALOG_NAME, CATALOG_KEY, CATALOG_COLTYPES);
+		}
+		Tuple nametup = new Tuple();
+		nametup.append(new Variable("name", TableName.class),name);
+		TupleSet headerSet;
+		try {
+			headerSet = catalog.primary().lookupByKey(nametup);
+		} catch (BadKeyException e) {
+			throw new IllegalStateException(e);
 		}
 		
-		byte[] tableHeader = 
-			Stasis.hash_lookup(-1, 1, 1, toBytes(name));
-
-		if(tableHeader == null) {
-			long [] rid = Stasis.hash_create(-1);
-			tableHeader = registerTable(-1, name, rid[0], rid[1], key, attributeTypes);
-		} 
-		try {
-			header = new Tuple(tableHeader);
-			page = (Long)header.value(0);
-			slot = (Long)header.value(1);
-		} catch (IOException e) {
-			e.printStackTrace();
+		Tuple catalogEntry;
+		if(headerSet.isEmpty()) {
+			long xid = Stasis.begin();
+			rid = Stasis.hash_create(xid);
+			Stasis.commit(xid);
+			catalogEntry = registerTable(name, key, attributeTypes);
+		} else {
+			catalogEntry = headerSet.iterator().next();
+			rid = new long[3];
 		}
+		header = catalog.primary().key().projectValue(catalogEntry);
+		rid[0] = (Long)header.value(0);
+		rid[1] = (Long)header.value(1);
+		rid[2] = 56L; // XXX hack!
+
 	}
 
 	@Override
-	protected boolean add(byte[] keybytes, byte[] valbytes)
+	protected boolean add(byte[] keybytes, byte[] valbytes) 
+		throws UpdateException {
+		long xid = Stasis.begin();
+		boolean ret;
+		try {
+			ret = add(xid,keybytes, valbytes);
+		} catch(UpdateException e) {
+			Stasis.abort(xid);
+			throw e;
+		}
+		Stasis.commit(xid);
+		return ret;
+	}
+	protected boolean add(long xid, byte[] keybytes, byte[] valbytes)
 			throws UpdateException {
-		byte[] oldvalbytes = Stasis.hash_insert(-1, page, slot, keybytes, valbytes);
+		byte[] oldvalbytes = Stasis.hash_insert(xid, rid, keybytes, valbytes);
 		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
 			throw new UpdateException("primary key violation");
 		}
-		return oldvalbytes != null;
+		return oldvalbytes == null;
 	}
-
+	
 	@Override
 	public Long cardinality() {
-		return Stasis.hash_cardinality(-1, page, slot);
+		return Stasis.hash_cardinality(-1, rid);
 	}
 
 	@Override
 	protected boolean remove(byte[] keybytes, byte[] valbytes)
 			throws UpdateException {
-		byte[] oldvalbytes = Stasis.hash_remove(-1, page, slot, keybytes);
+		long xid = Stasis.begin();
+		byte[] oldvalbytes = Stasis.hash_remove(-1, rid, keybytes);
 		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
+			Stasis.abort(xid);
 			throw new UpdateException("primary key violation");
 		}
+		Stasis.commit(xid);
 		return oldvalbytes != null;
 	}
 
 	@Override
 	protected byte[] lookup(byte[] keybytes) {
-		return Stasis.hash_lookup(-1L, page, slot, keybytes);
+		return Stasis.hash_lookup(-1L, rid, keybytes);
 	}
 
 	@Override
 	protected Iterator<byte[][]> tupleBytes() {
+		final long xid = -1; // XXX 
 		return new Iterator<byte[][]>() {
-
-			private byte[] it = Stasis.hash_iterator(-1, page, slot);
+			private byte[] it = Stasis.hash_iterator(xid, rid);
 
 			private byte[][] current = new byte[2][];
 			private byte[][] next = new byte[2][];
 			
+			private boolean hadNext = true;
 			Iterator<byte[][]> init() {
-				boolean hadNext = Stasis.iterator_next(it);
+				hadNext = Stasis.iterator_next(xid, it);
 				if(hadNext) {
-					current[0] = Stasis.iterator_key(it);
-					current[1] = Stasis.iterator_value(it);
-					Stasis.iterator_tuple_done(it);
-					
-					hadNext = Stasis.iterator_next(it);
-					if(hadNext) {
-						next[0] = Stasis.iterator_key(it);
-						next[1] = Stasis.iterator_value(it);
-						Stasis.iterator_tuple_done(it);
-					}
+					next[0] = Stasis.iterator_key(xid,it);
+					next[1] = Stasis.iterator_value(xid, it);
+					Stasis.iterator_tuple_done(xid, it);
+					hadNext = Stasis.iterator_next(xid,it);
+				} else {
+					Stasis.iterator_close(xid, it);
 				}
 				return this;
 			}
 			
-			@Override
 			public boolean hasNext() {
-				return next[0] != null;
+				return hadNext;
 			}
 
-			@Override
 			public byte[][] next() {
-				if(next[0] == null) {
-					throw new IllegalStateException("next() called after end of iterator");
-				} else {
+				if(hadNext) {
 					current = next;
-					byte[][] next = new byte[2][];
-					boolean hadNext = Stasis.iterator_next(it);
+					next = new byte[2][];
+
+					hadNext = Stasis.iterator_next(xid,it);
 					if(hadNext) {
-						next[0] = Stasis.iterator_key(it);
-						next[1] = Stasis.iterator_value(it);
-						Stasis.iterator_tuple_done(it);
+						next[0] = Stasis.iterator_key(xid,it);
+						next[1] = Stasis.iterator_value(xid,it);
+						Stasis.iterator_tuple_done(xid,it);
+					} else {
+						Stasis.iterator_close(xid, it);
 					}
 					return current;
+				} else {
+					throw new IllegalStateException("next() called after end of iterator");
 				}
 			}
 
-			@Override
 			public void remove() {
 				throw new UnsupportedOperationException("No support for removal via table iterators yet...");
 			}
+
+			@Override
 			protected void finalize() throws Throwable {
 				try {
-					Stasis.iterator_close(it);
+					// XXX not in finalize!!
+					if(hadNext) 
+						Stasis.iterator_close(xid,it);
 				} finally {
 					super.finalize();
 				}

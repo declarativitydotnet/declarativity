@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import stasis.jni.JavaHashtable;
+import stasis.jni.LinearHashNTA;
 
 import jol.core.Periodic;
 import jol.lang.plan.Aggregate;
@@ -370,7 +371,14 @@ public final class TypeChecker extends Visitor {
 		TypeList schema  = (TypeList) n.getNode(2).getProperty(Constants.TYPE);
 		Table create;
 		if(name.name.startsWith("stasis")) {
-			create = new JavaHashtable(context, name, key, schema);
+			//create = new JavaHashtable(context, name, key, schema);
+			try {
+				create = new LinearHashNTA(context, name, key, schema);
+			} catch (UpdateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				create = null;
+			}
 		} else {
 			create = new BasicTable(context, name, key, schema);
 		}
