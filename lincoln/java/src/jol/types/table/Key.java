@@ -58,7 +58,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 		for (int i = 1; i < attributes.size(); i++) {
 			value += ", " + attributes.get(i).toString();
 		}
-		return value;
+		return "Key("+value+")";
 	}
 	
 	/**
@@ -103,7 +103,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 	public Tuple projectValue(Tuple tuple) {
 		List<Comparable> values = new ArrayList<Comparable>();
 		
-		for(int i = 0; i < attributes.size(); i++) {
+		for(int i = 0; i < tuple.size(); i++) {
 			if(!attributes.contains(i)) {
 				values.add(tuple.value(i));
 			}
