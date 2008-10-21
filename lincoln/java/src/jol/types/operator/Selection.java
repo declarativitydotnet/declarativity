@@ -46,7 +46,7 @@ public class Selection extends Operator {
 		for (Tuple tuple : tuples) {
 			if (java.lang.Boolean.TRUE.equals(filter.evaluate(tuple))) {
 				result.add(tuple);
-			}
+			} 
 		}
 		return result;
 	}

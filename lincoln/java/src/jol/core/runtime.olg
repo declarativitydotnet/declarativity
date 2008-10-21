@@ -59,7 +59,7 @@ evaluation(Time, Program, Name, Insertions, Deletions) :-
 publicEval
 execute(Time, Program2, Name, Insertions, null) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
-	query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
+	query(Program2, Rule, Public, Async, Delete, Event, Input, Output, Object),
 	Public == true && Input == Name, Program1 != Program2;
 
 /* Execute on the intended program. */

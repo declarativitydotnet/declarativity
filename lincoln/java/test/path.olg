@@ -49,7 +49,7 @@ init
 path(Source, Destination, 1) :- link(Source, Destination);
 
 /* Transitive closure over path, link. */
-trans
+transitive
 path(Source, Destination, Hops+1) :- 
 	path(Source, Intermediate, Hops), link(Intermediate, Destination);
 

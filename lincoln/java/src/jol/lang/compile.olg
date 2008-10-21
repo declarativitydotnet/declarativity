@@ -38,7 +38,7 @@ watch(checkStrata, i);
 /* Determine R/G graph dependencies. */
 dependency(ProgramName, Head.name(), Body.name()) :-
 	config(ProgramName, Object),
-	rule(ProgramName, Rule, _),
+	rule(ProgramName, Rule),
 	predicate(ProgramName, Rule, 0, _, Head), /* Position == 0 */
 	predicate(ProgramName, Rule, Pos, _, Body), 
 	Head.name() != Body.name(), Pos > 0,
@@ -54,7 +54,7 @@ dependency(ProgramName, Ancestor, Child) :-
 priority_init
 runtime::priority(ProgramName, Pred.name(), 0) :-
 	config(ProgramName, Object),
-	rule(ProgramName, Rule, _),
+	rule(ProgramName, Rule),
 	predicate(ProgramName, Rule, Pos, Event, Pred),
 	ProgramName != "compile";
 	
@@ -101,14 +101,14 @@ runtime::priority(Program, Pred, Priority) :-
 	runtime::priority(Program, Pred, Priority);	
 
 delete
-query(Program, Rule, Public, Delete, Event, Input, Output, Object) :-
+query(Program, Rule, Public, Async, Delete, Event, Input, Output, Object) :-
 	hardUninstall(Program),
-	query(Program, Rule, Public, Delete, Event, Input, Output, Object);
+	query(Program, Rule, Public, Async, Delete, Event, Input, Output, Object);
 	
 delete
-rule(Program, Rule, Public, Delete, Object) :-	
+rule(Program, Rule, Public, Async, Delete, Object) :-	
 	hardUninstall(Program),
-	rule(Program, Rule, Public, Delete, Object);
+	rule(Program, Rule, Public, Async, Delete, Object);
 	
 delete
 predicate(Program, Rule, Position, Event, Object) :-

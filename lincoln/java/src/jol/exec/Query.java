@@ -35,11 +35,12 @@ public abstract class Query implements Comparable<Query> {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "query");
 		public static final Key PRIMARY_KEY = new Key();
 		
-		public enum Field{PROGRAM, RULE, PUBLIC, DELETE, EVENT, INPUT, OUTPUT, OBJECT};
+		public enum Field{PROGRAM, RULE, PUBLIC, ASYNC, DELETE, EVENT, INPUT, OUTPUT, OBJECT};
 		public static final Class[] SCHEMA = {
 			String.class,     // Program name
 			String.class,     // Rule name
 			Boolean.class,    // Public query?
+			Boolean.class,    // Async query?
 			Boolean.class,    // Delete rule/query?
 			String.class,     // Event modifier
 			TableName.class,  // Input table name
@@ -63,6 +64,8 @@ public abstract class Query implements Comparable<Query> {
 	
 	private Boolean isPublic;
 	
+	private Boolean isAsync;
+	
 	private Boolean isDelete;
 	
 	private Predicate.Event event;
@@ -71,18 +74,20 @@ public abstract class Query implements Comparable<Query> {
 	
 	private Predicate output;
 	
-	public Query(Runtime context, String program, String rule, Boolean isPublic, Boolean isDelete, 
+	public Query(Runtime context, String program, String rule, 
+			     Boolean isPublic, Boolean isAsync, Boolean isDelete, 
 			     Predicate input, Predicate output) {
 		this.program = program;
 		this.rule = rule;
 		this.isPublic = isPublic;
+		this.isAsync = isAsync;
 		this.isDelete = isDelete;
 		this.event  = input.event();
 		this.input = input;
 		this.output = output;
 		try {
 			context.catalog().table(QueryTable.TABLENAME).force(
-					new Tuple(program, rule, isPublic, isDelete, 
+					new Tuple(program, rule, isPublic, isAsync, isDelete, 
 							  event.toString(), input.name(), output.name(), this));
 		} catch (UpdateException e) {
 			// TODO Auto-generated catch block
@@ -118,6 +123,10 @@ public abstract class Query implements Comparable<Query> {
 	
 	public boolean isDelete() {
 		return this.isDelete;
+	}
+	
+	public boolean isAsync() {
+		return this.isAsync;
 	}
 	
 	public boolean isPublic() {

@@ -14,9 +14,10 @@ import jol.core.Runtime;
 public class BasicQuery extends Query {
 	private List<Operator> body;
 
-	public BasicQuery(Runtime context, String program, String rule, Boolean isPublic, Boolean isDelete,
+	public BasicQuery(Runtime context, String program, String rule, 
+			          Boolean isPublic, Boolean isAsync, Boolean isDelete,
 					  Predicate event, Predicate head, List<Operator> body) {
-		super(context, program, rule, isPublic, isDelete, event, head);
+		super(context, program, rule, isPublic, isAsync, isDelete, event, head);
 		this.body = body;
 	}
 	

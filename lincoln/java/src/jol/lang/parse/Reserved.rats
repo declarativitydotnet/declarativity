@@ -7,6 +7,7 @@ body {
     add(OVERLOG_KEYWORDS, new String[] {
       "delete",      
       "public",      
+      "async",      
       "true",       
       "false", 
       "in",     

@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import jol.exec.Query;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Program;
@@ -216,16 +219,57 @@ public class Driver implements Runnable {
 			TupleSet.class    // Deletions tuple set
 		};
 		
+		/**
+		 *  Used to execute an asynchronous query. The result will be
+		 *  scheduled via the {@link Runtime#schedule(String, TableName, TupleSet, TupleSet)}
+		 *  method.
+		 */
+		private class AsyncQueryEval implements Runnable {
+			private Query query;
+			
+			private TupleSet input;
+			
+			private boolean insertion;
+			
+			public AsyncQueryEval(Query query, TupleSet input, boolean insertion) {
+				this.query = query;
+				this.input = input;
+				this.insertion = insertion;
+			}
+
+			public void run() {
+				try {
+					TupleSet result = query.evaluate(input);
+					if (result.size() > 0) {
+						if (this.insertion) {
+							Evaluator.this.context.schedule(query.program(), query.output().name(), result, null);
+						}
+						else {
+							Evaluator.this.context.schedule(query.program(), query.output().name(), null, result);
+						}
+					}
+				} catch (P2RuntimeException e) {
+					e.printStackTrace();
+				} catch (UpdateException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
 		/** The runtime context. */
 		private Runtime context;
+		
+		/** An executor for async queries. */
+		private ExecutorService executor;
 
 		/**
 		 * Creates a new evaluated based on the given runtime.
 		 * @param context The runtime context. 
 		 */
-		public Evaluator(Runtime context) {
+		public Evaluator(Runtime context, ExecutorService executor) {
 			super("evaluator", new TypeList(SCHEMA));
 			this.context = context;
+			this.executor = executor;
 		}
 		
 		@Override
@@ -288,20 +332,25 @@ public class Driver implements Runnable {
 								}
 							}
 
-							TupleSet result = null;
-							try {
-								result = query.evaluate(insertions);
-								if (result.size() == 0) continue;
-							} catch (P2RuntimeException e) {
-								e.printStackTrace();
-								java.lang.System.exit(0);
-							}
-
-							if (query.isDelete()) {
-								continuation(continuations, time, program.name(), Predicate.Event.DELETE, result);
+							if (query.isAsync()) {
+								this.executor.execute(new AsyncQueryEval(query, insertions.clone(), !query.isDelete()));
 							}
 							else {
-								continuation(continuations, time, program.name(), Predicate.Event.INSERT, result);
+								TupleSet result = null;
+								try {
+									result = query.evaluate(insertions);
+									if (result.size() == 0) continue;
+								} catch (P2RuntimeException e) {
+									e.printStackTrace();
+									java.lang.System.exit(0);
+								}
+
+								if (query.isDelete()) {
+									continuation(continuations, time, program.name(), Predicate.Event.DELETE, result);
+								}
+								else {
+									continuation(continuations, time, program.name(), Predicate.Event.INSERT, result);
+								}
 							}
 						}
 					}
@@ -312,30 +361,36 @@ public class Driver implements Runnable {
 					for (Query query : querySet) {
 						Table output = context.catalog().table(query.output().name());
 						if (query.event() == Predicate.Event.DELETE ||
-								(output.type() == Table.Type.TABLE && query.event() != Predicate.Event.INSERT)) {
+								(output.type() == Table.Type.TABLE && 
+										query.event() != Predicate.Event.INSERT)) {
 							if (watchDelete != null) {
 								try { watchDelete.rule(query.rule()); watchDelete.evaluate(deletions);
 								} catch (P2RuntimeException e) { }
 							}
 
-							TupleSet result = null;
-							try {
-								result = query.evaluate(deletions);
-								if (result.size() == 0) continue;
-							} catch (P2RuntimeException e) {
-								e.printStackTrace();
-								java.lang.System.exit(0);
-							}
-
+							Predicate.Event resultType = Predicate.Event.DELETE;
 							if (!query.isDelete() && output.type() == Table.Type.EVENT) {
-								/* Query is not a delete and it's output type is an event. */
-								continuation(continuations, time, program.name(), Predicate.Event.INSERT, result);
+								resultType = Predicate.Event.INSERT;
 							}
-							else if (output.type() == Table.Type.TABLE) {
-								continuation(continuations, time, program.name(), Predicate.Event.DELETE, result);
+							else if (output.type() == Table.Type.EVENT) {
+								throw new UpdateException("Query " + query + 
+										" is trying to delete from table " + output.name() + "?");
+							}
+							
+							if (query.isAsync()) {
+								this.executor.execute(
+										new AsyncQueryEval(query, insertions.clone(), 
+												           resultType == Predicate.Event.INSERT));
 							}
 							else {
-								throw new UpdateException("Query " + query + " is trying to delete from table " + output.name() + "?");
+								try {
+									TupleSet result = query.evaluate(deletions);
+									if (result.size() == 0) continue;
+									continuation(continuations, time, program.name(), resultType, result);
+								} catch (P2RuntimeException e) {
+									e.printStackTrace();
+									java.lang.System.exit(0);
+								}
 							}
 						}
 					}
@@ -418,18 +473,18 @@ public class Driver implements Runnable {
 	
 	/** The flusher table function. */
 	private Flusher flusher;
-
+	
 	/**
 	 * Creates a new driver.
 	 * @param context The runtime context.
 	 * @param schedule The schedule table.
 	 * @param clock The system clock table.
 	 */
-	public Driver(Runtime context, Schedule schedule, Clock clock) {
+	public Driver(Runtime context, Schedule schedule, Clock clock, ExecutorService executor) {
 		this.tasks = new ArrayList<Task>();
 		this.schedule = schedule;
 		this.clock = clock;
-		this.evaluator = new Evaluator(context);
+		this.evaluator = new Evaluator(context, executor);
 		this.flusher = new Flusher(context);
 		
 		context.catalog().register(this.evaluator);
@@ -469,6 +524,12 @@ public class Driver implements Runnable {
 		while (true) {
 			synchronized (this) {
 				try {
+					if (schedule.cardinality() > 0) {
+						clockValue = schedule.min();
+					}
+					else {
+						clockValue = clockValue + 1;
+					}
 					TupleSet time = clock.time(clockValue);
 					java.lang.System.err.println("============================     EVALUATE SCHEDULE     =============================");
 					evaluate(clockValue, runtime.name(), time.name(), time, null); // Clock insert current
@@ -490,12 +551,6 @@ public class Driver implements Runnable {
 					try {
 						this.wait();
 					} catch (InterruptedException e) { }
-				}
-				if (schedule.cardinality() > 0) {
-					clockValue = schedule.min();
-				}
-				else {
-					clockValue = clockValue + 1;
 				}
 			}
 		}

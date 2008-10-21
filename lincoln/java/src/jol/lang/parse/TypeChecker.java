@@ -488,8 +488,8 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitRule(final GNode n) {
-		String name = (n.getString(1) == null) ? 
-				      "Rule" + this.uniqueID++ : n.getString(1);
+		String name = (n.getString(2) == null) ? 
+				      "Rule" + this.uniqueID++ : n.getString(2);
 		
 		if (ruleNames.contains(name)) {
 			runtime.error("Multiple rule names defined as " 
@@ -500,8 +500,8 @@ public final class TypeChecker extends Visitor {
 		ruleNames.add(name);
 		
 		Boolean isPublic = n.getString(0) != null;
-		Boolean isDelete = n.getString(2) != null;
-		
+		Boolean isAsync  = n.getString(1) != null;
+		Boolean isDelete = n.getString(3) != null;
 		
 		Predicate head = null;
 		List<Term> body = null;
@@ -512,13 +512,13 @@ public final class TypeChecker extends Visitor {
 		table.enter("Body:" + name);
 		try {
 			/* Evaluate the body first. */
-			Class type = (Class) dispatch(n.getNode(4));
+			Class type = (Class) dispatch(n.getNode(5));
 			
 			if (type == Error.class) {
 				return Error.class;
 			}
 			assert(type == List.class);
-			body = (List) n.getNode(4).getProperty(Constants.TYPE);
+			body = (List<Term>) n.getNode(5).getProperty(Constants.TYPE);
 			
 			Term event = null;
 			for (Term t : body) {
@@ -552,12 +552,12 @@ public final class TypeChecker extends Visitor {
 			table.enter("Head:" + name);
 			try {
 				/* Evaluate the head. */
-				type = (Class) dispatch(n.getNode(3));
+				type = (Class) dispatch(n.getNode(4));
 				if (type == Error.class) {
 					return Error.class;
 				}
 				assert (type == Predicate.class);
-				head = (Predicate) n.getNode(3).getProperty(Constants.TYPE);
+				head = (Predicate) n.getNode(4).getProperty(Constants.TYPE);
 			} finally {
 				table.exit();
 			}
@@ -565,7 +565,7 @@ public final class TypeChecker extends Visitor {
 			table.exit();
 		}
 		
-		Rule rule = new Rule(n.getLocation(), name, isPublic, isDelete, head, body);
+		Rule rule = new Rule(n.getLocation(), name, isPublic, isAsync, isDelete, head, body);
 		n.setProperty(Constants.TYPE, rule);
 		return Rule.class;
 	}

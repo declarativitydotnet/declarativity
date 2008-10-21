@@ -3,6 +3,8 @@ package jol.core;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Timer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import jol.exec.Query.QueryTable;
 import jol.lang.Compiler;
@@ -60,6 +62,9 @@ public class Runtime implements System {
 	/** The system physical clock. */
 	private Timer timer;
 	
+	/** An executor for async queries. */
+	private ExecutorService executor;
+	
 	/** Creates a new runtime. Called from {#link #create(int)}. */
 	private Runtime() {
 		this.catalog = Table.initialize(this);
@@ -74,14 +79,16 @@ public class Runtime implements System {
 		this.catalog.register(new Periodic(this, schedule));
 		this.catalog.register(new Log(this, java.lang.System.err));
 
+		this.executor   = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
 		this.network    = new Network(this);
-		this.driver     = new Driver(this, schedule, clock);
+		this.driver     = new Driver(this, schedule, clock, executor);
 		this.thread     = new Thread(driver);
 		this.timer      = new Timer("Timer", true);
 	}
 	
 	public void shutdown() {
 		synchronized (driver) {
+			this.executor.shutdown();
 			this.thread.interrupt();
 			if (this.network != null) {
 				this.network.shutdown();

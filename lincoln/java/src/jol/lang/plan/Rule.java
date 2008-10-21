@@ -35,11 +35,12 @@ public class Rule extends Clause {
 		public static final Key PRIMARY_KEY = new Key(0,1);
 		
 		
-		public enum Field {PROGRAM, RULENAME, PUBLIC, DELETE, OBJECT};
+		public enum Field {PROGRAM, RULENAME, PUBLIC, ASYNC, DELETE, OBJECT};
 		public static final Class[] SCHEMA =  {
 			String.class,             // Program name
 			String.class,             // Rule name
 			java.lang.Boolean.class,  // public rule?
+			java.lang.Boolean.class,  // async rule?
 			java.lang.Boolean.class,  // delete rule?
 			Rule.class                // Rule object
 		};
@@ -60,6 +61,7 @@ public class Rule extends Clause {
 			object.program   = (String) tuple.value(Field.PROGRAM.ordinal());
 			object.name      = (String) tuple.value(Field.RULENAME.ordinal());
 			object.isPublic  = (java.lang.Boolean) tuple.value(Field.PUBLIC.ordinal());
+			object.isAsync   = (java.lang.Boolean) tuple.value(Field.ASYNC.ordinal());
 			object.isDelete  = (java.lang.Boolean) tuple.value(Field.DELETE.ordinal());
 			return super.insert(tuple);
 		}
@@ -78,6 +80,8 @@ public class Rule extends Clause {
 	
 	private java.lang.Boolean isPublic;
 	
+	private java.lang.Boolean isAsync;
+	
 	private Predicate head;
 	
 	private List<Term> body;
@@ -86,11 +90,13 @@ public class Rule extends Clause {
 	
 	
 	public Rule(xtc.tree.Location location, String name, 
-			    java.lang.Boolean isPublic, java.lang.Boolean isDelete, 
+			    java.lang.Boolean isPublic, java.lang.Boolean isAsync,
+			    java.lang.Boolean isDelete, 
 			    Predicate head, List<Term> body) {
 		super(location);
 		this.name = name;
 		this.isPublic = isPublic;
+		this.isAsync  = isAsync;
 		this.isDelete = isDelete;
 		this.head = head;
 		this.body = body;
@@ -106,7 +112,8 @@ public class Rule extends Clause {
 	
 	@Override
 	public String toString() {
-		String value = (isPublic ? "public " : "") + name + 
+		String value = (isPublic ? "public " : "") + 
+					   (isAsync ? "async " : "") + name + 
 		               (isDelete ? " delete " : " ") + head + " :- \n";
 		for (int i = 0; i < body.size(); i++) {
 			value += "\t" + body.get(i);
@@ -146,7 +153,7 @@ public class Rule extends Clause {
 			this.body.get(i).set(context, program, this.name, i+1);
 		}
 		
-		context.catalog().table(RuleTable.TABLENAME).force(new Tuple(program, name, isPublic, isDelete, this));
+		context.catalog().table(RuleTable.TABLENAME).force(new Tuple(program, name, isPublic, isAsync, isDelete, this));
 	}
 
 	public List<Query> query(Runtime context, TupleSet periodics) throws PlannerException {
@@ -386,7 +393,7 @@ public class Rule extends Clause {
 			operators.add(new RemoteBuffer(context, head, isDelete));
 		}
 		
-		query.add(new BasicQuery(context, program, name, isPublic, isDelete, event, head, operators));
+		query.add(new BasicQuery(context, program, name, isPublic, isAsync, isDelete, event, head, operators));
 		return query;
 	}
 
