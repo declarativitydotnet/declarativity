@@ -23,11 +23,13 @@ public class Aggregate extends Variable {
 		this.method = method;
 	}
 	
+	@Override
 	public Aggregate clone() {
 		return this.method == null ? new Aggregate(name(), function, type()) :
 									 new Aggregate(method, function, type());
 	}
 
+	@Override
 	public String toString() {
 		return this.function + "<" + super.toString() + ">";
 	}

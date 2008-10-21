@@ -51,6 +51,7 @@ public abstract class Query implements Comparable<Query> {
 			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		}
 		
+		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			return super.insert(tuple);
 		}
@@ -93,8 +94,10 @@ public abstract class Query implements Comparable<Query> {
 		return this.event;
 	}
 	
+	@Override
 	public abstract String toString();
 	
+	@Override
 	public boolean equals(Object o) {
 		return o instanceof Query &&
 				compareTo((Query)o) == 0;

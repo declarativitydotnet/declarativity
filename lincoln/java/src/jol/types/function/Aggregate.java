@@ -106,10 +106,12 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			this.current = null;
 		}
 		
+		@Override
 		public Tuple result() {
 			return this.result == null ? null : this.result.clone();
 		}
 		
+		@Override
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.current == null) {
 			    this.current = (C)this.aggregate.function().evaluate(tuple);
@@ -121,6 +123,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return this.result;
 		}
 		
+		@Override
 		public Tuple delete(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.remove(tuple)) {
 				TupleSet tuples = this.tuples;
@@ -134,6 +137,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 
+		@Override
 		public Class returnType() {
 			return this.aggregate.type();
 		}
@@ -219,10 +223,12 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			this.accessor = accessor;
 		}
 		
+		@Override
 		public Tuple result() {
 			return this.result == null ? null : this.result.clone();
 		}
 		
+		@Override
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.add(tuple)) {
 				C value = accessor.evaluate(tuple);
@@ -235,6 +241,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 		
+		@Override
 		public Tuple delete(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.contains(tuple)) {
 				this.tuples.remove(tuple);
@@ -253,6 +260,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 
+		@Override
 		public Class returnType() {
 			return accessor.returnType();
 		}
@@ -274,6 +282,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			this.accessor = accessor;
 		}
 		
+		@Override
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
@@ -283,6 +292,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 		
+		@Override
 		public Tuple insert(Tuple tuple) {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
@@ -291,12 +301,14 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 		
+		@Override
 		public Tuple delete(Tuple tuple) {
 			this.result = tuple;
 			this.tuples.remove(tuple);
 			return result();
 		}
 
+		@Override
 		public Class returnType() {
 			return Integer.class;
 		}
@@ -318,6 +330,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			reset();
 		}
 		
+		@Override
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
@@ -333,6 +346,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			this.sum = 0F;
 		}
 		
+		@Override
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
@@ -343,6 +357,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 		
+		@Override
 		public Tuple delete(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.remove(tuple)) {
 				this.tuples.add(tuple);
@@ -354,6 +369,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 
+		@Override
 		public Class returnType() {
 			return Float.class;
 		}
@@ -375,6 +391,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			reset();
 		}
 		
+		@Override
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
@@ -390,6 +407,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			this.current = null;
 		}
 		
+		@Override
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
@@ -404,6 +422,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 		
+		@Override
 		public Tuple delete(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.remove(tuple)) {
 				TupleSet tuples = this.tuples;
@@ -416,6 +435,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 
+		@Override
 		public Class returnType() {
 			return String.class;
 		}
@@ -439,6 +459,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			this.result = null;
 		}
 		
+		@Override
 		public Tuple result() {
 			if (this.result != null) {
 				this.result = this.result.clone();
@@ -448,6 +469,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 		
+		@Override
 		public Tuple insert(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
@@ -457,6 +479,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 		
+		@Override
 		public Tuple delete(Tuple tuple) throws P2RuntimeException {
 			if (this.tuples.remove(tuple)) {
 				this.result = tuple;
@@ -466,6 +489,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return null;
 		}
 
+		@Override
 		public Class returnType() {
 			return TupleSet.class;
 		}

@@ -157,6 +157,7 @@ public abstract class StasisTable extends Table {
 	}
 
 
+	@Override
 	public Iterator<Tuple> tuples() {
 		return new Iterator<Tuple>() {
 			Iterator<byte[][]> it = tupleBytes();
@@ -205,6 +206,7 @@ public abstract class StasisTable extends Table {
 		StasisTable.runtime = runtime;
 	}
 
+	@Override
 	public abstract Long cardinality();
     protected abstract boolean remove(byte[] keybytes, byte[] valbytes) throws UpdateException;
 	protected abstract boolean add(byte[] keybytes, byte[] valbytes) throws UpdateException;

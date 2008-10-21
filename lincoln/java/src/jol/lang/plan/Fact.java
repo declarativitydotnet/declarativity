@@ -56,6 +56,7 @@ public class Fact extends Clause {
 		this.arguments = arguments;
 	}
 	
+	@Override
 	public String toString() {
 		String value = name + "(";
 		if (arguments.size() == 0)

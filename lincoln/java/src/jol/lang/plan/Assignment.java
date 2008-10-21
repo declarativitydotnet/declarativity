@@ -57,6 +57,7 @@ public class Assignment extends Term {
 		this.value = value;
 	}
 	
+	@Override
 	public String toString() {
 		return variable.toString() + " := " + value.toString();
 	}

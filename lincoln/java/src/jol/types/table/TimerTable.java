@@ -77,6 +77,7 @@ public class TimerTable extends Table {
 			return toString().compareTo(o.toString());
 		}
 		
+		@Override
 		public String toString() {
 			return TimerTable.this.name.toString();
 		}

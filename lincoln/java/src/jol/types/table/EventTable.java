@@ -63,6 +63,7 @@ public class EventTable extends Table {
 	}
 
 	/** @return null */
+	@Override
 	public Iterator<Tuple> tuples() {
 		return null;
 	}

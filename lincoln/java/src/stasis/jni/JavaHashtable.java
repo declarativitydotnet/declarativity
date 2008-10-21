@@ -46,6 +46,7 @@ public class JavaHashtable extends StasisTable {
 		this.tbl = tables.get(name);
 	}
 
+	@Override
 	public boolean remove(byte[] keybytes, byte[] valbytes)
 	 throws UpdateException {
 		byte[] oldvalbytes = tbl.remove(keybytes);
@@ -55,6 +56,7 @@ public class JavaHashtable extends StasisTable {
 		return oldvalbytes != null;
 	}
 
+	@Override
 	public boolean add(byte[] keybytes, byte[] valbytes)
 	 throws UpdateException {
 		byte[] oldvalbytes = tbl.put(keybytes, valbytes);
@@ -64,10 +66,12 @@ public class JavaHashtable extends StasisTable {
 		return oldvalbytes == null;
 	}
 
+	@Override
 	public Long cardinality() {
 		return (long)tbl.size();
 	}
 
+	@Override
 	public Iterator<byte[][]> tupleBytes() {
 		return new Iterator<byte[][]>() {
 			Iterator<byte[]> it = tbl.keySet().iterator();

@@ -66,6 +66,7 @@ public class Watch extends Clause {
 		this.modifier = modifier;
 	}
 	
+	@Override
 	public String toString() {
 		return "watch(" + name + ", " + modifier + ").";
 	}

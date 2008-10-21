@@ -21,6 +21,7 @@ public abstract class Message implements Comparable<Message>, Serializable {
 		this.layer = layer;
 	}
 	
+	@Override
 	public String toString() {
 		return layer + ":" + id.toString();
 	}

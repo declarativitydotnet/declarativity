@@ -62,6 +62,7 @@ public class Compiler {
 			this.context = context;
 		}
 
+		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Program program = (Program) tuple.value(Field.PROGRAM.ordinal());
 			if (program == null) {

@@ -27,6 +27,7 @@ public class TypeList extends ValueList<Class> {
 		addAll(values);
 	}
 	
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof TypeList) {
 			return ((TypeList)o).compareTo(this) == 0;

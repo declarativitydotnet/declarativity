@@ -78,6 +78,7 @@ public class Program implements Comparable<Program> {
 		return new Tuple(name, this);
 	}
 	
+	@Override
 	public String toString() {
 		return "PROGRAM " + this.name;
 	}

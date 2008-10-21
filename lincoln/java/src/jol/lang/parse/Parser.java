@@ -112,6 +112,7 @@ public final class Parser extends ParserBase {
 
   // =========================================================================
 
+  @Override
   protected Column newColumn() {
     return new ParserColumn();
   }

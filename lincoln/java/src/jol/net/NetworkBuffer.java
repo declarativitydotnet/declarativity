@@ -36,6 +36,7 @@ public class NetworkBuffer extends ObjectTable {
 		super(context, new TableName("network", "buffer"), PRIMARY_KEY, new TypeList(SCHEMA));
 	}
 	
+	@Override
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 		return super.insert(tuples, conflicts);
 	}

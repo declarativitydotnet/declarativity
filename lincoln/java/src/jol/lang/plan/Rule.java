@@ -120,6 +120,7 @@ public class Rule extends Clause {
 		return value;
 	}
 	
+	@Override
 	public int compareTo(Clause o) {
 		if (o instanceof Rule) {
 			Rule other = (Rule) o;

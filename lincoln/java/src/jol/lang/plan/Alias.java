@@ -8,6 +8,7 @@ public class Alias extends Variable {
 		this.position(field.intValue());
 	}
 	
+	@Override
 	public String toString() {
 		return super.toString() + " := $" + position();
 	}
