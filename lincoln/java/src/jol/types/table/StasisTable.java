@@ -119,7 +119,7 @@ public abstract class StasisTable extends Table {
 	protected static TableName CATALOG_NAME = new TableName("Stasis", "Catalog");
 	protected static Key CATALOG_KEY = new Key(0);
 	protected static TypeList CATALOG_COLTYPES = new TypeList(new Class[] { String.class, Long.class, Long.class} );
-	protected static Tuple CATALOG_SCHEMA;
+	protected static Tuple CATALOG_SCHEMA = new Tuple();
 	protected static byte[] CATALOG_SCHEMA_BYTES;
 	protected static byte[] CATALOG_NAME_BYTES; 
 	private static Runtime runtime;
@@ -171,7 +171,8 @@ public abstract class StasisTable extends Table {
 					Tuple k = new Tuple(o[0]);
 					Tuple v = new Tuple(o[1]);
 					
-					Tuple ret =key.reconstruct(k, v); 
+					Tuple ret =key.reconstruct(k, v);
+								
 					return ret;
 				} catch (Exception e) {
 					throw new Error("couldn't deserialize", e);
