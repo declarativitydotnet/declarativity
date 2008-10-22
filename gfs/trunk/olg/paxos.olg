@@ -20,13 +20,13 @@ define(lastPromise,keys(0,1,4),{String,Integer,Integer,String,String});
 define(sendPromise,keys(0,1,4),{String,Integer,Integer,String,String});
 define(receivedPromise,keys(0,1,4),{String,Integer,Integer,String,String});
 define(acceptRequest,keys(0,1),{String, Integer,String,Integer});
-define(sendBeginBallot,keys(0,1),{String, Integer,String,String});
+define(sendBeginRound,keys(0,1),{String, Integer,String,String});
 define(accept,keys(0,1),{String, Integer,String});
 define(sendAccept,keys(0,1,3),{String, Integer,String,String});
 define(decree,keys(0,1),{String, Integer,String});
 define(success,keys(0,1),{String, Integer,String,String});
 	
-define(maxPrevBallot,keys(0),{String,Integer});
+define(maxPrevRound,keys(0),{String,Integer});
 define(priestCnt,keys(0),{String,Integer});
 define(lastPromiseCnt,keys(0,1),{String,Integer,Integer});
 define(quorum,keys(0,1),{String,Integer});
@@ -35,154 +35,197 @@ define(acceptCnt,keys(0,1),{String,Integer,Integer});
 define(reply,keys(0,1),{String,String,String});
 define(tick,keys(0,1),{String,String,Integer});
 define(instance,keys(0),{String,Integer});
-	
-	
-lastTried(Lord,-1) :- parliament(Lord,Priest);
-prevVote(Lord,-1,"none") :- parliament(Lord,Priest);
-nextBal(Lord,-1) :- parliament(Lord,Priest);
-instance(Lord,-1) :- parliament(Lord,Priest);
-	
-	/**/
-watch(tick,id);
-watch(prepare,ad);
-watch(sendPrepare,ad);
-watch(lastTried,ad);
-watch(parliament,ad);
-watch(sendPromise,ad);
-watch(priestCnt,id);
-watch(lastPromiseCnt,ad);
-watch(lastPromise,ad);
-	/**/
-watch(quorum,ad);
-watch(decree,iad);
-watch(acceptCnt,ad);
-watch(sendAccept,ad);
-watch(accept,ad);
-watch(success,ad);
-watch(decreeRequest,ad);
-	
-//watch(maxPrevBallot,adi);
-watch(acceptRequest,ad);
-//watch(receivedPromise,ad);
-	
-watch(prevVote,ad);	
-watch(instance,aed);
-	
+
+/*******************************************************************
+nomenclature mappings between "parliamentary paxos" and "simple paxos"
+
+part time parliament --> paxos made simple
+-------------------------------------------
+Agent         Agent
+Ballot        Round
+NextBallot    Prepare
+LastVote      Promise
+Vote          Accept
+
+
+PAXOS global invariants:
+
+  let B be a set of ballots with the following components:
+
+    B.dec - A decree (the one being voted on).
+    B.qrm - A nonempty set of priests (the ballotÕs quorum).
+    B.vot - A set of priests (the ones who cast votes for the decree).
+    B.bal - A ballot number.
+
+
+  Consistency is guaranteed and progress is possible if:
+
+  B1(B) - Each ballot in B has a unique ballot number.
+  B2(B) - The quorums of any two ballots in B have at least one priest in common.
+  B3(B) - For every ballot B in B, if any priest in BÕs quorum voted in an earlier
+      ballot in B, then the decree of B equals the decree of the latest of those
+      earlier ballots.
+*/
 	
 
-	 
-lastTried(Priest,Bnum) :- lastTried(Priest,Old),
-	prepare#insert(Priest,Bnum,Decree),
+	
+lastTried(Master,-1) :- parliament(Master,Agent);
+prevVote(Master,-1,"none") :- parliament(Master,Agent);
+nextBal(Master,-1) :- parliament(Master,Agent);
+instance(Master,-1) :- parliament(Master,Agent);
+
+/**************************************************************************************
+r1. Priest p chooses a new ballot number b greater than lastTried [p], sets lastTried[p]
+to b, and sends a NextBallot (b) message to some set of priests.
+***************************************************************************************/
+
+r1_a
+lastTried(Agent,Bnum) :- lastTried(Agent,Old),
+	prepare#insert(Agent,Bnum,Decree),
 	Bnum >= Old;
 	
 storedDecreeRequest(A,B,C,Id) :- decreeRequest#insert(A,B,C), Id := Runtime.idgen();
-instance(Lord,I+1) :- instance(Lord,I), storedDecreeRequest#insert(Lord,B,C);
+instance(Master,I+1) :- instance(Master,I), storedDecreeRequest#insert(Master,B,C);
 	
-prepare(Priest,Ballot,Decree) :- 
-	decreeRequest(Priest,Decree,From),
-	lastTried(Priest,Old),
+r1_b
+prepare(Agent,Round,Decree) :- 
+	decreeRequest(Agent,Decree,From),
+	lastTried(Agent,Old),
 	// if we don't already have a quorum
-  //instance(Priest,0),
-	Ballot := Old + 1;
+  //instance(Agent,0),
+	Round := Old + 1;
 	
-	/* a per-transaction timer that starts at zero when a transaction begins */
-//tick(Commander,Decree,C) :- decreeRequest(Commander,Decree,From), C := 0;
-//tick(Commander,Decree,C) :- periodic(Id,2L), tick(Commander,Decree,Count), C := Count + 1;
+r1_c
+sendPrepare(@Peer,Round,Decree,Agent) :-prepare(@Agent,Round,Decree),
+	parliament(@Agent,Peer);
+
+/**************************************************************************************
+2. Upon receipt of a NextBallot (b) message from p with b > nextBal [q], priest q
+sets nextBal [q] to b and sends a LastVote (b, v) message to p, where v equals
+prevVote [q]. (A NextBallot (b) message is ignored if b ² nextBal [q].)
+***************************************************************************************/
+
+
+r2_a
+nextBal(Agent,Round) :-nextBal(Agent,Old),
+	lastPromise#insert(Agent,Round,OldRound,Decree),
+	Round >= Old;
+
+
+r2_b
+lastPromise(Agent,Round,OldRound,OldDecree,Peer) :- sendPrepare(Agent,Round,Decree,Peer),
+	prevVote(Agent,OldRound,OldDecree),
+	Round >= OldRound;
+
+r2_c	
+sendPromise(@Master,Round,OldRound,Decree,Agent) :-
+	lastPromise(@Agent,Round,OldRound,Decree,Master);	
+
+
+/* for quorum handling, aggregates are difficult to avoid... */
+priestCnt(Master,count<*>) :- parliament(Master,Agent);
+lastPromiseCnt(Master,Round,count<Agent>) :- sendPromise#insert(Master,Round,Foo,Bar,Agent);
+maxPrevRound(Master,max<OldRound>) :- sendPromise(Master,Round,OldRound,Decree,Agent);
 	
-	 
-sendPrepare(@Peer,Ballot,Decree,Priest) :-prepare(@Priest,Ballot,Decree),
-	parliament(@Priest,Peer);
-	
-nextBal(Priest,Ballot) :-nextBal(Priest,Old),
-	lastPromise#insert(Priest,Ballot,OldBallot,Decree),
-	Ballot >= Old;
-	 
-lastPromise(Priest,Ballot,OldBallot,OldDecree,Peer) :- sendPrepare(Priest,Ballot,Decree,Peer),
-	prevVote(Priest,OldBallot,OldDecree),
-	Ballot >= OldBallot;
-	
-sendPromise(@Lord,Ballot,OldBallot,Decree,Priest) :-
-	lastPromise(@Priest,Ballot,OldBallot,Decree,Lord);
-	
-	/* for quorum handling, aggregates are difficult to avoid... */
-priestCnt(Lord,count<*>) :- parliament(Lord,Priest);
-lastPromiseCnt(Lord,Ballot,count<Priest>) :- sendPromise#insert(Lord,Ballot,Foo,Bar,Priest);
-	
-maxPrevBallot(Lord,max<OldBallot>) :- sendPromise(Lord,Ballot,OldBallot,Decree,Priest);
-	
-	
-quorum(Lord,Ballot) :- priestCnt(Lord,Pcnt),
-	lastPromiseCnt(Lord,Ballot,Vcnt),
+/**************************************************************************************
+3.  After receiving a LastVote (b, v) message from every priest in some majority
+set Q, where b = lastTried [p], priest p initiates a new ballot with number b,
+quorum Q, and decree d, where d is chosen to satisfy B3. He then sends a
+BeginBallot (b, d) message to every priest in Q.
+***************************************************************************************/
+
+r3_a	
+quorum(Master,Round) :- priestCnt(Master,Pcnt),
+	lastPromiseCnt(Master,Round,Vcnt),
 	Vcnt > ( Pcnt / 2 );
 	
-acceptRequest(Lord,Ballot,OldDecree,MaxB) :- quorum(Lord,Ballot),
-	maxPrevBallot(Lord,MaxB),
-	prepare(Lord,Ballot,Decree),
-	sendPromise(Lord,Ballot,MaxB,OldDecree,Priest),
+r3_b
+acceptRequest(Master,Round,OldDecree,MaxB) :- quorum(Master,Round),
+	maxPrevRound(Master,MaxB),
+	prepare(Master,Round,Decree),
+	sendPromise(Master,Round,MaxB,OldDecree,Agent),
 	MaxB != -1;
-	
-acceptRequest(Lord,Ballot,Decree,-1) :- quorum(Lord,Ballot),
-	maxPrevBallot(Lord,MaxB),
-	sendPromise(Lord,Ballot,MaxB,OldDecree,Priest),
+
+r3_c	
+acceptRequest(Master,Round,Decree,-1) :- quorum(Master,Round),
+	maxPrevRound(Master,MaxB),
+	sendPromise(Master,Round,MaxB,OldDecree,Agent),
 	MaxB == -1,
-	prepare(Lord,Ballot,Decree);
+	prepare(Master,Round,Decree);
 	
 	// or in the multi-paxos case:
 	/*
-acceptRequest(Lord,OldB+1,Decree,OldB) :- 
-	storedDecreeRequest(Lord,Decree,From,_),
-	quorum(Lord,OldB);
+acceptRequest(Master,OldB+1,Decree,OldB) :- 
+	storedDecreeRequest(Master,Decree,From,_),
+	quorum(Master,OldB);
 	*/
 
 /*
-acceptRequest(Lord,OldB,Decree,OldB) :-
-  decreeRequest(Lord,Decree,From),
-  quorum(Lord,OldB),
-  instance(Lord,I),
+r3_d
+acceptRequest(Master,OldB,Decree,OldB) :-
+  decreeRequest(Master,Decree,From),
+  quorum(Master,OldB),
+  instance(Master,I),
   I > 0;
 */	
 
-sendBeginBallot(@Priest,Ballot,Decree,Lord) :- acceptRequest(@Lord,Ballot,Decree,Kind),
-	parliament(@Lord,Priest);
+r3_e
+sendBeginRound(@Agent,Round,Decree,Master) :- acceptRequest(@Master,Round,Decree,Kind),
+	parliament(@Master,Agent);
+
+/**************************************************************************************
+r4. Upon receipt of a BeginBallot (b,d) message with b = nextBal [q], priest q casts
+his vote in ballot number b, sets prevVote [q] to this vote, and sends a Voted (b, q)
+message to p. (A BeginBallot (b, d) message is ignored if b = nextBal [q].)
+***************************************************************************************/
+r4_a
+accept(Agent,Round,Decree) :- sendBeginRound(Agent,Round,Decree,Master),
+	nextBal(Agent,OldB),
+	Round == OldB;
 	
-accept(Priest,Ballot,Decree) :- sendBeginBallot(Priest,Ballot,Decree,Lord),
-	nextBal(Priest,OldB),
-	Ballot == OldB;
+r4_b	
+prevVote(Agent,Round,Decree) :- prevVote(Agent,Old,OD),
+	lastPromise(Agent,Round,OldRound,OldDecree),
+	accept#insert(Agent,Round,Decree),
+	Round >= Old;
+
+r4_c	
+sendAccept(@Master,Round,Decree,Agent) :- accept(@Agent,Round,Decree),
+	sendBeginRound(@Agent,Round,Decree,Master);
 	
-	
-prevVote(Priest,Ballot,Decree) :- prevVote(Priest,Old,OD),
-	lastPromise(Priest,Ballot,OldBallot,OldDecree),
-	accept#insert(Priest,Ballot,Decree),
-	Ballot >= Old;
-	
-sendAccept(@Lord,Ballot,Decree,Priest) :- accept(@Priest,Ballot,Decree),
-	sendBeginBallot(@Priest,Ballot,Decree,Lord);
-	
-acceptCnt(Lord,Ballot,count<Priest>) :- sendAccept(Lord,Ballot,Decree,Priest);
-	
-decree(Lord,Ballot,Decree) :- lastTried(Lord,Ballot),
-	acceptCnt(Lord,Ballot,Votes),
+acceptCnt(Master,Round,count<Agent>) :- sendAccept(Master,Round,Decree,Agent);
+
+/**************************************************************************************
+r5. If p has received a Voted (b, q) message from every priest q in Q (the quorum
+for ballot number b), where b = lastTried [p], then he writes d (the decree of
+that ballot) in his ledger and sends a Success (d) message to every priest.
+***************************************************************************************/
+r5_a	
+decree(Master,Round,Decree) :- lastTried(Master,Round),
+	acceptCnt(Master,Round,Votes),
 	// this is |quorum| 
-	lastPromiseCnt(Lord,Ballot,Votes),
-	acceptRequest(Lord,Ballot,Decree);
-	
-success(@Priest,Ballot,Decree,From) :-decree#insert(@Lord,Ballot,Decree),
+	lastPromiseCnt(Master,Round,Votes),
+	acceptRequest(Master,Round,Decree);
+
+r5_b	
+success(@Agent,Round,Decree,From) :-decree#insert(@Master,Round,Decree),
 	// this might be a mistake. 
-	storedDecreeRequest(@Lord,Decree,From,_),
+	storedDecreeRequest(@Master,Decree,From,_),
 	// we interpret "every" to mean a broadcast.
-	parliament(@Lord,Priest);
+	parliament(@Master,Agent);
 	
 	// any learner can reply to the client.or set-wise, they all can...
 watch(reply,id);
-reply(@Client,Decree,"passed") :- success(@Me,Ballot,Decree,Client);
+reply(@Client,Decree,"passed") :- success(@Me,Round,Decree,Client);
 	
 
 
 
 
-	/***subroutine, really, for figuring out cohort membership from the environment.
+/***
+  subroutine, really, for figuring out cohort membership from the environment.
 	I'd like to have this in a separate file, but that isn't working... 
-	***/
+***/
 define(ident,keys(0),{Integer,Integer});
 	
 ident(A,P) :- A := new Integer(System.getenv("ME")),
@@ -203,3 +246,32 @@ parliament(Me,Him) :- fake(A,B),
 	Him := "tcp:localhost:" + Right.toString();
 	
 	/* end sub-thing */
+
+
+	/**/
+watch(tick,id);
+watch(prepare,ad);
+watch(sendPrepare,ad);
+watch(lastTried,ad);
+watch(parliament,ad);
+watch(sendPromise,ad);
+watch(priestCnt,id);
+watch(lastPromiseCnt,ad);
+watch(lastPromise,ad);
+	/**/
+watch(quorum,ad);
+watch(decree,iad);
+watch(acceptCnt,ad);
+watch(sendAccept,ad);
+watch(accept,ad);
+watch(success,ad);
+watch(decreeRequest,ad);
+	
+//watch(maxPrevRound,adi);
+watch(acceptRequest,ad);
+//watch(receivedPromise,ad);
+	
+watch(prevVote,ad);	
+watch(instance,aed);
+	
+	
