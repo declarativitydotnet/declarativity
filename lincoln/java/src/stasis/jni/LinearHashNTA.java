@@ -37,31 +37,23 @@ public class LinearHashNTA extends StasisTable {
 		return row;
 		
     }
-    static boolean ranOnce = false;
     protected LinearHashNTA(Runtime context) throws UpdateException {
 		super(context, CATALOG_NAME, CATALOG_KEY, CATALOG_COLTYPES);
     	key = new Key(0);
-    	if(!ranOnce) {
-    		Stasis.init();
-    		ranOnce = true;
-    	}
-    	long xid = Stasis.begin();
 		rootRid = Stasis.root_record();
 		long type = Stasis.record_type(xid, rootRid);
 		if(type == -1) {
+			dirty = true;
 			rid = Stasis.hash_create(xid);
 			if(rid[0] != rootRid[0] || rid[1] != rootRid[1]) {
-				Stasis.abort(xid);
 				throw new IllegalStateException();
 			}
 		} else {
 			rid = new long[3];
 			rid[0] = rootRid[0];
 			rid[1] = rootRid[1];
-			rid[2] = 56L; // XXX hack!
 		}
 		header = CATALOG_SCHEMA;
-		Stasis.commit(xid);
 	}
     
 	public LinearHashNTA(Runtime context, TableName name, Key key,
@@ -83,9 +75,8 @@ public class LinearHashNTA extends StasisTable {
 		
 		Tuple catalogEntry;
 		if(headerSet.isEmpty()) {
-			long xid = Stasis.begin();
+			dirty = true;
 			rid = Stasis.hash_create(xid);
-			Stasis.commit(xid);
 			catalogEntry = registerTable(name, key, attributeTypes);
 		} else {
 			catalogEntry = headerSet.iterator().next();
@@ -94,26 +85,12 @@ public class LinearHashNTA extends StasisTable {
 		header = catalog.primary().key().projectValue(catalogEntry);
 		rid[0] = (Long)header.value(0);
 		rid[1] = (Long)header.value(1);
-		rid[2] = 56L; // XXX hack!
-
 	}
 
 	@Override
-	protected boolean add(byte[] keybytes, byte[] valbytes) 
-		throws UpdateException {
-		long xid = Stasis.begin();
-		boolean ret;
-		try {
-			ret = add(xid,keybytes, valbytes);
-		} catch(UpdateException e) {
-			Stasis.abort(xid);
-			throw e;
-		}
-		Stasis.commit(xid);
-		return ret;
-	}
-	protected boolean add(long xid, byte[] keybytes, byte[] valbytes)
+	protected boolean add(byte[] keybytes, byte[] valbytes)
 			throws UpdateException {
+		dirty = true;
 		byte[] oldvalbytes = Stasis.hash_insert(xid, rid, keybytes, valbytes);
 		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
 			throw new UpdateException("primary key violation");
@@ -129,24 +106,21 @@ public class LinearHashNTA extends StasisTable {
 	@Override
 	protected boolean remove(byte[] keybytes, byte[] valbytes)
 			throws UpdateException {
-		long xid = Stasis.begin();
+		dirty = true;
 		byte[] oldvalbytes = Stasis.hash_remove(-1, rid, keybytes);
 		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
-			Stasis.abort(xid);
 			throw new UpdateException("primary key violation");
 		}
-		Stasis.commit(xid);
 		return oldvalbytes != null;
 	}
 
 	@Override
 	protected byte[] lookup(byte[] keybytes) {
-		return Stasis.hash_lookup(-1L, rid, keybytes);
+		return Stasis.hash_lookup(xid, rid, keybytes);
 	}
 
 	@Override
 	protected Iterator<byte[][]> tupleBytes() {
-		final long xid = -1; // XXX 
 		return new Iterator<byte[][]>() {
 			private byte[] it = Stasis.hash_iterator(xid, rid);
 
@@ -191,15 +165,15 @@ public class LinearHashNTA extends StasisTable {
 			}
 
 			public void remove() {
+				dirty = true;
 				throw new UnsupportedOperationException("No support for removal via table iterators yet...");
 			}
 
 			@Override
 			protected void finalize() throws Throwable {
 				try {
-					// XXX not in finalize!!
 					if(hadNext) 
-						Stasis.iterator_close(xid,it);
+						throw new IllegalStateException("detected non-exhausted iterator in finalize()");
 				} finally {
 					super.finalize();
 				}

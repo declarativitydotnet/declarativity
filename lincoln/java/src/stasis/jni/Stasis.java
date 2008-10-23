@@ -34,10 +34,10 @@ public class Stasis {
 	public static native byte[]		iterator_value(long xid, byte[] it);
 	public static native void			iterator_tuple_done(long xid, byte[] it);
 
-	static {
-	    System.loadLibrary("stasisjni");
-    }
-
+	public static void loadLibrary() {
+		System.loadLibrary("stasisjni");
+	}
+	
 	public static void main(String[] arg) {
 		System.out.println("Tinit()");
 		init();

@@ -15,6 +15,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.P2RuntimeException;
 import jol.types.exception.UpdateException;
+import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
@@ -69,7 +70,8 @@ public class Runtime implements System {
 	private Runtime() {
 		this.catalog = Table.initialize(this);
 		Compiler.initialize(this);
-
+		StasisTable.initializeStasis(this);
+		
 		this.schedule = new Schedule(this);
 		this.clock    = new Clock(this, "localhost");
 		this.catalog.register(this.schedule);
@@ -93,6 +95,7 @@ public class Runtime implements System {
 			if (this.network != null) {
 				this.network.shutdown();
 			}
+			StasisTable.deinitializeStasis();
 		}
 	}
 	

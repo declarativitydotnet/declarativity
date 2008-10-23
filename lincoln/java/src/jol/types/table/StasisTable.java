@@ -14,6 +14,7 @@ import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import stasis.jni.JavaHashtable;
+import stasis.jni.Stasis;
 
 public abstract class StasisTable extends Table {
 	private static final ByteArrayOutputStream outArray = new ByteArrayOutputStream();
@@ -201,9 +202,51 @@ public abstract class StasisTable extends Table {
 		return secondary;
 	}
 
+	// XXX add support for concurrent transactions
+	protected static long xid;
+	protected static boolean dirty = false;
+	public static boolean foundStasis = false;
+	
 	public static void initializeStasis(Runtime runtime) {
 		JavaHashtable.initialize(toBytes(CATALOG_NAME), CATALOG_SCHEMA_BYTES);
 		StasisTable.runtime = runtime;
+		try {
+			Stasis.loadLibrary();
+			foundStasis = true;
+		} catch (UnsatisfiedLinkError e) {
+		}
+		if(foundStasis) {
+			System.err.print("Stasis recovery..."); System.err.flush();
+			Stasis.init();
+			System.err.println("suceeded");
+			xid = Stasis.begin();
+			foundStasis = true;
+		}
+	}
+	public static void deinitializeStasis() {
+		if(foundStasis) {
+			if(dirty) {
+				Stasis.commit(xid);
+			}
+			Stasis.deinit();
+		}
+	}
+	
+	public static void commit() {
+		if(foundStasis && dirty) {
+			System.err.println("commit transaction " + xid);
+			Stasis.commit(xid);
+			xid = Stasis.begin();
+			dirty = false;
+		}
+	}
+	// XXX figure out how to abort transactions
+	public static void abort() {
+		if(foundStasis && dirty) {
+			Stasis.abort(xid);
+			xid = Stasis.begin();
+			dirty = false;
+		}
 	}
 
 	@Override

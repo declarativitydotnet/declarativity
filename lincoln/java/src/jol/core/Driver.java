@@ -18,6 +18,7 @@ import jol.types.exception.UpdateException;
 import jol.types.operator.Operator;
 import jol.types.operator.Watch;
 import jol.types.table.Aggregation;
+import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 
@@ -539,6 +540,7 @@ public class Driver implements Runnable {
 					}
 					tasks.clear(); // Clear task queue.
 					evaluate(clockValue, runtime.name(), time.name(), null, time); // Clock delete current
+					StasisTable.commit();
 					java.lang.System.err.println("============================ ========================== =============================");
 				} catch (UpdateException e) {
 					e.printStackTrace();
