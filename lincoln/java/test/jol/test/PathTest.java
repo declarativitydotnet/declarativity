@@ -1,4 +1,4 @@
-package jol;
+package jol.test;
 
 import java.net.MalformedURLException;
 import java.net.URL;
