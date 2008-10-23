@@ -8,8 +8,8 @@
   <property name="dist"  location="ant-dist"/>
   <property name="doc" location="doc"/>
   <property name="lib" location="lib"/>
-  <property name="parser-dir" location="${src}/jol/lang/parse"/>
   <property name="src" location="src"/>
+  <property name="parser-dir" location="${src}/jol/lang/parse"/>
   <property name="test" location="test"/>
 
   <target name="init">
