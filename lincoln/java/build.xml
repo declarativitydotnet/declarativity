@@ -11,6 +11,7 @@
   <property name="src" location="src"/>
   <property name="parser-dir" location="${src}/jol/lang/parse"/>
   <property name="test" location="test"/>
+  <property name="test-output" location="ant-test-output"/>
 
   <target name="init">
     <tstamp/>
@@ -74,6 +75,15 @@
       </manifest>
     </jar>
   	<delete dir="${dist}/rats_tmp"/>
+
+    <!-- Build a separate JAR file containing the test bytecode and
+         the dependent OLG files -->
+    <jar jarfile="${dist}/jol-test.jar">
+      <fileset dir="${build}" includes="jol/test/**"/>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}"/>
+      </manifest>
+    </jar>
   </target>
 
   <target name="doc" description="generate Javadoc documentation">
@@ -81,14 +91,22 @@
   </target>
 
   <target name="test" description="run JUnit tests">
-    <junit printsummary="yes">
+    <mkdir dir="${test-output}"/>
+
+    <!-- Note that we fork a JVM to run the tests in. This is probably
+         good for robustness reasons; it also seems necessary to
+         prevent JUnit from interferring with our classpath and
+         preventing the loading of OLG files. -->
+    <junit printsummary="yes" fork="yes">
       <classpath>
+        <pathelement location="${dist}/jol.jar"/>
+        <pathelement location="${dist}/jol-test.jar"/>
         <pathelement location="${lib}/junit.jar"/>
       </classpath>
 
       <formatter type="plain"/>
 
-      <batchtest>
+      <batchtest todir="${test-output}">
         <fileset dir="${test}">
           <include name="**/*Test.java"/>
         </fileset>
@@ -100,5 +118,6 @@
     <delete dir="${build}"/>
     <delete dir="${dist}"/>
     <delete dir="${doc}"/>
+    <delete dir="${test-output}"/>
   </target>
 </project>
