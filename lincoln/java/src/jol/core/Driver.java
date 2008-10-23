@@ -5,7 +5,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import jol.exec.Query;
 import jol.lang.plan.Predicate;
