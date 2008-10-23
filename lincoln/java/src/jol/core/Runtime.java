@@ -216,8 +216,8 @@ public class Runtime implements System {
 		try {
 			Runtime runtime = new Runtime();
 			URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("jol/core/runtime.olg");
-			if(runtimeFile == null) {
-			    throw new P2RuntimeException("Could not load jol/core/runtime.olg.  Add src/ to your classpath.");
+			if (runtimeFile == null) {
+			    throw new P2RuntimeException("Could not load jol/core/runtime.olg.");
 			}
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
