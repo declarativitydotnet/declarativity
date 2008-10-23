@@ -225,12 +225,14 @@ public class Runtime implements System {
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
 			runtime.driver.runtime(runtime.program("runtime"));
-			runtime.network.install(port);
-			runtime.thread.start();
-
+			/* Install compiler files first so that further programs
+			 * will be evaluated by the compiler (i.e., they will be stratified). */
 			for (URL file : Compiler.FILES) {
 				runtime.install("system", file);
 			}
+			runtime.network.install(port);
+			runtime.thread.start();
+
 			return runtime;
 		} catch (Exception e) {
 			e.printStackTrace();
