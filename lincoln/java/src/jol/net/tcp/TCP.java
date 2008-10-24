@@ -40,8 +40,7 @@ public class TCP extends Server {
 		this.server = new ServerSocket(port);
 		this.threads = new ThreadGroup("TCP");
 		this.channels = new Hashtable<Address, Thread>();
-		context.install("system",
-				ClassLoader.getSystemClassLoader().getResource("jol/net/tcp/tcp.olg"));
+		context.install("system", ClassLoader.getSystemResource("jol/net/tcp/tcp.olg"));
 	}
 	
 	@Override

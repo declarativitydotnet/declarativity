@@ -218,7 +218,7 @@ public class Runtime implements System {
 	public static System create(int port) throws P2RuntimeException {
 		try {
 			Runtime runtime = new Runtime();
-			URL runtimeFile = ClassLoader.getSystemClassLoader().getResource("jol/core/runtime.olg");
+			URL runtimeFile = ClassLoader.getSystemResource("jol/core/runtime.olg");
 			if (runtimeFile == null) {
 			    throw new P2RuntimeException("Could not load jol/core/runtime.olg.");
 			}

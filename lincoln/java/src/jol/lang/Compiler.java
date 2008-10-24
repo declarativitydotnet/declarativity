@@ -39,8 +39,8 @@ import xtc.util.Runtime;
  */
 public class Compiler {
 	public static final URL[] FILES = {
-			ClassLoader.getSystemClassLoader().getResource("jol/lang/compile.olg"),
-			ClassLoader.getSystemClassLoader().getResource("jol/lang/stratachecker.olg")
+			ClassLoader.getSystemResource("jol/lang/compile.olg"),
+			ClassLoader.getSystemResource("jol/lang/stratachecker.olg")
 		};
 
 	public static class CompileTable extends ObjectTable {

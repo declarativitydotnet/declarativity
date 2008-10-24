@@ -58,7 +58,7 @@ public class TCPNIO extends Server {
 		this.executor = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
 		this.connections = new Hashtable<String, Connection>();
 		this.newConnections = new ArrayList<Connection>();
-		context.install("system", ClassLoader.getSystemClassLoader().getResource("jol/net/tcp/tcp.olg"));
+		context.install("system", ClassLoader.getSystemResource("jol/net/tcp/tcp.olg"));
 		
 		ServerSocketChannel server = ServerSocketChannel.open();
 		server.configureBlocking(false);

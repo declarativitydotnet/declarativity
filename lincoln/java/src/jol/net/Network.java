@@ -53,7 +53,7 @@ public final class Network {
 		
 		/* Install network layer application */
 		context.install("network",
-				ClassLoader.getSystemClassLoader().getResource("jol/net/network.olg"));
+				ClassLoader.getSystemResource("jol/net/network.olg"));
 	}
 	
 	/**
