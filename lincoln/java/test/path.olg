@@ -1,9 +1,8 @@
 program path;
 
+import java.lang.Integer;
 import java.lang.Object;
 import java.lang.String;
-import java.lang.Integer;
-import jol.core.Runtime;
 
 import jol.types.basic.ValueList;
 
@@ -15,15 +14,12 @@ define(allpaths, {String, ValueList});
 define(pathPrinter, {String, ValueList});
 define(computeAll, {String});
 
-/* Fire a timer 10 seconds following program start time.
-   The period is set to 0, which means I only want it to
-   fire once. */
-timer(newlink, 10000, 0);
-
 /* 1 -> 2 -> 3 -> 4 */
 link("1", "2");
 link("2", "3");
 link("3", "4");
+
+/* Add an extra 2 -> 4 link, to make the shortest path non-trivial */
 link("2", "4");
 
 /* 5 -> 6 -> 7 -> 8 -> 9 */
@@ -36,36 +32,35 @@ watch(path, ae);
 watch(shortestPath, ae);
 watch(allpaths, r);
 
+/* Fire a timer 5 seconds following program start time.  The period is
+   set to 0, which means it will only fire once. */
+timer(newlink, 5000, 0);
 watch(newlink, ra);
 
 /* Add the link 9 -> 10 when newlink fires */
-link("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
-
-newlink(null, 5000, null) :- newlink(Delay, Period, Timer), Period == 0L;
-
+link("9", "10") :- newlink(_, _, _);
 
 /* Initialize all paths with link */
 init
 path(Source, Destination, 1) :- link(Source, Destination);
 
-/* Transitive closure over path, link. */
-transitive
+/* Transitive closure over path, link */
+trans
 path(Source, Destination, Hops+1) :- 
 	path(Source, Intermediate, Hops), link(Intermediate, Destination);
 
-/* Compute shortest paths. */
+/* Compute shortest paths */
 shortestPath
 shortestPath(Source, Destination, min<Hops>) :- 
 	path(Source, Destination, Hops);
-	
+
 computeAll(Source) :-
 	shortestPath(Source, Destination, Hops);
-	
-import jol.types.basic.Schema;
-allpaths(Source, generic<(new ValueList()).insert(Destination)>) :-
-	computeAll(Bla),
+
+allpaths(Source, generic<(new ValueList()).insert((Object)Destination)>) :-
+	computeAll(_),
 	path(Source, Destination, Hops);
-	
+
 pathPrinter(Source, Paths) :-
 	allpaths(Source, Paths);
 
