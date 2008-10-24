@@ -77,6 +77,7 @@
          the dependent OLG files -->
     <jar jarfile="${dist}/jol-test.jar">
       <fileset dir="${build}" includes="jol/test/**"/>
+      <fileset dir="${test}" includes="**/*.olg"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>

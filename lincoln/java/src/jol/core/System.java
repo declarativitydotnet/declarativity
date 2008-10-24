@@ -34,10 +34,10 @@ public interface System {
 	/**
 	 * Install program file into runtime.
 	 * @param owner Program owner.
-	 * @param file File containing program text.
+	 * @param url The location of the program contents.
 	 * @throws UpdateException compilation/installation problems
 	 */
-	public void install(String owner, URL file) throws UpdateException;
+	public void install(String owner, URL url) throws UpdateException;
 
 	/**
 	 * Uninstall program.

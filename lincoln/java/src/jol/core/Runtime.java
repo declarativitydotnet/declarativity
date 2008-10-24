@@ -154,11 +154,11 @@ public class Runtime implements System {
 	/**
 	 * Install the program contained in the given file under the given owner.
 	 * @param owner The owner of the program.
-	 * @param file The file containing the program text.
+	 * @param url The location that contains the program text.
 	 */
-	public void install(String owner, URL file) throws UpdateException {
+	public void install(String owner, URL url) throws UpdateException {
 		TupleSet compilation = new TupleSet(CompileTable.TABLENAME);
-		compilation.add(new Tuple(null, owner, file.toString(), null));
+		compilation.add(new Tuple(null, owner, url.toString(), null));
 		schedule("runtime", CompileTable.TABLENAME, compilation, new TupleSet(CompileTable.TABLENAME));
 	}
 	

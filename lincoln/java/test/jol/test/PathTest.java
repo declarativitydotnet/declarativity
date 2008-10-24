@@ -27,7 +27,7 @@ public class PathTest {
 
     @Test
     public void simplePathTest() throws MalformedURLException, UpdateException {
-        this.sys.install("gfs",
-                         new URL("file:///home/neilconway/lincoln/java/test/jol/path.olg"));
+        URL u = ClassLoader.getSystemResource("path.olg");
+        this.sys.install("gfs", u);
     }
 }
