@@ -1446,7 +1446,7 @@ public final class TypeChecker extends Visitor {
 			Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
 			if (type(var.name()) != null) {
 				runtime.warning("Assuming " + var.name() + 
-						        " is not a variable but rather refers the class type of " + 
+						        " is not a variable but rather refers to the class type of " + 
 						        type(var.name()), n);
 				n.getNode(0).setProperty(Constants.TYPE, type(var.name()));
 				type = Class.class;
