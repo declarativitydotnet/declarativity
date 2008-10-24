@@ -6,7 +6,7 @@ import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
 /**
- * An ObjectTable is an abstract class extened by those tables created
+ * An ObjectTable is an abstract class extended by those tables created
  * in Java. Creating such tables allow for application specific insertion/deletion
  * semantics.
  */
