@@ -89,10 +89,10 @@ instance(Master,I+1) :- instance(Master,I), storedDecreeRequest#insert(Master,B,
 	
 r1_b
 prepare(Agent,Round,Decree) :- 
-	decreeRequest(Agent,Decree,From),
+	storedDecreeRequest(Agent,Decree,From),
 	lastTried(Agent,Old),
 	// if we don't already have a quorum
-  //instance(Agent,0),
+  instance#insert(Agent,0),
 	Round := Old + 1;
 	
 r1_c
@@ -113,7 +113,8 @@ nextBal(Agent,Round) :-nextBal(Agent,Old),
 
 
 r2_b
-lastPromise(Agent,Round,OldRound,OldDecree,Peer) :- sendPrepare(Agent,Round,Decree,Peer),
+lastPromise(Agent,Round,OldRound,OldDecree,Peer) :- 
+  sendPrepare#insert(Agent,Round,Decree,Peer),
 	prevVote(Agent,OldRound,OldDecree),
 	Round >= OldRound;
 
@@ -140,14 +141,16 @@ quorum(Master,Round) :- priestCnt(Master,Pcnt),
 	Vcnt > ( Pcnt / 2 );
 	
 r3_b
-acceptRequest(Master,Round,OldDecree,MaxB) :- quorum(Master,Round),
+acceptRequest(Master,Round,OldDecree,MaxB) :- 
+  //quorum(Master,Round),
 	maxPrevRound(Master,MaxB),
 	prepare(Master,Round,Decree),
 	sendPromise(Master,Round,MaxB,OldDecree,Agent),
 	MaxB != -1;
 
 r3_c	
-acceptRequest(Master,Round,Decree,-1) :- quorum(Master,Round),
+acceptRequest(Master,Round,Decree,-1) :- 
+  //quorum(Master,Round),
 	maxPrevRound(Master,MaxB),
 	sendPromise(Master,Round,MaxB,OldDecree,Agent),
 	MaxB == -1,
@@ -160,14 +163,11 @@ acceptRequest(Master,OldB+1,Decree,OldB) :-
 	quorum(Master,OldB);
 	*/
 
-/*
-r3_d
-acceptRequest(Master,OldB,Decree,OldB) :-
-  decreeRequest(Master,Decree,From),
-  quorum(Master,OldB),
+acceptRequest(Master,-1,Decree,-1) :-
+  storedDecreeRequest(Master,Decree,From,_),
+  //quorum(Master,OldB),
   instance(Master,I),
   I > 0;
-*/	
 
 r3_e
 sendBeginRound(@Agent,Round,Decree,Master) :- acceptRequest(@Master,Round,Decree,Kind),
@@ -182,6 +182,10 @@ r4_a
 accept(Agent,Round,Decree) :- sendBeginRound(Agent,Round,Decree,Master),
 	nextBal(Agent,OldB),
 	Round == OldB;
+
+// we are locked in quorum
+accept(Agent,Round,Decree) :- sendBeginRound(Agent,Round,Decree,Master),
+Round == -1;
 	
 r4_b	
 prevVote(Agent,Round,Decree) :- prevVote(Agent,Old,OD),
@@ -202,7 +206,7 @@ that ballot) in his ledger and sends a Success (d) message to every priest.
 ***************************************************************************************/
 r5_a	
 decree(Master,Round,Decree) :- lastTried(Master,Round),
-	acceptCnt(Master,Round,Votes),
+	acceptCnt#insert(Master,Round,Votes),
 	// this is |quorum| 
 	lastPromiseCnt(Master,Round,Votes),
 	acceptRequest(Master,Round,Decree);
@@ -249,29 +253,29 @@ parliament(Me,Him) :- fake(A,B),
 
 
 	/**/
-watch(tick,id);
-watch(prepare,ad);
-watch(sendPrepare,ad);
-watch(lastTried,ad);
-watch(parliament,ad);
-watch(sendPromise,ad);
-watch(priestCnt,id);
-watch(lastPromiseCnt,ad);
-watch(lastPromise,ad);
+watch(tick,ie);
+watch(prepare,ae);
+watch(sendPrepare,ae);
+watch(lastTried,ae);
+watch(parliament,ae);
+watch(sendPromise,ae);
+watch(priestCnt,ar);
+watch(lastPromiseCnt,ae);
+watch(lastPromise,ae);
 	/**/
-watch(quorum,ad);
-watch(decree,iad);
-watch(acceptCnt,ad);
-watch(sendAccept,ad);
-watch(accept,ad);
-watch(success,ad);
-watch(decreeRequest,ad);
+watch(quorum,ae);
+watch(decree,ae);
+watch(acceptCnt,ae);
+watch(sendAccept,ae);
+watch(accept,ae);
+watch(success,ae);
+watch(decreeRequest,ae);
 	
-//watch(maxPrevRound,adi);
-watch(acceptRequest,ad);
-//watch(receivedPromise,ad);
+//watch(maxPrevRound,ae);
+watch(acceptRequest,ae);
+//watch(receivedPromise,ae);
 	
-watch(prevVote,ad);	
-watch(instance,aed);
+watch(prevVote,ae);	
+watch(instance,ae);
 	
 	
