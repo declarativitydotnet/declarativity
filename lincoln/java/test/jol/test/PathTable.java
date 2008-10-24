@@ -1,5 +1,6 @@
 package jol.test;
 
+import jol.core.Runtime;
 import jol.types.basic.TypeList;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
