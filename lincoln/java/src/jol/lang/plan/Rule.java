@@ -3,8 +3,12 @@ package jol.lang.plan;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+
+import jol.core.Periodic;
+import jol.core.Runtime;
 import jol.exec.BasicQuery;
 import jol.exec.Query;
+import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -24,9 +28,6 @@ import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
-import jol.core.Periodic;
-import jol.lang.plan.Watch.WatchTable;
-import jol.core.Runtime;
 
 public class Rule extends Clause {
 	
@@ -225,10 +226,10 @@ public class Rule extends Clause {
 		
 		/* Create the set of localized rules. */
 		/* Grab the location variable representing from the event for this 
-		 * rule group. The orginal event will be the first group. Subsequent 
+		 * rule group. The original event will be the first group. Subsequent 
 		 * groups will be triggered off the intermediate event predicates
 		 * created during the localization process. The final group will 
-		 * project onto the orginal head predicate. */
+		 * project onto the original head predicate. */
 		while(groupByLocation.size() > 0) {
 			String location           = event.locationVariable().name();
 			Schema intermediateSchema = event.schema();
@@ -276,7 +277,7 @@ public class Rule extends Clause {
 				event = intermediate;
 			}
 			else {
-				/* This is the final group that projects back to the orginal head. */
+				/* This is the final group that projects back to the original head. */
 				intermediateBody.addAll(remainder); // Tack on any remainder terms (e.g., selections, assignments).
 				queries.addAll(query(context, periodics, head, event, intermediateBody));
 			}
