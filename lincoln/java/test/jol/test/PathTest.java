@@ -16,8 +16,10 @@ public class PathTest {
     private System sys;
 
     @Before
-    public void setup() throws P2RuntimeException {
+    public void setup() throws P2RuntimeException, MalformedURLException {
         this.sys = Runtime.create(5000);
+        URL u = ClassLoader.getSystemResource("jol/test/path.olg");
+        this.sys.install("gfs", u);
     }
 
     @After
@@ -26,8 +28,14 @@ public class PathTest {
     }
 
     @Test
-    public void simplePathTest() throws MalformedURLException, UpdateException {
-        URL u = ClassLoader.getSystemResource("path.olg");
-        this.sys.install("gfs", u);
+    public void simplePathTest() throws UpdateException {
+        /* Setup the initial links */
+        TableName link_tbl = new TableName("path", "link");
+        TupleSet links = new TupleSet(link_tbl);
+        links.add(new Tuple("1", "2"));
+        links.add(new Tuple("2", "3"));
+        links.add(new Tuple("3", "4"));
+
+        system.schedule("path", link_tbl, links, null);
     }
 }
