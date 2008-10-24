@@ -15,7 +15,7 @@ define(allpaths, {String, ValueList});
 define(pathPrinter, {String, ValueList});
 define(computeAll, {String});
 
-/* Fire a time 10 seconds following program start time.
+/* Fire a timer 10 seconds following program start time.
    The period is set to 0, which means I only want it to
    fire once. */
 timer(newlink, 10000, 0);
