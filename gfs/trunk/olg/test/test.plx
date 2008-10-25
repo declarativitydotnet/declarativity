@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 use strict;
 use IO::Handle;
-use Test::Simple tests => 8;
+use Test::Simple tests => 10;
 
 my $JAR = "jol.new";
-my $OLG = "../paxos.olg";
+my $OLG = "../getopt.olg ../paxos.olg";
 
 my @handles;
 
@@ -14,11 +14,43 @@ $SIG{ALRM}  = 'cleanup';
 test_1();
 test_2();
 test_3();
+#test_4();
 
 print "\b";
 
 
 ###############################################################
+
+sub test_4 {
+  # start a paxos instance over 3 replicas
+  my @pids = pipe_many(4);
+
+  # yay, array smushing
+  push @handles,@pids;
+
+  # kill one of the reps 
+  kill(9,$handles[4]);
+
+  # make a request
+  my ($p4,$handle) = request(10000,"start_synod.olg","123");
+
+  my $rest = snatch_reply($handle);
+
+  # check that is it passed.
+  ok($rest =~ /XACT123/,"continuous xact");
+  ok($rest =~ /passed/,"passed");
+
+  # kill it
+
+  foreach (@pids) {
+    kill(9,$_);
+  }
+  kill(9,$p4);
+  # look, it shouldn't have to be like this, but it is.
+  system("killall java");
+
+}
+
 
 sub test_3 {
   # start a paxos instance over 3 replicas
@@ -28,7 +60,7 @@ sub test_3 {
   push @handles,@pids;
 
   # kill one of the reps 
-  kill(9,$handles[2]);
+  #kill(9,$handles[2]);
 
   # make a request
   my ($p4,$handle) = request(10000,"continuous_synod.olg","123");
@@ -41,6 +73,11 @@ sub test_3 {
 
   # 
   my $second = snatch_reply($handle);
+  ok($rest =~ /XACT0/,"still zero");
+  ok($rest =~ /passed/,"passed");
+
+
+  my $third = snatch_reply($handle);
   ok($rest =~ /XACT0/,"still zero");
   ok($rest =~ /passed/,"passed");
 
@@ -85,9 +122,8 @@ sub test_2 {
 
 sub test_1 {
   # start a paxos instance
-  my $p1 = pipe_p(0,0);
-  #my $p1 = pipe_many(0);
-  push @handles,$p1;
+  my @pids = pipe_many(0);
+  push @handles,@pids;
 
   # make a request
   my ($p2,$handle) = request(10000,"start_synod.olg","123");
@@ -100,7 +136,9 @@ sub test_1 {
 
   # kill it
   kill(9,$p2);
-  kill(9,$p1);
+  foreach (@pids) {
+    kill(9,$_);
+  }
 }
 
 sub snatch_reply {
@@ -163,6 +201,7 @@ sub pipe_many {
   my $port = 10000 + $procs;
   $ENV{"ME"} = $procs;
   $ENV{"PROC"} = $procs;
+  alarm(60);
   my $pid = open(PIPE,"java -jar $JAR $port $OLG 2>&1 |");
   while (<PIPE>) {
     #print "OUT: $_\n";
@@ -170,37 +209,11 @@ sub pipe_many {
       last;
     }
   }
+  alarm(0);
+  ok(1,"started up");
   push @pids,$pid;
   # give them a few seconds to spin up.
   sleep(4);
   return @pids;
 }
 
-sub pipe_p {
-  my ($id,$procs) = @_;
-
-  my $port = $id + 10000;
-  $ENV{"ME"} = $id;
-  $ENV{"PROC"} = $procs;
-  my $pid = open(PIPE,"java -jar $JAR $port $OLG 2>&1 |");
-  while (<PIPE>) {
-    #print "OUT: $_\n";
-    if (/CLOCK/) {
-      last;
-    }
-  }
-  return $pid;
-}
-
-sub spawn_p {
-  my ($id,$procs) = @_;
-  my $kidpid = fork();
-
-  my $port = $id + 10000;
-  $ENV{"ME"} = $id;
-  $ENV{"PROC"} = $procs;
-  if (!$kidpid) {
-    system("java -jar $JAR $port $OLG");
-  }
-  return $kidpid;
-}

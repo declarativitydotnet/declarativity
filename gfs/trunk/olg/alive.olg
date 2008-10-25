@@ -28,7 +28,7 @@ watch(alive,ae);
 zTick(Ip) :- 
   ident(Me,_),
   B := Me + 10000,
-  Ip := "tcp:localhost:"+B.toString(),
+  Ip := "udp:localhost:"+B.toString(),
   zTimer(_,_,_);
   
 
@@ -92,7 +92,7 @@ fake(A,O+1) :- ident(A,P),
 parliament(Me,Him) :- fake(A,B),
   Left := A + 10000,
   Right := B + 10000,
-  Me := "tcp:localhost:" + Left.toString(),
-  Him := "tcp:localhost:" + Right.toString();
+  Me := "udp:localhost:" + Left.toString(),
+  Him := "udp:localhost:" + Right.toString();
 
 

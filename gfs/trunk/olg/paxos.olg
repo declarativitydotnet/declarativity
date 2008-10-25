@@ -68,6 +68,8 @@ PAXOS global invariants:
 */
 	
 
+public
+parliament(A,B) :- getopt::parliament#insert(A,B);
 	
 lastTried(Master,-1) :- parliament(Master,Agent);
 prevVote(Master,-1,"none") :- parliament(Master,Agent);
@@ -82,17 +84,17 @@ to b, and sends a NextBallot (b) message to some set of priests.
 r1_a
 lastTried(Agent,Bnum) :- lastTried(Agent,Old),
 	prepare#insert(Agent,Bnum,Decree),
-	Bnum >= Old;
+	Bnum > Old;
 	
 storedDecreeRequest(A,B,C,Id) :- decreeRequest#insert(A,B,C), Id := Runtime.idgen();
 instance(Master,I+1) :- instance(Master,I), storedDecreeRequest#insert(Master,B,C);
 	
 r1_b
 prepare(Agent,Round,Decree) :- 
-	storedDecreeRequest(Agent,Decree,From),
+	storedDecreeRequest#insert(Agent,Decree,From),
 	lastTried(Agent,Old),
 	// if we don't already have a quorum
-  instance#insert(Agent,0),
+  //instance#insert(Agent,0),
 	Round := Old + 1;
 	
 r1_c
@@ -109,7 +111,7 @@ prevVote [q]. (A NextBallot (b) message is ignored if b ² nextBal [q].)
 r2_a
 nextBal(Agent,Round) :-nextBal(Agent,Old),
 	lastPromise#insert(Agent,Round,OldRound,Decree),
-	Round >= Old;
+	Round > Old;
 
 
 r2_b
@@ -135,14 +137,17 @@ quorum Q, and decree d, where d is chosen to satisfy B3. He then sends a
 BeginBallot (b, d) message to every priest in Q.
 ***************************************************************************************/
 
+define(quorumEvent,{String,Integer});
 r3_a	
-quorum(Master,Round) :- priestCnt(Master,Pcnt),
+quorumEvent(Master,Round) :- priestCnt(Master,Pcnt),
 	lastPromiseCnt(Master,Round,Vcnt),
 	Vcnt > ( Pcnt / 2 );
+
+quorum(M,R) :- quorumEvent#insert(M,R);
 	
 r3_b
 acceptRequest(Master,Round,OldDecree,MaxB) :- 
-  //quorum(Master,Round),
+  quorum(Master,Round),
 	maxPrevRound(Master,MaxB),
 	prepare(Master,Round,Decree),
 	sendPromise(Master,Round,MaxB,OldDecree,Agent),
@@ -150,7 +155,7 @@ acceptRequest(Master,Round,OldDecree,MaxB) :-
 
 r3_c	
 acceptRequest(Master,Round,Decree,-1) :- 
-  //quorum(Master,Round),
+  quorum(Master,Round),
 	maxPrevRound(Master,MaxB),
 	sendPromise(Master,Round,MaxB,OldDecree,Agent),
 	MaxB == -1,
@@ -230,6 +235,7 @@ reply(@Client,Decree,"passed") :- success(@Me,Round,Decree,Client);
   subroutine, really, for figuring out cohort membership from the environment.
 	I'd like to have this in a separate file, but that isn't working... 
 ***/
+/*
 define(ident,keys(0),{Integer,Integer});
 	
 ident(A,P) :- A := new Integer(System.getenv("ME")),
@@ -248,7 +254,7 @@ parliament(Me,Him) :- fake(A,B),
 	Right := B + 10000,
 	Me := "tcp:localhost:" + Left.toString(),
 	Him := "tcp:localhost:" + Right.toString();
-	
+*/
 	/* end sub-thing */
 
 
