@@ -171,7 +171,7 @@ public abstract class Table implements Comparable<Table> {
 		/**
 		 * Register the given table with the catalog.
 		 * @param table The table to be registered.
-		 * @return true if table registration suceeds, false otherwise.
+		 * @return true if table registration succeeds, false otherwise.
 		 */
 		public boolean register(Table table) {
 			Tuple tuple = new Tuple(table.name(), table.type().toString(), table.key(), new TypeList(table.types()), table);
@@ -190,6 +190,7 @@ public abstract class Table implements Comparable<Table> {
 	 * TABLE: A materialized table (stores tuples)
 	 * EVENT: Does not store the tuples inserted.
 	 * FUNCTION: A table function. (no tuple storage)
+	 * TIMER: Represents a wall-clock timer.
 	 */
 	public enum Type{TABLE, EVENT, FUNCTION, TIMER};
 	
@@ -354,7 +355,7 @@ public abstract class Table implements Comparable<Table> {
 			
 			Set<Tuple> oldvals = null;
 			try {
-				if(conflicts != null && primary() != null) {
+				if (conflicts != null && primary() != null) {
 					oldvals = primary().lookupByKey(primary().key().project(t));
 			 	}
 			} catch (BadKeyException e) {
@@ -393,7 +394,7 @@ public abstract class Table implements Comparable<Table> {
 	public TupleSet delete(Iterator<Tuple> tuples) throws UpdateException {
 		TupleSet delta = new TupleSet(name());
 
-		while(tuples.hasNext()) {
+		while (tuples.hasNext()) {
 			Tuple t = tuples.next();
 			t = t.clone();
 			if (delete(t)) {
@@ -421,6 +422,7 @@ public abstract class Table implements Comparable<Table> {
 	/**
 	 * Signal to table below to actually perform the deletion.
 	 * @param t Tuple to be deleted.
+	 * @return true if the deletion occurred, false otherwise.
 	 * @throws UpdateException 
 	 */
 	protected abstract boolean delete(Tuple t) throws UpdateException;
