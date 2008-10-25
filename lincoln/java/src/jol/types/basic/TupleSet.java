@@ -120,13 +120,11 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	}
 	
 	/**
-	 *  Set the table name.
+	 * Set the table name.
 	 * @param name the table name.
-	 * @return true
 	 */
-	public boolean name(TableName name) {
+	public void name(TableName name) {
 		this.name = name;
-		return true;
 	}
 	
 	boolean warnedAboutBigTable = false;
