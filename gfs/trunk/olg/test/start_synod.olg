@@ -5,7 +5,8 @@ import java.lang.System;
 
 define(decreeRequest,{String,String,String});
 define(doping,keys(0,1,2),{String,String,String,String});
-define (reply,keys(0,1),{String,String,String});
+//define (reply,keys(0,1),{String,String,String});
+define (reply,{String,String,String});
 
 watch(doping,ad);
 watch(reply,ad);

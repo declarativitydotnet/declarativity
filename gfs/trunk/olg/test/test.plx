@@ -4,15 +4,16 @@ use IO::Handle;
 use Test::Simple tests => 10;
 
 my $JAR = "jol.new";
-my $OLG = "../getopt.olg ../paxos.olg";
+#my $OLG = "../getopt.olg ../paxos.olg";
+my $OLG = "../getopt.olg ../multipaxos.olg";
 
 my @handles;
 
 
 $SIG{ALRM}  = 'cleanup';
 
-test_1();
-test_2();
+#test_1();
+#test_2();
 test_3();
 #test_4();
 
@@ -37,7 +38,7 @@ sub test_4 {
   my $rest = snatch_reply($handle);
 
   # check that is it passed.
-  ok($rest =~ /XACT123/,"continuous xact");
+  ok($rest =~ /XACT0/,"continuous xact");
   ok($rest =~ /passed/,"passed");
 
   # kill it
@@ -73,13 +74,13 @@ sub test_3 {
 
   # 
   my $second = snatch_reply($handle);
-  ok($rest =~ /XACT0/,"still zero");
-  ok($rest =~ /passed/,"passed");
+  ok($second =~ /XACT0/,"still zero");
+  ok($second =~ /passed/,"passed");
 
 
   my $third = snatch_reply($handle);
-  ok($rest =~ /XACT0/,"still zero");
-  ok($rest =~ /passed/,"passed");
+  ok($third =~ /XACT0/,"still zero");
+  ok($third =~ /passed/,"passed");
 
   # kill it
 
@@ -96,7 +97,7 @@ sub test_3 {
 
 sub test_2 {
   # start a paxos instance over 3 replicas
-  my @pids = pipe_many(5);
+  my @pids = pipe_many(3);
   # yay, array smushing
   push @handles,@pids;
 
@@ -144,7 +145,7 @@ sub test_1 {
 sub snatch_reply {
   my ($handle) = @_;
   
-  alarm(15);
+  alarm(20);
   my $rest;
   while (<$handle>) {
     if (/reply/) {
