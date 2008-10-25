@@ -2,13 +2,13 @@ package jol.types.operator;
 
 import java.util.Set;
 
+import jol.core.Runtime;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.P2RuntimeException;
 import jol.types.function.TupleFunction;
-import jol.core.Runtime;
 
 /**
  * An Assign operator assigns some constant value to some attribute position

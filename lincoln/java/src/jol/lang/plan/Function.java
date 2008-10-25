@@ -1,5 +1,6 @@
 package jol.lang.plan;
 
+import jol.core.Runtime;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
@@ -9,7 +10,6 @@ import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
-import jol.core.Runtime;
 
 public class Function extends Predicate {
 	

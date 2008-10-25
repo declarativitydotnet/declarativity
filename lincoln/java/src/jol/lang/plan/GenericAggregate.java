@@ -11,7 +11,7 @@ import jol.types.exception.P2RuntimeException;
 import jol.types.function.TupleFunction;
 
 /**
- * Generic aggregates are supported by calling a statful VOID method on
+ * Generic aggregates are supported by calling a stateful VOID method on
  * an object. That arguments indicate what is passed into the object.
  * @author tcondie
  *

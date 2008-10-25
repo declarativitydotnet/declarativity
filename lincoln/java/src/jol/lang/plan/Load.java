@@ -9,12 +9,12 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import jol.core.Runtime;
 import jol.lang.plan.Fact.FactTable;
 import jol.types.basic.Tuple;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import xtc.tree.Location;
-import jol.core.Runtime;
 
 public class Load extends Clause {
 	private final static String DEFAULT_DELIM = ",";
