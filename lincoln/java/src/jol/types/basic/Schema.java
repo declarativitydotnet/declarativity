@@ -1,8 +1,9 @@
 package jol.types.basic;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jol.lang.plan.DontCare;
 import jol.lang.plan.Variable;
@@ -20,13 +21,13 @@ public class Schema {
 	/** The table name that this schema references. */
 	protected TableName name;
 	
-	/** A hash from the string variable name to the variable itself. */
-	protected Hashtable<String, Variable> variables;
+	/** A map from the string variable name to the variable itself. */
+	protected Map<String, Variable> variables;
 
 	/**  Create an empty schema. */
 	public Schema() {
 		this.name = null;
-		this.variables = new Hashtable<String, Variable>();
+		this.variables = new HashMap<String, Variable>();
 	}
 
 	/** 
@@ -35,7 +36,7 @@ public class Schema {
 	 */
 	public Schema(TableName name) {
 		this.name = name;
-		this.variables = new Hashtable<String, Variable>();
+		this.variables = new HashMap<String, Variable>();
 	}
 	
 	/**
@@ -48,7 +49,7 @@ public class Schema {
 		for (int i = 0; i < variables.size(); i++) {
 			variables.get(i).position(i);
 		}
-		this.variables = new Hashtable<String, Variable>();
+		this.variables = new HashMap<String, Variable>();
 		for (Variable variable : variables) {
 			this.variables.put(variable.name(), variable);
 		}
@@ -60,7 +61,7 @@ public class Schema {
 	 */
 	private Schema(Schema schema) {
 		this.name = schema.name;
-		this.variables = new Hashtable<String, Variable>(schema.variables);
+		this.variables = new HashMap<String, Variable>(schema.variables);
 	}
 	
 	@Override

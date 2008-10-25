@@ -1,13 +1,15 @@
 package jol.types.operator;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
+import jol.core.Runtime;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.net.IP;
-import jol.net.NetworkMessage;
 import jol.net.NetworkBuffer;
+import jol.net.NetworkMessage;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -15,7 +17,6 @@ import jol.types.exception.P2RuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.function.TupleFunction;
 import jol.types.table.TableName;
-import jol.core.Runtime;
 
 /**
  * A RemoteBuffer takes the input tuples and inserts them
@@ -30,7 +31,7 @@ public class RemoteBuffer extends Operator {
 	/** Indicates whether the tuples represent a delete operation. */
 	private boolean deletion;
 	
-	/** An accessor to the loction/address attribute value. */
+	/** An accessor to the location/address attribute value. */
 	private TupleFunction<Comparable> addressAccessor;
 	
 	/** 
@@ -64,8 +65,8 @@ public class RemoteBuffer extends Operator {
 	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
 		if (tuples.size() == 0) return tuples;
 		
-		/* Group tuples by the address attribute: (address, tuble) */
-		Hashtable<String, TupleSet> groupByAddress = new Hashtable<String, TupleSet>();
+		/* Group tuples by the address attribute: (address, tuple) */
+		Map<String, TupleSet> groupByAddress = new HashMap<String, TupleSet>();
 		for (Tuple tuple : tuples) {
 			String key = (String) this.addressAccessor.evaluate(tuple);
 			if (!groupByAddress.containsKey(key)) {

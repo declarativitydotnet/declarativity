@@ -1,8 +1,10 @@
 package jol.types.table;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
@@ -40,9 +42,8 @@ import jol.core.Runtime;
  *  by the predicate containing the aggregation.
  */
 public class Aggregation<C extends Comparable<C>> extends Table {
-	
 	/** Stores base tuples in aggregate functions. */
-	private Hashtable<Tuple, Aggregate<C>> baseTuples;
+	private Map<Tuple, Aggregate<C>> baseTuples;
 	
 	/** Stores aggregate values derived from base tuples and aggregate functions. */
 	private TupleSet aggregateTuples;
@@ -54,7 +55,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	protected Index primary;
 	
 	/** The secondary indices. */
-	protected Hashtable<Key, Index> secondary;
+	protected Map<Key, Index> secondary;
 	
 	/**
 	 * Create a new Aggregation table.
@@ -64,7 +65,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	 */
 	public Aggregation(Runtime context, Predicate predicate, Table.Type type) {
 		super(predicate.name(), type, key(predicate), types(predicate));
-		this.baseTuples = new Hashtable<Tuple, Aggregate<C>>();
+		this.baseTuples = new HashMap<Tuple, Aggregate<C>>();
 		this.aggregateTuples = new TupleSet(name());
 		
 		for (jol.lang.plan.Expression arg : predicate) {
@@ -76,7 +77,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		
 		if (type == Table.Type.TABLE) {
 			this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
-			this.secondary = new Hashtable<Key, Index>();
+			this.secondary = new HashMap<Key, Index>();
 		}
 	}
 	
@@ -229,8 +230,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	}
 	
 	@Override
-	public Hashtable<Key, Index> secondary() {
+	public Map<Key, Index> secondary() {
 		return this.secondary;
 	}
-
 }

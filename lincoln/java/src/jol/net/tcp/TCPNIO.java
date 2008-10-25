@@ -13,23 +13,24 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import jol.core.Runtime;
 import jol.net.Address;
-import jol.net.IP;
 import jol.net.Channel;
-import jol.net.Network;
+import jol.net.IP;
 import jol.net.Message;
+import jol.net.Network;
 import jol.net.Server;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
-import jol.core.Runtime;
 
 public class TCPNIO extends Server {
 	/** The name of the receive message predicate (tcp::receive). */
@@ -46,7 +47,7 @@ public class TCPNIO extends Server {
 	
 	private ExecutorService executor;
 	
-	private Hashtable<String, Connection> connections;
+	private Map<String, Connection> connections;
 	
 	private List<Connection> newConnections;
 		
@@ -56,7 +57,7 @@ public class TCPNIO extends Server {
 		this.manager = manager;
 		this.selector = SelectorProvider.provider().openSelector();
 		this.executor = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
-		this.connections = new Hashtable<String, Connection>();
+		this.connections = new HashMap<String, Connection>();
 		this.newConnections = new ArrayList<Connection>();
 		context.install("system", ClassLoader.getSystemResource("jol/net/tcp/tcp.olg"));
 		

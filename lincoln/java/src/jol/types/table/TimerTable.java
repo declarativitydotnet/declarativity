@@ -1,7 +1,7 @@
 package jol.types.table;
 
-import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TimerTask;
 
 import jol.core.Runtime;
@@ -164,7 +164,7 @@ public class TimerTable extends Table {
 	public Index primary() { return null; }
 
 	@Override
-	public Hashtable<Key, Index> secondary() { return null; }
+	public Map<Key, Index> secondary() { return null; }
 
 	@Override
 	public Iterator<Tuple> tuples() {

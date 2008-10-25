@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import jol.core.Runtime;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
@@ -17,9 +18,8 @@ import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
-import jol.types.table.TableName;
 import jol.types.table.Table;
-import jol.core.Runtime;
+import jol.types.table.TableName;
 
 public class Predicate extends Term implements Iterable<Expression> {
 	public enum Field{PROGRAM, RULE, POSITION, EVENT, OBJECT};
@@ -195,7 +195,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 			if (table.primary().key().equals(indexKey)) {
 				index = table.primary();
 			}
-			else if (table.secondary().contains(indexKey)) {
+			else if (table.secondary().containsKey(indexKey)) {
 				index = table.secondary().get(indexKey);
 			}
 			else {

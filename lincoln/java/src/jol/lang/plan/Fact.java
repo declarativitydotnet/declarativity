@@ -3,6 +3,7 @@ package jol.lang.plan;
 import java.util.ArrayList;
 import java.util.List;
 
+import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.exception.P2RuntimeException;
@@ -13,7 +14,6 @@ import jol.types.table.Index;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
-import jol.core.Runtime;
 
 public class Fact extends Clause {
 	

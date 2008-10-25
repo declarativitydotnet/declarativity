@@ -1,16 +1,18 @@
 package jol.types.operator;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import jol.core.Runtime;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.exception.P2RuntimeException;
 import jol.types.function.TupleFunction;
-import jol.core.Runtime;
 
 /**
  * The interface to all join operators.
@@ -34,7 +36,7 @@ public abstract class Join extends Operator {
 		 */
 		public TableField(Class type, Integer position) { 
 			this.type = type;
-			this.position=position; 
+			this.position = position; 
 		}
 		/** Extracts the value from the tuple field position. */
 		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
@@ -153,8 +155,8 @@ public abstract class Join extends Operator {
 	 */
 	private List<JoinFilter> filters(Predicate predicate) {
 		List<JoinFilter> filters = new ArrayList<JoinFilter>();
-		
-		Hashtable<String, Variable> positions = new Hashtable<String, Variable>();
+		Map<String, Variable> positions = new HashMap<String, Variable>();
+
 		for (jol.lang.plan.Expression arg : predicate) {
 			assert(arg.position() >= 0);
 			

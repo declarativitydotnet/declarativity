@@ -1,7 +1,7 @@
 package jol.types.table;
 
-import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Map;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -58,7 +58,7 @@ public class EventTable extends Table {
 
 	@Override
 	/** @return null */
-	public Hashtable<Key, Index> secondary() {
+	public Map<Key, Index> secondary() {
 		return null; // No tuple storage
 	}
 
@@ -73,5 +73,4 @@ public class EventTable extends Table {
 	public Long cardinality() {
 		return 0L;
 	}
-
 }

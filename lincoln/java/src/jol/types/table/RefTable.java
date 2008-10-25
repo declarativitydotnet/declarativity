@@ -1,7 +1,8 @@
 package jol.types.table;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
@@ -28,7 +29,7 @@ public class RefTable extends Table {
 	protected Index primary;
 	
 	/** A map to all secondary indices. */
-	protected Hashtable<Key, Index> secondary;
+	protected Map<Key, Index> secondary;
 	
 	/**
 	 * Create a new RefCounted Table.
@@ -41,7 +42,7 @@ public class RefTable extends Table {
 		super(name, Type.TABLE, key, types);
 		this.tuples = new TupleSet(name);
 		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
-		this.secondary = new Hashtable<Key, Index>();
+		this.secondary = new HashMap<Key, Index>();
 	}
 	
 	@Override
@@ -97,7 +98,7 @@ public class RefTable extends Table {
 	}
 
 	@Override
-	public Hashtable<Key, Index> secondary() {
+	public Map<Key, Index> secondary() {
 		return this.secondary;
 	}
 
@@ -105,5 +106,4 @@ public class RefTable extends Table {
 	public Long cardinality() {
 		return (long)this.tuples.size();
 	}
-
 }

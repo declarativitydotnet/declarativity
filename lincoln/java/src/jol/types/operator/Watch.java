@@ -1,17 +1,18 @@
 package jol.types.operator;
 
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 
+import jol.core.Runtime;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
-import jol.types.basic.TupleSet;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 import jol.types.exception.P2RuntimeException;
 import jol.types.table.TableName;
-import jol.core.Runtime;
 
 /**
  * Watch operators print the input tuples to some PrintStream before
@@ -22,7 +23,7 @@ public class Watch extends Operator {
 	public static enum Modifier{NONE, TRACE, ADD, ERASE, INSERT, DELETE, RECEIVE, SEND};
 	
 	/** A map from the watch character to the Modifier type. */
-	public static final Hashtable<Character, Modifier> modifiers = new Hashtable<Character, Modifier>();
+	public static final Map<Character, Modifier> modifiers = new HashMap<Character, Modifier>();
 	
 	static {
 		modifiers.put('t', Modifier.TRACE);

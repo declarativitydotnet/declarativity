@@ -318,10 +318,10 @@ public abstract class Table implements Comparable<Table> {
 	public abstract Index primary();
 	
 	/**
-	 * A hashtable of all defined secondary indices.
+	 * A map containing all defined secondary indices.
 	 * @return All defined secondary indices.
 	 */
-	public abstract Hashtable<Key, Index> secondary();
+	public abstract Map<Key, Index> secondary();
 
 	/**
 	 * Force insert the given tuple. This method is

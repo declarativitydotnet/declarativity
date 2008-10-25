@@ -1,13 +1,14 @@
 package jol.types.table;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
+import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
-import jol.core.Runtime;
 
 /**
  * A basic table definition.
@@ -27,7 +28,7 @@ public class BasicTable extends Table {
 	protected Index primary;
 	
 	/** All secondary indices. */
-	protected Hashtable<Key, Index> secondary;
+	protected Map<Key, Index> secondary;
 	
 	/**
 	 * Create a new basic table.
@@ -41,7 +42,7 @@ public class BasicTable extends Table {
 		this.key = key;
 		this.tuples = new TupleSet(name);
 		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
-		this.secondary = new Hashtable<Key, Index>();
+		this.secondary = new HashMap<Key, Index>();
 	}
 	
 	@Override
@@ -72,7 +73,7 @@ public class BasicTable extends Table {
 	}
 
 	@Override
-	public Hashtable<Key, Index> secondary() {
+	public Map<Key, Index> secondary() {
 		return this.secondary;
 	}
 

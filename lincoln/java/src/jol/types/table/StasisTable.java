@@ -3,8 +3,9 @@ package jol.types.table;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import jol.core.Runtime;
 import jol.lang.plan.Variable;
@@ -136,7 +137,6 @@ public abstract class StasisTable extends Table {
 	
 	//LinearHash tbl;
 	Index prim;
-	Hashtable<Key,Index> sec;
 	
 	@Override
 	protected boolean delete(Tuple t) throws UpdateException {
@@ -189,7 +189,7 @@ public abstract class StasisTable extends Table {
 
 	
 	private Index primary;
-	private Hashtable<Key, Index> secondary = new Hashtable<Key, Index>();
+	private Map<Key, Index> secondary = new HashMap<Key, Index>();
 
 	@Override
 	public Index primary() {
@@ -197,7 +197,7 @@ public abstract class StasisTable extends Table {
 	}
 
 	@Override
-	public Hashtable<Key, Index> secondary() {
+	public Map<Key, Index> secondary() {
 		System.out.println("Stasis table: returning transient list of secondary indices:" + secondary.keySet().toString());
 		return secondary;
 	}

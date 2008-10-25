@@ -1,10 +1,12 @@
 package jol.lang.plan;
 
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 
-import jol.types.table.Table;
+import jol.core.Periodic;
+import jol.core.Runtime;
 import jol.exec.Query;
 import jol.lang.plan.Rule.RuleTable;
 import jol.types.basic.Tuple;
@@ -15,9 +17,8 @@ import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
+import jol.types.table.Table;
 import jol.types.table.TableName;
-import jol.core.Periodic;
-import jol.core.Runtime;
 
 public class Program implements Comparable<Program> {
 	
@@ -55,7 +56,7 @@ public class Program implements Comparable<Program> {
 	
 	private Set<Table> definitions;
 	
-	private Hashtable<TableName, Set<Query>> queries;
+	private Map<TableName, Set<Query>> queries;
 	
 	private TupleSet periodics;
 	
@@ -64,7 +65,7 @@ public class Program implements Comparable<Program> {
 		this.name        = name;
 		this.owner       = owner;
 		this.definitions = new HashSet<Table>();
-		this.queries     = new Hashtable<TableName, Set<Query>>();
+		this.queries     = new HashMap<TableName, Set<Query>>();
 		this.periodics   = new TupleSet(Periodic.TABLENAME);
 		try {
 			context.catalog().table(ProgramTable.TABLENAME).force(new Tuple(name, owner, this));

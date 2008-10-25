@@ -6,19 +6,20 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
+import jol.core.Runtime;
 import jol.net.Address;
-import jol.net.IP;
 import jol.net.Channel;
-import jol.net.Network;
+import jol.net.IP;
 import jol.net.Message;
+import jol.net.Network;
 import jol.net.Server;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
-import jol.core.Runtime;
 
 public class TCP extends Server {
 	private static final TableName ReceiveMessage = new TableName("tcp", "receive");
@@ -31,7 +32,7 @@ public class TCP extends Server {
 	
 	private ThreadGroup threads;
 	
-	private Hashtable<Address, Thread> channels;
+	private Map<Address, Thread> channels;
 		
 	public TCP(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
 		super("TCP Server");
@@ -39,7 +40,7 @@ public class TCP extends Server {
 		this.manager = manager;
 		this.server = new ServerSocket(port);
 		this.threads = new ThreadGroup("TCP");
-		this.channels = new Hashtable<Address, Thread>();
+		this.channels = new HashMap<Address, Thread>();
 		context.install("system", ClassLoader.getSystemResource("jol/net/tcp/tcp.olg"));
 	}
 	

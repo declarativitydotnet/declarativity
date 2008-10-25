@@ -1,12 +1,13 @@
 package jol.net;
 
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
+import jol.core.Runtime;
 import jol.net.tcp.TCPNIO;
 import jol.types.basic.Tuple;
 import jol.types.exception.UpdateException;
-import jol.core.Runtime;
 
 /**
  * The Network manager class. 
@@ -22,7 +23,7 @@ public final class Network {
 	
 	private Connection connection;
 	
-	private Hashtable<String, Server> servers; 
+	private Map<String, Server> servers; 
 	
 	/**
 	 * Create a new network manager.
@@ -34,7 +35,7 @@ public final class Network {
 		this.context       = context;
 		this.buffer        = new NetworkBuffer(context);
 		this.connection    = new Connection(context, this);
-		this.servers       = new Hashtable<String, Server>();
+		this.servers       = new HashMap<String, Server>();
 		
 		context.catalog().register(this.buffer);
 		context.catalog().register(this.connection);

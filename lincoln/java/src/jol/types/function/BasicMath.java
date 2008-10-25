@@ -1,7 +1,8 @@
 package jol.types.function;
 
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 
 import jol.types.basic.Tuple;
@@ -10,7 +11,7 @@ import jol.types.exception.P2RuntimeException;
 public class BasicMath {
 	public enum Operator{UPLUS, UMINUS, PLUS, MINUS, TIMES, DIVIDE, MOD, POW, LSHIFT, RSHIFT};
 
-	private final static Hashtable<String, Operator> operators = new Hashtable<String, Operator>();
+	private final static Map<String, Operator> operators = new HashMap<String, Operator>();
 	static {
 		operators.put("++", Operator.UPLUS);
 		operators.put("--", Operator.UMINUS);

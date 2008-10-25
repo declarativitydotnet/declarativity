@@ -1,8 +1,9 @@
 package jol.core;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -46,8 +47,8 @@ public class Driver implements Runnable {
 				this.time    = (Long)      tuple.value(Field.TIME.ordinal());
 				this.program = (String)    tuple.value(Field.PROGRAM.ordinal());
 				this.name    = (TableName) tuple.value(Field.TABLENAME.ordinal());
-				insertions = new TupleSet(name);
-				deletions = new TupleSet(name);
+				this.insertions = new TupleSet(name);
+				this.deletions = new TupleSet(name);
 			}
 			
 			public void add(Tuple tuple) {
@@ -83,7 +84,7 @@ public class Driver implements Runnable {
 		 * @return Aggregated set of tuples.
 		 */
 		private TupleSet aggregate(TupleSet tuples) {
-			Hashtable<ScheduleUnit, ScheduleUnit> units = new Hashtable<ScheduleUnit, ScheduleUnit>();
+			Map<ScheduleUnit, ScheduleUnit> units = new HashMap<ScheduleUnit, ScheduleUnit>();
 			for (Tuple tuple : tuples) {
 				ScheduleUnit unit = new ScheduleUnit(tuple);
 				if (!units.containsKey(unit)) {
@@ -102,7 +103,7 @@ public class Driver implements Runnable {
 		/** The attribute fields expected by this table function. */
 		public enum Field{TIME, PROGRAM, TABLENAME, INSERTIONS, DELETIONS};
 		
-		/** The attribute types execpted by this table function. */
+		/** The attribute types excepted by this table function. */
 		public static final Class[] SCHEMA =  {
 			Long.class,       // Time
 			String.class,     // Program name
@@ -309,7 +310,7 @@ public class Driver implements Runnable {
 		 */
 		private TupleSet evaluate(Long time, Program program, TableName name, TupleSet insertions, TupleSet deletions) 
 		throws UpdateException {
-			Hashtable<String, Tuple> continuations = new Hashtable<String, Tuple>();
+			Map<String, Tuple> continuations = new HashMap<String, Tuple>();
 
 			WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
 			Operator watchInsert = watch.watched(program.name(), name, Watch.Modifier.INSERT);
@@ -411,13 +412,13 @@ public class Driver implements Runnable {
 
 		/**
 		 * Helper routine that packages up result tuples grouped by (time, program, tablename).
-		 * @param continuations Hashtable containing the tuple groups
+		 * @param continuations Map containing the tuple groups
 		 * @param time Current time.
 		 * @param program Program that evaluated the tuples.
 		 * @param event Indicates whether the tuples are insertions or deletions.
 		 * @param result The result tuples taken from the output of a query.
 		 */
-		private void continuation(Hashtable<String, Tuple> continuations, Long time,
+		private void continuation(Map<String, Tuple> continuations, Long time,
 				                  String program, Predicate.Event event, TupleSet result) {
 			String key = program + "." + result.name();
 

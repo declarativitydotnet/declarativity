@@ -1,8 +1,9 @@
 package jol.lang.plan;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jol.core.Periodic;
 import jol.core.Runtime;
@@ -34,7 +35,6 @@ public class Rule extends Clause {
 	public static class RuleTable extends ObjectTable {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "rule");
 		public static final Key PRIMARY_KEY = new Key(0,1);
-		
 		
 		public enum Field {PROGRAM, RULENAME, PUBLIC, ASYNC, DELETE, OBJECT};
 		public static final Class[] SCHEMA =  {
@@ -208,13 +208,13 @@ public class Rule extends Clause {
 		List<Query> queries = new ArrayList<Query>();
 		
 		/* Group all predicate terms by the location variable. */
-		Hashtable<String, List<Term>> groupByLocation = new Hashtable<String, List<Term>>();
+		Map<String, List<Term>> groupByLocation = new HashMap<String, List<Term>>();
 		List<Term> remainder = new ArrayList<Term>(); // Remaining terms.
 		for (Term t : body) {
 			if (t instanceof Predicate) {
 				Predicate p = (Predicate) t;
 				String loc = p.locationVariable().name();
-				if (!groupByLocation.contains(loc)) {
+				if (!groupByLocation.containsKey(loc)) {
 					groupByLocation.put(loc, new ArrayList<Term>());
 				}
 				groupByLocation.get(loc).add(p);

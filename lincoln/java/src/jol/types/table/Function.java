@@ -1,7 +1,7 @@
 package jol.types.table;
 
-import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Map;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -53,7 +53,7 @@ public abstract class Function extends Table {
 	}
 
 	@Override
-	public Hashtable<Key, Index> secondary() {
+	public Map<Key, Index> secondary() {
 		return null;
 	}
 
@@ -66,5 +66,4 @@ public abstract class Function extends Table {
 	public Long cardinality() {
 		return 0L;
 	}
-
 }
