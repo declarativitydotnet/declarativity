@@ -1,7 +1,5 @@
 package jol.core;
 
-import java.util.Iterator;
-
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
