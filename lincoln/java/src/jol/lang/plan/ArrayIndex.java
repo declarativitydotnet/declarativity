@@ -38,7 +38,7 @@ public class ArrayIndex extends Expression {
 	public TupleFunction function() {
 		return new TupleFunction() {
 			private final TupleFunction function = array.function();
-			public Object evaluate(Tuple tuple) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, JolRuntimeException {
+			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				return Array.get(function.evaluate(tuple), index);
 			}
 
