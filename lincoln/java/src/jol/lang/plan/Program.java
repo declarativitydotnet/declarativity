@@ -124,7 +124,6 @@ public class Program implements Comparable<Program> {
 					}
 					queries.get(input.name()).add(query);
 				}
-				
 			}
 
 			if (periodics.size() > 0) {
@@ -147,7 +146,6 @@ public class Program implements Comparable<Program> {
 	}
 
 	public Set<Query> queries(TableName name) {
-		
 		return this.queries == null || !this.queries.containsKey(name) ? null : this.queries.get(name);
 	}
 

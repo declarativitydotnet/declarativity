@@ -230,7 +230,7 @@ public class Rule extends Clause {
 		 * groups will be triggered off the intermediate event predicates
 		 * created during the localization process. The final group will 
 		 * project onto the original head predicate. */
-		while(groupByLocation.size() > 0) {
+		while (groupByLocation.size() > 0) {
 			String location           = event.locationVariable().name();
 			Schema intermediateSchema = event.schema();
 			String intermediateName   = new String(this.name + "_intermediate_" + event.name().name);

@@ -582,7 +582,7 @@ public class Driver implements Runnable {
 		/* Evaluate until nothing remains. */
 		while (insert.size() > 0 || delete.size() > 0) {
 			TupleSet delta = null;
-			while(insert.size() > 0) {
+			while (insert.size() > 0) {
 				delta = flusher.insert(insert, null);
 				delta = evaluator.insert(delta, null);
 				insert.clear(); // Clear out evaluated insertions
@@ -590,7 +590,7 @@ public class Driver implements Runnable {
 				split(delta, insert, delete);
 			}
 			
-			while(delete.size() > 0) {
+			while (delete.size() > 0) {
 				delta = flusher.insert(delete, null);
 				delta = evaluator.insert(delta, null);
 				delete.clear(); // Clear out evaluated deletions
@@ -624,6 +624,4 @@ public class Driver implements Runnable {
 			deletions.add(delete);
 		}
 	}
-
-
 }

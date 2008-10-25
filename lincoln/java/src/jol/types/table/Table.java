@@ -332,8 +332,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException Bad tuple.
 	 */
 	public void force(Tuple tuple) throws UpdateException {
-		TupleSet insertion = new TupleSet(name());
-		insertion.add(tuple);
+		TupleSet insertion = new TupleSet(name(), tuple);
 		TupleSet conflicts = new TupleSet(name());
 		insert(insertion, conflicts);
 		delete(conflicts);
@@ -366,8 +365,8 @@ public abstract class Table implements Comparable<Table> {
 				delta.add(t);
 
 				if (conflicts != null && primary() != null) {
-						conflicts.addAll(oldvals); 
-				} 
+					conflicts.addAll(oldvals);
+				}
 				
 				/* Update the indices here so that primary key
 				 * conflicts from within the tupleset will show up

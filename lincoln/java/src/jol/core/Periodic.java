@@ -84,9 +84,10 @@ public class Periodic extends ObjectTable {
 	
 	public Long min() {
 		Long min = Long.MAX_VALUE;
-		for (Tuple current : tuples) {
-			Long time = (Long) current.value(Field.TIME.ordinal());
-			min = min < time  ? min : time;
+		for (Tuple t : this.tuples) {
+			Long time = (Long) t.value(Field.TIME.ordinal());
+			if (min > time)
+				min = time;
 		}
 		return min;
 	}

@@ -51,11 +51,11 @@ public class Schedule extends ObjectTable {
 	 */
 	public Long min() {
 		Long min = Long.MAX_VALUE;
-		Iterator<Tuple> it = tuples();
-		while(it.hasNext()) {
-			Tuple tuple = it.next();
-			min = min.longValue() < ((Long)tuple.value(Field.TIME.ordinal())).longValue() ?
-						min : (Long) tuple.value(Field.TIME.ordinal());
+		for (Tuple t : this.tuples)
+		{
+			Long time = (Long) t.value(Field.TIME.ordinal());
+			if (min > time)
+				min = time;
 		}
 		return min;
 	}
