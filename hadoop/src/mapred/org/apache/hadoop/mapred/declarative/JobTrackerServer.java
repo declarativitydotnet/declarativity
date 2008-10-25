@@ -43,6 +43,7 @@ import org.apache.hadoop.mapred.declarative.table.TaskTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerErrorTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerTable;
+import org.apache.hadoop.mapred.declarative.util.JobState;
 import org.apache.hadoop.mapred.declarative.util.Wrapper;
 import org.apache.hadoop.util.HostsFileReader;
 import org.apache.hadoop.util.VersionInfo;
@@ -135,8 +136,9 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		Table jobs = context.catalog().table(JobTable.TABLENAME);
 		JobStatus[] status = new JobStatus[jobs.cardinality().intValue()];
 		int index = 0;
-		for (Iterator<Tuple> jobIter = jobs.tuples(); jobIter.hasNext(); ) {
-			status[index++] = status(jobIter.next());
+		for (Iterator<Tuple> iter = jobs.tuples(); iter.hasNext(); ) {
+			JobState state = (JobState) iter.next().value(JobTable.Field.STATUS.ordinal());
+			status[index++] = state.status();
 		}
 		return status;
 	}
@@ -185,7 +187,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			if (jobs == null || jobs.size() == 0) {
 				throw new IOException("Unkown job identifier! " + jobid);
 			}
-			return status(jobs.iterator().next());
+			JobState state = (JobState) jobs.iterator().next().value(JobTable.Field.STATUS.ordinal());
+			return state.status();
 		} catch (BadKeyException e) {
 			e.printStackTrace();
 			return null;
@@ -197,10 +200,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		List<JobStatus> status = new ArrayList<JobStatus>();
 		for (Iterator<Tuple> jobIter = jobs.tuples(); jobIter.hasNext(); ) {
 			Tuple job = jobIter.next();
-			Integer runState = (Integer) job.value(JobTable.Field.RUN_STATE.ordinal());
-			if(runState == JobStatus.RUNNING ||  runState == JobStatus.PREP) {
-				status.add(status(job));
-			}
+			JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
+			status.add(state.status());
 		}
 		return status.toArray(new JobStatus[status.size()]);
 	}
@@ -235,10 +236,12 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				job = jobTracker.newJob(jobid);
 				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, 
 						         new TupleSet(JobTable.TABLENAME, job), null);
-				return status(job);
+				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
+				return state.status();
 			}
 			else {
-				return status(job);
+				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
+				return state.status();
 			}
 		} catch (UpdateException e) {
 			throw new IOException(e);
@@ -285,26 +288,6 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			e.printStackTrace();
 		}
 		return null;
-	}
-	
-	/**
-	 * Construct a job status object from the job tuple.
-	 * @param job The job tuple.
-	 * @return A job status containing the attribute values taken
-	 * from the job tuple.
-	 */
-	private final JobStatus status(Tuple job) {
-		JobID jobid       = (JobID)   job.value(JobTable.Field.JOBID.ordinal());
-		String user       = (String)  job.value(JobTable.Field.USER.ordinal());
-		Integer runstate  = (Integer) job.value(JobTable.Field.RUN_STATE.ordinal());
-		Long startTime    = (Long)    job.value(JobTable.Field.START_TIME.ordinal());
-		Float mapProgress = (Float)   job.value(JobTable.Field.MAP_PROGRESS.ordinal());
-		Float redProgress = (Float)   job.value(JobTable.Field.REDUCE_PROGRESS.ordinal());
-		
-		JobStatus status = new JobStatus(jobid, mapProgress, redProgress, runstate);
-	    status.setStartTime(startTime);
-	    status.setUsername(user);
-	    return status;
 	}
 	
 	/**

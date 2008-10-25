@@ -224,15 +224,7 @@ public class JobTrackerImpl extends JobTracker {
 	    String url = "http://" + this.localMachine + ":"  + 
 	                  this.port + "/jobdetails.jsp?jobid=" + jobid;
 	    
-	    return new Tuple(jobid, 
-	    		         jobConf.getJobName(),
-	    		         jobConf.getUser(), 
-	    		         jobFile.toString(),
-	    		         java.lang.System.currentTimeMillis(),
-	    		         jobConf.getJobPriority(),
-	    		         url,
-	    		         JobStatus.PREP,
-	    		         0f, 0f, 0f);
+	    return JobTable.tuple(jobid, jobFile.toString(), jobConf, url);
 	}
 
 	@Override

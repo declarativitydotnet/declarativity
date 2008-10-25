@@ -1,6 +1,7 @@
 package org.apache.hadoop.mapred.declarative.table;
 
 import java.io.DataInputStream;
+
 import java.io.IOException;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -10,6 +11,8 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
+import org.apache.hadoop.mapred.declarative.Constants.TaskType;
+import org.apache.hadoop.mapred.declarative.util.TaskState;
 import org.apache.hadoop.mapred.declarative.util.Wrapper;
 
 import jol.types.basic.Tuple;
@@ -18,10 +21,11 @@ import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 import jol.types.table.Function;
 
+
 public class TaskCreate extends Function {
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, JOBCONF, JOBFILE, TASKID, TYPE,
-		              PARTITION, SPLIT_FILE, MAP_COUNT};
+		              PARTITION, SPLIT_FILE, MAP_COUNT, STATUS};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
@@ -32,7 +36,8 @@ public class TaskCreate extends Function {
 		Enum.class,      // Task type
 		Integer.class,   // Partition number
 		Wrapper.class,   // Split file
-		Integer.class    // Map count
+		Integer.class,   // Map count
+		TaskState.class // Task status
 	};
 	
 	private JobTracker jobTracker;
@@ -80,7 +85,7 @@ public class TaskCreate extends Function {
 	    int numMapTasks = splits.length;
 	    
 	    for(int i=0; i < numMapTasks; ++i) {
-	      tasks.add(create(jobid, TaskTable.Type.MAP, conf, jobFile, i, splits[i], numMapTasks));
+	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile, i, splits[i], numMapTasks));
 	    }
 	    
 	    //
@@ -89,28 +94,20 @@ public class TaskCreate extends Function {
 	    int numReduceTasks = conf.getNumReduceTasks();
 
 	    for (int i = 0; i < numReduceTasks; i++) {
-	    	tasks.add(create(jobid, TaskTable.Type.REDUCE, conf, jobFile, i, null, numMapTasks));
+	    	tasks.add(create(jobid, TaskType.REDUCE, conf, jobFile, i, null, numMapTasks));
 	    }
 
-	    // create cleanup two cleanup tips, one map and one reduce.
-	    // cleanup map tip. This map is doesn't use split. 
-	    // Just assign splits[0]
-	    tasks.add(create(jobid, TaskTable.Type.CLEANER, conf, jobFile, 0, splits[0], numMapTasks));
-
-	    // cleanup reduce tip.
-	    tasks.add(create(jobid, TaskTable.Type.CLEANER, conf, jobFile, 1, null, numMapTasks));
-		
 		return tasks;
 	}
 	
-	private Tuple create(JobID jobid, TaskTable.Type type, JobConf conf, String jobFile, 
+	private Tuple create(JobID jobid, TaskType type, JobConf conf, String jobFile, 
 			             Integer partition, JobClient.RawSplit split, int mapCount) {
-		TaskID taskid = new TaskID(jobid, type == TaskTable.Type.MAP, partition);
+		TaskID taskid = new TaskID(jobid, type == TaskType.MAP, partition);
 		
 		return new Tuple(jobid, new Wrapper<JobConf>(conf), jobFile, 
 				         taskid, type, partition, 
 				         new Wrapper<JobClient.RawSplit>(split), 
-				         mapCount);
+				         mapCount, new TaskState(jobid, taskid));
 	}
 	
 }

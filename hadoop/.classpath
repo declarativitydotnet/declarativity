@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src/examples"/>
 	<classpathentry kind="src" path="src/hdfs"/>
-	<classpathentry excluding="org/apache/hadoop/mapred/JobTrackerOld.java|org/apache/hadoop/mapred/TaskInProgress.java|org/apache/hadoop/mapred/JobInProgress.java" kind="src" path="src/mapred"/>
+	<classpathentry excluding="org/apache/hadoop/mapred/JobTrackerOld.java|org/apache/hadoop/mapred/TaskInProgress.java|org/apache/hadoop/mapred/JobInProgress.java|org/apache/hadoop/mapred/LocalJobRunner.java" kind="src" path="src/mapred"/>
 	<classpathentry kind="src" path="src/test"/>
 	<classpathentry kind="src" path="src/tools"/>
 	<classpathentry kind="lib" path="contrib/datajoin/hadoop-0.18.1-datajoin.jar"/>

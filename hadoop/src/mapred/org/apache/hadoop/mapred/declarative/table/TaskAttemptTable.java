@@ -27,27 +27,34 @@ public class TaskAttemptTable extends ObjectTable {
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
-		JobID.class,          // Job identifier
-		TaskID.class,         // Task identifier
-		TaskAttemptID.class,  // TaskAttemptID
-		Float.class,          // Progress
-		Enum.class,           // State
-		Enum.class,           // Phase 
-		String.class,         // Diagnostic string,
-		String.class,         // Tracker name
-		Long.class,           // Start time
-		Long.class            // Finish time
+		JobID.class,    // Job identifier
+		TaskID.class,   // Task identifier
+		Integer.class,  // Task attempt count
+		Float.class,    // Progress
+		Enum.class,     // State
+		Enum.class,     // Phase 
+		String.class,   // Diagnostic string,
+		String.class,   // Tracker name
+		Long.class,     // Start time
+		Long.class      // Finish time
 	};
 	
 	public TaskAttemptTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 	}
 	
+	/**
+	 * Routine accepts a task status object from some
+	 * tracker and makes it into a tuple of type
+	 * TaskAttemptTable.
+	 * @param status Task status from tracker.
+	 * @return TaskAttemptTable tuple
+	 */
 	public static Tuple tuple(TaskStatus status) {
 		TaskAttemptID attemptid = status.getTaskID();
 		JobID         jobid     = attemptid.getJobID();
 		TaskID        taskid    = attemptid.getTaskID();
-		return new Tuple(jobid, taskid, attemptid, 
+		return new Tuple(jobid, taskid, attemptid.getId(), 
 				         status.getProgress(), 
 				         status.getRunState(), 
 				         status.getPhase(),

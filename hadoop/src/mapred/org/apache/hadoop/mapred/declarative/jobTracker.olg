@@ -1,60 +1,58 @@
 program jobtracker;
 
-
-import org.apache.hadoop.mapred.util.Wrapper;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.table.TaskTable;
-
-/* Task runner implements a task on a tracker
- * Schema: taskRunner(JobID, TaskID, TrackerName) */
-define(taskRunner, keys(0,1,2), {JobID, String, String});
-
-/* Counter for the number of map task runners on a tracker. */
-define(trackerMapTaskCount, keys(0), {String, Integer});
-
-/* Counter for the number of reduce task runners on a tracker. */
-define(trackerReduceTaskCount, keys(0), {String, Integer});
-
-/* A view that keeps track of how many map task runners
-   are executing on a given tracker. */
-trackerMapTaskCount(TrackerName, count<TaskID>) :-
-	task(JobID, TaskID, Type, Partition, Status),
-	taskRunner(JobID, TaskID, TrackerName),
-	Type == TaskTable.Type.MAP;
-	
-/* A view that keeps track of how many reduce task runners
-   are executing on a given tracker. */
-trackerReduceTaskCount(TrackerName, count<TaskID>) :-
-	task(JobID, TaskID, Type, Partition, Status),
-	taskRunner(JobID, TaskID, TrackerName),
-	Type == TaskTable.Type.REDUCE;
-	
-	
-	
 /*************** TASK INIT *********************/
 
-import org.apache.hadoop.mapred.JobStatus;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
+import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.util.JobState;
+import org.apache.hadoop.mapred.declarative.util.TaskState;
 import java.lang.Integer;
 import java.lang.Long;
 import java.lang.Enum;
 
-define(initTask, {JobID, Wrapper, TaskID, Enum, Integer, Long, Long});
+define(initTask, {JobID, Wrapper, String, TaskID, Enum, Integer, Wrapper, Integer, TaskState});
 
-initTask(JobID, JobConf, null, null, null, null, null) :-
-	jobTable(JobID, _, _, _, _, _, _, RunState, JobConf, _, _, _),
-	RunState == JobStatus.PREP;
+initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
+	job(JobID, Name, User, JobFile, JobConf, URL, Priority, JobState),
+	JobState.state() == JobStatus.PREP;
 	
 async
-task(JobID, TaskID, Type, Partition, InputSize, OutputSize) :-
-	taskCreate(initTask(JobID, JobConf, TaskID, Type, Partition, InputSize, OutputSize));
-	
-/* Set the job status to running, and the map, reduce, and cleaner progress to 0. */
-jobTable(JobID, Name, User, File, StartTime, Priority, URL, JobStatus.RUNNING, JobConf, 0, 0, 0) :-
-	initTask(JobID),
-	jobTable(JobID, Name, User, File, StartTime, Priority, URL, _, JobConf, _, _, _);
+task(JobID, TaskID, Type, Partition, Split, MapCount, Status) :-
+	taskCreate(initTask(JobID, JobConf, JobFile, TaskID, Type, Partition, Split, MapCount, Status));
 	
 	
+/*************** Job Status Maintenance *********************/
 	
+define(JobStatus, {JobID, JobState});
+
+jobStatus(JobID, generic<(new JobState(JobID, Maps, Reduces).task(Type, TaskState)>) :-
+	task(JobID, _, Type, _, _, _, TaskState),
+	jobMapCount(JobID, Maps), jobReduceCount(JobID, Reduces),	
+    job(JobID, Name, User, File, JobConf, URL, Priority, _);
+
+job(JobID, Name, User, File, JobConf, URL, Priority, JobState) :-
+	jobStatus(JobID, JobState),
+    job(JobID, Name, User, File, JobConf, URL, Priority, _);
+    
+jobMapCount(JobId, count<*>) :-
+	task(JobID, _, Type, _, _, _, _),
+	Type == TaskTable.MAP;
 	
+jobReduceCount(JobId, count<*>) :-
+	task(JobID, _, Type, _, _, _, _),
+	Type == TaskTable.REDUCE;
+	
+
+/*************** Task Status Maintenance *********************/
+
+define(TaskStatus, {JobID, TaskID, TaskState});
+	
+taskStatus(JobID, TaskID, generic<(new TaskState(JobID, TaskID)).attempt(Progress, State, Phase, Start, Finish)>) :-
+	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, Start, Finish)
+	
+task(JobID, TaskID, Type, Partition, Split, MapCount, TaskState) :-
+	taskStatus(JobID, TaskID, TaskState),
+	task(JobID, TaskID, Type, Partition, Split, MapCount, _);
 	
 	

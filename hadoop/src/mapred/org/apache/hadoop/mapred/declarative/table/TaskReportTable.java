@@ -7,6 +7,7 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskReport;
+import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.table.TaskTable.Field;
 import org.apache.hadoop.mapred.declarative.util.Wrapper;
 
@@ -54,7 +55,7 @@ public class TaskReportTable extends ObjectTable {
 	public TaskReport[] mapReports(JobID jobid) {
 		try {
 			Key key = new Key(Field.JOBID.ordinal(), Field.TYPE.ordinal());
-			TupleSet tuples = secondary().get(key).lookupByKey(jobid, TaskTable.Type.MAP);
+			TupleSet tuples = secondary().get(key).lookupByKey(jobid, TaskType.MAP);
 			return report(tuples);
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -65,7 +66,7 @@ public class TaskReportTable extends ObjectTable {
 	public TaskReport[] reduceReports(JobID jobid) {
 		try {
 			Key key = new Key(Field.JOBID.ordinal(), Field.TYPE.ordinal());
-			TupleSet tuples = secondary().get(key).lookupByKey(jobid, TaskTable.Type.REDUCE);
+			TupleSet tuples = secondary().get(key).lookupByKey(jobid, TaskType.REDUCE);
 			return report(tuples);
 		} catch (Throwable e) {
 			e.printStackTrace();
