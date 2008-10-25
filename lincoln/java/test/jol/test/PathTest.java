@@ -28,7 +28,7 @@ public class PathTest {
         this.sys.catalog().register(new PathTable((Runtime) this.sys));
 
         URL u = ClassLoader.getSystemResource("jol/test/path.olg");
-        this.sys.install("gfs", u);
+        this.sys.install("unit-test", u);
     }
 
     @After
