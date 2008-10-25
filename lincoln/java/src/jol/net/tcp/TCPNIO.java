@@ -135,8 +135,7 @@ public class TCPNIO extends Server {
 			register(connection);
 			return connection;
 		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
+            throw new RuntimeException("Failed to connect to " + address, e);
 		}
 	}
 	

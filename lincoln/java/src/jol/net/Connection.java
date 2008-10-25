@@ -69,7 +69,5 @@ public class Connection extends ObjectTable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}
-
 }
