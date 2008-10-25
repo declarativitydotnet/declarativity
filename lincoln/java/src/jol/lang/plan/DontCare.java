@@ -1,7 +1,7 @@
 package jol.lang.plan;
 
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 public class DontCare extends Variable {
@@ -16,7 +16,7 @@ public class DontCare extends Variable {
 	public TupleFunction function() {
 		assert(position() >= 0);
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws P2RuntimeException {
+			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				return tuple.value(position());
 			}
 

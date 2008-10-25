@@ -13,7 +13,7 @@ import jol.lang.plan.Program;
 import jol.net.Network;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.StasisTable;
 import jol.types.table.Table;
@@ -213,14 +213,14 @@ public class Runtime implements System {
 	 * Creates a new runtime object that listens on the given network port.
 	 * @param port The network port that this runtime listens on.
 	 * @return A new runtime object.
-	 * @throws P2RuntimeException If something went wrong during bootstrap.
+	 * @throws JolRuntimeException If something went wrong during bootstrap.
 	 */
-	public static System create(int port) throws P2RuntimeException {
+	public static System create(int port) throws JolRuntimeException {
 		try {
 			Runtime runtime = new Runtime();
 			URL runtimeFile = ClassLoader.getSystemResource("jol/core/runtime.olg");
 			if (runtimeFile == null) {
-			    throw new P2RuntimeException("Could not load jol/core/runtime.olg.");
+			    throw new JolRuntimeException("Could not load jol/core/runtime.olg.");
 			}
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
@@ -236,11 +236,11 @@ public class Runtime implements System {
 			return runtime;
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new P2RuntimeException(e.toString());
+			throw new JolRuntimeException(e.toString());
 		}
 	}
 	
-	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, P2RuntimeException {
+	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, JolRuntimeException {
 
 		if (args.length < 2) {
 			java.lang.System.out.println("Usage: jol.core.Runtime port program");

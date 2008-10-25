@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.util.Set;
 
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 public class ObjectReference extends Reference {
@@ -33,12 +33,12 @@ public class ObjectReference extends Reference {
 	public TupleFunction function() {
 		final TupleFunction objectFunction = this.object.function();
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws P2RuntimeException {
+			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				try {
 					Object instance = objectFunction.evaluate(tuple);
 					return ObjectReference.this.field.get(instance);
 				} catch (Exception e) {
-					throw new P2RuntimeException(e.toString());
+					throw new JolRuntimeException(e.toString());
 				}
 			}
 			public Class returnType() {

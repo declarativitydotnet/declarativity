@@ -6,7 +6,7 @@ import java.util.List;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.function.TupleFunction;
 import jol.types.table.HashIndex;
@@ -75,7 +75,7 @@ public class Fact extends Clause {
 			TupleFunction function = argument.function();
 			try {
 				values.add((Comparable)function.evaluate(null));
-			} catch (P2RuntimeException e) {
+			} catch (JolRuntimeException e) {
 				e.printStackTrace();
 				throw new UpdateException(e.toString());
 			}

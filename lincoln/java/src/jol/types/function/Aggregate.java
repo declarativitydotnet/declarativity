@@ -3,13 +3,13 @@ package jol.types.function;
 import jol.lang.plan.GenericAggregate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 
 public abstract class Aggregate<C extends Comparable<C>> {
 	
-	public abstract Tuple insert(Tuple tuple) throws P2RuntimeException;
+	public abstract Tuple insert(Tuple tuple) throws JolRuntimeException;
 	
-	public abstract Tuple delete(Tuple tuple) throws P2RuntimeException;
+	public abstract Tuple delete(Tuple tuple) throws JolRuntimeException;
 	
 	public abstract Tuple result();
 	
@@ -31,7 +31,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return this.position;
 		}
 
-		public C evaluate(Tuple tuple) throws P2RuntimeException {
+		public C evaluate(Tuple tuple) throws JolRuntimeException {
 			return (C) tuple.value(this.position);
 		}
 
@@ -112,7 +112,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+		public Tuple insert(Tuple tuple) throws JolRuntimeException {
 			if (this.current == null) {
 			    this.current = (C)this.aggregate.function().evaluate(tuple);
 			}
@@ -124,7 +124,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+		public Tuple delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				TupleSet tuples = this.tuples;
 				reset();
@@ -176,7 +176,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+		public Tuple insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
 				C value = accessor.evaluate(tuple);
 				if (current == null || this.current.compareTo(value) > 0) {
@@ -189,7 +189,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+		public Tuple delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				C  value = accessor.evaluate(tuple);
 				if (this.current.compareTo(value) == 0) {
@@ -229,7 +229,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+		public Tuple insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
 				C value = accessor.evaluate(tuple);
 				if (current == null || this.current.compareTo(value) < 0) {
@@ -242,7 +242,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+		public Tuple delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.contains(tuple)) {
 				this.tuples.remove(tuple);
 				C value = accessor.evaluate(tuple);
@@ -347,7 +347,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+		public Tuple insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
 				Number value = (Number) this.accessor.evaluate(tuple);
@@ -358,7 +358,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+		public Tuple delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				this.tuples.add(tuple);
 				this.result = tuple;
@@ -408,7 +408,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+		public Tuple insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
 				if (this.current == null) {
@@ -423,7 +423,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+		public Tuple delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				TupleSet tuples = this.tuples;
 				reset();
@@ -470,7 +470,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws P2RuntimeException {
+		public Tuple insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
 				this.result = tuple;
 				this.nestedSet.add(this.accessor.evaluate(tuple));
@@ -480,7 +480,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws P2RuntimeException {
+		public Tuple delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				this.result = tuple;
 				this.nestedSet.remove(this.accessor.evaluate(tuple));

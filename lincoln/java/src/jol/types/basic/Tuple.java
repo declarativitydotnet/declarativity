@@ -13,7 +13,7 @@ import java.util.List;
 
 import jol.lang.plan.DontCare;
 import jol.lang.plan.Variable;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 
 /**
  * A tuple is an ordered list of values. Each value
@@ -285,11 +285,11 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	/**
 	 * Set the tuple schema.
 	 * @param schema The schema to assign to this tuple.
-	 * @throws P2RuntimeException
+	 * @throws JolRuntimeException
 	 */
-	public void schema(Schema schema) throws P2RuntimeException {
+	public void schema(Schema schema) throws JolRuntimeException {
 		if (schema.size() != size()) {
-			throw new P2RuntimeException("Schema " + schema.name() + schema + " does not match tuple arity! " +
+			throw new JolRuntimeException("Schema " + schema.name() + schema + " does not match tuple arity! " +
 					                     " Tuple: " + this + " size =? " + size());
 		}
 		this.schema = schema;

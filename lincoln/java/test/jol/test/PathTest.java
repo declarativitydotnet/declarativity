@@ -8,7 +8,7 @@ import jol.core.System;
 import jol.test.PathTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.types.table.TableName;
@@ -23,7 +23,7 @@ public class PathTest {
     private System sys;
 
     @Before
-    public void setup() throws P2RuntimeException, UpdateException {
+    public void setup() throws JolRuntimeException, UpdateException {
         this.sys = Runtime.create(5000);
         this.sys.catalog().register(new PathTable((Runtime) this.sys));
 

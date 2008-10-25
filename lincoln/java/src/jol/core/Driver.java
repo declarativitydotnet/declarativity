@@ -14,7 +14,7 @@ import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.Operator;
 import jol.types.operator.Watch;
@@ -157,7 +157,7 @@ public class Driver implements Runnable {
 						Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
 						if (watchRemove != null) {
 							try { watchRemove.evaluate(deletions);
-							} catch (P2RuntimeException e) { }
+							} catch (JolRuntimeException e) { }
 						}
 					}
 				}
@@ -171,7 +171,7 @@ public class Driver implements Runnable {
 						Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
 						if (watchRemove != null) {
 							try { watchRemove.evaluate(deletions);
-							} catch (P2RuntimeException e) { }
+							} catch (JolRuntimeException e) { }
 						}
 					}
 				}
@@ -180,7 +180,7 @@ public class Driver implements Runnable {
 					Operator watchAdd = watch.watched(program, name, Watch.Modifier.ADD);
 					if (watchAdd != null) {
 						try { watchAdd.evaluate(insertions);
-						} catch (P2RuntimeException e) { }
+						} catch (JolRuntimeException e) { }
 					}
 				}
 				
@@ -249,7 +249,7 @@ public class Driver implements Runnable {
 							Evaluator.this.context.schedule(query.program(), query.output().name(), null, result);
 						}
 					}
-				} catch (P2RuntimeException e) {
+				} catch (JolRuntimeException e) {
 					e.printStackTrace();
 				} catch (UpdateException e) {
 					e.printStackTrace();
@@ -328,7 +328,7 @@ public class Driver implements Runnable {
 						if (query.event() != Predicate.Event.DELETE) {
 							if (watchInsert != null) {
 								try { watchInsert.rule(query.rule()); watchInsert.evaluate(insertions);
-								} catch (P2RuntimeException e) { 
+								} catch (JolRuntimeException e) { 
 									java.lang.System.err.println("WATCH INSERTION FAILURE ON " + name + "!");
 								}
 							}
@@ -341,7 +341,7 @@ public class Driver implements Runnable {
 								try {
 									result = query.evaluate(insertions);
 									if (result.size() == 0) continue;
-								} catch (P2RuntimeException e) {
+								} catch (JolRuntimeException e) {
 									e.printStackTrace();
 									java.lang.System.exit(0);
 								}
@@ -366,7 +366,7 @@ public class Driver implements Runnable {
 										query.event() != Predicate.Event.INSERT)) {
 							if (watchDelete != null) {
 								try { watchDelete.rule(query.rule()); watchDelete.evaluate(deletions);
-								} catch (P2RuntimeException e) { }
+								} catch (JolRuntimeException e) { }
 							}
 
 							Predicate.Event resultType = Predicate.Event.DELETE;
@@ -388,7 +388,7 @@ public class Driver implements Runnable {
 									TupleSet result = query.evaluate(deletions);
 									if (result.size() == 0) continue;
 									continuation(continuations, time, program.name(), resultType, result);
-								} catch (P2RuntimeException e) {
+								} catch (JolRuntimeException e) {
 									e.printStackTrace();
 									java.lang.System.exit(0);
 								}

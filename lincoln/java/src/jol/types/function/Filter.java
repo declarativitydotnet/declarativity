@@ -1,7 +1,7 @@
 package jol.types.function;
 
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 
 public class Filter implements TupleFunction<Comparable> {
 	public enum Operator{NOT, AND, OR, EQ, NEQ, LTHAN, GTHAN, LEQ, GEQ};
@@ -18,7 +18,7 @@ public class Filter implements TupleFunction<Comparable> {
 		this.rhs = rhs;
 	}
 
-	public Boolean evaluate(Tuple tuple) throws P2RuntimeException {
+	public Boolean evaluate(Tuple tuple) throws JolRuntimeException {
 		switch (oper) {
 		case NOT:   return not(tuple);
 		case AND:   return and(tuple);
@@ -55,40 +55,40 @@ public class Filter implements TupleFunction<Comparable> {
 		return Boolean.TRUE;
 	}
 	
-	private Boolean not(Tuple tuple) throws P2RuntimeException {
+	private Boolean not(Tuple tuple) throws JolRuntimeException {
 		return !value(this.lhs.evaluate(tuple));
 	}
 	
-	private Boolean and(Tuple tuple) throws P2RuntimeException {
+	private Boolean and(Tuple tuple) throws JolRuntimeException {
 		return value(this.lhs.evaluate(tuple)) && value(this.rhs.evaluate(tuple));
 	}
 	
-	private Boolean or(Tuple tuple) throws P2RuntimeException {
+	private Boolean or(Tuple tuple) throws JolRuntimeException {
 		return value(this.lhs.evaluate(tuple)) || value(this.rhs.evaluate(tuple));
 	}
 	
-	private Boolean eq(Tuple tuple) throws P2RuntimeException {
+	private Boolean eq(Tuple tuple) throws JolRuntimeException {
 		System.err.println("FILTER: " + lhs.evaluate(tuple) + " == " + rhs.evaluate(tuple));
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) == 0;
 	}
 	
-	private Boolean neq(Tuple tuple) throws P2RuntimeException {
+	private Boolean neq(Tuple tuple) throws JolRuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) != 0;
 	}
 	
-	private Boolean lthan(Tuple tuple) throws P2RuntimeException {
+	private Boolean lthan(Tuple tuple) throws JolRuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) < 0;
 	}
 	
-	private Boolean gthan(Tuple tuple) throws P2RuntimeException {
+	private Boolean gthan(Tuple tuple) throws JolRuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) > 0;
 	}
 	
-	private Boolean leq(Tuple tuple) throws P2RuntimeException {
+	private Boolean leq(Tuple tuple) throws JolRuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) <= 0;
 	}
 	
-	private Boolean geq(Tuple tuple) throws P2RuntimeException {
+	private Boolean geq(Tuple tuple) throws JolRuntimeException {
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) >= 0;
 	}
 

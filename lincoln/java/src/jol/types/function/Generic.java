@@ -2,7 +2,7 @@ package jol.types.function;
 
 import java.lang.reflect.Method;
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 
 
 public class Generic<Type> implements TupleFunction<Type> {
@@ -22,7 +22,7 @@ public class Generic<Type> implements TupleFunction<Type> {
 		this.args = args;
 	}
 	
-	public Type evaluate(Tuple tuple) throws P2RuntimeException {
+	public Type evaluate(Tuple tuple) throws JolRuntimeException {
 		Object obj = this.obj != null ? this.obj.evaluate(tuple) : null;
 		Object[] args = new Object[this.args.length];
 		for (int i = 0; i < this.args.length; i++) {

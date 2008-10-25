@@ -9,7 +9,7 @@ import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.function.Aggregate;
 import jol.core.Runtime;
@@ -160,7 +160,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 			}
 			try {
 				baseTuples.get(key).insert(tuple);
-			} catch (P2RuntimeException e) {
+			} catch (JolRuntimeException e) {
 				e.printStackTrace();
 				System.exit(0);
 			}
@@ -199,7 +199,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 					if (this.baseTuples.get(key).tuples().size() == 0) {
 						this.baseTuples.remove(key);
 					}
-				} catch (P2RuntimeException e) {
+				} catch (JolRuntimeException e) {
 					e.printStackTrace();
 				}
 			}

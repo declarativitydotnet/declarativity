@@ -13,7 +13,7 @@ import jol.net.NetworkMessage;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.function.TupleFunction;
 import jol.types.table.TableName;
@@ -62,7 +62,7 @@ public class RemoteBuffer extends Operator {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
+	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		if (tuples.size() == 0) return tuples;
 		
 		/* Group tuples by the address attribute: (address, tuple) */

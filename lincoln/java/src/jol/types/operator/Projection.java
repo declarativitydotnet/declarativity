@@ -12,7 +12,7 @@ import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 import jol.core.Runtime;
 
@@ -63,7 +63,7 @@ public class Projection extends Operator {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
+	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		TupleSet result = new TupleSet(schema().name());
 		for (Tuple tuple : tuples) {
 			List<Comparable> values = new ArrayList<Comparable>();

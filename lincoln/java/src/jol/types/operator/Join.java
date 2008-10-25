@@ -11,7 +11,7 @@ import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 /**
@@ -39,7 +39,7 @@ public abstract class Join extends Operator {
 			this.position = position; 
 		}
 		/** Extracts the value from the tuple field position. */
-		public Comparable evaluate(Tuple tuple) throws P2RuntimeException {
+		public Comparable evaluate(Tuple tuple) throws JolRuntimeException {
 			return tuple.value(this.position);
 		}
 		/** The type of value returned by {@link #evaluate(Tuple)}. */
@@ -75,9 +75,9 @@ public abstract class Join extends Operator {
 		 * @param outer Tuple from the outer.
 		 * @param inner Tuple from the inner.
 		 * @return true if join succeeds, false otherwise.
-		 * @throws P2RuntimeException
+		 * @throws JolRuntimeException
 		 */
-		public Boolean evaluate(Tuple outer, Tuple inner) throws P2RuntimeException {
+		public Boolean evaluate(Tuple outer, Tuple inner) throws JolRuntimeException {
 			Comparable lvalue = null;
 			Comparable rvalue = null;
 			if (this.lhs instanceof TableField) {
@@ -135,9 +135,9 @@ public abstract class Join extends Operator {
 	 * @param outer Tuple from the outer relation.
 	 * @param inner Tuple from the inner relation.
 	 * @return true if all join filters succeed, false otherwise.
-	 * @throws P2RuntimeException
+	 * @throws JolRuntimeException
 	 */
-	protected Boolean validate(Tuple outer, Tuple inner) throws P2RuntimeException {
+	protected Boolean validate(Tuple outer, Tuple inner) throws JolRuntimeException {
 		for (JoinFilter filter : filters) {
 			if (filter.evaluate(outer, inner) == Boolean.FALSE) {
 				return false;

@@ -6,7 +6,7 @@ import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.table.Index;
 import jol.types.table.Key;
 
@@ -42,7 +42,7 @@ public class IndexJoin extends Join {
 	}
 	
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
+	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		try {
 			TupleSet result = new TupleSet();
 			for (Tuple outer : tuples) {
@@ -58,7 +58,7 @@ public class IndexJoin extends Join {
 			}
 			return result;
 		} catch (BadKeyException e) {
-			throw new P2RuntimeException("index join failed!", e);
+			throw new JolRuntimeException("index join failed!", e);
 		}
 	}
 }

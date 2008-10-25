@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 
 public class BasicMath {
 	public enum Operator{UPLUS, UMINUS, PLUS, MINUS, TIMES, DIVIDE, MOD, POW, LSHIFT, RSHIFT};
@@ -64,7 +64,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public java.lang.Double evaluate(Tuple tuple) throws P2RuntimeException {
+		public java.lang.Double evaluate(Tuple tuple) throws JolRuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -96,7 +96,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws P2RuntimeException {
+		public Object evaluate(Tuple tuple) throws JolRuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -128,7 +128,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws P2RuntimeException {
+		public Object evaluate(Tuple tuple) throws JolRuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -162,7 +162,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws P2RuntimeException {
+		public Object evaluate(Tuple tuple) throws JolRuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -196,7 +196,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws P2RuntimeException {
+		public Object evaluate(Tuple tuple) throws JolRuntimeException {
 			Number lhs = (Number) this.lhs.evaluate(tuple);
 			Number rhs = this.rhs == null ? null : (Number) this.rhs.evaluate(tuple);
 			switch(oper) {
@@ -230,7 +230,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws P2RuntimeException {
+		public Object evaluate(Tuple tuple) throws JolRuntimeException {
 			Set lhs = (Set) this.lhs.evaluate(tuple);
 			Set rhs = (Set) this.rhs.evaluate(tuple);
 			Set result = new HashSet();
@@ -269,7 +269,7 @@ public class BasicMath {
 			this.rhs = rhs;
 		}
 
-		public Object evaluate(Tuple tuple) throws P2RuntimeException {
+		public Object evaluate(Tuple tuple) throws JolRuntimeException {
 			String lhs = (String) this.lhs.evaluate(tuple);
 			String rhs = (String) this.rhs.evaluate(tuple);
 			switch (oper) {

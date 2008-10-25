@@ -14,7 +14,7 @@ import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.function.TupleFunction;
@@ -342,7 +342,7 @@ public class Rule extends Clause {
 			
 			TupleFunction<java.lang.Boolean> periodicFilter = new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple)
-						throws P2RuntimeException {
+						throws JolRuntimeException {
 					return identifier.equals((String)tuple.value(Periodic.Field.IDENTIFIER.ordinal()));
 				}
 				public Class returnType() {

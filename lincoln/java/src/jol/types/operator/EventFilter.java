@@ -9,7 +9,7 @@ import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 import jol.core.Runtime;
 
@@ -43,7 +43,7 @@ public class EventFilter extends Operator {
 		}
 
 		/** @return true if filter is satisfied, false otherwise.  */
-		public Boolean evaluate(Tuple tuple) throws P2RuntimeException {
+		public Boolean evaluate(Tuple tuple) throws JolRuntimeException {
 			Comparable fvalue = function.evaluate(tuple);
 			Comparable tvalue = tuple.value(position);
 			
@@ -97,7 +97,7 @@ public class EventFilter extends Operator {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
+	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		if (filters.size() == 0) {
 			return tuples;
 		}

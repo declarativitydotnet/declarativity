@@ -1,7 +1,7 @@
 package jol.lang.plan;
 
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 
@@ -42,7 +42,7 @@ public class Aggregate extends Variable {
 	public TupleFunction function() {
 		return this.method != null ?  method.function() :
 			new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws P2RuntimeException {
+			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				return name().equals(STAR) ? tuple.id() : tuple.value(name());
 			}
 

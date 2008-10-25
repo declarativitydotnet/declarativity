@@ -4,7 +4,7 @@ import java.util.List;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.operator.Operator;
 import jol.core.Runtime;
 
@@ -35,9 +35,9 @@ public class BasicQuery extends Query {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet input) throws P2RuntimeException {
+	public TupleSet evaluate(TupleSet input) throws JolRuntimeException {
 		if (!input.name().equals(input().name())) {
-			throw new P2RuntimeException("Query expects event " + input().name() + 
+			throw new JolRuntimeException("Query expects event " + input().name() + 
 					                     " but got event " + input.name());
 		}
 		

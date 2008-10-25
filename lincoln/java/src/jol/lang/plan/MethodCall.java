@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 public class MethodCall extends Expression {
@@ -74,7 +74,7 @@ public class MethodCall extends Expression {
 		}
 		
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws P2RuntimeException {
+			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				Object instance = objectFunction.evaluate(tuple);
 				Object[] arguments = new Object[MethodCall.this.arguments.size()];
 				int index = 0;
@@ -101,7 +101,7 @@ public class MethodCall extends Expression {
 					return null;
 				} catch (Exception e) {
 					e.printStackTrace();
-					throw new P2RuntimeException(e.toString());
+					throw new JolRuntimeException(e.toString());
 				}
 			}
 

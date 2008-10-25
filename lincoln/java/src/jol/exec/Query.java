@@ -4,7 +4,7 @@ import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
@@ -141,5 +141,5 @@ public abstract class Query implements Comparable<Query> {
 		return this.output;
 	}
 	
-	public abstract TupleSet evaluate(TupleSet input) throws P2RuntimeException;
+	public abstract TupleSet evaluate(TupleSet input) throws JolRuntimeException;
 }

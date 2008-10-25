@@ -22,7 +22,7 @@ import jol.lang.plan.Selection.SelectionTable;
 import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.EventTable;
 import jol.types.table.Key;
@@ -73,7 +73,7 @@ public class Compiler {
 					Compiler compiler = new Compiler(context, owner, fileURL);
 					tuple.value(Field.NAME.ordinal(), compiler.program.name());
 					tuple.value(Field.PROGRAM.ordinal(), compiler.program);
-				} catch (P2RuntimeException e) {
+				} catch (JolRuntimeException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 					throw new UpdateException(e.toString());
@@ -107,7 +107,7 @@ public class Compiler {
 	private Runtime runtime = new Runtime();
 
 	/** Create a new driver for Overlog. */
-	public Compiler(jol.core.Runtime context, String owner, URL input) throws P2RuntimeException {
+	public Compiler(jol.core.Runtime context, String owner, URL input) throws JolRuntimeException {
 		this.context = context;
 		this.owner = owner;
 		this.runtime = new Runtime();
@@ -123,7 +123,7 @@ public class Compiler {
 					e.printStackTrace();
 				}
 			}
-			throw new P2RuntimeException("Compilation of program "
+			throw new JolRuntimeException("Compilation of program "
 					+ program.name() + " resulted in "
 					+ this.runtime.errorCount() + " errors.");
 		}

@@ -6,7 +6,7 @@ import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
@@ -122,9 +122,9 @@ public abstract class Operator implements Comparable<Operator> {
 	 * implement the operator functionality.
 	 * @param tuples The input tuples to be processed by this operator.
 	 * @return The output tuples that have been processed by this operator.
-	 * @throws P2RuntimeException
+	 * @throws JolRuntimeException
 	 */
-	public abstract TupleSet evaluate(TupleSet tuples) throws P2RuntimeException;
+	public abstract TupleSet evaluate(TupleSet tuples) throws JolRuntimeException;
 
 	/** 
 	 * The schema that is assigned to the output tuples.

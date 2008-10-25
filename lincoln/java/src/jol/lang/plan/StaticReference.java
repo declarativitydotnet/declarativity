@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jol.types.basic.Tuple;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 public class StaticReference extends Reference {
@@ -25,11 +25,11 @@ public class StaticReference extends Reference {
 	@Override
 	public TupleFunction function() {
 		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws P2RuntimeException {
+			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				try {
 					return StaticReference.this.field.get(null);
 				} catch (Exception e) {
-					throw new P2RuntimeException(e.toString());
+					throw new JolRuntimeException(e.toString());
 				}
 			}
 			public Class returnType() {

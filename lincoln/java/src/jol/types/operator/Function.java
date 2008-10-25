@@ -7,7 +7,7 @@ import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.core.Runtime;
@@ -36,7 +36,7 @@ public class Function extends Operator {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
+	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		try {
 			TupleSet result = this.function.insert(tuples, null);
 			for (Tuple tuple : result) {
@@ -45,7 +45,7 @@ public class Function extends Operator {
 			return result;
 		} catch (UpdateException e) {
 			e.printStackTrace();
-			throw new P2RuntimeException(e.toString());
+			throw new JolRuntimeException(e.toString());
 		}
 	}
 

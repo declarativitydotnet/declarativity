@@ -7,7 +7,7 @@ import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 /**
@@ -45,7 +45,7 @@ public class Assign<C extends Comparable<C> > extends Operator {
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws P2RuntimeException {
+	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		Variable variable = assignment.variable();
 		TupleFunction<C> function = assignment.value().function();
 		TupleSet deltas = new TupleSet(tuples.name());
