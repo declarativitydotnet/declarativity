@@ -69,7 +69,7 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		 * @param context The runtime context.
 		 */
 		public IndexTable(Runtime context) {
-			super(context, new TableName(GLOBALSCOPE, "index"), PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 			this.context = context;
 		}
 		
