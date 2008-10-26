@@ -5,11 +5,13 @@ import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
 import jol.core.System;
-import jol.test.PathTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
+import jol.types.table.Key;
+import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
@@ -20,6 +22,28 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class PathTest {
+	private static class PathTable extends ObjectTable {
+		public static final TableName TABLENAME = new TableName("path", "path");
+		
+		public static final Key PRIMARY_KEY = new Key(0, 1, 2);
+		
+		public enum Field {
+			SOURCE,
+			DESTINATION,
+			HOPS
+		};
+		
+		public static final Class[] SCHEMA = {
+			String.class,	// Source
+			String.class,   // Destination
+			Integer.class   // # of hops from source => dest on this path
+		};
+		
+		public PathTable(Runtime context) {
+			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		}
+	}
+
     private System sys;
 
     @Before
