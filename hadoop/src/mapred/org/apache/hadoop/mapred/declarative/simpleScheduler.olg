@@ -1,0 +1,20 @@
+program scheduler;
+
+/******************** Process new jobs *******************/
+
+/* Put new jobs in a wait queue. */
+waitQueue(JobID, StartTime, Priority) :-
+	job(JobID, JobName, User, JobFile, JobConf, URL, Priority, StartTime, _, JobState),
+	JobState.state() == JobStatus.State.PREP;
+	
+/* Overall min priority. */
+minWaitPriority(JobID, min<Priority.ordinal()>) :-
+	waitQueue(JobID, StartTime, Priority); 
+	
+/* View of the oldest waiting job in each priority level. */
+oldestWaitingJob(JobID, Priority, min<StartTime>) :-
+	waitQueue(JobID, StartTime, Priority);
+	
+	
+	
+	

@@ -14,9 +14,11 @@ import java.lang.Enum;
 define(initTask, {JobID, Wrapper, String, TaskID, Enum, Integer, Wrapper, Integer, TaskState});
 
 initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
-	job(JobID, Name, User, JobFile, JobConf, URL, Priority, JobState),
+	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState),
 	JobState.state() == JobStatus.PREP;
 	
+/* Break out of the current fixpoint thread (using 'async') since taskCreate table function
+   makes calls to the DFS. */
 async
 task(JobID, TaskID, Type, Partition, Split, MapCount, Status) :-
 	taskCreate(initTask(JobID, JobConf, JobFile, TaskID, Type, Partition, Split, MapCount, Status));
@@ -24,16 +26,25 @@ task(JobID, TaskID, Type, Partition, Split, MapCount, Status) :-
 	
 /*************** Job Status Maintenance *********************/
 	
-define(JobStatus, {JobID, JobState});
+define(jobStateUpdate, {JobID});
+define(jobState, {JobID, JobState});
+define(jobMapCount, keys(0), {JobID, Integer});
+define(jobReduceCount, keys(0), {JobID, Integer});
 
-jobStatus(JobID, generic<(new JobState(JobID, Maps, Reduces).task(Type, TaskState)>) :-
+/* Update the job state on any change to the task table. */
+jobStateUpdate(JobID) :- task(JobID);
+
+/* Compute the job state based on task state. */
+jobState(JobID, generic<(new JobState(JobID, Maps, Reduces).task(Type, TaskState)>) :-
+	jobStateUpdate(JobID),
 	task(JobID, _, Type, _, _, _, TaskState),
 	jobMapCount(JobID, Maps), jobReduceCount(JobID, Reduces),	
-    job(JobID, Name, User, File, JobConf, URL, Priority, _);
-
-job(JobID, Name, User, File, JobConf, URL, Priority, JobState) :-
-	jobStatus(JobID, JobState),
-    job(JobID, Name, User, File, JobConf, URL, Priority, _);
+	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState);
+	
+/* Update the job state. */
+job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState) :-
+	jobState(JobID, JobState),
+	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _);
     
 jobMapCount(JobId, count<*>) :-
 	task(JobID, _, Type, _, _, _, _),
@@ -46,13 +57,19 @@ jobReduceCount(JobId, count<*>) :-
 
 /*************** Task Status Maintenance *********************/
 
-define(TaskStatus, {JobID, TaskID, TaskState});
+define(taskStateUpdate, {JobID, TaskID});
+define(taskState, {JobID, TaskID, TaskState});
 	
-taskStatus(JobID, TaskID, generic<(new TaskState(JobID, TaskID)).attempt(Progress, State, Phase, Start, Finish)>) :-
-	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, Start, Finish)
+/* Update the job state on any change to the task table. */
+taskStateUpdate(JobID, TaskID) :- 
+	taskAttempt(JobID, TaskID, _, _, _, _, _, _, _, _), Start > 0;
+
+taskState(JobID, TaskID, generic<(new TaskState(JobID, TaskID)).attempt(Progress, State, Phase, Start, Finish)>) :-
+	taskStateUpdate(JobID, TaskID),
+	taskAttempt(JobID, TaskID, _, Progress, State, Phase, _, _, Start, Finish)
 	
 task(JobID, TaskID, Type, Partition, Split, MapCount, TaskState) :-
-	taskStatus(JobID, TaskID, TaskState),
+	taskState(JobID, TaskID, TaskState),
 	task(JobID, TaskID, Type, Partition, Split, MapCount, _);
 	
 	

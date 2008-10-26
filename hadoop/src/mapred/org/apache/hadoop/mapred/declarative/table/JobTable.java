@@ -2,6 +2,7 @@ package org.apache.hadoop.mapred.declarative.table;
 
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.declarative.util.JobState;
@@ -22,20 +23,19 @@ public class JobTable extends ObjectTable {
 	public static final Key PRIMARY_KEY = new Key(0);
 	
 	/** An enumeration of all clock table fields. */
-	public enum Field{JOBID, NAME, USER, FILE, JOBCONF, URL, PRIORITY, MAPS, REDUCES, STATUS};
+	public enum Field{JOBID, JOBNAME, JOBFILE, JOBCONF, USER, URL, PRIORITY, SUBMIT_TIME, STATUS};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
-		JobID.class,     // JobID
-		String.class,    // Name
-		String.class,    // User
-		String.class,    // File
-		Wrapper.class,   // JobConf
-		String.class,    // URL
-		Enum.class,      // Priority
-		Integer.class,   // Map count
-		Integer.class,   // Reduce count
-		JobState.class   // Job status
+		JobID.class,        // JobID
+		String.class,       // Name
+		String.class,       // File
+		Wrapper.class,      // JobConf
+		String.class,       // User
+		String.class,       // URL
+		JobPriority.class,  // Priority
+		Long.class,         // Submit time
+		JobState.class      // Job status
 	};
 	
 	private Runtime context;
@@ -48,12 +48,12 @@ public class JobTable extends ObjectTable {
 	public static Tuple tuple(JobID jobid, String jobFile, JobConf conf, String url) {
 		return new Tuple(jobid, 
 				         conf.getJobName(), 
-				         conf.getUser(), 
 				         jobFile,
 				         new Wrapper<JobConf>(conf),
+				         conf.getUser(), 
 				         url, 
 				         conf.getJobPriority(),
-				         0, 0,
+				         java.lang.System.currentTimeMillis(),
 		                 new JobState(jobid));
 		
 	}

@@ -297,10 +297,10 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 */
 	private final JobProfile profile(Tuple job) {
 		JobID  jobid = (JobID)  job.value(JobTable.Field.JOBID.ordinal());
+		String name  = (String) job.value(JobTable.Field.JOBNAME.ordinal());
+		String file  = (String) job.value(JobTable.Field.JOBFILE.ordinal());
 		String user  = (String) job.value(JobTable.Field.USER.ordinal());
-		String file  = (String) job.value(JobTable.Field.FILE.ordinal());
 		String url   = (String) job.value(JobTable.Field.URL.ordinal());
-		String name  = (String) job.value(JobTable.Field.NAME.ordinal());
 		
 		return new JobProfile(user, jobid, file, url, name);
 	}
