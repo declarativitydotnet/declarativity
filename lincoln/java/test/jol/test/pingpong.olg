@@ -1,0 +1,12 @@
+program pingpong;
+
+define(doping, {String, String, Integer, Integer});
+define(ping, {String, String, Integer, Integer});
+
+/* When we get a message from Java land, send it to everyone but myself */
+doping(@Self, Target, MsgId, MsgCount) :- self(Self), nodes(Self), nodes(Target), inmessage(Id, Count);
+ping(@Target, Source, MsgId, MsgCount) :- doping(@Source, Target, MsgId, MsgCount);
+
+/* When we receive a message, send it back to the source with count - 1,
+ * unless the count is already 0 */
+ ping(@Source, Target, MsgId, MsgCount - 1) :- ping(@Target, Source, MsgId, MsgCount);
