@@ -11,13 +11,11 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 
 /**
- * The periodic table stores all registered periodics.
- * Programs can remove periodics by simply deleting from
- * this table. The compiler will translate all periodic
- * statements within the program into a tuple entry that
- * is registered in this table. The runtime schedules
- * periodics from the tuple entries in this table.
- *
+ * The periodic table stores all registered periodics. Programs can remove
+ * periodics by simply deleting from this table. The compiler will translate all
+ * periodic statements within the program into a tuple entry that is registered
+ * in this table. The runtime schedules periodics from the tuple entries in this
+ * table.
  */
 public class Periodic extends ObjectTable {
 	
@@ -51,7 +49,6 @@ public class Periodic extends ObjectTable {
 			
 			return deltas;
 		}
-		
 	}
 	
 	public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "periodic");
@@ -61,10 +58,10 @@ public class Periodic extends ObjectTable {
 	public static final Class[] SCHEMA = { 
 		String.class, // Identifier
 		Long.class,   // Period
-		Long.class,   // TTL
-		Long.class,   // Time
-		Long.class,   // Count
-		String.class  // Program
+		Long.class,   // TTL (maximum count before periodic stops)
+		Long.class,   // Time (initial offset before periodic starts)
+		Long.class,   // Count (current periodic execution count)
+		String.class  // Program (program that defined the periodic)
 	};
 	
 	public Periodic(Runtime context, Table schedule) {
