@@ -72,17 +72,20 @@ public class PathTest {
         	}
         };
 
+        /* Fire the callback for each change to the "paths" table */
+        Table path_tbl = this.sys.catalog().table(PathTable.TABLENAME);
+        path_tbl.register(cb);
+
         /* Setup the initial links */
-        TableName link_name = new TableName("path", "link");
         TupleSet links = new TupleSet();
         links.add(new Tuple("1", "2"));
         links.add(new Tuple("2", "3"));
         links.add(new Tuple("3", "4"));
 
-        Table path_tbl = this.sys.catalog().table(PathTable.TABLENAME);
-        path_tbl.register(cb);
+        TableName link_name = new TableName("path", "link");
         this.sys.schedule("path", link_name, links, null);
+        
+        /* Wait to be notified by the callback */
         queue.take();
-        java.lang.System.err.println("done!!!");
     }
 }
