@@ -92,7 +92,11 @@ public class PingPongTest {
 		this.systems[1] = this.ponger = Runtime.create(PONGER_PORT);
 		
 		for (System s : this.systems)
+		{
 			s.catalog().register(new NodeTable((Runtime) s));
+			s.catalog().register(new SelfTable((Runtime) s));
+			s.catalog().register(new InMessageTable((Runtime) s));
+		}
 
 		URL u = ClassLoader.getSystemResource("jol/test/pingpong.olg");
 		for (System s : this.systems)
