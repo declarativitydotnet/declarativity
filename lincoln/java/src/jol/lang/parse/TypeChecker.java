@@ -222,7 +222,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitImport(final GNode n) {
-		Class type = (Class) dispatch((Node)n.getNode(0));
+		Class type = (Class) dispatch(n.getNode(0));
 		if (type == Error.class) return Error.class;
 		else if (type != Class.class) {
 			runtime.error("Expected class type at import statement!", n);
@@ -237,18 +237,18 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitLoad(final GNode n) {
-		Class type = (Class) dispatch((Node)n.getNode(0));
+		Class type = (Class) dispatch(n.getNode(0));
 		assert(type == Value.class);
 		Value<?> fileName = (Value<?>) n.getNode(0).getProperty(Constants.TYPE);
 		File file = new File((String)fileName.value());
 		
-		type = (Class) dispatch((Node)n.getNode(1));
+		type = (Class) dispatch(n.getNode(1));
 		assert(type == TableName.class);
 		TableName name = (TableName) n.getNode(1).getProperty(Constants.TYPE);
 		
 		String delim = null;
 		if (n.size() > 2) {
-			type = (Class) dispatch((Node)n.getNode(2));
+			type = (Class) dispatch(n.getNode(2));
 			Value<?> delimValue = (Value<?>) n.getNode(2).getProperty(Constants.TYPE);
 		    delim = (String)delimValue.value();
 		}
@@ -274,7 +274,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitFact(final GNode n) {
-		Class type = (Class) dispatch((Node)n.getNode(0));
+		Class type = (Class) dispatch(n.getNode(0));
 		assert(type == TableName.class);
 		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
 		if (name.scope == null) {
@@ -308,7 +308,7 @@ public final class TypeChecker extends Visitor {
 	}
 	
 	public Class visitWatch(final GNode n) {
-		Class type = (Class) dispatch((Node)n.getNode(0));
+		Class type = (Class) dispatch(n.getNode(0));
 		assert(type == TableName.class);
 		
 		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
@@ -368,7 +368,7 @@ public final class TypeChecker extends Visitor {
 		assert(type == TypeList.class);
 		TypeList schema  = (TypeList) n.getNode(2).getProperty(Constants.TYPE);
 		Table create;
-		if(name.name.startsWith("stasis")) {
+		if (name.name.startsWith("stasis")) {
 			//create = new JavaHashtable(context, name, key, schema);
 			try {
 				create = new LinearHashNTA(context, name, key, schema);
