@@ -235,13 +235,11 @@ public class Runtime implements System {
 
 			return runtime;
 		} catch (Exception e) {
-			e.printStackTrace();
-			throw new JolRuntimeException(e.toString());
+			throw new JolRuntimeException("Failed to create JOL runtime instance", e);
 		}
 	}
 	
 	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, JolRuntimeException {
-
 		if (args.length < 2) {
 			java.lang.System.out.println("Usage: jol.core.Runtime port program");
 			java.lang.System.exit(1);
