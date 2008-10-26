@@ -18,8 +18,6 @@ public class Watch extends Clause {
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
 		public enum Field {PROGRAM, TABLENAME, MODIFIER, OPERATOR};
 		
-		private Runtime context;
-		
 		public static final Class[] SCHEMA =  {
 			String.class,                              // Program name
 			TableName.class,                           // Table name
@@ -29,7 +27,6 @@ public class Watch extends Clause {
 
 		public WatchTable(Runtime context) {
 			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
-			this.context = context;
 		}
 
 		@Override
