@@ -115,7 +115,7 @@ public class Compiler {
 			Node ast = parse(input);
 			process(ast);
 
-			if (this.runtime.errorCount() > 0) {
+			if (runtime.errorCount() > 0) {
 				for (Table table : this.program.definitions()) {
 					try {
 						context.catalog().drop(table.name());
@@ -125,7 +125,7 @@ public class Compiler {
 				}
 				throw new JolRuntimeException("Compilation of program "
 						+ program.name() + " resulted in "
-						+ this.runtime.errorCount() + " errors.");
+						+ runtime.errorCount() + " errors.");
 			}
 		}
 	}

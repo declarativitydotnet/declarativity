@@ -240,15 +240,6 @@ public class Runtime implements System {
 	}
 	
 	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, JolRuntimeException {
-	       System s1 = Runtime.create(5000);
-	       System s2 = Runtime.create(5001);
-	       try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 		if (args.length < 2) {
 			java.lang.System.out.println("Usage: jol.core.Runtime port program");
 			java.lang.System.exit(1);
