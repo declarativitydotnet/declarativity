@@ -27,4 +27,5 @@ public class ValueList<T> extends ArrayList<T> implements Comparable<ValueList> 
 	public void insert(T o) {
 		super.add(o);
 	}
+	
 }

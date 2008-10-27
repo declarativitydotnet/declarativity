@@ -49,10 +49,12 @@ import jol.lang.plan.Watch;
 import jol.lang.plan.Fact.FactTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
+import jol.types.basic.ValueList;
 import jol.types.exception.UpdateException;
 import jol.types.table.Aggregation;
 import jol.types.table.BasicTable;
 import jol.types.table.EventTable;
+import jol.types.table.Flatten;
 import jol.types.table.Key;
 import jol.types.table.Table;
 import jol.types.table.TableName;
@@ -708,25 +710,43 @@ public final class TypeChecker extends Visitor {
 		assert(type == Predicate.class);
 		Predicate predicate = (Predicate) n.getNode(1).getProperty(Constants.TYPE);
 		
-		Table table = context.catalog().table(name);
-		if (table == null || table.type() != Table.Type.FUNCTION) {
-			runtime.error("Unknown table function " + name, n);
-			return Error.class;
+		Table table = null;
+		if (name.name.equals(Flatten.NAME)) {
+			TypeList types = new TypeList();
+			boolean valid = false;
+			for (Expression arg : predicate) {
+				types.add(arg.type());
+				if (arg.type() == ValueList.class) {
+					valid = true;
+					this.table.current().define(((Variable) arg).name(), Comparable.class);
+				}
+			}
+			table = new Flatten(context.idgen(), types);
+			if (!valid) {
+				runtime.warning("Flatten input schema does not contain a ValueList!", n);
+			}
 		}
 		else {
-			/* Make sure predicate schema matches table function schema. */
-			Class[] types = table.types();
-			int index = 0;
-			for (Expression arg : predicate) {
-				if (types[index] != arg.type()) {
-					runtime.error("Predicate argument position " + index + " does not match table function type!",n);
+			table = context.catalog().table(name);
+			if (table == null || table.type() != Table.Type.FUNCTION) {
+				runtime.error("Unknown table function " + name, n);
+				return Error.class;
+			}
+			else {
+				/* Make sure predicate schema matches table function schema. */
+				Class[] types = table.types();
+				int index = 0;
+				for (Expression arg : predicate) {
+					if (types[index] != arg.type()) {
+						runtime.error("Predicate argument position " + index + " does not match table function type!",n);
+						return Error.class;
+					}
+					index++;
+				}
+				if (types.length != index) {
+					runtime.error("Predicate schema types must match table function types!",n);
 					return Error.class;
 				}
-				index++;
-			}
-			if (types.length != index) {
-				runtime.error("Predicate schema types must match table function types!",n);
-				return Error.class;
 			}
 		}
 		
@@ -1150,8 +1170,10 @@ public final class TypeChecker extends Visitor {
 		Class cast = (Class) n.getNode(0).getProperty(Constants.TYPE);
 		Expression expr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 		
-		if (expr.type() != null && !(subtype(expr.type(), cast) || subtype(cast, expr.type()))) {
-			runtime.error("CAST ERROR: Expression type " + expr.type() + " is not a supertype of " + cast + ".", n);
+		if (expr.type() != null && expr.type() != Comparable.class 
+				&& !(subtype(expr.type(), cast) || subtype(cast, expr.type()))) {
+			runtime.error("CAST ERROR: Expression " + expr.toString() + 
+					      " type " + expr.type() + " is not a supertype of " + cast + ".", n);
 			return Error.class;
 		}
 		
