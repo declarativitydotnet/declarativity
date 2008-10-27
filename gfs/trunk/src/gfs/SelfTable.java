@@ -19,7 +19,7 @@ public class SelfTable extends ObjectTable {
         String.class,   // Address of self
 	};
 
-	protected MasterRequestTable(Runtime context) {
+	protected SelfTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 	}
 }

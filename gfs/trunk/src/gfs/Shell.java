@@ -33,8 +33,8 @@ public class Shell {
 
         system = Runtime.create(5501);
 
-		this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
-        this.system.catalog().register(new SelfTable((Runtime) this.system));
+		system.catalog().register(new MasterRequestTable((Runtime) system));
+        system.catalog().register(new SelfTable((Runtime) system));
 
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_master.olg"));
