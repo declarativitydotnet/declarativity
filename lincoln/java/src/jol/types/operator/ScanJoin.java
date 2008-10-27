@@ -1,7 +1,5 @@
 package jol.types.operator;
 
-import java.util.Iterator;
-
 import jol.lang.plan.Predicate;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
@@ -40,10 +38,7 @@ public class ScanJoin extends Join {
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		TupleSet result = new TupleSet();
 		for (Tuple outer : tuples) {
-			Iterator<Tuple> innerIt = this.table.tuples();
-
-			while(innerIt.hasNext()) {
-				Tuple inner = innerIt.next();
+			for (Tuple inner : this.table.tuples()) {
 				inner.schema(this.predicate.schema().clone());
 				
 				if (validate(outer, inner)) {

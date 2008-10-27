@@ -87,7 +87,7 @@ public abstract class StasisTable extends Table {
 
 			@Override
 			public Iterator<Tuple> iterator() {
-				return table().tuples(); 
+				return table().tuples().iterator(); 
 			}
 
 			@Override
@@ -159,31 +159,33 @@ public abstract class StasisTable extends Table {
 
 
 	@Override
-	public Iterator<Tuple> tuples() {
-		return new Iterator<Tuple>() {
-			Iterator<byte[][]> it = tupleBytes();
+	public Iterable<Tuple> tuples() {
+		return new Iterable<Tuple>() {
+			public Iterator<Tuple> iterator() {
+				return new Iterator<Tuple>() {
+					Iterator<byte[][]> it = tupleBytes();
 
-			public boolean hasNext() {
-				return it.hasNext();
-			}
+					public boolean hasNext() {
+						return it.hasNext();
+					}
 
-			public Tuple next() {
-				byte[][] o = it.next();
-				try {
-					Tuple k = new Tuple(o[0]);
-					Tuple v = new Tuple(o[1]);
-					
-					Tuple ret =key.reconstruct(k, v);
-								
-					return ret;
-				} catch (Exception e) {
-					throw new Error("couldn't deserialize", e);
-				}
-			}
+					public Tuple next() {
+						byte[][] o = it.next();
+						try {
+							Tuple k = new Tuple(o[0]);
+							Tuple v = new Tuple(o[1]);
+							
+							return key.reconstruct(k, v);
+						} catch (Exception e) {
+							throw new Error("couldn't deserialize", e);
+						}
+					}
 
-			public void remove() {
-				it.remove();
-			}
+					public void remove() {
+						it.remove();
+					}
+				};
+			}			
 		};
 	}
 

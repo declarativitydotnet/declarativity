@@ -1,10 +1,11 @@
 package jol.types.table;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import jol.core.Runtime;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -12,7 +13,6 @@ import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.function.Aggregate;
-import jol.core.Runtime;
 
 /**
  * A table aggregation.
@@ -21,7 +21,7 @@ import jol.core.Runtime;
  *  remove those tuples on deletion. However, the tuples that are made
  *  visible to the outside world are the aggregate values generated 
  *  by set of resident tuples. A table aggregation is created if a
- *  predicate refering to the table contains an aggregation. The
+ *  predicate referring to the table contains an aggregation. The
  *  aggregate function is registered with this table object. The
  *  aggregate function determines the value of the aggregate value.
  *  Deletions to this table may cause new tuples to appear. For instance
@@ -117,8 +117,8 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	}
 	
 	@Override
-	public Iterator<Tuple> tuples() {
-		return (this.aggregateTuples.clone()).iterator();
+	public Iterable<Tuple> tuples() {
+		return this.aggregateTuples.clone();
 	}
 	
 	/**
@@ -167,7 +167,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		}
 		
 		TupleSet delta = values();
-		delta.removeAll(tuples());  // Only those newly inserted tuples remain.
+		delta.removeAll(this.aggregateTuples.clone());  // Only those newly inserted tuples remain.
 		delta.removeAll(deletions);
 		
 		if (type() == Table.Type.EVENT) {
@@ -186,7 +186,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	
 	@Override
 	/** Should only be called from within this Class.  */
-	public TupleSet delete(TupleSet deletions) throws UpdateException {
+	public TupleSet delete(Iterable<Tuple> deletions) throws UpdateException {
 		if (type() == Table.Type.EVENT) {
 			throw new UpdateException("Aggregation table " + name() + " is an event table!");
 		}

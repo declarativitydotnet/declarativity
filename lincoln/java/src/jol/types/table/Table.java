@@ -1,6 +1,8 @@
 package jol.types.table;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
@@ -302,7 +304,7 @@ public abstract class Table implements Comparable<Table> {
 	 * The set of stored tuples.
 	 * @return A reference to the set of stored tuples.
 	 */
-	public abstract Iterator<Tuple> tuples();
+	public abstract Iterable<Tuple> tuples();
 	
 	/**
 	 * The primary key.
@@ -387,14 +389,10 @@ public abstract class Table implements Comparable<Table> {
 	 * (a.k.a. the tuples that were actually deleted by this operation.)
 	 * @throws UpdateException 
 	 **/
-	public TupleSet delete(TupleSet tuples) throws UpdateException {
-		return delete(tuples.iterator());
-	}
-	public TupleSet delete(Iterator<Tuple> tuples) throws UpdateException {
+	public TupleSet delete(Iterable<Tuple> tuples) throws UpdateException {
 		TupleSet delta = new TupleSet(name());
-
-		while (tuples.hasNext()) {
-			Tuple t = tuples.next();
+		
+		for (Tuple t : tuples) {
 			t = t.clone();
 			if (delete(t)) {
 				delta.add(t);

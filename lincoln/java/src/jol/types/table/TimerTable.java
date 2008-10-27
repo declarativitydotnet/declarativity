@@ -1,6 +1,5 @@
 package jol.types.table;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.TimerTask;
 
@@ -167,8 +166,14 @@ public class TimerTable extends Table {
 	public Map<Key, Index> secondary() { return null; }
 
 	@Override
-	public Iterator<Tuple> tuples() {
-		return (this.timer == null ? new TupleSet(name(), new Tuple())
-		       : new TupleSet(name(), new Tuple(timer.delay, timer.period, timer))).iterator();
+	public Iterable<Tuple> tuples() {
+		Tuple t;
+
+		if (this.timer == null)
+			t = new Tuple();
+		else
+			t = new Tuple(timer.delay, timer.period, timer);
+		
+		return new TupleSet(name(), t);
 	}
 }

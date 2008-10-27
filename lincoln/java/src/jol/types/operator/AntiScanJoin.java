@@ -1,7 +1,5 @@
 package jol.types.operator;
 
-import java.util.Iterator;
-
 import jol.lang.plan.Predicate;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
@@ -45,9 +43,7 @@ public class AntiScanJoin extends Join {
 		TupleSet result = new TupleSet();
 		for (Tuple outer : tuples) {
 			boolean success = false;
-			Iterator<Tuple> it = this.table.tuples();
-			while(it.hasNext()) {
-				Tuple inner = it.next();
+			for (Tuple inner : this.table.tuples()) {
 				inner.schema(this.predicate.schema());
 				if (validate(outer, inner) && outer.join(inner) != null) {
 					success = true;

@@ -1,6 +1,5 @@
 package jol.types.table;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import jol.types.basic.Tuple;
@@ -58,7 +57,7 @@ public abstract class Function extends Table {
 	}
 
 	@Override
-	public Iterator<Tuple> tuples() {
+	public Iterable<Tuple> tuples() {
 		return null;
 	}
 	

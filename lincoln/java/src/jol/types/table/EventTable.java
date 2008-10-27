@@ -1,6 +1,5 @@
 package jol.types.table;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import jol.types.basic.Tuple;
@@ -34,7 +33,7 @@ public class EventTable extends Table {
 	
 	@Override
 	/** @exception UpdateException */
-	public TupleSet delete(TupleSet tuples) throws UpdateException {
+	public TupleSet delete(Iterable<Tuple> tuples) throws UpdateException {
 		throw new UpdateException("Can't remove tuples from event table");
 	}
 
@@ -64,7 +63,7 @@ public class EventTable extends Table {
 
 	/** @return null */
 	@Override
-	public Iterator<Tuple> tuples() {
+	public Iterable<Tuple> tuples() {
 		return null;
 	}
 

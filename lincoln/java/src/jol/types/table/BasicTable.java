@@ -1,7 +1,6 @@
 package jol.types.table;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import jol.core.Runtime;
@@ -46,9 +45,9 @@ public class BasicTable extends Table {
 	}
 	
 	@Override
-	public Iterator<Tuple> tuples() {
+	public Iterable<Tuple> tuples() {
 		try {
-		return (this.tuples == null ? new TupleSet(name()) : this.tuples.clone()).iterator();
+			return (this.tuples == null ? new TupleSet(name()) : this.tuples.clone());
 		} catch (Exception e) {
 			System.err.println("TABLE " + name() + " ERROR: " + e);
 			e.printStackTrace();

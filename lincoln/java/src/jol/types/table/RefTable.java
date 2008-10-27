@@ -1,7 +1,6 @@
 package jol.types.table;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import jol.core.Runtime;
@@ -46,8 +45,8 @@ public class RefTable extends Table {
 	}
 	
 	@Override
-	public Iterator<Tuple> tuples() {
-		return (this.tuples == null ? new TupleSet(name()) : this.tuples.clone()).iterator();
+	public Iterable<Tuple> tuples() {
+		return (this.tuples == null ? new TupleSet(name()) : this.tuples.clone());
 	}
 	
 	@Override
@@ -72,7 +71,6 @@ public class RefTable extends Table {
 		}
 		return false; // The tuple does not exist.
 	}
-
 
 	@Override
 	protected boolean insert(Tuple t) throws UpdateException {

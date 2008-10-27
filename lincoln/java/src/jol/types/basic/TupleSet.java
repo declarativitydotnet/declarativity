@@ -3,7 +3,6 @@ package jol.types.basic;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import jol.types.table.TableName;
@@ -13,9 +12,9 @@ import jol.types.table.TableName;
  * A tuple set is a set contain for tuples that belong to the same relation.
  */
 public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Serializable {
-	/** Identifier generator. */
 	private static final long serialVersionUID = 1L;
 
+	/** Identifier generator. */
 	private static long ids = 0L;
 	
 	/** Tuple set identifier. */
@@ -23,6 +22,8 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	
 	/** Table name to which the tuples of this set belong. */
 	private TableName name;
+
+	boolean warnedAboutBigTable = false;
 	
 	/**
 	 * Create an empty tuple set.
@@ -127,22 +128,16 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 		this.name = name;
 	}
 	
-	boolean warnedAboutBigTable = false;
-	@Override
-	public boolean addAll(Collection<? extends Tuple> tuples) {
-		super.addAll(tuples);
-		if (this.size() > 1000 && !warnedAboutBigTable) {
-			warnedAboutBigTable = true;
+	public boolean addAll(Iterable<? extends Tuple> tuples) {
+		for (Tuple t : tuples)
+			add(t);
+
+		if (this.size() > 1000 && !this.warnedAboutBigTable) {
+			this.warnedAboutBigTable = true;
 			System.err.println("TUPLE SET " + name() + " has exceeded 1000 tuples");
 		}
+
 		return true;
-	}
-	public boolean addAll(Iterator<? extends Tuple> tuples) {
-		while(tuples.hasNext()) add(tuples.next());
-		return true;
-	}
-	public void removeAll(Iterator<? extends Tuple> tuples) {
-		while(tuples.hasNext()) remove(tuples.next());
 	}
 
 	/**
