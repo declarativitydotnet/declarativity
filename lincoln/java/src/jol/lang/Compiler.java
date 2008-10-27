@@ -39,8 +39,8 @@ import xtc.util.Runtime;
  */
 public class Compiler {
 	public static final URL[] FILES = {
-			ClassLoader.getSystemResource("jol/lang/compile.olg"),
-			ClassLoader.getSystemResource("jol/lang/stratachecker.olg")
+			ClassLoader.getSystemClassLoader().getResource("jol/lang/compile.olg"),
+			ClassLoader.getSystemClassLoader().getResource("jol/lang/stratachecker.olg")
 		};
 
 	public static class CompileTable extends ObjectTable {
@@ -104,28 +104,29 @@ public class Compiler {
 
 	private Program program;
 
-	private Runtime runtime = new Runtime();
+	private final static Runtime runtime = new Runtime(); 
 
 	/** Create a new driver for Overlog. */
 	public Compiler(jol.core.Runtime context, String owner, URL input) throws JolRuntimeException {
 		this.context = context;
 		this.owner = owner;
-		this.runtime = new Runtime();
 
-		Node ast = parse(input);
-		process(ast);
+		synchronized(runtime) {
+			Node ast = parse(input);
+			process(ast);
 
-		if (this.runtime.errorCount() > 0) {
-			for (Table table : this.program.definitions()) {
-				try {
-					context.catalog().drop(table.name());
-				} catch (UpdateException e) {
-					e.printStackTrace();
+			if (this.runtime.errorCount() > 0) {
+				for (Table table : this.program.definitions()) {
+					try {
+						context.catalog().drop(table.name());
+					} catch (UpdateException e) {
+						e.printStackTrace();
+					}
 				}
+				throw new JolRuntimeException("Compilation of program "
+						+ program.name() + " resulted in "
+						+ this.runtime.errorCount() + " errors.");
 			}
-			throw new JolRuntimeException("Compilation of program "
-					+ program.name() + " resulted in "
-					+ this.runtime.errorCount() + " errors.");
 		}
 	}
 

@@ -1,0 +1,72 @@
+program path;
+
+import java.lang.Object;
+import java.lang.String;
+import java.lang.Integer;
+import jol.core.Runtime;
+
+import jol.types.basic.ValueList;
+
+define(link, keys(0,1), {String, String});
+define(path, keys(0,1,2), {String, String, Integer});
+define(shortestPath, keys(0,1), {String, String, Integer});
+
+define(allpaths, {String, ValueList});
+define(pathPrinter, {String, ValueList});
+define(computeAll, {String});
+
+/* Fire a time 10 seconds following program start time.
+   The period is set to 0, which means I only want it to
+   fire once. */
+timer(newlink, 10000, 0);
+
+/* 1 -> 2 -> 3 -> 4 */
+link("1", "2");
+link("2", "3");
+link("3", "4");
+link("2", "4");
+
+/* 5 -> 6 -> 7 -> 8 -> 9 */
+link("5", "6");
+link("6", "7");
+link("7", "8");
+link("8", "9");
+
+watch(path, ae);
+watch(shortestPath, ae);
+watch(allpaths, r);
+
+watch(newlink, ra);
+
+/* Add the link 9 -> 10 when newlink fires */
+link("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
+
+newlink(null, 5000, null) :- newlink(_, 0, _);
+
+
+/* Initialize all paths with link */
+init
+path(Source, Destination, 1) :- link(Source, Destination);
+
+/* Transitive closure over path, link. */
+transitive
+path(Source, Destination, Hops+1) :- 
+	path(Source, Intermediate, Hops), link(Intermediate, Destination);
+
+/* Compute shortest paths. */
+shortestPath
+shortestPath(Source, Destination, min<Hops>) :- 
+	path(Source, Destination, Hops);
+	
+computeAll(Source) :-
+	shortestPath(Source, Destination, Hops);
+	
+import jol.types.basic.Schema;
+allpaths(Source, generic<(new ValueList()).insert(Destination)>) :-
+	computeAll(Bla),
+	path(Source, Destination, Hops);
+	
+pathPrinter(Source, Paths) :-
+	allpaths(Source, Paths);
+
+delete link("2", "4") :- periodic(Id, 1L, 1L, 5L);

@@ -51,7 +51,6 @@ dependency(ProgramName, Ancestor, Child) :-
 	Ancestor != Child;
 	
 /* Initialize all predicates to stratum 0. */
-priority_init
 runtime::priority(ProgramName, Pred.name(), 0) :-
 	config(ProgramName, Object),
 	rule(ProgramName, Rule),
