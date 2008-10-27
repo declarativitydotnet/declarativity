@@ -7,17 +7,17 @@ define(master, keys(0), {String});
 nodes("tcp:localhost:5500");
 nodes("tcp:localhost:5501");
 
-// The master node
+// The address of the master node
 master("tcp:localhost:5500");
 
 // File name, contents
-define(file, keys(0), {String,String});
+define(file, keys(0), {String, String});
 
 file("Foo", "Bar");
 file("Bar", "Baz");
 
 // If we get a response for a file that exists, send back the content
 // of the file
-gfs_client#response(@Source, Id, FContents) :-
+gfs_client::response(@Source, Id, FContents) :-
     file(FName, FContents), request(@Master, Id, Source, FName),
-    Self(Master), master(Master);
+    self(Master), master(Master);

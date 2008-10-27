@@ -2,6 +2,7 @@ package gfs;
 
 import jol.core.System;
 import jol.core.Runtime;
+import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
@@ -40,6 +41,12 @@ public class Master {
 
 		this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
         this.system.catalog().register(new SelfTable((Runtime) this.system));
+
+        /* Identify which address the local node is at */
+        TupleSet self = new TupleSet();
+        self.add(new Tuple("tcp:localhost:" + this.port));
+        system.schedule("gfs_master", SelfTable.TABLENAME, self, null);
+        Thread.sleep(1000);
 
 		Callback cb = new Callback() {
 			@Override

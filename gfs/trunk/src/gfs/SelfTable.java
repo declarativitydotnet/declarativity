@@ -8,13 +8,13 @@ import jol.types.table.TableName;
 
 public class SelfTable extends ObjectTable {
 	public static final TableName TABLENAME = new TableName("gfs_master", "self");
-	
+
 	public static final Key PRIMARY_KEY = new Key(0);
-	
+
 	public enum Field {
         ADDRESS
 	};
-	
+
 	public static final Class<?>[] SCHEMA = {
         String.class,   // Address of self
 	};

@@ -25,7 +25,7 @@ public class Shell {
      *  (3) inject the appropriate inserts into JOL; wait for the results to come back
      *  (4) return results to stdout
      */
-    public static void main(String[] args) throws JolRuntimeException, UpdateException {
+    public static void main(String[] args) throws JolRuntimeException, UpdateException, InterruptedException {
         List<String> argList = Arrays.asList(args);
 
         if (argList.size() == 0)
@@ -35,6 +35,12 @@ public class Shell {
 
 		system.catalog().register(new MasterRequestTable((Runtime) system));
         system.catalog().register(new SelfTable((Runtime) system));
+
+        /* Identify which address the local node is at */
+        TupleSet self = new TupleSet();
+        self.add(new Tuple("tcp:localhost:" + 5501));
+        system.schedule("gfsmaster", SelfTable.TABLENAME, self, null);
+        Thread.sleep(1000);
 
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_master.olg"));

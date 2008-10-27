@@ -6,5 +6,8 @@ define(cat_request, keys(0), {Integer, String});
 // Request ID, File contents
 define(cat_response, keys(0), {Integer,String});
 
+gfs_master::request(@Target, Id, Source, FName) :-
+    cat_request(Id, FName), gfs_master::self(Source), gfs_master::master(Target);
+
 cat_response(Id, FContents) :-
-    gfs_master#response(@Node, Id, FContents), gfs_master#Self(Node);
+    gfs_master::response(@Node, Id, FContents), gfs_master::self(Node);
