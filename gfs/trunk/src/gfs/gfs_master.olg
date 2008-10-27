@@ -1,0 +1,7 @@
+program gfs_master;
+
+// File name, contents
+define(file, keys(0), {String,String});
+
+file("Foo", "Bar");
+file("Bar", "Baz");

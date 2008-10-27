@@ -1,13 +1,7 @@
-program gfs;
+program gfs_client;
 
 // Request ID, Filename
 define(cat_request, keys(0), {Integer, String});
 
 // Request ID, File contents
 define(cat_response, keys(0), {Integer,String});
-
-// File name, contents
-define(file, keys(0), {String,String});
-
-file("Foo", "Bar");
-file("Bar", "Baz");

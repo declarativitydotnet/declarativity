@@ -32,7 +32,7 @@ public class Shell {
             usage();
 
         system = Runtime.create(12345);
-        system.install("gfs", ClassLoader.getSystemResource("gfs/nrc_gfs.olg"));
+        system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
 
         String op = argList.remove(0);
 
@@ -118,8 +118,8 @@ public class Shell {
     }
 
     private static void usage() {
-        java.lang.System.out.println("Usage: java gfs.Shell op_name args");
-        java.lang.System.out.println("Where op_name = {cat,mkdir,write}");
+        java.lang.System.err.println("Usage: java gfs.Shell op_name args");
+        java.lang.System.err.println("Where op_name = {cat,mkdir,write}");
         java.lang.System.exit(0);
     }
 }
