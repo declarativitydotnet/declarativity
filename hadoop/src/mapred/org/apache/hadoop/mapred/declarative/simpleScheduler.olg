@@ -8,7 +8,7 @@ waitQueue(JobID, StartTime, Priority) :-
 	JobState.state() == JobStatus.State.PREP;
 	
 /* Overall min priority. */
-minWaitPriority(JobID, min<Priority.ordinal()>) :-
+minWaitPriority(JobID, min<Priority>) :-
 	waitQueue(JobID, StartTime, Priority); 
 	
 /* View of the oldest waiting job in each priority level. */

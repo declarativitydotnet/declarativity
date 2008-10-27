@@ -38,6 +38,7 @@ import org.apache.hadoop.mapred.TaskStatus.Phase;
 import org.apache.hadoop.mapred.TaskStatus.State;
 import org.apache.hadoop.mapred.declarative.table.HeartbeatTable;
 import org.apache.hadoop.mapred.declarative.table.JobTable;
+import org.apache.hadoop.mapred.declarative.table.NetworkTopologyTable;
 import org.apache.hadoop.mapred.declarative.table.TaskAttemptTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable;
@@ -446,12 +447,18 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 */
 	private boolean updateTaskTracker(String name, TaskTrackerStatus status, boolean init) { 
 		try {
-			Table    table         = this.context.catalog().table(TaskTrackerTable.TABLENAME);
-			TupleSet trackerLookup = table.primary().lookupByKey(name);
-
+			TaskTrackerTable trackerTable = (TaskTrackerTable)
+				this.context.catalog().table(TaskTrackerTable.TABLENAME);
+			
+			TupleSet trackerLookup = trackerTable.primary().lookupByKey(name);
 			if ( init && trackerLookup.size() > 0 ||
 				!init && trackerLookup.size() == 0) {
 				return false;
+			}
+			else if (init) {
+				NetworkTopologyTable topologyTable = 
+					(NetworkTopologyTable) this.context.catalog().table(TaskTrackerTable.TABLENAME);
+				topologyTable.resolve(status);
 			}
 			
 			Tuple tracker = 

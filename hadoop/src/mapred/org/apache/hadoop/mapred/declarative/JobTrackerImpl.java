@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import jol.core.System;
 import jol.types.basic.Tuple;
@@ -49,6 +51,8 @@ public class JobTrackerImpl extends JobTracker {
 	  /** The JOL system context. */
 	  private System context;
 	  
+	  private Executor executor;
+	  
 	  /** The server interface. */
 	  private Server server;
 
@@ -72,6 +76,8 @@ public class JobTrackerImpl extends JobTracker {
 	public JobTrackerImpl(System context, JobConf conf) throws IOException {
 		super(getDateFormat().format(new Date()));
 		this.conf = conf;
+		this.context = context;
+		this.executor = Executors.newCachedThreadPool();
 		
 		  // Set ports, start RPC servers, etc.
 	    InetSocketAddress addr = getAddress(conf);
@@ -134,7 +140,7 @@ public class JobTrackerImpl extends JobTracker {
 	    
 	    /* Install the declarative definitions. */
 	    try {
-			install(context);
+			install((jol.core.Runtime)context, conf);
 		} catch (UpdateException e) {
 			throw new IOException(e);
 		}
@@ -144,22 +150,30 @@ public class JobTrackerImpl extends JobTracker {
 		return new SimpleDateFormat("yyyyMMddHHmm");
 	}
 	
-	private void install(System context) throws UpdateException {
-		this.context = context;
-		this.context().catalog().register(new JobTable((jol.core.Runtime)context));
-		this.context().catalog().register(new TaskAttemptTable((jol.core.Runtime)context));
+	private void install(jol.core.Runtime context, JobConf conf) throws UpdateException {
+		this.context().catalog().register(new JobTable(context));
+		this.context().catalog().register(new TaskAttemptTable(context));
 		this.context().catalog().register(new TaskCreate(this));
-		this.context().catalog().register(new TaskReportTable((jol.core.Runtime)context));
-		this.context().catalog().register(new TaskTable((jol.core.Runtime)context));
-		this.context().catalog().register(new TaskTrackerActionTable((jol.core.Runtime)context));
-		this.context().catalog().register(new TaskTrackerErrorTable((jol.core.Runtime)context));
-		this.context().catalog().register(new TaskTrackerTable((jol.core.Runtime)context));
+		this.context().catalog().register(new TaskReportTable(context));
+		this.context().catalog().register(new TaskTable(context));
+		this.context().catalog().register(new TaskTrackerActionTable(context));
+		this.context().catalog().register(new TaskTrackerErrorTable(context));
+		this.context().catalog().register(new TaskTrackerTable(context));
+		this.context().catalog().register(new NetworkTopologyTable(context, this));
 		
 		URL program = 
 			ClassLoader.getSystemClassLoader().
 				getResource("org/apache/hadoop/mapred/declarative/jobTracker.olg");
 		this.context.install("hadoop", program);
 
+	}
+	
+	public JobConf conf() {
+		return this.conf;
+	}
+	
+	public Executor executor() {
+		return this.executor;
 	}
 	
 	@Override

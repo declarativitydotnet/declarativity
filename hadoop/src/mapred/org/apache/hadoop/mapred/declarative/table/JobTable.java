@@ -38,11 +38,8 @@ public class JobTable extends ObjectTable {
 		JobState.class      // Job status
 	};
 	
-	private Runtime context;
-
 	public JobTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
-		this.context = context;
 	}
 	
 	public static Tuple tuple(JobID jobid, String jobFile, JobConf conf, String url) {

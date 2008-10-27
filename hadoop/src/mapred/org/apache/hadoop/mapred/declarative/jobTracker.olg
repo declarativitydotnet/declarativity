@@ -1,7 +1,5 @@
 program jobtracker;
 
-/*************** TASK INIT *********************/
-
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants;
@@ -11,17 +9,31 @@ import java.lang.Integer;
 import java.lang.Long;
 import java.lang.Enum;
 
+/*************** TASK INIT *********************/
+
+
 define(initTask, {JobID, Wrapper, String, TaskID, Enum, Integer, Wrapper, Integer, TaskState});
+define(taskInputLocation, keys(0,1), {JobID, TaskID, String});
+define(taskInput, {JobID, TaskID, ValueList});
 
 initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
 	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState),
-	JobState.state() == JobStatus.PREP;
+	JobState.state() == JobState.PREP;
 	
 /* Break out of the current fixpoint thread (using 'async') since taskCreate table function
    makes calls to the DFS. */
 async
 task(JobID, TaskID, Type, Partition, Split, MapCount, Status) :-
 	taskCreate(initTask(JobID, JobConf, JobFile, TaskID, Type, Partition, Split, MapCount, Status));
+	
+taskInput(JobId, TaskId, Locations) :-
+	task(JobId, TaskId, Type, _, Split, _, TaskState),
+	TaskState.state() == TaskState.UNASSIGNED,
+	Locations := new ValueList(Split.getLocations());
+	
+taskInputLocation(JobId, TaskId, Location) :-
+	flatten(taskInput(JobId, TaskId, Locations)),
+	Location := (String) Locations;
 	
 	
 /*************** Job Status Maintenance *********************/
@@ -62,7 +74,7 @@ define(taskState, {JobID, TaskID, TaskState});
 	
 /* Update the job state on any change to the task table. */
 taskStateUpdate(JobID, TaskID) :- 
-	taskAttempt(JobID, TaskID, _, _, _, _, _, _, _, _), Start > 0;
+	taskAttempt(JobID, TaskID, _, _, _, _, _, _, Start, _), Start > 0;
 
 taskState(JobID, TaskID, generic<(new TaskState(JobID, TaskID)).attempt(Progress, State, Phase, Start, Finish)>) :-
 	taskStateUpdate(JobID, TaskID),

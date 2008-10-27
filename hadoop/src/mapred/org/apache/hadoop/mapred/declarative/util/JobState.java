@@ -6,12 +6,13 @@ import java.util.Set;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
+import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.table.TaskTable;
 
 public class JobState implements Comparable<JobState> {
 	private JobID jobid;
 	
-	private int state;
+	private Constants.JobState state;
 
 	private int mapCount;
 	
@@ -23,7 +24,7 @@ public class JobState implements Comparable<JobState> {
 	
 	public JobState(JobID jobid, int mapCount, int reduceCount) {
 		this.jobid       = jobid;
-		this.state       = JobStatus.PREP;
+		this.state       = Constants.JobState.PREP;
 		this.mapCount    = mapCount;
 		this.maps        = new HashSet<TaskState>();
 		this.reduceCount = reduceCount;
@@ -55,7 +56,7 @@ public class JobState implements Comparable<JobState> {
 		float mapProgress    = 0f;
 		float reduceProgress = 0f;
 		
-		if (this.state == JobStatus.RUNNING) {
+		if (this.state == Constants.JobState.RUNNING) {
 			for (TaskState map : maps) {
 				mapProgress += map.progress();
 			}
@@ -65,10 +66,10 @@ public class JobState implements Comparable<JobState> {
 			}
 			reduceProgress = reduceProgress / (float) this.reduceCount;
 		}
-		else if (this.state == JobStatus.SUCCEEDED) {
+		else if (this.state == Constants.JobState.SUCCEEDED) {
 			mapProgress = reduceProgress = 1f;
 		}
-		return new JobStatus(this.jobid, mapProgress, reduceProgress, this.state);
+		return new JobStatus(this.jobid, mapProgress, reduceProgress, this.state.ordinal()+1);
 	}
 
 }
