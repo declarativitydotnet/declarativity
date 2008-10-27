@@ -32,7 +32,7 @@ public class Shell {
             usage();
 
         system = Runtime.create(12345);
-        system.install("gfs", ClassLoader.getSystemResource("nrc_gfs.olg"));
+        system.install("gfs", ClassLoader.getSystemResource("gfs/nrc_gfs.olg"));
 
         String op = argList.remove(0);
 

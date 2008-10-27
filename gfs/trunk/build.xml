@@ -20,7 +20,14 @@
 
   <target name="dist" depends="compile" description="generate a JAR file">
     <mkdir dir="${dist}"/>
-    <jar jarfile="${dist}/gfs-${DSTAMP}.jar" basedir="${build}"/>
+    <jar jarfile="${dist}/gfs.jar">
+      <fileset dir="${build}"/>
+      <fileset dir="${src}" includes="**/*.olg"/>
+
+      <manifest>
+        <attribute name="Built-By" value="${user.name}"/>
+      </manifest>
+    </jar>
   </target>
 
   <target name="clean" description="clean up">
