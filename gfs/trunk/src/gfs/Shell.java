@@ -8,7 +8,7 @@ import jol.core.Runtime;
 import jol.core.System;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.P2RuntimeException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.types.table.TableName;
@@ -20,18 +20,18 @@ public class Shell {
 
     /*
      * TODO:
-     *  (1) connect to an instance of P2
+     *  (1) connect to an instance of JOL
      *  (2) parse command-line argument into command + arguments
-     *  (3) inject the appropriate inserts into P2; wait for the results to come back
+     *  (3) inject the appropriate inserts into JOL; wait for the results to come back
      *  (4) return results to stdout
      */
-    public static void main(String[] args) throws P2RuntimeException, UpdateException {
+    public static void main(String[] args) throws JolRuntimeException, UpdateException {
         List<String> argList = Arrays.asList(args);
 
         if (argList.size() == 0)
             usage();
 
-        system = Runtime.create(123);
+        system = Runtime.create(12345);
         system.install("gfs", ClassLoader.getSystemResource("nrc_gfs.olg"));
 
         String op = argList.remove(0);

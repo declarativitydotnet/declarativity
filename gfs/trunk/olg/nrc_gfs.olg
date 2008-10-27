@@ -1,17 +1,13 @@
 program gfs;
 
 // Request ID, Filename
-define(cat_request,{Integer,String});
+define(cat_request, keys(0), {Integer, String});
 
 // Request ID, File contents
-define(cat_response,{Integer,String});
+define(cat_response, keys(0), {Integer,String});
 
 // File name, contents
-define(file,{String,String});
+define(file, keys(0), {String,String});
 
 file("Foo", "Bar");
 file("Bar", "Baz");
-
-//master(A,B);
-
-//sendRequest(@B,Id,File,A) :- master(@A,B), request(Id,File,@A);
