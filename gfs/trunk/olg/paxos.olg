@@ -69,7 +69,7 @@ PAXOS global invariants:
 	
 
 public
-parliament(A,B) :- getopt::parliament#insert(A,B);
+parliament(A,B) :- getopt::parliament(A,B),periodic(Id,3L,3L);
 	
 lastTried(Master,-1) :- parliament(Master,Agent);
 prevVote(Master,-1,"none") :- parliament(Master,Agent);

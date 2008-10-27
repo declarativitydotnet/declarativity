@@ -3,6 +3,8 @@ use strict;
 use IO::Handle;
 use Test::Simple tests => 10;
 
+my $to = 600;
+
 my $JAR = "jol.new";
 #my $OLG = "../getopt.olg ../paxos.olg";
 my $OLG = "../getopt.olg ../multipaxos.olg";
@@ -12,8 +14,8 @@ my @handles;
 
 $SIG{ALRM}  = 'cleanup';
 
-#test_1();
-#test_2();
+test_1();
+test_2();
 test_3();
 #test_4();
 
@@ -21,37 +23,6 @@ print "\b";
 
 
 ###############################################################
-
-sub test_4 {
-  # start a paxos instance over 3 replicas
-  my @pids = pipe_many(4);
-
-  # yay, array smushing
-  push @handles,@pids;
-
-  # kill one of the reps 
-  kill(9,$handles[4]);
-
-  # make a request
-  my ($p4,$handle) = request(10000,"start_synod.olg","123");
-
-  my $rest = snatch_reply($handle);
-
-  # check that is it passed.
-  ok($rest =~ /XACT0/,"continuous xact");
-  ok($rest =~ /passed/,"passed");
-
-  # kill it
-
-  foreach (@pids) {
-    kill(9,$_);
-  }
-  kill(9,$p4);
-  # look, it shouldn't have to be like this, but it is.
-  system("killall java");
-
-}
-
 
 sub test_3 {
   # start a paxos instance over 3 replicas
@@ -74,12 +45,13 @@ sub test_3 {
 
   # 
   my $second = snatch_reply($handle);
-  ok($second =~ /XACT0/,"still zero");
+  ok($second =~ /XACT1/,"still zero");
   ok($second =~ /passed/,"passed");
 
 
+  print "3\n";
   my $third = snatch_reply($handle);
-  ok($third =~ /XACT0/,"still zero");
+  ok($third =~ /XACT2/,"still zero");
   ok($third =~ /passed/,"passed");
 
   # kill it
@@ -145,9 +117,10 @@ sub test_1 {
 sub snatch_reply {
   my ($handle) = @_;
   
-  alarm(20);
+  alarm($to);
   my $rest;
   while (<$handle>) {
+    #print "H: $_\n";
     if (/reply/) {
       $rest = $_;
       $rest .= <$handle>;
@@ -156,6 +129,7 @@ sub snatch_reply {
     }
   }
   alarm(0);
+  print "rest: $rest\n";
   return $rest;
 }
 
@@ -202,7 +176,7 @@ sub pipe_many {
   my $port = 10000 + $procs;
   $ENV{"ME"} = $procs;
   $ENV{"PROC"} = $procs;
-  alarm(60);
+  alarm(20 * $procs);
   my $pid = open(PIPE,"java -jar $JAR $port $OLG 2>&1 |");
   while (<PIPE>) {
     #print "OUT: $_\n";

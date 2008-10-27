@@ -9,7 +9,7 @@ define (reply,{String,String,String});
 
 //define (reply,keys(0,1,2),{String,String,String});
 
-timer(tick,10,10);
+timer(tick,1000,1000);
 
 watch(doping,ad);
 watch(reply,ad);
@@ -39,7 +39,7 @@ ticker(N+1) :- ticker(N), tick#insert(_,_,_);
 
 please(Lord,Message,Me,Start) :- doping(Lord,Me,Id),
                             ticker(MyId), 
-                            MyId < 10,
+                            MyId < 4,
                            Message := "XACT" + MyId.toString(),
                            Start := System.currentTimeMillis();
 
