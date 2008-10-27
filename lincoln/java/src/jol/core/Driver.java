@@ -460,14 +460,19 @@ public class Driver implements Runnable {
 	/** Tasks that the driver needs to execute during the next clock. */
 	private List<Task> tasks;
 	
+	private boolean debug;
+	
 	/** The runtime program */
 	private Program runtime;
 
 	/** The table containing all tuples that need to be scheduled/executed. */
 	private Schedule schedule;
 
-	/** The system clock. */
+	/** The logical system clock. */
 	private Clock clock;
+	
+	/** The driver logical time. */
+	private Long logicalTime;
 	
 	/** The evaluator table function. */
 	public Evaluator evaluator;
@@ -483,8 +488,10 @@ public class Driver implements Runnable {
 	 */
 	public Driver(Runtime context, Schedule schedule, Clock clock, ExecutorService executor) {
 		this.tasks = new ArrayList<Task>();
+		this.debug = true;
 		this.schedule = schedule;
 		this.clock = clock;
+		this.logicalTime = 0L;
 		this.evaluator = new Evaluator(context, executor);
 		this.flusher = new Flusher(context);
 		
@@ -508,46 +515,17 @@ public class Driver implements Runnable {
 	public void task(Task task) {
 		this.tasks.add(task);
 	}
-
-	/**
-	 * The main driver loop.
-	 * The loop is responsible for 1. updating the clock 2. scheduling tasks.
-	 * Driver algorithm:
-	 * 	loop forever {
-	 * 		update to new clock value;
-	 * 		evaluate (insertion of clock value);
-	 * 		evaluate (all tasks);
-	 * 		evaluate (deletion of clock value);
-	 * 	}
-	 */
+	
 	public void run() {
-		long clockValue = 0L;
 		while (true) {
 			synchronized (this) {
 				try {
-					if (schedule.cardinality() > 0) {
-						clockValue = schedule.min();
-					}
-					else {
-						clockValue = clockValue + 1;
-					}
-					TupleSet time = clock.time(clockValue);
-					java.lang.System.err.println("============================     EVALUATE SCHEDULE     =============================");
-					evaluate(clockValue, runtime.name(), time.name(), time, null); // Clock insert current
-					
-					/* Evaluate task queue. */
-					for (Task task : tasks) {
-						evaluate(clockValue, task.program(), task.name(), task.insertions(), task.deletions());
-					}
-					tasks.clear(); // Clear task queue.
-					evaluate(clockValue, runtime.name(), time.name(), null, time); // Clock delete current
-					StasisTable.commit();
-					java.lang.System.err.println("============================ ========================== =============================");
+					evaluate();
 				} catch (UpdateException e) {
 					e.printStackTrace();
-					java.lang.System.exit(1);
+					return;
 				}
-
+				
 				/* Check for new tasks or schedules, if none wait. */
 				while (this.tasks.size() == 0 && schedule.cardinality() == 0) {
 					try {
@@ -556,6 +534,39 @@ public class Driver implements Runnable {
 				}
 			}
 		}
+	}
+
+	/**
+	 * The main driver fixpoint evaluator.
+	 * Executes a single Datalog fixpoint iterations.
+	 * Driver algorithm:
+	 *  fixpoint {
+	 * 		update to new clock value;
+	 * 		evaluate (insertion of clock value);
+	 * 		evaluate (all runtime tasks);
+	 * 		evaluate (deletion of clock value);
+	 * 	}
+	 * @throws UpdateException 
+	 */
+	void evaluate() throws UpdateException {
+		if (schedule.cardinality() > 0) {
+			this.logicalTime = schedule.min();
+		}
+		else {
+			this.logicalTime = this.logicalTime + 1;
+		}
+		TupleSet time = clock.time(this.logicalTime);
+		if (debug) java.lang.System.err.println("============================     EVALUATE SCHEDULE     =============================");
+		evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
+
+		/* Evaluate task queue. */
+		for (Task task : tasks) {
+			evaluate(this.logicalTime, task.program(), task.name(), task.insertions(), task.deletions());
+		}
+		tasks.clear(); // Clear task queue.
+		evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
+		StasisTable.commit();
+		if (debug) java.lang.System.err.println("============================ ========================== =============================");
 	}
 	
 	/**

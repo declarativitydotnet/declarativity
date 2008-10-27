@@ -88,6 +88,17 @@ public class Runtime implements System {
 		this.timer      = new Timer("Timer", true);
 	}
 	
+	public void evaluate() throws JolRuntimeException {
+		if (this.thread.isAlive()) {
+			throw new JolRuntimeException("ERROR: can't call evaluate when system has been started!");
+		}
+		try {
+			this.driver.evaluate();
+		} catch (UpdateException e) {
+			throw new JolRuntimeException(e.toString());
+		}
+	}
+	
 	public void shutdown() {
 		synchronized (driver) {
 			this.executor.shutdown();
@@ -99,13 +110,10 @@ public class Runtime implements System {
 		}
 	}
 	
-	/**
-	 * @return The query processor (Driver) thread.
-	 */
-	public Thread thread() {
-		return this.thread;
+	public void start() {
+		this.thread.start();
 	}
-
+	
 	/**
 	 * @return The system catalog {@link Catalog}.
 	 */
@@ -231,7 +239,7 @@ public class Runtime implements System {
 				runtime.install("system", file);
 			}
 			runtime.network.install(port);
-			runtime.thread.start();
+			runtime.driver.evaluate();
 
 			return runtime;
 		} catch (Exception e) {
@@ -251,5 +259,7 @@ public class Runtime implements System {
 			URL url = new URL("file", "", args[i]);
 			runtime.install("user", url);
 		}
+		runtime.evaluate(); // Install program arguments.
+		runtime.start();
 	}
 }
