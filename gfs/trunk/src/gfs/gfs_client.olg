@@ -5,3 +5,6 @@ define(cat_request, keys(0), {Integer, String});
 
 // Request ID, File contents
 define(cat_response, keys(0), {Integer,String});
+
+cat_response(Id, FContents) :-
+    gfs_master#response(@Node, Id, FContents), gfs_master#Self(Node);

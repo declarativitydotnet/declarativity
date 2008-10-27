@@ -31,7 +31,11 @@ public class Shell {
         if (argList.size() == 0)
             usage();
 
-        system = Runtime.create(12345);
+        system = Runtime.create(5501);
+
+		this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
+        this.system.catalog().register(new SelfTable((Runtime) this.system));
+
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_master.olg"));
 
@@ -54,21 +58,21 @@ public class Shell {
     {
         if (args.size() == 0)
             usage();
-        
+
         for (String file : args)
-        	doCatFile(file);
+            doCatFile(file);
     }
-    
+
     private static void doCatFile(String file) throws UpdateException
     {
-    	final int request_id = generateId();
-    	final SynchronousQueue<String> content_queue = new SynchronousQueue<String>();
-    	
-    	// Create the request tuple
+        final int request_id = generateId();
+        final SynchronousQueue<String> content_queue = new SynchronousQueue<String>();
+
+        // Create the request tuple
         TableName tblName = new TableName("gfs", "cat_requests");
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(request_id, file));
-        
+
         // Register callback to listen for responses
         Callback response_callback = new Callback() {
 			@Override
@@ -90,14 +94,14 @@ public class Shell {
         };
         Table responseTbl = system.catalog().table(tblName);
         responseTbl.register(response_callback);
-        
+
         // Do the insert
         system.schedule("gfs", tblName, req, null);
-        
+
         // Wait for the response
         String contents = content_queue.remove();
         responseTbl.unregister(response_callback);
-        
+
         java.lang.System.out.println("File name: " + file);
         java.lang.System.out.println("Contents:");
         java.lang.System.out.println(contents);
@@ -105,7 +109,7 @@ public class Shell {
     }
 
     private static int generateId() {
-    	return id++;
+        return id++;
 	}
 
 	private static void doCreateDir(List<String> args)

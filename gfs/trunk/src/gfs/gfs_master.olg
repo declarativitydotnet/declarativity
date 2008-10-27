@@ -1,7 +1,23 @@
 program gfs_master;
 
+define(nodes, keys(0), {String});
+define(master, keys(0), {String});
+
+// The nodes in the cluster
+nodes("tcp:localhost:5500");
+nodes("tcp:localhost:5501");
+
+// The master node
+master("tcp:localhost:5500");
+
 // File name, contents
 define(file, keys(0), {String,String});
 
 file("Foo", "Bar");
 file("Bar", "Baz");
+
+// If we get a response for a file that exists, send back the content
+// of the file
+gfs_client#response(@Source, Id, FContents) :-
+    file(FName, FContents), request(@Master, Id, Source, FName),
+    Self(Master), master(Master);

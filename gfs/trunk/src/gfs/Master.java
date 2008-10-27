@@ -15,31 +15,32 @@ public class Master {
 
 		if (args.length > 1)
 			usage();
-		
+
 		if (args.length == 1)
 			port = Integer.parseInt(args[0]);
 
 		Master m = new Master(port);
 		m.start();
 	}
-	
+
 	private static void usage() {
 		java.lang.System.err.println("Usage: gfs.Master [port-number]");
 		java.lang.System.exit(1);
 	}
-	
+
 	private int port;
 	private System system;
-	
+
 	public Master(int port) {
 		this.port = port;
 	}
-	
+
 	public void start() throws JolRuntimeException, UpdateException, InterruptedException {
 		this.system = Runtime.create(this.port);
-		
+
 		this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
-		
+        this.system.catalog().register(new SelfTable((Runtime) this.system));
+
 		Callback cb = new Callback() {
 			@Override
 			public void deletion(TupleSet tuples) {}
@@ -52,10 +53,10 @@ public class Master {
 
 		Thread.sleep(1000);
 		this.system.catalog().table(MasterRequestTable.TABLENAME).register(cb);
-		
+
 		this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
 		this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_master.olg"));
-		
+
 		java.lang.System.out.println("Server ready!");
 	}
 }
