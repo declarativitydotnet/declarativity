@@ -33,6 +33,7 @@ public class Shell {
 
         system = Runtime.create(12345);
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
+        system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_master.olg"));
 
         String op = argList.remove(0);
 
