@@ -45,7 +45,7 @@ public class Master {
         /* Identify which address the local node is at */
         TupleSet self = new TupleSet();
         self.add(new Tuple("tcp:localhost:" + this.port));
-        system.schedule("gfs_master", SelfTable.TABLENAME, self, null);
+        system.schedule("gfs", SelfTable.TABLENAME, self, null);
         Thread.sleep(1000);
 
 		Callback cb = new Callback() {
@@ -61,8 +61,7 @@ public class Master {
 		Thread.sleep(1000);
 		this.system.catalog().table(MasterRequestTable.TABLENAME).register(cb);
 
-		this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
-		this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_master.olg"));
+		this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
 
 		java.lang.System.out.println("Server ready!");
 	}

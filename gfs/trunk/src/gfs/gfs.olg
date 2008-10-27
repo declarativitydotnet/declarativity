@@ -1,4 +1,4 @@
-program gfs_master;
+program gfs;
 
 define(nodes, keys(0), {String});
 define(master, keys(0), {String});
@@ -16,8 +16,22 @@ define(file, keys(0), {String, String});
 file("Foo", "Bar");
 file("Bar", "Baz");
 
+// Request ID, Filename
+define(cat_request, keys(0), {Integer, String});
+
+// Request ID, File contents
+define(cat_response, keys(0), {Integer,String});
+
+define(response, keys(0,1), {String, Integer, String});
+
+request(@Target, Id, Source, FName) :-
+    cat_request(Id, FName), self(Source), master(Target);
+
+cat_response(Id, FContents) :-
+    response(@Node, Id, FContents), self(Node);
+
 // If we get a response for a file that exists, send back the content
 // of the file
-gfs_client::response(@Source, Id, FContents) :-
+response(@Source, Id, FContents) :-
     file(FName, FContents), request(@Master, Id, Source, FName),
     self(Master), master(Master);

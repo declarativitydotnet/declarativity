@@ -7,7 +7,7 @@ import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
 public class MasterRequestTable extends ObjectTable {
-    public static final TableName TABLENAME = new TableName("gfsmaster", "request");
+    public static final TableName TABLENAME = new TableName("gfs", "request");
 
     public static final Key PRIMARY_KEY = new Key(0, 1);
 
