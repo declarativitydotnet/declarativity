@@ -86,7 +86,7 @@ public class PingPongTest {
 	private int nextId = 0;
 
 	@Before
-	public void setup() throws JolRuntimeException, UpdateException {
+    public void setup() throws JolRuntimeException, UpdateException, InterruptedException {
 		this.systems = new System[2];
 		this.systems[0] = this.pinger = Runtime.create(PINGER_PORT);
 		this.systems[1] = this.ponger = Runtime.create(PONGER_PORT);
@@ -96,11 +96,14 @@ public class PingPongTest {
 			s.catalog().register(new NodeTable((Runtime) s));
 			s.catalog().register(new SelfTable((Runtime) s));
 			s.catalog().register(new InMessageTable((Runtime) s));
+            s.evaluate();
 		}
 
 		URL u = ClassLoader.getSystemResource("jol/test/pingpong.olg");
-		for (System s : this.systems)
+		for (System s : this.systems) {
 			s.install("pingpong", u);
+            s.evaluate();
+        }
 		
 		/* Tell each runtime about the set of nodes in the cluster */
 		TupleSet nodes = new TupleSet();
@@ -117,16 +120,19 @@ public class PingPongTest {
 		self.clear();
 		self.add(new Tuple(this.makeAddr(PONGER_PORT)));
 		this.ponger.schedule("pingpong", SelfTable.TABLENAME, self, null);
+
+        for (System s : this.systems)
+            s.evaluate();
 	}
 	
 	@After
 	public void shutdown() {
-		this.pinger.shutdown();
-		this.ponger.shutdown();
+        for (System s : this.systems)
+            s.shutdown();
 	}
 	
 	@Test
-	public void simplePingPongTest() throws UpdateException, InterruptedException {
+    public void simplePingPongTest() throws UpdateException, InterruptedException, JolRuntimeException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
@@ -134,6 +140,7 @@ public class PingPongTest {
 			public void deletion(TupleSet tuples) {}
 
 			public void insertion(TupleSet tuples) {
+                java.lang.System.out.println("Got insert!");
 				Assert.assertEquals(1, tuples.size());
 				
 				Tuple t = tuples.iterator().next();
@@ -147,22 +154,32 @@ public class PingPongTest {
 				}
 			}
 		};
+
 		TableName ping_tbl_name = new TableName("pingpong", "ping");
 		this.ponger.catalog().table(ping_tbl_name).register(cb);
 
 		/* Send a new message from pinger => ponger */
-		TupleSet inmessages = new TupleSet();
-		inmessages.add(new Tuple(this.getNewId(), 1));
-		this.pinger.schedule("pingpong", InMessageTable.TABLENAME, inmessages, null);
-		
+		TupleSet inmessage = new TupleSet();
+		inmessage.add(new Tuple(this.getNewId(), 1));
+		this.pinger.schedule("pingpong", InMessageTable.TABLENAME, inmessage, null);
+
+        java.lang.System.out.println("test started, waiting for callback...");
 		queue.take();
+        java.lang.System.out.println("done!");
 	}
 	
 	private int getNewId() {
-		return this.nextId ++;
+		return this.nextId++;
 	}
 	
 	private String makeAddr(int port) {
 		return "tcp:localhost:" + port;
 	}
+
+    public static void main(String[] args) throws Exception {
+        PingPongTest t = new PingPongTest();
+        t.setup();
+        t.simplePingPongTest();
+        t.shutdown();
+    }
 }
