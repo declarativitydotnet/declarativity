@@ -56,7 +56,7 @@ public interface System {
 	 * @param program Program name
 	 * @throws UpdateException Uninstall problems
 	 */
-	public void uninstall(String program) throws UpdateException;
+	void uninstall(String program) throws UpdateException;
 
 	/**
 	 * Schedule a set of tuples to be evaluated by a given program.
