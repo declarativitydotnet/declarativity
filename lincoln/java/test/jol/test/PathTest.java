@@ -63,7 +63,7 @@ public class PathTest {
     }
 
     @Test
-    public void simplePathTest() throws UpdateException, InterruptedException, JolRuntimeException {
+    public void simplePathTest() throws UpdateException, InterruptedException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 

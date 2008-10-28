@@ -86,7 +86,7 @@ public class PingPongTest {
     private int nextId = 0;
 
     @Before
-    public void setup() throws JolRuntimeException, UpdateException, InterruptedException {
+    public void setup() throws JolRuntimeException, UpdateException {
         this.systems = new System[2];
         this.systems[0] = this.pinger = Runtime.create(PINGER_PORT);
         this.systems[1] = this.ponger = Runtime.create(PONGER_PORT);
@@ -132,7 +132,7 @@ public class PingPongTest {
     }
     
     @Test
-    public void simplePingPongTest() throws UpdateException, InterruptedException, JolRuntimeException {
+    public void simplePingPongTest() throws UpdateException, InterruptedException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
