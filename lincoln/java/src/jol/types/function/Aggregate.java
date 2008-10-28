@@ -1,8 +1,16 @@
 package jol.types.function;
 
+import java.util.Iterator;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 import jol.lang.plan.GenericAggregate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
 
 public abstract class Aggregate<C extends Comparable<C>> {
@@ -40,6 +48,8 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 	
+	public static final String TOPK     = "topk";
+	public static final String BOTTOMK  = "bottomk";
 	public static final String MIN      = "min";
 	public static final String MAX      = "max";
 	public static final String COUNT    = "count";
@@ -50,6 +60,12 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public static Aggregate function(jol.lang.plan.Aggregate aggregate) {
 		if (aggregate instanceof GenericAggregate) {
 			return new Generic((GenericAggregate) aggregate);
+		}
+		else if (TOPK.equals(aggregate.functionName())) {
+			return new TopBottomK((jol.lang.plan.TopK)aggregate);
+		}
+		else if (BOTTOMK.equals(aggregate.functionName())) {
+			return new TopBottomK((jol.lang.plan.BottomK)aggregate);
 		}
 		else if (MIN.equals(aggregate.functionName())) {
 			return new Min(new Accessor(aggregate));
@@ -87,6 +103,94 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return jol.types.basic.TupleSet.class;
 		}
 		return null;
+	}
+	
+	public static class TopBottomK<C extends Comparable<C>> extends Aggregate<C> {
+		private enum Type{TOP, BOTTOM};
+		
+		private Integer k;
+		private TreeMap<C, ValueList<C>> values;
+		private Type type;
+		private TupleSet tuples;
+		private Tuple result;
+		private Accessor<C> accessor;
+
+		
+		public TopBottomK(jol.lang.plan.TopK aggregate) {
+			this.type = Type.TOP;
+			this.k = aggregate.k();
+			this.accessor = new Accessor<C>(aggregate);
+			reset();
+		}
+		
+		public TopBottomK(jol.lang.plan.BottomK aggregate) {
+			this.type = Type.BOTTOM;
+			this.k = aggregate.k();
+			this.accessor = new Accessor<C>(aggregate);
+			reset();
+		}
+		
+		private void reset() {
+			this.tuples = new TupleSet();
+			this.values = new TreeMap<C, ValueList<C>>();
+			this.result = null;
+		}
+		
+		@Override
+		public Tuple result() {
+			return this.result == null ? null : this.result.clone();
+		}
+		
+		@Override
+		public Tuple insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				C value = accessor.evaluate(tuple);
+				if (!this.values.containsKey(value)) {
+					this.values.put(value, new ValueList<C>());
+				}
+				this.values.get(value).add(value);
+				
+				ValueList<C> resultValues = new ValueList<C>();
+				NavigableSet<C> keys = this.type == Type.TOP ?
+						this.values.descendingKeySet() : this.values.navigableKeySet();
+				int k = this.k;
+				for (C key : keys) {
+					if (k == 0) break;
+					for (C element : this.values.get(key)) {
+						if (k == 0) break;
+						resultValues.add(element);
+					}
+				}
+				this.result = tuple.clone();
+				this.result.value(this.accessor.position(), resultValues);
+				return this.result;
+			}
+			return null;
+		}
+		
+		@Override
+		public Tuple delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				TupleSet tuples = this.tuples;
+				reset();
+				Tuple last = null;
+				for (Tuple copy : tuples) {
+					last = insert(copy);
+				}
+				return last;
+			}
+			return null;
+		}
+
+		@Override
+		public Class returnType() {
+			return ValueList.class;
+		}
+
+		@Override
+		public TupleSet tuples() {
+			return this.tuples.clone();
+		}
 	}
 	
 	public static class Generic<C extends Comparable<C>> extends Aggregate<C> {

@@ -22,6 +22,7 @@ import jol.lang.plan.Aggregate;
 import jol.lang.plan.Alias;
 import jol.lang.plan.ArrayIndex;
 import jol.lang.plan.Assignment;
+import jol.lang.plan.BottomK;
 import jol.lang.plan.Cast;
 import jol.lang.plan.DontCare;
 import jol.lang.plan.Expression;
@@ -42,6 +43,7 @@ import jol.lang.plan.Selection;
 import jol.lang.plan.StaticMethodCall;
 import jol.lang.plan.StaticReference;
 import jol.lang.plan.Term;
+import jol.lang.plan.TopK;
 import jol.lang.plan.UnknownReference;
 import jol.lang.plan.Value;
 import jol.lang.plan.Variable;
@@ -1708,7 +1710,17 @@ public final class TypeChecker extends Visitor {
 	public Class visitAggregate(final GNode n) {
 		String function = n.getString(0);
 		
-		if ("generic".equals(function)) {
+		if ("topk".equals(function) || "bottomk".equals(function)) {
+			dispatch(n.getNode(1));
+			dispatch(n.getNode(2));
+			Value<Integer> k   = (Value<Integer>) n.getNode(1).getProperty(Constants.TYPE);
+			Variable       var = (Variable)       n.getNode(2).getProperty(Constants.TYPE);
+			n.setProperty(Constants.TYPE, 
+					"topk".equals(function) ? 
+							new TopK(var.name(), k.value()) :
+							new BottomK(var.name(), k.value()));
+		}
+		else if ("generic".equals(function)) {
 			Class type = (Class) dispatch(n.getNode(1));
 			
 			if (type != MethodCall.class) {

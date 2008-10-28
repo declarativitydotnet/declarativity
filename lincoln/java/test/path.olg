@@ -10,6 +10,8 @@ import jol.types.basic.ValueList;
 define(link, keys(0,1), {String, String});
 define(path, keys(0,1,2), {String, String, Integer});
 define(shortestPath, keys(0,1), {String, String, Integer});
+define(topPaths, keys(0,1), {String, String, ValueList});
+define(flatTopPaths, {String, String, Integer});
 
 define(allpaths, {String, ValueList});
 define(flatpaths, {String, Integer});
@@ -34,9 +36,10 @@ link("8", "9");
 
 watch(path, ae);
 watch(shortestPath, ae);
+watch(topPaths, ae);
 watch(allpaths, a);
 watch(flatpaths, a);
-
+watch(flatTopPaths, a);
 watch(newlink, ra);
 
 /* Add the link 9 -> 10 when newlink fires */
@@ -59,6 +62,11 @@ shortestPath
 shortestPath(Source, Destination, min<Hops>) :- 
 	path(Source, Destination, Hops);
 	
+/* What are the top two (if exist) path hops from each
+   source to each destination? */
+topPaths(Source, Destination, bottomk<2, Hops>) :-
+	path(Source, Destination, Hops);
+	
 computeAll(Source) :-
 	shortestPath(Source, Destination, Hops);
 	
@@ -70,5 +78,9 @@ allpaths(Source, generic<(new ValueList()).insert(Destination)>) :-
 flatpaths(Source, Path) :-
 	flatten(allpaths(Source, Paths)),
 	Path := (Integer) Paths;
+	
+flatTopPaths(Source, Destination, Hop) :-
+	flatten(topPaths(Source, Destination, Hops)),
+	Hop := (Integer) Hops;
 
 delete link("2", "4") :- periodic(Id, 1L, 1L, 5L);
