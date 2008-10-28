@@ -190,23 +190,23 @@ public class Runtime implements System {
 			             final TupleSet insertions, final TupleSet deletions) throws UpdateException {
 		synchronized (driver) {
 			if (program.equals("runtime")) {
-			driver.task(new Driver.Task() {
-				public TupleSet insertions() {
-					return insertions;
-				}
-				
-				public TupleSet deletions() {
-					return deletions;
-				}
+			    driver.task(new Driver.Task() {
+			        public TupleSet insertions() {
+			            return insertions;
+			        }
 
-				public String program() {
-					return program;
-				}
+			        public TupleSet deletions() {
+			            return deletions;
+			        }
 
-				public TableName name() {
-					return name;
-				}
-			});
+			        public String program() {
+			            return program;
+			        }
+
+			        public TableName name() {
+			            return name;
+			        }
+			    });
 			}
 			else {
 				Tuple tuple = new Tuple(clock.current() + 1L, program, name, 
