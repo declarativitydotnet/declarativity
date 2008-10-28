@@ -21,14 +21,14 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
 
 /**
- * The system runtime.
- * Contains a reference to all state in an instance of the
- * OverLog library. 
- * A call to the {@link Runtime#create(int)} will create
- * a new runtime object and run it in a separate thread.
+ * The system runtime. Contains a reference to all state in an instance of the
+ * OverLog library. A call to the {@link Runtime#create(int)} will create a new
+ * runtime object. The runtime can either be used synchronously by calling
+ * {@link #evaluate()}, or asynchronously in its own thread by calling
+ * {@link Runtime#start()}.
  * 
- * Implements the {@link System} interface through which
- * outside programs interact with the OverLog library.
+ * Implements the {@link System} interface through which outside programs
+ * interact with the OverLog library.
  */
 public class Runtime implements System {
 	/** Used to grab a quick identifier. */
