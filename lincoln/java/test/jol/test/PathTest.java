@@ -62,7 +62,7 @@ public class PathTest {
     }
 
     @Test
-        public void simplePathTest() throws UpdateException, InterruptedException, JolRuntimeException {
+    public void simplePathTest() throws UpdateException, InterruptedException, JolRuntimeException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
@@ -111,6 +111,7 @@ public class PathTest {
         this.sys.start();
 
         /* Wait to be notified by the callback */
+        java.lang.System.err.println("Test created; waiting for results...");
         queue.take();
     }
 
