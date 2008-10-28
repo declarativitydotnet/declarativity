@@ -19,13 +19,13 @@ public interface System {
 	 * Get the system clock.
 	 * @return The current system (logical) clock
 	 */
-	public Clock clock();
+	Clock clock();
 	
 	/** System shutdown */
-	public void shutdown();
+	void shutdown();
 	
-	/** Start the asyncronous system driver */
-	public void start();
+	/** Start the asynchronous system driver */
+	void start();
 
 	/**
 	 * Perform a single fixpoint computation. 
@@ -33,15 +33,15 @@ public interface System {
 	 * {@link #schedule(String, TableName, TupleSet, TupleSet)}, 
 	 * {@link #install(String, URL)} and {@link #uninstall(String)}
 	 * Calling this method after a call to {@link #start()} is not allowed.
-	 * @throws JolRuntimeException WHen called post {@link #start()}
+	 * @throws JolRuntimeException When called post {@link #start()}
 	 */
-	public void evaluate() throws JolRuntimeException;
+	void evaluate() throws JolRuntimeException;
 	
 	/**
 	 * Get the system catalog.
 	 * @return The system catalog {@link Catalog}.
 	 */
-	public Catalog catalog();
+	Catalog catalog();
 
 	/**
 	 * Install program file into runtime.
@@ -49,7 +49,7 @@ public interface System {
 	 * @param url The location of the program contents.
 	 * @throws UpdateException compilation/installation problems
 	 */
-	public void install(String owner, URL url) throws UpdateException;
+	void install(String owner, URL url) throws UpdateException;
 
 	/**
 	 * Uninstall program.
@@ -60,14 +60,15 @@ public interface System {
 
 	/**
 	 * Schedule a set of tuples to be evaluated by a given program.
+	 * The evaluation will occur at a future fixpoint.
 	 * @param program Program name
 	 * @param name Table name
 	 * @param insertions Set of tuples to insert and evaluate
 	 * @param deletions Set of tuples to delete and evaluate
 	 * @throws UpdateException
 	 */
-	public void schedule(String program,
-				         TableName name,
-				         TupleSet insertions,
-				         TupleSet deletions) throws UpdateException;
+	void schedule(String program,
+				  TableName name,
+				  TupleSet insertions,
+				  TupleSet deletions) throws UpdateException;
 }
