@@ -111,7 +111,7 @@ public class Compiler {
 		this.context = context;
 		this.owner = owner;
 
-		synchronized(runtime) {
+		synchronized (runtime) {
 			Node ast = parse(input);
 			process(ast);
 
@@ -181,7 +181,7 @@ public class Compiler {
 		// Perform type checking.
 		// runtime.console().format(node).pln().flush();
 		this.program = new Program(context, name, owner);
-		TypeChecker typeChecker = new TypeChecker(context, this.runtime, this.program);
+		TypeChecker typeChecker = new TypeChecker(context, Compiler.runtime, this.program);
 		typeChecker.prepare();
 
 		/* First evaluate all import statements. */
