@@ -566,7 +566,7 @@ public class Driver implements Runnable {
 		tasks.clear(); // Clear task queue.
 		evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
 		StasisTable.commit();
-		if (debug) java.lang.System.err.println("============================ ========================== =============================");
+		if (debug) java.lang.System.err.println("============================ ========================== ============================");
 	}
 	
 	/**
