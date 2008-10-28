@@ -11,7 +11,7 @@ import jol.types.table.Table.Callback;
 public class Master {
 	private static final int DEFAULT_MASTER_PORT = 5500;
 
-	public static void main(String[] args) throws JolRuntimeException, UpdateException, InterruptedException {
+	public static void main(String[] args) throws JolRuntimeException, UpdateException {
 		int port = DEFAULT_MASTER_PORT;
 
 		if (args.length > 1)
@@ -36,7 +36,7 @@ public class Master {
 		this.port = port;
 	}
 
-	public void start() throws JolRuntimeException, UpdateException, InterruptedException {
+	public void start() throws JolRuntimeException, UpdateException {
 		this.system = Runtime.create(this.port);
 
 		this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
@@ -46,7 +46,7 @@ public class Master {
         TupleSet self = new TupleSet();
         self.add(new Tuple("tcp:localhost:" + this.port));
         system.schedule("gfs", SelfTable.TABLENAME, self, null);
-        Thread.sleep(1000);
+        system.evaluate();
 
 		Callback cb = new Callback() {
 			@Override
@@ -58,10 +58,10 @@ public class Master {
 			}
 		};
 
-		Thread.sleep(1000);
 		this.system.catalog().table(MasterRequestTable.TABLENAME).register(cb);
-
 		this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
+        this.system.evaluate();
+        this.system.start();
 
 		java.lang.System.out.println("Server ready!");
 	}

@@ -40,10 +40,11 @@ public class Shell {
         TupleSet self = new TupleSet();
         self.add(new Tuple("tcp:localhost:" + 5501));
         system.schedule("gfsmaster", SelfTable.TABLENAME, self, null);
-        Thread.sleep(1000);
+        system.evaluate();
 
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
         system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_master.olg"));
+        system.start();
 
         String op = argList.remove(0);
 
@@ -88,6 +89,7 @@ public class Shell {
 
 			@Override
 			public void insertion(TupleSet tuples) {
+                java.lang.System.err.println("insertion() cb invoked");
 				for (Tuple t : tuples)
 				{
 					if (t.value("request_id").equals(request_id))
