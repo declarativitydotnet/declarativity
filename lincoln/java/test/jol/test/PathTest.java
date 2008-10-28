@@ -53,6 +53,7 @@ public class PathTest {
 
         URL u = ClassLoader.getSystemResource("jol/test/path.olg");
         this.sys.install("unit-test", u);
+        this.sys.evaluate();    // XXX: temporary workaround for runtime bug
     }
 
     @After
