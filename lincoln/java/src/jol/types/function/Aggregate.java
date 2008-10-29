@@ -1,11 +1,7 @@
 package jol.types.function;
 
-import java.util.Iterator;
-import java.util.NavigableMap;
 import java.util.NavigableSet;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import jol.lang.plan.GenericAggregate;
 import jol.types.basic.Tuple;
