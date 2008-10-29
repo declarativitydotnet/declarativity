@@ -1,1 +1,53 @@
 Support files for the lincoln.war web service stuff.
+
+Compiling linoln.war:
+
+cd $JOL
+ant war
+
+Running lincoln.war:
+
+Download the newest 'core' version of tomcat 6.x from tomcat.apache.org.
+
+mkdir ~/local
+cd ~/local
+tar -zxf /path/to/apache-tomcat-*.tar.gz
+cd apache-tomcat-*
+mv webapps/ webapps-examples
+mkdir webapps
+cp $JOL/ant-dist/lincoln.war webapps/
+bin/startup.sh
+
+Browse to: http://localhost:8080/lincoln/ 
+
+Note that tomcat will accept connections from the internet on
+the following ports:
+
+8009
+8005
+8080  <-- http port
+
+Mess with $TOMCAT/conf/server.xml if you want to change this.
+
+Jol can open ports too:
+
+8747  <-- Civil.java opens this as of this writing.
+
+Mess with $JOL/examples/servlet/web.xml, re-run 'ant war' and deploy the new
+lincoln.war to change this.
+
+Re-running (aka: 'deploying') linclon.war:
+
+cd ~/local/apache-tomcat-*
+bin/shutdown.sh
+rm -rf webapps/lincoln
+cp $JOL/ant-dist/lincoln.war webapps/
+bin/startup.sh
+
+Adding your own servlet:
+
+1) Use the boilerplate code in Civil.java as a starting point for your Servlet
+   class.
+
+2) Copy the Civil section of the web.xml in the same directory as this file,
+   and edit it as needed.
