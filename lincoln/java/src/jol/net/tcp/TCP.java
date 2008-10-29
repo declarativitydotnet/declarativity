@@ -83,7 +83,7 @@ public class TCP extends Server {
 			channels.put(channel.address(), thread);
 			return channel;
 		} catch (Exception e) {
-            throw new RuntimeException("Failed to connect to " + address, e);
+			return null;
 		}
 	}
 	
