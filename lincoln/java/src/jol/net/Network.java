@@ -113,13 +113,8 @@ public final class Network {
 			return null;
 		}
 		
-		try {
-			Channel channel = servers.get(protocol).open(address);
-			return channel;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+		Channel channel = servers.get(protocol).open(address);
+		return channel;
 	}
 	
 	/**

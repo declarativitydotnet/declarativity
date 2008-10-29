@@ -135,7 +135,7 @@ public class TCPNIO extends Server {
 			register(connection);
 			return connection;
 		} catch (Exception e) {
-            throw new RuntimeException("Failed to connect to " + address, e);
+			return null;
 		}
 	}
 	

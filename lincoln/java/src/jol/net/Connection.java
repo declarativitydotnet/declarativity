@@ -30,6 +30,7 @@ public class Connection extends ObjectTable {
 	
 	@Override
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
+		TupleSet success = new TupleSet(name());
 		for (Tuple tuple : tuples) {
 			String  protocol = (String) tuple.value(Field.PROTOCOL.ordinal());
 			Address address  = (Address) tuple.value(Field.ADDRESS.ordinal());
@@ -38,9 +39,13 @@ public class Connection extends ObjectTable {
 				channel = manager.create(protocol, address);
 				tuple.value(Field.CHANNEL.ordinal(), channel);
 			}
+			
+			if (channel != null) {
+				success.add(tuple);
+			}
 		}
 		
-		return super.insert(tuples, conflicts);
+		return super.insert(success, conflicts);
 	}
 	
 	@Override

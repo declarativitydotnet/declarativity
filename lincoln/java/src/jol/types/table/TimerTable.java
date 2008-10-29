@@ -11,22 +11,27 @@ import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
 /**
- * The TimerTable.
- * Timers are based on the {@link java.util.Timer} class. Please
- * see that documentation for further details.
+ * The TimerTable. Support for both physical and logical timers.
+ * Physical Timers are based on the Java {@link java.util.Timer} class. Please
+ * see that documentation for further details. Logical timers are based
+ * on Datalog fixpoints, and will fire at most once per such fixpoint. 
  * 
  * <p>
  * A timer table is created for each timer declaration made in the sytem.
- * A timer is created in the program using the following syntax:<br>
- * <pre>
+ * A timer is created in the program using the following syntax:<br><br>
+ * <code>
  * 		timer(<b>Name</b>, <b>Type</b>, <b>Period</b>, <b>TTL</b>, <b>Delay</b>);
- * </pre> <br>
+ * </code> <br><br>
  * <b>Name:</b> String valued name to which the timer maybe referred in a rule.<br>
  * <b>Type:</b> The timer type can be either 'logical' or 'physical'.<br>
  * <b>Period:</b> The period at which the timer should trigger named events.<br>
  * <b>TTL:</b> The maximum number of timers that should fire.<br>
- * <b>Delay:</b> The delay in milliseconds that the timer should begin.<br>
- * 
+ * <b>Delay:</b> The delay that should occur before the timer begins.<br>
+ * <br>
+ * Depending on the timer type the values for period and delay have different
+ * meanings. These values for physical timers are in units of
+ * milliseconds. In the case of logical timers, these values are in units of
+ * Datalog fixpoints.
  * <p>
  * A program references the timer in a rule by naming a predicate the
  * same as the timer <b>Name</b> declaration with the following predicate: 
@@ -36,16 +41,13 @@ import jol.types.exception.UpdateException;
  * <code>
  * <pre>
  * Example:
- * - New logical timer that fires every 2 fixpoints up to 2 times with the first
- * occurring immediately after the program starts.
- * at a fixpoint period of 2 (every 2 fixpoints ltimer will fire).
+ * - New logical timer that fires 5 times every 2 fixpoints with the first
+ * occurring at the fixpoint immediately following the program start.
+ * timer(ltimer, logical, 2, 5, 1); 
  * 
- * timer(ltimer, logical, 2, 5, 0); 
- * 
- * - New physical timer that fires every 2 seconds up to 5 times with the first
- * timer occurring immediately after the program starts.
- * 
- * timer(ptimer, physical, 2000, 5, 0);
+ * - New physical timer that fires 5 times every 2 seconds with the first
+ * timer occurring 10 seconds after the program starts.
+ * timer(ptimer, physical, 2000, 5, 10000);
  * 
  * - Trigger a fire tuple when ltimer occurs.
  * fire(Period, TTL, Delay) :- 
