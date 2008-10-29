@@ -25,8 +25,9 @@ print "\b";
 ###############################################################
 
 sub test_3 {
-  # start a paxos instance over 3 replicas
-  my @pids = pipe_many(2);
+  # start a paxos instance over 4 replicas
+  my $cnt = 0;
+  my @pids = pipe_many($cnt);
 
   # yay, array smushing
   push @handles,@pids;
@@ -36,23 +37,27 @@ sub test_3 {
 
   # make a request
   my ($p4,$handle) = request(10000,"continuous_synod.olg","123");
+  
+  my %status;
+  for (my $i=0; $i < 10; $i++) {
+    $status{"XACT$i"} = 1;
+  }
+  
+  while (sumof(%status) > 0) {
+    print "snatch\n";
+    my $rep = snatch_reply($handle);
+    if ($rep =~ /(XACT\d+)/) { 
+      if (defined($status{$1})) {
+        $status{$1} = 0;
+        ok(1,"good one $1");
+      } else {
+        ok(0,"unexpected response $1");
+      }
+    } else {
+      print "no match: $rep\n";
+    }
+  }
 
-  my $rest = snatch_reply($handle);
-
-  # check that is it passed.
-  ok($rest =~ /XACT0/,"continuous xact");
-  ok($rest =~ /passed/,"passed");
-
-  # 
-  my $second = snatch_reply($handle);
-  ok($second =~ /XACT1/,"still zero");
-  ok($second =~ /passed/,"passed");
-
-
-  print "3\n";
-  my $third = snatch_reply($handle);
-  ok($third =~ /XACT2/,"still zero");
-  ok($third =~ /passed/,"passed");
 
   # kill it
 
@@ -65,22 +70,31 @@ sub test_3 {
 
 }
 
+sub sumof {
+  my (%h) = @_;
+  my $sum;
+  foreach (keys %h) {
+    $sum += $h{$_};
+  }
+  return $sum;
+}
+
 
 
 sub test_2 {
   # start a paxos instance over 3 replicas
-  my @pids = pipe_many(3);
+  my @pids = pipe_many(1);
   # yay, array smushing
   push @handles,@pids;
 
   # make a request
   my ($p4,$handle) = request(10000,"start_synod.olg","123");
 
-  my $rest = snatch_reply($handle);
-
-  # check that is it passed.
-  ok($rest =~ /XACT123/,"6 replicas");
-  ok($rest =~ /passed/,"passed");
+  #my $rest = snatch_reply($handle);
+  ## check that is it passed.
+  #ok($rest =~ /XACT123/,"6 replicas");
+  #ok($rest =~ /passed/,"passed");
+  reply_matches($handle,"XACT123");
 
   # kill it
 
@@ -101,16 +115,31 @@ sub test_1 {
   # make a request
   my ($p2,$handle) = request(10000,"start_synod.olg","123");
 
-  my $rest = snatch_reply($handle);
+  #my $rest = snatch_reply($handle);
+  ## check that is it passed.
+  #ok($rest =~ /XACT123/,"my xact");
+  #ok($rest =~ /passed/,"passed");
 
-  # check that is it passed.
-  ok($rest =~ /XACT123/,"my xact");
-  ok($rest =~ /passed/,"passed");
+  reply_matches($handle,"XACT123");
 
   # kill it
   kill(9,$p2);
   foreach (@pids) {
     kill(9,$_);
+  }
+}
+
+sub reply_matches {
+  my ($handle,$regexp) = @_;
+
+  my $reply = snatch_reply($handle);
+  #print "ok\n";
+  #ok($reply =~ /$regexp/,"matches $regexp");
+  if ($reply =~ /$regexp/) {
+    ok(1,"matches $regexp");
+  } else {
+    print "$reply does not match $regexp\n";
+    ok(0,"failed");
   }
 }
 
@@ -129,7 +158,7 @@ sub snatch_reply {
     }
   }
   alarm(0);
-  print "rest: $rest\n";
+  #print "rest: $rest\n";
   return $rest;
 }
 
@@ -176,7 +205,7 @@ sub pipe_many {
   my $port = 10000 + $procs;
   $ENV{"ME"} = $procs;
   $ENV{"PROC"} = $procs;
-  alarm(20 * $procs);
+  alarm($to * $procs);
   my $pid = open(PIPE,"java -jar $JAR $port $OLG 2>&1 |");
   while (<PIPE>) {
     #print "OUT: $_\n";
