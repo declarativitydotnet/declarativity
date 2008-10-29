@@ -6,6 +6,7 @@
 
   <property name="build" location="ant-build"/>
   <property name="dist"  location="ant-dist"/>
+
   <property name="doc" location="doc"/>
   <property name="lib" location="lib"/>
   <property name="src" location="src"/>
@@ -41,6 +42,7 @@
     <javac destdir="${build}" debug="yes">
       <classpath>
         <pathelement location="${lib}/xtc.jar"/>
+        <pathelement location="${lib}/servlet-api.jar"/>
         <pathelement location="${lib}/junit.jar"/>
       </classpath>
 
@@ -82,6 +84,19 @@
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
     </jar>
+  </target>
+
+  <target name="war" depends="compile" description="Make .war containg lincoln servlets">
+    <mkdir dir="${dist}"/>
+    <war destfile="${dist}/lincoln.war"
+	 webxml="examples/servlet/web.xml">
+      <classes dir="${src}" includes="**/*.olg"/>
+      <fileset dir="examples/servlet/" includes="lincoln.conf"/>
+      <fileset dir="examples/" includes="**/*.olg"/>
+      <classes dir="${build}" excludes="jol/test/**"/>
+      <lib dir="${lib}" includes="xtc.jar"/>
+    </war>
+      
   </target>
 
   <target name="doc" description="generate Javadoc documentation">
