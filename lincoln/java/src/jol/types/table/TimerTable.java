@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.TimerTask;
 
 import jol.core.Runtime;
+import jol.core.Schedule;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
@@ -18,61 +19,67 @@ import jol.types.exception.UpdateException;
  * A timer table is created for each timer declaration made in the sytem.
  * A timer is created in the program using the following syntax:<br>
  * <pre>
- * 		timer(<b>Name</b>, <b>Delay</b>, <b>Period</b>);
+ * 		timer(<b>Name</b>, <b>Type</b>, <b>Period</b>, <b>TTL</b>, <b>Delay</b>);
  * </pre> <br>
  * <b>Name:</b> String valued name to which the timer maybe referred in a rule.<br>
- * <b>Delay:</b> The delay in milliseconds that the timer should begin.<br>
+ * <b>Type:</b> The timer type can be either 'logical' or 'physical'.<br>
  * <b>Period:</b> The period at which the timer should trigger named events.<br>
+ * <b>TTL:</b> The maximum number of timers that should fire.<br>
+ * <b>Delay:</b> The delay in milliseconds that the timer should begin.<br>
  * 
  * <p>
  * A program references the timer in a rule by naming a predicate the
- * same as the timer <b>Name</b> declaration with the following schema: 
- * <code>(Delay, Period, Timer)</code>.
- * The Delay and Period are the current registered values. The Timer
- * variable is supplied the timer object which has type {@link java.util.TimerTask}.
+ * same as the timer <b>Name</b> declaration with the following predicate: 
+ * <code>Name(Period, TTL, Delay)</code>.
+ * The Period, TTL, and Delay are the current registered values. 
  * <p>
  * <code>
  * <pre>
  * Example:
- * - New timer 'newlink' that fires one time 10 seconds after the program starts.
- * timer(newlink, 10000, 0); 
+ * - New logical timer that fires every 2 fixpoints up to 2 times with the first
+ * occurring immediately after the program starts.
+ * at a fixpoint period of 2 (every 2 fixpoints ltimer will fire).
  * 
- * - Add a new link from node 9 to some random node when newlink fires.
- * link("9", randomNode()) :- newlink(Delay, Period, Timer);
- *
- * - Set the the period of the newlink timer to be 5 seconds if the Period is 0
- * newlink(Delay, 5000, Timer) :- newlink(Delay, Period, Timer), Period == 0;
+ * timer(ltimer, logical, 2, 5, 0); 
  * 
- * - Cancel the timer (NOTE: Can insert a new Period or Delay later to restart the timer)
- * delete
- * newlink(null, null, null) :- some body;
+ * - New physical timer that fires every 2 seconds up to 5 times with the first
+ * timer occurring immediately after the program starts.
+ * 
+ * timer(ptimer, physical, 2000, 5, 0);
+ * 
+ * - Trigger a fire tuple when ltimer occurs.
+ * fire(Period, TTL, Delay) :- 
+ *      ltimer(Period, TTL, Delay);
+ *      
+ * - Trigger a fire tuple when ptimer occurs.
+ * fire(Period, TTL, Delay) :- 
+ *      ptimer(Period, TTL, Delay);
  * </pre>
  * </code>
  */
 public class TimerTable extends Table {
+	private enum Type {PHYSICAL, LOGICAL};
 	
-	private class Timer extends TimerTask implements Comparable<Timer> {
-		private long delay;
-		private long period;
+	private class PhysicalTimer extends TimerTask implements Comparable<PhysicalTimer> {
+		private TableName name;
+		private TupleSet timer;
 		
-		
-		public Timer(long delay, long period) {
-			this.delay = delay;
-			this.period = period;
+		public PhysicalTimer(TableName name, TupleSet timer) {
+			this.name  = name;
+			this.timer = timer;
 		}
 
 		@Override
 		public void run() {
-			TupleSet timer = new TupleSet(TimerTable.this.name, new Tuple(delay, period, this));
 			try {
-				TimerTable.this.context.schedule(TimerTable.this.program, TimerTable.this.name, timer, null);
+				TimerTable.this.context.schedule(name.scope, name, timer, null);
 			} catch (UpdateException e) {
 				e.printStackTrace();
 				cancel();
 			}
 		}
 
-		public int compareTo(Timer o) {
+		public int compareTo(PhysicalTimer o) {
 			return toString().compareTo(o.toString());
 		}
 		
@@ -84,25 +91,37 @@ public class TimerTable extends Table {
 	}
 	
 	/** The attribute fields expected by this table function. */
-	public enum Field{DELAY, PERIOD, TIMER};
+	public enum Field{PERIOD, TTL, DELAY};
 	
 	/** The attribute types execpted by this table function. */
 	public static final Class[] SCHEMA =  {
-		Long.class, // Delay
 		Long.class, // Period
-		Timer.class // Timer object
+		Long.class, // TTL
+		Long.class  // Delay
 	};
 	
 	private Runtime context;
 	
-	private String program;
+	private Type type;
 	
-	private Timer timer;
+	private long period;
 	
-	public TimerTable(Runtime context, String program, TableName name, long delay, long period) {
-		super(name, Type.TIMER, null, new TypeList(SCHEMA));
+	private long ttl;
+	
+	private long delay;
+	
+	private long count;
+	
+	private PhysicalTimer timer;
+	
+	public TimerTable(Runtime context, TableName name, String type, long period, long ttl, long delay) {
+		super(name, Table.Type.TIMER, null, new TypeList(SCHEMA));
 		this.context = context;
-		this.program = program;
+		this.type    = type.toLowerCase().equals("physical") ? Type.PHYSICAL : Type.LOGICAL;
+		this.period  = period;
+		this.ttl     = ttl;
+		this.delay   = delay;
+		this.count   = -1;
 		this.timer   = null;
 	}
 
@@ -121,41 +140,76 @@ public class TimerTable extends Table {
 
 	@Override
 	protected boolean insert(Tuple t) throws UpdateException {
-		Long delay  = (Long) t.value(Field.DELAY.ordinal());
 		Long period = (Long) t.value(Field.PERIOD.ordinal());
+		Long ttl    = (Long) t.value(Field.TTL.ordinal());
 		
-		if (delay == null && period == null) {
-			throw new UpdateException("Can't have both null delay and null period!");
+		/* I allow adjustments to period and ttl */
+		if (period != null && period != this.period) {
+			this.period = period;
+			reset();
 		}
-		else if (this.timer == null) {
-			set(delay, period);
-			return false; // Wait for timer to fire
+		
+		if (ttl != null && ttl != this.ttl) {
+			this.ttl = ttl;
+			reset();
 		}
-		else if (delay == null || period == null ||
-				 delay  != this.timer.delay || 
-				 period != this.timer.period) {
-			set(delay, period);
-			return false; // Wait for timer to fire
+		
+		count++;
+		
+		if (type == Type.PHYSICAL) {
+			if (this.timer == null) {
+				schedulePhysicalTimer();
+			}
+			else if (this.count >= this.ttl) {
+				reset();
+			}
 		}
-		return true; // Timer fired
+		else {
+			scheduleNextLogicalTimer();
+		}
+		return count > 0; // wait for first timer fire!
 	}
 	
 	/**
-	 * Set a new timer.
-	 * @param delay The timer delay (null -> 0)
-	 * @param period The timer period (null -> 0)
+	 * Set a new physical timer.
 	 */
-	private void set(Long delay, Long period) {
-		if (this.timer != null) timer.cancel();
-		if (delay == null) delay = 0L;
-		if (period == null) period = 0L;
-		
-		this.timer = new Timer(delay, period);
-		if (period > 0) {
-			context.timer().schedule(timer, delay, period);
+	private void schedulePhysicalTimer() {
+		if (this.delay == 0 && this.count == 0) {
+			/* Let the current (first) insertion represent the 
+			 * first logical timer. */
+			count++;
 		}
-		else {
-			context.timer().schedule(timer, delay);
+		
+		if (this.count < this.ttl) {
+			this.timer = new PhysicalTimer(this.name, timer());
+			long delay = this.timer == null ? this.delay : 0L;
+			if (period > 0) {
+				context.timer().schedule(this.timer, delay, this.period);
+			}
+			else {
+				context.timer().schedule(this.timer, delay);
+			}
+		}
+	}
+	
+	private void scheduleNextLogicalTimer() {
+		if (this.delay == 0 && count == 0) {
+			/* Let the current (first) insertion represent the 
+			 * first logical timer. */
+			count++; 
+		}
+		
+		if (count < this.ttl) {
+			Table schedule = this.context.catalog().table(Schedule.TABLENAME);
+			Long nextTimer = context.clock().current();
+			if (this.count == 0) nextTimer += this.delay;
+			else nextTimer += this.period;
+			
+			try {
+				schedule.force(new Tuple(nextTimer, name().scope, name(), timer(), null));
+			} catch (UpdateException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -167,13 +221,17 @@ public class TimerTable extends Table {
 
 	@Override
 	public Iterable<Tuple> tuples() {
-		Tuple t;
-
-		if (this.timer == null)
-			t = new Tuple();
-		else
-			t = new Tuple(timer.delay, timer.period, timer);
-		
-		return new TupleSet(name(), t);
+		return timer();
+	}
+	
+	private TupleSet timer() {
+		return new TupleSet(name(), new Tuple(this.period, this.ttl, this.delay));
+	}
+	
+	private void reset() {
+		if (this.timer != null) {
+			this.timer.cancel();
+			this.timer = null;
+		}
 	}
 }

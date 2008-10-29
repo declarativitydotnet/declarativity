@@ -122,29 +122,6 @@ schedule(Time, Program, Name, Insertions, Deletions) :-
 	schedule(Time, Program, Name, Insertions, Deletions);
 
 /*******************************************************************/
-/*** Periodic scheduler                                           **/
-
-define(schedulePeriodic, {String, Long, Long, Long, Long, String});
-
-/* Schedule next periodic. */
-renewPeriodic
-schedulePeriodic(Id, Period, TTL, Time+Period, Count+1, Program) :-
-	clock#insert(Location, Time),
-	global::periodic(Id, Period, TTL, Time, Count, Program),
-	Count < TTL;
-			
-initPeriodic 
-schedulePeriodic(Id, Period, TTL, Time+1+Offset, Count+1, Program) :-
-	config(Time, Program, Object),
-	global::periodic(Id, Period, TTL, Offset, Count, Program);
-	
-/* Schedule the periodic and update its execution count. */
-schedulePeriodic 
-global::periodic(Id, Period, TTL, Time, Count, Program) :-
-	periodicScheduler(schedulePeriodic(Id, Period, TTL, Time, Count, Program));
-
-
-/*******************************************************************/
 /*** Fact scheduler */
 
 define(facts, {String, TableName, TupleSet});

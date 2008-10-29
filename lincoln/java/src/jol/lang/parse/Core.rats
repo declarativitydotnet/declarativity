@@ -69,11 +69,18 @@ Node Term =
   ;
 
 //----------------------------   Timer  ---------------------------/
+// timer(Name, Type, Period, TTL, Delay);
 
 generic Timer =
     void:"timer":Word void:"(":Symbol TableName void:",":Symbol
+    TimerType void:",":Symbol IntegerConstant void:",":Symbol 
     IntegerConstant void:",":Symbol IntegerConstant void:")":Symbol 
     ;
+   
+String TimerType =
+	  "physical":Word
+	/ "logical":Word
+	;
 
 //----------------------------  Definition  ---------------------------/
 

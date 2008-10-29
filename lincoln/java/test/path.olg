@@ -20,7 +20,9 @@ define(computeAll, {String});
 /* Fire a time 10 seconds following program start time.
    The period is set to 0, which means I only want it to
    fire once. */
-timer(newlink, 10000, 0);
+timer(newlink, physical, 10000, 5, 10000);
+
+timer(removeLink, logical, 1, 1, 5);
 
 /* 1 -> 2 -> 3 -> 4 */
 link("1", "2");
@@ -84,4 +86,4 @@ flatTopPaths(Source, Destination, Hop) :-
 	flatten(topPaths(Source, Destination, Hops)),
 	Hop := (Integer) Hops;
 
-delete link("2", "4") :- periodic(Id, 1L, 1L, 5L);
+delete link("2", "4") :- removeLink(Period, TTL, Delay);

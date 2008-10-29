@@ -1,0 +1,17 @@
+program timer;
+
+timer(ltimer, logical, 2, 5, 0);
+timer(ptimer, physical, 2000, 5, 0);
+
+define(fire, {Long, Long, Long});
+
+
+watch(ltimer, a);
+watch(ptimer, a);
+
+fire(Period, TTL, Delay) :-
+	ltimer(Period, TTL, Delay);
+	
+	
+fire(Period, TTL, Delay) :-
+	ptimer(Period, TTL, Delay);

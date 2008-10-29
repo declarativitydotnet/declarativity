@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jol.core.Periodic;
 import jol.core.Runtime;
 import jol.exec.Query;
 import jol.lang.plan.Rule.RuleTable;
@@ -58,15 +57,12 @@ public class Program implements Comparable<Program> {
 	
 	private Map<TableName, Set<Query>> queries;
 	
-	private TupleSet periodics;
-	
 	public Program(Runtime context, String name, String owner) {
 		this.context     = context;
 		this.name        = name;
 		this.owner       = owner;
 		this.definitions = new HashSet<Table>();
 		this.queries     = new HashMap<TableName, Set<Query>>();
-		this.periodics   = new TupleSet(Periodic.TABLENAME);
 		try {
 			context.catalog().table(ProgramTable.TABLENAME).force(new Tuple(name, owner, this));
 		} catch (UpdateException e) {
@@ -100,7 +96,6 @@ public class Program implements Comparable<Program> {
 	
 	public java.lang.Boolean plan() throws PlannerException {
 		this.queries.clear();
-		this.periodics.clear();
 
 		try {
 			/* First plan out all the rules. */
@@ -117,7 +112,7 @@ public class Program implements Comparable<Program> {
 
 				/* Store all planned queries from a given rule. 
 				 * NOTE: delta rules can produce > 1 query. */
-				for (Query query : rule.query(context, this.periodics)) {
+				for (Query query : rule.query(context)) {
 					Predicate input = query.input();
 					if (!queries.containsKey(query.input().name())) {
 						queries.put(input.name(), new HashSet<Query>());
@@ -126,15 +121,7 @@ public class Program implements Comparable<Program> {
 				}
 			}
 
-			if (periodics.size() > 0) {
-				for (Tuple tuple : this.periodics) {
-					context.catalog().table(Periodic.TABLENAME).force(tuple);
-				}
-			}
 		} catch (BadKeyException e) {
-			e.printStackTrace();
-			return false;
-		} catch (UpdateException e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -147,10 +134,6 @@ public class Program implements Comparable<Program> {
 
 	public Set<Query> queries(TableName name) {
 		return this.queries == null || !this.queries.containsKey(name) ? null : this.queries.get(name);
-	}
-
-	public TupleSet periodics() {
-		return this.periodics;
 	}
 
 	public String name() {

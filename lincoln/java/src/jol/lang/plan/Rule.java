@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jol.core.Periodic;
 import jol.core.Runtime;
 import jol.exec.BasicQuery;
 import jol.exec.Query;
@@ -157,7 +156,7 @@ public class Rule extends Clause {
 		context.catalog().table(RuleTable.TABLENAME).force(new Tuple(program, name, isPublic, isAsync, isDelete, this));
 	}
 
-	public List<Query> query(Runtime context, TupleSet periodics) throws PlannerException {
+	public List<Query> query(Runtime context) throws PlannerException {
 		/* First search for an event predicate. */
 		Predicate event   = null;
 		
@@ -183,7 +182,7 @@ public class Rule extends Clause {
 		}
 
 		if (event != null) {
-			return query(context, periodics, head, event, body);
+			return query(context, head, event, body);
 		}
 		else {
 			return mviewQuery(context, head, body);
@@ -199,12 +198,12 @@ public class Rule extends Clause {
 			}
 			
 			Predicate delta = (Predicate) term1;
-			queries.addAll(query(context, null, head, delta, body));
+			queries.addAll(query(context, head, delta, body));
 		}
 		return queries;
 	}
 	
-	private List<Query> localize(Runtime context, TupleSet periodics, Predicate head, Predicate event, List<Term> body) throws PlannerException {
+	private List<Query> localize(Runtime context, Predicate head, Predicate event, List<Term> body) throws PlannerException {
 		List<Query> queries = new ArrayList<Query>();
 		
 		/* Group all predicate terms by the location variable. */
@@ -271,7 +270,7 @@ public class Rule extends Clause {
 				intermediate.position = 0;
 				
 				/* Create a query with the intermediate as the head predicate. */
-				queries.addAll(query(context, periodics, intermediate, event, intermediateBody));
+				queries.addAll(query(context, intermediate, event, intermediateBody));
 				
 				/* the intermediate predicate will be the event predicate in the next (localized) rule. */
 				event = intermediate;
@@ -279,14 +278,14 @@ public class Rule extends Clause {
 			else {
 				/* This is the final group that projects back to the original head. */
 				intermediateBody.addAll(remainder); // Tack on any remainder terms (e.g., selections, assignments).
-				queries.addAll(query(context, periodics, head, event, intermediateBody));
+				queries.addAll(query(context, head, event, intermediateBody));
 			}
 		}
 		return queries;
 	}
 
 	
-	private List<Query> query(Runtime context, TupleSet periodics, Predicate head, Predicate event, List<Term> body) throws PlannerException {
+	private List<Query> query(Runtime context, Predicate head, Predicate event, List<Term> body) throws PlannerException {
 		List<Query>    query     = new ArrayList<Query>();
 		List<Operator> operators = new ArrayList<Operator>();
 		
@@ -300,63 +299,15 @@ public class Rule extends Clause {
 					}
 				}
 				else if (!loc.equals(p.locationVariable())) {
-					return localize(context, periodics, head, event, body);
+					return localize(context, head, event, body);
 				}
 			}
 		}
 		
 		
-		if (event.name().name.equals("periodic") &&
-				! event.name().scope.equals(Table.GLOBALSCOPE)) {
-			Long period    = 1L;
-			Long ttl       = 1L;
-			Long start     = 0L;
-			Long count     = 0L;
-			String program = this.program;
-			
-			if (event.argument(Periodic.Field.PERIOD.ordinal()) instanceof Value) {
-				period = (Long) ((Value) event.argument(Periodic.Field.PERIOD.ordinal())).value();
-			}
-			if (event.argument(Periodic.Field.TTL.ordinal()) instanceof Value) {
-				ttl = (Long) ((Value) event.argument(Periodic.Field.TTL.ordinal())).value();
-			}
-			if (event.argument(Periodic.Field.TIME.ordinal()) instanceof Value) {
-				start = (Long) ((Value) event.argument(Periodic.Field.TIME.ordinal())).value();
-			}
-			if (event.argument(Periodic.Field.COUNT.ordinal()) instanceof Value) {
-				count = (Long) ((Value) event.argument(Periodic.Field.COUNT.ordinal())).value();
-			}
-			if (event.argument(Periodic.Field.PROGRAM.ordinal()) instanceof Value) {
-				program = (String) ((Value) event.argument(Periodic.Field.PROGRAM.ordinal())).value();
-			}
-			
-			List<Comparable> values = new ArrayList<Comparable>();
-			final String identifier = Runtime.idgen().toString();
-			values.add(identifier);
-			values.add(period);
-			values.add(ttl);
-			values.add(start);
-			values.add(count);
-			values.add(program);
-			periodics.add(new Tuple(values));
-			
-			TupleFunction<java.lang.Boolean> periodicFilter = new TupleFunction<java.lang.Boolean>() {
-				public java.lang.Boolean evaluate(Tuple tuple)
-						throws JolRuntimeException {
-					return identifier.equals((String)tuple.value(Periodic.Field.IDENTIFIER.ordinal()));
-				}
-				public Class returnType() {
-					return java.lang.Boolean.class;
-				}
-			};
-			EventFilter efilter = new EventFilter(context, event, periodicFilter);
+		EventFilter efilter = new EventFilter(context, event);
+		if (efilter.filters() > 0) {
 			operators.add(efilter);
-		}
-		else {
-			EventFilter efilter = new EventFilter(context, event);
-			if (efilter.filters() > 0) {
-				operators.add(efilter);
-			}
 		}
 		
 		WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);

@@ -17,7 +17,6 @@ import java.util.Set;
 
 import stasis.jni.LinearHashNTA;
 
-import jol.core.Periodic;
 import jol.lang.plan.Aggregate;
 import jol.lang.plan.Alias;
 import jol.lang.plan.ArrayIndex;
@@ -423,7 +422,7 @@ public final class TypeChecker extends Visitor {
 	public Class visitTimer(final GNode n) {
 		Class type;
 
-		/************** Event Name ******************/
+		/************** Timer Name ******************/
 		type = (Class) dispatch(n.getNode(0));
 		if (type == Error.class) return Error.class;
 		
@@ -435,19 +434,30 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		
-		type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) return Error.class;
-		Value<Integer> delay = (Value) n.getNode(1).getProperty(Constants.TYPE);
+		String timerType = n.getString(1);
 		
 		type = (Class) dispatch(n.getNode(2));
 		if (type == Error.class) return Error.class;
 		Value<Integer> period = (Value) n.getNode(2).getProperty(Constants.TYPE);
+		
+		type = (Class) dispatch(n.getNode(3));
+		if (type == Error.class) return Error.class;
+		Value<Integer> ttl = (Value) n.getNode(3).getProperty(Constants.TYPE);
+		
+		type = (Class) dispatch(n.getNode(4));
+		if (type == Error.class) return Error.class;
+		Value<Integer> delay = (Value) n.getNode(4).getProperty(Constants.TYPE);
 
 		try {
-			TimerTable timer = new TimerTable(context, program.name(), name, delay.value().longValue(), period.value().longValue());
+			TimerTable timer = 
+				new TimerTable(context, name, timerType, 
+					           period.value().longValue(), 
+					           ttl.value().longValue(), 
+					           delay.value().longValue());
+			
 			/* Create a fact that will insert the timer into the timer table, basically starting the timer. */
 			context.catalog().table(FactTable.TABLENAME).force(
-					new Tuple(program.name(), name, new Tuple(delay.value().longValue(), period.value().longValue(), null)));
+					new Tuple(program.name(), name, timer.tuples().iterator().next()));
 			context.catalog().register(timer);
 			n.setProperty(Constants.TYPE, timer);
 		} catch (UpdateException e) {
@@ -799,21 +809,7 @@ public final class TypeChecker extends Visitor {
 		List<Expression> arguments = new ArrayList<Expression>();
 		
 
-		if (!"runtime".equals(this.program.name()) && 
-				"periodic".equals(name.name) &&
-				!Table.GLOBALSCOPE.equals(name.scope)) {
-			if (parameters.size() < 1 || parameters.size() > Periodic.SCHEMA.length) {
-				runtime.error("Wrong arguments to periodic predicate", n);
-				return Error.class;
-			}
-			else if (!(parameters.get(0) instanceof Variable)) {
-				runtime.error("First parameter to periodic predicate must be a Variable", n);
-				return Error.class;
-			}
-			
-			tableEvent = Predicate.Event.INSERT;
-		}
-		else if (schema.size() < parameters.size()) {
+		if (schema.size() < parameters.size()) {
 			runtime.error("Program " + program.name() + ": Schema size mismatch on predicate " +  name ,n);
 			return Error.class;
 		}

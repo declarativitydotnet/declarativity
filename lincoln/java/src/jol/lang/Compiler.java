@@ -8,7 +8,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import jol.core.Periodic;
 import jol.lang.parse.Parser;
 import jol.lang.parse.TypeChecker;
 import jol.lang.plan.*;
@@ -204,12 +203,6 @@ public class Compiler {
 					return;
 			}
 		}
-
-		/* All programs define a local periodic event table. */
-		TableName periodic = new TableName(program.name(), "periodic");
-		Table eventTable = new EventTable(periodic, new TypeList(Periodic.SCHEMA));
-		context.catalog().register(eventTable);
-		program.definition(eventTable);
 
 		/* Evaluate all other clauses. */
 		for (Node clause : node.getNode(1).<Node> getList(0)) {

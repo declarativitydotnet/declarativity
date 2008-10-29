@@ -82,7 +82,6 @@ public class Runtime implements System {
 		this.catalog.register(this.clock);
 		
 		this.catalog.register(new QueryTable(this));
-		this.catalog.register(new Periodic(this, schedule));
 		this.catalog.register(new Log(this, java.lang.System.err));
 
 		this.executor   = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
@@ -275,7 +274,6 @@ public class Runtime implements System {
 	 */
 	public static ResourceLoader servletLoader(final ServletContext c) {
 		return new ResourceLoader() {
-			@Override
 			public URL getResource(String file) throws JolRuntimeException {
 				try {
 					// Is living with the classes?
@@ -297,7 +295,6 @@ public class Runtime implements System {
 	}
 	public static ResourceLoader defaultLoader() {
 		return new ResourceLoader() {
-			@Override
 			public URL getResource(String arg0) throws JolRuntimeException {
 				URL runtimeFile = ClassLoader.getSystemResource(arg0);
 				if(runtimeFile == null) {
