@@ -75,7 +75,10 @@ lastTried(Agent,Instance,Bnum) :- lastTried(Agent,I,Old),
   Instance >= I;
 	
 storedDecreeRequest(A,B,C,Id) :- decreeRequest#insert(A,B,C), Id := Runtime.idgen();
-storedDecreeRequest(A,B,C,Id) :- paxos_global::decreeRequestBuffer#insert(A,B,C), Id := Runtime.idgen();
+
+public
+storedDecreeRequest(A,B,C,Id) :- 
+  paxos_global::decreeRequestBuffer(A,B,C), Id := Runtime.idgen();
 
 instance(Master,I+1) :- instance(Master,I), storedDecreeRequest#insert(Master,B,C,_);
 	
