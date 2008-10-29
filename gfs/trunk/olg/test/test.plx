@@ -7,7 +7,8 @@ my $to = 600;
 
 my $JAR = "jol.new";
 #my $OLG = "../getopt.olg ../paxos.olg";
-my $OLG = "../getopt.olg ../multipaxos.olg";
+#my $OLG = "../getopt.olg ../multipaxos.olg";
+my $OLG = "../paxos_global.olg ../getopt.olg ../multipaxos.olg ../paxos_client_liveness.olg";
 
 my @handles;
 
@@ -79,11 +80,48 @@ sub sumof {
   return $sum;
 }
 
+sub kill_one {
+  my ($pid) = @_;
+
+  open(PIDS,"ps -ef|grep java|grep 1000$pid|");
+  while (<PIDS>) {
+    my ($e,$q,$pid) = split(/\s+/,$_);
+    print "pid $pid\n"; 
+    kill(9,$pid);
+  }
+  close(PIDS);
+  
+}
+
+sub test_4 {
+  # start a paxos instance over 3 replicas
+  my @pids = pipe_many(4);
+  # yay, array smushing
+  push @handles,@pids;
+
+
+  kill_one(2);
+  system("ps -ef | grep java");
+
+  # make a request
+  my ($p4,$handle) = request(10000,"start_synod.olg","123");
+
+  reply_matches($handle,"XACT123");
+
+  # kill it
+
+  foreach (@pids) {
+    kill(9,$_);
+  }
+  kill(9,$p4);
+  # look, it shouldn't have to be like this, but it is.
+  system("killall java");
+}
 
 
 sub test_2 {
   # start a paxos instance over 3 replicas
-  my @pids = pipe_many(1);
+  my @pids = pipe_many(4);
   # yay, array smushing
   push @handles,@pids;
 
@@ -137,6 +175,7 @@ sub reply_matches {
   #ok($reply =~ /$regexp/,"matches $regexp");
   if ($reply =~ /$regexp/) {
     ok(1,"matches $regexp");
+    ok($reply =~ /passed/,"passed");
   } else {
     print "$reply does not match $regexp\n";
     ok(0,"failed");
@@ -158,7 +197,7 @@ sub snatch_reply {
     }
   }
   alarm(0);
-  #print "rest: $rest\n";
+  print "rest: $rest\n";
   return $rest;
 }
 

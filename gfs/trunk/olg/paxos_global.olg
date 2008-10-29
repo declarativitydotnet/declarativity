@@ -1,0 +1,9 @@
+program paxos_global;
+
+define(requestStatus,keys(0,1),{String,String,String,String});
+//define(decreeRequestBuffer,keys(0,1,2),{String,String,String});
+define(decreeRequestBuffer,{String,String,String});
+
+watch(decreeRequestBuffer,ae);
+
+

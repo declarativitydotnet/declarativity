@@ -33,11 +33,15 @@ define(quorum,keys(0,1,2),{String,Integer,Integer});
 define(acceptCnt,keys(0,1,2),{String,Integer,Integer,Integer});
 	
 define(reply,keys(0,1),{String,String,String});
-define(tick,keys(0,1),{String,String,Integer});
+//define(tick,keys(0,1),{String,String,Integer});
 define(instance,keys(0),{String,Integer});
 
+//define(timeError,keys(0,1,2,3),{String,String,String,Long});
+//watch(timeError,aedir);
+
+
 public
-parliament(A,B) :- getopt::parliament#insert(A,B);
+parliament(A,B) :- getopt::parliament(A,B),periodic(Id,3L,3L);
 	
 lastTried(Master,-1,-1) :- parliament(Master,Agent);
 prevVote(Master,-1,-1,"none") :- parliament(Master,Agent);
@@ -71,6 +75,8 @@ lastTried(Agent,Instance,Bnum) :- lastTried(Agent,I,Old),
   Instance >= I;
 	
 storedDecreeRequest(A,B,C,Id) :- decreeRequest#insert(A,B,C), Id := Runtime.idgen();
+storedDecreeRequest(A,B,C,Id) :- paxos_global::decreeRequestBuffer#insert(A,B,C), Id := Runtime.idgen();
+
 instance(Master,I+1) :- instance(Master,I), storedDecreeRequest#insert(Master,B,C,_);
 	
 r1_b
@@ -228,8 +234,22 @@ success(@Agent,Instance,Round,Decree,From) :-decree#insert(@Master,Instance,Roun
 	parliament(@Master,Agent);
 	
 	// any learner can reply to the client.or set-wise, they all can...
-watch(reply,id);
-reply(@Client,Decree,"passed") :- success(@Me,Instance,Round,Decree,Client);
+watch(reply,aid);
+//reply(@Client,Decree,"passed") :- success(@Me,Instance,Round,Decree,Client);
+
+public
+paxos_global::requestStatus(Me,Client,Decree,"passed") :-
+  success(Me,Instance,Round,Decree,Client);
+
+public
+reply(@Client,Decree,Message) :-
+  paxos_global::requestStatus(@Master,Client,Decree,Message);
+
+
+/*
+reply(@Client,Decree,"timed out") :-
+  timeError(@Master,Client,Decree,Id);
+*/
 	
 
 
@@ -263,7 +283,7 @@ parliament(Me,Him) :- fake(A,B),
 
 
 	/**/
-watch(tick,ie);
+//watch(tick,ie);
 watch(prepare,ae);
 watch(sendPrepare,ae);
 watch(lastTried,ae);
