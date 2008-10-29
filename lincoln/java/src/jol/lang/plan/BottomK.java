@@ -1,16 +1,17 @@
 package jol.lang.plan;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jol.types.basic.ValueList;
 
-public class BottomK extends Aggregate {
-	private Integer bottomk;
+public class BottomK extends Limit {
 
-	public BottomK(String name, Integer bottomk) {
-		super(name, jol.types.function.Aggregate.BOTTOMK, ValueList.class);
-		this.bottomk = bottomk;
+	public BottomK(String name, Number bottomkConst) {
+		super(name, jol.types.function.Aggregate.BOTTOMK, bottomkConst);
 	}
 	
-	public Integer k() {
-		return this.bottomk;
+	public BottomK(String name, Variable bottomkVar) {
+		super(name, jol.types.function.Aggregate.BOTTOMK, bottomkVar);
 	}
 }

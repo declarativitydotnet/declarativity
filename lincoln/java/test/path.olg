@@ -10,7 +10,7 @@ import jol.types.basic.ValueList;
 define(link, keys(0,1), {String, String});
 define(path, keys(0,1,2), {String, String, Integer});
 define(shortestPath, keys(0,1), {String, String, Integer});
-define(topPaths, keys(0,1), {String, String, ValueList});
+define(topPaths, keys(0,1), {String, String, ValueList, String});
 define(flatTopPaths, {String, String, Integer});
 
 define(allpaths, {String, ValueList});
@@ -64,8 +64,9 @@ shortestPath(Source, Destination, min<Hops>) :-
 	
 /* What are the top two (if exist) path hops from each
    source to each destination? */
-topPaths(Source, Destination, bottomk<2, Hops>) :-
-	path(Source, Destination, Hops);
+topPaths(Source, Destination, bottomk<Hops, K>, "foo") :-
+	path(Source, Destination, Hops),
+	K := 2;
 	
 computeAll(Source) :-
 	shortestPath(Source, Destination, Hops);

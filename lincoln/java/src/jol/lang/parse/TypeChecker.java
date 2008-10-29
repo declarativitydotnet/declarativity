@@ -29,6 +29,7 @@ import jol.lang.plan.Expression;
 import jol.lang.plan.Fact;
 import jol.lang.plan.GenericAggregate;
 import jol.lang.plan.IfThenElse;
+import jol.lang.plan.Limit;
 import jol.lang.plan.Load;
 import jol.lang.plan.MethodCall;
 import jol.lang.plan.NewClass;
@@ -843,7 +844,6 @@ public final class TypeChecker extends Visitor {
 			}
 
 			if (param instanceof Variable) {
-				/* Only look in the current scope. */
 				Variable var = (Variable) param;
 				var.type(paramType);
 				if (var.type() == null) {
@@ -854,6 +854,7 @@ public final class TypeChecker extends Visitor {
 				/* Map variable to its type. */
 				table.current().define(var.name(), var.type());
 				paramType = var.type();
+				param.position(index);
 			}
 			else if (param.variables().size() > 0) {
 				for (Variable var : param.variables()) {
@@ -890,6 +891,18 @@ public final class TypeChecker extends Visitor {
 
 			param.position(index);
 			arguments.add(param);
+			
+			/* Tricky little hack to add limit variables. 
+			 * This side steps type check against the table schema
+			 * since we only need to know that the aggregate position
+			 * in the table takes type ValueList. */
+			if (param instanceof Limit) {
+				Limit limit = (Limit) param;
+				if (limit.kVar() != null) {
+					limit.kVar().position(index+1);
+					table.current().define(limit.kVar().name(), Integer.class);
+				}
+			}
 		}
 		
 		if (schema.size() != arguments.size()) {
@@ -1711,14 +1724,28 @@ public final class TypeChecker extends Visitor {
 		String function = n.getString(0);
 		
 		if ("topk".equals(function) || "bottomk".equals(function)) {
+			Class type = (Class) dispatch(n.getNode(2));
 			dispatch(n.getNode(1));
-			dispatch(n.getNode(2));
-			Value<Integer> k   = (Value<Integer>) n.getNode(1).getProperty(Constants.TYPE);
-			Variable       var = (Variable)       n.getNode(2).getProperty(Constants.TYPE);
-			n.setProperty(Constants.TYPE, 
-					"topk".equals(function) ? 
-							new TopK(var.name(), k.value()) :
-							new BottomK(var.name(), k.value()));
+			if (type == Variable.class) {
+				Variable kVar = (Variable) n.getNode(2).getProperty(Constants.TYPE);
+				Variable var  = (Variable) n.getNode(1).getProperty(Constants.TYPE);
+				if (!subtype(Number.class, var.type())) {
+					runtime.error("First parameter to " + function + " aggregate must be of" +
+							" type Number! Variable " + var + " is type " + var.type(), n);
+					return Error.class;
+				}
+				n.setProperty(Constants.TYPE, 
+						"topk".equals(function) ? 
+								new TopK(var.name(), kVar) : new BottomK(var.name(), kVar));
+			}
+			else {
+				Value<Number>  kConst = (Value<Number>) n.getNode(2).getProperty(Constants.TYPE);
+				Variable       var    = (Variable)      n.getNode(1).getProperty(Constants.TYPE);
+				n.setProperty(Constants.TYPE, 
+						"topk".equals(function) ? 
+								new TopK(var.name(), kConst.value()) :
+									new BottomK(var.name(), kConst.value()));
+			}
 		}
 		else if ("generic".equals(function)) {
 			Class type = (Class) dispatch(n.getNode(1));

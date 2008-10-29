@@ -7,6 +7,7 @@ import java.util.Set;
 
 import jol.lang.plan.Expression;
 import jol.lang.plan.GenericAggregate;
+import jol.lang.plan.Limit;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
@@ -51,6 +52,14 @@ public class Projection extends Operator {
 			else {
 				accessors.add(arguments.get(i).function());
 				projection.add(var);
+				
+				if (var instanceof Limit) {
+					Limit limit = (Limit) var;
+					if (limit.kVar() != null) {
+						accessors.add(limit.kVar().function());
+						projection.add(limit.kVar());
+					}
+				}
 			}
 		}
 		

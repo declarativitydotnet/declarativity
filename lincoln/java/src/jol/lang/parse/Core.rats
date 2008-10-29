@@ -268,10 +268,12 @@ generic NewClass = void:"new":Word TypeName;
 generic ReferenceName = Name;
 
 generic Aggregate = 
-     <Generic> "generic":Word void:"<":Symbol PostfixExpression void:">":Symbol
-   / <TopK>    "topk":Word void:"<":Symbol IntegerConstant void:",":Symbol AggregateVariable void:">":Symbol
-   / <BottomK> "bottomk":Word void:"<":Symbol IntegerConstant void:",":Symbol AggregateVariable void:">":Symbol
-   / <Basic>   Name void:"<":Symbol PostfixExpression void:">":Symbol
+     <Generic>  "generic":Word void:"<":Symbol PostfixExpression void:">":Symbol
+   / <TopK1>    "topk":Word    void:"<":Symbol AggregateVariable void:",":Symbol IntegerConstant void:">":Symbol
+   / <TopK2>    "topk":Word    void:"<":Symbol AggregateVariable void:",":Symbol AggregateVariable void:">":Symbol
+   / <BottomK1> "bottomk":Word void:"<":Symbol AggregateVariable void:",":Symbol IntegerConstant void:">":Symbol
+   / <BottomK2> "bottomk":Word void:"<":Symbol AggregateVariable void:",":Symbol AggregateVariable void:">":Symbol
+   / <Basic>    Name void:"<":Symbol PostfixExpression void:">":Symbol
    ;
 
 Node AggregateVariable =

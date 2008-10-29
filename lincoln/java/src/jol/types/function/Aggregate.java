@@ -26,25 +26,26 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public abstract Class returnType();
 	
 	private static class Accessor<C extends Comparable<C>> implements TupleFunction<C> {
-		private Integer position;
+		private jol.lang.plan.Variable var;
 		
-		private Class type;
-		
-		public Accessor(jol.lang.plan.Aggregate aggregate) {
-			this.position = aggregate.position();
-			this.type     = aggregate.type();
+		public Accessor(jol.lang.plan.Variable var) {
+			this.var = var;
 		}
 		
 		public Integer position() {
-			return this.position;
+			return this.var.position();
 		}
 
 		public C evaluate(Tuple tuple) throws JolRuntimeException {
-			return (C) tuple.value(this.position);
+			return (C) tuple.value(this.var.position());
 		}
 
 		public Class returnType() {
-			return this.type;
+			return this.var.type();
+		}
+		
+		public jol.lang.plan.Variable var() {
+			return this.var;
 		}
 	}
 	
@@ -108,25 +109,30 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public static class TopBottomK<C extends Comparable<C>> extends Aggregate<C> {
 		private enum Type{TOP, BOTTOM};
 		
-		private Integer k;
+		private Number kConstant;
 		private TreeMap<C, ValueList<C>> values;
 		private Type type;
 		private TupleSet tuples;
 		private Tuple result;
-		private Accessor<C> accessor;
+		private Accessor<C> kAccessor;
+		private Accessor<C> valueAccessor;
 
 		
 		public TopBottomK(jol.lang.plan.TopK aggregate) {
 			this.type = Type.TOP;
-			this.k = aggregate.k();
-			this.accessor = new Accessor<C>(aggregate);
+			this.kConstant = aggregate.kConst();
+			this.kAccessor = aggregate.kVar() == null ?
+					null : new Accessor<C>(aggregate.kVar());
+			this.valueAccessor = new Accessor<C>(aggregate);
 			reset();
 		}
 		
 		public TopBottomK(jol.lang.plan.BottomK aggregate) {
 			this.type = Type.BOTTOM;
-			this.k = aggregate.k();
-			this.accessor = new Accessor<C>(aggregate);
+			this.kConstant = aggregate.kConst();
+			this.kAccessor = aggregate.kVar() == null ?
+					null : new Accessor<C>(aggregate.kVar());
+			this.valueAccessor = new Accessor<C>(aggregate);
 			reset();
 		}
 		
@@ -144,7 +150,10 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		@Override
 		public Tuple insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				C value = accessor.evaluate(tuple);
+				C  value = this.valueAccessor.evaluate(tuple);
+				Number kConst = this.kConstant == null ?
+						(Number) this.kAccessor.evaluate(tuple) : this.kConstant;
+						
 				if (!this.values.containsKey(value)) {
 					this.values.put(value, new ValueList<C>());
 				}
@@ -153,7 +162,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 				ValueList<C> resultValues = new ValueList<C>();
 				NavigableSet<C> keys = this.type == Type.TOP ?
 						this.values.descendingKeySet() : this.values.navigableKeySet();
-				int k = this.k;
+				int k = kConst.intValue();
 				for (C key : keys) {
 					if (k == 0) break;
 					for (C element : this.values.get(key)) {
@@ -162,7 +171,11 @@ public abstract class Aggregate<C extends Comparable<C>> {
 					}
 				}
 				this.result = tuple.clone();
-				this.result.value(this.accessor.position(), resultValues);
+				
+				this.result.value(this.valueAccessor.position(), resultValues);
+				if (this.kAccessor != null) {
+					this.result.remove(this.kAccessor.var());
+				}
 				return this.result;
 			}
 			return null;

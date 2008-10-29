@@ -35,7 +35,7 @@ public interface System {
 	 * Calling this method after a call to {@link #start()} is not allowed.
 	 * @throws JolRuntimeException When called post {@link #start()}
 	 */
-	void evaluate() throws JolRuntimeException;
+	public void evaluate() throws JolRuntimeException;
 	
 	/**
 	 * Get the system catalog.
