@@ -34,8 +34,7 @@ public class UDP extends Server {
 		super("UDP Server");
 		this.context = context;
 		this.server = new DatagramSocket(port);
-		context.install("system",
-				ClassLoader.getSystemResource("jol/net/udp/udp.olg"));
+		context.install("system", "jol/net/udp/udp.olg");
 	}
 	
 	/**

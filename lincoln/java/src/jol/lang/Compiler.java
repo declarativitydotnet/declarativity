@@ -38,11 +38,12 @@ import xtc.util.Runtime;
  * The driver for processing the Overlog language.
  */
 public class Compiler {
-	public static final URL[] FILES = {
-			ClassLoader.getSystemClassLoader().getResource("jol/lang/compile.olg"),
-			ClassLoader.getSystemClassLoader().getResource("jol/lang/stratachecker.olg")
+	public static URL[] FILES(jol.core.Runtime.ResourceLoader l) throws JolRuntimeException {
+		return new URL[] {
+				l.getResource("jol/lang/compile.olg"),
+				l.getResource("jol/lang/stratachecker.olg"),
 		};
-
+	}
 	public static class CompileTable extends ObjectTable {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "compiler");
 		public static final Key PRIMARY_KEY = new Key(0);

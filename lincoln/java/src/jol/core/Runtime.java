@@ -6,6 +6,8 @@ import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.servlet.ServletContext;
+
 import jol.exec.Query.QueryTable;
 import jol.lang.Compiler;
 import jol.lang.Compiler.CompileTable;
@@ -33,6 +35,8 @@ import jol.types.table.Table.Catalog;
 public class Runtime implements System {
 	/** Used to grab a quick identifier. */
 	private static Long idgenerator = 0L;
+
+	private static jol.core.Runtime.ResourceLoader loader;
 	
 	/** @return A new unique system identifier. */
 	public static Long idgen() {
@@ -158,9 +162,34 @@ public class Runtime implements System {
 			return null;
 		}
 	}
+	/**
+	 * Code that wants to install overlog files on the classpath
+	 * should call this method instead of using ClassLoader directly.
+	 * 
+	 * This allows overlog installation in environments like Servlet
+	 * containers that provide non-standard ClassLoaders 
+	 * 
+	 * @param owner The owner of the program
+	 * @param resource The name of a program that lives in the classpath,
+	 * 				   without a leading '/'.
+	 * @throws UpdateException
+	 */
+	public void install(String owner, String resource)
+		throws UpdateException {
+		try {
+			install(owner, loader.getResource(resource));
+		} catch (JolRuntimeException e) {
+			// TODO Do we want to wrap this, or propagate JolRuntime exceptions?
+			throw new UpdateException("Error loading resource", e);
+		}
+	}
 	
 	/**
 	 * Install the program contained in the given file under the given owner.
+	 * 
+	 * This should *not* be used to install overlog files that live in the 
+	 * classpath.  The locations of such files should be passed as a string.
+	 * 
 	 * @param owner The owner of the program.
 	 * @param url The location that contains the program text.
 	 */
@@ -216,26 +245,88 @@ public class Runtime implements System {
 			driver.notify();
 		}
 	}
-	
+	public interface Callback<T> {
+		public T call(Runtime r);
+	};
+	public <T> T call(Callback<T> cb) {
+		synchronized (driver) {
+			return cb.call(this);
+		}
+	}
+	/**
+	 * Maps from resource filename to URL.  Unfortunately, we cannot always
+	 * rely on the ClassLoader to lookup resources for us.
+	 * 
+	 *  @see defaultLoader()
+	 *  @see servletLoader()
+	 */
+	public interface ResourceLoader {
+		URL getResource(String filename) throws JolRuntimeException;
+	};
+	/**
+	 * Create a resource loader that uses a ServletContext to locate
+	 * resources.
+	 * 
+	 * TODO Keeps pointers to servlet contexts around after getPost() returns,
+	 * 		then access them from concurrent threads.  Is that safe?
+	 *   
+	 * @param c The servlet context that will be used to lookup resources. 
+	 * @return A ResourceLoader that can be passed to create().
+	 */
+	public static ResourceLoader servletLoader(final ServletContext c) {
+		return new ResourceLoader() {
+			@Override
+			public URL getResource(String file) throws JolRuntimeException {
+				try {
+					// Is living with the classes?
+					URL resource = c.getResource("/WEB-INF/classes/"+file);
+					if(resource == null) {
+						// Is it at the root of the WAR?
+					    resource = c.getResource("/"+file);
+					}
+					if(resource == null) {
+						throw new JolRuntimeException("Could not load " + file
+									+ " servlet context root is " + c.getRealPath("/"));
+					}
+					return resource;
+				} catch (MalformedURLException e) {
+					throw new JolRuntimeException("Could not load resource", e);
+				}
+			}
+		};
+	}
+	public static ResourceLoader defaultLoader() {
+		return new ResourceLoader() {
+			@Override
+			public URL getResource(String arg0) throws JolRuntimeException {
+				URL runtimeFile = ClassLoader.getSystemResource(arg0);
+				if(runtimeFile == null) {
+					throw new JolRuntimeException("Could not load " + arg0);
+				}
+				return runtimeFile;
+			}
+		};
+	}
+	public static System create(int port) throws JolRuntimeException {
+		return create(port, defaultLoader());
+	}
 	/**
 	 * Creates a new runtime object that listens on the given network port.
 	 * @param port The network port that this runtime listens on.
 	 * @return A new runtime object.
 	 * @throws JolRuntimeException If something went wrong during bootstrap.
 	 */
-	public static System create(int port) throws JolRuntimeException {
+	public static System create(int port, ResourceLoader l) throws JolRuntimeException {
 		try {
+			Runtime.loader = l;
 			Runtime runtime = new Runtime();
-			URL runtimeFile = ClassLoader.getSystemResource("jol/core/runtime.olg");
-			if (runtimeFile == null) {
-			    throw new JolRuntimeException("Could not load jol/core/runtime.olg.");
-			}
+			URL runtimeFile = loader.getResource("jol/core/runtime.olg");
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
 			runtime.driver.runtime(runtime.program("runtime"));
 			/* Install compiler files first so that further programs
 			 * will be evaluated by the compiler (i.e., they will be stratified). */
-			for (URL file : Compiler.FILES) {
+			for (URL file : Compiler.FILES(loader)) {
 				runtime.install("system", file);
 			}
 			runtime.network.install(port);

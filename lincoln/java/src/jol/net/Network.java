@@ -53,8 +53,7 @@ public final class Network {
 		// server("udp", new UDP(port+1));
 		
 		/* Install network layer application */
-		context.install("network",
-				ClassLoader.getSystemResource("jol/net/network.olg"));
+		context.install("network", "jol/net/network.olg");
 	}
 	
 	/**
