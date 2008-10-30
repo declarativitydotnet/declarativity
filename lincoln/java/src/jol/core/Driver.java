@@ -568,7 +568,11 @@ public class Driver implements Runnable {
 		StasisTable.commit();
 		if (debug) java.lang.System.err.println("============================ ========================== ============================");
 	}
-	
+	public void evaluateFixpoint() throws UpdateException {
+		do {
+			evaluate();
+		} while(schedule.cardinality() > 0);
+	}
 	/**
 	 * Helper function that calls the flusher and evaluator table functions.
 	 * This function will evaluate the passed in tuples to fixedpoint (until

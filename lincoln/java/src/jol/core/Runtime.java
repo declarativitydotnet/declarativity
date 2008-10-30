@@ -104,7 +104,19 @@ public class Runtime implements System {
 			}
 		}
 	}
-	
+	public void evaluateFixpoint() throws JolRuntimeException {
+		// XXX might not be a good idea to bypass this check.
+		//		if (this.thread.isAlive()) {
+		//			throw new JolRuntimeException("ERROR: can't call evaluate when system has been started!");
+		//		}
+		synchronized (driver) {
+			try {
+				this.driver.evaluateFixpoint();
+			} catch (UpdateException e) {
+				throw new JolRuntimeException(e.toString());
+			}
+		}
+	} 
 	public void shutdown() {
 		synchronized (driver) {
 			this.executor.shutdown();

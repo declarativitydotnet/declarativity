@@ -124,15 +124,7 @@ public class Civil extends LincolnServlet {
 					addEvents.startWatchLog(deltaAdd);
 					eraseEvents.startWatchLog(deltaErase);
 					r.schedule(prog, linkTable, insertions, deletions);
-					r.evaluate();
-					// XXX HACK!  Calling this once doesn't reach a local fixpoint (at least for programs w/ negation)
-					r.evaluate();
-					r.evaluate();
-					r.evaluate();
-					r.evaluate();
-					r.evaluate();
-					r.evaluate();
-					r.evaluate();
+					r.evaluateFixpoint();
 					addEvents.stopWatchLog();
 					eraseEvents.stopWatchLog();
 					return false;
