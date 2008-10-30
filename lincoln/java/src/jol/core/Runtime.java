@@ -2,6 +2,9 @@ package jol.core;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -104,16 +107,23 @@ public class Runtime implements System {
 			}
 		}
 	}
-	public void evaluateFixpoint() throws JolRuntimeException {
-		// XXX might not be a good idea to bypass this check.
-		//		if (this.thread.isAlive()) {
-		//			throw new JolRuntimeException("ERROR: can't call evaluate when system has been started!");
-		//		}
+	public void evaluateFixpoint(RuntimeCallback[] pre,
+												   RuntimeCallback[] post) throws JolRuntimeException, UpdateException {
 		synchronized (driver) {
+			// disableInterrupts();
 			try {
-				this.driver.evaluateFixpoint();
-			} catch (UpdateException e) {
-				throw new JolRuntimeException(e.toString());
+				this.driver.fixpointPrepare();
+
+				for(RuntimeCallback c : pre) {
+					call(c);
+				}
+				this.driver.fixpointEvaluate();
+				
+				for(RuntimeCallback c : post) {
+					call(c);
+				}
+			} finally {
+				// enableInterrupts();
 			}
 		}
 	} 
@@ -259,13 +269,16 @@ public class Runtime implements System {
 			driver.notify();
 		}
 	}
-	public interface RuntimeCallback<T> {
-		public T call(Runtime r) throws UpdateException, JolRuntimeException;
+	public interface RuntimeCallback {
+		public void call(Runtime r) throws UpdateException, JolRuntimeException;
 	};
-	public <T> T call(RuntimeCallback<T> cb) throws UpdateException, JolRuntimeException {
+	public void call(RuntimeCallback cb) throws UpdateException, JolRuntimeException {
 		synchronized (driver) {
-			return cb.call(this);
+			cb.call(this);
 		}
+	}
+	public static RuntimeCallback[] callbacks(RuntimeCallback...callbacks) {
+		return callbacks;
 	}
 	/**
 	 * Maps from resource filename to URL.  Unfortunately, we cannot always

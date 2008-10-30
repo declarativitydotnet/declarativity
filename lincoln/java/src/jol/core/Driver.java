@@ -568,7 +568,12 @@ public class Driver implements Runnable {
 		StasisTable.commit();
 		if (debug) java.lang.System.err.println("============================ ========================== ============================");
 	}
-	public void evaluateFixpoint() throws UpdateException {
+	public void fixpointPrepare() throws UpdateException {
+		while(schedule.cardinality() > 0) {
+			evaluate();
+		}
+	}
+	public void fixpointEvaluate() throws UpdateException {
 		do {
 			evaluate();
 		} while(schedule.cardinality() > 0);
