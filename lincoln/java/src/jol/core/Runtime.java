@@ -92,13 +92,16 @@ public class Runtime implements System {
 	}
 	
 	public void evaluate() throws JolRuntimeException {
-		if (this.thread.isAlive()) {
-			throw new JolRuntimeException("ERROR: can't call evaluate when system has been started!");
-		}
-		try {
-			this.driver.evaluate();
-		} catch (UpdateException e) {
-			throw new JolRuntimeException(e.toString());
+		// XXX might not be a good idea to bypass this check.
+		//		if (this.thread.isAlive()) {
+		//			throw new JolRuntimeException("ERROR: can't call evaluate when system has been started!");
+		//		}
+		synchronized (driver) {
+			try {
+				this.driver.evaluate();
+			} catch (UpdateException e) {
+				throw new JolRuntimeException(e.toString());
+			}
 		}
 	}
 	
@@ -245,9 +248,9 @@ public class Runtime implements System {
 		}
 	}
 	public interface Callback<T> {
-		public T call(Runtime r);
+		public T call(Runtime r) throws UpdateException, JolRuntimeException;
 	};
-	public <T> T call(Callback<T> cb) {
+	public <T> T call(Callback<T> cb) throws UpdateException, JolRuntimeException {
 		synchronized (driver) {
 			return cb.call(this);
 		}

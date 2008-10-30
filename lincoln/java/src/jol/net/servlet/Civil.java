@@ -1,141 +1,218 @@
 package jol.net.servlet;
 
 import java.util.ArrayList;
-
-import java.io.FileNotFoundException;
+import java.util.Collection;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URL;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import jol.core.Runtime;
+import jol.lang.plan.Watch.WatchTable;
+import jol.types.operator.Watch;
+import jol.types.table.Table;
+import jol.types.table.TableName;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
-import jol.types.table.TableName;
-import jol.types.table.Table;
-import jol.types.basic.Tuple;
 
-public class Civil extends HttpServlet {
+public class Civil extends LincolnServlet {
 
-	static int lincolnPort;
-	static String lincolnProgram;
-	static boolean singleton = true;
-	static jol.core.Runtime runtime;
+	private void printTable(PrintWriter out, Collection<Tuple> ts) {
+        out.println("<table>");
 
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    	for(Tuple tup : ts) {
+    	    out.print("<tr>");
+    	    for(int i = 0; i < tup.size(); i++) {
+    		out.print("<td>");
+    		Comparable c = tup.value(i);
+    		String val;
+    		if(c == null) {
+    		    val = "null";
+    		} else {
+    		    if(tup.value(i) instanceof TableName) {
+    			TableName tn = (TableName)tup.value(i);
+    			val = "<a href='/lincoln/"+tn.scope+"/"+tn.name+"'>"
+    			    + tn.toString() + "</a>";
+    		    } else {
+    			val = tup.value(i).toString();
+    	// XXX there is probably a real implementaion of this somewhere.
+    			val = val.replace("<","&lt;");
+    			val = val.replace(">","&gt;");
+    			val = val.replace("&","&amp;");
+    		    }
+    		}
+    		out.print(val);
+    		out.print("</td>");
+    	    }
+    	    out.println("</tr>");
+    	}
+    	out.println("</table>");
+
+	}
+	
+    @Override
+	public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException
     {
-    	try {
-	    if(singleton) {
-		synchronized (this) {
-		    if(singleton) {
-			lincolnPort
-			    = Integer.parseInt(
-				getServletConfig().getInitParameter("port"));
-			lincolnProgram
-			    = getServletConfig().getInitParameter("olg");
-
-			jol.core.Runtime.ResourceLoader l
-			    = jol.core.
-			       Runtime.servletLoader(getServletContext());
-			runtime = (jol.core.Runtime) 
-			    jol.core.Runtime.create(lincolnPort, l);
-			
-			runtime.install("user", l.getResource(lincolnProgram));
-					
-			runtime.evaluate(); // Install program arguments.
-			runtime.start();
-		    }
-	    			
-		    singleton = false;
-		}
-	    }
-    	} catch (UpdateException e) {
-    		throw new ServletException(e);
-    	} catch (JolRuntimeException e) {
-    		throw new ServletException(e);
-    	}
+    	jol.core.Runtime runtime = getLincolnRuntime();
 
         String servletPath = request.getServletPath();
-        String table = request.getParameter("table");
-        String lastName = request.getParameter("lastname");
+        
+        String[] tok = servletPath.substring(1).split("/");
+        String scope = "global";
+        String name = "catalog";
 
-	String[] tok = servletPath.substring(1).split("/");
-	String scope = "global";
-	String name = "catalog";
+        if(tok.length == 2) {
+        	scope = tok[0];
+        	name = tok[1];
+        }
 
-	if(tok.length == 2) {
-	    scope = tok[0];
-	    name = tok[1];
-	}
+        final TableName tableName = new TableName(scope,name);
 
-	final TableName tableName = new TableName(scope,name);
+        final jol.core.Runtime.Callback<ArrayList<Tuple>> dumpTable = 
+        	new jol.core.Runtime.Callback<ArrayList<Tuple>>() {
+				public ArrayList<Tuple> call(jol.core.Runtime r) {
 
-	ArrayList<Tuple> tupleList;
-	try {
-	    tupleList = runtime.call(
-	      new jol.core.Runtime.Callback<ArrayList<Tuple>>() {
-		public ArrayList<Tuple> call(jol.core.Runtime r) {
+					ArrayList<Tuple> a = new ArrayList<Tuple>();
 
-		    ArrayList<Tuple> a = new ArrayList<Tuple>();
+					for(Tuple t : r.catalog().table(tableName).primary()) {
+						a.add(t);
+					}
+					return a;
+				}
+			};
 
-		    for(Tuple t : r.catalog()
-			    .table(tableName).primary()) {
-			a.add(t);
-		    }
+		final TupleSet insertions = new TupleSet();
+		final TupleSet deletions = new TupleSet();
 
-		    return a;
+		String action = request.getParameter("Action");
+		
+		if(action != null) {
+			Tuple t = new Tuple(
+					(String)request.getParameter("from"),
+					(String)request.getParameter("to")
+					);
+			// XXX this bypasses the type checker.  If we insert the wrong type of tuple, 
+			// then bad things happen!
+			if(action.equals("Insert")) {
+				insertions.add(t);
+			} else if (action.equals("Delete")) {
+				deletions.add(t);
+			}
 		}
-	    });
-	} catch (NullPointerException e) {
-	    throw new ServletException("Table not found", e);
-	}
+
+		
+		final String prog = "path";
+		final TableName linkTable= new TableName("path", "link");
+		final TableName shortestPathTable = new TableName("path", "shortestPath");
+		
+		final ArrayList<Tuple> deltaAdd = new ArrayList<Tuple>();
+		final ArrayList<Tuple> deltaErase = new ArrayList<Tuple>();
+
+		final jol.core.Runtime.Callback<Boolean> inject =
+			new jol.core.Runtime.Callback<Boolean>() {
+
+				@Override
+				public Boolean call(Runtime r) throws UpdateException, JolRuntimeException {
+					
+					WatchTable w = (WatchTable)r.catalog().table(new TableName(Table.GLOBALSCOPE, "watches"));
+					Watch addEvents = (Watch)w.watched(prog, shortestPathTable, Watch.Modifier.ADD);
+					Watch eraseEvents =  (Watch)w.watched(prog, shortestPathTable, Watch.Modifier.ERASE);
+					addEvents.startWatchLog(deltaAdd);
+					eraseEvents.startWatchLog(deltaErase);
+					r.schedule(prog, linkTable, insertions, deletions);
+					r.evaluate();
+					// XXX HACK!  Calling this once doesn't reach a local fixpoint (at least for programs w/ negation)
+					r.evaluate();
+					r.evaluate();
+					r.evaluate();
+					r.evaluate();
+					r.evaluate();
+					r.evaluate();
+					r.evaluate();
+					addEvents.stopWatchLog();
+					eraseEvents.stopWatchLog();
+					return false;
+				}
+				
+			};
+			
+		jol.core.Runtime.Callback<Object[]> allAtOnce =
+			new jol.core.Runtime.Callback<Object[]>() {
+
+				@Override
+				public Object[] call(Runtime r) throws UpdateException, JolRuntimeException {
+					return new Object[] {
+							dumpTable.call(r),
+							inject.call(r),
+							dumpTable.call(r)
+					};
+				}
+				
+			};
+        Collection<Tuple> tupleList, tupleList2;
+        try {
+        	Object[] all = runtime.call(allAtOnce);
+        	tupleList = (Collection<Tuple>) all[0];
+        	tupleList2 = (Collection<Tuple>) all[2];
+        } catch (UpdateException e) {
+        	throw new ServletException("Table not found", e);
+        } catch (JolRuntimeException e) {
+        	throw new ServletException("Table not found", e);
+        }
 
     	response.setContentType("text/html");
         final PrintWriter out = response.getWriter();
 
-	out.println(
+        out.println(
 "<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>" +
 "<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>" +
 "<head><meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>"
-);
+        );
 
-        out.println("<title>Linoln test interface</title>");
+        out.println("<title>" + getLincolnProgramName() + " on port " + getLincolnPort()  + "</title>");
         out.println("</head>");
         out.println("<body>");
-	out.println("<h1>Running " + lincolnProgram + " on port " + lincolnPort +"</h1>");
-	out.println("<h2>"+tableName+"</h2>");
-	out.println("<table>");
+        out.println("<h1>Running " + getLincolnProgramName() + " on port " + getLincolnPort() +"</h1>");
+        out.println("<h2>"+tableName+"</h2>");
 
-	for(Tuple tup : tupleList) {
-	    out.print("<tr>");
-	    for(int i = 0; i < tup.size(); i++) {
-		out.print("<td>");
-		Comparable c = tup.value(i);
-		String val;
-		if(c == null) {
-		    val = "null";
-		} else {
-		    if(tup.value(i) instanceof TableName) {
-			TableName tn = (TableName)tup.value(i);
-			val = "<a href='/lincoln/"+tn.scope+"/"+tn.name+"'>"
-			    + tn.toString() + "</a>";
-		    } else {
-			val = tup.value(i).toString();
-	// XXX there is probably a real implementaion of this somewhere.
-			val = val.replace("<","&lt;");
-			val = val.replace(">","&gt;");
-			val = val.replace("&","&amp;");
-		    }
-		}
-		out.print(val);
-		out.print("</td>");
-	    }
-	    out.println("</tr>");
-	}
-	out.println("</table>");
+        out.print("<form action='' method='post'>");
+        out.println("<p>New link: ");
+        out.println("<input type='text' size='20' name='from'/>");
+        out.println(" -> ");
+        out.println("<input type='text' size='20' name='to'/>");
+        out.println(" ");
+        out.println("<input type='submit' name='Action' value='Insert'/>");
+        out.println("<input type='submit' name='Action' value='Delete'/>");
+        out.println("</p>"); 
+        out.println("</form>");
+
+        out.print("<ul>");
+        for(Object n : request.getParameterMap().keySet()) {
+        	out.print("<li>'" + n + "' = '" + request.getParameter((String)n) + "'</li>" );
+        }
+        out.print("</ul>");
+
+        out.print("<h2>Before</h2>");
+        
+        printTable(out, tupleList);
+
+        out.println("<h2>path:shortestPath deletions</h2>");
+
+        printTable(out, deltaErase);
+        
+        out.println("<h2>path::shortestPath insertions</h2>");
+        
+        printTable(out, deltaAdd);
+        
+        out.print("<h2>After</h2>");
+        
+        printTable(out, tupleList2);
+        
+        
 	/*	out.println("<p>");
         out.println("Parameters in this request:</p>");
         out.println("<p>Servlet path: " + servletPath + "</p>");
@@ -156,16 +233,11 @@ public class Civil extends HttpServlet {
         out.println("<input type='text' size='20' name='lastname'/>");
         out.println("<br/>");
         out.println("<input type='submit'/>");
-	out.println("</p>"); */
+	out.println("</p>"); 
         out.println("</form>");
+        */
         out.println("</body>");
         out.println("</html>");
     }
 
-    public void doPost(HttpServletRequest request,
-		       HttpServletResponse response)
-    throws IOException, ServletException
-    {
-        doGet(request, response);
-    }
 }
