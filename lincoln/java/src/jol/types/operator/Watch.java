@@ -3,7 +3,6 @@ package jol.types.operator;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,9 +24,6 @@ public class Watch extends Operator {
 	
 	/** A map from the watch character to the Modifier type. */
 	public static final Map<Character, Modifier> modifiers = new HashMap<Character, Modifier>();
-	
-	/** If non-null, each watched event will be appended to this list */
-	public List<Tuple> watchLog = null; 
 	
 	static {
 		modifiers.put('t', Modifier.TRACE);
@@ -79,16 +75,6 @@ public class Watch extends Operator {
 		this.stream = stream;
 	}
 
-	public void startWatchLog(List<Tuple> l) {
-		this.watchLog = l;
-	}
-	public List<Tuple> stopWatchLog() {
-		List<Tuple> ret = this.watchLog;
-		this.watchLog = null;
-		return ret;
-		
-	}
-	
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		if (tuples.size() == 0) return tuples;
@@ -103,7 +89,6 @@ public class Watch extends Operator {
 		
 		stream.println(header);
 		for (Tuple tuple : tuples) {
-			if(watchLog != null) watchLog.add(tuple);
 			stream.println("\t" + tuple);
 		}
 		return tuples;

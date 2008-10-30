@@ -9,10 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import jol.core.Runtime;
-import jol.lang.plan.Watch.WatchTable;
-import jol.types.operator.Watch;
+import jol.core.Runtime.RuntimeCallback;
 import jol.types.table.Table;
 import jol.types.table.TableName;
+import jol.types.table.Table.Callback;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -72,9 +72,9 @@ public class Civil extends LincolnServlet {
 
         final TableName tableName = new TableName(scope,name);
 
-        final jol.core.Runtime.Callback<ArrayList<Tuple>> dumpTable = 
-        	new jol.core.Runtime.Callback<ArrayList<Tuple>>() {
-				public ArrayList<Tuple> call(jol.core.Runtime r) {
+        final RuntimeCallback<ArrayList<Tuple>> dumpTable = 
+        	new RuntimeCallback<ArrayList<Tuple>>() {
+				public ArrayList<Tuple> call(Runtime r) {
 
 					ArrayList<Tuple> a = new ArrayList<Tuple>();
 
@@ -112,28 +112,39 @@ public class Civil extends LincolnServlet {
 		final ArrayList<Tuple> deltaAdd = new ArrayList<Tuple>();
 		final ArrayList<Tuple> deltaErase = new ArrayList<Tuple>();
 
-		final jol.core.Runtime.Callback<Boolean> inject =
-			new jol.core.Runtime.Callback<Boolean>() {
+		final jol.core.Runtime.RuntimeCallback<Boolean> inject =
+			new jol.core.Runtime.RuntimeCallback<Boolean>() {
 
 				@Override
 				public Boolean call(Runtime r) throws UpdateException, JolRuntimeException {
 					
-					WatchTable w = (WatchTable)r.catalog().table(new TableName(Table.GLOBALSCOPE, "watches"));
-					Watch addEvents = (Watch)w.watched(prog, shortestPathTable, Watch.Modifier.ADD);
-					Watch eraseEvents =  (Watch)w.watched(prog, shortestPathTable, Watch.Modifier.ERASE);
-					addEvents.startWatchLog(deltaAdd);
-					eraseEvents.startWatchLog(deltaErase);
+					Table sp = r.catalog().table(shortestPathTable);
+					Callback logger = new Callback() {
+
+						@Override
+						public void deletion(TupleSet tuples) {
+							deltaErase.addAll(tuples);
+						}
+
+						@Override
+						public void insertion(TupleSet tuples) {
+							deltaAdd.addAll(tuples);
+						}
+					};
+
+					sp.register(logger);
+					
 					r.schedule(prog, linkTable, insertions, deletions);
 					r.evaluateFixpoint();
-					addEvents.stopWatchLog();
-					eraseEvents.stopWatchLog();
+				
+					sp.unregister(logger);
 					return false;
 				}
 				
 			};
 			
-		jol.core.Runtime.Callback<Object[]> allAtOnce =
-			new jol.core.Runtime.Callback<Object[]>() {
+		jol.core.Runtime.RuntimeCallback<Object[]> allAtOnce =
+			new jol.core.Runtime.RuntimeCallback<Object[]>() {
 
 				@Override
 				public Object[] call(Runtime r) throws UpdateException, JolRuntimeException {

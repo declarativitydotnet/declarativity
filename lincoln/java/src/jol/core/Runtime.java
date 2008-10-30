@@ -259,10 +259,10 @@ public class Runtime implements System {
 			driver.notify();
 		}
 	}
-	public interface Callback<T> {
+	public interface RuntimeCallback<T> {
 		public T call(Runtime r) throws UpdateException, JolRuntimeException;
 	};
-	public <T> T call(Callback<T> cb) throws UpdateException, JolRuntimeException {
+	public <T> T call(RuntimeCallback<T> cb) throws UpdateException, JolRuntimeException {
 		synchronized (driver) {
 			return cb.call(this);
 		}
