@@ -1,0 +1,15 @@
+program slinki;
+
+import java.lang.String;
+
+define(pages, keys(0), {String, String});
+define(getPage, {String});
+define(getPageResult, {String});
+
+pages("Main", "= Hello world");
+
+getPageResult(Content) :- pages(Name,Content), getPage(Name);
+
+watch(pages, ae);
+watch(getPage, ae);
+watch(getPageResult, ae);
