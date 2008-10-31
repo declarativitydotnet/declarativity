@@ -31,6 +31,7 @@ public class HTML {
         		        );
 
         s.append("<title>" + title  + "</title>");
+        s.append("<link href='/lincoln/lincoln.css' title='normal-page' type='text/css' rel='Stylesheet' media='screen'/>");
         s.append("</head>");
         s.append("<body>");
         s.append("<h1 class='Title'>" + title + "</h1>");

@@ -1,9 +1,9 @@
 package jol.net.servlet;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,13 +11,13 @@ import javax.servlet.http.HttpServletResponse;
 import jol.core.Runtime;
 import jol.core.Runtime.RuntimeCallback;
 import jol.net.servlet.util.HTML;
-import jol.types.table.Table;
-import jol.types.table.TableName;
-import jol.types.table.Table.Callback;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
+import jol.types.table.Table;
+import jol.types.table.TableName;
+import jol.types.table.Table.Callback;
 
 public class Civil extends LincolnServlet {
 
@@ -26,18 +26,22 @@ public class Civil extends LincolnServlet {
     throws IOException, ServletException
     {
     	jol.core.Runtime runtime = getLincolnRuntime();
-
-        String servletPath = request.getServletPath();
+    	
+    	String urlprefix = request.getContextPath()+request.getServletPath()+"/";
+        String subdir = request.getPathInfo();
         
-        String[] tok = servletPath.substring(1).split("/");
         String scope = "global";
         String name = "catalog";
 
-        if(tok.length == 2) {
-        	scope = tok[0];
-        	name = tok[1];
+        if(subdir != null && subdir.length() > 0) {
+        
+	        String[] tok = subdir.substring(1).split("/");
+	        
+	        if(tok.length == 2) {
+	        	scope = tok[0];
+	        	name = tok[1];
+	        }
         }
-
         final TableName tableName = new TableName(scope,name);
 
         final ArrayList<Tuple> preTable = new ArrayList<Tuple>();
@@ -134,7 +138,7 @@ public class Civil extends LincolnServlet {
 
     	response.setContentType("text/html");
 
-    	HTML format = new HTML(request.getContextPath()+"/");
+    	HTML format = new HTML(urlprefix);
     	
     	final PrintWriter out = response.getWriter();
 

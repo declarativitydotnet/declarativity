@@ -21,11 +21,16 @@ public class LincolnServlet extends HttpServlet {
 	public String getLincolnProgramName() {
 		return getServletConfig().getInitParameter("olg");
 	}
-	
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		getLincolnRuntime();
+	}
 	public jol.core.Runtime getLincolnRuntime() throws ServletException {
 		synchronized(lincolns) {
 			try {
-				jol.core.Runtime ret = lincolns.get(getServletName());
+				String lincolnProgram = getLincolnProgramName()+":"+getLincolnPort();
+				jol.core.Runtime ret = lincolns.get(lincolnProgram);
 				if(ret == null) {
 	
 					jol.core.Runtime.ResourceLoader l
@@ -34,7 +39,7 @@ public class LincolnServlet extends HttpServlet {
 					ret.install("user", l.getResource(getLincolnProgramName()));
 					ret.evaluate(); // Install program arguments.
 					ret.start();
-					lincolns.put(getServletName(), ret);
+					lincolns.put(lincolnProgram, ret);
 				}
 				return ret;
 			} catch (JolRuntimeException e) {

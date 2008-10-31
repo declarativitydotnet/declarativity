@@ -21,6 +21,6 @@
     </servlet>
     <servlet-mapping>
       <servlet-name>Civil</servlet-name>
-      <url-pattern>/</url-pattern>
+      <url-pattern>/Civil/*</url-pattern>
     </servlet-mapping>
 </web-app>
