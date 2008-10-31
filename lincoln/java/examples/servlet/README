@@ -51,3 +51,10 @@ Adding your own servlet:
 
 2) Copy the Civil section of the web.xml in the same directory as this file,
    and edit it as needed.
+
+Getting Tomcat to load Stasis:
+
+export LD_LIBRARY_PATH=/home/sears/stasis4/build/src/stasis/:/home/sears/stasis4/build/src/libdfa/
+export CATALINA_OPTS=-Djava.library.path=/home/sears/workspace/jol/bin/stasis/jni
+
+(Update the paths so they don't hardcode my home directory...)

@@ -92,8 +92,9 @@ public class LinearHashNTA extends StasisTable {
 			throws UpdateException {
 		dirty = true;
 		byte[] oldvalbytes = Stasis.hash_insert(xid, rid, keybytes, valbytes);
-		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
-			throw new UpdateException("primary key violation");
+		if(oldvalbytes != null) {
+			//throw new UpdateException("primary key violation");
+			return (!Arrays.equals(valbytes, oldvalbytes));
 		}
 		return oldvalbytes == null;
 	}
@@ -109,7 +110,7 @@ public class LinearHashNTA extends StasisTable {
 		dirty = true;
 		byte[] oldvalbytes = Stasis.hash_remove(-1, rid, keybytes);
 		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
-			throw new UpdateException("primary key violation");
+			throw new UpdateException("attempt to remove non-existant tuple");
 		}
 		return oldvalbytes != null;
 	}

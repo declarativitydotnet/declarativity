@@ -33,7 +33,7 @@
 	</init-param> 
 	<init-param>
 	  <param-name>olg</param-name>
-	  <param-value>servlet/stinki.olg</param-value>
+	  <param-value>servlet/stinki-stasis.olg</param-value>
 	</init-param>
     </servlet>
     <servlet-mapping>
@@ -50,7 +50,7 @@
 	</init-param> 
 	<init-param>
 	  <param-name>olg</param-name>
-	  <param-value>servlet/stinki.olg</param-value>
+	  <param-value>servlet/stinki-stasis.olg</param-value>
 	</init-param>
     </servlet>
     <servlet-mapping>

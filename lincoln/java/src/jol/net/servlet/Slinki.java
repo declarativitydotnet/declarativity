@@ -1,10 +1,7 @@
 package jol.net.servlet;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
@@ -13,7 +10,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import jol.core.Runtime.RuntimeCallback;
-import jol.net.servlet.util.HTML;
 import jol.net.servlet.util.Lincoln;
 import jol.net.servlet.util.Lincoln.DeltaLogger;
 import jol.net.servlet.util.Lincoln.InjectTuples;
@@ -44,7 +40,7 @@ public class Slinki extends LincolnServlet {
         String setParam = request.getParameter("content"); 
         if(setParam != null) {
         	InjectTuples create = new InjectTuples("slinki",
-        										   new TableName("slinki", "pages"));
+        										   new TableName("slinki", "setPage"));
         	create.insertions().add(new Tuple(name, setParam));
 
 	        try {
@@ -53,18 +49,26 @@ public class Slinki extends LincolnServlet {
 	    			  		   	new Logger[] 		  {        },
 	    			  		   	new RuntimeCallback[] {        });
 	        } catch (UpdateException e) {
-	        	e.printStackTrace(); //throw new ServletException(e);
+	        	throw new ServletException(e);
 	        } catch (JolRuntimeException e) {
-	        	e.printStackTrace(); throw new ServletException(e);
+	        	throw new ServletException(e);
 	        }
 	        response.sendRedirect(urlprefix + subdir);
         	
         } else {
-	        InjectTuples query = new InjectTuples("slinki",
-	        									  new TableName("slinki","getPage"));
+
+        	InjectTuples query;
+        	String desiredVersion = request.getParameter("version"); 
+        	if(desiredVersion != null) { 
+        		query = new InjectTuples("slinki", new TableName("slinki", "getPageVersion"));
+    	        query.insertions().add(new Tuple(name, Integer.parseInt(desiredVersion)));
+        	} else{ 
+        		query = new InjectTuples("slinki", new TableName("slinki","getPage"));
+    	        query.insertions().add(new Tuple(name));
+
+        	}
 	        DeltaLogger result = new DeltaLogger(runtime, new TableName("slinki", "getPageResult"));
 	        
-	        query.insertions().add(new Tuple(name));
 	        
 	        try {
 				Lincoln.evaluateTimestep(runtime,
@@ -77,8 +81,10 @@ public class Slinki extends LincolnServlet {
 	        	e.printStackTrace(); throw new ServletException(e);
 	        }
 	        String page;
+	        Integer version = 0;
 	        if(result.getInsertions().size() == 1) {
 	        	page = (String)result.getInsertions().get(0).value(0);
+	        	version = (Integer)result.getInsertions().get(0).value(1);
 	        } else {
 	        	page = "= " + name + "\nClick edit (on the right) to create this new page."; 
 	        }
@@ -98,7 +104,8 @@ public class Slinki extends LincolnServlet {
 
 	        while((in = template.readLine()) != null) {
 	        	out.println(in.replaceAll("__TITLE__",name)
-	        				.replaceAll("__CONTENT__",page));
+	        				.replaceAll("__CONTENT__",page)
+	        				.replaceAll("__MAXVERSION__",version.toString()));
 	        }
         }
     }

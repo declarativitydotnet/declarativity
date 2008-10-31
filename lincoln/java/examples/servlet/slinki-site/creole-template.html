@@ -18,7 +18,7 @@
 <tr valign="top">
 <td class="sidebar">
    <div id='sidebar' class ="menu">
-      <img src='http://tardis.cs.berkeley.edu/stiki.png' alt='Tardis'/>
+      <img src='http://tardis.cs.berkeley.edu/slinki.jpg' alt='slinki'/>
       <ul class="menusection">
          <li><a class="menuitem" href="/lincoln/slinki/Main">Main</a></li>
          <li><a class="menuitem" href="/lincoln/slinki/About">About</a></li>
@@ -38,7 +38,8 @@
     }
 --></script>
 
-<div class="editbutton" id="editbutton" onclick="toggleDisplay('editform');">Edit</div>
+<div class="editbutton" id="editbutton">
+<table><tr><td><form method='post' action="/lincoln/slinki/__TITLE__">ver <input class='versionbox' type="textbox" name="version" value='__MAXVERSION__'/</form></td><td onclick="toggleDisplay('editform');">Edit</td></tr></table></div>
 <form id='editform' action="/lincoln/slinki/__TITLE__">
 <p>
 <input type="hidden" name="set" value="__TITLE__"/>
