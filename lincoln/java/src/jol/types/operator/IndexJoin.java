@@ -38,7 +38,8 @@ public class IndexJoin extends Join {
 	
 	@Override
 	public String toString() {
-		return "INDEX JOIN PREDICATE[" + predicate.toString() + "]";
+		return this.predicate == null ? 
+				"null" : "INDEX JOIN PREDICATE[" + predicate.toString() + "]";
 	}
 	
 	@Override

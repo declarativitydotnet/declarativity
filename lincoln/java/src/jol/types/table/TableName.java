@@ -28,6 +28,24 @@ public class TableName implements Comparable<TableName>, Serializable {
 		this.name = name;
 	}
 	
+	/**
+	 * Construct a table name from a {@link java.lang.String}.
+	 * The name format should be scope::name, where scope is
+	 * the program defining the table. If no scope is provided
+	 * then the scope will default to the global namespace (i.e., global::name).
+	 * @param name The name
+	 */
+	public TableName(String name) {
+		if (name.contains("::")) {
+			this.scope = name.substring(0, name.indexOf("::"));
+			this.name  = name.substring(name.indexOf("::") + "::".length());
+		}
+		else {
+			this.scope = Table.GLOBALSCOPE;
+			this.name  = name;
+		}
+	}
+	
 	@Override
 	public String toString() {
 		return scope + "::" + name;

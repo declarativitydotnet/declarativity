@@ -33,6 +33,10 @@ public class Function extends Operator {
 		super(context, predicate.program(), predicate.rule());
 		this.function = function;
 		this.predicate = predicate;
+		if (this.function == null || this.predicate == null) {
+			System.err.println("TRIED TO CREATE A TABLE FUNCTION WITH NULL ARGUMENTS");
+			System.exit(0);
+		}
 	}
 
 	@Override
@@ -61,7 +65,8 @@ public class Function extends Operator {
 
 	@Override
 	public String toString() {
-		return this.function.name() + "(" + predicate + ")";
+		return this.function == null || this.predicate == null ? 
+				"null" : this.function.name() + "(" + predicate + ")";
 	}
 
 }

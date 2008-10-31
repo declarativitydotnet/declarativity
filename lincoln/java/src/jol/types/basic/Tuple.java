@@ -317,13 +317,18 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 			return -1;
 		}
 		for (int i = 0; i < size(); i++) {
-			if (values.get(i) == null || other.values.get(i) == null) {
-				if (values.get(i) != other.values.get(i)) {
-					return -1;
+			try {
+				if (values.get(i) == null || other.values.get(i) == null) {
+					if (values.get(i) != other.values.get(i)) {
+						return -1;
+					}
 				}
-			}
-			else if (values.get(i).compareTo(other.values.get(i)) != 0) {
-				return values.get(i).compareTo(other.values.get(i));
+				else if (values.get(i).compareTo(other.values.get(i)) != 0) {
+					return values.get(i).compareTo(other.values.get(i));
+				}
+			} catch (Throwable e) {
+				System.err.println("COMPARISON ERROR: Tuple 1: " + this + " Tuple 2 " + other);
+				return -1;
 			}
 		}
 		return 0;
@@ -337,15 +342,13 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	
 	@Override
 	public int hashCode() {
-		if (this.values.size() == 0)
-				return id.hashCode();
+		if (this.values.size() == 0) "null".hashCode();
 
 		StringBuilder sb = new StringBuilder();
 		for (Comparable value : values) {
-			if (value == null)
-				sb.append("null".hashCode());
-			else
-				sb.append(value.hashCode());
+			Integer code = value == null ? 
+					"null".hashCode() : value.hashCode();
+			sb.append(code);
 		}
 		return sb.toString().hashCode();
 	}

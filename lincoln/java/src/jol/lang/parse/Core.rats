@@ -228,7 +228,7 @@ generic InclusiveExpression =
   ;
 
 generic RangeExpression =
-  LeftRangeOperator Expression void:",":Symbol  Expression RightRangeOperator
+  LeftRangeOperator Expression void:"-":Symbol  Expression RightRangeOperator
   ;
 
 String LeftRangeOperator =
@@ -262,6 +262,7 @@ Node PrimaryExpression =
  / <Aggregate>    Aggregate Spacing
  / <Reference>    ReferenceName Spacing
  / <Constant>     Constant Spacing
+ / <ListValues>   ValuesList Spacing
  / <Context>      void:"(":Symbol Expression void:")":Symbol
  ;
 
@@ -287,6 +288,11 @@ Node AggregateVariable =
     <LocationVariable>  Location
   / <Variable>          Variable
   ;
+  
+ generic ValuesList = 
+ 	  <Values> void:"[":Symbol ExpressionList void:"]":Symbol
+ 	/ <Empty>  void:"[":Symbol void:"]":Symbol
+ 	;
 
 //----------------------------  Alias  ----------------------------------/
 

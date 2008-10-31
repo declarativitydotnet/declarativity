@@ -47,6 +47,7 @@ import jol.lang.plan.Term;
 import jol.lang.plan.TopK;
 import jol.lang.plan.UnknownReference;
 import jol.lang.plan.Value;
+import jol.lang.plan.ValuesList;
 import jol.lang.plan.Variable;
 import jol.lang.plan.Watch;
 import jol.lang.plan.Fact.FactTable;
@@ -288,23 +289,44 @@ public final class TypeChecker extends Visitor {
 				name.scope = Table.GLOBALSCOPE;
 			}
 		}
-		if (context.catalog().table(name) == null) {
+		
+		Table table = context.catalog().table(name);
+		if (table == null) {
 			runtime.error("No table defined for fact " + name, n);
 			return Error.class;
 		}
 		
+		Class[] types = table.types();
 		List<Expression> args = new ArrayList<Expression>();
+		
 		if (n.size() != 0) {
+			int index = 0;
 			for (Node arg : n.<Node> getList(1)) {
 				Class t = (Class) dispatch(arg);
-				assert(subtype(Expression.class, t));
 				Expression expr = (Expression) arg.getProperty(Constants.TYPE);
 				if (expr.variables().size() > 0) {
 					runtime.error("Facts are not allowed to contain variables!", n);
 					return Error.class;
 				}
+				else if (index >= types.length) {
+					break;
+				}
+				else if (!subtype(types[index], expr.type())) {
+					runtime.error("Type mismatch with fact argument " 
+							      + index + " of type " + expr.type() +
+							      ", expected type " + types[index], n);
+					return Error.class;
+				}
 				args.add(expr);
+				index++;
 			}
+		}
+		
+		if (types.length != args.size()) {
+			runtime.error("Argument mismatch in facts for table " + name + 
+					      ". Table has " + types.length + ", but facts has size " + 
+					      args.size() + ".", n);
+			return Error.class;
 		}
 		
 		Fact fact = new Fact(n.getLocation(), name, args);
@@ -1648,6 +1670,23 @@ public final class TypeChecker extends Visitor {
 		}
 		n.setProperty(Constants.TYPE, args);
 		return List.class;
+	}
+	
+	//---------------------------- ValuesList ------------------------//
+	public Class visitValuesList(final GNode n) {
+		List<Expression> args = new ArrayList<Expression>();
+		if (n.size() != 0) {
+			for (Node arg : n.<Node> getList(0)) {
+				Class t = (Class) dispatch(arg);
+				if (t == Error.class) { 
+					return Error.class;
+				}
+				assert(Expression.class.isAssignableFrom(t));
+				args.add((Expression)arg.getProperty(Constants.TYPE));
+			}
+		}
+		n.setProperty(Constants.TYPE, new ValuesList(args));
+		return ValuesList.class;
 	}
 	
 	

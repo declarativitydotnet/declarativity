@@ -25,6 +25,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public static final String BOTTOMK  = "bottomk";
 	public static final String MIN      = "min";
 	public static final String MAX      = "max";
+	public static final String SUM      = "sum";
 	public static final String COUNT    = "count";
 	public static final String AVG      = "avg";
 	public static final String SUMSTR   = "sumstr";
@@ -52,6 +53,9 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		else if (AVG.equals(aggregate.functionName())) {
 			return new Avg(aggregate);
 		}
+		else if (SUM.equals(aggregate.functionName())) {
+			return new Sum(aggregate);
+		}
 		else if (SUMSTR.equals(aggregate.functionName())) {
 			return new ConcatString(aggregate);
 		}
@@ -69,8 +73,11 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		else if (COUNT.equals(function)) {
 			return Integer.class;
 		}
-		else if (AVG.equals(function)) {
+		else if (AVG.equals(function) || SUM.equals(function)) {
 			return Float.class;
+		}
+		else if (TOPK.equals(function) || BOTTOMK.equals(function)) {
+			return ValueList.class;
 		}
 		else if (TUPLESET.equals(function)) {
 			return jol.types.basic.TupleSet.class;
@@ -386,6 +393,55 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		@Override
 		public Float result() {
 			return size() == 0 ? 0F : this.sum / (float) this.tuples.size();
+		}
+		
+		public void reset() {
+			this.tuples = new TupleSet();
+			this.sum    = 0F;
+		}
+		
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				Number value = (Number) this.accessor.evaluate(tuple);
+				this.sum += value.floatValue();
+			}
+		}
+		
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				Number value = (Number) this.accessor.evaluate(tuple);
+				this.sum -= value.floatValue();
+			}
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+		
+		@Override
+		public int position() {
+			return this.position;
+		}
+	}
+	
+	public static class Sum extends Aggregate<Float> {
+		private TupleSet tuples;
+		private Float sum;
+		private TupleFunction<Number> accessor;
+		private int position;
+		
+		public Sum(jol.lang.plan.Aggregate aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		@Override
+		public Float result() {
+			return this.sum;
 		}
 		
 		public void reset() {

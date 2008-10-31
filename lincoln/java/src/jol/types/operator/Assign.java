@@ -41,7 +41,7 @@ public class Assign<C extends Comparable<C> > extends Operator {
 	
 	@Override
 	public String toString() {
-		return this.assignment.toString();
+		return this.assignment == null ? "null" : this.assignment.toString();
 	}
 
 	@Override
