@@ -9,13 +9,12 @@ import jol.types.basic.ValueList;
 
 define(link, keys(0,1), {String, String});
 define(path, keys(0,1,2), {String, String, Integer});
-define(shortestPath, keys(0,1), {String, String, Integer});
-define(topPaths, keys(0,1), {String, String, ValueList, String});
+define(pathStatistics, keys(0,1), {String, String, Integer, Integer, ValueList});
+define(allPaths, {String, ValueList});
 define(flatTopPaths, {String, String, Integer});
-
-define(allpaths, {String, ValueList});
 define(flatpaths, {String, Integer});
 define(computeAll, {String});
+define(links, keys(0), {Integer});
 
 /* Fire a time 10 seconds following program start time.
    The period is set to 0, which means I only want it to
@@ -36,19 +35,20 @@ link("6", "7");
 link("7", "8");
 link("8", "9");
 
+watch(link, ae);
 watch(path, ae);
-watch(shortestPath, ae);
-watch(topPaths, ae);
-watch(allpaths, a);
+watch(pathStatistics, ae);
+watch(allPaths, a);
 watch(flatpaths, a);
 watch(flatTopPaths, a);
-watch(newlink, ra);
 
 /* Add the link 9 -> 10 when newlink fires */
 link("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
 
 newlink(null, 5000, null) :- newlink(_, 0, _);
 
+watch(links, a);
+links(count<*>) :- link(Src, Dst);
 
 /* Initialize all paths with link */
 init
@@ -57,33 +57,29 @@ path(Source, Destination, 1) :- link(Source, Destination);
 /* Transitive closure over path, link. */
 transitive
 path(Source, Destination, Hops+1) :- 
-	path(Source, Intermediate, Hops), link(Intermediate, Destination);
+	path(Source, Intermediate, Hops), link(Intermediate, Destination),
+	links(Count), Hops <= Count;
 
 /* Compute shortest paths. */
-shortestPath
-shortestPath(Source, Destination, min<Hops>) :- 
-	path(Source, Destination, Hops);
-	
-/* What are the top two (if exist) path hops from each
-   source to each destination? */
-topPaths(Source, Destination, bottomk<Hops, K>, "foo") :-
+statistics
+pathStatistics(Source, Destination, min<Hops>, max<Hops>, bottomk<Hops, K>) :- 
 	path(Source, Destination, Hops),
 	K := 2;
 	
 computeAll(Source) :-
-	shortestPath(Source, Destination, Hops);
+	pathStatistics(Source, Destination, MinHops, MaxHops, TopHops);
 	
 import jol.types.basic.Schema;
-allpaths(Source, generic<(new ValueList()).insert(Destination)>) :-
+allPaths(Source, generic<(new ValueList()).insert(Destination)>) :-
 	computeAll(Bla),
 	path(Source, Destination, Hops);
 	
 flatpaths(Source, Path) :-
-	flatten(allpaths(Source, Paths)),
+	flatten(allPaths(Source, Paths)),
 	Path := (Integer) Paths;
 	
 flatTopPaths(Source, Destination, Hop) :-
-	flatten(topPaths(Source, Destination, Hops)),
-	Hop := (Integer) Hops;
+	flatten(pathStatistics(Source, Destination, MinHops, MaxHops, TopHops)),
+	Hop := (Integer) TopHops;
 
 delete link("2", "4") :- removeLink(Period, TTL, Delay);

@@ -42,13 +42,15 @@ import jol.types.function.Aggregate;
  */
 public class Aggregation<C extends Comparable<C>> extends Table {
 	/** Stores base tuples in aggregate functions. */
-	private Map<Tuple, Aggregate<C>> baseTuples;
+	private Map<Tuple, List<Aggregate<C>>> aggregateFunctions;
+	
+	private List<Aggregate<C>> singleGroupAggregateFunctions;
 	
 	/** Stores aggregate values derived from base tuples and aggregate functions. */
 	private TupleSet aggregateTuples;
 	
 	/** The aggregate attribute */
-	private jol.lang.plan.Aggregate aggregate;
+	private List<jol.lang.plan.Aggregate> aggregates;
 	
 	/** The primary key. */
 	protected Index primary;
@@ -62,17 +64,26 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	 * @param predicate The predicate containing the GroupBy/Aggregation
 	 * @param type The type of aggregation.
 	 */
-	public Aggregation(Runtime context, Predicate predicate, Table.Type type) {
-		super(predicate.name(), type, key(predicate), types(predicate));
-		this.baseTuples = new HashMap<Tuple, Aggregate<C>>();
-		this.aggregateTuples = new TupleSet(name());
+	public Aggregation(Runtime context, Predicate predicate, Table.Type type, Class[] schemaTypes) {
+		super(predicate.name(), type, key(predicate), new TypeList(schemaTypes));
+		this.aggregateFunctions = null;
+		this.singleGroupAggregateFunctions = null;
+		this.aggregateTuples    = new TupleSet(name());
+		this.aggregates         = new ArrayList<jol.lang.plan.Aggregate>();
 		
 		for (jol.lang.plan.Expression arg : predicate) {
 			if (arg instanceof jol.lang.plan.Aggregate) {
-				this.aggregate = (jol.lang.plan.Aggregate) arg;
-				break;
+				this.aggregates.add((jol.lang.plan.Aggregate)arg);
 			}
 		}
+		
+		if (key().size() > 0) {
+			this.aggregateFunctions = new HashMap<Tuple, List<Aggregate<C>>>();
+		}
+		else {
+			this.singleGroupAggregateFunctions = groupGenerate();
+		}
+		
 		
 		if (type == Table.Type.TABLE) {
 			this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
@@ -80,12 +91,12 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		}
 	}
 	
-	/**
-	 * The aggregate variable taken from the predicate.
-	 * @return The aggregate variable object.
-	 */
-	public jol.lang.plan.Aggregate variable() {
-		return this.aggregate;
+	private List<Aggregate<C>> groupGenerate() {
+		List<Aggregate<C>> functions = new ArrayList<Aggregate<C>>();
+		for (jol.lang.plan.Aggregate aggregate : this.aggregates) {
+			functions.add(Aggregate.function(aggregate));
+		}
+		return functions;
 	}
 	
 	/**
@@ -96,7 +107,8 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	private static Key key(Predicate predicate) {
 		List<Integer> key = new ArrayList<Integer>();
 		for (jol.lang.plan.Expression arg : predicate) {
-			if (!(arg instanceof jol.lang.plan.Aggregate)) {
+			if (!(arg instanceof jol.lang.plan.AggregateVariable) &&
+					!(arg instanceof jol.lang.plan.Aggregate)) {
 				key.add(arg.position());
 			}
 		}
@@ -104,34 +116,33 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	}
 	
 	/**
-	 * Extract the type of each attribute from the predicate.
-	 * @param predicate The predicate containing the aggregate variable.
-	 * @return An ordered list of types.
+	 * Returns the (base) set of tuples contained in this table.
+	 * @return The set of tuples that exist in this table after
+	 * all insert/delete calls.
 	 */
-	private static TypeList types(Predicate predicate) {
-		TypeList types = new TypeList();
-		for (jol.lang.plan.Expression arg : predicate) {
-			types.add(arg.type());
+	private TupleSet result() {
+		TupleSet result = new TupleSet(name());
+		if (this.singleGroupAggregateFunctions != null) {
+			Tuple tuple = new Tuple();
+			for (Aggregate<C> aggregation : this.singleGroupAggregateFunctions) {
+				tuple.append(null, aggregation.result());
+			}
+			result.add(tuple);
+		} else {
+			for (Tuple group : this.aggregateFunctions.keySet()) {
+				Tuple tuple = group.clone();
+				for (Aggregate<C> aggregation :  this.aggregateFunctions.get(group)) {
+					tuple.insert(aggregation.position(), aggregation.result());
+				}
+				result.add(tuple);
+			}
 		}
-		return types;
+		return result;
 	}
 	
 	@Override
 	public Iterable<Tuple> tuples() {
 		return this.aggregateTuples.clone();
-	}
-	
-	/**
-	 * Returns the (base) set of tuples contained in this table.
-	 * @return The set of tuples that exist in this table after
-	 * all insert/delete calls.
-	 */
-	private TupleSet values() {
-		TupleSet values = new TupleSet(name());
-		for (Aggregate<C> value : baseTuples.values()) {
-			values.add(value.result());
-		}
-		return values;
 	}
 	
 	@Override
@@ -154,24 +165,39 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		}
 		
 		for (Tuple tuple : insertions) {
-			Tuple key = key().project(tuple);
-			if (!baseTuples.containsKey(key)) {
-				baseTuples.put(key, Aggregate.function(this.aggregate));
+			List<Aggregate<C>> functions = null;
+			if (this.singleGroupAggregateFunctions != null) {
+				functions = this.singleGroupAggregateFunctions;
 			}
+			else {
+				Tuple key = key().project(tuple);
+				if (!this.aggregateFunctions.containsKey(key)) {
+					this.aggregateFunctions.put(key, groupGenerate());
+				}
+				functions = this.aggregateFunctions.get(key);
+			}
+			
 			try {
-				baseTuples.get(key).insert(tuple);
+				for (Aggregate<C> func : functions) {
+					func.insert(tuple); // perform this aggregate
+				}
 			} catch (JolRuntimeException e) {
 				e.printStackTrace();
 				System.exit(0);
 			}
 		}
 		
-		TupleSet delta = values();
+		TupleSet delta = result();
 		delta.removeAll(this.aggregateTuples.clone());  // Only those newly inserted tuples remain.
 		delta.removeAll(deletions);
 		
 		if (type() == Table.Type.EVENT) {
-			this.baseTuples.clear();
+			if (this.singleGroupAggregateFunctions != null) {
+				this.singleGroupAggregateFunctions = groupGenerate();
+			}
+			else {
+				this.aggregateFunctions.clear();
+			}
 			this.aggregateTuples.clear();
 			return delta;
 		}
@@ -191,24 +217,39 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 			throw new UpdateException("Aggregation table " + name() + " is an event table!");
 		}
 		
-		for (Tuple tuple : deletions) {
-			Tuple key = key().project(tuple);
-			if (this.baseTuples.containsKey(key)) {
-				try {
-					this.baseTuples.get(key).delete(tuple);
-					if (this.baseTuples.get(key).tuples().size() == 0) {
-						this.baseTuples.remove(key);
+		try {
+			for (Tuple tuple : deletions) {
+				if (this.singleGroupAggregateFunctions != null) {
+					for (Aggregate<C> function : this.singleGroupAggregateFunctions) {
+						function.delete(tuple);
+						if (function.size() == 0) {
+							this.singleGroupAggregateFunctions = groupGenerate();
+							break; // we're out of tuples for this group.
+						}
 					}
-				} catch (JolRuntimeException e) {
-					e.printStackTrace();
+				}
+				else {
+					Tuple key = key().project(tuple);
+					if (this.aggregateFunctions.containsKey(key)) {
+						List<Aggregate<C>> functions = this.aggregateFunctions.get(key);
+						for (Aggregate<C> function : functions) {
+							function.delete(tuple);
+							if (function.size() == 0) {
+								this.aggregateFunctions.remove(key);
+								break; // we're out of tuples for this group.
+							}
+						}
+					}
 				}
 			}
+		} catch (JolRuntimeException e) {
+			e.printStackTrace();
 		}
 		
 		TupleSet delta = new TupleSet(name());
 		delta.addAll(tuples());
 		
-		delta.removeAll(values());  // removed = tuples that don't exist in after.
+		delta.removeAll(result());  // removed = tuples that don't exist in after.
 		return super.delete(delta); // signal indices that we've removed these tuples.
 	}
 	

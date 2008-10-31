@@ -248,15 +248,21 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		this.id = id;
 	}
 	
+	public void insert(int index, Comparable value) {
+		this.values.add(index, value);
+	}
+	
 	/**
 	 * Append the tuple value along with the corresponding schema variable.
 	 * @param variable The schema variable.
 	 * @param value The tuple value.
 	 */
 	public void append(Variable variable, Comparable value) {
-		variable = variable.clone();
-		variable.position(this.schema.size());
-		this.schema.append(variable);
+		if (variable != null) {
+			variable = variable.clone();
+			variable.position(this.schema.size());
+			this.schema.append(variable);
+		}
 		this.values.add(value);
 	}
 	
@@ -362,8 +368,12 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 *  @param value The value to set. 
 	 */
 	public void value(int field, Comparable value) {
-		assert(field < values.size());
-		values.set(field, value);
+		if (this.values.size() == field) {
+			this.values.add(value);
+		}
+		else {
+			values.set(field, value);
+		}
 	}
 	
 	/**

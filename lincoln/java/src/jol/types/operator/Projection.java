@@ -15,6 +15,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
+import jol.types.table.TableName;
 import jol.core.Runtime;
 
 /**
@@ -29,6 +30,8 @@ public class Projection extends Operator {
 	/** The field accessors of the projection. */
 	List<TupleFunction<Comparable>> accessors = new ArrayList<TupleFunction<Comparable>>();
 	
+	private TableName name;
+	
 	/**
 	 * Create a new projection operator
 	 * @param context THe runtime context.
@@ -36,34 +39,26 @@ public class Projection extends Operator {
 	 */
 	public Projection(Runtime context, Predicate predicate) {
 		super(context, predicate.program(), predicate.rule());
+		this.name = predicate.name();
 		
-		List<Variable>   projection = new ArrayList<Variable>();
-		List<Variable>   variables  = predicate.schema().variables();
-		List<Expression> arguments  = predicate.arguments();
+		List<Variable> variables = new ArrayList<Variable>();
+		List<Expression> arguments = predicate.arguments();
+		List<Variable> predicateVariables = predicate.schema().variables();
 		
-		for (int i = 0; i < variables.size(); i++) {
-			Variable var = variables.get(i);
-			if (var instanceof GenericAggregate) {
-				for (Variable sub : var.variables()) {
-					accessors.add(sub.function());
-					projection.add(sub);
+		for (int i = 0; i < arguments.size(); i++) {
+			Expression argument = arguments.get(i);
+			if (argument instanceof Variable) {
+				for (Variable var : ((Variable)argument).variables()) {
+					accessors.add(var.function());
+					variables.add(var);
 				}
 			}
 			else {
-				accessors.add(arguments.get(i).function());
-				projection.add(var);
-				
-				if (var instanceof Limit) {
-					Limit limit = (Limit) var;
-					if (limit.kVar() != null) {
-						accessors.add(limit.kVar().function());
-						projection.add(limit.kVar());
-					}
-				}
+				accessors.add(argument.function());
+				variables.add(predicateVariables.get(i));
 			}
 		}
-		
-		this.schema = new Schema(predicate.name(), projection);
+		this.schema = new Schema(predicate.name(), variables);
 	}
 	
 	@Override
@@ -75,13 +70,21 @@ public class Projection extends Operator {
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		TupleSet result = new TupleSet(schema().name());
 		for (Tuple tuple : tuples) {
-			List<Comparable> values = new ArrayList<Comparable>();
-			for (TupleFunction<Comparable> accessor : accessors) {
-				values.add(accessor.evaluate(tuple));
+			try {
+				List<Comparable> values = new ArrayList<Comparable>();
+				for (TupleFunction<Comparable> accessor : accessors) {
+					values.add(accessor.evaluate(tuple));
+				}
+				Tuple projection = new Tuple(values);
+				projection.schema(schema());
+				result.add(projection);
+			} catch (Throwable e) {
+				System.err.println("PROJECTION ERROR " + this.name
+						+ ": PROGRAM " + this.program + " RULE " + this.rule + 
+						" -- SCHEMA " + this.schema + " tuple " + tuple + 
+						" TUPLE SCHEMA " + tuple.schema());
+				System.exit(0);
 			}
-			Tuple projection = new Tuple(values);
-			projection.schema(schema());
-			result.add(projection);
 		}
 		return result;
 	}

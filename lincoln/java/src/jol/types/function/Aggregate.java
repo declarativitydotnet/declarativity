@@ -11,39 +11,15 @@ import jol.types.exception.JolRuntimeException;
 
 public abstract class Aggregate<C extends Comparable<C>> {
 	
-	public abstract Tuple insert(Tuple tuple) throws JolRuntimeException;
+	public abstract void insert(Tuple tuple) throws JolRuntimeException;
 	
-	public abstract Tuple delete(Tuple tuple) throws JolRuntimeException;
+	public abstract void delete(Tuple tuple) throws JolRuntimeException;
 	
-	public abstract Tuple result();
+	public abstract Comparable result();
 	
-	public abstract TupleSet tuples();
+	public abstract int size();
 	
-	public abstract Class returnType();
-	
-	private static class Accessor<C extends Comparable<C>> implements TupleFunction<C> {
-		private jol.lang.plan.Variable var;
-		
-		public Accessor(jol.lang.plan.Variable var) {
-			this.var = var;
-		}
-		
-		public Integer position() {
-			return this.var.position();
-		}
-
-		public C evaluate(Tuple tuple) throws JolRuntimeException {
-			return (C) tuple.value(this.var.position());
-		}
-
-		public Class returnType() {
-			return this.var.type();
-		}
-		
-		public jol.lang.plan.Variable var() {
-			return this.var;
-		}
-	}
+	public abstract int position();
 	
 	public static final String TOPK     = "topk";
 	public static final String BOTTOMK  = "bottomk";
@@ -65,22 +41,22 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return new TopBottomK((jol.lang.plan.BottomK)aggregate);
 		}
 		else if (MIN.equals(aggregate.functionName())) {
-			return new Min(new Accessor(aggregate));
+			return new Min(aggregate);
 		}
 		else if (MAX.equals(aggregate.functionName())) {
-			return new Max(new Accessor(aggregate));
+			return new Max(aggregate);
 		}
 		else if (COUNT.equals(aggregate.functionName())) {
-			return new Count(new Accessor(aggregate));
+			return new Count(aggregate);
 		}
 		else if (AVG.equals(aggregate.functionName())) {
-			return new Avg(new Accessor(aggregate));
+			return new Avg(aggregate);
 		}
 		else if (SUMSTR.equals(aggregate.functionName())) {
-			return new ConcatString(new Accessor<String>(aggregate));
+			return new ConcatString(aggregate);
 		}
 		else if (TUPLESET.equals(aggregate.functionName())) {
-			return new TupleCollection(new Accessor<Tuple>(aggregate));
+			return new TupleCollection(aggregate);
 		}
 		
 		return null;
@@ -105,30 +81,25 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public static class TopBottomK<C extends Comparable<C>> extends Aggregate<C> {
 		private enum Type{TOP, BOTTOM};
 		
-		private Number kConstant;
+		private int position;
 		private TreeMap<C, ValueList<C>> values;
 		private Type type;
 		private TupleSet tuples;
-		private Tuple result;
-		private Accessor<C> kAccessor;
-		private Accessor<C> valueAccessor;
+		private Comparable result;
+		private TupleFunction<C> accessor;
 
 		
 		public TopBottomK(jol.lang.plan.TopK aggregate) {
 			this.type = Type.TOP;
-			this.kConstant = aggregate.kConst();
-			this.kAccessor = aggregate.kVar() == null ?
-					null : new Accessor<C>(aggregate.kVar());
-			this.valueAccessor = new Accessor<C>(aggregate);
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
 			reset();
 		}
 		
 		public TopBottomK(jol.lang.plan.BottomK aggregate) {
 			this.type = Type.BOTTOM;
-			this.kConstant = aggregate.kConst();
-			this.kAccessor = aggregate.kVar() == null ?
-					null : new Accessor<C>(aggregate.kVar());
-			this.valueAccessor = new Accessor<C>(aggregate);
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
 			reset();
 		}
 		
@@ -139,16 +110,16 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		
 		@Override
-		public Tuple result() {
-			return this.result == null ? null : this.result.clone();
+		public Comparable result() {
+			return this.result;
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws JolRuntimeException {
+		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				C  value = this.valueAccessor.evaluate(tuple);
-				Number kConst = this.kConstant == null ?
-						(Number) this.kAccessor.evaluate(tuple) : this.kConstant;
+				ValueList result = (ValueList)this.accessor.evaluate(tuple);
+				C      value  = (C) result.get(0);
+				Number kConst = (Number) result.get(1);
 						
 				if (!this.values.containsKey(value)) {
 					this.values.put(value, new ValueList<C>());
@@ -166,46 +137,35 @@ public abstract class Aggregate<C extends Comparable<C>> {
 						resultValues.add(element);
 					}
 				}
-				this.result = tuple.clone();
-				
-				this.result.value(this.valueAccessor.position(), resultValues);
-				if (this.kAccessor != null) {
-					this.result.remove(this.kAccessor.var());
-				}
-				return this.result;
+				this.result = resultValues;
 			}
-			return null;
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws JolRuntimeException {
+		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				TupleSet tuples = this.tuples;
 				reset();
-				Tuple last = null;
 				for (Tuple copy : tuples) {
-					last = insert(copy);
+					insert(copy);
 				}
-				return last;
 			}
-			return null;
+		}
+		
+		@Override
+		public int size() {
+			return this.tuples.size();
 		}
 
 		@Override
-		public Class returnType() {
-			return ValueList.class;
-		}
-
-		@Override
-		public TupleSet tuples() {
-			return this.tuples.clone();
+		public int position() {
+			return this.position;
 		}
 	}
 	
 	public static class Generic<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
-		private Tuple result;
-		private C current;
+		private C result;
 		private GenericAggregate aggregate;
 		
 		public Generic(GenericAggregate aggregate) {
@@ -216,400 +176,351 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		private void reset() {
 			this.tuples = new TupleSet();
 			this.result = null;
-			this.current = null;
 		}
 		
 		@Override
-		public Tuple result() {
-			return this.result == null ? null : this.result.clone();
-		}
-		
-		@Override
-		public Tuple insert(Tuple tuple) throws JolRuntimeException {
-			if (this.current == null) {
-			    this.current = (C)this.aggregate.function().evaluate(tuple);
-			}
-			this.aggregate.function(this.current).evaluate(tuple);
-			this.tuples.add(tuple);
-			this.result = tuple.clone();
-			this.result.value(this.aggregate.position(), this.current);
+		public Comparable result() {
 			return this.result;
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws JolRuntimeException {
-			if (this.tuples.remove(tuple)) {
-				TupleSet tuples = this.tuples;
-				reset();
-				Tuple last = null;
-				for (Tuple copy : tuples) {
-					last = insert(copy);
-				}
-				return last;
-			}
-			return null;
-		}
-
-		@Override
-		public Class returnType() {
-			return this.aggregate.type();
-		}
-
-		@Override
-		public TupleSet tuples() {
-			return this.tuples.clone();
-		}
-	}
-	
-	public static class Min<C extends Comparable<C>> extends Aggregate<C> {
-		private TupleSet tuples;
-		private Tuple result;
-		private C current;
-		private Accessor<C> accessor;
-		
-		public Min(Accessor<C> accessor) {
-			this.accessor = accessor;
-			reset();
-		}
-		
-		private void reset() {
-			this.result = null;
-			this.current = null;
-			this.tuples = new TupleSet();
-		}
-		
-		@Override
-		public TupleSet tuples() {
-			return this.tuples.clone();
-		}
-		
-		@Override
-		public Tuple result() {
-			return this.result == null ? null : this.result.clone();
-		}
-		
-		@Override
-		public Tuple insert(Tuple tuple) throws JolRuntimeException {
+		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				C value = accessor.evaluate(tuple);
-				if (current == null || this.current.compareTo(value) > 0) {
-					this.current = value;
-					this.result = tuple;
-					return result;
+				if (this.result == null) {
+					this.result = (C)this.aggregate.function().evaluate(tuple);
 				}
+				this.aggregate.function(this.result).evaluate(tuple);
 			}
-			return null;
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws JolRuntimeException {
-			if (this.tuples.remove(tuple)) {
-				C  value = accessor.evaluate(tuple);
-				if (this.current.compareTo(value) == 0) {
-					TupleSet tuples = this.tuples;
-					reset();
-					for (Tuple copy : tuples) {
-						insert(copy);
-					}
-					return result();
-				}
-			}
-			return null;
-		}
-
-		@Override
-		public Class returnType() {
-			return accessor.returnType();
-		}
-	}
-	
-	public static class Max<C extends Comparable<C>> extends Aggregate<C> {
-		private TupleSet tuples;
-		private Tuple result;
-		private C current;
-		private Accessor<C> accessor;
-		
-		public Max(Accessor<C> accessor) {
-			this.result = null;
-			this.current = null;
-			this.tuples = new TupleSet();
-			this.accessor = accessor;
-		}
-		
-		@Override
-		public Tuple result() {
-			return this.result == null ? null : this.result.clone();
-		}
-		
-		@Override
-		public Tuple insert(Tuple tuple) throws JolRuntimeException {
-			if (this.tuples.add(tuple)) {
-				C value = accessor.evaluate(tuple);
-				if (current == null || this.current.compareTo(value) < 0) {
-					this.current = value;
-					this.result = tuple;
-					return result;
-				}
-			}
-			return null;
-		}
-		
-		@Override
-		public Tuple delete(Tuple tuple) throws JolRuntimeException {
-			if (this.tuples.contains(tuple)) {
-				this.tuples.remove(tuple);
-				C value = accessor.evaluate(tuple);
-				if (this.current.compareTo(value) == 0) {
-					TupleSet tuples = this.tuples;
-					this.tuples = new TupleSet();
-					this.current = null;
-					this.result  = null;
-					for (Tuple copy : tuples) {
-						insert(copy);
-					}
-					return result();
-				}
-			}
-			return null;
-		}
-
-		@Override
-		public Class returnType() {
-			return accessor.returnType();
-		}
-		
-		@Override
-		public TupleSet tuples() {
-			return this.tuples.clone();
-		}
-	}
-	
-	public static class Count<C extends Comparable<C>> extends Aggregate<C>{
-		private TupleSet tuples;
-		private Tuple result;
-		private Accessor<C> accessor;
-		
-		public Count(Accessor<C> accessor) {
-			this.tuples = new TupleSet();
-			this.result = null;
-			this.accessor = accessor;
-		}
-		
-		@Override
-		public Tuple result() {
-			if (this.result != null) {
-				this.result = this.result.clone();
-				this.result.value(accessor.position(), this.tuples.size());
-				return this.result;
-			}
-			return null;
-		}
-		
-		@Override
-		public Tuple insert(Tuple tuple) {
-			if (this.tuples.add(tuple)) {
-				this.result = tuple;
-				return result();
-			}
-			return null;
-		}
-		
-		@Override
-		public Tuple delete(Tuple tuple) {
-			this.result = tuple;
-			this.tuples.remove(tuple);
-			return result();
-		}
-
-		@Override
-		public Class returnType() {
-			return Integer.class;
-		}
-		
-		@Override
-		public TupleSet tuples() {
-			return this.tuples.clone();
-		}
-	}
-	
-	public static class Avg<C extends Comparable<C>> extends Aggregate<C> {
-		private TupleSet tuples;
-		private Tuple result;
-		private Float sum;
-		private Accessor<C> accessor;
-		
-		public Avg(Accessor<C> accessor) {
-			this.accessor = accessor;
-			reset();
-		}
-		
-		@Override
-		public Tuple result() {
-			if (this.result != null) {
-				this.result = this.result.clone();
-				this.result.value(accessor.position(), this.sum / (float)this.tuples.size());
-				return this.result;
-			}
-			return null;
-		}
-		
-		public void reset() {
-			this.tuples = new TupleSet();
-			this.result = null;
-			this.sum = 0F;
-		}
-		
-		@Override
-		public Tuple insert(Tuple tuple) throws JolRuntimeException {
-			if (this.tuples.add(tuple)) {
-				this.result = tuple;
-				Number value = (Number) this.accessor.evaluate(tuple);
-				this.sum += value.floatValue();
-				return result();
-			}
-			return null;
-		}
-		
-		@Override
-		public Tuple delete(Tuple tuple) throws JolRuntimeException {
-			if (this.tuples.remove(tuple)) {
-				this.tuples.add(tuple);
-				this.result = tuple;
-				Number value = (Number) this.accessor.evaluate(tuple);
-				this.sum -= value.floatValue();
-				return result();
-			}
-			return null;
-		}
-
-		@Override
-		public Class returnType() {
-			return Float.class;
-		}
-		
-		@Override
-		public TupleSet tuples() {
-			return this.tuples.clone();
-		}
-	}
-	
-	public static class ConcatString extends Aggregate<String> {
-		private TupleSet tuples;
-		private Tuple result;
-		private String current;
-		private Accessor<String> accessor;
-		
-		public ConcatString(Accessor<String> accessor) {
-			this.accessor = accessor;
-			reset();
-		}
-		
-		@Override
-		public Tuple result() {
-			if (this.result != null) {
-				this.result = this.result.clone();
-				this.result.value(accessor.position(), this.current);
-				return this.result;
-			}
-			return null;
-		}
-		
-		public void reset() {
-			this.tuples = new TupleSet();
-			this.result = null;
-			this.current = null;
-		}
-		
-		@Override
-		public Tuple insert(Tuple tuple) throws JolRuntimeException {
-			if (this.tuples.add(tuple)) {
-				this.result = tuple;
-				if (this.current == null) {
-					this.current = this.accessor.evaluate(tuple);
-				}
-				else {
-					this.current += this.accessor.evaluate(tuple);
-				}
-				return result();
-			}
-			return null;
-		}
-		
-		@Override
-		public Tuple delete(Tuple tuple) throws JolRuntimeException {
+		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				TupleSet tuples = this.tuples;
 				reset();
 				for (Tuple copy : tuples) {
 					insert(copy);
 				}
-				return result();
 			}
-			return null;
-		}
-
-		@Override
-		public Class returnType() {
-			return String.class;
 		}
 		
 		@Override
-		public TupleSet tuples() {
-			return this.tuples.clone();
+		public int size() {
+			return this.tuples.size();
+		}
+
+		@Override
+		public int position() {
+			return this.aggregate.position();
+		}
+	}
+	
+	public static class Min<C extends Comparable<C>> extends Aggregate<C> {
+		private TupleSet tuples;
+		private C result;
+		private TupleFunction<C> accessor;
+		private int position;
+		
+		public Min(jol.lang.plan.Aggregate aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		private void reset() {
+			this.result = null;
+			this.tuples = new TupleSet();
+		}
+		
+		@Override
+		public C result() {
+			return this.result;
+		}
+		
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				C value = accessor.evaluate(tuple);
+				if (this.result == null || this.result.compareTo(value) > 0) {
+					this.result = value;
+				}
+			}
+		}
+		
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				C value = accessor.evaluate(tuple);
+				if (this.result.compareTo(value) == 0) {
+					TupleSet tuples = this.tuples;
+					reset();
+					for (Tuple copy : tuples) {
+						insert(copy);
+					}
+				}
+			}
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+
+		@Override
+		public int position() {
+			return this.position;
+		}
+	}
+	
+	public static class Max<C extends Comparable<C>> extends Aggregate<C> {
+		private TupleSet tuples;
+		private C result;
+		private TupleFunction<C> accessor;
+		private int position;
+		
+		public Max(jol.lang.plan.Aggregate aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		private void reset() {
+			this.result = null;
+			this.tuples = new TupleSet();
+		}
+		
+		@Override
+		public C result() {
+			return this.result;
+		}
+		
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				C value = accessor.evaluate(tuple);
+				if (this.result == null || this.result.compareTo(value) < 0) {
+					this.result = value;
+				}
+			}
+		}
+		
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.contains(tuple)) {
+				this.tuples.remove(tuple);
+				C value = accessor.evaluate(tuple);
+				if (this.result.compareTo(value) == 0) {
+					TupleSet tuples = this.tuples;
+					reset();
+					for (Tuple copy : tuples) {
+						insert(copy);
+					}
+				}
+			}
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+		
+		@Override
+		public int position() {
+			return this.position;
+		}
+	}
+	
+	public static class Count<C extends Comparable<C>> extends Aggregate<C>{
+		private TupleSet tuples;
+		private TupleFunction<C> accessor;
+		private int position;
+		
+		public Count(jol.lang.plan.Aggregate aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		private void reset() {
+			this.tuples = new TupleSet();
+		}
+		
+		@Override
+		public Comparable result() {
+			return size();
+		}
+		
+		@Override
+		public void insert(Tuple tuple) {
+			this.tuples.add(tuple);
+		}
+		
+		@Override
+		public void delete(Tuple tuple) {
+			this.tuples.remove(tuple);
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+		
+		@Override
+		public int position() {
+			return this.position;
+		}
+	}
+	
+	public static class Avg<C extends Comparable<C>> extends Aggregate<C> {
+		private TupleSet tuples;
+		private Float sum;
+		private TupleFunction<C> accessor;
+		private int position;
+		
+		public Avg(jol.lang.plan.Aggregate aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		@Override
+		public Float result() {
+			return size() == 0 ? 0F : this.sum / (float) this.tuples.size();
+		}
+		
+		public void reset() {
+			this.tuples = new TupleSet();
+			this.sum    = 0F;
+		}
+		
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				Number value = (Number) this.accessor.evaluate(tuple);
+				this.sum += value.floatValue();
+			}
+		}
+		
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				Number value = (Number) this.accessor.evaluate(tuple);
+				this.sum -= value.floatValue();
+			}
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+		
+		@Override
+		public int position() {
+			return this.position;
+		}
+	}
+	
+	public static class ConcatString extends Aggregate<String> {
+		private TupleSet tuples;
+		private String result;
+		private TupleFunction<String> accessor;
+		private int position;
+		
+		public ConcatString(jol.lang.plan.Aggregate aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		@Override
+		public String result() {
+			return this.result;
+		}
+		
+		public void reset() {
+			this.tuples = new TupleSet();
+			this.result = null;
+		}
+		
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				if (this.result == null) {
+					this.result = this.accessor.evaluate(tuple);
+				}
+				else {
+					this.result += this.accessor.evaluate(tuple);
+				}
+			}
+		}
+		
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				TupleSet tuples = this.tuples;
+				reset();
+				for (Tuple copy : tuples) {
+					insert(copy);
+				}
+			}
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+		
+		@Override
+		public int position() {
+			return this.position;
 		}
 	}
 	
 	public static class TupleCollection extends Aggregate<Tuple> {
 		private TupleSet tuples;
-		private Tuple    result;
-		private TupleSet nestedSet;
-		private Accessor<Tuple> accessor;
+		private TupleSet result;
+		private TupleFunction<Tuple> accessor;
+		private int position;
 		
-		public TupleCollection(Accessor<Tuple> accessor) {
-			this.accessor = accessor;
+		public TupleCollection(jol.lang.plan.Aggregate aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		private void reset() {
 			this.tuples = new TupleSet();
-			this.nestedSet = new TupleSet();
-			this.result = null;
+			this.result = new TupleSet();
 		}
 		
 		@Override
-		public Tuple result() {
-			if (this.result != null) {
-				this.result = this.result.clone();
-				this.result.value(accessor.position(), this.nestedSet.clone());
-				return this.result;
-			}
-			return null;
+		public TupleSet result() {
+			return this.result;
 		}
 		
 		@Override
-		public Tuple insert(Tuple tuple) throws JolRuntimeException {
+		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				this.result = tuple;
-				this.nestedSet.add(this.accessor.evaluate(tuple));
-				return result();
+				this.result.add(this.accessor.evaluate(tuple));
 			}
-			return null;
 		}
 		
 		@Override
-		public Tuple delete(Tuple tuple) throws JolRuntimeException {
+		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
-				this.result = tuple;
-				this.nestedSet.remove(this.accessor.evaluate(tuple));
-				return result();
+				this.result.remove(this.accessor.evaluate(tuple));
 			}
-			return null;
 		}
 
 		@Override
-		public Class returnType() {
-			return TupleSet.class;
+		public int size() {
+			return this.tuples.size();
 		}
 		
 		@Override
-		public TupleSet tuples() {
-			return this.tuples.clone();
+		public int position() {
+			return this.position;
 		}
 	}
+	
 }

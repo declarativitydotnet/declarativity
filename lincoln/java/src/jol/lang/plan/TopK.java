@@ -7,11 +7,11 @@ import jol.types.basic.ValueList;
 
 public class TopK extends Limit {
 	
-	public TopK(String name, Number bottomkConst) {
-		super(name, jol.types.function.Aggregate.TOPK, bottomkConst);
+	public TopK(Variable value, Number bottomkConst) {
+		super(jol.types.function.Aggregate.TOPK, value, bottomkConst);
 	}
 	
-	public TopK(String name, Variable bottomkVar) {
-		super(name, jol.types.function.Aggregate.TOPK, bottomkVar);
+	public TopK(Variable value, Variable bottomkVar) {
+		super(jol.types.function.Aggregate.TOPK, value, bottomkVar);
 	}
 }

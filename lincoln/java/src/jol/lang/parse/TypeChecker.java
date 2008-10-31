@@ -18,6 +18,7 @@ import java.util.Set;
 import stasis.jni.LinearHashNTA;
 
 import jol.lang.plan.Aggregate;
+import jol.lang.plan.AggregateVariable;
 import jol.lang.plan.Alias;
 import jol.lang.plan.ArrayIndex;
 import jol.lang.plan.Assignment;
@@ -603,27 +604,11 @@ public final class TypeChecker extends Visitor {
 
 		/* All variables mentioned in the head must be in the body. 
 		 * The types must also match. */
-		int position = 0;
 		for (Expression argument : head) {
-			if (argument instanceof Variable) {
-				Variable var = (Variable) argument;
-				var.position(position);
-				if (var instanceof DontCare) {
-					runtime.error("Head predicate can't contain don't care variable!", n);
-					return Error.class;
-				}
-				else if (var instanceof Aggregate) {
-					Aggregate agg = (Aggregate) var;
-					Table table = context.catalog().table(head.name());
-					if (table instanceof Aggregation) {
-						Aggregation aggregation = (Aggregation) table;
-						if (!agg.functionName().equals(aggregation.variable().functionName()) ||
-								!agg.name().equals(aggregation.variable().name())) {
-							runtime.error("Table aggregates must be unique!", n);
-							return Error.class;
-						}
-					}
-					
+			if (argument instanceof Aggregate) {
+				Aggregate agg = (Aggregate) argument;
+				Table table = context.catalog().table(head.name());
+				if (!(table instanceof Aggregation)) {
 					try {
 						/* Drop the previous table. */
 						context.catalog().drop(table.name());
@@ -631,15 +616,37 @@ public final class TypeChecker extends Visitor {
 						runtime.error(e.toString());
 						return Error.class;
 					}
-					Table aggregate = new Aggregation(context, head, table.type());
-					context.catalog().register(aggregate);
-					this.program.definition(aggregate);
+					table = new Aggregation(context, head, table.type(), table.types());
+					context.catalog().register(table);
+					this.program.definition(table);
+				}
 					
-					Class[] types = table.types();
-					if (types[var.position()] != var.type()) {
-						runtime.error("Aggregate type "+ aggregate.type() + 
-								      " does not match head type " + types[var.position()] + "!", n);
-						return Error.class;
+				Class[] types = table.types();
+				if (types[argument.position()] != argument.type()) {
+					runtime.error("Aggregate type "+ agg.type() + 
+							      " does not match table type " + 
+							      types[argument.position()] + "!", n);
+					return Error.class;
+				}
+			}
+			else if (argument instanceof Variable) {
+				Variable var = (Variable) argument;
+				if (var instanceof DontCare) {
+					runtime.error("Head predicate can't contain don't care variable!", n);
+					return Error.class;
+				}
+				else if (var instanceof AggregateVariable) {
+					if (!AggregateVariable.STAR.equals(var.name())) {
+						Class<?> bodyType = (Class) table.current().getParent()
+								.lookupLocally(var.name());
+						if (bodyType == null) {
+							for (Iterator<String> name = table.current().getParent().symbols(); 
+							     name.hasNext();)
+								System.err.println(name.next());
+							runtime.error("Head variable " + var
+									+ " not defined in rule body.", n);
+							return Error.class;
+						}
 					}
 				}
 				else {
@@ -659,7 +666,6 @@ public final class TypeChecker extends Visitor {
 					}
 				}
 			}
-			position++;
 		}
 
 		n.setProperty(Constants.TYPE, head);
@@ -815,6 +821,7 @@ public final class TypeChecker extends Visitor {
 		}
 		
 		
+		List<AggregateVariable> aggVariables = new ArrayList<AggregateVariable>();
 		/* Type check each tuple argument according to the schema. */
 		for (int index = 0; index < schema.size(); index++) {
 			Expression<?> param = parameters.size() <= index ? 
@@ -838,6 +845,15 @@ public final class TypeChecker extends Visitor {
 					arguments.add(dontcare);
 				}
 			}
+			
+			if (param instanceof Aggregate) {
+				for (AggregateVariable agg : ((Aggregate)param).variables()) {
+					if (!aggVariables.contains(agg) && 
+							!agg.name().equals(AggregateVariable.STAR)) {
+						aggVariables.add(agg);
+					}
+				}
+			}
 
 			if (param instanceof Variable) {
 				Variable var = (Variable) param;
@@ -850,12 +866,13 @@ public final class TypeChecker extends Visitor {
 				/* Map variable to its type. */
 				table.current().define(var.name(), var.type());
 				paramType = var.type();
-				param.position(index);
 			}
-			else if (param.variables().size() > 0) {
+			
+			if (param.variables().size() > 0) {
 				for (Variable var : param.variables()) {
+					if (var.name().equals(AggregateVariable.STAR)) continue;
 					if (!table.current().isDefined(var.name())) {
-						runtime.error("Body predicate contains an argument expression based " +
+						runtime.error("Predicate " + name + " contains an argument expression based " +
 									"that depends on variable " + var.name() + ", which is not" +
 									"defined by some left hand side predicate!", n);
 						return Error.class;
@@ -884,26 +901,18 @@ public final class TypeChecker extends Visitor {
 					return Error.class;
 				}
 			}
-
 			param.position(index);
 			arguments.add(param);
-			
-			/* Tricky little hack to add limit variables. 
-			 * This side steps type check against the table schema
-			 * since we only need to know that the aggregate position
-			 * in the table takes type ValueList. */
-			if (param instanceof Limit) {
-				Limit limit = (Limit) param;
-				if (limit.kVar() != null) {
-					limit.kVar().position(index+1);
-					table.current().define(limit.kVar().name(), Integer.class);
-				}
-			}
 		}
 		
 		if (schema.size() != arguments.size()) {
 			runtime.error("Schema size mismatch on predicate " +  name ,n);
 			return Error.class;
+		}
+		
+		/* Toss all aggregate variables at the end of the tuple. */
+		if (aggVariables.size() > 0) {
+			arguments.addAll(aggVariables);
 		}
 		
 		Predicate pred = new Predicate(notin, name, tableEvent, arguments);
@@ -1732,15 +1741,15 @@ public final class TypeChecker extends Visitor {
 				}
 				n.setProperty(Constants.TYPE, 
 						"topk".equals(function) ? 
-								new TopK(var.name(), kVar) : new BottomK(var.name(), kVar));
+								new TopK(var, kVar) : new BottomK(var, kVar));
 			}
 			else {
 				Value<Number>  kConst = (Value<Number>) n.getNode(2).getProperty(Constants.TYPE);
 				Variable       var    = (Variable)      n.getNode(1).getProperty(Constants.TYPE);
 				n.setProperty(Constants.TYPE, 
 						"topk".equals(function) ? 
-								new TopK(var.name(), kConst.value()) :
-									new BottomK(var.name(), kConst.value()));
+								new TopK(var, kConst.value()) :
+									new BottomK(var, kConst.value()));
 			}
 		}
 		else if ("generic".equals(function)) {
@@ -1754,21 +1763,15 @@ public final class TypeChecker extends Visitor {
 			n.setProperty(Constants.TYPE, new GenericAggregate(method));
 		}
 		else {
-			if (n.getNode(1) == null) {
+			Class type = (Class) dispatch(n.getNode(1));
+			if (type == Variable.class) {
+				Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
 				n.setProperty(Constants.TYPE, 
-						new Aggregate((String)null, function, jol.types.function.Aggregate.type(function, null)));
-			}
-			else {
-				Class type = (Class) dispatch(n.getNode(1));
-				if (type == Variable.class) {
-					Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
-					n.setProperty(Constants.TYPE, 
-							new Aggregate(var.name(), function, jol.types.function.Aggregate.type(function, var.type())));
-				} else if (type == MethodCall.class) {
-					MethodCall method = (MethodCall) n.getNode(1).getProperty(Constants.TYPE);
-					n.setProperty(Constants.TYPE,  
-							new Aggregate(method, function, jol.types.function.Aggregate.type(function, method.type())));
-				}
+						new Aggregate(new AggregateVariable(var), function, jol.types.function.Aggregate.type(function, var.type())));
+			} else if (type == MethodCall.class) {
+				MethodCall method = (MethodCall) n.getNode(1).getProperty(Constants.TYPE);
+				n.setProperty(Constants.TYPE,  
+						new Aggregate(method, function, jol.types.function.Aggregate.type(function, method.type())));
 			}
 		}
 		return Aggregate.class;

@@ -17,6 +17,9 @@ public class Variable extends Expression {
 	public Variable(String name, Class type) {
 		this.name = name;
 		this.type = type;
+		if (name.equals("*")) {
+			position(-1);
+		}
 		position(-1);
 	}
 	

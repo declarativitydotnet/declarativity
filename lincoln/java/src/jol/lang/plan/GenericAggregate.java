@@ -18,11 +18,8 @@ import jol.types.function.TupleFunction;
  */
 public class GenericAggregate extends Aggregate {
 
-	private MethodCall method;
-	
 	public GenericAggregate(MethodCall method) {
-		super(STAR, method.method().getName(), method.object().type());
-		this.method = method;
+		super(method, "generic", method.object().type());
 	}
 	
 	@Override
@@ -33,11 +30,6 @@ public class GenericAggregate extends Aggregate {
 	@Override
 	public String toString() {
 		return "generic<" + method.toString() + ">";
-	}
-	
-	@Override
-	public Set<Variable> variables() {
-		return method.variables();
 	}
 	
 	@Override
