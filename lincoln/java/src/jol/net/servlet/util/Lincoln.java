@@ -33,9 +33,26 @@ public class Lincoln {
 	
     public static abstract class Logger extends Callback {
     	private Table t;
-    	public Logger(Table t) { this.t = t; }
-    	public Logger(Runtime r, TableName n) { this.t = r.catalog().table(n); }
-    	public Logger(Runtime r, String scope, String name) { this.t = r.catalog().table(new TableName(scope, name)); }
+
+    	public Logger(Table t) {
+    		this.t = t;
+    		if(t == null) 
+    			throw new NullPointerException("Can't log against non-existent table");
+    	}
+    	public Logger(Runtime r, TableName n) {
+    		this.t = r.catalog().table(n);
+    		if(t == null) {
+    			throw new NullPointerException("Table " + n + " not found");
+    		}
+    	}
+    	public Logger(Runtime r, String scope, String name) {
+    		this.t = r.catalog().table(new TableName(scope, name));
+    		if(t == null) {
+    			throw new NullPointerException("Table " + scope
+    											 + "::" + name + " not found");
+    		}
+		}
+
     	public void start() { t.register(this); }
     	public void stop() { t.unregister(this); }
     }

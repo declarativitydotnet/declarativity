@@ -6,6 +6,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
+import jol.types.table.Table.Callback;
 
 /**
  * An event table.
@@ -28,6 +29,9 @@ public class EventTable extends Table {
 	@Override
 	/** Simply returns what is passed in as the delta set. */
 	public TupleSet insert(TupleSet tuples, TupleSet deletions) throws UpdateException {
+		for (Callback callback : this.callbacks) {
+			callback.insertion(tuples);
+		}
 		return tuples;
 	}
 	

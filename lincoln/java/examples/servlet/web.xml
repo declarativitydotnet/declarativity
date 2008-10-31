@@ -23,4 +23,41 @@
       <servlet-name>Civil</servlet-name>
       <url-pattern>/Civil/*</url-pattern>
     </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Slinki</servlet-name>
+        <servlet-class>jol.net.servlet.Slinki</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>8748</param-value>
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>servlet/stinki.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>Slinki</servlet-name>
+      <url-pattern>/slinki/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Civil2</servlet-name>
+        <servlet-class>jol.net.servlet.Civil</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>8748</param-value>
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>servlet/stinki.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>Civil2</servlet-name>
+      <url-pattern>/slinki-Civil/*</url-pattern>
+    </servlet-mapping>
+
+
+
 </web-app>

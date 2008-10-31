@@ -38,6 +38,9 @@ public class HTML {
 
         return s;
 	}
+	public StringBuilder body(String s) {
+		return new StringBuilder("<p>"+s+"</p>");
+	}
 	public StringBuilder footer() {
         return  new StringBuilder("</body>\n</html>");
 	}

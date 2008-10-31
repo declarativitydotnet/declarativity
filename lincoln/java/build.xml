@@ -91,7 +91,9 @@
     <war destfile="${dist}/lincoln.war"
 	 webxml="examples/servlet/web.xml">
       <classes dir="${src}" includes="**/*.olg"/>
-      <fileset dir="examples/servlet/" includes="lincoln.css"/>
+      <fileset dir="examples/servlet/" includes="**/*.css"/>
+      <fileset dir="examples/servlet/" includes="**/*.html"/>
+      <fileset dir="examples/servlet/" includes="**/*.js"/>
       <fileset dir="examples/" includes="**/*.olg"/>
       <classes dir="${build}" excludes="jol/test/**"/>
       <lib dir="${lib}" includes="xtc.jar"/>
