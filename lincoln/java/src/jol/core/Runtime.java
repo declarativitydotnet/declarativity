@@ -369,8 +369,9 @@ public class Runtime implements System {
 		for (int i = 1; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);
 			runtime.install("user", url);
+		  runtime.evaluate(); // Install program arguments.
 		}
-		runtime.evaluate(); // Install program arguments.
+	//runtime.evaluate(); // Install program arguments.
 		runtime.start();
 	}
 }

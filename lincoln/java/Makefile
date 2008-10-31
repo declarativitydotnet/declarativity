@@ -2,7 +2,9 @@ all: bin/stasis/jni/libstasisjni.so
 	@echo; echo "Be sure to add this to java's command line:" ;echo
 	@echo "  -Djava.library.path=`pwd`/bin/stasis/jni" ; echo
 
-STASIS_DIR=/home/sears/stasis4
+#STASIS_DIR=/home/sears/stasis4
+STASIS_DIR=/Users/peteralvaro/code/stasis/stasis-read-only
+JAVA_DIR=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home/
 
 bin/stasis/jni/Stasis.class : src/stasis/jni/Stasis.java
 	cd src;	javac -d ../bin \
@@ -15,23 +17,20 @@ src/stasis/jni/stasis_jni_Stasis.h : bin/stasis/jni/Stasis.class
 
 bin/stasis/jni/libstasisjni.so: src/stasis/jni/stasis_jni_Stasis.c \
 				src/stasis/jni/stasis_jni_Stasis.h
-	gcc -shared -fPIC \
-	    -I /usr/lib/jvm/java-6-openjdk/include \
+	gcc  -fPIC \
+	    -I $(JAVA_DIR)/include \
             -I $(STASIS_DIR) \
-	    -L $(STASIS_DIR)/build/src/libdfa \
-	    -L $(STASIS_DIR)/build/src/stasis \
+	    $(STASIS_DIR)/build/src/stasis/libstasis.dylib \
                src/stasis/jni/stasis_jni_Stasis.c \
-	    -l stasis \
-            -l rw \
-	    -o bin/stasis/jni/libstasisjni.so
+	    -dylib -o bin/stasis/jni/libstasisjni.dylib
 
 .PHONY: clean
 
 clean :
 	rm bin/stasis/jni/Stasis.class \
 	   src/stasis/jni/stasis_jni_Stasis.h \
-	   bin/stasis/jni/libstasisjni.so
+	   bin/stasis/jni/libstasisjni.dylib
 
 .PHONY: test
 test : all
-	java -cp bin -Djava.library.path=/home/sears/workspace/jol/bin/stasis/jni stasis.jni.Stasis
+	java -cp bin -Djava.library.path=bin/stasis/jni stasis.jni.Stasis

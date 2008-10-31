@@ -69,6 +69,7 @@
       <fileset dir="${src}" includes="**/*.olg"/>
       <!-- Include the RATS runtime files that we need -->
       <zipfileset src="${lib}/xtc.jar"/>
+      <zipfileset src="${lib}/servlet-api.jar"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
         <attribute name="Main-Class" value="jol.core.Runtime"/>
