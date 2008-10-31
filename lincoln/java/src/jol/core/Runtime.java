@@ -107,23 +107,21 @@ public class Runtime implements System {
 			}
 		}
 	}
-	public void evaluateFixpoint(RuntimeCallback[] pre,
-												   RuntimeCallback[] post) throws JolRuntimeException, UpdateException {
+	public void evaluateTimestamp(RuntimeCallback pre,
+								 RuntimeCallback post) throws JolRuntimeException, UpdateException {
 		synchronized (driver) {
-			// disableInterrupts();
+			// XXX disableInterrupts();
 			try {
-				this.driver.fixpointPrepare();
+				this.driver.timestampPrepare();
 
-				for(RuntimeCallback c : pre) {
-					call(c);
-				}
-				this.driver.fixpointEvaluate();
+				call(pre);
+
+				this.driver.timestampEvaluate();
+
+				call(post);
 				
-				for(RuntimeCallback c : post) {
-					call(c);
-				}
 			} finally {
-				// enableInterrupts();
+				// XXX enableInterrupts();
 			}
 		}
 	} 
@@ -276,9 +274,6 @@ public class Runtime implements System {
 		synchronized (driver) {
 			cb.call(this);
 		}
-	}
-	public static RuntimeCallback[] callbacks(RuntimeCallback...callbacks) {
-		return callbacks;
 	}
 	/**
 	 * Maps from resource filename to URL.  Unfortunately, we cannot always

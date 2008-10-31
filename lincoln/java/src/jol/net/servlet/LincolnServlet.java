@@ -21,6 +21,12 @@ public class LincolnServlet extends HttpServlet {
 	public String getLincolnProgramName() {
 		return getServletConfig().getInitParameter("olg");
 	}
+	public String getRequestRoot(HttpServletRequest request) {
+		return request.getContextPath()+request.getServletPath()+"/";
+	}
+	public String getRequestSubdirectory(HttpServletRequest request) {
+		return request.getPathInfo();
+	}
 	@Override
 	public void init() throws ServletException {
 		super.init();
@@ -56,4 +62,5 @@ public class LincolnServlet extends HttpServlet {
     {
         doGet(request, response);
     }
+
 }

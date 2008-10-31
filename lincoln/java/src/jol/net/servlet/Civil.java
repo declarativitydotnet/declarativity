@@ -2,22 +2,23 @@ package jol.net.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import jol.core.Runtime;
 import jol.core.Runtime.RuntimeCallback;
 import jol.net.servlet.util.HTML;
+import jol.net.servlet.util.Lincoln;
+import jol.net.servlet.util.Lincoln.DeltaLogger;
+import jol.net.servlet.util.Lincoln.DumpTable;
+import jol.net.servlet.util.Lincoln.InjectTuples;
+import jol.net.servlet.util.Lincoln.Logger;
+
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
-import jol.types.table.Table;
 import jol.types.table.TableName;
-import jol.types.table.Table.Callback;
 
 public class Civil extends LincolnServlet {
 
@@ -27,8 +28,10 @@ public class Civil extends LincolnServlet {
     {
     	jol.core.Runtime runtime = getLincolnRuntime();
     	
-    	String urlprefix = request.getContextPath()+request.getServletPath()+"/";
-        String subdir = request.getPathInfo();
+    	String urlprefix = getRequestRoot(request);
+        String subdir = getRequestSubdirectory(request);
+
+        // ------ Decide which table to display the contents of
         
         String scope = "global";
         String name = "catalog";
@@ -42,35 +45,16 @@ public class Civil extends LincolnServlet {
 	        	name = tok[1];
 	        }
         }
-        final TableName tableName = new TableName(scope,name);
-
-        final ArrayList<Tuple> preTable = new ArrayList<Tuple>();
-        final ArrayList<Tuple> postTable = new ArrayList<Tuple>();
         
-        final RuntimeCallback dumpTablePre = 
-        	new RuntimeCallback() {
-      	
-				public void call(Runtime r) {
-					for(Tuple t : r.catalog().table(tableName).primary()) {
-						preTable.add(t);
-					}
-				}
-			};
-        final RuntimeCallback dumpTablePost = 
-        	new RuntimeCallback() {
-      	
-				public void call(Runtime r) {
-					for(Tuple t : r.catalog().table(tableName).primary()) {
-						postTable.add(t);
-					}
-				}
-			};
+        final TableName tableName = new TableName(scope,name);
+        final DumpTable preTableDump  = new DumpTable(tableName);
+        final DumpTable postTableDump = new DumpTable(tableName);
 
-		final TupleSet insertions = new TupleSet();
-		final TupleSet deletions = new TupleSet();
-
+        // ------ Setup callbacks for injecting / deleting tuple
+        
+		InjectTuples inject = new InjectTuples("path", new TableName("path", "link"));
 		String action = request.getParameter("Action");
-		
+
 		if(action != null) {
 			Tuple t = new Tuple(
 					(String)request.getParameter("from"),
@@ -79,64 +63,35 @@ public class Civil extends LincolnServlet {
 			// XXX this bypasses the type checker.  If we insert the wrong type of tuple, 
 			// then bad things happen!
 			if(action.equals("Insert")) {
-				insertions.add(t);
+				inject.insertions().add(t);
 			} else if (action.equals("Delete")) {
-				deletions.add(t);
+				inject.deletions().add(t);
 			}
 		}
 
+		// ------ Setup callback to log the differences to the shortestPath table.
 		
-		final String prog = "path";
-		final TableName linkTable= new TableName("path", "link");
 		final TableName shortestPathTable = new TableName("path", "shortestPath");
+
+		final DeltaLogger logger = new DeltaLogger(runtime, shortestPathTable);
+
+		// ------ Run the lincoln query
+			
+		try {
+			Lincoln.evaluateTimestep(runtime,
+    			  		   	new RuntimeCallback[] { preTableDump, inject },
+    			  		   	new Logger[] 		  { logger               },
+    			  		   	new RuntimeCallback[] { postTableDump        });
+    	  
+		} catch (UpdateException e) {
+			throw new ServletException("Table not found", e);
+		} catch (JolRuntimeException e) {
+			throw new ServletException("Table not found", e);
+		}
+
+		// ------ Render the html response
 		
-		final ArrayList<Tuple> deltaAdd = new ArrayList<Tuple>();
-		final ArrayList<Tuple> deltaErase = new ArrayList<Tuple>();
-
-		final Table sp = runtime.catalog().table(shortestPathTable);
-		final Callback logger = new Callback() {
-
-			@Override
-			public void deletion(TupleSet tuples) {
-				deltaErase.addAll(tuples);
-			}
-
-			@Override
-			public void insertion(TupleSet tuples) {
-				deltaAdd.addAll(tuples);
-			}
-		};
-
-		final RuntimeCallback pre = new RuntimeCallback() {
-				@Override
-				public void call(Runtime r) throws UpdateException, JolRuntimeException {
-					sp.register(logger);
-					r.schedule(prog, linkTable, insertions, deletions);
-				}
-			};
-
-		final RuntimeCallback post = new RuntimeCallback() {
-
-			@Override
-			public void call(Runtime r) throws UpdateException,
-					JolRuntimeException {
-					sp.unregister(logger);
-			}
-			
-		};
-			
-      try {
-        	runtime.evaluateFixpoint(
-        			Runtime.callbacks(dumpTablePre,pre),
-        			Runtime.callbacks(post,dumpTablePost)
-        	);
-        } catch (UpdateException e) {
-        	throw new ServletException("Table not found", e);
-        } catch (JolRuntimeException e) {
-        	throw new ServletException("Table not found", e);
-        }
-
-    	response.setContentType("text/html");
+		response.setContentType("text/html");
 
     	HTML format = new HTML(urlprefix);
     	
@@ -161,16 +116,16 @@ public class Civil extends LincolnServlet {
         out.print(format.httpParametersToString(request.getParameterMap()));
 
         out.print(format.section("Before"));
-        out.print(format.toString(preTable));
+        out.print(format.toString(preTableDump.result()));
         
         out.println(format.section(format.toString(shortestPathTable) + " deletions"));
-        out.print(format.toString(deltaErase));
+        out.print(format.toString(logger.getDeletions()));
         
         out.println(format.section(format.toString(shortestPathTable) + " insertions"));
-        out.print(format.toString(deltaAdd));
+        out.print(format.toString(logger.getInsertions()));
         
-        out.print(format.section("Before"));
-        out.print(format.toString(postTable));
+        out.print(format.section("After"));
+        out.print(format.toString(postTableDump.result()));
         
         out.print(format.footer());
         
