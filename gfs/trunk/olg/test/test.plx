@@ -3,7 +3,7 @@ use strict;
 use IO::Handle;
 use Test::Simple tests => 10;
 
-my $to = 600;
+my $to = 20;
 
 my $JAR = "jol.new";
 #my $OLG = "../getopt.olg ../paxos.olg";
@@ -17,8 +17,8 @@ $SIG{ALRM}  = 'cleanup';
 
 test_1();
 test_2();
-test_3();
-#test_4();
+#test_3();
+test_4();
 
 print "\b";
 
@@ -86,7 +86,6 @@ sub kill_one {
   open(PIDS,"ps -ef|grep java|grep 1000$pid|");
   while (<PIDS>) {
     my ($e,$q,$pid) = split(/\s+/,$_);
-    print "pid $pid\n"; 
     kill(9,$pid);
   }
   close(PIDS);
@@ -101,12 +100,13 @@ sub test_4 {
 
 
   kill_one(2);
+  kill_one(1);
   system("ps -ef | grep java");
 
   # make a request
-  my ($p4,$handle) = request(10000,"start_synod.olg","123");
+  my ($p4,$handle) = request(10000,"start_synod.olg","nonce");
 
-  reply_matches($handle,"XACT123");
+  reply_matches($handle,"nonce");
 
   # kill it
 
@@ -121,7 +121,7 @@ sub test_4 {
 
 sub test_2 {
   # start a paxos instance over 3 replicas
-  my @pids = pipe_many(4);
+  my @pids = pipe_many(2);
   # yay, array smushing
   push @handles,@pids;
 
@@ -197,7 +197,7 @@ sub snatch_reply {
     }
   }
   alarm(0);
-  print "rest: $rest\n";
+  #print "rest: $rest\n";
   return $rest;
 }
 

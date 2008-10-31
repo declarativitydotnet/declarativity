@@ -5,7 +5,8 @@ import java.lang.System;
 /* implements a naive, partially synchronous liveness detector */
 
 // z = heartbeat timer = 3secs
-timer(zTimer,2000,2000);
+timer(zTimer,physical,2000,2000,2000);
+timer(periodic,logical,1,1,1);
 
 define(alive,keys(0),{String,Integer});
 define(parliament,keys(0,1),{String,String});
@@ -28,7 +29,7 @@ watch(alive,ae);
 zTick(Ip) :- 
   ident(Me,_),
   B := Me + 10000,
-  Ip := "udp:localhost:"+B.toString(),
+  Ip := "tcp:localhost:"+B.toString(),
   zTimer(_,_,_);
   
 
@@ -46,7 +47,7 @@ beatLog(Me,Him,Time) :-
 // the next two rules are synchronized on the cTimer
 define(round,keys(0),{Integer});
 watch(round,ae);
-round(0) :- periodic(Id,1L,1L,1L);
+round(0) :- periodic(_,_,_);
 round(R+1) :-
   round(R),
   alive#insert(Him,R);
@@ -70,7 +71,7 @@ beatLog(Me,Him,Time) :-
 
 
 
-
+watch(parliament,aei);
 
 
 
@@ -80,7 +81,7 @@ define(ident,keys(0),{Integer,Integer});
 
 ident(A,P) :- A := new Integer(System.getenv("ME")),
   P := new Integer(System.getenv("PROC")),
-  periodic(Id,1L,1L,1L);
+  periodic(_,_,_);
 
 define(fake,keys(0,1),{Integer,Integer});
  
@@ -92,7 +93,7 @@ fake(A,O+1) :- ident(A,P),
 parliament(Me,Him) :- fake(A,B),
   Left := A + 10000,
   Right := B + 10000,
-  Me := "udp:localhost:" + Left.toString(),
-  Him := "udp:localhost:" + Right.toString();
+  Me := "tcp:localhost:" + Left.toString(),
+  Him := "tcp:localhost:" + Right.toString();
 
 

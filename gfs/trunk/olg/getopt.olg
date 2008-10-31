@@ -6,16 +6,22 @@ import java.lang.Integer;
 import java.lang.System;
 import jol.core.Runtime;
 
+// name,type,period,ttl, delay
+timer(periodic,logical,1,1,1);
+
 /***
   subroutine, really, for figuring out cohort membership from the environment.
 	I'd like to have this in a separate file, but that isn't working... 
 ***/
+
+
 define(ident,keys(0),{Integer,Integer});
 define(parliament,keys(0,1),{String,String});
 	
 ident(A,P) :- A := new Integer(System.getenv("ME")),
 	P := new Integer(System.getenv("PROC")),
-	periodic(Id,1L,1L,1L);
+	periodic(1L,1L,1L);
+  
 	
 define(fake,keys(0,1),{Integer,Integer});
 	

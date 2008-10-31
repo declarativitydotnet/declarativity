@@ -5,8 +5,12 @@ import java.lang.Integer;
 	
 import java.lang.System;
 import jol.core.Runtime;
-	
-	//define(decreeRequest,keys(0,1,2),{String,String,String});
+
+
+// name,type,period,ttl, delay
+timer(periodic,logical,1,1,1);
+
+//define(decreeRequest,keys(0,1,2),{String,String,String});
 define(decreeRequest,{String,String,String});
 define(storedDecreeRequest,keys(0,1,2,3),{String,String,String,Long});
 define(lastTried,keys(0,1),{String,Integer,Integer});
@@ -14,14 +18,17 @@ define(prevVote,keys(0,1),{String,Integer,Integer,String});
 define(nextBal,keys(0,1),{String,Integer,Integer});
 define(node,keys(0),{String});
 define(parliament,keys(0,1),{String,String});
-define(prepare,keys(0,1,2),{String,Integer,Integer,String});
+//define(prepare,keys(0,1,2),{String,Integer,Integer,String});
+define(prepare,{String,Integer,Integer,String});
 define(sendPrepare,keys(0,1,2,4),{String,Integer,Integer,String,String});
 define(lastPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
-define(sendPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
+//define(sendPromise,keys(1,1,2,5),{String,Integer,Integer,Integer,String,String});
+define(sendPromise,{String,Integer,Integer,Integer,String,String});
 define(receivedPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
 define(acceptRequest,keys(0,1,2),{String,Integer, Integer,String,Integer});
 define(sendBeginRound,keys(0,1,2),{String,Integer, Integer,String,String});
-define(accept,keys(0,1,2),{String,Integer, Integer,String});
+//define(accept,keys(0,1,2),{String,Integer, Integer,String});
+define(accept,{String,Integer, Integer,String});
 define(sendAccept,keys(0,1,2,4),{String,Integer, Integer,String,String});
 define(decree,keys(0,1,2),{String, Integer,Integer,String});
 define(success,keys(0,1,2),{String,Integer, Integer,String,String});
@@ -41,27 +48,12 @@ define(instance,keys(0),{String,Integer});
 
 
 public
-parliament(A,B) :- getopt::parliament(A,B),periodic(Id,3L,3L);
+parliament(A,B) :- getopt::parliament(A,B),periodic(_,_,_);
 	
 lastTried(Master,-1,-1) :- parliament(Master,Agent);
 prevVote(Master,-1,-1,"none") :- parliament(Master,Agent);
 nextBal(Master,-1,-1) :- parliament(Master,Agent);
 instance(Master,-1) :- parliament(Master,Agent);
-
-
-/**
-good morning, Mr. Van Winkle
-**/
-// round, instance, decree
-define(ledger,keys(0,1),{Integer,Integer,String});
-// give everyone 5 seconds to settle
-timer(wakeup,5000,0);
-
-
-//prepare(Agent,Round,Decree) :-
-//  wakeup(_,_,_),
-//  ledger(Round,Instance,Decree);
-
 
 /**************************************************************************************
 r1. Priest p chooses a new ballot number b greater than lastTried [p], sets lastTried[p]
@@ -70,27 +62,35 @@ to b, and sends a NextBallot (b) message to some set of priests.
 
 r1_a
 lastTried(Agent,Instance,Bnum) :- lastTried(Agent,I,Old),
-	prepare#insert(Agent,Instance,Bnum,Decree),
+	//prepare#insert(Agent,Instance,Bnum,Decree),
+	prepare(Agent,Instance,Bnum,Decree),
 	Bnum > Old,
   Instance >= I;
 	
-storedDecreeRequest(A,B,C,Id) :- decreeRequest#insert(A,B,C), Id := Runtime.idgen();
-
-public
 storedDecreeRequest(A,B,C,Id) :- 
-  paxos_global::decreeRequestBuffer(A,B,C), Id := Runtime.idgen();
+  decreeRequest#insert(A,B,C), 
+  Id := Runtime.idgen();
 
-instance(Master,I+1) :- instance(Master,I), storedDecreeRequest#insert(Master,B,C,_);
+instance(Master,I+1) :- 
+  instance(Master,I), 
+  storedDecreeRequest#insert(Master,B,C,_);
 	
 r1_b
 prepare(Agent,Instance,Round,Decree) :- 
-	storedDecreeRequest#insert(Agent,Decree,From),
+  decreeRequest(Agent,Decree,From),
 	lastTried(Agent,I,Old),
   Instance >= I,
   instance(Agent,Instance),
-	// if we don't already have a quorum
-  //instance#insert(Agent,0),
 	Round := Old + 1;
+
+// 
+public r1_b2
+prepare(Agent,Instance,Round,Decree) :- 
+  // current instance
+	lastTried(Agent,Instance,Old),
+  paxos_global::decreeRequestBuffer#insert(Master,Decree,Client),
+	Round := Old + 1;
+	
 	
 r1_c
 sendPrepare(@Peer,Instance,Round,Decree,Agent) :-
@@ -155,17 +155,20 @@ r3_b
 acceptRequest(Master,Instance,Round,OldDecree,MaxB) :- 
   quorum(Master,Instance,Round),
 	maxPrevRound(Master,Instance,MaxB),
-	prepare(Master,Instace,Round,Decree),
-	sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
+	//prepare(Master,Instace,Round,Decree),
+  storedDecreeRequest(Master,Decree,_),
+  OldDecree := "who cares?",
+	//sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
 	MaxB != -1;
 
 r3_c	
 acceptRequest(Master,Instance,Round,Decree,-1) :- 
   quorum(Master,Instance,Round),
 	maxPrevRound(Master,Instance,MaxB),
-	sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
+	//sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
 	MaxB == -1,
-	prepare(Master,Instance,Round,Decree);
+  storedDecreeRequest(Master,Decree,_);
+	//prepare(Master,Instance,Round,Decree);
 	
 	// or in the multi-paxos case:
 	/*
@@ -256,33 +259,6 @@ reply(@Client,Decree,"timed out") :-
 	
 
 
-
-
-/***
-  subroutine, really, for figuring out cohort membership from the environment.
-	I'd like to have this in a separate file, but that isn't working... 
-***/
-/*
-define(ident,keys(0),{Integer,Integer});
-	
-ident(A,P) :- A := new Integer(System.getenv("ME")),
-	P := new Integer(System.getenv("PROC")),
-	periodic(Id,1L,1L,1L);
-	
-define(fake,keys(0,1),{Integer,Integer});
-	
-fake(A,0) :- ident(A,P),B := A;
-fake(A,O+1) :- ident(A,P),
-	fake(A,O),
-	O < P;
-	
-parliament(Me,Him) :- fake(A,B),
-	Left := A + 10000,
-	Right := B + 10000,
-	Me := "tcp:localhost:" + Left.toString(),
-	Him := "tcp:localhost:" + Right.toString();
-*/
-	/* end sub-thing */
 
 
 	/**/

@@ -9,7 +9,7 @@ define (reply,{String,String,String});
 
 //define (reply,keys(0,1,2),{String,String,String});
 
-timer(tick,1000,1000);
+timer(tick,physical,1000,1000,1000);
 
 watch(doping,ad);
 watch(reply,ad);
