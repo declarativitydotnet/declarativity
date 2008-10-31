@@ -39,6 +39,7 @@ public class Stasis {
 	}
 	
 	public static void main(String[] arg) {
+		loadLibrary();
 		System.out.println("Tinit()");
 		init();
 		System.out.println("Stasis is running");
