@@ -1,17 +1,22 @@
 program pingpong;
 
 define(doping, {String, String, Integer, Integer});
-define(ping, {String, String, Integer, Integer});
+define(ping, {String, String, Integer, Integer, Integer});
 
+watch(self, tsai);
 watch(ping, tsai);
+watch(inmessage, tsai);
 
 /* When we get a message from Java land, send it to everyone but myself */
 doping(@Self, Target, MsgId, MsgCount) :-
-    self(Self), nodes(Self), nodes(Target), inmessage(MsgId, MsgCount), Self != Target;
+    self(Self), nodes(Self), nodes(Target),
+    inmessage(MsgId, MsgCount), Self != Target;
 
-ping(@Target, Source, MsgId, MsgCount) :- doping(@Source, Target, MsgId, MsgCount);
+ping(@Target, Source, MsgId, MsgCount, InitialCount) :-
+    doping(@Source, Target, MsgId, MsgCount),
+    InitialCount := MsgCount;
 
 /* When we receive a message, send it back to the source with count - 1,
  * unless the count is already 0 */
-ping(@Source, Target, MsgId, MsgCount - 1) :-
-    ping(@Target, Source, MsgId, MsgCount), MsgCount > 0;
+ping(@Source, Target, MsgId, MsgCount - 1, InitialCount) :-
+    ping(@Target, Source, MsgId, MsgCount, InitialCount), MsgCount > 0;

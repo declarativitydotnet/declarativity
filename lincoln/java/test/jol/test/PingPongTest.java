@@ -132,7 +132,7 @@ public class PingPongTest {
     }
     
     @Test
-    public void simplePingPongTest() throws UpdateException, InterruptedException {
+        public void simplePingPongTest() throws UpdateException, InterruptedException, JolRuntimeException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
@@ -141,16 +141,25 @@ public class PingPongTest {
 
             public void insertion(TupleSet tuples) {
                 java.lang.System.out.println("Got insert!");
-                Assert.assertEquals(1, tuples.size());
-                
-                Tuple t = tuples.iterator().next();
-                Integer id = (Integer) t.value(3);
-                Assert.assertEquals(1, id.intValue());
-                
-                try {
-                    queue.put("done!");
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                boolean done = false;
+
+                for (Tuple t : tuples) {
+                    Integer msgCount = (Integer) t.value(3);
+                    Integer initialCount = (Integer) t.value(4);
+
+                    Assert.assertTrue(msgCount <= initialCount);
+                    Assert.assertTrue(msgCount >= 0);
+
+                    if (msgCount == 0)
+                        done = true;
+                }
+
+                if (done) {
+                    try {
+                        queue.put("done!");
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         };
@@ -162,6 +171,9 @@ public class PingPongTest {
         TupleSet inmessage = new TupleSet();
         inmessage.add(new Tuple(this.getNewId(), 1));
         this.pinger.schedule("pingpong", InMessageTable.TABLENAME, inmessage, null);
+
+        for (System s : this.systems)
+            s.start();
 
         java.lang.System.out.println("test started, waiting for callback...");
         queue.take();
