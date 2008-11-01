@@ -1,7 +1,6 @@
 package jol.test;
 
 import java.net.URL;
-import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
 import jol.core.System;
@@ -14,7 +13,6 @@ import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
-import jol.types.table.Table.Callback;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -58,49 +56,11 @@ public class PathTest {
 
     @After
     public void shutdown() {
-        java.lang.System.err.println("shutdown() invoked");
         this.sys.shutdown();
     }
 
     @Test
-    public void simplePathTest() throws UpdateException, InterruptedException {
-        /* Arrange to block until the callback tells us we're done */
-        final SynchronousQueue<String> queue = new SynchronousQueue<String>();
-
-        Callback cb = new Callback() {
-            private int count = 0;
-
-            @Override
-            public void deletion(TupleSet tuples) {
-            }
-            
-            @Override
-            public void insertion(TupleSet tuples) {
-                java.lang.System.err.println("insertion() cb invoked");
-                for (Tuple t : tuples)
-                {
-                    String src = (String) t.value(PathTable.Field.SOURCE.ordinal());
-                    String dest = (String) t.value(PathTable.Field.DESTINATION.ordinal());
-                    Integer hops = (Integer) t.value(PathTable.Field.HOPS.ordinal());
-
-                    java.lang.System.err.println("Path from " + src + " => " + dest);
-                    Assert.assertFalse(src.equals(dest));
-                    this.count++;
-                }
-
-                try {
-                    if (this.count == 6)
-                        queue.put("foo"); // done
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-
-        /* Fire the callback for each change to the "paths" table */
-        Table path_tbl = this.sys.catalog().table(PathTable.TABLENAME);
-        path_tbl.register(cb);
-
+    public void simplePathTest() throws UpdateException, JolRuntimeException {
         /* Setup the initial links */
         TupleSet links = new TupleSet();
         links.add(new Tuple("1", "2"));
@@ -109,11 +69,50 @@ public class PathTest {
 
         TableName link_name = new TableName("path", "link");
         this.sys.schedule("path", link_name, links, null);
-        this.sys.start();
+        this.sys.evaluate();
 
-        /* Wait to be notified by the callback */
-        java.lang.System.err.println("Test created; waiting for results...");
-        queue.take();
+        /* We expect to find 6 paths */
+        int nPaths = countPaths();
+        Assert.assertEquals(6, nPaths);
+
+        /* Add a link from 2 => 4 */
+        links.clear();
+        links.add(new Tuple("2", "4"));
+        this.sys.schedule("path", link_name, links, null);
+        this.sys.evaluate();
+
+        /* We expect to find 8 paths */
+        nPaths = countPaths();
+        Assert.assertEquals(8, nPaths);
+
+        /* Delete the link from 1 => 2 */
+        links.clear();
+        links.add(new Tuple("1", "2"));
+        this.sys.schedule("path", link_name, null, links);
+        /* XXX: hack -- we need to call evaluate() until all pending deletes are done */
+        this.sys.evaluate();
+        this.sys.evaluate();
+        this.sys.evaluate();
+        this.sys.evaluate();
+
+        /* We expect to find 4 paths */
+        nPaths = countPaths();
+        Assert.assertEquals(4, nPaths);
+    }
+
+    private int countPaths() {
+        Table path_tbl = this.sys.catalog().table(PathTable.TABLENAME);
+        int nPaths = 0;
+
+        for (Tuple t : path_tbl.tuples()) {
+            String src = (String) t.value(PathTable.Field.SOURCE.ordinal());
+            String dest = (String) t.value(PathTable.Field.DESTINATION.ordinal());
+
+            Assert.assertFalse(src.equals(dest));
+            nPaths++;
+        }
+
+        return nPaths;
     }
 
     public static void main(String[] args) throws Exception {
