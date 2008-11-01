@@ -519,6 +519,13 @@ public class Driver implements Runnable {
 	public void run() {
 		while (true) {
 			synchronized (this) {
+                /*
+                 * XXX: If we received a shutdown request, we might want to honor
+                 * it before evaluating the next fixpoint (which might take a
+                 * long time). We don't do this right now, since pending
+                 * deletions aren't scheduled atomically with their triggering
+                 * fixpoint.
+                 */
 				try {
 					evaluate();
 				} catch (UpdateException e) {
@@ -530,7 +537,10 @@ public class Driver implements Runnable {
 				while (this.tasks.size() == 0 && schedule.cardinality() == 0) {
 					try {
 						this.wait();
-					} catch (InterruptedException e) { }
+					} catch (InterruptedException e) {
+					    /* We got a shutdown request */
+					    return;
+					}
 				}
 			}
 		}
