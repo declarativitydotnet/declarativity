@@ -358,15 +358,18 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		return this.values.size();
 	}
 	
-	/** The value at the indicated field position. 
+	/**
+	 * The value at the indicated field position. Field
+	 * positions are zero-based.
 	 * @param field The field position.
 	 */
 	public Comparable value(int field) {
-		return values.get(field);
+		return this.values.get(field);
 	}
 	
 	/**
 	 *  Sets the value to be in the given field position.
+	 *  Field positions are zero-based.
 	 *  @param field The field position.
 	 *  @param value The value to set. 
 	 */
