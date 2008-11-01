@@ -5,9 +5,9 @@ import Identifier;
 import Symbol;
 
 Node Constant = 
-    FloatConstant Spacing
+    FloatConstant
   / LongConstant Spacing
-  / IntegerConstant Spacing
+  / IntegerConstant
   / StringConstant Spacing
   / NullConstant Spacing
   / BooleanConstant Spacing
@@ -18,7 +18,7 @@ Node Constant =
  
 Pair<Node> ConstantList = Constant (void:',' Constant)*;
 
-generic FloatConstant = FloatingPointString;
+generic FloatConstant = FloatingPointString Spacing;
 
 Pair<Node> FloatList = FloatConstant (void:',' FloatConstant)*;
 
@@ -33,8 +33,8 @@ transient String Exponent        = [eE] [+\-]? Digit+ ;
 transient String FloatTypeSuffix = [fFdD] ;
 
 generic IntegerConstant =
-    HexConstant 
-  / DecimalConstant ;
+    HexConstant Spacing
+  / DecimalConstant Spacing;
   
 generic LongConstant =
 	DecimalConstant LongTypeSuffix;
