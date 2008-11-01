@@ -89,7 +89,6 @@ public class Lincoln {
 		};
 
 		final RuntimeCallback post = new RuntimeCallback() {
-
 			@Override
 			public void call(Runtime r) throws UpdateException,
 			JolRuntimeException {

@@ -1,10 +1,5 @@
 package jol.lang.plan;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import jol.types.basic.ValueList;
-
 public class TopK extends Limit {
 	
 	public TopK(Variable value, Number bottomkConst) {

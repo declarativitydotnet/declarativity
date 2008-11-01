@@ -29,7 +29,6 @@ import jol.lang.plan.Expression;
 import jol.lang.plan.Fact;
 import jol.lang.plan.GenericAggregate;
 import jol.lang.plan.IfThenElse;
-import jol.lang.plan.Limit;
 import jol.lang.plan.Load;
 import jol.lang.plan.MethodCall;
 import jol.lang.plan.NewClass;
@@ -762,7 +761,7 @@ public final class TypeChecker extends Visitor {
 					this.table.current().define(((Variable) arg).name(), Comparable.class);
 				}
 			}
-			table = new Flatten(context.idgen(), types);
+			table = new Flatten(jol.core.Runtime.idgen(), types);
 			if (!valid) {
 				runtime.warning("Flatten input schema does not contain a ValueList!", n);
 			}

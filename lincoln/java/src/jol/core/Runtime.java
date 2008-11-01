@@ -2,9 +2,6 @@ package jol.core;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -267,14 +264,17 @@ public class Runtime implements System {
 			driver.notify();
 		}
 	}
+
 	public interface RuntimeCallback {
-		public void call(Runtime r) throws UpdateException, JolRuntimeException;
+		void call(Runtime r) throws UpdateException, JolRuntimeException;
 	};
+
 	public void call(RuntimeCallback cb) throws UpdateException, JolRuntimeException {
 		synchronized (driver) {
 			cb.call(this);
 		}
 	}
+
 	/**
 	 * Maps from resource filename to URL.  Unfortunately, we cannot always
 	 * rely on the ClassLoader to lookup resources for us.

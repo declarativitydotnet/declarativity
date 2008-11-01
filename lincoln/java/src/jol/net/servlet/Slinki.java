@@ -20,8 +20,9 @@ import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 
 public class Slinki extends LincolnServlet {
+    private static final long serialVersionUID = 1L;
 
-   @Override
+@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException
     {

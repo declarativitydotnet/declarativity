@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import jol.lang.plan.Expression;
-import jol.lang.plan.GenericAggregate;
-import jol.lang.plan.Limit;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;

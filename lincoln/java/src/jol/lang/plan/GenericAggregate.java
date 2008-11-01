@@ -4,7 +4,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
@@ -13,8 +12,8 @@ import jol.types.function.TupleFunction;
 /**
  * Generic aggregates are supported by calling a stateful VOID method on
  * an object. That arguments indicate what is passed into the object.
+ * 
  * @author tcondie
- *
  */
 public class GenericAggregate extends Aggregate {
 

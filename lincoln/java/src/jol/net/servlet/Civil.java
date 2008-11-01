@@ -21,6 +21,7 @@ import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 
 public class Civil extends LincolnServlet {
+    private static final long serialVersionUID = 1L;
 
     @Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
