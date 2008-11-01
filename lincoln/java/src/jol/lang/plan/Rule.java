@@ -157,9 +157,11 @@ public class Rule extends Clause {
 		/* First search for an event predicate. */
 		Predicate event   = null;
 		
+		List<Selection> selections = new ArrayList<Selection>();
 		for (Term term : body) {
 			if (term instanceof Predicate) {
 				Predicate pred = (Predicate) term;
+				selections.addAll(canonicalize(pred));
 
 				Table table = context.catalog().table(pred.name());
 				if (table.type() == Table.Type.EVENT ||
@@ -177,6 +179,7 @@ public class Rule extends Clause {
 				}
 			}
 		}
+		body.addAll(selections);
 
 		if (event != null) {
 			return query(context, head, event, body);
@@ -184,6 +187,25 @@ public class Rule extends Clause {
 		else {
 			return mviewQuery(context, head, body);
 		}
+	}
+	
+	private List<Selection> canonicalize(Predicate pred) {
+		List<Selection> selections        = new ArrayList<Selection>();
+		List<Expression> canonicalization = new ArrayList<Expression>();
+		for (Expression argument : pred.arguments()) {
+			if (!(argument instanceof Variable) &&
+					argument.variables().size() > 0) {
+				Variable dontcare = new DontCare(argument.type());
+				dontcare.position(argument.position());
+				selections.add(new Selection(new Boolean(Boolean.EQUAL, dontcare, argument)));
+				canonicalization.add(dontcare);
+			}
+			else {
+				canonicalization.add(argument);
+			}
+		}
+		pred.arguments(canonicalization);
+		return selections;
 	}
 	
 	private List<Query> mviewQuery(Runtime context, Predicate head, List<Term> body) throws PlannerException {

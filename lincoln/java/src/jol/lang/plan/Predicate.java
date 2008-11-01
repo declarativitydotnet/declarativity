@@ -148,6 +148,10 @@ public class Predicate extends Term implements Iterable<Expression> {
 		return this.arguments;
 	}
 	
+	void arguments(List<Expression> arguments) {
+		this.arguments = new Arguments(this, arguments);
+	}
+	
 	@Override
 	public String toString() {
 		assert(schema.size() == arguments.size());
