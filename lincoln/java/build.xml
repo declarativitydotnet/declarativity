@@ -19,11 +19,12 @@
     <mkdir dir="${build}"/>
   </target>
 
-  <!-- Check if we need to re-run Rats -->
+  <!-- We need to re-run Rats if any of the .rats files have changed -->
   <target name="rats-freshness">
     <uptodate property="rats.up-to-date"
-              srcfile="${parser-dir}/Parser.rats"
-              targetfile="${parser-dir}/Parser.java"/>
+              targetfile="${parser-dir}/Parser.java">
+      <srcfiles dir="${parser-dir}" includes="*.rats"/>
+    </uptodate>
   </target>
 
   <target name="rats" depends="rats-freshness" unless="rats.up-to-date">
