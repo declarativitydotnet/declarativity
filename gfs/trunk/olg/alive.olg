@@ -5,7 +5,8 @@ import java.lang.System;
 /* implements a naive, partially synchronous liveness detector */
 
 // z = heartbeat timer = 3secs
-timer(zTimer,physical,2000,2000,2000);
+// name,type,period,ttl,delay 
+timer(zTimer,physical,5000,9999,0);
 timer(periodic,logical,1,1,1);
 
 define(alive,keys(0),{String,Integer});
@@ -13,7 +14,7 @@ define(parliament,keys(0,1),{String,String});
 define(threshold,keys(0),{Long});
 
 // very generous
-threshold(9L);
+threshold(12L);
 
 define(heartbeat,{String,String});
 define(zTick,{String});
@@ -23,7 +24,7 @@ watch(alive,ae);
 //watch(zTick,ae);
 //watch(parliament,ae);
 watch(beatLog,ae);
-watch(alive,ae);
+//watch(alive,ae);
 
 
 zTick(Ip) :- 
@@ -71,7 +72,7 @@ beatLog(Me,Him,Time) :-
 
 
 
-watch(parliament,aei);
+//watch(parliament,aei);
 
 
 
