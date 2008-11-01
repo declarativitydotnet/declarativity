@@ -162,8 +162,7 @@ public class Compiler {
 			char[] buf = new char[512];
 			int n;
 			
-			while ((n = isr.read(buf, 0, buf.length)) != -1)
-			{
+			while ((n = isr.read(buf, 0, buf.length)) != -1) {
 				sb.append(buf, 0, n);
 			}
 		}
