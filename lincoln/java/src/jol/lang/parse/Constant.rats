@@ -16,11 +16,11 @@ Node Constant =
   / Matrix Spacing
   ;
  
-Pair<Node> ConstantList = Constant (void:',' Constant)*;
+Pair<Node> ConstantList = Constant (void:",":Symbol Constant)*;
 
 generic FloatConstant = FloatingPointString Spacing;
 
-Pair<Node> FloatList = FloatConstant (void:',' FloatConstant)*;
+Pair<Node> FloatList = FloatConstant (void:",":Symbol FloatConstant)*;
 
 String FloatingPointString =
     Digit+ '.' Digit+ Exponent? FloatTypeSuffix? 
@@ -39,7 +39,7 @@ generic IntegerConstant =
 generic LongConstant =
 	DecimalConstant LongTypeSuffix;
   
-Pair<Node> IntegerList = IntegerConstant (void:',' IntegerConstant)*;
+Pair<Node> IntegerList = IntegerConstant (void:",":Symbol IntegerConstant)*;
 
 transient String HexConstant =  HexNumeral     HexTypeSuffix? ;
 
