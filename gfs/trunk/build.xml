@@ -15,7 +15,9 @@
   </target>
 
   <target name="compile" depends="init" description="compile the source">
-    <javac srcdir="${src}" destdir="${build}" classpath="${lib}/jol.jar" debug="yes"/>
+    <javac srcdir="${src}" destdir="${build}" classpath="${lib}/jol.jar" debug="yes">
+      <compilerarg value="-Xlint:unchecked"/>
+    </javac>
   </target>
 
   <target name="dist" depends="compile" description="generate a JAR file">

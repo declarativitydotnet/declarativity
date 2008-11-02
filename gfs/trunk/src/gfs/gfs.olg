@@ -11,6 +11,7 @@ nodes("tcp:localhost:5501");
 // The address of the master node
 master("tcp:localhost:5500");
 
+// Node, Master node
 define(master_per_node, keys(0, 1), {String, String});
 
 master_per_node("tcp:localhost:5500", "tcp:localhost:5500");
@@ -51,7 +52,3 @@ request_done(@Master, Id, Source, FContents) :-
 // of the file
 cat_response(@Source, Id, FContents) :-
     request_done(@Master, Id, Source, FContents);
-
-watch(response, tsai);
-watch(cat_request, tsai);
-watch(request_started, tsai);
