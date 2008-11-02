@@ -563,7 +563,7 @@ public final class TypeChecker extends Visitor {
 					Predicate p = (Predicate) t;
 					for (Expression arg : p) {
 						if (arg instanceof Aggregate) {
-							runtime.error("Body predicate can't contain aggregates!",n);
+							runtime.error("Body predicate can't contain aggregates!", n);
 							return Error.class;
 						}
 					}
@@ -714,7 +714,7 @@ public final class TypeChecker extends Visitor {
 				}
 				Predicate p = (Predicate) node.getProperty(Constants.TYPE);
 				if (p.event() != Predicate.Event.NONE && p.notin()) {
-					runtime.error("Can't apply notin to event predicate!",n);
+					runtime.error("Can't apply notin to event predicate!", n);
 					return Error.class;
 				}
 				terms.add(p);
@@ -778,13 +778,13 @@ public final class TypeChecker extends Visitor {
 				int index = 0;
 				for (Expression arg : predicate) {
 					if (types[index] != arg.type()) {
-						runtime.error("Predicate argument position " + index + " does not match table function type!",n);
+						runtime.error("Predicate argument position " + index + " does not match table function type!", n);
 						return Error.class;
 					}
 					index++;
 				}
 				if (types.length != index) {
-					runtime.error("Predicate schema types must match table function types!",n);
+					runtime.error("Predicate schema types must match table function types!", n);
 					return Error.class;
 				}
 			}
@@ -835,22 +835,22 @@ public final class TypeChecker extends Visitor {
 		List<Expression> parameters = (List<Expression>) n.getNode(3).getProperty(Constants.TYPE);
 		List<Expression> arguments = new ArrayList<Expression>();
 		
-
 		if (schema.size() < parameters.size()) {
-			runtime.error("Program " + program.name() + ": Schema size mismatch on predicate " +  name ,n);
+			runtime.error("Program " + program.name() + ": Schema size mismatch on predicate " +  name, n);
 			return Error.class;
 		}
 		
-		
 		List<AggregateVariable> aggVariables = new ArrayList<AggregateVariable>();
+		String argLocation = null;
+
 		/* Type check each tuple argument according to the schema. */
 		for (int index = 0; index < schema.size(); index++) {
 			Expression<?> param = parameters.size() <= index ? 
 					new DontCare(schema.get(index)) : parameters.get(index);
 			Class paramType = param.type();
-			
+
 			if (param instanceof Cast) {
-				param = ((Cast)param).expression();
+				param = ((Cast) param).expression();
 			}
 			
 			if (param instanceof Alias) {
@@ -868,7 +868,7 @@ public final class TypeChecker extends Visitor {
 			}
 			
 			if (param instanceof Aggregate) {
-				for (AggregateVariable agg : ((Aggregate)param).variables()) {
+				for (AggregateVariable agg : ((Aggregate) param).variables()) {
 					if (!aggVariables.contains(agg) && 
 							!agg.name().equals(AggregateVariable.STAR)) {
 						aggVariables.add(agg);
@@ -887,6 +887,20 @@ public final class TypeChecker extends Visitor {
 				/* Map variable to its type. */
 				table.current().define(var.name(), var.type());
 				paramType = var.type();
+
+				/* We cannot have two arguments with different location specifiers */
+				if (var.loc()) {
+					if (argLocation == null) {
+						argLocation = var.name();
+					}
+					else if (!argLocation.equals(var.name())) {
+						runtime.error("Predicate " + name + " contains " +
+									  "more than one distinct location specifier " +
+									  "in its argument list: @" +
+									  argLocation + ", @" + var.name(), n);
+						return Error.class;
+					}
+				}
 			}
 			
 			if (param.variables().size() > 0) {
@@ -906,10 +920,10 @@ public final class TypeChecker extends Visitor {
 				if (param instanceof Value && 
 						Number.class.isAssignableFrom(schema.get(index)) &&
 						Number.class.isAssignableFrom(param.type())) {
-					Number number = (Number) ((Value)param).value();
+					Number number = (Number) ((Value) param).value();
 					try {
 						Constructor<?> cons = ((Class<?>)schema.get(index)).getConstructor(String.class);
-						param = new Value<Number>((Number)cons.newInstance(number.toString())); 
+						param = new Value<Number>((Number) cons.newInstance(number.toString())); 
 					} catch (Exception e) {
 						e.printStackTrace();
 						return Error.class;
@@ -927,7 +941,7 @@ public final class TypeChecker extends Visitor {
 		}
 		
 		if (schema.size() != arguments.size()) {
-			runtime.error("Schema size mismatch on predicate " +  name ,n);
+			runtime.error("Schema size mismatch on predicate " +  name, n);
 			return Error.class;
 		}
 		
@@ -1002,7 +1016,7 @@ public final class TypeChecker extends Visitor {
 		if (type == Error.class) return Error.class;
 		else if (!Expression.class.isAssignableFrom(type)) {
 			runtime.error("Expected expression type but got type " + 
-					      type + " instead.",n);
+					      type + " instead.", n);
 			return Error.class;
 		}
 		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);

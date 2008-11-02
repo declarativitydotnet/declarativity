@@ -117,7 +117,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	public Variable locationVariable() {
 		for (Expression argument : this) {
-			if (argument instanceof Variable && ((Variable)argument).loc()) {
+			if (argument instanceof Variable && ((Variable) argument).loc()) {
 				return (Variable) argument;
 			}
 		}
