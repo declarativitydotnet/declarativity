@@ -2,6 +2,7 @@ package jol.types.basic;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,13 +24,13 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	/** Table name to which the tuples of this set belong. */
 	private TableName name;
 
-	boolean warnedAboutBigTable = false;
+	private boolean warnedAboutBigTable = false;
 	
 	/**
 	 * Create an empty tuple set.
 	 */
 	public TupleSet() {
-		this((TableName)null);
+		this((TableName) null);
 	}
 	
 	/** 
@@ -78,8 +79,11 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	@Override
 	public String toString() {
 		String tuples = name + "[";
-		for (Tuple tuple : this) {
-			tuples += tuple + ", ";
+		Iterator<Tuple> iter = this.iterator();
+		while (iter.hasNext()) {
+			tuples += iter.next();
+			if (iter.hasNext())
+				tuples += ", ";
 		}
 		tuples += "]";
 		return tuples;
@@ -93,7 +97,7 @@ public class TupleSet extends HashSet<Tuple> implements Comparable<TupleSet>, Se
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof TupleSet) {
-			return ((TupleSet)o).id.equals(this.id);
+			return ((TupleSet) o).id.equals(this.id);
 		}
 		return false;
 	}

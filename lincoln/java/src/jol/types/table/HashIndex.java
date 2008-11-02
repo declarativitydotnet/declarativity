@@ -65,7 +65,7 @@ public class HashIndex extends Index {
 
 	@Override
 	public TupleSet lookupByKey(Tuple key) throws BadKeyException {
-		if(key.size() != key().size() && key().size() > 0) {
+		if (key.size() != key().size() && key().size() > 0) {
 			throw new BadKeyException("Key had wrong number of columns.  " +
 					"Saw: " + key.size() + " expected: " + key().size() + " key: " + key().toString());
 		}
