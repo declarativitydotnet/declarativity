@@ -44,6 +44,8 @@ public class Shell {
             shell.doCreateFile(argList);
         else
             usage();
+
+        shell.shutdown();
     }
 
     Shell() throws JolRuntimeException, UpdateException {
@@ -88,7 +90,6 @@ public class Shell {
 
             @Override
             public void insertion(TupleSet tuples) {
-                java.lang.System.err.println("insertion() cb invoked");
                 for (Tuple t : tuples) {
                     Integer tupRequestId = (Integer) t.value(1);
 
@@ -135,6 +136,10 @@ public class Shell {
 
     private void doCreateFile(List<String> args) {
         ;
+    }
+
+    private void shutdown() {
+        this.system.shutdown();
     }
 
     private static void usage() {
