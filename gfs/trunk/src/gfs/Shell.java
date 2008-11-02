@@ -38,10 +38,12 @@ public class Shell {
         String op = argList.remove(0);
         if (op.equals("cat"))
             shell.doConcatenate(argList);
-        else if (op.equals("mkdir"))
-            shell.doCreateDir(argList);
         else if (op.equals("create"))
             shell.doCreateFile(argList);
+        else if (op.equals("ls"))
+            shell.doListDirs(argList);
+        else if (op.equals("mkdir"))
+            shell.doCreateDir(argList);
         else
             usage();
 
@@ -121,8 +123,7 @@ public class Shell {
         responseTbl.unregister(response_callback);
 
         java.lang.System.out.println("File name: " + file);
-        java.lang.System.out.println("Contents:");
-        java.lang.System.out.println(contents);
+        java.lang.System.out.println("Contents: " + contents);
         java.lang.System.out.println("=============");
     }
 
@@ -138,13 +139,25 @@ public class Shell {
         ;
     }
 
+    private void doListDirs(List<String> args) {
+        if (args.size() == 0)
+            usage();
+
+        for (String dir : args)
+            doListDir(dir);
+    }
+
+    private void doListDir(String dirname) {
+        ;
+    }
+
     private void shutdown() {
         this.system.shutdown();
     }
 
     private static void usage() {
         java.lang.System.err.println("Usage: java gfs.Shell op_name args");
-        java.lang.System.err.println("Where op_name = {cat,mkdir,write}");
+        java.lang.System.err.println("Where op_name = {cat,create,ls,mkdir}");
         java.lang.System.exit(0);
     }
 }
