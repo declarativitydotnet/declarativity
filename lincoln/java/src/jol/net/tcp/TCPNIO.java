@@ -70,7 +70,7 @@ public class TCPNIO extends Server {
 	@Override
 	public void interrupt() {
 		super.interrupt();
-		executor.shutdown();
+		this.executor.shutdown();
 	}
 	
 	@Override
@@ -80,9 +80,9 @@ public class TCPNIO extends Server {
 				this.selector.select();
 				
 				synchronized (newConnections) {
-					for (Connection connection : newConnections) {
-						connections.put(connection.toString(), connection);
-						connection.channel.register(this.selector, SelectionKey.OP_READ);
+					for (Connection newConn : newConnections) {
+						connections.put(newConn.toString(), newConn);
+						newConn.channel.register(this.selector, SelectionKey.OP_READ);
 					}
 					newConnections.clear();
 				}
@@ -92,7 +92,9 @@ public class TCPNIO extends Server {
 				while (iter.hasNext()) {
 					SelectionKey key = iter.next();
 					iter.remove();
-					if (!key.isValid()) { continue; }
+
+					if (!key.isValid())
+					    continue;
 					
 					if (key.isAcceptable()) {
 						ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
@@ -100,11 +102,11 @@ public class TCPNIO extends Server {
 						if (channel != null) {
 							Connection connection = new Connection(channel);
 							manager.connection().register(connection);
-							register (connection);
+							register(connection);
 						}
 					}
 					else if (key.isReadable()) {
-						String connectionKey = ((SocketChannel)key.channel()).socket().toString();
+						String connectionKey = ((SocketChannel) key.channel()).socket().toString();
 						final Connection connection = this.connections.get(connectionKey);
 						executor.execute(new Runnable() {
 							public void run() {
@@ -151,8 +153,8 @@ public class TCPNIO extends Server {
 	}
 	
 	private void register(Connection connection) {
-		synchronized (newConnections) {
-			newConnections.add(connection);
+		synchronized (this.newConnections) {
+			this.newConnections.add(connection);
 			this.selector.wakeup();
 		}
 	}
@@ -163,7 +165,7 @@ public class TCPNIO extends Server {
 
 		public Connection(SocketChannel channel) throws IOException {
 			super("tcp", new IP(channel.socket().getInetAddress(), channel.socket().getPort()));
-			this.buffer = ByteBuffer.allocate(10000);
+			this.buffer = ByteBuffer.allocate(8192);
 			this.channel = channel;
 			this.channel.configureBlocking(false);
 		}
@@ -201,9 +203,11 @@ public class TCPNIO extends Server {
 			} catch (IOException e) { }
 		}
 
-		/** Helper method that receives a single message from the socket channel. 
-		 * Will demarshall the message and schedule the message with
-		 * the TCP program as a {#link {@link TCPNIO#ReceiveMessage}} tuple. */
+		/**
+         * Helper method that receives a single message from the socket channel.
+         * Will demarshall the message and schedule the message with the TCP
+         * program as a {@link TCPNIO#ReceiveMessage} tuple.
+         */
 		private void receive() {
 			try {
 				Message message = null;
@@ -277,6 +281,7 @@ public class TCPNIO extends Server {
 	    	int read = 0;
 	    	int attempts = 0;
 	        int total = buf.limit() - buf.position();
+
 	        do {
 	            int bytes = socket.read(buf);
 	            if (bytes == 0) attempts++;
@@ -287,6 +292,7 @@ public class TCPNIO extends Server {
 	            }
 	            read += bytes;
 	        } while (!once && read < total);
+
 	        return read;
 	    }
 	}
