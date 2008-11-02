@@ -1,6 +1,7 @@
 package gfs;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 
@@ -15,8 +16,9 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Shell {
-	private static System system;
-	private static int id = 1;
+	private System system;
+	private int nextId = 1;
+    private String selfAddress;
 
     /*
      * TODO:
@@ -25,43 +27,47 @@ public class Shell {
      *  (3) inject the appropriate inserts into JOL; wait for the results to come back
      *  (4) return results to stdout
      */
-    public static void main(String[] args) throws JolRuntimeException, UpdateException, InterruptedException {
-        List<String> argList = Arrays.asList(args);
+    public static void main(String[] args) throws Exception {
+        List<String> argList = new LinkedList(Arrays.asList(args));
 
         if (argList.size() == 0)
             usage();
 
-        system = Runtime.create(5501);
-
-		system.catalog().register(new MasterRequestTable((Runtime) system));
-        system.catalog().register(new SelfTable((Runtime) system));
-
-        /* Identify which address the local node is at */
-        TupleSet self = new TupleSet();
-        self.add(new Tuple("tcp:localhost:" + 5501));
-        system.schedule("gfsmaster", SelfTable.TABLENAME, self, null);
-        system.evaluate();
-
-        system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
-        system.evaluate();
-        system.start();
+        Shell shell = new Shell();
 
         String op = argList.remove(0);
-
         if (op.equals("cat"))
-            doConcatenate(argList);
+            shell.doConcatenate(argList);
         else if (op.equals("mkdir"))
-            doCreateDir(argList);
+            shell.doCreateDir(argList);
         else if (op.equals("create"))
-            doCreateFile(argList);
+            shell.doCreateFile(argList);
         else
             usage();
+    }
+
+    Shell() throws JolRuntimeException, UpdateException {
+        this.system = Runtime.create(5501);
+
+		this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
+        this.system.catalog().register(new SelfTable((Runtime) this.system));
+
+        /* Identify which address the local node is at */
+        this.selfAddress = "tcp:localhost:" + 5501;
+        TupleSet self = new TupleSet();
+        self.add(new Tuple(this.selfAddress));
+        this.system.schedule("gfs", SelfTable.TABLENAME, self, null);
+        this.system.evaluate();
+
+        this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
+        this.system.evaluate();
+        this.system.start();
     }
 
     /*
      * XXX: consider parallel evaluation
      */
-    private static void doConcatenate(List<String> args) throws UpdateException
+    private void doConcatenate(List<String> args) throws UpdateException, InterruptedException
     {
         if (args.size() == 0)
             usage();
@@ -70,15 +76,15 @@ public class Shell {
             doCatFile(file);
     }
 
-    private static void doCatFile(String file) throws UpdateException
+    private void doCatFile(String file) throws UpdateException, InterruptedException
     {
-        final int request_id = generateId();
+        final int requestId = generateId();
         final SynchronousQueue<String> content_queue = new SynchronousQueue<String>();
 
         // Create the request tuple
         TableName tblName = new TableName("gfs", "cat_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(request_id, file));
+        req.add(new Tuple(this.selfAddress, requestId, file));
 
         // Register callback to listen for responses
         Callback response_callback = new Callback() {
@@ -92,22 +98,30 @@ public class Shell {
                 java.lang.System.err.println("insertion() cb invoked");
 				for (Tuple t : tuples)
 				{
-					if (t.value("request_id").equals(request_id))
+                    String tupRequestId = (String) t.value(1);
+
+					if (tupRequestId.equals(requestId))
 					{
-						String response_contents = (String) t.value("contents");
-						content_queue.add(response_contents);
+						String responseContents = (String) t.value(2);
+                        try {
+                            content_queue.put(responseContents);
+                            break;
+                        }
+                        catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
 					}
 				}
 			}
         };
-        Table responseTbl = system.catalog().table(tblName);
+        Table responseTbl = system.catalog().table(new TableName("gfs", "cat_response"));
         responseTbl.register(response_callback);
 
         // Do the insert
         system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
-        String contents = content_queue.remove();
+        String contents = content_queue.take();
         responseTbl.unregister(response_callback);
 
         java.lang.System.out.println("File name: " + file);
@@ -116,16 +130,16 @@ public class Shell {
         java.lang.System.out.println("=============");
     }
 
-    private static int generateId() {
-        return id++;
+    private int generateId() {
+        return nextId++;
 	}
 
-	private static void doCreateDir(List<String> args)
+	private void doCreateDir(List<String> args)
     {
         ;
     }
 
-    private static void doCreateFile(List<String> args)
+    private void doCreateFile(List<String> args)
     {
         ;
     }

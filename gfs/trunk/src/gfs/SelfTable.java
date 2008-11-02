@@ -16,10 +16,10 @@ public class SelfTable extends ObjectTable {
 	};
 
 	public static final Class<?>[] SCHEMA = {
-        String.class,   // Address of self
+        String.class    // Address of self
 	};
 
-	protected SelfTable(Runtime context) {
+	SelfTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 	}
 }

@@ -19,36 +19,39 @@ master_per_node("tcp:localhost:5501", "tcp:localhost:5500");
 //master_per_node(@Node, Master) :- master(@Master), nodes(@Node);
 
 // Node, File name, Contents
-define(file, keys(0), {String, String, String});
+define(file, keys(0, 1), {String, String, String});
 
 file("tcp:localhost:5500", "Foo", "Bar");
 file("tcp:localhost:5500", "Bar", "Baz");
 
+// Node, Request ID, Target, File name
 define(request_started, keys(0, 1), {String, Integer, String, String});
 
-// Node, Request ID, Filename
+// Node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});
 
 // Node, Request ID, File contents
 define(cat_response, keys(0, 1), {String, Integer, String});
 
-// Node, Request id, File contents
+// Node, Request ID, File contents
 define(response, keys(0, 1), {String, Integer, String});
 
-request_started(@Source, Id, Target, FName) :-
-    self(@Source), master_per_node(@Source, @Target),
+request_started(@Source, Id, Master, FName) :-
+    self(@Source), master_per_node(@Source, Master),
     cat_request(@Source, Id, FName);
 
 request(@Target, Id, Source, FName) :-
     request_started(@Source, Id, Target, FName);
 
-cat_response(@Node, Id, FContents) :-
-    response(@Node, Id, FContents), self(@Node);
-
 request_done(@Master, Id, Source, FContents) :-
     file(@Master, FName, FContents), request(@Master, Id, Source, FName),
     self(@Master), master(@Master);
 
-// If we get a request for a file that exists, send back the content
+// If we get a request for a file that exists, send back the contents
 // of the file
-response(@Source, Id, FContents) :- request_done(@Master, Id, Source, FContents);
+cat_response(@Source, Id, FContents) :-
+    request_done(@Master, Id, Source, FContents);
+
+watch(response, tsai);
+watch(cat_request, tsai);
+watch(request_started, tsai);
