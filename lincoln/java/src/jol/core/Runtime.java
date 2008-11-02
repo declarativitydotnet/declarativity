@@ -12,9 +12,11 @@ import jol.exec.Query.QueryTable;
 import jol.lang.Compiler;
 import jol.lang.Compiler.CompileTable;
 import jol.lang.plan.Program;
+import jol.lang.plan.Program.ProgramTable;
 import jol.net.Network;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.StasisTable;
@@ -257,6 +259,18 @@ public class Runtime implements System {
 			    });
 			}
 			else {
+			    /* Check that the specified program already exists */
+			    TupleSet programs = null;
+			    try {
+			        Table programTable = this.catalog().table(ProgramTable.TABLENAME);
+			        programs = programTable.primary().lookupByKey(program);
+			    }
+			    catch (BadKeyException e) {}
+
+			    if (programs == null || programs.isEmpty())
+			        throw new UpdateException("Failed to find program: " + program);
+
+			    /* Schedule the insertions/deletions */
 				Tuple tuple = new Tuple(clock.current() + 1L, program, name, 
 						                insertions, deletions);
 				schedule.force(tuple);
