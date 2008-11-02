@@ -76,7 +76,7 @@ public class Shell {
         final SynchronousQueue<String> content_queue = new SynchronousQueue<String>();
 
         // Create the request tuple
-        TableName tblName = new TableName("gfs", "cat_requests");
+        TableName tblName = new TableName("gfs", "cat_request");
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(request_id, file));
 

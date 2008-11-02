@@ -2,6 +2,7 @@ program gfs;
 
 define(nodes, keys(0), {String});
 define(master, keys(0), {String});
+define(request_done, keys(0, 1), {String, Integer, String, String});
 
 // The nodes in the cluster
 nodes("tcp:localhost:5500");
@@ -10,29 +11,44 @@ nodes("tcp:localhost:5501");
 // The address of the master node
 master("tcp:localhost:5500");
 
-// File name, contents
-define(file, keys(0), {String, String});
+define(master_per_node, keys(0, 1), {String, String});
 
-file("Foo", "Bar");
-file("Bar", "Baz");
+master_per_node("tcp:localhost:5500", "tcp:localhost:5500");
+master_per_node("tcp:localhost:5501", "tcp:localhost:5500");
 
-// Request ID, Filename
-define(cat_request, keys(0), {Integer, String});
+//master_per_node(@Node, Master) :- master(@Master), nodes(@Node);
 
-// Request ID, File contents
-define(cat_response, keys(0), {Integer,String});
+// Node, File name, Contents
+define(file, keys(0), {String, String, String});
+
+file("tcp:localhost:5500", "Foo", "Bar");
+file("tcp:localhost:5500", "Bar", "Baz");
+
+define(request_started, keys(0, 1), {String, Integer, String, String});
+
+// Node, Request ID, Filename
+define(cat_request, keys(0, 1), {String, Integer, String});
+
+// Node, Request ID, File contents
+define(cat_response, keys(0, 1), {String, Integer, String});
 
 // Node, Request id, File contents
 define(response, keys(0, 1), {String, Integer, String});
 
-request(@Target, Id, Source, FName) :-
-    cat_request(Id, FName), self(Source), master(Target);
+request_started(@Source, Id, Target, FName) :-
+    self(@Source), master_per_node(@Source, @Target),
+    cat_request(@Source, Id, FName);
 
-cat_response(Id, FContents) :-
-    response(@Node, Id, FContents), self(Node);
+request(@Target, Id, Source, FName) :-
+    request_started(@Source, Id, Target, FName);
+
+cat_response(@Node, Id, FContents) :-
+    response(@Node, Id, FContents), self(@Node);
+
+request_done(@Master, Id, Source, FContents) :-
+    file(@Master, FName, FContents), request(@Master, Id, Source, FName),
+    self(@Master), master(@Master);
 
 // If we get a request for a file that exists, send back the content
 // of the file
-response(@Source, Id, FContents) :-
-    file(FName, FContents), request(@Master, Id, Source, FName),
-    self(Master), master(Master);
+response(@Source, Id, FContents) :- request_done(@Master, Id, Source, FContents);
