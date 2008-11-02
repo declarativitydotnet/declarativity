@@ -98,23 +98,21 @@ public class EventFilter extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		if (filters.size() == 0) {
+		if (filters.size() == 0)
 			return tuples;
+
+		TupleSet result = new TupleSet(tuples.name());
+
+		for (Tuple tuple : tuples) {
+		    boolean valid = true;
+		    for (TupleFunction<Boolean> filter : this.filters) {
+		        valid = filter.evaluate(tuple);
+		        if (!valid) break;
+		    }
+		    if (valid) result.add(tuple);
 		}
-		else {
-			TupleSet result = new TupleSet(tuples.name());
-			
-			for (Tuple tuple : tuples) {
-				boolean valid = true;
-				for (TupleFunction<Boolean> filter : this.filters) {
-					valid = filter.evaluate(tuple);
-					if (!valid) break;
-				}
-				if (valid) result.add(tuple);
-			}
-			
-			return result;
-		}
+
+		return result;
 	}
 
 	@Override
