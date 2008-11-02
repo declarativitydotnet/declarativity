@@ -12,11 +12,10 @@ public class Master {
 	private static final int DEFAULT_MASTER_PORT = 5500;
 
 	public static void main(String[] args) throws JolRuntimeException, UpdateException {
-		int port = DEFAULT_MASTER_PORT;
-
 		if (args.length > 1)
 			usage();
 
+		int port = DEFAULT_MASTER_PORT;
 		if (args.length == 1)
 			port = Integer.parseInt(args[0]);
 

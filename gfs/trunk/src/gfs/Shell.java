@@ -42,8 +42,8 @@ public class Shell {
         system.schedule("gfsmaster", SelfTable.TABLENAME, self, null);
         system.evaluate();
 
-        system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_client.olg"));
-        system.install("gfs", ClassLoader.getSystemResource("gfs/gfs_master.olg"));
+        system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
+        system.evaluate();
         system.start();
 
         String op = argList.remove(0);

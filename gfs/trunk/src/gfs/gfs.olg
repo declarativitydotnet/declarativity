@@ -22,7 +22,8 @@ define(cat_request, keys(0), {Integer, String});
 // Request ID, File contents
 define(cat_response, keys(0), {Integer,String});
 
-define(response, keys(0,1), {String, Integer, String});
+// Node, Request id, File contents
+define(response, keys(0, 1), {String, Integer, String});
 
 request(@Target, Id, Source, FName) :-
     cat_request(Id, FName), self(Source), master(Target);
@@ -30,7 +31,7 @@ request(@Target, Id, Source, FName) :-
 cat_response(Id, FContents) :-
     response(@Node, Id, FContents), self(Node);
 
-// If we get a response for a file that exists, send back the content
+// If we get a request for a file that exists, send back the content
 // of the file
 response(@Source, Id, FContents) :-
     file(FName, FContents), request(@Master, Id, Source, FName),
