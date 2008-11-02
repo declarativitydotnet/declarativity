@@ -21,10 +21,10 @@ public interface System {
 	 */
 	Clock clock();
 	
-	/** System shutdown */
+	/** Shutdown the system. */
 	void shutdown();
 	
-	/** Start the asynchronous system driver */
+	/** Start the asynchronous system driver. */
 	void start();
 
 	/**
@@ -35,7 +35,7 @@ public interface System {
 	 * Calling this method after a call to {@link #start()} is not allowed.
 	 * @throws JolRuntimeException When called post {@link #start()}
 	 */
-	public void evaluate() throws JolRuntimeException;
+	void evaluate() throws JolRuntimeException;
 	
 	/**
 	 * Get the system catalog.
