@@ -234,8 +234,6 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		type = (Class) n.getNode(0).getProperty(Constants.TYPE);
-		
-		type = (Class) n.getNode(0).getProperty(Constants.TYPE);
 		NAME_TO_BASETYPE.put(type.getSimpleName(), type);
 		n.setProperty(Constants.TYPE, type);
 		return Class.class;
@@ -1732,16 +1730,33 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitClassType(final GNode n) {
 		try {
+			Class type  = null;
 			String name = n.getString(0);
-			for (Object c : n.getList(1)) {
-				name  += "." + c.toString();
-			}
-			Class type = Error.class;
 			if (type(name) != null) {
 				type = type(name);
+				name = type.getCanonicalName();
 			}
-			else {
-				type = Class.forName(name);
+			
+			for (Object c : n.getList(1)) {
+				if (type != null) {
+					name  += "$" + c.toString();
+					type = type(name) == null ? 
+							Class.forName(name) : type(name);
+					NAME_TO_BASETYPE.put(name, type);
+				}
+				else {
+					name  += "." + c.toString();
+					try {
+						type = Class.forName(name);
+					}
+					catch (ClassNotFoundException e) {
+						type = null;
+					}
+				}
+			}
+			
+			if (type == null) {
+				return Error.class;
 			}
 			n.setProperty(Constants.TYPE, type);
 			return Class.class;

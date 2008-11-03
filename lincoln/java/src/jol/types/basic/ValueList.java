@@ -11,6 +11,17 @@ import java.util.ArrayList;
 public class ValueList<T> extends ArrayList<T> implements Comparable<ValueList> {
 	private static final long serialVersionUID = 1L;
 
+	public ValueList() {
+		super();
+	}
+	
+	public ValueList(T[] values) {
+		super();
+		for (T value : values) {
+			add(value);
+		}
+	}
+	
 	public int compareTo(ValueList o) {
 		if (o.equals(this)) {
 			return 0;
