@@ -12,6 +12,7 @@ import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 import jol.types.table.TableName;
 import jol.core.Runtime;
@@ -34,8 +35,9 @@ public class Projection extends Operator {
 	 * Create a new projection operator
 	 * @param context THe runtime context.
 	 * @param predicate The predicate whose schema we project to.
+	 * @throws JolRuntimeException 
 	 */
-	public Projection(Runtime context, Predicate predicate) {
+	public Projection(Runtime context, Predicate predicate) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
 		this.name = predicate.name();
 		
@@ -52,6 +54,13 @@ public class Projection extends Operator {
 				}
 			}
 			else {
+				if (predicateVariables.size() <= i) {
+					// Fatal error!
+					throw new PlannerException("Projection error: " +
+							"NOT ENOUGH VARIABLES IN PREDICATE " + predicate.toString() +
+					        " -- PREDICATE VARIABLES: " + predicateVariables.toString() +
+					        " -- PREDICATE ARGUMENTS: " + arguments.toString());
+				}
 				accessors.add(argument.function());
 				variables.add(predicateVariables.get(i));
 			}

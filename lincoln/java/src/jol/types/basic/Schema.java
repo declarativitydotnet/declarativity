@@ -22,12 +22,12 @@ public class Schema {
 	protected TableName name;
 	
 	/** A map from the string variable name to the variable itself. */
-	protected Map<String, Variable> variables;
+	protected List<Variable> variables;
 
 	/**  Create an empty schema. */
 	public Schema() {
 		this.name = null;
-		this.variables = new HashMap<String, Variable>();
+		this.variables = new ArrayList<Variable>();
 	}
 
 	/** 
@@ -36,7 +36,7 @@ public class Schema {
 	 */
 	public Schema(TableName name) {
 		this.name = name;
-		this.variables = new HashMap<String, Variable>();
+		this.variables = new ArrayList<Variable>();
 	}
 	
 	/**
@@ -49,10 +49,7 @@ public class Schema {
 		for (int i = 0; i < variables.size(); i++) {
 			variables.get(i).position(i);
 		}
-		this.variables = new HashMap<String, Variable>();
-		for (Variable variable : variables) {
-			this.variables.put(variable.name(), variable);
-		}
+		this.variables = variables; 
 	}
 	
 	/**
@@ -61,7 +58,7 @@ public class Schema {
 	 */
 	private Schema(Schema schema) {
 		this.name = schema.name;
-		this.variables = new HashMap<String, Variable>(schema.variables);
+		this.variables = new ArrayList<Variable>(schema.variables);
 	}
 	
 	@Override
@@ -92,11 +89,11 @@ public class Schema {
 	 */
 	public void append(Variable variable) {
 		variable.position(this.variables.size());
-		this.variables.put(variable.name(), variable);
+		this.variables.add(variable);
 	}
 	
 	public boolean remove(Variable variable) {
-		return this.variables.remove(variable.name()) != null;
+		return this.variables.remove(variable);
 	}
 	
 	/**
@@ -105,7 +102,7 @@ public class Schema {
 	 * @return true if schema contains variable, false otherwise.
 	 */
 	public boolean contains(Variable variable) {
-		return this.variables.containsKey(variable.name());
+		return this.variables.contains(variable);
 	}
 	
 	@Override
@@ -120,13 +117,8 @@ public class Schema {
 	 */
 	public final List<Class> types() {
 		List<Class> types = new ArrayList<Class>();
-		for (int position = 0; position < this.variables.size(); position++) {
-			for (Variable variable : this.variables.values()) {
-				if (variable.position() == position) {
-					types.add(variable.type());
-					break;
-				}
-			}
+		for (Variable variable : this.variables) {
+			types.add(variable.type());
 		}
 		return types;
 	}
@@ -136,25 +128,24 @@ public class Schema {
 	 * @return A list of the schema variables.
 	 */
 	public final List<Variable> variables() {
-		List<Variable> variables = new ArrayList<Variable>();
-		for (int position = 0; position < this.variables.size(); position++) {
-			for (Variable variable : this.variables.values()) {
-				if (variable.position() == position) {
-					variables.add(variable);
-					break;
-				}
-			}
-		}
-		return variables;
+		return new ArrayList<Variable>(this.variables);
 	}
 	
 	/**
 	 * Find variable by name.
 	 * @param name Variable name.
 	 * @return The variable if exists, otherwise null.
+	 * NOTE: use with caution. if more than 1 variable
+	 * exists with the same name this method simply returns
+	 * the first.
 	 */
 	public final Variable variable(String name) {
-		return this.variables.get(name);
+		for (Variable v : this.variables) {
+			if (v.name().equals(name)) {
+				return v;
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -163,7 +154,7 @@ public class Schema {
 	 * @return The value type.
 	 */
 	public final Class type(String name) {
-		return this.variables.get(name).type();
+		return variable(name).type();
 	}
 	
 	/**
@@ -172,8 +163,8 @@ public class Schema {
 	 * @return The position of the variable within this schema or -1 if !exist.
 	 */
 	public final int position(String name) {
-		return this.variables.containsKey(name) ?
-				this.variables.get(name).position() : -1;
+		Variable v = variable(name);
+		return v != null ? v.position() : -1;
 	}
 	
 	/**
@@ -184,13 +175,13 @@ public class Schema {
 	 */
 	public final Schema join(Schema inner) {
 		Schema join = new Schema();
-		for (Variable variable : this.variables()) {
+		for (Variable variable : this.variables) {
 			if (!(variable instanceof DontCare)) {
 				join.append(variable.clone());
 			}
 		}
 		
-		for (Variable variable : inner.variables()) {
+		for (Variable variable : inner.variables) {
 			if (!(variable instanceof DontCare) && !join.contains(variable)) {
 				join.append(variable.clone());
 			}
