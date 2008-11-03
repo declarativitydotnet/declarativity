@@ -13,10 +13,8 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -47,8 +45,6 @@ public class TCPNIO extends Server {
 	
 	private ExecutorService executor;
 	
-	private Map<String, Connection> connections;
-	
 	private List<Connection> newConnections;
 		
 	public TCPNIO(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
@@ -57,7 +53,6 @@ public class TCPNIO extends Server {
 		this.manager = manager;
 		this.selector = SelectorProvider.provider().openSelector();
 		this.executor = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
-		this.connections = new HashMap<String, Connection>();
 		this.newConnections = new ArrayList<Connection>();
 		context.install("system", "jol/net/tcp/tcp.olg");
 		
@@ -78,13 +73,14 @@ public class TCPNIO extends Server {
 		while (true) {
 			try {
 				this.selector.select();
-				
-				synchronized (newConnections) {
-					for (Connection newConn : newConnections) {
-						connections.put(newConn.toString(), newConn);
-						newConn.channel.register(this.selector, SelectionKey.OP_READ);
+
+				/* Add any pending new connections to the select set */
+				synchronized (this.newConnections) {
+					for (Connection newConn : this.newConnections) {
+						SelectionKey key = newConn.channel.register(this.selector, SelectionKey.OP_READ);
+						key.attach(newConn);
 					}
-					newConnections.clear();
+					this.newConnections.clear();
 				}
 				
 		        // Iterate over the set of keys for which events are available
@@ -106,8 +102,7 @@ public class TCPNIO extends Server {
 						}
 					}
 					else if (key.isReadable()) {
-						String connectionKey = ((SocketChannel) key.channel()).socket().toString();
-						final Connection connection = this.connections.get(connectionKey);
+						final Connection connection = (Connection) key.attachment();
 						executor.execute(new Runnable() {
 							public void run() {
 								connection.receive();
@@ -146,9 +141,6 @@ public class TCPNIO extends Server {
 		if (channel instanceof Connection) {
 			Connection connection = (Connection) channel;
 			connection.close();
-			if (this.connections.containsKey(connection.toString())) {
-					this.connections.remove(connection.toString());
-			}
 		}
 	}
 	
