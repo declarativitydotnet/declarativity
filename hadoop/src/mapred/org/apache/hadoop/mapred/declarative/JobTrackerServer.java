@@ -137,8 +137,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		Table jobs = context.catalog().table(JobTable.TABLENAME);
 		JobStatus[] status = new JobStatus[jobs.cardinality().intValue()];
 		int index = 0;
-		for (Iterator<Tuple> iter = jobs.tuples(); iter.hasNext(); ) {
-			JobState state = (JobState) iter.next().value(JobTable.Field.STATUS.ordinal());
+		for (Tuple tuple : jobs.tuples()) {
+			JobState state = (JobState) tuple.value(JobTable.Field.STATUS.ordinal());
 			status[index++] = state.status();
 		}
 		return status;
@@ -149,8 +149,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		TaskTable taskTable    = (TaskTable) context.catalog().table(TaskTable.TABLENAME);
 		int totalMapTaskCapacity    = 0;
 		int totalReduceTaskCapacity = 0;
-		for (Iterator<Tuple> iter = taskTrackerTable.tuples(); iter.hasNext(); ) {
-			Tuple tracker = iter.next();
+		for (Tuple tracker : taskTrackerTable.tuples()) {
 			totalMapTaskCapacity    += (Integer) tracker.value(TaskTrackerTable.Field.MAX_MAP.ordinal());
 			totalReduceTaskCapacity += (Integer) tracker.value(TaskTrackerTable.Field.MAX_REDUCE.ordinal());
 		}
@@ -199,8 +198,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	public JobStatus[] jobsToComplete() throws IOException {
 		Table jobs = context.catalog().table(JobTable.TABLENAME);
 		List<JobStatus> status = new ArrayList<JobStatus>();
-		for (Iterator<Tuple> jobIter = jobs.tuples(); jobIter.hasNext(); ) {
-			Tuple job = jobIter.next();
+		for (Tuple job : jobs.tuples()) {
 			JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
 			status.add(state.status());
 		}

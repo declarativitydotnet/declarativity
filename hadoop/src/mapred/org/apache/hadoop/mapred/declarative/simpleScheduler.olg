@@ -1,20 +1,106 @@
 program scheduler;
 
+taskAttempts(JobID, TaskID, count<*>) :-
+	jobtracker::taskAttempt(JobID, TaskID);
+
+taskAttempts(JobID, TaskID, 0) :-
+	task(JobID, TaskID, _, _, _, _, Status),
+	Status.state() == TaskStatus.UNASSIGNED;
+
+taskAttempt(JobID, TaskID, AttemptID, 0, State, Phase, null, TrackerName, 0, 0) :-
+	scheduleTaskAttempt(JobID, TaskID, TrackerName),
+	jobtracker::taskAttempts(JobID, TaskID, Attempts),
+	State := TaskState.RUNNING,
+	Phase := TaskPhase.STARTING,
+	AttemptID := Attempts + 1;
+ 
 /******************** Process new jobs *******************/
 
+define(jobQueue, keys(0), {JobID, Enum, Long});
+define(jobQueueStats, keys(), {Integer, Enum, Long});
+define(oldestQueuedJob, keys(0), {JobID, Enum, Long});
+
 /* Put new jobs in a wait queue. */
-waitQueue(JobID, StartTime, Priority) :-
+public
+jobQueue(JobID, Priority, StartTime) :-
 	job(JobID, JobName, User, JobFile, JobConf, URL, Priority, StartTime, _, JobState),
-	JobState.state() == JobStatus.State.PREP;
+	JobState.state() == JobState.PREP;
 	
-/* Overall min priority. */
-minWaitPriority(JobID, min<Priority>) :-
-	waitQueue(JobID, StartTime, Priority); 
+/* Overall min priority and min start time. */
+jobQueueStats(count<*>, min<Priority>, min<StartTime>) :-
+	jobQueue(JobID, Priority, StartTime); 
 	
 /* View of the oldest waiting job in each priority level. */
-oldestWaitingJob(JobID, Priority, min<StartTime>) :-
-	waitQueue(JobID, StartTime, Priority);
+oldestQueuedJob(JobID, Priority, min<StartTime>) :-
+	jobQueue(JobID, Priority, StartTime);
 	
 	
+/******************** Schedule Map Tasks *******************/
 	
+define(trackerSlots, keys(0), {String, String, Integer, Integer});
+define(mapCandidate, keys(0,1), {JobID, TaskID, String, Integer, Long});
+
+trackerSlots(TrackerName, Host, MaxMap - MapCount, MaxReduce - ReduceCount) :-
+	taskTracker(Name, Host, HttpPort, Timestamp, Failures, MapCount, ReduceCount, MaxMap, MaxReduce);
+
+/* Priority 1: Schedule unassigned tasks from the oldest + highest
+               priority job. */
+mapCandidate(JobID, TaskID, TrackerName, Priority, Distance) :-
+	trackerSlots(TrackerName, Host, Maps, Reduces),
+	Maps > 0,
+	jobQueueStats(Jobs, MinPriority, MinStartTime),
+	jobQueue(JobID, MinPriority, _),
+	task(JobID, TaskID, Type, _, _, _, Status),
+	Type == TaskType.MAP, 
+	Status.state() == TaskState.UNASSIGNED || Status.state() == TaskState.FAILED,
+    notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.FAILED, _, _, TrackerName, _, _),
+	taskFileLocation(JobID, TaskID, Location),
+	Distance := NetUtil.distance(Host, Location),
+	Priority := 1;
+	
+/* Priority 2: Speculative task execution on the min priority job. */
+mapCandidate(JobID, TaskID, TrackerName, Priority, Distance) :-
+	trackerSlots(TrackerName, Host, Maps, Reduces),
+	Maps > 0,
+	jobQueueStats(Jobs, MinPriority, MinStartTime),
+	jobQueue(JobID, MinPriority, _),
+	task(JobID, TaskID, Type, _, _, _, Status),
+	Type == TaskType.MAP, 
+    notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.FAILED, _, _, TrackerName, _, _),
+	Status.state() == TaskState.RUNNING,
+	taskFileLocation(JobID, TaskID, Location),
+	Distance := NetUtil.distance(Host, Location),
+	Priority := 2;
+	
+/* Priority 3: Unassigned tasks from oldest job. */
+mapCandidate(JobID, TaskID, TrackerName, Priority, Distance) :-
+	trackerSlots(TrackerName, Host, Maps, Reduces),
+	Maps > 0,
+	jobQueueStats(Jobs, MinPriority, MinStartTime),
+	jobQueue(JobID, _, MinStartTime),
+	task(JobID, TaskID, Type, _, _, _, Status),
+	Type == TaskType.MAP, 
+	Status.state() == TaskState.UNASSIGNED || Status.state() == TaskState.FAILED,
+    notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.FAILED, _, _, TrackerName, _, _),
+	taskFileLocation(JobID, TaskID, Location),
+	Distance := NetUtil.distance(Host, Location),
+	Priority := 3;
+	
+	
+bestMapDistance(TrackerName, min<Priority>, bottomk<Distance, MapSlots>) :-
+	mapCandidate(JobID, TaskID, TrackerName, Priority, Distance),
+	trackerSlots(TrackerName, Host, MapSlots, ReduceSlots);
+	
+mapSelector(TrackerName, Priority, Distance) :-
+	flatten(bestMapDistance(TrackerName, Priority, BestDistances)),
+	Distance := (Long) BestDistances;
+	
+scheduleTaskAttempt(JobID, TaskID, TrackerName) :-
+	mapSelector(TrackerName, Priority, Distance),
+	mapCandidate(JobID, TaskID, TrackerName, Priority, Distance);
+	
+delete
+mapCandidate(JobID, TaskID, TrackerName, Priority, Distance) :-
+	scheduleTaskAttempt(JobID, TaskID, TrackerName),
+	mapCandidate(JobID, TaskID, TrackerName, Priority, Distance);
 	

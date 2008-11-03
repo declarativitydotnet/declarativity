@@ -18,7 +18,9 @@ import jol.types.basic.Tuple;
  * All job trackers implement this interface.
  */
 public abstract class JobTracker {
-	public static final String PROGRAM = "jobtracker";
+	public static final String PROGRAM   = "jobtracker";
+	public static final String SCHEDULER = "scheduler";
+	
 	public static enum State { INITIALIZING, RUNNING }
 	
 	protected State state = State.INITIALIZING;

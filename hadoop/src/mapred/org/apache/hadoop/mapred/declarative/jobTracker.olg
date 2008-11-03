@@ -13,8 +13,8 @@ import java.lang.Enum;
 
 
 define(initTask, {JobID, Wrapper, String, TaskID, Enum, Integer, Wrapper, Integer, TaskState});
-define(taskInputLocation, keys(0,1), {JobID, TaskID, String});
-define(taskInput, {JobID, TaskID, ValueList});
+define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
+define(taskFile, {JobID, TaskID, ValueList});
 
 initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
 	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState),
@@ -26,13 +26,13 @@ async
 task(JobID, TaskID, Type, Partition, Split, MapCount, Status) :-
 	taskCreate(initTask(JobID, JobConf, JobFile, TaskID, Type, Partition, Split, MapCount, Status));
 	
-taskInput(JobId, TaskId, Locations) :-
+taskFile(JobId, TaskId, Locations) :-
 	task(JobId, TaskId, Type, _, Split, _, TaskState),
 	TaskState.state() == TaskState.UNASSIGNED,
 	Locations := new ValueList(Split.getLocations());
 	
-taskInputLocation(JobId, TaskId, Location) :-
-	flatten(taskInput(JobId, TaskId, Locations)),
+taskFileLocation(JobId, TaskId, Location) :-
+	flatten(taskFile(JobId, TaskId, Locations)),
 	Location := (String) Locations;
 	
 	
