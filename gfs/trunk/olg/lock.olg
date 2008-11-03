@@ -1,0 +1,80 @@
+program lock;
+
+import jol.types.basic.Tuple;
+
+define(lock,keys(0),{String,String,String});
+
+
+// me,lockname,type,requestor
+define(lockRequest,keys(0,1),{String,String,String,String});
+// requestor,me,lock,type,status
+define(lockGrant,keys(0,1,2,3),{String,String,String,String,String});
+
+// wow, overlog kicks ass
+no_lock
+lockGrant(Requestor,Me,Lock,Type,"granted") :-
+  lockRequest#insert(Me,Lock,Type,Requestor),
+  notin lockGrant(_,Me,Lock,_,"granted");
+
+x_lock
+lockGrant(Requestor,Me,Lock,Type,"granted") :-
+  lockRequest#insert(Me,Lock,Type,Requestor),
+  Type == "S",
+  notin lockGrant(R,M,Lock,"X","granted");
+
+new_xlock
+lockGrant(Requestor,Me,Lock,Type,"denied") :-
+  lockRequest#insert(Me,Lock,Type,Requestor),
+  Type == "X",
+  lockGrant(_,Me,Lock,_,"granted");
+  
+// paxosify the lock state update.
+public
+paxos_global::decreeRequest(Me,Decree,Him) :-
+  lockGrant#insert(R,M,Lock,Type,Status),
+  Status == "granted",
+  lockRequest(Me,Lock,Type,R),
+  Him := Me,
+  Decree := new String(Lock +","+ Type +","+ R);
+
+public
+lock(Lock,Type,R) :-
+  paxos_global::requestStatus(Master,Client,Decree,Message),
+  Message == "passed",
+  Lock := Decree.split(",")[0],
+  Type := Decree.split(",")[1],
+  R := Decree.split(",")[2];
+
+/*** tests ***/
+
+timer(t,physical,2000,99999,3000);
+define(tick,keys(0),{Integer});
+tick(0);
+tick(T+1) :- tick(T), t#insert(_,_,_);
+
+
+lockRequest("tcp:localhost:10000","foo","S","tcp:localhost:10000") :-
+  tick(T),
+  T == 2;
+
+
+lockRequest("tcp:localhost:10000","foo","S","tcp:localhost:10000") :-
+  tick(T),
+  T == 4;
+
+lockRequest("tcp:localhost:10000","foo","X","tcp:localhost:10000") :-
+  tick(T),
+  T == 6;
+
+lockRequest("tcp:localhost:10000","bar","X","tcp:localhost:10000") :-
+  tick(T),
+  T == 8;
+
+
+lockRequest("tcp:localhost:10000","bar","S","tcp:localhost:10000") :-
+  tick(T),
+  T == 10;
+
+watch(lock,ae);
+watch(lockGrant,ae);
+//watch(tick,ae);

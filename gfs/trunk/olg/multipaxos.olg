@@ -25,10 +25,10 @@ define(lastPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String})
 //define(sendPromise,keys(1,1,2,5),{String,Integer,Integer,Integer,String,String});
 define(sendPromise,{String,Integer,Integer,Integer,String,String});
 define(receivedPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
-define(acceptRequest,keys(0,1,2),{String,Integer, Integer,String,Integer});
-define(sendBeginRound,keys(0,1,2),{String,Integer, Integer,String,String});
-//define(accept,keys(0,1,2),{String,Integer, Integer,String});
-define(accept,{String,Integer, Integer,String});
+//define(sendBeginRound,keys(0,1,2),{String,Integer, Integer,String,String});
+define(sendBeginRound,{String,Integer, Integer,String,String});
+define(accept,keys(0,1,2),{String,Integer, Integer,String,String});
+//define(accept,{String,Integer, Integer,String});
 define(sendAccept,keys(0,1,2,4),{String,Integer, Integer,String,String});
 define(decree,keys(0,1,2),{String, Integer,Integer,String});
 define(success,keys(0,1,2),{String,Integer, Integer,String,String});
@@ -36,7 +36,6 @@ define(success,keys(0,1,2),{String,Integer, Integer,String,String});
 define(maxPrevRound,keys(0,1),{String,Integer,Integer});
 define(priestCnt,keys(0),{String,Integer});
 define(lastPromiseCnt,keys(0,1,2),{String,Integer,Integer,Integer});
-define(quorum,keys(0,1,2),{String,Integer,Integer});
 define(acceptCnt,keys(0,1,2),{String,Integer,Integer,Integer});
 	
 define(reply,keys(0,1),{String,String,String});
@@ -46,6 +45,9 @@ define(instance,keys(0),{String,Integer});
 //define(timeError,keys(0,1,2,3),{String,String,String,Long});
 //watch(timeError,aedir);
 
+public
+paxos_global::decreeRequest(A,B,C) :-
+  decreeRequest(A,B,C);
 
 public
 parliament(A,B) :- getopt::parliament(A,B),periodic(_,_,_);
@@ -66,18 +68,19 @@ lastTried(Agent,Instance,Bnum) :- lastTried(Agent,I,Old),
 	prepare(Agent,Instance,Bnum,Decree),
 	Bnum > Old,
   Instance >= I;
-	
+
+public	
 storedDecreeRequest(A,B,C,Id) :- 
-  decreeRequest#insert(A,B,C), 
+  paxos_global::decreeRequest(A,B,C), 
   Id := Runtime.idgen();
 
 instance(Master,I+1) :- 
   instance(Master,I), 
   storedDecreeRequest#insert(Master,B,C,_);
 	
-r1_b
+public
 prepare(Agent,Instance,Round,Decree) :- 
-  decreeRequest(Agent,Decree,From),
+  paxos_global::decreeRequest(Agent,Decree,From),
 	lastTried(Agent,I,Old),
   Instance >= I,
   instance(Agent,Instance),
@@ -143,32 +146,44 @@ quorum Q, and decree d, where d is chosen to satisfy B3. He then sends a
 BeginBallot (b, d) message to every priest in Q.
 ***************************************************************************************/
 
-define(quorumEvent,{String,Integer,Integer});
+//define(quorum,keys(0,1,2),{String,Integer,Integer});
+define(quorum,{String,Integer,Integer});
 r3_a	
-quorumEvent(Master,Instance,Round) :- priestCnt(Master,Pcnt),
+quorum(Master,Instance,Round) :- priestCnt(Master,Pcnt),
 	lastPromiseCnt(Master,Instance,Round,Vcnt),
 	Vcnt > ( Pcnt / 2 );
 
-quorum(M,I,R) :- quorumEvent#insert(M,I,R);
+//quorum(M,I,R) :- quorumEvent#insert(M,I,R);
 	
+define(acceptRequest,keys(0,1,2),{String,Integer, Integer,String,Integer,String});
+
 r3_b
-acceptRequest(Master,Instance,Round,OldDecree,MaxB) :- 
+acceptRequest(Master,Instance,Round,OldDecree,MaxB,From) :- 
   quorum(Master,Instance,Round),
 	maxPrevRound(Master,Instance,MaxB),
 	//prepare(Master,Instace,Round,Decree),
-  storedDecreeRequest(Master,Decree,_),
+  storedDecreeRequest(Master,Decree,From,_),
   OldDecree := "who cares?",
 	//sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
 	MaxB != -1;
 
 r3_c	
-acceptRequest(Master,Instance,Round,Decree,-1) :- 
+acceptRequest(Master,Instance,Round,Decree,-1,From) :- 
   quorum(Master,Instance,Round),
 	maxPrevRound(Master,Instance,MaxB),
 	//sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
 	MaxB == -1,
-  storedDecreeRequest(Master,Decree,_);
+  storedDecreeRequest(Master,Decree,From,Id),
+  topOfQueue(Master,Id);
 	//prepare(Master,Instance,Round,Decree);
+
+define(topOfQueue,keys(0),{String,Long});
+topOfQueue(Master,max<Id>) :- storedDecreeRequest(Master,Decree,From,Id);
+
+delete
+storedDecreeRequest(Master,Decree,X,Y) :-
+  acceptRequest(Master,Instance,Round,Decree,MaxB),
+  storedDecreeRequest(Master,Decree,X,Y);
 	
 	// or in the multi-paxos case:
 	/*
@@ -177,10 +192,10 @@ acceptRequest(Master,OldB+1,Decree,OldB) :-
 	quorum(Master,OldB);
 	*/
 
-acceptRequest(Master,Instance,-1,Decree,-1) :-
+acceptRequest(Master,Instance,-1,Decree,-1,From) :-
   storedDecreeRequest(Master,Decree,From,_),
   quorum(Master,Instance,OldB),
-  instance(Master,Instance),
+  //instance(Master,Instance),
   Instance > -1;
 
 r3_e
@@ -194,7 +209,7 @@ his vote in ballot number b, sets prevVote [q] to this vote, and sends a Voted (
 message to p. (A BeginBallot (b, d) message is ignored if b = nextBal [q].)
 ***************************************************************************************/
 r4_a
-accept(Agent,Instance,Round,Decree) :- 
+accept(Agent,Instance,Round,Decree,Master) :- 
   sendBeginRound(Agent,Instance,Round,Decree,Master),
 	nextBal(Agent,Instance,OldB),
 	Round == OldB;
@@ -208,16 +223,17 @@ r4_b
 prevVote(Agent,Instance,Round,Decree) :- 
   prevVote(Agent,I,Old,OD),
 	lastPromise(Agent,Instance,Round,OldRound,OldDecree),
-	accept#insert(Agent,Instance,Round,Decree),
+	accept#insert(Agent,Instance,Round,Decree,Master),
 	Round >= Old,
   Instance >= I;
 
-r4_c	
+r4_c
 sendAccept(@Master,Instance,Round,Decree,Agent) :- 
-  accept(@Agent,Instance,Round,Decree),
-	sendBeginRound(@Agent,Instance,Round,Decree,Master);
+  accept(@Agent,Instance,Round,Decree,Master);//,
+	//sendBeginRound(@Agent,Instance,Round,Decree,Master);
 	
-acceptCnt(Master,Instance,Round,count<Agent>) :- sendAccept(Master,Instance,Round,Decree,Agent);
+acceptCnt(Master,Instance,Round,count<Agent>) :- 
+  sendAccept(Master,Instance,Round,Decree,Agent);
 
 /**************************************************************************************
 r5. If p has received a Voted (b, q) message from every priest q in Q (the quorum
@@ -233,23 +249,27 @@ decree(Master,Instance,Round,Decree) :-
 	acceptRequest(Master,Instance,Round,Decree);
 
 r5_b	
-success(@Agent,Instance,Round,Decree,From) :-decree#insert(@Master,Instance,Round,Decree),
+success(@Agent,Instance,Round,Decree,From) :-
+  decree#insert(@Master,Instance,Round,Decree),
 	// this might be a mistake. 
-	storedDecreeRequest(@Master,Decree,From,_),
+	//storedDecreeRequest(@Master,Decree,From,_),
+  acceptRequest(@Master,Instance,Round,Decree,Kind,From),
 	// we interpret "every" to mean a broadcast.
 	parliament(@Master,Agent);
 	
 	// any learner can reply to the client.or set-wise, they all can...
 watch(reply,aid);
-//reply(@Client,Decree,"passed") :- success(@Me,Instance,Round,Decree,Client);
+reply(@Client,Decree,"passed") :- 
+  success(@Me,Instance,Round,Decree,Client);
 
 public
 paxos_global::requestStatus(Me,Client,Decree,"passed") :-
   success(Me,Instance,Round,Decree,Client);
+  
 
-public
-reply(@Client,Decree,Message) :-
-  paxos_global::requestStatus(@Master,Client,Decree,Message);
+//public
+//paxos_global::reply(@Client,Decree,Message) :-
+//  paxos_global::requestStatus(@Master,Client,Decree,Message);
 
 
 /*
@@ -278,7 +298,7 @@ watch(acceptCnt,ae);
 watch(sendAccept,ae);
 watch(accept,ae);
 watch(success,ae);
-watch(decreeRequest,ae);
+//watch(decreeRequest,ae);
 	
 //watch(maxPrevRound,ae);
 watch(acceptRequest,ae);

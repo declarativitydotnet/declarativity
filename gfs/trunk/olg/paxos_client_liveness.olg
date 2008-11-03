@@ -56,8 +56,8 @@ livelog(Master,Client,Request,Id,Time) :-
 
 public
 paxos_global::decreeRequestBuffer(Master,Request,Client) :-
-  timeIssue#insert(Master,Client,Request,Id),
-  paxos::storedDecreeRequest(Master,Request,Client,Id);
+  timeIssue#insert(Master,Client,Request,Id);//,
+ // paxos::storedDecreeRequest(Master,Request,Client,Id);
 
 public 
 paxos_global::requestStatus(Master,Client,Decree,Status) :-

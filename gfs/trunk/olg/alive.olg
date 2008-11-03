@@ -1,15 +1,18 @@
 program alive;
 
 import java.lang.System;
+import java.lang.Thread;
 
 /* implements a naive, partially synchronous liveness detector */
 
 // z = heartbeat timer = 3secs
 // name,type,period,ttl,delay 
-timer(zTimer,physical,5000,9999,0);
+timer(zTimer,physical,2000,5,2000);
 timer(periodic,logical,1,1,1);
 
-define(alive,keys(0),{String,Integer});
+zTimer(A,1000,B) :- zTimer(A,Old,B), Old < 10L;
+
+define(alive,keys(0),{String,Long});
 define(parliament,keys(0,1),{String,String});
 define(threshold,keys(0),{Long});
 
@@ -46,14 +49,16 @@ beatLog(Me,Him,Time) :-
 
 
 // the next two rules are synchronized on the cTimer
-define(round,keys(0),{Integer});
-watch(round,ae);
+/*
+define(round,keys(0),{Long});
 round(0) :- periodic(_,_,_);
 round(R+1) :-
   round(R),
   alive#insert(Him,R);
-  
+*/
 
+sequence(round,0);
+  
 alive(Him,Round) :- 
   beatLog(Me,Him,Time),
   zTimer(_,_,_),
@@ -68,6 +73,7 @@ beatLog(Me,Him,Time) :-
   zTimer(_,_,_),
   Now := new Long(System.currentTimeMillis()),
   beatLog(Me,Him,Time),
+  Thread.sleep(1000L),
   (Now - Time) > 10000L; // 10 secs: soft state: NOT a critical parameter as long as it is high enough.
 
 

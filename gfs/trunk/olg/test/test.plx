@@ -18,7 +18,7 @@ $SIG{ALRM}  = 'cleanup';
 test_1();
 test_2();
 #test_3();
-test_4();
+#test_4();
 
 print "\b";
 
@@ -121,7 +121,7 @@ sub test_4 {
 
 sub test_2 {
   # start a paxos instance over 3 replicas
-  my @pids = pipe_many(2);
+  my @pids = pipe_many(3);
   # yay, array smushing
   push @handles,@pids;
 
