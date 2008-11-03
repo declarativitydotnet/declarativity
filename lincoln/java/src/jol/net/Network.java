@@ -135,12 +135,11 @@ public final class Network {
 	}
 	
 	/**
-	 * Get the connection table. The purpose of this
-	 * method is for the TCP server to register/unregister new connections.
+	 * Get the connection table. The purpose of this method is to
+	 * allow protocol servers to register and unregister connections.
 	 * @return The connection table.
 	 */
 	public Connection connection() {
 		return this.connection;
 	}
-	
 }
