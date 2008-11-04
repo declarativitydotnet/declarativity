@@ -10,6 +10,7 @@ import jol.core.Runtime;
 import jol.core.System;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
@@ -96,9 +97,9 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
-                        String responseContent = (String) t.value(2);
+                        Object fileContent = t.value(2);
                         try {
-                            responseQueue.put((Object) responseContent);
+                            responseQueue.put(fileContent);
                             break;
                         }
                         catch (InterruptedException e) {
@@ -155,10 +156,9 @@ public class Shell {
                         Integer tupRequestId = (Integer) t.value(1);
 
                         if (tupRequestId.intValue() == requestId) {
-                            Object responseContents = (Object) t.value(2);
-                            java.lang.System.out.println("Resp: " + responseContents.toString());
+                            Object lsContent = t.value(2);
                             try {
-                                responseQueue.put(responseContents);
+                                responseQueue.put(lsContent);
                                 break;
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
@@ -177,10 +177,15 @@ public class Shell {
         req.add(new Tuple(this.selfAddress, requestId));
         this.system.schedule("gfs", tblName, req, null);
 
-        Object contents = (String) this.responseQueue.take();
+        ValueList lsContent = (ValueList) this.responseQueue.take();
         responseTbl.unregister(responseCallback);
 
-        java.lang.System.out.println("LS response: " + contents.toString());
+        java.lang.System.out.println("ls:");
+        int i = 1;
+        for (Object o : lsContent) {
+            java.lang.System.out.println("  " + i + ". " + o.toString());
+            i++;
+        }
     }
 
     private void shutdown() {

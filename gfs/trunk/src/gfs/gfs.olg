@@ -1,5 +1,7 @@
 program gfs;
 
+import jol.types.basic.ValueList;
+
 define(nodes, keys(0), {String});
 define(master, keys(0), {String});
 
@@ -23,6 +25,7 @@ define(file, keys(0, 1), {String, String, String});
 
 file("tcp:localhost:5500", "Foo", "Bar");
 file("tcp:localhost:5500", "Bar", "Baz");
+file("tcp:localhost:5500", "Quux", "Quuux");
 
 // Source node, Request ID, Request type, Request arguments
 define(request_started, keys(0, 1), {String, Integer, String, String});
