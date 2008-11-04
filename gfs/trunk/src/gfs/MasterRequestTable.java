@@ -15,14 +15,16 @@ public class MasterRequestTable extends ObjectTable {
         TARGET,
         ID,
         SOURCE,
-        CONTENT
+        TYPE,
+        ARGS
     };
 
     public static final Class<?>[] SCHEMA = {
         String.class,   // Target address
         Integer.class,  // Request ID
         String.class,   // Source address
-        String.class    // Request payload
+        String.class,   // Request type
+        String.class    // Request payload (arguments)
     };
 
     protected MasterRequestTable(Runtime context) {

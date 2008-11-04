@@ -18,9 +18,9 @@ import jol.types.table.Table.Callback;
 
 public class Shell {
     private System system;
-    private int nextId = 1;
     private String selfAddress;
     private Random rand;
+    private SynchronousQueue<String> responseQueue;
 
     /*
      * TODO:
@@ -30,12 +30,11 @@ public class Shell {
      *  (4) return results to stdout
      */
     public static void main(String[] args) throws Exception {
+        Shell shell = new Shell();
         List<String> argList = new LinkedList<String>(Arrays.asList(args));
 
         if (argList.size() == 0)
-            usage();
-
-        Shell shell = new Shell();
+            shell.usage();
 
         String op = argList.remove(0);
         if (op.equals("cat"))
@@ -47,15 +46,16 @@ public class Shell {
         else if (op.equals("mkdir"))
             shell.doCreateDir(argList);
         else
-            usage();
+            shell.usage();
 
         shell.shutdown();
     }
 
     Shell() throws JolRuntimeException, UpdateException {
         this.rand = new Random();
-        this.system = Runtime.create(5501);
+        this.responseQueue = new SynchronousQueue<String>();
 
+        this.system = Runtime.create(5501);
         this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
         this.system.catalog().register(new SelfTable((Runtime) this.system));
 
@@ -84,10 +84,9 @@ public class Shell {
 
     private void doCatFile(String file) throws UpdateException, InterruptedException, JolRuntimeException {
         final int requestId = generateId();
-        final SynchronousQueue<String> content_queue = new SynchronousQueue<String>();
 
         // Register callback to listen for responses
-        Callback response_callback = new Callback() {
+        Callback responseCallback = new Callback() {
             @Override
             public void deletion(TupleSet tuples) {
                 ;
@@ -101,7 +100,7 @@ public class Shell {
                     if (tupRequestId.intValue() == requestId) {
                         String responseContents = (String) t.value(2);
                         try {
-                            content_queue.put(responseContents);
+                            responseQueue.put(responseContents);
                             break;
                         }
                         catch (InterruptedException e) {
@@ -112,7 +111,7 @@ public class Shell {
             }
         };
         Table responseTbl = this.system.catalog().table(new TableName("gfs", "cat_response"));
-        responseTbl.register(response_callback);
+        responseTbl.register(responseCallback);
 
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "cat_request");
@@ -122,8 +121,8 @@ public class Shell {
         this.system.evaluate();
 
         // Wait for the response
-        String contents = content_queue.take();
-        responseTbl.unregister(response_callback);
+        String contents = responseQueue.take();
+        responseTbl.unregister(responseCallback);
 
         java.lang.System.out.println("File name: " + file);
         java.lang.System.out.println("Contents: " + contents);
@@ -144,24 +143,20 @@ public class Shell {
     }
 
     private void doListDirs(List<String> args) {
-        if (args.size() == 0)
+        if (args.size() != 0)
             usage();
 
-        for (String dir : args)
-            doListDir(dir);
-    }
-
-    private void doListDir(String dirname) {
-        ;
+        // Register a callback to listen for responses
     }
 
     private void shutdown() {
         this.system.shutdown();
     }
 
-    private static void usage() {
+    private void usage() {
         java.lang.System.err.println("Usage: java gfs.Shell op_name args");
         java.lang.System.err.println("Where op_name = {cat,create,ls,mkdir}");
+        shutdown();
         java.lang.System.exit(0);
     }
 }

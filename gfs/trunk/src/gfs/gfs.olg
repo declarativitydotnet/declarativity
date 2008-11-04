@@ -25,11 +25,14 @@ define(file, keys(0, 1), {String, String, String});
 file("tcp:localhost:5500", "Foo", "Bar");
 file("tcp:localhost:5500", "Bar", "Baz");
 
-// Node, Request ID, Target, File name
+// Node, Request ID, Request type, Request arguments
 define(request_started, keys(0, 1), {String, Integer, String, String});
 
 // Node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});
+
+// Node, Request ID
+define(ls_request, keys(0, 1), {String, Integer});
 
 // Node, Request ID, File contents
 define(cat_response, keys(0, 1), {String, Integer, String});
@@ -37,18 +40,25 @@ define(cat_response, keys(0, 1), {String, Integer, String});
 // Node, Request ID, File contents
 define(response, keys(0, 1), {String, Integer, String});
 
-request_started(@Source, Id, Master, FName) :-
-    self(@Source), master_per_node(@Source, Master),
-    cat_request(@Source, Id, FName);
+request_started(@Source, Id, RequestType, Filename) :-
+    cat_request(@Source, Id, Filename), RequestType := "Cat";
 
-request(@Target, Id, Source, FName) :-
-    request_started(@Source, Id, Target, FName);
+request_started(@Source, Id, RequestType, null) :-
+    ls_request(@Source, Id), RequestType := "ls";
+
+request(@Master, Id, Source, RequestType, Args) :-
+    self(@Source), master_per_node(@Source, Master),
+    request_started(@Source, Id, RequestType, Args);
 
 request_done(@Master, Id, Source, FContents) :-
-    file(@Master, FName, FContents), request(@Master, Id, Source, FName),
+    file(@Master, FName, FContents), request(@Master, Id, Source, _, FName),
     self(@Master), master(@Master);
 
-// If we get a request for a file that exists, send back the contents
-// of the file
+// If we get a "cat" request for a file that exists, send back the
+// contents of the file
 cat_response(@Source, Id, FContents) :-
     request_done(@Master, Id, Source, FContents);
+
+// XXX: how to handle failed requests?
+
+// If we got an "ls" request, send back a list containing all the files
