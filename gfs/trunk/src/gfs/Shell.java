@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
+import java.util.Random;
 
 import jol.core.Runtime;
 import jol.core.System;
@@ -19,6 +20,7 @@ public class Shell {
     private System system;
     private int nextId = 1;
     private String selfAddress;
+    private Random rand;
 
     /*
      * TODO:
@@ -51,6 +53,7 @@ public class Shell {
     }
 
     Shell() throws JolRuntimeException, UpdateException {
+        this.rand = new Random();
         this.system = Runtime.create(5501);
 
         this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
@@ -128,7 +131,8 @@ public class Shell {
     }
 
     private int generateId() {
-        return nextId++;
+        return rand.nextInt();
+        //        return nextId++;
     }
 
     private void doCreateDir(List<String> args) {
