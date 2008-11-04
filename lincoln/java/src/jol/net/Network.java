@@ -112,9 +112,8 @@ public final class Network {
 			System.err.println("ERROR: Unknown protocol " + protocol);
 			return null;
 		}
-		
-		Channel channel = servers.get(protocol).open(address);
-		return channel;
+
+		return servers.get(protocol).open(address);
 	}
 	
 	/**

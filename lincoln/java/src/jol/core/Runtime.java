@@ -217,7 +217,7 @@ public class Runtime implements System {
 	public void install(String owner, URL url) throws UpdateException {
 		TupleSet compilation = new TupleSet(CompileTable.TABLENAME);
 		compilation.add(new Tuple(null, owner, url.toString(), null));
-		schedule("runtime", CompileTable.TABLENAME, compilation, new TupleSet(CompileTable.TABLENAME));
+		schedule("runtime", CompileTable.TABLENAME, compilation, null);
 	}
 	
 	/**

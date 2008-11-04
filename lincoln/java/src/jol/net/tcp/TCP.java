@@ -142,7 +142,7 @@ public class TCP extends Server {
 					Message message = (Message) this.iss.readObject();
 					IP address = new IP(this.socket.getInetAddress(), this.socket.getPort());
 					Tuple tuple = new Tuple(address, message);
-					context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
+					context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), null);
 				} catch (IOException e) {
 					try {
 						TCP.this.manager.connection().unregister(this);

@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -15,8 +16,6 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import jol.core.Runtime;
 import jol.net.Address;
@@ -43,16 +42,13 @@ public class TCPNIO extends Server {
 	
 	private Selector selector;
 	
-	private ExecutorService executor;
-	
 	private List<Connection> newConnections;
-		
+
 	public TCPNIO(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
 		super("TCPNIO Server");
 		this.context = context;
 		this.manager = manager;
 		this.selector = SelectorProvider.provider().openSelector();
-		this.executor = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
 		this.newConnections = new ArrayList<Connection>();
 		context.install("system", "jol/net/tcp/tcp.olg");
 		
@@ -60,12 +56,6 @@ public class TCPNIO extends Server {
 		server.configureBlocking(false);
 		server.socket().bind(new InetSocketAddress(port));
 		server.register(this.selector, SelectionKey.OP_ACCEPT);
-	}
-	
-	@Override
-	public void interrupt() {
-		super.interrupt();
-		this.executor.shutdown();
 	}
 	
 	@Override
@@ -83,7 +73,7 @@ public class TCPNIO extends Server {
 					this.newConnections.clear();
 				}
 				
-		        // Iterate over the set of keys for which events are available
+		        /* Iterate over the keys for which events are available */
 				Iterator<SelectionKey> iter = this.selector.selectedKeys().iterator();
 				while (iter.hasNext()) {
 					SelectionKey key = iter.next();
@@ -96,18 +86,14 @@ public class TCPNIO extends Server {
 						ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
 						SocketChannel channel = ssc.accept();
 						if (channel != null) {
-							Connection connection = new Connection(channel);
-							manager.connection().register(connection);
-							register(connection);
+							Connection conn = new Connection(channel);
+							manager.connection().register(conn);
+							register(conn);
 						}
 					}
 					else if (key.isReadable()) {
-						final Connection connection = (Connection) key.attachment();
-						executor.execute(new Runnable() {
-							public void run() {
-								connection.receive();
-							}
-						});
+						Connection conn = (Connection) key.attachment();
+                        conn.read();
 					}
 				}
 			} catch (IOException e) {
@@ -128,9 +114,9 @@ public class TCPNIO extends Server {
 			while (!channel.finishConnect()) {
 				Thread.yield();
 			}
-			Connection connection = new Connection(channel);
-			register(connection);
-			return connection;
+			Connection conn = new Connection(channel);
+			register(conn);
+			return conn;
 		} catch (Exception e) {
 			return null;
 		}
@@ -138,10 +124,12 @@ public class TCPNIO extends Server {
 	
 	@Override
 	public void close(Channel channel) {
-		if (channel instanceof Connection) {
-			Connection connection = (Connection) channel;
-			connection.close();
-		}
+		if (!(channel instanceof Connection))
+			throw new IllegalArgumentException("Unrecognized TCPNIO channel: " +
+											   channel.toString());
+
+		Connection conn = (Connection) channel;
+		conn.close();
 	}
 	
 	private void register(Connection connection) {
@@ -152,19 +140,22 @@ public class TCPNIO extends Server {
 	}
 	
 	private class Connection extends Channel {
+        private static final int LENGTH_WORD_SIZE = Integer.SIZE / Byte.SIZE;
+        private static final int READ_DONE = 1;
+        private static final int READ_LENGTH = 2;
+        private static final int READ_MESSAGE = 3;
+
 		private ByteBuffer buffer;
 		private SocketChannel channel;
+
+        private int readState;
 
 		public Connection(SocketChannel channel) throws IOException {
 			super("tcp", new IP(channel.socket().getInetAddress(), channel.socket().getPort()));
 			this.buffer = ByteBuffer.allocate(8192);
 			this.channel = channel;
 			this.channel.configureBlocking(false);
-		}
-		
-		@Override 
-		public String toString() {
-			return this.channel.socket().toString();
+            this.readState = READ_DONE;
 		}
 		
 		@Override
@@ -178,9 +169,9 @@ public class TCPNIO extends Server {
 					ByteArrayOutputStream bstream = new ByteArrayOutputStream();
 					ObjectOutputStream ostream = new ObjectOutputStream(bstream);
 					ostream.writeObject(packet);
-					buffer.putInt(bstream.size());
-					buffer.put(bstream.toByteArray());
-					buffer.flip();
+					this.buffer.putInt(bstream.size());
+					this.buffer.put(bstream.toByteArray());
+					this.buffer.flip();
 					write(this.buffer, this.channel);
 				}
 			} catch (IOException e) {
@@ -192,49 +183,85 @@ public class TCPNIO extends Server {
 		private void close() {
 			try {
 				this.channel.close();
-			} catch (IOException e) { }
-		}
-
-		/**
-         * Helper method that receives a single message from the socket channel.
-         * Will demarshall the message and schedule the message with the TCP
-         * program as a {@link TCPNIO#ReceiveMessage} tuple.
-         */
-		private void receive() {
-			try {
-				Message message = null;
-				synchronized (buffer) {
-					this.buffer.clear();
-					this.buffer.limit(Integer.SIZE / Byte.SIZE);
-					int bytes = read(this.buffer, this.channel, true);
-					if (bytes == 0) return;
-
-					int length = this.buffer.getInt(0);
-					this.buffer.clear();
-					this.buffer.limit(length);
-					read(this.buffer, this.channel, false);
-
-					ObjectInputStream istream = new ObjectInputStream(new ByteArrayInputStream(this.buffer.array()));
-					message = (Message) istream.readObject();
-				}
-				IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
-				Tuple tuple = new Tuple(address, message);
-				context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), new TupleSet(ReceiveMessage));
 			} catch (IOException e) {
-				e.printStackTrace();
-				return;
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-				System.exit(0);
-			} catch (Exception e) {
-				try {
-					TCPNIO.this.manager.connection().unregister(this);
-				} catch (UpdateException e1) {
-					e1.printStackTrace();
-					System.exit(0);
-				}
+                throw new RuntimeException(e);
 			}
 		}
+
+        /**
+         * There is some input data available to be read, so try to read
+         * it. This advances the read state machine appropriately, depending on
+         * how much input is actually available.
+         */
+        private void read() {
+            try {
+                switch (this.readState) {
+                case READ_DONE:
+                    this.buffer.clear();
+                    this.buffer.limit(LENGTH_WORD_SIZE);
+                    this.readState = READ_LENGTH;
+                    /* fallthrough and try to read length */
+
+                case READ_LENGTH:
+                    doSocketRead();
+                    if (this.buffer.hasRemaining())
+                        return;
+
+                    int msgLength = this.buffer.getInt(0);
+                    this.buffer.clear();
+                    this.buffer.limit(msgLength);
+                    this.readState = READ_MESSAGE;
+                    /* fallthrough and try to read message */
+
+                case READ_MESSAGE:
+                    doSocketRead();
+                    if (this.buffer.hasRemaining())
+                        return;
+
+                    constructReceiveMessage();
+                    this.buffer.clear();
+                    this.readState = READ_DONE;
+                }
+            } catch (IOException e) {
+                if (e instanceof ClosedChannelException)
+                    java.lang.System.err.println("TCP channel closed: " +
+                                                 this.channel.socket().toString());
+                else
+                    java.lang.System.err.println("Unexpected IO exception: " +
+                                                 this.channel.socket().toString());
+                try {
+                    TCPNIO.this.manager.connection().unregister(this);
+                } catch (UpdateException ue) {
+                    throw new RuntimeException(ue);
+                }
+            }
+        }
+
+        private void doSocketRead() throws IOException {
+            int bytes = this.channel.read(this.buffer);
+            if (bytes == -1)
+                throw new ClosedChannelException();
+        }
+
+        /**
+         * Demarshall an already-read message from the input buffer, and
+         * schedule the message with the TCP program as a {@link
+         * TCPNIO#ReceiveMessage} tuple.
+         */
+        private void constructReceiveMessage() throws IOException {
+            try {
+                ObjectInputStream istream = new ObjectInputStream(new ByteArrayInputStream(this.buffer.array()));
+                Message message = (Message) istream.readObject();
+                IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
+                Tuple tuple = new Tuple(address, message);
+                context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), null);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (UpdateException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
 		private int totalWritten = 0;
 		/**
 		 * Method will write ALL data contained in the byte buffer.
@@ -254,39 +281,5 @@ public class TCPNIO extends Server {
 	        
 	        System.out.println("TCPNIO: Wrote " + totalWritten + " bytes so far");
 	    }
-	 
-	    /**
-	     * Read data from the socket channel and place it into the buffer. The 
-	     * amount that is to be read is taken from the current buffer position
-	     * and limit. That is, length_to_read = buf.limit() - buf.position().
-	     * This method will continue to read from the socket until this amount of
-	     * data has been received UNLESS the third parameter is set to true.
-	     * @param buf The buffer that will contain the data after this call.
-	     * @param socket The socket channel that will be read.
-	     * @param once If true then only 1 attempt will be made to read from the socket,
-	     * otherwise an infinite number of attempts will be made to read (buf.limit() - buf.position())
-	     * bytes from the socket channel.
-	     * @return The number of bytes read.
-	     * @throws IOException
-	     */
-	    private int read(ByteBuffer buf, SocketChannel socket, boolean once) throws IOException {
-	    	int read = 0;
-	    	int attempts = 0;
-	        int total = buf.limit() - buf.position();
-
-	        do {
-	            int bytes = socket.read(buf);
-	            if (bytes == 0) attempts++;
-	            else attempts = 0;
-	            
-	            if (attempts > MAX_SOCKET_ATTEMPTS) {
-	            	throw new IOException("TCPNIO: read from socket " + attempts + " times with no progress");
-	            }
-	            read += bytes;
-	        } while (!once && read < total);
-
-	        return read;
-	    }
 	}
-
 }

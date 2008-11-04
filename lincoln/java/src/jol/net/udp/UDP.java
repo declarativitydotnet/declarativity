@@ -52,7 +52,7 @@ public class UDP extends Server {
 					ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(buf));
 					Message message = (Message) input.readObject();
 					Tuple tuple = new Tuple("receive", new IP(packet.getAddress(), packet.getPort()), message);
-					context.schedule("tcp", UDPMessage, new TupleSet(UDPMessage, tuple), new TupleSet(UDPMessage));
+					context.schedule("tcp", UDPMessage, new TupleSet(UDPMessage, tuple), null);
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 					System.exit(0);
@@ -74,7 +74,7 @@ public class UDP extends Server {
 	
 	@Override
 	public void close(Channel channel) {
-		((Connection)channel).close();
+		((Connection) channel).close();
 	}
 	
 	private static class Connection extends Channel {

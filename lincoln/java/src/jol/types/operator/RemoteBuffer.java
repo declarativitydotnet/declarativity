@@ -63,7 +63,7 @@ public class RemoteBuffer extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		if (tuples.size() == 0) return tuples;
+		if (tuples.isEmpty()) return tuples;
 		
 		/* Group tuples by the address attribute: (address, tuple) */
 		Map<String, TupleSet> groupByAddress = new HashMap<String, TupleSet>();
@@ -93,7 +93,7 @@ public class RemoteBuffer extends Operator {
 			
 			TableName bufferName = context.network().buffer().name();
 			try {
-				context.schedule("network", bufferName, new TupleSet(bufferName, remote), new TupleSet(bufferName));
+				context.schedule("network", bufferName, new TupleSet(bufferName, remote), null);
 			} catch (UpdateException e) {
 				e.printStackTrace();
 			}
