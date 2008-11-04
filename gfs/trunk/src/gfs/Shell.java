@@ -20,7 +20,7 @@ public class Shell {
     private System system;
     private String selfAddress;
     private Random rand;
-    private SynchronousQueue<String> responseQueue;
+    private SynchronousQueue responseQueue;
 
     /*
      * TODO:
@@ -53,7 +53,7 @@ public class Shell {
 
     Shell() throws JolRuntimeException, UpdateException {
         this.rand = new Random();
-        this.responseQueue = new SynchronousQueue<String>();
+        this.responseQueue = new SynchronousQueue();
 
         this.system = Runtime.create(5501);
         this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
@@ -88,9 +88,7 @@ public class Shell {
         // Register callback to listen for responses
         Callback responseCallback = new Callback() {
             @Override
-            public void deletion(TupleSet tuples) {
-                ;
-            }
+            public void deletion(TupleSet tuples) {}
 
             @Override
             public void insertion(TupleSet tuples) {
@@ -100,7 +98,7 @@ public class Shell {
                     if (tupRequestId.intValue() == requestId) {
                         String responseContents = (String) t.value(2);
                         try {
-                            responseQueue.put(responseContents);
+                            responseQueue.put((Object) responseContents);
                             break;
                         }
                         catch (InterruptedException e) {
@@ -118,10 +116,9 @@ public class Shell {
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(this.selfAddress, requestId, file));
         this.system.schedule("gfs", tblName, req, null);
-        this.system.evaluate();
 
         // Wait for the response
-        String contents = responseQueue.take();
+        String contents = (String) this.responseQueue.take();
         responseTbl.unregister(responseCallback);
 
         java.lang.System.out.println("File name: " + file);
@@ -131,7 +128,6 @@ public class Shell {
 
     private int generateId() {
         return rand.nextInt();
-        //        return nextId++;
     }
 
     private void doCreateDir(List<String> args) {
@@ -142,11 +138,48 @@ public class Shell {
         ;
     }
 
-    private void doListDirs(List<String> args) {
+    private void doListDirs(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
         if (args.size() != 0)
             usage();
 
+        final int requestId = generateId();
+
         // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+                @Override
+                public void deletion(TupleSet tuples) {}
+
+                @Override
+                    public void insertion(TupleSet tuples) {
+                    for (Tuple t : tuples) {
+                        Integer tupRequestId = (Integer) t.value(1);
+
+                        if (tupRequestId.intValue() == requestId) {
+                            String responseContents = (String) t.value(2);
+                            try {
+                                responseQueue.put(responseContents);
+                                break;
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }
+                }
+            };
+
+        Table responseTbl = this.system.catalog().table(new TableName("gfs", "ls_response"));
+        responseTbl.register(responseCallback);
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("gfs", "ls_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(this.selfAddress, requestId));
+        this.system.schedule("gfs", tblName, req, null);
+
+        String contents = (String) this.responseQueue.take();
+        responseTbl.unregister(responseCallback);
+
+        java.lang.System.out.println("LS response: " + contents);
     }
 
     private void shutdown() {
