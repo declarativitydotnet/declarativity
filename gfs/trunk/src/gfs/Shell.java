@@ -96,9 +96,9 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
-                        String responseContents = (String) t.value(2);
+                        String responseContent = (String) t.value(2);
                         try {
-                            responseQueue.put((Object) responseContents);
+                            responseQueue.put((Object) responseContent);
                             break;
                         }
                         catch (InterruptedException e) {
@@ -118,11 +118,11 @@ public class Shell {
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
-        String contents = (String) this.responseQueue.take();
+        String content = (String) this.responseQueue.take();
         responseTbl.unregister(responseCallback);
 
         java.lang.System.out.println("File name: " + file);
-        java.lang.System.out.println("Contents: " + contents);
+        java.lang.System.out.println("Content: " + content);
         java.lang.System.out.println("=============");
     }
 
@@ -155,7 +155,8 @@ public class Shell {
                         Integer tupRequestId = (Integer) t.value(1);
 
                         if (tupRequestId.intValue() == requestId) {
-                            String responseContents = (String) t.value(2);
+                            Object responseContents = (Object) t.value(2);
+                            java.lang.System.out.println("Resp: " + responseContents.toString());
                             try {
                                 responseQueue.put(responseContents);
                                 break;
@@ -176,10 +177,10 @@ public class Shell {
         req.add(new Tuple(this.selfAddress, requestId));
         this.system.schedule("gfs", tblName, req, null);
 
-        String contents = (String) this.responseQueue.take();
+        Object contents = (String) this.responseQueue.take();
         responseTbl.unregister(responseCallback);
 
-        java.lang.System.out.println("LS response: " + contents);
+        java.lang.System.out.println("LS response: " + contents.toString());
     }
 
     private void shutdown() {
@@ -189,6 +190,7 @@ public class Shell {
     private void usage() {
         java.lang.System.err.println("Usage: java gfs.Shell op_name args");
         java.lang.System.err.println("Where op_name = {cat,create,ls,mkdir}");
+
         shutdown();
         java.lang.System.exit(0);
     }
