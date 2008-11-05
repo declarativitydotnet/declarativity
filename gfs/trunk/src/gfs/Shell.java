@@ -1,6 +1,7 @@
 package gfs;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
@@ -83,7 +84,7 @@ public class Shell {
             doCatFile(file);
     }
 
-    private void doCatFile(String file) throws UpdateException, InterruptedException, JolRuntimeException {
+    private void doCatFile(final String file) throws UpdateException, InterruptedException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -97,9 +98,21 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
-                        Object fileContent = t.value(2);
+                        Boolean success = (Boolean) t.value(2);
+                        Object content = t.value(3);
+
+                        if (success.booleanValue()) {
+                            java.lang.System.out.println("File name: " + file);
+                            java.lang.System.out.println("Content: " + content);
+                            java.lang.System.out.println("=============");
+                        } else {
+                            java.lang.System.out.println("ERROR on \"cat\":");
+                            java.lang.System.out.println("File name: " + file);
+                            java.lang.System.out.println("Error message: " + content);
+                        }
+
                         try {
-                            responseQueue.put(fileContent);
+                            responseQueue.put(content);
                             break;
                         }
                         catch (InterruptedException e) {
@@ -119,12 +132,8 @@ public class Shell {
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
-        String content = (String) this.responseQueue.take();
+        Object obj = this.responseQueue.take();
         responseTbl.unregister(responseCallback);
-
-        java.lang.System.out.println("File name: " + file);
-        java.lang.System.out.println("Content: " + content);
-        java.lang.System.out.println("=============");
     }
 
     private int generateId() {
@@ -177,13 +186,14 @@ public class Shell {
         req.add(new Tuple(this.selfAddress, requestId));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList lsContent = (ValueList) this.responseQueue.take();
+        ValueList<String> lsContent = (ValueList<String>) this.responseQueue.take();
+        Collections.sort(lsContent);
         responseTbl.unregister(responseCallback);
 
         java.lang.System.out.println("ls:");
         int i = 1;
-        for (Object o : lsContent) {
-            java.lang.System.out.println("  " + i + ". " + o.toString());
+        for (String file : lsContent) {
+            java.lang.System.out.println("  " + i + ". " + file);
             i++;
         }
     }

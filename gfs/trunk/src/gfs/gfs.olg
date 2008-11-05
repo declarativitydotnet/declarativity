@@ -36,12 +36,12 @@ define(cat_request, keys(0, 1), {String, Integer, String});
 // Source node, Request ID
 define(ls_request, keys(0, 1), {String, Integer});
 
-// Master node, Request Id, Source node, Response
-define(cat_request_done, keys(0, 1), {String, Integer, String, String});
+// Master node, Request Id, Source node, Success, Response
+define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(ls_request_done, keys(0, 1), {String, Integer, String, ValueList});
 
-// Node, Request ID, File contents
-define(cat_response, keys(0, 1), {String, Integer, String});
+// Node, Request ID, Success, File contents
+define(cat_response, keys(0, 1), {String, Integer, Boolean, String});
 
 // Node, Request ID, Listing contents
 define(ls_response, keys(0, 1), {String, Integer, ValueList});
@@ -57,21 +57,25 @@ request(@Master, Id, Source, RequestType, Args) :-
 
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file
-// XXX: what if the file doesn't exist?
-cat_request_done(@Master, Id, Source, FContent) :-
-    request(@Master, Id, Source, RequestType, FName),
-    RequestType == "Cat",
-    file(@Master, FName, FContent);
+cat_request_done(@Master, Id, Source, Success, FContent) :-
+    request(@Master, Id, Source, "Cat", FName),
+    file(@Master, FName, FContent), Success := true;
+
+// If the file doesn't exist, return an error message
+cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
+    request(@Master, Id, Source, "Cat", FName),
+    notin file(@Master, FName, _),
+    Success := false, ErrMessage := "File does not exist";
 
 // If we got an "ls" request, send back the names of all the files in
 // the FS
 ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
-    request(@Master, Id, Source, RequestType, _),
     RequestType == "Ls",
+    request(@Master, Id, Source, RequestType, _),
     file(@Master, FName, _);
 
-cat_response(@Source, Id, FContent) :-
-    cat_request_done(@Master, Id, Source, FContent);
+cat_response(@Source, Id, Success, FContent) :-
+    cat_request_done(@Master, Id, Source, Success, FContent);
 
 ls_response(@Source, Id, ListingContent) :-
     ls_request_done(@Master, Id, Source, ListingContent);
