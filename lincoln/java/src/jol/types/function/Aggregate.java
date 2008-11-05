@@ -82,6 +82,9 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		else if (TUPLESET.equals(function)) {
 			return jol.types.basic.TupleSet.class;
 		}
+		else if (SUMSTR.equals(function)) {
+			return java.lang.String.class;
+		}
 		return null;
 	}
 	

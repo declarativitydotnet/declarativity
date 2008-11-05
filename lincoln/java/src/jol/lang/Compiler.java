@@ -1,5 +1,6 @@
 package jol.lang;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -40,6 +41,7 @@ public class Compiler {
 		return new URL[] {
 				l.getResource("jol/lang/compile.olg"),
 				l.getResource("jol/lang/stratachecker.olg"),
+				l.getResource("jol/lang/debug.olg"),
 		};
 	}
 	public static class CompileTable extends ObjectTable {
@@ -128,6 +130,18 @@ public class Compiler {
 			}
 		}
 	}
+	
+    public static boolean toDot(String program, String graph) {
+    	try {
+    		graph = graph.replaceAll("\\\\\"", "\"");
+			FileWriter graphFile = new FileWriter(program + ".dot");
+			graphFile.write(graph);
+			graphFile.close();
+		} catch (IOException e) {
+			return false;
+		}
+		return true;
+    }
 
 	public Program program() {
 		return this.program;

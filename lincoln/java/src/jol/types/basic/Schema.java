@@ -107,7 +107,20 @@ public class Schema {
 	
 	@Override
 	public String toString() {
-		return variables().toString();
+		StringBuilder sb = new StringBuilder();
+		for (Variable var : variables()) {
+			if (var instanceof DontCare) {
+				sb.append("_");
+			}
+			else {
+				sb.append(var.name());
+			}
+			sb.append(", ");
+		}
+		if (sb.lastIndexOf(", ") > 0) {
+			return "(" + sb.substring(0, sb.lastIndexOf(", ")) + ")";
+		}
+		return "()";
 	}
 	
 	

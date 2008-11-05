@@ -1,0 +1,42 @@
+program debug;
+
+import java.lang.Integer;
+import java.lang.String;
+import jol.lang.Compiler;
+
+define(done, {String});
+define(todot, {String, String});
+define(predicates, keys(0), {String, String});
+define(dependencies, keys(0), {String, String});
+
+
+done(Program) :-
+	todot(Program, Graph),
+	Compiler.toDot(Program, Graph);
+
+todot(Program, Graph) :-
+	predicates(Program, Preds),
+	dependencies(Program, Depends),
+	Graph := "digraph " + Program + " {" +
+			  "compound=true;" +
+			  Preds + Depends + 
+	          "}";
+	        
+public
+predicates(Program, sumstr<Pred>) :-
+	compile::debug(Program),
+	predicate(Program, _, _, _, Predicate),
+	Pred := Predicate.toDot();
+	
+public
+dependencies(Program, sumstr<Dependency>) :-
+	compile::debug(Program),
+	rule(Program, Rule, _, _, Delete, RuleObject),
+	predicate(Program, Rule, _, _, HeadPredicate),
+	predicate(Program, Rule, _, _, BodyPredicate),
+	RuleObject.head() == HeadPredicate,
+	HeadPredicate != BodyPredicate,
+	Dependency := BodyPredicate.dotName() + 
+	              " -> " + HeadPredicate.dotName() + ";";
+	        
+	        

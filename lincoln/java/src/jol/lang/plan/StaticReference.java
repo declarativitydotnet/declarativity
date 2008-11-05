@@ -13,7 +13,7 @@ public class StaticReference extends Reference {
 	private Field field;
 	
 	public StaticReference(Class type, Field field) {
-		super(field.isEnumConstant() ? Enum.class : field.getType(), 
+		super(field.getType(),
 			  type.getCanonicalName() + "." + field.getName());
 		this.field = field;
 	}
