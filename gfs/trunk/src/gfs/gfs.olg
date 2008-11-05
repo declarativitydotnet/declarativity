@@ -33,21 +33,30 @@ define(request_started, keys(0, 1), {String, Integer, String, String});
 // Source node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});
 
+// Source node, Request ID, File name, File content
+define(create_request, keys(0, 1), {String, Integer, String, String});
+
 // Source node, Request ID
 define(ls_request, keys(0, 1), {String, Integer});
 
 // Master node, Request Id, Source node, Success, Response
 define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
+define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(ls_request_done, keys(0, 1), {String, Integer, String, ValueList});
 
 // Node, Request ID, Success, File contents
 define(cat_response, keys(0, 1), {String, Integer, Boolean, String});
+
+// Node, Request ID, Success, Error message (on failure)
+define(create_response, keys(0, 1), {String, Integer, Boolean, String});
 
 // Node, Request ID, Listing contents
 define(ls_response, keys(0, 1), {String, Integer, ValueList});
 
 request_started(@Source, Id, RequestType, Filename) :-
     cat_request(@Source, Id, Filename), RequestType := "Cat";
+request_started(@Source, Id, RequestType, Filename) :-
+    create_request(@Source, Id, Filename, _), RequestType := "Create";
 request_started(@Source, Id, RequestType, "Foo") :-
     ls_request(@Source, Id), RequestType := "Ls";
 
@@ -67,6 +76,25 @@ cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
     notin file(@Master, FName, _),
     Success := false, ErrMessage := "File does not exist";
 
+// If we get a "create" request for a file that does not exist,
+// create the file and send back a positive ack
+create_request_done(@Master, Id, Source, Success, "...") :-
+    request(@Master, Id, Source, "Create", FName),
+    notin file(@Master, FName, _),
+    Success := true;
+
+file(@Master, FName, FContent) :-
+    request(@Master, Id, Source, "Create", FName),
+    notin file(@Master, FName, _),
+    FContent := "test";
+
+// If we get a "create" request for a file that exists, send
+// back a negative ack
+create_request_done(@Master, Id, Source, Success, ErrMessage) :-
+    request(@Master, Id, Source, "Create", FName),
+    file(@Master, FName, _),
+    Success := false, ErrMessage := "File already exists";
+
 // If we got an "ls" request, send back the names of all the files in
 // the FS
 ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
@@ -74,8 +102,11 @@ ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :
     request(@Master, Id, Source, RequestType, _),
     file(@Master, FName, _);
 
-cat_response(@Source, Id, Success, FContent) :-
-    cat_request_done(@Master, Id, Source, Success, FContent);
+cat_response(@Source, Id, Success, Response) :-
+    cat_request_done(@Master, Id, Source, Success, Response);
 
-ls_response(@Source, Id, ListingContent) :-
-    ls_request_done(@Master, Id, Source, ListingContent);
+create_response(@Source, Id, Success, Response) :-
+    create_request_done(@Master, Id, Source, Success, Response);
+
+ls_response(@Source, Id, Response) :-
+    ls_request_done(@Master, Id, Source, Response);

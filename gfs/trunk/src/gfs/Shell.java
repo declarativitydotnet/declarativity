@@ -1,5 +1,6 @@
 package gfs;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -44,9 +45,7 @@ public class Shell {
         else if (op.equals("create"))
             shell.doCreateFile(argList);
         else if (op.equals("ls"))
-            shell.doListDirs(argList);
-        else if (op.equals("mkdir"))
-            shell.doCreateDir(argList);
+            shell.doListFiles(argList);
         else
             shell.usage();
 
@@ -140,15 +139,70 @@ public class Shell {
         return rand.nextInt();
     }
 
-    private void doCreateDir(List<String> args) {
-        ;
+    private void doCreateFile(List<String> args) throws UpdateException, InterruptedException {
+        if (args.size() != 1)
+            usage();
+
+        /* Read the contents of the file from stdin */
+        StringBuilder sb = new StringBuilder();
+        int b;
+        try {
+            while ((b = java.lang.System.in.read()) != -1)
+                sb.append((char) b);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        String filename = args.get(0);
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+                 @Override
+                     public void deletion(TupleSet tuples) {}
+
+                 @Override
+                     public void insertion(TupleSet tuples) {
+                     for (Tuple t : tuples) {
+                         Integer tupRequestId = (Integer) t.value(1);
+
+                         if (tupRequestId.intValue() == requestId) {
+                             Boolean success = (Boolean) t.value(2);
+
+                             if (success.booleanValue()) {
+                                 java.lang.System.out.println("Create succeeded.");
+                             } else {
+                                 String errMessage = (String) t.value(3);
+                                 java.lang.System.out.println("Create failed.");
+                                 java.lang.System.out.println("Error message: " + errMessage);
+                             }
+
+                             try {
+                                 responseQueue.put(success);
+                                 break;
+                             } catch (InterruptedException e) {
+                                 throw new RuntimeException(e);
+                             }
+                         }
+                     }
+                 }
+            };
+
+        Table responseTbl = this.system.catalog().table(new TableName("gfs", "create_response"));
+        responseTbl.register(responseCallback);
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("gfs", "create_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(this.selfAddress, requestId, filename, sb.toString()));
+        this.system.schedule("gfs", tblName, req, null);
+
+        // Wait for the response
+        Object obj = this.responseQueue.take();
+        responseTbl.unregister(responseCallback);
     }
 
-    private void doCreateFile(List<String> args) {
-        ;
-    }
-
-    private void doListDirs(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
+    private void doListFiles(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
         if (args.size() != 0)
             usage();
 
@@ -204,7 +258,7 @@ public class Shell {
 
     private void usage() {
         java.lang.System.err.println("Usage: java gfs.Shell op_name args");
-        java.lang.System.err.println("Where op_name = {cat,create,ls,mkdir}");
+        java.lang.System.err.println("Where op_name = {cat,create,ls}");
 
         shutdown();
         java.lang.System.exit(0);
