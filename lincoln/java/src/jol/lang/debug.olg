@@ -36,7 +36,7 @@ dependencies(Program, sumstr<Dependency>) :-
 	predicate(Program, Rule, _, _, BodyPredicate),
 	RuleObject.head() == HeadPredicate,
 	HeadPredicate != BodyPredicate,
-	Dependency := BodyPredicate.dotName() + 
-	              " -> " + HeadPredicate.dotName() + ";";
+	Dependency := HeadPredicate.dotName() + 
+	              " -> " + BodyPredicate.dotName() + ";";
 	        
 	        
