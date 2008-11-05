@@ -44,6 +44,9 @@ define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, String})
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(ls_request_done, keys(0, 1), {String, Integer, String, ValueList});
 
+// Master node, Request ID, Source node
+define(create_request_ok, keys(0, 1), {String, Integer, String});
+
 // Node, Request ID, Success, File contents
 define(cat_response, keys(0, 1), {String, Integer, Boolean, String});
 
@@ -76,23 +79,29 @@ cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
     notin file(@Master, FName, _),
     Success := false, ErrMessage := "File does not exist";
 
-// If we get a "create" request for a file that does not exist,
-// create the file and send back a positive ack
-create_request_done(@Master, Id, Source, Success, "...") :-
+// Given a create request, will it be successful?
+create_request_ok(@Master, Id, Source) :-
     request(@Master, Id, Source, "Create", FName),
-    notin file(@Master, FName, _),
+    notin file(@Master, FName, _);
+
+// If we got a "create" request for a file that didn't exist,
+// send back a positive ack
+create_request_done(@Master, Id, Source, Success, "...") :-
+    create_request_ok(@Master, Id, Source),
     Success := true;
 
+// Add the file
 file(@Master, FName, FContent) :-
-    request(@Master, Id, Source, "Create", FName),
-    notin file(@Master, FName, _),
+    create_request_ok(@Master, Id, Source),
+    request(@Master, Id, Source, "Create", FName), 
     FContent := "test";
 
 // If we get a "create" request for a file that exists, send
 // back a negative ack
+// XXX: this doesn't work correctly
 create_request_done(@Master, Id, Source, Success, ErrMessage) :-
     request(@Master, Id, Source, "Create", FName),
-    file(@Master, FName, _),
+    notin create_request_ok(@Master, Id, Source),
     Success := false, ErrMessage := "File already exists";
 
 // If we got an "ls" request, send back the names of all the files in
