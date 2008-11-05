@@ -1,9 +1,5 @@
 program path;
 
-import java.lang.Integer;
-import java.lang.Object;
-import java.lang.String;
-
 import jol.types.basic.ValueList;
 
 define(link, keys(0,1), {String, String});
@@ -59,7 +55,7 @@ shortestPath(Source, Destination, min<Hops>) :-
 computeAll(Source) :-
 	shortestPath(Source, Destination, Hops);
 
-allpaths(Source, generic<(new ValueList()).insert((Object)Destination)>) :-
+allpaths(Source, generic<(new ValueList()).insert(Destination)>) :-
 	computeAll(_),
 	path(Source, Destination, Hops);
 
