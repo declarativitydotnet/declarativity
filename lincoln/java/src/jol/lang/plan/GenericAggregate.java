@@ -28,7 +28,7 @@ public class GenericAggregate extends Aggregate {
 	
 	@Override
 	public String toString() {
-		return "generic<" + method.toString() + ">";
+		return "generic<" + method.method().getName() + ">";
 	}
 	
 	@Override

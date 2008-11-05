@@ -36,7 +36,6 @@ dependencies(Program, sumstr<Dependency>) :-
 	predicate(Program, Rule, _, _, BodyPredicate),
 	RuleObject.head() == HeadPredicate,
 	HeadPredicate != BodyPredicate,
-	Dependency := HeadPredicate.dotName() + 
-	              " -> " + BodyPredicate.dotName() + ";";
+	Dependency := Compiler.dotEdge(HeadPredicate, BodyPredicate) + ";";
 	        
 	        

@@ -91,6 +91,10 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		}
 	}
 	
+	public List<jol.lang.plan.Aggregate> aggregates() {
+		return this.aggregates;
+	}
+	
 	private List<Aggregate<C>> groupGenerate() {
 		List<Aggregate<C>> functions = new ArrayList<Aggregate<C>>();
 		for (jol.lang.plan.Aggregate aggregate : this.aggregates) {

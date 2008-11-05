@@ -283,7 +283,7 @@ public class Rule extends Clause {
 				intermediateEvent = new EventTable(new TableName(this.program, intermediateName), 
 					                               new TypeList(intermediateSchema.types()));
 				context.catalog().register(intermediateEvent);
-				Predicate intermediate = new Predicate(false, intermediateEvent.name(), Predicate.Event.NONE, intermediateSchema);
+				Predicate intermediate = new Predicate(context, false, intermediateEvent.name(), Predicate.Event.NONE, intermediateSchema);
 				intermediate.program  = event.program();
 				intermediate.rule     = event.rule();
 				intermediate.position = 0;

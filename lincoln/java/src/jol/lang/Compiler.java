@@ -24,6 +24,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
+import jol.types.table.Aggregation;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.Table;
@@ -141,6 +142,26 @@ public class Compiler {
 			return false;
 		}
 		return true;
+    }
+    
+    public static String dotEdge(Predicate from, Predicate to) {
+    	String edge = from.dotName() + "->" + to.dotName();
+    	Table table = to.context.catalog().table(to.name());
+    	if (to.notin()) {
+    		edge += "[color = red, label = \"notin\"]";
+    	}
+    	else if (table instanceof Aggregation) {
+    		jol.types.table.Aggregation aggregation = (Aggregation) table;
+    		edge += "[color = blue, label = \"";
+    		List<jol.lang.plan.Aggregate> aggregates = aggregation.aggregates();
+    		for (jol.lang.plan.Aggregate aggregate : aggregates) {
+    			edge += aggregate.toString() + ", ";
+    		}
+    		edge = edge.substring(0, edge.lastIndexOf(", "));
+    		edge += "\"]";
+    	}
+    	
+    	return edge;
     }
 
 	public Program program() {

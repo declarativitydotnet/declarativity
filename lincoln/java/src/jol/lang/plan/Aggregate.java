@@ -56,7 +56,12 @@ public class Aggregate extends Expression {
 
 	@Override
 	public String toString() {
-		return this.function + "<" + this.variables + ">";
+		String agg = this.function + "<";
+		for (Variable var : this.variables) {
+			agg += var.name() + ", ";
+		}
+		agg = agg.substring(0, agg.lastIndexOf(", ")) + ">";
+		return agg;
 	}
 	
 	public String functionName() {

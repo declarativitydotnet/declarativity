@@ -59,6 +59,8 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	public enum Event{NONE, INSERT, DELETE};
 	
+	public Runtime context;
+	
 	private boolean notin;
 	
 	private TableName name;
@@ -69,16 +71,18 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private Schema schema;
 	
-	public Predicate(boolean notin, TableName name, Event event, List<Expression> arguments) {
+	public Predicate(Runtime context, boolean notin, TableName name, Event event, List<Expression> arguments) {
 		super();
+		this.context = context;
 		this.notin = notin;
 		this.name = name;
 		this.event = event;
 		this.arguments = new Arguments(this, arguments);
 	}
 	
-	public Predicate(boolean notin, TableName name, Event event, Schema schema) {
+	public Predicate(Runtime context, boolean notin, TableName name, Event event, Schema schema) {
 		super();
+		this.context = context;
 		this.notin = notin;
 		this.name = name;
 		this.event = event;
@@ -88,6 +92,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	protected Predicate(Predicate pred) {
 		super();
+		this.context   = pred.context;
 		this.notin     = pred.notin;
 		this.name      = pred.name;
 		this.event     = pred.event;
