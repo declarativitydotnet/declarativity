@@ -132,49 +132,6 @@ public class Compiler {
 		}
 	}
 	
-    public static boolean toDot(String program, String definitions, String dependencies) {
-    	try {
-    		StringBuilder sb = new StringBuilder();
-    		sb.append("digraph " + program + "{\n");
-    		sb.append("\tcompound=true;\n");
-    		sb.append("\tranksep=1.25;\n");
-    		sb.append("\tlabel=\"Stratification Graph Program " + program + "\";\n");
-    		sb.append("\tnode [shape=plaintext, fontname=\"verdana\", fontsize=16];\n");
-    		sb.append("\tbgcolor=white;\n");
-    		sb.append("\tedge [arrowsize=1];\n");
-    		sb.append(definitions);
-    		sb.append(dependencies);
-    		sb.append("\n}");
-    		
-			FileWriter graphFile = new FileWriter(program + ".dot");
-			graphFile.write(sb.toString().replaceAll("\\\\\"", "\""));
-
-			graphFile.close();
-		} catch (IOException e) {
-			return false;
-		}
-		return true;
-    }
-    
-    public static String dotEdge(Predicate from, Predicate to) {
-    	String edge = from.name().dotLabel() + " -> " + to.name().dotLabel();
-    	Table table = to.context.catalog().table(to.name());
-    	if (to.notin()) {
-    		edge += "[color = red, label = \"notin\"]";
-    	}
-    	else if (table instanceof Aggregation) {
-    		jol.types.table.Aggregation aggregation = (Aggregation) table;
-    		edge += "[color = blue, label = \"";
-    		List<jol.lang.plan.Aggregate> aggregates = aggregation.aggregates();
-    		for (jol.lang.plan.Aggregate aggregate : aggregates) {
-    			edge += aggregate.toString() + ", ";
-    		}
-    		edge = edge.substring(0, edge.lastIndexOf(", "));
-    		edge += "\"]";
-    	}
-    	
-    	return edge + ";\n";
-    }
 
 	public Program program() {
 		return this.program;

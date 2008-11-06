@@ -2,7 +2,7 @@ program debug;
 
 import java.lang.Integer;
 import java.lang.String;
-import jol.lang.Compiler;
+import jol.lang.Debugger;
 import jol.types.table.TableName;
 
 define(debug, {String});
@@ -13,10 +13,9 @@ define(stratumGraphs, keys(0), {String, String});
 define(dependencies, keys(0), {String, String});
 
 
-watch(done, s);
 done(Program) :-
 	todot(Program, Definitions, Dependencies),
-	Compiler.toDot(Program, Definitions, Dependencies);
+	Debugger.toDot(Program, Definitions, Dependencies);
 
 todot(Program, Preds, Depends) :-
 	stratumGraphs(Program, Preds),
@@ -26,7 +25,7 @@ todot(Program, Preds, Depends) :-
 stratumGraphs(Program, sumstr<Graph>) :-
 	stratum(Program, Level, Nodes),
 	Graph := "subgraph cluster" + Level.toString() + " {" +
-	          "rank=same; label = \"stratum " + Level.toString() + "\";" +
+	          "rank=same; label = \"Stratum " + Level.toString() + "\";" +
 	          "color=black; " + Nodes + "}";
 	          
 public
@@ -42,7 +41,10 @@ dependencies(Program, sumstr<Dependency>) :-
 	predicate(Program, Rule, _, _, HeadPredicate),
 	predicate(Program, Rule, _, _, BodyPredicate),
 	RuleObject.head() == HeadPredicate,
+	runtime::priority(Program, N1, P1),
+	runtime::priority(Program, N2, P2),
+	HeadPredicate.name() == N1, BodyPredicate.name() == N2,
 	HeadPredicate != BodyPredicate,
-	Dependency := Compiler.dotEdge(HeadPredicate, BodyPredicate);
+	Dependency := Debugger.dotEdge(HeadPredicate, P1, BodyPredicate, P2);
 	        
 	        
