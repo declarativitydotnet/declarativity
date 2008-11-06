@@ -42,7 +42,6 @@ public class Compiler {
 		return new URL[] {
 				l.getResource("jol/lang/compile.olg"),
 				l.getResource("jol/lang/stratachecker.olg"),
-				l.getResource("jol/lang/debug.olg"),
 				l.getResource("jol/lang/grappa.olg")
 		};
 	}
