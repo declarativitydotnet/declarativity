@@ -1,10 +1,6 @@
-all: bin/stasis/jni/libstasisjni.so
+all: checkvars bin/stasis/jni/libstasisjni.so
 	@echo; echo "Be sure to add this to java's command line:" ;echo
 	@echo "  -Djava.library.path=`pwd`/bin/stasis/jni" ; echo
-
-#STASIS_DIR=/home/sears/stasis4
-STASIS_DIR=/Users/peteralvaro/code/stasis/stasis-read-only
-JAVA_DIR=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home/
 
 bin/stasis/jni/Stasis.class : src/stasis/jni/Stasis.java
 	cd src;	javac -d ../bin \
@@ -17,20 +13,39 @@ src/stasis/jni/stasis_jni_Stasis.h : bin/stasis/jni/Stasis.class
 
 bin/stasis/jni/libstasisjni.so: src/stasis/jni/stasis_jni_Stasis.c \
 				src/stasis/jni/stasis_jni_Stasis.h
-	gcc  -fPIC \
-	    -I $(JAVA_DIR)/include \
-            -I $(STASIS_DIR) \
-	    $(STASIS_DIR)/build/src/stasis/libstasis.dylib \
-               src/stasis/jni/stasis_jni_Stasis.c \
-	    -dylib -o bin/stasis/jni/libstasisjni.dylib
+	if [ "$(shell uname)" = "Linux" ] ; then \
+	  gcc -shared -fPIC \
+	      -I $(JAVA_DIR)/include \
+	      -I $(STASIS_DIR) \
+	      -L $(STASIS_DIR)/build/src/libdfa \
+	      -L $(STASIS_DIR)/build/src/stasis \
+	         src/stasis/jni/stasis_jni_Stasis.c \
+	      -l stasis \
+	      -l rw \
+	      -o bin/stasis/jni/libstasisjni.so ; \
+	else \
+	  gcc -fPIC \
+	      -I $(JAVA_DIR)/include \
+	      -I $(STASIS_DIR) \
+	       $(STASIS_DIR)/build/src/stasis/libstasis.dylib \
+	       src/stasis/jni/stasis_jni_Stasis.c \
+	       -dylib -o bin/stasis/jni/libstasisjni.dylib ; \
+	fi
 
 .PHONY: clean
 
 clean :
-	rm bin/stasis/jni/Stasis.class \
-	   src/stasis/jni/stasis_jni_Stasis.h \
-	   bin/stasis/jni/libstasisjni.dylib
+	rm -f bin/stasis/jni/Stasis.class \
+	      src/stasis/jni/stasis_jni_Stasis.h \
+	      bin/stasis/jni/libstasisjni.so
+
+.PHONY: checkvars
+checkvars :
+	@if [[ ! -d "$(STASIS_DIR)" ]] ; then  echo 'Define $$STASIS_DIR to continue!'; exit 1; fi
+	@if [[ ! -d "$(JAVA_DIR)" ]] ; then  echo 'Define $$JAVA_DIR to continue!'; exit 1; fi
+
 
 .PHONY: test
-test : all
-	java -cp bin -Djava.library.path=bin/stasis/jni stasis.jni.Stasis
+test : checkvars all
+	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis:$(STASIS_DIR)/build/src/libdfa \
+	java -cp bin -Djava.library.path=/home/sears/workspace/jol/bin/stasis/jni stasis.jni.Stasis
