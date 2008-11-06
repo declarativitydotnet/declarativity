@@ -1,9 +1,7 @@
 package jol.types.basic;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import jol.lang.plan.DontCare;
 import jol.lang.plan.Variable;

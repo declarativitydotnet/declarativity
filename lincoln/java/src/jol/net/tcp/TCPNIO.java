@@ -33,9 +33,6 @@ public class TCPNIO extends Server {
 	/** The name of the receive message predicate (tcp::receive). */
 	private static final TableName ReceiveMessage = new TableName("tcp", "receive");
 	
-	/** The maximum number of times we will read/write a socket channel with no progress. */
-	private static final int MAX_SOCKET_ATTEMPTS = 10;
-	
 	private Runtime context;
 	
 	private Network manager;
