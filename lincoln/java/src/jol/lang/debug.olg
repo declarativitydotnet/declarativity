@@ -3,39 +3,46 @@ program debug;
 import java.lang.Integer;
 import java.lang.String;
 import jol.lang.Compiler;
+import jol.types.table.TableName;
 
+define(debug, {String});
 define(done, {String});
-define(todot, {String, String});
-define(predicates, keys(0), {String, String});
+define(todot, {String, String, String});
+define(stratum, {String, Integer, String});
+define(stratumGraphs, keys(0), {String, String});
 define(dependencies, keys(0), {String, String});
 
 
+watch(done, s);
 done(Program) :-
-	todot(Program, Graph),
-	Compiler.toDot(Program, Graph);
+	todot(Program, Definitions, Dependencies),
+	Compiler.toDot(Program, Definitions, Dependencies);
 
-todot(Program, Graph) :-
-	predicates(Program, Preds),
-	dependencies(Program, Depends),
-	Graph := "digraph " + Program + " {" +
-			  "compound=true;" +
-			  Preds + Depends + 
-	          "}";
+todot(Program, Preds, Depends) :-
+	stratumGraphs(Program, Preds),
+	dependencies(Program, Depends);
 	        
+	        
+stratumGraphs(Program, sumstr<Graph>) :-
+	stratum(Program, Level, Nodes),
+	Graph := "subgraph cluster" + Level.toString() + " {" +
+	          "rank=same; label = \"stratum " + Level.toString() + "\";" +
+	          "color=black; " + Nodes + "}";
+	          
 public
-predicates(Program, sumstr<Pred>) :-
-	compile::debug(Program),
-	predicate(Program, _, _, _, Predicate),
-	Pred := Predicate.toDot();
+stratum(Program, Priority, sumstr<Pred>) :-
+	debug(Program),
+	runtime::priority(Program, Name, Priority),
+	Pred := Name.toDot();
 	
 public
 dependencies(Program, sumstr<Dependency>) :-
-	compile::debug(Program),
+	debug(Program),
 	rule(Program, Rule, _, _, Delete, RuleObject),
 	predicate(Program, Rule, _, _, HeadPredicate),
 	predicate(Program, Rule, _, _, BodyPredicate),
 	RuleObject.head() == HeadPredicate,
 	HeadPredicate != BodyPredicate,
-	Dependency := Compiler.dotEdge(HeadPredicate, BodyPredicate) + ";";
+	Dependency := Compiler.dotEdge(HeadPredicate, BodyPredicate);
 	        
 	        

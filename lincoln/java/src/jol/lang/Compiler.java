@@ -132,11 +132,23 @@ public class Compiler {
 		}
 	}
 	
-    public static boolean toDot(String program, String graph) {
+    public static boolean toDot(String program, String definitions, String dependencies) {
     	try {
-    		graph = graph.replaceAll("\\\\\"", "\"");
+    		StringBuilder sb = new StringBuilder();
+    		sb.append("digraph " + program + "{\n");
+    		sb.append("\tcompound=true;\n");
+    		sb.append("\tranksep=1.25;\n");
+    		sb.append("\tlabel=\"Stratification Graph Program " + program + "\";\n");
+    		sb.append("\tnode [shape=plaintext, fontname=\"verdana\", fontsize=16];\n");
+    		sb.append("\tbgcolor=white;\n");
+    		sb.append("\tedge [arrowsize=1];\n");
+    		sb.append(definitions);
+    		sb.append(dependencies);
+    		sb.append("\n}");
+    		
 			FileWriter graphFile = new FileWriter(program + ".dot");
-			graphFile.write(graph);
+			graphFile.write(sb.toString().replaceAll("\\\\\"", "\""));
+
 			graphFile.close();
 		} catch (IOException e) {
 			return false;
@@ -145,7 +157,7 @@ public class Compiler {
     }
     
     public static String dotEdge(Predicate from, Predicate to) {
-    	String edge = from.dotName() + "->" + to.dotName();
+    	String edge = from.name().dotLabel() + " -> " + to.name().dotLabel();
     	Table table = to.context.catalog().table(to.name());
     	if (to.notin()) {
     		edge += "[color = red, label = \"notin\"]";
@@ -161,7 +173,7 @@ public class Compiler {
     		edge += "\"]";
     	}
     	
-    	return edge;
+    	return edge + ";\n";
     }
 
 	public Program program() {

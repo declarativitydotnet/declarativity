@@ -236,15 +236,4 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 	}
 	
-	public String dotName() {
-		return name().scope + name().name;
-	}
-	
-	public String toDot() {
-		String dot = "\n" + dotName() + " [shape=ellipse, label = \"";
-		dot += name() + 
-		       schema().toString() +
-		       "\" ];\n";
-		return dot;
-	}
 }

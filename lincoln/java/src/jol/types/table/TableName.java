@@ -46,6 +46,16 @@ public class TableName implements Comparable<TableName>, Serializable {
 		}
 	}
 	
+	public String dotLabel() {
+		return scope + name;
+	}
+	
+	public String toDot() {
+		String dot = "\n node [label = \"";
+		dot += toString() + "\"] " + dotLabel() + ";\n";
+		return dot;
+	}
+	
 	@Override
 	public String toString() {
 		return scope + "::" + name;

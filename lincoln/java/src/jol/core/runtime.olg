@@ -147,6 +147,7 @@ schedule(Time+1, Program, Name, Facts, null) :-
 /*** Schedule compile */
 
 define(config, {Long, String, jol.lang.plan.Program});
+import java.lang.Comparable;
 
 configProgram 
 config(Time, Program, Object) :-
@@ -158,3 +159,7 @@ compileConfig
 schedule(Time, "compile", Tuples.name(), Tuples, null) :-
 	config(Time, Program, Object),
 	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
+	
+schedule(Time+1, "debug", Tuples.name(), Tuples, null) :-
+	config(Time, Program, Object),
+	Tuples := new TupleSet(new TableName("debug", "debug"), Object.nameTuple());
