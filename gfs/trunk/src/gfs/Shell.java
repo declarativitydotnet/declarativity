@@ -46,6 +46,8 @@ public class Shell {
             shell.doCreateFile(argList);
         else if (op.equals("ls"))
             shell.doListFiles(argList);
+        else if (op.equals("rm"))
+            shell.doRemove(argList);
         else
             shell.usage();
 
@@ -76,7 +78,7 @@ public class Shell {
      * XXX: consider parallel evaluation
      */
     private void doConcatenate(List<String> args) throws UpdateException, InterruptedException {
-        if (args.size() == 0)
+        if (args.isEmpty())
             usage();
 
         for (String file : args)
@@ -203,7 +205,7 @@ public class Shell {
     }
 
     private void doListFiles(List<String> args) throws UpdateException, InterruptedException {
-        if (args.size() != 0)
+        if (args.isEmpty())
             usage();
 
         final int requestId = generateId();
@@ -252,13 +254,72 @@ public class Shell {
         }
     }
 
+    private void doRemove(List<String> argList) throws UpdateException, InterruptedException {
+        if (argList.isEmpty())
+            usage();
+        
+        for (String s : argList) {
+            doRemoveFile(s);
+        }
+    }
+
+    private void doRemoveFile(final String file) throws UpdateException, InterruptedException {
+        final int requestId = generateId();
+
+        // Register callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(2);
+
+                        if (success.booleanValue()) {
+                            java.lang.System.out.println("Remove of file \"" + file + "\": success.");
+                        } else {
+                            Object content = t.value(3);
+                            java.lang.System.out.println("ERROR on \"rm\":");
+                            java.lang.System.out.println("File name: " + file);
+                            java.lang.System.out.println("Error message: " + content);
+                        }
+
+                        try {
+                            responseQueue.put(success);
+                            break;
+                        }
+                        catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        };
+        Table responseTbl = this.system.catalog().table(new TableName("gfs", "rm_response"));
+        responseTbl.register(responseCallback);
+        
+        // Create and insert the request tuple
+        TableName tblName = new TableName("gfs", "rm_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(this.selfAddress, requestId, file));
+        this.system.schedule("gfs", tblName, req, null);
+
+        // Wait for the response
+        Object obj = this.responseQueue.take();
+        responseTbl.unregister(responseCallback);
+    }
+
     private void shutdown() {
         this.system.shutdown();
     }
 
     private void usage() {
         java.lang.System.err.println("Usage: java gfs.Shell op_name args");
-        java.lang.System.err.println("Where op_name = {cat,create,ls}");
+        java.lang.System.err.println("Where op_name = {cat,create,ls,rm}");
 
         shutdown();
         java.lang.System.exit(0);

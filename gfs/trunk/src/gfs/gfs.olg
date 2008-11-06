@@ -39,10 +39,14 @@ define(create_request, keys(0, 1), {String, Integer, String, String});
 // Source node, Request ID
 define(ls_request, keys(0, 1), {String, Integer});
 
-// Master node, Request Id, Source node, Success, Response
+// Source node, Request ID, File name
+define(rm_request, keys(0, 1), {String, Integer, String});
+
+// Master node, Request Id, Source node, Success?, Response
 define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(ls_request_done, keys(0, 1), {String, Integer, String, ValueList});
+define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 
 // Master node, Request ID, Source node
 define(create_request_ok, keys(0, 1), {String, Integer, String});
@@ -56,12 +60,17 @@ define(create_response, keys(0, 1), {String, Integer, Boolean, String});
 // Node, Request ID, Listing contents
 define(ls_response, keys(0, 1), {String, Integer, ValueList});
 
-request_started(@Source, Id, RequestType, Filename) :-
-    cat_request(@Source, Id, Filename), RequestType := "Cat";
-request_started(@Source, Id, RequestType, Filename) :-
-    create_request(@Source, Id, Filename, _), RequestType := "Create";
+// Node, Request ID, Success, Error message (on failure)
+define(rm_response, keys(0, 1), {String, Integer, Boolean, String});
+
+request_started(@Source, Id, RequestType, FName) :-
+    cat_request(@Source, Id, FName), RequestType := "Cat";
+request_started(@Source, Id, RequestType, FName) :-
+    create_request(@Source, Id, FName, _), RequestType := "Create";
 request_started(@Source, Id, RequestType, "Foo") :-
     ls_request(@Source, Id), RequestType := "Ls";
+request_started(@Source, Id, RequestType, FName) :-
+    rm_request(@Source, Id, FName), RequestType :- "Rm";
 
 request(@Master, Id, Source, RequestType, Args) :-
     self(@Source), master_per_node(@Source, Master),
@@ -107,9 +116,19 @@ create_request_done(@Master, Id, Source, Success, ErrMessage) :-
 // If we got an "ls" request, send back the names of all the files in
 // the FS
 ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
-    RequestType == "Ls",
-    request(@Master, Id, Source, RequestType, _),
+    request(@Master, Id, Source, "Ls", _),
     file(@Master, FName, _);
+    
+// If we got an "rm" request and the file exists, remove it and send
+// back a positive ack.
+rm_request_done(@Master, Id, Source, true, "...") :-
+    request(@Master, Id, Source, "Rm", FName),
+    file(@Master, FName, _);
+
+// Actually delete the file
+delete
+file(@Master, FName, _) :-
+    request(@Master, Id, Source, "Rm", FName);
 
 cat_response(@Source, Id, Success, Response) :-
     cat_request_done(@Master, Id, Source, Success, Response);
@@ -119,3 +138,6 @@ create_response(@Source, Id, Success, Response) :-
 
 ls_response(@Source, Id, Response) :-
     ls_request_done(@Master, Id, Source, Response);
+
+rm_response(@Source, Id, Success, Response) :-
+    rm_response_done(@Master, Id, Source, Success, Response);
