@@ -80,17 +80,18 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		initialize();
 		fromBytes(b);
 	}
-	
-	private final static int OBJECT = 0;
-	private final static int STRING = 1;
-	private final static int INT = 2;
-	private final static int LONG = 3;
-	private final static int SHORT = 4;
-	private final static int BOOLEAN = 5;
-	private final static int CHAR = 6;
-	private final static int BYTE = 7;
-	private final static int FLOAT = 8;
-	private final static int DOUBLE = 9;
+
+	private final static int NULL = 0;
+	private final static int OBJECT = 1;
+	private final static int STRING = 2;
+	private final static int INT = 3;
+	private final static int LONG = 4;
+	private final static int SHORT = 5;
+	private final static int BOOLEAN = 6;
+	private final static int CHAR = 7;
+	private final static int BYTE = 8;
+	private final static int FLOAT = 9;
+	private final static int DOUBLE = 10;
 	
 	private boolean warned = false;
 	
@@ -99,7 +100,9 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		DataOutputStream out = new DataOutputStream(ret);
 		out.writeShort(values.size());
 		for (Object o : values) {
-			if (o instanceof String) {
+			if (o == null) {
+				out.writeByte(NULL);
+			} else if (o instanceof String) {
 				out.writeByte(STRING);
 				out.writeUTF((String)o);
 			} else if (o instanceof Integer) {
@@ -151,7 +154,9 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		values = new ArrayList<Comparable>(size);
 		for (int i = 0; i < size; i++) {
 			int type = in.readByte();
-			if (type == STRING) {
+			if (type == NULL) {
+				values.add(null);
+			} else if (type == STRING) {
 				values.add(in.readUTF());
 			} else if (type == INT) {
 				values.add(in.readInt());
@@ -220,15 +225,15 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public Tuple clone() {
 		Tuple copy = new Tuple(this.values);
 		copy.schema = this.schema != null ? this.schema.clone() : null;
-		copy.id     = this.id;
+		copy.id		= this.id;
 		return copy;
 	}
 	
 	/** Initialize an empty tuple. */
 	private void initialize() {
-		this.schema   = new Schema();
+		this.schema	  = new Schema();
 		this.refCount = new Long(1);
-		this.id       = idGen.toString();
+		this.id		  = idGen.toString();
 		idGen += 1L;
 	}
 	
@@ -306,7 +311,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public void schema(Schema schema) throws JolRuntimeException {
 		if (schema.size() != size()) {
 			throw new JolRuntimeException("Schema " + schema.name() + schema + " does not match tuple arity! " +
-					                     " Tuple: " + this + " size =? " + size());
+										 " Tuple: " + this + " size =? " + size());
 		}
 		this.schema = schema;
 	}
@@ -368,10 +373,10 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	}
 	
 	/**
-	 *  Sets the value to be in the given field position.
-	 *  Field positions are zero-based.
-	 *  @param field The field position.
-	 *  @param value The value to set. 
+	 *	Sets the value to be in the given field position.
+	 *	Field positions are zero-based.
+	 *	@param field The field position.
+	 *	@param value The value to set. 
 	 */
 	public void value(int field, Comparable value) {
 		if (this.values.size() == field) {
