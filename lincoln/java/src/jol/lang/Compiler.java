@@ -43,16 +43,18 @@ public class Compiler {
 				l.getResource("jol/lang/compile.olg"),
 				l.getResource("jol/lang/stratachecker.olg"),
 				l.getResource("jol/lang/debug.olg"),
+				l.getResource("jol/lang/grappa.olg")
 		};
 	}
 	public static class CompileTable extends ObjectTable {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "compiler");
 		public static final Key PRIMARY_KEY = new Key(0);
-		public enum Field {NAME, OWNER, FILE, PROGRAM};
+		public enum Field {NAME, OWNER, DEBUGGER, FILE, PROGRAM};
 
 		public static final Class[] SCHEMA = {
 				String.class, // Program name
 				String.class, // Program owner
+				String.class, // Debugger
 				String.class, // Program file
 				Program.class // The program object
 		};

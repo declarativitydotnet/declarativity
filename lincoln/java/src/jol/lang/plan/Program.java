@@ -71,6 +71,10 @@ public class Program implements Comparable<Program> {
 		}
 	}
 	
+	public Runtime context() {
+		return this.context;
+	}
+	
 	public Tuple tuple() {
 		return new Tuple(name, this);
 	}

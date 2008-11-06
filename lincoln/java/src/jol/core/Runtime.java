@@ -2,6 +2,7 @@ package jol.core;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -215,8 +216,12 @@ public class Runtime implements System {
 	 * @param url The location that contains the program text.
 	 */
 	public void install(String owner, URL url) throws UpdateException {
+		install(owner, null, url);
+	}
+	
+	public void install(String owner, String debugger, URL url) throws UpdateException {
 		TupleSet compilation = new TupleSet(CompileTable.TABLENAME);
-		compilation.add(new Tuple(null, owner, url.toString(), null));
+		compilation.add(new Tuple(null, owner, debugger, url.toString(), null));
 		schedule("runtime", CompileTable.TABLENAME, compilation, null);
 	}
 	
@@ -378,14 +383,34 @@ public class Runtime implements System {
 			java.lang.System.exit(1);
 		}
 		
+		ArrayList<String> arguments = new ArrayList<String>();
+		String debugger = null;
+		for (int i = 0; i < args.length; i++) {
+			String arg = args[i];
+			if (arg.startsWith("-d")) {
+				if (arg.length() > "-d".length()) {
+					debugger = arg.substring(1, arg.length());
+					debugger = debugger.trim();
+					java.lang.System.err.println("DEBUGGER: " + debugger);
+				}
+				else {
+					debugger = args[++i].trim();
+				}
+			}
+			else {
+				arguments.add(arg);
+			}
+		}
+		
+		args = arguments.toArray(new String[arguments.size()]);
+		
 		// Initialize the global Runtime
 		Runtime runtime = (Runtime) Runtime.create(Integer.parseInt(args[0]));
 		for (int i = 1; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);
-			runtime.install("user", url);
-		  runtime.evaluate(); // Install program arguments.
+			runtime.install("user", debugger, url);
+			runtime.evaluate(); // Install program arguments.
 		}
-	//runtime.evaluate(); // Install program arguments.
 		runtime.start();
 	}
 }

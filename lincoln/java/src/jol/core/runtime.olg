@@ -146,20 +146,22 @@ schedule(Time+1, Program, Name, Facts, null) :-
 /*******************************************************************/
 /*** Schedule compile */
 
-define(config, {Long, String, jol.lang.plan.Program});
+define(config, {Long, String, String, jol.lang.plan.Program});
 import java.lang.Comparable;
+import jol.lang.Debugger;
 
 configProgram 
-config(Time, Program, Object) :-
-	compiler#insert(Program, Owner, File, Object),
+config(Time, Program, Debugger, Object) :-
+	compiler#insert(Program, Owner, Debugger, File, Object),
 	clock(Location, Time),
 	Object.plan();
 		
 compileConfig 
 schedule(Time, "compile", Tuples.name(), Tuples, null) :-
-	config(Time, Program, Object),
+	config(Time, Program, _, Object),
 	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
 	
-schedule(Time+1, "debug", Tuples.name(), Tuples, null) :-
-	config(Time, Program, Object),
-	Tuples := new TupleSet(new TableName("debug", "debug"), Object.nameTuple());
+schedule(Time+1, "grappa", Tuples.name(), Tuples, null) :-
+	config(Time, Program, Debugger, Object),
+	Debugger != null,
+	Tuples := new TupleSet(new TableName("grappa", "debug"), Debugger.tuple(Program, Debugger));

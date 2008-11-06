@@ -45,6 +45,6 @@ dependencies(Program, sumstr<Dependency>) :-
 	runtime::priority(Program, N2, P2),
 	HeadPredicate.name() == N1, BodyPredicate.name() == N2,
 	HeadPredicate != BodyPredicate,
-	Dependency := Debugger.dotEdge(HeadPredicate, P1, BodyPredicate, P2);
+	Dependency := Debugger.edge(HeadPredicate, P1, BodyPredicate, P2);
 	        
 	        
