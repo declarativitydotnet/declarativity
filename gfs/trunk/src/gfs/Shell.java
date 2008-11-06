@@ -75,7 +75,7 @@ public class Shell {
     /*
      * XXX: consider parallel evaluation
      */
-    private void doConcatenate(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
+    private void doConcatenate(List<String> args) throws UpdateException, InterruptedException {
         if (args.size() == 0)
             usage();
 
@@ -83,7 +83,7 @@ public class Shell {
             doCatFile(file);
     }
 
-    private void doCatFile(final String file) throws UpdateException, InterruptedException, JolRuntimeException {
+    private void doCatFile(final String file) throws UpdateException, InterruptedException {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -158,35 +158,35 @@ public class Shell {
 
         // Register a callback to listen for responses
         Callback responseCallback = new Callback() {
-                 @Override
-                     public void deletion(TupleSet tuples) {}
+            @Override
+            public void deletion(TupleSet tuples) {}
 
-                 @Override
-                     public void insertion(TupleSet tuples) {
-                     for (Tuple t : tuples) {
-                         Integer tupRequestId = (Integer) t.value(1);
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
 
-                         if (tupRequestId.intValue() == requestId) {
-                             Boolean success = (Boolean) t.value(2);
+                    if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(2);
 
-                             if (success.booleanValue()) {
-                                 java.lang.System.out.println("Create succeeded.");
-                             } else {
-                                 String errMessage = (String) t.value(3);
-                                 java.lang.System.out.println("Create failed.");
-                                 java.lang.System.out.println("Error message: " + errMessage);
-                             }
+                        if (success.booleanValue()) {
+                            java.lang.System.out.println("Create succeeded.");
+                        } else {
+                            String errMessage = (String) t.value(3);
+                            java.lang.System.out.println("Create failed.");
+                            java.lang.System.out.println("Error message: " + errMessage);
+                        }
 
-                             try {
-                                 responseQueue.put(success);
-                                 break;
-                             } catch (InterruptedException e) {
-                                 throw new RuntimeException(e);
-                             }
-                         }
-                     }
-                 }
-            };
+                        try {
+                            responseQueue.put(success);
+                            break;
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        };
 
         Table responseTbl = this.system.catalog().table(new TableName("gfs", "create_response"));
         responseTbl.register(responseCallback);
@@ -202,7 +202,7 @@ public class Shell {
         responseTbl.unregister(responseCallback);
     }
 
-    private void doListFiles(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
+    private void doListFiles(List<String> args) throws UpdateException, InterruptedException {
         if (args.size() != 0)
             usage();
 
@@ -210,26 +210,26 @@ public class Shell {
 
         // Register a callback to listen for responses
         Callback responseCallback = new Callback() {
-                @Override
-                public void deletion(TupleSet tuples) {}
+            @Override
+            public void deletion(TupleSet tuples) {}
 
-                @Override
-                    public void insertion(TupleSet tuples) {
-                    for (Tuple t : tuples) {
-                        Integer tupRequestId = (Integer) t.value(1);
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
 
-                        if (tupRequestId.intValue() == requestId) {
-                            Object lsContent = t.value(2);
-                            try {
-                                responseQueue.put(lsContent);
-                                break;
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
+                    if (tupRequestId.intValue() == requestId) {
+                        Object lsContent = t.value(2);
+                        try {
+                            responseQueue.put(lsContent);
+                            break;
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
                         }
                     }
                 }
-            };
+            }
+        };
 
         Table responseTbl = this.system.catalog().table(new TableName("gfs", "ls_response"));
         responseTbl.register(responseCallback);
