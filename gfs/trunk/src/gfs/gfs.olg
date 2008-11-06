@@ -70,7 +70,7 @@ request_started(@Source, Id, RequestType, FName) :-
 request_started(@Source, Id, RequestType, "Foo") :-
     ls_request(@Source, Id), RequestType := "Ls";
 request_started(@Source, Id, RequestType, FName) :-
-    rm_request(@Source, Id, FName), RequestType :- "Rm";
+    rm_request(@Source, Id, FName), RequestType := "Rm";
 
 request(@Master, Id, Source, RequestType, Args) :-
     self(@Source), master_per_node(@Source, Master),
@@ -121,14 +121,17 @@ ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :
     
 // If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
+// XXX: need to handle the case that the file doesn't exist
 rm_request_done(@Master, Id, Source, true, "...") :-
     request(@Master, Id, Source, "Rm", FName),
     file(@Master, FName, _);
 
 // Actually delete the file
+// XXX: join against File in the body is unnecessary
 delete
-file(@Master, FName, _) :-
-    request(@Master, Id, Source, "Rm", FName);
+file(@Master, FName, FContents) :-
+    request(@Master, Id, Source, "Rm", FName),
+    file(@Master, FName, FContents);
 
 cat_response(@Source, Id, Success, Response) :-
     cat_request_done(@Master, Id, Source, Success, Response);
@@ -140,4 +143,4 @@ ls_response(@Source, Id, Response) :-
     ls_request_done(@Master, Id, Source, Response);
 
 rm_response(@Source, Id, Success, Response) :-
-    rm_response_done(@Master, Id, Source, Success, Response);
+    rm_request_done(@Master, Id, Source, Success, Response);

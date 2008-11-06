@@ -205,7 +205,7 @@ public class Shell {
     }
 
     private void doListFiles(List<String> args) throws UpdateException, InterruptedException {
-        if (args.isEmpty())
+        if (!args.isEmpty())
             usage();
 
         final int requestId = generateId();
