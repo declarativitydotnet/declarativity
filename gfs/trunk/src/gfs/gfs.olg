@@ -95,7 +95,7 @@ create_request_ok(@Master, Id, Source) :-
 
 // If we got a "create" request for a file that didn't exist,
 // send back a positive ack
-create_request_done(@Master, Id, Source, Success, "...") :-
+create_request_done(@Master, Id, Source, Success, null) :-
     create_request_ok(@Master, Id, Source),
     Success := true;
 
@@ -122,7 +122,7 @@ ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :
 // If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
 // XXX: need to handle the case that the file doesn't exist
-rm_request_done(@Master, Id, Source, true, "...") :-
+rm_request_done(@Master, Id, Source, true, null) :-
     request(@Master, Id, Source, "Rm", FName),
     file(@Master, FName, _);
 
