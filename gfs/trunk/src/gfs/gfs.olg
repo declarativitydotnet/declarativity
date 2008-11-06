@@ -27,9 +27,6 @@ file("tcp:localhost:5500", "Foo", "Bar");
 file("tcp:localhost:5500", "Bar", "Baz");
 file("tcp:localhost:5500", "Quux", "Quuux");
 
-// Source node, Request ID, Request type, Request arguments
-define(request_started, keys(0, 1), {String, Integer, String, String});
-
 // Source node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});
 
@@ -41,6 +38,9 @@ define(ls_request, keys(0, 1), {String, Integer});
 
 // Source node, Request ID, File name
 define(rm_request, keys(0, 1), {String, Integer, String});
+
+// Source node, Request ID, Request type, Request arguments
+define(request_started, keys(0, 1), {String, Integer, String, String});
 
 // Master node, Request Id, Source node, Success?, Response
 define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
@@ -102,7 +102,7 @@ create_request_done(@Master, Id, Source, Success, null) :-
 // Add the file
 file(@Master, FName, FContent) :-
     create_request_ok(@Master, Id, Source),
-    request(@Master, Id, Source, "Create", FName), 
+    request(@Master, Id, Source, "Create", FName),
     FContent := "test";
 
 // If we get a "create" request for a file that exists, send
