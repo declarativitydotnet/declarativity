@@ -6,6 +6,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
+import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Master {
@@ -38,8 +39,9 @@ public class Master {
     public void start() throws JolRuntimeException, UpdateException {
         this.system = Runtime.create(this.port);
 
-        this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
         this.system.catalog().register(new SelfTable((Runtime) this.system));
+        this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
+        this.system.evaluate();
 
         Callback cb = new Callback() {
             @Override
@@ -51,9 +53,7 @@ public class Master {
             }
         };
 
-        this.system.catalog().table(MasterRequestTable.TABLENAME).register(cb);
-        this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
-        this.system.evaluate();
+        this.system.catalog().table(new TableName("gfs", "request")).register(cb);
 
         /* Identify which address the local node is at */
         TupleSet self = new TupleSet();

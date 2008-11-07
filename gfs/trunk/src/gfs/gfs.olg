@@ -42,6 +42,9 @@ define(rm_request, keys(0, 1), {String, Integer, String});
 // Source node, Request ID, Request type, Arg1, Arg2
 define(request_started, keys(0, 1), {String, Integer, String, String, String});
 
+// Master node, Request ID, Source node, Request type, Arg1, Arg2
+define(request, keys(0, 1), {String, Integer, String, String, String, String});
+
 // Master node, Request Id, Source node, Success?, Response
 define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
