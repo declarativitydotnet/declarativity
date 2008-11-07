@@ -44,6 +44,7 @@
       <classpath>
         <pathelement location="${lib}/grappa1_2.jar"/>
         <pathelement location="${lib}/xtc.jar"/>
+        <pathelement location="${lib}/grappa1_2.jar"/>
         <pathelement location="${lib}/servlet-api.jar"/>
         <pathelement location="${lib}/junit.jar"/>
       </classpath>
@@ -100,6 +101,7 @@
       <fileset dir="examples/" includes="**/*.olg"/>
       <classes dir="${build}" excludes="jol/test/**"/>
       <lib dir="${lib}" includes="xtc.jar"/>
+      <lib dir="${lib}" includes="grappa1_2.jar"/>
     </war>
       
   </target>
