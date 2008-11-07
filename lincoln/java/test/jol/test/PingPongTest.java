@@ -132,7 +132,7 @@ public class PingPongTest {
     }
     
     @Test
-        public void simplePingPongTest() throws UpdateException, InterruptedException, JolRuntimeException {
+        public void simplePingPongTest() throws UpdateException, InterruptedException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 

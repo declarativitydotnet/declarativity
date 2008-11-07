@@ -1,6 +1,5 @@
 package jol.lang;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -24,7 +23,6 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
-import jol.types.table.Aggregation;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.Table;

@@ -1,19 +1,13 @@
 package jol.lang;
 
-import java.awt.BorderLayout;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringBufferInputStream;
 import java.util.List;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
@@ -24,7 +18,6 @@ import att.grappa.GrappaConstants;
 import att.grappa.GrappaPanel;
 import att.grappa.GrappaSupport;
 import att.grappa.Node;
-import att.grappa.Parser;
 import att.grappa.Subgraph;
 
 import jol.lang.plan.Predicate;
