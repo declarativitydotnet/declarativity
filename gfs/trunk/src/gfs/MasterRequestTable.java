@@ -24,7 +24,8 @@ public class MasterRequestTable extends ObjectTable {
         Integer.class,  // Request ID
         String.class,   // Source address
         String.class,   // Request type
-        String.class    // Request payload (arguments)
+        String.class,   // Request payload (arg1)
+        String.class    // Request payload (arg2)
     };
 
     protected MasterRequestTable(Runtime context) {
