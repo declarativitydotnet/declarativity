@@ -144,7 +144,7 @@ public class TCPNIO extends Server {
 
 		private ByteBuffer buffer;
 		private SocketChannel channel;
-
+        private String remoteAddr;
         private int readState;
 
 		public Connection(SocketChannel channel) throws IOException {
@@ -152,6 +152,7 @@ public class TCPNIO extends Server {
 			this.buffer = ByteBuffer.allocate(8192);
 			this.channel = channel;
 			this.channel.configureBlocking(false);
+            this.remoteAddr = channel.socket().toString();
             this.readState = READ_DONE;
 		}
 		
@@ -222,10 +223,11 @@ public class TCPNIO extends Server {
             } catch (IOException e) {
                 if (e instanceof ClosedChannelException)
                     java.lang.System.err.println("TCP channel closed: " +
-                                                 this.channel.socket().toString());
+                                                 this.remoteAddr);
                 else
                     java.lang.System.err.println("Unexpected IO exception: " +
-                                                 this.channel.socket().toString());
+                                                 this.remoteAddr);
+
                 try {
                     TCPNIO.this.manager.connection().unregister(this);
                 } catch (UpdateException ue) {
