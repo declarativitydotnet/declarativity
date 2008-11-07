@@ -231,6 +231,12 @@ public class Rule extends Clause {
 		for (Term t : body) {
 			if (t instanceof Predicate) {
 				Predicate p = (Predicate) t;
+
+				if (p.locationVariable() == null)
+					throw new PlannerException("Predicate \"" + p.name() + "\" in " +
+											   "localized rule \"" + head.name() +
+											   "\" has no location specifier!");
+
 				String loc = p.locationVariable().name();
 				if (!groupByLocation.containsKey(loc)) {
 					groupByLocation.put(loc, new ArrayList<Term>());
