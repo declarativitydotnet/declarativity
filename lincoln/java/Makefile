@@ -88,4 +88,5 @@ shutdown:
 
 startup: checkvars
 	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis/ \
+	CATALINA_OPTS=-Djava.library.path=ant-build/stasis/jni \
 	apache-tomcat-6.0.18/bin/startup.sh
