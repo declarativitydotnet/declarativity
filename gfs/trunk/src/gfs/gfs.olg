@@ -87,14 +87,16 @@ cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
 
 // If we got a "create" request for a file that didn't exist,
 // send back a positive ack
+// XXX: use of "#insert" here is a hack
 create_request_done(@Master, Id, Source, true, null) :-
-    request(@Master, Id, Source, "Create", FName),
+    request#insert(@Master, Id, Source, "Create", FName),
     notin file(@Master, FName, _);
 
 // If we get a "create" request for a file that exists, send
 // back a negative ack
+// XXX: use of "#insert" here is a hack
 create_request_done(@Master, Id, Source, false, ErrMessage) :-
-    request(@Master, Id, Source, "Create", FName),
+    request#insert(@Master, Id, Source, "Create", FName),
     file(@Master, FName, _),
     ErrMessage := "File already exists";
 
