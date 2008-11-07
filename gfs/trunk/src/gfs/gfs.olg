@@ -1,10 +1,7 @@
 program gfs;
 
 import jol.types.basic.ValueList;
-
-// The address of the master node
-define(master, keys(0), {String});
-master("tcp:localhost:5500");
+import gfs.Master;
 
 // Node, Master node
 define(master_for_node, keys(0, 1), {String, String});
@@ -12,14 +9,14 @@ define(master_for_node, keys(0, 1), {String, String});
 // Right now, every node has the same master. We leave the master undefined
 // on the master node itself.
 master_for_node(Self, Master) :-
-    self(Self), master(Master), Self != Master;
+    self(Self), Master := Master.ADDRESS, Self != Master;
 
 // Node, File name, Contents
 define(file, keys(0, 1), {String, String, String});
 
-file("tcp:localhost:5500", "Foo", "Bar");
-file("tcp:localhost:5500", "Bar", "Baz");
-file("tcp:localhost:5500", "Quux", "Quuux");
+file(Master.ADDRESS, "Foo", "Bar");
+file(Master.ADDRESS, "Bar", "Baz");
+file(Master.ADDRESS, "Quux", "Quuux");
 
 // Source node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});

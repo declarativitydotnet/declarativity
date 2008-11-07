@@ -10,34 +10,28 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Master {
-    private static final int DEFAULT_MASTER_PORT = 5500;
+    public static final int PORT = 5500;
+    public static final String ADDRESS = "tcp:localhost:" + PORT;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
-        if (args.length > 1)
+        if (args.length != 0)
             usage();
 
-        int port = DEFAULT_MASTER_PORT;
-        if (args.length == 1)
-            port = Integer.parseInt(args[0]);
-
-        Master m = new Master(port);
+        Master m = new Master();
         m.start();
     }
 
     private static void usage() {
-        java.lang.System.err.println("Usage: gfs.Master [port-number]");
+        java.lang.System.err.println("Usage: gfs.Master");
         java.lang.System.exit(1);
     }
 
-    private int port;
     private System system;
 
-    public Master(int port) {
-        this.port = port;
-    }
+    public Master() {}
 
     public void start() throws JolRuntimeException, UpdateException {
-        this.system = Runtime.create(this.port);
+        this.system = Runtime.create(Master.PORT);
 
         this.system.catalog().register(new SelfTable((Runtime) this.system));
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
@@ -57,7 +51,7 @@ public class Master {
 
         /* Identify which address the local node is at */
         TupleSet self = new TupleSet();
-        self.add(new Tuple("tcp:localhost:" + this.port));
+        self.add(new Tuple(Master.ADDRESS));
         this.system.schedule("gfs", SelfTable.TABLENAME, self, null);
         this.system.evaluate();
         this.system.start();
