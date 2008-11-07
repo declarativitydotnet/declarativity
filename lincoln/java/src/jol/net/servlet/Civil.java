@@ -47,9 +47,9 @@ public class Civil extends LincolnServlet {
 	        }
         }
         
-        final TableName tableName = new TableName(scope,name);
-        final DumpTable preTableDump  = new DumpTable(tableName);
-        final DumpTable postTableDump = new DumpTable(tableName);
+        TableName tableName = new TableName(scope,name);
+        DumpTable preTableDump  = new DumpTable(tableName);
+        DumpTable postTableDump = new DumpTable(tableName);
 
         // ------ Setup callbacks for injecting / deleting tuple
         
@@ -72,18 +72,29 @@ public class Civil extends LincolnServlet {
 
 		// ------ Setup callback to log the differences to the shortestPath table.
 		
-		final TableName shortestPathTable = new TableName("path", "shortestPath");
+		TableName shortestPathTable = new TableName("path", "shortestPath");
+		DeltaLogger logger;
 
-		final DeltaLogger logger = new DeltaLogger(runtime, shortestPathTable);
+		try {
+			logger = new DeltaLogger(runtime, shortestPathTable);
+		} catch (Exception e) {
+			logger = null;
+		}
 
 		// ------ Run the lincoln query
 			
 		try {
-			Lincoln.evaluateTimestep(runtime,
-    			  		   	new RuntimeCallback[] { preTableDump, inject },
-    			  		   	new Logger[] 		  { logger               },
-    			  		   	new RuntimeCallback[] { postTableDump        });
-    	  
+			if(logger != null) {
+				Lincoln.evaluateTimestep(runtime,
+	    			  		   	new RuntimeCallback[] { preTableDump, inject },
+	    			  		   	new Logger[] 		  { logger               },
+	    			  		   	new RuntimeCallback[] { postTableDump        });
+			} else {
+				Lincoln.evaluateTimestep(runtime,
+			  		   	new RuntimeCallback[] { preTableDump, },
+			  		   	new Logger[] 		  { },
+			  		   	new RuntimeCallback[] { });
+			}
 		} catch (UpdateException e) {
 			throw new ServletException("Table not found", e);
 		} catch (JolRuntimeException e) {
@@ -119,14 +130,17 @@ public class Civil extends LincolnServlet {
         out.print(format.section("Before"));
         out.print(format.toString(preTableDump.result()));
         
-        out.println(format.section(format.toString(shortestPathTable) + " deletions"));
-        out.print(format.toString(logger.getDeletions()));
+        if(logger != null) {
         
-        out.println(format.section(format.toString(shortestPathTable) + " insertions"));
-        out.print(format.toString(logger.getInsertions()));
-        
-        out.print(format.section("After"));
-        out.print(format.toString(postTableDump.result()));
+	        out.println(format.section(format.toString(shortestPathTable) + " deletions"));
+	        out.print(format.toString(logger.getDeletions()));
+	        
+	        out.println(format.section(format.toString(shortestPathTable) + " insertions"));
+	        out.print(format.toString(logger.getInsertions()));
+	        
+	        out.print(format.section("After"));
+	        out.print(format.toString(postTableDump.result()));
+        }
         
         out.print(format.footer());
         

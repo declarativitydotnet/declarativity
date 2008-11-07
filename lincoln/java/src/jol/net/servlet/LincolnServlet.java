@@ -38,7 +38,7 @@ public class LincolnServlet extends HttpServlet {
 				String lincolnProgram = getLincolnProgramName()+":"+getLincolnPort();
 				jol.core.Runtime ret = lincolns.get(lincolnProgram);
 				if(ret == null) {
-	
+					System.out.println("Creating new instance of " + lincolnProgram);
 					jol.core.Runtime.ResourceLoader l
 					    = jol.core.Runtime.servletLoader(getServletContext());
 					ret = (jol.core.Runtime) jol.core.Runtime.create(getLincolnPort(), l);
@@ -46,6 +46,8 @@ public class LincolnServlet extends HttpServlet {
 					ret.evaluate(); // Install program arguments.
 					ret.start();
 					lincolns.put(lincolnProgram, ret);
+				} else {
+					System.out.println("Attaching to existing instance of " + lincolnProgram);
 				}
 				return ret;
 			} catch (JolRuntimeException e) {
