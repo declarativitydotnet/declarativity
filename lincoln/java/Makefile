@@ -65,14 +65,21 @@ prepare-webapp-dir: apache-tomcat-6.0.18
 	mkdir apache-tomcat-6.0.18/webapps
 	@echo "Scrubbed webapp dir"
 
-.PHONY: scrub-web-apps deploy
-deploy : checkvars all prepare-webapp-dir
+.PHONY: deploy-stasis
+deploy-stasis : checkvars all prepare-webapp-dir
 	ant war -q -e
 	cp ant-dist/lincoln.war apache-tomcat-6.0.18/webapps
 	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis/ \
 	CATALINA_OPTS=-Djava.library.path=bin/stasis/jni \
 	apache-tomcat-6.0.18/bin/startup.sh
-	@echo "Deployed"
+	@echo "Deployed with Stasis"
+
+.PHONY: deploy
+deploy: prepare-webapp-dir
+	ant war -q -e
+	cp ant-dist/lincoln.war apache-tomcat-6.0.18/webapps
+	apache-tomcat-6.0.18/bin/startup.sh
+	@echo "Deployed without Stasis"
 
 shutdown:
 	@apache-tomcat-6.0.18/bin/shutdown.sh || true
