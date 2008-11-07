@@ -42,6 +42,7 @@
   <target name="compile" depends="init,rats" description="compile the source">
     <javac destdir="${build}" debug="yes">
       <classpath>
+        <pathelement location="${lib}/grappa1_2.jar"/>
         <pathelement location="${lib}/xtc.jar"/>
         <pathelement location="${lib}/servlet-api.jar"/>
         <pathelement location="${lib}/junit.jar"/>
