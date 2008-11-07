@@ -1,17 +1,18 @@
-all: checkvars bin/stasis/jni/libstasisjni.so
+all: checkvars ant-build/stasis/jni/libstasisjni.so
 	@echo; echo "Be sure to add this to java's command line:" ;echo
-	@echo "  -Djava.library.path=`pwd`/bin/stasis/jni" ; echo
+	@echo "  -Djava.library.path=`pwd`/ant-build/stasis/jni" ; echo
 
-bin/stasis/jni/Stasis.class : src/stasis/jni/Stasis.java
-	cd src;	javac -d ../bin \
+ant-build/stasis/jni/Stasis.class : src/stasis/jni/Stasis.java
+	mkdir ant-build
+	cd src;	javac -d ../ant-build \
 	    stasis/jni/Stasis.java
 
-src/stasis/jni/stasis_jni_Stasis.h : bin/stasis/jni/Stasis.class
-	javah -classpath bin -jni \
+src/stasis/jni/stasis_jni_Stasis.h : ant-build/stasis/jni/Stasis.class
+	javah -classpath ant-build -jni \
 	    -d src/stasis/jni/ \
 	    stasis.jni.Stasis
 
-bin/stasis/jni/libstasisjni.so: src/stasis/jni/stasis_jni_Stasis.c \
+ant-build/stasis/jni/libstasisjni.so: src/stasis/jni/stasis_jni_Stasis.c \
 				src/stasis/jni/stasis_jni_Stasis.h
 	if [ "$(shell uname)" = "Linux" ] ; then \
 	  gcc -shared -fPIC \
@@ -20,34 +21,35 @@ bin/stasis/jni/libstasisjni.so: src/stasis/jni/stasis_jni_Stasis.c \
 	      -L $(STASIS_DIR)/build/src/stasis \
 	         src/stasis/jni/stasis_jni_Stasis.c \
 	      -l stasis \
-	      -o bin/stasis/jni/libstasisjni.so ; \
+	      -o ant-build/stasis/jni/libstasisjni.so ; \
 	else \
 	  gcc -fPIC \
 	      -I $(JAVA_DIR)/include \
 	      -I $(STASIS_DIR) \
 	       $(STASIS_DIR)/build/src/stasis/libstasis.dylib \
 	       src/stasis/jni/stasis_jni_Stasis.c \
-	       -dylib -o bin/stasis/jni/libstasisjni.dylib ; \
+	       -dylib -o ant-build/stasis/jni/libstasisjni.dylib ; \
 	fi
 
 .PHONY: clean
 
 clean : shutdown
-	rm -rf bin/stasis/jni/Stasis.class \
+	rm -rf ant-build/stasis/jni/Stasis.class \
 	      src/stasis/jni/stasis_jni_Stasis.h \
-	      bin/stasis/jni/libstasisjni.so \
+	      ant-build/stasis/jni/libstasisjni.so \
 	      apache-tomcat-6.0.18
+	ant -q -e clean
 
 .PHONY: checkvars
 checkvars :
-	@if [[ ! -d "$(STASIS_DIR)" ]] ; then  echo 'Define $$STASIS_DIR to continue!'; exit 1; fi
-	@if [[ ! -d "$(JAVA_DIR)" ]] ; then  echo 'Define $$JAVA_DIR to continue!'; exit 1; fi
+	@if [ ! -d "$(STASIS_DIR)" ] ; then  echo 'Define $$STASIS_DIR to continue!'; exit 1; fi
+	@if [ ! -d "$(JAVA_DIR)" ] ; then  echo 'Define $$JAVA_DIR to continue!'; exit 1; fi
 
 
 .PHONY: test
 test : checkvars all
 	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis:$(STASIS_DIR)/build/src/libdfa \
-	java -cp bin -Djava.library.path=/home/sears/workspace/jol/bin/stasis/jni stasis.jni.Stasis
+	java -cp ant-build -Djava.library.path=/home/sears/workspace/jol/ant-build/stasis/jni stasis.jni.Stasis
 
 apache-tomcat-6.0.18.tar.gz: 
 	@wget -v http://apache.mirror99.com/tomcat/tomcat-6/v6.0.18/bin/apache-tomcat-6.0.18.tar.gz -O apache-tomcat-6.0.18.tar.gz
@@ -70,7 +72,7 @@ deploy-stasis : checkvars all prepare-webapp-dir
 	ant war -q -e
 	cp ant-dist/lincoln.war apache-tomcat-6.0.18/webapps
 	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis/ \
-	CATALINA_OPTS=-Djava.library.path=bin/stasis/jni \
+	CATALINA_OPTS=-Djava.library.path=ant-build/stasis/jni \
 	apache-tomcat-6.0.18/bin/startup.sh
 	@echo "Deployed with Stasis"
 
@@ -86,5 +88,4 @@ shutdown:
 
 startup: checkvars
 	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis/ \
-	CATALINA_OPTS=-Djava.library.path=bin/stasis/jni \
 	apache-tomcat-6.0.18/bin/startup.sh
