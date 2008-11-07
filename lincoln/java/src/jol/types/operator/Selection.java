@@ -44,9 +44,18 @@ public class Selection extends Operator {
 		TupleSet result = new TupleSet(tuples.name());
 		TupleFunction<java.lang.Boolean> filter = this.selection.predicate().function();
 		for (Tuple tuple : tuples) {
-			if (java.lang.Boolean.TRUE.equals(filter.evaluate(tuple))) {
-				result.add(tuple);
-			} 
+			try {
+				if (java.lang.Boolean.TRUE.equals(filter.evaluate(tuple))) {
+					result.add(tuple);
+				} 
+			} catch (Throwable t) {
+				t.printStackTrace();
+				String error = "ERROR " + t.toString() + 
+				               ". Program " + this.selection.program() + 
+				               ". Exception while evaluating selection predicate " + 
+			 	               this + ". Input tuple: " + tuple;
+				throw new JolRuntimeException(error);
+			}
 		}
 		return result;
 	}

@@ -82,4 +82,5 @@ flatTopPaths(Source, Destination, Hop) :-
 	flatten(pathStatistics(Source, Destination, MinHops, MaxHops, TopHops)),
 	Hop := (Integer) TopHops;
 
+
 delete link("2", "4") :- removeLink(Period, TTL, Delay);

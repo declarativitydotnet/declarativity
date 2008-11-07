@@ -50,9 +50,15 @@ public class Assign<C extends Comparable<C> > extends Operator {
 		TupleFunction<C> function = assignment.value().function();
 		TupleSet deltas = new TupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
-			Tuple delta = tuple.clone();
-			delta.value(variable, function.evaluate(delta));
-			deltas.add(delta);
+			try {
+				Tuple delta = tuple.clone();
+				delta.value(variable, function.evaluate(delta));
+				deltas.add(delta);
+			} catch (Throwable t) {
+				String msg = t.toString() + ". Program " + this.assignment.program() +
+				             ". Error during assignment " + toString();
+				throw new JolRuntimeException(msg);
+			}
 		}
 		return deltas;
 	}

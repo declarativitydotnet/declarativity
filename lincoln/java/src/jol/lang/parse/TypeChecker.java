@@ -1133,9 +1133,6 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		
-		assert(Expression.class.isAssignableFrom(ltype) && 
-			   Expression.class.isAssignableFrom(rtype));
-		
 		String oper = n.getString(1);
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
@@ -1560,8 +1557,14 @@ public final class TypeChecker extends Visitor {
 				n.setProperty(Constants.TYPE, new ObjectReference(expr, field));
 				return ObjectReference.class;
 			} catch (Exception e) { 
-				n.setProperty(Constants.TYPE, new UnknownReference(expr, null, name));
-				return Reference.class;
+				for (Method method : type.getMethods()) {
+					if (method.getName().equals(name)) {
+						n.setProperty(Constants.TYPE, new UnknownReference(expr, null, name));
+						return Reference.class;
+					}
+				}
+				runtime.error("Unknown reference " + name + " in type " + type);
+				return Error.class;
 			}
 		}
 		else if (type == Class.class) {
@@ -1589,8 +1592,14 @@ public final class TypeChecker extends Visitor {
 				return StaticReference.class;
 			} catch (Exception e) {
 				/* It must be a method at this point. Punt to higher ground. */
-				n.setProperty(Constants.TYPE, new UnknownReference(null, type, name));
-				return Reference.class;
+				for (Method method : type.getMethods()) {
+					if (method.getName().equals(name)) {
+						n.setProperty(Constants.TYPE, new UnknownReference(null, type, name));
+						return Reference.class;
+					}
+				}
+				runtime.error("ERROR: unknown reference! " + name + " in type " + type);
+				return Error.class;
 			}
 		}
 		else {

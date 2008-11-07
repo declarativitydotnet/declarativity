@@ -82,26 +82,19 @@ public class MethodCall extends Expression {
 					arguments[index++] = argFunction.evaluate(tuple);
 				}
 				try {
-					try {
-						if (MethodCall.this.method.getReturnType() == void.class) {
-							MethodCall.this.method.invoke(instance, arguments);
-							return instance;
-						}
-						else {
-							return MethodCall.this.method.invoke(instance, arguments);
-						}
-					} catch (InvocationTargetException e) {
-						System.err.println(e.getTargetException().getMessage());
-						e.getTargetException().printStackTrace();
-						System.exit(0);
-					} catch (Exception e) {
-						System.err.println(e + ": method invocation " + MethodCall.this.method.toString());
-						System.exit(0);
+					if (MethodCall.this.method.getReturnType() == void.class) {
+						MethodCall.this.method.invoke(instance, arguments);
+						return instance;
 					}
-					return null;
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw new JolRuntimeException(e.toString());
+					else {
+						return MethodCall.this.method.invoke(instance, arguments);
+					}
+				} catch (Throwable e) {
+					String error = "ERROR: method invocation on " + 
+							instance + " method " +
+							MethodCall.this.method.toString() + 
+							" arguments " + arguments;
+					throw new JolRuntimeException(error);
 				}
 			}
 

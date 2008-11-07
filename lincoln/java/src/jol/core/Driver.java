@@ -315,7 +315,7 @@ public class Driver implements Runnable {
 			WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
 			Operator watchInsert = watch.watched(program.name(), name, Watch.Modifier.INSERT);
 			Operator watchDelete = watch.watched(program.name(), name, Watch.Modifier.DELETE);
-
+			
 			Set<Query> querySet = program.queries(name);
 			if (insertions.size() > 0) {
 				if (deletions.size() > 0) {
@@ -406,7 +406,6 @@ public class Driver implements Runnable {
 					delta.add(continuation);
 				}
 			}
-
 			return delta;
 		}
 
@@ -529,7 +528,7 @@ public class Driver implements Runnable {
 				try {
 					evaluate();
 				} catch (UpdateException e) {
-					e.printStackTrace();
+					java.lang.System.err.println(e);
 					return;
 				}
 				

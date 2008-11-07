@@ -332,7 +332,8 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 					return values.get(i).compareTo(other.values.get(i));
 				}
 			} catch (Throwable e) {
-				System.err.println("COMPARISON ERROR: Tuple 1: " + this + " Tuple 2 " + other);
+				e.printStackTrace();
+				System.err.println("COMPARISON ERROR: " + e + " Tuple 1: " + this + " Tuple 2 " + other);
 				return -1;
 			}
 		}
