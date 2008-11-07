@@ -2,7 +2,7 @@ package stasis.jni;
 
 public class Stasis {
 	// Stasis operations
-	public static native void			init();
+	public static native int			init();
 	public static native void			deinit();
 
 	public static native long[]      root_record();

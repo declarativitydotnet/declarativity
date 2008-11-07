@@ -219,8 +219,12 @@ public abstract class StasisTable extends Table {
 		}
 		if(foundStasis) {
 			System.err.print("Stasis recovery..."); System.err.flush();
-			Stasis.init();
-			System.err.println("suceeded");
+			int initcount = Stasis.init();
+			if(initcount == 1) {
+				System.err.println("suceeded");
+			} else {
+				System.err.println("skipped; attached to running copy of Stasis");
+			}
 			xid = Stasis.begin();
 			foundStasis = true;
 		}

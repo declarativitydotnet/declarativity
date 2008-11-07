@@ -36,15 +36,20 @@ static jbyteArray jbyteArray_bytes(JNIEnv *e, byte* b, size_t sz) {
   return jba;
 }
 static int initted = 0;
-JNIEXPORT void JNICALL Java_stasis_jni_Stasis_init
+JNIEXPORT jint JNICALL Java_stasis_jni_Stasis_init
   (JNIEnv *e, jclass c) {
-  Tinit();
-  initted = 1;
+  if(!initted) {
+    Tinit();
+  }
+  initted++;
+  return initted;
 }
 JNIEXPORT void JNICALL Java_stasis_jni_Stasis_deinit
   (JNIEnv *e, jclass c) {
-  Tdeinit();
-  initted = 0;
+  initted--;
+  if(!initted) {
+    Tdeinit();
+  }
 }
 JNIEXPORT jlongArray JNICALL Java_stasis_jni_Stasis_root_1record
   (JNIEnv *e, jclass c) {
