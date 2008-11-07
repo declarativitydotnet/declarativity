@@ -8,7 +8,7 @@
 <web-app>
 
     <servlet>
-        <servlet-name>Civil</servlet-name><!-- Common gateway Interface for VIewing Lincoln-->
+        <servlet-name>path</servlet-name><!-- Common gateway Interface for VIewing Lincoln-->
         <servlet-class>jol.net.servlet.Civil</servlet-class>
 	<init-param>
 	  <param-name>port</param-name>
@@ -20,8 +20,8 @@
 	</init-param>
     </servlet>
     <servlet-mapping>
-      <servlet-name>Civil</servlet-name>
-      <url-pattern>/Civil/*</url-pattern>
+      <servlet-name>path</servlet-name>
+      <url-pattern>/path/*</url-pattern>
     </servlet-mapping>
 
     <servlet>
@@ -42,7 +42,7 @@
     </servlet-mapping>
 
     <servlet>
-        <servlet-name>Civil2</servlet-name>
+        <servlet-name>slinki-civil</servlet-name>
         <servlet-class>jol.net.servlet.Civil</servlet-class>
 	<init-param>
 	  <param-name>port</param-name>
@@ -54,8 +54,44 @@
 	</init-param>
     </servlet>
     <servlet-mapping>
-      <servlet-name>Civil2</servlet-name>
-      <url-pattern>/slinki-Civil/*</url-pattern>
+      <servlet-name>slinki-civil</servlet-name>
+      <url-pattern>/slinki-civil/*</url-pattern>
+    </servlet-mapping>
+
+
+
+    <servlet>
+        <servlet-name>pinger</servlet-name>
+        <servlet-class>jol.net.servlet.Civil</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>10000</param-value>
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>pinger.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>pinger</servlet-name>
+      <url-pattern>/pinger/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ponger</servlet-name>
+        <servlet-class>jol.net.servlet.Civil</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>10001</param-value>
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>ponger.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>ponger</servlet-name>
+      <url-pattern>/ponger/*</url-pattern>
     </servlet-mapping>
 
 

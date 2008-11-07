@@ -1,5 +1,68 @@
 Support files for the lincoln.war web service stuff.
 
+===========================================================================
+
+New automatic installation / configuration:
+
+The following makefiles will automatically download and configure tomcat 
+for you.
+
+------------------------------
+
+make deploy
+
+downloads, installs and starts a tomcat web server, compiles jol, and 
+sets up some sample lincoln servlets.  Running it again rebuilds jol, 
+then reconfigures the servlets and restarts tomcat.  You can play with 
+some example programs at:
+
+  http://localhost:8080/lincoln/
+
+(the wiki won't work without stasis...)
+
+The tomcat server will be installed to jol/apache-tomcat-6.0.18/
+
+------------------------------
+
+STASIS_DIR=/path/to/stasis/ JAVA_DIR=/path/to/jdk/ make deploy-stasis
+
+  The same, but configures tomcat and lincoln to use the Stasis JNI 
+  bindings.  This doesn't work on macos yet.
+
+------------------------------
+
+make shutdown
+
+  Shutdown tomcat.
+
+------------------------------
+
+make clean
+
+  Delete tomcat and its logs.  Stasis databases will not be affected.
+
+------------------------------
+
+rm storefile.txt logfile.txt
+
+  Delete the stasis database.
+
+------------------------------
+
+- Web server logs (overlog compilation errors go to them) live at:
+
+   jol/apache-tomcat-6.0.18/logs/catalina.out
+
+- Don't touch the contents of 
+
+   jol/apache-tomcat-6.0.18/webapps
+
+as 'make deploy' automatically blows it away.
+
+===========================================================================
+
+Manual installation / configuration:
+
 Compiling linoln.war:
 
 cd $JOL

@@ -1,47 +1,29 @@
-program test;
+program pingpong;  /* ponger.olg */
 
 import jol.core.Runtime;
+import java.lang.System;
 
-define(t1, keys(0), {String, String});
-define(doping, {String, String, Long});
-define(ping, {String, String, Long});
-define(pong, {String, String, Long});
-define(gotpong, {String, String, Long});
+timer(timeToPing, physical, 1000, 100, 0);
+
+/* Network messages */
+
+define(doping, {String,String,Long});
+define(dopong, {String,String,Long});
+
+/* Local state for pinger; these tables have an extra timestamp column
+   so pinger.olg can measure RTT. */
+
+define(ping, keys(0,1,2), {String, String, Long, Long});
+define(ack,  keys(0,1,2), {String, String, Long, Long});
+
 define(link, keys(0,1), {String, String});
-
-
-t1("tcp:localhost:10001", "pingme");
 link("tcp:localhost:10000", "tcp:localhost:10001");
 
-watch(gotpong, s);
-watch(doping, s);
+ping(A, B, Runtime.idgen(), System.currentTimeMillis())
+        :- timeToPing(_,_,_), link(A,B);
 
-define(run, {String, Long, String});
-define(deletePeriodic, {String});
+doping(@B,A,Id):-ping(@A,B,Id);
 
-deletePeriodic(Id) :-
-	run(Id, Count, Program),
-	Count == 4L;
+ack(A,B,Id,new Long(System.currentTimeMillis())-Ts) :-
+                dopong(A,B,Id), ping(A,B,Id,Ts);
 
-delete
-global::periodic(Id, Period, TTL, Start, Count, Program) :-
-	deletePeriodic(Id),
-	global::periodic(Id, Period, TTL, Start, Count, Program);
-
-/* Register a new periodic with the system. 
- * NOTE: The fact that Count and Program are variables means that 
- *       they will be given default values (0 and "test", respectively). 
- *       It is possible to give all variables in your periodic. The default
- *       values will be period 1, ttl 1, startTime 0, count 0, program "test".
- */
-r0
-run(Id, Count, Program) :- periodic(Id, 2L, 10L, Start, Count, Program);
-
-r1 
-doping(A, B, Runtime.idgen()) :-  run(Id, Count, Program), link(A, B);
-
-r2
-ping(@B, A, Id) :- doping(@A, B, Id), t1(@B, C), C == "pingme";
-
-r3
-gotpong(@A, B, Id) :- pong(@A, B, Id);
