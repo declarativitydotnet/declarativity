@@ -4,7 +4,6 @@ import java.lang.String;
 import java.lang.Integer;
 
 define(stasisPages, keys(0,1), {String, Integer, String});
-define(currentPages, keys(0), {String,Integer});
 
 define(getPage, {String});
 define(getPageVersion, {String, Integer});
@@ -15,24 +14,17 @@ define(getPageResult, {String, Integer});
 define(t, keys(0), {String});
 t("42");
 
-/* XXX notin clause is another workaround for aggregate breakage; would be better to 
-   use max<> in head.  */
-stasisPages(Name,N+1,Content) :- setPage(Name,Content), stasisPages(Name,N, _),
-                                  notin stasisPages(Name,N+1,_);
+/* setPage -> stasisPages */
 
-/* Cleaner version of above rule (but blows away version history at recovery!) */
-/* stasisPages(Name, max<N>+1, Content):- setPage(Name,Content), stasisPages(Name,N, _),*/
+/* XXX shouldn't be event table; t(_) should be setPage(Name,_)  */
+define(currentPage, keys(0), {String,Integer});
+currentPage(Name,max<N>)      :- t(_), stasisPages(Name,N,_);
+stasisPages(Name,N+1,Content) :- setPage#insert(Name,Content), currentPage(Name,N);
+stasisPages(Name,1,Content)   :- setPage#insert(Name,Content), notin stasisPages(Name,_,_);
 
-stasisPages(Name,1,Content) :- setPage(Name, Content), notin stasisPages(Name,_,_);
+getPageResult(Content, N) :- getPage#insert(Name),
+                             stasisPages(Name,N,Content), currentPage(Name, N);
 
-/* XXX t kicks off an aggregate recalculation after recovery making
-   currentPages persistent doesn't work for some reason... I think the
-   aggregate state is not recalculated when the system comes up, and
-   then strange stuff happens. */
-
-currentPages(Name, max<N>) :- stasisPages(Name,N,_), t(_);
-
-getPageResult(Content, N) :- currentPages(Name, N), stasisPages(Name,N,Content),
-				getPage(Name);
-getPageResult(Content, N) :- stasisPages(Name,N,Content), getPageVersion(Name,N);
+getPageResult(Content, N) :- getPageVersion#insert(Name,N),
+                             stasisPages(Name,N,Content);
 
