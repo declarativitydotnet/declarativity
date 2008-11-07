@@ -135,7 +135,6 @@ public class LinearHashNTA extends StasisTable {
 					next[0] = Stasis.iterator_key(xid,it);
 					next[1] = Stasis.iterator_value(xid, it);
 					Stasis.iterator_tuple_done(xid, it);
-					hadNext = Stasis.iterator_next(xid,it);
 				} else {
 					Stasis.iterator_close(xid, it);
 				}
