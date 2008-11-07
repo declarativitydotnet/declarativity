@@ -1581,7 +1581,7 @@ public final class TypeChecker extends Visitor {
 				/* Check if it's a static field. */
 				Field field = type.getField(name);
 				if (!field.isEnumConstant() &&
-					field.getModifiers() != Modifier.STATIC) {
+					!Modifier.isStatic(field.getModifiers())) {
 					runtime.error("Field " + name + " must be static or an enumeration!", n);
 					return Error.class;
 				}
