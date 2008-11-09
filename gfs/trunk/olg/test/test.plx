@@ -5,7 +5,10 @@ use Test::Simple tests => 10;
 
 my $to = 20;
 
-my $JAR = "jol.new";
+#my $JAR = "jol.new";
+my $JAR = "~/code/java/ant-dist/jol.jar";
+
+
 #my $OLG = "../getopt.olg ../paxos.olg";
 #my $OLG = "../getopt.olg ../multipaxos.olg";
 my $OLG = "../paxos_global.olg ../getopt.olg ../multipaxos.olg ../paxos_client_liveness.olg";
@@ -67,6 +70,9 @@ sub test_3 {
   }
   kill(9,$p4);
   # look, it shouldn't have to be like this, but it is.
+  system("killall java");
+
+  system("killall java");
   system("killall java");
 
 }

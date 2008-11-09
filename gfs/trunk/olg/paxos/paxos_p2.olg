@@ -1,0 +1,204 @@
+program paxos;
+	
+import java.lang.String;
+import java.lang.Integer;
+	
+import java.lang.System;
+import jol.core.Runtime;
+
+timer(periodic,logical,1,1,1);
+	
+define(acceptRequest,keys(0,1),{String,Integer, Integer,String,Integer});
+define(sendBeginRound,keys(0,1),{String, Integer,Integer,String,String});
+define(accept,keys(0,1),{String, Integer,Integer,String});
+define(sendAccept,keys(0,1,3),{String, Integer,Integer,String,String});
+define(decree,keys(0,1),{String, Integer,Integer,String});
+define(success,keys(0,1),{String,Integer, Integer,String,String});
+	
+define(acceptCnt,keys(0,1),{String,Integer,Integer,Integer});
+	
+define(reply,keys(0,1),{String,Integer,String,String});
+define(tick,keys(0,1),{String,String,Integer});
+define(instance,keys(0),{String,Integer});
+
+public
+startinstance
+instance(Me,0) :-
+  periodic(_,_,_),
+  getopt::id(Me,P);
+
+//bumpinstance
+//instance(Me,I+1) :-
+//  instance(Me,I),
+//  success#insert(Me,I,Round,Decree,Client);
+
+bumpinstance
+instance(Me,I+1) :-
+  instance(Me,I),
+  storedDecreeRequest#insert(Master,Decree,From),
+  success(Me,I,Round,OldDecree,Client);
+
+// jump to the current instance.
+bi2 
+instance(Me,I) :-
+  instance(Me,OldI),
+  sendBeginRound#insert(Me,I,Round,_,Master),
+  Master != Me,
+  I > OldI;
+
+
+watch(instance,ae);
+watch(acceptRequest,idae);
+
+	
+/**************************************************************************************
+3.  After receiving a LastVote (b, v) message from every priest in some majority
+set Q, where b = lastTried [p], priest p initiates a new ballot with number b,
+quorum Q, and decree d, where d is chosen to satisfy B3. He then sends a
+BeginBallot (b, d) message to every priest in Q.
+***************************************************************************************/
+	
+r3_b
+acceptRequest(Master,Instance,Round,OldDecree,MaxB) :- 
+  quorum(Master,Round),
+	maxPrevRound(Master,MaxB),
+	prepare(Master,Round,Decree),
+  instance(Master,Instance),
+	sendPromise(Master,Round,MaxB,OldDecree,Agent),
+  //Instance == 0,
+	MaxB != -1;
+
+r3_c	
+acceptRequest(Master,Instance,Round,Decree,-1) :- 
+  quorum(Master,Round),
+	maxPrevRound(Master,MaxB),
+  instance(Master,Instance),
+	sendPromise(Master,Round,MaxB,OldDecree,Agent),
+	MaxB == -1,
+  //Instance == 0,
+	prepare(Master,Round,Decree);
+	
+// MULTIPAXOS!
+
+watch(storedDecreeRequest,aed);
+
+r3_d
+acceptRequest(Master,I,Round,Decree,-1) :-
+  storedDecreeRequest#insert(Master,Decree,From,_),
+  quorum(Master,Round),
+  maxPrevRound(Master,MaxB),
+	sendPromise(Master,Round,MaxB,OldDecree,Agent),
+  OldDecree == "none",
+  instance(Master,I),
+  I > 0;
+
+define(foo,{String,Integer});
+watch(foo,ae);
+ark
+foo(Master,Round) :-
+  storedDecreeRequest(Master,Decree,From,_),
+  quorum(Master,Round),
+  instance(Master,I),
+  I > 0;
+
+
+r3_e
+sendBeginRound(@Agent,Instance,Round,Decree,Master) :- 
+  acceptRequest(@Master,Instance,Round,Decree,Kind),
+	parliament(@Master,Agent);
+
+/**************************************************************************************
+r4. Upon receipt of a BeginBallot (b,d) message with b = nextBal [q], priest q casts
+his vote in ballot number b, sets prevVote [q] to this vote, and sends a Voted (b, q)
+message to p. (A BeginBallot (b, d) message is ignored if b = nextBal [q].)
+***************************************************************************************/
+r4_a
+accept(Agent,Instance,Round,Decree) :-
+  sendBeginRound(Agent,Instance,Round,Decree,Master),
+	nextBal(Agent,OldB),
+  instance(Agent,Instance),
+	Round == OldB;
+
+r4_b	
+prevVote(Agent,Round,Decree) :- prevVote(Agent,Old,OD),
+	lastPromise(Agent,Round,OldRound,OldDecree),
+	accept#insert(Agent,Instance,Round,Decree),
+	Round >= Old;
+
+r4_c	
+sendAccept(@Master,Instance,Round,Decree,Agent) :- 
+  accept(@Agent,Instance,Round,Decree),
+	sendBeginRound(@Agent,Instance,Round,Decree,Master);
+	
+acceptCnt(Master,Instance,Round,count<Agent>) :- 
+  sendAccept(Master,Instance,Round,Decree,Agent);
+
+/**************************************************************************************
+r5. If p has received a Voted (b, q) message from every priest q in Q (the quorum
+for ballot number b), where b = lastTried [p], then he writes d (the decree of
+that ballot) in his ledger and sends a Success (d) message to every priest.
+***************************************************************************************/
+r5_a	
+decree(Master,Instance,Round,Decree) :- 
+  lastTried(Master,Round),
+	acceptCnt#insert(Master,Instance,Round,Votes),
+	// this is |quorum| 
+	lastPromiseCnt(Master,Round,Votes),
+	acceptRequest(Master,Instance,Round,Decree);
+
+r5_b	
+success(@Agent,Instance,Round,Decree,From) :-
+  decree(@Master,Instance,Round,Decree),
+	// this might be a mistake. 
+	storedDecreeRequest(@Master,SomeDecree,From,_),
+	// we interpret "every" to mean a broadcast.
+	parliament(@Master,Agent);
+
+/*
+r5_c
+success(@Agent,Instance,Round,Decree,From) :-
+  decree(@Master,Instance,Round,Decree),
+	// this might be a mistake. 
+	paxos_global::decreeRequestBuffer(@Master,Decree,From),
+	// we interpret "every" to mean a broadcast.
+	parliament(@Master,Agent);
+*/	
+	
+	// any learner can reply to the client.or set-wise, they all can...
+watch(reply,id);
+reply(@Client,Instance,Decree,"passed") :- 
+  success(@Me,Instance,Round,Decree,Client);
+	
+
+define(bar,keys(0),{String,Integer});
+watch(bar,ae);
+
+arrr
+delete
+quorum(Master,Round) :-
+  quorum(Master,Round),
+  sendBeginRound(Master,Instance,NewRound,Decree,Other),
+  NewRound > Round;
+
+watch(decree,ae);
+watch(acceptCnt,ae);
+watch(sendAccept,ae);
+watch(sendBeginRound,ae);
+watch(accept,ae);
+watch(success,ae);
+watch(decreeRequest,ae);
+	
+watch(maxPrevRound,ae);
+watch(acceptRequest,aeid);
+//watch(receivedPromise,ae);
+	
+watch(prevVote,ae);	
+watch(instance,ae);
+
+watch(quorum,ae);
+watch(decree,ae);
+watch(acceptCnt,ae);
+watch(sendAccept,ae);
+watch(accept,ae);
+watch(success,ae);
+watch(sendPromise,ae);	

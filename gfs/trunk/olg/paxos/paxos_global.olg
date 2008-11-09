@@ -1,0 +1,22 @@
+program paxos_global;
+
+define(requestStatus,keys(0,1),{String,String,String,String});
+define(decreeRequestBuffer,keys(0,1,2),{String,String,String});
+//define(decreeRequestBuffer,{String,String,String});
+define(decreeRequest,{String,String,String});
+
+//define(reply,keys(0,1),{String,String,String});
+
+
+watch(decreeRequestBuffer,ae);
+watch(decreeRequest,ae);
+//watch(reply,ae);
+watch(requestStatus,ae);
+
+
+//public
+/*
+reply(@Client,Decree,Message) :-
+  requestStatus(@Master,Client,Decree,Message);
+*/
+
