@@ -64,7 +64,9 @@
   	  nested JAR files, we use <zipfileset> to slurp the entire XTC
   	  JAR into the JOL JAR. XXX: This makes us GPL, by contamination.
   	  The full XTC JAR is also pretty large. It would be better to
-  	  depend on only the LGPL'd Rats files.
+  	  depend on only the LGPL'd Rats files. We also slurp in the
+          JARs for the Servlet API and Grappa, which is wrong for similar
+          reasons.
   	-->
     <jar jarfile="${dist}/jol.jar">
       <fileset dir="${build}" excludes="jol/test/**"/>
@@ -72,7 +74,7 @@
       <fileset dir="${src}" includes="**/*.olg"/>
       <!-- Include the RATS runtime files that we need -->
       <zipfileset src="${lib}/xtc.jar"/>
-      <zipfileset src="${lib}/grappa1_2.jar"/>
+      <zipfileset src="${lib}/grappa.jar"/>
       <zipfileset src="${lib}/servlet-api.jar"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
