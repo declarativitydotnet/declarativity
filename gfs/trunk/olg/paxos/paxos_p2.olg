@@ -11,7 +11,7 @@ timer(periodic,logical,1,1,1);
 define(acceptRequest,keys(0,1),{String,Integer, Integer,String,Integer});
 define(sendBeginRound,keys(0,1),{String, Integer,Integer,String,String});
 define(accept,keys(0,1),{String, Integer,Integer,String});
-define(sendAccept,keys(0,1,3),{String, Integer,Integer,String,String});
+define(sendAccept,keys(0,1,4),{String, Integer,Integer,String,String});
 define(decree,keys(0,1),{String, Integer,Integer,String});
 define(success,keys(0,1),{String,Integer, Integer,String,String});
 	
@@ -19,7 +19,7 @@ define(acceptCnt,keys(0,1),{String,Integer,Integer,Integer});
 	
 define(reply,keys(0,1),{String,Integer,String,String});
 define(tick,keys(0,1),{String,String,Integer});
-define(instance,keys(0),{String,Integer});
+//define(instance,keys(0),{String,Integer});
 
 public
 startinstance
@@ -32,18 +32,25 @@ instance(Me,0) :-
 //  instance(Me,I),
 //  success#insert(Me,I,Round,Decree,Client);
 
+window
+delete
+storedDecreeRequest(Master,Decree,From,Id) :-
+  storedDecreeRequest(Master,Decree,From,Id),
+  success#insert(Master,I,Round,Decree,From);
+
 bumpinstance
 instance(Me,I+1) :-
   instance(Me,I),
-  storedDecreeRequest#insert(Master,Decree,From),
+  storedDecreeRequest#insert(Master,Decree,From,Id),
   success(Me,I,Round,OldDecree,Client);
 
 // jump to the current instance.
 bi2 
 instance(Me,I) :-
   instance(Me,OldI),
-  sendBeginRound#insert(Me,I,Round,_,Master),
-  Master != Me,
+	//sendPromise(Master,I,Round,MaxB,OldDecree,Agent),
+  sendBeginRound#insert(Me,I,Round,Decree,Agent),
+  Me != Agent,
   I > OldI;
 
 
@@ -60,20 +67,20 @@ BeginBallot (b, d) message to every priest in Q.
 	
 r3_b
 acceptRequest(Master,Instance,Round,OldDecree,MaxB) :- 
-  quorum(Master,Round),
+  quorum#insert(Master,Round),
 	maxPrevRound(Master,MaxB),
 	prepare(Master,Round,Decree),
   instance(Master,Instance),
-	sendPromise(Master,Round,MaxB,OldDecree,Agent),
+	sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
   //Instance == 0,
 	MaxB != -1;
 
 r3_c	
 acceptRequest(Master,Instance,Round,Decree,-1) :- 
-  quorum(Master,Round),
+  quorum#insert(Master,Round),
 	maxPrevRound(Master,MaxB),
   instance(Master,Instance),
-	sendPromise(Master,Round,MaxB,OldDecree,Agent),
+	sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
 	MaxB == -1,
   //Instance == 0,
 	prepare(Master,Round,Decree);
@@ -84,12 +91,12 @@ watch(storedDecreeRequest,aed);
 
 r3_d
 acceptRequest(Master,I,Round,Decree,-1) :-
-  storedDecreeRequest#insert(Master,Decree,From,_),
+  storedDecreeRequest(Master,Decree,From,_),
   quorum(Master,Round),
-  maxPrevRound(Master,MaxB),
-	sendPromise(Master,Round,MaxB,OldDecree,Agent),
-  OldDecree == "none",
-  instance(Master,I),
+  //maxPrevRound(Master,MaxB),
+	///sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
+  //OldDecree == "none",
+  instance#insert(Master,I),
   I > 0;
 
 define(foo,{String,Integer});
@@ -99,6 +106,8 @@ foo(Master,Round) :-
   storedDecreeRequest(Master,Decree,From,_),
   quorum(Master,Round),
   instance(Master,I),
+  maxPrevRound(Master,MaxB),
+	sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
   I > 0;
 
 
