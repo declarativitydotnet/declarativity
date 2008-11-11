@@ -56,7 +56,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 
 /** Base class for tasks. */
-abstract class Task implements Writable, Configurable {
+public abstract class Task implements Writable, Configurable {
   private static final Log LOG =
     LogFactory.getLog("org.apache.hadoop.mapred.TaskRunner");
 

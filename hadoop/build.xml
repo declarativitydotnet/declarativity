@@ -278,6 +278,7 @@
   
   <target name="compile-core-classes" depends="init, compile-rcc-compiler">
 
+  	<!--
     <jsp-compile
      uriroot="${src.webapps}/task"
      outputdir="${build.src}"
@@ -305,6 +306,7 @@
      package="org.apache.hadoop.dfs"
      webxml="${build.webapps}/datanode/WEB-INF/web.xml">
     </jsp-compile>
+    -->
 
     <!-- Compile Java files (excluding JSPs) checking warnings -->
     <javac 

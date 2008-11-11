@@ -27,6 +27,8 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 /**
  * A JUnit test to test Mini Map-Reduce Cluster with multiple directories

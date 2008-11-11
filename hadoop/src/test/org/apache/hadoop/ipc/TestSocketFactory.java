@@ -32,8 +32,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobStatus;
-import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.net.StandardSocketFactory;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 /**
  * This class checks that RPCs can use specialized socket factories.

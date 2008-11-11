@@ -22,6 +22,8 @@ import junit.framework.TestCase;
 import org.apache.hadoop.dfs.MiniDFSCluster;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 import java.io.File;
 import java.io.IOException;

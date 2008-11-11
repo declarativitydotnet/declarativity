@@ -23,6 +23,8 @@ import junit.framework.TestCase;
 import org.apache.hadoop.dfs.MiniDFSCluster;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.mapred.MRCaching.TestResult;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 /**
  * A JUnit test to test caching with DFS

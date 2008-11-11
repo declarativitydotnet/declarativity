@@ -34,6 +34,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.lib.IdentityMapper;
 import org.apache.hadoop.mapred.lib.IdentityReducer;
 import org.apache.hadoop.util.Progressable;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 /**
  * A JUnit test to test that jobs' output filenames are not HTML-encoded (cf HADOOP-1795).

@@ -109,7 +109,7 @@ public class NetworkTopologyTable extends ObjectTable {
 	}
 		  
 	/** The table name */
-	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "topology");
+	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "networkTopology");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);

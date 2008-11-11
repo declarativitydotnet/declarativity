@@ -45,8 +45,8 @@ public abstract class JobTracker {
 	}
 	
 	public static InetSocketAddress getAddress(Configuration conf) {
-		String jobTrackerStr = conf.get("mapred.job.tracker", "localhost:8012");
-		return NetUtils.createSocketAddr(jobTrackerStr);
+		String address = conf.get("mapred.job.tracker", "localhost:9001");
+		return NetUtils.createSocketAddr(address);
 	}
 	
 	public final String identifier() {
@@ -92,8 +92,8 @@ public abstract class JobTracker {
 	 * Get the http port.
 	 * @return The http port number.
 	 */
-	public abstract int getInfoPort();
-	
+	public int getInfoPort() { return 0; }
+
 	/**
 	 * Get the JOL system context.
 	 * @return The JOL system context.

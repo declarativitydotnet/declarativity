@@ -27,6 +27,8 @@ import org.apache.hadoop.dfs.MiniDFSCluster;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapred.lib.IdentityReducer;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 import junit.framework.TestCase;
 

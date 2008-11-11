@@ -1,10 +1,10 @@
 package org.apache.hadoop.mapred.declarative.table;
 
 import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.declarative.util.Wrapper;
 
 import jol.core.Runtime;
 import jol.types.basic.TypeList;
+import jol.types.basic.Wrapper;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;

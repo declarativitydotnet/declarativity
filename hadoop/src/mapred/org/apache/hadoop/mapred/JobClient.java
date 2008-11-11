@@ -386,11 +386,7 @@ public class JobClient extends Configured implements MRConstants, Tool  {
    */
   public void init(JobConf conf) throws IOException {
     String tracker = conf.get("mapred.job.tracker", "local");
-    if ("local".equals(tracker)) {
-      this.jobSubmitClient = new LocalJobRunner(conf);
-    } else {
-      this.jobSubmitClient = createRPCProxy(JobTracker.getAddress(conf), conf);
-    }        
+    this.jobSubmitClient = createRPCProxy(JobTracker.getAddress(conf), conf);
   }
 
   private JobSubmissionProtocol createRPCProxy(InetSocketAddress addr,
@@ -415,9 +411,7 @@ public class JobClient extends Configured implements MRConstants, Tool  {
    * Close the <code>JobClient</code>.
    */
   public synchronized void close() throws IOException {
-    if (!(jobSubmitClient instanceof LocalJobRunner)) {
       RPC.stopProxy(jobSubmitClient);
-    }
   }
 
   /**

@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/examples"/>
+	<classpathentry excluding="jol/net/servlet/util/Lincoln.java|jol/net/servlet/Civil.java|jol/net/servlet/Slinki.java" kind="src" path="jol"/>
+	<classpathentry kind="src" path="src/ant"/>
+	<classpathentry kind="src" path="src/native"/>
+	<classpathentry kind="src" path="src/core"/>
 	<classpathentry kind="src" path="src/hdfs"/>
-	<classpathentry excluding="org/apache/hadoop/mapred/JobTrackerOld.java|org/apache/hadoop/mapred/TaskInProgress.java|org/apache/hadoop/mapred/JobInProgress.java|org/apache/hadoop/mapred/LocalJobRunner.java" kind="src" path="src/mapred"/>
-	<classpathentry kind="src" path="src/test"/>
+	<classpathentry excluding="org/apache/hadoop/mapred/JobTrackerOld.java|org/apache/hadoop/mapred/TaskInProgress.java|org/apache/hadoop/mapred/JobInProgress.java|org/apache/hadoop/mapred/LocalJobRunner.java|org/apache/hadoop/mapred/CompletedJobStatusStore.java|org/apache/hadoop/mapred/declarative/test/MiniMRCluster.java" kind="src" path="src/mapred"/>
+	<classpathentry excluding="org/apache/hadoop/mapred/TestRackAwareTaskPlacement.java|org/apache/hadoop/mapred/TestMultipleLevelCaching.java|org/apache/hadoop/record/|org/apache/hadoop/mapred/TestMRServerPorts.java" kind="src" path="src/test"/>
 	<classpathentry kind="src" path="src/tools"/>
-	<classpathentry kind="lib" path="contrib/datajoin/hadoop-0.18.1-datajoin.jar"/>
-	<classpathentry kind="lib" path="contrib/eclipse-plugin/hadoop-0.18.1-eclipse-plugin.jar"/>
-	<classpathentry kind="lib" path="contrib/index/hadoop-0.18.1-index.jar"/>
-	<classpathentry kind="lib" path="contrib/streaming/hadoop-0.18.1-streaming.jar"/>
-	<classpathentry kind="lib" path="hadoop-0.18.1-core.jar"/>
-	<classpathentry kind="lib" path="hadoop-0.18.1-examples.jar"/>
-	<classpathentry kind="lib" path="hadoop-0.18.1-test.jar"/>
-	<classpathentry kind="lib" path="hadoop-0.18.1-tools.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/commons-cli-2.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-httpclient-3.0.1.jar"/>
@@ -34,14 +31,13 @@
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/xmlenc-0.52.jar"/>
 	<classpathentry kind="lib" path="src/contrib/index/lib/lucene-core-2.3.1.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="src/test/lib/ftpserver-server-1.0.0-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="/Users/tcondie/workspace/hadoop-0.18.1/build/ant-hadoop-0.18.2-dev.jar"/>
-	<classpathentry kind="lib" path="/Users/tcondie/workspace/hadoop-0.18.1/build/hadoop-0.18.2-dev-core.jar"/>
 	<classpathentry kind="lib" path="src/test/lib/ftplet-api-1.0.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="src/test/lib/ftpserver-core-1.0.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="src/test/lib/mina-core-2.0.0-M2-20080407.124109-12.jar"/>
 	<classpathentry kind="lib" path="/jol/lib/xtc.jar"/>
-	<classpathentry kind="lib" path="/jol/ant-dist/jol.jar"/>
+	<classpathentry kind="lib" path="lib/ant.jar"/>
+	<classpathentry kind="lib" path="hadoop-0.18.1-core.jar"/>
+	<classpathentry kind="lib" path="/jol/lib/grappa.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

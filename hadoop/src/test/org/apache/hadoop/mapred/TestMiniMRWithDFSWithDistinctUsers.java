@@ -27,6 +27,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.security.*;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 /**
  * A JUnit test to test Mini Map-Reduce Cluster with Mini-DFS.

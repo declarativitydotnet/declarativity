@@ -19,6 +19,9 @@
 package org.apache.hadoop.mapred;
 
 import java.io.IOException;
+
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 import junit.framework.TestCase;
 
 /**

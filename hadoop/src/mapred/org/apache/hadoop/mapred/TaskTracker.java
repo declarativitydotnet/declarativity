@@ -2230,7 +2230,7 @@ public class TaskTracker
    * Get the name for this task tracker.
    * @return the string like "tracker_mymachine:50010"
    */
-  String getName() {
+  public String getName() {
     return taskTrackerName;
   }
     

@@ -36,6 +36,8 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapred.MRCaching.TestResult;
 import org.apache.hadoop.util.Progressable;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 /**
  * A JUnit test to test min map-reduce cluster with local file system.

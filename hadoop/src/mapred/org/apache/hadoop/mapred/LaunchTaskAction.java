@@ -27,7 +27,7 @@ import java.io.IOException;
  * to the {@link org.apache.hadoop.mapred.TaskTracker} to launch a new task.
  * 
  */
-class LaunchTaskAction extends TaskTrackerAction {
+public class LaunchTaskAction extends TaskTrackerAction {
   private Task task;
 
   public LaunchTaskAction() {

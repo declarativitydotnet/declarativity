@@ -5,16 +5,18 @@ import java.util.LinkedHashMap;
 
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskID;
-import org.apache.hadoop.mapred.TaskStatus;
+import org.apache.hadoop.mapred.declarative.Constants;
 
 public class TaskState implements Comparable<TaskState> {
-	private static class AttemptState {
+	private static class AttemptState implements Comparable<AttemptState> {
 		public Float progress;
-		public TaskStatus.State state;
-		public TaskStatus.Phase phase;
+		public Constants.TaskState state;
+		public Constants.TaskPhase phase;
 		public Long start;
 		public Long finish;
-		public AttemptState(Float progress, TaskStatus.State state, TaskStatus.Phase phase, 
+		public AttemptState(Float progress, 
+				            Constants.TaskState state, 
+				            Constants.TaskPhase phase, 
 				            Long start, Long finish) {
 			this.progress = progress;
 			this.state    = state;
@@ -22,6 +24,26 @@ public class TaskState implements Comparable<TaskState> {
 			this.start    = start;
 			this.finish   = finish;
 		}
+		public int compareTo(AttemptState o) {
+			int comparison = 0;
+			/* First compare the State. */
+			comparison = this.state.compareTo(o.state);
+			if (comparison != 0) return comparison;
+			/* Now compare the Phase. */
+			comparison = this.phase.compareTo(o.phase);
+			if (comparison != 0) return comparison;
+			/* Now compare the Progress. */
+			comparison = this.progress.compareTo(o.progress);
+			if (comparison != 0) return comparison;
+			/* Now compare the Start time. */
+			comparison = this.start.compareTo(o.start);
+			/* Now compare the Finish time. */
+			if (comparison != 0) return comparison;
+			comparison = this.finish.compareTo(o.finish);
+			
+			return comparison;
+		}
+		
 	}
 	private JobID jobid;
 	
@@ -49,9 +71,18 @@ public class TaskState implements Comparable<TaskState> {
 	}
 	
 	public int compareTo(TaskState o) {
-		int jobCompare = this.jobid.compareTo(o.jobid);
-		return jobCompare == 0 ? 
-				this.taskid.compareTo(o.taskid) : jobCompare;
+		int comparison = this.jobid.compareTo(o.jobid);
+		if (comparison != 0) return comparison;
+		comparison = this.taskid.compareTo(o.taskid);
+		if (comparison != 0) return comparison;
+		if (best() == o.best()) return 0;
+		if (best() == null || o.best() == null) return -1;
+		return best().compareTo(o.best());
+	}
+	
+	public String toString() {
+		return "Task[" + this.taskid + ", " 
+		               + state() + ", " + phase() + "]";
 	}
 
 	/**
@@ -67,29 +98,33 @@ public class TaskState implements Comparable<TaskState> {
 	 */
 	public void attempt(Integer attemptID,
 						Float progress, 
-			            TaskStatus.State state, 
-			            TaskStatus.Phase phase, 
+			            Constants.TaskState state, 
+			            Constants.TaskPhase phase, 
 			            Long start, Long finish) {
+		AttemptState attempt = new AttemptState(progress, state, phase, start, finish);
 		if (this.attempts.containsKey(attemptID)) {
-			this.attempts.remove(attemptID);
+			if (this.attempts.get(attemptID).compareTo(attempt) < 0) {
+				this.attempts.remove(attemptID);
+			}
+			else {
+				return; // Keep the better one.
+			}
 		}
-		this.attempts.put(attemptID, 
-				          new AttemptState(progress, state, phase, 
-				        		           start, finish));
+		this.attempts.put(attemptID, attempt); 
 	}
 	
 	public float progress() {
 		return attempts.size() == 0 ? 0f : best().progress;
 	}
 	
-	public TaskStatus.State state() {
+	public Constants.TaskState state() {
 		return attempts.size() == 0 ? 
-				TaskStatus.State.UNASSIGNED : best().state;
+				Constants.TaskState.UNASSIGNED : best().state;
 	}
 	
-	public TaskStatus.Phase phase() {
+	public Constants.TaskPhase phase() {
 		return attempts.size() == 0 ? 
-				TaskStatus.Phase.STARTING : best().phase;
+				Constants.TaskPhase.STARTING : best().phase;
 	}
 	
 	public long start() {
@@ -108,7 +143,7 @@ public class TaskState implements Comparable<TaskState> {
 			if (best == null) {
 				best = state;
 			}
-			else if (state.state == TaskStatus.State.SUCCEEDED ||
+			else if (state.state == Constants.TaskState.SUCCEEDED ||
 			         best.progress < state.progress) {
 				best = state;
 			}

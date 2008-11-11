@@ -9,13 +9,13 @@ import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.table.TaskTable.Field;
-import org.apache.hadoop.mapred.declarative.util.Wrapper;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
 import jol.types.basic.ValueList;
+import jol.types.basic.Wrapper;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
@@ -37,7 +37,7 @@ public class TaskReportTable extends ObjectTable {
 	public static final Class[] SCHEMA = {
 		JobID.class,     // Job identifier
 		TaskID.class,    // Task identifier
-		Enum.class,      // Type
+		TaskType.class,  // Type
 		Float.class,     // Progress
 		String.class,    // State
 		ValueList.class, // Diasnostics

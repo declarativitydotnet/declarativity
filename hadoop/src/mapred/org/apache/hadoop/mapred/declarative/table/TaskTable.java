@@ -3,13 +3,14 @@ package org.apache.hadoop.mapred.declarative.table;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
+import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
-import org.apache.hadoop.mapred.declarative.util.Wrapper;
 
 import jol.core.Runtime;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
+import jol.types.basic.Wrapper;
 import jol.types.exception.BadKeyException;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
@@ -31,8 +32,7 @@ public class TaskTable extends ObjectTable {
 	public static final Class[] SCHEMA = {
 		JobID.class,     // Job identifier
 		TaskID.class,    // Task identifier
-		Long.class,      // Start time
-		Enum.class,      // Task type
+		TaskType.class,  // Task type
 		Integer.class,   // Partition number
 		Wrapper.class,   // Split file
 		Integer.class,   // Map count

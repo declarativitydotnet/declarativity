@@ -77,7 +77,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 
 /** A Reduce task. */
-class ReduceTask extends Task {
+public class ReduceTask extends Task {
 
   static {                                        // register a ctor
     WritableFactories.setFactory

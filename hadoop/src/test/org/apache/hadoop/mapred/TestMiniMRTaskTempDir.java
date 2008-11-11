@@ -30,6 +30,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.lib.IdentityReducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.dfs.MiniDFSCluster;
+import org.apache.hadoop.mapred.MiniMRCluster;
+
 
 /**
  * Class to test mapred task's temp directory

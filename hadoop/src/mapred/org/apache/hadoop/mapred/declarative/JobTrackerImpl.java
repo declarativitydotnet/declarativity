@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 
 import jol.core.System;
 import jol.types.basic.Tuple;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 
@@ -66,14 +67,10 @@ public class JobTrackerImpl extends JobTracker {
 	  /** RPC Host name */
 	  private String localMachine;
 	  
-	  // Used to provide an HTML view on Job, Task, and TaskTracker structures
-	  private StatusHttpServer infoServer;
-	  private int infoPort;
-	  
 	  private DNSToSwitchMapping dnsToSwitchMapping;
 	  private NetworkTopology clusterMap = new NetworkTopology();
 
-	public JobTrackerImpl(System context, JobConf conf) throws IOException {
+	public JobTrackerImpl(System context, JobConf conf) throws IOException, ClassNotFoundException {
 		super(getDateFormat().format(new Date()));
 		this.conf = conf;
 		this.context = context;
@@ -88,34 +85,19 @@ public class JobTrackerImpl extends JobTracker {
 	    	RPC.getServer(new JobTrackerServer(context, this, conf), 
 	    			      addr.getHostName(), addr.getPort(), 
 	    			      handlerCount, false, conf);
-	    
-	    String infoAddr = 
-	    	NetUtils.getServerAddress(conf, "mapred.job.tracker.info.bindAddress",
-	    			"mapred.job.tracker.info.port",
-	    	"mapred.job.tracker.http.address");
-	    InetSocketAddress infoSocAddr = NetUtils.createSocketAddr(infoAddr);
-	    String infoBindAddress = infoSocAddr.getHostName();
-	    int tmpInfoPort = infoSocAddr.getPort();
-	    this.infoServer = new StatusHttpServer("job", infoBindAddress, tmpInfoPort, 
-	    		                               tmpInfoPort == 0);
-	    this.infoServer.setAttribute("job.tracker", this);
-	    
+		this.server.start();
 	    
 	    // The rpc/web-server ports can be ephemeral ports... 
 	    // ... ensure we have the correct info
 	    this.port = server.getListenerAddress().getPort();
 	    this.conf.set("mapred.job.tracker", (this.localMachine + ":" + this.port));
 	    LOG.info("JobTracker up at: " + this.port);
-	    this.infoPort = this.infoServer.getPort();
-	    this.conf.set("mapred.job.tracker.http.address", 
-	    		infoBindAddress + ":" + this.infoPort); 
-	    LOG.info("JobTracker webserver: " + this.infoServer.getPort());
 	    
 	    while (true) {
 	    	try {
 	    		// if we haven't contacted the namenode go ahead and do it
 	    		if (fs == null) {
-	    			fs = FileSystem.get(conf);
+	    			fs = FileSystem.getLocal(conf);
 	    		}
 	    		this.systemDir = new Path(conf.get("mapred.system.dir", "/tmp/hadoop/mapred/system"));  
 	    		this.systemDir = fs.makeQualified(this.systemDir);
@@ -143,6 +125,8 @@ public class JobTrackerImpl extends JobTracker {
 			install((jol.core.Runtime)context, conf);
 		} catch (UpdateException e) {
 			throw new IOException(e);
+		} catch (JolRuntimeException e) {
+			throw new IOException(e);
 		}
 	}
 
@@ -150,22 +134,33 @@ public class JobTrackerImpl extends JobTracker {
 		return new SimpleDateFormat("yyyyMMddHHmm");
 	}
 	
-	private void install(jol.core.Runtime context, JobConf conf) throws UpdateException {
+	private void install(jol.core.Runtime context, JobConf conf) throws UpdateException, JolRuntimeException {
 		this.context().catalog().register(new JobTable(context));
 		this.context().catalog().register(new TaskAttemptTable(context));
 		this.context().catalog().register(new TaskCreate(this));
+		this.context().catalog().register(new AssignTracker(this));
 		this.context().catalog().register(new TaskReportTable(context));
 		this.context().catalog().register(new TaskTable(context));
 		this.context().catalog().register(new TaskTrackerActionTable(context));
 		this.context().catalog().register(new TaskTrackerErrorTable(context));
 		this.context().catalog().register(new TaskTrackerTable(context));
 		this.context().catalog().register(new NetworkTopologyTable(context, this));
+		this.context().catalog().register(new HeartbeatTable(context));
 		
 		URL program = 
 			ClassLoader.getSystemClassLoader().
-				getResource("org/apache/hadoop/mapred/declarative/jobTracker.olg");
+				getResource("org/apache/hadoop/mapred/declarative/" + 
+						    PROGRAM + ".olg");
 		this.context.install("hadoop", program);
-
+		this.context.evaluate();
+		
+		URL scheduler = 
+			ClassLoader.getSystemClassLoader().
+				getResource("org/apache/hadoop/mapred/declarative/" + 
+						    SCHEDULER + ".olg");
+		this.context.install("hadoop", scheduler);
+		this.context.evaluate();
+		this.context.start();
 	}
 	
 	public JobConf conf() {
@@ -183,8 +178,6 @@ public class JobTrackerImpl extends JobTracker {
 	
 	@Override
 	public void offerService() throws IOException, InterruptedException {
-		this.server.start();
-
 		synchronized (this) {
 			state = State.RUNNING;
 		}
@@ -193,14 +186,6 @@ public class JobTrackerImpl extends JobTracker {
 	
 	@Override
 	public void stopTracker() {
-		if (this.infoServer != null) {
-			LOG.info("Stopping infoServer");
-			try {
-				this.infoServer.stop();
-			} catch (InterruptedException ex) {
-				ex.printStackTrace();
-			}
-		}
 		if (this.server != null) {
 			LOG.info("Stopping server");
 			this.server.stop();
@@ -216,11 +201,6 @@ public class JobTrackerImpl extends JobTracker {
 		return this.port;
 	}
 	
-	@Override
-	public int getInfoPort() {
-		return this.infoPort;
-	}
-
 	@Override
 	public FileSystem fileSystem() {
 		return this.fs;
@@ -281,7 +261,7 @@ public class JobTrackerImpl extends JobTracker {
 			java.lang.System.out.println("usage: JobTracker");
 			java.lang.System.exit(-1);
 		}
-
+		
 		try {
 			JobTracker tracker = startTracker(new JobConf());
 			tracker.offerService();

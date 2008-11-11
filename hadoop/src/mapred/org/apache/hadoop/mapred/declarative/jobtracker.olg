@@ -1,0 +1,122 @@
+program jobtracker;
+
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.util.JobState;
+import org.apache.hadoop.mapred.declarative.util.TaskState;
+
+import jol.types.basic.ValueList;
+import jol.types.basic.Wrapper;
+import java.lang.Integer;
+import java.lang.Long;
+import java.lang.Enum;
+
+/*************** TASK INIT *********************/
+
+
+define(initTask, {JobID, Wrapper, String, TaskID, Constants.TaskType, Integer, Wrapper, Integer, TaskState});
+define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
+define(taskFile, {JobID, TaskID, ValueList});
+
+
+initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
+	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status),
+	Status.state() == Constants.JobState.PREP;
+	
+/* Break out of the current fixpoint thread (using 'async') since taskCreate table function
+   makes calls to the DFS. */
+async initTask
+task(JobID, TaskID, Type, Partition, Split, MapCount, Status) :-
+	taskCreate(initTask(JobID, JobConf, JobFile, TaskID, Type, Partition, Split, MapCount, Status));
+	
+taskFile(JobId, TaskId, Locations) :-
+	task(JobId, TaskId, Type, _, Split, _, Status),
+	Status.state() == Constants.TaskState.UNASSIGNED,
+	Type == Constants.TaskType.MAP,
+	Locations := new ValueList(((JobClient.RawSplit)Split.object()).getLocations());
+	
+taskFileLocation(JobId, TaskId, Location) :-
+	flatten(taskFile(JobId, TaskId, Locations)),
+	Location := (String) Locations;
+	
+	
+/*************** Network Statistics  *********************/
+
+define(networkDistance, keys(0,1), {String, String, Integer});
+define(neighborDistance, keys(0,1), {String, String, Integer});
+
+networkDistance(Host, Host, 0) :-
+	networkTopology(Host, Location, Parent, Level);
+	
+networkDistance(Host, Location, 1) :-
+	networkTopology(Host, Location, Parent, Level);
+	
+networkDistance(Decendent, Ancestor, Distance + 1) :-
+	networkTopology(Name, Decendent, Parent, Level),
+	networkDistance(Parent, Ancestor, Distance);
+	
+neighborDistance(Location1, Location2, min<Distance>) :-
+	networkDistance(Location1, Ancestor, Distance1),
+	networkDistance(Location2, Ancestor, Distance2),
+	Location1 != Location2,
+	Distance := Distance1 + Distance2;
+	
+networkDistance(Location1, Location2, Distance) :-
+	neighborDistance(Location1, Location2, Distance);
+
+
+/*************** Job Status Maintenance *********************/
+	
+define(jobStateUpdate, {JobID});
+define(jobState, {JobID, JobState});
+define(jobMapCount, keys(0), {JobID, Integer});
+define(jobReduceCount, keys(0), {JobID, Integer});
+
+/* Update the job state on any change to the task table. */
+jobStateUpdate(JobID) :- task(JobID);
+
+watch(job, a);
+/* Compute the job state based on task state. */
+jobState(JobID, generic<(new JobState(JobID, Maps, Reduces, Constants.JobState.RUNNING)).task(Type, TaskState)>) :-
+	jobStateUpdate(JobID),
+	task(JobID, _, Type, _, _, _, TaskState),
+	jobMapCount(JobID, Maps), jobReduceCount(JobID, Reduces),	
+	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState);
+	
+/* Update the job state. */
+job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState) :-
+	jobState(JobID, JobState),
+	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _);
+    
+jobMapCount(JobID, count<*>) :-
+	task(JobID, _, Type, _, _, _, _),
+	Type == Constants.TaskType.MAP;
+
+jobReduceCount(JobID, count<*>) :-
+	task(JobID, _, Type, _, _, _, _),
+	Type == Constants.TaskType.REDUCE;
+	
+
+/*************** Task Status Maintenance *********************/
+
+define(taskStateUpdate, {JobID, TaskID});
+define(taskState, {JobID, TaskID, TaskState});
+	
+/* Update the job state on any change to the task table. */
+taskStateUpdate(JobID, TaskID) :- 
+	taskAttempt(JobID, TaskID, _, _, _, _, _, _, Start, _), Start > 0L;
+
+taskState(JobID, TaskID, generic<(new TaskState(JobID, TaskID)).attempt(AttemptID, Progress, State, Phase, Start, Finish)>) :-
+	taskStateUpdate(JobID, TaskID),
+	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, Start, Finish);
+	
+watch(taskAttempt, a);
+watch(task, a);
+task(JobID, TaskID, Type, Partition, Split, MapCount, TaskState) :-
+	taskState(JobID, TaskID, TaskState),
+	task(JobID, TaskID, Type, Partition, Split, MapCount, _);
+	
+	
+	

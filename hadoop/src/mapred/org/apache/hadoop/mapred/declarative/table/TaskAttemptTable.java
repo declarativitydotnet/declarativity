@@ -5,6 +5,8 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskStatus;
+import org.apache.hadoop.mapred.declarative.Constants.TaskPhase;
+import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
@@ -31,8 +33,8 @@ public class TaskAttemptTable extends ObjectTable {
 		TaskID.class,   // Task identifier
 		Integer.class,  // Task attempt count
 		Float.class,    // Progress
-		Enum.class,     // State
-		Enum.class,     // Phase 
+		TaskState.class, // State
+		TaskPhase.class, // Phase 
 		String.class,   // Diagnostic string,
 		String.class,   // Tracker name
 		Long.class,     // Start time
@@ -56,8 +58,8 @@ public class TaskAttemptTable extends ObjectTable {
 		TaskID        taskid    = attemptid.getTaskID();
 		return new Tuple(jobid, taskid, attemptid.getId(), 
 				         status.getProgress(), 
-				         status.getRunState(), 
-				         status.getPhase(),
+				         TaskState.valueOf(status.getRunState().name()), 
+				         TaskPhase.valueOf(status.getPhase().name()),
 				         status.getDiagnosticInfo(), 
 				         status.getTaskTracker(), 
 				         status.getStartTime(), 

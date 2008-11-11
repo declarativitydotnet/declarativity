@@ -13,11 +13,11 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
-import org.apache.hadoop.mapred.declarative.util.Wrapper;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
+import jol.types.basic.Wrapper;
 import jol.types.exception.UpdateException;
 import jol.types.table.Function;
 
@@ -33,7 +33,7 @@ public class TaskCreate extends Function {
 		Wrapper.class,   // JobConf
 		String.class,    // JobFile
 		TaskID.class,    // Task identifier
-		Enum.class,      // Task type
+		TaskType.class,  // Task type
 		Integer.class,   // Partition number
 		Wrapper.class,   // Split file
 		Integer.class,   // Map count

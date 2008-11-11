@@ -9,6 +9,7 @@ import java.util.Set;
 import jol.core.System;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.basic.Wrapper;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
@@ -45,7 +46,6 @@ import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerErrorTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerTable;
 import org.apache.hadoop.mapred.declarative.util.JobState;
-import org.apache.hadoop.mapred.declarative.util.Wrapper;
 import org.apache.hadoop.util.HostsFileReader;
 import org.apache.hadoop.util.VersionInfo;
 
@@ -454,8 +454,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				return false;
 			}
 			else if (init) {
-				NetworkTopologyTable topologyTable = 
-					(NetworkTopologyTable) this.context.catalog().table(TaskTrackerTable.TABLENAME);
+				NetworkTopologyTable topologyTable =  (NetworkTopologyTable) 
+					this.context.catalog().table(NetworkTopologyTable.TABLENAME);
 				topologyTable.resolve(status);
 			}
 			
@@ -477,7 +477,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 					null);
 			
 			/* Schedule updates of all tasks running on this tracker. */
-			updateTasks(status.getTaskReports());
+			updateTasks(name, status.getTaskReports());
 		} catch (Exception e) {
 			JobTrackerImpl.LOG.fatal("TaskTracker update error!", e);
 			return false;
@@ -490,9 +490,21 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @param tasks
 	 * @throws UpdateException 
 	 */
-	private void updateTasks(List<TaskStatus> tasks) throws UpdateException {
+	private void updateTasks(String tracker, List<TaskStatus> tasks) throws UpdateException {
 		TupleSet attempts = new TupleSet(TaskAttemptTable.TABLENAME);
 		for (TaskStatus status : tasks) {
+			if (status.getProgress() >= 1f && status.getRunState() == TaskStatus.State.RUNNING) {
+				status.setStateString(TaskStatus.State.SUCCEEDED.toString());
+			}
+			if (status.getRunState() == TaskStatus.State.SUCCEEDED) {
+				java.lang.System.err.println("TRACKER " + tracker + 
+						" REPORTS TASK " + status.getTaskID() + " SUCCESS");
+			}
+			else {
+				java.lang.System.err.println("TRACKER " + tracker + 
+						" REPORTS TASK " + status.getTaskID() + " " + status.getRunState() + " PROGRESS " + status.getProgress());
+			}
+			status.setTaskTracker(tracker);
 			attempts.add(TaskAttemptTable.tuple(status));
 		}
 		this.context.schedule(JobTracker.PROGRAM, 
