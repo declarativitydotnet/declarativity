@@ -59,7 +59,6 @@ public class Shell {
         this.responseQueue = new SynchronousQueue();
 
         this.system = Runtime.create(5501);
-        this.system.catalog().register(new MasterRequestTable((Runtime) this.system));
         this.system.catalog().register(new SelfTable((Runtime) this.system));
 
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
