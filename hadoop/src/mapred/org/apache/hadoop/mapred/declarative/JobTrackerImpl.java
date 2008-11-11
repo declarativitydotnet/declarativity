@@ -261,6 +261,7 @@ public class JobTrackerImpl extends JobTracker {
 			java.lang.System.out.println("usage: JobTracker");
 			java.lang.System.exit(-1);
 		}
+		java.lang.System.err.println("STARTING JOBTRACKER");
 		
 		try {
 			JobTracker tracker = startTracker(new JobConf());

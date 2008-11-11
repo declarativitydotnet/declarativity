@@ -35,9 +35,9 @@
 	<classpathentry kind="lib" path="src/test/lib/ftplet-api-1.0.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="src/test/lib/ftpserver-core-1.0.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="src/test/lib/mina-core-2.0.0-M2-20080407.124109-12.jar"/>
-	<classpathentry kind="lib" path="/jol/lib/xtc.jar"/>
 	<classpathentry kind="lib" path="lib/ant.jar"/>
 	<classpathentry kind="lib" path="hadoop-0.18.1-core.jar"/>
-	<classpathentry kind="lib" path="/jol/lib/grappa.jar"/>
+	<classpathentry kind="lib" path="lib/grappa.jar"/>
+	<classpathentry kind="lib" path="lib/xtc.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

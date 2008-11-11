@@ -156,8 +156,9 @@ candidate(JobID, TaskID, Type, TrackerName, Priority) :-
 	jobQueueStats(Jobs, MinPriority, _),
 	jobQueue(JobID, MinPriority, SubmitTime, Type),
 	jobtracker::task(JobID, TaskID, Type, _, _, _, Status),
-	Status.state() == TaskState.UNASSIGNED || Status.state() == TaskState.FAILED,
+	Status.state() != TaskState.KILLED,
     notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.FAILED, _, _, TrackerName, _, _),
+    notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.RUNNING, _, _, _, _, _),
 	Type == TaskType.MAP && Maps > 0 || Type == TaskType.REDUCE && Reduces > 0,
 	Priority := 1;
 	
