@@ -5,8 +5,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import jol.lang.parse.TypeChecker;
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 
 public class BasicMath {
 	public enum Operator{UPLUS, UMINUS, PLUS, MINUS, TIMES, DIVIDE, MOD, POW, LSHIFT, RSHIFT};
@@ -26,8 +28,8 @@ public class BasicMath {
 	}
 
 
-	public static TupleFunction function(String oper, TupleFunction lhs, TupleFunction rhs) {
-		Class type = lhs.returnType();
+	public static TupleFunction function(String oper, TupleFunction lhs, TupleFunction rhs) throws PlannerException {
+		Class type = TypeChecker.type(lhs.returnType().getSimpleName());
 		if (Double.class.isAssignableFrom(type)) {
 			return new DoubleEval(operators.get(oper), lhs, rhs);
 		}
@@ -49,8 +51,7 @@ public class BasicMath {
 		if (Long.class.isAssignableFrom(type)) {
 			return new LongEval(operators.get(oper), lhs, rhs);
 		}
-
-		return null;
+		throw new PlannerException("Unknown type " + type);
 	}
 
 	public static class DoubleEval implements TupleFunction<java.lang.Double> {
@@ -108,7 +109,7 @@ public class BasicMath {
 			case DIVIDE: return new Float(lhs.floatValue() / rhs.floatValue());
 			case MOD:    return new Float(lhs.floatValue() % rhs.floatValue());
 			case POW:    return new Float(java.lang.Math.pow(lhs.floatValue(),rhs.floatValue()));
-			default: return null; // TODO LOG THIS ERROR.
+			default: throw new JolRuntimeException("UNKNOWN MATH OPERATION " + oper);
 			}
 		}
 

@@ -29,6 +29,7 @@ import jol.lang.plan.Expression;
 import jol.lang.plan.Fact;
 import jol.lang.plan.GenericAggregate;
 import jol.lang.plan.IfThenElse;
+import jol.lang.plan.Limit;
 import jol.lang.plan.Load;
 import jol.lang.plan.MethodCall;
 import jol.lang.plan.NewClass;
@@ -166,6 +167,9 @@ public final class TypeChecker extends Visitor {
 	
 	private boolean subtype(Class<?> superType, Class<?> subType) {
 		if (subType == null) return true;
+		if (superType == null) {
+			System.err.println("FATAL COMPILE ERROR: super type check null! subtype " + subType);
+		}
 		
 		if (type(superType.getSimpleName()) != null) superType = type(superType.getSimpleName()); 
 		if (type(subType.getSimpleName()) != null) subType = type(subType.getSimpleName()); 
@@ -197,12 +201,12 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Can't ensure boolean value from void class");
 			return null; // Can't do it for void expression type
 		}
-		else if (Number.class.isAssignableFrom(expr.type())) {
+		else if (subtype(Number.class, expr.type())) {
 			/* expr != 0 */
 			return new jol.lang.plan.Boolean(jol.lang.plan.Boolean.NEQUAL,
 					                    expr, new Value<Number>(0));
 		}
-		else if (expr.type() != boolean.class && !Boolean.class.isAssignableFrom(expr.type())) {
+		else if (!subtype(Boolean.class, expr.type())) {
 			/* expr != null*/
 			return new jol.lang.plan.Boolean(jol.lang.plan.Boolean.NEQUAL,
 									    expr, new Null());
@@ -514,7 +518,6 @@ public final class TypeChecker extends Visitor {
 		for (Node attr : n.<Node>getList(0)) {
 			Class type = (Class) dispatch(attr);
 			if (type == Error.class) return Error.class;
-			assert(type == Class.class);
 			type = (Class) attr.getProperty(Constants.TYPE);
 			types.add(type);
 		}
@@ -641,7 +644,7 @@ public final class TypeChecker extends Visitor {
 				}
 					
 				Class[] types = table.types();
-				if (types[argument.position()] != argument.type()) {
+				if (!subtype(types[argument.position()], argument.type())) {
 					runtime.error("Aggregate type "+ agg.type() + 
 							      " does not match table type " + 
 							      types[argument.position()] + "!", n);
@@ -1359,13 +1362,14 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Undefined expression " + rhs, n);
 			return Error.class;
 		}
-		else if (Number.class.isAssignableFrom(lhs.type()) && 
-			     Number.class.isAssignableFrom(rhs.type())) {
+		
+		if (subtype(Number.class, lhs.type()) && 
+			     subtype(Number.class, rhs.type())) {
 			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
 			return jol.lang.plan.Math.class;
 		}
-		else if (String.class.isAssignableFrom(lhs.type()) && 
-			     String.class.isAssignableFrom(rhs.type())) {
+		else if (subtype(String.class, lhs.type()) && 
+			     subtype(String.class, rhs.type())) {
 			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
 			return jol.lang.plan.Math.class;
 		}
@@ -1398,8 +1402,8 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Undefined expression " + rhs, n);
 			return Error.class;
 		}
-		else if (Number.class.isAssignableFrom(lhs.type()) && 
-			Number.class.isAssignableFrom(rhs.type())) {
+		else if (subtype(Number.class, lhs.type()) && 
+			     subtype(Number.class, rhs.type())) {
 			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
 			return jol.lang.plan.Math.class;
 		}
@@ -1648,9 +1652,10 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Unable to resolve expression type " + expr); 
 			return Error.class;
 		}
-		else if  (!Number.class.isAssignableFrom(expr.type())) {
+		else if (!subtype(Number.class, expr.type())) {
 			runtime.error("Expression " + expr + 
 					" type must be numberic in increment expression.");
+			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(jol.lang.plan.Math.INC, expr, null));
 		return jol.lang.plan.Math.class;
@@ -1666,9 +1671,10 @@ public final class TypeChecker extends Visitor {
 			runtime.error("Unable to resolve expression type " + expr); 
 			return Error.class;
 		}
-		else if  (!Number.class.isAssignableFrom(expr.type())) {
+		else if  (!subtype(Number.class, expr.type())) {
 			runtime.error("Expression " + expr + 
 					" type must be numberic in decrement expression.");
+			return Error.class;
 		}
 		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(jol.lang.plan.Math.DEC, expr, null));
 		return jol.lang.plan.Math.class;
@@ -1765,6 +1771,7 @@ public final class TypeChecker extends Visitor {
 			}
 			
 			if (type == null) {
+				runtime.error("Unknown class type! " + name);
 				return Error.class;
 			}
 			n.setProperty(Constants.TYPE, type);
@@ -1804,14 +1811,28 @@ public final class TypeChecker extends Visitor {
 	public Class visitAggregate(final GNode n) {
 		String function = n.getString(0);
 		
-		if ("topk".equals(function) || "bottomk".equals(function)) {
+		if ("limit".equals(function)) {
 			Class type = (Class) dispatch(n.getNode(2));
 			dispatch(n.getNode(1));
 			if (type == Variable.class) {
 				Variable kVar = (Variable) n.getNode(2).getProperty(Constants.TYPE);
 				Variable var  = (Variable) n.getNode(1).getProperty(Constants.TYPE);
-				if (!subtype(Number.class, var.type())) {
-					runtime.error("First parameter to " + function + " aggregate must be of" +
+				n.setProperty(Constants.TYPE, new Limit(var, kVar)); 
+			}
+			else {
+				Value<Number>  kConst = (Value<Number>) n.getNode(2).getProperty(Constants.TYPE);
+				Variable       var    = (Variable)      n.getNode(1).getProperty(Constants.TYPE);
+				n.setProperty(Constants.TYPE, new Limit(var, kConst.value())); 
+			}
+		}
+		else if ("topk".equals(function) || "bottomk".equals(function)) {
+			Class type = (Class) dispatch(n.getNode(2));
+			dispatch(n.getNode(1));
+			if (type == Variable.class) {
+				Variable kVar = (Variable) n.getNode(2).getProperty(Constants.TYPE);
+				Variable var  = (Variable) n.getNode(1).getProperty(Constants.TYPE);
+				if (!subtype(Number.class, kVar.type())) {
+					runtime.error("Second parameter to " + function + " aggregate must be of" +
 							" type Number! Variable " + var + " is type " + var.type(), n);
 					return Error.class;
 				}

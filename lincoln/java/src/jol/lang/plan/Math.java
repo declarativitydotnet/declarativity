@@ -3,6 +3,7 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import jol.types.exception.PlannerException;
 import jol.types.function.BasicMath;
 import jol.types.function.TupleFunction;
 
@@ -41,7 +42,7 @@ public class Math<N extends java.lang.Number> extends Expression<N> {
 	
 	@Override
 	public String toString() {
-		return "(" + lhs + " " + oper + " " + rhs + ")";
+		return "MATH(" + lhs + " " + oper + " " + rhs + ")";
 	}
 
 	@Override
@@ -56,6 +57,11 @@ public class Math<N extends java.lang.Number> extends Expression<N> {
 
 	@Override
 	public TupleFunction<N> function() {
-		return BasicMath.function(oper, lhs.function(), rhs.function());
+		try {
+			return BasicMath.function(oper, lhs.function(), rhs.function());
+		} catch (PlannerException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 }

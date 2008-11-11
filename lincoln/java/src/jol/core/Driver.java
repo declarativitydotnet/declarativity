@@ -124,6 +124,31 @@ public class Driver implements Runnable {
 			this.context = context;
 		}
 		
+		/**
+		 * Flush insertions based on the {@link Evaluator} schema.
+		 * NOTE: This is used by the main driver function only.
+		 * @param tuples Tuples to flush.
+		 * @return
+		 * @throws UpdateException
+		 */
+		TupleSet insert(TupleSet tuples) throws UpdateException {
+			TupleSet delta = new TupleSet(name());
+			for (Tuple tuple : tuples) {
+				Long      time       = (Long)      tuple.value(Evaluator.Field.TIME.ordinal());
+				String    program    = (String)    tuple.value(Evaluator.Field.PROGRAM.ordinal());
+				TableName name       = (TableName) tuple.value(Evaluator.Field.TABLENAME.ordinal());
+				TupleSet  insertions = (TupleSet)  tuple.value(Evaluator.Field.INSERTIONS.ordinal());
+				TupleSet  deletions  = (TupleSet)  tuple.value(Evaluator.Field.DELETIONS.ordinal());
+
+				Tuple t = flush(time, program, name, insertions, deletions);
+				if (t != null) {
+					t.insert(Evaluator.Field.QUERY.ordinal(), null);
+					delta.add(t);
+				}
+			}
+			return delta;
+		}
+		
 		@Override
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 			TupleSet delta = new TupleSet(name());
@@ -133,62 +158,65 @@ public class Driver implements Runnable {
 				TableName name       = (TableName) tuple.value(Field.TABLENAME.ordinal());
 				TupleSet  insertions = (TupleSet)  tuple.value(Field.INSERTIONS.ordinal());
 				TupleSet  deletions  = (TupleSet)  tuple.value(Field.DELETIONS.ordinal());
-				
-				if (insertions == null) insertions = new TupleSet(name);
-				if (deletions == null)  deletions = new TupleSet(name);
-				
-				if (time < context.clock().current()) {
-					java.lang.System.err.println("ERROR: Evaluating schedule tuple with time = " + 
-							                      time + " < current clock " + context.clock().current() +
-							                      ": PROGRAM " + program + " TUPLE NAME " + name);
-				}
-				
-				if (insertions.size() == 0 && deletions.size() == 0) {
-					continue;
-				}
 
+				Tuple t = flush(time, program, name, insertions, deletions);
+				if (t != null) delta.add(t);
+			}
+			return delta;
+		}
+		
+		private Tuple flush(Long time, String program, TableName name, 
+				            TupleSet insertions, TupleSet deletions) 
+		throws UpdateException {
+			if (insertions == null) insertions = new TupleSet(name);
+			if (deletions == null)  deletions = new TupleSet(name);
+			
+			if (time < context.clock().current()) {
+				java.lang.System.err.println("ERROR: Evaluating schedule tuple with time = " + 
+						                      time + " < current clock " + context.clock().current() +
+						                      ": PROGRAM " + program + " TUPLE NAME " + name);
+			}
+			if (insertions.size() == 0 && deletions.size() == 0) {
+				return null;
+			}
+
+			WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
+			Table table = context.catalog().table(name);
+			if (insertions.size() > 0 || table instanceof Aggregation) {
+				insertions = table.insert(insertions, deletions);
 				
-				WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
-				Table table = context.catalog().table(name);
-				if (insertions.size() > 0 || table instanceof Aggregation) {
-					insertions = table.insert(insertions, deletions);
-					
-					if (table instanceof Aggregation) {
-						Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
-						if (watchRemove != null) {
-							try { watchRemove.evaluate(deletions);
-							} catch (JolRuntimeException e) { }
-						}
-					}
-				}
-				else if (deletions.size() > 0) { 
-					if (table.type() != Table.Type.TABLE) {
-						deletions.clear();
-					}
-					else {
-						deletions = table.delete(deletions);
-					
-						Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
-						if (watchRemove != null) {
-							try { watchRemove.evaluate(deletions);
-							} catch (JolRuntimeException e) { }
-						}
-					}
-				}
-				
-				if (insertions.size() > 0) {
-					Operator watchAdd = watch.watched(program, name, Watch.Modifier.ADD);
-					if (watchAdd != null) {
-						try { watchAdd.evaluate(insertions);
+				if (table instanceof Aggregation) {
+					Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
+					if (watchRemove != null) {
+						try { watchRemove.evaluate(deletions);
 						} catch (JolRuntimeException e) { }
 					}
 				}
-				
-				tuple.value(Field.INSERTIONS.ordinal(), insertions);
-				tuple.value(Field.DELETIONS.ordinal(), deletions);
-				delta.add(tuple);
 			}
-			return delta;
+			else if (deletions.size() > 0) { 
+				if (table.type() != Table.Type.TABLE) {
+					deletions.clear();
+				}
+				else {
+					deletions = table.delete(deletions);
+				
+					Operator watchRemove = watch.watched(program, name, Watch.Modifier.ERASE);
+					if (watchRemove != null) {
+						try { watchRemove.evaluate(deletions);
+						} catch (JolRuntimeException e) { }
+					}
+				}
+			}
+			
+			if (insertions.size() > 0) {
+				Operator watchAdd = watch.watched(program, name, Watch.Modifier.ADD);
+				if (watchAdd != null) {
+					try { watchAdd.evaluate(insertions);
+					} catch (JolRuntimeException e) { }
+				}
+			}
+			
+			return new Tuple(time, program, name, insertions, deletions);
 		}
 	}
 	
@@ -210,11 +238,12 @@ public class Driver implements Runnable {
 	 */
 	public static class Evaluator extends jol.types.table.Function {
 		/** The fields expected by this table function. */
-		public enum Field{TIME, PROGRAM, TABLENAME, INSERTIONS, DELETIONS};
+		public enum Field{TIME, PROGRAM, QUERY, TABLENAME, INSERTIONS, DELETIONS};
 		/** The field types expected by this table function. */
 		public static final Class[] SCHEMA =  {
 			Long.class,       // Evaluation time
 			String.class,     // Program name
+			Query.class,      // Query to execute
 			TableName.class,  // Table name
 			TupleSet.class,   // Insertion tuple set
 			TupleSet.class    // Deletions tuple set
@@ -279,25 +308,29 @@ public class Driver implements Runnable {
 			for (Tuple tuple : tuples) {
 				Long      time       = (Long)      tuple.value(Field.TIME.ordinal());
 				String    programName= (String)    tuple.value(Field.PROGRAM.ordinal());
+				Query     query      = (Query)     tuple.value(Field.QUERY.ordinal());
 				TableName name       = (TableName) tuple.value(Field.TABLENAME.ordinal());
 				TupleSet  insertions = (TupleSet)  tuple.value(Field.INSERTIONS.ordinal());
 				TupleSet  deletions  = (TupleSet)  tuple.value(Field.DELETIONS.ordinal());
 				if (deletions == null) deletions = new TupleSet(name);
 				Program program = context.program(programName);
 				
-				if (program != null) {
-					TupleSet  result = evaluate(time, program, name, insertions, deletions);
-					delta.addAll(result);
+				if (query == null && program.queries(name) != null) {
+					for (Query q : program.queries(name)) {
+						TupleSet  result = evaluate(time, program, q, name, insertions, deletions);
+						delta.addAll(result);
+					}
 				}
-				else {
-					java.lang.System.err.println("EVALUATOR ERROR: unknown program " + programName + "!");
+				else if (query != null) {
+					TupleSet  result = evaluate(time, program, query, name, insertions, deletions);
+					delta.addAll(result);
 				}
 			}
 			return delta;
 		}
 		
 		/** 
-		 * Evaluates the given insertions/deletions against the program queries.
+		 * Evaluates the given insertions/deletions against a single program query.
 		 * @param time The current time.
 		 * @param program The program whose queries will evaluate the tuples.
 		 * @param name The name of the table to which the tuples refer.
@@ -308,91 +341,85 @@ public class Driver implements Runnable {
 		 * insertions.size() == 0.
 		 * @throws UpdateException On evaluation error.
 		 */
-		private TupleSet evaluate(Long time, Program program, TableName name, TupleSet insertions, TupleSet deletions) 
+		private TupleSet evaluate(Long time, Program program, Query query, TableName name, TupleSet insertions, TupleSet deletions) 
 		throws UpdateException {
 			Map<String, Tuple> continuations = new HashMap<String, Tuple>();
 
 			WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
 			Operator watchInsert = watch.watched(program.name(), name, Watch.Modifier.INSERT);
 			Operator watchDelete = watch.watched(program.name(), name, Watch.Modifier.DELETE);
-			
-			Set<Query> querySet = program.queries(name);
+
 			if (insertions.size() > 0) {
 				if (deletions.size() > 0) {
 					/* We're not going to deal with the deletions yet. */
 					continuation(continuations, time, program.name(), Predicate.Event.DELETE, deletions);
 				}
 
-				if (querySet != null) {
-					for (Query query : querySet) {
-						if (query.event() != Predicate.Event.DELETE) {
-							if (watchInsert != null) {
-								try { watchInsert.rule(query.rule()); watchInsert.evaluate(insertions);
-								} catch (JolRuntimeException e) { 
-									java.lang.System.err.println("WATCH INSERTION FAILURE ON " + name + "!");
-								}
-							}
+				if (query.event() != Predicate.Event.DELETE) {
+					if (watchInsert != null) {
+						try { watchInsert.rule(query.rule()); watchInsert.evaluate(insertions);
+						} catch (JolRuntimeException e) { 
+							java.lang.System.err.println("WATCH INSERTION FAILURE ON " + name + "!");
+						}
+					}
 
-							if (query.isAsync()) {
-								this.executor.execute(new AsyncQueryEval(query, insertions.clone(), !query.isDelete()));
-							}
-							else {
-								TupleSet result = null;
-								try {
-									result = query.evaluate(insertions);
-									if (result.size() == 0) continue;
-								} catch (JolRuntimeException e) {
-									e.printStackTrace();
-									java.lang.System.exit(0);
-								}
+					if (query.isAsync()) {
+						this.executor.execute(new AsyncQueryEval(query, insertions.clone(), !query.isDelete()));
+					}
+					else {
+						TupleSet result = null;
+						try {
+							result = query.evaluate(insertions);
+						} catch (JolRuntimeException e) {
+							e.printStackTrace();
+							java.lang.System.exit(0);
+						}
 
-								if (query.isDelete()) {
-									continuation(continuations, time, program.name(), Predicate.Event.DELETE, result);
-								}
-								else {
-									continuation(continuations, time, program.name(), Predicate.Event.INSERT, result);
-								}
+						if (result.size() > 0) {
+							if (query.isDelete()) {
+								continuation(continuations, time, 
+										program.name(), Predicate.Event.DELETE, result);
+							} else {
+								continuation(continuations, time, 
+										program.name(), Predicate.Event.INSERT, result);
 							}
 						}
 					}
 				}
 			}
 			else if (deletions.size() > 0) {
-				if (querySet != null) {
-					for (Query query : querySet) {
-						Table output = context.catalog().table(query.output().name());
-						if (query.event() == Predicate.Event.DELETE ||
-								(output.type() == Table.Type.TABLE && 
-										query.event() != Predicate.Event.INSERT)) {
-							if (watchDelete != null) {
-								try { watchDelete.rule(query.rule()); watchDelete.evaluate(deletions);
-								} catch (JolRuntimeException e) { }
-							}
+				Table output = context.catalog().table(query.output().name());
+				if (query.event() == Predicate.Event.DELETE ||
+						(output.type() == Table.Type.TABLE && 
+								query.event() != Predicate.Event.INSERT)) {
+					if (watchDelete != null) {
+						try { watchDelete.rule(query.rule()); watchDelete.evaluate(deletions);
+						} catch (JolRuntimeException e) { }
+					}
 
-							Predicate.Event resultType = Predicate.Event.DELETE;
-							if (!query.isDelete() && output.type() == Table.Type.EVENT) {
-								resultType = Predicate.Event.INSERT;
+					Predicate.Event resultType = Predicate.Event.DELETE;
+					if (!query.isDelete() && output.type() == Table.Type.EVENT) {
+						resultType = Predicate.Event.INSERT;
+					}
+					else if (output.type() == Table.Type.EVENT) {
+						throw new UpdateException("Query " + query + 
+								" is trying to delete from table " + output.name() + "?");
+					}
+
+					if (query.isAsync()) {
+						this.executor.execute(
+								new AsyncQueryEval(query, insertions.clone(), 
+										resultType == Predicate.Event.INSERT));
+					}
+					else {
+						try {
+							TupleSet result = query.evaluate(deletions);
+							if (result.size() > 0) {
+								continuation(continuations, time, program.name(), resultType, result);
 							}
-							else if (output.type() == Table.Type.EVENT) {
-								throw new UpdateException("Query " + query + 
-										" is trying to delete from table " + output.name() + "?");
-							}
-							
-							if (query.isAsync()) {
-								this.executor.execute(
-										new AsyncQueryEval(query, insertions.clone(), 
-												           resultType == Predicate.Event.INSERT));
-							}
-							else {
-								try {
-									TupleSet result = query.evaluate(deletions);
-									if (result.size() == 0) continue;
-									continuation(continuations, time, program.name(), resultType, result);
-								} catch (JolRuntimeException e) {
-									e.printStackTrace();
-									java.lang.System.exit(0);
-								}
-							}
+						} catch (JolRuntimeException e) {
+							e.printStackTrace();
+							java.lang.System.exit(0);
 						}
 					}
 				}
@@ -422,7 +449,7 @@ public class Driver implements Runnable {
 			String key = program + "." + result.name();
 
 			if (!continuations.containsKey(key)) {
-				Tuple tuple = new Tuple(time, program, result.name(),
+				Tuple tuple = new Tuple(time, program, null, result.name(),
 						                new TupleSet(result.name()), 
 						                new TupleSet(result.name()));
 				continuations.put(key, tuple);
@@ -606,13 +633,13 @@ public class Driver implements Runnable {
 		
 		TupleSet insert = new TupleSet();
 		TupleSet delete = new TupleSet();
-		insert.add(new Tuple(time, program, name, insertions, deletions)); 
+		insert.add(new Tuple(time, program, null, name, insertions, deletions)); 
 		
 		/* Evaluate until nothing remains. */
 		while (insert.size() > 0 || delete.size() > 0) {
 			TupleSet delta = null;
 			while (insert.size() > 0) {
-				delta = flusher.insert(insert, null);
+				delta = flusher.insert(insert);
 				delta = evaluator.insert(delta, null);
 				insert.clear(); // Clear out evaluated insertions
 				/* Split delta into sets of insertions and deletions */
@@ -620,7 +647,7 @@ public class Driver implements Runnable {
 			}
 			
 			while (delete.size() > 0) {
-				delta = flusher.insert(delete, null);
+				delta = flusher.insert(delete);
 				delta = evaluator.insert(delta, null);
 				delete.clear(); // Clear out evaluated deletions
 				/* Split delta into sets of insertions and deletions. 

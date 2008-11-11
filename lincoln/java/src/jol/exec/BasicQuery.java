@@ -49,7 +49,14 @@ public class BasicQuery extends Query {
 		}
 		
 		for (Operator oper : body) {
-			tuples = (TupleSet) oper.evaluate(tuples);
+			try {
+				tuples = (TupleSet) oper.evaluate(tuples);
+			} catch (Throwable t) {
+				t.printStackTrace();
+				String error = "ERROR: " + t.toString();
+				error += ". Query " + toString() + ". At operator " + oper;
+				throw new JolRuntimeException(error);
+			}
 		}
 		
 		return tuples;

@@ -281,6 +281,8 @@ generic Aggregate =
    / <TopK2>    "topk":Word    void:"<":Symbol AggregateVariable void:",":Symbol AggregateVariable void:">":Symbol
    / <BottomK1> "bottomk":Word void:"<":Symbol AggregateVariable void:",":Symbol IntegerConstant void:">":Symbol
    / <BottomK2> "bottomk":Word void:"<":Symbol AggregateVariable void:",":Symbol AggregateVariable void:">":Symbol
+   / <Limit1>   "limit":Word   void:"<":Symbol AggregateVariable void:",":Symbol IntegerConstant void:">":Symbol
+   / <Limit2>   "limit":Word   void:"<":Symbol AggregateVariable void:",":Symbol AggregateVariable void:">":Symbol
    / <Basic>    Name void:"<":Symbol PostfixExpression void:">":Symbol
    ;
 

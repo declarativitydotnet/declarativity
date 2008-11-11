@@ -3,6 +3,7 @@ program runtime;
 import java.lang.String;
 import java.lang.Integer;
 import java.lang.Long;
+import jol.exec.Query;
 import jol.types.basic.TupleSet;
 import jol.types.basic.Tuple;
 import jol.types.table.TableName;
@@ -19,8 +20,8 @@ define(deletionQueue,  keys(), {Long, String, TableName, TupleSet});
 /* Evaluator output: evaluation(Time, ProgramName, TableName, Insertions, Deletions) */
 define(evaluation, {Long, String, TableName, TupleSet, TupleSet});
 
-/* Evaluator input: execute(Time, ProgramName, TableName, Insertions, Deletions) */
-define(execute,    {Long, String, TableName, TupleSet, TupleSet});
+/* Evaluator input: execute(Time, ProgramName, Query, TableName, Insertions, Deletions) */
+define(execute, {Long, String, Query, TableName, TupleSet, TupleSet});
 
 /* Committer output: delta(Time, ProgramName, TableName, Insertions, Deletions) */ 
 define(delta, {Long, String, TableName, TupleSet, TupleSet});
@@ -53,18 +54,21 @@ schedule(Time, Program, Name, Insertions, Deletions) :-
 /* Evaluate the program with the given insertions OR deletions. */
 evaluator
 evaluation(Time, Program, Name, Insertions, Deletions) :-
-	evaluator(execute(Time, Program, Name, Insertions, Deletions));
+	evaluator(execute(Time, Program, Query, Name, Insertions, Deletions));
 	
 /* NOTE: We do not schedule public deletions!! */
 publicEval
-execute(Time, Program2, Name, Insertions, null) :-
+execute(Time, Program2, Query, Name, Insertions, null) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
-	query(Program2, Rule, Public, Async, Delete, Event, Input, Output, Object),
+	query(Program2, Rule, Public, Async, Delete, Event, Input, Output, Query),
 	Public == true && Input == Name, Program1 != Program2;
 
-/* Execute on the intended program. */
+/* Execute on the intended program. 
+ * NOTE: Passing 'null' as the query signals to the evaluator
+ *       to use all relevant (those interested in 'Name') 
+ *       program queries. */
 localEval
-execute(Time, Program, Name, Insertions, Deletions) :-
+execute(Time, Program, null, Name, Insertions, Deletions) :-
 	delta(Time, Program, Name, Insertions, Deletions);
 
 /* Flusher the insertions OR deletions, pass deltas to evaluator. */

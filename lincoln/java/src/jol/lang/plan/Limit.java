@@ -13,7 +13,15 @@ public class Limit extends Aggregate {
 	
 	private Variable kVar;
 
-	public Limit(String function, Variable value, Number kConst) {
+	public Limit(Variable value, Number kConst) {
+		this(jol.types.function.Aggregate.LIMIT, value, kConst);
+	}
+	
+	public Limit(Variable value, Variable kVar) {
+		this(jol.types.function.Aggregate.LIMIT, value, kVar);
+	}
+	
+	protected Limit(String function, Variable value, Number kConst) {
 		super(variables(value), function, ValueList.class);
 		this.kConst = kConst;
 		this.kVar = null;

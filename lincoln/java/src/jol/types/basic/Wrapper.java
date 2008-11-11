@@ -7,6 +7,12 @@ public class Wrapper<T> implements Comparable<Wrapper<T>> {
 	public Wrapper(T object) {
 		this.object = object;
 	}
+	
+	@Override
+	public String toString() {
+		return this.object == null ? 
+				"null" : this.object.toString();
+	}
 
 	public int compareTo(Wrapper<T> o) {
 		if (o == this) {

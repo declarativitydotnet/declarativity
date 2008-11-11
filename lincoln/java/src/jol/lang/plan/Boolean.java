@@ -39,7 +39,7 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 	
 	@Override
 	public String toString() {
-		return "(" + lhs.toString() + " " + 
+		return "BOOLEAN(" + lhs.toString() + " " + 
 		      oper + " " + rhs.toString() + ")";
 	}
 
@@ -171,7 +171,16 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				private final TupleFunction<C> left  = lhs.function();
 				private final TupleFunction<C> right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					return (left.evaluate(tuple)).compareTo(right.evaluate(tuple)) > 0;
+					try {
+						Comparable lcomp = left.evaluate(tuple);
+						Comparable rcomp = right.evaluate(tuple);
+						return lcomp.compareTo(rcomp) > 0;
+					} catch (Throwable t) {
+						System.err.println("ERROR " + Boolean.this.toString());
+						throw new JolRuntimeException(t.toString() + 
+								" -- " + Boolean.this.toString() + 
+								": left " + left + ", right " + right);
+					}
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;

@@ -23,6 +23,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	
 	public static final String TOPK     = "topk";
 	public static final String BOTTOMK  = "bottomk";
+	public static final String LIMIT    = "limit";
 	public static final String MIN      = "min";
 	public static final String MAX      = "max";
 	public static final String SUM      = "sum";
@@ -40,6 +41,9 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		else if (BOTTOMK.equals(aggregate.functionName())) {
 			return new TopBottomK((jol.lang.plan.BottomK)aggregate);
+		}
+		else if (LIMIT.equals(aggregate.functionName())) {
+			return new Limit((jol.lang.plan.Limit)aggregate);
 		}
 		else if (MIN.equals(aggregate.functionName())) {
 			return new Min(aggregate);
@@ -76,7 +80,9 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		else if (AVG.equals(function) || SUM.equals(function)) {
 			return Float.class;
 		}
-		else if (TOPK.equals(function) || BOTTOMK.equals(function)) {
+		else if (LIMIT.equals(function) ||
+				 TOPK.equals(function) || 
+				 BOTTOMK.equals(function)) {
 			return ValueList.class;
 		}
 		else if (TUPLESET.equals(function)) {
@@ -86,6 +92,72 @@ public abstract class Aggregate<C extends Comparable<C>> {
 			return java.lang.String.class;
 		}
 		return null;
+	}
+	
+	public static class Limit<C extends Comparable<C>> extends Aggregate<C> {
+		private int position;
+		private ValueList<C> values;
+		private TupleSet tuples;
+		private Comparable result;
+		private TupleFunction<C> accessor;
+
+		
+		public Limit(jol.lang.plan.Limit aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		private void reset() {
+			this.tuples = new TupleSet();
+			this.values = new ValueList<C>();
+			this.result = null;
+		}
+		
+		@Override
+		public Comparable result() {
+			return this.result;
+		}
+		
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				ValueList result = (ValueList)this.accessor.evaluate(tuple);
+				C      value  = (C) result.get(0);
+				Number kConst = (Number) result.get(1);
+						
+				this.values.add(value);
+				
+				ValueList<C> resultValues = new ValueList<C>();
+				int k = kConst.intValue();
+				for (int i = 0; i < k; i++) {
+					if (this.values.size() <= i) break;
+					resultValues.add(this.values.get(i));
+				}
+				this.result = resultValues;
+			}
+		}
+		
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				TupleSet tuples = this.tuples;
+				reset();
+				for (Tuple copy : tuples) {
+					insert(copy);
+				}
+			}
+		}
+		
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+
+		@Override
+		public int position() {
+			return this.position;
+		}
 	}
 	
 	public static class TopBottomK<C extends Comparable<C>> extends Aggregate<C> {
