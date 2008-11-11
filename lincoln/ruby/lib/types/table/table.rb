@@ -10,35 +10,24 @@ class Table
 
   attr_reader name
   
-  def initialize(name, type, size, lifetime, key, attributeTypes)
+  def initialize(name, type, key, attributeTypes)
     @name = name
     @table_type = type
     @attributeTypes = attributeTypes
-    @size = size
-    @lifetime = lifetime
     @key = key
     @callbacks = Array.new    
-
-	# (pa) catalog->$catalog
-    if not $catalog.nil?
-      Table.register(name, type, size, lifetime, key, attributeTypes, self)
-    end
   end
 
-  def Table.init
-    $catalog = Catalog.new
-    $index = IndexTable.new
-    register($catalog.name, $catalog.table_type, $catalog.size, $catalog.lifetime, $catalog.key, $catalog.types.clone, $catalog)
+  def Table.init(context)
+    catalog = Catalog.new(context)
+    catalog.index = IndexTable.new(context)
+    catalog.register(catalog.index)
+    catalog.register(catalog)
+    catalog.register(OperatorTable.new(context))
+
+    return catalog
   end
   
-  def catalog
-    $catalog
-  end
-  
-  def index
-    $index
-  end
-
   class Event
     NONE = 1
     INSERT = 2
@@ -53,7 +42,7 @@ class Table
 
   def to_s
     value = @name.to_s + ", " + @attributeTypes.to_s + 
-    ", " + @size.to_s + ", " + @lifetime.to_s + ", keys(" + @key.to_s + "), {" +
+    ", keys(" + @key.to_s + "), {" +
     @attributeTypes.to_s + "}\n"
     if not tuples.nil?
       tuples.each do |t|
@@ -87,18 +76,6 @@ class Table
     @callbacks.delete(callback)
   end
 
-  def Table.register(name, type, size, lifetime, key, types, object)
-    # make sure table wasn't already registered!
-    tups = $catalog.primary.lookup_vals(name)
-    unless tups.nil? or tups.size == 0
-      raise "table " + name.to_s + " already registered\n"
-      return
-    end
-    
-    tuple = Tuple.new(name, type.to_s, size, lifetime, key, types, object)
-    $catalog.force(tuple)
-  end
-
   def drop
     tuples = catalog.primary.lookup_vals(name)
     retval = (catalog.delete(tuples.tups).size > 0)
@@ -108,14 +85,14 @@ class Table
     end
   end
 
-  def Table.find_table(name)
-    raise "Catalog missing" if $catalog.nil?
-    tables = $catalog.primary.lookup_vals(name)
-    return nil if tables.nil? or tables.size == 0
-    return tables.tups[0].value(Catalog::Field::OBJECT) if tables.size == 1
-    throw tables.size.to_s + " tables named " + name.to_s + " defined!"
-  end
-
+  # def Table.find_table(catalog, name)
+  #   raise "Catalog missing" if catalog.nil?
+  #   tables = catalog.primary.lookup_vals(name)
+  #   return nil if tables.nil? or tables.size == 0
+  #   return tables.tups[0].value(Catalog::Field::OBJECT) if tables.size == 1
+  #   throw tables.size.to_s + " tables named " + name.to_s + " defined!"
+  # end
+  # 
   def <=>(o)
     return (name <=> (o.name))
   end
@@ -151,6 +128,7 @@ class Table
   end
   
   def delete(tuples)
+    require 'ruby-debug'; debugger if tuples.nil?
     delta = TupleSet.new(name)
     tuples.each do |t|
 #      t = t.clone

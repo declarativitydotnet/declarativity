@@ -3,11 +3,11 @@ require "lib/types/exception/bad_key_exception"
 require "lib/types/table/table"
 
 class RefTable < Table
-  def initialize(name, key, types)
-    super(name, TableType::TABLE, INFINITY, INFINITY, key, types)
+  def initialize(context, name, key, types)
+    super(name, TableType::TABLE, key, types)
     @key = key
     @tuples = TupleSet.new(name, nil)
-    @primary = HashIndex.new(self, key, Index::Type::PRIMARY)
+    @primary = HashIndex.new(context, self, key, Index::Type::PRIMARY)
     @secondary = Hash.new
   end
 

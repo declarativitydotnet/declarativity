@@ -26,6 +26,7 @@ class Periodic < ObjectTable
 	end
 	
 	@@PRIMARY_KEY = Key.new(0)
+	@@TABLENAME = TableName.new(GLOBALSCOPE, "periodic")
 	
 	class Field 
 	  IDENTIFIER = 0
@@ -48,18 +49,28 @@ class Periodic < ObjectTable
 	def Periodic.schema
 	  @@SCHEMA
   end
+
+  def Periodic.table_name
+    @@TABLENAME
+  end
   
-	def initialize(schedule)
-		super(TableName.new(GLOBALSCOPE, "periodic"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		@scheduler = Scheduler.new(schedule)
+	def initialize(context,schedule)
+		super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+		# context.catalog.register(Scheduler.new(schedule))
 	end
-	
+
+	def insert
+  	identifier = tuple.value(Field.IDENTIFIER)
+		tuple.value(Field.IDENTIFIER, Runtime.idgen().to_s) if (identifier.nil?)
+		return super.insert(tuple)
+	end
+  	
 	def min
 		curmin = exp(2,Bignum.size) - 1
 		tuples.each do |current|
 			time = current.value(Field::TIME)
 			curmin = curmin < time  ? curmin : time
 		end
-		return min
+		return curmin
 	end
 end

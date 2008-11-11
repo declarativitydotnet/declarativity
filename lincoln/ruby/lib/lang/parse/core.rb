@@ -512,7 +512,7 @@ module Overlog
 
   module Rname0
     def name
-      elements[0]
+      elements[1]
     end
 
   end
@@ -526,24 +526,41 @@ module Overlog
     end
 
     i1, s1 = index, []
-    r2 = _nt_name
+    i2 = index
+    if input.index('delete', index) == index
+      r3 = (SyntaxNode).new(input, index...(index + 6))
+      @index += 6
+    else
+      terminal_parse_failure('delete')
+      r3 = nil
+    end
+    if r3
+      r2 = nil
+    else
+      self.index = i2
+      r2 = SyntaxNode.new(input, index...index)
+    end
     s1 << r2
     if r2
-      i3 = index
-      if input.index('(', index) == index
-        r4 = (SyntaxNode).new(input, index...(index + 1))
-        @index += 1
-      else
-        terminal_parse_failure('(')
-        r4 = nil
-      end
+      r4 = _nt_name
+      s1 << r4
       if r4
-        r3 = nil
-      else
-        self.index = i3
-        r3 = SyntaxNode.new(input, index...index)
+        i5 = index
+        if input.index('(', index) == index
+          r6 = (SyntaxNode).new(input, index...(index + 1))
+          @index += 1
+        else
+          terminal_parse_failure('(')
+          r6 = nil
+        end
+        if r6
+          r5 = nil
+        else
+          self.index = i5
+          r5 = SyntaxNode.new(input, index...index)
+        end
+        s1 << r5
       end
-      s1 << r3
     end
     if s1.last
       r1 = (SyntaxNode).new(input, i1...index, s1)

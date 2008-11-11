@@ -4,8 +4,8 @@ require 'lib/lang/plan/variable'
 class Aggregate < Variable 
 	@@STAR = '*'
 	
-	def initialize(name, function, type)
-		super(name, type)
+	def initialize(name, function, type, position, location)
+		super(name, type, position, location)
 		@function = function
 	end
 	

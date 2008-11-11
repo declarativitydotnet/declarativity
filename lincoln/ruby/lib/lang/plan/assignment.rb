@@ -18,12 +18,13 @@ class Assignment < Term
 	
 	attr_reader :variable, :value
 
-  def operator(input)
-		return Assign.new(self, input)
+  def operator(context, input)
+		return Assign.new(context, self, input)
 	end
 
-	def set(program, rule, position)
-		Compiler.assignment.force(Tuple.new(program, rule, position, self))
+	def set(context, program, rule, position)
+	  super(context,program,rule,position)
+		context.catalog.table(AssignmentTable.table_name).force(Tuple.new(program, rule, position, self))
 	end
 
 	# not sure if this is right

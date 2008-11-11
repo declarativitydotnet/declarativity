@@ -16,12 +16,12 @@ class Index
   @@PRIMARY = 0
   @@SECONDARY = 1
 
-  def initialize(table, key, type)
+  def initialize(context, table, key, type)
     @table = table
     @key = key
     @index_type = type
 
-    iTable = $index
+    iTable = context.catalog.index unless context.catalog.nil?
     unless iTable.nil? 
       iTable.insert_tup(Tuple.new(table.name, key, type, self.class, self))
     end

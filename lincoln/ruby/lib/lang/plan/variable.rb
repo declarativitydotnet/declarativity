@@ -1,10 +1,11 @@
 require "lib/lang/plan/expression"
 
 class Variable < Expression
-  def initialize(name, type, position=-1)
+  def initialize(name, type, position, loc)
     @name = name
     @expr_type = type
     @position = position
+    @loc = loc
   end
 
   def ==(o)
@@ -14,11 +15,11 @@ class Variable < Expression
   end
 
   def clone
-    Variable.new(@name, @expr_type, @position)
+    Variable.new(@name, @expr_type, @position, @loc)
   end
   
   attr_reader :name
-  attr_accessor :expr_type
+  attr_accessor :expr_type, :loc
 
   def hash
     @name.hash

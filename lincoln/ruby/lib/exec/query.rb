@@ -1,7 +1,7 @@
-require 'lib/core/system'
+require 'lib/core/runtime'
 class Query
   include Comparable
-	def initialize(program, rule, isPublic, isDelete, input, output)
+	def initialize(context, program, rule, isPublic, isDelete, input, output)
 		@program = program
 		@rule = rule
 		@isPublic = isPublic
@@ -9,7 +9,8 @@ class Query
 		@event  = input.event()
 		@input = input
 		@output = output
-	  System.query.force(Tuple.new(@program, @rule, @isPublic, @isDelete, @event.to_s, @input.name, @output.name, self))
+    # catalog tuple generated in Runtime.initialize
+    #	  context.catalog.table(QueryTable.table_name).force(Tuple.new(@program, @rule, @isPublic, @isDelete, @event.to_s, @input.name, @output.name, self))
   end	
 	
 	attr_reader :event, :program, :rule, :isDelete, :isPublic, :input, :output

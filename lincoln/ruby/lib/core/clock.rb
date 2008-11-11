@@ -1,6 +1,7 @@
 require 'lib/types/exception/update_exception'
 class Clock < ObjectTable 
 	@@PRIMARY_KEY = Key.new(0)
+	@@TABLENAME = TableName.new(GLOBALSCOPE, "clock")
 	
 	class Field
 	  LOCATION = 0
@@ -9,10 +10,10 @@ class Clock < ObjectTable
   
 	@@SCHEMA = [String, Integer] # location, clockvalue
 	
-	def initialize(location)
-		super(TableName.new(GLOBALSCOPE, "clock"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+	def initialize(context, location)
+		super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
 		@location = location;
-		@clock = -1
+		@clock = 0
 	end
 	
 	def current()
@@ -20,6 +21,7 @@ class Clock < ObjectTable
 	end
 	
 	def insert_tup(tuple)
+#	  require 'ruby-debug'; debugger
 		time = tuple.value(Field::CLOCK)
 		if (time < @clock) then
 			raise UpdateException, "Invalid clock time " +  time.to_s + " current clock value = " + @clock.to_s

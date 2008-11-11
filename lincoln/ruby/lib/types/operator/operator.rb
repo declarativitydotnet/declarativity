@@ -14,14 +14,14 @@ class Operator
     return identifier
   end 
 
-  @@table = OperatorTable.new
-
-  def initialize(program, rule)
+  def initialize(context, program, rule)
+    @context = context
     @identifier = newId
     @program = program
     @rule = rule
-    me = Tuple.new(@@table.name, program, rule, @identifier, nil, self)
-    @@table.insert_tup(me)
+    me = Tuple.new(OperatorTable.name, program, rule, @identifier, nil, self)
+    # catalog tuple generated in Runtime.initialize
+    # context.catalog.table(OperatorTable.table_name).force(me)
   end
   
   attr_reader :identifier

@@ -4,8 +4,9 @@
 # the "--compiler" flag generates CompilerCatalogTable classes.
 
 # e.g.:
-#    ruby gencatalog.rb < bootstrap.sql > schema.rb
-#    ruby gencatalog.rb --compiler < compiler.sql >> schema.rb
+#    ruby gencatalog.rb -c global < global.sql > schema.rb
+#    ruby gencatalog.rb -c bootstrap < bootstrap.sql >> schema.rb
+#    ruby gencatalog.rb -c compiler < compiler.sql >> schema.rb
 
 
 require "rubygems"
@@ -109,15 +110,15 @@ end
 
 sky = TreeWalker.new(tree)
 
-v = Visit.new
+v = Visit.new(nil)
 
-sky.add_handler("tablename",VTable.new,1)
-sky.add_handler("key_colname",VCol.new,1)
-sky.add_handler("key_modifier",VKey.new,1)
-sky.add_handler("dtype",VType.new,1)
+sky.add_handler("tablename",VTable.new(nil),1)
+sky.add_handler("key_colname",VCol.new(nil),1)
+sky.add_handler("key_modifier",VKey.new(nil),1)
+sky.add_handler("dtype",VType.new(nil),1)
 
 
-sky.add_handler("num",VNum.new,1)
+sky.add_handler("num",VNum.new(nil),1)
 
 sky.walk("n")
 
@@ -136,7 +137,7 @@ $tables.sort.each do |table, arr|
   tableCap = table[0..0].capitalize + table[1..table.length]
   mixin = tableCap+"TableMixin"
 	print "class "+tableCap+"Table < " + classname.capitalize + "CatalogTable\n"
-  print "include "+mixin+" if defined? "+mixin+"\n"
+  print "  include "+mixin+" if defined? "+mixin+"\n"
 	if ($keys[table].size > 0) then
 		print "  @@PRIMARY_KEY = Key.new("+$keys[table].join(",")+")\n"
 	else
@@ -149,15 +150,15 @@ $tables.sort.each do |table, arr|
 		print "    "+arr[i].upcase+"="+i.to_s+"\n"
 	end
 	print "  end\n"
-	print "  @@SCHEMA = ["+$types[table].join(",")+"]\n"
-
-  print "  @@classes[self] = 1"
 
   tableStr = table[0..0].downcase + table[1..table.length]
+	print "  @@SCHEMA = ["+$types[table].join(",")+"]\n"
+	print "  @@TABLENAME = TableName.new(#{scope}, \"#{tableStr}\")\n"
+  print "  @@classes[self] = 1"
   
-	print "\n  def initialize\n"
-        print "    super(TableName.new(#{scope}, \"#{tableStr}\"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
-        print "    if defined? "+mixin+" and "+mixin+".methods.include? 'initialize_mixin'\n       then initialize_mixin \n    end\n"
+	print "\n  def initialize(context)\n"
+        print "    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))\n"
+        print "    if defined? "+mixin+" and "+mixin+".methods.include? 'initialize_mixin'\n       initialize_mixin(context) \n    end\n"
   # print "    programKey = Key.new(Field::" + arr[0].upcase+")\n"
   # print "    index = HashIndex.new(self, programKey, Index::Type::SECONDARY)\n"
   # print "    @secondary[programKey] = index\n"
@@ -171,20 +172,24 @@ $tables.sort.each do |table, arr|
   print "\n    #{scope}\n"
   print "\n  end"
   
-  print "\n  def pkey\n"
+  print "\n  def " + tableCap + "Table.pkey\n"
   print "\n    @@PRIMARY_KEY\n"
   print "\n  end"
 
-  print "\n  def schema\n"
+  print "\n  def " + tableCap + "Table.schema\n"
   print "\n    @@SCHEMA\n"
   print "\n  end"
   
 	print "\n  def schema_of\n"
 	(0..arr.size-1).each do |i|
-		print "    "+ arr[i]+" = Variable.new(\""+arr[i]+"\","+$types[table][i]+")\n"
-		print "    "+arr[i]+".position="+i.to_s+"\n"
+		print "    "+ arr[i]+" = Variable.new(\""+arr[i]+"\","+$types[table][i]+", "+i.to_s+",nil)\n"
 	end
 	print "    return Schema.new(\""+tableCap+"\",["+arr.join(",")+"])\n"
 	print "  end\n"
+
+  print "\n  def " + tableCap + "Table.table_name"
+  print "\n    @@TABLENAME"
+  print "\n  end\n"
+  
 	print "end\n\n"
 end

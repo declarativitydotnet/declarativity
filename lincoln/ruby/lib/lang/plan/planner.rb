@@ -20,14 +20,16 @@ require 'benchmark'
 class OverlogPlanner
 
 	class PlanProjector
-		def initialize(programname,ts)
+		def initialize(runtime, programname,ts)
+		  @runtime = runtime
 			@tuples = ts
 			@progname = programname
 		end
 
-		def proj_cat(tup,obj,type,func)
+		def proj_cat(tup,obj,type,func,position)
 			proj = func.call(tup)
-			objVar = Variable.new(type,obj.class)
+#			require 'ruby-debug'; debugger if not defined? obj.position
+			objVar = Variable.new(type,obj.class,position,nil)
 			proj.append(objVar,obj)
 			return proj
 		end
@@ -53,14 +55,13 @@ class OverlogPlanner
 						raise("can't aggregate over non-variable ("+var.value("type")+")")
 					end
 					# fix that string stuff!
-					thisvar = Aggregate.new(var.value("p_txt"),@aggFunc,AggregateFunction.type(@aggFunc,String))
+					thisvar = Aggregate.new(var.value("p_txt"),@aggFunc,AggregateFunction.agg_type(@aggFunc,String), var.value("expr_pos"), nil)
 					thisvar.position = var.value("expr_pos")
 					@aggFunc = nil
 				else 
 					case var.value("type")
 						when "var"
-							thisvar = Variable.new(var.value("p_txt"),String)
-							thisvar.position = var.value("expr_pos")
+							thisvar = Variable.new(var.value("p_txt"),String,var.value("expr_pos"),nil)
 						when "const"
 							thisvar = Value.new(var.value("p_txt"))
 							thisvar.position = var.value("expr_pos")
@@ -87,7 +88,7 @@ class OverlogPlanner
 				next if thisvar.nil?
 				# here, we don't actually project and aggregate.  we merely append the object to the tuple.
 				myVar = var.clone
-				myVar.append(Variable.new("var_obj",thisvar.class),thisvar)
+				myVar.append(Variable.new("var_obj",thisvar.class,thisvar.position,nil),thisvar)
 				myState << myVar
 			end	
 			# sort order should still be preserved.
@@ -102,8 +103,8 @@ class OverlogPlanner
 		end
 
 		def test_tup_tt(tup,typet)
-			typet.each do |tt|
-				return false unless tup.schema.contains(Variable.new(tt,String))	
+			typet.each_with_index do |tt,i|
+				return false unless tup.schema.contains(Variable.new(tt,String,i,nil))	
 			end
 			return true
 		end
@@ -160,8 +161,8 @@ class OverlogPlanner
 				thispred = Predicate.new(false,TableName.new(scope,tname),event,aHash[k])
 
 				# I think the p2 system uses positions starting at 1.
-				thispred.set(pred.value("program_name"),pred.value("rulename"),pred.value("pred_pos"))
-				ret << proj_cat(pred,thispred,"_term_obj",method(:project_term))
+				thispred.set(@runtime,pred.value("program_name"),pred.value("rulename"),pred.value("pred_pos"))
+				ret << proj_cat(pred,thispred,"_term_obj",method(:project_term),thispred.position)
 			end
 			return ret
 		end
@@ -173,16 +174,15 @@ class OverlogPlanner
 				ass = pHash[k]
 				lhs_txt = ass.value("lhs")
 				eval_expr = ass.value("assign_txt")
-				lhs = Variable.new(lhs_txt,String)
-				lhs.position = 0
+				lhs = Variable.new(lhs_txt,String,0,nil)
         # this is an assignment.  our first variable is the lhs; we don't want to
         # associate this with the expression on the rhs.
         exprArgs = aHash[k][1..aHash[k].length]
 				expr = ArbitraryExpression.new(eval_expr,exprArgs)
 
 				thisassign = Assignment.new(lhs,expr)
-				thisassign.set(ass.value("program_name"),ass.value("rulename"),ass.value("assign_pos"))
-				ret << proj_cat(ass,thisassign,"_term_obj",method(:project_term))
+				thisassign.set(@runtime,ass.value("program_name"),ass.value("rulename"),ass.value("assign_pos"))
+				ret << proj_cat(ass,thisassign,"_term_obj",method(:project_term),thisassign.position)
 			end
 			return ret
 		end
@@ -194,8 +194,8 @@ class OverlogPlanner
 				eval_expr = sel.value("select_txt")
 				expr = ArbitraryExpression.new(eval_expr,aHash[k])
 				thisselect = SelectionTerm.new(expr)
-				thisselect.set(@progname,sel.value("rulename"),sel.value("select_pos"))
-				ret << proj_cat(sel,thisselect,"_term_obj",method(:project_term))
+				thisselect.set(@runtime, @progname,sel.value("rulename"),sel.value("select_pos"))
+				ret << proj_cat(sel,thisselect,"_term_obj",method(:project_term),thisselect.position)
 			end
 			return ret
 		end
@@ -247,9 +247,10 @@ class OverlogPlanner
 
         d = (context.value("delete") == 1)
         ruleObj = Rule.new(1,context.value("rulename"),true,d,head,body)
-        ruleObj.set(context.value("program_name"))
+        ruleObj.set(@runtime, context.value("program_name"))
 
-        ret << proj_cat(pHash[rule],ruleObj,"_rule_obj",method(:project_rule))
+#        require 'ruby-debug'; debugger
+        ret << proj_cat(pHash[rule],ruleObj,"_rule_obj",method(:project_rule),nil)
       end
       return ret
     end
@@ -270,7 +271,7 @@ class OverlogPlanner
 	def predoftable(table)
 	        schema = table.schema_of
 	        p = Predicate.new(false,table.name,table,schema.variables)
-		p.set("global","r1",1)
+		p.set(@runtime,"global","r1",1)
 		return p
 	end
 
@@ -291,7 +292,8 @@ class OverlogPlanner
 
 	def thook(name)
 		tn = TableName.new(CompilerCatalogTable::COMPILERSCOPE,name)
-		ret = Table.find_table(tn)
+		require 'ruby-debug'; debugger if @runtime.nil?
+		ret = @runtime.catalog.table(tn)
 		raise("parser table #{name} not found in catalog") if ret.nil?
 
     ret.clear
@@ -315,13 +317,14 @@ class OverlogPlanner
 		@tfuncs = thook("myTableFunction")
 	end
 
-	def initialize(utterance)
+	def initialize(runtime, utterance)
+	  @runtime = runtime
 		# lookup the catalog tables and store references to them in instance variables.
 		catalog_tables
 
 		
 		# the choice about whether to pass these references as args, or repeat the lookup above in the compiler, is somewhat arbitrary	
-		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
+		compiler = OverlogCompiler.new(@runtime, @rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
 
 		
                 parseTime  = Benchmark.measure { compiler.parse(utterance) }
@@ -342,7 +345,7 @@ class OverlogPlanner
 		# ts points to my programs tuples.  for now, I'm going to assume there's only ever one row in here.
 		program = @programs.tuples.tups[0]
 		@progname = program.value("program_name")
-		return Program.new(@progname,"your mother")
+		return Program.new(@runtime,@progname,"your mother")
 	end
 
 	def plan
@@ -360,6 +363,7 @@ class OverlogPlanner
 	end
 
 	def plan_materializations
+	  #require 'ruby-debug'; debugger
 		@tables.tuples.each do |table| 
 			rescols = join_of(@columns,TupleSet.new("cols",table))
 			cols = Array.new
@@ -377,32 +381,36 @@ class OverlogPlanner
 			typestr = '[' + cols.join(",") + ']'
 			indxstr = 'Key.new(' + indxs.join(",") + ')'
 			typething = eval(typestr)
-			indxthing = eval(indxstr)
+#			indxthing = eval(indxstr)
+      indxthing = Key.new(*indxs)
 
 			(scope,tname) = get_scope(table.value("tablename"),@progname)
+			tn = TableName.new(scope,tname)
 
 			# hackensack
-			tn = table.value("tablename")
-			if tn.eql?("periodic") then
-				tableObj = EventTable.new(TableName.new(scope,tn),typething)
+      if indxthing.size == 0 
+        # require 'ruby-debug'; debugger
+        # XXXXX assume the lack of pkey indicates an Event table!  
+        # Refactor this to be handled by the parser!
+				tableObj = EventTable.new(tn,typething)        
 			else
 				#print "tn=#{tn}\n" 
-				(scope,tname) = get_scope(tn,@progname)
-				tableObj = RefTable.new(TableName.new(scope,tname),indxthing,typething)
+				tableObj = RefTable.new(@runtime, TableName.new(scope,tname),indxthing,typething)
 			end		
-			@program.definition(tableObj)			
+			@program.definition(tableObj)		
+			@runtime.catalog.register(tableObj)
 	
 			if (!table.value("watch").nil?) then
-				watch  = WatchClause.new(1,table.value("tablename"),table.value("watch"))
-				watch.set(@program.name)
+				watch  = WatchClause.new(1,tname,table.value("watch"))
+				watch.set(@runtime, @program.name)
 			end
 		end
 	end
 
 	def add_terms(ts)
-		predIndx = HashIndex.new(@preds,Key.new(1),Integer)
-		assIndx = HashIndex.new(@assigns,Key.new(1),Integer)
-		selIndx = HashIndex.new(@selects,Key.new(1),Integer)
+		predIndx = HashIndex.new(@runtime, @preds,Key.new(1),Integer)
+		assIndx = HashIndex.new(@runtime, @assigns,Key.new(1),Integer)
+		selIndx = HashIndex.new(@runtime, @selects,Key.new(1),Integer)
 
 		retSet = TupleSet.new("terms",nil)
 		ts.each do |tup|
@@ -446,7 +454,7 @@ class OverlogPlanner
 
 	def bu_facts(ts)
 		# assumes one program in parse tables at a time!
-		factIndx = HashIndex.new(@facts,Key.new(1),Integer)
+		factIndx = HashIndex.new(@runtime, @facts,Key.new(1),Integer)
 
 		fields = Hash.new
 		ts.order_by("termid","expr_pos") do |tup|
@@ -473,7 +481,7 @@ class OverlogPlanner
 			#table = Table.find_table(@progname+'::'+tab)
 			
 			(scope,tname) = get_scope(tab,@progname)
-			table = Table.find_table(TableName.new(scope,tname))
+			table = @runtime.catalog.table(TableName.new(scope,tname))
 			raise("#{tab} not found in catalog") if table.nil?
 
 			fields[tab].keys.sort.each  do |term|
@@ -485,7 +493,7 @@ class OverlogPlanner
           vars << Value.new(v)
         end
         fact = Fact.new(1,tab,vars)
-        fact.set(@program)
+        fact.set(@runtime, @program)
 			end
 		end
 	end 
@@ -506,7 +514,7 @@ class OverlogPlanner
 
 		fullSet = add_terms(allPrograms)	
 
-		planMaster = PlanProgram.new(@progname,fullSet)
+		planMaster = PlanProgram.new(@runtime, @progname,fullSet)
 		planMaster.emit.each do |e|
 			#puts e
 		end
@@ -531,14 +539,14 @@ class OverlogPlanner
 		  require 'ruby-debug'; debugger
 		  return nil
 	  end
-		sexpr = ScanJoin.new(pred,ts.tups[0].schema)
+		sexpr = ScanJoin.new(@runtime, pred,ts.tups[0].schema)
 		return sexpr.evaluate(ts)
 	end
 
 	def indxjoin_of(tab,key,ts)
 		example = ts.tups[0].schema
 		pred = predoftable(tab)
-		sexpr = IndexJoin.new(pred,example,Key.new(example.position(key)),tab.primary)
+		sexpr = IndexJoin.new(@runtime, pred,example,Key.new(example.position(key)),tab.primary)
 		return sexpr.evaluate(ts)
 	end
 end

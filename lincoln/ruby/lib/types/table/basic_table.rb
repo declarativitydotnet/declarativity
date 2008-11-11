@@ -3,12 +3,13 @@ require "lib/types/basic/tuple_set"
 require "lib/types/table/hash_index"
 
 class BasicTable < Table
-  def initialize(name, size, lifetime, key, types)
+  def initialize(context, name, key, types)
     @tuples = TupleSet.new(name, nil)
-    super(name, TableType::TABLE, size, lifetime.to_f, key, types)
+    super(name, TableType::TABLE, key, types)
     @key = key
-    @primary = HashIndex.new(self, key, Index::Type::PRIMARY)
+    @primary = HashIndex.new(context, self, key, Index::Type::PRIMARY)
     @secondary = Hash.new
+    @context = context
   end
   
   def tuples

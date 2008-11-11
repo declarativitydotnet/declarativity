@@ -9,55 +9,53 @@ require 'lib/lang/plan/arguments'
 require 'lib/lang/plan/value'
 require 'lib/lang/plan/predicate'
 require 'lib/lang/parse/schema'
-require 'lib/core/system'
+require 'lib/core/runtime'
 require "test/unit"
 
 class TestJoin < Test::Unit::TestCase
-  $catalog=nil; $index=nil
-  sys = System.new
-  sys.init
-
   def default_test
+    r = Runtime.new
+
     t1 = Tuple.new(1, "joe")
-    v = Variable.new("id", Integer, 0)
-    v2 = Variable.new("name", String, 1)
+    v = Variable.new("id", Integer, 0,nil)
+    v2 = Variable.new("name", String, 1,nil)
     schema1 = Schema.new("schema1", [v, v2])
     t1.schema = schema1
 
     t2 = Tuple.new(1, "hellerstein")
-    v3 = Variable.new("id", Integer, 0)
-    v4 = Variable.new("lastname", String, 1)
+    v3 = Variable.new("id", Integer, 0,nil)
+    v4 = Variable.new("lastname", String, 1,nil)
     schema2 = Schema.new("schema2", [v3, v4])
     t2.schema = schema2
 
-    table1 = BasicTable.new('Firstname', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
+    table1 = BasicTable.new(r, 'Firstname', Key.new(0), [Integer, String])
+    r.catalog.register(table1)
     ts = TupleSet.new('fnames', t1)
     table1.insert(ts, nil)
     table2 = EventTable.new('Lastname', [Integer, String])
+    r.catalog.register(table2)
     ts2 = TupleSet.new('lnames', t2)
 
 
     test_join(table2, schema2, t1, t2, v)
     
     pred = Predicate.new(false,table1.name, Table::Event::NONE, schema1.variables)
-    pred.set("myprog", "r3", 1) 
+    pred.set(r, "myprog", "r3", 1) 
     
-    sj = ScanJoin.new(pred, schema1)
+    sj = ScanJoin.new(r, pred, schema1)
     test_real_join(sj, table1, schema1, ts, schema2, ts2)
     assert_equal(sj.to_s, "NEST LOOP JOIN: PREDICATE[Firstname(id:0, name:1)]")
 
-    $catalog=nil; $index=nil
-    sys = System.new
-    sys.init
+    r = Runtime.new
     
     # reset the tables and tuplesets and repeat the experiment with index join
-    table1 = BasicTable.new('Firstname', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
+    table1 = BasicTable.new(r, 'Firstname', Key.new(0), [Integer, String])
     ts = TupleSet.new('fnames', t1)
     table1.insert(ts, nil)
     table2 = EventTable.new('Lastname', [Integer, String])
     ts2 = TupleSet.new('lnames', t2)
     
-    ij = IndexJoin.new(pred, schema1, Key.new(0), table1.primary)
+    ij = IndexJoin.new(r, pred, schema1, Key.new(0), table1.primary)
     test_real_join(ij, table1, schema1, ts, schema2, ts2)
     assert_equal(ij.to_s, "INDEX JOIN: PREDICATE[Firstname(id:0, name:1)]")
     
@@ -66,28 +64,29 @@ class TestJoin < Test::Unit::TestCase
   # all we're doing here is testing that the Join operators checks 
   # single-table stuff correctly.  No joining actually happens.
   def test_join(table, schema, t1, t2, v)
+    r = Runtime.new
     # test constant matches
     constant = Value.new("hellerstein")
     constant.position = 1
     pred = Predicate.new(false, table.name, Table::Event::NONE, [constant])
-    pred.set("myprog", "r1", 1)
-    join = Join.new(pred, schema)
+    pred.set(r, "myprog", "r1", 1)
+    join = Join.new(r, pred, schema)
     assert(join.validate(t1,t2))
 
     # test constant that does not match
     constant2 = Value.new("jones")
     constant2.position = 1
     pred2 = Predicate.new(false, table.name, Table::Event::NONE, [constant2])
-    pred2.set("myprog", "r2", 1)
-    join2 = Join.new(pred2, schema)
+    pred2.set(r, "myprog", "r2", 1)
+    join2 = Join.new(r, pred2, schema)
     assert_equal(join2.validate(t1,t2), false)
 
     # test repeated variable
     constant2 = Value.new("jones")
     constant2.position = 1
     pred2 = Predicate.new(false, table.name, Table::Event::NONE, [v,v])
-    pred2.set("myprog", "r2", 1)
-    join2 = Join.new(pred2, schema)
+    pred2.set(r, "myprog", "r2", 1)
+    join2 = Join.new(r, pred2, schema)
     assert(join2.validate(t1,t2))
 
     #coverage
@@ -103,8 +102,8 @@ class TestJoin < Test::Unit::TestCase
 
     # add another matching tuple to ts2, should join to produce 2 tuples
     tmatch = Tuple.new(1, "huckenfluster")
-    v3 = Variable.new("id", Integer, 0)
-    v4 = Variable.new("lastname", String, 1)
+    v3 = Variable.new("id", Integer, 0,nil)
+    v4 = Variable.new("lastname", String, 1,nil)
     schema2 = Schema.new("schema2", [v3, v4])
     tmatch.schema = schema2
     ts2 << tmatch
@@ -112,8 +111,8 @@ class TestJoin < Test::Unit::TestCase
 
     # add another matching tuple to basic_table, should join to produce 4
     ttablematch = Tuple.new(1, "sally")
-    v = Variable.new("id", Integer, 0)
-    v2 = Variable.new("name", String, 1)
+    v = Variable.new("id", Integer, 0,nil)
+    v2 = Variable.new("name", String, 1,nil)
     schema1 = Schema.new("schema1", [v, v2])
     ttablematch.schema = schema1
     

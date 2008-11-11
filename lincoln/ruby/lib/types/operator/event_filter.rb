@@ -19,8 +19,8 @@ class EventFilter < Operator
 		end
 	end
 	
-	def initialize (predicate)
-		super(predicate.program, predicate.rule)
+	def initialize (context, predicate)
+		super(context, predicate.program, predicate.rule)
 		@predicate = predicate
 		@filters = Array.new
 		
@@ -34,8 +34,8 @@ class EventFilter < Operator
 	  end
 	end
 	
-	def new_pf(predicate, filter)
-		super(predicate.program, predicate.rule)
+	def new_pf(context, predicate, filter)
+		super(context, predicate.program, predicate.rule)
 		@predicate = predicate
 		@filters = [filter]
   end

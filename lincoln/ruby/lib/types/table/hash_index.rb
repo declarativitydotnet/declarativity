@@ -3,8 +3,8 @@ require "lib/types/table/index.rb"
 class HashIndex < Index
   attr_reader :map
   
-  def initialize(table, key, type)
-    super(table, key, type)
+  def initialize(context, table, key, type)
+    super(context, table, key, type)
     @map = Hash.new
     ##table.tuples.each {|t| insert(t);  print "table #{table}, inserting #{t}\n";}
 
@@ -34,6 +34,13 @@ class HashIndex < Index
     end
   end
   
+  def lookupByKey(key)
+		if(@key.size != key.size and key.size > 0) 
+			raise "Key had wrong number of columns.  " + "Saw: " + key.size + " expected: " + key.size + " key: " + key.toString\
+		end
+		return (@map.has_key?(key)) ? @map[key] : TupleSet.new(table.name)
+	end
+	
   def lookup(t)
     k = @key.project(t).values.hash
     return @map.has_key?(k) ? @map[k] : TupleSet.new(table.name, nil)

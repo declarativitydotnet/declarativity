@@ -10,49 +10,89 @@ class Catalog < ObjectTable
   class Field # hack to simulate a Java or C enum
     TABLENAME = 0
     TYPE = 1
-    SIZE = 2
-    LIFETIME = 3
-    KEY = 4
-    TYPES = 5
-    OBJECT = 6
+    KEY = 2
+    TYPES = 3
+    OBJECT = 4
   end # Field
 
   @@SCHEMA = [
     TableName.class, # Name
     String.class,    # Table type
-    Integer.class,   # The table size
-    Float.class,     # The lifetime
     Key.class,       # The primary key
     TypeList.class,  # The type of each attribute
     BasicTable.class      # The table object
   ]
 
-  def initialize # Catalog
-    super(TableName.new(GLOBALSCOPE, "catalog"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
+  def initialize(context) # Catalog
+    super(context, TableName.new(GLOBALSCOPE, "catalog"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
+    @context = context
+    @index = nil
+  end
+  
+  def insert_tup(tuple)
+    table = tuple.value(Field::OBJECT)
+    if table.nil?
+      name = tuple.value(Field::TABLENAME)
+      type = tuple.value(Field::TYPE)
+      key      = tuple.value(Field::KEY)
+      types    = tuple.value(Field::TYPES)
+
+      if type == TableType::TABLE
+        table = BasicTable.new(@context, name, key, types)
+      else
+        raise "Don't know how to create table type " + type.to_s
+      end
+    end
+    tuple.value(Field::OBJECT)
+    return super(tuple)
+  end #Catalog.insert
+
+  #     /**
+  # * The index table.
+  # * @return The index table.
+  # */
+  attr_accessor :index
+
+  # /**
+  #  * Drop the table with the given name.
+  #  * @param name The name of the table.
+  #  * @return true if table was dropped, false otherwise.
+  #  * @throws UpdateException
+  #  */
+  def drop(name)
+    tuples = primary.lookup_vals(name)
+    return delete(tuples).size > 0
   end
 
-  protected
-    def insert_tup(tuple)
-      table = tuple.value(Field::OBJECT)
-      if table.nil?
-        name = tuple.value(Field::TABLENAME)
-        type = tuple.value(Field::TYPE)
-        size = tuple.value(Field::SIZE)
-        lifetime = tuple.value(Field::LIFETIME)
-        key      = tuple.value(Field::KEY)
-        types    = tuple.value(Field::TYPES)
+  # /**
+  #  * Get the table object with the given name.
+  #  * @param name The name of the table.
+  #  * @return The table object or null if !exist.
+  #  */
+  def table(name)
+    table = primary.lookup_vals(name)
 
-        if type == TableType::TABLE
-          if (size.to_f == INFINITY) and (lifetime.to_f == INFINITY)
-            table = RefTable.new(name,key,types)
-          else
-            table = BasicTable.new(name, size, lifetime, key, types)
-          end
-        else
-          raise "Don't know how to create table type " + type.to_s
-        end
-      end
-      tuple.value(Field::OBJECT)
-      return super(tuple)
-    end #Catalog.insert
+    return nil if table.nil?
+
+    if (table.size() == 1)
+      return table.tups[0].value(Catalog::Field::OBJECT)
+    elsif (table.size() > 1)
+      require 'ruby-debug'; debugger
+      raise "Should be one " + name.to_s + " table defined, but there are "+ table.size.to_s + "!"
+    end
+  end
+
+  # /**
+  #  * Register the given table with the catalog.
+  #  * @param table The table to be registered.
+  #  * @return true if table registration suceeds, false otherwise.
+  #  */
+  def register(table)
+ #   require 'ruby-debug'; debugger if table.name.scope == "path"
+  #  print "Catalog.register(" + table.name.to_s + ")\n"
+    tuple = Tuple.new(table.name, table.table_type, table.key, table.types, table)
+
+    force(tuple);
+    return true;
+  end
 end # Catalog

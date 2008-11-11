@@ -3,16 +3,15 @@ require "lib/types/basic/tuple_set"
 require "lib/types/basic/tuple"
 require "lib/types/table/key"
 require "lib/types/table/catalog"
+require "lib/core/runtime"
 require "test/unit"
 require "rubygems"
 
 class TestHashIndex < Test::Unit::TestCase
   def default_test
-    $catalog=nil; $index=nil
-    sys = System.new
-    sys.init
+    r = Runtime.new
 
-    bt = BasicTable.new('Orli', 10, BasicTable::INFINITY, Key.new(0), [Integer, String])
+    bt = BasicTable.new(r, 'Orli', Key.new(0), [Integer, String])
     ts = TupleSet.new('test', Tuple.new(1, 'hi'))
     assert_equal(bt.insert(ts, nil).tups.to_a, ts.tups.to_a)
     

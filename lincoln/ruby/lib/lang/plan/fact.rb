@@ -15,7 +15,7 @@ class Fact < Clause
 		return value + ")."
 	end
 
-	def set(program) 
+	def set(context, program) 
 		values = Array.new
 		@arguments.each do |argument|
 			function = argument.function
@@ -25,7 +25,7 @@ class Fact < Clause
 		unless @name.class <= TableName or @name.class <= String
 		  require 'ruby-debug'; debugger
 	  end
-		Compiler.fact.force(Tuple.new(program, @name, Tuple.new(values)))
+		context.catalog.table(FactTable.table_name).force(Tuple.new(program, @name, Tuple.new(*values)))
 	end
 
 end

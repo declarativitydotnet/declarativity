@@ -10,6 +10,7 @@ require 'lib/types/table/object_table.rb'
 require 'lib/lang/plan/predicate.rb'
 require 'lib/lang/plan/rule.rb'
 require 'lib/types/table/basic_table.rb'
+require 'lib/core/runtime'
 require 'termtab'
 
 require "TreeWalker.rb"
@@ -34,7 +35,8 @@ expr = ExpressionTable.new
 
 #terms = pexpr = nil
 
-compiler = OverlogCompiler.new(nil,terms,preds,pexpr,expr)
+r = Runtime.new
+compiler = OverlogCompiler.new(r, nil,terms,preds,pexpr,expr)
 compiler.parse(prog)
 compiler.analyze()
 

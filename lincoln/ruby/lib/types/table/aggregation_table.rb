@@ -1,10 +1,10 @@
 class AggregationTable < Table	
-  def initialize(predicate, type)
+  def initialize(context, predicate, type)
     super(predicate.name, type, predicate.key, predicate.types)
     @tuples = Hash.new
     @aggregates = Hash.new
-    if (type == Table.Type.TABLE) 
-      @primary = HashIndex.new(self, key, Index.Type.PRIMARY)
+    if (type == Table::Type::TABLE) 
+      @primary = HashIndex.new(context, self, key, Index::Type::PRIMARY)
       @secondary = Hash.new
     end
 
@@ -33,7 +33,7 @@ class AggregationTable < Table
   def types(predicate)
     types = TypeList.new
     predicate.each do |arg|
-      types << arg.type
+      types << arg.table_type
     end
     return types
   end
@@ -77,7 +77,7 @@ class AggregationTable < Table
       c.deletion(deletions)
     end
 
-    if type == Table.Type.EVENT
+    if type == Table::TableType::EVENT
       @tuples.clear
       @aggregates.clear
     end
@@ -110,12 +110,12 @@ class AggregationTable < Table
 
   def delete_tup(tuple)
     thekey = key.project(tuple)
-    group = tuples.get(thekey)
+    group = tuples[thekey]
     return false if group.nil?
     group.remove(tuple)
 
     # Recompute aggregate of tuple group.
-    function = @aggregates.get(thekey)
+    function = @aggregates[thekey]
     previous = function.result
     function.reset
     group.each { |t| function.evaluate(t) }
@@ -131,13 +131,13 @@ class AggregationTable < Table
   def insert_tup(tuple)
     thekey = key.project(tuple)
     if (!tuples.containsKey(thekey)) then tuples.put(thekey, TupleSet.new(name))
-      tuples.get(thekey).add(tuple)
+      tuples[thekey] << tuple
 
       if (!@aggregates.containsKey(thekey))
         #print "ok, calling function over a non-constructed aggregate\n"
         @aggregates.put(thekey, Aggregate.function(@aggregate))
       end
-      @aggregates.get(thekey).evaluate(tuple)
+      @aggregates[thekey].evaluate(tuple)
       return true
     end
   end

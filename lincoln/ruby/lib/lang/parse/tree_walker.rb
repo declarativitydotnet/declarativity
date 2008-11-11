@@ -2,10 +2,11 @@
 
 class TreeWalker
 	class Handler
-		def initialize()	
+		def initialize(runtime)	
 			#@term = string
 			#@func = func
 			#@recurse = recurse
+			@runtime = runtime
 		end
 		def semantic
 			# not implemented

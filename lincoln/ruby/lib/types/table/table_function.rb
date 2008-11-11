@@ -6,7 +6,7 @@ require "lib/types/exception/update_exception"
 class TableFunction < Table
 
   def initialize(name, types)
-    super(TableName.new(GLOBALSCOPE, name), TableType::FUNCTION, INFINITY, INFINITY, nil, types);
+    super(TableName.new(GLOBALSCOPE, name), TableType::FUNCTION, nil, types);
   end
 
   def insert(tuples, conflicts) 

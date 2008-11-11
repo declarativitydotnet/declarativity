@@ -12,8 +12,8 @@ class WatchClause < Clause
 		return "watch(" + @name + ", " + @modifier + ")."
 	end
 
-	def set(program)
+	def set(context, program)
 		###Compiler.watch.force(Tuple.new(program, name, modifier, Watch.new(program, null, name, modifier)))
-		Program.watch.force(Tuple.new(program, @name, @modifier, WatchOp.new(program, nil, @name, @modifier)))
+		context.catalog.table(WatchTable.table_name).force(Tuple.new(program, @name, @modifier, WatchOp.new(context, program, nil, @name, @modifier)))
 	end
 end

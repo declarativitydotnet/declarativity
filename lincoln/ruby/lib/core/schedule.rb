@@ -1,12 +1,14 @@
 class Schedule < ObjectTable
 
+  @@TABLENAME = TableName.new(GLOBALSCOPE, "schedule")
   @@PRIMARY_KEY = Key.new()
 
   class Field 
     TIME = 0
     PROGRAM = 1
-    INSERTIONS = 2
-    DELETIONS = 3
+    TABLENAME = 2
+    INSERTIONS = 3
+    DELETIONS = 4
   end
 
   @@SCHEMA = [Integer, String, TableName, TupleSet, TupleSet]
@@ -16,8 +18,8 @@ class Schedule < ObjectTable
   # TupleSet.class,  // Insertion tuple set
   # TupleSet.class   // Deletion tuple set
 
-  def initialize
-    super(TableName.new(GLOBALSCOPE, "schedule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
   end
 
   def min
@@ -33,16 +35,19 @@ class Schedule < ObjectTable
   end
   
   def insert(t, c)
+    print "+++++++++++++++++++ SCHEDULE: " + self.to_s + "\n"
+    print "+++++++++++++++++++  --> inserting " + t.tups.size.to_s + ": " + t.tups.to_s + "\n"
     super(t, c)
   end
   
   def delete(tups)
-    require 'ruby-debug'; debugger
+#    require 'ruby-debug'; debugger
+  print "+++++++++++++++++++ SCHEDULE: " + self.to_s + "\n"
+  print "+++++++++++++++++++  --> deleting " + tups.size.to_s + ": " + tups.tups.to_s + "\n"
     super(tups)
   end
   
   def delete_tup(tup)
-    require 'ruby-debug'; debugger
     super(tup)
   end
 end

@@ -13,23 +13,28 @@ module AssignmentTableMixin
 end
 
 module CompilerTableMixin
+  attr_reader :context
+  def initialize_mixin(context)
+    @context = context
+  end
   def insert_tup(tuple)
     program = tuple.value(field("PROGRAM"))
     if (program.nil?)
       owner = tuple.value(field("OWNER"))
       file  = tuple.value(field("FILE"))
-      compiler = Compiler.new(owner, file)
-      tuple.set_value(field("NAME"), compiler.program.name)
-      tuple.set_value(field("PROGRAM"), compiler.program)
+      require 'ruby-debug'; debugger if @context.nil?
+      compiler = Compiler.new(@context, owner, file)
+      tuple.set_value(field("NAME"), compiler.the_program.name)
+      tuple.set_value(field("PROGRAM"), compiler.the_program)
     end
     return super(tuple)
   end
 end
 
 module FactTableMixin
-  def initialize_mixin
+  def initialize_mixin(context)
     programKey = Key.new(field("PROGRAM"))
-    index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
+    index = HashIndex.new(context, self, programKey, Index::Type::SECONDARY)
     @secondary[programKey] = index
   end
   
@@ -37,18 +42,22 @@ module FactTableMixin
 end
 
 module IndexTableMixin
+  attr_reader :context
+  def initialize_mixin(context)
+    @context = context
+  end
   def insert_tup(tuple)
     if tuple.value(field("OBJECT")).nil? then
       begin
         ctype = tuple.value(field("CLASSNAME"))
         name = tuple.value(field("TABLENAME"))
-        if (table = Table.find_table(name)).nil?
+        if (table = @context.catalog.table(name)).nil?
           raise UpdateException, "can't create index; table " + name.to_s + " not found in catalog"
         end
         # create the index object
         key = tuple.value(field("KEY"))
         type = tuple.value(field("TYPE"))
-        index = ctype.new(table, key, type)
+        index = ctype.new(@context, table, key, type)
         tuple.set_value(field("OBJECT"), index)
       rescue => boom
         raise UpdateException, boom
@@ -62,10 +71,10 @@ end
 module RuleTableMixin
   include ObjectFromCatalog
 
-  def initialize_mixin
+  def initialize_mixin(context)
     programKey = Key.new(field("PROGRAM"))
-    index = HashIndex.new(self, programKey, Index::Type::SECONDARY)
-    @secondary[programKey.hash] = index
+    index = HashIndex.new(context, self, programKey, Index::Type::SECONDARY)
+    @secondary[programKey] = index
   end
   
   module_function:initialize_mixin
@@ -78,7 +87,8 @@ end
 module WatchTableMixin
   def watched(program, name, modifier)
     key = Tuple.new(program, name, modifier)
-    tuples = Program.watch.primary.lookup(key)
+    tuples = primary.lookupByKey(primary.key().project(key))		
+#    tuples = Program.watch.primary.lookup(key)
     if (tuples.size() > 0) then
       return tuples.iterator.next.value(field("OPERATOR"))
     end

@@ -2,8 +2,8 @@ require 'lib/types/basic/tuple_set'
 require 'lib/types/operator/operator'
 
 class SelectionOp < Operator
-  def initialize(selection, input)
-    super(selection.program, selection.rule)
+  def initialize(context, selection, input)
+    super(context, selection.program, selection.rule)
     @selection = selection
     @schema = input.clone
   end

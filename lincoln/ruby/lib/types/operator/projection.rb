@@ -1,6 +1,6 @@
 class Projection < Operator
-	def initialize (predicate)
-		super(predicate.program, predicate.rule)
+	def initialize (context, predicate)
+		super(context, predicate.program, predicate.rule)
 		@predicate = predicate
 
   	@accessors = Array.new		

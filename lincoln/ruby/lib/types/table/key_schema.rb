@@ -13,7 +13,7 @@ class SchemaKey < Key
 				att = a
 			end
 			# we don't know the type yet...
-			var = Variable.new(a,String)
+			var = Variable.new(a,String,i,nil)
 			if tup.schema.contains(var) then
 				realVar = tup.schema.variable(a).clone
 				realVar.position = i

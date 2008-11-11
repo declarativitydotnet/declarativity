@@ -51,15 +51,15 @@ class TestParse < Test::Unit::TestCase
 	end
 
 	def test_join1
-		prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
+		r = prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
 		# set up schema table's predicate
 		#require 'ruby-debug'; debugger
 		term_schema = @terms.schema_of
 		term_pred  = Predicate.new(false,@terms.name,@terms,term_schema.variables)
-		term_pred.set("global", "r3", 1)
+		term_pred.set(r, "global", "r3", 1)
 		
-		sj = ScanJoin.new(term_pred, @preds.schema_of)	
+		sj = ScanJoin.new(r, term_pred, @preds.schema_of)	
 		ts = TupleSet.new("pred", *@preds.tuples)
 		res = sj.evaluate(ts)
 
@@ -76,8 +76,6 @@ class TestParse < Test::Unit::TestCase
 	def test_deletion
 		prep("program foo;\ndelete path(A,B,_) :- path(B,Z,C);\n")
 		assert_equal(1,@rules.tuples.tups[0].value("delete"))
-
-		
 	end
 
 	def test_aggregation
@@ -169,24 +167,34 @@ class TestParse < Test::Unit::TestCase
 	end
 
 	def rei
-		$catalog = nil
-		$index = nil
-		$catalog = Catalog.new
-		$index = IndexTable.new
-
-		@preds = MyPredicateTable.new
-		@terms = MyTermTable.new
-		@pexpr = MyPrimaryExpressionTable.new
-		@expr = MyExpressionTable.new
-		@facts = MyFactTable.new
-		@tables = MyTableTable.new
-		@columns = MyColumnTable.new
-		@indices = MyIndexTable.new
-		@programs = MyProgramTable.new
-		@rules = MyRuleTable.new
-		@selects = MySelectionTable.new
-		@assigns = MyAssignmentTable.new
-		@tfuncs = MyTableFunctionTable.new
+    r = Runtime.new
+		# @preds = MyPredicateTable.new(r)
+		@preds = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myPredicate"))
+		# @terms = MyTermTable.new(r)
+		@terms = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myTerm"))
+    # @pexpr = MyPrimaryExpressionTable.new(r)
+		@pexpr = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myPrimaryExpression"))
+    # @expr = MyExpressionTable.new(r)
+    @expr = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myExpression"))
+    # @facts = MyFactTable.new(r)
+		@facts = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myFact"))    
+		# @tables = MyTableTable.new(r)
+		@tables = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myTable"))    
+		# @columns = MyColumnTable.new(r)
+		@columns = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myColumn"))    
+		# @indices = MyIndexTable.new(r)
+		@indices = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myIndex"))
+		# @programs = MyProgramTable.new(r)
+		@programs = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myProgram"))
+		# @rules = MyRuleTable.new(r)
+		@rules = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myRule"))
+		# @selects = MySelectionTable.new(r)
+		@selects = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"mySelection"))
+    # @assigns = MyAssignmentTable.new(r)
+		@assigns = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myAssignment"))
+    # @tfuncs = MyTableFunctionTable.new(r)
+		@tfuncs = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myTableFunction"))
+		return r
 	end
 	
 	def test_fact
@@ -208,10 +216,11 @@ class TestParse < Test::Unit::TestCase
 	end
 
 	def prep(utterance)
-		rei
-		compiler = OverlogCompiler.new(@rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
+		r = rei
+		compiler = OverlogCompiler.new(r, @rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
 		compiler.verbose = 'y'
 		compiler.parse(utterance)
 		compiler.analyze
+		return r
 	end
 end

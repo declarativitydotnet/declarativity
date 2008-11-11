@@ -1,66 +1,15 @@
 require 'lib/types/table/object_table'
 require 'lib/lang/parse/compiler_mixins'
-class BootstrapCatalogTable < ObjectTable
+class GlobalCatalogTable < ObjectTable
   @@classes = Hash.new
-  BOOTSTRAPSCOPE = 'bootstrap'
-  def BootstrapCatalogTable.classes
+  GLOBALSCOPE = 'global'
+  def GlobalCatalogTable.classes
     @@classes.keys
   end
 end
 
-class CompilerTable < BootstrapCatalogTable
-include CompilerTableMixin if defined? CompilerTableMixin
-  @@PRIMARY_KEY = Key.new(0)
-  class Field
-    NAME=0
-    OWNER=1
-    FILE=2
-    PROGRAM=3
-  end
-  @@SCHEMA = [String,String,String,String]
-  @@classes[self] = 1
-  def initialize
-    super(TableName.new(BOOTSTRAPSCOPE, "compiler"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-    if defined? CompilerTableMixin and CompilerTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
-    end
-  end
-
-  def field(name)
-
-    eval('Field::'+name)
-
-  end
-  def scope
-
-    BOOTSTRAPSCOPE
-
-  end
-  def pkey
-
-    @@PRIMARY_KEY
-
-  end
-  def schema
-
-    @@SCHEMA
-
-  end
-  def schema_of
-    name = Variable.new("name",String)
-    name.position=0
-    owner = Variable.new("owner",String)
-    owner.position=1
-    file = Variable.new("file",String)
-    file.position=2
-    program = Variable.new("program",String)
-    program.position=3
-    return Schema.new("Compiler",[name,owner,file,program])
-  end
-end
-
-class IndexTable < BootstrapCatalogTable
-include IndexTableMixin if defined? IndexTableMixin
+class IndexTable < GlobalCatalogTable
+  include IndexTableMixin if defined? IndexTableMixin
   @@PRIMARY_KEY = Key.new(0,1)
   class Field
     TABLENAME=0
@@ -70,11 +19,12 @@ include IndexTableMixin if defined? IndexTableMixin
     OBJECT=4
   end
   @@SCHEMA = [TableName,Key,TableType,String,String]
+  @@TABLENAME = TableName.new(GLOBALSCOPE, "index")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(BOOTSTRAPSCOPE, "index"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? IndexTableMixin and IndexTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -85,36 +35,35 @@ include IndexTableMixin if defined? IndexTableMixin
   end
   def scope
 
-    BOOTSTRAPSCOPE
+    GLOBALSCOPE
 
   end
-  def pkey
+  def IndexTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def IndexTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    tablename = Variable.new("tablename",TableName)
-    tablename.position=0
-    key = Variable.new("key",Key)
-    key.position=1
-    type = Variable.new("type",TableType)
-    type.position=2
-    classname = Variable.new("classname",String)
-    classname.position=3
-    object = Variable.new("object",String)
-    object.position=4
+    tablename = Variable.new("tablename",TableName, 0,nil)
+    key = Variable.new("key",Key, 1,nil)
+    type = Variable.new("type",TableType, 2,nil)
+    classname = Variable.new("classname",String, 3,nil)
+    object = Variable.new("object",String, 4,nil)
     return Schema.new("Index",[tablename,key,type,classname,object])
+  end
+
+  def IndexTable.table_name
+    @@TABLENAME
   end
 end
 
-class OperatorTable < BootstrapCatalogTable
-include OperatorTableMixin if defined? OperatorTableMixin
+class OperatorTable < GlobalCatalogTable
+  include OperatorTableMixin if defined? OperatorTableMixin
   @@PRIMARY_KEY = Key.new(2)
   class Field
     PROGRAM=0
@@ -123,11 +72,74 @@ include OperatorTableMixin if defined? OperatorTableMixin
     SELECTIVITY=3
   end
   @@SCHEMA = [String,String,String,Float]
+  @@TABLENAME = TableName.new(GLOBALSCOPE, "operator")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(BOOTSTRAPSCOPE, "operator"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? OperatorTableMixin and OperatorTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    GLOBALSCOPE
+
+  end
+  def OperatorTable.pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def OperatorTable.schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    program = Variable.new("program",String, 0,nil)
+    rule = Variable.new("rule",String, 1,nil)
+    id = Variable.new("id",String, 2,nil)
+    selectivity = Variable.new("selectivity",Float, 3,nil)
+    return Schema.new("Operator",[program,rule,id,selectivity])
+  end
+
+  def OperatorTable.table_name
+    @@TABLENAME
+  end
+end
+
+require 'lib/types/table/object_table'
+require 'lib/lang/parse/compiler_mixins'
+class BootstrapCatalogTable < ObjectTable
+  @@classes = Hash.new
+  BOOTSTRAPSCOPE = 'bootstrap'
+  def BootstrapCatalogTable.classes
+    @@classes.keys
+  end
+end
+
+class CompilerTable < BootstrapCatalogTable
+  include CompilerTableMixin if defined? CompilerTableMixin
+  @@PRIMARY_KEY = Key.new(0)
+  class Field
+    NAME=0
+    OWNER=1
+    FILE=2
+    PROGRAM=3
+  end
+  @@SCHEMA = [String,String,String,String]
+  @@TABLENAME = TableName.new(BOOTSTRAPSCOPE, "compiler")
+  @@classes[self] = 1
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? CompilerTableMixin and CompilerTableMixin.methods.include? 'initialize_mixin'
+       initialize_mixin(context) 
     end
   end
 
@@ -141,31 +153,31 @@ include OperatorTableMixin if defined? OperatorTableMixin
     BOOTSTRAPSCOPE
 
   end
-  def pkey
+  def CompilerTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def CompilerTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    rule = Variable.new("rule",String)
-    rule.position=1
-    id = Variable.new("id",String)
-    id.position=2
-    selectivity = Variable.new("selectivity",Float)
-    selectivity.position=3
-    return Schema.new("Operator",[program,rule,id,selectivity])
+    name = Variable.new("name",String, 0,nil)
+    owner = Variable.new("owner",String, 1,nil)
+    file = Variable.new("file",String, 2,nil)
+    program = Variable.new("program",String, 3,nil)
+    return Schema.new("Compiler",[name,owner,file,program])
+  end
+
+  def CompilerTable.table_name
+    @@TABLENAME
   end
 end
 
 class QueryTable < BootstrapCatalogTable
-include QueryTableMixin if defined? QueryTableMixin
+  include QueryTableMixin if defined? QueryTableMixin
   @@PRIMARY_KEY = Key.new
   class Field
     PROGRAM=0
@@ -178,11 +190,12 @@ include QueryTableMixin if defined? QueryTableMixin
     OBJECT=7
   end
   @@SCHEMA = [String,String,Integer,Integer,String,TableName,TableName,String]
+  @@TABLENAME = TableName.new(BOOTSTRAPSCOPE, "query")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(BOOTSTRAPSCOPE, "query"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? QueryTableMixin and QueryTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -196,34 +209,30 @@ include QueryTableMixin if defined? QueryTableMixin
     BOOTSTRAPSCOPE
 
   end
-  def pkey
+  def QueryTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def QueryTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    rule = Variable.new("rule",String)
-    rule.position=1
-    public = Variable.new("public",Integer)
-    public.position=2
-    delete = Variable.new("delete",Integer)
-    delete.position=3
-    event = Variable.new("event",String)
-    event.position=4
-    input = Variable.new("input",TableName)
-    input.position=5
-    output = Variable.new("output",TableName)
-    output.position=6
-    object = Variable.new("object",String)
-    object.position=7
+    program = Variable.new("program",String, 0,nil)
+    rule = Variable.new("rule",String, 1,nil)
+    public = Variable.new("public",Integer, 2,nil)
+    delete = Variable.new("delete",Integer, 3,nil)
+    event = Variable.new("event",String, 4,nil)
+    input = Variable.new("input",TableName, 5,nil)
+    output = Variable.new("output",TableName, 6,nil)
+    object = Variable.new("object",String, 7,nil)
     return Schema.new("Query",[program,rule,public,delete,event,input,output,object])
+  end
+
+  def QueryTable.table_name
+    @@TABLENAME
   end
 end
 
@@ -238,7 +247,7 @@ class CompilerCatalogTable < ObjectTable
 end
 
 class MyAssignmentTable < CompilerCatalogTable
-include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
+  include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     ASSIGNMENTID=0
@@ -248,11 +257,12 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
     ASSIGN_TXT=4
   end
   @@SCHEMA = [Integer,Integer,Integer,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myAssignment")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myAssignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyAssignmentTableMixin and MyAssignmentTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -266,33 +276,32 @@ include MyAssignmentTableMixin if defined? MyAssignmentTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyAssignmentTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyAssignmentTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    assignmentid = Variable.new("assignmentid",Integer)
-    assignmentid.position=0
-    termid = Variable.new("termid",Integer)
-    termid.position=1
-    assign_pos = Variable.new("assign_pos",Integer)
-    assign_pos.position=2
-    lhs = Variable.new("lhs",String)
-    lhs.position=3
-    assign_txt = Variable.new("assign_txt",String)
-    assign_txt.position=4
+    assignmentid = Variable.new("assignmentid",Integer, 0,nil)
+    termid = Variable.new("termid",Integer, 1,nil)
+    assign_pos = Variable.new("assign_pos",Integer, 2,nil)
+    lhs = Variable.new("lhs",String, 3,nil)
+    assign_txt = Variable.new("assign_txt",String, 4,nil)
     return Schema.new("MyAssignment",[assignmentid,termid,assign_pos,lhs,assign_txt])
+  end
+
+  def MyAssignmentTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyColumnTable < CompilerCatalogTable
-include MyColumnTableMixin if defined? MyColumnTableMixin
+  include MyColumnTableMixin if defined? MyColumnTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     COLUMNID=0
@@ -301,11 +310,12 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
     DATATYPE=3
   end
   @@SCHEMA = [Integer,Integer,Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myColumn")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myColumn"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyColumnTableMixin and MyColumnTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -319,31 +329,31 @@ include MyColumnTableMixin if defined? MyColumnTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyColumnTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyColumnTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    columnid = Variable.new("columnid",Integer)
-    columnid.position=0
-    tableid = Variable.new("tableid",Integer)
-    tableid.position=1
-    col_pos = Variable.new("col_pos",Integer)
-    col_pos.position=2
-    datatype = Variable.new("datatype",String)
-    datatype.position=3
+    columnid = Variable.new("columnid",Integer, 0,nil)
+    tableid = Variable.new("tableid",Integer, 1,nil)
+    col_pos = Variable.new("col_pos",Integer, 2,nil)
+    datatype = Variable.new("datatype",String, 3,nil)
     return Schema.new("MyColumn",[columnid,tableid,col_pos,datatype])
+  end
+
+  def MyColumnTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyExpressionTable < CompilerCatalogTable
-include MyExpressionTableMixin if defined? MyExpressionTableMixin
+  include MyExpressionTableMixin if defined? MyExpressionTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     EXPRESSIONID=0
@@ -353,11 +363,12 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
     EXPR_TEXT=4
   end
   @@SCHEMA = [Integer,Integer,Integer,Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myExpression")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyExpressionTableMixin and MyExpressionTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -371,33 +382,32 @@ include MyExpressionTableMixin if defined? MyExpressionTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyExpressionTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyExpressionTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    expressionid = Variable.new("expressionid",Integer)
-    expressionid.position=0
-    termid = Variable.new("termid",Integer)
-    termid.position=1
-    arg_pos = Variable.new("arg_pos",Integer)
-    arg_pos.position=2
-    expr_pos = Variable.new("expr_pos",Integer)
-    expr_pos.position=3
-    expr_text = Variable.new("expr_text",String)
-    expr_text.position=4
+    expressionid = Variable.new("expressionid",Integer, 0,nil)
+    termid = Variable.new("termid",Integer, 1,nil)
+    arg_pos = Variable.new("arg_pos",Integer, 2,nil)
+    expr_pos = Variable.new("expr_pos",Integer, 3,nil)
+    expr_text = Variable.new("expr_text",String, 4,nil)
     return Schema.new("MyExpression",[expressionid,termid,arg_pos,expr_pos,expr_text])
+  end
+
+  def MyExpressionTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyFactTable < CompilerCatalogTable
-include MyFactTableMixin if defined? MyFactTableMixin
+  include MyFactTableMixin if defined? MyFactTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     FACTID=0
@@ -405,11 +415,12 @@ include MyFactTableMixin if defined? MyFactTableMixin
     TABLENAME=2
   end
   @@SCHEMA = [Integer,Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myFact")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myFact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyFactTableMixin and MyFactTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -423,29 +434,30 @@ include MyFactTableMixin if defined? MyFactTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyFactTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyFactTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    factid = Variable.new("factid",Integer)
-    factid.position=0
-    termid = Variable.new("termid",Integer)
-    termid.position=1
-    tablename = Variable.new("tablename",String)
-    tablename.position=2
+    factid = Variable.new("factid",Integer, 0,nil)
+    termid = Variable.new("termid",Integer, 1,nil)
+    tablename = Variable.new("tablename",String, 2,nil)
     return Schema.new("MyFact",[factid,termid,tablename])
+  end
+
+  def MyFactTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyIndexTable < CompilerCatalogTable
-include MyIndexTableMixin if defined? MyIndexTableMixin
+  include MyIndexTableMixin if defined? MyIndexTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     INDEXID=0
@@ -453,11 +465,12 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
     COL_POS=2
   end
   @@SCHEMA = [Integer,Integer,Integer]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myIndex")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myIndex"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyIndexTableMixin and MyIndexTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -471,29 +484,30 @@ include MyIndexTableMixin if defined? MyIndexTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyIndexTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyIndexTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    indexid = Variable.new("indexid",Integer)
-    indexid.position=0
-    tableid = Variable.new("tableid",Integer)
-    tableid.position=1
-    col_pos = Variable.new("col_pos",Integer)
-    col_pos.position=2
+    indexid = Variable.new("indexid",Integer, 0,nil)
+    tableid = Variable.new("tableid",Integer, 1,nil)
+    col_pos = Variable.new("col_pos",Integer, 2,nil)
     return Schema.new("MyIndex",[indexid,tableid,col_pos])
+  end
+
+  def MyIndexTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyPredicateTable < CompilerCatalogTable
-include MyPredicateTableMixin if defined? MyPredicateTableMixin
+  include MyPredicateTableMixin if defined? MyPredicateTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     PREDICATEID=0
@@ -503,11 +517,12 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
     EVENT_MOD=4
   end
   @@SCHEMA = [Integer,Integer,Integer,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myPredicate")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myPredicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyPredicateTableMixin and MyPredicateTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -521,33 +536,32 @@ include MyPredicateTableMixin if defined? MyPredicateTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyPredicateTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyPredicateTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    predicateid = Variable.new("predicateid",Integer)
-    predicateid.position=0
-    termid = Variable.new("termid",Integer)
-    termid.position=1
-    pred_pos = Variable.new("pred_pos",Integer)
-    pred_pos.position=2
-    pred_txt = Variable.new("pred_txt",String)
-    pred_txt.position=3
-    event_mod = Variable.new("event_mod",String)
-    event_mod.position=4
+    predicateid = Variable.new("predicateid",Integer, 0,nil)
+    termid = Variable.new("termid",Integer, 1,nil)
+    pred_pos = Variable.new("pred_pos",Integer, 2,nil)
+    pred_txt = Variable.new("pred_txt",String, 3,nil)
+    event_mod = Variable.new("event_mod",String, 4,nil)
     return Schema.new("MyPredicate",[predicateid,termid,pred_pos,pred_txt,event_mod])
+  end
+
+  def MyPredicateTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyPrimaryExpressionTable < CompilerCatalogTable
-include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
+  include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     PRIMARYEXPRESSIONID=0
@@ -558,11 +572,12 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
     DATATYPE=5
   end
   @@SCHEMA = [Integer,Integer,Integer,String,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myPrimaryExpression")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myPrimaryExpression"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyPrimaryExpressionTableMixin and MyPrimaryExpressionTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -576,35 +591,33 @@ include MyPrimaryExpressionTableMixin if defined? MyPrimaryExpressionTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyPrimaryExpressionTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyPrimaryExpressionTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    primaryexpressionid = Variable.new("primaryexpressionid",Integer)
-    primaryexpressionid.position=0
-    expressionid = Variable.new("expressionid",Integer)
-    expressionid.position=1
-    p_pos = Variable.new("p_pos",Integer)
-    p_pos.position=2
-    p_txt = Variable.new("p_txt",String)
-    p_txt.position=3
-    type = Variable.new("type",String)
-    type.position=4
-    datatype = Variable.new("datatype",String)
-    datatype.position=5
+    primaryexpressionid = Variable.new("primaryexpressionid",Integer, 0,nil)
+    expressionid = Variable.new("expressionid",Integer, 1,nil)
+    p_pos = Variable.new("p_pos",Integer, 2,nil)
+    p_txt = Variable.new("p_txt",String, 3,nil)
+    type = Variable.new("type",String, 4,nil)
+    datatype = Variable.new("datatype",String, 5,nil)
     return Schema.new("MyPrimaryExpression",[primaryexpressionid,expressionid,p_pos,p_txt,type,datatype])
+  end
+
+  def MyPrimaryExpressionTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyProgramTable < CompilerCatalogTable
-include MyProgramTableMixin if defined? MyProgramTableMixin
+  include MyProgramTableMixin if defined? MyProgramTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     PROGRAMID=0
@@ -612,11 +625,12 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
     PROGRAM_NAME=2
   end
   @@SCHEMA = [Integer,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myProgram")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myProgram"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyProgramTableMixin and MyProgramTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -630,29 +644,30 @@ include MyProgramTableMixin if defined? MyProgramTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyProgramTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyProgramTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    programid = Variable.new("programid",Integer)
-    programid.position=0
-    owner = Variable.new("owner",String)
-    owner.position=1
-    program_name = Variable.new("program_name",String)
-    program_name.position=2
+    programid = Variable.new("programid",Integer, 0,nil)
+    owner = Variable.new("owner",String, 1,nil)
+    program_name = Variable.new("program_name",String, 2,nil)
     return Schema.new("MyProgram",[programid,owner,program_name])
+  end
+
+  def MyProgramTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyRuleTable < CompilerCatalogTable
-include MyRuleTableMixin if defined? MyRuleTableMixin
+  include MyRuleTableMixin if defined? MyRuleTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     RULEID=0
@@ -662,11 +677,12 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
     DELETE=4
   end
   @@SCHEMA = [Integer,Integer,String,Integer,Integer]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myRule")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myRule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyRuleTableMixin and MyRuleTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -680,33 +696,32 @@ include MyRuleTableMixin if defined? MyRuleTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyRuleTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyRuleTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    ruleid = Variable.new("ruleid",Integer)
-    ruleid.position=0
-    programid = Variable.new("programid",Integer)
-    programid.position=1
-    rulename = Variable.new("rulename",String)
-    rulename.position=2
-    public = Variable.new("public",Integer)
-    public.position=3
-    delete = Variable.new("delete",Integer)
-    delete.position=4
+    ruleid = Variable.new("ruleid",Integer, 0,nil)
+    programid = Variable.new("programid",Integer, 1,nil)
+    rulename = Variable.new("rulename",String, 2,nil)
+    public = Variable.new("public",Integer, 3,nil)
+    delete = Variable.new("delete",Integer, 4,nil)
     return Schema.new("MyRule",[ruleid,programid,rulename,public,delete])
+  end
+
+  def MyRuleTable.table_name
+    @@TABLENAME
   end
 end
 
 class MySelectionTable < CompilerCatalogTable
-include MySelectionTableMixin if defined? MySelectionTableMixin
+  include MySelectionTableMixin if defined? MySelectionTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     SELECTIONID=0
@@ -715,11 +730,12 @@ include MySelectionTableMixin if defined? MySelectionTableMixin
     SELECT_TXT=3
   end
   @@SCHEMA = [Integer,Integer,Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "mySelection")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "mySelection"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MySelectionTableMixin and MySelectionTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -733,31 +749,31 @@ include MySelectionTableMixin if defined? MySelectionTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MySelectionTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MySelectionTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    selectionid = Variable.new("selectionid",Integer)
-    selectionid.position=0
-    termid = Variable.new("termid",Integer)
-    termid.position=1
-    select_pos = Variable.new("select_pos",Integer)
-    select_pos.position=2
-    select_txt = Variable.new("select_txt",String)
-    select_txt.position=3
+    selectionid = Variable.new("selectionid",Integer, 0,nil)
+    termid = Variable.new("termid",Integer, 1,nil)
+    select_pos = Variable.new("select_pos",Integer, 2,nil)
+    select_txt = Variable.new("select_txt",String, 3,nil)
     return Schema.new("MySelection",[selectionid,termid,select_pos,select_txt])
+  end
+
+  def MySelectionTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyTableTable < CompilerCatalogTable
-include MyTableTableMixin if defined? MyTableTableMixin
+  include MyTableTableMixin if defined? MyTableTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     TABLEID=0
@@ -765,11 +781,12 @@ include MyTableTableMixin if defined? MyTableTableMixin
     WATCH=2
   end
   @@SCHEMA = [Integer,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myTable")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myTable"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTableTableMixin and MyTableTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -783,29 +800,30 @@ include MyTableTableMixin if defined? MyTableTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyTableTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyTableTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    tableid = Variable.new("tableid",Integer)
-    tableid.position=0
-    tablename = Variable.new("tablename",String)
-    tablename.position=1
-    watch = Variable.new("watch",String)
-    watch.position=2
+    tableid = Variable.new("tableid",Integer, 0,nil)
+    tablename = Variable.new("tablename",String, 1,nil)
+    watch = Variable.new("watch",String, 2,nil)
     return Schema.new("MyTable",[tableid,tablename,watch])
+  end
+
+  def MyTableTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyTableFunctionTable < CompilerCatalogTable
-include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
+  include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     TABLEFUNID=0
@@ -814,11 +832,12 @@ include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
     NESTED_PREDICATE_ID=3
   end
   @@SCHEMA = [Integer,Integer,String,Integer]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myTableFunction")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myTableFunction"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTableFunctionTableMixin and MyTableFunctionTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -832,31 +851,31 @@ include MyTableFunctionTableMixin if defined? MyTableFunctionTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyTableFunctionTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyTableFunctionTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    tablefunid = Variable.new("tablefunid",Integer)
-    tablefunid.position=0
-    termid = Variable.new("termid",Integer)
-    termid.position=1
-    function = Variable.new("function",String)
-    function.position=2
-    nested_predicate_id = Variable.new("nested_predicate_id",Integer)
-    nested_predicate_id.position=3
+    tablefunid = Variable.new("tablefunid",Integer, 0,nil)
+    termid = Variable.new("termid",Integer, 1,nil)
+    function = Variable.new("function",String, 2,nil)
+    nested_predicate_id = Variable.new("nested_predicate_id",Integer, 3,nil)
     return Schema.new("MyTableFunction",[tablefunid,termid,function,nested_predicate_id])
+  end
+
+  def MyTableFunctionTable.table_name
+    @@TABLENAME
   end
 end
 
 class MyTermTable < CompilerCatalogTable
-include MyTermTableMixin if defined? MyTermTableMixin
+  include MyTermTableMixin if defined? MyTermTableMixin
   @@PRIMARY_KEY = Key.new(0)
   class Field
     TERMID=0
@@ -865,11 +884,12 @@ include MyTermTableMixin if defined? MyTermTableMixin
     TERM_TXT=3
   end
   @@SCHEMA = [Integer,Integer,Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myTerm")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "myTerm"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? MyTermTableMixin and MyTermTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -883,31 +903,31 @@ include MyTermTableMixin if defined? MyTermTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def MyTermTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def MyTermTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    termid = Variable.new("termid",Integer)
-    termid.position=0
-    ruleid = Variable.new("ruleid",Integer)
-    ruleid.position=1
-    term_pos = Variable.new("term_pos",Integer)
-    term_pos.position=2
-    term_txt = Variable.new("term_txt",String)
-    term_txt.position=3
+    termid = Variable.new("termid",Integer, 0,nil)
+    ruleid = Variable.new("ruleid",Integer, 1,nil)
+    term_pos = Variable.new("term_pos",Integer, 2,nil)
+    term_txt = Variable.new("term_txt",String, 3,nil)
     return Schema.new("MyTerm",[termid,ruleid,term_pos,term_txt])
+  end
+
+  def MyTermTable.table_name
+    @@TABLENAME
   end
 end
 
 class AssignmentTable < CompilerCatalogTable
-include AssignmentTableMixin if defined? AssignmentTableMixin
+  include AssignmentTableMixin if defined? AssignmentTableMixin
   @@PRIMARY_KEY = Key.new(0,1)
   class Field
     PROGRAM=0
@@ -916,11 +936,12 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
     OBJECT=3
   end
   @@SCHEMA = [String,String,Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "assignment")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "assignment"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? AssignmentTableMixin and AssignmentTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -934,31 +955,31 @@ include AssignmentTableMixin if defined? AssignmentTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def AssignmentTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def AssignmentTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    rule = Variable.new("rule",String)
-    rule.position=1
-    position = Variable.new("position",Integer)
-    position.position=2
-    object = Variable.new("object",String)
-    object.position=3
+    program = Variable.new("program",String, 0,nil)
+    rule = Variable.new("rule",String, 1,nil)
+    position = Variable.new("position",Integer, 2,nil)
+    object = Variable.new("object",String, 3,nil)
     return Schema.new("Assignment",[program,rule,position,object])
+  end
+
+  def AssignmentTable.table_name
+    @@TABLENAME
   end
 end
 
 class FactTable < CompilerCatalogTable
-include FactTableMixin if defined? FactTableMixin
+  include FactTableMixin if defined? FactTableMixin
   @@PRIMARY_KEY = Key.new
   class Field
     PROGRAM=0
@@ -966,11 +987,12 @@ include FactTableMixin if defined? FactTableMixin
     TUPLE=2
   end
   @@SCHEMA = [String,TableName,Tuple]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "fact")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "fact"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? FactTableMixin and FactTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -984,29 +1006,30 @@ include FactTableMixin if defined? FactTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def FactTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def FactTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    tablename = Variable.new("tablename",TableName)
-    tablename.position=1
-    tuple = Variable.new("tuple",Tuple)
-    tuple.position=2
+    program = Variable.new("program",String, 0,nil)
+    tablename = Variable.new("tablename",TableName, 1,nil)
+    tuple = Variable.new("tuple",Tuple, 2,nil)
     return Schema.new("Fact",[program,tablename,tuple])
+  end
+
+  def FactTable.table_name
+    @@TABLENAME
   end
 end
 
 class PredicateTable < CompilerCatalogTable
-include PredicateTableMixin if defined? PredicateTableMixin
+  include PredicateTableMixin if defined? PredicateTableMixin
   @@PRIMARY_KEY = Key.new(0,1,2)
   class Field
     PROGRAM=0
@@ -1016,11 +1039,12 @@ include PredicateTableMixin if defined? PredicateTableMixin
     OBJECT=4
   end
   @@SCHEMA = [String,String,Integer,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "predicate")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "predicate"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? PredicateTableMixin and PredicateTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -1034,33 +1058,82 @@ include PredicateTableMixin if defined? PredicateTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def PredicateTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def PredicateTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    rule = Variable.new("rule",String)
-    rule.position=1
-    position = Variable.new("position",Integer)
-    position.position=2
-    event = Variable.new("event",String)
-    event.position=3
-    object = Variable.new("object",String)
-    object.position=4
+    program = Variable.new("program",String, 0,nil)
+    rule = Variable.new("rule",String, 1,nil)
+    position = Variable.new("position",Integer, 2,nil)
+    event = Variable.new("event",String, 3,nil)
+    object = Variable.new("object",String, 4,nil)
     return Schema.new("Predicate",[program,rule,position,event,object])
+  end
+
+  def PredicateTable.table_name
+    @@TABLENAME
+  end
+end
+
+class ProgramTable < CompilerCatalogTable
+  include ProgramTableMixin if defined? ProgramTableMixin
+  @@PRIMARY_KEY = Key.new(0)
+  class Field
+    PROGRAM=0
+    OWNER=1
+    OBJECT=2
+  end
+  @@SCHEMA = [String,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "program")
+  @@classes[self] = 1
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? ProgramTableMixin and ProgramTableMixin.methods.include? 'initialize_mixin'
+       initialize_mixin(context) 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    COMPILERSCOPE
+
+  end
+  def ProgramTable.pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def ProgramTable.schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    program = Variable.new("program",String, 0,nil)
+    owner = Variable.new("owner",String, 1,nil)
+    object = Variable.new("object",String, 2,nil)
+    return Schema.new("Program",[program,owner,object])
+  end
+
+  def ProgramTable.table_name
+    @@TABLENAME
   end
 end
 
 class RuleTable < CompilerCatalogTable
-include RuleTableMixin if defined? RuleTableMixin
+  include RuleTableMixin if defined? RuleTableMixin
   @@PRIMARY_KEY = Key.new(0,1)
   class Field
     PROGRAM=0
@@ -1070,11 +1143,12 @@ include RuleTableMixin if defined? RuleTableMixin
     OBJECT=4
   end
   @@SCHEMA = [String,String,String,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "rule")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "rule"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? RuleTableMixin and RuleTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -1088,33 +1162,84 @@ include RuleTableMixin if defined? RuleTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def RuleTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def RuleTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    name = Variable.new("name",String)
-    name.position=1
-    is_public = Variable.new("is_public",String)
-    is_public.position=2
-    is_delete = Variable.new("is_delete",String)
-    is_delete.position=3
-    object = Variable.new("object",String)
-    object.position=4
+    program = Variable.new("program",String, 0,nil)
+    name = Variable.new("name",String, 1,nil)
+    is_public = Variable.new("is_public",String, 2,nil)
+    is_delete = Variable.new("is_delete",String, 3,nil)
+    object = Variable.new("object",String, 4,nil)
     return Schema.new("Rule",[program,name,is_public,is_delete,object])
+  end
+
+  def RuleTable.table_name
+    @@TABLENAME
+  end
+end
+
+class SelectionTable < CompilerCatalogTable
+  include SelectionTableMixin if defined? SelectionTableMixin
+  @@PRIMARY_KEY = Key.new(0,1,2)
+  class Field
+    PROGRAM=0
+    RULE=1
+    POSITION=2
+    OBJECT=3
+  end
+  @@SCHEMA = [String,String,Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "selection")
+  @@classes[self] = 1
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? SelectionTableMixin and SelectionTableMixin.methods.include? 'initialize_mixin'
+       initialize_mixin(context) 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    COMPILERSCOPE
+
+  end
+  def SelectionTable.pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def SelectionTable.schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    program = Variable.new("program",String, 0,nil)
+    rule = Variable.new("rule",String, 1,nil)
+    position = Variable.new("position",Integer, 2,nil)
+    object = Variable.new("object",String, 3,nil)
+    return Schema.new("Selection",[program,rule,position,object])
+  end
+
+  def SelectionTable.table_name
+    @@TABLENAME
   end
 end
 
 class WatchTable < CompilerCatalogTable
-include WatchTableMixin if defined? WatchTableMixin
+  include WatchTableMixin if defined? WatchTableMixin
   @@PRIMARY_KEY = Key.new(0,1,2)
   class Field
     PROGRAM=0
@@ -1122,11 +1247,12 @@ include WatchTableMixin if defined? WatchTableMixin
     MODIFIER=2
   end
   @@SCHEMA = [String,String,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "watch")
   @@classes[self] = 1
-  def initialize
-    super(TableName.new(COMPILERSCOPE, "watch"), @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
     if defined? WatchTableMixin and WatchTableMixin.methods.include? 'initialize_mixin'
-       then initialize_mixin 
+       initialize_mixin(context) 
     end
   end
 
@@ -1140,24 +1266,25 @@ include WatchTableMixin if defined? WatchTableMixin
     COMPILERSCOPE
 
   end
-  def pkey
+  def WatchTable.pkey
 
     @@PRIMARY_KEY
 
   end
-  def schema
+  def WatchTable.schema
 
     @@SCHEMA
 
   end
   def schema_of
-    program = Variable.new("program",String)
-    program.position=0
-    tablename = Variable.new("tablename",String)
-    tablename.position=1
-    modifier = Variable.new("modifier",String)
-    modifier.position=2
+    program = Variable.new("program",String, 0,nil)
+    tablename = Variable.new("tablename",String, 1,nil)
+    modifier = Variable.new("modifier",String, 2,nil)
     return Schema.new("Watch",[program,tablename,modifier])
+  end
+
+  def WatchTable.table_name
+    @@TABLENAME
   end
 end
 

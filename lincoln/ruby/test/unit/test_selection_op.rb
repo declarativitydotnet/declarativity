@@ -20,8 +20,8 @@ class TestSelectionOp < Test::Unit::TestCase
   
   def constant_expr_test
     # test a few constant expressions
-    v = Variable.new("id", Integer, 0)
-    v2 = Variable.new("name", String, 1)
+    v = Variable.new("id", Integer, 0,nil)
+    v2 = Variable.new("name", String, 1,nil)
     schemey = Schema.new("schemey", [v,v2])
 
     booleq = Boolean.new("==", Value.new(0), Value.new(0))
@@ -49,8 +49,8 @@ class TestSelectionOp < Test::Unit::TestCase
   end
   def variable_expr_test
     t = Tuple.new(1, "joe")
-    v = Variable.new("id", Integer, 0)
-    v2 = Variable.new("name", Numeric)
+    v = Variable.new("id", Integer, 0,nil)
+    v2 = Variable.new("name", Numeric,nil)
     v2.expr_type = String
     assert_equal(v2.function.returnType, String)
     v2.position = 1

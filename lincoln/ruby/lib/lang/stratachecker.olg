@@ -1,7 +1,8 @@
 program strataChecker;
 
-/*import p2.core.Log;
-import p2.types.table.TableName;
+/*
+import jol.core.Log;
+import jol.types.table.TableName;
 import java.lang.String;
 import java.lang.Integer;
 */
@@ -10,32 +11,36 @@ define(error, {String, String, TableName, Integer, TableName, Integer});
 
 /* Verify strata for notin predicates. */
 public
-error(Program, Rule, Parent.name(), ParentStrata, Child.name(), ChildStrata) :-
-	compiler::checkStrata(Program, Predicates),
-	compiler::predicate(Program, Rule, 0, Event, Parent), 
-	compiler::predicate(Program, Rule, Pos, Event, Child), 
+error(Program, Rule, Pname, ParentStrata, Cname, ChildStrata) :-
+	compile::checkStrata(Program, Predicates),
+	predicate(Program, Rule, 0, Event, Parent), 
+	predicate(Program, Rule, Pos, Event, Child), 
 	Pos > 0, Child.notin(),
-	runtime::priority(Program, Parent.name(), ParentStrata),
-	runtime::priority(Program, Child.name(), ChildStrata),
+	Pname := Parent.name(),
+	Cname := Child.name(),
+	runtime::priority(Program, Pname, ParentStrata),
+	runtime::priority(Program, Cname, ChildStrata),
 	ParentStrata <= ChildStrata;
 	
 /* Verify strata for aggregation predicates. */
 public
-error(Program, Rule, Parent, ParentStrata, Head.name(), HeadStrata) :-
-	compiler::checkStrata(Program, Predicates),
-	compiler::predicate(Program, Rule, 0, Event, Head), 
+error(Program, Rule, Parent, ParentStrata, Hname, HeadStrata) :-
+	compile::checkStrata(Program, Predicates),
+	predicate(Program, Rule, 0, Event, Head), 
 	Head.containsAggregation(),
-	compiler::dependency(Program, Parent, Head.name()),
-	runtime::priority(Program, Head.name(), HeadStrata),
+	Hname := Head.name(),
+	compile::dependency(Program, Parent, Hname),
+	runtime::priority(Program, Hname, HeadStrata),
 	runtime::priority(Program, Parent, ParentStrata),
 	ParentStrata <= HeadStrata;
 	
 	
 log("WARNING", Msg) :-
 	error(Program, Rule, Parent, ParentStrata, Child, ChildStrata),
-	global::clock(Location, Time),
+	clock(Location, Time),
 /*	Msg := "Program " + Program + ", RULE " + Rule +
 	       ": strata error Predicate " + 
-	       Parent.toString() + " is assigned to strata " + ParentStrata.toString() + 
-	       " but depends on predicate " + Child.toString() + " in strata " + ChildStrata.toString()
-	*/ Msg:="MSG is bad for you";
+	       Parent.to_s + " is assigned to strata " + ParentStrata.to_s + 
+	       " but depends on predicate " + Child.to_s + " in strata " + ChildStrata.to_s; */
+	  Msg := "Bite me, died in stratachecker";
+	

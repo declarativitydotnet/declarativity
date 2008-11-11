@@ -1,6 +1,6 @@
 class Function < Operator 
-	def initialize(function, predicate)
-		super(predicate.program, predicate.rule)
+	def initialize(context, function, predicate)
+		super(context, predicate.program, predicate.rule)
 		@function = function
 		@predicate = predicate
 	end

@@ -1,8 +1,8 @@
-program compiler;
+program compile;
 
-/* 
-   import p2.lang.plan.Program;
-   import java.lang.Integer;
+/*
+import jol.lang.plan.Program;
+import java.lang.Integer;
 */
 
 /*******************************************************************/
@@ -13,25 +13,29 @@ define(config, {String, Program});
 define(checkStrata, {String, Integer});
 
 /*******************************************************************/
-/*** Facts that initialize priority with this programs predicates ***/
+/*** Facts that initialize priority with this program's predicates ***/
 
-runtime::priority("compiler", TableName.new("bootstrap", "compiler"),  0);
-runtime::priority("compiler", TableName.new("global", "predicate"), 0);
-runtime::priority("compiler", TableName.new("compiler", "rule"),      0);
+runtime::priority("compile", new TableName("global", "compiler"),  0);
+runtime::priority("compile", new TableName("global", "predicate"), 0);
+runtime::priority("compile", new TableName("global", "rule"),      0);
 
-runtime::priority("compiler", TableName.new("compiler", "config"),         0);
-runtime::priority("compiler", TableName.new("compiler", "dependency"),     1);
-runtime::priority("compiler", TableName.new("compiler", "priorityUpdate"), 2);
-runtime::priority("compiler", TableName.new("runtime", "priority"),       3);
-runtime::priority("compiler", TableName.new("compiler", "checkStrata"),    4);
+runtime::priority("compile", new TableName("compile", "config"),         0);
+runtime::priority("compile", new TableName("compile", "dependency"),     1);
+runtime::priority("compile", new TableName("compile", "priorityUpdate"), 2);
+runtime::priority("compile", new TableName("runtime", "priority"),       3);
+runtime::priority("compile", new TableName("compile", "checkStrata"),    4);
 
 
 /*******************************************************************/
 /*** Compile rules: Initialize program priority/strata **/
 
+/*
 checkStratification
 checkStrata(Program, count<*>) :-
 	runtime::priority(Program, TableName, Priority);
+
+watch(checkStrata, i);
+*/
 
 /* Determine R/G graph dependencies. */
 dependency(ProgramName, Head.name(), Body.name()) :-
@@ -39,11 +43,8 @@ dependency(ProgramName, Head.name(), Body.name()) :-
 	rule(ProgramName, Rule, _),
 	predicate(ProgramName, Rule, 0, _, Head), /* Position == 0 */
 	predicate(ProgramName, Rule, Pos, _, Body), 
-	Hn := Head.name(),
-	Bn := Body.name(),
-	Hn != Bn, 
-	Pos > 0,
-	ProgramName != "compiler";
+	Head.name() != Body.name(), Pos > 0,
+	ProgramName != "compile";
 	
 /* Transitive closure over the dependency graph. */
 dependency(ProgramName, Ancestor, Child) :-
@@ -52,16 +53,17 @@ dependency(ProgramName, Ancestor, Child) :-
 	Ancestor != Child;
 	
 /* Initialize all predicates to stratum 0. */
+priority_init
 runtime::priority(ProgramName, Pred.name(), 0) :-
 	config(ProgramName, Object),
 	rule(ProgramName, Rule, _),
 	predicate(ProgramName, Rule, Pos, Event, Pred),
-	ProgramName != "compiler";
+	ProgramName != "compile";
 	
 runtime::priority(ProgramName, TableName, 0) :-
 	config(ProgramName, Object),
 	fact(ProgramName, TableName, Tuple),
-	ProgramName != "compiler";
+	ProgramName != "compile";
 
 
 /* Bubble up predicates in the stratum chain. */
@@ -75,4 +77,61 @@ priorityUpdate(ProgramName, Head, max<Priority>) :-
 		
 runtime::priority(ProgramName, Pred, Priority) :-
 	priorityUpdate(ProgramName, Pred, Priority);
+	
+	
+/*******************************************************************/
+/*** Compile uninstall program **/
+import java.lang.Boolean;
+	
+define(uninstall, {String, Boolean});
+define(hardUninstall, {String});
+
+delete
+program(Program, Owner, Object) :-
+	uninstall(Program, _),
+	program(Program, Owner, Object),
+	Owner != "system";
+	
+hardUninstall(Program) :-
+	uninstall(Program, Hard),
+	program(Program, Owner, Object),
+	Owner != "system";
+
+delete
+runtime::priority(Program, Pred, Priority) :-
+	hardUninstall(Program),
+	runtime::priority(Program, Pred, Priority);	
+
+delete
+query(Program, Rule, Public, Delete, Event, Input, Output, Object) :-
+	hardUninstall(Program),
+	query(Program, Rule, Public, Delete, Event, Input, Output, Object);
+	
+delete
+rule(Program, Rule, Public, Delete, Object) :-	
+	hardUninstall(Program),
+	rule(Program, Rule, Public, Delete, Object);
+	
+delete
+predicate(Program, Rule, Position, Event, Object) :-
+	hardUninstall(Program),
+	predicate(Program, Rule, Position, Event, Object);
+	
+delete
+selection(Program, Rule, Position, Object) :-
+	hardUninstall(Program),
+	selection(Program, Rule, Position, Object);
+
+delete
+assignment(Program, Rule, Position, Object) :-
+	hardUninstall(Program),
+	assignment(Program, Rule, Position, Object);
+
+delete
+watches(Program, Tablename, Modifier, Operator) :-
+	hardUninstall(Program),
+	watches(Program, Tablename, Modifier, Operator);
+	
+	
+	
 	

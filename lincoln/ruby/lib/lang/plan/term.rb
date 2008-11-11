@@ -33,11 +33,13 @@ class Term
 	  raise "subclass method for Term.requires not defined"
   end
 	
-  def set(program, rule, position) 
-	  raise "subclass method for Term.set not defined"
+  def set(context, program, rule, position) 
+	  @program = program
+	  @rule = rule
+	  @position = position
   end
   	
-	def operator(input)
+	def operator(context, input)
 	  raise "subclass method for Term.operator not defined"
   end
 end

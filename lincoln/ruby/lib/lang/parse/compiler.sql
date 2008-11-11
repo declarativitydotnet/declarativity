@@ -98,6 +98,14 @@ table assignment (
  object String
 )
 
+
+table program (
+  +program String,
+  owner String,
+  object String
+)
+
+
 table rule (
   +program String,
   +name String,
@@ -120,9 +128,16 @@ table watch (
 )
 
 table predicate (
-        +program String,
-        +rule String,
-        +position Integer,
-        event String,
-        object String
+  +program String,
+  +rule String,
+  +position Integer,
+  event String,
+  object String
+)
+
+table selection (
+  +program String,
+  +rule String, 
+  +position Integer,
+  object String
 )

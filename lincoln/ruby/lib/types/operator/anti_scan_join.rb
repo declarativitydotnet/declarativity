@@ -1,7 +1,7 @@
 class AntiScanJoin < Join
-	def initialize (predicate, input)
-		super(predicate, input)
-		@table = Table.table(predicate.name)
+	def initialize (context, predicate, input)
+		super(context, predicate, input)
+		@table = context.catalog.table(predicate.name)
 	end
 
   def to_s

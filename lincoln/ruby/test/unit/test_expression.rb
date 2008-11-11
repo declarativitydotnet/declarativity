@@ -22,9 +22,9 @@ require "lib/lang/plan/native_expression.rb"
 class TestExpression < Test::Unit::TestCase
 	def test_prog
 
-		a = Variable.new("A",Integer,0)
-		b = Variable.new("B",Integer, 1)
-		c = Variable.new("C",Integer,2)
+		a = Variable.new("A",Integer,0,nil)
+		b = Variable.new("B",Integer, 1,nil)
+		c = Variable.new("C",Integer,2,nil)
 		schema = Schema.new("me",[a,b,c])
 
 		tup = Tuple.new(4,2,3)

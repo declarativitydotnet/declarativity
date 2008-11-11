@@ -1,69 +1,138 @@
 program runtime;
 
-require "lib/types/basic/tuple_set";
-require "lib/types/basic/tuple";
-require "lib/types/table/table_name";
+/*
+import java.lang.String;
+import java.lang.Integer;
+import java.lang.Float;
+import jol.types.basic.TupleSet;
+import jol.types.basic.Tuple;
+import jol.types.table.TableName;
+*/
 
-/* Define runtime events. */
-define(runnable, {Float, String, TableName, TupleSet, TupleSet});
-define(strata, keys(0,1), {String, Float, Integer});
-define(priority, keys(0,1), {String, TableName, Integer});
+/* global::schedules things from the global::schedule queue (attaches strata to each tuple). */
+define(queue, {Float, Integer, String, TableName, TupleSet, TupleSet});
+
+/* Insertion queue: (Time, Strata, ProgramName, TableName, Tuples) */
+define(insertionQueue, keys(), {Float, Integer, String, TableName, TupleSet});
+
+/* Deletion queue: (Time, ProgramName, TableName, Tuples) */
+define(deletionQueue,  keys(), {Float, String, TableName, TupleSet});
+
+/* Evaluator output: evaluation(Time, ProgramName, TableName, Insertions, Deletions) */
+define(evaluation, {Float, String, TableName, TupleSet, TupleSet});
+
+/* Evaluator input: execute(Time, ProgramName, TableName, Insertions, Deletions) */
+define(execute,    {Float, String, TableName, TupleSet, TupleSet});
+
+/* Committer output: delta(Time, ProgramName, TableName, Insertions, Deletions) */ 
 define(delta, {Float, String, TableName, TupleSet, TupleSet});
 
-reschedule
+/* Committer input: runnable(Time, ProgramName, TableName, Insertions, Deletions) */ 
+define(runnable,   {Float, String, TableName, TupleSet, TupleSet});
+
+/* Current strata: strata(Program, Time, Strata) */
+define(strata,  keys(0,1), {String, Float, Integer});
+
+/* Predicate/TableName priority/strata: priority(Program, TableName, Strata) */
+define(priority, keys(0,1), {String, TableName, Integer});
+
+/* Remove insertion post evaluation. */
+delete
+insertionQueue(Time, Strata, Program, Name, Insertions) :-
+    runnable(Time, Program, Name, Insertions, _),
+    insertionQueue(Time, Strata, Program, Name, Insertions);
+
+/* Remove deletion post evaluation. */
+delete
+deletionQueue(Time, Program, Name, Deletions) :-
+    runnable(Time, Program, Name, _, Deletions);
+
+/* Reglobal::schedule delta. */
 global::schedule(Time, Program, Name, Insertions, Deletions) :-
-	delta(Time, Program, Name, Insertions, Deletions);
+	evaluation(Time, Program, Name, Insertions, Deletions),
+	Insertions.size() > 0;
+
+global::schedule(Time, Program, Name, Insertions, Deletions) :-
+  evaluation(Time, Program, Name, Insertions, Deletions),
+	Deletions.size() > 0;
 	
-schedulePublic 
-global::schedule(Time, Program2, Name, Insertions, Deletions) :-
+/* Evaluate the program with the given insertions OR deletions. */
+evaluator
+evaluation(Time, Program, Name, Insertions, Deletions) :-
+	evaluator(execute(Time, Program, Name, Insertions, Deletions));
+	
+/* NOTE: We do not global::schedule public deletions!! */
+publicEval
+execute(Time, Program2, Name, Insertions, null) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
 	bootstrap::query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
-	/* next line changed to remove && expression, which doesn't parse right */
 	Public == true, Input == Name, Program1 != Program2;
 
-evaluate 
+/* Execute on the intended program. */
+localEval
+execute(Time, Program, Name, Insertions, Deletions) :-
+	delta(Time, Program, Name, Insertions, Deletions);
+
+/* Flusher the insertions OR deletions, pass deltas to evaluator. */
+commit 
 delta(Time, Program, Name, Insertions, Deletions) :-
-	evaluate(runnable(Time, Program, Name, Insertions, Deletions));
-
-
-/* Delete what has been evaluated in the current clock. */
-cleanup 
-delete global::schedule(Time, Program, Name, Insertions, Deletions) :-
-	runnable(Time, Program, Name, Insertions, Deletions);
+	flusher(runnable(Time, Program, Name, Insertions, Deletions));
 
 /* Identify the runnable tuples. */
-runnable 
-runnable(Time, Program, Name, Insertions, Deletions) :-
-	strata#insert(Program, Time, Priority),
-	global::schedule(Time, Program, Name, Insertions, Deletions),
-	priority(Program, Name, Priority);
-	
-/* Determine the current strata in the current time for all 
-   programs that have something scheduled. */
-/* JMH asks: When/how does one stratum end and the next begin? */
-strata 
-strata(Program, Time, min<Priority>) :-
-	global::clock(Location, Time),
-	global::schedule(Time, Program, Name, Insertions, Deletions),
-	priority(Program, Name, Priority);
+insertion_runnable 
+runnable(Time, Program, Name, Insertions, null) :-
+	strata(Program, Time, Strata),
+	insertionQueue(Time, Strata, Program, Name, Insertions);
 
-/* This case handles those programs that do not have a query
-    (and hence no priority) for the tuple 'Name'. */
-/* JMH asks: when is this logic needed? At initialization of the program?? */
-runnable(Time, Program, Name, Insertions, Deletions) :-
+/* Execute all deletions when insertion count goes to 0. 
+   Deletions executed and deletions deltas global::scheduled for 
+   next global::clock. */
+deletion_runnable 
+runnable(Time+1, Program, Name, null, Deletions) :-
+	deletionQueue(Time, Program, Name, Deletions);
+
+
+/* Determine the current strata in the current time for all 
+   programs that have something global::scheduled. */
+strata 
+strata(Program, Time, min<Stratum>) :-
+	insertionQueue(Time, Stratum, Program, Name, Insertions);
+
+init_insertion_queue
+insertionQueue(Time, Strata, Program, Name, Insertions) :-
+	queue(Time, Strata, Program, Name, Insertions, _),
+	compiler::program(Program, Owner, Object),
+	Insertions != null, Insertions.size() > 0;
+	
+init_deletion_queue
+deletionQueue(Time, Program, Name, Deletions) :-
+	queue(Time, Strata, Program, Name, Insertions, Deletions),
+	compiler::program(Program, Owner, Object),
+	Deletions != null, Deletions.size() > 0;
+	
+/* Queue up global::scheduled items in current global::clock. */
+queue(Time, Strata, Program, Name, Insertions, Deletions) :-
 	global::clock(Location, Time),
 	global::schedule(Time, Program, Name, Insertions, Deletions),
-	notin priority(Program, Name, Priority);
+	priority(Program, Name, Strata);
 	
-	
+queue(Time, 0, Program, Name, Insertions, Deletions) :-
+	global::clock(Location, Time),
+	global::schedule(Time, Program, Name, Insertions, Deletions),
+	notin priority(Program, Name, _);
+
+/* Clean up queued programs. */
+delete
+global::schedule(Time, Program, Name, Insertions, Deletions) :-
+	global::clock#delete(Location, Time),
+	global::schedule(Time, Program, Name, Insertions, Deletions);
+
 /*******************************************************************/
-/*** Periodic scheduler                                           **/
+/*** Periodic global::scheduler                                           **/
 
 define(schedulePeriodic, {String, Float, Float, Float, Float, String});
 
-/* Schedule next periodic. */
-/* Seems that periodics never seem to get "garbage collected" after their TTL
-   expires -- JMH */
+/* schedule next periodic. */
 renewPeriodic
 schedulePeriodic(Id, Period, TTL, Time+Period, Count+1, Program) :-
 	global::clock#insert(Location, Time),
@@ -75,14 +144,14 @@ schedulePeriodic(Id, Period, TTL, Time+1+Offset, Count+1, Program) :-
 	config(Time, Program, Object),
 	global::periodic(Id, Period, TTL, Offset, Count, Program);
 	
-/* Schedule the periodic and update its execution count. */
+/* global::schedule the periodic and update its execution count. */
 schedulePeriodic 
-global::periodic(Id, Period, TTL, Time, Count, Program) :-
-	periodicScheduler(schedulePeriodic(Id, Period, TTL, Time, Count, Program));
+periodic(Id, Period, TTL, Time, Count, Program) :-
+	periodicSchedule(schedulePeriodic(Id, Period, TTL, Time, Count, Program));
 
 
 /*******************************************************************/
-/*** Fact scheduler */
+/*** Fact global::scheduler */
 
 define(facts, {String, TableName, TupleSet});
 
@@ -91,36 +160,33 @@ facts(Program, Name, tupleset<Tuple>) :-
 	config(Time, Program, Object),
 	compiler::fact(Program, Name, Tuple);
 	
-installFacts1 
-runnable(Time, Program, Name, Facts, null) :-
+installFacts 
+queue(Time, 0, Program, Name, Facts, null) :-
 	facts(Program, Name, Facts), Program == "compiler",
+	Facts.name(Name),
 	global::clock(Location, Time);
 	
 installFacts2 
 global::schedule(Time+1, Program, Name, Facts, null) :-
-	facts(Program, Name, Facts), Program != "compiler",
+	facts(Program, Name, Facts), Program != "compile",
+	Facts.name(Name),
 	global::clock(Location, Time);
 	
 /*******************************************************************/
-/*** Schedule compile */
+/*** global::schedule compile */
 
 define(config, {Float, String, Program});
 
 configProgram 
-  config(Time, Program, Obj) :- 
-	bootstrap::compiler#insert(Program, Owner, File, Obj), 
+config(Time, Program, Object) :-
+	bootstrap::compiler#insert(Program, Owner, File, Object),
 	global::clock(Location, Time),
-	Obj.plan;
-
-watch (config, id);
-
+	Object.plan();
+		
 compileConfig 
-runnable(Time, "compiler", Name, Tuples, null) :-
+global::schedule(Time, "compile", TupleName, Tuples, null) :-
 	config(Time, Program, Object),
-	Tn := TableName.new("compiler", "config"),
-	On := Object.tuple(),
-	Tuples := TupleSet.new(Tn,On),
-	/*Tuples := TupleSet.new(TableName.new("compiler", "config"), Object.tuple()),*/
-  Name := Tuples.name();
-
-
+	TableName := TableName.new("compile", "config"),
+	Obj := Object.tuple(),
+	TupleName := Tuples.name(),
+	Tuples := TupleSet.new(TableName, Obj);

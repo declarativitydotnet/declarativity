@@ -2,7 +2,7 @@ require 'lib/types/table/table'
 
 class EventTable < Table
   def initialize(name, types)
-    super(name, TableType::EVENT, 0, 0, nil, types)
+    super(name, TableType::EVENT, nil, types)
   end
   
   def insert(tuples, deletions)

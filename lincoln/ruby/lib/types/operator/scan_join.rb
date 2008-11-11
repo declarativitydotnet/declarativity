@@ -2,9 +2,9 @@ require 'lib/types/operator/join'
 require 'lib/types/table/table'
 
 class ScanJoin < Join 
-	def initialize(predicate, input)
-		super(predicate, input)
-		@table = Table.find_table(predicate.name)
+	def initialize(context, predicate, input)
+		super(context, predicate, input)
+		@table = context.catalog.table(predicate.name)
 		if @table.nil?
 		  raise "ScanJoin initialization failed: couldn't find table " + predicate.name.to_s 
 	  end

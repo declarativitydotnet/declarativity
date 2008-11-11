@@ -6,18 +6,19 @@ require 'lib/lang/plan/function'
 require 'lib/lang/plan/assignment'
 require 'lib/lang/plan/rule'
 require 'lib/lang/parse/schema'
+require 'lib/core/periodic'
 
 class Program
   include Comparable
 		
-  @@program = MyProgramTable.new
-#  @@rule = Rule::RuleTable.new
-  @@watch = WatchTable.new
-  @@fact = MyFactTable.new
-  @@predicate = PredicateTable.new
-  @@tfunction = Function::TableFunction.new
-  @@selection = MySelectionTable.new
-  @@assignment = MyAssignmentTable.new
+#   @@program = MyProgramTable.new(context)
+# #  @@rule = Rule::RuleTable.new
+#   # @@watch = WatchTable.new
+#   @@fact = MyFactTable.new(context)
+#   # @@predicate = PredicateTable.new
+#   # @@tfunction = Function::TableFunction.new
+#   @@selection = MySelectionTable.new(context)
+#   @@assignment = MyAssignmentTable.new(context)
   
   def Program.watch
     @@watch
@@ -30,14 +31,15 @@ class Program
     @@selection
   end
               
-	def initialize(name, owner) 
+	def initialize(context, name, owner) 
+	  @context     = context
 		@name        = name
 		@owner       = owner
 		@definitions = Array.new
 		@queries     = Hash.new
-		@periodics   = TupleSet.new(System.periodic.name)
-		@@program.force(Tuple.new(@name, @owner, self))
-		System.install_program(name, self)
+		@periodics   = TupleSet.new(Periodic.table_name)
+		context.catalog.table(ProgramTable.table_name).force(Tuple.new(@name, @owner, self))
+#		System.install_program(name, self)
   end	
   
 	def tuple
@@ -65,8 +67,8 @@ class Program
     @periodics.clear
 
     # First plan out all the rules
-    hash_index = Compiler.rule.secondary[Key.new(RuleTable::Field::PROGRAM).hash]
-    rules = hash_index.lookup_vals(@name)
+#    require 'ruby-debug'; debugger
+    rules = @context.catalog.table(RuleTable.table_name).secondary[Key.new(RuleTable::Field::PROGRAM)].lookup_vals(@name)
 
     unless rules.nil? then
       rules.each do |tuple| 
@@ -74,7 +76,8 @@ class Program
 
         # Store all planned queries from a given rule. 
         # NOTE: delta rules can produce > 1 query. 
-        rule.query(@periodics).each do |query|
+        rule.query(@context, @periodics).each do |query|
+         #  require 'ruby-debug'; debugger
           input = query.input
           @queries[input.name.hash] = Array.new if !@queries.has_key?(query.input.name.hash)
           @queries[input.name.hash] << query
@@ -84,7 +87,7 @@ class Program
   
     if (periodics.size > 0) then
       @periodics.each do |tuple|
-        System.periodic.force(tuple)
+        @context.catalog.table(Periodic.table_name).force(tuple)
       end
     end
     return true;

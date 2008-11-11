@@ -18,8 +18,8 @@ class Function < Term
       # String.class,    // function name
       # Function.class   // function object
 
-		def initialize
-			super(TableName.new(GLOBALSCOPE, "function"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
+		def initialize(context)
+			super(context, TableName.new(GLOBALSCOPE, "function"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
 		end
 		
 		def insert(tuple)
@@ -38,17 +38,17 @@ class Function < Term
 		@predicate = predicate
 	end
 
-	def operator(input)
-		return Function.new(@function, @predicate);
+	def operator(context, input)
+		return Function.new(context, @function, @predicate);
 	end
 
 	def requires
 		@predicate.requires
 	end
 
-	def set(program, rule, position)
-		@predicate.set(program, rule, position)
-		$program.tfunction.force(Tuple.new(program, rule, position, @function.name, self))
+	def set(context, program, rule, position)
+		super(context, program, rule, position)
+		context.catalog.table(TableFunction.table_name).force(Tuple.new(program, rule, position, @function.name, self))
 	end
 
 	def to_s 

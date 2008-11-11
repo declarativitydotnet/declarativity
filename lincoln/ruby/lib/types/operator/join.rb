@@ -47,8 +47,8 @@ class Join < Operator
     end
   end
 
-  def initialize(predicate, input) 
-    super(predicate.program, predicate.rule)
+  def initialize(context, predicate, input) 
+    super(context, predicate.program, predicate.rule)
     @predicate = predicate
     @filters = filters(predicate)
     @schema = input.join(predicate.schema)

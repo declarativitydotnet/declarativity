@@ -1,6 +1,6 @@
 class Assign < Operator
-  def initialize (assignment, input)
-		super(assignment.program, assignment.rule)
+  def initialize (context, assignment, input)
+		super(context, assignment.program, assignment.rule)
 		@assignment = assignment
 		@schema = input.clone
 

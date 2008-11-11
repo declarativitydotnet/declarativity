@@ -20,7 +20,8 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
   @@FILES =  ["lib/lang/compiler.olg", "lib/lang/stratachecker.olg"]
 
   # Create a new driver for Overlog.
-  def initialize(owner, file)
+  def initialize(context, owner, file)
+    @context = context
     @owner = owner
     @file = file
     utterance = ''
@@ -28,18 +29,18 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
       f.each_line { |l| utterance << l }
     end
     # Since this is a new compiler, we need to wipe out any old compiler catalog stuff
-    Compiler.init_catalog
-    planner = OverlogPlanner.new(utterance)
+    # Compiler.init_catalog(context)
+    planner = OverlogPlanner.new(@context, utterance)
     planner.plan
-    @program = planner.program		
+    @the_program = planner.program		
 
-    #    typeChecker = TypeChecker.new(@runtime, @program)
+    #    typeChecker = TypeChecker.new(@runtime, @the_program)
     # This is an XTC-ism
     # args = ["-no-exit", "-silent", file]
     # run(args)
 
     # if (runtime.errorCount > 0) then
-    #    @program.definitions.each { |table| Table.drop(table.name) }
+    #    @the_program.definitions.each { |table| Table.drop(table.name) }
     #  end
   end	
 
@@ -52,35 +53,34 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
     end
   end
 
-
-  def Compiler.init_catalog
+  def Compiler.register_class(context, cname)
+    table = cname[0..(cname.rindex("Table")-1)]
+    table[0] = table[0..0].downcase
+    varname = camelize(table)
+    str = "@@"+ varname + " = " + cname + ".new(context)" 
+    #      print "\t"+str+"\n"
+    eval(str)
+    str = "context.catalog.register(@@" + varname + ")"
+    eval(str)
+    return varname
+  end
+  
+  
+  def Compiler.init_catalog(context)
     @@syms = Array.new
-    CompilerCatalogTable.classes.each do |c|
-      table = c.name[0..(c.name.rindex("Table")-1)]
-      table[0] = table[0..0].downcase
-      table_name = TableName.new(CompilerCatalogTable::COMPILERSCOPE,table)
-      t = Table.find_table(table_name)
-      # if table.downcase == "rule" and (not t.nil?)
-      #   require 'ruby-debug'; debugger
-      # end
-     unless t.nil?
-        t.drop 
-        unless $catalog.primary.lookup_vals(table_name).size == 0
-          require 'ruby-debug; debugger'
-          raise 'table {table_name} still lurking in catalog after delete'
-        end
-        raise "drop failed" unless Table.find_table(table_name).nil?
-      end
-      varname = camelize(table)
-      str = "@@"+ varname + " = " + c.name + ".new" 
-#      print "\t"+str+"\n"
-	    eval(str)
-	    @@syms << eval(":" + varname)
+    CompilerCatalogTable.classes.each do |c| 
+      varname = Compiler.register_class(context, c.name)
+      @@syms << eval(":" + varname)
+      cattr_reader(@@syms)
     end
-    cattr_reader(@@syms)
   end
 
-  attr_reader :program
+  def Compiler.init_bootstrap(context)
+    BootstrapCatalogTable.classes.each {|c| Compiler.register_class(context, c.name)}
+  end
+  
+  
+  attr_reader :the_program
   
   def Compiler.files
     @@FILES
@@ -104,8 +104,8 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 
     # Perform type checking.
     # runtime.console.format(node).pln.flush
-    @program = Program.new(name, owner)
-    @typeChecker = TypeChecker.new(@runtime, @program)
+    @the_program = Program.new(context, name, owner)
+    @typeChecker = TypeChecker.new(context, @runtime, @the_program)
     @typeChecker.prepare
 
     # First evaluate all import statements.
@@ -129,7 +129,9 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 
     # All programs define a local periodic event table
     periodic = TableName.new(program.name, "periodic")
-    program.definition(EventTable.new(periodic, TypeList.new(Periodic::SCHEMA)))
+    eventTable = EventTable.new(periodic, TypeList.new(Periodic::SCHEMA))
+    @context.catalog.register(eventTable)
+    program.definition(eventTable)
 
     # Evaluate all other clauses.
     node.getNode(1).<Node>getList(0) do |clause|
@@ -137,11 +139,11 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
         typeChecker.analyze(clause)
         return if runtime.errorCount > 0
         if clause.getName == "Watch"
-          watches = clause.getProperty(Constants.TYPE)
-          watches.each { |w| w.set(@program.name) }
+          watches = clause.getProperty(Constants::TYPE)
+          watches.each { |w| w.set(context, @the_program.name) }
         else
-          c = clause.getProperty(Constants.TYPE)
-          c.set(@program.name)
+          c = clause.getProperty(Constants::TYPE)
+          c.set(context, @the_program.name)
         end
       end
     end

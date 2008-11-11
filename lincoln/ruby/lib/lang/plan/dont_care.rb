@@ -3,8 +3,8 @@ class DontCare < Variable
   @@DONTCARE = "_"
   @@ids = 0
 
-  def initialize(type)
-    super("DC" + @@ids.to_s, @type);
+  def initialize(type, position, loc)
+    super("DC" + @@ids.to_s, @type, position, loc);
     @@ids+= 1
   end
 

@@ -3,6 +3,7 @@ class TypeList
   
   def initialize(types)
     unless types.class <= Array
+#      require 'ruby-debug'; debugger
       raise "invalid type to TypeList.new"
     end
     @types = types

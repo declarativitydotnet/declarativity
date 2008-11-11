@@ -44,7 +44,7 @@ class AggregateFunction < TupleFunction
     return retval
   end
 
-  def AggregateFunction.type(function, type) 
+  def AggregateFunction.agg_type(function, type) 
     retval = case function
     when @@MIN: type
     when @@MAX: type

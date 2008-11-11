@@ -1,11 +1,3 @@
-table index (
-  +tablename TableName,
-  +key Key,
-  type TableType,
-  classname String,
-  object String
-)
-
 table query (
 	  program String,
 	  rule String,
@@ -16,14 +8,6 @@ table query (
 	  output TableName,
 	  object String
 )
-
-table operator (
-  program String,
-  rule String,
-  +id String,
-  selectivity Float
-)
-
 
 table compiler (
   +name String,

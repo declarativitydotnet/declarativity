@@ -21,15 +21,12 @@ class WatchOp < Operator
   @@modifiers[:s] = Modifier::SEND
 
 
-  def initialize(program, rule, name, modifier) 
-    @name = name
-    @modifier = modifier
-    @stream = STDERR
-    super(program, rule)
+  def initialize(context, program, rule, name, modifier) 
+    new_prnms(context,program,rule,name,modifier,STDERR)
+    super(context, program, rule)
   end
 
-  def new_prnms(program, rule, name, modifier, stream)
-    super(program, rule)
+  def new_prnms(context, program, rule, name, modifier, stream)
     @name = name
     @modifier = modifier
     @stream = stream
@@ -38,7 +35,7 @@ class WatchOp < Operator
   def evaluate(tuples)
     return tuples if tuples.size == 0
 
-    header = "Program " + program.to_s + " [CLOCK " + System.clock.current + "] " + Modifier::to_s + ": " + name
+    header = "Program " + program.to_s + " [CLOCK " + context.clock.current + "] " + Modifier::to_s + ": " + name
 
     header += " Rule " + rule unless @rule.nil?
     header += "\n\tSCHEMA: " + tuples.iterator.next.schema

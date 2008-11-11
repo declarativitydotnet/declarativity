@@ -14,7 +14,7 @@ class Clause
 	  raise "Clause.to_s needs to be subclassed"
   end
 	
-	def set(program) 
+	def set(context, program) 
 	  raise "Clause.set needs to be subclassed"
   end
 end

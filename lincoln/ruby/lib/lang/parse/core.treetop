@@ -73,7 +73,7 @@ include Ddl
 			}
 	end
   rule rname
-    ( name !'(' )?
+    ( !'delete' name !'(' )?
   end
 	rule followsfrom
 		Spacing ':-' Spacing
