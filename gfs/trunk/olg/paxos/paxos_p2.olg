@@ -173,8 +173,22 @@ decree(Master,Instance,Round,Decree) :-
 	//acceptCnt#insert(Master,Instance,Round,Votes),
 	acceptCnt(Master,Instance,Round,Votes),
 	// this is |quorum| 
-	paxos::lastPromiseCnt(Master,Round,Votes),
+	///paxos::lastPromiseCnt(Master,Round,Votes),
+  paxos::priestCnt(Master,Priests),
+  Votes > (Priests / 2), 
 	acceptRequest(Master,Instance,Round,Decree);
+
+define(wouldDecree,{String,Integer,String});
+watch(wouldDecree,ae);
+wouldDecree(Master,Instance,Decree) :-
+  paxos::lastTried(Master,Round),
+  acceptCnt#insert(Master,Instance,Round,Votes),
+  // this is |quorum|
+  ///paxos::lastPromiseCnt(Master,Round,Votes),
+  paxos::priestCnt(Master,Priests),
+  Votes > (Priests / 2),
+  acceptRequest(Master,Instance,Round,Decree);
+
 
 public
 r5_b	

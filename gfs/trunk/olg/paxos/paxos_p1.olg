@@ -37,6 +37,7 @@ watch(lastPromise,ae);
 watch(lastPromiseCnt,ae);
 */
 
+watch(storedDecreeRequest,id);
 watch(quorum,ae);
 watch(prepare,aeid);
 
