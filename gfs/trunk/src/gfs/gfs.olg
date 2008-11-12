@@ -1,7 +1,20 @@
 program gfs;
 
 import jol.types.basic.ValueList;
-import gfs.Master;
+import gfs.GFSMaster;
+
+
+//define(create_request_p2, keys(0, 1), {String, Integer, String, Boolean, String});
+//watch(gfs_global::create_request_p2,aeid);
+
+public
+create_request_done(Master, Id, Source, Status,Error) :-
+  gfs_global::create_request_done(Master, Id, Source, Status,Error);
+
+public
+rm_request_done(Master, Id, Source, Status,Error) :-
+  gfs_global::rm_request_done(Master, Id, Source, Status,Error);
+
 
 // Node, Master node
 define(master_for_node, keys(0, 1), {String, String});
@@ -9,14 +22,19 @@ define(master_for_node, keys(0, 1), {String, String});
 // Right now, every node has the same master. We leave the master undefined
 // on the master node itself.
 master_for_node(Self, Master) :-
-    self(Self), Master := Master.ADDRESS, Self != Master;
+    self(Self), Master := GFSMaster.ADDRESS, Self != Master;
 
 // Node, File name, Contents
-define(file, keys(0, 1), {String, String, String});
+///define(gfs_global::file, {String, String, String});
 
-file(Master.ADDRESS, "Foo", "Bar");
-file(Master.ADDRESS, "Bar", "Baz");
-file(Master.ADDRESS, "Quux", "Quuux");
+//watch(gfs_global::file,ae);
+
+//gfs_global::file(A,B,C) :-
+  //gfs_global::file(A,B,C);
+
+gfs_global::file(GFSMaster.ADDRESS, "Foo", "Bar");
+gfs_global::file(GFSMaster.ADDRESS, "Bar", "Baz");
+gfs_global::file(GFSMaster.ADDRESS, "Quux", "Quuux");
 
 // Source node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});
@@ -41,6 +59,10 @@ define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, String})
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(ls_request_done, keys(0, 1), {String, Integer, String, ValueList});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
+
+// pa....
+define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean, String});
+define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean, String});
 
 // Node, Request ID, Success, File contents
 define(cat_response, keys(0, 1), {String, Integer, Boolean, String});
@@ -70,71 +92,76 @@ request(@Master, Id, Source, RequestType, Arg1, Arg2) :-
     self(@Source), master_for_node(@Source, Master),
     request_started(@Source, Id, RequestType, Arg1, Arg2);
 
-// If we get a "cat" request for a file that exists, send back the
-// contents of the file
+// If we get a "cat" request for a gfs_global::file that exists, send back the
+// contents of the gfs_global::file
 cat_request_done(@Master, Id, Source, Success, FContent) :-
     request(@Master, Id, Source, "Cat", FName, _),
-    file(@Master, FName, FContent), Success := true;
+    gfs_global::file(@Master, FName, FContent), Success := true;
 
-// If the file doesn't exist, return an error message
+// If the gfs_global::file doesn't exist, return an error message
 cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
     request(@Master, Id, Source, "Cat", FName, _),
-    notin file(@Master, FName, _),
+    notin gfs_global::file(@Master, FName, _),
     Success := false, ErrMessage := "File does not exist";
 
-// If we got a "create" request for a file that didn't exist,
+// If we got a "create" request for a gfs_global::file that didn't exist,
 // send back a positive ack
 // XXX: the use of "#insert" here is a hack
-create_request_done(@Master, Id, Source, true, null) :-
+create_request_pending(@Master, Id, Source, true, null) :-
     request#insert(@Master, Id, Source, "Create", FName, _),
-    notin file(@Master, FName, _);
+    notin gfs_global::file(@Master, FName, _);
 
-// If we get a "create" request for a file that exists, send
+// If we get a "create" request for a gfs_global::file that exists, send
 // back a negative ack
 // XXX: the use of "#insert" here is a hack
-create_request_done(@Master, Id, Source, false, ErrMessage) :-
+create_request_pending(@Master, Id, Source, false, ErrMessage) :-
     request#insert(@Master, Id, Source, "Create", FName, _),
-    file(@Master, FName, _),
+    gfs_global::file(@Master, FName, _),
     ErrMessage := "File already exists";
 
-// If the "create" succeeded, add the file
-file(@Master, FName, FContent) :-
-    create_request_done(@Master, Id, Source, true, _),
+// If the "create" succeeded, add the gfs_global::file
+/*
+gfs_global::file(@Master, FName, FContent) :-
+    gfs_global::create_request_done(@Master, Id, Source, true, _),
     request(@Master, Id, Source, "Create", FName, FContent);
-
-// If we got an "ls" request, send back the names of all the files in
+*/
+// If we got an "ls" request, send back the names of all the gfs_global::files in
 // the FS
 ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
     request(@Master, Id, Source, "Ls", _, _),
-    file(@Master, FName, _);
+    gfs_global::file(@Master, FName, _);
     
-// If we got an "rm" request and the file exists, remove it and send
+// If we got an "rm" request and the gfs_global::file exists, remove it and send
 // back a positive ack.
-rm_request_done(@Master, Id, Source, true, null) :-
+public
+rm_request_pending(@Master, Id, Source, true, null) :-
     request(@Master, Id, Source, "Rm", FName, _),
-    file(@Master, FName, _);
+    gfs_global::file(@Master, FName, _);
 
-// If we got an "rm" request and the file doesn't exist, return a
+// If we got an "rm" request and the gfs_global::file doesn't exist, return a
 // negative ack. NB: unlike in the "create" case, we don't need the
 // "#insert" hack, since deletions are postponed the end of the
 // fixpoint.
-rm_request_done(@Master, Id, Source, false, ErrMessage) :-
+gfs_global::rm_request_done(@Master, Id, Source, false, ErrMessage) :-
     request(@Master, Id, Source, "Rm", FName, _),
-    notin file(@Master, FName, _),
+    notin gfs_global::file(@Master, FName, _),
     ErrMessage := "File does not exist";
 
-// If the "rm" succeeded, actually delete the file
+/*
+// If the "rm" succeeded, actually delete the gfs_global::file
 // XXX: join against File in the body is unnecessary, but JOL
 // complains about a "don't care variable in the head"
 delete
-file(@Master, FName, FContents) :-
+gfs_global::file(@Master, FName, FContents) :-
     rm_request_done(@Master, Id, Source, true, _),
     request(@Master, Id, Source, "Rm", FName, _),
-    file(@Master, FName, FContents);
+    gfs_global::file(@Master, FName, FContents);
+*/
 
 cat_response(@Source, Id, Success, Response) :-
     cat_request_done(@Master, Id, Source, Success, Response);
 
+watch(create_response,ae);
 create_response(@Source, Id, Success, Response) :-
     create_request_done(@Master, Id, Source, Success, Response);
 
