@@ -1,7 +1,7 @@
 program gfs;
 
 import jol.types.basic.ValueList;
-import gfs.GFSMaster;
+import gfs.Master;
 
 
 //define(create_request_p2, keys(0, 1), {String, Integer, String, Boolean, String});
@@ -22,7 +22,7 @@ define(master_for_node, keys(0, 1), {String, String});
 // Right now, every node has the same master. We leave the master undefined
 // on the master node itself.
 master_for_node(Self, Master) :-
-    self(Self), Master := GFSMaster.ADDRESS, Self != Master;
+    self(Self), Master := Master.ADDRESS, Self != Master;
 
 // Node, File name, Contents
 ///define(gfs_global::file, {String, String, String});
@@ -32,9 +32,9 @@ master_for_node(Self, Master) :-
 //gfs_global::file(A,B,C) :-
   //gfs_global::file(A,B,C);
 
-gfs_global::file(GFSMaster.ADDRESS, "Foo", "Bar");
-gfs_global::file(GFSMaster.ADDRESS, "Bar", "Baz");
-gfs_global::file(GFSMaster.ADDRESS, "Quux", "Quuux");
+gfs_global::file(Master.ADDRESS, "Foo", "Bar");
+gfs_global::file(Master.ADDRESS, "Bar", "Baz");
+gfs_global::file(Master.ADDRESS, "Quux", "Quuux");
 
 // Source node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});
