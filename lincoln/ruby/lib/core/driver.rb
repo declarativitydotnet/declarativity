@@ -285,7 +285,7 @@ class Driver < Monitor
   end
    # Tasks are used to inject tuples into the schedule.
   class Task 
-    attr_reader :insertions, :deletions, :program, :name
+    attr_accessor :insertions, :deletions, :program, :name
   end
 
   # Creates a new driver.
@@ -335,7 +335,7 @@ class Driver < Monitor
         print("============================     #{@tasks.length} TASKS     =============================\n")
 
         # Evaluate task queue
-       # require 'ruby-debug'; debugger
+        @tasks.each_with_index {|task,i|         print "============================     TASK #{i}: #{task.name}, #{task.insertions.tups[0].to_s}, #{task.deletions.tups[0].to_s}     =============================\n"}
         @tasks.each {|task| evaluate(task.program, task.name, task.insertions, task.deletions)}
         @tasks.clear # Clear task queue.
         evaluate(runtime.name, time.name, nil, time) # Clock delete current
@@ -343,7 +343,6 @@ class Driver < Monitor
 
         # Check for new tasks or schedules, if none wait.
         @cond_var.wait_while {@tasks.size == 0 && @schedule.cardinality == 0}
-        print("============================     TASK ACQUIRED     =============================\n")
         if (@schedule.cardinality > 0)
           time = @clock.time(@schedule.min)
         else 

@@ -12,9 +12,9 @@ define(error, {String, String, TableName, Integer, TableName, Integer});
 /* Verify strata for notin predicates. */
 public
 error(Program, Rule, Pname, ParentStrata, Cname, ChildStrata) :-
-	compile::checkStrata(Program, Predicates),
-	predicate(Program, Rule, 0, Event, Parent), 
-	predicate(Program, Rule, Pos, Event, Child), 
+	compiler::checkStrata(Program, Predicates),
+	compiler::predicate(Program, Rule, 0, Event, Parent), 
+	compiler::predicate(Program, Rule, Pos, Event, Child), 
 	Pos > 0, Child.notin(),
 	Pname := Parent.name(),
 	Cname := Child.name(),
@@ -25,11 +25,11 @@ error(Program, Rule, Pname, ParentStrata, Cname, ChildStrata) :-
 /* Verify strata for aggregation predicates. */
 public
 error(Program, Rule, Parent, ParentStrata, Hname, HeadStrata) :-
-	compile::checkStrata(Program, Predicates),
-	predicate(Program, Rule, 0, Event, Head), 
+	compiler::checkStrata(Program, Predicates),
+	compiler::predicate(Program, Rule, 0, Event, Head), 
 	Head.containsAggregation(),
 	Hname := Head.name(),
-	compile::dependency(Program, Parent, Hname),
+	compiler::dependency(Program, Parent, Hname),
 	runtime::priority(Program, Hname, HeadStrata),
 	runtime::priority(Program, Parent, ParentStrata),
 	ParentStrata <= HeadStrata;
@@ -37,7 +37,7 @@ error(Program, Rule, Parent, ParentStrata, Hname, HeadStrata) :-
 	
 log("WARNING", Msg) :-
 	error(Program, Rule, Parent, ParentStrata, Child, ChildStrata),
-	clock(Location, Time),
+	global::clock(Location, Time),
 /*	Msg := "Program " + Program + ", RULE " + Rule +
 	       ": strata error Predicate " + 
 	       Parent.to_s + " is assigned to strata " + ParentStrata.to_s + 

@@ -89,7 +89,7 @@ class Catalog < ObjectTable
   #  */
   def register(table)
  #   require 'ruby-debug'; debugger if table.name.scope == "path"
-    print "Catalog.register(" + table.name.to_s + ")\n"
+  #  print "Catalog.register(" + table.name.to_s + ")\n"
     tuple = Tuple.new(table.name, table.table_type, table.key, table.types, table)
 
     force(tuple);
