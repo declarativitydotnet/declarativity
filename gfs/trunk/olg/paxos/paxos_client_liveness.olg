@@ -37,7 +37,7 @@ timeIssue(Master,Client,Request,Id) :-
   tick#insert(_,_,_),
   Now := new Long(System.currentTimeMillis()),
   timeout(Timeout,Times),
-  notin paxos::decree(Master,Instance,Round,Request),
+  notin multipaxos::decree(Master,Instance,Round,Request),
   notin timeIssue(Master,Client,_,Id),
   (Now - Time) > Timeout;
 
@@ -47,7 +47,7 @@ timeError(Master,Client,Request,Id) :-
   tick(_,_,_),
   Now := new Long(System.currentTimeMillis()),
   timeout(Timeout,Times),
-  notin paxos::decree(Master,Instance,Round,Request),
+  notin multipaxos::decree(Master,Instance,Round,Request),
   (Now - Time) > (Timeout * Times);
 
 delete
@@ -63,7 +63,7 @@ public
 delete 
 livelog(Master,Client,Request,Id,Time) :-
   livelog(Master,Client,Request,Id,Time),
-  paxos::decree(Master,Instance,Round,Request);
+  multipaxos::decree(Master,Instance,Round,Request);
 
 
 public
@@ -72,7 +72,8 @@ paxos_global::decreeRequestBuffer(Master,Request,Client) :-
  // paxos::storedDecreeRequest(Master,Request,Client,Id);
 
 public 
-paxos_global::requestStatus(Master,Client,Decree,Status) :-
+paxos_global::requestStatus(Master,Client,Decree,Instance,Status) :-
   timeError(Master,Client,Decree,Id),
+  Instance := -100,
   Status := "timeout";
 

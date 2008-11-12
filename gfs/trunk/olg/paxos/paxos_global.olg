@@ -1,9 +1,11 @@
 program paxos_global;
 
-define(requestStatus,keys(0,1),{String,String,String,String});
+define(requestStatus,keys(0,1),{String,String,String,Integer,String});
 define(decreeRequestBuffer,keys(0,1,2),{String,String,String});
 //define(decreeRequestBuffer,{String,String,String});
 define(decreeRequest,{String,String,String});
+
+define(reply,keys(0,1),{String,Integer,String,String});
 
 //define(reply,keys(0,1),{String,String,String});
 
@@ -13,10 +15,13 @@ watch(decreeRequest,ae);
 //watch(reply,ae);
 watch(requestStatus,ae);
 
+define(members,keys(0),{String});
+define(id,keys(0),{String});
+watch(members,ae);
+watch(id,ae);
 
-//public
-/*
-reply(@Client,Decree,Message) :-
-  requestStatus(@Master,Client,Decree,Message);
-*/
+
+public
+reply(@Client,Instance,Decree,Message) :-
+  requestStatus(@Master,Client,Decree,Instance,Message);
 

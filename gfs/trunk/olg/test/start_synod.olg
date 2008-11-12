@@ -1,4 +1,4 @@
-program paxos;
+program paxos_global;
 
 import java.lang.System;
 
@@ -34,6 +34,13 @@ please(Lord,Message,Me,Start,Program) :- doping(Lord,Me,Id,Program),
                            Message := "XACT" + Id.toString(),
                            Start := System.currentTimeMillis();
 
+/* DUP! */
+/*
+please(Lord,Message,Me,Start,Program) :-
+                          doping(Lord,Me,Id,Program), 
+                           Message := "XACTfoo",
+                           Start := System.currentTimeMillis();
+*/
 //decreeRequest(@Lord,Message,Me) :- doping(Lord,@Me,Id), Message := "XACT" + Id.toString();
 decreeRequest(@Lord,Message,Me) :- please(Lord,Message,@Me,Start,Program), Program == "paxos" ;
 

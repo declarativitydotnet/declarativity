@@ -1,52 +1,96 @@
 program lock;
 
 import jol.types.basic.Tuple;
+import jol.core.Runtime;
 
 define(lock,keys(0),{String,String,String});
 
 
 // me,lockname,type,requestor
-define(lockRequest,keys(0,1),{String,String,String,String});
+define(lockRequest,{String,String,String,String});
+define(storedLockRequest,keys(4),{String,String,String,String,Long});
 // requestor,me,lock,type,status
 define(lockGrant,keys(0,1,2,3),{String,String,String,String,String});
+define(lView,keys(0,1,2),{String,String,String});
+
+watch(storedLockRequest,aeid);
+
+storedLockRequest(Me,Lock,Type,Requestor,Id) :-
+  lockRequest#insert(Me,Lock,Type,Requestor),
+  Id := Runtime.idgen();
+
+lView(Lock,Type,Holder) :- 
+  lockGrant(Holder,Me,Lock,Type,Status),
+  Status == "granted";
+
+lView(Lock,Type,Holder) :-
+  lock(Lock,Type,Holder);
 
 // wow, overlog kicks ass
 no_lock
 lockGrant(Requestor,Me,Lock,Type,"granted") :-
-  lockRequest#insert(Me,Lock,Type,Requestor),
-  notin lockGrant(_,Me,Lock,_,"granted");
+  storedLockRequest#insert(Me,Lock,Type,Requestor,Id),
+  notin lView(Lock,_,_);
 
-x_lock
+s_lock
 lockGrant(Requestor,Me,Lock,Type,"granted") :-
-  lockRequest#insert(Me,Lock,Type,Requestor),
+  storedLockRequest#insert(Me,Lock,Type,Requestor,Id),
   Type == "S",
-  notin lockGrant(R,M,Lock,"X","granted");
+  notin lView(Lock,"X",R2);
 
 new_xlock
 lockGrant(Requestor,Me,Lock,Type,"denied") :-
-  lockRequest#insert(Me,Lock,Type,Requestor),
+  storedLockRequest#insert(Me,Lock,Type,Requestor,Id),
   Type == "X",
-  lockGrant(_,Me,Lock,_,"granted");
+  lView(Lock,_,_);
+
+old_xlock
+lockGrant(Requestor,Me,Lock,Type,"denied") :-
+  storedLockRequest#insert(Me,Lock,Type,Requestor,Id),
+  lView(Lock,"X",_);
+  
   
 // paxosify the lock state update.
 public
 paxos_global::decreeRequest(Me,Decree,Him) :-
   lockGrant#insert(R,M,Lock,Type,Status),
   Status == "granted",
-  lockRequest(Me,Lock,Type,R),
-  Him := Me,
+  storedLockRequest(Me,Lock,Type,R,Id),
+  //Him := Me,
+  Him := R,
   Decree := new String(Lock +","+ Type +","+ R);
 
 public
-lock(Lock,Type,R) :-
-  paxos_global::requestStatus(Master,Client,Decree,Message),
-  Message == "passed",
+lock(Lock,Type,From) :-
+  multipaxos::success(Master,Instance,Round,Decree,From),
   Lock := Decree.split(",")[0],
   Type := Decree.split(",")[1],
   R := Decree.split(",")[2];
 
+
+define(responseReady,{String,String,String,Long,String,String});
+define(response,{String,String,String,Long,String,String});
+
+watch(responseReady,ae);
+
+responseReady(Me,Lock,Type,Id,Requestor,Status) :-
+  storedLockRequest(Me,Lock,Type,Requestor,Id), 
+  lockGrant(Requestor,Me,Lock,Type,Status),
+  lock#insert(Lock,Type,Requestor),
+  Status == "granted";
+
+responseReady(Me,Lock,Type,Id,Requestor,Status) :-
+  storedLockRequest(Me,Lock,Type,Requestor,Id), 
+  lockGrant#insert(Requestor,Me,Lock,Type,Status),
+  Status == "denied";
+
+
+response(@From,Lock,Type,Id,Me,Status) :-
+  responseReady(@Me,Lock,Type,Id,From,Status);
+
 /*** tests ***/
 
+/*
 timer(t,physical,2000,99999,3000);
 define(tick,keys(0),{Integer});
 tick(0);
@@ -74,7 +118,7 @@ lockRequest("tcp:localhost:10000","bar","X","tcp:localhost:10000") :-
 lockRequest("tcp:localhost:10000","bar","S","tcp:localhost:10000") :-
   tick(T),
   T == 10;
-
+*/
 watch(lock,ae);
-watch(lockGrant,ae);
+watch(lockGrant,aeid);
 //watch(tick,ae);

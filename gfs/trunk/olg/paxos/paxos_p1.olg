@@ -8,7 +8,7 @@ import jol.core.Runtime;
 
 timer(periodic,logical,1,1,1);
 	
-define(decreeRequest,{String,String,String});
+////define(decreeRequest,{String,String,String});
 define(storedDecreeRequest,keys(0,1,2,3),{String,String,String,Long});
 define(lastTried,keys(0),{String,Integer});
 define(prevVote,keys(0),{String,Integer,String});
@@ -29,10 +29,16 @@ define(tick,keys(0,1),{String,String,Integer});
 
 define(instance,keys(0),{String,Integer});
 
+/*
+watch(storedDecreeRequest,id);
 watch(quorum,ae);
-watch(prepare,ae);
+watch(prepare,aeid);
 watch(lastPromise,ae);
 watch(lastPromiseCnt,ae);
+*/
+
+watch(quorum,ae);
+watch(prepare,aeid);
 
 /*******************************************************************
 nomenclature mappings between "parliamentary paxos" and "simple paxos"
@@ -64,38 +70,52 @@ PAXOS global invariants:
       ballot in B, then the decree of B equals the decree of the latest of those
       earlier ballots.
 */
-	
 
 public
-parliament(A,B) :- getopt::parliament(A,B),periodic(_,_,_);
+parliament(A,B) :- 
+  paxos_global::id(A),
+  paxos_global::members(B);//,
+  //periodic(_,_,_);
+
 	
 lastTried(Master,-1) :- parliament(Master,Agent);
 prevVote(Master,-1,"none") :- parliament(Master,Agent);
 nextBal(Master,-1) :- parliament(Master,Agent);
-//instance(Master,-1) :- parliament(Master,Agent);
 
 /**************************************************************************************
 r1. Priest p chooses a new ballot number b greater than lastTried [p], sets lastTried[p]
 to b, and sends a NextBallot (b) message to some set of priests.
 ***************************************************************************************/
 
+watch(lastTried,ae);
 r1_a
-lastTried(Agent,Bnum) :- lastTried(Agent,Old),
+lastTried(Agent,Bnum) :- 
+  lastTried(Agent,Old),
+  // we need to use #insert here, because if we don't, our new value is erased in the next fixpoint
+  // (because it's not greater than itself)
 	prepare#insert(Agent,Bnum,Decree),
 	Bnum > Old;
 	
+public
 storedDecreeRequest(A,B,C,Id) :- 
-  decreeRequest#insert(A,B,C), 
+  // 4:
+  paxos_global::decreeRequest(A,B,C), 
   Id := Runtime.idgen();
-//instance(Master,I+1) :- instance(Master,I), storedDecreeRequest#insert(Master,B,C);
-	
+
+define(topOfQueue,keys(0),{String,Long});
+topOfQueue(A,min<Id>) :-
+  storedDecreeRequest(A,B,C,Id);
+
 r1_b
 prepare(Agent,Round,Decree) :- 
-	storedDecreeRequest#insert(Agent,Decree,From),
+	storedDecreeRequest(Agent,Decree,From,Id),
+  // we need the insert here for another reason: to add capacitance to the flip-flop
+  // created by r1_a above.  without this insert, which forces the rule to be evaluated
+  // once only in the fixpoint, we'll keep adding because of the cycle through lastTried...
+  topOfQueue#insert(Agent,Id),
 	lastTried(Agent,Old),
 	// if we don't already have a quorum 
   notin quorum(Agent,_),
-  //instance#insert(Agent,0),
 	Round := Old + 1;
 
 // 
@@ -103,13 +123,14 @@ public r1_b2
 prepare(Agent,Round,Decree) :-
   // current instance
   lastTried(Agent,Old),
-  //notin quorum(Agent,_),
-  paxos_global::decreeRequestBuffer#insert(Master,Decree,Client),
+  // INSERT HERE TOO
+  paxos_global::decreeRequestBuffer(Master,Decree,Client),
   Round := Old + 1;
 
 	
 r1_c
-sendPrepare(@Peer,Round,Decree,Agent) :-prepare(@Agent,Round,Decree),
+sendPrepare(@Peer,Round,Decree,Agent) :-
+  prepare(@Agent,Round,Decree),
 	parliament(@Agent,Peer);
 
 /**************************************************************************************
@@ -120,14 +141,18 @@ prevVote [q]. (A NextBallot (b) message is ignored if b ² nextBal [q].)
 
 
 r2_a
-nextBal(Agent,Round) :-nextBal(Agent,Old),
+nextBal(Agent,Round) :-
+  nextBal(Agent,Old),
+  // same reason as r1_a: I need to see the old version on the rhs.
 	lastPromise#insert(Agent,Instance,Round,OldRound,Decree),
 	Round > Old;
 
 
 r2_b
 lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :- 
-  sendPrepare#insert(Agent,Round,Decree,Peer),
+  // NEW
+  //sendPrepare#insert(Agent,Round,Decree,Peer),
+  sendPrepare(Agent,Round,Decree,Peer),
 	prevVote(Agent,OldRound,OldDecree),
   instance(Agent,Instance),
 	Round >= OldRound;
@@ -139,8 +164,13 @@ sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-
 
 /* for quorum handling, aggregates are difficult to avoid... */
 priestCnt(Master,count<*>) :- parliament(Master,Agent);
+
 lastPromiseCnt(Master,Round,count<Agent>) :- 
+  // I need an explanation for this one... here's how it begins:
+  // we need lastPromiseCnt later too see if our voters match our quorum.
+  // rows expire from sendPromise (why?) and this protects me from that.
   sendPromise#insert(Master,Instance,Round,Foo,Bar,Agent);
+
 maxPrevRound(Master,max<OldRound>) :- 
   sendPromise(Master,Instance,Round,OldRound,Decree,Agent);
 	
@@ -151,12 +181,8 @@ quorum Q, and decree d, where d is chosen to satisfy B3. He then sends a
 BeginBallot (b, d) message to every priest in Q.
 ***************************************************************************************/
 
-define(quorumEvent,{String,Integer});
 r3_a	
-quorumEvent(Master,Round) :- 
+quorum(Master,Round) :- 
   priestCnt(Master,Pcnt),
 	lastPromiseCnt(Master,Round,Vcnt),
 	Vcnt > ( Pcnt / 2 );
-
-quorum(M,R) :- quorumEvent#insert(M,R);
-	

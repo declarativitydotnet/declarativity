@@ -1,4 +1,4 @@
-program paxos;
+program paxos_global;
 
 import java.lang.System;
 
