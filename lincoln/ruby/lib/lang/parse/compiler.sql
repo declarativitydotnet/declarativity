@@ -121,7 +121,7 @@ table fact (
 	tuple Tuple
 )
 
-table watch (
+table watches (
   +program String,
   +tablename String,
   +modifier String

@@ -17,7 +17,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
   extend ObjectFromCatalog
   ##@@FILES =  ["/Users/joeh/devel/lincoln/ruby/lib/lang/compile.olg", "/Users/joeh/devel/lincoln/ruby/lib/lang/stratachecker.olg"]
 
-  @@FILES =  ["lib/lang/compiler.olg", "lib/lang/stratachecker.olg"]
+  @@FILES =  ["lib/lang/stratachecker.olg", "lib/lang/compiler.olg"]
 
   # Create a new driver for Overlog.
   def initialize(context, owner, file)

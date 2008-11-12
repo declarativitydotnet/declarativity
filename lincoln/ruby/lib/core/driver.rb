@@ -303,11 +303,12 @@ class Driver < Monitor
     context.catalog.register(@flusher)
     # important to call super on Monitor initialization
     super()
+    @cond_var = MonitorMixin::ConditionVariable::new(self)
   end
 
   # Set the runtime program.
   # @param runtime The runtime program. 
-  attr_accessor :runtime
+  attr_accessor :runtime, :cond_var
 
   # * Add a task to the task queue. This will be evaluated
   # * on the next clock tick.
@@ -341,9 +342,7 @@ class Driver < Monitor
         print("============================ ========================== =============================\n");
 
         # Check for new tasks or schedules, if none wait.
-        while (@tasks.size == 0 && @schedule.cardinality == 0) do
-          wait
-        end
+        @cond_var.wait_while {@tasks.size == 0 && @schedule.cardinality == 0}
         print("============================     TASK ACQUIRED     =============================\n")
         if (@schedule.cardinality > 0)
           time = @clock.time(@schedule.min)

@@ -1247,7 +1247,7 @@ class WatchTable < CompilerCatalogTable
     MODIFIER=2
   end
   @@SCHEMA = [String,String,String]
-  @@TABLENAME = TableName.new(COMPILERSCOPE, "watch")
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "watches")
   @@classes[self] = 1
   def initialize(context)
     super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
