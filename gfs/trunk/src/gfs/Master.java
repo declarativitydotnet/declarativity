@@ -9,7 +9,7 @@ import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
-public class GFSMaster {
+public class Master {
     public static int PORT;
     public static String ADDRESS = "tcp:localhost:5500";
     //public static String ADDRESS;
@@ -29,21 +29,21 @@ public class GFSMaster {
         for (int i=0; i < args.length; i++) {
           clique[i] = "tcp:localhost:"+args[i];
         }
-        GFSMaster m = new GFSMaster();
+        Master m = new Master();
         m.start();
     }
 
     private static void usage() {
-        java.lang.System.err.println("Usage: gfs.GFSMaster port");
+        java.lang.System.err.println("Usage: gfs.Master port");
         java.lang.System.exit(1);
     }
 
     private System system;
 
-    public GFSMaster() {}
+    public Master() {}
 
     public void start() throws JolRuntimeException, UpdateException {
-        this.system = Runtime.create(GFSMaster.PORT);
+        this.system = Runtime.create(Master.PORT);
 
         this.system.catalog().register(new SelfTable((Runtime) this.system));
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
@@ -75,7 +75,7 @@ public class GFSMaster {
 
         /* Identify which address the local node is at */
         TupleSet self = new TupleSet();
-        self.add(new Tuple(GFSMaster.ADDRESS));
+        self.add(new Tuple(Master.ADDRESS));
         this.system.schedule("gfs", SelfTable.TABLENAME, self, null);
         this.system.evaluate();
         this.system.start();
@@ -93,7 +93,7 @@ public class GFSMaster {
         this.system.evaluate();
 
         TupleSet id = new TupleSet();
-        id.add(new Tuple(GFSMaster.ADDRESS));
+        id.add(new Tuple(Master.ADDRESS));
         this.system.schedule("paxos",PaxosIdTable.TABLENAME,id,null);
 
         for (String s : this.clique) {
