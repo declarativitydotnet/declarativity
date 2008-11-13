@@ -11,7 +11,7 @@ timer(periodic,logical,1,1,1);
 ////define(decreeRequest,{String,String,String});
 define(storedDecreeRequest,keys(0,1,2,3),{String,String,String,Long});
 define(lastTried,keys(0),{String,Integer});
-define(prevVote,keys(0),{String,Integer,String});
+define(prevVote,keys(0),{String,Integer,Integer,String});
 define(nextBal,keys(0),{String,Integer});
 define(node,keys(0),{String});
 define(parliament,keys(0,1),{String,String});
@@ -29,17 +29,12 @@ define(tick,keys(0,1),{String,String,Integer});
 
 define(instance,keys(0),{String,Integer});
 
-/*
-watch(storedDecreeRequest,id);
+watch(storedDecreeRequest,ae);
 watch(quorum,ae);
 watch(prepare,aeid);
 watch(lastPromise,ae);
 watch(lastPromiseCnt,ae);
-*/
 
-watch(storedDecreeRequest,id);
-watch(quorum,ae);
-watch(prepare,aeid);
 
 /*******************************************************************
 nomenclature mappings between "parliamentary paxos" and "simple paxos"
@@ -80,7 +75,7 @@ parliament(A,B) :-
 
 	
 lastTried(Master,-1) :- parliament(Master,Agent);
-prevVote(Master,-1,"none") :- parliament(Master,Agent);
+prevVote(Master,0,-1,"none") :- parliament(Master,Agent);
 nextBal(Master,-1) :- parliament(Master,Agent);
 
 /**************************************************************************************
@@ -125,7 +120,7 @@ prepare(Agent,Round,Decree) :-
   // current instance
   lastTried(Agent,Old),
   // INSERT HERE TOO
-  paxos_global::decreeRequestBuffer(Master,Decree,Client),
+  paxos_global::decreeRequestBuffer#insert(Master,Decree,Client),
   Round := Old + 1;
 
 	
@@ -154,9 +149,21 @@ lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :-
   // NEW
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
-	prevVote(Agent,OldRound,OldDecree),
+	prevVote(Agent,OldInstance,OldRound,OldDecree),
   instance(Agent,Instance),
+  Instance == OldInstance,
 	Round >= OldRound;
+
+
+r2_b2
+lastPromise(Agent,Instance,Round,-1,"none",Peer) :- 
+  // NEW
+  //sendPrepare#insert(Agent,Round,Decree,Peer),
+  sendPrepare(Agent,Round,Decree,Peer),
+	notin prevVote(Agent,Instance,_,_),
+  instance(Agent,Instance);//,
+	///Round >= OldRound;
+
 
 r2_c	
 sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-

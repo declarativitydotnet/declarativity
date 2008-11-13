@@ -21,6 +21,12 @@ define(acceptCnt,keys(0,1),{String,Integer,Integer,Integer});
 define(tick,keys(0,1),{String,String,Integer});
 //define(instance,keys(0),{String,Integer});
 
+watch(paxos::instance,ae);
+watch(paxos::sendPrepare,ae);
+
+watch(paxos::sendPromise,ae);
+
+
 public
 startinstance
 paxos::instance(Me,0) :-
@@ -42,6 +48,7 @@ paxos::instance(Me,I+1) :-
   paxos::instance(Me,I),
   // necessary #insert
   paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
+  //paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
   success(Me,I,Round,OldDecree,Client);
 
 // jump to the current instance.
@@ -54,6 +61,12 @@ paxos::instance(Me,I) :-
   //sendBeginRound(Me,I,Round,Decree,Agent),
   Me != Agent,
   I > OldI;
+
+public
+bump_lasttried
+paxos::lastTried(Me,Round) :-
+  sendBeginRound#insert(Me,I,Round,Decree,Agent),
+  Me != Agent;
 
 // jump to the current instance.
 public
@@ -140,10 +153,11 @@ accept(Agent,Instance,Round,Decree) :-
 
 public
 r4_b	
-paxos::prevVote(Agent,Round,Decree) :- 
-  paxos::prevVote(Agent,Old,OD),
+paxos::prevVote(Agent,Instance,Round,Decree) :- 
+  paxos::prevVote(Agent,OI,Old,OD),
 	paxos::lastPromise(Agent,Round,OldRound,OldDecree),
 	accept#insert(Agent,Instance,Round,Decree),
+  // ??
 	Round >= Old;
 
 define(recall,keys(0,1,2),{String,Integer,Integer,String});

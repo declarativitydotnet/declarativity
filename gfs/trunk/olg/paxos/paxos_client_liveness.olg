@@ -8,17 +8,17 @@ define(livelog,keys(0,1,2,3),{String,String,String,Long,Long});
 //define(timeError,keys(0,1,2,3),{String,String,String,Long});
 define(timeError,{String,String,String,Long});
 //define(timeIssue,keys(0,1,2,3),{String,String,String,Long});
-define(timeIssue,keys(0,1,2,3),{String,String,String,Long});
+define(timeIssue,keys(0,1,2,3),{String,String,String,Long,Long});
 define(timeout,keys(0),{Long,Integer});
 // a lazy timer that we'll change later.
-timer(tick,physical,1000,1000,0);
+timer(tick,physical,1000,10000,0);
 
 watch(livelog,ad);
 watch(timeError,ad);
 watch(timeIssue,ad);
 //watch(paxos_global::decreeRequestbuffer,ae);
 
-timeout(5000L,8);
+timeout(5000L,10);
 
 
 public
@@ -32,9 +32,10 @@ livelog(Master,Client,Request,Id,Time) :-
   Time := System.currentTimeMillis();
 
 public
-timeIssue(Master,Client,Request,Id) :-
+timeIssue(Master,Client,Request,Id,TickId) :-
   livelog(Master,Client,Request,Id,Time),
   tick#insert(_,_,_),
+  TickId := Runtime.idgen(),
   Now := new Long(System.currentTimeMillis()),
   timeout(Timeout,Times),
   notin multipaxos::decree(Master,Instance,Round,Request),
@@ -51,7 +52,8 @@ timeError(Master,Client,Request,Id) :-
   (Now - Time) > (Timeout * Times);
 
 delete
-timeIssue(Master,Client,Request,Id) :-
+timeIssue(Master,Client,Request,Id,Tickid) :-
+  timeIssue(Master,Client,Request,Id,Tickid),
   timeError(Master,Client,Request,Id);
 
 delete 
@@ -68,8 +70,14 @@ livelog(Master,Client,Request,Id,Time) :-
 
 public
 paxos_global::decreeRequestBuffer(Master,Request,Client) :-
-  timeIssue#insert(Master,Client,Request,Id);//,
+  timeIssue#insert(Master,Client,Request,Id,TickId);//,
  // paxos::storedDecreeRequest(Master,Request,Client,Id);
+
+public
+delete
+timeIssue(Master,Client,Request,Id,TickId) :-
+  timeIssue(Master,Client,Request,Id,TickId),
+  paxos_global::decreeRequestBuffer#insert(Master,Request,Client);
 
 public 
 paxos_global::requestStatus(Master,Client,Decree,Instance,Status) :-

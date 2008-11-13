@@ -5,15 +5,17 @@ import java.lang.Thread;
 
 /* implements a naive, partially synchronous liveness detector */
 
+watch(currentMaster,ae);
+
 // z = heartbeat timer = 3secs
 // name,type,period,ttl,delay 
-timer(zTimer,physical,2000,5,2000);
+timer(zTimer,physical,2000,50000,2000);
 timer(periodic,logical,1,1,1);
 
 zTimer(A,1000,B) :- zTimer(A,Old,B), Old < 10L;
 
-define(alive,keys(0),{String,Long});
-define(parliament,keys(0,1),{String,String});
+define(alive,keys(0),{String,String,Long,Integer});
+//define(parliament,keys(0,1),{String,String});
 define(threshold,keys(0),{Long});
 
 // very generous
@@ -22,46 +24,58 @@ threshold(12L);
 define(heartbeat,{String,String});
 define(zTick,{String});
 
+define(currentMax,keys(0),{String,Integer});
+define(currentMaster,keys(0),{String,String});
+public
+currentMax(Me,max<Id>) :-
+  alive(Me,Fellow,Round,Id);
+
+currentMaster(Me,Master) :-
+  currentMax(Me,Id),
+  alive(Me,Master,Round,Id);
+
+
 //watch(heartbeat,ae);
-watch(alive,ae);
+//watch(alive,ae);
 //watch(zTick,ae);
 //watch(parliament,ae);
-watch(beatLog,ae);
+//watch(beatLog,ae);
 //watch(alive,ae);
 
 
 zTick(Ip) :- 
-  ident(Me,_),
-  B := Me + 10000,
-  Ip := "tcp:localhost:"+B.toString(),
+  //ident(Me,_),
+  paxos_global::id(Ip),
+  //B := Me + 10000,
+  //Ip := "tcp:localhost:"+B.toString(),
   zTimer(_,_,_);
   
 
 heartbeat(@Him,Me) :-
-  parliament(@Me,Him),
+  paxos::parliament(@Me,Him),
   zTick(@Me);
 
 define(beatLog,keys(0,1,2),{String,String,Long});
 
 beatLog(Me,Him,Time) :-
-  heartbeat(Me,Him),
+  heartbeat#insert(Me,Him),
   Time := System.currentTimeMillis();
 
 
 // the next two rules are synchronized on the cTimer
-/*
 define(round,keys(0),{Long});
 round(0) :- periodic(_,_,_);
 round(R+1) :-
   round(R),
-  alive#insert(Him,R);
-*/
+  alive#insert(Me,Him,R,Id);
 
-sequence(round,0);
+//sequence(round,0);
   
-alive(Him,Round) :- 
+alive(Me,Him,Round,Id) :- 
   beatLog(Me,Him,Time),
+  paxos_global::id(Me),
   zTimer(_,_,_),
+  Id := new Integer(Him.split(":")[2]),
   round(Round),
   threshold(Thresh),
   Now := new Long(System.currentTimeMillis()),
@@ -73,7 +87,7 @@ beatLog(Me,Him,Time) :-
   zTimer(_,_,_),
   Now := new Long(System.currentTimeMillis()),
   beatLog(Me,Him,Time),
-  Thread.sleep(1000L),
+  //Thread.sleep(1000L),
   (Now - Time) > 10000L; // 10 secs: soft state: NOT a critical parameter as long as it is high enough.
 
 
@@ -82,8 +96,9 @@ beatLog(Me,Him,Time) :-
 
 
 
-/* getopt, if you will */
 
+/* getopt, if you will */
+/*
 define(ident,keys(0),{Integer,Integer});
 
 ident(A,P) :- A := new Integer(System.getenv("ME")),
@@ -103,4 +118,4 @@ parliament(Me,Him) :- fake(A,B),
   Me := "tcp:localhost:" + Left.toString(),
   Him := "tcp:localhost:" + Right.toString();
 
-
+*/
