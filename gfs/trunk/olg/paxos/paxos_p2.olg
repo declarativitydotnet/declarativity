@@ -48,7 +48,7 @@ paxos::instance(Me,I+1) :-
   paxos::instance(Me,I),
   // necessary #insert
   paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
-  //paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
+  //paxos::storedDecreeRequest(Master,Decree,From,Id),
   success(Me,I,Round,OldDecree,Client);
 
 // jump to the current instance.
@@ -119,7 +119,8 @@ acceptRequest(Master,I,Round,Decree,-1) :-
   //maxPrevRound(Master,MaxB),
 	///sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
   //OldDecree == "none",
-  paxos::instance#insert(Master,I),
+  ////paxos::instance#insert(Master,I),
+  paxos::instance(Master,I),
   I > 0;
 
 public
@@ -240,7 +241,6 @@ paxos::quorum(Master,Round) :-
   Master != Other,
   NewRound > Round;
 
-/*
 watch(decree,ae);
 watch(acceptCnt,ae);
 watch(sendAccept,ae);
@@ -263,7 +263,6 @@ watch(sendAccept,ae);
 watch(accept,ae);
 watch(success,ae);
 //watch(sendPromise,ae);	
-*/
 
 watch(success,ae);
 watch(paxos::quorum,ae);
