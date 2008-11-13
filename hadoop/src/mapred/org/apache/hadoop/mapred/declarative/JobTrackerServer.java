@@ -1,6 +1,7 @@
 package org.apache.hadoop.mapred.declarative;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -46,6 +47,8 @@ import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerErrorTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerTable;
 import org.apache.hadoop.mapred.declarative.util.JobState;
+import org.apache.hadoop.net.NetUtils;
+import org.apache.hadoop.net.NodeBase;
 import org.apache.hadoop.util.HostsFileReader;
 import org.apache.hadoop.util.VersionInfo;
 

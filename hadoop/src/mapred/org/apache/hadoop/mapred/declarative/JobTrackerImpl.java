@@ -148,16 +148,13 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new HeartbeatTable(context));
 		
 		URL program = 
-			ClassLoader.getSystemClassLoader().
-				getResource("org/apache/hadoop/mapred/declarative/" + 
-						    PROGRAM + ".olg");
+			ClassLoader.getSystemClassLoader().getResource(PROGRAM + ".olg");
+		
 		this.context.install("hadoop", program);
 		this.context.evaluate();
 		
 		URL scheduler = 
-			ClassLoader.getSystemClassLoader().
-				getResource("org/apache/hadoop/mapred/declarative/" + 
-						    SCHEDULER + ".olg");
+			ClassLoader.getSystemClassLoader().getResource(SCHEDULER + ".olg");
 		this.context.install("hadoop", scheduler);
 		this.context.evaluate();
 		this.context.start();
