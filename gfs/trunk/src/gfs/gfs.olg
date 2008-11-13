@@ -2,6 +2,7 @@ program gfs;
 
 import jol.types.basic.ValueList;
 import gfs.Master;
+import gfs.Shell;
 
 
 //define(create_request_p2, keys(0, 1), {String, Integer, String, Boolean, String});
@@ -17,12 +18,19 @@ rm_request_done(Master, Id, Source, Status,Error) :-
 
 
 // Node, Master node
+watch(master_for_node,ae);
 define(master_for_node, keys(0, 1), {String, String});
 
 // Right now, every node has the same master. We leave the master undefined
 // on the master node itself.
+
+//watch(alive::alive,ae);
 master_for_node(Self, Master) :-
-    self(Self), Master := Master.ADDRESS, Self != Master;
+    self(Self), 
+    //Master := Master.ADDRESS, 
+    //Master := Shell.MASTERS[Shell.INDX],
+    Master := Shell.currentMaster(),
+    Self != Master;
 
 // Node, File name, Contents
 ///define(gfs_global::file, {String, String, String});
@@ -89,7 +97,9 @@ request_started(@Source, Id, "Rm", FName, null) :-
     rm_request(@Source, Id, FName);
 
 request(@Master, Id, Source, RequestType, Arg1, Arg2) :-
-    self(@Source), master_for_node(@Source, Master),
+    self(@Source), 
+    master_for_node(@Source, Master),
+    //alive::currentMaster(@Source,Master),
     request_started(@Source, Id, RequestType, Arg1, Arg2);
 
 // If we get a "cat" request for a gfs_global::file that exists, send back the

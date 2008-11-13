@@ -48,15 +48,16 @@ public class Master {
         this.system.catalog().register(new SelfTable((Runtime) this.system));
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
-        this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
-        this.system.evaluate();
 
         if (clique == null) {
           java.lang.System.out.println("TRIVIAL\n");
+          this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
           this.system.install("gfs", ClassLoader.getSystemResource("gfs/trivial_glue.olg"));
         } else { 
           paxos_setup();
         }
+
+        this.system.evaluate();
 
         Callback cb = new Callback() {
             @Override
@@ -88,6 +89,11 @@ public class Master {
 
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_p1.olg"));
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_p2.olg"));
+
+        //this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/alive.olg"));
+        //this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_client_liveness.olg"));
+
+        this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/paxos_gfs_glue.olg"));
         //this.system.install("gfs", ClassLoader.getSystemResource("gfs/trivial_glue.olg"));
         this.system.evaluate();

@@ -18,12 +18,21 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
+import gfs.JOLTimer;
 
 public class Shell {
     private System system;
     private String selfAddress;
     private Random rand;
     private SynchronousQueue responseQueue;
+    private static Shell shell;
+
+    private static String[] MASTERS = new String[] {
+      "tcp:localhost:5500",
+      "tcp:localhost:5502",
+      "tcp:localhost:5503"
+    };
+    private static int INDX = 0;
 
     /*
      * TODO:
@@ -33,7 +42,8 @@ public class Shell {
      *  (4) return results to stdout
      */
     public static void main(String[] args) throws Exception {
-        Shell shell = new Shell();
+        //Shell shell = new Shell();
+        shell = new Shell();
         List<String> argList = new LinkedList<String>(Arrays.asList(args));
 
         if (argList.size() == 0)
@@ -58,6 +68,10 @@ public class Shell {
         this.rand = new Random();
         this.responseQueue = new SynchronousQueue();
 
+        //int port = java.lang.System.getEnv("MASTER");
+        //if (port == null) 
+        //  port = 5500;
+
         this.system = Runtime.create(5501);
         this.system.catalog().register(new SelfTable((Runtime) this.system));
 
@@ -72,6 +86,7 @@ public class Shell {
         self.add(new Tuple(this.selfAddress));
         this.system.schedule("gfs", SelfTable.TABLENAME, self, null);
         this.system.evaluate();
+        scheduleNewMaster();
         this.system.start();
     }
 
@@ -84,6 +99,18 @@ public class Shell {
 
         for (String file : args)
             doCatFile(file);
+    }
+
+    public static String currentMaster() {
+      java.lang.System.out.println("INDX = "+INDX+"\n");
+      return MASTERS[INDX];
+    }
+    private void scheduleNewMaster() throws UpdateException,JolRuntimeException {
+      /* Identify which address the local node is at */
+      TupleSet self = new TupleSet();
+      self.add(new Tuple(this.selfAddress, MASTERS[INDX]));
+      this.system.schedule("gfs", MasterTable.TABLENAME, self, null);
+      this.system.evaluate();
     }
 
     private void doCatFile(final String file) throws UpdateException, InterruptedException {
@@ -142,7 +169,7 @@ public class Shell {
         return rand.nextInt();
     }
 
-    private void doCreateFile(List<String> args) throws UpdateException, InterruptedException {
+    private void doCreateFile(List<String> args) throws UpdateException, InterruptedException,JolRuntimeException {
         if (args.size() != 1)
             usage();
 
@@ -200,9 +227,18 @@ public class Shell {
         req.add(new Tuple(this.selfAddress, requestId, filename, sb.toString()));
         this.system.schedule("gfs", tblName, req, null);
 
-        // Wait for the response
-        Object obj = this.responseQueue.take();
+        // Wait for the response (12 secs)
+        Object obj = timedTake(this.responseQueue,12000);
         responseTbl.unregister(responseCallback);
+        if (obj == null) {
+          // we timed out.
+          java.lang.System.out.println("retrying (indx= "+INDX+")\n");
+          doCreateFile(args);
+        } else { 
+
+        }
+      
+        //responseTbl.unregister(responseCallback);
     }
 
     private void doListFiles(List<String> args) throws UpdateException, InterruptedException {
@@ -312,6 +348,34 @@ public class Shell {
         // Wait for the response
         Object obj = this.responseQueue.take();
         responseTbl.unregister(responseCallback);
+    }
+    private Object timedTake(SynchronousQueue q,int millis) throws InterruptedException,JolRuntimeException,UpdateException {
+        JOLTimer t = new JOLTimer(millis,this.responseQueue);
+        t.start();
+        Object obj = this.responseQueue.take();
+        t.stop();
+        Object ret = null;
+
+        /* doing this cleanup here may be ill advised.
+           but I do want to do it in one place only.
+           leaks?
+        */
+        try {
+          String msg = (String)obj;
+          if (msg.compareTo("timeout") == 0) {
+            if (INDX++ == MASTERS.length-1) {
+              java.lang.System.out.println("giving up\n");
+              java.lang.System.exit(1); 
+            }
+            scheduleNewMaster();
+          }
+        } catch (ClassCastException e) {
+          // fine, it's not a timeout then.
+          
+          java.lang.System.out.println("looks good\n");
+          ret = obj;
+        }
+        return ret;
     }
 
     private void shutdown() {

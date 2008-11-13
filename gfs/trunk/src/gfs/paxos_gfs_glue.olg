@@ -38,18 +38,7 @@ gfs_global::file(Master,Name,Content) :-
   Op := Decree.split(",")[1],
   Op == "d";
 
-define(hupherl,{String,String});
-watch(hupherl,ae);
-hupherl(Master,Name) :-
-  gfs_global::file(Master,Name,Content),
-  paxos_global::requestStatus(Master,From,Decree,Instance,"passed"),
-  Name := Decree.split(",")[0],
-  Op := Decree.split(",")[1],
-  Op == "d";
-
-  
 watch(gfs_global::create_request_done,aeid);
-
 watch(gfs_global::file,ae);
 
 
