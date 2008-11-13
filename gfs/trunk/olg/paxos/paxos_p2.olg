@@ -9,8 +9,9 @@ import jol.core.Runtime;
 //timer(periodic,logical,1,1,1);
 	
 define(acceptRequest,keys(0,1),{String,Integer, Integer,String,Integer});
-define(sendBeginRound,keys(0,1),{String, Integer,Integer,String,String});
-define(accept,keys(0,1),{String, Integer,Integer,String});
+define(sendBeginRound,keys(0,1,2),{String, Integer,Integer,String,String});
+//define(sendBeginRound,{String, Integer,Integer,String,String});
+define(accept,keys(0,1),{String, Integer,Integer,String,String});
 define(sendAccept,keys(0,1,4),{String, Integer,Integer,String,String});
 define(decree,keys(0,1),{String, Integer,Integer,String});
 define(success,keys(0,1),{String,Integer, Integer,String,String});
@@ -23,9 +24,8 @@ define(tick,keys(0,1),{String,String,Integer});
 
 watch(paxos::instance,ae);
 watch(paxos::sendPrepare,ae);
-
+watch(paxos::nextBal,ae);
 watch(paxos::sendPromise,ae);
-
 
 public
 startinstance
@@ -47,9 +47,10 @@ bumpinstance
 paxos::instance(Me,I+1) :-
   paxos::instance(Me,I),
   // necessary #insert
-  paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
-  //paxos::storedDecreeRequest(Master,Decree,From,Id),
-  success(Me,I,Round,OldDecree,Client);
+  //paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
+  paxos::storedDecreeRequest(Master,Decree,From,Id),
+  // test.
+  success#insert(Me,I,Round,OldDecree,Client);
 
 // jump to the current instance.
 public
@@ -65,7 +66,8 @@ paxos::instance(Me,I) :-
 public
 bump_lasttried
 paxos::lastTried(Me,Round) :-
-  sendBeginRound#insert(Me,I,Round,Decree,Agent),
+  //sendBeginRound#insert(Me,I,Round,Decree,Agent),
+  sendBeginRound(Me,I,Round,Decree,Agent),
   Me != Agent;
 
 // jump to the current instance.
@@ -90,7 +92,7 @@ public
 r3_b
 acceptRequest(Master,Instance,Round,OldDecree,MaxB) :- 
   paxos::quorum(Master,Round),
-	paxos::maxPrevRound(Master,MaxB),
+	paxos::maxPrevRound(Master,Instance,MaxB),
 	paxos::prepare(Master,Round,Decree),
   paxos::instance(Master,I),
   I >= Instance,
@@ -101,7 +103,7 @@ public
 r3_c	
 acceptRequest(Master,Instance,Round,Decree,-1) :- 
   paxos::quorum(Master,Round),
-	paxos::maxPrevRound(Master,MaxB),
+	paxos::maxPrevRound(Master,Instance,MaxB),
   paxos::instance(Master,Instance),
 	paxos::sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
 	MaxB == -1,
@@ -113,15 +115,34 @@ acceptRequest(Master,Instance,Round,Decree,-1) :-
 
 public
 r3_d
-acceptRequest(Master,I,Round,Decree,-1) :-
+acceptRequest(Master,I,Round,Decree,-2) :-
   paxos::storedDecreeRequest(Master,Decree,From,_),
   paxos::quorum(Master,Round),
-  //maxPrevRound(Master,MaxB),
-	///sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
+  //paxos::maxPrevRound(Master,MaxB),
+	//paxos::sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
   //OldDecree == "none",
-  ////paxos::instance#insert(Master,I),
+  //MaxB == -1,
+  //paxos::instance#insert(Master,I),
+  paxos::instance(Master,I),
+  notin paxos::maxPrevRound(Master,I,_),
+  I > 0;
+
+//watch(paxos::maxPrevRound,ae);
+
+define(wouldBe,{String,Integer,Integer,String,String,Integer});
+watch(wouldBe,ae);
+public
+r3_def
+wouldBe(Master,I,Round,Decree,OldDecree,MaxB) :-
+  paxos::storedDecreeRequest(Master,Decree,From,_),
+  paxos::quorum(Master,Round),
+  //paxos::maxPrevRound(Master,MPMB),
+	paxos::sendPromise(Master,Instance,SomeRound,MaxB,OldDecree,Agent),
+ // OldDecree == "none",
+  ///paxos::instance#insert(Master,I),
   paxos::instance(Master,I),
   I > 0;
+
 
 public
 r3_e
@@ -136,7 +157,7 @@ message to p. (A BeginBallot (b, d) message is ignored if b = nextBal [q].)
 ***************************************************************************************/
 public
 r4_a
-accept(Agent,Instance,Round,Decree) :-
+accept(Agent,Instance,Round,Decree,Master) :-
   sendBeginRound(Agent,Instance,Round,Decree,Master),
 	paxos::nextBal(Agent,OldB),
   paxos::instance(Agent,Instance),
@@ -161,15 +182,14 @@ paxos::prevVote(Agent,Instance,Round,Decree) :-
   // ??
 	Round >= Old;
 
-define(recall,keys(0,1,2),{String,Integer,Integer,String});
+define(recall,keys(0,1,2),{String,Integer,Integer,String,String});
 memory
-recall(Agent,Instance,Round,Decree) :-
-  accept#insert(Agent,Instance,Round,Decree);
+recall(Agent,Instance,Round,Decree,Master) :-
+  accept#insert(Agent,Instance,Round,Decree,Master);
 
 r4_c	
 sendAccept(@Master,Instance,Round,Decree,Agent) :- 
-  recall(@Agent,Instance,Round,Decree),
-	sendBeginRound(@Agent,Instance,Round,Decree,Master);
+  recall(@Agent,Instance,Round,Decree,Master);
 	
 votes
 acceptCnt(Master,Instance,Round,count<Agent>) :- 
@@ -193,6 +213,7 @@ decree(Master,Instance,Round,Decree) :-
   Votes > (Priests / 2), 
 	acceptRequest(Master,Instance,Round,Decree);
 
+/*
 define(wouldDecree,{String,Integer,String});
 watch(wouldDecree,ae);
 wouldDecree(Master,Instance,Decree) :-
@@ -203,7 +224,7 @@ wouldDecree(Master,Instance,Decree) :-
   paxos::priestCnt(Master,Priests),
   Votes > (Priests / 2),
   acceptRequest(Master,Instance,Round,Decree);
-
+*/
 
 public
 r5_b	
@@ -250,7 +271,7 @@ watch(success,ae);
 //watch(decreeRequest,ae);
 	
 //watch(maxPrevRound,ae);
-watch(acceptRequest,aeid);
+watch(acceptRequest,ae);
 //watch(receivedPromise,ae);
 	
 //watch(prevVote,ae);	
@@ -258,9 +279,7 @@ watch(acceptRequest,aeid);
 
 //watch(quorum,ae);
 watch(decree,ae);
-watch(acceptCnt,ae);
 watch(sendAccept,ae);
-watch(accept,ae);
 watch(success,ae);
 //watch(sendPromise,ae);	
 

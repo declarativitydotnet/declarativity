@@ -20,7 +20,7 @@ define(sendPrepare,keys(0,1,3),{String,Integer,String,String});
 define(lastPromise,keys(0,1,2,4),{String,Integer,Integer,Integer,String,String});
 define(sendPromise,keys(0,1,2,4),{String,Integer,Integer,Integer,String,String});
 	
-define(maxPrevRound,keys(0),{String,Integer});
+define(maxPrevRound,keys(0),{String,Integer,Integer});
 define(priestCnt,keys(0),{String,Integer});
 define(lastPromiseCnt,keys(0,1),{String,Integer,Integer});
 define(quorum,keys(0,1),{String,Integer});
@@ -34,6 +34,8 @@ watch(quorum,ae);
 watch(prepare,aeid);
 watch(lastPromise,ae);
 watch(lastPromiseCnt,ae);
+
+watch(nextBal,ae);
 
 
 /*******************************************************************
@@ -143,6 +145,10 @@ nextBal(Agent,Round) :-
 	lastPromise#insert(Agent,Instance,Round,OldRound,Decree),
 	Round > Old;
 
+define(highestInstance,keys(0),{String,Integer});
+
+highestInstance(Agent,max<Instance>) :-
+	prevVote(Agent,Instance,OldRound,OldDecree);
 
 r2_b
 lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :- 
@@ -179,7 +185,7 @@ lastPromiseCnt(Master,Round,count<Agent>) :-
   // rows expire from sendPromise (why?) and this protects me from that.
   sendPromise#insert(Master,Instance,Round,Foo,Bar,Agent);
 
-maxPrevRound(Master,max<OldRound>) :- 
+maxPrevRound(Master,Instance,max<OldRound>) :- 
   sendPromise(Master,Instance,Round,OldRound,Decree,Agent);
 	
 /**************************************************************************************
