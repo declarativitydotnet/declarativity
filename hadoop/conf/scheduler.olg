@@ -1,0 +1,213 @@
+program scheduler;
+
+import java.lang.String;
+import java.lang.Integer;
+import java.lang.Float;
+import java.lang.System;
+import jol.types.basic.ValueList;
+import org.apache.hadoop.mapred.declarative.Constants.JobState;
+import org.apache.hadoop.mapred.declarative.Constants.TaskState;
+import org.apache.hadoop.mapred.declarative.Constants.TaskPhase;
+import org.apache.hadoop.mapred.declarative.Constants.TaskType;
+import org.apache.hadoop.mapred.TaskTrackerAction;
+import org.apache.hadoop.mapred.declarative.util.TaskUtil;
+import org.apache.hadoop.mapred.JobPriority;
+
+
+/*************** Task Attempt Scheduler *********************/
+
+define(taskAttempts, keys(0,1), {JobID, TaskID, Integer});
+define(scheduleTask, {JobID, TaskID, String});
+define(taskLimit,    {JobID, ValueList, String});
+
+public
+taskAttempts(JobID, TaskID, count<*>) :-
+	jobtracker::taskAttempt(JobID, TaskID);
+
+public
+taskAttempts(JobID, TaskID, 0) :-
+	jobtracker::task(JobID, TaskID, _, _, _, _, Status),
+	Status.state() == TaskState.UNASSIGNED;
+
+initTaskAttempt
+jobtracker::taskAttempt(JobID, TaskID, AttemptID, 0, State, Phase, null, TrackerName, 0L, 0L) :-
+	scheduleTask(JobID, TaskID, TrackerName),
+	taskAttempts(JobID, TaskID, Attempts),
+	State := TaskState.RUNNING,
+	Phase := TaskPhase.STARTING,
+	AttemptID := Attempts + 1;
+	
+watch(jobtracker::taskTrackerAction, a);
+actionSchedule
+jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
+	jobtracker::taskAttempt(JobID, TaskID, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _),
+	jobtracker::job(JobID, JobName, JobFile),
+	jobtracker::task(JobID, TaskID, Type, Partition, Split, MapCount, _),
+	Action := Type == Constants.TaskType.MAP ? 
+	          TaskUtil.launchMap(Split, JobFile, TaskID, AttemptID, Partition) :
+	          TaskUtil.launchReduce(JobFile, TaskID, AttemptID, Partition, MapCount);
+ 
+/******************** Process Jobs *******************/
+define(jobQueue,                keys(0), {JobID, JobPriority, Long, TaskType});
+define(jobQueueStats,           keys(),  {Integer, JobPriority, Long});
+define(oldestQueuedJob,         keys(0), {JobID, JobPriority, Long});
+define(jobMapTasks,             keys(0), {JobID, Integer});
+define(jobFinishedMapTasks,     keys(0), {JobID, Integer});
+define(jobReduceTasks,          keys(0), {JobID, Integer});
+define(jobFinishedReduceTasks,  keys(0), {JobID, Integer});
+
+/* Put new jobs in a wait queue in a MAP phase. */
+public
+jobQueue(JobID, Priority, SubmitTime, TaskType.MAP) :-
+	jobtracker::job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status),
+	Status.state() == JobState.PREP;
+	
+/* Overall min priority and min start time. */
+jobQueueStats(count<*>, min<Priority>, min<SubmitTime>) :-
+	jobQueue(JobID, Priority, SubmitTime, _); 
+	
+/* View of the oldest waiting job in each priority level. */
+oldestQueuedJob(JobID, Priority, min<SubmitTime>) :-
+	jobQueue(JobID, Priority, SubmitTime, _);
+	
+jobQueue(JobID, Priority, SubmitTime, TaskType.REDUCE) :-
+	jobMapTasks(JobID, Maps), jobFinishedMapTasks(JobID, Maps),
+	jobQueue(JobID, Priority, SubmitTime, Phase),
+	Phase == TaskType.MAP;
+	
+public
+jobMapTasks(JobID, count<TaskID>) :-
+	jobQueue(JobID),
+	jobtracker::task(JobID, TaskID, Type, _, _, _, _),
+	Type == TaskType.MAP;
+	
+watch(jobMapTasks, a);
+watch(jobFinishedMapTasks, a);
+public
+jobFinishedMapTasks(JobID, count<TaskID>) :-
+	jobQueue(JobID),
+	jobtracker::task(JobID, TaskID, Type, _, _, _, Status),
+	Type == TaskType.MAP, Status.state() == TaskState.SUCCEEDED;
+	
+public
+jobReduceTasks(JobID, count<TaskID>) :-
+	jobQueue(JobID),
+	jobtracker::task(JobID, TaskID, Type, _, _, _, _),
+	Type == TaskType.REDUCE;
+	
+public
+jobFinishedReduceTasks(JobID, count<TaskID>) :-
+	jobQueue(JobID),
+	jobtracker::task(JobID, TaskID, Type, _, _, _, Status),
+	Type == TaskType.REDUCE, Status.state() == TaskState.SUCCEEDED;
+	
+	
+/******************** Task Statistics *******************/
+/* Task Progress stores the min, max, avg progress for a jobs tasks. */
+define(taskProgress, keys(0,1), {JobID, TaskType, Float, Float, Float});
+
+watch(taskProgress, a);
+public
+taskProgress(JobID, Type, min<Progress>, max<Progress>, avg<Progress>) :-
+	jobtracker::task(JobID, TaskID, Type, _, _, _, Status),
+	Status.state() == TaskState.RUNNING, 
+	Progress := Status.progress();
+
+/******************** Schedule Tasks *******************/
+	
+define(trackerSlots, keys(0), {String, String, Integer, Integer});
+define(candidate, keys(), {JobID, TaskID, TaskType, String, Integer});
+define(proposal, {JobID, TaskID, Integer, String, Integer});
+define(assignment,  {JobID, TaskID, String, Integer});
+
+/* Schedule a task assignment. */
+scheduleTask(JobID, TaskID, TrackerName) :-
+	assignment(JobID, TaskID, TrackerName, Slots);
+	
+/* Clear all candidates when a schedule decision has been made. */
+delete
+candidate(JobID, TaskID, Type, TrackerName, Priority) :-
+	scheduleTask(JobID, TaskID, _),
+	candidate(JobID, TaskID, Type, TrackerName, Priority);
+	
+
+/* Update tracker slot count on task assignment. */
+trackerSlots(TrackerName, Host, MapSlots, ReduceSlots) :-
+	assignment(JobID, TaskID, TrackerName, Slots),
+	jobtracker::task(JobID, TaskID, Type, _, _, _, Status),
+	trackerSlots(TrackerName, Host, MapSlots, ReduceSlots),
+	MapSlots    := Type == TaskType.MAP    ? Slots : MapSlots,
+	ReduceSlots := Type == TaskType.REDUCE ? Slots : ReduceSlots;
+
+/* Determine a set of assignments from a set of proposals. */
+assignment(JobID, TaskID, TrackerName, Slots) :-
+	assignTracker(proposal(JobID, TaskID, Priority, TrackerName, Slots));
+
+
+/* Update tracker slots taken directly from tracker heartbeat. */
+public
+trackerSlots(TrackerName, Host, MaxMap - MapCount, MaxReduce - ReduceCount) :-
+	jobtracker::taskTracker(TrackerName, Host, HttpPort, Timestamp, Failures, MapCount, ReduceCount, MaxMap, MaxReduce);
+
+/* Priority 1: Schedule unassigned tasks from the oldest + highest priority job. */
+public
+candidate(JobID, TaskID, Type, TrackerName, Priority) :-
+	trackerSlots(TrackerName, Host, Maps, Reduces),
+	jobQueueStats(Jobs, MinPriority, _),
+	jobQueue(JobID, MinPriority, SubmitTime, Type),
+	jobtracker::task(JobID, TaskID, Type, _, _, _, Status),
+	Status.state() != TaskState.RUNNING,
+    notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.FAILED, _, _, TrackerName, _, _),
+    notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.RUNNING, _, _, _, _, _),
+    notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.SUCCEEDED, _, _, _, _, _),
+	Type == TaskType.MAP && Maps > 0 || Type == TaskType.REDUCE && Reduces > 0,
+	Priority := 1;
+	
+/* Priority 2: Speculative task execution on the min priority job. */
+/*
+public
+candidate(JobID, TaskID, Type, TrackerName, Priority) :-
+	trackerSlots(TrackerName, Host, Maps, Reduces),
+	jobQueueStats(Jobs, MinPriority, _),
+	jobQueue(JobID, MinPriority, JobSubmitTime, Type),
+	jobtracker::task(JobID, TaskID, Type, _, _, _, Status),
+	taskProgress(JobID, Type, MinProgress, MaxProgress, AvgProgress),
+    notin jobtracker::taskAttempt(JobID, TaskID, _, _, TaskState.FAILED, _, _, TrackerName, _, _),
+	Status.state() == TaskState.RUNNING,
+	Type == TaskType.MAP && Maps > 0 || Type == TaskType.REDUCE && Reduces > 0,
+	FOO := java.lang.System.currentTimeMillis(),
+	(java.lang.System.currentTimeMillis() - JobSubmitTime) > 60000L,
+	Status.progress() < AvgProgress - 0.2,
+	Priority := 2;
+	*/
+	
+	
+/******************** Schedule Map Tasks *******************/
+define(bestMapDistance, {JobID, TaskID, String, Integer, Integer, Integer});
+
+/*
+public
+bestMapDistance(JobID, TaskID, TrackerName, MapSlots, min<Priority>, min<Distance>) :-
+	candidate(JobID, TaskID, Type, TrackerName, Priority),
+	jobtracker::taskFileLocation(JobID, TaskID, FileLocation),
+	jobtracker::networkDistance(Host, FileLocation, Distance),
+	trackerSlots(TrackerName, Host, MapSlots, ReduceSlots),
+	Type == TaskType.MAP, MapSlots > 0;
+	*/
+	
+/* Propose the map tasks with the best priority and min distance to tracker. */
+proposal(JobID, TaskID, Priority, TrackerName, MapSlots) :-
+	candidate(JobID, TaskID, Type, TrackerName, Priority),
+	trackerSlots(TrackerName, Host, MapSlots, ReduceSlots),
+	Type == TaskType.MAP, MapSlots > 0;
+	
+/******************** Schedule Reduce Tasks *******************/
+
+proposal(JobID, TaskID, Priority, TrackerName, ReduceSlots) :-
+	candidate(JobID, TaskID, Type, TrackerName, Priority),
+	trackerSlots(TrackerName, Host, MapSlots, ReduceSlots),
+	Type == TaskType.REDUCE, ReduceSlots > 0;
+	
+	
+	
+	
