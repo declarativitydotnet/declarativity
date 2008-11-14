@@ -87,8 +87,9 @@ public class Master {
     private void paxos_setup() throws JolRuntimeException , UpdateException {
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_global.olg"));
 
-        this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_p1.olg"));
-        this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_p2.olg"));
+        this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_pruned1.olg"));
+        this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_pruned2.old"));
+        //this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_p2.olg"));
 
         //this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/alive.olg"));
         //this.system.install("gfs", ClassLoader.getSystemResource("gfs/olg/paxos/paxos_client_liveness.olg"));

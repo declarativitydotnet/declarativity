@@ -36,6 +36,7 @@ watch(lastPromise,ae);
 watch(lastPromiseCnt,ae);
 
 watch(nextBal,ae);
+watch(prevVote,ae);
 
 
 /*******************************************************************
@@ -101,6 +102,7 @@ storedDecreeRequest(A,B,C,Id) :-
   Id := Runtime.idgen();
 
 define(topOfQueue,keys(0),{String,Long});
+watch(topOfQueue,ae);
 topOfQueue(A,min<Id>) :-
   storedDecreeRequest(A,B,C,Id);
 

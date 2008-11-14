@@ -29,8 +29,8 @@ public class Shell {
 
     private static String[] MASTERS = new String[] {
       "tcp:localhost:5500",
-      "tcp:localhost:5502",
-      "tcp:localhost:5503"
+      "tcp:localhost:5502"//,
+      //"tcp:localhost:5503"
     };
     private static int INDX = 0;
 
@@ -119,7 +119,11 @@ public class Shell {
         // Register callback to listen for responses
         Callback responseCallback = new Callback() {
             @Override
-            public void deletion(TupleSet tuples) {}
+            public void deletion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+      
+                }
+            }
 
             @Override
             public void insertion(TupleSet tuples) {
@@ -241,7 +245,7 @@ public class Shell {
         //responseTbl.unregister(responseCallback);
     }
 
-    private void doListFiles(List<String> args) throws UpdateException, InterruptedException {
+    private void doListFiles(List<String> args) throws UpdateException, InterruptedException,JolRuntimeException {
         if (!args.isEmpty())
             usage();
 
@@ -279,19 +283,25 @@ public class Shell {
         req.add(new Tuple(this.selfAddress, requestId));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList<String> lsContent = (ValueList<String>) this.responseQueue.take();
-        Collections.sort(lsContent);
-        responseTbl.unregister(responseCallback);
+        Object obj = (Object) timedTake(this.responseQueue,4000);
+        if (obj == null) {
+          doListFiles(args);
+        } else {
+          //ValueList<String> lsContent = (ValueList<String>) this.responseQueue.take();
+          ValueList<String> lsContent = (ValueList<String>) obj;
+          Collections.sort(lsContent);
+          responseTbl.unregister(responseCallback);
 
-        java.lang.System.out.println("ls:");
-        int i = 1;
-        for (String file : lsContent) {
+          java.lang.System.out.println("ls:");
+          int i = 1;
+          for (String file : lsContent) {
             java.lang.System.out.println("  " + i + ". " + file);
             i++;
+          }
         }
     }
 
-    private void doRemove(List<String> argList) throws UpdateException, InterruptedException {
+    private void doRemove(List<String> argList) throws UpdateException, InterruptedException,JolRuntimeException {
         if (argList.isEmpty())
             usage();
         
@@ -300,7 +310,7 @@ public class Shell {
         }
     }
 
-    private void doRemoveFile(final String file) throws UpdateException, InterruptedException {
+    private void doRemoveFile(final String file) throws UpdateException, InterruptedException,JolRuntimeException {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -346,8 +356,11 @@ public class Shell {
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
-        Object obj = this.responseQueue.take();
+        //Object obj = this.responseQueue.take();
+        Object obj = timedTake(this.responseQueue,10000);
         responseTbl.unregister(responseCallback);
+        if (obj == null) 
+           doRemoveFile(file);  
     }
     private Object timedTake(SynchronousQueue q,int millis) throws InterruptedException,JolRuntimeException,UpdateException {
         JOLTimer t = new JOLTimer(millis,this.responseQueue);

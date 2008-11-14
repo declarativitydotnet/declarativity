@@ -39,8 +39,8 @@ delete
 paxos::storedDecreeRequest(Master,Decree,From,Id) :-
   paxos::storedDecreeRequest(Master,Decree,From,Id),
   // 2:
-  //success#insert(Master,I,Round,Decree,From);
-  success(Master,I,Round,Decree,From);
+  success#insert(Master,I,Round,Decree,From);
+  //success(Master,I,Round,Decree,From);
 
 public
 bumpinstance
@@ -177,7 +177,7 @@ public
 r4_b	
 paxos::prevVote(Agent,Instance,Round,Decree) :- 
   paxos::prevVote(Agent,OI,Old,OD),
-	paxos::lastPromise(Agent,Round,OldRound,OldDecree),
+	paxos::lastPromise(Agent,IO2,Round,OldRound,OldDecree),
 	accept#insert(Agent,Instance,Round,Decree),
   // ??
 	Round >= Old;
@@ -205,8 +205,8 @@ r5_a
 decree(Master,Instance,Round,Decree) :- 
   paxos::lastTried(Master,Round),
   // 1:
-	//acceptCnt#insert(Master,Instance,Round,Votes),
-	acceptCnt(Master,Instance,Round,Votes),
+	acceptCnt#insert(Master,Instance,Round,Votes),
+	//acceptCnt(Master,Instance,Round,Votes),
 	// this is |quorum| 
 	///paxos::lastPromiseCnt(Master,Round,Votes),
   paxos::priestCnt(Master,Priests),
