@@ -315,13 +315,31 @@ public class Driver implements Runnable {
 				if (deletions == null) deletions = new TupleSet(name);
 				Program program = context.program(programName);
 				
-				if (query == null && program.queries(name) != null) {
-					for (Query q : program.queries(name)) {
-						TupleSet  result = evaluate(time, program, q, name, insertions, deletions);
-						delta.addAll(result);
+				if (query == null) {
+					/* It is assumed that not specific query means execute
+					 * all relevant queries.  */
+					if (program.queries(name) != null) {
+						for (Query q : program.queries(name)) {
+							TupleSet  result = evaluate(time, program, q, name, insertions, deletions);
+							delta.addAll(result);
+						}
+					}
+					else if (insertions.size() > 0 && deletions.size() > 0) {
+						/* This case is tricky. Basically, no queries are interested in
+						 * the insertions BUT we still need to 'flush' the deletions which
+						 * will not occur until there are no more insertions. So basically
+						 * we need to clear these insertions out (they've already been flushed)
+						 * and punt the deletions back to the runtime scheduler to be flushed
+						 * and reevaluated.  */
+						insertions.clear();
+						delta.add(tuple);
 					}
 				}
-				else if (query != null) {
+				else {
+					/* A specific query was given. The runtime scheduler does this when
+					 * it is executing a program that is not the primary target but
+					 * has a query that is public and that query triggers off of 
+					 * these tuple insertions. */
 					TupleSet  result = evaluate(time, program, query, name, insertions, deletions);
 					delta.addAll(result);
 				}
