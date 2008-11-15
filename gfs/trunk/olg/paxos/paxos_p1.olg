@@ -22,8 +22,6 @@ define(sendPromise,keys(0,1,2,4),{String,Integer,Integer,Integer,String,String})
 	
 define(maxPrevRound,keys(0),{String,Integer,Integer});
 define(priestCnt,keys(0),{String,Integer});
-define(lastPromiseCnt,keys(0,1),{String,Integer,Integer});
-define(quorum,keys(0,1),{String,Integer});
 	
 define(tick,keys(0,1),{String,String,Integer});
 
@@ -34,6 +32,7 @@ watch(quorum,ae);
 watch(prepare,aeid);
 watch(lastPromise,ae);
 watch(lastPromiseCnt,ae);
+watch(sendPromise,ae);
 
 watch(nextBal,ae);
 watch(prevVote,ae);
@@ -139,6 +138,7 @@ sets nextBal [q] to b and sends a LastVote (b, v) message to p, where v equals
 prevVote [q]. (A NextBallot (b) message is ignored if b ² nextBal [q].)
 ***************************************************************************************/
 
+watch(sendPrepare,ae);
 
 r2_a
 nextBal(Agent,Round) :-
@@ -157,21 +157,37 @@ lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :-
   // NEW
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
-	prevVote(Agent,OldInstance,OldRound,OldDecree),
+	prevVote(Agent,OI,OldRound,OldDecree),
+  maxPrevVoteInstance(Master,OI),
   instance(Agent,Instance),
-  Instance == OldInstance,
+  Instance == OI,
 	Round >= OldRound;
 
+//NEW
+define(maxPrevVoteInstance,keys(0),{String,Integer});
+maxPrevVoteInstance(Master,max<Instance>) :-
+  prevVote(Master,Instance,_,_);
 
 r2_b2
 lastPromise(Agent,Instance,Round,-1,"none",Peer) :- 
   // NEW
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
-	notin prevVote(Agent,Instance,_,_),
+	//prevVote(Agent,OI,_,_),
+  maxPrevVoteInstance(Master,OI),
+  Instance > OI,
   instance(Agent,Instance);//,
 	///Round >= OldRound;
 
+define (wouldPromise,{String,Integer,Integer,Integer,String,String});
+watch(wouldPromise,ae);
+wp
+wouldPromise(Agent,Instance,Round,-1,"none",Peer) :- 
+  // NEW
+  //sendPrepare#insert(Agent,Round,Decree,Peer),
+  sendPrepare(Agent,Round,Decree,Peer),
+	notin prevVote(Agent,Instance,_,_),
+  instance(Agent,Instance);//,
 
 r2_c	
 sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-
@@ -181,6 +197,7 @@ sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-
 /* for quorum handling, aggregates are difficult to avoid... */
 priestCnt(Master,count<*>) :- parliament(Master,Agent);
 
+define(lastPromiseCnt,keys(0,1),{String,Integer,Integer});
 lastPromiseCnt(Master,Round,count<Agent>) :- 
   // I need an explanation for this one... here's how it begins:
   // we need lastPromiseCnt later too see if our voters match our quorum.
@@ -197,8 +214,11 @@ quorum Q, and decree d, where d is chosen to satisfy B3. He then sends a
 BeginBallot (b, d) message to every priest in Q.
 ***************************************************************************************/
 
+define(quorum,keys(0,1),{String,Integer});
 r3_a	
 quorum(Master,Round) :- 
   priestCnt(Master,Pcnt),
-	lastPromiseCnt(Master,Round,Vcnt),
+  // if I don't do this, rows expire out of quorum and phase2 stuff fails...
+	lastPromiseCnt#insert(Master,Round,Vcnt),
 	Vcnt > ( Pcnt / 2 );
+
