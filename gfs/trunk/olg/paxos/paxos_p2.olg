@@ -182,14 +182,16 @@ paxos::prevVote(Agent,Instance,Round,Decree) :-
   // ??
 	Round >= Old;
 
+/*
 define(recall,keys(0,1,2),{String,Integer,Integer,String,String});
 memory
 recall(Agent,Instance,Round,Decree,Master) :-
   accept#insert(Agent,Instance,Round,Decree,Master);
+*/
 
 r4_c	
 sendAccept(@Master,Instance,Round,Decree,Agent) :- 
-  recall(@Agent,Instance,Round,Decree,Master);
+  accept(@Agent,Instance,Round,Decree,Master);
 	
 votes
 acceptCnt(Master,Instance,Round,count<Agent>) :- 
@@ -205,8 +207,8 @@ r5_a
 decree(Master,Instance,Round,Decree) :- 
   paxos::lastTried(Master,Round),
   // 1:
-	acceptCnt#insert(Master,Instance,Round,Votes),
-	//acceptCnt(Master,Instance,Round,Votes),
+	//acceptCnt#insert(Master,Instance,Round,Votes),
+	acceptCnt(Master,Instance,Round,Votes),
 	// this is |quorum| 
 	///paxos::lastPromiseCnt(Master,Round,Votes),
   paxos::priestCnt(Master,Priests),
