@@ -27,67 +27,14 @@ watch(paxos::sendPrepare,ae);
 watch(paxos::nextBal,ae);
 watch(paxos::sendPromise,ae);
 
-public
-startinstance
-paxos::instance(Me,0) :-
-  paxos::periodic(_,_,_),
-  paxos_global::id(Me);
-
-public
-window
-delete
-paxos::storedDecreeRequest(Master,Decree,From,Id) :-
-  paxos::storedDecreeRequest(Master,Decree,From,Id),
-  // 2:
-  success#insert(Master,I,Round,Decree,From);
-  //success(Master,I,Round,Decree,From);
-
-public
-bumpinstance
-paxos::instance(Me,I+1) :-
-  paxos::instance(Me,I),
-  // necessary #insert
-  //paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
-  paxos::storedDecreeRequest(Master,Decree,From,Id),
-  // test.
-  success#insert(Me,I,Round,OldDecree,Client);
-
-// jump to the current instance.
-public
-bi2 
-paxos::instance(Me,I) :-
-  paxos::instance(Me,OldI),
-  // 3:
-  sendBeginRound#insert(Me,I,Round,Decree,Agent),
-  //sendBeginRound(Me,I,Round,Decree,Agent),
-  Me != Agent,
-  I > OldI;
-
-public
-bump_lasttried
-paxos::lastTried(Me,Round) :-
-  //sendBeginRound#insert(Me,I,Round,Decree,Agent),
-  sendBeginRound(Me,I,Round,Decree,Agent),
-  Me != Agent;
-
-// jump to the current instance.
-public
-bi3
-paxos::instance(Me,I+1) :-
-  paxos::instance(Me,OldI),
-	paxos::sendPromise#insert(Me,I,Round,MaxB,OldDecree,Agent),
-  Me != Agent,
-  I > OldI;
-
-
-	
 /**************************************************************************************
 3.  After receiving a LastVote (b, v) message from every priest in some majority
 set Q, where b = lastTried [p], priest p initiates a new ballot with number b,
 quorum Q, and decree d, where d is chosen to satisfy B3. He then sends a
 BeginBallot (b, d) message to every priest in Q.
 ***************************************************************************************/
-	
+
+
 public
 r3_b
 acceptRequest(Master,Instance,Round,OldDecree,MaxB) :- 
@@ -124,7 +71,10 @@ acceptRequest(Master,I,Round,Decree,-2) :-
   //MaxB == -1,
   //paxos::instance#insert(Master,I),
   paxos::instance(Master,I),
-  notin paxos::maxPrevRound(Master,I,_),
+  //notin paxos::maxPrevRound(Master,I,_),
+  //notin paxos::sendPromise(Master,I,_,_,_,_),
+  notin success(Master,I,_,_,_),
+  //notin sendBeginRound(Master,I,_,_,_),
   I > 0;
 
 //watch(paxos::maxPrevRound,ae);

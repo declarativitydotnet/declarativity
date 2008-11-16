@@ -29,8 +29,8 @@ public class Shell {
 
     private static String[] MASTERS = new String[] {
       "tcp:localhost:5500",
-      "tcp:localhost:5502"//,
-      //"tcp:localhost:5503"
+      "tcp:localhost:5502",
+      "tcp:localhost:5503"
     };
     private static int INDX = 0;
 

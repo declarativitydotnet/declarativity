@@ -158,13 +158,14 @@ lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :-
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
 	prevVote(Agent,OI,OldRound,OldDecree),
-  maxPrevVoteInstance(Master,OI),
+  maxPrevVoteInstance(Agent,OI),
   instance(Agent,Instance),
   Instance == OI,
 	Round >= OldRound;
 
 //NEW
 define(maxPrevVoteInstance,keys(0),{String,Integer});
+watch(maxPrevVoteInstance,ae);
 maxPrevVoteInstance(Master,max<Instance>) :-
   prevVote(Master,Instance,_,_);
 
@@ -174,10 +175,11 @@ lastPromise(Agent,Instance,Round,-1,"none",Peer) :-
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
 	//prevVote(Agent,OI,_,_),
-  maxPrevVoteInstance(Master,OI),
-  Instance > OI,
+  ///maxPrevVoteInstance(Agent,OI);   //,
+  notin prevVote(Agent,Instance,_,_),
+  //Instance > OI,
   instance(Agent,Instance);//,
-	///Round >= OldRound;
+	///////Round >= OldRound;
 
 define (wouldPromise,{String,Integer,Integer,Integer,String,String});
 watch(wouldPromise,ae);

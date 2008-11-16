@@ -1,0 +1,66 @@
+program paxos_instance;
+	
+import java.lang.String;
+import java.lang.Integer;
+	
+import java.lang.System;
+import jol.core.Runtime;
+
+//timer(periodic,logical,1,1,1);
+	
+watch(paxos::instance,ae);
+watch(paxos::nextBal,ae);
+
+public
+startinstance
+paxos::instance(Me,0) :-
+  paxos::periodic(_,_,_),
+  paxos_global::id(Me);
+
+public
+window
+delete
+paxos::storedDecreeRequest(Master,Decree,From,Id) :-
+  paxos::storedDecreeRequest(Master,Decree,From,Id),
+  // 2:
+  multipaxos::success#insert(Master,I,Round,Decree,From);
+  //success(Master,I,Round,Decree,From);
+
+public
+bumpinstance
+paxos::instance(Me,I+1) :-
+  paxos::instance(Me,I),
+  // necessary #insert
+  //paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
+  paxos::storedDecreeRequest(Master,Decree,From,Id),
+  // test.
+  multipaxos::success#insert(Me,I,Round,OldDecree,Client);
+
+// jump to the current instance.
+public
+bi2 
+paxos::instance(Me,I) :-
+  paxos::instance(Me,OldI),
+  // 3:
+  multipaxos::sendBeginRound#insert(Me,I,Round,Decree,Agent),
+  //sendBeginRound(Me,I,Round,Decree,Agent),
+  Me != Agent,
+  I > OldI;
+
+public
+bump_lasttried
+paxos::lastTried(Me,Round) :-
+  //sendBeginRound#insert(Me,I,Round,Decree,Agent),
+  multipaxos::sendBeginRound(Me,I,Round,Decree,Agent),
+  Me != Agent;
+
+// jump to the current instance.
+public
+bi3
+paxos::instance(Me,I+1) :-
+  paxos::instance(Me,OldI),
+	paxos::sendPromise#insert(Me,I,Round,MaxB,OldDecree,Agent),
+  Me != Agent,
+  I > OldI;
+
+
