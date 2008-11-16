@@ -38,7 +38,7 @@
     </jar>
     <jar jarfile="${dist}/gfs-test.jar">
       <fileset dir="${build}" includes="gfs/test/**"/>
-      <fileset dir="${olg}" includes="**/*.olg"/>
+      <fileset dir="${test}" includes="**/*.olg"/>
     </jar>
   </target>
   
