@@ -8,6 +8,9 @@
   <property name="build" location="build"/>
   <property name="dist"  location="dist"/>
   <property name="lib" location="lib"/>
+  <property name="test" location="test"/>
+  <property name="test-output" location="test-output"/>
+  <property name="olg" location="olg"/>
 
   <target name="init">
     <tstamp/>
@@ -16,6 +19,9 @@
 
   <target name="compile" depends="init" description="compile the source">
     <javac srcdir="${src}" destdir="${build}" classpath="${lib}/jol.jar" debug="yes">
+      <compilerarg value="-Xlint:unchecked"/>
+    </javac>
+    <javac srcdir="${test}" destdir="${build}" classpath="${lib}/jol.jar:${lib}/junit.jar" debug="yes">
       <compilerarg value="-Xlint:unchecked"/>
     </javac>
   </target>
@@ -30,10 +36,41 @@
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
     </jar>
+    <jar jarfile="${dist}/gfs-test.jar">
+      <fileset dir="${build}" includes="gfs/test/**"/>
+      <fileset dir="${olg}" includes="**/*.olg"/>
+    </jar>
   </target>
+  
 
   <target name="clean" description="clean up">
     <delete dir="${build}"/>
     <delete dir="${dist}"/>
+  </target>
+  <target name="doc" description="generate Javadoc documentation">
+    <javadoc destdir="${doc}" sourcepath="${src}" classpath="${lib}/xtc.jar"/>
+  </target>
+
+  <target name="test" description="run JUnit tests">
+    <mkdir dir="${test-output}"/>
+    <!-- Note that we fork a JVM to run the tests in. This is probably
+         good for robustness reasons; it also seems necessary to
+         prevent JUnit from interferring with our classpath and
+         preventing the loading of OLG files. -->
+    <junit printsummary="yes" fork="yes">
+      <classpath>
+        <pathelement location="${lib}/jol.jar"/>
+        <pathelement location="${dist}/gfs-test.jar"/>
+        <pathelement location="${lib}/junit.jar"/>
+      </classpath>
+
+      <formatter type="plain"/>
+
+      <batchtest todir="${test-output}">
+        <fileset dir="${test}">
+          <include name="**/*Test.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
   </target>
 </project>
