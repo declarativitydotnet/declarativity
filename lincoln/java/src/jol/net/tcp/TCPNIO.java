@@ -38,6 +38,8 @@ public class TCPNIO extends Server {
 	private Network manager;
 	
 	private Selector selector;
+
+	private ServerSocketChannel server;
 	
 	private List<Connection> newConnections;
 
@@ -49,11 +51,20 @@ public class TCPNIO extends Server {
 		this.newConnections = new ArrayList<Connection>();
 		context.install("system", "jol/net/tcp/tcp.olg");
 		
-		ServerSocketChannel server = ServerSocketChannel.open();
+		server = ServerSocketChannel.open();
 		server.configureBlocking(false);
 		server.socket().bind(new InetSocketAddress(port));
 		server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
+
+  public void cleanup()  {
+    try {
+      this.server.close();
+    } catch (IOException e) {
+
+    }
+  }
+
 	
 	@Override
 	public void run() {

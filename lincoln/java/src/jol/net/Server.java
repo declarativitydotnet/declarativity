@@ -13,6 +13,7 @@ public abstract class Server extends Thread {
 	 * @return A channel object.
 	 */
 	public abstract Channel open(Address address);
+  public abstract void cleanup();
 	
 	/**
 	 * Close the channel.
