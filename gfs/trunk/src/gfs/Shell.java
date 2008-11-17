@@ -50,21 +50,28 @@ public class Shell {
             shell.usage();
 
         String op = argList.remove(0);
-        if (op.equals("cat"))
-            shell.doConcatenate(argList);
-        else if (op.equals("create"))
+        if (op.equals("cat")) {
+            shell.doConcatenate(argList); 
+        } else if (op.equals("create")) {
             shell.doCreateFile(argList);
-        else if (op.equals("ls"))
-            shell.doListFiles(argList);
-        else if (op.equals("rm"))
+        } else if (op.equals("ls")) {
+            ValueList<String> list = shell.doListFiles(argList);
+            java.lang.System.out.println("ls:");
+            int i = 1;
+            for (String file : list) {
+              java.lang.System.out.println("  " + i + ". " + file);
+              i++;
+            }
+        } else if (op.equals("rm")) {
             shell.doRemove(argList);
-        else
+        } else {
             shell.usage();
+        }
 
         shell.shutdown();
     }
 
-    Shell() throws JolRuntimeException, UpdateException {
+    public Shell() throws JolRuntimeException, UpdateException {
         this.rand = new Random();
         this.responseQueue = new SynchronousQueue();
 
@@ -173,18 +180,25 @@ public class Shell {
         return rand.nextInt();
     }
 
-    private void doCreateFile(List<String> args) throws UpdateException, InterruptedException,JolRuntimeException {
+    public void doCreateFile(List<String> args) throws UpdateException, InterruptedException,JolRuntimeException {
+      doCreateFile(args,true);
+    }
+    public void doCreateFile(List<String> args,Boolean fromStdin) throws UpdateException, InterruptedException,JolRuntimeException {
         if (args.size() != 1)
             usage();
 
-        /* Read the contents of the file from stdin */
         StringBuilder sb = new StringBuilder();
-        int b;
-        try {
+        if (fromStdin) {
+          /* Read the contents of the file from stdin */
+          int b;
+          try {
             while ((b = java.lang.System.in.read()) != -1)
-                sb.append((char) b);
-        } catch (IOException e) {
+              sb.append((char) b);
+          } catch (IOException e) {
             throw new RuntimeException(e);
+          }
+        } else {
+          sb.append("foo");  
         }
 
         String filename = args.get(0);
@@ -237,7 +251,7 @@ public class Shell {
         if (obj == null) {
           // we timed out.
           java.lang.System.out.println("retrying (indx= "+INDX+")\n");
-          doCreateFile(args);
+          doCreateFile(args,fromStdin);
         } else { 
 
         }
@@ -245,7 +259,7 @@ public class Shell {
         //responseTbl.unregister(responseCallback);
     }
 
-    private void doListFiles(List<String> args) throws UpdateException, InterruptedException,JolRuntimeException {
+    public ValueList<String> doListFiles(List<String> args) throws UpdateException, InterruptedException,JolRuntimeException {
         if (!args.isEmpty())
             usage();
 
@@ -285,23 +299,26 @@ public class Shell {
 
         Object obj = (Object) timedTake(this.responseQueue,4000);
         if (obj == null) {
-          doListFiles(args);
+          return doListFiles(args);
         } else {
           //ValueList<String> lsContent = (ValueList<String>) this.responseQueue.take();
           ValueList<String> lsContent = (ValueList<String>) obj;
           Collections.sort(lsContent);
           responseTbl.unregister(responseCallback);
 
+          /*
           java.lang.System.out.println("ls:");
           int i = 1;
           for (String file : lsContent) {
             java.lang.System.out.println("  " + i + ". " + file);
             i++;
           }
+          */
+          return lsContent;
         }
     }
 
-    private void doRemove(List<String> argList) throws UpdateException, InterruptedException,JolRuntimeException {
+    protected void doRemove(List<String> argList) throws UpdateException, InterruptedException,JolRuntimeException {
         if (argList.isEmpty())
             usage();
         
@@ -310,7 +327,7 @@ public class Shell {
         }
     }
 
-    private void doRemoveFile(final String file) throws UpdateException, InterruptedException,JolRuntimeException {
+    protected void doRemoveFile(final String file) throws UpdateException, InterruptedException,JolRuntimeException {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -391,7 +408,7 @@ public class Shell {
         return ret;
     }
 
-    private void shutdown() {
+    public void shutdown() {
         this.system.shutdown();
     }
 

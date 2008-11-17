@@ -75,17 +75,30 @@ parliament(A,B) :-
   paxos_global::members(B);//,
   //periodic(_,_,_);
 
-	
+/*
 lastTried(Master,-1) :- parliament(Master,Agent);
 prevVote(Master,0,-1,"none") :- parliament(Master,Agent);
 nextBal(Master,-1) :- parliament(Master,Agent);
-
+*/
+//public
+//lastTried(Master,-1) :- paxos_global::id(Master);
+public
+prepare(Master,-1,"none") :- paxos_global::id(Master);
+public
+prevVote(Master,0,-1,"none") :- paxos_global::id(Master);
+public
+nextBal(Master,-1) :- paxos_global::id(Master);
 /**************************************************************************************
 r1. Priest p chooses a new ballot number b greater than lastTried [p], sets lastTried[p]
 to b, and sends a NextBallot (b) message to some set of priests.
 ***************************************************************************************/
 
+//sequence(nextTicket,0);
+
 watch(lastTried,ae);
+
+/*
+public
 r1_a
 lastTried(Agent,Bnum) :- 
   lastTried(Agent,Old),
@@ -93,6 +106,10 @@ lastTried(Agent,Bnum) :-
   // (because it's not greater than itself)
 	prepare#insert(Agent,Bnum,Decree),
 	Bnum > Old;
+*/
+
+lastTried(Agent,max<Bnum>) :-
+  prepare(Agent,Bnum,_);
 	
 public
 storedDecreeRequest(A,B,C,Id) :- 
@@ -102,9 +119,13 @@ storedDecreeRequest(A,B,C,Id) :-
 
 define(topOfQueue,keys(0),{String,Long});
 watch(topOfQueue,ae);
+
 topOfQueue(A,min<Id>) :-
+ // storedDecreeRequest#insert(A,B,C,Id);
+
   storedDecreeRequest(A,B,C,Id);
 
+public
 r1_b
 prepare(Agent,Round,Decree) :- 
 	storedDecreeRequest(Agent,Decree,From,Id),
@@ -112,12 +133,29 @@ prepare(Agent,Round,Decree) :-
   // created by r1_a above.  without this insert, which forces the rule to be evaluated
   // once only in the fixpoint, we'll keep adding because of the cycle through lastTried...
   topOfQueue#insert(Agent,Id),
-	lastTried(Agent,Old),
+  //topOfQueue(Agent,Id),
+	lastTried(WHAT,Old),
 	// if we don't already have a quorum 
   notin quorum(Agent,_),
 	Round := Old + 1;
 
-// 
+define(wouldPrep,{String,Integer,String,String,String});
+watch(wouldPrep,ae);
+
+public
+wouldPrep(Agent,Round,Decree,WHAT,Me) :- 
+	storedDecreeRequest(Agent,Decree,From,Id),
+  topOfQueue#insert(Agent,Id),
+  //Round := 100,
+  // I don't know wtf is up with this...
+	lastTried(WHAT,Old),
+  //WHAT == Agent,
+  notin quorum(Agent,_),
+  paxos_global::id(Me),
+	Round := Old + 1;
+
+//
+/* 
 public r1_b2
 prepare(Agent,Round,Decree) :-
   // current instance
@@ -125,11 +163,12 @@ prepare(Agent,Round,Decree) :-
   // INSERT HERE TOO
   paxos_global::decreeRequestBuffer#insert(Master,Decree,Client),
   Round := Old + 1;
-
+*/
 	
 r1_c
 sendPrepare(@Peer,Round,Decree,Agent) :-
   prepare(@Agent,Round,Decree),
+  Round >= 0,
 	parliament(@Agent,Peer);
 
 /**************************************************************************************

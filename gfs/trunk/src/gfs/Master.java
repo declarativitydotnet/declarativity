@@ -10,26 +10,32 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Master {
-    public static int PORT;
-    public static String ADDRESS = "tcp:localhost:5500";
+    //public static int PORT;
+    //public static String ADDRESS = "tcp:localhost:5500";
+    public int port;
+    public String address;
     //public static String ADDRESS;
     public static String[] clique;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
+/*
         if (args.length < 1) {
           clique = null;
-          PORT = 5500;
-          ADDRESS="tcp:localhost:5500";
+          //PORT = 5500;
+          //ADDRESS="tcp:localhost:5500";
+          port = 5500;
+          address = "tcp:localhost:5500";
         }else {
           clique = new String[args.length];
-          PORT = Integer.valueOf(args[0]).intValue();
-          ADDRESS = "tcp:localhost:" + args[0];
+          port = Integer.valueOf(args[0]).intValue();
+          address = "tcp:localhost:" + args[0];
         }
 
         for (int i=0; i < args.length; i++) {
           clique[i] = "tcp:localhost:"+args[i];
         }
-        Master m = new Master();
+*/
+        Master m = new Master(args);
         m.start();
     }
 
@@ -40,10 +46,27 @@ public class Master {
 
     private System system;
 
-    public Master() {}
+    public Master(String... args) {
+      if (args.length < 1) {
+        clique = null;
+        port = 5500;
+        address = "tcp:localhost:"+port;
+      } else {
+        clique = new String[args.length];
+        port = Integer.valueOf(args[0]).intValue();
+        address = "tcp:localhost:" + args[0];
+      }  
+      for (int i=0; i < args.length; i++) {
+          clique[i] = "tcp:localhost:"+args[i];
+      }
+    }
+
+    public void stop() {
+      this.system.shutdown();
+    }
 
     public void start() throws JolRuntimeException, UpdateException {
-        this.system = Runtime.create(Master.PORT);
+        this.system = Runtime.create(port);
 
         this.system.catalog().register(new SelfTable((Runtime) this.system));
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
@@ -76,7 +99,7 @@ public class Master {
 
         /* Identify which address the local node is at */
         TupleSet self = new TupleSet();
-        self.add(new Tuple(Master.ADDRESS));
+        self.add(new Tuple(address));
         this.system.schedule("gfs", SelfTable.TABLENAME, self, null);
         this.system.evaluate();
         this.system.start();
@@ -101,7 +124,7 @@ public class Master {
         this.system.evaluate();
 
         TupleSet id = new TupleSet();
-        id.add(new Tuple(Master.ADDRESS));
+        id.add(new Tuple(address));
         this.system.schedule("paxos",PaxosIdTable.TABLENAME,id,null);
 
         for (String s : this.clique) {

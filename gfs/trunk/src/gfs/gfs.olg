@@ -40,9 +40,13 @@ master_for_node(Self, Master) :-
 //gfs_global::file(A,B,C) :-
   //gfs_global::file(A,B,C);
 
+/*
 gfs_global::file(Master.ADDRESS, "Foo", "Bar");
 gfs_global::file(Master.ADDRESS, "Bar", "Baz");
 gfs_global::file(Master.ADDRESS, "Quux", "Quuux");
+*/
+gfs_global::file(A,"Foo","Bar") :-
+  self(A);
 
 // Source node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});

@@ -23,8 +23,22 @@ delete
 paxos::storedDecreeRequest(Master,Decree,From,Id) :-
   paxos::storedDecreeRequest(Master,Decree,From,Id),
   // 2:
-  multipaxos::success#insert(Master,I,Round,Decree,From);
-  //success(Master,I,Round,Decree,From);
+  //multipaxos::success#insert(Master,I,Round,Decree,From);
+  multipaxos::success(Master,I,Round,Decree,From);
+
+public
+del2
+delete
+multipaxos::sendAccept(Master,Instance,Round,Decree,Agent) :-
+  multipaxos::sendAccept(Master,Instance,Round,Decree,Agent),
+  multipaxos::success(Master,Instance,_,Decree);
+
+public
+del3
+delete
+multipaxos::acceptRequest(Master,Instance,Round,Decree,Kind) :-
+  multipaxos::acceptRequest(Master,Instance,Round,Decree,Kind),
+  multipaxos::success(Master,Instance,_,Decree);
 
 public
 bumpinstance
@@ -32,7 +46,9 @@ paxos::instance(Me,I+1) :-
   paxos::instance(Me,I),
   // necessary #insert
   //paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
-  paxos::storedDecreeRequest(Master,Decree,From,Id),
+
+  //OH DEAR
+  /////paxos::storedDecreeRequest(Me,Decree,From,Id),
   // test.
   multipaxos::success#insert(Me,I,Round,OldDecree,Client);
 
@@ -47,12 +63,24 @@ paxos::instance(Me,I) :-
   Me != Agent,
   I > OldI;
 
+/*
 public
-bump_lasttried
-paxos::lastTried(Me,Round) :-
-  //sendBeginRound#insert(Me,I,Round,Decree,Agent),
-  multipaxos::sendBeginRound(Me,I,Round,Decree,Agent),
-  Me != Agent;
+paxos_global::lastTried(Me,Round) :-
+  paxos_global::lastTried(Me,Old),
+  //multipaxos::sendBeginRound#insert(Me,I,Round,Decree,Agent),
+  //multipaxos::sendBeginRound(Me,I,Round,Decree,Agent),
+  multipaxos::accept(Me,I,Round,Decree,Master),
+  Me != Master,
+  Round > Old;
+*/
+define(wouldBL,{String,Integer});
+watch(wouldBL,ae);
+public
+wouldBL(Me,Round) :-
+  paxos_global::lastTried(Me,Old),
+  multipaxos::accept(Me,I,Round,Decree,Master),
+  Round > Old,
+  Me != Master;
 
 // jump to the current instance.
 public

@@ -79,6 +79,7 @@ acceptRequest(Master,I,Round,Decree,-2) :-
 
 //watch(paxos::maxPrevRound,ae);
 
+/*
 define(wouldBe,{String,Integer,Integer,String,String,Integer});
 watch(wouldBe,ae);
 public
@@ -92,7 +93,7 @@ wouldBe(Master,I,Round,Decree,OldDecree,MaxB) :-
   ///paxos::instance#insert(Master,I),
   paxos::instance(Master,I),
   I > 0;
-
+*/
 
 public
 r3_e

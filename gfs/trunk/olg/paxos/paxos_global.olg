@@ -4,6 +4,7 @@ define(requestStatus,keys(0,1),{String,String,String,Integer,String});
 define(decreeRequestBuffer,keys(0,1,2),{String,String,String});
 //define(decreeRequestBuffer,{String,String,String});
 define(decreeRequest,{String,String,String});
+define(lastTried,keys(0),{String,Integer});
 
 define(reply,keys(0,1),{String,Integer,String,String});
 
