@@ -33,6 +33,7 @@ class WatchOp < Operator
   end
 
   def evaluate(tuples)
+    require 'ruby-debug'; debugger
     return tuples if tuples.size == 0
 
     header = "Program " + program.to_s + " [CLOCK " + context.clock.current + "] " + Modifier::to_s + ": " + name
@@ -40,9 +41,11 @@ class WatchOp < Operator
     header += " Rule " + rule unless @rule.nil?
     header += "\n\tSCHEMA: " + tuples.iterator.next.schema
 
-    stream.puts(header)
+    print(header)
+#    stream.puts(header)
     tuples.each do |tuple|
-      stream.puts("\t" + tuple)
+#      stream.puts("\t" + tuple)
+      print("\t" + tuple)
     end
     return tuples
   end

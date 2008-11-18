@@ -83,6 +83,7 @@ class Driver < Monitor
     end
 
     def insert(tuples, conflicts)
+     # require 'ruby-debug'; debugger
       delta = TupleSet.new(name)
       aggregate(tuples).each do |tuple| 
         time       = tuple.value(Field::TIME)
@@ -336,12 +337,14 @@ class Driver < Monitor
 
         # Evaluate task queue
         @tasks.each_with_index {|task,i|         print "============================     TASK #{i}: #{task.name}, #{task.insertions.tups[0].to_s}, #{task.deletions.tups[0].to_s}     =============================\n"}
+#        require 'ruby-debug'; debugger
         @tasks.each {|task| evaluate(task.program, task.name, task.insertions, task.deletions)}
         @tasks.clear # Clear task queue.
         evaluate(runtime.name, time.name, nil, time) # Clock delete current
         print("============================ ========================== =============================\n");
 
         # Check for new tasks or schedules, if none wait.
+     #   require 'ruby-debug'; debugger
         @cond_var.wait_while {@tasks.size == 0 && @schedule.cardinality == 0}
         if (@schedule.cardinality > 0)
           time = @clock.time(@schedule.min)
