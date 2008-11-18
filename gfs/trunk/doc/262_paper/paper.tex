@@ -5,7 +5,98 @@
 \date{December 20, 2008}
 \begin{document}
 \maketitle
-Hello, world.\cite{gfs}
+\begin{abstract}
+Abstract here.
+\end{abstract}
+\section{Introduction}
+
+\section{The BOOM Vision}
+Motivating the use of declarative logic languages for implementing
+distributed systems.
+
+Approach 1:
+\begin{itemize}
+\item
+  building distributed systems is hard
+
+\item
+  current techniques for building distributed systems are
+  ineffective. Why? Because they operate at the wrong level of
+  abstraction
+
+\item
+  Declarative logic languages allow the programmer to work at a more
+  comfortable level of abstraction
+\end{itemize}
+
+Approach 2:
+\begin{itemize}
+\item
+  Like distributed systems, networking protocols are traditionally
+  described as finite state machines.
+
+\item 
+  Somewhat surprisingly, the declarative specification of network
+  protocols yields promising results.
+
+\item 
+  We plan to apply the same techniques to a broader class of
+  distributed systems
+\end{itemize}
+
+\subsection{Declarative Specification of Distributed Filesystems}
+Why choose GFS to implement in a declarative language?
+\begin{itemize}
+\item
+  Separation of control and data paths in the design.
+
+\item
+  Data centric, ``systemsy''
+
+\item
+  Existing implementations intermingle policy and mechanism
+\end{itemize}
+
+\section{System Architecture}
+
+\section{System Realization}
+\begin{itemize}
+\item
+  Language integration: what belongs in declarative land, and what in
+  imperative land?
+
+\item
+  Representation of data
+
+\item
+  Use of Paxos as a component
+\end{itemize}
+
+\section{Performance Evaluation}
+Compared with HDFS. Look at both overall throughput, and metadata ops/second.
+
+\section{Related Work}
+
+\section{Future Work}
+\begin{itemize}
+\item
+  Challenges/difficulties
+
+\item
+  Some of the Lincoln vision?
+
+\item
+  Cross-layer optimizations
+
+\item
+  Continuous query optimization
+
+\item
+  Hadoop integration
+\end{itemize}
+
+\section{Conclusions}
+
 \bibliographystyle{abbrv}
 \bibliography{paper}  % sigproc.bib is the name of the Bibliography in this case
 \appendix
