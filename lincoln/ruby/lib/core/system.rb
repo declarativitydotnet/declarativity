@@ -89,6 +89,7 @@ class System
 	end
 	
   def main(args)
+    Thread.abort_on_exception = true
     bootstrap
     ##print "BOOTSTRAP done. should have table in scope\n"
     tabn = Table.find_table(TableName.new("runtime","priority"))

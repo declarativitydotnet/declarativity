@@ -184,8 +184,6 @@ config(Time, Program, Object) :-
 	Object.plan();
 		
 		
-watch(runnable, d);
-
 compileConfig 
 global::schedule(Time, "compile", TupleName, Tuples, null) :-
 	config(Time, Program, Object),

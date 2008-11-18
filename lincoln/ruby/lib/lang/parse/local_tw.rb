@@ -185,9 +185,9 @@ class OverlogCompiler
         require 'ruby-debug'; debugger
         raise("no tabletable, requesting watch on #{obj.ptablename.text_value}") 
       end
-      require 'ruby-debug'; debugger
+ #     require 'ruby-debug'; debugger
       hi = HashIndex.new(@runtime,tabtab,Key.new(1),String)
-      tab = hi.lookup(Tuple.new(nil,obj.ptablename.text_value.hash))
+      tab = hi.lookup(Tuple.new(nil,obj.ptablename.text_value))
       if tab.tups[0].nil?
         require 'ruby-debug'; debugger
         raise("no tuples in tabletable, requesting watch on #{obj.ptablename.text_value}")
