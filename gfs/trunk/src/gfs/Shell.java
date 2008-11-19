@@ -25,12 +25,13 @@ public class Shell {
     private String selfAddress;
     private Random rand;
     private SynchronousQueue responseQueue;
+
     private static Shell shell;
 
-    private static String[] MASTERS = new String[] {
-      "tcp:localhost:5500",
-      "tcp:localhost:5502",
-      "tcp:localhost:5503"
+    private static final String[] MASTERS = new String[] {
+        "tcp:localhost:5500",
+        "tcp:localhost:5502",
+        "tcp:localhost:5503"
     };
     private static int INDX = 0;
 
@@ -59,8 +60,8 @@ public class Shell {
             java.lang.System.out.println("ls:");
             int i = 1;
             for (String file : list) {
-              java.lang.System.out.println("  " + i + ". " + file);
-              i++;
+                java.lang.System.out.println("  " + i + ". " + file);
+                i++;
             }
         } else if (op.equals("rm")) {
             shell.doRemove(argList);
@@ -109,15 +110,16 @@ public class Shell {
     }
 
     public static String currentMaster() {
-      java.lang.System.out.println("INDX = "+INDX+"\n");
-      return MASTERS[INDX];
+        java.lang.System.out.println("INDX = "+INDX+"\n");
+        return MASTERS[INDX];
     }
-    private void scheduleNewMaster() throws UpdateException,JolRuntimeException {
-      /* Identify which address the local node is at */
-      TupleSet self = new TupleSet();
-      self.add(new Tuple(this.selfAddress, MASTERS[INDX]));
-      this.system.schedule("gfs", MasterTable.TABLENAME, self, null);
-      this.system.evaluate();
+
+    private void scheduleNewMaster() throws UpdateException, JolRuntimeException {
+        /* Identify which address the local node is at */
+        TupleSet self = new TupleSet();
+        self.add(new Tuple(this.selfAddress, MASTERS[INDX]));
+        this.system.schedule("gfs", MasterTable.TABLENAME, self, null);
+        this.system.evaluate();
     }
 
     private void doCatFile(final String file) throws UpdateException, InterruptedException {
@@ -180,25 +182,25 @@ public class Shell {
         return rand.nextInt();
     }
 
-    public void doCreateFile(List<String> args) throws UpdateException, InterruptedException,JolRuntimeException {
+    public void doCreateFile(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
       doCreateFile(args,true);
     }
-    public void doCreateFile(List<String> args,Boolean fromStdin) throws UpdateException, InterruptedException,JolRuntimeException {
+    public void doCreateFile(List<String> args, Boolean fromStdin) throws UpdateException, InterruptedException, JolRuntimeException {
         if (args.size() != 1)
             usage();
 
         StringBuilder sb = new StringBuilder();
         if (fromStdin) {
-          /* Read the contents of the file from stdin */
-          int b;
-          try {
-            while ((b = java.lang.System.in.read()) != -1)
-              sb.append((char) b);
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+            /* Read the contents of the file from stdin */
+            int b;
+            try {
+                while ((b = java.lang.System.in.read()) != -1)
+                    sb.append((char) b);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } else {
-          sb.append("foo");  
+            sb.append("foo");  
         }
 
         String filename = args.get(0);
@@ -250,8 +252,8 @@ public class Shell {
         responseTbl.unregister(responseCallback);
         if (obj == null) {
           // we timed out.
-          java.lang.System.out.println("retrying (indx= "+INDX+")\n");
-          doCreateFile(args,fromStdin);
+          java.lang.System.out.println("retrying (indx= " + INDX + ")\n");
+          doCreateFile(args, fromStdin);
         } else { 
 
         }
@@ -299,7 +301,7 @@ public class Shell {
 
         Object obj = (Object) timedTake(this.responseQueue,4000);
         if (obj == null) {
-          return doListFiles(args);
+            return doListFiles(args);
         } else {
           //ValueList<String> lsContent = (ValueList<String>) this.responseQueue.take();
           ValueList<String> lsContent = (ValueList<String>) obj;
@@ -379,8 +381,9 @@ public class Shell {
         if (obj == null) 
            doRemoveFile(file);  
     }
-    private Object timedTake(SynchronousQueue q,int millis) throws InterruptedException,JolRuntimeException,UpdateException {
-        JOLTimer t = new JOLTimer(millis,this.responseQueue);
+
+    private Object timedTake(SynchronousQueue q, int millis) throws InterruptedException,JolRuntimeException,UpdateException {
+        JOLTimer t = new JOLTimer(millis, this.responseQueue);
         t.start();
         Object obj = this.responseQueue.take();
         t.stop();
@@ -391,19 +394,18 @@ public class Shell {
            leaks?
         */
         try {
-          String msg = (String)obj;
-          if (msg.compareTo("timeout") == 0) {
-            if (INDX++ == MASTERS.length-1) {
-              java.lang.System.out.println("giving up\n");
-              java.lang.System.exit(1); 
+            String msg = (String) obj;
+            if (msg.compareTo("timeout") == 0) {
+                if (INDX++ == MASTERS.length-1) {
+                    java.lang.System.out.println("giving up\n");
+                    java.lang.System.exit(1); 
+                }
+                scheduleNewMaster();
             }
-            scheduleNewMaster();
-          }
         } catch (ClassCastException e) {
-          // fine, it's not a timeout then.
-          
-          java.lang.System.out.println("looks good\n");
-          ret = obj;
+            // fine, it's not a timeout then.
+            java.lang.System.out.println("looks good\n");
+            ret = obj;
         }
         return ret;
     }
