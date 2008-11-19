@@ -5,9 +5,6 @@ import gfs.Master;
 import gfs.Shell;
 
 
-//define(create_request_p2, keys(0, 1), {String, Integer, String, Boolean, String});
-//watch(gfs_global::create_request_p2,aeid);
-
 public
 create_request_done(Master, Id, Source, Status,Error) :-
   gfs_global::create_request_done(Master, Id, Source, Status,Error);
@@ -23,11 +20,6 @@ define(master_for_node, keys(0, 1), {String, String});
 
 // Node, File name, Contents
 ///define(gfs_global::file, {String, String, String});
-
-//watch(gfs_global::file,ae);
-
-//gfs_global::file(A,B,C) :-
-  //gfs_global::file(A,B,C);
 
 /*
 gfs_global::file(Master.ADDRESS, "Foo", "Bar");
@@ -61,7 +53,7 @@ define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, Strin
 define(ls_request_done, keys(0, 1), {String, Integer, String, ValueList});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 
-// pa....
+// new tables for indirection through paxos
 define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean, String});
 define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean, String});
 
@@ -92,7 +84,6 @@ request_started(@Source, Id, "Rm", FName, null) :-
 request(@Master, Id, Source, RequestType, Arg1, Arg2) :-
     self(@Source), 
     master_for_node(@Source, Master),
-    //alive::currentMaster(@Source,Master),
     request_started(@Source, Id, RequestType, Arg1, Arg2);
 
 // If we get a "cat" request for a gfs_global::file that exists, send back the
@@ -109,6 +100,7 @@ cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
 
 // If we got a "create" request for a gfs_global::file that didn't exist,
 // send back a positive ack
+// actually, don't send the ack till we've heard back from paxos.
 // XXX: the use of "#insert" here is a hack
 create_request_pending(@Master, Id, Source, true, null) :-
     request#insert(@Master, Id, Source, "Create", FName, _),
@@ -122,12 +114,6 @@ create_request_pending(@Master, Id, Source, false, ErrMessage) :-
     gfs_global::file(@Master, FName, _),
     ErrMessage := "File already exists";
 
-// If the "create" succeeded, add the gfs_global::file
-/*
-gfs_global::file(@Master, FName, FContent) :-
-    gfs_global::create_request_done(@Master, Id, Source, true, _),
-    request(@Master, Id, Source, "Create", FName, FContent);
-*/
 // If we got an "ls" request, send back the names of all the gfs_global::files in
 // the FS
 ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
@@ -149,17 +135,6 @@ gfs_global::rm_request_done(@Master, Id, Source, false, ErrMessage) :-
     request(@Master, Id, Source, "Rm", FName, _),
     notin gfs_global::file(@Master, FName, _),
     ErrMessage := "File does not exist";
-
-/*
-// If the "rm" succeeded, actually delete the gfs_global::file
-// XXX: join against File in the body is unnecessary, but JOL
-// complains about a "don't care variable in the head"
-delete
-gfs_global::file(@Master, FName, FContents) :-
-    rm_request_done(@Master, Id, Source, true, _),
-    request(@Master, Id, Source, "Rm", FName, _),
-    gfs_global::file(@Master, FName, FContents);
-*/
 
 cat_response(@Source, Id, Success, Response) :-
     cat_request_done(@Master, Id, Source, Success, Response);
