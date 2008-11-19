@@ -20,6 +20,7 @@
   <target name="compile" depends="init" description="compile the source">
     <javac srcdir="${src}" destdir="${build}" classpath="${lib}/jol.jar" debug="yes">
       <compilerarg value="-Xlint:unchecked"/>
+      <compilerarg value="-Xlint:deprecation"/>
     </javac>
     <javac srcdir="${test}" destdir="${build}" classpath="${lib}/jol.jar:${lib}/junit.jar" debug="yes">
       <compilerarg value="-Xlint:unchecked"/>
