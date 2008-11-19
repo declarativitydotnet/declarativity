@@ -46,7 +46,8 @@ public class GFSMM1Test extends TestCommon {
       shutdown();
 
     } catch (Exception e) {
-      java.lang.System.out.println("something went wrong: "+e);
+      java.lang.System.out.println("something went wrong!");
+      e.printStackTrace();
       java.lang.System.exit(1);
     }
   }

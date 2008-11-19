@@ -31,6 +31,7 @@
     <jar jarfile="${dist}/gfs.jar">
       <fileset dir="${build}"/>
       <fileset dir="${src}" includes="**/*.olg"/>
+      <fileset dir="olg" includes="**/*.olg"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
@@ -38,7 +39,6 @@
 
     <jar jarfile="${dist}/gfs-test.jar">
       <fileset dir="${build}" includes="gfs/test/**"/>
-      <fileset dir="${test}/olg" includes="**/*.olg"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
