@@ -57,15 +57,14 @@ public class TCPNIO extends Server {
 		server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
 
-  public void cleanup()  {
-    try {
-      this.server.close();
-    } catch (IOException e) {
+	public void cleanup() {
+	    try {
+	        this.server.close();
+	    } catch (IOException e) {
+	        throw new RuntimeException(e);
+	    }
+	}
 
-    }
-  }
-
-	
 	@Override
 	public void run() {
 		while (true) {

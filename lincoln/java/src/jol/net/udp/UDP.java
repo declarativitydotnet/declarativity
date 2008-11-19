@@ -76,6 +76,11 @@ public class UDP extends Server {
 	public void close(Channel channel) {
 		((Connection) channel).close();
 	}
+
+    @Override
+    public void cleanup() {
+        // Nothing to do for UDP cleanup
+    }
 	
 	private static class Connection extends Channel {
 		private DatagramSocket socket;
@@ -117,5 +122,4 @@ public class UDP extends Server {
 			socket.close();
 		}
 	}
-
 }

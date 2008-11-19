@@ -95,6 +95,15 @@ public class TCP extends Server {
 			channels.remove(channel.address());
 		}
 	}
+
+	@Override
+    public void cleanup() {
+	    try {
+	        this.server.close();
+	    } catch (IOException e) {
+	        throw new RuntimeException(e);
+	    }
+    }
 	
 	private class Connection extends Channel implements Runnable {
 		private Socket socket;
@@ -160,5 +169,4 @@ public class TCP extends Server {
 			}
 		}
 	}
-
 }
