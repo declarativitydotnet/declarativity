@@ -109,11 +109,11 @@ public class MultiPaxosTest {
             s.catalog().register(new IdTable((Runtime) s));
             s.catalog().register(new InMessageTable((Runtime) s));
             s.evaluate();
-            myInstall(s,"gfs/test/olg/paxos/paxos_global.olg");
-            myInstall(s,"gfs/test/olg/paxos/paxos_p1.olg");
-            myInstall(s,"gfs/test/olg/paxos/paxos_p2.olg");
-            myInstall(s,"gfs/test/olg/paxos/paxos_instance.olg");
-            myInstall(s,"gfs/test/olg/paxos/paxos_client_liveness.olg");
+            myInstall(s, "paxos/paxos_global.olg");
+            myInstall(s, "paxos/paxos_p1.olg");
+            myInstall(s, "paxos/paxos_p2.olg");
+            myInstall(s, "paxos/paxos_instance.olg");
+            myInstall(s, "paxos/paxos_client_liveness.olg");
         }
 
         TupleSet nodes = new TupleSet();

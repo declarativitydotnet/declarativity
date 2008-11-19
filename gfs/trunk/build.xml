@@ -10,7 +10,6 @@
   <property name="lib" location="lib"/>
   <property name="test" location="test"/>
   <property name="test-output" location="test-output"/>
-  <property name="olg" location="olg"/>
 
   <target name="init">
     <tstamp/>
@@ -32,14 +31,17 @@
     <jar jarfile="${dist}/gfs.jar">
       <fileset dir="${build}"/>
       <fileset dir="${src}" includes="**/*.olg"/>
-
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
     </jar>
+
     <jar jarfile="${dist}/gfs-test.jar">
       <fileset dir="${build}" includes="gfs/test/**"/>
-      <fileset dir="${test}" includes="**/*.olg"/>
+      <fileset dir="${test}/olg" includes="**/*.olg"/>
+      <manifest>
+        <attribute name="Built-By" value="${user.name}"/>
+      </manifest>
     </jar>
   </target>
   
@@ -47,9 +49,11 @@
   <target name="clean" description="clean up">
     <delete dir="${build}"/>
     <delete dir="${dist}"/>
+    <delete dir="${test-output}"/>
   </target>
+
   <target name="doc" description="generate Javadoc documentation">
-    <javadoc destdir="${doc}" sourcepath="${src}" classpath="${lib}/xtc.jar"/>
+    <javadoc destdir="${doc}" sourcepath="${src}" classpath="${lib}/jol.jar"/>
   </target>
 
   <target name="test" description="run JUnit tests">
@@ -61,6 +65,7 @@
     <junit printsummary="yes" fork="yes">
       <classpath>
         <pathelement location="${lib}/jol.jar"/>
+        <pathelement location="${dist}/gfs.jar"/>
         <pathelement location="${dist}/gfs-test.jar"/>
         <pathelement location="${lib}/junit.jar"/>
       </classpath>
