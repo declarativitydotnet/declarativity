@@ -32,26 +32,31 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class GFSMM4Test extends TestCommon {
+  
+  private void startOne() throws Exception {
+    this.masters = new ValueList<Master>();
+    Master m = new Master();
+    m.start();
+    this.masters.add(m);
+  }
 
-  //@Test
+  @Test
   public void test4() {
     try { 
-      //startMany("5500","5502","5503");
-      this.masters = new ValueList<Master>();
-      Master m = new Master();
-      m.start();
-      this.masters.add(m);
+      startMany("5500","5502","5503");
+      //startOne();
     
-      Shell longRun = new Shell();
+      //Shell longRun = new Shell();
 
-      for (int i=0; i < 50; i++) {
+      for (int i=0; i < 500; i++) {
         String file = "XACT"+i;
-        createFile(longRun,file);
+        //createFile(longRun,file);
+        shellCreate(file);
       }      
 
-      longRun.shutdown();
+      //longRun.shutdown();
 
-      assertTrue(shellLs("XACT52","XACT98","XACT36","XACT12"));
+      assertTrue(shellLs("XACT42","XACT18","XACT36","XACT12"));
   
       java.lang.System.out.println("OK, good then\n");
       shutdown();

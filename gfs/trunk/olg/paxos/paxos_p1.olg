@@ -27,16 +27,22 @@ define(tick,keys(0,1),{String,String,Integer});
 
 define(instance,keys(0),{String,Integer});
 
+
+/*
 watch(storedDecreeRequest,ae);
 watch(quorum,ae);
+watch(maxPrevVoteInstance,ae);
 watch(prepare,aeid);
 watch(lastPromise,ae);
 watch(lastPromiseCnt,ae);
 watch(sendPromise,ae);
+watch(topOfQueue,ae);
 
+watch(sendPrepare,ae);
+watch(lastTried,ae);
 watch(nextBal,ae);
 watch(prevVote,ae);
-
+*/
 
 /*******************************************************************
 nomenclature mappings between "parliamentary paxos" and "simple paxos"
@@ -95,7 +101,6 @@ to b, and sends a NextBallot (b) message to some set of priests.
 
 //sequence(nextTicket,0);
 
-watch(lastTried,ae);
 
 /*
 public
@@ -118,7 +123,6 @@ storedDecreeRequest(A,B,C,Id) :-
   Id := Runtime.idgen();
 
 define(topOfQueue,keys(0),{String,Long});
-watch(topOfQueue,ae);
 
 topOfQueue(A,min<Id>) :-
  // storedDecreeRequest#insert(A,B,C,Id);
@@ -139,6 +143,7 @@ prepare(Agent,Round,Decree) :-
   notin quorum(Agent,_),
 	Round := Old + 1;
 
+/*
 define(wouldPrep,{String,Integer,String,String,String});
 watch(wouldPrep,ae);
 
@@ -153,7 +158,7 @@ wouldPrep(Agent,Round,Decree,WHAT,Me) :-
   notin quorum(Agent,_),
   paxos_global::id(Me),
 	Round := Old + 1;
-
+*/
 //
 /* 
 public r1_b2
@@ -177,7 +182,6 @@ sets nextBal [q] to b and sends a LastVote (b, v) message to p, where v equals
 prevVote [q]. (A NextBallot (b) message is ignored if b ² nextBal [q].)
 ***************************************************************************************/
 
-watch(sendPrepare,ae);
 
 r2_a
 nextBal(Agent,Round) :-
@@ -204,7 +208,6 @@ lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :-
 
 //NEW
 define(maxPrevVoteInstance,keys(0),{String,Integer});
-watch(maxPrevVoteInstance,ae);
 maxPrevVoteInstance(Master,max<Instance>) :-
   prevVote(Master,Instance,_,_);
 
@@ -220,6 +223,7 @@ lastPromise(Agent,Instance,Round,-1,"none",Peer) :-
   instance(Agent,Instance);//,
 	///////Round >= OldRound;
 
+/*
 define (wouldPromise,{String,Integer,Integer,Integer,String,String});
 watch(wouldPromise,ae);
 wp
@@ -229,6 +233,7 @@ wouldPromise(Agent,Instance,Round,-1,"none",Peer) :-
   sendPrepare(Agent,Round,Decree,Peer),
 	notin prevVote(Agent,Instance,_,_),
   instance(Agent,Instance);//,
+*/
 
 r2_c	
 sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-

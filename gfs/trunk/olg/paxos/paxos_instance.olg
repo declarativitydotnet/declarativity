@@ -11,6 +11,12 @@ import jol.core.Runtime;
 watch(paxos::instance,ae);
 watch(paxos::nextBal,ae);
 
+
+
+define(sdCnt,keys(0),{String,Integer});
+watch(sdCnt,ae);
+public sdCnt(M,count<Id>) :- paxos::storedDecreeRequest(M,D,F,Id);
+
 public
 startinstance
 paxos::instance(Me,0) :-
@@ -44,10 +50,6 @@ public
 bumpinstance
 paxos::instance(Me,I+1) :-
   paxos::instance(Me,I),
-  // necessary #insert
-  //paxos::storedDecreeRequest#insert(Master,Decree,From,Id),
-
-  //OH DEAR
   /////paxos::storedDecreeRequest(Me,Decree,From,Id),
   // test.
   multipaxos::success#insert(Me,I,Round,OldDecree,Client);
@@ -73,6 +75,7 @@ paxos_global::lastTried(Me,Round) :-
   Me != Master,
   Round > Old;
 */
+
 define(wouldBL,{String,Integer});
 watch(wouldBL,ae);
 public

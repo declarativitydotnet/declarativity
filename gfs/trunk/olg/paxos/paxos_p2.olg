@@ -18,14 +18,8 @@ define(success,keys(0,1),{String,Integer, Integer,String,String});
 	
 define(acceptCnt,keys(0,1),{String,Integer,Integer,Integer});
 	
-//define(reply,keys(0,1),{String,Integer,String,String});
 define(tick,keys(0,1),{String,String,Integer});
-//define(instance,keys(0),{String,Integer});
 
-watch(paxos::instance,ae);
-watch(paxos::sendPrepare,ae);
-watch(paxos::nextBal,ae);
-watch(paxos::sendPromise,ae);
 
 /**************************************************************************************
 3.  After receiving a LastVote (b, v) message from every priest in some majority
@@ -65,35 +59,9 @@ r3_d
 acceptRequest(Master,I,Round,Decree,-2) :-
   paxos::storedDecreeRequest(Master,Decree,From,_),
   paxos::quorum(Master,Round),
-  //paxos::maxPrevRound(Master,MaxB),
-	//paxos::sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
-  //OldDecree == "none",
-  //MaxB == -1,
-  //paxos::instance#insert(Master,I),
   paxos::instance(Master,I),
-  //notin paxos::maxPrevRound(Master,I,_),
-  //notin paxos::sendPromise(Master,I,_,_,_,_),
   notin success(Master,I,_,_,_),
-  //notin sendBeginRound(Master,I,_,_,_),
   I > 0;
-
-//watch(paxos::maxPrevRound,ae);
-
-/*
-define(wouldBe,{String,Integer,Integer,String,String,Integer});
-watch(wouldBe,ae);
-public
-r3_def
-wouldBe(Master,I,Round,Decree,OldDecree,MaxB) :-
-  paxos::storedDecreeRequest(Master,Decree,From,_),
-  paxos::quorum(Master,Round),
-  //paxos::maxPrevRound(Master,MPMB),
-	paxos::sendPromise(Master,Instance,SomeRound,MaxB,OldDecree,Agent),
- // OldDecree == "none",
-  ///paxos::instance#insert(Master,I),
-  paxos::instance(Master,I),
-  I > 0;
-*/
 
 public
 r3_e
@@ -130,15 +98,7 @@ paxos::prevVote(Agent,Instance,Round,Decree) :-
   paxos::prevVote(Agent,OI,Old,OD),
 	paxos::lastPromise(Agent,IO2,Round,OldRound,OldDecree),
 	accept#insert(Agent,Instance,Round,Decree),
-  // ??
 	Round >= Old;
-
-/*
-define(recall,keys(0,1,2),{String,Integer,Integer,String,String});
-memory
-recall(Agent,Instance,Round,Decree,Master) :-
-  accept#insert(Agent,Instance,Round,Decree,Master);
-*/
 
 r4_c	
 sendAccept(@Master,Instance,Round,Decree,Agent) :- 
@@ -157,27 +117,10 @@ public
 r5_a	
 decree(Master,Instance,Round,Decree) :- 
   paxos::lastTried(Master,Round),
-  // 1:
-	//acceptCnt#insert(Master,Instance,Round,Votes),
 	acceptCnt(Master,Instance,Round,Votes),
-	// this is |quorum| 
-	///paxos::lastPromiseCnt(Master,Round,Votes),
   paxos::priestCnt(Master,Priests),
   Votes > (Priests / 2), 
 	acceptRequest(Master,Instance,Round,Decree);
-
-/*
-define(wouldDecree,{String,Integer,String});
-watch(wouldDecree,ae);
-wouldDecree(Master,Instance,Decree) :-
-  paxos::lastTried(Master,Round),
-  acceptCnt#insert(Master,Instance,Round,Votes),
-  // this is |quorum|
-  ///paxos::lastPromiseCnt(Master,Round,Votes),
-  paxos::priestCnt(Master,Priests),
-  Votes > (Priests / 2),
-  acceptRequest(Master,Instance,Round,Decree);
-*/
 
 public
 r5_b	
@@ -187,17 +130,15 @@ success(@Agent,Instance,Round,Decree,From) :-
 	// we interpret "every" to mean a broadcast.
 	paxos::parliament(@Master,Agent);
 
-/*
+public
 r5_c
 success(@Agent,Instance,Round,Decree,From) :-
   decree(@Master,Instance,Round,Decree),
 	// this might be a mistake. 
 	paxos_global::decreeRequestBuffer(@Master,Decree,From),
 	// we interpret "every" to mean a broadcast.
-	parliament(@Master,Agent);
-*/
+	paxos::parliament(@Master,Agent);
 
-watch(paxos_global::requestStatus,ae);	
 	
 // any learner can reply to the client, or set-wise, they all can...
 public
@@ -215,6 +156,11 @@ paxos::quorum(Master,Round) :-
   Master != Other,
   NewRound > Round;
 
+/*
+watch(paxos::instance,ae);
+watch(paxos::sendPrepare,ae);
+watch(paxos::nextBal,ae);
+watch(paxos::sendPromise,ae);
 watch(decree,ae);
 watch(acceptCnt,ae);
 watch(sendAccept,ae);
@@ -223,6 +169,7 @@ watch(accept,ae);
 watch(success,ae);
 //watch(decreeRequest,ae);
 	
+watch(paxos_global::requestStatus,ae);	
 //watch(maxPrevRound,ae);
 watch(acceptRequest,ae);
 //watch(receivedPromise,ae);
@@ -239,3 +186,4 @@ watch(success,ae);
 watch(success,ae);
 watch(paxos::quorum,ae);
 watch(paxos::sendPromise,ae);
+*/

@@ -21,17 +21,6 @@ rm_request_done(Master, Id, Source, Status,Error) :-
 watch(master_for_node,ae);
 define(master_for_node, keys(0, 1), {String, String});
 
-// Right now, every node has the same master. We leave the master undefined
-// on the master node itself.
-
-//watch(alive::alive,ae);
-master_for_node(Self, Master) :-
-    self(Self), 
-    //Master := Master.ADDRESS, 
-    //Master := Shell.MASTERS[Shell.INDX],
-    Master := Shell.currentMaster(),
-    Self != Master;
-
 // Node, File name, Contents
 ///define(gfs_global::file, {String, String, String});
 
