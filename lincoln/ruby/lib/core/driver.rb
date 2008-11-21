@@ -201,6 +201,7 @@ class Driver < Monitor
       watchInsert = watch.watched(program.name, name, WatchOp::Modifier::INSERT)
       watchDelete = watch.watched(program.name, name, WatchOp::Modifier::DELETE)
 
+      require 'ruby-debug'; debugger
       querySet = program.get_queries(name)
       if (querySet.nil?)
         return TupleSet.new(name) # Done

@@ -21,6 +21,10 @@ class BasicQuery < Query
   end
 
   def evaluate(inval)
+    print "================== RUNNING QUERY =================\n"
+    print "=======  #{to_s} ======"
+    require 'ruby-debug'; debugger
+    
     if (@input.name != inval.name) then
       raise DataflowRuntimeException, "Query expects input " + @input.name.to_s + 
       " but got input tuples " + inval.name.to_s
@@ -37,6 +41,7 @@ class BasicQuery < Query
       tuples = oper.evaluate(tuples)
     end
 
+    print "==== PRODUCED #{tuples.size.to_s}: #{tuples.tups.to_s} ====\n"
     return tuples
   end
 end

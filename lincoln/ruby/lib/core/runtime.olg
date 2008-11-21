@@ -111,17 +111,20 @@ deletionQueue(Time, Program, Name, Deletions) :-
 	Deletions != null, Deletions.size() > 0;
 	
 /* Queue up global::scheduled items in current global::clock. */
+q1_rule
 queue(Time, Strata, Program, Name, Insertions, Deletions) :-
 	global::clock(Location, Time),
 	global::schedule(Time, Program, Name, Insertions, Deletions),
 	priority(Program, Name, Strata);
 	
+q2_rule
 queue(Time, 0, Program, Name, Insertions, Deletions) :-
 	global::clock(Location, Time),
 	global::schedule(Time, Program, Name, Insertions, Deletions),
 	notin priority(Program, Name, _);
 
 /* Clean up queued programs. */
+sched_deleter
 delete
 global::schedule(Time, Program, Name, Insertions, Deletions) :-
 	global::clock#delete(Location, Time),
@@ -184,6 +187,8 @@ config(Time, Program, Object) :-
 	Object.plan();
 		
 		
+watch(runnable, d);
+
 compileConfig 
 global::schedule(Time, "compile", TupleName, Tuples, null) :-
 	config(Time, Program, Object),
