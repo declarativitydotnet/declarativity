@@ -2,11 +2,22 @@ package gfs;
 
 public class Conf {
     private static String selfAddr = null;
-    private static final String[] masterAry = new String[] {
-        "tcp:localhost:5500",
-        "tcp:localhost:5502",
-        "tcp:localhost:5503"
+
+    /* NB: The following two arrays must have the same length! */
+    private static final String[] masterHosts = new String[] {
+        "localhost",
+        "localhost",
+        "localhost"
     };
+    private static final int[] masterPorts = new int[] {
+        5505,
+        5506,
+        5507
+    };
+
+    static {
+        assert(masterHosts.length == masterPorts.length);
+    }
 
     /* NB: This must be called before installing "gfs.olg" */
     public static void setSelfAddress(String addr) {
@@ -20,11 +31,15 @@ public class Conf {
         return selfAddr;
     }
 
-    public static String getMaster(int idx) {
-        return masterAry[idx];
+    public static String getMasterAddress(int idx) {
+        return "tcp:" + masterHosts[idx] + ":" + masterPorts[idx];
+    }
+
+    public static int getMasterPort(int idx) {
+        return masterPorts[idx];
     }
 
     public static int getNumMasters() {
-        return masterAry.length;
+        return masterHosts.length;
     }
 }

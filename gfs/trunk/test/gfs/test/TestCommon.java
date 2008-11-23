@@ -81,7 +81,8 @@ public class TestCommon {
           sig[s++] = args[j];
         }
       } 
-      Master m = new Master(sig);
+      //      Master m = new Master(sig);
+      Master m = new Master(0); // XXX
       m.start();
       this.masters.add(m);
     }

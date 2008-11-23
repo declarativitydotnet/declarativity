@@ -17,11 +17,9 @@ public class GFSTest {
     Master master;
 
     try { 
-      
-      master = new Master();
       shell = new Shell();
-
-      master.start();    
+      master = new Master(0); // XXX
+      master.start();
 
       List<String> argList = new LinkedList<String>();
       argList.add("foo");
@@ -42,15 +40,11 @@ public class GFSTest {
       master.stop();
       shell.shutdown();
       Assert.assertTrue(good);
-
     } catch (Exception e) {
       java.lang.System.out.println("something went wrong: "+e);
       java.lang.System.exit(1);
     }
   }
-
-
-
 
   public static void main(String[] args) throws Exception {
     GFSTest t = new GFSTest();

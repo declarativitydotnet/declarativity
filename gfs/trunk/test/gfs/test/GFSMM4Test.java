@@ -10,7 +10,7 @@ public class GFSMM4Test extends TestCommon {
   
   private void startOne() throws Exception {
     this.masters = new ValueList<Master>();
-    Master m = new Master();
+    Master m = new Master(0); // XXX
     m.start();
     this.masters.add(m);
   }

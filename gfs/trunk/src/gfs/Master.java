@@ -10,35 +10,27 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Master {
-    private final int port;
     private final String address;
-    private String[] clique;
+    private final int port;
     private System system;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
-        Master m = new Master(args);
+        if (args.length != 1)
+            usage();
+
+        Master m = new Master(Integer.parseInt(args[0]));
         m.start();
     }
 
     private static void usage() {
-        java.lang.System.err.println("Usage: gfs.Master port");
+        java.lang.System.err.println("Usage: gfs.Master idx");
+        java.lang.System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumMasters() - 1));
         java.lang.System.exit(1);
     }
 
-    public Master(String... args) {
-        if (args.length < 1) {
-            clique = null;
-            port = 5500;
-            address = "tcp:localhost:" + port;
-        } else {
-            clique = new String[args.length];
-            port = Integer.parseInt(args[0]);
-            address = "tcp:localhost:" + args[0];
-        }
-
-        for (int i = 0; i < args.length; i++) {
-            clique[i] = "tcp:localhost:" + args[i];
-        }
+    public Master(int masterIdx) {
+        this.address = Conf.getMasterAddress(masterIdx);
+        this.port = Conf.getMasterPort(masterIdx);
     }
 
     public void stop() {
@@ -54,7 +46,7 @@ public class Master {
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
 
-        if (clique == null) {
+        if (Conf.getNumMasters() == 1) {
             java.lang.System.out.println("TRIVIAL\n");
             this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
             this.system.install("gfs", ClassLoader.getSystemResource("gfs/trivial_glue.olg"));
@@ -99,9 +91,10 @@ public class Master {
         id.add(new Tuple(address));
         this.system.schedule("paxos", PaxosIdTable.TABLENAME, id, null);
 
-        for (String s : this.clique) {
+        for (int i = 0; i < Conf.getNumMasters(); i++) {
+            String addr = Conf.getMasterAddress(i);
             TupleSet member = new TupleSet();
-            member.add(new Tuple(s));
+            member.add(new Tuple(addr));
             this.system.schedule("paxos", PaxosMemberTable.TABLENAME, member, null);
         }
         this.system.evaluate();

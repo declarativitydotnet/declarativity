@@ -93,7 +93,8 @@ public class Shell {
 
     private void scheduleNewMaster() throws UpdateException, JolRuntimeException {
         TupleSet self = new TupleSet();
-        self.add(new Tuple(Conf.getSelfAddress(), Conf.getMaster(this.currentMaster)));
+        self.add(new Tuple(Conf.getSelfAddress(),
+                           Conf.getMasterAddress(this.currentMaster)));
         this.system.schedule("gfs", MasterTable.TABLENAME, self, null);
         this.system.evaluate();
     }
