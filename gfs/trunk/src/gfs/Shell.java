@@ -43,7 +43,7 @@ public class Shell {
         if (op.equals("cat")) {
             shell.doConcatenate(argList); 
         } else if (op.equals("create")) {
-            shell.doCreateFile(argList);
+            shell.doCreateFile(argList, true);
         } else if (op.equals("ls")) {
             ValueList<String> list = shell.doListFiles(argList);
             java.lang.System.out.println("ls:");
@@ -154,10 +154,7 @@ public class Shell {
         return rand.nextInt();
     }
 
-    public void doCreateFile(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
-        doCreateFile(args, true);
-    }
-    public void doCreateFile(List<String> args, Boolean fromStdin) throws UpdateException, InterruptedException, JolRuntimeException {
+    public void doCreateFile(List<String> args, boolean fromStdin) throws UpdateException, InterruptedException, JolRuntimeException {
         if (args.size() != 1)
             usage();
 

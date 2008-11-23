@@ -60,7 +60,7 @@ public class Master {
             this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
             this.system.install("gfs", ClassLoader.getSystemResource("gfs/trivial_glue.olg"));
         } else {
-            paxos_setup();
+            setupPaxos();
         }
 
         this.system.evaluate();
@@ -82,7 +82,7 @@ public class Master {
         java.lang.System.out.println("Server ready!");
     }
 
-    private void paxos_setup() throws JolRuntimeException, UpdateException {
+    private void setupPaxos() throws JolRuntimeException, UpdateException {
         this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_global.olg"));
 
         this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_p1.olg"));
