@@ -10,9 +10,10 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Master {
-    private int port;
-    private String address;
+    private final int port;
+    private final String address;
     private String[] clique;
+    private System system;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
         Master m = new Master(args);
@@ -23,8 +24,6 @@ public class Master {
         java.lang.System.err.println("Usage: gfs.Master port");
         java.lang.System.exit(1);
     }
-
-    private System system;
 
     public Master(String... args) {
         if (args.length < 1) {
@@ -43,7 +42,7 @@ public class Master {
     }
 
     public void stop() {
-      this.system.shutdown();
+        this.system.shutdown();
     }
 
     public void start() throws JolRuntimeException, UpdateException {
@@ -72,7 +71,6 @@ public class Master {
             @Override
             public void insertion(TupleSet tuples) {
                 java.lang.System.out.println("Got file @ master: " + tuples.toString());
-                   
             }
         };
 
