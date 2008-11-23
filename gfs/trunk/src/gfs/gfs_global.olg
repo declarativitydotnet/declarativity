@@ -3,5 +3,5 @@ program gfs_global;
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 
+// Node, file name, contents
 define(file, keys(0, 1), {String, String, String});
-

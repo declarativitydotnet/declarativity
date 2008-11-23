@@ -30,5 +30,3 @@ farg(Master,FName) :-
   gfs_global::file(Master,FName,Content),
   gfs_global::rm_request_done(Master, Id, Name, true, _),
   gfs::request(Master, Id, Name, _, FName, _);
-
-

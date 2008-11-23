@@ -10,9 +10,9 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Master {
-    public int port;
-    public String address;
-    public static String[] clique;
+    private int port;
+    private String address;
+    private String[] clique;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
         Master m = new Master(args);
@@ -95,7 +95,6 @@ public class Master {
 
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/paxos_gfs_glue.olg"));
-        //this.system.install("gfs", ClassLoader.getSystemResource("gfs/trivial_glue.olg"));
         this.system.evaluate();
 
         TupleSet id = new TupleSet();

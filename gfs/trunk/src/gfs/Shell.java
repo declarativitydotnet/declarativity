@@ -20,18 +20,10 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Shell {
+    private int currentMaster;
     private System system;
     private Random rand;
     private SynchronousQueue responseQueue;
-
-    private static Shell shell;
-
-    private static final String[] MASTERS = new String[] {
-        "tcp:localhost:5500",
-        "tcp:localhost:5502",
-        "tcp:localhost:5503"
-    };
-    private static int INDX = 0;
 
     /*
      * TODO:
@@ -41,8 +33,7 @@ public class Shell {
      *  (4) return results to stdout
      */
     public static void main(String[] args) throws Exception {
-        //Shell shell = new Shell();
-        shell = new Shell();
+        Shell shell = new Shell();
         List<String> argList = new LinkedList<String>(Arrays.asList(args));
 
         if (argList.size() == 0)
@@ -73,6 +64,7 @@ public class Shell {
     public Shell() throws JolRuntimeException, UpdateException {
         this.rand = new Random();
         this.responseQueue = new SynchronousQueue();
+        this.currentMaster = 0;
 
         /* Identify the address of the local node */
         Conf.setSelfAddress("tcp:localhost:5501");
@@ -99,14 +91,9 @@ public class Shell {
             doCatFile(file);
     }
 
-    public static String currentMaster() {
-        java.lang.System.out.println("INDX = "+INDX+"\n");
-        return MASTERS[INDX];
-    }
-
     private void scheduleNewMaster() throws UpdateException, JolRuntimeException {
         TupleSet self = new TupleSet();
-        self.add(new Tuple(Conf.getSelfAddress(), MASTERS[INDX]));
+        self.add(new Tuple(Conf.getSelfAddress(), Conf.getMaster(this.currentMaster)));
         this.system.schedule("gfs", MasterTable.TABLENAME, self, null);
         this.system.evaluate();
     }
@@ -117,11 +104,7 @@ public class Shell {
         // Register callback to listen for responses
         Callback responseCallback = new Callback() {
             @Override
-            public void deletion(TupleSet tuples) {
-                for (Tuple t : tuples) {
-      
-                }
-            }
+            public void deletion(TupleSet tuples) {}
 
             @Override
             public void insertion(TupleSet tuples) {
@@ -172,7 +155,7 @@ public class Shell {
     }
 
     public void doCreateFile(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
-      doCreateFile(args,true);
+        doCreateFile(args, true);
     }
     public void doCreateFile(List<String> args, Boolean fromStdin) throws UpdateException, InterruptedException, JolRuntimeException {
         if (args.size() != 1)
@@ -241,7 +224,7 @@ public class Shell {
         responseTbl.unregister(responseCallback);
         if (obj == null) {
           // we timed out.
-          java.lang.System.out.println("retrying (indx= " + INDX + ")\n");
+          java.lang.System.out.println("retrying (master indx= " + this.currentMaster + ")\n");
           doCreateFile(args, fromStdin);
         } else { 
 
@@ -250,7 +233,7 @@ public class Shell {
         //responseTbl.unregister(responseCallback);
     }
 
-    public ValueList<String> doListFiles(List<String> args) throws UpdateException, InterruptedException,JolRuntimeException {
+    public ValueList<String> doListFiles(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
         if (!args.isEmpty())
             usage();
 
@@ -288,28 +271,18 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId));
         this.system.schedule("gfs", tblName, req, null);
 
-        Object obj = (Object) timedTake(this.responseQueue,4000);
+        Object obj = (Object) timedTake(this.responseQueue, 4000);
+        responseTbl.unregister(responseCallback);
         if (obj == null) {
             return doListFiles(args);
         } else {
-          //ValueList<String> lsContent = (ValueList<String>) this.responseQueue.take();
-          ValueList<String> lsContent = (ValueList<String>) obj;
-          Collections.sort(lsContent);
-          responseTbl.unregister(responseCallback);
-
-          /*
-          java.lang.System.out.println("ls:");
-          int i = 1;
-          for (String file : lsContent) {
-            java.lang.System.out.println("  " + i + ". " + file);
-            i++;
-          }
-          */
-          return lsContent;
+            ValueList<String> lsContent = (ValueList<String>) obj;
+            Collections.sort(lsContent);
+            return lsContent;
         }
     }
 
-    protected void doRemove(List<String> argList) throws UpdateException, InterruptedException,JolRuntimeException {
+    protected void doRemove(List<String> argList) throws UpdateException, InterruptedException, JolRuntimeException {
         if (argList.isEmpty())
             usage();
         
@@ -318,7 +291,7 @@ public class Shell {
         }
     }
 
-    protected void doRemoveFile(final String file) throws UpdateException, InterruptedException,JolRuntimeException {
+    protected void doRemoveFile(final String file) throws UpdateException, InterruptedException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -385,7 +358,8 @@ public class Shell {
         try {
             String msg = (String) obj;
             if (msg.compareTo("timeout") == 0) {
-                if (INDX++ == MASTERS.length-1) {
+                this.currentMaster++;
+                if (this.currentMaster == Conf.getNumMasters()) {
                     java.lang.System.out.println("giving up\n");
                     java.lang.System.exit(1); 
                 }

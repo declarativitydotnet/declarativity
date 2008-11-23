@@ -13,7 +13,7 @@ public
 rm_request_done(Master, Id, Source, Status, Error) :-
   gfs_global::rm_request_done(Master, Id, Source, Status, Error);
 
-// Self address
+// The address of the local node
 define(self, keys(0), {String});
 self(Conf.getSelfAddress());
 
