@@ -272,11 +272,11 @@ public class Shell {
         responseTbl.unregister(responseCallback);
         if (obj == null) {
             return doListFiles(args);
-        } else {
-            ValueList<String> lsContent = (ValueList<String>) obj;
-            Collections.sort(lsContent);
-            return lsContent;
         }
+
+        ValueList<String> lsContent = (ValueList<String>) obj;
+        Collections.sort(lsContent);
+        return lsContent;
     }
 
     protected void doRemove(List<String> argList) throws UpdateException, InterruptedException, JolRuntimeException {
