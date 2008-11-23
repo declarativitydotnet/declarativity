@@ -14,15 +14,10 @@ import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 
-import jol.types.table.EventTable;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 import junit.framework.Assert;
 //import gfs.test.Assert;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 public class PaxosCommon {
 
