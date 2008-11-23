@@ -49,7 +49,7 @@ public class Master {
         /* Identify the address of the local node */
         Conf.setSelfAddress(this.address);
 
-        this.system = Runtime.create(port);
+        this.system = Runtime.create(this.port);
 
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
@@ -77,7 +77,7 @@ public class Master {
         this.system.catalog().table(new TableName("gfs_global", "file")).register(cb);
 
         this.system.start();
-        java.lang.System.out.println("Server ready!");
+        java.lang.System.out.println("Master node @ " + this.port + " ready!");
     }
 
     private void setupPaxos() throws JolRuntimeException, UpdateException {
