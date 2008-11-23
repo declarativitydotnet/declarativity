@@ -41,7 +41,6 @@ public class TestCommon {
     shell.shutdown();
   }
 
-
   protected void assertTrue(Boolean b) {
     /* weird huh?  Assert.assertTrue raises an error without calling the @After method,
        so we never terminate.
@@ -54,8 +53,7 @@ public class TestCommon {
 
   protected Boolean findInLs(Shell shell,String... files) throws JolRuntimeException,UpdateException,InterruptedException {
     ValueList<String> list = lsFile(shell);
-    
-    Boolean good = false;
+
     // obviously not an efficient way to do this.
     for (String item : files) {
         if (!list.contains(item)) {
