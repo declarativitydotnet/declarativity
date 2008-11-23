@@ -31,7 +31,7 @@ public class GFSTest {
       //shell = new Shell();
       argList.clear();
       ValueList<String> list = shell.doListFiles(argList);
-      Boolean good = false;
+      boolean good = false;
       for (String item : list) {
         java.lang.System.out.println("got: "+item);
         if (item.compareTo("foo") == 0) {
