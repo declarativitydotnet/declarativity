@@ -270,9 +270,8 @@ public class Shell {
 
         Object obj = (Object) timedTake(this.responseQueue, 4000);
         responseTbl.unregister(responseCallback);
-        if (obj == null) {
+        if (obj == null)
             return doListFiles(args);
-        }
 
         ValueList<String> lsContent = (ValueList<String>) obj;
         Collections.sort(lsContent);
