@@ -223,11 +223,7 @@ public class Shell {
           // we timed out.
           java.lang.System.out.println("retrying (master indx= " + this.currentMaster + ")\n");
           doCreateFile(args, fromStdin);
-        } else { 
-
         }
-      
-        //responseTbl.unregister(responseCallback);
     }
 
     public ValueList<String> doListFiles(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
