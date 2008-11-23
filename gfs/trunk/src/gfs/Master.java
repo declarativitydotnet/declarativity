@@ -10,31 +10,11 @@ import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
 public class Master {
-    //public static int PORT;
-    //public static String ADDRESS = "tcp:localhost:5500";
     public int port;
     public String address;
-    //public static String ADDRESS;
     public static String[] clique;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
-/*
-        if (args.length < 1) {
-          clique = null;
-          //PORT = 5500;
-          //ADDRESS="tcp:localhost:5500";
-          port = 5500;
-          address = "tcp:localhost:5500";
-        }else {
-          clique = new String[args.length];
-          port = Integer.valueOf(args[0]).intValue();
-          address = "tcp:localhost:" + args[0];
-        }
-
-        for (int i=0; i < args.length; i++) {
-          clique[i] = "tcp:localhost:"+args[i];
-        }
-*/
         Master m = new Master(args);
         m.start();
     }
@@ -47,18 +27,19 @@ public class Master {
     private System system;
 
     public Master(String... args) {
-      if (args.length < 1) {
-        clique = null;
-        port = 5500;
-        address = "tcp:localhost:"+port;
-      } else {
-        clique = new String[args.length];
-        port = Integer.valueOf(args[0]).intValue();
-        address = "tcp:localhost:" + args[0];
-      }  
-      for (int i=0; i < args.length; i++) {
-          clique[i] = "tcp:localhost:"+args[i];
-      }
+        if (args.length < 1) {
+            clique = null;
+            port = 5500;
+            address = "tcp:localhost:" + port;
+        } else {
+            clique = new String[args.length];
+            port = Integer.parseInt(args[0]);
+            address = "tcp:localhost:" + args[0];
+        }
+
+        for (int i = 0; i < args.length; i++) {
+            clique[i] = "tcp:localhost:" + args[i];
+        }
     }
 
     public void stop() {
@@ -66,18 +47,20 @@ public class Master {
     }
 
     public void start() throws JolRuntimeException, UpdateException {
+        /* Identify the address of the local node */
+        Conf.setSelfAddress(this.address);
+
         this.system = Runtime.create(port);
 
-        this.system.catalog().register(new SelfTable((Runtime) this.system));
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
 
         if (clique == null) {
-          java.lang.System.out.println("TRIVIAL\n");
-          this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
-          this.system.install("gfs", ClassLoader.getSystemResource("gfs/trivial_glue.olg"));
-        } else { 
-          paxos_setup();
+            java.lang.System.out.println("TRIVIAL\n");
+            this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
+            this.system.install("gfs", ClassLoader.getSystemResource("gfs/trivial_glue.olg"));
+        } else {
+            paxos_setup();
         }
 
         this.system.evaluate();
@@ -91,23 +74,15 @@ public class Master {
                 java.lang.System.out.println("Got file @ master: " + tuples.toString());
                    
             }
-
-                
         };
 
         this.system.catalog().table(new TableName("gfs_global", "file")).register(cb);
 
-        /* Identify which address the local node is at */
-        TupleSet self = new TupleSet();
-        self.add(new Tuple(address));
-        this.system.schedule("gfs", SelfTable.TABLENAME, self, null);
-        this.system.evaluate();
         this.system.start();
-
         java.lang.System.out.println("Server ready!");
     }
 
-    private void paxos_setup() throws JolRuntimeException , UpdateException {
+    private void paxos_setup() throws JolRuntimeException, UpdateException {
         this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_global.olg"));
 
         this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_p1.olg"));
@@ -125,12 +100,12 @@ public class Master {
 
         TupleSet id = new TupleSet();
         id.add(new Tuple(address));
-        this.system.schedule("paxos",PaxosIdTable.TABLENAME,id,null);
+        this.system.schedule("paxos", PaxosIdTable.TABLENAME, id, null);
 
         for (String s : this.clique) {
-          TupleSet member = new TupleSet();
-          member.add(new Tuple(s));
-          this.system.schedule("paxos",PaxosMemberTable.TABLENAME,member,null);
+            TupleSet member = new TupleSet();
+            member.add(new Tuple(s));
+            this.system.schedule("paxos", PaxosMemberTable.TABLENAME, member, null);
         }
         this.system.evaluate();
     }

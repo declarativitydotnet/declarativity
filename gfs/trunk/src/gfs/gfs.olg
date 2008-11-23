@@ -1,33 +1,27 @@
 program gfs;
 
 import jol.types.basic.ValueList;
+import gfs.Conf;
 import gfs.Master;
 import gfs.Shell;
 
+public
+create_request_done(Master, Id, Source, Status, Error) :-
+  gfs_global::create_request_done(Master, Id, Source, Status, Error);
 
 public
-create_request_done(Master, Id, Source, Status,Error) :-
-  gfs_global::create_request_done(Master, Id, Source, Status,Error);
+rm_request_done(Master, Id, Source, Status, Error) :-
+  gfs_global::rm_request_done(Master, Id, Source, Status, Error);
 
-public
-rm_request_done(Master, Id, Source, Status,Error) :-
-  gfs_global::rm_request_done(Master, Id, Source, Status,Error);
-
+// Self address
+define(self, keys(0), {String});
+self(Conf.getSelfAddress());
 
 // Node, Master node
-watch(master_for_node,ae);
+watch(master_for_node, ae);
 define(master_for_node, keys(0, 1), {String, String});
 
-// Node, File name, Contents
-///define(gfs_global::file, {String, String, String});
-
-/*
-gfs_global::file(Master.ADDRESS, "Foo", "Bar");
-gfs_global::file(Master.ADDRESS, "Bar", "Baz");
-gfs_global::file(Master.ADDRESS, "Quux", "Quuux");
-*/
-gfs_global::file(A,"Foo","Bar") :-
-  self(A);
+gfs_global::file(A, "Foo", "Bar") :- self(A);
 
 // Source node, Request ID, File name
 define(cat_request, keys(0, 1), {String, Integer, String});

@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.SynchronousQueue;
 import java.util.Random;
+import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
 import jol.core.System;
@@ -18,11 +18,9 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
-import gfs.JOLTimer;
 
 public class Shell {
     private System system;
-    private String selfAddress;
     private Random rand;
     private SynchronousQueue responseQueue;
 
@@ -76,24 +74,16 @@ public class Shell {
         this.rand = new Random();
         this.responseQueue = new SynchronousQueue();
 
-        //int port = java.lang.System.getEnv("MASTER");
-        //if (port == null) 
-        //  port = 5500;
+        /* Identify the address of the local node */
+        Conf.setSelfAddress("tcp:localhost:5501");
 
         this.system = Runtime.create(5501);
-        this.system.catalog().register(new SelfTable((Runtime) this.system));
 
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
         this.system.evaluate();
 
-        /* Identify which address the local node is at */
-        this.selfAddress = "tcp:localhost:5501";
-        TupleSet self = new TupleSet();
-        self.add(new Tuple(this.selfAddress));
-        this.system.schedule("gfs", SelfTable.TABLENAME, self, null);
-        this.system.evaluate();
         scheduleNewMaster();
         this.system.start();
     }
@@ -115,9 +105,8 @@ public class Shell {
     }
 
     private void scheduleNewMaster() throws UpdateException, JolRuntimeException {
-        /* Identify which address the local node is at */
         TupleSet self = new TupleSet();
-        self.add(new Tuple(this.selfAddress, MASTERS[INDX]));
+        self.add(new Tuple(Conf.getSelfAddress(), MASTERS[INDX]));
         this.system.schedule("gfs", MasterTable.TABLENAME, self, null);
         this.system.evaluate();
     }
@@ -170,7 +159,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "cat_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(this.selfAddress, requestId, file));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, file));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
@@ -244,7 +233,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "create_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(this.selfAddress, requestId, filename, sb.toString()));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, filename, sb.toString()));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response (12 secs)
@@ -296,7 +285,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "ls_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(this.selfAddress, requestId));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId));
         this.system.schedule("gfs", tblName, req, null);
 
         Object obj = (Object) timedTake(this.responseQueue,4000);
@@ -371,18 +360,18 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "rm_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(this.selfAddress, requestId, file));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, file));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
         //Object obj = this.responseQueue.take();
-        Object obj = timedTake(this.responseQueue,10000);
+        Object obj = timedTake(this.responseQueue, 10000);
         responseTbl.unregister(responseCallback);
-        if (obj == null) 
-           doRemoveFile(file);  
+        if (obj == null)
+           doRemoveFile(file);
     }
 
-    private Object timedTake(SynchronousQueue q, int millis) throws InterruptedException,JolRuntimeException,UpdateException {
+    private Object timedTake(SynchronousQueue q, int millis) throws InterruptedException, JolRuntimeException, UpdateException {
         JOLTimer t = new JOLTimer(millis, this.responseQueue);
         t.start();
         Object obj = this.responseQueue.take();
