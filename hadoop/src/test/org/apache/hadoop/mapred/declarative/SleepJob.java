@@ -120,13 +120,12 @@ Partitioner<IntWritable, IntWritable>{
 
 	public static void main(String[] args) throws Exception{
 		JobConf conf = new JobConf();
-		int numHosts = 2;
-	    conf.set("fs.default.name", "file:///");  
-	    System.setProperty("hadoop.log.dir", "/tmp/logs");
+		int numHosts = 1;
+	    System.setProperty("hadoop.log.dir", "/tmp/log");
 
 	    // Setup the NameNode configuration
 		// FileSystem fileSys = FileSystem.get(conf);
-	    FileSystem fileSys = FileSystem.getLocal(conf);
+	    FileSystem fileSys = FileSystem.get(conf);
 	    String [] hosts = new String[numHosts];
 	    for (int i = 0; i < numHosts; i++) {
 	    	hosts[i] = "localhost";
@@ -136,7 +135,6 @@ Partitioner<IntWritable, IntWritable>{
 	    MiniMRCluster mr = 
 	    	new MiniMRCluster(9001, 0, numHosts, fileSys.getName(), 1, null, hosts);
 	    
-		System.err.println("FILE SYSTEM " + fileSys.toString());
 		int res = ToolRunner.run(mr.createJobConf(), new SleepJob(), args);
 		System.exit(res);
 	}
@@ -146,7 +144,6 @@ Partitioner<IntWritable, IntWritable>{
 			, long reduceSleepCount) throws Exception {
 		Random random = new Random();
 		FileSystem fs = FileSystem.get(getConf());
-		System.err.println("SLEEP JOB FILE SYSTEM " + fs.toString());
 		Path tempPath = new Path("/tmp/sleep.job.data");
 		SequenceFile.Writer writer = SequenceFile.createWriter(fs, getConf()
 				, tempPath, IntWritable.class, IntWritable.class);
