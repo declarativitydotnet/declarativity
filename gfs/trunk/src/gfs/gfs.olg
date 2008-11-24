@@ -31,8 +31,8 @@ define(request_started, keys(0, 1), {String, Integer, String, String, String});
 // Master node, Request ID, Source node, Request type, Arg1, Arg2
 define(request, keys(0, 1), {String, Integer, String, String, String, String});
 
-// Master node, Request Id, Source node, Success?, Response
-define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
+// Master node, Request Id, Source node, Success?, Response, ErrorMessage?
+define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, ValueList, String});
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(ls_request_done, keys(0, 1), {String, Integer, String, ValueList});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
@@ -41,8 +41,8 @@ define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
 define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean, String});
 define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean, String});
 
-// Node, Request ID, Success, File contents
-define(cat_response, keys(0, 1), {String, Integer, Boolean, String});
+// Node, Request ID, Success, File blocks, Error message (on failure)
+define(cat_response, keys(0, 1), {String, Integer, Boolean, ValueList, String});
 
 // Node, Request ID, Success, Error message (on failure)
 define(create_response, keys(0, 1), {String, Integer, Boolean, String});
@@ -72,12 +72,12 @@ request(@Master, Id, Source, RequestType, Arg1, Arg2) :-
 
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file
-cat_request_done(@Master, Id, Source, Success, FContent) :-
+cat_request_done(@Master, Id, Source, Success, Blocks, null) :-
     request(@Master, Id, Source, "Cat", FName, _),
-    gfs_global::file(@Master, FName, FContent), Success := true;
+    gfs_global::file(@Master, FName, Blocks), Success := true;
 
 // If the file doesn't exist, return an error message
-cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
+cat_request_done(@Master, Id, Source, Success, null, ErrMessage) :-
     request(@Master, Id, Source, "Cat", FName, _),
     notin gfs_global::file(@Master, FName, _),
     Success := false, ErrMessage := "File does not exist";
@@ -128,8 +128,8 @@ gfs_global::rm_request_done(@Master, Id, Source, false, ErrMessage) :-
     notin gfs_global::file(@Master, FName, _),
     ErrMessage := "File does not exist";
 
-cat_response(@Source, Id, Success, Response) :-
-    cat_request_done(@Master, Id, Source, Success, Response);
+cat_response(@Source, Id, Success, Response, ErrMessage) :-
+    cat_request_done(@Master, Id, Source, Success, Response, ErrMessage);
 
 watch(create_response,ae);
 create_response(@Source, Id, Success, Response) :-

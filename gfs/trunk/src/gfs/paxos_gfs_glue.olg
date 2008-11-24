@@ -20,13 +20,13 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   Decree := FName + ",d";
 
 public 
-gfs_global::file(Master, Name, Content) :- 
+gfs_global::file(Master, Name, Blocks) :-
   paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
   Name := Decree.split(",")[0],
-  Content := "<SOME REFERENCE>",
   Op := Decree.split(",")[1],
+  Blocks := new ValueList(),
   // if I got this through the paxos log, that is...
-  //notin gfs_global::file(Master,Name,_),
+  //notin gfs_global::file(Master, Name, _),
   Op == "i";
 
 public

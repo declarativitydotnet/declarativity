@@ -123,20 +123,21 @@ public class Shell {
 
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(2);
-                        Object content = t.value(3);
 
                         if (success.booleanValue()) {
+                            ValueList blocks = (ValueList) t.value(3);
                             java.lang.System.out.println("File name: " + file);
-                            java.lang.System.out.println("Content: " + content);
+                            java.lang.System.out.println("Blocks: " + blocks.toString());
                             java.lang.System.out.println("=============");
                         } else {
+                            String errMessage = (String) t.value(4);
                             java.lang.System.out.println("ERROR on \"cat\":");
                             java.lang.System.out.println("File name: " + file);
-                            java.lang.System.out.println("Error message: " + content);
+                            java.lang.System.out.println("Error message: " + errMessage);
                         }
 
                         try {
-                            responseQueue.put(content);
+                            responseQueue.put("done");
                             break;
                         }
                         catch (InterruptedException e) {
