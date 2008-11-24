@@ -216,11 +216,6 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 					this.tuples.remove(o);
 					return true;
 				}
-				else if (name != null) {
-					System.err.println("WARNING: TABLE " + name + 
-							" removal of tuple " + other + 
-							" did not succeed due to ref counts. Check your logic.");
-				}
 			}
 		}
 		return false;

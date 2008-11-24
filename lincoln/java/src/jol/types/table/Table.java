@@ -393,7 +393,6 @@ public abstract class Table implements Comparable<Table> {
 		TupleSet delta = new TupleSet(name());
 		
 		for (Tuple t : tuples) {
-			t = t.clone();
 			if (delete(t)) {
 				delta.add(t);
 			}

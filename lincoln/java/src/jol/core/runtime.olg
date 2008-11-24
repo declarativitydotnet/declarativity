@@ -20,11 +20,14 @@ define(deletionQueue,  keys(), {Long, String, TableName, TupleSet});
 /* Evaluator output: evaluation(Time, ProgramName, TableName, Insertions, Deletions) */
 define(evaluation, {Long, String, TableName, TupleSet, TupleSet});
 
-/* Evaluator input: execute(Time, ProgramName, Query, TableName, Insertions, Deletions) */
+/* Evaluator call: execute(Time, ProgramName, Query, TableName, Insertions, Deletions) */
 define(execute, {Long, String, Query, TableName, TupleSet, TupleSet});
 
-/* Committer output: delta(Time, ProgramName, TableName, Insertions, Deletions) */ 
+/* Evaluator input: delta(Time, ProgramName, TableName, Insertions, Deletions) */ 
 define(delta, {Long, String, TableName, TupleSet, TupleSet});
+
+/* Committer output: flushed(Time, ProgramName, TableName, Insertions, Deletions) */ 
+define(flushed, {Long, String, TableName, TupleSet, TupleSet});
 
 /* Committer input: runnable(Time, ProgramName, TableName, Insertions, Deletions) */ 
 define(runnable,   {Long, String, TableName, TupleSet, TupleSet});
@@ -71,9 +74,21 @@ localEval
 execute(Time, Program, null, Name, Insertions, Deletions) :-
 	delta(Time, Program, Name, Insertions, Deletions);
 
+delta(Time, Program, Name, Insertions, Deletions) :-
+	insertionCount(Time, Program, Count), Count == 0,
+	flushed(Time, Program, Name, Insertions, Deletions);
+	
+delta(Time, Program, Name, Insertions, null) :-
+	insertionCount(Time, Program, Count), Count > 0,
+	flushed(Time, Program, Name, Insertions, Deletions);
+
+deletionQueue(Time, Program, Name, Deletions) :-
+	insertionCount(Time, Program, Count), Count > 0,
+	flushed(Time, Program, Name, Insertions, Deletions);
+
 /* Flusher the insertions OR deletions, pass deltas to evaluator. */
 commit 
-delta(Time, Program, Name, Insertions, Deletions) :-
+flushed(Time, Program, Name, Insertions, Deletions) :-
 	flusher(runnable(Time, Program, Name, Insertions, Deletions));
 
 /* Identify the runnable tuples. */
