@@ -326,7 +326,6 @@
     <copy todir="${build.classes}">
       <fileset dir="${core.src.dir}" includes="**/*.properties"/>
       <fileset dir="${mapred.src.dir}" includes="**/*.properties"/>
-      <fileset dir="${mapred.src.dir}" includes="**/*.olg"/>
       <fileset dir="${hdfs.src.dir}" includes="**/*.properties"/>  		
     </copy>
      
@@ -454,7 +453,8 @@
         </section>
       </manifest>
       <!-- Include the OLG files we need to bootstrap JOL in the JAR -->
-      <fileset dir="${mapred.src.dir}" includes="**/*.olg"/>
+      <fileset file="${conf.dir}/jobtracker.olg"/>
+      <fileset file="${conf.dir}/scheduler.olg"/>
       <fileset file="${conf.dir}/hadoop-default.xml"/>
       <fileset file="${conf.dir}/commons-logging.properties"/>
       <fileset file="${conf.dir}/log4j.properties"/>
