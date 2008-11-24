@@ -33,7 +33,6 @@ public class Shell {
      *  (4) return results to stdout
      */
     public static void main(String[] args) throws Exception {
-        Conf.setNewMasterList();
         Shell shell = new Shell();
         List<String> argList = new LinkedList<String>(Arrays.asList(args));
 
