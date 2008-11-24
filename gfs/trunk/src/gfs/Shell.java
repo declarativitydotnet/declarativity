@@ -40,7 +40,9 @@ public class Shell {
             shell.usage();
 
         String op = argList.remove(0);
-        if (op.equals("cat")) {
+        if (op.equals("append")) {
+            shell.doAppend(argList);
+        } else if (op.equals("cat")) {
             shell.doConcatenate(argList); 
         } else if (op.equals("create")) {
             shell.doCreateFile(argList, true);
@@ -80,6 +82,13 @@ public class Shell {
         this.system.start();
     }
 
+    private void doAppend(List<String> args) {
+        if (args.size() != 1)
+            usage();
+
+        String filename = args.get(0);
+    }
+
     /*
      * XXX: consider parallel evaluation
      */
@@ -92,10 +101,10 @@ public class Shell {
     }
 
     private void scheduleNewMaster() throws UpdateException, JolRuntimeException {
-        TupleSet self = new TupleSet();
-        self.add(new Tuple(Conf.getSelfAddress(),
-                           Conf.getMasterAddress(this.currentMaster)));
-        this.system.schedule("gfs", MasterTable.TABLENAME, self, null);
+        TupleSet master = new TupleSet();
+        master.add(new Tuple(Conf.getSelfAddress(),
+                             Conf.getMasterAddress(this.currentMaster)));
+        this.system.schedule("gfs", MasterTable.TABLENAME, master, null);
         this.system.evaluate();
     }
 
@@ -159,6 +168,7 @@ public class Shell {
         if (args.size() != 1)
             usage();
 
+        // XXX: file content isn't used right now
         StringBuilder sb = new StringBuilder();
         if (fromStdin) {
             /* Read the contents of the file from stdin */
@@ -214,11 +224,11 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "create_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, filename, sb.toString()));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, filename));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response (12 secs)
-        Object obj = timedTake(this.responseQueue,12000);
+        Object obj = timedTake(this.responseQueue, 12000);
         responseTbl.unregister(responseCallback);
         if (obj == null) {
           // we timed out.
@@ -372,7 +382,7 @@ public class Shell {
 
     private void usage() {
         java.lang.System.err.println("Usage: java gfs.Shell op_name args");
-        java.lang.System.err.println("Where op_name = {cat,create,ls,rm}");
+        java.lang.System.err.println("Where op_name = {append,cat,create,ls,rm}");
 
         shutdown();
         java.lang.System.exit(0);

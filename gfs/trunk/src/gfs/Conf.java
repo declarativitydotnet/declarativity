@@ -6,13 +6,13 @@ public class Conf {
     /* NB: The following two arrays must have the same length! */
     private static String[] masterHosts = new String[] {
         "localhost",
-        "localhost",
-        "localhost"
+//         "localhost",
+//         "localhost"
     };
     private static int[] masterPorts = new int[] {
         5505,
-        5506,
-        5507
+//         5506,
+//         5507
     };
 
     /* NB: The following three arrays must have the same length! */

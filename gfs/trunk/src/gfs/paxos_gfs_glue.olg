@@ -3,7 +3,7 @@ program glue;
 watch(gfs_global::file,ae);
 
 public
-paxos_global::decreeRequest(Master,Decree,From) :-
+paxos_global::decreeRequest(Master, Decree, From) :-
   paxos_global::id(Master),
   // err
   From := Master,
@@ -12,7 +12,7 @@ paxos_global::decreeRequest(Master,Decree,From) :-
   Decree := FName + ",i";
 
 public
-paxos_global::decreeRequest(Master,Decree,From) :-
+paxos_global::decreeRequest(Master, Decree, From) :-
   paxos_global::id(Master),
   From := Master,
   gfs::rm_request_pending(Master, Id, Name, true, _),
@@ -20,8 +20,8 @@ paxos_global::decreeRequest(Master,Decree,From) :-
   Decree := FName + ",d";
 
 public 
-gfs_global::file(Master,Name,Content) :- 
-  paxos_global::requestStatus(Master,From,Decree,Instance,"passed"),
+gfs_global::file(Master, Name, Content) :- 
+  paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
   Name := Decree.split(",")[0],
   Content := "<SOME REFERENCE>",
   Op := Decree.split(",")[1],
@@ -31,9 +31,9 @@ gfs_global::file(Master,Name,Content) :-
 
 public
 delete
-gfs_global::file(Master,Name,Content) :- 
-  gfs_global::file(Master,Name,Content),
-  paxos_global::requestStatus(Master,From,Decree,Instance,"passed"),
+gfs_global::file(Master, Name, Content) :- 
+  gfs_global::file(Master, Name, Content),
+  paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
   Name := Decree.split(",")[0],
   Op := Decree.split(",")[1],
   Op == "d";
@@ -46,7 +46,7 @@ public
 green
 gfs_global::create_request_done(Master, Id, Source, Status,Error) :-
   gfs::create_request_pending(Master, Id, Source, Status,Error),
-  paxos_global::requestStatus(Master,Client,Decree,Instance,Message),
+  paxos_global::requestStatus(Master, Client, Decree, Instance, Message),
   gfs::request(Master, Id, Name, _, FName, _),
   Message == "passed",
   FName == Decree.split(",")[0],
@@ -56,7 +56,7 @@ gfs_global::create_request_done(Master, Id, Source, Status,Error) :-
 public 
 gfs_global::rm_request_done(Master, Id, Source, Status,Error) :-
   gfs::rm_request_pending(Master, Id, Source, Status,Error),
-  paxos_global::requestStatus(Master,Client,Decree,Instance,Message),
+  paxos_global::requestStatus(Master, Client, Decree, Instance, Message),
   gfs::request(Master, Id, Name, _, FName, _),
   Message == "passed",
   FName == Decree.split(",")[0],
@@ -66,12 +66,12 @@ gfs_global::rm_request_done(Master, Id, Source, Status,Error) :-
 
 public 
 red
-gfs_global::create_request_done(Master, Id, Source, Status,Error) :-
-  gfs::create_request_pending(Master, Id, Source, Status,Error),
+gfs_global::create_request_done(Master, Id, Source, Status, Error) :-
+  gfs::create_request_pending(Master, Id, Source, Status, Error),
   Status == false;
 
 public 
-gfs_global::rm_request_done(Master, Id, Source, Status,Error) :-
-  gfs::rm_request_pending(Master, Id, Source, Status,Error),
+gfs_global::rm_request_done(Master, Id, Source, Status, Error) :-
+  gfs::rm_request_pending(Master, Id, Source, Status, Error),
   Status == false;
 
