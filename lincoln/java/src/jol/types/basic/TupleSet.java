@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jol.types.table.TableName;
@@ -17,7 +18,7 @@ import jol.types.table.TableName;
 public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable {
 	private static final long serialVersionUID = 1L;
 	
-	private HashMap<Tuple, Tuple> tuples;
+	private Map<Tuple, Tuple> tuples;
 
 	/** Identifier generator. */
 	private static long ids = 0L;
