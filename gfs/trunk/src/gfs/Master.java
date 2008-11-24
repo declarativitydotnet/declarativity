@@ -52,14 +52,7 @@ public class Master {
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
 
-        if (Conf.getNumMasters() == 1) {
-            java.lang.System.out.println("TRIVIAL\n");
-            this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
-            this.system.install("gfs", ClassLoader.getSystemResource("gfs/trivial_glue.olg"));
-        } else {
-            setupPaxos();
-        }
-
+        setupPaxos();
         this.system.evaluate();
 
         Callback cb = new Callback() {
