@@ -29,7 +29,7 @@ public class Master {
     }
 
     private static void usage() {
-        java.lang.System.err.println("Usage: gfs.Master idx");
+        java.lang.System.err.println("Usage: gfs.Master index");
         java.lang.System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumMasters() - 1));
         java.lang.System.exit(1);
     }

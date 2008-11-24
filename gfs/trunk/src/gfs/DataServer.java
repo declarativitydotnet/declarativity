@@ -1,6 +1,7 @@
 package gfs;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,17 +9,27 @@ import java.net.Socket;
 public class DataServer implements Runnable {
     private static class DataWorker implements Runnable {
         private Socket socket;
+        private String clientAddr;
         private DataInputStream in;
         
         DataWorker(Socket socket) throws IOException {
             this.socket = socket;
+            this.clientAddr = socket.toString();
             this.in = new DataInputStream(socket.getInputStream());
         }
 
         public void run() {
             while (true) {
                 try {
-                    readCommand();
+                    try {
+                        readCommand();
+                    } catch (EOFException e) {
+                        if (!this.socket.isClosed())
+                            this.socket.close();
+
+                        System.out.println("got EOF from " + this.clientAddr);
+                        break;
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

@@ -15,8 +15,27 @@ public class Conf {
         5507
     };
 
+    /* NB: The following three arrays must have the same length! */
+    private static final String[] dataNodes = new String[] {
+        "localhost",
+        "localhost",
+        "localhost"
+    };
+    private static final int[] dataNodeControlPorts = new int[] {
+        5600,
+        5601,
+        5602
+    };
+    private static final int[] dataNodeDataPorts = new int[] {
+        5601,
+        5603,
+        5603
+    };
+
     static {
         assert(masterHosts.length == masterPorts.length);
+        assert(dataNodes.length == dataNodeControlPorts.length);
+        assert(dataNodes.length == dataNodeDataPorts.length);
     }
 
     /* NB: This must be called before installing "gfs.olg" */
@@ -51,5 +70,21 @@ public class Conf {
 
     public static int getNumMasters() {
         return masterHosts.length;
+    }
+
+    public static String getDataNodeAddress(int idx) {
+        return "tcp:" + dataNodes[idx] + ":" + dataNodeControlPorts[idx];
+    }
+
+    public static int getDataNodeControlPort(int idx) {
+        return dataNodeControlPorts[idx];
+    }
+
+    public static int getDataNodeDataPort(int idx) {
+        return dataNodeDataPorts[idx];
+    }
+
+    public static int getNumDataNodes() {
+        return dataNodes.length;
     }
 }
