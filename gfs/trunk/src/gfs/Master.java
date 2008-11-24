@@ -18,7 +18,13 @@ public class Master {
         if (args.length != 1)
             usage();
 
-        Master m = new Master(Integer.parseInt(args[0]));
+        int masterIdx = Integer.parseInt(args[0]);
+        if (masterIdx < 0 || masterIdx >= Conf.getNumMasters()) {
+            java.lang.System.err.println("Illegal master index: " + masterIdx);
+            usage();
+        }
+
+        Master m = new Master(masterIdx);
         m.start();
     }
 
