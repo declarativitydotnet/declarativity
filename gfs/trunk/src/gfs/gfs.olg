@@ -93,8 +93,8 @@ cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
     Success := false, ErrMessage := "File does not exist";
 
 // If we got a "create" request for a file that didn't exist,
-// send back a positive ack
-// actually, don't send the ack till we've heard back from paxos.
+// we need to wait until we get consensus from paxos; then we
+// can send back a positive ack.
 // XXX: the use of "#insert" here is a hack
 create_request_pending(@Master, Id, Source, true, null) :-
     request#insert(@Master, Id, Source, "Create", FName, _),
