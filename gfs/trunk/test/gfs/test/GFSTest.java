@@ -1,9 +1,5 @@
 package gfs.test;
 
-import java.util.List;
-import java.util.LinkedList;
-import jol.types.basic.ValueList;
-import junit.framework.Assert;
 import gfs.Master;
 import gfs.Shell;
 

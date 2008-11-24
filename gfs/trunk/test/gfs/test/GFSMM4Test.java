@@ -1,7 +1,5 @@
 package gfs.test;
 
-import gfs.Shell;
-
 import gfs.test.TestCommon;
 
 import org.junit.Test;
