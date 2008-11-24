@@ -132,7 +132,14 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				private final TupleFunction<C> left  = lhs.function();
 				private final TupleFunction<C> right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					return (left.evaluate(tuple)).compareTo(right.evaluate(tuple)) <= 0;
+					C lvalue = left.evaluate(tuple);
+					C rvalue = right.evaluate(tuple);
+					try {
+						return lvalue.compareTo(rvalue) <= 0;
+					} catch (Throwable t) {
+						System.err.println("ERROR " + t.toString() + ", ON " + lvalue + " <= " + rvalue);
+						throw new JolRuntimeException(t.toString());
+					}
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;

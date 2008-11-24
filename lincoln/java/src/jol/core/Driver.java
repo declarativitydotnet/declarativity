@@ -323,16 +323,18 @@ public class Driver implements Runnable {
 							delta.addAll(result);
 						}
 					}
+					/*
 					else if (insertions.size() > 0 && deletions.size() > 0) {
-						/* This case is tricky. Basically, no queries are interested in
+						 * This case is tricky. Basically, no queries are interested in
 						 * the insertions BUT we still need to 'flush' the deletions which
 						 * will not occur until there are no more insertions. So basically
 						 * we need to clear these insertions out (they've already been flushed)
 						 * and punt the deletions back to the runtime scheduler to be flushed
-						 * and reevaluated.  */
+						 * and reevaluated.  
 						insertions.clear();
 						delta.add(tuple);
-					}
+					} */
+				
 				}
 				else {
 					/* A specific query was given. The runtime scheduler does this when
@@ -531,7 +533,7 @@ public class Driver implements Runnable {
 	 */
 	public Driver(Runtime context, Schedule schedule, Clock clock, ExecutorService executor) {
 		this.tasks = new ArrayList<Task>();
-		this.debug = true;
+		this.debug = false;
 		this.schedule = schedule;
 		this.clock = clock;
 		this.logicalTime = 0L;

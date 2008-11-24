@@ -223,9 +223,10 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	
 	@Override
 	public Tuple clone() {
-		Tuple copy = new Tuple(this.values);
-		copy.schema = this.schema != null ? this.schema.clone() : null;
-		copy.id		= this.id;
+		Tuple copy    = new Tuple(this.values);
+		copy.schema   = this.schema != null ? this.schema.clone() : null;
+		copy.id		  = this.id;
+		copy.refCount = this.refCount;
 		return copy;
 	}
 	
@@ -342,8 +343,19 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	
 	@Override
 	public boolean equals(Object obj) {
-		return obj instanceof Tuple && 
-				((Tuple)obj).compareTo(this) == 0;
+		if (obj instanceof Tuple) {
+			Tuple t = (Tuple) obj;
+			if (size() != t.size()) return false;
+			for (int i = 0; i < size(); i++) {
+				Comparable me    = this.values.get(i) == null ? "null" : this.values.get(i);
+				Comparable other = t.values.get(i) == null ? "null" : t.values.get(i);
+				if (me.compareTo(other) != 0) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 	
 	@Override
@@ -430,6 +442,26 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 */
 	public void refCount(Long value) {
 		this.refCount = value;
+	}
+	
+	public long refCountInc() {
+		this.refCount++;
+		return this.refCount;
+	}
+	
+	public long refCountInc(long value) {
+		this.refCount += value;
+		return this.refCount;
+	}
+	
+	public long refCountDec() {
+		this.refCount--;
+		return this.refCount;
+	}
+	
+	public long refCountDec(long value) {
+		this.refCount -= value;
+		return this.refCount;
 	}
 	
 	/**

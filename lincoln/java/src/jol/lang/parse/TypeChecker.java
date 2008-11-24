@@ -642,6 +642,9 @@ public final class TypeChecker extends Visitor {
 					context.catalog().register(table);
 					this.program.definition(table);
 				}
+				else {
+					// TODO: Verify that table aggregate is compatible!
+				}
 					
 				Class[] types = table.types();
 				if (!subtype(types[argument.position()], argument.type())) {

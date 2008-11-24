@@ -58,7 +58,7 @@ evaluation(Time, Program, Name, Insertions, Deletions) :-
 	
 /* NOTE: We do not schedule public deletions!! */
 publicEval
-execute(Time, Program2, Query, Name, Insertions, null) :-
+execute(Time, Program2, Query, Name, Insertions, Deletions) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
 	query(Program2, Rule, Public, Async, Delete, Event, Input, Output, Query),
 	Public == true && Input == Name, Program1 != Program2;
@@ -83,12 +83,15 @@ runnable(Time, Program, Name, Insertions, null) :-
 	insertionQueue(Time, Strata, Program, Name, Insertions);
 
 /* Execute all deletions when insertion count goes to 0. 
-   Deletions executed and deletions deltas scheduled for 
-   next clock. */
+   Deletions executed and deletions deltas scheduled. */
 deletion_runnable 
-runnable(Time+1, Program, Name, null, Deletions) :-
+runnable(Time, Program, Name, null, Deletions) :-
+	insertionCount(Time, Program, Count), Count == 0,
 	deletionQueue(Time, Program, Name, Deletions);
 
+define(insertionCount, keys(0,1), {Long, String, Integer});
+insertionCount(Time, Program, count<Name>) :-
+	insertionQueue(Time, Strata, Program, Name, _);
 
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */

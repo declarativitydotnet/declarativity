@@ -10,7 +10,7 @@ import jol.types.exception.UpdateException;
  * in Java. Creating such tables allow for application specific insertion/deletion
  * semantics.
  */
-public abstract class ObjectTable extends RefTable {
+public abstract class ObjectTable extends BasicTable {
 	
 	/**
 	 * Create a new ObjectTable.

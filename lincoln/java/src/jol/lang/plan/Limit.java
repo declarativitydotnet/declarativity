@@ -57,7 +57,17 @@ public class Limit extends Aggregate {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				ValueList result = new ValueList();
 				for (AggregateVariable var : variables) {
-					result.add((Comparable)var.function().evaluate(tuple));
+					if (var.position() > 0) {
+						try {
+							result.add(var.function().evaluate(tuple));
+						} catch (Throwable t) {
+							throw new JolRuntimeException("TRYING TO GET " + var + 
+									" from " + tuple.schema() + " at position " + var.position());
+						}
+					}
+					else {
+						result.add(var.function().evaluate(tuple));
+					}
 				}
 				if (variables.size() == 1) {
 					result.add(kConst);

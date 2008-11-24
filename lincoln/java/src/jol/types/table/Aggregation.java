@@ -157,12 +157,13 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	 * become part of the delta set. 
 	 */
 	public TupleSet insert(TupleSet insertions, TupleSet deletions) throws UpdateException {
-		if (deletions.size() > 0) {
+		if (deletions != null && deletions.size() > 0) {
 			TupleSet intersection = deletions.clone();
 			intersection.retainAll(insertions);
 		
 			insertions.removeAll(intersection);
 			deletions.removeAll(intersection);
+			
 			TupleSet delta = delete(deletions);
 			deletions.clear();
 			deletions.addAll(delta);
@@ -183,6 +184,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 			
 			try {
 				for (Aggregate<C> func : functions) {
+					tuple = tuple.clone();
 					func.insert(tuple); // perform this aggregate
 				}
 			} catch (JolRuntimeException e) {
@@ -193,7 +195,9 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		
 		TupleSet delta = result();
 		delta.removeAll(this.aggregateTuples.clone());  // Only those newly inserted tuples remain.
-		delta.removeAll(deletions);
+		if (deletions != null) {
+			delta.removeAll(deletions);
+		}
 		
 		if (type() == Table.Type.EVENT) {
 			if (this.singleGroupAggregateFunctions != null) {
@@ -226,10 +230,12 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 				if (this.singleGroupAggregateFunctions != null) {
 					for (Aggregate<C> function : this.singleGroupAggregateFunctions) {
 						function.delete(tuple);
+						/*
 						if (function.size() == 0) {
 							this.singleGroupAggregateFunctions = groupGenerate();
 							break; // we're out of tuples for this group.
 						}
+						*/
 					}
 				}
 				else {
@@ -238,10 +244,12 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 						List<Aggregate<C>> functions = this.aggregateFunctions.get(key);
 						for (Aggregate<C> function : functions) {
 							function.delete(tuple);
+							/*
 							if (function.size() == 0) {
 								this.aggregateFunctions.remove(key);
 								break; // we're out of tuples for this group.
 							}
+							*/
 						}
 					}
 				}

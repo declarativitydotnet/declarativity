@@ -65,7 +65,7 @@ public class Program implements Comparable<Program> {
 		this.queries     = new HashMap<TableName, Set<Query>>();
 		try {
 			context.catalog().table(ProgramTable.TABLENAME).force(new Tuple(name, owner, this));
-		} catch (UpdateException e) {
+		} catch (Throwable e) {
 			e.printStackTrace();
 			java.lang.System.exit(1);
 		}
