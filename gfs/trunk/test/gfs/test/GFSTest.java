@@ -9,7 +9,7 @@ import gfs.Shell;
 
 import org.junit.Test;
 
-public class GFSTest {
+public class GFSTest extends TestCommon{
 
   @Test
   public void test1() {
@@ -17,29 +17,10 @@ public class GFSTest {
     Master master;
 
     try { 
-      shell = new Shell();
-      master = new Master(0); // XXX
-      master.start();
-
-      List<String> argList = new LinkedList<String>();
-      argList.add("foo");
-      shell.doCreateFile(argList,false);
-      //shell.shutdown();
-
-      //shell = new Shell();
-      argList.clear();
-      ValueList<String> list = shell.doListFiles(argList);
-      boolean good = false;
-      for (String item : list) {
-        java.lang.System.out.println("got: "+item);
-        if (item.compareTo("foo") == 0) {
-          good = true;
-        }
-      }
-
-      master.stop();
-      shell.shutdown();
-      Assert.assertTrue(good);
+        startMany("localhost:5505");
+        shellCreate("foo");
+        shellLs("foo");
+        stopMany();
     } catch (Exception e) {
       java.lang.System.out.println("something went wrong: "+e);
       java.lang.System.exit(1);

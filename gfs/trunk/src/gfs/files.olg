@@ -1,0 +1,69 @@
+program files;
+
+import jol.types.basic.ValueList;
+import java.io.File;
+import java.util.ArrayList;
+
+define(file,keys(0,1),{String,String});
+define(dir,keys(0),{String,File,ValueList});
+
+timer(clock,physical,5000,5000,1000);
+//timer(periodic,logical,10,10,1);
+
+
+watch(dir,ae);
+watch(file,ae);
+//watch(periodic,ae);
+
+dir(A,B,C) :-
+    A := "tcp:localhost:5508",
+    B := new File("gfs_data"),
+    C := new ValueList(B.list()),
+    clock(_,_,_);
+
+define(indx,keys(0),{String,Integer});
+watch(indx,ae);
+indx(A,0) :-   
+    dir#insert(A,B,C);
+
+delete
+file(A,B) :-
+    file(A,B),
+    dir#insert(A,X,Y);
+
+indx(Me,Next) :-
+    indx(Me,Old),
+    file#insert(A,C),
+    Next := Old + 1;
+
+
+file(A,C) :-
+    dir(A,F,D),
+    indx#insert(A,I),
+    I < D.size(),
+    B := D.get(I),
+    C := B.toString();
+
+
+define(heartBeat,keys(0,1,2),{String,String,String,Long});
+watch(heartBeat,ae);
+heartBeat(A,B,C,D) :-
+    file(A,C),
+    masters(A,B),
+    clock(_,_,_),
+    D := java.lang.System.currentTimeMillis();
+
+
+define(sendHeartBeat,keys(0,1,2),{String,String,String,Long});
+sendHeartBeat(@B,A,C,D) :-
+    heartBeat(@A,B,C,D);
+
+define(masters,keys(0,1),{String,String});
+/*
+masters(A,B) :-
+    clock(_,_,_),
+    A := "tcp:localhost:5508",
+    B := "tcp:localhost:5508";
+*/
+masters("tcp:localhost:5508","tcp:localhost:5508");
+

@@ -9,7 +9,7 @@ public class GFSMM3Test extends TestCommon {
   @Test
   public void test3() {
     try { 
-      startMany("5500","5502","5503");
+      startMany("localhost:5500","localhost:5502","localhost:5503");
       
       shellCreate("foo");
       /* this time, kill the primary */

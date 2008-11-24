@@ -6,9 +6,7 @@ import java.lang.Integer;
 import java.lang.System;
 import jol.core.Runtime;
 
-timer(periodic,logical,1,1,1);
-	
-////define(decreeRequest,{String,String,String});
+timer(periodic,logical,1,1,1);	
 define(storedDecreeRequest,keys(0,1,2,3),{String,String,String,Long});
 define(lastTried,keys(0),{String,Integer});
 define(prevVote,keys(0),{String,Integer,Integer,String});
@@ -78,14 +76,8 @@ PAXOS global invariants:
 public
 parliament(A,B) :- 
   paxos_global::id(A),
-  paxos_global::members(B);//,
-  //periodic(_,_,_);
+  paxos_global::members(B);
 
-/*
-lastTried(Master,-1) :- parliament(Master,Agent);
-prevVote(Master,0,-1,"none") :- parliament(Master,Agent);
-nextBal(Master,-1) :- parliament(Master,Agent);
-*/
 //public
 //lastTried(Master,-1) :- paxos_global::id(Master);
 public
@@ -99,7 +91,6 @@ r1. Priest p chooses a new ballot number b greater than lastTried [p], sets last
 to b, and sends a NextBallot (b) message to some set of priests.
 ***************************************************************************************/
 
-//sequence(nextTicket,0);
 
 
 /*
@@ -143,23 +134,6 @@ prepare(Agent,Round,Decree) :-
   notin quorum(Agent,_),
 	Round := Old + 1;
 
-/*
-define(wouldPrep,{String,Integer,String,String,String});
-watch(wouldPrep,ae);
-
-public
-wouldPrep(Agent,Round,Decree,WHAT,Me) :- 
-	storedDecreeRequest(Agent,Decree,From,Id),
-  topOfQueue#insert(Agent,Id),
-  //Round := 100,
-  // I don't know wtf is up with this...
-	lastTried(WHAT,Old),
-  //WHAT == Agent,
-  notin quorum(Agent,_),
-  paxos_global::id(Me),
-	Round := Old + 1;
-*/
-//
 /* 
 public r1_b2
 prepare(Agent,Round,Decree) :-

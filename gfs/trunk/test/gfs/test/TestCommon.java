@@ -8,6 +8,7 @@ import jol.types.exception.UpdateException;
 import junit.framework.Assert;
 import gfs.Master;
 import gfs.Shell;
+import gfs.Conf;
 
 import org.junit.After;
 import org.junit.Before;
@@ -72,6 +73,8 @@ public class TestCommon {
   } 
   protected void startMany(String... args) throws JolRuntimeException,UpdateException,InterruptedException {
     this.masters = new ValueList<Master>(); 
+
+    /*
     for (int i=0, s=0; i < args.length; i++,s=0) {
       String[] sig = new String[args.length];
       sig[s++] = args[i];
@@ -85,6 +88,15 @@ public class TestCommon {
       Master m = new Master(0); // XXX
       m.start();
       this.masters.add(m);
+    }
+    */
+    
+    Conf.setNewMasterList(args);
+
+    for (int i=0; i < Conf.getNumMasters(); i++) {
+        Master m = new Master(i);
+        m.start();
+        this.masters.add(m);
     }
   }
 

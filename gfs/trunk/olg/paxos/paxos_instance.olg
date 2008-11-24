@@ -20,7 +20,7 @@ public sdCnt(M,count<Id>) :- paxos::storedDecreeRequest(M,D,F,Id);
 public
 startinstance
 paxos::instance(Me,0) :-
-  paxos::periodic(_,_,_),
+ // paxos::periodic(_,_,_),
   paxos_global::id(Me);
 
 public

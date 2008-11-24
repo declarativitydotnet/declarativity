@@ -15,6 +15,7 @@ public class Master {
     private System system;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
+        Conf.setNewMasterList();
         if (args.length != 1)
             usage();
 

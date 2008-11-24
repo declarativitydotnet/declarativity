@@ -9,7 +9,7 @@ public class GFSMM1Test extends TestCommon {
   @Test
   public void test1() {
     try { 
-      startMany("5500","5502","5503");
+      startMany("localhost:5500","localhost:5502","localhost:5503");
       
       //shell = new Shell();
       //createFile(shell,"foo");
