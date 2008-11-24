@@ -18,7 +18,7 @@ public class TaskState implements Comparable<TaskState> {
 				            Constants.TaskState state, 
 				            Constants.TaskPhase phase, 
 				            Long start, Long finish) {
-			this.progress = progress;
+			this.progress = state == Constants.TaskState.SUCCEEDED ? 1f : progress;
 			this.state    = state;
 			this.phase    = phase;
 			this.start    = start;
@@ -82,7 +82,8 @@ public class TaskState implements Comparable<TaskState> {
 	
 	public String toString() {
 		return "Task[" + this.taskid + ", " 
-		               + state() + ", " + phase() + "]";
+		               + state() + ", " + phase() + 
+		               ", progress = " + progress() + "]";
 	}
 
 	/**

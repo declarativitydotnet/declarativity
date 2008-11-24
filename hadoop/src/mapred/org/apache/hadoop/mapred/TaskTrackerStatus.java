@@ -70,6 +70,10 @@ public class TaskTrackerStatus implements Writable {
     this.maxMapTasks = maxMapTasks;
     this.maxReduceTasks = maxReduceTasks;
   }
+  
+  public String toString() {
+	  return this.trackerName + ", " + this.taskReports + ", failures " + failures;
+  }
 
   /**
    */

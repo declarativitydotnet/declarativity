@@ -1,5 +1,7 @@
 package org.apache.hadoop.mapred.declarative.table;
 
+import org.apache.hadoop.mapred.JobTracker;
+
 import jol.core.Runtime;
 import jol.types.basic.TypeList;
 import jol.types.table.Key;
@@ -8,7 +10,7 @@ import jol.types.table.TableName;
 
 public class TaskTrackerErrorTable extends ObjectTable {
 	/** The table name */
-	public static final TableName TABLENAME = new TableName("mapred", "taskTrackerError");
+	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskTrackerError");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key();

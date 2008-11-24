@@ -38,6 +38,9 @@ public class HeartbeatResponse implements Writable, Configurable {
   int heartbeatInterval;
   TaskTrackerAction[] actions;
 
+  public String toString() {
+	  return "RESPONSE " + responseId + ", actions " + actions;
+  }
   HeartbeatResponse() {}
   
   public HeartbeatResponse(short responseId, TaskTrackerAction[] actions) {

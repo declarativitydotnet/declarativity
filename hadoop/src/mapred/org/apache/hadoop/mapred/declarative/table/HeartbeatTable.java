@@ -1,10 +1,13 @@
 package org.apache.hadoop.mapred.declarative.table;
 
 import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.JobTracker;
 
 import jol.core.Runtime;
+import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.basic.Wrapper;
+import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
@@ -17,7 +20,7 @@ import jol.types.table.TableName;
 public class HeartbeatTable extends ObjectTable {
 
 	/** The table name */
-	public static final TableName TABLENAME = new TableName("mapred", "heartbeat");
+	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "heartbeat");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);
@@ -36,5 +39,4 @@ public class HeartbeatTable extends ObjectTable {
 	public HeartbeatTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 	}
-
 }

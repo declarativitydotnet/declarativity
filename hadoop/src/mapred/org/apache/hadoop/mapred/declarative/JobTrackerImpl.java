@@ -76,6 +76,15 @@ public class JobTrackerImpl extends JobTracker {
 		this.context = context;
 		this.executor = Executors.newCachedThreadPool();
 		
+	    /* Install the declarative definitions. */
+	    try {
+			install((jol.core.Runtime)context, conf);
+		} catch (UpdateException e) {
+			throw new IOException(e);
+		} catch (JolRuntimeException e) {
+			throw new IOException(e);
+		}
+		
 		  // Set ports, start RPC servers, etc.
 	    InetSocketAddress addr = getAddress(conf);
 	    this.localMachine = addr.getHostName();
@@ -120,14 +129,6 @@ public class JobTrackerImpl extends JobTracker {
 	            conf.getClass("topology.node.switch.mapping.impl", ScriptBasedMapping.class,
 	                DNSToSwitchMapping.class), conf);
 	    
-	    /* Install the declarative definitions. */
-	    try {
-			install((jol.core.Runtime)context, conf);
-		} catch (UpdateException e) {
-			throw new IOException(e);
-		} catch (JolRuntimeException e) {
-			throw new IOException(e);
-		}
 	}
 
 	private static SimpleDateFormat getDateFormat() {

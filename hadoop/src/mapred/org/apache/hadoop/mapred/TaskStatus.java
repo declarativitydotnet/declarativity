@@ -56,6 +56,11 @@ public abstract class TaskStatus implements Writable, Cloneable {
   private Phase phase = Phase.STARTING; 
   private Counters counters;
   private boolean includeCounters;
+  
+  public String toString() {
+	  return "[Task " + taskid + ", progress " + this.progress + 
+	         ", runstate " + runState + "]";
+  }
 
   public TaskStatus() {}
 

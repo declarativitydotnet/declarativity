@@ -22,16 +22,13 @@ public class JobState implements Comparable<JobState> {
 	
 	private Set<TaskState> reduces;
 	
-	public JobState(JobID jobid, int mapCount, int reduceCount, Constants.JobState state) {
+	public JobState(JobID jobid, int mapCount, int reduceCount) {
 		this.jobid       = jobid;
-		this.state       = state;
+		this.state       = Constants.JobState.PREP;
 		this.mapCount    = mapCount;
 		this.maps        = new HashSet<TaskState>();
 		this.reduceCount = reduceCount;
 		this.reduces     = new HashSet<TaskState>();
-	}
-	public JobState(JobID jobid, int mapCount, int reduceCount) {
-		this(jobid, mapCount, reduceCount, Constants.JobState.PREP);
 	}
 	
 	public JobState(JobID jobid) {
@@ -55,6 +52,7 @@ public class JobState implements Comparable<JobState> {
 	}
 	
 	public void task(TaskType type, TaskState state) {
+		this.state = Constants.JobState.RUNNING;
 		if (type == TaskType.MAP) {
 			this.maps.add(state);
 		}

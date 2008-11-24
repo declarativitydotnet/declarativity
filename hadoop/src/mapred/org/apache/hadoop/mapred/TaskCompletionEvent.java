@@ -41,6 +41,7 @@ public class TaskCompletionEvent implements Writable{
   private int idWithinJob;
   public static final TaskCompletionEvent[] EMPTY_ARRAY = 
     new TaskCompletionEvent[0];
+  
   /**
    * Default constructor for Writable.
    *
@@ -186,6 +187,8 @@ public class TaskCompletionEvent implements Writable{
     buf.append(taskId); 
     buf.append(", Status : ");  
     buf.append(status.name());
+    buf.append(", Tracker Location : ");  
+    buf.append(this.taskTrackerHttp);
     return buf.toString();
   }
     

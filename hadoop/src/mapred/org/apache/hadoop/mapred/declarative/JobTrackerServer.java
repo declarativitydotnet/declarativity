@@ -3,6 +3,7 @@ package org.apache.hadoop.mapred.declarative;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -12,6 +13,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.Wrapper;
 import jol.types.exception.BadKeyException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 
@@ -38,6 +40,8 @@ import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.JobHistory.JobInfo;
 import org.apache.hadoop.mapred.TaskStatus.Phase;
 import org.apache.hadoop.mapred.TaskStatus.State;
+import org.apache.hadoop.mapred.declarative.Constants.TaskState;
+import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.table.HeartbeatTable;
 import org.apache.hadoop.mapred.declarative.table.JobTable;
 import org.apache.hadoop.mapred.declarative.table.NetworkTopologyTable;
@@ -53,8 +57,90 @@ import org.apache.hadoop.util.HostsFileReader;
 import org.apache.hadoop.util.VersionInfo;
 
 public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProtocol {
-	private final static TaskCompletionEvent[] EMPTY_EVENTS = new TaskCompletionEvent[0];
+	private class TaskAttemptListener extends jol.types.table.Table.Callback {
+		private HashMap<JobID, List<TaskCompletionEvent>> completionEvents;
 
+		public TaskAttemptListener(HashMap<JobID, List<TaskCompletionEvent>> events) {
+			this.completionEvents = events;
+		}
+		
+		@Override
+		public void deletion(TupleSet tuples) {
+		}
+		@Override
+		public void insertion(TupleSet tuples) {
+			for (Tuple tuple : tuples) {
+				JobID jobid     = (JobID)     tuple.value(TaskAttemptTable.Field.JOBID.ordinal());
+				TaskID taskid   = (TaskID)    tuple.value(TaskAttemptTable.Field.TASKID.ordinal());
+				Integer attempt = (Integer)   tuple.value(TaskAttemptTable.Field.ATTEMPTID.ordinal());
+				TaskState state = (TaskState) tuple.value(TaskAttemptTable.Field.STATE.ordinal());
+				String  taskLoc = (String)    tuple.value(TaskAttemptTable.Field.TASKLOCATION.ordinal());
+				
+				if (state == TaskState.SUCCEEDED || 
+						state == TaskState.KILLED || 
+						state == TaskState.FAILED) {
+					synchronized (JobTrackerServer.this.completionEvents) {
+						Table table = JobTrackerServer.this.context.catalog().table(TaskTable.TABLENAME);
+						TupleSet lookup;
+						try { lookup = table.primary().lookupByKey(jobid, taskid);
+						} catch (BadKeyException e) {
+							JobTrackerImpl.LOG.error(e.toString());
+							continue;
+						}
+						if (lookup.size() != 1) {
+							JobTrackerImpl.LOG.error("Task lookup size != 1");
+							continue;
+						}
+
+						Tuple taskTuple = lookup.iterator().next();
+						Integer partition = (Integer) taskTuple.value(TaskTable.Field.PARTITION.ordinal());
+						TaskType type     = (TaskType) taskTuple.value(TaskTable.Field.TYPE.ordinal());
+						int eventID = JobTrackerServer.this.completionEvents.get(jobid).size();
+						TaskCompletionEvent event = 
+							new TaskCompletionEvent(eventID,
+									new TaskAttemptID(taskid, attempt),
+									partition, type == TaskType.MAP,
+									TaskCompletionEvent.Status.valueOf(state.name()),
+									taskLoc);
+						JobTrackerServer.this.completionEvents.get(jobid).add(event);
+					}
+				}
+			}
+		}
+	}
+	
+	private class JobListener extends jol.types.table.Table.Callback {
+
+		@Override
+		public void deletion(TupleSet tuples) {
+			synchronized (JobTrackerServer.this.completionEvents) {
+				for (Tuple tuple : tuples) {
+					JobID jobid = (JobID) tuple.value(JobTable.Field.JOBID.ordinal());
+					JobState state = (JobState) tuple.value(JobTable.Field.STATUS.ordinal());
+					if (state.state() == Constants.JobState.SUCCEEDED ||
+					    state.state() == Constants.JobState.FAILED) {
+						JobTrackerServer.this.completionEvents.remove(jobid);
+					}
+				}
+			}
+		}
+
+		@Override
+		public void insertion(TupleSet tuples) {
+			synchronized (JobTrackerServer.this.completionEvents) {
+				for (Tuple tuple : tuples) {
+					JobID jobid = (JobID) tuple.value(JobTable.Field.JOBID.ordinal());
+					JobState state = (JobState) tuple.value(JobTable.Field.STATUS.ordinal());
+					if (state.state() == Constants.JobState.PREP) {
+						JobTrackerServer.this.completionEvents.put(jobid, 
+								new ArrayList<TaskCompletionEvent>());
+					}
+				}
+			}
+		}
+		
+	}
+	
 	private int nextJobId = 1;
 
 	private System context;
@@ -62,11 +148,15 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	private JobTracker jobTracker;
 	
 	private HostsFileReader hostsReader;
-
 	
+	private HashMap<JobID, List<TaskCompletionEvent>> completionEvents;
+
 	public JobTrackerServer(System context, JobTracker jobTracker, JobConf conf) throws IOException {
 		this.context = context;
 		this.jobTracker = jobTracker;
+		this.completionEvents = new HashMap<JobID, List<TaskCompletionEvent>>();
+		context.catalog().table(TaskAttemptTable.TABLENAME).register(new TaskAttemptListener(this.completionEvents));
+		context.catalog().table(JobTable.TABLENAME).register(new JobListener());
 		
 		// Read the hosts/exclude files to restrict access to the jobtracker.
 	    this.hostsReader = new HostsFileReader(conf.get("mapred.hosts", ""),
@@ -327,7 +417,16 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 
 	public TaskCompletionEvent[] getTaskCompletionEvents(JobID jobid,
 			int fromEventId, int maxEvents) throws IOException {
-		return EMPTY_EVENTS;
+	    TaskCompletionEvent[] events = TaskCompletionEvent.EMPTY_ARRAY;
+	    synchronized (completionEvents) {
+	    	if (completionEvents.containsKey(jobid) &&
+	    			completionEvents.get(jobid).size() > fromEventId) {
+	    		int actualMax = Math.min(maxEvents, 
+	    				(completionEvents.get(jobid).size() - fromEventId));
+	    		events = completionEvents.get(jobid).subList(fromEventId, actualMax + fromEventId).toArray(events);        
+	    	}
+	    }
+	    return events;
 	}
 
 	public void reportTaskTrackerError(String taskTracker, 
@@ -353,7 +452,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		if (!acceptTaskTracker(status)) {
 			throw new DisallowedTaskTrackerException(status);
 		}
-
+		
 		String trackerName = status.getTrackerName();
 		try {
 			Table heartbeatTable = context.catalog().table(HeartbeatTable.TABLENAME);
@@ -366,6 +465,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				// tasktracker to re-initialize itself.
 				TupleSet prevHeartbeat = heartbeatTable.primary().lookupByKey(trackerName);
 				if (prevHeartbeat.size() == 0) {
+					JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
 					HeartbeatResponse response = 
 						new HeartbeatResponse(responseId, 
 								new TaskTrackerAction[] {new ReinitTrackerAction()});
@@ -386,7 +486,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			short newResponseId = (short)(responseId + 1);
 			HeartbeatResponse response = new HeartbeatResponse(newResponseId, null);
 			TupleSet          actions  = new TupleSet(TaskTrackerActionTable.TABLENAME);
-			if (updateTaskTracker(trackerName, status, initialContact)) {
+			if (updateTaskTracker(status, initialContact)) {
 				TaskTrackerActionTable table = (TaskTrackerActionTable) 
 						context.catalog().table(TaskTrackerActionTable.TABLENAME);
 				/* Grab any actions from the action table. */
@@ -394,6 +494,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			}
 			else {
 				/* Something went wrong with updating the tracker status. */
+				JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
 				response.setActions(new TaskTrackerAction[] {new ReinitTrackerAction()});
 			}
 			/* Store the response. */
@@ -403,6 +504,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			e.printStackTrace();
 		}
 		
+		JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
 		HeartbeatResponse response = 
 			new HeartbeatResponse(responseId, 
 					new TaskTrackerAction[] {new ReinitTrackerAction()});
@@ -446,12 +548,12 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @param status The new status for the task tracker
 	 * @return true success, false failure 
 	 */
-	private boolean updateTaskTracker(String name, TaskTrackerStatus status, boolean init) { 
+	private boolean updateTaskTracker(TaskTrackerStatus status, boolean init) { 
 		try {
 			TaskTrackerTable trackerTable = (TaskTrackerTable)
 				this.context.catalog().table(TaskTrackerTable.TABLENAME);
 			
-			TupleSet trackerLookup = trackerTable.primary().lookupByKey(name);
+			TupleSet trackerLookup = trackerTable.primary().lookupByKey(status.getTrackerName());
 			if ( init && trackerLookup.size() > 0 ||
 				!init && trackerLookup.size() == 0) {
 				return false;
@@ -463,7 +565,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			}
 			
 			Tuple tracker = 
-				new Tuple(name,  
+				new Tuple(status.getTrackerName(),  
 						status.getHost(), 
 						status.getHttpPort(),  
 						status.getLastSeen(), 
@@ -480,7 +582,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 					null);
 			
 			/* Schedule updates of all tasks running on this tracker. */
-			updateTasks(name, status.getTaskReports());
+			updateTasks(status);
 		} catch (Exception e) {
 			JobTrackerImpl.LOG.fatal("TaskTracker update error!", e);
 			return false;
@@ -493,22 +595,17 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @param tasks
 	 * @throws UpdateException 
 	 */
-	private void updateTasks(String tracker, List<TaskStatus> tasks) throws UpdateException {
+	private void updateTasks(TaskTrackerStatus trackerStatus) 
+	throws UpdateException {
+		String tracker = trackerStatus.getTrackerName();
+		List<TaskStatus> tasks = trackerStatus.getTaskReports();
 		TupleSet attempts = new TupleSet(TaskAttemptTable.TABLENAME);
-		for (TaskStatus status : tasks) {
-			if (status.getProgress() >= 1f && status.getRunState() == TaskStatus.State.RUNNING) {
-				status.setStateString(TaskStatus.State.SUCCEEDED.toString());
+		for (TaskStatus taskStatus : tasks) {
+			if (taskStatus.getProgress() >= 1f && taskStatus.getRunState() == TaskStatus.State.RUNNING) {
+				taskStatus.setStateString(TaskStatus.State.SUCCEEDED.toString());
 			}
-			if (status.getRunState() == TaskStatus.State.SUCCEEDED) {
-				java.lang.System.err.println("TRACKER " + tracker + 
-						" REPORTS TASK " + status.getTaskID() + " SUCCESS");
-			}
-			else {
-				java.lang.System.err.println("TRACKER " + tracker + 
-						" REPORTS TASK " + status.getTaskID() + " " + status.getRunState() + " PROGRESS " + status.getProgress());
-			}
-			status.setTaskTracker(tracker);
-			attempts.add(TaskAttemptTable.tuple(status));
+			taskStatus.setTaskTracker(tracker);
+			attempts.add(TaskAttemptTable.tuple(trackerStatus, taskStatus));
 		}
 		this.context.schedule(JobTracker.PROGRAM, 
 					TaskAttemptTable.TABLENAME, 
