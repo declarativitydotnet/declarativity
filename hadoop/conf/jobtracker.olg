@@ -15,7 +15,6 @@ import java.lang.Enum;
 
 /*************** TASK INIT *********************/
 
-
 define(initTask, {JobID, Wrapper, String, TaskID, Constants.TaskType, Integer, Wrapper, Integer, TaskState});
 define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 define(taskFile, {JobID, TaskID, ValueList});
@@ -37,7 +36,6 @@ taskFile(JobId, TaskId, Locations) :-
 	Type == Constants.TaskType.MAP,
 	Locations := new ValueList(((JobClient.RawSplit)Split.object()).getLocations());
 	
-watch(taskFileLocation, a);
 taskFileLocation(JobId, TaskId, Location) :-
 	flatten(taskFile(JobId, TaskId, Locations)),
 	Location := (String) Locations;
@@ -48,8 +46,6 @@ taskFileLocation(JobId, TaskId, Location) :-
 define(networkDistance, keys(0,1), {String, String, Integer});
 define(neighborDistance, keys(0,1), {String, String, Integer});
 
-watch(networkDistance, a);
-watch(networkTopology, a);
 networkDistance(Host, Host, 0) :-
 	networkTopology(Host, Location, Parent, Level);
 	
@@ -82,23 +78,25 @@ jobStateUpdate(JobID) :- task(JobID);
 
 watch(job, a);
 /* Compute the job state based on task state. */
-jobState(JobID, generic<(new JobState(JobID, Maps, Reduces, Constants.JobState.RUNNING)).task(Type, TaskState)>) :-
+jobState(JobID, generic<(new JobState(JobID, Maps, Reduces)).task(Type, TaskState)>) :-
 	jobStateUpdate(JobID),
 	task(JobID, _, Type, _, _, _, TaskState),
 	jobMapCount(JobID, Maps), jobReduceCount(JobID, Reduces),	
 	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState);
-	
+
 /* Update the job state. */
 job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState) :-
 	jobState(JobID, JobState),
 	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _);
     
-jobMapCount(JobID, count<*>) :-
-	task(JobID, _, Type, _, _, _, _),
+mapCount
+jobMapCount(JobId, count<TaskId>) :-
+	task(JobId, TaskId, Type, _, _, _, _),
 	Type == Constants.TaskType.MAP;
 
-jobReduceCount(JobID, count<*>) :-
-	task(JobID, _, Type, _, _, _, _),
+reduceCount
+jobReduceCount(JobId, count<TaskId>) :-
+	task(JobId, TaskId, Type, _, _, _, _),
 	Type == Constants.TaskType.REDUCE;
 	
 
@@ -108,15 +106,15 @@ define(taskStateUpdate, {JobID, TaskID});
 define(taskState, {JobID, TaskID, TaskState});
 	
 /* Update the job state on any change to the task table. */
+stateUpdate
 taskStateUpdate(JobID, TaskID) :- 
-	taskAttempt(JobID, TaskID, _, _, _, _, _, _, Start, _), Start > 0L;
+	taskAttempt(JobID, TaskID, _, _, _, _, _, _, _, Start, _), Start > 0L;
 
+computeTaskState
 taskState(JobID, TaskID, generic<(new TaskState(JobID, TaskID)).attempt(AttemptID, Progress, State, Phase, Start, Finish)>) :-
 	taskStateUpdate(JobID, TaskID),
-	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, Start, Finish);
+	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, _, Start, Finish);
 	
-watch(taskAttempt, a);
-watch(task, a);
 task(JobID, TaskID, Type, Partition, Split, MapCount, TaskState) :-
 	taskState(JobID, TaskID, TaskState),
 	task(JobID, TaskID, Type, Partition, Split, MapCount, _);
