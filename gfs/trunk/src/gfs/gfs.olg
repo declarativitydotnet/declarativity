@@ -80,19 +80,19 @@ request(@Master, Id, Source, RequestType, Arg1, Arg2) :-
     master_for_node(@Source, Master),
     request_started(@Source, Id, RequestType, Arg1, Arg2);
 
-// If we get a "cat" request for a gfs_global::file that exists, send back the
-// contents of the gfs_global::file
+// If we get a "cat" request for a file that exists, send back the
+// contents of the file
 cat_request_done(@Master, Id, Source, Success, FContent) :-
     request(@Master, Id, Source, "Cat", FName, _),
     gfs_global::file(@Master, FName, FContent), Success := true;
 
-// If the gfs_global::file doesn't exist, return an error message
+// If the file doesn't exist, return an error message
 cat_request_done(@Master, Id, Source, Success, ErrMessage) :-
     request(@Master, Id, Source, "Cat", FName, _),
     notin gfs_global::file(@Master, FName, _),
     Success := false, ErrMessage := "File does not exist";
 
-// If we got a "create" request for a gfs_global::file that didn't exist,
+// If we got a "create" request for a file that didn't exist,
 // send back a positive ack
 // actually, don't send the ack till we've heard back from paxos.
 // XXX: the use of "#insert" here is a hack
@@ -100,7 +100,7 @@ create_request_pending(@Master, Id, Source, true, null) :-
     request#insert(@Master, Id, Source, "Create", FName, _),
     notin gfs_global::file(@Master, FName, _);
 
-// If we get a "create" request for a gfs_global::file that exists, send
+// If we get a "create" request for a file that exists, send
 // back a negative ack
 // XXX: the use of "#insert" here is a hack
 create_request_pending(@Master, Id, Source, false, ErrMessage) :-
@@ -108,20 +108,20 @@ create_request_pending(@Master, Id, Source, false, ErrMessage) :-
     gfs_global::file(@Master, FName, _),
     ErrMessage := "File already exists";
 
-// If we got an "ls" request, send back the names of all the gfs_global::files in
+// If we got an "ls" request, send back the names of all the files in
 // the FS
 ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
     request(@Master, Id, Source, "Ls", _, _),
     gfs_global::file(@Master, FName, _);
     
-// If we got an "rm" request and the gfs_global::file exists, remove it and send
+// If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
 public
 rm_request_pending(@Master, Id, Source, true, null) :-
     request(@Master, Id, Source, "Rm", FName, _),
     gfs_global::file(@Master, FName, _);
 
-// If we got an "rm" request and the gfs_global::file doesn't exist, return a
+// If we got an "rm" request and the file doesn't exist, return a
 // negative ack. NB: unlike in the "create" case, we don't need the
 // "#insert" hack, since deletions are postponed the end of the
 // fixpoint.
