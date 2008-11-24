@@ -6,7 +6,7 @@ import gfs.test.TestCommon;
 
 import org.junit.Test;
 
-public class GFSMM4Test extends TestCommon {
+public class GFSMM5Test extends TestCommon {
   
   private void startOne() throws Exception {
     this.masters = new ValueList<Master>();
@@ -45,7 +45,7 @@ public class GFSMM4Test extends TestCommon {
 
 
   public static void main(String[] args) throws Exception {
-    GFSMM4Test t = new GFSMM4Test();
+    GFSMM5Test t = new GFSMM5Test();
     t.test4();
   }
 

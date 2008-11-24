@@ -42,6 +42,11 @@ public class TestCommon {
     shell.shutdown();
   }
 
+  protected void shellRm(String name) throws JolRuntimeException,UpdateException,InterruptedException {
+    Shell shell = new Shell();
+    rmFile(shell,name);
+    shell.shutdown();
+  }
   protected void assertTrue(Boolean b) {
     /* weird huh?  Assert.assertTrue raises an error without calling the @After method,
        so we never terminate.
@@ -109,7 +114,11 @@ public class TestCommon {
       argList.add(name);
       shell.doCreateFile(argList,false);
   }
-
+    protected void rmFile(Shell shell,String name) throws UpdateException,InterruptedException,JolRuntimeException  {
+        List<String> argList = new LinkedList<String>();
+        argList.add(name);
+        shell.doRemove(argList);
+    }
 /*
   public static void main(String[] args) throws Exception {
     TestC t = new GFSMMTest();

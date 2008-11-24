@@ -275,7 +275,7 @@ public class Shell {
         return lsContent;
     }
 
-    protected void doRemove(List<String> argList) throws UpdateException, InterruptedException, JolRuntimeException {
+    public void doRemove(List<String> argList) throws UpdateException, InterruptedException, JolRuntimeException {
         if (argList.isEmpty())
             usage();
         
