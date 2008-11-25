@@ -154,7 +154,8 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	}
 	
 	public boolean add(Tuple tuple) {
-		if (tuple.refCount <=0 ) return false;
+		if (tuple == null) return false;
+		else if (tuple.refCount <=0 ) return false;
 		else if (this.tuples.containsKey(tuple)) {
 			this.tuples.get(tuple).refCountInc(tuple.refCount());
 			return false;
@@ -207,7 +208,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	}
 
 	public boolean remove(Object o) {
-		if (o instanceof Tuple) {
+		if (o != null && o instanceof Tuple) {
 			Tuple other = (Tuple) o;
 			if (this.tuples.containsKey(o)) {
 				Tuple t = this.tuples.get(o);
