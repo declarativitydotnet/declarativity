@@ -199,26 +199,16 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		byte[] bytes = toBytes();
 		out.writeInt(bytes.length);
 		out.write(bytes);
-
-		// This would perform normal java serialization if it weren't
-		// commented out.
-
-		//out.writeObject(values);
 	}
+
 	private void readObject(ObjectInputStream in) throws IOException {
 		// Custom tuple serializer
 		byte[] bytes = new byte[in.readInt()];
 		in.readFully(bytes);
 		fromBytes(bytes);
 
-		// Version that would use Java serialization 
-//		try {
-//			values = (ArrayList<Comparable>)in.readObject();
-//		} catch (ClassNotFoundException e) {
-//			// This method can only throw IOException, or these methods won't
-//			// be called by serialization stuff.
-//			throw new IOException("Couldn't read serialized object", e);
-//		}
+		// We need to manually restore transient fields
+		initialize();
 	}
 	
 	@Override
@@ -229,8 +219,11 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		copy.refCount = this.refCount;
 		return copy;
 	}
-	
-	/** Initialize an empty tuple. */
+
+    /**
+     * Initialize the transient fields of an empty tuple, or one that has been
+     * freshly deserialized.
+     */
 	private void initialize() {
 		this.schema	  = new Schema();
 		this.refCount = new Long(1);

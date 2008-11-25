@@ -155,7 +155,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	
 	public boolean add(Tuple tuple) {
 		if (tuple == null) return false;
-		else if (tuple.refCount <=0 ) return false;
+		else if (tuple.refCount <= 0) return false;
 		else if (this.tuples.containsKey(tuple)) {
 			this.tuples.get(tuple).refCountInc(tuple.refCount());
 			return false;
