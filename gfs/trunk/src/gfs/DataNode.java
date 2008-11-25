@@ -3,9 +3,10 @@ package gfs;
 import jol.core.System;
 import jol.core.Runtime;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.UpdateException;
 
 public class DataNode {
-    public static void main(String[] args) throws JolRuntimeException {
+    public static void main(String[] args) throws JolRuntimeException,UpdateException {
         if (args.length != 1)
             usage();
 
@@ -39,11 +40,13 @@ public class DataNode {
         this.serverThread.start();
     }
 
-    public void start() throws JolRuntimeException {
+    public void start() throws JolRuntimeException,UpdateException {
         /* Identify the address of the local node */
         Conf.setSelfAddress(Conf.getDataNodeAddress(this.nodeId));
 
         this.system = Runtime.create(this.port);
+
+        this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/files.olg"));
 
         this.system.start();
         java.lang.System.out.println("DataNode @ " + this.port + " (" +

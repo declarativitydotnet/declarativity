@@ -84,6 +84,8 @@ public class Master {
 
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
         this.system.install("gfs", ClassLoader.getSystemResource("gfs/paxos_gfs_glue.olg"));
+
+        //this.system.install("gfs", ClassLoader.getSystemResource("gfs/files.olg"));
         this.system.evaluate();
 
         TupleSet id = new TupleSet();

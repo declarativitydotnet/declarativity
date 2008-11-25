@@ -140,3 +140,28 @@ ls_response(@Source, Id, Response) :-
 
 rm_response(@Source, Id, Success, Response) :-
     rm_request_done(@Master, Id, Source, Success, Response);
+
+
+
+/*****************************/
+define(sendHeartBeat,keys(0,1,2),{String,String,String,Long});
+define(dataNodes,keys(0,1),{String,String});
+watch(dataNodes,ae);
+timer(clock,physical,5000,5000,1000);
+
+dataNodes(Master,Host) :-
+    chunks(Master,Host,_,_);
+
+define(chunks,keys(0,1,2),{String,String,String,Long});
+watch(chunks,ae);
+chunks(Master,Host,File,Tstamp) :-
+    sendHeartBeat(Master,Host,File,Tstamp),
+    Ctime := java.lang.System.currentTimeMillis(),
+    (Ctime - Tstamp) < 10000L;
+
+delete 
+chunks(Master,Host,File,Ts) :-
+    chunks(Master,Host,File,Ts),
+    Ctime := java.lang.System.currentTimeMillis(),
+    clock(_,_,_),
+    (Ctime - Ts) > 10000L;
