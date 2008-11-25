@@ -22,7 +22,6 @@ datadir(Conf.getSelfAddress(),"gfs_data");
 
 dir(Host,DirObj,DirList) :-
     datadir(Host,Dir),
-    Dn == Host,
     DirObj := new File(Dir),
     DirList := DirObj.isDirectory() ? new ValueList(DirObj.list()) : new ValueList(),
     clock(_,_,_);
@@ -68,9 +67,6 @@ sendHeartBeat(@Master,Host,File,Tstamp) :-
 define(masters,keys(0,1),{String,String});
 define(mindx,keys(0),{String,Integer});
 mindx(Conf.getSelfAddress(),0);
-
-watch(dnodes,ae);
-watch(dindx,ae);
 
 mindx(Host,I) :-
     mindx(Host,O),
