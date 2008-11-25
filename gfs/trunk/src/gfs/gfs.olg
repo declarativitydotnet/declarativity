@@ -9,6 +9,9 @@ import gfs.Shell;
 define(self, keys(0), {String});
 self(Conf.getSelfAddress());
 
+gfs_global::file(Self, "Foo", Blocks) :-
+    self(Self), Blocks := new ValueList();
+
 // Node, Master node
 watch(master_for_node, ae);
 define(master_for_node, keys(0, 1), {String, String});
