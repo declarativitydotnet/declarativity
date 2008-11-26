@@ -171,7 +171,7 @@ public class Shell {
 
         // XXX: file content isn't used right now
         StringBuilder sb = new StringBuilder();
-        if (fromStdin) {
+        if (fromStdin && false) {
             /* Read the contents of the file from stdin */
             int b;
             try {
