@@ -76,8 +76,6 @@ parliament(A,B) :-
   paxos_global::id(A),
   paxos_global::members(B);
 
-//public
-//lastTried(Master,-1) :- paxos_global::id(Master);
 public
 sendPrepare(Master,-1,"none",Master) :- paxos_global::id(Master);
 public
@@ -90,25 +88,10 @@ to b, and sends a NextBallot (b) message to some set of priests.
 ***************************************************************************************/
 
 
-
-/*
-public
-r1_a
-lastTried(Agent,Bnum) :- 
-  lastTried(Agent,Old),
-  // we need to use #insert here, because if we don't, our new value is erased in the next fixpoint
-  // (because it's not greater than itself)
-	prepare#insert(Agent,Bnum,Decree),
-	Bnum > Old;
-*/
-
 // this works because all leaders are also acceptors.
 lastTried(Agent,max<Round>) :-
   sendPrepare(Agent,Round,Decree,Master);
 
-//lastTried(Agent,max<Bnum>) :-
-//  prepare(Agent,Bnum,_);
-	
 public
 storedDecreeRequest(A,B,C,Id) :- 
   // 4:
@@ -118,8 +101,6 @@ storedDecreeRequest(A,B,C,Id) :-
 define(topOfQueue,keys(0),{String,Long});
 
 topOfQueue(A,min<Id>) :-
- // storedDecreeRequest#insert(A,B,C,Id);
-
   storedDecreeRequest(A,B,C,Id);
 
 public
@@ -130,7 +111,6 @@ prepare(Agent,Round,Decree) :-
   // created by r1_a above.  without this insert, which forces the rule to be evaluated
   // once only in the fixpoint, we'll keep adding because of the cycle through lastTried...
   topOfQueue#insert(Agent,Id),
-  //topOfQueue(Agent,Id),
 	lastTried(WHAT,Old),
 	// if we don't already have a quorum 
   notin quorum(Agent,_),
@@ -194,18 +174,15 @@ lastPromise(Agent,Instance,Round,-1,"none",Peer) :-
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
     Round > -1,
-	//prevVote(Agent,OI,_,_),
-  ///maxPrevVoteInstance(Agent,OI);   //,
-  ////notin prevVote(Agent,Instance,_,_),
     maxPrevVoteInstance(Agent,OI),
   Instance > OI,
-  instance(Agent,Instance);//,
-	///////Round >= OldRound;
+  instance(Agent,Instance);
 
 define (wouldPromise,{String,Integer,Integer,Integer,String,String});
 watch(wouldPromise,ae);
 timer(ticker,physical,1000,1000,1000);
 
+/*
 wp
 wouldPromise(Agent,Instance,Round,-1,"none",Peer) :- 
   // NEW
@@ -214,6 +191,7 @@ wouldPromise(Agent,Instance,Round,-1,"none",Peer) :-
     ticker(_,_,_),
   notin prevVote(Agent,Instance2,_,_),
   instance(Agent,Instance);//,
+*/
 
 r2_c	
 sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-

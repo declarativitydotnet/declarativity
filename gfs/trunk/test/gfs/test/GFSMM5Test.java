@@ -2,6 +2,7 @@ package gfs.test;
 
 import jol.types.basic.ValueList;
 import gfs.Master;
+import gfs.Shell;
 import gfs.test.TestCommon;
 
 import org.junit.Test;
@@ -18,18 +19,18 @@ public class GFSMM5Test extends TestCommon {
   @Test
   public void test4() {
     try { 
-      startMany("5500","5502","5503");
+      startMany("localhost:5500","localhost:5502","localhost:5503");
       //startOne();
     
-      //Shell longRun = new Shell();
+      Shell longRun = new Shell();
 
-      for (int i=0; i < 500; i++) {
+      for (int i=0; i < 50; i++) {
         String file = "XACT"+i;
-        //createFile(longRun,file);
-        shellCreate(file);
+        createFile(longRun,file);
+        //shellCreate(file);
       }      
 
-      //longRun.shutdown();
+      longRun.shutdown();
 
       assertTrue(shellLs("XACT42","XACT18","XACT36","XACT12"));
   
