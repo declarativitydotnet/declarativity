@@ -27,9 +27,9 @@ public class GFSMM4Test extends TestCommon {
 
       assertTrue(shellLs("foo","bar"));
     
-        shellRm("foo");
+     //   shellRm("foo");
         
-        assertTrue(!shellLs("foo"));
+        ///assertTrue(!shellLs("foo"));
 
       shutdown();
 
