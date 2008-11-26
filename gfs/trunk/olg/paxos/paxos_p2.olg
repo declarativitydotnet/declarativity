@@ -140,6 +140,7 @@ success(@Agent,Instance,Round,Decree,From) :-
 	paxos::parliament(@Master,Agent);
 
 
+/*
 // breakout.
 public
 r5_d
@@ -148,7 +149,7 @@ success(Agent,Instance,Round,Decree,From) :-
   paxos::priestCnt(Agent,1),
   Round := -1,
   paxos::instance(Agent,Instance);
-  
+*/  
 	
 // any learner can reply to the client, or set-wise, they all can...
 public
@@ -166,7 +167,6 @@ paxos::quorum(Master,Round) :-
   Master != Other,
   NewRound > Round;
 
-/*
 watch(paxos::instance,ae);
 watch(paxos::sendPrepare,ae);
 watch(paxos::nextBal,ae);
@@ -196,4 +196,3 @@ watch(success,ae);
 watch(success,ae);
 watch(paxos::quorum,ae);
 watch(paxos::sendPromise,ae);
-*/
