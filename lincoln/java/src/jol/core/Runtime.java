@@ -242,46 +242,31 @@ public class Runtime implements System {
 	 *  @param deletions The set of tuples to be deleted and deltas executed.
 	 */
 	public void schedule(final String program, final TableName name,
-			             final TupleSet insertions, final TupleSet deletions) throws UpdateException {
-		synchronized (driver) {
-			if (program.equals("runtime")) {
-			    driver.task(new Driver.Task() {
-			        public TupleSet insertions() {
-			            return insertions;
-			        }
-
-			        public TupleSet deletions() {
-			            return deletions;
-			        }
-
-			        public String program() {
-			            return program;
-			        }
-
-			        public TableName name() {
-			            return name;
-			        }
-			    });
-			}
-			else {
-			    /* Check that the specified program already exists */
-			    TupleSet programs = null;
-			    try {
-			        Table programTable = this.catalog().table(ProgramTable.TABLENAME);
-			        programs = programTable.primary().lookupByKey(program);
-			    }
-			    catch (BadKeyException e) {}
-
-			    if (programs == null || programs.isEmpty())
-			        throw new UpdateException("Failed to find program: " + program);
-
-			    /* Schedule the insertions/deletions */
-				Tuple tuple = new Tuple(clock.current() + 1L, program, name, 
-						                insertions, deletions);
-				schedule.force(tuple);
-			}
-			driver.notify();
+			final TupleSet insertions, final TupleSet deletions) throws UpdateException {
+		if (!program.equals("runtime")) {
+			/* Check that the specified program already exists */
+			try {
+				Table programTable = this.catalog().table(ProgramTable.TABLENAME);
+				TupleSet programs = programTable.primary().lookupByKey(program);
+				if (programs == null || programs.isEmpty())
+					throw new UpdateException("Failed to find program: " + program);
+			} catch (BadKeyException e) {}
 		}
+
+		driver.task(new Driver.Task() {
+			public TupleSet  insertions() { return insertions; }
+			public TupleSet  deletions()  { return deletions; }
+			public String    program()    { return program; }
+			public TableName name()       { return name; }
+		});
+		
+		/* Non-blocking wake-up call to the driver. */
+		this.executor.execute(new Runnable() {
+			public void run() {
+				synchronized(driver) { driver.notify(); }
+				return;
+			}
+		});
 	}
 
 	public interface RuntimeCallback {

@@ -2,6 +2,7 @@ package jol.core;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -558,7 +559,9 @@ public class Driver implements Runnable {
 	 * @param task The task to be added.
 	 */
 	public void task(Task task) {
-		this.tasks.add(task);
+		synchronized (this.tasks) {
+			this.tasks.add(task);
+		}
 	}
 	
 	public void run() {
@@ -610,15 +613,34 @@ public class Driver implements Runnable {
 		else {
 			this.logicalTime = this.logicalTime + 1;
 		}
+		
+		List<Task> runtimeTasks = new ArrayList<Task>();
+		synchronized(this.tasks)  {
+	    /* Schedule the insertions/deletions */
+			Iterator<Task> iter = this.tasks.iterator();
+			while (iter.hasNext()) {
+				Task task = iter.next();
+				if (task.program().equals("runtime")) {
+					runtimeTasks.add(task);
+				}
+				else {
+					Tuple tuple = new Tuple(this.logicalTime, 
+							                task.program(), task.name(), 
+					                        task.insertions(), task.deletions());
+					schedule.force(tuple);
+				}
+			}
+			this.tasks.clear();
+		}
+		
 		TupleSet time = clock.time(this.logicalTime);
 		if (debug) java.lang.System.err.println("============================     EVALUATE SCHEDULE     =============================");
 		evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
 
 		/* Evaluate task queue. */
-		for (Task task : tasks) {
+		for (Task task : runtimeTasks) {
 			evaluate(this.logicalTime, task.program(), task.name(), task.insertions(), task.deletions());
 		}
-		tasks.clear(); // Clear task queue.
 		evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
 		StasisTable.commit();
 		if (debug) java.lang.System.err.println("============================ ========================== ============================");
