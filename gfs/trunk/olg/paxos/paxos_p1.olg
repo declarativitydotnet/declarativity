@@ -26,7 +26,6 @@ define(tick,keys(0,1),{String,String,Integer});
 define(instance,keys(0),{String,Integer});
 
 
-/*
 watch(storedDecreeRequest,ae);
 watch(quorum,ae);
 watch(maxPrevVoteInstance,ae);
@@ -40,7 +39,6 @@ watch(sendPrepare,ae);
 watch(lastTried,ae);
 watch(nextBal,ae);
 watch(prevVote,ae);
-*/
 
 /*******************************************************************
 nomenclature mappings between "parliamentary paxos" and "simple paxos"
@@ -81,7 +79,7 @@ parliament(A,B) :-
 //public
 //lastTried(Master,-1) :- paxos_global::id(Master);
 public
-prepare(Master,-1,"none") :- paxos_global::id(Master);
+sendPrepare(Master,-1,"none",Master) :- paxos_global::id(Master);
 public
 prevVote(Master,0,-1,"none") :- paxos_global::id(Master);
 public
@@ -104,8 +102,12 @@ lastTried(Agent,Bnum) :-
 	Bnum > Old;
 */
 
-lastTried(Agent,max<Bnum>) :-
-  prepare(Agent,Bnum,_);
+// this works because all leaders are also acceptors.
+lastTried(Agent,max<Round>) :-
+  sendPrepare(Agent,Round,Decree,Master);
+
+//lastTried(Agent,max<Bnum>) :-
+//  prepare(Agent,Bnum,_);
 	
 public
 storedDecreeRequest(A,B,C,Id) :- 
@@ -174,6 +176,7 @@ lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :-
   // NEW
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
+    Round > -1,
 	prevVote(Agent,OI,OldRound,OldDecree),
   maxPrevVoteInstance(Agent,OI),
   instance(Agent,Instance),
@@ -190,24 +193,27 @@ lastPromise(Agent,Instance,Round,-1,"none",Peer) :-
   // NEW
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
+    Round > -1,
 	//prevVote(Agent,OI,_,_),
   ///maxPrevVoteInstance(Agent,OI);   //,
-  notin prevVote(Agent,Instance,_,_),
-  //Instance > OI,
+  ////notin prevVote(Agent,Instance,_,_),
+    maxPrevVoteInstance(Agent,OI),
+  Instance > OI,
   instance(Agent,Instance);//,
 	///////Round >= OldRound;
 
-/*
 define (wouldPromise,{String,Integer,Integer,Integer,String,String});
 watch(wouldPromise,ae);
+timer(ticker,physical,1000,1000,1000);
+
 wp
 wouldPromise(Agent,Instance,Round,-1,"none",Peer) :- 
   // NEW
   //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
-	notin prevVote(Agent,Instance,_,_),
+    ticker(_,_,_),
+  notin prevVote(Agent,Instance2,_,_),
   instance(Agent,Instance);//,
-*/
 
 r2_c	
 sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-

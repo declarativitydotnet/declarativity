@@ -11,6 +11,7 @@ define(file,keys(0,1),{String,String});
 define(dir,keys(0),{String,File,ValueList});
 
 timer(clock,physical,5000,5000,1000);
+timer(periodic,logical,1,1,1);
 
 
 watch(dir,ae);
@@ -66,7 +67,12 @@ sendHeartBeat(@Master,Host,File,Tstamp) :-
 
 define(masters,keys(0,1),{String,String});
 define(mindx,keys(0),{String,Integer});
-mindx(Conf.getSelfAddress(),0);
+watch(masters,ae);
+watch(periodic,ae);
+//mindx(Conf.getSelfAddress(),0);
+mindx(Me,0) :-
+    Me := Conf.getSelfAddress(),
+    periodic(_,_,_);
 
 mindx(Host,I) :-
     mindx(Host,O),
@@ -75,7 +81,7 @@ mindx(Host,I) :-
     I := O + 1;
 
 masters(Host,Master) :-
-    mindx(Host,I),
+    mindx#insert(Host,I),
     Master := Conf.getMasterAddress(I);
 
 
