@@ -27,17 +27,17 @@ class Table
 
     return catalog
   end
-  
-  class Event
-    NONE = 1
-    INSERT = 2
-    DELETE = 3
-  end
+  # THIS IS IN PREDICATE, NOT TABLE!  
+  # class Event
+  #   NONE = 0
+  #   INSERT = 1
+  #   DELETE = 2
+  # end
 
   module TableType
-    TABLE = 1
-    EVENT = 2
-    FUNCTION = 3
+    TABLE = 0
+    EVENT = 1
+    FUNCTION = 2
   end
 
   def to_s

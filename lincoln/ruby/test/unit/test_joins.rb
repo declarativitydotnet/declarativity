@@ -39,7 +39,7 @@ class TestJoin < Test::Unit::TestCase
 
     test_join(table2, schema2, t1, t2, v)
     
-    pred = Predicate.new(false,table1.name, Table::Event::NONE, schema1.variables)
+    pred = Predicate.new(false,table1.name, Predicate::EVENT::NONE, schema1.variables)
     pred.set(r, "myprog", "r3", 1) 
     
     sj = ScanJoin.new(r, pred, schema1)
@@ -68,7 +68,7 @@ class TestJoin < Test::Unit::TestCase
     # test constant matches
     constant = Value.new("hellerstein")
     constant.position = 1
-    pred = Predicate.new(false, table.name, Table::Event::NONE, [constant])
+    pred = Predicate.new(false, table.name, Predicate::EVENT::NONE, [constant])
     pred.set(r, "myprog", "r1", 1)
     join = Join.new(r, pred, schema)
     assert(join.validate(t1,t2))
@@ -76,7 +76,7 @@ class TestJoin < Test::Unit::TestCase
     # test constant that does not match
     constant2 = Value.new("jones")
     constant2.position = 1
-    pred2 = Predicate.new(false, table.name, Table::Event::NONE, [constant2])
+    pred2 = Predicate.new(false, table.name, Predicate::EVENT::NONE, [constant2])
     pred2.set(r, "myprog", "r2", 1)
     join2 = Join.new(r, pred2, schema)
     assert_equal(join2.validate(t1,t2), false)
@@ -84,7 +84,7 @@ class TestJoin < Test::Unit::TestCase
     # test repeated variable
     constant2 = Value.new("jones")
     constant2.position = 1
-    pred2 = Predicate.new(false, table.name, Table::Event::NONE, [v,v])
+    pred2 = Predicate.new(false, table.name, Predicate::EVENT::NONE, [v,v])
     pred2.set(r, "myprog", "r2", 1)
     join2 = Join.new(r, pred2, schema)
     assert(join2.validate(t1,t2))

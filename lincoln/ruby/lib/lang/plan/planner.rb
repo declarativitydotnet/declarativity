@@ -148,11 +148,11 @@ class OverlogPlanner
 				(scope,tname) = get_scope(pred.value("pred_txt"),@progname)
 				case pred.value("event_mod") 
 					when "insert"
-						event = Table::Event::INSERT
+						event = Predicate::Event::INSERT
 					when "delete"
-						event = Table::Event::DELETE
+						event = Predicate::Event::DELETE
 					when "", nil
-						event = Table::Event::NONE
+						event = Predicate::Event::NONE
 				else
 					raise "unknown event type: #{pred.value("event_mod")}\n"
 				end
@@ -493,7 +493,8 @@ class OverlogPlanner
           vars << Value.new(v)
         end
         fact = Fact.new(1,tab,vars)
-        fact.set(@runtime, @program)
+ #       require 'ruby-debug'; debugger
+        fact.set(@runtime, @program.name)
 			end
 		end
 	end 

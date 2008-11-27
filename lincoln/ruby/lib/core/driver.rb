@@ -97,6 +97,7 @@ class Driver < Monitor
 
         next if (insertions.size == 0 and deletions.size == 0)
 
+#        require 'ruby-debug'; debugger
         watch = @context.catalog.table(WatchTable.table_name)
         table = @context.catalog.table(name)
         if (insertions.size > 0 || table.class <= AggregationTable)
@@ -172,6 +173,7 @@ class Driver < Monitor
 
         deletions  = TupleSet.new(name) if deletions.nil?
 
+#        require 'ruby-debug'; debugger
         program = @context.program(programName)
 
         if !program.nil?
@@ -201,8 +203,10 @@ class Driver < Monitor
       watchInsert = watch.watched(program.name, name, WatchOp::Modifier::INSERT)
       watchDelete = watch.watched(program.name, name, WatchOp::Modifier::DELETE)
 
-      require 'ruby-debug'; debugger
+#      require 'ruby-debug'; debugger
       querySet = program.get_queries(name)
+#      querySet.each { |q| puts q.rule}
+#      program.dump_queries
       if (querySet.nil?)
         return TupleSet.new(name) # Done
       end
@@ -305,7 +309,7 @@ class Driver < Monitor
     context.catalog.register(@flusher)
     # important to call super on Monitor initialization
     super()
-    @cond_var = MonitorMixin::ConditionVariable::new(self)
+    @cond_var = self.new_cond
   end
 
   # Set the runtime program.
@@ -333,13 +337,17 @@ class Driver < Monitor
     while 1
       synchronize do
         print("============================     EVALUATE SCHEDULE     =============================\n")
+        print("============================     #{@tasks.size} TASKS     ===========================\n")
+        print("===========================     #{@schedule.cardinality} SCHED QUEUE     ========================\n")
         evaluate(runtime.name, time.name, time, nil)
-        print("============================     #{@tasks.length} TASKS     =============================\n")
 
         # Evaluate task queue
         @tasks.each_with_index {|task,i|         print "============================     TASK #{i}: #{task.name}, #{task.insertions.tups[0].to_s}, #{task.deletions.tups[0].to_s}     =============================\n"}
 #        require 'ruby-debug'; debugger
-        @tasks.each {|task| evaluate(task.program, task.name, task.insertions, task.deletions)}
+        @tasks.each do |task| 
+#          require 'ruby-debug'; debugger
+          evaluate(task.program, task.name, task.insertions, task.deletions)
+        end
         @tasks.clear # Clear task queue.
         evaluate(runtime.name, time.name, nil, time) # Clock delete current
         print("============================ ========================== =============================\n");
@@ -392,10 +400,10 @@ class Driver < Monitor
     tuples.each do |tuple| 
       insert = tuple.clone;
       delete = tuple.clone;
-      insert.value(Evaluator.Field::INSERTIONS, tuple.value(Evaluator.Field::INSERTIONS))
-      insert.value(Evaluator.Field::DELETIONS, nil)
-      delete.value(Evaluator.Field::INSERTIONS, nil)
-      delete.value(Evaluator.Field::DELETIONS, tuple.value(Evaluator.Field::DELETIONS))
+      insert.set_value(Evaluator::Field::INSERTIONS, tuple.value(Evaluator::Field::INSERTIONS))
+      insert.set_value(Evaluator::Field::DELETIONS, nil)
+      delete.set_value(Evaluator::Field::INSERTIONS, nil)
+      delete.set_value(Evaluator::Field::DELETIONS, tuple.value(Evaluator::Field::DELETIONS))
 
       insertions << insert
       deletions << delete

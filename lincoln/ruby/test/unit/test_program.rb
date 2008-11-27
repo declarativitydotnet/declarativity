@@ -52,9 +52,9 @@ class TestProgram < Test::Unit::TestCase
     # try a simple projection on one relation: 
     #   path(From, To, Cost) :- link(From, To, Cost, Annotation).
     ####
-    link = Predicate.new(false, tn, Table::Event::NONE, [v1, v2, v3, v4])
+    link = Predicate.new(false, tn, Predicate::EVENT::NONE, [v1, v2, v3, v4])
     link.set('testprog', 'r1', 1)
-    path = Predicate.new(false, TableName.new(nil,"path"), Table::Event::NONE, [v1, v2, v3])
+    path = Predicate.new(false, TableName.new(nil,"path"), Predicate::EVENT::NONE, [v1, v2, v3])
     path.set('testprog', 'r1', 0)
     body = [link]
     r = Rule.new(1, 'r1', true, false,  path, body)
@@ -100,7 +100,7 @@ class TestProgram < Test::Unit::TestCase
     v6 = Variable.new("To2", Integer, 1,nil)
     v7 = Variable.new("Cost2", Float, 2,nil)
     v8 = Variable.new("Note2", String, 3,nil)
-    link2 = Predicate.new(false, TableName.new(nil,"link"), Table::Event::NONE, [v5, v6, v7, v8])
+    link2 = Predicate.new(false, TableName.new(nil,"link"), Predicate::EVENT::NONE, [v5, v6, v7, v8])
     link2.set('testprog', 'l2', 1)
 
     body = [link, link2]
@@ -109,7 +109,7 @@ class TestProgram < Test::Unit::TestCase
     # this one would work fine, were it not for idiosyncratic differences in pretty-printing.
     #e = ArbitraryExpression.new("Cost + Cost2",[v3,v7])
 
-    path3 = Predicate.new(false, TableName.new(nil,"path"), Table::Event::NONE, [v1, v6, e])
+    path3 = Predicate.new(false, TableName.new(nil,"path"), Predicate::EVENT::NONE, [v1, v6, e])
     path3.set('testprog', 'p3', 0)
     
     r3 = Rule.new(1, 'r3', true, false, path3, body)

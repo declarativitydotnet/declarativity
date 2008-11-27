@@ -74,7 +74,7 @@ class Rule < Clause
           require 'ruby-debug'; debugger
           raise "Table " + term.name.to_s + " not found in catalog" 
         end
-        if (table.table_type == Table::TableType::EVENT || term.event != Table::Event::NONE) 
+        if (table.table_type == Table::TableType::EVENT || term.event != Predicate::Event::NONE) 
           if (!event.nil?)  
             require 'ruby-debug'; debugger				  
             raise PlannerException, "Multiple event predicates in rule " + name.to_s + 
@@ -90,8 +90,10 @@ class Rule < Clause
     end
 
     if (!event.nil?)
+#      puts "---- EVENT FOR RULE #{name.to_s} IS #{event.to_s} ----"
       return query_stuff(context, periodics, head, event, body)
     else
+#      puts "---- NO EVENT FOR RULE #{name.to_s} ---- "
       return mviewQuery(context, head, body)
     end    
   end

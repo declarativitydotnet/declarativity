@@ -165,9 +165,10 @@ facts(Program, Name, tupleset<Tuple>) :-
 	
 installFacts 
 queue(Time, 0, Program, Name, Facts, null) :-
-	facts(Program, Name, Facts), Program == "compiler",
+	facts(Program, Name, Facts), 
+	global::clock(Location, Time), 
 	Facts.name(Name),
-	global::clock(Location, Time);
+	Program == "compiler";
 	
 installFacts2 
 global::schedule(Time+1, Program, Name, Facts, null) :-
@@ -194,5 +195,5 @@ global::schedule(Time, "compile", TupleName, Tuples, null) :-
 	config(Time, Program, Object),
 	TableName := TableName.new("compile", "config"),
 	Obj := Object.tuple(),
-	TupleName := Tuples.name(),
-	Tuples := TupleSet.new(TableName, Obj);
+	Tuples := TupleSet.new(TableName, Obj),
+	TupleName := Tuples.name();

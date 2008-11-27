@@ -21,9 +21,8 @@ class BasicQuery < Query
   end
 
   def evaluate(inval)
-    print "================== RUNNING QUERY =================\n"
-    print "=======  #{to_s} ======"
-    require 'ruby-debug'; debugger
+    print "================== RUNNING QUERY \"#{rule.to_s}(#{inval.name.to_s})\" =================\n"
+    require 'ruby-debug'; debugger if rule.to_s == "collectFacts"
     
     if (@input.name != inval.name) then
       raise DataflowRuntimeException, "Query expects input " + @input.name.to_s + 

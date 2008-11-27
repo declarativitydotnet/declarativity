@@ -73,11 +73,11 @@ class Program
     unless rules.nil? then
       rules.each do |tuple| 
         rule = tuple.value(RuleTable::Field::OBJECT)
-
+        # require 'ruby-debug'; debugger
+#        puts "==== PLANNING RULE #{rule.name} ===="
         # Store all planned queries from a given rule. 
         # NOTE: delta rules can produce > 1 query. 
         rule.query(@context, @periodics).each do |query|
-         #  require 'ruby-debug'; debugger
           input = query.input
           @queries[input.name.hash] = Array.new if !@queries.has_key?(query.input.name.hash)
           @queries[input.name.hash] << query
@@ -100,6 +100,15 @@ class Program
 	def get_queries(name)
 		@queries[name.hash]
 	end
+	
+	def dump_queries
+	  @queries.keys.each do |h| 
+	    @queries[h].each do |q|
+	      puts q.rule
+      end
+    end
+  end
+	  
 end
 
 

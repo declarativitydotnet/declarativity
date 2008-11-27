@@ -169,7 +169,7 @@ class TupleSet < UnsortedTupleSet
       @back_ptrs[o.hash] = @positions.length-1
       super(o)
     else 
-      puts o.inspect	
+ #     puts o.inspect	
       raise "inserting a " + o.class.name + " object into TupleSet"
     end
   end
