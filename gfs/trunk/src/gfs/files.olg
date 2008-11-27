@@ -1,6 +1,7 @@
 program gfs;
 
 import jol.types.basic.ValueList;
+import jol.core.Runtime;
 import java.io.File;
 import java.util.ArrayList;
 import java.lang.Object;
@@ -51,25 +52,44 @@ file(Host,File) :-
     File := B.toString();
 
 
-define(heartBeat,keys(0,1,2),{String,String,String,Long});
+define(heartBeat,keys(0,1,2),{String,String,String,Long,Long});
 watch(heartBeat,ae);
-heartBeat(Host,Master,File,Tstamp) :-
+heartBeat(Host,Master,File,Tstamp,Id) :-
     file(Host,File),
     masters(Host,Master),
     clock(_,_,_),
-    Tstamp := java.lang.System.currentTimeMillis();
+    Tstamp := java.lang.System.currentTimeMillis(),
+    Id := Runtime.idgen();
 
 
-define(sendHeartBeat,keys(0,1,2,3),{String,String,String,Long});
+heartBeat(Host,Master,"-",Tstamp,-1) :-
+    masters(Host,Master),
+    clock(_,_,_),
+    Tstamp := java.lang.System.currentTimeMillis(),
+    Id := Runtime.idgen();
+
+
+
+define(sendHeartBeat,keys(0,1,2,3),{String,String,String,Long,Long});
 watch(sendHeartBeat,ae);
-sendHeartBeat(@Master,Host,File,Tstamp) :-
-    heartBeat(@Host,Master,File,Tstamp);
+sendHeartBeat(@Master,Host,File,Tstamp,Id) :-
+    heartBeat(@Host,Master,File,Tstamp,Id),
+    notin serverKnows(@Host,Master,File,_);
+
+define(ackHeartBeat,keys(0,1,2),{String,String,Long});
+watch(ackHeartBeat,ae);
+
+define(serverKnows,keys(0,1,2,3),{String,String,String,Long});
+watch(serverKnows,ae);
+serverKnows(Host,Master,File,Id) :-
+    heartBeat(Host,Master,File,Tstamp,Id),
+    ackHeartBeat#insert(Host,Master,Id);
 
 define(masters,keys(0,1),{String,String});
 define(mindx,keys(0),{String,Integer});
 watch(masters,ae);
-watch(periodic,ae);
-//mindx(Conf.getSelfAddress(),0);
+//watch(periodic,ae);
+
 mindx(Me,0) :-
     Me := Conf.getSelfAddress(),
     periodic(_,_,_);
@@ -83,5 +103,6 @@ mindx(Host,I) :-
 masters(Host,Master) :-
     mindx#insert(Host,I),
     Master := Conf.getMasterAddress(I);
+
 
 
