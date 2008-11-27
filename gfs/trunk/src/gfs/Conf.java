@@ -37,6 +37,8 @@ public class Conf {
         assert(dataNodes.length == dataNodeControlPorts.length);
         assert(dataNodes.length == dataNodeDataPorts.length);
     }
+    private static final int fileOpTimeout = 20000;
+    private static final int listingTimeout = 5000;
 
     /* NB: This must be called before installing "gfs.olg" */
     public static void setSelfAddress(String addr) {
@@ -49,7 +51,12 @@ public class Conf {
 
         return selfAddr;
     }
-
+    public static int getFileOpTimeout() {
+        return fileOpTimeout;
+    }
+    public static int getListingTimeout() {
+        return listingTimeout;
+    }
     public static void setNewMasterList(String... args) {
         masterHosts = new String[args.length];
         masterPorts = new int[args.length];

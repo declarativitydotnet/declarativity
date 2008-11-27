@@ -228,8 +228,8 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        // Wait for the response (12 secs)
-        Object obj = timedTake(this.responseQueue, 12000);
+        // Wait for the response 
+        Object obj = timedTake(this.responseQueue, Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null) {
           // we timed out.
@@ -276,7 +276,7 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId));
         this.system.schedule("gfs", tblName, req, null);
 
-        Object obj = (Object) timedTake(this.responseQueue, 4000);
+        Object obj = (Object) timedTake(this.responseQueue, Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null)
             return doListFiles(args);
@@ -342,7 +342,7 @@ public class Shell {
 
         // Wait for the response
         //Object obj = this.responseQueue.take();
-        Object obj = timedTake(this.responseQueue, 10000);
+        Object obj = timedTake(this.responseQueue, Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null)
            doRemoveFile(file);
