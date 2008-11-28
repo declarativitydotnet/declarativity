@@ -212,6 +212,7 @@ class OverlogCompiler
     def semantic(text,obj)
       #super(text,obj)
       t = text.gsub('"',"")
+#      require 'ruby-debug'; debugger
       otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],obj.func.text_value,"agg_func","??")
 
       super(obj.aggregatevariable.text_value,obj.aggregatevariable)
