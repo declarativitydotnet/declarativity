@@ -276,7 +276,7 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId));
         this.system.schedule("gfs", tblName, req, null);
 
-        Object obj = (Object) timedTake(this.responseQueue, Conf.getListingTimeout());
+        Object obj = timedTake(this.responseQueue, Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null)
             return doListFiles(args);
