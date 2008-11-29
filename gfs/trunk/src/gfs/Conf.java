@@ -2,41 +2,35 @@ package gfs;
 
 public class Conf {
     private static String selfAddr = null;
+    
+    private static class Host {
+        public final String name;
+        public final int port;
+        public final int auxPort;
 
-    /* NB: The following two arrays must have the same length! */
-    private static String[] masterHosts = new String[] {
-        "localhost",
-//         "localhost",
-//         "localhost"
-    };
-    private static int[] masterPorts = new int[] {
-        5505,
-//         5506,
-//         5507
-    };
-
-    /* NB: The following three arrays must have the same length! */
-    private static final String[] dataNodes = new String[] {
-        "localhost",
-        "localhost",
-        "localhost"
-    };
-    private static final int[] dataNodeControlPorts = new int[] {
-        5600,
-        5601,
-        5602
-    };
-    private static final int[] dataNodeDataPorts = new int[] {
-        5601,
-        5603,
-        5603
-    };
-
-    static {
-        assert(masterHosts.length == masterPorts.length);
-        assert(dataNodes.length == dataNodeControlPorts.length);
-        assert(dataNodes.length == dataNodeDataPorts.length);
+        Host(String name, int port, int auxPort) {
+            this.name = name;
+            this.port = port;
+            this.auxPort = auxPort;
+        }
+        
+        Host(String name, int port) {
+            this(name, port, -1);
+        }
     }
+    
+    private static Host[] masterNodes = new Host[] {
+        new Host("localhost", 5505),
+        // new Host("localhost", 5506),
+        // new Host("localhost", 5507),
+    };
+    
+    private static Host[] dataNodes = new Host[] {
+        new Host("localhost", 5600, 5700),
+        new Host("localhost", 5601, 5701),
+        new Host("localhost", 5602, 5702),
+    };
+
     private static final int fileOpTimeout = 20000;
     private static final int listingTimeout = 5000;
 
@@ -58,37 +52,37 @@ public class Conf {
         return listingTimeout;
     }
     public static void setNewMasterList(String... args) {
-        masterHosts = new String[args.length];
-        masterPorts = new int[args.length];
+        masterNodes = new Host[args.length];
         for (int i = 0; i < args.length; i++) {
             String[] parts = args[i].split(":");
-            masterHosts[i] = parts[0];
-            masterPorts[i] = Integer.parseInt(parts[1]);
+            masterNodes[i] = new Host(parts[0], Integer.parseInt(parts[1]));
         }
     }
 
     public static String getMasterAddress(int idx) {
-        return "tcp:" + masterHosts[idx] + ":" + masterPorts[idx];
+        Host h = masterNodes[idx];
+        return "tcp:" + h.name + ":" + h.port;
     }
 
     public static int getMasterPort(int idx) {
-        return masterPorts[idx];
+        return masterNodes[idx].port;
     }
 
     public static int getNumMasters() {
-        return masterHosts.length;
+        return masterNodes.length;
     }
 
     public static String getDataNodeAddress(int idx) {
-        return "tcp:" + dataNodes[idx] + ":" + dataNodeControlPorts[idx];
+        Host dn = dataNodes[idx];
+        return "tcp:" + dn.name + ":" + dn.port;
     }
 
     public static int getDataNodeControlPort(int idx) {
-        return dataNodeControlPorts[idx];
+        return dataNodes[idx].port;
     }
 
     public static int getDataNodeDataPort(int idx) {
-        return dataNodeDataPorts[idx];
+        return dataNodes[idx].auxPort;
     }
 
     public static int getNumDataNodes() {
