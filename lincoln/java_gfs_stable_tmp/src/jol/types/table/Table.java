@@ -260,23 +260,28 @@ public abstract class Table implements Comparable<Table> {
 	public Type type() {
 		return this.type;
 	}
-	
+
 	/**
-	 * Register a new callback on table updates.
+	 * Register a new callback on table updates. Note that this is synchronized
+	 * because it might be invoked by a thread in the client program
+	 * concurrently with callbacks being invoked by JOL.
+	 * 
 	 * @param callback The callback to register.
 	 */
-	public void register(Callback callback) {
+	public synchronized void register(Callback callback) {
 		this.callbacks.add(callback);
 	}
-	
+
 	/**
-	 * Unregister a the given callback.
-	 * @param callback The callback to deallocate.
+	 * Unregister the given callback. Note that this is synchronized because it
+	 * might be invoked by a thread in the client program concurrently with
+	 * callbacks being invoked by JOL.
+	 * 
+	 * @param callback The callback to unregister.
 	 */
-	public void unregister(Callback callback) {
+	public synchronized void unregister(Callback callback) {
 		this.callbacks.remove(callback);
 	}
-	
 	
 	/**
 	 * Compare this table name to the other.
@@ -284,7 +289,6 @@ public abstract class Table implements Comparable<Table> {
 	public int compareTo(Table o) {
 		return name().compareTo(o.name());
 	}
-
 	
 	/**
 	 * Get the table name.
@@ -375,8 +379,10 @@ public abstract class Table implements Comparable<Table> {
 				 * during this method call.  */
 				TupleSet insertion = new TupleSet(name());
 				insertion.add(t);
-				for (Callback callback : this.callbacks) {
-					callback.insertion(insertion);
+				synchronized (this) {
+				    for (Callback callback : this.callbacks) {
+				        callback.insertion(insertion);
+				    }
 				}
 			}
 		}
@@ -399,10 +405,12 @@ public abstract class Table implements Comparable<Table> {
 			}
 		}
 		
-		if (delta.size() > 0) {
-			for (Callback callback : this.callbacks) {
-				callback.deletion(delta);
-			}
+		if (!delta.isEmpty()) {
+		    synchronized (this) {
+		        for (Callback callback : this.callbacks) {
+		            callback.deletion(delta);
+		        }
+		    }
 		}
 		
 		return delta;
