@@ -6,6 +6,6 @@
 	<classpathentry kind="lib" path="lib/xtc.jar"/>
 	<classpathentry kind="lib" path="lib/junit.jar"/>
 	<classpathentry kind="lib" path="lib/servlet-api.jar"/>
-	<classpathentry kind="lib" path="/Users/neilconway/Documents/workspace/jol/lib/grappa.jar"/>
+	<classpathentry kind="lib" path="lib/grappa.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
