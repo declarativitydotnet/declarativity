@@ -110,7 +110,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
    * Sets finishTime. 
    * @param finishTime finish time of task.
    */
-  void setFinishTime(long finishTime) {
+  public void setFinishTime(long finishTime) {
     this.finishTime = finishTime;
   }
   /**
@@ -161,7 +161,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
    * Set startTime of the task.
    * @param startTime start time
    */
-  void setStartTime(long startTime) {
+  public void setStartTime(long startTime) {
     this.startTime = startTime;
   }
   /**

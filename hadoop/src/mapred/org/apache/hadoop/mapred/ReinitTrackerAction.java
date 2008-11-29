@@ -33,6 +33,10 @@ public class ReinitTrackerAction extends TaskTrackerAction {
     super(ActionType.REINIT_TRACKER);
   }
   
+  public String toString() {
+	  return ActionType.REINIT_TRACKER.name();
+  }
+  
   public void write(DataOutput out) throws IOException {}
 
   public void readFields(DataInput in) throws IOException {}

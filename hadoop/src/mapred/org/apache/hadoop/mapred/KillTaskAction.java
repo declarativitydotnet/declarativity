@@ -22,6 +22,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
+
 
 /**
  * Represents a directive from the {@link org.apache.hadoop.mapred.JobTracker} 
@@ -30,6 +32,10 @@ import java.io.IOException;
  */
 class KillTaskAction extends TaskTrackerAction {
   TaskAttemptID taskId;
+  
+  public String toString() {
+	  return ActionType.KILL_TASK.name() + " -- " + taskId;
+  }
   
   public KillTaskAction() {
     super(ActionType.KILL_TASK);

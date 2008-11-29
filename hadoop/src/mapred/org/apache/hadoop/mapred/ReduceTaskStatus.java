@@ -26,7 +26,7 @@ import java.util.List;
 
 
 
-class ReduceTaskStatus extends TaskStatus {
+public class ReduceTaskStatus extends TaskStatus {
 
   private long shuffleFinishTime; 
   private long sortFinishTime; 
@@ -54,7 +54,7 @@ class ReduceTaskStatus extends TaskStatus {
   }
 
   @Override
-  void setFinishTime(long finishTime) {
+  public void setFinishTime(long finishTime) {
     if (shuffleFinishTime == 0) {
       this.shuffleFinishTime = finishTime; 
     }

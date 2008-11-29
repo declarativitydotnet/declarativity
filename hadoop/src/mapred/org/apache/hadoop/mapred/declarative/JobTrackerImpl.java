@@ -28,6 +28,7 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.StatusHttpServer;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.declarative.table.*;
+import org.apache.hadoop.mapred.declarative.test.TaskTrackerCluster;
 import org.apache.hadoop.net.DNSToSwitchMapping;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.net.NetworkTopology;
@@ -49,6 +50,8 @@ public class JobTrackerImpl extends JobTracker {
 	    FsPermission.createImmutable((short) 0733); // rwx-wx-wx
 	  private static final int SYSTEM_DIR_CLEANUP_RETRY_PERIOD = 10000;
 
+	  private JobTrackerServer masterInterface;
+	  
 	  /** The JOL system context. */
 	  private System context;
 	  
@@ -90,10 +93,11 @@ public class JobTrackerImpl extends JobTracker {
 	    this.localMachine = addr.getHostName();
 	    this.port = addr.getPort();
 	    int handlerCount = conf.getInt("mapred.job.tracker.handler.count", 10);
-	    this.server = 
-	    	RPC.getServer(new JobTrackerServer(context, this, conf), 
-	    			      addr.getHostName(), addr.getPort(), 
-	    			      handlerCount, false, conf);
+	    this.masterInterface = new JobTrackerServer(context, this, conf); 
+	    this.server = RPC.getServer(this.masterInterface, 
+	    			                addr.getHostName(), addr.getPort(), 
+	    			                handlerCount, false, conf);
+	    			                                
 		this.server.start();
 	    
 	    // The rpc/web-server ports can be ephemeral ports... 
@@ -130,6 +134,10 @@ public class JobTrackerImpl extends JobTracker {
 	                DNSToSwitchMapping.class), conf);
 	    
 	}
+	
+	public JobTrackerServer masterInterface() {
+		return this.masterInterface;
+	}
 
 	private static SimpleDateFormat getDateFormat() {
 		return new SimpleDateFormat("yyyyMMddHHmm");
@@ -146,7 +154,6 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new TaskTrackerErrorTable(context));
 		this.context().catalog().register(new TaskTrackerTable(context));
 		this.context().catalog().register(new NetworkTopologyTable(context, this));
-		this.context().catalog().register(new HeartbeatTable(context));
 		
 		URL program = 
 			ClassLoader.getSystemClassLoader().getResource(PROGRAM + ".olg");
@@ -255,15 +262,27 @@ public class JobTrackerImpl extends JobTracker {
 	public static void main(String argv[]) 
 	throws IOException, InterruptedException {
 		StringUtils.startupShutdownMessage(JobTracker.class, argv, LOG);
-		if (argv.length != 0) {
-			java.lang.System.out.println("usage: JobTracker");
-			java.lang.System.exit(-1);
-		}
 		java.lang.System.err.println("STARTING JOBTRACKER");
 		
+		boolean debug   = false;
+		int clusterSize = 0;
+		for (int i = 0; i < argv.length; i++) {
+			if (argv[i].startsWith("-d")) {
+				debug = true;
+				clusterSize = Integer.parseInt(argv[i+1]); 
+			}
+		}
+		
 		try {
-			JobTracker tracker = startTracker(new JobConf());
-			tracker.offerService();
+			JobTrackerImpl tracker = (JobTrackerImpl) startTracker(new JobConf());
+			if (debug) {
+				TaskTrackerCluster cluster = 
+					new TaskTrackerCluster(tracker.masterInterface(), clusterSize);
+				tracker.offerService();
+			}
+			else {
+				tracker.offerService();
+			}
 		} catch (Throwable e) {
 			LOG.fatal(StringUtils.stringifyException(e));
 			java.lang.System.exit(-1);

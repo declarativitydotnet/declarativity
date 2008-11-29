@@ -1,17 +1,14 @@
 package org.apache.hadoop.mapred.declarative;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import jol.core.System;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.Wrapper;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
@@ -38,11 +35,8 @@ import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.JobHistory.JobInfo;
-import org.apache.hadoop.mapred.TaskStatus.Phase;
-import org.apache.hadoop.mapred.TaskStatus.State;
 import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
-import org.apache.hadoop.mapred.declarative.table.HeartbeatTable;
 import org.apache.hadoop.mapred.declarative.table.JobTable;
 import org.apache.hadoop.mapred.declarative.table.NetworkTopologyTable;
 import org.apache.hadoop.mapred.declarative.table.TaskAttemptTable;
@@ -51,8 +45,6 @@ import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerErrorTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerTable;
 import org.apache.hadoop.mapred.declarative.util.JobState;
-import org.apache.hadoop.net.NetUtils;
-import org.apache.hadoop.net.NodeBase;
 import org.apache.hadoop.util.HostsFileReader;
 import org.apache.hadoop.util.VersionInfo;
 
@@ -141,6 +133,10 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		
 	}
 	
+	private boolean debug = false;
+	
+	private HashMap<String, HeartbeatResponse> heartbeats;
+	
 	private int nextJobId = 1;
 
 	private System context;
@@ -154,6 +150,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	public JobTrackerServer(System context, JobTracker jobTracker, JobConf conf) throws IOException {
 		this.context = context;
 		this.jobTracker = jobTracker;
+		this.heartbeats = new HashMap<String, HeartbeatResponse>();
 		this.completionEvents = new HashMap<JobID, List<TaskCompletionEvent>>();
 		context.catalog().table(TaskAttemptTable.TABLENAME).register(new TaskAttemptListener(this.completionEvents));
 		context.catalog().table(JobTable.TABLENAME).register(new JobListener());
@@ -453,63 +450,81 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			throw new DisallowedTaskTrackerException(status);
 		}
 		
-		String trackerName = status.getTrackerName();
-		try {
-			Table heartbeatTable = context.catalog().table(HeartbeatTable.TABLENAME);
-
-			// First check if the last heartbeat response got through
-			if (!initialContact) {
-				// If this isn't the 'initial contact' from the tasktracker,
-				// there is something seriously wrong if the JobTracker has
-				// no record of the 'previous heartbeat'; if so, ask the 
-				// tasktracker to re-initialize itself.
-				TupleSet prevHeartbeat = heartbeatTable.primary().lookupByKey(trackerName);
-				if (prevHeartbeat.size() == 0) {
-					JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
-					HeartbeatResponse response = 
-						new HeartbeatResponse(responseId, 
-								new TaskTrackerAction[] {new ReinitTrackerAction()});
-					response(trackerName, response, null);
-					return response;
-				} else {
-					Tuple tuple = prevHeartbeat.iterator().next();
-					Wrapper<HeartbeatResponse> response = 
-						(Wrapper<HeartbeatResponse>) tuple.value(HeartbeatTable.Field.RESPONSE.ordinal());
-					if (response.object().getResponseId() != responseId) {
-						// Means that the previous response was not received.
-						return response.object();  // Send it again.
-					}
-				}
-			}
-
-			// Process this heartbeat 
-			short newResponseId = (short)(responseId + 1);
-			HeartbeatResponse response = new HeartbeatResponse(newResponseId, null);
-			TupleSet          actions  = new TupleSet(TaskTrackerActionTable.TABLENAME);
-			if (updateTaskTracker(status, initialContact)) {
-				TaskTrackerActionTable table = (TaskTrackerActionTable) 
-						context.catalog().table(TaskTrackerActionTable.TABLENAME);
-				/* Grab any actions from the action table. */
-				response.setActions(table.actions(trackerName, actions));
-			}
-			else {
-				/* Something went wrong with updating the tracker status. */
-				JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
-				response.setActions(new TaskTrackerAction[] {new ReinitTrackerAction()});
-			}
-			/* Store the response. */
-			response(trackerName, response, actions);
-			return response;
-		} catch (Exception e) {
-			e.printStackTrace();
+		HeartbeatResponse response    = null;
+		TupleSet          actions     = null;
+		String            trackerName = status.getTrackerName();
+		
+		if (debug) {
+			java.lang.System.err.println("========================= TASK TRACKER HEARTBEAT " + 
+					        responseId + "=========================");
 		}
 		
-		JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
-		HeartbeatResponse response = 
-			new HeartbeatResponse(responseId, 
-					new TaskTrackerAction[] {new ReinitTrackerAction()});
-		response(trackerName, response, null);
-		return response;
+		try {
+			try {
+				// First check if the last heartbeat response got through
+				if (!initialContact) {
+					// If this isn't the 'initial contact' from the tasktracker,
+					// there is something seriously wrong if the JobTracker has
+					// no record of the 'previous heartbeat'; if so, ask the 
+					// tasktracker to re-initialize itself.
+					if (!heartbeats.containsKey(trackerName)) {
+						JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
+						response = 
+							new HeartbeatResponse(responseId, 
+									new TaskTrackerAction[] {new ReinitTrackerAction()});
+						return response;
+					} else {
+						response = heartbeats.get(trackerName);
+						if (response.getResponseId() != responseId) {
+							// Means that the previous response was not received.
+							JobTrackerImpl.LOG.info("RESEND RESPONSE: " + response.getResponseId());
+							return response;  // Send it again.
+						}
+					}
+				}
+
+				// Process this heartbeat 
+				short newResponseId = (short)(responseId + 1);
+				actions  = new TupleSet(TaskTrackerActionTable.TABLENAME);
+				response = new HeartbeatResponse(newResponseId, null);
+				if (updateTaskTracker(status, initialContact)) {
+					TaskTrackerActionTable table = (TaskTrackerActionTable) 
+					     context.catalog().table(TaskTrackerActionTable.TABLENAME);
+					/* Grab any actions from the action table. */
+					response.setActions(table.actions(trackerName, actions));
+				}
+				else {
+					/* Something went wrong with updating the tracker status. */
+					JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
+					response.setActions(new TaskTrackerAction[] {new ReinitTrackerAction()});
+				}
+				return response;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			JobTrackerImpl.LOG.info("RESET TRACKER " + trackerName);
+			response = 
+				new HeartbeatResponse(responseId, 
+						new TaskTrackerAction[] {new ReinitTrackerAction()});
+			return response;
+		}
+		finally {
+			/* Store the response. */
+			response(trackerName, response, actions);
+			if (debug) {
+				/*
+				try {
+					context.evaluate();
+				}
+				catch (Throwable t) {
+					t.printStackTrace();
+				}
+				*/
+				java.lang.System.err.println("========================= END HEARTBEAT " + 
+						responseId + "=========================");
+			}
+		}
 	}
 	
 	/**
@@ -525,14 +540,9 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	private void response(String trackerName, HeartbeatResponse response, TupleSet actions) { 
 		try {
 			if (response != null) {
-				Wrapper<HeartbeatResponse> wrapper = new Wrapper<HeartbeatResponse>(response);
-				TupleSet insertions = 
-					new TupleSet(HeartbeatTable.TABLENAME, 
-							new Tuple(trackerName, response.getResponseId(), 
-									response.getHeartbeatInterval(), wrapper));
-				context.schedule(JobTracker.PROGRAM, HeartbeatTable.TABLENAME, insertions, null);
+				heartbeats.put(trackerName, response);
 			}
-
+			
 			if (actions != null && actions.size() > 0) {
 				context.schedule(JobTracker.PROGRAM, TaskTrackerActionTable.TABLENAME, null, actions);
 			}
@@ -568,7 +578,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				new Tuple(status.getTrackerName(),  
 						status.getHost(), 
 						status.getHttpPort(),  
-						status.getLastSeen(), 
+						java.lang.System.currentTimeMillis(), 
 						status.getFailures(),  
 						status.countMapTasks(), 
 						status.countReduceTasks(), 

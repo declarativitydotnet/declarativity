@@ -59,13 +59,13 @@ public class TaskState implements Comparable<TaskState> {
 	
 	@Override
 	public int hashCode() {
-		return this.taskid.hashCode();
+		return (this.jobid.hashCode() + ":" + this.taskid.hashCode()).hashCode();
 	}
 	
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof TaskState) {
-			return compareTo((TaskState) o) == 0;
+			return compareTo((TaskState)o) == 0;
 		}
 		return false;
 	}
@@ -75,9 +75,8 @@ public class TaskState implements Comparable<TaskState> {
 		if (comparison != 0) return comparison;
 		comparison = this.taskid.compareTo(o.taskid);
 		if (comparison != 0) return comparison;
-		if (best() == o.best()) return 0;
-		if (best() == null || o.best() == null) return -1;
-		return best().compareTo(o.best());
+		if (this.state() != o.state()) return this.state().ordinal() - o.state().ordinal();
+		return Float.compare(this.progress(), o.progress());
 	}
 	
 	public String toString() {
@@ -112,6 +111,14 @@ public class TaskState implements Comparable<TaskState> {
 			}
 		}
 		this.attempts.put(attemptID, attempt); 
+	}
+	
+	/**
+	 * How many attempts have been made on this task.
+	 * @return
+	 */
+	public int attempts() {
+		return attempts.size();
 	}
 	
 	public float progress() {

@@ -19,7 +19,7 @@
 package org.apache.hadoop.mapred;
 
 
-class MapTaskStatus extends TaskStatus {
+public class MapTaskStatus extends TaskStatus {
 
   public MapTaskStatus() {}
 

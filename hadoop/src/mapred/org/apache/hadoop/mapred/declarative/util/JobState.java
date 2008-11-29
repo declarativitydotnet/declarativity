@@ -3,6 +3,9 @@ package org.apache.hadoop.mapred.declarative.util;
 import java.util.HashSet;
 import java.util.Set;
 
+import jol.types.basic.ComparableSet;
+import jol.types.basic.TupleSet;
+
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
@@ -14,25 +17,35 @@ public class JobState implements Comparable<JobState> {
 	
 	private Constants.JobState state;
 
-	private int mapCount;
-	
 	private Set<TaskState> maps;
-	
-	private int reduceCount;
 	
 	private Set<TaskState> reduces;
 	
-	public JobState(JobID jobid, int mapCount, int reduceCount) {
-		this.jobid       = jobid;
-		this.state       = Constants.JobState.PREP;
-		this.mapCount    = mapCount;
-		this.maps        = new HashSet<TaskState>();
-		this.reduceCount = reduceCount;
-		this.reduces     = new HashSet<TaskState>();
+	public JobState(JobID jobid) {
+		this.jobid   = jobid;
+		this.state   = Constants.JobState.PREP;
+		this.maps    = new HashSet<TaskState>();
+		this.reduces = new HashSet<TaskState>();
 	}
 	
-	public JobState(JobID jobid) {
-		this(jobid, 0, 0);
+	public JobState(JobID jobid, ComparableSet maps, ComparableSet reduces) {
+		this.jobid   = jobid;
+		this.state   = Constants.JobState.RUNNING;
+		this.maps    = maps;
+		this.reduces = reduces;
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.jobid.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof JobState) {
+			return compareTo((JobState)o) == 0;
+		}
+		return false;
 	}
 	
 	public String toString() {
@@ -44,7 +57,15 @@ public class JobState implements Comparable<JobState> {
 	}
 	
 	public int compareTo(JobState o) {
-		return this.jobid.compareTo(o.jobid);
+		int comparison = this.jobid.compareTo(o.jobid);
+		if (comparison != 0) return comparison;
+		JobStatus me = status();
+		JobStatus other = o.status();
+		if (me.getRunState() != other.getRunState()) 
+			return me.getRunState() - other.getRunState();
+		comparison = Float.compare(me.mapProgress(), other.mapProgress());
+		if (comparison != 0) return comparison;
+		return Float.compare(me.reduceProgress(), other.reduceProgress());
 	}
 	
 	public JobID jobID() {
@@ -74,15 +95,18 @@ public class JobState implements Comparable<JobState> {
 			for (TaskState map : maps) {
 				mapProgress += map.progress();
 			}
-			mapProgress = mapProgress / (float) this.mapCount;
+			mapProgress = mapProgress / (float) this.maps.size();
 			for (TaskState reduce : reduces) {
 				reduceProgress += reduce.progress();
 			}
-			reduceProgress = reduceProgress / (float) this.reduceCount;
+			reduceProgress = reduceProgress / (float) this.reduces.size();
 		}
 		else if (this.state == Constants.JobState.SUCCEEDED) {
 			mapProgress = reduceProgress = 1f;
 		}
+		
+		if (this.reduces.size() > 3)
+			System.err.println("REDUCES " + this.reduces.size() + ", " + this.reduces);
 		
 		if (mapProgress == 1f && reduceProgress == 1f) {
 			this.state = Constants.JobState.SUCCEEDED;

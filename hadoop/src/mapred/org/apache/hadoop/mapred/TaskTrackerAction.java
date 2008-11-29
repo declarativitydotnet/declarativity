@@ -51,6 +51,8 @@ public abstract class TaskTrackerAction implements Writable {
     REINIT_TRACKER
   };
   
+  public abstract String toString();
+  
   /**
    * A factory-method to create objects of given {@link ActionType}. 
    * @param actionType the {@link ActionType} of object to create.
