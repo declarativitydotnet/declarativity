@@ -145,7 +145,7 @@ public class PaxosCommon {
 
 
 
-        public void simpleMultiPaxosTest() throws UpdateException, InterruptedException {
+        public void simpleMultiPaxosTest() throws InterruptedException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 

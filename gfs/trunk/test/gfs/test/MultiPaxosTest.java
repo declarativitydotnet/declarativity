@@ -175,7 +175,7 @@ public class MultiPaxosTest {
 
 
 
-        public void simpleMultiPaxosTest() throws UpdateException, InterruptedException {
+        public void simpleMultiPaxosTest() throws InterruptedException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
@@ -219,7 +219,7 @@ public class MultiPaxosTest {
         tab.unregister(cb);
     }
 
-        public void complexMultiPaxosTest() throws UpdateException, InterruptedException {
+        public void complexMultiPaxosTest() throws InterruptedException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
