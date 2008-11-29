@@ -1,0 +1,14 @@
+program pingpong;  /* ponger.olg */
+
+/* Network messages */
+define(doping, {String,String,Long});
+define(dopong, {String,String,Long});
+
+/* Local state; ponger doesn't know about pinger's internal state. */
+define(pong, keys(0,1,2), {String, String, Long});
+
+/* Local rule triggered as the network generates events */
+pong(B, A, Id) :- doping(B, A, Id);
+
+/* Triggers network events due to non-matching location specifiers */
+dopong(@A,B,Id) :- pong(@B,A,Id);

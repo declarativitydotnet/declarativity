@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> 
+
+<!DOCTYPE web-app
+   PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+   "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+
+<web-app>
+
+    <servlet>
+        <servlet-name>path</servlet-name><!-- Common gateway Interface for VIewing Lincoln-->
+        <servlet-class>jol.net.servlet.Civil</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>8747</param-value> <!-- 87 = 4 score + 7 -->
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>path.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>path</servlet-name>
+      <url-pattern>/path/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>Slinki</servlet-name>
+        <servlet-class>jol.net.servlet.Slinki</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>8748</param-value>
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>servlet/stinki-stasis.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>Slinki</servlet-name>
+      <url-pattern>/slinki/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>slinki-civil</servlet-name>
+        <servlet-class>jol.net.servlet.Civil</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>8748</param-value>
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>servlet/stinki-stasis.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>slinki-civil</servlet-name>
+      <url-pattern>/slinki-civil/*</url-pattern>
+    </servlet-mapping>
+
+
+
+    <servlet>
+        <servlet-name>pinger</servlet-name>
+        <servlet-class>jol.net.servlet.Civil</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>10000</param-value>
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>pinger.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>pinger</servlet-name>
+      <url-pattern>/pinger/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ponger</servlet-name>
+        <servlet-class>jol.net.servlet.Civil</servlet-class>
+	<init-param>
+	  <param-name>port</param-name>
+	  <param-value>10001</param-value>
+	</init-param> 
+	<init-param>
+	  <param-name>olg</param-name>
+	  <param-value>ponger.olg</param-value>
+	</init-param>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>ponger</servlet-name>
+      <url-pattern>/ponger/*</url-pattern>
+    </servlet-mapping>
+
+
+
+</web-app>

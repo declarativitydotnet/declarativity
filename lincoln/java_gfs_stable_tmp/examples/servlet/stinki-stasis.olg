@@ -1,0 +1,30 @@
+program slinki;
+
+import java.lang.String;
+import java.lang.Integer;
+
+define(stasisPages, keys(0,1), {String, Integer, String});
+
+define(getPage, {String});
+define(getPageVersion, {String, Integer});
+define(setPage, {String,String});
+
+define(getPageResult, {String, Integer});
+
+define(t, keys(0), {String});
+t("42");
+
+/* setPage -> stasisPages */
+
+/* XXX shouldn't be event table; t(_) should be setPage(Name,_)  */
+define(currentPage, keys(0), {String,Integer});
+currentPage(Name,max<N>)      :- t(_), stasisPages(Name,N,_);
+stasisPages(Name,N+1,Content) :- setPage#insert(Name,Content), currentPage(Name,N);
+stasisPages(Name,1,Content)   :- setPage#insert(Name,Content), notin stasisPages(Name,_,_);
+
+getPageResult(Content, N) :- getPage#insert(Name),
+                             stasisPages(Name,N,Content), currentPage(Name, N);
+
+getPageResult(Content, N) :- getPageVersion#insert(Name,N),
+                             stasisPages(Name,N,Content);
+

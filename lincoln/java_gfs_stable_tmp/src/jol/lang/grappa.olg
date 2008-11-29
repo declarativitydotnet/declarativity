@@ -1,0 +1,60 @@
+program grappa;
+
+import java.lang.Integer;
+import java.lang.String;
+import jol.lang.Debugger;
+import jol.types.table.TableName;
+import att.grappa.Graph;
+import att.grappa.Subgraph;
+import att.grappa.Node;
+import jol.types.basic.Wrapper;
+
+define(debug, {String, String});
+define(done,  {String});
+define(stratum,      {String, Integer});
+define(displayGraph, {String, String, Wrapper});
+define(display,      {String});
+
+define(graph,     keys(0),   {String, String, Wrapper});
+define(subgraphs, keys(0,1), {String, Integer, Wrapper});
+define(nodes,     keys(0,1), {String, TableName, Integer, Wrapper});
+
+done(Program) :-
+	displayGraph(Program, Debugger, MainGraph),
+	Debugger.display(Program, Debugger, (Graph)MainGraph.object());
+
+displayGraph(Program, Debugger, MainGraph) :-
+	display(Program),         
+	graph(Program, Debugger, MainGraph),
+	rule(Program, Rule, _, _, Delete, RuleObject),
+	predicate(Program, Rule, _, _, HeadPredicate),
+	predicate(Program, Rule, _, _, BodyPredicate),
+	RuleObject.head() == HeadPredicate,
+	nodes(Program, Name1, Priority1, Node1),
+	nodes(Program, Name2, Priority2, Node2),
+	HeadPredicate.name() == Name1, BodyPredicate.name() == Name2,
+	HeadPredicate != BodyPredicate,
+	Debugger.edge(MainGraph,
+	              HeadPredicate, Priority1, Node1, 
+	              BodyPredicate, Priority2, Node2);
+	         
+display(Program) :- nodes(Program);
+
+nodes(Program, Name, Priority, N) :-
+	subgraphs(Program, Priority, G),
+	runtime::priority(Program, Name, Priority),
+	N := new Wrapper(Debugger.node((Subgraph)G.object(), Name));
+
+subgraphs(Program, Stratum, G) :-
+	stratum(Program, Stratum),
+	graph(Program, _, MainGraph),
+	G := new Wrapper(Debugger.subgraph((Graph)MainGraph.object(), Stratum));
+	
+stratum(Program, Priority) :-
+	graph(Program, _, G),
+	runtime::priority(Program, Name, Priority);
+
+public
+graph(Program, Debugger, G) :-
+	debug(Program, Debugger),
+	G := new Wrapper(new Graph("Stratification Graph " + Program));
