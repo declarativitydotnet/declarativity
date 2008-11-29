@@ -90,10 +90,10 @@ mindx(Me,0) :-
     periodic(_,_,_);
 
 mindx(Host,I) :-
-    mindx(Host,O),
+    mindx(Host,Old),
     masters#insert(Host,Master),
-    O < Conf.getNumMasters()-1,
-    I := O + 1;
+    Old < Conf.getNumMasters()-1,
+    I := Old + 1;
 
 masters(Host,Master) :-
     mindx#insert(Host,I),
