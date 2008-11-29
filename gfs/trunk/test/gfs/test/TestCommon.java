@@ -14,117 +14,107 @@ import org.junit.After;
 import org.junit.Before;
 
 public class TestCommon {
-  //private Master[] masters;
-  protected ValueList<Master> masters;
-  protected Shell shell;
+    protected ValueList<Master> masters;
+    protected Shell shell;
 
-  @Before
-  public void doNothing() {}
-  
-  @After
-  public void shutdown() {
-    for (Master m : masters) {
-      m.stop();
+    @Before
+    public void doNothing() {
     }
-    //shell.shutdown();
-  }
 
-  protected Boolean shellLs(String... list) throws JolRuntimeException,UpdateException,InterruptedException {
-    Shell shell = new Shell();
-    Boolean ret = findInLs(shell,list);
-    shell.shutdown();
-    return ret;
-  }
-
-  protected void shellCreate(String name) throws JolRuntimeException,UpdateException,InterruptedException {
-    Shell shell = new Shell();
-    createFile(shell,name);
-    shell.shutdown();
-  }
-
-  protected void shellRm(String name) throws JolRuntimeException,UpdateException,InterruptedException {
-    Shell shell = new Shell();
-    rmFile(shell,name);
-    shell.shutdown();
-  }
-  protected void assertTrue(Boolean b) {
-    /* weird huh?  Assert.assertTrue raises an error without calling the @After method,
-       so we never terminate.
-    */
-    if (!b) {
-      shutdown();
+    @After
+    public void shutdown() {
+        for (Master m : masters) {
+            m.stop();
+        }
+        // shell.shutdown();
     }
-    Assert.assertTrue(b);
-  }
 
-  protected Boolean findInLs(Shell shell,String... files) throws JolRuntimeException,UpdateException,InterruptedException {
-    ValueList<String> list = lsFile(shell);
+    protected Boolean shellLs(String... list) throws JolRuntimeException,
+            UpdateException, InterruptedException {
+        Shell shell = new Shell();
+        Boolean ret = findInLs(shell, list);
+        shell.shutdown();
+        return ret;
+    }
 
-    // obviously not an efficient way to do this.
-    for (String item : files) {
-        if (!list.contains(item)) {
-          return false;
-        } else {
-          java.lang.System.out.println("found "+item);
+    protected void shellCreate(String name) throws JolRuntimeException, UpdateException,
+            InterruptedException {
+        Shell shell = new Shell();
+        createFile(shell, name);
+        shell.shutdown();
+    }
+
+    protected void shellRm(String name) throws JolRuntimeException, UpdateException,
+            InterruptedException {
+        Shell shell = new Shell();
+        rmFile(shell, name);
+        shell.shutdown();
+    }
+
+    protected void assertTrue(Boolean b) {
+        /*
+         * weird huh? Assert.assertTrue raises an error without calling the
+         * @After method, so we never terminate.
+         */
+        if (!b)
+            shutdown();
+
+        Assert.assertTrue(b);
+    }
+
+    protected Boolean findInLs(Shell shell, String... files) throws JolRuntimeException,
+            UpdateException, InterruptedException {
+        ValueList<String> list = lsFile(shell);
+
+        // obviously not an efficient way to do this.
+        for (String item : files) {
+            if (!list.contains(item))
+                return false;
+
+            java.lang.System.out.println("found " + item);
+        }
+        return true;
+    }
+
+    protected void stopMany() {
+        for (Master sys : this.masters) {
+            sys.stop();
         }
     }
-    return true;
-  }
 
-  protected void stopMany() {
-    for (Master sys : this.masters) {
-      sys.stop();
-    }
-  } 
-  protected void startMany(String... args) throws JolRuntimeException,UpdateException,InterruptedException {
-    this.masters = new ValueList<Master>(); 
+    protected void startMany(String... args) throws JolRuntimeException, UpdateException {
+        this.masters = new ValueList<Master>();
 
-    /*
-    for (int i=0, s=0; i < args.length; i++,s=0) {
-      String[] sig = new String[args.length];
-      sig[s++] = args[i];
-      for (int j=0; j < args.length; j++) {
-        java.lang.System.out.println("J = "+j);
-        if (j != i) {
-          sig[s++] = args[j];
+        Conf.setNewMasterList(args);
+
+        for (int i = 0; i < Conf.getNumMasters(); i++) {
+            Master m = new Master(i);
+            m.start();
+            this.masters.add(m);
         }
-      } 
-      //      Master m = new Master(sig);
-      Master m = new Master(0); // XXX
-      m.start();
-      this.masters.add(m);
     }
-    */
-    
-    Conf.setNewMasterList(args);
 
-    for (int i=0; i < Conf.getNumMasters(); i++) {
-        Master m = new Master(i);
-        m.start();
-        this.masters.add(m);
+    protected ValueList<String> lsFile(Shell shell) throws UpdateException,
+            InterruptedException, JolRuntimeException {
+        List<String> argList = new LinkedList<String>();
+        return shell.doListFiles(argList);
     }
-  }
 
-  protected ValueList<String> lsFile(Shell shell) throws UpdateException,InterruptedException,JolRuntimeException {
-      List<String> argList = new LinkedList<String>();
-      return shell.doListFiles(argList);
-  }
-  protected void createFile(Shell shell,String name) throws UpdateException,InterruptedException,JolRuntimeException  {
-      List<String> argList = new LinkedList<String>();
-      argList.add(name);
-      shell.doCreateFile(argList,false);
-  }
-    protected void rmFile(Shell shell,String name) throws UpdateException,InterruptedException,JolRuntimeException  {
+    protected void createFile(Shell shell, String name) throws UpdateException,
+            InterruptedException, JolRuntimeException {
+        List<String> argList = new LinkedList<String>();
+        argList.add(name);
+        shell.doCreateFile(argList, false);
+    }
+
+    protected void rmFile(Shell shell, String name) throws UpdateException,
+            InterruptedException, JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         argList.add(name);
         shell.doRemove(argList);
     }
-/*
-  public static void main(String[] args) throws Exception {
-    TestC t = new GFSMMTest();
-    t.test1();
-    t.test2();
-    t.test3();
-  }
-*/
+    /*
+     * public static void main(String[] args) throws Exception { TestC t = new
+     * GFSMMTest(); t.test1(); t.test2(); t.test3(); }
+     */
 }
