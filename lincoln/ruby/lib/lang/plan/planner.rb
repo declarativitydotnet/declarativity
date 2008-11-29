@@ -42,23 +42,31 @@ class OverlogPlanner
 		end
 	end
 
-	class PlanExpression < PlanProjector	
+	class PlanExpression < PlanProjector
 		class VarEater
 			# I know, too many nested classes
 			def initialize
-				@aggFunc = nil	
+				@aggInfo = nil
+        @state = "normal"
 			end
+
 			def eat(var)
-				if (!@aggFunc.nil?) then
+        # this is an ugly statemachine...
+        if (@state == "emit") then
+          @state = "normal"
+          thisvar = @aggInfo
+          @aggInfo = nil
+				elsif (@state == "collect") then
 					if (!var.value("type").eql?("var")) then
 #					  require 'ruby-debug'; debugger
-						raise("can't aggregate over non-variable ("+var.value("type")+")")
+						raise("can't aggregate over non-variable #{var.value("p_txt")} ("+var.value("type")+")")
 					end
-					# fix that string stuff!
-          require 'ruby-debug'; debugger
-					thisvar = Aggregate.new(var.value("p_txt"),@aggFunc,AggregateFunction.agg_type(@aggFunc,String), var.value("expr_pos"), nil)
-					thisvar.position = var.value("expr_pos")
-					@aggFunc = nil
+          # this only works for aggregates with one argument, and appear at the end of the predicate.  this should be revisited.
+          # in the java versions, the aggregates are assigned in place to the predicate, and the arguments of the aggregates
+          # are appended to the end of the tuple (which we don't know yet, since we're assembling in-place).
+          @aggInfo = Variable.new(var.value("p_txt"),String,var.value("expr_pos")+1,nil)
+					thisvar = Aggregate.new(var.value("p_txt"),@aggInfo,AggregateFunction.agg_type(@aggInfo,String), var.value("expr_pos"), nil)
+					@state = "emit"
 				else 
 					case var.value("type")
 						when "var"
@@ -67,7 +75,8 @@ class OverlogPlanner
 							thisvar = Value.new(var.value("p_txt"))
 							thisvar.position = var.value("expr_pos")
 						when "agg_func"
-							@aggFunc = var.value("p_txt")	
+							@aggInfo = var.value("p_txt")	
+              @state = "collect"
 							thisvar = nil
 	
 					else
@@ -141,7 +150,6 @@ class OverlogPlanner
 		
 		def get_preds(ts)
 			pHash,aHash = accumulate_vars(ts,"pred_txt","event_mod","pred_pos")
-
 			ret = TupleSet.new("preds",nil)
 
 			pHash.each_key do |k|
