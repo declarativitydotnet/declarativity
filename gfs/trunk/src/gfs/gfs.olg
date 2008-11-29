@@ -101,12 +101,24 @@ create_request_pending(@Master, Id, Source, false, ErrMessage) :-
     gfs_global::file(@Master, FName, _),
     ErrMessage := "File already exists";
 
-// If we got an "ls" request, send back the names of all the files in
-// the FS
-ls_request_done(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
+// If we get an "ls" request, send back the names of all the files in
+// the file system. If the file system is empty, send back an empty
+// ValueList. Note that we need to do the aggregation in a sub-rule.
+define(compute_ls, keys(0, 1), {String, Integer, String, ValueList});
+
+compute_ls(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
     request(@Master, Id, Source, "Ls", _, _),
     gfs_global::file(@Master, FName, _);
-    
+
+ls_request_done(@Master, Id, Source, FileList) :-
+    request(@Master, Id, Source, "Ls", _, _),
+    compute_ls(@Master, Id, Source, FileList);
+
+ls_request_done(@Master, Id, Source, FileList) :-
+    request(@Master, Id, Source, "Ls", _, _),
+    notin gfs_global::file(@Master, _, _),
+    FileList := new ValueList();
+
 // If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
 public
