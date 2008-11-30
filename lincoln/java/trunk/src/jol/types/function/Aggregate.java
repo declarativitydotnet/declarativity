@@ -1,9 +1,11 @@
 package jol.types.function;
 
+import java.util.HashSet;
 import java.util.NavigableSet;
 import java.util.TreeMap;
 
 import jol.lang.plan.GenericAggregate;
+import jol.types.basic.ComparableSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.ValueList;
@@ -31,6 +33,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public static final String AVG      = "avg";
 	public static final String SUMSTR   = "sumstr";
 	public static final String TUPLESET = "tupleset";
+	public static final String SET      = "set";
 	
 	public static Aggregate function(jol.lang.plan.Aggregate aggregate) {
 		if (aggregate instanceof GenericAggregate) {
@@ -66,6 +69,9 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		else if (TUPLESET.equals(aggregate.functionName())) {
 			return new TupleCollection(aggregate);
 		}
+		else if (SET.equals(aggregate.functionName())) {
+			return new Set(aggregate);
+		}
 		
 		return null;
 	}
@@ -87,6 +93,9 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 		else if (TUPLESET.equals(function)) {
 			return jol.types.basic.TupleSet.class;
+		}
+		else if (SET.equals(function)) {
+			return jol.types.basic.ComparableSet.class;
 		}
 		else if (SUMSTR.equals(function)) {
 			return java.lang.String.class;
@@ -640,6 +649,55 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				this.result.remove(this.accessor.evaluate(tuple));
+			}
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+		
+		@Override
+		public int position() {
+			return this.position;
+		}
+	}
+	
+	public static class Set extends Aggregate<Tuple> {
+		private TupleSet tuples;
+		private ComparableSet result;
+		private TupleFunction<Tuple> accessor;
+		private int position;
+		
+		public Set(jol.lang.plan.Aggregate aggregate) {
+			this.accessor = aggregate.function();
+			this.position = aggregate.position();
+			reset();
+		}
+		
+		private void reset() {
+			this.tuples = new TupleSet();
+			this.result = new ComparableSet();
+		}
+		
+		@Override
+		public ComparableSet result() {
+			return this.result;
+		}
+		
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				this.result.add(this.accessor.evaluate(tuple));
+				System.err.println("TUPLE INSERTED SET AGG: " + tuple + " RESULT " + this.result);
+			}
+		}
+		
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				this.result.remove(this.accessor.evaluate(tuple));
+				System.err.println("TUPLE REMOVED SET AGG: " + tuple + " RESULT " + this.result);
 			}
 		}
 
