@@ -64,6 +64,7 @@ public class DataNode {
 
         this.system = Runtime.create(this.port);
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/files.olg"));
+        this.system.evaluate();
         
         /* Identify the data directory */
         TableName tblName = new TableName("gfs", "datadir");
