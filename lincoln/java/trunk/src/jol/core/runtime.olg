@@ -14,8 +14,8 @@ define(queue, {Long, Integer, String, TableName, TupleSet, TupleSet});
 /* Insertion queue: (Time, Strata, ProgramName, TableName, Tuples) */
 define(insertionQueue, keys(), {Long, Integer, String, TableName, TupleSet});
 
-/* Deletion queue: (Time, ProgramName, TableName, Tuples) */
-define(deletionQueue,  keys(), {Long, String, TableName, TupleSet});
+/* Deletion queue: (Time, Strata, ProgramName, TableName, Tuples) */
+define(deletionQueue,  keys(), {Long, Integer, String, TableName, TupleSet});
 
 /* Evaluator output: evaluation(Time, ProgramName, TableName, Insertions, Deletions) */
 define(evaluation, {Long, String, TableName, TupleSet, TupleSet});
@@ -26,7 +26,7 @@ define(execute, {Long, String, Query, TableName, TupleSet, TupleSet});
 /* Evaluator input: delta(Time, ProgramName, TableName, Insertions, Deletions) */ 
 define(delta, {Long, String, TableName, TupleSet, TupleSet});
 
-/* Committer output: flushed(Time, ProgramName, TableName, Insertions, Deletions) */ 
+/* Flusher output: flushed(Time, ProgramName, TableName, Insertions, Deletions) */ 
 define(flushed, {Long, String, TableName, TupleSet, TupleSet});
 
 /* Committer input: runnable(Time, ProgramName, TableName, Insertions, Deletions) */ 
@@ -46,8 +46,9 @@ insertionQueue(Time, Strata, Program, Name, Insertions) :-
 
 /* Remove deletion post evaluation. */
 delete
-deletionQueue(Time, Program, Name, Deletions) :-
-    runnable(Time, Program, Name, _, Deletions);
+deletionQueue(Time, Strata, Program, Name, Deletions) :-
+    runnable(Time, Program, Name, _, Deletions),
+    deletionQueue(Time, Strata, Program, Name, Deletions);
 
 /* Reschedule delta. */
 schedule(Time, Program, Name, Insertions, Deletions) :-
@@ -73,18 +74,15 @@ execute(Time, Program2, Query, Name, Insertions, Deletions) :-
 localEval
 execute(Time, Program, null, Name, Insertions, Deletions) :-
 	delta(Time, Program, Name, Insertions, Deletions);
-
-delta(Time, Program, Name, Insertions, Deletions) :-
-	insertionCount(Time, Program, Count), Count == 0,
-	flushed(Time, Program, Name, Insertions, Deletions);
 	
-delta(Time, Program, Name, Insertions, null) :-
-	insertionCount(Time, Program, Count), Count > 0,
-	flushed(Time, Program, Name, Insertions, Deletions);
-
-deletionQueue(Time, Program, Name, Deletions) :-
-	insertionCount(Time, Program, Count), Count > 0,
-	flushed(Time, Program, Name, Insertions, Deletions);
+schedule(Time, Program, Name, null, Deletions) :-
+	flushed(Time, Program, Name, Insertions, Deletions),
+	Insertions.size() > 0 && Deletions.size() > 0;
+	
+delta(Time, Program, Name, Insertions, Deletions) :-
+	flushed(Time, Program, Name, Insertions, FlushedDeletions),
+	Deletions := Insertions.size() == 0 ? FlushedDeletions : null;
+	
 
 /* Flusher the insertions OR deletions, pass deltas to evaluator. */
 commit 
@@ -97,16 +95,18 @@ runnable(Time, Program, Name, Insertions, null) :-
 	strata(Program, Time, Strata),
 	insertionQueue(Time, Strata, Program, Name, Insertions);
 
-/* Execute all deletions when insertion count goes to 0. 
-   Deletions executed and deletions deltas scheduled. */
-deletion_runnable 
+/* Execute any deletions that are in a lower strata than all 
+   current insertions. */ 
+deletion_runnable1
 runnable(Time, Program, Name, null, Deletions) :-
-	insertionCount(Time, Program, Count), Count == 0,
-	deletionQueue(Time, Program, Name, Deletions);
-
-define(insertionCount, keys(0,1), {Long, String, Integer});
-insertionCount(Time, Program, count<Name>) :-
-	insertionQueue(Time, Strata, Program, Name, _);
+	strata(Program, Time, CurrentStrata),
+	deletionQueue(Time, Strata, Program, Name, Deletions),
+	CurrentStrata == null || Strata < CurrentStrata;
+	
+deletion_runnable2
+runnable(Time, Program, Name, null, Deletions) :-
+	deletionQueue(Time, Strata, Program, Name, Deletions),
+	notin insertionQueue(Time, _, Program, _, _);
 
 /* Determine the current strata in the current time for all 
    programs that have something scheduled. */
@@ -121,7 +121,7 @@ insertionQueue(Time, Strata, Program, Name, Insertions) :-
 	Insertions != null && Insertions.size() > 0;
 	
 init_deletion_queue
-deletionQueue(Time, Program, Name, Deletions) :-
+deletionQueue(Time, Strata, Program, Name, Deletions) :-
 	queue(Time, Strata, Program, Name, Insertions, Deletions),
 	program(Program, Owner, Object),
 	Deletions != null && Deletions.size() > 0;

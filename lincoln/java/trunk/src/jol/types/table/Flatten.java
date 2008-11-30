@@ -97,10 +97,12 @@ public class Flatten extends Function {
 			int   position = flattenPositions.remove(0);
 			for (Tuple tuple : tuples) {
 				ValueList<Comparable> list = (ValueList<Comparable>) tuple.value(position);
-				for (Comparable value : list) {
-					Tuple flattened = tuple.clone();
-					flattened.value(position, value);
-					delta.add(flattened);
+				if (list != null) {
+					for (Comparable value : list) {
+						Tuple flattened = tuple.clone();
+						flattened.value(position, value);
+						delta.add(flattened);
+					}
 				}
 			}
 			/* Recursively flatten along remaining positions. */

@@ -367,6 +367,7 @@ public abstract class Table implements Comparable<Table> {
 				throw new UpdateException("couldn't insert", e);
 			}
 
+			t.refCount(1L); // TODO code review semantics
 			if (insert(t)) {
 				delta.add(t);
 

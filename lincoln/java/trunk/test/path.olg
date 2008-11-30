@@ -43,12 +43,12 @@ watch(flatpaths, a);
 watch(flatTopPaths, a);
 
 /* Add the link 9 -> 10 when newlink fires */
-link("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
+// link("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
 
-newlink(null, 5000, null) :- newlink(_, 0, _);
+// newlink(null, 5000, null) :- newlink(_, 0, _);
 
-watch(links, a);
-links(count<*>) :- link(Src, Dst);
+watch(links, ae);
+links(count<Link>) :- link(Src, Dst), Link := Src + "->" + Dst;
 
 /* Initialize all paths with link */
 init
