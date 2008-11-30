@@ -13,16 +13,14 @@ import jol.types.function.TupleFunction;
 /**
  * An Assign operator assigns some constant value to some attribute position
  * in the input tuples. The output tuples will contain the assigned value.
- *
  */
 public class Assign<C extends Comparable<C> > extends Operator {
-	
 	/** The assignment predicate. */
 	private jol.lang.plan.Assignment assignment;
-	
+
 	/** The output schema. */
 	private Schema schema;
-	
+
 	/**
 	 * Create a new assign operator.
 	 * @param context The runtime context.
@@ -33,12 +31,12 @@ public class Assign<C extends Comparable<C> > extends Operator {
 		super(context, assignment.program(), assignment.rule());
 		this.assignment = assignment;
 		this.schema = input.clone();
-		
+
 		if (!this.schema.contains(this.assignment.variable())) {
 			this.schema.append(this.assignment.variable());
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return this.assignment == null ? "null" : this.assignment.toString();
@@ -57,12 +55,12 @@ public class Assign<C extends Comparable<C> > extends Operator {
 			} catch (Throwable t) {
 				String msg = t.toString() + ". Program " + this.assignment.program() +
 				             ". Error during assignment " + toString();
-				throw new JolRuntimeException(msg);
+				throw new JolRuntimeException(msg, t);
 			}
 		}
 		return deltas;
 	}
-	
+
 	@Override
 	public Schema schema() {
 		return this.schema;
