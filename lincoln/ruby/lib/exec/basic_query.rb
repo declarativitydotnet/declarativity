@@ -21,9 +21,7 @@ class BasicQuery < Query
   end
 
   def evaluate(inval)
-    print "================== RUNNING QUERY \"#{rule.to_s}(#{inval.name.to_s})\" =================\n"
-    #require 'ruby-debug'; debugger if rule.to_s == "collectFacts"
-    
+    print "================== RUNNING QUERY \"#{rule.to_s}(#{inval.name.to_s})\" =================\n"    
     if (@input.name != inval.name) then
       raise DataflowRuntimeException, "Query expects input " + @input.name.to_s + 
       " but got input tuples " + inval.name.to_s
@@ -36,6 +34,7 @@ class BasicQuery < Query
       tuples << (tuple)
     end
 
+#    require 'ruby-debug'; debugger if rule.to_s == "q2_rule"
     @body.each do |oper| 
       tuples = oper.evaluate(tuples)
     end

@@ -167,14 +167,15 @@ installFacts
 queue(Time, 0, Program, Name, Facts, null) :-
 	facts(Program, Name, Facts), 
 	global::clock(Location, Time), 
-	Facts.name(Name),
+	Facts.setName(Name),
 	Program == "compiler";
 	
 installFacts2 
-global::schedule(Time+1, Program, Name, Facts, null) :-
+global::schedule(TheTime, Program, Name, Facts, null) :-
 	facts(Program, Name, Facts), Program != "compile",
-	Facts.name(Name),
-	global::clock(Location, Time);
+	Facts.setName(Name),
+	global::clock(Location, Time),
+	TheTime := Time+1;
 	
 /*******************************************************************/
 /*** global::schedule compile */

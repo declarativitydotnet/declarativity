@@ -336,10 +336,10 @@ class Driver < Monitor
     time = @clock.time(0)
     while 1
       synchronize do
-        print("============================     EVALUATE SCHEDULE     =============================\n")
+        evaluate(runtime.name, time.name, time, nil) # Clock insert new time
+        print("============================     EVALUATE SCHEDULE TIME #{@clock.current}    =============================\n")
         print("============================     #{@tasks.size} TASKS     ===========================\n")
         print("===========================     #{@schedule.cardinality} SCHED QUEUE     ========================\n")
-        evaluate(runtime.name, time.name, time, nil)
 
         # Evaluate task queue
         @tasks.each_with_index {|task,i|         print "============================     TASK #{i}: #{task.name}, #{task.insertions.tups[0].to_s}, #{task.deletions.tups[0].to_s}     =============================\n"}
@@ -349,6 +349,7 @@ class Driver < Monitor
           evaluate(task.program, task.name, task.insertions, task.deletions)
         end
         @tasks.clear # Clear task queue.
+        require 'ruby-debug'; debugger
         evaluate(runtime.name, time.name, nil, time) # Clock delete current
         print("============================ ========================== =============================\n");
 

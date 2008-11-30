@@ -7,13 +7,13 @@ class AggregateFunction < TupleFunction
     def initialize(aggregate)
       @position = aggregate.position
       @type     = aggregate.class
-#	    @name     = aggregate.name
+	    @name     = aggregate.name
     end
 
     attr_reader :position
 
     def evaluate(tuple)
-      tuple.value(@position)
+      tuple.value(@name)
     end
 
     def returnType
