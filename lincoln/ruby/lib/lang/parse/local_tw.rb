@@ -107,12 +107,10 @@ class OverlogCompiler
     def semantic(text,obj)
       super(text,obj)
 
-      #puts obj.inspect
       eventMod = obj.eventModifier.text_value.eql?("") ? nil : obj.eventModifier.elements[1].text_value
-
+      notin = obj.notin.text_value.eql?("") ? false : true
       @@current["predicate"] = @@positions["_Universal"]
-      #otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],@@state["Predicate"][0])
-      otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],obj.ptablename.text_value,eventMod)
+      otabinsert(@pt,@@positions["_Universal"],@@current["term"],@@positions["_Termpos"],obj.ptablename.text_value,eventMod,notin)
     end
   end
 

@@ -140,7 +140,7 @@ class OverlogPlanner
 		#end
 		
 		def get_preds(ts)
-			pHash,aHash = accumulate_vars(ts,"pred_txt","event_mod","pred_pos")
+			pHash,aHash = accumulate_vars(ts,"pred_txt","event_mod","pred_pos","notin")
 
 			ret = TupleSet.new("preds",nil)
 
@@ -159,7 +159,7 @@ class OverlogPlanner
 				end
 			
 				# notin, name, event, arguments
-				thispred = Predicate.new(false,TableName.new(scope,tname),event,aHash[k])
+				thispred = Predicate.new(pred.value("notin"),TableName.new(scope,tname),event,aHash[k])
 
 				# I think the p2 system uses positions starting at 1.
 				thispred.set(@runtime,pred.value("program_name"),pred.value("rulename"),pred.value("pred_pos"))
@@ -247,6 +247,7 @@ class OverlogPlanner
         head = body.shift
 
         d = (context.value("delete") == 1)
+
         ruleObj = Rule.new(1,context.value("rulename"),true,d,head,body)
         ruleObj.set(@runtime, context.value("program_name"))
 

@@ -515,8 +515,9 @@ class MyPredicateTable < CompilerCatalogTable
     PRED_POS=2
     PRED_TXT=3
     EVENT_MOD=4
+    NOTIN=5
   end
-  @@SCHEMA = [Integer,Integer,Integer,String,String]
+  @@SCHEMA = [Integer,Integer,Integer,String,String,String]
   @@TABLENAME = TableName.new(COMPILERSCOPE, "myPredicate")
   @@classes[self] = 1
   def initialize(context)
@@ -552,7 +553,8 @@ class MyPredicateTable < CompilerCatalogTable
     pred_pos = Variable.new("pred_pos",Integer, 2,nil)
     pred_txt = Variable.new("pred_txt",String, 3,nil)
     event_mod = Variable.new("event_mod",String, 4,nil)
-    return Schema.new("MyPredicate",[predicateid,termid,pred_pos,pred_txt,event_mod])
+    notin = Variable.new("notin",String, 5,nil)
+    return Schema.new("MyPredicate",[predicateid,termid,pred_pos,pred_txt,event_mod,notin])
   end
 
   def MyPredicateTable.table_name
@@ -1247,7 +1249,7 @@ class WatchTable < CompilerCatalogTable
     MODIFIER=2
   end
   @@SCHEMA = [String,String,String]
-  @@TABLENAME = TableName.new(COMPILERSCOPE, "watches")
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "watch")
   @@classes[self] = 1
   def initialize(context)
     super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))

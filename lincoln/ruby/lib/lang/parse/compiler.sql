@@ -10,7 +10,8 @@ table MyPredicate (
 	termid Integer,
 	pred_pos Integer,
 	pred_txt String,
-	event_mod String
+	event_mod String,
+  notin String
 )
 
 table MyTableFunction (
@@ -121,7 +122,7 @@ table fact (
 	tuple Tuple
 )
 
-table watches (
+table watch (
   +program String,
   +tablename String,
   +modifier String

@@ -155,7 +155,7 @@ include Ddl
 		  }
 	end
      	rule predicate
-		    notin? ptablename eventModifier  arguments   
+		    notin ptablename eventModifier  arguments   
 				{
 					def predicate
 						#return self.ptablename
@@ -168,9 +168,9 @@ include Ddl
 	end
 	rule notin
 		# DON'T FORGET THIS
-		Spacing ( 'notin' ) Spacing
+		Spacing ( 'notin'? ) Spacing
 		{
-			def naught
+			def notin
 				return !text_value.eql?("")
 			end
 		}

@@ -3,6 +3,7 @@ require 'lib/lang/plan/dont_care'
 require 'lib/lang/plan/arguments'
 require 'lib/types/operator/index_join'
 require 'lib/types/operator/scan_join'
+require 'lib/types/operator/anti_scan_join'
 require 'lib/lang/plan/object_from_catalog'
 require 'lib/lang/parse/schema.rb'
 

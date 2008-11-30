@@ -9,7 +9,7 @@ class AntiScanJoin < Join
 	end
 	
   def evaluate(tuples)
-		result = TupleSet.new
+		result = TupleSet.new("anti",nil)
 		tuples.each do |outer|
 			success = false
 			@table.tuples.each do |inner|
@@ -19,7 +19,7 @@ class AntiScanJoin < Join
 					break
 				end
 			end
-			if (!success) result << outer
+			if (!success) then result << outer end
 		end
 		return result
 	end

@@ -1533,6 +1533,10 @@ module Overlog
   end
 
   module Predicate0
+    def notin
+      elements[0]
+    end
+
     def ptablename
       elements[1]
     end
@@ -1565,22 +1569,17 @@ module Overlog
     end
 
     i0, s0 = index, []
-    r2 = _nt_notin
-    if r2
-      r1 = r2
-    else
-      r1 = SyntaxNode.new(input, index...index)
-    end
+    r1 = _nt_notin
     s0 << r1
     if r1
-      r3 = _nt_ptablename
-      s0 << r3
-      if r3
-        r4 = _nt_eventModifier
-        s0 << r4
-        if r4
-          r5 = _nt_arguments
-          s0 << r5
+      r2 = _nt_ptablename
+      s0 << r2
+      if r2
+        r3 = _nt_eventModifier
+        s0 << r3
+        if r3
+          r4 = _nt_arguments
+          s0 << r4
         end
       end
     end
@@ -1609,7 +1608,7 @@ module Overlog
   end
 
   module Notin1
-			def naught
+			def notin
 				return !text_value.eql?("")
 			end
   end
@@ -1627,16 +1626,21 @@ module Overlog
     s0 << r1
     if r1
       if input.index('notin', index) == index
-        r2 = (SyntaxNode).new(input, index...(index + 5))
+        r3 = (SyntaxNode).new(input, index...(index + 5))
         @index += 5
       else
         terminal_parse_failure('notin')
-        r2 = nil
+        r3 = nil
+      end
+      if r3
+        r2 = r3
+      else
+        r2 = SyntaxNode.new(input, index...index)
       end
       s0 << r2
       if r2
-        r3 = _nt_Spacing
-        s0 << r3
+        r4 = _nt_Spacing
+        s0 << r4
       end
     end
     if s0.last
