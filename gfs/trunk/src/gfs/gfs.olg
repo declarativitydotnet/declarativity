@@ -156,7 +156,16 @@ ls_response(@Source, Id, Response) :-
 rm_response(@Source, Id, Success, Response) :-
     rm_request_done(@Master, Id, Source, Success, Response);
 
+/****************************/
 
+/* All the chunks at a given data node */
+define(node_contents, keys(0), {String, ValueList});
+
+/* Mapping from chunks => data nodes */
+define(chunk_nodes, keys(0), {Integer, ValueList});
+
+/* Leases: primary nodes for each chunk */
+define(chunk_primaries, keys(0), {Integer, String});
 
 /*****************************/
 define(sendHeartBeat,keys(0,1,2),{String,String,String,Long,Long});

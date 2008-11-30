@@ -1,0 +1,6 @@
+package gfs;
+
+public interface DataProtocol {
+    final byte READ_OPERATION = 1;
+    final byte WRITE_OPERATION = 2;
+}

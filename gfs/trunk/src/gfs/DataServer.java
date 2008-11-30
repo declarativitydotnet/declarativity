@@ -38,6 +38,25 @@ public class DataServer implements Runnable {
         
         private void readCommand() throws IOException {
             byte opCode = this.in.readByte();
+            
+            switch (opCode) {
+            case DataProtocol.READ_OPERATION:
+                doReadOperation();
+                break;
+            case DataProtocol.WRITE_OPERATION:
+                doWriteOperation();
+                break;
+            default:
+                throw new IOException("Unrecognized opcode: " + opCode);
+            }
+        }
+
+        private void doWriteOperation() {
+            // TODO Auto-generated method stub
+        }
+
+        private void doReadOperation() {
+            // TODO Auto-generated method stub            
         }
     }
 
