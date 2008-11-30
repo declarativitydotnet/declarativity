@@ -185,6 +185,6 @@ chunks(Master,Host,File,MaxTstamp) :-
 delete 
 chunks(Master,Host,File,Ts) :-
     chunks(Master,Host,File,Ts),
-    Ctime := java.lang.System.currentTimeMillis(),
     clock(_,_,_),
+    Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - Ts) > 10000L;

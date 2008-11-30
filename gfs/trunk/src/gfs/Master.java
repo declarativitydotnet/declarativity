@@ -48,7 +48,7 @@ public class Master {
         Conf.setSelfAddress(this.address);
 
         this.system = Runtime.create(this.port);
-
+  
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
 
