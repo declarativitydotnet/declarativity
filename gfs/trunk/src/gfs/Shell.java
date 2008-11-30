@@ -124,7 +124,7 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
-                        Object blockList = t.value(2);
+                        Object blockList = t.value(4);
                         try {
                             responseQueue.put(blockList);
                             break;
@@ -135,7 +135,7 @@ public class Shell {
                 }
             }
         };
-        Table responseTbl = registerCallback(responseCallback, "ls_response");
+        Table responseTbl = registerCallback(responseCallback, "response");
 
         ValueList blockList = (ValueList) this.responseQueue.take();
         responseTbl.unregister(responseCallback);
@@ -189,10 +189,10 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
-                        Boolean success = (Boolean) t.value(2);
+                        Boolean success = (Boolean) t.value(3);
 
                         if (success.booleanValue()) {
-                            ValueList blocks = (ValueList) t.value(3);
+                            ValueList blocks = (ValueList) t.value(4);
                             java.lang.System.out.println("File name: " + file);
                             java.lang.System.out.println("Blocks: " + blocks.toString());
                             java.lang.System.out.println("=============");
@@ -214,17 +214,23 @@ public class Shell {
                 }
             }
         };
-        Table responseTbl = registerCallback(responseCallback, "cat_response");
+        Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "cat_request");
+        TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, file));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Cat", makeList(file)));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
         Object obj = this.responseQueue.take();
         responseTbl.unregister(responseCallback);
+    }
+
+    private ValueList makeList(Object obj) {
+        ValueList result = new ValueList();
+        result.add(obj);
+        return result;
     }
 
     private int generateId() {
@@ -264,12 +270,12 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
-                        Boolean success = (Boolean) t.value(2);
+                        Boolean success = (Boolean) t.value(3);
 
                         if (success.booleanValue()) {
                             java.lang.System.out.println("Create succeeded.");
                         } else {
-                            String errMessage = (String) t.value(3);
+                            String errMessage = (String) t.value(4);
                             java.lang.System.out.println("Create failed.");
                             java.lang.System.out.println("Error message: " + errMessage);
                         }
@@ -284,12 +290,12 @@ public class Shell {
                 }
             }
         };
-        Table responseTbl = registerCallback(responseCallback, "create_response");
+        Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "create_request");
+        TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, filename));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Create", makeList(filename)));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
@@ -297,7 +303,7 @@ public class Shell {
         responseTbl.unregister(responseCallback);
         if (obj == null) {
           // we timed out.
-          java.lang.System.out.println("retrying (master indx= " + this.currentMaster + ")\n");
+          java.lang.System.out.println("retrying (master indx = " + this.currentMaster + ")\n");
           doCreateFile(args, fromStdin);
         }
     }
@@ -319,7 +325,7 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
-                        Object lsContent = t.value(2);
+                        Object lsContent = t.value(4);
                         try {
                             responseQueue.put(lsContent);
                             break;
@@ -331,12 +337,12 @@ public class Shell {
             }
         };
 
-        Table responseTbl = registerCallback(responseCallback, "ls_response");
+        Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "ls_request");
+        TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
         this.system.schedule("gfs", tblName, req, null);
 
         Object obj = timedTake(this.responseQueue, Conf.getListingTimeout());
@@ -369,15 +375,15 @@ public class Shell {
             @Override
             public void insertion(TupleSet tuples) {
                 for (Tuple t : tuples) {
-                    Integer tupRequestId = (Integer) t.value(1);
+                    Integer tupRequestId = (Integer) t.value(2);
 
                     if (tupRequestId.intValue() == requestId) {
-                        Boolean success = (Boolean) t.value(2);
+                        Boolean success = (Boolean) t.value(4);
 
                         if (success.booleanValue()) {
                             java.lang.System.out.println("Remove of file \"" + file + "\": success.");
                         } else {
-                            Object content = t.value(3);
+                            Object content = t.value(5);
                             java.lang.System.out.println("ERROR on \"rm\":");
                             java.lang.System.out.println("File name: " + file);
                             java.lang.System.out.println("Error message: " + content);
@@ -394,12 +400,12 @@ public class Shell {
                 }
             }
         };
-        Table responseTbl = registerCallback(responseCallback, "rm_response");
+        Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "rm_request");
+        TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, file));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", makeList(file)));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response

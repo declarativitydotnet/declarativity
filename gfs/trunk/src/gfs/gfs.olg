@@ -16,90 +16,54 @@ gfs_global::file(Self, "Foo", Blocks) :-
 watch(master_for_node, ae);
 define(master_for_node, keys(0, 1), {String, String});
 
-// Source node, Request ID, File name
-define(cat_request, keys(0, 1), {String, Integer, String});
+// Node address, Request ID, Request type, Args
+define(start_request, keys(0, 1), {String, Integer, String, ValueList});
 
-// Source node, Request ID, File name
-define(create_request, keys(0, 1), {String, Integer, String});
+// Master node, Request ID, Source node, Request type, Args
+define(request, keys(0, 1), {String, Integer, String, String, ValueList});
 
-// Source node, Request ID
-define(ls_request, keys(0, 1), {String, Integer});
-
-// Source node, Request ID, File name
-define(rm_request, keys(0, 1), {String, Integer, String});
-
-// Source node, Request ID, Request type, Arg1, Arg2
-define(request_started, keys(0, 1), {String, Integer, String, String, String});
-
-// Master node, Request ID, Source node, Request type, Arg1, Arg2
-define(request, keys(0, 1), {String, Integer, String, String, String, String});
-
-// Master node, Request Id, Source node, Success?, Response, ErrorMessage?
-define(cat_request_done, keys(0, 1), {String, Integer, String, Boolean, ValueList, String});
-define(create_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
-define(ls_request_done, keys(0, 1), {String, Integer, String, ValueList});
-define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean, String});
-
-// New tables for indirection through paxos
-define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean, String});
-define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean, String});
-
-// Node, Request ID, Success, File blocks, Error message (on failure)
-define(cat_response, keys(0, 1), {String, Integer, Boolean, ValueList, String});
-
-// Node, Request ID, Success, Error message (on failure)
-define(create_response, keys(0, 1), {String, Integer, Boolean, String});
-
-// Node, Request ID, Listing contents
-define(ls_response, keys(0, 1), {String, Integer, ValueList});
-
-// Node, Request ID, Success, Error message (on failure)
-define(rm_response, keys(0, 1), {String, Integer, Boolean, String});
-
-request_started(@Source, Id, "Cat", FName, null) :-
-    cat_request(@Source, Id, FName);
-
-request_started(@Source, Id, "Create", FName, null) :-
-    create_request(@Source, Id, FName);
-
-request_started(@Source, Id, "Ls", null, null) :-
-    ls_request(@Source, Id);
-
-request_started(@Source, Id, "Rm", FName, null) :-
-    rm_request(@Source, Id, FName);
-
-request(@Master, Id, Source, RequestType, Arg1, Arg2) :-
+request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
     master_for_node(@Source, Master),
-    request_started(@Source, Id, RequestType, Arg1, Arg2);
+    start_request(@Source, ReqId, ReqType, Args);
+
+// Client node, Request ID, Master node, Success, Results
+define(response, keys(0, 1), {String, Integer, String, Boolean, ValueList});
 
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file
-cat_request_done(@Master, Id, Source, Success, Blocks, null) :-
-    request(@Master, Id, Source, "Cat", FName, _),
-    gfs_global::file(@Master, FName, Blocks), Success := true;
+response(@Source, Id, Master, Success, Blocks) :-
+    request(@Master, Id, Source, "Cat", Args),
+    FName := (String) Args.get(0),
+    gfs_global::file(@Master, FName, Blocks),
+    Success := true;
 
 // If the file doesn't exist, return an error message
-cat_request_done(@Master, Id, Source, Success, null, ErrMessage) :-
-    request(@Master, Id, Source, "Cat", FName, _),
+response(@Source, Id, Master, Success, ErrMessage) :-
+    request(@Master, Id, Source, "Cat", Args),
+    FName := (String) Args.get(0),
     notin gfs_global::file(@Master, FName, _),
-    Success := false, ErrMessage := "File does not exist";
+    Success := false,
+    ErrMessage := new ValueList();//"File does not exist";
+
+define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 
 // If we got a "create" request for a file that didn't exist,
 // we need to wait until we get consensus from paxos; then we
 // can send back a positive ack.
 // XXX: the use of "#insert" here is a hack
-create_request_pending(@Master, Id, Source, true, null) :-
-    request#insert(@Master, Id, Source, "Create", FName, _),
+create_request_pending(@Master, Id, Source, true) :-
+    request#insert(@Master, Id, Source, "Create", Args),
+    FName := (String) Args.get(0),
     notin gfs_global::file(@Master, FName, _);
 
-// If we get a "create" request for a file that exists, send
-// back a negative ack
-// XXX: the use of "#insert" here is a hack
-create_request_pending(@Master, Id, Source, false, ErrMessage) :-
-    request#insert(@Master, Id, Source, "Create", FName, _),
-    gfs_global::file(@Master, FName, _),
-    ErrMessage := "File already exists";
+// If we get a "create" request for a file that exists, we
+// need to wait until we get consensus from paxos; then we
+// can send back a negative ack
+create_request_pending(@Master, Id, Source, false) :-
+    request#insert(@Master, Id, Source, "Create", Args),
+    FName := (String) Args.get(0),
+    gfs_global::file(@Master, FName, _);
 
 // If we get an "ls" request, send back the names of all the files in
 // the file system. If the file system is empty, send back an empty
@@ -107,54 +71,45 @@ create_request_pending(@Master, Id, Source, false, ErrMessage) :-
 define(compute_ls, keys(0, 1), {String, Integer, String, ValueList});
 
 compute_ls(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
-    request(@Master, Id, Source, "Ls", _, _),
+    request(@Master, Id, Source, "Ls", _),
     gfs_global::file(@Master, FName, _);
 
-ls_request_done(@Master, Id, Source, FileList) :-
-    request(@Master, Id, Source, "Ls", _, _),
+response(@Source, Id, Master, true, FileList) :-
+    request(@Master, Id, Source, "Ls", _),
     compute_ls(@Master, Id, Source, FileList);
 
-ls_request_done(@Master, Id, Source, FileList) :-
-    request(@Master, Id, Source, "Ls", _, _),
+response(@Source, Id, Master, true, FileList) :-
+    request(@Master, Id, Source, "Ls", _),
     notin gfs_global::file(@Master, _, _),
     FileList := new ValueList();
+
+define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 
 // If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
 public
-rm_request_pending(@Master, Id, Source, true, null) :-
-    request(@Master, Id, Source, "Rm", FName, _),
+rm_request_pending(@Master, Id, Source, true) :-
+    request(@Master, Id, Source, "Rm", Args),
+    FName := (String) Args.get(0),
     gfs_global::file(@Master, FName, _);
 
 public
-create_request_done(Master, Id, Source, Status, Error) :-
-  gfs_global::create_request_done(Master, Id, Source, Status, Error);
+response(@Source, Id, Master, Success, null) :-
+    gfs_global::create_request_done(Master, Id, Source, Success);
 
 public
-rm_request_done(Master, Id, Source, Status, Error) :-
-  gfs_global::rm_request_done(Master, Id, Source, Status, Error);
+response(@Source, Id, Master, Success, null) :-
+    gfs_global::rm_request_done(Master, Id, Source, Success);
 
 // If we got an "rm" request and the file doesn't exist, return a
 // negative ack. NB: unlike in the "create" case, we don't need the
 // "#insert" hack, since deletions are postponed the end of the
 // fixpoint.
-gfs_global::rm_request_done(@Master, Id, Source, false, ErrMessage) :-
-    request(@Master, Id, Source, "Rm", FName, _),
-    notin gfs_global::file(@Master, FName, _),
-    ErrMessage := "File does not exist";
-
-cat_response(@Source, Id, Success, Response, ErrMessage) :-
-    cat_request_done(@Master, Id, Source, Success, Response, ErrMessage);
-
-watch(create_response,ae);
-create_response(@Source, Id, Success, Response) :-
-    create_request_done(@Master, Id, Source, Success, Response);
-
-ls_response(@Source, Id, Response) :-
-    ls_request_done(@Master, Id, Source, Response);
-
-rm_response(@Source, Id, Success, Response) :-
-    rm_request_done(@Master, Id, Source, Success, Response);
+// XXX: we should probably synchronize with Paxos here
+response(@Source, Id, Master, false, null) :-
+    request(@Master, Id, Source, "Rm", Args),
+    FName := (String) Args.get(0),
+    notin gfs_global::file(@Master, FName, _);
 
 /****************************/
 

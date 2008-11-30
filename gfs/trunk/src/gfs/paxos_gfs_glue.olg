@@ -7,23 +7,25 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   paxos_global::id(Master),
   // err
   From := Master,
-  gfs::create_request_pending(Master, Id, Name, true, _),
-  gfs::request(Master, Id, Name, _, FName, _),
+  gfs::create_request_pending(Master, Id, Source, true),
+  gfs::request(Master, Id, Source, "Create", Args),
+  FName := (String) Args.get(0),
   Decree := FName + ",i";
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
   paxos_global::id(Master),
   From := Master,
-  gfs::rm_request_pending(Master, Id, Name, true, _),
-  gfs::request(Master, Id, Name, _, FName, _),
+  gfs::rm_request_pending(Master, Id, Source, true),
+  gfs::request(Master, Id, Source, "Rm", Args),
+  FName := (String) Args.get(0),
   Decree := FName + ",d";
 
-public 
-gfs_global::file(Master, Name, Blocks) :-
+public
+gfs_global::file(Master, FName, Blocks) :-
   periodic(_,_,_),
   paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
-  Name := Decree.split(",")[0],
+  FName := Decree.split(",")[0],
   Op := Decree.split(",")[1],
   Blocks := new ValueList(),
   Op == "i";
@@ -32,47 +34,48 @@ timer(periodic,physical,1000,1000,1000);
 
 public
 delete
-gfs_global::file(Master, Name, Content) :- 
-  canDelete(Master,Id,Source,Status,Error,Name),
-  gfs_global::file(Master, Name, Content);
+gfs_global::file(Master, FName, Content) :-
+  canDelete(Master, Id, Source, Status, FName),
+  gfs_global::file(Master, FName, Content);
 
 watch(gfs_global::create_request_done,aeid);
 watch(gfs_global::file,ae);
 
-define(canDelete,keys(),{String,Integer,String,Boolean,String,String});
+define(canDelete,keys(),{String,Integer,String,Boolean,String});
 watch(canDelete,ae);
 
 public
-canDelete(Master,Id,Source,Status,Error,FName) :- 
-  gfs::rm_request_pending(Master, Id, Source, Status,Error),
+canDelete(Master, Id, Source, Status, FName) :-
+  gfs::rm_request_pending(Master, Id, Source, Status),
   periodic(_,_,_),
   paxos_global::requestStatus(Master, Client, Decree, Instance, Message),
-  gfs::request(Master, Id, Name, _, FName, _),
+  gfs::request(Master, Id, Source, "Rm", Args),
+  FName := (String) Args.get(0),
   Message == "passed",
   FName == Decree.split(",")[0],
   Op := Decree.split(",")[1],
   Op == "d";
 
 
-public 
+public
 green
-gfs_global::create_request_done(Master, Id, Source, Status,Error) :-
-  gfs::create_request_pending(Master, Id, Source, Status,Error),
-  gfs_global::file(Master,FName,Content),
-  gfs::request(Master, Id, Name, _, FName, _);
+gfs_global::create_request_done(Master, Id, Source, Status) :-
+  gfs::create_request_pending(Master, Id, Source, Status),
+  gfs::request(Master, Id, Source, "Create", Args),
+  FName := (String) Args.get(0),
+  gfs_global::file(Master, FName, _);
 
-public 
-gfs_global::rm_request_done(Master, Id, Source, Status,Error) :-
-  canDelete(Master,Id,Source,Status,Error,Name);
+public
+gfs_global::rm_request_done(Master, Id, Source, Status) :-
+  canDelete(Master, Id, Source, Status, Name);
 
-public 
+public
 red
-gfs_global::create_request_done(Master, Id, Source, Status, Error) :-
-  gfs::create_request_pending(Master, Id, Source, Status, Error),
+gfs_global::create_request_done(Master, Id, Source, Status) :-
+  gfs::create_request_pending(Master, Id, Source, Status),
   Status == false;
 
-public 
-gfs_global::rm_request_done(Master, Id, Source, Status, Error) :-
-  gfs::rm_request_pending(Master, Id, Source, Status, Error),
+public
+gfs_global::rm_request_done(Master, Id, Source, Status) :-
+  gfs::rm_request_pending(Master, Id, Source, Status),
   Status == false;
-
