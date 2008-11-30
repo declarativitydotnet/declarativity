@@ -42,8 +42,10 @@ public class Shell {
         String op = argList.remove(0);
         if (op.equals("append")) {
             shell.doAppend(argList);
+        } else if (op.equals("read")) {
+            shell.doRead(argList);
         } else if (op.equals("cat")) {
-            shell.doConcatenate(argList); 
+            shell.doConcatenate(argList);
         } else if (op.equals("create")) {
             shell.doCreateFile(argList, true);
         } else if (op.equals("ls")) {
@@ -87,6 +89,71 @@ public class Shell {
             usage();
 
         String filename = args.get(0);
+    }
+
+    private void doRead(List<String> args) throws InterruptedException {
+        if (args.size() != 1)
+            usage();
+
+        String filename = args.get(0);
+
+        /* Ask a master node for the list of blocks */
+        List<Integer> blocks = getBlockList(filename);
+
+        /*
+         * For each block, ask the master node for a list of data nodes that
+         * hold the block, and then read the block's contents from those nodes.
+         */
+        for (Integer block : blocks) {
+            List<String> locations = getBlockLocations(block);
+            readFile(locations);
+        }
+    }
+
+    private ValueList getBlockList(String filename) throws InterruptedException {
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Object blockList = t.value(2);
+                        try {
+                            responseQueue.put(blockList);
+                            break;
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        };
+        Table responseTbl = registerCallback(responseCallback, "ls_response");
+
+        ValueList blockList = (ValueList) this.responseQueue.take();
+        responseTbl.unregister(responseCallback);
+        return blockList;
+    }
+
+    private Table registerCallback(Callback callback, String tableName) {
+        Table table = this.system.catalog().table(new TableName("gfs", tableName));
+        table.register(callback);
+        return table;
+    }
+
+    private List<String> getBlockLocations(Integer block) {
+        return null;
+    }
+
+    private void readFile(List<String> locations) {
+        ;
     }
 
     /*
@@ -147,8 +214,7 @@ public class Shell {
                 }
             }
         };
-        Table responseTbl = this.system.catalog().table(new TableName("gfs", "cat_response"));
-        responseTbl.register(responseCallback);
+        Table responseTbl = registerCallback(responseCallback, "cat_response");
 
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "cat_request");
@@ -181,7 +247,7 @@ public class Shell {
                 throw new RuntimeException(e);
             }
         } else {
-            sb.append("foo");  
+            sb.append("foo");
         }
 
         String filename = args.get(0);
@@ -218,9 +284,7 @@ public class Shell {
                 }
             }
         };
-
-        Table responseTbl = this.system.catalog().table(new TableName("gfs", "create_response"));
-        responseTbl.register(responseCallback);
+        Table responseTbl = registerCallback(responseCallback, "create_response");
 
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "create_request");
@@ -228,7 +292,7 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        // Wait for the response 
+        // Wait for the response
         Object obj = timedTake(this.responseQueue, Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null) {
@@ -267,8 +331,7 @@ public class Shell {
             }
         };
 
-        Table responseTbl = this.system.catalog().table(new TableName("gfs", "ls_response"));
-        responseTbl.register(responseCallback);
+        Table responseTbl = registerCallback(responseCallback, "ls_response");
 
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "ls_request");
@@ -289,7 +352,7 @@ public class Shell {
     public void doRemove(List<String> argList) throws UpdateException, InterruptedException, JolRuntimeException {
         if (argList.isEmpty())
             usage();
-        
+
         for (String s : argList) {
             doRemoveFile(s);
         }
@@ -331,9 +394,8 @@ public class Shell {
                 }
             }
         };
-        Table responseTbl = this.system.catalog().table(new TableName("gfs", "rm_response"));
-        responseTbl.register(responseCallback);
-        
+        Table responseTbl = registerCallback(responseCallback, "rm_response");
+
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "rm_request");
         TupleSet req = new TupleSet(tblName);
@@ -365,7 +427,7 @@ public class Shell {
                 this.currentMaster++;
                 if (this.currentMaster == Conf.getNumMasters()) {
                     java.lang.System.out.println("giving up\n");
-                    java.lang.System.exit(1); 
+                    java.lang.System.exit(1);
                 }
                 scheduleNewMaster();
             }
@@ -383,7 +445,7 @@ public class Shell {
 
     private void usage() {
         java.lang.System.err.println("Usage: java gfs.Shell op_name args");
-        java.lang.System.err.println("Where op_name = {append,cat,create,ls,rm}");
+        java.lang.System.err.println("Where op_name = {append,cat,create,ls,read,rm}");
 
         shutdown();
         java.lang.System.exit(0);

@@ -69,7 +69,7 @@ request_started(@Source, Id, "Rm", FName, null) :-
     rm_request(@Source, Id, FName);
 
 request(@Master, Id, Source, RequestType, Arg1, Arg2) :-
-    self(@Source), 
+    self(@Source),
     master_for_node(@Source, Master),
     request_started(@Source, Id, RequestType, Arg1, Arg2);
 
@@ -191,7 +191,7 @@ chunks(Master,Host,File,MaxTstamp) :-
     Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - MaxTstamp) < 10000L;
 
-delete 
+delete
 chunks(Master,Host,File,Ts) :-
     chunks(Master,Host,File,Ts),
     clock(_,_,_),
