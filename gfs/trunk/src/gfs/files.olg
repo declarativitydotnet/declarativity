@@ -14,12 +14,12 @@ timer(periodic,logical,1,1,1);
 watch(dir,ae);
 watch(file,ae);
 
-define(datadir, keys(0), {String, String});
-watch(datadir,ae);
-datadir(Conf.getSelfAddress(), "gfs_data");
+// Node address, data directory on host file system
+define(datadir, keys(0), {String,String});
+watch(datadir, ae);
 
 dir(Host,DirObj,DirList) :-
-    datadir(Host,Dir),
+    datadir(Host, Dir),
     DirObj := new File(Dir),
     DirList := DirObj.isDirectory() ? new ValueList(DirObj.list()) : new ValueList(),
     clock(_,_,_);
