@@ -156,9 +156,6 @@ public class Shell {
         ;
     }
 
-    /*
-     * XXX: consider parallel evaluation
-     */
     private void doConcatenate(List<String> args) throws UpdateException, InterruptedException {
         if (args.isEmpty())
             usage();
@@ -219,18 +216,12 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Cat", makeList(file)));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Cat", file));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
         Object obj = this.responseQueue.take();
         responseTbl.unregister(responseCallback);
-    }
-
-    private ValueList makeList(Object obj) {
-        ValueList result = new ValueList();
-        result.add(obj);
-        return result;
     }
 
     private int generateId() {
@@ -275,9 +266,9 @@ public class Shell {
                         if (success.booleanValue()) {
                             java.lang.System.out.println("Create succeeded.");
                         } else {
-                            String errMessage = (String) t.value(4);
+//                             String errMessage = (String) t.value(4);
                             java.lang.System.out.println("Create failed.");
-                            java.lang.System.out.println("Error message: " + errMessage);
+//                             java.lang.System.out.println("Error message: " + errMessage);
                         }
 
                         try {
@@ -295,7 +286,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Create", makeList(filename)));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Create", filename));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
@@ -375,18 +366,18 @@ public class Shell {
             @Override
             public void insertion(TupleSet tuples) {
                 for (Tuple t : tuples) {
-                    Integer tupRequestId = (Integer) t.value(2);
+                    Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
-                        Boolean success = (Boolean) t.value(4);
+                        Boolean success = (Boolean) t.value(3);
 
                         if (success.booleanValue()) {
                             java.lang.System.out.println("Remove of file \"" + file + "\": success.");
                         } else {
-                            Object content = t.value(5);
+//                             Object content = t.value(5);
                             java.lang.System.out.println("ERROR on \"rm\":");
                             java.lang.System.out.println("File name: " + file);
-                            java.lang.System.out.println("Error message: " + content);
+//                             java.lang.System.out.println("Error message: " + content);
                         }
 
                         try {
@@ -405,7 +396,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", makeList(file)));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", file));
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response

@@ -10,17 +10,17 @@ define(self, keys(0), {String});
 self(Conf.getSelfAddress());
 
 gfs_global::file(Self, "Foo", Blocks) :-
-    self(Self), Blocks := new ValueList();
+    self(Self), Blocks := new ValueList({1,2,3});
 
 // Node, Master node
 watch(master_for_node, ae);
 define(master_for_node, keys(0, 1), {String, String});
 
-// Node address, Request ID, Request type, Args
-define(start_request, keys(0, 1), {String, Integer, String, ValueList});
+// Node address, Request ID, Request type, Arg
+define(start_request, keys(0, 1), {String, Integer, String, String});
 
-// Master node, Request ID, Source node, Request type, Args
-define(request, keys(0, 1), {String, Integer, String, String, ValueList});
+// Master node, Request ID, Source node, Request type, Arg
+define(request, keys(0, 1), {String, Integer, String, String, String});
 
 watch(request, ae);
 
@@ -31,19 +31,18 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 
 // Client node, Request ID, Master node, Success, Results
 define(response, keys(0, 1), {String, Integer, String, Boolean, ValueList});
+watch(response, ae);
 
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file
 response(@Source, Id, Master, Success, Blocks) :-
-    request(@Master, Id, Source, "Cat", Args),
-    FName := (String) Args.get(0),
+    request(@Master, Id, Source, "Cat", FName),
     gfs_global::file(@Master, FName, Blocks),
     Success := true;
 
 // If the file doesn't exist, return an error message
 response(@Source, Id, Master, Success, ErrMessage) :-
-    request(@Master, Id, Source, "Cat", Args),
-    FName := (String) Args.get(0),
+    request(@Master, Id, Source, "Cat", FName),
     notin gfs_global::file(@Master, FName, _),
     Success := false,
     ErrMessage := new ValueList();//"File does not exist";
@@ -56,16 +55,14 @@ watch(create_request_pending, ae);
 // can send back a positive ack.
 // XXX: the use of "#insert" here is a hack
 create_request_pending(@Master, Id, Source, true) :-
-    request#insert(@Master, Id, Source, "Create", Args),
-    FName := (String) Args.get(0),
+    request#insert(@Master, Id, Source, "Create", FName),
     notin gfs_global::file(@Master, FName, _);
 
 // If we get a "create" request for a file that exists, we
 // need to wait until we get consensus from Paxos; then we
 // can send back a negative ack
 create_request_pending(@Master, Id, Source, false) :-
-    request#insert(@Master, Id, Source, "Create", Args),
-    FName := (String) Args.get(0),
+    request#insert(@Master, Id, Source, "Create", FName),
     gfs_global::file(@Master, FName, _);
 
 public
@@ -96,8 +93,7 @@ define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 // back a positive ack.
 public
 rm_request_pending(@Master, Id, Source, true) :-
-    request(@Master, Id, Source, "Rm", Args),
-    FName := (String) Args.get(0),
+    request(@Master, Id, Source, "Rm", FName),
     gfs_global::file(@Master, FName, _);
 
 public
@@ -110,8 +106,7 @@ response(@Source, Id, Master, Success, null) :-
 // fixpoint.
 // XXX: we should probably synchronize with Paxos here
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "Rm", Args),
-    FName := (String) Args.get(0),
+    request(@Master, Id, Source, "Rm", FName),
     notin gfs_global::file(@Master, FName, _);
 
 /****************************/

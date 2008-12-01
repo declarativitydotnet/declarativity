@@ -8,8 +8,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   // err
   From := Master,
   gfs::create_request_pending(Master, Id, Source, true),
-  gfs::request(Master, Id, Source, "Create", Args),
-  FName := (String) Args.get(0),
+  gfs::request(Master, Id, Source, "Create", FName),
   Decree := FName + ",i";
 
 public
@@ -17,8 +16,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   paxos_global::id(Master),
   From := Master,
   gfs::rm_request_pending(Master, Id, Source, true),
-  gfs::request(Master, Id, Source, "Rm", Args),
-  FName := (String) Args.get(0),
+  gfs::request(Master, Id, Source, "Rm", FName),
   Decree := FName + ",d";
 
 public
@@ -49,8 +47,7 @@ canDelete(Master, Id, Source, Status, FName) :-
   gfs::rm_request_pending(Master, Id, Source, Status),
   periodic(_,_,_),
   paxos_global::requestStatus(Master, Client, Decree, Instance, Message),
-  gfs::request(Master, Id, Source, "Rm", Args),
-  FName := (String) Args.get(0),
+  gfs::request(Master, Id, Source, "Rm", FName),
   Message == "passed",
   FName == Decree.split(",")[0],
   Op := Decree.split(",")[1],
@@ -61,8 +58,7 @@ public
 green
 gfs_global::create_request_done(Master, Id, Source, Status) :-
   gfs::create_request_pending(Master, Id, Source, Status),
-  gfs::request(Master, Id, Source, "Create", Args),
-  FName := (String) Args.get(0),
+  gfs::request(Master, Id, Source, "Create", FName),
   gfs_global::file(Master, FName, _);
 
 public
