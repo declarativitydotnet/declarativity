@@ -7,6 +7,10 @@ public class JolRuntimeException extends Exception {
 		super(message);
 	}
 
+	public JolRuntimeException(Throwable cause) {
+	    super(cause);
+	}
+
 	public JolRuntimeException(String message, Throwable cause) {
 		super(message, cause);
 	}
