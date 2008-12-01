@@ -3,11 +3,15 @@ package jol.types.exception;
 public class JolRuntimeException extends Exception {
 	private static final long serialVersionUID = 1L;
 
-	public JolRuntimeException(String error) {
-		super(error);
+	public JolRuntimeException(String message) {
+		super(message);
 	}
 
-	public JolRuntimeException(String error, Exception e) {
-		super(error, e);
+	public JolRuntimeException(Throwable cause) {
+	    super(cause);
+	}
+
+	public JolRuntimeException(String message, Throwable cause) {
+		super(message, cause);
 	}
 }
