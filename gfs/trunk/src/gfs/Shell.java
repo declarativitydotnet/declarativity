@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
 import jol.core.System;
@@ -24,7 +23,7 @@ public class Shell {
     private int currentMaster;
     private System system;
     private Random rand;
-    private SynchronousQueue responseQueue;
+    private SimpleQueue responseQueue;
 
     /*
      * TODO:
@@ -68,7 +67,7 @@ public class Shell {
 
     public Shell() throws JolRuntimeException, UpdateException {
         this.rand = new Random();
-        this.responseQueue = new SynchronousQueue();
+        this.responseQueue = new SimpleQueue();
         this.currentMaster = 0;
 
         /* Identify the address of the local node */
@@ -96,7 +95,7 @@ public class Shell {
         String filename = args.get(0);
     }
 
-    private void doRead(List<String> args) throws InterruptedException, UpdateException {
+    private void doRead(List<String> args) throws UpdateException {
         if (args.size() != 1)
             usage();
 
@@ -116,7 +115,7 @@ public class Shell {
         }
     }
 
-    private ValueList getBlockList(final String filename) throws InterruptedException, UpdateException {
+    private ValueList getBlockList(final String filename) throws UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -135,12 +134,8 @@ public class Shell {
                             throw new RuntimeException("Failed to get block list for " + filename);
 
                         Object blockList = t.value(4);
-                        try {
-                            responseQueue.put(blockList);
-                            break;
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        responseQueue.put(blockList);
+                        break;
                     }
                 }
             }
@@ -153,7 +148,7 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "BlockList", filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList blockList = (ValueList) this.responseQueue.take();
+        ValueList blockList = (ValueList) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
         return blockList;
     }
@@ -164,7 +159,7 @@ public class Shell {
         return table;
     }
 
-    private List<String> getBlockLocations(final Integer block) throws UpdateException, InterruptedException {
+    private List<String> getBlockLocations(final Integer block) throws UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -183,12 +178,8 @@ public class Shell {
                             throw new RuntimeException("Failed to get block list for block #" + block);
 
                         Object nodeList = t.value(4);
-                        try {
-                            responseQueue.put(nodeList);
-                            break;
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        responseQueue.put(nodeList);
+                        break;
                     }
                 }
             }
@@ -201,7 +192,7 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "BlockLocations", block));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList nodeList = (ValueList) this.responseQueue.take();
+        ValueList nodeList = (ValueList) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
         return nodeList;
     }
@@ -210,7 +201,7 @@ public class Shell {
         ;
     }
 
-    private void doConcatenate(List<String> args) throws UpdateException, InterruptedException {
+    private void doConcatenate(List<String> args) throws UpdateException {
         if (args.isEmpty())
             usage();
 
@@ -218,15 +209,19 @@ public class Shell {
             doCatFile(file);
     }
 
-    private void scheduleNewMaster() throws UpdateException, JolRuntimeException {
+    private void scheduleNewMaster() throws JolRuntimeException {
         TupleSet master = new TupleSet();
         master.add(new Tuple(Conf.getSelfAddress(),
                              Conf.getMasterAddress(this.currentMaster)));
-        this.system.schedule("gfs", MasterTable.TABLENAME, master, null);
+        try {
+            this.system.schedule("gfs", MasterTable.TABLENAME, master, null);
+        } catch (UpdateException e) {
+            throw new JolRuntimeException(e);
+        }
         this.system.evaluate();
     }
 
-    private void doCatFile(final String file) throws UpdateException, InterruptedException {
+    private void doCatFile(final String file) throws UpdateException {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -253,14 +248,8 @@ public class Shell {
                             java.lang.System.out.println("File name: " + file);
                             java.lang.System.out.println("Error message: " + errMessage);
                         }
-
-                        try {
-                            responseQueue.put("done");
-                            break;
-                        }
-                        catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        responseQueue.put("done");
+                        break;
                     }
                 }
             }
@@ -274,7 +263,7 @@ public class Shell {
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
-        Object obj = this.responseQueue.take();
+        Object obj = this.responseQueue.get();
         responseTbl.unregister(responseCallback);
     }
 
@@ -282,7 +271,7 @@ public class Shell {
         return rand.nextInt();
     }
 
-    public void doCreateFile(List<String> args, boolean fromStdin) throws UpdateException, InterruptedException, JolRuntimeException {
+    public void doCreateFile(List<String> args, boolean fromStdin) throws UpdateException, JolRuntimeException {
         if (args.size() != 1)
             usage();
 
@@ -317,20 +306,13 @@ public class Shell {
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
 
-                        if (success.booleanValue()) {
+                        if (success.booleanValue())
                             java.lang.System.out.println("Create succeeded.");
-                        } else {
-//                             String errMessage = (String) t.value(4);
+                        else
                             java.lang.System.out.println("Create failed.");
-//                             java.lang.System.out.println("Error message: " + errMessage);
-                        }
 
-                        try {
-                            responseQueue.put(success);
-                            break;
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        responseQueue.put(success);
+                        break;
                     }
                 }
             }
@@ -344,17 +326,17 @@ public class Shell {
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
-        Object obj = timedTake(this.responseQueue, Conf.getFileOpTimeout());
-        while (obj == null) {
+        while (true) {
+            Object obj = timedGet(Conf.getFileOpTimeout());
+            if (obj != null)
+                break;
           // we timed out.
           java.lang.System.out.println("retrying (master indx = " + this.currentMaster + ")\n");
-          obj = timedTake(this.responseQueue, Conf.getFileOpTimeout());
-          //doCreateFile(args, fromStdin);
         }
         responseTbl.unregister(responseCallback);
     }
 
-    public ValueList<String> doListFiles(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {
+    public ValueList<String> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
         if (!args.isEmpty())
             usage();
 
@@ -372,12 +354,8 @@ public class Shell {
 
                     if (tupRequestId.intValue() == requestId) {
                         Object lsContent = t.value(4);
-                        try {
-                            responseQueue.put(lsContent);
-                            break;
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        responseQueue.put(lsContent);
+                        break;
                     }
                 }
             }
@@ -391,7 +369,7 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
         this.system.schedule("gfs", tblName, req, null);
 
-        Object obj = timedTake(this.responseQueue, Conf.getListingTimeout());
+        Object obj = timedGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null)
             return doListFiles(args);
@@ -401,7 +379,7 @@ public class Shell {
         return lsContent;
     }
 
-    public void doRemove(List<String> argList) throws UpdateException, InterruptedException, JolRuntimeException {
+    public void doRemove(List<String> argList) throws UpdateException, JolRuntimeException {
         if (argList.isEmpty())
             usage();
 
@@ -410,7 +388,7 @@ public class Shell {
         }
     }
 
-    protected void doRemoveFile(final String file) throws UpdateException, InterruptedException, JolRuntimeException {
+    protected void doRemoveFile(final String file) throws UpdateException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -425,23 +403,10 @@ public class Shell {
 
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
-
-                        if (success.booleanValue()) {
-                            java.lang.System.out.println("Remove of file \"" + file + "\": success.");
-                        } else {
-//                             Object content = t.value(5);
-                            java.lang.System.out.println("ERROR on \"rm\":");
-                            java.lang.System.out.println("File name: " + file);
-//                             java.lang.System.out.println("Error message: " + content);
-                        }
-
-                        try {
-                            responseQueue.put(success);
-                            break;
-                        }
-                        catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        java.lang.System.out.println("Remove of file \"" + file + "\": " +
+                                (success.booleanValue() ? "succeeded" : "failed"));
+                        responseQueue.put(success);
+                        break;
                     }
                 }
             }
@@ -455,40 +420,25 @@ public class Shell {
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
-        //Object obj = this.responseQueue.take();
-        Object obj = timedTake(this.responseQueue, Conf.getFileOpTimeout());
+        Object obj = timedGet(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null)
            doRemoveFile(file);
     }
 
-    private Object timedTake(SynchronousQueue q, int millis) throws InterruptedException, JolRuntimeException, UpdateException {
-        JOLTimer t = new JOLTimer(millis, this.responseQueue);
-        t.start();
-        Object obj = this.responseQueue.take();
-        t.stop();
-        Object ret = null;
+    private Object timedGet(long timeout) throws JolRuntimeException {
+        Object result = this.responseQueue.get(timeout);
+        if (result != null)
+            return result;
 
-        /* doing this cleanup here may be ill advised.
-           but I do want to do it in one place only.
-           leaks?
-        */
-        try {
-            String msg = (String) obj;
-            if (msg.compareTo("timeout") == 0) {
-                this.currentMaster++;
-                if (this.currentMaster == Conf.getNumMasters()) {
-                    java.lang.System.out.println("giving up\n");
-                    java.lang.System.exit(1);
-                }
-                scheduleNewMaster();
-            }
-        } catch (ClassCastException e) {
-            // fine, it's not a timeout then.
-            java.lang.System.out.println("looks good\n");
-            ret = obj;
+        // We timed out
+        this.currentMaster++;
+        if (this.currentMaster == Conf.getNumMasters()) {
+            java.lang.System.out.println("giving up\n");
+            java.lang.System.exit(1);
         }
-        return ret;
+        scheduleNewMaster();
+        return null;
     }
 
     public void shutdown() {

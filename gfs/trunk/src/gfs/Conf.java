@@ -2,7 +2,7 @@ package gfs;
 
 public class Conf {
     private static String selfAddr = null;
-    
+
     private static class Host {
         public final String name;
         public final int port;
@@ -13,26 +13,26 @@ public class Conf {
             this.port = port;
             this.auxPort = auxPort;
         }
-        
+
         Host(String name, int port) {
             this(name, port, -1);
         }
     }
-    
+
     private static Host[] masterNodes = new Host[] {
         new Host("localhost", 5505),
         // new Host("localhost", 5506),
         // new Host("localhost", 5507),
     };
-    
+
     private static Host[] dataNodes = new Host[] {
         new Host("localhost", 5600, 5700),
         new Host("localhost", 5601, 5701),
         new Host("localhost", 5602, 5702),
     };
 
-    private static final int fileOpTimeout = 20000;
-    private static final int listingTimeout = 5000;
+    private static final long fileOpTimeout = 20000;
+    private static final long listingTimeout = 5000;
 
     /* NB: This must be called before installing "gfs.olg" */
     public static void setSelfAddress(String addr) {
@@ -45,10 +45,10 @@ public class Conf {
 
         return selfAddr;
     }
-    public static int getFileOpTimeout() {
+    public static long getFileOpTimeout() {
         return fileOpTimeout;
     }
-    public static int getListingTimeout() {
+    public static long getListingTimeout() {
         return listingTimeout;
     }
     public static void setNewMasterList(String... args) {
