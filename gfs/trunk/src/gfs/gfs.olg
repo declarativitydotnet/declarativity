@@ -19,9 +19,9 @@ define(master_for_node, keys(0, 1), {String, String});
 watch(start_request,ae);
 
 /*cleanup
-delete 
-start_request(Source, ReqId, ReqType, Args) :- 
-    start_request(Source, ReqId, ReqType, Args),  
+delete
+start_request(Source, ReqId, ReqType, Args) :-
+    start_request(Source, ReqId, ReqType, Args),
     master_for_node#insert(Source,New);
 */
 
@@ -41,6 +41,16 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 // Client node, Request ID, Master node, Success, Results
 define(response, keys(0, 1), {String, Integer, String, Boolean, ValueList});
 watch(response, ae);
+
+// If we get a "BlockList" request for an extant file, send back its
+// blocks
+response(@Source, Id, Master, true, Blocks) :-
+    request(@Master, Id, Source, "BlockList", FName),
+    gfs_global::file(@Master, FName, Blocks);
+
+response(@Source, Id, Master, false, null) :-
+    request(@Master, Id, Source, "BlockList", FName),
+    notin gfs_global::file(@Master, FName, Blocks);
 
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file

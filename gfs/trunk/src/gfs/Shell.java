@@ -76,7 +76,7 @@ public class Shell {
         String port = java.lang.System.getenv("PORT");
         if (port == null) {
             port = "5501";
-        } 
+        }
         Conf.setSelfAddress("tcp:localhost:"+port);
         this.system = Runtime.create(Integer.valueOf(port));
 
@@ -96,7 +96,7 @@ public class Shell {
         String filename = args.get(0);
     }
 
-    private void doRead(List<String> args) throws InterruptedException {
+    private void doRead(List<String> args) throws InterruptedException, UpdateException {
         if (args.size() != 1)
             usage();
 
@@ -104,6 +104,9 @@ public class Shell {
 
         /* Ask a master node for the list of blocks */
         List<Integer> blocks = getBlockList(filename);
+        java.lang.System.out.println("blocks = " + blocks);
+        if (args.size() == 1)
+            return;
 
         /*
          * For each block, ask the master node for a list of data nodes that
@@ -115,7 +118,7 @@ public class Shell {
         }
     }
 
-    private ValueList getBlockList(String filename) throws InterruptedException {
+    private ValueList getBlockList(String filename) throws InterruptedException, UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -129,6 +132,10 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+                        if (success.booleanValue() == false)
+                            throw new RuntimeException("Failed to get block list");
+
                         Object blockList = t.value(4);
                         try {
                             responseQueue.put(blockList);
@@ -141,6 +148,12 @@ public class Shell {
             }
         };
         Table responseTbl = registerCallback(responseCallback, "response");
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("gfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "BlockList", filename));
+        this.system.schedule("gfs", tblName, req, null);
 
         ValueList blockList = (ValueList) this.responseQueue.take();
         responseTbl.unregister(responseCallback);
