@@ -19,6 +19,7 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
+
 public class Shell {
     private int currentMaster;
     private System system;
@@ -71,9 +72,13 @@ public class Shell {
         this.currentMaster = 0;
 
         /* Identify the address of the local node */
-        Conf.setSelfAddress("tcp:localhost:5501");
-
-        this.system = Runtime.create(5501);
+        /* this is necessary for current tests, but may not be done this way in the future */
+        String port = java.lang.System.getenv("PORT");
+        if (port == null) {
+            port = "5501";
+        } 
+        Conf.setSelfAddress("tcp:localhost:"+port);
+        this.system = Runtime.create(Integer.valueOf(port));
 
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
