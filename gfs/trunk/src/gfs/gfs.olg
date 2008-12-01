@@ -22,6 +22,8 @@ define(start_request, keys(0, 1), {String, Integer, String, ValueList});
 // Master node, Request ID, Source node, Request type, Args
 define(request, keys(0, 1), {String, Integer, String, String, ValueList});
 
+watch(request, ae);
+
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
     master_for_node(@Source, Master),
@@ -47,9 +49,10 @@ response(@Source, Id, Master, Success, ErrMessage) :-
     ErrMessage := new ValueList();//"File does not exist";
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean});
+watch(create_request_pending, ae);
 
 // If we got a "create" request for a file that didn't exist,
-// we need to wait until we get consensus from paxos; then we
+// we need to wait until we get consensus from Paxos; then we
 // can send back a positive ack.
 // XXX: the use of "#insert" here is a hack
 create_request_pending(@Master, Id, Source, true) :-
@@ -58,12 +61,16 @@ create_request_pending(@Master, Id, Source, true) :-
     notin gfs_global::file(@Master, FName, _);
 
 // If we get a "create" request for a file that exists, we
-// need to wait until we get consensus from paxos; then we
+// need to wait until we get consensus from Paxos; then we
 // can send back a negative ack
 create_request_pending(@Master, Id, Source, false) :-
     request#insert(@Master, Id, Source, "Create", Args),
     FName := (String) Args.get(0),
     gfs_global::file(@Master, FName, _);
+
+public
+response(@Source, Id, Master, Success, null) :-
+    gfs_global::create_request_done(@Master, Id, Source, Success);
 
 // If we get an "ls" request, send back the names of all the files in
 // the file system. If the file system is empty, send back an empty
@@ -95,11 +102,7 @@ rm_request_pending(@Master, Id, Source, true) :-
 
 public
 response(@Source, Id, Master, Success, null) :-
-    gfs_global::create_request_done(Master, Id, Source, Success);
-
-public
-response(@Source, Id, Master, Success, null) :-
-    gfs_global::rm_request_done(Master, Id, Source, Success);
+    gfs_global::rm_request_done(@Master, Id, Source, Success);
 
 // If we got an "rm" request and the file doesn't exist, return a
 // negative ack. NB: unlike in the "create" case, we don't need the
