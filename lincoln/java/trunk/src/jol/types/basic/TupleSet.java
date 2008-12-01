@@ -31,6 +31,8 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 
 	private boolean warnedAboutBigTable = false;
 	
+	private boolean refCount = true;
+	
 	/**
 	 * Create an empty tuple set.
 	 */
@@ -83,6 +85,10 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 		this.name = name;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.add(tuple);
+	}
+	
+	public void refCount(boolean count) {
+		this.refCount = count;
 	}
 	
 	@Override
@@ -213,7 +219,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 			if (this.tuples.containsKey(o)) {
 				Tuple t = this.tuples.get(o);
 				t.refCount(t.refCount - other.refCount());
-				if (t.refCount <= 0L) {
+				if (!this.refCount || t.refCount <= 0L) {
 					this.tuples.remove(o);
 					return true;
 				}

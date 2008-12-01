@@ -71,6 +71,8 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		this.aggregateTuples    = new TupleSet(name());
 		this.aggregates         = new ArrayList<jol.lang.plan.Aggregate>();
 		
+		this.aggregateTuples.refCount(false);
+		
 		for (jol.lang.plan.Expression arg : predicate) {
 			if (arg instanceof jol.lang.plan.Aggregate) {
 				this.aggregates.add((jol.lang.plan.Aggregate)arg);
@@ -194,7 +196,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		}
 		
 		TupleSet delta = result();
-		delta.removeAll(this.aggregateTuples.clone());  // Only those newly inserted tuples remain.
+		delta.removeAll(this.aggregateTuples);  // Only those newly inserted tuples remain.
 		if (deletions != null) {
 			delta.removeAll(deletions);
 		}
@@ -215,7 +217,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	
 	@Override
 	public boolean insert(Tuple tuple) throws UpdateException {
-		return this.aggregateTuples.add(tuple);
+		return this.aggregateTuples.add(tuple.clone());
 	}
 	
 	@Override

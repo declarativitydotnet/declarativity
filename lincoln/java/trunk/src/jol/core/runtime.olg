@@ -94,7 +94,7 @@ insertion_runnable
 runnable(Time, Program, Name, Insertions, null) :-
 	strata(Program, Time, Strata),
 	insertionQueue(Time, Strata, Program, Name, Insertions);
-
+	
 /* Execute any deletions that are in a lower strata than all 
    current insertions. */ 
 deletion_runnable1

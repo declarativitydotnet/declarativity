@@ -574,7 +574,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 
 		@Override
 		public String result() {
-			return this.result;
+			return new String(this.result);
 		}
 
 		public void reset() {
@@ -635,7 +635,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 
 		@Override
 		public TupleSet result() {
-			return this.result;
+			return this.result.clone();
 		}
 
 		@Override
@@ -682,14 +682,13 @@ public abstract class Aggregate<C extends Comparable<C>> {
 
 		@Override
 		public ComparableSet result() {
-			return this.result;
+			return this.result.clone();
 		}
 
 		@Override
 		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
 				this.result.add(this.accessor.evaluate(tuple));
-				System.err.println("TUPLE INSERTED SET AGG: " + tuple + " RESULT " + this.result);
 			}
 		}
 
@@ -697,7 +696,6 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				this.result.remove(this.accessor.evaluate(tuple));
-				System.err.println("TUPLE REMOVED SET AGG: " + tuple + " RESULT " + this.result);
 			}
 		}
 
