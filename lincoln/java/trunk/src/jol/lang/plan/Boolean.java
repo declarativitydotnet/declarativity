@@ -19,13 +19,13 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 	public final static String LESS    = "<";
 	public final static String GREATER = ">";
 	public final static String IN      = "in";
-	
+
 	private String oper;
-	
+
 	private Expression<C> lhs;
-	
+
 	private Expression<C> rhs;
-	
+
 	public Boolean(String oper, Expression<C> lhs, Expression<C> rhs) {
 		this.oper = oper;
 		this.lhs = lhs;
@@ -36,10 +36,10 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 	public Class<java.lang.Boolean> type() {
 		return java.lang.Boolean.class;
 	}
-	
+
 	@Override
 	public String toString() {
-		return "BOOLEAN(" + lhs.toString() + " " + 
+		return "BOOLEAN(" + lhs.toString() + " " +
 		      oper + " " + rhs.toString() + ")";
 	}
 
@@ -65,7 +65,6 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(OR)) {
@@ -78,7 +77,6 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(NOT)) {
@@ -90,7 +88,6 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(EQUAL)) {
@@ -99,7 +96,7 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				private final TupleFunction<C> right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
 					/* Evaluate only once!! */
-					C l = left.evaluate(tuple); 
+					C l = left.evaluate(tuple);
 					C r = right.evaluate(tuple);
 					if (l == null || r == null) return l == r;
 					else return l.compareTo(r) == 0;
@@ -107,7 +104,6 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(NEQUAL)) {
@@ -124,7 +120,6 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(LEQUAL)) {
@@ -137,14 +132,13 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 					try {
 						return lvalue.compareTo(rvalue) <= 0;
 					} catch (Throwable t) {
-						System.err.println("ERROR " + t.toString() + ", ON " + lvalue + " <= " + rvalue);
-						throw new JolRuntimeException(t.toString());
+						String msg = "ERROR " + t.toString() + ", ON " + lvalue + " <= " + rvalue;
+						throw new JolRuntimeException(msg, t);
 					}
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(GEQUAL)) {
@@ -152,12 +146,19 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				private final TupleFunction<C> left  = lhs.function();
 				private final TupleFunction<C> right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					return (left.evaluate(tuple)).compareTo(right.evaluate(tuple)) >= 0;
+                    try {
+                        C lvalue = left.evaluate(tuple);
+                        C rvalue = right.evaluate(tuple);
+                        return lvalue.compareTo(rvalue) >= 0;
+                    } catch (Throwable t) {
+                        throw new JolRuntimeException(t.toString() +
+                                " -- " + Boolean.this.toString() +
+                                ": left " + left + ", right " + right, t);
+                    }
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(LESS)) {
@@ -165,12 +166,19 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				private final TupleFunction<C> left  = lhs.function();
 				private final TupleFunction<C> right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					return (left.evaluate(tuple)).compareTo(right.evaluate(tuple)) < 0;
+				    try {
+				        C lvalue = left.evaluate(tuple);
+				        C rvalue = right.evaluate(tuple);
+				        return lvalue.compareTo(rvalue) < 0;
+				    } catch (Throwable t) {
+                        throw new JolRuntimeException(t.toString() +
+                                " -- " + Boolean.this.toString() +
+                                ": left " + left + ", right " + right, t);
+				    }
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(GREATER)) {
@@ -179,20 +187,18 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				private final TupleFunction<C> right = rhs.function();
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
 					try {
-						Comparable lcomp = left.evaluate(tuple);
-						Comparable rcomp = right.evaluate(tuple);
-						return lcomp.compareTo(rcomp) > 0;
+						C lvalue = left.evaluate(tuple);
+						C rvalue = right.evaluate(tuple);
+						return lvalue.compareTo(rvalue) > 0;
 					} catch (Throwable t) {
-						System.err.println("ERROR " + Boolean.this.toString());
-						throw new JolRuntimeException(t.toString() + 
-								" -- " + Boolean.this.toString() + 
-								": left " + left + ", right " + right);
+						throw new JolRuntimeException(t.toString() +
+								" -- " + Boolean.this.toString() +
+								": left " + left + ", right " + right, t);
 					}
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
 		else if (this.oper.equals(IN)) {
@@ -206,10 +212,9 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 				public Class returnType() {
 					return java.lang.Boolean.class;
 				}
-				
 			};
 		}
-		
+
 		assert(false);
 		return null;
 	}

@@ -2,6 +2,7 @@ package jol.lang.plan;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -87,9 +88,9 @@ public class MethodCall extends Expression {
 					}
 				} catch (Throwable t) {
 					String error = "ERROR: method invocation on " +
-							instance + " method " +
+							instance + ", method \"" +
 							MethodCall.this.method.toString() +
-							" arguments " + arguments;
+							"\", arguments " + Arrays.toString(arguments);
 					throw new JolRuntimeException(error, t);
 				}
 			}
