@@ -16,6 +16,15 @@ gfs_global::file(Self, "Foo", Blocks) :-
 watch(master_for_node, ae);
 define(master_for_node, keys(0, 1), {String, String});
 
+watch(start_request,ae);
+
+/*cleanup
+delete 
+start_request(Source, ReqId, ReqType, Args) :- 
+    start_request(Source, ReqId, ReqType, Args),  
+    master_for_node#insert(Source,New);
+*/
+
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
 

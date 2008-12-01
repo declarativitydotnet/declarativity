@@ -13,15 +13,12 @@ public class GFSMM2Test extends TestCommon {
     try { 
       startMany("localhost:5500","localhost:5502","localhost:5503");
       
-      shell = new Shell();
-      createFile(shell,"foo");
-
+      shellCreate("foo");
       /* kill one of the masters */
       this.masters.get(1).stop();
 
-      createFile(shell,"bar");
-
-      assertTrue(findInLs(shell,"foo","bar"));
+      shellCreate("bar");
+      assertTrue(shellLs("foo","bar"));
 
       shutdown();
 

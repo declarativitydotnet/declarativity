@@ -29,8 +29,8 @@ delete
 paxos::storedDecreeRequest(Master,Decree,From,Id) :-
   paxos::storedDecreeRequest(Master,Decree,From,Id),
   // 2:
-  //multipaxos::success#insert(Master,I,Round,Decree,From);
-  multipaxos::success(Master,I,Round,Decree,From);
+  multipaxos::success#insert(Master,I,Round,Decree,From);
+  //multipaxos::success(Master,_,_,Decree,From);
 
 public
 del2

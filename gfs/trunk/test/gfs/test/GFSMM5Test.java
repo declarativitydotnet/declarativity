@@ -19,13 +19,13 @@ public class GFSMM5Test extends TestCommon {
   @Test
   public void test4() {
     try { 
-      //startMany("localhost:5500","localhost:5502","localhost:5503");
+    //  startMany("localhost:5500","localhost:5502","localhost:5503");
     startMany("localhost:5500");
       //startOne();
     
       Shell longRun = new Shell();
 
-      for (int i=0; i < 50; i++) {
+      for (int i=0; i < 500; i++) {
         String file = "XACT"+i;
         createFile(longRun,file);
         Thread.sleep(100);

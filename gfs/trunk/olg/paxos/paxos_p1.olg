@@ -180,7 +180,7 @@ lastPromise(Agent,Instance,Round,-1,"none",Peer) :-
 
 define (wouldPromise,{String,Integer,Integer,Integer,String,String});
 watch(wouldPromise,ae);
-timer(ticker,physical,1000,1000,1000);
+timer(ticker,physical,2000,2000,2000);
 
 /*
 wp

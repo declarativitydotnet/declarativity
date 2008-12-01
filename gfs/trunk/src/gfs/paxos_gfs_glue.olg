@@ -21,24 +21,25 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 
 public
 gfs_global::file(Master, FName, Blocks) :-
-  periodic(_,_,_),
+  //periodic(_,_,_),
   appView(Master,From,Decree,Instance,FName,Op,Id),
   Blocks := new ValueList(),
   Op == "i";
 
-timer(periodic,physical,1000,1000,1000);
+timer(periodic,physical,3000,3000,3000);
 
 define(appView,{String,String,String,Integer,String,String,Integer});
 watch(appView,ae);
 public
 appView(Master,From,Decree,Instance,Name,Op,Id) :-
   paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
+  periodic(_,_,_),
   Name := Decree.split(",")[0],
   Op := Decree.split(",")[1],
   //Id := new Integer(Integer.valueOf(Decree.split(",")[2]));
   Id := Integer.valueOf(Decree.split(",")[2]);
 
-
+public
 delete
 gfs_global::file(Master, FName, Content) :-
   canDelete(Master, Id, Source, Status, FName),
@@ -63,8 +64,17 @@ public
 green
 gfs_global::create_request_done(Master, Id, Source, Status) :-
   gfs::create_request_pending(Master, Id, Source, Status),
-  gfs::request(Master, Id, Source, "Create", FName),
-  gfs_global::file(Master, FName, _);
+  //gfs::request(Master, Id, Source, "Create", FName),
+  //gfs_global::file(Master, FName, _);
+  appView(Master,From,Decree,Instance,FName,"i",Id);
+
+public
+red1
+gfs_global::create_request_done(Master, Id, Source, false) :-
+  gfs::create_request_pending(Master, Id, Source, Status),
+  appView(Master,From,Decree,Instance,FName,"i",Id2),
+  Id != Id2;
+
 
 public
 gfs_global::rm_request_done(Master, Id, Source, Status) :-

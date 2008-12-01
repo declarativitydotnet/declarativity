@@ -296,12 +296,13 @@ public class Shell {
 
         // Wait for the response
         Object obj = timedTake(this.responseQueue, Conf.getFileOpTimeout());
-        responseTbl.unregister(responseCallback);
-        if (obj == null) {
+        while (obj == null) {
           // we timed out.
           java.lang.System.out.println("retrying (master indx = " + this.currentMaster + ")\n");
-          doCreateFile(args, fromStdin);
+          obj = timedTake(this.responseQueue, Conf.getFileOpTimeout());
+          //doCreateFile(args, fromStdin);
         }
+        responseTbl.unregister(responseCallback);
     }
 
     public ValueList<String> doListFiles(List<String> args) throws UpdateException, InterruptedException, JolRuntimeException {

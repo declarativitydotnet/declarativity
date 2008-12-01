@@ -39,7 +39,7 @@ public class MultiPaxos1Test extends PaxosCommon {
     public static void main(String[] args) throws Exception {
         MultiPaxos1Test t = new MultiPaxos1Test();
         t.test1();
-        t.test2();
+        //t.test2();
         //t.test3();
     }
 }
