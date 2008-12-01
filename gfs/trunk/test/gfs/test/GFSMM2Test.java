@@ -1,7 +1,5 @@
 package gfs.test;
 
-import gfs.Shell;
-
 import gfs.test.TestCommon;
 
 import org.junit.Test;
@@ -10,9 +8,9 @@ public class GFSMM2Test extends TestCommon {
 
   @Test
   public void test2() {
-    try { 
+    try {
       startMany("localhost:5500","localhost:5502","localhost:5503");
-      
+
       shellCreate("foo");
       /* kill one of the masters */
       this.masters.get(1).stop();
