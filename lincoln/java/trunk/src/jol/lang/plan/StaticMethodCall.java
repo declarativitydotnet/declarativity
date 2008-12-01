@@ -3,6 +3,7 @@ package jol.lang.plan;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,13 +13,13 @@ import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 public class StaticMethodCall extends Expression {
-	
+
 	private Class type;
-	
+
 	private Field field;
-	
+
 	private Method method;
-	
+
 	private List<Expression> arguments;
 
 	public StaticMethodCall(Class type, Method method, List<Expression> arguments) {
@@ -26,13 +27,13 @@ public class StaticMethodCall extends Expression {
 		this.method = method;
 		this.arguments = arguments;
 	}
-	
+
 	public StaticMethodCall(Field field, Method method, List<Expression> arguments) {
 		this.field = field;
 		this.method = method;
 		this.arguments = arguments;
 	}
-	
+
 	@Override
 	public String toString() {
 		String name;
@@ -42,7 +43,7 @@ public class StaticMethodCall extends Expression {
 		else {
 			name = type.getName() + "." + method.getName();
 		}
-		
+
 		if (arguments.size() == 0) {
 			return name + "()";
 		}
@@ -73,7 +74,7 @@ public class StaticMethodCall extends Expression {
 		for (Expression argument : this.arguments) {
 			argFunctions.add(argument.function());
 		}
-		
+
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				Object[] arguments = new Object[StaticMethodCall.this.arguments.size()];
@@ -84,11 +85,11 @@ public class StaticMethodCall extends Expression {
 				try {
 					return StaticMethodCall.this.method.invoke(null, arguments);
 				} catch (Exception e) {
-					String error = "ERROR: " + e.toString() + 
-					               ". Occured while evaluating static method call " +
+					String msg = "ERROR: " + e.toString() +
+					               ". Occurred while evaluating static method call \"" +
 					               StaticMethodCall.this.toString() +
-					               " on arguments " + arguments;
-					throw new JolRuntimeException(error);
+					               "\", on arguments " + Arrays.toString(arguments);
+					throw new JolRuntimeException(msg, e);
 				}
 			}
 
@@ -97,5 +98,4 @@ public class StaticMethodCall extends Expression {
 			}
 		};
 	}
-
 }

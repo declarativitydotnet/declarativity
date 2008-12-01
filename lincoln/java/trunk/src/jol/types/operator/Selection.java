@@ -10,19 +10,19 @@ import jol.types.function.TupleFunction;
 import jol.core.Runtime;
 
 /**
- * Selection operator applies a selection predicate to 
+ * Selection operator applies a selection predicate to
  * the input tuples sending any tuples that pass the predicate
  * to the output tuple set.
  *
  */
 public class Selection extends Operator {
-	
+
 	/** The selection predicate. */
 	private jol.lang.plan.Selection selection;
-	
+
 	/** The output schema. NOTE: same as the input schema. */
 	private Schema schema;
-	
+
 	/** Create a new selection operator.
 	 * @param context The runtime context.
 	 * @param selection The selection predicate.
@@ -38,7 +38,7 @@ public class Selection extends Operator {
 	public String toString() {
 		return "SELECTION [" + this.selection + "]";
 	}
-	
+
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		TupleSet result = new TupleSet(tuples.name());
@@ -47,14 +47,13 @@ public class Selection extends Operator {
 			try {
 				if (java.lang.Boolean.TRUE.equals(filter.evaluate(tuple))) {
 					result.add(tuple);
-				} 
+				}
 			} catch (Throwable t) {
-				t.printStackTrace();
-				String error = "ERROR " + t.toString() + 
-				               ". Program " + this.selection.program() + 
-				               ". Exception while evaluating selection predicate " + 
+				String msg = "ERROR " + t.toString() +
+				               ". Program " + this.selection.program() +
+				               ". Exception while evaluating selection predicate " +
 			 	               this + ". Input tuple: " + tuple;
-				throw new JolRuntimeException(error);
+				throw new JolRuntimeException(msg, t);
 			}
 		}
 		return result;
@@ -69,5 +68,4 @@ public class Selection extends Operator {
 	public Set<Variable> requires() {
 		return this.selection.predicate().variables();
 	}
-
 }
