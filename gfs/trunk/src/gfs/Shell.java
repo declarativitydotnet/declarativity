@@ -105,8 +105,6 @@ public class Shell {
         /* Ask a master node for the list of blocks */
         List<Integer> blocks = getBlockList(filename);
         java.lang.System.out.println("blocks = " + blocks);
-        if (args.size() == 1)
-            return;
 
         /*
          * For each block, ask the master node for a list of data nodes that
@@ -118,7 +116,7 @@ public class Shell {
         }
     }
 
-    private ValueList getBlockList(String filename) throws InterruptedException, UpdateException {
+    private ValueList getBlockList(final String filename) throws InterruptedException, UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -134,7 +132,7 @@ public class Shell {
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
                         if (success.booleanValue() == false)
-                            throw new RuntimeException("Failed to get block list");
+                            throw new RuntimeException("Failed to get block list for " + filename);
 
                         Object blockList = t.value(4);
                         try {
@@ -166,8 +164,46 @@ public class Shell {
         return table;
     }
 
-    private List<String> getBlockLocations(Integer block) {
-        return null;
+    private List<String> getBlockLocations(final Integer block) throws UpdateException, InterruptedException {
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+                        if (success.booleanValue() == false)
+                            throw new RuntimeException("Failed to get block list for block #" + block);
+
+                        Object nodeList = t.value(4);
+                        try {
+                            responseQueue.put(nodeList);
+                            break;
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        };
+        Table responseTbl = registerCallback(responseCallback, "response");
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("gfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "BlockLocations", block));
+        this.system.schedule("gfs", tblName, req, null);
+
+        ValueList nodeList = (ValueList) this.responseQueue.take();
+        responseTbl.unregister(responseCallback);
+        return nodeList;
     }
 
     private void readFile(List<String> locations) {
