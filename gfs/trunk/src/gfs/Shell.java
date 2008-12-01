@@ -189,7 +189,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "BlockLocations", block));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "BlockLocations", block.toString()));
         this.system.schedule("gfs", tblName, req, null);
 
         ValueList nodeList = (ValueList) this.responseQueue.get(); // XXX: timeout?

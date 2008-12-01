@@ -52,25 +52,26 @@ response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "BlockList", FName),
     notin gfs_global::file(@Master, FName, Blocks);
 
-/* All the blocks at a given data node */
-define(node_contents, keys(0), {String, ValueList});
+// A master's knowledge of all the blocks at a given data node:
+// Master node, Data node, block list
+define(node_contents, keys(0, 1), {String, String, ValueList});
 
-/* Mapping from blocks => data nodes */
-define(block_nodes, keys(0), {Integer, ValueList});
-
-/* Leases: primary nodes for each chunk */
-define(block_primaries, keys(0), {Integer, String});
+// A master's mapping from block numbers to data nodes
+// Master node, Block ID, List of data nodes holding the block
+define(block_nodes, keys(0, 1), {String, Integer, ValueList});
 
 // If we get a "BlockLocations" request for a block that we have knowledge
 // of, return a list of the nodes holding that block. Otherwise, return
 // an error.
 response(@Source, Id, Master, true, NodeList) :-
-    request(@Master, Id, Source, "BlockLocations", BlockId),
-    block_nodes(BlockId, NodeList);
+    request(@Master, Id, Source, "BlockLocations", BlockIdStr),
+    BlockId := Integer.valueOf(BlockIdStr),
+    block_nodes(@Master, BlockId, NodeList);
 
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "BlockLocations", BlockId),
-    notin block_nodes(BlockId, _);
+    request(@Master, Id, Source, "BlockLocations", BlockIdStr),
+    BlockId := Integer.valueOf(BlockIdStr),
+    notin block_nodes(@Master, BlockId, _);
 
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file
