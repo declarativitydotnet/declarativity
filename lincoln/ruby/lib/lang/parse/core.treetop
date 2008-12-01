@@ -364,7 +364,7 @@ include Ddl
 			}
 	end
 	rule wordCharacters
-		[a-zA-Z0-9_]*
+		[a-zA-Z0-9_\?]*
 	end
    	rule Spacing
 		     (Space  /  LineTerminator  /  TraditionalComment  /  EndOfLineComment)*    

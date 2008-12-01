@@ -130,9 +130,9 @@ assignment(Program, Rule, Position, Object) :-
 	assignment(Program, Rule, Position, Object);
 
 delete
-watches(Program, Tablename, Modifier, Operator) :-
+watch(Program, Tablename, Modifier, Operator) :-
 	hardUninstall(Program),
-	watches(Program, Tablename, Modifier, Operator);
+	watch(Program, Tablename, Modifier, Operator);
 	
 	
 	

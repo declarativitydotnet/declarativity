@@ -102,13 +102,19 @@ init_insertion_queue
 insertionQueue(Time, Strata, Program, Name, Insertions) :-
 	queue(Time, Strata, Program, Name, Insertions, _),
 	compiler::program(Program, Owner, Object),
-	Insertions != null, Insertions.size() > 0;
+/*  ArbitraryExpression fails when Insertions is a TupleSet */
+/*	Insertions != null, */
+	Size := Insertions.size,
+	Size > 0;
 	
 init_deletion_queue
 deletionQueue(Time, Program, Name, Deletions) :-
 	queue(Time, Strata, Program, Name, Insertions, Deletions),
 	compiler::program(Program, Owner, Object),
-	Deletions != null, Deletions.size() > 0;
+/*  ArbitraryExpression fails when Deletions is a TupleSet */
+/*	Deletions != null */
+	Size := Deletions.size,
+	Size > 0;
 	
 /* Queue up global::scheduled items in current global::clock. */
 q1_rule

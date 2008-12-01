@@ -349,7 +349,6 @@ class Driver < Monitor
           evaluate(task.program, task.name, task.insertions, task.deletions)
         end
         @tasks.clear # Clear task queue.
-        require 'ruby-debug'; debugger
         evaluate(runtime.name, time.name, nil, time) # Clock delete current
         print("============================ ========================== =============================\n");
 
