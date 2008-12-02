@@ -12,14 +12,12 @@ import jol.types.table.TableName;
  * provide a name to tuple attributes. The variables
  * are taken from predicates in programs specific to
  * a rule.
- *
  */
 public class Schema {
-
 	/** The table name that this schema references. */
 	protected TableName name;
 
-	/** A map from the string variable name to the variable itself. */
+	/** Map from variable position to the variable itself */
 	protected List<Variable> variables;
 
 	/**  Create an empty schema. */
