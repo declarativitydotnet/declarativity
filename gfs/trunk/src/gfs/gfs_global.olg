@@ -5,5 +5,5 @@ import jol.types.basic.ValueList;
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean});
 
-// Node, file name, chunks
+// Node, file name, chunk IDs
 define(file, keys(0, 1), {String, String, ValueList});

@@ -42,42 +42,38 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 define(response, keys(0, 1), {String, Integer, String, Boolean, ValueList});
 watch(response, ae);
 
-// If we get a "BlockList" request for an extant file, send back its
-// blocks
-response(@Source, Id, Master, true, Blocks) :-
-    request(@Master, Id, Source, "BlockList", FName),
-    gfs_global::file(@Master, FName, Blocks);
+// If we get a "ChunkList" request for an extant file, send back its
+// chunks
+response(@Source, Id, Master, true, Chunks) :-
+    request(@Master, Id, Source, "ChunkList", FName),
+    gfs_global::file(@Master, FName, Chunks);
 
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "BlockList", FName),
-    notin gfs_global::file(@Master, FName, Blocks);
+    request(@Master, Id, Source, "ChunkList", FName),
+    notin gfs_global::file(@Master, FName, _);
 
-// A master's knowledge of all the blocks at a given data node:
-// Master node, Data node, block list
-define(node_contents, keys(0, 1), {String, String, ValueList});
-
-// A master's mapping from block numbers to data nodes
-// Master node, Block ID, List of data nodes holding the block
-define(block_nodes, keys(0, 1), {String, Integer, ValueList});
-
-// If we get a "BlockLocations" request for a block that we have knowledge
-// of, return a list of the nodes holding that block. Otherwise, return
+// If we get a "ChunkLocations" request for a chunk that we have knowledge
+// of, return a list of the nodes holding that chunk. Otherwise, return
 // an error.
+compute_chunk_locs(@Master, ReqId, Source, generic<(new ValueList()).insert(NodeAddr)) :-
+    request(@Master, ReqId, Source, "ChunkLocations", ChunkIdStr),
+    ChunkId := Integer.valueOf(ChunkIdStr),
+    chunks(@Master, NodeAddr, ChunkId, _);
+
 response(@Source, Id, Master, true, NodeList) :-
-    request(@Master, Id, Source, "BlockLocations", BlockIdStr),
-    BlockId := Integer.valueOf(BlockIdStr),
-    block_nodes(@Master, BlockId, NodeList);
+    request(@Master, Id, Source, "ChunkLocations", _),
+    compute_chunk_locs(@Master, Id, Source, NodeList);
 
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "BlockLocations", BlockIdStr),
-    BlockId := Integer.valueOf(BlockIdStr),
-    notin block_nodes(@Master, BlockId, _);
+    request(@Master, Id, Source, "ChunkLocations", ChunkIdStr),
+    ChunkId := Integer.valueOf(ChunkIdStr),
+    notin chunks(@Master, _, ChunkId, _);
 
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file
-response(@Source, Id, Master, Success, Blocks) :-
+response(@Source, Id, Master, Success, Chunks) :-
     request(@Master, Id, Source, "Cat", FName),
-    gfs_global::file(@Master, FName, Blocks),
+    gfs_global::file(@Master, FName, Chunks),
     Success := true;
 
 // If the file doesn't exist, return an error message
@@ -159,23 +155,25 @@ timer(clock, physical, 5000, 5000, 1000);
 define(ackHeartBeat, keys(0, 1, 2),{String, String, Long});
 
 ackHeartBeat(@Dnode, Master, Id) :-
-    sendHeartBeat(@Master, Dnode, File, Tstamp, Id),
+    sendHeartBeat(@Master, Dnode, _, _, Id),
     Id != -1L;
 
 dataNodes(Master, Host, max<Tstamp>) :-
-    sendHeartBeat(Master, Host, File, Tstamp, Id);
+    sendHeartBeat(Master, Host, _, Tstamp, _);
 
+// Master node, Data node, BlockId, Timestamp of last
+// update from data node
 define(chunks, keys(0, 1, 2),{String, String, String, Long});
 watch(chunks, ae);
-chunks(Master, Host, File, MaxTstamp) :-
-    sendHeartBeat(Master, Host, File, Tstamp, Id),
+chunks(Master, Host, ChunkId, MaxTstamp) :-
+    sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
     dataNodes(Master, Host, MaxTstamp),
     Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - MaxTstamp) < 10000L;
 
 delete
-chunks(Master, Host, File, Ts) :-
-    chunks(Master, Host, File, Ts),
+chunks(Master, Host, ChunkId, Ts) :-
+    chunks(Master, Host, ChunkId, Ts),
     clock(_,_,_),
     Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - Ts) > 10000L;

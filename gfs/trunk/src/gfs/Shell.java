@@ -104,21 +104,22 @@ public class Shell {
 
         String filename = args.get(0);
 
-        /* Ask a master node for the list of blocks */
-        List<Integer> blocks = getBlockList(filename);
-        java.lang.System.out.println("blocks = " + blocks);
+        /* Ask a master node for the list of chunks */
+        List<Integer> chunks = getChunkList(filename);
+        java.lang.System.out.println("chunks = " + chunks);
 
         /*
-         * For each block, ask the master node for a list of data nodes that
-         * hold the block, and then read the block's contents from those nodes.
+         * For each chunk, ask the master node for a list of data nodes that
+         * hold the chunk, and then read the chunk's contents from one or
+         * more of those nodes.
          */
-        for (Integer block : blocks) {
-            List<String> locations = getBlockLocations(block);
-            readBlock(block, locations);
+        for (Integer chunk : chunks) {
+            List<String> locations = getChunkLocations(chunk);
+            readChunk(chunk, locations);
         }
     }
 
-    private ValueList getBlockList(final String filename) throws UpdateException {
+    private ValueList getChunkList(final String filename) throws UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -134,10 +135,10 @@ public class Shell {
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
                         if (success.booleanValue() == false)
-                            throw new RuntimeException("Failed to get block list for " + filename);
+                            throw new RuntimeException("Failed to get chunk list for " + filename);
 
-                        Object blockList = t.value(4);
-                        responseQueue.put(blockList);
+                        Object chunkList = t.value(4);
+                        responseQueue.put(chunkList);
                         break;
                     }
                 }
@@ -148,12 +149,12 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "BlockList", filename));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList blockList = (ValueList) this.responseQueue.get(); // XXX: timeout?
+        ValueList chunkList = (ValueList) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
-        return blockList;
+        return chunkList;
     }
 
     private Table registerCallback(Callback callback, String tableName) {
@@ -162,7 +163,7 @@ public class Shell {
         return table;
     }
 
-    private List<String> getBlockLocations(final Integer block) throws UpdateException {
+    private List<String> getChunkLocations(final Integer chunk) throws UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -178,7 +179,7 @@ public class Shell {
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
                         if (success.booleanValue() == false)
-                            throw new RuntimeException("Failed to get block list for block #" + block);
+                            throw new RuntimeException("Failed to get chunk list for chunk #" + chunk);
 
                         Object nodeList = t.value(4);
                         responseQueue.put(nodeList);
@@ -192,7 +193,8 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("gfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "BlockLocations", block.toString()));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId,
+                          "ChunkLocations", chunk.toString()));
         this.system.schedule("gfs", tblName, req, null);
 
         ValueList nodeList = (ValueList) this.responseQueue.get(); // XXX: timeout?
@@ -200,20 +202,20 @@ public class Shell {
         return nodeList;
     }
 
-    private void readBlock(Integer block, List<String> locations) {
+    private void readChunk(Integer chunk, List<String> locations) {
         for (String loc : locations) {
-            StringBuilder sb = readBlockFromAddress(block, loc);
+            StringBuilder sb = readChunkFromAddress(chunk, loc);
             if (sb != null) {
-                java.lang.System.out.println("Content of block " +
-                                             block + ": " + sb);
+                java.lang.System.out.println("Content of chunk " +
+                                             chunk + ": " + sb);
                 return;
             }
         }
 
-        throw new RuntimeException("Failed to read block " + block);
+        throw new RuntimeException("Failed to read chunk " + chunk);
     }
 
-    private StringBuilder readBlockFromAddress(Integer block, String addr) {
+    private StringBuilder readChunkFromAddress(Integer chunkId, String addr) {
         try {
             String[] parts = addr.split(":");
             String host = parts[0];
@@ -221,7 +223,7 @@ public class Shell {
             Socket sock = new Socket(host, port);
             DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
             dos.writeByte(DataProtocol.READ_OPERATION);
-            dos.writeInt(block.intValue());
+            dos.writeInt(chunkId.intValue());
 
             // XXX: rewrite this to use nio and Channel.transferFrom()
             StringBuilder sb = new StringBuilder();
@@ -237,7 +239,7 @@ public class Shell {
             sock.close();
             return sb;
         } catch (Exception e) {
-            java.lang.System.out.println("Exception reading block from " +
+            java.lang.System.out.println("Exception reading chunk from " +
                                          addr + ": " + e.toString());
             return null;
         }
@@ -280,9 +282,9 @@ public class Shell {
                         Boolean success = (Boolean) t.value(3);
 
                         if (success.booleanValue()) {
-                            ValueList blocks = (ValueList) t.value(4);
+                            ValueList chunks = (ValueList) t.value(4);
                             java.lang.System.out.println("File name: " + file);
-                            java.lang.System.out.println("Blocks: " + blocks.toString());
+                            java.lang.System.out.println("Chunks: " + chunks.toString());
                             java.lang.System.out.println("=============");
                         } else {
                             String errMessage = (String) t.value(4);
