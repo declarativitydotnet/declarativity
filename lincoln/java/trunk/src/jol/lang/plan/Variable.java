@@ -9,11 +9,11 @@ import jol.types.function.TupleFunction;
 public class Variable extends Expression {
 
 	protected String name;
-	
+
 	protected Class type;
-	
+
 	private boolean location;
-	
+
 	public Variable(String name, Class type) {
 		this.name = name;
 		this.type = type;
@@ -22,12 +22,12 @@ public class Variable extends Expression {
 		}
 		position(-1);
 	}
-	
+
 	public Variable(String name, Class type, boolean location) {
 		this(name, type);
 		this.location = location;
 	}
-	
+
 	/**
 	 * Is this variable a location variable?
 	 * @return true if so, false otherwise
@@ -35,11 +35,11 @@ public class Variable extends Expression {
 	public boolean loc() {
 		return this.location;
 	}
-	
+
 	public void loc(boolean loc) {
 		this.location = loc;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Variable) {
@@ -48,7 +48,7 @@ public class Variable extends Expression {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public Expression clone() {
 		Variable variable = new Variable(name, type);
@@ -56,18 +56,18 @@ public class Variable extends Expression {
 		variable.location = this.location;
 		return variable;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return name().hashCode();
 	}
-	
+
 	@Override
 	public String toString() {
 		String var = (position() >= 0) ? name() + ":" + position() : name();
 		return this.location ? "@" + var : var;
 	}
-	
+
 	public String name() {
 		return this.name;
 	}
@@ -76,11 +76,11 @@ public class Variable extends Expression {
 	public Class type() {
 		return this.type;
 	}
-	
+
 	public void type(Class type) {
 		this.type = type;
 	}
-	
+
 	@Override
 	public Set<Variable> variables() {
 		Set<Variable> variables = new HashSet<Variable>();
@@ -107,5 +107,4 @@ public class Variable extends Expression {
 			}
 		};
 	}
-	
 }
