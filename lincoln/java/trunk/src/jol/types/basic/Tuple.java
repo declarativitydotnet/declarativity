@@ -11,7 +11,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import jol.lang.plan.DontCare;
 import jol.lang.plan.Variable;
 import jol.types.exception.JolRuntimeException;
 
@@ -20,30 +19,30 @@ import jol.types.exception.JolRuntimeException;
  * in the tuple must implement the {#link Comparable} interface
  * in order to perform relational comparison operations on the
  * tuple values.  Tuple values must also implement the {#link Serializable}
- * interface in order to ship tuples to remote locations. 
+ * interface in order to ship tuples to remote locations.
  */
 public class Tuple implements Comparable<Tuple>, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	transient private static Long idGen = new Long(0);
-	
+
 	/** The tuple identifier. */
 	transient protected String id;
-	
+
 	/** An ordered list of tuple values. */
 	protected List<Comparable> values;
-	
+
 	/** A timestamp on when this tuple was created. */
 	transient protected Long timestamp;
-	
+
 	/** A tuple refcount. */
 	transient protected Long refCount;
-	
+
 	/** The tuple schema. */
 	transient protected Schema schema;
-	
-	
-	/** 
+
+
+	/**
 	 * Create a new tuple.
 	 * @param values The values that make up the tuple.
 	 */
@@ -54,7 +53,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 			this.values.add(value);
 		}
 	}
-	
+
 	/**
 	 * Create a new tuple.
 	 * @param values The values that make up the tuple.
@@ -63,7 +62,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		initialize();
 		this.values = new ArrayList<Comparable>(values);
 	}
-	
+
 	/**
 	 * Create an empty tuple.
 	 */
@@ -92,9 +91,9 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	private final static int BYTE = 8;
 	private final static int FLOAT = 9;
 	private final static int DOUBLE = 10;
-	
+
 	private boolean warned = false;
-	
+
 	public byte[] toBytes() throws IOException {
 		ByteArrayOutputStream ret = new ByteArrayOutputStream();
 		DataOutputStream out = new DataOutputStream(ret);
@@ -147,7 +146,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		out.close();
 		return ret.toByteArray();
 	}
-	
+
 	public void fromBytes(byte[] bytes) throws IOException {
 		DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
 		short size = in.readShort();
@@ -180,7 +179,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 				in.readFully(obytes);
 				ObjectInputStream oin = new ObjectInputStream(
 										  new ByteArrayInputStream(obytes));
-				
+
 				try {
 					values.add((Comparable) oin.readObject());
 				} catch (ClassNotFoundException e) {
@@ -210,7 +209,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		// We need to manually restore transient fields
 		initialize();
 	}
-	
+
 	@Override
 	public Tuple clone() {
 		Tuple copy    = new Tuple(this.values);
@@ -230,7 +229,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		this.id		  = idGen.toString();
 		idGen += 1L;
 	}
-	
+
 	/**
 	 * The tuple identifier.
 	 * @return The tuple identifier.
@@ -238,7 +237,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public String id() {
 		return this.id;
 	}
-	
+
 	/**
 	 * Set the tuple identifier.
 	 * @param id The identifier to set the tuple identifier to.
@@ -246,11 +245,11 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public void id(String id) {
 		this.id = id;
 	}
-	
+
 	public void insert(int index, Comparable value) {
 		this.values.add(index, value);
 	}
-	
+
 	/**
 	 * Append the tuple value along with the corresponding schema variable.
 	 * @param variable The schema variable.
@@ -263,17 +262,17 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		}
 		this.values.add(value);
 	}
-	
+
 	public void remove(Variable var) throws JolRuntimeException {
 		if (!this.schema.contains(var)) {
-			throw new JolRuntimeException("Unknown variable " + var + 
+			throw new JolRuntimeException("Unknown variable " + var +
 					" in schema " + this.schema);
 		}
 		int pos = this.schema.position(var.name());
 		this.schema.remove(var);
 		this.values.remove(pos);
 	}
-	
+
 	@Override
 	public String toString() {
 		String value = "<";
@@ -287,7 +286,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		value += ">";
 		return value;
 	}
-	
+
 	/**
 	 * The tuple schema.
 	 * @return The tuple schema.
@@ -295,7 +294,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public Schema schema() {
 		return this.schema;
 	}
-	
+
 	/**
 	 * Set the tuple schema.
 	 * @param schema The schema to assign to this tuple.
@@ -308,7 +307,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		}
 		this.schema = schema;
 	}
-	
+
 	/** Comparison based on tuple values (empty tuples are equivalent). */
 	public int compareTo(Tuple other) {
 		if (size() != other.size()) {
@@ -332,7 +331,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		}
 		return 0;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Tuple) {
@@ -349,25 +348,25 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		if (this.values.size() == 0) "null".hashCode();
 
 		StringBuilder sb = new StringBuilder();
 		for (Comparable value : values) {
-			Integer code = value == null ? 
+			Integer code = value == null ?
 					"null".hashCode() : value.hashCode();
 			sb.append(code);
 		}
 		return sb.toString().hashCode();
 	}
-	
+
 	/** The number of attributes in this tuple. */
 	public int size() {
 		return this.values.size();
 	}
-	
+
 	/**
 	 * The value at the indicated field position. Field
 	 * positions are zero-based.
@@ -376,12 +375,12 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public Comparable value(int field) {
 		return this.values.get(field);
 	}
-	
+
 	/**
 	 *	Sets the value to be in the given field position.
 	 *	Field positions are zero-based.
 	 *	@param field The field position.
-	 *	@param value The value to set. 
+	 *	@param value The value to set.
 	 */
 	public void value(int field, Comparable value) {
 		if (this.values.size() == field) {
@@ -391,7 +390,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 			values.set(field, value);
 		}
 	}
-	
+
 	/**
 	 * Get the value at the variable position indicated by the variable name.
 	 * @param name The variable name.
@@ -403,7 +402,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Set the value within the tuple based on the position of the variable.
 	 * @param variable The variable.
@@ -418,7 +417,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 			value(position, value);
 		}
 	}
-	
+
 	/**
 	 * Get the value type based on the variable name.
 	 * @param name The variable name.
@@ -427,7 +426,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public Class type(String name) {
 		return this.schema.type(name);
 	}
-	
+
 	/**
 	 * SEt the refcount of this tuple.
 	 * @param value The refcount value.
@@ -435,27 +434,27 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public void refCount(Long value) {
 		this.refCount = value;
 	}
-	
+
 	public long refCountInc() {
 		this.refCount++;
 		return this.refCount;
 	}
-	
+
 	public long refCountInc(long value) {
 		this.refCount += value;
 		return this.refCount;
 	}
-	
+
 	public long refCountDec() {
 		this.refCount--;
 		return this.refCount;
 	}
-	
+
 	public long refCountDec(long value) {
 		this.refCount -= value;
 		return this.refCount;
 	}
-	
+
 	/**
 	 * Get the refcount of this tuple.
 	 * @return The refcount.
@@ -463,7 +462,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public Long refCount() {
 		return this.refCount;
 	}
-	
+
 	/**
 	 * Set the timestamp of this tuple.
 	 * @param value The timestamp to set.
@@ -471,7 +470,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public void timestamp(Long value) {
 		this.timestamp = value;
 	}
-	
+
 	/**
 	 * Get the timestamp of this tuple.
 	 * @return The timestamp.
@@ -479,7 +478,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	public Long timestamp() {
 		return this.timestamp;
 	}
-	
+
 	/**
 	 * Join this tuple with the inner tuple based on the joining
 	 * attribute values of each tuple.
@@ -488,7 +487,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 */
 	public Tuple join(Tuple inner) {
 		Tuple join = new Tuple();
-		
+
 		/* Take care of all join variables first. */
 		for (Variable variable : schema().variables()) {
 			if (inner.schema().contains(variable)) {
@@ -511,8 +510,8 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 				join.append(variable, value(variable.name()));
 			}
 		}
-		
-		/* Append any variables from the inner that do 
+
+		/* Append any variables from the inner that do
 		 * not match join variable. */
 		for (Variable variable : inner.schema().variables()) {
 			if (!join.schema().contains(variable)) {

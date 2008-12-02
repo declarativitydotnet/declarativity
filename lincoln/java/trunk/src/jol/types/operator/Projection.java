@@ -15,7 +15,6 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
-import jol.types.table.TableName;
 import jol.core.Runtime;
 
 /**
@@ -23,33 +22,33 @@ import jol.core.Runtime;
  * attributes defined by the given predicate (head) schema.
  */
 public class Projection extends Operator {
-	
+
 	private Predicate predicate;
-	
+
 	/** The field accessors of the projection. */
 	private List<TupleFunction<Comparable>> accessors;
-	
+
 	private Schema schema;
-	
+
 	/**
 	 * Create a new projection operator
 	 * @param context THe runtime context.
 	 * @param predicate The predicate whose schema we project to.
-	 * @throws JolRuntimeException 
+	 * @throws JolRuntimeException
 	 */
 	public Projection(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.accessors = new ArrayList<TupleFunction<Comparable>>();
 		this.schema    = new Schema(predicate.name());
-		
+
 		for (int i = 0; i < predicate.arguments().size(); i++) {
 			Expression argument = predicate.arguments().get(i).clone();
 			Set<Variable> variables = argument.variables();
 			for (Variable var : variables) {
 				int position = input.position(var.name());
 				if (position < 0) {
-					throw new PlannerException("Uknown variable " + var + 
+					throw new PlannerException("Uknown variable " + var +
 							" in input schema " + input);
 				}
 				var.position(position);
@@ -60,11 +59,11 @@ public class Projection extends Operator {
 			else {
 				this.schema.append(new DontCare(argument.type()));
 			}
-			
+
 			accessors.add(argument.function());
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return "PROJECTION [" + this.predicate + "]";
