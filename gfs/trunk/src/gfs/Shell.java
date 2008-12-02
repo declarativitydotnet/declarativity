@@ -264,7 +264,7 @@ public class Shell {
 
     private void sendRoutedData(ValueList l) {
         try {
-            String addr = (String)l.get(0);
+            String addr = (String) l.get(0);
             String[] parts = addr.split(":");
             String host = parts[1];
             int controlPort = Integer.parseInt(parts[2]);
@@ -275,7 +275,7 @@ public class Shell {
             DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
             dos.writeByte(DataProtocol.WRITE_OPERATION);
             // the last element of the valuelist is our new chunkid
-            dos.writeInt(Integer.valueOf((String)l.get(l.size()-1)));
+            dos.writeInt(Integer.valueOf((String) l.get(l.size() - 1)));
             // the real size of the list is the list, minus the address we just contacted and the chunkid.
             dos.writeInt(l.size() - 2);
             for (int i = 1; i < l.size() - 2; i++) {
@@ -286,9 +286,8 @@ public class Shell {
         } catch (Exception e) {
             java.lang.System.out.println("Exception reading chunk " +
                                           e.toString());
-            return ;
+            return;
         }
-
     }
 
     private StringBuilder readChunkFromAddress(Integer chunkId, String addr) {
