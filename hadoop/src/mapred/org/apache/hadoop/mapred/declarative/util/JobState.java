@@ -33,6 +33,7 @@ public class JobState implements Comparable<JobState> {
 		this.state   = Constants.JobState.RUNNING;
 		this.maps    = maps;
 		this.reduces = reduces;
+		// System.err.println("MAPS " + maps + ", REDUCES " + reduces);
 	}
 	
 	@Override
@@ -104,9 +105,6 @@ public class JobState implements Comparable<JobState> {
 		else if (this.state == Constants.JobState.SUCCEEDED) {
 			mapProgress = reduceProgress = 1f;
 		}
-		
-		if (this.reduces.size() > 3)
-			System.err.println("REDUCES " + this.reduces.size() + ", " + this.reduces);
 		
 		if (mapProgress == 1f && reduceProgress == 1f) {
 			this.state = Constants.JobState.SUCCEEDED;

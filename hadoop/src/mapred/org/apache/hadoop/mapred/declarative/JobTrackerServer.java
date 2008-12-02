@@ -323,8 +323,9 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			if (job == null) {
 				/* Create a new job and schedule its insertion into the job table. */
 				job = jobTracker.newJob(jobid);
-				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, 
-						         new TupleSet(JobTable.TABLENAME, job), null);
+				context.schedule(JobTracker.PROGRAM, JobTable.INIT, 
+						         new TupleSet(JobTable.INIT, job), null);
+				context.evaluate();
 				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
 				return state.status();
 			}
@@ -333,6 +334,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				return state.status();
 			}
 		} catch (UpdateException e) {
+			throw new IOException(e);
+		} catch (JolRuntimeException e) {
 			throw new IOException(e);
 		}
 	}

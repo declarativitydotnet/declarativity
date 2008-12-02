@@ -18,6 +18,7 @@ import jol.types.table.TableName;
 public class JobTable extends ObjectTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "job");
+	public static final TableName INIT = new TableName(JobTracker.PROGRAM, "initJob");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);
