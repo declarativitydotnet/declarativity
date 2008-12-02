@@ -18,49 +18,54 @@ import jol.net.Network;
 import jol.net.Server;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 
 public class TCP extends Server {
 	private static final TableName ReceiveMessage = new TableName("tcp", "receive");
-	
+
 	private Runtime context;
-	
+
 	private Network manager;
-	
+
 	private ServerSocket server;
-	
+
 	private ThreadGroup threads;
-	
+
 	private Map<Address, Thread> channels;
-		
-	public TCP(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
+
+	public TCP(Runtime context, Network manager, Integer port) throws IOException, UpdateException, JolRuntimeException {
 		super("TCP Server");
 		this.context = context;
 		this.manager = manager;
 		this.server = new ServerSocket(port);
 		this.threads = new ThreadGroup("TCP");
 		this.channels = new HashMap<Address, Thread>();
+
+		// NB: we need to evaluate() here to avoid a race condition: the
+		// TCP program must be registered before we accept any connections
 		context.install("system", "jol/net/tcp/tcp.olg");
+		context.evaluate();
 	}
-	
+
 	@Override
 	public void interrupt() {
 		super.interrupt();
 		this.threads.interrupt();
 		this.threads.destroy();
 	}
-	
+
 	@Override
 	public void run() {
 		while (true) {
 			Connection channel = null;
 			try {
 				Socket socket = this.server.accept();
-				
+
 				channel = new Connection(socket);
 				manager.connection().register(channel);
-				
+
 				Thread thread  = new Thread(this.threads, channel);
 				thread.start();
 				channels.put(channel.address(), thread);
@@ -73,7 +78,7 @@ public class TCP extends Server {
 			}
 		}
 	}
-	
+
 	@Override
 	public Channel open(Address address) {
 		try {
@@ -86,7 +91,7 @@ public class TCP extends Server {
 			return null;
 		}
 	}
-	
+
 	@Override
 	public void close(Channel channel) {
 		if (channels.containsKey(channel.address())) {
@@ -104,13 +109,13 @@ public class TCP extends Server {
 	        throw new RuntimeException(e);
 	    }
     }
-	
+
 	private class Connection extends Channel implements Runnable {
 		private Socket socket;
 		private ObjectInputStream iss;
 		private ObjectOutputStream oss;
 
-		public Connection(Address address) 
+		public Connection(Address address)
 			throws UnknownHostException, IOException {
 			super("tcp", address);
 			IP ip = (IP) address;
@@ -118,14 +123,14 @@ public class TCP extends Server {
 			this.oss    = new ObjectOutputStream(this.socket.getOutputStream());
 			this.iss    = new ObjectInputStream(this.socket.getInputStream());
 		}
-		
+
 		public Connection(Socket socket) throws IOException {
 			super("tcp", new IP(socket.getInetAddress(), socket.getPort()));
 			this.socket = socket;
 			this.oss    = new ObjectOutputStream(this.socket.getOutputStream());
 			this.iss    = new ObjectInputStream(socket.getInputStream());
 		}
-		
+
 		@Override
 		public boolean send(Message packet) {
 			try {
@@ -138,7 +143,7 @@ public class TCP extends Server {
 			}
 			return true;
 		}
-		
+
 		private void close() {
 			try {
 				socket.close();

@@ -26,35 +26,40 @@ import jol.net.Network;
 import jol.net.Server;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 
 public class TCPNIO extends Server {
 	/** The name of the receive message predicate (tcp::receive). */
 	private static final TableName ReceiveMessage = new TableName("tcp", "receive");
-	
+
 	private Runtime context;
-	
+
 	private Network manager;
-	
+
 	private Selector selector;
 
 	private ServerSocketChannel server;
-	
+
 	private List<Connection> newConnections;
 
-	public TCPNIO(Runtime context, Network manager, Integer port) throws IOException, UpdateException {
+	public TCPNIO(Runtime context, Network manager, Integer port) throws IOException, UpdateException, JolRuntimeException {
 		super("TCPNIO Server");
 		this.context = context;
 		this.manager = manager;
 		this.selector = SelectorProvider.provider().openSelector();
 		this.newConnections = new ArrayList<Connection>();
+
+	    // NB: we need to evaluate() here to avoid a race condition: the
+        // TCP program must be registered before we accept any connections
 		context.install("system", "jol/net/tcp/tcp.olg");
-		
-		server = ServerSocketChannel.open();
-		server.configureBlocking(false);
-		server.socket().bind(new InetSocketAddress(port));
-		server.register(this.selector, SelectionKey.OP_ACCEPT);
+		context.evaluate();
+
+		this.server = ServerSocketChannel.open();
+		this.server.configureBlocking(false);
+		this.server.socket().bind(new InetSocketAddress(port));
+		this.server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
 
 	public void cleanup() {
@@ -79,7 +84,7 @@ public class TCPNIO extends Server {
 					}
 					this.newConnections.clear();
 				}
-				
+
 		        /* Iterate over the keys for which events are available */
 				Iterator<SelectionKey> iter = this.selector.selectedKeys().iterator();
 				while (iter.hasNext()) {
@@ -88,7 +93,7 @@ public class TCPNIO extends Server {
 
 					if (!key.isValid())
 					    continue;
-					
+
 					if (key.isAcceptable()) {
 						ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
 						SocketChannel channel = ssc.accept();
@@ -110,7 +115,7 @@ public class TCPNIO extends Server {
 			}
 		}
 	}
-	
+
 	@Override
 	public Channel open(Address address) {
 		try {
@@ -128,7 +133,7 @@ public class TCPNIO extends Server {
 			return null;
 		}
 	}
-	
+
 	@Override
 	public void close(Channel channel) {
 		if (!(channel instanceof Connection))
@@ -138,14 +143,14 @@ public class TCPNIO extends Server {
 		Connection conn = (Connection) channel;
 		conn.close();
 	}
-	
+
 	private void register(Connection connection) {
 		synchronized (this.newConnections) {
 			this.newConnections.add(connection);
 			this.selector.wakeup();
 		}
 	}
-	
+
 	private class Connection extends Channel {
         private static final int LENGTH_WORD_SIZE = Integer.SIZE / Byte.SIZE;
         private static final int READ_DONE = 1;
@@ -165,7 +170,7 @@ public class TCPNIO extends Server {
             this.remoteAddr = channel.socket().toString();
             this.readState = READ_DONE;
 		}
-		
+
 		@Override
 		public boolean send(Message packet) {
 			try {
@@ -187,7 +192,7 @@ public class TCPNIO extends Server {
 			}
 			return true;
 		}
-		
+
 		private void close() {
 			try {
 				this.channel.close();
@@ -236,6 +241,7 @@ public class TCPNIO extends Server {
                                                  this.remoteAddr);
                 else
                     java.lang.System.err.println("Unexpected IO exception: " +
+                                                 e.toString() + ". Client: " +
                                                  this.remoteAddr);
 
                 try {
@@ -283,11 +289,11 @@ public class TCPNIO extends Server {
 	    private void write(ByteBuffer buf, SocketChannel socket) throws IOException {
 	        int len = buf.limit() - buf.position();
 	        totalWritten += len;
-	        
+
 	        while (len > 0) {
 	            len -= socket.write(buf);
 	        }
-	        
+
 	        System.out.println("TCPNIO: Wrote " + totalWritten + " bytes so far");
 	    }
 	}
