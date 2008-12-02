@@ -1,6 +1,9 @@
 package gfs;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -111,7 +114,7 @@ public class Shell {
          */
         for (Integer block : blocks) {
             List<String> locations = getBlockLocations(block);
-            readFile(locations);
+            readBlock(block, locations);
         }
     }
 
@@ -197,8 +200,46 @@ public class Shell {
         return nodeList;
     }
 
-    private void readFile(List<String> locations) {
-        ;
+    private void readBlock(Integer block, List<String> locations) {
+        for (String loc : locations) {
+            StringBuilder sb = readBlockFromAddress(block, loc);
+            if (sb != null) {
+                java.lang.System.out.println("Content of block " +
+                                             block + ": " + sb);
+                return;
+            }
+        }
+
+        throw new RuntimeException("Failed to read block " + block);
+    }
+
+    private StringBuilder readBlockFromAddress(Integer block, String addr) {
+        try {
+            String[] parts = addr.split(":");
+            String host = parts[0];
+            int port = Integer.parseInt(parts[1]);
+            Socket sock = new Socket(host, port);
+            DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
+            dos.writeByte(DataProtocol.READ_OPERATION);
+            dos.writeInt(block.intValue());
+
+            StringBuilder sb = new StringBuilder();
+            byte[] buf = new byte[8192];
+            DataInputStream dis = new DataInputStream(sock.getInputStream());
+            int length = dis.readInt();
+            int remaining = length;
+            while (remaining > 0) {
+                int nread = dis.read(buf);
+                remaining -= nread;
+                sb.append(buf);
+            }
+            sock.close();
+            return sb;
+        } catch (Exception e) {
+            java.lang.System.out.println("Exception reading block from " +
+                                         addr + ": " + e.toString());
+            return null;
+        }
     }
 
     private void doConcatenate(List<String> args) throws UpdateException {
