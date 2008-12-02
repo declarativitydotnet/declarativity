@@ -21,14 +21,14 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 
 public
 gfs_global::file(Master, FName, Blocks) :-
-  //periodic(_,_,_),
+ // periodic(_,_,_),
   appView(Master,From,Decree,Instance,FName,Op,Id),
   Blocks := new ValueList(),
   Op == "i";
 
 timer(periodic,physical,3000,3000,3000);
 
-define(appView,{String,String,String,Integer,String,String,Integer});
+define(appView,keys(0,1,3,4),{String,String,String,Integer,String,String,Integer});
 watch(appView,ae);
 public
 appView(Master,From,Decree,Instance,Name,Op,Id) :-
