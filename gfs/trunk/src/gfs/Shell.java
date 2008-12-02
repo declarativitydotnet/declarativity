@@ -3,7 +3,9 @@ package gfs;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
@@ -101,7 +103,7 @@ public class Shell {
 
         ValueList<String> chunks = getNewChunk(filename);
         sendRoutedData(chunks);
-        
+
     }
 
     private void doRead(List<String> args) throws UpdateException {
@@ -297,16 +299,18 @@ public class Shell {
             int dataPort = Conf.findDataNodeDataPort(host, controlPort);
 
             java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
-            Socket sock = new Socket(host, dataPort);
+            SocketAddress sockAddr = new InetSocketAddress(host, dataPort);
+            SocketChannel inChannel = SocketChannel.open();
+            inChannel.configureBlocking(true);
+            inChannel.connect(sockAddr);
+
+            Socket sock = inChannel.socket();
             DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
             DataInputStream dis = new DataInputStream(sock.getInputStream());
 
             dos.writeByte(DataProtocol.READ_OPERATION);
             dos.writeInt(chunkId.intValue());
             int length = dis.readInt();
-
-            SocketChannel inChannel = sock.getChannel();
-            inChannel.configureBlocking(true);
 
             // XXX: rewrite this to use FileChannel.transferFrom()
             StringBuilder sb = new StringBuilder();
@@ -320,6 +324,7 @@ public class Shell {
                 byte[] ary = buf.array();
                 for (int i = 0; i < ary.length; i++)
                     sb.append((char) ary[i]);
+                buf.rewind();
             }
 
             sock.close();
@@ -327,6 +332,7 @@ public class Shell {
         } catch (Exception e) {
             java.lang.System.out.println("Exception reading chunk from " +
                                          addr + ": " + e.toString());
+            e.printStackTrace();
             return null;
         }
     }
