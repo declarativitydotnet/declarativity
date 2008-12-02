@@ -233,11 +233,13 @@ public class Shell {
             byte[] buf = new byte[8192];
             DataInputStream dis = new DataInputStream(sock.getInputStream());
             int length = dis.readInt();
+
             int remaining = length;
             while (remaining > 0) {
                 int nread = dis.read(buf);
                 remaining -= nread;
-                sb.append(buf);
+                for (int i = 0; i < nread; i++)
+                    sb.append((char) buf[i]);
             }
             sock.close();
             return sb;
