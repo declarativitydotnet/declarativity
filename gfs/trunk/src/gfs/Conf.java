@@ -85,6 +85,16 @@ public class Conf {
         return dataNodes[idx].auxPort;
     }
 
+    public static int findDataNodeDataPort(String host, int controlPort) {
+        for (Host h : dataNodes) {
+            if (h.name.equals(host) && h.port == controlPort)
+                return h.auxPort;
+        }
+
+        throw new IllegalArgumentException("No such data node: " +
+                                           host + ":" + controlPort);
+    }
+
     public static int getNumDataNodes() {
         return dataNodes.length;
     }

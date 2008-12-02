@@ -218,9 +218,12 @@ public class Shell {
     private StringBuilder readChunkFromAddress(Integer chunkId, String addr) {
         try {
             String[] parts = addr.split(":");
-            String host = parts[0];
-            int port = Integer.parseInt(parts[1]);
-            Socket sock = new Socket(host, port);
+            String host = parts[1];
+            int controlPort = Integer.parseInt(parts[2]);
+            int dataPort = Conf.findDataNodeDataPort(host, controlPort);
+
+            java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
+            Socket sock = new Socket(host, dataPort);
             DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
             dos.writeByte(DataProtocol.READ_OPERATION);
             dos.writeInt(chunkId.intValue());

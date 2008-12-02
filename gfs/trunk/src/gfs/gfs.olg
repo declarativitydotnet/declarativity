@@ -56,7 +56,9 @@ response(@Source, Id, Master, false, null) :-
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return a list of the nodes holding that chunk. Otherwise, return
 // an error.
-compute_chunk_locs(@Master, ReqId, Source, generic<(new ValueList()).insert(NodeAddr)) :-
+define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, String, ValueList});
+
+compute_chunk_locs(@Master, ReqId, Source, generic<(new ValueList()).insert(NodeAddr)>) :-
     request(@Master, ReqId, Source, "ChunkLocations", ChunkId),
     chunks(@Master, NodeAddr, ChunkId, _);
 
@@ -164,15 +166,15 @@ dataNodes(Master, Host, max<Tstamp>) :-
 // update from data node
 define(chunks, keys(0, 1, 2),{String, String, String, Long});
 watch(chunks, ae);
-chunks(Master, Host, ChunkId, MaxTstamp) :-
-    sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
-    dataNodes(Master, Host, MaxTstamp),
+chunks(Master, DataNode, ChunkId, MaxTstamp) :-
+    sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
+    dataNodes(Master, DataNode, MaxTstamp),
     Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - MaxTstamp) < 10000L;
 
 delete
-chunks(Master, Host, ChunkId, Ts) :-
-    chunks(Master, Host, ChunkId, Ts),
+chunks(Master, DataNode, ChunkId, Ts) :-
+    chunks(Master, DataNode, ChunkId, Ts),
     clock(_, _, _),
     Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - Ts) > 10000L;
