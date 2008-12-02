@@ -48,16 +48,7 @@ public class DataNode {
     }
 
     public void start() throws JolRuntimeException, UpdateException {
-        File root = new File(fsRoot);
-        if (root.exists()) {
-            if (!root.isDirectory())
-                throw new RuntimeException("FS root is not a directory: " + root);
-        } else {
-            if (!root.mkdir())
-                throw new RuntimeException("Failed to create directory: " + root);
-
-            java.lang.System.out.println("Created new root directory: " + root);
-        }
+        setupFsRoot();
 
         /* Identify the address of the local node */
         Conf.setSelfAddress(Conf.getDataNodeAddress(this.nodeId));
@@ -76,5 +67,18 @@ public class DataNode {
 
         java.lang.System.out.println("DataNode @ " + this.port + " (" +
                                      Conf.getDataNodeDataPort(this.nodeId) + ") ready!");
+    }
+
+    private void setupFsRoot() {
+        File root = new File(fsRoot);
+        if (root.exists()) {
+            if (!root.isDirectory())
+                throw new RuntimeException("FS root is not a directory: " + root);
+        } else {
+            if (!root.mkdir())
+                throw new RuntimeException("Failed to create directory: " + root);
+
+            java.lang.System.out.println("Created new root directory: " + root);
+        }
     }
 }

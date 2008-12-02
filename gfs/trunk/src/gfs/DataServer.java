@@ -67,15 +67,17 @@ public class DataServer implements Runnable {
         private void doReadOperation() throws IOException {
             int blockId = this.in.readInt();
             File blockFile = getBlockFile(blockId);
-            int fileSize = (int) blockFile.length();
 
+            int fileSize = (int) blockFile.length();
             out.writeInt(fileSize);
+
             FileChannel fc = new FileInputStream(blockFile).getChannel();
             long nwrite = fc.transferTo(0, fileSize, this.channel);
             if (nwrite != (long) fileSize)
                 throw new RuntimeException("Failed to write expected file " +
                                            "size: wrote " + nwrite + ", expected " +
                                            fileSize);
+            fc.close();
         }
     }
 

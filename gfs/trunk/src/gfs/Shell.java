@@ -223,6 +223,7 @@ public class Shell {
             dos.writeByte(DataProtocol.READ_OPERATION);
             dos.writeInt(block.intValue());
 
+            // XXX: rewrite this to use nio and Channel.transferFrom()
             StringBuilder sb = new StringBuilder();
             byte[] buf = new byte[8192];
             DataInputStream dis = new DataInputStream(sock.getInputStream());
