@@ -6,18 +6,24 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 
 public class DataServer implements Runnable {
     private class DataWorker implements Runnable {
-        private Socket socket;
+        private SocketChannel channel;
         private String clientAddr;
         private DataInputStream in;
         private DataOutputStream out;
 
-        DataWorker(Socket socket) throws IOException {
-            this.socket = socket;
+        DataWorker(SocketChannel channel) throws IOException {
+            channel.configureBlocking(true);
+            this.channel = channel;
+            Socket socket = channel.socket();
             this.clientAddr = socket.toString();
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
@@ -29,9 +35,7 @@ public class DataServer implements Runnable {
                     try {
                         readCommand();
                     } catch (EOFException e) {
-                        if (!this.socket.isClosed())
-                            this.socket.close();
-
+                        this.channel.close();
                         System.out.println("got EOF from " + this.clientAddr);
                         break;
                     }
@@ -63,15 +67,21 @@ public class DataServer implements Runnable {
         private void doReadOperation() throws IOException {
             int blockId = this.in.readInt();
             File blockFile = getBlockFile(blockId);
-            out.writeInt((int) blockFile.length());
+            int fileSize = (int) blockFile.length();
 
-            FileInputStream fis = new FileInputStream(blockFile);
-            int remaining = (int) blockFile.length();
+            out.writeInt(fileSize);
+            FileChannel fc = new FileInputStream(blockFile).getChannel();
+            long nwrite = fc.transferTo(0, fileSize, this.channel);
+            if (nwrite != (long) fileSize)
+                throw new RuntimeException("Failed to write expected file " +
+                                           "size: wrote " + nwrite + ", expected " +
+                                           fileSize);
         }
     }
 
     private String fsRoot;
     private ThreadGroup workers;
+    private ServerSocketChannel listener;
     private ServerSocket serverSocket;
 
     DataServer(int port, String fsRoot) {
@@ -79,7 +89,11 @@ public class DataServer implements Runnable {
         this.workers = new ThreadGroup("DataWorkers");
 
         try {
-            this.serverSocket = new ServerSocket(port);
+            InetSocketAddress listenAddr = new InetSocketAddress(port);
+            this.listener = ServerSocketChannel.open();
+            this.serverSocket = this.listener.socket();
+            this.serverSocket.setReuseAddress(true);
+            this.serverSocket.bind(listenAddr);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -88,9 +102,9 @@ public class DataServer implements Runnable {
     public void run() {
         while (true) {
             try {
-                Socket socket = this.serverSocket.accept();
+                SocketChannel channel = this.listener.accept();
 
-                DataWorker dw = new DataWorker(socket);
+                DataWorker dw = new DataWorker(channel);
                 Thread t = new Thread(this.workers, dw);
                 t.start();
             } catch (IOException e) {
