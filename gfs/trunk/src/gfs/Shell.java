@@ -91,11 +91,15 @@ public class Shell {
         this.system.start();
     }
 
-    private void doAppend(List<String> args) {
+    private void doAppend(List<String> args) throws UpdateException {
         if (args.size() != 1)
             usage();
 
         String filename = args.get(0);
+
+        ValueList<String> chunks = getNewChunk(filename);
+        sendRoutedData(chunks);
+        
     }
 
     private void doRead(List<String> args) throws UpdateException {
@@ -118,6 +122,45 @@ public class Shell {
             readChunk(chunk, locations);
         }
     }
+
+    private ValueList getNewChunk(final String filename) throws UpdateException {
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+                        if (success.booleanValue() == false)
+                            throw new RuntimeException("Failed to get chunk list for " + filename);
+
+                        Object chunkList = t.value(4);
+                        responseQueue.put(chunkList);
+                        break;
+                    }
+                }
+            }
+        };
+        Table responseTbl = registerCallback(responseCallback, "response");
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("gfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", filename));
+        this.system.schedule("gfs", tblName, req, null);
+
+        ValueList chunkList = (ValueList) this.responseQueue.get(); // XXX: timeout?
+        responseTbl.unregister(responseCallback);
+        return chunkList;
+    }
+
 
     private ValueList getChunkList(final String filename) throws UpdateException {
         final int requestId = generateId();
@@ -213,6 +256,35 @@ public class Shell {
         }
 
         throw new RuntimeException("Failed to read chunk " + chunk);
+    }
+
+    private void sendRoutedData(ValueList l) {
+        try {
+            String addr = (String)l.get(0);
+            String[] parts = addr.split(":");
+            String host = parts[1];
+            int controlPort = Integer.parseInt(parts[2]);
+            int dataPort = Conf.findDataNodeDataPort(host, controlPort);
+
+            java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
+            Socket sock = new Socket(host, dataPort);
+            DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
+            dos.writeByte(DataProtocol.WRITE_OPERATION);
+            // the last element of the valuelist is our new chunkid
+            dos.writeInt(Integer.valueOf((String)l.get(l.size()-1)));
+            // the real size of the list is the list, minus the address we just contacted and the chunkid.
+            dos.writeInt(l.size() - 2);
+            for (int i = 1; i < l.size() - 2; i++) {
+                dos.writeChars((String)l.get(i));
+            }
+            // then write the actual data
+
+        } catch (Exception e) {
+            java.lang.System.out.println("Exception reading chunk " +
+                                          e.toString());
+            return ;
+        }
+
     }
 
     private StringBuilder readChunkFromAddress(Integer chunkId, String addr) {

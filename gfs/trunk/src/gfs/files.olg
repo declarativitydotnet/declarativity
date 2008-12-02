@@ -49,7 +49,7 @@ file(Host,File) :-
 
 
 define(heartBeat,keys(0,1,2),{String,String,String,Long,Long});
-watch(heartBeat,ae);
+//watch(heartBeat,ae);
 heartBeat(Host,Master,File,Tstamp,Id) :-
     file(Host,File),
     masters(Host,Master),

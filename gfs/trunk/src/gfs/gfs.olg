@@ -17,15 +17,6 @@ gfs_global::file(Self, "Foo", Chunks) :-
 watch(master_for_node, ae);
 define(master_for_node, keys(0, 1), {String, String});
 
-watch(start_request,ae);
-
-/*cleanup
-delete
-start_request(Source, ReqId, ReqType, Args) :-
-    start_request(Source, ReqId, ReqType, Args),
-    master_for_node#insert(Source,New);
-*/
-
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
 
@@ -42,6 +33,41 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 // Client node, Request ID, Master node, Success, Results
 define(response, keys(0, 1), {String, Integer, String, Boolean, ValueList});
 watch(response, ae);
+
+// if we get a "NewChunk" request for a file, create a new chunk id
+define(chunkSeq, keys(0), {String, Integer});
+chunkSeq(Master, 0) :-   
+    self(Master);
+
+chunkSeq(Master, I+1) :-
+    chunkSeq(Master, I),
+    request#insert(Master, Id, Source, "NewChunk", FName);
+
+
+response(@Source, Id, Master, true, Stuff) :-
+    request(@Master, Id, Source, "NewChunk", FName),
+    // this needs to be tied into a paxos decree to enforce the ordering.
+    candidate_datanode(@Master, Id, Source, FName, I, Stuff),
+    Stuff.insert(I.toString());
+
+watch(candidate_datanode, ae);
+
+define(candidate_datanode, keys(0, 1), {String, Integer, String, String, Integer, ValueList});
+candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).insert(DataNode)>) :-
+    request#insert(Master, Id, Source, "NewChunk", FName),
+    chunkSeq(Master,I),
+    chunks(Master,DataNode,ChunkId,_),
+    gfs_global::file(Master, FName, _);
+    // this is where it gets interesting.
+    // some distance function over the datanodes...
+
+
+
+// a "NewChunk" request for a nonexistent file causes an error.
+response(@Source, Id, Master, false, null) :-
+    request(@Master, Id, Source, "NewChunk", FName),
+    notin gfs_global::file(@Master, FName, _);
+
 
 // If we get a "ChunkList" request for an extant file, send back its
 // chunks
@@ -150,7 +176,7 @@ response(@Source, Id, Master, false, null) :-
 define(sendHeartBeat, keys(0, 1, 2), {String, String, String, Long, Long});
 define(dataNodes, keys(0, 1), {String, String, Long});
 watch(dataNodes, ae);
-watch(sendHeartBeat, ae);
+//watch(sendHeartBeat, ae);
 timer(clock, physical, 5000, 5000, 1000);
 
 define(ackHeartBeat, keys(0, 1, 2), {String, String, Long});
