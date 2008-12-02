@@ -150,32 +150,32 @@ response(@Source, Id, Master, false, null) :-
     notin gfs_global::file(@Master, FName, _);
 
 /*****************************/
-define(sendHeartBeat,keys(0,1,2),{String,String,String,Long,Long});
-define(dataNodes,keys(0,1),{String,String,Long});
-watch(dataNodes,ae);
-watch(sendHeartBeat,ae);
-timer(clock,physical,5000,5000,1000);
+define(sendHeartBeat, keys(0, 1, 2),{String, String, String, Long, Long});
+define(dataNodes, keys(0, 1),{String, String, Long});
+watch(dataNodes, ae);
+watch(sendHeartBeat, ae);
+timer(clock, physical, 5000, 5000, 1000);
 
-define(ackHeartBeat,keys(0,1,2),{String,String,Long});
+define(ackHeartBeat, keys(0, 1, 2),{String, String, Long});
 
-ackHeartBeat(@Dnode,Master,Id) :-
-    sendHeartBeat(@Master,Dnode,File,Tstamp,Id),
+ackHeartBeat(@Dnode, Master, Id) :-
+    sendHeartBeat(@Master, Dnode, File, Tstamp, Id),
     Id != -1L;
 
-dataNodes(Master,Host,max<Tstamp>) :-
-    sendHeartBeat(Master,Host,File,Tstamp,Id);
+dataNodes(Master, Host, max<Tstamp>) :-
+    sendHeartBeat(Master, Host, File, Tstamp, Id);
 
-define(chunks,keys(0,1,2),{String,String,String,Long});
-watch(chunks,ae);
-chunks(Master,Host,File,MaxTstamp) :-
-    sendHeartBeat(Master,Host,File,Tstamp,Id),
-    dataNodes(Master,Host,MaxTstamp),
+define(chunks, keys(0, 1, 2),{String, String, String, Long});
+watch(chunks, ae);
+chunks(Master, Host, File, MaxTstamp) :-
+    sendHeartBeat(Master, Host, File, Tstamp, Id),
+    dataNodes(Master, Host, MaxTstamp),
     Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - MaxTstamp) < 10000L;
 
 delete
-chunks(Master,Host,File,Ts) :-
-    chunks(Master,Host,File,Ts),
+chunks(Master, Host, File, Ts) :-
+    chunks(Master, Host, File, Ts),
     clock(_,_,_),
     Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - Ts) > 10000L;
