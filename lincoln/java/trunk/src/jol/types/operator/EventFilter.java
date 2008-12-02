@@ -75,8 +75,6 @@ public class EventFilter extends Operator {
 		this.filters = new ArrayList<TupleFunction<Boolean>>();
 		
 		for (jol.lang.plan.Expression arg : predicate) {
-			assert(arg.position() >= 0);
-			
 			if (!(arg instanceof Variable)) {
 				this.filters.add(new Filter(arg.position(), arg.function()));
 			}
@@ -109,9 +107,11 @@ public class EventFilter extends Operator {
 		        valid = filter.evaluate(tuple);
 		        if (!valid) break;
 		    }
-		    if (valid) result.add(tuple);
+		    if (valid) {
+		    	result.add(tuple);
+		    }
 		}
-
+		
 		return result;
 	}
 

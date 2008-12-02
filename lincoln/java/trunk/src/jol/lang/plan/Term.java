@@ -4,6 +4,7 @@ import java.util.Set;
 
 import jol.core.Runtime;
 import jol.types.basic.Schema;
+import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.Operator;
 
@@ -68,5 +69,5 @@ public abstract class Term implements Comparable<Term> {
 	
 	public abstract void set(Runtime context, String program, String rule, Integer position) throws UpdateException;
 	
-	public abstract Operator operator(Runtime context, Schema input);
+	public abstract Operator operator(Runtime context, Schema input) throws PlannerException;
 }

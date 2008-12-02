@@ -19,6 +19,10 @@ public class ObjectReference extends Reference {
 		this.object = object;
 		this.field = field;
 	}
+	
+	public Expression clone() {
+		return new ObjectReference(object, field);
+	}
 
 	@Override
 	public Set<Variable> variables() {

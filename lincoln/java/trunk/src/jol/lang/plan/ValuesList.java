@@ -1,5 +1,6 @@
 package jol.lang.plan;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,6 +15,14 @@ public class ValuesList extends Expression<ValueList> {
 	
 	public ValuesList(List<Expression> values) {
 		this.values = values;
+	}
+	
+	public Expression clone() {
+		List<Expression> values = new ArrayList<Expression>();
+		for (Expression value : this.values) {
+			values.add(value.clone());
+		}
+		return new ValuesList(values);
 	}
 	
 	@Override

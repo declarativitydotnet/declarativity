@@ -31,6 +31,10 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}
+	
+	public Expression clone() {
+		return new Boolean(oper, lhs, rhs);
+	}
 
 	@Override
 	public Class<java.lang.Boolean> type() {

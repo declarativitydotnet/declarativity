@@ -9,9 +9,9 @@ import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 public class Limit extends Aggregate {
-	private Number kConst;
+	protected Number kConst;
 	
-	private Variable kVar;
+	protected Variable kVar;
 
 	public Limit(Variable value, Number kConst) {
 		this(jol.types.function.Aggregate.LIMIT, value, kConst);
@@ -31,6 +31,17 @@ public class Limit extends Aggregate {
 		super(variables(value, kVar), function, ValueList.class);
 		this.kConst = null;
 		this.kVar = kVar;
+	}
+	
+	protected Limit(Limit copy) {
+		super(copy.variables, copy.function, ValueList.class);
+		this.kConst = copy.kConst;
+		this.kVar   = copy.kVar;
+	}
+	
+	@Override
+	public Expression clone() {
+		return new Limit(this);
 	}
 	
 	private static List<AggregateVariable> variables(Variable...variables) {

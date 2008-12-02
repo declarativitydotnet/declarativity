@@ -196,8 +196,8 @@ public class Rule extends Clause {
 			if (!(argument instanceof Variable) &&
 					argument.variables().size() > 0) {
 				Variable dontcare = new DontCare(argument.type());
-				dontcare.position(argument.position());
-				selections.add(new Selection(new Boolean(Boolean.EQUAL, dontcare, argument)));
+				selections.add(new Selection(new Boolean(Boolean.EQUAL, 
+						                     dontcare.clone(), argument)));
 				canonicalization.add(dontcare);
 			}
 			else {
@@ -347,15 +347,23 @@ public class Rule extends Clause {
 		}
 		
 		Schema schema = event.schema().clone();
+		List<Assignment> assignments = new ArrayList<Assignment>();
 		for (Term term : body) {
-			if (!term.equals(event)) {
+			if (term instanceof Assignment) assignments.add((Assignment)term);
+			else if (!term.equals(event)) {
 				Operator oper = term.operator(context, schema);
 				operators.add(oper);
 				schema = oper.schema();
 			}
 		}
 		
-		operators.add(new Projection(context, head));
+		for (Assignment assignment : assignments) {
+			Operator oper = assignment.operator(context, schema);
+			operators.add(oper);
+			schema = oper.schema();
+		}
+		
+		operators.add(new Projection(context, head, schema));
 		
 		if (watch.watched(program, head.name(), jol.types.operator.Watch.Modifier.SEND) != null) {
 			operators.add(

@@ -21,6 +21,14 @@ public class MethodCall extends Expression {
 		this.method = method;
 		this.arguments = arguments;
 	}
+	
+	public Expression clone() {
+		List<Expression> arguments = new ArrayList<Expression>();
+		for (Expression arg : this.arguments) {
+			arguments.add(arg.clone());
+		}
+		return new MethodCall(object.clone(), method, arguments);
+	}
 
 	public Expression object() {
 		return this.object;

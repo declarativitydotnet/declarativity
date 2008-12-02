@@ -14,6 +14,10 @@ public class Value<Type> extends Expression {
 		this.value = value;
 	}
 	
+	public Expression clone() {
+		return new Value(value);
+	}
+	
 	public Type value() {
 		return this.value;
 	}

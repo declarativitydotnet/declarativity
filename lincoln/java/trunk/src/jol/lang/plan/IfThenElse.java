@@ -23,6 +23,10 @@ public class IfThenElse extends Expression {
 		this.thenexpr = thenexpr;
 		this.elseexpr = elseexpr;
 	}
+	
+	public Expression clone() {
+		return new IfThenElse(type, (Boolean)ifexpr.clone(), thenexpr.clone(), elseexpr.clone());
+	}
 
 	@Override
 	public String toString() {

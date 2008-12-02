@@ -54,7 +54,8 @@ public class Assign<C extends Comparable<C> > extends Operator {
 				deltas.add(delta);
 			} catch (Throwable t) {
 				String msg = t.toString() + ". Program " + this.assignment.program() +
-				             ". Error during assignment " + toString();
+				             ". Error during assignment " + toString() + 
+				             ", on input tuple " + tuple;
 				throw new JolRuntimeException(msg, t);
 			}
 		}

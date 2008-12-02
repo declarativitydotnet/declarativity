@@ -34,6 +34,10 @@ public class Math<N extends java.lang.Number> extends Expression<N> {
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}
+	
+	public Expression clone() {
+		return new Math(oper, lhs.clone(), rhs.clone());
+	}
 
 	@Override
 	public Class<N> type() {

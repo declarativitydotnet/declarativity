@@ -187,14 +187,12 @@ public class Schema {
 	public final Schema join(Schema inner) {
 		Schema join = new Schema();
 		for (Variable variable : this.variables) {
-			if (!(variable instanceof DontCare)) {
-				join.append(variable.clone());
-			}
+			join.append((Variable)variable.clone());
 		}
 		
 		for (Variable variable : inner.variables) {
-			if (!(variable instanceof DontCare) && !join.contains(variable)) {
-				join.append(variable.clone());
+			if (!join.contains(variable)) {
+				join.append((Variable)variable.clone());
 			}
 		}
 		return join;

@@ -21,6 +21,20 @@ public class NewClass extends Expression {
 	public NewClass(Class type) {
 		this.type = type;
 	}
+	
+	private NewClass(Class type, Constructor constructor, List<Expression> arguments) {
+		this.type = type;
+		this.constructor = constructor;
+		this.arguments = arguments;
+	}
+	
+	public Expression clone() {
+		List<Expression> arguments = new ArrayList<Expression>();
+		for (Expression arg : this.arguments) {
+			arguments.add(arg.clone());
+		}
+		return new NewClass(type, constructor, arguments);
+	}
 
 	@Override
 	public Class type() {

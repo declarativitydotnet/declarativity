@@ -49,7 +49,7 @@ public class Aggregate extends Expression {
 	}
 	
 	@Override
-	public Aggregate clone() {
+	public Expression clone() {
 		return this.method == null ? new Aggregate(this.variables, this.function, type()) :
 									 new Aggregate(method, function, type());
 	}

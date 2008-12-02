@@ -15,6 +15,10 @@ public class Cast<C> extends Expression {
 		this.expression = expression;
 	}
 	
+	public Expression clone() {
+		return new Cast(type, expression.clone());
+	}
+	
 	@Override
 	public TupleFunction function() {
 		return this.expression.function();

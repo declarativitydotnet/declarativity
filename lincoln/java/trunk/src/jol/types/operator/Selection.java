@@ -32,6 +32,16 @@ public class Selection extends Operator {
 		super(context, selection.program(), selection.rule());
 		this.selection = selection;
 		this.schema = input.clone();
+		for (Variable var : this.selection.requires()) {
+			if (this.schema.contains(var)) {
+				var.position(this.schema.position(var.name()));
+			}
+			else {
+				throw new RuntimeException("Selection " + selection + 
+						". Error: variable " + var + 
+						" not in input schema " + input);
+			}
+		}
 	}
 
 	@Override

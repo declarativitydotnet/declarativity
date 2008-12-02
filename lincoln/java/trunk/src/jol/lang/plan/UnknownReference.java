@@ -13,6 +13,11 @@ public class UnknownReference extends Reference {
 		super(type, name);
 		this.object = object;
 	}
+	
+	public Expression clone() {
+		return this;
+	}
+	
 	@Override
 	public Expression object() {
 		return this.object;

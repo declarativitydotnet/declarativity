@@ -4,6 +4,7 @@ import java.util.Set;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
+import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.Operator;
 import jol.types.operator.Assign;
@@ -53,8 +54,8 @@ public class Assignment extends Term {
 	private Expression<?> value;
 	
 	public Assignment(Variable variable, Expression value) {
-		this.variable = variable;
-		this.value = value;
+		this.variable = (Variable) variable.clone();
+		this.value = value.clone();
 	}
 	
 	@Override
@@ -76,7 +77,17 @@ public class Assignment extends Term {
 	}
 
 	@Override
-	public Operator operator(Runtime context, Schema input) {
+	public Operator operator(Runtime context, Schema input) throws PlannerException {
+		int position = input.position(this.variable.name());
+		
+		for (Variable var : this.value.variables()) {
+			position = input.position(var.name());
+			if (position < 0) {
+				throw new PlannerException("Uknown variable " + var + " in schema " + input);
+			}
+			var.position(position);
+		}
+		
 		return new Assign(context, this, input);
 	}
 

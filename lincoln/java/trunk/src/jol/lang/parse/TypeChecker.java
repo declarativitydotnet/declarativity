@@ -648,7 +648,8 @@ public final class TypeChecker extends Visitor {
 					
 				Class[] types = table.types();
 				if (!subtype(types[argument.position()], argument.type())) {
-					runtime.error("Aggregate type "+ agg.type() + 
+					runtime.error("Aggregate " + argument + ", position " + argument.position() +
+							", type "+ agg.type() + 
 							      " does not match table type " + 
 							      types[argument.position()] + "!", n);
 					return Error.class;

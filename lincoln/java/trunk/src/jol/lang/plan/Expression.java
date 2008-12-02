@@ -29,6 +29,9 @@ public abstract class Expression<C> {
 		this.position = position;
 	}
 	
+	@Override
+	public abstract Expression clone();
+	
 	/**
 	 * @return The java type of the expression value.
 	 */

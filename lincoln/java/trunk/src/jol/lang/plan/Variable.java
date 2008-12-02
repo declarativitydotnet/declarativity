@@ -50,7 +50,7 @@ public class Variable extends Expression {
 	}
 	
 	@Override
-	public Variable clone() {
+	public Expression clone() {
 		Variable variable = new Variable(name, type);
 		variable.position(this.position());
 		variable.location = this.location;

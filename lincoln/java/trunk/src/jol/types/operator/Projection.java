@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jol.lang.plan.DontCare;
 import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
@@ -23,13 +24,12 @@ import jol.core.Runtime;
  */
 public class Projection extends Operator {
 	
-	/** The projection schema. */
-	private Schema schema;
+	private Predicate predicate;
 	
 	/** The field accessors of the projection. */
-	List<TupleFunction<Comparable>> accessors = new ArrayList<TupleFunction<Comparable>>();
+	private List<TupleFunction<Comparable>> accessors;
 	
-	private TableName name;
+	private Schema schema;
 	
 	/**
 	 * Create a new projection operator
@@ -37,45 +37,42 @@ public class Projection extends Operator {
 	 * @param predicate The predicate whose schema we project to.
 	 * @throws JolRuntimeException 
 	 */
-	public Projection(Runtime context, Predicate predicate) throws PlannerException {
+	public Projection(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
-		this.name = predicate.name();
+		this.predicate = predicate;
+		this.accessors = new ArrayList<TupleFunction<Comparable>>();
+		this.schema    = new Schema(predicate.name());
 		
-		List<Variable> variables = new ArrayList<Variable>();
-		List<Expression> arguments = predicate.arguments();
-		List<Variable> predicateVariables = predicate.schema().variables();
-		
-		for (int i = 0; i < arguments.size(); i++) {
-			Expression argument = arguments.get(i);
-			if (argument instanceof Variable) {
-				for (Variable var : ((Variable)argument).variables()) {
-					accessors.add(var.function());
-					variables.add(var);
+		for (int i = 0; i < predicate.arguments().size(); i++) {
+			Expression argument = predicate.arguments().get(i).clone();
+			Set<Variable> variables = argument.variables();
+			for (Variable var : variables) {
+				int position = input.position(var.name());
+				if (position < 0) {
+					throw new PlannerException("Uknown variable " + var + 
+							" in input schema " + input);
 				}
+				var.position(position);
+			}
+			if (argument instanceof Variable) {
+				this.schema.append((Variable) argument);
 			}
 			else {
-				if (predicateVariables.size() <= i) {
-					// Fatal error!
-					throw new PlannerException("Projection error: " +
-							"NOT ENOUGH VARIABLES IN PREDICATE " + predicate.toString() +
-					        " -- PREDICATE VARIABLES: " + predicateVariables.toString() +
-					        " -- PREDICATE ARGUMENTS: " + arguments.toString());
-				}
-				accessors.add(argument.function());
-				variables.add(predicateVariables.get(i));
+				this.schema.append(new DontCare(argument.type()));
 			}
+			
+			accessors.add(argument.function());
 		}
-		this.schema = new Schema(predicate.name(), variables);
 	}
 	
 	@Override
 	public String toString() {
-		return "PROJECTION [" + schema() + "]";
+		return "PROJECTION [" + this.predicate + "]";
 	}
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		TupleSet result = new TupleSet(schema().name());
+		TupleSet result = new TupleSet(predicate.name());
 		for (Tuple tuple : tuples) {
 			try {
 				List<Comparable> values = new ArrayList<Comparable>();
@@ -86,10 +83,8 @@ public class Projection extends Operator {
 				projection.schema(schema());
 				result.add(projection);
 			} catch (Throwable e) {
-				System.err.println("PROJECTION ERROR " + this.name
-						+ ": PROGRAM " + this.program + " RULE " + this.rule + 
-						" -- SCHEMA " + this.schema + " tuple " + tuple + 
-						" TUPLE SCHEMA " + tuple.schema());
+				System.err.println("PROJECTION ERROR " + this.predicate
+						+ ": PROGRAM " + this.program + " RULE " + this.rule);
 				System.exit(0);
 			}
 		}
@@ -103,6 +98,6 @@ public class Projection extends Operator {
 
 	@Override
 	public Set<Variable> requires() {
-		return new HashSet<Variable>(schema().variables());
+		return new HashSet<Variable>(predicate.requires());
 	}
 }

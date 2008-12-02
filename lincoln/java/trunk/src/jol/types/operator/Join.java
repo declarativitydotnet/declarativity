@@ -117,7 +117,6 @@ public abstract class Join extends Operator {
 		this.predicate = predicate;
 		this.filters = filters(predicate);
 		this.schema = input.join(predicate.schema());
-		
 	}
 	
 	@Override

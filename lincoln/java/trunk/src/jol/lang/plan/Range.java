@@ -83,6 +83,10 @@ public class Range<C extends Comparable<C>> extends Expression {
 		this.begin = begin;
 		this.end = end;
 	}
+	
+	public Expression clone() {
+		return new Range(oper, begin.clone(), end.clone());
+	}
 
 	@Override
 	public Class type() {

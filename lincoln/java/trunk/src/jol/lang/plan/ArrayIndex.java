@@ -20,6 +20,11 @@ public class ArrayIndex extends Expression {
 	}
 	
 	@Override
+	public Expression clone() {
+		return new ArrayIndex(array, index);
+	}
+	
+	@Override
 	public Class type() {
 		return array.type().getComponentType();
 	}

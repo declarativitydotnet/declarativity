@@ -258,7 +258,6 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 */
 	public void append(Variable variable, Comparable value) {
 		if (variable != null) {
-			variable = variable.clone();
 			variable.position(this.schema.size());
 			this.schema.append(variable);
 		}
@@ -492,10 +491,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		
 		/* Take care of all join variables first. */
 		for (Variable variable : schema().variables()) {
-			if (variable instanceof DontCare) {
-				continue;
-			}
-			else if (inner.schema().contains(variable)) {
+			if (inner.schema().contains(variable)) {
 				Comparable outerValue = value(variable.name());
 				Comparable innerValue = inner.value(variable.name());
 				if (outerValue == null || innerValue == null) {
@@ -519,10 +515,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		/* Append any variables from the inner that do 
 		 * not match join variable. */
 		for (Variable variable : inner.schema().variables()) {
-			if (variable instanceof DontCare) {
-				continue;
-			}
-			else if (!join.schema().contains(variable)) {
+			if (!join.schema().contains(variable)) {
 				join.append(variable, inner.value(variable.name()));
 			}
 		}

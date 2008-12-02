@@ -18,6 +18,10 @@ public class StaticReference extends Reference {
 		this.field = field;
 	}
 	
+	public Expression clone() {
+		return new StaticReference(type, field);
+	}
+	
 	public Field field() {
 		return this.field;
 	}

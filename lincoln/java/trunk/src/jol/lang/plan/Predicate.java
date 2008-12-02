@@ -1,5 +1,6 @@
 package jol.lang.plan;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -69,8 +70,6 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	private Arguments arguments;
 	
-	private Schema schema;
-	
 	public Predicate(Runtime context, boolean notin, TableName name, Event event, List<Expression> arguments) {
 		super();
 		this.context = context;
@@ -86,7 +85,6 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.notin = notin;
 		this.name = name;
 		this.event = event;
-		this.schema = schema;
 		this.arguments = new Arguments(this, schema.variables());
 	}
 	
@@ -96,12 +94,24 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.notin     = pred.notin;
 		this.name      = pred.name;
 		this.event     = pred.event;
-		this.arguments = pred.arguments;
-		this.schema    = pred.schema;
+		this.arguments = pred.arguments != null ? pred.arguments.clone() : null;
+	}
+	
+	public Predicate clone() {
+		return new Predicate(this);
 	}
 	
 	public Schema schema() {
-		return schema;
+		List<Variable> variables = new ArrayList<Variable>();
+		for (Expression e : this.arguments) {
+			if (e instanceof Variable) {
+				variables.add((Variable) e);
+			}
+			else {
+				variables.add(new DontCare(e.type()));
+			}
+		}
+		return new Schema(this.name, variables);
 	}
 	
 	public boolean notin() {
@@ -159,7 +169,6 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	@Override
 	public String toString() {
-		assert(schema.size() == arguments.size());
 		String value = (notin ? "notin " : "") + name + "(";
 		if (arguments.size() == 0) {
 			return value + ")";
@@ -187,7 +196,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		/* Determine the join and lookup keys. */
 		Key lookupKey = new Key();
 		Key indexKey  = new Key();
-		for (Variable var : this.schema.variables()) {
+		for (Variable var : schema().variables()) {
 			if (input.contains(var)) {
 				indexKey.add(var.position());
 				lookupKey.add(input.variable(var.name()).position());
@@ -224,16 +233,6 @@ public class Predicate extends Term implements Iterable<Expression> {
 	@Override
 	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
 		context.catalog().table(PredicateTable.TABLENAME).force(new Tuple(program, rule, position, event.toString(), this));
-		
-		this.schema = new Schema(name());
-		for (Expression arg : arguments) {
-			if (arg instanceof Variable) {
-				this.schema.append((Variable) arg);
-			}
-			else {
-				this.schema.append(new DontCare(arg.type()));
-			}
-		}
 	}
 	
 }

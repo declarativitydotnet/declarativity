@@ -24,26 +24,41 @@ public class StaticMethodCall extends Expression {
 
 	public StaticMethodCall(Class type, Method method, List<Expression> arguments) {
 		this.type = type;
+		this.field = null;
 		this.method = method;
 		this.arguments = arguments;
 	}
 
 	public StaticMethodCall(Field field, Method method, List<Expression> arguments) {
+		this.type = null;
 		this.field = field;
 		this.method = method;
 		this.arguments = arguments;
 	}
 
+	public Expression clone() {
+		List<Expression> arguments = new ArrayList<Expression>();
+		for (Expression arg : this.arguments) {
+			arguments.add(arg.clone());
+		}
+		return this.type == null ? 
+				new StaticMethodCall(type, method, arguments) :
+			    new StaticMethodCall(field, method, arguments);
+	}
+	
 	@Override
 	public String toString() {
-		String name;
-		if (field != null) {
+		String name = "";
+		if (field != null && method != null) {
 			name = this.field.getName() + "." + method.getName();
 		}
-		else {
+		else if (type != null && method != null) {
 			name = type.getName() + "." + method.getName();
 		}
-
+		else {
+			return name;
+		}
+		
 		if (arguments.size() == 0) {
 			return name + "()";
 		}

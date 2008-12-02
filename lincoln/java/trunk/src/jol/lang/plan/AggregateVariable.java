@@ -16,6 +16,11 @@ public class AggregateVariable extends Variable {
 	}
 	
 	@Override
+	public Expression clone() {
+		return new AggregateVariable(name, type);
+	}
+	
+	@Override
 	public TupleFunction function() {
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
