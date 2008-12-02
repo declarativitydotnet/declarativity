@@ -42,7 +42,7 @@ public class DataNode {
         this.nodeId = nodeId;
         this.fsRoot = fsRoot;
         this.port = Conf.getDataNodeControlPort(nodeId);
-        this.dserver = new DataServer(Conf.getDataNodeDataPort(nodeId));
+        this.dserver = new DataServer(Conf.getDataNodeDataPort(nodeId), fsRoot);
         this.serverThread = new Thread(this.dserver);
         this.serverThread.start();
     }
@@ -55,7 +55,7 @@ public class DataNode {
         } else {
             if (!root.mkdir())
                 throw new RuntimeException("Failed to create directory: " + root);
-            
+
             java.lang.System.out.println("Created new root directory: " + root);
         }
 
@@ -65,7 +65,7 @@ public class DataNode {
         this.system = Runtime.create(this.port);
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/files.olg"));
         this.system.evaluate();
-        
+
         /* Identify the data directory */
         TableName tblName = new TableName("gfs", "datadir");
         TupleSet datadir = new TupleSet(tblName);
