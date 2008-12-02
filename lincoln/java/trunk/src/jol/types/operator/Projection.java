@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jol.core.Runtime;
 import jol.lang.plan.DontCare;
 import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
@@ -15,7 +16,6 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
-import jol.core.Runtime;
 
 /**
  * A Projection operator "projects" the input tuples onto a subset of

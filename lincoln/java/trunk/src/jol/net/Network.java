@@ -7,24 +7,25 @@ import java.util.Map;
 import jol.core.Runtime;
 import jol.net.tcp.TCPNIO;
 import jol.types.basic.Tuple;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 
 /**
- * The Network manager class. 
- * 
+ * The Network manager class.
+ *
  * <p>
  * The network manager is responsible for the initialization and
  * maintenance of all networking components.
  */
 public final class Network {
 	private Runtime context;
-	
+
 	private NetworkBuffer buffer;
-	
+
 	private Connection connection;
-	
-	private Map<String, Server> servers; 
-	
+
+	private Map<String, Server> servers;
+
 	/**
 	 * Create a new network manager.
 	 * This will allocate a network buffer table {@link NetworkBuffer} and a
@@ -36,26 +37,28 @@ public final class Network {
 		this.buffer        = new NetworkBuffer(context);
 		this.connection    = new Connection(context, this);
 		this.servers       = new HashMap<String, Server>();
-		
+
 		context.catalog().register(this.buffer);
 		context.catalog().register(this.connection);
 	}
-	
+
 	/**
 	 * Install network components.
 	 * @param port The listen port.
 	 * @throws IOException
 	 * @throws UpdateException
+	 * @throws JolRuntimeException
 	 */
-	public final void install(Integer port) throws IOException, UpdateException {
+	public final void install(Integer port) throws IOException, UpdateException, JolRuntimeException {
 		/* Install protocols */
 		server("tcp", new TCPNIO(context, this, port));
 		// server("udp", new UDP(port+1));
-		
+
 		/* Install network layer application */
 		context.install("network", "jol/net/network.olg");
+		context.evaluate();
 	}
-	
+
 	/**
 	 * Shutdown all network connections.
 	 */
@@ -71,7 +74,7 @@ public final class Network {
 			// TODO Log error.
 		}
 	}
-	
+
 	/**
 	 * Method for creating a tuple that can be inserted into the network buffer.
 	 * @param direction The message direction (send/receive)
@@ -82,7 +85,7 @@ public final class Network {
 	public final static Tuple tuple(String direction, Address address, Message message) {
 		return new Tuple(direction, address, message);
 	}
-	
+
 	/**
 	 * Get the network buffer.
 	 * @return The network buffer object.
@@ -90,7 +93,7 @@ public final class Network {
 	public NetworkBuffer buffer() {
 		return this.buffer;
 	}
-	
+
 	/**
 	 * Start and register a new protocol server.
 	 * @param protocol The protocol name.
@@ -100,7 +103,7 @@ public final class Network {
 		server.start();
 		this.servers.put(protocol, server);
 	}
-	
+
 	/**
 	 * Create a new channel.
 	 * NOTE: Will not register channel with {@link Connection} table.
@@ -116,7 +119,7 @@ public final class Network {
 
 		return servers.get(protocol).open(address);
 	}
-	
+
 	/**
 	 * Close the connection channel and stop its thread.
 	 * This method will NOT remove the channel from the
@@ -124,7 +127,7 @@ public final class Network {
 	 * either deleting from the {@link #Connection} table
 	 * or calling the {@link Connection#unregister(Channel)}
 	 * method.
-	 * @param channel Connection channel to be stopped. 
+	 * @param channel Connection channel to be stopped.
 	 */
 	public void close(Channel channel) {
 		if (!servers.containsKey(channel.protocol())) {
@@ -133,7 +136,7 @@ public final class Network {
 		}
 		servers.get(channel.protocol()).close(channel);
 	}
-	
+
 	/**
 	 * Get the connection table. The purpose of this method is to
 	 * allow protocol servers to register and unregister connections.
