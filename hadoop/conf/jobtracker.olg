@@ -3,6 +3,7 @@ program jobtracker;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.util.JobState;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
@@ -15,17 +16,19 @@ import java.lang.Enum;
 
 /*************** TASK INIT *********************/
 
+define(initJob,  {JobID, String, String, Wrapper, String, String, JobPriority, Long, JobState});
 define(initTask, {JobID, Wrapper, String, TaskID, Constants.TaskType, Integer, Wrapper, Integer, TaskState});
 define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 define(taskFile, {JobID, TaskID, ValueList});
 
+job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
+	initJob(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status);
 
 initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
-	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status),
-	Status.state() == Constants.JobState.PREP;
+	initJob(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status);
 	
 /* Break out of the current fixpoint thread (using 'async') since taskCreate table function
-   makes calls to the DFS. */
+   makes blocking calls to the DFS. */
 async initTask
 task(JobID, TaskID, Type, Partition, Split, MapCount, Status) :-
 	taskCreate(initTask(JobID, JobConf, JobFile, TaskID, Type, Partition, Split, MapCount, Status));
@@ -67,57 +70,48 @@ networkDistance(Location1, Location2, Distance) :-
 
 
 /*************** Job Status Maintenance *********************/
+import jol.types.basic.ComparableSet;
 	
-define(jobStateUpdate, {JobID});
-define(jobState, {JobID, JobState});
-define(jobMapCount, keys(0), {JobID, Integer});
-define(jobReduceCount, keys(0), {JobID, Integer});
-
-/* Update the job state on any change to the task table. */
-jobStateUpdate(JobID) :- task(JobID);
-
-watch(job, a);
-/* Compute the job state based on task state. */
-jobState(JobID, generic<(new JobState(JobID, Maps, Reduces)).task(Type, TaskState)>) :-
-	jobStateUpdate(JobID),
-	task(JobID, _, Type, _, _, _, TaskState),
-	jobMapCount(JobID, Maps), jobReduceCount(JobID, Reduces),	
-	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState);
+define(mapTasks,    keys(0), {JobID, ComparableSet});
+define(reduceTasks, keys(0), {JobID, ComparableSet});
+define(updateJob, {JobID});
 
 /* Update the job state. */
-job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobState) :-
-	jobState(JobID, JobState),
-	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _);
-    
-mapCount
-jobMapCount(JobId, count<TaskId>) :-
-	task(JobId, TaskId, Type, _, _, _, _),
-	Type == Constants.TaskType.MAP;
+updateJobState
+job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
+	updateJob(JobId), mapTasks(JobId, Maps), reduceTasks(JobId, Reduces),
+	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _),
+	Status := new JobState(JobId, Maps, Reduces);
+	
+updateJob(JobId) :- mapTasks(JobId);
+updateJob(JobId) :- reduceTasks(JobId);
+	
+watch(job, a);
+watch(task, a);
 
-reduceCount
-jobReduceCount(JobId, count<TaskId>) :-
-	task(JobId, TaskId, Type, _, _, _, _),
+mapTaskStatus
+mapTasks(JobId, set<Status>) :-
+	task(JobId, TaskId, Type, _, _, _, Status),
+	Type == Constants.TaskType.MAP;
+	
+reduceTasks(JobId, set<Status>) :-
+	task(JobId, TaskId, Type, _, _, _, Status),
 	Type == Constants.TaskType.REDUCE;
 	
-
+    
 /*************** Task Status Maintenance *********************/
 
-define(taskStateUpdate, {JobID, TaskID});
 define(taskState, {JobID, TaskID, TaskState});
-	
-/* Update the job state on any change to the task table. */
-stateUpdate
-taskStateUpdate(JobID, TaskID) :- 
-	taskAttempt(JobID, TaskID, _, _, _, _, _, _, _, Start, _), Start > 0L;
 
 computeTaskState
 taskState(JobID, TaskID, generic<(new TaskState(JobID, TaskID)).attempt(AttemptID, Progress, State, Phase, Start, Finish)>) :-
-	taskStateUpdate(JobID, TaskID),
-	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, _, Start, Finish);
+	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, _, Start, Finish),
+	task(JobID, TaskID, Type, _, _, _, TaskStatus),
+	Start > 0L,
+	TaskStatus.state() == Constants.TaskState.UNASSIGNED || TaskStatus.state() == Constants.TaskState.RUNNING;
 	
-task(JobID, TaskID, Type, Partition, Split, MapCount, TaskState) :-
-	taskState(JobID, TaskID, TaskState),
+task(JobID, TaskID, Type, Partition, Split, MapCount, TaskStatus) :-
+	taskState(JobID, TaskID, TaskStatus),
 	task(JobID, TaskID, Type, Partition, Split, MapCount, _);
-	
 	
 	

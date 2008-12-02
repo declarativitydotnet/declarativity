@@ -35,7 +35,9 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, Tracker
 	taskAttempts(JobId, TaskId, Attempts),
 	State := TaskState.RUNNING,
 	Phase := TaskPhase.STARTING,
-	AttemptID := Attempts + 1;
+	AttemptID := Attempts;
+	
+watch(jobtracker::taskTrackerAction, a);
 	
 actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
@@ -73,13 +75,11 @@ jobQueue(JobId, Priority, SubmitTime, TaskType.REDUCE) :-
 	
 public
 jobMapTasks(JobId, count<TaskId>) :-
-	jobQueue(JobId),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, _),
 	Type == TaskType.MAP;
 	
 public
 jobFinishedMapTasks(JobId, count<TaskId>) :-
-	jobQueue(JobId),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	Type == TaskType.MAP, Status.state() == TaskState.SUCCEEDED;
 	
@@ -95,7 +95,7 @@ taskProgress(JobId, Type, min<Progress>, max<Progress>, avg<Progress>) :-
 
 /******************** Schedule Tasks *******************/
 	
-define(trackerSlots, keys(0), {String, String, Integer, Integer});
+define(trackerSlots, keys(0), {String, String, Long, Integer, Integer});
 define(candidate,    keys(),  {JobID, TaskID, TaskType, String, Long});
 define(mapProposal,    {JobID, String, ValueList});
 define(reduceProposal, {JobID, String, ValueList});
@@ -119,26 +119,27 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	
 /* Update tracker slots taken directly from tracker heartbeat. */
 public
-trackerSlots(TrackerName, Host, MaxMap - MapCount, MaxReduce - ReduceCount) :-
+trackerSlots(TrackerName, Host, Timestamp, MaxMap - MapCount, MaxReduce - ReduceCount) :-
 	jobtracker::taskTracker(TrackerName, Host, HttpPort, Timestamp, Failures, MapCount, ReduceCount, MaxMap, MaxReduce);
 
 /* Priority 1: Schedule unassigned tasks. */
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
-	trackerSlots(TrackerName, Host, Maps, Reduces),
+	trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	jobQueue(JobId, JPriority, SubmitTime, Type),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
-	Status.state() == TaskState.UNASSIGNED,
+    notin jobtracker::taskAttempt(JobId, TaskId, _, _, _, _, _, _, _, _, _),
 	Type == TaskType.MAP && Maps > 0 || Type == TaskType.REDUCE && Reduces > 0,
 	Priority := Function.priority(1, JPriority, SubmitTime);
 	
 /* Priority 2: Schedule failed tasks. */
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
-	trackerSlots(TrackerName, Host, Maps, Reduces),
+	trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	jobQueue(JobId, JPriority, SubmitTime, Type),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	Status.state() == TaskState.FAILED,
+	Status.attempts() < 3,
     notin jobtracker::taskAttempt(JobId, TaskId, _, _, TaskState.FAILED, _, _, TrackerName, _, _, _),
 	Type == TaskType.MAP && Maps > 0 || Type == TaskType.REDUCE && Reduces > 0,
 	Priority := Function.priority(2, JPriority, SubmitTime);
@@ -147,7 +148,7 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 /*
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
-	trackerSlots(TrackerName, Host, Maps, Reduces),
+	trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	jobQueue(JobId, JPriority, JobSubmitTime, Type),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	taskProgress(JobId, Type, MinProgress, MaxProgress, AvgProgress),
@@ -167,14 +168,14 @@ define(bestMapDistance, {JobID, TaskID, String, Integer, Integer, Integer});
 /* Propose the map tasks. */
 mapProposal(JobId, TrackerName, bottomk<Priority,MapSlots>) :-
 	candidate(JobId, TaskId, Type, TrackerName, Priority),
-	trackerSlots(TrackerName, Host, MapSlots, ReduceSlots),
+	trackerSlots(TrackerName, Host, _, MapSlots, ReduceSlots),
 	Type == TaskType.MAP, MapSlots > 0;
 	
 /******************** Schedule Reduce Tasks *******************/
 
 reduceProposal(JobId, TrackerName, bottomk<Priority,ReduceSlots>) :-
 	candidate(JobId, TaskId, Type, TrackerName, Priority),
-	trackerSlots(TrackerName, Host, MapSlots, ReduceSlots),
+	trackerSlots(TrackerName, Host, _, MapSlots, ReduceSlots),
 	Type == TaskType.REDUCE, ReduceSlots > 0;
 	
 	
