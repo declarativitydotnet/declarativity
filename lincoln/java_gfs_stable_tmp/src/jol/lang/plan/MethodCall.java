@@ -11,13 +11,13 @@ import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
 
 public class MethodCall extends Expression {
-	
+
 	private Expression<?> object;
-	
+
 	private Method method;
-	
+
 	private List<Expression> arguments;
-	
+
 	public MethodCall(Expression object, Method method, List<Expression> arguments) {
 		this.object = object;
 		this.method = method;
@@ -27,20 +27,20 @@ public class MethodCall extends Expression {
 	public Expression object() {
 		return this.object;
 	}
-	
+
 	public Method method() {
 		return this.method;
 	}
-	
+
 	public List<Expression> arguments() {
 		return this.arguments;
 	}
-	
+
 	@Override
 	public Class type() {
 		return method.getReturnType() == Void.class ? this.object.type() : method.getReturnType();
 	}
-	
+
 	@Override
 	public String toString() {
 		String value = method.getName() + "(";
@@ -71,7 +71,7 @@ public class MethodCall extends Expression {
 		for (Expression argument : this.arguments) {
 			argFunctions.add(argument.function());
 		}
-		
+
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				Object instance = objectFunction.evaluate(tuple);
@@ -88,12 +88,12 @@ public class MethodCall extends Expression {
 					else {
 						return MethodCall.this.method.invoke(instance, arguments);
 					}
-				} catch (Throwable e) {
-					String error = "ERROR: method invocation on " + 
+				} catch (Throwable t) {
+					String error = "ERROR: method invocation on " +
 							instance + " method " +
-							MethodCall.this.method.toString() + 
+							MethodCall.this.method.toString() +
 							" arguments " + arguments;
-					throw new JolRuntimeException(error);
+					throw new JolRuntimeException(error, t);
 				}
 			}
 

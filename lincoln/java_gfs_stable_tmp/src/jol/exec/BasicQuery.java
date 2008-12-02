@@ -14,13 +14,13 @@ import jol.core.Runtime;
 public class BasicQuery extends Query {
 	private List<Operator> body;
 
-	public BasicQuery(Runtime context, String program, String rule, 
+	public BasicQuery(Runtime context, String program, String rule,
 			          Boolean isPublic, Boolean isAsync, Boolean isDelete,
 					  Predicate event, Predicate head, List<Operator> body) {
 		super(context, program, rule, isPublic, isAsync, isDelete, event, head);
 		this.body = body;
 	}
-	
+
 	@Override
 	public String toString() {
 		String query = "QUERY RULE: " + rule() +  " ||: EVENT " + input().toString();
@@ -37,17 +37,17 @@ public class BasicQuery extends Query {
 	@Override
 	public TupleSet evaluate(TupleSet input) throws JolRuntimeException {
 		if (!input.name().equals(input().name())) {
-			throw new JolRuntimeException("Query expects event " + input().name() + 
+			throw new JolRuntimeException("Query expects event " + input().name() +
 					                     " but got event " + input.name());
 		}
-		
+
 		TupleSet tuples = new TupleSet(input.name());
 		for (Tuple tuple : input) {
 			tuple = tuple.clone();
 			tuple.schema(input().schema().clone());
 			tuples.add(tuple);
 		}
-		
+
 		for (Operator oper : body) {
 			try {
 				tuples = (TupleSet) oper.evaluate(tuples);
@@ -55,10 +55,10 @@ public class BasicQuery extends Query {
 				t.printStackTrace();
 				String error = "ERROR: " + t.toString();
 				error += ". Query " + toString() + ". At operator " + oper;
-				throw new JolRuntimeException(error);
+				throw new JolRuntimeException(error, t);
 			}
 		}
-		
+
 		return tuples;
 	}
 
