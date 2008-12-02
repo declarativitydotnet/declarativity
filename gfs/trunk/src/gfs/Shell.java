@@ -4,6 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -79,7 +81,7 @@ public class Shell {
         if (port == null) {
             port = "5501";
         }
-        Conf.setSelfAddress("tcp:localhost:"+port);
+        Conf.setSelfAddress("tcp:localhost:" + port);
         this.system = Runtime.create(Integer.valueOf(port));
 
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
@@ -297,22 +299,29 @@ public class Shell {
             java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
             Socket sock = new Socket(host, dataPort);
             DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
+            DataInputStream dis = new DataInputStream(sock.getInputStream());
+
             dos.writeByte(DataProtocol.READ_OPERATION);
             dos.writeInt(chunkId.intValue());
-
-            // XXX: rewrite this to use nio and Channel.transferFrom()
-            StringBuilder sb = new StringBuilder();
-            byte[] buf = new byte[8192];
-            DataInputStream dis = new DataInputStream(sock.getInputStream());
             int length = dis.readInt();
 
+            SocketChannel inChannel = sock.getChannel();
+            inChannel.configureBlocking(true);
+
+            // XXX: rewrite this to use FileChannel.transferFrom()
+            StringBuilder sb = new StringBuilder();
+            ByteBuffer buf = ByteBuffer.allocate(8192);
             int remaining = length;
             while (remaining > 0) {
-                int nread = dis.read(buf);
+                int nread = inChannel.read(buf);
+                if (nread == -1)
+                    throw new IOException("Unexpected EOF from data node");
                 remaining -= nread;
-                for (int i = 0; i < nread; i++)
-                    sb.append((char) buf[i]);
+                byte[] ary = buf.array();
+                for (int i = 0; i < ary.length; i++)
+                    sb.append((char) ary[i]);
             }
+
             sock.close();
             return sb;
         } catch (Exception e) {
