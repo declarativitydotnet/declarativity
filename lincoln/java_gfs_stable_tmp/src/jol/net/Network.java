@@ -56,6 +56,7 @@ public final class Network {
 
 		/* Install network layer application */
 		context.install("network", "jol/net/network.olg");
+		context.evaluate();
 	}
 
 	/**
