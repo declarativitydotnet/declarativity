@@ -9,8 +9,9 @@ import gfs.Shell;
 define(self, keys(0), {String});
 self(Conf.getSelfAddress());
 
-gfs_global::file(Self, "Foo", Blocks) :-
-    self(Self), Blocks := new ValueList({1,2,3});
+gfs_global::file(Self, "Foo", Chunks) :-
+    self(Self),
+    Chunks := new ValueList({1,2,3});
 
 // Node, Master node
 watch(master_for_node, ae);
@@ -56,8 +57,7 @@ response(@Source, Id, Master, false, null) :-
 // of, return a list of the nodes holding that chunk. Otherwise, return
 // an error.
 compute_chunk_locs(@Master, ReqId, Source, generic<(new ValueList()).insert(NodeAddr)) :-
-    request(@Master, ReqId, Source, "ChunkLocations", ChunkIdStr),
-    ChunkId := Integer.valueOf(ChunkIdStr),
+    request(@Master, ReqId, Source, "ChunkLocations", ChunkId),
     chunks(@Master, NodeAddr, ChunkId, _);
 
 response(@Source, Id, Master, true, NodeList) :-
@@ -65,8 +65,7 @@ response(@Source, Id, Master, true, NodeList) :-
     compute_chunk_locs(@Master, Id, Source, NodeList);
 
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "ChunkLocations", ChunkIdStr),
-    ChunkId := Integer.valueOf(ChunkIdStr),
+    request(@Master, Id, Source, "ChunkLocations", ChunkId),
     notin chunks(@Master, _, ChunkId, _);
 
 // If we get a "cat" request for a file that exists, send back the
@@ -146,13 +145,13 @@ response(@Source, Id, Master, false, null) :-
     notin gfs_global::file(@Master, FName, _);
 
 /*****************************/
-define(sendHeartBeat, keys(0, 1, 2),{String, String, String, Long, Long});
-define(dataNodes, keys(0, 1),{String, String, Long});
+define(sendHeartBeat, keys(0, 1, 2), {String, String, String, Long, Long});
+define(dataNodes, keys(0, 1), {String, String, Long});
 watch(dataNodes, ae);
 watch(sendHeartBeat, ae);
 timer(clock, physical, 5000, 5000, 1000);
 
-define(ackHeartBeat, keys(0, 1, 2),{String, String, Long});
+define(ackHeartBeat, keys(0, 1, 2), {String, String, Long});
 
 ackHeartBeat(@Dnode, Master, Id) :-
     sendHeartBeat(@Master, Dnode, _, _, Id),
@@ -174,6 +173,6 @@ chunks(Master, Host, ChunkId, MaxTstamp) :-
 delete
 chunks(Master, Host, ChunkId, Ts) :-
     chunks(Master, Host, ChunkId, Ts),
-    clock(_,_,_),
+    clock(_, _, _),
     Ctime := java.lang.System.currentTimeMillis(),
     (Ctime - Ts) > 10000L;
