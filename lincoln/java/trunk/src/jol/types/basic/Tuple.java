@@ -24,10 +24,10 @@ import jol.types.exception.JolRuntimeException;
 public class Tuple implements Comparable<Tuple>, Serializable {
 	private static final long serialVersionUID = 1L;
 
-	transient private static Long idGen = new Long(0);
+	transient private static long idGen = 0L;
 
 	/** The tuple identifier. */
-	transient protected String id;
+	transient protected long id;
 
 	/** An ordered list of tuple values. */
 	protected List<Comparable> values;
@@ -230,7 +230,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	    this.hashCacheValid = false;
 		this.schema	        = new Schema();
 		this.refCount       = 1;
-		this.id		        = idGen.toString();
+		this.id		        = idGen;
 		idGen++;
 	}
 
@@ -238,7 +238,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 * The tuple identifier.
 	 * @return The tuple identifier.
 	 */
-	public String id() {
+	public long id() {
 		return this.id;
 	}
 
@@ -246,7 +246,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 * Set the tuple identifier.
 	 * @param id The identifier to set the tuple identifier to.
 	 */
-	public void id(String id) {
+	public void id(long id) {
 		this.id = id;
 	}
 

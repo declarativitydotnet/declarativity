@@ -29,7 +29,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 			this.attributes.add(i);
 		}
 	}
-	
+
 	/**
 	 * Create a new key with the given attribute positions.
 	 * @param attr A list of the integer position.
@@ -37,12 +37,12 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 	public Key(List<Integer> attr) {
 		this.attributes = attr;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Key) {
@@ -50,7 +50,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public String toString() {
 		if (attributes.size() == 0) return "None";
@@ -60,7 +60,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 		}
 		return "Key("+value+")";
 	}
-	
+
 	/**
 	 * The number of attribute positions.
 	 * @return The number of attribute positions.
@@ -68,7 +68,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 	public int size() {
 		return this.attributes.size();
 	}
-	
+
 	/**
 	 * Add a new integer position to the end of this key.
 	 * @param position The integer position to be added.
@@ -76,12 +76,12 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 	public void add(Integer position) {
 		this.attributes.add(position);
 	}
-	
+
 	/**
 	 * Extract, from the tuple argument, the values
 	 * at the integer positions represented by this key object.
 	 * @param tuple The tuple containing the values to be extracted.
-	 * @return A new tuple object containing only the extracted values 
+	 * @return A new tuple object containing only the extracted values
 	 * in key positional order.
 	 */
 	public Tuple project(Tuple tuple) {
@@ -99,12 +99,12 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 			return project;
 		}
 	}
-	
+
 	public Tuple projectValue(Tuple tuple) {
 		List<Comparable> values = new ArrayList<Comparable>();
-		
-		for(int i = 0; i < tuple.size(); i++) {
-			if(!attributes.contains(i)) {
+
+		for (int i = 0; i < tuple.size(); i++) {
+			if (!attributes.contains(i)) {
 				values.add(tuple.value(i));
 			}
 		}
@@ -113,37 +113,37 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 		project.id(tuple.id());
 		return project;
 	}
-	
+
 	public Tuple reconstruct(Tuple projectedKey, Tuple projectedValue) {
 		int len = projectedKey.size() + projectedValue.size();
-		List<Comparable> tuple= new ArrayList<Comparable>();
+		List<Comparable> tuple = new ArrayList<Comparable>();
 		int k = 0;
-		
+
 		assert(attributes.size() == projectedKey.size());
-		
-		for(Integer i: attributes) {
-			while(tuple.size() <= i) { tuple.add(null); }
-			tuple.set(i,projectedKey.value(k));
+
+		for (Integer i: attributes) {
+			while (tuple.size() <= i) { tuple.add(null); }
+			tuple.set(i, projectedKey.value(k));
 			k++;
 		}
 		int v = 0;
-		for(int i = 0; i < len; i++) {
-			if(!attributes.contains(i)) {
-				while(tuple.size() <= i) { tuple.add(null); }
-				tuple.set(i,projectedValue.value(v));
+		for (int i = 0; i < len; i++) {
+			if (!attributes.contains(i)) {
+				while (tuple.size() <= i) { tuple.add(null); }
+				tuple.set(i, projectedValue.value(v));
 				v++;
 			}
 		}
 		Tuple t = new Tuple(tuple);
 		t.id(projectedKey.id());
-		assert(t.id().equals(projectedValue.id()));
+		assert(t.id() == projectedValue.id());
 		return t;
 	}
 
 	public boolean empty() {
 		return attributes.size() == 0;
 	}
-	
+
 	public int compareTo(Key o) {
 		if (attributes.size() < o.attributes.size()) {
 			return -1;
