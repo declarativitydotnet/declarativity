@@ -14,11 +14,11 @@ import jol.types.table.TableName;
 import jol.core.Runtime;
 
 public class Selection extends Term {
-	
+
 	public static class SelectionTable extends ObjectTable {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "selection");
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
-		
+
 		public enum Field {PROGRAM, RULE, POSITION, OBJECT};
 		public static final Class[] SCHEMA = {
 			String.class,   // Program name
@@ -30,7 +30,7 @@ public class Selection extends Term {
 		public SelectionTable(Runtime context) {
 			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		}
-		
+
 		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Selection object = (Selection) tuple.value(Field.OBJECT.ordinal());
@@ -43,15 +43,15 @@ public class Selection extends Term {
 			return super.insert(tuple);
 		}
 	}
-	
+
 	private Boolean<?> predicate;
-	
+
 	public Selection(Boolean predicate) {
 		super();
 		this.predicate = (Boolean) predicate.clone();
 		assert(predicate.type() == java.lang.Boolean.class);
 	}
-	
+
 	@Override
 	public String toString() {
 		return predicate.toString();
@@ -61,7 +61,7 @@ public class Selection extends Term {
 	public Set<Variable> requires() {
 		return predicate.variables();
 	}
-	
+
 	public Boolean predicate() {
 		return this.predicate;
 	}
@@ -71,11 +71,11 @@ public class Selection extends Term {
 		for (Variable var : this.predicate.variables()) {
 			position = input.position(var.name());
 			if (position < 0) {
-				throw new PlannerException("Uknown variable " + var + " in schema " + input);
+				throw new PlannerException("Unknown variable " + var + " in schema " + input);
 			}
 			var.position(position);
 		}
-		
+
 		return new jol.types.operator.Selection(context, this, input);
 	}
 

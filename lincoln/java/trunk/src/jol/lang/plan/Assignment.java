@@ -14,13 +14,13 @@ import jol.types.table.TableName;
 import jol.core.Runtime;
 
 public class Assignment extends Term {
-	
+
 	public static class AssignmentTable extends ObjectTable {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "assignment");
 		public static final Key PRIMARY_KEY = new Key(0,1);
-		
+
 		public enum Field {PROGRAM, RULE, POSITION, OBJECT};
-		public static final Class[] SCHEMA = { 
+		public static final Class[] SCHEMA = {
 			String.class,    // Program name
 			String.class,    // Rule name
 			Integer.class,   // Rule position
@@ -30,7 +30,7 @@ public class Assignment extends Term {
 		public AssignmentTable(Runtime context) {
 			super(context, new TableName(GLOBALSCOPE, "assignment"), PRIMARY_KEY, new TypeList(SCHEMA));
 		}
-		
+
 		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Assignment object = (Assignment) tuple.value(Field.OBJECT.ordinal());
@@ -42,22 +42,22 @@ public class Assignment extends Term {
 			object.position  = (Integer) tuple.value(Field.POSITION.ordinal());
 			return super.insert(tuple);
 		}
-		
+
 		@Override
 		protected boolean delete(Tuple tuple) throws UpdateException {
 			return super.delete(tuple);
 		}
 	}
-	
+
 	private Variable variable;
-	
+
 	private Expression<?> value;
-	
+
 	public Assignment(Variable variable, Expression value) {
 		this.variable = (Variable) variable.clone();
 		this.value = value.clone();
 	}
-	
+
 	@Override
 	public String toString() {
 		return variable.toString() + " := " + value.toString();
@@ -67,11 +67,11 @@ public class Assignment extends Term {
 	public Set<Variable> requires() {
 		return value.variables();
 	}
-	
+
 	public Variable variable() {
 		return this.variable;
 	}
-	
+
 	public Expression value() {
 		return this.value;
 	}
@@ -79,15 +79,15 @@ public class Assignment extends Term {
 	@Override
 	public Operator operator(Runtime context, Schema input) throws PlannerException {
 		int position = input.position(this.variable.name());
-		
+
 		for (Variable var : this.value.variables()) {
 			position = input.position(var.name());
 			if (position < 0) {
-				throw new PlannerException("Uknown variable " + var + " in schema " + input);
+				throw new PlannerException("Unknown variable " + var + " in schema " + input);
 			}
 			var.position(position);
 		}
-		
+
 		return new Assign(context, this, input);
 	}
 
