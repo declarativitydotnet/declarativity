@@ -97,7 +97,7 @@ public class MethodCall extends Expression {
 				} catch (Throwable t) {
 					String error = "ERROR: method invocation on " +
 							instance + ", method \"" +
-							MethodCall.this.method.toString() +
+							MethodCall.this.method.toGenericString() +
 							"\", arguments " + Arrays.toString(arguments);
 					throw new JolRuntimeException(error, t);
 				}

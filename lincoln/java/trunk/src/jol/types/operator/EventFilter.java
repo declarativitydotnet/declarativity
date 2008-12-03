@@ -1,6 +1,8 @@
 package jol.types.operator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +27,7 @@ public class EventFilter extends Operator {
 	 * to some constant value. If this comparison succeeds then the 
 	 * filter succeeds. 
 	 */
-	private class Filter implements TupleFunction<Boolean> {
+	private class ConstantFilter implements TupleFunction<Boolean> {
 		/** The value position within the tuple used in the comparison. */
 		private Integer position;
 		
@@ -37,7 +39,7 @@ public class EventFilter extends Operator {
 		 * @param position The value position.
 		 * @param function The constant function extractor.
 		 */
-		private Filter(Integer position,  TupleFunction<Comparable> function) {
+		private ConstantFilter(Integer position, TupleFunction<Comparable> function) {
 			this.position = position;
 			this.function = function;
 		}
@@ -57,6 +59,39 @@ public class EventFilter extends Operator {
 		
 	}
 	
+	/**
+	 * A filter that ensures two attributes values are the same.
+	 */
+	private class AttributeFilter implements TupleFunction<Boolean> {
+		private Class type;
+		private int a1;
+		private int a2;
+
+		/**
+		 * Create a new filter.
+		 * @param position The value position.
+		 * @param function The constant function extractor.
+		 */
+		private AttributeFilter(Class type, int a1, int a2) {
+			this.type = type;
+			this.a1 = a1;
+			this.a2 = a2;
+		}
+
+		/** @return true if filter is satisfied, false otherwise.  */
+		public Boolean evaluate(Tuple tuple) throws JolRuntimeException {
+			Comparable a1 = tuple.value(this.a1);
+			Comparable a2 = tuple.value(this.a2);
+			return (a1 == a2 || 
+					(a1 != null && a2 != null && a1.compareTo(a2) == 0));
+		}
+
+		/** The constant type. */
+		public Class returnType() {
+			return type;
+		}
+	}
+	
 	/** The event predicate. */
 	private Predicate predicate;
 	
@@ -74,9 +109,23 @@ public class EventFilter extends Operator {
 		this.predicate = predicate;
 		this.filters = new ArrayList<TupleFunction<Boolean>>();
 		
+		HashMap<String, Variable> variables = new HashMap<String, Variable>();
 		for (jol.lang.plan.Expression arg : predicate) {
-			if (!(arg instanceof Variable)) {
-				this.filters.add(new Filter(arg.position(), arg.function()));
+			if (arg instanceof Variable) {
+				Variable var = (Variable) arg;
+				if (variables.containsKey(var.name())) {
+					Variable previous = variables.get(var.name());
+					this.filters.add(
+							new AttributeFilter(previous.type(),
+							                    previous.position(), 
+							                    var.position()));
+				}
+				else {
+					variables.put(var.name(), var);
+				}
+			}
+			else {
+				this.filters.add(new ConstantFilter(arg.position(), arg.function()));
 			}
 		}
 	}

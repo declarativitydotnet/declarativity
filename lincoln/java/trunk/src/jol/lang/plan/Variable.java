@@ -91,11 +91,11 @@ public class Variable extends Expression {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				try {
 					return tuple.value(name());
-				} catch (Exception e) {
+				} catch (Throwable t) {
 					System.err.println("UNKNOWN VARIABLE NAME " + name() + " IN TUPLE SCHEMA " + tuple.schema());
 					System.err.println("ASSUMED POSITION " + position());
-					e.printStackTrace();
-					throw new JolRuntimeException (e.toString());
+					t.printStackTrace();
+					throw new JolRuntimeException (t.toString());
 				}
 			}
 

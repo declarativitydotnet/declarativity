@@ -53,6 +53,8 @@ public class Assign<C extends Comparable<C> > extends Operator {
 				delta.value(variable, function.evaluate(delta));
 				deltas.add(delta);
 			} catch (Throwable t) {
+				System.err.println("ASSUMED SCHEMA " + this.schema);
+				System.err.println("TUPLE SCHEMA " + tuple.schema());
 				String msg = t.toString() + ". Program " + this.assignment.program() +
 				             ". Error during assignment " + toString() + 
 				             ", on input tuple " + tuple;
