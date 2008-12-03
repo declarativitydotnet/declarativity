@@ -253,7 +253,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	}
 
 	public Counters getJobCounters(JobID arg0) throws IOException {
-		return null;
+		return new Counters();
 	}
 
 	public JobProfile getJobProfile(JobID jobid) throws IOException {

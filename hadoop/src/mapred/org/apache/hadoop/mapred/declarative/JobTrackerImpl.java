@@ -28,6 +28,7 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.StatusHttpServer;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.declarative.table.*;
+import org.apache.hadoop.mapred.declarative.test.JobSimulator;
 import org.apache.hadoop.mapred.declarative.test.TaskTrackerCluster;
 import org.apache.hadoop.net.DNSToSwitchMapping;
 import org.apache.hadoop.net.NetUtils;
@@ -278,6 +279,8 @@ public class JobTrackerImpl extends JobTracker {
 			if (debug) {
 				TaskTrackerCluster cluster = 
 					new TaskTrackerCluster(tracker.masterInterface(), clusterSize);
+				JobSimulator simulator = new JobSimulator();
+				simulator.start();
 				tracker.offerService();
 			}
 			else {
