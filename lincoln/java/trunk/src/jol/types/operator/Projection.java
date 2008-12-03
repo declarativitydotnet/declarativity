@@ -32,7 +32,7 @@ public class Projection extends Operator {
 
 	/**
 	 * Create a new projection operator
-	 * @param context THe runtime context.
+	 * @param context The runtime context.
 	 * @param predicate The predicate whose schema we project to.
 	 * @throws JolRuntimeException
 	 */
@@ -48,7 +48,7 @@ public class Projection extends Operator {
 			for (Variable var : variables) {
 				int position = input.position(var.name());
 				if (position < 0) {
-					throw new PlannerException("Uknown variable " + var +
+					throw new PlannerException("Unknown variable " + var +
 							" in input schema " + input);
 				}
 				var.position(position);
