@@ -263,16 +263,6 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		this.values.add(value);
 	}
 
-	public void remove(Variable var) throws JolRuntimeException {
-		if (!this.schema.contains(var)) {
-			throw new JolRuntimeException("Unknown variable " + var +
-					" in schema " + this.schema);
-		}
-		int pos = this.schema.position(var.name());
-		this.schema.remove(var);
-		this.values.remove(pos);
-	}
-
 	@Override
 	public String toString() {
 		String value = "<";

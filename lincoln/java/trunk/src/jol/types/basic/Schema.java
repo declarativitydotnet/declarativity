@@ -87,10 +87,6 @@ public class Schema {
 		this.variables.add(variable);
 	}
 
-	public boolean remove(Variable variable) {
-		return this.variables.remove(variable);
-	}
-
 	/**
 	 * Variable containment in this schema.
 	 * @param variable The variable to test for containment.
