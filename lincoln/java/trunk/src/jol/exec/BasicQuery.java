@@ -23,8 +23,7 @@ public class BasicQuery extends Query {
 
 	@Override
 	public String toString() {
-		String query = "QUERY RULE: " + rule();
-		return query;
+		return "QUERY RULE: " + rule();
 	}
 
 	@Override
@@ -41,7 +40,7 @@ public class BasicQuery extends Query {
 			tuples.add(tuple);
 		}
 
-		for (Operator oper : body) {
+		for (Operator oper : this.body) {
 			try {
 				tuples = (TupleSet) oper.evaluate(tuples);
 			} catch (Throwable t) {
