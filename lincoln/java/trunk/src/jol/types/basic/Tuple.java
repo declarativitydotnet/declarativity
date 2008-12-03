@@ -341,7 +341,8 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 
 	@Override
 	public int hashCode() {
-		if (this.values.size() == 0) "null".hashCode();
+		if (this.values.size() == 0)
+		    return "null".hashCode();
 
 		StringBuilder sb = new StringBuilder();
 		for (Comparable value : values) {
