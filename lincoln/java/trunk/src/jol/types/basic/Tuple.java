@@ -32,9 +32,6 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	/** An ordered list of tuple values. */
 	protected List<Comparable> values;
 
-	/** A timestamp on when this tuple was created. */
-	transient protected long timestamp;
-
 	/** A tuple refcount. */
 	transient protected long refCount;
 
@@ -470,22 +467,6 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 */
 	public long refCount() {
 		return this.refCount;
-	}
-
-	/**
-	 * Set the timestamp of this tuple.
-	 * @param value The timestamp to set.
-	 */
-	public void timestamp(long value) {
-		this.timestamp = value;
-	}
-
-	/**
-	 * Get the timestamp of this tuple.
-	 * @return The timestamp.
-	 */
-	public long timestamp() {
-		return this.timestamp;
 	}
 
 	/**
