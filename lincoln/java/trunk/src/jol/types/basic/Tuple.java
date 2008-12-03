@@ -346,9 +346,8 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 
 		StringBuilder sb = new StringBuilder();
 		for (Comparable value : values) {
-			Integer code = value == null ?
-					"null".hashCode() : value.hashCode();
-			sb.append(code);
+            int code = (value == null ? "null".hashCode() : value.hashCode());
+            sb.append(code);
 		}
 		return sb.toString().hashCode();
 	}
