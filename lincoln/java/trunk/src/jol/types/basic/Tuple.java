@@ -336,9 +336,8 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 			for (int i = 0; i < size(); i++) {
 				Comparable me    = this.values.get(i) == null ? "null" : this.values.get(i);
 				Comparable other = t.values.get(i) == null ? "null" : t.values.get(i);
-				if (me.compareTo(other) != 0) {
-					return false;
-				}
+				if (!me.equals(other))
+				    return false;
 			}
 			return true;
 		}

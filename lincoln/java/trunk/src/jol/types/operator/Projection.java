@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import jol.core.Runtime;
+import jol.lang.plan.AggregateVariable;
 import jol.lang.plan.DontCare;
 import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
@@ -46,6 +47,10 @@ public class Projection extends Operator {
 			Expression argument = predicate.arguments().get(i).clone();
 			Set<Variable> variables = argument.variables();
 			for (Variable var : variables) {
+			    // Skip "*" variables
+			    if (var.name().equals(AggregateVariable.STAR))
+			        continue;
+
 				int position = input.position(var.name());
 				if (position < 0) {
 					throw new PlannerException("Unknown variable " + var +
