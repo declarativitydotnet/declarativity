@@ -9,9 +9,9 @@ import jol.types.table.Table;
 import jol.core.Runtime;
 
 /**
- * An AntiScanJoin operator is the forms basis of the 'notin' operator.
- * The input tuples are joined with an inner table and only those 
- * tuples from the input that DO NOT satisfy the join are passed 
+ * An AntiScanJoin operator forms the basis of the 'notin' operator.
+ * The input tuples are joined with an inner table and only those
+ * tuples from the input that DO NOT satisfy the join are passed
  * to the output TupleSet.
  *
  * NOTE: The output schema of this operator will be the same
@@ -21,8 +21,8 @@ public class AntiScanJoin extends Join {
 
 	/** The inner relation. */
 	private Table table;
-	
-	/** 
+
+	/**
 	 * Create a new operator.
 	 * @param context The runtime context.
 	 * @param predicate The (notin) predicate.
@@ -37,7 +37,7 @@ public class AntiScanJoin extends Join {
 	public String toString() {
 		return "ANTI NEST LOOP JOIN: PREDICATE[" + this.predicate  + "]";
 	}
-	
+
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		TupleSet result = new TupleSet();
