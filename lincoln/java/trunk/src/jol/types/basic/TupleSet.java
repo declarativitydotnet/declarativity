@@ -17,30 +17,30 @@ import jol.types.table.TableName;
  */
 public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable {
 	private static final long serialVersionUID = 1L;
-	
+
 	private Map<Tuple, Tuple> tuples;
 
 	/** Identifier generator. */
-	private static long ids = 0L;
-	
+	private static long idGen = 0L;
+
 	/** Tuple set identifier. */
-	private String id;
-	
+	private long id;
+
 	/** Table name to which the tuples of this set belong. */
 	private TableName name;
 
 	private boolean warnedAboutBigTable = false;
-	
+
 	private boolean refCount = true;
-	
+
 	/**
 	 * Create an empty tuple set.
 	 */
 	public TupleSet() {
 		this((TableName) null);
 	}
-	
-	/** 
+
+	/**
 	 * Copy constructor.
 	 * @param clone The set to copy.
 	 */
@@ -50,17 +50,17 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.addAll(clone);
 	}
-	
+
 	/**
 	 * Empty tuple set that references a given table name.
 	 * @param name The table name to reference.
 	 */
 	public TupleSet(TableName name) {
-		this.id = "TupleSet:" + ids++;
+		this.id = idGen++;
 		this.name = name;
 		this.tuples = new HashMap<Tuple, Tuple>();
 	}
-	
+
 	/**
 	 * Initialize the tuple set to contain the passed in tuples
 	 * that reference the given table name.
@@ -68,12 +68,12 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	 * @param tuples The tuples to initialize.
 	 */
 	public TupleSet(TableName name, Set<Tuple> tuples) {
-		this.id = "TupleSet:" + ids++;
+		this.id = idGen++;
 		this.name = name;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.addAll(tuples);
 	}
-	
+
 	/**
 	 * Create a tuple set referencing the given table name containing
 	 * the single tuple.
@@ -81,16 +81,16 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	 * @param tuple A single tuple that will make up this set.
 	 */
 	public TupleSet(TableName name, Tuple tuple) {
-		this.id = "TupleSet:" + ids++;
+		this.id = idGen++;
 		this.name = name;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.add(tuple);
 	}
-	
+
 	public void refCount(boolean count) {
 		this.refCount = count;
 	}
-	
+
 	@Override
 	public String toString() {
 		String tuples = name + "[";
@@ -103,33 +103,34 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 		tuples += "]";
 		return tuples;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return id.hashCode();
+	    // Take the XOR of the two halves of the ID
+	    return (int) (this.id ^ (this.id >>> 32));
 	}
-	
+
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof TupleSet) {
-			return ((TupleSet) o).id.equals(this.id);
+			return ((TupleSet) o).id == this.id;
 		}
 		return false;
 	}
-	
+
 	@Override
 	public TupleSet clone() {
 		return new TupleSet(this);
 	}
-	
+
 	/**
 	 * The tuple set identifier.
 	 * @return The identifier assigned to this tuple set.
 	 */
-	public String id() {
+	public long id() {
 		return this.id;
 	}
-	
+
 	/**
 	 * The name of the table that the tuples belonging to this set are
 	 * part of.
@@ -138,7 +139,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	public TableName name() {
 		return this.name;
 	}
-	
+
 	/**
 	 * Set the table name.
 	 * @param name the table name.
@@ -146,7 +147,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	public void name(TableName name) {
 		this.name = name;
 	}
-	
+
 	public boolean addAll(Iterable<? extends Tuple> tuples) {
 		for (Tuple t : tuples)
 			add(t);
@@ -158,7 +159,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 
 		return true;
 	}
-	
+
 	public boolean add(Tuple tuple) {
 		if (tuple == null) return false;
 		else if (tuple.refCount <= 0) return false;
@@ -173,12 +174,17 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 
 	/**
 	 * Comparison for tuple identifiers.
-	 * 
-	 * NOTE: This method does NOT perform set comparison 
+	 *
+	 * NOTE: This method does NOT perform set comparison
 	 * (other methods will perform that action {@link #containsAll(Collection)}).
 	 */
-	public int compareTo(TupleSet tuples) {
-		return this.id.compareTo(tuples.id);
+	public int compareTo(TupleSet other) {
+	    if (this.id < other.id)
+	        return -1;
+	    if (this.id > other.id)
+	        return 1;
+
+	    return 0;
 	}
 
 	public boolean addAll(Collection<? extends Tuple> c) {
@@ -260,4 +266,4 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 		return this.tuples.values().toArray(a);
 	}
 }
-	
+
