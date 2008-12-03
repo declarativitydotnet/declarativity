@@ -34,9 +34,14 @@ public class Conf {
     private static final long fileOpTimeout = 20000;
     private static final long listingTimeout = 5000;
 
+    private static final long chunkSize = 10240;
+
     /* NB: This must be called before installing "gfs.olg" */
     public static void setSelfAddress(String addr) {
         selfAddr = addr;
+    }
+    public static long getChunkSize() {
+        return chunkSize;
     }
 
     public static String getSelfAddress() {

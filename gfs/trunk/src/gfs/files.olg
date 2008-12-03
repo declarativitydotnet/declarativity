@@ -48,24 +48,25 @@ file(Host,File) :-
     File := B.toString();
 
 
-define(heartBeat,keys(0,1,2),{String,String,String,Long,Long});
+define(heartBeat,keys(0,1,2),{String,String,Integer,Long,Long});
 //watch(heartBeat,ae);
-heartBeat(Host,Master,File,Tstamp,Id) :-
+heartBeat(Host,Master,Chunk,Tstamp,Id) :-
     file(Host,File),
+    Chunk := Integer.valueOf(File),
     masters(Host,Master),
     clock(_,_,_),
     Tstamp := java.lang.System.currentTimeMillis(),
     Id := Runtime.idgen();
 
 
-heartBeat(Host,Master,"-",Tstamp,-1) :-
+heartBeat(Host,Master,-1,Tstamp,-1) :-
     masters(Host,Master),
     clock(_,_,_),
     Tstamp := java.lang.System.currentTimeMillis(),
     Id := Runtime.idgen();
 
 
-define(sendHeartBeat,keys(0,1,2,3),{String,String,String,Long,Long});
+define(sendHeartBeat,keys(0,1,2,3),{String,String,Integer,Long,Long});
 watch(sendHeartBeat,ae);
 sendHeartBeat(@Master,Host,File,Tstamp,Id) :-
     heartBeat(@Host,Master,File,Tstamp,Id),
@@ -74,7 +75,7 @@ sendHeartBeat(@Master,Host,File,Tstamp,Id) :-
 define(ackHeartBeat,keys(0,1,2),{String,String,Long});
 watch(ackHeartBeat,ae);
 
-define(serverKnows,keys(0,1,2,3),{String,String,String,Long});
+define(serverKnows,keys(0,1,2,3),{String,String,Integer,Long});
 watch(serverKnows,ae);
 serverKnows(Host,Master,File,Id) :-
     heartBeat(Host,Master,File,Tstamp,Id),

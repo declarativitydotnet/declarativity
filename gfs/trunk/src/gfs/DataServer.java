@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -12,6 +13,9 @@ import java.net.Socket;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+
+import gfs.Shell;
+import jol.types.basic.ValueList;
 
 public class DataServer implements Runnable {
     private class DataWorker implements Runnable {
@@ -62,6 +66,115 @@ public class DataServer implements Runnable {
 
         private void doWriteOperation() {
             // TODO Auto-generated method stub
+            java.lang.System.out.println("WRITE OP\n");
+
+            try {
+                int chunkId = readChunkId();
+                ValueList<String> path = readHeaders();
+                path.insert(String.valueOf(chunkId));
+
+                File newf = getNewChunk(chunkId);
+                java.lang.System.out.println("Ready to read file in\n");
+
+                FileChannel fc = new FileOutputStream(newf).getChannel();
+                fc.transferFrom(this.channel, 0, Conf.getChunkSize());
+                fc.close();
+               
+                // we are not pipelining yet. 
+                if (path.size() > 1)  {
+                    java.lang.System.out.println("path size was " + path.size());
+                    copyToNext(newf, path);
+                }
+                 
+                java.lang.System.out.println("done writing chunk\n");
+                
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void copyToNext(File f, ValueList<String> path) {
+            try {
+                Socket sock = Shell.setupStream(path.get(0));
+                SocketChannel chan = sock.getChannel();
+                if (chan == null) { 
+                    java.lang.System.out.println("OHNO\n");
+                }
+                DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
+                Shell.sendRoutedData(dos, path);
+                java.lang.System.out.println("routed data sent\n");
+                FileChannel fc = new FileInputStream(f).getChannel();
+                java.lang.System.out.println("got fc\n" + fc.toString());
+                fc.transferTo(0, Conf.getChunkSize(), chan); 
+                fc.close();
+                sock.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private int dataTransfer(int chunkId, String[] path) {
+            final int bufferSize = 8192;
+            try {
+                File newf = getNewChunk(chunkId);
+                FileChannel fc = new FileOutputStream(newf).getChannel();
+                int sent = 0;
+                while (sent < Conf.getChunkSize()) { 
+                    fc.transferFrom(this.channel, sent, bufferSize);
+                    sent += bufferSize;
+                }
+                fc.close();
+                 
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return 0;
+        }
+    
+        private int readChunkId() {
+            try {
+                return this.in.readInt();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        private ValueList<String> readHeaders() {
+            String[] path = null;
+            // clean me later
+            try {
+                int sourceRouteListLen = this.in.readInt();
+                java.lang.System.out.println("LISTLEN: "+sourceRouteListLen);
+                if (sourceRouteListLen > 0) {
+                    path = new String[sourceRouteListLen+1];
+                    int i = 0;
+                    path[i] = "";
+                    for (char b = this.in.readChar(); b != ';' && i < sourceRouteListLen; b = this.in.readChar()) {
+                        if (b == '|') {
+                            i++;
+                            path[i] = "";
+                        } else { 
+                            path[i] = path[i] + b;
+                        }
+                    }
+                    for (String s : path) {
+                        java.lang.System.out.println("APTH: "+s);
+                    } 
+                    
+                } else {
+                    if (this.in.readChar() != ';') {
+                        throw new RuntimeException("invalid header");
+                    }
+                }
+
+                ValueList<String> ret = new ValueList();
+                for (int i=0; i < sourceRouteListLen; i++) {
+                    ret.add(path[i]);
+                }
+                return ret;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    
         }
 
         private void doReadOperation() throws IOException {
@@ -113,6 +226,20 @@ public class DataServer implements Runnable {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+
+    public File getNewChunk(int chunkId) {
+        String filename = this.fsRoot + File.separator + chunkId;
+        File newf = new File(filename);
+        try {
+            if (!newf.createNewFile()) {
+                throw new RuntimeException("failed to create fresh file "+filename);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return newf;
     }
 
     public File getBlockFile(int blockId) {

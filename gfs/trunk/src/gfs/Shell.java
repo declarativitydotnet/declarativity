@@ -102,7 +102,19 @@ public class Shell {
         String filename = args.get(0);
 
         ValueList<String> chunks = getNewChunk(filename);
-        sendRoutedData(chunks);
+        Socket sock = setupStream(chunks.get(0));
+
+        try {
+
+            DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
+            sendRoutedData(dos,chunks);
+            for (int b=java.lang.System.in.read(),read=0; b != -1 && read < Conf.getChunkSize(); b=java.lang.System.in.read()) {
+                dos.write(b);
+            } 
+            dos.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
@@ -127,7 +139,7 @@ public class Shell {
         }
     }
 
-    private ValueList getNewChunk(final String filename) throws UpdateException {
+    private ValueList<String> getNewChunk(final String filename) throws UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -160,13 +172,13 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList chunkList = (ValueList) this.responseQueue.get(); // XXX: timeout?
+        ValueList<String> chunkList = (ValueList) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
         return chunkList;
     }
 
 
-    private ValueList getChunkList(final String filename) throws UpdateException {
+    private ValueList<Integer> getChunkList(final String filename) throws UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -262,25 +274,42 @@ public class Shell {
         throw new RuntimeException("Failed to read chunk " + chunk);
     }
 
-    private void sendRoutedData(ValueList l) {
-        try {
-            String addr = (String) l.get(0);
-            String[] parts = addr.split(":");
-            String host = parts[1];
-            int controlPort = Integer.parseInt(parts[2]);
-            int dataPort = Conf.findDataNodeDataPort(host, controlPort);
+    public static Socket setupStream(String addr) {
+        String[] parts = addr.split(":");
+        String host = parts[1];
+        int controlPort = Integer.parseInt(parts[2]);
+        int dataPort = Conf.findDataNodeDataPort(host, controlPort);
 
-            java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
-            Socket sock = new Socket(host, dataPort);
-            DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
+
+        java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
+        try {
+            SocketAddress sockAddr = new InetSocketAddress(host, dataPort);
+            SocketChannel inChannel = SocketChannel.open();
+            inChannel.configureBlocking(true);
+            inChannel.connect(sockAddr);
+            Socket sock = inChannel.socket();
+            return sock;
+        } catch (Exception e) {
+            throw new RuntimeException("failed to open socket\n");
+        }
+        
+    }
+    
+    public static void sendRoutedData(DataOutputStream dos, ValueList<String> l) {
+        try {
             dos.writeByte(DataProtocol.WRITE_OPERATION);
             // the last element of the valuelist is our new chunkid
-            dos.writeInt(Integer.valueOf((String) l.get(l.size() - 1)));
+            java.lang.System.out.println("next hop is "+l.get(l.size()-1));
+            dos.writeInt(Integer.valueOf((String)l.get(l.size()-1)));
+
             // the real size of the list is the list, minus the address we just contacted and the chunkid.
             dos.writeInt(l.size() - 2);
-            for (int i = 1; i < l.size() - 2; i++) {
+            for (int i = 1; i < l.size() - 1; i++) {
+                java.lang.System.out.println("write "+l.get(i));
                 dos.writeChars((String)l.get(i));
+                dos.writeChar('|');
             }
+            dos.writeChar(';');
             // then write the actual data
 
         } catch (Exception e) {
@@ -509,7 +538,7 @@ public class Shell {
         if (obj == null)
             return doListFiles(args);
 
-        ValueList<String> lsContent = (ValueList<String>) obj;
+        ValueList<String> lsContent = (ValueList) obj;
         Collections.sort(lsContent);
         return lsContent;
     }
