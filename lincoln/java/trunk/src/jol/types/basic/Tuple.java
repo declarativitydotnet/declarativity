@@ -33,13 +33,19 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	protected List<Comparable> values;
 
 	/** A timestamp on when this tuple was created. */
-	transient protected Long timestamp;
+	transient protected long timestamp;
 
 	/** A tuple refcount. */
-	transient protected Long refCount;
+	transient protected long refCount;
 
 	/** The tuple schema. */
 	transient protected Schema schema;
+
+	/** Cached hash code value */
+	transient protected int hashCache;
+
+	/** Is the cached hash code value up-to-date? */
+	transient protected boolean hashCacheValid;
 
 
 	/**
@@ -224,10 +230,11 @@ public class Tuple implements Comparable<Tuple>, Serializable {
      * freshly deserialized.
      */
 	private void initialize() {
-		this.schema	  = new Schema();
-		this.refCount = new Long(1);
-		this.id		  = idGen.toString();
-		idGen += 1L;
+	    this.hashCacheValid = false;
+		this.schema	        = new Schema();
+		this.refCount       = 1;
+		this.id		        = idGen.toString();
+		idGen++;
 	}
 
 	/**
@@ -248,6 +255,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 
 	public void insert(int index, Comparable value) {
 		this.values.add(index, value);
+		this.hashCacheValid = false;
 	}
 
 	/**
@@ -261,6 +269,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 			this.schema.append(variable);
 		}
 		this.values.add(value);
+		this.hashCacheValid = false;
 	}
 
 	@Override
@@ -341,16 +350,26 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 
 	@Override
 	public int hashCode() {
-		if (this.values.size() == 0)
-		    return "null".hashCode();
+	    /* If necessary, recompute the cached hash code */
+	    if (!this.hashCacheValid)
+	        recomputeHashCache();
 
-		StringBuilder sb = new StringBuilder();
-		for (Comparable value : values) {
-            int code = (value == null ? "null".hashCode() : value.hashCode());
-            sb.append(code);
-		}
-		return sb.toString().hashCode();
+	    return this.hashCache;
 	}
+
+    private void recomputeHashCache() {
+        if (this.values.size() == 0) {
+            this.hashCache = "null".hashCode();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (Comparable value : values) {
+                int code = (value == null ? "null".hashCode() : value.hashCode());
+                sb.append(code);
+            }
+            this.hashCache = sb.toString().hashCode();
+        }
+        this.hashCacheValid = true;
+    }
 
 	/** The number of attributes in this tuple. */
 	public int size() {
@@ -373,12 +392,12 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 *	@param value The value to set.
 	 */
 	public void value(int field, Comparable value) {
-		if (this.values.size() == field) {
+		if (this.values.size() == field)
 			this.values.add(value);
-		}
-		else {
-			values.set(field, value);
-		}
+		else
+			this.values.set(field, value);
+
+		this.hashCacheValid = false;
 	}
 
 	/**
@@ -421,7 +440,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 * SEt the refcount of this tuple.
 	 * @param value The refcount value.
 	 */
-	public void refCount(Long value) {
+	public void refCount(long value) {
 		this.refCount = value;
 	}
 
@@ -449,7 +468,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 * Get the refcount of this tuple.
 	 * @return The refcount.
 	 */
-	public Long refCount() {
+	public long refCount() {
 		return this.refCount;
 	}
 
@@ -457,7 +476,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 * Set the timestamp of this tuple.
 	 * @param value The timestamp to set.
 	 */
-	public void timestamp(Long value) {
+	public void timestamp(long value) {
 		this.timestamp = value;
 	}
 
@@ -465,7 +484,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	 * Get the timestamp of this tuple.
 	 * @return The timestamp.
 	 */
-	public Long timestamp() {
+	public long timestamp() {
 		return this.timestamp;
 	}
 
