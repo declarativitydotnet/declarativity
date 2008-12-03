@@ -20,7 +20,7 @@ import jol.types.exception.BadKeyException;
  *  the query processor already does via the join operation.
  */
 public class HashIndex extends Index {
-	
+
 	/** A map containing the set of tuples with the same key. */
 	private Map<Tuple, TupleSet> map;
 
@@ -35,12 +35,12 @@ public class HashIndex extends Index {
 	public HashIndex(Runtime context, Table table, Key key, Type type) {
 		super(context, table, key, type, true);
 		this.map = new HashMap<Tuple, TupleSet>();
-		
+
 		for (Tuple t : table.tuples()) {
 			insert(t);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		String out = "Index " + table().name() + "\n";
@@ -49,15 +49,16 @@ public class HashIndex extends Index {
 		}
 		return out;
 	}
-	
+
 	@Override
 	protected void insert(Tuple t) {
 		Tuple key = key().project(t);
-		if (this.map.containsKey(key)) {
-			this.map.get(key).add(t);
-		}
-		else {
-			TupleSet tuples = new TupleSet(table().name());
+		TupleSet tuples = this.map.get(key);
+
+		if (tuples != null) {
+		    tuples.add(t);
+		} else {
+			tuples = new TupleSet(table().name());
 			tuples.add(t);
 			this.map.put(key, tuples);
 		}
@@ -69,16 +70,24 @@ public class HashIndex extends Index {
 			throw new BadKeyException("Key had wrong number of columns.  " +
 					"Saw: " + key.size() + " expected: " + key().size() + " key: " + key().toString());
 		}
-		return this.map.containsKey(key) ? 
-				this.map.get(key) : new TupleSet(table().name());
+
+		TupleSet tuples = this.map.get(key);
+		if (tuples != null)
+		    return tuples;
+		else
+		    return new TupleSet(table().name());
 	}
 
 	@Override
 	protected void remove(Tuple t) {
 		Tuple key = key().project(t);
-		
-		if (this.map.containsKey(key)) {
-			this.map.get(key).remove(t);
+
+		TupleSet tuples = this.map.get(key);
+		if (tuples != null) {
+		    tuples.remove(t);
+
+		    if (tuples.isEmpty())
+		        this.map.remove(key);
 		}
 	}
 
