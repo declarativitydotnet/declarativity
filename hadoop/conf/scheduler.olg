@@ -17,7 +17,9 @@ import org.apache.hadoop.mapred.JobPriority;
 /*************** Task Attempt Scheduler *********************/
 
 define(taskAttempts, keys(0,1), {JobID, TaskID, Integer});
-define(schedule, {JobID, TaskID, String});
+define(schedule,      {JobID, TaskID, String});
+define(mapSlots,      {JobID, String, ValueList});
+define(reduceSlots,   {JobID, String, ValueList});
 
 public
 taskAttempts(JobId, TaskId, count<AttemptId>) :-
@@ -37,7 +39,6 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, Tracker
 	Phase := TaskPhase.STARTING,
 	AttemptID := Attempts;
 	
-watch(jobtracker::taskTrackerAction, a);
 	
 actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
@@ -101,15 +102,25 @@ define(mapProposal,    {JobID, String, ValueList});
 define(reduceProposal, {JobID, String, ValueList});
 
 /* Schedule task on tracker from flattened priorities. */
-schedule(JobId, TaskId, TrackerName) :-
+mapSlots(JobId, TrackerName, limit<TaskId, Maps>) :-
 	flatten(mapProposal(JobId, TrackerName, Priorities)),
 	candidate(JobId, TaskId, Type, TrackerName, Priority),
+	trackerSlots(TrackerName, Host, _, Maps, Reduces),
+	Priority == (Long) Priorities;
+	
+reduceSlots(JobId, TrackerName, limit<TaskId, Reduces>) :-
+	flatten(reduceProposal(JobId, TrackerName, Priorities)),
+	candidate(JobId, TaskId, Type, TrackerName, Priority),
+	trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	Priority == (Long) Priorities;
 	
 schedule(JobId, TaskId, TrackerName) :-
-	flatten(reduceProposal(JobId, TrackerName, Priorities)),
-	candidate(JobId, TaskId, Type, TrackerName, Priority),
-	Priority == (Long) Priorities;
+	flatten(mapSlots(JobId, TrackerName, Tasks)),
+	TaskId := (TaskID) Tasks;
+	
+schedule(JobId, TaskId, TrackerName) :-
+	flatten(reduceSlots(JobId, TrackerName, Tasks)),
+	TaskId := (TaskID) Tasks;
 	
 /* clean up scheduled candidates. */
 delete

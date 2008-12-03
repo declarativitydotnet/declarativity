@@ -18,8 +18,8 @@ import java.lang.Enum;
 
 define(initJob,  {JobID, String, String, Wrapper, String, String, JobPriority, Long, JobState});
 define(initTask, {JobID, Wrapper, String, TaskID, Constants.TaskType, Integer, Wrapper, Integer, TaskState});
-define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 define(taskFile, {JobID, TaskID, ValueList});
+define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 
 job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
 	initJob(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status);
@@ -86,8 +86,10 @@ job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :
 updateJob(JobId) :- mapTasks(JobId);
 updateJob(JobId) :- reduceTasks(JobId);
 	
+	/*
 watch(job, a);
 watch(task, a);
+*/
 
 mapTaskStatus
 mapTasks(JobId, set<Status>) :-
