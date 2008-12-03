@@ -7,17 +7,16 @@ import java.io.Serializable;
  * A table name is made up of two parts:
  * 1. The scope of the table (e.g., the program name that created the table).
  * 2. The (user) given name.
- *
  */
 public class TableName implements Comparable<TableName>, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/** The scope of the table. */
 	public String scope;
-	
+
 	/** The string name of this table. */
-	public String name;
-	
+	public final String name;
+
 	/**
 	 * Construct a new table name.
 	 * @param scope The table scope (e.g., the program name).
@@ -27,7 +26,7 @@ public class TableName implements Comparable<TableName>, Serializable {
 		this.scope = scope;
 		this.name = name;
 	}
-	
+
 	/**
 	 * Construct a table name from a {@link java.lang.String}.
 	 * The name format should be scope::name, where scope is
@@ -45,39 +44,50 @@ public class TableName implements Comparable<TableName>, Serializable {
 			this.name  = name;
 		}
 	}
-	
+
 	public String dotLabel() {
 		return scope + name;
 	}
-	
+
 	public String toDot() {
 		String dot = "\n node [label = \"";
 		dot += toString() + "\"] " + dotLabel() + ";\n";
 		return dot;
 	}
-	
+
 	@Override
 	public String toString() {
 		return scope + "::" + name;
 	}
-	
+
 	@Override
 	public boolean equals(Object o) {
-		return o instanceof TableName &&
-				toString().equals(o.toString());
+	    if (!(o instanceof TableName))
+	        return false;
+
+	    TableName other = (TableName) o;
+	    if (!other.name.equals(this.name))
+	        return false;
+	    if (!other.scope.equals(this.scope))
+	        return false;
+
+	    return true;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return toString().hashCode();
+	    return this.scope.hashCode() ^ this.name.hashCode();
 	}
 
 	/**
-	 * Compare the string version of the table name.
+	 * Compare the scope, then the string version of the table name.
 	 */
 	public int compareTo(TableName o) {
-		return toString().compareTo(o.toString());
+	    int scopeCmp = this.scope.compareTo(o.scope);
+	    if (scopeCmp != 0)
+	        return scopeCmp;
+
+	    return this.name.compareTo(o.name);
 	}
-	
 }
 
