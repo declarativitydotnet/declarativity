@@ -355,16 +355,15 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	}
 
     private void recomputeHashCache() {
-        if (this.values.size() == 0) {
-            this.hashCache = "null".hashCode();
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (Comparable value : values) {
-                int code = (value == null ? "null".hashCode() : value.hashCode());
-                sb.append(code);
-            }
-            this.hashCache = sb.toString().hashCode();
-        }
+        /*
+         * This hash function is based on the advice in "Effective Java" by J.
+         * Bloch, p. 38-39 (Item 8).
+         */
+        int h = 37;
+        for (Comparable v : this.values)
+            h = (h * 31) + (v == null ? 0 : v.hashCode());
+
+        this.hashCache = h;
         this.hashCacheValid = true;
     }
 
