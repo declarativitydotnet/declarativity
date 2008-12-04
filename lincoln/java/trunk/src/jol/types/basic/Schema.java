@@ -132,7 +132,7 @@ public class Schema {
 	 * @return A list of the schema variables.
 	 */
 	public final List<Variable> variables() {
-		return new ArrayList<Variable>(this.variables);
+		return this.variables;
 	}
 
 	/**
