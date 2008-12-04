@@ -15,8 +15,8 @@ define(node,keys(0),{String});
 define(parliament,keys(0,1),{String,String});
 define(prepare,keys(0,1),{String,Integer,String});
 define(sendPrepare,keys(0,1,3),{String,Integer,String,String});
-define(lastPromise,keys(0,1,2,4),{String,Integer,Integer,Integer,String,String});
-define(sendPromise,keys(0,1,2,4),{String,Integer,Integer,Integer,String,String});
+define(lastPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
+define(sendPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
 	
 define(maxPrevRound,keys(0),{String,Integer,Integer});
 define(priestCnt,keys(0),{String,Integer});
