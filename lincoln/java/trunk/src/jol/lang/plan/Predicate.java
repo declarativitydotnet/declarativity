@@ -27,7 +27,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 	public static class PredicateTable extends ObjectTable {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "predicate");
 		public static final Key PRIMARY_KEY = new Key(0,1,2);
-		
+
 		public static final Class[] SCHEMA =  {
 			String.class,     // program name
 			String.class,     // rule name
@@ -39,7 +39,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		public PredicateTable(Runtime context) {
 			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
 		}
-		
+
 		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Predicate object = (Predicate) tuple.value(Field.OBJECT.ordinal());
@@ -51,25 +51,25 @@ public class Predicate extends Term implements Iterable<Expression> {
 			object.position  = (Integer) tuple.value(Field.POSITION.ordinal());
 			return super.insert(tuple);
 		}
-		
+
 		@Override
 		protected boolean delete(Tuple tuple) throws UpdateException {
 			return super.delete(tuple);
 		}
 	}
-	
+
 	public enum Event{NONE, INSERT, DELETE};
-	
+
 	public Runtime context;
-	
+
 	private boolean notin;
-	
+
 	private TableName name;
-	
+
 	private Event event;
-	
+
 	private Arguments arguments;
-	
+
 	public Predicate(Runtime context, boolean notin, TableName name, Event event, List<Expression> arguments) {
 		super();
 		this.context = context;
@@ -78,7 +78,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.event = event;
 		this.arguments = new Arguments(this, arguments);
 	}
-	
+
 	public Predicate(Runtime context, boolean notin, TableName name, Event event, Schema schema) {
 		super();
 		this.context = context;
@@ -87,7 +87,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.event = event;
 		this.arguments = new Arguments(this, schema.variables());
 	}
-	
+
 	protected Predicate(Predicate pred) {
 		super();
 		this.context   = pred.context;
@@ -96,11 +96,11 @@ public class Predicate extends Term implements Iterable<Expression> {
 		this.event     = pred.event;
 		this.arguments = pred.arguments != null ? pred.arguments.clone() : null;
 	}
-	
+
 	public Predicate clone() {
 		return new Predicate(this);
 	}
-	
+
 	public Schema schema() {
 		List<Variable> variables = new ArrayList<Variable>();
 		for (Expression e : this.arguments) {
@@ -113,23 +113,23 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 		return new Schema(this.name, variables);
 	}
-	
+
 	public boolean notin() {
 		return this.notin;
 	}
-	
+
 	public Event event() {
 		return this.event;
 	}
-	
+
 	void event(Event event) {
 		this.event = event;
 	}
-	
+
 	public TableName name() {
 		return this.name;
 	}
-	
+
 	public Variable locationVariable() {
 		for (Expression argument : this) {
 			if (argument instanceof Variable && ((Variable) argument).loc()) {
@@ -138,7 +138,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		}
 		return null;
 	}
-	
+
 	public boolean containsAggregation() {
 		for (Expression e : arguments) {
 			if (e instanceof Aggregate) {
@@ -154,19 +154,19 @@ public class Predicate extends Term implements Iterable<Expression> {
 	public Iterator<Expression> iterator() {
 		return this.arguments.iterator();
 	}
-	
+
 	public Expression argument(Integer i) {
 		return this.arguments.get(i);
 	}
-	
+
 	public List<Expression> arguments() {
 		return this.arguments;
 	}
-	
+
 	void arguments(List<Expression> arguments) {
 		this.arguments = new Arguments(this, arguments);
 	}
-	
+
 	@Override
 	public String toString() {
 		String value = (notin ? "notin " : "") + name + "(";
@@ -202,11 +202,11 @@ public class Predicate extends Term implements Iterable<Expression> {
 				lookupKey.add(input.variable(var.name()).position());
 			}
 		}
-		
+
 		if (notin) {
 			return new AntiScanJoin(context, this, input);
 		}
-		
+
 		Table table = context.catalog().table(this.name);
 		Index index = null;
 		if (indexKey.size() > 0) {
@@ -221,7 +221,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 				table.secondary().put(indexKey, index);
 			}
 		}
-		
+
 		if (index != null) {
 			return new IndexJoin(context, this, input, lookupKey, index);
 		}
@@ -229,10 +229,10 @@ public class Predicate extends Term implements Iterable<Expression> {
 			return new ScanJoin(context, this, input);
 		}
 	}
-	
+
 	@Override
 	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
 		context.catalog().table(PredicateTable.TABLENAME).force(new Tuple(program, rule, position, event.toString(), this));
 	}
-	
+
 }
