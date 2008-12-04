@@ -62,11 +62,13 @@ import jol.types.exception.UpdateException;
 public class TimerTable extends Table {
 	private enum Type {PHYSICAL, LOGICAL};
 
-	private class PhysicalTimer extends TimerTask implements Comparable<PhysicalTimer> {
+	private static class PhysicalTimer extends TimerTask implements Comparable<PhysicalTimer> {
+	    private Runtime context;
 		private TableName name;
 		private TupleSet timer;
 
-		public PhysicalTimer(TableName name, TupleSet timer) {
+		public PhysicalTimer(Runtime context, TableName name, TupleSet timer) {
+		    this.context = context;
 			this.name  = name;
 			this.timer = timer;
 		}
@@ -74,7 +76,7 @@ public class TimerTable extends Table {
 		@Override
 		public void run() {
 			try {
-				TimerTable.this.context.schedule(name.scope, name, timer, null);
+				this.context.schedule(name.scope, name, timer, null);
 			} catch (UpdateException e) {
 				e.printStackTrace();
 				cancel();
@@ -87,7 +89,7 @@ public class TimerTable extends Table {
 
 		@Override
 		public String toString() {
-			return TimerTable.this.name.toString();
+			return this.name.toString();
 		}
 	}
 
@@ -182,7 +184,7 @@ public class TimerTable extends Table {
 		}
 
 		if (this.count < this.ttl) {
-			this.timer = new PhysicalTimer(this.name, timer());
+			this.timer = new PhysicalTimer(this.context, this.name, timer());
 			long delay = this.timer == null ? this.delay : 0L;
 			if (period > 0) {
 				context.timer().schedule(this.timer, delay, this.period);
