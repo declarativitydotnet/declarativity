@@ -478,24 +478,24 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 
 		/* Take care of all join variables first. */
 		for (Variable variable : schema().variables()) {
+            Comparable outerValue = value(variable.name());
 			if (inner.schema().contains(variable)) {
-				Comparable outerValue = value(variable.name());
 				Comparable innerValue = inner.value(variable.name());
 				if (outerValue == null || innerValue == null) {
 					if (outerValue == innerValue) {
 						join.append(variable, null);
 					}
 				}
-				else if (!value(variable.name()).equals(inner.value(variable.name()))) {
+				else if (!outerValue.equals(innerValue)) {
 					return null; // Tuples do not join
 				}
 				else {
-					join.append(variable, value(variable.name()));
+					join.append(variable, outerValue);
 				}
 			}
 			else {
 				/* Inner does not contain variable so just add it. */
-				join.append(variable, value(variable.name()));
+				join.append(variable, outerValue);
 			}
 		}
 
