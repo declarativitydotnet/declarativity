@@ -14,8 +14,8 @@ import jol.types.exception.UpdateException;
  * The TimerTable. Support for both physical and logical timers.
  * Physical Timers are based on the Java {@link java.util.Timer} class. Please
  * see that documentation for further details. Logical timers are based
- * on Datalog fixpoints, and will fire at most once per such fixpoint. 
- * 
+ * on Datalog fixpoints, and will fire at most once per such fixpoint.
+ *
  * <p>
  * A timer table is created for each timer declaration made in the sytem.
  * A timer is created in the program using the following syntax:<br><br>
@@ -34,38 +34,38 @@ import jol.types.exception.UpdateException;
  * Datalog fixpoints.
  * <p>
  * A program references the timer in a rule by naming a predicate the
- * same as the timer <b>Name</b> declaration with the following predicate: 
+ * same as the timer <b>Name</b> declaration with the following predicate:
  * <code>Name(Period, TTL, Delay)</code>.
- * The Period, TTL, and Delay are the current registered values. 
+ * The Period, TTL, and Delay are the current registered values.
  * <p>
  * <code>
  * <pre>
  * Example:
  * - New logical timer that fires 5 times every 2 fixpoints with the first
  * occurring at the fixpoint immediately following the program start.
- * timer(ltimer, logical, 2, 5, 1); 
- * 
+ * timer(ltimer, logical, 2, 5, 1);
+ *
  * - New physical timer that fires 5 times every 2 seconds with the first
  * timer occurring 10 seconds after the program starts.
  * timer(ptimer, physical, 2000, 5, 10000);
- * 
+ *
  * - Trigger a fire tuple when ltimer occurs.
- * fire(Period, TTL, Delay) :- 
+ * fire(Period, TTL, Delay) :-
  *      ltimer(Period, TTL, Delay);
- *      
+ *
  * - Trigger a fire tuple when ptimer occurs.
- * fire(Period, TTL, Delay) :- 
+ * fire(Period, TTL, Delay) :-
  *      ptimer(Period, TTL, Delay);
  * </pre>
  * </code>
  */
 public class TimerTable extends Table {
 	private enum Type {PHYSICAL, LOGICAL};
-	
+
 	private class PhysicalTimer extends TimerTask implements Comparable<PhysicalTimer> {
 		private TableName name;
 		private TupleSet timer;
-		
+
 		public PhysicalTimer(TableName name, TupleSet timer) {
 			this.name  = name;
 			this.timer = timer;
@@ -84,38 +84,37 @@ public class TimerTable extends Table {
 		public int compareTo(PhysicalTimer o) {
 			return toString().compareTo(o.toString());
 		}
-		
+
 		@Override
 		public String toString() {
 			return TimerTable.this.name.toString();
 		}
-		
 	}
-	
+
 	/** The attribute fields expected by this table function. */
 	public enum Field{PERIOD, TTL, DELAY};
-	
-	/** The attribute types execpted by this table function. */
+
+	/** The attribute types expected by this table function. */
 	public static final Class[] SCHEMA =  {
 		Long.class, // Period
 		Long.class, // TTL
 		Long.class  // Delay
 	};
-	
+
 	private Runtime context;
-	
+
 	private Type type;
-	
+
 	private long period;
-	
+
 	private long ttl;
-	
+
 	private long delay;
-	
+
 	private long count;
-	
+
 	private PhysicalTimer timer;
-	
+
 	public TimerTable(Runtime context, TableName name, String type, long period, long ttl, long delay) {
 		super(name, Table.Type.TIMER, null, new TypeList(SCHEMA));
 		this.context = context;
@@ -144,20 +143,20 @@ public class TimerTable extends Table {
 	protected boolean insert(Tuple t) throws UpdateException {
 		Long period = (Long) t.value(Field.PERIOD.ordinal());
 		Long ttl    = (Long) t.value(Field.TTL.ordinal());
-		
+
 		/* I allow adjustments to period and ttl */
 		if (period != null && period != this.period) {
 			this.period = period;
 			reset();
 		}
-		
+
 		if (ttl != null && ttl != this.ttl) {
 			this.ttl = ttl;
 			reset();
 		}
-		
+
 		count++;
-		
+
 		if (type == Type.PHYSICAL) {
 			if (this.timer == null) {
 				schedulePhysicalTimer();
@@ -171,17 +170,17 @@ public class TimerTable extends Table {
 		}
 		return count > 0; // wait for first timer fire!
 	}
-	
+
 	/**
 	 * Set a new physical timer.
 	 */
 	private void schedulePhysicalTimer() {
 		if (this.delay == 0 && this.count == 0) {
-			/* Let the current (first) insertion represent the 
+			/* Let the current (first) insertion represent the
 			 * first logical timer. */
 			count++;
 		}
-		
+
 		if (this.count < this.ttl) {
 			this.timer = new PhysicalTimer(this.name, timer());
 			long delay = this.timer == null ? this.delay : 0L;
@@ -193,20 +192,20 @@ public class TimerTable extends Table {
 			}
 		}
 	}
-	
+
 	private void scheduleNextLogicalTimer() {
 		if (this.delay == 0 && count == 0) {
-			/* Let the current (first) insertion represent the 
+			/* Let the current (first) insertion represent the
 			 * first logical timer. */
-			count++; 
+			count++;
 		}
-		
+
 		if (count < this.ttl) {
 			Table schedule = this.context.catalog().table(Schedule.TABLENAME);
 			Long nextTimer = context.clock().current();
 			if (this.count == 0) nextTimer += this.delay;
 			else nextTimer += this.period;
-			
+
 			try {
 				schedule.force(new Tuple(nextTimer, name().scope, name(), timer(), null));
 			} catch (UpdateException e) {
@@ -225,11 +224,11 @@ public class TimerTable extends Table {
 	public Iterable<Tuple> tuples() {
 		return timer();
 	}
-	
+
 	private TupleSet timer() {
 		return new TupleSet(name(), new Tuple(this.period, this.ttl, this.delay));
 	}
-	
+
 	private void reset() {
 		if (this.timer != null) {
 			this.timer.cancel();
