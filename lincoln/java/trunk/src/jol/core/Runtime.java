@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 import javax.servlet.ServletContext;
 
@@ -31,7 +32,7 @@ import jol.types.table.Table.Catalog;
  * runtime object. The runtime can either be used synchronously by calling
  * {@link #evaluate()}, or asynchronously in its own thread by calling
  * {@link Runtime#start()}.
- * 
+ *
  * Implements the {@link System} interface through which outside programs
  * interact with the OverLog library.
  */
@@ -40,50 +41,50 @@ public class Runtime implements System {
 	private static Long idgenerator = 0L;
 
 	private static jol.core.Runtime.ResourceLoader loader;
-	
+
 	/** @return A new unique system identifier. */
 	public static Long idgen() {
 		return idgenerator++;
 	}
-	
+
 	/** The thread that the runtime executes in.
 	 * Created and started in {#link #create(int)}. */
 	private Thread thread;
-	
+
 	/** The system catalog contain all table references. */
 	private Catalog catalog;
-	
+
 	/** The network object that manages communication over
 	 * various protocols. */
 	private Network network;
-	
+
 	/** The driver for the the query processor engine. */
 	private Driver driver;
-	
+
 	/** A table that contains all tuples waiting to be
 	 * executed by the query processor {@link Driver}. */
 	private Schedule schedule;
-	
+
 	/** The system logical clock. */
 	private Clock clock;
-	
+
 	/** The system physical clock. */
 	private Timer timer;
-	
+
 	/** An executor for async queries. */
 	private ExecutorService executor;
-	
+
 	/** Creates a new runtime. Called from {#link #create(int)}. */
 	private Runtime() {
 		this.catalog = Table.initialize(this);
 		Compiler.initialize(this);
 		StasisTable.initializeStasis(this);
-		
+
 		this.schedule = new Schedule(this);
 		this.clock    = new Clock(this, "localhost");
 		this.catalog.register(this.schedule);
 		this.catalog.register(this.clock);
-		
+
 		this.catalog.register(new QueryTable(this));
 		this.catalog.register(new Log(this, java.lang.System.err));
 
@@ -93,7 +94,7 @@ public class Runtime implements System {
 		this.thread     = new Thread(driver);
 		this.timer      = new Timer("Timer", true);
 	}
-	
+
 	public void evaluate() throws JolRuntimeException {
 		// XXX might not be a good idea to bypass this check.
 		//		if (this.thread.isAlive()) {
@@ -119,14 +120,15 @@ public class Runtime implements System {
 				this.driver.timestampEvaluate();
 
 				call(post);
-				
+
 			} finally {
 				// XXX enableInterrupts();
 			}
 		}
-	} 
+	}
 	public void shutdown() {
 		synchronized (driver) {
+		    this.timer.cancel();
 			this.executor.shutdown();
 			this.thread.interrupt();
 			if (this.network != null) {
@@ -135,32 +137,32 @@ public class Runtime implements System {
 			StasisTable.deinitializeStasis();
 		}
 	}
-	
+
 	public void start() {
 		this.thread.start();
 	}
-	
+
 	/**
 	 * @return The system catalog {@link Catalog}.
 	 */
 	public Catalog catalog() {
 		return this.catalog;
 	}
-	
+
 	/**
 	 * @return The network manager {@link Network}.
 	 */
 	public Network network() {
 		return this.network;
 	}
-	
+
 	/**
 	 * @return The system clock {@link Clock}.
 	 */
 	public Clock clock() {
 		return this.clock;
 	}
-	
+
 	/**
 	 * Get the system physical timer clock.
 	 * @return The system timer.
@@ -187,10 +189,10 @@ public class Runtime implements System {
 	/**
 	 * Code that wants to install overlog files on the classpath
 	 * should call this method instead of using ClassLoader directly.
-	 * 
+	 *
 	 * This allows overlog installation in environments like Servlet
-	 * containers that provide non-standard ClassLoaders 
-	 * 
+	 * containers that provide non-standard ClassLoaders
+	 *
 	 * @param owner The owner of the program
 	 * @param resource The name of a program that lives in the classpath,
 	 * 				   without a leading '/'.
@@ -205,26 +207,26 @@ public class Runtime implements System {
 			throw new UpdateException("Error loading resource", e);
 		}
 	}
-	
+
 	/**
 	 * Install the program contained in the given file under the given owner.
-	 * 
-	 * This should *not* be used to install overlog files that live in the 
+	 *
+	 * This should *not* be used to install overlog files that live in the
 	 * classpath.  The locations of such files should be passed as a string.
-	 * 
+	 *
 	 * @param owner The owner of the program.
 	 * @param url The location that contains the program text.
 	 */
 	public void install(String owner, URL url) throws UpdateException {
 		install(owner, null, url);
 	}
-	
+
 	public void install(String owner, String debugger, URL url) throws UpdateException {
 		TupleSet compilation = new TupleSet(CompileTable.TABLENAME);
 		compilation.add(new Tuple(null, owner, debugger, url.toString(), null));
 		schedule("runtime", CompileTable.TABLENAME, compilation, null);
 	}
-	
+
 	/**
 	 * Uninstall a program.
 	 * @param name The program name.
@@ -233,7 +235,7 @@ public class Runtime implements System {
 		TupleSet uninstall = new TupleSet(new TableName("compiler", "uninstall"), new Tuple(name, true));
 		schedule("compile", uninstall.name(), uninstall, null);
 	}
-	
+
 	/**
 	 *  Schedule a set of insertion/deletion tuples.
 	 *  @param program The program that should execute the delta tuples.
@@ -259,14 +261,26 @@ public class Runtime implements System {
 			public String    program()    { return program; }
 			public TableName name()       { return name; }
 		});
-		
+
 		/* Non-blocking wake-up call to the driver. */
-		this.executor.execute(new Runnable() {
-			public void run() {
-				synchronized(driver) { driver.notify(); }
-				return;
-			}
-		});
+        try {
+            this.executor.execute(new Runnable() {
+                public void run() {
+                    synchronized (driver) {
+                        driver.notify();
+                    }
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            /*
+             * We might see this exception if schedule() is called concurrently
+             * with shutdown(). This might occur if a physical timer fires
+             * concurrently with JOL shutdown, for example. If this is the
+             * case, we just ignore the exception.
+             */
+            if (!this.executor.isShutdown())
+                throw e;
+        }
 	}
 
 	public interface RuntimeCallback {
@@ -282,7 +296,7 @@ public class Runtime implements System {
 	/**
 	 * Maps from resource filename to URL.  Unfortunately, we cannot always
 	 * rely on the ClassLoader to lookup resources for us.
-	 * 
+	 *
 	 *  @see defaultLoader()
 	 *  @see servletLoader()
 	 */
@@ -292,11 +306,11 @@ public class Runtime implements System {
 	/**
 	 * Create a resource loader that uses a ServletContext to locate
 	 * resources.
-	 * 
+	 *
 	 * TODO Keeps pointers to servlet contexts around after getPost() returns,
 	 * 		then access them from concurrent threads.  Is that safe?
-	 *   
-	 * @param c The servlet context that will be used to lookup resources. 
+	 *
+	 * @param c The servlet context that will be used to lookup resources.
 	 * @return A ResourceLoader that can be passed to create().
 	 */
 	public static ResourceLoader servletLoader(final ServletContext c) {
@@ -361,13 +375,13 @@ public class Runtime implements System {
 			throw new JolRuntimeException("Failed to create JOL runtime instance", e);
 		}
 	}
-	
+
 	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, JolRuntimeException {
 		if (args.length < 2) {
 			java.lang.System.out.println("Usage: jol.core.Runtime port program");
 			java.lang.System.exit(1);
 		}
-		
+
 		ArrayList<String> arguments = new ArrayList<String>();
 		String debugger = null;
 		for (int i = 0; i < args.length; i++) {
@@ -386,9 +400,9 @@ public class Runtime implements System {
 				arguments.add(arg);
 			}
 		}
-		
+
 		args = arguments.toArray(new String[arguments.size()]);
-		
+
 		// Initialize the global Runtime
 		Runtime runtime = (Runtime) Runtime.create(Integer.parseInt(args[0]));
 		for (int i = 1; i < args.length; i++) {
