@@ -2,7 +2,6 @@ package jol.types.operator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -24,13 +23,13 @@ import jol.core.Runtime;
 public class EventFilter extends Operator {
 	/**
 	 * A filter extracts a field from the input tuple and compares it
-	 * to some constant value. If this comparison succeeds then the 
-	 * filter succeeds. 
+	 * to some constant value. If this comparison succeeds then the
+	 * filter succeeds.
 	 */
 	private class ConstantFilter implements TupleFunction<Boolean> {
 		/** The value position within the tuple used in the comparison. */
 		private Integer position;
-		
+
 		/** The function that extracts the constant used in the comparison. */
 		private TupleFunction<Comparable> function;
 
@@ -48,7 +47,7 @@ public class EventFilter extends Operator {
 		public Boolean evaluate(Tuple tuple) throws JolRuntimeException {
 			Comparable fvalue = function.evaluate(tuple);
 			Comparable tvalue = tuple.value(position);
-			
+
 			return (fvalue == tvalue || fvalue.compareTo(tvalue) == 0);
 		}
 
@@ -56,9 +55,9 @@ public class EventFilter extends Operator {
 		public Class returnType() {
 			return function.returnType();
 		}
-		
+
 	}
-	
+
 	/**
 	 * A filter that ensures two attributes values are the same.
 	 */
@@ -82,7 +81,7 @@ public class EventFilter extends Operator {
 		public Boolean evaluate(Tuple tuple) throws JolRuntimeException {
 			Comparable a1 = tuple.value(this.a1);
 			Comparable a2 = tuple.value(this.a2);
-			return (a1 == a2 || 
+			return (a1 == a2 ||
 					(a1 != null && a2 != null && a1.compareTo(a2) == 0));
 		}
 
@@ -91,24 +90,24 @@ public class EventFilter extends Operator {
 			return type;
 		}
 	}
-	
+
 	/** The event predicate. */
 	private Predicate predicate;
-	
+
 	/** A list of filters, one for each constant in the event predicate. */
 	private List<TupleFunction<Boolean>> filters;
-	
+
 
 	/**
 	 * Create a new event filter operator.
 	 * @param context The runtime context.
-	 * @param predicate The event predicate. 
+	 * @param predicate The event predicate.
 	 */
 	public EventFilter(Runtime context, Predicate predicate) {
 		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.filters = new ArrayList<TupleFunction<Boolean>>();
-		
+
 		HashMap<String, Variable> variables = new HashMap<String, Variable>();
 		for (jol.lang.plan.Expression arg : predicate) {
 			if (arg instanceof Variable) {
@@ -117,7 +116,7 @@ public class EventFilter extends Operator {
 					Variable previous = variables.get(var.name());
 					this.filters.add(
 							new AttributeFilter(previous.type(),
-							                    previous.position(), 
+							                    previous.position(),
 							                    var.position()));
 				}
 				else {
@@ -129,7 +128,7 @@ public class EventFilter extends Operator {
 			}
 		}
 	}
-	
+
 	/**
 	 * Create a new event filter.
 	 * @param context The runtime context.
@@ -160,7 +159,7 @@ public class EventFilter extends Operator {
 		    	result.add(tuple);
 		    }
 		}
-		
+
 		return result;
 	}
 
@@ -178,7 +177,7 @@ public class EventFilter extends Operator {
 	public String toString() {
 		return "EVENT FILTER " + predicate + ": FILTERS " + this.filters;
 	}
-	
+
 	/**
 	 * The number of constant filters.
 	 * @return The number of constant filters.
