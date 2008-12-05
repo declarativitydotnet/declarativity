@@ -82,7 +82,7 @@ public class EventFilter extends Operator {
 			Comparable a1 = tuple.value(this.a1);
 			Comparable a2 = tuple.value(this.a2);
 			return (a1 == a2 ||
-					(a1 != null && a2 != null && a1.compareTo(a2) == 0));
+					(a1 != null && a2 != null && a1.equals(a2)));
 		}
 
 		/** The constant type. */
@@ -96,7 +96,6 @@ public class EventFilter extends Operator {
 
 	/** A list of filters, one for each constant in the event predicate. */
 	private List<TupleFunction<Boolean>> filters;
-
 
 	/**
 	 * Create a new event filter operator.
@@ -144,7 +143,7 @@ public class EventFilter extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		if (filters.size() == 0)
+		if (filters.isEmpty())
 			return tuples;
 
 		TupleSet result = new TupleSet(tuples.name());
@@ -185,5 +184,4 @@ public class EventFilter extends Operator {
 	public int filters() {
 		return this.filters.size();
 	}
-
 }
