@@ -1901,7 +1901,13 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitIntegerConstant(final GNode n) {
-		n.setProperty(Constants.TYPE, new Value<Integer>(Integer.parseInt(n.getString(0))));
+		String value = n.getString(0);
+		if (value.equals("infinity")) {
+			n.setProperty(Constants.TYPE, new Value<Integer>(Integer.MAX_VALUE));
+		}
+		else  {
+			n.setProperty(Constants.TYPE, new Value<Integer>(Integer.parseInt(value)));
+		}
 		return Value.class;
 	}
 

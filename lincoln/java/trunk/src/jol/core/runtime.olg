@@ -142,7 +142,7 @@ delete
 schedule(Time, Program, Name, Insertions, Deletions) :-
 	clock#delete(Location, Time),
 	schedule(Time, Program, Name, Insertions, Deletions);
-
+	
 /*******************************************************************/
 /*** Fact scheduler */
 

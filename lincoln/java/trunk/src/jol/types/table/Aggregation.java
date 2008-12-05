@@ -136,14 +136,18 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 			result.add(tuple);
 		} else {
 			for (Tuple group : this.aggregateFunctions.keySet()) {
-				Tuple tuple = group.clone();
-				for (Aggregate<C> aggregation :  this.aggregateFunctions.get(group)) {
-					tuple.insert(aggregation.position(), aggregation.result());
-				}
+				Tuple tuple = result(group.clone());
 				result.add(tuple);
 			}
 		}
 		return result;
+	}
+	
+	private Tuple result(Tuple group) {
+		for (Aggregate<C> aggregation :  this.aggregateFunctions.get(group)) {
+			group.insert(aggregation.position(), aggregation.result());
+		}
+		return group;
 	}
 	
 	@Override
@@ -159,6 +163,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	 * become part of the delta set. 
 	 */
 	public TupleSet insert(TupleSet insertions, TupleSet deletions) throws UpdateException {
+		TupleSet expirations = new TupleSet();
 		if (deletions != null && deletions.size() > 0) {
 			TupleSet intersection = deletions.clone();
 			intersection.retainAll(insertions);
@@ -166,7 +171,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 			insertions.removeAll(intersection);
 			deletions.removeAll(intersection);
 			
-			TupleSet delta = delete(deletions);
+			TupleSet delta = delete(deletions, expirations);
 			deletions.clear();
 			deletions.addAll(delta);
 		}
@@ -212,6 +217,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 			return delta;
 		}
 		insertions = super.insert(delta, deletions);
+		insertions.addAll(expirations);
 		return insertions;
 	}
 	
@@ -220,9 +226,8 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		return this.aggregateTuples.add(tuple.clone());
 	}
 	
-	@Override
 	/** Should only be called from within this Class.  */
-	public TupleSet delete(Iterable<Tuple> deletions) throws UpdateException {
+	public TupleSet delete(Iterable<Tuple> deletions, TupleSet expire) throws UpdateException {
 		if (type() == Table.Type.EVENT) {
 			throw new UpdateException("Aggregation table " + name() + " is an event table!");
 		}
@@ -232,26 +237,24 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 				if (this.singleGroupAggregateFunctions != null) {
 					for (Aggregate<C> function : this.singleGroupAggregateFunctions) {
 						function.delete(tuple);
-						/*
 						if (function.size() == 0) {
+							expire.addAll(result());
 							this.singleGroupAggregateFunctions = groupGenerate();
 							break; // we're out of tuples for this group.
 						}
-						*/
 					}
 				}
 				else {
-					Tuple key = key().project(tuple);
-					if (this.aggregateFunctions.containsKey(key)) {
-						List<Aggregate<C>> functions = this.aggregateFunctions.get(key);
+					Tuple group = key().project(tuple);
+					if (this.aggregateFunctions.containsKey(group)) {
+						List<Aggregate<C>> functions = this.aggregateFunctions.get(group);
 						for (Aggregate<C> function : functions) {
 							function.delete(tuple);
-							/*
 							if (function.size() == 0) {
-								this.aggregateFunctions.remove(key);
+								expire.add(result(group.clone()));
+								this.aggregateFunctions.remove(group);
 								break; // we're out of tuples for this group.
 							}
-							*/
 						}
 					}
 				}

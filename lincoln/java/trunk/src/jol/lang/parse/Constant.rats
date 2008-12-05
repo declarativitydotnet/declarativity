@@ -34,6 +34,7 @@ transient String FloatTypeSuffix = [fFdD] ;
 
 generic IntegerConstant =
     HexConstant Spacing
+  / InfinityConstant Spacing
   / DecimalConstant Spacing;
   
 generic LongConstant =
@@ -67,8 +68,8 @@ generic BooleanConstant =
   / "false":Word 
   ;
 
-generic InfinityConstant =
-  void:"infinity":Word
+String InfinityConstant =
+  "infinity":Word
   ;
 
 generic NullConstant =
