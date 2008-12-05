@@ -5,16 +5,18 @@ import jol.types.basic.ValueList;
 import java.io.File;
 import gfs.Conf;
 
-define(file, keys(0,1), {String, String});
-define(dir, keys(0), {String, File, ValueList});
+define(chunk, keys(0,1), {String, String});
+define(chunkTmp, {String, String});
+define(dir, keys(0,1,2), {String, File, ValueList});
 
 timer(clock,physical,5000,5000,1000);
 timer(periodic,logical,1,1,1);
 
 watch(dir,ae);
-watch(file,ae);
+watch(chunk,ae);
+watch(chunkTmp,ae);
 
-// Node address, data directory on host file system
+// Node address, data directory on host chunk system
 define(datadir, keys(0), {String,String});
 watch(datadir, ae);
 
@@ -29,29 +31,33 @@ watch(indx,ae);
 indx(Host,0) :-   
     dir#insert(Host,Dir,List);
 
+/*
 delete
-file(Host,File) :-
-    file(Host,File),
+chunk(Host,File) :-
+    chunk(Host,File),
     dir#insert(Host,Dir,List);
+*/
 
 indx(Host,Next) :-
     indx(Host,Old),
-    file#insert(Host,File),
+    chunkTmp(Host,File),
     Next := Old + 1;
 
-
-file(Host,File) :-
+chunkTmp(Host,File) :-
     dir(Host,Dir,List),
-    indx#insert(Host,I),
+    indx(Host,I),
     I < List.size(),
     B := List.get(I),
     File := B.toString();
+
+chunk(Host, File) :-
+    chunkTmp#insert(Host, File);
 
 
 define(heartBeat,keys(0,1,2),{String,String,Integer,Long,Long});
 //watch(heartBeat,ae);
 heartBeat(Host,Master,Chunk,Tstamp,Id) :-
-    file(Host,File),
+    chunk(Host,File),
     Chunk := Integer.valueOf(File),
     masters(Host,Master),
     clock(_,_,_),

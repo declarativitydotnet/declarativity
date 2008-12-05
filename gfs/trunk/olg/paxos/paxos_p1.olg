@@ -25,7 +25,7 @@ define(tick,keys(0,1),{String,String,Integer});
 
 define(instance,keys(0),{String,Integer});
 
-
+/*
 watch(storedDecreeRequest,ae);
 watch(quorum,ae);
 watch(maxPrevVoteInstance,ae);
@@ -39,6 +39,7 @@ watch(sendPrepare,ae);
 watch(lastTried,ae);
 watch(nextBal,ae);
 watch(prevVote,ae);
+*/
 
 /*******************************************************************
 nomenclature mappings between "parliamentary paxos" and "simple paxos"

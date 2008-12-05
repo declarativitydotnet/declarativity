@@ -167,6 +167,7 @@ paxos::quorum(Master,Round) :-
   Master != Other,
   NewRound > Round;
 
+/*
 watch(paxos::instance,ae);
 watch(paxos::sendPrepare,ae);
 watch(paxos::nextBal,ae);
@@ -191,8 +192,8 @@ watch(acceptRequest,ae);
 watch(decree,ae);
 watch(sendAccept,ae);
 watch(success,ae);
-//watch(sendPromise,ae);	
 
 watch(success,ae);
 watch(paxos::quorum,ae);
 watch(paxos::sendPromise,ae);
+*/
