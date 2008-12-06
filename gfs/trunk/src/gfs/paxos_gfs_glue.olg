@@ -29,6 +29,7 @@ gfs_global::file(Master, FName, Blocks) :-
 timer(periodic,physical,3000,3000,3000);
 
 define(appView,keys(0,1,3,4),{String,String,String,Integer,String,String,Integer});
+//define(appView, {String,String,String,Integer,String,String,Integer});
 watch(appView,ae);
 public
 appView(Master,From,Decree,Instance,Name,Op,Id) :-
@@ -36,7 +37,6 @@ appView(Master,From,Decree,Instance,Name,Op,Id) :-
   periodic(_,_,_),
   Name := Decree.split(",")[0],
   Op := Decree.split(",")[1],
-  //Id := new Integer(Integer.valueOf(Decree.split(",")[2]));
   Id := Integer.valueOf(Decree.split(",")[2]);
 
 public
@@ -72,6 +72,7 @@ public
 red1
 gfs_global::create_request_done(Master, Id, Source, false) :-
   gfs::create_request_pending(Master, Id, Source, Status),
+  gfs::request(Master, Id, Source, "Create", FName),
   appView(Master,From,Decree,Instance,FName,"i",Id2),
   Id != Id2;
 

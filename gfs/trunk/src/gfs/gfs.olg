@@ -52,8 +52,16 @@ chunkSeq(Master, I+1) :-
 response(@Source, Id, Master, true, Stuff) :-
     request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
-    candidate_datanode#insert(@Master, Id, Source, FName, I, Stuff),
+    //candidate_datanode#insert(@Master, Id, Source, FName, I, Stuff),
+    newListHolder(@Master,Source,Id,Stuff,I),
     Stuff.insert(I.toString());
+
+define(newListHolder,keys(0,1),{String,String,Integer,ValueList,Integer});
+
+newListHolder(Master,Source,Id,List,I) :- 
+    candidate_datanode#insert(@Master, Id, Source, FName, I, Stuff),
+    List := new ValueList(Stuff.toArray());
+
 
 watch(candidate_datanode, ae);
 

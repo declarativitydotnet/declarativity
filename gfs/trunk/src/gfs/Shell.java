@@ -101,19 +101,26 @@ public class Shell {
 
         String filename = args.get(0);
 
-        ValueList<String> chunks = getNewChunk(filename);
-        Socket sock = setupStream(chunks.get(0));
-
-        try {
-
-            DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
-            sendRoutedData(dos,chunks);
-            for (int b=java.lang.System.in.read(),read=0; b != -1 && read < Conf.getChunkSize(); b=java.lang.System.in.read()) {
-                dos.write(b);
-            } 
-            dos.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        int b = 1;
+        while (b != -1) {
+            ValueList<String> chunks = getNewChunk(filename);
+            Socket sock = setupStream(chunks.get(0));
+            try {
+                DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
+                sendRoutedData(dos,chunks);
+                int read = 0;
+                while (b != -1 && read < Conf.getChunkSize()) {
+                    byte buf[] = new byte[Conf.getBufSize()];
+                    b = java.lang.System.in.read(buf,0,Conf.getBufSize());
+                    //read += Conf.getChunkSize();
+                    dos.write(buf);
+                    read += b;
+                }
+                java.lang.System.out.println("exiting inner loop with "+b+" retval and "+read+" bytes read\n");
+                dos.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
     }

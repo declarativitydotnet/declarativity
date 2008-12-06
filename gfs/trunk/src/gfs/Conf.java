@@ -34,7 +34,9 @@ public class Conf {
     private static final long fileOpTimeout = 20000;
     private static final long listingTimeout = 5000;
 
-    private static final long chunkSize = 10240;
+    private static final long chunkSize = 10240000;
+
+    private static final int bufSize = 102400;
 
     /* NB: This must be called before installing "gfs.olg" */
     public static void setSelfAddress(String addr) {
@@ -42,6 +44,10 @@ public class Conf {
     }
     public static long getChunkSize() {
         return chunkSize;
+    }
+
+    public static int getBufSize() {
+        return bufSize;
     }
 
     public static String getSelfAddress() {
