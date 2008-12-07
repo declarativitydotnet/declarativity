@@ -68,8 +68,8 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 		if (this.oper.equals(AND)) {
 			return new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					return (java.lang.Boolean) lvalue.evaluate(tuple) && 
-					       (java.lang.Boolean) rvalue.evaluate(tuple);
+					return java.lang.Boolean.TRUE.equals(lvalue.evaluate(tuple)) && 
+					       java.lang.Boolean.TRUE.equals(rvalue.evaluate(tuple));
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -79,8 +79,8 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 		else if (this.oper.equals(OR)) {
 			return new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					return (java.lang.Boolean)  lvalue.evaluate(tuple) || 
-					       (java.lang.Boolean)  rvalue.evaluate(tuple);
+					return java.lang.Boolean.TRUE.equals(lvalue.evaluate(tuple)) || 
+					       java.lang.Boolean.TRUE.equals(rvalue.evaluate(tuple));
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -90,7 +90,7 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 		else if (this.oper.equals(NOT)) {
 			return new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					return !(java.lang.Boolean) lvalue.evaluate(tuple);
+					return java.lang.Boolean.FALSE.equals(lvalue.evaluate(tuple));
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;

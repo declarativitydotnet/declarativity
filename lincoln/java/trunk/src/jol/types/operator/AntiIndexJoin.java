@@ -55,9 +55,16 @@ public class AntiIndexJoin extends Join {
 			for (Tuple outer : outerTuples) {
 				TupleSet oTuples = new TupleSet();
 				TupleSet innerTuples = this.index.lookupByKey(lookupKey.project(outer));
-				outerTuples.add(outer);
-				TupleSet join = join(outerTuples, innerTuples);
-				if (join.size() == 0) result.add(outer);
+				if (innerTuples.size() == 0) {
+					/* An obvious optimized case. */
+					result.add(outer);
+				}
+				else {
+					/* We need to perform the actual join on the *reduced* tuple set. */
+					outerTuples.add(outer);
+					TupleSet join = join(outerTuples, innerTuples);
+					if (join.size() == 0) result.add(outer);
+				}
 			}
 			return result;
 		} catch (BadKeyException e) {

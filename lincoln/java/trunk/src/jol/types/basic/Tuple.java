@@ -42,6 +42,7 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	/** Is the cached hash code value up-to-date? */
 	transient protected boolean hashCacheValid;
 
+	transient protected boolean frozen;
 
 	/**
 	 * Create a new tuple.
@@ -226,6 +227,7 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
      * freshly deserialized.
      */
 	private void initialize() {
+		this.frozen         = false;
 	    this.hashCacheValid = false;
 		this.refCount       = 1;
 		this.id		        = idGen;
@@ -247,19 +249,27 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	public void id(long id) {
 		this.id = id;
 	}
-
-	public void insert(int index, Comparable value) {
-		this.values.add(index, value);
-		this.hashCacheValid = false;
+	
+	public boolean frozen() {
+		return this.frozen;
+	}
+	
+	public void freeze() {
+		this.frozen = true;
 	}
 
 	/**
 	 * Append the tuple value.
 	 * @param value The tuple value.
 	 */
-	public void append(Comparable value) {
-		this.values.add(value);
-		this.hashCacheValid = false;
+	public void append(Comparable value) throws RuntimeException {
+		if (frozen()) {
+			throw new RuntimeException("Operation invalid on frozen tuple!");
+		}
+		else {
+			this.values.add(value);
+			this.hashCacheValid = false;
+		}
 	}
 
 	@Override
@@ -358,13 +368,17 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	 *	@param field The field position.
 	 *	@param value The value to set.
 	 */
-	public void value(int field, Comparable value) {
-		if (this.values.size() == field)
-			this.values.add(value);
-		else
-			this.values.set(field, value);
-
-		this.hashCacheValid = false;
+	public void value(int field, Comparable value) throws RuntimeException {
+		if (frozen()) {
+			throw new RuntimeException("Unsupported tuple operation on frozen tuple!");
+		}
+		else {
+			if (this.values.size() == field)
+				this.values.add(value);
+			else
+				this.values.set(field, value);
+			this.hashCacheValid = false;
+		}
 	}
 
 	/**

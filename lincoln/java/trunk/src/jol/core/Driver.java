@@ -141,8 +141,12 @@ public class Driver implements Runnable {
 
 				Tuple t = flush(time, program, name, insertions, deletions);
 				if (t != null) {
-					t.insert(Evaluator.Field.QUERY.ordinal(), null);
-					delta.add(t);
+					delta.add(new Tuple(t.value(Field.TIME.ordinal()), 
+							            t.value(Field.PROGRAM.ordinal()), 
+							            null, // Query 
+							            t.value(Field.TABLENAME.ordinal()), 
+							            t.value(Field.INSERTIONS.ordinal()), 
+							            t.value(Field.DELETIONS.ordinal())));
 				}
 			}
 			return delta;
