@@ -125,7 +125,7 @@ public class Shell {
 
     }
 
-    private void doRead(List<String> args) throws UpdateException {
+    private void doRead(List<String> args) throws UpdateException,JolRuntimeException {
         if (args.size() != 1)
             usage();
 
@@ -185,7 +185,7 @@ public class Shell {
     }
 
 
-    private ValueList<Integer> getChunkList(final String filename) throws UpdateException {
+    private ValueList<Integer> getChunkList(final String filename) throws UpdateException,JolRuntimeException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -218,7 +218,10 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList chunkList = (ValueList) this.responseQueue.get(); // XXX: timeout?
+       // ValueList chunkList = (ValueList) this.responseQueue.get(); // XXX: timeout?
+
+        ValueList chunkList = (ValueList)spinGet(Conf.getListingTimeout());
+        
         responseTbl.unregister(responseCallback);
         return chunkList;
     }
@@ -497,6 +500,7 @@ public class Shell {
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
+        /*
         while (true) {
             Object obj = timedGet(Conf.getFileOpTimeout());
             if (obj != null)
@@ -504,6 +508,8 @@ public class Shell {
           // we timed out.
           java.lang.System.out.println("retrying (master indx = " + this.currentMaster + ")\n");
         }
+        */
+        Object obj = spinGet(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
     }
 
@@ -540,10 +546,14 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
         this.system.schedule("gfs", tblName, req, null);
 
+        /*
         Object obj = timedGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null)
             return doListFiles(args);
+        */
+        Object obj = spinGet(Conf.getListingTimeout());
+        responseTbl.unregister(responseCallback);
 
         ValueList<String> lsContent = (ValueList) obj;
         Collections.sort(lsContent);
@@ -591,10 +601,27 @@ public class Shell {
         this.system.schedule("gfs", tblName, req, null);
 
         // Wait for the response
+        /*
         Object obj = timedGet(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
         if (obj == null)
            doRemoveFile(file);
+        */  
+        Object obj = spinGet(Conf.getFileOpTimeout());
+        responseTbl.unregister(responseCallback);
+    }
+
+    private Object spinGet(long timeout) throws JolRuntimeException {
+        while (this.currentMaster < Conf.getNumMasters()-1) {
+            Object result = this.responseQueue.get(timeout);
+            if (result != null) 
+                return result;
+           
+            java.lang.System.out.println("master "+this.currentMaster+" timed out.  retry?\n"); 
+            this.currentMaster++;
+            scheduleNewMaster();
+        }
+        throw new JolRuntimeException("timed out on all masters");
     }
 
     private Object timedGet(long timeout) throws JolRuntimeException {

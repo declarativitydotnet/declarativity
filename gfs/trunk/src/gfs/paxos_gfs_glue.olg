@@ -19,25 +19,56 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   gfs::request(Master, Id, Source, "Rm", FName),
   Decree := FName + ",d,"+Id.toString();
 
+// an insert op in the log induces a new metadata entry for a file.
 public
 gfs_global::file(Master, FName, Blocks) :-
  // periodic(_,_,_),
-  appView(Master,From,Decree,Instance,FName,Op,Id),
+  appView#insert(Master,From,Decree,Instance,FName,Op,Id),
   Blocks := new ValueList(),
   Op == "i";
 
+
+// or, if we are adding a chunk to a file's chunklist, we likewise need to pass it through paxos.
+// (and indeed, should block the requestor, but this is not implemented yet)
+public
+paxos_global::decreeRequest(Master, Decree, From) :-
+  paxos_global::id(Master),
+  From := Master,
+  gfs::candidate_datanode#insert(Master, Id, Source, FName, I, Stuff),
+  Decree := FName + ",u,"+Id.toString()+","+I.toString();
+
+
+// add chunks to the file list.
+watch(gfs_global::file, ae);
+public
+gfs_global::file(Master,FName,Chunks) :-
+    gfs_global::file(Master,FName,Chunks),
+    appView#insert(Master,From,Decree,Instance,Fname,Op,Id,I),
+    Op == "u",
+    Chunks.insert(I);
+
+
+
+
 timer(periodic,physical,3000,3000,3000);
 
-define(appView,keys(0,1,3,4),{String,String,String,Integer,String,String,Integer});
-//define(appView, {String,String,String,Integer,String,String,Integer});
+define(appView,keys(0,1,3,4),{String,String,String,Integer,String,String,Integer,Integer});
+//define(appView, {String,String,String,Integer,String,String,Integer,Integer});
 watch(appView,ae);
 public
-appView(Master,From,Decree,Instance,Name,Op,Id) :-
+appView(Master,From,Decree,Instance,Name,Op,Id,I) :-
   paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
   periodic(_,_,_),
-  Name := Decree.split(",")[0],
-  Op := Decree.split(",")[1],
-  Id := Integer.valueOf(Decree.split(",")[2]);
+  NVL := new ValueList(Decree.split(",")),
+  //Name := Decree.split(",")[0],
+  //Op := Decree.split(",")[1],
+  //Id := Integer.valueOf(Decree.split(",")[2]),
+  //  I := 100;
+  //I := Array.getLength((Decree.split(",")) < 4) ? -1 :  Integer.valueOf(Decree.split(",")[3]);
+    Name := (String)NVL.get(0),
+    Op := (String)NVL.get(1),
+    Id := Integer.valueOf((String)NVL.get(2)),
+    I := NVL.size() < 4 ? -1 : Integer.valueOf((String)NVL.get(3));
 
 public
 delete

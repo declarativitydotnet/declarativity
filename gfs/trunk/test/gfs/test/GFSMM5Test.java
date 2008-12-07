@@ -3,6 +3,7 @@ package gfs.test;
 import jol.types.basic.ValueList;
 import gfs.Master;
 import gfs.Shell;
+import gfs.Conf;
 import gfs.test.TestCommon;
 
 import org.junit.Test;
@@ -19,24 +20,36 @@ public class GFSMM5Test extends TestCommon {
   @Test
   public void test4() {
     try { 
-    //  startMany("localhost:5500","localhost:5502","localhost:5503");
-    startMany("localhost:5500");
+      startMany("localhost:5500","localhost:5502","localhost:5503");
+    //startMany("localhost:5500");
       //startOne();
     
       Shell longRun = new Shell();
 
-      for (int i=0; i < 500; i++) {
+      long agg = 0;
+        int count = 0;
+
+      for (int i=0; i < 50; i++) {
         String file = "XACT"+i;
+        long now = java.lang.System.currentTimeMillis();
         createFile(longRun,file);
-        Thread.sleep(100);
+        agg += (java.lang.System.currentTimeMillis() - now);
+        count += 1;
+        //Thread.sleep(100);
         //shellCreate(file);
       }      
-
       longRun.shutdown();
 
-      assertTrue(shellLs("XACT2","XACT18","XACT16","XACT12"));
   
       java.lang.System.out.println("OK, good then\n");
+
+      long avg = agg / count;   
+      java.lang.System.out.println("average time to create metadata on "+ Conf.getNumMasters() + " is "+ avg);
+    
+        int cnt = shellLsCnt();
+        java.lang.System.out.println("total files in ls: "+cnt);
+
+      assertTrue(shellLs("XACT2","XACT18","XACT16","XACT12","XACT78","XACT 59"));
       shutdown();
 
     } catch (Exception e) {

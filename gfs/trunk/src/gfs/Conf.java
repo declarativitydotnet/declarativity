@@ -21,8 +21,8 @@ public class Conf {
 
     private static Host[] masterNodes = new Host[] {
         new Host("localhost", 5505),
-        // new Host("localhost", 5506),
-        // new Host("localhost", 5507),
+        new Host("localhost", 5506),
+        new Host("localhost", 5507),
     };
 
     private static Host[] dataNodes = new Host[] {

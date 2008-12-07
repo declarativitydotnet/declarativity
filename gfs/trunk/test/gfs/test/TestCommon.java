@@ -37,6 +37,15 @@ public class TestCommon {
         return ret;
     }
 
+    protected int shellLsCnt() throws JolRuntimeException,
+            UpdateException, InterruptedException {
+        Shell shell = new Shell();
+        int ret = lsCnt(shell);
+        shell.shutdown();
+        return ret;
+    }
+
+
     protected void shellCreate(String name) throws JolRuntimeException, UpdateException,
             InterruptedException {
         Shell shell = new Shell();
@@ -60,6 +69,11 @@ public class TestCommon {
             shutdown();
 
         Assert.assertTrue(b);
+    }
+
+    protected int lsCnt(Shell shell) throws JolRuntimeException, UpdateException, InterruptedException {
+        ValueList<String> list = lsFile(shell);
+        return list.size();
     }
 
     protected Boolean findInLs(Shell shell, String... files) throws JolRuntimeException,

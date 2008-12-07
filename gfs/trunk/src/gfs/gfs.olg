@@ -52,7 +52,6 @@ chunkSeq(Master, I+1) :-
 response(@Source, Id, Master, true, Stuff) :-
     request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
-    //candidate_datanode#insert(@Master, Id, Source, FName, I, Stuff),
     newListHolder(@Master,Source,Id,Stuff,I),
     Stuff.insert(I.toString());
 
@@ -66,6 +65,7 @@ newListHolder(Master,Source,Id,List,I) :-
 watch(candidate_datanode, ae);
 
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ValueList});
+//candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).insert(DataNode)>) :-
 candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).insert(DataNode)>) :-
     request#insert(Master, Id, Source, "NewChunk", FName),
     chunkSeq(Master,I),
@@ -73,16 +73,6 @@ candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).inser
     gfs_global::file(Master, FName, _);
     // this is where it gets interesting.
     // some distance function over the datanodes...
-
-
-// add chunks to the file list.
-watch(gfs_global::file, ae);
-public
-gfs_global::file(Master,FName,Chunks) :-
-    gfs_global::file(Master,FName,Chunks),
-    candidate_datanode#insert(Master, Id, Source, FName, I, Stuff),
-    Chunks.insert(I);
-
 
 
 // a "NewChunk" request for a nonexistent file causes an error.
