@@ -12,6 +12,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
+import jol.types.operator.AntiIndexJoin;
 import jol.types.operator.AntiScanJoin;
 import jol.types.operator.IndexJoin;
 import jol.types.operator.Operator;
@@ -205,10 +206,6 @@ public class Predicate extends Term implements Iterable<Expression> {
 			}
 		}
 
-		if (notin) {
-			return new AntiScanJoin(context, this, input);
-		}
-
 		Table table = context.catalog().table(this.name);
 		Index index = null;
 		if (indexKey.size() > 0) {
@@ -223,19 +220,26 @@ public class Predicate extends Term implements Iterable<Expression> {
 				table.secondary().put(indexKey, index);
 			}
 		}
-
-		if (index != null) {
-			return new IndexJoin(context, this, input, lookupKey, index);
-		}
-		else {
-			return new ScanJoin(context, this, input);
+		
+		if (notin) {
+			if (index != null) {
+				return new AntiIndexJoin(context, this, input, lookupKey, index);
+			} else {
+				return new AntiScanJoin(context, this, input);
+			}
+		} else {
+			if (index != null) {
+				return new IndexJoin(context, this, input, lookupKey, index);
+			} else {
+				return new ScanJoin(context, this, input);
+			}
 		}
 	}
 
 	@Override
 	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
 		context.catalog().table(PredicateTable.TABLENAME)
-		.force(new Tuple(program, rule, position, event.toString(), this));
+			.force(new Tuple(program, rule, position, event.toString(), this));
 	}
 
 }
