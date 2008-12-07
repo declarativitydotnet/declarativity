@@ -10,6 +10,7 @@ import jol.core.Runtime;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
+import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.AntiScanJoin;
 import jol.types.operator.IndexJoin;
@@ -192,14 +193,15 @@ public class Predicate extends Term implements Iterable<Expression> {
 	}
 
 	@Override
-	public Operator operator(Runtime context, Schema input) {
+	public Operator operator(Runtime context, Schema input) throws PlannerException {
 		/* Determine the join and lookup keys. */
 		Key lookupKey = new Key();
 		Key indexKey  = new Key();
-		for (Variable var : schema().variables()) {
+		Schema schema = schema();
+		for (Variable var : schema.variables()) {
 			if (input.contains(var)) {
-				indexKey.add(var.position());
-				lookupKey.add(input.variable(var.name()).position());
+				indexKey.add(schema.position(var.name()));
+				lookupKey.add(input.position(var.name()));
 			}
 		}
 
@@ -232,7 +234,8 @@ public class Predicate extends Term implements Iterable<Expression> {
 
 	@Override
 	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
-		context.catalog().table(PredicateTable.TABLENAME).force(new Tuple(program, rule, position, event.toString(), this));
+		context.catalog().table(PredicateTable.TABLENAME)
+		.force(new Tuple(program, rule, position, event.toString(), this));
 	}
 
 }

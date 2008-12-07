@@ -8,6 +8,7 @@ import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 
 /**
@@ -20,21 +21,28 @@ public class Assign<C extends Comparable<C> > extends Operator {
 
 	/** The output schema. */
 	private Schema schema;
-
+	
+	private int variablePosition;
+	
+	private TupleFunction<Comparable> valueFunction;
+	
 	/**
 	 * Create a new assign operator.
 	 * @param context The runtime context.
 	 * @param assignment The assignment predicate.
 	 * @param input The input schema.
+	 * @throws PlannerException 
 	 */
-	public Assign(Runtime context, jol.lang.plan.Assignment assignment, Schema input) {
+	public Assign(Runtime context, jol.lang.plan.Assignment assignment, Schema input) throws PlannerException {
 		super(context, assignment.program(), assignment.rule());
 		this.assignment = assignment;
+		this.valueFunction = assignment.value().function(input);
 		this.schema = input.clone();
-
+		
 		if (!this.schema.contains(this.assignment.variable())) {
 			this.schema.append(this.assignment.variable());
 		}
+		this.variablePosition = this.schema.position(assignment.variable().name());
 	}
 
 	@Override
@@ -44,17 +52,14 @@ public class Assign<C extends Comparable<C> > extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		Variable variable = assignment.variable();
-		TupleFunction<C> function = assignment.value().function();
 		TupleSet deltas = new TupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
 			try {
 				Tuple delta = tuple.clone();
-				delta.value(variable, function.evaluate(delta));
+				delta.value(this.variablePosition, this.valueFunction.evaluate(delta));
 				deltas.add(delta);
 			} catch (Throwable t) {
-				System.err.println("ASSUMED SCHEMA " + this.schema);
-				System.err.println("TUPLE SCHEMA " + tuple.schema());
+				System.err.println("SCHEMA " + this.schema);
 				String msg = t.toString() + ". Program " + this.assignment.program() +
 				             ". Error during assignment " + toString() + 
 				             ", on input tuple " + tuple;

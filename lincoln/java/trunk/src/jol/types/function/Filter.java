@@ -68,7 +68,6 @@ public class Filter implements TupleFunction<Comparable> {
 	}
 	
 	private Boolean eq(Tuple tuple) throws JolRuntimeException {
-		System.err.println("FILTER: " + lhs.evaluate(tuple) + " == " + rhs.evaluate(tuple));
 		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) == 0;
 	}
 	

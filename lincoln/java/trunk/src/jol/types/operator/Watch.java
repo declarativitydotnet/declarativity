@@ -85,7 +85,6 @@ public class Watch extends Operator {
 		if (this.rule != null) {
 			header += " Rule " + rule;
 		}
-		header += "\n\tSCHEMA: " + tuples.iterator().next().schema();
 		
 		stream.println(header);
 		for (Tuple tuple : tuples) {

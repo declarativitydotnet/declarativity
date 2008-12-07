@@ -42,10 +42,7 @@ public class Schema {
 	 */
 	public Schema(TableName name, List<Variable> variables) {
 		this.name = name;
-		for (int i = 0; i < variables.size(); i++) {
-			variables.get(i).position(i);
-		}
-		this.variables = variables;
+		this.variables = new ArrayList<Variable>(variables);
 	}
 
 	/**
@@ -83,7 +80,6 @@ public class Schema {
 	 * @param variable The variable to append.
 	 */
 	public void append(Variable variable) {
-		variable.position(this.variables.size());
 		this.variables.add(variable);
 	}
 
@@ -94,6 +90,10 @@ public class Schema {
 	 */
 	public boolean contains(Variable variable) {
 		return this.variables.contains(variable);
+	}
+	
+	public boolean contains(String name) {
+		return position(name) >= 0;
 	}
 
 	@Override
@@ -158,7 +158,7 @@ public class Schema {
 	 * @return The value type.
 	 */
 	public final Class type(String name) {
-		return variable(name).type();
+		return contains(name) ? variable(name).type() : null;
 	}
 
 	/**
@@ -167,8 +167,12 @@ public class Schema {
 	 * @return The position of the variable within this schema or -1 if !exist.
 	 */
 	public final int position(String name) {
-		Variable v = variable(name);
-		return v != null ? v.position() : -1;
+		for (int i = 0; i < this.variables.size(); i++) {
+			if (this.variables.get(i).name().equals(name)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/**

@@ -6,7 +6,9 @@ import java.util.List;
 import jol.types.basic.Tuple;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;;
 
 public class Limit extends Aggregate {
 	protected Number kConst;
@@ -61,25 +63,21 @@ public class Limit extends Aggregate {
 	}
 	
 	@Override
-	public TupleFunction function() {
-		final List<AggregateVariable> variables = this.variables;
+	public TupleFunction function(Schema schema) throws PlannerException {
 		final Number kConst = this.kConst;
+		final List<TupleFunction<Comparable>> values = 
+			new ArrayList<TupleFunction<Comparable>>();
+		for (Variable var : this.variables) {
+			values.add(var.function(schema));
+		}
+		
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				ValueList result = new ValueList();
-				for (AggregateVariable var : variables) {
-					if (var.position() > 0) {
-						try {
-							result.add(var.function().evaluate(tuple));
-						} catch (Throwable t) {
-							throw new JolRuntimeException("TRYING TO GET " + var + 
-									" from " + tuple.schema() + " at position " + var.position());
-						}
-					}
-					else {
-						result.add(var.function().evaluate(tuple));
-					}
+				for (TupleFunction f : values) {
+					result.add(f.evaluate(tuple));
 				}
+				
 				if (variables.size() == 1) {
 					result.add(kConst);
 				}

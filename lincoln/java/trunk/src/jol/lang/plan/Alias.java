@@ -3,13 +3,19 @@ package jol.lang.plan;
 
 public class Alias extends Variable {
 	
-	public Alias(String name, Integer field, Class type) {
+	private int position;
+	
+	public Alias(String name, int position, Class type) {
 		super(name, type);
-		this.position(field.intValue());
+		this.position = position;
 	}
 	
 	@Override
 	public String toString() {
-		return super.toString() + " := $" + position();
+		return super.toString() + " := $" + position;
+	}
+	
+	public int position() {
+		return this.position;
 	}
 }

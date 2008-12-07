@@ -7,6 +7,7 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.table.Index;
 import jol.types.table.Key;
 
@@ -29,8 +30,10 @@ public class IndexJoin extends Join {
 	 * @param input The input tuple schema.
 	 * @param lookupKey The lookup key.
 	 * @param index The index.
+	 * @throws PlannerException 
 	 */
-	public IndexJoin(Runtime context, Predicate predicate, Schema input, Key lookupKey, Index index) {
+	public IndexJoin(Runtime context, Predicate predicate, Schema input, 
+			         Key lookupKey, Index index) throws PlannerException {
 		super(context, predicate, input);
 		this.lookupKey = lookupKey;
 		this.index = index;
@@ -38,8 +41,7 @@ public class IndexJoin extends Join {
 	
 	@Override
 	public String toString() {
-		return this.predicate == null ? 
-				"null" : "INDEX JOIN PREDICATE[" + predicate.toString() + "]";
+		return "index join " + index.table();
 	}
 	
 	@Override
@@ -47,15 +49,10 @@ public class IndexJoin extends Join {
 		try {
 			TupleSet result = new TupleSet();
 			for (Tuple outer : tuples) {
-				for(Tuple inner : this.index.lookupByKey(lookupKey.project(outer))) {
-					if (validate(outer, inner)) {
-						inner.schema(this.predicate.schema().clone());
-						Tuple join = outer.join(inner);
-						if (join != null) {
-							result.add(join);
-						}
-					}
-				}
+				TupleSet outerTuples = new TupleSet();
+				TupleSet innerTuples = this.index.lookupByKey(lookupKey.project(outer));
+				outerTuples.add(outer);
+				result.addAll(join(outerTuples, innerTuples));
 			}
 			return result;
 		} catch (BadKeyException e) {

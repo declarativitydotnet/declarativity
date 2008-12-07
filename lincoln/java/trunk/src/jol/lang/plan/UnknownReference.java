@@ -3,7 +3,9 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
 public class UnknownReference extends Reference {
 
@@ -24,8 +26,8 @@ public class UnknownReference extends Reference {
 	}
 
 	@Override
-	public TupleFunction function() {
-		return null;
+	public TupleFunction function(Schema schema) throws PlannerException {
+		throw new PlannerException("Unknown reference does not have a function!");
 	}
 
 	@Override

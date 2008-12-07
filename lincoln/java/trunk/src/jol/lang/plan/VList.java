@@ -8,12 +8,14 @@ import java.util.Set;
 import jol.types.basic.Tuple;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
-public class ValuesList extends Expression<ValueList> {
+public class VList extends Expression<ValueList> {
 	private List<Expression> values;
 	
-	public ValuesList(List<Expression> values) {
+	public VList(List<Expression> values) {
 		this.values = values;
 	}
 	
@@ -22,7 +24,7 @@ public class ValuesList extends Expression<ValueList> {
 		for (Expression value : this.values) {
 			values.add(value.clone());
 		}
-		return new ValuesList(values);
+		return new VList(values);
 	}
 	
 	@Override
@@ -45,13 +47,18 @@ public class ValuesList extends Expression<ValueList> {
 	}
 
 	@Override
-	public TupleFunction function() {
-		final List<Expression> values = this.values;
+	public TupleFunction function(Schema schema) throws PlannerException {
+		final List<TupleFunction<Comparable>> functions = 
+			new ArrayList<TupleFunction<Comparable>>();
+		for (Expression value : values) {
+			functions.add(value.function(schema));
+		}
+		
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				ValueList list = new ValueList();
-				for (Expression value: values) {
-					list.add(value.function().evaluate(tuple));
+				for (TupleFunction<Comparable> fn : functions) {
+					list.add(fn.evaluate(tuple));
 				}
 				return list;
 			}

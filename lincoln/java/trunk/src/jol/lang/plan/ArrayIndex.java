@@ -4,7 +4,9 @@ import java.lang.reflect.Array;
 import java.util.Set;
 
 import jol.types.basic.Tuple;
+import jol.types.basic.Schema;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 
 public class ArrayIndex extends Expression {
@@ -40,16 +42,14 @@ public class ArrayIndex extends Expression {
 	}
 
 	@Override
-	public TupleFunction function() {
+	public TupleFunction function(Schema schema) throws PlannerException {
+		final TupleFunction arrayFunc = array.function(schema);
 		return new TupleFunction() {
-			private final TupleFunction function = array.function();
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
-				return Array.get(function.evaluate(tuple), index);
+				return Array.get(arrayFunc.evaluate(tuple), index);
 			}
 
-			public Class returnType() {
-				return type();
-			}
+			public Class returnType() { return type(); }
 			
 		};
 	}

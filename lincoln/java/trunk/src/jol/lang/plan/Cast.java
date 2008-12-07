@@ -2,7 +2,9 @@ package jol.lang.plan;
 
 import java.util.Set;
 
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
 public class Cast<C> extends Expression {
 
@@ -20,8 +22,8 @@ public class Cast<C> extends Expression {
 	}
 	
 	@Override
-	public TupleFunction function() {
-		return this.expression.function();
+	public TupleFunction function(Schema schema) throws PlannerException {
+		return this.expression.function(schema);
 	}
 
 	@Override

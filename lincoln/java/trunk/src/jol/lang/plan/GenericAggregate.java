@@ -7,13 +7,13 @@ import java.util.List;
 
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
 /**
  * Generic aggregates are supported by calling a stateful VOID method on
  * an object. That arguments indicate what is passed into the object.
- * 
- * @author tcondie
  */
 public class GenericAggregate extends Aggregate {
 
@@ -32,15 +32,15 @@ public class GenericAggregate extends Aggregate {
 	}
 	
 	@Override
-	public TupleFunction function() {
-		return this.method.object().function();
+	public TupleFunction function(Schema schema) throws PlannerException {
+		return this.method.object().function(schema);
 	}
 	
-	public TupleFunction function(final Object instance) {
+	public TupleFunction function(final Object instance, Schema schema) throws PlannerException {
 		final List<TupleFunction> argFunctions = new ArrayList<TupleFunction>();
 		final Method method = this.method.method();
 		for (Expression argument : this.method.arguments()) {
-			argFunctions.add(argument.function());
+			argFunctions.add(argument.function(schema));
 		}
 		
 		return new TupleFunction() {

@@ -11,12 +11,7 @@ public class Arguments extends ArrayList<Expression> implements Comparable<Argum
 	public Arguments(Predicate predicate, List<? extends Expression> arguments) {
 		super(arguments.size());
 		this.predicate = predicate;
-		int position = 0;
-		for (Expression e : arguments) {
-			Expression arg = e.clone();
-			arg.position(position++);
-			add(arg);
-		}
+		addAll(arguments);
 	}
 	
 	public Arguments clone() {

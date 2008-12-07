@@ -42,6 +42,7 @@ watch(allPaths, a);
 watch(flatpaths, a);
 watch(flatTopPaths, a);
 
+
 /* Add the link 9 -> 10 when newlink fires */
 // link("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
 

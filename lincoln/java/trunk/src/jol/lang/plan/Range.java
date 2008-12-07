@@ -5,7 +5,9 @@ import java.util.Set;
 
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
 public class Range<C extends Comparable<C>> extends Expression {
 	
@@ -116,11 +118,10 @@ public class Range<C extends Comparable<C>> extends Expression {
 	}
 
 	@Override
-	public TupleFunction function() {
+	public TupleFunction function(Schema schema) throws PlannerException {
+		final TupleFunction<C> startFn = begin.function(schema);
+		final TupleFunction<C> endFn   = end.function(schema);
 		return new TupleFunction() {
-			private final TupleFunction<C> startFn = begin.function();
-			private final TupleFunction<C> endFn   = end.function();
-
 			public Function evaluate(Tuple tuple) throws JolRuntimeException {
 				C start = (C)startFn.evaluate(tuple);
 				C end   = (C)endFn.evaluate(tuple);

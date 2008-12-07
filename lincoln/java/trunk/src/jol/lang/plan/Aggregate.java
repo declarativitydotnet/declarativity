@@ -5,9 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 
 
@@ -69,29 +71,38 @@ public class Aggregate extends Expression {
 	}
 	
 	@Override
-	public TupleFunction function() {
-		final List<AggregateVariable> variables = this.variables;
-		return this.method != null ?  method.function() :
-			new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws JolRuntimeException {
-				if (variables.size() == 0) { 
-					return null;
-				} else if (variables.size() == 1) {
-					return variables.get(0).function().evaluate(tuple);
-				} else {
-					ValueList result = new ValueList();
-					for (AggregateVariable var : variables) {
-						result.add((Comparable)var.function().evaluate(tuple));
+	public TupleFunction function(Schema schema) throws PlannerException {
+		if (this.method != null) {
+			return this.method.function(schema);
+		}
+		else if (this.variables.size() > 0) {
+			final List<TupleFunction<Comparable>> variableFunctions = 
+				new ArrayList<TupleFunction<Comparable>>();
+			for (Expression var : this.variables) {
+				variableFunctions.add(var.function(schema));
+			}
+			return new TupleFunction() {
+				public Object evaluate(Tuple tuple) throws JolRuntimeException {
+					if (variables.size() == 1) {
+						return variableFunctions.get(0).evaluate(tuple);
+					} else {
+						ValueList result = new ValueList();
+						for (TupleFunction<Comparable> fn : variableFunctions) {
+							result.add(fn.evaluate(tuple));
+						}
+						return result;
 					}
-					return result;
 				}
-			}
 
-			public Class returnType() {
-				return variables.size() == 1 ? 
-						variables.get(0).type() : ValueList.class;
-			}
-		};
+				public Class returnType() {
+					return variables.size() == 1 ? 
+							variables.get(0).type() : ValueList.class;
+				}
+			};
+		}
+		else {
+			throw new PlannerException("Unexpected aggregation case! " + toString());
+		}
 	}
 
 	@Override

@@ -4,7 +4,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jol.types.basic.Tuple;
+import jol.types.basic.Schema;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 
 public class IfThenElse extends Expression {
@@ -50,11 +52,12 @@ public class IfThenElse extends Expression {
 	}
 
 	@Override
-	public TupleFunction function() {
+	public TupleFunction function(Schema schema) throws PlannerException {
+		final TupleFunction<java.lang.Boolean> test = ifexpr.function(schema);
+		final TupleFunction thencase = thenexpr.function(schema);
+		final TupleFunction elsecase = elseexpr.function(schema);
+		
 		return new TupleFunction() {
-			private final TupleFunction<java.lang.Boolean> test = ifexpr.function();
-			private final TupleFunction thencase = thenexpr.function();
-			private final TupleFunction elsecase = elseexpr.function();
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				return test.evaluate(tuple).equals(java.lang.Boolean.TRUE) ? 
 						thencase.evaluate(tuple) : elsecase.evaluate(tuple);

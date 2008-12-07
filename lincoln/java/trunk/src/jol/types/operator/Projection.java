@@ -56,8 +56,8 @@ public class Projection extends Operator {
 					throw new PlannerException("Unknown variable " + var +
 							" in input schema " + input);
 				}
-				var.position(position);
 			}
+			
 			if (argument instanceof Variable) {
 				this.schema.append((Variable) argument);
 			}
@@ -65,13 +65,13 @@ public class Projection extends Operator {
 				this.schema.append(new DontCare(argument.type()));
 			}
 
-			accessors.add(argument.function());
+			accessors.add(argument.function(input));
 		}
 	}
 
 	@Override
 	public String toString() {
-		return "PROJECTION [" + this.predicate + "]";
+		return "projection [" + this.predicate + "]";
 	}
 
 	@Override
@@ -84,7 +84,6 @@ public class Projection extends Operator {
 					values.add(accessor.evaluate(tuple));
 				}
 				Tuple projection = new Tuple(values);
-				projection.schema(schema());
 				result.add(projection);
 			} catch (Throwable e) {
 				System.err.println("PROJECTION ERROR " + this.predicate

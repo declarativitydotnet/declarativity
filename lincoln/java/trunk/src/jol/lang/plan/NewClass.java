@@ -8,7 +8,9 @@ import java.util.Set;
 
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
 public class NewClass extends Expression {
 	
@@ -72,10 +74,10 @@ public class NewClass extends Expression {
 	}
 
 	@Override
-	public TupleFunction function() {
+	public TupleFunction function(Schema schema) throws PlannerException {
 		final List<TupleFunction> argFunctions = new ArrayList<TupleFunction>();
 		for (Expression argument : this.arguments) {
-			argFunctions.add(argument.function());
+			argFunctions.add(argument.function(schema));
 		}
 		
 		return new TupleFunction() {

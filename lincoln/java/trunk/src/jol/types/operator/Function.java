@@ -42,11 +42,7 @@ public class Function extends Operator {
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		try {
-			TupleSet result = this.function.insert(tuples, null);
-			for (Tuple tuple : result) {
-				tuple.schema(predicate.schema().clone());
-			}
-			return result;
+			return this.function.insert(tuples, null);
 		} catch (UpdateException e) {
 			e.printStackTrace();
 			throw new JolRuntimeException(e.toString());

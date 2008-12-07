@@ -2,15 +2,18 @@ package jol.types.table;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import jol.core.Runtime;
+import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.function.Aggregate;
 
@@ -52,20 +55,28 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	/** The aggregate attribute */
 	private List<jol.lang.plan.Aggregate> aggregates;
 	
+	private Predicate predicate;
+	
 	/** The primary key. */
 	protected Index primary;
 	
 	/** The secondary indices. */
 	protected Map<Key, Index> secondary;
 	
+	private enum TupleKey {GROUP, AGGREGATE};
+	private List<TupleKey> tupleKey;
+	
 	/**
 	 * Create a new Aggregation table.
 	 * @param context The runtime context.
 	 * @param predicate The predicate containing the GroupBy/Aggregation
 	 * @param type The type of aggregation.
+	 * @throws PlannerException 
 	 */
-	public Aggregation(Runtime context, Predicate predicate, Table.Type type, Class[] schemaTypes) {
-		super(predicate.name(), type, key(predicate), new TypeList(schemaTypes));
+	public Aggregation(Runtime context, Predicate predicate, Table.Type type, Class[] schemaTypes) 
+	throws PlannerException {
+		super(predicate.name(), type, null, new TypeList(schemaTypes));
+		this.predicate = predicate;
 		this.aggregateFunctions = null;
 		this.singleGroupAggregateFunctions = null;
 		this.aggregateTuples    = new TupleSet(name());
@@ -73,11 +84,28 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		
 		this.aggregateTuples.refCount(false);
 		
-		for (jol.lang.plan.Expression arg : predicate) {
+		/*
+		 * Determine the primary key, which is always the group by key.
+		 * Also determine the tuple key, which is used to create a result
+		 * tuple from 1. a tuple containing just the group by values and 
+		 * 2. the list of aggregate functions for the given group.
+		 * Just go look at Aggregation#result().
+		 */
+		this.tupleKey = new ArrayList<TupleKey>();
+		List<Integer> groupKey = new ArrayList<Integer>();
+		for (int position = 0; position < predicate.arguments().size(); position++) {
+			Expression arg = predicate.argument(position);
 			if (arg instanceof jol.lang.plan.Aggregate) {
 				this.aggregates.add((jol.lang.plan.Aggregate)arg);
+				this.tupleKey.add(TupleKey.AGGREGATE);
+			}
+			else if (!(arg instanceof jol.lang.plan.AggregateVariable)) {
+				groupKey.add(position); // Group by key
+				this.tupleKey.add(TupleKey.GROUP);
 			}
 		}
+		super.key = new Key(groupKey);
+		
 		
 		if (key().size() > 0) {
 			this.aggregateFunctions = new HashMap<Tuple, List<Aggregate<C>>>();
@@ -97,28 +125,12 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		return this.aggregates;
 	}
 	
-	private List<Aggregate<C>> groupGenerate() {
+	private List<Aggregate<C>> groupGenerate() throws PlannerException {
 		List<Aggregate<C>> functions = new ArrayList<Aggregate<C>>();
 		for (jol.lang.plan.Aggregate aggregate : this.aggregates) {
-			functions.add(Aggregate.function(aggregate));
+			functions.add(Aggregate.function(aggregate, predicate.schema()));
 		}
 		return functions;
-	}
-	
-	/**
-	 * Determines the key based on the predicate.
-	 * @param predicate The predicate defining the aggregate variable.
-	 * @return A key the contains the GroupBy columns.
-	 */
-	private static Key key(Predicate predicate) {
-		List<Integer> key = new ArrayList<Integer>();
-		for (jol.lang.plan.Expression arg : predicate) {
-			if (!(arg instanceof jol.lang.plan.AggregateVariable) &&
-					!(arg instanceof jol.lang.plan.Aggregate)) {
-				key.add(arg.position());
-			}
-		}
-		return new Key(key);
 	}
 	
 	/**
@@ -131,7 +143,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		if (this.singleGroupAggregateFunctions != null) {
 			Tuple tuple = new Tuple();
 			for (Aggregate<C> aggregation : this.singleGroupAggregateFunctions) {
-				tuple.append(null, aggregation.result());
+				tuple.append(aggregation.result());
 			}
 			result.add(tuple);
 		} else {
@@ -144,10 +156,23 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	}
 	
 	private Tuple result(Tuple group) {
-		for (Aggregate<C> aggregation :  this.aggregateFunctions.get(group)) {
-			group.insert(aggregation.position(), aggregation.result());
+		if (this.aggregateFunctions.containsKey(group)) {
+			Iterator<Aggregate<C>> aValues = this.aggregateFunctions.get(group).iterator();
+			Iterator<Comparable>  gbValues = group.iterator();
+			Tuple result = new Tuple();
+			for (TupleKey key : this.tupleKey) {
+				switch(key) {
+				case AGGREGATE:
+					result.append(aValues.next().result());
+					break;
+				case GROUP:
+					result.append(gbValues.next());
+					break;
+				}
+			}
+			return result;
 		}
-		return group;
+		return null;
 	}
 	
 	@Override
@@ -182,11 +207,15 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 				functions = this.singleGroupAggregateFunctions;
 			}
 			else {
-				Tuple key = key().project(tuple);
-				if (!this.aggregateFunctions.containsKey(key)) {
-					this.aggregateFunctions.put(key, groupGenerate());
+				Tuple group = key().project(tuple);
+				if (!this.aggregateFunctions.containsKey(group)) {
+					try {
+						this.aggregateFunctions.put(group, groupGenerate());
+					} catch (PlannerException e) {
+						throw new UpdateException(e.toString());
+					}
 				}
-				functions = this.aggregateFunctions.get(key);
+				functions = this.aggregateFunctions.get(group);
 			}
 			
 			try {
@@ -208,7 +237,11 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		
 		if (type() == Table.Type.EVENT) {
 			if (this.singleGroupAggregateFunctions != null) {
-				this.singleGroupAggregateFunctions = groupGenerate();
+				try {
+					this.singleGroupAggregateFunctions = groupGenerate();
+				} catch (PlannerException e) {
+					throw new UpdateException(e.toString());
+				}
 			}
 			else {
 				this.aggregateFunctions.clear();
@@ -239,7 +272,11 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 						function.delete(tuple);
 						if (function.size() == 0) {
 							expire.addAll(result());
-							this.singleGroupAggregateFunctions = groupGenerate();
+							try {
+								this.singleGroupAggregateFunctions = groupGenerate();
+							} catch (PlannerException e) {
+								throw new UpdateException(e.toString());
+							}
 							break; // we're out of tuples for this group.
 						}
 					}

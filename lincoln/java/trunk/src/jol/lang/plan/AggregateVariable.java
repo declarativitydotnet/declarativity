@@ -1,5 +1,6 @@
 package jol.lang.plan;
 
+import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
@@ -21,16 +22,24 @@ public class AggregateVariable extends Variable {
 	}
 	
 	@Override
-	public TupleFunction function() {
-		return new TupleFunction() {
-			public Object evaluate(Tuple tuple) throws JolRuntimeException {
-				return name().equals(STAR) ? tuple.id() : tuple.value(name());
-			}
-
-			public Class returnType() {
-				return type;
-			}
-		};
+	public TupleFunction function(Schema schema) {
+		if (name().equals(STAR)) {
+			return new TupleFunction() {
+				public Object evaluate(Tuple tuple) throws JolRuntimeException {
+					return tuple.id();
+				}
+				public Class returnType() { return Long.class; }
+			};
+		}
+		else {
+			final int position = schema.position(name());
+			return new TupleFunction() {
+				public Object evaluate(Tuple tuple) throws JolRuntimeException {
+					return tuple.value(position);
+				}
+				public Class returnType() { return type; }
+			};
+		}
 	}
 
 }

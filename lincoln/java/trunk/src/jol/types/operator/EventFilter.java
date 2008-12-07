@@ -5,12 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 import jol.core.Runtime;
 
@@ -101,29 +103,32 @@ public class EventFilter extends Operator {
 	 * Create a new event filter operator.
 	 * @param context The runtime context.
 	 * @param predicate The event predicate.
+	 * @throws PlannerException 
 	 */
-	public EventFilter(Runtime context, Predicate predicate) {
+	public EventFilter(Runtime context, Predicate predicate) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.filters = new ArrayList<TupleFunction<Boolean>>();
 
-		HashMap<String, Variable> variables = new HashMap<String, Variable>();
-		for (jol.lang.plan.Expression arg : predicate) {
+		HashMap<String, Integer> variables = new HashMap<String, Integer>();
+		for (int position = 0; position < predicate.arguments().size(); position++) {
+			Expression arg = predicate.argument(position);
 			if (arg instanceof Variable) {
 				Variable var = (Variable) arg;
 				if (variables.containsKey(var.name())) {
-					Variable previous = variables.get(var.name());
+					Integer previous = variables.get(var.name());
 					this.filters.add(
-							new AttributeFilter(previous.type(),
-							                    previous.position(),
-							                    var.position()));
+							new AttributeFilter(var.type(),
+							                    previous, position));
 				}
 				else {
-					variables.put(var.name(), var);
+					variables.put(var.name(), position);
 				}
 			}
 			else {
-				this.filters.add(new ConstantFilter(arg.position(), arg.function()));
+				this.filters.add(
+						new ConstantFilter(position, 
+								           arg.function(predicate.schema())));
 			}
 		}
 	}

@@ -7,6 +7,7 @@ import java.util.Set;
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
 public class StaticReference extends Reference {
 	
@@ -27,7 +28,7 @@ public class StaticReference extends Reference {
 	}
 
 	@Override
-	public TupleFunction function() {
+	public TupleFunction function(Schema schema) {
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				try {

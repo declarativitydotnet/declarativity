@@ -2,17 +2,24 @@ package jol.types.operator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import jol.core.Runtime;
+import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
+import jol.types.function.Filter;
 import jol.types.function.TupleFunction;
+import jol.types.table.Table;
 
 /**
  * The interface to all join operators.
@@ -48,6 +55,7 @@ public abstract class Join extends Operator {
 		}
 	}
 	
+	
 	/**
 	 * Evaluates a single join attribute.
 	 */
@@ -78,55 +86,59 @@ public abstract class Join extends Operator {
 		 * @throws JolRuntimeException
 		 */
 		public Boolean evaluate(Tuple outer, Tuple inner) throws JolRuntimeException {
-			Comparable lvalue = null;
-			Comparable rvalue = null;
-			if (this.lhs instanceof TableField) {
-				lvalue = this.lhs.evaluate(inner); 
-			}
-			else {
-				lvalue = this.lhs.evaluate(outer); 
-			}
-			
-			if (this.rhs instanceof TableField) {
-				rvalue = this.rhs.evaluate(inner);
-			}
-			else {
-				rvalue = this.rhs.evaluate(outer);
-			}
+			Comparable lvalue = this.lhs.evaluate(outer);
+			Comparable rvalue = this.rhs.evaluate(inner);
 			return lvalue.compareTo(rvalue) == 0;
 		}
 	}
 	
-	/** The predicate of the table being joined with the input tuples. */
-	protected Predicate predicate;
+	/** The outer schema. */
+	protected Schema outerSchema;
 	
-	/** The output schema. */
-	protected Schema schema;
+	/** The inner schema */
+	protected Schema innerSchema;
 	
 	/** A list of join filters, one for each common join attribute. */
-	private List<JoinFilter> filters;
+	private List<JoinFilter> joinFilters;
+	
+	private List<Filter> predicateFilters;
+	
+	private List<Integer> innerNonJoinPositions;
 	
 	/**
 	 * Create a new join operator.
 	 * @param context The runtime context.
 	 * @param predicate The predicate representing the table being joined.
 	 * @param input The schema of the input tuples that are to be joined with the (inner) table.
+	 * @throws PlannerException 
 	 */
-	public Join(Runtime context, Predicate predicate, Schema input) {
+	public Join(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
-		this.predicate = predicate;
-		this.filters = filters(predicate);
-		this.schema = input.join(predicate.schema());
+		this.outerSchema = input;
+		this.innerSchema = predicate.schema();
+		this.innerNonJoinPositions = new ArrayList<Integer>();
+		for (Variable var : this.innerSchema.variables()) {
+			if (!this.outerSchema.contains(var)) {
+				this.innerNonJoinPositions.add(this.innerSchema.position(var.name()));
+			}
+		}
+		initFilters(predicate);
 	}
 	
 	@Override
 	public Schema schema() {
-		return this.schema;
+		Schema schema = this.outerSchema.clone();
+		for (Variable var : this.innerSchema.variables()) {
+			if (!schema.contains(var)) {
+				schema.append(var);
+			}
+		}
+		return schema;
 	}
 
 	@Override
 	public Set<Variable> requires() {
-		return predicate.requires();
+		return new HashSet<Variable>();
 	}
 	
 	/**
@@ -136,9 +148,18 @@ public abstract class Join extends Operator {
 	 * @return true if all join filters succeed, false otherwise.
 	 * @throws JolRuntimeException
 	 */
-	protected Boolean validate(Tuple outer, Tuple inner) throws JolRuntimeException {
-		for (JoinFilter filter : filters) {
+	private Boolean validate(Tuple outer, Tuple inner) throws JolRuntimeException {
+		for (JoinFilter filter : this.joinFilters) {
 			if (filter.evaluate(outer, inner) == Boolean.FALSE) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private Boolean validate(Tuple inner) throws JolRuntimeException {
+		for (Filter filter : this.predicateFilters) {
+			if (Boolean.FALSE.equals(filter.evaluate(inner))) {
 				return false;
 			}
 		}
@@ -151,34 +172,72 @@ public abstract class Join extends Operator {
 	 * variable that matches between these two schemas.
 	 * @param predicate The predicate that references the inner table.
 	 * @return A list of join filters.
+	 * @throws PlannerException 
 	 */
-	private List<JoinFilter> filters(Predicate predicate) {
-		List<JoinFilter> filters = new ArrayList<JoinFilter>();
-		Map<String, Variable> positions = new HashMap<String, Variable>();
-
-		for (jol.lang.plan.Expression arg : predicate) {
-			assert(arg.position() >= 0);
-			
+	private void initFilters(Predicate predicate) 
+	throws PlannerException {
+		this.predicateFilters = new ArrayList<Filter>();
+		this.joinFilters      = new ArrayList<JoinFilter>();
+		
+		Map<String, Integer> positions = new HashMap<String, Integer>();
+		for (int position = 0; position < predicate.arguments().size(); position++ ) {
+			Expression arg = predicate.argument(position);
 			if (arg instanceof Variable) {
 				Variable var = (Variable) arg;
 				if (positions.containsKey(var.name())) {
-					Variable prev = positions.get(var.name());
-					filters.add(new JoinFilter(
-								   new TableField(prev.type(), prev.position()), 
-								   new TableField(var.type(), prev.position())));
+					Integer prev = positions.get(var.name());
+					predicateFilters.add(
+							    new Filter(Filter.Operator.EQ,
+								           new TableField(var.type(), prev), 
+								           new TableField(var.type(), position)));
 				}
 				else {
-					positions.put(var.name(), var);
+					positions.put(var.name(), position);
 				}
 			}
 			else {
-				filters.add(new JoinFilter(
-						    new TableField(arg.type(), 
-						    		       arg.position()), 
-						    		       arg.function()));
+				predicateFilters.add(
+						    new Filter(Filter.Operator.EQ,
+						               new TableField(arg.type(), position), 
+						               arg.function(predicate.schema())));
 			}
 		}
 		
-		return filters;
+		this.joinFilters = new ArrayList<JoinFilter>();
+		for (Variable var : outerSchema.variables()) {
+			if (innerSchema.contains(var)) {
+				TupleFunction<Comparable> o = var.function(outerSchema);
+				TupleFunction<Comparable> i = var.function(innerSchema);
+				this.joinFilters.add(new JoinFilter(o, i));
+			}
+		}
+	}
+	
+	/**
+	 * Join the outer tuples with the inner tuples.
+	 * @param outerTuples Outer tuples.
+	 * @param innerTuples Inner tuples.
+	 * @return Join result.
+	 * @throws JolRuntimeException
+	 */
+	protected TupleSet join(TupleSet outerTuples, TupleSet innerTuples) 
+	throws JolRuntimeException {
+		TupleSet result = new TupleSet();
+		for (Tuple outer : outerTuples) {
+			for (Tuple inner : innerTuples) {
+				if (validate(inner) && validate(outer, inner)) {
+					result.add(join(outer, inner));
+				}
+			}
+		}
+		return result;
+	}
+	
+	private Tuple join(Tuple outer, Tuple inner) {
+		Tuple result = outer.clone();
+		for (Integer position : this.innerNonJoinPositions) {
+			result.append(inner.value(position));
+		}
+		return result;
 	}
 }

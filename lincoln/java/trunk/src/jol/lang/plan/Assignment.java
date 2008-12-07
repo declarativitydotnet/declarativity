@@ -78,16 +78,6 @@ public class Assignment extends Term {
 
 	@Override
 	public Operator operator(Runtime context, Schema input) throws PlannerException {
-		int position = input.position(this.variable.name());
-
-		for (Variable var : this.value.variables()) {
-			position = input.position(var.name());
-			if (position < 0) {
-				throw new PlannerException("Unknown variable " + var + " in schema " + input);
-			}
-			var.position(position);
-		}
-
 		return new Assign(context, this, input);
 	}
 

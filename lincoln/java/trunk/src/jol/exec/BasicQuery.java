@@ -36,7 +36,6 @@ public class BasicQuery extends Query {
 		TupleSet tuples = new TupleSet(input.name());
 		for (Tuple tuple : input) {
 			tuple = tuple.clone();
-			tuple.schema(input().schema().clone());
 			tuples.add(tuple);
 		}
 

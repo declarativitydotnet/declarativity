@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import jol.lang.plan.Variable;
@@ -21,7 +22,7 @@ import jol.types.exception.JolRuntimeException;
  * tuple values.  Tuple values must also implement the {#link Serializable}
  * interface in order to ship tuples to remote locations.
  */
-public class Tuple implements Comparable<Tuple>, Serializable {
+public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	transient private static long idGen = 0L;
@@ -34,9 +35,6 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 
 	/** A tuple refcount. */
 	transient protected long refCount;
-
-	/** The tuple schema. */
-	transient protected Schema schema;
 
 	/** Cached hash code value */
 	transient protected int hashCache;
@@ -82,6 +80,8 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		initialize();
 		fromBytes(b);
 	}
+	
+	
 
 	private final static int NULL = 0;
 	private final static int OBJECT = 1;
@@ -216,7 +216,6 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	@Override
 	public Tuple clone() {
 		Tuple copy    = new Tuple(this.values);
-		copy.schema   = this.schema != null ? this.schema.clone() : null;
 		copy.id		  = this.id;
 		copy.refCount = this.refCount;
 		return copy;
@@ -228,7 +227,6 @@ public class Tuple implements Comparable<Tuple>, Serializable {
      */
 	private void initialize() {
 	    this.hashCacheValid = false;
-		this.schema	        = new Schema();
 		this.refCount       = 1;
 		this.id		        = idGen;
 		idGen++;
@@ -256,15 +254,10 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	}
 
 	/**
-	 * Append the tuple value along with the corresponding schema variable.
-	 * @param variable The schema variable.
+	 * Append the tuple value.
 	 * @param value The tuple value.
 	 */
-	public void append(Variable variable, Comparable value) {
-		if (variable != null) {
-			variable.position(this.schema.size());
-			this.schema.append(variable);
-		}
+	public void append(Comparable value) {
 		this.values.add(value);
 		this.hashCacheValid = false;
 	}
@@ -281,27 +274,6 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		}
 		value += ">";
 		return value;
-	}
-
-	/**
-	 * The tuple schema.
-	 * @return The tuple schema.
-	 */
-	public Schema schema() {
-		return this.schema;
-	}
-
-	/**
-	 * Set the tuple schema.
-	 * @param schema The schema to assign to this tuple.
-	 * @throws JolRuntimeException
-	 */
-	public void schema(Schema schema) throws JolRuntimeException {
-		if (schema.size() != size()) {
-			throw new JolRuntimeException("Schema " + schema.name() + schema + " does not match tuple arity! " +
-										 " Tuple: " + this + " size =? " + size());
-		}
-		this.schema = schema;
 	}
 
 	/** Comparison based on tuple values (empty tuples are equivalent). */
@@ -396,43 +368,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 	}
 
 	/**
-	 * Get the value at the variable position indicated by the variable name.
-	 * @param name The variable name.
-	 * @return The value at the given position, or null if !exist.
-	 */
-	public Comparable value(String name) {
-		if (this.schema != null) {
-			return value(this.schema.position(name));
-		}
-		return null;
-	}
-
-	/**
-	 * Set the value within the tuple based on the position of the variable.
-	 * @param variable The variable.
-	 * @param value The value to set.
-	 */
-	public void value(Variable variable, Comparable value) {
-		int position = this.schema.position(variable.name());
-		if (position < 0) {
-			append(variable, value);
-		}
-		else {
-			value(position, value);
-		}
-	}
-
-	/**
-	 * Get the value type based on the variable name.
-	 * @param name The variable name.
-	 * @return The type of the value at the variable position.
-	 */
-	public Class type(String name) {
-		return this.schema.type(name);
-	}
-
-	/**
-	 * SEt the refcount of this tuple.
+	 * Set the refcount of this tuple.
 	 * @param value The refcount value.
 	 */
 	public void refCount(long value) {
@@ -467,45 +403,7 @@ public class Tuple implements Comparable<Tuple>, Serializable {
 		return this.refCount;
 	}
 
-	/**
-	 * Join this tuple with the inner tuple based on the joining
-	 * attribute values of each tuple.
-	 * @param inner The tuple to join with.
-	 * @return The join tuple or null if join fails.
-	 */
-	public Tuple join(Tuple inner) {
-		Tuple join = new Tuple();
-
-		/* Take care of all join variables first. */
-		for (Variable variable : schema().variables()) {
-            Comparable outerValue = value(variable.name());
-			if (inner.schema().contains(variable)) {
-				Comparable innerValue = inner.value(variable.name());
-				if (outerValue == null || innerValue == null) {
-					if (outerValue == innerValue) {
-						join.append(variable, null);
-					}
-				}
-				else if (!outerValue.equals(innerValue)) {
-					return null; // Tuples do not join
-				}
-				else {
-					join.append(variable, outerValue);
-				}
-			}
-			else {
-				/* Inner does not contain variable so just add it. */
-				join.append(variable, outerValue);
-			}
-		}
-
-		/* Append any variables from the inner that do
-		 * not match join variable. */
-		for (Variable variable : inner.schema().variables()) {
-			if (!join.schema().contains(variable)) {
-				join.append(variable, inner.value(variable.name()));
-			}
-		}
-		return join;
+	public Iterator<Comparable> iterator() {
+		return this.values.iterator();
 	}
 }

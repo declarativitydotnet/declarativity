@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
+import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.function.TupleFunction;
 
@@ -17,7 +19,6 @@ public class Variable extends Expression {
 	public Variable(String name, Class type) {
 		this.name = name;
 		this.type = type;
-		position(-1);
 	}
 
 	public Variable(String name, Class type, boolean location) {
@@ -48,10 +49,7 @@ public class Variable extends Expression {
 
 	@Override
 	public Expression clone() {
-		Variable variable = new Variable(name, type);
-		variable.position(this.position());
-		variable.location = this.location;
-		return variable;
+		return new Variable(name, type, location);
 	}
 
 	@Override
@@ -61,7 +59,7 @@ public class Variable extends Expression {
 
 	@Override
 	public String toString() {
-		String var = (position() >= 0) ? name() + ":" + position() : name();
+		String var = name();
 		return this.location ? "@" + var : var;
 	}
 
@@ -86,15 +84,19 @@ public class Variable extends Expression {
 	}
 
 	@Override
-	public TupleFunction function() {
+	public TupleFunction function(Schema schema) throws PlannerException {
+		final int position = schema.position(name());
+		if (position < 0) {
+			throw new PlannerException("Unknown variable name " + name());
+		}
+		
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				try {
-					return tuple.value(name());
+					return tuple.value(position);
 				} catch (Throwable t) {
-					System.err.println("UNKNOWN VARIABLE NAME " + name() + " IN TUPLE SCHEMA " + tuple.schema());
-					System.err.println("ASSUMED POSITION " + position());
-					t.printStackTrace();
+					System.err.println("UNKNOWN VARIABLE NAME " + name());
+					System.err.println("ASSUMED POSITION " + position);
 					throw new JolRuntimeException (t.toString());
 				}
 			}

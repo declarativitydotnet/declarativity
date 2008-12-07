@@ -5,10 +5,12 @@ import java.util.TreeMap;
 
 import jol.lang.plan.GenericAggregate;
 import jol.types.basic.ComparableSet;
+import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 
 public abstract class Aggregate<C extends Comparable<C>> {
 
@@ -19,8 +21,6 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public abstract Comparable result();
 
 	public abstract int size();
-
-	public abstract int position();
 
 	public static final String TOPK     = "topk";
 	public static final String BOTTOMK  = "bottomk";
@@ -35,45 +35,46 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public static final String SET      = "set";
 
 
-	public static Aggregate function(jol.lang.plan.Aggregate aggregate) {
+	public static Aggregate function(jol.lang.plan.Aggregate aggregate, Schema input) 
+	throws PlannerException {
 		if (aggregate instanceof GenericAggregate) {
-			return new Generic((GenericAggregate) aggregate);
+			return new Generic((GenericAggregate) aggregate, input);
 		}
 		else if (TOPK.equals(aggregate.functionName())) {
-			return new TopBottomK((jol.lang.plan.TopK)aggregate);
+			return new TopBottomK((jol.lang.plan.TopK)aggregate, input);
 		}
 		else if (BOTTOMK.equals(aggregate.functionName())) {
-			return new TopBottomK((jol.lang.plan.BottomK)aggregate);
+			return new TopBottomK((jol.lang.plan.BottomK)aggregate, input);
 		}
 		else if (LIMIT.equals(aggregate.functionName())) {
-			return new Limit((jol.lang.plan.Limit)aggregate);
+			return new Limit((jol.lang.plan.Limit)aggregate, input);
 		}
 		else if (MIN.equals(aggregate.functionName())) {
-			return new Min(aggregate);
+			return new Min(aggregate, input);
 		}
 		else if (MAX.equals(aggregate.functionName())) {
-			return new Max(aggregate);
+			return new Max(aggregate, input);
 		}
 		else if (COUNT.equals(aggregate.functionName())) {
-			return new Count(aggregate);
+			return new Count(aggregate, input);
 		}
 		else if (AVG.equals(aggregate.functionName())) {
-			return new Avg(aggregate);
+			return new Avg(aggregate, input);
 		}
 		else if (SUM.equals(aggregate.functionName())) {
-			return new Sum(aggregate);
+			return new Sum(aggregate, input);
 		}
 		else if (SUMSTR.equals(aggregate.functionName())) {
-			return new ConcatString(aggregate);
+			return new ConcatString(aggregate, input);
 		}
 		else if (TUPLESET.equals(aggregate.functionName())) {
-			return new TupleCollection(aggregate);
+			return new TupleCollection(aggregate, input);
 		}
 		else if (SET.equals(aggregate.functionName())) {
-			return new Set(aggregate);
+			return new Set(aggregate, input);
 		}
-
-		return null;
+		throw new PlannerException("Unknown aggregate function " + 
+				aggregate.functionName());
 	}
 
 	public static Class type(String function, Class type) {
@@ -104,16 +105,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	}
 
 	public static class Limit<C extends Comparable<C>> extends Aggregate<C> {
-		private int position;
 		private ValueList<C> values;
 		private TupleSet tuples;
 		private Comparable result;
 		private TupleFunction<C> accessor;
 
 
-		public Limit(jol.lang.plan.Limit aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public Limit(jol.lang.plan.Limit aggregate, Schema schema) 
+		throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -162,17 +162,11 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class TopBottomK<C extends Comparable<C>> extends Aggregate<C> {
 		private enum Type{TOP, BOTTOM};
 
-		private int position;
 		private TreeMap<C, ValueList<C>> values;
 		private Type type;
 		private TupleSet tuples;
@@ -180,17 +174,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		private TupleFunction<C> accessor;
 
 
-		public TopBottomK(jol.lang.plan.TopK aggregate) {
+		public TopBottomK(jol.lang.plan.TopK aggregate, Schema schema) throws PlannerException {
 			this.type = Type.TOP;
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
-		public TopBottomK(jol.lang.plan.BottomK aggregate) {
+		public TopBottomK(jol.lang.plan.BottomK aggregate, Schema schema) throws PlannerException {
 			this.type = Type.BOTTOM;
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -222,10 +214,10 @@ public abstract class Aggregate<C extends Comparable<C>> {
 						this.values.descendingKeySet() : this.values.navigableKeySet();
 				int k = kConst.intValue();
 				for (C key : keys) {
-					if (k == 0) break;
+					if (resultValues.size() == k) break;
 					for (C element : this.values.get(key)) {
-						if (k == 0) break;
 						resultValues.add(element);
+						if (resultValues.size() == k) break;
 					}
 				}
 				this.result = resultValues;
@@ -247,20 +239,17 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class Generic<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private C result;
 		private GenericAggregate aggregate;
+		private Schema schema;
 
-		public Generic(GenericAggregate aggregate) {
+		public Generic(GenericAggregate aggregate, Schema schema) {
 			this.aggregate = aggregate;
+			this.schema    = schema.clone();
 			reset();
 		}
 
@@ -276,11 +265,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 
 		@Override
 		public void insert(Tuple tuple) throws JolRuntimeException {
-			if (this.tuples.add(tuple)) {
-				if (this.result == null) {
-					this.result = (C)this.aggregate.function().evaluate(tuple);
+			try {
+				if (this.tuples.add(tuple)) {
+					if (this.result == null) {
+						this.result = (C)this.aggregate.function(schema).evaluate(tuple);
+					}
+					this.aggregate.function(this.result, schema).evaluate(tuple);
 				}
-				this.aggregate.function(this.result).evaluate(tuple);
+			} catch (PlannerException e) {
+				throw new JolRuntimeException(e.toString());
 			}
 		}
 
@@ -299,22 +292,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.aggregate.position();
-		}
 	}
 
 	public static class Min<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private C result;
 		private TupleFunction<C> accessor;
-		private int position;
 
-		public Min(jol.lang.plan.Aggregate aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public Min(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -356,22 +342,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class Max<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private C result;
 		private TupleFunction<C> accessor;
-		private int position;
 
-		public Max(jol.lang.plan.Aggregate aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public Max(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -414,21 +393,14 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class Count<C extends Comparable<C>> extends Aggregate<C>{
 		private TupleSet tuples;
 		private TupleFunction<C> accessor;
-		private int position;
 
-		public Count(jol.lang.plan.Aggregate aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public Count(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -455,22 +427,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class Avg<C extends Comparable<C>> extends Aggregate<C> {
 		private TupleSet tuples;
 		private Float sum;
 		private TupleFunction<C> accessor;
-		private int position;
 
-		public Avg(jol.lang.plan.Aggregate aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public Avg(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -504,22 +469,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class Sum extends Aggregate<Float> {
 		private TupleSet tuples;
 		private Float sum;
 		private TupleFunction<Number> accessor;
-		private int position;
 
-		public Sum(jol.lang.plan.Aggregate aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public Sum(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -553,22 +511,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class ConcatString extends Aggregate<String> {
 		private TupleSet tuples;
 		private String result;
 		private TupleFunction<String> accessor;
-		private int position;
 
-		public ConcatString(jol.lang.plan.Aggregate aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public ConcatString(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -609,22 +560,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class TupleCollection extends Aggregate<Tuple> {
 		private TupleSet tuples;
 		private TupleSet result;
 		private TupleFunction<Tuple> accessor;
-		private int position;
 
-		public TupleCollection(jol.lang.plan.Aggregate aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public TupleCollection(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -656,22 +600,15 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public int size() {
 			return this.tuples.size();
 		}
-
-		@Override
-		public int position() {
-			return this.position;
-		}
 	}
 
 	public static class Set extends Aggregate<Tuple> {
 		private TupleSet tuples;
 		private ComparableSet result;
 		private TupleFunction<Tuple> accessor;
-		private int position;
 
-		public Set(jol.lang.plan.Aggregate aggregate) {
-			this.accessor = aggregate.function();
-			this.position = aggregate.position();
+		public Set(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
 			reset();
 		}
 
@@ -702,11 +639,6 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		@Override
 		public int size() {
 			return this.tuples.size();
-		}
-
-		@Override
-		public int position() {
-			return this.position;
 		}
 	}
 

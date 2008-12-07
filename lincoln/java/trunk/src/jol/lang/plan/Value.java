@@ -5,6 +5,7 @@ import java.util.Set;
 
 import jol.types.basic.Tuple;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
 public class Value<Type> extends Expression {
 
@@ -42,7 +43,7 @@ public class Value<Type> extends Expression {
 	}
 
 	@Override
-	public TupleFunction function() {
+	public TupleFunction function(Schema schema) {
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) {
 				return value;

@@ -127,10 +127,10 @@ public abstract class StasisTable extends Table {
 	private static Runtime runtime;
 	
 	static { 
-		CATALOG_SCHEMA.append(new Variable("Page", Long.class), new Long(1));
-		CATALOG_SCHEMA.append(new Variable("Slot", Long.class), new Long(1));
-		CATALOG_SCHEMA.append(new Variable("Key", Key.class), CATALOG_KEY);
-		CATALOG_SCHEMA.append(new Variable("Types", TypeList.class), CATALOG_COLTYPES);
+		CATALOG_SCHEMA.append(new Long(1));
+		CATALOG_SCHEMA.append(new Long(1));
+		CATALOG_SCHEMA.append(CATALOG_KEY);
+		CATALOG_SCHEMA.append(CATALOG_COLTYPES);
 		CATALOG_SCHEMA_BYTES = toBytes(CATALOG_SCHEMA);
 		CATALOG_NAME_BYTES = toBytes(CATALOG_NAME);
 	}

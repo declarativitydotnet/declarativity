@@ -6,7 +6,7 @@ import java.util.Set;
 import jol.types.exception.PlannerException;
 import jol.types.function.BasicMath;
 import jol.types.function.TupleFunction;
-
+import jol.types.basic.Schema;
 
 public class Math<N extends java.lang.Number> extends Expression<N> {
 	
@@ -60,12 +60,7 @@ public class Math<N extends java.lang.Number> extends Expression<N> {
 	}
 
 	@Override
-	public TupleFunction<N> function() {
-		try {
-			return BasicMath.function(oper, lhs.function(), rhs.function());
-		} catch (PlannerException e) {
-			e.printStackTrace();
-			return null;
-		}
+	public TupleFunction<N> function(Schema schema) throws PlannerException {
+		return BasicMath.function(oper, lhs.function(schema), rhs.function(schema));
 	}
 }

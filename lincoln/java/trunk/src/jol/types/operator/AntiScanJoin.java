@@ -5,6 +5,7 @@ import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.table.Table;
 import jol.core.Runtime;
 
@@ -27,30 +28,31 @@ public class AntiScanJoin extends Join {
 	 * @param context The runtime context.
 	 * @param predicate The (notin) predicate.
 	 * @param input The input schema.
+	 * @throws PlannerException 
 	 */
-	public AntiScanJoin(Runtime context, Predicate predicate, Schema input) {
+	public AntiScanJoin(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate, input);
 		this.table = context.catalog().table(predicate.name());
 	}
 
 	@Override
 	public String toString() {
-		return "ANTI NEST LOOP JOIN: PREDICATE[" + this.predicate  + "]";
+		return "anti nested-loop join " + table;
+	}
+	
+	@Override
+	public Schema schema() {
+		return this.outerSchema.clone();
 	}
 
 	@Override
-	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
+	public TupleSet evaluate(TupleSet outerTuples) throws JolRuntimeException {
 		TupleSet result = new TupleSet();
-		for (Tuple outer : tuples) {
-			boolean success = false;
-			for (Tuple inner : this.table.tuples()) {
-				inner.schema(this.predicate.schema());
-				if (validate(outer, inner) && outer.join(inner) != null) {
-					success = true;
-					break;
-				}
-			}
-			if (!success) result.add(outer);
+		for (Tuple outer : outerTuples) {
+			TupleSet oTuples = new TupleSet();
+			oTuples.add(outer);
+			TupleSet join = join(oTuples, (TupleSet)table.tuples());
+			if (join.size() == 0) result.add(outer);
 		}
 		return result;
 	}

@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import stasis.jni.LinearHashNTA;
-
 import jol.lang.plan.Aggregate;
 import jol.lang.plan.AggregateVariable;
 import jol.lang.plan.Alias;
@@ -47,13 +45,14 @@ import jol.lang.plan.Term;
 import jol.lang.plan.TopK;
 import jol.lang.plan.UnknownReference;
 import jol.lang.plan.Value;
-import jol.lang.plan.ValuesList;
+import jol.lang.plan.VList;
 import jol.lang.plan.Variable;
 import jol.lang.plan.Watch;
 import jol.lang.plan.Fact.FactTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.basic.ValueList;
+import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Aggregation;
 import jol.types.table.BasicTable;
@@ -396,10 +395,11 @@ public final class TypeChecker extends Visitor {
 		assert(type == TypeList.class);
 		TypeList schema  = (TypeList) n.getNode(2).getProperty(Constants.TYPE);
 		Table create;
+		/*
 		if (name.name.startsWith("stasis")) {
 			//create = new JavaHashtable(context, name, key, schema);
 			try {
-				create = new LinearHashNTA(context, name, key, schema);
+				// create = new LinearHashNTA(context, name, key, schema);
 			} catch (UpdateException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -408,6 +408,8 @@ public final class TypeChecker extends Visitor {
 		} else {
 			create = new BasicTable(context, name, key, schema);
 		}
+		*/
+		create = new BasicTable(context, name, key, schema);
 		context.catalog().register(create);
 		this.program.definition(create);
 		n.setProperty(Constants.TYPE, create);
@@ -626,7 +628,8 @@ public final class TypeChecker extends Visitor {
 
 		/* All variables mentioned in the head must be in the body.
 		 * The types must also match. */
-		for (Expression argument : head) {
+		for (int position = 0; position < head.arguments().size(); position++) {
+			Expression argument = head.argument(position);
 			if (argument instanceof Aggregate) {
 				Aggregate agg = (Aggregate) argument;
 				Table table = context.catalog().table(head.name());
@@ -638,7 +641,12 @@ public final class TypeChecker extends Visitor {
 						runtime.error(e.toString());
 						return Error.class;
 					}
-					table = new Aggregation(context, head, table.type(), table.types());
+					try {
+						table = new Aggregation(context, head, table.type(), table.types());
+					} catch (PlannerException e) {
+						runtime.error(e.toString(), n);
+						return Error.class;
+					}
 					context.catalog().register(table);
 					this.program.definition(table);
 				}
@@ -647,11 +655,11 @@ public final class TypeChecker extends Visitor {
 				}
 
 				Class[] types = table.types();
-				if (!subtype(types[argument.position()], argument.type())) {
-					runtime.error("Aggregate " + argument + ", position " + argument.position() +
+				if (!subtype(types[position], argument.type())) {
+					runtime.error("Aggregate " + argument + ", position " + position +
 							", type "+ agg.type() +
 							      " does not match table type " +
-							      types[argument.position()] + "!", n);
+							      types[position] + "!", n);
 					return Error.class;
 				}
 			}
@@ -867,7 +875,6 @@ public final class TypeChecker extends Visitor {
 				/* Fill in missing variables with tmp variables. */
 				while (index < alias.position()) {
 					Variable dontcare = new DontCare(schema.get(index));
-					dontcare.position(index++);
 					arguments.add(dontcare);
 				}
 			}
@@ -941,7 +948,6 @@ public final class TypeChecker extends Visitor {
 					return Error.class;
 				}
 			}
-			param.position(index);
 			arguments.add(param);
 		}
 
@@ -1715,8 +1721,8 @@ public final class TypeChecker extends Visitor {
 				args.add((Expression)arg.getProperty(Constants.TYPE));
 			}
 		}
-		n.setProperty(Constants.TYPE, new ValuesList(args));
-		return ValuesList.class;
+		n.setProperty(Constants.TYPE, new VList(args));
+		return VList.class;
 	}
 
 

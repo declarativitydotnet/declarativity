@@ -7,6 +7,7 @@ import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.function.TupleFunction;
 import jol.types.table.HashIndex;
@@ -70,18 +71,22 @@ public class Fact extends Clause {
 
 	@Override
 	public void set(Runtime context, String program) throws UpdateException {
-		List<Comparable> values = new ArrayList<Comparable>();
-		for (Expression argument : this.arguments) {
-			TupleFunction function = argument.function();
-			try {
-				values.add((Comparable)function.evaluate(null));
-			} catch (JolRuntimeException e) {
-				e.printStackTrace();
-				throw new UpdateException(e.toString());
+		try {
+			List<Comparable> values = new ArrayList<Comparable>();
+			for (Expression argument : this.arguments) {
+				TupleFunction function = argument.function(null);
+				try {
+					values.add((Comparable)function.evaluate(null));
+				} catch (JolRuntimeException e) {
+					e.printStackTrace();
+					throw new UpdateException(e.toString());
+				}
 			}
+			context.catalog().table(FactTable.TABLENAME)
+				.force(new Tuple(program, name, new Tuple(values)));
+		} catch (PlannerException e) {
+			throw new UpdateException(e.toString());
 		}
-		
-		context.catalog().table(FactTable.TABLENAME).force(new Tuple(program, name, new Tuple(values)));
 	}
 
 }

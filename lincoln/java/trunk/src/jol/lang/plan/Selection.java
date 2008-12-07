@@ -68,14 +68,6 @@ public class Selection extends Term {
 
 	@Override
 	public Operator operator(Runtime context, Schema input) throws PlannerException {
-		for (Variable var : this.predicate.variables()) {
-			position = input.position(var.name());
-			if (position < 0) {
-				throw new PlannerException("Unknown variable " + var + " in schema " + input);
-			}
-			var.position(position);
-		}
-
 		return new jol.types.operator.Selection(context, this, input);
 	}
 

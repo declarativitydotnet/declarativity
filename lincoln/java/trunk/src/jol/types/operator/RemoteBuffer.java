@@ -14,6 +14,7 @@ import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.function.TupleFunction;
 import jol.types.table.TableName;
@@ -39,8 +40,10 @@ public class RemoteBuffer extends Operator {
 	 * @param context The runtime context.
 	 * @param predicate The (head) predicate with the remote location attribute.
 	 * @param deletion true if tuples represent a delete operation.
+	 * @throws PlannerException 
 	 */
-	public RemoteBuffer(Runtime context, Predicate predicate, boolean deletion) {
+	public RemoteBuffer(Runtime context, Predicate predicate, boolean deletion) 
+	throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.deletion = deletion;
@@ -49,7 +52,7 @@ public class RemoteBuffer extends Operator {
 			if (arg instanceof Variable) {
 				Variable var = (Variable) arg;
 				if (var.loc()) {
-					addressAccessor = arg.function();
+					addressAccessor = arg.function(predicate.schema());
 					break;
 				}
 			}

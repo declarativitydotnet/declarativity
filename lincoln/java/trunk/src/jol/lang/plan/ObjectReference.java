@@ -5,7 +5,9 @@ import java.util.Set;
 
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
+import jol.types.basic.Schema;
 
 public class ObjectReference extends Reference {
 	
@@ -34,8 +36,8 @@ public class ObjectReference extends Reference {
 	}
 
 	@Override
-	public TupleFunction function() {
-		final TupleFunction objectFunction = this.object.function();
+	public TupleFunction function(Schema schema) throws PlannerException {
+		final TupleFunction objectFunction = this.object.function(schema);
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				try {
