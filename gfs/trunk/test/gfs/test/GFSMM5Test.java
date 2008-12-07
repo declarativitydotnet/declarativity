@@ -29,7 +29,7 @@ public class GFSMM5Test extends TestCommon {
       long agg = 0;
         int count = 0;
 
-      for (int i=0; i < 50; i++) {
+      for (int i=0; i < 100; i++) {
         String file = "XACT"+i;
         long now = java.lang.System.currentTimeMillis();
         createFile(longRun,file);
@@ -49,7 +49,7 @@ public class GFSMM5Test extends TestCommon {
         int cnt = shellLsCnt();
         java.lang.System.out.println("total files in ls: "+cnt);
 
-      assertTrue(shellLs("XACT2","XACT18","XACT16","XACT12","XACT78","XACT 59"));
+      assertTrue(shellLs("XACT2","XACT18","XACT16","XACT12","XACT78","XACT59"));
       shutdown();
 
     } catch (Exception e) {
