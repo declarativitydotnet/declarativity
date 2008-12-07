@@ -23,13 +23,13 @@ public class LinearHashNTA extends StasisTable {
     
     protected Tuple registerTable(TableName name, Key key, TypeList type) throws UpdateException {
 		Tuple header = new Tuple();
-		header.append(new Variable("Page", Long.class), rid[0]);
-		header.append(new Variable("Slot", Long.class), rid[1]);
-		header.append(new Variable("Key", Key.class), key);
-		header.append(new Variable("Types", TypeList.class), attributeTypes);
+		header.append( rid[0]);
+		header.append( rid[1]);
+		header.append( key);
+		header.append( attributeTypes);
 			
 		Tuple nameTup = new Tuple();
-		nameTup.append(new Variable("Name", TableName.class),name);
+		nameTup.append(name);
 		
 		Tuple row = catalog.key().reconstruct(nameTup, header);
 		catalog.insert(row);
@@ -65,7 +65,7 @@ public class LinearHashNTA extends StasisTable {
 			catalog.registerTable(CATALOG_NAME, CATALOG_KEY, CATALOG_COLTYPES);
 		}
 		Tuple nametup = new Tuple();
-		nametup.append(new Variable("name", TableName.class),name);
+		nametup.append(name);
 		TupleSet headerSet;
 		try {
 			headerSet = catalog.primary().lookupByKey(nametup);
