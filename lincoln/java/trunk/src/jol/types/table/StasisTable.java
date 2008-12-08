@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import jol.core.Runtime;
-import jol.lang.plan.Variable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;

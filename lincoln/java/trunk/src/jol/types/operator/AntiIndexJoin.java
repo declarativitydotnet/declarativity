@@ -10,7 +10,6 @@ import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.table.Index;
 import jol.types.table.Key;
-import jol.types.table.Table;
 
 public class AntiIndexJoin extends Join {
 

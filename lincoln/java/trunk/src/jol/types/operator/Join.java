@@ -3,7 +3,6 @@ package jol.types.operator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +18,6 @@ import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.function.Filter;
 import jol.types.function.TupleFunction;
-import jol.types.table.Table;
 
 /**
  * The interface to all join operators.
