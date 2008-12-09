@@ -105,7 +105,9 @@ public class TCPNIO extends Server {
 					}
 					else if (key.isReadable()) {
 						Connection conn = (Connection) key.attachment();
-                        conn.read();
+                        boolean isClosed = conn.read();
+                        if (isClosed)
+                            key.cancel();
 					}
 				}
 			} catch (IOException e) {
@@ -206,7 +208,7 @@ public class TCPNIO extends Server {
          * it. This advances the read state machine appropriately, depending on
          * how much input is actually available.
          */
-        private void read() {
+        private boolean read() {
             try {
                 switch (this.readState) {
                 case READ_DONE:
@@ -218,7 +220,7 @@ public class TCPNIO extends Server {
                 case READ_LENGTH:
                     doSocketRead();
                     if (this.buffer.hasRemaining())
-                        return;
+                        return false;
 
                     int msgLength = this.buffer.getInt(0);
                     this.buffer.clear();
@@ -229,7 +231,7 @@ public class TCPNIO extends Server {
                 case READ_MESSAGE:
                     doSocketRead();
                     if (this.buffer.hasRemaining())
-                        return;
+                        return false;
 
                     constructReceiveMessage();
                     this.buffer.clear();
@@ -245,10 +247,13 @@ public class TCPNIO extends Server {
 
                 try {
                     TCPNIO.this.manager.connection().unregister(this);
+                    return true;
                 } catch (UpdateException ue) {
                     throw new RuntimeException(ue);
                 }
             }
+
+            return false;
         }
 
         private void doSocketRead() throws IOException {
