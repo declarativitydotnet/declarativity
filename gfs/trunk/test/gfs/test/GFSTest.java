@@ -16,9 +16,10 @@ public class GFSTest extends TestCommon{
         startMany("localhost:5505");
         shellCreate("foo");
         shellLs("foo");
-        stopMany();
+        shutdown();
     } catch (Exception e) {
-      java.lang.System.out.println("something went wrong: "+e);
+      java.lang.System.out.println("something went wrong: " + e);
+      e.printStackTrace();
       java.lang.System.exit(1);
     }
   }
@@ -27,5 +28,4 @@ public class GFSTest extends TestCommon{
     GFSTest t = new GFSTest();
     t.test1();
   }
-
 }
