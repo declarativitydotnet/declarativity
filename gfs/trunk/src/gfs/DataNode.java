@@ -9,6 +9,7 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
+import gfs.DataServer;
 
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
@@ -38,13 +39,16 @@ public class DataNode {
     private Thread serverThread;
     private System system;
 
-    DataNode(int nodeId, String fsRoot) {
+    public DataNode(int nodeId, String fsRoot) {
         this.nodeId = nodeId;
         this.fsRoot = fsRoot;
         this.port = Conf.getDataNodeControlPort(nodeId);
         this.dserver = new DataServer(Conf.getDataNodeDataPort(nodeId), fsRoot);
         this.serverThread = new Thread(this.dserver);
         this.serverThread.start();
+    }
+    public int getPort() {
+        return port;
     }
 
     public void start() throws JolRuntimeException, UpdateException {
@@ -67,6 +71,12 @@ public class DataNode {
 
         java.lang.System.out.println("DataNode @ " + this.port + " (" +
                                      Conf.getDataNodeDataPort(this.nodeId) + ") ready!");
+    }
+
+    public void stop() {
+        this.dserver.stop();
+        this.system.shutdown();
+
     }
 
     private void setupFsRoot() {

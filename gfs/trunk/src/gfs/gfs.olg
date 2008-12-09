@@ -37,7 +37,7 @@ watch(response, ae);
 // if we get a "NewChunk" request for a file, create a new chunk id
 
 define(chunkSeq, keys(0), {String, Integer});
-watch(chunkSeq, ae);
+//watch(chunkSeq, ae);
 chunkSeq(Master, Top+1) :-   
     self(Master),
     notin chunkSeq(Master,SomeId),
@@ -62,11 +62,12 @@ newListHolder(Master,Source,Id,List,I) :-
     List := new ValueList(Stuff.toArray());
 
 
-watch(candidate_datanode, ae);
+//watch(candidate_datanode, ae);
 
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ValueList});
 //candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).insert(DataNode)>) :-
-candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).insert(DataNode)>) :-
+// this is a highly arbitrary topK datanodes.
+candidate_datanode(Master, Id, Source, FName, I, topk<DataNode, 2>) :-
     request#insert(Master, Id, Source, "NewChunk", FName),
     chunkSeq(Master,I),
     chunks(Master,DataNode,ChunkId,_),
@@ -104,7 +105,7 @@ define(chunkHWM, keys(0, 1), {String,Integer});
 chunkHWM(Master,max<ChunkId>) :-
     chunks(Master,_,ChunkId,_);
 
-watch(chunkHWM,ae);
+//watch(chunkHWM,ae);
 
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return a list of the nodes holding that chunk. Otherwise, return
@@ -167,7 +168,7 @@ response(@Source, Id, Master, Success, null) :-
 // the file system. If the file system is empty, send back an empty
 // ValueList. Note that we need to do the aggregation in a sub-rule.
 define(compute_ls, keys(0, 1), {String, Integer, String, ValueList});
-
+watch(compute_ls, ae);
 compute_ls(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
     request(@Master, Id, Source, "Ls", _),
     gfs_global::file(@Master, FName, _);
@@ -233,3 +234,27 @@ chunks(Master, DataNode, ChunkId, Ts) :-
     chunks(Master, DataNode, ChunkId, Ts),
     clock(_, _, _),
     (java.lang.System.currentTimeMillis() - Ts) > 10000L;
+
+
+/**************************/
+// maintenance functions
+
+define(repFactor, keys(0,1), {String,Integer,Integer});
+watch(repFactor, ae);
+repFactor(Master, ChunkId, count<DataNode>) :-
+    chunks(Master, DataNode, ChunkId, Ts);
+
+define(backOfList, keys(0), {String,Integer,String});
+watch(backOfList, ae);
+backOfList(Master,ChunkId,min<DataNode>) :-
+    chunks(Master, DataNode, ChunkId, Ts);
+
+timer(longPeriod,physical,10000,100000,0);
+
+define(to_delete, keys(0,1,2), {String,String,Integer});
+watch(to_delete, ae);
+to_delete(Master, DataNode, ChunkId) :-
+    repFactor(Master, ChunkId, Cnt),
+    backOfList(Master, ChunkId, DataNode),
+    longPeriod(_, _, _),
+    Cnt > Conf.getRepFactor();

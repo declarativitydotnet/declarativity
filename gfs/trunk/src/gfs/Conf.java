@@ -38,12 +38,17 @@ public class Conf {
 
     private static final int bufSize = 102400;
 
+    private static int replicationFactor = 2;
+
     /* NB: This must be called before installing "gfs.olg" */
     public static void setSelfAddress(String addr) {
         selfAddr = addr;
     }
     public static long getChunkSize() {
         return chunkSize;
+    }
+    public static int getRepFactor() {
+        return replicationFactor;
     }
 
     public static int getBufSize() {

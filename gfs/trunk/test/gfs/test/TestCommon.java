@@ -2,11 +2,13 @@ package gfs.test;
 
 import java.util.List;
 import java.util.LinkedList;
+import java.io.InputStream;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import junit.framework.Assert;
 import gfs.Master;
+import gfs.DataNode;
 import gfs.Shell;
 import gfs.Conf;
 
@@ -15,6 +17,7 @@ import org.junit.Before;
 
 public class TestCommon {
     protected ValueList<Master> masters;
+    protected ValueList<DataNode> datanodes;
     protected Shell shell;
 
     @Before
@@ -25,6 +28,11 @@ public class TestCommon {
     public void shutdown() {
         for (Master m : masters) {
             m.stop();
+        }
+        if (datanodes != null) {
+            for (DataNode d : datanodes) {
+                d.stop();
+            }
         }
         // shell.shutdown();
     }
@@ -94,6 +102,9 @@ public class TestCommon {
         for (Master sys : this.masters) {
             sys.stop();
         }
+        for (DataNode d : this.datanodes) {
+            d.stop();
+        }
     }
 
     protected void startMany(String... args) throws JolRuntimeException, UpdateException {
@@ -108,11 +119,33 @@ public class TestCommon {
         }
     }
 
+    protected void startManyDataNodes(String... args) throws JolRuntimeException, UpdateException {
+        this.datanodes = new ValueList<DataNode>();
+
+        assert(args.length == Conf.getNumDataNodes());
+
+        for (int i = 0; (i < Conf.getNumDataNodes()) && (i < args.length); i++) {
+            DataNode d = new DataNode(i,args[i]);
+            java.lang.System.out.println("new DATANODE "+ d.getPort());
+            d.start();
+            this.datanodes.add(d);
+        }
+    }
+
+
     protected ValueList<String> lsFile(Shell shell) throws UpdateException,
             InterruptedException, JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         return shell.doListFiles(argList);
     }
+
+    protected void appendFile(Shell shell, String name, InputStream s) throws UpdateException,
+            InterruptedException, JolRuntimeException {
+        List<String> argList = new LinkedList<String>();
+        argList.add(name);
+        shell.doAppend(argList, s);
+    }
+
 
     protected void createFile(Shell shell, String name) throws UpdateException,
             InterruptedException, JolRuntimeException {

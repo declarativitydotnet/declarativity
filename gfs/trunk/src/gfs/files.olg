@@ -13,8 +13,8 @@ timer(clock,physical,5000,5000,1000);
 timer(periodic,logical,1,1,1);
 
 watch(dir,ae);
-watch(chunk,ae);
-watch(chunkTmp,ae);
+//watch(chunk,ae);
+//watch(chunkTmp,ae);
 
 // Node address, data directory on host chunk system
 define(datadir, keys(0), {String,String});
@@ -27,7 +27,7 @@ dir(Host,DirObj,DirList) :-
     clock(_,_,_);
 
 define(indx,keys(0),{String,Integer});
-watch(indx,ae);
+//watch(indx,ae);
 indx(Host,0) :-   
     dir#insert(Host,Dir,List);
 
@@ -73,13 +73,13 @@ heartBeat(Host,Master,-1,Tstamp,-1) :-
 
 
 define(sendHeartBeat,keys(0,1,2,3),{String,String,Integer,Long,Long});
-watch(sendHeartBeat,ae);
+//watch(sendHeartBeat,ae);
 sendHeartBeat(@Master,Host,File,Tstamp,Id) :-
     heartBeat(@Host,Master,File,Tstamp,Id),
     notin serverKnows(@Host,Master,File,_);
 
 define(ackHeartBeat,keys(0,1,2),{String,String,Long});
-watch(ackHeartBeat,ae);
+//watch(ackHeartBeat,ae);
 
 define(serverKnows,keys(0,1,2,3),{String,String,Integer,Long});
 watch(serverKnows,ae);
@@ -89,11 +89,13 @@ serverKnows(Host,Master,File,Id) :-
 
 define(masters,keys(0,1),{String,String});
 define(mindx,keys(0),{String,Integer});
-watch(masters,ae);
+//watch(masters,ae);
+//watch(mindx,ae);
 //watch(periodic,ae);
 
 mindx(Me,0) :-
-    Me := Conf.getSelfAddress(),
+    //Me := Conf.getSelfAddress(),
+    dir(Me,_),
     periodic(_,_,_);
 
 mindx(Host,I) :-

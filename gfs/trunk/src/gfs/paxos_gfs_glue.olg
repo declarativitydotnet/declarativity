@@ -41,12 +41,21 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 // add chunks to the file list.
 watch(gfs_global::file, ae);
 public
-gfs_global::file(Master,FName,Chunks) :-
-    gfs_global::file(Master,FName,Chunks),
-    appView#insert(Master,From,Decree,Instance,Fname,Op,Id,I),
-    Op == "u",
-    Chunks.insert(I);
+gfs_global::file(Master,FName,List) :-
+    //gfs_global::file(Master,FName,Chunks),
+    //appView#insert(Master,From,Decree,Instance,FName,Op,Id,I),
+    //Op == "u",
+    //C2 := new ValueList(Chunks.toArray()),
+    fileUpdate(Master,FName,List,I),
+    List.insert(I);
 
+define(fileUpdate, keys(0,1), {String,String,ValueList,Integer} );
+fileUpdate(Master,FName,List,I) :-
+    gfs_global::file(Master,FName,Chunks),
+    appView#insert(Master,From,Decree,Instance,FName,Op,Id,I),
+    Op == "u",
+    //List := Chunks.size() > 0 ? new ValueList(Chunks.toArray()) : new ValueList();
+    List := new ValueList(Chunks.toArray());
 
 
 

@@ -13,6 +13,8 @@ import java.net.Socket;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.ClosedChannelException;
 
 import gfs.Shell;
 import jol.types.basic.ValueList;
@@ -59,6 +61,9 @@ public class DataServer implements Runnable {
             case DataProtocol.WRITE_OPERATION:
                 doWriteOperation();
                 break;
+            case DataProtocol.DELETE_OPERATION:
+                doDeleteOperation();
+                break;
             default:
                 throw new IOException("Unrecognized opcode: " + opCode);
             }
@@ -88,6 +93,15 @@ public class DataServer implements Runnable {
                  
                 java.lang.System.out.println("done writing chunk\n");
                 
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        private void doDeleteOperation() {
+            try {
+                int chunkId = readChunkId();    
+                File victim = getBlockFile(chunkId);
+                victim.delete();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -214,6 +228,15 @@ public class DataServer implements Runnable {
         }
     }
 
+    public void stop() {
+        this.workers.destroy(); 
+        try {
+            this.serverSocket.close();
+        } catch (Exception e) {
+
+        }
+    }
+
     public void run() {
         while (true) {
             try {
@@ -222,6 +245,8 @@ public class DataServer implements Runnable {
                 DataWorker dw = new DataWorker(channel);
                 Thread t = new Thread(this.workers, dw);
                 t.start();
+            } catch (AsynchronousCloseException e) {
+            } catch (ClosedChannelException e) {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

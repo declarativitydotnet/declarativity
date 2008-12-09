@@ -1,6 +1,7 @@
 package gfs;
 
 import java.io.DataInputStream;
+import java.io.InputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+
 
 import jol.core.Runtime;
 import jol.core.System;
@@ -95,7 +97,11 @@ public class Shell {
         this.system.start();
     }
 
-    private void doAppend(List<String> args) throws UpdateException {
+    public void doAppend(List<String> args) throws UpdateException {
+        this.doAppend(args,java.lang.System.in);
+    }
+    
+    public void doAppend(List<String> args, InputStream s) throws UpdateException {
         if (args.size() != 1)
             usage();
 
@@ -111,7 +117,8 @@ public class Shell {
                 int read = 0;
                 while (b != -1 && read < Conf.getChunkSize()) {
                     byte buf[] = new byte[Conf.getBufSize()];
-                    b = java.lang.System.in.read(buf,0,Conf.getBufSize());
+                    //b = java.lang.System.in.read(buf,0,Conf.getBufSize());
+                    b = s.read(buf,0,Conf.getBufSize());
                     //read += Conf.getChunkSize();
                     dos.write(buf);
                     read += b;
@@ -288,6 +295,8 @@ public class Shell {
         String[] parts = addr.split(":");
         String host = parts[1];
         int controlPort = Integer.parseInt(parts[2]);
+
+        java.lang.System.out.println("TEST1 -- "+addr);
         int dataPort = Conf.findDataNodeDataPort(host, controlPort);
 
 
@@ -334,6 +343,8 @@ public class Shell {
             String[] parts = addr.split(":");
             String host = parts[1];
             int controlPort = Integer.parseInt(parts[2]);
+
+        java.lang.System.out.println("TEST2\n");
             int dataPort = Conf.findDataNodeDataPort(host, controlPort);
 
             java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
@@ -612,14 +623,14 @@ public class Shell {
     }
 
     private Object spinGet(long timeout) throws JolRuntimeException {
-        while (this.currentMaster < Conf.getNumMasters()-1) {
+        while (this.currentMaster < Conf.getNumMasters()) {
+            scheduleNewMaster();
             Object result = this.responseQueue.get(timeout);
             if (result != null) 
                 return result;
            
             java.lang.System.out.println("master "+this.currentMaster+" timed out.  retry?\n"); 
             this.currentMaster++;
-            scheduleNewMaster();
         }
         throw new JolRuntimeException("timed out on all masters");
     }
