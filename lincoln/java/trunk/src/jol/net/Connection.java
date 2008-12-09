@@ -11,23 +11,25 @@ import jol.types.table.TableName;
 import jol.core.Runtime;
 
 public class Connection extends ObjectTable {
-	
+
 	public static final Key PRIMARY_KEY = new Key(0,1);
-	
+
 	public enum Field{PROTOCOL, ADDRESS, CHANNEL};
 	public static final Class[] SCHEMA = {
 		String.class,   // protocol
 		Address.class,  // address
 		Channel.class   // channel
 	};
-	
+
+	private Runtime context;
 	private Network manager;
-	
+
 	protected Connection(Runtime context, Network manager) {
 		super(context, new TableName("network", "connection"), PRIMARY_KEY, new TypeList(SCHEMA));
+		this.context = context;
 		this.manager = manager;
 	}
-	
+
 	@Override
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 		TupleSet success = new TupleSet(name());
@@ -39,15 +41,15 @@ public class Connection extends ObjectTable {
 				channel = manager.create(protocol, address);
 				tuple.value(Field.CHANNEL.ordinal(), channel);
 			}
-			
+
 			if (channel != null) {
 				success.add(tuple);
 			}
 		}
-		
+
 		return super.insert(success, conflicts);
 	}
-	
+
 	@Override
 	public boolean delete(Tuple tuple) throws UpdateException {
 		if (super.delete(tuple)) {
@@ -59,17 +61,15 @@ public class Connection extends ObjectTable {
 		}
 		return false;
 	}
-	
+
 	public void register(Channel channel) throws UpdateException {
 		force(new Tuple(channel.protocol(), channel.address(), channel));
 	}
-	
+
 	public void unregister(Channel channel) throws UpdateException {
 		try {
 			TupleSet channels = primary().lookupByKey(channel.protocol(), channel.address());
-			for (Tuple connection : channels) {
-				delete(connection);
-			}
+			this.context.schedule(name().scope, name(), null, channels);
 		} catch (BadKeyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
