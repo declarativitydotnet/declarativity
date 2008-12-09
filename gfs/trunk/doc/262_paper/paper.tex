@@ -6,9 +6,29 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-Abstract here.
 \end{abstract}
+
 \section{Introduction}
+With the imminent arrival of many-core processors and cloud computing,
+architectures for distributed computing are in the midst of a period
+of disruptive change. In the near future, almost all non-trivial
+software systems will be physically distributed, often executing in
+complex environments consistenting of many distributed processors,
+storage units, and network interconnects.
+
+However, techniques for constructing distributed systems have not kept
+up with this rapid rate of change. Distributed systems are typically
+implemented with tools developed for single-machine programs, and only
+superficially adapted to the challenges of a distributed setting. As a
+result, programmers are forced to work at the wrong level of
+abstraction. Many distributed algorithms can be concisely described,
+but implemented only with great difficulty. This is because
+traditional programming languages are non-distributed by default, and
+force programmers to concern themselves with myriad details of
+communication, synchronization, consensus, and fault tolerance.
+
+We propose a new methodology for constructing distributed systems,
+inspired by prior work on declarative networking.
 
 \section{The BOOM Vision}
 Motivating the use of declarative logic languages for implementing
