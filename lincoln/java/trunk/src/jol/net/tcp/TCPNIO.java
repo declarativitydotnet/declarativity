@@ -163,6 +163,7 @@ public class TCPNIO extends Server {
 		private SocketChannel channel;
         private String remoteAddr;
         private int readState;
+        private int totalWritten;
 
 		public Connection(SocketChannel channel) throws IOException {
 			super("tcp", new IP(channel.socket().getInetAddress(), channel.socket().getPort()));
@@ -171,6 +172,7 @@ public class TCPNIO extends Server {
 			this.channel.configureBlocking(false);
             this.remoteAddr = channel.socket().toString();
             this.readState = READ_DONE;
+            this.totalWritten = 0;
 		}
 
 		@Override
@@ -180,10 +182,10 @@ public class TCPNIO extends Server {
 					if (!this.channel.isConnected()) {
 						return false;
 					}
-					this.buffer.clear();
 					ByteArrayOutputStream bstream = new ByteArrayOutputStream();
 					ObjectOutputStream ostream = new ObjectOutputStream(bstream);
 					ostream.writeObject(packet);
+                    this.buffer.clear();
 					this.buffer.putInt(bstream.size());
 					this.buffer.put(bstream.toByteArray());
 					this.buffer.flip();
@@ -281,7 +283,6 @@ public class TCPNIO extends Server {
             }
         }
 
-		private int totalWritten = 0;
 		/**
 		 * Method will write ALL data contained in the byte buffer.
 		 * This method will not return until the entire buffer has been written
@@ -292,13 +293,13 @@ public class TCPNIO extends Server {
 		 */
 	    private void write(ByteBuffer buf, SocketChannel socket) throws IOException {
 	        int len = buf.limit() - buf.position();
-	        totalWritten += len;
+	        this.totalWritten += len;
 
 	        while (len > 0) {
 	            len -= socket.write(buf);
 	        }
 
-	        System.out.println("TCPNIO: Wrote " + totalWritten + " bytes so far");
+	        System.out.println("TCPNIO: Wrote " + this.totalWritten + " bytes so far");
 	    }
 	}
 }
