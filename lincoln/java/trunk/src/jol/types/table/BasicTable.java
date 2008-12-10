@@ -42,6 +42,8 @@ public class BasicTable extends Table {
 		this.tuples = new TupleSet(name);
 		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
 		this.secondary = new HashMap<Key, Index>();
+		
+		this.tuples.refCount(false);
 	}
 	
 	@Override

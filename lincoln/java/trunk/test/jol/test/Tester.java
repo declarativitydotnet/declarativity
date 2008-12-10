@@ -1,6 +1,8 @@
 package jol.test;
 
+import java.io.FileWriter;
 import java.net.URL;
+import java.util.Random;
 
 import jol.core.Runtime;
 import jol.core.System;
@@ -78,6 +80,23 @@ public class Tester {
     }
 
     public static void main(String[] args) throws Exception {
+    	Random rand = new Random();
+    	FileWriter writer = new FileWriter("test/data/data1.txt");
+    	for (int i = 0; i < 5000; i++) {
+    		writer.write(Integer.toString(rand.nextInt(100)));
+    		writer.write(",");
+    		writer.write(Integer.toString(rand.nextInt(200)));
+    		writer.write("\n");
+    	}
+    	writer.close();
+    	
+        System system = Runtime.create(5000);
+        system.install("test", ClassLoader.getSystemResource("jol/test/largedata.olg"));
+        system.evaluate(); 
+        system.evaluate(); 
+        system.shutdown();
+    	
+    	
     	for (String[] test : Tester.TESTS) {
     		URL file = ClassLoader.getSystemResource(test[0]);
     		Tester tester = new Tester(file, new TableName(test[1]));

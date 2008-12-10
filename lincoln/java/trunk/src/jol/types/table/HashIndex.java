@@ -59,6 +59,7 @@ public class HashIndex extends Index {
 		    tuples.add(t);
 		} else {
 			tuples = new TupleSet(table().name());
+			tuples.refCount(false);
 			tuples.add(t);
 			this.map.put(key, tuples);
 		}
