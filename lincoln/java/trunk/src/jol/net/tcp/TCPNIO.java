@@ -159,7 +159,8 @@ public class TCPNIO extends Server {
         private static final int READ_LENGTH = 2;
         private static final int READ_MESSAGE = 3;
 
-		private ByteBuffer buffer;
+		private ByteBuffer rBuffer;
+		private ByteBuffer wBuffer;
 		private SocketChannel channel;
         private String remoteAddr;
         private int readState;
@@ -167,7 +168,8 @@ public class TCPNIO extends Server {
 
 		public Connection(SocketChannel channel) throws IOException {
 			super("tcp", new IP(channel.socket().getInetAddress(), channel.socket().getPort()));
-			this.buffer = ByteBuffer.allocate(8192);
+			this.rBuffer = ByteBuffer.allocate(4096);
+			this.wBuffer = ByteBuffer.allocate(4096);
 			this.channel = channel;
 			this.channel.configureBlocking(false);
             this.remoteAddr = channel.socket().toString();
@@ -178,18 +180,18 @@ public class TCPNIO extends Server {
 		@Override
 		public boolean send(Message packet) {
 			try {
-				synchronized (buffer) {
+				synchronized (this.wBuffer) {
 					if (!this.channel.isConnected()) {
 						return false;
 					}
 					ByteArrayOutputStream bstream = new ByteArrayOutputStream();
 					ObjectOutputStream ostream = new ObjectOutputStream(bstream);
 					ostream.writeObject(packet);
-                    this.buffer.clear();
-					this.buffer.putInt(bstream.size());
-					this.buffer.put(bstream.toByteArray());
-					this.buffer.flip();
-					write(this.buffer, this.channel);
+                    this.wBuffer.clear();
+					this.wBuffer.putInt(bstream.size());
+					this.wBuffer.put(bstream.toByteArray());
+					this.wBuffer.flip();
+					write();
 				}
 			} catch (IOException e) {
 				return false;
@@ -206,37 +208,39 @@ public class TCPNIO extends Server {
 		}
 
         /**
-         * There is some input data available to be read, so try to read
-         * it. This advances the read state machine appropriately, depending on
-         * how much input is actually available.
+         * There is some input data available to be read, so try to read it.
+         * This advances the read state machine appropriately, depending on how
+         * much input is actually available.
+         *
+         * @return true if the connection was closed, false otherwise.
          */
         private boolean read() {
             try {
                 switch (this.readState) {
                 case READ_DONE:
-                    this.buffer.clear();
-                    this.buffer.limit(LENGTH_WORD_SIZE);
+                    this.rBuffer.clear();
+                    this.rBuffer.limit(LENGTH_WORD_SIZE);
                     this.readState = READ_LENGTH;
                     /* fallthrough and try to read length */
 
                 case READ_LENGTH:
                     doSocketRead();
-                    if (this.buffer.hasRemaining())
+                    if (this.rBuffer.hasRemaining())
                         return false;
 
-                    int msgLength = this.buffer.getInt(0);
-                    this.buffer.clear();
-                    this.buffer.limit(msgLength);
+                    int msgLength = this.rBuffer.getInt(0);
+                    this.rBuffer.clear();
+                    this.rBuffer.limit(msgLength);
                     this.readState = READ_MESSAGE;
                     /* fallthrough and try to read message */
 
                 case READ_MESSAGE:
                     doSocketRead();
-                    if (this.buffer.hasRemaining())
+                    if (this.rBuffer.hasRemaining())
                         return false;
 
-                    constructReceiveMessage();
-                    this.buffer.clear();
+                    unmarshallMessage();
+                    this.rBuffer.clear();
                     this.readState = READ_DONE;
                 }
             } catch (IOException e) {
@@ -259,19 +263,19 @@ public class TCPNIO extends Server {
         }
 
         private void doSocketRead() throws IOException {
-            int bytes = this.channel.read(this.buffer);
+            int bytes = this.channel.read(this.rBuffer);
             if (bytes == -1)
                 throw new ClosedChannelException();
         }
 
         /**
-         * Demarshall an already-read message from the input buffer, and
+         * Demarshall an already-read message from the input rBuffer, and
          * schedule the message with the TCP program as a {@link
          * TCPNIO#ReceiveMessage} tuple.
          */
-        private void constructReceiveMessage() throws IOException {
+        private void unmarshallMessage() throws IOException {
             try {
-                ObjectInputStream istream = new ObjectInputStream(new ByteArrayInputStream(this.buffer.array()));
+                ObjectInputStream istream = new ObjectInputStream(new ByteArrayInputStream(this.rBuffer.array()));
                 Message message = (Message) istream.readObject();
                 IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
                 Tuple tuple = new Tuple(address, message);
@@ -283,20 +287,17 @@ public class TCPNIO extends Server {
             }
         }
 
-		/**
-		 * Method will write ALL data contained in the byte buffer.
-		 * This method will not return until the entire buffer has been written
-		 * to the socket channel.
-		 * @param buf The data buffer.
-		 * @param socket The socket channel.
-		 * @throws IOException
-		 */
-	    private void write(ByteBuffer buf, SocketChannel socket) throws IOException {
-	        int len = buf.limit() - buf.position();
+        /**
+         * Method will write ALL data contained in the write buffer. This method
+         * will not return until the entire buffer has been written to the
+         * socket channel.
+         */
+	    private void write() throws IOException {
+	        int len = this.wBuffer.limit() - this.wBuffer.position();
 	        this.totalWritten += len;
 
 	        while (len > 0) {
-	            len -= socket.write(buf);
+	            len -= this.channel.write(this.wBuffer);
 	        }
 
 	        System.out.println("TCPNIO: Wrote " + this.totalWritten + " bytes so far");
