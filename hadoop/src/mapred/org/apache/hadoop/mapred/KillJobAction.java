@@ -31,7 +31,7 @@ import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
  * a job and cleanup resources.
  * 
  */
-class KillJobAction extends TaskTrackerAction {
+public class KillJobAction extends TaskTrackerAction {
   JobID jobId;
 
   public KillJobAction() {
@@ -59,6 +59,14 @@ class KillJobAction extends TaskTrackerAction {
   @Override
   public void readFields(DataInput in) throws IOException {
     jobId = JobID.read(in);
+  }
+
+  @Override
+	public boolean equals(Object o) {
+	  if (o instanceof KillJobAction) {
+		  return this.jobId.equals(((KillJobAction)o).jobId);
+	  }
+	  return false;
   }
 
 }

@@ -28,6 +28,13 @@ public class JobState implements Comparable<JobState> {
 		this.reduces = new HashSet<TaskState>();
 	}
 	
+	public JobState(JobID jobid, Constants.JobState state) {
+		this.jobid = jobid;
+		this.state = state;
+		this.maps    = new HashSet<TaskState>();
+		this.reduces = new HashSet<TaskState>();
+	}
+	
 	public JobState(JobID jobid, ComparableSet maps, ComparableSet reduces) {
 		this.jobid   = jobid;
 		this.state   = Constants.JobState.RUNNING;
@@ -56,6 +63,7 @@ public class JobState implements Comparable<JobState> {
 		       " MapProgress[" + status.mapProgress() + "]," +
 		       " ReduceProgress[" + status.reduceProgress() + "]";
 	}
+	
 	
 	public int compareTo(JobState o) {
 		int comparison = this.jobid.compareTo(o.jobid);
@@ -86,6 +94,10 @@ public class JobState implements Comparable<JobState> {
 	
 	public Constants.JobState state() {
 		return this.state;
+	}
+	
+	public void state(Constants.JobState state) {
+		this.state = state;
 	}
 	
 	public JobStatus status() {

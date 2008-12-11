@@ -36,6 +36,7 @@ import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.JobHistory.JobInfo;
 import org.apache.hadoop.mapred.declarative.Constants.TaskState;
+import org.apache.hadoop.mapred.declarative.Constants.TaskTrackerState;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.table.JobTable;
 import org.apache.hadoop.mapred.declarative.table.NetworkTopologyTable;
@@ -72,29 +73,31 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 						state == TaskState.KILLED || 
 						state == TaskState.FAILED) {
 					synchronized (JobTrackerServer.this.completionEvents) {
-						Table table = JobTrackerServer.this.context.catalog().table(TaskTable.TABLENAME);
-						TupleSet lookup;
-						try { lookup = table.primary().lookupByKey(jobid, taskid);
-						} catch (BadKeyException e) {
-							JobTrackerImpl.LOG.error(e.toString());
-							continue;
-						}
-						if (lookup.size() != 1) {
-							JobTrackerImpl.LOG.error("Task lookup size != 1");
-							continue;
-						}
+						if (JobTrackerServer.this.completionEvents.containsKey(jobid)) {
+							Table table = JobTrackerServer.this.context.catalog().table(TaskTable.TABLENAME);
+							TupleSet lookup;
+							try { lookup = table.primary().lookupByKey(jobid, taskid);
+							} catch (BadKeyException e) {
+								JobTrackerImpl.LOG.error(e.toString());
+								continue;
+							}
+							if (lookup.size() != 1) {
+								JobTrackerImpl.LOG.error("Task lookup size != 1");
+								continue;
+							}
 
-						Tuple taskTuple = lookup.iterator().next();
-						Integer partition = (Integer) taskTuple.value(TaskTable.Field.PARTITION.ordinal());
-						TaskType type     = (TaskType) taskTuple.value(TaskTable.Field.TYPE.ordinal());
-						int eventID = JobTrackerServer.this.completionEvents.get(jobid).size();
-						TaskCompletionEvent event = 
-							new TaskCompletionEvent(eventID,
-									new TaskAttemptID(taskid, attempt),
-									partition, type == TaskType.MAP,
-									TaskCompletionEvent.Status.valueOf(state.name()),
-									taskLoc);
-						JobTrackerServer.this.completionEvents.get(jobid).add(event);
+							Tuple taskTuple = lookup.iterator().next();
+							Integer partition = (Integer) taskTuple.value(TaskTable.Field.PARTITION.ordinal());
+							TaskType type     = (TaskType) taskTuple.value(TaskTable.Field.TYPE.ordinal());
+							int eventID = JobTrackerServer.this.completionEvents.get(jobid).size();
+							TaskCompletionEvent event = 
+								new TaskCompletionEvent(eventID,
+										new TaskAttemptID(taskid, attempt),
+										partition, type == TaskType.MAP,
+										TaskCompletionEvent.Status.valueOf(state.name()),
+										taskLoc);
+							JobTrackerServer.this.completionEvents.get(jobid).add(event);
+						}
 					}
 				}
 			}
@@ -305,7 +308,13 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			
 			if (lookup.size() > 0) {
 				/* Schedule the deletion of any jobs returned by index. */
-				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, null, lookup);
+				for (Tuple t : lookup) {
+					JobState status = (JobState) t.value(JobTable.Field.STATUS.ordinal());
+					if (status != null && status.state() != Constants.JobState.FAILED) {
+						status.state(Constants.JobState.FAILED);
+					}
+				}
+				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, lookup, null);
 			}
 		} catch (BadKeyException e) {
 			e.printStackTrace();
@@ -581,6 +590,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				new Tuple(status.getTrackerName(),  
 						status.getHost(), 
 						status.getHttpPort(),  
+						TaskTrackerState.RUNNING,
 						java.lang.System.currentTimeMillis(), 
 						status.getFailures(),  
 						status.countMapTasks(), 

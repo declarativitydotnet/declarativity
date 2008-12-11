@@ -59,4 +59,12 @@ class KillTaskAction extends TaskTrackerAction {
   public void readFields(DataInput in) throws IOException {
     taskId = TaskAttemptID.read(in);
   }
+  
+  @Override
+	public boolean equals(Object o) {
+	  if (o instanceof KillTaskAction) {
+		  return this.taskId.equals(((KillTaskAction)o).taskId);
+	  }
+	  return false;
+}
 }

@@ -5,7 +5,9 @@ import java.io.IOException;
 import jol.types.basic.Wrapper;
 
 import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobPriority;
+import org.apache.hadoop.mapred.KillJobAction;
 import org.apache.hadoop.mapred.LaunchTaskAction;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.MapTask;
@@ -42,5 +44,9 @@ public final class Function {
 		return new Wrapper<TaskTrackerAction>(new LaunchTaskAction(
 				   new ReduceTask(jobFile, new TaskAttemptID(taskId, attemptId), 
 						          partition, numMaps)));
+	}
+	
+	public static Wrapper<TaskTrackerAction> killJob(JobID jobid) {
+		return new Wrapper<TaskTrackerAction>(new KillJobAction(jobid));
 	}
 }

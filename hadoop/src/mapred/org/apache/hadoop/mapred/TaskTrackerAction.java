@@ -53,6 +53,8 @@ public abstract class TaskTrackerAction implements Writable {
   
   public abstract String toString();
   
+  public abstract boolean equals(Object o);
+  
   /**
    * A factory-method to create objects of given {@link ActionType}. 
    * @param actionType the {@link ActionType} of object to create.

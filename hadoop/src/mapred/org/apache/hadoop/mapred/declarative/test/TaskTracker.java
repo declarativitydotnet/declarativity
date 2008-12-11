@@ -9,6 +9,7 @@ import java.util.concurrent.Executor;
 
 import org.apache.hadoop.mapred.HeartbeatResponse;
 import org.apache.hadoop.mapred.InterTrackerProtocol;
+import org.apache.hadoop.mapred.KillJobAction;
 import org.apache.hadoop.mapred.LaunchTaskAction;
 import org.apache.hadoop.mapred.MapTask;
 import org.apache.hadoop.mapred.MapTaskStatus;
@@ -18,6 +19,8 @@ import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
+import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 
 class TaskTracker extends Thread {
 	
@@ -30,11 +33,18 @@ class TaskTracker extends Thread {
 		private TaskStatus.Phase phase;
 		
 		public TaskRunner(TaskTracker tracker, Task task, long time) {
+			this(tracker, task, time, TaskStatus.State.UNASSIGNED);
+		}
+		
+		public TaskRunner(TaskTracker tracker, Task task, 
+				          long time, TaskStatus.State state) {
 			this.tracker = tracker;
 			this.task = task;
 			this.start = 0L;
 			this.time = time;
-			this.state = TaskStatus.State.UNASSIGNED;
+			this.state = state;
+			this.phase = (task instanceof MapTask) ?
+				         TaskStatus.Phase.MAP : TaskStatus.Phase.REDUCE;
 		}
 		
 		public String toString() {
@@ -55,7 +65,7 @@ class TaskTracker extends Thread {
 		
 		public TaskStatus status() {
 			float progress = 0f;
-			if (this.state != TaskStatus.State.UNASSIGNED) {
+			if (this.state == TaskStatus.State.RUNNING) {
 				long current = System.currentTimeMillis();
 				if (current - this.start < this.start) {
 					progress = 1f;
@@ -69,7 +79,7 @@ class TaskTracker extends Thread {
 			return status(progress);
 		}
 		
-		public TaskStatus status(float progress) {
+		private TaskStatus status(float progress) {
 			long finish = this.state == TaskStatus.State.SUCCEEDED ?
 					System.currentTimeMillis() : 0L;
 					
@@ -93,18 +103,15 @@ class TaskTracker extends Thread {
 		}
 		
 		public void run() {
-			this.start = System.currentTimeMillis();
-			this.state = TaskStatus.State.RUNNING;
-			this.phase = TaskStatus.Phase.MAP;
-			if (task instanceof ReduceTask) {
-				// TODO wait for maps to finish
-				this.phase = TaskStatus.Phase.REDUCE;
+			if (this.state == TaskStatus.State.UNASSIGNED) {
+				this.start = System.currentTimeMillis();
+				this.state = TaskStatus.State.RUNNING;
 			}
 		}
 	}
 	
-	private static final Long MAX_TASK_TIME = 60017L; // Ensure prime
-	private static final Long MIN_TASK_TIME = 10000L;
+	private static final Long MAX_TASK_TIME = 120011L; // Ensure prime
+	private static final Long MIN_TASK_TIME = 60000L;
 	
 	private Executor executor;
 	
@@ -173,13 +180,25 @@ class TaskTracker extends Thread {
 			if (action instanceof LaunchTaskAction) {
 				launch((LaunchTaskAction) action);
 			}
+			else if (action instanceof KillJobAction) {
+				KillJobAction killAction = (KillJobAction) action;
+				Set<TaskRunner> kill = new HashSet<TaskRunner>();
+				for (TaskRunner runner : this.runners) {
+					if (runner.task.getJobID().equals(killAction.getJobID())) {
+						kill.add(runner);
+						runner.state = TaskStatus.State.KILLED;
+					}
+				}
+			}
 		}
 	}
 	
 	private void launch(LaunchTaskAction action) {
 		Task task = action.getTask();
 		long time = MIN_TASK_TIME + (rand.nextLong() % MAX_TASK_TIME);
-		TaskRunner runner = new TaskRunner(this, task, time);
+		TaskStatus.State state =   (time < (MIN_TASK_TIME + 0.5 * MAX_TASK_TIME)) ?
+				TaskStatus.State.FAILED : TaskStatus.State.UNASSIGNED;
+		TaskRunner runner = new TaskRunner(this, task, time, state);
 		this.executor.execute(runner);
 		this.runners.add(runner);
 	}

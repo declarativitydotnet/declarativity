@@ -30,38 +30,52 @@ import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
  * 
  */
 public class LaunchTaskAction extends TaskTrackerAction {
-  private Task task;
-  
-  public String toString() {
-	  return ActionType.LAUNCH_TASK.name() + " -- " + task;
-  }
+	private Task task;
 
-  public LaunchTaskAction() {
-    super(ActionType.LAUNCH_TASK);
-  }
-  
-  public LaunchTaskAction(Task task) {
-    super(ActionType.LAUNCH_TASK);
-    this.task = task;
-  }
-  
-  public Task getTask() {
-    return task;
-  }
-  
-  public void write(DataOutput out) throws IOException {
-    out.writeBoolean(task.isMapTask());
-    task.write(out);
-  }
-  
-  public void readFields(DataInput in) throws IOException {
-    boolean isMapTask = in.readBoolean();
-    if (isMapTask) {
-      task = new MapTask();
-    } else {
-      task = new ReduceTask();
-    }
-    task.readFields(in);
-  }
+	public String toString() {
+		return ActionType.LAUNCH_TASK.name() + " -- " + task.getTaskID();
+	}
+
+	public LaunchTaskAction() {
+		super(ActionType.LAUNCH_TASK);
+	}
+
+	public LaunchTaskAction(Task task) {
+		super(ActionType.LAUNCH_TASK);
+		this.task = task;
+	}
+
+	public Task getTask() {
+		return task;
+	}
+
+	public void write(DataOutput out) throws IOException {
+		out.writeBoolean(task.isMapTask());
+		task.write(out);
+	}
+
+	public void readFields(DataInput in) throws IOException {
+		boolean isMapTask = in.readBoolean();
+		if (isMapTask) {
+			task = new MapTask();
+		} else {
+			task = new ReduceTask();
+		}
+		task.readFields(in);
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.task.getTaskID().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof LaunchTaskAction) {
+			Task other = ((LaunchTaskAction) o).getTask();
+			return this.task.getTaskID().equals(other.getTaskID());
+		}
+		return false;
+	}
 
 }

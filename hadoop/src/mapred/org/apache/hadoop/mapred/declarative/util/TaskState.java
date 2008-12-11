@@ -57,6 +57,12 @@ public class TaskState implements Comparable<TaskState> {
 		this.attempts = new LinkedHashMap<Integer, AttemptState>();
 	}
 	
+	private TaskState(JobID jobid, TaskID taskid, HashMap<Integer, AttemptState> attempts) {
+		this.jobid = jobid;
+		this.taskid = taskid;
+		this.attempts = (HashMap<Integer, AttemptState>) attempts.clone();
+	}
+	
 	@Override
 	public int hashCode() {
 		return (this.jobid.hashCode() + ":" + this.taskid.hashCode()).hashCode();
@@ -68,6 +74,11 @@ public class TaskState implements Comparable<TaskState> {
 			return compareTo((TaskState)o) == 0;
 		}
 		return false;
+	}
+	
+	@Override
+	public TaskState clone() {
+		return new TaskState(jobid, taskid, attempts);
 	}
 	
 	public int compareTo(TaskState o) {

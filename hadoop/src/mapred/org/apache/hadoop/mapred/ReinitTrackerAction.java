@@ -41,4 +41,9 @@ public class ReinitTrackerAction extends TaskTrackerAction {
 
   public void readFields(DataInput in) throws IOException {}
 
+@Override
+public boolean equals(Object o) {
+	return o instanceof ReinitTrackerAction;
+}
+
 }
