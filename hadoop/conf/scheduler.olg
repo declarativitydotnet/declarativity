@@ -31,13 +31,14 @@ taskAttempts(JobId, TaskId, count<AttemptId>) :-
 	jobtracker::taskAttempt(JobId, TaskId, AttemptId);
 	
 failedJob
-jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobStatus) :-
-	taskAttempts(JobId, TaskId, Attempts), trackerCount(Trackers),
-	jobtracker::task(JobId, TaskId, _, _, _, _, Status),
-	jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _),
-	Status.state() == Constants.TaskState.FAILED,
+jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FailStatus) :-
+	taskAttempts#insert(JobId, TaskId, Attempts), trackerCount(Trackers),
+	jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
+	jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobStatus),
+	TaskStatus.state() == Constants.TaskState.FAILED,
+	JobStatus.state() == Constants.JobState.RUNNING,
 	Attempts > 3 || Attempts > Trackers,
-	JobStatus := new JobState(JobId, Constants.JobState.FAILED);
+	FailStatus := new JobState(JobId, Constants.JobState.FAILED);
 
 jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L) :-
 	flatten(scheduleAttempt(JobId, TaskId, Names)),
@@ -58,8 +59,6 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, Tracker
 scheduleAttempt(JobId, TaskId, limit<TrackerName, 1>) :-
 	schedule(JobId, TaskId, TrackerName);
 	
-watch(jobtracker::taskTrackerAction, a);
-
 actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
 	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _),

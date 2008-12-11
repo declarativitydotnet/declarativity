@@ -112,8 +112,6 @@ reduceTasks(JobId, set<Status>) :-
 	task(JobId, TaskId, Type, _, _, _, Status),
 	Type == Constants.TaskType.REDUCE;
 	
-watch(job, ae);
-watch(killjob, a);
 public
 killjob(JobId, TrackerName) :-
 	job(JobId, _, _, _, _, _, _, _, JobStatus),
