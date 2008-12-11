@@ -13,6 +13,24 @@ public class Wrapper<T> implements Comparable<Wrapper<T>> {
 		return this.object == null ? 
 				"null" : this.object.toString();
 	}
+	
+	@Override
+	public int hashCode() {
+		return this.object == null ? "null".hashCode() :
+			this.object.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Wrapper) {
+			Object other = ((Wrapper)o).object;
+			if (this.object == other) return true;
+			else if (this.object != null && other != null) {
+				return object.equals(((Wrapper)o).object);
+			}
+		}
+		return false;
+	}
 
 	public int compareTo(Wrapper<T> o) {
 		if (o == this) {
