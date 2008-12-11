@@ -7,12 +7,27 @@ import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.util.JobState;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
+import org.apache.hadoop.mapred.declarative.util.Function;
+import org.apache.hadoop.mapred.TaskTrackerAction;
 
 import jol.types.basic.ValueList;
 import jol.types.basic.Wrapper;
 import java.lang.Integer;
 import java.lang.Long;
 import java.lang.Enum;
+
+/*************** Task Tracker Monitor *********************/
+
+timer(checkTracker, physical, 60000, infinity, 60000);
+
+taskTracker(TrackerName, Host, HttpPort, Constants.TaskTrackerState.FAILED, 
+            Timestamp, Failures, MapCount, ReduceCount, MaxMap, MaxReduce) :-
+	checkTracker(Period, TTL, Delay),
+	taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
+	            MapCount, ReduceCount, MaxMap, MaxReduce),
+	TrackerState == Constants.TaskTrackerState.RUNNING,
+	java.lang.System.currentTimeMillis() - Timestamp > Period;
+
 
 /*************** TASK INIT *********************/
 
@@ -75,6 +90,8 @@ import jol.types.basic.ComparableSet;
 define(mapTasks,    keys(0), {JobID, ComparableSet});
 define(reduceTasks, keys(0), {JobID, ComparableSet});
 define(updateJob, {JobID});
+define(killjob,   {JobID, String});
+
 
 /* Update the job state. */
 updateJobState
@@ -86,11 +103,6 @@ job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :
 updateJob(JobId) :- mapTasks(JobId);
 updateJob(JobId) :- reduceTasks(JobId);
 	
-	/*
-watch(job, a);
-watch(task, a);
-*/
-
 mapTaskStatus
 mapTasks(JobId, set<Status>) :-
 	task(JobId, TaskId, Type, _, _, _, Status),
@@ -100,17 +112,40 @@ reduceTasks(JobId, set<Status>) :-
 	task(JobId, TaskId, Type, _, _, _, Status),
 	Type == Constants.TaskType.REDUCE;
 	
+watch(job, ae);
+watch(killjob, a);
+public
+killjob(JobId, TrackerName) :-
+	job(JobId, _, _, _, _, _, _, _, JobStatus),
+	taskAttempt(JobId, TaskID, _, _, TaskState, _, _, TrackerName, _, _, _),
+	JobStatus.state()  == Constants.JobState.FAILED,
+	TaskState == Constants.TaskState.RUNNING;
+	
+actionKillJob
+taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-	
+	killjob(JobId, TrackerName),
+	Action := Function.killJob(JobId);
+	
     
 /*************** Task Status Maintenance *********************/
 
 define(taskState, {JobID, TaskID, TaskState});
 
+taskAttempt(JobID, TaskID, AttemptID, Progress, Constants.TaskState.FAILED, 
+            Phase, Diag, TrackerName, FileLoc, Start, Finish) :-
+	taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, _, _),
+	taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish),
+	TrackerState != Constants.TaskTrackerState.RUNNING,
+	TaskState == Constants.TaskState.RUNNING;
+	
 computeTaskState
-taskState(JobID, TaskID, generic<(new TaskState(JobID, TaskID)).attempt(AttemptID, Progress, State, Phase, Start, Finish)>) :-
+taskState(JobID, TaskID, generic<NewStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish)>) :-
 	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, _, Start, Finish),
 	task(JobID, TaskID, Type, _, _, _, TaskStatus),
-	Start > 0L,
-	TaskStatus.state() == Constants.TaskState.UNASSIGNED || TaskStatus.state() == Constants.TaskState.RUNNING;
+	TaskStatus.state() == Constants.TaskState.UNASSIGNED || 
+	TaskStatus.state() == Constants.TaskState.FAILED || 
+	TaskStatus.state() == Constants.TaskState.RUNNING,
+	NewStatus := (TaskState) TaskStatus.clone();
 	
 task(JobID, TaskID, Type, Partition, Split, MapCount, TaskStatus) :-
 	taskState(JobID, TaskID, TaskStatus),
