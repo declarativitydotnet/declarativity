@@ -7,7 +7,7 @@
 \maketitle
 \begin{abstract}
   While architectures for distributed computing are rapidly changing,
-  techniques for building distributed systems have remained relatively
+  techniques for building distributed systems have remained
   stagnant. As distributed computation becomes the common case,
   traditional techniques for building distributed systems will become
   untenable, because they force programs to deal with the mundane
@@ -16,17 +16,89 @@
   understand, modify, and port to new environments. We propose BOOM, a
   new paradigm for concisely specifying a broad class of distributed
   systems. In this paper, we describe the first application in the
-  BOOM stack: BoomFS, a distributed filesystem in the style of the
-  Google File System that is implemented in a combination of Java and
+  BOOM stack: BoomFS, a distributed filesystem similar to the Google
+  File System\cite{gfs} that is implemented in a mixture of Java and
   declarative logic.
 \end{abstract}
 
 \section{Introduction}
 
-With the widespread adoption of many-core processors, cloud computing,
-and mobile clients, architectures for distributed computing are
-experiencing a period of disruptive change. In the near future, nearly
-every non-trivial software system will be physically distributed.
+With the widespread adoption of cloud computing, pervasive mobile
+clients, and many-core processors, computing architectures are
+undergoing a period of disruptive change. In the near future, nearly
+every non-trivial software system will be physically
+distributed. Distributed programming will be the common case, rather
+than the exception.
+
+Traditional techniques for building distributed systems are ill-suited
+to this new environment. Developing fault-tolerant distributed systems
+remains enormously difficult and expensive, and is typically only
+attempted by the experienced programmers with extensive training in
+the field. As more journeyman developers must deal with the challenges
+of distributed computing as a matter of course, this situation will
+become untenable. Better techniques for constructing distributed
+systems are urgently needed.
+
+The fundamental problem with traditional techniques for building
+distributed systems is that they provide the wrong abstractions to the
+programmer. Distributed systems are typically implemented with tools
+developed for single-machine programs, and only superficially adapted
+to the challenges of a distributed setting. Programmers are forced to
+deal with the mundane details of communication, synchronization, and
+consensus. As a result, the essence of the distributed computation is
+obscured by a forest of boilerplate details. Evidence for this can be
+seen in the fact that distributed algorithms such as Paxos can be
+stated in a page of pseudocode, but typically require many thousands
+of lines of code to implement using standard
+tools\cite{paxosmadelive}.
+
+Traditional tools operate at a low level of abstraction because they
+force programmers to intermingle the specification of \emph{what} a
+distributed program should do with \emph{how} it can be done. This
+results in fragile programs that fail to adapt to changes in their
+environments. For example, consider a client program that wants to
+compute a function over data stored in a compute cloud. Should the
+function code be sent to the server, or should the data be sent to the
+client? The optimal policy depends on factors including the relative
+costs of network bandwidth, server-side computation and client-side
+computation, as well as how much data is required, how expensive the
+function is, and the frequency with which the function is invoked or
+the input data is modified. All of these variables are likely to
+fluctuate in a distributed system, so encoding a particular decision
+into the application program results in a fragile design. This
+fragility results in programs that cannot easily be modified, or
+ported to distributed systems with varying performance
+characteristics.
+
+Inspired by the data independence provided by the relational model, we
+aim to provide \emph{network scale independence} for distributed
+systems by separating the programmer's intent from its concrete
+realization. In BOOM, a distributed system is composed of two types of
+components:
+\begin{itemize}
+\item
+  \emph{imperative} components that implement the basic units of
+  functionality of a distributed system. For example, in BoomFS,
+  imperative components are used to transfer data chunks between
+  hosts, and to read and write data from the native file system.
+
+\item
+  \emph{declarative} components that specify ``what''
+
+\end{itemize}
+
+Because traditional tools force programmers to specify distributed
+systems at such a low level of abstraction, 
+
+As distributed systems become the common case, traditional software
+engineering techniques will become increasingly untenable. Building a
+reliable, efficient distributed system with the present generation of
+programming tools 
+
+However, traditional techniques for constructing distributed systems
+are 
+
+Traditional techniques for 
 
 Traditional techniques to constructing software systems will be
 sub-optimal for this new environment, because they provide
@@ -166,7 +238,7 @@ Compared with HDFS. Look at both overall throughput, and metadata ops/second.
 \section{Conclusions}
 
 \bibliographystyle{abbrv}
-\bibliography{paper}  % sigproc.bib is the name of the Bibliography in this case
+\bibliography{paper}
 \appendix
 \section{Paxos in Overlog}
 \end{document}
