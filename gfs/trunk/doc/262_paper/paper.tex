@@ -22,23 +22,37 @@
 \end{abstract}
 
 \section{Introduction}
-
 With the widespread adoption of cloud computing, pervasive mobile
 clients, and many-core processors, computing architectures are
 undergoing a period of disruptive change. In the near future, nearly
-every non-trivial software system will be physically
-distributed. Distributed programming will be the common case, rather
-than the exception.
+every non-trivial software system will be physically distributed:
+distributed programming will be the common case.
 
 Traditional techniques for building distributed systems are ill-suited
-to this new environment. Developing fault-tolerant distributed systems
-remains enormously difficult and expensive, and is typically only
-attempted by the experienced programmers with extensive training in
-the field. As more journeyman developers must deal with the challenges
-of distributed computing as a matter of course, this situation will
-become untenable. Better techniques for constructing distributed
-systems are urgently needed.
+to this new environment. Despite considerable research, developing
+fault-tolerant distributed systems remains enormously difficult and
+expensive, and is typically only attempted by experienced programmers
+with extensive training in the field. As more journeyman developers
+must deal with the challenges of distributed computing as a matter of
+course, this situation will become untenable. Better techniques for
+constructing distributed systems are urgently needed.
 
+We believe a new approach to building distributed systems is necessary
+to address this need. Inspired by prior work on declarative
+networking, \ldots
+
+In Section 2, we discuss the failings of traditional tools for
+building distributed systems, and outline the BOOM vision in
+contrast. We also motivate our decision to begin the BOOM project by
+implementing a declarative file system. In Section 3, we describe the
+design goals and basic architecture of BoomFS. In Section 4, we detail
+how this architecture was realized in the BOOM style. In Section 5, we
+report on a performance study comparing BoomFS and HDFS\cite{}. In
+Section 6, we explore extensions to the file system that are
+facilitated by our use of a declarative coordination language. In
+Section 7, we discuss related work, and we conclude in Section 8.
+
+\section{The BOOM Vision}
 The fundamental problem with traditional techniques for building
 distributed systems is that they provide the wrong abstractions to the
 programmer. Distributed systems are typically implemented with tools
@@ -83,105 +97,11 @@ components:
   hosts, and to read and write data from the native file system.
 
 \item
-  \emph{declarative} components that specify ``what''
-
-\end{itemize}
-
-Because traditional tools force programmers to specify distributed
-systems at such a low level of abstraction, 
-
-As distributed systems become the common case, traditional software
-engineering techniques will become increasingly untenable. Building a
-reliable, efficient distributed system with the present generation of
-programming tools 
-
-However, traditional techniques for constructing distributed systems
-are 
-
-Traditional techniques for 
-
-Traditional techniques to constructing software systems will be
-sub-optimal for this new environment, because they provide
-abstractions oriented toward single-computer programs. 
-
-,
-often executing in complex environments consisting of many distributed
-processors, storage units, and network interconnects.
-
-However, techniques for constructing distributed systems have not kept
-up with this rapid rate of change. Distributed systems are typically
-implemented with tools developed for single-machine programs, and only
-superficially adapted to the challenges of a distributed setting. As a
-result, programmers are forced to work at the wrong level of
-abstraction. As a result, typical distributed systems are:
-\begin{itemize}
-\item \emph{difficult to construct}, because the programming language
-  deals only with local invariants over local state, but the problem
-  domain requires global invariants over global state
-
-\item \emph{difficult to reason about}, because the essence of the
-  distributed algorithm is obscured amongst a myriad of details for
-  resource management, coordination, synchronization, and
-  communication
-
-\item
-  \emph{fragile}, because the programming language forces programmers
-  to mix policy and mechanism. For example, the distribution of data
-  among the nodes of a distributed setting is essentially an assertion
-  about the communication costs, available network bandwidth, the
-  relative costs of communication and computation, and the
-  application's data access patterns. By hard-coding the location of
-  data in a distributed system, a traditional distributed program
-  would be inflexible to changes in any of these parameters.
-\end{itemize}
-
-Many distributed algorithms can be concisely described,
-but implemented only with great difficulty. This is because
-traditional programming languages are non-distributed by default, and
-force programmers to concern themselves with myriad details of
-communication, synchronization, consensus, and fault tolerance.
-
-We propose a new methodology for constructing distributed systems,
-inspired by prior work on declarative networking. Inspired by the data
-independence provided by the relational model, we aim to provide
-\emph{network scale independence} for distributed systems: developers
-should specify their intent in a high-level, declarative language. The
-system will then realize their specification in the current
-distributed setting --- but can subsequently change the mapping from
-specification to realization as the environment changes.
-
-\section{The BOOM Vision}
-Motivating the use of declarative logic languages for implementing
-distributed systems.
-
-Approach 1:
-\begin{itemize}
-\item
-  building distributed systems is hard
-
-\item
-  current techniques for building distributed systems are
-  ineffective. Why? Because they operate at the wrong level of
-  abstraction
-
-\item
-  Declarative logic languages allow the programmer to work at a more
-  comfortable level of abstraction
-\end{itemize}
-
-Approach 2:
-\begin{itemize}
-\item
-  Like distributed systems, networking protocols are traditionally
-  described as finite state machines.
-
-\item 
-  Somewhat surprisingly, the declarative specification of network
-  protocols yields promising results.
-
-\item 
-  We plan to apply the same techniques to a broader class of
-  distributed systems
+  \emph{declarative} components that specify ``what'' the distributed
+  system should do. Declarative components are written as a series of
+  logical rules that describe the coordination and composition of the
+  imperative components. Essentially, the declarative logic is
+  responsible for deciding ``what'' should be done to satisfy 
 \end{itemize}
 
 \subsection{Declarative Specification of Distributed Filesystems}
@@ -215,8 +135,6 @@ Why choose GFS to implement in a declarative language?
 \section{Performance Evaluation}
 Compared with HDFS. Look at both overall throughput, and metadata ops/second.
 
-\section{Related Work}
-
 \section{Future Work}
 \begin{itemize}
 \item
@@ -234,6 +152,8 @@ Compared with HDFS. Look at both overall throughput, and metadata ops/second.
 \item
   Hadoop integration
 \end{itemize}
+
+\section{Related Work}
 
 \section{Conclusions}
 
