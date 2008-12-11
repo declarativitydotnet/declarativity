@@ -278,6 +278,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		try {
 			TupleSet jobs = table.primary().lookupByKey(jobid);
 			if (jobs == null || jobs.size() == 0) {
+				java.lang.System.err.println("TABLE " + (TupleSet) table.tuples());
 				throw new IOException("Unkown job identifier! " + jobid);
 			}
 			JobState state = (JobState) jobs.iterator().next().value(JobTable.Field.STATUS.ordinal());

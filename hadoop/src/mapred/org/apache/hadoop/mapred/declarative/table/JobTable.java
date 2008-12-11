@@ -11,6 +11,7 @@ import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TypeList;
 import jol.types.basic.Wrapper;
+import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
