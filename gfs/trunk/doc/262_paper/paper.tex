@@ -6,14 +6,34 @@
 \begin{document}
 \maketitle
 \begin{abstract}
+  While architectures for distributed computing are rapidly changing,
+  techniques for building distributed systems have remained relatively
+  stagnant. As distributed computation becomes the common case,
+  traditional techniques for building distributed systems will become
+  untenable, because they force programs to deal with the mundane
+  boilerplate details of constructing reliable distributed
+  systems. This yields programs that are difficult to construct,
+  understand, modify, and port to new environments. We propose BOOM, a
+  new paradigm for concisely specifying a broad class of distributed
+  systems. In this paper, we describe the first application in the
+  BOOM stack: BoomFS, a distributed filesystem in the style of the
+  Google File System that is implemented in a combination of Java and
+  declarative logic.
 \end{abstract}
 
 \section{Introduction}
-With the increasing prevalence of many-core processors, cloud computing,
-and mobile clients, architectures for distributed computing are in the
-midst of a period of disruptive change. In the near future, almost all
-non-trivial software systems will be physically distributed, often
-executing in complex environments consisting of many distributed
+
+With the widespread adoption of many-core processors, cloud computing,
+and mobile clients, architectures for distributed computing are
+experiencing a period of disruptive change. In the near future, nearly
+every non-trivial software system will be physically distributed.
+
+Traditional techniques to constructing software systems will be
+sub-optimal for this new environment, because they provide
+abstractions oriented toward single-computer programs. 
+
+,
+often executing in complex environments consisting of many distributed
 processors, storage units, and network interconnects.
 
 However, techniques for constructing distributed systems have not kept
