@@ -78,29 +78,29 @@ public class DataServer implements Runnable {
                 ValueList<String> path = readHeaders();
                 path.insert(String.valueOf(chunkId));
 
-                File newf = getNewChunk(chunkId);
+                File newf = createChunkFile(chunkId);
                 java.lang.System.out.println("Ready to read file in\n");
 
                 FileChannel fc = new FileOutputStream(newf).getChannel();
                 fc.transferFrom(this.channel, 0, Conf.getChunkSize());
                 fc.close();
-               
-                // we are not pipelining yet. 
+
+                // we are not pipelining yet.
                 if (path.size() > 1)  {
                     java.lang.System.out.println("path size was " + path.size());
                     copyToNext(newf, path);
                 }
-                 
+
                 java.lang.System.out.println("done writing chunk\n");
-                
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
         private void doDeleteOperation() {
             try {
-                int chunkId = readChunkId();    
-                File victim = getBlockFile(chunkId);
+                int chunkId = readChunkId();
+                File victim = getChunkFile(chunkId);
                 victim.delete();
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -111,7 +111,7 @@ public class DataServer implements Runnable {
             try {
                 Socket sock = Shell.setupStream(path.get(0));
                 SocketChannel chan = sock.getChannel();
-                if (chan == null) { 
+                if (chan == null) {
                     java.lang.System.out.println("OHNO\n");
                 }
                 DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
@@ -119,7 +119,7 @@ public class DataServer implements Runnable {
                 java.lang.System.out.println("routed data sent\n");
                 FileChannel fc = new FileInputStream(f).getChannel();
                 java.lang.System.out.println("got fc\n" + fc.toString());
-                fc.transferTo(0, Conf.getChunkSize(), chan); 
+                fc.transferTo(0, Conf.getChunkSize(), chan);
                 fc.close();
                 sock.close();
             } catch (Exception e) {
@@ -130,21 +130,21 @@ public class DataServer implements Runnable {
         private int dataTransfer(int chunkId, String[] path) {
             final int bufferSize = 8192;
             try {
-                File newf = getNewChunk(chunkId);
+                File newf = createChunkFile(chunkId);
                 FileChannel fc = new FileOutputStream(newf).getChannel();
                 int sent = 0;
-                while (sent < Conf.getChunkSize()) { 
+                while (sent < Conf.getChunkSize()) {
                     fc.transferFrom(this.channel, sent, bufferSize);
                     sent += bufferSize;
                 }
                 fc.close();
-                 
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
             return 0;
         }
-    
+
         private int readChunkId() {
             try {
                 return this.in.readInt();
@@ -166,14 +166,14 @@ public class DataServer implements Runnable {
                         if (b == '|') {
                             i++;
                             path[i] = "";
-                        } else { 
+                        } else {
                             path[i] = path[i] + b;
                         }
                     }
                     for (String s : path) {
                         java.lang.System.out.println("APTH: "+s);
-                    } 
-                    
+                    }
+
                 } else {
                     if (this.in.readChar() != ';') {
                         throw new RuntimeException("invalid header");
@@ -188,12 +188,12 @@ public class DataServer implements Runnable {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-    
+
         }
 
         private void doReadOperation() throws IOException {
             int blockId = this.in.readInt();
-            File blockFile = getBlockFile(blockId);
+            File blockFile = getChunkFile(blockId);
 
             int fileSize = (int) blockFile.length();
             out.writeInt(fileSize);
@@ -229,11 +229,11 @@ public class DataServer implements Runnable {
     }
 
     public void stop() {
-        this.workers.destroy(); 
+        this.workers.destroy();
         try {
             this.serverSocket.close();
         } catch (Exception e) {
-
+            throw new RuntimeException(e);
         }
     }
 
@@ -254,12 +254,12 @@ public class DataServer implements Runnable {
     }
 
 
-    public File getNewChunk(int chunkId) {
+    public File createChunkFile(int chunkId) {
         String filename = this.fsRoot + File.separator + chunkId;
         File newf = new File(filename);
         try {
             if (!newf.createNewFile()) {
-                throw new RuntimeException("failed to create fresh file "+filename);
+                throw new RuntimeException("Failed to create fresh file " + filename);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -267,14 +267,14 @@ public class DataServer implements Runnable {
         return newf;
     }
 
-    public File getBlockFile(int blockId) {
-        String filename = this.fsRoot + File.separator + blockId;
+    public File getChunkFile(int chunkId) {
+        String filename = this.fsRoot + File.separator + chunkId;
         File file = new File(filename);
         if (!file.exists())
-            throw new RuntimeException("Block not found: " + blockId);
+            throw new RuntimeException("Chunk not found: " + chunkId);
 
         if (!file.isFile())
-            throw new RuntimeException("Block file is not a normal file: " + file);
+            throw new RuntimeException("Chunk file is not a normal file: " + file);
 
         return file;
     }
