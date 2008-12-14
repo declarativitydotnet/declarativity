@@ -6,7 +6,7 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-  While architectures for distributed computing are rapidly changing,
+  While architectures for distributed computing are changing rapidly,
   techniques for building distributed systems have remained
   stagnant. As distributed computation becomes the common case,
   traditional techniques for building distributed systems will become
@@ -91,17 +91,41 @@ realization. In BOOM, a distributed system is composed of two types of
 components:
 \begin{itemize}
 \item
-  \emph{imperative} components that implement the basic units of
-  functionality of a distributed system. For example, in BoomFS,
-  imperative components are used to transfer data chunks between
-  hosts, and to read and write data from the native file system.
+  \emph{imperative} components implement the basic units of
+  functionality of a distributed system. Imperative components are
+  typically used to perform tasks like I/O and numerical
+  computation. These tasks are usually best stated in an imperative
+  language like Java or C++, particularly because these components
+  often involve interaction with the operating system or native
+  libraries. In BoomFS, imperative components implemented in Java are
+  used to transfer data chunks between hosts, and to read and write
+  data from the native file system.
 
 \item
-  \emph{declarative} components that specify ``what'' the distributed
-  system should do. Declarative components are written as a series of
-  logical rules that describe the coordination and composition of the
-  imperative components. Essentially, the declarative logic is
-  responsible for deciding ``what'' should be done to satisfy 
+  \emph{declarative} components specify the bulk of the logic of the
+  distributed system. Declarative components are written as a
+  collection of logical rules that describe the coordination and
+  composition of the imperative components. Essentially, the
+  declarative logic is responsible for deciding ``what'' a member of
+  the distributed system should do; the imperative components are
+  responsible for realizing those actions. A declarative component is
+  essentially a join between a stream of events and a
+  database. Evaluating this query over an event stream results in
+  producing more events (either at the local node or a remote node),
+  inserting new database tuples, or invoking imperative
+  components.
+
+  Declarative components are implemented in a high-level declarative
+  logic language, such as Overlog[cite]. This requires the state of
+  the distributed system to be represented in tables.
+
+  In BoomFS, declarative components implement the protocols between
+  clients and master nodes, between different masters, and between
+  masters and data nodes. That is, declarative rules implement the
+  ``control path''; the data path (from clients to data nodes and
+  between different data nodes, is implemented as an imperative
+  component, because it is straightforward and primarily involves
+  copying bytes.
 \end{itemize}
 
 \subsection{Declarative Specification of Distributed Filesystems}
