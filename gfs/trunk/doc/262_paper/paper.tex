@@ -122,10 +122,11 @@ components:
   In BoomFS, declarative components implement the protocols between
   clients and master nodes, between different masters, and between
   masters and data nodes. That is, declarative rules implement the
-  ``control path''; the data path (from clients to data nodes and
-  between different data nodes, is implemented as an imperative
-  component, because it is straightforward and primarily involves
-  copying bytes.
+  ``control path'', which represents the vast majority of the
+  complexity in the BoomFS design. The data path (from clients to data
+  nodes and between different data nodes, is implemented as an
+  imperative component, because it is straightforward and primarily
+  involves copying bytes.
 \end{itemize}
 
 \subsection{Declarative Specification of Distributed Filesystems}
