@@ -89,6 +89,7 @@ class Rule < Clause
       end
     end
 
+#    require 'ruby-debug'; debugger if name.to_s == 'strata'
     if (!event.nil?)
 #      puts "---- EVENT FOR RULE #{name.to_s} IS #{event.to_s} ----"
       return query_stuff(context, periodics, head, event, body)

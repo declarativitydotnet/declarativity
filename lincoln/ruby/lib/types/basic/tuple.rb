@@ -113,6 +113,7 @@ class Tuple
         #require 'ruby-debug'; debugger
         print "SCHEMA: #{@schema}\n"
         print "TUPLE: #{values}\n"
+        require 'ruby-debug'; debugger
         raise("field "+i.to_s+" does not exist in tuple") 
       end
       return values[@schema.position(i)]

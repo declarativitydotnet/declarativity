@@ -36,7 +36,7 @@ class Predicate < Term
 	end
 	
 	def containsAggregation
-		arguments.each do |e|
+		@arguments.each do |e|
 			if e.class <= Aggregate then
 				return true;
 		  end

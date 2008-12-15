@@ -504,6 +504,11 @@ class MyIndexTable < CompilerCatalogTable
   def MyIndexTable.table_name
     @@TABLENAME
   end
+  
+  def insert_tup(t)
+    require 'ruby-debug'; debugger if t.value(Field::COL_POS).nil?
+    super(t)
+  end
 end
 
 class MyPredicateTable < CompilerCatalogTable

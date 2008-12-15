@@ -110,13 +110,19 @@ class Table
     delta = TupleSet.new(name, nil)
     tuples.each do |t|
       t = t.clone
+      
+      oldvals = nil
+			if (!conflicts.nil? and !primary.nil?) then
+					oldvals = primary.lookupByKey(primary.key.project(t))
+			end
+      
       if insert_tup(t)
         delta << t
         conflicts += primary.lookup(t) unless (conflicts.nil? or primary.nil?)
+        insertion = TupleSet.new(name)
+        insertion << t
+        @callbacks.each {|c| c.insertion(insertion)}
       end
-    end
-    if delta.size > 0
-      @callbacks.each {|c| c.insertion(delta)}
     end
 
     return delta

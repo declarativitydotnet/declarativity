@@ -95,6 +95,7 @@ class Driver < Monitor
         insertions = TupleSet.new(name) if insertions.nil?
         deletions  = TupleSet.new(name) if deletions.nil?
 
+        require 'ruby-debug'; debugger if name.name == "insertionQueue"
         next if (insertions.size == 0 and deletions.size == 0)
 
 #        require 'ruby-debug'; debugger
@@ -203,9 +204,10 @@ class Driver < Monitor
       watchInsert = watch.watched(program.name, name, WatchOp::Modifier::INSERT)
       watchDelete = watch.watched(program.name, name, WatchOp::Modifier::DELETE)
 
-#      require 'ruby-debug'; debugger
+      require 'ruby-debug'; debugger if name.to_s == 'runtime::insertionQueue'
       querySet = program.get_queries(name)
-#      querySet.each { |q| puts q.rule}
+      querySet.each { |q| puts "tuple from #{name} triggers #{q.rule}"}
+
 #      program.dump_queries
       if (querySet.nil?)
         return TupleSet.new(name) # Done
@@ -221,6 +223,7 @@ class Driver < Monitor
               watchInsert.rule(query.rule)
               watchInsert.evaluate(insertions)
             end
+            puts "evaluating #{query.to_s} on #{insertions.size} tuples"
             result = query.evaluate(insertions)
             next if (result.size == 0)
 

@@ -49,6 +49,7 @@ class RefTable < Table
         end
       end
       @tuples << t.clone
+      return true
     end
 
 end

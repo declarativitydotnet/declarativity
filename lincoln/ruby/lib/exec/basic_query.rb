@@ -38,8 +38,8 @@ class BasicQuery < Query
     @body.each do |oper| 
       tuples = oper.evaluate(tuples)
     end
-
-    print "==== PRODUCED #{tuples.size.to_s}: #{tuples.tups.to_s} ====\n"
+    require 'ruby-debug'; debugger if output.name.to_s == 'runtime::insertionQueue' and tuples.size > 0
+    print "==== PRODUCED #{tuples.size.to_s} tups in #{output.name.to_s}: #{tuples.tups.to_s} ====\n"
     return tuples
   end
 end

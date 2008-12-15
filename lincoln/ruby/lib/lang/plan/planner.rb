@@ -377,7 +377,9 @@ class OverlogPlanner
 			resindx = join_of(@indices,TupleSet.new("cols",table))
 			indxs = Array.new	
 			resindx.order_by("col_pos") do |col|
-				indxs << col.value("col_pos")
+			  x = col.value("col_pos")
+			  require 'ruby-debug'; debugger if x.nil?
+				indxs << x
 			end 		
 
 			typestr = '[' + cols.join(",") + ']'

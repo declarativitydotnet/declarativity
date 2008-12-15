@@ -5,7 +5,7 @@ class AntiScanJoin < Join
 	end
 
   def to_s
-		return "ANTI NEST LOOP JOIN: PREDICATE[" + @predicate  + "]"
+		return "ANTI NEST LOOP JOIN: PREDICATE[" + @predicate.to_s  + "]"
 	end
 	
   def evaluate(tuples)
