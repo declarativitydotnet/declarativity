@@ -53,8 +53,6 @@ public class Shell {
             shell.doAppend(argList);
         } else if (op.equals("read")) {
             shell.doRead(argList);
-        } else if (op.equals("cat")) {
-            shell.doConcatenate(argList);
         } else if (op.equals("create")) {
             shell.doCreateFile(argList, true);
         } else if (op.equals("ls")) {
@@ -347,7 +345,7 @@ public class Shell {
         java.lang.System.out.println("TEST2\n");
             int dataPort = Conf.findDataNodeDataPort(host, controlPort);
 
-            java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
+            java.lang.System.out.println("Reading chunk " + chunkId + " from: " + host + ":" + dataPort);
             SocketAddress sockAddr = new InetSocketAddress(host, dataPort);
             SocketChannel inChannel = SocketChannel.open();
             inChannel.configureBlocking(true);
@@ -386,14 +384,6 @@ public class Shell {
         }
     }
 
-    private void doConcatenate(List<String> args) throws UpdateException {
-        if (args.isEmpty())
-            usage();
-
-        for (String file : args)
-            doCatFile(file);
-    }
-
     private void scheduleNewMaster() throws JolRuntimeException {
         TupleSet master = new TupleSet();
         master.add(new Tuple(Conf.getSelfAddress(),
@@ -404,52 +394,6 @@ public class Shell {
             throw new JolRuntimeException(e);
         }
         this.system.evaluate();
-    }
-
-    private void doCatFile(final String file) throws UpdateException {
-        final int requestId = generateId();
-
-        // Register callback to listen for responses
-        Callback responseCallback = new Callback() {
-            @Override
-            public void deletion(TupleSet tuples) {}
-
-            @Override
-            public void insertion(TupleSet tuples) {
-                for (Tuple t : tuples) {
-                    Integer tupRequestId = (Integer) t.value(1);
-
-                    if (tupRequestId.intValue() == requestId) {
-                        Boolean success = (Boolean) t.value(3);
-
-                        if (success.booleanValue()) {
-                            ValueList chunks = (ValueList) t.value(4);
-                            java.lang.System.out.println("File name: " + file);
-                            java.lang.System.out.println("Chunks: " + chunks.toString());
-                            java.lang.System.out.println("=============");
-                        } else {
-                            String errMessage = (String) t.value(4);
-                            java.lang.System.out.println("ERROR on \"cat\":");
-                            java.lang.System.out.println("File name: " + file);
-                            java.lang.System.out.println("Error message: " + errMessage);
-                        }
-                        responseQueue.put("done");
-                        break;
-                    }
-                }
-            }
-        };
-        Table responseTbl = registerCallback(responseCallback, "response");
-
-        // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "start_request");
-        TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Cat", file));
-        this.system.schedule("gfs", tblName, req, null);
-
-        // Wait for the response
-        Object obj = this.responseQueue.get();
-        responseTbl.unregister(responseCallback);
     }
 
     private int generateId() {
@@ -656,7 +600,7 @@ public class Shell {
 
     private void usage() {
         java.lang.System.err.println("Usage: java gfs.Shell op_name args");
-        java.lang.System.err.println("Where op_name = {append,cat,create,ls,read,rm}");
+        java.lang.System.err.println("Where op_name = {append,create,ls,read,rm}");
 
         shutdown();
         java.lang.System.exit(0);
