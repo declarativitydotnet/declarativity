@@ -1,0 +1,468 @@
+Spanning Tree Edges
+r31.millennium.berkeley.edu:23048, r26.millennium.berkeley.edu:23043, 2007-Dec-14, 02:57:44.868328
+r32.millennium.berkeley.edu:23049, r26.millennium.berkeley.edu:23043, 2007-Dec-14, 02:57:44.875456
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 2007-Dec-14, 02:57:45.120192
+r34.millennium.berkeley.edu:23051, r9.millennium.berkeley.edu:23052, 2007-Dec-14, 03:01:06.093704
+r10.millennium.berkeley.edu:23001, r15.millennium.berkeley.edu:23006, 2007-Dec-14, 02:57:18.728308
+r10.millennium.berkeley.edu:23001, r12.millennium.berkeley.edu:23003, 2007-Dec-14, 02:57:18.772999
+r11.millennium.berkeley.edu:23028, r13.millennium.berkeley.edu:23030, 2007-Dec-14, 02:57:45.724941
+r10.millennium.berkeley.edu:23001, r17.millennium.berkeley.edu:23034, 2007-Dec-14, 03:00:58.007734
+r11.millennium.berkeley.edu:23028, r9.millennium.berkeley.edu:23026, 2007-Dec-14, 03:00:57.866035
+r10.millennium.berkeley.edu:23027, r33.millennium.berkeley.edu:23024, 2007-Dec-14, 03:01:05.17066
+r29.millennium.berkeley.edu:23046, r25.millennium.berkeley.edu:23042, 2007-Dec-14, 02:57:47.799659
+r23.millennium.berkeley.edu:23014, r24.millennium.berkeley.edu:23015, 2007-Dec-14, 02:57:27.662786
+r14.millennium.berkeley.edu:23031, r13.millennium.berkeley.edu:23030, 2007-Dec-14, 02:57:45.718712
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 2007-Dec-14, 02:57:40.876424
+r33.millennium.berkeley.edu:23024, r26.millennium.berkeley.edu:23017, 2007-Dec-14, 02:57:28.346792
+r33.millennium.berkeley.edu:23024, r10.millennium.berkeley.edu:23027, 2007-Dec-14, 03:01:05.177743
+r34.millennium.berkeley.edu:23025, r12.millennium.berkeley.edu:23029, 2007-Dec-14, 03:01:04.428487
+r25.millennium.berkeley.edu:23016, r29.millennium.berkeley.edu:23020, 2007-Dec-14, 02:57:25.130981
+r18.millennium.berkeley.edu:23035, r21.millennium.berkeley.edu:23038, 2007-Dec-14, 02:57:49.56427
+r25.millennium.berkeley.edu:23016, r24.millennium.berkeley.edu:23015, 2007-Dec-14, 02:57:27.665108
+r18.millennium.berkeley.edu:23035, r17.millennium.berkeley.edu:23034, 2007-Dec-14, 03:01:01.610436
+r17.millennium.berkeley.edu:23034, r10.millennium.berkeley.edu:23001, 2007-Dec-14, 03:00:58.001811
+r17.millennium.berkeley.edu:23034, r13.millennium.berkeley.edu:23030, 2007-Dec-14, 03:01:01.61452
+r17.millennium.berkeley.edu:23034, r18.millennium.berkeley.edu:23035, 2007-Dec-14, 03:01:01.61807
+r23.millennium.berkeley.edu:23040, r25.millennium.berkeley.edu:23042, 2007-Dec-14, 03:01:06.03328
+r13.millennium.berkeley.edu:23030, r14.millennium.berkeley.edu:23031, 2007-Dec-14, 02:57:45.72284
+r13.millennium.berkeley.edu:23030, r11.millennium.berkeley.edu:23028, 2007-Dec-14, 02:57:45.72953
+r13.millennium.berkeley.edu:23030, r12.millennium.berkeley.edu:23029, 2007-Dec-14, 02:57:45.745085
+r21.millennium.berkeley.edu:23012, r18.millennium.berkeley.edu:23009, 2007-Dec-14, 03:00:55.419067
+r19.millennium.berkeley.edu:23010, r18.millennium.berkeley.edu:23009, 2007-Dec-14, 03:00:55.430323
+r13.millennium.berkeley.edu:23030, r17.millennium.berkeley.edu:23034, 2007-Dec-14, 03:01:01.610406
+r31.millennium.berkeley.edu:23022, r24.millennium.berkeley.edu:23015, 2007-Dec-14, 02:57:27.659319
+r29.millennium.berkeley.edu:23020, r25.millennium.berkeley.edu:23016, 2007-Dec-14, 02:57:25.125551
+r12.millennium.berkeley.edu:23029, r13.millennium.berkeley.edu:23030, 2007-Dec-14, 02:57:45.736885
+r24.millennium.berkeley.edu:23015, r22.millennium.berkeley.edu:23013, 2007-Dec-14, 02:57:23.237613
+r24.millennium.berkeley.edu:23015, r25.millennium.berkeley.edu:23016, 2007-Dec-14, 02:57:27.669027
+r24.millennium.berkeley.edu:23041, r21.millennium.berkeley.edu:23038, 2007-Dec-14, 02:57:44.73502
+r12.millennium.berkeley.edu:23029, r34.millennium.berkeley.edu:23025, 2007-Dec-14, 03:01:04.431119
+r24.millennium.berkeley.edu:23015, r30.millennium.berkeley.edu:23021, 2007-Dec-14, 02:57:27.670507
+r30.millennium.berkeley.edu:23021, r24.millennium.berkeley.edu:23015, 2007-Dec-14, 02:57:27.665751
+r28.millennium.berkeley.edu:23019, r24.millennium.berkeley.edu:23015, 2007-Dec-14, 02:57:27.664898
+r27.millennium.berkeley.edu:23018, r24.millennium.berkeley.edu:23015, 2007-Dec-14, 02:57:27.664885
+r24.millennium.berkeley.edu:23015, r23.millennium.berkeley.edu:23014, 2007-Dec-14, 02:57:27.675499
+r24.millennium.berkeley.edu:23015, r27.millennium.berkeley.edu:23018, 2007-Dec-14, 02:57:27.676988
+r24.millennium.berkeley.edu:23015, r28.millennium.berkeley.edu:23019, 2007-Dec-14, 02:57:27.68198
+r24.millennium.berkeley.edu:23015, r31.millennium.berkeley.edu:23022, 2007-Dec-14, 02:57:27.683444
+r33.millennium.berkeley.edu:23050, r26.millennium.berkeley.edu:23043, 2007-Dec-14, 02:57:44.894726
+r30.millennium.berkeley.edu:23047, r26.millennium.berkeley.edu:23043, 2007-Dec-14, 03:01:06.126435
+r16.millennium.berkeley.edu:23007, r9.millennium.berkeley.edu:23052, 2007-Dec-14, 02:57:45.125956
+r16.millennium.berkeley.edu:23007, r10.millennium.berkeley.edu:23053, 2007-Dec-14, 02:57:45.127476
+r16.millennium.berkeley.edu:23007, r15.millennium.berkeley.edu:23006, 2007-Dec-14, 03:00:53.40419
+r32.millennium.berkeley.edu:23023, r26.millennium.berkeley.edu:23017, 2007-Dec-14, 02:57:28.32991
+r21.millennium.berkeley.edu:23038, r27.millennium.berkeley.edu:23044, 2007-Dec-14, 02:57:44.738744
+r17.millennium.berkeley.edu:23008, r15.millennium.berkeley.edu:23006, 2007-Dec-14, 03:00:53.401172
+r21.millennium.berkeley.edu:23038, r24.millennium.berkeley.edu:23041, 2007-Dec-14, 02:57:44.747919
+r21.millennium.berkeley.edu:23038, r25.millennium.berkeley.edu:23042, 2007-Dec-14, 02:57:44.799523
+r21.millennium.berkeley.edu:23038, r18.millennium.berkeley.edu:23035, 2007-Dec-14, 02:57:49.550267
+r26.millennium.berkeley.edu:23043, r31.millennium.berkeley.edu:23048, 2007-Dec-14, 02:57:44.884882
+r19.millennium.berkeley.edu:23036, r22.millennium.berkeley.edu:23039, 2007-Dec-14, 02:57:50.445705
+r26.millennium.berkeley.edu:23043, r32.millennium.berkeley.edu:23049, 2007-Dec-14, 02:57:44.886356
+r19.millennium.berkeley.edu:23036, r11.millennium.berkeley.edu:23002, 2007-Dec-14, 03:00:58.011626
+r11.millennium.berkeley.edu:23002, r12.millennium.berkeley.edu:23003, 2007-Dec-14, 02:57:18.772309
+r11.millennium.berkeley.edu:23002, r19.millennium.berkeley.edu:23036, 2007-Dec-14, 03:00:58.018086
+r26.millennium.berkeley.edu:23043, r33.millennium.berkeley.edu:23050, 2007-Dec-14, 02:57:44.901693
+r26.millennium.berkeley.edu:23043, r25.millennium.berkeley.edu:23042, 2007-Dec-14, 02:57:47.795726
+r25.millennium.berkeley.edu:23042, r21.millennium.berkeley.edu:23038, 2007-Dec-14, 02:57:44.783743
+r25.millennium.berkeley.edu:23042, r26.millennium.berkeley.edu:23043, 2007-Dec-14, 02:57:47.801827
+r25.millennium.berkeley.edu:23042, r28.millennium.berkeley.edu:23045, 2007-Dec-14, 02:57:47.805372
+r25.millennium.berkeley.edu:23042, r29.millennium.berkeley.edu:23046, 2007-Dec-14, 02:57:47.809672
+r25.millennium.berkeley.edu:23042, r23.millennium.berkeley.edu:23040, 2007-Dec-14, 03:01:06.039774
+r26.millennium.berkeley.edu:23043, r30.millennium.berkeley.edu:23047, 2007-Dec-14, 03:01:06.129398
+r15.millennium.berkeley.edu:23006, r10.millennium.berkeley.edu:23001, 2007-Dec-14, 02:57:18.72472
+r15.millennium.berkeley.edu:23006, r17.millennium.berkeley.edu:23008, 2007-Dec-14, 03:00:53.409504
+r18.millennium.berkeley.edu:23009, r12.millennium.berkeley.edu:23003, 2007-Dec-14, 03:00:53.134931
+r15.millennium.berkeley.edu:23006, r16.millennium.berkeley.edu:23007, 2007-Dec-14, 03:00:53.410985
+r18.millennium.berkeley.edu:23009, r22.millennium.berkeley.edu:23013, 2007-Dec-14, 03:00:55.412402
+r18.millennium.berkeley.edu:23009, r21.millennium.berkeley.edu:23012, 2007-Dec-14, 03:00:55.434103
+r18.millennium.berkeley.edu:23009, r19.millennium.berkeley.edu:23010, 2007-Dec-14, 03:00:55.437634
+r22.millennium.berkeley.edu:23039, r19.millennium.berkeley.edu:23036, 2007-Dec-14, 02:57:50.438701
+r16.millennium.berkeley.edu:23033, r12.millennium.berkeley.edu:23003, 2007-Dec-14, 02:57:40.876394
+r9.millennium.berkeley.edu:23026, r11.millennium.berkeley.edu:23028, 2007-Dec-14, 03:00:57.859546
+r22.millennium.berkeley.edu:23013, r24.millennium.berkeley.edu:23015, 2007-Dec-14, 02:57:23.243431
+r22.millennium.berkeley.edu:23013, r26.millennium.berkeley.edu:23017, 2007-Dec-14, 02:57:23.24698
+r22.millennium.berkeley.edu:23013, r18.millennium.berkeley.edu:23009, 2007-Dec-14, 03:00:55.409616
+r26.millennium.berkeley.edu:23017, r22.millennium.berkeley.edu:23013, 2007-Dec-14, 02:57:23.238306
+r27.millennium.berkeley.edu:23044, r21.millennium.berkeley.edu:23038, 2007-Dec-14, 02:57:44.73562
+r26.millennium.berkeley.edu:23017, r32.millennium.berkeley.edu:23023, 2007-Dec-14, 02:57:28.334165
+r28.millennium.berkeley.edu:23045, r25.millennium.berkeley.edu:23042, 2007-Dec-14, 02:57:47.797125
+r26.millennium.berkeley.edu:23017, r33.millennium.berkeley.edu:23024, 2007-Dec-14, 02:57:28.352238
+r12.millennium.berkeley.edu:23003, r10.millennium.berkeley.edu:23001, 2007-Dec-14, 02:57:18.763343
+r12.millennium.berkeley.edu:23003, r11.millennium.berkeley.edu:23002, 2007-Dec-14, 02:57:18.781762
+r12.millennium.berkeley.edu:23003, r15.millennium.berkeley.edu:23032, 2007-Dec-14, 02:57:40.881592
+r12.millennium.berkeley.edu:23003, r16.millennium.berkeley.edu:23033, 2007-Dec-14, 02:57:40.884837
+r12.millennium.berkeley.edu:23003, r18.millennium.berkeley.edu:23009, 2007-Dec-14, 03:00:53.142327
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 2007-Dec-14, 02:57:45.118554
+r9.millennium.berkeley.edu:23052, r34.millennium.berkeley.edu:23051, 2007-Dec-14, 03:01:06.094598
+Reachable
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 7, 2007-Dec-14, 02:59:15.013103
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 52, 2007-Dec-14, 02:59:15.014711
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 53, 2007-Dec-14, 02:59:15.016593
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 2, 2007-Dec-14, 02:59:15.017699
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 3, 2007-Dec-14, 02:59:15.018667
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 8, 2007-Dec-14, 02:59:15.01946
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 13, 2007-Dec-14, 02:59:15.020255
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 16, 2007-Dec-14, 02:59:15.021049
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 14, 2007-Dec-14, 02:59:15.021842
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 15, 2007-Dec-14, 02:59:15.022635
+r10.millennium.berkeley.edu:23053, r16.millennium.berkeley.edu:23007, 18, 2007-Dec-14, 02:59:15.023434
+r16.millennium.berkeley.edu:23007, r10.millennium.berkeley.edu:23053, 53, 2007-Dec-14, 02:58:48.010848
+r16.millennium.berkeley.edu:23007, r10.millennium.berkeley.edu:23053, 54, 2007-Dec-14, 02:58:48.012223
+r16.millennium.berkeley.edu:23007, r9.millennium.berkeley.edu:23052, 52, 2007-Dec-14, 02:58:48.011253
+r16.millennium.berkeley.edu:23007, r9.millennium.berkeley.edu:23052, 53, 2007-Dec-14, 02:58:48.012643
+r16.millennium.berkeley.edu:23007, r18.millennium.berkeley.edu:23009, 2, 2007-Dec-14, 02:58:50.537272
+r16.millennium.berkeley.edu:23007, r18.millennium.berkeley.edu:23009, 3, 2007-Dec-14, 02:58:51.526608
+r16.millennium.berkeley.edu:23007, r18.millennium.berkeley.edu:23009, 8, 2007-Dec-14, 02:58:52.394775
+r16.millennium.berkeley.edu:23007, r18.millennium.berkeley.edu:23009, 13, 2007-Dec-14, 02:58:52.55388
+r16.millennium.berkeley.edu:23007, r18.millennium.berkeley.edu:23009, 16, 2007-Dec-14, 02:58:53.190565
+r16.millennium.berkeley.edu:23007, r18.millennium.berkeley.edu:23009, 14, 2007-Dec-14, 02:58:53.271458
+r16.millennium.berkeley.edu:23007, r18.millennium.berkeley.edu:23009, 15, 2007-Dec-14, 02:58:53.332906
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 7, 2007-Dec-14, 02:59:14.764956
+r16.millennium.berkeley.edu:23007, r18.millennium.berkeley.edu:23009, 18, 2007-Dec-14, 02:58:53.356644
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 53, 2007-Dec-14, 02:59:14.766264
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 54, 2007-Dec-14, 02:59:14.768148
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 2, 2007-Dec-14, 02:59:14.769592
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 3, 2007-Dec-14, 02:59:14.770563
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 8, 2007-Dec-14, 02:59:14.771356
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 13, 2007-Dec-14, 02:59:14.772148
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 16, 2007-Dec-14, 02:59:14.77294
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 14, 2007-Dec-14, 02:59:14.773736
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 15, 2007-Dec-14, 02:59:14.774531
+r9.millennium.berkeley.edu:23052, r16.millennium.berkeley.edu:23007, 18, 2007-Dec-14, 02:59:14.775328
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 32, 2007-Dec-14, 02:59:09.977903
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 33, 2007-Dec-14, 02:59:09.981963
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 34, 2007-Dec-14, 02:59:09.984352
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 8, 2007-Dec-14, 02:59:09.98645
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 54, 2007-Dec-14, 02:59:09.993313
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 52, 2007-Dec-14, 02:59:09.995025
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 53, 2007-Dec-14, 02:59:09.996741
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 16, 2007-Dec-14, 02:59:09.998456
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 14, 2007-Dec-14, 02:59:10.000175
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 15, 2007-Dec-14, 02:59:10.001887
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 18, 2007-Dec-14, 02:59:10.003604
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 29, 2007-Dec-14, 02:59:10.007049
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 31, 2007-Dec-14, 02:59:10.010477
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 1, 2007-Dec-14, 02:59:10.012196
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 7, 2007-Dec-14, 02:59:10.01391
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 9, 2007-Dec-14, 02:59:10.015625
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 2, 2007-Dec-14, 02:59:10.017339
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 10, 2007-Dec-14, 02:59:10.01905
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 4, 2007-Dec-14, 02:59:10.020771
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 13, 2007-Dec-14, 02:59:10.022491
+r15.millennium.berkeley.edu:23032, r12.millennium.berkeley.edu:23003, 12, 2007-Dec-14, 02:59:10.02422
+r23.millennium.berkeley.edu:23014, r24.millennium.berkeley.edu:23015, 16, 2007-Dec-14, 02:58:51.60132
+r31.millennium.berkeley.edu:23048, r26.millennium.berkeley.edu:23043, 50, 2007-Dec-14, 02:59:12.610396
+r15.millennium.berkeley.edu:23006, r10.millennium.berkeley.edu:23001, 53, 2007-Dec-14, 02:58:55.066652
+r23.millennium.berkeley.edu:23014, r24.millennium.berkeley.edu:23015, 17, 2007-Dec-14, 02:58:51.675146
+r31.millennium.berkeley.edu:23048, r26.millennium.berkeley.edu:23043, 49, 2007-Dec-14, 02:59:12.612929
+r15.millennium.berkeley.edu:23006, r10.millennium.berkeley.edu:23001, 16, 2007-Dec-14, 02:58:55.574057
+r14.millennium.berkeley.edu:23031, r13.millennium.berkeley.edu:23030, 1, 2007-Dec-14, 02:59:09.875381
+r23.millennium.berkeley.edu:23014, r24.millennium.berkeley.edu:23015, 14, 2007-Dec-14, 02:58:51.793341
+r31.millennium.berkeley.edu:23048, r26.millennium.berkeley.edu:23043, 43, 2007-Dec-14, 02:59:12.620828
+r15.millennium.berkeley.edu:23006, r10.millennium.berkeley.edu:23001, 14, 2007-Dec-14, 02:58:55.61454
+r14.millennium.berkeley.edu:23031, r13.millennium.berkeley.edu:23030, 31, 2007-Dec-14, 02:59:09.876288
+r23.millennium.berkeley.edu:23014, r24.millennium.berkeley.edu:23015, 15, 2007-Dec-14, 02:58:51.803634
+r31.millennium.berkeley.edu:23048, r26.millennium.berkeley.edu:23043, 44, 2007-Dec-14, 02:59:12.622412
+r15.millennium.berkeley.edu:23006, r10.millennium.berkeley.edu:23001, 15, 2007-Dec-14, 02:58:55.644476
+r14.millennium.berkeley.edu:23031, r13.millennium.berkeley.edu:23030, 34, 2007-Dec-14, 02:59:09.879359
+r23.millennium.berkeley.edu:23014, r24.millennium.berkeley.edu:23015, 18, 2007-Dec-14, 02:58:51.81475
+r31.millennium.berkeley.edu:23048, r26.millennium.berkeley.edu:23043, 42, 2007-Dec-14, 02:59:12.671069
+r15.millennium.berkeley.edu:23006, r10.millennium.berkeley.edu:23001, 18, 2007-Dec-14, 02:58:55.655542
+r26.millennium.berkeley.edu:23017, r22.millennium.berkeley.edu:23013, 20, 2007-Dec-14, 02:58:52.256294
+r12.millennium.berkeley.edu:23029, r13.millennium.berkeley.edu:23030, 29, 2007-Dec-14, 02:59:10.049052
+r12.millennium.berkeley.edu:23029, r13.millennium.berkeley.edu:23030, 45, 2007-Dec-14, 02:59:12.730482
+r12.millennium.berkeley.edu:23029, r13.millennium.berkeley.edu:23030, 50, 2007-Dec-14, 02:59:12.890096
+r11.millennium.berkeley.edu:23002, r14.millennium.berkeley.edu:23005, 53, 2007-Dec-14, 02:58:49.120367
+r19.millennium.berkeley.edu:23010, r14.millennium.berkeley.edu:23005, 11, 2007-Dec-14, 02:58:50.347565
+r19.millennium.berkeley.edu:23036, r13.millennium.berkeley.edu:23030, 34, 2007-Dec-14, 02:59:11.299702
+r33.millennium.berkeley.edu:23050, r26.millennium.berkeley.edu:23043, 52, 2007-Dec-14, 02:59:13.674434
+r19.millennium.berkeley.edu:23036, r13.millennium.berkeley.edu:23030, 39, 2007-Dec-14, 02:59:11.312201
+r26.millennium.berkeley.edu:23043, r25.millennium.berkeley.edu:23042, 38, 2007-Dec-14, 02:59:12.662929
+r19.millennium.berkeley.edu:23036, r13.millennium.berkeley.edu:23030, 41, 2007-Dec-14, 02:59:13.000683
+r19.millennium.berkeley.edu:23036, r13.millennium.berkeley.edu:23030, 46, 2007-Dec-14, 02:59:13.16489
+r21.millennium.berkeley.edu:23038, r27.millennium.berkeley.edu:23044, 43, 2007-Dec-14, 02:59:11.617306
+r21.millennium.berkeley.edu:23038, r27.millennium.berkeley.edu:23044, 44, 2007-Dec-14, 02:59:11.618019
+r21.millennium.berkeley.edu:23038, r18.millennium.berkeley.edu:23035, 32, 2007-Dec-14, 02:59:11.628386
+r21.millennium.berkeley.edu:23038, r18.millennium.berkeley.edu:23035, 35, 2007-Dec-14, 02:59:11.629962
+r21.millennium.berkeley.edu:23038, r25.millennium.berkeley.edu:23042, 45, 2007-Dec-14, 02:59:11.725747
+r21.millennium.berkeley.edu:23038, r25.millennium.berkeley.edu:23042, 50, 2007-Dec-14, 02:59:11.913096
+r21.millennium.berkeley.edu:23038, r25.millennium.berkeley.edu:23042, 46, 2007-Dec-14, 02:59:13.046013
+r21.millennium.berkeley.edu:23038, r25.millennium.berkeley.edu:23042, 48, 2007-Dec-14, 02:59:13.079489
+r33.millennium.berkeley.edu:23024, r9.millennium.berkeley.edu:23026, 23, 2007-Dec-14, 02:58:55.696167
+r33.millennium.berkeley.edu:23024, r10.millennium.berkeley.edu:23027, 27, 2007-Dec-14, 02:58:55.699556
+r33.millennium.berkeley.edu:23024, r9.millennium.berkeley.edu:23026, 26, 2007-Dec-14, 02:58:55.697556
+r33.millennium.berkeley.edu:23024, r10.millennium.berkeley.edu:23027, 28, 2007-Dec-14, 02:58:55.700457
+r33.millennium.berkeley.edu:23024, r9.millennium.berkeley.edu:23026, 27, 2007-Dec-14, 02:58:55.69846
+r33.millennium.berkeley.edu:23024, r26.millennium.berkeley.edu:23017, 24, 2007-Dec-14, 02:58:55.70087
+r33.millennium.berkeley.edu:23024, r26.millennium.berkeley.edu:23017, 16, 2007-Dec-14, 02:58:55.702159
+r33.millennium.berkeley.edu:23024, r26.millennium.berkeley.edu:23017, 14, 2007-Dec-14, 02:58:55.702945
+r33.millennium.berkeley.edu:23024, r26.millennium.berkeley.edu:23017, 21, 2007-Dec-14, 02:58:55.709276
+r33.millennium.berkeley.edu:23024, r26.millennium.berkeley.edu:23017, 8, 2007-Dec-14, 02:58:55.710064
+r12.millennium.berkeley.edu:23003, r15.millennium.berkeley.edu:23032, 1, 2007-Dec-14, 02:58:46.743276
+r12.millennium.berkeley.edu:23003, r15.millennium.berkeley.edu:23032, 3, 2007-Dec-14, 02:58:46.744616
+r12.millennium.berkeley.edu:23003, r15.millennium.berkeley.edu:23032, 31, 2007-Dec-14, 02:58:46.745512
+r12.millennium.berkeley.edu:23003, r15.millennium.berkeley.edu:23032, 33, 2007-Dec-14, 02:58:46.746229
+r12.millennium.berkeley.edu:23003, r16.millennium.berkeley.edu:23033, 1, 2007-Dec-14, 02:58:46.743206
+r12.millennium.berkeley.edu:23003, r16.millennium.berkeley.edu:23033, 32, 2007-Dec-14, 02:58:46.744539
+r12.millennium.berkeley.edu:23003, r16.millennium.berkeley.edu:23033, 33, 2007-Dec-14, 02:58:46.74543
+r12.millennium.berkeley.edu:23003, r16.millennium.berkeley.edu:23033, 34, 2007-Dec-14, 02:58:46.746139
+r12.millennium.berkeley.edu:23003, r10.millennium.berkeley.edu:23001, 8, 2007-Dec-14, 02:58:52.043784
+r12.millennium.berkeley.edu:23003, r10.millennium.berkeley.edu:23001, 54, 2007-Dec-14, 02:58:52.075786
+r12.millennium.berkeley.edu:23003, r10.millennium.berkeley.edu:23001, 53, 2007-Dec-14, 02:58:52.143084
+r12.millennium.berkeley.edu:23003, r11.millennium.berkeley.edu:23002, 52, 2007-Dec-14, 02:58:52.500873
+r12.millennium.berkeley.edu:23003, r11.millennium.berkeley.edu:23002, 31, 2007-Dec-14, 02:58:55.350092
+r12.millennium.berkeley.edu:23003, r11.millennium.berkeley.edu:23002, 1, 2007-Dec-14, 02:58:56.335038
+Clique
+r23.millennium.berkeley.edu:23014, 14, 2007-Dec-14, 02:56:50.71408
+r23.millennium.berkeley.edu:23014, 15, 2007-Dec-14, 02:56:50.716962
+r31.millennium.berkeley.edu:23048, 47, 2007-Dec-14, 02:57:12.733982
+r31.millennium.berkeley.edu:23048, 49, 2007-Dec-14, 02:57:12.736834
+r10.millennium.berkeley.edu:23053, 53, 2007-Dec-14, 02:57:15.163008
+r10.millennium.berkeley.edu:23053, 54, 2007-Dec-14, 02:57:15.165279
+r34.millennium.berkeley.edu:23051, 51, 2007-Dec-14, 02:57:21.677228
+r15.millennium.berkeley.edu:23032, 1, 2007-Dec-14, 02:57:10.066412
+r34.millennium.berkeley.edu:23051, 52, 2007-Dec-14, 02:57:21.680096
+r15.millennium.berkeley.edu:23032, 3, 2007-Dec-14, 02:57:10.069236
+r15.millennium.berkeley.edu:23032, 31, 2007-Dec-14, 02:57:10.071939
+r15.millennium.berkeley.edu:23032, 33, 2007-Dec-14, 02:57:10.074647
+r17.millennium.berkeley.edu:23034, 1, 2007-Dec-14, 02:57:10.38593
+r17.millennium.berkeley.edu:23034, 34, 2007-Dec-14, 02:57:10.388727
+r29.millennium.berkeley.edu:23046, 44, 2007-Dec-14, 02:57:12.528571
+r17.millennium.berkeley.edu:23034, 35, 2007-Dec-14, 02:57:10.39142
+r11.millennium.berkeley.edu:23028, 27, 2007-Dec-14, 02:57:09.605625
+r14.millennium.berkeley.edu:23031, 30, 2007-Dec-14, 02:57:09.873098
+r30.millennium.berkeley.edu:23021, 20, 2007-Dec-14, 02:56:54.235244
+r29.millennium.berkeley.edu:23046, 45, 2007-Dec-14, 02:57:12.531412
+r23.millennium.berkeley.edu:23040, 40, 2007-Dec-14, 02:57:11.44285
+r14.millennium.berkeley.edu:23031, 31, 2007-Dec-14, 02:57:09.875942
+r11.millennium.berkeley.edu:23028, 28, 2007-Dec-14, 02:57:09.608498
+r30.millennium.berkeley.edu:23021, 22, 2007-Dec-14, 02:56:54.238055
+r29.millennium.berkeley.edu:23046, 47, 2007-Dec-14, 02:57:12.534123
+r23.millennium.berkeley.edu:23040, 41, 2007-Dec-14, 02:57:11.445774
+r14.millennium.berkeley.edu:23031, 32, 2007-Dec-14, 02:57:09.878673
+r11.millennium.berkeley.edu:23028, 29, 2007-Dec-14, 02:57:09.611235
+r14.millennium.berkeley.edu:23031, 33, 2007-Dec-14, 02:57:09.881406
+r32.millennium.berkeley.edu:23049, 49, 2007-Dec-14, 02:57:12.941156
+r32.millennium.berkeley.edu:23049, 50, 2007-Dec-14, 02:57:12.943982
+r32.millennium.berkeley.edu:23049, 51, 2007-Dec-14, 02:57:12.946692
+r27.millennium.berkeley.edu:23018, 17, 2007-Dec-14, 02:56:52.534219
+r32.millennium.berkeley.edu:23049, 47, 2007-Dec-14, 02:59:12.997732
+r27.millennium.berkeley.edu:23018, 18, 2007-Dec-14, 02:56:52.53702
+r32.millennium.berkeley.edu:23049, 48, 2007-Dec-14, 02:59:13.030575
+r27.millennium.berkeley.edu:23018, 19, 2007-Dec-14, 02:56:52.539707
+r32.millennium.berkeley.edu:23049, 46, 2007-Dec-14, 02:59:13.056726
+r24.millennium.berkeley.edu:23041, 41, 2007-Dec-14, 02:57:11.547397
+r24.millennium.berkeley.edu:23041, 42, 2007-Dec-14, 02:57:11.550253
+r25.millennium.berkeley.edu:23016, 16, 2007-Dec-14, 02:56:52.111143
+r25.millennium.berkeley.edu:23016, 17, 2007-Dec-14, 02:56:52.113996
+r25.millennium.berkeley.edu:23016, 20, 2007-Dec-14, 02:58:52.132113
+r18.millennium.berkeley.edu:23035, 34, 2007-Dec-14, 02:57:10.551288
+r25.millennium.berkeley.edu:23016, 19, 2007-Dec-14, 02:58:52.189826
+r18.millennium.berkeley.edu:23035, 35, 2007-Dec-14, 02:57:10.554119
+r25.millennium.berkeley.edu:23016, 21, 2007-Dec-14, 02:58:52.25567
+r18.millennium.berkeley.edu:23035, 36, 2007-Dec-14, 02:57:10.556815
+r18.millennium.berkeley.edu:23035, 37, 2007-Dec-14, 02:59:10.553869
+r18.millennium.berkeley.edu:23035, 38, 2007-Dec-14, 02:59:11.942008
+r18.millennium.berkeley.edu:23035, 39, 2007-Dec-14, 02:59:11.952733
+r18.millennium.berkeley.edu:23035, 40, 2007-Dec-14, 02:59:11.970109
+r24.millennium.berkeley.edu:23015, 15, 2007-Dec-14, 02:56:51.633613
+r24.millennium.berkeley.edu:23015, 16, 2007-Dec-14, 02:56:51.636424
+r24.millennium.berkeley.edu:23015, 14, 2007-Dec-14, 02:58:51.635935
+r24.millennium.berkeley.edu:23015, 17, 2007-Dec-14, 02:58:51.654671
+r24.millennium.berkeley.edu:23015, 19, 2007-Dec-14, 02:58:51.701431
+r12.millennium.berkeley.edu:23029, 28, 2007-Dec-14, 02:57:10.125844
+r24.millennium.berkeley.edu:23015, 20, 2007-Dec-14, 02:58:51.712079
+r24.millennium.berkeley.edu:23015, 22, 2007-Dec-14, 02:58:51.778576
+r12.millennium.berkeley.edu:23029, 29, 2007-Dec-14, 02:57:10.128706
+r24.millennium.berkeley.edu:23015, 18, 2007-Dec-14, 02:58:51.826035
+r21.millennium.berkeley.edu:23012, 11, 2007-Dec-14, 02:56:50.544672
+r28.millennium.berkeley.edu:23019, 17, 2007-Dec-14, 02:56:52.998354
+r24.millennium.berkeley.edu:23015, 21, 2007-Dec-14, 02:58:52.137169
+r12.millennium.berkeley.edu:23029, 30, 2007-Dec-14, 02:57:10.131438
+r28.millennium.berkeley.edu:23019, 19, 2007-Dec-14, 02:56:53.001165
+r24.millennium.berkeley.edu:23015, 23, 2007-Dec-14, 02:58:52.382226
+r21.millennium.berkeley.edu:23012, 12, 2007-Dec-14, 02:56:50.550762
+r28.millennium.berkeley.edu:23019, 20, 2007-Dec-14, 02:56:53.003863
+r34.millennium.berkeley.edu:23025, 25, 2007-Dec-14, 02:57:21.613693
+r21.millennium.berkeley.edu:23012, 13, 2007-Dec-14, 02:56:50.556607
+r34.millennium.berkeley.edu:23025, 26, 2007-Dec-14, 02:57:21.616561
+r13.millennium.berkeley.edu:23030, 29, 2007-Dec-14, 02:57:09.70270
+r13.millennium.berkeley.edu:23030, 30, 2007-Dec-14, 02:57:09.705542
+r13.millennium.berkeley.edu:23030, 31, 2007-Dec-14, 02:57:09.708256
+r13.millennium.berkeley.edu:23030, 34, 2007-Dec-14, 02:59:09.651435
+r13.millennium.berkeley.edu:23030, 35, 2007-Dec-14, 02:59:09.671184
+r13.millennium.berkeley.edu:23030, 36, 2007-Dec-14, 02:59:09.752815
+r13.millennium.berkeley.edu:23030, 28, 2007-Dec-14, 02:59:09.834125
+r13.millennium.berkeley.edu:23030, 37, 2007-Dec-14, 02:59:10.485818
+r13.millennium.berkeley.edu:23030, 38, 2007-Dec-14, 02:59:11.848658
+r13.millennium.berkeley.edu:23030, 39, 2007-Dec-14, 02:59:11.860948
+r9.millennium.berkeley.edu:23052, 52, 2007-Dec-14, 02:57:14.927994
+r13.millennium.berkeley.edu:23030, 40, 2007-Dec-14, 02:59:11.881123
+r9.millennium.berkeley.edu:23052, 53, 2007-Dec-14, 02:57:14.930809
+r19.millennium.berkeley.edu:23010, 10, 2007-Dec-14, 02:56:50.32674
+r19.millennium.berkeley.edu:23010, 11, 2007-Dec-14, 02:56:50.329589
+r33.millennium.berkeley.edu:23024, 23, 2007-Dec-14, 02:56:55.870373
+r19.millennium.berkeley.edu:23010, 9, 2007-Dec-14, 02:58:51.646168
+r33.millennium.berkeley.edu:23024, 24, 2007-Dec-14, 02:56:55.876674
+r19.millennium.berkeley.edu:23010, 13, 2007-Dec-14, 02:58:51.810109
+r33.millennium.berkeley.edu:23024, 25, 2007-Dec-14, 02:56:55.882971
+r19.millennium.berkeley.edu:23010, 7, 2007-Dec-14, 02:58:52.171791
+r33.millennium.berkeley.edu:23024, 26, 2007-Dec-14, 02:58:55.788766
+r19.millennium.berkeley.edu:23010, 8, 2007-Dec-14, 02:58:52.214396
+r33.millennium.berkeley.edu:23024, 27, 2007-Dec-14, 02:58:55.83272
+r33.millennium.berkeley.edu:23050, 48, 2007-Dec-14, 02:57:13.994076
+r33.millennium.berkeley.edu:23050, 49, 2007-Dec-14, 02:57:14.000356
+r33.millennium.berkeley.edu:23050, 51, 2007-Dec-14, 02:57:14.006396
+r10.millennium.berkeley.edu:23001, 1, 2007-Dec-14, 02:56:45.675155
+r10.millennium.berkeley.edu:23001, 2, 2007-Dec-14, 02:56:45.678003
+r10.millennium.berkeley.edu:23001, 4, 2007-Dec-14, 02:58:45.683735
+r10.millennium.berkeley.edu:23001, 6, 2007-Dec-14, 02:58:45.749758
+r10.millennium.berkeley.edu:23001, 7, 2007-Dec-14, 02:58:46.891185
+r10.millennium.berkeley.edu:23001, 3, 2007-Dec-14, 02:58:47.07868
+r10.millennium.berkeley.edu:23001, 31, 2007-Dec-14, 02:58:47.109096
+r10.millennium.berkeley.edu:23001, 29, 2007-Dec-14, 02:58:47.947113
+r10.millennium.berkeley.edu:23001, 30, 2007-Dec-14, 02:58:47.969557
+r10.millennium.berkeley.edu:23001, 9, 2007-Dec-14, 02:58:48.103205
+r10.millennium.berkeley.edu:23001, 10, 2007-Dec-14, 02:58:48.165714
+r10.millennium.berkeley.edu:23001, 12, 2007-Dec-14, 02:58:48.269538
+r10.millennium.berkeley.edu:23001, 13, 2007-Dec-14, 02:58:48.399428
+r10.millennium.berkeley.edu:23001, 11, 2007-Dec-14, 02:58:48.836157
+r10.millennium.berkeley.edu:23001, 33, 2007-Dec-14, 02:58:49.314437
+r10.millennium.berkeley.edu:23001, 53, 2007-Dec-14, 02:58:53.092888
+r10.millennium.berkeley.edu:23001, 8, 2007-Dec-14, 02:58:53.114682
+r10.millennium.berkeley.edu:23001, 54, 2007-Dec-14, 02:58:53.132916
+r10.millennium.berkeley.edu:23001, 52, 2007-Dec-14, 02:58:53.143687
+r10.millennium.berkeley.edu:23001, 32, 2007-Dec-14, 02:58:53.959215
+r21.millennium.berkeley.edu:23038, 37, 2007-Dec-14, 02:57:11.860363
+r10.millennium.berkeley.edu:23027, 26, 2007-Dec-14, 02:57:09.421466
+r10.millennium.berkeley.edu:23027, 27, 2007-Dec-14, 02:57:09.42431
+r21.millennium.berkeley.edu:23038, 38, 2007-Dec-14, 02:57:11.86648
+r10.millennium.berkeley.edu:23027, 28, 2007-Dec-14, 02:57:09.427017
+r10.millennium.berkeley.edu:23027, 25, 2007-Dec-14, 02:59:09.639725
+r21.millennium.berkeley.edu:23038, 39, 2007-Dec-14, 02:57:11.872367
+r10.millennium.berkeley.edu:23001, 34, 2007-Dec-14, 02:58:54.546374
+r21.millennium.berkeley.edu:23038, 43, 2007-Dec-14, 02:59:11.722636
+r21.millennium.berkeley.edu:23038, 41, 2007-Dec-14, 02:59:11.854368
+r21.millennium.berkeley.edu:23038, 42, 2007-Dec-14, 02:59:12.155733
+r21.millennium.berkeley.edu:23038, 45, 2007-Dec-14, 02:59:12.218198
+r21.millennium.berkeley.edu:23038, 44, 2007-Dec-14, 02:59:12.241907
+r21.millennium.berkeley.edu:23038, 40, 2007-Dec-14, 02:59:12.476828
+r29.millennium.berkeley.edu:23020, 19, 2007-Dec-14, 02:56:53.408005
+r29.millennium.berkeley.edu:23020, 20, 2007-Dec-14, 02:56:53.410858
+r29.millennium.berkeley.edu:23020, 21, 2007-Dec-14, 02:56:53.413593
+r16.millennium.berkeley.edu:23007, 7, 2007-Dec-14, 02:56:48.049607
+r16.millennium.berkeley.edu:23007, 8, 2007-Dec-14, 02:56:48.052473
+r16.millennium.berkeley.edu:23007, 53, 2007-Dec-14, 02:58:48.052002
+r30.millennium.berkeley.edu:23047, 46, 2007-Dec-14, 02:57:12.544925
+r30.millennium.berkeley.edu:23047, 47, 2007-Dec-14, 02:57:12.547755
+r30.millennium.berkeley.edu:23047, 48, 2007-Dec-14, 02:57:12.550462
+r31.millennium.berkeley.edu:23022, 21, 2007-Dec-14, 02:56:54.300198
+r31.millennium.berkeley.edu:23022, 22, 2007-Dec-14, 02:56:54.303032
+r31.millennium.berkeley.edu:23022, 23, 2007-Dec-14, 02:56:54.305753
+r32.millennium.berkeley.edu:23023, 22, 2007-Dec-14, 02:56:54.678177
+r32.millennium.berkeley.edu:23023, 24, 2007-Dec-14, 02:56:54.681038
+r17.millennium.berkeley.edu:23008, 7, 2007-Dec-14, 02:56:49.175201
+r17.millennium.berkeley.edu:23008, 8, 2007-Dec-14, 02:56:49.178014
+r17.millennium.berkeley.edu:23008, 9, 2007-Dec-14, 02:56:49.180702
+r26.millennium.berkeley.edu:23043, 42, 2007-Dec-14, 02:57:11.897192
+r22.millennium.berkeley.edu:23039, 38, 2007-Dec-14, 02:57:11.252391
+r22.millennium.berkeley.edu:23039, 39, 2007-Dec-14, 02:57:11.255257
+r22.millennium.berkeley.edu:23039, 40, 2007-Dec-14, 02:57:11.257995
+r26.millennium.berkeley.edu:23043, 44, 2007-Dec-14, 02:57:11.899996
+r26.millennium.berkeley.edu:23043, 49, 2007-Dec-14, 02:59:11.806587
+r26.millennium.berkeley.edu:23043, 51, 2007-Dec-14, 02:59:11.865135
+r26.millennium.berkeley.edu:23043, 47, 2007-Dec-14, 02:59:11.983009
+r26.millennium.berkeley.edu:23043, 40, 2007-Dec-14, 02:59:12.00213
+r26.millennium.berkeley.edu:23043, 41, 2007-Dec-14, 02:59:12.012055
+r15.millennium.berkeley.edu:23006, 4, 2007-Dec-14, 02:56:47.069966
+r15.millennium.berkeley.edu:23006, 6, 2007-Dec-14, 02:56:47.072776
+r15.millennium.berkeley.edu:23006, 7, 2007-Dec-14, 02:56:47.075481
+r26.millennium.berkeley.edu:23043, 46, 2007-Dec-14, 02:59:12.914734
+r25.millennium.berkeley.edu:23042, 40, 2007-Dec-14, 02:57:11.813303
+r25.millennium.berkeley.edu:23042, 41, 2007-Dec-14, 02:57:11.816164
+r18.millennium.berkeley.edu:23009, 6, 2007-Dec-14, 02:56:49.07927
+r25.millennium.berkeley.edu:23042, 43, 2007-Dec-14, 02:57:11.818871
+r18.millennium.berkeley.edu:23009, 7, 2007-Dec-14, 02:56:49.082117
+r25.millennium.berkeley.edu:23042, 45, 2007-Dec-14, 02:59:11.726722
+r18.millennium.berkeley.edu:23009, 9, 2007-Dec-14, 02:56:49.084838
+r25.millennium.berkeley.edu:23042, 44, 2007-Dec-14, 02:59:11.744804
+r26.millennium.berkeley.edu:23043, 48, 2007-Dec-14, 02:59:12.951883
+r18.millennium.berkeley.edu:23009, 10, 2007-Dec-14, 02:56:49.08756
+r25.millennium.berkeley.edu:23042, 47, 2007-Dec-14, 02:59:11.897507
+r18.millennium.berkeley.edu:23009, 8, 2007-Dec-14, 02:58:52.399529
+r25.millennium.berkeley.edu:23042, 42, 2007-Dec-14, 02:59:12.554671
+r25.millennium.berkeley.edu:23042, 46, 2007-Dec-14, 02:59:13.053957
+r19.millennium.berkeley.edu:23036, 35, 2007-Dec-14, 02:57:11.452019
+r19.millennium.berkeley.edu:23036, 36, 2007-Dec-14, 02:57:11.454897
+r19.millennium.berkeley.edu:23036, 37, 2007-Dec-14, 02:57:11.457583
+r19.millennium.berkeley.edu:23036, 38, 2007-Dec-14, 02:59:11.727644
+r16.millennium.berkeley.edu:23033, 1, 2007-Dec-14, 02:57:10.234773
+r16.millennium.berkeley.edu:23033, 32, 2007-Dec-14, 02:57:10.237701
+r19.millennium.berkeley.edu:23036, 39, 2007-Dec-14, 02:59:11.749156
+r16.millennium.berkeley.edu:23033, 33, 2007-Dec-14, 02:57:10.24048
+r16.millennium.berkeley.edu:23033, 34, 2007-Dec-14, 02:57:10.243266
+r19.millennium.berkeley.edu:23036, 40, 2007-Dec-14, 02:59:11.827382
+r22.millennium.berkeley.edu:23013, 13, 2007-Dec-14, 02:56:50.209084
+r22.millennium.berkeley.edu:23013, 14, 2007-Dec-14, 02:56:50.211907
+r22.millennium.berkeley.edu:23013, 15, 2007-Dec-14, 02:58:50.188041
+r22.millennium.berkeley.edu:23013, 18, 2007-Dec-14, 02:58:51.776914
+r26.millennium.berkeley.edu:23017, 14, 2007-Dec-14, 02:56:52.306939
+r22.millennium.berkeley.edu:23013, 22, 2007-Dec-14, 02:58:52.283694
+r27.millennium.berkeley.edu:23044, 43, 2007-Dec-14, 02:57:12.131723
+r22.millennium.berkeley.edu:23013, 23, 2007-Dec-14, 02:58:52.306894
+r27.millennium.berkeley.edu:23044, 44, 2007-Dec-14, 02:57:12.134526
+r27.millennium.berkeley.edu:23044, 45, 2007-Dec-14, 02:57:12.137207
+r28.millennium.berkeley.edu:23045, 43, 2007-Dec-14, 02:57:12.36195
+r28.millennium.berkeley.edu:23045, 45, 2007-Dec-14, 02:57:12.364782
+r28.millennium.berkeley.edu:23045, 46, 2007-Dec-14, 02:57:12.367484
+r26.millennium.berkeley.edu:23017, 15, 2007-Dec-14, 02:56:52.309778
+r11.millennium.berkeley.edu:23002, 1, 2007-Dec-14, 02:56:45.661553
+r11.millennium.berkeley.edu:23002, 3, 2007-Dec-14, 02:56:45.664396
+r26.millennium.berkeley.edu:23017, 18, 2007-Dec-14, 02:56:52.312484
+r11.millennium.berkeley.edu:23002, 4, 2007-Dec-14, 02:56:45.667104
+r11.millennium.berkeley.edu:23002, 6, 2007-Dec-14, 02:58:45.726392
+r11.millennium.berkeley.edu:23002, 2, 2007-Dec-14, 02:58:46.040824
+r11.millennium.berkeley.edu:23002, 7, 2007-Dec-14, 02:58:46.588634
+r11.millennium.berkeley.edu:23002, 29, 2007-Dec-14, 02:58:46.833952
+r11.millennium.berkeley.edu:23002, 30, 2007-Dec-14, 02:58:46.889474
+r11.millennium.berkeley.edu:23002, 31, 2007-Dec-14, 02:58:46.899917
+r26.millennium.berkeley.edu:23017, 24, 2007-Dec-14, 02:58:52.27520
+r11.millennium.berkeley.edu:23002, 9, 2007-Dec-14, 02:58:46.971417
+r11.millennium.berkeley.edu:23002, 10, 2007-Dec-14, 02:58:46.98244
+r11.millennium.berkeley.edu:23002, 11, 2007-Dec-14, 02:58:47.020373
+r11.millennium.berkeley.edu:23002, 12, 2007-Dec-14, 02:58:47.10747
+r11.millennium.berkeley.edu:23002, 13, 2007-Dec-14, 02:58:47.128415
+r11.millennium.berkeley.edu:23002, 33, 2007-Dec-14, 02:58:47.493916
+r11.millennium.berkeley.edu:23002, 32, 2007-Dec-14, 02:58:48.382241
+r26.millennium.berkeley.edu:23017, 22, 2007-Dec-14, 02:58:52.35752
+r11.millennium.berkeley.edu:23002, 34, 2007-Dec-14, 02:58:48.613117
+r11.millennium.berkeley.edu:23002, 53, 2007-Dec-14, 02:58:52.409527
+r11.millennium.berkeley.edu:23002, 8, 2007-Dec-14, 02:58:52.43343
+r11.millennium.berkeley.edu:23002, 54, 2007-Dec-14, 02:58:52.453062
+r11.millennium.berkeley.edu:23002, 52, 2007-Dec-14, 02:58:52.506467
+r26.millennium.berkeley.edu:23017, 23, 2007-Dec-14, 02:58:52.365491
+r9.millennium.berkeley.edu:23026, 23, 2007-Dec-14, 02:57:08.949547
+r9.millennium.berkeley.edu:23026, 26, 2007-Dec-14, 02:57:08.952449
+r9.millennium.berkeley.edu:23026, 27, 2007-Dec-14, 02:57:08.955224
+r12.millennium.berkeley.edu:23003, 1, 2007-Dec-14, 02:56:46.796424
+r12.millennium.berkeley.edu:23003, 2, 2007-Dec-14, 02:56:46.802521
+r12.millennium.berkeley.edu:23003, 4, 2007-Dec-14, 02:56:46.808488
+r12.millennium.berkeley.edu:23003, 33, 2007-Dec-14, 02:58:46.983297
+r12.millennium.berkeley.edu:23003, 3, 2007-Dec-14, 02:58:47.117824
+r12.millennium.berkeley.edu:23003, 31, 2007-Dec-14, 02:58:47.218824
+r12.millennium.berkeley.edu:23003, 29, 2007-Dec-14, 02:58:47.536719
+r12.millennium.berkeley.edu:23003, 30, 2007-Dec-14, 02:58:47.573777
+r12.millennium.berkeley.edu:23003, 7, 2007-Dec-14, 02:58:47.655736
+r12.millennium.berkeley.edu:23003, 9, 2007-Dec-14, 02:58:47.785298
+r12.millennium.berkeley.edu:23003, 10, 2007-Dec-14, 02:58:47.850031
+r12.millennium.berkeley.edu:23003, 11, 2007-Dec-14, 02:58:47.94581
+r12.millennium.berkeley.edu:23003, 12, 2007-Dec-14, 02:58:48.069641
+r12.millennium.berkeley.edu:23003, 13, 2007-Dec-14, 02:58:48.10812
+r12.millennium.berkeley.edu:23003, 6, 2007-Dec-14, 02:58:48.572934
+r12.millennium.berkeley.edu:23003, 32, 2007-Dec-14, 02:58:50.252678
+r12.millennium.berkeley.edu:23003, 34, 2007-Dec-14, 02:58:50.736532
+r12.millennium.berkeley.edu:23003, 53, 2007-Dec-14, 02:58:53.005544
+r12.millennium.berkeley.edu:23003, 8, 2007-Dec-14, 02:58:53.027184
+r12.millennium.berkeley.edu:23003, 54, 2007-Dec-14, 02:58:53.03949
+r12.millennium.berkeley.edu:23003, 52, 2007-Dec-14, 02:58:53.072877

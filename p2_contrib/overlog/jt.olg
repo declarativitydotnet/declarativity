@@ -1,0 +1,79 @@
+/*
+ * Junction Tree
+ *
+ * Running the script:
+ * distInf-build/tests/runOverLog -p 10000 -o junctree.olg -DNODE_ADDR=\"localhost:10000\" -DMYID=\"0\" -DLINKS_FILE=\"data/links.csv\" -DVARS_FILE=\"data/variables.csv\"
+ * /Users/kuangc/workspace/p2/trunk-build/tests/runOverLog -p 10009 -o junctree.olg -DNODE_ADDR=\"localhost:10009\" -DMYID=\"9\" -DLINKS_FILE=\"data/local-10-links-top20.csv\" -DVARS_FILE=\"data/local-10-vars.csv\"
+ */
+
+/* Variables reachable from the Neighbor of a Node: Node, Neighbor, Var 
+   possibleReachvar may contain stale information for dead edges. */
+materialize(possibleReachvar, infinity, infinity, keys(1,2,3)).
+materialize(reachvar, infinity, infinity, keys(1,2,3)).
+
+/* Clique variables */
+materialize(clique, infinity, infinity, keys(1,2)).
+
+/* Separator between two cliques. */
+materialize(separator, infinity, infinity, keys(1,2,3)).
+
+/* Compute reachable variables. */
+reachvar_basecase
+possibleReachvar(@Nbr, Node, Var) :-
+        routingEdge(@Node, Nbr),
+        localVariable(@Node, Var).
+
+reachvar_recursive
+possibleReachvar(@Nbr, Node, Var) :-
+        routingEdge(@Node, Nbr),
+        reachvar(@Node, OtherNbr, Var),
+        Nbr != OtherNbr.
+
+reachvar(@Node, Nbr, Var) :-
+        possibleReachvar(@Node, Nbr, Var),
+        routingEdge(@Node, Nbr).
+        
+/* Compute the set of variables (clique) C_i at each node. */
+clique(@Node, Var) :-
+        started(@Node),
+        localVariable(@Node, Var).
+
+clique(@Node, Var) :-
+        reachvar(@Node, Nbr1, Var),
+        reachvar(@Node, Nbr2, Var),
+        Nbr1 != Nbr2.
+
+/* Compute the separator. */
+separator(@Nbr, Node, Var) :-
+        reachvar(@Node, Nbr, Var),
+        clique(@Node, Var).
+
+watchmod(routingEdge, "id").
+watchmod(carries, "id").
+/*
+watchmod(reachvar, "id").
+watchmod(clique, "id"). 
+watchmod(separator, "id").
+*/
+
+/* Dummy clique & separator facts (needed to generate DELTA_* events). */
+materialize(clique_dummy, infinity, infinity, keys(1)).
+materialize(separator_dummy, infinity, infinity, keys(1)).
+clique_dummy(@Node) :- clique(@Node, Var).
+separator_dummy(@Node) :- separator(@Node, Nbr, Var).
+
+/* Rules for logging. */
+clique_inserted(@Node, Var, Time) :-
+        clique_DELTA_INSERT(@Node, Var), Time := f_timerElapsed().
+clique_deleted(@Node, Var, Time) :-
+        clique_DELTA_DELETE(@Node, Var), Time := f_timerElapsed().
+
+separator_inserted(@Node, Nbr, Var, Time) :-
+        separator_DELTA_INSERT(@Node, Nbr, Var), Time := f_timerElapsed().
+separator_deleted(@Node, Nbr, Var, Time) :-
+        separator_DELTA_DELETE(@Node, Nbr, Var), Time := f_timerElapsed().
+
+watchmod(clique_inserted, "s").
+watchmod(clique_deleted, "s").
+watchmod(separator_inserted, "s").
+watchmod(separator_deleted, "s").

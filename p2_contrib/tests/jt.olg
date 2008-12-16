@@ -1,0 +1,6 @@
+/** Executes the junction tree algorithm. */
+
+#include "rst.olg"
+
+#include "../overlog/load_vars_sql.olg" 
+#include "../overlog/jt.olg"

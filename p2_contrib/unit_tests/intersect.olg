@@ -1,0 +1,7 @@
+value(@Node, Z) :-
+        periodic(@Node, E, 1),
+        X := f_initSet(1),
+        Y := f_initSet(1),
+        Z := X & Y.
+
+watchmod(value, "s").

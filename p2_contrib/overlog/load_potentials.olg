@@ -1,0 +1,41 @@
+/** Loads potentials of a MRF from a CSV file. Triggered by variablesLoaded. */
+
+/** Stage to read CSV */
+stage("CSVtuple", inputNodePotentials, inputNodePotential).
+stage("CSVtuple", inputEdgePotentials, inputEdgePotential).
+
+/** Invoke the CSVtuple stage */
+inputNodePotentials(@Node, Filename) :- 
+	variablesLoaded(@Node), Filename := NODE_POT_FILE.
+
+inputEdgePotentials(@Node, Filename) :- 
+	variablesLoaded(@Node), Filename := EDGE_POT_FILE.
+
+/*
+watchmod(inputNodePotential, "s").
+watchmod(inputEdgePotential, "s").
+*/
+
+/* Node potentials: Node, Var, Factor. */	
+materialize(nodePotential, infinity, infinity, keys(1,2)).
+
+/* Edge potentials: Node, Var, NbrVar, Factor */
+materialize(edgePotential, infinity, infinity, keys(1,2,3)).
+
+/** Create the potential facts for variables that we reason about. */
+nodePotential(@Node, Var, Factor) :-
+	inputNodePotential(@Node, Var, Values),
+	localVariable(@Node, Var, Type, Size),
+	Dummy := f_registerVariable(Var, Type, Size),
+	Factor := f_tableFactor(f_cons(Var, f_initlist()), Values).
+
+edgePotential(@Node, Var, NbrVar, Factor) :-
+	inputEdgePotential(@Node, Var, NbrVar, Values),
+	localVariable(@Node, Var, Type1, Size1),
+	variable(@Node, NbrVar, _, Type2, Size2),
+	Dummy1 := f_registerVariable(Var, Type1, Size1),
+	Dummy2 := f_registerVariable(NbrVar, Type2, Size2),
+	Factor := f_tableFactor(f_cons(Var, NbrVar), Values).
+
+watchmod(nodePotential, "az").
+watchmod(edgePotential, "az").

@@ -1,0 +1,37 @@
+#define EM_EPOCH 2
+#define R 1
+#define P -8
+#define FNAME "../../prl/tests/data/mixture.txt"
+#define VARNAME "a"
+
+
+materialize(em, infinity, infinity, keys(1)).
+/* The edges of MRF connected to a variable at this node: Node, From, To */
+materialize(edge, infinity, infinity, keys(1,2,3)).
+
+mrfEdge(@Node, Source, Target) :- 
+        localVariable(@Node, Source, _),
+        edgeInput(@Node, Source, Target).
+
+/* Takes four arguments: 
+   the filename, the variable name, the dimension, the number of clusters */
+r1 initEngine(@Node, M) :- 
+        periodic(@Node,E,0,1),
+        M := f_emEngine(FNAME, VARNAME, 2, 2).
+        
+r2 em(@Node, M1) :- 
+        initEngine(@Node, M),
+        M1 := f_emInit(f_pow(R,P)).
+
+r3 em(@Node,M1) :-
+        periodic(@Node,E,EM_EPOCH,5),
+        em(@Node, M),
+        M1 := f_emUpdate(M,R).
+        
+message(@node, M1) :-
+     periodic(@Node,E, CONV_EPOCH,1),
+     
+        
+        
+watchmod(initEngine, "s").
+watchmod(em, "i").

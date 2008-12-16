@@ -1,0 +1,55 @@
+/** Loads variables from a CSV file. Initiated by nodesLoaded. */
+
+/** Stage to read CSV */
+stage("CSVtuple", varFile, inputVariable).
+stage("CSVtuple", similarityFile, inputSimilarity).
+/*May put that as a scalar value that is a constant*/
+stage("CSVtuple", preferenceFile, inputPreference).
+
+
+/** Invoke the CSVtuple stage */
+varFile(@Node, Filename) :- nodesLoaded(@Node), Filename := VARS_FILE.
+
+variablesLoaded(@Node) :-
+	variable(@Node, Var, VarNode), Var == "Done".
+
+similarityFile(@Node, Filename) :- variablesLoaded(@Node), Filename := SIMILARITY_FILE.
+preferenceFile(@Node, Filename) :- variablesLoaded(@Node), Filename := PREFERENCE_FILE.
+
+
+/* The set of variables and the associated nodes: node, var, nodeCarryingVar */
+materialize(variable, infinity, infinity, keys(1,2)).
+materialize(localVariable, infinity, infinity, keys(1,2)).
+
+/*global var table*/
+variable(@Node, Var, VarNode) :- 
+	inputVariable(@Node, VarNodeId, Var),
+        node(@Node, VarNodeId, VarNode).
+        
+localVariable(@Node, Var, VarNode) :- 
+	inputVariable(@Node, VarNodeId, Var),
+        node(@Node, VarNodeId, VarNode),
+        VarNodeId == MYID.
+        
+similarity(@Node, Source, Target, S) :- 
+	inputSimilarity(@Node, Source, Target, Similarity),
+	localVariable(@Node, Source, _),
+	S := f_toDouble(Similarity).
+        
+preference(@Node, Source, P) :- 
+	inputPreference(@Node, Source, Preference),
+        localVariable(@Node, Source, _),
+	P := 0.0 + Preference.
+
+similarity(@Node, Source, Source, P) :-
+        preference(@Node, Source, Preference),
+        P := 0.0 + Preference.
+        
+watchmod(similarity, "idz").
+/*watchmod(variable, "iz").*/
+watchmod(localVariable, "iz").
+watchmod(preference, "s").
+watchmod(variablesLoaded, "s").
+watchmod(inputSimilarity, "c").
+
+

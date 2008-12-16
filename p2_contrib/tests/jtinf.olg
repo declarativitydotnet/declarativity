@@ -1,0 +1,10 @@
+/* #include "jt_fixed.olg"*/
+#include "jt.olg"
+
+#ifndef JTINF_EPOCH
+  #define JTINF_EPOCH EPOCH
+#endif
+
+#include "../overlog/load_clique_potentials.olg"
+#include "../overlog/jtinf.olg"
+

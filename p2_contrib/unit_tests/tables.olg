@@ -1,0 +1,26 @@
+materialize(foo, infinity, infinity, keys(1)).
+materialize(bar, infinity, infinity, keys(1,2)).
+materialize(zoo, infinity, infinity, keys(1)).
+
+zoo(@Node) :- foo(@Node).
+
+foo(@Node) :- bar(@Node, 1).
+foo(@Node) :- bar(@Node, 2).
+
+event1(@Node) :- periodic(@Node, E, 1, 1).
+event2(@Node) :- periodic(@Node, E, 2, 1).
+
+bar(@Node, 1) :- event1(@Node).
+bar(@Node, 2) :- event2(@Node).
+
+delete bar(@Node, 1) :- periodic(@Node, E, 3, 1).
+delete bar(@Node, 2) :- periodic(@Node, E, 5, 1).
+
+/*
+delete foo(@Node) :- periodic(@Node, E, 3, 1).
+delete foo(@Node) :- periodic(@Node, E, 5, 1).
+*/
+
+watchmod(foo, "aid").
+watchmod(bar, "aid").
+watchmod(zoo, "aid").

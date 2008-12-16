@@ -1,0 +1,13 @@
+cd ../image-segmentation;
+genconfigs('circle/',4);
+genconfigs('circle/',4,'emulab');
+genconfigs('circle/',9,'emulab');
+genconfigs('circle/',16,'emulab');
+cd ../random-ising;
+genconfigs('10x10_1/',4);
+genconfigs('10x10_5/',4);
+genconfigs('10x10_5/',4, 'emulab');
+genconfigs('10x10_5/',9, 'emulab');
+genconfigs('10x10_1/',9, 'emulab');
+genconfigs('10x10_1/',4, 'emulab');
+cd ..;

@@ -1,0 +1,7 @@
+If generate a fact with one length but then use it with a different length in a later rule, may segfault.
+
+an "unused variable" warning (encountered in betterParent)
+
+selecting which node the computation is performed on
+
+some insertions and deletions not forwarded

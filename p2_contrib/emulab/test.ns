@@ -1,0 +1,34 @@
+# test emulab specification
+set ns [new Simulator]
+source tb_compat.tcl
+
+
+# set static routing
+$ns rtproto Static
+
+set maxnodes 54
+set lanstr ""
+
+# nodes
+for {set i 1} {$i <= $maxnodes} {incr i} {
+	# set node name
+	set node($i) [$ns node]
+	# set network conditions
+	append lanstr "$node($i) "
+	# set OS
+	tb-set-node-os $node($i) FC6-UPDATE
+	# set hardware
+	tb-set-hardware $node($i) pc3000
+	tb-set-node-startcmd $node($i) "/proj/P2/distinf/startup.sh >& /proj/P2/distinf/logs/$node($i)_startup.log" 
+	# tb-set-node-rpms $node($i) /proj/P2/distinf/some.rpm
+	# tb-set-node-tarfiles $node($i) /usr/site /proj/myproj/tarfiles/silly.tar.gz
+}
+
+# Put all the nodes in a lan
+set big-lan [$ns make-lan "$lanstr" 100Mb 0ms]
+
+# tb-set-sync-server $nodeB 
+
+
+# run it
+$ns run

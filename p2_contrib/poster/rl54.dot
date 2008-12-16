@@ -1,0 +1,307 @@
+graph G {
+	orientation=landscape
+	center=true
+	overlap=scale
+	"r17.millennium.berkeley.edu:23008" [ label="r17.millennium.berkeley.edu:23008: carries [7, 8, 9]
+clique [7, 8, 9]" ];
+	"r25.millennium.berkeley.edu:23016" [ label="r25.millennium.berkeley.edu:23016: carries [16, 17]
+clique [16, 17]" ];
+	"r27.millennium.berkeley.edu:23044" [ label="r27.millennium.berkeley.edu:23044: carries [43, 44, 45]
+clique [43, 44, 45, 47, 49, 46, 48, 51, 42]" ];
+	"r24.millennium.berkeley.edu:23041" [ label="r24.millennium.berkeley.edu:23041: carries [41, 42]
+clique [41, 42]" ];
+	"r21.millennium.berkeley.edu:23038" [ label="r21.millennium.berkeley.edu:23038: carries [37, 38, 39]
+clique [37, 38, 39, 41, 43, 40, 51, 42]" ];
+	"r12.millennium.berkeley.edu:23029" [ label="r12.millennium.berkeley.edu:23029: carries [28, 29, 30]
+clique [28, 29, 30]" ];
+	"r15.millennium.berkeley.edu:23006" [ label="r15.millennium.berkeley.edu:23006: carries [4, 6, 7]
+clique [4, 6, 7, 8, 9, 10, 53, 51]" ];
+	"r10.millennium.berkeley.edu:23027" [ label="r10.millennium.berkeley.edu:23027: carries [26, 27, 28]
+clique [26, 27, 28]" ];
+	"r29.millennium.berkeley.edu:23020" [ label="r29.millennium.berkeley.edu:23020: carries [19, 20, 21]
+clique [19, 20, 21]" ];
+	"r27.millennium.berkeley.edu:23018" [ label="r27.millennium.berkeley.edu:23018: carries [17, 18, 19]
+clique [17, 18, 19]" ];
+	"r26.millennium.berkeley.edu:23017" [ label="r26.millennium.berkeley.edu:23017: carries [14, 15, 18]
+clique [14, 15, 18, 24, 20, 21, 22, 19, 23, 27, 25, 26]" ];
+	"r29.millennium.berkeley.edu:23046" [ label="r29.millennium.berkeley.edu:23046: carries [44, 45, 47]
+clique [44, 45, 47]" ];
+	"r14.millennium.berkeley.edu:23005" [ label="r14.millennium.berkeley.edu:23005: carries [3, 4, 6]
+clique [3, 4, 6, 11, 10, 27, 25, 26]" ];
+	"r34.millennium.berkeley.edu:23051" [ label="r34.millennium.berkeley.edu:23051: carries [51, 52]
+clique [51, 52]" ];
+	"r22.millennium.berkeley.edu:23039" [ label="r22.millennium.berkeley.edu:23039: carries [38, 39, 40]
+clique [38, 39, 40, 41]" ];
+	"r30.millennium.berkeley.edu:23047" [ label="r30.millennium.berkeley.edu:23047: carries [46, 47, 48]
+clique [46, 47, 48]" ];
+	"r9.millennium.berkeley.edu:23052" [ label="r9.millennium.berkeley.edu:23052: carries [52, 53]
+clique [52, 53]" ];
+	"r11.millennium.berkeley.edu:23028" [ label="r11.millennium.berkeley.edu:23028: carries [27, 28, 29]
+clique [27, 28, 29]" ];
+	"r32.millennium.berkeley.edu:23023" [ label="r32.millennium.berkeley.edu:23023: carries [22, 24]
+clique [22, 24, 23, 27, 26]" ];
+	"r19.millennium.berkeley.edu:23036" [ label="r19.millennium.berkeley.edu:23036: carries [35, 36, 37]
+clique [35, 36, 37, 38, 39, 41, 40]" ];
+	"r16.millennium.berkeley.edu:23033" [ label="r16.millennium.berkeley.edu:23033: carries [1, 32, 33, 34]
+clique [1, 32, 33, 34]" ];
+	"r19.millennium.berkeley.edu:23010" [ label="r19.millennium.berkeley.edu:23010: carries [10, 11]
+clique [10, 11]" ];
+	"r33.millennium.berkeley.edu:23050" [ label="r33.millennium.berkeley.edu:23050: carries [48, 49, 51]
+clique [48, 49, 51]" ];
+	"r16.millennium.berkeley.edu:23007" [ label="r16.millennium.berkeley.edu:23007: carries [7, 8]
+clique [7, 8, 52, 53, 6, 10, 9, 51]" ];
+	"r11.millennium.berkeley.edu:23002" [ label="r11.millennium.berkeley.edu:23002: carries [1, 3, 4]
+clique [1, 3, 4, 33, 31, 34, 32]" ];
+	"r28.millennium.berkeley.edu:23045" [ label="r28.millennium.berkeley.edu:23045: carries [43, 45, 46]
+clique [43, 45, 46]" ];
+	"r32.millennium.berkeley.edu:23049" [ label="r32.millennium.berkeley.edu:23049: carries [49, 50, 51]
+clique [49, 50, 51]" ];
+	"r14.millennium.berkeley.edu:23031" [ label="r14.millennium.berkeley.edu:23031: carries [30, 31, 32, 33]
+clique [30, 31, 32, 33]" ];
+	"r34.millennium.berkeley.edu:23025" [ label="r34.millennium.berkeley.edu:23025: carries [25, 26]
+clique [25, 26]" ];
+	"r15.millennium.berkeley.edu:23032" [ label="r15.millennium.berkeley.edu:23032: carries [1, 3, 31, 33]
+clique [1, 3, 31, 33]" ];
+	"r33.millennium.berkeley.edu:23024" [ label="r33.millennium.berkeley.edu:23024: carries [23, 24, 25]
+clique [23, 24, 25]" ];
+	"r31.millennium.berkeley.edu:23022" [ label="r31.millennium.berkeley.edu:23022: carries [21, 22, 23]
+clique [21, 22, 23]" ];
+	"r10.millennium.berkeley.edu:23053" [ label="r10.millennium.berkeley.edu:23053: carries [53, 54]
+clique [53, 54]" ];
+	"r31.millennium.berkeley.edu:23048" [ label="r31.millennium.berkeley.edu:23048: carries [47, 49]
+clique [47, 49]" ];
+	"r30.millennium.berkeley.edu:23021" [ label="r30.millennium.berkeley.edu:23021: carries [20, 22]
+clique [20, 22]" ];
+	"r10.millennium.berkeley.edu:23001" [ label="r10.millennium.berkeley.edu:23001: carries [1, 2]
+clique [1, 2, 4, 6, 10, 51]" ];
+	"r25.millennium.berkeley.edu:23042" [ label="r25.millennium.berkeley.edu:23042: carries [40, 41, 43]
+clique [40, 41, 43]" ];
+	"r23.millennium.berkeley.edu:23040" [ label="r23.millennium.berkeley.edu:23040: carries [40, 41]
+clique [40, 41]" ];
+	"r21.millennium.berkeley.edu:23012" [ label="r21.millennium.berkeley.edu:23012: carries [11, 12, 13]
+clique [11, 12, 13, 27, 25, 26]" ];
+	"r26.millennium.berkeley.edu:23043" [ label="r26.millennium.berkeley.edu:23043: carries [42, 44]
+clique [42, 44]" ];
+	"r9.millennium.berkeley.edu:23000" [ label="r9.millennium.berkeley.edu:23000: carries [1]
+clique [1, 3, 4, 35, 36, 34, 6, 31, 10, 27, 25, 26, 32, 33, 37, 38, 39, 41, 40, 51]" ];
+	"r13.millennium.berkeley.edu:23030" [ label="r13.millennium.berkeley.edu:23030: carries [29, 30, 31]
+clique [29, 30, 31, 26, 27, 28, 32, 33, 25]" ];
+	"r17.millennium.berkeley.edu:23034" [ label="r17.millennium.berkeley.edu:23034: carries [1, 34, 35]
+clique [1, 34, 35]" ];
+	"r23.millennium.berkeley.edu:23014" [ label="r23.millennium.berkeley.edu:23014: carries [14, 15]
+clique [14, 15]" ];
+	"r22.millennium.berkeley.edu:23013" [ label="r22.millennium.berkeley.edu:23013: carries [13, 14]
+clique [13, 14, 15, 19, 20, 22, 18, 21, 23, 27, 25, 26]" ];
+	"r24.millennium.berkeley.edu:23015" [ label="r24.millennium.berkeley.edu:23015: carries [15, 16]
+clique [15, 16, 17, 22, 20, 19, 14, 18, 21, 23]" ];
+	"r12.millennium.berkeley.edu:23003" [ label="r12.millennium.berkeley.edu:23003: carries [1, 2, 4]
+clique [1, 2, 4]" ];
+	"r18.millennium.berkeley.edu:23009" [ label="r18.millennium.berkeley.edu:23009: carries [6, 7, 9, 10]
+clique [6, 7, 9, 10]" ];
+	"r28.millennium.berkeley.edu:23019" [ label="r28.millennium.berkeley.edu:23019: carries [17, 19, 20]
+clique [17, 19, 20]" ];
+	"r18.millennium.berkeley.edu:23035" [ label="r18.millennium.berkeley.edu:23035: carries [34, 35, 36]
+clique [34, 35, 36, 37, 38, 39, 41, 40, 51]" ];
+	"r9.millennium.berkeley.edu:23026" [ label="r9.millennium.berkeley.edu:23026: carries [23, 26, 27]
+clique [23, 26, 27]" ];
+	"r20.millennium.berkeley.edu:23037" -- "r22.millennium.berkeley.edu:23039" [ style=dotted ];
+	"r16.millennium.berkeley.edu:23033" -- "r9.millennium.berkeley.edu:23000" [ style=dotted ];
+	"r30.millennium.berkeley.edu:23047" -- "r34.millennium.berkeley.edu:23051" [ style=dotted ];
+	"r23.millennium.berkeley.edu:23040" -- "r29.millennium.berkeley.edu:23046" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23001" -- "r12.millennium.berkeley.edu:23003" [ style=bold ];
+	"r25.millennium.berkeley.edu:23042" -- "r29.millennium.berkeley.edu:23046" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23001" -- "r16.millennium.berkeley.edu:23033" [ style=dotted ];
+	"r30.millennium.berkeley.edu:23021" -- "r33.millennium.berkeley.edu:23024" [ style=dotted ];
+	"r17.millennium.berkeley.edu:23034" -- "r20.millennium.berkeley.edu:23037" [ style=dotted ];
+	"r18.millennium.berkeley.edu:23009" -- "r22.millennium.berkeley.edu:23013" [ style=dotted ];
+	"r32.millennium.berkeley.edu:23049" -- "r34.millennium.berkeley.edu:23051" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23045" -- "r29.millennium.berkeley.edu:23046" [ style=dotted ];
+	"r31.millennium.berkeley.edu:23022" -- "r34.millennium.berkeley.edu:23025" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23019" -- "r30.millennium.berkeley.edu:23021" [ style=dotted ];
+	"r29.millennium.berkeley.edu:23020" -- "r31.millennium.berkeley.edu:23022" [ style=dotted ];
+	"r22.millennium.berkeley.edu:23039" -- "r25.millennium.berkeley.edu:23042" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23043" -- "r32.millennium.berkeley.edu:23049" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23018" -- "r30.millennium.berkeley.edu:23021" [ style=dotted ];
+	"r11.millennium.berkeley.edu:23028" -- "r13.millennium.berkeley.edu:23030" [ style=bold ];
+	"r32.millennium.berkeley.edu:23023" -- "r9.millennium.berkeley.edu:23026" [ style=bold ];
+	"r28.millennium.berkeley.edu:23045" -- "r33.millennium.berkeley.edu:23050" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23019" -- "r29.millennium.berkeley.edu:23020" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23019" -- "r33.millennium.berkeley.edu:23024" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23027" -- "r9.millennium.berkeley.edu:23026" [ style=dotted ];
+	"r34.millennium.berkeley.edu:23025" -- "r9.millennium.berkeley.edu:23026" [ style=dotted ];
+	"r25.millennium.berkeley.edu:23016" -- "r27.millennium.berkeley.edu:23018" [ style=dotted ];
+	"r17.millennium.berkeley.edu:23008" -- "r19.millennium.berkeley.edu:23010" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23019" -- "r32.millennium.berkeley.edu:23023" [ style=dotted ];
+	"r20.millennium.berkeley.edu:23037" -- "r24.millennium.berkeley.edu:23041" [ style=dotted ];
+	"r13.millennium.berkeley.edu:23030" -- "r9.millennium.berkeley.edu:23000" [ style=bold ];
+	"r24.millennium.berkeley.edu:23015" -- "r27.millennium.berkeley.edu:23018" [ style=bold ];
+	"r24.millennium.berkeley.edu:23015" -- "r30.millennium.berkeley.edu:23021" [ style=bold ];
+	"r33.millennium.berkeley.edu:23024" -- "r9.millennium.berkeley.edu:23026" [ style=dotted ];
+	"r11.millennium.berkeley.edu:23002" -- "r18.millennium.berkeley.edu:23009" [ style=dotted ];
+	"r21.millennium.berkeley.edu:23038" -- "r25.millennium.berkeley.edu:23042" [ style=bold ];
+	"r20.millennium.berkeley.edu:23011" -- "r22.millennium.berkeley.edu:23013" [ style=dotted ];
+	"r31.millennium.berkeley.edu:23022" -- "r9.millennium.berkeley.edu:23026" [ style=dotted ];
+	"r16.millennium.berkeley.edu:23007" -- "r34.millennium.berkeley.edu:23051" [ style=bold ];
+	"r27.millennium.berkeley.edu:23044" -- "r29.millennium.berkeley.edu:23046" [ style=bold ];
+	"r24.millennium.berkeley.edu:23041" -- "r25.millennium.berkeley.edu:23042" [ style=dotted ];
+	"r17.millennium.berkeley.edu:23034" -- "r19.millennium.berkeley.edu:23036" [ style=dotted ];
+	"r15.millennium.berkeley.edu:23006" -- "r17.millennium.berkeley.edu:23008" [ style=bold ];
+	"r12.millennium.berkeley.edu:23003" -- "r14.millennium.berkeley.edu:23005" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23053" -- "r17.millennium.berkeley.edu:23008" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23044" -- "r33.millennium.berkeley.edu:23050" [ style=bold ];
+	"r19.millennium.berkeley.edu:23036" -- "r9.millennium.berkeley.edu:23000" [ style=bold ];
+	"r26.millennium.berkeley.edu:23043" -- "r33.millennium.berkeley.edu:23050" [ style=dotted ];
+	"r14.millennium.berkeley.edu:23005" -- "r9.millennium.berkeley.edu:23000" [ style=bold ];
+	"r10.millennium.berkeley.edu:23053" -- "r15.millennium.berkeley.edu:23006" [ style=bold ];
+	"r30.millennium.berkeley.edu:23021" -- "r31.millennium.berkeley.edu:23022" [ style=dotted ];
+	"r25.millennium.berkeley.edu:23042" -- "r27.millennium.berkeley.edu:23044" [ style=dotted ];
+	"r33.millennium.berkeley.edu:23024" -- "r34.millennium.berkeley.edu:23025" [ style=dotted ];
+	"r19.millennium.berkeley.edu:23036" -- "r22.millennium.berkeley.edu:23039" [ style=dotted ];
+	"r33.millennium.berkeley.edu:23050" -- "r34.millennium.berkeley.edu:23051" [ style=dotted ];
+	"r21.millennium.berkeley.edu:23038" -- "r24.millennium.berkeley.edu:23041" [ style=bold ];
+	"r11.millennium.berkeley.edu:23028" -- "r34.millennium.berkeley.edu:23025" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23044" -- "r31.millennium.berkeley.edu:23048" [ style=bold ];
+	"r16.millennium.berkeley.edu:23007" -- "r17.millennium.berkeley.edu:23008" [ style=dotted ];
+	"r14.millennium.berkeley.edu:23005" -- "r21.millennium.berkeley.edu:23012" [ style=bold ];
+	"r29.millennium.berkeley.edu:23020" -- "r34.millennium.berkeley.edu:23025" [ style=dotted ];
+	"r31.millennium.berkeley.edu:23022" -- "r32.millennium.berkeley.edu:23023" [ style=dotted ];
+	"r14.millennium.berkeley.edu:23005" -- "r15.millennium.berkeley.edu:23006" [ style=dotted ];
+	"r29.millennium.berkeley.edu:23020" -- "r33.millennium.berkeley.edu:23024" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23001" -- "r14.millennium.berkeley.edu:23005" [ style=dotted ];
+	"r24.millennium.berkeley.edu:23041" -- "r31.millennium.berkeley.edu:23048" [ style=dotted ];
+	"r24.millennium.berkeley.edu:23015" -- "r25.millennium.berkeley.edu:23016" [ style=bold ];
+	"r20.millennium.berkeley.edu:23037" -- "r25.millennium.berkeley.edu:23042" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23043" -- "r28.millennium.berkeley.edu:23045" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23017" -- "r33.millennium.berkeley.edu:23024" [ style=bold ];
+	"r10.millennium.berkeley.edu:23027" -- "r11.millennium.berkeley.edu:23028" [ style=dotted ];
+	"r18.millennium.berkeley.edu:23035" -- "r20.millennium.berkeley.edu:23037" [ style=dotted ];
+	"r12.millennium.berkeley.edu:23029" -- "r14.millennium.berkeley.edu:23031" [ style=dotted ];
+	"r20.millennium.berkeley.edu:23011" -- "r21.millennium.berkeley.edu:23012" [ style=dotted ];
+	"r17.millennium.berkeley.edu:23034" -- "r18.millennium.berkeley.edu:23035" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23017" -- "r29.millennium.berkeley.edu:23020" [ style=bold ];
+	"r15.millennium.berkeley.edu:23006" -- "r16.millennium.berkeley.edu:23007" [ style=bold ];
+	"r30.millennium.berkeley.edu:23047" -- "r33.millennium.berkeley.edu:23050" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23053" -- "r16.millennium.berkeley.edu:23007" [ style=dotted ];
+	"r29.millennium.berkeley.edu:23046" -- "r30.millennium.berkeley.edu:23047" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23045" -- "r31.millennium.berkeley.edu:23048" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23044" -- "r30.millennium.berkeley.edu:23047" [ style=bold ];
+	"r26.millennium.berkeley.edu:23043" -- "r30.millennium.berkeley.edu:23047" [ style=dotted ];
+	"r21.millennium.berkeley.edu:23038" -- "r22.millennium.berkeley.edu:23039" [ style=dotted ];
+	"r20.millennium.berkeley.edu:23037" -- "r21.millennium.berkeley.edu:23038" [ style=dotted ];
+	"r22.millennium.berkeley.edu:23039" -- "r24.millennium.berkeley.edu:23041" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23027" -- "r32.millennium.berkeley.edu:23023" [ style=dotted ];
+	"r34.millennium.berkeley.edu:23051" -- "r9.millennium.berkeley.edu:23052" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23017" -- "r28.millennium.berkeley.edu:23019" [ style=dotted ];
+	"r30.millennium.berkeley.edu:23047" -- "r31.millennium.berkeley.edu:23048" [ style=dotted ];
+	"r24.millennium.berkeley.edu:23041" -- "r27.millennium.berkeley.edu:23044" [ style=dotted ];
+	"r22.millennium.berkeley.edu:23013" -- "r26.millennium.berkeley.edu:23017" [ style=bold ];
+	"r31.millennium.berkeley.edu:23048" -- "r32.millennium.berkeley.edu:23049" [ style=dotted ];
+	"r12.millennium.berkeley.edu:23003" -- "r18.millennium.berkeley.edu:23009" [ style=dotted ];
+	"r11.millennium.berkeley.edu:23002" -- "r9.millennium.berkeley.edu:23000" [ style=bold ];
+	"r24.millennium.berkeley.edu:23041" -- "r29.millennium.berkeley.edu:23046" [ style=dotted ];
+	"r13.millennium.berkeley.edu:23030" -- "r34.millennium.berkeley.edu:23025" [ style=bold ];
+	"r15.millennium.berkeley.edu:23032" -- "r9.millennium.berkeley.edu:23000" [ style=dotted ];
+	"r18.millennium.berkeley.edu:23009" -- "r19.millennium.berkeley.edu:23010" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23053" -- "r34.millennium.berkeley.edu:23051" [ style=dotted ];
+	"r32.millennium.berkeley.edu:23049" -- "r33.millennium.berkeley.edu:23050" [ style=dotted ];
+	"r12.millennium.berkeley.edu:23003" -- "r16.millennium.berkeley.edu:23033" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23001" -- "r17.millennium.berkeley.edu:23034" [ style=dotted ];
+	"r19.millennium.berkeley.edu:23010" -- "r21.millennium.berkeley.edu:23012" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23027" -- "r12.millennium.berkeley.edu:23029" [ style=dotted ];
+	"r18.millennium.berkeley.edu:23035" -- "r19.millennium.berkeley.edu:23036" [ style=dotted ];
+	"r29.millennium.berkeley.edu:23046" -- "r31.millennium.berkeley.edu:23048" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23018" -- "r31.millennium.berkeley.edu:23022" [ style=dotted ];
+	"r11.millennium.berkeley.edu:23028" -- "r14.millennium.berkeley.edu:23031" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23001" -- "r15.millennium.berkeley.edu:23006" [ style=bold ];
+	"r32.millennium.berkeley.edu:23023" -- "r34.millennium.berkeley.edu:23025" [ style=dotted ];
+	"r19.millennium.berkeley.edu:23036" -- "r21.millennium.berkeley.edu:23038" [ style=dotted ];
+	"r13.millennium.berkeley.edu:23030" -- "r19.millennium.berkeley.edu:23036" [ style=dotted ];
+	"r16.millennium.berkeley.edu:23033" -- "r17.millennium.berkeley.edu:23034" [ style=dotted ];
+	"r32.millennium.berkeley.edu:23023" -- "r33.millennium.berkeley.edu:23024" [ style=dotted ];
+	"r23.millennium.berkeley.edu:23040" -- "r24.millennium.berkeley.edu:23041" [ style=dotted ];
+	"r22.millennium.berkeley.edu:23039" -- "r23.millennium.berkeley.edu:23040" [ style=bold ];
+	"r25.millennium.berkeley.edu:23016" -- "r29.millennium.berkeley.edu:23020" [ style=dotted ];
+	"r11.millennium.berkeley.edu:23002" -- "r16.millennium.berkeley.edu:23033" [ style=bold ];
+	"r26.millennium.berkeley.edu:23043" -- "r27.millennium.berkeley.edu:23044" [ style=bold ];
+	"r12.millennium.berkeley.edu:23029" -- "r34.millennium.berkeley.edu:23025" [ style=dotted ];
+	"r13.millennium.berkeley.edu:23030" -- "r14.millennium.berkeley.edu:23031" [ style=bold ];
+	"r21.millennium.berkeley.edu:23012" -- "r22.millennium.berkeley.edu:23013" [ style=bold ];
+	"r12.millennium.berkeley.edu:23003" -- "r15.millennium.berkeley.edu:23032" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23027" -- "r33.millennium.berkeley.edu:23024" [ style=dotted ];
+	"r18.millennium.berkeley.edu:23035" -- "r21.millennium.berkeley.edu:23038" [ style=bold ];
+	"r22.millennium.berkeley.edu:23013" -- "r24.millennium.berkeley.edu:23015" [ style=bold ];
+	"r11.millennium.berkeley.edu:23002" -- "r12.millennium.berkeley.edu:23003" [ style=dotted ];
+	"r19.millennium.berkeley.edu:23010" -- "r22.millennium.berkeley.edu:23013" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23019" -- "r31.millennium.berkeley.edu:23022" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23027" -- "r34.millennium.berkeley.edu:23025" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23018" -- "r28.millennium.berkeley.edu:23019" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23045" -- "r32.millennium.berkeley.edu:23049" [ style=dotted ];
+	"r24.millennium.berkeley.edu:23015" -- "r31.millennium.berkeley.edu:23022" [ style=bold ];
+	"r11.millennium.berkeley.edu:23028" -- "r12.millennium.berkeley.edu:23029" [ style=dotted ];
+	"r25.millennium.berkeley.edu:23016" -- "r31.millennium.berkeley.edu:23022" [ style=dotted ];
+	"r17.millennium.berkeley.edu:23034" -- "r9.millennium.berkeley.edu:23000" [ style=bold ];
+	"r25.millennium.berkeley.edu:23042" -- "r26.millennium.berkeley.edu:23043" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23043" -- "r29.millennium.berkeley.edu:23046" [ style=dotted ];
+	"r13.millennium.berkeley.edu:23030" -- "r17.millennium.berkeley.edu:23034" [ style=dotted ];
+	"r19.millennium.berkeley.edu:23036" -- "r20.millennium.berkeley.edu:23037" [ style=dotted ];
+	"r23.millennium.berkeley.edu:23040" -- "r27.millennium.berkeley.edu:23044" [ style=dotted ];
+	"r29.millennium.berkeley.edu:23020" -- "r30.millennium.berkeley.edu:23021" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23018" -- "r29.millennium.berkeley.edu:23020" [ style=dotted ];
+	"r15.millennium.berkeley.edu:23006" -- "r18.millennium.berkeley.edu:23009" [ style=dotted ];
+	"r29.millennium.berkeley.edu:23020" -- "r32.millennium.berkeley.edu:23023" [ style=dotted ];
+	"r14.millennium.berkeley.edu:23031" -- "r16.millennium.berkeley.edu:23033" [ style=dotted ];
+	"r31.millennium.berkeley.edu:23022" -- "r33.millennium.berkeley.edu:23024" [ style=dotted ];
+	"r29.millennium.berkeley.edu:23046" -- "r33.millennium.berkeley.edu:23050" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23019" -- "r29.millennium.berkeley.edu:23020" [ style=dotted ];
+	"r16.millennium.berkeley.edu:23007" -- "r9.millennium.berkeley.edu:23052" [ style=bold ];
+	"r24.millennium.berkeley.edu:23015" -- "r28.millennium.berkeley.edu:23019" [ style=bold ];
+	"r26.millennium.berkeley.edu:23043" -- "r31.millennium.berkeley.edu:23048" [ style=dotted ];
+	"r15.millennium.berkeley.edu:23006" -- "r16.millennium.berkeley.edu:23033" [ style=dotted ];
+	"r24.millennium.berkeley.edu:23041" -- "r28.millennium.berkeley.edu:23045" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23044" -- "r32.millennium.berkeley.edu:23049" [ style=bold ];
+	"r25.millennium.berkeley.edu:23016" -- "r28.millennium.berkeley.edu:23019" [ style=dotted ];
+	"r15.millennium.berkeley.edu:23032" -- "r18.millennium.berkeley.edu:23035" [ style=dotted ];
+	"r23.millennium.berkeley.edu:23040" -- "r26.millennium.berkeley.edu:23043" [ style=dotted ];
+	"r23.millennium.berkeley.edu:23040" -- "r30.millennium.berkeley.edu:23047" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23017" -- "r32.millennium.berkeley.edu:23023" [ style=bold ];
+	"r11.millennium.berkeley.edu:23002" -- "r19.millennium.berkeley.edu:23036" [ style=dotted ];
+	"r21.millennium.berkeley.edu:23038" -- "r27.millennium.berkeley.edu:23044" [ style=bold ];
+	"r12.millennium.berkeley.edu:23029" -- "r13.millennium.berkeley.edu:23030" [ style=bold ];
+	"r10.millennium.berkeley.edu:23027" -- "r13.millennium.berkeley.edu:23030" [ style=bold ];
+	"r24.millennium.berkeley.edu:23041" -- "r26.millennium.berkeley.edu:23043" [ style=dotted ];
+	"r20.millennium.berkeley.edu:23037" -- "r23.millennium.berkeley.edu:23040" [ style=dotted ];
+	"r16.millennium.berkeley.edu:23033" -- "r18.millennium.berkeley.edu:23035" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23045" -- "r30.millennium.berkeley.edu:23047" [ style=dotted ];
+	"r22.millennium.berkeley.edu:23039" -- "r30.millennium.berkeley.edu:23047" [ style=dotted ];
+	"r23.millennium.berkeley.edu:23040" -- "r28.millennium.berkeley.edu:23045" [ style=dotted ];
+	"r14.millennium.berkeley.edu:23005" -- "r19.millennium.berkeley.edu:23010" [ style=bold ];
+	"r30.millennium.berkeley.edu:23047" -- "r32.millennium.berkeley.edu:23049" [ style=dotted ];
+	"r11.millennium.berkeley.edu:23002" -- "r14.millennium.berkeley.edu:23005" [ style=dotted ];
+	"r14.millennium.berkeley.edu:23005" -- "r18.millennium.berkeley.edu:23009" [ style=dotted ];
+	"r25.millennium.berkeley.edu:23042" -- "r28.millennium.berkeley.edu:23045" [ style=dotted ];
+	"r28.millennium.berkeley.edu:23019" -- "r34.millennium.berkeley.edu:23025" [ style=dotted ];
+	"r11.millennium.berkeley.edu:23028" -- "r9.millennium.berkeley.edu:23026" [ style=dotted ];
+	"r13.millennium.berkeley.edu:23030" -- "r16.millennium.berkeley.edu:23033" [ style=dotted ];
+	"r23.millennium.berkeley.edu:23014" -- "r24.millennium.berkeley.edu:23015" [ style=bold ];
+	"r19.millennium.berkeley.edu:23010" -- "r20.millennium.berkeley.edu:23011" [ style=dotted ];
+	"r17.millennium.berkeley.edu:23008" -- "r18.millennium.berkeley.edu:23009" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23027" -- "r31.millennium.berkeley.edu:23022" [ style=dotted ];
+	"r22.millennium.berkeley.edu:23039" -- "r27.millennium.berkeley.edu:23044" [ style=dotted ];
+	"r18.millennium.berkeley.edu:23009" -- "r21.millennium.berkeley.edu:23012" [ style=dotted ];
+	"r23.millennium.berkeley.edu:23040" -- "r25.millennium.berkeley.edu:23042" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23001" -- "r15.millennium.berkeley.edu:23032" [ style=dotted ];
+	"r30.millennium.berkeley.edu:23021" -- "r32.millennium.berkeley.edu:23023" [ style=dotted ];
+	"r19.millennium.berkeley.edu:23036" -- "r22.millennium.berkeley.edu:23039" [ style=bold ];
+	"r11.millennium.berkeley.edu:23002" -- "r15.millennium.berkeley.edu:23032" [ style=bold ];
+	"r10.millennium.berkeley.edu:23053" -- "r9.millennium.berkeley.edu:23052" [ style=dotted ];
+	"r13.millennium.berkeley.edu:23030" -- "r18.millennium.berkeley.edu:23035" [ style=dotted ];
+	"r31.millennium.berkeley.edu:23048" -- "r33.millennium.berkeley.edu:23050" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23017" -- "r30.millennium.berkeley.edu:23021" [ style=dotted ];
+	"r10.millennium.berkeley.edu:23001" -- "r9.millennium.berkeley.edu:23000" [ style=bold ];
+	"r28.millennium.berkeley.edu:23045" -- "r31.millennium.berkeley.edu:23048" [ style=dotted ];
+	"r26.millennium.berkeley.edu:23017" -- "r31.millennium.berkeley.edu:23022" [ style=dotted ];
+	"r16.millennium.berkeley.edu:23007" -- "r18.millennium.berkeley.edu:23009" [ style=bold ];
+	"r24.millennium.berkeley.edu:23041" -- "r30.millennium.berkeley.edu:23047" [ style=dotted ];
+	"r27.millennium.berkeley.edu:23044" -- "r28.millennium.berkeley.edu:23045" [ style=bold ];
+	"r18.millennium.berkeley.edu:23035" -- "r9.millennium.berkeley.edu:23000" [ style=bold ];
+}

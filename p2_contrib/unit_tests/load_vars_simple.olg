@@ -1,0 +1,29 @@
+/**
+ Loads vars from a CSV file. 
+ Creates tuples: 
+  	varOutput(@Node, From, To, Cost)
+
+ Arguments:
+ ----------
+ VARS_START_DELAY
+   The delay before we start loading the vars.
+
+ VARS_FILE
+   The name of the file that contains the vars.
+*/
+
+/** Stage to read CSV */
+stage("CSVtuple", inputVariables, inputVariable).
+
+/** Invokes the CSVtuple stage. */
+inputVariables(@Node, Filename) :- 
+	periodic(@Node, E, VARS_START_DELAY, 1), Filename := VARS_FILE.
+
+materialize(localVariable, infinity, infinity, keys(1,2)).
+
+localVariable(@Node, Var, Type, Size) :- 
+	inputVariable(@Node, VarNode, Var, Type, Size),
+        Node == VarNode.
+
+watchmod(localVariable, "id").
+/* watchmod(varOutput, "c"). */

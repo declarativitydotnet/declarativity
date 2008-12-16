@@ -1,0 +1,80 @@
+
+reachable_basecase
+reachvar(@Node, Nbr, Var) :-
+        edge(@Node, Nbr, _),
+        localVariable(@Nbr, Var, _, _).
+
+##reachable_basecase_delta_edge_1 reachvar_add(@Node, Nbr, Var) :-
+	intermediateResult_reachable_basecase_delta_edge_1_2(@Nbr, Node, Nbr, $_34),
+	localVariable(@Nbr, Var, $_35, $_36).
+
+
+##removal_reachable_basecase_delta_edge_1 delete reachvar_delete(@Node, Nbr, Var) :-
+	intermediateResult_removal_reachable_basecase_delta_edge_1_2(@Nbr, Node, Nbr, $_34),
+	localVariable(@Nbr, Var, $_35, $_36).
+
+
+
+
+====
+
+reachable_basecase
+reachvar(@Node, Nbr, Var) :-
+        edge(@Nbr, Node, _),
+        edge(@Node, Nbr, _),
+        localVariable(@Nbr, Var, _, _).
+
+
+
+
+##intermediateRule_1238 intermediateResult_reachable_basecase_delta_edge_1_3(@Nbr, Node, $_34, Nbr, $_35) :-
+	intermediateResult_reachable_basecase_delta_edge_1_2(@Node, Nbr, Node, $_34),
+	edge(@Node, Nbr, $_35).
+
+
+##reachable_recursive_delta_edge_1 reachvar_add(@Node, Nbr, Var) :-
+	intermediateResult_reachable_recursive_delta_edge_1_2(@Nbr, Node, Nbr, $_38),
+	reachvar(@Nbr, Descendant, Var),
+	Descendant == not Node.
+
+
+##intermediateRule_1244 intermediateResult_removal_reachable_basecase_delta_edge_1_3(@Nbr, Node, $_34, Nbr, $_35) :-
+	intermediateResult_removal_reachable_basecase_delta_edge_1_2(@Node, Nbr, Node, $_34),
+	edge(@Node, Nbr, $_35).
+
+
+##removal_reachable_recursive_delta_edge_1 delete reachvar_delete(@Node, Nbr, Var) :-
+	intermediateResult_removal_reachable_recursive_delta_edge_1_2(@Nbr, Node, Nbr, $_38),
+	reachvar(@Nbr, Descendant, Var),
+	Descendant == not Node.
+
+
+##reachable_basecase_delta_edge_1 reachvar_add(@Node, Nbr, Var) :-
+	intermediateResult_reachable_basecase_delta_edge_1_3(@Nbr, Node, $_34, Nbr, $_35),
+	localVariable(@Nbr, Var, $_36, $_37).
+
+
+
+====
+
+
+
+##intermediateRule_1290 intermediateResult_rule_18_delta_edge_1_3(@Nbr, Node, Nbr, $_41, Var, $_7) :-
+	edge_DELTA_INSERT(@Node, Nbr, $_41),
+	reachvar(@Node, Nbr, Var, 0).
+
+
+##intermediateRule_1292 intermediateResult_rule_18_delta_reachvar_2_3(@Nbr, Node, Nbr, Var, 0, $_41) :-
+	reachvar_DELTA_INSERT(@Node, Nbr, Var, 0),
+	edge(@Node, Nbr, $_41).
+
+
+##rule_18_delta_edge_1 separator(@Node, Nbr, Var) :-
+	intermediateResult_rule_18_delta_edge_1_3(@Nbr, Node, Nbr, $_41, Var, $_7),
+	reachvar(@Nbr, Node, Var, 0).
+
+
+##rule_18_delta_reachvar_2 separator(@Node, Nbr, Var) :-
+	intermediateResult_rule_18_delta_reachvar_2_3(@Nbr, Node, Nbr, Var, 0, $_41),
+	reachvar(@Nbr, Node, Var, 0).
+

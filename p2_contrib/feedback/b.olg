@@ -1,0 +1,2 @@
+hello(@Node) :- periodic(@Node, E, 1, 1).
+watch(hello).

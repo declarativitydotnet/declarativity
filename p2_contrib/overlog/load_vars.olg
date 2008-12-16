@@ -1,0 +1,30 @@
+/** Loads variables from a CSV file. Initiated by nodesLoaded. */
+
+/** Stage to read CSV */
+stage("CSVtuple", varFile, inputVariable).
+
+/** Invoke the CSVtuple stage */
+varFile(@Node, Filename) :- nodesLoaded(@Node), Filename := VARS_FILE.
+
+/* watchmod(inputVariable, "s"). */
+
+/* The set of variables and the associated nodes: node, var, nodeCarryingVar */
+materialize(variable, infinity, infinity, keys(1,2)).
+materialize(localVariable, infinity, infinity, keys(1,2)).
+
+/* Insert the variable information */
+variable(@Node, Var, VarNode, Type, Size) :- 
+	inputVariable(@Node, VarNodeId, Var, Type, Size),
+        node(@Node, VarNodeId, VarNode).
+
+localVariable(@Node, Var, Type, Size) :- 
+	inputVariable(@Node, VarNodeId, Var, Type, Size), 
+        VarNodeId == MYID,
+        Dummy := f_registerVariable(Var, Type, Size).
+
+variablesLoaded(@Node) :-
+	variable(@Node, _, VarNode, _, _), VarNode == "Done".
+
+watchmod(localVariable, "iz").
+/* watchmod(variable, "az"). */
+watchmod(variablesLoaded, "s").

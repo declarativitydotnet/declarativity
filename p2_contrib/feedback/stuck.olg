@@ -1,0 +1,12 @@
+materialize(reachvar, infinity, infinity, keys(1,2,3)).
+materialize(separator, infinity, infinity, keys(1,2)).
+/* materialize(edge, infinity, infinity, keys(1,2)). */
+
+separator(@Nbr, Node, Var) :-
+/*      edge(@Node, Nbr, Dummy), */
+        Zero := 0,
+        reachvar(@Node, Nbr, Var, Zero),
+        reachvar(@Nbr, Node, Var, Zero).
+
+test(@Node) :- periodic(@Node, E, 1).
+watchmod(test, "s").

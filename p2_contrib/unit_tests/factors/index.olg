@@ -1,0 +1,20 @@
+/** Run as $OVERLOG -p 10004 -o index.olg */
+
+#define VARS_FILE "1-vars-localhost-4.csv"
+#define VARS_START_DELAY 0
+#define NODE_POT_FILE "1-nodepot.csv"
+#define EDGE_POT_FILE "1-edgepot.csv"
+
+#include "../../overlog/load_vars.olg"
+#include "../../overlog/load_potentials.olg"
+
+materialize(tableFactor, infinity, infinity, keys(1,2)).
+
+tableFactor(@Node, Factor) :- edgePotential(@Node, Var, NbrVar, Factor).
+tableFactor(@Node, Factor) :- nodePotential(@Node, Var, Factor).
+
+tableCount(@Node, a_count<Factor>) :- 
+        tableFactor(@Node, Factor), periodic(@Node, E, 4, 1).
+
+watchmod(tableFactor, "i").
+watchmod(tableCount, "s").    /* Should be 75 */

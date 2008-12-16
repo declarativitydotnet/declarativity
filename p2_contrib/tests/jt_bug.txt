@@ -1,0 +1,59 @@
+Variable assignment:
+localhost:10001: 1
+localhost:10002: 1,2
+localhost:10003: 1,3,4
+localhost:10004: 1,2,4,
+
+-----
+
+Parents:
+
+     1     1     2     2
+     1     1     1     2
+     1     1     1     1
+
+
+-----
+
+Node 1: (lines 715-764)
+
+##Print[InsertEvent: RULE rule_edge_DELTA_INSERT]:  [edge(localhost:10001, localhost:10003, [2008-Mar-17 02:35:38.105639000])]
+##TupleCount, 7, 2008-Mar-17 02:35:38.153713000
+##Print[InsertEvent: RULE rule_reachvar_DELTA_INSERT]:  [reachvar(localhost:10001, localhost:10003, 1)]
+##Print[InsertEvent: RULE rule_reachvar_DELTA_INSERT]:  [reachvar(localhost:10001, localhost:10003, 2)]
+##Print[InsertEvent: RULE rule_reachvar_DELTA_INSERT]:  [reachvar(localhost:10001, localhost:10003, 3)]
+##Print[InsertEvent: RULE rule_reachvar_DELTA_INSERT]:  [reachvar(localhost:10001, localhost:10003, 4)]
+
+
+##Print[InsertEvent: RULE rule_clique_DELTA_INSERT]:  [clique(localhost:10001, 3)]
+##TupleCount, 11, 2008-Mar-17 02:35:38.226797000
+##Print[InsertEvent: RULE rule_edge_DELTA_INSERT]:  [edge(localhost:10001, localhost:10002, [2008-Mar-17 02:35:38.114712000])]
+
+##TupleCount, 12, 2008-Mar-17 02:35:38.261987000
+##TupleCount, 13, 2008-Mar-17 02:35:38.266025000
+
+##TupleCount, 17, 2008-Mar-17 02:35:38.348059000
+##Print[DeleteEvent: RULE rule_reachvar_DELTA_DELETE]:  [reachvar(localhost:10001, localhost:10003, 1)]
+##TupleCount, 18, 2008-Mar-17 02:35:38.358703000
+##Print[DeleteEvent: RULE rule_reachvar_DELTA_DELETE]:  [reachvar(localhost:10001, localhost:10003, 2)]
+##TupleCount, 19, 2008-Mar-17 02:35:38.369795000
+
+##Print[DeleteEvent: RULE rule_reachvar_DELTA_DELETE]:  [reachvar(localhost:10001, localhost:10003, 4)]
+##TupleCount, 21, 2008-Mar-17 02:35:38.397007000
+
+##Print[DeleteEvent: RULE rule_clique_DELTA_DELETE]:  [clique(localhost:10001, 3)]
+
+##Print[DeleteEvent: RULE rule_clique_DELTA_DELETE]:  [clique(localhost:10001, 4)]
+
+##Print[DeleteEvent: RULE rule_clique_DELTA_DELETE]:  [clique(localhost:10001, 2)]
+
+
+----
+
+Node 3 (lines 719-726):
+
+##Print[InsertEvent: RULE rule_parent_DELTA_INSERT]:  [parent(localhost:10003, localhost:10001)]
+
+##Print[InsertEvent: RULE rule_edge_DELTA_INSERT]:  [edge(localhost:10003, localhost:10001, [2008-Mar-17 02:35:38.105072000])]
+##Print[DeleteAction: RULE rule_edge_delete]:  [edge(localhost:10003, localhost:10002, [2008-Mar-17 02:35:38.109448000])]
+##Print[DeleteEvent: RULE rule_edge_DELTA_DELETE]:  [edge(localhost:10003, localhost:10002, [2008-Mar-17 02:35:33.881964000])]

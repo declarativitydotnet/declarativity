@@ -1,0 +1,89 @@
+/* 
+
+$OVERLOG -o sendFactor.olg -p 10000 -DNBR=\"localhost:10001\"
+
+*/
+
+/* The neighbors of a node in the MRF: node, nbr */
+materialize(edge, infinity, infinity, keys(1,2)).
+init_nbrs edge(@Me, Nbr) :- periodic(@Me, E, 0, 1), Nbr := NBR.
+
+/* The set of variables and the associated nodes: node var */
+materialize(variable, infinity, infinity, keys(1,2)).
+/* Node potentials: Node, Factor. */	
+materialize(nodePotential, infinity, infinity, keys(1)).
+/* Edge potentials: Node, Nbr, Factor */
+materialize(edgePotential, infinity, infinity, keys(1,2)).
+
+r1 var(@Me, A) :- periodic(@Me, E, 0, 1), A := f_registerVariable(1, "F", 2).
+r2 var(@Me, A) :- periodic(@Me, E, 0, 1), A := f_registerVariable(2, "F", 2).
+r3 var(@Me, A) :- periodic(@Me, E, 0, 1), A := f_registerVariable(3, "F", 2).
+
+r4 nodePotential(@Me, F) :- periodic(@Me, E, 1, 1), Values := {[0, 6.8691133112549352e-01], [1, 1.0555184086812896e-02]}, F := f_createTableFactor([1], Values).
+
+r5 edgePotential(@Me, Nbr, F) :- periodic(@Me, E, 1, 1), Nbr := "localhost:10002", Values := {[0, 0, 1], [0, 1, 1.3533528323661270e-01], [1, 0, 1.3533528323661270e-01], [1, 1, 1]}, F := f_createTableFactor([1, 2], Values).
+r6 edgePotential(@Me, Nbr, F) :- periodic(@Me, E, 1, 1), Nbr := "localhost:10003", Values := {[0, 0, 1], [0, 1, 1.3533528323661270e-01], [1, 0, 1.3533528323661270e-01], [1, 1, 1]}, F := f_createTableFactor([1, 3], Values).
+
+r7 variable(@Me, A) :- periodic(@Me, E, 0, 1), A := 1.
+
+r8
+factor_msg_node(@Nbr, NodeFactor) :-
+	periodic(@Node, E, 2, 1),
+	nodePotential(@Node, NodeFactor),
+	edge(@Node, Nbr).
+
+r9
+factor_msg_edge(@Nbr, Nbr, EdgeFactor) :-
+	periodic(@Node, E, 2, 1),
+	edgePotential(@Node, _, EdgeFactor),
+	edge(@Node, Nbr).
+
+r10
+factor_msg_combine(@Nbr, Nbr, NodeFactor) :-
+	periodic(@Node, E, 3, 1),
+	nodePotential(@Node, NodeFactor),
+	edgePotential(@Node, _, EdgeFactor),
+	FactorList := f_initlist(),
+	FactorList := f_append(NodeFactor, f_append(EdgeFactor, FactorList)),
+	f_size(FactorList) > 0,
+	IntermediateFactor := f_combineAll(FactorList),
+	variable(@Node, Var),
+	VariableList := f_initlist(),
+	VariableList := f_cons(Var, VariableList),
+	NewFactor := f_collapse(IntermediateFactor, VariableList),
+	edge(@Node, Nbr).
+
+watchmod(factor_msg_node, "s").
+watchmod(factor_msg_edge, "s").
+watchmod(factor_msg_combine, "s").
+watchmod(var, "").
+watchmod(edge, "").
+watchmod(nodePotential, "").
+watchmod(edgePotential, "").
+
+
+/*factorA
+factorA(@Me, F) :-
+	periodic(@Me, E, 2, 1),
+	V1 := f_cons(1, f_cons(2, f_initlist())),
+	V2 := [1, 2],
+	M := {[2, 1], [1, 2]},
+	F := f_createCanonicalFactor(V1, M, V2).
+*/
+/*
+	init_factor
+	localFactor(@Node, F) :- 
+	    periodic(@Node, E, 1, 1),
+	    F := f_defaultCanonicalFactor().*/
+	
+/*calc_msg
+factor_msg(@Nbr, Node, NewFactor) :-
+	factors(@Node, Nbr, IncomingFactors),
+	nodePotential(@Node, NodeFactor),
+	edgePotential(@Node, Nbr, EdgeFactor),
+	variable(@Nbr, Var),
+	FactorList := f_cons(EdgeFactor, f_cons(NodeFactor, IncomingFactors)),
+	IntermediateFactor := f_combineAll(FactorList),
+	VariableList := f_initlist(),
+	VariableList := f_cons(Var, VariableList),
+	NewFactor := f_collapse(IntermediateFactor, VariableList).*/

@@ -1,0 +1,669 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                  PACKAGES                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\usepackage{epsfig}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+%\usepackage{pxfonts}
+\usepackage{color}
+\usepackage{subfigure}
+%\usepackage[raggedright,normalsize,sf,SF,hang]{subfigure}
+\usepackage{paralist}	% for compactenum etc
+\usepackage{caption}
+\usepackage{ifthen}
+%\usepackage{substr}
+%\renewcommand{\captionfont}{\sffamily}
+%\usepackage[toc,page,title,titletoc]{appendix}
+%\renewcommand{\restoreapp}{}
+%\renewcommand{\appendixname}{Appendix}
+\usepackage[noend]{algorithmic}
+%\usepackage[nottoc]{tocbibind}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                  COMMANDS                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\ignore}[1]{}
+% An indexed term
+\newcommand{\term}[1]{\index{#1}{\bfseries #1}}
+% A term indexed differently from its name
+%\newcommand{\termi}[2]{\index{#2}{\bfseries #1}}
+\newcommand{\termi}[2]{{\bfseries #1}}
+% A term that is not indexed
+\newcommand{\termni}[1]{{\bfseries #1}}
+\newcommand{\sumproduct}{sum--product}
+%\newcommand{\sumproduct}{Shafer--Shenoy}
+%\newcommand{\bk}{Boyen \& Koller (1998)}
+%\newcommand{\bk}{BK}
+%\newcommand{\tjtf}{TJTF}
+\newcommand{\bk}{\textsc{b\&k98}}
+%\newcommand{\tjtf}{TJTF}
+\newcommand{\tjtf}{\textsc{tjtf}}
+\newcommand{\dbn}{\textsc{dbn}}
+\newcommand{\ttbn}{\textsc{2-tbn}}
+\newcommand{\slat}{\textsc{slat}}
+\newcommand{\rdpi}{\textsc{rdpi}}
+\newcommand{\oca}{\textsc{oca}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                 APPEARANCE                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Change the font used for section headers to sans serif and make
+% chapter headers centered.
+%\usepackage{sectsty}
+%\allsectionsfont{\sffamily}
+%\chapterfont{\centering \sffamily}
+
+%% \renewcommand\topfraction{.7}
+%% \renewcommand\bottomfraction{.3}
+%% \renewcommand\textfraction{.2}   
+%% \renewcommand\floatpagefraction{.5}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                ENVIRONMENTS                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\setcounter{secnumdepth}{5}
+%\setcounter{tocdepth}{1}
+
+\usepackage{framed}
+\definecolor{gray}{cmyk}{0.05,0.05,0.05,0.05}
+\newcommand{\shadecolor}{gray}
+%\setlength{\fboxrule}{1pt}
+%\setlength{\fboxsep}{1em}
+%\newenvironment{highlight}[1][gray]%
+%  {\vspace*{0.5\baselineskip} \begin{center}\begin{minipage}{0.85\textwidth}\renewcommand{\shadecolor}{#1}\begin{shaded}}%
+%  {\end{shaded}\end{minipage}\end{center} \vspace*{0.5\baselineskip}}
+\newenvironment{highlight}[1][white]%
+  {\renewcommand{\shadecolor}{#1}\begin{shaded}}%
+  {\end{shaded}}
+\newenvironment{nohighlight}%
+  {}%
+  {}
+
+\definecolor{pink}{cmyk}{0,0.1,0.1,0}
+
+%\newenvironment{outline}{\begin{note} \begin{itemize}}{\end{itemize} \end{note}}
+%\newcommand{\commentout}[1]{}
+
+% Definitions.
+%\newtheoremstyle{mythmstyle}% name
+%  {0pt}%      Space above
+%  {0pt}%      Space below
+%  {}%         Body font
+%  {}%         Indent amount (empty = no indent, \parindent = para indent)
+%  {\bfseries}%Thm head font
+%  {.}%        Punctuation after thm head
+%  { }%        Space after thm head: " " = normal interword space;
+%        %       \newline = linebreak
+%  {}%         Thm head spec (can be left empty, meaning `normal')
+%\theoremstyle{mythmstyle}
+
+\newtheorem{theorem}{Theorem}%[chapter]
+\newtheorem{lemma}{Lemma}%[chapter]
+\newtheorem{corollary}{Corollary}%[chapter]
+\newtheorem{property}{Property}%[chapter]
+\newtheorem{definition}{Definition}%[chapter]
+\newtheorem{example}{Example}%[chapter]
+\newtheorem{algorithm}{Algorithm}%[chapter]
+
+%\newtheorem{thm}{Theorem}%[chapter]
+%\newtheorem{lem}{Lemma}%[chapter]
+%\newtheorem{corr}{Corollary}%[chapter]
+%\newtheorem{prop}{Property}%[chapter]
+%\newtheorem{defn}{Definition}%[chapter]
+%\newtheorem{exam}{Example}%[chapter]
+%\newtheorem{alg}{Algorithm}%[chapter]
+
+%\newenvironment{algorithm}[1]{\begin{nohighlight} \begin{alg} \mbox{\emph{#1}}}{\end{alg} \end{nohighlight}}
+%\newenvironment{example}{\begin{nohighlight} \begin{exam}}{\end{exam} \end{nohighlight}}
+%\newenvironment{definition}{\begin{nohighlight} \begin{defn}}{\end{defn} \end{nohighlight}}
+%\newenvironment{theorem}{\begin{nohighlight} \begin{thm}}{\end{thm} \end{nohighlight}}
+%\newenvironment{lemma}{\begin{nohighlight} \begin{lem}}{\end{lem} \end{nohighlight}}
+%\newenvironment{corollary}{\begin{highlight} \begin{corr}}{\end{corr} \end{nohighlight}}
+%\newenvironment{property}{\begin{highlight} \begin{prop}}{\end{prop} \end{nohighlight}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                  NOTATION                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% General %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+\providecommand{\abs}[1]{\ensuremath{\lvert#1\rvert}}
+\providecommand{\norm}[1]{\ensuremath{\lVert#1\rVert}}
+\providecommand{\bignorm}[1]{\ensuremath{\bigl\lVert#1\bigr\rVert}}
+\providecommand{\Bignorm}[1]{\ensuremath{\Bigl\lVert#1\Bigr\rVert}}
+%\newcommand{\norm}[1]{\ensuremath{||#1||}}
+%\newcommand{\implies}{\ensuremath{\Longrightarrow}}
+%\newcommand{\iff}{\ensuremath{\Longleftrightarrow}}
+\newcommand{\bzero}{\ensuremath{\boldsymbol{0}}}
+\newcommand{\bone}{\ensuremath{\boldsymbol{1}}}
+\newcommand{\df}[1]{\ensuremath{\textrm{d}#1}}
+\newcommand{\tr}[1]{\ensuremath{\textrm{trace}(#1)}}
+\newcommand{\transpose}{\ensuremath{\top}}
+\newcommand{\reals}{\ensuremath{\mathbb{R}}}
+\newcommand{\nonnegreals}{\ensuremath{\mathbb{R}^+}}
+\newcommand{\nonnegints}{\ensuremath{\mathbb{Z}^+}}
+%\newcommand{\defeq}[0]{\ensuremath{\stackrel{\triangle}{=}}}
+\newcommand{\defeq}{\triangleq}
+\newcommand{\setdiff}{\ensuremath{-}}
+\newcommand{\indicator}[1]{\ensuremath{\boldsymbol{1}\{ #1 \}}}
+\newcommand{\set}[1]{\ensuremath{\left\{ #1 \right\}}}
+\newcommand{\E}[1]{\ensuremath{\mathbb{E}[{#1}]}}
+\newcommand{\Cov}[1]{\ensuremath{\textrm{Cov}[{#1}]}}
+\newcommand{\kl}[2]{\ensuremath{D(#1 \, \| \, #2)}}
+\newcommand{\opt}{\ensuremath{\ast}}
+\DeclareMathOperator*{\argmax}{arg max}
+\DeclareMathOperator*{\argmin}{arg min}
+\newcommand{\card}[1]{\ensuremath{|#1|}}
+\newcommand{\scope}[1]{\ensuremath{\textrm{Scope}[{#1}]}}
+\newcommand{\assign}{\leftarrow}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sets %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% The arguments of a factor: \args{node}
+\newcommand{\args}[1]{{\ensuremath \iset{A}_{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Processes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+%% A stochastic process: \proc[letter]
+\newcommand{\proc}[1][x]{{\ensuremath \mathbf{\uppercase{#1}}}}
+% A process index: \ind{letter}
+\newcommand{\ind}[1]{{\ensuremath{\lowercase{#1}}}}
+\newcommand{\varind}[1]{{\ensuremath{\textsc{\lowercase{#1}}}}}
+% Three generic indices.
+\newcommand{\inda}{\ind{a}}
+\newcommand{\indb}{\ind{b}}
+\newcommand{\indc}{\ind{c}}
+\newcommand{\indd}{\ind{d}}
+\newcommand{\inde}{\ind{e}}
+\newcommand{\indf}{\ind{f}}
+\newcommand{\indg}{\ind{g}}
+\newcommand{\indh}{\ind{h}}
+\newcommand{\indi}{\ind{i}}
+\newcommand{\indj}{\ind{j}}
+\newcommand{\indk}{\ind{k}}
+
+%% A process variable: \rv[letter]{index}
+\newcommand{\rv}[2][x]{{\ensuremath \uppercase{#1}_{#2}}}
+%% A process value: \rval[letter]{index}
+%\newcommand{\rval}[2][x]{{\ensuremath \lowercase{#1}_{#2}}}
+%% A fixed process value: \frval[letter]{index}
+\newcommand{\frval}[2][x]{{\ensuremath \overline{\lowercase{#1}}_{#2}}}
+%% A subprocess index set: \iset{letter}
+\newcommand{\iset}[1]{{\ensuremath{\uppercase{#1}}}}
+%% The index set of the global process.
+\newcommand{\univ}{\iset{V}}
+%% The index set of the query variables: \query[\node]
+\newcommand{\query}[1]{\ensuremath{\iset{Q}_{#1}}}
+%% The index set of the evidence variables.
+\newcommand{\evidence}[1]{\iset{E}_{#1}}
+%% The index set of the parent variables of a variable: \parents{index}.
+\newcommand{\parents}[1]{\textrm{Pa}[{#1}]}
+\newcommand{\pa}[1]{\parents{#1}}
+
+%% The index set of the parent variables of a variable: \parents{index}.
+%\newcommand{\parents}[1]{\ensuremath{\textbf{Pa}[{#1}]}}
+%\newcommand{\pa}[1]{\parents{#1}}
+
+%% Three generic index sets.
+\newcommand{\iseta}{\iset{S}}
+\newcommand{\isetb}{\iset{T}}
+\newcommand{\isetc}{\iset{U}}
+\newcommand{\isetd}{\iset{R}}
+%% A stochastic subprocess: \subproc[letter]{indexset}
+\newcommand{\subproc}[2][x]{{\ensuremath \mathbf{\uppercase{#1}}_{#2}}}
+%% The index set of discrete variables.
+\newcommand{\discrete}{\iset{D}}
+%% The index set of continuous variables.
+\newcommand{\continuous}{\iset{C}}
+
+%% Annotation
+\newcommand{\annot}[2]{%
+\def\empty{}%
+\def\targ{#2}%
+\ifx\targ\empty \ensuremath{#1}%
+\else \ensuremath{{#1}^{#2}}%
+\fi}
+
+%% Double annotation
+\newcommand{\dannot}[3]{%
+\def\empty{}%
+\def\targ{#2}%
+\ifx\targ\empty \ensuremath{#1_{#3}}%
+\else \ensuremath{{#1}^{#2}_{#3}}%
+\fi}
+
+% Time indexing, e.g., \ti{\rvals{x}}{t}
+% The following definition typesets the time index only if it is specified
+\newcommand{\ti}[2]{
+  \def\empty{}
+  \def\targ{#2}
+  \ifx\targ\empty
+    \ensuremath{#1}
+  \else
+    \ensuremath{{#1}^{(#2)}}
+  \fi}
+% Component indexing, e.g., \ci{\rvals{x}}{i}
+\newcommand{\ci}[2]{\ensuremath{{#1}_{#2}}}
+% Both time and component indexing, e.g., \tci{\rvals{x}}{t}{i}
+\newcommand{\tci}[3]{
+  \def\empty{}
+  \def\targ{#2}
+  \ifx\targ\empty
+    \ensuremath{{#1}_{#3}}
+  \else
+    \ensuremath{{#1}_{#3}^{(#2)}}
+  \fi}
+% A time index range: \range{t}{t'}
+\newcommand{\range}[2]{\ensuremath{{#1}:{#2}}}
+
+% A random variable
+\newcommand{\rvar}[1]{\ensuremath{\MakeUppercase{#1}}}
+% A value of a random variable
+\newcommand{\rval}[1]{\ensuremath{\MakeLowercase{#1}}}
+% A set/vector of random variables
+\newcommand{\rvars}[1]{\ensuremath{\MakeUppercase{{\bf #1}}}}
+% A value of a set/vector of random variables
+\newcommand{\rvals}[1]{\ensuremath{\MakeLowercase{{\bf #1}}}}
+
+% Some common combinations of variables/values and indices
+\newcommand{\rvalti}[2]{\ensuremath{\ti{\rval{#1}}{#2}}}
+\newcommand{\rvarti}[2]{\ensuremath{\ti{\rvar{#1}}{#2}}}
+\newcommand{\rvalci}[2]{\ensuremath{\ci{\rval{#1}}{#2}}}
+\newcommand{\rvarci}[2]{\ensuremath{\ci{\rvar{#1}}{#2}}}
+\newcommand{\rvalsti}[2]{\ensuremath{\ti{\rvals{#1}}{#2}}}
+\newcommand{\rvarsti}[2]{\ensuremath{\ti{\rvars{#1}}{#2}}}
+\newcommand{\rvalsci}[2]{\ensuremath{\ci{\rvals{#1}}{#2}}}
+\newcommand{\rvarsci}[2]{\ensuremath{\ci{\rvars{#1}}{#2}}}
+\newcommand{\rvaltci}[3]{\ensuremath{\tci{\rval{#1}}{#2}{#3}}}
+\newcommand{\rvartci}[3]{\ensuremath{\tci{\rvar{#1}}{#2}{#3}}}
+\newcommand{\rvalstci}[3]{\ensuremath{\tci{\rvals{#1}}{#2}{#3}}}
+\newcommand{\rvarstci}[3]{\ensuremath{\tci{\rvars{#1}}{#2}{#3}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Densities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+% A generic function: \function{symbol}{annot}{args}
+% Leaves out the arguments if the args are empty
+\newcommand \function[3]{\ensuremath{
+  \def\args{#3}
+  \def\empty{}
+  \ifx\args\empty
+    {#1}_{#2}
+  \else
+    {#1}_{#2}(#3)
+  \fi}}
+%% Probability
+%\newcommand{\probability}{\ensuremath{\wp}}
+%% Given
+\newcommand{\given}{{\ensuremath \vert}}
+%% Probability
+\newcommand{\pr}[1]{\ensuremath{\textrm{Pr}\left[#1\right]}}
+%% Conditional probability
+\newcommand{\cpr}[2]{\ensuremath{\textrm{Pr}\left[#1 \,\given\, #2\right]}}
+%% Density: \p
+\newcommand{\p}[2][]{\function{\textsl{p}}{#1}{#2}}
+%% Conditional density: \cp{vars}{vars}
+\newcommand{\cp}[3][]{\p[#1]{#2 \given #3}}
+%% Approximate density: \ap
+\newcommand{\ap}[2][]{\function{\tilde{\textsl{p}}}{#1}{#2}}
+%% Approximate conditional density: \acp{vars}{vars}
+\newcommand{\acp}[3][]{\ap[#1]{#2 \given #3}}
+%% Other density: \q
+\newcommand{\q}[2][]{\function{\textsl{q}}{#1}{#2}}
+%% Empirical distribution: \empp
+\newcommand{\empp}[2][]{\function{\hat{\textsl{p}}}{#1}{#2}}
+%% Counts (a special case of an empirical distribution):
+\newcommand{\counts}[1]{\ensuremath{\text{Count}\left[{#1}\right]}}
+
+%% Independence statement: \condind{indexset1}{indexset2}{indexset3}
+%\newcommand{\indep}{{\bot\negthickspace\negthickspace\bot}
+\newcommand{\indep}{{\,\bot\,}}
+\newcommand{\margind}[2]{{\ensuremath #1 \, \indep \, #2}}
+\newcommand{\condind}[3]{{\ensuremath #1 \, \indep \, #2 \, \vert \, #3}}
+
+% Independence relations: \indeprel[annotation]{graph_or_distribution}
+\newcommand{\indeprel}[1]{\ensuremath{\cal{I}(#1)}}
+
+%% Markov graph
+\newcommand{\markov}[1][{}]{{\ensuremath G_{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Trees %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+%% A graph
+\newcommand{\graph}[1][{}]{\annot{G}{#1}}
+%% A tree: \tree[annotation]
+\newcommand{\tree}[1][{}]{\annot{T}{#1}}
+% A node: \node{letter} (deprecated)
+\newcommand{\node}[1]{{\ensuremath{\lowercase{#1}}}}
+% Two generic nodes (deprecated)
+\newcommand{\n}[1][]{\node{n}_{#1}}
+\newcommand{\m}{\node{m}}
+%\newcommand{\l}{\ell}
+% Some more generic nodes (deprecated)
+\newcommand{\na}{\node{i}}
+\newcommand{\nb}{\node{j}}
+\newcommand{\nc}{\node{k}}
+\newcommand{\nd}{\node{h}}
+\newcommand{\nf}{\node{\ell}}
+\newcommand{\nh}{\node{f}}
+\newcommand{\nj}{\node{g}}
+\newcommand{\nm}{\node{m}}
+\newcommand{\nn}{\node{n}}
+%% The node set of a tree
+\newcommand{\nodes}[1][\tree]{\ensuremath{N_{#1}}}
+%% The edges of a tree (should be clear from context)
+\newcommand{\edges}[1][\tree]{\ensuremath{E_{#1}}}
+%% The directed edges of a tree (deprecated)
+\newcommand{\dedges}[1][\tree]{\ensuremath{\vec{E}_{#1}}}
+%% The undirected edges of a tree (deprecated)
+\newcommand{\uedges}[1][\tree]{\ensuremath{E_{#1}}}
+%% Directed edge: \dedge{from}{to}
+\newcommand{\dedge}[2]{\ensuremath{(#1, #2)}}
+%% Undirected edge: \uedge{node1}{node2}
+\newcommand{\uedge}[2]{\ensuremath{\{#1, #2\}}}
+%% Neighbors of a node: \nbr{node}
+\newcommand{\nbr}[2][\tree]{\ensuremath{\nodes[{#1}](#2)}}
+%% Descendants under an edge: \desc{from}{to}
+\newcommand{\desc}[2]{\ensuremath{D\dedge{#1}{#2}}}
+%% Rooted tree: \rootedtree
+\newcommand{\rootedtree}{\ensuremath{\vec{T}}}
+%% Node set: \nset[accent]{index}
+\newcommand{\nset}[1][]{\ensuremath{M_{#1}}}
+%% An upstream neighbor: \upnbr{node}
+\newcommand{\upnbr}[1]{\ensuremath{up(#1)}}
+%% Root node
+\newcommand{\nroot}[0]{r}
+%% Edge weight
+\newcommand{\eweight}[2]{\ensuremath{w_{#1,#2}}}
+%% Line representing an edge
+\newcommand{\uedgel}[0]{\longleftrightarrow}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Assignments %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+% A dummy assignment to a set of variables: \das{indexset}
+\newcommand{\as}[2][x]{{\ensuremath{\textbf{\lowercase{#1}}_{#2}}}}
+% A fixed assignment to a set of variables: \fas{indexset}
+\newcommand{\fas}[2][x]{{\ensuremath{\overline{\textbf{\lowercase{#1}}}_{#2}}}}
+% The evidence assignment.
+%\newcommand{\obs}[1][]{\fas{\evidence[#1]}}
+% The restriction of an assignment to a subset of
+% variables: \restr{assignment}{varset}
+\newcommand{\restr}[2]{{\ensuremath{{#1}:{#2}}}}
+% The union of two disjoint assignments: \union{assignment1}{assignment2}
+\newcommand{\union}[2]{{\ensuremath{#1 \cup #2}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Variable elimination %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% An elimination factor: \elim[\pre|\post]{var}
+\newcommand{\pre}{}
+\newcommand{\post}{{\ensuremath \ast}}
+\newcommand{\elim}[2][\pre]{{\ensuremath \xi^{#1}_{#2}}}
+%% An elimination clique: \eclique{var}
+\newcommand{\eclique}[1]{{\ensuremath \iset{E}_{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Clique trees %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The following typesetting could be improved...
+
+%% A clique tree.
+%\newcommand{\ct}{{\ensuremath \mathfrak{T}}}
+%% A set of cliques: \cliques[annotation]
+\newcommand{\cliques}[1][{}]{\annot{\mathbf{C}}{#1}}
+\newcommand{\subcliques}[1]{\ensuremath{\cliques_{#1}}}
+%% The clique of a node: \clique[annotation]{node}
+\newcommand{\clique}[2][{}]{\dannot{C}{#1}{#2}}
+%% The clique of a node, indexed by time: \cliqueti[time]{node}
+%\newcommand{\cliqueti}[2][{}]{\ensuremath{\rvarstci{C}{#1}{#2}}}
+%% A separator between a pair of nodes: \sep[annotation]{node1}{node2}
+\newcommand{\sep}[3][{}]{\dannot{S}{#1}{#2,#3}}
+%% A separator between a pair of nodes: \septi[time]{node1}{node2}
+%\newcommand{\septi}[3][{}]{\ensuremath{\rvarstci{S}{#1}{#2,#3}}}
+%% The elements reachable via an edge: \reach[annotation]{node1}{node2}
+\newcommand{\reach}[3][]{\ensuremath{R^{#1}_{#2,#3}}}
+%% The elements reachable exclusively via an edge: \ereach{node1}{node2}
+\newcommand{\ereach}[2]{\reach[\ast]{#1}{#2}}
+%% Cliques in the message between two nodes
+%\newcommand{\mcliques}[2]{{\ensuremath \mathbf{C}_{#1 \rightarrow #2}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%% Clique tree parameterization %%%%%%%%%%%%%%%%%%%%%%
+
+%% The factors of a clique tree: \factors[annot]
+\newcommand{\factors}[1][{}]{{\ensuremath \boldsymbol{\psi}^{#1}}}
+%% A factor of a clique tree: \factor[node]
+\newcommand{\factor}[1]{\ensuremath{\psi_{#1}}}
+%% Another arbitrary factor: \otherfactor[marker]
+\newcommand{\otherfactor}[1][{}]{{\ensuremath \gamma_{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sum-product %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% The message from one node to another: \msg[accent]{from}{to}
+\newcommand{\msg}[3][]{\dannot{\mu}{#1}{#2, #3}}  % \rightarrow
+\newcommand{\msgs}[1][]{\annot{{\boldsymbol \mu}}{#1}}
+%% The node belief of a node: \nbel[accent]{node}
+\newcommand{\nbel}[2][{}]{\ensuremath{\beta_{#2}^{#1}}}
+%% The edge belief of an edge: \ebel[accent]{node1}{node2}
+\newcommand{\ebel}[3][{}]{\ensuremath{\beta_{#2,#3}^{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%% Asynchronous message passing %%%%%%%%%%%%%%%%%%%%%%
+
+%% A sum-product charge (possibly accented)
+\newcommand{\spchg}[1][{}]{{\ensuremath \boldsymbol{\eta}^{#1}}}
+%% An accent to indicate an updated value
+\newcommand{\updated}{{\ensuremath \star}}
+%% The sum-product charge on a directed edge (possibly
+%% accented): \spchge[accent]{node1}{node2}
+\newcommand{\spchge}[3][{}]{{\ensuremath \eta_{\dedge{#2}{#3}}^{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Hugin %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% A Hugin charge (possibly accented)
+\newcommand{\hchg}[1][{}]{{\ensuremath \boldsymbol{\phi}^{#1}}}
+%% A Hugin node charge (possibly accented): \hchgn[accent]{node}
+\newcommand{\hchgn}[2][{}]{{\ensuremath \phi_{#2}^{#1}}}
+%% A Hugin edge charge (possibly accented): \hchge[accent]{node1}{node2}
+\newcommand{\hchge}[3][{}]{{\ensuremath \phi_{\uedge{#2}{#3}}^{#1}}}
+%% The contraction of a Hugin charge: \contr[charge]
+\newcommand{\contr}[1][\hchg]{{\ensuremath \chi_{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%% Multivariate Gaussians %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% A random vector: \rvec{indexes}
+\newcommand{\rvec}[2][x]{\ensuremath{\vec{\mathbf{\uppercase{#1}}}_{#2}}}
+%% A subvector of a random vector: \subrvec{indexes}
+%\newcommand{\subrvec}[2][x]{{\ensuremath \rvec[#1]_{#2}}}
+% A vector value: \asv{letter}
+\newcommand{\asv}[2][x]{\ensuremath{\vec{\mathbf{\lowercase{#1}}}_{#2}}}
+
+%% Moment form Gaussians
+% The mean vector (subscripted, possibly annotated [TODO])
+\newcommand{\mean}[1]{\ensuremath{\mu_{#1}}}
+% The covariance matrix (subscripted)
+\newcommand{\cov}[1]{\ensuremath{\Sigma_{#1}}}
+% A moment-parameterized Gaussian: \momentg{mean}{cov}
+\newcommand{\momentg}[2]{\ensuremath{{\mathcal N}\left(#1, #2\right)}}
+% Approximated mean vector (subscripted) 
+\newcommand{\amean}[1]{\tilde{\mu}_{#1}}
+% Approximated covariance matrix (subscripted)
+\newcommand{\acov}[1]{\tilde{\Sigma}_{#1}}
+
+%% Canonical form Gaussians
+% The information vector (subscripted)
+\newcommand{\ivec}[1]{\eta_{#1}}
+% The information matrix (subscripted)
+\newcommand{\imat}[1]{\Lambda_{#1}}
+% A canonical-parameterized Gaussian: \canonicalg{ivec}{imat}
+\newcommand{\canonicalg}[2]{\ensuremath{{\mathcal N}^{-1}\left(#1, #2\right)}}
+% The information vector (subscripted)
+\newcommand{\aivec}[1]{\tilde{\eta}_{#1}}
+% The information matrix (subscripted)
+\newcommand{\aimat}[1]{\tilde{\Lambda}_{#1}}
+
+% A Gaussian factor: \gfactor{subrvec}{ivec}{imat}
+\newcommand{\gfactor}[3]{\ensuremath{{\mathcal G}\left(#1; #2, #3\right)}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%% Dynamic Bayesian networks %%%%%%%%%%%%%%%%%%%%%%%%
+
+% Indexing an attribute by time: \ti{index}{time}
+%\newcommand{\ti}[2]{{\ensuremath {#1}(#2)}}
+% Indexing an attribute set by time: \tis{indexset}{time}
+%\newcommand{\tis}[2]{{\ensuremath {#1}(#2)}}
+% The states of a DBN
+%\newcommand{\states}{\iset{w}}
+% A time index range: \trange{t}{t'}
+%\newcommand{\trange}[2]{{\ensuremath {#1}:{#2}}}
+
+% The state variables in a DBN: \statevars[time]
+\newcommand{\State}[2][{}]{\rvarstci{x}{#1}{#2}}
+% Assignments to state variables: \statevals[time]
+\newcommand{\state}[2][{}]{\rvalstci{x}{#1}{#2}}
+% A single state variable: \statevar[time]{index}
+\newcommand{\sState}[2][{}]{\rvartci{x}{#1}{#2}}
+% Assignment to a single state variable: \stateval[time]{index}
+\newcommand{\sstate}[2][{}]{\rvaltci{x}{#1}{#2}}
+
+% The variable representing a class
+\newcommand{\Class}[2][{}]{\rvarstci{y}{#1}{#2}}
+% Assignments to state variables: \statevals[time]
+\newcommand{\class}[2][{}]{\rvalstci{y}{#1}{#2}}
+
+% The observations: \obsvars[time]
+\newcommand{\Obs}[2][{}]{\rvarstci{z}{#1}{#2}}
+% Values of observation variables: \obsvals[time]
+\newcommand{\obs}[2][{}]{\rvalstci{z}{#1}{#2}}
+\newcommand{\fobs}[2][{}]{\rvalstci{\underline{z}}{#1}{#2}}
+% An observation variable in a DBN: \obsvar[time]{index}
+\newcommand{\sObs}[2][{}]{\rvartci{z}{#1}{#2}}
+% Value of an observation variable
+\newcommand{\sobs}[2][{}]{\rvaltci{z}{#1}{#2}}
+\newcommand{\sfobs}[2][{}]{\rvaltci{\underline{z}}{#1}{#2}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Information theory %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Entropy: \entropy{subproc}
+\newcommand{\entropy}[2][{}]{\ensuremath{H_{#1}({#2})}}
+% Conditional entropy: \condent{subproc1}{subproc2}
+\newcommand{\condent}[2]{\ensuremath{H({#1} \given {#2})}}
+%
+\newcommand{\centropy}[3][{}]{\ensuremath{H_{#1}({#2} \given {#3})}}
+% Conditional mutual information: \condmi{subproc1}{subproc2}{subproc3}
+\newcommand{\condmi}[3]{\ensuremath{I({#1}; {#2} \given {#3})}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SLAM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The robot's state
+\newcommand{\robot}{\iset{r}}
+% The states of all landmarks
+\newcommand{\lms}{\iset{l}}
+% The state of landmark k
+\newcommand{\lm}[1]{\iset{l}_{#1}}
+% The odometry measurement
+\newcommand{\odo}{\iset{o}}
+% A measurement of landmark i
+\newcommand{\lmobs}[1]{\iset{m}_{#1}}
+% The control signal
+\newcommand{\control}{\iset{c}}
+% The noisy control signal
+\newcommand{\noisycontrol}{\tilde{\iset{c}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%% Generalized Distributive Law %%%%%%%%%%%%%%%%%%%%%%
+
+% Binary combine operator
+\newcommand{\combine}{\ensuremath{\otimes}}
+% Combine operator for a set of factors
+\newcommand{\combination}{\ensuremath{\bigotimes}}
+%% Binary 
+%\newcommand{\summarize}{\ensuremath{\oplus}}
+% Summary operator
+\newcommand{\summary}{\ensuremath{\bigoplus}}
+% Summing down to a set of variables
+\newcommand{\summaryto}[1]{\ensuremath{\bigoplus_{\downarrow #1}}}
+% The null factor
+\newcommand{\nullfactor}{\ensuremath{\mathbf{0}}}
+% The result at a node: \result[node]
+\newcommand{\result}[1][]{\ensuremath{\beta_{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Calibration  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The true temperature at a node: \temp{node}
+\newcommand{\Temp}[1]{\rvarci{t}{#1}}
+\newcommand{\temp}[1]{\rvalci{t}{#1}}
+\newcommand{\Temps}{\rvars{t}}
+\newcommand{\temps}{\rvals{t}}
+% The bias at a node: \bias{node}
+\newcommand{\Bias}[1]{\rvarci{b}{#1}}
+\newcommand{\bias}[1]{\rvalci{b}{#1}}
+\newcommand{\Biases}{\rvars{b}}
+\newcommand{\biases}{\rvals{b}}
+% The temperature observation at a node: \tobs{node}
+\newcommand{\Tobs}[1]{\rvarci{z}{#1}}
+\newcommand{\tobs}[1]{\rvalci{z}{#1}}
+\newcommand{\ftobs}[1]{\rvalci{\underline{z}}{#1}}
+\newcommand{\Tobsns}{\rvars{z}}
+\newcommand{\tobsns}{\rvals{z}}
+\newcommand{\ftobsns}{\rvals{\underline{z}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Regression %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% A regressor function: \regressor
+\newcommand{\regressor}{{\ensuremath{\hat{f}}}}
+% A basis function: \basis[index]
+\newcommand{\basis}[1][]{{\ensuremath{b_{#1}}}}
+% A basis function weight: \weight[index]
+\newcommand{\weight}[1][]{{\ensuremath{w_{#1}}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Distributed inference %%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% The network junction tree
+\newcommand{\ntree}[1][{}]{\ensuremath{\tree[n]_{#1}}}
+%% The clique of a network junction tree
+\newcommand{\nclique}[2][{}]{\ensuremath{\annot{D}{#1}_{#2}}}
+%% The clique of a node, indexed by time: \cliqueti[time]{node}
+%\newcommand{\ncliqueti}[2][{}]{\ensuremath{\rvarstci{D}{#1}{#2}}}
+%% A separator between a pair of network nodes: \sep[annotation]{node1}{node2}
+\newcommand{\nsep}[3][{}]{\ensuremath{\annot{S}{#1}_{#2,#3}}}
+\newcommand{\nnodes}{N}
+%% A separator between a pair of nodes: \septi[time]{node1}{node2}
+%\newcommand{\nsepti}[3][{}]{\ensuremath{\rvarstci{S}{#1}{#2,#3}}}
+%% Prior fragment
+\newcommand{\pfrag}[1]{\ensuremath{\pi_{#1}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Prior/likelihood models %%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% A collection of priors
+\newcommand{\ps}[1][]{\ensuremath{\bf{\p{}}^{#1}}}
+%% An unaligned prior
+\newcommand{\pp}[2][]{\ensuremath{\pi^{#1}_{#2}}}
+%% A collection of unaligned priors
+\newcommand{\pps}[1][]{\ensuremath{\boldsymbol{\pi}^{#1}}}
+\newcommand{\priors}[1][]{\pps{#1}}
+%% A likelihood factor
+\newcommand{\lf}[2][]{\ensuremath{\lambda^{#1}_{#2}}}
+%% A collection of likelihood factors
+\newcommand{\lfs}[1][]{\ensuremath{\boldsymbol{\lambda}^{#1}}}
+
+%% Deprecated notation below:
+%% A prior charge (possibly accented)
+\newcommand{\pchg}[1][{}]{{\ensuremath \boldsymbol{\pi}^{#1}}}
+%% A prior node charge (possibly accented): \pchgn[accent]{node}
+\newcommand{\pchgn}[2][{}]{{\ensuremath \pi_{#2}^{#1}}}
+%% A prior edge charge (possibly accented): \pchge[accent]{node1}{node2}
+\newcommand{\pchge}[3][{}]{{\ensuremath \pi_{\uedge{#2}{#3}}^{#1}}}
+%% A likelihood charge (possibly accented)
+\newcommand{\lchg}[1][{}]{{\ensuremath \boldsymbol{\lambda}^{#1}}}
+%% A likelihood node charge (possibly accented): \lchgn[accent]{node}
+\newcommand{\lchgn}[2][{}]{{\ensuremath \lambda_{#2}^{#1}}}
+%% The contraction of a prior/likelihood decomposable model: \plcontr{pldm}
+\newcommand{\plcontr}[1]{{\ensuremath \chi_{#1}}}
+%% An abbreviation for prior/likelihood decomposable models
+\newcommand{\pl}{P/L}
+%% Another clique (besides \clique{})
+\newcommand{\otherclique}{\ensuremath{\iset{D}}}
+%% The projection of a robust factor
+\DeclareMathOperator*{\projection}{\ensuremath{\Downarrow}}
+
+\newcommand{\mff}{decomposable fragment}

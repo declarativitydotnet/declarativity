@@ -1,0 +1,22 @@
+#ifndef TIMER_OLG
+#define TIMER_OLG
+
+/** Node, Id, When. */
+materialize(timer, infinity, infinity, keys(1,2)).
+
+timer(@Node, Id, Time) :- 
+        insertTimer(@Node, Id, Delay),
+        Time := f_timerElapsed() + f_timeDuration(Delay).
+
+timerEvent(@Node, Id, Now) :-
+        periodic(@Node, E, 1),
+        timer(@Node, Id, Time),
+        Now := f_timerElapsed(),
+        f_timerElapsed() > Time.
+
+delete timer(@Node, Id, Time) :-
+        periodic(@Node, E, 1),
+        timer(@Node, Id, Time),
+        f_timerElapsed() > Time.
+
+#endif

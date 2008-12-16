@@ -1,0 +1,13 @@
+
+set ns [new Simulator]
+source tb_compat.tcl
+
+# Nodes
+set node0 [$ns node]
+tb-set-node-os $node0 FC6-UPDATE
+
+tb-set-hardware $node0 pc3000
+tb-set-node-startcmd $node0 "/proj/P2/distinf/startup.sh >& /proj/P2/distinf/logs/startupbuild.log" 
+
+$ns rtproto Static
+$ns run

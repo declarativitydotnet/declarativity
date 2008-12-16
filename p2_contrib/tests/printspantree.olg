@@ -1,0 +1,28 @@
+/*
+/Users/kuangc/workspace/p2/distinf-release/bin/runStagedOverlog -p 12345 -o printspantree.olg -DLINKS_FILE=\"data/local4_links_subset.csv\" -DNODE_ADDR=\"localhost:12345\"
+*/
+
+#define LINKS_START_DELAY 0
+#include "../overlog/load_links.olg"
+
+materialize(nodeList, infinity, infinity, keys(1,2)).
+materialize(linkList, infinity, infinity, keys(1,2,3)).
+loadLinks2 nodeList(@Current, From, Time) :- linkOutput(@Current, From, To, _), Time := f_now().
+loadLinks3 nodeList(@Current, To, Time) :- linkOutput(@Current, From, To, _), Time := f_now().
+loadLinks4 linkList(@Current, From, To, Cost) :- linkOutput(@Current, From, To, Cost).
+
+lookup1 
+printLink(@Current, From, To, Cost) :- 
+	periodic(@Current, E, 5, 1), linkList(@Current, From, To, Cost).
+watchmod(printLink, "s").
+
+lookup2a
+edgeLookup(@Node, Current) :- 
+	periodic(@Current, E, 6, 1), nodeList(@Current, Node, Time).
+lookup2b
+printSpanTreeEdge(@Current, Node, NodeParent, Time) :- 
+	edgeResult(@Current, Node, NodeParent, Time).
+watchmod(printSpanTreeEdge, "s").
+
+/*watch(edgeLookup).
+watch(edgeResult).*/

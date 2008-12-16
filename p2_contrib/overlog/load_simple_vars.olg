@@ -1,0 +1,12 @@
+/** Loads variables from a CSV file.
+    Warning: probably defunct at the moment.  */
+
+/** Stage to read CSV */
+stage("CSVtuple", varsFileInput, varOutput).
+
+/** Invokes the CSVtuple stage. */
+loadVars1 
+varsFileInput(@Node, Filename) :- 
+	periodic(@Node, E, 0, 1), Filename := VARS_FILE.
+
+watchmod(varOutput, "c"). 

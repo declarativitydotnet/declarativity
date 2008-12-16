@@ -1,0 +1,305 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% USENIX Workshop on Large-Scale Exploits and Emergent Threats (LEET '08)
+% April 2008
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%
+% Some comment lines for separating sections of the latex file:
+%
+
+% High-level structure:
+%===========================================================================
+% Section:
+%---------------------------------------------------------------------------
+% Subsection:
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Subsubsection:
+%. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+% Figure, etc.:
+%o o o o o o o o o o o o o o o o o o o
+
+\documentclass[letterpaper,twocolumn,11pt]{article}
+\usepackage{usenix,epsfig}
+\usepackage{boxedminipage}
+\include{commands}
+
+\usepackage{latexsym}
+\usepackage{graphics}
+\usepackage{amsmath,amssymb}
+\usepackage{epsfig}
+%\usepackage[tight]{subfigure}
+\usepackage{url}
+\usepackage{float}
+\usepackage{colortbl}
+
+\hyphenation{Spam-Bayes}
+
+\newlength{\wordheight}
+\newcommand{\nodepth}[1]{%
+ \settoheight{\wordheight}{#1}%
+ \raisebox{0pt}[\wordheight][0pt]{#1}}
+
+%
+% Title and author information
+%
+\title{Declarative, Distributed Inference for Behavioral Blacklisting of Spammers}
+\newcommand{\authorspace}{\hspace{.2in}}
+\author{%
+  {\rm Ashima Atul} \\ University of California, Berkeley \and {\rm Udam Saini} \\ University of California, Berkeley \and
+  {\rm Stanislav Funiak} \\ Carnegie Mellon University
+}
+\date{}
+
+% Use these for section/figure/table references for uniformity of style
+\newcommand{\secref}[1]{Section~\ref{#1}}
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+
+% AUTHORS: To make comments in this paper, please create a command like
+% the one below with your own name, then use that to add notes.
+\newcommand{\ashima}[1]{\textbf{[Ashima: #1]}}
+\newcommand{\udam}[1]{\textbf{[Udam: #1]}}
+ 
+\floatstyle{ruled}
+\newfloat{Overlog}{h}{lop}
+\floatname{Overlog}{Program}
+\newcommand{\orule}[1]{{#1}}
+\newcommand{\ofact}[1]{{\tt #1}}
+\newcommand{\rel}[1]{{\sf #1}}
+
+\newcommand{\localvar}[1]{\ensuremath{L_{#1}}}
+
+\newcommand{\vectre}[1]{\mathbf{#1}}
+
+%\newcommand{\vecw}{\mathbf{w}}
+%\newcommand{\veca}{\mathbf{a}}
+\newcommand{\vecp}{\vectre{p}}
+\newcommand{\vecm}{\vectre{m}}
+\newcommand{\veca}{\vectre{a}}
+\newcommand{\distas}{\sim}
+
+\newtheorem{Theorem}{Theorem}[section]
+\newtheorem{Corollary}[Theorem]{Corollary}
+\newtheorem{Lemma}[Theorem]{Lemma}
+\newtheorem{Proposition}[Theorem]{Proposition}
+\newtheorem{Conjecture}[Theorem]{Conjecture}
+\newtheorem{Example}[Theorem]{Example}
+\newtheorem{Question}[Theorem]{Question}
+\newtheorem{Remark}[Theorem]{Remark}
+\newtheorem{Problem}[Theorem]{Problem}
+\newtheorem{Definition}[Theorem]{Definition}
+\newtheorem{Claim}[Theorem]{Claim}
+\newtheorem{Addendum}[Theorem]{Addendum}
+\newtheorem{Observation}[Theorem]{Observation}
+\newtheorem{Comment}[Theorem]{Comment}
+\newtheorem{Conclusion}[Theorem]{Conclusion}
+
+\newcommand{\itemhead}[1]{\textbf{#1}}
+
+%\newcommand{\naive}{na\"{i}ve\ }
+%\newcommand{\Naive}{Na\"{i}ve\ }
+\newcommand{\naive}{naive\ }
+\newcommand{\Naive}{Naive\ }
+
+
+%\newcommand{\ourcaption}[1]{{\Huge \caption{\Huge \textsc{#1}}}}
+
+% These are left over from the Oakland submission
+%% \setlength{\oddsidemargin}{0in}
+%% \setlength{\evensidemargin}{0in}
+%% \setlength{\textwidth}{6.5in}
+%% \setlength{\topmargin}{-0.5in}
+%% \setlength{\textheight}{9in}
+
+
+% Width for resizing graphs in one column
+\newcommand{\colgraphw}{3in}
+% width for resizing graphs three to a page
+\newcommand{\onethirdw}{2.43in}
+
+\newcommand{\wwjd}{focused}
+\newcommand{\WWJD}{Focused}
+
+% cas: when we get desparate
+%\renewcommand{\baselinestretch}{0.99}
+
+%===========================================================================
+ 
+\begin{document} 
+ 
+\maketitle 
+
+\begin{abstract} 
+Behavioral blacklisting is a new promising technique for spam detection. In this paper, we use P2, a system that allows for construction of distributed systems in a declarative manner. Due to the declarative nature of P2, our distributed clustering algorithm is concise, correct, and easy to maintain. The distributed affinity propagation algorithm performs similarly to the centralized spectral clustering algorithm used by Ramachandran et al~\cite{bb}, and allows for domain-mail servers to classify emails, by IP address, as spam or non-spam in real-time. IP addresses are clustered by their sending pattern where the pattern represents the frequency of emails an IP address sent to multiple domains.
+\end{abstract}
+
+\input{introduction}
+\input{p2}
+\input{cc}
+\input{architecture}
+\input{evaluation}
+\input{relatedwork}
+\input{future}
+\section{Conclusion}
+\label{concl}
+In this paper, we proposed using P2 to implement a distributed version of affinity propagation for detecting spammers. P2 allows us to easily develop a distributed approach to spam filtering using declarative programming, which keeps our program concise. This distributed implementation allows domain-mail servers to classify emails in real-time, and works as well as the centralized spectral clustering algorithm used by SpamTracker \cite{bb}. 
+\section{Acknowledgment}
+We thank Prof. Nick Feamster and Anirudh Ramachandran for providing the SpamTracker dataset and giving insight into their design and algorithms, as well as Prof. Joe Hellerstein and Prof. Vern Paxson for their directions and comments.
+
+\bibliographystyle{plain}
+\small{\bibliography{paper}}
+
+\appendix
+\section{Appendix}
+\label{appendix}
+\definecolor{myblue}{rgb}{0.8,0.85,1}
+
+\begin{tabular}{|l|}
+\hline
+\rowcolor{myblue} Materialized relations \\
+\hline
+\scriptsize{\textit{/*node, Var, CandidateExemplar, value*/}} \\
+\scriptsize{materialize(availability, infinity, infinity, keys(2,3)).} \\
+
+\scriptsize{\textit{/*node, LocalVar, CandidateExemplar, value*/}} \\
+\scriptsize{materialize(responsibility, infinity, infinity, keys(2,3)).} \\
+
+\scriptsize{\textit{/*node, LocalVar, CandidateExemplar, value*/}} \\
+\scriptsize{materialize(sentResponsibility, infinity, infinity, keys(2,3)).} \\
+
+\scriptsize{\textit{/*node, LocalVar, CandidateExemplar, value*/}}\\
+\scriptsize{materialize(similarity, infinity, infinity, keys(2,3)).} \\
+
+\scriptsize{\textit{/* node, Var, CandidateExemplar, max(Responsibility, 0)*/}} \\
+\scriptsize{materialize(rp, infinity, infinity, keys(2,3)).} \\
+\hline
+\end{tabular}
+
+
+\begin{tabular}{|l|}
+\hline
+\rowcolor{myblue} Update responsibilities for each iteration\\
+\scriptsize{\textit{/*Responsibility updates for each local variable}}\\
+\scriptsize{\textit{at a periodic time interval*/}}\\
+\scriptsize{rUpdate(@N, LocalVar) :-}\\
+\scriptsize{ \hspace{0.5cm}        periodic(@N,E, AP\_EPOCH),}\\
+\scriptsize{ \hspace{0.5cm}        localVariable(@N, LocalVar, \_).}\\
+        
+\scriptsize{\textit{/*Ordered set of similarity + availability (AS)}}\\
+\scriptsize{\textit{The customized a\_Max2Details aggregate function}}\\
+\scriptsize{\textit{returns the ordered pair of (candidate exemplars, AS)}}\\
+\scriptsize{\textit{with the largest two AS values*/}}\\
+\scriptsize{asSet(@N, LocalVar, a\_Max2Details\textless{}AS\textgreater{}) :- }\\
+\scriptsize{ \hspace{0.5cm}        rUpdate(@N, LocalVar),}\\
+\scriptsize{ \hspace{0.5cm}        availability(@N, LocalVar, CE, A,),}\\
+\scriptsize{ \hspace{0.5cm}        similarity(@N, LocalVar, CE, S),}\\
+\scriptsize{ \hspace{0.5cm}        AS := A + S.}\\
+
+
+\scriptsize{\textit{/*Responsibility calcuations for a given r(i,k)}}\\
+\scriptsize{\textit{i can be considered the LocalVar and k is the variable CE}}\\
+\scriptsize{\textit{The CE here only relates to the candidate exemplars that}}\\
+\scriptsize{\textit{do not produce the maximum AS value for the LocalVar, i}}\\
+\scriptsize{\textit{This is detailed in \textbf{Equation 3.5*/}}}\\
+\scriptsize{responsibilityEvent(@N, LocalVar, CE, NR) :-}\\
+\scriptsize{ \hspace{0.5cm}        asSet(@N, LocalVar, Max2Details),}\\
+\scriptsize{ \hspace{0.5cm}        similarity(@N, LocalVar, CE, S), }\\
+\scriptsize{ \hspace{0.5cm}        MaxAS := f\_removeLast(Max2Details),}\\
+\scriptsize{ \hspace{0.5cm}        MaxCE := f\_removeLast(Max2Details),}\\
+\scriptsize{ \hspace{0.5cm}        NR := Similarity - MaxAS,}\\
+\scriptsize{ \hspace{0.5cm}        CE != MaxCE.}\\
+
+\scriptsize{\textit{/*Responsibility calcuations for a given r(i,k)}}\\
+\scriptsize{\textit{i can be considered the LocalVar and k is the variable CE}}\\
+\scriptsize{\textit{The CE here only relates to the candidate exemplars that}}\\
+\scriptsize{\textit{does produce the maximum AS value for the LocalVar, i}}\\
+\scriptsize{\textit{This is detailed in \textbf{Equation 3.5}*/}}\\
+\scriptsize{responsibilityEvent(@N, LocalVar, CE, NR)  :-}\\
+\scriptsize{ \hspace{0.5cm}        asSet(@N, LocalVar, Max2Details),}\\
+\scriptsize{ \hspace{0.5cm}        similarity(@N, LocalVar, CE, S),}\\
+\scriptsize{ \hspace{0.5cm}        MaxAS := f\_removeLast(Max2Details),}\\
+\scriptsize{ \hspace{0.5cm}        MaxCE := f\_removeLast(Max2Details),}\\
+\scriptsize{ \hspace{0.5cm}        MaxAS2 := f\_removeLast(Max2Details),}\\
+\scriptsize{ \hspace{0.5cm}        MaxCE2 := f\_removeLast(Max2Details),}\\
+\scriptsize{ \hspace{0.5cm}        NR := S - MaxAS2,}\\
+\scriptsize{ \hspace{0.5cm}        CE == MaxCE.}\\
+
+\scriptsize{\textit{/*This rules sends the responsibilities across the network}}\\
+\scriptsize{\textit{the variable relation contains the location (IP address/port)}}\\
+\scriptsize{\textit{of the candidate exemplar (CE)*/}}\\
+\scriptsize{responsibility(@CEN, LocalVar, CE, R)  :-}\\
+\scriptsize{ \hspace{0.5cm}        responsibilityEvent(@N, LocalVar, CE, NR)}\\
+\scriptsize{ \hspace{0.5cm}        variable(@N, CE, CEN).}\\
+        
+\scriptsize{sentResponsibility(@N, LocalVar, CE, R)  :-}\\
+\scriptsize{ \hspace{0.5cm}        responsibilityEvent(@Node, LocalVar, CE, R).}\\
+\hline
+\end{tabular}\\
+
+\begin{tabular}{|l|}
+\hline
+\rowcolor{myblue} Update availabilities for each iteration\\
+\hline
+\scriptsize{\textit{/*Availabilitiy updates for each local variable}}\\
+\scriptsize{\textit{at a periodic time interval*/}}\\
+\scriptsize{aUpdate(@Node, CE, Var) :-}\\
+\scriptsize{ \hspace{0.5cm}         periodic(@N, E, AP\_EPOCH),}\\
+\scriptsize{ \hspace{0.5cm}         localVariable(@N, CE, \_),}\\
+\scriptsize{ \hspace{0.5cm}         similarity(@N, CE, Var, \_).}\\
+
+\scriptsize{\textit{/* The summation in \textbf{Equation 3.6}*/}}\\        
+\scriptsize{sumRp(@N, Var, CE, a\_SUM\textless{}RP\textgreater{}) :-}\\
+\scriptsize{ \hspace{0.5cm}         aUpdate(@N, CE, Var),}\\
+\scriptsize{ \hspace{0.5cm}         rp(@N, OtherVar, CE, RP),}\\
+\scriptsize{ \hspace{0.5cm}         OtherVar != Var,}\\
+\scriptsize{ \hspace{0.5cm}         OtherVar != CE.}\\
+
+\scriptsize{\textit{/*Availability calculations \textbf{Equations 3.6}*/}}\\
+\scriptsize{availabilityCalc(@N, Var, CE, NA) :-}\\
+\scriptsize{ \hspace{0.5cm}         sumRp(@N, Var, CE, SumRP),}\\
+\scriptsize{ \hspace{0.5cm}         responsibility(@N, CE, CE, R),}\\
+\scriptsize{ \hspace{0.5cm}         A := SumRP + R,}\\
+\scriptsize{ \hspace{0.5cm}         NA := f\_min(A, 0.0),}\\
+\scriptsize{ \hspace{0.5cm}         Var != CE.}\\
+
+\scriptsize{\textit{/*Self-availability calculations \textbf{Equations 3.7}*/}}\\
+\scriptsize{availabilityCalc(@N, CE, CE, NA) :-}\\
+\scriptsize{ \hspace{0.5cm}        sumRp(@N, Var, CE, SumRP),}\\
+\scriptsize{ \hspace{0.5cm}         NA := SumRP}\\
+\scriptsize{ \hspace{0.5cm}         Var == CE.}\\
+
+\scriptsize{\textit{/*This rules sends the availabilities across the network}}\\
+\scriptsize{\textit{the variable relation contains the location (IP address/port)}}\\
+\scriptsize{\textit{of the Var variable*/}}\\
+\scriptsize{availability(@VarNode, Var, CE, NA)  :-}\\
+\scriptsize{ \hspace{0.5cm}         availabilityCalc(@N, Var, CE, NA)}\\
+\scriptsize{ \hspace{0.5cm}         variable(@Node, Var, VarNode).}\\
+\hline
+\end{tabular}
+\newpage
+\begin{tabular}{|l|}
+\hline
+\rowcolor{myblue} Exemplar calculation\\
+\hline
+\scriptsize{\textit{/*Exemplar updates for each local variable}}\\
+\scriptsize{\textit{at a periodic time interval*/}}\\
+\scriptsize{eUpdate(@N, LocalVar) :-}\\
+\scriptsize{ \hspace{0.5cm}        periodic(@N, E, AP\_EPOCH),}\\
+\scriptsize{ \hspace{0.5cm}         localVariable(@N, LocalVar, \_).}\\
+
+\scriptsize{\textit{/*Exemplar calculations from \textbf{Equation 3.8}*/}}\\
+\scriptsize{exemplarCalc(@N, LocalVar, a\_MAX\textless{}Sum\textgreater{}) :- }\\
+\scriptsize{ \hspace{0.5cm}         eUpdate(@N, LocalVar),}\\
+\scriptsize{ \hspace{0.5cm}         availability(@N, LocalVar, CE, A),}\\
+\scriptsize{ \hspace{0.5cm}         sentResponsibility(@N, LocalVar, CE, R),}\\
+\scriptsize{ \hspace{0.5cm}         Sum := A + R.}\\
+
+\scriptsize{exemplar(@N, LocalVar, CE) :-}\\
+\scriptsize{ \hspace{0.5cm}         exemplarCalc(@N, LocalVar, MaxSum),}\\
+\scriptsize{ \hspace{0.5cm}         availability(@N, LocalVar, CE, A),}\\
+\scriptsize{ \hspace{0.5cm}         sentResponsibility(@N, LocalVar, CE, R),}\\
+\scriptsize{ \hspace{0.5cm}         MaxSum == A + R.}\\
+\hline
+\end{tabular}
+
+\end{document}

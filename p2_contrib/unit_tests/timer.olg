@@ -1,0 +1,19 @@
+/*#include "../overlog/timer.olg"
+
+
+insertTimer(@Node, 1, 2) :- periodic(@Node, E, 2, 1).
+insertTimer(@Node, 2, 4) :- periodic(@Node, E, 2, 1).
+insertTimer(@Node, 1, 2) :- periodic(@Node, E, 10, 1).
+*/
+dummy(@Node, X) :- periodic(@Node, E, 2, 1), X := f_timerRestart().
+
+now(@Node, X) :- periodic(@Node, E, 1, 10), X := f_now().
+elapsed(@Node, X) :- periodic(@Node, E, 1, 10), X := f_timerElapsed().
+
+hello(@Nbr) :- periodic(@Node, E, 1, 10), Nbr := "localhost:10001".
+
+watchmod(timer, "id").
+watchmod(timerEvent, "s").
+watchmod(dummy, "s").
+watchmod(elapsed, "s").
+watchmod(now, "s").

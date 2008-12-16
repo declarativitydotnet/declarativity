@@ -1,0 +1,142 @@
+/** Requires: 
+    nodePotential, edgePotential, variable, localVariable, linkOutput */
+
+/* The identifier of each node: Node, NodeId, Time */
+materialize(identifier, infinity, 1, keys(1)).
+
+identifier(@Node, MyId) :- periodic(@Node, E, 0, 1), MyId := MYID.
+
+/* The edges of MRF connected to a variable at this node: Node, From, To */
+materialize(mrfEdge, infinity, infinity, keys(1,2,3)).
+
+mrfEdge(@Node, Source, Target) :- 
+        localVariable(@Node, Source, _),
+        mrfEdgeInput(@Node, Source, Target).
+
+watchmod(mrfEdge, "i").
+
+/* A BP message sent to a neighbor: Node, Src, Target, Factor. */
+materialize(message, infinity, infinity, keys(1,2,3)).
+
+/* A BP messages received from a neighbor: Node, Src, Target, Factor. */
+materialize(incoming, infinity, infinity, keys(1,2,3)).
+
+/* Residual of a sent message: Node, Src, Target, Residual. */ 
+materialize(residual, infinity, infinity, keys(1,2,3)).
+
+
+/**********************************************************************
+  Compute the new messages
+ **********************************************************************/
+/* Messages coming into node from nodes OTHER than Nbr */       
+bpUpdate(@Node, Source, Target) :-
+        started(@Node),
+        periodic(@Node, E, BP_EPOCH),
+        localVariable(@Node, Source, _, _),
+        mrfEdge(@Node, Source, Target).
+
+/* Factors whose product forms the messge. */
+messageFactors(@Node, Source, Target, a_MKLIST<Factor>) :-
+        bpUpdate(@Node, Source, Target),
+        incoming(@Node, OtherVar, Source, Factor), 
+        OtherVar != Target.
+
+/* The result of a single unweighted update */
+evalMessage(@Node, Source, Target, NewFactor) :-
+        messageFactors(@Node, Source, Target, InFactors),
+        nodePotential(@Node, Source, NodeFactor),
+        edgePotential(@Node, Source, Target, EdgeFactor),
+        F := f_product(f_cons(EdgeFactor, f_cons(NodeFactor, InFactors))),
+        NewFactor := f_normalize(f_marginal(F, f_initSet(Target))).
+
+
+/**********************************************************************
+  Perform a weighted update and compute the residuals
+ **********************************************************************/
+message_update
+messageEvent(@Node, Source, Target, MixedFactor, Residual) :-
+        evalMessage(@Node, Source, Target, NewFactor),
+        message(@Node, Source, Target, OldFactor),
+        MixedFactor := f_weightedUpdate(OldFactor, NewFactor, BP_UPDATE_RATE),
+        Residual := f_normInf(NewFactor, OldFactor).
+
+message_init
+messageEvent(@Node, Source, Target, NewFactor, Residual) :-
+        evalMessage(@Node, Source, Target, NewFactor),
+        notin message(@Node, Source, Target, _),
+        Residual := DEFAULT_RESIDUAL.
+
+/* The latest residual for each message. */
+residual(@Node, Source, Target, Residual) :- 
+        messageEvent(@Node, Source, Target, _, Residual).
+
+/* We cannot merge message and messageEvent because mutating operations 
+   only work well when triggered by an event (unless indexing all columns). */
+message(@Node, Source, Target, Factor) :-
+        messageEvent(@Node, Source, Target, Factor, _).
+
+incoming(@TargetNode, Source, Target, Factor) :-
+        messageEvent(@Node, Source, Target, Factor, _),
+        variable(@Node, Target, TargetNode, _, _).
+
+
+/**********************************************************************
+  Calculate the belief
+ **********************************************************************/
+/* Periodically trigger the belief update event.
+   We cannot simply listen on incoming insertions here, since that means
+   that we may be double-counting the old and the new incoming messages. */
+beliefUpdate(@Node, Var) :- 
+        started(@Node),
+        periodic(@Node, E, BP_EPOCH),
+        localVariable(@Node, Var, _, _).
+
+/* The list of all incoming factors. */
+beliefIncoming(@Node, Var, a_MKLIST<Factor>) :- 
+        beliefUpdate(@Node, Var),
+        incoming(@Node, _, Var, Factor).
+
+belief(@Node, Var, F) :- 
+        beliefIncoming(@Node, Var, IncomingFactors),
+        nodePotential(@Node, Var, NodeFactor),
+        F := f_normalize(f_product(f_cons(NodeFactor, IncomingFactors))).
+
+beliefValues(@Node, Var, Values, Time) :- 
+        belief(@Node, Var, Factor), 
+        Values := f_values(Factor), 
+        Time := f_timerElapsed().
+
+/**********************************************************************
+  Log the residuals and the number of message updates
+ **********************************************************************/
+/* Log all residuals. */
+residualUpdate(@Node, Time) :-
+        started(@Node), periodic(@Node, E, BP_EPOCH), Time := f_timerElapsed().
+  /* this tuple is needed because group by variables must be in the event. */
+
+messageResidual(@Node, a_MAX<Residual>, Time) :- 
+        residualUpdate(@Node, Time),
+        residual(@Node, _, _, Residual).
+
+messageUpdates(@Node, a_COUNT<Source>, Time) :-
+        residualUpdate(@Node, Time),
+        localVariable(@Node, Source, _, _),
+        mrfEdge(@Node, Source, _).
+
+watchmod(messageUpdates, "s").
+
+/* print result */
+watchmod(identifier, "a").
+watchmod(beliefValues, "s").
+/* watchmod(incoming, "id"). */
+/* watchmod(message, "id").*/
+watchmod(messageResidual, "s").
+/* watchmod(messageFactors, "s"). */
+
+/*
+watchmod(edge, "az").
+watchmod(bpUpdate, "sc").
+watchmod(beliefFactors, "sc").
+watchmod(beliefUpdate, "sc").
+watchmod(belief, "sc"). 
+*/

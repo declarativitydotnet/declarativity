@@ -1,0 +1,23 @@
+#if NNODES == 4
+
+  #define PARTITION_FILE "part4.csv"
+  #define PARTITION_START 15
+  #define PARTITION_END 35
+
+#elif NNODES == 10
+
+  #define PARTITION_FILE "part10.csv"
+  #define PARTITION_START 25
+  #define PARTITION_END 50
+
+#elif NNODES == 54
+
+  #define PARTITION_FILE "part54.csv"
+  #define PARTITION_START 30
+  #define PARTITION_END 70
+
+#else
+
+  #error "Invalid experiment size.
+
+#endif

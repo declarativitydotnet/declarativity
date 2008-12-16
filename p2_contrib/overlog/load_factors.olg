@@ -1,0 +1,30 @@
+/** Loads clique potentials from an SQLite table. Triggered by variablesLoaded.
+    Note: for now, the potentials must have distinct (Node, ArgumentString) */
+
+/** Stage to read CSV */
+stage("SQLiteLoad", factorTable, factorInput).
+
+/** Invoke the CSVtuple stage */
+factorTable(@Node, INPUT_DB, FACTOR_TYPE, "node_id", "factor") :- 
+	nodesLoaded(@Node).
+
+watchmod(factorInput, "s").
+
+/* Node potentials: Node, Factor. */	
+materialize(localFactor, infinity, infinity, keys(1)).
+
+/* The set of variables associated with a node: node, vars */
+materialize(localVars, infinity, infinity, keys(1,2)).
+
+/** Create the potential facts for variables that we reason about. */
+localFactor(@Node, Factor) :-
+	factorInput(@Node, NodeId, Factor),
+        NodeId == MYID.
+
+/* Insert the variable information */
+localVars(@Node, Vars) :-
+	localFactor(@Node, Factor),
+        Vars := f_arguments(Factor).
+
+watchmod(localFactor, "id").
+watchmod(localVars, "id").

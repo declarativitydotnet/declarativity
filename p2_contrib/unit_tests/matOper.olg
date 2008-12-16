@@ -1,0 +1,8 @@
+materialize(env, infinity, infinity, keys(2,3)).
+materialize(try, infinity, infinity, keys(1,2)).
+watchmod(out, "s").
+watchmod(out1, "s").
+
+r1 try(@I, M) :- periodic(@I,E,0,1), M := {[1,1.5,2], [3, 4, 5]}.
+r2 out(@I, N, T, Z) :- periodic(@I,E,2,3), try(@I, M),
+				   N := M + M, T := f_matrixTranspose(M), Z := f_initZeroMatrix(4,4). 

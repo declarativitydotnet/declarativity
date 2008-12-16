@@ -1,0 +1,183 @@
+\section{Graph of the 54 node RAD Lab cluster experiment}
+
+The network graph of the 54 node experiment can be found in Figure~\ref{fig:jt54}.
+
+\begin{sidewaysfigure}[tpb]
+ \centering
+ \includegraphics[width=\columnwidth]{figs/jt54.eps}
+ \caption{Network graph of 54 node Intel-Berkeley dataset being run on the RAD Lab cluster.}
+ \label{fig:jt54}
+\end{sidewaysfigure}
+
+\section{Junction Tree and Spanning Tree}
+
+
+The Junction Tree algorithm is made up of the rules in Listing~\ref{jtrules}.
+The rule named \textit{clique\_init} has three parts: the rule name, head and body. The head and body are separated 
+by the delimiter :-, and are mostly easily interpreted from right to left. When the body is true, the head is 
+true. The distributed nature, or network-awareness, of this programming model is represented by the special 
+symbol “@”, which gives a fact an intended network destination. 
+
+\begin{enumerate}
+\item {\textit{clique\_init:}} Initialize the clique of a local node with the
+variable the local node carries.
+\item{\textit{reachable\_update:}} " \textit{iIf} local node \textit{X} has an
+edge to remote node \textit{Nbr} and \textit{Nbr} carries variable
+\textit{Var}, \emph{then} local node \textit{X} can reach variable
+\textit{Var} through its neighbor \textit{Nbr}.
+\item{\textit{reachable\_recur:}} \textit{If} a local node \textit{X} gets an
+edge connecting it to remote node \textit{Nbr}, then all variables
+\textit{Var} at the remote node that are not of the local node \textit{X} are
+reachable from local node \textit{X}.
+\item{\textit{clique\_update:}} \textit{If} a local node \textit{X} has a
+variable \textit{Var} that is present in two of its remote node neighbors
+\textit{Nbr} and \textit{OtherNbr}, \textit{then} the local node's clique
+should have variable \textit{Var} in it.
+\item {\textit{separator:}} "\textit{If} local node \textit{X} has an edge to
+remote node \textit{Nbr} and variable \textit{Var} is present in the clique of
+both local node \textit{X} and remote node \textit{Nbr}, then variable
+\textit{Var} should be in the local nodes separator set".
+\end{enumerate}
+
+\begin{figure*}[tpb]
+\tt
+{\begin{lstlisting}[frame=trbl, caption={Junction Tree rules},
+label=jtrules, captionpos=b, basicstyle=\footnotesize, boxpos=c]
+	clique_init
+	clique(@X, Var) :- 
+	       variable(@X, Var).      
+	reachable_update
+	reachable(@X, Nbr, Var) :- 
+	       edge(@X, Nbr),
+	       variable(@Nbr, Var).
+	reachable_recur
+	reachable(@X, Nbr, Var, Time) :- 
+	       edge(@X, Nbr),
+	       reachable(@Nbr, OtherNbr, Var),
+	       X != OtherNbr.
+	clique_update
+	clique(@X, Var) :- 
+	       reachable(@X, Nbr, Var),
+	       reachable(@X, OtherNbr, Var),
+	       Nbr != OtherNbr.
+	separator_update
+	separator(@X, Nbr, Var) :- 
+	       edge(@X, Nbr),
+	       clique(@X, Var),
+	       clique(@Nbr, Var).
+\end{lstlisting}
+}
+
+\end{figure*}
+
+The Spanning Tree rules can be found in Listing~\ref{strules}
+
+\begin{figure*}[tpb]
+\tt
+
+{\begin{lstlisting}[frame=trbl, caption={Spanning Tree rules},
+label=strules, captionpos=b, basicstyle=\footnotesize, boxpos=c]
+	create_path
+	path(@X, Neighbor, Cost, PathList) :-
+	        link(@X, Neighbor, Cost), 
+	        PathList := f_concat(X, Neighbor).
+
+	find_best_path
+	bestPathCost(@X,Neighbor, a_MIN<Cost>) :-
+	        path(@X, Neighbor, Cost, PathList).
+
+	store_best_path
+	bestPath(@X, Neighbor, Cost, PathList) :-
+	        bestPathCost(@X, Neighbor, Cost), 
+	        path(@X, Neighbor, Cost, PathList).
+
+	update_path
+	newPath(@Neighbor, X, Dest, Cost, PathList) :-
+	        link(@X, Neighbor, _),
+	        bestPath(@X, Dest, Cost, PathList),
+	        Neighbor != Dest.
+
+	add_path
+	path(@X, Dest, Cost, PathList) :-
+	        link(@X, Neighbor, ExistingCost), 
+	        newPath(@X, Neighbor, Dest, NCost, NPL),
+	        Cost := ExistingCost + NCost,
+	        f_member(NewPathList, X)==0, 
+	        PathList := f_concat(X, NPL).
+
+\end{lstlisting}
+}
+\end{figure*}
+
+The Shafer Shenoy message passing rules can be found in Listing~\ref{ssrules}
+
+\begin{figure*}[tpb]
+\tt
+{\begin{lstlisting}[frame=trbl, caption={Shafer Shenoy algorithm rules},
+label=ssrules, captionpos=b, basicstyle=\footnotesize, boxpos=c]
+add_factor
+localFactor(@Node, F) :-
+        localFactor(@Node, Previous),
+        addFactor(@Node, New),
+        F := f_combine(Previous, New).
+
+nbr_count
+nbrCount(@Node, a_COUNT<*>) :- edgeInf(@Node, Nbr).
+
+clique_set
+cliqueSet(@Node, a_SET<Var>) :- clique(@Node, Var).
+
+incoming_message
+incomingMessage(@Node, From, Factor) :-
+        msg(@Node, From, Factor).
+
+incoming_factor
+incomingFactor(@Node, From, To, Factor) :-
+        msg(@Node, From, Factor),
+        edgeInf(@Node, To),
+        From != To.
+
+incoming_factors
+incomingFactors(@Node, To, a_SET<Factor>) :-
+        incomingFactor(@Node, _, To, Factor).
+
+empty_factors
+incomingFactors(@Node, Nbr, Empty) :- 
+        edgeInf(@Node, Nbr),
+        localFactor(@Node, _),
+        Empty := f_removeLast(f_append(1)).
+
+incoming_length
+incomingLength(@Node, Nbr, Length) :- 
+        incomingFactors(@Node, Nbr, Incoming),
+        Length := f_size(Incoming).
+
+message_gen
+message(@Node, Nbr, F) :-
+        incomingFactors(@Node, Nbr, Incoming),
+        nbrCount(@Node, NbrCount),
+        f_size(Incoming) == NbrCount - 1,
+        localFactor(@Node, Local),
+        cliqueSet(@Nbr, Sep),
+        F := f_factorCollapse(f_combine(f_combineAll(Incoming), Local), Sep).
+
+incoming_messages
+incomingMessages(@Node, a_SET<Factor>) :-
+        incomingMessage(@Node, Nbr, Factor).
+
+node_belief
+nodeBelief(@Node, F) :-
+        incomingMessages(@Node, Incoming),
+        nbrCount(@Node, NbrCount),
+        f_size(Incoming) == NbrCount,
+        localFactor(@Node, Local),
+        F := f_combine(f_combineAll(Incoming), Local).
+
+node_mean
+nodeMean(@Node, V) :-
+        nodeBelief(@Node, Factor),
+        V := f_gaussianMean(f_factorCollapse(Factor, f_append(MYID))).
+
+\end{lstlisting}
+}
+\end{figure*}

@@ -1,0 +1,23 @@
+/** Stage to read CSV */
+stage("SQLiteSave", saveTuple, dummy).
+
+/** Specifies the table. */
+saveTuple(@Node, Filename, Table, "elapsed", "factor") :- 
+	periodic(@Node, E, 1, 1),
+        Filename := "test.db",
+        Table := "test".
+/*        Field1 := "duration". */
+
+dummy(@Node, X) :- periodic(@Node, E, 2, 1), X := f_timerRestart().
+
+materialize(mat, infinity, infinity, keys(1)).
+
+mat(@Node) :-
+        periodic(@Node, E, 2).
+
+saveTuple(@Node, Elapsed, Factor) :-
+        mat(@Node),
+        Elapsed := f_timerElapsed(),
+        Factor := f_factor(1).
+
+/** watch(saveTuple). */

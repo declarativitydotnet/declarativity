@@ -1,0 +1,20 @@
+var1
+var(@Me, A) :- periodic(@Me, E, 1, 1), A := f_registerVariable(1, "V", 1).
+
+factor1
+factor(@Me, F) :- 
+	periodic(@Me, E, 2, 1), 
+	F := f_canonicalGaussian([1], "1", "0.5").
+
+factor2
+factor(@Me, F) :-
+	periodic(@Me, E, 2, 1),
+	F := f_factor(1.0).
+
+factor3
+table(@Me, F) :-
+        periodic(@Me, E, 2, 1),
+        F := f_tableFactor(f_initlist(), [1]).
+
+watchmod(factor, "s").
+watchmod(table, "s").

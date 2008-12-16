@@ -1,0 +1,15 @@
+materialize(edge, infinity, 128, keys(1,2)).
+materialize(var,infinity,infinity,keys(1,2)).
+
+edge("localhost:10000","localhost:10001").
+edge("localhost:10001","localhost:10000").
+
+v1 var(@Me, Me) :- periodic(@Me, E, 2, 1).
+
+v2 var(@J, V) :- var(@I,V), edge(@I,J).
+
+vd delete edge(@Me,"localhost:10001") :- periodic(@Me, E, 4, 1).
+vd2 delete edge(@Me,"localhost:10000") :- periodic(@Me, E, 4, 1).
+
+watch(edge).
+watch(var).

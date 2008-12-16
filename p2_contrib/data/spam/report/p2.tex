@@ -1,0 +1,32 @@
+\section{Declarative Programming for Distributed Systems}
+\label{p2} 
+In this section we give a brief overview of P2 and its declarative language \emph{Overlog}~\cite{p2}. A declarative language and runtime system can provide an easy and flexible platform for developing, deploying and optimizing distributed algorithms. 
+
+P2 allows the programmer to specify overlay networks and analyze data using Overlog. The overlog language is based on Datalog, a logic programming language. Overlog programs are constructed from rules, which specify how facts are generated from each other. Key concepts are relations and fact tuples. A relation is described by a list of fields. A fact tuple is an assignment of values to the fields. There are two types of relations: materialized and streaming. Materialized relations are similar to database tables and streaming relations are similar to events. Keys in the materialized tables represent the primary keys of the relation. Overlog programs are well suited for specifying distributed algorithms, which involve maintaining lists of neighbors and passing messages between the neighbors. 
+
+The declarative specification of overlay and data processing logic, specified in Overlog, is compiled into distributed dataflow programs. A dataflow is an optimized specification of the resulting distributed application, which handles message passing, relational operations such as (join, selection, projection, aggregation), queueing, and multiplexing. 
+
+Overlog rules are of the form $\langle\emph{ruleID}\rangle \langle\emph{head}\rangle :- \langle\emph{body}\rangle$ where \emph{body} contains a list of predicates over relations in a database, and \emph{head} defines the tuples derived from the relations that satisfy the predicates in the \emph{body}. The commas separating the predicates represent the conjunction operation. The symbol \emph{@} in the relation represents the \emph{location specifier}, conveying the location (node address) at which the tuple information is residing.
+
+To give a better understanding to the reader of declarative rules and their conciseness in Overlog, we briefly explain the rules for finding shortest path between all pairs of nodes written in Overlog (Program~\ref{overlog:spr}) . The relation \emph{link} stores the information of the neighboring nodes and cost of the edge to the neighbors. \emph{Path} relation has attributes \texttt{(Source, Destination, Path List, Cost)}, where \texttt{source} and \texttt{destination} are endpoints of the path, \texttt{path list} stores the nodes in the path to \texttt{destination} and \texttt{cost} is the total cost to reach the \texttt{destination}. Rules are best read as \emph{rule body} with the \emph{predicates} as the if statement, followed by the \emph{rule head }as the then clause. Rule \emph{r1} states that if there is a tuple \texttt{(NextHop, Cost)} in the \emph{link} table at node \texttt{Src}, then node \texttt{Src} has a path to \texttt{NextHop} node with weight equal to \texttt{cost} and the \texttt{path list} with value \texttt{NextHop}. Rule \emph{r2} states that if there is a \emph{link} tuple \texttt{(NextHop, Cost1)} at node \texttt{Src} and at node \texttt{NextHop} the \emph{path} relation has tuple \texttt{(Dest, PathList, Cost2)}, then node \texttt{Src} has a path to \texttt{Dest} through \texttt{NextHop} with \texttt{Cost = Cost1 + Cost2}. Rule \emph{r1} gives one-hop paths from link tuples, and \emph{r2} recursively produces path tuples with \emph{destination} more than one-hop away. In rule \emph{r3} we find the minimum cost path that node \emph{Src} has to \emph{Dest}.
+
+\begin{Overlog}
+\small{
+materialize(link,infinity,infinity,keys(1,2)).\\
+materialize(path,infinity,infinity,keys(1,2,3)).\\
+\\
+r1: path(@Src, NextHop,PathList,Cost) :-\\
+\phantom{30} link (@Src,NextHop,Cost),\\
+\phantom{30} PathList := f\_initList(NxtHop).\\\\
+r2: path(@Src Dest,NewPathList,Cost) :-\\
+\phantom{30} link (@Src,NextHop,Cost1),\\
+\phantom{30} path(@NextHop,Dest,PathList,Cost2),\\
+\phantom{30} NewPathlist:=f\_concat(PathList,NextHop),\\
+\phantom{30} Cost = Cost1 + Cost2.\\\\
+r3: bestPath(@Src,Dest,PathList,min$\langle Cost \rangle$) :- \\
+\phantom{30} path(@Src,Dest,PathList,Cost)\\
+}
+  \caption{All pairs shortest path}
+  \label{overlog:spr}
+\end{Overlog}
+

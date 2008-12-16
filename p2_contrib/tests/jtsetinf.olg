@@ -1,0 +1,20 @@
+#include "db.olg"
+#include "rst.olg"
+
+#ifndef JT_EPOCH
+  #define JT_EPOCH EPOCH
+#endif
+
+#ifndef JTINF_EPOCH
+  #define JTINF_EPOCH EPOCH
+#endif
+
+#ifndef FACTOR_TYPE
+  #define FACTOR_TYPE "decomposable"
+#endif
+
+#define JTSET
+
+#include "../overlog/load_factors.olg"
+#include "../overlog/jtset.olg"
+#include "../overlog/jtinf.olg"

@@ -1,0 +1,20 @@
+/** Loads internode links from a CSV file. Triggered by nodesLoaded. */
+
+/** Stage to read CSV */
+stage("CSVtuple", linksFile, linkIds).
+
+/** Invokes the CSVtuple stage. */
+linksFile(@Node, Filename) :- nodesLoaded(@Node), Filename := LINKS_FILE.
+
+linkInput(@Node, From, To, PSend, PReceive) :-
+        linkIds(@Node, FromId, ToId, PSend, PReceive),
+        node(@Node, FromId, From),
+        node(@Node, ToId, To).
+
+/** Marks links that are active. */
+materialize(linkEnabled, infinity, 10000000, keys(1,2)).
+
+linkEnabled(@Node, To) :- linkInput(@Node, From, To), Node == From.
+
+/* watchmod(linkInput, "s").*/
+

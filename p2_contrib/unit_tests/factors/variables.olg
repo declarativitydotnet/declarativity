@@ -1,0 +1,4 @@
+var1
+var(@Me, A) :- periodic(@Me, E, 1, 1), A := f_registerVariable("a", "V", 1).
+
+watch(var).

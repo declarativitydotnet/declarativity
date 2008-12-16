@@ -1,0 +1,20 @@
+/** Run as $OVERLOG -p 10004 -o indexGaussian.olg */
+
+#define VARS_FILE "model-vars-localhost-4.csv"
+#define VARS_START_DELAY 0
+#define CLIQUE_POT_FILE "model-cliquepot-localhost-4.csv"
+
+#include "../../overlog/load_vars.olg"
+#include "../../overlog/load_clique_potentials.olg" 
+
+materialize(gaussianFactor, infinity, infinity, keys(1,2)).
+
+gaussianFactor(@Node, Factor) :- cliquePotential(@Node, _, Factor).
+
+gaussianFactor(@Node, Factor) :- cliquePotential(@Node, _, Factor).
+
+gaussianCount(@Node, a_count<Factor>) :-
+        gaussianFactor(@Node, Factor), periodic(@Node, E, 4, 1).
+
+watchmod(gaussianFactor, "i").
+watchmod(gaussianCount, "s"). /* Should be 3 */

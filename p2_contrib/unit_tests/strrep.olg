@@ -1,0 +1,2 @@
+hello(@Node, X) :- periodic(@Node, E, 1), X := f_strReplace("o", "O", Node).
+watchmod(hello, "s").

@@ -1,0 +1,266 @@
+/*
+ Spanning Tree formation using a simplified version of the algorithm in 
+ http://ai.stanford.edu/~paskin/pubs/PaskinGuestrinMcFadden2005.pdf
+ 
+ Running the script:
+ /Users/kuangc/workspace/p2/distinf-release/bin/runStagedOverlog -o rst.olg -DLINKS_START_DELAY=2 -DLINKS_FILE=\"../tests/data/local4_links_subset.csv\" -DROUTING_ITERATIONS=1000 -DROUTING_EPOCH=3 -DROUTING_START_DELAY=3 -DMAX_LINK_AGE=5 -DMYID=\"localhost:10000\"
+
+ Forms a spanning tree, without any optimization. Detects dead links and 
+ switches the edges of the spanning tree as necessary.
+ 
+ Arguments:
+ ----------
+ ROUTING_ITERATIONS
+   The total number of epochs executed by the spanning tree algorithm.
+
+ ROUTING_EPOCH
+   The duration of each epoch in seconds.
+
+ ROUTING_START_DELAY
+   The delay (in seconds) before we start running the algorithm.
+
+ MAX_LINK_AGE
+   The number of seconds before we drop the link to a silent node.
+
+ MYID
+        Unique ID for this node
+*/
+
+#include "timer.olg"
+
+/* The identifier of a node: Node, NodeId */
+materialize(identifier, infinity, infinity, keys(1)).
+
+/* Communication links among nodes: Node, Neighbor, Cost, LastUpdateTime */
+materialize(link, infinity, infinity, keys(1,2)).
+
+/* Links on which communication was recently heard. */
+materialize(linkActive, infinity, infinity, keys(1,2)).
+
+/* The configuration for active links. */
+materialize(config, infinity, infinity, keys(1,2)).
+
+/* The information about a candidate parent. */
+materialize(possibleParent, infinity, infinity, keys(1,2,3,4,5)).
+
+/* The parent of a node: Node, Parent.
+   Since edge etc. are reference-counted, parent must not generate refresh
+     events.  */
+materialize(parent, infinity, infinity, keys(1)).
+
+/* The root of the tree that this node belongs to: Node, Root */
+materialize(root, infinity, infinity, keys(1)).
+
+/* The latest pulse for each root a node has seen: Node, Root, Pulse. */
+materialize(pulse, infinity, infinity, keys(1,2)).
+
+/* The edges that form the spanning tree: Node, Neighbor. */
+materialize(possibleEdge, infinity, infinity, keys(1,2)).
+materialize(edge, infinity, infinity, keys(1,2)).
+materialize(routingEdge, infinity, infinity, keys(1,2)).
+
+/* Inserts the link information between this node and its neighbors. */
+link(@Node, To, PSend, PReceive, 0) :- 
+        linkInput(@Node, From, To, PSend, PReceive),
+        Node == From.
+
+/* Initialize the node's identifier. */
+identifier(@Node, MyId) :-
+        periodic(@Node, E, 0, 1), MyId := MYID.
+
+watchmod(identifier, "a").
+
+
+/**********************************************************************
+  The information about possible parents is determined by the current
+  parent, current root, and the configurations.
+ **********************************************************************/
+
+/* Update each node's own root pulse time. */
+pulse(@Node, MYID, Time) :-
+	started(@Node),
+        periodic(@Node, E, ROUTING_EPOCH),
+        Time := f_timerElapsed().
+
+/* Insert the default pulse for a root we've never heard of. */
+pulse(@Node, RootId, Pulse) :- 
+        config_DELTA_INSERT(@Node, _, _, RootId, Pulse),
+        notin pulse(@Node, RootId, _).
+
+/* Update the pulse for the current parent. */
+pulse(@Node, RootId, Pulse) :-
+        config_DELTA_INSERT(@Node, Nbr, _, RootId, Pulse),
+        parent(@Node, Nbr).
+
+/* Update the root for the current parent. */
+root(@Node, RootId) :-
+        config_DELTA_INSERT(@Node, Nbr, _, RootId, Pulse),
+        parent(@Node, Nbr).
+
+/**********************************************************************
+  Update the internal state and configurations by selecting
+  the new best parent.
+ **********************************************************************/
+/* Run a single update. */
+updateParent(@Node) :-
+        started(@Node),
+        periodic(@Node, E, ROUTING_EPOCH).
+
+/* The cost of changing a parent. */
+newParent(@Node, a_max<InvCostParent>) :-
+        updateParent(@Node),
+        config(@Node, Nbr, NbrParent, NbrRootId, NbrPulse),
+        linkActive(@Node, Nbr),
+        pulse(@Node, NbrRootId, OldPulse),
+        parent(@Node, OldParent),
+        root(@Node, OldRootId),
+        NbrRootId <= OldRootId, /* Neighbor has a better root */
+        Nbr != OldParent,       /* Neighbor is not already my parent */
+        NbrPulse > OldPulse,    /* Neighbor is not my descendant. */
+        NbrParent != Node,      /* Neighbor is not my child: avoid cycles */
+        link(@Node, Nbr, _, PReceive),
+        Cost := 1.0 / PReceive + ROUTING_SWITCH_COST,
+        InvCostParent := f_cons(1.0 - Cost, Nbr).
+
+/* The cost of keeping the parent */
+newOldParent(@Node, NewParent, a_max<InvCostParent>) :-
+        newParent(@Node, NewParent),
+        config(@Node, Nbr, NbrParent, NbrRootId, NbrPulse),
+        linkActive(@Node, Nbr),
+        parent(@Node, Nbr),
+        NbrRootId < MYID,
+        NbrParent != Node,
+        link(@Node, Nbr, _, PReceive),
+        Cost := 1.0 / PReceive,
+        InvCostParent := f_cons(1.0 - Cost, Nbr).
+
+/* No parent has root lower than myself. I am the root.*/
+bestParent(@Node, Node) :-
+        newOldParent(@Node, NewParent, OldParent),
+        f_size(NewParent) == 0,
+        f_size(OldParent) == 0.
+
+/* Select the best parent. */
+bestParent(@Node, Parent) :-
+        newOldParent(@Node, NewParent, OldParent),
+        CostParent := f_max(NewParent, OldParent),
+        f_size(CostParent) > 0,
+        Parent := f_last(CostParent).
+
+/* Additional info about the parent. */
+bestParentInfo(@Node, Parent, RootId, Pulse) :-
+        bestParent(@Node, Parent),
+        config(@Node, Parent, _, RootId, Pulse).
+
+bestParentInfo(@Node, Node, MYID, Pulse) :-
+        bestParent(@Node, Parent),
+        Parent == Node,
+        pulse(@Node, MYID, Pulse).
+  
+/* Update the parent, the root, and the pulse. */
+parent(@Node, Parent) :-
+        bestParentInfo(@Node, Parent, _, _).
+
+root(@Node, RootId) :-
+        bestParentInfo(@Node, _, RootId, _).
+
+pulse(@Node, RootId, Pulse) :-
+        bestParentInfo(@Node, _, RootId, Pulse).
+ 
+/* Send a configuration message describing Node's state to all neighbors. */
+config(@Nbr, Node, Parent, RootId, Pulse) :-
+        bestParentInfo(@Node, Parent, RootId, Pulse),
+#ifdef LOSSY_LINKS
+        link(@Node, Nbr, PSend),
+        f_coinFlip(PSend) == 1,  /* simulate lossy links */
+#endif
+        linkEnabled(@Node, Nbr).
+
+/* Configurations are assumed to be broadcasted and counted exactly once. */ 
+configBroadcast(@Base, Node, Parent, RootId, Pulse) :-
+        bestParentInfo(@Node, Parent, RootId, Pulse),
+        Base := BASE_ADDR.
+
+/* Establish bidirectional edges, used by higher levels. */
+possibleEdge(@Node, Parent) :- parent(@Node, Parent).
+
+possibleEdge(@Parent, Node) :- parent(@Node, Parent).
+
+edge(@Node, Nbr) :-
+        possibleEdge(@Node, Nbr), linkActive(@Node, Nbr).
+
+/* delay the insertion into routingEdge, in order to avoid ripple efects. */
+insertTimer(@Node, Nbr, ROUTING_EPOCH) :- edge(@Node, Nbr).
+
+routingEdge(@Node, Nbr) :- timerEvent(@Node, Nbr), edge(@Node, Nbr).
+
+delete routingEdge(@Node, Nbr) :- edge_DELTA_DELETE(@Node, Nbr).
+
+/**********************************************************************
+  Maintain a relation of active links. 
+ **********************************************************************/
+config_inserted(@Node, Nbr) :-
+        config(@Node, Nbr, Parent, RootId, Pulse).
+
+/* Update the link age. */
+link(@Node, Nbr, PSend, PReceive, Time) :-
+        config_inserted(@Node, Nbr),
+        link(@Node, Nbr, PSend, PReceive, _),
+        Time := f_timerElapsed().
+
+/* Mark new links. */
+linkActive(@Node, Nbr) :-
+        config_inserted(@Node, Nbr),
+        notin linkActive(@Node, Nbr).
+
+/* Mark the link as inactive if we have not heard messages on it in a while */
+delete linkActive(@Node, Nbr) :- 
+        periodic(@Node, E, ROUTING_EPOCH),
+        link(@Node, Nbr, _, _, Time),
+        f_timerElapsed() - Time > MAX_LINK_AGE * ROUTING_EPOCH.
+
+/* Note: in the rewritten rules, line 4 is printed without parenthesis, 
+         but it is executed correctly.  */
+delete linkActive(@Node, Nbr) :- 
+        periodic(@Node, E, ROUTING_EPOCH),
+        link(@Node, Nbr, _, PReceive, Time),
+        LinkAge := (f_timerElapsed() - Time) / ROUTING_EPOCH, 
+        LinkAge > MAX_LINK_AGE || 
+          f_pow(1-PReceive, LinkAge - 2) < SILENCE_THRESHOLD.
+          /* Use LinkAge-1, rather than LinkAge, to handle the border cases. */
+
+/* We could have also used soft-state, but currently, the declaration 
+   of soft-state tables does not allow basic arithmetic expressions. */
+
+/* watchmod(linkOutput, "s"). */
+watchmod(parent, "id").
+watchmod(root, "id"). 
+watchmod(pulse, "i").
+watchmod(linkActive, "id"). 
+watchmod(bestParentInfo, "s").
+
+/*
+watchmod(config, "i").
+watchmod(newOldParent, "s").
+watchmod(bestParent, "s").
+watchmod(bestParentInfo, "s").
+watchmod(edge, "id").
+watchmod(link, "iz"). 
+*/
+
+/* Rules for logging. */
+materialize(edge_dummy, infinity, infinity, keys(1)).
+edge_dummy(@Node) :- edge(@Node, Var).
+
+edge_inserted(@Node, Nbr, Time) :-
+        edge_DELTA_INSERT(@Node, Nbr), Time := f_timerElapsed().
+edge_deleted(@Node, Nbr, Time) :-
+        edge_DELTA_DELETE(@Node, Nbr), Time := f_timerElapsed().
+
+watchmod(edge_inserted, "s").
+watchmod(edge_deleted, "s").
+
+parent_changed(@Node, Parent, Time) :- 
+        parent(@Node, Parent), Time := f_timerElapsed().
+
+watchmod(parent_changed,"s").

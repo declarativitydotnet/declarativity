@@ -1,0 +1,17 @@
+/** Loads variables from an SQLite table. Initiated by nodesLoaded. */
+
+stage("SQLiteLoad", varTable, varRow).
+
+varTable(@Node, INPUT_DB, "variables", "node_id", "variables") :-
+        nodesLoaded(@Node).
+
+/* The set of variables associated with a node: node, vars */
+materialize(localVars, infinity, infinity, keys(1)).
+
+/* Insert the variable information */
+localVars(@Node, Vars) :-
+	varRow(@Node, VarNodeId, Vars),
+        VarNodeId == MYID.
+
+watchmod(varRow, "c").
+watchmod(localVars, "id").

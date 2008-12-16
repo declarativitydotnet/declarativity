@@ -1,0 +1,10 @@
+materialize(a,infinity,1,keys(1)).
+materialize(b,infinity,1,keys(1)).
+
+b(@Node, X) :- a(@Node, X).
+
+a(@Node, 1) :- periodic(@Node, E, 1, 1).
+a(@Node, 2) :- periodic(@Node, E, 2, 1).
+
+watchmod(a,"id").
+watchmod(b,"id").

@@ -1,0 +1,11 @@
+/** Executes the junction tree algorithm. */
+
+#include "db.olg"
+#include "rst.olg"
+
+#ifndef JT_EPOCH
+#define JT_EPOCH EPOCH
+#endif
+
+#include "../overlog/load_localvars.olg" 
+#include "../overlog/jtset.olg"

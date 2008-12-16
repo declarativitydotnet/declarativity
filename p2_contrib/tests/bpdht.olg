@@ -1,0 +1,29 @@
+/* Loopy belief propagation with DHT lookup */
+
+
+#ifndef BP_EPOCH
+  #define BP_EPOCH EPOCH
+#endif
+
+#ifndef BP_UPDATE_RATE
+  #define BP_UPDATE_RATE 1
+#endif
+
+#define DEFAULT_RESIDUAL 1
+#define EXPERIMENT_DURATION BP_EPOCH*NITERS
+
+#define CHORD_STABILIZATION 60
+
+#include "../overlog/load_nodes.olg"
+#include "../overlog/load_vars.olg"
+#include "../overlog/load_mrf_edges.olg"
+#include "../overlog/load_potentials.olg"
+
+#include "../overlog/bpdht.olg"
+#include "../overlog/start.olg"
+
+
+/* Chord. The running script must provide the LANDMARK definition */
+#include "../overlog/chord.olg"
+	
+watchmod(nodeHash, "i").

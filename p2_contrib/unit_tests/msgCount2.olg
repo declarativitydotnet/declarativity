@@ -1,0 +1,69 @@
+materialize(edge, infinity, infinity, keys(1,2)).
+materialize(msg, infinity, infinity, keys(1,2)).
+materialize(incomingFactor, infinity, infinity, keys(1,2,3)).
+materialize(nbrCount, infinity, infinity, keys(1)).
+
+e1 edge(@Node, "localhost:10001") :- periodic(@Node, E, 1, 1).
+e2 edge(@Node, "localhost:10002") :- periodic(@Node, E, 1, 1).
+e3 edge(@Node, "localhost:10003") :- periodic(@Node, E, 1, 1).
+e4 edge(@Node, "localhost:10004") :- periodic(@Node, E, 1, 1).
+
+m1 msg(@Node, "localhost:10001", "a") :- periodic(@Node, E, 1, 1).
+m2 msg(@Node, "localhost:10002", "b") :- periodic(@Node, E, 1, 1).
+
+r1
+msg(@X, Nbr, V) :- periodic(@X, E, 2, 1),
+	Nbr := "localhost:10003",
+	V := "c".
+
+/*
+r2 msgCount(@Node) :- msg(@Node, Nbr, F).
+*/
+
+/* Could not count the number of edges other than a neighbor.
+   edgeCount(@Node, Nbr, a_COUNT<*>) :-
+	edge(@Node, Nbr),
+	edge(@Node, Other),
+	Nbr != Other.
+*/
+
+r4 nbrCount(@Node, a_COUNT<*>) :- edge(@Node, Nbr).
+
+r5 incomingFactor(@Node, Nbr, Y) :-
+	edge(@Node, Nbr),
+	msg(@Node, OtherNbr, Y),
+	Nbr != OtherNbr.
+
+r6 incomingFactors(@Node, Nbr, a_SET<Y>) :-
+	incomingFactor(@Node, Nbr, Y).
+
+f7 sendMsg(@Node, Nbr, F) :-
+	incomingFactors(@Node, Nbr, F),
+	nbrCount(@Node, NbrCount),
+	f_size(F) == NbrCount - 1.
+
+/*
+r6 sendMsg(@Node, Nbr, ECnt, a_SET<Y>) :- 
+	eCount(@Node, Nbr, ECnt),
+	mCount(@Node, Nbr, MCnt),
+	msg(@Node, OtherNbr, Y),	
+	OtherNbr != Nbr,		
+	ECnt == MCnt.
+*/
+/*
+r7 updateMsg(@Nbr, FactSet) :- 
+	sendMsg(@Node, Nbr, ECnt, FactSet),
+	
+	f_size(FactSet) != ECnt.
+*/
+
+watchmod(nbrCount, "i").
+/* watchmod(incomingFactor, "s"). */
+/* watch(incomingFactors). */
+watch(sendMsg).
+
+
+/* watch(eCount). */
+/* watchmod(sendMsg, "sc").*/
+/*watchmod(mCount, "sc").*/
+/*watchmod(updateMsg, "s"). */

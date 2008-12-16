@@ -1,0 +1,73 @@
+materialize(factorA, infinity, infinity, keys(1)).
+materialize(factorB, infinity, infinity, keys(1)).
+materialize(factorC, infinity, infinity, keys(1)).
+
+var1
+var(@Me, V) :- periodic(@Me, E, 1, 1), V := f_registerVariable(1, "F", 2).
+
+var2
+var(@Me, V) :- periodic(@Me, E, 1, 1), V := f_registerVariable(2, "F", 3).
+
+var2
+var(@Me, V) :- periodic(@Me, E, 1, 1), V := f_registerVariable(3, "F", 4).
+
+factorA
+factorA(@Me, F) :- 
+	periodic(@Me, E, 2, 1), 
+	/* M := {[0, 0, 0.2], [0, 1, 0.5], [1, 2, 0.8]},  */
+        M := "0.2_0_0.5_0_0_0.8",
+	F := f_tableFactor([1, 2], M).
+
+factorB
+factorB(@Me, F) :- 
+	periodic(@Me, E, 2, 1), 
+	F := f_tableFactor([1], "0.5_0.6").
+
+factorC(@Me, F) :-
+	periodic(@Me, E, 2, 1),
+	F := f_tableFactor([1], "1_1").
+
+weightedUpdate(@Me, F1, F2) :- 
+	periodic(@Me, E, 3, 1),
+	factorB(@Me, FB), 
+	factorC(@Me, FC),
+	F1 := f_weightedUpdate(FB, FC, 1),
+	F2 := f_weightedUpdate(FB, FC, 0.5).
+
+norms(@Me, N1, Ninf) :-
+          factorB(@Me, FB), 
+	  factorC(@Me, FC),
+          N1 := f_norm1(FB, FC),
+          Ninf := f_normInf(FB, FC).
+watch(norms).
+
+combine
+combination(@Me, F) :-
+	factorA(@Me, FA),
+	factorB(@Me, FB),
+	F := FA * FB.
+
+collapse
+marginal(@Me, F) :-
+	factorA(@Me, FA),
+	F := f_marginal(FA, [1]).
+
+normalize
+normalize(@Me, F) :-
+	factorA(@Me, FA),
+	F := f_normalize(FA).
+
+values
+values(@Me, V) :- 
+	factorA(@Me, FA),
+	V := f_values(FA).
+
+watchmod(factorA, "i").
+watchmod(factorB, "i").
+watchmod(factorC, "i").
+watchmod(weightedUpdate, "s").
+watchmod(combination, "s").
+watchmod(marginal, "s").
+watchmod(combinationList, "s").
+watchmod(normalize, "s").
+watchmod(values, "s").

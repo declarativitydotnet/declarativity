@@ -1,0 +1,8 @@
+factor(@Nbr, F) :- 
+              Nbr := "localhost:10001",
+              periodic(@Node, E, 0, 1), 
+              Dummy := f_registerVariable(1, "F", 2),
+              F := f_tableFactor([1], "0.1_0.2").
+
+watch(factor).
+

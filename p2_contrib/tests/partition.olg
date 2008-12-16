@@ -1,0 +1,37 @@
+#include "../overlog/timer.olg"
+
+materialize(component, infinity, infinity, keys(2)).
+
+/** Load the partition */
+stage("CSVtuple", partitionFile, partitionInput).
+
+partitionFile(@Node, Filename) :-
+        nodesLoaded(@Node), Filename := PARTITION_FILE.
+
+component(@Me, Node, ComponentId) :-
+        partitionInput(@Me, NodeId, ComponentId),
+        node(@Me, NodeId, Node).
+
+watchmod(component, "i").
+
+/** Setup the activation / deactivation events */
+insertTimer(@Node, 1, Time) :- start(@Node), Time := PARTITION_START * EPOCH.
+insertTimer(@Node, 2, Time) :- start(@Node), Time := PARTITION_END * EPOCH.
+
+/** Deactive and activate the neighbor links. */
+delete linkEnabled(@Node, Nbr) :-
+        timerEvent(@Node, 1),
+        link(@Node, Nbr, _, _),
+        component(@Node, Node, MyId),
+        component(@Node, Nbr, NbrId),
+        MyId != NbrId.
+
+linkEnabled(@Node, Nbr) :-
+        timerEvent(@Node, 2),
+        link(@Node, Nbr, _, _),
+        component(@Node, Node, MyId),
+        component(@Node, Nbr, NbrId),
+        MyId != NbrId.
+
+watchmod(timerEvent, "s").
+watchmod(linkEnabled, "id").

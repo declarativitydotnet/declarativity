@@ -1,0 +1,5 @@
+#!/bin/bash
+$OVERLOG -r WARN -o sendFactor.olg -p 10000 -DNBR=\"localhost:10001\" 2>1.log  &
+$OVERLOG -r WARN -o sendFactorNbr.olg -p 10001 2>2.log &
+
+

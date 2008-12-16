@@ -1,0 +1,36 @@
+/*
+ Spanning Tree that is simply loaded from file.
+*/
+
+/* The identifier of each node: Node, NodeId */
+materialize(identifier, infinity, 1, keys(1)).
+
+/* Spanning tree edges: Node, Neighbor 
+    This is the interface to any program on top of this spanning tree */
+materialize(edge, infinity, 100000, keys(1,2)).
+
+/* Initialize the node's identifier. */
+init_identifier
+identifier(@Node, MyId) :- 
+        periodic(@Node, E, 0, 1), MyId := MYID.
+
+watchmod(identifier, "a").
+
+/* Inserts the link information between this node and its neighbors. */
+edge(@From, To, Time) :- 
+        linkOutput(@Node, From, To, _), 
+        Node == From, 
+        Time := f_timerElapsed().
+
+/* Rules for logging. */
+materialize(edge_dummy, infinity, infinity, keys(1)).
+edge_dummy(@Node) :- edge(@Node, Nbr).
+
+edge_inserted(@Node, Nbr, Time) :-
+        edge_DELTA_INSERT(@Node, Nbr), Time := f_timerElapsed().
+edge_deleted(@Node, Nbr, Time) :-
+        edge_DELTA_DELETE(@Node, Nbr), Time := f_timerElapsed().
+
+watchmod(edge_inserted, "s").
+watchmod(edge_deleted, "s").
+

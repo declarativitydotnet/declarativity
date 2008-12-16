@@ -1,0 +1,93 @@
+Working title: Overlays for distributed inference problems
+
+Introduction
+* Distributed inference is critical in many applications
+** Emergency response teams
+** Privacy-preserving collaborative spam filtering
+** Router configuration?
+* Inference algorithms need to do non-trivial computations.
+** JMH: Emphasize here the centrality of computations on graphs: spanning trees, transitive closures, etc.
+** For example, loopy belief propagation algorithms use message schedule that may require maintaining a priority queue to determine the message with the highest residual. In other case of TRP, the algorithms need to compute a set of spanning trees whose edges cover the edges of the markov network. Even more fundamentally level, the nodes need to perform variable lookup and coordination.
+** On the constrast, most distributed versions of these algorithms only simple neighbor-to-neighbor communication; no global coordination.
+* The ad-hoc networking community has developed tools to perform global communications and data structures on networks
+** These are distributed algorithms for maintaining and manipulating graph data structures (approximate hypercubes, DeBruijn graphs, etc.) in distributed environments. 
+** For example: can use a DHT like Chord to perform variable lookup. Can perform aggregation; form spanning trees. Such structures called overlay: logical datastructure on top of a physical network.
+** Even more fundamentally.
+* Recent work on Declarative Networking has successfully applied deductive database languages to the construction of overlay networks
+** enormous reductions in code, "fitness" in matching pseudocode
+** adopted in both p2p and sensornet contexts, implementing a wide variety of network protocols across all levels of the traditional network stack
+** a key idea: networking protocols construct and manipulate graphs, and deductive database languages are simple ways to express properties and constraints on graphs
+
+* Our thesis: overlay networks and inference algorithms can be easily programmed, adapted and integrated in a distributed system using Declarative Networking.
+** intuition from above: inference is graph computation, so same argument applies.
+** We'll start by showing just how easy this can be: distributed loopy belief propagation in k lines of code (line-for-line from somebody's pseudocode?)
+** Expand to the use of a sophisticated DHT (47 more lines of code) to enable variations on loopy
+** show how a complex interleaving of the inference and networking layers can be easily expressed in a declarative framework
+
+** throughout, we'll measure answer quality and message costs relative to centralized implementations
+** also measure code size and try to qualitatively evaluate the "fitness" of the language to the tasks at hand
+
+
+** Loopy belief propagation: message scheduling, lookup.
+** In combination with local sampling, can achieve message complexity that is close to the corresponding centralized solution.
+** Junction tree inference: Distributed triangulation. Spans across layers. 
+** Some of these techniques have been examined in the prior literature
+*** Using DHT to lookup variables
+*** JT
+*** We put them together here
+* We demonstrate the algorithms on two applications
+** Collaborative spam filtering, executed on emulab, a large network that simulates realistic network conditions, such communication delays. Demonstrate that achieve a similar rate of novelty as a related centralized implementation.
+** Also evaluate on a suite of real-world and simulated results. Show that achieve similar performance as handcoded and comparable to centralized that does not perform any coodination
+
+The distributed inference problem
+* Probabilistic model and its relation to the physical network
+** Assume that have a graphical model representation of the density: MRF, or a decomposable model.
+** Each node carries a part of the model and wishes to compute the posterior over a subset of the variables.
+* Example: collaborative spam filtering. 
+** Have a similarity measure that describe the communication patterns of a node. Perform clustering to classify a node.
+** One way to do clustering is to use LBP. An effective centralized algorithm: residual belief propagation. Requires us to maintain and update a queue of residuals.
+* Challenges
+** Variable discovery
+** Programming distributed systems is dificult
+** Global coordination: can we retrieve the messages in the right order (approximately?)
+** Robustness
+** What about more challenging optimization problems; distributed triangulation. Assignment of variables to nodes.
+
+Distributed inference with overlays
+* Intro to Overlog / P2
+** Use the baseline belief propagation as an example here?
+* Inference with global coordination
+** The synchronous bp algorithm is too simple: too costly. Better to do TRP or RBP.
+** In TRP, need to compute a number of spanning trees that cover the Markov network. Here's how you do it with Overlog.
+** In RBP, update messages greedily in best-first order
+*** Maintaining the queue in a distributed is too costly; no known results
+*** Can sample the duration, after which a message is sent
+*** In expectation, the first message that is sent across the network has a residual close to the maximum.
+*** To keep the total duration resonable, we need to compute the normalization (sum of residuals). This normalization determines the overall rate, at which messages are sent. Requires global coordination (computing of residual). Can use dat aggregation.
+* Inference with uncertain variable locations; dynamic memberships?
+** Simple combination: 
+** More complicated: don't know the complete model, have a relational model
+   [not sure if we'll get here]
+* Distributed triangulation; junction tree inference
+** Explored in P&G
+** Effectively, collapses the layers.
+** What do we say here?
+
+Experimental results
+* Summary
+** Algorithms written in Overlog, with key datastructures (factors etc.) written in C++. \footnote{Aiming to release the code before the conference.}
+** Examined three applications: collaborative spam filtering, sensor calibration, as well as a suite of difficult problems are not specific to distributed domain.
+** We evaluate the convergence or the accuracy of the solution as a function of the number of messages sent.
+** Compare with idealized centralized algorithm, previous Lisp implementation where the algorithms were hand-coded.
+* Things to show for loopy BP on the collaborative filtering and other datasets
+** Validate the detection rates for collaborative spam filtering (since we're using a slightly different clustering method)
+** Comparison of centralized RBP and our randomized distributed version
+** Comparison of different distributed versions
+* Things to show for junction tree inference
+** Communication complexity compared to the Lisp implementation to compute the overlay
+** Time to stabilize (?)
+** Since this is not new, do we need to worry about showing the results of an actual inference task?
+
+Conclusions
+* Overlays are highly useful for distributed inference. We demonstrate that you can get very good results
+* Interesting work: given these algorithm descriptions, can we optimize the variable placement?

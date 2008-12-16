@@ -1,0 +1,20 @@
+materialize(set, infinity, infinity, keys(1,2)).
+
+result(@Node, a_UNION<X>) :-
+        periodic(@Node, E, 2),
+        set(@Node, X).
+
+set(@Node, X) :-
+        periodic(@Node, E, 3, 1),
+        X := [ 1, 2, 3 ].
+
+set(@Node, X) :-
+        periodic(@Node, E, 5, 1),
+        X := [ 2, 3, 4 ].
+
+set(@Node, X) :-
+        periodic(@Node, E, 7, 1),
+        X := [ 3, 4, 5 ].
+
+watchmod(result, "s").
+watchmod(set, "i").
