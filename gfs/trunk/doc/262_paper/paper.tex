@@ -158,7 +158,39 @@ Why choose GFS to implement in a declarative language?
 \end{itemize}
 
 \section{Performance Evaluation}
-Compared with HDFS. Look at both overall throughput, and metadata ops/second.
+
+We  validate the applicability of our approach by prototyping a distributed filesystem based on Google's GFS, and evaluating its performance and robustness to failure.  Our goal is to achieve competitive performance on the large append and read workload characteristic of the GFS environment in spite of the increased control overhead of our Overlog runtime, and to demonstrate fault tolerance even when master nodes are lost.  In this section, we present an evaluation of how successful we were in achieving these goals.
+
+In the first section, we compare the cost of metadata operations between our prototype and HDFS, the Hadoop open source implementation of GFS.  Following this, we simulate a MapReduce sort benchmark, comparing read and write performance between BFS and HDFS as we 
+scale the number of concurrent clients and datanodes together.  Finally, we discuss the various failure modes of the architecture and the impact of our multi-master extension on these scenarios.
+
+\subsection{Test Environment}
+
+GFS is a proprietary filesystem: we can only speculate about its implementation based on the documentation that Google has published, and we cannot evaluate its performance against our own simulated workloads.  Instead, we used Hadoop, Yahoo's open source implemenation of MapReduce, which includes a distributed filesystem (HDFS) based on GFS.
+
+We performed our experiments on the Amazon Elastic Compute Cloud, a virtualized "utility computing" environment.  EC2 provides a convenient and inexpensive testing platform, but this convenience can come at the cost of high variability in network and disk performance (LATE paper, EC2).  Hadoop is already well-integrated with EC2, and instrumenting BFS to handle dynamic address assignment was trivial.
+
+\subsection{Metadata Operations}
+
+In our first experiment, we compare the latency of metadata operations affecting the control path.  A directory listing uses the client protocol and requires a round trip between the client and master and a lookup on the master, as does touching a file on the filesystem.  Copying a zero-byte file requires two round trips to the master: one to get a new chunk id for the append operation, and another to request a link of datanodes who can accept the new chunkid.  (Does hadoop combine these?  probably, and it would be easy for us to do so).
+
+The results of running 100 of each of these metadata operations are shown in Figure 1.  As we anticipated, the overhead of these operations is significantly higher in our implementation that in HDFS.  This is due in part to client-side caching, enabled in HDFS and not yet implemented in BFS, although it would be simple to locally materialize lookup results into relations that can be queried before visiting the master. (actually, I don't think we can claim this.  you can't cache lookup results, new file create requests or new chunk requests!).
+
+\subsection{Sort Benchmark}
+
+Our next experiment evaluates read and write performance under a typical MapReduce workload.  The sort benchmark used by Dean et al [] is a simple and practical test that puts equal stress on the read and write components of the distributed filesystem.  
+
+The MapReduce specification of sorting is trivial, largely because sorting (over \emph{some} key) is a side-effect of the framework.  Thus, the map function simply returns the sort key and the entire line as the key's value, and the reduce function is simply the identity function.  In an execution of the sort, a single input file is read in parallel in disjoint sections by all of the mappers, which apply the hash function and write the bucketed results to their local disks.  The reducers then read these files via RPC calls, apply the built-in merge sort, and write as many files back to the GFS as there are reducers.
+
+For the purposes of our experiments, we are interested only in the costs associated with the parallel reads at the start of the workflow described above, and the parallel writes described at the end.  Hence, in our simulation we dispense with the actual sorting, hashing and crossbarring, and focus merely on the filesystem performance as  the number of concurrent clients and datanodes are scaled up together.  For a given concurrency level D, we provision an EC2 cluster with a master node and D datanodes, and prime the filesystem by creating D 100MB files with a replication factor of 2.  We then spawn D client processes (one on each datanode), which read one of the files from the filesystem, write it to local disk, then create a new distributed filesystem file and append the contents of the local file to it.  Thus, each client reads (writes) 100MB to (from) the filesystem concurrently in each sort benchmark, as we vary D.
+
+Our results are summarized in Figures 2 and 3.  At lower concurrency levels, BFS is comparable in read performance and handily outperforms HSFS in write performance.  This result supports our intuition that the relatively high cost of metadata operations is quickly amortized by the highly efficient datapath under the large transfers characteristic of MapReduce and Hadoop workloads.
+
+In HDFS, read latency increases gradually as load increases, but write latency reacts very quickly to concurrency, increasing by almost two times as we increase the number of clients from 1 to 4.  Beyond that point, HDFS gracefully handles increasing load, with low variance.  BFS shows similar read results, but significantly lower write latency (less than half that of HDFS, though the variance is higher).  At 16 concurrent clients, the BFS implementation began suffering timeouts.  At this time is is difficult for us to say whether this is due to issues with queueing in the Overlog runtime implementation, race conditions or other bugs in the Overlog  specification of GFS, or a problem with the custom data transfer protocol that we implemented.  The variance for x=16 in the graph in Figure 4 reflects the fact that out of 48 observations, 4 timeouts occurred, resulting in write times greater than 60 seconds (because our timeout was 60 seconds).  If we omit those four observations from our results, the mean write response time is 10.12 seconds.
+
+\subsection{Fault Tolerance}
+
+
 
 \section{Future Work}
 \begin{itemize}
