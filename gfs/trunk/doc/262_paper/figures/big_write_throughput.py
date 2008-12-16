@@ -12,4 +12,4 @@ plt.errorbar(xvalues, [9.81,12.68,11.27,15.11], [0.47,3.82,3.69,17.31], fmt='o-'
 plt.xlim([0,17])
 plt.ylim([0,40])
 plt.legend(loc='upper right')
-plt.savefig('big_write_throughput.svg')
+plt.savefig('big_write_throughput.eps')
