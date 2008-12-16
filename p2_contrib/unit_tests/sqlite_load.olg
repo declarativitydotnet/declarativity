@@ -1,0 +1,8 @@
+/** Stage to read CSV */
+stage("SQLiteLoad", sqlTable, sqlTuple).
+
+/** Specifies the table. */
+sqlTable(@Node, "model.db", "model") :-
+	periodic(@Node, E, 1, 1).
+
+watchmod(sqlTuple, "c").

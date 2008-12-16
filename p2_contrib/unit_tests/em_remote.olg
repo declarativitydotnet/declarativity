@@ -1,0 +1,67 @@
+#define EM_EPOCH 3
+#define R 1
+#define P -8
+#define VARNAME "a"
+
+materialize(em, infinity, infinity, keys(1)).
+materialize(edge, infinity, infinity, keys(1,2)).
+
+edge("localhost:10000", "localhost:10001").
+edge("localhost:10001", "localhost:10000").
+
+/*initialization of the engine performed at all the nodes*/
+r1 initEngine(@Node, M) :- 
+        periodic(@Node,E,0,1),
+        M := f_emEngine(FNAME, VARNAME, 2, 2).
+
+/*to be performed only at one node ????*/
+r2 emEvent(@Node, M1) :- 
+        initEngine(@Node, M),
+        M1 := f_emInit(f_pow(R,P)),
+        Node == "localhost:10000".
+        
+r3 em(@Node, M1) :-
+        emEvent(@Node, M1).
+        
+r4 emEvent(@OtherNode, M1) :-
+        emEvent(@Node, M1),
+        edge(@Node, OtherNode),
+        Node == "localhost:10000".
+
+/*perform the E step*/
+r5 emUpdate(@Node, MNew) :-
+        periodic(@Node,E,EM_EPOCH),
+        em(@Node, M),
+        MNew := f_emUpdate(M,f_pow(R,P)).
+
+r6 em(@Node, MNew) :-
+        emUpdate(@Node, MNew).
+
+/*share information with remote nodes */
+r7 message(@OtherNode, MNew) :-
+        emUpdate(@Node, MNew),
+        edge(@Node, OtherNode).
+
+/*Takes two mixture aggregates and combines their parameters*/
+aggM(@Node, MAgg) :-
+        message(@Node, MNew),
+        em(@Node, M),
+        MAgg := f_addParameters(M, MNew).
+
+/*perform local update
+Takes the aggregate mixture and regularization and
+and returns the local mixture aggregate
+normalize the output*/
+local(@Node, MLocal) :-
+        aggM(@Node, MAgg),
+        MLocal := f_mNormalize(f_emLocalUpdate(MAgg, f_pow(R,P)), f_pow(R,P)).
+
+/*perform M step and update estimate*/
+r3 em(@Node,M1) :-
+        local(@Node, MLocal),
+        M1 := f_emUpdate(MLocal,f_pow(R,P)).
+        
+        
+watchmod(initEngine, "s").
+watchmod(em, "i").
+watchmod(emEvent, "sc").

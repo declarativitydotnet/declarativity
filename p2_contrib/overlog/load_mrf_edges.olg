@@ -1,0 +1,10 @@
+/** Loads edges of a MRF from a CSV file. Triggered by variablesLoaded. */
+
+/** Stage to read CSV */
+stage("CSVtuple", mrfEdgesFile, mrfEdgeInput).
+
+/** Invoke the CSVtuple stage */
+mrfEdgesFile(@Node, Filename) :- 
+	variablesLoaded(@Node), Filename := MRF_EDGES_FILE.
+
+/* watchmod(mrfEdgeInput, "c"). */

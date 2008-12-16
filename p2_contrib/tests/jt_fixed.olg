@@ -1,0 +1,8 @@
+/** Executes the junction tree algorithm. */
+
+#include "st_fixed.olg"
+
+#define VARS_START_DELAY 0
+
+#include "../overlog/load_vars.olg" 
+#include "../overlog/jt_fixed.olg"

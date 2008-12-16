@@ -1,0 +1,30 @@
+/** Loads variables from an SQLite table. Initiated by nodesLoaded. */
+
+/** Stage to read CSV */
+stage("SQLiteLoad", varTable, varRow).
+
+varTable(@Node, INPUT_DB, "variables", "node_id", "name") :-
+        nodesLoaded(@Node).
+
+/* The set of variables and the associated nodes: node, var, nodeCarryingVar */
+materialize(variable, infinity, infinity, keys(1,2)).
+materialize(localVariable, infinity, infinity, keys(1,2)).
+
+/* Insert the variable information */
+variable(@Node, Var, VarNode) :- 
+	varRow(@Node, VarNodeId, Var),
+        node(@Node, VarNodeId, VarNode).
+
+localVariable(@Node, Var) :- 
+	varRow(@Node, VarNodeId, Var), 
+        VarNodeId == MYID.
+
+/*
+variablesLoaded(@Node) :-
+	variable(@Node, _, VarNode), VarNode == "Done".
+*/
+
+watchmod(varRow, "c").
+watchmod(localVariable, "iz").
+watchmod(variable, "iz").
+watchmod(variablesLoaded, "s").

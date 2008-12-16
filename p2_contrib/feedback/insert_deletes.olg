@@ -1,0 +1,11 @@
+materialize(foo, infinity, 100000, keys(1)).
+materialize(bar, infinity, 100000, keys(1,2)).
+
+foo(@Node, 1) :- periodic(@Node, E, 1, 1).
+foo(@Node, 2) :- periodic(@Node, E, 2, 1).
+
+bar(@Node, X) :- foo(@Node, X).
+
+watchmod(foo, "id").
+watchmod(bar, "id").
+

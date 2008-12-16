@@ -1,0 +1,13 @@
+materialize(a, infinity, infinity, keys(1,2)).
+/* materialize(b, infinity, infinity, keys(1)). */
+
+a(@Node, 1) :- periodic(@Node, E, 1, 1).
+a(@Node, 2) :- periodic(@Node, E, 1, 1).
+
+b(@Node, mklist<A>) :- periodic(@Node, E, 2, 1), a(@Node, A).
+
+c(@Node, B) :- b(@Node, B).
+
+watchmod(a, "i").
+watchmod(b, "s").
+watchmod(c, "s").

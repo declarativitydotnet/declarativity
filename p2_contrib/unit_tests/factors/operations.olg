@@ -1,0 +1,62 @@
+materialize(factorA, infinity, infinity, keys(1)).
+materialize(factorB, infinity, infinity, keys(1)).
+
+var1
+var(@Node, V) :- periodic(@Node, E, 1, 1), V := f_registerVariable(1, "V", 1).
+
+var2
+var(@Node, V) :- periodic(@Node, E, 1, 1), V := f_registerVariable(2, "V", 1).
+
+var3
+var(@Node, V) :- periodic(@Node, E, 1, 1), V := f_registerVariable(3, "V", 1).
+
+var3
+var(@Node, V) :- periodic(@Node, E, 1, 1), V := f_registerVariable(4, "V", 1).
+
+factorD
+factorD(@Node, F) :- periodic(@Node, E, 2, 1), 
+	     F := f_canonicalGaussian([1],"1","2").
+
+factorA
+factorA(@Node, F) :- 
+	periodic(@Node, E, 2, 1), 
+/* 	V1 := [1, 2], 
+	V2 := [1, 2],  
+	M := {[2, 1], [1, 2]}, */
+	F := f_canonicalGaussian([1, 2], "2_1;1_2", "1_2").
+	
+
+factorB
+factorB(@Node, F) :- 
+	periodic(@Node, E, 2, 1),
+	V1 := f_cons(2, f_cons(3, f_initlist())),
+	M := {[3, 1], [1, 3]},
+	V2 := [1, 1],
+	F := f_canonicalGaussian(V1, M, V2).
+
+combine
+combination(@Node, F) :-
+	factorA(@Node, FA),
+	factorB(@Node, FB),
+	F := FA * FB.
+
+combine_list
+combinationList(@Node, P, F) :-
+        periodic(@Node, E, 4, 1),
+        factorA(@Node, FA),
+        factorB(@Node, FB),
+        P := f_cons(FA, FB),
+        F := f_product(P).
+
+collapse
+marginal(@Node, F) :-
+	factorA(@Node, FA),
+	V := f_cons(1, f_initlist()),
+	F := f_marginal(FA, V).
+
+watchmod(factorA, "i").
+watchmod(factorB, "i").
+watchmod(combination, "s").
+watchmod(marginal, "s").
+watchmod(combinationList, "s").
+watchmod(var, "s").

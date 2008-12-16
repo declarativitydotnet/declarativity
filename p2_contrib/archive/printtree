@@ -1,0 +1,3 @@
+#!/bin/bash
+./printgraph.py graph.log graph.dot data/local4_links.csv
+

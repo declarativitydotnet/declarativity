@@ -1,0 +1,7 @@
+asdf(@Node, Val1, Val2, Val3) :-
+	periodic(@Node, E, 0, 20),
+	Val1 := f_coinFlip(0),
+	Val2 := f_coinFlip(0.5),
+	Val3 := f_coinFlip(1).
+	
+watchmod(asdf, "s").

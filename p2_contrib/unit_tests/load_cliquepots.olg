@@ -1,0 +1,7 @@
+#define VARS_FILE "../data/temperature-estimation/model_vars_localhost_4.csv"
+#define VARS_START_DELAY 0
+#define CLIQUE_POT_FILE "../data/temperature-estimation/model_cliquepot_localhost_4.csv"
+#include "../overlog/load_vars.olg"
+
+#include "../overlog/load_clique_potentials.olg"
+

@@ -1,0 +1,113 @@
+/* The sent messages: Node, From, Factor. */
+/* TODO: Change the order: Node, To, Factor. */
+materialize(message, infinity, infinity, keys(1,2)).
+
+/* The received messages and local factor: Node, From, Factor. */
+materialize(incoming, infinity, infinity, keys(1,2,3)).
+
+/* The separator represented as a set. Node, Nbr, Variables */
+materialize(separatorSet, infinity, infinity, keys(1,2)).
+
+
+/**********************************************************************
+  Initialize the tables
+ **********************************************************************/
+
+incoming(@Node, Node, Factor) :- 
+        localFactor(@Node, Factor).
+
+
+/**********************************************************************
+  One round of updates
+ **********************************************************************/
+
+/* Perform one round of updates. */
+jtinfUpdate(@Node, Time) :- 
+	periodic(@Node, E, JTINF_EPOCH),
+	started(@Node),
+        Time := f_timerElapsed(),
+        incoming(@Node, Node, _). /* Each node must have a local factor. */
+
+nbrUpdate(@Node, Nbr) :-
+        jtinfUpdate(@Node, _), 
+        routingEdge(@Node, Nbr),
+        linkActive(@Node, Nbr).
+
+/* Update the separator set. */
+#ifndef JTSET
+separator_set
+separatorSet(@Node, Nbr, a_mkList<Var>) :-
+	nbrUpdate(@Node, Nbr),
+	separator(@Node, Nbr, Var).
+#endif
+
+/* Calculate the factors whose product forms the messge. */
+messageFactors(@Node, TargetNbr, a_mkList<Factor>) :-
+        nbrUpdate(@Node, TargetNbr),
+	incoming(@Node, Nbr, Factor), /* includes the local factor */
+	Nbr != TargetNbr.
+
+/* messageNbrs(@Node, TargetNbr, a_mkList<Nbr>) :-
+        nbrUpdate(@Node, TargetNbr),
+        incoming(@Node, Nbr, _),
+        Nbr != TargetNbr.
+   watchmod(message_nbrs, "s"). */
+
+/* Compute the message. */
+message(@Nbr, Node, NewFactor) :-
+	messageFactors(@Node, Nbr, MessageFactors),
+#ifndef JTSET
+        separatorSet(@Node, Nbr, Retain),
+#else
+        separator(@Node, Nbr, Retain),
+#endif
+	NewFactor := f_marginal(f_product(MessageFactors), Retain).
+
+/* The incoming message. When the edge is deleted, so is this message. */
+incoming(@Node, Nbr, Factor) :-
+        message(@Node, Nbr, Factor),
+        routingEdge(@Node, Nbr).
+
+/**********************************************************************
+  Calculate the beliefs
+ **********************************************************************/
+beliefFactors(@Node, a_mkList<Factor>) :-
+	jtinfUpdate(@Node, Time),
+	incoming(@Node, _, Factor).
+
+belief(@Node, Factor) :-
+        beliefFactors(@Node, BeliefFactors),
+	Factor := f_product(BeliefFactors).
+
+factorCount(@Node, Count) :-
+        beliefFactors(@Node, Factors),
+        Count := f_size(Factors).
+
+watchmod(factorCount, "s").
+
+/*
+tempMean(@Node, Mean, Time) :-
+ 	belief(@Node, Factor),
+	Mean := f_mean(f_marginal(Factor, f_initSet(MYID))),
+	Time := f_timerElapsed().
+	*/
+
+/* print result */
+watchmod(jtinfUpdate, "s").
+watchmod(nbrUpdate, "s").
+watchmod(identifier, "a").
+watchmod(incoming, "id").
+watchmod(message, "i"). 
+/* watchmod(tempMean, "s"). */
+
+/* watchmod(separatorSet, "iz"). */
+watchmod(belief, "s").
+
+/* Rules for logging. */
+stage("SQLiteSave", beliefRow, dummy).
+beliefRow(@Node, OUTPUT_DB, "beliefs", "node", "time", "belief") :-
+        periodic(@Node, E, 0, 1).
+
+beliefRow(@Node, MYID, Time, Factor) :-
+        belief(@Node, Factor),
+        Time := f_timerElapsed().

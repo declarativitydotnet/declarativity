@@ -1,0 +1,8 @@
+#define VARS_START_DELAY 0
+#define VARS_FILE "../data/image-segmentation/circle/3x3_vars_localhost_4.csv"
+#define NODE_POT_FILE "../data/image-segmentation/circle/3x3_nodepot.csv"
+#define EDGE_POT_FILE "../data/image-segmentation/circle/3x3_edgepot.csv"
+
+#include "../overlog/load_vars.olg"
+#include "../overlog/load_potentials.olg"
+

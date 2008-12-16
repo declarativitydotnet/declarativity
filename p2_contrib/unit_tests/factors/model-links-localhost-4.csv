@@ -1,0 +1,12 @@
+localhost:10002,localhost:10001,3.461003e-01
+localhost:10003,localhost:10001,7.533581e-01
+localhost:10004,localhost:10001,1.853429e-01
+localhost:10001,localhost:10002,2.579053e-01
+localhost:10003,localhost:10002,2.223492e-01
+localhost:10004,localhost:10002,5.713027e-01
+localhost:10001,localhost:10003,7.751041e-01
+localhost:10002,localhost:10003,4.388928e-01
+localhost:10004,localhost:10003,5.178440e-01
+localhost:10001,localhost:10004,2.390868e-01
+localhost:10002,localhost:10004,5.988858e-01
+localhost:10003,localhost:10004,4.078308e-01

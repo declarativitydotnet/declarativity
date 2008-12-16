@@ -1,0 +1,51 @@
+
+materialize(edgeUpdate, infinity, infinity, keys(1,2)).
+materialize(clique, infinity, infinity, keys(1,2)).
+
+#include "shafer_shenoy.olg"
+#include "intel10-model.olg"
+
+edgeUpdate("localhost:10009", "localhost:10010").
+edgeUpdate("localhost:10007", "localhost:10010").
+edgeUpdate("localhost:10008", "localhost:10010").
+edgeUpdate("localhost:10006", "localhost:10010").
+edgeUpdate("localhost:10004", "localhost:10010").
+edgeUpdate("localhost:10004", "localhost:10002").
+edgeUpdate("localhost:10003", "localhost:10010").
+edgeUpdate("localhost:10010", "localhost:10004").
+edgeUpdate("localhost:10010", "localhost:10006").
+edgeUpdate("localhost:10010", "localhost:10007").
+edgeUpdate("localhost:10010", "localhost:10008").
+edgeUpdate("localhost:10010", "localhost:10003").
+edgeUpdate("localhost:10010", "localhost:10009").
+edgeUpdate("localhost:10002", "localhost:10004").
+edgeUpdate("localhost:10002", "localhost:10001").
+edgeUpdate("localhost:10001", "localhost:10002").
+clique("localhost:10009", 7).
+clique("localhost:10009", 8).
+clique("localhost:10009", 9).
+clique("localhost:10007", 4).
+clique("localhost:10007", 6).
+clique("localhost:10007", 7).
+clique("localhost:10008", 7).
+clique("localhost:10008", 8).
+clique("localhost:10006", 3).
+clique("localhost:10006", 4).
+clique("localhost:10006", 6).
+clique("localhost:10004", 1).
+clique("localhost:10004", 2).
+clique("localhost:10004", 4).
+clique("localhost:10010", 6).
+clique("localhost:10010", 7).
+clique("localhost:10010", 9).
+clique("localhost:10010", 1).
+clique("localhost:10010", 4).
+clique("localhost:10010", 1).
+clique("localhost:10010", 3).
+clique("localhost:10010", 8).
+clique("localhost:10003", 1).
+clique("localhost:10003", 3).
+clique("localhost:10003", 4).
+clique("localhost:10002", 1).
+clique("localhost:10002", 2).
+clique("localhost:10001", 1).

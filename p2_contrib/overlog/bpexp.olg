@@ -1,0 +1,233 @@
+/** BP with exponential sampling scheme (now deprecated). */
+
+/***  Tuple definitions and initialization ***/
+
+/* The neighbors of a node in the MRF: Node, From, To */
+materialize(var_edges, infinity, 100000, keys(1,2,3)).
+
+init_var_edges var_edges(@Node, Source, Target) :- varLinkOutput(@Node, Source, Target).
+
+/* The LBP message: Node, Var, NbrVar, Factor */
+materialize(factor_msg, infinity, 100000, keys(1,2,3)).
+
+/* sent messages: FromNode, ToNode, FromVar, ToVar, Factor */
+materialize(sent_messages, infinity, 100000, keys(3,4)).
+
+/* message queue (@Node, TargetNode, Source, Target, NewFactor, Time, N) */
+materialize(message_queue, infinity, 100000, keys(3, 4)).
+
+/* avg_residual (@Node, Residual, Count)*/
+materialize(avg_residual, infinity, 1, keys (1)).
+
+/* local_residual_sum (@Node, Residual, Count)*/
+materialize(local_residual_sum, infinity, 1, keys (1)).
+
+/*
+
+	Calculate messages to neighbors
+	
+*/
+/* single tuple table generated after rst is stable */
+materialize(rst_stable, infinity, 1, keys(1)).
+rst_stabilize_event
+rst_stable(@Node) :- periodic(@Node, E, RST_STABILIZATION, 1).
+
+/* Update other neighbors on receipt of update from node OTHER than neighbor */	
+trigger_update
+nbrRoundup(@Node, Source, Target) :-
+	factor_msg_update(@Node, SenderVar, UpdatedVar),
+	rst_stable(@Node),
+	localVariable(@Node, Source, _, _),
+	var_edges(@Node, Source, Target),
+	Source == UpdatedVar,
+	Target != SenderVar.
+
+/* rst stable is well after local variables and var edges are loaded */
+first_update
+nbrRoundup(@Node, Source, Target) :-
+	rst_stable(@Node),
+	localVariable(@Node, Source, _, _),
+	var_edges(@Node, Source, Target).
+
+gather_factors
+factors(@Node, Source, Target, a_MKLIST<Factor>) :-
+	nbrRoundup(@Node, Source, Target),
+	factor_msg(@Node, IncomingVar, Source, Factor), 
+	IncomingVar != Target.
+
+/* The resulting factor_msg computed to a node */
+calculate_message
+eval_message(@Node, TargetNode, Source, Target, NewFactor) :-
+	factors(@Node, Source, Target, IncomingFactors),
+	variable(@Node, Target, TargetNode),
+	nodePotential(@Node, Source, NodeFactor),
+	edgePotential(@Node, Source, Target, EdgeFactor),
+	FactorList := f_cons(EdgeFactor, f_cons(NodeFactor, IncomingFactors)),
+	IntermediateFactor := f_prod(FactorList),
+	TargetVars := f_cons(Target, f_initlist()),
+	NewFactor := f_normalize(f_marginal(IntermediateFactor, TargetVars)).
+
+/*
+
+	Determine whether to send messages
+
+*/
+evaluate_message
+message_queue(@Node, TargetNode, Source, Target, MixedFactor, Time, Residual) :-
+	eval_message(@Node, TargetNode, Source, Target, NewFactor),
+	sent_messages(@Node, TargetNode, Source, Target, OldFactor),
+	avg_residual(@Node, Normalizer, _),
+	Residual := f_normInf(NewFactor, OldFactor),
+        Residual > 0,
+        MixedFactor := f_weightedUpdate(OldFactor, NewFactor, BP_UPDATE_RATE),
+        Lambda := Residual / Normalizer * ROUTING_EPOCH,
+	Time := f_now() + f_sampleExponential(Lambda).
+
+/* first message in queue gets default average residual (DEFAULT_RESIDUAL) */
+first_message
+message_queue(@Node, TargetNode, Source, Target, NewFactor, Time, Residual) :-
+	eval_message(@Node, TargetNode, Source, Target, NewFactor),
+	notin sent_messages(@Node, TargetNode, Source, Target, _),
+        Residual := DEFAULT_RESIDUAL,
+        Time := f_now().
+
+send_message_event
+send_message(@Node, TargetNode, Source, Target, NewFactor) :-
+	periodic(@Node, E, CHECK_RESIDUAL_DELAY_EPOCH, CHECK_RESIDUAL_DELAY_ITERATIONS),
+	rst_stable(@Node),
+	message_queue(@Node, TargetNode, Source, Target, NewFactor, Time, N),
+	f_now() > Time.
+
+send_to_neighbor
+factor_msg(@TargetNode, Source, Target, NewFactor) :-
+	send_message(@Node, TargetNode, Source, Target, NewFactor).
+
+dequeue_message	
+delete message_queue(@Node, TargetNode, Source, Target, NewFactor, Time, N) :-
+	send_message(@Node, TargetNode, Source, Target, NewFactor),
+	message_queue(@Node, TargetNode, Source, Target, NewFactor, Time, N).
+
+/* for output */
+sentMsgResidual(@Node, N, Time) :-
+	send_message(@Node, TargetNode, Source, Target, NewFactor),
+	message_queue(@Node, TargetNode, Source, Target, NewFactor, Time, N).
+
+save_sent_message
+sent_messages(@Node, TargetNode, Source, Target, Factor) :-
+	send_message(@Node, TargetNode, Source, Target, Factor).
+
+/*
+
+	Calculate belief
+
+*/
+factor_update
+factor_msg_update(@Node, SenderVar, UpdateVar) :- 
+	factor_msg(@Node, SenderVar, UpdateVar, _).
+
+message_event
+incoming(@Node, Var, a_MKLIST<Factor>) :- 
+	factor_msg_update(@Node, _, Var),
+	factor_msg(@Node, _, Var, Factor).
+
+calculate_belief
+belief(@Node, Var, NewFactor) :- 
+	incoming(@Node, Var, IncomingFactors),
+	nodePotential(@Node, Var, NodeFactor),
+	NewFactor := f_normalize(f_prod(f_cons(NodeFactor, IncomingFactors))).
+
+belief_values
+beliefValues(@Node, Var, Values, Time) :- 
+	belief(@Node, Var, Factor), Values := f_values(Factor), Time := f_now().
+
+/*
+
+	Calculate average residual value
+	
+*/
+/*init residual*/
+avg_residual(NODE_ADDR, DEFAULT_RESIDUAL, 1).
+
+calc_count
+count_local(@Node, a_COUNT<N>) :-
+	periodic(@Node, E, ROUTING_EPOCH, ROUTING_ITERATIONS),
+	rst_stable(@Node),
+	message_queue(@Node, _, _, _, _, _, N).
+
+calc_sum
+local_residual_sum(@Node, a_SUM<N>, Cnt) :-
+	count_local(@Node, Cnt),
+	message_queue(@Node, _, _, _, _, _, N),
+	Cnt != 0.
+
+send_local(@Node, N, Cnt) :-
+	local_residual_sum(@Node, N, Cnt).
+
+send_sum_residual
+send_sum(@Nbr, Node, N, Cnt) :-
+	send_local(@Node, N, Cnt), 
+	edge(@Node, Nbr, _), /*edges in rst.olg */
+	Cnt != 0,
+	N != 0.
+
+update_avg_residual0
+update_avg_residual(@Node, Nbr, NewResidual, NewSum, NewCnt) :-
+	send_sum(@Node, Nbr, NbrN, NbrCnt),
+	local_residual_sum(@Node, N, Cnt),
+	NewCnt := Cnt + NbrCnt,
+	NewSum := N + NbrN,
+	NewResidual := NewSum / NewCnt.
+
+update_avg_residual1
+avg_residual(@Node, NewResidual, NewCnt) :-
+	update_avg_residual(@Node, _, NewResidual, _, NewCnt).
+
+update_avg_residual2
+send_sum(@OtherNbr, Node, NewSum, NewCnt) :-
+	update_avg_residual(@Node, Nbr, NewResidual, NewSum, NewCnt),
+	edge(@Node, OtherNbr, _),
+	Nbr != OtherNbr.
+
+/* for output */
+avgResidual(@Node, R, C, Time) :- 
+	avg_residual(@Node, R, C),
+	Time := f_now().
+
+/* print result */
+watchmod(identifier, "a").
+watchmod(beliefValues, "s").
+watchmod(factor_msg, "i").
+watchmod(sentMsgResidual, "s").
+watchmod(avgResidual, "s").
+
+/*watchmod(edge, "iz").
+watchmod(nodePotential, "iz").
+watchmod(edgePotential, "iz").*/
+/*watchmod(sent_messages, "iz").*/
+/*watchmod(message_queue, "iz").*/
+watchmod(avg_residual, "iz").
+watchmod(local_residual_sum, "iz").
+
+/*watchmod(nbrRoundup, "sc").*/
+/*watchmod(factors, "sc").*/
+
+/*watchmod(send_message, "s").
+watchmod(eval_message, "s").
+watchmod(queue_message, "s").*/
+/*watchmod(incoming, "sc").
+watchmod(belief, "s").*/
+watchmod(count_local, "sc").
+watchmod(update_avg_residual, "sc").
+watchmod(send_sum, "sc").
+
+
+/* Report the node's parent (for printing the spanning tree). */
+print_spantree 
+edgeResult(@Requester, Node, Neighbor, Time) :- 
+	edgeLookup(@Node, Requester), edge(@Node, Neighbor, Time).
+
+print_identifier
+identifierResult(@Current, Node, Id, Time) :-
+	identifierLookup(@Node, Current), identifier(@Current, Id, Time).
+
+

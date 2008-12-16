@@ -1,0 +1,12 @@
+materialize(test, infinity, infinity, keys(1)).
+
+null1(@Node, a_max<Test>) :-
+        periodic(@Node, E, 1, 1),
+        test(@Node, Test).
+
+result(@Node, Result) :-
+        null1(@Node, Null),
+        Result := f_max(f_cons(1, 2), Null).
+
+watch(null1).
+watch(result).

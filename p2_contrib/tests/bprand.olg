@@ -1,0 +1,45 @@
+/* Executes loopy belief propagation with randomized schedule of messages */
+
+/* Timings to help with the experiments:
+   on P4-3GHz, aggregation takes about 0.2s/epoch per node 
+     (on a 9-node network, Berkeley links, can be more for larger networks)
+   
+   Processing 10 variables takes about 0.6s/epoch per node
+
+   On P4-3GHz: 6x6, 4 nodes, epoch=4 works
+
+   On Emulab: 10x10, 9 nodes, epoch=1
+              20x20, 9 nodes, epoch=4 (both at 50-60 percent utilization)
+*/
+
+/* Standard BP parameters */
+#ifndef BP_EPOCH
+  #define BP_EPOCH EPOCH
+#endif
+
+#ifndef BP_UPDATE_RATE
+  #define BP_UPDATE_RATE 1
+#endif
+
+#define EXPERIMENT_DURATION BP_EPOCH*NITERS
+#define DEFAULT_RESIDUAL 1
+
+/* Parameters specific to randomized BP. */
+#ifndef BP_EXPONENT
+  #define BP_EXPONENT 1
+#endif
+
+#ifndef AGG_EPOCH
+  #define AGG_EPOCH BP_EPOCH
+#endif
+
+#ifndef ROUTING_EPOCH
+  #define ROUTING_EPOCH AGG_EPOCH
+#endif
+
+#include "rst.olg"
+
+#include "../overlog/load_vars.olg"
+#include "../overlog/load_mrf_edges.olg"
+#include "../overlog/load_potentials.olg"
+#include "../overlog/bprand.olg"

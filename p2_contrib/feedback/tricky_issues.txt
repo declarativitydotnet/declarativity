@@ -1,0 +1,86 @@
+materialize(foo, infinity, 100000, keys(1)).
+materialize(bar, infinity, 100000, keys(1)).
+
+foo(@Node, 1) :- periodic(@Node, E, 1, 1).
+foo(@Node, 2) :- periodic(@Node, E, 2, 1).
+
+bar(@Node, X) :- foo(@Node, X).
+
+watchmod(foo, "id").
+watchmod(bar, "id").
+
+The replacement of foo(@Node,1) with foo(Node, 2) inadvertendly also deletes 
+bar(Node, 2). => have to key on all entries.
+
+===
+
+in bp.olg
+when incoming is materialize(incoming, infinity, 100000, keys(1,2,3,4)).
+
+message is changed, so we get both insert and delete
+
+##Print[InsertEvent: RULE rule_message_DELTA_INSERT]:  [message(localhost:10004, localhost:10004, 34, 28, {#V(28|F|2)}
+0 0.119229
+1 0.880771
+, 0)]
+##Print[DeleteEvent: RULE rule_message_DELTA_DELETE]:  [message(localhost:10004, localhost:10004, 34, 28, {#V(28|F|2)}
+0 0.119229
+1 0.880771
+, 1.11022e-16)]
+
+incoming is not changed so we get two inserts and one delete for the same value
+
+##Print[SendAction: RULE rule_14_delta_message_1]:  [residual(localhost:10004, 0, [2008-Mar-27 05:59:44.415813000])]
+##Print[DeleteEvent: RULE rule_incoming_DELTA_DELETE]:  [incoming(localhost:10004, 34, 28, {#V(28|F|2)}
+0 0.119229
+1 0.880771
+)]
+
+
+=> have to use reference counted table.
+
+====
+
+refresh.olg
+Refresh can interfere with the reference counted tables
+
+materialize(foo, infinity, 1000000, keys(1,2)).
+materialize(bar, infinity, infinity, keys(1,2)).
+
+foo(@Node, 1) :- periodic(@Node, E, 2).
+
+bar(@Node, X) :- foo(@Node, X).
+
+watchmod(foo, "iazd").
+watchmod(bar, "iazd").
+
+if the value of foo is overwritten with the same value, p2 will simply 
+increase the reference count of bar.
+
+
+===
+
+load a string from CSV that looks like a number
+now do a join with a different table that has the number stored in its 
+    true format
+=> join fails (does not find the value)
+
+===
+
+atomicity:
+in junction tree or bp, we would like the bp update be atomic.
+otherwise we may end up with extra facts that go into the mp computation
+
+
+==
+
+inconsistencies in tuple sizes should be detected at compile time
+
+====
+
+P2 cannot reliably underive facts, see deletes.olg
+
+
+==
+
+timing issues in general

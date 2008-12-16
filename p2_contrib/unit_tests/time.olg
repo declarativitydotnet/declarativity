@@ -1,0 +1,21 @@
+stuff(@Node, A, B, C) :-
+        periodic(@Node, E, 0, 1),
+        A := f_timeDuration(1.5),
+        B := f_now(),
+        C := B + A.
+
+time(@Node, 0) :-
+        periodic(@Node, E, 0, 1),
+        f_timeDuration(1.5) > 20.
+
+time(@Node, 2) :-
+        periodic(@Node, E, 2, 1),
+        f_timeDuration(1.5) > 1.
+
+time(@Node, A) :-
+        periodic(@Node, E, 4, 1),
+        A := 1.5 * f_timeDuration(1.5).
+
+
+watchmod(stuff, "s").
+watchmod(time, "s").

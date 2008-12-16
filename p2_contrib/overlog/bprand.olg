@@ -1,0 +1,232 @@
+/** Requires: 
+    nodePotential, edgePotential, variable, localVariable, linkOutput */
+
+/***  Tuple definitions and initialization ***/
+
+/* The edges of MRF connected to a variable at this node: Node, From, To */
+materialize(mrfEdge, infinity, infinity, keys(1,2,3)).
+
+mrfEdge(@Node, Source, Target) :- 
+        localVariable(@Node, Source, _),
+        mrfEdgeInput(@Node, Source, Target).
+
+watchmod(mrfEdge, "i").
+
+/* A BP message sent to a neighbor: Node, Src, Target, Factor. */
+materialize(message, infinity, infinity, keys(1,2,3)).
+
+/* A BP messages received from a neighbor: Node, Src, Target, Factor. */
+materialize(incoming, infinity, infinity, keys(1,2,3)).
+
+/* Residual of a sent message: Node, Src, Target, Residual. */ 
+materialize(residual, infinity, infinity, keys(1,2,3)).
+
+/* The current estimate of the average residual: Node, Sum, Count */
+materialize(normalizer, infinity, infinity, keys(1)).
+
+/* The sum of residuals, received from a neighbor: Node, Nbr, Sum, Count */
+materialize(receivedResidual, infinity, infinity, keys(1,2)).
+materialize(incomingResidual, infinity, infinity, keys(1,2,3,4)).
+
+
+/**********************************************************************
+  Compute the new messages
+ **********************************************************************/
+
+/* Messages coming into node from nodes OTHER than Nbr */       
+bp_update
+bpUpdate(@Node, Source, Target) :-
+        started(@Node),
+        periodic(@Node, E, BP_EPOCH),
+        localVariable(@Node, Source, _, _),
+        mrfEdge(@Node, Source, Target).
+
+message_factors
+messageFactors(@Node, Source, Target, a_MKLIST<Factor>) :-
+        bpUpdate(@Node, Source, Target),
+        incoming(@Node, IncomingVar, Source, Factor), 
+        IncomingVar != Target.
+
+calculate_message
+evalMessage(@Node, Source, Target, NewFactor) :-
+        messageFactors(@Node, Source, Target, IncomingFactors),
+        nodePotential(@Node, Source, NodeFactor),
+        edgePotential(@Node, Source, Target, EdgeFactor),
+        FactorList := f_cons(EdgeFactor, f_cons(NodeFactor, IncomingFactors)),
+        IntermediateFactor := f_prod(FactorList),
+        TargetVars := f_cons(Target, f_initlist()),
+        NewFactor := f_normalize(f_marginal(IntermediateFactor, TargetVars)).
+
+/**********************************************************************
+  Perform a weighted update and compute the residuals
+ **********************************************************************/
+/* Compute the weighted sum of the new and previous message */
+message_update
+messageEvent(@Node, TargetNode, Source, Target, MixedFactor, Residual) :-
+        evalMessage(@Node, Source, Target, NewFactor),
+        message(@Node, Source, Target, OldFactor),
+        variable(@Node, Target, TargetNode, _, _),
+        normalizer(@Node, Normalizer),
+        Residual := f_normInf(NewFactor, OldFactor),
+/*         (Node == TargetNode) || */
+          (f_coinFlip(f_pow(Residual, BP_EXPONENT) / Normalizer) == 1),
+        MixedFactor := f_weightedUpdate(OldFactor, NewFactor, BP_UPDATE_RATE).
+
+message_init
+messageEvent(@Node, TargetNode, Source, Target, NewFactor, Residual) :-
+        evalMessage(@Node, Source, Target, NewFactor),
+        notin message(@Node, Source, Target, _),
+        variable(@Node, Target, TargetNode, _, _),
+        Residual := DEFAULT_RESIDUAL.
+
+/* The latest residual (whether a message was sent or not) */
+residual(@Node, Source, Target, Residual) :- 
+        evalMessage(@Node, Source, Target, NewFactor),
+        message(@Node, Source, Target, OldFactor),
+        Residual := f_normInf(NewFactor, OldFactor),
+        Time := f_timerElapsed().
+
+residual(@Node, Source, Target, Residual) :-
+        evalMessage(@Node, Source, Target, NewFactor),
+        notin message(@Node, Source, Target, _),
+        Residual := DEFAULT_RESIDUAL,
+        Time := f_timerElapsed().
+
+/* A message sent to a neighbor. */
+message(@Node, Source, Target, NewFactor) :-
+        messageEvent(@Node, _, Source, Target, NewFactor, _).
+
+incoming(@TargetNode, Source, Target, NewFactor) :-
+        messageEvent(@Node, TargetNode, Source, Target, NewFactor, _).
+
+
+/**********************************************************************
+        Calculate average residual value
+ **********************************************************************/
+
+/* Compute the sum & count of residuals of messsages sent to remote nodes. */
+localResidualCount(@Node, a_COUNT<Residual>) :-
+        started(@Node),
+        periodic(@Node, E, AGG_EPOCH),
+        residual(@Node, _, Target, Residual).
+/*        variable(@Node, Target, TargetNode, _, _), */
+/*        Node != TargetNode.                        */
+
+localResidual(@Node, a_SUM<Term>, Count) :-
+        localResidualCount(@Node, Count),
+        residual(@Node, _, Target, Residual),
+        Term := f_pow(Residual, BP_EXPONENT).
+/*        variable(@Node, Target, TargetNode, _, _), */
+/*        Node != TargetNode,                        */
+
+/* Update the local aggregate. */
+receivedResidual(@Node, Node, Sum, Count) :- /* this tuple will be replaced */
+        localResidual(@Node, Sum, Count).
+
+incomingResidual(@Node, Node, Sum, Count) :- /* this one derived & underived */
+        receivedResidual(@Node, From, Sum, Count),
+        From == Node.
+
+/* Send an update to each neighbor in the spanning tree */
+nbrUpdate(@Node, Nbr) :-
+        localResidual(@Node),
+        edge(@Node, Nbr). /* the edge in the spanning tree */
+
+receivedResidual1(@Node, Nbr, a_SUM<Sum>) :-
+        nbrUpdate(@Node, Nbr),
+        incomingResidual(@Node, Other, Sum, _),
+        Other != Nbr.
+
+receivedResidual(@Nbr, Node, Sum, a_SUM<Count>) :-
+        receivedResidual1(@Node, Nbr, Sum),
+        incomingResidual(@Node, Other, _, Count),
+        Other != Nbr.
+
+incomingResidual(@Node, Nbr, Sum, Count) :-
+        receivedResidual(@Node, Nbr, Sum, Count),
+        edge(@Node, Nbr).
+
+estimatedResidual1(@Node, a_SUM<Sum>) :-
+        localResidual(@Node),
+        incomingResidual(@Node, Nbr, Sum, _).
+
+estimatedResidual(@Node, Sum, a_SUM<Count>) :-
+        estimatedResidual1(@Node, Sum),
+        incomingResidual(@Node, Nbr, _, Count).
+
+normalizer(@Node, Value, Time) :-
+        estimatedResidual(@Node, Sum, Count),
+        Count > 0,
+        Value := Sum / Count,
+        Time := f_timerElapsed().
+
+normalizer(@Node, 1, Time) :- 
+        periodic(@Node, E, 0, 1), Time := f_timerElapsed().
+
+/**********************************************************************
+  Calculate the beliefs 
+ **********************************************************************/
+/* Periodically trigger the belief update event.
+   We cannot simply listen on incoming insertions here, since that means
+   that we may be double-counting the old and the new incoming messages. 
+*/
+beliefUpdate(@Node, Var) :- 
+        started(@Node),
+        periodic(@Node, E, BP_EPOCH),
+        localVariable(@Node, Var, _, _).
+
+/* The list of all incoming factors. */
+beliefIncoming(@Node, Var, a_MKLIST<Factor>) :- 
+        beliefUpdate(@Node, Var),
+        incoming(@Node, _, Var, Factor).
+
+belief(@Node, Var, F) :- 
+        beliefIncoming(@Node, Var, IncomingFactors),
+        nodePotential(@Node, Var, NodeFactor),
+        F := f_normalize(f_prod(f_cons(NodeFactor, IncomingFactors))).
+
+beliefValues(@Node, Var, Values, Time) :- 
+        belief(@Node, Var, Factor), 
+        Values := f_values(Factor), 
+        Time := f_timerElapsed().
+
+/**********************************************************************
+  Log the residuals and the number of message updates
+ **********************************************************************/
+/* Log all residuals. */
+residualUpdate(@Node, Time) :-
+        started(@Node), periodic(@Node, E, BP_EPOCH), Time := f_timerElapsed().
+  /* this tuple is needed because group by variables must be in the event. */
+
+messageResidual(@Node, a_MAX<Residual>, Time) :- 
+        residualUpdate(@Node, Time),
+        residual(@Node, _, _, Residual).
+
+messageUpdates(@Node, 1, Time) :-
+        message(@Node), Time := f_timerElapsed().
+
+watchmod(messageUpdates, "s").
+
+/* print result */
+watchmod(identifier, "a").
+watchmod(beliefValues, "s").
+/* watchmod(incoming, "id").*/
+/* watchmod(message, "id"). */
+watchmod(messageResidual, "s").
+
+watchmod(incomingResidual, "id"). 
+watchmod(estimatedResidual, "s").
+watchmod(normalizer, "i").
+
+/*
+watchmod(nbrUpdate, "s").
+watchmod(receivedResidual, "idh").
+watchmod(residual, "id").
+
+watchmod(edge, "az").
+watchmod(messageFactors, "s").
+watchmod(bpUpdate, "sc").
+watchmod(beliefFactors, "sc").
+watchmod(beliefUpdate, "sc").
+watchmod(belief, "sc"). 
+*/

@@ -1,0 +1,35 @@
+materialize(variables, infinity, infinity, keys(1,2, 3)).
+materialize(table1, infinity, infinity, keys(2)).
+
+table1("localhost:10000", 5.0).
+variables("localhost:10000", "A", 1).
+variables("localhost:10000", "B", 2).
+variables("localhost:10000", "B", 3).
+variables("localhost:10000", "D", 4).
+variables("localhost:10000", "E", 5).
+variables("localhost:10000", "F", 6).
+
+
+aggset1
+out1(@X, a_MkSet<V>) :- periodic(@X, E, 1, 1),
+	variables(@X, V, Y).
+
+aggset2
+out2(@X, a_MkSet<Y>) :- periodic(@X, E, 1, 1),
+        variables(@X, V, Y).
+
+aggset3
+out3(@X, a_MkSet<V>) :- periodic(@X, E, 1, 1),
+        table1(@X, V).
+
+ddd
+delete table1(@X, V) :- periodic(@X, E, 3, 1),
+        table1(@X, V).
+
+aggset4
+out3(@X, a_MkSet<V>) :- periodic(@X, E, 4, 1),
+        table1(@X, V).
+
+watchmod(out1, "s").
+watchmod(out2, "s").
+watchmod(out3, "s").

@@ -1,0 +1,35 @@
+* Introduction
+** demonstrated how probabilistic inference algorithms can be implemented concisely in a distributed manner.
+** Example scenarios:
+*** Loopy BP: x lines of Lisp code (not counting factor operations)
+*** Simple junction tree: y lines of Lisp code (not counting factor operations)
+*** Robust junction tree: z lines of Lisp code (...)
+** Our implementation:
+*** Loopy BP: x lines of code
+*** Simple junction tree: y lines of code
+*** Robust junction tree: z lines of code
+** The way it works: 
+* Background
+** What we're trying to do: probabilistic inference when the representation and computation distributed across several nodes
+** Simple algorithms, e.g. loopy BP, simple
+** Sometimes want to perform more complicated algorithms with robustness guarantees, e.g. [Paskin Guestrin UAI04]
+** However, the complexity of implementing such algorithms quickly goes up
+* Proposed solution
+** Use P2/Overlog. The language is rooted in Prolog. Generates facts; takes care of figuring out which facts have become true or are no longer true. Facts can span several nodes. Complex decision and coordination tasks can be written simply.
+** Simple example (e.g., spanning tree or a junction tree given a spanning tree)
+*** Note that it's a locally optimal solution
+** Demonstrated the following inference tasks; next to each task, we outline the key challenges we had to overcome.
+*** Robust spanning tree
+*** Junction tree
+*** Inference layer (simple on top of the things we discussed above)
+* Empirical evaluation
+** Dataset: tested on two datasets: a small 10 node network and a complete 54-node Berkeley dataset
+** Evaluated:
+*** Number of messages passed?
+*** Time to stabilize as a function of the size of the network?
+*** Accuracy?
+* Conclusions
+** We proposed an effective approach to implementign inference algorithms in a distributed manner
+** We saw that many optimizations performed locally. Would be interesting to see if there are properties that can be optimized globally
+** [+ something that ties to the class that could be done in the future]
+

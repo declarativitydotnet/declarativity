@@ -1,0 +1,32 @@
+/* 
+	Executes loopy belief propagation 
+
+	Run: 
+		./runlocal.sh bp_mv 4
+*/
+
+#define DEFAULT_RESIDUAL 1
+
+#define LINKS_START_DELAY 0
+#define VARS_START_DELAY 0
+
+#define RST_STABILIZATION 10
+
+#define CHECK_RESIDUAL_DELAY_EPOCH 1
+#define CHECK_RESIDUAL_DELAY_ITERATIONS 120
+
+#define ROUTING_START_DELAY 5
+#define MAX_LINK_AGE 10
+
+#include "../overlog/quit.olg"
+
+#include "../overlog/load_links.olg"
+#include "../overlog/load_vars_links.olg"
+#include "../overlog/load_vars.olg"
+#include "../overlog/load_potentials.olg"
+#include "../overlog/rst.olg"
+
+#include "../overlog/bpexp.olg"
+
+
+

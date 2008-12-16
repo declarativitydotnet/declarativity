@@ -1,0 +1,17 @@
+On compile error, cast error, etc. etc. EXIT EXIT EXIT
+##Pel_VM caught an operator exception: 'Oper(/) not supported for types time_duration, int64
+
+
+mixing facts on local remote nodes 
+the remote events don
+
+==
+
+(100 - 100) / 2  shown as 100 - 100 / 2, confuses the user
+
+==
+
+policy to specify if delete events get fired before insert events?
+
+==
+multiple aggregates per rule

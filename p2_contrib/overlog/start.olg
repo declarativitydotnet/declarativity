@@ -1,0 +1,30 @@
+/* run: $OVERLOG -o quit.olg -DEND_RUN=5 */
+
+materialize(started, infinity, infinity, keys(1,2)).
+
+#ifdef BASE_ADDR
+load(@Base, Node) :- 
+        periodic(@Node, E, 1), 
+        notin started(@Node, _),
+        Base := BASE_ADDR.
+#endif
+
+started(@Node, Time) :- start(@Node), Time := f_now().
+
+timerRestart(@Node, X) :- start(@Node), X := f_timerRestart().
+
+finished(@Node, Time) :- 
+        periodic(@Node, E, 1),
+        started(@Node, StartTime),
+        Time := f_now(), /* f_timerElapsed() only valid after we started. */
+        Time - StartTime > EXPERIMENT_DURATION.
+
+quit(@Node, Result) :-
+        Result := f_quit(),
+        finished(@Node, _).
+
+watchmod(started, "i").
+watchmod(start, "c").
+watchmod(finished, "s").
+watchmod(timerRestart, "s").
+

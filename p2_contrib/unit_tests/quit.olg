@@ -1,0 +1,4 @@
+willQuit(@Node) :- periodic(@Node, E, 3, 1).
+hasQuit(@Node, A) :- willQuit(@Node), A := f_quit().
+watch(willQuit).
+watch(hasQuit).

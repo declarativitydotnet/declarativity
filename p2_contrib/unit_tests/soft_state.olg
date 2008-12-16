@@ -1,0 +1,5 @@
+materialize(soft, 10*10, infinity, keys(1,2)).
+
+soft(@Node) :- periodic(@Node, E, 1, 1).
+
+watchmod(soft, "id").

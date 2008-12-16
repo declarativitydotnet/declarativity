@@ -1,0 +1,9 @@
+materialize(env, infinity, infinity, keys(2,3)).
+materialize(try, infinity, infinity, keys(1,2)).
+watch(out).
+
+r1 try(@I, V) :- periodic(@I,E,0,1), V := [3, 4, 5].
+r2 out(@I, V, W, X, Y, A) :- periodic(@I,E,1,2), try(@I, V),
+                              W := V[2], X := V[1], 
+                              Y := V[0], A := f_vectorCompare(V,[3, 5, 2]).
+

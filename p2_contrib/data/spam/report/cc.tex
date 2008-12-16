@@ -1,0 +1,75 @@
+\section{Clustering and Classification}
+\label{cc} 
+We use affinity propagation \cite{ap} for clustering spammers that have the same sending behavior. We discuss the clustering and classification techniques applied to our system in Section~\ref{cluster} and Section~\ref{classify}. Section~\ref{ap} gives an explanation of affinity propagation. 
+
+\subsection{Clustering}
+\label{cluster} 
+Our clustering and classification phase is similar to SpamTracker \cite{bb}. Spammers are clustered only on their sending behavior, which is determined by finding the domains a spammer targets. Email contents are not taken into consideration. To gather data concerning a spammer's sending behavior, we collect data for over two hundred distinct email domains. 
+\begin{equation}
+       \displaystyle M \leftarrow \sum_{k = 1}^t M'(i, j, k)
+       \label{eq:collapse}
+\end{equation}
+
+In the clustering phase, we generate a matrix $M$ \emph{n}x\emph{d}, where \emph{n} is the number of IP addresses that sent emails to \emph{d} domains in a time interval \emph{t}. A period of 6 hours is used to gather the number of messages that an IP sends to the \emph{d} domains in that time interval. 
+
+In order to get the similarity matrix $S$ \emph{n}x\emph{n}, which is used in the affinity propagation algorithm, the dot product between two IP addresses is calculated. When
+calculating the similarity that data point \emph{i} shares with data point \emph{j}, the dot product is normalized. 
+\begin{equation}
+	\displaystyle S(i, j) \leftarrow \frac{M(i, j) \bullet M(i, j)'}{\sum_{k=1}^d M(j,k)}
+	\label{eq:similarity}
+\end{equation}
+
+The clusters generated in the clustering phase do not have common IP addresses between them. Each cluster represents a spammer traffic pattern. The cluster center is computed by averaging the traffic pattern of the IP addresses present in the cluster. The cluster average is a \emph{1}x\emph{d} vector.
+\begin{equation}
+	\displaystyle c_{avg}(j) \leftarrow \frac{\sum_{i=1}^{\vert C \vert} M_c(i,j)}{\vert C \vert}
+	\label{eq:cavg}
+\end{equation}
+
+\subsection{Classification}
+\label{classify} 
+In the classification phase, the sending pattern of an IP address \emph{T}, a \emph{1}x\emph{d} vector, is determined, and then a score is calculated to determine the similarity of its traffic pattern with one of the clusters. This score is the maximum of the normalized dot product between the sending pattern of the IP address being tested and the set of cluster averages found in Equation~\ref{eq:cavg}. 
+\begin{equation}
+	\displaystyle Score \leftarrow \max_{C} \frac{T(1, j) \bullet c_{avg}(i, j)'}{\sum_{j=1}^d c_{avg}(i,j)'}
+	\label{eq:score}
+\end{equation}
+\\
+
+Since we are attempting to determine the sending patterns of spammers across multiple domains, we ignore clusters that are dominated by a single domain. Also, spammers that target a single domain will tend to give scores of one to benign, non-spamming, IP addresses since non-spamming IP addresses will tend to send emails to a single domain in a short duration. 
+
+A single round of classification involves classifying the set of IP addresses, that send email within the next six hour period using the set of clusters found in the preceding time interval. 
+
+\subsection{Affinity Propagation}
+\label{ap} 
+Affinity propagation is a message passing algorithm that clusters similar data points. The algorithm sends messages between each variable in the algorithm. In a naive distributed implementation, each variable can be a node in the network, which sends messages across the network edges until a set of exemplars and their corresponding clusters have been found. An exemplar is a variable that lies in the center of the cluster.
+
+The algorithm takes as input a similarity matrix $S$ of $n$x$n$ size for $n$ data points. $S(i,j)$ represents the similarity data point \emph{i} has with data point \emph{j}. The similarity matrix does not need to be symmetric, that is the similarity data point \emph{j} has with data point \emph{i} does not need to be the same as data point \emph{i}'s similarity with data point \emph{j}. Data point \emph{k}'s similarity with itself is referred to as the preference for data point \emph{k} as its own exemplar. Preferences with large values are more likely to be chosen as an exemplar. The initial preference values  determines the number of clusters. If each data point is just as likely to be an exemplar, preferences should all be set to a common value. For our experiments, the preferences were set to the median similarity of a given IP address. 
+
+There are two kind of messages that are sent between data points. The \emph{responsibility message r(i,k)} represents how well suited data point \emph{k} is as the exemplar of \emph{i}.
+\begin{equation}
+	\displaystyle r(i,k)\leftarrow s(i,k)-\max_{k' s.t. k' \neq k}\{a(i,k') + s(i,k')\}
+	\label{eq:resp}
+\end{equation}
+
+Availability messages are sent from candidate exemplar \emph{k} to data point \emph{i} suggesting whether \emph{k} will be a good exemplar for \emph{i}.
+\begin{eqnarray*}
+	\displaystyle a(i,k) \leftarrow \min\{0,r(k,k) + \\
+    \sum_{i' s.t. i' \notin \{i,k\}}\max\{0, r(i',k)\}\}	
+    \label{eq:avail}
+\end{eqnarray*}
+\begin{equation}
+\end{equation}
+Self-availability is updated using:
+\begin{equation}
+	\displaystyle a(k,k) \leftarrow \sum_{i' s.t. i' \neq k} \max\{0, r(i',k)\}
+	\label{eq:self}
+\end{equation}
+
+At any point in time, exemplar for data point \emph{i} can be found by combining the responsibilities and availabilities.
+\begin{equation}
+	\displaystyle exemplar(i) \leftarrow \argmax_{k} \{a(i,k) + r(i, k)\}
+	\label{eq:exemplar}
+\end{equation}
+
+Data points that have no similarity (a similarity of zero in our experiments) do not need to send messages between them. If data points do not share any similarity, these points should never be exemplars for each other. The availabilities and responsibilities are constantly updated in an iterative process: responsibilities are first updated given the availabilities (these are initially set to zero), availabilities are updated given the newly calculated responsibilities, and finally the exemplars for each iteration are calculated. 
+
+Once the exemplars have converged, the affinity propagation algorithm terminates. As responsibilities and availabilities for each data point are updated, oscillations can occur. To prevent oscillations, we use a damping factor, $\lambda$, with a value between 0 and 1 whereby each message is set to $\lambda$ times it previous value plus 1 minus $\lambda$ times its new value. 

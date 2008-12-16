@@ -1,0 +1,76 @@
+\documentclass[11pt]{article}
+% Page layout and spacing
+\usepackage[margin=1in]{geometry}
+\usepackage[medium,compact]{titlesec}
+
+\usepackage{rotating}
+% Formatting
+\usepackage{alltt}
+\usepackage{url}
+% Type1 fonts please!
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage{textcomp}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{epsfig}
+\usepackage{cite}
+\usepackage{color}
+\usepackage{xspace}
+\usepackage{listings}
+\usepackage{boxedminipage}
+\usepackage{multirow}
+
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}
+
+\newcommand{\note}[1]{[\textcolor{red}{\textit{#1}}]}
+\newcommand{\msg}[1]{{\textsc{\small #1}}}
+\newcommand{\method}[1]{{\texttt{\small #1}}}
+
+\newcommand{\stitle}[1]{{\bf #1:}}
+
+\usepackage{fancyhdr}
+
+\title{Declarative and Robust Junction Tree for Distributed Inference}
+
+\author{Ashima Atul, Kuang Chen}
+
+% \rhead{Draft of \today{}. Please do not distribute.}
+\rhead{}
+\chead{}
+\lhead{}
+\renewcommand{\headrulewidth}{0pt}
+
+\pagestyle{fancy}
+
+\newcommand{\eat}[1]{}
+
+\begin{document}
+
+\maketitle
+%\pagestyle{plain}
+\thispagestyle{fancy}
+
+% \begin{abstract}
+% \end{abstract}
+
+\input{body}
+
+\section*{Acknowledgments}
+We would like to thank Stanislav Funiak participating in the implementation of
+the distributed inference layers and the poster, and as well for the valuable
+feedback he gave on this report.
+
+\bibliographystyle{abbrv}
+\bibliography{distinf}
+
+\appendix
+\input{appendix}
+
+\end{document}

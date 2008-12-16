@@ -1,0 +1,11 @@
+/* $OVERLOG -o loaded.olg -p 10001 -DBASE_ADDR=\"localhost:9999\" */
+
+/* #ifdef BASE_ADDR */
+
+load(@Base, Node) :- periodic(@Node, E, 0, 1), Base := BASE_ADDR.
+
+/* #endif */
+
+watch(load).
+watch(start).
+

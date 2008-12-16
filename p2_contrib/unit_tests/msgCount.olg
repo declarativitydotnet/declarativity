@@ -1,0 +1,41 @@
+materialize(edge, infinity, infinity, keys(1,2)).
+materialize(msg, infinity, infinity, keys(1,2)).
+
+edge("localhost:10000", "localhost:10001").
+edge("localhost:10000", "localhost:10002").
+edge("localhost:10000", "localhost:10003").
+edge("localhost:10000", "localhost:10004").
+
+msg("localhost:10000", "localhost:10001", "a").
+msg("localhost:10000", "localhost:10002", "b").
+
+r1
+msg(@X, Nbr, V) :- periodic(@X, E, 1,1),
+	Nbr := "localhost:10003",
+	V := "c".
+
+r2 msgCount(@Node) :- msg(@Node, Nbr, F).
+
+r3 edgeCount(@Node, Nbr) :- msgCount(@Node),
+			    edge(@Node, Nbr).
+
+r4 eCnt(@Node, Nbr, a_COUNT<*>) :- edgeCount(@Node, Nbr),
+   	edge(@Node, OtherNbr),
+	Nbr != OtherNbr.
+
+r5 mCount(@Node, Nbr, Cnt, a_COUNT<*>) :- eCnt(@Node, Nbr, Cnt),
+	msg(@Node, OtherNbr, V),
+	Nbr != OtherNbr. 
+
+r6 sendMsg(@Node, Nbr, ECnt, a_SET<Y>) :- mCount(@Node, Nbr, ECnt, MCnt),
+	msg(@Node, OtherNbr, Y),	
+	OtherNbr != Nbr,		
+	ECnt == MCnt.
+
+r7 updateMsg(@Nbr, FactSet) :- sendMsg(@Node, Nbr, ECnt, FactSet),
+	f_size(FactSet) != ECnt.
+
+/*watchmod(eCnt, "s").*/
+watchmod(sendMsg, "sc").
+/*watchmod(mCount, "sc").*/
+watchmod(updateMsg, "s").

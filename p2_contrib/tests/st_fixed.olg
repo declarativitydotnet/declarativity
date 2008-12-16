@@ -1,0 +1,10 @@
+/** Executes the rooted spanning tree algorithm. */
+
+/* depends on END_RUN value */
+#include "../overlog/quit.olg"
+
+#define LINKS_START_DELAY 0
+
+#include "../overlog/load_links.olg"
+
+#include "../overlog/st_fixed.olg"

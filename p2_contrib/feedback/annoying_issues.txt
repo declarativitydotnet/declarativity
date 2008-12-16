@@ -1,0 +1,7 @@
+Location specifier in the wrong place.
+
+Include aggregation variable in the event => aggregates don't work.
+
+##COMPILE ERROR: program commandLine, node localhost:10000, error code 1: Rule rule_49 contains multiple event predicates.
+-- not sure which rule they're talking about
+

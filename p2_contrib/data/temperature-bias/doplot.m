@@ -1,0 +1,10 @@
+s=loadsoln('jtinf_part/emulab-54','model');
+cols=[3 4 5];
+bw=cumsum(s.bw(:,cols),2);
+h=plot(s.e,bw);
+set(h,'linewidth',2);
+set(gca, 'fontsize', 20, 'fontname', 'times');
+xlabel('time step');
+ylabel('bandwidth per node [kB]');
+legend(s.algs{cols(end:-1:1)});
+print('-depsc','plots/partition-bandwidth');

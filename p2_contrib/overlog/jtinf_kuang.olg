@@ -1,0 +1,153 @@
+/* Stores count of nbrs: Node, Count*/
+materialize(neighbor_count, infinity, 1000, keys(1)).
+
+/* The factors stored locally at each node: Node, Factor */
+materialize(local_factor, infinity, 1000, keys(1)).
+
+/* The inference messages: From, To, Factor */
+materialize(message, infinity, 1000, keys(1,2)).
+
+/* The clique variables represented as a set. */
+materialize(clique_set, infinity, 1000, keys(1)).
+
+
+materialize(message_to_send, infinity, 1000, keys(1,2)).
+
+/*
+
+ 	Initialize Tables
+
+*/
+
+/* Initialize the local factor with the combination of all added factors. */
+add_factor addedFactor(@Node) :- addFactor(@Node, _, _).
+
+local_factors 
+local_factors(@Node, a_MKLIST<F>) :- addedFactor(@Node), addFactor(@Node, _, F).
+
+local_message
+message(@Node, Node, F) :-
+	local_factors(@Node, Factors), 
+	F := f_combineAll(Factors).
+
+/* Computes the aggregate statistics: number of neighbors & clique set. */
+init_neighbor_count0
+neighbor_count_update(@Node) :- 
+	edge(@Node, Nbr).
+
+init_neighbor_count1
+neighbor_count(@Node, a_COUNT<Nbr>) :- 
+	neighbor_count_update(@Node),
+	edge(@Node, Nbr).
+
+/*
+
+ 	Handle Churn
+
+*/
+
+update_neighbor_count_on_edge_delete
+neighbor_count_update(@Node) :- 
+    edge_DELTA_DELETE(@Node).
+
+edge_deletion
+delete message_to_send(@Node, Other, FactorList) :- 
+	edge_DELTA_DELETE(@Node, Other, _),
+	message_to_send(@Node, Other, FactorList).
+	
+message_deletion
+delete message(@Node, Nbr, Factor) :-
+	edge_DELTA_DELETE(@Node, Nbr, _),
+	message(@Node, Nbr, Factor).
+
+send_message(@Node, Nbr) :-
+	message_DELTA_DELETE(@Node),
+	edge(@Node, Nbr).
+/*	message_delete(@Node, Nbr, _),
+	edge(@Node, OtherNbr).
+	Nbr != OtherNbr.*/
+/*	message_DELTA_DELETE(@Node, Nbr, _),
+	edge(@Node, OtherNbr),
+	Nbr != OtherNbr.
+*/
+clique_set_update0
+clique_set_update(@Node) :- 
+	clique(@Node, Var).
+
+clique_set_update_delete
+clique_set_update(@Node) :- 
+    clique_DELTA_DELETE(@Node).
+
+clique_set_update_mkset
+clique_set(@Node, a_MKLIST<Var>) :- 
+	clique_set_update(@Node), 
+	clique(@Node, Var).
+
+/* On clique set change, request neighbors to recalculate message */
+clique_set_update_notification
+send_message(@Nbr, Node) :-
+	clique_set_update(@Node),
+	edge(@Node, Nbr).
+
+
+/*
+ 	Calculate Messages
+
+*/
+/* 1) if new message, update all other neighbors; 2) if new edge, update edge neighbor */
+send_message0
+send_message(@Node, TargetNbr) :-
+	message(@Node, Nbr, _),
+	edge(@Node, TargetNbr, _),
+	TargetNbr != Nbr.
+
+/* Computes a list of factors from neighbors other than Nbr. */
+send_message1
+message_to_send(@Node, TargetNbr, a_MKLIST<Factor>) :-	
+	send_message(@Node, TargetNbr),
+	message(@Node, Nbr, Factor), /*includes the local factor as well */
+	Nbr != TargetNbr.
+
+send_message2
+message(@Nbr, Node, NewFactor) :-
+	message_to_send(@Node, Nbr, FactorsList),
+	neighbor_count(@Node, NbrCount),
+	f_size(FactorsList) == NbrCount, /* |local factor| + |other neighbors' factors| = |neighbors| - 1 */
+	clique_set(@Nbr, Variables),
+	/*edge(@Node, Nbr, _),*/
+	NewFactor := f_collapse(f_combineAll(FactorsList), Variables).
+
+/*
+ 	Calculate Beliefs
+*/
+calculate_belief0
+message_event(@Node) :- message(@Node, Nbr, F).
+
+calculate_belief1
+calculate_belief(@Node, a_MKLIST<Factor>) :-
+	message_event(@Node),
+	message(@Node, _, Factor).
+
+calculate_belief2
+node_belief(@Node, Factor) :-
+	calculate_belief(@Node, IncomingFactors),
+	neighbor_count(@Node, NbrCount),
+	message(@Node, Node, Factor),
+	f_size(IncomingFactors) == NbrCount + 1, /* Got all messages including local factor? */
+	Factor := f_combineAll(IncomingFactors).
+
+mean_temp(@Node, Mean, Time) :-
+ 	node_belief(@Node, Factor),
+	Mean := f_gaussianMean(f_collapse(Factor, [MYID])),
+	Time := f_now().
+	
+watchmod(neighbor_count, "iadz").
+watchmod(local_factor, "iadz").
+watchmod(clique_set, "iadz").
+watchmod(message, "iadz"). 
+watchmod(send_message, "sc").
+watchmod(message_to_send, "iadz").
+watchmod(message_event, "sc").
+watchmod(calculate_belief, "sc").
+watchmod(node_belief, "s").
+watchmod(mean_temp, "s").

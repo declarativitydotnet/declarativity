@@ -1,0 +1,76 @@
+
+#define LINKS_START_DELAY 1
+#include "../overlog/load_links.olg"
+
+materialize(nodeList, infinity, infinity, keys(1,2)).
+materialize(linkList, infinity, infinity, keys(1,2,3)).
+
+loadLinks2 
+nodeList(@Current, From, Time) :- 
+	linkOutput(@Current, From, To, Cost), Time := f_now().
+
+loadLinks3 
+nodeList(@Current, To, Time) :- 
+	linkOutput(@Current, From, To, Cost), Time := f_now().
+
+loadLinks4 
+linkList(@Current, From, To, Cost, Time) :- 
+	linkOutput(@Current, From, To, Cost), Time := f_now().
+
+lookup1 
+printLink(@Current, From, To, Cost, Time) :- 
+	periodic(@Current, E, 15, 1), linkList(@Current, From, To, Cost, Time).
+watchmod(printLink, "s").
+
+lookup2a
+edgeLookup(@Node, Current) :- 
+	periodic(@Current, E, 16, 1), nodeList(@Current, Node, Time).
+lookup2b
+printSpanTreeEdge(@Current, Node, NodeParent, Time) :- 
+	edgeResult(@Current, Node, NodeParent, Time).
+watchmod(printSpanTreeEdge, "s").
+
+lookup3a
+carriesLookup(@Node, Current) :- 
+	periodic(@Current, E, 17, 1), nodeList(@Current, Node, Time).
+lookup3b
+printVarCarried(@Current, Node, Var, Time) :- 
+	carriesResult(@Current, Node, Var, Time).
+watchmod(printVarCarried, "s").
+
+lookup4a
+reachVarLookup(@Node, Current) :- 
+	periodic(@Current, E, 18, 1), nodeList(@Current, Node, Time).
+lookup4b
+printReachVar(@Current, Node, Neighbor, Var, Time) :- 
+	reachVarResult(@Current, Node, Neighbor, Var, Time).
+watchmod(printReachVar, "s").
+
+lookup5a
+cliqueLookup(@Node, Current) :- 
+	periodic(@Current, E, 19, 1), nodeList(@Current, Node, Time).
+lookup5b
+printClique(@Current, Node, Var, Time) :- 
+	cliqueResult(@Current, Node, Var, Time).
+watchmod(printClique, "s").
+
+lookup6a
+separatorLookup(@Node, Current) :- 
+	periodic(@Current, E, 20, 1), nodeList(@Current, Node, Time).
+lookup6b
+printSeparator(@Current, Node, Neighbor, Var, Time) :- 
+	separatorResult(@Current, Node, Neighbor, Var, Time).
+watchmod(printSeparator, "s").
+
+lookup7a
+identifierLookup(@Node, Current) :- 
+	periodic(@Current, E, 14, 1), nodeList(@Current, Node, Time).
+printIdentifier(@Current, Node, Id, Time) :-
+	identifierResult(@Current, Node, Id, Time).
+watchmod(printIdentifier, "s").
+	
+/*watchmod(edgeLookup, "s").
+watchmod(carriesLookup, "s").
+watchmod(edgeResult, "c").
+watchmod(carriesResult, "c").
+*/

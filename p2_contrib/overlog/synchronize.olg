@@ -1,0 +1,46 @@
+/** A simple file that starts all nodes in a synchronous manner. */
+
+#include "load_nodes.olg"
+
+materialize(loaded, infinity, infinity, keys(1,2)).
+materialize(nNodes, infinity, 1, keys(1)).
+materialize(allLoaded, infinity, infinity, keys(1)).
+
+/** Register all booted nodes. */
+node_inserted(@Base) :- node(@Base).
+
+nNodes(@Base, a_COUNT<Node>) :- 
+	node(@Base, Node), 
+        Node != "Done",
+	node_inserted(@Base).
+
+/* Has the node been loaded? (remote event). */
+loaded(@Base, Node) :- 
+        load(@Base, Node).
+
+loaded_inserted(@Base) :- loaded(@Base, _).
+
+nLoaded(@Base, a_COUNT<Node>) :-
+	loaded(@Base, Node),
+	loaded_inserted(@Base).
+
+/** After all nodes have been booted, send them a start message. */
+allLoaded(@Base, Time) :-
+	nNodes(@Base, N), nLoaded(@Base, Nl), N == Nl,
+	Time := f_now().
+
+start(@Node) :- allLoaded(@Base), node(@Base, _, Node), Node != "Done".
+
+quit(@Node) :- 
+        periodic(@Node, E, 1),
+        allLoaded(@Node, Time),
+        f_now() > Time + 5,
+        Result := f_quit().
+
+watchmod(allLoaded, "i").
+watchmod(nNodes, "i").
+watchmod(loaded, "id").
+watchmod(nLoaded, "s"). 
+
+/*watchmod(node, "i"). */
+

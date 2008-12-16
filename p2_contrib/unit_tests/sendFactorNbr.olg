@@ -1,0 +1,20 @@
+/* 
+
+$OVERLOG -o sendFactorNbr.olg -p 10001
+
+*/
+
+r1 var(@Me, A) :- periodic(@Me, E, 0, 1), A := f_registerVariable(1, "F", 2).
+r2 var(@Me, A) :- periodic(@Me, E, 0, 1), A := f_registerVariable(2, "F", 2).
+r3 var(@Me, A) :- periodic(@Me, E, 0, 1), A := f_registerVariable(3, "F", 2).
+
+got_factor_msg_node(@Nbr, NodeFactor) :-
+	factor_msg_node(@Nbr, NodeFactor).
+got_factor_msg_edge(@Nbr, Node, EdgeFactor) :-
+	factor_msg_edge(@Nbr, Node, EdgeFactor).
+got_factor_msg_combine(@Nbr, Node, NodeFactor) :-
+	factor_msg_combine(@Nbr, Node, NodeFactor).
+
+watchmod(got_factor_msg_node, "c").
+watchmod(got_factor_msg_edge, "c").
+watchmod(got_factor_msg_combine, "c").

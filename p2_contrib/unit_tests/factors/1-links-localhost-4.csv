@@ -1,0 +1,6 @@
+localhost:10002,localhost:10001,1
+localhost:10001,localhost:10002,1
+localhost:10003,localhost:10002,1
+localhost:10002,localhost:10003,1
+localhost:10004,localhost:10003,1
+localhost:10003,localhost:10004,1

@@ -1,0 +1,25 @@
+/* Baseline loopy belief propagation. */
+
+/* Suggested timings:
+   Locally, P4 3GHz: 6x6,  4 nodes, epoch=2
+                     10x10 4 nodes, epoch=6
+
+   On Emulab: 10x10, 9 nodes, epoch=1
+              20x20, 9 nodes, epoch=4 (both about 50 percent utilization)
+*/
+
+#define BP_EPOCH EPOCH
+
+#ifndef BP_UPDATE_RATE
+  #define BP_UPDATE_RATE 1
+#endif
+
+#define DEFAULT_RESIDUAL 1
+#define EXPERIMENT_DURATION BP_EPOCH*NITERS
+
+#include "../overlog/load_nodes.olg"
+#include "../overlog/load_vars.olg"
+#include "../overlog/load_mrf_edges.olg"
+#include "../overlog/load_potentials.olg"
+#include "../overlog/bp.olg"
+#include "../overlog/start.olg"

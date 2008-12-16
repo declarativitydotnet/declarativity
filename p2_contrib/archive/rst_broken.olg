@@ -1,0 +1,167 @@
+/*
+
+Spanning Tree formation using a simplified version of the algorithm in 
+http://ai.stanford.edu/~paskin/pubs/PaskinGuestrinMcFadden2005.pdf
+
+This version can have cyclic behavior.
+
+Running the script:
+
+distInf/tests/runOverLog -p 10000 -o spantreerooted.olg -DNODE_ADDR=\"localhost:10000\" -DMYID=\"0\" -DLINKS_FILE=\"links.csv\"
+
+*/
+
+/** The total number of epochs executed by the spanning tree algorithm. *
+#define RUN_ITERATIONS "infinity"
+
+/** The duration of each epoch in seconds. */
+#define EPOCH 3
+
+/** The number of seconds before we drop the link to a silent node. */
+#define MAX_LINK_AGE 10
+
+/** The delay before we start running the algorithm. */
+#define START_DELAY 1
+
+#include "links.olg"
+
+/** The identifier of each node: Node, NodeId */
+materialize(identifier, infinity, 1, keys(1)).
+
+/** The best root and the root ID known by the node: Node, Root, RootId. */
+materialize(root, infinity, infinity, keys(1)).
+
+/** The node's parent: Node, Parent. */
+materialize(parent, infinity, infinity, keys(1)).
+
+/** The latest pulse known by the node: Node, Pulse, TimeLastUpdated. */
+materialize(pulse, infinity, infinity, keys(1)).
+
+
+/** Verify that we received the correct id and initialize 
+    (sometimes -DMYID=X gets an incorrect value) */
+identifier(@Me, MyId) :- 
+ 	MyId := MYID, periodic(@Me, E, 0, 1).
+watchmod(identifier, "ia").
+
+/** Initialize each node to be its own parent and its own root. */
+parent(@Node, Node) :- 
+	periodic(@Node, E, START_DELAY, 1).
+
+root(@Node, Node, NodeId) :- 
+	periodic(@Node, E, START_DELAY, 1), identifier(@Node, NodeId).
+
+pulse(@Node, Zero, Now) :- 
+	periodic(@Node, E, START_DELAY, 1), Zero := 0, Now := f_now().
+
+/** Generate a new pulse for each root node. */
+pulse_gen 
+pulse(@Node, NewPulse, Time) :- 
+	periodic(@Node, E, EPOCH, RUN_ITERATIONS), 
+	root(@Node, Node, _), 
+	pulse(@Node, Pulse, _),
+	NewPulse := Pulse + 1,
+	Time := f_now().
+
+
+/********************************************************************/
+/* Maintain the spanning tree by periodically sending configuration */
+/* messages.
+/**/
+
+/** Send a configuration message to all neighbors.
+    This message describes the state of the node Node. */
+conf_gen 
+config(@Neighbor, Node, Parent, Root, RootId, Pulse) :- 
+	periodic(@Node, E, EPOCH, RUN_ITERATIONS), 
+	link(@Node, Neighbor, _, _), 
+	parent(@Node, Parent),
+	root(@Node, Root, RootId),
+	pulse(@Node, Pulse, _).
+
+/** Update the pulse and the root using the parent's configuration message. */
+update_pulse 
+pulse(@Node, NbrPulse, TimeNow) :-
+	config(@Node, Neighbor, _, _, _, NbrPulse), 
+	parent(@Node, Neighbor),
+	TimeNow := f_now().
+
+update_root
+root(@Node, NbrRoot, NbrRootId) :-
+	config(@Node, Neighbor, _, NbrRoot, NbrRootId, _),
+	parent(@Node, Neighbor).
+	
+/** Switch to a new parent with lower root value. */
+switch_parent
+betterParent(@Node, Neighbor, NbrRoot, NbrRootId, NbrPulse) :- 
+	config(@Node, Neighbor, NbrParent, NbrRoot, NbrRootId, NbrPulse), 
+	parent(@Node, Parent),
+	root(@Node, Root, RootId),
+	NbrRootId < RootId,
+	NbrParent != Node,  /* don't make a cycle if Neighbor is our child */
+	Neighbor != Parent. /* don't bother if Neighbor is already our parent*/
+
+/** Update the parent, root, and the pulse if we switched the parent. */
+new_parent
+parent(@Node, Parent) :- 
+	betterParent(@Node, Parent, _, _, _).
+
+new_root
+root(@Node, Root, RootId) :- 
+	betterParent(@Node, _, Root, RootId, _).
+
+new_pulse
+pulse(@Node, Pulse, Time) :- 
+	betterParent(@Node, _, _, _, Pulse), Time := f_now().
+
+
+/********************************************************************/
+/* Detect stale links to the parent by keeping track of the last time
+/*  we received a message from the parent. 
+/**/
+
+/** When we receive a configuration message, update the link age.
+    Todo: custom link costs. */
+conn_update 
+link(@Node, Neighbor, Cost, Time) :- 
+	config(@Node, Neighbor, _, _, _, _),
+	link(@Node, Neighbor, Cost, _),
+	Time := f_now().
+
+/** Detect a blocked link. */
+blocked_link 
+blockedLink(@Node, Neighbor) :-
+	periodic(@Node, E, EPOCH, RUN_ITERATIONS),
+	link(@Node, Neighbor, _, LastTime),
+	LinkAge := f_now() - LastTime,
+	LinkAge > MAX_LINK_AGE.
+
+/** If the blocked link was with our parent, drop the parent. */
+reset_parent
+parent(@Node, Node) :- 
+	blockedLink(@Node, Neighbor),
+	parent(@Node, Neighbor).
+
+reset_root
+root(@Node, Node, MYID) :- 
+	blockedLink(@Node, Neighbor),
+	parent(@Node, Neighbor).
+
+/** Now delete the link. */
+kill_link
+delete link(@Node, Neighbor) :- 
+	blockedLink(@Node, Neighbor).
+
+/*watchmod(linkOutput, "s").*/ 
+watchmod(parent, "ia").
+watchmod(root, "ia").
+watchmod(pulse, "a").
+watchmod(config, "s").
+watchmod(betterParent, "sc").
+/* watchmod(link, "iard"). */
+watchmod(blockedLink, "sc").
+
+/** Report the node's parent, for printing the spanning tree. */
+lookup 
+parentResult(@Client, Node, Parent, Time) :- 
+	parentLookup(@Node, Client), parent(@Node, Parent), Time := f_now().

@@ -1,0 +1,95 @@
+/*
+ * Junction Tree
+ *
+ * Running the script:
+ * distInf-build/tests/runOverLog -p 10000 -o junctree.olg -DNODE_ADDR=\"localhost:10000\" -DMYID=\"0\" -DLINKS_FILE=\"data/links.csv\" -DVARS_FILE=\"data/variables.csv\"
+ * /Users/kuangc/workspace/p2/trunk-build/tests/runOverLog -p 10009 -o junctree.olg -DNODE_ADDR=\"localhost:10009\" -DMYID=\"9\" -DLINKS_FILE=\"data/local-10-links-top20.csv\" -DVARS_FILE=\"data/local-10-vars.csv\"
+ */
+
+/* Variables reachable from the Neighbor of a Node: Node, Neighbor, Var 
+   possibleReachvar may contain stale information for dead edges. */
+materialize(reachvars, infinity, infinity, keys(1,2)).
+materialize(reachvarsIncoming, infinity, infinity, keys(1,2,3)).
+
+/* Clique variables */
+materialize(clique, infinity, infinity, keys(1)).
+
+/* Separator between two cliques. */
+materialize(separator, infinity, infinity, keys(1,2,3)).
+
+/* Perform one round of updates. */
+jtUpdate(@Node, Time) :- 
+	periodic(@Node, E, JT_EPOCH),
+        Time := f_timerElapsed(),
+	started(@Node).
+
+jtNbrUpdate(@Node, Nbr) :-
+        jtUpdate(@Node),
+        routingEdge(@Node, Nbr).
+
+reachvars(@Node, Node, Vars) :-
+        localVars(@Node, Vars).
+
+reachvarsIncoming(@Node, Node, Vars) :-
+        reachvars(@Node, Nbr, Vars),
+        Node == Nbr.
+
+/* Calculate the union of incoming reachable variable messages. */
+reachvars(@Target, Node, a_UNION<Vars>) :-
+        jtNbrUpdate(@Node, Target),
+	reachvarsIncoming(@Node, Nbr, Vars), /* includes the local vars */ 
+	Nbr != Target.
+
+/* The incoming message. When the edge is deleted, so is this message. */
+reachvarsIncoming(@Node, Nbr, Vars) :-
+        reachvars(@Node, Nbr, Vars),
+        routingEdge(@Node, Nbr).
+
+/* Compute the clique at each node */
+cliqueRIP(@Node, a_UNION<Vars>) :-
+        jtUpdate(@Node),
+        reachvarsIncoming(@Node, Nbr1, Vars1),
+        reachvarsIncoming(@Node, Nbr2, Vars2),
+        Nbr1 != Nbr2,
+        Vars := Vars1 & Vars2.
+
+clique(@Node, Vars) :-
+        cliqueRIP(@Node, RipVars),
+        localVars(@Node, LocalVars),
+        Vars := RipVars | LocalVars.
+
+/* Compute the separator. */
+separator(@Node, Nbr, Vars) :-
+        reachvarsIncoming(@Node, Nbr, NbrVars),
+        clique(@Node, MyVars),
+        Node != Nbr,
+        Vars := MyVars & NbrVars.
+
+watchmod(localvars, "id").
+watchmod(routingEdge, "id").
+watchmod(reachvars, "id").
+watchmod(reachvarsIncoming, "id").
+watchmod(cliqueRIP, "s").
+watchmod(clique, "id"). 
+watchmod(separator, "id").
+
+/* Dummy clique & separator facts (needed to generate DELTA_* events). */
+/*
+materialize(clique_dummy, infinity, infinity, keys(1)).
+materialize(separator_dummy, infinity, infinity, keys(1)).
+clique_dummy(@Node) :- clique(@Node, Var).
+separator_dummy(@Node) :- separator(@Node, Nbr, Var).
+*/
+
+/* Rules for logging. */
+
+/* Open the database */
+stage("SQLiteSave", cliqueRow, dummy).
+cliqueRow(@Node, Filename, "cliques", "node", "time", "clique") :-
+        Filename := OUTPUT_DB,
+        periodic(@Node, E, 0, 1).
+
+/* Store the cliques. */
+cliqueRow(@Node, MYID, Time, Vars) :-
+        clique(@Node, Vars),
+        Time := f_timerElapsed().

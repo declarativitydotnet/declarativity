@@ -1,0 +1,7 @@
+/** Stage to read CSV */
+stage("PRLtuple", xmlFile, inputFactor).
+
+/** Invoke the CSVtuple stage */
+xmlFile(@Node, Filename) :- periodic(@Node, E, 1, 1), Filename := "factors.xml".
+
+watch(inputFactor).

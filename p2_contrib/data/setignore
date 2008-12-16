@@ -1,0 +1,8 @@
+#!/bin/bash
+echo "*.csv" > /tmp/ignored
+echo "*.net" >> /tmp/ignored
+cat /tmp/ignored
+for i in $@; do
+  echo $i
+  svn propset svn:ignore -F /tmp/ignored $i
+done

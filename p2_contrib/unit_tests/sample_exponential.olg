@@ -1,0 +1,4 @@
+value(@Node, V) :-
+        periodic(@Node, E, 1), V := f_sampleExponential(5).
+
+watchmod(value,"s").

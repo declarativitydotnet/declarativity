@@ -1,0 +1,8 @@
+materialize(p, infinity, infinity, keys(1)).
+materialize(q, infinity, infinity, keys(1)).
+materialize(r, infinity, infinity, keys(1)).
+
+p(@X, Y) :- q(@X, Z), r(@Z, Y).
+/* p(@X, Y) :- q(@X, Z), r(@Z, Y), s(@Z, X). */
+
+

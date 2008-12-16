@@ -1,0 +1,42 @@
+/* This file is deprecated. */
+#include "../overlog/quit.olg"
+
+#define JT_INIT_DELAY 60
+#define FACTOR_INIT_DELAY 66
+
+#include "../overlog/sum_product.olg"
+
+#include "data/local4_model.olg"
+
+/*#include "jt.olg"*/
+
+
+materialize(edge, infinity, 1000, keys(1,2)).
+materialize(clique, infinity, 1000, keys(1,2)).
+
+edge("localhost:10004", "localhost:10001", "").
+edge("localhost:10001", "localhost:10004", "").
+edge("localhost:10001", "localhost:10003", "").
+edge("localhost:10003", "localhost:10001", "").
+edge("localhost:10002", "localhost:10001", "").
+edge("localhost:10001", "localhost:10002", "").
+
+clique("localhost:10001", 1).
+clique("localhost:10001", 2).
+clique("localhost:10001", 4).
+clique("localhost:10003", 1).
+clique("localhost:10003", 3).
+clique("localhost:10003", 4).
+clique("localhost:10002", 1).
+clique("localhost:10002", 2).
+clique("localhost:10004", 1).
+clique("localhost:10004", 2).
+clique("localhost:10004", 4).
+
+/* for extracting beliefs... */
+init_identifier
+identifier(@Me, MyId, Time) :- 
+	periodic(@Me, E, 0, 1), MyId := MYID, Time := f_now().
+
+materialize(identifier, infinity, 1, keys(1)).
+watchmod(identifier, "a").

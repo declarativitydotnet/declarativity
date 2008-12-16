@@ -1,0 +1,24 @@
+/* #include "b.olg" */
+#define BLAH 10
+
+materialize(foo, infinity, 10, keys(1,2)).
+materialize(bar, infinity, 10, keys(1)).
+
+foo(@Node, A, Time) :-
+        periodic(@Node, E, 1, 1),
+        A := 1,
+        Time := f_now().
+
+bar(@Node) :- foo(@Node, _, _).
+
+delete foo(@Node, A, Time) :-
+        periodic(@Node, E, 3, 1),
+        A := 0,
+        Time := f_now().
+
+zoo(@Node) :- foo(@Node, _, _), periodic(@Node, E, 4, 1).
+
+
+watch(foo).
+watch(bar).
+watch(zoo).

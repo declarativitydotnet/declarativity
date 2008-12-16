@@ -1,0 +1,15 @@
+materialize(env, infinity, infinity, keys(2,3)).
+materialize(try, infinity, infinity, keys(1,2)).
+watch(try).
+watch(out).
+
+try(@I, M) :- periodic(@I,E,0,1), M := {[0,1,2], [3, 4, 5]}.
+try(@I, M) :- periodic(@I,E,0,1), M := "1_2_3;4_5_6".
+
+
+
+/*r2 out(@I, M, N, O, P, Q, R, S) :- periodic(@I,E,2,3), try(@I, M), 
+                                    N := M{0,0}, O := M{0,1},
+                                    P := M{0,2}, Q := M{1,0}, 
+				    R := M{1,1}, S := M{1,2}.
+*/

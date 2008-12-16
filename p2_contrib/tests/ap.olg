@@ -1,0 +1,49 @@
+/* Baseline loopy belief propagation. */
+
+#ifndef AP_EPOCH
+#define AP_EPOCH 10
+#endif
+
+#ifndef DAMP_F
+#define DAMP_F 0.9
+#endif
+/* below are stub thresholds that we should change
+depending on the data */
+#ifndef THRESHOLD_S
+#define THRESHOLD_S -100.0
+#endif
+
+#ifndef THRESHOLD_R
+#define THRESHOLD_R -100.0
+#endif
+
+#ifndef THRESHOLD_A
+#define THRESHOLD_A -100.0
+#endif
+
+#define EXPERIMENT_DURATION AP_EPOCH*NITERS
+
+#include "../overlog/load_nodes.olg"
+#include "../overlog/load_ap_data.olg"
+#include "../overlog/ap.olg"
+#include "../overlog/start.olg"
+
+materialize(rTimer, infinity, 1, keys(1)).
+materialize(aTimer, infinity, 1, keys(1)).
+
+rTimer(@Node, TimeStep, Now) :-
+        timerRestart(@Node, X),
+        Start := f_timeDuration(AP_EPOCH),
+        TimeStep := Start,
+        Now := f_now().
+        
+aTimer(@Node, TimeStep, Now) :-
+        timerRestart(@Node, X),
+        Start := f_timeDuration(AP_EPOCH*2),
+        TimeStep := Start,
+        Now := f_now().
+        
+/*watchmod(rTimer, "i").
+watchmod(aTimer, "i").*/
+
+

@@ -1,0 +1,23 @@
+/** Spanning tree algorithm with greedy local optimizations. */
+
+/* Default parameters */
+#ifndef ROUTING_EPOCH
+  #define ROUTING_EPOCH EPOCH
+#endif
+
+#ifndef ROUTING_SWITCH_COST
+  #define ROUTING_SWITCH_COST 1.0
+#endif
+
+#define MAX_LINK_AGE 20        /* in terms of epochs */
+#define SILENCE_THRESHOLD f_pow(0.1,5)
+  /* the scientific notation (1e-5) does not work at the moment */
+
+#ifndef EXPERIMENT_DURATION
+  #define EXPERIMENT_DURATION ROUTING_EPOCH*NITERS
+#endif
+
+#include "../overlog/load_nodes.olg"
+#include "../overlog/load_links.olg"
+#include "../overlog/rst.olg"
+#include "../overlog/start.olg"

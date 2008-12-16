@@ -1,0 +1,41 @@
+/*
+ * A static junction tree that simply loads the information from the 
+ * file.
+ */
+
+/* Clique variables */
+materialize(clique, infinity, infinity, keys(1,2)).
+
+/* Separator between two cliques. */
+materialize(separator, infinity, infinity, keys(1,2,3)).
+
+/* Compute the set of variables (clique) C_i at each node. */
+clique(@Node, Var) :- localVariable(@Node, Var, _, _).
+
+/* Compute the separator. */
+separator(@Node, Nbr, Var) :- 
+        edge(@Node, Nbr),
+        clique(@Node, Var),
+        variable(@Node, Var, Nbr, _, _).
+
+/* Dummy clique & separator facts (needed to generate DELTA_* events). */
+materialize(clique_dummy, infinity, infinity, keys(1)).
+materialize(separator_dummy, infinity, infinity, keys(1)).
+clique_dummy(@Node) :- clique(@Node, Var).
+separator_dummy(@Node) :- separator(@Node, Nbr, Var).
+
+/* Rules for logging. */
+clique_inserted(@Node, Var, Time) :-
+        clique_DELTA_INSERT(@Node, Var), Time := f_timerElapsed().
+clique_deleted(@Node, Var, Time) :-
+        clique_DELTA_DELETE(@Node, Var), Time := f_timerElapsed().
+
+separator_inserted(@Node, Nbr, Var, Time) :-
+        separator_DELTA_INSERT(@Node, Nbr, Var), Time := f_timerElapsed().
+separator_deleted(@Node, Nbr, Var, Time) :-
+        separator_DELTA_DELETE(@Node, Nbr, Var), Time := f_timerElapsed().
+
+watchmod(clique_inserted, "s").
+watchmod(clique_deleted, "s").
+watchmod(separator_inserted, "s").
+watchmod(separator_deleted, "s").

@@ -1,0 +1,18 @@
+/* Loads node ids from a table. */
+
+/** Me, Node, NodeId */
+materialize(node, infinity, infinity, keys(1,2)).
+
+stage("CSVtuple", nodeFile, nodeInput).
+
+nodeFile(@Node, Filename) :- 
+	periodic(@Node, E, 0, 1), Filename := NODES_FILE.
+
+node(@Me, Id, Node) :-
+        nodeInput(@Me, Id, Node).
+
+nodesLoaded(@Me) :-
+        node(@Me, Id, Node), Id == "Done".
+
+watchmod(node, "i").
+watchmod(nodesLoaded, "s").

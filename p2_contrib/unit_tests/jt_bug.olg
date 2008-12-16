@@ -1,0 +1,38 @@
+/* Vars reachable from the Neighbor of a Node: Node, Neighbor, Var */
+materialize(reachvar, infinity, infinity, keys(1,2,3)).
+
+#define VARS_START_DELAY 0
+#define VARS_FILE "temperature_vars.csv"
+#include "load_vars_simple.olg"
+
+/* Clique variables */
+materialize(clique, infinity, infinity, keys(1,2)).
+
+materialize(edge, infinity, infinity, keys(1,2)).
+
+start(@Node)  :- periodic(@Node, E, 5, 1), Node == "localhost:10003".
+switch(@Node) :- periodic(@Node, E, 10, 1), Node == "localhost:10003".
+
+edge(@Node, "localhost:10002", 1) :- start(@Node).
+edge(@Nbr, Node, 1) :- start(@Node), Nbr := "localhost:10002".
+
+edge(@Node, "localhost:10001", 1) :- switch(@Node).
+delete edge(@Node, "localhost:10002", 1) :- switch(@Node).
+delete edge(@Nbr, Node, 1) :- switch(@Node), Nbr := "localhost:10002".
+
+/* Var is in the clique at Neighbor */
+reachable_neighbor
+reachvar(@Nbr, Node, Var) :-
+        edge(@Node, Nbr, _), 
+        localVariable(@Node, Var, _, _).
+
+/* Var is in cliques downstream of Nbr, away from Node */
+reachable_recur
+reachvar(@Nbr, Node, Var) :-
+        edge(@Node, Nbr, _), 
+	reachvar(@Node, OtherNbr, Var), 
+	Nbr != OtherNbr. 
+
+
+watchmod(edge, "id").
+watchmod(reachvar, "iadzr").

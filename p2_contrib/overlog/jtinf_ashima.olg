@@ -1,0 +1,170 @@
+/* Stores count of nbrs: Node, Count*/
+materialize(neighbor_count, infinity, 1000, keys(1)).
+
+/* The factors stored locally at each node: Node, Factor */
+materialize(local_factor, infinity, 1000, keys(1)).
+
+/* The inference messages: From, To, Factor */
+materialize(message, infinity, 1000, keys(1,2)).
+
+/* The clique variables represented as a set. */
+materialize(clique_set, infinity, 1000, keys(1)).
+
+/* Queue of outbound messages */
+materialize(factors_roundup, infinity, 1000, keys(1,2)).
+
+/*
+
+ 	Initialize Tables
+
+*/
+
+/* Initialize the local factor with the combination of all added factors. */
+add_factor 
+addedFactor(@Node) :- addFactor(@Node, _, _).
+
+local_factors 
+local_factors(@Node, a_MKLIST<F>) :- addedFactor(@Node), addFactor(@Node, _, F).
+
+local_message
+message(@Node, Node, F) :-
+	local_factors(@Node, Factors), 
+	F := f_combineAll(Factors).
+
+/*
+
+ 	Handle Churn
+
+	- edge delete ?
+	
+	-> neighbor count
+	-> local messages
+	-> local clique set
+	-> send messages to neighbors
+	
+*/
+
+/* temp set to large */
+#define JTINF_UPDATE_EPOCH 3
+
+/* size 1 flag for tracking whether tree has changed */
+materialize(jt_dirty, infinity, 1, keys(1)).
+
+/* on any edge or clique insert or delete, flag inference layer as dirty */
+jt_updated(@Node, Time) :- edge(@Node, _, _), clique(@Node, _), Time := f_now().
+
+jt_updated(@Node, Time) :- edge_DELTA_DELETE(@Node, _, _), Time := f_now().
+	
+jt_updated(@Node, Time) :- clique_DELTA_DELETE(@Node, _), Time := f_now().
+
+jt_dirty(@Node, Time) :- jt_updated(@Node, Time).
+
+jtinf_refresh(@Node, Now) :- 
+	periodic(@Node, E, JTINF_UPDATE_EPOCH), 
+	jt_dirty(@Node, LastTime), Now := f_now(),
+	Now - LastTime < JTINF_UPDATE_EPOCH.
+
+/* Computes the aggregate statistics: number of neighbors & clique set. */
+
+neighbor_count_update
+neighbor_count(@Node, a_COUNT<Nbr>, Time) :-
+	jtinf_refresh(@Node, Time),
+	edge(@Node, Nbr, _).
+
+clique_set_update
+clique_set(@Node, a_MKLIST<Var>, Time) :- 
+	jtinf_refresh(@Node, Time),
+	clique(@Node, Var).
+
+clear_old_messages
+delete message(@Node, Nbr, Factor) :-
+	jtinf_refresh(@Node, Time),
+	message(@Node, Nbr, Factor),
+	Node != Nbr. /* delete all msgs but the local factor */
+
+/* send a message to all neighbors */
+send_message(@Node, Nbr) :-
+	jtinf_refresh(@Node, Time),
+	edge(@Node, Nbr).
+
+/* notify Nbrs of change by requesting a message */
+send_message(@Nbr, Node) :-
+	jtinf_refresh(@Node, Time),
+	edge(@Node, Nbr).
+
+/*clear_outbound_msgs
+delete factors_roundup(@Node, Other, FactorList) :- 
+	jtinf_refresh(@Node, Time),
+	factors_roundup(@Node, Other, FactorList).*/
+
+/*
+
+ 	Calculate Messages
+
+
+*/
+/* 1) if new message, update all other neighbors; 2) if new edge, update edge neighbor */
+send_message0
+send_message(@Node, TargetNbr) :-
+	message(@Node, Nbr, _),
+	edge(@Node, TargetNbr, _),
+	TargetNbr != Nbr.
+
+/* Computes a list of factors from neighbors other than Nbr. */
+send_message1
+factors_roundup(@Node, TargetNbr, a_MKLIST<Factor>) :-	
+	send_message(@Node, TargetNbr),
+	message(@Node, Nbr, Factor), /*includes the local factor as well */
+	Nbr != TargetNbr.
+
+send_message2
+message(@Nbr, Node, NewFactor) :-
+	factors_roundup(@Node, Nbr, FactorsList),
+	neighbor_count(@Node, NbrCount),
+	f_size(FactorsList) == NbrCount, /* |local factor| + |other neighbors' factors| = |neighbors| - 1 */
+	clique_set(@Nbr, Variables),
+	/*edge(@Node, Nbr, _),*/
+	NewFactor := f_collapse(f_combineAll(FactorsList), Variables).
+
+/*
+ 	Calculate Beliefs
+*/
+calculate_belief0
+message_event(@Node) :- message(@Node, Nbr, F).
+
+calculate_belief1
+calculate_belief(@Node, a_MKLIST<Factor>) :-
+	message_event(@Node),
+	message(@Node, _, Factor).
+
+calculate_belief2
+node_belief(@Node, Factor) :-
+	calculate_belief(@Node, IncomingFactors),
+	neighbor_count(@Node, NbrCount),
+	message(@Node, Node, Factor),
+	f_size(IncomingFactors) == NbrCount + 1, /* Got all messages including local factor? */
+	Factor := f_combineAll(IncomingFactors).
+
+beliefValues(@Node, Mean, Time) :-
+ 	node_belief(@Node, Factor),
+	Mean := f_gaussianMean(f_collapse(Factor, [MYID])),
+	Time := f_now().
+	
+/* print result */
+watchmod(identifier, "a").
+watchmod(beliefValues, "s").
+watchmod(message, "i"). 
+
+watchmod(jt_dirty, "i").
+watchmod(local_factor, "iz").
+watchmod(neighbor_count, "iz").
+watchmod(clique_set, "iz").
+/*watchmod(factors_roundup, "iz").*/
+
+watchmod(jt_updated, "s").
+watchmod(jtinf_refresh, "s").
+watchmod(send_message, "s").
+watchmod(collect_factors, "s").
+watchmod(message_event, "s").
+watchmod(calculate_belief, "s").
+watchmod(node_belief, "s").

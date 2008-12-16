@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# /Users/kuangc/workspace/p2/trunk-build/tests/runOverLog -p 10000 -o spantreerooted.olg -DNODE_ADDR=\"localhost:10000\" -DROOT=\"0\" -DLINKS_FILE=\"links.csv\"
+
+#overlog=distInf/tests/runOverLog
+overlog=distInf/build/tests/runOverLog
+
+#overlog=/home/sfuniak/pieskovisko/p2/tests/runOverLog
+#overlog=/Users/kuangc/workspace/p2/trunk-build/tests/runOverLog 
+#echo $overlog
+#overlog=./mytest
+N=4
+
+# First, assign the addresses
+for ((i=0;i<N;i=i+1)) ; do
+  port[$i]=$((10000+i))
+done
+
+for ((i=0;i<N;i=i+1)) ; do
+    olog="$overlog -p $((port[$i])) -o spantreerooted3.olg -DNODE_ADDR=\"localhost:$((port[$i]))\" -DMYID=\"$i\" -DLINKS_FILE=\"links.csv\""
+    xterm="xterm -geometry 180x25 -sb -sl 1000 -T $i"
+    logfile="logs/spantreerooted-$((port[$i])).log"
+    $xterm -e logsave $logfile $olog &
+    sleep 1
+done

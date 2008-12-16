@@ -1,0 +1,22 @@
+
+factors(@Node, IncomingFactors) :-
+	periodic(@Node, E, 0, 1),
+	A := "CanonicalFactor1",
+	B := "CanonicalFactor2",
+	IncomingFactors := f_initlist(),
+	IncomingFactors := f_cons(A, IncomingFactors),
+	IncomingFactors := f_cons(B, IncomingFactors).
+
+watch(factors).
+
+testCar(@Node, Factor, IncomingFactors) :-
+	factors(@Node, IncomingFactors),
+	Factor := f_car(IncomingFactors).
+
+watch(testCar).
+
+testCdr(@Node, Factor, IncomingFactors) :-
+	factors(@Node, IncomingFactors),
+	Factor := f_cdr(IncomingFactors).
+
+watch(testCdr).

@@ -1,0 +1,9 @@
+\section{Challenges and Issues}
+\label{ci} 
+\subsection{Mapping graphical model onto physical network}
+\label{map} 
+The behavioral blacklisting paper \cite{bb} captures the logs at the domain of the receiver and it seems more natural to have each physical node in the network be a domain mail server that stores the logs. In this setting information of a sending IP address will span multiple logs. We need to aggregate information for each IP address from all the domain servers in order to extract its sending pattern. In order to achieve this task we have a separate layer of super-nodes that distributes IP addresses between them. This layer performs the computation to generate clusters of IP addresses that have similar sending pattern. In our case, we will have multiple variables (IP addresses) assigned to a single physical node. This requires customizing the algorithm to run for multiple variables per node.
+
+\subsection{Performance issues}
+\label{issues} 
+\ashima{Discuss performance issue and have some graph for evaluation of distributed implementation}

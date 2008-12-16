@@ -1,0 +1,367 @@
+/** Requires: 
+    nodePotential, edgePotential, variable, localVariable, linkOutput */
+
+/***  Tuple definitions and initialization ***/
+
+/* The identifier of each node: Node, NodeId */
+materialize(identifier, infinity, 1, keys(1)).
+
+/* The neighbors of a node in the MRF: Node, From, To */
+materialize(mrfEdge, infinity, 200000, keys(1,2,3)).
+
+/* The set of local variables */
+materialize(localVarHash, infinity, 100000, keys(1,2)).
+
+/* variableLocation(@DHTNode, Var, VarNode)*/
+materialize(variableLocation, infinity, 100000, keys(1,2,3)).
+
+/* variableLocation(@Node, Var, DHTNode)*/
+materialize(remoteLocation, infinity, 100000, keys(1,2)).
+
+/*target location in chord:  */
+materialize(targetLocation, infinity, 100000, keys(1,2)).
+
+/* DHT lookup */
+materialize(lookupRequest, infinity, 100000, keys(1,2)).
+
+
+
+/***  Rules ***/
+
+ 
+/* Initialize the node's identifier. */
+identifier(@Node, MyId) :- 
+	periodic(@Node, E, 0, 1), 
+	MyId := MYID.
+
+init_mrfEdgeInput
+mrfEdge(@Node, Source, Target, TargetHash) :- 
+        mrfEdgeInput(@Node, Source, Target),
+        localVariable(@Node, Source, Type, Size),
+        RandomId := f_rand(),
+        TargetHash := f_sha1(Target).
+
+/* Insert local variable hash information */
+load_vars_hash
+localVarHash(@Node, Var, RandomId, HashValue) :- 
+        localVariable(@Node, Var, Type, Size),
+        RandomId := f_sha1(f_now()),
+        HashValue := f_sha1(Var).
+
+
+/**********************************************************************
+  Timers
+  1. timer :- stores the time when the node started running
+  2. chordStable :- signals local variable registration phase to start after
+                    the Chord ring is formed 
+  2. starTargetLookup :- signals start of target location phase after all 
+                         the local varibles have been registered with Chord
+  3. startBP :- signals start of belief propagation phase once all the target 
+                locations have been found                
+**********************************************************************/
+ /* single tuple table generated after chord is stable */
+materialize(chordStable, infinity, 1, keys(1)).
+materialize(timer, infinity, infinity, keys(1)).
+materialize(startTargetLookup, infinity, 1, keys(1)).
+materialize(startBP, infinity, 1, keys(1)).
+
+/*start the chord timer for chord stabilization*/
+timer(@Node, T) :- 
+        started(@Node),
+        T := f_now().
+        
+/*chord stabilized - now start registration of local variables
+to Chord nodes*/    
+chord_stabilize_event
+chordStable(@Node) :-
+        periodic(@Node, E, 3),
+        timer(@Node, T),
+        f_now() > T + CHORD_STABILIZATION,
+        notin chordStable(@Node).
+
+/*start target location lookups 60 seconds after 
+all local variables have been registered with Chord nodes
+and their Chord node locations have been found*/
+startTargetLookup(@Node, T) :-
+        periodic(@Node, E, 3),
+        localVarCnt(@Node, Cnt),
+        remoteLocCnt(@Node, Cnt),
+        chordStable(@Node),
+        T := f_now(),
+        notin startTargetLookup(@Node).
+
+/*start belief propagation calculation 60 secs after all 
+target nodes physical location addresses have been found*/
+startBP(@Node, T) :- 
+        targetLocationCnt(@Node, Cnt),
+        lookupRequestCnt(@Node, Cnt),
+        T := f_now(),
+        notin startBP(@Node, _).   
+        
+            
+/**********************************************************************
+  Registeration of variable location at DHT nodes
+**********************************************************************/
+materialize(localVarCnt, infinity, 1, keys(1)).
+materialize(remoteLocCnt, infinity, 1, keys(1)).
+materialize(lookupRequestCnt, infinity, 1, keys(1)).
+
+
+/*event needed to fire aggregation*/
+localVarCntEvent(@Node) :- chordStable(@Node).
+localVarCnt(@Node, a_COUNT<*>) :-
+        localVarCntEvent(@Node),
+	localVarHash(@Node, Var, RandomId, HashValue).
+
+
+/*Send lookup to find DHT location of local variables*/
+var_location_request
+lookup(@Node, HashValue, Node, RandomId) :- 
+        periodic(@Node, E, 3),
+        chordStable(@Node),
+        localVarHash(@Node, Var, RandomId, HashValue),
+        notin remoteLocation(@Node, Var, _).
+                 	
+/*store DHT location of local variable*/
+remoteLocation(@Node, Var, ResultAddr) :-
+        lookupResults(@Node, SentKey, DHTNodeKey, ResultAddr, ResultId),
+        localVarHash(@Node, Var, RandomId, HashValue),
+        ResultId == RandomId,
+        SentKey == HashValue.
+
+/* Derived at the node that stores the variable location. */
+/*After storing DHT location information locally
+register the local variable at the DHT node*/
+/*NOTE: somehow the remote inserts are getting lost 
+so we continue inserting them periodically*/
+variableLocationEvent(@ResultAddr, Var, Node) :- 
+        periodic(@Node, E, 3),
+        remoteLocation(@Node, Var, ResultAddr),
+        notin startBP(@Node, _).
+variableLocation(@DHTNode, Var, Node) :- 
+        variableLocationEvent(@DHTNode, Var, Node).
+
+/*Count wheter DHT node locations for all local variables have been found*/
+remoteLocationEvent(@Node) :- 
+        remoteLocation(@Node, Var, ResultAddr).
+/*get count of known DHT locations of local variables*/
+remoteLocCnt(@Node, a_COUNT<*>) :- 
+        remoteLocationEvent(@Node),
+        remoteLocation(@Node, Var, ResultAddr).
+
+
+/**********************************************************************
+ retreival of target location from DHT nodes.
+**********************************************************************/
+
+/* targets that reside locally*/
+targetLocation(@Node, Target, Node) :-
+         mrfEdge(@Node, Source, Target, TargetHash),
+         localVarHash(@Node, Target, _, _).     
+       
+/* If varaileLocation has information about the target
+then add it to your target location. */
+targetLocation(@Node, Target, TargetNode) :-
+         mrfEdge(@Node, Source, Target, TargetHash),
+         variableLocation(@Node, Target, TargetNode).
+
+/* we need this to generate different Id for each lookup request
+ sent to search the target variable location */              
+/* Used to search for registered variables. */   
+lookupRequest(@Node, Target, TargetHash, Rand)  :- 
+        chordStable(@Node),
+        mrfEdge(@Node, Source, Target, TargetHash),
+        Rand := f_sha1(f_now()).
+
+/*event needed for firing aggregation*/
+lookupRequestCntEvent(@Node) :- 
+        lookupRequest(@Node, Target, TargetHash, Rand).
+/*count number of target locations that have to be found*/
+lookupRequestCnt(@Node, a_COUNT<*>) :-
+        lookupRequestCntEvent(@Node),
+        lookupRequest(@Node, Target, TargetHash, Rand).         
+
+
+/* Lookup to decide where target information is stored. */        
+targetLocation_lookup
+lookup(@Node, TargetHash, Node, Rand) :-
+        periodic(@Node, E, 3),
+        startTargetLookup(@Node, T),
+        f_now() > T + 60,
+        lookupRequest(@Node, Target, TargetHash, Rand),
+        notin targetLocation(@Node, Target, _),
+        notin localVarHash(@Node, Target, _, _),
+        notin variableLocation(@Node, Target, _).
+ 
+/* Get the target location from the Chord node. */     
+target_location
+targetLocation(@Node, Target, TargetNode) :-
+        lookupResults(@Node, HashValue, DHTKey, DHTAddress, DHTResultId),
+        lookupRequest(@Node, Target, TargetHash, Rand),
+        variableLocation(@DHTAddress, Target, TargetNode),
+        DHTResultId == Rand,
+        TargetHash == HashValue.        
+
+/*even needed for firing aggregation*/
+targetLocationEvent(@Node) :-         
+        periodic(@Node, E, 3),
+        startTargetLookup(@Node, T),
+        f_now() > T + 60.
+/*count number of target locations that have been discovered*/
+targetLocationCnt(@Node, a_COUNT<*>) :- 
+        targetLocationEvent(@Node),
+        targetLocation(@Node, Target, TargetNode). 
+
+
+watchmod(targetLocation, "iz").
+watchmod(variableLocation, "idz").
+watchmod(remoteLocation, "idz").
+watchmod(remoteLocCnt, "idz").
+watchmod(localVarCnt, "idz").
+watchmod(chordStable, "iz").
+/*watchmod(mrfEdge, "iz").*/
+/*watchmod(localVarHash, "iz").*/
+watchmod(lookupRequest, "iz").
+watchmod(startTargetLookup, "iz").
+watchmod(targetLocationCnt, "idz").
+watchmod(lookupRequestCnt, "idz").
+watchmod(startBP, "iz").
+
+
+/**********************************************************************
+  LBP
+ **********************************************************************/
+ 
+/* The LBP incoming message: Node, Var, NbrVar, Factor */
+materialize(incoming, infinity, infinity, keys(1,2,3)).
+
+/* sent messages: FromNode, ToNode, FromVar, ToVar, Factor */
+materialize(message, infinity, 200000, keys(2,3)).
+
+/* Residual of a sent message: Node, Src, Target, Residual. */ 
+materialize(residual, infinity, infinity, keys(1,2,3)).
+
+/**********************************************************************
+  Compute the new messages
+ **********************************************************************/
+
+/* Messages coming into node from nodes OTHER than Nbr */       
+bp_update
+bpUpdate(@Node, Source, Target) :-
+        periodic(@Node, E, BP_EPOCH),
+        chordStable(@Node),
+        startBP(@Node, T),
+	f_now() > T + 60,
+        localVarHash(@Node, Source, RandomId, HashValue),
+        mrfEdge(@Node, Source, Target, TargetHash).
+
+/* Factors whose product forms the messge. */
+message_factors
+messageFactors(@Node, Source, Target, a_MKLIST<Factor>) :-
+        bpUpdate(@Node, Source, Target),
+        incoming(@Node, OtherVar, Source, Factor), 
+        OtherVar != Target.
+
+/* The resulting factor_msg computed to a node */
+calculate_message
+evalMessage(@Node, Source, Target, NewFactor) :-
+        messageFactors(@Node, Source, Target, InFactors),
+        nodePotential(@Node, Source, NodeFactor),
+        edgePotential(@Node, Source, Target, EdgeFactor),
+        F := f_prod(f_cons(EdgeFactor, f_cons(NodeFactor, InFactors))),
+        NewFactor := f_normalize(f_marginal(F, f_initSet(Target))).
+
+
+/**********************************************************************
+  Perform a weighted update and compute the residuals
+ **********************************************************************/
+
+message_update
+messageEvent(@Node, Source, Target, MixedFactor, Residual) :-
+        evalMessage(@Node, Source, Target, NewFactor),
+        message(@Node, Source, Target, OldFactor),
+        Residual := f_normInf(NewFactor, OldFactor),
+        Residual > 0,
+        MixedFactor := f_weightedUpdate(OldFactor, NewFactor, BP_UPDATE_RATE).
+
+message_init
+messageEvent(@Node, Source, Target, NewFactor, Residual) :-
+	evalMessage(@Node, Source, Target, NewFactor),
+	notin message(@Node, Source, Target, _),
+	Residual := DEFAULT_RESIDUAL.
+
+/* The latest residual for each message. */
+residual(@Node, Source, Target, Residual) :- 
+        messageEvent(@Node, Source, Target, _, Residual).
+                
+send_to_neighbor
+incoming(@TargetNode, Source, Target, NewFactor) :-
+        messageEvent(@Node, Source, Target, NewFactor, _),
+        targetLocation(@Node, Target, TargetNode).
+                
+save_message
+message(@Node, Source, Target, NewFactor) :-
+        messageEvent(@Node, Source, Target, NewFactor, _).
+
+
+/**********************************************************************
+  Calculate the belief
+ **********************************************************************/
+/* Periodically trigger the belief update event.
+   We cannot simply listen on incoming insertions here, since that means
+   that we may be double-counting the old and the new incoming messages. 
+*/
+beliefUpdate(@Node, Source) :- 
+        periodic(@Node, E, BP_EPOCH),
+        chordStable(@Node),
+        startBP(@Node, T),
+	f_now() > T + 60,
+        localVarHash(@Node, Source, RandomId, HashValue).
+
+/* The list of all incoming factors. */
+beliefIncoming(@Node, Var, a_MKLIST<Factor>) :- 
+        beliefUpdate(@Node, Var),
+        incoming(@Node, _, Var, Factor).
+
+belief(@Node, Var, F) :- 
+        beliefIncoming(@Node, Var, IncomingFactors),
+        nodePotential(@Node, Var, NodeFactor),
+        F := f_normalize(f_prod(f_cons(NodeFactor, IncomingFactors))).
+
+beliefValues(@Node, Var, Values, Time) :- 
+        belief(@Node, Var, Factor), 
+        Values := f_values(Factor), 
+        Time := f_timerElapsed().
+
+/**********************************************************************
+  Log the residuals and the number of message updates
+ **********************************************************************/
+/* Log all residuals. */
+residualUpdate(@Node, Time) :-
+        periodic(@Node, E, BP_EPOCH),
+        chordStable(@Node),
+        startBP(@Node, T),
+	f_now() > T + 60,  
+	Time := f_timerElapsed().
+ 
+ /* this tuple is needed because group by variables must be in the event. */
+messageResidual(@Node, a_MAX<Residual>, Time) :- 
+        residualUpdate(@Node, Time),
+        residual(@Node, _, _, Residual).
+
+messageUpdates(@Node, a_COUNT<Source>, Time) :-
+        residualUpdate(@Node, Time),
+        localVariable(@Node, Source, _, _),
+        mrfEdge(@Node, Source, _).
+
+watchmod(messageUpdates, "s").
+watchmod(messageResidual, "s").
+	
+/* print result */
+watchmod(identifier, "a").
+watchmod(beliefValues, "s").
+watchmod(incoming, "id").
+watchmod(message, "id").
+/*watchmod(beliefCount, "s").*/
+
+watchmod(messageFactors, "s").

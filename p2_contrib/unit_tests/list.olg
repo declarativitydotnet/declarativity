@@ -1,0 +1,6 @@
+materialize(foo, infinity, infinity, keys(1,2)).
+
+trigger(@Node) :- a(@Node).
+
+bar(@Node, a_MkSet<Var>) :-
+        trigger(@Node), foo(@Node, Var).

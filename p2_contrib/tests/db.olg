@@ -1,0 +1,4 @@
+#ifndef OUTPUT_DB
+#define OUTPUT_DB ".db" ||| MYID ||| "/" ||| OUTPUT_DIR
+/* the ||| is reversed for some reason. */
+#endif

@@ -1,0 +1,80 @@
+/**
+This file is deprecated
+
+Minimum Spanning Tree formation
+
+*/
+
+#define FIRE_EDGES_DELAY 5
+
+materialize(link,infinity,infinity,keys(1,2)).
+materialize(path,infinity,infinity,keys(1,2,4)).
+materialize(bestPath,infinity,infinity,keys(1,2)).
+materialize(bestPathCost,infinity,infinity,keys(1,2)).
+
+materialize(linksFile,infinity,infinity,keys(1,2)).
+linksFile(NODE_ADDR, LINKS_FILE).
+
+stage("CSVtuple", csvInput, linkOutput).
+loadLinks csvInput(@Current, Filename) :- periodic(@Current, E, 0, 1), linksFile(@Current, Filename).
+linkLinks2 link(@Current, To, Cost) :- linkOutput(@Current, From, To, Cost), Current == From.
+
+linkEq1 linkHack(@Neighbor, Current, Cost) :- link(@Current, Neighbor, Cost), periodic(@Current, E, 2, 1).
+linkEq2 link(@Current, Neighbor, Cost) :- linkHack(@Current, Neighbor, Cost).
+
+/* triggers static/direct path insertions */
+r1 path(@Current,Neighbor,Cost,PathList) :- 
+	link(@Current,Neighbor,Cost), 
+	PathList1:=f_append(Current), 
+	PathList2:=f_append(Neighbor),
+	PathList:=f_concat(PathList1,PathList2),
+	periodic(@Current, E, 2, 1).
+
+/* calculates best path cost */
+r2 bestPathCost(@Current,Neighbor,a_MIN<Cost>) :- 
+	path(@Current,Neighbor,Cost,PathList).
+
+/* insert best path */
+r3 bestPath(@Current,Neighbor,Cost,PathList) :-
+	bestPathCost(@Current,Neighbor,Cost), 
+	path(@Current,Neighbor,Cost,PathList).
+
+/* send upate to neighbors of nodes i can reach */
+r4 newPath(@Neighbor, Current, Dest, Cost, PathList) :- 
+	link(@Current, Neighbor, _), 
+	bestPath(@Current, Dest, Cost, PathList), 
+	Neighbor != Dest.
+
+/* update path according to newPath updates */
+r5 path(@Current,Dest,Cost,PathList) :- 
+	link(@Current,Neighbor,Cost1),
+	newPath(@Current, Neighbor, Dest, Cost2, PathList2),
+	Cost:=Cost1+Cost2, 
+	f_member(PathList2,Current)==0,     
+	PathList1:=f_append(Current),
+	PathList:=f_concat(PathList1,PathList2).
+
+r6 edge(@Current, Last) :-
+	periodic(@Current, E, FIRE_EDGES_DELAY, 1), 
+	bestPath(@Current, Dest, Cost, PathList), 
+	f_size(PathList) == 2,
+	Last := f_last(PathList),
+	NewPathList := f_removeLast(PathList),
+	SecondToLast := f_last(NewPathList),
+	SecondToLast == Current.
+
+
+/*
+watchmod(link, "ia").
+watchmod(path, "ia").
+watchmod(bestPathCost, "ia").
+watchmod(unravelEdges, "c").
+watchmod(chaseEdges, "c").
+watchmod(unravelEdges, "sc").
+watchmod(chaseEdges, "sc").
+watch(csvInput).
+watch(linkOutput).
+*/
+
+watchmod(link, "ia").
+watchmod(bestPath, "ia").

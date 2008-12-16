@@ -1,0 +1,18 @@
+var1
+var(@Me, A) :- periodic(@Me, E, 1, 1), A := f_registerVariable(1, "V", 1).
+
+factor2
+factor(@Me, F) :-
+	periodic(@Me, E, 2, 1),
+	F := f_factor(0).
+
+collapse
+marginal(@Me, F) :-
+	factorA(@Me, FA),
+	F := f_marginal(FA, 1).
+
+mylist
+list(@Me, F) :- periodic(@Me, E, 1, 1), F := f_append(1, f_append(2, f_initlist())).
+
+watch(factor).
+watch(list).

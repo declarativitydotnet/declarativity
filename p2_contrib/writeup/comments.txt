@@ -1,0 +1,117 @@
+High-level comments:
+- tie it the discussion better 
+
+
+Page 1:
+
+Author list:
+- put a footnote, saying sth along the lines "S. Funiak participated in the implementation of the distributed inference layers and the poster, and he gave feedback on this report." Put my full name.
+
+1. Motivation and Challenge
+
+Paragraph:
+"Massive amounts of data" -- why important? The distributed aspects seem
+more important
+
+what's the motivation for running distributed inference?
+- perhaps too expensive to collect all the data
+  - either communication expensive or too much data
+- can perform active control
+
+3rd paragraph: 
+Note: We did not do the entire architecture. Still would need some
+robustness aspects. So we're looking at 10x saving (which is very 
+good still).
+
+Need more details in the introduction
+
+2. 
+2.1 P2 and (its?) benefits
+NDLog => Overlog?
+
+constructed from rules that describe how _facts_ are generated
+=> then say that facts are tuples in a table
+why is this good enough? 
+- often list of neighbors
+- or inference messagees between neighbors
+
+3rd paragraph (translated into flow graph): 
+what is a data flow graph? continuous query processing system?
+
+"which provides a concise, powerful and intuitive way to express the
+kinds of operations necessary to debug large networked systems and
+find faults either offline or online" 
+what faults?
+
+2.2 Architecture
+Better if we use the JT inference architecture as an example
+Figure 1: should show the underlying graphical model as well.
+Will provide figure.
+
+How different is this junction tree formation from the 
+formation typically used in centralized algorithms 
+(maximum intersection tree & variable elimination)? Why?
+
+Which algorithm did we use in inference layer? Needs more 
+technical information: 
+given an MRF, assign the potentials of the MRF to the cliques
+(how?) and then run the sum--product algorithm.
+
+Question: should we call the algorithm "Shafer-Shenoy" or sum--product?
+Which term did you use in class?
+
+2.3 Adaptivity
+consider folding into the previous section
+"The dynamic updates help in calculating accurate probabilistic
+inference as per the latest network."
+
+Figure 2: Change node labels to 0-9
+
+2.4 Junction Tree rules
+OK but a little boring
+
+Suggestion: move the complete rules to Appendix (won't count towards the
+page limit & he won't read them). Provide a more abstract description:
+
+Facts directly correspond to the terms in the equation: 
+- clique(N, i) if variable i is in the clique at node i
+- reachable(...) if variable i is in the subtree rooted at node i away from j
+- and similarly for the separator
+provides automatic deletion of facts that no longer hold
+
+Point the reader to the Appendix.
+
+Inference:
+- similar one fact for each 
+- new fact (message) overwrites the new one if the algorithm is run 
+asynchronously
+- use streaming events for some functionality (such as insertions of facts
+at remote nodes) that are not directly supported in P2 at the moment
+  (will be supported in the new release).
+
+3. Experimental section
+
+Figure 3. Drawing of the graph: needs to be more legible.
+- consider erasing the shadows (too big a file)
+
+More citations.
+
+4. Conclusion
+We did not make the algorithms more robust (the changing network conditions).
+However: there was a race condition in the original algorithm (whereby nodes
+could propagate stale information indefinitely). Using our implementation,
+we were able to notice and easily address this race condition.
+
+Need to clearly distinguish between the work that we're planning on 
+doing vs. what can be done. 
+
+5. Listings
+Label the listings clearly as an appendix
+For the first one, in the figure label, describe the syntax.
+Each rule takes on a form Conclusion :- Precondition
+where Conclusion is a fact and Precondition is a conjunction
+of facts. @indicates the node Location. 
+
+Consider removing the rule names (less clutter); do some syntax highlighting.
+
+
