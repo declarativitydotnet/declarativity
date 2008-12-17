@@ -166,7 +166,7 @@ components:
 \subsection{Declarative Specification of Distributed Filesystems}
 Why choose GFS to implement in a declarative language?
 
-Before directly addressing why we chose this GFS re-envisioning as the the first vehicle of the BOOM philosophy, we observe that it is common for well-designed systems to structurally separate control and data paths.  Often this is a result of practical concerns that have little to do with the abstract notion of separating policy and mechanism: first, it is undesirable for data path congestion to delay control messages, and second, a certain amount of control overhead associated with better functionality is acceptable, so long as it is off the critical path of data transfer, which will contribute the most to overall latency as transfer sizes increase .  Data transfer mechanisms such as DOT, and even early internet applications like FTP, send control messages on a separate channel from data transfer.
+Before directly addressing why we chose this GFS re-envisioning as the the first vehicle of the BOOM philosophy, we observe that it is common for well-designed systems to structurally separate control and data paths.  Often this is a result of practical concerns that have little to do with the abstract notion of separating policy and mechanism: first, it is undesirable for data path congestion to delay control messages, and second, a certain amount of control overhead associated with better functionality is acceptable, so long as it is off the critical path of data transfer, which will contribute the most to overall latency as transfer sizes increase .  Data transfer mechanisms such as DOT, and even early Internet applications like FTP, send control messages on a separate channel from data transfer.
 
 GFS was a good fit for our approach for several reasons.  First, the separation of data and control planes described above is central to its design.  Their design choice of a single master introduced the possibility of bottlenecks, and a master-independent data path alleviates this potential hotspot, making client-master communication necessary only for atomic filesystem metadata operations.   The overhead associated with the necessary consistency guarantees over these operations is divorced from the data path in the GFS design.
 
@@ -426,7 +426,7 @@ concurrently in each sort benchmark, as we vary D.
 \end{figure}
 Our results are summarized in Figures \ref{fig:big-read-perf} and
 \ref{fig:big-write-perf}.  At lower concurrency levels, BFS is
-comparable in read performance and handily outperforms HSFS in write
+comparable in read performance and handily outperforms HDFS in write
 performance.  This result supports our intuition that the relatively
 high cost of metadata operations is quickly amortized by the highly
 efficient datapath under the large transfers characteristic of
