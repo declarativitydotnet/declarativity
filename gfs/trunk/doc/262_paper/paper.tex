@@ -43,16 +43,17 @@ distributed systems are urgently needed.
 
 We believe that a new approach to building distributed systems is
 necessary to address this need. Inspired by prior work on declarative
-networking[cite], we propose a new architectural style for distributed
-programs in which policy and protocol is specified in a declarative
-logic language, while the operational mechanisms of the system are
-written in a traditional imperative language. We are engaged in the
-Berkeley Orders of Magnitude (BOOM) project, which aims to use this
-style to build common cloud computing infrastructure components using
-orders of magnitude less code, and operate at orders of magnitude more
-scale. In Section \ref{boom-vision}, we discuss the failings of
-traditional tools for building distributed systems in more detail, and
-outline the BOOM vision in contrast.
+networking\cite{dn-sigmod, network-data-indep}, we propose a new
+architectural style for distributed programs in which policy and
+protocol is specified in a declarative logic language, while the
+operational mechanisms of the system are written in a traditional
+imperative language. We are engaged in the Berkeley Orders of
+Magnitude (BOOM) project, which aims to use this style to build common
+cloud computing infrastructure components using orders of magnitude
+less code, and operate at orders of magnitude more scale. In Section
+\ref{boom-vision}, we discuss the failings of traditional tools for
+building distributed systems in more detail, and outline the BOOM
+vision in contrast.
 
 The first system we have built using this architectural style is
 BoomFS, a distributed filesystem similar to the Google File
@@ -147,8 +148,8 @@ components:
   components.
 
   Declarative components are implemented in a high-level declarative
-  logic language, such as Overlog[cite]. This requires the state of
-  the distributed system to be represented in tables.
+  logic language, such as Overlog\cite{dn-sigmod}. This requires the
+  state of the distributed system to be represented in tables.
 
   In BoomFS, declarative components implement the protocols between
   clients and master nodes, between different masters, and between
@@ -363,9 +364,10 @@ create requests or new chunk requests!).
 
 \subsection{Sort Benchmark}
 Our next experiment evaluates read and write performance under a
-typical MapReduce workload.  The sort benchmark used by Dean et al []
-is a simple and practical test that puts equal stress on the read and
-write components of the distributed filesystem.
+typical MapReduce workload.  The sort benchmark of Dean and
+Ghemawat\cite{mapreduce} is a simple and practical test that puts
+equal stress on the read and write components of the distributed
+filesystem.
 
 The MapReduce specification of sorting is trivial, largely because
 sorting (over \emph{some} key) is a side-effect of the framework.
