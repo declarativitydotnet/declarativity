@@ -43,7 +43,7 @@ distributed systems are urgently needed.
 
 We believe that a new approach to building distributed systems is
 necessary to address this need. Inspired by prior work on declarative
-networking\cite{dn-sigmod, network-data-indep}, we propose a new
+networking~\cite{dn-sigmod, network-data-indep}, we propose a new
 architectural style for distributed programs in which policy and
 protocol is specified in a declarative logic language, while the
 operational mechanisms of the system are written in a traditional
@@ -57,7 +57,7 @@ vision in contrast.
 
 The first system we have built using this architectural style is
 BoomFS, a distributed filesystem similar to the Google File
-System\cite{gfs}. Our goal in building this system was not novelty of
+System~\cite{gfs}. Our goal in building this system was not novelty of
 design: although BoomFS supports multiple master nodes, its
 architecture is otherwise very similar to GFS. Instead, our aim was to
 show that a GFS-like filesystem can be easily and concisely
@@ -86,7 +86,7 @@ obscured by a forest of boilerplate details. Evidence for this can be
 seen in the fact that distributed algorithms such as Paxos can be
 stated in a page of pseudocode, but typically require many thousands
 of lines of code to implement using standard
-tools\cite{paxos-made-live}.
+tools~\cite{paxos-made-live}.
 
 Traditional tools operate at a low level of abstraction because they
 force programmers to intermingle the specification of \emph{what} a
@@ -105,13 +105,13 @@ bandwidth, server-side computation and client-side computation, as
 well as how much data is required, how expensive the function is, and
 the frequency with which the function is invoked or the input data is
 modified. All of these parameters are likely to fluctuate, both within
-a single environment over time,\footnote{Internal variability at
-  virtualized environments like Amazon EC2 has been
-  well-documented\ldots XXX} and when the distributed program is
-deployed to a new environment. Traditional approaches to constructing
-distributed systems require hardcoding assumptions about these
-parameters. This yields fragile programs that are expensive to modify,
-and difficult to adapt to new environments.
+a single environment over time,\footnote{Internal heterogeneity in
+  virtualized environments such as Amazon's Elastic Compute Cloud has
+  been well-documented in recent work~\cite{late-sched}.} and when the
+distributed program is deployed to a new environment. Traditional
+approaches to constructing distributed systems require hardcoding
+assumptions about these parameters. This yields fragile programs that
+are expensive to modify, and difficult to adapt to new environments.
 
 In addition to inflexibility, the failure to separate mechanism from
 policy makes programs harder to understand and reason about. XXX
@@ -148,7 +148,7 @@ components:
   components.
 
   Declarative components are implemented in a high-level declarative
-  logic language, such as Overlog\cite{dn-sigmod}. This requires the
+  logic language, such as Overlog~\cite{dn-sigmod}. This requires the
   state of the distributed system to be represented in tables.
 
   In BoomFS, declarative components implement the protocols between
@@ -194,7 +194,7 @@ We now turn to discussing the architecture, implementation, and
 performance characteristics of BoomFS, the distributed filesystem we
 have implemented using both Java and Overlog. The architecture of
 BoomFS is directly inspired by the design of the Google File
-System\cite{gfs}. Our contribution is not the design per se; rather,
+System~\cite{gfs}. Our contribution is not the design per se; rather,
 it is the way in which the architecture was realized. XXX
 
 \begin{figure}
@@ -233,7 +233,7 @@ chunks that contain the file's content.\footnote{The current prototype
   inconsequential implementation shortcut that we plan to address in
   the near future.} To avoid a single point of failure, our design
 allows for multiple master nodes, which are kept in synchrony using a
-consensus protocol (currently Paxos\cite{paxos-made-simple}).
+consensus protocol (currently Paxos~\cite{paxos-made-simple}).
 
 Data nodes are responsible for storing chunks. They have no knowledge
 of the structure of the filesystem as a whole, nor even which files
@@ -379,7 +379,7 @@ create requests or new chunk requests!).
 \subsection{Sort Benchmark}
 Our next experiment evaluates read and write performance under a
 typical MapReduce workload.  The sort benchmark of Dean and
-Ghemawat\cite{mapreduce} is a simple and practical test that puts
+Ghemawat~\cite{mapreduce} is a simple and practical test that puts
 equal stress on the read and write components of the distributed
 filesystem.
 
