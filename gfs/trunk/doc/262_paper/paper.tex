@@ -19,9 +19,10 @@
   an ongoing project to develop concise declarative specifications for
   a broad class of scalable distributed systems. In this paper, we
   describe the first application in the BOOM stack: BoomFS, a
-  distributed filesystem similar to the Google File System\cite{gfs}
-  that is implemented using a combination of Java and declarative
-  logic.
+  distributed filesystem that is implemented using a combination of
+  Java and declarative logic. We show that BoomFS is easy to
+  understand and modify, and achieves performance that is competitive
+  with the Hadoop Filesystem (HDFS).
 \end{abstract}
 \section{Introduction}
 \label{introduction}
@@ -53,21 +54,23 @@ scale. In Section \ref{boom-vision}, we discuss the failings of
 traditional tools for building distributed systems in more detail, and
 outline the BOOM vision in contrast.
 
-The first system that we have built using this architectural style is
-BoomFS, a distributed file system modeled on the Google File
-System. Our goal in building this system was not novelty of design;
-instead, our hope was to show that such a system could be implemented
-easily and concisely using the BOOM style, and that the resulting
-system could be easily understood and adapted to new environments.  In
-Section \ref{system-arch}, we describe the design goals and basic
-architecture of BoomFS. In Section \ref{system-realize}, we detail how
-this architecture was realized using a mixture of declarative logic
-and Java. In Section \ref{perf-eval}, we report on a preliminary
-performance study comparing BoomFS and HDFS, an open source
-implementation of the GFS design. In Section \ref{future-work}, we
-explore extensions to the file system that are facilitated by our use
-of a declarative coordination language. In Section \ref{related-work},
-we discuss related work, and we conclude in Section \ref{conclusion}.
+The first system we have built using this architectural style is
+BoomFS, a distributed filesystem similar to the Google File
+System\cite{gfs}. Our goal in building this system was not novelty of
+design: although BoomFS supports multiple master nodes, its
+architecture is otherwise very similar to GFS. Instead, our aim was to
+show that a GFS-like filesystem can be easily and concisely
+implemented in the BOOM style. The resulting system should achieve
+competitive performance, and be easy to understand and adapt to new
+environments and policies. In Section \ref{system-arch}, we describe
+the basic architecture of BoomFS. In Section \ref{system-realize}, we
+detail how this architecture was realized using a mixture of
+declarative logic and Java. In Section \ref{perf-eval}, we report on a
+preliminary performance study comparing BoomFS and HDFS, an open
+source implementation of the GFS design. In Section \ref{future-work},
+we explore extensions to the file system that are facilitated by our
+use of a declarative logic language. In Section \ref{related-work}, we
+discuss related work, and we conclude in Section \ref{conclusion}.
 
 \section{The BOOM Vision}
 \label{boom-vision}
@@ -332,6 +335,13 @@ come at the cost of high variability in network and disk performance
 instrumenting BFS to handle dynamic address assignment was trivial.
 
 \subsection{Metadata Operations}
+\begin{figure}
+\centering
+\epsfig{file=figures/metadata_throughput.eps, width=1\columnwidth}
+\caption{Performance for metadata operations}
+\label{fig:metadata-perf}
+\end{figure}
+
 In our first experiment, we compare the latency of metadata operations
 affecting the control path.  A directory listing uses the client
 protocol and requires a round trip between the client and master and a
@@ -342,14 +352,14 @@ a link of datanodes who can accept the new chunkid.  (Does hadoop
 combine these?  probably, and it would be easy for us to do so).
 
 The results of running 100 of each of these metadata operations are
-shown in Figure 1.  As we anticipated, the overhead of these
-operations is significantly higher in our implementation that in HDFS.
-This is due in part to client-side caching, enabled in HDFS and not
-yet implemented in BFS, although it would be simple to locally
-materialize lookup results into relations that can be queried before
-visiting the master. (actually, I don't think we can claim this.  you
-can't cache lookup results, new file create requests or new chunk
-requests!).
+shown in Figure \ref{fig:metadata-perf}.  As we anticipated, the
+overhead of these operations is significantly higher in our
+implementation that in HDFS.  This is due in part to client-side
+caching, enabled in HDFS and not yet implemented in BFS, although it
+would be simple to locally materialize lookup results into relations
+that can be queried before visiting the master. (actually, I don't
+think we can claim this.  you can't cache lookup results, new file
+create requests or new chunk requests!).
 
 \subsection{Sort Benchmark}
 Our next experiment evaluates read and write performance under a
@@ -383,12 +393,25 @@ filesystem file and append the contents of the local file to it.
 Thus, each client reads (writes) 100MB to (from) the filesystem
 concurrently in each sort benchmark, as we vary D.
 
-Our results are summarized in Figures 2 and 3.  At lower concurrency
-levels, BFS is comparable in read performance and handily outperforms
-HSFS in write performance.  This result supports our intuition that
-the relatively high cost of metadata operations is quickly amortized
-by the highly efficient datapath under the large transfers
-characteristic of MapReduce and Hadoop workloads.
+\begin{figure}
+\centering
+\epsfig{file=figures/big_read_throughput.eps, width=1\columnwidth}
+\caption{Sequential read performance for the sort benchmark}
+\label{fig:big-read-perf}
+\end{figure}
+\begin{figure}
+\centering
+\epsfig{file=figures/big_write_throughput.eps, width=1\columnwidth}
+\caption{Sequential write performance for the sort benchmark}
+\label{fig:big-write-perf}
+\end{figure}
+Our results are summarized in Figures \ref{fig:big-read-perf} and
+\ref{fig:big-write-perf}.  At lower concurrency levels, BFS is
+comparable in read performance and handily outperforms HSFS in write
+performance.  This result supports our intuition that the relatively
+high cost of metadata operations is quickly amortized by the highly
+efficient datapath under the large transfers characteristic of
+MapReduce and Hadoop workloads.
 
 In HDFS, read latency increases gradually as load increases, but write
 latency reacts very quickly to concurrency, increasing by almost two
