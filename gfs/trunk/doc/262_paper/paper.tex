@@ -193,11 +193,25 @@ We feel that our approach is a natural way to express systems of this kind, and 
 \section{System Architecture}
 \label{system-arch}
 We now turn to discussing the architecture, implementation, and
-performance characteristics of BoomFS, the distributed filesystem we
-have implemented using both Java and Overlog. The architecture of
-BoomFS is directly inspired by the design of the Google File
-System~\cite{gfs}. Our contribution is not the design per se; rather,
-it is the way in which the architecture was realized. XXX
+performance characteristics of BoomFS. The architecture of the system
+is directly inspired by the design of the Google File System. The
+design goals and system architecture of GFS are well-documented
+elsewhere~\cite{gfs, hdfs-arch}, so we include only a short discussion
+of them here.
+
+Like GFS, BoomFS does not attempt to be a general-purpose distributed
+filesystem. Instead, it is designed to perform well for a particular
+class of workloads, and to operate on a particular cluster
+architecture. We focus on achieving good performance for large
+sequential reads and writes. Files are assumed to be very large;
+therefore, we choose a large chunk size of XXX. We focus on delivering
+high sequential read and write throughput and efficient network
+utilization, rather than achieving low latency or efficient usage of
+stable storage. Members of a BoomFS system are assumed to be
+unreliable commodity machines, provisioned with relatively modest
+resources.  Reliability is achieved by storing multiple copies of each
+chunk; scalability is achieved by spreading file system contents over
+a large cluster of machines (typically hundreds or thousands).
 
 \begin{figure}
 % XXX
@@ -209,33 +223,17 @@ it is the way in which the architecture was realized. XXX
 
 \subsection{System Overview}
 The major components of the BoomFS design are depicted in Figure
-\ref{fig:system-arch}. %XXX
-
-Like GFS, BoomFS does not attempt to be a general-purpose distributed
-filesystem. Instead, it is designed to perform well for a particular
-class of workloads, and to operate on a particular cluster
-architecture. We focus on achieving good performance for large
-sequential reads and writes. Files are assumed to be very large;
-therefore, we choose a large chunk size of XXX. We focus on delivering
-high sequential read and write throughput and efficient network
-utilization, rather than achieving low latency or efficient usage of
-stable storage. Nodes in a BoomFS system are assumed to be unreliable
-commodity machines, provisioned with relatively modest resources.
-Reliability is achieved by storing multiple copies of each chunk;
-scalability is achieved by spreading file system contents over a large
-cluster of machines (typically hundreds or thousands).
-
-There are three basic types of nodes in BoomFS: \emph{master nodes},
-\emph{data nodes}, and \emph{clients}. Master nodes contain the
-canonical description of the structure of the filesystem. The
-filesystem is described by a mapping from file names to file
-identifiers, and a mapping from file identifiers to the sequence of
-chunks that contain the file's content.\footnote{The current prototype
-  does not support directories, but this is a relatively
-  inconsequential implementation shortcut that we plan to address in
-  the near future.} To avoid a single point of failure, our design
-allows for multiple master nodes, which are kept in synchrony using a
-consensus protocol (currently Paxos~\cite{paxos-made-simple}).
+\ref{fig:system-arch}. There are three basic types of nodes in BoomFS:
+\emph{master nodes}, \emph{data nodes}, and \emph{clients}. Master
+nodes contain the canonical description of the structure of the
+filesystem. The filesystem is described by a mapping from file names
+to file identifiers, and a mapping from file identifiers to the
+sequence of chunks that contain the file's content.\footnote{The
+  current prototype does not support directories, but this is a
+  relatively inconsequential implementation shortcut that we plan to
+  address in the near future.} To avoid a single point of failure, our
+design allows for multiple master nodes, which are kept in synchrony
+using a consensus protocol (currently Paxos~\cite{paxos-made-simple}).
 
 Data nodes are responsible for storing chunks. They have no knowledge
 of the structure of the filesystem as a whole, nor even which files
@@ -249,12 +247,13 @@ the content of a data node resides at the data node itself, not at the
 master nodes; the master's copy of this information is updated lazily.
 
 Finally, client nodes represent application programs that wish to read
-and write to files stored in BoomFS. We expect that application
-programs will interact with the system through a client library that
-provides a convenient stream-like abstraction for files stored in
-BoomFS. % Other APIs (fuse, hdfs), POSIX
+and write files. We expect that applications will interact with the
+system through a client library that provides a convenient stream-like
+abstraction for files stored in BoomFS. In the future, we plan to
+implement the HDFS API, to allow BoomFS to easily replace HDFS in
+existing Hadoop installations. % mention POSIX?
 
-\subsection{Control Path}
+\subsection{Filesystem Operations}
 To append to a file, a client node begins by contacting one of the
 master nodes, and requesting that a new chunk be added to a particular
 file.\footnote{In the current prototype, random writes are not
