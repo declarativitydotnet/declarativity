@@ -304,7 +304,7 @@ In the first section, we compare the cost of metadata operations between our pro
 scale the number of concurrent clients and datanodes together.  Finally, we discuss the various failure modes of the architecture and the impact of our multi-master extension on these scenarios.
 
 \subsection{Test Environment}
-GFS is a proprietary filesystem: we can only speculate about its implementation based on the documentation that Google has published, and we cannot evaluate its performance against our own simulated workloads.  Instead, we used Hadoop, Yahoo's open source implemenation of MapReduce, which includes a distributed filesystem (HDFS) based on GFS.
+GFS is a proprietary filesystem: we can only speculate about its implementation based on the documentation that Google has published, and we cannot evaluate its performance against our own simulated workloads.  Instead, we used Hadoop, Yahoo's open source implementation of MapReduce, which includes a distributed filesystem (HDFS) based on GFS.
 
 We performed our experiments on the Amazon Elastic Compute Cloud, a virtualized "utility computing" environment.  EC2 provides a convenient and inexpensive testing platform, but this convenience can come at the cost of high variability in network and disk performance (LATE paper, EC2).  Hadoop is already well-integrated with EC2, and instrumenting BFS to handle dynamic address assignment was trivial.
 
