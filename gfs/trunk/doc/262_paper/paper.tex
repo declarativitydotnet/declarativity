@@ -1,8 +1,10 @@
 \documentclass{article}
 \usepackage{fullpage}
-\title{BoomFS: A Declarative Distributed Filesystem}
+\usepackage{epsfig}
+\title{BoomFS: A Declarative Approach To Building\\Distributed Filesystems}
 \author{Peter Alvaro, Neil Conway}
-\date{December 20, 2008}
+\date{December 19, 2008}
+\twocolumn
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -10,18 +12,19 @@
   techniques for building distributed systems have remained
   stagnant. As distributed computation becomes the common case,
   traditional techniques for building distributed systems will become
-  untenable, because they force programs to deal with the mundane
+  untenable, because they force programmers to deal with the mundane
   boilerplate details of constructing reliable distributed
   systems. This yields programs that are difficult to construct,
-  understand, modify, and port to new environments. We propose BOOM, a
-  new paradigm for concisely specifying a broad class of distributed
-  systems. In this paper, we describe the first application in the
-  BOOM stack: BoomFS, a distributed filesystem similar to the Google
-  File System\cite{gfs} that is implemented in a mixture of Java and
-  declarative logic.
+  understand, modify, and adapt to new environments. We propose BOOM,
+  an ongoing project to develop concise declarative specifications for
+  a broad class of scalable distributed systems. In this paper, we
+  describe the first application in the BOOM stack: BoomFS, a
+  distributed filesystem similar to the Google File System\cite{gfs}
+  that is implemented using a combination of Java and declarative
+  logic.
 \end{abstract}
-
 \section{Introduction}
+\label{introduction}
 With the widespread adoption of cloud computing, pervasive mobile
 clients, and many-core processors, computing architectures are
 undergoing a period of disruptive change. In the near future, nearly
@@ -33,30 +36,45 @@ to this new environment. Despite considerable research, developing
 fault-tolerant distributed systems remains enormously difficult and
 expensive, and is typically only attempted by experienced programmers
 with extensive training in the field. As more journeyman developers
-must deal with the challenges of distributed computing as a matter of
-course, this situation will become untenable. Better techniques for
-constructing distributed systems are urgently needed.
+must deal with the challenges of distributed computing, this situation
+will become increasingly untenable. Better techniques for constructing
+distributed systems are urgently needed.
 
-We believe a new approach to building distributed systems is necessary
-to address this need. Inspired by prior work on declarative
-networking, \ldots
+We believe that a new approach to building distributed systems is
+necessary to address this need. Inspired by prior work on declarative
+networking[cite], we propose a new architectural style for distributed
+programs in which policy and protocol is specified in a declarative
+logic language, while the operational mechanisms of the system are
+written in a traditional imperative language. We are engaged in the
+Berkeley Orders of Magnitude (BOOM) project, which aims to use this
+style to build common cloud computing infrastructure components using
+orders of magnitude less code, and operate at orders of magnitude more
+scale. In Section \ref{boom-vision}, we discuss the failings of
+traditional tools for building distributed systems in more detail, and
+outline the BOOM vision in contrast.
 
-In Section 2, we discuss the failings of traditional tools for
-building distributed systems, and outline the BOOM vision in
-contrast. We also motivate our decision to begin the BOOM project by
-implementing a declarative file system. In Section 3, we describe the
-design goals and basic architecture of BoomFS. In Section 4, we detail
-how this architecture was realized in the BOOM style. In Section 5, we
-report on a performance study comparing BoomFS and HDFS\cite{}. In
-Section 6, we explore extensions to the file system that are
-facilitated by our use of a declarative coordination language. In
-Section 7, we discuss related work, and we conclude in Section 8.
+The first system that we have built using this architectural style is
+BoomFS, a distributed file system modeled on the Google File
+System. Our goal in building this system was not novelty of design;
+instead, our hope was to show that such a system could be implemented
+easily and concisely using the BOOM style, and that the resulting
+system could be easily understood and adapted to new environments.  In
+Section \ref{system-arch}, we describe the design goals and basic
+architecture of BoomFS. In Section \ref{system-realize}, we detail how
+this architecture was realized using a mixture of declarative logic
+and Java. In Section \ref{perf-eval}, we report on a preliminary
+performance study comparing BoomFS and HDFS, an open source
+implementation of the GFS design. In Section \ref{future-work}, we
+explore extensions to the file system that are facilitated by our use
+of a declarative coordination language. In Section \ref{related-work},
+we discuss related work, and we conclude in Section \ref{conclusion}.
 
 \section{The BOOM Vision}
+\label{boom-vision}
 The fundamental problem with traditional techniques for building
 distributed systems is that they provide the wrong abstractions to the
 programmer. Distributed systems are typically implemented with tools
-developed for single-machine programs, and only superficially adapted
+developed for single-machine programs and only superficially adapted
 to the challenges of a distributed setting. Programmers are forced to
 deal with the mundane details of communication, synchronization, and
 consensus. As a result, the essence of the distributed computation is
@@ -64,25 +82,35 @@ obscured by a forest of boilerplate details. Evidence for this can be
 seen in the fact that distributed algorithms such as Paxos can be
 stated in a page of pseudocode, but typically require many thousands
 of lines of code to implement using standard
-tools\cite{paxosmadelive}.
+tools\cite{paxos-made-live}.
 
 Traditional tools operate at a low level of abstraction because they
 force programmers to intermingle the specification of \emph{what} a
-distributed program should do with \emph{how} it can be done. This
-results in fragile programs that fail to adapt to changes in their
-environments. For example, consider a client program that wants to
-compute a function over data stored in a compute cloud. Should the
-function code be sent to the server, or should the data be sent to the
-client? The optimal policy depends on factors including the relative
-costs of network bandwidth, server-side computation and client-side
-computation, as well as how much data is required, how expensive the
-function is, and the frequency with which the function is invoked or
-the input data is modified. All of these variables are likely to
-fluctuate in a distributed system, so encoding a particular decision
-into the application program results in a fragile design. This
-fragility results in programs that cannot easily be modified, or
-ported to distributed systems with varying performance
-characteristics.
+distributed program should do with \emph{how} it can be done. That is,
+mechanism and policy are not separated, and are implemented in the
+same language. This has two primary problems: it yields fragile
+programs that cannot easily adapt to change, and it results in
+programs that are difficult to understand.
+
+For example, consider a client program that wants to compute a
+function over data stored in a compute cloud. Should the function code
+be sent to the server, should the data be sent to the client, or
+should both code and data be sent to an intermediary? The optimal
+policy depends on factors including the relative costs of network
+bandwidth, server-side computation and client-side computation, as
+well as how much data is required, how expensive the function is, and
+the frequency with which the function is invoked or the input data is
+modified. All of these parameters are likely to fluctuate, both within
+a single environment over time,\footnote{Internal variability at
+  virtualized environments like Amazon EC2 has been
+  well-documented\ldots XXX} and when the distributed program is
+deployed to a new environment. Traditional approaches to constructing
+distributed systems require hardcoding assumptions about these
+parameters. This yields fragile programs that are expensive to modify,
+and difficult to adapt to new environments.
+
+In addition to inflexibility, the failure to separate mechanism from
+policy makes programs harder to understand and reason about. XXX
 
 Inspired by the data independence provided by the relational model, we
 aim to provide \emph{network scale independence} for distributed
@@ -122,11 +150,11 @@ components:
   In BoomFS, declarative components implement the protocols between
   clients and master nodes, between different masters, and between
   masters and data nodes. That is, declarative rules implement the
-  ``control path'', which represents the vast majority of the
-  complexity in the BoomFS design. The data path (from clients to data
-  nodes and between different data nodes, is implemented as an
-  imperative component, because it is straightforward and primarily
-  involves copying bytes.
+  ``control path'', which contains the vast majority of the complexity
+  in the BoomFS design. The data path (from clients to data nodes and
+  between different data nodes, is implemented as an imperative
+  component, because it is straightforward and primarily involves the
+  transfer of bytes.
 \end{itemize}
 
 \subsection{Declarative Specification of Distributed Filesystems}
@@ -143,21 +171,133 @@ Why choose GFS to implement in a declarative language?
 \end{itemize}
 
 \section{System Architecture}
+\label{system-arch}
+We now turn to discussing the architecture, implementation, and
+performance characteristics of BoomFS, the distributed filesystem we
+have implemented using both Java and Overlog. The architecture of
+BoomFS is directly inspired by the design of the Google File
+System\cite{gfs}. Our contribution is not the design per se; rather,
+it is the way in which the architecture was realized. XXX
+
+\begin{figure}
+% XXX
+\centering
+\epsfig{file=figures/big_read_throughput.eps, width=1\columnwidth}
+\caption{The components of the BoomFS architecture}
+\label{fig:system-arch}
+\end{figure}
+
+\subsection{System Overview}
+The major components of the BoomFS design are depicted in Figure
+\ref{fig:system-arch}. %XXX
+
+Like GFS, BoomFS does not attempt to be a general-purpose distributed
+filesystem. Instead, it is designed to perform well for a particular
+class of workloads, and to operate on a particular cluster
+architecture. We focus on achieving good performance for large
+sequential reads and writes. Files are assumed to be very large;
+therefore, we choose a large chunk size of XXX. We focus on delivering
+high sequential read and write throughput and efficient network
+utilization, rather than achieving low latency or efficient usage of
+stable storage. Nodes in a BoomFS system are assumed to be unreliable
+commodity machines, provisioned with relatively modest resources.
+Reliability is achieved by storing multiple copies of each chunk;
+scalability is achieved by spreading file system contents over a large
+cluster of machines (typically hundreds or thousands).
+
+There are three basic types of nodes in BoomFS: \emph{master nodes},
+\emph{data nodes}, and \emph{clients}. Master nodes contain the
+canonical description of the structure of the filesystem. The
+filesystem is described by a mapping from file names to file
+identifiers, and a mapping from file identifiers to the sequence of
+chunks that contain the file's content.\footnote{The current prototype
+  does not support directories, but this is a relatively
+  inconsequential implementation shortcut that we plan to address in
+  the near future.} To avoid a single point of failure, our design
+allows for multiple master nodes, which are kept in synchrony using a
+consensus protocol (currently Paxos\cite{paxos-made-simple}).
+
+Data nodes are responsible for storing chunks. They have no knowledge
+of the structure of the filesystem as a whole, nor even which files
+the chunks they store belong to. Each data node periodically sends a
+\emph{heartbeat} to the master nodes. This notifies the masters that
+the data node is still alive, and contains a list of the chunks
+currently stored at the data node. The masters use this information to
+update a mapping from chunk identifiers to the set of data nodes that
+might be holding that chunk. Note that the canonical description of
+the content of a data node resides at the data node itself, not at the
+master nodes; the master's copy of this information is updated lazily.
+
+Finally, client nodes represent application programs that wish to read
+and write to files stored in BoomFS. We expect that application
+programs will interact with the system through a client library that
+provides a convenient stream-like abstraction for files stored in
+BoomFS. % Other APIs (fuse, hdfs), POSIX
+
+\subsection{Control Path}
+To append to a file, a client node begins by contacting one of the
+master nodes, and requesting that a new chunk be added to a particular
+file.\footnote{In the current prototype, random writes are not
+  supported, and each append operation creates a new chunk --- we
+  expect that each append will be large enough to justify occupying a
+  single chunk. We discuss our plans for relaxing these constraints in
+  Section \ref{future-work}.} The master first generates a new chunk
+identifier. To ensure that the state of the file system is consistent
+across all the masters, the master uses a consensus protocol to ensure
+that all masters have agreed to add the new chunk identifier at the
+same position in the chunk list for the appropriate file. Once
+consensus has been reached, the master sends the new chunk identifier
+back to the client, as well as a list of data nodes that might be
+appropriate locations for the new chunk.
+
+The client is then responsible for pushing data for the chunk to a
+sufficient number of data nodes. There are various policies a client
+could use to do this. For example, the client could directly connect
+to all the data nodes and send the chunk content itself, or it might
+only send the data to a single data node, and instruct that node to
+propagate the data onward. Once the chunk content has been completely
+received by a data node and written to disk, this fact will be
+reflected in the next heartbeat that the data node sends to the
+masters. In turn, this will make the data node available for
+subsequent operations on the chunk.
+
+To read from a file, a client once again begins by contacting one of
+the master nodes to fetch the list of chunks that make up the target
+file. For each chunk identifier in the list, the client consults the
+master to determine the set of data nodes that have copies of that
+chunk. The client then reads the chunk by connecting to one of the
+data nodes directly.
+
+\subsection{Data Path}
+
+\subsection{Data Nodes}
 
 \section{System Realization}
+\label{system-realize}
+
+\subsection{Software Architecture}
+
+\subsection{Data Representation}
+
+\subsection{Consensus}
+
 \begin{itemize}
 \item
   Language integration: what belongs in declarative land, and what in
   imperative land?
 
 \item
-  Representation of data
+  Representation of metadata and data
+
+\item
+  Data path implementation
 
 \item
   Use of Paxos as a component
 \end{itemize}
 
 \section{Performance Evaluation}
+\label{perf-eval}
 We  validate the applicability of our approach by prototyping a distributed filesystem based on Google's GFS, and evaluating its performance and robustness to failure.  Our goal is to achieve competitive performance on the large append and read workload characteristic of the GFS environment in spite of the increased control overhead of our Overlog runtime, and to demonstrate fault tolerance even when master nodes are lost.  In this section, we present an evaluation of how successful we were in achieving these goals.
 
 In the first section, we compare the cost of metadata operations between our prototype and HDFS, the Hadoop open source implementation of GFS.  Following this, we simulate a MapReduce sort benchmark, comparing read and write performance between BFS and HDFS as we 
@@ -205,6 +345,7 @@ GFS and HDFS implement data integrity checking at different granularities: in HD
  
 
 \section{Future Work}
+\label{future-work}
 \begin{itemize}
 \item
   Challenges/difficulties
@@ -223,8 +364,10 @@ GFS and HDFS implement data integrity checking at different granularities: in HD
 \end{itemize}
 
 \section{Related Work}
+\label{related-work}
 
-\section{Conclusions}
+\section{Conclusion}
+\label{conclusion}
 
 \bibliographystyle{abbrv}
 \bibliography{paper}
