@@ -265,9 +265,9 @@ sufficient number of data nodes. There are various policies a client
 could use to do this. For example, the client could directly connect
 to all the data nodes and send the chunk content itself, or it might
 only send the data to a single data node, and instruct that node to
-propagate the data onward. Once the chunk content has been completely
-received by a data node and written to disk, this fact will be
-reflected in the next heartbeat that the data node sends to the
+propagate the data onward. Once the content of a chunk has been
+completely received by a data node and written to disk, this fact will
+be reflected in the next heartbeat that the data node sends to the
 masters. In turn, this will make the data node available for
 subsequent operations on the chunk.
 
@@ -306,9 +306,30 @@ in Section XXX, and by conducting a performance study in Section
 \ref{perf-eval}.
 
 \subsection{Approach}
-Our task in developing this declaratively specified prototype is to represent the distributed state of the filesystem (the union of the various states in the finite automata describing the master and datanode servers) as a single relational database, with relations partitioned across nodes.  Both policy (which expresses constraints over these relations, and conditions under which the contents of the relations may change) and protocol (which expresses how data may move from one partition, and hence node,  to another) are then expressed in a network-aware recursive query language that operates over the relations.
+Our task in developing this declaratively specified prototype is to
+represent the distributed state of the filesystem (the union of the
+various states in the finite automata describing the master and
+datanode servers) as a single relational database, with relations
+partitioned across nodes.  Both policy (which expresses constraints
+over these relations, and conditions under which the contents of the
+relations may change) and protocol (which expresses how data may move
+from one partition, and hence node, to another) are then expressed in
+a network-aware recursive query language that operates over the
+relations.
 
-We feel that our approach is a natural way to express systems of this kind, and results in a codebase that is easy to understand, validate against the original specification, and extend.  As we built the prototype, we concentrated first on the correctness of the specification and on exploiting the economy of mechanism exposed by flattening system state.  For the mechanism components including data transfer and source-routing for the data path, we implemented simple, best-effort modules as place holders while we composed the collection of logical rules comprising the declarative specification of the system.  Once this was correct, it was simple to return to the mechanism modules and tune them to improve performance, without worrying about violating the correctness guaranteed by the policy layer.
+We feel that our approach is a natural way to express systems of this
+kind, and results in a codebase that is easy to understand, validate
+against the original specification, and extend.  As we built the
+prototype, we concentrated first on the correctness of the
+specification and on exploiting the economy of mechanism exposed by
+flattening system state.  For the mechanism components including data
+transfer and source-routing for the data path, we implemented simple,
+best-effort modules as place holders while we composed the collection
+of logical rules comprising the declarative specification of the
+system.  Once this was correct, it was simple to return to the
+mechanism modules and tune them to improve performance, without
+worrying about violating the correctness guaranteed by the policy
+layer.
 
 \subsection{Software Architecture}
 \begin{figure}
@@ -337,16 +358,17 @@ This architecture is quite similar to the familiar structure of an
 application that uses a DBMS: the database is responsible for managing
 data, and the application uses queries to retrieve and modify the
 state of the database. However, there are some crucial differences
-between this architecture and the design of BoomFS. For example, Overlog
-relations are partitioned over multiple nodes.  While one-time queries are expressible 
-in Overlog, continuous queries are the more common case, represented syntactically as 
-a recursive join and semantically as a cyclic dataflow graph.
+between this architecture and the design of BoomFS. For example,
+Overlog relations are partitioned over multiple nodes.  While one-time
+queries are expressible in Overlog, continuous queries are the more
+common case, represented syntactically as a recursive join and
+semantically as a cyclic dataflow graph.
 
 \subsection{State Representation}
 Any filesystem contains two kinds of state: data and metadata. In
 BoomFS, data is stored as a collection of chunks distributed over the
 data nodes. Each data node stores chunks as normal files on its
-filesystem.
+local filesystem.
 
 All the metadata in BoomFS is represented as relations; some of these
 relations are partitioned over multiple nodes.
