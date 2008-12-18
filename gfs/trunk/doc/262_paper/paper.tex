@@ -584,22 +584,39 @@ time is 10.12 seconds.
 
 \section{Future Work}
 \label{future-work}
-\begin{itemize}
-\item
-  Challenges/difficulties
+The current version of the BoomFS prototype confirms that the BOOM
+architectural style can be successfully applied to the construction of
+a distributed filesystem. However, we feel that the most exciting
+research on this topic remains to be done.
 
-\item
-  Some of the Lincoln vision?
+We believe that interesting issues in computer system design often
+only arise when technology is deployed in production
+environments. Therefore, we plan to complete the implementation of
+BoomFS and deliver a production-quality filesystem. This requires
+implementing support for directories, fine-grained concurrent appends,
+and persistent metadata. We also want to ensure that BoomFS is able to
+scale to petabyte-range data sets and thousands of nodes. We plan to
+validate BoomFS's usability and performance by implementing the HDFS
+API, and then using BoomFS to replace HDFS in real-world Hadoop
+installations.
 
-\item
-  Cross-layer optimizations
+We also plan to leverage the flexibility allowed by BoomFS's
+declarative specification to explore new filesystem features and
+policies. We closely followed the GFS design primarily to demonstrate
+that a faithful reimplementation is possible using declarative
+techniques, but we plan to consider a much broader space of design
+alternatives in the future. For example, it should be possible to
+partition the filesystem metadata over the master nodes, removing a
+major scalability barrier.
 
-\item
-  Continuous query optimization
-
-\item
-  Hadoop integration
-\end{itemize}
+Finally, we plan to explore the cross-layer optimizations that are
+enabled when multiple elements of the networking stack are implemented
+using the same declarative techniques. For example, colleagues are
+completing an implementation of the Hadoop job scheduler in
+Overlog. By running this on top of BoomFS, it would be possible for an
+optimizer to make intelligent costing decisions for filesystem
+operations that automatically reflect the characteristics of the
+current Hadoop job.
 
 \section{Related Work}
 \label{related-work}
@@ -635,9 +652,9 @@ computer system design~\cite{hydra-policy-mech-sep}.
 \section{Conclusion}
 \label{conclusion}
 We have implemented BoomFS, a distributed filesystem that is similar
-to GFS and HDFS. BoomFS achieves competitive performance with HDFS
-while avoiding a single point of failure through its support for
-multiple master nodes.
+to GFS and HDFS. BoomFS achieves competitive performance with
+HDFS. Unlike HDFS, BoomFS avoids a single point of failure through its
+support for multiple master nodes and automatic failover.
 
 More importantly, BoomFS is implemented using the BOOM architectural
 style: the complex protocols and policy of the control path are
@@ -645,9 +662,9 @@ implemented in declarative logic, while the relatively simple,
 high-performance data path is implemented in Java. BoomFS was
 relatively easy to implement. Because the implementation is concise
 and comprehensible, BoomFS can be extended and adapted to new
-environments. BoomFS is the first member of a class of data center
-infrastructure projects we plan to undertake under the mantle of the
-BOOM project.
+environments. BoomFS is the first of several pieces of data center
+infrastructure we plan to implement using declarative techniques as
+part of the BOOM project.
 
 \bibliographystyle{abbrv}
 \bibliography{paper}
