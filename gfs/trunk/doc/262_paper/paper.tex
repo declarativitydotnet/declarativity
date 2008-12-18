@@ -302,10 +302,6 @@ directories.\footnote{The prototype implementation we describe in
   Section \ref{system-realize} does not currently support directories,
   but we expect that this will be easy to fix.}
 
-\subsection{Data Path}
-
-\subsection{Data Nodes}
-
 \section{System Realization}
 \label{system-realize}
 
@@ -313,22 +309,73 @@ directories.\footnote{The prototype implementation we describe in
 
 \subsection{Data Representation}
 
-\subsection{Consensus}
+\subsection{Control Protocol}
 
-\begin{itemize}
-\item
-  Language integration: what belongs in declarative land, and what in
-  imperative land?
+\subsection{Data Protocol}
 
-\item
-  Representation of metadata and data
+\subsection{Fault Tolerance}
+In the target environment of GFS deployments, namely large clusters of
+commodity machines, ``component failures are the norm rather than the
+exception''~\cite{gfs}.  In this section we explore several of the
+failure modes of the system, and discuss how our integration of a
+declaratively-specified Paxos implementation addresses shortcomings in
+the original GFS and HDFS design.
 
-\item
-  Data path implementation
+\subsubsection{Datanode Failure}
+As long as the replication factor is configured to be greater than
+two, the loss of a datanode will be transparent to applications using
+the system.  The last heartbeats of the lost node will quickly expire
+from the soft-state tables on the masters, and clients will no longer
+be directed to this server for read or write requests.  The updated
+soft state will cause aggregates in the BFS logic to be recomputed,
+which in turn cause new migration events to be fired, selecting
+another replica as a target for the chunks whose replication factor is
+now too low.  GFS and HDFS both use this kind of replication strategy,
+though Ghemawat et al. discuss the possible use of other forms of
+redundancy, such as parity.
 
-\item
-  Use of Paxos as a component
-\end{itemize}
+\subsubsection{Datanode Disk Failure}
+The effect of this failure is more or less the same as for Datanode
+failure, assuming that all the filesystem data is stored on a single
+disk.  The datanode will continue to send heartbeats to the master,
+but one of these will include a delta record describing the loss of
+the files on the disk.  The same chain of inferences described in the
+lost datanode scenario described above will fire for these chunks.  It
+should be noted that our current prototype will throw an exception
+after trying to read from the lost directory, and the datanode service
+will stop, resulting in \emph{identical} behavior to the lost datanode
+scenario.
+
+\subsubsection{Data Corruption}
+GFS and HDFS implement data integrity checking at different
+granularities: in HDFS, chunk (called ``blocks'' in HDFS) checksums
+are calculated over the entire 64M chunk, while in GFS, a chunk is
+subdivided into 64K blocks, each of which has an associated 32bit
+checksum.  Our prototype did not implement any integrity checks, but
+we plan to add them soon.
+
+\subsubsection{Master Failure}
+GFS keeps all filesystem metadata on a single master server to which
+all client requests are directed: the mapping is maintained through
+the DNS.  Several secondary masters are run in a log replay mode
+similar to the log-shipping approach employed by database systems: a
+metadata change is not considered committed until the log tail has
+been flushed not only to stable local storage, but to all secondary
+masters.  This implies the use of a two-phase commit protocol, but the
+implementation is not discussed in detail.  If the primary master
+fails, the failure must be detected by an external application, which
+then remaps the DNS entry to one of the secondaries.
+ 
+HDFS supports the concept of a ``Secondary NameNode'' or backup master
+that asynchronously applies log entries to a checkpoint image.  The
+primary master supports writing log entries to multiple directories,
+one of which can be a remote filesystem such as NFS: a secondary
+master can then read the log from this filesystem.  Presumably, this
+adds considerable overhead to the performance of the master.
+ 
+In our prototype, a configurable number of masters operate in
+lock-step using the Paxos consensus protocol, also implemented in the
+Overlog language.
 
 \section{Performance Evaluation}
 \label{perf-eval}
@@ -462,70 +509,6 @@ out of 48 observations, 4 timeouts occurred, resulting in write times
 greater than 60 seconds (because our timeout was 60 seconds).  If we
 omit those four observations from our results, the mean write response
 time is 10.12 seconds.
-
-\subsection{Fault Tolerance}
-In the target environment of GFS deployments, namely large clusters of
-commodity machines, ``component failures are the norm rather than the
-exception''~\cite{gfs}.  In this section we explore several of the
-failure modes of the system, and discuss how our integration of a
-declaratively-specified Paxos implementation addresses shortcomings in
-the original GFS and HDFS design.
-
-\subsubsection{Datanode Failure}
-As long as the replication factor is configured to be greater than
-two, the loss of a datanode will be transparent to applications using
-the system.  The last heartbeats of the lost node will quickly expire
-from the soft-state tables on the masters, and clients will no longer
-be directed to this server for read or write requests.  The updated
-soft state will cause aggregates in the BFS logic to be recomputed,
-which in turn cause new migration events to be fired, selecting
-another replica as a target for the chunks whose replication factor is
-now too low.  GFS and HDFS both use this kind of replication strategy,
-though Ghemawat et al. discuss the possible use of other forms of
-redundancy, such as parity.
-
-\subsubsection{Datanode Disk Failure}
-The effect of this failure is more or less the same as for Datanode
-failure, assuming that all the filesystem data is stored on a single
-disk.  The datanode will continue to send heartbeats to the master,
-but one of these will include a delta record describing the loss of
-the files on the disk.  The same chain of inferences described in the
-lost datanode scenario described above will fire for these chunks.  It
-should be noted that our current prototype will throw an exception
-after trying to read from the lost directory, and the datanode service
-will stop, resulting in \emph{identical} behavior to the lost datanode
-scenario.
-
-\subsubsection{Data Corruption}
-GFS and HDFS implement data integrity checking at different
-granularities: in HDFS, chunk (called ``blocks'' in HDFS) checksums
-are calculated over the entire 64M chunk, while in GFS, a chunk is
-subdivided into 64K blocks, each of which has an associated 32bit
-checksum.  Our prototype did not implement any integrity checks, but
-we plan to add them soon.
-
-\subsubsection{Master Failure}
-GFS keeps all filesystem metadata on a single master server to which
-all client requests are directed: the mapping is maintained through
-the DNS.  Several secondary masters are run in a log replay mode
-similar to the log-shipping approach employed by database systems: a
-metadata change is not considered committed until the log tail has
-been flushed not only to stable local storage, but to all secondary
-masters.  This implies the use of a two-phase commit protocol, but the
-implementation is not discussed in detail.  If the primary master
-fails, the failure must be detected by an external application, which
-then remaps the DNS entry to one of the secondaries.
- 
-HDFS supports the concept of a ``Secondary NameNode'' or backup master
-that asynchronously applies log entries to a checkpoint image.  The
-primary master supports writing log entries to multiple directories,
-one of which can be a remote filesystem such as NFS: a secondary
-master can then read the log from this filesystem.  Presumably, this
-adds considerable overhead to the performance of the master.
- 
-In our prototype, a configurable number of masters operate in
-lock-step using the Paxos consensus protocol, also implemented in the
-Overlog language.
 
 \section{Future Work}
 \label{future-work}
