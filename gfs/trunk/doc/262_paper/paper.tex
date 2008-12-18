@@ -281,11 +281,11 @@ data nodes directly.
 To delete a file, a client contacts a master node. The master passes
 the request through the consensus protocol. When consensus has been
 reached, all the masters remove the file from their internal
-metadata. There is no need to eagerly remove the chunks belonging to
-the file from data nodes: the next time the data node sends a
-heartbeat to a master, the master replies with a list of the chunks on
-the data node that is has no knowledge of. These orphaned chunks can
-be garbage collected at the data node's leisure.
+metadata. There is no need to eagerly contact data nodes to remove the
+chunks belonging to the deleted file: the next time the data node
+sends a heartbeat to a master, the master replies with a list of the
+chunks on the data node that is has no knowledge of. These orphaned
+chunks can be garbage collected at the data node's leisure.
 
 Other filesystem operations are straightforward. Clients interact with
 master nodes to obtain directory listings, and create and remove
@@ -296,14 +296,14 @@ directories.\footnote{Our prototype implementation of BoomFS does not
 \section{System Realization}
 \label{system-realize}
 The filesystem design described in Section \ref{system-arch} is
-abstract, and it might reasonably be implemented using a variety of
-techniques. In this section, we describe how we implemented the BoomFS
-design using a combination of Java, for the imperative components, and
-Overlog, for the declarative components. We validate this
-implementation decision in two ways: by demonstrating how this
-implementation allows for the easy modification of filesystem policies
-in Section XXX, and by conducting a performance study in Section
-\ref{perf-eval}.
+abstract, and might reasonably be implemented using a variety of
+techniques. In this section, we describe how we realized the BoomFS
+design using a combination of Java and Overlog. % XXX describe overlog here
+
+We validate this implementation strategy in two ways: by demonstrating
+how this implementation allows for the easy modification of filesystem
+policies in Section XXX, and by conducting a performance study in
+Section \ref{perf-eval}.
 
 \subsection{Approach}
 Our task in developing this declaratively specified prototype is to
@@ -384,15 +384,14 @@ For read-only operations like many client protocol interactions, a single declar
 The data protocol is a straightforward mechanism for transferring the
 content of a chunk between two hosts. The server side of the protocol
 is implemented as a simple imperative component that runs on each data
-node. It listens on a dedicated TCP port, and handles each client
+node. It listens on a dedicated TCP port and handles each client
 connection using a separate thread. Data transfer is done using the
 \texttt{FileChannel.transferTo()} mechanism provided by Java NIO,
-which is a Java mechanism that allows an underlying zero copy API to
-perform the bulk data transfer (such as \texttt{sendfile(2)} on
-Linux). The data protocol consists of only two simple operations:
-writing a chunk from the client to the server, and reading a chunk
-from the server to the client. The protocol client is either a client
-node or another data node.
+which allows an underlying zero copy API to perform the bulk data
+transfer (such as \texttt{sendfile(2)} on Linux). The data protocol
+consists of two simple operations: writing a chunk from the client to
+the server, and reading a chunk from the server to the client. The
+protocol client is either a client node or another data node.
 
 While the data protocol is unicast, a client node typically wants to
 write a new chunk to multiple data nodes. As noted in Section
