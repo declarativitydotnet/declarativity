@@ -623,15 +623,14 @@ filesystem metadata is already available for declarative queries. We
 plan to explore this topic in the future.
 
 Both BoomFS and GFS emphasize the distinction between control and data
-paths. This separation has a long history in computer science, and can
-be found in systems ranging from FTP~\cite{ftp-rfc} and DOT, to the
-Berkeley Fast Filesystem and modern journalling
-filesystems.\footnote{In these filesystems, metadata and data are
-  subject to different consistency requirements and durability
-  guarantees, and are implemented using different on-disk data
-  structures.} Similarly, the separation of control and data is a
-well-established principle in computer system
-design~\cite{hydra-policy-mech-sep}.
+paths. This division has a long history in computer science, and can
+be found in protocols ranging from FTP~\cite{ftp-rfc} and
+DOT~\cite{dot}, to filesystems like Berkeley FFS~\cite{ffs} and
+ext3.\footnote{In these filesystems, metadata and data are subject to
+  different consistency requirements and durability guarantees, and
+  are implemented using different on-disk data structures.} Similarly,
+the separation of control and data is a well-established principle in
+computer system design~\cite{hydra-policy-mech-sep}.
 
 \section{Conclusion}
 \label{conclusion}
