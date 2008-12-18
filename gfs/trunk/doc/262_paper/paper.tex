@@ -600,6 +600,19 @@ time is 10.12 seconds.
 
 \section{Related Work}
 \label{related-work}
+To our knowledge, this work represents the first attempt to specify a
+distributed filesystem using declarative techniques. However, GFS and
+related designs (including BoomFS) is a ``filesystem'' only in the
+loose.
+
+Recent work on declarative filesystem checkers is interesting, and
+demonstrates another application of declarative principles to storage
+technology. Declarative consistency checkers, garbage
+
+Many systems make a distinction between data and metadata: journalled
+filesystems, FTP, \ldots. Similarly, the separation of control and
+data has a long history in computer system
+design~\cite{hydra-policy-mech-sep}.
 
 \section{Conclusion}
 \label{conclusion}
