@@ -30,7 +30,7 @@
 With the widespread adoption of cloud computing, pervasive mobile
 clients, and many-core processors, computing architectures are
 undergoing a period of disruptive change. In the near future, nearly
-every non-trivial software system will be physically distributed:
+every non-trivial software system will be physically separated:
 distributed programming will be the common case.
 
 Traditional techniques for building distributed systems are ill-suited
@@ -69,10 +69,9 @@ the basic architecture of BoomFS. In Section \ref{system-realize}, we
 detail how this architecture was realized using a mixture of
 declarative logic and Java. In Section \ref{perf-eval}, we report on a
 preliminary performance study comparing BoomFS and HDFS, an open
-source implementation of the GFS design. In Section \ref{future-work},
-we explore extensions to the file system that are facilitated by our
-use of a declarative logic language. In Section \ref{related-work}, we
-discuss related work, and we conclude in Section \ref{conclusion}.
+source implementation of GFS. We discuss plans for future work in
+Section \ref{future-work}, describe related research in Section
+\ref{related-work}, and conclude in Section \ref{conclusion}.
 
 \section{The BOOM Vision}
 \label{boom-vision}
@@ -358,18 +357,18 @@ In our design, instead of using separate state machines to implement the various
 For read-only operations like many client protocol interactions, a single declarative rule on the client (to transfer the injected request tuple to the master) and a pair of rules on the master (one to return the results to the client, and an error handler) suffice.  Requests that modify filesystem metadata follow the same structure, but trigger a more complicated chain of inferences on the master.  In particular, the master must achieve consensus among master replicas, attempt the modification,  and indicate success to the client only if these steps succeed.  Heartbeats from datanodes to the master are structured similarly to client requests, but are triggered by a periodic timer rather than by human interaction.   Finally, control protocol messages from master to datanode are fired when conditions specified by certain aggregate queries indicate that system invariants are unmet, as when the number of replicas drops below the specified replication factor.  
 
 \subsection{Data Protocol}
-The data protocol is a straightforward mechanism for transferring
-chunk content between two hosts (either between a client and a data
-node, or between two data nodes). The server side of the protocol is
-implemented as a simple imperative component that runs on each data
+The data protocol is a straightforward mechanism for transferring the
+content of a chunk between two hosts. The server side of the protocol
+is implemented as a simple imperative component that runs on each data
 node. It listens on a dedicated TCP port, and handles each client
 connection using a separate thread. Data transfer is done using the
 \texttt{FileChannel.transferTo()} mechanism provided by Java NIO,
 which is a Java mechanism that allows an underlying zero copy API to
-do the bulk data transfer (such as \texttt{sendfile(2)} on Linux). The
-data protocol consists of only two operations: writing a chunk from
-the client to the server, and reading a chunk from the server to the
-client.
+perform the bulk data transfer (such as \texttt{sendfile(2)} on
+Linux). The data protocol consists of only two simple operations:
+writing a chunk from the client to the server, and reading a chunk
+from the server to the client. The protocol client is either a client
+node or another data node.
 
 While the data protocol is unicast, a client node typically wants to
 write a new chunk to multiple data nodes. As noted in Section
@@ -658,13 +657,12 @@ support for multiple master nodes and automatic failover.
 
 More importantly, BoomFS is implemented using the BOOM architectural
 style: the complex protocols and policy of the control path are
-implemented in declarative logic, while the relatively simple,
-high-performance data path is implemented in Java. BoomFS was
-relatively easy to implement. Because the implementation is concise
-and comprehensible, BoomFS can be extended and adapted to new
-environments. BoomFS is the first of several pieces of data center
-infrastructure we plan to implement using declarative techniques as
-part of the BOOM project.
+implemented in declarative logic, while the simple, high-performance
+data path is written in Java. BoomFS was straightforward to
+implement. Because the implementation is concise and comprehensible,
+the filesystem is easy to modify and adapt to new environments. BoomFS
+is the first of several pieces of data center infrastructure we plan
+to implement using declarative techniques as part of the BOOM project.
 
 \bibliographystyle{abbrv}
 \bibliography{paper}
