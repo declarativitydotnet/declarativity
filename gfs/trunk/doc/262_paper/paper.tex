@@ -218,7 +218,7 @@ a large cluster of machines (typically hundreds or thousands).
 \centering
 \epsfig{file=figures/big_read_throughput.eps, width=1\columnwidth}
 \caption{The components of the BoomFS architecture}
-\label{fig:jol-arch}
+\label{fig:system-arch}
 \end{figure}
 
 \subsection{System Overview}
@@ -319,11 +319,33 @@ in Section XXX, and by conducting a performance study in Section
 % XXX
 \centering
 \epsfig{file=figures/big_read_throughput.eps, width=1\columnwidth}
-\caption{The architecture of a single BoomFS node}
-\label{fig:system-arch}
+\caption{The architecture of a program using JOL}
+\label{fig:jol-arch}
 \end{figure}
 In BoomFS, masters, data nodes, and clients are all implemented using
-a combination of Java and Overlog.
+a combination of Java and Overlog. We used JOL~\cite{jol}, a
+Java-based Overlog implementation that allows an Overlog evaluator to
+be embedded inside a Java program, and allows Overlog programs to
+contain Java objects and invoke Java methods. Java programs can insert
+and delete tuples from Overlog relations, and register ``queries''
+that invoke a callback when a particular state is reached by the
+Overlog instance. Figure \ref{fig:jol-arch} depicts this design.
+
+An Overlog program consists of \emph{rules}, 
+
+When a BoomFS node is started, it begins by initializing an instance
+of the JOL evaluator, and installing the BoomFS Overlog files into it.
+
+Each node type in BoomFS is structured in a similar way. Upon startup,
+the node runs Java code that bootstraps a JOL instance, and installs
+the Overlog files for BoomFS.
+
+This architecture is quite similar to the familiar structure of an
+application that uses a DBMS: the database is responsible for managing
+data, and the application uses queries to retrieve and modify the
+state of the database. However, there are some crucial differences
+between this architecture and the design of BoomFS. First, Overlog
+relations are partitioned over multiple nodes.
 
 \subsection{State Representation}
 Any filesystem contains two kinds of state: data and metadata. In
@@ -559,6 +581,17 @@ time is 10.12 seconds.
 
 \section{Conclusion}
 \label{conclusion}
+We have implemented BoomFS, a distributed filesystem that is similar
+to GFS and HDFS. BoomFS achieves competitive performance with HDFS
+while avoiding a single point of failure through its support for
+multiple master nodes.
+
+More importantly, BoomFS is implemented in a combination of Java and
+Overlog. BoomFS was relatively easy to implement; because the
+implementation is concise and comprehensible, BoomFS can be extended
+and adapted to new environments. BoomFS is the first member of a class
+of data center infrastructure projects we plan to undertake under the
+mantle of the BOOM project.
 
 \bibliographystyle{abbrv}
 \bibliography{paper}
