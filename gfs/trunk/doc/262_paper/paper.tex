@@ -265,8 +265,8 @@ identifier. To ensure that the state of the file system is consistent
 across all the masters, the master uses a consensus protocol to ensure
 that all masters have agreed to add the new chunk identifier at the
 same position in the chunk list for the appropriate file. Once
-consensus has been reached, the master sends the new chunk identifier
-back to the client, as well as a list of data nodes that might be
+consensus has been reached, the master replies to the client with the
+new chunk identifier, and a list of data nodes that might be
 appropriate locations for the new chunk.
 
 The client is then responsible for pushing data for the chunk to a
@@ -286,6 +286,21 @@ file. For each chunk identifier in the list, the client consults the
 master to determine the set of data nodes that have copies of that
 chunk. The client then reads the chunk by connecting to one of the
 data nodes directly.
+
+To delete a file, a client contacts a master node. The master passes
+the request through the consensus protocol. When consensus has been
+reached, all the masters remove the file from their internal
+metadata. There is no need to eagerly remove the chunks belonging to
+the file from data nodes: the next time the data node sends a
+heartbeat to a master, the master replies with a list of the chunks on
+the data node that is has no knowledge of. These orphaned chunks can
+be garbage collected at the data node's leisure.
+
+Other filesystem operations are straightforward. Clients interact with
+master nodes to obtain directory listings, and create and remove
+directories.\footnote{The prototype implementation we describe in
+  Section \ref{system-realize} does not currently support directories,
+  but we expect that this will be easy to fix.}
 
 \subsection{Data Path}
 
@@ -451,8 +466,8 @@ time is 10.12 seconds.
 \subsection{Fault Tolerance}
 In the target environment of GFS deployments, namely large clusters of
 commodity machines, ``component failures are the norm rather than the
-exception.''  In this section we explore several of the failure modes
-of the system, and discuss how our integration of a
+exception''~\cite{gfs}.  In this section we explore several of the
+failure modes of the system, and discuss how our integration of a
 declaratively-specified Paxos implementation addresses shortcomings in
 the original GFS and HDFS design.
 
