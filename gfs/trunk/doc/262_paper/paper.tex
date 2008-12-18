@@ -254,6 +254,7 @@ implement the HDFS API, to allow BoomFS to easily replace HDFS in
 existing Hadoop installations. % mention POSIX?
 
 \subsection{Filesystem Operations}
+\label{fs-ops}
 To append to a file, a client node begins by contacting one of the
 master nodes, and requesting that a new chunk be added to a particular
 file.\footnote{In the current prototype, random writes are not
@@ -298,9 +299,9 @@ be garbage collected at the data node's leisure.
 
 Other filesystem operations are straightforward. Clients interact with
 master nodes to obtain directory listings, and create and remove
-directories.\footnote{The prototype implementation we describe in
-  Section \ref{system-realize} does not currently support directories,
-  but we expect that this will be easy to fix.}
+directories.\footnote{Our prototype implementation of BoomFS does not
+  currently support directories, but we expect that this will be easy
+  to fix.}
 
 \section{System Realization}
 \label{system-realize}
@@ -331,11 +332,6 @@ and delete tuples from Overlog relations, and register ``queries''
 that invoke a callback when a particular state is reached by the
 Overlog instance. Figure \ref{fig:jol-arch} depicts this design.
 
-An Overlog program consists of \emph{rules}, 
-
-When a BoomFS node is started, it begins by initializing an instance
-of the JOL evaluator, and installing the BoomFS Overlog files into it.
-
 Each node type in BoomFS is structured in a similar way. Upon startup,
 the node runs Java code that bootstraps a JOL instance, and installs
 the Overlog files for BoomFS.
@@ -359,6 +355,32 @@ relations are partitioned over multiple nodes.
 \subsection{Control Protocol}
 
 \subsection{Data Protocol}
+The data protocol is a straightforward mechanism for transferring
+chunk content between two hosts (either between a client and a data
+node, or between two data nodes). The server side of the protocol is
+implemented as a simple imperative component that runs on each data
+node. It listens on a dedicated TCP port, and handles each client
+connection using a separate thread. Data transfer is done using the
+\texttt{FileChannel.transferTo()} mechanism provided by Java NIO,
+which is a Java mechanism that allows an underlying zero copy API to
+do the bulk data transfer (such as \texttt{sendfile(2)} on Linux). The
+data protocol consists of only two operations: writing a chunk from
+the client to the server, and reading a chunk from the server to the
+client.
+
+While the data protocol is unicast, a client node typically wants to
+write a new chunk to multiple data nodes. As noted in Section
+\ref{fs-ops}, there are several ways in which this could be
+accomplished. The current BoomFS prototype does ``source routing'':
+after obtaining a new chunk identifier from a master node, the client
+decides on the sequence of data nodes that it wants to write a new
+chunk to, and then transfers the chunk to the first node in the
+sequence. That node then transfers the chunk to the second node in the
+sequence, and so on. While this approach is effective at utilizing
+network bandwidth, it is subject to partial failures, and the current
+implementation is not pipelined. More importantly, routing decisions
+of this nature should be specified in Overlog, not hardcoded in
+Java. We plan to rectify this shortcoming in the near future.
 
 \subsection{Fault Tolerance}
 In the target environment of GFS deployments, namely large clusters of
@@ -586,12 +608,15 @@ to GFS and HDFS. BoomFS achieves competitive performance with HDFS
 while avoiding a single point of failure through its support for
 multiple master nodes.
 
-More importantly, BoomFS is implemented in a combination of Java and
-Overlog. BoomFS was relatively easy to implement; because the
-implementation is concise and comprehensible, BoomFS can be extended
-and adapted to new environments. BoomFS is the first member of a class
-of data center infrastructure projects we plan to undertake under the
-mantle of the BOOM project.
+More importantly, BoomFS is implemented using the BOOM architectural
+style: the complicated protocols and policy of the control path are
+implemented in declarative logic, while the relatively simple,
+high-performance data path is implemented in Java. BoomFS was
+relatively easy to implement; because the implementation is concise
+and comprehensible, BoomFS can be extended and adapted to new
+environments. BoomFS is the first member of a class of data center
+infrastructure projects we plan to undertake under the mantle of the
+BOOM project.
 
 \bibliographystyle{abbrv}
 \bibliography{paper}
