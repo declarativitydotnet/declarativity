@@ -177,15 +177,14 @@ components:
 \end{itemize}
 
 \subsection{Declarative Specification of\\Distributed Filesystems}
-It is common for well-designed systems to structurally separate control and data paths.  Often this is a result of practical concerns that have little to do with the abstract notion of separating policy and mechanism: first, it is undesirable for data path congestion to delay control messages, and second, a certain amount of control overhead associated with better functionality is acceptable, so long as it is off the critical path of data transfer, which will contribute the most to overall latency as transfer sizes increase.  Data transfer mechanisms such as DOT, and even early Internet applications like FTP, send control messages on a separate channel from data transfer.
+It is common for well-designed systems to structurally separate control and data paths.  Often this is a result of practical concerns that have little to do with the abstract notion of separating policy and mechanism: first, it is undesirable for data path congestion to delay control messages, and second, a certain amount of control overhead associated with better functionality is acceptable, so long as it is off the critical path of data transfer, which will contribute the most to overall latency as transfer sizes increase.  
 
 The GFS design choice of a single master introduced the possibility of bottlenecks, and a master-independent data path alleviates this potential hotspot, making client-master communication necessary only for atomic filesystem metadata operations.   The overhead associated with the necessary consistency guarantees over these operations is divorced from the data path in the GFS design.
 
-Second, we observe that in GFS and other distributed filesystems, the bulk of system complexity lies not in mechanism but in policy.  This is not to say that operational components (zero-copy I/O, fast checksumming, careful use of caches at various levels) are not critical to system performance, but merely that the bulk of the design and implementation deal with enforcing and maintaining the various invariants that make the system behave correctly, including replica placement decisions, failure handling, load balancing and consensus among agents in shared computations.
+Additionally, we observe that in GFS and other distributed filesystems, the bulk of system complexity lies not in mechanism but in policy.  This is not to say that operational components (zero-copy I/O, fast checksumming, careful use of caches at various levels) are not critical to system performance, but merely that the bulk of the design and implementation deal with enforcing and maintaining the various invariants that make the system behave correctly, including replica placement decisions, failure handling, load balancing and consensus among agents in shared computations.
 
-Combining these observations, we see that the GFS style of distributed filesystem is a perfect vehicle for our philosophy.  Our task in developing a declaratively specified prototype is to represent the distributed state of the file system (the union of the various states in the finite automata describing the master and datanode servers) as a single relational database, with relations partitioned across nodes.  Both policy (which expresses constraints over these relations, and conditions under which the contents of the relations may change) and protocol (which expresses how data may move from one partition, and hence node,  to another) are then expressed in a network-aware recursive query language that operates over the relations.
+Combining these observations, we see that the GFS style of distributed filesystem is a perfect testing ground for the BOOM approach to implementing distributed systems.
 
-We feel that our approach is a natural way to express systems of this kind, and results in a codebase that is easy to understand, validate against the original specification, and extend.  As we built the prototype, we concentrated first on the correctness of the specification and on exploiting the economy of mechanism exposed by flattening system state.  For the mechanism components including data transfer and source-routing for the data path, we implemented simple, best-effort modules as place holders while we composed the collection of logical rules comprising the declarative specification of the system.  Once this was correct, it was simple to return to the mechanism modules and tune them to improve performance, without worrying about violating the correctness guaranteed by the policy layer.
 
 \section{System Architecture}
 \label{system-arch}
@@ -312,6 +311,11 @@ implementation allows for the easy modification of filesystem policies
 in Section XXX, and by conducting a performance study in Section
 \ref{perf-eval}.
 
+\subsection{Approach}
+Our task in developing this declaratively specified prototype is to represent the distributed state of the filesystem (the union of the various states in the finite automata describing the master and datanode servers) as a single relational database, with relations partitioned across nodes.  Both policy (which expresses constraints over these relations, and conditions under which the contents of the relations may change) and protocol (which expresses how data may move from one partition, and hence node,  to another) are then expressed in a network-aware recursive query language that operates over the relations.
+
+We feel that our approach is a natural way to express systems of this kind, and results in a codebase that is easy to understand, validate against the original specification, and extend.  As we built the prototype, we concentrated first on the correctness of the specification and on exploiting the economy of mechanism exposed by flattening system state.  For the mechanism components including data transfer and source-routing for the data path, we implemented simple, best-effort modules as place holders while we composed the collection of logical rules comprising the declarative specification of the system.  Once this was correct, it was simple to return to the mechanism modules and tune them to improve performance, without worrying about violating the correctness guaranteed by the policy layer.
+
 \subsection{Software Architecture}
 \begin{figure}
 % XXX
@@ -320,6 +324,8 @@ in Section XXX, and by conducting a performance study in Section
 \caption{The architecture of a program using JOL}
 \label{fig:jol-arch}
 \end{figure}
+
+
 In BoomFS, masters, data nodes, and clients are all implemented using
 a combination of Java and Overlog. We used JOL~\cite{jol}, a
 Java-based Overlog implementation that allows an Overlog evaluator to
@@ -337,8 +343,10 @@ This architecture is quite similar to the familiar structure of an
 application that uses a DBMS: the database is responsible for managing
 data, and the application uses queries to retrieve and modify the
 state of the database. However, there are some crucial differences
-between this architecture and the design of BoomFS. First, Overlog
-relations are partitioned over multiple nodes.
+between this architecture and the design of BoomFS. For example, Overlog
+relations are partitioned over multiple nodes.  While one-time queries are expressible 
+in Overlog, continuous queries are the more common case, represented syntactically as 
+a recursive join and semantically as a cyclic dataflow graph.
 
 \subsection{State Representation}
 Any filesystem contains two kinds of state: data and metadata. In
@@ -446,7 +454,7 @@ adds considerable overhead to the performance of the master.
  
 In our prototype, a configurable number of masters operate in
 lock-step using the Paxos consensus protocol, also implemented in the
-Overlog language.
+Overlog language.  This means that like GFS, a mutation of file system metadata in not complete until it is reflected on all participating masters.  Unlike GFS, BFS backed by Paxos is a multimaster system, supporting "update anywhere anytime" semantics [Gray, Helmand], although for performance reasons it is preferable to have all clients communicate with a single primary master.  Assuming non-byzantine faults, a BFS installation with M masters can survive M/2 - 1 failures, as consensus requires merely simple minority (as opposed to 2PC, which requires unanimity).  If the primary fails, we also incur the cost of a timeout on each client on the first request to the failed master; after that, the client's master list is updated to reflect the loss.  No external monitoring or indirection are necessary to support this level of fault tolerance.
 
 \section{Performance Evaluation}
 \label{perf-eval}
