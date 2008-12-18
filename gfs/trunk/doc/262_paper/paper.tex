@@ -92,19 +92,21 @@ tools~\cite{paxos-made-live}.
 Traditional tools operate at a low level of abstraction because they
 force programmers to intermingle the specification of \emph{what} a
 distributed program should do with \emph{how} it can be done. That is,
-mechanism and policy are not separated, and are implemented in the
+mechanism and policy are specified together, and implemented in the
 same language. This has two primary problems: it yields fragile
 programs that cannot easily adapt to change, and it results in
 programs that are difficult to understand.
 
 For example, consider a client program that wants to compute a
-function over data stored in a compute cloud. Should the function code
-be sent to the server, should the data be sent to the client, or
-should both code and data be sent to an intermediary? The optimal
-policy depends on factors including the relative costs of network
-bandwidth, server-side computation and client-side computation, as
-well as how much data is required, how expensive the function is, and
-the frequency with which the function is invoked or the input data is
+function over data stored in a compute cloud. Should the function's
+code be sent to the server, should the data be sent to the client, or
+should both code and data be sent to an intermediary? These
+alternatives can be viewed as ``query plans'' that accomplish the same
+objective, but have different performance characteristics. The optimal
+plan depends on factors including the relative costs of network
+bandwidth, server-side computation and client-side computation, how
+much data is required, how expensive the function is, and the
+frequency with which the function is invoked or the input data is
 modified. All of these parameters are likely to fluctuate, both within
 a single environment over time,\footnote{Internal heterogeneity and
   performance variability in virtualized environments such as Amazon's
@@ -115,8 +117,20 @@ distributed systems require hardcoding assumptions about these
 parameters. This yields fragile programs that are expensive to modify,
 and difficult to adapt to new environments.
 
+% XXX: rework following paragraph
 In addition to inflexibility, the failure to separate mechanism from
-policy makes programs harder to understand and reason about. XXX
+policy makes programs harder to understand and reason about. The
+policies and protocols of a program (the ``what'') are typically the
+most interesting parts of it (and often the hardest to get right). The
+mechanisms that achieve those policies are often straightforward but
+verbose. By implementing policy and protocol together with mechanism,
+the mundane details of the latter obscure the essential nature of the
+former, harming comprehensibility. Furthermore, a language that is
+appropriate for implementing mechanism is unlikely to be ideal for
+specifying policy, and vice versa. There are many examples of
+algorithms that can be concisely expressed in an appropriate
+declarative language, but are much harder to write in an imperative
+language (e.g.\ \cite{chord-overlog}).
 
 Inspired by the data independence provided by the relational model, we
 aim to provide \emph{network scale independence} for distributed
@@ -308,6 +322,8 @@ in Section XXX, and by conducting a performance study in Section
 \caption{The architecture of a single BoomFS node}
 \label{fig:system-arch}
 \end{figure}
+In BoomFS, masters, data nodes, and clients are all implemented using
+a combination of Java and Overlog.
 
 \subsection{State Representation}
 Any filesystem contains two kinds of state: data and metadata. In
