@@ -14,24 +14,23 @@
   stagnant. As distributed computation becomes the common case,
   traditional techniques for building distributed systems will become
   untenable, because they force programmers to deal with the mundane
-  boilerplate details of constructing reliable distributed
-  systems. This yields programs that are difficult to construct,
-  understand, modify, and adapt to new environments. We propose BOOM,
-  an ongoing project to develop concise declarative specifications for
-  a broad class of scalable distributed systems. In this paper, we
-  describe the first application in the BOOM stack: BoomFS, a
-  distributed filesystem that is implemented using a combination of
-  Java and declarative logic. We show that BoomFS is easy to
-  understand and modify, and achieves competitive performance in a
-  preliminary performance study.
+  details of constructing reliable distributed systems. This yields
+  programs that are difficult to construct, understand, modify, and
+  adapt to new environments. We propose BOOM, an ongoing project to
+  develop concise declarative specifications for a broad class of
+  scalable distributed systems. In this paper, we describe the first
+  application in the BOOM stack: BoomFS, a distributed filesystem that
+  is implemented using a combination of Java and declarative logic. We
+  show that BoomFS is easy to understand and modify, and achieves
+  competitive performance in a preliminary performance study.
 \end{abstract}
 \section{Introduction}
 \label{introduction}
-With the widespread adoption of cloud computing, pervasive mobile
-clients, and many-core processors, computing architectures are
-undergoing a period of disruptive change. In the near future, nearly
-every non-trivial software system will be physically separated:
-distributed programming will be the common case.
+With the widespread adoption of cloud computing, mobile clients, and
+manycore processors, computing architectures are undergoing a period
+of disruptive change. In the near future, nearly every non-trivial
+software system will be physically separated: distributed programming
+will be the common case.
 
 Traditional techniques for building distributed systems are ill-suited
 to this new environment. Despite considerable research, developing
@@ -42,16 +41,15 @@ must deal with the challenges of distributed computing, this situation
 will become increasingly untenable. Better techniques for constructing
 distributed systems are urgently needed.
 
-We believe that a new approach to building distributed systems is
-necessary to address this need. Inspired by prior work on declarative
-networking~\cite{dn-sigmod, network-data-indep}, we propose a new
-architectural style for distributed programs in which policy and
-protocol are specified in a declarative logic language, while the
-operational mechanisms of the system are written in a traditional
-imperative language. We are engaged in the Berkeley Orders of
-Magnitude (BOOM) project, which aims to use this style to build common
-cloud computing infrastructure components using orders of magnitude
-less code, and operate at orders of magnitude more scale. In Section
+Inspired by prior work on declarative networking~\cite{dn-sigmod,
+  network-data-indep}, we propose a new architectural style for
+distributed programs in which policy and protocol are specified in a
+declarative logic language, while the operational mechanisms of the
+system are written in a traditional imperative language. We are
+engaged in the Berkeley Orders of Magnitude (BOOM) project, which aims
+to use this style to build cloud computing infrastructure components
+that operate at orders of magnitude greater scale but are specified in
+orders of magnitude less code than traditional approaches. In Section
 \ref{boom-vision}, we discuss the problems with traditional tools for
 building distributed systems in more detail, and outline the BOOM
 vision in contrast.
@@ -68,9 +66,10 @@ environments and policies. In Section \ref{system-arch}, we describe
 the basic architecture of BoomFS. In Section \ref{system-realize}, we
 detail how this architecture was realized using a mixture of
 declarative logic and Java. In Section \ref{perf-eval}, we report on a
-preliminary performance study comparing BoomFS and HDFS, an open
-source implementation of GFS. We discuss plans for future work in
-Section \ref{future-work}, describe related research in Section
+preliminary performance study comparing BoomFS and the Hadoop File
+System (HDFS), an open source implementation of
+GFS~\cite{hdfs-arch}. We discuss plans for future work in Section
+\ref{future-work}, describe related research in Section
 \ref{related-work}, and conclude in Section \ref{conclusion}.
 
 \section{The BOOM Vision}
@@ -84,9 +83,8 @@ deal with the mundane details of communication, synchronization, and
 consensus. As a result, the essence of the distributed computation is
 obscured by a forest of boilerplate details. Evidence for this can be
 seen in the fact that distributed algorithms such as Paxos can be
-stated in a page of pseudocode, but typically require many thousands
-of lines of code to implement using standard
-tools~\cite{paxos-made-live}.
+stated in a page of pseudocode, but require many thousands of lines of
+code to implement using standard tools~\cite{paxos-made-live}.
 
 Traditional tools operate at a low level of abstraction because they
 force programmers to intermingle the specification of \emph{what} a
@@ -96,40 +94,39 @@ same language. This has two primary problems: it yields fragile
 programs that cannot easily adapt to change, and it results in
 programs that are difficult to understand.
 
-For example, consider a client program that wants to compute a
-function over data stored in a compute cloud. Should the function's
-code be sent to the server, should the data be sent to the client, or
-should both code and data be sent to an intermediary? These
-alternatives can be viewed as ``query plans'' that accomplish the same
-objective, but have different performance characteristics. The optimal
-plan depends on factors including the relative costs of network
-bandwidth, server-side computation and client-side computation, how
-much data is required, how expensive the function is, and the
-frequency with which the function is invoked or the input data is
-modified. All of these parameters are likely to fluctuate, both within
-a single environment over time,\footnote{Internal heterogeneity and
-  performance variability in virtualized environments such as Amazon's
-  Elastic Compute Cloud has been well-documented in recent
-  work~\cite{late-sched}.} and when the distributed program is
-deployed to a new environment. Traditional approaches to constructing
-distributed systems require hardcoding assumptions about these
-parameters. This yields fragile programs that are expensive to modify,
-and difficult to adapt to new environments.
+For example, consider a client that wants to compute a function over
+data stored in a compute cloud. Should the function's code be sent to
+the server, should the data be sent to the client, or should both code
+and data be sent to an intermediary? These alternatives can be viewed
+as ``query plans'' that accomplish the same objective, but have
+different performance characteristics. The optimal plan depends on
+factors including the relative costs of network bandwidth, server-side
+computation and client-side computation, how much data is required,
+how expensive the function is, and the frequency with which the
+function is invoked or the input data is modified. All of these
+parameters are likely to fluctuate, both within a single environment
+over time,\footnote{Internal heterogeneity and performance variability
+  in virtualized environments such as Amazon's Elastic Compute Cloud
+  has been well-documented in recent work~\cite{late-sched}.} and when
+the distributed program is deployed to a new environment. Traditional
+approaches to constructing distributed systems require hardcoding
+assumptions about these parameters. This yields fragile programs that
+are expensive to modify, and difficult to adapt to new environments.
 
 % XXX: rework following paragraph
 In addition to inflexibility, the failure to separate mechanism from
 policy makes programs harder to understand and reason about. The
-policies and protocols of a program (the ``what'') are typically the
-most interesting parts of it (and often the hardest to get right). The
-mechanisms that achieve those policies are often straightforward but
-verbose. By implementing policy and protocol together with mechanism,
-the mundane details of the latter obscure the essential nature of the
-former, harming comprehensibility. Furthermore, a language that is
-appropriate for implementing mechanism is unlikely to be ideal for
-specifying policy, and vice versa. There are many examples of
-algorithms that can be concisely expressed in an appropriate
-declarative language, but are much harder to write in an imperative
-language (e.g.\ \cite{chord-overlog}).
+policies and protocols of a distributed program are typically its most
+interesting parts, and often the hardest to get right. The mechanisms
+that achieve those policies are often straightforward but verbose. By
+implementing policy together with mechanism, the mundane details of
+the latter obscure the essential nature of the former, harming
+comprehensibility. Furthermore, a language that is appropriate for
+implementing mechanism is unlikely to be ideal for specifying policy,
+and vice versa. There are many examples of algorithms that can be
+concisely expressed in an appropriate declarative language, but are
+much harder to write in an imperative language (e.g.\
+\cite{chord-overlog}).
 
 Inspired by the data independence provided by the relational model, we
 aim to provide \emph{network scale independence} for distributed
@@ -188,12 +185,11 @@ Combining these observations, we see that the GFS style of distributed filesyste
 
 \section{System Architecture}
 \label{system-arch}
-We now turn to discussing the architecture, implementation, and
-performance characteristics of BoomFS. The architecture of the system
-is directly inspired by the design of the Google File System. The
-design goals and system architecture of GFS are well-documented
-elsewhere~\cite{gfs, hdfs-arch}, so we include only a short discussion
-of them here.
+We now turn to the architecture, implementation, and performance
+characteristics of BoomFS. The architecture of the system is directly
+inspired by the Google File System. The design goals and system
+architecture of GFS are well-documented elsewhere~\cite{gfs,
+  hdfs-arch}, so we include only a brief discussion of them here.
 
 Like GFS, BoomFS does not attempt to be a general-purpose distributed
 filesystem. Instead, it is designed to perform well for a particular
@@ -202,11 +198,11 @@ architecture. We focus on achieving good performance for large
 sequential reads and writes. Files are assumed to be very large;
 therefore, we choose a large chunk size of XXX. We focus on delivering
 high sequential read and write throughput and efficient network
-utilization, rather than achieving low latency or efficient usage of
-stable storage. Members of a BoomFS system are assumed to be
+utilization, rather than achieving low latency or minimizing total
+disk space requirements. Members of a BoomFS system are assumed to be
 unreliable commodity machines, provisioned with relatively modest
 resources.  Reliability is achieved by storing multiple copies of each
-chunk; scalability is achieved by spreading file system contents over
+chunk; scalability is achieved by spreading filesystem contents over
 a large cluster of machines (typically hundreds or thousands).
 
 \begin{figure}
@@ -218,18 +214,16 @@ a large cluster of machines (typically hundreds or thousands).
 \end{figure}
 
 \subsection{System Overview}
-The major components of the BoomFS design are depicted in Figure
+The major components of BoomFS are depicted in Figure
 \ref{fig:system-arch}. There are three types of nodes in BoomFS:
 \emph{master nodes}, \emph{data nodes}, and \emph{clients}. Master
 nodes contain the canonical description of the structure of the
 filesystem. The filesystem is described by a mapping from file names
-to file identifiers, and a mapping from file identifiers to the
-sequence of chunks that contain the file's content.\footnote{The
-  current prototype does not support directories, but this is a
-  relatively inconsequential implementation shortcut that we plan to
-  address in the near future.} To avoid a single point of failure, our
-design allows for multiple master nodes, which are kept in synchrony
-using a consensus protocol (currently Paxos~\cite{paxos-made-simple}).
+to file identifiers, and from file identifiers to the sequence of
+chunks that contain the file's content. To avoid a single point of
+failure, our design allows for multiple master nodes, which are kept
+in synchrony using a consensus protocol (currently
+Paxos~\cite{paxos-made-simple}).
 
 Data nodes are responsible for storing chunks. They have no knowledge
 of the structure of the filesystem as a whole, nor even which files
@@ -277,8 +271,8 @@ reflected in the next heartbeat that the data node sends to the
 masters. In turn, this will make the data node available for
 subsequent operations on the chunk.
 
-To read from a file, a client once again begins by contacting one of
-the master nodes to fetch the list of chunks that make up the target
+To read a file, a client once again begins by contacting one of the
+master nodes to fetch the list of chunks that make up the target
 file. For each chunk identifier in the list, the client consults the
 master to determine the set of data nodes that have copies of that
 chunk. The client then reads the chunk by connecting to one of the
