@@ -321,30 +321,30 @@ failure modes of the system, and discuss how our integration of a
 declaratively-specified Paxos implementation addresses shortcomings in
 the original GFS and HDFS design.
 
-\subsubsection{Datanode Failure}
-As long as the replication factor is configured to be greater than
-two, the loss of a datanode will be transparent to applications using
-the system.  The last heartbeats of the lost node will quickly expire
-from the soft-state tables on the masters, and clients will no longer
-be directed to this server for read or write requests.  The updated
-soft state will cause aggregates in the BFS logic to be recomputed,
-which in turn cause new migration events to be fired, selecting
-another replica as a target for the chunks whose replication factor is
-now too low.  GFS and HDFS both use this kind of replication strategy,
-though Ghemawat et al. discuss the possible use of other forms of
-redundancy, such as parity.
+\subsubsection{Data Node Failure}
+As long as the replication factor of a file is greater than one, the
+loss of a data node will be transparent to applications using the
+system.  The last heartbeats of the lost node will quickly expire from
+the soft-state tables on the masters, and clients will no longer be
+directed to this server for read or write requests.  The updated soft
+state will cause aggregates in the BFS logic to be recomputed, which
+in turn cause new migration events to be fired, selecting another
+replica as a target for the chunks whose replication factor is now too
+low.  GFS and HDFS both use this kind of replication strategy, though
+Ghemawat et al. discuss the possible use of other forms of redundancy,
+such as parity.
 
-\subsubsection{Datanode Disk Failure}
-The effect of this failure is more or less the same as for Datanode
+\subsubsection{Data Node Disk Failure}
+The effect of this failure is more or less the same as for data node
 failure, assuming that all the filesystem data is stored on a single
-disk.  The datanode will continue to send heartbeats to the master,
+disk.  The data node will continue to send heartbeats to the master,
 but one of these will include a delta record describing the loss of
 the files on the disk.  The same chain of inferences described in the
-lost datanode scenario described above will fire for these chunks.  It
-should be noted that our current prototype will throw an exception
-after trying to read from the lost directory, and the datanode service
-will stop, resulting in \emph{identical} behavior to the lost datanode
-scenario.
+lost data node scenario described above will fire for these chunks.
+It should be noted that our current prototype will throw an exception
+after trying to read from the lost directory, and the data node
+service will stop, resulting in \emph{identical} behavior to the
+failed data node scenario.
 
 \subsubsection{Data Corruption}
 GFS and HDFS implement data integrity checking at different
@@ -393,7 +393,7 @@ In the first section, we compare the cost of metadata operations
 between our prototype and HDFS, the Hadoop open source implementation
 of GFS.  Following this, we simulate a MapReduce sort benchmark,
 comparing read and write performance between BFS and HDFS as we scale
-the number of concurrent clients and datanodes together.  Finally, we
+the number of concurrent clients and data nodes together.  Finally, we
 discuss the various failure modes of the architecture and the impact
 of our multi-master extension on these scenarios.
 
@@ -427,7 +427,7 @@ protocol and requires a round trip between the client and master and a
 lookup on the master, as does touching a file on the filesystem.
 Copying a zero-byte file requires two round trips to the master: one
 to get a new chunk id for the append operation, and another to request
-a link of datanodes who can accept the new chunkid.  (Does hadoop
+a link of data nodes who can accept the new chunkid.  (Does hadoop
 combine these?  probably, and it would be easy for us to do so).
 
 The results of running 100 of each of these metadata operations are
@@ -463,11 +463,11 @@ costs associated with the parallel reads at the start of the workflow
 described above, and the parallel writes described at the end.  Hence,
 in our simulation we dispense with the actual sorting, hashing and
 crossbarring, and focus merely on the filesystem performance as the
-number of concurrent clients and datanodes are scaled up together.
+number of concurrent clients and data nodes are scaled up together.
 For a given concurrency level D, we provision an EC2 cluster with a
-master node and D datanodes, and prime the filesystem by creating D
+master node and D data nodes, and prime the filesystem by creating D
 100MB files with a replication factor of 2.  We then spawn D client
-processes (one on each datanode), which read one of the files from the
+processes (one on each data node), which read one of the files from the
 filesystem, write it to local disk, then create a new distributed
 filesystem file and append the contents of the local file to it.
 Thus, each client reads (writes) 100MB to (from) the filesystem
