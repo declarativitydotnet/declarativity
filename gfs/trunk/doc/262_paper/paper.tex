@@ -249,16 +249,16 @@ To append to a file, a client node begins by contacting one of the
 master nodes, and requesting that a new chunk be added to a particular
 file.\footnote{In the current prototype, random writes are not
   supported, and each append operation creates a new chunk --- we
-  expect that each append will be large enough to justify occupying a
-  single chunk. We discuss our plans for relaxing these constraints in
-  Section \ref{future-work}.} The master first generates a new chunk
-identifier. To ensure that the state of the file system is consistent
-across all the masters, the master uses a consensus protocol to ensure
-that all masters have agreed to add the new chunk identifier at the
-same position in the chunk list for the appropriate file. Once
-consensus has been reached, the master replies to the client with the
-new chunk identifier, and a list of data nodes that might be
-appropriate locations for the new chunk.
+  expect that each append will be large enough to justify occupying an
+  entire chunk. We plan to relax this constraint in the future.} The
+master first generates a new chunk identifier. To ensure that the
+state of the file system is consistent across all the masters, the
+master uses a consensus protocol to ensure that all masters have
+agreed to add the new chunk identifier at the same position in the
+chunk list for the appropriate file. Once consensus has been reached,
+the master replies to the client with the new chunk identifier, and a
+list of data nodes that might be appropriate locations for the new
+chunk.
 
 The client is then responsible for pushing data for the chunk to a
 sufficient number of data nodes. There are various policies a client
@@ -290,8 +290,8 @@ chunks can be garbage collected at the data node's leisure.
 Other filesystem operations are straightforward. Clients interact with
 master nodes to obtain directory listings, and create and remove
 directories.\footnote{Our prototype implementation of BoomFS does not
-  currently support directories, but we expect that this will be easy
-  to fix.}
+  currently support directories, but we expect that this
+  implementation shortcut will be easy to fix.}
 
 \section{System Realization}
 \label{system-realize}
