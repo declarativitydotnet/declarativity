@@ -9,7 +9,7 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-  While architectures for distributed computing are changing rapidly,
+  While architectures for distributed computing are rapidly changing,
   techniques for building distributed systems have remained
   stagnant. As distributed computation becomes the common case,
   traditional techniques for building distributed systems will become
@@ -133,7 +133,7 @@ aim to provide \emph{network scale independence} for distributed
 systems by separating the programmer's intent from its concrete
 realization. In BOOM, a distributed system is composed of two types of
 components:
-\begin{itemize}
+\begin{enumerate}
 \item
   \emph{imperative} components implement the basic units of
   functionality of a distributed system. Imperative components are
@@ -141,47 +141,61 @@ components:
   computation. These tasks are usually best stated in an imperative
   language like Java or C++, particularly because these components
   often involve interaction with the operating system or native
-  libraries. In BoomFS, imperative components implemented in Java are
-  used to transfer data chunks between hosts, and to read and write
-  data from the native file system.
+  libraries.
 
 \item
   \emph{declarative} components specify the bulk of the logic of the
-  distributed system. Declarative components are written as a
-  collection of logical rules that describe the coordination and
-  composition of the imperative components. Essentially, the
-  declarative logic is responsible for deciding ``what'' a member of
-  the distributed system should do; the imperative components are
-  responsible for realizing those actions. A declarative component is
-  essentially a join between a stream of events and a
-  database. Evaluating this query over an event stream results in
-  producing more events (either at the local node or a remote node),
-  inserting new database tuples, or invoking imperative
-  components.
+  distributed system. These components are written as a collection of
+  logical rules that describe the coordination and composition of the
+  imperative components. Essentially, the declarative components are
+  responsible for deciding ``what'' a member of the distributed system
+  should do; the imperative components are responsible for realizing
+  those actions. A declarative component is essentially a join between
+  a stream of events and a database. Evaluating this query over an
+  event stream results in producing more events (either at the local
+  node or a remote node), inserting new database tuples, or invoking
+  imperative components.
 
   Declarative components are implemented in a high-level declarative
   logic language, such as Overlog~\cite{dn-sigmod}. This requires the
   state of the distributed system to be represented in tables.
+\end{enumerate}
 
-  In BoomFS, declarative components implement the protocols between
-  clients and master nodes, between different masters, and between
-  masters and data nodes. That is, declarative rules implement the
-  ``control path'', which contains the vast majority of the complexity
-  in the BoomFS design. The data path (from clients to data nodes and
-  between different data nodes, is implemented as an imperative
-  component, because it is straightforward and primarily involves the
-  transfer of bytes.
-\end{itemize}
+In BoomFS, imperative components are used to efficiently transfer data
+between hosts. The vast majority of the filesystem's complexity
+resides in the declarative components, which decide when and where
+data should be transferred.
 
 \subsection{Declarative Specification of\\Distributed Filesystems}
-It is common for well-designed systems to structurally separate control and data paths.  Often this is a result of practical concerns that have little to do with the abstract notion of separating policy and mechanism: first, it is undesirable for data path congestion to delay control messages, and second, a certain amount of control overhead associated with better functionality is acceptable, so long as it is off the critical path of data transfer, which will contribute the most to overall latency as transfer sizes increase.  
+It is common for well-designed systems to structurally separate
+control and data paths.  Often this is a result of practical concerns
+that have little to do with the abstract notion of separating policy
+and mechanism: first, it is undesirable for data path congestion to
+delay control messages, and second, a certain amount of control
+overhead associated with better functionality is acceptable, so long
+as it is off the critical path of data transfer, which will contribute
+the most to overall latency as transfer sizes increase.
 
-The GFS design choice of a single master introduced the possibility of bottlenecks, and a master-independent data path alleviates this potential hotspot, making client-master communication necessary only for atomic filesystem metadata operations.   The overhead associated with the necessary consistency guarantees over these operations is divorced from the data path in the GFS design.
+The GFS design choice of a single master introduced the possibility of
+bottlenecks, and a master-independent data path alleviates this
+potential hotspot, making client-master communication necessary only
+for atomic filesystem metadata operations.  The overhead associated
+with the necessary consistency guarantees over these operations is
+divorced from the data path in the GFS design.
 
-Additionally, we observe that in GFS and other distributed filesystems, the bulk of system complexity lies not in mechanism but in policy.  This is not to say that operational components (zero-copy I/O, fast checksumming, careful use of caches at various levels) are not critical to system performance, but merely that the bulk of the design and implementation deal with enforcing and maintaining the various invariants that make the system behave correctly, including replica placement decisions, failure handling, load balancing and consensus among agents in shared computations.
+Additionally, we observe that in GFS and other distributed
+filesystems, the bulk of system complexity lies not in mechanism but
+in policy.  This is not to say that operational components (zero-copy
+I/O, fast checksumming, careful use of caches at various levels) are
+not critical to system performance, but merely that the bulk of the
+design and implementation deal with enforcing and maintaining the
+various invariants that make the system behave correctly, including
+replica placement decisions, failure handling, load balancing and
+consensus among agents in shared computations.
 
-Combining these observations, we see that the GFS style of distributed filesystem is a perfect testing ground for the BOOM approach to implementing distributed systems.
-
+Combining these observations, we see that the GFS style of distributed
+filesystem is a perfect testing ground for the BOOM approach to
+implementing distributed systems.
 
 \section{System Architecture}
 \label{system-arch}
@@ -305,15 +319,13 @@ policies in Section XXX, and by conducting a performance study in
 Section \ref{perf-eval}.
 
 \subsection{Approach}
-Our task in developing this declaratively specified prototype is to
-represent the distributed state of the filesystem (the union of the
-various states in the finite automata describing the master and
-datanode servers) as a single relational database, with relations
-partitioned across nodes.  Both policy (which expresses constraints
-over these relations, and conditions under which the contents of the
-relations may change) and protocol (which expresses how data may move
-from one partition, and hence node, to another) are then expressed in
-a network-aware recursive query language that operates over the
+Our task in developing the BoomFS prototype is to represent the
+distributed state of the filesystem as a single relational database,
+with relations partitioned across nodes.  Both policy (which expresses
+constraints over these relations, and conditions under which the
+contents of the relations may change) and protocol (which expresses
+how data may move from one node to another) are then expressed in a
+network-aware recursive query language that operates over the
 relations.
 
 We feel that our approach is a natural way to express systems of this
@@ -330,7 +342,23 @@ mechanism modules and tune them to improve performance, without
 worrying about violating the correctness guaranteed by the policy
 layer.
 
-It was equally straightforward to extend the declarative components of the system.  With the global state flattened, it was easy to return to many initially deferred optimizations.  For example, sending the complete chunk state in each heartbeat, while correct, is not reasonable as the system scales.  Changing the heartbeats to reflect only chunk status deltas was a simple matter of sending the set difference of the local chunk relation and the relation of chunk heartbeat messages that have been acknowledged by the master.  Deletion deltas are simply the same set minus with the terms reversed.  Our initial policy for replica placement was purely distance-based, and had poor distribution of chunks when a small number of topologically close clients were appending data.  Extending this to a multi-level ordering that considers datanode chunk load was a simple matter of adding an aggregate query computing chunk count per node, and performing a second bottom-k computation to select the lowest loaded nodes that are not more than some specified distance from the client.
+It was equally straightforward to extend the declarative components of
+the system.  With the global state flattened, it was easy to return to
+many initially deferred optimizations.  For example, sending the
+complete chunk state in each heartbeat, while correct, is not
+reasonable as the system scales.  Changing the heartbeats to reflect
+only chunk status deltas was a simple matter of sending the set
+difference of the local chunk relation and the relation of chunk
+heartbeat messages that have been acknowledged by the master.
+Deletion deltas are simply the same set minus with the terms reversed.
+Our initial policy for replica placement was purely distance-based,
+and had poor distribution of chunks when a small number of
+topologically close clients were appending data.  Extending this to a
+multi-level ordering that considers data node chunk load was a simple
+matter of adding an aggregate query computing chunk count per node,
+and performing a second bottom-k computation to select the lowest
+loaded nodes that are not more than some specified distance from the
+client.
 
 \subsection{Software Architecture}
 \begin{figure}
@@ -339,7 +367,6 @@ It was equally straightforward to extend the declarative components of the syste
 \caption{The architecture of a program using JOL}
 \label{fig:jol-arch}
 \end{figure}
-
 
 In BoomFS, masters, data nodes, and clients are all implemented using
 a combination of Java and Overlog. We used JOL~\cite{jol}, a
@@ -374,13 +401,55 @@ All the metadata in BoomFS is represented as relations; some of these
 relations are partitioned over multiple nodes.
 
 \subsection{Control Path}
-In GFS, the control path comprises three separate protocols: the client protocol spoken between client and master to read or modify filesystem metadata, the control protocol between master and datanode used for replica migration or deletion instructions, and the heartbeats regularly sent from datanodes to the master.  The replication mechanism, which in GFS involves a log flush to multiple slave masters, can be considered a fourth protocol.
+In GFS, the control path comprises three separate protocols: the
+client protocol spoken between clients and masters to modify
+filesystem metadata, the control protocol between master and data node
+used for replica migration or deletion instructions, and the
+heartbeats regularly sent from data nodes to the masters.  The
+replication mechanism, which in GFS involves a log flush to multiple
+slave masters, can be considered a fourth protocol.
 
-In our design, instead of using separate state machines to implement the various communication protocols, all control path messaging is specified declaratively.  Logical inference rules, like database views, perform select-project-join over locally materialized relations, and the newly projected tuples are sent over the network if their location specifier indicates that they belong in a different partition, and hence a different node in the system.  At the destination, an incoming tuple's schema describes its content and determines which rules, if any, should be reevaluated with reference to the new data.
+In our design, instead of using separate state machines to implement
+the various communication protocols, all control path messaging is
+specified declaratively.  Logical inference rules, like database
+views, perform select-project-join over locally materialized
+relations, and the newly projected tuples are sent over the network if
+their location specifier indicates that they belong in a different
+partition, and hence a different node in the system.  At the
+destination, an incoming tuple's schema describes its content and
+determines which rules, if any, should be reevaluated with reference
+to the new data.
 
-For read-only operations like many client protocol interactions, a single declarative rule on the client (to transfer the injected request tuple to the master) and a pair of rules on the master (one to return the results to the client, and an error handler) suffice.  Requests that modify filesystem metadata follow the same structure, but trigger a more complicated chain of inferences on the master.  In particular, the master must achieve consensus among master replicas, attempt the modification,  and indicate success to the client only if these steps succeed.  Heartbeats from datanodes to the master are structured similarly to client requests, but are triggered by a periodic timer rather than by human interaction.   Finally, control protocol messages from master to datanode are fired when conditions specified by certain aggregate queries indicate that system invariants are unmet, as when the number of replicas drops below the specified replication factor.  
+For read-only operations like many client protocol interactions, a
+single declarative rule on the client (to transfer the injected
+request tuple to the master) and a pair of rules on the master (one to
+return the results to the client, and an error handler) suffice.
+Requests that modify filesystem metadata follow the same structure,
+but trigger a more complicated chain of inferences on the master.  In
+particular, the master must achieve consensus among master replicas,
+attempt the modification, and indicate success to the client only if
+these steps succeed.  Heartbeats from data nodes to the master are
+structured similarly to client requests, but are triggered by a
+periodic timer rather than by human interaction.  Finally, control
+protocol messages from master to data node are fired when conditions
+specified by certain aggregate queries indicate that system invariants
+are unmet, as when the number of replicas drops below the specified
+replication factor.
 
-Let us take a concrete example beginning with a client request to append a stream of data to a file.  The java shell code running at the client injects a tuple into a local table, triggering a send rule that causes the tuple, which contains the client's address, the file identifier, and a opcode indicating that this is a request for a new chunk identifier, to the master.  This initiates a chain of inferences that generate a new id, achieve consensus on the assignment of this id to the given file's list of chunks, and select a set of possible candidate data nodes that may store the new chunk.  The resulting chunk identifier and candidate data node list are then embedded in a tuple and returned to the client.  The client applies its local policy, which may be a simple distance function, to sort the set of candidate data nodes and select a next hop.  From here, the data path is invoked for the remainder of the operation.
+Let us take a concrete example beginning with a client request to
+append a stream of data to a file.  The java shell code running at the
+client injects a tuple into a local table, triggering a send rule that
+causes the tuple, which contains the client's address, the file
+identifier, and a opcode indicating that this is a request for a new
+chunk identifier, to the master.  This initiates a chain of inferences
+that generate a new id, achieve consensus on the assignment of this id
+to the given file's list of chunks, and select a set of possible
+candidate data nodes that may store the new chunk.  The resulting
+chunk identifier and candidate data node list are then embedded in a
+tuple and returned to the client.  The client applies its local
+policy, which may be a simple distance function, to sort the set of
+candidate data nodes and select a next hop.  From here, the data path
+is invoked for the remainder of the operation.
 
 \subsection{Data Path}
 The data protocol is a straightforward mechanism for transferring the
@@ -399,15 +468,16 @@ While the data protocol is unicast, a client node typically wants to
 write a new chunk to multiple data nodes. As noted in Section
 \ref{fs-ops}, there are several ways in which this could be
 accomplished. The current BoomFS prototype does ``source routing'':
-after obtaining a new chunk identifier and list of candidate datanodes from a master node, the client
-decides on the sequence of data nodes that it wants to write a new
-chunk to, and then transfers the chunk to the first node in the
-sequence. That node then transfers the chunk to the second node in the
-sequence, and so on. While this approach is effective at utilizing
-network bandwidth, it is subject to partial failures, and the current
-implementation is not pipelined. More importantly, routing decisions
-of this nature should be specified in Overlog, not hardcoded in
-Java. We plan to rectify this shortcoming in the near future.
+after obtaining a new chunk identifier and list of candidate data
+nodes from a master node, the client decides on the sequence of data
+nodes that it wants to write a new chunk to, and then transfers the
+chunk to the first node in the sequence. That node then transfers the
+chunk to the second node in the sequence, and so on. While this
+approach is effective at utilizing network bandwidth, it is subject to
+partial failures, and the current implementation is not
+pipelined. More importantly, routing decisions of this nature should
+be specified in Overlog, not hardcoded in Java. We plan to rectify
+this shortcoming in the near future.
 
 \subsection{Fault Tolerance}
 In the target environment of GFS deployments, namely large clusters of
