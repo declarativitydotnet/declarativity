@@ -29,7 +29,7 @@
 With the widespread adoption of cloud computing, mobile clients, and
 manycore processors, computing architectures are undergoing a period
 of disruptive change. In the near future, nearly every non-trivial
-software system will be physically separated: distributed programming
+software system will be physically dispersed: distributed programming
 will be the common case.
 
 Traditional techniques for building distributed systems are ill-suited
@@ -37,21 +37,21 @@ to this new environment. Despite considerable research, developing
 fault-tolerant distributed systems remains enormously difficult and
 expensive, and is typically only attempted by experienced programmers
 with extensive training in the field. As more journeyman developers
-must deal with the challenges of distributed computing, this situation
-will become increasingly untenable. Better techniques for constructing
-distributed systems are urgently needed.
+begin to encounter the challenges of distributed computing as a matter
+of course, this situation will become increasingly untenable. Better
+techniques for constructing distributed systems are urgently needed.
 
 Inspired by prior work on declarative networking~\cite{dn-sigmod,
   network-data-indep}, we propose a new architectural style for
 distributed programs in which policy and protocol are specified in a
 declarative logic language, while the operational mechanisms of the
-system are written in a traditional imperative language. We are
+program are written in a traditional imperative language. We are
 engaged in the Berkeley Orders of Magnitude (BOOM) project, which aims
 to use this style to build cloud computing infrastructure components
 that operate at orders of magnitude greater scale but are specified in
 orders of magnitude less code than traditional approaches. In Section
-\ref{boom-vision}, we discuss the problems with traditional tools for
-building distributed systems in more detail, and outline the BOOM
+\ref{boom-vision}, we discuss the problems with traditional approaches
+to building distributed systems in more detail, and outline the BOOM
 vision in contrast.
 
 The first system we have built using this architectural style is
@@ -88,11 +88,11 @@ code to implement using standard tools~\cite{paxos-made-live}.
 
 Traditional tools operate at a low level of abstraction because they
 force programmers to intermingle the specification of \emph{what} a
-distributed program should do with \emph{how} it can be done. That is,
-mechanism and policy are specified together, and implemented in the
-same language. This has two primary problems: it yields fragile
-programs that cannot easily adapt to change, and it results in
-programs that are difficult to understand.
+distributed program should do with \emph{how} it should be
+achieved. That is, mechanism and policy are specified together, and
+implemented in the same language. This approach has two primary
+problems: it yields fragile programs that cannot easily adapt to
+change, and it results in programs that are difficult to understand.
 
 For example, consider a client that wants to compute a function over
 data stored in a compute cloud. Should the function's code be sent to
@@ -541,7 +541,19 @@ adds considerable overhead to the performance of the master.
  
 In our prototype, a configurable number of masters operate in
 lock-step using the Paxos consensus protocol, also implemented in the
-Overlog language.  This means that like GFS, a mutation of file system metadata in not complete until it is reflected on all participating masters.  Unlike GFS, BFS backed by Paxos is a multimaster system, supporting "update anywhere anytime" semantics [Gray, Helmand], although for performance reasons it is preferable to have all clients communicate with a single primary master.  Assuming non-byzantine faults, a BFS installation with M masters can survive M/2 - 1 failures, as consensus requires merely simple minority (as opposed to 2PC, which requires unanimity).  If the primary fails, we also incur the cost of a timeout on each client on the first request to the failed master; after that, the client's master list is updated to reflect the loss.  No external monitoring or indirection are necessary to support this level of fault tolerance.
+Overlog language.  This means that like GFS, a mutation of file system
+metadata in not complete until it is reflected on all participating
+masters.  Unlike GFS, BFS backed by Paxos is a multimaster system that
+supports ``update anywhere anytime''
+semantics~\cite{dangers-of-replication}, although for performance
+reasons it is preferable to have all clients communicate with a single
+primary master.  Assuming non-byzantine faults, a BFS installation
+with $m$ masters can survive $m/2 - 1$ failures, as consensus requires
+merely simple minority.  If the primary fails, we also incur the cost
+of a timeout on each client on the first request to the failed master;
+after that, the client's master list is updated to reflect the loss.
+No external monitoring or indirection are necessary to support this
+level of fault tolerance.
 
 \section{Performance Evaluation}
 \label{perf-eval}
@@ -653,7 +665,7 @@ Our results are summarized in Figures \ref{fig:big-read-perf} and
 comparable in read performance and handily outperforms HDFS in write
 performance.  This result supports our intuition that the relatively
 high cost of metadata operations is quickly amortized by the highly
-efficient datapath under the large transfers characteristic of
+efficient data path under the large transfers characteristic of
 MapReduce and Hadoop workloads.
 
 In HDFS, read latency increases gradually as load increases, but write
