@@ -78,6 +78,8 @@ class OverlogCompiler
 
   class VisitPexp < VisitIExpression
     def semantic(text,obj)
+      require 'ruby-debug'; debugger
+      
       super(text,obj)
       @@positions["_Primpos"] = @@positions["_Primpos"] + 1
     end
@@ -106,7 +108,7 @@ class OverlogCompiler
     end
     def semantic(text,obj)
       super(text,obj)
-
+ #     require 'ruby-debug'; debugger if obj.ptablename.text_value == 'execute'
       eventMod = obj.eventModifier.text_value.eql?("") ? nil : obj.eventModifier.elements[1].text_value
       notin = obj.notin.text_value.eql?("") ? false : true
       @@current["predicate"] = @@positions["_Universal"]
@@ -120,6 +122,7 @@ class OverlogCompiler
       @tft = tft
     end
     def semantic(text,obj)
+#      require 'ruby-debug'; debugger
       super(text,obj)
       otabinsert(@tft, @@positions["_Universal"], @@current["term"], obj.ptablename.text_value, @@current["predicate"])    
     end
@@ -128,6 +131,7 @@ class OverlogCompiler
   class VisitPredArg < VisitGeneric
     def semantic(text,obj)
       super(text,obj)
+#        require 'ruby-debug'; debugger
       @@positions["_Predarg"] = @@positions["_Predarg"] + 1
     end
   end
@@ -152,7 +156,7 @@ class OverlogCompiler
 
     def semantic(text,obj)
       super(text,obj)
-      otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??")
+ otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??")
     end
   end
 

@@ -48,25 +48,34 @@ deletionQueue(Time, Program, Name, Deletions) :-
     runnable(Time, Program, Name, _, Deletions);
 
 /* Reglobal::schedule delta. */
+sched1
 global::schedule(Time, Program, Name, Insertions, Deletions) :-
 	evaluation(Time, Program, Name, Insertions, Deletions),
-	Insertions.size() > 0;
+	Nilness := Insertions.nil?,
+	Nilness != true,
+	Size := Insertions.size,
+	Size > 0;
 
+sched2
 global::schedule(Time, Program, Name, Insertions, Deletions) :-
   evaluation(Time, Program, Name, Insertions, Deletions),
-	Deletions.size() > 0;
+	Nilness := Deletions.nil?,
+	Nilness != true,
+	Size := Deletions.size,
+	Size > 0;
 	
 /* Evaluate the program with the given insertions OR deletions. */
 evaluator
-evaluation(Time, Program, Name, Insertions, Deletions) :-
-	evaluator(execute(Time, Program, Name, Insertions, Deletions));
+evaluation(JoeTime, Program, Name, Insertions, Deletions) :-
+	evaluator(execute(JoeTime, Program, Name, Insertions, Deletions));
 	
 /* NOTE: We do not global::schedule public deletions!! */
 publicEval
-execute(Time, Program2, Name, Insertions, null) :-
+execute(Time, Program2, Name, Insertions, N) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
 	bootstrap::query(Program2, Rule, Public, Delete, Event, Input, Output, Object),
-	Public == true, Input == Name, Program1 != Program2;
+	Public == true, Input == Name, Program1 != Program2, 
+	N := nil;
 
 /* Execute on the intended program. */
 localEval
@@ -80,16 +89,19 @@ delta(Time, Program, Name, Insertions, Deletions) :-
 
 /* Identify the runnable tuples. */
 insertion_runnable 
-runnable(Time, Program, Name, Insertions, null) :-
+runnable(Time, Program, Name, Insertions, N) :-
 	strata(Program, Time, Strata),
-	insertionQueue(Time, Strata, Program, Name, Insertions);
+	insertionQueue(Time, Strata, Program, Name, Insertions),
+	N := nil;
 
 /* Execute all deletions when insertion count goes to 0. 
    Deletions executed and deletions deltas global::scheduled for 
    next global::clock. */
 deletion_runnable 
-runnable(Time+1, Program, Name, null, Deletions) :-
-	deletionQueue(Time, Program, Name, Deletions);
+runnable(T, Program, Name, N, Deletions) :-
+	deletionQueue(Time, Program, Name, Deletions),
+	T := Time + 1,
+	N := nil;
 
 
 /* Determine the current strata in the current time for all 
@@ -103,7 +115,8 @@ insertionQueue(Time, Strata, Program, Name, Insertions) :-
 	queue(Time, Strata, Program, Name, Insertions, _),
 	compiler::program(Program, Owner, Object),
 /*  ArbitraryExpression fails when Insertions is a TupleSet */
-/*	Insertions != null, */
+	Nilness := Insertions.nil?,
+	Nilness != true,
 	Size := Insertions.size,
 	Size > 0;
 	
@@ -112,7 +125,8 @@ deletionQueue(Time, Program, Name, Deletions) :-
 	queue(Time, Strata, Program, Name, Insertions, Deletions),
 	compiler::program(Program, Owner, Object),
 /*  ArbitraryExpression fails when Deletions is a TupleSet */
-/*	Deletions != null */
+	Nilness := Deletions.nil?,
+	Nilness != true,
 	Size := Deletions.size,
 	Size > 0;
 	
@@ -124,10 +138,11 @@ queue(Time, Strata, Program, Name, Insertions, Deletions) :-
 	priority(Program, Name, Strata);
 	
 q2_rule
-queue(Time, 0, Program, Name, Insertions, Deletions) :-
+queue(Time, Zero, Program, Name, Insertions, Deletions) :-
 	global::clock(Location, Time),
 	global::schedule(Time, Program, Name, Insertions, Deletions),
-	notin priority(Program, Name, _);
+	notin priority(Program, Name, _),
+	Zero := 0;
 
 /* Clean up queued programs. */
 sched_deleter
@@ -143,15 +158,20 @@ define(schedulePeriodic, {String, Float, Float, Float, Float, String});
 
 /* schedule next periodic. */
 renewPeriodic
-schedulePeriodic(Id, Period, TTL, Time+Period, Count+1, Program) :-
+schedulePeriodic(Id, Period, TTL, Tp, C, Program) :-
 	global::clock#insert(Location, Time),
 	global::periodic(Id, Period, TTL, Time, Count, Program),
-	Count < TTL;
+	Count < TTL,
+	Tp := Time+Period,
+	C := Count+1;
 			
 initPeriodic 
-schedulePeriodic(Id, Period, TTL, Time+1+Offset, Count+1, Program) :-
+schedulePeriodic(Id, Period, TTL, T, C, Program) :-
 	config(Time, Program, Object),
-	global::periodic(Id, Period, TTL, Offset, Count, Program);
+	global::periodic(Id, Period, TTL, Offset, Count, Program),
+	T1 := Time+1,
+	T := Time1+Offset,
+	C := Count+1;
 	
 /* global::schedule the periodic and update its execution count. */
 schedulePeriodic 
@@ -160,7 +180,7 @@ periodic(Id, Period, TTL, Time, Count, Program) :-
 
 
 /*******************************************************************/
-/*** Fact global::scheduler */
+/*** Fact scheduler */
 
 define(facts, {String, TableName, TupleSet});
 
@@ -168,23 +188,17 @@ collectFacts
 facts(Program, Name, tupleset<Tuple>) :-
 	config(Time, Program, Object),
 	compiler::fact(Program, Name, Tuple);
-	
-installFacts 
-queue(Time, 0, Program, Name, Facts, null) :-
-	facts(Program, Name, Facts), 
-	global::clock(Location, Time), 
-	Facts.setName(Name),
-	Program == "compiler";
-	
+
 installFacts2 
-global::schedule(TheTime, Program, Name, Facts, null) :-
-	facts(Program, Name, Facts), Program != "compile",
-	Facts.setName(Name),
+global::schedule(TheTime, Program, Name, Facts, N) :-
+	facts(Program, Name, Facts),
+/*	Facts.setName(Name), */
 	global::clock(Location, Time),
-	TheTime := Time+1;
+	TheTime := Time+1,
+	N := nil;
 	
 /*******************************************************************/
-/*** global::schedule compile */
+/*** schedule compile */
 
 define(config, {Float, String, Program});
 
@@ -198,9 +212,10 @@ config(Time, Program, Object) :-
 watch(runnable, d);
 
 compileConfig 
-global::schedule(Time, "compile", TupleName, Tuples, null) :-
+global::schedule(Time, "compiler", TupleName, Tuples, N) :-
 	config(Time, Program, Object),
-	TableName := TableName.new("compile", "config"),
+	TableName := TableName.new("compiler", "config"),
 	Obj := Object.tuple(),
 	Tuples := TupleSet.new(TableName, Obj),
-	TupleName := Tuples.name();
+	TupleName := Tuples.name(),
+	N := nil;

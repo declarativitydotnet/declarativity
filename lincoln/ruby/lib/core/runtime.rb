@@ -71,7 +71,7 @@ class Runtime
 	
 	def uninstall(name)
 		uninstall = TupleSet.new(TableName.new("compiler", "uninstall"), Tuple.new(name, true))
-		schedule("compile", uninstall.name, uninstall, nil)
+		schedule("compiler", uninstall.name, uninstall, nil)
 	end
 	
   #  Schedule a set of insertion/deletion tuples.
@@ -87,11 +87,11 @@ class Runtime
 			  task.deletions = deletions
 			  task.program = program
 			  task.name = name
-#		    print "XXX Tasking: #{name}, #{task.insertions.tups[0]}, #{task.deletions.tups[0]}"
+		    puts "XXX Tasking: #{name}, #{task.insertions.tups[0]}, #{task.deletions.tups[0]}"
   			@driver.task(task)
 			else
 				tuple = Tuple.new(clock.current + 1, program, name, insertions, deletions)
-#		    print "XXX Scheduling: #{name}, #{task.insertions.tups[0]}, #{task.deletions.tups[0]}"
+		    print "XXX Scheduling: #{name}, #{task.insertions.tups[0]}, #{task.deletions.tups[0]}"
 				schedule.force(tuple)
 			end
 			# XXXXXXXXXX
@@ -110,7 +110,7 @@ class Runtime
 		runtime.driver.runtime = runtime.program("runtime")
 		# XXXXXXXXXXXXX
 #		runtime.network.install(port)
-   runtime.thread.run
+    runtime.thread.run
    # runtime.driver.run_driver
     
 #    runtime.thread = Thread.new { runtime.driver.run_driver }

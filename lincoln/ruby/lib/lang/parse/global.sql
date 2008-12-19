@@ -12,3 +12,11 @@ table operator (
   +id String,
   selectivity Float
 )
+
+table function (
+  +program String,
+  +rule String,
+  +position Integer,
+  name String,
+  object String
+)

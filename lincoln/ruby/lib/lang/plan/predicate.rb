@@ -25,7 +25,7 @@ class Predicate < Term
 	  DELETE = 2
   end
 
-	attr_reader :schema, :notin, :name
+	attr_reader :schema, :notin, :name, :arguments
 	attr_accessor :event
 	
 	def locationVariable
@@ -102,6 +102,7 @@ class Predicate < Term
 		table = context.catalog.table(@name)
 		index = nil
 		if (indexKey.size > 0) then
+#      require 'ruby-debug'; debugger if !input.name.nil? and input.name.name == 'strata'
 			if (table.primary.key == indexKey) then
 				index = table.primary
 			elsif (table.secondary.has_key?(indexKey))

@@ -49,6 +49,11 @@ class OverlogPlanner
 				@aggFunc = nil	
 			end
 			def eat(var)
+			  # this may be called on tuples that have no Vars in them,
+			  # e.g. TableFunction tuples.
+			  # return nil for those -- JMH
+        return nil if var.schema.position("type").nil?
+        
 				if (!@aggFunc.nil?) then
 					if (!var.value("type").eql?("var")) then
 #					  require 'ruby-debug'; debugger
@@ -98,6 +103,11 @@ class OverlogPlanner
 	end	
 
 	class PlanTerm < PlanExpression
+	  def initialize(runtime, programname,ts, tfuncs)
+		  super(runtime, programname, ts)
+		  @tfuncs = tfuncs
+    end
+		
 		def project_term(tup,*extras)
 			key = SchemaKey.new("ruleid","rulename","programid","program_name","delete","termid","term_pos","term_txt",*extras)
 			proj = key.project(tup)
@@ -112,6 +122,7 @@ class OverlogPlanner
 		
 		def accumulate_vars(ts, *type_txt)
 			# special function for the base class that all terms can use.
+ #     require 'ruby-debug'; debugger if type_txt.include?("tablefunid")
 			res = TupleSet.new("terms",nil)
 			aHash = Hash.new
 			pHash = Hash.new
@@ -138,10 +149,31 @@ class OverlogPlanner
 		#	end
 		#	return [scope,tname]
 		#end
-		
-		def get_preds(ts)
-			pHash,aHash = accumulate_vars(ts,"pred_txt","event_mod","pred_pos","notin")
 
+    def get_tfuncs(ts)
+#      require 'ruby-debug'; debugger
+      pHash,aHash = accumulate_vars(ts,"tablefunid","termid","function", "nested_predicate_id")
+
+      ret = TupleSet.new("tfuncs",nil)
+
+      pHash.each_key do |k|
+        pred = pHash[k]
+
+        # notin, name, event, arguments
+        #				require 'ruby-debug'; debugger if tname == 'strata'
+        thistfunc = Function.new(pred.value("function"),pred.value("nested_predicate_id"))
+
+        ret << proj_cat(pred,thistfunc,"_term_obj",method(:project_term),thistfunc.position)
+      end
+      return ret
+    end
+
+		def get_preds(ts)
+			pHash,aHash = accumulate_vars(ts,"pred_txt","event_mod","pred_pos","notin","predicateid")
+
+      tfuncIndx = HashIndex.new(@runtime, @tfuncs,Key.new(3),Integer) if @tfuncs  
+      puts "tfuncs: #{tfuncIndx.map.keys.sort.map {|k| k.to_s + " "}}"
+      lookups = []
 			ret = TupleSet.new("preds",nil)
 
 			pHash.each_key do |k|
@@ -159,14 +191,28 @@ class OverlogPlanner
 				end
 			
 				# notin, name, event, arguments
+#				require 'ruby-debug'; debugger if tname == 'strata'
 				thispred = Predicate.new(pred.value("notin"),TableName.new(scope,tname),event,aHash[k])
-
 				# I think the p2 system uses positions starting at 1.
 				thispred.set(@runtime,pred.value("program_name"),pred.value("rulename"),pred.value("pred_pos"))
+        
+        # wrap pred in TableFunction if there is one
+ #       require "ruby-debug"; debugger
+        if !tfuncIndx.nil?
+          tf = tfuncIndx.lookup(Tuple.new(nil, pred.value("predicateid"))) 
+          lookups << pred.value("predicateid")
+          if tf.size > 0
+            require 'ruby-debug'; debugger
+            puts "YAYYYYYYYY"
+          end
+        end
+        
 				ret << proj_cat(pred,thispred,"_term_obj",method(:project_term),thispred.position)
 			end
+			puts "lookups: #{lookups.sort.map {|k| k.to_s + " "}}"
 			return ret
 		end
+		
 		def get_assigns(ts)
 		  # require 'ruby-debug'; debugger
 			pHash,aHash = accumulate_vars(ts,"assign_txt","lhs","assign_pos")
@@ -200,11 +246,14 @@ class OverlogPlanner
 			end
 			return ret
 		end
+
 		def emit
 			ts = super
+ #     require 'ruby-debug'; debugger
 			preds = get_preds(ts)
 			assigns = get_assigns(ts)
 			selects = get_selects(ts)
+      tfuncs = get_tfuncs(ts)
 
 			ret = TupleSet.new("terms",nil)
 			preds.each { |p| ret << p }
@@ -251,13 +300,14 @@ class OverlogPlanner
         ruleObj = Rule.new(1,context.value("rulename"),true,d,head,body)
         ruleObj.set(@runtime, context.value("program_name"))
 
-#        require 'ruby-debug'; debugger
+ #       require 'ruby-debug'; debugger if context.value("rulename") == 'evaluator'
         ret << proj_cat(pHash[rule],ruleObj,"_rule_obj",method(:project_rule),nil)
       end
       return ret
     end
 	end
 	class PlanProgram < PlanRule
+  		
 		def project_program(tup,*extras)
 			key = SchemaKey.new("programid","program_name")
 			proj = key.project(tup)
@@ -376,23 +426,30 @@ class OverlogPlanner
 			
 			resindx = join_of(@indices,TupleSet.new("cols",table))
 			indxs = Array.new	
+			emptykey = false
 			resindx.order_by("col_pos") do |col|
 			  x = col.value("col_pos")
-			  require 'ruby-debug'; debugger if x.nil?
-				indxs << x
+			  if x.nil?
+			    # empty but existing key means pkey is on all columns
+			    emptykey = true
+		    else
+				  indxs << x 
+			  end
 			end 		
+
+#      require 'ruby-debug'; debugger if indxs == []
 
 			typestr = '[' + cols.join(",") + ']'
 			indxstr = 'Key.new(' + indxs.join(",") + ')'
 			typething = eval(typestr)
-#			indxthing = eval(indxstr)
-      indxthing = Key.new(*indxs)
+			indxthing = eval(indxstr)
+#      indxthing = Key.new(*indxs)
 
 			(scope,tname) = get_scope(table.value("tablename"),@progname)
 			tn = TableName.new(scope,tname)
 
 			# hackensack
-      if indxthing.size == 0 
+      if indxthing.size == 0 && !emptykey
         # require 'ruby-debug'; debugger
         # XXXXX assume the lack of pkey indicates an Event table!  
         # Refactor this to be handled by the parser!
@@ -411,50 +468,29 @@ class OverlogPlanner
 		end
 	end
 
-	def add_terms(ts)
-		predIndx = HashIndex.new(@runtime, @preds,Key.new(1),Integer)
-		assIndx = HashIndex.new(@runtime, @assigns,Key.new(1),Integer)
-		selIndx = HashIndex.new(@runtime, @selects,Key.new(1),Integer)
+  def add_terms(ts)
+    predIndx = HashIndex.new(@runtime, @preds,Key.new(1),Integer)
+    assIndx = HashIndex.new(@runtime, @assigns,Key.new(1),Integer)
+    selIndx = HashIndex.new(@runtime, @selects,Key.new(1),Integer)
 
-		retSet = TupleSet.new("terms",nil)
-		ts.each do |tup|
-			[predIndx,assIndx,selIndx].each do |i|
-				relRec = i.lookup(Tuple.new(nil,tup.value("termid")))
-				case relRec.tups.size
-					when 0 
-						# do nothing
-					when 1
-						retSet << tup.join(relRec.tups[0])
-				else
-				  #require 'ruby-debug'; debugger
-
-		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"myTerm")).dump_to_tmp_csv
-		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"myPredicate")).dump_to_tmp_csv
-		#		Table.find_table(TableName.new(Table::GLOBALSCOPE,"myProgram")).dump_to_tmp_csv
-				
-		#		  BootstrapCatalogTable.classes.each do |c|
-  		#		  table = c.name[0..(c.name.rindex("Table")-1)]
-         #   table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
-         #   t = Table.find_table(table_name)
-		##print "dump #{t}\n"
-         #   t.dump_to_tmp_csv unless t.nil?
-	#		    end
-	#			  CompilerCatalogTable.classes.each do |c|
-	#			    table = c.name[0..(c.name.rindex("Table")-1)]
-         #   table_name = TableName.new(Table::GLOBALSCOPE,table.downcase)
-         #   t = Table.find_table(table_name)
-         #   t.dump_to_tmp_csv unless t.nil?
-	#		    end			    
-				  # $catalog.dump_to_tmp_csv
-          # print "looked up #{tup.value("termid")}\n"
-          # print "somehow found #{relRec.tups}\n"
-
-					raise("looked up #{tup.value("termid")}, somehow found #{relRec.tups}.  Should only find one match")
-				end
-			end
-		end
-		return retSet
-	end
+    retSet = TupleSet.new("terms",nil)
+    #	  require 'ruby-debug'; debugger
+    ts.each do |tup|
+      [predIndx,assIndx,selIndx].each do |i|
+        relRec = i.lookup(Tuple.new(nil,tup.value("termid")))
+        case relRec.tups.size
+        when 0 
+          # do nothing
+        when 1
+          newtup = tup.join(relRec.tups[0])
+          retSet << newtup
+        else
+          raise("looked up #{tup.value("termid")}, somehow found #{relRec.tups}.  Should only find one match")
+        end # case
+      end		
+    end
+    return retSet
+  end
 
 	def bu_facts(ts)
 		# assumes one program in parse tables at a time!
@@ -507,19 +543,19 @@ class OverlogPlanner
 		# real bottom-up goes out the window, of course, if we have multiple programs in our state tables at once.
 
 
-		
+#		require 'ruby-debug'; debugger
 		allPrimaryExpressions = TupleSet.new("pexpr",*@pexpr.tuples)
 		allExpressions = indxjoin_of(@expr,"expressionid",allPrimaryExpressions)
-		allTerms = indxjoin_of(@terms,"termid",allExpressions)
+#		require 'ruby-debug'; debugger
+		exprTerms = indxjoin_of(@terms,"termid",allExpressions)
 
-
-		bu_facts(allTerms)
-		allRules = indxjoin_of(@rules,"ruleid",allTerms)
+		bu_facts(exprTerms)
+		allRules = indxjoin_of(@rules,"ruleid",exprTerms)
 		allPrograms = indxjoin_of(@programs,"programid",allRules)
 
 		fullSet = add_terms(allPrograms)	
-
-		planMaster = PlanProgram.new(@runtime, @progname,fullSet)
+		
+		planMaster = PlanProgram.new(@runtime, @progname,fullSet,@tfuncs)
 		planMaster.emit.each do |e|
 			#puts e
 		end

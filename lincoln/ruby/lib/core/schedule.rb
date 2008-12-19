@@ -35,15 +35,15 @@ class Schedule < ObjectTable
   end
   
   def insert(t, c)
-    print "+++++++++++++++++++ SCHEDULE: " + self.to_s + "\n"
-    print "+++++++++++++++++++  --> inserting " + t.tups.size.to_s + ": " + t.tups.to_s + "\n"
+#    print "+++++++++++++++++++ SCHEDULE: " + self.to_s + "\n"
+#    print "+++++++++++++++++++  --> inserting " + t.tups.size.to_s + ": " + t.tups.to_s + "\n"
     super(t, c)
   end
   
   def delete(tups)
 #    require 'ruby-debug'; debugger
-  print "+++++++++++++++++++ SCHEDULE: " + self.to_s + "\n"
-  print "+++++++++++++++++++  --> deleting " + tups.size.to_s + ": " + tups.tups.to_s + "\n"
+#  print "+++++++++++++++++++ SCHEDULE: " + self.to_s + "\n"
+#  print "+++++++++++++++++++  --> deleting " + tups.size.to_s + ": " + tups.tups.to_s + "\n"
     super(tups)
   end
   

@@ -95,7 +95,7 @@ class Driver < Monitor
         insertions = TupleSet.new(name) if insertions.nil?
         deletions  = TupleSet.new(name) if deletions.nil?
 
-        require 'ruby-debug'; debugger if name.name == "insertionQueue"
+#        require 'ruby-debug'; debugger if name.name == "insertionQueue"
         next if (insertions.size == 0 and deletions.size == 0)
 
 #        require 'ruby-debug'; debugger
@@ -174,7 +174,7 @@ class Driver < Monitor
 
         deletions  = TupleSet.new(name) if deletions.nil?
 
-#        require 'ruby-debug'; debugger
+#        puts "INSERTING into #{name.to_s}"
         program = @context.program(programName)
 
         if !program.nil?
@@ -204,9 +204,9 @@ class Driver < Monitor
       watchInsert = watch.watched(program.name, name, WatchOp::Modifier::INSERT)
       watchDelete = watch.watched(program.name, name, WatchOp::Modifier::DELETE)
 
-      require 'ruby-debug'; debugger if name.to_s == 'runtime::insertionQueue'
+#      require 'ruby-debug'; debugger if name.to_s == 'runtime::insertionQueue'
       querySet = program.get_queries(name)
-      querySet.each { |q| puts "tuple from #{name} triggers #{q.rule}"}
+#      querySet.each { |q| puts "tuple from #{name} triggers #{q.rule}"}
 
 #      program.dump_queries
       if (querySet.nil?)
@@ -223,7 +223,7 @@ class Driver < Monitor
               watchInsert.rule(query.rule)
               watchInsert.evaluate(insertions)
             end
-            puts "evaluating #{query.to_s} on #{insertions.size} tuples"
+#            puts "evaluating #{query.to_s} on #{insertions.size} tuples"
             result = query.evaluate(insertions)
             next if (result.size == 0)
 
@@ -307,6 +307,7 @@ class Driver < Monitor
     @clock = clock
     @evaluator = Evaluator.new(context)
     @flusher = Flusher.new(context)
+    @context = context
 
     context.catalog.register(@evaluator)
     context.catalog.register(@flusher)
@@ -317,7 +318,7 @@ class Driver < Monitor
 
   # Set the runtime program.
   # @param runtime The runtime program. 
-  attr_accessor :runtime, :cond_var
+  attr_accessor :runtime, :cond_var, :context
 
   # * Add a task to the task queue. This will be evaluated
   # * on the next clock tick.
@@ -339,24 +340,27 @@ class Driver < Monitor
     time = @clock.time(0)
     while 1
       synchronize do
+        puts("============================ INSERTING TIME #{time.tups[0].to_s} ===================")
+#        require 'ruby-debug'; debugger
         evaluate(runtime.name, time.name, time, nil) # Clock insert new time
-        print("============================     EVALUATE SCHEDULE TIME #{@clock.current}    =============================\n")
+        print("========================     EVALUATE SCHEDULE TIME #{@clock.current}    =========================\n")
         print("============================     #{@tasks.size} TASKS     ===========================\n")
         print("===========================     #{@schedule.cardinality} SCHED QUEUE     ========================\n")
 
         # Evaluate task queue
-        @tasks.each_with_index {|task,i|         print "============================     TASK #{i}: #{task.name}, #{task.insertions.tups[0].to_s}, #{task.deletions.tups[0].to_s}     =============================\n"}
-#        require 'ruby-debug'; debugger
-        @tasks.each do |task| 
-#          require 'ruby-debug'; debugger
+        @tasks.each_with_index do |task, i| 
+          #          require 'ruby-debug'; debugger
+          print "======================== TASK #{i}: #{task.name} ========================\n"
+          puts "    Insertions: #{task.insertions.tups[0].to_s}"
+          puts "    Deletions: #{task.deletions.tups[0].to_s}"
           evaluate(task.program, task.name, task.insertions, task.deletions)
         end
         @tasks.clear # Clear task queue.
         evaluate(runtime.name, time.name, nil, time) # Clock delete current
-        print("============================ ========================== =============================\n");
+        print("========================== ======================== ===========================\n");
 
         # Check for new tasks or schedules, if none wait.
-     #   require 'ruby-debug'; debugger
+        #   require 'ruby-debug'; debugger
         @cond_var.wait_while {@tasks.size == 0 && @schedule.cardinality == 0}
         if (@schedule.cardinality > 0)
           time = @clock.time(@schedule.min)

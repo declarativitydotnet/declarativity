@@ -255,6 +255,8 @@ class Rule < Clause
       end
     end
 
+    fix_agg_head(@head, context) if @aggregation
+    
     operators << Projection.new(context, @head)
 
     if !(watch.watched(@program, @head.name, WatchOp::Modifier::SEND).nil?)
@@ -269,5 +271,36 @@ class Rule < Clause
 #    require 'ruby-debug'; debugger
     qry << BasicQuery.new(context,@program,@name,@isPublic,@isDelete,event,@head,operators)
     return qry
+  end
+
+  def fix_agg_head(head, context)
+    head.each do |var|
+#      require 'ruby-debug'; debugger
+      if var.class <= Aggregate
+        agg = var
+        table = context.catalog.table(head.name)
+        if table.class < AggregationTable
+          aggregation = table
+          if (agg.functionName != aggregation.variable.functionName) ||
+            (agg.name != aggregation.variable.name)
+            raise("Table aggregates must be unique!")
+          end
+        end
+        # Drop the previous table.
+        context.catalog.drop(table.name)
+
+        aggregate = AggregationTable.new(context, head, table.table_type)
+        context.catalog.register(aggregate)
+        progtab = context.catalog.table(ProgramTable.table_name)
+        
+#        the_program.definition(aggregate)
+
+        types = table.types
+        if (types[var.position] != var.expr_type)
+          require 'ruby-debug'; debugger
+          raise("Aggregate type "+ var.expr_type.to_s + " does not match head type " + types[var.position].to_s + "!")
+        end		      
+      end
+    end
   end
 end

@@ -13,11 +13,12 @@ class AggregateFunction < TupleFunction
     attr_reader :position
 
     def evaluate(tuple)
+#      require 'ruby-debug'; debugger
       tuple.value(@name)
     end
 
     def returnType
-      @type;
+      @type
     end
   end
 
@@ -27,7 +28,7 @@ class AggregateFunction < TupleFunction
   @@COUNT    = "count"
   @@AVG      = "avg"
   @@SUMSTR   = "sumstr"
-  @@MAKESET  = "tupleset"
+  @@TUPLESET  = "tupleset"
 
 
   def AggregateFunction.function(aggregate)
@@ -37,7 +38,7 @@ class AggregateFunction < TupleFunction
     when @@COUNT: Count.new(Accessor.new(aggregate))
     when @@AVG: Avg.new(Accessor.new(aggregate))
     when @@SUMSTR: SumStr.new(Accessor.new(aggregate))
-    when @@MAKESET: MakeSet.new(Accessor.new(aggregate))
+    when @@TUPLESET: TupleCollection.new(Accessor.new(aggregate))
     else nil
     end
 
@@ -46,38 +47,63 @@ class AggregateFunction < TupleFunction
 
   def AggregateFunction.agg_type(function, type) 
     retval = case function
-    when @@MIN: type
-    when @@MAX: type
+    # when @@MIN: type
+    # when @@MAX: type
+    when @@MIN: Integer
+    when @@MAX: Integer
     when @@COUNT: Integer
     when @@AVG: Float
     when @@SUMSTR: String
-    when @@MAKESET: TupleSet
+    when @@TUPLESET: TupleSet
     else nil
     end
   end
 
   class Exemplary
     def initialize(accessor)
+      @accessor = accessor
+      reset
+    end
+
+    def reset
       @result = nil
       @current = nil
-      @accessor = accessor
+      @tuples = TupleSet.new("agg")
+    end
+    
+    def tuples
+      @tuples.clone
     end
 
     def result
       @result.nil?  ? nil : @result.clone
     end
 
-    def reset
-      @result = nil
-      @current = nll
+    def insert(tuple)
+      if (@tuples << tuple)
+        return evaluate(tuple)
+      end
     end
-
+    
     def evaluate(tuple)
       value = @accessor.evaluate(tuple)
       if (@current.nil? || prefer_new(@current, value)) # > 0
         @current = value
         @result = tuple
         return value
+      end
+      return nil
+    end
+    
+    def delete(tuple)
+      if @tuples.remove(tuple)
+        value = @accessor.evaluate(tuple)
+        if (@current == value)
+          tuples = @tuples
+          reset
+          tuples.each {|t| insert(t)}
+          return result
+        end
       end
       return nil
     end
@@ -93,6 +119,7 @@ class AggregateFunction < TupleFunction
 
   class Min < Exemplary
     def prefer_new(current, newer)
+      require 'ruby-debug'; debugger
       current < newer ? true : false
     end
   end
@@ -107,126 +134,250 @@ class AggregateFunction < TupleFunction
 
   class Count	
     def initialize(accessor)
+      @tuples = TupleSet.new("agg")
       @result = nil
-      @current = 0
       @accessor = accessor
     end
 
     def result
       return nil if @result.nil?
-      @result = @result.clone()
-      @result.value(accessor.position, @current)
+      @result = @result.clone
+      @result.set_value(accessor.position, @tuples.size)
       return @result
     end
 
-    def reset
-      @current = 0
+    def insert(tuple)
+      if (@tuples << tuple)
+        @result = tuple
+        return result
+      end
+      return nil
     end
-
-    def evaluate(tuple)
+    
+    def delete(tuple)
       @result = tuple
-      @current += 1
-      return @current
+      @tuples.remove(tuple)
+      return result
     end
 
     def returnType
       Integer
     end
+    
+    def tuples
+      @tuples.clone
+    end
   end
 
   class Avg
     def initialize(accessor)
-      @result = nil
-      @sum = @count = 0
       @accessor = accessor
+      reset
     end
 
     def result
       return nil if @result.nil
-      @result = @result.clone();
-      @result.value(accessor.position, @sum / @count)
+      @result = @result.clone
+      @result.set_value(accessor.position, @sum / @tuples.size)
       return @result
     end
 
     def reset
+      @tuples = TupleSet.new("agg")
       @result = nil
       @sum = 0
-      @count = 0
     end
 
-    def evaluate(tuple)
-      @result = tuple
-      @sum += @accessor.evaluate(tuple).to_f*1.0
-      @count += 1.0
-      return @sum / @count
+    def insert(tuple)
+      if (tuples << tuple)
+        @result = tuple
+        value = @accessor.evaluate(tuple)
+        @sum += value.to_f
+        return result
+      end
+      return nil
+    end
+    
+    def delete(tuple)
+      if (@tuples.remove(tuple))
+        @tuples << tuple
+        @result = tuple
+        value = @accessor.evaluate(tuple)
+        @sum -= value.to_f
+        return result
+      end
+      return nil
     end
 
     def returnType
       Float
     end
-  end
-
-  class SumStr 
-    def initialize(accessor)
-      @current = nil
-      @accessor = accessor
-    end
-
-    def result
-      return nil if @result.nil? 
-      @result = @result.clone()
-      @result.value(@accessor.position, @current)
-      return @result;
-    end
-
-    def reset
-      @result = nil
-      @current = nil
-    end
-
-    def evaluate(tuple)
-      @result = tuple
-      if @current.nil?
-        @current = @accessor.evaluate(tuple) 
-      else
-        @current += @accessor.evaluate(tuple) 
-      end
-      return @current
-    end
-
-    def returnType
-      String
+    
+    def tuples
+      @tuples.clone
     end
   end
 
-  class MakeSet
-    def initialize(accessor)
-      @result = nil
-      @tupleset = nil
-      @accessor = accessor
-    end
+  class ConcatString
+  		def initialize(accessor)
+  			@accessor = accessor
+  			reset
+  		end
 
-    def result
-      return nil if @result.nil?
-      @result = @result.clone()
-      @result.value(@accessor.position, @tupleset)
-      return @result
-    end
+  		def result
+  			unless (@result.nil?) 
+  				@result = @result.clone
+  				@result.set_value(accessor.position, @current)
+  				return @result
+  			end
+  			return nil
+  		end
 
-    def reset
-      @result = nil
-      @tupleset = nil
-    end
+      def reset 
+  			@tuples = TupleSet.new
+  			@result = nil
+  			@current = nil
+  		end
 
-    def evaluate(tuple)
-      @result = tuple
-      @tupleset = TupleSet.new("agg") if @tupleset.nil?
-      @tupleset << @accessor.evaluate(tuple)
-      return @tupleset
-    end
+  		def insert(tuple)
+  			if (@tuples << tuple)
+  				@result = tuple
+  				if @current.nil?
+  					@current = @accessor.evaluate(tuple)
+  				else 
+  					@current += @accessor.evaluate(tuple)
+  				end
+  				return result
+  			end
+  			return nil
+  		end
 
-    def returnType
-      TupleSet
-    end
+  		def delete(tuple)
+  			if (@tuples.remove(tuple)) 
+  				tuples = @tuples
+  				reset
+  				tuples.each { |copy| insert copy }
+  				return result
+  			end
+  			return nil
+			end
+
+  		def returnType 
+  			String
+  		end
+
+  		def tuples 
+  			return @tuples.clone
+  		end
+  	end
+
+  	class TupleCollection
+  		def initialize(accessor) 
+  			@accessor = accessor
+  			@tuples = TupleSet.new("agg")
+  			@nestedSet = TupleSet.new("agg")
+  			@result = nil
+  		end
+
+  		def result 
+  			unless (@result.nil?) 
+  				@result = @result.clone
+  				@result.set_value(@accessor.position, @nestedSet.clone)
+  				return @result
+  			end
+  			return nil
+  		end
+
+  		def insert(tuple)
+  			if (@tuples << tuple) 
+  				@result = tuple
+  				@nestedSet << @accessor.evaluate(tuple)
+  				return result
+  			end
+  			return nil
+  		end
+
+  		def delete(tuple)
+  			if (@tuples.remove(tuple)) 
+  				@result = tuple
+  				@nestedSet.remove(@accessor.evaluate(tuple))
+  				return result
+  			end
+  			return nil
+  		end
+
+  		def returnType 
+  			TupleSet
+  		end
+
+  		def tuples 
+  			@tuples.clone
+  		end
+  	end
   end
-end
+
+
+#   class SumStr 
+#     def initialize(accessor)
+#       @current = nil
+#       @accessor = accessor
+#     end
+# 
+#     def result
+#       return nil if @result.nil? 
+#       @result = @result.clone
+#       @result.set_value(@accessor.position, @current)
+#       return @result;
+#     end
+# 
+#     def reset
+#       @result = nil
+#       @current = nil
+#     end
+# 
+#     def evaluate(tuple)
+#       @result = tuple
+#       if @current.nil?
+#         @current = @accessor.evaluate(tuple) 
+#       else
+#         @current += @accessor.evaluate(tuple) 
+#       end
+#       return @current
+#     end
+# 
+#     def returnType
+#       String
+#     end
+#   end
+# 
+#   class MakeSet
+#     def initialize(accessor)
+#       @result = nil
+#       @tupleset = nil
+#       @accessor = accessor
+#     end
+# 
+#     def result
+#       return nil if @result.nil?
+#       @result = @result.clone
+#       @result.set_value(@accessor.position, @tupleset)
+#       return @result
+#     end
+# 
+#     def reset
+#       @result = nil
+#       @tupleset = nil
+#     end
+# 
+#     def evaluate(tuple)
+#       @result = tuple
+#       @tupleset = TupleSet.new("agg") if @tupleset.nil?
+#       @tupleset << @accessor.evaluate(tuple)
+#       return @tupleset
+#     end
+# 
+#     def returnType
+#       TupleSet
+#     end
+#   end
+# end
