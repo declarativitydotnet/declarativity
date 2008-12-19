@@ -330,6 +330,8 @@ mechanism modules and tune them to improve performance, without
 worrying about violating the correctness guaranteed by the policy
 layer.
 
+It was equally straightforward to extend the declarative components of the system.  With the global state flattened, it was easy to return to many initially deferred optimizations.  For example, sending the complete chunk state in each heartbeat, while correct, is not reasonable as the system scales.  Changing the heartbeats to reflect only chunk status deltas was a simple matter of sending the set difference of the local chunk relation and the relation of chunk heartbeat messages that have been acknowledged by the master.  Deletion deltas are simply the same set minus with the terms reversed.  Our initial policy for replica placement was purely distance-based, and had poor distribution of chunks when a small number of topologically close clients were appending data.  Extending this to a multi-level ordering that considers datanode chunk load was a simple matter of adding an aggregate query computing chunk count per node, and performing a second bottom-k computation to select the lowest loaded nodes that are not more than some specified distance from the client.
+
 \subsection{Software Architecture}
 \begin{figure}
 \centering
@@ -371,14 +373,16 @@ local filesystem.
 All the metadata in BoomFS is represented as relations; some of these
 relations are partitioned over multiple nodes.
 
-\subsection{Control Protocol}
+\subsection{Control Path}
 In GFS, the control path comprises three separate protocols: the client protocol spoken between client and master to read or modify filesystem metadata, the control protocol between master and datanode used for replica migration or deletion instructions, and the heartbeats regularly sent from datanodes to the master.  The replication mechanism, which in GFS involves a log flush to multiple slave masters, can be considered a fourth protocol.
 
 In our design, instead of using separate state machines to implement the various communication protocols, all control path messaging is specified declaratively.  Logical inference rules, like database views, perform select-project-join over locally materialized relations, and the newly projected tuples are sent over the network if their location specifier indicates that they belong in a different partition, and hence a different node in the system.  At the destination, an incoming tuple's schema describes its content and determines which rules, if any, should be reevaluated with reference to the new data.
 
 For read-only operations like many client protocol interactions, a single declarative rule on the client (to transfer the injected request tuple to the master) and a pair of rules on the master (one to return the results to the client, and an error handler) suffice.  Requests that modify filesystem metadata follow the same structure, but trigger a more complicated chain of inferences on the master.  In particular, the master must achieve consensus among master replicas, attempt the modification,  and indicate success to the client only if these steps succeed.  Heartbeats from datanodes to the master are structured similarly to client requests, but are triggered by a periodic timer rather than by human interaction.   Finally, control protocol messages from master to datanode are fired when conditions specified by certain aggregate queries indicate that system invariants are unmet, as when the number of replicas drops below the specified replication factor.  
 
-\subsection{Data Protocol}
+Let us take a concrete example beginning with a client request to append a stream of data to a file.  The java shell code running at the client injects a tuple into a local table, triggering a send rule that causes the tuple, which contains the client's address, the file identifier, and a opcode indicating that this is a request for a new chunk identifier, to the master.  This initiates a chain of inferences that generate a new id, achieve consensus on the assignment of this id to the given file's list of chunks, and select a set of possible candidate data nodes that may store the new chunk.  The resulting chunk identifier and candidate data node list are then embedded in a tuple and returned to the client.  The client applies its local policy, which may be a simple distance function, to sort the set of candidate data nodes and select a next hop.  From here, the data path is invoked for the remainder of the operation.
+
+\subsection{Data Path}
 The data protocol is a straightforward mechanism for transferring the
 content of a chunk between two hosts. The server side of the protocol
 is implemented as a simple imperative component that runs on each data
@@ -395,7 +399,7 @@ While the data protocol is unicast, a client node typically wants to
 write a new chunk to multiple data nodes. As noted in Section
 \ref{fs-ops}, there are several ways in which this could be
 accomplished. The current BoomFS prototype does ``source routing'':
-after obtaining a new chunk identifier from a master node, the client
+after obtaining a new chunk identifier and list of candidate datanodes from a master node, the client
 decides on the sequence of data nodes that it wants to write a new
 chunk to, and then transfers the chunk to the first node in the
 sequence. That node then transfers the chunk to the second node in the
@@ -519,18 +523,15 @@ protocol and requires a round trip between the client and master and a
 lookup on the master, as does touching a file on the filesystem.
 Copying a zero-byte file requires two round trips to the master: one
 to get a new chunk id for the append operation, and another to request
-a link of data nodes who can accept the new chunkid.  (Does hadoop
-combine these?  probably, and it would be easy for us to do so).
-
+a link of data nodes who can accept the new chunkid. \footnote{Piggybacking these 
+responses is a simple optimization not yet implemented in our prototype}
 The results of running 100 of each of these metadata operations are
 shown in Figure \ref{fig:metadata-perf}.  As we anticipated, the
 overhead of these operations is significantly higher in our
 implementation that in HDFS.  This is due in part to client-side
 caching, enabled in HDFS and not yet implemented in BFS, although it
 would be simple to locally materialize lookup results into relations
-that can be queried before visiting the master. (actually, I don't
-think we can claim this.  you can't cache lookup results, new file
-create requests or new chunk requests!).
+that can be queried before visiting the master.
 
 \subsection{Sort Benchmark}
 Our next experiment evaluates read and write performance under a
@@ -543,8 +544,8 @@ The MapReduce specification of sorting is trivial, largely because
 sorting (over \emph{some} key) is a side-effect of the framework.
 Thus, the map function simply returns the sort key and the entire line
 as the key's value, and the reduce function is simply the identity
-function.  In an execution of the sort, a single input file is read in
-parallel in disjoint sections by all of the mappers, which apply the
+function.  In an execution of the sort, disjoint sections of a single input file are read in
+parallel by all of the mappers, which apply the
 hash function and write the bucketed results to their local disks.
 The reducers then read these files via RPC calls, apply the built-in
 merge sort, and write as many files back to the GFS as there are
@@ -590,8 +591,9 @@ latency reacts very quickly to concurrency, increasing by almost two
 times as we increase the number of clients from 1 to 4.  Beyond that
 point, HDFS gracefully handles increasing load, with low variance.
 BFS shows similar read results, but significantly lower write latency
-(less than half that of HDFS, though the variance is higher).  At 16
-concurrent clients, the BFS implementation began suffering timeouts.
+(less than half that of HDFS, though the variance is higher).  
+
+At 16 concurrent clients, the BFS implementation began suffering timeouts.
 At this time is is difficult for us to say whether this is due to
 issues with queueing in the Overlog runtime implementation, race
 conditions or other bugs in the Overlog specification of GFS, or a
