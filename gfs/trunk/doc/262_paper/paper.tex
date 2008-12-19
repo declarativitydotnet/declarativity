@@ -12,9 +12,10 @@
   While architectures for distributed computing are rapidly changing,
   techniques for building distributed systems have remained
   stagnant. As distributed computation becomes the common case,
-  traditional techniques for building distributed systems will become
+  traditional techniques for building such systems will become
   untenable, because they force programmers to deal with the mundane
-  details of constructing reliable distributed systems. This yields
+  details of constructing reliable distributed systems rather than concentrating
+  on the desired computation. This yields
   programs that are difficult to construct, understand, modify, and
   adapt to new environments. We propose BOOM, an ongoing project to
   develop concise declarative specifications for a broad class of
@@ -79,7 +80,7 @@ distributed systems is that they provide the wrong abstractions to the
 programmer. Distributed systems are typically implemented with tools
 developed for single-machine programs and only superficially adapted
 to the challenges of a distributed setting. Programmers are forced to
-deal with the mundane details of communication, synchronization, and
+deal with the tedious details of communication, synchronization, and
 consensus. As a result, the essence of the distributed computation is
 obscured by a forest of boilerplate details. Evidence for this can be
 seen in the fact that distributed algorithms such as Paxos can be
@@ -111,10 +112,10 @@ over time,\footnote{Internal heterogeneity and performance variability
 the distributed program is deployed to a new environment. Traditional
 approaches to constructing distributed systems require hardcoding
 assumptions about these parameters. This yields fragile programs that
-are expensive to modify, and difficult to adapt to new environments.
+are expensive to modify and difficult to adapt to new environments.
 
-In addition to inflexibility, the failure to separate mechanism from
-policy makes programs harder to understand and reason about. The
+In addition to being inflexible, the failure to separate mechanism from
+policy it harder to understand and reason about these programs. The
 policies and protocols of a distributed program are typically its most
 interesting parts, and often the hardest to get right. In contrast,
 the mechanisms that achieve those policies are often straightforward
@@ -204,7 +205,7 @@ class of workloads, and to operate on a particular cluster
 architecture. We focus on achieving good performance for large
 sequential reads and writes. Files are assumed to be very large, and
 are therefore divided into large \emph{chunks} that far exceed typical
-filesystem block sizes (64MB in the case of GFS). We focus on
+filesystem block sizes (64MB). We focus on
 delivering high sequential read and write throughput and efficient
 network utilization, rather than achieving low latency or minimizing
 total disk space requirements. Members of a BoomFS system are assumed
@@ -234,8 +235,10 @@ in synchrony using a consensus protocol (currently
 Paxos~\cite{paxos-made-simple}).
 
 Data nodes are responsible for storing chunks. They have no knowledge
-of the structure of the filesystem as a whole, nor even which files
-the chunks they store belong to. Each data node periodically sends a
+of the structure of the filesystem as a whole, or of the files to which  
+the chunks they store belong.  Nor do they have any \emph{a priori} knowledge
+of the identities of other data nodes in the system;  these are explicitly
+specified in the data path protocol.  Each data node periodically sends a
 \emph{heartbeat} to the master nodes. This notifies the masters that
 the data node is still alive, and contains a list of the chunks
 currently stored at the data node. The masters use this information to
@@ -312,49 +315,8 @@ Overlog~\cite{dn-sigmod}.
 
 We validate this implementation strategy in two ways: by demonstrating
 how this implementation allows for the easy modification of filesystem
-policies in Section \ref{approach}, and by conducting a performance
+policies in Section \ref{decl-approach}, and by conducting a performance
 study in Section \ref{perf-eval}.
-
-\subsection{Approach}
-\label{approach}
-Our task in developing the BoomFS prototype was to represent the
-distributed state of the filesystem as a single relational database,
-with relations partitioned across nodes.  Both policy (which expresses
-constraints over these relations, and conditions under which the
-contents of the relations may change) and protocol (which expresses
-how data may move from one node to another) can then be expressed in a
-network-aware recursive query language that operates over the
-relations.
-
-As we built the prototype, we concentrated first on the correctness of
-the specification and on exploiting the economy of mechanism exposed
-by flattening system state.  For the imperative components, including
-data transfer and source-routing for the data path, we implemented
-simple, best-effort modules as place holders while we composed the
-collection of logical rules comprising the declarative specification
-of the system.  Once this was correct, it was simple to return to the
-imperative components and tune them to improve performance, without
-worrying about violating the correctness guarantees made by the policy
-layer.
-
-It was equally straightforward to extend the declarative components of
-the system.  With the global state flattened, it was easy to return to
-many initially deferred optimizations.  For example, our initial
-implementation of the system sent the entire state of each data node
-in every heartbeat message. While this was correct, it is clearly
-suboptimal as filesystem size increases.  Changing the heartbeats to
-reflect only chunk status deltas was a simple matter of sending the
-set difference of the local chunk relation and the relation of chunk
-heartbeat messages that have been acknowledged by the master.
-Deletion deltas are simply the same set minus with the terms reversed.
-Our initial policy for replica placement was purely distance-based,
-and had poor distribution of chunks when a small number of
-topologically close clients were appending data.  Extending this to a
-multi-level ordering that considers data node chunk load was a simple
-matter of adding an aggregate query computing chunk count per node,
-and performing a second bottom-$k$ computation to select the lowest
-loaded nodes that are not more than some specified distance from the
-client.
 
 \subsection{Software Architecture}
 % \begin{figure}
@@ -420,7 +382,7 @@ to the new data.
 For read-only operations like many client protocol interactions, a
 single declarative rule on the client (to transfer the injected
 request tuple to the master) and a pair of rules on the master (one to
-return the results to the client, and an error handler) suffice.
+return the results to the client, and an error handler) suffice to express the messaging logic.
 Requests that modify filesystem metadata follow the same structure,
 but trigger a more complicated chain of inferences on the master.  In
 particular, the master must achieve consensus among master replicas,
@@ -467,7 +429,7 @@ write a new chunk to multiple data nodes. As noted in Section
 accomplished. The current BoomFS prototype does ``source routing'':
 after obtaining a new chunk identifier and list of candidate data
 nodes from a master node, the client decides on the sequence of data
-nodes that it wants to write a new chunk to, and then transfers the
+nodes to which it wants to write a new chunk, and then transfers the
 chunk to the first node in the sequence. That node then transfers the
 chunk to the second node in the sequence, and so on. While this
 approach is effective at utilizing network bandwidth, it is subject to
@@ -515,11 +477,11 @@ granularities: in HDFS, chunk (called ``blocks'' in HDFS) checksums
 are calculated over the entire 64M chunk, while in GFS, a chunk is
 subdivided into 64K blocks, each of which has an associated 32bit
 checksum.  Our prototype did not implement any integrity checks, but
-we plan to add them soon.
+we plan to add this feature in the near future.
 
 \subsubsection{Master Failure}
 GFS keeps all filesystem metadata on a single master server to which
-all client requests are directed: the mapping is maintained through
+all client requests are directed; the mapping is maintained through
 the DNS.  Several secondary masters are run in a log replay mode
 similar to the log-shipping approach employed by database systems: a
 metadata change is not considered committed until the log tail has
@@ -532,7 +494,7 @@ then remaps the DNS entry to one of the secondaries.
 HDFS supports the concept of a ``Secondary NameNode'' or backup master
 that asynchronously applies log entries to a checkpoint image.  The
 primary master supports writing log entries to multiple directories,
-one of which can be a remote filesystem such as NFS: a secondary
+one of which can be a remote filesystem such as NFS.  A secondary
 master can then read the log from this filesystem.  Presumably, this
 adds considerable overhead to the performance of the master.
  
@@ -552,17 +514,57 @@ after that, the client's master list is updated to reflect the loss.
 No external monitoring or indirection are necessary to support this
 level of fault tolerance.
 
+\subsection{Implementation Process}
+\label{decl-approach}
+Our task in developing the BoomFS prototype was to represent the
+distributed state of the filesystem as a single relational database,
+with relations partitioned across nodes.  Both policy (which expresses
+constraints over these relations, and conditions under which the
+contents of the relations may change) and protocol (which expresses
+how data may move from one node to another) can then be expressed in a
+network-aware recursive query language that operates over the
+relations.
+
+As we built the prototype, we concentrated first on the correctness of
+the specification and on exploiting the economy of mechanism exposed
+by flattening system state.  For the imperative components, including
+data transfer and source-routing for the data path, we implemented
+simple, best-effort modules as place holders while we built the
+collection of logical rules comprising the declarative specification
+of the system.  Once this was correct, it was simple to return to the
+imperative components and tune them to improve performance, without
+worrying about violating the correctness guarantees made by the policy
+layer.
+
+It was equally straightforward to extend the declarative components of
+the system.  With the global state flattened, it was easy to return to
+many initially deferred optimizations.  For example, our initial
+implementation of the system sent the entire state of each data node
+in every heartbeat message. While this was correct, it is clearly
+suboptimal as filesystem size increases.  Changing the heartbeats to
+reflect only chunk status deltas was a simple matter of sending the
+set difference of the local chunk relation and the relation of chunk
+heartbeat messages that have been acknowledged by the master.
+Deletion deltas are simply the same set minus with the terms reversed.
+Our initial policy for replica placement was purely distance-based,
+and had poor distribution of chunks when a small number of
+topologically close clients were appending data.  Extending this to a
+multi-level ordering that considers data node chunk load was a simple
+matter of adding an aggregate query computing chunk count per node,
+and performing a second bottom-$k$ computation to select the lowest
+loaded nodes that are not more than some specified distance from the
+client.
+
 \section{Performance Evaluation}
 \label{perf-eval}
 We validate the applicability of our approach by prototyping a
 distributed filesystem based on Google's GFS, and evaluating its
-performance and robustness to failure.  Our goal is to achieve
+performance against a characteristic workload.  Our goal is to achieve
 competitive performance on the large append and read workload
-characteristic of the GFS environment in spite of the increased
-control overhead of our Overlog runtime, and to demonstrate fault
-tolerance even when master nodes are lost.  In this section, we
-present an evaluation of how successful we were in achieving these
-goals.
+characteristic of the GFS environment, in spite of the increased
+control overhead of our Overlog runtime.  In this section, we
+present an evaluation of how successful we were in achieving this
+goal.
 
 In the first section, we compare the cost of metadata operations
 between our prototype and HDFS, the Hadoop open source implementation
