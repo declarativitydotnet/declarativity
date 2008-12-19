@@ -113,20 +113,19 @@ approaches to constructing distributed systems require hardcoding
 assumptions about these parameters. This yields fragile programs that
 are expensive to modify, and difficult to adapt to new environments.
 
-% XXX: rework following paragraph
 In addition to inflexibility, the failure to separate mechanism from
 policy makes programs harder to understand and reason about. The
 policies and protocols of a distributed program are typically its most
-interesting parts, and often the hardest to get right. The mechanisms
-that achieve those policies are often straightforward but verbose. By
-implementing policy together with mechanism, the mundane details of
-the latter obscure the essential nature of the former, harming
-comprehensibility. Furthermore, a language that is appropriate for
-implementing mechanism is unlikely to be ideal for specifying policy,
-and vice versa. There are many examples of algorithms that can be
-concisely expressed in an appropriate declarative language, but are
-much harder to write in an imperative language (e.g.\
-\cite{chord-overlog}).
+interesting parts, and often the hardest to get right. In contrast,
+the mechanisms that achieve those policies are often straightforward
+but verbose. By implementing policy together with mechanism, the
+mundane details of the latter obscure the essential nature of the
+former, harming comprehensibility. Furthermore, a language that is
+appropriate for implementing mechanism is unlikely to be ideal for
+specifying policy, and vice versa. There are many examples of
+algorithms that can be concisely expressed in an appropriate
+declarative language, but are much harder to write in an imperative
+language (e.g.\ \cite{chord-overlog}).
 
 Inspired by the data independence provided by the relational model, we
 aim to provide \emph{network scale independence} for distributed
@@ -156,42 +155,36 @@ components:
   node or a remote node), inserting new database tuples, or invoking
   imperative components.
 
-  Declarative components are implemented in a high-level declarative
-  logic language, such as Overlog~\cite{dn-sigmod}. This requires the
-  state of the distributed system to be represented in tables.
+  Declarative components are implemented in a network-aware
+  declarative logic language, such as Overlog~\cite{dn-sigmod}. This
+  requires the state of the distributed program to be represented as
+  relations that are partioned over the nodes of the system.
 \end{enumerate}
 
 In BoomFS, imperative components are used to efficiently transfer data
 between hosts. The vast majority of the filesystem's complexity
 resides in the declarative components, which decide when and where
-data should be transferred.
+data should be transferred. We describe the realization of BoomFS as a
+set of imperative and declarative components in Section
+\ref{system-realize}.
 
 \subsection{Declarative Specification of\\Distributed Filesystems}
-It is common for well-designed systems to structurally separate
-control and data paths.  Often this is a result of practical concerns
-that have little to do with the abstract notion of separating policy
-and mechanism: first, it is undesirable for data path congestion to
-delay control messages, and second, a certain amount of control
-overhead associated with better functionality is acceptable, so long
-as it is off the critical path of data transfer, which will contribute
-the most to overall latency as transfer sizes increase.
+In many systems, there is a structural separation between control and
+data paths. This can be motivated either by principle (the separation
+of mechanism and policy~\cite{hydra-policy-mech-sep}), or by practical
+concerns: data and control paths typically differ in average message
+size, and in requirements for consistency and latency. It is
+undesirable for data path congestion to delay control messages.
 
-The GFS design choice of a single master introduced the possibility of
-bottlenecks, and a master-independent data path alleviates this
-potential hotspot, making client-master communication necessary only
-for atomic filesystem metadata operations.  The overhead associated
-with the necessary consistency guarantees over these operations is
-divorced from the data path in the GFS design.
-
-Additionally, we observe that in GFS and other distributed
-filesystems, the bulk of system complexity lies not in mechanism but
-in policy.  This is not to say that operational components (zero-copy
-I/O, fast checksumming, careful use of caches at various levels) are
-not critical to system performance, but merely that the bulk of the
-design and implementation deal with enforcing and maintaining the
-various invariants that make the system behave correctly, including
-replica placement decisions, failure handling, load balancing and
-consensus among agents in shared computations.
+We argue that in many distributed systems, the bulk of the
+intellectual complexity resides in the control path; this is clearly
+true of the GFS design. This is not to say that operational components
+(zero-copy I/O, fast checksumming, careful use of caches at various
+levels) are not critical to system performance, but merely that the
+bulk of the design and implementation deal with enforcing and
+maintaining the various invariants that make the system behave
+correctly, including replica placement decisions, failure handling,
+load balancing and consensus among agents in shared computations.
 
 Combining these observations, we see that the GFS style of distributed
 filesystem is a perfect testing ground for the BOOM approach to
@@ -209,20 +202,22 @@ Like GFS, BoomFS does not attempt to be a general-purpose distributed
 filesystem. Instead, it is designed to perform well for a particular
 class of workloads, and to operate on a particular cluster
 architecture. We focus on achieving good performance for large
-sequential reads and writes. Files are assumed to be very large;
-therefore, we choose a large chunk size of XXX. We focus on delivering
-high sequential read and write throughput and efficient network
-utilization, rather than achieving low latency or minimizing total
-disk space requirements. Members of a BoomFS system are assumed to be
-unreliable commodity machines, provisioned with relatively modest
-resources.  Reliability is achieved by storing multiple copies of each
-chunk; scalability is achieved by spreading filesystem contents over
-a large cluster of machines (typically hundreds or thousands).
+sequential reads and writes. Files are assumed to be very large, and
+are therefore divided into large \emph{chunks} that far exceed typical
+filesystem block sizes (64MB in the case of GFS). We focus on
+delivering high sequential read and write throughput and efficient
+network utilization, rather than achieving low latency or minimizing
+total disk space requirements. Members of a BoomFS system are assumed
+to be unreliable commodity machines, provisioned with relatively
+modest resources.  Reliability is achieved by storing multiple copies
+of each chunk; scalability is achieved by spreading filesystem
+contents over a large cluster of machines (typically hundreds or
+thousands).
 
 \begin{figure}
 \centering
 \epsfig{file=figures/arch.eps, width=1\columnwidth}
-\caption{The components of the BoomFS architecture}
+\caption{BoomFS architecture}
 \label{fig:system-arch}
 \end{figure}
 
@@ -300,55 +295,56 @@ sends a heartbeat to a master, the master replies with a list of the
 chunks on the data node that is has no knowledge of. These orphaned
 chunks can be garbage collected at the data node's leisure.
 
-Other filesystem operations are straightforward. Clients interact with
-master nodes to obtain directory listings, and create and remove
-directories.\footnote{Our prototype implementation of BoomFS does not
-  currently support directories, but we expect that this
-  implementation shortcut will be easy to fix.}
+Other filesystem operations are straightforward. For example, clients
+interact with master nodes to obtain directory listings, and create
+and remove directories.\footnote{Our prototype implementation of
+  BoomFS does not currently support directories, but we expect that
+  this implementation shortcut will be easy to fix.}
 
 \section{System Realization}
 \label{system-realize}
 The filesystem design described in Section \ref{system-arch} is
 abstract, and might reasonably be implemented using a variety of
 techniques. In this section, we describe how we realized the BoomFS
-design using a combination of Java and Overlog. % XXX describe overlog here
+design using a combination of Java and Overlog. In the following
+discussion, we assume that the reader has some familiarity with
+Overlog~\cite{dn-sigmod}.
 
 We validate this implementation strategy in two ways: by demonstrating
 how this implementation allows for the easy modification of filesystem
-policies in Section XXX, and by conducting a performance study in
-Section \ref{perf-eval}.
+policies in Section \ref{approach}, and by conducting a performance
+study in Section \ref{perf-eval}.
 
 \subsection{Approach}
-Our task in developing the BoomFS prototype is to represent the
+\label{approach}
+Our task in developing the BoomFS prototype was to represent the
 distributed state of the filesystem as a single relational database,
 with relations partitioned across nodes.  Both policy (which expresses
 constraints over these relations, and conditions under which the
 contents of the relations may change) and protocol (which expresses
-how data may move from one node to another) are then expressed in a
+how data may move from one node to another) can then be expressed in a
 network-aware recursive query language that operates over the
 relations.
 
-We feel that our approach is a natural way to express systems of this
-kind, and results in a codebase that is easy to understand, validate
-against the original specification, and extend.  As we built the
-prototype, we concentrated first on the correctness of the
-specification and on exploiting the economy of mechanism exposed by
-flattening system state.  For the mechanism components including data
-transfer and source-routing for the data path, we implemented simple,
-best-effort modules as place holders while we composed the collection
-of logical rules comprising the declarative specification of the
-system.  Once this was correct, it was simple to return to the
-mechanism modules and tune them to improve performance, without
-worrying about violating the correctness guaranteed by the policy
+As we built the prototype, we concentrated first on the correctness of
+the specification and on exploiting the economy of mechanism exposed
+by flattening system state.  For the imperative components, including
+data transfer and source-routing for the data path, we implemented
+simple, best-effort modules as place holders while we composed the
+collection of logical rules comprising the declarative specification
+of the system.  Once this was correct, it was simple to return to the
+imperative components and tune them to improve performance, without
+worrying about violating the correctness guarantees made by the policy
 layer.
 
 It was equally straightforward to extend the declarative components of
 the system.  With the global state flattened, it was easy to return to
-many initially deferred optimizations.  For example, sending the
-complete chunk state in each heartbeat, while correct, is not
-reasonable as the system scales.  Changing the heartbeats to reflect
-only chunk status deltas was a simple matter of sending the set
-difference of the local chunk relation and the relation of chunk
+many initially deferred optimizations.  For example, our initial
+implementation of the system sent the entire state of each data node
+in every heartbeat message. While this was correct, it is clearly
+suboptimal as filesystem size increases.  Changing the heartbeats to
+reflect only chunk status deltas was a simple matter of sending the
+set difference of the local chunk relation and the relation of chunk
 heartbeat messages that have been acknowledged by the master.
 Deletion deltas are simply the same set minus with the terms reversed.
 Our initial policy for replica placement was purely distance-based,
@@ -356,17 +352,17 @@ and had poor distribution of chunks when a small number of
 topologically close clients were appending data.  Extending this to a
 multi-level ordering that considers data node chunk load was a simple
 matter of adding an aggregate query computing chunk count per node,
-and performing a second bottom-k computation to select the lowest
+and performing a second bottom-$k$ computation to select the lowest
 loaded nodes that are not more than some specified distance from the
 client.
 
 \subsection{Software Architecture}
-\begin{figure}
-\centering
-\epsfig{file=figures/dataflow.eps, width=1\columnwidth}
-\caption{The architecture of a program using JOL}
-\label{fig:jol-arch}
-\end{figure}
+% \begin{figure}
+% \centering
+% \epsfig{file=figures/dataflow.eps, width=1\columnwidth}
+% \caption{The architecture of a program using JOL}
+% \label{fig:jol-arch}
+% \end{figure}
 
 In BoomFS, masters, data nodes, and clients are all implemented using
 a combination of Java and Overlog. We used JOL~\cite{jol}, a
@@ -375,7 +371,7 @@ be embedded inside a Java program, and allows Overlog programs to
 contain Java objects and invoke Java methods. Java programs can insert
 and delete tuples from Overlog relations, and register ``queries''
 that invoke a callback when a particular state is reached by the
-Overlog instance. Figure \ref{fig:jol-arch} depicts this design.
+Overlog instance.
 
 Each node type in BoomFS is structured in a similar way. Upon startup,
 the node runs Java code that bootstraps a JOL instance, and installs
@@ -401,6 +397,7 @@ All the metadata in BoomFS is represented as relations; some of these
 relations are partitioned over multiple nodes.
 
 \subsection{Control Path}
+\label{control-path}
 In GFS, the control path comprises three separate protocols: the
 client protocol spoken between clients and masters to modify
 filesystem metadata, the control protocol between master and data node
@@ -493,12 +490,12 @@ loss of a data node will be transparent to applications using the
 system.  The last heartbeats of the lost node will quickly expire from
 the soft-state tables on the masters, and clients will no longer be
 directed to this server for read or write requests.  The updated soft
-state will cause aggregates in the BFS logic to be recomputed, which
+state will cause aggregates in the BoomFS logic to be recomputed, which
 in turn cause new migration events to be fired, selecting another
 replica as a target for the chunks whose replication factor is now too
 low.  GFS and HDFS both use this kind of replication strategy, though
 Ghemawat et al. discuss the possible use of other forms of redundancy,
-such as parity.
+such as parity~\cite{gfs}.
 
 \subsubsection{Data Node Disk Failure}
 The effect of this failure is more or less the same as for data node
@@ -543,11 +540,11 @@ In our prototype, a configurable number of masters operate in
 lock-step using the Paxos consensus protocol, also implemented in the
 Overlog language.  This means that like GFS, a mutation of file system
 metadata in not complete until it is reflected on all participating
-masters.  Unlike GFS, BFS backed by Paxos is a multimaster system that
+masters.  Unlike GFS, BoomFS backed by Paxos is a multimaster system that
 supports ``update anywhere anytime''
 semantics~\cite{dangers-of-replication}, although for performance
 reasons it is preferable to have all clients communicate with a single
-primary master.  Assuming non-byzantine faults, a BFS installation
+primary master.  Assuming non-byzantine faults, a BoomFS installation
 with $m$ masters can survive $m/2 - 1$ failures, as consensus requires
 merely simple minority.  If the primary fails, we also incur the cost
 of a timeout on each client on the first request to the failed master;
@@ -570,10 +567,8 @@ goals.
 In the first section, we compare the cost of metadata operations
 between our prototype and HDFS, the Hadoop open source implementation
 of GFS.  Following this, we simulate a MapReduce sort benchmark,
-comparing read and write performance between BFS and HDFS as we scale
-the number of concurrent clients and data nodes together.  Finally, we
-discuss the various failure modes of the architecture and the impact
-of our multi-master extension on these scenarios.
+comparing read and write performance between BoomFS and HDFS as we scale
+the number of concurrent clients and data nodes together.
 
 \subsection{Test Environment}
 GFS is a proprietary filesystem: we can only speculate about its
@@ -583,13 +578,11 @@ workloads.  Instead, we used Hadoop, Yahoo's open source
 implementation of MapReduce, which includes a distributed filesystem
 (HDFS) based on GFS.
 
-We performed our experiments on the Amazon Elastic Compute Cloud, a
-virtualized ``utility computing'' environment~\cite{amazon-ec2}.  EC2
-provides a convenient and inexpensive testing platform, but this
-convenience can come at the cost of high variability in network and
-disk performance (LATE paper, EC2).  Hadoop is already well-integrated
-with EC2, and instrumenting BFS to handle dynamic address assignment
-was trivial.
+We performed our experiments on the Amazon Elastic Compute Cloud
+(EC2), a virtualized ``utility computing''
+environment~\cite{amazon-ec2}. Hadoop is already well-integrated with
+EC2, and instrumenting BoomFS to handle dynamic address assignment was
+trivial.
 
 \subsection{Metadata Operations}
 \begin{figure}
@@ -604,22 +597,24 @@ affecting the control path.  A directory listing uses the client
 protocol and requires a round trip between the client and master and a
 lookup on the master, as does touching a file on the filesystem.
 Copying a zero-byte file requires two round trips to the master: one
-to get a new chunk id for the append operation, and another to request
-a link of data nodes who can accept the new chunkid. \footnote{Piggybacking these 
-responses is a simple optimization not yet implemented in our prototype.}
-The results of running 100 of each of these metadata operations are
-shown in Figure \ref{fig:metadata-perf}.  As we anticipated, the
-overhead of these operations is significantly higher in our
-implementation that in HDFS.  This is due in part to client-side
-caching, enabled in HDFS and not yet implemented in BFS, although it
-would be simple to locally materialize lookup results into relations
-that can be queried before visiting the master.
+to get a new chunk identifier for the append operation, and another to
+request a set of data nodes who can accept the new
+chunk.\footnote{Combining these responses into a single message is a
+  simple optimization not yet implemented in our prototype.}  The
+results of running 100 of each of these metadata operations are shown
+in Figure \ref{fig:metadata-perf}.  As we anticipated, the overhead of
+these operations is significantly higher in our implementation that in
+HDFS.  This is partly due to the current performance of the JOL
+implementation. Another factor is the presence of client-side caching,
+enabled in HDFS and not yet implemented in BoomFS. However, it would
+be simple to locally materialize lookup results into relations that
+can be queried before visiting the master.
 
 \subsection{Sort Benchmark}
 Our next experiment evaluates read and write performance under a
 typical MapReduce workload.  The sort benchmark of Dean and
 Ghemawat~\cite{mapreduce} is a simple and practical test that puts
-equal stress on the read and write components of the distributed
+equal stress on the read and write components of a distributed
 filesystem.
 
 The MapReduce specification of sorting is trivial, largely because
@@ -639,14 +634,14 @@ described above, and the parallel writes described at the end.  Hence,
 in our simulation we dispense with the actual sorting, hashing and
 crossbarring, and focus merely on the filesystem performance as the
 number of concurrent clients and data nodes are scaled up together.
-For a given concurrency level D, we provision an EC2 cluster with a
-master node and D data nodes, and prime the filesystem by creating D
-100MB files with a replication factor of 2.  We then spawn D client
-processes (one on each data node), which read one of the files from the
-filesystem, write it to local disk, then create a new distributed
-filesystem file and append the contents of the local file to it.
-Thus, each client reads (writes) 100MB to (from) the filesystem
-concurrently in each sort benchmark, as we vary D.
+For a given concurrency level $D$, we provision an EC2 cluster with a
+master node and $D$ data nodes, and prime the filesystem by creating
+$D$ 100MB files with a replication factor of 2.  We then spawn $D$
+client processes (one on each data node), which read one of the files
+from the filesystem, write it to local disk, then create a new
+distributed filesystem file and append the contents of the local file
+to it.  Thus, each client reads (writes) 100MB to (from) the
+filesystem concurrently in each sort benchmark, as we vary $D$.
 
 \begin{figure}
 \centering
@@ -661,7 +656,7 @@ concurrently in each sort benchmark, as we vary D.
 \label{fig:big-write-perf}
 \end{figure}
 Our results are summarized in Figures \ref{fig:big-read-perf} and
-\ref{fig:big-write-perf}.  At lower concurrency levels, BFS is
+\ref{fig:big-write-perf}.  At lower concurrency levels, BoomFS is
 comparable in read performance and handily outperforms HDFS in write
 performance.  This result supports our intuition that the relatively
 high cost of metadata operations is quickly amortized by the highly
@@ -672,19 +667,19 @@ In HDFS, read latency increases gradually as load increases, but write
 latency reacts very quickly to concurrency, increasing by almost two
 times as we increase the number of clients from 1 to 4.  Beyond that
 point, HDFS gracefully handles increasing load, with low variance.
-BFS shows similar read results, but significantly lower write latency
-(less than half that of HDFS, though the variance is higher).  
+BoomFS shows similar read results, but significantly lower write
+latency (less than half that of HDFS, though the variance is higher).
 
-At 16 concurrent clients, the BFS implementation began suffering timeouts.
-At this time is is difficult for us to say whether this is due to
-issues with queueing in the Overlog runtime implementation, race
-conditions or other bugs in the Overlog specification of GFS, or a
-problem with the custom data transfer protocol that we implemented.
-The variance for x=16 in the graph in Figure 4 reflects the fact that
-out of 48 observations, 4 timeouts occurred, resulting in write times
-greater than 60 seconds (because our timeout was 60 seconds).  If we
-omit those four observations from our results, the mean write response
-time is 10.12 seconds.
+At 16 concurrent clients, the BoomFS implementation began suffering
+timeouts.  At this time is is difficult for us to say whether this is
+due to issues with queueing in the Overlog runtime implementation,
+race conditions or other bugs in the Overlog specification of GFS, or
+a problem with the custom data transfer protocol that we implemented.
+The variance for $x=16$ in the graph in Figure 4 reflects the fact
+that out of 48 observations, 4 timeouts occurred, resulting in write
+times greater than 60 seconds (because our timeout was 60 seconds).
+If we omit those four observations from our results, the mean write
+response time is 10.12 seconds.
 
 \section{Future Work}
 \label{future-work}
