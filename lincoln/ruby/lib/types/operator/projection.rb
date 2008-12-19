@@ -1,42 +1,45 @@
 class Projection < Operator
 	def initialize (context, predicate)
 		super(context, predicate.program, predicate.rule)
-		@predicate = predicate
+		@accessors = []
+		projection = []
+		variables = predicate.schema.variables
+		arguments = predicate.arguments
 
-  	@accessors = Array.new		
-		predicate.each do |arg| 
-			@accessors << arg.function
-		end
+		variables.each_with_index do |var, i|
+      @accessors << arguments[i].function
+      projection << var
+    end
+		@schema = Schema.new(predicate.name, projection)
 	end
 	
 	def to_s
-		return "PROJECTION PREDICATE[" + predicate.to_s + "]"
+		return "PROJECTION PREDICATE[" + schema.to_s + "]"
 	end
 
   def evaluate(tuples)
-		result = TupleSet.new(@predicate.name)
+#    require 'ruby-debug'; debugger if @predicate.name.nil?
+		result = TupleSet.new(schema.name)
 		tuples.each do |tuple|
-			values = Array.new
+			the_values = Array.new
 			@accessors.each do |a|
 			  if not (a.methods.include? "evaluate")
           raise "no evaluate method for tuple accessor" 
         end
-			  values << a.evaluate(tuple)
+			  the_values << a.evaluate(tuple)
 		  end
-			projection = Tuple.new(*values)
-			projection.schema = @predicate.schema
+			projection = Tuple.new(*the_values)
+			projection.schema = @schema
 			result << projection
 		end
 		return result
 	end
 
 	def schema
-		@predicate.schema
+		@schema
 	end
 
 	def requires
-		@predicate.requires
+		@schema.variables
 	end
-	
-	attr_reader :predicate
 end

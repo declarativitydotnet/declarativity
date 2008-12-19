@@ -8,6 +8,60 @@ class GlobalCatalogTable < ObjectTable
   end
 end
 
+class FunctionTable < GlobalCatalogTable
+  include FunctionTableMixin if defined? FunctionTableMixin
+  @@PRIMARY_KEY = Key.new(0,1,2)
+  class Field
+    PROGRAM=0
+    RULE=1
+    POSITION=2
+    NAME=3
+    OBJECT=4
+  end
+  @@SCHEMA = [String,String,Integer,String,String]
+  @@TABLENAME = TableName.new(GLOBALSCOPE, "function")
+  @@classes[self] = 1
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? FunctionTableMixin and FunctionTableMixin.methods.include? 'initialize_mixin'
+       initialize_mixin(context) 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    GLOBALSCOPE
+
+  end
+  def FunctionTable.pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def FunctionTable.schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    program = Variable.new("program",String, 0,nil)
+    rule = Variable.new("rule",String, 1,nil)
+    position = Variable.new("position",Integer, 2,nil)
+    name = Variable.new("name",String, 3,nil)
+    object = Variable.new("object",String, 4,nil)
+    return Schema.new("Function",[program,rule,position,name,object])
+  end
+
+  def FunctionTable.table_name
+    @@TABLENAME
+  end
+end
+
 class IndexTable < GlobalCatalogTable
   include IndexTableMixin if defined? IndexTableMixin
   @@PRIMARY_KEY = Key.new(0,1)
@@ -503,11 +557,6 @@ class MyIndexTable < CompilerCatalogTable
 
   def MyIndexTable.table_name
     @@TABLENAME
-  end
-  
-  def insert_tup(t)
-    require 'ruby-debug'; debugger if t.value(Field::COL_POS).nil?
-    super(t)
   end
 end
 

@@ -57,7 +57,13 @@ class Tuple
           # stop; enough is enough
           out += "InternalObject:#{value.object_id.to_s}"
         else
-          out += value.to_s
+          if value.class <= String
+            out += '"' + value.to_s + '"'
+          elsif value.class <= Float
+            out += sprintf("%.2f", value)
+          else
+            out += value.to_s
+          end
         end
       end
     else
@@ -68,7 +74,7 @@ class Tuple
 
   def schema=(s)
     if s.size != size
-      ##require 'ruby-debug'; debugger
+      require 'ruby-debug'; debugger
       err = "Schema assignment does not match tuple arity!  schema " + s.to_s+" (vs. tuple values ["
       values.each {|v| err <<  v.to_s + ", " }
       err[err.length-1] = "]" 

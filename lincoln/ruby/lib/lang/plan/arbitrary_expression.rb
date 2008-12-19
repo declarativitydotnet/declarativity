@@ -88,11 +88,12 @@ class ArbitraryExpression < Expression
               args << t.value(v.name)
             end
           end
-#          require 'ruby-debug'; debugger
+#          require 'ruby-debug'; debugger if value.nil?
           return value.send(@method,*args)		
         else
           # FIX ME
           ####foo = @method.gsub(/[()]/,"")
+#          require 'ruby-debug'; debugger if value.nil?
           return value.send(@method)
          #### return value.send(foo)
         end
@@ -126,7 +127,7 @@ class ArbitraryExpression < Expression
       subexpr = subexpr + @expr
       begin
 #        require 'ruby-debug'; debugger
-#        print "EVAL: #{subexpr}\n"
+ #       print "EVAL: #{subexpr}\n"
         retval = eval(subexpr)
       rescue => detail
         puts "failed to eval \'#{subexpr}\'"

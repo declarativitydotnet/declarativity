@@ -7,31 +7,6 @@ class Function < Term
     NAME = 3
     OBJECT = 4
   end
-  
-	class TableFunction < ObjectTable 
-		@@PRIMARY_KEY = Key.new(0,1,2)
-		
-		@@SCHEMA =  [String, String, Integer, String, Function]
-      # String.class,    // program name
-      # String.class,    // rule name
-      # Integer.class,   // position
-      # String.class,    // function name
-      # Function.class   // function object
-
-		def initialize(context)
-			super(context, TableName.new(GLOBALSCOPE, "function"), @@PRIMARY_KEY, TypeList.new(@@SCHEMA))
-		end
-		
-		def insert(tuple)
-			object = tuple.value(Field::OBJECT)
-			raise UpdateException, "Predicate object null" if object.nil?
-			
-			object.program   = tuple.value(Field::PROGRAM)
-			object.rule      = tuple.value(Field::RULE)
-			object.position  = tuple.value(Field::POSITION)
-			return super(tuple)
-		end
-	end
 
 	def initialize(function, predicate) 
 		@function = function

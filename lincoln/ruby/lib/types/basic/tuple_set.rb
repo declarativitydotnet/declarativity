@@ -59,6 +59,12 @@ class UnsortedTupleSet
     return retval
   end
 
+  def -(ts)
+    retval = self.class.new(name, *tups)
+    ts.each {|t| retval.delete(t)}
+    return retval
+  end
+
   def <<(o)
     case o.class.name
       #      when 'TupleSet': o.each {|t| @tups << t }
@@ -71,6 +77,7 @@ class UnsortedTupleSet
       puts o.inspect	
       raise "inserting a " + o.class.name + " object into TupleSet"
     end
+    return true
   end
 
   def setName(n)
@@ -186,12 +193,14 @@ class TupleSet < UnsortedTupleSet
         super(o)
       end
     else 
-      #     puts o.inspect	
+      #     puts o.inspect
+      require 'ruby-debug'; debugger	
       raise "inserting a " + o.class.name + " object into TupleSet"
     end
     unless @back_ptrs.size == @positions.size 
       raise "tupleset back_ptrs (#{@back_ptrs.size}) and positions (#{@positions.size}) not aligned"
     end
+    return true
   end
 
   def tups

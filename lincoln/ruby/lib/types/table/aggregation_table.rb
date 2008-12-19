@@ -1,149 +1,126 @@
 class AggregationTable < Table	
-  def initialize(context, predicate, type)
-    super(predicate.name, type, predicate.key, predicate.types)
-    @tuples = Hash.new
-    @aggregates = Hash.new
-    if (type == Table::Type::TABLE) 
-      @primary = HashIndex.new(context, self, key, Index::Type::PRIMARY)
-      @secondary = Hash.new
-    end
+  def initialize(context, predicate, the_type)
+    super(predicate.name, the_type, pred_key(predicate), pred_types(predicate))
+    @baseTuples = Hash.new
+    @aggregateTuples = TupleSet.new(name)
 
+    @aggregate = nil
     predicate.each do |arg|
-      if arg.class < Aggregate
+      if arg.class <= Aggregate
         @aggregate = arg
         break
       end
     end
+    raise "no agg found" if @aggregate == nil
+
+    if (the_type == Table::TableType::TABLE) 
+      @primary = HashIndex.new(context, self, @key, Index::Type::PRIMARY)
+      @secondary = Hash.new
+    end
+
   end
 
   def variable
     @aggregate
   end
 
-  def key(predicate)
-    key = Array.new<Integer>
+  def pred_key(predicate)
+    key = []
     predicate.each do |arg|
       unless arg.class < Aggregate
         key << arg.position
       end
     end
-    return Key.new(key)
+    return Key.new(*key)
   end
 
-  def types(predicate)
-    types = TypeList.new
+  def pred_types(predicate)
+    types = TypeList.new([])
     predicate.each do |arg|
-      types << arg.table_type
+      types << arg.expr_type
     end
     return types
   end
 
   def tuples
-    current = TupleSet.new(name)
-    unless @aggregates.nil?
-      @aggregates.values.each do |aggregate|
-        current << aggregate.result unless aggregate.result.nil?
-      end
-    end
-    return current
+    @aggregateTuples.clone
   end
 
+  def values
+    vals = TupleSet.new(name)
+    @baseTuples.values.each {|v| vals << v.result}
+    return vals
+  end
+  
   def insert(insertions, deletions)
-    deletions -= insertions
-
-    previous = tuples
-
-    # Perform aggregation.
-    insertions.each { |tuple| insert(tuple) }
-
-    if !deletions.nil? && deletions.size > 0
-      delete(deletions)
+    if deletions.size > 0
+      intersection = deletions.clone
+    
+      insertions = insertions - intersection
+      deletions = deletions - intersection
+      delta = delete(deletions)
       deletions.clear
+      deletions.addAll(delta)
+    end    
+
+    insertions.each do |tuple|
+      the_key = key.project(tuple)
+      if !@baseTuples.has_key?(the_key)
+ #       require 'ruby-debug'; debugger
+        @baseTuples[the_key] = AggregateFunction.function(@aggregate)
+      end
+      @baseTuples[the_key].insert(tuple)
     end
-
-    current = tuples
-
-    if !deletions.nil?
-      deletions += previous    # Add all previous tuples
-      deletions -= current     # Remove all current tuples
+#    require 'ruby-debug'; debugger
+    delta = values - tuples
+    delta = delta - deletions
+    
+    if table_type == Table::TableType::EVENT
+      require 'ruby-debug'; debugger if name.name == "strata"
+      @baseTuples.clear
+      @aggregateTuples.clear
+      return delta
     end
-
-    delta = TupleSet.new(name)
-    delta += current # Add all current tuples
-    delta -= previous # Remove those that existed before
-
-    callbacks.each do |c|
-      c.insertion(delta)
-      c.deletion(deletions)
-    end
-
-    if type == Table::TableType::EVENT
-      @tuples.clear
-      @aggregates.clear
-    end
-    return delta
-  end
-
-  def delete(deletions)
-    previous = tuples
-
-    # Perform deletions
-    deletions.each { |tup| delete(tup) } 
-
-    current = tuples
-
-    updates = TupleSet.new(name)
-    updates += previous          # Add all previous tuples
-    updates -= current           # Remove all current tuples
-
-    delta = TupleSet.new(name)
-    delta += current             # Add all current tuples
-    delta -= previous            # Remove those that existed before
-
-    callbacks.each do |c|
-      c.insertion(delta)
-      c.deletion(updates)
-    end
-
-    return delta
-  end
-
-  def delete_tup(tuple)
-    thekey = key.project(tuple)
-    group = tuples[thekey]
-    return false if group.nil?
-    group.remove(tuple)
-
-    # Recompute aggregate of tuple group.
-    function = @aggregates[thekey]
-    previous = function.result
-    function.reset
-    group.each { |t| function.evaluate(t) }
-
-    # Did deletion caused an aggregate change?
-    if function.result.nil?
-      @aggregates.remove(thekey)
-      return true
-    end
-    return !function.result.equals(previous)
+    insertions = super(delta, deletions)
+    return insertions
   end
 
   def insert_tup(tuple)
-    thekey = key.project(tuple)
-    if (!tuples.containsKey(thekey)) then tuples.put(thekey, TupleSet.new(name))
-      tuples[thekey] << tuple
+    @aggregateTuples << tuple
+    return @aggregateTuples
+  end
 
-      if (!@aggregates.containsKey(thekey))
-        #print "ok, calling function over a non-constructed aggregate\n"
-        @aggregates.put(thekey, Aggregate.function(@aggregate))
+  def delete(deletions)
+    require 'ruby-debug'; debugger
+    if table_type = Table::TableType::EVENT
+      raise ("Aggregation table " + name + " is an event table!")
+		end
+		
+		deletions.each do |tuple|
+		  the_key = key.project(tuple)
+		  if (@baseTuples.has_key?(key))
+		    if (@baseTuples[key].tuples.size == 0)
+		      @baseTuples.delete(key)
+	      end
       end
-      @aggregates[thekey].evaluate(tuple)
-      return true
     end
+    
+    delta = TupleSet.new(name)
+    delta.addAll(tuples)
+    delta.removeAll(values)
+    return super(delta)
+  end
+
+  def delete_tup(tuple)
+    require 'ruby-debug'; debugger
+    @aggregateTuples.delete(tuple)
+    return @aggregateTuples
   end
 
   def cardinality 
-    return @tuples.length
+    t = tuples
+    return 0 if t.nil?
+    return t.size
   end
 
   attr_reader :primary, :secondary
