@@ -2,7 +2,7 @@
 \usepackage{fullpage}
 \usepackage{epsfig}
 \usepackage{url}
-\title{BoomFS: A Declarative Approach To Building\\Distributed Filesystems}
+\title{BoomFS: A Declarative Approach To Building\\Distributed File Systems}
 \author{Peter Alvaro, Neil Conway}
 \date{December 19, 2008}
 \begin{document}
@@ -19,7 +19,7 @@
   environments. We propose BOOM, an ongoing project to develop concise
   declarative specifications for a broad class of scalable distributed
   systems. In this paper, we describe the first application in the
-  BOOM stack: BoomFS, a distributed filesystem that is implemented
+  BOOM stack: BoomFS, a distributed file system that is implemented
   using a combination of Java and declarative logic. We show that
   BoomFS is easy to understand and modify, and achieves competitive
   performance in a preliminary performance study.
@@ -55,11 +55,11 @@ to building distributed systems in more detail, and outline the BOOM
 vision in contrast.
 
 The first system we have built using this architectural style is
-BoomFS, a distributed filesystem similar to the Google File
+BoomFS, a distributed file system similar to the Google File
 System~\cite{gfs}. Our goal in building this system was not novelty of
 design: although BoomFS supports multiple master nodes, its
 architecture is otherwise very similar to GFS. Instead, our aim was to
-show that a GFS-like filesystem can be easily and concisely
+show that a GFS-like file system can be easily and concisely
 implemented in the BOOM style. The resulting system should achieve
 competitive performance, and be easy to understand and adapt to new
 environments and policies. In Section \ref{system-arch}, we describe
@@ -162,13 +162,13 @@ components:
 \end{enumerate}
 
 In BoomFS, imperative components are used to efficiently transfer data
-between hosts. The vast majority of the filesystem's complexity
+between hosts. The vast majority of the file system's complexity
 resides in the declarative components, which decide when and where
 data should be transferred. We describe the realization of BoomFS as a
 set of imperative and declarative components in Section
 \ref{system-realize}.
 
-\subsection{Declarative Specification of\\Distributed Filesystems}
+\subsection{Declarative Specification of\\Distributed File Systems}
 In many systems, there is a structural separation between control and
 data paths. This can be motivated either by principle (the separation
 of mechanism and policy~\cite{hydra-policy-mech-sep}), or by practical
@@ -187,7 +187,7 @@ correctly, including replica placement decisions, failure handling,
 load balancing and consensus among agents in shared computations.
 
 Combining these observations, we see that the GFS style of distributed
-filesystem is a perfect testing ground for the BOOM approach to
+file system is a perfect testing ground for the BOOM approach to
 implementing distributed systems.
 
 \section{System Architecture}
@@ -199,20 +199,19 @@ architecture of GFS are well-documented elsewhere~\cite{gfs,
   hdfs-arch}, so we include only a brief discussion of them here.
 
 Like GFS, BoomFS does not attempt to be a general-purpose distributed
-filesystem. Instead, it is designed to perform well for a particular
+file system. Instead, it is designed to perform well for a particular
 class of workloads, and to operate on a particular cluster
 architecture. We focus on achieving good performance for large
 sequential reads and writes. Files are assumed to be very large, and
 are therefore divided into large \emph{chunks} that far exceed typical
-filesystem block sizes (64MB). We focus on
-delivering high sequential read and write throughput and efficient
-network utilization, rather than achieving low latency or minimizing
-total disk space requirements. Members of a BoomFS system are assumed
-to be unreliable commodity machines, provisioned with relatively
-modest resources.  Reliability is achieved by storing multiple copies
-of each chunk; scalability is achieved by spreading filesystem
-contents over a large cluster of machines (typically hundreds or
-thousands).
+file system block sizes (64MB). We focus on delivering high sequential
+read and write throughput and efficient network utilization, rather
+than achieving low latency or minimizing total disk space
+requirements. Members of a BoomFS system are assumed to be unreliable
+commodity machines, provisioned with relatively modest resources.
+Reliability is achieved by storing multiple copies of each chunk;
+scalability is achieved by spreading file system contents over a large
+cluster of machines (typically hundreds or thousands).
 
 \begin{figure}
 \centering
@@ -226,7 +225,7 @@ The major components of BoomFS are depicted in Figure
 \ref{fig:system-arch}. There are three types of nodes in BoomFS:
 \emph{master nodes}, \emph{data nodes}, and \emph{clients}. Master
 nodes contain the canonical description of the structure of the
-filesystem. The filesystem is described by a mapping from file names
+file system. The file system is described by a mapping from file names
 to file identifiers, and from file identifiers to the sequence of
 chunks that contain the file's content. To avoid a single point of
 failure, our design allows for multiple master nodes, which are kept
@@ -234,7 +233,7 @@ in synchrony using a consensus protocol (currently
 Paxos~\cite{paxos-made-simple}).
 
 Data nodes are responsible for storing chunks. They have no knowledge
-of the structure of the filesystem as a whole, or of the files to which  
+of the structure of the file system as a whole, or of the files to which  
 the chunks they store belong.  Nor do they have any \emph{a priori} knowledge
 of the identities of other data nodes in the system;  these are explicitly
 specified in the data path protocol.  Each data node periodically sends a
@@ -253,7 +252,7 @@ abstraction for files stored in BoomFS. In the future, we plan to
 implement the HDFS API, to allow BoomFS to easily replace HDFS in
 existing Hadoop installations. % mention POSIX?
 
-\subsection{Filesystem Operations}
+\subsection{File System Operations}
 \label{fs-ops}
 To append to a file, a client node begins by contacting one of the
 master nodes, and requesting that a new chunk be added to a particular
@@ -297,7 +296,7 @@ sends a heartbeat to a master, the master replies with a list of the
 chunks on the data node that is has no knowledge of. These orphaned
 chunks can be garbage collected at the data node's leisure.
 
-Other filesystem operations are straightforward. For example, clients
+Other file system operations are straightforward. For example, clients
 interact with master nodes to obtain directory listings, and create
 and remove directories.\footnote{Our prototype implementation of
   BoomFS does not currently support directories, but we expect that
@@ -305,7 +304,7 @@ and remove directories.\footnote{Our prototype implementation of
 
 \section{System Realization}
 \label{system-realize}
-The filesystem design described in Section \ref{system-arch} is
+The file system design described in Section \ref{system-arch} is
 abstract, and might reasonably be implemented using a variety of
 techniques. In this section, we describe how we realized the BoomFS
 design using a combination of Java and Overlog. In the following
@@ -313,9 +312,9 @@ discussion, we assume that the reader has some familiarity with
 Overlog~\cite{dn-sigmod}.
 
 We validate this implementation strategy in two ways: by demonstrating
-how this implementation allows for the easy modification of filesystem
-policies in Section \ref{decl-approach}, and by conducting a performance
-study in Section \ref{perf-eval}.
+how this implementation allows for the easy modification of file system
+policies in Section \ref{decl-approach}, and by conducting a
+performance study in Section \ref{perf-eval}.
 
 \subsection{Software Architecture}
 % \begin{figure}
@@ -349,10 +348,10 @@ common case, represented syntactically as a recursive join and
 semantically as a cyclic dataflow graph.
 
 \subsection{State Representation}
-Any filesystem contains two kinds of state: data and metadata. In
+Any file system contains two kinds of state: data and metadata. In
 BoomFS, data is stored as a collection of chunks distributed over the
 data nodes. Each data node stores chunks as normal files on its
-local filesystem.
+local file system.
 
 All the metadata in BoomFS is represented as relations; some of these
 relations are partitioned over multiple nodes.
@@ -361,7 +360,7 @@ relations are partitioned over multiple nodes.
 \label{control-path}
 In GFS, the control path comprises three separate protocols: the
 client protocol spoken between clients and masters to modify
-filesystem metadata, the control protocol between master and data node
+file system metadata, the control protocol between master and data node
 used for replica migration or deletion instructions, and the
 heartbeats regularly sent from data nodes to the masters.  The
 replication mechanism, which in GFS involves a log flush to multiple
@@ -381,18 +380,18 @@ to the new data.
 For read-only operations like many client protocol interactions, a
 single declarative rule on the client (to transfer the injected
 request tuple to the master) and a pair of rules on the master (one to
-return the results to the client, and an error handler) suffice to express the messaging logic.
-Requests that modify filesystem metadata follow the same structure,
-but trigger a more complicated chain of inferences on the master.  In
-particular, the master must achieve consensus among master replicas,
-attempt the modification, and indicate success to the client only if
-these steps succeed.  Heartbeats from data nodes to the master are
-structured similarly to client requests, but are triggered by a
-periodic timer rather than by human interaction.  Finally, control
-protocol messages from master to data node are fired when conditions
-specified by certain aggregate queries indicate that system invariants
-are unmet, as when the number of replicas drops below the specified
-replication factor.
+return the results to the client, and an error handler) suffice to
+express the messaging logic.  Requests that modify file system
+metadata follow the same structure, but trigger a more complicated
+chain of inferences on the master.  In particular, the master must
+achieve consensus among master replicas, attempt the modification, and
+indicate success to the client only if these steps succeed.
+Heartbeats from data nodes to the master are structured similarly to
+client requests, but are triggered by a periodic timer rather than by
+human interaction.  Finally, control protocol messages from master to
+data node are fired when conditions specified by certain aggregate
+queries indicate that system invariants are unmet, as when the number
+of replicas drops below the specified replication factor.
 
 Let us take a concrete example beginning with a client request to
 append a stream of data to a file.  The Java shell code running at the
@@ -460,7 +459,7 @@ such as parity~\cite{gfs}.
 
 \subsubsection{Data Node Disk Failure}
 The effect of this failure is more or less the same as for data node
-failure, assuming that all the filesystem data is stored on a single
+failure, assuming that all the file system data is stored on a single
 disk.  The data node will continue to send heartbeats to the master,
 but one of these will include a delta record describing the loss of
 the files on the disk.  The same chain of inferences described in the
@@ -479,7 +478,7 @@ checksum.  Our prototype did not implement any integrity checks, but
 we plan to add this feature in the near future.
 
 \subsubsection{Master Failure}
-GFS keeps all filesystem metadata on a single master server to which
+GFS keeps all file system metadata on a single master server to which
 all client requests are directed; the mapping is maintained through
 the DNS.  Several secondary masters are run in a log replay mode
 similar to the log-shipping approach employed by database systems: a
@@ -493,8 +492,8 @@ then remaps the DNS entry to one of the secondaries.
 HDFS supports the concept of a ``Secondary NameNode'' or backup master
 that asynchronously applies log entries to a checkpoint image.  The
 primary master supports writing log entries to multiple directories,
-one of which can be a remote filesystem such as NFS.  A secondary
-master can then read the log from this filesystem.  Presumably, this
+one of which can be a remote file system such as NFS.  A secondary
+master can then read the log from this file system.  Presumably, this
 adds considerable overhead to the performance of the master.
  
 In our prototype, a configurable number of masters operate in
@@ -516,7 +515,7 @@ level of fault tolerance.
 \subsection{Implementation Process}
 \label{decl-approach}
 Our task in developing the BoomFS prototype was to represent the
-distributed state of the filesystem as a single relational database,
+distributed state of the file system as a single relational database,
 with relations partitioned across nodes.  Both policy (which expresses
 constraints over these relations, and conditions under which the
 contents of the relations may change) and protocol (which expresses
@@ -540,7 +539,7 @@ the system.  With the global state flattened, it was easy to return to
 many initially deferred optimizations.  For example, our initial
 implementation of the system sent the entire state of each data node
 in every heartbeat message. While this was correct, it is clearly
-suboptimal as filesystem size increases.  Changing the heartbeats to
+suboptimal as file system size increases.  Changing the heartbeats to
 reflect only chunk status deltas was a simple matter of sending the
 set difference of the local chunk relation and the relation of chunk
 heartbeat messages that have been acknowledged by the master.
@@ -557,7 +556,7 @@ client.
 \section{Performance Evaluation}
 \label{perf-eval}
 We validate the applicability of our approach by prototyping a
-distributed filesystem based on Google's GFS, and evaluating its
+distributed file system based on Google's GFS, and evaluating its
 performance against a characteristic workload.  Our goal is to achieve
 competitive performance on the large append and read workload
 characteristic of the GFS environment, in spite of the increased
@@ -572,11 +571,11 @@ comparing read and write performance between BoomFS and HDFS as we scale
 the number of concurrent clients and data nodes together.
 
 \subsection{Test Environment}
-GFS is a proprietary filesystem: we can only speculate about its
+GFS is a proprietary file system: we can only speculate about its
 implementation based on the documentation that Google has published,
 and we cannot evaluate its performance against our own simulated
 workloads.  Instead, we used Hadoop, Yahoo's open source
-implementation of MapReduce, which includes a distributed filesystem
+implementation of MapReduce, which includes a distributed file system
 (HDFS) based on GFS.
 
 We performed our experiments on the Amazon Elastic Compute Cloud
@@ -596,7 +595,7 @@ trivial.
 In our first experiment, we compare the latency of metadata operations
 affecting the control path.  A directory listing uses the client
 protocol and requires a round trip between the client and master and a
-lookup on the master, as does touching a file on the filesystem.
+lookup on the master, as does touching a file on the file system.
 Copying a zero-byte file requires two round trips to the master: one
 to get a new chunk identifier for the append operation, and another to
 request a set of data nodes who can accept the new
@@ -616,7 +615,7 @@ Our next experiment evaluates read and write performance under a
 typical MapReduce workload.  The sort benchmark of Dean and
 Ghemawat~\cite{mapreduce} is a simple and practical test that puts
 equal stress on the read and write components of a distributed
-filesystem.
+file system.
 
 The MapReduce specification of sorting is trivial, largely because
 sorting (over \emph{some} key) is a side-effect of the framework.
@@ -633,16 +632,16 @@ For the purposes of our experiments, we are interested only in the
 costs associated with the parallel reads at the start of the workflow
 described above, and the parallel writes described at the end.  Hence,
 in our simulation we dispense with the actual sorting, hashing and
-crossbarring, and focus merely on the filesystem performance as the
+crossbarring, and focus merely on the file system performance as the
 number of concurrent clients and data nodes are scaled up together.
 For a given concurrency level $D$, we provision an EC2 cluster with a
-master node and $D$ data nodes, and prime the filesystem by creating
+master node and $D$ data nodes, and prime the file system by creating
 $D$ 100MB files with a replication factor of 2.  We then spawn $D$
 client processes (one on each data node), which read one of the files
-from the filesystem, write it to local disk, then create a new
-distributed filesystem file and append the contents of the local file
+from the file system, write it to local disk, then create a new
+distributed file system file and append the contents of the local file
 to it.  Thus, each client reads (writes) 100MB to (from) the
-filesystem concurrently in each sort benchmark, as we vary $D$.
+file system concurrently in each sort benchmark, as we vary $D$.
 
 \begin{figure}
 \centering
@@ -686,13 +685,13 @@ response time is 10.12 seconds.
 \label{future-work}
 The current version of the BoomFS prototype confirms that the BOOM
 architectural style can be successfully applied to the construction of
-a distributed filesystem. However, we feel that the most exciting
+a distributed file system. However, we feel that the most exciting
 research on this topic remains to be done.
 
 We believe that interesting issues in computer system design often
 only arise when technology is deployed in production
 environments. Therefore, we plan to complete the implementation of
-BoomFS and deliver a production-quality filesystem. This requires
+BoomFS and deliver a production-quality file system. This requires
 implementing support for directories, fine-grained concurrent appends,
 and persistent metadata. We also want to ensure that BoomFS is able to
 scale to petabyte-range data sets and thousands of nodes. We plan to
@@ -701,12 +700,12 @@ API, and then using BoomFS to replace HDFS in real-world Hadoop
 installations.
 
 We also plan to leverage the flexibility allowed by BoomFS's
-declarative specification to explore new filesystem features and
+declarative specification to explore new file system features and
 policies. We closely followed the GFS design primarily to demonstrate
 that a faithful reimplementation is possible using declarative
 techniques, but we plan to consider a much broader space of design
 alternatives in the future. For example, it should be possible to
-partition the filesystem metadata over the master nodes, removing a
+partition the file system metadata over the master nodes, removing a
 major scalability barrier.
 
 Finally, we plan to explore the cross-layer optimizations that are
@@ -714,36 +713,36 @@ enabled when multiple elements of the networking stack are implemented
 using the same declarative techniques. For example, colleagues are
 completing an implementation of the Hadoop job scheduler in
 Overlog. By running this on top of BoomFS, it would be possible for an
-optimizer to make intelligent costing decisions for filesystem
+optimizer to make intelligent costing decisions for file system
 operations that automatically reflect the characteristics of the
 current Hadoop job.
 
 \section{Related Work}
 \label{related-work}
 To our knowledge, this work represents the first attempt to specify a
-distributed filesystem using declarative techniques. However, it can
+distributed file system using declarative techniques. However, it can
 be argued that GFS and related designs (including BoomFS) are
-``filesystems'' only in a loose sense, because they do not implement
+``file systems'' only in a loose sense, because they do not implement
 POSIX semantics and provide looser consistency guarantees than
-traditional filesystems. In this sense, BoomFS is clearly related to
+traditional file systems. In this sense, BoomFS is clearly related to
 prior work on declarative specifications of storage infrastructure,
 such as DHTs~\cite{chord-overlog} and data replication
 systems~\cite{padre-draft}.
 
-Recent work on a declarative filesystem filesystem integrity
-checker~\cite{sqck} provides another example of how sophisticated
-policies and invariants can be concisely stated in an appropriate
-high-level declarative language. Similar tools for distributed
-consistency checking, garbage collection, monitoring, and periodic
-optimization should be easy to write on top of BoomFS, because all
-filesystem metadata is already available for declarative queries. We
-plan to explore this topic in the future.
+Recent work on a declarative file system integrity checker~\cite{sqck}
+provides another example of how sophisticated policies and invariants
+can be concisely stated in an appropriate high-level declarative
+language. Similar tools for distributed consistency checking, garbage
+collection, monitoring, and periodic optimization should be easy to
+write on top of BoomFS, because all file system metadata is already
+available for declarative queries. We plan to explore this topic in
+the future.
 
 Both BoomFS and GFS emphasize the distinction between control and data
 paths. This division has a long history in computer science, and can
 be found in protocols ranging from FTP~\cite{ftp-rfc} and
-DOT~\cite{dot}, to filesystems like Berkeley FFS~\cite{ffs} and
-ext3.\footnote{In these filesystems, metadata and data are subject to
+DOT~\cite{dot}, to file systems like Berkeley FFS~\cite{ffs} and
+ext3.\footnote{In these file systems, metadata and data are subject to
   different consistency requirements and durability guarantees, and
   are implemented using different on-disk data structures.} Similarly,
 the separation of control and data is a well-established principle in
@@ -751,7 +750,7 @@ computer system design~\cite{hydra-policy-mech-sep}.
 
 \section{Conclusion}
 \label{conclusion}
-We have implemented BoomFS, a distributed filesystem that is similar
+We have implemented BoomFS, a distributed file system that is similar
 to GFS and HDFS. BoomFS achieves competitive performance with
 HDFS. Unlike HDFS, BoomFS avoids a single point of failure through its
 support for multiple master nodes and automatic failover.
@@ -761,7 +760,7 @@ style: the complex protocols and policy of the control path are
 implemented in declarative logic, while the simple, high-performance
 data path is written in Java. BoomFS was straightforward to
 implement. Because the implementation is concise and comprehensible,
-the filesystem is easy to modify and adapt to new environments. BoomFS
+the file system is easy to modify and adapt to new environments. BoomFS
 is the first of several pieces of data center infrastructure we plan
 to implement using declarative techniques as part of the BOOM project.
 
