@@ -186,8 +186,8 @@ maintaining the various invariants that make the system behave
 correctly, including replica placement decisions, failure handling,
 load balancing and consensus among agents in shared computations.
 
-Combining these observations, we see that the GFS style of distributed
-file system is a perfect testing ground for the BOOM approach to
+Combining these observations, we see that GFS-like distributed file
+systems are attractive candidates for the BOOM approach to
 implementing distributed systems.
 
 \section{System Architecture}
@@ -233,22 +233,20 @@ in synchrony using a consensus protocol (currently
 Paxos~\cite{paxos-made-simple}).
 
 Data nodes are responsible for storing chunks. They have no knowledge
-of the structure of the file system as a whole, or of the files to which  
-the chunks they store belong.  Nor do they have any \emph{a priori} knowledge
-of the identities of other data nodes in the system;  these are explicitly
-specified in the data path protocol.  Each data node periodically sends a
-\emph{heartbeat} to the master nodes. This notifies the masters that
-the data node is still alive, and contains a list of the chunks
-currently stored at the data node. The masters use this information to
-update a mapping from chunk identifiers to the set of data nodes that
-might be holding that chunk. Note that the canonical description of
-the content of a data node resides at the data node itself, not at the
-master nodes; the master's copy of this information is updated lazily.
+of the structure of the file system or the identities of any other
+data nodes. Each data node periodically sends a \emph{heartbeat} to
+the master nodes. This notifies the masters that the data node is
+still alive, and contains a list of the chunks currently stored at the
+data node. The masters use this information to update the mapping from
+chunk identifiers to the set of data nodes that might be holding that
+chunk. Note that the canonical description of the content of a data
+node resides at the data node itself, not at the master nodes; the
+master's copy of this information is updated lazily.
 
 Finally, client nodes represent application programs that wish to read
 and write files. We expect that applications will interact with the
 system through a client library that provides a convenient stream-like
-abstraction for files stored in BoomFS. In the future, we also plan to
+abstraction for files stored in BoomFS. In the future, we plan to
 implement the HDFS API, to allow BoomFS to easily replace HDFS in
 existing Hadoop installations.
 
@@ -583,8 +581,7 @@ environment~\cite{amazon-ec2}.
 \subsection{Metadata Operations}
 \begin{figure}
 \centering
-% XXX
-\includegraphics[width=1\columnwidth]{figures/big_read_throughput.pdf}
+\includegraphics[width=1\columnwidth]{figures/metadata_throughput.pdf}
 \caption{Performance for metadata operations}
 \label{fig:metadata-perf}
 \end{figure}
