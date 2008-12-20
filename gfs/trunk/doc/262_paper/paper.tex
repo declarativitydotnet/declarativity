@@ -1,11 +1,10 @@
-\documentclass{article}
+\documentclass[twocolumn]{article}
 \usepackage{fullpage}
 \usepackage{epsfig}
 \usepackage{url}
 \title{BoomFS: A Declarative Approach To Building\\Distributed Filesystems}
 \author{Peter Alvaro, Neil Conway}
 \date{December 19, 2008}
-\twocolumn
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -14,16 +13,16 @@
   stagnant. As distributed computation becomes the common case,
   traditional techniques for building such systems will become
   untenable, because they force programmers to deal with the mundane
-  details of constructing reliable distributed systems rather than concentrating
-  on the desired computation. This yields
-  programs that are difficult to construct, understand, modify, and
-  adapt to new environments. We propose BOOM, an ongoing project to
-  develop concise declarative specifications for a broad class of
-  scalable distributed systems. In this paper, we describe the first
-  application in the BOOM stack: BoomFS, a distributed filesystem that
-  is implemented using a combination of Java and declarative logic. We
-  show that BoomFS is easy to understand and modify, and achieves
-  competitive performance in a preliminary performance study.
+  details of constructing reliable distributed systems rather than
+  concentrating on the desired computation. This yields programs that
+  are difficult to construct, understand, modify, and adapt to new
+  environments. We propose BOOM, an ongoing project to develop concise
+  declarative specifications for a broad class of scalable distributed
+  systems. In this paper, we describe the first application in the
+  BOOM stack: BoomFS, a distributed filesystem that is implemented
+  using a combination of Java and declarative logic. We show that
+  BoomFS is easy to understand and modify, and achieves competitive
+  performance in a preliminary performance study.
 \end{abstract}
 \section{Introduction}
 \label{introduction}
