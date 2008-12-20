@@ -253,7 +253,7 @@ existing Hadoop installations.
 \subsection{File System Operations}
 \label{fs-ops}
 To append to a file, a client node begins by contacting one of the
-master nodes, and requesting that a new chunk be added to a particular
+master nodes and requesting that a new chunk be added to a particular
 file.\footnote{In the current prototype, random writes are not
   supported, and each append operation creates a new chunk --- we
   expect that each append will be large enough to justify occupying an
@@ -267,11 +267,11 @@ the master replies to the client with the new chunk identifier, and a
 list of data nodes that might be appropriate locations for the new
 chunk.
 
-The client is then responsible for pushing data for the chunk to a
-sufficient number of data nodes. There are various policies a client
+The client is then responsible for transferring the chunk's content to
+a sufficient number of data nodes. There are various policies a client
 could use to do this. For example, the client could directly connect
 to all the data nodes and send the chunk content itself, or it might
-only send the data to a single data node, and instruct that node to
+only send the data to a single data node and instruct that node to
 propagate the data onward. Once the content of a chunk has been
 completely received by a data node and written to disk, this fact will
 be reflected in the next heartbeat that the data node sends to the
