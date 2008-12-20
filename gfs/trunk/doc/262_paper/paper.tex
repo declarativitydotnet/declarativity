@@ -206,12 +206,12 @@ sequential reads and writes. Files are assumed to be very large, and
 are therefore divided into large \emph{chunks} that far exceed typical
 file system block sizes (64MB). We focus on delivering high sequential
 read and write throughput and efficient network utilization, rather
-than achieving low latency or minimizing total disk space
-requirements. Members of a BoomFS system are assumed to be unreliable
-commodity machines, provisioned with relatively modest resources.
-Reliability is achieved by storing multiple copies of each chunk;
-scalability is achieved by spreading file system contents over a large
-cluster of machines (typically hundreds or thousands).
+than achieving low latency or minimizing total space requirements.
+Members of a BoomFS system are assumed to be unreliable commodity
+machines, provisioned with relatively modest resources.  Reliability
+is achieved by storing multiple copies of each chunk and scalability
+is achieved by spreading file system content over a large cluster of
+machines (typically hundreds or thousands).
 
 \begin{figure}
 \centering
@@ -248,9 +248,9 @@ master nodes; the master's copy of this information is updated lazily.
 Finally, client nodes represent application programs that wish to read
 and write files. We expect that applications will interact with the
 system through a client library that provides a convenient stream-like
-abstraction for files stored in BoomFS. In the future, we plan to
+abstraction for files stored in BoomFS. In the future, we also plan to
 implement the HDFS API, to allow BoomFS to easily replace HDFS in
-existing Hadoop installations. % mention POSIX?
+existing Hadoop installations.
 
 \subsection{File System Operations}
 \label{fs-ops}
@@ -291,7 +291,7 @@ To delete a file, a client contacts a master node. The master passes
 the request through the consensus protocol. When consensus has been
 reached, all the masters remove the file from their internal
 metadata. There is no need to eagerly contact data nodes to remove the
-chunks belonging to the deleted file: the next time the data node
+chunks that make up the deleted file: the next time the data node
 sends a heartbeat to a master, the master replies with a list of the
 chunks on the data node that is has no knowledge of. These orphaned
 chunks can be garbage collected at the data node's leisure.
@@ -311,9 +311,9 @@ design using a combination of Java and Overlog. In the following
 discussion, we assume that the reader has some familiarity with
 Overlog~\cite{dn-sigmod}.
 
-We validate this implementation strategy in two ways: by demonstrating
-how this implementation allows for the easy modification of file system
-policies in Section \ref{decl-approach}, and by conducting a
+We validate our implementation strategy in two ways: by demonstrating
+how a declarative specification enables easy modification of file
+system policies in Section \ref{decl-approach}, and by conducting a
 performance study in Section \ref{perf-eval}.
 
 \subsection{Software Architecture}
