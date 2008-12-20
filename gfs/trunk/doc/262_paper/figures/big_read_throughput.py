@@ -12,4 +12,4 @@ plt.errorbar(xvalues, [8.97,9.31,8.78,9.3], [0.35, 1.29, 1.33, 3.37], fmt='^-', 
 plt.xlim([0,17])
 plt.ylim([5,14])
 plt.legend(loc='upper right')
-plt.savefig('big_read_throughput.eps')
+plt.savefig('big_read_throughput.pdf')
