@@ -1,6 +1,6 @@
 \documentclass[twocolumn]{article}
 \usepackage{fullpage}
-\usepackage{epsfig}
+\usepackage{graphicx}
 \usepackage{url}
 \title{BoomFS: A Declarative Approach To Building\\Distributed File Systems}
 \author{Peter Alvaro, Neil Conway}
@@ -215,7 +215,7 @@ machines (typically hundreds or thousands).
 
 \begin{figure}
 \centering
-\epsfig{file=figures/boomfs_arch.eps, width=1\columnwidth}
+\includegraphics[width=1\columnwidth]{figures/boomfs_arch.pdf}
 \caption{BoomFS architecture}
 \label{fig:system-arch}
 \end{figure}
@@ -576,18 +576,15 @@ implementation based on the documentation that Google has published,
 and we cannot evaluate its performance against our own simulated
 workloads.  Instead, we used Hadoop, Yahoo's open source
 implementation of MapReduce, which includes a distributed file system
-(HDFS) based on GFS.
-
-We performed our experiments on the Amazon Elastic Compute Cloud
-(EC2), a virtualized ``utility computing''
-environment~\cite{amazon-ec2}. Hadoop is already well-integrated with
-EC2, and instrumenting BoomFS to handle dynamic address assignment was
-trivial.
+(HDFS) based on GFS. We performed our experiments on the Amazon
+Elastic Compute Cloud (EC2), a virtualized ``utility computing''
+environment~\cite{amazon-ec2}.
 
 \subsection{Metadata Operations}
 \begin{figure}
 \centering
-\epsfig{file=figures/metadata_throughput.eps, width=1\columnwidth}
+% XXX
+\includegraphics[width=1\columnwidth]{figures/big_read_throughput.pdf}
 \caption{Performance for metadata operations}
 \label{fig:metadata-perf}
 \end{figure}
@@ -645,13 +642,13 @@ file system concurrently in each sort benchmark, as we vary $D$.
 
 \begin{figure}
 \centering
-\epsfig{file=figures/big_read_throughput.eps, width=1\columnwidth}
+\includegraphics[width=1\columnwidth]{figures/big_read_throughput.pdf}
 \caption{Sequential read performance for the sort benchmark}
 \label{fig:big-read-perf}
 \end{figure}
 \begin{figure}
 \centering
-\epsfig{file=figures/big_write_throughput.eps, width=1\columnwidth}
+\includegraphics[width=1\columnwidth]{figures/big_write_throughput.pdf}
 \caption{Sequential write performance for the sort benchmark}
 \label{fig:big-write-perf}
 \end{figure}
