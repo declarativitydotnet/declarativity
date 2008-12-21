@@ -102,6 +102,7 @@ include Ddl
 	end
   	rule Term
 		  TableFunction  /  predicate  /  Assignment  /  Selection   
+		  #predicate  /  Assignment  /  Selection   
 	end
      	rule Definition
 		     ('define' opar ptablename Comma Keys Comma Schema cpar /     'define' opar ptablename Comma Schema cpar )
@@ -147,7 +148,7 @@ include Ddl
 		  [taeidrs]+    
 	end
      	rule TableFunction
-		  ptablename opar predicate cpar  
+		  ptablename opar notapredicate cpar  
 		  {
 		    def TableFunction
 		      return self
@@ -155,15 +156,32 @@ include Ddl
 		  }
 	end
      	rule predicate
-		    notin ptablename eventModifier  arguments   
+        #(notin / (tablefunc opar)) ptablename eventModifier arguments cpar?
+        #  /
+        #tablefunc opar ptablename eventModifier arguments cpar
+        #notin ptablename eventModifier arguments / notin tablefunc opar ptablename eventModifier arguments cpar
+        #tablefunc notin opar? ptablename eventModifier arguments cpar?
+        notin ptablename eventModifier arguments
 				{
 					def predicate
-						#return self.ptablename
 						return self
 					end
-					#def args
-					#	return arguments.value
-					#end
+				}
+	end
+  rule tablefunc
+    Spacing ptablename? Spacing
+      {
+        def tablefunc 
+          return self;
+        end
+      }
+  end
+  rule notapredicate 
+		    notin ptablename eventModifier  arguments   
+				{
+					def notapredicate
+						return self
+					end
 				}
 	end
 	rule notin

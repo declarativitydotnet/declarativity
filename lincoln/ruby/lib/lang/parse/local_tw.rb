@@ -78,8 +78,7 @@ class OverlogCompiler
 
   class VisitPexp < VisitIExpression
     def semantic(text,obj)
-      require 'ruby-debug'; debugger
-      
+      #require 'ruby-debug'; debugger
       super(text,obj)
       @@positions["_Primpos"] = @@positions["_Primpos"] + 1
     end
@@ -116,14 +115,14 @@ class OverlogCompiler
     end
   end
 
-  class VisitTableFunction < VisitTerm
-    def initialize(runtime, tft,term)
-      super(runtime, term)
+  class VisitTableFunction < VisitPredicate
+    def initialize(runtime, tft,pred,term)
+      super(runtime, pred,term)
       @tft = tft
     end
     def semantic(text,obj)
-#      require 'ruby-debug'; debugger
-      super(text,obj)
+      super(text,obj.notapredicate)
+      @@positions["_Universal"] = @@positions["_Universal"] + 1;
       otabinsert(@tft, @@positions["_Universal"], @@current["term"], obj.ptablename.text_value, @@current["predicate"])    
     end
   end
@@ -410,12 +409,10 @@ class OverlogCompiler
     sky.add_handler("expression",VisitExpression.new(@runtime,@extable),1)
     sky.add_handler("primaryexpression",vg,1)
     sky.add_handler("predicate",VisitPredicate.new(@runtime,@predicatetable,@termtable),1)
-    sky.add_handler("TableFunction",VisitTableFunction.new(@runtime,@tablefunctiontable,@termtable),1)
+    sky.add_handler("TableFunction",VisitTableFunction.new(@runtime,@tablefunctiontable,@predicatetable,@termtable),1)
     sky.add_handler("Fact",VisitFact.new(@runtime,@facttable,@termtable),1)
     sky.add_handler("Definition",VisitTable.new(@runtime,@tabletable),1)
     sky.add_handler("TableName",vg,1)
-    #sky.add_handler("TableName",VisitTable.new(@runtime,@tabletable),1)
-
     sky.add_handler("Schema",vg,1)
     sky.add_handler("Rule",VisitRule.new(@runtime,@ruletable),1)
     sky.add_handler("Selection",VisitSelection.new(@runtime,@selecttable,@termtable),1)
