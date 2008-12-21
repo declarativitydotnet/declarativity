@@ -1480,7 +1480,7 @@ module Overlog
       elements[1]
     end
 
-    def predicate
+    def notapredicate
       elements[2]
     end
 
@@ -1510,7 +1510,7 @@ module Overlog
       r2 = _nt_opar
       s0 << r2
       if r2
-        r3 = _nt_predicate
+        r3 = _nt_notapredicate
         s0 << r3
         if r3
           r4 = _nt_cpar
@@ -1552,12 +1552,8 @@ module Overlog
 
   module Predicate1
 					def predicate
-						#return self.ptablename
 						return self
 					end
-					#def args
-					#	return arguments.value
-					#end
   end
 
   def _nt_predicate
@@ -1593,6 +1589,121 @@ module Overlog
     end
 
     node_cache[:predicate][start_index] = r0
+
+    return r0
+  end
+
+  module Tablefunc0
+    def Spacing
+      elements[0]
+    end
+
+    def Spacing
+      elements[2]
+    end
+  end
+
+  module Tablefunc1
+    def tablefunc 
+      return self;
+    end
+  end
+
+  def _nt_tablefunc
+    start_index = index
+    if node_cache[:tablefunc].has_key?(index)
+      cached = node_cache[:tablefunc][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_Spacing
+    s0 << r1
+    if r1
+      r3 = _nt_ptablename
+      if r3
+        r2 = r3
+      else
+        r2 = SyntaxNode.new(input, index...index)
+      end
+      s0 << r2
+      if r2
+        r4 = _nt_Spacing
+        s0 << r4
+      end
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Tablefunc0)
+      r0.extend(Tablefunc1)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:tablefunc][start_index] = r0
+
+    return r0
+  end
+
+  module Notapredicate0
+    def notin
+      elements[0]
+    end
+
+    def ptablename
+      elements[1]
+    end
+
+    def eventModifier
+      elements[2]
+    end
+
+    def arguments
+      elements[3]
+    end
+  end
+
+  module Notapredicate1
+					def notapredicate
+						return self
+					end
+  end
+
+  def _nt_notapredicate
+    start_index = index
+    if node_cache[:notapredicate].has_key?(index)
+      cached = node_cache[:notapredicate][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_notin
+    s0 << r1
+    if r1
+      r2 = _nt_ptablename
+      s0 << r2
+      if r2
+        r3 = _nt_eventModifier
+        s0 << r3
+        if r3
+          r4 = _nt_arguments
+          s0 << r4
+        end
+      end
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(Notapredicate0)
+      r0.extend(Notapredicate1)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:notapredicate][start_index] = r0
 
     return r0
   end

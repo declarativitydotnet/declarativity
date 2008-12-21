@@ -172,6 +172,7 @@ class OverlogPlanner
 			pHash,aHash = accumulate_vars(ts,"pred_txt","event_mod","pred_pos","notin","predicateid")
 
       tfuncIndx = HashIndex.new(@runtime, @tfuncs,Key.new(3),Integer) if @tfuncs  
+      #print "TSchema: #{@tfuncs.tuples.tups[0].schema}\n"
       puts "tfuncs: #{tfuncIndx.map.keys.sort.map {|k| k.to_s + " "}}"
       lookups = []
 			ret = TupleSet.new("preds",nil)
@@ -200,6 +201,13 @@ class OverlogPlanner
  #       require "ruby-debug"; debugger
         if !tfuncIndx.nil?
           tf = tfuncIndx.lookup(Tuple.new(nil, pred.value("predicateid"))) 
+          # well, maybe the index lookup won't find the matching TF, but this
+          # inner loop will find it!
+          @tfuncs.tuples.each do |t|
+            if t.value("nested_predicate_id") == pred.value("predicateid")
+              print "HIT it!\n"
+            end
+          end
           lookups << pred.value("predicateid")
           if tf.size > 0
             require 'ruby-debug'; debugger
@@ -546,8 +554,25 @@ class OverlogPlanner
 #		require 'ruby-debug'; debugger
 		allPrimaryExpressions = TupleSet.new("pexpr",*@pexpr.tuples)
 		allExpressions = indxjoin_of(@expr,"expressionid",allPrimaryExpressions)
-#		require 'ruby-debug'; debugger
 		exprTerms = indxjoin_of(@terms,"termid",allExpressions)
+  
+    @expr.tuples.each do |t|
+    #  print "TERM: #{t}\n"
+    end
+    @terms.tuples.each do |t|
+    #  print "TERM: #{t}\n"
+    end
+    @preds.tuples.each do |t|
+    #  print "PRED: #{t}\n"
+    end
+
+    @tfuncs.tuples.each do |t|
+    #  print "TF: #{t}\n"
+    end
+    #print "schema: #{exprTerms.tups[0].schema}\n"
+    exprTerms.each do |t|
+    #  print "EXPRTM: #{t}\n"
+    end
 
 		bu_facts(exprTerms)
 		allRules = indxjoin_of(@rules,"ruleid",exprTerms)

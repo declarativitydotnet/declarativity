@@ -34,7 +34,7 @@ class BasicQuery < Query
       tuples << (tuple)
     end
 
-    require 'ruby-debug'; debugger if rule == 'evaluator'
+    #require 'ruby-debug'; debugger if rule == 'evaluator'
     @body.each do |oper| 
       tuples = oper.evaluate(tuples)
     end
