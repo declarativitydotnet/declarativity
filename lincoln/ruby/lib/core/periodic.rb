@@ -2,7 +2,7 @@ require 'lib/lang/plan/function'
 
 class Periodic < ObjectTable 
 	
-	class Scheduler < Function
+	class Scheduler < TableFunctionTable
 		def initialize(schedule) 
 			super("periodicScheduler", TypeList.new(Periodic.schema))
 			@schedule = schedule
@@ -56,7 +56,7 @@ class Periodic < ObjectTable
   
 	def initialize(context,schedule)
 		super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
-		# context.catalog.register(Scheduler.new(schedule))
+		context.catalog.register(Scheduler.new(schedule))
 	end
 
 	def insert

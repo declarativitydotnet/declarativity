@@ -84,7 +84,7 @@ class Rule < Clause
           event = term
         end
         if (event.class <= Function)
-          event.event(Predicate.Event::INSERT)
+          event.event = (Predicate::Event::INSERT)
         end
       end
     end
@@ -279,7 +279,7 @@ class Rule < Clause
       if var.class <= Aggregate
         agg = var
         table = context.catalog.table(head.name)
-        if table.class < AggregationTable
+        if table.class <= AggregationTable
           aggregation = table
           if (agg.functionName != aggregation.variable.functionName) ||
             (agg.name != aggregation.variable.name)
@@ -289,6 +289,7 @@ class Rule < Clause
         # Drop the previous table.
         context.catalog.drop(table.name)
 
+#        require 'ruby-debug'; debugger if table.name.name == 'strata'
         aggregate = AggregationTable.new(context, head, table.table_type)
         context.catalog.register(aggregate)
         progtab = context.catalog.table(ProgramTable.table_name)

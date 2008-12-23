@@ -1,4 +1,4 @@
-require 'lib/types/table/table_function'
+require 'lib/types/table/function_table'
 require 'lib/types/basic/tuple_set'
 require 'lib/types/table/aggregation_table'
 require 'lib/types/table/event_table'
@@ -9,7 +9,7 @@ class Driver < Monitor
   Infinity = 1.0/0
   @@threads = []
 
-  class Flusher < TableFunction
+  class Flusher < TableFunctionTable
     class ScheduleUnit 
       def initialize(tuple)
         @time    = tuple.value(Field::TIME)
@@ -101,6 +101,7 @@ class Driver < Monitor
 #        require 'ruby-debug'; debugger
         watch = @context.catalog.table(WatchTable.table_name)
         table = @context.catalog.table(name)
+        require 'ruby-debug'; debugger if table.nil?
         if (insertions.size > 0 || table.class <= AggregationTable)
           insertions = table.insert(insertions, deletions)
 
@@ -146,7 +147,7 @@ class Driver < Monitor
   #  The return value of this table function contains a set of tuples
   #  that represent the output of the query evaluations. 
 
-  class Evaluator < TableFunction
+  class Evaluator < TableFunctionTable
     class Field
       TIME = 0
       PROGRAM = 1

@@ -176,7 +176,7 @@ schedulePeriodic(Id, Period, TTL, T, C, Program) :-
 /* global::schedule the periodic and update its execution count. */
 schedulePeriodic 
 periodic(Id, Period, TTL, Time, Count, Program) :-
-	periodicSchedule(schedulePeriodic(Id, Period, TTL, Time, Count, Program));
+	periodicScheduler(schedulePeriodic(Id, Period, TTL, Time, Count, Program));
 
 
 /*******************************************************************/
