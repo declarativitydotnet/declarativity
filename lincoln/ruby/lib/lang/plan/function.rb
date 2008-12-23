@@ -1,5 +1,6 @@
-require 'lib/lang/plan/term'
-class Function < Term 
+require 'lib/lang/plan/predicate'
+require 'lib/types/operator/function_op.rb'
+class Function < Predicate 
   class Field
     PROGRAM = 0
     RULE = 1
@@ -9,12 +10,13 @@ class Function < Term
   end
 
 	def initialize(function, predicate) 
+#	  require 'ruby-debug'; debugger
+		super(predicate.notin, predicate.name, predicate.event, predicate.arguments)
 		@function = function
-		@predicate = predicate
 	end
 
 	def operator(context, input)
-		return Function.new(context, @function, @predicate);
+		return FunctionOp.new(context, @function, self);
 	end
 
 	def requires
@@ -23,11 +25,11 @@ class Function < Term
 
 	def set(context, program, rule, position)
 		super(context, program, rule, position)
-		context.catalog.table(TableFunction.table_name).force(Tuple.new(program, rule, position, @function.name, self))
+		context.catalog.table(FunctionTable.table_name).force(Tuple.new(program, rule, position, @function.name, self))
 	end
 
 	def to_s 
-		@function.name + "(" + @predicate.to_s + ")"
+		@function.name.to_s + "(" + super + ")"
 	end
 	
 	attr_reader :predicate

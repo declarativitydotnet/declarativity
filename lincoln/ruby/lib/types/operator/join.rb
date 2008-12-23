@@ -43,7 +43,8 @@ class Join < Operator
       else 
         rvalue = @rhs.evaluate(outer)
       end
-      return ((lvalue <=> rvalue) == 0)
+#      require 'ruby-debug'; debugger if lvalue == true
+      return (lvalue == rvalue)
     end
   end
 

@@ -14,6 +14,8 @@ require "lib/lang/plan/arbitrary_expression.rb"
 require "lib/types/function/aggregate_fn.rb"
 require "lib/lang/plan/watch_clause.rb"
 require "lib/lang/parse/procedural.rb"
+require 'lib/core/driver'
+require 'lib/lang/parse/schema.rb'
 
 require 'benchmark'
 
@@ -200,24 +202,36 @@ class OverlogPlanner
         # wrap pred in TableFunction if there is one
  #       require "ruby-debug"; debugger
         if !tfuncIndx.nil?
-          tf = tfuncIndx.lookup(Tuple.new(nil, pred.value("predicateid"))) 
-          # well, maybe the index lookup won't find the matching TF, but this
-          # inner loop will find it!
-          @tfuncs.tuples.each do |t|
-            if t.value("nested_predicate_id") == pred.value("predicateid")
-              print "HIT it!\n"
-            end
-          end
+          # Debug code: when the index lookup won't find the matching TF, 
+          # this loop will find it!
+          # hit = nil
+          #  @tfuncs.tuples.each do |t|
+          #    if t.value("nested_predicate_id") == pred.value("predicateid")
+          #      print "HIT it!  Tup: #{t.to_s}\n"
+          #      hit = 1
+          #    end
+          #  end
+          #  require 'ruby-debug'; debugger if !hit.nil?
+           tf = tfuncIndx.lookup(Tuple.new(nil, nil, nil, pred.value("predicateid"))) 
           lookups << pred.value("predicateid")
           if tf.size > 0
-            require 'ruby-debug'; debugger
-            puts "YAYYYYYYYY"
+            # this predicate should be wrapped in a TableFunction
+            raise "more than one TupleFunction Term matches a Predicate" if tf.size > 1
+#            require 'ruby-debug'; debugger
+            func_tup = tf.tups[0]
+#            puts "YAYYYYYYYY"
+            func_name = func_tup.value("function")
+            thefunc_table = @runtime.catalog.table(TableName.new(Table::GLOBALSCOPE,func_name))
+            raise "non-existent TableFunction #{func_name}" if thefunc_table.nil?
+            newfunc = Function.new(thefunc_table, thispred)
+            newfunc.set(@runtime, pred.value("program_name"), pred.value("rulename"), pred.value("pred_pos"))
+            thispred = newfunc
           end
         end
         
 				ret << proj_cat(pred,thispred,"_term_obj",method(:project_term),thispred.position)
 			end
-			puts "lookups: #{lookups.sort.map {|k| k.to_s + " "}}"
+#			puts "lookups: #{lookups.sort.map {|k| k.to_s + " "}}"
 			return ret
 		end
 		
@@ -466,7 +480,8 @@ class OverlogPlanner
 				#print "tn=#{tn}\n" 
 				tableObj = RefTable.new(@runtime, TableName.new(scope,tname),indxthing,typething)
 			end		
-			@program.definition(tableObj)		
+			@program.definition(tableObj)	
+#			require 'ruby-debug'; debugger if tableObj.name.name == 'strata'	
 			@runtime.catalog.register(tableObj)
 	
 			if (!table.value("watch").nil?) then

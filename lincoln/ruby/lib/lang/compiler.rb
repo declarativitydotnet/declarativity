@@ -77,6 +77,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 
   def Compiler.init_bootstrap(context)
     BootstrapCatalogTable.classes.each {|c| Compiler.register_class(context, c.name)}
+    GlobalCatalogTable.classes.each {|c| Compiler.register_class(context, c.name)}
   end
   
   

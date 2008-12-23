@@ -1,5 +1,6 @@
 class AggregationTable < Table	
   def initialize(context, predicate, the_type)
+    raise ("Aggregation table key error") if pred_key(predicate).nil?
     super(predicate.name, the_type, pred_key(predicate), pred_types(predicate))
     @baseTuples = Hash.new
     @aggregateTuples = TupleSet.new(name)
@@ -27,7 +28,7 @@ class AggregationTable < Table
   def pred_key(predicate)
     key = []
     predicate.each do |arg|
-      unless arg.class < Aggregate
+      unless arg.class <= Aggregate
         key << arg.position
       end
     end
@@ -91,9 +92,9 @@ class AggregationTable < Table
   end
 
   def delete(deletions)
-    require 'ruby-debug'; debugger
-    if table_type = Table::TableType::EVENT
-      raise ("Aggregation table " + name + " is an event table!")
+ #   require 'ruby-debug'; debugger
+    if table_type == Table::TableType::EVENT
+      raise ("Aggregation table " + name.to_s + " is an event table!")
 		end
 		
 		deletions.each do |tuple|

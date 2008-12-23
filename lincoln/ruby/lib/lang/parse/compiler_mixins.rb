@@ -96,13 +96,13 @@ module WatchTableMixin
 end
 
 module FunctionTableMixin
-  def insert(tuple)
-		object = tuple.value(Field::OBJECT)
+  def insert_tup(tuple)
+		object = tuple.value(field("OBJECT"))
 		raise UpdateException, "Predicate object nil in TableFunction" if object.nil?
 		
-		object.program   = tuple.value(Field::PROGRAM)
-		object.rule      = tuple.value(Field::RULE)
-		object.position  = tuple.value(Field::POSITION)
+		object.program   = tuple.value(field("PROGRAM"))
+		object.rule      = tuple.value(field("RULE"))
+		object.position  = tuple.value(field("POSITION"))
 		return super(tuple)
 	end
 end

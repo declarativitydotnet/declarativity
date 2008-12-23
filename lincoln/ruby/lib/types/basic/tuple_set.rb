@@ -89,6 +89,11 @@ class UnsortedTupleSet
     ts.each {|t| self << t} unless ts.nil?
     return self
   end
+  
+  def removeAll(ts)
+    ts.each {|t| delete(t)} unless ts.nil?
+    return self
+  end
 
   def ==(o)
     if o.class == TupleSet

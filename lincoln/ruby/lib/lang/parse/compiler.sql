@@ -142,4 +142,3 @@ table selection (
   +position Integer,
   object String
 )
-

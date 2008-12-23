@@ -28,6 +28,10 @@ class Predicate < Term
 	attr_reader :schema, :notin, :name, :arguments
 	attr_accessor :event
 	
+	def event=(e)
+	  @event = e
+  end
+  
 	def locationVariable
 		self.each do |argument|
 			return argument if argument.class <= Variable and argument.loc

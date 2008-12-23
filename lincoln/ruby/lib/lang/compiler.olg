@@ -40,7 +40,7 @@ watch(checkStrata, i);
 /* Determine R/G graph dependencies. */
 dependency(ProgramName, Hname, Bname) :-
 	config(ProgramName, Object),
-	rule(ProgramName, Rule, _),
+	rule(ProgramName, Rule, X, Y, Z),
 	predicate(ProgramName, Rule, 0, _, Head), /* Position == 0 */
 	predicate(ProgramName, Rule, Pos, _, Body), 
 	Hname := Head.name(),
@@ -56,12 +56,14 @@ dependency(ProgramName, Ancestor, Child) :-
 	
 /* Initialize all predicates to stratum 0. */
 priority_init
-runtime::priority(ProgramName, Pred.name(), 0) :-
+runtime::priority(ProgramName, Name, 0) :-
 	config(ProgramName, Object),
-	rule(ProgramName, Rule, _),
+	rule(ProgramName, Rule, X, Y, Z),
 	predicate(ProgramName, Rule, Pos, Event, Pred),
-	ProgramName != "compiler";
+	ProgramName != "compiler",
+	Name := Pred.name();
 	
+priority2
 runtime::priority(ProgramName, TableName, 0) :-
 	config(ProgramName, Object),
 	fact(ProgramName, TableName, Tuple),
@@ -69,6 +71,7 @@ runtime::priority(ProgramName, TableName, 0) :-
 
 
 /* Bubble up predicates in the stratum chain. */
+priorityUpJoin
 priorityUpdate(ProgramName, Head, max<Priority>) :-
 	runtime::priority(ProgramName, Head, HPriority),
 	runtime::priority(ProgramName, Body, BPriority),
@@ -77,6 +80,7 @@ priorityUpdate(ProgramName, Head, max<Priority>) :-
 	HPriority <= BPriority,
 	Priority := BPriority + 1;
 		
+priorityUp
 runtime::priority(ProgramName, Pred, Priority) :-
 	priorityUpdate(ProgramName, Pred, Priority);
 	
