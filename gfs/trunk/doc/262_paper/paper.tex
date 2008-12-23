@@ -435,12 +435,12 @@ be specified in Overlog, not hardcoded in Java. We plan to rectify
 this shortcoming in the near future.
 
 \subsection{Fault Tolerance}
-In the target environment of GFS deployments, namely large clusters of
-commodity machines, ``component failures are the norm rather than the
-exception''~\cite{gfs}.  In this section we explore several of the
-failure modes of the system, and discuss how our integration of a
-declaratively-specified Paxos implementation addresses shortcomings in
-the original GFS and HDFS design.
+Both BoomFS and GFS are intended to be deployed on large clusters of
+commodity machines, in which ``component failures are the norm rather
+than the exception''~\cite{gfs}.  In this section we explore several
+of the failure modes of the system, and discuss how our integration of
+a declaratively-specified Paxos implementation addresses shortcomings
+in the original GFS and HDFS design.
 
 \subsubsection{Data Node Failure}
 As long as the replication factor of a file is greater than one, the
@@ -563,10 +563,10 @@ present an evaluation of how successful we were in achieving this
 goal.
 
 In the first section, we compare the cost of metadata operations
-between our prototype and HDFS, the Hadoop open source implementation
-of GFS.  Following this, we simulate a MapReduce sort benchmark,
-comparing read and write performance between BoomFS and HDFS as we scale
-the number of concurrent clients and data nodes together.
+between our prototype and HDFS.  Following this, we simulate a
+MapReduce sort benchmark, comparing read and write performance between
+BoomFS and HDFS as we scale the number of concurrent clients and data
+nodes together.
 
 \subsection{Test Environment}
 GFS is a proprietary file system: we can only speculate about its
