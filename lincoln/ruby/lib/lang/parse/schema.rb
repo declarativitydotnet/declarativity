@@ -354,6 +354,54 @@ class MyAssignmentTable < CompilerCatalogTable
   end
 end
 
+class MyClauseTable < CompilerCatalogTable
+  include MyClauseTableMixin if defined? MyClauseTableMixin
+  @@PRIMARY_KEY = Key.new(0)
+  class Field
+    CLAUSEID=0
+    CLAUSE_TYPE=1
+  end
+  @@SCHEMA = [Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myClause")
+  @@classes[self] = 1
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? MyClauseTableMixin and MyClauseTableMixin.methods.include? 'initialize_mixin'
+       initialize_mixin(context) 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    COMPILERSCOPE
+
+  end
+  def MyClauseTable.pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def MyClauseTable.schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    clauseid = Variable.new("clauseid",Integer, 0,nil)
+    clause_type = Variable.new("clause_type",String, 1,nil)
+    return Schema.new("MyClause",[clauseid,clause_type])
+  end
+
+  def MyClauseTable.table_name
+    @@TABLENAME
+  end
+end
+
 class MyColumnTable < CompilerCatalogTable
   include MyColumnTableMixin if defined? MyColumnTableMixin
   @@PRIMARY_KEY = Key.new(0)
@@ -412,11 +460,12 @@ class MyExpressionTable < CompilerCatalogTable
   class Field
     EXPRESSIONID=0
     TERMID=1
-    ARG_POS=2
-    EXPR_POS=3
-    EXPR_TEXT=4
+    CLAUSEID=2
+    ARG_POS=3
+    EXPR_POS=4
+    EXPR_TEXT=5
   end
-  @@SCHEMA = [Integer,Integer,Integer,Integer,String]
+  @@SCHEMA = [Integer,Integer,Integer,Integer,Integer,String]
   @@TABLENAME = TableName.new(COMPILERSCOPE, "myExpression")
   @@classes[self] = 1
   def initialize(context)
@@ -449,10 +498,11 @@ class MyExpressionTable < CompilerCatalogTable
   def schema_of
     expressionid = Variable.new("expressionid",Integer, 0,nil)
     termid = Variable.new("termid",Integer, 1,nil)
-    arg_pos = Variable.new("arg_pos",Integer, 2,nil)
-    expr_pos = Variable.new("expr_pos",Integer, 3,nil)
-    expr_text = Variable.new("expr_text",String, 4,nil)
-    return Schema.new("MyExpression",[expressionid,termid,arg_pos,expr_pos,expr_text])
+    clauseid = Variable.new("clauseid",Integer, 2,nil)
+    arg_pos = Variable.new("arg_pos",Integer, 3,nil)
+    expr_pos = Variable.new("expr_pos",Integer, 4,nil)
+    expr_text = Variable.new("expr_text",String, 5,nil)
+    return Schema.new("MyExpression",[expressionid,termid,clauseid,arg_pos,expr_pos,expr_text])
   end
 
   def MyExpressionTable.table_name
@@ -465,10 +515,12 @@ class MyFactTable < CompilerCatalogTable
   @@PRIMARY_KEY = Key.new(0)
   class Field
     FACTID=0
-    TERMID=1
-    TABLENAME=2
+    PROGRAMID=1
+    CLAUSEID=2
+    TABLENAME=3
+    TERM_TEXT=4
   end
-  @@SCHEMA = [Integer,Integer,String]
+  @@SCHEMA = [Integer,Integer,Integer,String,String]
   @@TABLENAME = TableName.new(COMPILERSCOPE, "myFact")
   @@classes[self] = 1
   def initialize(context)
@@ -500,9 +552,11 @@ class MyFactTable < CompilerCatalogTable
   end
   def schema_of
     factid = Variable.new("factid",Integer, 0,nil)
-    termid = Variable.new("termid",Integer, 1,nil)
-    tablename = Variable.new("tablename",String, 2,nil)
-    return Schema.new("MyFact",[factid,termid,tablename])
+    programid = Variable.new("programid",Integer, 1,nil)
+    clauseid = Variable.new("clauseid",Integer, 2,nil)
+    tablename = Variable.new("tablename",String, 3,nil)
+    term_text = Variable.new("term_text",String, 4,nil)
+    return Schema.new("MyFact",[factid,programid,clauseid,tablename,term_text])
   end
 
   def MyFactTable.table_name
@@ -556,6 +610,56 @@ class MyIndexTable < CompilerCatalogTable
   end
 
   def MyIndexTable.table_name
+    @@TABLENAME
+  end
+end
+
+class MyMethodCallTable < CompilerCatalogTable
+  include MyMethodCallTableMixin if defined? MyMethodCallTableMixin
+  @@PRIMARY_KEY = Key.new(0)
+  class Field
+    MCALLID=0
+    EXPRESSIONID=1
+    MTEXT=2
+  end
+  @@SCHEMA = [Integer,Integer,String]
+  @@TABLENAME = TableName.new(COMPILERSCOPE, "myMethodCall")
+  @@classes[self] = 1
+  def initialize(context)
+    super(context, @@TABLENAME, @@PRIMARY_KEY,  TypeList.new(@@SCHEMA))
+    if defined? MyMethodCallTableMixin and MyMethodCallTableMixin.methods.include? 'initialize_mixin'
+       initialize_mixin(context) 
+    end
+  end
+
+  def field(name)
+
+    eval('Field::'+name)
+
+  end
+  def scope
+
+    COMPILERSCOPE
+
+  end
+  def MyMethodCallTable.pkey
+
+    @@PRIMARY_KEY
+
+  end
+  def MyMethodCallTable.schema
+
+    @@SCHEMA
+
+  end
+  def schema_of
+    mcallid = Variable.new("mcallid",Integer, 0,nil)
+    expressionid = Variable.new("expressionid",Integer, 1,nil)
+    mtext = Variable.new("mtext",String, 2,nil)
+    return Schema.new("MyMethodCall",[mcallid,expressionid,mtext])
+  end
+
+  def MyMethodCallTable.table_name
     @@TABLENAME
   end
 end
@@ -728,11 +832,12 @@ class MyRuleTable < CompilerCatalogTable
   class Field
     RULEID=0
     PROGRAMID=1
-    RULENAME=2
-    PUBLIC=3
-    DELETE=4
+    CLAUSEID=2
+    RULENAME=3
+    PUBLIC=4
+    DELETE=5
   end
-  @@SCHEMA = [Integer,Integer,String,Integer,Integer]
+  @@SCHEMA = [Integer,Integer,Integer,String,Integer,Integer]
   @@TABLENAME = TableName.new(COMPILERSCOPE, "myRule")
   @@classes[self] = 1
   def initialize(context)
@@ -765,10 +870,11 @@ class MyRuleTable < CompilerCatalogTable
   def schema_of
     ruleid = Variable.new("ruleid",Integer, 0,nil)
     programid = Variable.new("programid",Integer, 1,nil)
-    rulename = Variable.new("rulename",String, 2,nil)
-    public = Variable.new("public",Integer, 3,nil)
-    delete = Variable.new("delete",Integer, 4,nil)
-    return Schema.new("MyRule",[ruleid,programid,rulename,public,delete])
+    clauseid = Variable.new("clauseid",Integer, 2,nil)
+    rulename = Variable.new("rulename",String, 3,nil)
+    public = Variable.new("public",Integer, 4,nil)
+    delete = Variable.new("delete",Integer, 5,nil)
+    return Schema.new("MyRule",[ruleid,programid,clauseid,rulename,public,delete])
   end
 
   def MyRuleTable.table_name
@@ -935,7 +1041,7 @@ class MyTermTable < CompilerCatalogTable
   @@PRIMARY_KEY = Key.new(0)
   class Field
     TERMID=0
-    RULEID=1
+    CLAUSEID=1
     TERM_POS=2
     TERM_TXT=3
   end
@@ -971,10 +1077,10 @@ class MyTermTable < CompilerCatalogTable
   end
   def schema_of
     termid = Variable.new("termid",Integer, 0,nil)
-    ruleid = Variable.new("ruleid",Integer, 1,nil)
+    clauseid = Variable.new("clauseid",Integer, 1,nil)
     term_pos = Variable.new("term_pos",Integer, 2,nil)
     term_txt = Variable.new("term_txt",String, 3,nil)
-    return Schema.new("MyTerm",[termid,ruleid,term_pos,term_txt])
+    return Schema.new("MyTerm",[termid,clauseid,term_pos,term_txt])
   end
 
   def MyTermTable.table_name

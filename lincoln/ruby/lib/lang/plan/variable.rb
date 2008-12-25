@@ -19,7 +19,7 @@ class Variable < Expression
   end
   
   attr_reader :name
-  attr_accessor :expr_type, :loc
+  attr_accessor :expr_type, :loc, :position
 
   def hash
     @name.hash

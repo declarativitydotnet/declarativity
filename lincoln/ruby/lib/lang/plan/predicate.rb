@@ -92,6 +92,7 @@ class Predicate < Term
 		# Determine the join and lookup keys.
 		lookupKey = Key.new
 		indexKey  = Key.new
+#		require 'ruby-debug'; debugger if !input.name.nil? and input.name.name == 'clock'
 		@schema.variables.each do |var|
 			if (input.contains(var)) then
 				indexKey << var.position
@@ -106,7 +107,6 @@ class Predicate < Term
 		table = context.catalog.table(@name)
 		index = nil
 		if (indexKey.size > 0) then
-#      require 'ruby-debug'; debugger if !input.name.nil? and input.name.name == 'strata'
 			if (table.primary.key == indexKey) then
 				index = table.primary
 			elsif (table.secondary.has_key?(indexKey))

@@ -57,6 +57,7 @@ class TreeWalker
 				sem = (defined? p.text_value) ? p.text_value : p.to_s
 				h.semantic(sem,p)
 				if (@verbose == 'v') then  
+#				  require 'ruby-debug'; debugger if sem =~ /TableName\./
 					print k[0]+ ": ("+sem+")\n"
 				end 
 				#print "INTER: #{k[0]}\n"	
@@ -75,6 +76,7 @@ class TreeWalker
 				sem = (defined? p.text_value) ? p.text_value : p.to_s
 				k.semantic(sem,p)
 				if (@verbose == 'v') then  
+          # require 'ruby-debug'; debugger if sem =~ /TableName\./
 					print m.to_s+ ": ("+sem+")\n"
 				end 
 				#print "INTER: #{m.to_s}\n"

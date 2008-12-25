@@ -7,6 +7,7 @@ class BasicQuery < Query
     require 'ruby-debug'; debugger if body.nil?
     @body        = body
     super(context, program, rule, isPublic, isDelete, event, head)
+    @context = context
   end
 
   def to_s
@@ -29,13 +30,16 @@ class BasicQuery < Query
 
     tuples = TupleSet.new(@input.name)
     inval.each do |tuple| 
+      require 'ruby-debug'; debugger if tuple.size != @input.schema.size
       tuple = tuple.clone
       tuple.schema = @input.schema.clone
       tuples << (tuple)
     end
 
-    require 'ruby-debug'; debugger if rule == 'q2_rule'
+#    require 'ruby-debug'; debugger if rule == 'q1_rule'
     @body.each do |oper| 
+      # PUT IN SOME CHECK HERE THAT OPER SCHEMA VARIABLES NOT REPLICATED!
+      # oper.schema.variables.each do |v|
       tuples = oper.evaluate(tuples)
     end
  #   require 'ruby-debug'; debugger if output.name.to_s == 'runtime::insertionQueue' and tuples.size > 0

@@ -383,9 +383,10 @@ module Overlog
   end
 
   module Fact1
-				def Fact
-					return self.ptablename.text_value
-				end
+    				def Fact
+    #					return self.ptablename.text_value
+              return self
+    				end
   end
 
   def _nt_Fact
@@ -1958,10 +1959,84 @@ module Overlog
     return r0
   end
 
+  module SubexpressionList0
+    def Comma
+      elements[0]
+    end
+
+    def expression
+      elements[1]
+    end
+  end
+
+  module SubexpressionList1
+    def expression
+      elements[0]
+    end
+
+  end
+
+  module SubexpressionList2
+	  def value
+	    return
+    end
+  end
+
+  def _nt_subexpressionList
+    start_index = index
+    if node_cache[:subexpressionList].has_key?(index)
+      cached = node_cache[:subexpressionList][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0, s0 = index, []
+    r1 = _nt_expression
+    s0 << r1
+    if r1
+      s2, i2 = [], index
+      loop do
+        i3, s3 = index, []
+        r4 = _nt_Comma
+        s3 << r4
+        if r4
+          r5 = _nt_expression
+          s3 << r5
+        end
+        if s3.last
+          r3 = (SyntaxNode).new(input, i3...index, s3)
+          r3.extend(SubexpressionList0)
+        else
+          self.index = i3
+          r3 = nil
+        end
+        if r3
+          s2 << r3
+        else
+          break
+        end
+      end
+      r2 = SyntaxNode.new(input, i2...index, s2)
+      s0 << r2
+    end
+    if s0.last
+      r0 = (SyntaxNode).new(input, i0...index, s0)
+      r0.extend(SubexpressionList1)
+      r0.extend(SubexpressionList2)
+    else
+      self.index = i0
+      r0 = nil
+    end
+
+    node_cache[:subexpressionList][start_index] = r0
+
+    return r0
+  end
+
   module UExpression0
-			#@def uExpression
-			#	return self
-			#end
+			def uExpression
+				return self
+			end
   end
 
   def _nt_uExpression
@@ -3486,6 +3561,12 @@ module Overlog
 
   end
 
+  module Methodcall1
+    def methodcall
+      return self
+    end
+  end
+
   def _nt_methodcall
     start_index = index
     if node_cache[:methodcall].has_key?(index)
@@ -3510,7 +3591,7 @@ module Overlog
         r3 = _nt_name
         s0 << r3
         if r3
-          r5 = _nt_arguments
+          r5 = _nt_subarguments
           if r5
             r4 = r5
           else
@@ -3523,6 +3604,7 @@ module Overlog
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
       r0.extend(Methodcall0)
+      r0.extend(Methodcall1)
     else
       self.index = i0
       r0 = nil
@@ -3598,16 +3680,6 @@ module Overlog
   end
 
   module Primaryexpression6
-    def NewClass
-      elements[0]
-    end
-
-    def Spacing
-      elements[1]
-    end
-  end
-
-  module Primaryexpression7
     def Referencename
       elements[0]
     end
@@ -3617,7 +3689,7 @@ module Overlog
     end
   end
 
-  module Primaryexpression8
+  module Primaryexpression7
 					#def primaryexpression
 					#	return self
 					#end
@@ -3648,7 +3720,7 @@ module Overlog
     end
     if r1
       r0 = r1
-      r0.extend(Primaryexpression8)
+      r0.extend(Primaryexpression7)
     else
       i4, s4 = index, []
       r5 = _nt_Aggregate
@@ -3666,7 +3738,7 @@ module Overlog
       end
       if r4
         r0 = r4
-        r0.extend(Primaryexpression8)
+        r0.extend(Primaryexpression7)
       else
         i7, s7 = index, []
         r8 = _nt_opar
@@ -3688,7 +3760,7 @@ module Overlog
         end
         if r7
           r0 = r7
-          r0.extend(Primaryexpression8)
+          r0.extend(Primaryexpression7)
         else
           i11, s11 = index, []
           r12 = _nt_Constant
@@ -3706,7 +3778,7 @@ module Overlog
           end
           if r11
             r0 = r11
-            r0.extend(Primaryexpression8)
+            r0.extend(Primaryexpression7)
           else
             i14, s14 = index, []
             r15 = _nt_Alias
@@ -3724,7 +3796,7 @@ module Overlog
             end
             if r14
               r0 = r14
-              r0.extend(Primaryexpression8)
+              r0.extend(Primaryexpression7)
             else
               i17, s17 = index, []
               r18 = _nt_variable
@@ -3742,10 +3814,10 @@ module Overlog
               end
               if r17
                 r0 = r17
-                r0.extend(Primaryexpression8)
+                r0.extend(Primaryexpression7)
               else
                 i20, s20 = index, []
-                r21 = _nt_NewClass
+                r21 = _nt_Referencename
                 s20 << r21
                 if r21
                   r22 = _nt_Spacing
@@ -3760,29 +3832,10 @@ module Overlog
                 end
                 if r20
                   r0 = r20
-                  r0.extend(Primaryexpression8)
+                  r0.extend(Primaryexpression7)
                 else
-                  i23, s23 = index, []
-                  r24 = _nt_Referencename
-                  s23 << r24
-                  if r24
-                    r25 = _nt_Spacing
-                    s23 << r25
-                  end
-                  if s23.last
-                    r23 = (SyntaxNode).new(input, i23...index, s23)
-                    r23.extend(Primaryexpression7)
-                  else
-                    self.index = i23
-                    r23 = nil
-                  end
-                  if r23
-                    r0 = r23
-                    r0.extend(Primaryexpression8)
-                  else
-                    self.index = i0
-                    r0 = nil
-                  end
+                  self.index = i0
+                  r0 = nil
                 end
               end
             end
@@ -3886,11 +3939,101 @@ module Overlog
     return r0
   end
 
+  module Subarguments0
+    def opar
+      elements[0]
+    end
+
+    def cpar
+      elements[2]
+    end
+  end
+
+  module Subarguments1
+    def opar
+      elements[0]
+    end
+
+    def cpar
+      elements[1]
+    end
+  end
+
+  module Subarguments2
+		       def args
+		         return subexpressionList
+	         end
+  end
+
+  def _nt_subarguments
+    start_index = index
+    if node_cache[:subarguments].has_key?(index)
+      cached = node_cache[:subarguments][index]
+      @index = cached.interval.end if cached
+      return cached
+    end
+
+    i0 = index
+    i1, s1 = index, []
+    r2 = _nt_opar
+    s1 << r2
+    if r2
+      r3 = _nt_subexpressionList
+      s1 << r3
+      if r3
+        r4 = _nt_cpar
+        s1 << r4
+      end
+    end
+    if s1.last
+      r1 = (SyntaxNode).new(input, i1...index, s1)
+      r1.extend(Subarguments0)
+    else
+      self.index = i1
+      r1 = nil
+    end
+    if r1
+      r0 = r1
+    else
+      i5, s5 = index, []
+      r6 = _nt_opar
+      s5 << r6
+      if r6
+        r7 = _nt_cpar
+        s5 << r7
+      end
+      if s5.last
+        r5 = (SyntaxNode).new(input, i5...index, s5)
+        r5.extend(Subarguments1)
+        r5.extend(Subarguments2)
+      else
+        self.index = i5
+        r5 = nil
+      end
+      if r5
+        r0 = r5
+      else
+        self.index = i0
+        r0 = nil
+      end
+    end
+
+    node_cache[:subarguments][start_index] = r0
+
+    return r0
+  end
+
   module NewClass0
     def Typename
       elements[0]
     end
 
+  end
+
+  module NewClass1
+		    def name
+		      'new'
+	      end
   end
 
   def _nt_NewClass
@@ -3913,10 +4056,20 @@ module Overlog
         r2 = nil
       end
       s0 << r2
+      if r2
+        r4 = _nt_arguments
+        if r4
+          r3 = r4
+        else
+          r3 = SyntaxNode.new(input, index...index)
+        end
+        s0 << r3
+      end
     end
     if s0.last
       r0 = (SyntaxNode).new(input, i0...index, s0)
       r0.extend(NewClass0)
+      r0.extend(NewClass1)
     else
       self.index = i0
       r0 = nil

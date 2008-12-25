@@ -14,8 +14,9 @@ class IndexJoin < Join
 	def evaluate(tuples)
 		result = TupleSet.new("ij_out", nil)
 		#puts tuples.name
+    
 		tuples.each do |outer|
-
+  		require 'ruby-debug'; debugger if outer.schema.name == 'clock'
 			if tuples.name.to_s.eql?("global::MyPrimaryExpression") then
 				#require 'ruby-debug'; debugger
 			end
@@ -24,6 +25,7 @@ class IndexJoin < Join
 				#print "TEST #{inner}\n"
 				if validate(outer, inner) then
 					#puts "found a tup for " + @index.table.name.name.to_s
+#require 'ruby-debug'; debugger
 					inner.schema = @predicate.schema.clone
 					jointup = outer.join(inner)
 					result << jointup unless jointup.nil?

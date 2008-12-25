@@ -194,6 +194,8 @@ class TestParse < Test::Unit::TestCase
 		@assigns = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myAssignment"))
     # @tfuncs = MyTableFunctionTable.new(r)
 		@tfuncs = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myTableFunction"))
+		@clauses = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myClause"))
+		@mcalls = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myMethodCall"))
 		return r
 	end
 	
@@ -217,7 +219,7 @@ class TestParse < Test::Unit::TestCase
 
 	def prep(utterance)
 		r = rei
-		compiler = OverlogCompiler.new(r, @rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs)
+		compiler = OverlogCompiler.new(r, @rules,@terms,@preds,@pexpr,@expr,@facts,@tables,@columns,@indices,@programs,@assigns,@selects,@tfuncs,@clauses,@mcalls)
 		compiler.verbose = 'y'
 		compiler.parse(utterance)
 		compiler.analyze
