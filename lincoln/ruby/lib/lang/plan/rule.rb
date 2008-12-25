@@ -251,6 +251,8 @@ class Rule < Clause
       if !(term == event) 
         oper = term.operator(context, schema)
         operators << oper
+ #       require 'ruby-debug'; debugger if event.name.name == "clock"
+    		
         schema = oper.schema
       end
     end

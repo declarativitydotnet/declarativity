@@ -41,6 +41,7 @@ end
 # this one makes a little sense
 
 def otabinsert(otab,*set)
+  raise "non-existent otab!" if otab.nil?
 	tup = Tuple.new(*set)
 	tup.schema = otab.schema_of
 

@@ -56,7 +56,8 @@ include Ddl
 		  ptablename opar expressionList cpar
 			{
 				def Fact
-					return self.ptablename.text_value
+#					return self.ptablename.text_value
+          return self
 				end
 			}
 	end
@@ -226,12 +227,21 @@ include Ddl
 			end
 		}
 	end
+	
+	rule subexpressionList #like expressionList, but on expressions not uExpressions
+	  expression (Comma expression)*
+  	{
+  	  def value
+  	    return
+      end
+  	}
+  end
 	rule uExpression
 		expression
 		{
-			#@def uExpression
-			#	return self
-			#end
+			def uExpression
+				return self
+			end
 		}
 	end	
    	rule IfElseexpression
@@ -330,14 +340,19 @@ include Ddl
 		    methodcall / primaryexpression /  Postfixexpression arguments /     Postfixexpression '[' Constant ']' ArrayIndex  /     Postfixexpression '++' Increment  /     Postfixexpression '--' Decrement  #/     primaryexpression   
 	end
 	rule methodcall
-		primaryexpression '.' name arguments?
+		primaryexpression '.' name subarguments?
 		##name '.' name arguments?
+    {
+      def methodcall
+        return self
+      end
+    }
 	end	
   	rule primaryexpression
 		    #(Location Spacing / Aggregate Spacing / Constant Spacing / Alias Spacing  /     variable Spacing  /     NewClass Spacing  /  Referencename Spacing  # / Constant Spacing  
 		#	/     opar expression cpar )
 
-		    (Location Spacing / Aggregate Spacing / opar expression cpar / Constant Spacing / Alias Spacing  /     variable Spacing  /     NewClass Spacing  /  Referencename Spacing)
+		    (Location Spacing / Aggregate Spacing / opar expression cpar / Constant Spacing / Alias Spacing  /     variable Spacing  /       Referencename Spacing)
 				{
 					#def primaryexpression
 					#	return self
@@ -357,9 +372,22 @@ include Ddl
 					return expressionList
 				end
 			}
-	end
+  	end
+		rule subarguments
+		     opar (subexpressionList) cpar / opar cpar
+		     {
+		       def args
+		         return subexpressionList
+	         end
+		     }
+	  end
   	rule NewClass
-		  Typename  '.new' 
+		  Typename  '.new' arguments?
+		  {
+		    def name
+		      'new'
+	      end
+      }
 	end
   	rule Referencename
 		  name   

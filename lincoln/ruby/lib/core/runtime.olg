@@ -208,14 +208,12 @@ config(Time, Program, Object) :-
 	global::clock(Location, Time),
 	Object.plan();
 		
-		
-watch(runnable, d);
-
 compileConfig 
 global::schedule(Time, "compiler", TupleName, Tuples, N) :-
 	config(Time, Program, Object),
-	TableName := TableName.new("compiler", "config"),
+	/* TName used to be TableName and that produced a silent bug on the name conflict */
+	TName := TableName.new("compiler", "config"),
 	Obj := Object.tuple(),
-	Tuples := TupleSet.new(TableName, Obj),
+	Tuples := TupleSet.new(TName, Obj),
 	TupleName := Tuples.name(),
 	N := nil;

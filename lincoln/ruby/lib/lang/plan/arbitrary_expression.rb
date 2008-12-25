@@ -6,6 +6,7 @@ class ArbitraryExpression < Expression
     @variables = Array.new
     # this whole bit is horribly hacktastic
     sides = expr.split(".")
+#    require 'ruby-debug'; debugger if expr == "TableName.new(\"compiler\", \"config\")"
     case sides.size 
     when 0
     when 1 
@@ -54,7 +55,7 @@ class ArbitraryExpression < Expression
         val = "\"" + s + "\""
       end
 #      print "WRAP #{s} => #{val}"
-      return 
+      return val
     elsif s.class <= TableName
       val = "\"" + s.to_s + "\""
     else
@@ -68,7 +69,8 @@ class ArbitraryExpression < Expression
      #print "EXPR #{@expr}\n"
       subexpr = ''
       unless @method.nil? 
-        ##require 'ruby-debug'; debugger
+        require 'ruby-debug'; debugger if !defined? @variables[0].name
+        require 'ruby-debug'; debugger if !defined? t.schema
         if t.schema.contains(@variables[0])
          value = t.value(@variables[0].name)
         else
@@ -109,6 +111,7 @@ class ArbitraryExpression < Expression
             # workaround
             ##subexpr = subexpr + "v"+v.name + " = \""+value.to_s+"\"\n"
 #            require 'ruby-debug'; debugger unless value.class == TrueClass
+            require 'ruby-debug'; debugger if value.to_s == ''
             subexpr = subexpr + "v"+v.name + " = "+value.to_s+"\n"
           elsif defined?(@variables[i+1]) and @variables[i+1].class == Value
             # unbound variables had better belong to assignments
@@ -127,11 +130,12 @@ class ArbitraryExpression < Expression
       subexpr = subexpr + @expr
       begin
 #        require 'ruby-debug'; debugger
- #       print "EVAL: #{subexpr}\n"
+#        print "EVAL: #{subexpr}\n"
         retval = eval(subexpr)
       rescue => detail
         puts "failed to eval \'#{subexpr}\'"
         puts detail.backtrace.join("\n")
+        require 'ruby-debug'; debugger
       end
       return retval
     end

@@ -1,6 +1,6 @@
 table MyTerm (
 	+termid Integer,
-	ruleid Integer,
+  clauseid Integer,
 	term_pos Integer,
 	term_txt String
 )
@@ -19,6 +19,12 @@ table MyTableFunction (
 	termid Integer,
 	function String,
 	nested_predicate_id Integer
+)
+
+table MyMethodCall(
+  +mcallid Integer,
+  expressionid Integer,
+  mtext String
 )
 
 table MyPrimaryExpression (
@@ -48,16 +54,33 @@ table MySelection (
 table MyExpression (
 	+expressionid Integer,
 	termid Integer,
+	clauseid Integer,
 	arg_pos Integer,
 	expr_pos Integer,
 	expr_text String
 )
 
+table MyClause (
+  +clauseid Integer,
+  clause_type String
+)
+
 table MyFact (
 	+factid Integer,
-	termid Integer,
-	tablename String
+	programid Integer,
+	clauseid Integer,
+	tablename String,
+	term_text String
 )
+
+table MyRule (
+	+ruleid Integer,
+	programid Integer,
+	clauseid Integer,
+	rulename String,
+	public Integer,
+	delete Integer
+) 
 
 table MyTable (
   +tableid Integer,
@@ -83,14 +106,6 @@ table MyProgram (
 	owner String,
 	program_name String
 )
-
-table MyRule (
-	+ruleid Integer,
-	programid Integer,
-	rulename String,
-	public Integer,
-	delete Integer
-) 
 
 table assignment (
 	+program String,

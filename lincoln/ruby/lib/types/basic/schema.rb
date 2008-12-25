@@ -36,10 +36,12 @@ class Schema
   end
 
   def <<(v)
+    v.position = variables.size
     @variable_set[v.name] = v 
   end
 
   def contains(v)
+    require 'ruby-debug'; debugger if !defined? v.name
     not @variable_set[v.name].nil?
   end
 

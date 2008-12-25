@@ -24,7 +24,7 @@ class OverlogCompiler
   # local modules
   class VisitGeneric < TreeWalker::Handler
     def initialize(runtime)
-      @@positions["_Universal"] = @@positions["_Termpos"] = @@positions["_Exprpos"] = @@positions["_Primpos"] = @@positions["Rule"] = @@positions["_Predarg"] = 0
+      @@positions["_Universal"] = @@positions["_Termpos"] = @@positions["_Exprpos"] = @@positions["_Primpos"] = @@positions["Rule"] = @@positions["Fact"] = @@positions["Clause"] = @@positions["_Predarg"] = 0
       super(runtime)
     end 
     def semantic(text,obj)
@@ -53,7 +53,7 @@ class OverlogCompiler
     def semantic(text,obj)
       @@positions["_Exprpos"] = @@positions["_Exprpos"] + 1
       @@positions["_Primpos"] = -1
-      otabinsert(@ext,@@positions["_Universal"],@@current["term"],@@positions["_Predarg"],@@positions["_Exprpos"],text)
+      otabinsert(@ext,@@positions["_Universal"],@@current["term"],@@current["clause"],@@positions["_Predarg"],@@positions["_Exprpos"],text)
       #otabinsert(@ext,@@positions["_Universal"],@@current["term"],@@positions["_Exprpos"],text)
 
       @@current["expression"] =  @@positions["_Universal"]
@@ -71,14 +71,14 @@ class OverlogCompiler
       @@positions["_Primpos"] = @@positions["_Predarg"] =  @@positions["_Exprpos"] = -1
       @@positions["_Termpos"] = @@positions["_Termpos"] + 1
       @@current["term"] = @@positions["_Universal"]
-      otabinsert(@termt,@@positions["_Universal"],@@current["rule"],@@positions["_Termpos"],text)
+      otabinsert(@termt,@@positions["_Universal"],@@current["clause"],@@positions["_Termpos"],text)
+      @@current["term"] = @@positions["_Universal"]
       @@positions["_Universal"] = @@positions["_Universal"] + 1
     end
   end
 
   class VisitPexp < VisitIExpression
     def semantic(text,obj)
-      #require 'ruby-debug'; debugger
       super(text,obj)
       @@positions["_Primpos"] = @@positions["_Primpos"] + 1
     end
@@ -107,7 +107,7 @@ class OverlogCompiler
     end
     def semantic(text,obj)
       super(text,obj)
- #     require 'ruby-debug'; debugger if obj.ptablename.text_value == 'execute'
+      #     require 'ruby-debug'; debugger if obj.ptablename.text_value == 'execute'
       eventMod = obj.eventModifier.text_value.eql?("") ? nil : obj.eventModifier.elements[1].text_value
       notin = obj.notin.text_value.eql?("") ? false : true
       @@current["predicate"] = @@positions["_Universal"]
@@ -130,7 +130,7 @@ class OverlogCompiler
   class VisitPredArg < VisitGeneric
     def semantic(text,obj)
       super(text,obj)
-#        require 'ruby-debug'; debugger
+      #        require 'ruby-debug'; debugger
       @@positions["_Predarg"] = @@positions["_Predarg"] + 1
     end
   end
@@ -155,20 +155,7 @@ class OverlogCompiler
 
     def semantic(text,obj)
       super(text,obj)
- otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??")
-    end
-  end
-
-  class VisitFact < VisitTerm
-    def initialize (runtime, facts,terms)
-      @ft = facts
-      super(runtime, terms)
-    end
-    def semantic(text,obj)
-      #@@positions["_Termpos"] = @@positions["_Primpos"] = -1
-      @@positions["_Termpos"] = -1
-      super(text,obj)
-      otabinsert(@ft,@@positions["_Universal"],@@current["term"],text)
+      otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],text,"var","??")
     end
   end
 
@@ -178,19 +165,20 @@ class OverlogCompiler
       super(r, terms)
     end
     def semantic(text,obj)
+      require 'ruby-debug'; debugger
       @@positions["_Termpos"] = -1
       super(text,obj)
       # the table must already exist.  Recreating this index is costly.  replace soon.
       tabtab = @runtime.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myTable"))
       if tabtab.nil?
-        require 'ruby-debug'; debugger
+        #        require 'ruby-debug'; debugger
         raise("no tabletable, requesting watch on #{obj.ptablename.text_value}") 
       end
- #     require 'ruby-debug'; debugger
+      #     require 'ruby-debug'; debugger
       hi = HashIndex.new(@runtime,tabtab,Key.new(1),String)
       tab = hi.lookup(Tuple.new(nil,obj.ptablename.text_value))
       if tab.tups[0].nil?
-        require 'ruby-debug'; debugger
+        #        require 'ruby-debug'; debugger
         raise("no tuples in tabletable, requesting watch on #{obj.ptablename.text_value}")
       end
       ptr = tab.tups[0].clone
@@ -213,7 +201,7 @@ class OverlogCompiler
     def semantic(text,obj)
       #super(text,obj)
       t = text.gsub('"',"")
-#      require 'ruby-debug'; debugger
+      #      require 'ruby-debug'; debugger
       otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],obj.func.text_value,"agg_func","??")
 
       super(obj.aggregatevariable.text_value,obj.aggregatevariable)
@@ -224,14 +212,54 @@ class OverlogCompiler
     end
   end
 
-  class VisitRule < VisitBase
-    def initialize (r,pt)
-      super(r)
+  class VisitClause < VisitBase
+    def initialize(r,ct)
+      super r
+      @ct = ct
+    end
+    def semantic(text,obj,type)
+      #     require 'ruby-debug'; debugger
+      super(text,obj)
+      # table MyClause (
+      #   +clauseid Integer,
+      #   clause_type String)
+      ruleid = type==Rule ? @@current["rule"] : nil
+      factid = type==Fact ? @@current["fact"] : nil
+      otabinsert(@ct,@@positions["_Universal"],type)
+      @@current["clause"] = @@positions["_Universal"]
+    end
+  end
+
+  class VisitFact < VisitClause
+    def initialize (runtime, facts, clauses)
+      @ft = facts
+      super(runtime, clauses)
+    end
+    def semantic(text,obj)
+      #      require 'ruby-debug'; debugger
+      #@@positions["_Termpos"] = @@positions["_Primpos"] = -1
+      #      @@positions["_Termpos"] = -1
+      super(text,obj,Fact)
+      # table MyFact (
+      #   +factid Integer,
+      #   programid Integer,
+      #   clauseid Integer,
+      #   tablename String,
+      #   term_text String
+      # )
+      otabinsert(@ft,@@positions["_Universal"],@@current["program"],@@current["clause"],obj.ptablename.text_value,text)
+      @@current["fact"] = @@positions["_Universal"]
+    end
+  end
+
+  class VisitRule < VisitClause
+    def initialize (r,pt,ct)
+      super(r,ct)
       @rt = pt
     end
     def semantic(text,obj)
       t = text.gsub('"',"")
-      super(text,obj)
+      super(text,obj,Rule)
 
       if obj.deleter.delete then
         d = 1
@@ -245,7 +273,16 @@ class OverlogCompiler
         name = text[0..10].gsub(/\n/,' ') + "..."
       end
 
-      otabinsert(@rt,@@positions["_Universal"],@@current["program"],name,nil,d)
+
+      # table MyRule (
+      #   +ruleid Integer,
+      #   programid Integer,
+      #   clauseid Integer,
+      #   rulename String,
+      #   public Integer,
+      #   delete Integer
+      # )
+      otabinsert(@rt,@@positions["_Universal"],@@current["program"],@@current["clause"],name,nil,d)
       @@current["rule"] = @@positions["_Universal"]
     end
   end
@@ -336,12 +373,12 @@ class OverlogCompiler
 
   class VisitExpression < VisitIExpression
     def semantic(text,obj)
+      #      require 'ruby-debug'; debugger if text =~ /TableName/
       if (!defined? obj.primaryexpression) then
         super(text,obj)
       end
     end
   end
-
 
   class VisitNewline < VisitGeneric
     def semantic(text,obj)
@@ -359,7 +396,7 @@ class OverlogCompiler
   # class body
 
 
-  def initialize(runtime, rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects,tfuncs)
+  def initialize(runtime, rules,terms,preds,pexps,exps,facts,tables,columns,indices,programs,assigns,selects,tfuncs,clauses,mcalls)
     @runtime = runtime
     @ruletable = rules
     @termtable = terms
@@ -374,6 +411,7 @@ class OverlogCompiler
     @selecttable = selects
     @assigntable = assigns
     @tablefunctiontable = tfuncs
+    @clausetable = clauses
 
     # reinitialize these awful globals, fingers crossed for good garbage collection.
     @@state = Hash.new
@@ -410,11 +448,11 @@ class OverlogCompiler
     sky.add_handler("primaryexpression",vg,1)
     sky.add_handler("predicate",VisitPredicate.new(@runtime,@predicatetable,@termtable),1)
     sky.add_handler("TableFunction",VisitTableFunction.new(@runtime,@tablefunctiontable,@predicatetable,@termtable),1)
-    sky.add_handler("Fact",VisitFact.new(@runtime,@facttable,@termtable),1)
+    sky.add_handler("Fact",VisitFact.new(@runtime,@facttable,@clausetable),1)
     sky.add_handler("Definition",VisitTable.new(@runtime,@tabletable),1)
     sky.add_handler("TableName",vg,1)
     sky.add_handler("Schema",vg,1)
-    sky.add_handler("Rule",VisitRule.new(@runtime,@ruletable),1)
+    sky.add_handler("Rule",VisitRule.new(@runtime,@ruletable,@clausetable),1)
     sky.add_handler("Selection",VisitSelection.new(@runtime,@selecttable,@termtable),1)
     sky.add_handler("Assignment",VisitAssignment.new(@runtime,@assigntable,@termtable), 1)
 

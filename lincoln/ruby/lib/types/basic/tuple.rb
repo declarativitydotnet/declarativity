@@ -9,7 +9,7 @@ require "rubygems"
 
 class Tuple
   include Comparable
-  
+
   @@idGen = 0
   def initialize(*values)
     init
@@ -17,13 +17,13 @@ class Tuple
     values.each {|v| @values << v}
     @values
   end
-  
+
   def clone
     t = super
     t.values = @values.clone
     # can't freeze here.  Ruby clone copies the freeze state, so this would mean that
     # the next call to clone would return a frozen t.values.  Not nice.
-#    @values.freeze  
+    #    @values.freeze  
     require 'ruby-debug'; debugger if t.values.frozen?
     return t
   end
@@ -34,7 +34,7 @@ class Tuple
     @tid = @@idGen
     @@idGen += 1
   end
-  
+
   attr_accessor :tid, :count, :schema, :values
 
   def append(var, val)
@@ -83,7 +83,7 @@ class Tuple
     end
     @schema = s
   end
-  
+
   def <=>(o)
     return -1 if size != o.size
 
@@ -102,15 +102,15 @@ class Tuple
   def ==(o)
     (o.class == Tuple) && ((o <=> self) == 0)
   end
-  
+
   def hash
     return to_s.hash
   end
-  
+
   def size
     return @values.length
   end
-  
+
   def value(i)
     if i.class <= Numeric
       return values[i]
@@ -125,7 +125,7 @@ class Tuple
       return values[@schema.position(i)]
     end
   end  
-  
+
   def set_value(i, value)
     if i.class <= Numeric
       @values[i] = value
@@ -138,43 +138,47 @@ class Tuple
       end
     end
   end
-  
+
   def tuple_type(name)
     @schema.schema_type(name)
   end
-  
+
   def timestamp=(value)
     @timestamp = value
   end
-  
+
   def timestamp
     @timestamp
   end
-  
+
   def join(inner)
     jointup = Tuple.new
-    
+
     # take care of all join variables first
     @schema.variables.each do |v|
-      outerval = value(v.name)
+      continue if v.class <= DontCare
 
-      # If the inner does not contain this variable, just add it
-      if not inner.schema.contains(v)
-        jointup.append(v, outerval)
-        next
-      end
-
-      if outerval == inner.value(v.name)
-        jointup.append(v, outerval)
+      if inner.schema.contains(v)
+        outerval = value(v.name)
+        innerval = inner.value(v.name)
+        if (outerval.nil? or innerval.nil?)
+          jointup.append(v, nil) if outerval == innerval
+        elsif value(v.name) != inner.value(v.name)
+          return nil # Tuples don't join
+        else
+          jointup.append(v, value(v.name))
+        end
       else
-        return nil      # join does not match
+        jointup.append(v, value(v.name))
       end
     end
 
     # Append any variables from the inner that do not match join
     # variable.
     inner.schema.variables.each do |v|
-      if not jointup.schema.contains(v)
+      if v.class <= DontCare
+        continue
+      elsif not jointup.schema.contains(v)
         jointup.append(v, inner.value(v.name))
       end
     end

@@ -103,6 +103,7 @@ class Driver < Monitor
         table = @context.catalog.table(name)
         require 'ruby-debug'; debugger if table.nil?
         if (insertions.size > 0 || table.class <= AggregationTable)
+          require 'ruby-debug'; debugger if table.nil?
           insertions = table.insert(insertions, deletions)
 
           if (table.class <= AggregationTable)
@@ -120,6 +121,7 @@ class Driver < Monitor
         end
 
         if (insertions.size > 0) 
+ #         require 'ruby-debug'; debugger
           watchAdd = watch.watched(program, name, WatchOp::Modifier::ADD)
           watchAdd.evaluate(insertions) unless watchAdd.nil?
         end
