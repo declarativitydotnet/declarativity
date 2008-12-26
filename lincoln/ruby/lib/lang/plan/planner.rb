@@ -487,9 +487,13 @@ class OverlogPlanner
       #			require 'ruby-debug'; debugger if tableObj.name.name == 'strata'	
       @runtime.catalog.register(tableObj)
 
-      if (!table.value("watch").nil?) then
-        watch  = WatchClause.new(1,tname,table.value("watch"))
-        watch.set(@runtime, @program.name)
+      mod = table.value("watch")
+      if (!mod.nil?) then
+        0.upto(mod.length-1) do |i|
+#          require 'ruby-debug'; debugger
+          watch  = WatchClause.new(1,tn,WatchOp.modifiers(mod[i..i].to_sym))
+          watch.set(@runtime, @program.name)
+        end
       end
     end
   end
@@ -551,6 +555,7 @@ class OverlogPlanner
         if !lastk.nil? and k[0] != lastk
           fact = Fact.new(1,tn,vars)
           fact.set(@runtime, @program.name)
+          puts "FACT: #{fact.to_s}"
           vars = []
         end            
         lastk = k[0]

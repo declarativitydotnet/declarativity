@@ -165,7 +165,7 @@ class OverlogCompiler
       super(r, terms)
     end
     def semantic(text,obj)
-      require 'ruby-debug'; debugger
+#      require 'ruby-debug'; debugger
       @@positions["_Termpos"] = -1
       super(text,obj)
       # the table must already exist.  Recreating this index is costly.  replace soon.

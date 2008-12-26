@@ -24,7 +24,8 @@ class Operator
     # context.catalog.table(OperatorTable.table_name).force(me)
   end
   
-  attr_reader :identifier
+  attr_reader :identifier, :program
+  attr_accessor :rule
 
   def <=>(o)
     return (@identifier <=> o.identifier)

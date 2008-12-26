@@ -46,6 +46,7 @@ class TestParse < Test::Unit::TestCase
 
 		@expr.tuples.each do |e|
 			# there are only three args to the largest predicate
+			require 'ruby-debug'; debugger
 			assert_operator(e.value("arg_pos"),:<,3)
 		end
 	end
@@ -195,7 +196,6 @@ class TestParse < Test::Unit::TestCase
     # @tfuncs = MyTableFunctionTable.new(r)
 		@tfuncs = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myTableFunction"))
 		@clauses = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myClause"))
-		@mcalls = r.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myMethodCall"))
 		return r
 	end
 	
@@ -207,14 +207,14 @@ class TestParse < Test::Unit::TestCase
 		end	
 
 		assert_equal(tups.size,1)
-		assert_equal(tups[0].to_s,"<1, nil, foo>")
+		assert_equal(tups[0].values, [1, nil, "foo"])
 		
 		tups = Array.new
 		@facts.tuples.each do |t|
 			tups << t
 		end	
 		assert_equal(tups.size,1)
-		assert_equal(tups[0].values[2],"path")		
+		assert_equal(tups[0].values[3],"path")		
 	end
 
 	def prep(utterance)
