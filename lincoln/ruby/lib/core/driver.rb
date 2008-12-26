@@ -223,7 +223,7 @@ class Driver < Monitor
         querySet.each do |query|
           if (query.event != Predicate::Event::DELETE)
             if (!watchInsert.nil?)
-              watchInsert.rule(query.rule)
+              watchInsert.rule = query.rule
               watchInsert.evaluate(insertions)
             end
 #            puts "evaluating #{query.to_s} on #{insertions.size} tuples"
@@ -343,19 +343,19 @@ class Driver < Monitor
     time = @clock.time(0)
     while 1
       synchronize do
-        puts("============================ INSERTING TIME #{time.tups[0].to_s} ===================")
+#        puts("============================ INSERTING TIME #{time.tups[0].to_s} ===================")
 #        require 'ruby-debug'; debugger
         evaluate(runtime.name, time.name, time, nil) # Clock insert new time
         print("========================     EVALUATE SCHEDULE TIME #{@clock.current}    =========================\n")
-        print("============================     #{@tasks.size} TASKS     ===========================\n")
-        print("===========================     #{@schedule.cardinality} SCHED QUEUE     ========================\n")
+#        print("============================     #{@tasks.size} TASKS     ===========================\n")
+#        print("===========================     #{@schedule.cardinality} SCHED QUEUE     ========================\n")
 
         # Evaluate task queue
         @tasks.each_with_index do |task, i| 
           #          require 'ruby-debug'; debugger
-          print "======================== TASK #{i}: #{task.name} ========================\n"
-          puts "    Insertions: #{task.insertions.tups[0].to_s}"
-          puts "    Deletions: #{task.deletions.tups[0].to_s}"
+#          print "======================== TASK #{i}: #{task.name} ========================\n"
+#          puts "    Insertions: #{task.insertions.tups[0].to_s}"
+#          puts "    Deletions: #{task.deletions.tups[0].to_s}"
           evaluate(task.program, task.name, task.insertions, task.deletions)
         end
         @tasks.clear # Clear task queue.

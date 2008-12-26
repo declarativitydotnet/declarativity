@@ -140,7 +140,8 @@ table fact (
 table watch (
   +program String,
   +tablename String,
-  +modifier String
+  +modifier String,
+  operator String
 )
 
 table predicate (

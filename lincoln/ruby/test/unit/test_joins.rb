@@ -39,7 +39,7 @@ class TestJoin < Test::Unit::TestCase
 
     test_join(table2, schema2, t1, t2, v)
     
-    pred = Predicate.new(false,table1.name, Predicate::EVENT::NONE, schema1.variables)
+    pred = Predicate.new(false,table1.name, Predicate::Event::NONE, schema1.variables)
     pred.set(r, "myprog", "r3", 1) 
     
     sj = ScanJoin.new(r, pred, schema1)
@@ -68,7 +68,7 @@ class TestJoin < Test::Unit::TestCase
     # test constant matches
     constant = Value.new("hellerstein")
     constant.position = 1
-    pred = Predicate.new(false, table.name, Predicate::EVENT::NONE, [constant])
+    pred = Predicate.new(false, table.name, Predicate::Event::NONE, [constant])
     pred.set(r, "myprog", "r1", 1)
     join = Join.new(r, pred, schema)
     assert(join.validate(t1,t2))

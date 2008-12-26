@@ -19,6 +19,10 @@ class WatchOp < Operator
   @@modifiers[:d] = Modifier::DELETE
   @@modifiers[:r] = Modifier::RECEIVE
   @@modifiers[:s] = Modifier::SEND
+  
+  def WatchOp.modifiers(s)
+    @@modifiers[s]
+  end
 
 
   def initialize(context, program, rule, name, modifier) 
@@ -33,19 +37,19 @@ class WatchOp < Operator
   end
 
   def evaluate(tuples)
-    require 'ruby-debug'; debugger
+#    require 'ruby-debug'; debugger
     return tuples if tuples.size == 0
 
-    header = "Program " + program.to_s + " [CLOCK " + context.clock.current + "] " + Modifier::to_s + ": " + name
+    header = "Program " + @program.to_s + " [CLOCK " + @context.clock.current.to_s + "] " + @modifier.to_s + ": " + @name.to_s
 
-    header += " Rule " + rule unless @rule.nil?
-    header += "\n\tSCHEMA: " + tuples.iterator.next.schema
+    header += " Rule " + @rule.to_s unless @rule.nil?
+    header += "\n\tSCHEMA: " + tuples.tups[0].schema.to_s
 
-    print(header)
+    puts(header)
 #    stream.puts(header)
     tuples.each do |tuple|
 #      stream.puts("\t" + tuple)
-      print("\t" + tuple)
+      puts("\t" + tuple.to_s)
     end
     return tuples
   end
@@ -60,6 +64,6 @@ class WatchOp < Operator
   end
 
   def to_s
-    return "Watch " + @modifier + ": " + @name
+    return "Watch " + @modifier.to_s + ": " + @name.to_s
   end
 end

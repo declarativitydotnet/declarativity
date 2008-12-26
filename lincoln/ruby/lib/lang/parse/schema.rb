@@ -1407,8 +1407,9 @@ class WatchTable < CompilerCatalogTable
     PROGRAM=0
     TABLENAME=1
     MODIFIER=2
+    OPERATOR=3
   end
-  @@SCHEMA = [String,String,String]
+  @@SCHEMA = [String,String,String,String]
   @@TABLENAME = TableName.new(COMPILERSCOPE, "watch")
   @@classes[self] = 1
   def initialize(context)
@@ -1442,7 +1443,8 @@ class WatchTable < CompilerCatalogTable
     program = Variable.new("program",String, 0,nil)
     tablename = Variable.new("tablename",String, 1,nil)
     modifier = Variable.new("modifier",String, 2,nil)
-    return Schema.new("Watch",[program,tablename,modifier])
+    operator = Variable.new("operator",String, 3,nil)
+    return Schema.new("Watch",[program,tablename,modifier,operator])
   end
 
   def WatchTable.table_name

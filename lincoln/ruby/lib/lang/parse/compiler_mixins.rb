@@ -86,11 +86,14 @@ end
 
 module WatchTableMixin
   def watched(program, name, modifier)
+#    require 'ruby-debug'; debugger if program == 'path'  and modifier == 4
     key = Tuple.new(program, name, modifier)
-    tuples = primary.lookupByKey(primary.key().project(key))		
+#    puts("checking for watch on [#{program}, #{name}, #{modifier}]") if program == 'path'
+    tuples = primary.lookupByKey(primary.key().project(key).values)		
 #    tuples = Program.watch.primary.lookup(key)
     if (tuples.size() > 0) then
-      return tuples.iterator.next.value(field("OPERATOR"))
+#      require 'ruby-debug'; debugger
+      return tuples.tups[0].value(field("OPERATOR"))
     end
   end
 end

@@ -87,7 +87,7 @@ class Runtime
 			  task.deletions = deletions
 			  task.program = program
 			  task.name = name
-		    puts "XXX Tasking: #{name}, #{task.insertions.tups[0]}, #{task.deletions.tups[0]}"
+#		    puts "XXX Tasking: #{name}, #{task.insertions.tups[0]}, #{task.deletions.tups[0]}"
   			@driver.task(task)
 			else
 				tuple = Tuple.new(clock.current + 1, program, name, insertions, deletions)

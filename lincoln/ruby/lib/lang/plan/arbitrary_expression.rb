@@ -133,9 +133,9 @@ class ArbitraryExpression < Expression
 #        print "EVAL: #{subexpr}\n"
         retval = eval(subexpr)
       rescue => detail
-        puts "failed to eval \'#{subexpr}\'"
-        puts detail.backtrace.join("\n")
-        require 'ruby-debug'; debugger
+        outstr = "failed to eval \'#{subexpr}\'"
+#        puts detail.backtrace.join("\n")
+        raise NameError, "failed to eval " + outstr
       end
       return retval
     end
