@@ -39,7 +39,7 @@ class Variable < Expression
     # in a closure, so when these functions are called, they'll remember 
     # that state
     e_lam = lambda do |t|
-      return t.value(@name)
+      return t.name_value(@name)
     end
 
     r_lam = lambda do

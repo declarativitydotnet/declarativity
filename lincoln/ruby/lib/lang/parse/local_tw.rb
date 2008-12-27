@@ -107,7 +107,7 @@ class OverlogCompiler
     end
     def semantic(text,obj)
       super(text,obj)
-      #     require 'ruby-debug'; debugger if obj.ptablename.text_value == 'execute'
+      #     # require 'ruby-debug'; debugger if obj.ptablename.text_value == 'execute'
       eventMod = obj.eventModifier.text_value.eql?("") ? nil : obj.eventModifier.elements[1].text_value
       notin = obj.notin.text_value.eql?("") ? false : true
       @@current["predicate"] = @@positions["_Universal"]
@@ -130,7 +130,7 @@ class OverlogCompiler
   class VisitPredArg < VisitGeneric
     def semantic(text,obj)
       super(text,obj)
-      #        require 'ruby-debug'; debugger
+      #        # require 'ruby-debug'; debugger
       @@positions["_Predarg"] = @@positions["_Predarg"] + 1
     end
   end
@@ -165,26 +165,26 @@ class OverlogCompiler
       super(r, terms)
     end
     def semantic(text,obj)
-#      require 'ruby-debug'; debugger
+#      # require 'ruby-debug'; debugger
       @@positions["_Termpos"] = -1
       super(text,obj)
       # the table must already exist.  Recreating this index is costly.  replace soon.
       tabtab = @runtime.catalog.table(TableName.new(CompilerCatalogTable::COMPILERSCOPE,"myTable"))
       if tabtab.nil?
-        #        require 'ruby-debug'; debugger
+        #        # require 'ruby-debug'; debugger
         raise("no tabletable, requesting watch on #{obj.ptablename.text_value}") 
       end
-      #     require 'ruby-debug'; debugger
+      #     # require 'ruby-debug'; debugger
       hi = HashIndex.new(@runtime,tabtab,Key.new(1),String)
       tab = hi.lookup(Tuple.new(nil,obj.ptablename.text_value))
       if tab.tups[0].nil?
-        #        require 'ruby-debug'; debugger
+        #        # require 'ruby-debug'; debugger
         raise("no tuples in tabletable, requesting watch on #{obj.ptablename.text_value}")
       end
       ptr = tab.tups[0].clone
       tabtab.delete(tab.tups)
 
-      otabinsert(tabtab,ptr.value("tableid"),ptr.value("tablename"),obj.watchword.watchFlow.text_value)
+      otabinsert(tabtab,ptr.name_value("tableid"),ptr.name_value("tablename"),obj.watchword.watchFlow.text_value)
 
 
     end
@@ -201,7 +201,7 @@ class OverlogCompiler
     def semantic(text,obj)
       #super(text,obj)
       t = text.gsub('"',"")
-      #      require 'ruby-debug'; debugger
+      #      # require 'ruby-debug'; debugger
       otabinsert(@pet,@@positions["_Universal"],@@current["expression"],@@positions["_Primpos"],obj.func.text_value,"agg_func","??")
 
       super(obj.aggregatevariable.text_value,obj.aggregatevariable)
@@ -218,7 +218,7 @@ class OverlogCompiler
       @ct = ct
     end
     def semantic(text,obj,type)
-      #     require 'ruby-debug'; debugger
+      #     # require 'ruby-debug'; debugger
       super(text,obj)
       # table MyClause (
       #   +clauseid Integer,
@@ -236,7 +236,7 @@ class OverlogCompiler
       super(runtime, clauses)
     end
     def semantic(text,obj)
-      #      require 'ruby-debug'; debugger
+      #      # require 'ruby-debug'; debugger
       #@@positions["_Termpos"] = @@positions["_Primpos"] = -1
       #      @@positions["_Termpos"] = -1
       super(text,obj,Fact)
@@ -296,7 +296,7 @@ class OverlogCompiler
       super(text,obj)
       @@current["table"] = @@positions["_Universal"]
       #@tt.insert(TupleSet.new("table",Tuple.new(@@positions["_Universal"],text)),nil)
-      #require 'ruby-debug'; debugger
+      ## require 'ruby-debug'; debugger
       otabinsert(@tt,@@positions["_Universal"],text,nil)
     end
   end
@@ -373,7 +373,7 @@ class OverlogCompiler
 
   class VisitExpression < VisitIExpression
     def semantic(text,obj)
-      #      require 'ruby-debug'; debugger if text =~ /TableName/
+      #      # require 'ruby-debug'; debugger if text =~ /TableName/
       if (!defined? obj.primaryexpression) then
         super(text,obj)
       end

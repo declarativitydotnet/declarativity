@@ -22,11 +22,11 @@ module ObjectFromCatalog
   def insert_tup(tuple)
     # needs to be done through eval since nested Field is class-dependent
 	  object_position = eval self.class.to_s + "::Field::OBJECT"
-    object = tuple.value(object_position)
+    object = tuple.values[object_position]
     raise UpdateException, "Object nil in catalog tuple" if object.nil?
     constants.each do |c|
       method = camelize(c[0].downcase) + "="
-      object.send method.to_sym, tuple.value(c[1]) unless c[0] == 'OBJECT'
+      object.send method.to_sym, tuple.values[c[1]] unless c[0] == 'OBJECT'
     end
     return super(tuple)
   end

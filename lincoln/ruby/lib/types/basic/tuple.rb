@@ -24,7 +24,7 @@ class Tuple
     # can't freeze here.  Ruby clone copies the freeze state, so this would mean that
     # the next call to clone would return a frozen t.values.  Not nice.
     #    @values.freeze  
-    require 'ruby-debug'; debugger if t.values.frozen?
+    # require 'ruby-debug'; debugger if t.values.frozen?
     return t
   end
 
@@ -41,7 +41,7 @@ class Tuple
     var = var.clone
     var.position = schema.size
     @schema << var
-    require 'ruby-debug'; debugger if @values.frozen?
+    # require 'ruby-debug'; debugger if @values.frozen?
     @values << val
   end
 
@@ -74,7 +74,7 @@ class Tuple
 
   def schema=(s)
     if s.size != size
-      require 'ruby-debug'; debugger
+      # require 'ruby-debug'; debugger
       err = "Schema assignment does not match tuple arity!  schema " + s.to_s+" (vs. tuple values ["
       values.each {|v| err <<  v.to_s + ", " }
       err[err.length-1] = "]" 
@@ -110,19 +110,29 @@ class Tuple
   def size
     return @values.length
   end
+  
+  def int_value(i)
+    return values[i]
+  end
+  
+  def name_value(i)
+    p = @schema.variable_set[i].position
+    if p.nil?
+      ## require 'ruby-debug'; debugger
+      print "SCHEMA: #{@schema}\n"
+      print "TUPLE: #{values}\n"
+      # require 'ruby-debug'; debugger
+      raise("field "+i.to_s+" does not exist in tuple") 
+    end
+    return values[p]
+  end
 
+# try not to call this; the class check is slow
   def value(i)
     if i.class <= Numeric
-      return values[i]
+      return int_value(i)
     else
-      if @schema.position(i).nil?
-        #require 'ruby-debug'; debugger
-        print "SCHEMA: #{@schema}\n"
-        print "TUPLE: #{values}\n"
-        require 'ruby-debug'; debugger
-        raise("field "+i.to_s+" does not exist in tuple") 
-      end
-      return values[@schema.position(i)]
+      return name_value(i)
     end
   end  
 
@@ -159,11 +169,11 @@ class Tuple
       continue if v.class <= DontCare
 
       if inner.schema.contains(v)
-        outerval = value(v.name)
+        outerval = name_value(v.name)
         innerval = inner.value(v.name)
         if (outerval.nil? or innerval.nil?)
           jointup.append(v, nil) if outerval == innerval
-        elsif value(v.name) != inner.value(v.name)
+        elsif value(v.name) != inner.name_value(v.name)
           return nil # Tuples don't join
         else
           jointup.append(v, value(v.name))
@@ -179,7 +189,7 @@ class Tuple
       if v.class <= DontCare
         continue
       elsif not jointup.schema.contains(v)
-        jointup.append(v, inner.value(v.name))
+        jointup.append(v, inner.name_value(v.name))
       end
     end
 

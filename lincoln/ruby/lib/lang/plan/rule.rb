@@ -66,17 +66,17 @@ class Rule < Clause
     event   = nil
     function = nil
     body.each do |term|
-      #  	  require 'ruby-debug'; debugger if name == 'tyson' 
+      #  	  # require 'ruby-debug'; debugger if name == 'tyson' 
       if (term.class <= Predicate)
         table = context.catalog.table(term.name)
         if table.nil?
           print context.catalog.to_s
-#          require 'ruby-debug'; debugger
+#          # require 'ruby-debug'; debugger
           raise "Table " + term.name.to_s + " not found in catalog" 
         end
         if (table.table_type == Table::TableType::EVENT || term.event != Predicate::Event::NONE) 
           if (!event.nil?)  
-            require 'ruby-debug'; debugger				  
+            # require 'ruby-debug'; debugger				  
             raise PlannerException, "Multiple event predicates in rule " + name.to_s + 
             " location " + term.location.to_s
           end
@@ -89,7 +89,7 @@ class Rule < Clause
       end
     end
 
-#    require 'ruby-debug'; debugger if name.to_s == 'strata'
+#    # require 'ruby-debug'; debugger if name.to_s == 'strata'
     if (!event.nil?)
 #      puts "---- EVENT FOR RULE #{name.to_s} IS #{event.to_s} ----"
       return query_stuff(context, periodics, head, event, body)
@@ -218,7 +218,7 @@ class Rule < Clause
 
       # set up a periodic filter by sending a lambda evaluate function to a TupleFunction
       doit = lambda do |t|
-        return identifier == tuple.value(Periodic.Field::IDENTIFIER)
+        return identifier == tuple.values[Periodic.Field::IDENTIFIER]
       end
       periodicFilter = Class.new(TupleFunction)
 
@@ -232,7 +232,7 @@ class Rule < Clause
       efilter = EventFilter.new(context, event, periodicFilter)
       operators << efilter
     else
-      #			  require 'ruby-debug'; debugger
+      #			  # require 'ruby-debug'; debugger
       efilter = EventFilter.new(context, event)
       if (efilter.filters > 0)
         operators << efilter
@@ -251,7 +251,7 @@ class Rule < Clause
       if !(term == event) 
         oper = term.operator(context, schema)
         operators << oper
- #       require 'ruby-debug'; debugger if event.name.name == "clock"
+ #       # require 'ruby-debug'; debugger if event.name.name == "clock"
     		
         schema = oper.schema
       end
@@ -270,14 +270,14 @@ class Rule < Clause
     operators << RemoteBuffer.new(context,head,isDelete) if (!headLoc.nil? and !eventLoc.nil? and headLoc != eventLoc)
 
     qry = []
-#    require 'ruby-debug'; debugger
+#    # require 'ruby-debug'; debugger
     qry << BasicQuery.new(context,@program,@name,@isPublic,@isDelete,event,@head,operators)
     return qry
   end
 
   def fix_agg_head(head, context)
     head.each do |var|
-#      require 'ruby-debug'; debugger
+#      # require 'ruby-debug'; debugger
       if var.class <= Aggregate
         agg = var
         table = context.catalog.table(head.name)
@@ -291,7 +291,7 @@ class Rule < Clause
         # Drop the previous table.
         context.catalog.drop(table.name)
 
-#        require 'ruby-debug'; debugger if table.name.name == 'strata'
+#        # require 'ruby-debug'; debugger if table.name.name == 'strata'
         aggregate = AggregationTable.new(context, head, table.table_type)
         context.catalog.register(aggregate)
         progtab = context.catalog.table(ProgramTable.table_name)
@@ -300,7 +300,7 @@ class Rule < Clause
 
         types = table.types
         if (types[var.position] != var.expr_type)
-          require 'ruby-debug'; debugger
+          # require 'ruby-debug'; debugger
           raise("Aggregate type "+ var.expr_type.to_s + " does not match head type " + types[var.position].to_s + "!")
         end		      
       end

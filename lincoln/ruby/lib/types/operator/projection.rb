@@ -18,7 +18,7 @@ class Projection < Operator
 	end
 
   def evaluate(tuples)
-#    require 'ruby-debug'; debugger if @predicate.name.nil?
+#    # require 'ruby-debug'; debugger if @predicate.name.nil?
 		result = TupleSet.new(schema.name)
 		tuples.each do |tuple|
 			the_values = Array.new

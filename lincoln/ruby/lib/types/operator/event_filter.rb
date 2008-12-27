@@ -9,7 +9,7 @@ class EventFilter < Operator
 
 		def evaluate(tuple)
 			fvalue = function.evaluate(tuple)
-			tvalue = tuple.value(@position)
+			tvalue = tuple.values[@position]
 			
 			return (fvalue == tvalue || ((fvalue <=> tvalue) == 0))
 		end
@@ -27,7 +27,7 @@ class EventFilter < Operator
 		predicate.each do |arg|
 			#puts predicate.inspect
 			#print "POSITION: "+arg.position.to_s+"\n"
-			require 'ruby-debug'
+			# require 'ruby-debug'
 #			debugger if arg.nil? or arg.position.nil?
 			raise unless arg.position >= 0
 			@filters << Filter.new(arg.position, arg.function) unless arg.class <= Variable

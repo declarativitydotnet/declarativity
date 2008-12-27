@@ -239,7 +239,7 @@ class TestPlan < Test::Unit::TestCase
   #   prog = prep(utterance)
   #   p = prog.plan
   # 
-  #   require 'ruby-debug'; debugger
+  #   # require 'ruby-debug'; debugger
   #   link = @runtime.catalog.table("agg_test::link")
   #   assert_equal(["a","a",2,"hi"], link.tuples.tups[0].values)
   # 
@@ -346,7 +346,7 @@ class TestPlan < Test::Unit::TestCase
     echo(X) :- link(F,T,C,A), B := Array.new(), J := 2, X:= B.push(J);"
     prog = prep(utterance)
 
-    ##require 'ruby-debug'; debugger
+    ### require 'ruby-debug'; debugger
     tn, ts = gen_link_tuples("path")
 
     assert(!prog.get_queries(tn).nil?)

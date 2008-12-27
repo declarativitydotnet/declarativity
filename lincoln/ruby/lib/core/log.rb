@@ -24,8 +24,8 @@ class Log < ObjectTable
 	end
 	
   def insert(tuple)
-		log = "LOGTYPE [" + tuple.value(Field::TYPE) + "], "
-		log += tuple.value(Field::MESSAGE) + "\n"
+		log = "LOGTYPE [" + tuple.values[Field::TYPE] + "], "
+		log += tuple.values[Field::MESSAGE] + "\n"
 		
 		@stream << log
 		return super.insert(tuple)

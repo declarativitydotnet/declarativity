@@ -22,7 +22,7 @@ class TableCat
       if table.nil? then
         return nil
       elsif table.size == 1 then
-        return table.next.value(Catalog.Field::OBJECT)
+        return table.next.values[Catalog.Field::OBJECT]
       elsif table.size > 1 then
         raise "More than one " + name + " table defined!"
         Kernel.exit(1)

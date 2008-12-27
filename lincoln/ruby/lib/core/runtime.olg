@@ -1,14 +1,5 @@
 program runtime;
 
-/*
-import java.lang.String;
-import java.lang.Integer;
-import java.lang.Float;
-import jol.types.basic.TupleSet;
-import jol.types.basic.Tuple;
-import jol.types.table.TableName;
-*/
-
 /* global::schedules things from the global::schedule queue (attaches strata to each tuple). */
 define(queue, {Float, Integer, String, TableName, TupleSet, TupleSet});
 
@@ -35,6 +26,10 @@ define(strata,  keys(0,1), {String, Float, Integer});
 
 /* Predicate/TableName priority/strata: priority(Program, TableName, Strata) */
 define(priority, keys(0,1), {String, TableName, Integer});
+
+/* watch(runnable, ida); */
+
+
 
 /* Remove insertion post evaluation. */
 delete

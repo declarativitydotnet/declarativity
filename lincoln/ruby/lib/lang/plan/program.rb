@@ -67,13 +67,13 @@ class Program
     @periodics.clear
 
     # First plan out all the rules
-#    require 'ruby-debug'; debugger
+#    # require 'ruby-debug'; debugger
     rules = @context.catalog.table(RuleTable.table_name).secondary[Key.new(RuleTable::Field::PROGRAM)].lookup_vals(@name)
 
     unless rules.nil? then
       rules.each do |tuple| 
-        rule = tuple.value(RuleTable::Field::OBJECT)
-        # require 'ruby-debug'; debugger
+        rule = tuple.values[RuleTable::Field::OBJECT]
+        # # require 'ruby-debug'; debugger
 #        puts "==== PLANNING RULE #{rule.name} ===="
         # Store all planned queries from a given rule. 
         # NOTE: delta rules can produce > 1 query. 

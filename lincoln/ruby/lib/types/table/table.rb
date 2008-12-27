@@ -89,7 +89,7 @@ class Table
   #   raise "Catalog missing" if catalog.nil?
   #   tables = catalog.primary.lookup_vals(name)
   #   return nil if tables.nil? or tables.size == 0
-  #   return tables.tups[0].value(Catalog::Field::OBJECT) if tables.size == 1
+  #   return tables.tups[0].values[Catalog::Field::OBJECT] if tables.size == 1
   #   throw tables.size.to_s + " tables named " + name.to_s + " defined!"
   # end
   # 
@@ -109,7 +109,7 @@ class Table
   def insert(tuples, conflicts)
     delta = TupleSet.new(name, nil)
     tuples.each do |t|
-      t = t.clone
+ #     t = t.clone
       
       oldvals = nil
 			if (!conflicts.nil? and !primary.nil?) then
@@ -134,7 +134,7 @@ class Table
   end
   
   def delete(tuples)
-    require 'ruby-debug'; debugger if tuples.nil?
+    # require 'ruby-debug'; debugger if tuples.nil?
     delta = TupleSet.new(name)
     tuples.each do |t|
 #      t = t.clone

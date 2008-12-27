@@ -10,7 +10,7 @@ class Function < Predicate
   end
 
 	def initialize(function, predicate) 
-#	  require 'ruby-debug'; debugger
+#	  # require 'ruby-debug'; debugger
 		super(predicate.notin, predicate.name, predicate.event, predicate.arguments)
 		@function = function
 	end

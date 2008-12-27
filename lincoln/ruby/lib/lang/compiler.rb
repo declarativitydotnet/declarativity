@@ -21,6 +21,7 @@ class Compiler # in java, this is a subclass of xtc.util.Tool
 
   # Create a new driver for Overlog.
   def initialize(context, owner, file)
+    puts "calling Compiler on #{file}"
     @context = context
     @owner = owner
     @file = file

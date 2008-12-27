@@ -5,7 +5,7 @@ class Key
   def initialize(*attrs)
     @attributes = Array.new
     attrs.each do |a| 
-      require 'ruby-debug'; debugger if a.nil?
+      # require 'ruby-debug'; debugger if a.nil?
       @attributes << a
     end
   end

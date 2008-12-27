@@ -37,7 +37,7 @@ class WatchOp < Operator
   end
 
   def evaluate(tuples)
-#    require 'ruby-debug'; debugger
+#    # require 'ruby-debug'; debugger
     return tuples if tuples.size == 0
 
     header = "Program " + @program.to_s + " [CLOCK " + @context.clock.current.to_s + "] " + @modifier.to_s + ": " + @name.to_s

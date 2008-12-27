@@ -4,7 +4,7 @@ class Fact < Clause
 	def initialize(location, name, arguments)
 		super(location)
 		@name = name
-		require 'ruby-debug'; debugger unless (@name.class <= TableName)
+		# require 'ruby-debug'; debugger unless (@name.class <= TableName)
 		@arguments = arguments
 		@type = @arguments[0].class
 	end
@@ -22,7 +22,7 @@ class Fact < Clause
 		@arguments.each do |argument|
 		  if argument.class <= Expression
 			  function = argument.function
-        #			require 'ruby-debug'; debugger
+        #			# require 'ruby-debug'; debugger
         #			if (@arguments[0].class == Value)
         values << function.evaluate(nil)
       else 
@@ -33,7 +33,7 @@ class Fact < Clause
 		end
 		
 		unless @name.class <= TableName
-		  require 'ruby-debug'; debugger
+		  # require 'ruby-debug'; debugger
 	  end
 		context.catalog.table(FactTable.table_name).force(Tuple.new(program, @name, Tuple.new(*values)))
 	end
