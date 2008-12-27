@@ -6,7 +6,7 @@ class ArbitraryExpression < Expression
     @variables = Array.new
     # this whole bit is horribly hacktastic
     sides = expr.split(".")
-#    require 'ruby-debug'; debugger if expr == "TableName.new(\"compiler\", \"config\")"
+#    # require 'ruby-debug'; debugger if expr == "TableName.new(\"compiler\", \"config\")"
     case sides.size 
     when 0
     when 1 
@@ -69,10 +69,10 @@ class ArbitraryExpression < Expression
      #print "EXPR #{@expr}\n"
       subexpr = ''
       unless @method.nil? 
-        require 'ruby-debug'; debugger if !defined? @variables[0].name
-        require 'ruby-debug'; debugger if !defined? t.schema
+        # require 'ruby-debug'; debugger if !defined? @variables[0].name
+        # require 'ruby-debug'; debugger if !defined? t.schema
         if t.schema.contains(@variables[0])
-         value = t.value(@variables[0].name)
+         value = t.name_value(@variables[0].name)
         else
           # this is not an attribute of the tuple.  Hopefully this is a Ruby class name
           # Put a try/catch thingy around me.
@@ -86,16 +86,16 @@ class ArbitraryExpression < Expression
 #              args << wrap_for_eval(v.value)
               args << v.value
             elsif v.class == Variable
-#              args << wrap_for_eval(t.value(v.name))
-              args << t.value(v.name)
+#              args << wrap_for_eval(t.name_value(v.name))
+              args << t.name_value(v.name)
             end
           end
-#          require 'ruby-debug'; debugger if value.nil?
+#          # require 'ruby-debug'; debugger if value.nil?
           return value.send(@method,*args)		
         else
           # FIX ME
           ####foo = @method.gsub(/[()]/,"")
-#          require 'ruby-debug'; debugger if value.nil?
+#          # require 'ruby-debug'; debugger if value.nil?
           return value.send(@method)
          #### return value.send(foo)
         end
@@ -106,12 +106,12 @@ class ArbitraryExpression < Expression
           if t.schema.contains(v) then
             # substitution is stupid: how many times are we gonna parse this thing??
             # instead, take advantage of rubiismo:
-            value = wrap_for_eval(t.value(v.name))
-#            value = t.value(v.name)
+            value = wrap_for_eval(t.name_value(v.name))
+#            value = t.name_value(v.name)
             # workaround
             ##subexpr = subexpr + "v"+v.name + " = \""+value.to_s+"\"\n"
-#            require 'ruby-debug'; debugger unless value.class == TrueClass
-            require 'ruby-debug'; debugger if value.to_s == ''
+#            # require 'ruby-debug'; debugger unless value.class == TrueClass
+            # require 'ruby-debug'; debugger if value.to_s == ''
             subexpr = subexpr + "v"+v.name + " = "+value.to_s+"\n"
           elsif defined?(@variables[i+1]) and @variables[i+1].class == Value
             # unbound variables had better belong to assignments
@@ -129,7 +129,7 @@ class ArbitraryExpression < Expression
       end
       subexpr = subexpr + @expr
       begin
-#        require 'ruby-debug'; debugger
+#        # require 'ruby-debug'; debugger
 #        print "EVAL: #{subexpr}\n"
         retval = eval(subexpr)
       rescue => detail

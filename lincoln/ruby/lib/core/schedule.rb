@@ -25,9 +25,9 @@ class Schedule < ObjectTable
   def min
     curmin = nil
     tuples.each do |tuple|
-      curmin = (!curmin.nil? and curmin < (tuple.value(Field::TIME))) ? curmin : tuple.value(Field::TIME)
+      curmin = (!curmin.nil? and curmin < (tuple.values[Field::TIME])) ? curmin : tuple.values[Field::TIME]
       if curmin.class == String
-        require 'ruby-debug'; debugger
+        # require 'ruby-debug'; debugger
         print curmin
       end
     end
@@ -41,7 +41,7 @@ class Schedule < ObjectTable
   end
   
   def delete(tups)
-#    require 'ruby-debug'; debugger
+#    # require 'ruby-debug'; debugger
 #  print "+++++++++++++++++++ SCHEDULE: " + self.to_s + "\n"
 #  print "+++++++++++++++++++  --> deleting " + tups.size.to_s + ": " + tups.tups.to_s + "\n"
     super(tups)

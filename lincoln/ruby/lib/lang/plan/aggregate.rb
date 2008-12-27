@@ -5,7 +5,7 @@ class Aggregate < Variable
 	@@STAR = '*'
 	
 	def initialize(name, function, the_type, position)
-#	  require 'ruby-debug'; debugger
+#	  # require 'ruby-debug'; debugger
 		super(name, the_type, position, nil)
 		@function = function
 	end
@@ -28,7 +28,7 @@ class Aggregate < Variable
     # in a closure, so when these functions are called, they'll remember 
     # that state
     e_lam = lambda do |t|
-      return name == @@STAR ? t.id : t.value(name)
+      return name == @@STAR ? t.id : t.name_value(name)
     end
 
     tmpClass = Class.new(TupleFunction)

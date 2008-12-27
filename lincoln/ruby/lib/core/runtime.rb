@@ -59,13 +59,13 @@ class Runtime
 	  return nil if (program.size == 0)
     # XXXXXX
 		tuple = program.tups[0]
-		return tuple.value(ProgramTable::Field::OBJECT)
+		return tuple.values[ProgramTable::Field::OBJECT]
   end
   
   def install(owner, file)
 		compilation = TupleSet.new(CompilerTable.table_name)
 		compilation << Tuple.new(nil, owner, file.to_s, nil)
-#		require 'ruby-debug'; debugger
+#		# require 'ruby-debug'; debugger
 		schedule("runtime", CompilerTable.table_name, compilation, TupleSet.new(CompilerTable.table_name))
 	end
 	
@@ -125,13 +125,14 @@ class Runtime
 		end
 		
 		# Initialize the global Runtime
-#		require 'ruby-debug'; debugger
+#		# require 'ruby-debug'; debugger
 		runtime = Runtime.create(args[0])
 		[1..args.length].each do |i| 
 #			url = URL.new("file", "", args[i]);
 #			runtime.install("user", url);
 			runtime.install("user", args[i]);
 		end
+#		(0..10000000).each {|i| sleep(1)}
 		runtime.thread.join
 	end
 end

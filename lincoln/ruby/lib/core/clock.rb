@@ -21,8 +21,8 @@ class Clock < ObjectTable
 	end
 	
 	def insert_tup(tuple)
-#	  require 'ruby-debug'; debugger
-		time = tuple.value(Field::CLOCK)
+#	  # require 'ruby-debug'; debugger
+		time = tuple.values[Field::CLOCK]
 		if (time < @clock) then
 			raise UpdateException, "Invalid clock time " +  time.to_s + " current clock value = " + @clock.to_s
 		end

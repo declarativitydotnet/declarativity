@@ -7,7 +7,7 @@ class HashIndex < Index
     super(context, table, key, type)
     @map = Hash.new
     ##table.tuples.each {|t| insert(t);  print "table #{table}, inserting #{t}\n";}
-#    require 'ruby-debug'; debugger
+#    # require 'ruby-debug'; debugger
     table.tuples.each {|t| insert(t)  }
   end
   

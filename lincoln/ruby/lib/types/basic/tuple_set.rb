@@ -69,7 +69,7 @@ class UnsortedTupleSet
     case o.class.name
       #      when 'TupleSet': o.each {|t| @tups << t }
     when 'TupleSet', 'Array': 
-      require 'ruby-debug'; debugger
+      # require 'ruby-debug'; debugger
       raise "using << rather than addAll to add a collection into a TupleSet"
     when 'Tuple':
       @tups[o.hash] = o
@@ -114,8 +114,8 @@ class UnsortedTupleSet
     out = @tups.values.sort do |a,b| 
       diff = 0
       col_names.each do |c|
-        ac = a.value(c)
-        bc = b.value(c)
+        ac = a.name_value(c)
+        bc = b.name_value(c)
         raise("can't order by unknown column set #{c}") if (ac.nil? or bc.nil?)
         diff = (ac <=> bc)
         break unless diff == 0
@@ -158,7 +158,7 @@ class TupleSet < UnsortedTupleSet
       @back_ptrs.delete(tup.hash)
       pos.upto(@positions.length - 1) do |i|
         unless @back_ptrs[@positions[i]] == i+1
-          require 'ruby-debug'; debugger
+          # require 'ruby-debug'; debugger
           raise "tupleset bug" 
         end
         @back_ptrs[@positions[i]] = i
@@ -187,7 +187,7 @@ class TupleSet < UnsortedTupleSet
     end
     case o.class.name
     when 'TupleSet','Array': o.each do |t| 
-      require 'ruby-debug';debugger
+      # require 'ruby-debug';debugger
       raise "tupleset back_ptrs (#{@back_ptrs.size}) and positions (#{@positions.size}) not aligned"
     end
     when 'Tuple':
@@ -199,7 +199,7 @@ class TupleSet < UnsortedTupleSet
       end
     else 
       #     puts o.inspect
-      require 'ruby-debug'; debugger	
+      # require 'ruby-debug'; debugger	
       raise "inserting a " + o.class.name + " object into TupleSet"
     end
     unless @back_ptrs.size == @positions.size 

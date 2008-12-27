@@ -30,12 +30,12 @@ class Catalog < ObjectTable
   end
   
   def insert_tup(tuple)
-    table = tuple.value(Field::OBJECT)
+    table = tuple.values[Field::OBJECT]
     if table.nil?
-      name = tuple.value(Field::TABLENAME)
-      type = tuple.value(Field::TYPE)
-      key      = tuple.value(Field::KEY)
-      types    = tuple.value(Field::TYPES)
+      name = tuple.values[Field::TABLENAME]
+      type = tuple.values[Field::TYPE]
+      key      = tuple.values[Field::KEY]
+      types    = tuple.values[Field::TYPES]
 
       if type == TableType::TABLE
         table = BasicTable.new(@context, name, key, types)
@@ -43,7 +43,7 @@ class Catalog < ObjectTable
         raise "Don't know how to create table type " + type.to_s
       end
     end
-    tuple.value(Field::OBJECT)
+    tuple.values[Field::OBJECT]
     return super(tuple)
   end #Catalog.insert
 
@@ -75,9 +75,9 @@ class Catalog < ObjectTable
     return nil if table.nil?
 
     if (table.size() == 1)
-      return table.tups[0].value(Catalog::Field::OBJECT)
+      return table.tups[0].values[Catalog::Field::OBJECT]
     elsif (table.size() > 1)
-      require 'ruby-debug'; debugger
+      # require 'ruby-debug'; debugger
       raise "Should be one " + name.to_s + " table defined, but there are "+ table.size.to_s + "!"
     end
   end
@@ -88,7 +88,7 @@ class Catalog < ObjectTable
   #  * @return true if table registration suceeds, false otherwise.
   #  */
   def register(table)
- #   require 'ruby-debug'; debugger if table.name.scope == "path"
+ #   # require 'ruby-debug'; debugger if table.name.scope == "path"
 #    print "Catalog.register(" + table.name.to_s + ")\n"
     tuple = Tuple.new(table.name, table.table_type, table.key, table.types, table)
 

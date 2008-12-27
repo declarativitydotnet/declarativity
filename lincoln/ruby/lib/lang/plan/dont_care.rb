@@ -11,7 +11,7 @@ class DontCare < Variable
   def function()
     throw RuntimeError, "@position < 0" unless @position >= 0
     e_lam = lambda do |t|
-      return t.value(@position)
+      return t.values[@position]
     end
 
     r_lam = lambda do

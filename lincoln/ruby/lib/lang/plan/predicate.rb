@@ -92,7 +92,7 @@ class Predicate < Term
 		# Determine the join and lookup keys.
 		lookupKey = Key.new
 		indexKey  = Key.new
-#		require 'ruby-debug'; debugger if !input.name.nil? and input.name.name == 'clock'
+#		# require 'ruby-debug'; debugger if !input.name.nil? and input.name.name == 'clock'
 		@schema.variables.each do |var|
 			if (input.contains(var)) then
 				indexKey << var.position

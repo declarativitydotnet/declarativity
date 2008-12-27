@@ -46,8 +46,8 @@ class TestParse < Test::Unit::TestCase
 
 		@expr.tuples.each do |e|
 			# there are only three args to the largest predicate
-			require 'ruby-debug'; debugger
-			assert_operator(e.value("arg_pos"),:<,3)
+			# require 'ruby-debug'; debugger
+			assert_operator(e.name_value("arg_pos"),:<,3)
 		end
 	end
 
@@ -55,7 +55,7 @@ class TestParse < Test::Unit::TestCase
 		r = prep("program foo;\nfoo(A,B) :- bar(A,B);\n")
 		
 		# set up schema table's predicate
-		#require 'ruby-debug'; debugger
+		## require 'ruby-debug'; debugger
 		term_schema = @terms.schema_of
 		term_pred  = Predicate.new(false,@terms.name,@terms,term_schema.variables)
 		term_pred.set(r, "global", "r3", 1)
@@ -70,13 +70,13 @@ class TestParse < Test::Unit::TestCase
 	def test_program
 		prep("program foo;\npath(A,B,_) :- path(B,Z,C);\n")
 		assert_equal(1,@programs.cardinality)
-		assert_equal(0,@rules.tuples.tups[0].value("delete"))
+		assert_equal(0,@rules.tuples.tups[0].name_value("delete"))
 
 	end
 		
 	def test_deletion
 		prep("program foo;\ndelete path(A,B,_) :- path(B,Z,C);\n")
-		assert_equal(1,@rules.tuples.tups[0].value("delete"))
+		assert_equal(1,@rules.tuples.tups[0].name_value("delete"))
 	end
 
 	def test_aggregation
@@ -141,7 +141,7 @@ class TestParse < Test::Unit::TestCase
           foo(A,B) :- bar(A,B);
 ")
     ruletup = @rules.tuples.tups[0]
-    assert_equal("rule1",ruletup.value("rulename"))
+    assert_equal("rule1",ruletup.name_value("rulename"))
     
   end
 

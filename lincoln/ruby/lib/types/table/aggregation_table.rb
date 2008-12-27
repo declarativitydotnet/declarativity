@@ -67,17 +67,17 @@ class AggregationTable < Table
     insertions.each do |tuple|
       the_key = key.project(tuple)
       if !@baseTuples.has_key?(the_key)
- #       require 'ruby-debug'; debugger
+ #       # require 'ruby-debug'; debugger
         @baseTuples[the_key] = AggregateFunction.function(@aggregate)
       end
       @baseTuples[the_key].insert(tuple)
     end
-#    require 'ruby-debug'; debugger
+#    # require 'ruby-debug'; debugger
     delta = values - tuples
     delta = delta - deletions
     
     if table_type == Table::TableType::EVENT
-      require 'ruby-debug'; debugger if name.name == "strata"
+      # require 'ruby-debug'; debugger if name.name == "strata"
       @baseTuples.clear
       @aggregateTuples.clear
       return delta
@@ -92,7 +92,7 @@ class AggregationTable < Table
   end
 
   def delete(deletions)
- #   require 'ruby-debug'; debugger
+ #   # require 'ruby-debug'; debugger
     if table_type == Table::TableType::EVENT
       raise ("Aggregation table " + name.to_s + " is an event table!")
 		end
@@ -113,7 +113,7 @@ class AggregationTable < Table
   end
 
   def delete_tup(tuple)
-    require 'ruby-debug'; debugger
+    # require 'ruby-debug'; debugger
     @aggregateTuples.delete(tuple)
     return @aggregateTuples
   end

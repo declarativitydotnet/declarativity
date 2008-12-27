@@ -15,7 +15,7 @@ class Join < Operator
     end
 
     def evaluate(tuple) 
-      return tuple.value(@position);
+      return tuple.values[@position];
     end
 
     def returnType
@@ -43,7 +43,7 @@ class Join < Operator
       else 
         rvalue = @rhs.evaluate(outer)
       end
-#      require 'ruby-debug'; debugger if lvalue == true
+#      # require 'ruby-debug'; debugger if lvalue == true
       return (lvalue == rvalue)
     end
   end
@@ -83,7 +83,7 @@ class Join < Operator
         filters << JoinFilter.new(TableField::new(arg.class, arg.position), arg.function)
       end
     end
-#    require 'ruby-debug'; debugger
+#    # require 'ruby-debug'; debugger
 #    raise "Join filters not resolved" if (positions != {} && filters == [])
     return filters;
   end

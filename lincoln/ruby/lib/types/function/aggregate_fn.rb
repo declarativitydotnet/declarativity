@@ -13,8 +13,8 @@ class AggregateFunction < TupleFunction
     attr_reader :position
 
     def evaluate(tuple)
-#      require 'ruby-debug'; debugger
-      tuple.value(@name)
+#      # require 'ruby-debug'; debugger
+      tuple.name_value(@name)
     end
 
     def returnType
@@ -119,7 +119,7 @@ class AggregateFunction < TupleFunction
 
   class Min < Exemplary
     def prefer_new(current, newer)
-      require 'ruby-debug'; debugger
+      # require 'ruby-debug'; debugger
       current < newer ? true : false
     end
   end
