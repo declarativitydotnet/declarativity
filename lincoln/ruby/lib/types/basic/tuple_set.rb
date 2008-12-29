@@ -33,7 +33,7 @@ class UnsortedTupleSet
   end
 
   def to_s
-    @id ###+ super
+    @id + " #{name}(#{size} tups)" ###+ super
   end
 
   def hash
@@ -41,7 +41,7 @@ class UnsortedTupleSet
   end
 
   def delete(tup)
-    @tups.delete(tup.hash)
+    return @tups.delete(tup.hash)
   end
 
   def clear

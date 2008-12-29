@@ -29,7 +29,9 @@ define(priority, keys(0,1), {String, TableName, Integer});
 
 /* watch(runnable, ida); */
 
-
+watch(priority, ida);
+watch(strata, ida);
+watch(queue, ida);
 
 /* Remove insertion post evaluation. */
 delete
@@ -65,7 +67,7 @@ evaluation(JoeTime, Program, Name, Insertions, Deletions) :-
 	evaluator(execute(JoeTime, Program, Name, Insertions, Deletions));
 	
 /* NOTE: We do not global::schedule public deletions!! */
-publicEval
+pEval
 execute(Time, Program2, Name, Insertions, N) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
 	bootstrap::query(Program2, Rule, Public, Delete, Event, Input, Output, Object),

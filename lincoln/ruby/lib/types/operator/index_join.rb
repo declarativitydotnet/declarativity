@@ -17,9 +17,9 @@ class IndexJoin < Join
     
 		tuples.each do |outer|
   		# require 'ruby-debug'; debugger if outer.schema.name == 'clock'
-			if tuples.name.to_s.eql?("global::MyPrimaryExpression") then
+#			if tuples.name.to_s.eql?("global::MyPrimaryExpression") then
 				## require 'ruby-debug'; debugger
-			end
+#			end
 			#print "TEST #{outer}\n"
 			@index.lookup_kt(@lookupKey, outer).each do |inner| 
 				#print "TEST #{inner}\n"
@@ -35,10 +35,10 @@ class IndexJoin < Join
 				end
 			end
 		end
-                if result.size == 0 then
+#                if result.size == 0 then
 		   ## require 'ruby-debug';debugger
                    #puts "no tups for " + @index.table.name.name
-                end
+#                end
 		return result
 	end
 end

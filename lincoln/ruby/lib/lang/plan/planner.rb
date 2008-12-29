@@ -480,7 +480,7 @@ class OverlogPlanner
         tableObj = EventTable.new(tn,typething)        
       else
         #print "tn=#{tn}\n" 
-        tableObj = RefTable.new(@runtime, TableName.new(scope,tname),indxthing,typething)
+        tableObj = BasicTable.new(@runtime, TableName.new(scope,tname),indxthing,typething)
       end		
       @program.definition(tableObj)	
       #			# require 'ruby-debug'; debugger if tableObj.name.name == 'strata'	

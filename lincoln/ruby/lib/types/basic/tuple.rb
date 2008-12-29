@@ -53,9 +53,9 @@ class Tuple
         #out += (value.nil? ? "nil".to_s : value.to_s) 
         if value.nil? 
           out += "nil"
-        elsif (value.class <= Tuple) || (value.class <= UnsortedTupleSet) || (value.class <= Index) || (value.class <= Table)
+        elsif (value.class <= UnsortedTupleSet) || (value.class <= Index) || (value.class <= Table)
           # stop; enough is enough
-          out += "InternalObject:#{value.object_id.to_s}"
+          out += "#{value.class}:#{value.object_id.to_s}(#{value.size} tuples)"
         else
           if value.class <= String
             out += '"' + value.to_s + '"'

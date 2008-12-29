@@ -89,7 +89,7 @@ module WatchTableMixin
 #    # require 'ruby-debug'; debugger if program == 'path'  and modifier == 4
     key = Tuple.new(program, name, modifier)
 #    puts("checking for watch on [#{program}, #{name}, #{modifier}]") if program == 'path'
-    tuples = primary.lookupByKey(primary.key().project(key).values)		
+    tuples = primary.lookupByKey(primary.key().project(key))		
 #    tuples = Program.watch.primary.lookup(key)
     if (tuples.size() > 0) then
 #      # require 'ruby-debug'; debugger

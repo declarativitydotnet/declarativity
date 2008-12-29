@@ -83,7 +83,6 @@ class Driver < Monitor
     end
 
     def insert(tuples, conflicts)
-     # # require 'ruby-debug'; debugger
       delta = TupleSet.new(name)
       aggregate(tuples).each do |tuple| 
         time       = tuple.values[Field::TIME]
@@ -110,14 +109,17 @@ class Driver < Monitor
             watchRemove = watch.watched(program, name, WatchOp::Modifier::ERASE)
             watchRemove.evaluate(deletions) unless (watchRemove.nil?) 
           end
-        else 
-          return TupleSet.new(name) if (table.table_type != Table::TableType::TABLE)
+        elsif deletions.size > 0
+          if (table.table_type != Table::TableType::TABLE)
+            deletions.clear
+          else
+#            require 'ruby-debug'; debugger
+          
+            deletions = table.delete(deletions)
 
-          deletions = table.delete(deletions)
-
-          watchRemove = watch.watched(program, name, WatchOp::Modifier::ERASE)
-          watchRemove.evaluate(deletions) unless watchRemove.nil?
-
+            watchRemove = watch.watched(program, name, WatchOp::Modifier::ERASE)
+            watchRemove.evaluate(deletions) unless watchRemove.nil?
+          end
         end
 
         if (insertions.size > 0) 

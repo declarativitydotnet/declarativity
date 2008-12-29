@@ -62,7 +62,7 @@ include Ddl
 			}
 	end
      	rule Rule
-		  #   (('public'   )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name  Spacing  deleter?  rulehead Spacing ':-' Spacing RuleBody   )
+		  #   (('public'   Spacing )?  deleter?  rulehead Spacing ':-' Spacing RuleBody  /     ('public'   )?  name  Spacing  deleter?  rulehead Spacing ':-' Spacing RuleBody   )
 		# reimagined rule:
 		##(( 'public' )? rname deleter rulehead followsfrom RuleBody / ( 'public' )? name? deleter rulehead followsfrom RuleBody  ) 
 
