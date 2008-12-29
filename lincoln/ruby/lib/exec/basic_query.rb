@@ -36,7 +36,7 @@ class BasicQuery < Query
       tuples << (tuple)
     end
 
-#    # require 'ruby-debug'; debugger if rule == 'q1_rule'
+#    require 'ruby-debug'; debugger if rule == 'init_dependency'
     @body.each do |oper| 
       # PUT IN SOME CHECK HERE THAT OPER SCHEMA VARIABLES NOT REPLICATED!
       # oper.schema.variables.each do |v|
@@ -44,7 +44,7 @@ class BasicQuery < Query
     end
  #   # require 'ruby-debug'; debugger if output.name.to_s == 'runtime::insertionQueue' and tuples.size > 0
 #    print "    produced #{tuples.size.to_s} tups in #{output.name.to_s}:\n       #{tuples.tups.to_s}\n"
-#    puts if tuples.tups.size > 0 
+    puts if tuples.tups.size > 0 
     return tuples
   end
 end

@@ -56,7 +56,11 @@ class Table
     raise "No subclass definition for cardinality"
   end
 
-  attr_reader :table_type, :name, :size, :lifetime, :key
+  def size
+    cardinality
+  end
+
+  attr_reader :table_type, :name, :lifetime, :key
   
   def types
     @attributeTypes
@@ -108,6 +112,7 @@ class Table
 
   def insert(tuples, conflicts)
     delta = TupleSet.new(name, nil)
+#    require 'ruby-debug'; debugger if name.name == 'priority'
     tuples.each do |t|
  #     t = t.clone
       
@@ -118,7 +123,7 @@ class Table
       
       if insert_tup(t)
         delta << t
-        conflicts += primary.lookup(t) unless (conflicts.nil? or primary.nil?)
+        conflicts.addAll(oldvals) unless oldvals.nil?
         insertion = TupleSet.new(name)
         insertion << t
         @callbacks.each {|c| c.insertion(insertion)}
@@ -146,13 +151,15 @@ class Table
     if delta.size > 0
       @callbacks.each {|c| c.deletion(delta)}
     end
-    
-    delta.each do |t|
-      matches = primary.lookup(t)
-      unless matches.nil? or matches.size == 0
-        raise "deleted tuple still in primary index" 
-      end
-    end
+ 
+    # this test is actually broken -- don't lookup on primary, need to lookup on all fields
+    # delta.each do |t|
+    #    matches = primary.lookup(t)
+    #    unless matches.nil? or matches.size == 0
+    #      require 'ruby-debug'; debugger
+    #      raise "deleted tuple still in primary index" 
+    #    end
+    #  end
     return delta
   end
 

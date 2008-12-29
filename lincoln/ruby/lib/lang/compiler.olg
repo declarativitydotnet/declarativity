@@ -1,10 +1,5 @@
 program compiler;
 
-/*
-import jol.lang.plan.Program;
-import java.lang.Integer;
-*/
-
 /*******************************************************************/
 /*** Table definitions ***/
 define(dependency, keys(0,1,2), {String, TableName, TableName});
@@ -37,18 +32,24 @@ checkStrata(Program, count<*>) :-
 watch(checkStrata, i);
 */
 
+watch(priorityUpdate, adi);
+
 /* Determine R/G graph dependencies. */
+/* This rule is crazy slow due to all the evals.  Should get predicate name into the catalog. */
+init_dependency
 dependency(ProgramName, Hname, Bname) :-
 	config(ProgramName, Object),
 	rule(ProgramName, Rule, X, Y, Z),
-	predicate(ProgramName, Rule, 0, _, Head), /* Position == 0 */
+	predicate(ProgramName, Rule, Zero, _, Head), /* Position == 0 */
 	predicate(ProgramName, Rule, Pos, _, Body), 
 	Hname := Head.name(),
 	Bname := Body.name(),
 	Hname != Bname, Pos > 0,
-	ProgramName != "compiler";
+	ProgramName != "compiler",
+	Zero := 0;
 	
 /* Transitive closure over the dependency graph. */
+recurse_dependency
 dependency(ProgramName, Ancestor, Child) :-
 	dependency(ProgramName, Ancestor, Descendant),
 	dependency(ProgramName, Descendant, Child),

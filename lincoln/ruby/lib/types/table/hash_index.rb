@@ -38,7 +38,7 @@ class HashIndex < Index
 		if (@key.size != the_key.size and @key.size > 0) 
 			raise "Key for #{table.name} with wrong number of columns.  " + "Saw: " + the_key.size.to_s + " expected: " + @key.size.to_s + " key: " + the_key.to_s
 		end
-		the_key = the_key.hash
+		the_key = the_key.values.hash
 		return (@map.has_key?(the_key)) ? @map[the_key] : TupleSet.new(table.name)
 	end
 	

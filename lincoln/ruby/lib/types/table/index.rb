@@ -38,6 +38,9 @@ class Index
 
   attr_reader :table, :key, :index_type
 
+  def size
+    @table.cardinality
+  end
 
   def clear
     raise "subclass method for Index.clear not defined"
