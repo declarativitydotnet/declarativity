@@ -56,18 +56,20 @@ dependency(ProgramName, Ancestor, Child) :-
 	
 /* Initialize all predicates to stratum 0. */
 priority_init
-runtime::priority(ProgramName, Name, 0) :-
+runtime::priority(ProgramName, Name, Zero) :-
 	config(ProgramName, Object),
 	rule(ProgramName, Rule, X, Y, Z),
 	predicate(ProgramName, Rule, Pos, Event, Pred),
 	ProgramName != "compiler",
-	Name := Pred.name();
+	Name := Pred.name(),
+	Zero := 0;
 	
 priority2
-runtime::priority(ProgramName, TableName, 0) :-
+runtime::priority(ProgramName, TableName, Zero) :-
 	config(ProgramName, Object),
 	fact(ProgramName, TableName, Tuple),
-	ProgramName != "compiler";
+	ProgramName != "compiler",
+	Zero := 0;
 
 
 /* Bubble up predicates in the stratum chain. */

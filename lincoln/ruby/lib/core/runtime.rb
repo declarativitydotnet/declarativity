@@ -132,7 +132,7 @@ class Runtime
 #			runtime.install("user", url);
 			runtime.install("user", args[i]);
 		end
-#		(0..10000000).each {|i| sleep(1)}
+		(0..10000000).each {|i| sleep(0.1); Thread.pass}
 		runtime.thread.join
 	end
 end
