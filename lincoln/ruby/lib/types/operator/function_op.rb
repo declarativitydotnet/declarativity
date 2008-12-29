@@ -1,4 +1,4 @@
-class Function < Operator 
+class FunctionOp < Operator 
 	def initialize(context, function, predicate)
 		super(context, predicate.program, predicate.rule)
 		@function = function
@@ -6,8 +6,9 @@ class Function < Operator
 	end
 
   def evaluate(tuples)
-		result = @function.insert(tuples, null)
-		result.each { |t| t.schema = predicate.schema.clone }
+#    # require 'ruby-debug'; debugger
+		result = @function.insert(tuples, nil)
+		result.each { |t| t.schema = @predicate.schema.clone }
 		return result
   end
 
