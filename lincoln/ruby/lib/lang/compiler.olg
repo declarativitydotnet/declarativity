@@ -32,7 +32,7 @@ checkStrata(Program, count<*>) :-
 watch(checkStrata, i);
 */
 
-watch(priorityUpdate, adi);
+watch(dependency, adi);
 
 /* Determine R/G graph dependencies. */
 /* This rule is crazy slow due to all the evals.  Should get predicate name into the catalog. */
@@ -95,47 +95,56 @@ runtime::priority(ProgramName, Pred, Priority) :-
 define(uninstall, {String, Boolean});
 define(hardUninstall, {String});
 
+del_prog
 delete
 program(Program, Owner, Object) :-
 	uninstall(Program, _),
 	program(Program, Owner, Object),
 	Owner != "system";
 	
+hard_uninstall
 hardUninstall(Program) :-
 	uninstall(Program, Hard),
 	program(Program, Owner, Object),
 	Owner != "system";
 
+del_prio
 delete
 runtime::priority(Program, Pred, Priority) :-
 	hardUninstall(Program),
 	runtime::priority(Program, Pred, Priority);	
 
+del_query
 delete
 bootstrap::query(Program, Rule, Public, Delete, Event, Input, Output, Object) :-
 	hardUninstall(Program),
 	bootstrap::query(Program, Rule, Public, Delete, Event, Input, Output, Object);
 	
+del_rule
 delete
 rule(Program, Rule, Public, Delete, Object) :-	
 	hardUninstall(Program),
 	rule(Program, Rule, Public, Delete, Object);
-	
+
+del_pred	
 delete
 predicate(Program, Rule, Position, Event, Object) :-
 	hardUninstall(Program),
 	predicate(Program, Rule, Position, Event, Object);
 	
+del_sel
 delete
 selection(Program, Rule, Position, Object) :-
 	hardUninstall(Program),
 	selection(Program, Rule, Position, Object);
 
+del_ass
 delete
 assignment(Program, Rule, Position, Object) :-
 	hardUninstall(Program),
 	assignment(Program, Rule, Position, Object);
 
+del_watch
 delete
 watch(Program, Tablename, Modifier, Operator) :-
 	hardUninstall(Program),

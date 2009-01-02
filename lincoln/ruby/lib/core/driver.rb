@@ -56,7 +56,7 @@ class Driver < Monitor
         units[unit] << tuple
       end
 
-      aggregate = TupleSet.new(name)
+      aggregate = TupleSet.new(@name)
       units.keys.each do |unit|
         if (unit.insertions.size > 0 || unit.deletions.size > 0)
           aggregate << unit.tuple
@@ -83,7 +83,7 @@ class Driver < Monitor
     end
 
     def insert(tuples, conflicts)
-      delta = TupleSet.new(name)
+      delta = TupleSet.new(@name)
       aggregate(tuples).each do |tuple| 
         time       = tuple.values[Field::TIME]
         program    = tuple.values[Field::PROGRAM]
@@ -94,36 +94,38 @@ class Driver < Monitor
         insertions = TupleSet.new(name) if insertions.nil?
         deletions  = TupleSet.new(name) if deletions.nil?
 
-#        # require 'ruby-debug'; debugger if name.name == "insertionQueue"
+        #        # require 'ruby-debug'; debugger if name.name == "insertionQueue"
         next if (insertions.size == 0 and deletions.size == 0)
 
-#        # require 'ruby-debug'; debugger
+        #        # require 'ruby-debug'; debugger
         watch = @context.catalog.table(WatchTable.table_name)
         table = @context.catalog.table(name)
         # require 'ruby-debug'; debugger if table.nil?
         if (insertions.size > 0 || table.class <= AggregationTable)
           # require 'ruby-debug'; debugger if table.nil?
+          delsize = deletions.size unless deletions.nil?
           insertions = table.insert(insertions, deletions)
+          require 'ruby-debug'; debugger if !deletions.nil? and delsize != deletions.size
 
           if (table.class <= AggregationTable)
             watchRemove = watch.watched(program, name, WatchOp::Modifier::ERASE)
             watchRemove.evaluate(deletions) unless (watchRemove.nil?) 
           end
-        elsif deletions.size > 0
-          if (table.table_type != Table::TableType::TABLE)
-            deletions.clear
-          else
-#            require 'ruby-debug'; debugger
+        else
+          return TupleSet.new(name) if (table.table_type != Table::TableType::TABLE)
+          #           require 'ruby-debug'; debugger
           
-            deletions = table.delete(deletions)
+#          require 'ruby-debug'; debugger if name == TableName.new('compiler','dependency')
 
-            watchRemove = watch.watched(program, name, WatchOp::Modifier::ERASE)
-            watchRemove.evaluate(deletions) unless watchRemove.nil?
-          end
+
+          deletions = table.delete(deletions)
+
+          watchRemove = watch.watched(program, name, WatchOp::Modifier::ERASE)
+          watchRemove.evaluate(deletions) unless watchRemove.nil?
         end
 
         if (insertions.size > 0) 
- #         # require 'ruby-debug'; debugger
+          #         # require 'ruby-debug'; debugger
           watchAdd = watch.watched(program, name, WatchOp::Modifier::ADD)
           watchAdd.evaluate(insertions) unless watchAdd.nil?
         end
@@ -169,7 +171,7 @@ class Driver < Monitor
     end
 
     def insert(tuples, conflicts)
-      delta = TupleSet.new(name)
+      delta = TupleSet.new(@name)
       tuples.each do |tuple|
         time       = tuple.values[Field::TIME]
         programName    = tuple.values[Field::PROGRAM]
@@ -179,7 +181,7 @@ class Driver < Monitor
 
         deletions  = TupleSet.new(name) if deletions.nil?
 
-#        puts "INSERTING into #{name.to_s}"
+        #        puts "INSERTING into #{name.to_s}"
         program = @context.program(programName)
 
         if !program.nil?
@@ -209,14 +211,13 @@ class Driver < Monitor
       watchInsert = watch.watched(program.name, name, WatchOp::Modifier::INSERT)
       watchDelete = watch.watched(program.name, name, WatchOp::Modifier::DELETE)
 
-#      # require 'ruby-debug'; debugger if name.to_s == 'runtime::insertionQueue'
+      #      # require 'ruby-debug'; debugger if name.to_s == 'runtime::insertionQueue'
       querySet = program.get_queries(name)
-#      querySet.each { |q| puts "tuple from #{name} triggers #{q.rule}"}
+      #      querySet.each { |q| puts "tuple from #{name} triggers #{q.rule}"}
 
-#      program.dump_queries
-      if (querySet.nil?)
-        return TupleSet.new(name) # Done
-      end
+      #      program.dump_queries
+
+      return TupleSet.new(name) if (querySet.nil?) # Done
 
       if (insertions.size > 0) 
         # We're not going to deal with the deletions yet.
@@ -228,7 +229,7 @@ class Driver < Monitor
               watchInsert.rule = query.rule
               watchInsert.evaluate(insertions)
             end
-#            puts "evaluating #{query.to_s} on #{insertions.size} tuples"
+            #            puts "evaluating #{query.to_s} on #{insertions.size} tuples"
             result = query.evaluate(insertions)
             next if (result.size == 0)
 
@@ -245,7 +246,7 @@ class Driver < Monitor
           if (query.event == Predicate::Event::DELETE or
             (output.table_type == Table::TableType::TABLE and query.event != Predicate::Event::INSERT))
             if (!watchDelete.nil?) 
-              watchDelete.rule(query.rule)
+              watchDelete.rule = query.rule
               watchDelete.evaluate(deletions)
             end
             result = query.evaluate(deletions)
@@ -297,7 +298,7 @@ class Driver < Monitor
     end
 
   end
-   # Tasks are used to inject tuples into the schedule.
+  # Tasks are used to inject tuples into the schedule.
   class Task 
     attr_accessor :insertions, :deletions, :program, :name
   end
@@ -345,19 +346,19 @@ class Driver < Monitor
     time = @clock.time(0)
     while 1
       synchronize do
-#        puts("============================ INSERTING TIME #{time.tups[0].to_s} ===================")
-#        # require 'ruby-debug'; debugger
+        #        puts("============================ INSERTING TIME #{time.tups[0].to_s} ===================")
+        #        # require 'ruby-debug'; debugger
         evaluate(runtime.name, time.name, time, nil) # Clock insert new time
         print("========================     EVALUATE SCHEDULE TIME #{@clock.current}    =========================\n")
-#        print("============================     #{@tasks.size} TASKS     ===========================\n")
-#        print("===========================     #{@schedule.cardinality} SCHED QUEUE     ========================\n")
+        #        print("============================     #{@tasks.size} TASKS     ===========================\n")
+        #        print("===========================     #{@schedule.cardinality} SCHED QUEUE     ========================\n")
 
         # Evaluate task queue
         @tasks.each_with_index do |task, i| 
           #          # require 'ruby-debug'; debugger
-#          print "======================== TASK #{i}: #{task.name} ========================\n"
-#          puts "    Insertions: #{task.insertions.tups[0].to_s}"
-#          puts "    Deletions: #{task.deletions.tups[0].to_s}"
+          #          print "======================== TASK #{i}: #{task.name} ========================\n"
+          #          puts "    Insertions: #{task.insertions.tups[0].to_s}"
+          #          puts "    Deletions: #{task.deletions.tups[0].to_s}"
           evaluate(task.program, task.name, task.insertions, task.deletions)
         end
         @tasks.clear # Clear task queue.
@@ -385,7 +386,6 @@ class Driver < Monitor
   # * @param deletions The set of deletions to evaluate.
   # * @throws UpdateException
   def evaluate(program, name, insertions, deletions)
-#    # require 'ruby-debug'; debugger
     insert = TupleSet.new("insert")
     delete = TupleSet.new("delete")
     insert << Tuple.new(@clock.current, program, name, insertions, deletions)

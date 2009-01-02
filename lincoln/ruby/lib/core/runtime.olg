@@ -29,17 +29,19 @@ define(priority, keys(0,1), {String, TableName, Integer});
 
 /* watch(runnable, ida); */
 
-watch(priority, ida);
+/* watch(priority, ida);
 watch(strata, ida);
-watch(queue, ida);
+watch(queue, ida); */
 
 /* Remove insertion post evaluation. */
+del_insertQ
 delete
 insertionQueue(Time, Strata, Program, Name, Insertions) :-
     runnable(Time, Program, Name, Insertions, _),
     insertionQueue(Time, Strata, Program, Name, Insertions);
 
 /* Remove deletion post evaluation. */
+del_delQ
 delete
 deletionQueue(Time, Program, Name, Deletions) :-
     runnable(Time, Program, Name, _, Deletions);

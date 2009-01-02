@@ -27,9 +27,12 @@ class WatchOp < Operator
 
   def initialize(context, program, rule, name, modifier) 
     new_prnms(context,program,rule,name,modifier,STDERR)
+#    require 'ruby-debug'; debugger if rule.nil?
     super(context, program, rule)
   end
 
+  attr_accessor :rule
+  
   def new_prnms(context, program, rule, name, modifier, stream)
     @name = name
     @modifier = modifier
@@ -40,8 +43,10 @@ class WatchOp < Operator
 #    # require 'ruby-debug'; debugger
     return tuples if tuples.size == 0
 
+    require 'ruby-debug'; debugger if @modifier == Modifier::DELETE
     header = "Program " + @program.to_s + " [CLOCK " + @context.clock.current.to_s + "] " + @modifier.to_s + ": " + @name.to_s
 
+#    require 'ruby-debug'; debugger
     header += " Rule " + @rule.to_s unless @rule.nil?
     header += "\n\tSCHEMA: " + tuples.tups[0].schema.to_s
 
