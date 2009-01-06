@@ -200,18 +200,18 @@ architecture of GFS are well-documented elsewhere~\cite{gfs,
 
 Like GFS, BoomFS does not attempt to be a general-purpose distributed
 file system. Instead, it is designed to perform well for a particular
-class of workloads, and to operate on a particular cluster
+class of workloads and to operate on a particular cluster
 architecture. We focus on achieving good performance for large
 sequential reads and writes. Files are assumed to be very large, and
 are therefore divided into large \emph{chunks} that far exceed typical
-file system block sizes (64 MB). We focus on delivering high sequential
-read and write throughput and efficient network utilization, rather
-than achieving low latency or minimizing total space requirements.
-Members of a BoomFS system are assumed to be unreliable commodity
-machines, provisioned with relatively modest resources.  Reliability
-is achieved by storing multiple copies of each chunk and scalability
-is achieved by spreading file system content over a large cluster of
-machines (typically hundreds or thousands).
+file system block sizes (64 MB). We focus on delivering high
+sequential read and write throughput and efficient network
+utilization, rather than achieving low latency or minimizing total
+space requirements.  Members of a BoomFS system are assumed to be
+unreliable commodity machines, provisioned with relatively modest
+resources.  Reliability is achieved by storing multiple copies of each
+chunk and scalability is achieved by spreading file system content
+over a large cluster of machines (typically hundreds or thousands).
 
 \begin{figure}
 \centering
@@ -255,7 +255,7 @@ existing Hadoop installations.
 To append to a file, a client node begins by contacting one of the
 master nodes and requesting that a new chunk be added to a particular
 file.\footnote{In the current prototype, random writes are not
-  supported, and each append operation creates a new chunk --- we
+  supported and each append operation creates a new chunk --- we
   expect that each append will be large enough to justify occupying an
   entire chunk. We plan to relax this constraint in the future.} The
 master first generates a new chunk identifier. To ensure that the
@@ -263,7 +263,7 @@ state of the file system is consistent across all the masters, the
 master uses a consensus protocol to ensure that all masters have
 agreed to add the new chunk identifier at the same position in the
 chunk list for the appropriate file. Once consensus has been reached,
-the master replies to the client with the new chunk identifier, and a
+the master replies to the client with the new chunk identifier and a
 list of data nodes that might be appropriate locations for the new
 chunk.
 
@@ -327,9 +327,9 @@ a combination of Java and Overlog. We used JOL~\cite{jol}, a
 Java-based Overlog implementation that allows an Overlog evaluator to
 be embedded inside a Java program, and allows Overlog programs to
 contain Java objects and invoke Java methods. Java programs can insert
-and delete tuples from Overlog relations, and register ``queries''
-that invoke a callback when a particular state is reached by the
-Overlog instance.
+and delete tuples from Overlog relations, and register callbacks that
+are invoked when a particular state is reached by the Overlog
+instance.
 
 Each node type in BoomFS is structured in a similar way. Upon startup,
 the node runs Java code that bootstraps a JOL instance, and installs
@@ -395,7 +395,7 @@ Let us take a concrete example beginning with a client request to
 append a stream of data to a file.  The Java shell code running at the
 client injects a tuple into a local table, triggering a send rule that
 causes the tuple, which contains the client's address, the file
-identifier, and a opcode indicating that this is a request for a new
+identifier, and an opcode indicating that this is a request for a new
 chunk identifier, to the master.  This initiates a chain of inferences
 that generate a new id, achieve consensus on the assignment of this id
 to the given file's list of chunks, and select a set of possible
