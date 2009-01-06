@@ -23,8 +23,7 @@ class BasicTable < Table
   end
   
   def insert_tup(tuple)
-    @tuples << tuple
-    return tuples
+    return (@tuples << tuple) # returns true if new tuple added
   end
   def delete_tup(tuple)
     return @tuples.delete(tuple)

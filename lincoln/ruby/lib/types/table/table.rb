@@ -110,10 +110,10 @@ class Table
     raise "subclass method for Table.secondary not defined"
   end
 
-  def insert(tuples, conflicts)
+  def insert(newtuples, conflicts)
     delta = TupleSet.new(name, nil)
-#    require 'ruby-debug'; debugger if name.name == 'priority'
-    tuples.each do |t|
+#    require 'ruby-debug'; debugger if name.name == 'dependency'
+    newtuples.each do |t|
  #     t = t.clone
       
       oldvals = nil
@@ -138,12 +138,12 @@ class Table
     @callbacks.each {|c| c.clear}
   end
   
-  def delete(tuples)
+  def delete(deltuples)
     # require 'ruby-debug'; debugger if tuples.nil?
     delta = TupleSet.new(name)
-    tuples.each do |t|
+    deltuples.each do |t|
 #      t = t.clone
-      if delete_tup(t)
+      unless delete_tup(t).nil?
         delta << t
       end
     end

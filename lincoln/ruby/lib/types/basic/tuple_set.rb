@@ -72,7 +72,9 @@ class UnsortedTupleSet
       # require 'ruby-debug'; debugger
       raise "using << rather than addAll to add a collection into a TupleSet"
     when 'Tuple':
+      return nil unless @tups[o.hash].nil?
       @tups[o.hash] = o
+      return true
     else 
       puts o.inspect	
       raise "inserting a " + o.class.name + " object into TupleSet"
@@ -191,6 +193,7 @@ class TupleSet < UnsortedTupleSet
       raise "tupleset back_ptrs (#{@back_ptrs.size}) and positions (#{@positions.size}) not aligned"
     end
     when 'Tuple':
+      return nil unless @tups[o.hash].nil?
       if @back_ptrs[o.hash].nil?
         @tups[o.hash] = o
         @positions << o.hash

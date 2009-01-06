@@ -29,7 +29,7 @@ class Clock < ObjectTable
 		end
 		@clock = time
 #		puts "XXXXXXXXXX CLOCK TIME SET TO #{time}  XXXXXXXXX" 
-		require 'ruby-debug'; debugger if time == 3
+#		require 'ruby-debug'; debugger if time == 3
 		return super(tuple)
 	end
 	
