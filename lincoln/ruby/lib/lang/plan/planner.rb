@@ -554,7 +554,7 @@ class OverlogPlanner
         if !lastk.nil? and k[0] != lastk
           fact = Fact.new(1,tn,vars)
           fact.set(@runtime, @program.name)
-          puts "FACT: #{fact.to_s}"
+#          puts "FACT: #{fact.to_s}"
           vars = []
         end            
         lastk = k[0]
@@ -571,7 +571,7 @@ class OverlogPlanner
         # puts fields.to_s
         fact = Fact.new(1,tn,vars)
         fact.set(@runtime, @program.name)
-        puts "FACT: #{fact.to_s}"
+#        puts "FACT: #{fact.to_s}"
       end
     end
   end 

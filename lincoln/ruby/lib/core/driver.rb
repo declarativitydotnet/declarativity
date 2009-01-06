@@ -103,9 +103,8 @@ class Driver < Monitor
         # require 'ruby-debug'; debugger if table.nil?
         if (insertions.size > 0 || table.class <= AggregationTable)
           # require 'ruby-debug'; debugger if table.nil?
-          delsize = deletions.size unless deletions.nil?
+#          puts "XXXX Insertions found: #{insertions.to_s}"
           insertions = table.insert(insertions, deletions)
-          require 'ruby-debug'; debugger if !deletions.nil? and delsize != deletions.size
 
           if (table.class <= AggregationTable)
             watchRemove = watch.watched(program, name, WatchOp::Modifier::ERASE)
@@ -117,7 +116,7 @@ class Driver < Monitor
           
 #          require 'ruby-debug'; debugger if name == TableName.new('compiler','dependency')
 
-
+#          puts "XXXX DELETIONS found: #{deletions.to_s}" if !deletions.nil? and deletions.size > 0
           deletions = table.delete(deletions)
 
           watchRemove = watch.watched(program, name, WatchOp::Modifier::ERASE)

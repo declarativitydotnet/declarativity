@@ -32,7 +32,7 @@ checkStrata(Program, count<*>) :-
 watch(checkStrata, i);
 */
 
-watch(dependency, adi);
+/* watch(dependency, adi); */
 
 /* Determine R/G graph dependencies. */
 /* This rule is crazy slow due to all the evals.  Should get predicate name into the catalog. */

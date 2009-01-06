@@ -43,7 +43,7 @@ class WatchOp < Operator
 #    # require 'ruby-debug'; debugger
     return tuples if tuples.size == 0
 
-    require 'ruby-debug'; debugger if @modifier == Modifier::DELETE
+#    require 'ruby-debug'; debugger if @modifier == Modifier::DELETE
     header = "Program " + @program.to_s + " [CLOCK " + @context.clock.current.to_s + "] " + @modifier.to_s + ": " + @name.to_s
 
 #    require 'ruby-debug'; debugger
