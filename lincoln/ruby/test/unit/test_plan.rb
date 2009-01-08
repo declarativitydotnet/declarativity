@@ -207,15 +207,20 @@ class TestPlan < Test::Unit::TestCase
   def test_agg
     utterance = "program agg_test;
     define(link,keys(0,1),{String,String,Integer,String});
+    define(min_cost,keys(0,1),{String,String,Float});
+    define(counter,keys(0,1),{String,String,Integer});
     min_cost(From,To,avg<Cost>) :- link(From,To,Cost,Annotation);
     counter(From,To,count<Cost>) :- link(From,To,Cost,Annotation);
     "
     prog = prep(utterance)
     tn, ts = gen_link_tuples("agg_test")
-    result = prog.get_queries(tn)[0].evaluate(ts)
+    q = prog.get_queries(tn)[0]
+    q = prog.get_queries(tn)[1] if q.output.name.name != "min_cost"
+    require 'ruby-debug'; debugger
+    result = q.evaluate(ts)
     assert_equal(result.tups.length, 2)
     result.tups.each do |t|
-      assert(t.values == ["N1","N2",10.0] || t.values == ["N2","N3",7.5])
+      assert(t.values == ["N1","N2",10] || t.values == ["N2","N3",7.5])
     end
     #assert_equal(result.tups[0].values, ["N1","N2",10.0])
     #assert_equal(result.tups[1].values, ["N2","N3",7.5])

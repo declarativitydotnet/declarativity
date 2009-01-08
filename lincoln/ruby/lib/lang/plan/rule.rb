@@ -281,6 +281,7 @@ class Rule < Clause
       if var.class <= Aggregate
         agg = var
         table = context.catalog.table(head.name)
+        raise "head table \"#{head.name}\" not found" if table.nil?
         if table.class <= AggregationTable
           aggregation = table
           if (agg.functionName != aggregation.variable.functionName) ||

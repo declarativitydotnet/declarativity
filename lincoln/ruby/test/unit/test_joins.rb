@@ -37,7 +37,7 @@ class TestJoin < Test::Unit::TestCase
     ts2 = TupleSet.new('lnames', t2)
 
 
-    test_join(table2, schema2, t1, t2, v)
+    test_join(table2, schema2, t1, t2, v.clone) # have to clone or we mess up schema1
     
     pred = Predicate.new(false,table1.name, Predicate::Event::NONE, schema1.variables)
     pred.set(r, "myprog", "r3", 1) 
@@ -76,7 +76,7 @@ class TestJoin < Test::Unit::TestCase
     # test constant that does not match
     constant2 = Value.new("jones")
     constant2.position = 1
-    pred2 = Predicate.new(false, table.name, Predicate::EVENT::NONE, [constant2])
+    pred2 = Predicate.new(false, table.name, Predicate::Event::NONE, [constant2])
     pred2.set(r, "myprog", "r2", 1)
     join2 = Join.new(r, pred2, schema)
     assert_equal(join2.validate(t1,t2), false)
@@ -84,7 +84,7 @@ class TestJoin < Test::Unit::TestCase
     # test repeated variable
     constant2 = Value.new("jones")
     constant2.position = 1
-    pred2 = Predicate.new(false, table.name, Predicate::EVENT::NONE, [v,v])
+    pred2 = Predicate.new(false, table.name, Predicate::Event::NONE, [v,v])
     pred2.set(r, "myprog", "r2", 1)
     join2 = Join.new(r, pred2, schema)
     assert(join2.validate(t1,t2))
