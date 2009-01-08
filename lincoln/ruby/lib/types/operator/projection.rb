@@ -24,6 +24,7 @@ class Projection < Operator
 			the_values = Array.new
 			@accessors.each do |a|
 			  if not (a.methods.include? "evaluate")
+			    require 'ruby-debug'; debugger
           raise "no evaluate method for tuple accessor" 
         end
 			  the_values << a.evaluate(tuple)

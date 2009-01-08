@@ -220,6 +220,7 @@ class TestPlan < Test::Unit::TestCase
     result = q.evaluate(ts)
     assert_equal(result.tups.length, 2)
     result.tups.each do |t|
+      require 'ruby-debug'; debugger
       assert(t.values == ["N1","N2",10] || t.values == ["N2","N3",7.5])
     end
     #assert_equal(result.tups[0].values, ["N1","N2",10.0])
