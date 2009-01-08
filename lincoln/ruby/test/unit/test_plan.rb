@@ -162,7 +162,7 @@ class TestPlan < Test::Unit::TestCase
     result = queries[0].evaluate(ts)
 
     # we should get this right back.
-    assert_equal("<here, there>",result.tups[0].to_s)
+    assert_equal(["here", "there"],result.tups[0].values)
   end
 
   def test_prog2
@@ -214,18 +214,18 @@ class TestPlan < Test::Unit::TestCase
     "
     prog = prep(utterance)
     tn, ts = gen_link_tuples("agg_test")
-    q = prog.get_queries(tn)[0]
-    q = prog.get_queries(tn)[1] if q.output.name.name != "min_cost"
-    require 'ruby-debug'; debugger
-    result = q.evaluate(ts)
+    q0 = prog.get_queries(tn)[0]
+    q1 = prog.get_queries(tn)[1] 
+    q0, q1 = q1, q0 if q1.output.name.name == "min_cost"
+      
+    result = q0.evaluate(ts)
     assert_equal(result.tups.length, 2)
     result.tups.each do |t|
-      require 'ruby-debug'; debugger
       assert(t.values == ["N1","N2",10] || t.values == ["N2","N3",7.5])
     end
     #assert_equal(result.tups[0].values, ["N1","N2",10.0])
     #assert_equal(result.tups[1].values, ["N2","N3",7.5])
-    result = prog.get_queries(tn)[1].evaluate(ts)
+    result = q1.evaluate(ts)
     assert_equal(result.tups.length, 2)
     result.tups.each do |t|
       assert(t.values == ["N1","N2",1] || t.values == ["N2","N3",2])
@@ -314,13 +314,17 @@ class TestPlan < Test::Unit::TestCase
     prog = prep(utterance)
     tn, ts = gen_link_tuples("deltest")
 
-    result = prog.get_queries(tn)[1].evaluate(ts)
-    assert_equal(result.tups.length, 2)
+    q0 = prog.get_queries(tn)[0]
+    q1 = prog.get_queries(tn)[1] 
+    q0, q1 = q1, q0 if q1.output.name.name == "path"
+
+    result = q0.evaluate(ts)
+    assert_equal(2, result.tups.length)
     result.tups.each do |t|
       assert( (t.values == ["N1","N2",10,"first"]) || (t.values == ["N2","N3",5,"second"])) 
     end
-    result = prog.get_queries(tn)[0].evaluate(ts)
-    assert_equal(result.tups.length, 1)
+    result = q1.evaluate(ts)
+    assert_equal(1, result.tups.length)
     assert_equal(result.tups[0].values, ["N1","N2",10,"first"])
   end
 
@@ -357,7 +361,8 @@ class TestPlan < Test::Unit::TestCase
 
     assert(!prog.get_queries(tn).nil?)
     result = prog.get_queries(tn)[0].evaluate(ts)
-    assert_equal(result.tups.length, 2)
+    # only 1 distinct tuple is generated
+    assert_equal(result.tups.length, 1)
     assert_equal(result.tups[0].values, [[2]])
 
   end

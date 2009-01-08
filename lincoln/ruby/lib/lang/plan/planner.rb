@@ -61,7 +61,6 @@ class OverlogPlanner
             raise("can't aggregate over non-variable ("+var.name_value("type")+")")
           end
           # fix that string stuff!
-          require 'ruby-debug'; debugger
           thisvar = Aggregate.new(var.name_value("p_txt"),@aggFunc, var.name_value("expr_pos")) #, nil)
           thisvar.position = var.name_value("expr_pos")
           @aggFunc = nil
