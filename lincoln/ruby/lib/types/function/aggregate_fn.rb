@@ -70,6 +70,11 @@ class AggregateFunction < TupleFunction
     def reset
       @result = nil
     end
+    
+    def evaluate(tuple)
+      insert(tuple)
+      return @accessor.evaluate(result)
+    end
   end
 
   class Exemplary < StdAgg
@@ -188,7 +193,7 @@ class AggregateFunction < TupleFunction
     end
 
     def result
-      return nil if @result.nil
+      return nil if @result.nil?
       @result = @result.clone
       @result.set_value(accessor.position, @sum / @tuples.size)
       return @result

@@ -9,7 +9,7 @@ class Aggregate < Variable
     the_type = AggregateFunction.agg_type(function, String) 
 		super(name, the_type, position, nil)
 		@function = function
-		@method = AggregateFunction.function(self).accessor
+		@method = AggregateFunction.function(self)
     raise "aggregate function #{@aggfunc} unrecognized" if @method.nil?
 	end
 	
