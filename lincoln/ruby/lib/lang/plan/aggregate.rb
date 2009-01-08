@@ -4,14 +4,17 @@ require 'lib/lang/plan/variable'
 class Aggregate < Variable 
 	@@STAR = '*'
 	
-	def initialize(name, function, the_type, position)
+	def initialize(name, function, position)
 #	  # require 'ruby-debug'; debugger
+    the_type = AggregateFunction.agg_type(function, String) 
 		super(name, the_type, position, nil)
 		@function = function
+		@method = AggregateFunction.function(self).accessor
+    raise "aggregate function #{@aggfunc} unrecognized" if @method.nil?
 	end
 	
 	def clone
-		Aggregate.new(@name, @function, expr_type, position)
+		Aggregate.new(@name, @function, position)
 	end
 
 	def to_s
@@ -23,6 +26,10 @@ class Aggregate < Variable
 	end
 	
   def function
+    return @method unless @method.nil?
+    
+    # otherwise synthesize a method to return last tuple value
+    
     # Ruby MetaProgramming-Fu!
     # the lambda's here make sure that the local state, i.e. @value, is 
     # in a closure, so when these functions are called, they'll remember 
