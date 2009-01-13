@@ -399,13 +399,14 @@ public class Driver implements Runnable {
 						}
 
 						if (result.size() > 0) {
-							if (query.isDelete()) {
-								continuation(continuations, time,
-										program.name(), Predicate.Event.DELETE, result);
-							} else {
-								continuation(continuations, time,
-										program.name(), Predicate.Event.INSERT, result);
-							}
+						    Predicate.Event eventType;
+						    if (query.isDelete())
+						        eventType = Predicate.Event.DELETE;
+						    else
+						        eventType = Predicate.Event.INSERT;
+
+                            continuation(continuations, time, program.name(),
+                                         eventType, result);
 						}
 					}
 				}
