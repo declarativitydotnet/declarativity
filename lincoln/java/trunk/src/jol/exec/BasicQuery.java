@@ -41,7 +41,7 @@ public class BasicQuery extends Query {
 
 		for (Operator oper : this.body) {
 			try {
-				tuples = (TupleSet) oper.evaluate(tuples);
+				tuples = oper.evaluate(tuples);
 			} catch (Throwable t) {
 				String error = "ERROR: " + t.toString();
 				error += ". Query " + toString() + ". At operator " + oper;
