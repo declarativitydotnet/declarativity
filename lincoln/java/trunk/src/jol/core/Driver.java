@@ -141,11 +141,11 @@ public class Driver implements Runnable {
 
 				Tuple t = flush(time, program, name, insertions, deletions);
 				if (t != null) {
-					delta.add(new Tuple(t.value(Field.TIME.ordinal()), 
-							            t.value(Field.PROGRAM.ordinal()), 
-							            null, // Query 
-							            t.value(Field.TABLENAME.ordinal()), 
-							            t.value(Field.INSERTIONS.ordinal()), 
+					delta.add(new Tuple(t.value(Field.TIME.ordinal()),
+							            t.value(Field.PROGRAM.ordinal()),
+							            null, // Query
+							            t.value(Field.TABLENAME.ordinal()),
+							            t.value(Field.INSERTIONS.ordinal()),
 							            t.value(Field.DELETIONS.ordinal())));
 				}
 			}
@@ -614,7 +614,7 @@ public class Driver implements Runnable {
 			this.logicalTime = schedule.min();
 		}
 		else {
-			this.logicalTime = this.logicalTime + 1;
+			this.logicalTime++;
 		}
 
 		List<Task> runtimeTasks = new ArrayList<Task>();
@@ -654,8 +654,9 @@ public class Driver implements Runnable {
 	public void timestampEvaluate() throws UpdateException {
 		do {
 			evaluate();
-		} while(schedule.cardinality() > 0);
+		} while (schedule.cardinality() > 0);
 	}
+
 	/**
 	 * Helper function that calls the flusher and evaluator table functions.
 	 * This function will evaluate the passed in tuples to fixedpoint (until
@@ -677,7 +678,7 @@ public class Driver implements Runnable {
 		TupleSet delete = new TupleSet();
 		insert.add(new Tuple(time, program, null, name, insertions, deletions));
 
-		/* Evaluate until nothing remains. */
+		/* Evaluate until nothing remains. This essentially implements semi-naive evaluation. */
 		while (insert.size() > 0 || delete.size() > 0) {
 			TupleSet delta = null;
 			while (insert.size() > 0) {
