@@ -23,13 +23,13 @@ define(evaluation, {Long, String, TableName, TupleSet, TupleSet});
 /* Evaluator call: execute(Time, ProgramName, Query, TableName, Insertions, Deletions) */
 define(execute, {Long, String, Query, TableName, TupleSet, TupleSet});
 
-/* Evaluator input: delta(Time, ProgramName, TableName, Insertions, Deletions) */ 
+/* Evaluator input: delta(Time, ProgramName, TableName, Insertions, Deletions) */
 define(delta, {Long, String, TableName, TupleSet, TupleSet});
 
-/* Flusher output: flushed(Time, ProgramName, TableName, Insertions, Deletions) */ 
+/* Flusher output: flushed(Time, ProgramName, TableName, Insertions, Deletions) */
 define(flushed, {Long, String, TableName, TupleSet, TupleSet});
 
-/* Committer input: runnable(Time, ProgramName, TableName, Insertions, Deletions) */ 
+/* Committer input: runnable(Time, ProgramName, TableName, Insertions, Deletions) */
 define(runnable,   {Long, String, TableName, TupleSet, TupleSet});
 
 /* Current strata: strata(Program, Time, Strata) */
@@ -54,12 +54,12 @@ deletionQueue(Time, Strata, Program, Name, Deletions) :-
 schedule(Time, Program, Name, Insertions, Deletions) :-
 	evaluation(Time, Program, Name, Insertions, Deletions),
 	Insertions.size() > 0 || Deletions.size() > 0;
-	
+
 /* Evaluate the program with the given insertions OR deletions. */
 evaluator
 evaluation(Time, Program, Name, Insertions, Deletions) :-
 	evaluator(execute(Time, Program, Query, Name, Insertions, Deletions));
-	
+
 /* NOTE: We do not schedule public deletions!! */
 publicEval
 execute(Time, Program2, Query, Name, Insertions, Deletions) :-
@@ -67,50 +67,50 @@ execute(Time, Program2, Query, Name, Insertions, Deletions) :-
 	query(Program2, Rule, Public, Async, Delete, Event, Input, Output, Query),
 	Public == true && Input == Name, Program1 != Program2;
 
-/* Execute on the intended program. 
+/* Execute on the intended program.
  * NOTE: Passing 'null' as the query signals to the evaluator
- *       to use all relevant (those interested in 'Name') 
+ *       to use all relevant (those interested in 'Name')
  *       program queries. */
 localEval
 execute(Time, Program, null, Name, Insertions, Deletions) :-
 	delta(Time, Program, Name, Insertions, Deletions);
-	
+
 schedule(Time, Program, Name, null, Deletions) :-
 	flushed(Time, Program, Name, Insertions, Deletions),
 	Insertions.size() > 0 && Deletions.size() > 0;
-	
+
 delta(Time, Program, Name, Insertions, Deletions) :-
 	flushed(Time, Program, Name, Insertions, FlushedDeletions),
-	Deletions := Insertions.size() == 0 ? FlushedDeletions : null;
-	
+	Deletions := Insertions.isEmpty() ? FlushedDeletions : null;
+
 
 /* Flusher the insertions OR deletions, pass deltas to evaluator. */
-commit 
+commit
 flushed(Time, Program, Name, Insertions, Deletions) :-
 	flusher(runnable(Time, Program, Name, Insertions, Deletions));
 
 /* Identify the runnable tuples. */
-insertion_runnable 
+insertion_runnable
 runnable(Time, Program, Name, Insertions, null) :-
 	strata(Program, Time, Strata),
 	insertionQueue(Time, Strata, Program, Name, Insertions);
-	
-/* Execute any deletions that are in a lower strata than all 
-   current insertions. */ 
+
+/* Execute any deletions that are in a lower strata than all
+   current insertions. */
 deletion_runnable1
 runnable(Time, Program, Name, null, Deletions) :-
 	strata(Program, Time, CurrentStrata),
 	deletionQueue(Time, Strata, Program, Name, Deletions),
 	CurrentStrata == null || Strata < CurrentStrata;
-	
+
 deletion_runnable2
 runnable(Time, Program, Name, null, Deletions) :-
 	deletionQueue(Time, Strata, Program, Name, Deletions),
 	notin insertionQueue(Time, _, Program, _, _);
 
-/* Determine the current strata in the current time for all 
+/* Determine the current strata in the current time for all
    programs that have something scheduled. */
-strata 
+strata
 strata(Program, Time, min<Stratum>) :-
 	insertionQueue(Time, Stratum, Program, Name, Insertions);
 
@@ -119,19 +119,19 @@ insertionQueue(Time, Strata, Program, Name, Insertions) :-
 	queue(Time, Strata, Program, Name, Insertions, _),
 	program(Program, Owner, Object),
 	Insertions != null && Insertions.size() > 0;
-	
+
 init_deletion_queue
 deletionQueue(Time, Strata, Program, Name, Deletions) :-
 	queue(Time, Strata, Program, Name, Insertions, Deletions),
 	program(Program, Owner, Object),
 	Deletions != null && Deletions.size() > 0;
-	
+
 /* Queue up scheduled items in current clock. */
 queue(Time, Strata, Program, Name, Insertions, Deletions) :-
 	clock(Location, Time),
 	schedule(Time, Program, Name, Insertions, Deletions),
 	priority(Program, Name, Strata);
-	
+
 queue(Time, 0, Program, Name, Insertions, Deletions) :-
 	clock(Location, Time),
 	schedule(Time, Program, Name, Insertions, Deletions),
@@ -142,29 +142,29 @@ delete
 schedule(Time, Program, Name, Insertions, Deletions) :-
 	clock#delete(Location, Time),
 	schedule(Time, Program, Name, Insertions, Deletions);
-	
+
 /*******************************************************************/
 /*** Fact scheduler */
 
 define(facts, {String, TableName, TupleSet});
 
-collectFacts 
+collectFacts
 facts(Program, Name, tupleset<Tuple>) :-
 	config(Time, Program, Object),
 	fact(Program, Name, Tuple);
-	
-installFacts 
+
+installFacts
 queue(Time, 0, Program, Name, Facts, null) :-
 	facts(Program, Name, Facts), Program == "compiler",
 	Facts.name(Name),
 	clock(Location, Time);
-	
-installFacts2 
+
+installFacts2
 schedule(Time+1, Program, Name, Facts, null) :-
 	facts(Program, Name, Facts), Program != "compile",
 	Facts.name(Name),
 	clock(Location, Time);
-	
+
 /*******************************************************************/
 /*** Schedule compile */
 
@@ -172,17 +172,17 @@ define(config, {Long, String, String, jol.lang.plan.Program});
 import java.lang.Comparable;
 import jol.lang.Debugger;
 
-configProgram 
+configProgram
 config(Time, Program, Debugger, Object) :-
 	compiler#insert(Program, Owner, Debugger, File, Object),
 	clock(Location, Time),
 	Object.plan();
-		
-compileConfig 
+
+compileConfig
 schedule(Time, "compile", Tuples.name(), Tuples, null) :-
 	config(Time, Program, _, Object),
 	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
-	
+
 schedule(Time+1, "grappa", Tuples.name(), Tuples, null) :-
 	config(Time, Program, Debugger, Object),
 	Debugger != null,
