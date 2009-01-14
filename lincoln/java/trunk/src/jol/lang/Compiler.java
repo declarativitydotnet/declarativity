@@ -20,6 +20,7 @@ import jol.lang.plan.Rule.RuleTable;
 import jol.lang.plan.Selection.SelectionTable;
 import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
@@ -64,24 +65,50 @@ public class Compiler {
 		}
 
 		@Override
+		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
+			TupleSet decorated = new TupleSet();
+			try {
+				for (Tuple t : tuples) {
+					Program program = (Program) t.value(Field.PROGRAM.ordinal());
+					if(program == null) {
+						String owner = (String) t.value(Field.OWNER.ordinal());
+						String file = (String) t.value(Field.FILE.ordinal());
+		
+						URL fileURL = new URL(file);
+						Compiler compiler = new Compiler(context, owner, fileURL);
+
+						Comparable[] vals = t.toArray();
+						vals[Field.NAME.ordinal()] = compiler.program.name();
+						vals[Field.PROGRAM.ordinal()] = compiler.program;
+						t = new Tuple(vals);
+					}
+					decorated.add(t);
+				}
+				return super.insert(decorated, conflicts);
+			} catch (JolRuntimeException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new UpdateException(e.toString());
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+				throw new UpdateException(e.toString());
+			}
+		}
+		/**
+		 * TODO remove this overridden method, assuming that the exception doesn't get triggered.
+		 * 
+		 * This method used to mutate the incoming tuple by setting the PROGRAM and NAME columns.
+		 * Callers relied on this. 
+		 */
+		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Program program = (Program) tuple.value(Field.PROGRAM.ordinal());
 			if (program == null) {
-				String owner = (String) tuple.value(Field.OWNER.ordinal());
-				String file = (String) tuple.value(Field.FILE.ordinal());
-				try {
-					URL fileURL = new URL(file);
-					Compiler compiler = new Compiler(context, owner, fileURL);
-					tuple.value(Field.NAME.ordinal(), compiler.program.name());
-					tuple.value(Field.PROGRAM.ordinal(), compiler.program);
-				} catch (JolRuntimeException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					throw new UpdateException(e.toString());
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-					throw new UpdateException(e.toString());
-				}
+				UpdateException e 
+					= new UpdateException("someone might be relying on ComplerTable.insert() for side effects. "
+														+ "Call the other insert instead");
+				e.printStackTrace(); // make sure this hits the console in junit land.
+				throw e;
 			}
 			return super.insert(tuple);
 		}
