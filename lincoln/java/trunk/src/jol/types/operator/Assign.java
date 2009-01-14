@@ -55,9 +55,17 @@ public class Assign<C extends Comparable<C> > extends Operator {
 		TupleSet deltas = new TupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
 			try {
-				Tuple delta = tuple.clone();
-				delta.value(this.variablePosition, this.valueFunction.evaluate(delta));
-				deltas.add(delta);
+				Comparable[] delta = tuple.toArray();
+				// we support appending to the end of the tuple.
+				if(variablePosition == delta.length) {
+					Comparable[] newDelta = new Comparable[variablePosition+1];
+					for(int i = 0; i < delta.length; i++) {
+						newDelta[i] = delta[i];
+					}
+					delta = newDelta;
+				}
+				delta[variablePosition] = valueFunction.evaluate(tuple);
+				deltas.add(new Tuple(delta));
 			} catch (Throwable t) {
 				System.err.println("SCHEMA " + this.schema);
 				String msg = t.toString() + ". Program " + this.assignment.program() +

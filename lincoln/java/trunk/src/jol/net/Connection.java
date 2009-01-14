@@ -39,7 +39,9 @@ public class Connection extends ObjectTable {
 			Channel channel = (Channel) tuple.value(Field.CHANNEL.ordinal());
 			if (channel == null) {
 				channel = manager.create(protocol, address);
-				tuple.value(Field.CHANNEL.ordinal(), channel);
+				Comparable[] vals = tuple.toArray();
+				vals[Field.CHANNEL.ordinal()] = channel;
+				tuple = new Tuple(vals);
 			}
 
 			if (channel != null) {
