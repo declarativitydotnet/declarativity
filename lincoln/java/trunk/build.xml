@@ -12,7 +12,7 @@
   <property name="src" location="src"/>
   <property name="parser-dir" location="${src}/jol/lang/parse"/>
   <property name="test" location="test"/>
-  <property name="test-output" location="ant-test-output"/>
+  <!-- <property name="test-output" location="ant-test-output"/> Removed by RCS.  See junit task for more info -->
 
   <target name="init">
     <tstamp/>
@@ -114,13 +114,28 @@
   </target>
 
   <target name="test" description="run JUnit tests">
-    <mkdir dir="${test-output}"/>
-
     <!-- Note that we fork a JVM to run the tests in. This is probably
          good for robustness reasons; it also seems necessary to
          prevent JUnit from interferring with our classpath and
-         preventing the loading of OLG files. -->
-    <junit printsummary="yes" fork="yes">
+         preventing the loading of OLG files. 
+
+         <rant>
+	 There is no apparent way to get ant to output strack traces via
+         output formatters, so I disabled formatters, and use 
+         'showoutput="yes"' to have it dump exceptions to console.
+
+         Also, 'filtertrace="yes"' helpfully filters lines that start w/
+         junit package names, but the stack traces that it wants to filter
+         start with the word 'at', so it doesn't really do anything useful
+         at all, so I disabled it.
+
+            - RCS
+         </rant>
+    -->
+    <!-- mkdir dir="${test-output}" Removed by RCS-->
+
+
+    <junit fork="yes" showoutput="yes" filtertrace="no" printsummary="yes">
       <classpath>
         <pathelement location="${dist}/jol.jar"/>
         <pathelement location="${dist}/jol-test.jar"/>
@@ -128,9 +143,9 @@
         <pathelement location="${lib}/grappa.jar"/>
       </classpath>
 
-      <formatter type="plain"/>
+      <!-- <formatter type="plain"/> -->
 
-      <batchtest todir="${test-output}">
+      <batchtest> <!-- todir="${test-output}"> Removed by RCS-->
         <fileset dir="${test}">
           <include name="**/*Test.java"/>
         </fileset>
