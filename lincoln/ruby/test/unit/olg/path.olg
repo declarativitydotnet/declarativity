@@ -13,8 +13,8 @@ link("6","7");
 link("7","8");
 link("8","9");
 
-/* watch(link, d);
-watch(path, id); */
+watch(link, d);
+watch(path, id);
 watch(shortestPath, adi);
 
 path(Source, Destination, 1) :- link(Source, Destination);

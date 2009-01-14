@@ -21,6 +21,6 @@ class FunctionOp < Operator
 	end
 
   def to_s
-		return @function.name + "(" + predicate.to_s + ")"
+		return @function.name.to_s + "(" + @predicate.to_s + ")"
 	end
 end

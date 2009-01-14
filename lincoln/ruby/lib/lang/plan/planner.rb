@@ -527,6 +527,7 @@ class OverlogPlanner
     fields = Hash.new
     facts = Hash.new
     ts.order_by("clauseid", "expr_pos") do |tup|
+      require 'ruby-debug'; debugger
       fields[tup.name_value("tablename")] = Hash.new if fields[tup.name_value("tablename")].nil?
 
      if fields[tup.name_value("tablename")][[tup.name_value("clauseid"),tup.name_value("arg_pos")]].nil?  
@@ -535,7 +536,7 @@ class OverlogPlanner
       end
     end
 
-#    # require 'ruby-debug'; debugger
+#    require 'ruby-debug'; debugger
     fields.each_key do |tab|
       #lookup = '::'+tab
       #table = Table.find_table(@progname+'::'+tab)
@@ -555,7 +556,8 @@ class OverlogPlanner
           fact.set(@runtime, @program.name)
 #          puts "FACT: #{fact.to_s}"
           vars = []
-        end            
+        end 
+#        require 'ruby-debug'; debugger           
         lastk = k[0]
         if fields[tab][k][0] =~ /\./
           # hack-o-rama!
@@ -569,6 +571,7 @@ class OverlogPlanner
       unless vars == []
         # puts fields.to_s
         fact = Fact.new(1,tn,vars)
+#          require 'ruby-debug'; debugger
         fact.set(@runtime, @program.name)
 #        puts "FACT: #{fact.to_s}"
       end

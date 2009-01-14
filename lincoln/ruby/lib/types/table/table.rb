@@ -143,9 +143,7 @@ class Table
     delta = TupleSet.new(name)
     deltuples.each do |t|
 #      t = t.clone
-      unless delete_tup(t).nil?
-        delta << t
-      end
+      delta << t unless delete_tup(t).nil?
     end
 
     if delta.size > 0

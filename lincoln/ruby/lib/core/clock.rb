@@ -24,7 +24,7 @@ class Clock < ObjectTable
 #	  # require 'ruby-debug'; debugger
 		time = tuple.values[Field::CLOCK]
 		if (time < @clock) then
-		  require 'ruby-debug'; debugger
+#		  require 'ruby-debug'; debugger
 			raise UpdateException, "Invalid clock time " +  time.to_s + " current clock value = " + @clock.to_s
 		end
 		@clock = time

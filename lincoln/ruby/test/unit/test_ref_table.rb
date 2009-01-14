@@ -2,15 +2,14 @@ require "lib/types/table/ref_table"
 require "lib/types/basic/tuple"
 require "lib/types/table/catalog"
 require "test/unit"
+require "lib/core/runtime"
 require "rubygems"
 
 class TestRefTable < Test::Unit::TestCase
   def default_test
-    $catalog=nil; $index=nil
-    sys = System.new
-    sys.init
+    runtime = Runtime.new
     
-    rt = RefTable.new("Family", Key.new(0), [Integer, String])
+    rt = RefTable.new(runtime, "Family", Key.new(0), [Integer, String])
     dd = Tuple.new(1, "Dahlia")
     o = Tuple.new(2, "Orli")
     ts = TupleSet.new("tups", dd, o, Tuple.new(3, "Dad"))
@@ -33,6 +32,5 @@ class TestRefTable < Test::Unit::TestCase
     assert_equal(rt.delete([dd]).size, 0)
     assert_equal(rt.cardinality,2)
     assert_equal(rt.secondary.length, 0)
-    rt.drop
   end
 end

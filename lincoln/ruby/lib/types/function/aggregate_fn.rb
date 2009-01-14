@@ -8,13 +8,16 @@ class AggregateFunction < TupleFunction
       @position = aggregate.position
       @type     = aggregate.class
       @name     = aggregate.name
+      @in_pos   = nil
     end
 
-    attr_reader :position
-
+    attr_reader :position, :in_pos
+    
     def evaluate(tuple)
       #      # require 'ruby-debug'; debugger
-      tuple.name_value(@name)
+#      @in_pos = tuple.name_pos(@name) if @in_pos.nil?
+#      tuple.int_value(@in_pos)
+       tuple.name_value(@name)
     end
 
     def returnType
@@ -62,18 +65,21 @@ class AggregateFunction < TupleFunction
   class StdAgg
     def initialize(accessor)
       @accessor = accessor
+      @result = nil
       reset
     end
     
     attr_reader :accessor
+    attr_reader :result
     
     def reset
       @result = nil
     end
     
     def evaluate(tuple)
+#      require 'ruby-debug'; debugger
       insert(tuple)
-      return @accessor.evaluate(result)
+      return result
     end
   end
 
@@ -85,6 +91,7 @@ class AggregateFunction < TupleFunction
 
     def reset
       super
+      @result = nil
       @current = nil
       @tuples = TupleSet.new("agg")
     end
@@ -93,26 +100,23 @@ class AggregateFunction < TupleFunction
       @tuples.clone
     end
 
-    def result
-      @result.nil?  ? nil : @result.clone
-    end
+    attr_reader :result
 
     def insert(tuple)
       if (@tuples << tuple)
-        return evaluate(tuple)
+        value = @accessor.evaluate(tuple)
+        if (@current.nil? || prefer_new(@result, value)) # > 0
+          @current = value
+          @result = tuple
+        end
       end
     end
 
-    def evaluate(tuple)
-      value = @accessor.evaluate(tuple)
-      if (@current.nil? || prefer_new(@current, value)) # > 0
-        @current = value
-        @result = tuple
-        return value
-      end
-      return nil
-    end
-
+    # def evaluate(tuple)
+    #   insert(tuple)
+    #   return @result
+    # end
+    # 
     def delete(tuple)
       if @tuples.remove(tuple)
         value = @accessor.evaluate(tuple)
@@ -120,10 +124,8 @@ class AggregateFunction < TupleFunction
           tuples = @tuples
           reset
           tuples.each {|t| insert(t)}
-          return result
         end
       end
-      return nil
     end
 
     def prefer_new(current, newer)
@@ -138,14 +140,14 @@ class AggregateFunction < TupleFunction
   class Min < Exemplary
     def prefer_new(current, newer)
       # require 'ruby-debug'; debugger
-      current < newer ? true : false
+      newer < current ? true : false
     end
   end
 
 
   class Max < Exemplary	
     def prefer_new(current, newer)
-      current > newer ? true : false
+      newer > current ? true : false
     end
   end
 
@@ -153,36 +155,37 @@ class AggregateFunction < TupleFunction
   class Count	< StdAgg
     def initialize(accessor)
       super(accessor)
-      @tuples = TupleSet.new("agg")
+      reset
+    end
+    
+    def reset
+      @cnt = 0
+      @result = nil
     end
 
     def result
-      return nil if @result.nil?
-      @result = @result.clone
-      @result.set_value(accessor.position, @tuples.size)
-      return @result
+      unless @result.nil?
+        @result = result.clone
+        @result.set_value(@accessor.position, size)
+      else
+        nil
+      end
     end
 
     def insert(tuple)
-      if (@tuples << tuple)
-        @result = tuple
-        return result
-      end
-      return nil
+      @cnt += 1
     end
 
     def delete(tuple)
-      @result = tuple
-      @tuples.remove(tuple)
-      return result
+      @cnt -= 1 if @cnt > 0
+    end
+
+    def size
+      @cnt
     end
 
     def returnType
       Integer
-    end
-
-    def tuples
-      @tuples.clone
     end
   end
 
@@ -191,49 +194,79 @@ class AggregateFunction < TupleFunction
       super(accessor)
       reset
     end
+    
+    def reset
+      @result = nil
+      @sum = 0
+      @cnt = 0
+    end
 
     def result
       return nil if @result.nil?
       @result = @result.clone
-      @result.set_value(accessor.position, @sum / @tuples.size)
-      return @result
-    end
-
-    def reset
-      super
-      @tuples = TupleSet.new("agg")
-      @sum = 0
+      @result.set_value(@accessor.position, (1.0 * @sum) / (1.0 * @cnt))
     end
 
     def insert(tuple)
-      if (tuples << tuple)
-        @result = tuple
-        value = @accessor.evaluate(tuple)
-        @sum += value.to_f
-        return result
-      end
-      return nil
+      @sum += @accessor.evaluate(tuple) 
+      @cnt += 1
     end
 
     def delete(tuple)
-      if (@tuples.remove(tuple))
-        @tuples << tuple
-        @result = tuple
-        value = @accessor.evaluate(tuple)
-        @sum -= value.to_f
-        return result
+      if @cnt > 0
+        @sum -= @accessor.evaluate(tuple) 
+        @cnt -= 1
       end
-      return nil
+    end
+
+    def size
+      @cnt
     end
 
     def returnType
       Float
     end
+  end
+  
+  class Sum < StdAgg
+    def initialize(accessor)
+      super(accessor)
+      reset
+    end
+    
+    def reset
+      @result = nil
+      @sum = 0
+      @cnt = 0
+    end
 
-    def tuples
-      @tuples.clone
+    def result
+      return nil if @result.nil?
+      @result = @result.clone
+      @result.set_value(@accessor.position, @sum)
+    end
+
+    def insert(tuple)
+      @sum += @accessor.evaluate(tuple) 
+      @cnt += 1
+    end
+
+    def delete(tuple)
+      if @cnt > 0
+        @sum -= @accessor.evaluate(tuple) 
+        @cnt -= 1
+      end
+    end
+
+    def size
+      @cnt
+    end
+
+    def returnType
+      Float
     end
   end
+
 
   class ConcatString < StdAgg
     def initialize(accessor)
@@ -242,9 +275,9 @@ class AggregateFunction < TupleFunction
     end
 
     def result
-      unless (@result.nil?) 
+      if @result.nil?
         @result = @result.clone
-        @result.set_value(accessor.position, @current)
+        @result.set_value(@accessor.position, @current)
         return @result
       end
       return nil
@@ -252,21 +285,21 @@ class AggregateFunction < TupleFunction
 
     def reset 
       super
-      @tuples = TupleSet.new
+      @tuples = TupleSet.new("ConcatStringAgg")
+      @result = nil
       @current = nil
     end
 
     def insert(tuple)
       if (@tuples << tuple)
         @result = tuple
-        if @current.nil?
+        if @result.nil?
           @current = @accessor.evaluate(tuple)
         else 
           @current += @accessor.evaluate(tuple)
         end
         return result
       end
-      return nil
     end
 
     def delete(tuple)
@@ -291,22 +324,25 @@ class AggregateFunction < TupleFunction
   class TupleCollection < StdAgg
     def initialize(accessor) 
       super(accessor)
-      @tuples = TupleSet.new("agg")
-      @nestedSet = TupleSet.new("agg")
+      reset
+    end
+    
+    def reset
+      @tuples = TupleSet.new("TupleSetAgg")
+      @nestedSet = TupleSet.new("NestedTupleSetAgg")
+      @the_result = nil
     end
 
-    def result 
-      return @result if @resul.nil?
-
-      @result = @result.clone
-      @result.set_value(@accessor.position, @nestedSet.clone)
-      return @result
+    def result
+      @the_result = @the_result.clone
+      @the_result.set_value(accessor.position, @nestedSet.clone)
+      return @the_result
     end
 
     def insert(tuple)
-      if (@tuples << tuple) 
-        @result = tuple
-        @nestedSet << @accessor.evaluate(tuple)
+      unless (@tuples << tuple).nil?
+        @the_result = tuple
+        @nestedSet << @accessor.evaluate(tuple) 
         return result
       end
       return nil
@@ -314,13 +350,21 @@ class AggregateFunction < TupleFunction
 
     def delete(tuple)
       if (@tuples.remove(tuple)) 
-        @result = tuple
-        @nestedSet.remove(@accessor.evaluate(tuple))
+        @the_result = tuple
+        @nestedSet.remove(@accessor.evaluate(tuple)) 
         return result
       end
-      return nil
     end
 
+    def size
+      @tuples.size
+    end
+    
+    # def evaluate(tuple)
+    #   insert(tuple)
+    #   return result
+    # end
+    # 
     def returnType 
       TupleSet
     end
@@ -340,7 +384,8 @@ end
 #     def result
 #       return nil if @result.nil? 
 #       @result = @result.clone
-#       @result.set_value(@accessor.position, @current)
+#       accessor.evaluate(@result) if accessor.in_pos.nil?
+#       @result.set_value(accessor.in_pos, @current)
 #       return @result;
 #     end
 # 
@@ -374,7 +419,8 @@ end
 #     def result
 #       return nil if @result.nil?
 #       @result = @result.clone
-#       @result.set_value(@accessor.position, @tupleset)
+#       accessor.evaluate(@result) if accessor.in_pos.nil?
+#       @result.set_value(accessor.in_pos, @tupleset)
 #       return @result
 #     end
 # 

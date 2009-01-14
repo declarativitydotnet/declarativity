@@ -28,6 +28,7 @@ class BasicQuery < Query
       " but got input tuples " + inval.name.to_s
     end
 
+    # This simply copies inval, for reasons unclear
     tuples = TupleSet.new(@input.name)
     inval.each do |tuple| 
       # require 'ruby-debug'; debugger if tuple.size != @input.schema.size
@@ -36,7 +37,7 @@ class BasicQuery < Query
       tuples << (tuple)
     end
 
-#    require 'ruby-debug'; debugger if rule == 'init_dependency'
+#    require 'ruby-debug'; debugger if rule == 'collectFacts'
     @body.each do |oper| 
       # PUT IN SOME CHECK HERE THAT OPER SCHEMA VARIABLES NOT REPLICATED!
       # oper.schema.variables.each do |v|

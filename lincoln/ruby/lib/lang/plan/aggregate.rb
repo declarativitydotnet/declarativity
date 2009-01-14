@@ -26,9 +26,8 @@ class Aggregate < Variable
 	end
 	
   def function
-    return @method unless @method.nil?
-    
-    # otherwise synthesize a method to return last tuple value
+    #  synthesize a method to return last tuple value.
+    # the AggregationTable logic will handle doing the agg function calls
     
     # Ruby MetaProgramming-Fu!
     # the lambda's here make sure that the local state, i.e. @value, is 
