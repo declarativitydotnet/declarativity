@@ -21,7 +21,7 @@ define(nodes,     keys(0,1), {String, TableName, Integer, Wrapper});
 
 done(Program) :-
 	displayGraph(Program, Debugger, MainGraph),
-	Debugger.display(Program, Debugger, (Graph)MainGraph.object());
+	jol.lang.Debugger.display(Program, Debugger, (Graph)MainGraph.object());
 
 displayGraph(Program, Debugger, MainGraph) :-
 	display(Program),         
@@ -34,7 +34,7 @@ displayGraph(Program, Debugger, MainGraph) :-
 	nodes(Program, Name2, Priority2, Node2),
 	HeadPredicate.name() == Name1, BodyPredicate.name() == Name2,
 	HeadPredicate != BodyPredicate,
-	Debugger.edge(MainGraph,
+	jol.lang.Debugger.edge(MainGraph,
 	              HeadPredicate, Priority1, Node1, 
 	              BodyPredicate, Priority2, Node2);
 	         
@@ -43,12 +43,12 @@ display(Program) :- nodes(Program);
 nodes(Program, Name, Priority, N) :-
 	subgraphs(Program, Priority, G),
 	runtime::priority(Program, Name, Priority),
-	N := new Wrapper(Debugger.node((Subgraph)G.object(), Name));
+	N := new Wrapper(jol.lang.Debugger.node((Subgraph)G.object(), Name));
 
 subgraphs(Program, Stratum, G) :-
 	stratum(Program, Stratum),
 	graph(Program, _, MainGraph),
-	G := new Wrapper(Debugger.subgraph((Graph)MainGraph.object(), Stratum));
+	G := new Wrapper(jol.lang.Debugger.subgraph((Graph)MainGraph.object(), Stratum));
 	
 stratum(Program, Priority) :-
 	graph(Program, _, G),

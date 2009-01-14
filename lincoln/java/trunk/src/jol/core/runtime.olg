@@ -179,4 +179,4 @@ schedule(Time, "compile", Tuples.name(), Tuples, null) :-
 schedule(Time+1, "grappa", Tuples.name(), Tuples, null) :-
 	config(Time, Program, Debugger, Object),
 	Debugger != null,
-	Tuples := new TupleSet(new TableName("grappa", "debug"), Debugger.tuple(Program, Debugger));
+	Tuples := new TupleSet(new TableName("grappa", "debug"), jol.lang.Debugger.tuple(Program, Debugger));
