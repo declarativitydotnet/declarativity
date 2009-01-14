@@ -24,12 +24,13 @@ class Projection < Operator
 			the_values = Array.new
 			@accessors.each do |a|
 			  if not (a.methods.include? "evaluate")
-			    require 'ruby-debug'; debugger
+#			    require 'ruby-debug'; debugger
           raise "no evaluate method for tuple accessor" 
         end
 			  the_values << a.evaluate(tuple)
 		  end
 			projection = Tuple.new(*the_values)
+#		  require 'ruby-debug'; debugger if @schema.name.name == "facts"
 			projection.schema = @schema
 			result << projection
 		end

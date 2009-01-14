@@ -22,16 +22,16 @@ class TestTuple < Test::Unit::TestCase
     
     v = Variable.new("ssn", Integer, 2,nil)
     @t.append(v, 123456789)
-    assert_equal(@t.to_s, "<1, Joe, 123456789>")
+    assert_equal(@t.values, [1, "Joe", 123456789])
   end
   
   def test_simple
     r = Tuple.new(1, "Joe")
     r.tid = 17
     assert_equal(r.tid, 17) 
-    assert_equal(@t.values[0), @t.name_value("eid")]   
-    assert_equal(@t.values[1), @t.name_value("name")]   
-    assert_equal(@t.values[2), @t.name_value("ssn")]  
+    assert_equal(@t.values[0], @t.name_value("eid"))
+    assert_equal(@t.values[1], @t.name_value("name"))   
+    assert_equal(@t.values[2], @t.name_value("ssn")) 
     assert_equal(@t.tuple_type("eid"), Integer) 
     assert_equal(@t.count, 1)
     @t.count = 0
@@ -69,13 +69,13 @@ class TestTuple < Test::Unit::TestCase
     assert_equal(@t <=> t, -1)
     
     # add a value with no position
-    c4 = Variable.new("hobby", String,nil)
+    c4 = Variable.new("hobby", String, nil, nil)
     t.set_value(c4, "bowling")
     assert_equal(t.values[3], "bowling")
     t.schema.variable("hobby").position = 3
     
     # test join
-    assert_nil(@t.join(t)) # join fails due to nil in t.ssn
+    assert_nil(@t.join(t).values[2]) # join should place nil in output
     t.set_value(2, 123456790)
     assert_nil(@t.join(t)) # join fails due to mismatch on values in ssn
     t.set_value(2, 123456789)
@@ -108,7 +108,7 @@ class TestTuple < Test::Unit::TestCase
     assert_not_equal(t2.join(t1), t2)
 
     t2.append(c2, nil)
-    assert_nil(t1.join(t2))
-    assert_nil(t2.join(t1))
+    assert_nil(t1.join(t2).values[2])
+    assert_nil(t2.join(t1).values[2])
   end
 end

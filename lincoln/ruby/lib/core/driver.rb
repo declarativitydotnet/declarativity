@@ -23,6 +23,7 @@ class Driver < Monitor
       def <<(tuple)
         insertions = tuple.values[Field::INSERTIONS]
         deletions  = tuple.values[Field::DELETIONS]
+#        require 'ruby-debug'; debugger unless insertions.nil? or insertions.class <= TupleSet
         @insertions.addAll(insertions) unless insertions.nil? 
         @deletions.addAll(deletions) unless deletions.nil? 
       end
@@ -53,6 +54,7 @@ class Driver < Monitor
       tuples.each do |tuple|
         unit = ScheduleUnit.new(tuple)
         units[unit] = unit unless units.has_key?(unit)
+ #       require 'ruby-debug'; debugger unless tuple.values[Field::INSERTIONS].nil? or tuple.values[Field::INSERTIONS].class <= TupleSet
         units[unit] << tuple
       end
 
@@ -89,6 +91,8 @@ class Driver < Monitor
         program    = tuple.values[Field::PROGRAM]
         name       = tuple.values[Field::TABLENAME]
         insertions = tuple.values[Field::INSERTIONS]
+ #       require 'ruby-debug'; debugger unless insertions.nil? or insertions.class <= TupleSet
+        
         deletions  = tuple.values[Field::DELETIONS]
 
         insertions = TupleSet.new(name) if insertions.nil?
@@ -102,7 +106,7 @@ class Driver < Monitor
         table = @context.catalog.table(name)
         # require 'ruby-debug'; debugger if table.nil?
         if (insertions.size > 0 || table.class <= AggregationTable)
-          # require 'ruby-debug'; debugger if table.nil?
+#          require 'ruby-debug'; debugger if table.name.name == 'facts'
 #          puts "XXXX Insertions found: #{insertions.to_s}"
           insertions = table.insert(insertions, deletions)
 
@@ -129,6 +133,7 @@ class Driver < Monitor
           watchAdd.evaluate(insertions) unless watchAdd.nil?
         end
 
+#        require 'ruby-debug'; debugger unless insertions.nil? or insertions.class <= TupleSet
         tuple.set_value(Field::INSERTIONS, insertions)
         tuple.set_value(Field::DELETIONS, deletions)
         delta << tuple
@@ -266,6 +271,7 @@ class Driver < Monitor
       delta = TupleSet.new(name)
       continuations.values.each do |continuation|
         ins  = continuation.values[Field::INSERTIONS]
+        raise "insertions not a TupleSet" unless ins.nil? or ins.class <= TupleSet
         dels = continuation.values[Field::DELETIONS]
         delta << continuation if (ins.size > 0 || dels.size > 0)
       end
@@ -289,6 +295,7 @@ class Driver < Monitor
 
       if (event == Predicate::Event::INSERT)
         insertions = continuations[key].values[Field::INSERTIONS]
+#        require 'ruby-debug'; debugger unless insertions.nil? or insertions.class <= TupleSet
         insertions.addAll(result)
       else
         deletions = continuations[key].values[Field::DELETIONS]
@@ -329,6 +336,7 @@ class Driver < Monitor
   # * on the next clock tick.
   # * @param task The task to be added.
   def task(task)
+#    require 'ruby-debug'; debugger if task.name.name == 'compiler'
     @tasks << task
   end
 
@@ -365,7 +373,6 @@ class Driver < Monitor
         print("========================== ======================== ===========================\n");
 
         # Check for new tasks or schedules, if none wait.
-        #   # require 'ruby-debug'; debugger
         @cond_var.wait_while {@tasks.size == 0 && @schedule.cardinality == 0}
         if (@schedule.cardinality > 0)
           time = @clock.time(@schedule.min)
@@ -417,6 +424,7 @@ class Driver < Monitor
       delete.set_value(Evaluator::Field::DELETIONS, tuple.values[Evaluator::Field::DELETIONS])
 
       insertions << insert
+#      require 'ruby-debug'; debugger unless insertions.nil? or insertions.class <= TupleSet
       deletions << delete
     end
   end

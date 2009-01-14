@@ -189,8 +189,8 @@ class TupleSet < UnsortedTupleSet
     end
     case o.class.name
     when 'TupleSet','Array': o.each do |t| 
-      # require 'ruby-debug';debugger
-      raise "tupleset back_ptrs (#{@back_ptrs.size}) and positions (#{@positions.size}) not aligned"
+#      require 'ruby-debug';debugger
+      raise "inserting object of class #{o.class.name.to_s} into a tupleset"
     end
     when 'Tuple':
       return nil unless @tups[o.hash].nil?

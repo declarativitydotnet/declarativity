@@ -33,10 +33,11 @@ class Schedule < ObjectTable
     end
     return curmin
   end
-  
+
   def insert(t, c)
 #    print "+++++++++++++++++++ SCHEDULE: " + self.to_s + "\n"
 #    print "+++++++++++++++++++  --> inserting " + t.tups.size.to_s + ": " + t.tups.to_s + "\n"
+#    require 'ruby-debug'; debugger if t.tups.size == 5
     super(t, c)
   end
   

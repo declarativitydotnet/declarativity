@@ -27,16 +27,17 @@ class RefTable < Table
         lookup = primary.lookup(t)
       end
 
+      return nil if lookup.nil?
       lookup.each do |l|
         if l == t then
           if l.count > 1.0 then
             l.count = l.count - 1.0
-            return false
+            return nil
           end
           return tuples.delete(t)
         end
-      end unless lookup.nil?
-      return false
+      end
+      return nil
     end
 
     def insert_tup(t)

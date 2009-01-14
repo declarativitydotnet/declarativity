@@ -40,6 +40,7 @@ class Runtime
 		@driver     = Driver.new(self, @schedule, @clock)
 		@thread     = nil
   	@thread     = Thread.new {Thread.stop; @driver.run_driver}
+  	@thread.abort_on_exception = true
 #		@timer      = Timer.new("Timer", true)
     @timer      = nil
   end

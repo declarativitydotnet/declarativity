@@ -236,7 +236,7 @@ class OverlogCompiler
       super(runtime, clauses)
     end
     def semantic(text,obj)
-      #      # require 'ruby-debug'; debugger
+      require 'ruby-debug'; debugger
       #@@positions["_Termpos"] = @@positions["_Primpos"] = -1
       #      @@positions["_Termpos"] = -1
       super(text,obj,Fact)

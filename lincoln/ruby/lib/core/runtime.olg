@@ -27,12 +27,6 @@ define(strata,  keys(0,1), {String, Float, Integer});
 /* Predicate/TableName priority/strata: priority(Program, TableName, Strata) */
 define(priority, keys(0,1), {String, TableName, Integer});
 
-/* watch(runnable, ida); */
-
-/* watch(priority, ida);
-watch(strata, ida);
-watch(queue, ida); */
-
 /* Remove insertion post evaluation. */
 del_insertQ
 delete

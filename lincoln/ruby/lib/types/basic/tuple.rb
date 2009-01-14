@@ -1,6 +1,8 @@
 require 'lib/types/basic/schema'
 require 'lib/types/basic/tuple'
+require 'lib/types/basic/tuple_set'
 require 'lib/lang/plan/variable'
+require 'lib/lang/plan/dont_care'
 require 'lib/lang/plan/value'
 require 'lib/types/table/table_name'
 require 'lib/types/table/index'
@@ -115,7 +117,7 @@ class Tuple
     return values[i]
   end
   
-  def name_value(i)
+  def name_pos(i)
     p = @schema.variable_set[i].position
     if p.nil?
       ## require 'ruby-debug'; debugger
@@ -124,7 +126,10 @@ class Tuple
       # require 'ruby-debug'; debugger
       raise("field "+i.to_s+" does not exist in tuple") 
     end
-    return values[p]
+    return p
+  end    
+  def name_value(i)
+    return values[name_pos(i)]
   end
 
 # try not to call this; the class check is slow

@@ -1,6 +1,6 @@
 class AggregationTable < Table	
   def initialize(context, predicate, the_type)
-    raise ("Aggregation table key error") if pred_key(predicate).nil?
+    raise("Aggregation table key error") if pred_key(predicate).nil?
     super(predicate.name, the_type, pred_key(predicate), pred_types(predicate))
     @baseTuples = Hash.new
     @aggregateTuples = TupleSet.new(name)
@@ -49,13 +49,16 @@ class AggregationTable < Table
 
   def values
     vals = TupleSet.new(name)
-    @baseTuples.values.each {|v| vals << v.result}
+    @baseTuples.values.each do |v| 
+#      require 'ruby-debug'; debugger unless v.result.class <= Tuple
+      vals << v.result
+    end
     return vals
   end
   
   def insert(insertions, deletions)
     if deletions.size > 0
-      intersection = deletions.clone
+      intersection = deletions - (deletions - insertions)
     
       insertions = insertions - intersection
       deletions = deletions - intersection
@@ -63,7 +66,7 @@ class AggregationTable < Table
       deletions.clear
       deletions.addAll(delta)
     end    
-
+ 
     insertions.each do |tuple|
       the_key = key.project(tuple)
       if !@baseTuples.has_key?(the_key)
