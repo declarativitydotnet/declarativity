@@ -99,9 +99,10 @@ public class Flatten extends Function {
 				ValueList<Comparable> list = (ValueList<Comparable>) tuple.value(position);
 				if (list != null) {
 					for (Comparable value : list) {
-						Tuple flattened = tuple.clone();
-						flattened.value(position, value);
-						delta.add(flattened);
+						Comparable flattened[] = tuple.toArray();
+						//Tuple flattened = tuple.clone();
+						flattened[position] = value; //.value(position, value);
+						delta.add(new Tuple(flattened));
 					}
 				}
 			}

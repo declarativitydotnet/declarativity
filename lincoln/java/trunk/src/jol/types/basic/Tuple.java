@@ -53,6 +53,11 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 		}
 	}
 
+	public Comparable[] toArray() {
+//		new Exception("debug").printStackTrace();
+		return values.toArray(new Comparable[0]);
+	}
+	
 	/**
 	 * Create a new tuple.
 	 * @param values The values that make up the tuple.
@@ -209,6 +214,8 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 		copy.refCount = this.refCount;
 		return copy;
 	}
+//	@Override
+//	public Tuple clone() { throw new UnsupportedOperationException(); }
 
     /**
      * Initialize the transient fields of an empty tuple, or one that has been
@@ -348,25 +355,6 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	 */
 	public Comparable value(int field) {
 		return this.values.get(field);
-	}
-
-	/**
-	 *	Sets the value to be in the given field position.
-	 *	Field positions are zero-based.
-	 *	@param field The field position.
-	 *	@param value The value to set.
-	 */
-	public void value(int field, Comparable value) throws RuntimeException {
-		if (frozen()) {
-			throw new RuntimeException("Unsupported tuple operation on frozen tuple!");
-		}
-		else {
-			if (this.values.size() == field)
-				this.values.add(value);
-			else
-				this.values.set(field, value);
-			this.hashCacheValid = false;
-		}
 	}
 
 	/**

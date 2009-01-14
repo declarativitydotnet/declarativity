@@ -106,7 +106,10 @@ public abstract class Table implements Comparable<Table> {
 				}
 			}
 			
-			tuple.value(Field.OBJECT.ordinal(), table);
+			Comparable[] values = tuple.toArray();
+			values[Field.OBJECT.ordinal()] = table;
+//			tuple.value(Field.OBJECT.ordinal(), table);
+			tuple = new Tuple(values);
 			return super.insert(tuple);
 		}
 		

@@ -713,15 +713,13 @@ public class Driver implements Runnable {
 	 */
 	private void split(TupleSet tuples, TupleSet insertions, TupleSet deletions) {
 		for (Tuple tuple : tuples) {
-			Tuple insert = tuple.clone();
-			Tuple delete = tuple.clone();
-			insert.value(Evaluator.Field.INSERTIONS.ordinal(), tuple.value(Evaluator.Field.INSERTIONS.ordinal()));
-			insert.value(Evaluator.Field.DELETIONS.ordinal(), null);
-			delete.value(Evaluator.Field.INSERTIONS.ordinal(), null);
-			delete.value(Evaluator.Field.DELETIONS.ordinal(), tuple.value(Evaluator.Field.DELETIONS.ordinal()));
+			Comparable[] insert = tuple.toArray();
+			Comparable[] delete = tuple.toArray();
+			insert[Evaluator.Field.DELETIONS.ordinal()] = null;
+			delete[Evaluator.Field.INSERTIONS.ordinal()] = null;
 
-			insertions.add(insert);
-			deletions.add(delete);
+			insertions.add(new Tuple(insert));
+			deletions.add(new Tuple(delete));
 		}
 	}
 }

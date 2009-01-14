@@ -86,7 +86,10 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 					Key key = (Key) tuple.value(Field.KEY.ordinal());
 					Type type = (Type) tuple.value(Field.TYPE.ordinal());
 					Index index = (Index) constructor.newInstance(table, key, type);
-					tuple.value(Field.OBJECT.ordinal(), index);
+					//tuple.value(Field.OBJECT.ordinal(), index);
+					Comparable[] values = tuple.toArray();
+					values[Field.OBJECT.ordinal()] = index;
+					tuple = new Tuple(values);
 				} catch (Exception e) {
 					throw new UpdateException(e.toString());
 				}
