@@ -88,6 +88,7 @@ public class Projection extends Operator {
 			} catch (Throwable e) {
 				System.err.println("PROJECTION ERROR " + this.predicate
 						+ ": PROGRAM " + this.program + " RULE " + this.rule);
+				e.printStackTrace();
 				System.exit(0);
 			}
 		}
