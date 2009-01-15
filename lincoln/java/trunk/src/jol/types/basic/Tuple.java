@@ -22,11 +22,6 @@ import java.util.List;
 public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializable {
 	private static final long serialVersionUID = 1L;
 
-	transient private static long idGen = 0L;
-
-	/** The tuple identifier. */
-	transient protected long id;
-
 	/** An ordered list of tuple values. */
 	protected List<Comparable> values;
 
@@ -210,7 +205,6 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	@Override
 	public Tuple clone() {
 		Tuple copy    = new Tuple(this.values);
-		copy.id		  = this.id;
 		copy.refCount = this.refCount;
 		return copy;
 	}
@@ -225,24 +219,6 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 		this.frozen         = false;
 	    this.hashCacheValid = false;
 		this.refCount       = 1;
-		this.id		        = idGen;
-		idGen++;
-	}
-
-	/**
-	 * The tuple identifier.
-	 * @return The tuple identifier.
-	 */
-	public long id() {
-		return this.id;
-	}
-
-	/**
-	 * Set the tuple identifier.
-	 * @param id The identifier to set the tuple identifier to.
-	 */
-	public void id(long id) {
-		this.id = id;
 	}
 
 	public boolean frozen() {

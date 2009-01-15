@@ -95,7 +95,6 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 			}
 
 			Tuple project = new Tuple(values);
-			project.id(tuple.id());
 			return project;
 		}
 	}
@@ -110,7 +109,6 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 		}
 
 		Tuple project = new Tuple(values);
-		project.id(tuple.id());
 		return project;
 	}
 
@@ -135,8 +133,6 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 			}
 		}
 		Tuple t = new Tuple(tuple);
-		t.id(projectedKey.id());
-		assert(t.id() == projectedValue.id());
 		return t;
 	}
 
