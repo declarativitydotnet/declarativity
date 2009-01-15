@@ -26,7 +26,7 @@ public class AggregateVariable extends Variable {
 		if (name().equals(STAR)) {
 			return new TupleFunction() {
 				public Object evaluate(Tuple tuple) throws JolRuntimeException {
-					return tuple.id();
+					return tuple;
 				}
 				public Class returnType() { return Long.class; }
 			};
