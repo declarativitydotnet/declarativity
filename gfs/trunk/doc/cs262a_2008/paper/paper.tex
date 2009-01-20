@@ -80,9 +80,9 @@ programmer. Distributed systems are typically implemented with tools
 developed for single-machine programs and only superficially adapted
 to the challenges of a distributed setting. Programmers are forced to
 deal with the tedious details of communication, synchronization, and
-consensus. As a result, the essence of the distributed computation is
-obscured by a forest of boilerplate details. Evidence for this can be
-seen in the fact that distributed algorithms such as Paxos can be
+distribution. As a result, the essence of the distributed computation
+is obscured by a thicket of boilerplate details. Evidence for this can
+be seen in the fact that distributed algorithms such as Paxos can be
 stated in a page of pseudocode, but require many thousands of lines of
 code to implement using standard tools~\cite{paxos-made-live}.
 
@@ -130,8 +130,8 @@ language (e.g.\ \cite{chord-overlog}).
 Inspired by the data independence provided by the relational model, we
 aim to provide \emph{network scale independence} for distributed
 systems by separating the programmer's intent from its concrete
-realization. In BOOM, a distributed system is composed of two types of
-components:
+realization~\cite{network-data-indep}. In BOOM, a distributed system
+is composed of two types of components:
 \begin{enumerate}
 \item
   \emph{imperative} components implement the basic units of
@@ -170,7 +170,7 @@ set of imperative and declarative components in Section
 
 \subsection{Declarative Specification of\\Distributed File Systems}
 In many systems, there is a structural separation between control and
-data paths. This can be motivated either by principle (the separation
+data paths. This can be motivated either by principle (e.g.\ the separation
 of mechanism and policy~\cite{hydra-policy-mech-sep}), or by practical
 concerns: data and control paths typically differ in average message
 size, and in requirements for consistency and latency. It is
@@ -260,12 +260,11 @@ file.\footnote{In the current prototype, random writes are not
   entire chunk. We plan to relax this constraint in the future.} The
 master first generates a new chunk identifier. To ensure that the
 state of the file system is consistent across all the masters, the
-master uses a consensus protocol to ensure that all masters have
-agreed to add the new chunk identifier at the same position in the
-chunk list for the appropriate file. Once consensus has been reached,
-the master replies to the client with the new chunk identifier and a
-list of data nodes that might be appropriate locations for the new
-chunk.
+master uses a consensus protocol to ensure that all masters will agree
+to add the new chunk identifier at the same position in the chunk list
+for the appropriate file. Once consensus has been reached, the master
+replies to the client with the new chunk identifier and a list of data
+nodes that might be appropriate locations for the new chunk.
 
 The client is then responsible for transferring the chunk's content to
 a sufficient number of data nodes. There are various policies a client
@@ -444,16 +443,16 @@ in the original GFS and HDFS design.
 
 \subsubsection{Data Node Failure}
 As long as the replication factor of a file is greater than one, the
-loss of a data node will be transparent to applications using the
-system.  The last heartbeats of the lost node will quickly expire from
-the soft-state tables on the masters, and clients will no longer be
-directed to this server for read or write requests.  The updated soft
-state will cause aggregates in the BoomFS logic to be recomputed, which
-in turn cause new migration events to be fired, selecting another
-replica as a target for the chunks whose replication factor is now too
-low.  GFS and HDFS both use this kind of replication strategy, though
-Ghemawat et al.\ discuss the possible use of other forms of redundancy,
-such as parity~\cite{gfs}.
+loss of a single data node will be transparent to applications using
+the system.  The last heartbeats of the lost node will quickly expire
+from the soft-state tables on the masters, and clients will no longer
+be directed to this server for read or write requests.  The updated
+soft state will cause aggregates in the BoomFS logic to be recomputed,
+which in turn cause new migration events to be fired, selecting
+another replica as a target for the chunks whose replication factor is
+now too low.  GFS and HDFS both use this kind of replication strategy,
+though Ghemawat et al.\ discuss the possible use of other forms of
+redundancy, such as parity~\cite{gfs}.
 
 \subsubsection{Data Node Disk Failure}
 The effect of this failure is more or less the same as for data node
