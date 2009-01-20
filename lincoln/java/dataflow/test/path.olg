@@ -1,0 +1,91 @@
+program path;
+
+import java.lang.Object;
+import java.lang.String;
+import java.lang.Integer;
+import jol.core.Runtime;
+
+import jol.types.basic.ValueList;
+
+define(link, keys(0,1), {String, String});
+define(path, keys(0,1,2), {String, String, Integer});
+define(pathStatistics, keys(0,1), {String, String, Integer, Integer, ValueList});
+define(allPaths, {String, ValueList});
+define(flatTopPaths, {String, String, Integer});
+define(flatpaths, {String, Integer});
+define(computeAll, {String});
+define(links, keys(0), {Integer});
+
+/* Fire a time 10 seconds following program start time.
+   The period is set to 0, which means I only want it to
+   fire once. */
+timer(newlink, physical, 10000, 5, 10000);
+
+timer(removeLink, logical, 1, 1, 5);
+
+/* 1 -> 2 -> 3 -> 4 */
+link("1", "2");
+link("2", "3");
+link("3", "4");
+link("2", "4");
+
+/* 5 -> 6 -> 7 -> 8 -> 9 */
+link("5", "6");
+link("6", "7");
+link("7", "8");
+link("8", "9");
+
+watch(link, ae);
+watch(path, ae);
+watch(pathStatistics, ae);
+watch(allPaths, a);
+watch(flatpaths, a);
+watch(flatTopPaths, a);
+
+
+/* Add the link 9 -> 10 when newlink fires */
+// link("9", Runtime.idgen().toString()) :- newlink(Delay, Period, Timer);
+
+// newlink(null, 5000, null) :- newlink(_, 0, _);
+
+watch(links, ae);
+links(count<Link>) :- link(Src, Dst), Link := Src + "->" + Dst;
+
+define(test1, {String});
+watch(test1, a);
+test1(Src) :- link(Src, Src);
+
+/* Initialize all paths with link */
+init
+path(Source, Destination, 1) :- link(Source, Destination);
+
+/* Transitive closure over path, link. */
+transitive
+path(Source, Destination, Hops+1) :- 
+	path(Source, Intermediate, Hops), link(Intermediate, Destination),
+	links(Count), Hops <= Count;
+
+/* Compute shortest paths. */
+statistics
+pathStatistics(Source, Destination, min<Hops>, max<Hops>, bottomk<Hops, K>) :- 
+	path(Source, Destination, Hops),
+	K := 2;
+	
+computeAll(Source) :-
+	pathStatistics(Source, Destination, MinHops, MaxHops, TopHops);
+	
+import jol.types.basic.Schema;
+allPaths(Source, generic<(new ValueList()).insert(Destination)>) :-
+	computeAll(Bla),
+	path(Source, Destination, Hops);
+	
+flatpaths(Source, Path) :-
+	flatten(allPaths(Source, Paths)),
+	Path := (Integer) Paths;
+	
+flatTopPaths(Source, Destination, Hop) :-
+	flatten(pathStatistics(Source, Destination, MinHops, MaxHops, TopHops)),
+	Hop := (Integer) TopHops;
+
+
+delete link("2", "4") :- removeLink(Period, TTL, Delay);

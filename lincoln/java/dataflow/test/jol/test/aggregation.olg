@@ -1,0 +1,11 @@
+program aggregation;
+
+import java.lang.Integer;
+import java.lang.String;
+
+define(counted, keys(0), {Integer, String});
+define(countStar, keys(0,1), {Integer, Integer});
+define(countCol, keys(0,1), {Integer, Integer});
+
+countStar(A, count<*>) :- counted(A,B);
+countCol(A, count<B>) :- counted(A,B);
