@@ -1,0 +1,90 @@
+module Constant(Spacing, Identifier, Symbol);
+
+import Spacing;
+import Identifier;
+import Symbol;
+
+Node Constant = 
+    FloatConstant
+  / LongConstant Spacing
+  / IntegerConstant
+  / StringConstant Spacing
+  / NullConstant Spacing
+  / BooleanConstant Spacing
+  / InfinityConstant Spacing
+  / Vector Spacing
+  / Matrix Spacing
+  ;
+ 
+Pair<Node> ConstantList = Constant (void:",":Symbol Constant)*;
+
+generic FloatConstant = FloatingPointString Spacing;
+
+Pair<Node> FloatList = FloatConstant (void:",":Symbol FloatConstant)*;
+
+String FloatingPointString =
+    Digit+ '.' Digit+ Exponent? FloatTypeSuffix? 
+  /        '.' Digit+ Exponent? FloatTypeSuffix?
+  / Digit+            Exponent  FloatTypeSuffix?
+  / Digit+            Exponent? FloatTypeSuffix
+  ;
+
+transient String Exponent        = [eE] [+\-]? Digit+ ;
+transient String FloatTypeSuffix = [fFdD] ;
+
+generic IntegerConstant =
+    HexConstant Spacing
+  / InfinityConstant Spacing
+  / DecimalConstant Spacing;
+  
+generic LongConstant =
+	DecimalConstant LongTypeSuffix;
+  
+Pair<Node> IntegerList = IntegerConstant (void:",":Symbol IntegerConstant)*;
+
+transient String HexConstant =  HexNumeral     HexTypeSuffix? ;
+
+transient String DecimalConstant = '-'? DecimalNumeral;
+
+transient String DecimalNumeral    = '0' / NonZeroDigit Digit* ;
+transient String NonZeroDigit      = [1-9] ;
+transient String Digit             = [0-9] ;
+
+transient String HexNumeral        = '0' [xX] HexDigit+ ;
+transient String HexDigit          = [0-9a-fA-F] ;
+
+transient String LongTypeSuffix = [lL] ;
+transient String HexTypeSuffix = [UI] ;
+
+generic StringConstant   = CharacterSequence;
+String CharacterSequence = ["] ( EscapeSequence / !["\\] _ )* ["] ;
+
+transient String EscapeSequence =
+  '\\' [btnfr"'\\] 
+  ;
+
+generic BooleanConstant =
+    "true":Word 
+  / "false":Word 
+  ;
+
+String InfinityConstant =
+  "infinity":Word
+  ;
+
+generic NullConstant =
+  "null":Word
+  ;
+  
+Node Vector = IntVector / FloatVector;
+  
+generic IntVector   = void:"{":Symbol IntegerList void:"}":Symbol ;
+generic FloatVector = void:"{":Symbol FloatList void:"}":Symbol ;
+
+Node Matrix = IntMatrix / FloatMatrix;
+
+generic IntMatrix   = void:"{":Symbol IntMatrixEntries void:"}":Symbol ;
+generic FloatMatrix = void:"{":Symbol FloatMatrixEntries void:"}":Symbol ;
+
+Pair<Node> IntMatrixEntries   = IntVector ( void:",":Symbol IntVector )*;
+Pair<Node> FloatMatrixEntries = FloatVector ( void:",":Symbol FloatVector )*;
