@@ -21,9 +21,6 @@ public class Selection extends Operator {
 	/** The selection predicate. */
 	private jol.lang.plan.Selection selection;
 
-	/** The output schema. NOTE: same as the input schema. */
-	private Schema schema;
-	
 	private TupleFunction<java.lang.Boolean> filter;
 
 	/** Create a new selection operator.
@@ -36,7 +33,6 @@ public class Selection extends Operator {
 	throws PlannerException {
 		super(context, selection.program(), selection.rule());
 		this.selection = selection;
-		this.schema = input.clone();
 		this.filter = selection.predicate().function(input);
 	}
 
