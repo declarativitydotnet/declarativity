@@ -29,8 +29,6 @@ public class Projection extends Operator {
 	/** The field accessors of the projection. */
 	private List<TupleFunction<Comparable>> accessors;
 
-	private Schema schema;
-
 	/**
 	 * Create a new projection operator
 	 * @param context The runtime context.
@@ -41,7 +39,6 @@ public class Projection extends Operator {
 		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
 		this.accessors = new ArrayList<TupleFunction<Comparable>>();
-		this.schema    = new Schema(predicate.name());
 
 		for (int i = 0; i < predicate.arguments().size(); i++) {
 			Expression argument = predicate.arguments().get(i).clone();
@@ -58,13 +55,6 @@ public class Projection extends Operator {
 				}
 			}
 			
-			if (argument instanceof Variable) {
-				this.schema.append((Variable) argument);
-			}
-			else {
-				this.schema.append(new DontCare(argument.type()));
-			}
-
 			accessors.add(argument.function(input));
 		}
 	}
@@ -93,15 +83,5 @@ public class Projection extends Operator {
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public Schema schema() {
-		return this.schema;
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return new HashSet<Variable>(predicate.requires());
 	}
 }

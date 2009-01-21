@@ -123,22 +123,6 @@ public abstract class Join extends Operator {
 		initFilters(predicate);
 	}
 	
-	@Override
-	public Schema schema() {
-		Schema schema = this.outerSchema.clone();
-		for (Variable var : this.innerSchema.variables()) {
-			if (!schema.contains(var)) {
-				schema.append(var);
-			}
-		}
-		return schema;
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return new HashSet<Variable>();
-	}
-	
 	/**
 	 * Apply all join filters.
 	 * @param outer Tuple from the outer relation.

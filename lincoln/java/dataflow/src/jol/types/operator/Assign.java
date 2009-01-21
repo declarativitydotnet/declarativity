@@ -76,14 +76,4 @@ public class Assign<C extends Comparable<C> > extends Operator {
 		}
 		return deltas;
 	}
-
-	@Override
-	public Schema schema() {
-		return this.schema;
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return this.assignment.requires();
-	}
 }

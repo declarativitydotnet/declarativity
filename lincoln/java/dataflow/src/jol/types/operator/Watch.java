@@ -94,16 +94,6 @@ public class Watch extends Operator {
 	}
 
 	@Override
-	public Set<Variable> requires() {
-		return new HashSet<Variable>();
-	}
-
-	@Override
-	public Schema schema() {
-		return null;
-	}
-
-	@Override
 	public String toString() {
 		return "Watch " + modifier + ": " + name;
 	}
