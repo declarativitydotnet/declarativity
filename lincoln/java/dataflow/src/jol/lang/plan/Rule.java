@@ -353,14 +353,14 @@ public class Rule extends Clause {
 			else if (!term.equals(event)) {
 				Operator oper = term.operator(context, schema);
 				operators.add(oper);
-				schema = oper.schema();
+				schema = term.schema(schema);
 			}
 		}
 		
 		for (Assignment assignment : assignments) {
 			Operator oper = assignment.operator(context, schema);
 			operators.add(oper);
-			schema = oper.schema();
+			schema = assignment.schema(schema);
 		}
 		
 		operators.add(new Projection(context, head, schema));

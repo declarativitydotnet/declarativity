@@ -67,6 +67,8 @@ public abstract class Term implements Comparable<Term> {
 	
 	public abstract Set<Variable> requires();
 	
+	public abstract Schema schema(Schema input);
+	
 	public abstract void set(Runtime context, String program, String rule, Integer position) throws UpdateException;
 	
 	public abstract Operator operator(Runtime context, Schema input) throws PlannerException;

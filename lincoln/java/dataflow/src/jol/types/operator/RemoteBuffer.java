@@ -105,16 +105,6 @@ public class RemoteBuffer extends Operator {
 		return new TupleSet(this.predicate.name());
 	}
 
-	@Override
-	public Schema schema() {
-		return this.predicate.schema();
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return this.predicate.requires();
-	}
-	
 	public Predicate predicate() {
 		return this.predicate;
 	}

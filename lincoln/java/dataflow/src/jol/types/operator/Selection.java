@@ -63,14 +63,4 @@ public class Selection extends Operator {
 		}
 		return result;
 	}
-
-	@Override
-	public Schema schema() {
-		return this.schema;
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return this.selection.predicate().variables();
-	}
 }
