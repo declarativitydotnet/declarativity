@@ -67,7 +67,7 @@ public class Assign<C extends Comparable<C> > extends Operator {
 			} catch (Throwable t) {
 				String msg = t.toString() + ". Program " + this.assignment.program() +
 				             ". Error during assignment " + toString() + 
-				             ", on input tuple " + tuple;
+				             "position " + variablePosition + " tuple size " + tuple.size() + ". Tuple = " + tuple;
 				throw new JolRuntimeException(msg, t);
 			}
 		}

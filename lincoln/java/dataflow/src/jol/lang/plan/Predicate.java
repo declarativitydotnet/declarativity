@@ -118,9 +118,11 @@ public class Predicate extends Term implements Iterable<Expression> {
 	
 	@Override
 	public Schema schema(Schema input) {
-		for (Variable var : this.schema().variables()) {
-			if (!input.contains(var)) {
-				input.append(var);
+		if (!this.notin) {
+			for (Variable var : this.schema().variables()) {
+				if (!input.contains(var)) {
+					input.append(var);
+				}
 			}
 		}
 		return input;
