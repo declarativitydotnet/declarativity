@@ -59,7 +59,8 @@ public class Flatten extends Function {
 		super(NAME + ":" + id, null);
 		this.positions = new ArrayList<Integer>();
 		TypeList outputTypes = new TypeList();
-		for (Class input : inputTypes) {
+		for (int i = 0; i < inputTypes.size(); i++) {
+			Class input = inputTypes.getClass(i);
 			if (input == ValueList.class) {
 				outputTypes.add(Comparable.class);
 				this.positions.add(outputTypes.size() - 1);
