@@ -8,7 +8,7 @@ import java.util.ArrayList;
  * 
  * NOTE: used to add column lists to tuples.
  */
-public class ValueList<T> extends ArrayList<T> implements Comparable<ValueList> {
+public class ValueList<T extends Comparable> extends ArrayList<T> implements Comparable<ValueList<T>> {
 	private static final long serialVersionUID = 1L;
 
 	public ValueList() {
@@ -22,13 +22,14 @@ public class ValueList<T> extends ArrayList<T> implements Comparable<ValueList> 
 		}
 	}
 	
-	public int compareTo(ValueList o) {
-		if (o.equals(this)) {
-			return 0;
+	public int compareTo(ValueList<T> o) {
+		if (size() < o.size()) return -1;
+		if (size() > o.size()) return 1;
+		for (int i = 0; i < size(); i++) {
+			int comp = this.get(i).compareTo(o.get(i));
+			if (comp != 0) return comp;
 		}
-		else {
-			return -1;
-		}
+		return 0;
 	}
 	
 	/**
