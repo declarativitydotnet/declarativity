@@ -15,7 +15,7 @@ public class AntiIndexJoin extends Join {
 
 	/** The lookup key used to obtain join matches from the inner relation. */
 	private Key lookupKey;
-	
+
 	/** The index used to perform the inner relation lookup. */
 	private Index index;
 
@@ -24,13 +24,13 @@ public class AntiIndexJoin extends Join {
 	 * @param context The runtime context.
 	 * @param predicate The (notin) predicate.
 	 * @param input The input schema.
-	 * @throws PlannerException 
+	 * @throws PlannerException
 	 */
-	public AntiIndexJoin(Runtime context, 
-			                 Predicate predicate, 
-			                 Schema input, 
-			                 Key lookupKey, 
-			                 Index index) 
+	public AntiIndexJoin(Runtime context,
+			                 Predicate predicate,
+			                 Schema input,
+			                 Key lookupKey,
+			                 Index index)
 	throws PlannerException {
 		super(context, predicate, input);
 		this.lookupKey = lookupKey;
@@ -41,7 +41,7 @@ public class AntiIndexJoin extends Join {
 	public String toString() {
 		return "anti nested-loop join " + index.table();
 	}
-	
+
 	@Override
 	public Schema schema() {
 		return this.outerSchema.clone();
@@ -52,7 +52,6 @@ public class AntiIndexJoin extends Join {
 		try {
 			TupleSet result = new TupleSet();
 			for (Tuple outer : outerTuples) {
-				TupleSet oTuples = new TupleSet();
 				TupleSet innerTuples = this.index.lookupByKey(lookupKey.project(outer));
 				if (innerTuples.size() == 0) {
 					/* An obvious optimized case. */
