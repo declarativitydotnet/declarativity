@@ -3,7 +3,7 @@ VIEWPDF=open
 USE_PDFLATEX=1
 BIBTEXSRCS=sosp.bib
 
-ifeq ($(shell uname -o),GNU/Linux)
+ifeq ($(shell uname), Linux)
   # linux; let distro manage latex-make
   include LaTeX.mk
 else
