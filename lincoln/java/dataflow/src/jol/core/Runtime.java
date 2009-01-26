@@ -89,10 +89,10 @@ public class Runtime implements System {
 		this.catalog.register(new Log(this, java.lang.System.err));
 
 		this.executor   = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
-		this.network    = new Network(this);
-		this.driver     = new Driver(this, schedule, clock, executor);
-		this.thread     = new Thread(driver);
 		this.timer      = new Timer("Timer", true);
+		this.driver     = new Driver(this, schedule, clock, executor);
+		this.network    = null; 
+		this.thread     = null;
 	}
 
 	public void evaluate() throws JolRuntimeException {
@@ -130,16 +130,17 @@ public class Runtime implements System {
 		synchronized (driver) {
 		    this.timer.cancel();
 			this.executor.shutdown();
-			this.thread.interrupt();
-			if (this.network != null) {
-				this.network.shutdown();
-			}
+			if (this.thread != null) this.thread.interrupt();
+			if (this.network != null) this.network.shutdown();
 			StasisTable.deinitializeStasis();
 		}
 	}
 
 	public void start() {
-		this.thread.start();
+		if (this.thread == null) {
+			this.thread = new Thread(driver);
+			this.thread.start();
+		}
 	}
 
 	/**
@@ -345,6 +346,11 @@ public class Runtime implements System {
 			}
 		};
 	}
+	
+	public static System create() throws JolRuntimeException {
+		return create(-1, defaultLoader());
+	}
+	
 	public static System create(int port) throws JolRuntimeException {
 		return create(port, defaultLoader());
 	}
@@ -367,7 +373,10 @@ public class Runtime implements System {
 			for (URL file : Compiler.FILES(loader)) {
 				runtime.install("system", file);
 			}
-			runtime.network.install(port);
+			if (port > 0) {
+				runtime.network = new Network(runtime);
+				runtime.network.install(port);
+			}
 			runtime.driver.evaluate();
 
 			return runtime;
