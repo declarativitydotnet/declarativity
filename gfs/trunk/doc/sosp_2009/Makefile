@@ -1,12 +1,13 @@
 NAME=sosp
-VIEWPDF=open
 USE_PDFLATEX=1
 BIBTEXSRCS=sosp.bib
 
 ifeq ($(shell uname), Linux)
-  # linux; let distro manage latex-make
-  include LaTeX.mk
+  # linux
+  VIEWPDF=evince
+  include  /usr/share/latex-mk/latex.gmk
 else
-  # macos; hardcode non-fhs path
+  # macos
+  VIEWPDF=open
   include /opt/local/share/latex-mk/latex.gmk
 endif
