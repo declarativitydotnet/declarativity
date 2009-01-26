@@ -39,11 +39,19 @@ GFS workalike~\cite{gfs-sosp}.
 \section{Reliability}
 \begin{itemize}
 \item
+  RCS Local durability primitive: Force persistent tables at end of
+  timestamp.  (paxos 'just works' (?)) Need datalog rewrite for 2PC's
+  prepare (ie: transactions in datalog rewrites).  2PC would be a
+  forward ref to performance section if it is here.  Splitting 2PC
+  into perf section might confuse durability story.
+
+\item
   Replicated HDFS master nodes ($\to$ crash recovery; assuming we have
   enough elements in the log?)
 
 \item
   Replicated Hadoop master
+
 \end{itemize}
 
 \section{Scalability}
@@ -58,6 +66,8 @@ GFS workalike~\cite{gfs-sosp}.
   Scheduler
 \item
   Location-aware
+\item
+  RCS Reliable master vs master w/ hot failover vs 2PC vs Paxos.  (Could be in perf or reliability section, but choice depends on failure rate, workload, etc...)
 \item
   Benchmark generation / monitoring
 \end{itemize}
