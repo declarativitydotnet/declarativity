@@ -304,7 +304,7 @@ public abstract class Table implements Comparable<Table> {
 	 * Get the type of each attribute (in schema order). 
 	 * @return The number of attributes associated with this table. */
 	public Class[] types() {
-		return (Class[]) attributeTypes.toArray(new Class[attributeTypes.size()]);
+		return (Class[]) attributeTypes.toArray();
 	}
 	
 	/**

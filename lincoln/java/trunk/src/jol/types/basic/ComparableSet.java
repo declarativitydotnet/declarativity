@@ -1,8 +1,9 @@
 package jol.types.basic;
 
 import java.util.HashSet;
+import java.util.TreeSet;
 
-public class ComparableSet<E> extends HashSet<E> implements Comparable<ComparableSet<E>> {
+public class ComparableSet<E> extends TreeSet<E> implements Comparable<ComparableSet<E>> {
     private static final long serialVersionUID = 1L;
 
 	public ComparableSet<E> clone() {

@@ -859,7 +859,7 @@ public final class TypeChecker extends Visitor {
 		/* Type check each tuple argument according to the schema. */
 		for (int index = 0; index < schema.size(); index++) {
 			Expression<?> param = parameters.size() <= index ?
-					new DontCare(schema.get(index)) : parameters.get(index);
+					new DontCare(schema.getClass(index)) : parameters.get(index);
 			Class paramType = param.type();
 
 			if (param instanceof Cast) {
@@ -874,7 +874,7 @@ public final class TypeChecker extends Visitor {
 				}
 				/* Fill in missing variables with tmp variables. */
 				while (index < alias.position()) {
-					Variable dontcare = new DontCare(schema.get(index));
+					Variable dontcare = new DontCare(schema.getClass(index));
 					arguments.add(dontcare);
 				}
 			}
@@ -893,7 +893,7 @@ public final class TypeChecker extends Visitor {
 				var.type(paramType);
 				if (var.type() == null) {
 					/* Fill in type using the schema. */
-					var.type(schema.get(index));
+					var.type(schema.getClass(index));
 				}
 
 				/* Map variable to its type. */
@@ -928,13 +928,13 @@ public final class TypeChecker extends Visitor {
 			}
 
 			/* Ensure the type matches the schema definition. */
-			if (!subtype(schema.get(index), paramType)) {
+			if (!subtype(schema.getClass(index), paramType)) {
 				if (param instanceof Value &&
-						Number.class.isAssignableFrom(schema.get(index)) &&
+						Number.class.isAssignableFrom(schema.getClass(index)) &&
 						Number.class.isAssignableFrom(param.type())) {
 					Number number = (Number) ((Value) param).value();
 					try {
-						Constructor<?> cons = ((Class<?>)schema.get(index)).getConstructor(String.class);
+						Constructor<?> cons = ((Class<?>)schema.getClass(index)).getConstructor(String.class);
 						param = new Value<Number>((Number) cons.newInstance(number.toString()));
 					} catch (Exception e) {
 						e.printStackTrace();

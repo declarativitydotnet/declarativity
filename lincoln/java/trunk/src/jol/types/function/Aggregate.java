@@ -33,6 +33,8 @@ public abstract class Aggregate<C extends Comparable<C>> {
 	public static final String SUMSTR   = "sumstr";
 	public static final String TUPLESET = "tupleset";
 	public static final String SET      = "set";
+	public static final String UNION    = "union";
+
 
 
 	public static Aggregate function(jol.lang.plan.Aggregate aggregate, Schema input) 
@@ -73,6 +75,9 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		else if (SET.equals(aggregate.functionName())) {
 			return new Set(aggregate, input);
 		}
+		else if (UNION.equals(aggregate.functionName())) {
+			return new Union(aggregate, input);
+		}
 		throw new PlannerException("Unknown aggregate function " + 
 				aggregate.functionName());
 	}
@@ -95,7 +100,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		else if (TUPLESET.equals(function)) {
 			return jol.types.basic.TupleSet.class;
 		}
-		else if (SET.equals(function)) {
+		else if (SET.equals(function) || UNION.equals(function)) {
 			return jol.types.basic.ComparableSet.class;
 		}
 		else if (SUMSTR.equals(function)) {
@@ -633,6 +638,58 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				this.result.remove(this.accessor.evaluate(tuple));
+			}
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+	}
+	
+	public static class Union extends Aggregate<Tuple> {
+		private TupleSet tuples;
+		private ComparableSet result;
+		private TupleFunction<Tuple> accessor;
+
+		public Union(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
+			reset();
+		}
+
+		private void reset() {
+			this.tuples = new TupleSet();
+			this.result = new ComparableSet();
+		}
+
+		@Override
+		public ComparableSet result() {
+			return this.result.clone();
+		}
+
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				Comparable v = this.accessor.evaluate(tuple);
+				if (v instanceof ComparableSet) {
+					this.result.addAll((ComparableSet) v);
+				}
+				else {
+					this.result.add(v);
+				}
+			}
+		}
+
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				Comparable v = this.accessor.evaluate(tuple);
+				if (v instanceof ComparableSet) {
+					this.result.removeAll((ComparableSet) v);
+				}
+				else {
+					this.result.remove(v);
+				}
 			}
 		}
 

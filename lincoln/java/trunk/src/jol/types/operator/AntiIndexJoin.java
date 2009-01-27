@@ -43,11 +43,6 @@ public class AntiIndexJoin extends Join {
 	}
 
 	@Override
-	public Schema schema() {
-		return this.outerSchema.clone();
-	}
-
-	@Override
 	public TupleSet evaluate(TupleSet outerTuples) throws JolRuntimeException {
 		try {
 			TupleSet result = new TupleSet();

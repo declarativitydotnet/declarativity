@@ -90,12 +90,6 @@ public abstract class Join extends Operator {
 		}
 	}
 	
-	/** The outer schema. */
-	protected Schema outerSchema;
-	
-	/** The inner schema */
-	protected Schema innerSchema;
-	
 	/** A list of join filters, one for each common join attribute. */
 	private List<JoinFilter> joinFilters;
 	
@@ -112,31 +106,14 @@ public abstract class Join extends Operator {
 	 */
 	public Join(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
-		this.outerSchema = input;
-		this.innerSchema = predicate.schema();
+		Schema innerSchema = predicate.schema();
 		this.innerNonJoinPositions = new ArrayList<Integer>();
-		for (Variable var : this.innerSchema.variables()) {
-			if (!this.outerSchema.contains(var)) {
-				this.innerNonJoinPositions.add(this.innerSchema.position(var.name()));
+		for (Variable var : innerSchema.variables()) {
+			if (!input.contains(var)) {
+				this.innerNonJoinPositions.add(innerSchema.position(var.name()));
 			}
 		}
-		initFilters(predicate);
-	}
-	
-	@Override
-	public Schema schema() {
-		Schema schema = this.outerSchema.clone();
-		for (Variable var : this.innerSchema.variables()) {
-			if (!schema.contains(var)) {
-				schema.append(var);
-			}
-		}
-		return schema;
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return new HashSet<Variable>();
+		initFilters(predicate, input);
 	}
 	
 	/**
@@ -172,7 +149,7 @@ public abstract class Join extends Operator {
 	 * @return A list of join filters.
 	 * @throws PlannerException 
 	 */
-	private void initFilters(Predicate predicate) 
+	private void initFilters(Predicate predicate, Schema input) 
 	throws PlannerException {
 		this.predicateFilters = new ArrayList<Filter>();
 		this.joinFilters      = new ArrayList<JoinFilter>();
@@ -202,10 +179,10 @@ public abstract class Join extends Operator {
 		}
 		
 		this.joinFilters = new ArrayList<JoinFilter>();
-		for (Variable var : outerSchema.variables()) {
-			if (innerSchema.contains(var)) {
-				TupleFunction<Comparable> o = var.function(outerSchema);
-				TupleFunction<Comparable> i = var.function(innerSchema);
+		for (Variable var : input.variables()) {
+			if (predicate.schema().contains(var)) {
+				TupleFunction<Comparable> o = var.function(input);
+				TupleFunction<Comparable> i = var.function(predicate.schema());
 				this.joinFilters.add(new JoinFilter(o, i));
 			}
 		}

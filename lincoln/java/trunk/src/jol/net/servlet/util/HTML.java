@@ -79,9 +79,9 @@ public class HTML {
 		if(t.size() == 0) {
 			s.append("<empty type list>");
 		} else {
-			s.append(toString((Class)t.get(0)));
+			s.append(toString((Class)t.getClass(0)));
 			for(int i = 1; i < t.size(); i++) {
-				s.append(", "+toString((Class)t.get(i)));
+				s.append(", "+toString((Class)t.getClass(i)));
 			}
 
 		}

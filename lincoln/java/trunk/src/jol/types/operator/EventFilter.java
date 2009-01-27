@@ -168,16 +168,6 @@ public class EventFilter extends Operator {
 	}
 
 	@Override
-	public Set<Variable> requires() {
-		return this.predicate.requires();
-	}
-
-	@Override
-	public Schema schema() {
-		return this.predicate.schema().clone();
-	}
-
-	@Override
 	public String toString() {
 		return "EVENT FILTER " + predicate + ": FILTERS " + this.filters;
 	}
