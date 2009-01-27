@@ -41,11 +41,6 @@ public class AntiScanJoin extends Join {
 	}
 	
 	@Override
-	public Schema schema() {
-		return this.outerSchema.clone();
-	}
-
-	@Override
 	public TupleSet evaluate(TupleSet outerTuples) throws JolRuntimeException {
 		TupleSet result = new TupleSet();
 		for (Tuple outer : outerTuples) {

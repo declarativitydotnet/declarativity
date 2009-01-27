@@ -75,4 +75,9 @@ public class Selection extends Term {
 	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
 		context.catalog().table(SelectionTable.TABLENAME).force(new Tuple(program, rule, position, this));
 	}
+
+	@Override
+	public Schema schema(Schema input) {
+		return input;
+	}
 }

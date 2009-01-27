@@ -49,16 +49,6 @@ public class Function extends Operator {
 	}
 
 	@Override
-	public Set<Variable> requires() {
-		return predicate.requires();
-	}
-
-	@Override
-	public Schema schema() {
-		return predicate.schema().clone();
-	}
-
-	@Override
 	public String toString() {
 		return this.function == null || this.predicate == null ? 
 				"null" : this.function.name() + "(" + predicate + ")";

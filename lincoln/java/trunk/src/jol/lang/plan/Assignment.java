@@ -86,4 +86,12 @@ public class Assignment extends Term {
 		context.catalog().table(AssignmentTable.TABLENAME).force(new Tuple(program, rule, position, this));
 	}
 
+	@Override
+	public Schema schema(Schema input) {
+		if (!input.contains(this.variable)) {
+			input.append(this.variable);
+		}
+		return input;
+	}
+
 }

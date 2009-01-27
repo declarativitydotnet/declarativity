@@ -19,9 +19,6 @@ public class Assign<C extends Comparable<C> > extends Operator {
 	/** The assignment predicate. */
 	private jol.lang.plan.Assignment assignment;
 
-	/** The output schema. */
-	private Schema schema;
-	
 	private int variablePosition;
 	
 	private TupleFunction<Comparable> valueFunction;
@@ -37,12 +34,13 @@ public class Assign<C extends Comparable<C> > extends Operator {
 		super(context, assignment.program(), assignment.rule());
 		this.assignment = assignment;
 		this.valueFunction = assignment.value().function(input);
-		this.schema = input.clone();
 		
-		if (!this.schema.contains(this.assignment.variable())) {
-			this.schema.append(this.assignment.variable());
+		if (input.contains(this.assignment.variable())) {
+			this.variablePosition = input.position(assignment.variable().name());
 		}
-		this.variablePosition = this.schema.position(assignment.variable().name());
+		else {
+			this.variablePosition = input.size();
+		}
 	}
 
 	@Override
@@ -67,23 +65,12 @@ public class Assign<C extends Comparable<C> > extends Operator {
 				delta[variablePosition] = valueFunction.evaluate(tuple);
 				deltas.add(new Tuple(delta));
 			} catch (Throwable t) {
-				System.err.println("SCHEMA " + this.schema);
 				String msg = t.toString() + ". Program " + this.assignment.program() +
 				             ". Error during assignment " + toString() + 
-				             ", on input tuple " + tuple;
+				             "position " + variablePosition + " tuple size " + tuple.size() + ". Tuple = " + tuple;
 				throw new JolRuntimeException(msg, t);
 			}
 		}
 		return deltas;
-	}
-
-	@Override
-	public Schema schema() {
-		return this.schema;
-	}
-
-	@Override
-	public Set<Variable> requires() {
-		return this.assignment.requires();
 	}
 }

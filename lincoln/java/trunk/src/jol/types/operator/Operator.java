@@ -126,15 +126,4 @@ public abstract class Operator implements Comparable<Operator> {
 	 */
 	public abstract TupleSet evaluate(TupleSet tuples) throws JolRuntimeException;
 
-	/** 
-	 * The schema that is assigned to the output tuples.
-	 * @return A schema object.
-	 */
-	public abstract Schema schema();
-	
-	/**
-	 * The set of variables required by this operators.
-	 * @return A set of variables.
-	 */
-	public abstract Set<Variable> requires();
 }
