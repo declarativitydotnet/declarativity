@@ -69,6 +69,9 @@ import xtc.tree.VisitingException;
 import xtc.tree.Visitor;
 import xtc.util.SymbolTable;
 
+import stasis.jni.LinearHashNTA;
+
+
 /**
  * A visitor to type check Overlog programs.
  */
@@ -402,11 +405,10 @@ public final class TypeChecker extends Visitor {
 		type = (Class) dispatch(n.getNode(2));
 		Class[] schema  = (Class[]) n.getNode(2).getProperty(Constants.TYPE);
 		Table create;
-		/*
 		if (name.name.startsWith("stasis")) {
 			//create = new JavaHashtable(context, name, key, schema);
 			try {
-				// create = new LinearHashNTA(context, name, key, schema);
+				create = new LinearHashNTA(context, name, key, schema);
 			} catch (UpdateException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -415,8 +417,6 @@ public final class TypeChecker extends Visitor {
 		} else {
 			create = new BasicTable(context, name, key, schema);
 		}
-		*/
-		create = new BasicTable(context, name, key, schema);
 		context.catalog().register(create);
 		this.program.definition(create);
 		n.setProperty(Constants.TYPE, create);
