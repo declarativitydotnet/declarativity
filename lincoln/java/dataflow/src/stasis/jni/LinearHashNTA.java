@@ -7,7 +7,6 @@ import jol.core.Runtime;
 import jol.lang.plan.Variable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -21,7 +20,7 @@ public class LinearHashNTA extends StasisTable {
     private long[] rootRid;
     private long[] rid;
     
-    protected Tuple registerTable(TableName name, Key key, TypeList type) throws UpdateException {
+    protected Tuple registerTable(TableName name, Key key, Class[] type) throws UpdateException {
 		Tuple header = new Tuple();
 		header.append( rid[0]);
 		header.append( rid[1]);
@@ -57,7 +56,7 @@ public class LinearHashNTA extends StasisTable {
 	}
     
 	public LinearHashNTA(Runtime context, TableName name, Key key,
-			TypeList attributeTypes) throws UpdateException {
+			Class[] attributeTypes) throws UpdateException {
 		super(context, name, key, attributeTypes);
 
 		if(catalog == null) {

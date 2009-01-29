@@ -7,7 +7,6 @@ import java.util.Set;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.Operator.OperatorTable;
@@ -75,7 +74,7 @@ public abstract class Table implements Comparable<Table> {
 			TableName.class, // Name
 			String.class,    // Table type
 			Key.class,       // The primary key
-			TypeList.class,  // The type of each attribute
+			Class[].class,  // The type of each attribute
 			Table.class      // The table object
 		};
 		
@@ -84,7 +83,7 @@ public abstract class Table implements Comparable<Table> {
 		 * @param context The runtime context.
 		 */
 		public Catalog(Runtime context) {
-			super(context, new TableName(GLOBALSCOPE, "catalog"), PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, new TableName(GLOBALSCOPE, "catalog"), PRIMARY_KEY, SCHEMA);
 			this.context = context;
 			this.index = null;
 		}
@@ -93,10 +92,10 @@ public abstract class Table implements Comparable<Table> {
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Table table = (Table) tuple.value(Field.OBJECT.ordinal());
 			if (table == null) {
-				TableName name    = (TableName) tuple.value(Field.TABLENAME.ordinal());
-				String   type     = (String) tuple.value(Field.TYPE.ordinal());
-				Key      key      = (Key) tuple.value(Field.KEY.ordinal());
-				TypeList types    = (TypeList) tuple.value(Field.TYPES.ordinal());
+				TableName name = (TableName) tuple.value(Field.TABLENAME.ordinal());
+				String   type  = (String) tuple.value(Field.TYPE.ordinal());
+				Key      key   = (Key) tuple.value(Field.KEY.ordinal());
+				Class[] types  = (Class[]) tuple.value(Field.TYPES.ordinal());
 
 				if (type.equals(Type.TABLE.toString())) {
 					table = new BasicTable(context, name, key, types);
@@ -106,9 +105,8 @@ public abstract class Table implements Comparable<Table> {
 				}
 			}
 			
-			Comparable[] values = tuple.toArray();
+			Object[] values = tuple.toArray();
 			values[Field.OBJECT.ordinal()] = table;
-//			tuple.value(Field.OBJECT.ordinal(), table);
 			tuple = new Tuple(values);
 			return super.insert(tuple);
 		}
@@ -179,7 +177,7 @@ public abstract class Table implements Comparable<Table> {
 		 * @return true if table registration succeeds, false otherwise.
 		 */
 		public boolean register(Table table) {
-			Tuple tuple = new Tuple(table.name(), table.type().toString(), table.key(), new TypeList(table.types()), table);
+			Tuple tuple = new Tuple(table.name(), table.type().toString(), table.key(), table.types(), table);
 
 			try {
 				force(tuple);
@@ -206,7 +204,7 @@ public abstract class Table implements Comparable<Table> {
 	protected TableName name;
 	
 	/** The type of each attribute in this table. */
-	protected TypeList attributeTypes;
+	protected Class[] attributeTypes;
 	
 	/** The primary for this table. */
 	protected Key key;
@@ -221,7 +219,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @param key The primary key of this table. 
 	 * @param attributeTypes The type of each attribute. 
 	 */
-	protected Table(TableName name, Type type, Key key, TypeList attributeTypes) {
+	protected Table(TableName name, Type type, Key key, Class[] attributeTypes) {
 		this.name = name;
 		this.type = type;
 		this.attributeTypes = attributeTypes;
@@ -304,7 +302,7 @@ public abstract class Table implements Comparable<Table> {
 	 * Get the type of each attribute (in schema order). 
 	 * @return The number of attributes associated with this table. */
 	public Class[] types() {
-		return (Class[]) attributeTypes.toArray();
+		return attributeTypes;
 	}
 	
 	/**

@@ -10,7 +10,6 @@ import jol.exec.Query;
 import jol.lang.plan.Rule.RuleTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
@@ -33,7 +32,7 @@ public class Program implements Comparable<Program> {
 		};
 
 		public ProgramTable(Runtime context) {
-			super(context, new TableName(GLOBALSCOPE, "program"), PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, new TableName(GLOBALSCOPE, "program"), PRIMARY_KEY, SCHEMA);
 		}
 		
 		@Override

@@ -3,7 +3,6 @@ package jol.lang.plan;
 import jol.core.Runtime;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 import jol.types.operator.Operator;
 import jol.types.table.Key;
@@ -27,7 +26,7 @@ public class Function extends Predicate {
 		};
 
 		public TableFunction(Runtime context) {
-			super(context, new TableName(GLOBALSCOPE, "function"), PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, new TableName(GLOBALSCOPE, "function"), PRIMARY_KEY, SCHEMA);
 		}
 		
 		@Override

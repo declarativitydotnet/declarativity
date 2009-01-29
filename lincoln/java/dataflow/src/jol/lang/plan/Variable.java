@@ -2,6 +2,8 @@ package jol.lang.plan;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import xtc.tree.Node;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.basic.Schema;
@@ -16,13 +18,14 @@ public class Variable extends Expression {
 
 	private boolean location;
 
-	public Variable(String name, Class type) {
+	public Variable(Node node, String name, Class type) {
+		super(node);
 		this.name = name;
 		this.type = type;
 	}
 
-	public Variable(String name, Class type, boolean location) {
-		this(name, type);
+	public Variable(Node node, String name, Class type, boolean location) {
+		this(node, name, type);
 		this.location = location;
 	}
 
@@ -49,7 +52,7 @@ public class Variable extends Expression {
 
 	@Override
 	public Expression clone() {
-		return new Variable(name, type, location);
+		return new Variable(node(), name, type, location);
 	}
 
 	@Override
@@ -95,8 +98,11 @@ public class Variable extends Expression {
 				try {
 					return tuple.value(position);
 				} catch (Throwable t) {
+					t.printStackTrace();
 					System.err.println("UNKNOWN VARIABLE NAME " + name());
 					System.err.println("ASSUMED POSITION " + position);
+					System.err.println("TUPLE " + tuple);
+					System.err.println("SIZE " + tuple.size());
 					throw new JolRuntimeException (t.toString());
 				}
 			}

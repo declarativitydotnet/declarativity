@@ -4,7 +4,6 @@ import java.util.Map;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
 /**
@@ -21,7 +20,7 @@ public class EventTable extends Table {
 	 * @param name The event table name
 	 * @param types The types assumed to make up the values of event tuple.
 	 */
-	public EventTable(TableName name, TypeList types) {
+	public EventTable(TableName name, Class[] types) {
 		super(name, Type.EVENT, null, types);
 	}
 	

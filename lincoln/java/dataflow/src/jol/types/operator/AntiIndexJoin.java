@@ -39,7 +39,7 @@ public class AntiIndexJoin extends Join {
 
 	@Override
 	public String toString() {
-		return "anti nested-loop join " + index.table();
+		return "anti nested-loop join";
 	}
 
 	@Override

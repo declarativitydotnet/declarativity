@@ -1,12 +1,14 @@
 package jol.lang.plan;
 
+import xtc.tree.Node;
+
 
 public class Alias extends Variable {
 	
 	private int position;
 	
-	public Alias(String name, int position, Class type) {
-		super(name, type);
+	public Alias(Node node, String name, int position, Class type) {
+		super(node, name, type);
 		this.position = position;
 	}
 	

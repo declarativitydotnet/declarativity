@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.function.TupleFunction;
 import jol.types.basic.Schema;
@@ -11,12 +13,13 @@ public class Value<Type> extends Expression {
 
 	private Type value;
 	
-	public Value(Type value) {
+	public Value(Node node, Type value) {
+		super(node);
 		this.value = value;
 	}
 	
 	public Expression clone() {
-		return new Value(value);
+		return new Value(node(), value);
 	}
 	
 	public Type value() {
@@ -30,11 +33,11 @@ public class Value<Type> extends Expression {
 	
 	@Override
 	public String toString() {
-		if (Integer.class.isAssignableFrom(type()) && 
+		if (type() != null && Integer.class.isAssignableFrom(type()) && 
 			value().equals(Integer.MAX_VALUE)) {
 			return "infinity";
 		}
-		return value().toString();
+		return this.value == null ? "null" : this.value.toString();
 	}
 
 	@Override

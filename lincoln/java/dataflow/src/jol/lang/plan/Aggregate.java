@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.ValueList;
@@ -22,7 +24,8 @@ public class Aggregate extends Expression {
 	
 	protected MethodCall method;
 	
-	public Aggregate(AggregateVariable variable, String function, Class type) {
+	public Aggregate(Node node, AggregateVariable variable, String function, Class type) {
+		super(node);
 		this.variables = new ArrayList<AggregateVariable>();
 		this.variables.add(variable);
 		this.function = function;
@@ -30,15 +33,16 @@ public class Aggregate extends Expression {
 		this.method = null;
 	}
 	
-	public Aggregate(List<AggregateVariable> variables, String function, Class type) {
+	public Aggregate(Node node, List<AggregateVariable> variables, String function, Class type) {
+		super(node);
 		this.type = type;
 		this.variables = variables;
 		this.function = function;
 		this.method = null;
 	}
 	
-	public Aggregate(MethodCall method, String function, Class type) {
-		this(formAggregateVariables(method.variables()), function, type);
+	public Aggregate(Node node, MethodCall method, String function, Class type) {
+		this(node, formAggregateVariables(method.variables()), function, type);
 		this.method = method;
 	}
 	
@@ -52,8 +56,8 @@ public class Aggregate extends Expression {
 	
 	@Override
 	public Expression clone() {
-		return this.method == null ? new Aggregate(this.variables, this.function, type()) :
-									 new Aggregate(method, function, type());
+		return this.method == null ? new Aggregate(node(), this.variables, this.function, type()) :
+									 new Aggregate(node(), method, function, type());
 	}
 
 	@Override
@@ -76,8 +80,8 @@ public class Aggregate extends Expression {
 			return this.method.function(schema);
 		}
 		else if (this.variables.size() > 0) {
-			final List<TupleFunction<Comparable>> variableFunctions = 
-				new ArrayList<TupleFunction<Comparable>>();
+			final List<TupleFunction<Object>> variableFunctions = 
+				new ArrayList<TupleFunction<Object>>();
 			for (Expression var : this.variables) {
 				variableFunctions.add(var.function(schema));
 			}
@@ -87,7 +91,7 @@ public class Aggregate extends Expression {
 						return variableFunctions.get(0).evaluate(tuple);
 					} else {
 						ValueList result = new ValueList();
-						for (TupleFunction<Comparable> fn : variableFunctions) {
+						for (TupleFunction<Object> fn : variableFunctions) {
 							result.add(fn.evaluate(tuple));
 						}
 						return result;

@@ -6,7 +6,6 @@ import java.util.Map;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
 /**
@@ -36,7 +35,7 @@ public class BasicTable extends Table {
 	 * @param key The primary key.
 	 * @param types The type of each attribute (in positional order).
 	 */
-	public BasicTable(Runtime context, TableName name, Key key, TypeList types) {
+	public BasicTable(Runtime context, TableName name, Key key, Class[] types) {
 		super(name, Type.TABLE, key, types);
 		this.key = key;
 		this.tuples = new TupleSet(name);

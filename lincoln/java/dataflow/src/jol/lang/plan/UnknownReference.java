@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 import jol.types.basic.Schema;
@@ -11,8 +13,8 @@ public class UnknownReference extends Reference {
 
 	private Expression<?> object;
 	
-	public UnknownReference(Expression object, Class type, String name) {
-		super(type, name);
+	public UnknownReference(Node node, Expression object, Class type, String name) {
+		super(node, type, name);
 		this.object = object;
 	}
 	

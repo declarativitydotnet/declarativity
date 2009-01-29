@@ -1,5 +1,7 @@
 package jol.types.function;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeMap;
 
@@ -12,13 +14,13 @@ import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 
-public abstract class Aggregate<C extends Comparable<C>> {
+public abstract class Aggregate<C extends Object> {
 
 	public abstract void insert(Tuple tuple) throws JolRuntimeException;
 
 	public abstract void delete(Tuple tuple) throws JolRuntimeException;
 
-	public abstract Comparable result();
+	public abstract C result();
 
 	public abstract int size();
 
@@ -109,11 +111,11 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		return null;
 	}
 
-	public static class Limit<C extends Comparable<C>> extends Aggregate<C> {
-		private ValueList<C> values;
+	public static class Limit extends Aggregate {
+		private List<Object> values;
 		private TupleSet tuples;
-		private Comparable result;
-		private TupleFunction<C> accessor;
+		private List<Object> result;
+		private TupleFunction<Object> accessor;
 
 
 		public Limit(jol.lang.plan.Limit aggregate, Schema schema) 
@@ -124,25 +126,25 @@ public abstract class Aggregate<C extends Comparable<C>> {
 
 		private void reset() {
 			this.tuples = new TupleSet();
-			this.values = new ValueList<C>();
+			this.values = new ArrayList<Object>();
 			this.result = null;
 		}
 
 		@Override
-		public Comparable result() {
+		public List<Object> result() {
 			return this.result;
 		}
 
 		@Override
 		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				ValueList result = (ValueList)this.accessor.evaluate(tuple);
-				C      value  = (C) result.get(0);
+				List result = (List)this.accessor.evaluate(tuple);
+				Object value  = (Object) result.get(0);
 				Number kConst = (Number) result.get(1);
 
 				this.values.add(value);
 
-				ValueList<C> resultValues = new ValueList<C>();
+				List<Object> resultValues = new ArrayList<Object>();
 				int k = kConst.intValue();
 				for (int i = 0; i < k; i++) {
 					if (this.values.size() <= i) break;
@@ -169,13 +171,13 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 
-	public static class TopBottomK<C extends Comparable<C>> extends Aggregate<C> {
+	public static class TopBottomK<C extends Comparable<C>> extends Aggregate<Object> {
 		private enum Type{TOP, BOTTOM};
 
 		private TreeMap<C, ValueList<C>> values;
 		private Type type;
 		private TupleSet tuples;
-		private Comparable result;
+		private Object result;
 		private TupleFunction<C> accessor;
 
 
@@ -198,7 +200,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 
 		@Override
-		public Comparable result() {
+		public Object result() {
 			return this.result;
 		}
 
@@ -246,7 +248,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 
-	public static class Generic<C extends Comparable<C>> extends Aggregate<C> {
+	public static class Generic<C extends Comparable<C>> extends Aggregate<Object> {
 		private TupleSet tuples;
 		private C result;
 		private GenericAggregate aggregate;
@@ -264,7 +266,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 
 		@Override
-		public Comparable result() {
+		public Object result() {
 			return this.result;
 		}
 
@@ -400,9 +402,9 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 
-	public static class Count<C extends Comparable<C>> extends Aggregate<C>{
+	public static class Count extends Aggregate<Integer> {
 		private TupleSet tuples;
-		private TupleFunction<C> accessor;
+		private TupleFunction<Object> accessor;
 
 		public Count(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
 			this.accessor = aggregate.function(schema);
@@ -414,7 +416,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 
 		@Override
-		public Comparable result() {
+		public Integer result() {
 			return size();
 		}
 
@@ -434,7 +436,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 
-	public static class Avg<C extends Comparable<C>> extends Aggregate<C> {
+	public static class Avg<C extends Comparable<C>> extends Aggregate<Float> {
 		private TupleSet tuples;
 		private Float sum;
 		private TupleFunction<C> accessor;
@@ -567,7 +569,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 
-	public static class TupleCollection extends Aggregate<Tuple> {
+	public static class TupleCollection extends Aggregate<TupleSet> {
 		private TupleSet tuples;
 		private TupleSet result;
 		private TupleFunction<Tuple> accessor;
@@ -607,7 +609,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 
-	public static class Set extends Aggregate<Tuple> {
+	public static class Set extends Aggregate<ComparableSet<Object>> {
 		private TupleSet tuples;
 		private ComparableSet result;
 		private TupleFunction<Tuple> accessor;
@@ -647,7 +649,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		}
 	}
 	
-	public static class Union extends Aggregate<Tuple> {
+	public static class Union extends Aggregate<ComparableSet<Object>> {
 		private TupleSet tuples;
 		private ComparableSet result;
 		private TupleFunction<Tuple> accessor;
@@ -670,7 +672,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		@Override
 		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				Comparable v = this.accessor.evaluate(tuple);
+				Object v = this.accessor.evaluate(tuple);
 				if (v instanceof ComparableSet) {
 					this.result.addAll((ComparableSet) v);
 				}
@@ -683,7 +685,7 @@ public abstract class Aggregate<C extends Comparable<C>> {
 		@Override
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
-				Comparable v = this.accessor.evaluate(tuple);
+				Object v = this.accessor.evaluate(tuple);
 				if (v instanceof ComparableSet) {
 					this.result.removeAll((ComparableSet) v);
 				}
