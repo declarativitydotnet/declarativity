@@ -3,7 +3,6 @@ package jol.lang.plan;
 import java.util.Set;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.Operator;
@@ -28,7 +27,7 @@ public class Assignment extends Term {
 		};
 
 		public AssignmentTable(Runtime context) {
-			super(context, new TableName(GLOBALSCOPE, "assignment"), PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, new TableName(GLOBALSCOPE, "assignment"), PRIMARY_KEY, SCHEMA);
 		}
 
 		@Override

@@ -1,9 +1,11 @@
 package jol.lang.plan;
 
+import xtc.tree.Node;
+
 public class Null extends Value<Object> {
 	
-	public Null() {
-		super(null);
+	public Null(Node node) {
+		super(node, null);
 	}
 	
 	@Override

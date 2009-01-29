@@ -8,14 +8,18 @@ import jol.types.function.TupleFunction;
 
 public abstract class Expression<C> {
 	
-	private xtc.tree.Location location;
-	
-	public void location(xtc.tree.Location location) {
-		this.location = location;
-	}
+	private xtc.tree.Node node;
 	
 	public xtc.tree.Location location() {
-		return this.location;
+		return this.node.getLocation();
+	}
+	
+	public xtc.tree.Node node() {
+		return this.node;
+	}
+	
+	protected Expression(xtc.tree.Node node) {
+		this.node = node;
 	}
 
 	@Override

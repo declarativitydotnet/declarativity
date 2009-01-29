@@ -5,7 +5,6 @@ import java.util.List;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
@@ -30,7 +29,7 @@ public class Fact extends Clause {
 		};
 
 		public FactTable(Runtime context) {
-			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 			Key programKey = new Key(Field.PROGRAM.ordinal());
 			Index index = new HashIndex(context, this, programKey, Index.Type.SECONDARY);
 			this.secondary.put(programKey, index);
@@ -72,11 +71,11 @@ public class Fact extends Clause {
 	@Override
 	public void set(Runtime context, String program) throws UpdateException {
 		try {
-			List<Comparable> values = new ArrayList<Comparable>();
+			List<Object> values = new ArrayList<Object>();
 			for (Expression argument : this.arguments) {
 				TupleFunction function = argument.function(null);
 				try {
-					values.add((Comparable)function.evaluate(null));
+					values.add(function.evaluate(null));
 				} catch (JolRuntimeException e) {
 					e.printStackTrace();
 					throw new UpdateException(e.toString());

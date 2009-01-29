@@ -1,5 +1,6 @@
 package jol.lang.plan;
 
+import xtc.tree.Node;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
@@ -8,17 +9,17 @@ import jol.types.function.TupleFunction;
 public class AggregateVariable extends Variable {
 	public static final String STAR = "*";
 	
-	public AggregateVariable(String name, Class type) {
-		super(name, type);
+	public AggregateVariable(Node node, String name, Class type) {
+		super(node, name, type);
 	}
 	
 	public AggregateVariable(Variable variable) {
-		super(variable.name(), variable.type());
+		super(variable.node(), variable.name(), variable.type());
 	}
 	
 	@Override
 	public Expression clone() {
-		return new AggregateVariable(name, type);
+		return new AggregateVariable(node(), name, type);
 	}
 	
 	@Override

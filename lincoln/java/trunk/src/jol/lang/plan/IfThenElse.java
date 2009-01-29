@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.basic.Schema;
 import jol.types.exception.JolRuntimeException;
@@ -19,7 +21,8 @@ public class IfThenElse extends Expression {
 	
 	private Expression<?> elseexpr;
 
-	public IfThenElse(Class type, Boolean ifexpr, Expression thenexpr, Expression elseexpr) {
+	public IfThenElse(Node node, Class type, Boolean ifexpr, Expression thenexpr, Expression elseexpr) {
+		super(node);
 		this.type = type;
 		this.ifexpr = ifexpr;
 		this.thenexpr = thenexpr;
@@ -27,7 +30,7 @@ public class IfThenElse extends Expression {
 	}
 	
 	public Expression clone() {
-		return new IfThenElse(type, (Boolean)ifexpr.clone(), thenexpr.clone(), elseexpr.clone());
+		return new IfThenElse(node(), type, (Boolean)ifexpr.clone(), thenexpr.clone(), elseexpr.clone());
 	}
 
 	@Override

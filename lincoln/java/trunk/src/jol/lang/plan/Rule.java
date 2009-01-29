@@ -11,7 +11,6 @@ import jol.exec.Query;
 import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.EventFilter;
@@ -43,7 +42,7 @@ public class Rule extends Clause {
 		};
 
 		public RuleTable(Runtime context) {
-			super(context, new TableName(GLOBALSCOPE, "rule"), PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, new TableName(GLOBALSCOPE, "rule"), PRIMARY_KEY, SCHEMA);
 			Key programKey = new Key(Field.PROGRAM.ordinal());
 			Index index = new HashIndex(context, this, programKey, Index.Type.SECONDARY);
 			this.secondary.put(programKey, index);
@@ -195,9 +194,8 @@ public class Rule extends Clause {
 		for (Expression argument : pred.arguments()) {
 			if (!(argument instanceof Variable) &&
 					argument.variables().size() > 0) {
-				Variable dontcare = new DontCare(argument.type());
-				selections.add(new Selection(new Boolean(Boolean.EQUAL, 
-						                     dontcare.clone(), argument)));
+				Variable dontcare = new DontCare(argument.node(), argument.type());
+				selections.add(new Selection(new Boolean(null, Boolean.EQUAL, dontcare.clone(), argument)));
 				canonicalization.add(dontcare);
 			}
 			else {
@@ -287,7 +285,7 @@ public class Rule extends Clause {
 			
 				EventTable
 				intermediateEvent = new EventTable(new TableName(this.program, intermediateName), 
-					                               new TypeList(intermediateSchema.types()));
+					                               intermediateSchema.types());
 				context.catalog().register(intermediateEvent);
 				Predicate intermediate = new Predicate(context, false, intermediateEvent.name(), Predicate.Event.NONE, intermediateSchema);
 				intermediate.program  = event.program();

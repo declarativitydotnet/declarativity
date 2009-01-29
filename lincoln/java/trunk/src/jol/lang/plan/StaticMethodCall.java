@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -24,14 +26,16 @@ public class StaticMethodCall extends Expression {
 
 	private List<Expression> arguments;
 
-	public StaticMethodCall(Class type, Method method, List<Expression> arguments) {
+	public StaticMethodCall(Node node, Class type, Method method, List<Expression> arguments) {
+		super(node);
 		this.type = type;
 		this.field = null;
 		this.method = method;
 		this.arguments = arguments;
 	}
 
-	public StaticMethodCall(Field field, Method method, List<Expression> arguments) {
+	public StaticMethodCall(Node node, Field field, Method method, List<Expression> arguments) {
+		super(node);
 		this.type = null;
 		this.field = field;
 		this.method = method;
@@ -44,8 +48,8 @@ public class StaticMethodCall extends Expression {
 			arguments.add(arg.clone());
 		}
 		return this.type == null ? 
-				new StaticMethodCall(type, method, arguments) :
-			    new StaticMethodCall(field, method, arguments);
+				new StaticMethodCall(node(), type, method, arguments) :
+			    new StaticMethodCall(node(), field, method, arguments);
 	}
 	
 	@Override
