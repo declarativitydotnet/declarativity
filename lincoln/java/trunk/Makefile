@@ -49,7 +49,7 @@ checkvars :
 .PHONY: test
 test : checkvars all
 	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis:$(STASIS_DIR)/build/src/libdfa \
-	java -cp ant-build -Djava.library.path=/home/sears/workspace/jol/ant-build/stasis/jni stasis.jni.Stasis
+	java -cp ant-build -Djava.library.path=`pwd`/ant-build/stasis/jni stasis.jni.Stasis
 
 apache-tomcat-6.0.18.tar.gz: 
 	@wget -v http://apache.mirror99.com/tomcat/tomcat-6/v6.0.18/bin/apache-tomcat-6.0.18.tar.gz -O apache-tomcat-6.0.18.tar.gz
