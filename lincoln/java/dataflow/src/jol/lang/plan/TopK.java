@@ -1,13 +1,15 @@
 package jol.lang.plan;
 
+import xtc.tree.Node;
+
 public class TopK extends Limit {
 	
-	public TopK(Variable value, Number bottomkConst) {
-		super(jol.types.function.Aggregate.TOPK, value, bottomkConst);
+	public TopK(Node node, Variable value, Number bottomkConst) {
+		super(node, jol.types.function.Aggregate.TOPK, value, bottomkConst);
 	}
 	
-	public TopK(Variable value, Variable bottomkVar) {
-		super(jol.types.function.Aggregate.TOPK, value, bottomkVar);
+	public TopK(Node node, Variable value, Variable bottomkVar) {
+		super(node, jol.types.function.Aggregate.TOPK, value, bottomkVar);
 	}
 	
 	private TopK(TopK copy) {

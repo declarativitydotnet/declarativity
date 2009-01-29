@@ -2,7 +2,6 @@ package jol.net;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -25,7 +24,7 @@ public class Connection extends ObjectTable {
 	private Network manager;
 
 	protected Connection(Runtime context, Network manager) {
-		super(context, new TableName("network", "connection"), PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, new TableName("network", "connection"), PRIMARY_KEY, SCHEMA);
 		this.context = context;
 		this.manager = manager;
 	}
@@ -39,7 +38,7 @@ public class Connection extends ObjectTable {
 			Channel channel = (Channel) tuple.value(Field.CHANNEL.ordinal());
 			if (channel == null) {
 				channel = manager.create(protocol, address);
-				Comparable[] vals = tuple.toArray();
+				Object[] vals = tuple.toArray();
 				vals[Field.CHANNEL.ordinal()] = channel;
 				tuple = new Tuple(vals);
 			}

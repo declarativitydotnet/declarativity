@@ -6,7 +6,7 @@ import jol.types.basic.Tuple;
 
 public class Cast implements TupleFunction {
 
-	public Comparable evaluate(Tuple tuple) {
+	public Object evaluate(Tuple tuple) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -89,7 +89,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 			return tuple;
 		}
 		else {
-			List<Comparable> values = new ArrayList<Comparable>();
+			List<Object> values = new ArrayList<Object>();
 			for (Integer attr : attributes) {
 				values.add(tuple.value(attr));
 			}
@@ -100,7 +100,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 	}
 
 	public Tuple projectValue(Tuple tuple) {
-		List<Comparable> values = new ArrayList<Comparable>();
+		List<Object> values = new ArrayList<Object>();
 
 		for (int i = 0; i < tuple.size(); i++) {
 			if (!attributes.contains(i)) {
@@ -114,7 +114,7 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 
 	public Tuple reconstruct(Tuple projectedKey, Tuple projectedValue) {
 		int len = projectedKey.size() + projectedValue.size();
-		List<Comparable> tuple = new ArrayList<Comparable>();
+		List<Object> tuple = new ArrayList<Object>();
 		int k = 0;
 
 		assert(attributes.size() == projectedKey.size());

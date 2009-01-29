@@ -33,24 +33,24 @@ public class EventFilter extends Operator {
 		private Integer position;
 
 		/** The function that extracts the constant used in the comparison. */
-		private TupleFunction<Comparable> function;
+		private TupleFunction<Object> function;
 
 		/**
 		 * Create a new filter.
 		 * @param position The value position.
 		 * @param function The constant function extractor.
 		 */
-		private ConstantFilter(Integer position, TupleFunction<Comparable> function) {
+		private ConstantFilter(Integer position, TupleFunction<Object> function) {
 			this.position = position;
 			this.function = function;
 		}
 
 		/** @return true if filter is satisfied, false otherwise.  */
 		public Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-			Comparable fvalue = function.evaluate(tuple);
-			Comparable tvalue = tuple.value(position);
+			Object fvalue = function.evaluate(tuple);
+			Object tvalue = tuple.value(position);
 
-			return (fvalue == tvalue || fvalue.compareTo(tvalue) == 0);
+			return (fvalue == tvalue || fvalue.equals(tvalue));
 		}
 
 		/** The constant type. */
@@ -81,8 +81,8 @@ public class EventFilter extends Operator {
 
 		/** @return true if filter is satisfied, false otherwise.  */
 		public Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-			Comparable a1 = tuple.value(this.a1);
-			Comparable a2 = tuple.value(this.a2);
+			Object a1 = tuple.value(this.a1);
+			Object a2 = tuple.value(this.a2);
 			return (a1 == a2 ||
 					(a1 != null && a2 != null && a1.equals(a2)));
 		}

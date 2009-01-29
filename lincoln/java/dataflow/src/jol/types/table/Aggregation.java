@@ -11,7 +11,6 @@ import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
@@ -75,7 +74,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	 */
 	public Aggregation(Runtime context, Predicate predicate, Table.Type type, Class[] schemaTypes) 
 	throws PlannerException {
-		super(predicate.name(), type, null, new TypeList(schemaTypes));
+		super(predicate.name(), type, null, schemaTypes);
 		this.predicate = predicate;
 		this.aggregateFunctions = null;
 		this.singleGroupAggregateFunctions = null;
@@ -158,7 +157,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	private Tuple result(Tuple group) {
 		if (this.aggregateFunctions.containsKey(group)) {
 			Iterator<Aggregate<C>> aValues = this.aggregateFunctions.get(group).iterator();
-			Iterator<Comparable>  gbValues = group.iterator();
+			Iterator<Object>      gbValues = group.iterator();
 			Tuple result = new Tuple();
 			for (TupleKey key : this.tupleKey) {
 				switch(key) {

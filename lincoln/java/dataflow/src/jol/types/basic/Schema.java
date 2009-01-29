@@ -119,12 +119,12 @@ public class Schema {
 	 * An ordered list of the value types in this schema.
 	 * @return A list of the value types.
 	 */
-	public final List<Class> types() {
+	public final Class[] types() {
 		List<Class> types = new ArrayList<Class>();
 		for (Variable variable : this.variables) {
 			types.add(variable.type());
 		}
-		return types;
+		return (Class[]) types.toArray(new Class[types.size()]);
 	}
 
 	/**

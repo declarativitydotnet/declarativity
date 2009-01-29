@@ -41,7 +41,7 @@ public class IndexJoin extends Join {
 	
 	@Override
 	public String toString() {
-		return "index join " + index.table();
+		return "index join ";
 	}
 	
 	@Override

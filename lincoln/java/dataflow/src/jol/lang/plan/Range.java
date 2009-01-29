@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -80,14 +82,15 @@ public class Range<C extends Comparable<C>> extends Expression {
 	
 	private Expression<C> end;
 
-	public Range(Operator oper, Expression<C> begin, Expression<C> end) {
+	public Range(Node node, Operator oper, Expression<C> begin, Expression<C> end) {
+		super(node);
 		this.oper = oper;
 		this.begin = begin;
 		this.end = end;
 	}
 	
 	public Expression clone() {
-		return new Range(oper, begin.clone(), end.clone());
+		return new Range(node(), oper, begin.clone(), end.clone());
 	}
 
 	@Override

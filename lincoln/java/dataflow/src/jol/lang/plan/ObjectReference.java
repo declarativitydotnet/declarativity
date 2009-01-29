@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.lang.reflect.Field;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -15,15 +17,15 @@ public class ObjectReference extends Reference {
 	
 	private Field field;
 	
-	public ObjectReference(Expression<Object> object, Field field) {
-		super(field.isEnumConstant() ? Enum.class : field.getType(), 
+	public ObjectReference(Node node, Expression<Object> object, Field field) {
+		super(node, field.isEnumConstant() ? Enum.class : field.getType(), 
 			  object.toString() + "." + field.getName());
 		this.object = object;
 		this.field = field;
 	}
 	
 	public Expression clone() {
-		return new ObjectReference(object, field);
+		return new ObjectReference(node(), object, field);
 	}
 
 	@Override

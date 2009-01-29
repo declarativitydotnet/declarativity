@@ -2,7 +2,6 @@ package jol.net;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
@@ -33,7 +32,7 @@ public class NetworkBuffer extends ObjectTable {
 	};
 	
 	public NetworkBuffer(Runtime context) {
-		super(context, new TableName("network", "buffer"), PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, new TableName("network", "buffer"), PRIMARY_KEY, SCHEMA);
 	}
 	
 	@Override

@@ -2,6 +2,8 @@ package jol.lang.plan;
 
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 import jol.types.basic.Schema;
@@ -12,13 +14,14 @@ public class Cast<C> extends Expression {
 	
 	private Expression<?> expression;
 	
-	public Cast(Class<C> type, Expression expression) {
+	public Cast(Node node, Class<C> type, Expression expression) {
+		super(node);
 		this.type = type;
 		this.expression = expression;
 	}
 	
 	public Expression clone() {
-		return new Cast(type, expression.clone());
+		return new Cast(node(), type, expression.clone());
 	}
 	
 	@Override

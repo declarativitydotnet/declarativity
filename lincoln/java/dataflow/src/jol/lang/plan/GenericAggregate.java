@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -17,13 +19,13 @@ import jol.types.basic.Schema;
  */
 public class GenericAggregate extends Aggregate {
 
-	public GenericAggregate(MethodCall method) {
-		super(method, "generic", method.object().type());
+	public GenericAggregate(Node node, MethodCall method) {
+		super(node, method, "generic", method.object().type());
 	}
 	
 	@Override
 	public GenericAggregate clone() {
-		return new GenericAggregate(this.method);
+		return new GenericAggregate(node(), this.method);
 	}
 	
 	@Override

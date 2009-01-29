@@ -4,7 +4,6 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
@@ -31,7 +30,7 @@ public class Log extends ObjectTable {
 	private FilterOutputStream stream;
 	
 	public Log(Runtime context, FilterOutputStream stream) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		this.stream = stream;
 	}
 	

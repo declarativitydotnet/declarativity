@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -20,12 +22,13 @@ public class NewClass extends Expression {
 	
 	private List<Expression> arguments;
 	
-	public NewClass(Class type) {
+	public NewClass(Node node, Class type) {
+		super(node);
 		this.type = type;
 	}
 	
-	private NewClass(Class type, Constructor constructor, List<Expression> arguments) {
-		this.type = type;
+	private NewClass(Node node, Class type, Constructor constructor, List<Expression> arguments) {
+		this(node, type);
 		this.constructor = constructor;
 		this.arguments = arguments;
 	}
@@ -35,7 +38,7 @@ public class NewClass extends Expression {
 		for (Expression arg : this.arguments) {
 			arguments.add(arg.clone());
 		}
-		return new NewClass(type, constructor, arguments);
+		return new NewClass(node(), type, constructor, arguments);
 	}
 
 	@Override

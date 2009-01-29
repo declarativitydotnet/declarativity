@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
@@ -15,7 +17,8 @@ import jol.types.basic.Schema;
 public class VList extends Expression<ValueList> {
 	private List<Expression> values;
 	
-	public VList(List<Expression> values) {
+	public VList(Node node, List<Expression> values) {
+		super(node);
 		this.values = values;
 	}
 	
@@ -24,7 +27,7 @@ public class VList extends Expression<ValueList> {
 		for (Expression value : this.values) {
 			values.add(value.clone());
 		}
-		return new VList(values);
+		return new VList(node(), values);
 	}
 	
 	@Override

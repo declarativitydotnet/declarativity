@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.exception.PlannerException;
 import jol.types.function.BasicMath;
 import jol.types.function.TupleFunction;
@@ -29,14 +31,15 @@ public class Math<N extends java.lang.Number> extends Expression<N> {
 	
 	private Expression<N> rhs;
 	
-	public Math(String oper, Expression<N> lhs, Expression<N> rhs) {
+	public Math(Node node, String oper, Expression<N> lhs, Expression<N> rhs) {
+		super(node);
 		this.oper = oper;
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}
 	
 	public Expression clone() {
-		return new Math(oper, lhs.clone(), rhs.clone());
+		return new Math(node(), oper, lhs.clone(), rhs.clone());
 	}
 
 	@Override
