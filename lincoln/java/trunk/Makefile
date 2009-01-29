@@ -48,7 +48,7 @@ checkvars :
 
 .PHONY: test
 test : checkvars all
-	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis:$(STASIS_DIR)/build/src/libdfa \
+	LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis \
 	java -cp ant-build -Djava.library.path=`pwd`/ant-build/stasis/jni stasis.jni.Stasis
 
 apache-tomcat-6.0.18.tar.gz: 
