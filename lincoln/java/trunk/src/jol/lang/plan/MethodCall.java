@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -18,7 +20,8 @@ public class MethodCall extends Expression {
 	private Method method;
 	private List<Expression> arguments;
 
-	public MethodCall(Expression object, Method method, List<Expression> arguments) {
+	public MethodCall(Node node, Expression object, Method method, List<Expression> arguments) {
+		super(node);
 		this.object = object;
 		this.method = method;
 		this.arguments = arguments;
@@ -29,7 +32,7 @@ public class MethodCall extends Expression {
 		for (Expression arg : this.arguments) {
 			arguments.add(arg.clone());
 		}
-		return new MethodCall(object.clone(), method, arguments);
+		return new MethodCall(node(), object.clone(), method, arguments);
 	}
 
 	public Expression object() {

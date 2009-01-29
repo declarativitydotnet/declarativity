@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;
@@ -13,14 +15,14 @@ public class StaticReference extends Reference {
 	
 	private Field field;
 	
-	public StaticReference(Class type, Field field) {
-		super(field.getType(),
+	public StaticReference(Node node, Class type, Field field) {
+		super(node, field.getType(),
 			  type.getCanonicalName() + "." + field.getName());
 		this.field = field;
 	}
 	
 	public Expression clone() {
-		return new StaticReference(type, field);
+		return new StaticReference(node(), type, field);
 	}
 	
 	public Field field() {

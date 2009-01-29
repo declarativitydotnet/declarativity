@@ -76,6 +76,7 @@ computeAll(Source) :-
 	
 watch(pathSet, a);
 import jol.types.basic.ComparableSet;
+import java.util.ArrayList;
 define(pathSet, {String, ComparableSet});
 pathSet(Source, union<Destination>) :-
 	computeAll(Bla),

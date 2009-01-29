@@ -3,7 +3,7 @@ package jol.lang.plan;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Arguments extends ArrayList<Expression> implements Comparable<Arguments> {
+public class Arguments extends ArrayList<Expression> {
 	private static final long serialVersionUID = 1L;
 
 	private Predicate predicate;
@@ -23,8 +23,12 @@ public class Arguments extends ArrayList<Expression> implements Comparable<Argum
 		return super.toString();
 	}
 	
-	public int compareTo(Arguments a) {
-		return this.predicate.compareTo(a.predicate);
+	public boolean equals(Object o) {
+		if (o instanceof Arguments) {
+			Arguments other = (Arguments) o;
+			return this.predicate.equals(other.predicate);
+		}
+		return false;
 	}
 
 }

@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.lang.reflect.Array;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.basic.Schema;
 import jol.types.exception.JolRuntimeException;
@@ -15,7 +17,8 @@ public class ArrayIndex extends Expression {
 	
 	private Integer index;
 	
-	public ArrayIndex(Expression<Variable> array, Integer index) {
+	public ArrayIndex(Node node, Expression<Variable> array, Integer index) {
+		super(node);
 		assert(array.type().isArray());
 		this.array = array;
 		this.index = index;
@@ -23,7 +26,7 @@ public class ArrayIndex extends Expression {
 	
 	@Override
 	public Expression clone() {
-		return new ArrayIndex(array, index);
+		return new ArrayIndex(node(), array, index);
 	}
 	
 	@Override

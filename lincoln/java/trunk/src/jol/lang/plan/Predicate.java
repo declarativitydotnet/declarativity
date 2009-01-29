@@ -9,7 +9,6 @@ import java.util.Set;
 import jol.core.Runtime;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.AntiIndexJoin;
@@ -39,7 +38,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 		};
 
 		public PredicateTable(Runtime context) {
-			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		}
 
 		@Override
@@ -110,7 +109,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 				variables.add((Variable) e);
 			}
 			else {
-				variables.add(new DontCare(e.type()));
+				variables.add(new DontCare(e.node(), e.type()));
 			}
 		}
 		return new Schema(this.name, variables);

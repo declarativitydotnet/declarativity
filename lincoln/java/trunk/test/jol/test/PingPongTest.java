@@ -7,7 +7,6 @@ import jol.core.Runtime;
 import jol.core.System;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -35,7 +34,7 @@ public class PingPongTest {
         };
         
         NodeTable(Runtime context) {
-            super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+            super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
     
@@ -53,7 +52,7 @@ public class PingPongTest {
         };
         
         SelfTable(Runtime context) {
-            super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+            super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
     
@@ -73,7 +72,7 @@ public class PingPongTest {
         };
         
         InMessageTable(Runtime context) {
-            super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+            super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
 

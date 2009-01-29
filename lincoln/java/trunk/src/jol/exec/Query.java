@@ -3,7 +3,6 @@ package jol.exec;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -29,7 +28,7 @@ import jol.core.Runtime;
  * any table insertions or deletions!
  * 
  */
-public abstract class Query implements Comparable<Query> {
+public abstract class Query {
 
 	public static class QueryTable extends ObjectTable {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "query");
@@ -49,7 +48,7 @@ public abstract class Query implements Comparable<Query> {
 		};
 		
 		public QueryTable(Runtime context) {
-			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		}
 		
 		@Override
@@ -104,13 +103,12 @@ public abstract class Query implements Comparable<Query> {
 	
 	@Override
 	public boolean equals(Object o) {
-		return o instanceof Query &&
-				compareTo((Query)o) == 0;
-	}
-	
-	public int compareTo(Query q) {
-		return this.hashCode() < q.hashCode() ? -1 :
-					this.hashCode() > q.hashCode() ? 1 : 0;
+		if (o instanceof Query) {
+			Query other = (Query) o;
+			return this.program.equals(other.program) &&
+					this.rule.equals(other.rule);
+		}
+		return false;
 	}
 	
 	public String program() {

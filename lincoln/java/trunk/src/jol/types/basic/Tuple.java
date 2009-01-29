@@ -13,17 +13,15 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * A tuple is an ordered list of values. Each value
- * in the tuple must implement the {#link Comparable} interface
- * in order to perform relational comparison operations on the
- * tuple values.  Tuple values must also implement the {#link Serializable}
+ * A tuple is an ordered list of values. 
+ * Tuple values must implement the {#link Serializable}
  * interface in order to ship tuples to remote locations.
  */
-public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializable {
+public class Tuple implements Iterable<Object>, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/** An ordered list of tuple values. */
-	protected List<Comparable> values;
+	protected List<Object> values;
 
 	/** A tuple refcount. */
 	transient protected long refCount;
@@ -40,26 +38,25 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	 * Create a new tuple.
 	 * @param values The values that make up the tuple.
 	 */
-	public Tuple(Comparable... values) {
+	public Tuple(Object... values) {
 		initialize();
-		this.values = new ArrayList<Comparable>();
-		for (Comparable value : values) {
+		this.values = new ArrayList<Object>();
+		for (Object value : values) {
 			this.values.add(value);
 		}
 	}
 
-	public Comparable[] toArray() {
-//		new Exception("debug").printStackTrace();
-		return values.toArray(new Comparable[0]);
+	public Object[] toArray() {
+		return values.toArray();
 	}
 	
 	/**
 	 * Create a new tuple.
 	 * @param values The values that make up the tuple.
 	 */
-	public Tuple(List<Comparable> values) {
+	public Tuple(List<Object> values) {
 		initialize();
-		this.values = new ArrayList<Comparable>(values);
+		this.values = new ArrayList<Object>(values);
 	}
 
 	/**
@@ -142,7 +139,7 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	public void fromBytes(byte[] bytes) throws IOException {
 		DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
 		short size = in.readShort();
-		values = new ArrayList<Comparable>(size);
+		values = new ArrayList<Object>(size);
 		for (int i = 0; i < size; i++) {
 			int type = in.readByte();
 			if (type == NULL) {
@@ -173,7 +170,7 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 										  new ByteArrayInputStream(obytes));
 
 				try {
-					values.add((Comparable) oin.readObject());
+					values.add(oin.readObject());
 				} catch (ClassNotFoundException e) {
 					throw new IOException("Couldn't deserialize object in column " + i +
 										  " of tuple (partial value is: " + toString() + ")");
@@ -233,7 +230,7 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	 * Append the tuple value.
 	 * @param value The tuple value.
 	 */
-	public void append(Comparable value) throws RuntimeException {
+	public void append(Object value) throws RuntimeException {
 		if (frozen()) {
 			throw new RuntimeException("Operation invalid on frozen tuple!");
 		}
@@ -249,36 +246,12 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 		if (values.size() > 0) {
 			value += values.get(0);
 			for (int i = 1; i < values.size(); i++) {
-				Comparable element = values.get(i);
+				Object element = values.get(i);
 				value += ", " + (element == null ? "null" : element.toString());
 			}
 		}
 		value += ">";
 		return value;
-	}
-
-	/** Comparison based on tuple values (empty tuples are equivalent). */
-	public int compareTo(Tuple other) {
-		if (size() != other.size()) {
-			return -1;
-		}
-		for (int i = 0; i < size(); i++) {
-			try {
-				if (values.get(i) == null || other.values.get(i) == null) {
-					if (values.get(i) != other.values.get(i)) {
-						return -1;
-					}
-				}
-				else if (values.get(i).compareTo(other.values.get(i)) != 0) {
-					return values.get(i).compareTo(other.values.get(i));
-				}
-			} catch (Throwable e) {
-				e.printStackTrace();
-				System.err.println("COMPARISON ERROR: " + e + " Tuple 1: " + this + " Tuple 2 " + other);
-				return -1;
-			}
-		}
-		return 0;
 	}
 
 	@Override
@@ -287,8 +260,8 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 			Tuple t = (Tuple) obj;
 			if (size() != t.size()) return false;
 			for (int i = 0; i < size(); i++) {
-				Comparable me    = this.values.get(i) == null ? "null" : this.values.get(i);
-				Comparable other = t.values.get(i) == null ? "null" : t.values.get(i);
+				Object me    = this.values.get(i) == null ? "null" : this.values.get(i);
+				Object other = t.values.get(i) == null ? "null" : t.values.get(i);
 				if (!me.equals(other))
 				    return false;
 			}
@@ -312,7 +285,7 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
          * Bloch, p. 38-39 (Item 8).
          */
         int h = 37;
-        for (Comparable v : this.values)
+        for (Object v : this.values)
             h = (h * 31) + (v == null ? 0 : v.hashCode());
 
         this.hashCache = h;
@@ -329,7 +302,7 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 	 * positions are zero-based.
 	 * @param field The field position.
 	 */
-	public Comparable value(int field) {
+	public Object value(int field) {
 		return this.values.get(field);
 	}
 
@@ -369,7 +342,7 @@ public class Tuple implements Iterable<Comparable>, Comparable<Tuple>, Serializa
 		return this.refCount;
 	}
 
-	public Iterator<Comparable> iterator() {
+	public Iterator<Object> iterator() {
 		return this.values.iterator();
 	}
 }

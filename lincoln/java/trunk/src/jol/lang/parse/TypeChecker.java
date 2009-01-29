@@ -50,8 +50,8 @@ import jol.lang.plan.Variable;
 import jol.lang.plan.Watch;
 import jol.lang.plan.Fact.FactTable;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.basic.ValueList;
+import jol.types.exception.CompileException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Aggregation;
@@ -65,6 +65,7 @@ import jol.types.table.TimerTable;
 import xtc.Constants;
 import xtc.tree.GNode;
 import xtc.tree.Node;
+import xtc.tree.VisitingException;
 import xtc.tree.Visitor;
 import xtc.util.SymbolTable;
 
@@ -134,7 +135,18 @@ public final class TypeChecker extends Visitor {
 	 * @return The corresponding symbol table.
 	 */
 	public Node analyze(Node node) {
-		dispatch(node);
+		try {
+			dispatch(node);
+		} catch (Throwable e) {
+			if (e.getCause() instanceof CompileException) {
+				CompileException ce = (CompileException) e.getCause();
+				runtime.error(ce.getMessage(), ce.node());
+			}
+			else {
+				runtime.error(e.getMessage());
+			}
+			System.exit(0);
+		}
 		return node;
 	}
 
@@ -181,6 +193,14 @@ public final class TypeChecker extends Visitor {
 
 		return superType == subType || superType.isAssignableFrom(subType);
 	}
+	
+	private boolean checkInterface(Class type, Class check) {
+		type = type(type.getCanonicalName()) == null ? type : type(type.getCanonicalName());
+		for (Class i : type.getInterfaces()) {
+			if (check == i) return true;
+		}
+		return false;
+	}
 
 	private boolean typeCoercion(Class[] formalTypes, Class[] argumentTypes) {
 		if (argumentTypes.length != formalTypes.length) return false;
@@ -197,22 +217,21 @@ public final class TypeChecker extends Visitor {
 
 	private jol.lang.plan.Boolean<?> ensureBooleanValue(Expression expr) {
 		if (expr.type() == null || expr.type() == Void.class) {
-			runtime.error("Can't ensure boolean value from void class");
-			return null; // Can't do it for void expression type
+			throw new CompileException("Can't ensure boolean value from void class", expr.node());
 		}
 		else if (subtype(Number.class, expr.type())) {
 			/* expr != 0 */
-			return new jol.lang.plan.Boolean(jol.lang.plan.Boolean.NEQUAL,
-					                    expr, new Value<Number>(0));
+			return new jol.lang.plan.Boolean(expr.node(), jol.lang.plan.Boolean.NEQUAL,
+					                    expr, new Value<Number>(expr.node(), 0));
 		}
 		else if (!subtype(Boolean.class, expr.type())) {
 			/* expr != null*/
-			return new jol.lang.plan.Boolean(jol.lang.plan.Boolean.NEQUAL,
-									    expr, new Null());
+			return new jol.lang.plan.Boolean(expr.node(), jol.lang.plan.Boolean.NEQUAL,
+									    expr, new Null(expr.node()));
 		}
 		else if (!jol.lang.plan.Boolean.class.isAssignableFrom(expr.getClass())) {
-			return new jol.lang.plan.Boolean(jol.lang.plan.Boolean.EQUAL, expr,
-									    new Value<java.lang.Boolean>(java.lang.Boolean.TRUE));
+			return new jol.lang.plan.Boolean(expr.node(), jol.lang.plan.Boolean.EQUAL, expr,
+									    new Value<java.lang.Boolean>(expr.node(), java.lang.Boolean.TRUE));
 		}
 		return (jol.lang.plan.Boolean) expr;
 	}
@@ -233,8 +252,7 @@ public final class TypeChecker extends Visitor {
 		Class type = (Class) dispatch(n.getNode(0));
 		if (type == Error.class) return Error.class;
 		else if (type != Class.class) {
-			runtime.error("Expected class type at import statement!", n);
-			return Error.class;
+			throw new CompileException("Expected class type at import statement!", n);
 		}
 		type = (Class) n.getNode(0).getProperty(Constants.TYPE);
 		NAME_TO_BASETYPE.put(type.getSimpleName(), type);
@@ -266,8 +284,7 @@ public final class TypeChecker extends Visitor {
 			}
 		}
 		if (context.catalog().table(name) == null) {
-			runtime.error("No table definition found for load on " + name, n);
-			return Error.class;
+			throw new CompileException("No table definition found for load on " + name, n);
 		}
 		else if (!file.exists()) {
 			runtime.warning("Loader: unknown file " + file.getAbsolutePath(), n);
@@ -292,8 +309,7 @@ public final class TypeChecker extends Visitor {
 
 		Table table = context.catalog().table(name);
 		if (table == null) {
-			runtime.error("No table defined for fact " + name, n);
-			return Error.class;
+			throw new CompileException("No table defined for fact " + name, n);
 		}
 
 		Class[] types = table.types();
@@ -305,17 +321,15 @@ public final class TypeChecker extends Visitor {
 				Class t = (Class) dispatch(arg);
 				Expression expr = (Expression) arg.getProperty(Constants.TYPE);
 				if (expr.variables().size() > 0) {
-					runtime.error("Facts are not allowed to contain variables!", n);
-					return Error.class;
+					throw new CompileException("Facts are not allowed to contain variables!", n);
 				}
 				else if (index >= types.length) {
 					break;
 				}
 				else if (!subtype(types[index], expr.type())) {
-					runtime.error("Type mismatch with fact argument "
-							      + index + " of type " + expr.type() +
-							      ", expected type " + types[index], n);
-					return Error.class;
+					throw new CompileException ("Type mismatch with fact argument "
+							                    + index + " of type " + expr.type() +
+							                    ", expected type " + types[index], n);
 				}
 				args.add(expr);
 				index++;
@@ -323,10 +337,9 @@ public final class TypeChecker extends Visitor {
 		}
 
 		if (types.length != args.size()) {
-			runtime.error("Argument mismatch in facts for table " + name +
-					      ". Table has " + types.length + ", but facts has size " +
-					      args.size() + ".", n);
-			return Error.class;
+			throw new CompileException("Argument mismatch in facts for table " + name +
+					                   ". Table has " + types.length + ", but facts has size " +
+					                   args.size() + ".", n);
 		}
 
 		Fact fact = new Fact(n.getLocation(), name, args);
@@ -347,8 +360,7 @@ public final class TypeChecker extends Visitor {
 		}
 
 		if (context.catalog().table(name) == null) {
-			runtime.error("Watch statement refers to unknown table/event name " + name, n);
-			return Error.class;
+			throw new CompileException("Watch statement refers to unknown table/event name " + name, n);
 		}
 		String modifier = n.size() > 1 ? n.getString(1) : null;
 
@@ -378,22 +390,17 @@ public final class TypeChecker extends Visitor {
 			name.scope = program.name();
 		}
 		else {
-			runtime.error("Dot specificed names not allowed in definition statement! " + n.getNode(0));
-			return Error.class;
+			throw new CompileException("Dot specificed names not allowed in definition statement!", n.getNode(0));
 		}
 
 		/************** Table Primary Key ******************/
 		type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) return type;
-		assert (type == Key.class);
 		Key key  = (Key) n.getNode(1).getProperty(Constants.TYPE);
 
 
 		/************** Table Schema ******************/
 		type = (Class) dispatch(n.getNode(2));
-		if (type == Error.class) return type;
-		assert(type == TypeList.class);
-		TypeList schema  = (TypeList) n.getNode(2).getProperty(Constants.TYPE);
+		Class[] schema  = (Class[]) n.getNode(2).getProperty(Constants.TYPE);
 		Table create;
 		/*
 		if (name.name.startsWith("stasis")) {
@@ -422,22 +429,17 @@ public final class TypeChecker extends Visitor {
 
 		/************** Event Name ******************/
 		type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		assert(type == TableName.class);
 
 		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
 		if (name.scope == null) {
 			name.scope = program.name();
 		} else {
-			runtime.error("Dot specificed names not allowed in definition statement! " + n.getNode(0));
-			return Error.class;
+			throw new CompileException("Dot specificed names not allowed in definition statement!", n.getNode(0));
 		}
 
 		/************** Table Schema ******************/
 		type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) return type;
-		assert(type == TypeList.class);
-		TypeList schema  = (TypeList) n.getNode(1).getProperty(Constants.TYPE);
+		Class[] schema  = (Class[]) n.getNode(1).getProperty(Constants.TYPE);
 
 		EventTable event = new EventTable(name, schema);
 		context.catalog().register(event);
@@ -450,28 +452,22 @@ public final class TypeChecker extends Visitor {
 
 		/************** Timer Name ******************/
 		type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-
 		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
 		if (name.scope == null) {
 			name.scope = program.name();
 		} else {
-			runtime.error("Dot specificed names not allowed in definition statement! " + n.getNode(0));
-			return Error.class;
+			throw new CompileException("Dot specificed names not allowed in definition statement!", n.getNode(0));
 		}
 
 		String timerType = n.getString(1);
 
 		type = (Class) dispatch(n.getNode(2));
-		if (type == Error.class) return Error.class;
 		Value<Integer> period = (Value) n.getNode(2).getProperty(Constants.TYPE);
 
 		type = (Class) dispatch(n.getNode(3));
-		if (type == Error.class) return Error.class;
 		Value<Integer> ttl = (Value) n.getNode(3).getProperty(Constants.TYPE);
 
 		type = (Class) dispatch(n.getNode(4));
-		if (type == Error.class) return Error.class;
 		Value<Integer> delay = (Value) n.getNode(4).getProperty(Constants.TYPE);
 
 		try {
@@ -487,8 +483,7 @@ public final class TypeChecker extends Visitor {
 			context.catalog().register(timer);
 			n.setProperty(Constants.TYPE, timer);
 		} catch (UpdateException e) {
-			runtime.error("Unable to schedule initial " + name + " timer!", n);
-			return Error.class;
+			throw new CompileException("Unable to schedule initial " + name + " timer!", n);
 		}
 		return Table.class;
 	}
@@ -500,13 +495,9 @@ public final class TypeChecker extends Visitor {
 		if (keyList.size() > 0) {
 			for (Node k : keyList) {
 				Class type = (Class) dispatch(k);
-				if (type == Error.class) return Error.class;
-				assert(type == Value.class);
-
 				Value<?> key  = (Value<?>) k.getProperty(Constants.TYPE);
 				if (key.type() == null || !Integer.class.isAssignableFrom(key.type())) {
-					runtime.error("Key must be of type Integer! type = " + key);
-					return Error.class;
+					throw new CompileException("Key must be of type Integer! type = " + key, n);
 				}
 				keys[index++] = (Integer)key.value();
 			}
@@ -519,12 +510,11 @@ public final class TypeChecker extends Visitor {
 		List<Class> types = new ArrayList<Class>();
 		for (Node attr : n.<Node>getList(0)) {
 			Class type = (Class) dispatch(attr);
-			if (type == Error.class) return Error.class;
 			type = (Class) attr.getProperty(Constants.TYPE);
 			types.add(type);
 		}
-		n.setProperty(Constants.TYPE, new TypeList(types));
-		return TypeList.class;
+		n.setProperty(Constants.TYPE, types.toArray(new Class[types.size()]));
+		return Class[].class;
 	}
 
 	public Class visitRule(final GNode n) {
@@ -532,10 +522,8 @@ public final class TypeChecker extends Visitor {
 				      "Rule" + this.uniqueID++ : n.getString(2);
 
 		if (ruleNames.contains(name)) {
-			runtime.error("Multiple rule names defined as "
-					+ name + ". Rule name must be unique!");
-			java.lang.System.exit(0);
-			return Error.class;
+			throw new CompileException("Multiple rule names defined as "
+					                   + name + ". Rule name must be unique!", n);
 		}
 		ruleNames.add(name);
 
@@ -553,11 +541,6 @@ public final class TypeChecker extends Visitor {
 		try {
 			/* Evaluate the body first. */
 			Class type = (Class) dispatch(n.getNode(5));
-
-			if (type == Error.class) {
-				return Error.class;
-			}
-			assert(type == List.class);
 			body = (List<Term>) n.getNode(5).getProperty(Constants.TYPE);
 
 			Term event = null;
@@ -566,8 +549,7 @@ public final class TypeChecker extends Visitor {
 					Predicate p = (Predicate) t;
 					for (Expression arg : p) {
 						if (arg instanceof Aggregate) {
-							runtime.error("Body predicate can't contain aggregates!", n);
-							return Error.class;
+							throw new CompileException("Body predicate can't contain aggregates!", n);
 						}
 					}
 
@@ -575,28 +557,17 @@ public final class TypeChecker extends Visitor {
 					if (table.type() == Table.Type.EVENT ||
 					    p.event() != Predicate.Event.NONE) {
 						if (event != null) {
-							runtime.error("Multiple event predicates in rule body!", n);
-							return Error.class;
+							throw new CompileException("Multiple event predicates in rule body!", n);
 						}
 						event = p;
 					}
 				}
-				/*
-				else if (t instanceof Function) {
-					Function f = (Function) t;
-					event = f.predicate();
-				}
-				*/
 			}
 
 			table.enter("Head:" + name);
 			try {
 				/* Evaluate the head. */
 				type = (Class) dispatch(n.getNode(4));
-				if (type == Error.class) {
-					return Error.class;
-				}
-				assert (type == Predicate.class);
 				head = (Predicate) n.getNode(4).getProperty(Constants.TYPE);
 			} finally {
 				table.exit();
@@ -613,17 +584,13 @@ public final class TypeChecker extends Visitor {
 	public Class visitRuleHead(final GNode n) {
 		/* Visit the tuple. */
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		assert(type == Predicate.class);
 		Predicate head = (Predicate) n.getNode(0).getProperty(Constants.TYPE);
 
 		if (head.notin()) {
-			runtime.error("Can't apply notin to head predicate!", n);
-			return Error.class;
+			throw new CompileException("Can't apply notin to head predicate!", n);
 		}
 		else if (head.event() != Predicate.Event.NONE) {
-			runtime.error("Can't apply event modifier to rule head!", n);
-			return Error.class;
+			throw new CompileException("Can't apply event modifier to rule head!", n);
 		}
 
 		/* All variables mentioned in the head must be in the body.
@@ -638,14 +605,12 @@ public final class TypeChecker extends Visitor {
 						/* Drop the previous table. */
 						context.catalog().drop(table.name());
 					} catch (UpdateException e) {
-						runtime.error(e.toString());
-						return Error.class;
+						throw new CompileException(e.toString(), n);
 					}
 					try {
 						table = new Aggregation(context, head, table.type(), table.types());
 					} catch (PlannerException e) {
-						runtime.error(e.toString(), n);
-						return Error.class;
+						throw new CompileException(e.toString(), n);
 					}
 					context.catalog().register(table);
 					this.program.definition(table);
@@ -656,30 +621,21 @@ public final class TypeChecker extends Visitor {
 
 				Class[] types = table.types();
 				if (!subtype(types[position], argument.type())) {
-					runtime.error("Aggregate " + argument + ", position " + position +
-							", type "+ agg.type() +
-							      " does not match table type " +
-							      types[position] + "!", n);
-					return Error.class;
+					throw new CompileException("Aggregate " + argument + ", position " + position +
+							                   ", type "+ agg.type() + " does not match table type " +
+							                   types[position] + "!", n);
 				}
 			}
 			else if (argument instanceof Variable) {
 				Variable var = (Variable) argument;
 				if (var instanceof DontCare) {
-					runtime.error("Head predicate can't contain don't care variable!", n);
-					return Error.class;
+					throw new CompileException("Head predicate can't contain don't care variable!", n);
 				}
 				else if (var instanceof AggregateVariable) {
 					if (!AggregateVariable.STAR.equals(var.name())) {
-						Class<?> bodyType = (Class) table.current().getParent()
-								.lookupLocally(var.name());
+						Class<?> bodyType = (Class) table.current().getParent().lookupLocally(var.name());
 						if (bodyType == null) {
-							for (Iterator<String> name = table.current().getParent().symbols();
-							     name.hasNext();)
-								System.err.println(name.next());
-							runtime.error("Head variable " + var
-									+ " not defined in rule body.", n);
-							return Error.class;
+							throw new CompileException("Head variable " + var + " not defined in rule body.", n);
 						}
 					}
 				}
@@ -687,16 +643,11 @@ public final class TypeChecker extends Visitor {
 					Class<?> headType = (Class) table.current().lookupLocally(var.name());
 					Class<?> bodyType = (Class) table.current().getParent().lookupLocally(var.name());
 					if (bodyType == null) {
-						for (Iterator<String> name = table.current().getParent().symbols(); name.hasNext(); )
-							System.err.println(name.next());
-						runtime.error("Head variable " + var
-								+ " not defined in rule body.", n);
-						return Error.class;
+						throw new CompileException("Head variable " + var + " not defined in rule body.", n);
 					} else if (!headType.isAssignableFrom(bodyType)) {
-						runtime.error("Type mismatch: Head variable " + var
-								+ " type is " + headType + ", but defined as type "
-								+ bodyType + " in rule body.");
-						return Error.class;
+						throw new CompileException("Type mismatch: Head variable " + var
+								                   + " type is " + headType + ", but defined as type "
+								                   + bodyType + " in rule body.", n);
 					}
 				}
 			}
@@ -713,22 +664,15 @@ public final class TypeChecker extends Visitor {
 		for (GNode node : n.<GNode>getList(0)) {
 			if (node.getName().equals("TableFunction")) {
 				Class type = (Class) dispatch(node);
-				if (type == Error.class) {
-					return type;
-				}
 				jol.lang.plan.Function f =
 					(jol.lang.plan.Function) node.getProperty(Constants.TYPE);
 				terms.add(0, f);
 			}
 			else if (node.getName().equals("Predicate")) {
 				Class type = (Class) dispatch(node);
-				if (type == Error.class) {
-					return type;
-				}
 				Predicate p = (Predicate) node.getProperty(Constants.TYPE);
 				if (p.event() != Predicate.Event.NONE && p.notin()) {
-					runtime.error("Can't apply notin to event predicate!", n);
-					return Error.class;
+					throw new CompileException("Can't apply notin to event predicate!", n);
 				}
 				terms.add(p);
 			}
@@ -739,10 +683,6 @@ public final class TypeChecker extends Visitor {
 
 		for (GNode node : other) {
 			Class type = (Class) dispatch(node);
-			if (type == Error.class) {
-				return type;
-			}
-			assert(Term.class.isAssignableFrom(type));
 			terms.add((Term)node.getProperty(Constants.TYPE));
 		}
 
@@ -759,31 +699,28 @@ public final class TypeChecker extends Visitor {
 		}
 
 		type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) return Error.class;
-		assert(type == Predicate.class);
 		Predicate predicate = (Predicate) n.getNode(1).getProperty(Constants.TYPE);
 
 		Table table = null;
 		if (name.name.equals(Flatten.NAME)) {
-			TypeList types = new TypeList();
+			List<Class> types = new ArrayList<Class>();
 			boolean valid = false;
 			for (Expression arg : predicate) {
 				types.add(arg.type());
-				if (arg.type() == ValueList.class) {
+				if (subtype(List.class, arg.type())) {
 					valid = true;
-					this.table.current().define(((Variable) arg).name(), Comparable.class);
+					this.table.current().define(((Variable) arg).name(), Object.class);
 				}
 			}
-			table = new Flatten(jol.core.Runtime.idgen(), types);
+			table = new Flatten(jol.core.Runtime.idgen(), types.toArray(new Class[types.size()]));
 			if (!valid) {
-				runtime.warning("Flatten input schema does not contain a ValueList!", n);
+				runtime.warning("Flatten input schema does not contain a List!", n);
 			}
 		}
 		else {
 			table = context.catalog().table(name);
 			if (table == null || table.type() != Table.Type.FUNCTION) {
-				runtime.error("Unknown table function " + name, n);
-				return Error.class;
+				throw new CompileException("Unknown table function " + name, n);
 			}
 			else {
 				/* Make sure predicate schema matches table function schema. */
@@ -791,14 +728,12 @@ public final class TypeChecker extends Visitor {
 				int index = 0;
 				for (Expression arg : predicate) {
 					if (types[index] != arg.type()) {
-						runtime.error("Predicate argument position " + index + " does not match table function type!", n);
-						return Error.class;
+						throw new CompileException("Predicate argument position " + index + " does not match table function type!", n);
 					}
 					index++;
 				}
 				if (types.length != index) {
-					runtime.error("Predicate schema types must match table function types!", n);
-					return Error.class;
+					throw new CompileException("Predicate schema types must match table function types!", n);
 				}
 			}
 		}
@@ -812,7 +747,6 @@ public final class TypeChecker extends Visitor {
 		String event = n.getString(2);
 
 		Class type = (Class) dispatch(n.getNode(1));
-		assert(type == TableName.class);
 		TableName name = (TableName) n.getNode(1).getProperty(Constants.TYPE);
 		if (name.scope == null) {
 			name.scope = program.name();
@@ -824,8 +758,7 @@ public final class TypeChecker extends Visitor {
 		/* Lookup the schema for the given tuple name. */
 		Table ptable = context.catalog().table(name);
 		if (ptable == null) {
-			runtime.error("No catalog definition for predicate " + name, n);
-			return Error.class;
+			throw new CompileException("No catalog definition for predicate " + name, n);
 		}
 
 		Predicate.Event tableEvent = Predicate.Event.NONE;
@@ -837,29 +770,26 @@ public final class TypeChecker extends Visitor {
 				tableEvent = Predicate.Event.DELETE;
 			}
 			else {
-				runtime.error("Unknown event modifier " + event + " on predicate " + name, n);
+				throw new CompileException("Unknown event modifier " + event + " on predicate " + name, n);
 			}
 		}
 
-		TypeList schema = new TypeList(ptable.types());
+		Class[] schema = ptable.types();
 		type = (Class) dispatch(n.getNode(3));
-		if (type == Error.class)
-			return Error.class;
 		List<Expression> parameters = (List<Expression>) n.getNode(3).getProperty(Constants.TYPE);
 		List<Expression> arguments = new ArrayList<Expression>();
 
-		if (schema.size() < parameters.size()) {
-			runtime.error("Program " + program.name() + ": Schema size mismatch on predicate " +  name, n);
-			return Error.class;
+		if (schema.length < parameters.size()) {
+			throw new CompileException("Program " + program.name() + ": Schema size mismatch on predicate " +  name, n);
 		}
 
 		List<AggregateVariable> aggVariables = new ArrayList<AggregateVariable>();
 		String argLocation = null;
 
 		/* Type check each tuple argument according to the schema. */
-		for (int index = 0; index < schema.size(); index++) {
+		for (int index = 0; index < schema.length; index++) {
 			Expression<?> param = parameters.size() <= index ?
-					new DontCare(schema.getClass(index)) : parameters.get(index);
+					new DontCare(n, schema[index]) : parameters.get(index);
 			Class paramType = param.type();
 
 			if (param instanceof Cast) {
@@ -869,12 +799,11 @@ public final class TypeChecker extends Visitor {
 			if (param instanceof Alias) {
 				Alias alias = (Alias) param;
 				if (alias.position() < index) {
-					runtime.error("Alias fields must be in numeric order!");
-					return Error.class;
+					throw new CompileException("Alias fields must be in numeric order!", param.node());
 				}
 				/* Fill in missing variables with tmp variables. */
 				while (index < alias.position()) {
-					Variable dontcare = new DontCare(schema.getClass(index));
+					Variable dontcare = new DontCare(alias.node(), schema[index]);
 					arguments.add(dontcare);
 				}
 			}
@@ -893,24 +822,26 @@ public final class TypeChecker extends Visitor {
 				var.type(paramType);
 				if (var.type() == null) {
 					/* Fill in type using the schema. */
-					var.type(schema.getClass(index));
+					var.type(schema[index]);
 				}
 
 				/* Map variable to its type. */
 				table.current().define(var.name(), var.type());
 				paramType = var.type();
 
-				/* We cannot have two arguments with different location specifiers */
 				if (var.loc()) {
-					if (argLocation == null) {
+					if (this.context.network() == null) {
+						throw new CompileException("Use of location variable not allowed when network is not enabled!", var.node());
+					}
+					else if (argLocation == null) {
 						argLocation = var.name();
 					}
 					else if (!argLocation.equals(var.name())) {
-						runtime.error("Predicate " + name + " contains " +
+						/* We cannot have two arguments with different location specifiers */
+						throw new CompileException("Predicate " + name + " contains " +
 									  "more than one distinct location specifier " +
 									  "in its argument list: @" +
 									  argLocation + ", @" + var.name(), n);
-						return Error.class;
 					}
 				}
 			}
@@ -919,39 +850,37 @@ public final class TypeChecker extends Visitor {
 				for (Variable var : param.variables()) {
 					if (var.name().equals(AggregateVariable.STAR)) continue;
 					if (!table.current().isDefined(var.name())) {
-						runtime.error("Predicate " + name + " contains an argument expression based " +
+						throw new CompileException("Predicate " + name + " contains an argument expression based " +
 									"that depends on variable " + var.name() + ", which is not" +
 									"defined by some left hand side predicate!", n);
-						return Error.class;
 					}
 				}
 			}
 
 			/* Ensure the type matches the schema definition. */
-			if (!subtype(schema.getClass(index), paramType)) {
+			if (!subtype(schema[index], paramType)) {
 				if (param instanceof Value &&
-						Number.class.isAssignableFrom(schema.getClass(index)) &&
+						Number.class.isAssignableFrom(schema[index]) &&
 						Number.class.isAssignableFrom(param.type())) {
 					Number number = (Number) ((Value) param).value();
 					try {
-						Constructor<?> cons = ((Class<?>)schema.getClass(index)).getConstructor(String.class);
-						param = new Value<Number>((Number) cons.newInstance(number.toString()));
+						Constructor<?> cons = ((Class<?>)schema[index]).getConstructor(String.class);
+						param = new Value<Number>(param.node(), (Number) cons.newInstance(number.toString()));
 					} catch (Exception e) {
 						e.printStackTrace();
 						return Error.class;
 					}
 				}
 				else {
-					runtime.error("Predicate " + name + " argument " + param.getClass() + " " + param
+					throw new CompileException("Predicate " + name + " argument " + param.getClass() + " " + param
 									+ " has type " + param.type() + " does not match type "
-									+ schema.get(index) + " in schema.", n);
-					return Error.class;
+									+ schema[index] + " in schema.", n);
 				}
 			}
 			arguments.add(param);
 		}
 
-		if (schema.size() != arguments.size()) {
+		if (schema.length != arguments.size()) {
 			runtime.error("Schema size mismatch on predicate " +  name, n);
 			return Error.class;
 		}
@@ -979,28 +908,22 @@ public final class TypeChecker extends Visitor {
 	public Class visitAssignment(final GNode n) {
 		/* Variable. */
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
 		if (!(type == Variable.class)) {
-			runtime.error("Cannot assign to type " + type +
-					" must be of type Variable or Location variable!");
-			return Error.class;
+			throw new CompileException("Cannot assign to type " + type +
+					" must be of type Variable or Location variable!", n.getNode(0));
 		}
 		Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
 
 		type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(type));
 		Expression expr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
-
 		if (expr.type() != null && var.type() == null) {
 			var.type(expr.type());
 			table.current().define(var.name(), expr.type());
 		}
 		else if (!subtype(var.type(), expr.type())) {
-			runtime.error("Assignment type mismatch: variable " + var.name() +
+			throw new CompileException("Assignment type mismatch: variable " + var.name() +
 					" of type " + var.type() +
-					" cannot be assigned a value of type " + expr.type());
-			return Error.class;
+					" cannot be assigned a value of type " + expr.type(), n);
 		}
 
 		Assignment assign = new Assignment(var, expr);
@@ -1011,8 +934,6 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitSelection(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		assert (Expression.class.isAssignableFrom(type));
 		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 
 		Selection select = new Selection(ensureBooleanValue(expr));
@@ -1024,50 +945,40 @@ public final class TypeChecker extends Visitor {
 	//---------------------------- Expressions -------------------------------//
 	public Class visitExpression(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		else if (!Expression.class.isAssignableFrom(type)) {
-			runtime.error("Expected expression type but got type " +
-					      type + " instead.", n);
-			return Error.class;
+		if (!Expression.class.isAssignableFrom(type)) {
+			throw new CompileException("Expected expression type but got type " +
+					                   type + " instead.", n);
 		}
 		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
-		expr.location(n.getLocation()); // Set the location of this expression.
 		n.setProperty(Constants.TYPE, n.getNode(0).getProperty(Constants.TYPE));
 		return type;
 	}
 
 	public Class visitIfElseExpression(final GNode n) {
 		Class iftype   = (Class) dispatch(n.getNode(0));
-		if (iftype == Error.class) return Error.class;
 		Class thentype = (Class) dispatch(n.getNode(1));
-		if (thentype == Error.class) return Error.class;
 		Class elsetype = (Class) dispatch(n.getNode(2));
-		if (elsetype == Error.class) return Error.class;
 
 		Expression ifexpr   = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression thenexpr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 		Expression elseexpr = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (ifexpr.type() == null) {
-			runtime.error("Undefined expression " + ifexpr, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + ifexpr, n);
 		}
 		else if (thentype != Null.class && thenexpr.type() == null) {
-			runtime.error("Undefined expression " + thenexpr, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + thenexpr, n);
 		}
 		else if (elsetype != Null.class && elseexpr.type() == null) {
-			runtime.error("Undefined expression " + elseexpr, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + elseexpr, n);
 		}
 		else if (ensureBooleanValue(ifexpr) == null) {
-			runtime.error("Cannot evaluate type " + ifexpr.type()
+			throw new CompileException("Cannot evaluate type " + ifexpr.type()
 					+ " in a logical or expression", n);
-			return Error.class;
 		}
 
 		n.setProperty(Constants.TYPE,
-				      new IfThenElse(lub(thenexpr.type(), elseexpr.type()),
+				      new IfThenElse(n, lub(thenexpr.type(), elseexpr.type()),
 				    		         ensureBooleanValue(ifexpr),
 				    		         thenexpr, elseexpr));
 		return IfThenElse.class;
@@ -1076,31 +987,25 @@ public final class TypeChecker extends Visitor {
 	public Class visitLogicalOrExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(1));
-		assert(Expression.class.isAssignableFrom(ltype) &&
-			   Expression.class.isAssignableFrom(rtype));
-
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
 		if (lhs.type() == null) {
-			runtime.error("Undefined expression " + lhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + lhs, n);
 		}
 		else if (rhs.type() == null) {
-			runtime.error("Undefined expression " + rhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + rhs, n);
 		}
 		else if (ensureBooleanValue(lhs) == null) {
-			runtime.error("Cannot evaluate type " + lhs.type()
+			throw new CompileException("Cannot evaluate type " + lhs.type()
 					+ " in a logical or expression", n);
-			return Error.class;
 		} else if (ensureBooleanValue(rhs) == null) {
-			runtime.error("Cannot evaluate void type " + rhs.type()
+			throw new CompileException("Cannot evaluate void type " + rhs.type()
 					+ " in a logical or expression", n);
-			return Error.class;
 		}
 		n.setProperty(Constants.TYPE,
-			new jol.lang.plan.Boolean<java.lang.Boolean>(jol.lang.plan.Boolean.OR,
+			new jol.lang.plan.Boolean<java.lang.Boolean>(n,
+					jol.lang.plan.Boolean.OR,
 					ensureBooleanValue(lhs),
 					ensureBooleanValue(rhs)));
 		return jol.lang.plan.Boolean.class;
@@ -1109,31 +1014,25 @@ public final class TypeChecker extends Visitor {
 	public Class visitLogicalAndExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(1));
-		assert(Expression.class.isAssignableFrom(ltype) &&
-			   Expression.class.isAssignableFrom(rtype));
-
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
 		if (lhs.type() == null) {
-			runtime.error("Undefined expression " + lhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + lhs, n);
 		}
 		else if (rhs.type() == null) {
-			runtime.error("Undefined expression " + rhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + rhs, n);
 		}
 		else if (ensureBooleanValue(lhs) == null) {
-			runtime.error("Cannot evaluate type " + lhs.type()
+			throw new CompileException("Cannot evaluate type " + lhs.type()
 					+ " in a logical and expression", n);
-			return Error.class;
 		} else if (ensureBooleanValue(rhs) == null) {
-			runtime.error("Cannot evaluate void type " + rhs.type()
+			throw new CompileException("Cannot evaluate void type " + rhs.type()
 					+ " in a logical and expression", n);
-			return Error.class;
 		}
 		n.setProperty(Constants.TYPE,
-			new jol.lang.plan.Boolean(jol.lang.plan.Boolean.AND,
+			new jol.lang.plan.Boolean(n, 
+					jol.lang.plan.Boolean.AND,
 					ensureBooleanValue(lhs),
 					ensureBooleanValue(rhs)));
 		return jol.lang.plan.Boolean.class;
@@ -1142,105 +1041,88 @@ public final class TypeChecker extends Visitor {
 	public Class visitEqualityExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
-		if (ltype == Error.class || rtype == Error.class) {
-			return Error.class;
-		}
-
 		String oper = n.getString(1);
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (ltype != Null.class && lhs.type() == null) {
-			runtime.error("Undefined expression " + lhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + lhs, n);
 		}
 		else if (rtype != Null.class && rhs.type() == null) {
-			runtime.error("Undefined expression " + rhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + rhs, n);
 		}
 		else if (Void.class == lhs.type()) {
-			runtime.error("Cannot evaluate type " + lhs.type()
+			throw new CompileException("Cannot evaluate type " + lhs.type()
 					+ " in a logical and expression", n);
-			return Error.class;
 		} else if (Void.class == rhs.type()) {
-			runtime.error("Cannot evaluate void type " + rhs.type()
+			throw new CompileException("Cannot evaluate void type " + rhs.type()
 					+ " in a logical and expression", n);
-			return Error.class;
 		}
-		n.setProperty(Constants.TYPE,
-			new jol.lang.plan.Boolean(oper,  lhs,  rhs));
+		n.setProperty(Constants.TYPE, new jol.lang.plan.Boolean(n, oper,  lhs,  rhs));
 		return jol.lang.plan.Boolean.class;
 	}
 
 	public Class visitInequalityExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
-		if (ltype == Error.class || rtype == Error.class) {
-			return Error.class;
-		}
-
-		assert(Expression.class.isAssignableFrom(ltype) &&
-			   Expression.class.isAssignableFrom(rtype));
 
 		String oper = n.getString(1);
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (ltype != Null.class && lhs.type() == null) {
-			runtime.error("Undefined expression " + lhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + lhs, n);
 		}
 		else if (rtype != Null.class && rhs.type() == null) {
-			runtime.error("Undefined expression " + rhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + rhs, n);
 		}
 		else if (Void.class == lhs.type()) {
-			runtime.error("Cannot evaluate type " + lhs.type()
+			throw new CompileException("Cannot evaluate type " + lhs.type()
 					+ " in a logical and expression", n);
-			return Error.class;
 		} else if (Void.class == rhs.type()) {
-			runtime.error("Cannot evaluate void type " + rhs.type()
+			throw new CompileException("Cannot evaluate void type " + rhs.type()
 					+ " in a logical and expression", n);
-			return Error.class;
+		} else if (!checkInterface(lhs.type(), Comparable.class)) {
+			throw new CompileException("Type " + lhs.type() + " must implement " + 
+					Comparable.class.getCanonicalName()  + 
+					" in order to use in a '" + oper + "' expression.", n);
+		} else if (!checkInterface(rhs.type(), Comparable.class)) {
+			throw new CompileException("Type " + rhs.type() + " must implement " + 
+					Comparable.class.getCanonicalName()  + 
+					" in order to use in a '" + oper + "' expression.", n);
 		}
-		n.setProperty(Constants.TYPE,
-			new jol.lang.plan.Boolean(oper,  lhs,  rhs));
+		
+		
+		
+		n.setProperty(Constants.TYPE, new jol.lang.plan.Boolean(n, oper,  lhs,  rhs));
 		return jol.lang.plan.Boolean.class;
 	}
 
 	public Class visitLogicalNegationExpression(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(type));
-
 		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 
 		if (ensureBooleanValue(expr) == null) {
-			runtime.error("Type error: cannot evaluate !" + expr.type(), n);
-			return Error.class;
+			throw new CompileException("Type error: cannot evaluate !" + expr.type(), n);
 		}
 		n.setProperty(Constants.TYPE,
-				new jol.lang.plan.Boolean(jol.lang.plan.Boolean.NOT, ensureBooleanValue(expr), null));
+				new jol.lang.plan.Boolean(n, jol.lang.plan.Boolean.NOT, ensureBooleanValue(expr), null));
 		return jol.lang.plan.Boolean.class;
 	}
 
 	public Class visitCastExpression(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
 		type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) return Error.class;
 
 		Class cast = (Class) n.getNode(0).getProperty(Constants.TYPE);
 		Expression expr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
-		if (expr.type() != null && expr.type() != Comparable.class
-				&& !(subtype(expr.type(), cast) || subtype(cast, expr.type()))) {
-			runtime.error("CAST ERROR: Expression " + expr.toString() +
+		if (expr.type() != null && !(subtype(expr.type(), cast) || subtype(cast, expr.type()))) {
+			throw new CompileException("CAST ERROR: Expression " + expr.toString() +
 					      " type " + expr.type() + " is not a supertype of " + cast + ".", n);
-			return Error.class;
 		}
 
-		n.setProperty(Constants.TYPE, new Cast(cast, expr));
+		n.setProperty(Constants.TYPE, new Cast(n, cast, expr));
 		return Cast.class;
 	}
 
@@ -1251,69 +1133,54 @@ public final class TypeChecker extends Visitor {
 			return Error.class;
 		}
 		else if (!Variable.class.isAssignableFrom(type)) {
-			runtime.error("Type error: left hand side of IN operator must be a Variable!", n);
-			return Error.class;
+			throw new CompileException("Type error: left hand side of IN operator must be a Variable!", n);
 		}
 		Variable variable = (Variable) n.getNode(0).getProperty(Constants.TYPE);
 
 		type = (Class) dispatch(n.getNode(2));
-		if (type == Error.class) {
-			return Error.class;
-		}
-
 		Expression expr = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 		if (Range.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(expr.type())) {
-			n.setProperty(Constants.TYPE, new jol.lang.plan.Boolean(jol.lang.plan.Boolean.IN, variable, expr));
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Boolean(n, jol.lang.plan.Boolean.IN, variable, expr));
 			return jol.lang.plan.Boolean.class;
 		}
 
-		runtime.error("Type error: right hand side of IN operator must be " +
+		throw new CompileException("Type error: right hand side of IN operator must be " +
 				      "a range expression or implement " + Collection.class, n);
-		return Error.class;
 	}
 
 	public Class visitRangeExpression(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(type));
 		type = (Class) dispatch(n.getNode(2));
-		if (type == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(type));
-
 		Expression begin = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 		Expression end   = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (begin.type() == null) {
-			runtime.error("Undefined expression " + begin, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + begin, n);
 		}
 		else if (end.type() == null) {
-			runtime.error("Undefined expression " + end, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + end, n);
 		}
 		else if (begin.type() != end.type()) {
-			runtime.error("Type error: range begin type " + begin.type() +
-					      " != range end type" + end.type());
-			return Error.class;
+			throw new CompileException("Type error: range begin type " + begin.type() +
+					      " != range end type" + end.type(), n);
 		}
 		else if (!Number.class.isAssignableFrom(begin.type())) {
-			runtime.error("Type error: range boundaries must be subtype of "  +
+			throw new CompileException("Type error: range boundaries must be subtype of "  +
 					       Number.class, n);
-			return Error.class;
 		}
 
 		String marker  = n.getString(0) + n.getString(3);
 		if ("[]".equals(marker)) {
-			n.setProperty(Constants.TYPE, new Range(Range.Operator.CC, begin, end));
+			n.setProperty(Constants.TYPE, new Range(n, Range.Operator.CC, begin, end));
 		}
 		else if ("(]".equals(marker)) {
-			n.setProperty(Constants.TYPE, new Range(Range.Operator.OC, begin, end));
+			n.setProperty(Constants.TYPE, new Range(n, Range.Operator.OC, begin, end));
 		}
 		else if ("[)".equals(marker)) {
-			n.setProperty(Constants.TYPE, new Range(Range.Operator.CO, begin, end));
+			n.setProperty(Constants.TYPE, new Range(n, Range.Operator.CO, begin, end));
 		}
 		else if ("()".equals(marker)) {
-			n.setProperty(Constants.TYPE, new Range(Range.Operator.OO, begin, end));
+			n.setProperty(Constants.TYPE, new Range(n, Range.Operator.OO, begin, end));
 		}
 		else {
 			assert(false);
@@ -1328,110 +1195,89 @@ public final class TypeChecker extends Visitor {
 		String oper = n.getString(1);
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
-		if (ltype == Error.class || rtype == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(ltype) &&
-			   Expression.class.isAssignableFrom(rtype));
 
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (lhs.type() == null) {
-			runtime.error("Undefined expression " + lhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + lhs, n);
 		}
 		else if (rhs.type() == null) {
-			runtime.error("Undefined expression " + rhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + rhs, n);
 		}
 		else if (lhs.type() == Integer.class && rhs.type() == Integer.class) {
-			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, oper, lhs, rhs));
 			return jol.lang.plan.Math.class;
 		} else {
-			runtime.error("Cannot shift type " + lhs.type() +
+			throw new CompileException("Cannot shift type " + lhs.type() +
 					" using type " + rhs.type(), n);
-			return Error.class;
 		}
 	}
 
 	public Class visitAdditiveExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
-		if (ltype == Error.class || rtype == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(ltype) &&
-			   Expression.class.isAssignableFrom(rtype));
 
 		String oper = n.getString(1);
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (lhs.type() == null) {
-			runtime.error("Undefined expression " + lhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + lhs, n);
 		}
 		else if (rhs.type() == null) {
-			runtime.error("Undefined expression " + rhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + rhs, n);
 		}
 
 		if (subtype(Number.class, lhs.type()) &&
 			     subtype(Number.class, rhs.type())) {
-			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, oper, lhs, rhs));
 			return jol.lang.plan.Math.class;
 		}
 		else if (subtype(String.class, lhs.type()) &&
 			     subtype(String.class, rhs.type())) {
-			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, oper, lhs, rhs));
 			return jol.lang.plan.Math.class;
 		}
 		else if (Set.class.isAssignableFrom(lhs.type()) &&
 			     Set.class.isAssignableFrom(rhs.type())) {
-			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, oper, lhs, rhs));
 			return jol.lang.plan.Math.class;
 		}
-		runtime.error("Type mismatch: " + lhs.type() +
+		throw new CompileException("Type mismatch: " + lhs.type() +
 				" " + oper + " " + rhs.type(), n);
-		return Error.class;
 	}
 
 	public Class visitMultiplicativeExpression(final GNode n) {
 		Class ltype = (Class) dispatch(n.getNode(0));
 		Class rtype = (Class) dispatch(n.getNode(2));
-		if (ltype == Error.class || rtype == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(ltype) &&
-			   Expression.class.isAssignableFrom(rtype));
 
 		String oper = n.getString(1);
 		Expression lhs = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (lhs.type() == null) {
-			runtime.error("Undefined expression " + lhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + lhs, n);
 		}
 		else if (rhs.type() == null) {
-			runtime.error("Undefined expression " + rhs, n);
-			return Error.class;
+			throw new CompileException("Undefined expression " + rhs, n);
 		}
 		else if (subtype(Number.class, lhs.type()) &&
 			     subtype(Number.class, rhs.type())) {
-			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(oper, lhs, rhs));
+			n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, oper, lhs, rhs));
 			return jol.lang.plan.Math.class;
 		}
-		runtime.error("Type mismatch: " + lhs.type() +
+		throw new CompileException("Type mismatch: " + lhs.type() +
 				" " + oper + " " + rhs.type(), n);
-		return Error.class;
 	}
 
 	//---------------------------- Postfix Expressions ------------------------//
 
 	public Class visitMethod(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(type));
 		Expression context = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 
 		Class argumentType = (Class) dispatch(n.getNode(1));
-		assert(argumentType == List.class);
 		List<Expression> arguments =
 			(List<Expression>) n.getNode(1).getProperty(Constants.TYPE);
 		List<Class> parameterTypes = new ArrayList<Class>();
@@ -1452,8 +1298,7 @@ public final class TypeChecker extends Visitor {
 					}
 				}
 				if (constructor == null) {
-					runtime.error("Undefined constructor " + newclass.type() + types);
-					return Error.class;
+					throw new CompileException("Undefined constructor " + newclass.type() + types, n);
 				}
 				newclass.constructor(constructor);
 				newclass.arguments(arguments);
@@ -1463,14 +1308,12 @@ public final class TypeChecker extends Visitor {
 			else if (type == Reference.class) {
 				Reference reference = (Reference) context;
 				if (reference.object() == null && reference.type() == null) {
-					runtime.error("Undefined reference " + reference.toString(), n);
-					return Error.class;
+					throw new CompileException("Undefined reference " + reference.toString(), n);
 				}
 				else if (reference.object() != null) {
 					Expression object = reference.object();
 					if (object.type() == null) {
-						runtime.error("Undefined expression object: " + object, n);
-						return Error.class;
+						throw new CompileException("Undefined expression object: " + object, n);
 					}
 					Method method = null;
 					for (Method m : object.type().getMethods()) {
@@ -1481,11 +1324,10 @@ public final class TypeChecker extends Visitor {
 						}
 					}
 					if (method == null) {
-						runtime.error("Undefined method " + object.type() + "." + reference.toString() + types.toString());
-						return Error.class;
+						throw new CompileException("Undefined method " + object.type() + "." + reference.toString() + types.toString(), n);
 					}
 
-				    n.setProperty(Constants.TYPE, new MethodCall(object, method, arguments));
+				    n.setProperty(Constants.TYPE, new MethodCall(n, object, method, arguments));
 				    return MethodCall.class;
 				}
 				else {
@@ -1498,35 +1340,29 @@ public final class TypeChecker extends Visitor {
 						}
 					}
 					if (method == null) {
-						runtime.error("Undefined method " + reference.type() + "." + reference.toString() + types);
-						return Error.class;
+						throw new CompileException("Undefined method " + reference.type() + "." + reference.toString() + types, n);
 					}
-					n.setProperty(Constants.TYPE, new StaticMethodCall(reference.type(), method, arguments));
+					n.setProperty(Constants.TYPE, new StaticMethodCall(n, reference.type(), method, arguments));
 					return StaticMethodCall.class;
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			runtime.error("Method error: on " +  context.toString() + ": " + e.toString(), n);
-			return Error.class;
+			throw new CompileException("Method error: on " +  context.toString() + ": " + e.toString(), n);
 		}
 
-		runtime.error("Unkown method reference " + context.toString(), n);
-		return Error.class;
+		throw new CompileException("Unkown method reference " + context.toString(), n);
 	}
 
 	public Class visitNewClass(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
 		type = (Class) n.getNode(0).getProperty(Constants.TYPE);
 
-		n.setProperty(Constants.TYPE, new NewClass(type));
+		n.setProperty(Constants.TYPE, new NewClass(n, type));
 		return NewClass.class;
 	}
 
 	public Class visitReference(final GNode n)  {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
 
 		if (type == Variable.class) {
 			Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
@@ -1542,8 +1378,7 @@ public final class TypeChecker extends Visitor {
 		if (type == Reference.class) {
 			Reference ref = (Reference) n.getNode(0).getProperty(Constants.TYPE);
 			if (ref.object() != null || ref.type() != null) {
-				runtime.error("Undefined reference " + ref.toString(), n);
-				return Error.class;
+				throw new CompileException("Undefined reference " + ref.toString(), n);
 			}
 			String name = ref.toString() + "." + n.getString(1);
 
@@ -1558,7 +1393,7 @@ public final class TypeChecker extends Visitor {
 				n.setProperty(Constants.TYPE, type);
 				return Class.class;
 			} catch (ClassNotFoundException e) {
-				n.setProperty(Constants.TYPE, new UnknownReference(null, null, name));
+				n.setProperty(Constants.TYPE, new UnknownReference(n, null, null, name));
 				return Reference.class;
 			}
 		}
@@ -1568,17 +1403,16 @@ public final class TypeChecker extends Visitor {
 			type = expr.type();
 			try {
 				Field field = type.getField(name);
-				n.setProperty(Constants.TYPE, new ObjectReference(expr, field));
+				n.setProperty(Constants.TYPE, new ObjectReference(n, expr, field));
 				return ObjectReference.class;
 			} catch (Exception e) {
 				for (Method method : type.getMethods()) {
 					if (method.getName().equals(name)) {
-						n.setProperty(Constants.TYPE, new UnknownReference(expr, null, name));
+						n.setProperty(Constants.TYPE, new UnknownReference(n, expr, null, name));
 						return Reference.class;
 					}
 				}
-				runtime.error("Unknown reference " + name + " in type " + type);
-				return Error.class;
+				throw new CompileException("Unknown reference " + name + " in type " + type, n);
 			}
 		}
 		else if (type == Class.class) {
@@ -1602,91 +1436,70 @@ public final class TypeChecker extends Visitor {
 					runtime.error("Field " + name + " must be static or an enumeration!", n);
 					return Error.class;
 				}
-				n.setProperty(Constants.TYPE, new StaticReference(type, field));
+				n.setProperty(Constants.TYPE, new StaticReference(n, type, field));
 				return StaticReference.class;
 			} catch (Exception e) {
 				/* It must be a method at this point. Punt to higher ground. */
 				for (Method method : type.getMethods()) {
 					if (method.getName().equals(name)) {
-						n.setProperty(Constants.TYPE, new UnknownReference(null, type, name));
+						n.setProperty(Constants.TYPE, new UnknownReference(n, null, type, name));
 						return Reference.class;
 					}
 				}
-				runtime.error("ERROR: unknown reference! " + name + " in type " + type);
-				return Error.class;
+				throw new CompileException("ERROR: unknown reference! " + name + " in type " + type, n);
 			}
 		}
-		else {
-			System.err.println("Unhandled reference type!");
-			System.exit(0);
-		}
-		return Error.class;
+		throw new CompileException("Unhandled reference type!", n);
 	}
 
 	public Class visitReferenceName(final GNode n) {
-		n.setProperty(Constants.TYPE, new UnknownReference(null, null, n.getString(0)));
+		n.setProperty(Constants.TYPE, new UnknownReference(n, null, null, n.getString(0)));
 		return Reference.class;
 	}
 
 	public Class visitArrayIndex(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(type));
-
 		type = (Class) dispatch(n.getNode(1));
-		if (type == Error.class) return Error.class;
-		assert(Value.class == type);
 
 		Expression    object = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		Value<Integer> index = (Value<Integer>) n.getNode(1).getProperty(Constants.TYPE);
 
 		if (object.type() == null) {
-			runtime.error("Type error: " + object.toString() + " unknown type!");
-			return Error.class;
+			throw new CompileException("Type error: " + object.toString() + " unknown type!", n);
 		}
 		else if (!object.type().isArray()) {
-			runtime.error("Type error: " + object.toString() + " is not an array type!");
-			return Error.class;
+			throw new CompileException("Type error: " + object.toString() + " is not an array type!", n);
 		}
-		n.setProperty(Constants.TYPE, new ArrayIndex(object, index.value()));
+		n.setProperty(Constants.TYPE, new ArrayIndex(n, object, index.value()));
 		return ArrayIndex.class;
 	}
 
 	public Class visitIncrement(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(type));
-
 		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		if (expr.type() == null) {
-			runtime.error("Unable to resolve expression type " + expr);
-			return Error.class;
+			throw new CompileException("Unable to resolve expression type " + expr, n);
 		}
 		else if (!subtype(Number.class, expr.type())) {
-			runtime.error("Expression " + expr +
-					" type must be numberic in increment expression.");
-			return Error.class;
+			throw new CompileException("Expression " + expr +
+					" type must be numberic in increment expression.", n);
 		}
-		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(jol.lang.plan.Math.INC, expr, null));
+		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, jol.lang.plan.Math.INC, expr, null));
 		return jol.lang.plan.Math.class;
 	}
 
 	public Class visitDecrement(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		if (type == Error.class) return Error.class;
-		assert(Expression.class.isAssignableFrom(type));
 
 		Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
 		if (expr.type() == null) {
-			runtime.error("Unable to resolve expression type " + expr);
-			return Error.class;
+			throw new CompileException("Unable to resolve expression type " + expr, n);
 		}
 		else if  (!subtype(Number.class, expr.type())) {
-			runtime.error("Expression " + expr +
-					" type must be numberic in decrement expression.");
-			return Error.class;
+			throw new CompileException("Expression " + expr +
+					" type must be numberic in decrement expression.", n);
 		}
-		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(jol.lang.plan.Math.DEC, expr, null));
+		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, jol.lang.plan.Math.DEC, expr, null));
 		return jol.lang.plan.Math.class;
 	}
 
@@ -1697,10 +1510,6 @@ public final class TypeChecker extends Visitor {
 		if (n.size() != 0) {
 			for (Node arg : n.<Node> getList(0)) {
 				Class t = (Class) dispatch(arg);
-				if (t == Error.class) {
-					return Error.class;
-				}
-				assert(Expression.class.isAssignableFrom(t));
 				args.add((Expression)arg.getProperty(Constants.TYPE));
 			}
 		}
@@ -1714,14 +1523,10 @@ public final class TypeChecker extends Visitor {
 		if (n.size() != 0) {
 			for (Node arg : n.<Node> getList(0)) {
 				Class t = (Class) dispatch(arg);
-				if (t == Error.class) {
-					return Error.class;
-				}
-				assert(Expression.class.isAssignableFrom(t));
 				args.add((Expression)arg.getProperty(Constants.TYPE));
 			}
 		}
-		n.setProperty(Constants.TYPE, new VList(args));
+		n.setProperty(Constants.TYPE, new VList(n, args));
 		return VList.class;
 	}
 
@@ -1781,15 +1586,13 @@ public final class TypeChecker extends Visitor {
 			}
 
 			if (type == null) {
-				runtime.error("Unknown class type! " + name);
-				return Error.class;
+				throw new CompileException("Unknown class type! " + name, n);
 			}
 			n.setProperty(Constants.TYPE, type);
 			return Class.class;
 		} catch (ClassNotFoundException e) {
-			runtime.error(e.toString(), n);
+			throw new CompileException(e.toString(), n);
 		}
-		return Error.class;
 	}
 
 	public Class visitPrimitiveType(final GNode n) {
@@ -1802,19 +1605,18 @@ public final class TypeChecker extends Visitor {
 		Class type =  (Class)  table.current().lookup(n.getString(0));
 		if (DontCare.DONTCARE.equals(n.getString(0))) {
 			/* Generate a fake variable for all don't cares. */
-			n.setProperty(Constants.TYPE, new DontCare(null));
+			n.setProperty(Constants.TYPE, new DontCare(n, null));
 		}
 		else {
-			n.setProperty(Constants.TYPE, new Variable(n.getString(0), type));
+			n.setProperty(Constants.TYPE, new Variable(n, n.getString(0), type));
 		}
 		return Variable.class;
 	}
 
 	public Class visitLocation(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		assert (type == Variable.class);
 		Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
-		n.setProperty(Constants.TYPE, new Variable(var.name(), var.type(), true));
+		n.setProperty(Constants.TYPE, new Variable(n, var.name(), var.type(), true));
 		return Variable.class;
 	}
 
@@ -1827,12 +1629,12 @@ public final class TypeChecker extends Visitor {
 			if (type == Variable.class) {
 				Variable kVar = (Variable) n.getNode(2).getProperty(Constants.TYPE);
 				Variable var  = (Variable) n.getNode(1).getProperty(Constants.TYPE);
-				n.setProperty(Constants.TYPE, new Limit(var, kVar));
+				n.setProperty(Constants.TYPE, new Limit(n, var, kVar));
 			}
 			else {
 				Value<Number>  kConst = (Value<Number>) n.getNode(2).getProperty(Constants.TYPE);
 				Variable       var    = (Variable)      n.getNode(1).getProperty(Constants.TYPE);
-				n.setProperty(Constants.TYPE, new Limit(var, kConst.value()));
+				n.setProperty(Constants.TYPE, new Limit(n, var, kConst.value()));
 			}
 		}
 		else if ("topk".equals(function) || "bottomk".equals(function)) {
@@ -1842,43 +1644,41 @@ public final class TypeChecker extends Visitor {
 				Variable kVar = (Variable) n.getNode(2).getProperty(Constants.TYPE);
 				Variable var  = (Variable) n.getNode(1).getProperty(Constants.TYPE);
 				if (!subtype(Number.class, kVar.type())) {
-					runtime.error("Second parameter to " + function + " aggregate must be of" +
+					throw new CompileException("Second parameter to " + function + " aggregate must be of" +
 							" type Number! Variable " + var + " is type " + var.type(), n);
-					return Error.class;
 				}
 				n.setProperty(Constants.TYPE,
 						"topk".equals(function) ?
-								new TopK(var, kVar) : new BottomK(var, kVar));
+								new TopK(n, var, kVar) : new BottomK(n, var, kVar));
 			}
 			else {
 				Value<Number>  kConst = (Value<Number>) n.getNode(2).getProperty(Constants.TYPE);
 				Variable       var    = (Variable)      n.getNode(1).getProperty(Constants.TYPE);
 				n.setProperty(Constants.TYPE,
 						"topk".equals(function) ?
-								new TopK(var, kConst.value()) :
-									new BottomK(var, kConst.value()));
+								new TopK(n, var, kConst.value()) :
+									new BottomK(n, var, kConst.value()));
 			}
 		}
 		else if ("generic".equals(function)) {
 			Class type = (Class) dispatch(n.getNode(1));
 
 			if (type != MethodCall.class) {
-				runtime.error("Generic function must be a method call!!", n);
-				return Error.class;
+				throw new CompileException("Generic function must be a method call!!", n);
 			}
 			MethodCall method = (MethodCall) n.getNode(1).getProperty(Constants.TYPE);
-			n.setProperty(Constants.TYPE, new GenericAggregate(method));
+			n.setProperty(Constants.TYPE, new GenericAggregate(n, method));
 		}
 		else {
 			Class type = (Class) dispatch(n.getNode(1));
 			if (type == Variable.class) {
 				Variable var = (Variable) n.getNode(1).getProperty(Constants.TYPE);
 				n.setProperty(Constants.TYPE,
-						new Aggregate(new AggregateVariable(var), function, jol.types.function.Aggregate.type(function, var.type())));
+						new Aggregate(n, new AggregateVariable(var), function, jol.types.function.Aggregate.type(function, var.type())));
 			} else if (type == MethodCall.class) {
 				MethodCall method = (MethodCall) n.getNode(1).getProperty(Constants.TYPE);
 				n.setProperty(Constants.TYPE,
-						new Aggregate(method, function, jol.types.function.Aggregate.type(function, method.type())));
+						new Aggregate(n, method, function, jol.types.function.Aggregate.type(function, method.type())));
 			}
 		}
 		return Aggregate.class;
@@ -1886,14 +1686,12 @@ public final class TypeChecker extends Visitor {
 
 	public Class visitAlias(final GNode n) {
 		Class type = (Class) dispatch(n.getNode(0));
-		assert (type == Variable.class);
 		Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
 
 		type = (Class) dispatch(n.getNode(1));
-		assert (type == Value.class);
 		Value<Integer> val = (Value<Integer>) n.getNode(1).getProperty(Constants.TYPE);
 
-		n.setProperty(Constants.TYPE,  new Alias(var.name(), val.value(), var.type()));
+		n.setProperty(Constants.TYPE, new Alias(n, var.name(), val.value(), var.type()));
 		return Alias.class;
 	}
 
@@ -1902,23 +1700,23 @@ public final class TypeChecker extends Visitor {
 	 ***********************************************************/
 
 	public Class visitFloatConstant(final GNode n) {
-		n.setProperty(Constants.TYPE, new Value<Float>(Float.parseFloat(n.getString(0))));
+		n.setProperty(Constants.TYPE, new Value<Float>(n, Float.parseFloat(n.getString(0))));
 		return Value.class;
 	}
 
 	public Class visitIntegerConstant(final GNode n) {
 		String value = n.getString(0);
 		if (value.equals("infinity")) {
-			n.setProperty(Constants.TYPE, new Value<Integer>(Integer.MAX_VALUE));
+			n.setProperty(Constants.TYPE, new Value<Integer>(n, Integer.MAX_VALUE));
 		}
 		else  {
-			n.setProperty(Constants.TYPE, new Value<Integer>(Integer.parseInt(value)));
+			n.setProperty(Constants.TYPE, new Value<Integer>(n, Integer.parseInt(value)));
 		}
 		return Value.class;
 	}
 
 	public Class visitLongConstant(final GNode n) {
-		n.setProperty(Constants.TYPE, new Value<Long>(Long.parseLong(n.getString(0))));
+		n.setProperty(Constants.TYPE, new Value<Long>(n, Long.parseLong(n.getString(0))));
 		return Value.class;
 	}
 
@@ -1926,27 +1724,27 @@ public final class TypeChecker extends Visitor {
 		String value = n.getString(0);
 		if (value.length() == 2) value = "";
 		else value = value.substring(1, value.length()-1);
-		n.setProperty(Constants.TYPE, new Value<String>(value));
+		n.setProperty(Constants.TYPE, new Value<String>(n, value));
 		return Value.class;
 	}
 
 	public Class visitBooleanConstant(final GNode n) {
 		if (n.getString(0).equals("true")) {
-			n.setProperty(Constants.TYPE, new Value<Boolean>(Boolean.TRUE));
+			n.setProperty(Constants.TYPE, new Value<Boolean>(n, Boolean.TRUE));
 		}
 		else {
-			n.setProperty(Constants.TYPE, new Value<Boolean>(Boolean.FALSE));
+			n.setProperty(Constants.TYPE, new Value<Boolean>(n, Boolean.FALSE));
 		}
 		return Value.class;
 	}
 
 	public Class visitNullConstant(final GNode n) {
-		n.setProperty(Constants.TYPE, new Null());
+		n.setProperty(Constants.TYPE, new Null(n));
 		return Null.class;
 	}
 
 	public Class visitInfinityConstant(final GNode n) {
-		n.setProperty(Constants.TYPE, new Value<Integer>(Integer.MAX_VALUE));
+		n.setProperty(Constants.TYPE, new Value<Integer>(n, Integer.MAX_VALUE));
 		return Value.class;
 	}
 
@@ -1964,12 +1762,11 @@ public final class TypeChecker extends Visitor {
 				matrix = new Float[elements.size()][vector.length];
 			}
 			else if (matrix[index-1].length != vector.length) {
-				runtime.error("Matrix vector lengths mismatch!");
-				return Error.class;
+				throw new CompileException("Matrix vector lengths mismatch!", n);
 			}
 			matrix[index++] = vector;
 		}
-		n.setProperty(Constants.TYPE, new Value<Float[][]>(matrix));
+		n.setProperty(Constants.TYPE, new Value<Float[][]>(n, matrix));
 		return Value.class;
 	}
 
@@ -1987,12 +1784,11 @@ public final class TypeChecker extends Visitor {
 				matrix = new Integer[elements.size()][vector.length];
 			}
 			else if (matrix[index-1].length != vector.length) {
-				runtime.error("Matrix vector lengths mismatch!");
-				return Error.class;
+				throw new CompileException("Matrix vector lengths mismatch!", n);
 			}
 			matrix[index++] = vector;
 		}
-		n.setProperty(Constants.TYPE, new Value<Integer[][]>(matrix));
+		n.setProperty(Constants.TYPE, new Value<Integer[][]>(n, matrix));
 		return Value.class;
 	}
 
@@ -2006,7 +1802,7 @@ public final class TypeChecker extends Visitor {
 			Value<Integer> val = (Value<Integer>) i.getProperty(Constants.TYPE);
 			vector[index++] = val.value();
 		}
-		n.setProperty(Constants.TYPE, new Value<Integer[]>(vector));
+		n.setProperty(Constants.TYPE, new Value<Integer[]>(n, vector));
 		return Value.class;
 	}
 
@@ -2016,11 +1812,10 @@ public final class TypeChecker extends Visitor {
 		int index = 0;
 		for (Node f : n.<Node>getList(0)) {
 			Class type = (Class) dispatch(f);
-			assert(type == Value.class);
 			Value<Float> val = (Value<Float>) f.getProperty(Constants.TYPE);
 			vector[index++] = val.value();
 		}
-		n.setProperty(Constants.TYPE, new Value<Float[]>(vector));
+		n.setProperty(Constants.TYPE, new Value<Float[]>(n, vector));
 		return Value.class;
 	}
 

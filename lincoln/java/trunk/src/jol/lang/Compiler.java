@@ -21,7 +21,7 @@ import jol.lang.plan.Selection.SelectionTable;
 import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
+import jol.types.exception.CompileException;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -60,7 +60,7 @@ public class Compiler {
 		private jol.core.Runtime context;
 
 		public CompileTable(jol.core.Runtime context) {
-			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 			this.context = context;
 		}
 
@@ -77,7 +77,7 @@ public class Compiler {
 						URL fileURL = new URL(file);
 						Compiler compiler = new Compiler(context, owner, fileURL);
 
-						Comparable[] vals = t.toArray();
+						Object[] vals = t.toArray();
 						vals[Field.NAME.ordinal()] = compiler.program.name();
 						vals[Field.PROGRAM.ordinal()] = compiler.program;
 						t = new Tuple(vals);
@@ -212,36 +212,30 @@ public class Compiler {
 		TypeChecker typeChecker = new TypeChecker(context, Compiler.runtime, this.program);
 		typeChecker.prepare();
 
-		/* First evaluate all import statements. */
-		for (Node clause : node.getNode(1).<Node> getList(0)) {
-			if (clause.getName().equals("Import")) {
-				typeChecker.analyze(clause);
-				if (runtime.errorCount() > 0)
-					return;
+		try {
+			/* First evaluate all import statements. */
+			for (Node clause : node.getNode(1).<Node> getList(0)) {
+				if (clause.getName().equals("Import")) {
+					typeChecker.analyze(clause);
+				}
 			}
-		}
 
-		/* Next evaluate all table and event declarations. */
-		for (Node clause : node.getNode(1).<Node> getList(0)) {
-			if (clause.getName().equals("Table") ||
-			    clause.getName().equals("Event") ||
-			    clause.getName().equals("Timer")) {
-				typeChecker.analyze(clause);
-				if (runtime.errorCount() > 0)
-					return;
+			/* Next evaluate all table and event declarations. */
+			for (Node clause : node.getNode(1).<Node> getList(0)) {
+				if (clause.getName().equals("Table") ||
+						clause.getName().equals("Event") ||
+						clause.getName().equals("Timer")) {
+					typeChecker.analyze(clause);
+				}
 			}
-		}
 
-		/* Evaluate all other clauses. */
-		for (Node clause : node.getNode(1).<Node> getList(0)) {
-			if (clause.getName().equals("Rule")
-					|| clause.getName().equals("Fact")
-					|| clause.getName().equals("Load")
-					|| clause.getName().equals("Watch")) {
-				typeChecker.analyze(clause);
-				if (runtime.errorCount() > 0)
-					return;
-				try {
+			/* Evaluate all other clauses. */
+			for (Node clause : node.getNode(1).<Node> getList(0)) {
+				if (clause.getName().equals("Rule")
+						|| clause.getName().equals("Fact")
+						|| clause.getName().equals("Load")
+						|| clause.getName().equals("Watch")) {
+					typeChecker.analyze(clause);
 					if (clause.getName().equals("Watch")) {
 						List watches = (List) clause.getProperty(Constants.TYPE);
 						for (Object watch : watches) {
@@ -252,11 +246,12 @@ public class Compiler {
 						if (c == null) continue;
 						c.set(context, this.program.name());
 					}
-				} catch (UpdateException e) {
-					e.printStackTrace();
-					runtime.error(e.toString());
 				}
 			}
+		} catch (CompileException e) {
+			runtime.error(e.getMessage(), e.node());
+		} catch (UpdateException e) {
+			runtime.error(e.getMessage());
 		}
 	}
 }

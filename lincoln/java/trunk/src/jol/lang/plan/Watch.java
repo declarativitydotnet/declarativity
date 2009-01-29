@@ -2,7 +2,6 @@ package jol.lang.plan;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.Operator;
@@ -26,7 +25,7 @@ public class Watch extends Clause {
 		};
 
 		public WatchTable(Runtime context) {
-			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		}
 
 		@Override

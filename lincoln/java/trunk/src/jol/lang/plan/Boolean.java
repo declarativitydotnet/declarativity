@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.util.HashSet;
 import java.util.Set;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
@@ -10,7 +12,7 @@ import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
 
 
-public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boolean> {
+public class Boolean<C> extends Expression<java.lang.Boolean> {
 
 	public final static String AND     = "&&";
 	public final static String OR      = "||";
@@ -29,14 +31,15 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 
 	private Expression<C> rhs;
 
-	public Boolean(String oper, Expression<C> lhs, Expression<C> rhs) {
+	public Boolean(Node node, String oper, Expression<C> lhs, Expression<C> rhs) {
+		super(node);
 		this.oper = oper;
 		this.lhs = lhs;
 		this.rhs = rhs;
 	}
 	
 	public Expression clone() {
-		return new Boolean(oper, lhs, rhs);
+		return new Boolean(node(), oper, lhs, rhs);
 	}
 
 	@Override
@@ -104,7 +107,7 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 					C l =  lvalue.evaluate(tuple);
 					C r =  rvalue.evaluate(tuple);
 					if (l == null || r == null) return l == r;
-					else return l.compareTo(r) == 0;
+					else return l.equals(r);
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -118,7 +121,7 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 					C l =  lvalue.evaluate(tuple);
 					C r =  rvalue.evaluate(tuple);
 					if (l == null || r == null) return l != r;
-					else return l.compareTo(r) != 0;
+					else return !l.equals(r);
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;
@@ -128,8 +131,8 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 		else if (this.oper.equals(LEQUAL)) {
 			return new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					C left  = lvalue.evaluate(tuple);
-					C right = rvalue.evaluate(tuple);
+					Comparable left  = (Comparable) lvalue.evaluate(tuple);
+					Comparable right = (Comparable) rvalue.evaluate(tuple);
 					try {
 						return left.compareTo(right) <= 0;
 					} catch (Throwable t) {
@@ -146,8 +149,8 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 			return new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
                     try {
-                        C left  = lvalue.evaluate(tuple);
-                        C right = rvalue.evaluate(tuple);
+                        Comparable left  = (Comparable) lvalue.evaluate(tuple);
+                        Comparable right = (Comparable) rvalue.evaluate(tuple);
                         return left.compareTo(right) >= 0;
                     } catch (Throwable t) {
                         throw new JolRuntimeException(t.toString() +
@@ -164,8 +167,8 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 			return new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
 				    try {
-				        C left  = lvalue.evaluate(tuple);
-				        C right = rvalue.evaluate(tuple);
+				        Comparable left  = (Comparable) lvalue.evaluate(tuple);
+				        Comparable right = (Comparable) rvalue.evaluate(tuple);
 				        return left.compareTo(right) < 0;
 				    } catch (Throwable t) {
                         throw new JolRuntimeException(t.toString() +
@@ -182,8 +185,8 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 			return new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
 					try {
-						C left  = lvalue.evaluate(tuple);
-						C right = rvalue.evaluate(tuple);
+						Comparable left  = (Comparable) lvalue.evaluate(tuple);
+						Comparable right = (Comparable) rvalue.evaluate(tuple);
 						return left.compareTo(right) > 0;
 					} catch (Throwable t) {
 						throw new JolRuntimeException(t.toString() +
@@ -199,8 +202,8 @@ public class Boolean<C extends Comparable<C>> extends Expression<java.lang.Boole
 		else if (this.oper.equals(IN)) {
 			return new TupleFunction<java.lang.Boolean>() {
 				public java.lang.Boolean evaluate(Tuple tuple) throws JolRuntimeException {
-					Range.Function<C> range = (Range.Function<C>) rvalue.evaluate(tuple);
-					return range.test(lvalue.evaluate(tuple));
+					Range.Function range = (Range.Function) rvalue.evaluate(tuple);
+					return range.test((Comparable)lvalue.evaluate(tuple));
 				}
 				public Class returnType() {
 					return java.lang.Boolean.class;

@@ -3,6 +3,8 @@ package jol.lang.plan;
 import java.util.ArrayList;
 import java.util.List;
 
+import xtc.tree.Node;
+
 import jol.types.basic.Tuple;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
@@ -15,28 +17,28 @@ public class Limit extends Aggregate {
 	
 	protected Variable kVar;
 
-	public Limit(Variable value, Number kConst) {
-		this(jol.types.function.Aggregate.LIMIT, value, kConst);
+	public Limit(Node node, Variable value, Number kConst) {
+		this(node, jol.types.function.Aggregate.LIMIT, value, kConst);
 	}
 	
-	public Limit(Variable value, Variable kVar) {
-		this(jol.types.function.Aggregate.LIMIT, value, kVar);
+	public Limit(Node node, Variable value, Variable kVar) {
+		this(node, jol.types.function.Aggregate.LIMIT, value, kVar);
 	}
 	
-	protected Limit(String function, Variable value, Number kConst) {
-		super(variables(value), function, ValueList.class);
+	protected Limit(Node node, String function, Variable value, Number kConst) {
+		super(node, variables(value), function, ValueList.class);
 		this.kConst = kConst;
 		this.kVar = null;
 	}
 	
-	public Limit(String function, Variable value, Variable kVar) {
-		super(variables(value, kVar), function, ValueList.class);
+	public Limit(Node node, String function, Variable value, Variable kVar) {
+		super(node, variables(value, kVar), function, ValueList.class);
 		this.kConst = null;
 		this.kVar = kVar;
 	}
 	
 	protected Limit(Limit copy) {
-		super(copy.variables, copy.function, ValueList.class);
+		super(copy.node(), copy.variables, copy.function, ValueList.class);
 		this.kConst = copy.kConst;
 		this.kVar   = copy.kVar;
 	}
