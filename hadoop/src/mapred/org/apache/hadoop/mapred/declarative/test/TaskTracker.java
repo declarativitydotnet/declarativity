@@ -112,6 +112,7 @@ class TaskTracker extends Thread {
 	
 	private static final Long MAX_TASK_TIME = 120011L; // Ensure prime
 	private static final Long MIN_TASK_TIME = 60000L;
+	private static final Random rand = new Random();
 	
 	private Executor executor;
 	
@@ -123,13 +124,11 @@ class TaskTracker extends Thread {
 	
 	private long interval;
 	
-	private int maxMapTasks = 2;
+	private int maxMapTasks;
 	
-	private int maxReduceTasks = 2;
+	private int maxReduceTasks;
 	
 	private Set<TaskRunner> runners;
-	
-	private Random rand;
 	
 	public TaskTracker(String name, Executor executor, InterTrackerProtocol master, long interval) {
 		this.name       = name;
@@ -138,7 +137,9 @@ class TaskTracker extends Thread {
 		this.responseId = 0;
 		this.interval   = interval;
 		this.runners    = new HashSet<TaskRunner>();
-		this.rand       = new Random();
+		
+		this.maxMapTasks    = 1 + rand.nextInt(5);
+		this.maxReduceTasks = 1 + rand.nextInt(5);
 	}
 	
 	@Override
@@ -196,8 +197,9 @@ class TaskTracker extends Thread {
 	private void launch(LaunchTaskAction action) {
 		Task task = action.getTask();
 		long time = MIN_TASK_TIME + (rand.nextLong() % MAX_TASK_TIME);
-		TaskStatus.State state =   (time < (MIN_TASK_TIME + 0.5 * MAX_TASK_TIME)) ?
-				TaskStatus.State.FAILED : TaskStatus.State.UNASSIGNED;
+		TaskStatus.State state =   TaskStatus.State.UNASSIGNED;
+		/*(time < (MIN_TASK_TIME + 0.5 * MAX_TASK_TIME)) ?
+				TaskStatus.State.FAILED : TaskStatus.State.UNASSIGNED; */
 		TaskRunner runner = new TaskRunner(this, task, time, state);
 		this.executor.execute(runner);
 		this.runners.add(runner);
@@ -216,7 +218,7 @@ class TaskTracker extends Thread {
 		}
 		this.runners.removeAll(done);
 		
-		return new TaskTrackerStatus(name(), "localhost", 
+		return new TaskTrackerStatus(name(), name() + ".localhost", 
                                      0, reports,  0, 
                                      maxMapTasks, maxReduceTasks);
 	}

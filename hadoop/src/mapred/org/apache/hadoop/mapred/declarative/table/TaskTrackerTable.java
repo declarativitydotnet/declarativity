@@ -5,7 +5,6 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.declarative.Constants.TaskTrackerState;
 
 import jol.core.Runtime;
-import jol.types.basic.TypeList;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
@@ -48,7 +47,7 @@ public class TaskTrackerTable extends ObjectTable {
 	
 
 	public TaskTrackerTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		// TODO Auto-generated constructor stub
 	}
 

@@ -13,7 +13,6 @@ import org.apache.hadoop.mapred.declarative.table.TaskTable.Field;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.basic.ValueList;
 import jol.types.basic.Wrapper;
 import jol.types.table.HashIndex;
@@ -46,7 +45,7 @@ public class TaskReportTable extends ObjectTable {
 	};
 	
 	public TaskReportTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		Key key = new Key(Field.JOBID.ordinal(), Field.TYPE.ordinal());
 		Index index  = new HashIndex(context, this, key, Index.Type.SECONDARY);
 		secondary().put(key, index);

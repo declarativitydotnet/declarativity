@@ -20,6 +20,7 @@ import jol.types.basic.Tuple;
 public abstract class JobTracker {
 	public static final String PROGRAM   = "jobtracker";
 	public static final String SCHEDULER = "scheduler";
+	public static final String POLICY    = "partitionPolicy";
 	
 	public static enum State { INITIALIZING, RUNNING }
 	
@@ -37,7 +38,7 @@ public abstract class JobTracker {
 	public static JobTracker startTracker(JobConf conf) 
 	throws IOException, InterruptedException {
 		try {
-			System context = jol.core.Runtime.create(10000);
+			System context = jol.core.Runtime.create();
 			return new JobTrackerImpl(context, conf);
 		} catch (Throwable e) {
 			throw new IOException(e);

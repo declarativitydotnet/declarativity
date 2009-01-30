@@ -357,7 +357,9 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		Tuple job = lookup(jobid);
 		if (job != null) {
 			JobPriority value = JobPriority.valueOf(priority);
-			job.value(JobTable.Field.PRIORITY.ordinal(), value);
+			Object [] values = job.toArray();
+			values[JobTable.Field.PRIORITY.ordinal()] = value;
+			job = new Tuple(values);
 			try {
 				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, 
 				         new TupleSet(JobTable.TABLENAME, job), null);

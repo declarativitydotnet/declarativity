@@ -9,7 +9,6 @@ import org.apache.hadoop.mapred.declarative.util.JobState;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.basic.Wrapper;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -41,7 +40,7 @@ public class JobTable extends ObjectTable {
 	};
 	
 	public JobTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 	}
 	
 	public static Tuple tuple(JobID jobid, String jobFile, JobConf conf, String url) {

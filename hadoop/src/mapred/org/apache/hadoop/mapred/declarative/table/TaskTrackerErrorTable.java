@@ -3,7 +3,6 @@ package org.apache.hadoop.mapred.declarative.table;
 import org.apache.hadoop.mapred.JobTracker;
 
 import jol.core.Runtime;
-import jol.types.basic.TypeList;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
@@ -27,7 +26,7 @@ public class TaskTrackerErrorTable extends ObjectTable {
 	
 
 	public TaskTrackerErrorTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 	}
 
 }
