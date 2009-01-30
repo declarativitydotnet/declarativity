@@ -166,6 +166,11 @@ public class JobTrackerImpl extends JobTracker {
 			ClassLoader.getSystemClassLoader().getResource(SCHEDULER + ".olg");
 		this.context.install("hadoop", scheduler);
 		this.context.evaluate();
+		
+		URL policy = 
+			ClassLoader.getSystemClassLoader().getResource(POLICY + ".olg");
+		this.context.install("hadoop", policy);
+		this.context.evaluate();
 		this.context.start();
 	}
 	

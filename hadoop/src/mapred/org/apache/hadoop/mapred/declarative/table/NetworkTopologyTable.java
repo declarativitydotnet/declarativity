@@ -19,7 +19,6 @@ import org.apache.hadoop.util.StringUtils;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
@@ -128,7 +127,7 @@ public class NetworkTopologyTable extends ObjectTable {
 	private Resolver resolver;
 	
 	public NetworkTopologyTable(Runtime context, JobTrackerImpl tracker) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		this.resolver = new Resolver(context, tracker.conf());
 		tracker.executor().execute(this.resolver);
 	}

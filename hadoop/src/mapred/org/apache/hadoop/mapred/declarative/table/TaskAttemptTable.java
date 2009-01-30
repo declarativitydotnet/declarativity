@@ -12,7 +12,6 @@ import org.apache.hadoop.net.NetUtils;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
@@ -45,7 +44,7 @@ public class TaskAttemptTable extends ObjectTable {
 	};
 	
 	public TaskAttemptTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 	}
 	
 	/**

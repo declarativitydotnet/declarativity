@@ -9,7 +9,6 @@ import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.core.Runtime;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.basic.Wrapper;
 import jol.types.exception.BadKeyException;
 import jol.types.table.HashIndex;
@@ -40,7 +39,7 @@ public class TaskTable extends ObjectTable {
 	};
 	
 	public TaskTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		Key typeKey = new Key(Field.TYPE.ordinal());
 		Index index = new HashIndex(context, this, typeKey, Index.Type.SECONDARY);
 		secondary().put(typeKey, index);

@@ -16,7 +16,6 @@ import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.basic.Wrapper;
 import jol.types.exception.UpdateException;
 import jol.types.table.Function;
@@ -43,7 +42,7 @@ public class TaskCreate extends Function {
 	private JobTracker jobTracker;
 
 	public TaskCreate(JobTracker jobTracker) {
-		super("taskCreate", new TypeList(SCHEMA));
+		super("taskCreate", SCHEMA);
 		this.jobTracker = jobTracker;
 	}
 
