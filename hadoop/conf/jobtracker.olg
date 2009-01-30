@@ -52,7 +52,7 @@ taskFile(JobId, TaskId, Locations) :-
 	task(JobId, TaskId, Type, _, Split, _, Status),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.MAP,
-	Locations := new ValueList(((JobClient.RawSplit)Split.object()).getLocations());
+	Locations := Function.getLocations((JobClient.RawSplit)Split.object());
 	
 taskFileLocation(JobId, TaskId, Location) :-
 	flatten(taskFile(JobId, TaskId, Locations)),
@@ -61,28 +61,21 @@ taskFileLocation(JobId, TaskId, Location) :-
 	
 /*************** Network Statistics  *********************/
 
+define(distance, keys(0,1), {String, String, Integer});
 define(networkDistance, keys(0,1), {String, String, Integer});
-define(neighborDistance, keys(0,1), {String, String, Integer});
 
-networkDistance(Host, Host, 0) :-
+distance(Host, Host, 0) :-
 	networkTopology(Host, Location, Parent, Level);
 	
-networkDistance(Host, Location, 1) :-
+distance(Host, Location, 1) :-
 	networkTopology(Host, Location, Parent, Level);
 	
-networkDistance(Decendent, Ancestor, Distance + 1) :-
-	networkTopology(Name, Decendent, Parent, Level),
-	networkDistance(Parent, Ancestor, Distance);
-	
-neighborDistance(Location1, Location2, min<Distance>) :-
-	networkDistance(Location1, Ancestor, Distance1),
-	networkDistance(Location2, Ancestor, Distance2),
+networkDistance(Location1, Location2, min<Distance>) :-
+	distance(Location1, Location, Distance1),
+	distance(Location2, Location, Distance2),
 	Location1 != Location2,
 	Distance := Distance1 + Distance2;
 	
-networkDistance(Location1, Location2, Distance) :-
-	neighborDistance(Location1, Location2, Distance);
-
 
 /*************** Job Status Maintenance *********************/
 import jol.types.basic.ComparableSet;
@@ -136,7 +129,7 @@ taskAttempt(JobID, TaskID, AttemptID, Progress, Constants.TaskState.FAILED,
 	TrackerState != Constants.TaskTrackerState.RUNNING,
 	TaskState == Constants.TaskState.RUNNING;
 	
-computeTaskState
+public
 taskState(JobID, TaskID, generic<NewStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish)>) :-
 	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, _, Start, Finish),
 	task(JobID, TaskID, Type, _, _, _, TaskStatus),

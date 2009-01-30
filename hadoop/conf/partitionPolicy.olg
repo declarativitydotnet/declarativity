@@ -1,0 +1,128 @@
+program partitionPolicy;
+
+
+import jol.types.basic.ComparableSet;
+import jol.types.basic.ValueList;
+import org.apache.hadoop.mapred.declarative.util.TaskPriority;
+
+define(candidate, keys(0,1), {JobID, TaskID, Constants.TaskType, String, ValueList});
+define(mapProposal,          {JobID, String, ValueList});
+define(reduceProposal,       {JobID, String, ValueList});
+define(mapSlots,             {JobID, String, ValueList});
+define(reduceSlots,          {JobID, String, ValueList});
+
+/******************** Task Statistics *******************/
+/* Task Progress stores the min, max, avg progress for a jobs tasks. */
+define(taskProgress, keys(0,1), {JobID, Constants.TaskType, Float, Float, Float});
+
+public
+taskProgress(JobId, Type, min<Progress>, max<Progress>, avg<Progress>) :-
+	jobtracker::task#insert(JobId, TaskId, Type, _, _, _, Status),
+	Status.state() == Constants.TaskState.RUNNING || Status.state() == Constants.TaskState.SUCCEEDED, 
+	Progress := Status.progress();
+	
+	
+/******************** Signal to schedule a task *******************/
+
+define(scheduleSelection, {JobID, TaskID, ComparableSet});
+define(scheduleOption,    {JobID, TaskID, String});
+
+scheduleSelection(JobId, TaskId, set<TrackerName>) :-
+	scheduleOption(JobId, TaskId, TrackerName);
+	
+watch(scheduler::schedule, a);
+scheduler::schedule(JobId, TaskId, TrackerName) :-
+	scheduleSelection(JobId, TaskId, Trackers),
+	TrackerName := (String) Function.random(Trackers);
+
+scheduleOption(JobId, TaskId, TrackerName) :-
+	flatten(mapSlots(JobId, TrackerName, Tasks)),
+	TaskId := (TaskID) Tasks;
+	
+scheduleOption(JobId, TaskId, TrackerName) :-
+	flatten(reduceSlots(JobId, TrackerName, Tasks)),
+	TaskId := (TaskID) Tasks;
+	
+/* clean up scheduled candidates. */
+delete
+candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::schedule(JobId, TaskId, _),
+	candidate(JobId, TaskId, Type, TrackerName, Priority);
+	
+/******************** Schedule Map Tasks *******************/
+mapProposal(JobId, TrackerName, bottomk<Priority,MapSlots>) :-
+	candidate(JobId, TaskId, Type, TrackerName, Priority),
+	scheduler::trackerSlots(TrackerName, Host, _, MapSlots, ReduceSlots),
+	Type == Constants.TaskType.MAP, MapSlots > 0;
+	
+/* Schedule task on tracker from flattened priorities. */
+mapSlots(JobId, TrackerName, limit<TaskId, Maps>) :-
+	flatten(mapProposal(JobId, TrackerName, Priorities)),
+	candidate(JobId, TaskId, Type, TrackerName, Priority),
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+	Priority == (Long) Priorities;
+	
+/******************** Schedule Reduce Tasks *******************/
+reduceProposal(JobId, TrackerName, bottomk<Priority,ReduceSlots>) :-
+	candidate(JobId, TaskId, Type, TrackerName, Priority),
+	scheduler::trackerSlots(TrackerName, Host, _, MapSlots, ReduceSlots),
+	Type == Constants.TaskType.REDUCE, ReduceSlots > 0;
+	
+reduceSlots(JobId, TrackerName, limit<TaskId, Reduces>) :-
+	flatten(reduceProposal(JobId, TrackerName, Priorities)),
+	candidate(JobId, TaskId, Type, TrackerName, Priority),
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+	Priority == (Long) Priorities;
+	
+/**************************************************************/
+/** Partition tracker network into maps and reduces          **/
+/* trackerType(TrackerName, Type); */
+define(trackerType, keys(0), {String, Constants.TaskType});
+
+watch(trackerType, a);
+public
+trackerType(TrackerName, Type) :-
+	jobtracker::taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, MaxMap, MaxReduce),
+	notin trackerType(TrackerName, _),
+	TrackerState != Constants.TaskTrackerState.FAILED,
+    Type := MaxMap >= MaxReduce ? Constants.TaskType.MAP : Constants.TaskType.REDUCE;
+
+
+/**************************************************************/
+
+/* Priority 1: Schedule unassigned map tasks on local nodes only. */
+public
+candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+	scheduler::jobQueue(JobId, JPriority, SubmitTime, Type),
+	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
+	trackerType(TrackerName, Type),
+	Status.state() == Constants.TaskState.UNASSIGNED,
+	Type == Constants.TaskType.MAP && Maps > 0,
+	Priority := [1, JPriority, SubmitTime];
+	
+/* Priority 1: Schedule unassigned reduce tasks on any node. */
+public
+candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+	scheduler::jobQueue(JobId, JPriority, SubmitTime, Type),
+	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
+	trackerType(TrackerName, Type),
+	Status.state() == Constants.TaskState.UNASSIGNED,
+	Type == Constants.TaskType.REDUCE && Reduces > 0,
+	Priority := [1, JPriority, SubmitTime];
+	
+/* Priority 2: Schedule failed tasks. */
+public
+candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+	scheduler::jobQueue(JobId, JPriority, SubmitTime, Type),
+	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
+	Status.state() == Constants.TaskState.FAILED,
+	Status.attempts() < 3,
+    notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _),
+    notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.RUNNING, _, _, _, _, _, _),
+	Type == Constants.TaskType.MAP && Maps > 0 || Type == Constants.TaskType.REDUCE && Reduces > 0,
+	Priority := [2, JPriority, SubmitTime];
+	
+	
