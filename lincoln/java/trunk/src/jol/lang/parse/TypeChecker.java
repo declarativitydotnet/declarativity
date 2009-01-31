@@ -215,6 +215,16 @@ public final class TypeChecker extends Visitor {
 		}
 		return true;
 	}
+	
+	private String typesToString(Class[] types) {
+		if (types.length == 0) return "";
+		StringBuilder sb = new StringBuilder();
+		sb.append(types[0].getSimpleName());
+		for (int i = 1; i < types.length; i++) {
+			sb.append(", " + types[i].getSimpleName());
+		}
+		return sb.toString();
+	}
 
 	// =========================================================================
 
@@ -678,6 +688,14 @@ public final class TypeChecker extends Visitor {
 			}
 			else {
 				other.add(node);
+			}
+		}
+		
+		if (n.size() > 1) {
+			for (GNode node : n.<GNode>getList(1)) {
+				Class type = (Class) dispatch(node);
+				Assignment a = (Assignment) node.getProperty(Constants.TYPE);
+				terms.add(a);
 			}
 		}
 
@@ -1298,7 +1316,13 @@ public final class TypeChecker extends Visitor {
 					}
 				}
 				if (constructor == null) {
-					throw new CompileException("Undefined constructor " + newclass.type() + types, n);
+					StringBuilder sb = new StringBuilder();
+					sb.append("Undefined constructor " + newclass.type() + "(" + typesToString(types) + ")\n");
+					sb.append("Constructor options for " + newclass.type().getCanonicalName() + " include:\n");
+					for (Constructor c : constructors) {
+						sb.append("\t" + newclass.type().getCanonicalName() + "(" + typesToString(c.getParameterTypes()) + ")");
+					}
+					throw new CompileException(sb.toString(), n);
 				}
 				newclass.constructor(constructor);
 				newclass.arguments(arguments);
@@ -1324,7 +1348,11 @@ public final class TypeChecker extends Visitor {
 						}
 					}
 					if (method == null) {
-						throw new CompileException("Undefined method " + object.type() + "." + reference.toString() + types.toString(), n);
+						StringBuilder sb = new StringBuilder();
+						sb.append("Undefined method " + reference.toString() + 
+								  "(" + typesToString(types) + ") in class type " + 
+								  reference.type().getCanonicalName());
+						throw new CompileException(sb.toString(), n);
 					}
 
 				    n.setProperty(Constants.TYPE, new MethodCall(n, object, method, arguments));
@@ -1340,7 +1368,10 @@ public final class TypeChecker extends Visitor {
 						}
 					}
 					if (method == null) {
-						throw new CompileException("Undefined method " + reference.type() + "." + reference.toString() + types, n);
+						StringBuilder sb = new StringBuilder();
+						sb.append("Undefined static method " + reference.type().getCanonicalName() + 
+								  "." + reference.toString() + "(" + typesToString(types) + ")\n");
+						throw new CompileException(sb.toString(), n);
 					}
 					n.setProperty(Constants.TYPE, new StaticMethodCall(n, reference.type(), method, arguments));
 					return StaticMethodCall.class;
@@ -1412,7 +1443,9 @@ public final class TypeChecker extends Visitor {
 						return Reference.class;
 					}
 				}
-				throw new CompileException("Unknown reference " + name + " in type " + type, n);
+				throw new CompileException("Expression " + expr + " has type " + type + 
+						                   ", which does not contain a field or method " +
+						                   "named '" + name + "'.", n);
 			}
 		}
 		else if (type == Class.class) {

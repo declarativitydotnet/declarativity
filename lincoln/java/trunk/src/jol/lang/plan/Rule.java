@@ -2,6 +2,7 @@ package jol.lang.plan;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -346,19 +347,35 @@ public class Rule extends Clause {
 		
 		Schema schema = event.schema().clone();
 		List<Assignment> assignments = new ArrayList<Assignment>();
+		List<Selection> selections = new ArrayList<Selection>();
+		List<Predicate> predicates = new ArrayList<Predicate>();
 		for (Term term : body) {
 			if (term instanceof Assignment) assignments.add((Assignment)term);
-			else if (!term.equals(event)) {
-				Operator oper = term.operator(context, schema);
-				operators.add(oper);
-				schema = term.schema(schema);
-			}
+			else if (term instanceof Selection) selections.add((Selection)term);
+			else if (!term.equals(event)) predicates.add((Predicate) term);
 		}
 		
-		for (Assignment assignment : assignments) {
-			Operator oper = assignment.operator(context, schema);
+		for (Predicate p : predicates) {
+			schema = planHelper(context, operators, assignments, selections, schema);
+			Operator oper = p.operator(context, schema);
 			operators.add(oper);
-			schema = assignment.schema(schema);
+			schema = p.schema(schema);
+		}
+		schema = planHelper(context, operators, assignments, selections, schema);
+		
+		if (assignments.size() > 0) {
+			StringBuilder sb = new StringBuilder();
+			for (Assignment a : assignments) {
+				sb.append("Unable to plan assignment " + a + " due to variable dependencies.\n");
+			}
+			throw new PlannerException(sb.toString());
+		}
+		if (selections.size() > 0) {
+			StringBuilder sb = new StringBuilder();
+			for (Selection s : selections) {
+				sb.append("Unable to plan assignment " + s + " due to variable dependencies.\n");
+			}
+			throw new PlannerException(sb.toString());
 		}
 		
 		operators.add(new Projection(context, head, schema));
@@ -378,6 +395,36 @@ public class Rule extends Clause {
 		
 		query.add(new BasicQuery(context, program, name, isPublic, isAsync, isDelete, event, head, operators));
 		return query;
+	}
+	
+	private Schema planHelper(Runtime context, List<Operator> operators, 
+			                  List<Assignment> assignments, List<Selection> selections, 
+			                  Schema schema) throws PlannerException {
+		List<Term> done = new ArrayList<Term>();
+		for (Iterator<Assignment> iter = assignments.iterator(); iter.hasNext(); ) {
+			Assignment a = iter.next();
+			if (schema.variables().containsAll(a.requires())) {
+				Operator oper = a.operator(context, schema);
+				operators.add(oper);
+				schema = a.schema(schema);
+				done.add(a);
+			}
+		}
+		
+		for (Iterator<Selection> iter = selections.iterator(); iter.hasNext(); ) {
+			Selection s = iter.next();
+			if (schema.variables().containsAll(s.requires())) {
+				Operator oper = s.operator(context, schema);
+				operators.add(oper);
+				schema = s.schema(schema);
+				done.add(s);
+			}
+		}
+		
+		assignments.removeAll(done);
+		selections.removeAll(done);
+		
+		return schema;
 	}
 
 }
