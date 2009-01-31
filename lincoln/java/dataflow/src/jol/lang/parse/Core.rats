@@ -57,7 +57,10 @@ generic Rule =
 
 generic RuleHead = Predicate;
 	
-generic RuleBody = TermList;
+generic RuleBody = 
+	  TermList void:"{":Symbol AssignmentList void:"}":Symbol
+	/ TermList
+	;
 
 Pair<Node> TermList =  Term (void:",":Symbol Term)* ;
 
@@ -67,6 +70,10 @@ Node Term =
   / Assignment
   / Selection
   ;
+
+Pair<Node> AssignmentList = 
+	Assignment (void:",":Symbol Assignment)* ;
+
 
 //----------------------------   Timer  ---------------------------/
 // timer(Name, Type, Period, TTL, Delay);
