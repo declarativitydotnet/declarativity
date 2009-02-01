@@ -68,8 +68,7 @@ path(Source, Destination, Hops+1) :-
 /* Compute shortest paths. */
 statistics
 pathStatistics(Source, Destination, min<Hops>, max<Hops>, bottomk<Hops, K>) :- 
-	path(Source, Destination, Hops), K == 2
-	{ K := 2 };
+	path(Source, Destination, Hops), K := 2, K == 2;
 	
 computeAll(Source) :-
 	pathStatistics(Source, Destination, MinHops, MaxHops, TopHops);

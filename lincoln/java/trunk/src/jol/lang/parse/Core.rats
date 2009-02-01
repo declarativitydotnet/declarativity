@@ -72,7 +72,7 @@ Node Term =
   ;
 
 Pair<Node> AssignmentList = 
-	Assignment (void:",":Symbol Assignment)* ;
+	Assignment void:";":Symbol (Assignment void:";":Symbol)* ;
 
 
 //----------------------------   Timer  ---------------------------/

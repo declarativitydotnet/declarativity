@@ -693,6 +693,7 @@ public final class TypeChecker extends Visitor {
 			for (GNode node : n.<GNode>getList(1)) {
 				Class type = (Class) dispatch(node);
 				Assignment a = (Assignment) node.getProperty(Constants.TYPE);
+				a.head(true); // This is a head assignment.
 				terms.add(a);
 			}
 		}
@@ -980,13 +981,16 @@ public final class TypeChecker extends Visitor {
 		Expression elseexpr = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (ifexpr.type() == null) {
-			throw new CompileException("Undefined expression " + ifexpr, n);
+			throw new CompileException("Undefined expression " + ifexpr + ". Type checking is performed in left to right order. " +
+					"Ensure variables in IF expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (thentype != Null.class && thenexpr.type() == null) {
-			throw new CompileException("Undefined expression " + thenexpr, n);
+			throw new CompileException("Undefined expression " + thenexpr + ". Type checking is performed in left to right order. " +
+					"Ensure variables in THEN expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (elsetype != Null.class && elseexpr.type() == null) {
-			throw new CompileException("Undefined expression " + elseexpr, n);
+			throw new CompileException("Undefined expression " + elseexpr + ". Type checking is performed in left to right order. " +
+					"Ensure variables in ELSE expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (ensureBooleanValue(ifexpr) == null) {
 			throw new CompileException("Cannot evaluate type " + ifexpr.type()
@@ -1007,10 +1011,12 @@ public final class TypeChecker extends Visitor {
 		Expression rhs = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
 		if (lhs.type() == null) {
-			throw new CompileException("Undefined expression " + lhs, n);
+			throw new CompileException("Undefined expression " + lhs + ". Type checking is performed in left to right order. " +
+					"Ensure variables in equality OR are defined in a predicate or assignment on the left.", n);
 		}
 		else if (rhs.type() == null) {
-			throw new CompileException("Undefined expression " + rhs, n);
+			throw new CompileException("Undefined expression " + rhs + ". Type checking is performed in left to right order. " +
+					"Ensure variables in OR expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (ensureBooleanValue(lhs) == null) {
 			throw new CompileException("Cannot evaluate type " + lhs.type()
@@ -1034,10 +1040,12 @@ public final class TypeChecker extends Visitor {
 		Expression rhs = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
 		if (lhs.type() == null) {
-			throw new CompileException("Undefined expression " + lhs, n);
+			throw new CompileException("Undefined expression " + lhs + ". Type checking is performed in left to right order. " +
+					"Ensure variables in AND expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (rhs.type() == null) {
-			throw new CompileException("Undefined expression " + rhs, n);
+			throw new CompileException("Undefined expression " + rhs + ". Type checking is performed in left to right order. " +
+					"Ensure variables in AND expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (ensureBooleanValue(lhs) == null) {
 			throw new CompileException("Cannot evaluate type " + lhs.type()
@@ -1062,10 +1070,12 @@ public final class TypeChecker extends Visitor {
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (ltype != Null.class && lhs.type() == null) {
-			throw new CompileException("Undefined expression " + lhs, n);
+			throw new CompileException("Undefined expression " + lhs + ". Type checking is performed in left to right order. " +
+					"Ensure variables in '" + oper +"' expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (rtype != Null.class && rhs.type() == null) {
-			throw new CompileException("Undefined expression " + rhs, n);
+			throw new CompileException("Undefined expression " + rhs + ". Type checking is performed in left to right order. " +
+					"Ensure variables in '" + oper +"' expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (Void.class == lhs.type()) {
 			throw new CompileException("Cannot evaluate type " + lhs.type()
@@ -1087,10 +1097,12 @@ public final class TypeChecker extends Visitor {
 		Expression rhs = (Expression) n.getNode(2).getProperty(Constants.TYPE);
 
 		if (ltype != Null.class && lhs.type() == null) {
-			throw new CompileException("Undefined expression " + lhs, n);
+			throw new CompileException("Undefined expression " + lhs + ". Type checking is performed in left to right order. " +
+					"Ensure variables in '" + oper +"' expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (rtype != Null.class && rhs.type() == null) {
-			throw new CompileException("Undefined expression " + rhs, n);
+			throw new CompileException("Undefined expression " + rhs + ". Type checking is performed in left to right order. " +
+					"Ensure variables in '" + oper +"' expression are defined in a predicate or assignment on the left.", n);
 		}
 		else if (Void.class == lhs.type()) {
 			throw new CompileException("Cannot evaluate type " + lhs.type()
@@ -1395,7 +1407,7 @@ public final class TypeChecker extends Visitor {
 
 		if (type == Variable.class) {
 			Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
-			if (type(var.name()) != null) {
+			if (var.type() == null && type(var.name()) != null) {
 				runtime.warning("Assuming " + var.name() +
 						        " is not a variable but rather refers to the class type of " +
 						        type(var.name()), n);
