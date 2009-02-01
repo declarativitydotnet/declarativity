@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.BufferedInputStream;
+import java.util.List;
 import java.util.zip.CheckedInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -19,7 +20,6 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.ClosedChannelException;
 
 import java.util.zip.CRC32;
-import java.nio.MappedByteBuffer;
 
 import gfs.Shell;
 import jol.types.basic.ValueList;
@@ -79,8 +79,8 @@ public class DataServer implements Runnable {
 
             try {
                 int chunkId = readChunkId();
-                ValueList<String> path = readHeaders();
-                path.insert(String.valueOf(chunkId));
+                List<String> path = readHeaders();
+                path.add(String.valueOf(chunkId));
 
                 File newf = createChunkFile(chunkId);
                 java.lang.System.out.println("Ready to read file in\n");
@@ -95,7 +95,7 @@ public class DataServer implements Runnable {
                     copyToNext(newf, path);
                 }
 
-                // sadly, for the time being, 
+                // sadly, for the time being,
                 createCRCFile(chunkId, getFileChecksum(newf));
 
             } catch (Exception e) {
@@ -112,7 +112,7 @@ public class DataServer implements Runnable {
             }
         }
 
-        private void copyToNext(File f, ValueList<String> path) {
+        private void copyToNext(File f, List<String> path) {
             try {
                 Socket sock = Shell.setupStream(path.get(0));
                 SocketChannel chan = sock.getChannel();
@@ -157,7 +157,7 @@ public class DataServer implements Runnable {
                 throw new RuntimeException(e);
             }
         }
-        private ValueList<String> readHeaders() {
+        private List<String> readHeaders() {
             String[] path = null;
             // clean me later
             try {
@@ -240,7 +240,7 @@ public class DataServer implements Runnable {
             java.lang.System.out.println("stop thread " + t.toString() + ")\n");
             t.stop();
         }
-        
+
         this.workers.destroy();
         try {
             this.serverSocket.close();

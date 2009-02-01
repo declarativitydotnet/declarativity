@@ -76,7 +76,7 @@ public class Shell {
         this.rand = new Random();
         this.responseQueue = new SimpleQueue();
         this.currentMaster = 0;
-        
+
         /* Identify the address of the local node */
         /* this is necessary for current tests, but may not be done this way in the future */
         String port = java.lang.System.getenv("PORT");
@@ -101,7 +101,7 @@ public class Shell {
     public void doAppend(List<String> args) throws UpdateException {
         this.doAppend(args,java.lang.System.in);
     }
-    
+
     public void doAppend(List<String> args, InputStream s) throws UpdateException {
         if (args.size() != 1)
             usage();
@@ -230,7 +230,7 @@ public class Shell {
        // ValueList chunkList = (ValueList) this.responseQueue.get(); // XXX: timeout?
 
         ValueList chunkList = (ValueList)spinGet(Conf.getListingTimeout());
-        
+
         responseTbl.unregister(responseCallback);
         return chunkList;
     }
@@ -313,15 +313,15 @@ public class Shell {
         } catch (Exception e) {
             throw new RuntimeException("failed to open socket\n");
         }
-        
+
     }
-    
-    public static void sendRoutedData(DataOutputStream dos, ValueList<String> l) {
+
+    public static void sendRoutedData(DataOutputStream dos, List<String> l) {
         try {
             dos.writeByte(DataProtocol.WRITE_OPERATION);
-            // the last element of the valuelist is our new chunkid
+            // the last element of the list is our new chunkid
             java.lang.System.out.println("next hop is "+l.get(l.size()-1));
-            dos.writeInt(Integer.valueOf((String)l.get(l.size()-1)));
+            dos.writeInt(Integer.valueOf(l.get(l.size()-1)));
 
             int newSize = l.size() - 2;
             // the real size of the list is the list, minus the address we just contacted and the chunkid
@@ -333,12 +333,11 @@ public class Shell {
             //for (int i = 1; i < l.size() - 1; i++) {
             for (int i = 1; i < newSize+1; i++) {
                 java.lang.System.out.println("write "+l.get(i));
-                dos.writeChars((String)l.get(i));
+                dos.writeChars(l.get(i));
                 dos.writeChar('|');
             }
             dos.writeChar(';');
-            // then write the actual data
-
+            // caller writes the actual data
         } catch (Exception e) {
             java.lang.System.out.println("Exception reading chunk " +
                                           e.toString());
@@ -571,7 +570,7 @@ public class Shell {
         responseTbl.unregister(responseCallback);
         if (obj == null)
            doRemoveFile(file);
-        */  
+        */
         Object obj = spinGet(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
     }
@@ -580,10 +579,10 @@ public class Shell {
         while (this.currentMaster < Conf.getNumMasters()) {
             scheduleNewMaster();
             Object result = this.responseQueue.get(timeout);
-            if (result != null) 
+            if (result != null)
                 return result;
-           
-            java.lang.System.out.println("master "+this.currentMaster+" timed out.  retry?\n"); 
+
+            java.lang.System.out.println("master "+this.currentMaster+" timed out.  retry?\n");
             this.currentMaster++;
         }
         throw new JolRuntimeException("timed out on all masters");
