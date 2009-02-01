@@ -7,7 +7,6 @@ import jol.core.Runtime;
 import jol.core.System;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -24,58 +23,58 @@ public class MultiPaxosTest {
 
     protected static class IdTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("paxos_global", "id");
-        
+
         public static final Key PRIMARY_KEY = new Key(0);
-        
+
         public enum Field {
             ME
         };
-        
+
         public static final Class[] SCHEMA = {
             String.class    // Address
         };
-        
+
         IdTable(Runtime context) {
-            super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+            super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
 
     protected static class NodeTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("paxos_global", "members");
-        
+
         public static final Key PRIMARY_KEY = new Key(0);
-        
+
         public enum Field {
             HIM
         };
-        
+
         public static final Class[] SCHEMA = {
             String.class    // Address
         };
-        
+
         NodeTable(Runtime context) {
-            super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+            super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
 
     protected static class InMessageTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("paxos_global", "decreeRequest");
-        
+
         public static final Key PRIMARY_KEY = new Key(0,1);
         public enum Field {
             ME,
             MESSAGE,
             FROM
         };
-        
+
         public static final Class[] SCHEMA = {
             String.class,
             String.class,
             String.class
         };
-        
+
         InMessageTable(Runtime context) {
-            super(context, TABLENAME,PRIMARY_KEY , new TypeList(SCHEMA));
+            super(context, TABLENAME,PRIMARY_KEY , SCHEMA);
         }
     }
 
@@ -88,19 +87,18 @@ public class MultiPaxosTest {
     private int nextId = 0;
 
     //@Before
-    
+
     public void setup(int... members) throws JolRuntimeException, UpdateException {
         this.systems = new System[members.length];
         this.ports = new int[members.length];
         java.lang.System.out.println("ml is "+members.length);
         for (int i=0; i < members.length; i++) {
-          this.systems[i] = Runtime.create(members[i]);
-          this.ports[i] = members[i];
+            this.systems[i] = Runtime.create(members[i]);
+            this.ports[i] = members[i];
         }
         this.pinger = this.systems[0];
 
-        for (System s : this.systems)
-        {
+        for (System s : this.systems) {
             s.catalog().register(new NodeTable((Runtime) s));
             s.catalog().register(new IdTable((Runtime) s));
             s.catalog().register(new InMessageTable((Runtime) s));
@@ -114,13 +112,13 @@ public class MultiPaxosTest {
 
         TupleSet nodes = new TupleSet();
         for (int m : members) {
-          nodes.add(new Tuple(this.makeAddr(m)));
+            nodes.add(new Tuple(this.makeAddr(m)));
         }
-        for (int i=0; i < members.length; i++) {
-          TupleSet id = new TupleSet();
-          id.add(new Tuple(this.makeAddr(members[i])));
-          this.systems[i].schedule("paxos_global",IdTable.TABLENAME, id, null);
-          this.systems[i].schedule("paxos_global",NodeTable.TABLENAME, nodes, null);
+        for (int i = 0; i < members.length; i++) {
+            TupleSet id = new TupleSet();
+            id.add(new Tuple(this.makeAddr(members[i])));
+            this.systems[i].schedule("paxos_global",IdTable.TABLENAME, id, null);
+            this.systems[i].schedule("paxos_global",NodeTable.TABLENAME, nodes, null);
         }
 
         for (System s : this.systems)
@@ -128,32 +126,32 @@ public class MultiPaxosTest {
     }
 
     void myInstall(System s,String file) {
-            URL u = ClassLoader.getSystemResource(file);
-            try {
-              s.install("multipaxos", u);
-              s.evaluate();
-            } catch (Exception e) {
-              java.lang.System.out.println("install failed for "+file);
-            }
+        URL u = ClassLoader.getSystemResource(file);
+        try {
+            s.install("multipaxos", u);
+            s.evaluate();
+        } catch (Exception e) {
+            java.lang.System.out.println("install failed for " + file);
+        }
     }
-    
+
     //@After
     public void shutdown() {
         for (System s : this.systems)
             s.shutdown();
     }
-    
+
     @Test
-        public void test1() throws UpdateException, InterruptedException,JolRuntimeException {
+        public void test1() throws UpdateException, InterruptedException, JolRuntimeException {
           MultiPaxosTest t = new MultiPaxosTest();
           setup(5000,5002,5003);
           simpleMultiPaxosTest();
           shutdown();
           Thread.sleep(2000);
         }
-      
+
       @Test
-        public void test2() throws UpdateException, InterruptedException,JolRuntimeException {
+        public void test2() throws UpdateException, InterruptedException, JolRuntimeException {
           /* in this test, we kill one of the (non-master) servers and confirm that we can still move forward */
           MultiPaxosTest t = new MultiPaxosTest();
           setup(5000,5002,5003);
@@ -163,7 +161,7 @@ public class MultiPaxosTest {
         }
 
       @Test
-        public void test3() throws UpdateException, InterruptedException,JolRuntimeException {
+        public void test3() throws UpdateException, InterruptedException, JolRuntimeException {
           /* in this test, we kill one of the (non-master) servers and confirm that we can still move forward */
           /*
           MultiPaxosTest t = new MultiPaxosTest();
@@ -189,7 +187,7 @@ public class MultiPaxosTest {
                 try {
                   queue.put(msg);
                 } catch (InterruptedException e) {
-                  
+
                   java.lang.System.out.println("some shit went down\n");
                   throw new RuntimeException(e);
                 }
@@ -233,7 +231,7 @@ public class MultiPaxosTest {
                 try {
                   queue.put(msg);
                 } catch (InterruptedException e) {
-                  
+
                   java.lang.System.out.println("some shit went down\n");
                   throw new RuntimeException(e);
                 }
@@ -261,7 +259,7 @@ public class MultiPaxosTest {
         Assert.assertTrue(pop.compareTo("success") == 0);
 
         tab.unregister(cb);
-   } 
+   }
     private String standardTest(TupleSet tuples,int round, String... slist) throws RuntimeException {
       String firstround = "";
       String msg = "success";
@@ -272,16 +270,16 @@ public class MultiPaxosTest {
         Integer thisround = (Integer) t.value(2);
         String decree = (String) t.value(3);
         // last failure wins.
-        if (round != thisround) 
+        if (round != thisround)
           msg = "failure: round="+thisround;
-        if (instance >= slist.length) { 
+        if (instance >= slist.length) {
           msg = "failure: oob instance "+instance;
         } else if (decree.compareTo(slist[instance]) != 0) {
           msg = "failure: instance["+instance+"], decree="+decree;
         }
       }
       return msg;
-    } 
+    }
 
     private void sked(System sys,int port,String message) {
         TupleSet inmessage = new TupleSet();
@@ -290,14 +288,14 @@ public class MultiPaxosTest {
           sys.schedule("paxos_global", InMessageTable.TABLENAME, inmessage, null);
           sys.evaluate();
         } catch (Exception e) {
-          
+
         }
     }
-    
+
     private int getNewId() {
         return this.nextId++;
     }
-    
+
     protected String makeAddr(int port) {
         return "tcp:localhost:" + port;
     }
