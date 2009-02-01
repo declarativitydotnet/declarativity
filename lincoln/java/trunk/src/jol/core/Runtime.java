@@ -386,13 +386,14 @@ public class Runtime implements System {
 	}
 
 	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, JolRuntimeException {
-		if (args.length < 2) {
-			java.lang.System.out.println("Usage: jol.core.Runtime port program");
+		if (args.length < 1) {
+			java.lang.System.out.println("Usage: jol.core.Runtime [-d] [-p port] program");
 			java.lang.System.exit(1);
 		}
 
 		ArrayList<String> arguments = new ArrayList<String>();
 		String debugger = null;
+		int port = -1;
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];
 			if (arg.startsWith("-d")) {
@@ -405,6 +406,15 @@ public class Runtime implements System {
 					debugger = args[++i].trim();
 				}
 			}
+			else if (arg.startsWith("-p")) {
+				if (arg.length() > "-p".length()) {
+					String p = arg.substring(1, arg.length());
+					port = Integer.parseInt(p.trim());
+				}
+				else {
+					port = Integer.parseInt(args[++i].trim());
+				}
+			}
 			else {
 				arguments.add(arg);
 			}
@@ -413,8 +423,8 @@ public class Runtime implements System {
 		args = arguments.toArray(new String[arguments.size()]);
 
 		// Initialize the global Runtime
-		Runtime runtime = (Runtime) Runtime.create(Integer.parseInt(args[0]));
-		for (int i = 1; i < args.length; i++) {
+		Runtime runtime = (Runtime) Runtime.create(port);
+		for (int i = 0; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);
 			runtime.install("user", debugger, url);
 			runtime.evaluate(); // Install program arguments.
