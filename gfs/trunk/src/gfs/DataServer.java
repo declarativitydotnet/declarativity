@@ -70,7 +70,6 @@ public class DataServer implements Runnable {
         }
 
         private void doWriteOperation() {
-            // TODO Auto-generated method stub
             java.lang.System.out.println("WRITE OP\n");
 
             try {
@@ -188,7 +187,6 @@ public class DataServer implements Runnable {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-
         }
 
         private void doReadOperation() throws IOException {

@@ -16,8 +16,8 @@ import org.junit.After;
 import org.junit.Before;
 
 public class TestCommon {
-    protected ValueList<Master> masters;
-    protected ValueList<DataNode> datanodes;
+    protected List<Master> masters;
+    protected List<DataNode> datanodes;
     protected Shell shell;
 
     @Before
@@ -26,11 +26,11 @@ public class TestCommon {
 
     @After
     public void shutdown() {
-        for (Master m : masters) {
+        for (Master m : this.masters) {
             m.stop();
         }
-        if (datanodes != null) {
-            for (DataNode d : datanodes) {
+        if (this.datanodes != null) {
+            for (DataNode d : this.datanodes) {
                 d.stop();
             }
         }
@@ -54,15 +54,13 @@ public class TestCommon {
     }
 
 
-    protected void shellCreate(String name) throws JolRuntimeException, UpdateException,
-            InterruptedException {
+    protected void shellCreate(String name) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
         createFile(shell, name);
         shell.shutdown();
     }
 
-    protected void shellRm(String name) throws JolRuntimeException, UpdateException,
-            InterruptedException {
+    protected void shellRm(String name) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
         rmFile(shell, name);
         shell.shutdown();
@@ -79,13 +77,13 @@ public class TestCommon {
         Assert.assertTrue(b);
     }
 
-    protected int lsCnt(Shell shell) throws JolRuntimeException, UpdateException, InterruptedException {
+    protected int lsCnt(Shell shell) throws JolRuntimeException, UpdateException {
         ValueList<String> list = lsFile(shell);
         return list.size();
     }
 
     protected Boolean findInLs(Shell shell, String... files) throws JolRuntimeException,
-            UpdateException, InterruptedException {
+            UpdateException {
         ValueList<String> list = lsFile(shell);
 
         // obviously not an efficient way to do this.
@@ -108,7 +106,7 @@ public class TestCommon {
     }
 
     protected void startMany(String... args) throws JolRuntimeException, UpdateException {
-        this.masters = new ValueList<Master>();
+        this.masters = new LinkedList<Master>();
 
         Conf.setNewMasterList(args);
 
@@ -120,7 +118,7 @@ public class TestCommon {
     }
 
     protected void startManyDataNodes(String... args) throws JolRuntimeException, UpdateException {
-        this.datanodes = new ValueList<DataNode>();
+        this.datanodes = new LinkedList<DataNode>();
 
         assert(args.length == Conf.getNumDataNodes());
 
@@ -134,13 +132,12 @@ public class TestCommon {
 
 
     protected ValueList<String> lsFile(Shell shell) throws UpdateException,
-            InterruptedException, JolRuntimeException {
+            JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         return shell.doListFiles(argList);
     }
 
-    protected void appendFile(Shell shell, String name, InputStream s) throws UpdateException,
-            InterruptedException, JolRuntimeException {
+    protected void appendFile(Shell shell, String name, InputStream s) throws UpdateException {
         List<String> argList = new LinkedList<String>();
         argList.add(name);
         shell.doAppend(argList, s);
@@ -148,14 +145,14 @@ public class TestCommon {
 
 
     protected void createFile(Shell shell, String name) throws UpdateException,
-            InterruptedException, JolRuntimeException {
+            JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         argList.add(name);
         shell.doCreateFile(argList, false);
     }
 
     protected void rmFile(Shell shell, String name) throws UpdateException,
-            InterruptedException, JolRuntimeException {
+            JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         argList.add(name);
         shell.doRemove(argList);
