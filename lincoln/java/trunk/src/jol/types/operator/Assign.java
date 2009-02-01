@@ -1,9 +1,6 @@
 package jol.types.operator;
 
-import java.util.Set;
-
 import jol.core.Runtime;
-import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -20,21 +17,21 @@ public class Assign<C extends Comparable<C> > extends Operator {
 	private jol.lang.plan.Assignment assignment;
 
 	private int variablePosition;
-	
+
 	private TupleFunction<Object> valueFunction;
-	
+
 	/**
 	 * Create a new assign operator.
 	 * @param context The runtime context.
 	 * @param assignment The assignment predicate.
 	 * @param input The input schema.
-	 * @throws PlannerException 
+	 * @throws PlannerException
 	 */
 	public Assign(Runtime context, jol.lang.plan.Assignment assignment, Schema input) throws PlannerException {
 		super(context, assignment.program(), assignment.rule());
 		this.assignment = assignment;
 		this.valueFunction = assignment.value().function(input);
-		
+
 		if (input.contains(this.assignment.variable())) {
 			this.variablePosition = input.position(assignment.variable().name());
 		}
@@ -66,7 +63,7 @@ public class Assign<C extends Comparable<C> > extends Operator {
 				deltas.add(new Tuple(delta));
 			} catch (Throwable t) {
 				String msg = t.toString() + ". Program " + this.assignment.program() +
-				             ". Error during assignment " + toString() + 
+				             ". Error during assignment " + toString() +
 				             "position " + variablePosition + " tuple size " + tuple.size() + ". Tuple = " + tuple;
 				throw new JolRuntimeException(msg, t);
 			}

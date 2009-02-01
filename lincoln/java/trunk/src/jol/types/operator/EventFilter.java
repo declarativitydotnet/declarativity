@@ -3,12 +3,10 @@ package jol.types.operator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
-import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -103,7 +101,7 @@ public class EventFilter extends Operator {
 	 * Create a new event filter operator.
 	 * @param context The runtime context.
 	 * @param predicate The event predicate.
-	 * @throws PlannerException 
+	 * @throws PlannerException
 	 */
 	public EventFilter(Runtime context, Predicate predicate) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
@@ -127,7 +125,7 @@ public class EventFilter extends Operator {
 			}
 			else {
 				this.filters.add(
-						new ConstantFilter(position, 
+						new ConstantFilter(position,
 								           arg.function(predicate.schema())));
 			}
 		}
