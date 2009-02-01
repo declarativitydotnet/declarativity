@@ -4,12 +4,13 @@ import jol.core.Runtime;
 import jol.types.basic.ValueList;
 import java.io.File;
 import gfs.Conf;
+import gfs.ChunkCheckSum;
 
-define(chunk, keys(0,1), {String, String});
+define(chunk, keys(0,1), {String, String, String});
 define(chunkTmp, {String, String});
 define(dir, keys(0,1,2), {String, File, ValueList});
 
-timer(clock,physical,5000,5000,1000);
+timer(clock,physical,5000,5000,5000);
 timer(periodic,logical,1,1,1);
 
 watch(dir,ae);
@@ -18,11 +19,12 @@ watch(dir,ae);
 
 // Node address, data directory on host chunk system
 define(datadir, keys(0), {String,String});
+define(checksumdir, keys(0), {String,String});
 watch(datadir, ae);
 
 dir(Host,DirObj,DirList) :-
     datadir(Host, Dir),
-    DirObj := new File(Dir),
+    DirObj := new File(Dir + File.separator + "chunks"),
     DirList := DirObj.isDirectory() ? new ValueList(DirObj.list()) : new ValueList(),
     clock(_,_,_);
 
@@ -40,7 +42,7 @@ chunk(Host,File) :-
 
 indx(Host,Next) :-
     indx(Host,Old),
-    chunkTmp(Host,File),
+    chunkTmp(Host, File),
     Next := Old + 1;
 
 chunkTmp(Host,File) :-
@@ -50,14 +52,26 @@ chunkTmp(Host,File) :-
     B := List.get(I),
     File := B.toString();
 
-chunk(Host, File) :-
-    chunkTmp#insert(Host, File);
+watch(chunk, ae);
+// fix me!
+checksumdir(H, D)  :-
+    dir(H, FD),
+    D := "testdata1/checksums";
+
+chunk(Host, F, Checksum) :-
+    Checksum := "foo",
+    chunkTmp#insert(Host, F); /*,
+    datadir(Host, Dir),
+    CSO := new gfs.ChunkCheckSum(); 
+    Checksum := CSO.checksum();
+    */
+    
 
 
 define(heartBeat,keys(0,1,2),{String,String,Integer,Long,Long});
 //watch(heartBeat,ae);
-heartBeat(Host,Master,Chunk,Tstamp,Id) :-
-    chunk(Host,File),
+heartBeat(Host, Master, Chunk, Tstamp, Id) :-
+    chunk(Host, File, Checksum),
     Chunk := Integer.valueOf(File),
     masters(Host,Master),
     clock(_,_,_),
@@ -107,3 +121,6 @@ mindx(Host,I) :-
 masters(Host,Master) :-
     mindx#insert(Host,I),
     Master := Conf.getMasterAddress(I);
+
+define(send_delete, keys(0), {String, Integer, String});
+watch(send_delete, ae);

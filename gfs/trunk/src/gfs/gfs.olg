@@ -1,5 +1,6 @@
 program gfs;
 
+import java.util.Random;
 import jol.types.basic.ValueList;
 import gfs.Conf;
 import gfs.Master;
@@ -28,6 +29,7 @@ watch(request, ae);
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
     master_for_node(@Source, Master),
+    // XXX PA
     start_request(@Source, ReqId, ReqType, Args);
 
 // Client node, Request ID, Master node, Success, Results
@@ -37,7 +39,7 @@ watch(response, ae);
 // if we get a "NewChunk" request for a file, create a new chunk id
 
 define(chunkSeq, keys(0), {String, Integer});
-//watch(chunkSeq, ae);
+watch(chunkSeq, ae);
 chunkSeq(Master, Top+1) :-   
     self(Master),
     notin chunkSeq(Master,SomeId),
@@ -48,32 +50,93 @@ chunkSeq(Master, I+1) :-
     request#insert(Master, Id, Source, "NewChunk", _);
 
 
-
 response(@Source, Id, Master, true, Stuff) :-
-    request(@Master, Id, Source, "NewChunk", FName),
+    //request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
-    newListHolder(@Master,Source,Id,Stuff,I),
+    newListHolder(@Master, Source, Id, Stuff, I, FName),
     Stuff.insert(I.toString());
 
-define(newListHolder,keys(0,1),{String,String,Integer,ValueList,Integer});
+define(newListHolder,keys(0,2),{String,String,Integer,ValueList,Integer,String});
+watch(newListHolder, ae);
 
-newListHolder(Master,Source,Id,List,I) :- 
-    candidate_datanode#insert(@Master, Id, Source, FName, I, Stuff),
+newListHolder(Master,Source,Id,List,I,FName) :- 
+    candidate_datanode(Master, Id, Source, FName, I, Stuff),
+    request(Master, Id, Source, NewChunk, FName),
     List := new ValueList(Stuff.toArray());
 
+define(chunk_cnt, keys(0,1), {String,String,Integer});
+//watch(chunk_cnt, ae);
+chunk_cnt(Master, DataNode, count<ChunkId>) :-
+    //long_period(_,_,_),
+    chunks(Master, DataNode, ChunkId,_);
 
-//watch(candidate_datanode, ae);
+/*
+define(lowest_loaded_nodes,keys(0,2), {String, Integer, String});
+watch(lowest_loaded_nodes, ae);
+lowest_loaded_nodes(Master, Cnt, DataNode) :-
+    flatk(Master, Id),
+    possible_choices(Master, Cnt, DataNode, Id);
+
+delete
+possible_choices(Master, Cnt, DataNode, Id) :-
+    possible_choices(Master, Cnt, DataNode, Id),
+    lowest_loaded_nodes(Master,Cnt,DataNode);
+
+define(flatk,keys(0,1),{String, Integer});
+//watch(flatk, ae);
+flatk(Master, IdFlat) :-
+    flatten(kpile(Master, Id)),
+    IdFlat := (Integer)Id;
+
+define(kpile,keys(0,1), {String, ValueList});
+watch(kpile, ae);
+kpile(Master, topk<Id,3>) :-
+    possible_choices(Master, Cnt, DataNode, Id);
+
+*/
+
+define(possible_choices,keys(0,1,2,3), {String, Integer, String,Integer});
+//define(possible_choices, {String, Integer, String,Integer});
+//watch(possible_choices, ae);
+possible_choices(Master, Cnt, DataNode, Id) :-
+    flat_cnt(Master, Cnt),
+    // SLOW!!
+    //Id := (new Random()).nextInt(1000),
+    Id := -100,
+    chunk_cnt(Master, DataNode, Cnt);
+
+
+define(flat_cnt, keys(0,1), {String, Integer});
+flat_cnt(Master, Cnt) :-
+    flatten(lowest_loaded_cnt(Master, BK)),
+    Cnt := (Integer)BK;
+
+define(lowest_loaded_cnt, keys(0), {String,ValueList});
+//watch(lowest_loaded_cnt, ae);
+lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
+    chunk_cnt(Master, _, Cnt); 
+
+/*
+delete
+lowest_loaded_cnt(Master, Cnts) :-
+    lowest_loaded_cnt(Master, Cnts),
+    lowest_loaded_nodes#insert(Master, Cnt, DataNode); 
+*/    
+
+watch(candidate_datanode, ae);
 
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ValueList});
-//candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).insert(DataNode)>) :-
-// this is a highly arbitrary topK datanodes.
-candidate_datanode(Master, Id, Source, FName, I, topk<DataNode, 2>) :-
-    request#insert(Master, Id, Source, "NewChunk", FName),
+candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).insert(DataNode)>) :-
+    request(Master, Id, Source, "NewChunk", FName),
     chunkSeq(Master,I),
-    chunks(Master,DataNode,ChunkId,_),
-    gfs_global::file(Master, FName, _);
-    // this is where it gets interesting.
-    // some distance function over the datanodes...
+    //lowest_loaded_nodes(Master, Cnt, DataNode),
+    possible_choices(Master, Cnt, DataNode, Id2),
+    gfs_global::file(Master, FName, _),
+    notin candidate_datanode(Master, Id, Source, FName, _, _);
+
+delete 
+request(Master, Id, Source, "NewChunk", FName) :-
+    newListHolder(Master, Source, Id, List, I, FName);
 
 
 // a "NewChunk" request for a nonexistent file causes an error.
@@ -84,6 +147,7 @@ response(@Source, Id, Master, false, null) :-
 
 // If we get a "ChunkList" request for an extant file, send back its
 // chunks
+// X-
 response(@Source, Id, Master, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FName),
     gfs_global::file(@Master, FName, Chunks);
@@ -130,6 +194,7 @@ response(@Source, ReqId, Master, false, null) :-
 
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file
+// X-?
 response(@Source, Id, Master, Success, Chunks) :-
     request(@Master, Id, Source, "Cat", FName),
     gfs_global::file(@Master, FName, Chunks),
@@ -220,10 +285,16 @@ ackHeartBeat(@Dnode, Master, Id) :-
 dataNodes(Master, Host, max<Tstamp>) :-
     sendHeartBeat(Master, Host, _, Tstamp, _);
 
+delete
+sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
+    sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
+    dataNodes(Master, Host, HighTstamp),
+    HighTstamp > Tstamp;
+    
+
 // Master node, Data node, BlockId, Timestamp of last
 // update from data node
 define(chunks, keys(0, 1, 2),{String, String, Integer, Long});
-//watch(chunks, ae);
 chunks(Master, DataNode, ChunkId, MaxTstamp) :-
     sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
     dataNodes(Master, DataNode, MaxTstamp),
@@ -239,22 +310,46 @@ chunks(Master, DataNode, ChunkId, Ts) :-
 /**************************/
 // maintenance functions
 
-define(repFactor, keys(0,1), {String,Integer,Integer});
-watch(repFactor, ae);
-repFactor(Master, ChunkId, count<DataNode>) :-
+define(rep_factor, keys(0,1), {String,Integer,Integer});
+watch(rep_factor, ae);
+rep_factor(Master, ChunkId, count<DataNode>) :-
+    long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, Ts);
 
-define(backOfList, keys(0), {String,Integer,String});
-watch(backOfList, ae);
-backOfList(Master,ChunkId,min<DataNode>) :-
+define(back_of_list, keys(0,1), {String,Integer,String});
+//watch(back_of_list, ae);
+back_of_list(Master, ChunkId, min<DataNode>) :-
+    long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, Ts);
 
-timer(longPeriod,physical,10000,100000,0);
+timer(long_period, physical, 10000, 100000, 0);
 
-define(to_delete, keys(0,1,2), {String,String,Integer});
-watch(to_delete, ae);
+define(to_delete, keys(0,2), {String,String,Integer});
+//watch(to_delete, ae);
 to_delete(Master, DataNode, ChunkId) :-
-    repFactor(Master, ChunkId, Cnt),
-    backOfList(Master, ChunkId, DataNode),
-    longPeriod(_, _, _),
+    rep_factor(Master, ChunkId, Cnt),
+    back_of_list(Master, ChunkId, DataNode),
+    ChunkId > 1,
+    long_period(_, _, _),
     Cnt > Conf.getRepFactor();
+
+define(newReplica, {String, Integer});
+watch(newReplica, ae);
+newReplica(Master, ChunkId) :-
+    rep_factor(Master, ChunkId, Cnt),
+    ChunkId > 1,
+    long_period(_, _, _),
+    Cnt < Conf.getRepFactor();
+
+// hacky constraint: one message per tick
+define(send_delete, keys(0), {String, Integer, String});
+send_delete(@DataNode,ChunkId,Master) :-
+    to_delete(@Master,DataNode,ChunkId);
+
+// not correct.
+/*
+delete 
+chunks(Master, DataNode, ChunkId, MTS) :-
+    chunks(Master, DataNode, ChunkId, MTS),
+    to_delete(Master,DataNode,ChunkId);
+*/

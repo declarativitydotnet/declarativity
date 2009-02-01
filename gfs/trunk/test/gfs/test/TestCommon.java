@@ -3,6 +3,7 @@ package gfs.test;
 import java.util.List;
 import java.util.LinkedList;
 import java.io.InputStream;
+import java.io.File;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
@@ -35,6 +36,7 @@ public class TestCommon {
             }
         }
         // shell.shutdown();
+        java.lang.System.out.println("shutdown complete\n");
     }
 
     protected Boolean shellLs(String... list) throws JolRuntimeException,
@@ -51,6 +53,9 @@ public class TestCommon {
         int ret = lsCnt(shell);
         shell.shutdown();
         return ret;
+    }
+    protected void killMaster(int index) {
+        this.masters.get(index).stop();
     }
 
 
@@ -123,6 +128,14 @@ public class TestCommon {
         assert(args.length == Conf.getNumDataNodes());
 
         for (int i = 0; (i < Conf.getNumDataNodes()) && (i < args.length); i++) {
+            new File(args[i]).mkdir();
+            try {
+                new File(args[i] + File.separator + "chunks").mkdir();
+                new File(args[i] + File.separator + "checksums").mkdir();
+                new File(args[i] + File.separator + "chunks/1").createNewFile();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             DataNode d = new DataNode(i,args[i]);
             java.lang.System.out.println("new DATANODE "+ d.getPort());
             d.start();

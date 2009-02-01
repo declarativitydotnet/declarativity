@@ -13,7 +13,7 @@ public class GFSMM3Test extends TestCommon {
       
       shellCreate("foo");
       /* this time, kill the primary */
-      this.masters.get(0).stop();
+      this.killMaster(0);
 
       /* these ops should timeout to the secondary but eventually work */
       shellCreate("bar");

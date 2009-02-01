@@ -76,14 +76,17 @@ public class Shell {
         this.rand = new Random();
         this.responseQueue = new SimpleQueue();
         this.currentMaster = 0;
-
+        
         /* Identify the address of the local node */
         /* this is necessary for current tests, but may not be done this way in the future */
         String port = java.lang.System.getenv("PORT");
         if (port == null) {
             port = "5501";
         }
+
+        /* this shouldn't be a static member at all... */
         Conf.setSelfAddress("tcp:localhost:" + port);
+
         this.system = Runtime.create(Integer.valueOf(port));
 
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
@@ -147,7 +150,8 @@ public class Shell {
          */
         for (Integer chunk : chunks) {
             List<String> locations = getChunkLocations(chunk);
-            readChunk(chunk, locations);
+            java.lang.System.out.println("I would read the chunk here.  but I won't");
+            //readChunk(chunk, locations);
         }
     }
 
@@ -319,9 +323,15 @@ public class Shell {
             java.lang.System.out.println("next hop is "+l.get(l.size()-1));
             dos.writeInt(Integer.valueOf((String)l.get(l.size()-1)));
 
-            // the real size of the list is the list, minus the address we just contacted and the chunkid.
-            dos.writeInt(l.size() - 2);
-            for (int i = 1; i < l.size() - 1; i++) {
+            int newSize = l.size() - 2;
+            // the real size of the list is the list, minus the address we just contacted and the chunkid
+            if (newSize > Conf.getRepFactor() - 1) {
+                newSize = Conf.getRepFactor() - 1;
+            }
+
+            dos.writeInt(newSize);
+            //for (int i = 1; i < l.size() - 1; i++) {
+            for (int i = 1; i < newSize+1; i++) {
                 java.lang.System.out.println("write "+l.get(i));
                 dos.writeChars((String)l.get(i));
                 dos.writeChar('|');
