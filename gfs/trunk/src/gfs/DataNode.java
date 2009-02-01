@@ -16,7 +16,6 @@ public class DataNode {
         if (args.length != 2)
             usage();
 
-
         int dataNodeIdx = Integer.parseInt(args[0]);
         if (dataNodeIdx < 0 || dataNodeIdx >= Conf.getNumDataNodes()) {
             java.lang.System.err.println("Illegal data node index: " + dataNodeIdx);
@@ -48,6 +47,7 @@ public class DataNode {
         this.serverThread = new Thread(this.dserver);
         this.serverThread.start();
     }
+
     public int getPort() {
         return port;
     }
@@ -78,7 +78,6 @@ public class DataNode {
     public void stop() {
         this.dserver.stop();
         this.system.shutdown();
-
     }
 
     private void setupFsRoot() {
