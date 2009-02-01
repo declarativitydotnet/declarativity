@@ -51,12 +51,15 @@ public class Assignment extends Term {
 	private Variable variable;
 
 	private Expression<?> value;
+	
+	private boolean head;
 
 	public Assignment(Variable variable, Expression value) {
 		this.variable = (Variable) variable.clone();
 		this.value = value.clone();
+		this.head = false;
 	}
-
+	
 	@Override
 	public String toString() {
 		return variable.toString() + " := " + value.toString();
@@ -65,6 +68,14 @@ public class Assignment extends Term {
 	@Override
 	public Set<Variable> requires() {
 		return value.variables();
+	}
+	
+	public boolean head() {
+		return this.head;
+	}
+	
+	public void head(boolean head) {
+		this.head = head;
 	}
 
 	public Variable variable() {

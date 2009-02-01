@@ -363,19 +363,22 @@ public class Rule extends Clause {
 		}
 		schema = planHelper(context, operators, assignments, selections, schema);
 		
-		if (assignments.size() > 0) {
-			StringBuilder sb = new StringBuilder();
-			for (Assignment a : assignments) {
-				sb.append("Unable to plan assignment " + a + " due to variable dependencies.\n");
-			}
-			throw new PlannerException(sb.toString());
-		}
 		if (selections.size() > 0) {
 			StringBuilder sb = new StringBuilder();
 			for (Selection s : selections) {
 				sb.append("Unable to plan assignment " + s + " due to variable dependencies.\n");
 			}
 			throw new PlannerException(sb.toString());
+		}
+		
+		/* Plan head predicate assignments last. */
+		for (Iterator<Assignment> iter = assignments.iterator(); iter.hasNext(); ) {
+			Assignment a = iter.next();
+			if (schema.variables().containsAll(a.requires())) {
+				Operator oper = a.operator(context, schema);
+				operators.add(oper);
+				schema = a.schema(schema);
+			}
 		}
 		
 		operators.add(new Projection(context, head, schema));
@@ -403,7 +406,7 @@ public class Rule extends Clause {
 		List<Term> done = new ArrayList<Term>();
 		for (Iterator<Assignment> iter = assignments.iterator(); iter.hasNext(); ) {
 			Assignment a = iter.next();
-			if (schema.variables().containsAll(a.requires())) {
+			if (!a.head() && schema.variables().containsAll(a.requires())) {
 				Operator oper = a.operator(context, schema);
 				operators.add(oper);
 				schema = a.schema(schema);
