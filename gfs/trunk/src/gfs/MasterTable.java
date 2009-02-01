@@ -17,7 +17,7 @@ public class MasterTable extends ObjectTable {
 
 	public static final Class<?>[] SCHEMA = {
         String.class,    // Address of self
-        String.class    // Address of current master
+        String.class     // Address of current master
 	};
 
 	MasterTable(Runtime context) {
