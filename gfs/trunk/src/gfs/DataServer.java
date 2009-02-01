@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.BufferedInputStream;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.CheckedInputStream;
 import java.io.IOException;
@@ -185,8 +186,8 @@ public class DataServer implements Runnable {
                     }
                 }
 
-                ValueList<String> ret = new ValueList();
-                for (int i=0; i < sourceRouteListLen; i++) {
+                List<String> ret = new LinkedList<String>();
+                for (int i = 0; i < sourceRouteListLen; i++) {
                     ret.add(path[i]);
                 }
                 return ret;

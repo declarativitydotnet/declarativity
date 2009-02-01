@@ -36,11 +36,9 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 define(response, keys(0, 1), {String, Integer, String, Boolean, ValueList});
 watch(response, ae);
 
-// if we get a "NewChunk" request for a file, create a new chunk id
-
 define(chunkSeq, keys(0), {String, Integer});
 watch(chunkSeq, ae);
-chunkSeq(Master, Top+1) :-   
+chunkSeq(Master, Top+1) :-
     self(Master),
     notin chunkSeq(Master,SomeId),
     chunkHWM(Master,Top);
@@ -49,18 +47,18 @@ chunkSeq(Master, I+1) :-
     chunkSeq(Master, I),
     request#insert(Master, Id, Source, "NewChunk", _);
 
-
-response(@Source, Id, Master, true, Stuff) :-
+// if we get a "NewChunk" request for a file, create a new chunk id
+response(@Source, Id, Master, true, Result) :-
     //request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
-    newListHolder(@Master, Source, Id, Stuff, I, FName),
-    Stuff.insert(I.toString());
+    newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
+    Result.insert(NewChunkId.toString());
 
 define(newListHolder,keys(0,2),{String,String,Integer,ValueList,Integer,String});
 watch(newListHolder, ae);
 
-newListHolder(Master,Source,Id,List,I,FName) :- 
-    candidate_datanode(Master, Id, Source, FName, I, Stuff),
+newListHolder(Master,Source,Id,List,NewChunkId,FName) :-
+    candidate_datanode(Master, Id, Source, FName, NewChunkId, Stuff),
     request(Master, Id, Source, NewChunk, FName),
     List := new ValueList(Stuff.toArray());
 
@@ -114,14 +112,14 @@ flat_cnt(Master, Cnt) :-
 define(lowest_loaded_cnt, keys(0), {String,ValueList});
 //watch(lowest_loaded_cnt, ae);
 lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
-    chunk_cnt(Master, _, Cnt); 
+    chunk_cnt(Master, _, Cnt);
 
 /*
 delete
 lowest_loaded_cnt(Master, Cnts) :-
     lowest_loaded_cnt(Master, Cnts),
-    lowest_loaded_nodes#insert(Master, Cnt, DataNode); 
-*/    
+    lowest_loaded_nodes#insert(Master, Cnt, DataNode);
+*/
 
 watch(candidate_datanode, ae);
 
@@ -134,7 +132,7 @@ candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).inser
     gfs_global::file(Master, FName, _),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
 
-delete 
+delete
 request(Master, Id, Source, "NewChunk", FName) :-
     newListHolder(Master, Source, Id, List, I, FName);
 
@@ -157,14 +155,14 @@ response(@Source, Id, Master, false, null) :-
     notin gfs_global::file(@Master, FName, _);
 
 
-// this is an alias of request, for "ChunkLocation" request types, with ChunkId cast as an Integer 
+// this is an alias of request, for "ChunkLocation" request types, with ChunkId cast as an Integer
 // I was having problems with overlog math on Longs....
 define(clRequest, {String, Integer, String, String, Integer});
 clRequest(Master, ReqId, Source, "ChunkLocations", CId) :-
     request(Master, ReqId, Source, "ChunkLocations", ChunkId),
     CId := Integer.valueOf(ChunkId);
 
-// we need to have a ground-truth HWM for 
+// we need to have a ground-truth HWM for
 define(chunkHWM, keys(0, 1), {String,Integer});
 chunkHWM(Master,max<ChunkId>) :-
     chunks(Master,_,ChunkId,_);
@@ -290,7 +288,7 @@ sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
     sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
     dataNodes(Master, Host, HighTstamp),
     HighTstamp > Tstamp;
-    
+
 
 // Master node, Data node, BlockId, Timestamp of last
 // update from data node
@@ -348,7 +346,7 @@ send_delete(@DataNode,ChunkId,Master) :-
 
 // not correct.
 /*
-delete 
+delete
 chunks(Master, DataNode, ChunkId, MTS) :-
     chunks(Master, DataNode, ChunkId, MTS),
     to_delete(Master,DataNode,ChunkId);
