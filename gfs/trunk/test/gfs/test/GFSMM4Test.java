@@ -15,7 +15,7 @@ public class GFSMM4Test extends TestCommon {
       //createFile(shell,"foo");
 
       /* kill one of the masters */
-      this.masters.get(1).stop();
+      killMaster(1);
 
      // shell = new Shell();
      // createFile(shell,"foo");

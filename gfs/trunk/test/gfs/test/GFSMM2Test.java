@@ -13,7 +13,8 @@ public class GFSMM2Test extends TestCommon {
 
       shellCreate("foo");
       /* kill one of the masters */
-      this.masters.get(1).stop();
+      //this.masters.get(1).stop();
+      this.killMaster(1);
 
       shellCreate("bar");
       assertTrue(shellLs("foo","bar"));

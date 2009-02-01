@@ -29,6 +29,7 @@ public class Conf {
         new Host("localhost", 5600, 5700),
         new Host("localhost", 5601, 5701),
         new Host("localhost", 5602, 5702),
+        new Host("localhost", 5603, 5703)
     };
 
     private static final long fileOpTimeout = 20000;
@@ -56,8 +57,8 @@ public class Conf {
     }
 
     public static String getSelfAddress() {
-        if (selfAddr == null)
-            throw new IllegalStateException();
+        //if (selfAddr == null)
+        //    throw new IllegalStateException();
 
         return selfAddr;
     }

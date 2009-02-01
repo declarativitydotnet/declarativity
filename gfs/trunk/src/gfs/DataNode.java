@@ -10,12 +10,15 @@ import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 import gfs.DataServer;
+import gfs.ChunkCheckSum;
 
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
         if (args.length != 2)
             usage();
 
+
+        ChunkCheckSum cs = new ChunkCheckSum();
         int dataNodeIdx = Integer.parseInt(args[0]);
         if (dataNodeIdx < 0 || dataNodeIdx >= Conf.getNumDataNodes()) {
             java.lang.System.err.println("Illegal data node index: " + dataNodeIdx);
@@ -64,6 +67,7 @@ public class DataNode {
         /* Identify the data directory */
         TableName tblName = new TableName("gfs", "datadir");
         TupleSet datadir = new TupleSet(tblName);
+        //datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot + File.separator + "chunks"));
         datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot));
         this.system.schedule("gfs", tblName, datadir, null);
 
