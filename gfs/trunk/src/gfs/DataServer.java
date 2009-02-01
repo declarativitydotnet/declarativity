@@ -23,7 +23,6 @@ import java.nio.channels.ClosedChannelException;
 import java.util.zip.CRC32;
 
 import gfs.Shell;
-import jol.types.basic.ValueList;
 
 public class DataServer implements Runnable {
     private class DataWorker implements Runnable {

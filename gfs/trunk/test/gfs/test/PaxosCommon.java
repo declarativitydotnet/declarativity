@@ -7,7 +7,6 @@ import jol.core.Runtime;
 import jol.core.System;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -23,58 +22,58 @@ public class PaxosCommon {
 
     protected static class IdTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("paxos_global", "id");
-        
+
         public static final Key PRIMARY_KEY = new Key(0);
-        
+
         public enum Field {
             ME
         };
-        
+
         public static final Class[] SCHEMA = {
             String.class    // Address
         };
-        
+
         IdTable(Runtime context) {
-            super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+            super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
 
     protected static class NodeTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("paxos_global", "members");
-        
+
         public static final Key PRIMARY_KEY = new Key(0);
-        
+
         public enum Field {
             HIM
         };
-        
+
         public static final Class[] SCHEMA = {
             String.class    // Address
         };
-        
+
         NodeTable(Runtime context) {
-            super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+            super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
 
     protected static class InMessageTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("paxos_global", "decreeRequest");
-        
+
         public static final Key PRIMARY_KEY = new Key(0,1);
         public enum Field {
             ME,
             MESSAGE,
             FROM
         };
-        
+
         public static final Class[] SCHEMA = {
             String.class,
             String.class,
             String.class
         };
-        
+
         InMessageTable(Runtime context) {
-            super(context, TABLENAME,PRIMARY_KEY , new TypeList(SCHEMA));
+            super(context, TABLENAME,PRIMARY_KEY , SCHEMA);
         }
     }
 
@@ -87,7 +86,7 @@ public class PaxosCommon {
     private int nextId = 0;
 
     //@Before
-    
+
     public void setup(int... members) throws JolRuntimeException, UpdateException {
         this.systems = new System[members.length];
         this.ports = new int[members.length];
@@ -135,13 +134,13 @@ public class PaxosCommon {
               java.lang.System.out.println("install failed for "+file);
             }
     }
-    
+
     //@After
     public void shutdown() {
         for (System s : this.systems)
             s.shutdown();
     }
-    
+
 
 
 
@@ -159,7 +158,7 @@ public class PaxosCommon {
                 try {
                   queue.put(msg);
                 } catch (InterruptedException e) {
-                  
+
                   java.lang.System.out.println("some shit went down\n");
                   throw new RuntimeException(e);
                 }
@@ -203,7 +202,7 @@ public class PaxosCommon {
                 try {
                   queue.put(msg);
                 } catch (InterruptedException e) {
-                  
+
                   java.lang.System.out.println("some shit went down\n");
                   throw new RuntimeException(e);
                 }
@@ -226,9 +225,9 @@ public class PaxosCommon {
         pop = (String) queue.take();
         Assert.assertTrue(pop.compareTo("success") == 0);
 
-        
+
         tab.unregister(cb);
-   } 
+   }
     private String standardTest(TupleSet tuples,int round, String... slist) throws RuntimeException {
       String firstround = "";
       String msg = "success";
@@ -239,16 +238,16 @@ public class PaxosCommon {
         Integer thisround = (Integer) t.value(2);
         String decree = (String) t.value(3);
         // last failure wins.
-        if (round != thisround) 
+        if (round != thisround)
           msg = "failure: round="+thisround;
-        if (instance >= slist.length) { 
+        if (instance >= slist.length) {
           msg = "failure: oob instance "+instance;
         } else if (decree.compareTo(slist[instance]) != 0) {
           msg = "failure: instance["+instance+"], decree="+decree;
         }
       }
       return msg;
-    } 
+    }
 
     private void sked(System sys,int port,String message) {
         TupleSet inmessage = new TupleSet();
@@ -257,14 +256,14 @@ public class PaxosCommon {
           sys.schedule("paxos_global", InMessageTable.TABLENAME, inmessage, null);
           sys.evaluate();
         } catch (Exception e) {
-          
+
         }
     }
-    
+
     private int getNewId() {
         return this.nextId++;
     }
-    
+
     protected String makeAddr(int port) {
         return "tcp:localhost:" + port;
     }

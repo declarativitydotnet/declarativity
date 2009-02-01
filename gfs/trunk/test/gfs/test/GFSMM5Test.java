@@ -2,7 +2,6 @@ package gfs.test;
 
 import java.util.LinkedList;
 
-import jol.types.basic.ValueList;
 import gfs.Master;
 import gfs.Shell;
 import gfs.Conf;

@@ -1,7 +1,6 @@
 package gfs;
 
 import jol.core.Runtime;
-import jol.types.basic.TypeList;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
@@ -22,6 +21,6 @@ public class MasterTable extends ObjectTable {
 	};
 
 	MasterTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 	}
 }
