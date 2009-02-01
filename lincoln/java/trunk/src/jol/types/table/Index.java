@@ -5,7 +5,6 @@ import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 
@@ -69,7 +68,7 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 		 * @param context The runtime context.
 		 */
 		public IndexTable(Runtime context) {
-			super(context, TABLENAME, PRIMARY_KEY, new TypeList(SCHEMA));
+			super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 			this.context = context;
 		}
 
@@ -86,8 +85,7 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 					Key key = (Key) tuple.value(Field.KEY.ordinal());
 					Type type = (Type) tuple.value(Field.TYPE.ordinal());
 					Index index = (Index) constructor.newInstance(table, key, type);
-					//tuple.value(Field.OBJECT.ordinal(), index);
-					Comparable[] values = tuple.toArray();
+					Object[] values = tuple.toArray();
 					values[Field.OBJECT.ordinal()] = index;
 					tuple = new Tuple(values);
 				} catch (Exception e) {
@@ -201,7 +199,7 @@ public abstract class Index implements Comparable<Index>, Iterable<Tuple> {
 	 * @return A set containing the lookup result.
 	 * @throws BadKeyException If the argument values do not match the key.
 	 */
-	public TupleSet lookupByKey(Comparable... keyValues) throws BadKeyException
+	public TupleSet lookupByKey(Object... keyValues) throws BadKeyException
 	{
 		return lookupByKey(new Tuple(keyValues));
 	}

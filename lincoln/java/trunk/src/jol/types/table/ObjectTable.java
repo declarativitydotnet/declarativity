@@ -2,7 +2,6 @@ package jol.types.table;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
 /**
@@ -19,7 +18,7 @@ public abstract class ObjectTable extends BasicTable {
 	 * @param key The primary key.
 	 * @param types The ordered list of attribute types.
 	 */
-	protected ObjectTable(Runtime context, TableName name, Key key, TypeList types) {
+	protected ObjectTable(Runtime context, TableName name, Key key, Class[] types) {
 		super(context, name, key, types);
 	}
 

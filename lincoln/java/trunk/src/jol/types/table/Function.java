@@ -4,7 +4,6 @@ import java.util.Map;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
 /**
@@ -29,7 +28,7 @@ public abstract class Function extends Table {
 	 * be the same as the types given by the predicate over which this
 	 * table function is to be applied.
 	 */
-	public Function(String name, TypeList types) {
+	public Function(String name, Class[] types) {
 		super(new TableName(GLOBALSCOPE, name), Type.FUNCTION, null, types);
 	}
 	

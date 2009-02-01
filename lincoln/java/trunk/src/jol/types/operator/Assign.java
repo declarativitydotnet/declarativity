@@ -21,7 +21,7 @@ public class Assign<C extends Comparable<C> > extends Operator {
 
 	private int variablePosition;
 	
-	private TupleFunction<Comparable> valueFunction;
+	private TupleFunction<Object> valueFunction;
 	
 	/**
 	 * Create a new assign operator.
@@ -53,10 +53,10 @@ public class Assign<C extends Comparable<C> > extends Operator {
 		TupleSet deltas = new TupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
 			try {
-				Comparable[] delta = tuple.toArray();
+				Object[] delta = tuple.toArray();
 				// we support appending to the end of the tuple.
 				if(variablePosition == delta.length) {
-					Comparable[] newDelta = new Comparable[variablePosition+1];
+					Object[] newDelta = new Object[variablePosition+1];
 					for(int i = 0; i < delta.length; i++) {
 						newDelta[i] = delta[i];
 					}

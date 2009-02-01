@@ -33,7 +33,7 @@ public class RemoteBuffer extends Operator {
 	private boolean deletion;
 	
 	/** An accessor to the location/address attribute value. */
-	private TupleFunction<Comparable> addressAccessor;
+	private TupleFunction<Object> addressAccessor;
 	
 	/** 
 	 * Create a new RemoteBuffer operator object.
