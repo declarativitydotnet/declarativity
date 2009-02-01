@@ -1,7 +1,5 @@
 package jol.types.operator;
 
-import java.util.Set;
-import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.TupleSet;
 import jol.types.basic.Tuple;
@@ -27,9 +25,9 @@ public class Selection extends Operator {
 	 * @param context The runtime context.
 	 * @param selection The selection predicate.
 	 * @param input The input schema
-	 * @throws PlannerException 
+	 * @throws PlannerException
 	 */
-	public Selection(Runtime context, jol.lang.plan.Selection selection, Schema input) 
+	public Selection(Runtime context, jol.lang.plan.Selection selection, Schema input)
 	throws PlannerException {
 		super(context, selection.program(), selection.rule());
 		this.selection = selection;

@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import jol.core.Runtime;
-import jol.lang.plan.Variable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
@@ -19,22 +18,22 @@ public class LinearHashNTA extends StasisTable {
     protected Tuple header;
     private long[] rootRid;
     private long[] rid;
-    
+
     protected Tuple registerTable(TableName name, Key key, Class[] type) throws UpdateException {
 		Tuple header = new Tuple();
 		header.append( rid[0]);
 		header.append( rid[1]);
 		header.append( key);
 		header.append( attributeTypes);
-			
+
 		Tuple nameTup = new Tuple();
 		nameTup.append(name);
-		
+
 		Tuple row = catalog.key().reconstruct(nameTup, header);
 		catalog.insert(row);
-		
+
 		return row;
-		
+
     }
     protected LinearHashNTA(Runtime context) throws UpdateException {
 		super(context, CATALOG_NAME, CATALOG_KEY, CATALOG_COLTYPES);
@@ -54,7 +53,7 @@ public class LinearHashNTA extends StasisTable {
 		}
 		header = CATALOG_SCHEMA;
 	}
-    
+
 	public LinearHashNTA(Runtime context, TableName name, Key key,
 			Class[] attributeTypes) throws UpdateException {
 		super(context, name, key, attributeTypes);
@@ -71,7 +70,7 @@ public class LinearHashNTA extends StasisTable {
 		} catch (BadKeyException e) {
 			throw new IllegalStateException(e);
 		}
-		
+
 		Tuple catalogEntry;
 		if(headerSet.isEmpty()) {
 			dirty = true;
@@ -97,7 +96,7 @@ public class LinearHashNTA extends StasisTable {
 		}
 		return oldvalbytes == null;
 	}
-	
+
 	@Override
 	public Long cardinality() {
 		return Stasis.hash_cardinality(-1, rid);
@@ -126,7 +125,7 @@ public class LinearHashNTA extends StasisTable {
 
 			private byte[][] current = new byte[2][];
 			private byte[][] next = new byte[2][];
-			
+
 			private boolean hadNext = true;
 			Iterator<byte[][]> init() {
 				hadNext = Stasis.iterator_next(xid, it);
@@ -139,7 +138,7 @@ public class LinearHashNTA extends StasisTable {
 				}
 				return this;
 			}
-			
+
 			public boolean hasNext() {
 				return hadNext;
 			}
@@ -171,7 +170,7 @@ public class LinearHashNTA extends StasisTable {
 			@Override
 			protected void finalize() throws Throwable {
 				try {
-					if(hadNext) 
+					if(hadNext)
 						throw new IllegalStateException("detected non-exhausted iterator in finalize()");
 				} finally {
 					super.finalize();

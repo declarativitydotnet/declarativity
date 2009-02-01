@@ -1,24 +1,20 @@
 package jol.types.operator;
 
-import java.util.Set;
-
+import jol.core.Runtime;
 import jol.lang.plan.Predicate;
-import jol.lang.plan.Variable;
-import jol.types.basic.Schema;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
-import jol.core.Runtime;
 
 /**
  * Applies a table function operator to the input stream.
  */
 public class Function extends Operator {
-	
+
 	/** The table function. */
 	private Table function;
-	
+
 	/** The predicate used as argument to the table function. */
 	private Predicate predicate;
 
@@ -50,7 +46,7 @@ public class Function extends Operator {
 
 	@Override
 	public String toString() {
-		return this.function == null || this.predicate == null ? 
+		return this.function == null || this.predicate == null ?
 				"null" : this.function.name() + "(" + predicate + ")";
 	}
 

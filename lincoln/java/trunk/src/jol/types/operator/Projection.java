@@ -1,13 +1,11 @@
 package jol.types.operator;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import jol.core.Runtime;
 import jol.lang.plan.AggregateVariable;
-import jol.lang.plan.DontCare;
 import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
@@ -54,7 +52,7 @@ public class Projection extends Operator {
 							" in input schema " + input);
 				}
 			}
-			
+
 			accessors.add(argument.function(input));
 		}
 	}

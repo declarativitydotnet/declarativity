@@ -2,10 +2,8 @@ package jol.types.operator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import jol.core.Runtime;
 import jol.lang.plan.Expression;
@@ -23,9 +21,9 @@ import jol.types.function.TupleFunction;
  * The interface to all join operators.
  */
 public abstract class Join extends Operator {
-	
+
 	/**
-	 * A table function used to extract values from tuples 
+	 * A table function used to extract values from tuples
 	 * taken from a specific {@link jol.types.table.Table} object.
 	 *
 	 */
@@ -39,9 +37,9 @@ public abstract class Join extends Operator {
 		 * @param type The field type.
 		 * @param position The field position.
 		 */
-		public TableField(Class type, Integer position) { 
+		public TableField(Class type, Integer position) {
 			this.type = type;
-			this.position = position; 
+			this.position = position;
 		}
 		/** Extracts the value from the tuple field position. */
 		public Object evaluate(Tuple tuple) throws JolRuntimeException {
@@ -52,31 +50,31 @@ public abstract class Join extends Operator {
 			return this.type;
 		}
 	}
-	
-	
+
+
 	/**
 	 * Evaluates a single join attribute.
 	 */
 	private class JoinFilter {
 		/** Left hand side value accessor. */
 		private TupleFunction<Object> lhs;
-		
+
 		/** Right hand side value accessor. */
 		private TupleFunction<Object> rhs;
 
 		/**
-		 * Create a new join filter. 
+		 * Create a new join filter.
 		 * @param lhs The left hand side accessor.
 		 * @param rhs The right hand side accessor.
 		 */
-		private JoinFilter(TupleFunction<Object> lhs, 
+		private JoinFilter(TupleFunction<Object> lhs,
 				           TupleFunction<Object> rhs) {
 			this.lhs = lhs;
 			this.rhs = rhs;
 		}
-		
+
 		/**
-		 * Evaluate a tuple from the outer relation and a tuple 
+		 * Evaluate a tuple from the outer relation and a tuple
 		 * from the inner relation along a single join attribute.
 		 * @param outer Tuple from the outer.
 		 * @param inner Tuple from the inner.
@@ -89,20 +87,20 @@ public abstract class Join extends Operator {
 			return lvalue.equals(rvalue);
 		}
 	}
-	
+
 	/** A list of join filters, one for each common join attribute. */
 	private List<JoinFilter> joinFilters;
-	
+
 	private List<Filter> predicateFilters;
-	
+
 	private List<Integer> innerNonJoinPositions;
-	
+
 	/**
 	 * Create a new join operator.
 	 * @param context The runtime context.
 	 * @param predicate The predicate representing the table being joined.
 	 * @param input The schema of the input tuples that are to be joined with the (inner) table.
-	 * @throws PlannerException 
+	 * @throws PlannerException
 	 */
 	public Join(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
@@ -115,7 +113,7 @@ public abstract class Join extends Operator {
 		}
 		initFilters(predicate, input);
 	}
-	
+
 	/**
 	 * Apply all join filters.
 	 * @param outer Tuple from the outer relation.
@@ -131,7 +129,7 @@ public abstract class Join extends Operator {
 		}
 		return true;
 	}
-	
+
 	private Boolean validate(Tuple inner) throws JolRuntimeException {
 		for (Filter filter : this.predicateFilters) {
 			if (Boolean.FALSE.equals(filter.evaluate(inner))) {
@@ -140,20 +138,20 @@ public abstract class Join extends Operator {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Create a list of join filters based on the predicate schema
 	 * and the input tuple schema. A filter will be created for each
 	 * variable that matches between these two schemas.
 	 * @param predicate The predicate that references the inner table.
 	 * @return A list of join filters.
-	 * @throws PlannerException 
+	 * @throws PlannerException
 	 */
-	private void initFilters(Predicate predicate, Schema input) 
+	private void initFilters(Predicate predicate, Schema input)
 	throws PlannerException {
 		this.predicateFilters = new ArrayList<Filter>();
 		this.joinFilters      = new ArrayList<JoinFilter>();
-		
+
 		Map<String, Integer> positions = new HashMap<String, Integer>();
 		for (int position = 0; position < predicate.arguments().size(); position++ ) {
 			Expression arg = predicate.argument(position);
@@ -163,7 +161,7 @@ public abstract class Join extends Operator {
 					Integer prev = positions.get(var.name());
 					predicateFilters.add(
 							    new Filter(Filter.Operator.EQ,
-								           new TableField(var.type(), prev), 
+								           new TableField(var.type(), prev),
 								           new TableField(var.type(), position)));
 				}
 				else {
@@ -173,11 +171,11 @@ public abstract class Join extends Operator {
 			else {
 				predicateFilters.add(
 						    new Filter(Filter.Operator.EQ,
-						               new TableField(arg.type(), position), 
+						               new TableField(arg.type(), position),
 						               arg.function(predicate.schema())));
 			}
 		}
-		
+
 		this.joinFilters = new ArrayList<JoinFilter>();
 		for (Variable var : input.variables()) {
 			if (predicate.schema().contains(var)) {
@@ -187,7 +185,7 @@ public abstract class Join extends Operator {
 			}
 		}
 	}
-	
+
 	/**
 	 * Join the outer tuples with the inner tuples.
 	 * @param outerTuples Outer tuples.
@@ -195,7 +193,7 @@ public abstract class Join extends Operator {
 	 * @return Join result.
 	 * @throws JolRuntimeException
 	 */
-	protected TupleSet join(TupleSet outerTuples, TupleSet innerTuples) 
+	protected TupleSet join(TupleSet outerTuples, TupleSet innerTuples)
 	throws JolRuntimeException {
 		TupleSet result = new TupleSet();
 		for (Tuple outer : outerTuples) {
@@ -207,7 +205,7 @@ public abstract class Join extends Operator {
 		}
 		return result;
 	}
-	
+
 	private Tuple join(Tuple outer, Tuple inner) {
 		Tuple result = outer.clone();
 		for (Integer position : this.innerNonJoinPositions) {

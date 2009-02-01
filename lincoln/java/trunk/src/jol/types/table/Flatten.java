@@ -5,47 +5,46 @@ import java.util.List;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.ValueList;
 import jol.types.exception.UpdateException;
 
 /**
  * Flatten function will flatten all attributes
- * of type ValueList in the input tuple set. 
- * 
+ * of type ValueList in the input tuple set.
+ *
  * <p>
  * For each tuple in the input, flatten will perform
  * a cross product of all ValueList attributes using
  * the list base values. For example: <br>
- * 
+ *
  * <pre>
  * <code>
  * input  tupleset: <1, ["foo", "bar"], [1.0, 2.0]>
- * 
+ *
  * output tupleset: <1, "foo", 1.0>, <1, "bar", 1.0>,
  *                  <1, "foo", 2.0>, <1, "bar", 2.0>,
  * </code>
  * </pre>
- * 
+ *
  * <p>
- * The type of the flatten output will be #Comparable. 
+ * The type of the flatten output will be #Comparable.
  * A cast must be made to the base type before inserting into
  * a table if that table accepts a flatten attribute and is
  * a type other than #Comparable. <br>
  * For example (taken from test/path.olg): <br>
- * 
+ *
  * <pre>
  * <code>
  * define(allpaths, {String, ValueList});
  * define(flatpaths, {String, Integer});
- * 
- * flatpaths(Source, Path) :- 
- *    flatten(allpaths(Source, Paths)), 
- *    Path := (Integer) Paths; // Need explicit cast to Integer 
- *    
- * // NOTE: The following is not supported and will invoke a type check error! 
- * flatpaths(Source, (Integer) Paths) :- 
- * 	  flatten(allpaths(Source, Paths)); 
- *    
+ *
+ * flatpaths(Source, Path) :-
+ *    flatten(allpaths(Source, Paths)),
+ *    Path := (Integer) Paths; // Need explicit cast to Integer
+ *
+ * // NOTE: The following is not supported and will invoke a type check error!
+ * flatpaths(Source, (Integer) Paths) :-
+ * 	  flatten(allpaths(Source, Paths));
+ *
  * </code>
  * </pred>
  */
@@ -53,7 +52,7 @@ public class Flatten extends Function {
 	public static final String NAME = "flatten";
 
 	private List<Integer> positions;
-	
+
 	public Flatten(Long id, Class[] inputTypes) {
 		super(NAME + ":" + id, inputTypes);
 		this.positions = new ArrayList<Integer>();
@@ -70,7 +69,7 @@ public class Flatten extends Function {
 		}
 		this.attributeTypes = outputTypes;
 	}
-	
+
 	@Override
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts)
 			throws UpdateException {
@@ -81,7 +80,7 @@ public class Flatten extends Function {
 			return flatten(tuples, new ArrayList<Integer>(this.positions));
 		}
 	}
-	
+
 	/**
 	 * @param tuples
 	 * @param positions

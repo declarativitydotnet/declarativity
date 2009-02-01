@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +49,6 @@ import jol.lang.plan.Variable;
 import jol.lang.plan.Watch;
 import jol.lang.plan.Fact.FactTable;
 import jol.types.basic.Tuple;
-import jol.types.basic.ValueList;
 import jol.types.exception.CompileException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
@@ -65,7 +63,6 @@ import jol.types.table.TimerTable;
 import xtc.Constants;
 import xtc.tree.GNode;
 import xtc.tree.Node;
-import xtc.tree.VisitingException;
 import xtc.tree.Visitor;
 import xtc.util.SymbolTable;
 
@@ -196,7 +193,7 @@ public final class TypeChecker extends Visitor {
 
 		return superType == subType || superType.isAssignableFrom(subType);
 	}
-	
+
 	private boolean checkInterface(Class type, Class check) {
 		type = type(type.getCanonicalName()) == null ? type : type(type.getCanonicalName());
 		for (Class i : type.getInterfaces()) {
@@ -215,7 +212,7 @@ public final class TypeChecker extends Visitor {
 		}
 		return true;
 	}
-	
+
 	private String typesToString(Class[] types) {
 		if (types.length == 0) return "";
 		StringBuilder sb = new StringBuilder();
@@ -691,7 +688,7 @@ public final class TypeChecker extends Visitor {
 				other.add(node);
 			}
 		}
-		
+
 		if (n.size() > 1) {
 			for (GNode node : n.<GNode>getList(1)) {
 				Class type = (Class) dispatch(node);
@@ -1050,7 +1047,7 @@ public final class TypeChecker extends Visitor {
 					+ " in a logical and expression", n);
 		}
 		n.setProperty(Constants.TYPE,
-			new jol.lang.plan.Boolean(n, 
+			new jol.lang.plan.Boolean(n,
 					jol.lang.plan.Boolean.AND,
 					ensureBooleanValue(lhs),
 					ensureBooleanValue(rhs)));
@@ -1102,17 +1099,17 @@ public final class TypeChecker extends Visitor {
 			throw new CompileException("Cannot evaluate void type " + rhs.type()
 					+ " in a logical and expression", n);
 		} else if (!checkInterface(lhs.type(), Comparable.class)) {
-			throw new CompileException("Type " + lhs.type() + " must implement " + 
-					Comparable.class.getCanonicalName()  + 
+			throw new CompileException("Type " + lhs.type() + " must implement " +
+					Comparable.class.getCanonicalName()  +
 					" in order to use in a '" + oper + "' expression.", n);
 		} else if (!checkInterface(rhs.type(), Comparable.class)) {
-			throw new CompileException("Type " + rhs.type() + " must implement " + 
-					Comparable.class.getCanonicalName()  + 
+			throw new CompileException("Type " + rhs.type() + " must implement " +
+					Comparable.class.getCanonicalName()  +
 					" in order to use in a '" + oper + "' expression.", n);
 		}
-		
-		
-		
+
+
+
 		n.setProperty(Constants.TYPE, new jol.lang.plan.Boolean(n, oper,  lhs,  rhs));
 		return jol.lang.plan.Boolean.class;
 	}
@@ -1350,8 +1347,8 @@ public final class TypeChecker extends Visitor {
 					}
 					if (method == null) {
 						StringBuilder sb = new StringBuilder();
-						sb.append("Undefined method " + reference.toString() + 
-								  "(" + typesToString(types) + ") in class type " + 
+						sb.append("Undefined method " + reference.toString() +
+								  "(" + typesToString(types) + ") in class type " +
 								  reference.type().getCanonicalName());
 						throw new CompileException(sb.toString(), n);
 					}
@@ -1370,7 +1367,7 @@ public final class TypeChecker extends Visitor {
 					}
 					if (method == null) {
 						StringBuilder sb = new StringBuilder();
-						sb.append("Undefined static method " + reference.type().getCanonicalName() + 
+						sb.append("Undefined static method " + reference.type().getCanonicalName() +
 								  "." + reference.toString() + "(" + typesToString(types) + ")\n");
 						throw new CompileException(sb.toString(), n);
 					}
@@ -1444,7 +1441,7 @@ public final class TypeChecker extends Visitor {
 						return Reference.class;
 					}
 				}
-				throw new CompileException("Expression " + expr + " has type " + type + 
+				throw new CompileException("Expression " + expr + " has type " + type +
 						                   ", which does not contain a field or method " +
 						                   "named '" + name + "'.", n);
 			}
