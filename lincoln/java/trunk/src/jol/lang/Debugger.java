@@ -22,7 +22,6 @@ import att.grappa.Subgraph;
 
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
-import jol.types.basic.Wrapper;
 import jol.types.table.Aggregation;
 import jol.types.table.Table;
 import jol.types.table.TableName;
@@ -152,12 +151,11 @@ public class Debugger {
 		return subgraph;
 	}
 
-	public static boolean edge(Wrapper main, 
-			Predicate consumer, int consumerStratum, Wrapper consumerNode,
-			Predicate producer, int producerStratum, Wrapper producerNode) {
-		Graph graph = (Graph) main.object();
+	public static boolean edge(Graph graph, 
+			Predicate consumer, int consumerStratum, Node consumerNode,
+			Predicate producer, int producerStratum, Node producerNode) {
 		Table table = producer.context.catalog().table(producer.name());
-		Edge edge = new Edge(graph, (Node)consumerNode.object(), (Node) producerNode.object());
+		Edge edge = new Edge(graph, consumerNode, producerNode);
 		if (producer.notin()) {
 			if (consumerStratum <= producerStratum) {
 				edge.getAttribute(Attribute.COLOR_ATTR).setValue(java.awt.Color.red);
