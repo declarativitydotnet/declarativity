@@ -1,7 +1,0 @@
-load0: write N tuples to M tables, does not use aggregates (M = number of passes each w/ different size)
-load1: write N tuples to M tables, use aggregates
-load2: write N tuples to one table, adds column for benchmark phase (fewer rules, higher level than load1)
-count: write N tuples to one table table only remembers one tuple per phase
-
-
-(Look at count.olg for comments; the others are very similar to it)
