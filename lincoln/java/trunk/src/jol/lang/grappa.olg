@@ -7,21 +7,20 @@ import jol.types.table.TableName;
 import att.grappa.Graph;
 import att.grappa.Subgraph;
 import att.grappa.Node;
-import jol.types.basic.Wrapper;
 
 define(debug, {String, String});
 define(done,  {String});
 define(stratum,      {String, Integer});
-define(displayGraph, {String, String, Wrapper});
+define(displayGraph, {String, String, Graph});
 define(display,      {String});
 
-define(graph,     keys(0),   {String, String, Wrapper});
-define(subgraphs, keys(0,1), {String, Integer, Wrapper});
-define(nodes,     keys(0,1), {String, TableName, Integer, Wrapper});
+define(graph,     keys(0),   {String, String, Graph});
+define(subgraphs, keys(0,1), {String, Integer, Subgraph});
+define(nodes,     keys(0,1), {String, TableName, Integer, Node});
 
 done(Program) :-
 	displayGraph(Program, Debugger, MainGraph),
-	jol.lang.Debugger.display(Program, Debugger, (Graph)MainGraph.object());
+	jol.lang.Debugger.display(Program, Debugger, MainGraph);
 
 displayGraph(Program, Debugger, MainGraph) :-
 	display(Program),         
@@ -43,12 +42,12 @@ display(Program) :- nodes(Program);
 nodes(Program, Name, Priority, N) :-
 	subgraphs(Program, Priority, G),
 	runtime::priority(Program, Name, Priority),
-	N := new Wrapper(jol.lang.Debugger.node((Subgraph)G.object(), Name));
+	N := jol.lang.Debugger.node(G, Name);
 
 subgraphs(Program, Stratum, G) :-
 	stratum(Program, Stratum),
 	graph(Program, _, MainGraph),
-	G := new Wrapper(jol.lang.Debugger.subgraph((Graph)MainGraph.object(), Stratum));
+	G := jol.lang.Debugger.subgraph(MainGraph, Stratum);
 	
 stratum(Program, Priority) :-
 	graph(Program, _, G),
@@ -57,4 +56,4 @@ stratum(Program, Priority) :-
 public
 graph(Program, Debugger, G) :-
 	debug(Program, Debugger),
-	G := new Wrapper(new Graph("Stratification Graph " + Program));
+	G := new Graph("Stratification Graph " + Program);
