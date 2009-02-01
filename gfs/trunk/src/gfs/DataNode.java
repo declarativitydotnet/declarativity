@@ -10,7 +10,6 @@ import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 import gfs.DataServer;
-import gfs.ChunkCheckSum;
 
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
@@ -18,7 +17,6 @@ public class DataNode {
             usage();
 
 
-        ChunkCheckSum cs = new ChunkCheckSum();
         int dataNodeIdx = Integer.parseInt(args[0]);
         if (dataNodeIdx < 0 || dataNodeIdx >= Conf.getNumDataNodes()) {
             java.lang.System.err.println("Illegal data node index: " + dataNodeIdx);
