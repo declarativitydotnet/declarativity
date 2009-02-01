@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import jol.types.basic.Tuple;
-import jol.types.basic.TypeList;
 import jol.types.table.Key;
 import jol.types.table.Table;
 import jol.types.table.TableName;
@@ -74,14 +73,14 @@ public class HTML {
 	public StringBuilder toString(Table t) {
 		return new StringBuilder("<span class='Table'>&lt;" + toString(t.name()) + "&gt;</span>");
 	}
-	public StringBuilder toString(TypeList t) {
+	public StringBuilder toString(Class[] t) {
 		StringBuilder s = new StringBuilder("<span class='TypeList'>[");
-		if(t.size() == 0) {
+		if(t.length == 0) {
 			s.append("<empty type list>");
 		} else {
-			s.append(toString((Class)t.getClass(0)));
-			for(int i = 1; i < t.size(); i++) {
-				s.append(", "+toString((Class)t.getClass(i)));
+			s.append(toString(t[0]));
+			for(int i = 1; i < t.length; i++) {
+				s.append(", "+toString((Class)t[i]));
 			}
 
 		}
@@ -115,8 +114,8 @@ public class HTML {
 			s = toString((Tuple)c);
 		} else if(c instanceof Key) {
 			s = toString((Key)c);
-		} else if(c instanceof TypeList) {
-			s = toString((TypeList)c);
+		} else if(c instanceof Class[]) {
+			s = toString((Class[])c);
 		} else if(c instanceof Table) {
 			s = toString((Table) c);
 		} else if(c instanceof Class) {
@@ -153,7 +152,7 @@ public class HTML {
 			    s.append("<tr class='LincolnRow'>");
 			    for(int i = 0; i < tup.size(); i++) {
 					s.append("<td class='LincolnField'>");
-					Comparable c = tup.value(i);
+					Object c = tup.value(i);
 					if(c == null) {
 					    s.append("null");
 					} else {

@@ -10,7 +10,6 @@ import java.util.Map;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import stasis.jni.JavaHashtable;
@@ -69,8 +68,7 @@ public abstract class StasisTable extends Table {
 	protected byte[] nameBytes;
 	protected byte[] schemaBytes;
 	
-	public StasisTable(Runtime context, TableName name, Key key,
-			TypeList attributeTypes) {
+	public StasisTable(Runtime context, TableName name, Key key, Class[] attributeTypes) {
 		super(name, Table.Type.TABLE, key, attributeTypes);
 
 		nameBytes = toBytes(name);
@@ -119,7 +117,7 @@ public abstract class StasisTable extends Table {
 
 	protected static TableName CATALOG_NAME = new TableName("Stasis", "Catalog");
 	protected static Key CATALOG_KEY = new Key(0);
-	protected static TypeList CATALOG_COLTYPES = new TypeList(new Class[] { String.class, Long.class, Long.class} );
+	protected static Class[] CATALOG_COLTYPES = new Class[] { String.class, Long.class, Long.class};
 	protected static Tuple CATALOG_SCHEMA = new Tuple();
 	protected static byte[] CATALOG_SCHEMA_BYTES;
 	protected static byte[] CATALOG_NAME_BYTES; 

@@ -27,7 +27,7 @@ public class Projection extends Operator {
 	private Predicate predicate;
 
 	/** The field accessors of the projection. */
-	private List<TupleFunction<Comparable>> accessors;
+	private List<TupleFunction<Object>> accessors;
 
 	/**
 	 * Create a new projection operator
@@ -38,7 +38,7 @@ public class Projection extends Operator {
 	public Projection(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
 		this.predicate = predicate;
-		this.accessors = new ArrayList<TupleFunction<Comparable>>();
+		this.accessors = new ArrayList<TupleFunction<Object>>();
 
 		for (int i = 0; i < predicate.arguments().size(); i++) {
 			Expression argument = predicate.arguments().get(i).clone();
@@ -69,8 +69,8 @@ public class Projection extends Operator {
 		TupleSet result = new TupleSet(predicate.name());
 		for (Tuple tuple : tuples) {
 			try {
-				List<Comparable> values = new ArrayList<Comparable>();
-				for (TupleFunction<Comparable> accessor : accessors) {
+				List<Object> values = new ArrayList<Object>();
+				for (TupleFunction<Object> accessor : accessors) {
 					values.add(accessor.evaluate(tuple));
 				}
 				Tuple projection = new Tuple(values);

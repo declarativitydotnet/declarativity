@@ -7,7 +7,6 @@ import jol.core.Runtime;
 import jol.core.Schedule;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
 /**
@@ -118,7 +117,7 @@ public class TimerTable extends Table {
 	private PhysicalTimer timer;
 
 	public TimerTable(Runtime context, TableName name, String type, long period, long ttl, long delay) {
-		super(name, Table.Type.TIMER, null, new TypeList(SCHEMA));
+		super(name, Table.Type.TIMER, null, SCHEMA);
 		this.context = context;
 		this.type    = type.toLowerCase().equals("physical") ? Type.PHYSICAL : Type.LOGICAL;
 		this.period  = period;

@@ -8,11 +8,11 @@ public class Filter implements TupleFunction<Comparable> {
 	
 	protected Operator oper;
 	
-	protected TupleFunction<Comparable> lhs;
+	protected TupleFunction<Object> lhs;
 	
-	protected TupleFunction<Comparable> rhs;
+	protected TupleFunction<Object> rhs;
 	
-	public Filter(Operator oper, TupleFunction<Comparable> lhs, TupleFunction<Comparable> rhs) {
+	public Filter(Operator oper, TupleFunction<Object> lhs, TupleFunction<Object> rhs) {
 		this.oper = oper;
 		this.lhs = lhs;
 		this.rhs = rhs;
@@ -39,7 +39,7 @@ public class Filter implements TupleFunction<Comparable> {
 	 * @param c The comparable object.
 	 * @return The boolean value of the comparable object.
 	 */
-	private Boolean value(Comparable c) {
+	private Boolean value(Object c) {
 		if (c == null) {
 			return Boolean.FALSE;
 		}
@@ -68,27 +68,35 @@ public class Filter implements TupleFunction<Comparable> {
 	}
 	
 	private Boolean eq(Tuple tuple) throws JolRuntimeException {
-		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) == 0;
+		return this.lhs.evaluate(tuple).equals(this.rhs.evaluate(tuple));
 	}
 	
 	private Boolean neq(Tuple tuple) throws JolRuntimeException {
-		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) != 0;
+		return !this.lhs.evaluate(tuple).equals(this.rhs.evaluate(tuple));
 	}
 	
 	private Boolean lthan(Tuple tuple) throws JolRuntimeException {
-		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) < 0;
+		Comparable left  = (Comparable) this.lhs.evaluate(tuple);
+		Comparable right = (Comparable) this.rhs.evaluate(tuple);
+		return left.compareTo(right) < 0;
 	}
 	
 	private Boolean gthan(Tuple tuple) throws JolRuntimeException {
-		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) > 0;
+		Comparable left  = (Comparable) this.lhs.evaluate(tuple);
+		Comparable right = (Comparable) this.rhs.evaluate(tuple);
+		return left.compareTo(right) > 0;
 	}
 	
 	private Boolean leq(Tuple tuple) throws JolRuntimeException {
-		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) <= 0;
+		Comparable left  = (Comparable) this.lhs.evaluate(tuple);
+		Comparable right = (Comparable) this.rhs.evaluate(tuple);
+		return left.compareTo(right) <= 0;
 	}
 	
 	private Boolean geq(Tuple tuple) throws JolRuntimeException {
-		return this.lhs.evaluate(tuple).compareTo(this.rhs.evaluate(tuple)) >= 0;
+		Comparable left  = (Comparable) this.lhs.evaluate(tuple);
+		Comparable right = (Comparable) this.rhs.evaluate(tuple);
+		return left.compareTo(right) >= 0;
 	}
 
 	public Class returnType() {

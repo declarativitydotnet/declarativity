@@ -29,7 +29,7 @@ public abstract class Join extends Operator {
 	 * taken from a specific {@link jol.types.table.Table} object.
 	 *
 	 */
-	private class TableField implements TupleFunction<Comparable> {
+	private class TableField implements TupleFunction<Object> {
 		/** The field type. */
 		private Class type;
 		/** The field position within the tuple. */
@@ -44,7 +44,7 @@ public abstract class Join extends Operator {
 			this.position = position; 
 		}
 		/** Extracts the value from the tuple field position. */
-		public Comparable evaluate(Tuple tuple) throws JolRuntimeException {
+		public Object evaluate(Tuple tuple) throws JolRuntimeException {
 			return tuple.value(this.position);
 		}
 		/** The type of value returned by {@link #evaluate(Tuple)}. */
@@ -59,18 +59,18 @@ public abstract class Join extends Operator {
 	 */
 	private class JoinFilter {
 		/** Left hand side value accessor. */
-		private TupleFunction<Comparable> lhs;
+		private TupleFunction<Object> lhs;
 		
 		/** Right hand side value accessor. */
-		private TupleFunction<Comparable> rhs;
+		private TupleFunction<Object> rhs;
 
 		/**
 		 * Create a new join filter. 
 		 * @param lhs The left hand side accessor.
 		 * @param rhs The right hand side accessor.
 		 */
-		private JoinFilter(TupleFunction<Comparable> lhs, 
-				           TupleFunction<Comparable> rhs) {
+		private JoinFilter(TupleFunction<Object> lhs, 
+				           TupleFunction<Object> rhs) {
 			this.lhs = lhs;
 			this.rhs = rhs;
 		}
@@ -84,9 +84,9 @@ public abstract class Join extends Operator {
 		 * @throws JolRuntimeException
 		 */
 		public Boolean evaluate(Tuple outer, Tuple inner) throws JolRuntimeException {
-			Comparable lvalue = this.lhs.evaluate(outer);
-			Comparable rvalue = this.rhs.evaluate(inner);
-			return lvalue.compareTo(rvalue) == 0;
+			Object lvalue = this.lhs.evaluate(outer);
+			Object rvalue = this.rhs.evaluate(inner);
+			return lvalue.equals(rvalue);
 		}
 	}
 	
@@ -181,8 +181,8 @@ public abstract class Join extends Operator {
 		this.joinFilters = new ArrayList<JoinFilter>();
 		for (Variable var : input.variables()) {
 			if (predicate.schema().contains(var)) {
-				TupleFunction<Comparable> o = var.function(input);
-				TupleFunction<Comparable> i = var.function(predicate.schema());
+				TupleFunction<Object> o = var.function(input);
+				TupleFunction<Object> i = var.function(predicate.schema());
 				this.joinFilters.add(new JoinFilter(o, i));
 			}
 		}

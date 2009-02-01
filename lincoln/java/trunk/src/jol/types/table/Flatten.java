@@ -5,7 +5,6 @@ import java.util.List;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.basic.ValueList;
 import jol.types.exception.UpdateException;
 
@@ -55,18 +54,18 @@ public class Flatten extends Function {
 
 	private List<Integer> positions;
 	
-	public Flatten(Long id, TypeList inputTypes) {
-		super(NAME + ":" + id, null);
+	public Flatten(Long id, Class[] inputTypes) {
+		super(NAME + ":" + id, inputTypes);
 		this.positions = new ArrayList<Integer>();
-		TypeList outputTypes = new TypeList();
-		for (int i = 0; i < inputTypes.size(); i++) {
-			Class input = inputTypes.getClass(i);
-			if (input == ValueList.class) {
-				outputTypes.add(Comparable.class);
-				this.positions.add(outputTypes.size() - 1);
+		Class[] outputTypes = new Class[inputTypes.length];
+		for (int i = 0; i < inputTypes.length; i++) {
+			Class input = inputTypes[i];
+			if (List.class.isAssignableFrom(input)) {
+				outputTypes[i] = Object.class;
+				this.positions.add(i);
 			}
 			else {
-				outputTypes.add(input);
+				outputTypes[i] = input;
 			}
 		}
 		this.attributeTypes = outputTypes;
@@ -97,10 +96,10 @@ public class Flatten extends Function {
 			TupleSet delta = new TupleSet(name());
 			int   position = flattenPositions.remove(0);
 			for (Tuple tuple : tuples) {
-				ValueList<Comparable> list = (ValueList<Comparable>) tuple.value(position);
+				List<Object> list = (List<Object>) tuple.value(position);
 				if (list != null) {
-					for (Comparable value : list) {
-						Comparable flattened[] = tuple.toArray();
+					for (Object value : list) {
+						Object flattened[] = tuple.toArray();
 						//Tuple flattened = tuple.clone();
 						flattened[position] = value; //.value(position, value);
 						delta.add(new Tuple(flattened));

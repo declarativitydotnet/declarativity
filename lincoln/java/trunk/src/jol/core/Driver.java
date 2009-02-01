@@ -12,7 +12,6 @@ import jol.lang.plan.Program;
 import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.TypeList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.Operator;
@@ -119,7 +118,7 @@ public class Driver implements Runnable {
 		 * @param context The runtime context.
 		 */
 		public Flusher(Runtime context) {
-			super("flusher", new TypeList(SCHEMA));
+			super("flusher", SCHEMA);
 			this.context = context;
 		}
 
@@ -300,7 +299,7 @@ public class Driver implements Runnable {
 		 * @param context The runtime context.
 		 */
 		public Evaluator(Runtime context, ExecutorService executor) {
-			super("evaluator", new TypeList(SCHEMA));
+			super("evaluator", SCHEMA);
 			this.context = context;
 			this.executor = executor;
 		}
@@ -713,8 +712,8 @@ public class Driver implements Runnable {
 	 */
 	private void split(TupleSet tuples, TupleSet insertions, TupleSet deletions) {
 		for (Tuple tuple : tuples) {
-			Comparable[] insert = tuple.toArray();
-			Comparable[] delete = tuple.toArray();
+			Object[] insert = tuple.toArray();
+			Object[] delete = tuple.toArray();
 			insert[Evaluator.Field.DELETIONS.ordinal()] = null;
 			delete[Evaluator.Field.INSERTIONS.ordinal()] = null;
 

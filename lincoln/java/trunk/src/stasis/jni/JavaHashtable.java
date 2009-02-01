@@ -5,7 +5,6 @@ import java.util.Hashtable;
 import java.util.Iterator;
 
 import jol.core.Runtime;
-import jol.types.basic.TypeList;
 import jol.types.exception.UpdateException;
 
 import jol.types.table.Key;
@@ -28,8 +27,7 @@ public class JavaHashtable extends StasisTable {
 	
 	private final Hashtable<byte[], byte[]> tbl;
 	
-	public JavaHashtable(Runtime context, TableName tableName, Key key,
-			TypeList attributeTypes) {
+	public JavaHashtable(Runtime context, TableName tableName, Key key, Class[] attributeTypes) {
 		super(context,tableName,key,attributeTypes);
 		byte[] name = super.nameBytes;
 		byte[] schema = super.schemaBytes;
