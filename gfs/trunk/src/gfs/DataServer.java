@@ -84,7 +84,7 @@ public class DataServer implements Runnable {
                 path.add(String.valueOf(chunkId));
 
                 File newf = createChunkFile(chunkId);
-                java.lang.System.out.println("Ready to read file in\n");
+                System.out.println("Ready to read file in\n");
 
                 FileChannel fc = new FileOutputStream(newf).getChannel();
                 fc.transferFrom(this.channel, 0, Conf.getChunkSize());
@@ -92,7 +92,7 @@ public class DataServer implements Runnable {
 
                 // we are not pipelining yet.
                 if (path.size() > 1) {
-                    java.lang.System.out.println("path size was " + path.size());
+                    System.out.println("path size was " + path.size());
                     copyToNext(newf, path);
                 }
 
@@ -123,7 +123,7 @@ public class DataServer implements Runnable {
                 }
                 DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
                 Shell.sendRoutedData(dos, path);
-                java.lang.System.out.println("routed data sent\n");
+                System.out.println("routed data sent\n");
                 FileChannel fc = new FileInputStream(f).getChannel();
                 java.lang.System.out.println("got fc\n" + fc.toString());
                 fc.transferTo(0, Conf.getChunkSize(), chan);
@@ -165,7 +165,7 @@ public class DataServer implements Runnable {
             // clean me later
             try {
                 int sourceRouteListLen = this.in.readInt();
-                java.lang.System.out.println("LISTLEN: " + sourceRouteListLen);
+                System.out.println("LISTLEN: " + sourceRouteListLen);
                 if (sourceRouteListLen > 0) {
                     path = new String[sourceRouteListLen + 1];
                     int i = 0;
@@ -179,7 +179,7 @@ public class DataServer implements Runnable {
                         }
                     }
                     for (String s : path) {
-                        java.lang.System.out.println("APTH: " + s);
+                        System.out.println("APTH: " + s);
                     }
 
                 } else {
@@ -235,12 +235,11 @@ public class DataServer implements Runnable {
     }
 
     public void stop() {
-        java.lang.System.out.println("active workers: " + this.workers.activeCount()
-                + "\n");
+        System.out.println("active workers: " + this.workers.activeCount() + "\n");
         Thread[] threadList = new Thread[this.workers.activeCount()];
         this.workers.enumerate(threadList);
         for (Thread t : threadList) {
-            java.lang.System.out.println("stop thread " + t.toString() + ")\n");
+            System.out.println("stop thread " + t.toString() + ")\n");
             t.stop();
         }
 
@@ -269,8 +268,7 @@ public class DataServer implements Runnable {
     }
 
     public void createCRCFile(int chunkId, long checksum) {
-        java.lang.System.out.println("create file for chunk " + chunkId
-                + " and checksum " + checksum + "\n");
+        System.out.println("create file for chunk " + chunkId  + " and checksum " + checksum + "\n");
         String filename = this.fsRoot + File.separator + "checksums" + File.separator
                 + chunkId + ".cksum";
         File newf = new File(filename);

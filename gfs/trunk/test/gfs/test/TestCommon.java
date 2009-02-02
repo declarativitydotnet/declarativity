@@ -1,17 +1,19 @@
 package gfs.test;
 
-import java.util.List;
-import java.util.LinkedList;
-import java.io.InputStream;
+import gfs.Conf;
+import gfs.DataNode;
+import gfs.Master;
+import gfs.Shell;
+
 import java.io.File;
+import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
+
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import junit.framework.Assert;
-import gfs.Master;
-import gfs.DataNode;
-import gfs.Shell;
-import gfs.Conf;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,11 +38,10 @@ public class TestCommon {
             }
         }
         // shell.shutdown();
-        java.lang.System.out.println("shutdown complete\n");
+        System.out.println("shutdown complete\n");
     }
 
-    protected Boolean shellLs(String... list) throws JolRuntimeException,
-            UpdateException {
+    protected Boolean shellLs(String... list) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
         Boolean ret = findInLs(shell, list);
         shell.shutdown();
@@ -53,10 +54,10 @@ public class TestCommon {
         shell.shutdown();
         return ret;
     }
+
     protected void killMaster(int index) {
         this.masters.get(index).stop();
     }
-
 
     protected void shellCreate(String name) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
@@ -73,6 +74,7 @@ public class TestCommon {
     protected void assertTrue(Boolean b) {
         /*
          * weird huh? Assert.assertTrue raises an error without calling the
+         *
          * @After method, so we never terminate.
          */
         if (!b)
@@ -95,7 +97,7 @@ public class TestCommon {
             if (!list.contains(item))
                 return false;
 
-            java.lang.System.out.println("found " + item);
+            System.out.println("found " + item);
         }
         return true;
     }
@@ -121,10 +123,11 @@ public class TestCommon {
         }
     }
 
-    protected void startManyDataNodes(String... args) throws JolRuntimeException, UpdateException {
+    protected void startManyDataNodes(String... args) throws JolRuntimeException,
+            UpdateException {
         this.datanodes = new LinkedList<DataNode>();
 
-        assert(args.length == Conf.getNumDataNodes());
+        assert (args.length == Conf.getNumDataNodes());
 
         for (int i = 0; (i < Conf.getNumDataNodes()) && (i < args.length); i++) {
             new File(args[i]).mkdir();
@@ -135,13 +138,12 @@ public class TestCommon {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            DataNode d = new DataNode(i,args[i]);
-            java.lang.System.out.println("new DATANODE "+ d.getPort());
+            DataNode d = new DataNode(i, args[i]);
+            System.out.println("new DATANODE " + d.getPort());
             d.start();
             this.datanodes.add(d);
         }
     }
-
 
     protected ValueList<String> lsFile(Shell shell) throws UpdateException,
             JolRuntimeException {
@@ -149,12 +151,12 @@ public class TestCommon {
         return shell.doListFiles(argList);
     }
 
-    protected void appendFile(Shell shell, String name, InputStream s) throws UpdateException {
+    protected void appendFile(Shell shell, String name, InputStream s)
+            throws UpdateException {
         List<String> argList = new LinkedList<String>();
         argList.add(name);
         shell.doAppend(argList, s);
     }
-
 
     protected void createFile(Shell shell, String name) throws UpdateException,
             JolRuntimeException {

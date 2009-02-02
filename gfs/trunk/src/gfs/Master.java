@@ -20,7 +20,7 @@ public class Master {
 
         int masterIdx = Integer.parseInt(args[0]);
         if (masterIdx < 0 || masterIdx >= Conf.getNumMasters()) {
-            java.lang.System.err.println("Illegal master index: " + masterIdx);
+            System.err.println("Illegal master index: " + masterIdx);
             usage();
         }
 
@@ -29,9 +29,9 @@ public class Master {
     }
 
     private static void usage() {
-        java.lang.System.err.println("Usage: gfs.Master index");
-        java.lang.System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumMasters() - 1));
-        java.lang.System.exit(1);
+        System.err.println("Usage: gfs.Master index");
+        System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumMasters() - 1));
+        System.exit(1);
     }
 
     public Master(int masterIdx) {
@@ -48,7 +48,7 @@ public class Master {
         Conf.setSelfAddress(this.address);
 
         this.system = Runtime.create(this.port);
-  
+
         this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
         this.system.evaluate();
 
@@ -61,14 +61,14 @@ public class Master {
 
             @Override
             public void insertion(TupleSet tuples) {
-                java.lang.System.out.println("Got file @ master: " + tuples.toString());
+                System.out.println("Got file @ master: " + tuples.toString());
             }
         };
 
         this.system.catalog().table(new TableName("gfs_global", "file")).register(cb);
 
         this.system.start();
-        java.lang.System.out.println("Master node @ " + this.port + " ready!");
+        System.out.println("Master node @ " + this.port + " ready!");
     }
 
     private void setupPaxos() throws JolRuntimeException, UpdateException {

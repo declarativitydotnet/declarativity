@@ -57,10 +57,10 @@ public class Shell {
             shell.doCreateFile(argList, true);
         } else if (op.equals("ls")) {
             ValueList<String> list = shell.doListFiles(argList);
-            java.lang.System.out.println("ls:");
+            System.out.println("ls:");
             int i = 1;
             for (String file : list) {
-                java.lang.System.out.println("  " + i + ". " + file);
+                System.out.println("  " + i + ". " + file);
                 i++;
             }
         } else if (op.equals("rm")) {
@@ -79,7 +79,7 @@ public class Shell {
 
         /* Identify the address of the local node */
         /* this is necessary for current tests, but may not be done this way in the future */
-        String port = java.lang.System.getenv("PORT");
+        String port = System.getenv("PORT");
         if (port == null) {
             port = "5501";
         }
@@ -99,7 +99,7 @@ public class Shell {
     }
 
     public void doAppend(List<String> args) throws UpdateException {
-        this.doAppend(args,java.lang.System.in);
+        this.doAppend(args,System.in);
     }
 
     public void doAppend(List<String> args, InputStream s) throws UpdateException {
@@ -118,13 +118,13 @@ public class Shell {
                 int read = 0;
                 while (b != -1 && read < Conf.getChunkSize()) {
                     byte buf[] = new byte[Conf.getBufSize()];
-                    //b = java.lang.System.in.read(buf,0,Conf.getBufSize());
+                    //b = System.in.read(buf,0,Conf.getBufSize());
                     b = s.read(buf,0,Conf.getBufSize());
                     //read += Conf.getChunkSize();
                     dos.write(buf);
                     read += b;
                 }
-                java.lang.System.out.println("exiting inner loop with "+b+" retval and "+read+" bytes read\n");
+                System.out.println("exiting inner loop with "+b+" retval and "+read+" bytes read\n");
                 dos.close();
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -141,7 +141,7 @@ public class Shell {
 
         /* Ask a master node for the list of chunks */
         List<Integer> chunks = getChunkList(filename);
-        java.lang.System.out.println("chunks = " + chunks);
+        System.out.println("chunks = " + chunks);
 
         /*
          * For each chunk, ask the master node for a list of data nodes that
@@ -150,7 +150,7 @@ public class Shell {
          */
         for (Integer chunk : chunks) {
             List<String> locations = getChunkLocations(chunk);
-            java.lang.System.out.println("I would read the chunk here.  but I won't");
+            System.out.println("I would read the chunk here.  but I won't");
             //readChunk(chunk, locations);
         }
     }
@@ -281,8 +281,8 @@ public class Shell {
         for (String loc : locations) {
             StringBuilder sb = readChunkFromAddress(chunk, loc);
             if (sb != null) {
-                java.lang.System.out.println("Content of chunk " +
-                                             chunk + ": " + sb);
+                System.out.println("Content of chunk " +
+                                   chunk + ": " + sb);
                 return;
             }
         }
@@ -295,11 +295,10 @@ public class Shell {
         String host = parts[1];
         int controlPort = Integer.parseInt(parts[2]);
 
-        java.lang.System.out.println("TEST1 -- "+addr);
+        System.out.println("TEST1 -- " + addr);
         int dataPort = Conf.findDataNodeDataPort(host, controlPort);
+        System.out.println("Connecting to: " + host + ":" + dataPort);
 
-
-        java.lang.System.out.println("Connecting to: " + host + ":" + dataPort);
         try {
             SocketAddress sockAddr = new InetSocketAddress(host, dataPort);
             SocketChannel inChannel = SocketChannel.open();
@@ -310,14 +309,13 @@ public class Shell {
         } catch (Exception e) {
             throw new RuntimeException("failed to open socket\n");
         }
-
     }
 
     public static void sendRoutedData(DataOutputStream dos, List<String> l) {
         try {
             dos.writeByte(DataProtocol.WRITE_OPERATION);
             // the last element of the list is our new chunkid
-            java.lang.System.out.println("next hop is "+l.get(l.size()-1));
+            System.out.println("next hop is "+l.get(l.size()-1));
             dos.writeInt(Integer.valueOf(l.get(l.size()-1)));
 
             int newSize = l.size() - 2;
@@ -328,15 +326,14 @@ public class Shell {
 
             dos.writeInt(newSize);
             for (int i = 1; i < newSize+1; i++) {
-                java.lang.System.out.println("write "+l.get(i));
+                System.out.println("write "+l.get(i));
                 dos.writeChars(l.get(i));
                 dos.writeChar('|');
             }
             dos.writeChar(';');
             // caller writes the actual data
         } catch (Exception e) {
-            java.lang.System.out.println("Exception reading chunk " +
-                                          e.toString());
+            System.out.println("Exception reading chunk " + e.toString());
             return;
         }
     }
@@ -347,10 +344,10 @@ public class Shell {
             String host = parts[1];
             int controlPort = Integer.parseInt(parts[2]);
 
-        java.lang.System.out.println("TEST2\n");
+            System.out.println("TEST2\n");
             int dataPort = Conf.findDataNodeDataPort(host, controlPort);
 
-            java.lang.System.out.println("Reading chunk " + chunkId + " from: " + host + ":" + dataPort);
+            System.out.println("Reading chunk " + chunkId + " from: " + host + ":" + dataPort);
             SocketAddress sockAddr = new InetSocketAddress(host, dataPort);
             SocketChannel inChannel = SocketChannel.open();
             inChannel.configureBlocking(true);
@@ -382,8 +379,8 @@ public class Shell {
             sock.close();
             return sb;
         } catch (Exception e) {
-            java.lang.System.out.println("Exception reading chunk from " +
-                                         addr + ": " + e.toString());
+            System.out.println("Exception reading chunk from " +
+                               addr + ": " + e.toString());
             e.printStackTrace();
             return null;
         }
@@ -415,7 +412,7 @@ public class Shell {
             /* Read the contents of the file from stdin */
             int b;
             try {
-                while ((b = java.lang.System.in.read()) != -1)
+                while ((b = System.in.read()) != -1)
                     sb.append((char) b);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -441,9 +438,9 @@ public class Shell {
                         Boolean success = (Boolean) t.value(3);
 
                         if (success.booleanValue())
-                            java.lang.System.out.println("Create succeeded.");
+                            System.out.println("Create succeeded.");
                         else
-                            java.lang.System.out.println("Create failed.");
+                            System.out.println("Create failed.");
 
                         responseQueue.put(success);
                         break;
@@ -529,8 +526,8 @@ public class Shell {
 
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
-                        java.lang.System.out.println("Remove of file \"" + file + "\": " +
-                                (success.booleanValue() ? "succeeded" : "failed"));
+                        System.out.println("Remove of file \"" + file + "\": " +
+                                           (success.booleanValue() ? "succeeded" : "failed"));
                         responseQueue.put(success);
                         break;
                     }
@@ -557,7 +554,7 @@ public class Shell {
             if (result != null)
                 return result;
 
-            java.lang.System.out.println("master "+this.currentMaster+" timed out.  retry?\n");
+            System.out.println("master "+this.currentMaster+" timed out.  retry?\n");
             this.currentMaster++;
         }
         throw new JolRuntimeException("timed out on all masters");
@@ -568,10 +565,10 @@ public class Shell {
     }
 
     private void usage() {
-        java.lang.System.err.println("Usage: java gfs.Shell op_name args");
-        java.lang.System.err.println("Where op_name = {append,create,ls,read,rm}");
+        System.err.println("Usage: java gfs.Shell op_name args");
+        System.err.println("Where op_name = {append,create,ls,read,rm}");
 
         shutdown();
-        java.lang.System.exit(0);
+        System.exit(0);
     }
 }

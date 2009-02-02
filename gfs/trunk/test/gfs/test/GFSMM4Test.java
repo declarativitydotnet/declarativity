@@ -5,44 +5,39 @@ import gfs.test.TestCommon;
 import org.junit.Test;
 
 public class GFSMM4Test extends TestCommon {
+    @Test
+    public void test2() {
+        try {
+            startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
-  @Test
-  public void test2() {
-    try { 
-      startMany("localhost:5500","localhost:5502","localhost:5503");
-      
-      //shell = new Shell();
-      //createFile(shell,"foo");
+            // shell = new Shell();
+            // createFile(shell,"foo");
 
-      /* kill one of the masters */
-      killMaster(1);
+            /* kill one of the masters */
+            killMaster(1);
 
-     // shell = new Shell();
-     // createFile(shell,"foo");
-     // createFile(shell,"bar");
+            // shell = new Shell();
+            // createFile(shell,"foo");
+            // createFile(shell,"bar");
 
-        shellCreate("foo");
-        shellCreate("bar");
+            shellCreate("foo");
+            shellCreate("bar");
 
+            assertTrue(shellLs("foo", "bar"));
 
-      assertTrue(shellLs("foo","bar"));
-    
-     //   shellRm("foo");
-        
-        ///assertTrue(!shellLs("foo"));
+            // shellRm("foo");
 
-      shutdown();
+            // /assertTrue(!shellLs("foo"));
 
-    } catch (Exception e) {
-      java.lang.System.out.println("something went wrong: "+e);
-      java.lang.System.exit(1);
+            shutdown();
+        } catch (Exception e) {
+            System.out.println("something went wrong: " + e);
+            System.exit(1);
+        }
     }
-  }
 
-
-  public static void main(String[] args) throws Exception {
-    GFSMM4Test t = new GFSMM4Test();
-    t.test2();
-  }
-
+    public static void main(String[] args) throws Exception {
+        GFSMM4Test t = new GFSMM4Test();
+        t.test2();
+    }
 }
