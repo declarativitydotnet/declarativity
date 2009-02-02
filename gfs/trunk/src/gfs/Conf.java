@@ -45,9 +45,11 @@ public class Conf {
     public static void setSelfAddress(String addr) {
         selfAddr = addr;
     }
+
     public static long getChunkSize() {
         return chunkSize;
     }
+
     public static int getRepFactor() {
         return replicationFactor;
     }
@@ -57,17 +59,20 @@ public class Conf {
     }
 
     public static String getSelfAddress() {
-        //if (selfAddr == null)
-        //    throw new IllegalStateException();
+        if (selfAddr == null)
+            throw new IllegalStateException();
 
         return selfAddr;
     }
+
     public static long getFileOpTimeout() {
         return fileOpTimeout;
     }
+
     public static long getListingTimeout() {
         return listingTimeout;
     }
+
     public static void setNewMasterList(String... args) {
         masterNodes = new Host[args.length];
         for (int i = 0; i < args.length; i++) {
