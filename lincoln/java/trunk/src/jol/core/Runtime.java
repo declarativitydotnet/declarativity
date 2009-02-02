@@ -86,12 +86,12 @@ public class Runtime implements JolSystem {
 		this.catalog.register(this.clock);
 
 		this.catalog.register(new QueryTable(this));
-		this.catalog.register(new Log(this, java.lang.System.err));
+		this.catalog.register(new Log(this, System.err));
 
 		this.executor   = Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors());
 		this.timer      = new Timer("Timer", true);
 		this.driver     = new Driver(this, schedule, clock, executor);
-		this.network    = null; 
+		this.network    = null;
 		this.thread     = null;
 	}
 
@@ -346,11 +346,11 @@ public class Runtime implements JolSystem {
 			}
 		};
 	}
-	
+
 	public static JolSystem create() throws JolRuntimeException {
 		return create(-1, defaultLoader());
 	}
-	
+
 	public static JolSystem create(int port) throws JolRuntimeException {
 		return create(port, defaultLoader());
 	}
@@ -387,8 +387,8 @@ public class Runtime implements JolSystem {
 
 	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, JolRuntimeException {
 		if (args.length < 1) {
-			java.lang.System.out.println("Usage: jol.core.Runtime [-d] [-p port] program");
-			java.lang.System.exit(1);
+			System.out.println("Usage: jol.core.Runtime [-d] [-p port] program");
+			System.exit(1);
 		}
 
 		ArrayList<String> arguments = new ArrayList<String>();
@@ -400,7 +400,7 @@ public class Runtime implements JolSystem {
 				if (arg.length() > "-d".length()) {
 					debugger = arg.substring(1, arg.length());
 					debugger = debugger.trim();
-					java.lang.System.err.println("DEBUGGER: " + debugger);
+					System.err.println("DEBUGGER: " + debugger);
 				}
 				else {
 					debugger = args[++i].trim();
