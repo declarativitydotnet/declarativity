@@ -1,6 +1,6 @@
 package gfs;
 
-import jol.core.System;
+import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -12,7 +12,7 @@ import jol.types.table.Table.Callback;
 public class Master {
     private final String address;
     private final int port;
-    private System system;
+    private JolSystem system;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
         if (args.length != 1)

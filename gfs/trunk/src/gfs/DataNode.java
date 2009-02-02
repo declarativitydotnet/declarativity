@@ -2,7 +2,7 @@ package gfs;
 
 import java.io.File;
 
-import jol.core.System;
+import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -37,7 +37,7 @@ public class DataNode {
     private String fsRoot;
     private DataServer dserver;
     private Thread serverThread;
-    private System system;
+    private JolSystem system;
 
     public DataNode(int nodeId, String fsRoot) {
         this.nodeId = nodeId;
