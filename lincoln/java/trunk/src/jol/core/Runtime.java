@@ -33,10 +33,10 @@ import jol.types.table.Table.Catalog;
  * {@link #evaluate()}, or asynchronously in its own thread by calling
  * {@link Runtime#start()}.
  *
- * Implements the {@link System} interface through which outside programs
+ * Implements the {@link JolSystem} interface through which outside programs
  * interact with the OverLog library.
  */
-public class Runtime implements System {
+public class Runtime implements JolSystem {
 	/** Used to grab a quick identifier. */
 	private static Long idgenerator = 0L;
 
@@ -347,11 +347,11 @@ public class Runtime implements System {
 		};
 	}
 	
-	public static System create() throws JolRuntimeException {
+	public static JolSystem create() throws JolRuntimeException {
 		return create(-1, defaultLoader());
 	}
 	
-	public static System create(int port) throws JolRuntimeException {
+	public static JolSystem create(int port) throws JolRuntimeException {
 		return create(port, defaultLoader());
 	}
 	/**
@@ -360,7 +360,7 @@ public class Runtime implements System {
 	 * @return A new runtime object.
 	 * @throws JolRuntimeException If something went wrong during bootstrap.
 	 */
-	public static System create(int port, ResourceLoader l) throws JolRuntimeException {
+	public static JolSystem create(int port, ResourceLoader l) throws JolRuntimeException {
 		try {
 			Runtime.loader = l;
 			Runtime runtime = new Runtime();
