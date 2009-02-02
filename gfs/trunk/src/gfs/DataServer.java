@@ -81,24 +81,21 @@ public class DataServer implements Runnable {
             try {
                 int chunkId = readChunkId();
                 List<String> path = readHeaders();
-                path.add(String.valueOf(chunkId));
 
                 File newf = createChunkFile(chunkId);
                 System.out.println("Ready to read file in\n");
-
                 FileChannel fc = new FileOutputStream(newf).getChannel();
                 fc.transferFrom(this.channel, 0, Conf.getChunkSize());
                 fc.close();
 
                 // we are not pipelining yet.
-                if (path.size() > 1) {
+                if (path.size() > 0) {
                     System.out.println("path size was " + path.size());
-                    copyToNext(newf, path);
+                    copyToNext(newf, chunkId, path);
                 }
 
                 // sadly, for the time being,
                 createCRCFile(chunkId, getFileChecksum(newf));
-
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -114,16 +111,15 @@ public class DataServer implements Runnable {
             }
         }
 
-        private void copyToNext(File f, List<String> path) {
+        private void copyToNext(File f, int chunkId, List<String> path) {
             try {
-                Socket sock = Shell.setupStream(path.get(0));
-                SocketChannel chan = sock.getChannel();
-                if (chan == null) {
-                    System.out.println("OHNO\n");
-                }
+                String nextAddr = path.remove(0);
+                Socket sock = Shell.setupStream(nextAddr);
                 DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
-                Shell.sendRoutedData(dos, path);
+                Shell.sendRoutedData(dos, chunkId, path);
                 System.out.println("routed data sent\n");
+
+                SocketChannel chan = sock.getChannel();
                 FileChannel fc = new FileInputStream(f).getChannel();
                 System.out.println("got fc\n" + fc.toString());
                 fc.transferTo(0, Conf.getChunkSize(), chan);
@@ -273,9 +269,9 @@ public class DataServer implements Runnable {
                 + chunkId + ".cksum";
         File newf = new File(filename);
         try {
-            if (!newf.createNewFile()) {
+            if (!newf.createNewFile())
                 throw new RuntimeException("Failed to create fresh file " + filename);
-            }
+
             FileOutputStream fos = new FileOutputStream(newf);
             // temporary
             fos.write(new Long(checksum).toString().getBytes());
