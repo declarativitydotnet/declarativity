@@ -18,7 +18,7 @@ public class DataNode {
 
         int dataNodeIdx = Integer.parseInt(args[0]);
         if (dataNodeIdx < 0 || dataNodeIdx >= Conf.getNumDataNodes()) {
-            java.lang.System.err.println("Illegal data node index: " + dataNodeIdx);
+            System.err.println("Illegal data node index: " + dataNodeIdx);
             usage();
         }
 
@@ -27,9 +27,9 @@ public class DataNode {
     }
 
     private static void usage() {
-        java.lang.System.err.println("Usage: gfs.DataNode index dir_root");
-        java.lang.System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumDataNodes() - 1));
-        java.lang.System.exit(1);
+        System.err.println("Usage: gfs.DataNode index dir_root");
+        System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumDataNodes() - 1));
+        System.exit(1);
     }
 
     private int nodeId;
@@ -71,8 +71,8 @@ public class DataNode {
 
         this.system.start();
 
-        java.lang.System.out.println("DataNode @ " + this.port + " (" +
-                                     Conf.getDataNodeDataPort(this.nodeId) + ") ready!");
+        System.out.println("DataNode @ " + this.port + " (" +
+                           Conf.getDataNodeDataPort(this.nodeId) + ") ready!");
     }
 
     public void stop() {
@@ -89,7 +89,7 @@ public class DataNode {
             if (!root.mkdir())
                 throw new RuntimeException("Failed to create directory: " + root);
 
-            java.lang.System.out.println("Created new root directory: " + root);
+            System.out.println("Created new root directory: " + root);
         }
     }
 }
