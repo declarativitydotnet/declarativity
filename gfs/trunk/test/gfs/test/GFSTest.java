@@ -1,8 +1,5 @@
 package gfs.test;
 
-import gfs.Master;
-import gfs.Shell;
-
 import org.junit.Test;
 
 public class GFSTest extends TestCommon {
