@@ -1,9 +1,9 @@
 program gfs_global;
 
-import jol.types.basic.ValueList;
+import java.util.ArrayList;
 
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean});
 
 // Node, file name, chunk IDs
-define(file, keys(0, 1), {String, String, ValueList});
+define(file, keys(0, 1), {String, String, ArrayList});

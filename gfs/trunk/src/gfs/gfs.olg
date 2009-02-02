@@ -1,6 +1,8 @@
 program gfs;
 
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.Arrays;
 import jol.types.basic.ValueList;
 import gfs.Conf;
 import gfs.Master;
@@ -12,7 +14,7 @@ self(Conf.getSelfAddress());
 
 gfs_global::file(Self, "Foo", Chunks) :-
     self(Self),
-    Chunks := new ValueList({1,2,3});
+    Chunks := new ArrayList(Arrays.asList({1,2,3}));
 
 // Node, Master node
 watch(master_for_node, ae);
@@ -33,7 +35,7 @@ request(@Master, ReqId, Source, ReqType, Args) :-
     start_request(@Source, ReqId, ReqType, Args);
 
 // Client node, Request ID, Master node, Success, Results
-define(response, keys(0, 1), {String, Integer, String, Boolean, ValueList});
+define(response, keys(0, 1), {String, Integer, String, Boolean, ArrayList});
 watch(response, ae);
 
 define(chunkSeq, keys(0), {String, Integer});
@@ -43,30 +45,30 @@ chunkSeq(Master, Top+1) :-
     notin chunkSeq(Master,SomeId),
     chunkHWM(Master,Top);
 
+// if we get a "NewChunk" request for a file, create a new chunk id
 chunkSeq(Master, I+1) :-
     chunkSeq(Master, I),
     request#insert(Master, Id, Source, "NewChunk", _);
 
-// if we get a "NewChunk" request for a file, create a new chunk id
 response(@Source, Id, Master, true, Result) :-
     //request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
     newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
-    Result.insert(NewChunkId.toString());
+    // Hack: add the new chunk id to the end of the result list
+    Result.add(NewChunkId.toString());
 
-define(newListHolder,keys(0,2),{String,String,Integer,ValueList,Integer,String});
+define(newListHolder,keys(0,2),{String,String,Integer,ArrayList,Integer,String});
 watch(newListHolder, ae);
 
 newListHolder(Master,Source,Id,List,NewChunkId,FName) :-
-    candidate_datanode(Master, Id, Source, FName, NewChunkId, Stuff),
-    request(Master, Id, Source, NewChunk, FName),
-    List := new ValueList(Stuff.toArray());
+    candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
+    request(Master, Id, Source, NewChunk, FName);
 
 define(chunk_cnt, keys(0,1), {String,String,Integer});
 //watch(chunk_cnt, ae);
 chunk_cnt(Master, DataNode, count<ChunkId>) :-
     //long_period(_,_,_),
-    chunks(Master, DataNode, ChunkId,_);
+    chunks(Master, DataNode, ChunkId, _);
 
 /*
 define(lowest_loaded_nodes,keys(0,2), {String, Integer, String});
@@ -78,13 +80,13 @@ lowest_loaded_nodes(Master, Cnt, DataNode) :-
 delete
 possible_choices(Master, Cnt, DataNode, Id) :-
     possible_choices(Master, Cnt, DataNode, Id),
-    lowest_loaded_nodes(Master,Cnt,DataNode);
+    lowest_loaded_nodes(Master, Cnt, DataNode);
 
 define(flatk,keys(0,1),{String, Integer});
 //watch(flatk, ae);
 flatk(Master, IdFlat) :-
     flatten(kpile(Master, Id)),
-    IdFlat := (Integer)Id;
+    IdFlat := (Integer) Id;
 
 define(kpile,keys(0,1), {String, ValueList});
 watch(kpile, ae);
@@ -107,10 +109,9 @@ possible_choices(Master, Cnt, DataNode, Id) :-
 define(flat_cnt, keys(0,1), {String, Integer});
 flat_cnt(Master, Cnt) :-
     flatten(lowest_loaded_cnt(Master, BK)),
-    Cnt := (Integer)BK;
+    Cnt := (Integer) BK;
 
 define(lowest_loaded_cnt, keys(0), {String,ValueList});
-//watch(lowest_loaded_cnt, ae);
 lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
     chunk_cnt(Master, _, Cnt);
 
@@ -121,10 +122,10 @@ lowest_loaded_cnt(Master, Cnts) :-
     lowest_loaded_nodes#insert(Master, Cnt, DataNode);
 */
 
+define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ArrayList});
 watch(candidate_datanode, ae);
 
-define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ValueList});
-candidate_datanode(Master, Id, Source, FName, I, generic<(new ValueList()).insert(DataNode)>) :-
+candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(DataNode)>) :-
     request(Master, Id, Source, "NewChunk", FName),
     chunkSeq(Master,I),
     //lowest_loaded_nodes(Master, Cnt, DataNode),
@@ -172,9 +173,9 @@ chunkHWM(Master,max<ChunkId>) :-
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return a list of the nodes holding that chunk. Otherwise, return
 // an error.
-define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, String, ValueList});
+define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, String, ArrayList});
 
-compute_chunk_locs(@Master, ReqId, Source, generic<(new ValueList()).insert(NodeAddr)>) :-
+compute_chunk_locs(@Master, ReqId, Source, generic<(new ArrayList()).add(NodeAddr)>) :-
     //request(@Master, ReqId, Source, "ChunkLocations", ChunkId),
     clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
     chunks(@Master, NodeAddr, ChunkId, _);
