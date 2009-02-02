@@ -25,6 +25,7 @@ import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
+import java.lang.System;
 
 /**
  * The system runtime. Contains a reference to all state in an instance of the
