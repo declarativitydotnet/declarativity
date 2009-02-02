@@ -130,24 +130,6 @@ public class DataServer implements Runnable {
             }
         }
 
-        private int dataTransfer(int chunkId, String[] path) {
-            final int bufferSize = 8192;
-            try {
-                File newf = createChunkFile(chunkId);
-                FileChannel fc = new FileOutputStream(newf).getChannel();
-                int sent = 0;
-                while (sent < Conf.getChunkSize()) {
-                    fc.transferFrom(this.channel, sent, bufferSize);
-                    sent += bufferSize;
-                }
-                fc.close();
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return 0;
-        }
-
         private int readChunkId() {
             try {
                 return this.in.readInt();
@@ -251,12 +233,13 @@ public class DataServer implements Runnable {
         while (true) {
             try {
                 SocketChannel channel = this.listener.accept();
-
                 DataWorker dw = new DataWorker(channel);
                 Thread t = new Thread(this.workers, dw);
                 t.start();
             } catch (AsynchronousCloseException e) {
+                throw new RuntimeException(e);
             } catch (ClosedChannelException e) {
+                throw new RuntimeException(e);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
