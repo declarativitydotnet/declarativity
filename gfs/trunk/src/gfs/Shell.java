@@ -1,9 +1,9 @@
 package gfs;
 
 import java.io.DataInputStream;
-import java.io.InputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -15,9 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-
-import jol.core.Runtime;
 import jol.core.JolSystem;
+import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.ValueList;
@@ -110,11 +109,13 @@ public class Shell {
 
         int b = 1;
         while (b != -1) {
-            ValueList<String> chunks = getNewChunk(filename);
-            Socket sock = setupStream(chunks.get(0));
+            ValueList<String> path = getNewChunk(filename);
+            String firstAddr = path.remove(0);
+            int chunkId = Integer.valueOf(path.remove(path.size() - 1));
+            Socket sock = setupStream(firstAddr);
             try {
                 DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
-                sendRoutedData(dos,chunks);
+                sendRoutedData(dos, chunkId, path);
                 int read = 0;
                 while (b != -1 && read < Conf.getChunkSize()) {
                     byte buf[] = new byte[Conf.getBufSize()];
@@ -130,7 +131,6 @@ public class Shell {
                 throw new RuntimeException(e);
             }
         }
-
     }
 
     private void doRead(List<String> args) throws UpdateException,JolRuntimeException {
@@ -311,23 +311,20 @@ public class Shell {
         }
     }
 
-    public static void sendRoutedData(DataOutputStream dos, List<String> l) {
+    public static void sendRoutedData(DataOutputStream dos, int chunkId, List<String> path) {
         try {
             dos.writeByte(DataProtocol.WRITE_OPERATION);
-            // the last element of the list is our new chunkid
-            System.out.println("next hop is "+l.get(l.size()-1));
-            dos.writeInt(Integer.valueOf(l.get(l.size()-1)));
+            dos.writeInt(chunkId);
 
-            int newSize = l.size() - 2;
-            // the real size of the list is the list, minus the address we just contacted and the chunkid
+            int newSize = path.size();
             if (newSize > Conf.getRepFactor() - 1) {
                 newSize = Conf.getRepFactor() - 1;
             }
 
             dos.writeInt(newSize);
-            for (int i = 1; i < newSize+1; i++) {
-                System.out.println("write "+l.get(i));
-                dos.writeChars(l.get(i));
+            for (int i = 0; i < newSize; i++) {
+                System.out.println("write " + path.get(i));
+                dos.writeChars(path.get(i));
                 dos.writeChar('|');
             }
             dos.writeChar(';');
