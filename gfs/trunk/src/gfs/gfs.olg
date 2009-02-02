@@ -297,13 +297,13 @@ define(chunks, keys(0, 1, 2),{String, String, Integer, Long});
 chunks(Master, DataNode, ChunkId, MaxTstamp) :-
     sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
     dataNodes(Master, DataNode, MaxTstamp),
-    (java.lang.System.currentTimeMillis() - MaxTstamp) < 10000L;
+    (System.currentTimeMillis() - MaxTstamp) < 10000L;
 
 delete
 chunks(Master, DataNode, ChunkId, Ts) :-
     chunks(Master, DataNode, ChunkId, Ts),
     clock(_, _, _),
-    (java.lang.System.currentTimeMillis() - Ts) > 10000L;
+    (System.currentTimeMillis() - Ts) > 10000L;
 
 
 /**************************/

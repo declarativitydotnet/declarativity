@@ -19,7 +19,7 @@ public class GFSMM1Test extends TestCommon {
         } catch (Exception e) {
             System.out.println("something went wrong!");
             e.printStackTrace();
-            java.lang.System.exit(1);
+            System.exit(1);
         }
     }
 
