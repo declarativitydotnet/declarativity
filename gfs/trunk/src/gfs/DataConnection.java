@@ -76,6 +76,14 @@ public class DataConnection {
         }
     }
 
+    void write(byte[] buf) {
+        try {
+            this.dos.write(buf);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     void close() {
         try {
             this.socket.close();
