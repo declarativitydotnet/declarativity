@@ -180,7 +180,6 @@ public class MultiPaxosTest {
         Callback cb = new Callback() {
             public void deletion(TupleSet tuples) {}
 
-        int count = 0;
             public void insertion(TupleSet tuples) {
                 java.lang.System.out.println("Got insert!");
                 String msg = standardTest(tuples,0,"foo","bar","bas");
@@ -224,7 +223,6 @@ public class MultiPaxosTest {
         Callback cb = new Callback() {
             public void deletion(TupleSet tuples) {}
 
-        int count = 0;
             public void insertion(TupleSet tuples) {
                 java.lang.System.out.println("Got insert!");
                 String msg = standardTest(tuples,0,"foo","bar","bas");
