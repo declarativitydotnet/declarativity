@@ -22,55 +22,55 @@ import org.junit.Test;
 public class PingPongTest {
     private static class NodeTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("pingpong", "nodes");
-        
+
         public static final Key PRIMARY_KEY = new Key(0);
-        
+
         public enum Field {
             ADDRESS
         };
-        
+
         public static final Class[] SCHEMA = {
             String.class    // Address
         };
-        
+
         NodeTable(Runtime context) {
             super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
-    
+
     private static class SelfTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("pingpong", "self");
-        
+
         public static final Key PRIMARY_KEY = new Key(0);
-        
+
         public enum Field {
             ADDRESS
         }
-        
+
         public static final Class[] SCHEMA = {
             String.class    // Address
         };
-        
+
         SelfTable(Runtime context) {
             super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
     }
-    
+
     private static class InMessageTable extends ObjectTable {
         public static final TableName TABLENAME = new TableName("pingpong", "inmessage");
-        
+
         public static final Key PRIMARY_KEY = new Key(0);
-        
+
         public enum Field {
             ID,
             COUNT
         };
-        
+
         public static final Class[] SCHEMA = {
             Integer.class,
             Integer.class
         };
-        
+
         InMessageTable(Runtime context) {
             super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
         }
@@ -89,7 +89,7 @@ public class PingPongTest {
         this.systems = new JolSystem[2];
         this.systems[0] = this.pinger = Runtime.create(PINGER_PORT);
         this.systems[1] = this.ponger = Runtime.create(PONGER_PORT);
-        
+
         for (JolSystem s : this.systems)
         {
             s.catalog().register(new NodeTable((Runtime) s));
@@ -103,19 +103,19 @@ public class PingPongTest {
             s.install("pingpong", u);
             s.evaluate();
         }
-        
+
         /* Tell each runtime about the set of nodes in the cluster */
         TupleSet nodes = new TupleSet();
         nodes.add(new Tuple(this.makeAddr(PINGER_PORT)));
         nodes.add(new Tuple(this.makeAddr(PONGER_PORT)));
         for (JolSystem s : this.systems)
             s.schedule("pingpong", NodeTable.TABLENAME, nodes, null);
-        
+
         /* Tell each runtime its own address */
         TupleSet self = new TupleSet();
         self.add(new Tuple(this.makeAddr(PINGER_PORT)));
         this.pinger.schedule("pingpong", SelfTable.TABLENAME, self, null);
-        
+
         self.clear();
         self.add(new Tuple(this.makeAddr(PONGER_PORT)));
         this.ponger.schedule("pingpong", SelfTable.TABLENAME, self, null);
@@ -123,13 +123,13 @@ public class PingPongTest {
         for (JolSystem s : this.systems)
             s.evaluate();
     }
-    
+
     @After
     public void shutdown() {
         for (JolSystem s : this.systems)
             s.shutdown();
     }
-    
+
     @Test
         public void simplePingPongTest() throws UpdateException, InterruptedException {
         /* Arrange to block until the callback tells us we're done */
@@ -139,7 +139,7 @@ public class PingPongTest {
             public void deletion(TupleSet tuples) {}
 
             public void insertion(TupleSet tuples) {
-                java.lang.System.out.println("Got insert!");
+                System.out.println("Got insert!");
                 boolean done = false;
 
                 for (Tuple t : tuples) {
@@ -174,15 +174,15 @@ public class PingPongTest {
         for (JolSystem s : this.systems)
             s.start();
 
-        java.lang.System.out.println("test started, waiting for callback...");
+        System.out.println("test started, waiting for callback...");
         queue.take();
-        java.lang.System.out.println("done!");
+        System.out.println("done!");
     }
-    
+
     private int getNewId() {
         return this.nextId++;
     }
-    
+
     private String makeAddr(int port) {
         return "tcp:localhost:" + port;
     }

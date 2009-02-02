@@ -174,9 +174,9 @@ public class Driver implements Runnable {
 			if (deletions == null)  deletions = new TupleSet(name);
 
 			if (time < context.clock().current()) {
-				java.lang.System.err.println("ERROR: Evaluating schedule tuple with time = " +
-						                      time + " < current clock " + context.clock().current() +
-						                      ": PROGRAM " + program + " TUPLE NAME " + name);
+				System.err.println("ERROR: Evaluating schedule tuple with time = " +
+						           time + " < current clock " + context.clock().current() +
+						           ": PROGRAM " + program + " TUPLE NAME " + name);
 			}
 			if (insertions.size() == 0 && deletions.size() == 0) {
 				return null;
@@ -381,7 +381,7 @@ public class Driver implements Runnable {
 					if (watchInsert != null) {
 						try { watchInsert.rule(query.rule()); watchInsert.evaluate(insertions);
 						} catch (JolRuntimeException e) {
-							java.lang.System.err.println("WATCH INSERTION FAILURE ON " + name + "!");
+							System.err.println("WATCH INSERTION FAILURE ON " + name + "!");
 						}
 					}
 
@@ -394,7 +394,7 @@ public class Driver implements Runnable {
 							result = query.evaluate(insertions);
 						} catch (JolRuntimeException e) {
 							e.printStackTrace();
-							java.lang.System.exit(0);
+							System.exit(0);
 						}
 
 						if (result.size() > 0) {
@@ -442,7 +442,7 @@ public class Driver implements Runnable {
 							}
 						} catch (JolRuntimeException e) {
 							e.printStackTrace();
-							java.lang.System.exit(0);
+							System.exit(0);
 						}
 					}
 				}
@@ -580,7 +580,7 @@ public class Driver implements Runnable {
 				try {
 					evaluate();
 				} catch (UpdateException e) {
-					java.lang.System.err.println(e);
+					System.err.println(e);
 					return;
 				}
 
@@ -635,7 +635,7 @@ public class Driver implements Runnable {
 		}
 
 		TupleSet time = clock.time(this.logicalTime);
-		if (debug) java.lang.System.err.println("============================     EVALUATE SCHEDULE     =============================");
+		if (debug) System.err.println("============================     EVALUATE SCHEDULE     =============================");
 		evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
 
 		/* Evaluate task queue. */
@@ -644,7 +644,7 @@ public class Driver implements Runnable {
 		}
 		evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
 		StasisTable.commit();
-		if (debug) java.lang.System.err.println("============================ ========================== ============================");
+		if (debug) System.err.println("============================ ========================== ============================");
 	}
 	public void timestampPrepare() throws UpdateException {
 		while (schedule.cardinality() > 0) {
