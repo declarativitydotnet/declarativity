@@ -76,7 +76,7 @@ public class DataServer implements Runnable {
         }
 
         private void doWriteOperation() {
-            java.lang.System.out.println("WRITE OP\n");
+            System.out.println("WRITE OP\n");
 
             try {
                 int chunkId = readChunkId();
@@ -119,13 +119,13 @@ public class DataServer implements Runnable {
                 Socket sock = Shell.setupStream(path.get(0));
                 SocketChannel chan = sock.getChannel();
                 if (chan == null) {
-                    java.lang.System.out.println("OHNO\n");
+                    System.out.println("OHNO\n");
                 }
                 DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
                 Shell.sendRoutedData(dos, path);
                 System.out.println("routed data sent\n");
                 FileChannel fc = new FileInputStream(f).getChannel();
-                java.lang.System.out.println("got fc\n" + fc.toString());
+                System.out.println("got fc\n" + fc.toString());
                 fc.transferTo(0, Conf.getChunkSize(), chan);
                 fc.close();
                 sock.close();

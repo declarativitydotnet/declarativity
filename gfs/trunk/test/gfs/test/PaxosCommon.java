@@ -82,7 +82,7 @@ public class PaxosCommon {
     public void setup(int... members) throws JolRuntimeException, UpdateException {
         this.systems = new JolSystem[members.length];
         this.ports = new int[members.length];
-        java.lang.System.out.println("ml is " + members.length);
+        System.out.println("ml is " + members.length);
         for (int i = 0; i < members.length; i++) {
             this.systems[i] = Runtime.create(members[i]);
             this.ports[i] = members[i];
