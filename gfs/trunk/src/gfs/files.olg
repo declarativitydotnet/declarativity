@@ -1,5 +1,6 @@
 program gfs;
 
+import java.lang.System;
 import java.io.File;
 import java.util.ArrayList;
 import jol.core.Runtime;
@@ -75,14 +76,13 @@ heartBeat(Host, Master, Chunk, Tstamp, Id) :-
     Chunk := Integer.valueOf(File),
     masters(Host,Master),
     clock(_,_,_),
-    Tstamp := java.lang.System.currentTimeMillis(),
+    Tstamp := System.currentTimeMillis(),
     Id := Runtime.idgen();
-
 
 heartBeat(Host,Master,-1,Tstamp,-1) :-
     masters(Host,Master),
     clock(_,_,_),
-    Tstamp := java.lang.System.currentTimeMillis(),
+    Tstamp := System.currentTimeMillis(),
     Id := Runtime.idgen();
 
 
