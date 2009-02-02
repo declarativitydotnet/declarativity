@@ -40,15 +40,14 @@ public class TestCommon {
     }
 
     protected Boolean shellLs(String... list) throws JolRuntimeException,
-            UpdateException, InterruptedException {
+            UpdateException {
         Shell shell = new Shell();
         Boolean ret = findInLs(shell, list);
         shell.shutdown();
         return ret;
     }
 
-    protected int shellLsCnt() throws JolRuntimeException,
-            UpdateException, InterruptedException {
+    protected int shellLsCnt() throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
         int ret = lsCnt(shell);
         shell.shutdown();
