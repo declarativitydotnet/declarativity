@@ -57,9 +57,9 @@ actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
 	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _),
 	jobtracker::job(JobId, JobName, JobFile),
-	jobtracker::task(JobId, TaskId, Type, Partition, Split, MapCount, _),
+	jobtracker::task(JobId, TaskId, Type, Partition, FileInput, MapCount, _),
 	Action := Type == Constants.TaskType.MAP ? 
-	          Function.launchMap(Split, JobFile, TaskId, AttemptID, Partition) :
+	          Function.launchMap(FileInput.split(), JobFile, TaskId, AttemptID, Partition) :
 	          Function.launchReduce(JobFile, TaskId, AttemptID, Partition, MapCount);
  
 /******************** Process Jobs *******************/
