@@ -3,14 +3,11 @@ package org.apache.hadoop.mapred.declarative.table;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobPriority;
-import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.declarative.util.JobState;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.Wrapper;
-import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
@@ -31,7 +28,7 @@ public class JobTable extends ObjectTable {
 		JobID.class,        // JobID
 		String.class,       // Name
 		String.class,       // File
-		Wrapper.class,      // JobConf
+		JobConf.class,      // JobConf
 		String.class,       // User
 		String.class,       // URL
 		JobPriority.class,  // Priority
@@ -47,7 +44,7 @@ public class JobTable extends ObjectTable {
 		return new Tuple(jobid, 
 				         conf.getJobName(), 
 				         jobFile,
-				         new Wrapper<JobConf>(conf),
+				         conf,
 				         conf.getUser(), 
 				         url, 
 				         conf.getJobPriority(),

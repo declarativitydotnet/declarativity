@@ -35,12 +35,15 @@ public class JobState implements Comparable<JobState> {
 		this.reduces = new HashSet<TaskState>();
 	}
 	
+	public JobState(JobID jobid, ComparableSet maps) {
+		this(jobid, maps, null);
+	}
+	
 	public JobState(JobID jobid, ComparableSet maps, ComparableSet reduces) {
 		this.jobid   = jobid;
 		this.state   = Constants.JobState.RUNNING;
 		this.maps    = maps;
 		this.reduces = reduces;
-		// System.err.println("MAPS " + maps + ", REDUCES " + reduces);
 	}
 	
 	@Override
@@ -109,10 +112,15 @@ public class JobState implements Comparable<JobState> {
 				mapProgress += map.progress();
 			}
 			mapProgress = mapProgress / (float) this.maps.size();
-			for (TaskState reduce : reduces) {
-				reduceProgress += reduce.progress();
+			if (reduces == null) {
+				reduceProgress = 1f;
 			}
-			reduceProgress = reduceProgress / (float) this.reduces.size();
+			else {
+				for (TaskState reduce : reduces) {
+					reduceProgress += reduce.progress();
+				}
+				reduceProgress = reduceProgress / (float) this.reduces.size();
+			}
 		}
 		else if (this.state == Constants.JobState.SUCCEEDED) {
 			mapProgress = reduceProgress = 1f;

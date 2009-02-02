@@ -111,7 +111,7 @@ public class JobTrackerImpl extends JobTracker {
 	    	try {
 	    		// if we haven't contacted the namenode go ahead and do it
 	    		if (fs == null) {
-	    			fs = FileSystem.getLocal(conf);
+	    			fs = FileSystem.get(conf);
 	    		}
 	    		this.systemDir = new Path(conf.get("mapred.system.dir", "/tmp/hadoop/mapred/system"));  
 	    		this.systemDir = fs.makeQualified(this.systemDir);
@@ -148,7 +148,7 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new JobTable(context));
 		this.context().catalog().register(new TaskAttemptTable(context));
 		this.context().catalog().register(new TaskCreate(this));
-		this.context().catalog().register(new AssignTracker(this));
+		// this.context().catalog().register(new AssignTracker(this));
 		this.context().catalog().register(new TaskReportTable(context));
 		this.context().catalog().register(new TaskTable(context));
 		this.context().catalog().register(new TaskTrackerActionTable(context));

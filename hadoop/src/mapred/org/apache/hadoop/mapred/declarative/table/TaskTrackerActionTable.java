@@ -10,7 +10,6 @@ import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.Wrapper;
 import jol.types.exception.BadKeyException;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
@@ -32,7 +31,7 @@ public class TaskTrackerActionTable extends ObjectTable {
 	public static final Class[] SCHEMA = {
 		String.class,   // Tracker name
 		ActionType.class,     // Action type
-		Wrapper.class   // Action object
+		TaskTrackerAction.class   // Action object
 	};
 	
 	private Key nameKey;
@@ -48,9 +47,9 @@ public class TaskTrackerActionTable extends ObjectTable {
 		List<TaskTrackerAction> actions = new ArrayList<TaskTrackerAction>();
 		try {
 			for (Tuple tuple : secondary().get(this.nameKey).lookupByKey(trackerName)) {
-				Wrapper<TaskTrackerAction> action = 
-					(Wrapper<TaskTrackerAction>) tuple.value(Field.ACTION.ordinal());
-				actions.add(action.object());
+				TaskTrackerAction action = 
+					(TaskTrackerAction) tuple.value(Field.ACTION.ordinal());
+				actions.add(action);
 				tuples.add(tuple);
 			}
 		} catch (BadKeyException e) {
