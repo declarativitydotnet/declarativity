@@ -1,13 +1,14 @@
 program gfs;
 
+import java.io.File;
+import java.util.ArrayList;
 import jol.core.Runtime;
 import jol.types.basic.ValueList;
-import java.io.File;
 import gfs.Conf;
 
 define(chunk, keys(0,1), {String, String, String});
 define(chunkTmp, {String, String});
-define(dir, keys(0,1,2), {String, File, ValueList});
+define(dir, keys(0,1,2), {String, File, ArrayList});
 
 timer(clock,physical,5000,5000,5000);
 timer(periodic,logical,1,1,1);
@@ -24,12 +25,12 @@ watch(datadir, ae);
 dir(Host,DirObj,DirList) :-
     datadir(Host, Dir),
     DirObj := new File(Dir + File.separator + "chunks"),
-    DirList := DirObj.isDirectory() ? new ValueList(DirObj.list()) : new ValueList(),
+    DirList := DirObj.isDirectory() ? new ArrayList(DirObj.list()) : new ArrayList(),
     clock(_,_,_);
 
 define(indx,keys(0),{String,Integer});
 //watch(indx,ae);
-indx(Host,0) :-   
+indx(Host,0) :-
     dir#insert(Host,Dir,List);
 
 /*
@@ -61,10 +62,10 @@ chunk(Host, F, Checksum) :-
     Checksum := "foo",
     chunkTmp#insert(Host, F); /*,
     datadir(Host, Dir),
-    CSO := new gfs.ChunkCheckSum(); 
+    CSO := new gfs.ChunkCheckSum();
     Checksum := CSO.checksum();
     */
-    
+
 
 
 define(heartBeat,keys(0,1,2),{String,String,Integer,Long,Long});

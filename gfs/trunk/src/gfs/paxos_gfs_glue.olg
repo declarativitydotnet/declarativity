@@ -1,5 +1,8 @@
 program glue;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 watch(gfs_global::file,ae);
 
 public
@@ -24,7 +27,7 @@ public
 gfs_global::file(Master, FName, Blocks) :-
  // periodic(_,_,_),
   appView#insert(Master,From,Decree,Instance,FName,Op,Id),
-  Blocks := new ValueList(),
+  Blocks := new ArrayList(),
   Op == "i";
 
 
@@ -47,17 +50,13 @@ gfs_global::file(Master,FName,List) :-
     //Op == "u",
     //C2 := new ValueList(Chunks.toArray()),
     fileUpdate(Master,FName,List,I),
-    List.insert(I);
+    List.add(I);
 
-define(fileUpdate, keys(0,1), {String,String,ValueList,Integer} );
-fileUpdate(Master,FName,List,I) :-
+define(fileUpdate, keys(0,1), {String,String,ArrayList,Integer} );
+fileUpdate(Master,FName,Chunks,I) :-
     gfs_global::file(Master,FName,Chunks),
     appView#insert(Master,From,Decree,Instance,FName,Op,Id,I),
-    Op == "u",
-    //List := Chunks.size() > 0 ? new ValueList(Chunks.toArray()) : new ValueList();
-    List := new ValueList(Chunks.toArray());
-
-
+    Op == "u";
 
 timer(periodic,physical,3000,3000,3000);
 
@@ -68,16 +67,16 @@ public
 appView(Master,From,Decree,Instance,Name,Op,Id,I) :-
   paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
   periodic(_,_,_),
-  NVL := new ValueList(Decree.split(",")),
-  //Name := Decree.split(",")[0],
-  //Op := Decree.split(",")[1],
-  //Id := Integer.valueOf(Decree.split(",")[2]),
-  //  I := 100;
-  //I := Array.getLength((Decree.split(",")) < 4) ? -1 :  Integer.valueOf(Decree.split(",")[3]);
-    Name := (String)NVL.get(0),
-    Op := (String)NVL.get(1),
-    Id := Integer.valueOf((String)NVL.get(2)),
-    I := NVL.size() < 4 ? -1 : Integer.valueOf((String)NVL.get(3));
+  NVL := Arrays.asList(Decree.split(",")),
+  Name := (String) NVL.get(0),
+  Op := (String) NVL.get(1),
+  Id := Integer.valueOf((String) NVL.get(2)),
+  I := NVL.size() < 4 ? -1 : Integer.valueOf((String) NVL.get(3));
+//   NVL := Decree.split(","),
+//   Name := NVL[0],
+//   Op := NVL[1],
+//   Id := Integer.valueOf(NVL[2]),
+//   I := NVL.length < 4 ? -1 : Integer.valueOf(NVL[3]);
 
 public
 delete
