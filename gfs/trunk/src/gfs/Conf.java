@@ -41,11 +41,6 @@ public class Conf {
 
     private static int replicationFactor = 2;
 
-    /* NB: This must be called before installing "gfs.olg" */
-    public static void setSelfAddress(String addr) {
-        selfAddr = addr;
-    }
-
     public static long getChunkSize() {
         return chunkSize;
     }
@@ -58,10 +53,15 @@ public class Conf {
         return bufSize;
     }
 
-    public static String getSelfAddress() {
-        if (selfAddr == null)
-            throw new IllegalStateException();
+    /* NB: This must be called before installing "gfs.olg" */
+    public static void setSelfAddress(String addr) {
+        selfAddr = addr;
+    }
 
+    public static String getSelfAddress() {
+        // XXX: null check disabled because of EC2 for now
+        //if (selfAddress == null)
+        //    throw new IllegalStateException();
         return selfAddr;
     }
 
