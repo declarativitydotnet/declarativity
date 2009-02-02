@@ -5,7 +5,7 @@ import java.net.URL;
 import java.util.Random;
 
 import jol.core.Runtime;
-import jol.core.System;
+import jol.core.JolSystem;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
@@ -27,7 +27,7 @@ public class Tester {
 	
 	public static enum CheckField{CHECK, SOLUTION};
 	
-    private System sys;
+    private JolSystem sys;
     
     private URL programFile;
     
@@ -90,7 +90,7 @@ public class Tester {
     	}
     	writer.close();
     	
-        System system = Runtime.create(5000);
+        JolSystem system = Runtime.create(5000);
         system.install("test", ClassLoader.getSystemResource("jol/test/largedata.olg"));
         system.evaluate(); 
         system.evaluate(); 

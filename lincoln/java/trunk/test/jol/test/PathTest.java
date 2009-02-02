@@ -3,7 +3,7 @@ package jol.test;
 import java.net.URL;
 
 import jol.core.Runtime;
-import jol.core.System;
+import jol.core.JolSystem;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -41,7 +41,7 @@ public class PathTest {
         }
     }
 
-    private System sys;
+    private JolSystem sys;
 
     @Before
     public void setup() throws JolRuntimeException, UpdateException {

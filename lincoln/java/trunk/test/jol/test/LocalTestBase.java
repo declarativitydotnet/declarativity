@@ -3,7 +3,7 @@ package jol.test;
 import java.net.URL;
 
 import jol.core.Runtime;
-import jol.core.System;
+import jol.core.JolSystem;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 
@@ -11,7 +11,7 @@ import org.junit.After;
 import org.junit.Before;
 
 public abstract class LocalTestBase {
-    protected System sys;
+    protected JolSystem sys;
     @Before
     abstract public void setup() throws JolRuntimeException, UpdateException;
     

@@ -4,7 +4,7 @@ import java.net.URL;
 import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
-import jol.core.System;
+import jol.core.JolSystem;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -79,18 +79,18 @@ public class PingPongTest {
     private static final int PINGER_PORT = 5000;
     private static final int PONGER_PORT = 5001;
 
-    private System[] systems;
-    private System pinger;
-    private System ponger;
+    private JolSystem[] systems;
+    private JolSystem pinger;
+    private JolSystem ponger;
     private int nextId = 0;
 
     @Before
     public void setup() throws JolRuntimeException, UpdateException {
-        this.systems = new System[2];
+        this.systems = new JolSystem[2];
         this.systems[0] = this.pinger = Runtime.create(PINGER_PORT);
         this.systems[1] = this.ponger = Runtime.create(PONGER_PORT);
         
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
         {
             s.catalog().register(new NodeTable((Runtime) s));
             s.catalog().register(new SelfTable((Runtime) s));
@@ -99,7 +99,7 @@ public class PingPongTest {
         }
 
         URL u = ClassLoader.getSystemResource("jol/test/pingpong.olg");
-        for (System s : this.systems) {
+        for (JolSystem s : this.systems) {
             s.install("pingpong", u);
             s.evaluate();
         }
@@ -108,7 +108,7 @@ public class PingPongTest {
         TupleSet nodes = new TupleSet();
         nodes.add(new Tuple(this.makeAddr(PINGER_PORT)));
         nodes.add(new Tuple(this.makeAddr(PONGER_PORT)));
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
             s.schedule("pingpong", NodeTable.TABLENAME, nodes, null);
         
         /* Tell each runtime its own address */
@@ -120,13 +120,13 @@ public class PingPongTest {
         self.add(new Tuple(this.makeAddr(PONGER_PORT)));
         this.ponger.schedule("pingpong", SelfTable.TABLENAME, self, null);
 
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
             s.evaluate();
     }
     
     @After
     public void shutdown() {
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
             s.shutdown();
     }
     
@@ -171,7 +171,7 @@ public class PingPongTest {
         inmessage.add(new Tuple(this.getNewId(), 1));
         this.pinger.schedule("pingpong", InMessageTable.TABLENAME, inmessage, null);
 
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
             s.start();
 
         java.lang.System.out.println("test started, waiting for callback...");
