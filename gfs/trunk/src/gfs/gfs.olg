@@ -62,7 +62,7 @@ watch(newListHolder, ae);
 
 newListHolder(Master,Source,Id,List,NewChunkId,FName) :-
     candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
-    request(Master, Id, Source, NewChunk, FName);
+    request(Master, Id, Source, "NewChunk", FName);
 
 define(chunk_cnt, keys(0,1), {String,String,Integer});
 //watch(chunk_cnt, ae);
