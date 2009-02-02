@@ -16,6 +16,7 @@ import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Partitioner;
@@ -36,17 +37,20 @@ public class JobSimulator extends Thread {
 		private int maps;
 		private int reduces;
 		private Path input;
+		private JobPriority priority;
 		
-		public Job(String name, int maps, int reduces, Path input) {
+		public Job(JobPriority priority, String name, int maps, int reduces, Path input) {
 			this.name = name;
 			this.maps = maps;
 			this.reduces = reduces;
 			this.input = input;
+			this.priority = priority;
 		}
 
 		public void run() {
 			try {
 				JobConf job = new JobConf();
+				job.setJobPriority(this.priority);
 				job.setNumMapTasks(maps);
 				job.setNumReduceTasks(reduces);
 				job.setMapperClass(Job.class);
@@ -108,33 +112,27 @@ public class JobSimulator extends Thread {
 	
 	public void run() {
 		JobConf  conf = new JobConf();
-		FileSystem fs = null;
-		Path tempPath = new Path("/tmp/job.simulator.data");
 		try {
-			Random random = new Random();
-			fs = FileSystem.get(conf);
-			SequenceFile.Writer writer = 
-				SequenceFile.createWriter(fs, conf, tempPath, 
-						IntWritable.class, IntWritable.class);
-			writer.close();
 			while (!isInterrupted()) {
 				try {
-					sleep(20000);
+					sleep(1000);
+					Random random = new Random();
+					Path tempPath = new Path("/tmp/job.simulator.data" + random.nextInt(5));
+					FileSystem fs = FileSystem.get(conf);
+					SequenceFile.Writer writer = 
+						SequenceFile.createWriter(fs, conf, tempPath, 
+								IntWritable.class, IntWritable.class);
+					writer.close();
 					String name = "job" + jobs.size();
-					Job job = new Job("job"+jobs.size(), 2, 2, tempPath);
+					JobPriority[] priorities = JobPriority.values();
+					Job job = new Job(priorities[random.nextInt(priorities.length)],
+							          "job"+jobs.size(), 2, 0, tempPath);
 					jobs.add(job);
 					this.executor.execute(job);
 				} catch (InterruptedException e) { }
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
-		}
-		finally {
-			if (fs != null) {
-				try {
-					fs.delete(tempPath, true);
-				} catch (IOException e) { }
-			}
 		}
 	}
 }

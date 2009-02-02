@@ -3,20 +3,22 @@ package org.apache.hadoop.mapred.declarative.table;
 import java.io.DataInputStream;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
+import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.Wrapper;
 import jol.types.exception.UpdateException;
 import jol.types.table.Function;
 
@@ -24,17 +26,17 @@ import jol.types.table.Function;
 public class TaskCreate extends Function {
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, JOBCONF, JOBFILE, TASKID, TYPE,
-		              PARTITION, SPLIT_FILE, MAP_COUNT, STATUS};
+		              PARTITION, FILE_INPUT, MAP_COUNT, STATUS};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
 		JobID.class,     // Job identifier
-		Wrapper.class,   // JobConf
+		JobConf.class,   // JobConf
 		String.class,    // JobFile
 		TaskID.class,    // Task identifier
 		TaskType.class,  // Task type
 		Integer.class,   // Partition number
-		Wrapper.class,   // Split file
+		FileInput.class, // Input file
 		Integer.class,   // Map count
 		TaskState.class // Task status
 	};
@@ -50,16 +52,16 @@ public class TaskCreate extends Function {
 	public TupleSet insert(TupleSet insertions, TupleSet conflicts) throws UpdateException {
 		TupleSet tasks = new TupleSet(name());
 		for (Tuple tuple : insertions) {
-			JobID jobid           = (JobID) tuple.value(Field.JOBID.ordinal());
-			Wrapper<JobConf> conf = (Wrapper<JobConf>) tuple.value(Field.JOBCONF.ordinal());
-			String jobFile        = (String) tuple.value(Field.JOBFILE.ordinal());
+			JobID jobid    = (JobID) tuple.value(Field.JOBID.ordinal());
+			JobConf conf   = (JobConf) tuple.value(Field.JOBCONF.ordinal());
+			String jobFile = (String) tuple.value(Field.JOBFILE.ordinal());
 			
 			if (jobid == null || conf == null) {
 				throw new UpdateException("Error: table function " + name() + 
 						                  " requires valid jobid and jobconf!");
 			}
 			try {
-				tasks.addAll(createTasks(jobid, conf.object(), jobFile));
+				tasks.addAll(createTasks(jobid, conf, jobFile));
 			} catch (IOException e) {
 				throw new UpdateException(e.toString());
 			}
@@ -73,6 +75,7 @@ public class TaskCreate extends Function {
 	    Path sysDir = this.jobTracker.systemDir();
 	    FileSystem fs = sysDir.getFileSystem(conf);
 	    DataInputStream splitFile = fs.open(new Path(conf.get("mapred.job.split.file")));
+	    Path[] paths = FileInputFormat.getInputPaths(conf);
 	    
 	    JobClient.RawSplit[] splits;
 	    try {
@@ -84,7 +87,7 @@ public class TaskCreate extends Function {
 	    int numMapTasks = splits.length;
 	    
 	    for(int i=0; i < numMapTasks; ++i) {
-	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile, i, splits[i], numMapTasks));
+	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile, i, new FileInput(null, splits[i]), numMapTasks));
 	    }
 	    
 	    //
@@ -100,12 +103,11 @@ public class TaskCreate extends Function {
 	}
 	
 	private Tuple create(JobID jobid, TaskType type, JobConf conf, String jobFile, 
-			             Integer partition, JobClient.RawSplit split, int mapCount) {
+			             Integer partition, FileInput input, int mapCount) {
 		TaskID taskid = new TaskID(jobid, type == TaskType.MAP, partition);
 		
-		return new Tuple(jobid, new Wrapper<JobConf>(conf), jobFile, 
-				         taskid, type, partition, 
-				         new Wrapper<JobClient.RawSplit>(split), 
+		return new Tuple(jobid, conf, jobFile, 
+				         taskid, type, partition, input, 
 				         mapCount, new TaskState(jobid, taskid));
 	}
 	

@@ -1,10 +1,12 @@
 package org.apache.hadoop.mapred.declarative.table;
 
+import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
+import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.core.Runtime;
@@ -25,7 +27,7 @@ public class TaskTable extends ObjectTable {
 	public static final Key PRIMARY_KEY = new Key(0,1);
 	
 	/** An enumeration of all fields. */
-	public enum Field{JOBID, TASKID, TYPE, PARTITION, SPLIT, MAP_COUNT, STATUS};
+	public enum Field{JOBID, TASKID, TYPE, PARTITION, FILE, MAP_COUNT, STATUS};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
@@ -33,7 +35,7 @@ public class TaskTable extends ObjectTable {
 		TaskID.class,    // Task identifier
 		TaskType.class,  // Task type
 		Integer.class,   // Partition number
-		Wrapper.class,   // Split file
+		FileInput.class, // Input file
 		Integer.class,   // Map count
 		TaskState.class // Task status
 	};

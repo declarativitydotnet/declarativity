@@ -2,10 +2,9 @@ package org.apache.hadoop.mapred.declarative.util;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.Set;
 
-import jol.types.basic.ComparableSet;
 import jol.types.basic.ValueList;
-import jol.types.basic.Wrapper;
 
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
@@ -25,33 +24,32 @@ public final class Function {
 		return category.longValue() * (priority.ordinal() + timestamp);
 	}
 
-	public static Wrapper<TaskTrackerAction> 
-	              launchMap(Wrapper<JobClient.RawSplit> split, String jobFile,
+	public static TaskTrackerAction 
+	              launchMap(JobClient.RawSplit split, String jobFile,
 			                TaskID taskId, int attemptId, int partition) {
-		if (split.object().getBytes() == null) {
+		if (split.getBytes() == null) {
 			System.err.println("SPLIT BYTES IS NULL FOR TASK " + taskId);
 			System.exit(0);
 		}
 		try {
-			return new Wrapper<TaskTrackerAction>(new LaunchTaskAction(
+			return new LaunchTaskAction(
 					new MapTask(jobFile, new TaskAttemptID(taskId, attemptId), partition,
-					            split.object().getClassName(), 
-					            split.object().getBytes())));
+					            split.getClassName(), split.getBytes()));
 		} catch (IOException e) {
 			return null;
 		}
 	}
 
-	public static Wrapper<TaskTrackerAction> 
+	public static TaskTrackerAction 
 	              launchReduce(String jobFile, TaskID taskId, int attemptId,
 			                   int partition, int numMaps) {
-		return new Wrapper<TaskTrackerAction>(new LaunchTaskAction(
+		return new LaunchTaskAction(
 				   new ReduceTask(jobFile, new TaskAttemptID(taskId, attemptId), 
-						          partition, numMaps)));
+						          partition, numMaps));
 	}
 	
-	public static Wrapper<TaskTrackerAction> killJob(JobID jobid) {
-		return new Wrapper<TaskTrackerAction>(new KillJobAction(jobid));
+	public static TaskTrackerAction killJob(JobID jobid) {
+		return new KillJobAction(jobid);
 	}
 	
 	public static ValueList getLocations(JobClient.RawSplit split) {
@@ -62,7 +60,7 @@ public final class Function {
 		return new ValueList(locations);
 	}
 	
-	public static Object random(ComparableSet objects) {
+	public static Object random(Set<Object> objects) {
 		return objects.toArray()[rand.nextInt(objects.size())];
 	}
 }
