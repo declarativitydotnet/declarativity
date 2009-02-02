@@ -17,7 +17,7 @@ import java.util.Random;
 
 
 import jol.core.Runtime;
-import jol.core.System;
+import jol.core.JolSystem;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.ValueList;
@@ -30,7 +30,7 @@ import jol.types.table.Table.Callback;
 
 public class Shell {
     private int currentMaster;
-    private System system;
+    private JolSystem system;
     private Random rand;
     private SimpleQueue responseQueue;
 

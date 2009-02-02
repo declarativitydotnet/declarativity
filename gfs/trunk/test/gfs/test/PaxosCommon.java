@@ -4,7 +4,7 @@ import java.net.URL;
 import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
-import jol.core.System;
+import jol.core.JolSystem;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -79,16 +79,16 @@ public class PaxosCommon {
 
     private static final int MASTER_PORT = 5000;
 
-    protected System[] systems;
+    protected JolSystem[] systems;
     protected int[] ports;
-    private System pinger;
-    private System ponger;
+    private JolSystem pinger;
+    private JolSystem ponger;
     private int nextId = 0;
 
     //@Before
 
     public void setup(int... members) throws JolRuntimeException, UpdateException {
-        this.systems = new System[members.length];
+        this.systems = new JolSystem[members.length];
         this.ports = new int[members.length];
         java.lang.System.out.println("ml is "+members.length);
         for (int i=0; i < members.length; i++) {
@@ -97,7 +97,7 @@ public class PaxosCommon {
         }
         this.pinger = this.systems[0];
 
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
         {
             s.catalog().register(new NodeTable((Runtime) s));
             s.catalog().register(new IdTable((Runtime) s));
@@ -121,11 +121,11 @@ public class PaxosCommon {
           this.systems[i].schedule("paxos_global",NodeTable.TABLENAME, nodes, null);
         }
 
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
             s.evaluate();
     }
 
-    void myInstall(System s,String file) {
+    void myInstall(JolSystem s,String file) {
             URL u = ClassLoader.getSystemResource(file);
             try {
               s.install("multipaxos", u);
@@ -137,7 +137,7 @@ public class PaxosCommon {
 
     //@After
     public void shutdown() {
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
             s.shutdown();
     }
 
@@ -169,7 +169,7 @@ public class PaxosCommon {
         tab.register(cb);
 
         sked(this.pinger,MASTER_PORT,"foo");
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
             s.start();
 
         java.lang.System.out.println("test started, waiting for callback...");
@@ -212,7 +212,7 @@ public class PaxosCommon {
         tab.register(cb);
 
         sked(this.systems[0],MASTER_PORT,"foo");
-        for (System s : this.systems)
+        for (JolSystem s : this.systems)
             s.start();
 
         java.lang.System.out.println("test started, waiting for callback...");
@@ -247,7 +247,7 @@ public class PaxosCommon {
       return msg;
     }
 
-    private void sked(System sys,int port,String message) {
+    private void sked(JolSystem sys,int port,String message) {
         TupleSet inmessage = new TupleSet();
         inmessage.add(new Tuple(this.makeAddr(port), message, this.makeAddr(port)));
         try {

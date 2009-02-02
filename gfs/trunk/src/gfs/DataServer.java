@@ -22,6 +22,10 @@ import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 
 public class DataServer implements Runnable {
+    /*
+     * A DataWorker instance handles a single client connection, and runs in a
+     * separate thread from the DataServer.
+     */
     private class DataWorker implements Runnable {
         private SocketChannel channel;
         private String clientAddr;
@@ -87,7 +91,7 @@ public class DataServer implements Runnable {
                 fc.close();
 
                 // we are not pipelining yet.
-                if (path.size() > 1)  {
+                if (path.size() > 1) {
                     java.lang.System.out.println("path size was " + path.size());
                     copyToNext(newf, path);
                 }
@@ -99,6 +103,7 @@ public class DataServer implements Runnable {
                 throw new RuntimeException(e);
             }
         }
+
         private void doDeleteOperation() {
             try {
                 int chunkId = readChunkId();
@@ -154,14 +159,15 @@ public class DataServer implements Runnable {
                 throw new RuntimeException(e);
             }
         }
+
         private List<String> readHeaders() {
             String[] path = null;
             // clean me later
             try {
                 int sourceRouteListLen = this.in.readInt();
-                java.lang.System.out.println("LISTLEN: "+sourceRouteListLen);
+                java.lang.System.out.println("LISTLEN: " + sourceRouteListLen);
                 if (sourceRouteListLen > 0) {
-                    path = new String[sourceRouteListLen+1];
+                    path = new String[sourceRouteListLen + 1];
                     int i = 0;
                     path[i] = "";
                     for (char b = this.in.readChar(); b != ';' && i < sourceRouteListLen; b = this.in.readChar()) {
@@ -173,7 +179,7 @@ public class DataServer implements Runnable {
                         }
                     }
                     for (String s : path) {
-                        java.lang.System.out.println("APTH: "+s);
+                        java.lang.System.out.println("APTH: " + s);
                     }
 
                 } else {
@@ -202,9 +208,8 @@ public class DataServer implements Runnable {
             FileChannel fc = new FileInputStream(blockFile).getChannel();
             long nwrite = fc.transferTo(0, fileSize, this.channel);
             if (nwrite != (long) fileSize)
-                throw new RuntimeException("Failed to write expected file " +
-                                           "size: wrote " + nwrite + ", expected " +
-                                           fileSize);
+                throw new RuntimeException("Failed to write expected file "
+                        + "size: wrote " + nwrite + ", expected " + fileSize);
             fc.close();
         }
     }
@@ -230,7 +235,8 @@ public class DataServer implements Runnable {
     }
 
     public void stop() {
-        java.lang.System.out.println("active workers: "+this.workers.activeCount()+"\n");
+        java.lang.System.out.println("active workers: " + this.workers.activeCount()
+                + "\n");
         Thread[] threadList = new Thread[this.workers.activeCount()];
         this.workers.enumerate(threadList);
         for (Thread t : threadList) {
@@ -241,7 +247,7 @@ public class DataServer implements Runnable {
         this.workers.destroy();
         try {
             this.serverSocket.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -263,8 +269,10 @@ public class DataServer implements Runnable {
     }
 
     public void createCRCFile(int chunkId, long checksum) {
-        java.lang.System.out.println("create file for chunk "+ chunkId + " and checksum "+ checksum  + "\n");
-        String filename = this.fsRoot + File.separator + "checksums" + File.separator + chunkId + ".cksum";
+        java.lang.System.out.println("create file for chunk " + chunkId
+                + " and checksum " + checksum + "\n");
+        String filename = this.fsRoot + File.separator + "checksums" + File.separator
+                + chunkId + ".cksum";
         File newf = new File(filename);
         try {
             if (!newf.createNewFile()) {
@@ -294,7 +302,8 @@ public class DataServer implements Runnable {
     }
 
     public File createChunkFile(int chunkId) {
-        String filename = this.fsRoot + File.separator + "chunks" + File.separator + chunkId;
+        String filename = this.fsRoot + File.separator + "chunks" + File.separator
+                + chunkId;
         File newf = new File(filename);
         try {
             if (!newf.createNewFile()) {
@@ -307,7 +316,8 @@ public class DataServer implements Runnable {
     }
 
     public File getChunkFile(int chunkId) {
-        String filename = this.fsRoot + File.separator + "chunks" +  File.separator + chunkId;
+        String filename = this.fsRoot + File.separator + "chunks" + File.separator
+                + chunkId;
         File file = new File(filename);
         if (!file.exists())
             throw new RuntimeException("Chunk not found: " + chunkId);
