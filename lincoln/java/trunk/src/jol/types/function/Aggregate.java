@@ -1,12 +1,12 @@
 package jol.types.function;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeMap;
 
 import jol.lang.plan.GenericAggregate;
-import jol.types.basic.ComparableSet;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -103,7 +103,7 @@ public abstract class Aggregate<C extends Object> {
 			return jol.types.basic.TupleSet.class;
 		}
 		else if (SET.equals(function) || UNION.equals(function)) {
-			return jol.types.basic.ComparableSet.class;
+			return HashSet.class;
 		}
 		else if (SUMSTR.equals(function)) {
 			return java.lang.String.class;
@@ -609,9 +609,9 @@ public abstract class Aggregate<C extends Object> {
 		}
 	}
 
-	public static class Set extends Aggregate<ComparableSet<Object>> {
+	public static class Set extends Aggregate<HashSet<Object>> {
 		private TupleSet tuples;
-		private ComparableSet result;
+		private HashSet result;
 		private TupleFunction<Tuple> accessor;
 
 		public Set(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
@@ -621,12 +621,12 @@ public abstract class Aggregate<C extends Object> {
 
 		private void reset() {
 			this.tuples = new TupleSet();
-			this.result = new ComparableSet();
+			this.result = new HashSet();
 		}
 
 		@Override
-		public ComparableSet result() {
-			return this.result.clone();
+		public HashSet result() {
+			return this.result;
 		}
 
 		@Override
@@ -649,9 +649,9 @@ public abstract class Aggregate<C extends Object> {
 		}
 	}
 	
-	public static class Union extends Aggregate<ComparableSet<Object>> {
+	public static class Union extends Aggregate<HashSet<Object>> {
 		private TupleSet tuples;
-		private ComparableSet result;
+		private HashSet result;
 		private TupleFunction<Tuple> accessor;
 
 		public Union(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
@@ -661,20 +661,20 @@ public abstract class Aggregate<C extends Object> {
 
 		private void reset() {
 			this.tuples = new TupleSet();
-			this.result = new ComparableSet();
+			this.result = new HashSet();
 		}
 
 		@Override
-		public ComparableSet result() {
-			return this.result.clone();
+		public HashSet result() {
+			return this.result;
 		}
 
 		@Override
 		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
 				Object v = this.accessor.evaluate(tuple);
-				if (v instanceof ComparableSet) {
-					this.result.addAll((ComparableSet) v);
+				if (v instanceof HashSet) {
+					this.result.addAll((HashSet) v);
 				}
 				else {
 					this.result.add(v);
@@ -686,8 +686,8 @@ public abstract class Aggregate<C extends Object> {
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
 				Object v = this.accessor.evaluate(tuple);
-				if (v instanceof ComparableSet) {
-					this.result.removeAll((ComparableSet) v);
+				if (v instanceof HashSet) {
+					this.result.removeAll((HashSet) v);
 				}
 				else {
 					this.result.remove(v);

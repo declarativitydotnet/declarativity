@@ -20,6 +20,7 @@ import jol.types.table.Aggregation;
 import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
+import java.lang.System;
 
 /**
  * The main driver loop that executes query objects {@link Query}.
@@ -580,7 +581,7 @@ public class Driver implements Runnable {
 				try {
 					evaluate();
 				} catch (UpdateException e) {
-					System.err.println(e);
+					java.lang.System.err.println(e);
 					return;
 				}
 
