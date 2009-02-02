@@ -112,21 +112,19 @@ public class Shell {
             ValueList<String> path = getNewChunk(filename);
             String firstAddr = path.remove(0);
             int chunkId = Integer.valueOf(path.remove(path.size() - 1));
-            Socket sock = setupStream(firstAddr);
+            DataConnection conn = new DataConnection(firstAddr);
             try {
-                DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
-                sendRoutedData(dos, chunkId, path);
-                int read = 0;
-                while (b != -1 && read < Conf.getChunkSize()) {
-                    byte buf[] = new byte[Conf.getBufSize()];
-                    //b = System.in.read(buf,0,Conf.getBufSize());
+                conn.sendRoutingData(chunkId, path);
+
+                int nread = 0;
+                byte buf[] = new byte[Conf.getBufSize()];
+                while (b != -1 && nread < Conf.getChunkSize()) {
                     b = s.read(buf,0,Conf.getBufSize());
-                    //read += Conf.getChunkSize();
-                    dos.write(buf);
-                    read += b;
+                    conn.write(buf);
+                    nread += b;
                 }
-                System.out.println("exiting inner loop with "+b+" retval and "+read+" bytes read\n");
-                dos.close();
+                System.out.println("exiting inner loop with "+b+" retval and "+nread+" bytes read\n");
+                conn.close();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -288,51 +286,6 @@ public class Shell {
         }
 
         throw new RuntimeException("Failed to read chunk " + chunk);
-    }
-
-    public static Socket setupStream(String addr) {
-        String[] parts = addr.split(":");
-        String host = parts[1];
-        int controlPort = Integer.parseInt(parts[2]);
-
-        System.out.println("TEST1 -- " + addr);
-        int dataPort = Conf.findDataNodeDataPort(host, controlPort);
-        System.out.println("Connecting to: " + host + ":" + dataPort);
-
-        try {
-            SocketAddress sockAddr = new InetSocketAddress(host, dataPort);
-            SocketChannel inChannel = SocketChannel.open();
-            inChannel.configureBlocking(true);
-            inChannel.connect(sockAddr);
-            Socket sock = inChannel.socket();
-            return sock;
-        } catch (Exception e) {
-            throw new RuntimeException("failed to open socket\n");
-        }
-    }
-
-    public static void sendRoutedData(DataOutputStream dos, int chunkId, List<String> path) {
-        try {
-            dos.writeByte(DataProtocol.WRITE_OPERATION);
-            dos.writeInt(chunkId);
-
-            int newSize = path.size();
-            if (newSize > Conf.getRepFactor() - 1) {
-                newSize = Conf.getRepFactor() - 1;
-            }
-
-            dos.writeInt(newSize);
-            for (int i = 0; i < newSize; i++) {
-                System.out.println("write " + path.get(i));
-                dos.writeChars(path.get(i));
-                dos.writeChar('|');
-            }
-            dos.writeChar(';');
-            // caller writes the actual data
-        } catch (Exception e) {
-            System.out.println("Exception reading chunk " + e.toString());
-            return;
-        }
     }
 
     private StringBuilder readChunkFromAddress(Integer chunkId, String addr) {

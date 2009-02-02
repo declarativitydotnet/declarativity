@@ -114,17 +114,13 @@ public class DataServer implements Runnable {
         private void copyToNext(File f, int chunkId, List<String> path) {
             try {
                 String nextAddr = path.remove(0);
-                Socket sock = Shell.setupStream(nextAddr);
-                DataOutputStream dos = new DataOutputStream(sock.getOutputStream());
-                Shell.sendRoutedData(dos, chunkId, path);
-                System.out.println("routed data sent\n");
+                DataConnection conn = new DataConnection(nextAddr);
+                conn.sendRoutingData(chunkId, path);
 
-                SocketChannel chan = sock.getChannel();
                 FileChannel fc = new FileInputStream(f).getChannel();
-                System.out.println("got fc\n" + fc.toString());
-                fc.transferTo(0, Conf.getChunkSize(), chan);
+                conn.sendChunkContent(fc);
                 fc.close();
-                sock.close();
+                conn.close();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
