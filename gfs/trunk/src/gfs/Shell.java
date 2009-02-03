@@ -19,7 +19,6 @@ import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
@@ -55,7 +54,7 @@ public class Shell {
         } else if (op.equals("create")) {
             shell.doCreateFile(argList, true);
         } else if (op.equals("ls")) {
-            ValueList<String> list = shell.doListFiles(argList);
+            List<String> list = shell.doListFiles(argList);
             System.out.println("ls:");
             int i = 1;
             for (String file : list) {
@@ -109,7 +108,7 @@ public class Shell {
 
         int b = 1;
         while (b != -1) {
-            ValueList<String> path = getNewChunk(filename);
+            List<String> path = getNewChunk(filename);
             String firstAddr = path.remove(0);
             int chunkId = Integer.valueOf(path.remove(path.size() - 1));
             DataConnection conn = new DataConnection(firstAddr);
@@ -153,7 +152,7 @@ public class Shell {
         }
     }
 
-    private ValueList<String> getNewChunk(final String filename) throws UpdateException {
+    private List<String> getNewChunk(final String filename) throws UpdateException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -186,13 +185,12 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList<String> chunkList = (ValueList) this.responseQueue.get(); // XXX: timeout?
+        List<String> chunkList = (List) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
         return chunkList;
     }
 
-
-    private ValueList<Integer> getChunkList(final String filename) throws UpdateException,JolRuntimeException {
+    private List<Integer> getChunkList(final String filename) throws UpdateException,JolRuntimeException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -225,7 +223,7 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList chunkList = (ValueList) spinGet(Conf.getListingTimeout());
+        List<Integer> chunkList = (List<Integer>) spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
         return chunkList;
     }
@@ -270,7 +268,7 @@ public class Shell {
                           "ChunkLocations", chunk.toString()));
         this.system.schedule("gfs", tblName, req, null);
 
-        ValueList nodeList = (ValueList) this.responseQueue.get(); // XXX: timeout?
+        List<String> nodeList = (List<String>) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
         return nodeList;
     }
@@ -411,7 +409,7 @@ public class Shell {
         responseTbl.unregister(responseCallback);
     }
 
-    public ValueList<String> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
+    public List<String> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
         if (!args.isEmpty())
             usage();
 
@@ -447,7 +445,7 @@ public class Shell {
         Object obj = spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
 
-        ValueList<String> lsContent = (ValueList) obj;
+        List<String> lsContent = (List<String>) obj;
         Collections.sort(lsContent);
         return lsContent;
     }
