@@ -131,6 +131,7 @@ taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-
 
 define(taskState, {JobID, TaskID, TaskState});
 
+watch(taskAttempt, a);
 taskAttempt(JobID, TaskID, AttemptID, Progress, Constants.TaskState.FAILED, 
             Phase, Diag, TrackerName, FileLoc, Start, Finish) :-
 	taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, _, _),
