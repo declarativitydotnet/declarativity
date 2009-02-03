@@ -39,19 +39,19 @@ public abstract class Aggregate<C extends Object> {
 
 
 
-	public static Aggregate function(jol.lang.plan.Aggregate aggregate, Schema input) 
+	public static Aggregate function(jol.lang.plan.Aggregate aggregate, Schema input)
 	throws PlannerException {
 		if (aggregate instanceof GenericAggregate) {
 			return new Generic((GenericAggregate) aggregate, input);
 		}
 		else if (TOPK.equals(aggregate.functionName())) {
-			return new TopBottomK((jol.lang.plan.TopK)aggregate, input);
+			return new TopBottomK((jol.lang.plan.TopK) aggregate, input);
 		}
 		else if (BOTTOMK.equals(aggregate.functionName())) {
-			return new TopBottomK((jol.lang.plan.BottomK)aggregate, input);
+			return new TopBottomK((jol.lang.plan.BottomK) aggregate, input);
 		}
 		else if (LIMIT.equals(aggregate.functionName())) {
-			return new Limit((jol.lang.plan.Limit)aggregate, input);
+			return new Limit((jol.lang.plan.Limit) aggregate, input);
 		}
 		else if (MIN.equals(aggregate.functionName())) {
 			return new Min(aggregate, input);
@@ -80,7 +80,7 @@ public abstract class Aggregate<C extends Object> {
 		else if (UNION.equals(aggregate.functionName())) {
 			return new Union(aggregate, input);
 		}
-		throw new PlannerException("Unknown aggregate function " + 
+		throw new PlannerException("Unknown aggregate function " +
 				aggregate.functionName());
 	}
 
@@ -117,8 +117,7 @@ public abstract class Aggregate<C extends Object> {
 		private List<Object> result;
 		private TupleFunction<Object> accessor;
 
-
-		public Limit(jol.lang.plan.Limit aggregate, Schema schema) 
+		public Limit(jol.lang.plan.Limit aggregate, Schema schema)
 		throws PlannerException {
 			this.accessor = aggregate.function(schema);
 			reset();
@@ -138,7 +137,7 @@ public abstract class Aggregate<C extends Object> {
 		@Override
 		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				List result = (List)this.accessor.evaluate(tuple);
+				List result = (List) this.accessor.evaluate(tuple);
 				Object value  = (Object) result.get(0);
 				Number kConst = (Number) result.get(1);
 
@@ -248,7 +247,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 	}
 
-	public static class Generic<C extends Comparable<C>> extends Aggregate<Object> {
+	public static class Generic<C> extends Aggregate<Object> {
 		private TupleSet tuples;
 		private C result;
 		private GenericAggregate aggregate;
@@ -275,7 +274,7 @@ public abstract class Aggregate<C extends Object> {
 			try {
 				if (this.tuples.add(tuple)) {
 					if (this.result == null) {
-						this.result = (C)this.aggregate.function(schema).evaluate(tuple);
+						this.result = (C) this.aggregate.function(schema).evaluate(tuple);
 					}
 					this.aggregate.function(this.result, schema).evaluate(tuple);
 				}
@@ -648,7 +647,7 @@ public abstract class Aggregate<C extends Object> {
 			return this.tuples.size();
 		}
 	}
-	
+
 	public static class Union extends Aggregate<HashSet<Object>> {
 		private TupleSet tuples;
 		private HashSet result;
@@ -700,5 +699,4 @@ public abstract class Aggregate<C extends Object> {
 			return this.tuples.size();
 		}
 	}
-
 }
