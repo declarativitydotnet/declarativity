@@ -1360,8 +1360,10 @@ public final class TypeChecker extends Visitor {
 					if (method == null) {
 						StringBuilder sb = new StringBuilder();
 						sb.append("Undefined method " + reference.toString() +
-								  "(" + typesToString(types) + ") in class type " +
-								  reference.type().getCanonicalName());
+								  "(" + typesToString(types) + ")");
+						if (reference.type() != null) {
+							sb.append(" in class type " + reference.type().getCanonicalName());
+						}
 						throw new CompileException(sb.toString(), n);
 					}
 
