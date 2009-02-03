@@ -8,10 +8,12 @@ import java.util.List;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
+import org.apache.hadoop.mapred.MRConstants;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.util.FileInput;
@@ -97,6 +99,16 @@ public class TaskCreate extends Function {
 
 	    for (int i = 0; i < numReduceTasks; i++) {
 	    	tasks.add(create(jobid, TaskType.REDUCE, conf, jobFile, i, null, numMapTasks));
+	    }
+	    
+	    // create job specific temporary directory in output path
+	    Path outputPath = FileOutputFormat.getOutputPath(conf);
+	    if (outputPath != null) {
+	      Path tmpDir = new Path(outputPath, MRConstants.TEMP_DIR_NAME);
+	      FileSystem fileSys = tmpDir.getFileSystem(conf);
+	      if (!fileSys.mkdirs(tmpDir)) {
+	        throw new IOException("Mkdirs failed to create " + tmpDir.toString());
+	      }
 	    }
 
 		return tasks;

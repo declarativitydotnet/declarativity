@@ -21,7 +21,7 @@ package org.apache.hadoop.mapred;
  * Some handy constants
  * 
  *******************************/
-interface MRConstants {
+public interface MRConstants {
   //
   // Timeouts, constants
   //
