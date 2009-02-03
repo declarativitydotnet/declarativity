@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 
-import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import junit.framework.Assert;
@@ -84,13 +83,13 @@ public class TestCommon {
     }
 
     protected int lsCnt(Shell shell) throws JolRuntimeException, UpdateException {
-        ValueList<String> list = lsFile(shell);
+        List<String> list = lsFile(shell);
         return list.size();
     }
 
     protected Boolean findInLs(Shell shell, String... files) throws JolRuntimeException,
             UpdateException {
-        ValueList<String> list = lsFile(shell);
+        List<String> list = lsFile(shell);
 
         // obviously not an efficient way to do this.
         for (String item : files) {
@@ -145,7 +144,7 @@ public class TestCommon {
         }
     }
 
-    protected ValueList<String> lsFile(Shell shell) throws UpdateException,
+    protected List<String> lsFile(Shell shell) throws UpdateException,
             JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         return shell.doListFiles(argList);

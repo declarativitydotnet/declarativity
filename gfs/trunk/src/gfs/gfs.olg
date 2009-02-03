@@ -231,10 +231,10 @@ response(@Source, Id, Master, Success, null) :-
 
 // If we get an "ls" request, send back the names of all the files in
 // the file system. If the file system is empty, send back an empty
-// ValueList. Note that we need to do the aggregation in a sub-rule.
-define(compute_ls, keys(0, 1), {String, Integer, String, ValueList});
+// list. Note that we need to do the aggregation in a sub-rule.
+define(compute_ls, keys(0, 1), {String, Integer, String, ArrayList});
 watch(compute_ls, ae);
-compute_ls(@Master, Id, Source, generic<(new ValueList()).insert(FName)>) :-
+compute_ls(@Master, Id, Source, generic<(new ArrayList()).add(FName)>) :-
     request(@Master, Id, Source, "Ls", _),
     gfs_global::file(@Master, FName, _);
 
@@ -245,7 +245,7 @@ response(@Source, Id, Master, true, FileList) :-
 response(@Source, Id, Master, true, FileList) :-
     request(@Master, Id, Source, "Ls", _),
     notin gfs_global::file(@Master, _, _),
-    FileList := new ValueList();
+    FileList := new ArrayList();
 
 define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 
