@@ -185,7 +185,7 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", filename));
         this.system.schedule("gfs", tblName, req, null);
 
-        List<String> chunkList = (List) this.responseQueue.get(); // XXX: timeout?
+        List<String> chunkList = (List<String>) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
         return chunkList;
     }
