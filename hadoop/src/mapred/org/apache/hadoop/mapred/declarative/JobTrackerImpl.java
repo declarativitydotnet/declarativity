@@ -111,7 +111,11 @@ public class JobTrackerImpl extends JobTracker {
 	    	try {
 	    		// if we haven't contacted the namenode go ahead and do it
 	    		if (fs == null) {
-	    			fs = FileSystem.get(conf);
+	    			try {
+	    				fs = FileSystem.get(conf);
+	    			} catch (IOException e) {
+	    				fs = FileSystem.getLocal(conf);
+	    			}
 	    		}
 	    		this.systemDir = new Path(conf.get("mapred.system.dir", "/tmp/hadoop/mapred/system"));  
 	    		this.systemDir = fs.makeQualified(this.systemDir);
