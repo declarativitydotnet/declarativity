@@ -99,7 +99,7 @@ public abstract class JobTracker {
 	 * Get the JOL system context.
 	 * @return The JOL system context.
 	 */
-	public abstract System context();
+	public abstract JolSystem context();
 
 	/**
 	 * Creates a new job based on the job file.

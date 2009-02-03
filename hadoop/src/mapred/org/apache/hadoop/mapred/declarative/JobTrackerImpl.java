@@ -187,7 +187,7 @@ public class JobTrackerImpl extends JobTracker {
 	}
 
 	@Override
-	public System context() {
+	public JolSystem context() {
 		return this.context;
 	}
 
