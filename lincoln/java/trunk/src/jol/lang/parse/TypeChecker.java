@@ -464,7 +464,7 @@ public final class TypeChecker extends Visitor {
 		if (name.scope == null) {
 			name.scope = program.name();
 		} else {
-			throw new CompileException("Dot specificed names not allowed in definition statement!", n.getNode(0));
+			throw new CompileException("Dot specified names not allowed in definition statement!", n.getNode(0));
 		}
 
 		String timerType = n.getString(1);
@@ -1391,7 +1391,7 @@ public final class TypeChecker extends Visitor {
 			throw new CompileException("Method error: on " +  context.toString() + ": " + e.toString(), n);
 		}
 
-		throw new CompileException("Unkown method reference " + context.toString(), n);
+		throw new CompileException("Unknown method reference " + context.toString(), n);
 	}
 
 	public Class visitNewClass(final GNode n) {
@@ -1525,7 +1525,7 @@ public final class TypeChecker extends Visitor {
 		}
 		else if (!subtype(Number.class, expr.type())) {
 			throw new CompileException("Expression " + expr +
-					" type must be numberic in increment expression.", n);
+					" type must be numeric in increment expression.", n);
 		}
 		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, jol.lang.plan.Math.INC, expr, null));
 		return jol.lang.plan.Math.class;
@@ -1540,7 +1540,7 @@ public final class TypeChecker extends Visitor {
 		}
 		else if  (!subtype(Number.class, expr.type())) {
 			throw new CompileException("Expression " + expr +
-					" type must be numberic in decrement expression.", n);
+					" type must be numeric in decrement expression.", n);
 		}
 		n.setProperty(Constants.TYPE, new jol.lang.plan.Math(n, jol.lang.plan.Math.DEC, expr, null));
 		return jol.lang.plan.Math.class;
