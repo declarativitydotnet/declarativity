@@ -3,6 +3,7 @@ program gfs;
 import java.lang.System;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import jol.core.Runtime;
 import gfs.Conf;
 
@@ -25,7 +26,7 @@ watch(datadir, ae);
 dir(Host,DirObj,DirList) :-
     datadir(Host, Dir),
     DirObj := new File(Dir + File.separator + "chunks"),
-    DirList := DirObj.isDirectory() ? new ArrayList(DirObj.list()) : new ArrayList(),
+    DirList := DirObj.isDirectory() ? new ArrayList(Arrays.asList(DirObj.list())) : new ArrayList(),
     clock(_,_,_);
 
 define(indx,keys(0),{String,Integer});
@@ -40,14 +41,14 @@ chunk(Host,File) :-
     dir#insert(Host,Dir,List);
 */
 
-indx(Host,Next) :-
-    indx(Host,Old),
+indx(Host, Next) :-
+    indx(Host, Old),
     chunkTmp(Host, File),
     Next := Old + 1;
 
-chunkTmp(Host,File) :-
-    dir(Host,Dir,List),
-    indx(Host,I),
+chunkTmp(Host, File) :-
+    dir(Host, Dir, List),
+    indx(Host, I),
     I < List.size(),
     B := List.get(I),
     File := B.toString();
