@@ -4,7 +4,6 @@ import java.lang.System;
 import java.io.File;
 import java.util.ArrayList;
 import jol.core.Runtime;
-import jol.types.basic.ValueList;
 import gfs.Conf;
 
 define(chunk, keys(0,1), {String, String, String});
