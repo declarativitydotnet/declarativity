@@ -37,6 +37,7 @@ jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTim
 	Attempts > 3 || Attempts > Trackers,
 	FailStatus := new JobState(JobId, Constants.JobState.FAILED);
 
+watch(jobtracker::taskAttempt, a);
 public
 jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L) :-
 	schedule(JobId, TaskId, TrackerName),
