@@ -25,25 +25,25 @@ import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
 public class NetworkTopologyTable extends ObjectTable {
-	
-	private class Resolver extends Thread { 
-		private jol.core.System context;
+
+	private class Resolver extends Thread {
+		private jol.core.JolSystem context;
 		private DNSToSwitchMapping dnsToSwitchMapping;
 
-		private LinkedBlockingQueue<TaskTrackerStatus> queue = 
+		private LinkedBlockingQueue<TaskTrackerStatus> queue =
 			new LinkedBlockingQueue <TaskTrackerStatus>();
 
-		public Resolver(jol.core.System context, JobConf conf) {
+		public Resolver(jol.core.JolSystem context, JobConf conf) {
 			super("DNS Resolver Thread");
 			setDaemon(true);
 			this.context = context;
-			this.dnsToSwitchMapping = 
+			this.dnsToSwitchMapping =
 				(DNSToSwitchMapping)ReflectionUtils.newInstance(
-						conf.getClass("topology.node.switch.mapping.impl", 
-								ScriptBasedMapping.class, 
+						conf.getClass("topology.node.switch.mapping.impl",
+								ScriptBasedMapping.class,
 								DNSToSwitchMapping.class),  conf);
 		}
-		
+
 		public void resolve(TaskTrackerStatus t) {
 			while (!queue.add(t)) {
 				JobTrackerImpl.LOG.warn("Couldn't add to the Resolution queue now. Will try again");
@@ -52,12 +52,12 @@ public class NetworkTopologyTable extends ObjectTable {
 				} catch (InterruptedException ie) {}
 			}
 		}
-		
+
 		@Override
 		public void run() {
 			while (!isInterrupted()) {
 				try {
-					List <TaskTrackerStatus> statuses = 
+					List <TaskTrackerStatus> statuses =
 						new ArrayList<TaskTrackerStatus>(queue.size());
 					// Block if the queue is empty
 					statuses.add(queue.take());
@@ -68,14 +68,14 @@ public class NetworkTopologyTable extends ObjectTable {
 					}
 					List<String> rName = dnsToSwitchMapping.resolve(dnHosts);
 					if (rName == null) {
-						JobTrackerImpl.LOG.error("The resolve call returned null! Using " + 
+						JobTrackerImpl.LOG.error("The resolve call returned null! Using " +
 								NetworkTopology.DEFAULT_RACK + " for some hosts");
 						rName = new ArrayList<String>(dnHosts.size());
 						for (int i = 0; i < dnHosts.size(); i++) {
 							rName.add(NetworkTopology.DEFAULT_RACK);
 						}
 					}
-					
+
 					int i = 0;
 					for (String m : rName) {
 						String host = statuses.get(i++).getHost();
@@ -83,7 +83,7 @@ public class NetworkTopologyTable extends ObjectTable {
 						register(host, networkLoc);
 					}
 				} catch (InterruptedException ie) {
-					JobTrackerImpl.LOG.warn(getName() + " exiting, got interrupted: " + 
+					JobTrackerImpl.LOG.warn(getName() + " exiting, got interrupted: " +
 							StringUtils.stringifyException(ie));
 					return;
 				} catch (Throwable t) {
@@ -93,7 +93,7 @@ public class NetworkTopologyTable extends ObjectTable {
 			}
 			JobTrackerImpl.LOG.warn(getName() + " exiting...");
 		}
-		
+
 		private void register(String host, String networkLoc) throws UpdateException {
 			TupleSet nodes = new TupleSet(NetworkTopologyTable.TABLENAME);
 			Node     node  = new NodeBase(host, networkLoc);
@@ -101,21 +101,21 @@ public class NetworkTopologyTable extends ObjectTable {
 				nodes.add(NetworkTopologyTable.node(node));
 				node = node.getParent();
 			}
-			this.context.schedule(JobTracker.PROGRAM, 
-					              NetworkTopologyTable.TABLENAME, 
+			this.context.schedule(JobTracker.PROGRAM,
+					              NetworkTopologyTable.TABLENAME,
 					              nodes, null);
 		}
 	}
-		  
+
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "networkTopology");
-	
+
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);
-	
+
 	/** An enumeration of all clock table fields. */
 	public enum Field{NAME, LOCATION, PARENT, LEVEL};
-	
+
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
 		String.class,   // Name
@@ -123,30 +123,30 @@ public class NetworkTopologyTable extends ObjectTable {
 		String.class,   // Parent name (FK)
 		Integer.class   // Node level
 	};
-	
+
 	private Resolver resolver;
-	
+
 	public NetworkTopologyTable(Runtime context, JobTrackerImpl tracker) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		this.resolver = new Resolver(context, tracker.conf());
 		tracker.executor().execute(this.resolver);
 	}
 
-	/** 
+	/**
 	 * Resolves the tracker network topology location, scheduling
-	 * the resolution in the jol.core.Runtime context. 
+	 * the resolution in the jol.core.Runtime context.
 	 * NOTE: non-blocking call.
 	 * @param tracker The tracker status.
 	 */
 	public void resolve(TaskTrackerStatus tracker) {
 		this.resolver.resolve(tracker);
 	}
-	
+
 	private static Tuple node(Node node) {
 		String parent = node.getParent() == null ? null :
 							node.getParent().getName();
-		return new Tuple(node.getName(), 
-				         node.getNetworkLocation(), 
+		return new Tuple(node.getName(),
+				         node.getNetworkLocation(),
 				         parent, node.getLevel());
 	}
 }
