@@ -5,7 +5,7 @@ import java.util.ArrayList;
 /**
  * Simple data structure that stores a list of values
  * and is able to compare itself against another such list.
- * 
+ *
  * NOTE: used to add column lists to tuples.
  */
 public class ValueList<T extends Comparable> extends ArrayList<T> implements Comparable<ValueList<T>> {
@@ -14,14 +14,14 @@ public class ValueList<T extends Comparable> extends ArrayList<T> implements Com
 	public ValueList() {
 		super();
 	}
-	
+
 	public ValueList(T[] values) {
 		super();
 		for (T value : values) {
 			add(value);
 		}
 	}
-	
+
 	public int compareTo(ValueList<T> o) {
 		if (size() < o.size()) return -1;
 		if (size() > o.size()) return 1;
@@ -31,7 +31,7 @@ public class ValueList<T extends Comparable> extends ArrayList<T> implements Com
 		}
 		return 0;
 	}
-	
+
 	/**
 	 * Insert into the list.
 	 * @param o Element to insert.
@@ -39,5 +39,4 @@ public class ValueList<T extends Comparable> extends ArrayList<T> implements Com
 	public void insert(T o) {
 		super.add(o);
 	}
-	
 }
