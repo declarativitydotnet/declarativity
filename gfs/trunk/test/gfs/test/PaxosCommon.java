@@ -44,7 +44,8 @@ public class PaxosCommon {
             HIM
         };
 
-        public static final Class[] SCHEMA = { String.class // Address
+        public static final Class[] SCHEMA = {
+            String.class // Address
         };
 
         NodeTable(Runtime context) {
@@ -175,7 +176,7 @@ public class PaxosCommon {
         tab.unregister(cb);
     }
 
-    public void complexMultiPaxosTest() throws UpdateException, InterruptedException {
+    public void complexMultiPaxosTest() throws InterruptedException {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
