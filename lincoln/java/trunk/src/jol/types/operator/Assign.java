@@ -52,9 +52,9 @@ public class Assign<C extends Comparable<C> > extends Operator {
 			try {
 				Object[] delta = tuple.toArray();
 				// we support appending to the end of the tuple.
-				if(variablePosition == delta.length) {
+				if (variablePosition == delta.length) {
 					Object[] newDelta = new Object[variablePosition+1];
-					for(int i = 0; i < delta.length; i++) {
+					for (int i = 0; i < delta.length; i++) {
 						newDelta[i] = delta[i];
 					}
 					delta = newDelta;
@@ -64,7 +64,7 @@ public class Assign<C extends Comparable<C> > extends Operator {
 			} catch (Throwable t) {
 				String msg = t.toString() + ". Program " + this.assignment.program() +
 				             ". Error during assignment " + toString() +
-				             "position " + variablePosition + " tuple size " + tuple.size() + ". Tuple = " + tuple;
+				             ", position " + variablePosition + ", tuple size " + tuple.size() + ". Tuple = " + tuple;
 				throw new JolRuntimeException(msg, t);
 			}
 		}
