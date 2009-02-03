@@ -201,11 +201,11 @@ response(@Source, Id, Master, Success, Chunks) :-
     Success := true;
 
 // If the file doesn't exist, return an error message
-response(@Source, Id, Master, Success, ErrMessage) :-
+response(@Source, Id, Master, Success, Result) :-
     request(@Master, Id, Source, "Cat", FName),
     notin gfs_global::file(@Master, FName, _),
     Success := false,
-    ErrMessage := new ValueList();//"File does not exist";
+    Result := new ArrayList();//"File does not exist";
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 watch(create_request_pending, ae);
