@@ -6,33 +6,29 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import xtc.tree.Node;
-
+import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
-import jol.types.basic.Schema;
+import xtc.tree.Node;
 
 public class NewClass extends Expression {
-	
 	private Class type;
-	
 	private Constructor constructor;
-	
 	private List<Expression> arguments;
-	
+
 	public NewClass(Node node, Class type) {
 		super(node);
 		this.type = type;
 	}
-	
+
 	private NewClass(Node node, Class type, Constructor constructor, List<Expression> arguments) {
 		this(node, type);
 		this.constructor = constructor;
 		this.arguments = arguments;
 	}
-	
+
 	public Expression clone() {
 		List<Expression> arguments = new ArrayList<Expression>();
 		for (Expression arg : this.arguments) {
@@ -58,7 +54,7 @@ public class NewClass extends Expression {
 		}
 		return value + ")";
 	}
-	
+
 	@Override
 	public Set<Variable> variables() {
 		Set<Variable> variables = new HashSet<Variable>();
@@ -67,11 +63,11 @@ public class NewClass extends Expression {
 		}
 		return variables;
 	}
-	
+
 	public void constructor(Constructor constructor) {
 		this.constructor = constructor;
 	}
-	
+
 	public void arguments(List<Expression> arguments) {
 		this.arguments = arguments;
 	}
@@ -82,7 +78,7 @@ public class NewClass extends Expression {
 		for (Expression argument : this.arguments) {
 			argFunctions.add(argument.function(schema));
 		}
-		
+
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				Object[] arguments = new Object[NewClass.this.arguments.size()];
