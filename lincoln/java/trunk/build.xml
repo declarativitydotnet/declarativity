@@ -12,7 +12,6 @@
   <property name="src" location="src"/>
   <property name="parser-dir" location="${src}/jol/lang/parse"/>
   <property name="test" location="test"/>
-  <!-- <property name="test-output" location="ant-test-output"/> Removed by RCS.  See junit task for more info -->
 
   <target name="init">
     <tstamp/>
@@ -62,11 +61,12 @@
   	  We want to redistribute the contents of the XTC JAR file with
   	  the JOL JAR. Since the default Java classloader doesn't support
   	  nested JAR files, we use <zipfileset> to slurp the entire XTC
-  	  JAR into the JOL JAR. XXX: This makes us GPL, by contamination.
-  	  The full XTC JAR is also pretty large. It would be better to
-  	  depend on only the LGPL'd Rats files. We also slurp in the
-          JARs for the Servlet API and Grappa, which is wrong for similar
-          reasons.
+  	  JAR into the JOL JAR.
+
+      XXX: This makes us GPL, by contamination. The full XTC JAR is
+      also pretty large. It would be better to depend on only the
+      LGPL'd Rats files. We also slurp in the JARs for the Servlet API
+      and Grappa, which is wrong for similar reasons.
   	-->
     <jar jarfile="${dist}/jol.jar">
       <fileset dir="${build}" excludes="jol/test/**"/>
@@ -120,7 +120,7 @@
          preventing the loading of OLG files. 
 
          <rant>
-	 There is no apparent way to get ant to output strack traces via
+         There is no apparent way to get ant to output strack traces via
          output formatters, so I disabled formatters, and use 
          'showoutput="yes"' to have it dump exceptions to console.
 
@@ -132,9 +132,6 @@
             - RCS
          </rant>
     -->
-    <!-- mkdir dir="${test-output}" Removed by RCS-->
-
-
     <junit fork="yes" showoutput="yes" filtertrace="no" printsummary="yes">
       <classpath>
         <pathelement location="${dist}/jol.jar"/>
@@ -142,10 +139,7 @@
         <pathelement location="${lib}/junit.jar"/>
         <pathelement location="${lib}/grappa.jar"/>
       </classpath>
-
-      <!-- <formatter type="plain"/> -->
-
-      <batchtest> <!-- todir="${test-output}"> Removed by RCS-->
+      <batchtest>
         <fileset dir="${test}">
           <include name="**/*Test.java"/>
         </fileset>
@@ -157,6 +151,5 @@
     <delete dir="${build}"/>
     <delete dir="${dist}"/>
     <delete dir="${doc}"/>
-    <delete dir="${test-output}"/>
   </target>
 </project>
