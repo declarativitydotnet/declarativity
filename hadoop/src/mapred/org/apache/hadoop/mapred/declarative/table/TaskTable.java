@@ -11,7 +11,6 @@ import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.core.Runtime;
 import jol.types.basic.TupleSet;
-import jol.types.basic.Wrapper;
 import jol.types.exception.BadKeyException;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
@@ -22,13 +21,13 @@ import jol.types.table.TableName;
 public class TaskTable extends ObjectTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "task");
-	
+
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0,1);
-	
+
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, TASKID, TYPE, PARTITION, FILE, MAP_COUNT, STATUS};
-	
+
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
 		JobID.class,     // Job identifier
@@ -39,7 +38,7 @@ public class TaskTable extends ObjectTable {
 		Integer.class,   // Map count
 		TaskState.class // Task status
 	};
-	
+
 	public TaskTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		Key typeKey = new Key(Field.TYPE.ordinal());
@@ -55,7 +54,7 @@ public class TaskTable extends ObjectTable {
 		}
 		return null;
 	}
-	
+
 	public TupleSet reduceTasks() {
 		try {
 			return secondary().get(new Key(Field.TYPE.ordinal())).lookupByKey(TaskType.REDUCE);
