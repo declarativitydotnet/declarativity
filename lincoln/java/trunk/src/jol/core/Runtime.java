@@ -49,7 +49,7 @@ public class Runtime implements JolSystem {
 	}
 
 	/** The thread that the runtime executes in.
-	 * Created and started in {#link #create(int)}. */
+	 * Created and started in {@link Runtime#create(int)}. */
 	private Thread thread;
 
 	/** The system catalog contain all table references. */
@@ -76,9 +76,8 @@ public class Runtime implements JolSystem {
 	private ExecutorService executor;
 
 	private int port;
-	public int getPort() { return port; }
-	
-	/** Creates a new runtime. Called from {#link #create(int)}. */
+
+	/** Creates a new runtime. Called from {@link Runtime#create(int)}. */
 	private Runtime(int port) {
 		this.catalog = Table.initialize(this);
 		this.port = port;
@@ -177,6 +176,13 @@ public class Runtime implements JolSystem {
 	 */
 	public Timer timer() {
 		return this.timer;
+	}
+
+	/**
+	 * Get the local TCP port.
+	 */
+	public int getPort() {
+		return this.port;
 	}
 
 	/**
