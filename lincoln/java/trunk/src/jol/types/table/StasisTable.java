@@ -19,7 +19,7 @@ public abstract class StasisTable extends Table {
 
 	protected byte[] nameBytes;
 	protected byte[] schemaBytes;
-	protected StasisSerializer s;
+	protected StasisSerializer s = new StasisSerializer();
 	protected TransactionStatus ts;
 	public StasisTable(Runtime context, TableName name, Key key, Class[] attributeTypes) {
 		super(name, Table.Type.TABLE, key, attributeTypes);
