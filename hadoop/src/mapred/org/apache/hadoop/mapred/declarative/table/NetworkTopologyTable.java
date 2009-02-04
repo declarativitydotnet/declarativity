@@ -25,8 +25,7 @@ import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
 public class NetworkTopologyTable extends ObjectTable {
-
-	private class Resolver extends Thread {
+	private class Resolver extends Thread { 
 		private jol.core.JolSystem context;
 		private DNSToSwitchMapping dnsToSwitchMapping;
 
