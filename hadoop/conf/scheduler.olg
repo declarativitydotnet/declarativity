@@ -37,7 +37,6 @@ jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTim
 	Attempts > 3 || Attempts > Trackers,
 	FailStatus := new JobState(JobId, Constants.JobState.FAILED);
 
-watch(jobtracker::taskAttempt, a);
 public
 jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L) :-
 	schedule(JobId, TaskId, TrackerName),
@@ -73,8 +72,18 @@ define(jobFinishedReduceTasks,  keys(0), {JobID, Integer});
 /* Put new jobs in a wait queue in a MAP phase. */
 public
 jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP) :-
-	jobtracker::job#insert(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status),
-	Status.state() == Constants.JobState.PREP;
+	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, JStatus),
+	jobMapTasks#insert(JobId, Tasks), Tasks > 0,
+	JStatus.state() == Constants.JobState.PREP;
+	
+
+watch(jobQueue, ae);
+public
+jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
+	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, JStatus),
+	jobReduceTasks#insert(JobId, Reduces), Reduces > 0,
+	notin jobMapTasks(JobId, Maps),
+	JStatus.state() == Constants.JobState.PREP;
 	
 public delete
 jobQueue(JobId, Priority, SubmitTime, Phase) :-
@@ -87,6 +96,12 @@ jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
 	jobFinishedMapTasks#insert(JobId, Maps), jobMapTasks(JobId, Maps),
 	jobQueue(JobId, Priority, SubmitTime, Phase),
 	Phase == Constants.TaskType.MAP;
+
+public
+jobReduceTasks(JobId, count<TaskId>) :-
+	jobtracker::task(JobId, TaskId, Type, _, _, _, _),
+	Type == Constants.TaskType.REDUCE;
+	
 	
 public
 jobMapTasks(JobId, count<TaskId>) :-
