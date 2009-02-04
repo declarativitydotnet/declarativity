@@ -54,7 +54,10 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public void initialize(URI name, Configuration conf) throws IOException {
-		throw new RuntimeException("not yet implemented");
+        System.out.println("BFS#initialize()");
+        setConf(conf);
+        int clientPort = conf.getInt("fs.bfs.clientPort", 5015);
+        System.out.println("BFS#initialize(): client port = " + clientPort);
 	}
 
 	@Override
