@@ -17,80 +17,68 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public FSDataOutputStream append(Path f, int bufferSize,
 			Progressable progress) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public FSDataOutputStream create(Path f, FsPermission permission,
 			boolean overwrite, int bufferSize, short replication,
 			long blockSize, Progressable progress) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public boolean delete(Path f) throws IOException {
-		// TODO Auto-generated method stub
-		return false;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public boolean delete(Path f, boolean recursive) throws IOException {
-		// TODO Auto-generated method stub
-		return false;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public FileStatus getFileStatus(Path f) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public URI getUri() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public Path getWorkingDirectory() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public void initialize(URI name, Configuration conf) throws IOException {
-		// TODO Auto-generated method stub
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public FileStatus[] listStatus(Path f) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public boolean mkdirs(Path f, FsPermission permission) throws IOException {
-		// TODO Auto-generated method stub
-		return false;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public FSDataInputStream open(Path f, int bufferSize) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public boolean rename(Path src, Path dst) throws IOException {
-		// TODO Auto-generated method stub
-		return false;
+		throw new RuntimeException("not yet implemented");
 	}
 
 	@Override
 	public void setWorkingDirectory(Path new_dir) {
-		// TODO Auto-generated method stub
-
+		throw new RuntimeException("not yet implemented");
 	}
 }
