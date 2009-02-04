@@ -8,13 +8,11 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
-import org.apache.hadoop.mapred.declarative.table.TaskTable.Field;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.ValueList;
-import jol.types.basic.Wrapper;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
@@ -22,16 +20,16 @@ import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
 public class TaskReportTable extends ObjectTable {
-	
+
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "task");
-	
+
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0,1);
-	
+
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, TASKID, TYPE, PROGRESS, STATE, DIAGNOSTICS, START, FINISH};
-	
+
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
 		JobID.class,     // Job identifier
@@ -39,18 +37,18 @@ public class TaskReportTable extends ObjectTable {
 		TaskType.class,  // Type
 		Float.class,     // Progress
 		String.class,    // State
-		ValueList.class, // Diasnostics
+		ValueList.class, // Diagnostics
 		Long.class,      // Start time
 		Long.class       // Finish time
 	};
-	
+
 	public TaskReportTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		Key key = new Key(Field.JOBID.ordinal(), Field.TYPE.ordinal());
 		Index index  = new HashIndex(context, this, key, Index.Type.SECONDARY);
 		secondary().put(key, index);
 	}
-	
+
 	public TaskReport[] mapReports(JobID jobid) {
 		try {
 			Key key = new Key(Field.JOBID.ordinal(), Field.TYPE.ordinal());
@@ -72,7 +70,7 @@ public class TaskReportTable extends ObjectTable {
 		}
 		return null;
 	}
-	
+
 	private TaskReport[] report(TupleSet tuples) {
 		List<TaskReport> reports = new ArrayList<TaskReport>();
 		for (Tuple tuple : tuples) {
@@ -81,12 +79,12 @@ public class TaskReportTable extends ObjectTable {
 			String            state       = (String) tuple.value(Field.STATE.ordinal());
 			Long              startTime   = (Long)   tuple.value(Field.START.ordinal());
 			Long              finishTime  = (Long)   tuple.value(Field.FINISH.ordinal());
-			ValueList<String> diagnostics = (ValueList<String>) 
+			ValueList<String> diagnostics = (ValueList<String>)
 										    tuple.value(Field.DIAGNOSTICS.ordinal());
-			
+
 			reports.add(new TaskReport(
-						taskid, progress, state, 
-						diagnostics.toArray(new String[diagnostics.size()]), 
+						taskid, progress, state,
+						diagnostics.toArray(new String[diagnostics.size()]),
 						startTime, finishTime, null));
 		}
 		return reports.toArray(new TaskReport[reports.size()]);
