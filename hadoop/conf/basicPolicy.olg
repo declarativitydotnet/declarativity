@@ -29,7 +29,6 @@ scheduleLimit(JobId, TaskId, Tracker) :-
 	limit(JobId, TaskId, Trackers),
 	Tracker := (String) Function.random(Trackers);
 	
-watch(scheduler::schedule, a);
 scheduler::schedule(JobId, TaskId, TrackerName) :-
 	scheduleLimit(JobId, TaskId, TrackerName);
 

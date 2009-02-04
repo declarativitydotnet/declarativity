@@ -38,6 +38,8 @@ define(initTask, {JobID, JobConf, String, TaskID, Constants.TaskType, Integer, F
 define(taskFile, {JobID, TaskID, ValueList});
 define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 
+watch(job, a);
+watch(task, a);
 job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
 	initJob(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status);
 
@@ -80,10 +82,10 @@ networkDistance(Location1, Location2, min<Distance>) :-
 	
 
 /*************** Job Status Maintenance *********************/
-import jol.types.basic.ComparableSet;
+import java.util.Set;
 	
-define(mapTasks,    keys(0), {JobID, ComparableSet});
-define(reduceTasks, keys(0), {JobID, ComparableSet});
+define(mapTasks,    keys(0), {JobID, Set});
+define(reduceTasks, keys(0), {JobID, Set});
 define(updateJob, {JobID});
 define(killjob,   {JobID, String});
 
@@ -100,7 +102,13 @@ updateJobStateNoReduce
 job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
 	updateJob(JobId), mapTasks(JobId, Maps), notin reduceTasks(JobId, Reduces),
 	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _),
-	Status := new JobState(JobId, Maps);
+	Status := new JobState(JobId, Maps, null);
+
+updateJobStateNoMap
+job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
+	updateJob(JobId), notin mapTasks(JobId, Maps), reduceTasks(JobId, Reduces),
+	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _),
+	Status := new JobState(JobId, null, Reduces);
 	
 updateJob(JobId) :- mapTasks(JobId);
 updateJob(JobId) :- reduceTasks(JobId);
@@ -131,7 +139,6 @@ taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-
 
 define(taskState, {JobID, TaskID, TaskState});
 
-watch(taskAttempt, a);
 taskAttempt(JobID, TaskID, AttemptID, Progress, Constants.TaskState.FAILED, 
             Phase, Diag, TrackerName, FileLoc, Start, Finish) :-
 	taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, _, _),
