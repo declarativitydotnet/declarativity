@@ -138,6 +138,7 @@ public final class TypeChecker extends Visitor {
 		try {
 			dispatch(node);
 		} catch (Throwable e) {
+			e.printStackTrace();
 			if (e.getCause() instanceof CompileException) {
 				CompileException ce = (CompileException) e.getCause();
 				runtime.error(ce.getMessage(), ce.node());
@@ -424,7 +425,6 @@ public final class TypeChecker extends Visitor {
 		} else {
 			create = new BasicTable(context, name, key, schema);
 		}
-		create = new BasicTable(context, name, key, schema);
 		context.catalog().register(create);
 		this.program.definition(create);
 		n.setProperty(Constants.TYPE, create);

@@ -644,7 +644,7 @@ public class Driver implements Runnable {
 			evaluate(this.logicalTime, task.program(), task.name(), task.insertions(), task.deletions());
 		}
 		evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
-		StasisTable.commit();
+		StasisTable.commit(this.runtime.context());
 		if (debug) System.err.println("============================ ========================== ============================");
 	}
 	public void timestampPrepare() throws UpdateException {

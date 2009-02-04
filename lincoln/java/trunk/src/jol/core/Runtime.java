@@ -75,10 +75,16 @@ public class Runtime implements JolSystem {
 	/** An executor for async queries. */
 	private ExecutorService executor;
 
+	private int port;
+	public int getPort() { return port; }
+	
 	/** Creates a new runtime. Called from {#link #create(int)}. */
-	private Runtime() {
+	private Runtime(int port) {
 		this.catalog = Table.initialize(this);
+		this.port = port;
 		Compiler.initialize(this);
+
+		// next line must come after initialization of 'port'
 		StasisTable.initializeStasis(this);
 
 		this.schedule = new Schedule(this);
@@ -133,7 +139,7 @@ public class Runtime implements JolSystem {
 			this.executor.shutdown();
 			if (this.thread != null) this.thread.interrupt();
 			if (this.network != null) this.network.shutdown();
-			StasisTable.deinitializeStasis();
+			StasisTable.deinitializeStasis(this);
 		}
 	}
 
@@ -364,7 +370,7 @@ public class Runtime implements JolSystem {
 	public static JolSystem create(int port, ResourceLoader l) throws JolRuntimeException {
 		try {
 			Runtime.loader = l;
-			Runtime runtime = new Runtime();
+			Runtime runtime = new Runtime(port);
 			URL runtimeFile = loader.getResource("jol/core/runtime.olg");
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
