@@ -223,8 +223,14 @@ creations/deletions), or "all".</description>
 
 <property>
   <name>fs.bfs.impl</name>
-  <value>org.apache.hadoop.fs.BoomFileSystem</value>
+  <value>org.apache.hadoop.fs.bfs.BoomFileSystem</value>
   <description>Boom File System, the FileSystem for bfs: URIs.</description>
+</property>
+
+<property>
+  <name>fs.bfs.clientPort</name>
+  <value>5015</value>
+  <description>TCP port to use for BFS client connections.</description>
 </property>
 
 <property>
