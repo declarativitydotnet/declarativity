@@ -3,7 +3,6 @@ package org.apache.hadoop.mapred.declarative.util;
 import java.util.HashSet;
 import java.util.Set;
 
-import jol.types.basic.ComparableSet;
 import jol.types.basic.TupleSet;
 
 import org.apache.hadoop.mapred.JobID;
@@ -35,11 +34,11 @@ public class JobState implements Comparable<JobState> {
 		this.reduces = new HashSet<TaskState>();
 	}
 	
-	public JobState(JobID jobid, ComparableSet maps) {
+	public JobState(JobID jobid, Set maps) {
 		this(jobid, maps, null);
 	}
 	
-	public JobState(JobID jobid, ComparableSet maps, ComparableSet reduces) {
+	public JobState(JobID jobid, Set<TaskState> maps, Set<TaskState> reduces) {
 		this.jobid   = jobid;
 		this.state   = Constants.JobState.RUNNING;
 		this.maps    = maps;
