@@ -222,6 +222,12 @@ creations/deletions), or "all".</description>
 </property>
 
 <property>
+  <name>fs.bfs.impl</name>
+  <value>org.apache.hadoop.fs.BoomFileSystem</value>
+  <description>Boom File System, the FileSystem for bfs: URIs.</description>
+</property>
+
+<property>
   <name>fs.inmemory.size.mb</name>
   <value>75</value>
   <description>The size of the in-memory filsystem instance in MB</description>
