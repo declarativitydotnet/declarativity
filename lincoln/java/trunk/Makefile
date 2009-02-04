@@ -14,9 +14,11 @@ src/stasis/jni/stasis_jni_Stasis.h : ant-build/stasis/jni/Stasis.class
 
 ant-build/stasis/jni/libstasisjni.so: src/stasis/jni/stasis_jni_Stasis.c \
 				src/stasis/jni/stasis_jni_Stasis.h
+	## XXX include/linux  worksaround broken sun java ubuntu package
 	if [ "$(shell uname)" = "Linux" ] ; then \
 	  gcc -shared -fPIC \
 	      -I $(JAVA_DIR)/include \
+	      -I $(JAVA_DIR)/include/linux \
 	      -I $(STASIS_DIR) \
 	      -L $(STASIS_DIR)/build/src/stasis \
 	         src/stasis/jni/stasis_jni_Stasis.c \
