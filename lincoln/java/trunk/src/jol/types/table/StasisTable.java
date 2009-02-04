@@ -16,65 +16,19 @@ import stasis.jni.JavaHashtable;
 import stasis.jni.Stasis;
 
 public abstract class StasisTable extends Table {
-	private static final ByteArrayOutputStream outArray = new ByteArrayOutputStream();
-    private static ObjectOutputStream serializer;
-
-    static {
-    	ObjectOutputStream s;
-    	try {
-    		s = new ObjectOutputStream(outArray);
-    	} catch(IOException e) {
-    		e.printStackTrace();
-    		s = null;
-    	}
-    	serializer = s;
-    }
-    
-    protected static  byte[] toBytes(Object o) {
-		appendObject(o);
-		return objectBytes();
-	}
-
-	private static  void appendObject(Object o) {
-		try {
-			serializer.writeObject(o);
-		} catch(IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-	}
-	private static byte[] objectBytes() {
-		try {
-			serializer.close(); // does not affect outArray...
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		byte[] ret = outArray.toByteArray(); // makes copy
-		outArray.reset();  // reset outArray to beginning of stream for next time.
-		try {
-			serializer = new ObjectOutputStream(outArray);
-		} catch(IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		if(ret == null) {
-			System.out.println("Impossible!!!");
-			System.exit(-1);
-		}
-		return ret;
-	}
 
 	protected byte[] nameBytes;
 	protected byte[] schemaBytes;
-	
+	protected StasisSerializer s;
+	protected TransactionStatus ts;
 	public StasisTable(Runtime context, TableName name, Key key, Class[] attributeTypes) {
 		super(name, Table.Type.TABLE, key, attributeTypes);
+		ts = xactTable.get(context.getPort());
 
-		nameBytes = toBytes(name);
-		appendObject(key);
-		appendObject(attributeTypes);
-		schemaBytes = objectBytes();
+		nameBytes = s.toBytes(name);
+		s.appendObject(key);
+		s.appendObject(attributeTypes);
+		schemaBytes = s.objectBytes();
 		
 		primary = new Index(context,this, this.key, Index.Type.PRIMARY, false) {
 			@Override
@@ -121,24 +75,23 @@ public abstract class StasisTable extends Table {
 	protected static Tuple CATALOG_SCHEMA = new Tuple();
 	protected static byte[] CATALOG_SCHEMA_BYTES;
 	protected static byte[] CATALOG_NAME_BYTES; 
-	private static Runtime runtime;
+	//private static Runtime runtime;
 	
 	static { 
 		CATALOG_SCHEMA.append(new Long(1));
 		CATALOG_SCHEMA.append(new Long(1));
 		CATALOG_SCHEMA.append(CATALOG_KEY);
 		CATALOG_SCHEMA.append(CATALOG_COLTYPES);
-		CATALOG_SCHEMA_BYTES = toBytes(CATALOG_SCHEMA);
-		CATALOG_NAME_BYTES = toBytes(CATALOG_NAME);
+		CATALOG_SCHEMA_BYTES = new StasisSerializer().toBytes(CATALOG_SCHEMA);
+		CATALOG_NAME_BYTES = new StasisSerializer().toBytes(CATALOG_NAME);
 	}
 	
-	//LinearHash tbl;
 	Index prim;
 	
 	@Override
 	protected boolean delete(Tuple t) throws UpdateException {
-		byte[] keybytes = toBytes(key.project(t));
-		byte[] valbytes = toBytes(key.projectValue(t));
+		byte[] keybytes = s.toBytes(key.project(t));
+		byte[] valbytes = s.toBytes(key.projectValue(t));
 		return remove(keybytes, valbytes);
 	}
 
@@ -201,14 +154,22 @@ public abstract class StasisTable extends Table {
 		return secondary;
 	}
 
+	protected static class TransactionStatus {
+		public long xid;
+		public boolean dirty;
+		public TransactionStatus(long xid) { this.xid = xid; this.dirty = false; }
+	};
+	
+	protected static Map<Integer,TransactionStatus> xactTable 
+		= new HashMap<Integer,TransactionStatus>();
+	
 	// XXX add support for concurrent transactions
-	protected static long xid;
-	protected static boolean dirty = false;
+//	protected static long xid;
+//	protected static boolean dirty = false;
 	public static boolean foundStasis = false;
 	
-	public static void initializeStasis(Runtime runtime) {
-		JavaHashtable.initialize(toBytes(CATALOG_NAME), CATALOG_SCHEMA_BYTES);
-		StasisTable.runtime = runtime;
+	public synchronized static void initializeStasis(Runtime context) {
+		JavaHashtable.initialize(new StasisSerializer().toBytes(CATALOG_NAME), CATALOG_SCHEMA_BYTES);
 		try {
 			Stasis.loadLibrary();
 			foundStasis = true;
@@ -222,33 +183,40 @@ public abstract class StasisTable extends Table {
 			} else {
 				System.err.println("skipped; attached to running copy of Stasis");
 			}
-			xid = Stasis.begin();
+			TransactionStatus newTs = new TransactionStatus(Stasis.begin());
+			xactTable.put(context.getPort(), newTs);
 			foundStasis = true;
 		}
 	}
-	public static void deinitializeStasis() {
+	public synchronized static void deinitializeStasis(Runtime context) {
 		if(foundStasis) {
-			if(dirty) {
-				Stasis.commit(xid);
+			TransactionStatus s = xactTable.get(context.getPort());
+			if(s.dirty) {
+				Stasis.commit(s.xid);
+				xactTable.remove(context.getPort());
 			}
-			Stasis.deinit();
+			if(xactTable.size() == 0) {
+				Stasis.deinit();
+			}
 		}
 	}
 	
-	public static void commit() {
-		if(foundStasis && dirty) {
-			System.err.println("commit transaction " + xid);
-			Stasis.commit(xid);
-			xid = Stasis.begin();
-			dirty = false;
+	public static void commit(Runtime context) {
+		TransactionStatus s = xactTable.get(context.getPort());
+		if(foundStasis && s.dirty) {
+			System.err.println("commit transaction " + s.xid);
+			Stasis.commit(s.xid);
+			s.xid = Stasis.begin();
+			s.dirty = false;
 		}
 	}
 	// XXX figure out how to abort transactions
-	public static void abort() {
-		if(foundStasis && dirty) {
-			Stasis.abort(xid);
-			xid = Stasis.begin();
-			dirty = false;
+	public static void abort(Runtime context) {
+		TransactionStatus s = xactTable.get(context.getPort());
+		if(foundStasis && s.dirty) {
+			Stasis.abort(s.xid);
+			s.xid = Stasis.begin();
+			s.dirty = false;
 		}
 	}
 
