@@ -1,22 +1,33 @@
-package gfs.test;
+package bfs.test;
 
-import gfs.test.TestCommon;
+import bfs.test.TestCommon;
 
 import org.junit.Test;
 
-public class GFSMM2Test extends TestCommon {
+public class BFSMM4Test extends TestCommon {
     @Test
     public void test2() {
         try {
             startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
-            shellCreate("foo");
-            /* kill one of the masters */
-            // this.masters.get(1).stop();
-            this.killMaster(1);
+            // shell = new Shell();
+            // createFile(shell,"foo");
 
+            /* kill one of the masters */
+            killMaster(1);
+
+            // shell = new Shell();
+            // createFile(shell,"foo");
+            // createFile(shell,"bar");
+
+            shellCreate("foo");
             shellCreate("bar");
+
             assertTrue(shellLs("foo", "bar"));
+
+            // shellRm("foo");
+
+            // /assertTrue(!shellLs("foo"));
 
             shutdown();
         } catch (Exception e) {
@@ -26,7 +37,7 @@ public class GFSMM2Test extends TestCommon {
     }
 
     public static void main(String[] args) throws Exception {
-        GFSMM2Test t = new GFSMM2Test();
+        BFSMM4Test t = new BFSMM4Test();
         t.test2();
     }
 }

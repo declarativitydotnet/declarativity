@@ -1,8 +1,8 @@
-package gfs.test;
+package bfs.test;
 
 import org.junit.Test;
 
-public class GFSTest extends TestCommon {
+public class BFSTest extends TestCommon {
     @Test
     public void test1() {
         try {
@@ -18,7 +18,7 @@ public class GFSTest extends TestCommon {
     }
 
     public static void main(String[] args) throws Exception {
-        GFSTest t = new GFSTest();
+        BFSTest t = new BFSTest();
         t.test1();
     }
 }
