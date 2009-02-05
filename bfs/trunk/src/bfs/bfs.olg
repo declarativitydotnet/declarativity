@@ -1,13 +1,13 @@
 program bfs;
 
-import bfs.Conf;
-import bfs.Master;
-import bfs.Shell;
 import java.lang.System;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 import jol.types.basic.ValueList;
+import bfs.Conf;
+import bfs.Master;
+import bfs.Shell;
 
 // The address of the local node
 define(self, keys(0), {String});
@@ -61,44 +61,18 @@ response(@Source, Id, Master, true, Result) :-
 define(newListHolder,keys(0,2),{String,String,Integer,ArrayList,Integer,String});
 watch(newListHolder, ae);
 
-newListHolder(Master,Source,Id,List,NewChunkId,FName) :-
+// We need to clone the list; otherwise the downstream list insert
+// causes a cycle through candidate_datanodes
+newListHolder(Master, Source, Id, NewList, NewChunkId, FName) :-
+    NewList := new ArrayList(List),
     candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
     request(Master, Id, Source, "NewChunk", FName);
 
 define(chunk_cnt, keys(0,1), {String,String,Integer});
-//watch(chunk_cnt, ae);
 chunk_cnt(Master, DataNode, count<ChunkId>) :-
-    //long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, _);
 
-/*
-define(lowest_loaded_nodes,keys(0,2), {String, Integer, String});
-watch(lowest_loaded_nodes, ae);
-lowest_loaded_nodes(Master, Cnt, DataNode) :-
-    flatk(Master, Id),
-    possible_choices(Master, Cnt, DataNode, Id);
-
-delete
-possible_choices(Master, Cnt, DataNode, Id) :-
-    possible_choices(Master, Cnt, DataNode, Id),
-    lowest_loaded_nodes(Master, Cnt, DataNode);
-
-define(flatk,keys(0,1),{String, Integer});
-//watch(flatk, ae);
-flatk(Master, IdFlat) :-
-    flatten(kpile(Master, Id)),
-    IdFlat := (Integer) Id;
-
-define(kpile,keys(0,1), {String, ValueList});
-watch(kpile, ae);
-kpile(Master, topk<Id,3>) :-
-    possible_choices(Master, Cnt, DataNode, Id);
-
-*/
-
 define(possible_choices,keys(0,1,2,3), {String, Integer, String,Integer});
-//define(possible_choices, {String, Integer, String,Integer});
-//watch(possible_choices, ae);
 possible_choices(Master, Cnt, DataNode, Id) :-
     flat_cnt(Master, Cnt),
     // SLOW!!
@@ -116,7 +90,7 @@ define(lowest_loaded_cnt, keys(0), {String,ValueList});
 lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
     chunk_cnt(Master, _, Cnt);
 
-/*
+/* cleanups temporarily disabled
 delete
 lowest_loaded_cnt(Master, Cnts) :-
     lowest_loaded_cnt(Master, Cnts),
@@ -129,7 +103,6 @@ watch(candidate_datanode, ae);
 candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(DataNode)>) :-
     request(Master, Id, Source, "NewChunk", FName),
     chunkSeq(Master,I),
-    //lowest_loaded_nodes(Master, Cnt, DataNode),
     possible_choices(Master, Cnt, DataNode, Id2),
     bfs_global::file(Master, FName, _),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
@@ -160,6 +133,7 @@ response(@Source, Id, Master, false, null) :-
 // this is an alias of request, for "ChunkLocation" request types, with ChunkId cast as an Integer
 // I was having problems with overlog math on Longs....
 define(clRequest, {String, Integer, String, String, Integer});
+watch(clRequest, ae);
 clRequest(Master, ReqId, Source, "ChunkLocations", CId) :-
     request(Master, ReqId, Source, "ChunkLocations", ChunkId),
     CId := Integer.valueOf(ChunkId);
@@ -169,15 +143,14 @@ define(chunkHWM, keys(0, 1), {String,Integer});
 chunkHWM(Master,max<ChunkId>) :-
     chunks(Master,_,ChunkId,_);
 
-//watch(chunkHWM,ae);
+watch(chunkHWM,ae);
 
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return a list of the nodes holding that chunk. Otherwise, return
 // an error.
 define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, String, ArrayList});
-
+watch(compute_chunk_locs, ae);
 compute_chunk_locs(@Master, ReqId, Source, generic<(new ArrayList()).add(NodeAddr)>) :-
-    //request(@Master, ReqId, Source, "ChunkLocations", ChunkId),
     clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
     chunks(@Master, NodeAddr, ChunkId, _);
 
@@ -186,7 +159,6 @@ response(@Source, Id, Master, true, NodeList) :-
     compute_chunk_locs(@Master, Id, Source, NodeList);
 
 response(@Source, ReqId, Master, false, null) :-
-    //request(@Master, Id, Source, "ChunkLocations", ChunkId),
     clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
     notin chunks(@Master, _, ChunkId, _);
 
@@ -285,39 +257,43 @@ ackHeartBeat(@Dnode, Master, Id) :-
 dataNodes(Master, Host, max<Tstamp>) :-
     sendHeartBeat(Master, Host, _, Tstamp, _);
 
+/* these deletions are needed (until softstate is available)
+   to keep a handle on memory usage.  but until things stabilize,
+   they are disabled. 
+
 delete
 sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
     sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
     dataNodes(Master, Host, HighTstamp),
     HighTstamp > Tstamp;
-
+*/
 
 // Master node, Data node, BlockId, Timestamp of last
 // update from data node
 define(chunks, keys(0, 1, 2),{String, String, Integer, Long});
+//watch(chunks, aed);
 chunks(Master, DataNode, ChunkId, MaxTstamp) :-
     sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
-    dataNodes(Master, DataNode, MaxTstamp),
-    (System.currentTimeMillis() - MaxTstamp) < 10000L;
+    dataNodes(Master, DataNode, MaxTstamp); //,
+    //(System.currentTimeMillis() - MaxTstamp) < 10000L;
 
+/* another temporarily disabled cleanup rule
 delete
 chunks(Master, DataNode, ChunkId, Ts) :-
     chunks(Master, DataNode, ChunkId, Ts),
     clock(_, _, _),
     (System.currentTimeMillis() - Ts) > 10000L;
-
+*/
 
 /**************************/
 // maintenance functions
 
 define(rep_factor, keys(0,1), {String,Integer,Integer});
-watch(rep_factor, ae);
 rep_factor(Master, ChunkId, count<DataNode>) :-
     long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, Ts);
 
 define(back_of_list, keys(0,1), {String,Integer,String});
-//watch(back_of_list, ae);
 back_of_list(Master, ChunkId, min<DataNode>) :-
     long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, Ts);
@@ -325,7 +301,6 @@ back_of_list(Master, ChunkId, min<DataNode>) :-
 timer(long_period, physical, 10000, 100000, 0);
 
 define(to_delete, keys(0,2), {String,String,Integer});
-//watch(to_delete, ae);
 to_delete(Master, DataNode, ChunkId) :-
     rep_factor(Master, ChunkId, Cnt),
     back_of_list(Master, ChunkId, DataNode),
