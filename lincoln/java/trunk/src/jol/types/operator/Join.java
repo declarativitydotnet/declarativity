@@ -193,7 +193,7 @@ public abstract class Join extends Operator {
 	 * @return Join result.
 	 * @throws JolRuntimeException
 	 */
-	protected TupleSet join(TupleSet outerTuples, TupleSet innerTuples)
+	protected TupleSet join(Iterable<Tuple> outerTuples, Iterable<Tuple> innerTuples)
 	throws JolRuntimeException {
 		TupleSet result = new TupleSet();
 		for (Tuple outer : outerTuples) {

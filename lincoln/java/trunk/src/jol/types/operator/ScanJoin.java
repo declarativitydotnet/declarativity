@@ -37,7 +37,7 @@ public class ScanJoin extends Join {
 	
 	@Override
 	public TupleSet evaluate(TupleSet outer) throws JolRuntimeException {
-		return join(outer, (TupleSet) this.table.tuples());
+		return join(outer, this.table.tuples());
 	}
 
 }
