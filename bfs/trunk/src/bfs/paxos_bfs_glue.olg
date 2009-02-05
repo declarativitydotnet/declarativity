@@ -12,7 +12,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   From := Master,
   bfs::create_request_pending(Master, Id, Source, true),
   bfs::request(Master, Id, Source, "Create", FName),
-  Decree := FName + ",i,"+Id.toString();
+  Decree := FName + ",i," + Id.toString();
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -20,7 +20,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   From := Master,
   bfs::rm_request_pending(Master, Id, Source, true),
   bfs::request(Master, Id, Source, "Rm", FName),
-  Decree := FName + ",d,"+Id.toString();
+  Decree := FName + ",d," + Id.toString();
 
 // an insert op in the log induces a new metadata entry for a file.
 public
@@ -38,7 +38,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   paxos_global::id(Master),
   From := Master,
   bfs::candidate_datanode#insert(Master, Id, Source, FName, I, Stuff),
-  Decree := FName + ",u,"+Id.toString()+","+I.toString();
+  Decree := FName + ",u," + Id.toString() + "," + I.toString();
 
 
 // add chunks to the file list.
@@ -72,6 +72,7 @@ appView(Master,From,Decree,Instance,Name,Op,Id,I) :-
   Op := (String) NVL.get(1),
   Id := Integer.valueOf((String) NVL.get(2)),
   I := NVL.size() < 4 ? -1 : Integer.valueOf((String) NVL.get(3));
+  // XXX: array version disabled because of JOL issue
 //   NVL := Decree.split(","),
 //   Name := NVL[0],
 //   Op := NVL[1],
