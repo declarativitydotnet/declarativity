@@ -16,7 +16,7 @@ import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
 	private BfsClient bfs;
-	private String workingDir = "/";
+	private Path workingDir = new Path("/");
 
 	@Override
 	public FSDataOutputStream append(Path f, int bufferSize,
@@ -52,11 +52,6 @@ public class BoomFileSystem extends FileSystem {
 	}
 
 	@Override
-	public Path getWorkingDirectory() {
-		throw new RuntimeException("not yet implemented");
-	}
-
-	@Override
 	public void initialize(URI name, Configuration conf) throws IOException {
         setConf(conf);
 
@@ -82,12 +77,17 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public boolean rename(Path src, Path dst) throws IOException {
-		throw new RuntimeException("not yet implemented");
+		return this.bfs.rename(getPathName(src), getPathName(dst));
+	}
+
+	@Override
+	public Path getWorkingDirectory() {
+		return this.workingDir;
 	}
 
 	@Override
 	public void setWorkingDirectory(Path new_dir) {
-		throw new RuntimeException("not yet implemented");
+		this.workingDir = makeAbsolute(new_dir);
 	}
 
 	private String getPathName(Path path) {
