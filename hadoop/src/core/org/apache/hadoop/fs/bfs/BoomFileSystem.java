@@ -3,6 +3,9 @@ package org.apache.hadoop.fs.bfs;
 import java.io.IOException;
 import java.net.URI;
 
+import jol.core.JolSystem;
+import jol.types.exception.JolRuntimeException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -13,6 +16,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
+	private JolSystem context;
 
 	@Override
 	public FSDataOutputStream append(Path f, int bufferSize,
@@ -54,10 +58,15 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public void initialize(URI name, Configuration conf) throws IOException {
-        System.out.println("BFS#initialize()");
         setConf(conf);
         int clientPort = conf.getInt("fs.bfs.clientPort", 5015);
         System.out.println("BFS#initialize(): client port = " + clientPort);
+
+        try {
+        	this.context = jol.core.Runtime.create(clientPort);
+        } catch (JolRuntimeException e) {
+        	throw new IOException(e);
+        }
 	}
 
 	@Override
