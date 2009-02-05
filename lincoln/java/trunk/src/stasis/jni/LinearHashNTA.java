@@ -39,19 +39,21 @@ public class LinearHashNTA extends StasisTable {
 		super(context, CATALOG_NAME, CATALOG_KEY, CATALOG_COLTYPES);
 		key = new Key(0);
 		rootRid = Stasis.root_record();
-		long type = Stasis.record_type(ts.xid, rootRid);
-		if(type == -1) {
-			ts.dirty = true;
-			rid = Stasis.hash_create(ts.xid);
-			if(rid[0] != rootRid[0] || rid[1] != rootRid[1]) {
-				throw new IllegalStateException();
+		synchronized (xactTable) {
+			long type = Stasis.record_type(ts.xid, rootRid);
+			if(type == -1) {
+				ts.dirty = true;
+				rid = Stasis.hash_create(ts.xid);
+				if(rid[0] != rootRid[0] || rid[1] != rootRid[1]) {
+					throw new IllegalStateException();
+				}
+			} else {
+				rid = new long[3];
+				rid[0] = rootRid[0];
+				rid[1] = rootRid[1];
 			}
-		} else {
-			rid = new long[3];
-			rid[0] = rootRid[0];
-			rid[1] = rootRid[1];
+			header = CATALOG_SCHEMA;
 		}
-		header = CATALOG_SCHEMA;
 	}
 	public LinearHashNTA(Runtime context, TableName name, Key key,
 			Class[] attributeTypes) throws UpdateException {
@@ -72,13 +74,15 @@ public class LinearHashNTA extends StasisTable {
 		}
 
 		Tuple catalogEntry;
-		if(headerSet.isEmpty()) {
-			ts.dirty = true;
-			rid = Stasis.hash_create(ts.xid);
-			catalogEntry = registerTable(name, key, attributeTypes);
-		} else {
-			catalogEntry = headerSet.iterator().next();
-			rid = new long[3];
+		synchronized (xactTable) {
+			if(headerSet.isEmpty()) {
+				ts.dirty = true;
+				rid = Stasis.hash_create(ts.xid);
+				catalogEntry = registerTable(name, key, attributeTypes);
+			} else {
+				catalogEntry = headerSet.iterator().next();
+				rid = new long[3];
+			}
 		}
 		header = catalog.primary().key().projectValue(catalogEntry);
 		rid[0] = (Long)header.value(0);
@@ -88,13 +92,15 @@ public class LinearHashNTA extends StasisTable {
 	@Override
 	protected boolean add(byte[] keybytes, byte[] valbytes)
 			throws UpdateException {
-	    ts.dirty = true;
-		byte[] oldvalbytes = Stasis.hash_insert(ts.xid, rid, keybytes, valbytes);
-		if(oldvalbytes != null) {
-			//throw new UpdateException("primary key violation");
-			return (!Arrays.equals(valbytes, oldvalbytes));
+		synchronized (xactTable) {
+			ts.dirty = true;
+			byte[] oldvalbytes = Stasis.hash_insert(ts.xid, rid, keybytes, valbytes);
+			if(oldvalbytes != null) {
+				//throw new UpdateException("primary key violation");
+				return (!Arrays.equals(valbytes, oldvalbytes));
+			}
+			return oldvalbytes == null;
 		}
-		return oldvalbytes == null;
 	}
 
 	@Override
@@ -105,36 +111,38 @@ public class LinearHashNTA extends StasisTable {
 	@Override
 	protected boolean remove(byte[] keybytes, byte[] valbytes)
 			throws UpdateException {
-		ts.dirty = true;
-		byte[] oldvalbytes = Stasis.hash_remove(-1, rid, keybytes);
-		if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
-			throw new UpdateException("attempt to remove non-existant tuple");
+		synchronized (xactTable) {
+			ts.dirty = true;
+			byte[] oldvalbytes = Stasis.hash_remove(-1, rid, keybytes);
+			if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
+				throw new UpdateException("attempt to remove non-existant tuple");
+			}
+			return oldvalbytes != null;
 		}
-		return oldvalbytes != null;
 	}
 
 	@Override
 	protected byte[] lookup(byte[] keybytes) {
-		return Stasis.hash_lookup(ts.xid, rid, keybytes);
+		return Stasis.hash_lookup(-1, rid, keybytes);
 	}
 
 	@Override
 	protected Iterator<byte[][]> tupleBytes() {
 		return new Iterator<byte[][]>() {
-			private byte[] it = Stasis.hash_iterator(ts.xid, rid);
+			private byte[] it = Stasis.hash_iterator(-1, rid);
 
 			private byte[][] current = new byte[2][];
 			private byte[][] next = new byte[2][];
 
 			private boolean hadNext = true;
 			Iterator<byte[][]> init() {
-				hadNext = Stasis.iterator_next(ts.xid, it);
+				hadNext = Stasis.iterator_next(-1, it);
 				if(hadNext) {
-					next[0] = Stasis.iterator_key(ts.xid,it);
-					next[1] = Stasis.iterator_value(ts.xid, it);
-					Stasis.iterator_tuple_done(ts.xid, it);
+					next[0] = Stasis.iterator_key(-1,it);
+					next[1] = Stasis.iterator_value(-1, it);
+					Stasis.iterator_tuple_done(-1, it);
 				} else {
-					Stasis.iterator_close(ts.xid, it);
+					Stasis.iterator_close(-1, it);
 				}
 				return this;
 			}
@@ -148,13 +156,13 @@ public class LinearHashNTA extends StasisTable {
 					current = next;
 					next = new byte[2][];
 
-					hadNext = Stasis.iterator_next(ts.xid,it);
+					hadNext = Stasis.iterator_next(-1,it);
 					if(hadNext) {
-						next[0] = Stasis.iterator_key(ts.xid,it);
-						next[1] = Stasis.iterator_value(ts.xid,it);
-						Stasis.iterator_tuple_done(ts.xid,it);
+						next[0] = Stasis.iterator_key(-1,it);
+						next[1] = Stasis.iterator_value(-1,it);
+						Stasis.iterator_tuple_done(-1,it);
 					} else {
-						Stasis.iterator_close(ts.xid, it);
+						Stasis.iterator_close(-1, it);
 					}
 					return current;
 				} else {
@@ -163,7 +171,7 @@ public class LinearHashNTA extends StasisTable {
 			}
 
 			public void remove() {
-				ts.dirty = true;
+//				ts.dirty = true;
 				throw new UnsupportedOperationException("No support for removal via table iterators yet...");
 			}
 

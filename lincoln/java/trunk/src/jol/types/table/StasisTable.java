@@ -1,8 +1,6 @@
 package jol.types.table;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -23,13 +21,14 @@ public abstract class StasisTable extends Table {
 	protected TransactionStatus ts;
 	public StasisTable(Runtime context, TableName name, Key key, Class[] attributeTypes) {
 		super(name, Table.Type.TABLE, key, attributeTypes);
-		ts = xactTable.get(context.getPort());
-
-		nameBytes = s.toBytes(name);
-		s.appendObject(key);
-		s.appendObject(attributeTypes);
-		schemaBytes = s.objectBytes();
-		
+		synchronized ( xactTable) {
+			ts = xactTable.get(context.getPort());
+	
+			nameBytes = s.toBytes(name);
+			s.appendObject(key);
+			s.appendObject(attributeTypes);
+			schemaBytes = s.objectBytes();
+		}
 		primary = new Index(context,this, this.key, Index.Type.PRIMARY, false) {
 			@Override
 			protected void insert(Tuple t) {
@@ -168,55 +167,63 @@ public abstract class StasisTable extends Table {
 //	protected static boolean dirty = false;
 	public static boolean foundStasis = false;
 	
-	public synchronized static void initializeStasis(Runtime context) {
+	public static void initializeStasis(Runtime context) {
 		JavaHashtable.initialize(new StasisSerializer().toBytes(CATALOG_NAME), CATALOG_SCHEMA_BYTES);
 		try {
 			Stasis.loadLibrary();
 			foundStasis = true;
 		} catch (UnsatisfiedLinkError e) {
 		}
-		if(foundStasis) {
-			System.err.print("Stasis recovery..."); System.err.flush();
-			int initcount = Stasis.init();
-			if(initcount == 1) {
-				System.err.println("suceeded");
-			} else {
-				System.err.println("skipped; attached to running copy of Stasis");
+		synchronized (xactTable) {
+			if(foundStasis) {
+				System.err.print("Stasis recovery..."); System.err.flush();
+				int initcount = Stasis.init();
+				if(initcount == 1) {
+					System.err.println("suceeded");
+				} else {
+					System.err.println("skipped; attached to running copy of Stasis");
+				}
+				TransactionStatus newTs = new TransactionStatus(Stasis.begin());
+				xactTable.put(context.getPort(), newTs);
+				foundStasis = true;
 			}
-			TransactionStatus newTs = new TransactionStatus(Stasis.begin());
-			xactTable.put(context.getPort(), newTs);
-			foundStasis = true;
 		}
 	}
-	public synchronized static void deinitializeStasis(Runtime context) {
-		if(foundStasis) {
-			TransactionStatus s = xactTable.get(context.getPort());
-			if(s.dirty) {
-				Stasis.commit(s.xid);
-				xactTable.remove(context.getPort());
-			}
-			if(xactTable.size() == 0) {
-				Stasis.deinit();
+	public static void deinitializeStasis(Runtime context) {
+		synchronized(xactTable) {
+			if(foundStasis) {
+				TransactionStatus s = xactTable.get(context.getPort());
+				if(s.dirty) {
+					Stasis.commit(s.xid);
+					xactTable.remove(context.getPort());
+				}
+				if(xactTable.size() == 0) {
+					Stasis.deinit();
+				}
 			}
 		}
 	}
 	
 	public static void commit(Runtime context) {
-		TransactionStatus s = xactTable.get(context.getPort());
-		if(foundStasis && s.dirty) {
-			System.err.println("commit transaction " + s.xid);
-			Stasis.commit(s.xid);
-			s.xid = Stasis.begin();
-			s.dirty = false;
+		synchronized(xactTable) {
+			TransactionStatus s = xactTable.get(context.getPort());
+			if(foundStasis && s.dirty) {
+				System.err.println("commit transaction " + s.xid);
+				Stasis.commit(s.xid);
+				s.xid = Stasis.begin();
+				s.dirty = false;
+			}
 		}
 	}
 	// XXX figure out how to abort transactions
 	public static void abort(Runtime context) {
-		TransactionStatus s = xactTable.get(context.getPort());
-		if(foundStasis && s.dirty) {
-			Stasis.abort(s.xid);
-			s.xid = Stasis.begin();
-			s.dirty = false;
+		synchronized (xactTable) {
+			TransactionStatus s = xactTable.get(context.getPort());
+			if(foundStasis && s.dirty) {
+				Stasis.abort(s.xid);
+				s.xid = Stasis.begin();
+				s.dirty = false;
+			}
 		}
 	}
 
