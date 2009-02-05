@@ -1,16 +1,15 @@
-package gfs.test;
+package bfs.test;
 
 import java.util.LinkedList;
-
-import gfs.test.TestCommon;
-
-import org.junit.Test;
 
 import bfs.Conf;
 import bfs.Master;
 import bfs.Shell;
+import bfs.test.TestCommon;
 
-public class GFSMM5Test extends TestCommon {
+import org.junit.Test;
+
+public class BFSMM5Test extends TestCommon {
 
     private void startOne() throws Exception {
         this.masters = new LinkedList<Master>();
@@ -60,7 +59,7 @@ public class GFSMM5Test extends TestCommon {
     }
 
     public static void main(String[] args) throws Exception {
-        GFSMM5Test t = new GFSMM5Test();
+        BFSMM5Test t = new BFSMM5Test();
         t.test4();
     }
 }

@@ -1,4 +1,4 @@
-program gfs;
+program bfs;
 
 import java.util.ArrayList;
 

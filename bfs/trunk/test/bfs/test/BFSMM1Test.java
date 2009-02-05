@@ -1,10 +1,10 @@
-package gfs.test;
+package bfs.test;
 
-import gfs.test.TestCommon;
+import bfs.test.TestCommon;
 
 import org.junit.Test;
 
-public class GFSMM1Test extends TestCommon {
+public class BFSMM1Test extends TestCommon {
     @Test
     public void test1() {
         try {
@@ -24,7 +24,7 @@ public class GFSMM1Test extends TestCommon {
     }
 
     public static void main(String[] args) throws Exception {
-        GFSMM1Test t = new GFSMM1Test();
+        BFSMM1Test t = new BFSMM1Test();
         t.test1();
     }
 }
