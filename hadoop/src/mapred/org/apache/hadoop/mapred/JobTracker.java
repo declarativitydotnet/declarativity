@@ -20,7 +20,7 @@ import jol.types.basic.Tuple;
 public abstract class JobTracker {
 	public static final String PROGRAM   = "jobtracker";
 	public static final String SCHEDULER = "scheduler";
-	public static final String POLICY    = "basicPolicy";
+	public static final String POLICY    = "policy";
 
 	public static enum State { INITIALIZING, RUNNING }
 
