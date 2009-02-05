@@ -29,7 +29,7 @@ public class Master {
     }
 
     private static void usage() {
-        System.err.println("Usage: gfs.Master index");
+        System.err.println("Usage: bfs.Master index");
         System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumMasters() - 1));
         System.exit(1);
     }
@@ -49,7 +49,7 @@ public class Master {
 
         this.system = Runtime.create(this.port);
 
-        this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
+        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
 
         setupPaxos();
@@ -65,27 +65,27 @@ public class Master {
             }
         };
 
-        this.system.catalog().table(new TableName("gfs_global", "file")).register(cb);
+        this.system.catalog().table(new TableName("bfs_global", "file")).register(cb);
 
         this.system.start();
         System.out.println("Master node @ " + this.port + " ready!");
     }
 
     private void setupPaxos() throws JolRuntimeException, UpdateException {
-        this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_global.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_global.olg"));
 
-        this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_p1.olg"));
-        //this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_pruned2.old"));
-        this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_p2.olg"));
-        this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_instance.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_p1.olg"));
+        //this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_pruned2.old"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_p2.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_instance.olg"));
 
-        //this.system.install("gfs", ClassLoader.getSystemResource("alive.olg"));
-        //this.system.install("gfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
+        //this.system.install("bfs", ClassLoader.getSystemResource("alive.olg"));
+        //this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
 
-        this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
-        this.system.install("gfs", ClassLoader.getSystemResource("gfs/paxos_gfs_glue.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
 
-        //this.system.install("gfs", ClassLoader.getSystemResource("gfs/files.olg"));
+        //this.system.install("bfs", ClassLoader.getSystemResource("bfs/files.olg"));
         this.system.evaluate();
 
         TupleSet id = new TupleSet();

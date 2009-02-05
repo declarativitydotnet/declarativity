@@ -1,4 +1,4 @@
-package gfs.test;
+package bfs.test;
 
 import java.net.URL;
 import java.util.concurrent.SynchronousQueue;
@@ -99,7 +99,7 @@ public class PaxosCommon {
             myInstall(s, "paxos/paxos_p1.olg");
             myInstall(s, "paxos/paxos_p2.olg");
             myInstall(s, "paxos/paxos_instance.olg");
-            // //myInstall(s, "gfs/test/olg/paxos/paxos_client_liveness.olg");
+            // //myInstall(s, "bfs/test/olg/paxos/paxos_client_liveness.olg");
         }
 
         TupleSet nodes = new TupleSet();

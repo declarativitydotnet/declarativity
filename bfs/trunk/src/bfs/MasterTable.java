@@ -6,7 +6,7 @@ import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
 public class MasterTable extends ObjectTable {
-	public static final TableName TABLENAME = new TableName("gfs", "master_for_node");
+	public static final TableName TABLENAME = new TableName("bfs", "master_for_node");
 
 	public static final Key PRIMARY_KEY = new Key(0);
 
