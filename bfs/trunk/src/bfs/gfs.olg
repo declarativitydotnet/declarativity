@@ -1,19 +1,19 @@
-program gfs;
+program bfs;
 
+import bfs.Conf;
+import bfs.Master;
+import bfs.Shell;
 import java.lang.System;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 import jol.types.basic.ValueList;
-import gfs.Conf;
-import gfs.Master;
-import gfs.Shell;
 
 // The address of the local node
 define(self, keys(0), {String});
 self(Conf.getSelfAddress());
 
-gfs_global::file(Self, "Foo", Chunks) :-
+bfs_global::file(Self, "Foo", Chunks) :-
     self(Self),
     Chunks := new ArrayList(Arrays.asList({1,2,3}));
 
@@ -131,7 +131,7 @@ candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(D
     chunkSeq(Master,I),
     //lowest_loaded_nodes(Master, Cnt, DataNode),
     possible_choices(Master, Cnt, DataNode, Id2),
-    gfs_global::file(Master, FName, _),
+    bfs_global::file(Master, FName, _),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
 
 delete
@@ -142,7 +142,7 @@ request(Master, Id, Source, "NewChunk", FName) :-
 // a "NewChunk" request for a nonexistent file causes an error.
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "NewChunk", FName),
-    notin gfs_global::file(@Master, FName, _);
+    notin bfs_global::file(@Master, FName, _);
 
 
 // If we get a "ChunkList" request for an extant file, send back its
@@ -150,11 +150,11 @@ response(@Source, Id, Master, false, null) :-
 // X-
 response(@Source, Id, Master, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FName),
-    gfs_global::file(@Master, FName, Chunks);
+    bfs_global::file(@Master, FName, Chunks);
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "ChunkList", FName),
-    notin gfs_global::file(@Master, FName, _);
+    notin bfs_global::file(@Master, FName, _);
 
 
 // this is an alias of request, for "ChunkLocation" request types, with ChunkId cast as an Integer
@@ -197,13 +197,13 @@ response(@Source, ReqId, Master, false, null) :-
 // X-?
 response(@Source, Id, Master, Success, Chunks) :-
     request(@Master, Id, Source, "Cat", FName),
-    gfs_global::file(@Master, FName, Chunks),
+    bfs_global::file(@Master, FName, Chunks),
     Success := true;
 
 // If the file doesn't exist, return an error message
 response(@Source, Id, Master, Success, Result) :-
     request(@Master, Id, Source, "Cat", FName),
-    notin gfs_global::file(@Master, FName, _),
+    notin bfs_global::file(@Master, FName, _),
     Success := false,
     Result := new ArrayList();//"File does not exist";
 
@@ -216,18 +216,18 @@ watch(create_request_pending, ae);
 // XXX: the use of "#insert" here is a hack
 create_request_pending(@Master, Id, Source, true) :-
     request#insert(@Master, Id, Source, "Create", FName),
-    notin gfs_global::file(@Master, FName, _);
+    notin bfs_global::file(@Master, FName, _);
 
 // If we get a "create" request for a file that exists, we
 // need to wait until we get consensus from Paxos; then we
 // can send back a negative ack
 create_request_pending(@Master, Id, Source, false) :-
     request#insert(@Master, Id, Source, "Create", FName),
-    gfs_global::file(@Master, FName, _);
+    bfs_global::file(@Master, FName, _);
 
 public
 response(@Source, Id, Master, Success, null) :-
-    gfs_global::create_request_done(@Master, Id, Source, Success);
+    bfs_global::create_request_done(@Master, Id, Source, Success);
 
 // If we get an "ls" request, send back the names of all the files in
 // the file system. If the file system is empty, send back an empty
@@ -236,7 +236,7 @@ define(compute_ls, keys(0, 1), {String, Integer, String, ArrayList});
 watch(compute_ls, ae);
 compute_ls(@Master, Id, Source, generic<(new ArrayList()).add(FName)>) :-
     request(@Master, Id, Source, "Ls", _),
-    gfs_global::file(@Master, FName, _);
+    bfs_global::file(@Master, FName, _);
 
 response(@Source, Id, Master, true, FileList) :-
     request(@Master, Id, Source, "Ls", _),
@@ -244,7 +244,7 @@ response(@Source, Id, Master, true, FileList) :-
 
 response(@Source, Id, Master, true, FileList) :-
     request(@Master, Id, Source, "Ls", _),
-    notin gfs_global::file(@Master, _, _),
+    notin bfs_global::file(@Master, _, _),
     FileList := new ArrayList();
 
 define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
@@ -254,11 +254,11 @@ define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 public
 rm_request_pending(@Master, Id, Source, true) :-
     request(@Master, Id, Source, "Rm", FName),
-    gfs_global::file(@Master, FName, _);
+    bfs_global::file(@Master, FName, _);
 
 public
 response(@Source, Id, Master, Success, null) :-
-    gfs_global::rm_request_done(@Master, Id, Source, Success);
+    bfs_global::rm_request_done(@Master, Id, Source, Success);
 
 // If we got an "rm" request and the file doesn't exist, return a
 // negative ack. NB: unlike in the "create" case, we don't need the
@@ -267,7 +267,7 @@ response(@Source, Id, Master, Success, null) :-
 // XXX: we should probably synchronize with Paxos here
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "Rm", FName),
-    notin gfs_global::file(@Master, FName, _);
+    notin bfs_global::file(@Master, FName, _);
 
 /*****************************/
 define(sendHeartBeat, keys(0, 1, 2), {String, String,Integer, Long, Long});

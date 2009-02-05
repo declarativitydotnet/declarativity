@@ -1,4 +1,4 @@
-program gfs_global;
+program bfs_global;
 
 import java.util.ArrayList;
 

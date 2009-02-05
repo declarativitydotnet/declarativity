@@ -1,11 +1,11 @@
-program gfs;
+program bfs;
 
+import bfs.Conf;
 import java.lang.System;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import jol.core.Runtime;
-import gfs.Conf;
 
 define(chunk, keys(0,1), {String, String, String});
 define(chunkTmp, {String, String});
@@ -63,7 +63,7 @@ chunk(Host, F, Checksum) :-
     Checksum := "foo",
     chunkTmp#insert(Host, F); /*,
     datadir(Host, Dir),
-    CSO := new gfs.ChunkCheckSum();
+    CSO := new bfs.ChunkCheckSum();
     Checksum := CSO.checksum();
     */
 

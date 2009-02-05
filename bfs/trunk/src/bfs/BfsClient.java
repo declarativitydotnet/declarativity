@@ -11,11 +11,11 @@ import jol.types.exception.UpdateException;
  * This class provides the BoomFS client API. It communicates with both master
  * nodes, to obtain metadata, and data nodes, to read and write data.
  */
-public class GfsClient {
+public class BfsClient {
 	private JolSystem system;
 	private int currentMaster;
 
-	public GfsClient(int port) {
+	public BfsClient(int port) {
 		try {
 	        /* this shouldn't be a static member at all... */
 	        Conf.setSelfAddress("tcp:localhost:" + port);
