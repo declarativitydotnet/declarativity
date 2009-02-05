@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<project name="GFS" default="dist" basedir=".">
+<project name="BFS" default="dist" basedir=".">
   <description>
-    A simple Ant build file for our Overlog-based GFS implementation
+    A simple Ant build file for BoomFS
   </description>
 
   <property name="src" location="src"/>
@@ -28,7 +28,7 @@
 
   <target name="dist" depends="compile" description="generate a JAR file">
     <mkdir dir="${dist}"/>
-    <jar jarfile="${dist}/gfs.jar">
+    <jar jarfile="${dist}/bfs.jar">
       <fileset dir="${build}"/>
       <fileset dir="${src}" includes="**/*.olg"/>
       <fileset dir="olg" includes="**/*.olg"/>
@@ -37,8 +37,8 @@
       </manifest>
     </jar>
 
-    <jar jarfile="${dist}/gfs-test.jar">
-      <fileset dir="${build}" includes="gfs/test/**"/>
+    <jar jarfile="${dist}/bfs-test.jar">
+      <fileset dir="${build}" includes="bfs/test/**"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
       </manifest>
@@ -64,9 +64,9 @@
          preventing the loading of OLG files. -->
     <junit printsummary="yes" fork="yes">
       <classpath>
+        <pathelement location="${dist}/bfs-test.jar"/>
+        <pathelement location="${dist}/bfs.jar"/>
         <pathelement location="${lib}/jol.jar"/>
-        <pathelement location="${dist}/gfs.jar"/>
-        <pathelement location="${dist}/gfs-test.jar"/>
         <pathelement location="${lib}/junit.jar"/>
       </classpath>
 

@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * This class represents the client side of a connection to a DataNode. It is
- * used by both HDFS clients and DataNodes.
+ * used by both BfsClients and DataNodes.
  */
 public class DataConnection {
     private SocketChannel channel;

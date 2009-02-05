@@ -22,9 +22,9 @@ public class BfsClient {
 
 			this.system = Runtime.create(port);
 
-	        this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
+	        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
 	        this.system.evaluate();
-	        this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
+	        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
 	        this.system.evaluate();
 
 	        updateMasterAddr();
@@ -41,7 +41,7 @@ public class BfsClient {
         master.add(new Tuple(Conf.getSelfAddress(),
                              Conf.getMasterAddress(this.currentMaster)));
         try {
-            this.system.schedule("gfs", MasterTable.TABLENAME, master, null);
+            this.system.schedule("bfs", MasterTable.TABLENAME, master, null);
         } catch (UpdateException e) {
             throw new JolRuntimeException(e);
         }

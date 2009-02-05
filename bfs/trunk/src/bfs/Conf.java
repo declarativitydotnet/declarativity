@@ -53,7 +53,7 @@ public class Conf {
         return bufSize;
     }
 
-    /* NB: This must be called before installing "gfs.olg" */
+    /* NB: This must be called before installing "bfs.olg" */
     public static void setSelfAddress(String addr) {
         selfAddr = addr;
     }

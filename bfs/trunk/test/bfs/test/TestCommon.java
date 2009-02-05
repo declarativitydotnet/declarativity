@@ -1,5 +1,4 @@
-package gfs.test;
-
+package bfs.test;
 
 import java.io.File;
 import java.io.InputStream;
@@ -173,6 +172,6 @@ public class TestCommon {
     }
     /*
      * public static void main(String[] args) throws Exception { TestC t = new
-     * GFSMMTest(); t.test1(); t.test2(); t.test3(); }
+     * BFSMMTest(); t.test1(); t.test2(); t.test3(); }
      */
 }

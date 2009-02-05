@@ -28,7 +28,7 @@ public class DataNode {
     }
 
     private static void usage() {
-        System.err.println("Usage: gfs.DataNode index dir_root");
+        System.err.println("Usage: bfs.DataNode index dir_root");
         System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumDataNodes() - 1));
         System.exit(1);
     }
@@ -60,15 +60,15 @@ public class DataNode {
         Conf.setSelfAddress(Conf.getDataNodeAddress(this.nodeId));
 
         this.system = Runtime.create(this.port);
-        this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/files.olg"));
+        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/files.olg"));
         this.system.evaluate();
 
         /* Identify the data directory */
-        TableName tblName = new TableName("gfs", "datadir");
+        TableName tblName = new TableName("bfs", "datadir");
         TupleSet datadir = new TupleSet(tblName);
         //datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot + File.separator + "chunks"));
         datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot));
-        this.system.schedule("gfs", tblName, datadir, null);
+        this.system.schedule("bfs", tblName, datadir, null);
 
         this.system.start();
 

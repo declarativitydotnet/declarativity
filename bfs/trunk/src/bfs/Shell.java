@@ -87,9 +87,9 @@ public class Shell {
 
         this.system = Runtime.create(Integer.valueOf(port));
 
-        this.system.install("gfs_global", ClassLoader.getSystemResource("gfs/gfs_global.olg"));
+        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
-        this.system.install("gfs", ClassLoader.getSystemResource("gfs/gfs.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
         this.system.evaluate();
 
         scheduleNewMaster();
@@ -180,10 +180,10 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "start_request");
+        TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", filename));
-        this.system.schedule("gfs", tblName, req, null);
+        this.system.schedule("bfs", tblName, req, null);
 
         List<String> chunkList = (List<String>) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
@@ -218,10 +218,10 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "start_request");
+        TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", filename));
-        this.system.schedule("gfs", tblName, req, null);
+        this.system.schedule("bfs", tblName, req, null);
 
         List<Integer> chunkList = (List<Integer>) spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
@@ -229,7 +229,7 @@ public class Shell {
     }
 
     private Table registerCallback(Callback callback, String tableName) {
-        Table table = this.system.catalog().table(new TableName("gfs", tableName));
+        Table table = this.system.catalog().table(new TableName("bfs", tableName));
         table.register(callback);
         return table;
     }
@@ -262,11 +262,11 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "start_request");
+        TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(Conf.getSelfAddress(), requestId,
                           "ChunkLocations", chunk.toString()));
-        this.system.schedule("gfs", tblName, req, null);
+        this.system.schedule("bfs", tblName, req, null);
 
         List<String> nodeList = (List<String>) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
@@ -339,7 +339,7 @@ public class Shell {
         master.add(new Tuple(Conf.getSelfAddress(),
                              Conf.getMasterAddress(this.currentMaster)));
         try {
-            this.system.schedule("gfs", MasterTable.TABLENAME, master, null);
+            this.system.schedule("bfs", MasterTable.TABLENAME, master, null);
         } catch (UpdateException e) {
             throw new JolRuntimeException(e);
         }
@@ -399,10 +399,10 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "start_request");
+        TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "Create", filename));
-        this.system.schedule("gfs", tblName, req, null);
+        this.system.schedule("bfs", tblName, req, null);
 
         // Wait for the response
         Object obj = spinGet(Conf.getFileOpTimeout());
@@ -437,10 +437,10 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "start_request");
+        TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
-        this.system.schedule("gfs", tblName, req, null);
+        this.system.schedule("bfs", tblName, req, null);
 
         Object obj = spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
@@ -485,10 +485,10 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("gfs", "start_request");
+        TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", file));
-        this.system.schedule("gfs", tblName, req, null);
+        this.system.schedule("bfs", tblName, req, null);
 
         // Wait for the response
         Object obj = spinGet(Conf.getFileOpTimeout());
@@ -513,7 +513,7 @@ public class Shell {
     }
 
     private void usage() {
-        System.err.println("Usage: java gfs.Shell op_name args");
+        System.err.println("Usage: java bfs.Shell op_name args");
         System.err.println("Where op_name = {append,create,ls,read,rm}");
 
         shutdown();
