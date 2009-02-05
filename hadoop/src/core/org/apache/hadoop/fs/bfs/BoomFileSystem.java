@@ -1,10 +1,9 @@
 package org.apache.hadoop.fs.bfs;
 
+import gfs.GfsClient;
+
 import java.io.IOException;
 import java.net.URI;
-
-import jol.core.JolSystem;
-import jol.types.exception.JolRuntimeException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -16,7 +15,8 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
-	private JolSystem context;
+	private GfsClient gfs;
+	private String workingDir = "/";
 
 	@Override
 	public FSDataOutputStream append(Path f, int bufferSize,
@@ -33,7 +33,7 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public boolean delete(Path f) throws IOException {
-		throw new RuntimeException("not yet implemented");
+		return this.gfs.delete(getPathName(f));
 	}
 
 	@Override
@@ -59,14 +59,10 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public void initialize(URI name, Configuration conf) throws IOException {
         setConf(conf);
+
         int clientPort = conf.getInt("fs.bfs.clientPort", 5015);
         System.out.println("BFS#initialize(): client port = " + clientPort);
-
-        try {
-        	this.context = jol.core.Runtime.create(clientPort);
-        } catch (JolRuntimeException e) {
-        	throw new IOException(e);
-        }
+        this.gfs = new GfsClient(clientPort);
 	}
 
 	@Override
@@ -92,5 +88,18 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public void setWorkingDirectory(Path new_dir) {
 		throw new RuntimeException("not yet implemented");
+	}
+
+	private String getPathName(Path path) {
+		checkPath(path);
+		String result = makeAbsolute(path).toUri().getPath();
+		return result;
+	}
+
+	private Path makeAbsolute(Path path) {
+		if (path.isAbsolute())
+			return path;
+
+		return new Path(this.workingDir, path);
 	}
 }
