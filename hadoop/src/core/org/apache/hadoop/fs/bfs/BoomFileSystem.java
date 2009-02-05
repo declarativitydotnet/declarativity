@@ -1,6 +1,6 @@
 package org.apache.hadoop.fs.bfs;
 
-import gfs.GfsClient;
+import bfs.BfsClient;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +15,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
-	private GfsClient gfs;
+	private BfsClient bfs;
 	private String workingDir = "/";
 
 	@Override
@@ -33,7 +33,7 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public boolean delete(Path f) throws IOException {
-		return this.gfs.delete(getPathName(f));
+		return this.bfs.delete(getPathName(f));
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class BoomFileSystem extends FileSystem {
 
         int clientPort = conf.getInt("fs.bfs.clientPort", 5015);
         System.out.println("BFS#initialize(): client port = " + clientPort);
-        this.gfs = new GfsClient(clientPort);
+        this.bfs = new BfsClient(clientPort);
 	}
 
 	@Override
