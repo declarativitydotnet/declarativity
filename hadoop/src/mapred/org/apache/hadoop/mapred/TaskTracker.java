@@ -823,6 +823,7 @@ public class TaskTracker
     // objects
     FileSystem local = FileSystem.getLocal(conf);
     this.localDirAllocator = new LocalDirAllocator("mapred.local.dir");
+    /*
     server.setAttribute("task.tracker", this);
     server.setAttribute("local.file.system", local);
     server.setAttribute("conf", conf);
@@ -833,6 +834,7 @@ public class TaskTracker
     server.addServlet("taskLog", "/tasklog", TaskLogServlet.class);
     server.start();
     this.httpPort = server.getPort();
+    */
     initialize();
   }
 
