@@ -1,11 +1,11 @@
 program bfs;
 
-import bfs.Conf;
 import java.lang.System;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import jol.core.Runtime;
+import bfs.Conf;
 
 define(chunk, keys(0,1), {String, String, String});
 define(chunkTmp, {String, String});
@@ -34,7 +34,7 @@ define(indx,keys(0),{String,Integer});
 indx(Host,0) :-
     dir#insert(Host,Dir,List);
 
-/*
+/* cleanup rules disabled
 delete
 chunk(Host,File) :-
     chunk(Host,File),
@@ -49,9 +49,9 @@ indx(Host, Next) :-
 chunkTmp(Host, File) :-
     dir(Host, Dir, List),
     indx(Host, I),
-    I < List.size(),
-    B := List.get(I),
-    File := B.toString();
+    I < List.size()
+    { B := List.get(I);
+    File := B.toString();};
 
 watch(chunk, ae);
 // fix me!
@@ -108,7 +108,6 @@ define(mindx,keys(0),{String,Integer});
 //watch(periodic,ae);
 
 mindx(Me,0) :-
-    //Me := Conf.getSelfAddress(),
     dir(Me,_),
     periodic(_,_,_);
 
