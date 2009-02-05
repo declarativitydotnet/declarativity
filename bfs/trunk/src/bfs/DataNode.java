@@ -1,6 +1,8 @@
-package gfs;
+package bfs;
 
 import java.io.File;
+
+import bfs.DataServer;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
@@ -9,7 +11,6 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
-import gfs.DataServer;
 
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {

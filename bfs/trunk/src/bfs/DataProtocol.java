@@ -1,4 +1,4 @@
-package gfs;
+package bfs;
 
 public interface DataProtocol {
     final byte READ_OPERATION = 1;

@@ -1,4 +1,4 @@
-package gfs;
+package bfs;
 
 import jol.core.Runtime;
 import jol.types.table.Key;

@@ -2,12 +2,13 @@ package gfs.test;
 
 import java.util.LinkedList;
 
-import gfs.Master;
-import gfs.Shell;
-import gfs.Conf;
 import gfs.test.TestCommon;
 
 import org.junit.Test;
+
+import bfs.Conf;
+import bfs.Master;
+import bfs.Shell;
 
 public class GFSMM5Test extends TestCommon {
 

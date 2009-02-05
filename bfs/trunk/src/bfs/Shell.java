@@ -1,4 +1,4 @@
-package gfs;
+package bfs;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

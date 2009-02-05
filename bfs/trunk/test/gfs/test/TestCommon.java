@@ -1,9 +1,5 @@
 package gfs.test;
 
-import gfs.Conf;
-import gfs.DataNode;
-import gfs.Master;
-import gfs.Shell;
 
 import java.io.File;
 import java.io.InputStream;
@@ -16,6 +12,11 @@ import junit.framework.Assert;
 
 import org.junit.After;
 import org.junit.Before;
+
+import bfs.Conf;
+import bfs.DataNode;
+import bfs.Master;
+import bfs.Shell;
 
 public class TestCommon {
     protected List<Master> masters;
