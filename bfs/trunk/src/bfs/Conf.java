@@ -1,4 +1,4 @@
-package gfs;
+package bfs;
 
 public class Conf {
     private static String selfAddr = null;

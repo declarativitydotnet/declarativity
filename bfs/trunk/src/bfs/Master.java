@@ -1,4 +1,4 @@
-package gfs;
+package bfs;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;

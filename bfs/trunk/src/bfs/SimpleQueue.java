@@ -1,4 +1,4 @@
-package gfs;
+package bfs;
 
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;

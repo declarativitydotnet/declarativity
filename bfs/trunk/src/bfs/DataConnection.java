@@ -1,4 +1,4 @@
-package gfs;
+package bfs;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
