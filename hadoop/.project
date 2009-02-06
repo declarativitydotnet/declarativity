@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>hadoop-0.18.1</name>
+	<name>hadoop</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -14,11 +14,4 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>jol</name>
-			<type>2</type>
-			<location>/Users/tcondie/workspace/jol/src</location>
-		</link>
-	</linkedResources>
 </projectDescription>

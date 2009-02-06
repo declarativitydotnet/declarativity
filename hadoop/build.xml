@@ -455,6 +455,8 @@
       <!-- Include the OLG files we need to bootstrap JOL in the JAR -->
       <fileset file="${conf.dir}/jobtracker.olg"/>
       <fileset file="${conf.dir}/scheduler.olg"/>
+      <fileset file="${conf.dir}/hive-default.xml"/>
+      <fileset file="${conf.dir}/hive-site.xml"/>
       <fileset file="${conf.dir}/hadoop-default.xml"/>
       <fileset file="${conf.dir}/commons-logging.properties"/>
       <fileset file="${conf.dir}/log4j.properties"/>
