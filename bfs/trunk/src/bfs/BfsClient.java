@@ -1,5 +1,6 @@
 package bfs;
 
+import java.util.List;
 import java.util.Random;
 
 import jol.core.JolSystem;
@@ -97,6 +98,10 @@ public class BfsClient {
 
 	public boolean rename(String oldPath, String newPath) {
 		return false;
+	}
+
+	public List<BfsFileInfo> dirListing(String path) {
+		return null;
 	}
 
     private Table registerCallback(Callback callback, String tableName) {
