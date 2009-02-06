@@ -1,5 +1,7 @@
 package bfs;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -100,8 +102,52 @@ public class BFSClient {
 		return false;
 	}
 
+	// We ignore the path, for now
 	public List<BFSFileInfo> dirListing(String path) {
-		return null;
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Object lsContent = t.value(4);
+                        responseQueue.put(lsContent);
+                        break;
+                    }
+                }
+            }
+        };
+
+        Table responseTbl = registerCallback(responseCallback, "response");
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("bfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
+        try {
+        	this.system.schedule("bfs", tblName, req, null);
+        } catch (UpdateException e) {
+        	throw new RuntimeException(e);
+        }
+
+        List<String> lsContent = (List<String>) waitForResponse(Conf.getListingTimeout());
+        responseTbl.unregister(responseCallback);
+
+        // Currently, we just get a list of file names back from Overlog,
+        // so we do the conversion to BFSFileInfo by hand.
+        List<BFSFileInfo> result = new ArrayList<BFSFileInfo>();
+        for (String fileName : lsContent) {
+        	result.add(new BFSFileInfo(fileName));
+        }
+
+        return result;
 	}
 
     private Table registerCallback(Callback callback, String tableName) {
