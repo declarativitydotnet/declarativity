@@ -3,11 +3,11 @@ USE_PDFLATEX=1
 BIBTEXSRCS=sosp.bib
 
 ifeq ($(shell uname), Linux)
-  # linux
+  # Linux
   VIEWPDF=evince
-  include  /usr/share/latex-mk/latex.gmk
+  include /usr/share/latex-mk/latex.gmk
 else
-  # macos
+  # OSX
   VIEWPDF=open
   include /opt/local/share/latex-mk/latex.gmk
 endif

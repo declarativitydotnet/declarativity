@@ -1,5 +1,12 @@
 NAME=paper
-VIEWPDF=open
 USE_PDFLATEX=1
 BIBTEXSRCS=paper.bib
-include /opt/local/share/latex-mk/latex.gmk
+
+ifeq ($(shell uname), Linux)
+  VIEWPDF=evince
+  include /usr/share/latex-mk/latex.gmk
+else
+  # OSX
+  VIEWPDF=open
+  include /opt/local/share/latex-mk/latex.gmk
+endif
