@@ -16,6 +16,7 @@ import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
 	private BfsClient bfs;
+    private URI uri;
 	private Path workingDir = new Path("/");
 
 	@Override
@@ -48,16 +49,18 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public URI getUri() {
-		throw new RuntimeException("not yet implemented");
+		System.out.println("URI = " + this.uri.toString());
+		return this.uri;
 	}
 
 	@Override
-	public void initialize(URI name, Configuration conf) throws IOException {
+	public void initialize(URI uri, Configuration conf) throws IOException {
         setConf(conf);
 
         int clientPort = conf.getInt("fs.bfs.clientPort", 5015);
         System.out.println("BFS#initialize(): client port = " + clientPort);
         this.bfs = new BfsClient(clientPort);
+        this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 	}
 
 	@Override
