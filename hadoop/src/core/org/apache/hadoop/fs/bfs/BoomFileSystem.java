@@ -1,6 +1,6 @@
 package org.apache.hadoop.fs.bfs;
 
-import bfs.BfsClient;
+import bfs.BFSClient;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +15,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
-	private BfsClient bfs;
+	private BFSClient bfs;
     private URI uri;
 	private Path workingDir = new Path("/");
 
@@ -49,7 +49,6 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public URI getUri() {
-		System.out.println("URI = " + this.uri.toString());
 		return this.uri;
 	}
 
@@ -59,7 +58,7 @@ public class BoomFileSystem extends FileSystem {
 
         int clientPort = conf.getInt("fs.bfs.clientPort", 5015);
         System.out.println("BFS#initialize(): client port = " + clientPort);
-        this.bfs = new BfsClient(clientPort);
+        this.bfs = new BFSClient(clientPort);
         this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 	}
 
