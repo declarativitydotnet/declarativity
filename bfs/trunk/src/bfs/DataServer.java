@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 
-public class DataServer implements Runnable {
+public class DataServer extends Thread {
     /*
      * A DataWorker instance handles a single client connection, and runs in a
      * separate thread from the DataServer.
@@ -192,10 +193,12 @@ public class DataServer implements Runnable {
     private ThreadGroup workers;
     private ServerSocketChannel listener;
     private ServerSocket serverSocket;
+    private boolean inShutdown;
 
     DataServer(int port, String fsRoot) {
         this.fsRoot = fsRoot;
         this.workers = new ThreadGroup("DataWorkers");
+        this.inShutdown = false;
 
         try {
             InetSocketAddress listenAddr = new InetSocketAddress(port);
@@ -208,7 +211,14 @@ public class DataServer implements Runnable {
         }
     }
 
-    public void stop() {
+    public void shutdown() {
+    	if (this.inShutdown)
+    		return;
+
+    	// Notify the DataServer thread that it should shutdown
+    	this.inShutdown = true;
+    	interrupt();
+
         System.out.println("active workers: " + this.workers.activeCount() + "\n");
         Thread[] threadList = new Thread[this.workers.activeCount()];
         this.workers.enumerate(threadList);
@@ -216,31 +226,34 @@ public class DataServer implements Runnable {
             System.out.println("stop thread " + t.toString() + ")\n");
             t.stop();
         }
-
         this.workers.destroy();
-        try {
-            this.serverSocket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void run() {
-        while (true) {
-            try {
-                SocketChannel channel = this.listener.accept();
-                DataWorker dw = new DataWorker(channel);
-                Thread t = new Thread(this.workers, dw);
-                t.start();
-            } catch (AsynchronousCloseException e) {
-                throw new RuntimeException(e);
-            } catch (ClosedChannelException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+		while (true) {
+			try {
+				if (this.inShutdown) {
+					System.out.println("Got shutdown request");
+					if (this.listener.isOpen())
+						this.listener.close();
+					break;
+				}
+
+				SocketChannel channel = this.listener.accept();
+				DataWorker dw = new DataWorker(channel);
+				Thread t = new Thread(this.workers, dw);
+				t.start();
+			} catch (ClosedByInterruptException e) {
+				if (!this.inShutdown)
+					throw new IllegalStateException("unexpected interrupt", e);
+				// Otherwise, just rerun the loop and then exit
+			} catch (ClosedChannelException e) {
+				throw new RuntimeException(e);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
 
     public void createCRCFile(int chunkId, long checksum) {
         System.out.println("create file for chunk " + chunkId  + " and checksum " + checksum + "\n");

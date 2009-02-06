@@ -37,7 +37,6 @@ public class DataNode {
     private int port;
     private String fsRoot;
     private DataServer dserver;
-    private Thread serverThread;
     private JolSystem system;
 
     public DataNode(int nodeId, String fsRoot) {
@@ -45,8 +44,7 @@ public class DataNode {
         this.fsRoot = fsRoot;
         this.port = Conf.getDataNodeControlPort(nodeId);
         this.dserver = new DataServer(Conf.getDataNodeDataPort(nodeId), fsRoot);
-        this.serverThread = new Thread(this.dserver);
-        this.serverThread.start();
+        this.dserver.start();
     }
 
     public int getPort() {
@@ -77,7 +75,7 @@ public class DataNode {
     }
 
     public void shutdown() {
-        this.dserver.stop();
+        this.dserver.shutdown();
         this.system.shutdown();
     }
 
