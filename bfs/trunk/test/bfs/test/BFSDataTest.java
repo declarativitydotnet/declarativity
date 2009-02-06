@@ -10,45 +10,43 @@ import org.junit.Test;
 
 public class BFSDataTest extends TestCommon {
 
-  @Test
-    public void test() {
-        try {
-            startMany("localhost:5500");
-            startManyDataNodes("testdata1", "testdata2", "testdata3","testdata4");
+	@Test
+	public void test() {
+		try {
+			startMany("localhost:5500");
+			startManyDataNodes("testdata1", "testdata2", "testdata3",
+					"testdata4");
 
+			shellCreate("foo");
+			System.out.println("ready to start shell\n");
+			Shell s = new Shell();
 
-            shellCreate("foo");
-            java.lang.System.out.println("ready to start shell\n");
-            Shell s  = new Shell();
+			java.lang.Runtime.getRuntime().exec(
+					"dd if=/dev/zero of=./hunk bs=1k count=10000");
+			File f = new File("hunk");
+			FileInputStream fis = new FileInputStream(f);
+			appendFile(s, "foo", (InputStream) fis);
+			fis.close();
+			s.shutdown();
 
-            java.lang.Runtime.getRuntime().exec("dd if=/dev/zero of=./hunk bs=1k count=10000");
-            File f = new File("hunk");
-            FileInputStream fis = new FileInputStream(f);
-            appendFile(s,"foo",(InputStream)fis);
-            fis.close();
-            s.shutdown();
+			new File("hunk").delete();
+			assertTrue(shellLs("foo"));
 
-            new File("hunk").delete();
-            assertTrue(shellLs("foo"));
+			try {
+				shutdown();
+			} catch (Exception e) {
 
-            try {
-                shutdown();
-            } catch (Exception e) {
+			}
 
-            }
+			System.out.println("now I am just not terminating\n");
+		} catch (Exception e) {
+			System.out.println("something went wrong: " + e);
+			System.exit(1);
+		}
+	}
 
-            java.lang.System.out.println("now I am just not terminating\n");
-
-        } catch (Exception e) {
-            java.lang.System.out.println("something went wrong: "+e);
-            java.lang.System.exit(1);
-        }
-    }
-
-
-  public static void main(String[] args) throws Exception {
-    BFSDataTest t = new BFSDataTest();
-    t.test();
-  }
-
+	public static void main(String[] args) throws Exception {
+		BFSDataTest t = new BFSDataTest();
+		t.test();
+	}
 }
