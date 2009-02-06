@@ -63,12 +63,10 @@ public class LinearHashNTA extends StasisTable {
 			catalog = new LinearHashNTA(context);  // open catalog based on recordid
 			catalog.registerTable(CATALOG_NAME, CATALOG_KEY, CATALOG_COLTYPES);
 		}
-		Tuple nametup = new Tuple();
-		nametup.append(name);
-		nametup.append(port);
+		TableName n = new TableName(port + ":" + name.scope, name.name);
 		TupleSet headerSet;
 		try {
-			headerSet = catalog.primary().lookupByKey(nametup);
+			headerSet = catalog.primary().lookupByKey(n);
 		} catch (BadKeyException e) {
 			throw new IllegalStateException(e);
 		}
@@ -78,7 +76,8 @@ public class LinearHashNTA extends StasisTable {
 			if(headerSet.isEmpty()) {
 				ts.dirty = true;
 				rid = Stasis.hash_create(ts.xid);
-				catalogEntry = registerTable(name, key, attributeTypes);
+//				System.out.println("Alloced stasis table: " + n + ", " + key);
+				catalogEntry = registerTable(n, key, attributeTypes);
 			} else {
 				catalogEntry = headerSet.iterator().next();
 				rid = new long[3];
