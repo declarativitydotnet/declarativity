@@ -36,8 +36,7 @@
 	<classpathentry kind="lib" path="src/test/lib/ftpserver-core-1.0.0-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="src/test/lib/mina-core-2.0.0-M2-20080407.124109-12.jar"/>
 	<classpathentry kind="lib" path="lib/ant.jar"/>
-	<classpathentry kind="lib" path="build/hadoop-0.18.2-dev-core.jar"/>
-	<classpathentry kind="lib" path="lib/jol.jar"/>
-	<classpathentry kind="lib" path="/bfs/dist/bfs.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/bfs"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/jol"/>
 	<classpathentry kind="output" path="eclipse"/>
 </classpath>
