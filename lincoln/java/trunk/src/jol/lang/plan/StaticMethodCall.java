@@ -106,11 +106,20 @@ public class StaticMethodCall extends Expression {
 				try {
 					return StaticMethodCall.this.method.invoke(null, arguments);
 				} catch (Exception e) {
-					String msg = "ERROR: " + e.toString() +
-					               ". Occurred while evaluating static method call \"" +
-					               StaticMethodCall.this.toString() +
-					               "\", on arguments " + Arrays.toString(arguments);
-					throw new JolRuntimeException(msg, e);
+					StringBuilder sb = new StringBuilder();
+					sb.append("ERROR: " + e.toString() + ".");
+					sb.append("\n Occurred while evaluating static call " + StaticMethodCall.this.toString());
+					sb.append("\n Argument values = " + Arrays.toString(arguments));
+					Expression args[] = StaticMethodCall.this.arguments.toArray(new Expression[arguments.length]);
+					if (args.length > 0) {
+						sb.append("\n Argument types = [");
+						sb.append(args[0].type());
+						for (int i = 1; i < args.length; i++) {
+							sb.append(", " + args[i].type());
+						}
+						sb.append("]");
+					}
+					throw new JolRuntimeException(sb.toString(), e);
 				}
 			}
 

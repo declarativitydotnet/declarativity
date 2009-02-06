@@ -44,6 +44,10 @@ public class NewClass extends Expression {
 
 	@Override
 	public String toString() {
+		if (constructor == null) {
+			return "Constructor class " + this.type;
+		}
+		
 		String value = "new " + constructor.getName() + "(";
 		if (arguments.size() == 0) {
 			return value + ")";
