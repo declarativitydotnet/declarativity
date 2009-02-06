@@ -1,10 +1,10 @@
 package bfs;
 
-public class BfsFileInfo {
+public class BFSFileInfo {
 	private boolean isDirectory;
 	private String fileName;
 
-	public BfsFileInfo(String name) {
+	public BFSFileInfo(String name) {
 		this.fileName = name;
 		this.isDirectory = false;
 	}

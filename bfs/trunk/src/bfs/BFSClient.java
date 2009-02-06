@@ -17,13 +17,13 @@ import jol.types.table.Table.Callback;
  * This class provides the BoomFS client API. It communicates with both master
  * nodes, to obtain metadata, and data nodes, to read and write data.
  */
-public class BfsClient {
+public class BFSClient {
 	private int currentMaster;
     private Random rand;
 	private SimpleQueue responseQueue;
 	private JolSystem system;
 
-	public BfsClient(int port) {
+	public BFSClient(int port) {
         this.rand = new Random();
         this.currentMaster = 0;
         this.responseQueue = new SimpleQueue();
@@ -100,7 +100,7 @@ public class BfsClient {
 		return false;
 	}
 
-	public List<BfsFileInfo> dirListing(String path) {
+	public List<BFSFileInfo> dirListing(String path) {
 		return null;
 	}
 
