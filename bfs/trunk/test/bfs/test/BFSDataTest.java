@@ -25,19 +25,14 @@ public class BFSDataTest extends TestCommon {
 					"dd if=/dev/zero of=./hunk bs=1k count=10000");
 			File f = new File("hunk");
 			FileInputStream fis = new FileInputStream(f);
-			appendFile(s, "foo", (InputStream) fis);
+			appendFile(s, "foo", fis);
 			fis.close();
 			s.shutdown();
 
 			new File("hunk").delete();
 			assertTrue(shellLs("foo"));
 
-			try {
-				shutdown();
-			} catch (Exception e) {
-
-			}
-
+			shutdown();
 			System.out.println("now I am just not terminating\n");
 		} catch (Exception e) {
 			System.out.println("something went wrong: " + e);
