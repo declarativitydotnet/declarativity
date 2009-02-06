@@ -130,13 +130,27 @@ public class TestCommon {
 
         for (int i = 0; (i < Conf.getNumDataNodes()) && (i < args.length); i++) {
             new File(args[i]).mkdir();
+
+            try {
+                File file = new File(args[i] + File.separator + "chunks");
+                for (File f : file.listFiles()) {
+                    System.out.println("delete "+f.toString()+"\n");
+                    f.delete();
+                }
+                File file2 = new File(args[i] + File.separator + "checksums");
+                for (File f : file2.listFiles()) {
+                    System.out.println("delete "+f.toString()+"\n");
+                    f.delete();
+                }
+            } catch (Exception e) {
+
+            }
             try {
                 new File(args[i] + File.separator + "chunks").mkdir();
                 new File(args[i] + File.separator + "checksums").mkdir();
-                new File(args[i] + File.separator + "chunks/1").createNewFile();
             } catch (Exception e) {
-                throw new RuntimeException(e);
             }
+
             DataNode d = new DataNode(i, args[i]);
             System.out.println("new DATANODE " + d.getPort());
             d.start();
