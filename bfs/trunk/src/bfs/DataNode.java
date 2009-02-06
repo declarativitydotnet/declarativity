@@ -76,7 +76,7 @@ public class DataNode {
                            Conf.getDataNodeDataPort(this.nodeId) + ") ready!");
     }
 
-    public void stop() {
+    public void shutdown() {
         this.dserver.stop();
         this.system.shutdown();
     }

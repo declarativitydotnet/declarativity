@@ -33,7 +33,7 @@ public class TestCommon {
         }
         if (this.datanodes != null) {
             for (DataNode d : this.datanodes) {
-                d.stop();
+                d.shutdown();
             }
         }
         // shell.shutdown();
@@ -106,7 +106,7 @@ public class TestCommon {
             sys.stop();
         }
         for (DataNode d : this.datanodes) {
-            d.stop();
+            d.shutdown();
         }
     }
 
