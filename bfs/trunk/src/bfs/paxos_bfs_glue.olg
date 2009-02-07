@@ -30,6 +30,11 @@ bfs_global::file(Master, FName, Blocks) :-
   Blocks := new ArrayList(),
   Op == "i";
 
+// to ensure that we 
+public
+bfs::chunkHWM(Master, max<I>) :-
+    appView(Master, From, Decree, Instance, Fname, Op, I);
+
 
 // or, if we are adding a chunk to a file's chunklist, we likewise need to pass it through paxos.
 // (and indeed, should block the requestor, but this is not implemented yet)

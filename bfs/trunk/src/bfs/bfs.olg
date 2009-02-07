@@ -46,6 +46,12 @@ chunkSeq(Master, Top+1) :-
     notin chunkSeq(Master,SomeId),
     chunkHWM(Master,Top);
 
+
+chunkSeq(Master, 1) :-
+    self(Master),
+    notin chunkSeq(Master,SomeId),
+    notin chunkHWM(Master,Top);
+
 // if we get a "NewChunk" request for a file, create a new chunk id
 chunkSeq(Master, I+1) :-
     chunkSeq(Master, I),
@@ -140,8 +146,6 @@ clRequest(Master, ReqId, Source, "ChunkLocations", CId) :-
 
 // we need to have a ground-truth HWM for
 define(chunkHWM, keys(0, 1), {String,Integer});
-chunkHWM(Master,max<ChunkId>) :-
-    chunks(Master,_,ChunkId,_);
 
 watch(chunkHWM,ae);
 
@@ -307,6 +311,13 @@ to_delete(Master, DataNode, ChunkId) :-
     ChunkId > 1,
     long_period(_, _, _),
     Cnt > Conf.getRepFactor();
+
+// reuse the newchunk request dataflow to migrate chunks
+// from one datanode to another
+/*
+request(Master, Id, Source, "NewChunk", FName) :-
+    newReplica(Master, ChunkId
+*/
 
 define(newReplica, {String, Integer});
 watch(newReplica, ae);
