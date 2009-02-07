@@ -223,9 +223,9 @@ public class DataServer extends Thread {
         this.workers.enumerate(threadList);
         for (Thread t : threadList) {
             System.out.println("stop thread " + t.toString() + ")\n");
-            t.stop();
+            //t.stop();
         }
-        this.workers.destroy();
+       // this.workers.destroy();
     }
 
     public void run() {

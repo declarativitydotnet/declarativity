@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class BFSDataTest extends DataCommon {
+public class BFSData1Test extends DataCommon {
 
     private static String testFile = "/usr/share/dict/words";
 
@@ -26,7 +26,7 @@ public class BFSDataTest extends DataCommon {
 
 
 	public static void main(String[] args) throws Exception {
-		BFSDataTest t = new BFSDataTest();
+		BFSData1Test t = new BFSData1Test();
 		t.test1();
 	}
 }

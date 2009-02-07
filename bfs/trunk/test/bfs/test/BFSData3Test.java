@@ -15,18 +15,18 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class BFSDataTest extends DataCommon {
+public class BFSData3Test extends DataCommon {
 
     private static String testFile = "/usr/share/dict/words";
 
 	@Test
     public void test1() {
-        test(testFile, 1, 1, 1);
+        test(testFile, 4, 1, 13);
     }
 
 
 	public static void main(String[] args) throws Exception {
-		BFSDataTest t = new BFSDataTest();
+		BFSData3Test t = new BFSData3Test();
 		t.test1();
 	}
 }

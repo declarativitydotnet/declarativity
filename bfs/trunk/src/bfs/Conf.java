@@ -29,13 +29,13 @@ public class Conf {
         new Host("localhost", 5600, 5700),
         new Host("localhost", 5601, 5701),
         new Host("localhost", 5602, 5702),
-        new Host("localhost", 5603, 5703)
     };
 
     private static final long fileOpTimeout = 20000;
     private static final long listingTimeout = 5000;
 
-    private static final long chunkSize = 10240000;
+    private static final long chunkSize = 102400;
+    //private static final long chunkSize = 1024000;
 
     private static final int bufSize = 102400;
 
@@ -47,6 +47,10 @@ public class Conf {
 
     public static int getRepFactor() {
         return replicationFactor;
+    }
+
+    public static void setRepFactor(int rf) {
+        replicationFactor = rf;
     }
 
     public static int getBufSize() {
@@ -75,9 +79,17 @@ public class Conf {
 
     public static void setNewMasterList(String... args) {
         masterNodes = new Host[args.length];
+        System.out.println("yo yo\n");
         for (int i = 0; i < args.length; i++) {
             String[] parts = args[i].split(":");
             masterNodes[i] = new Host(parts[0], Integer.parseInt(parts[1]));
+        }
+    }
+
+    public static void setNewDataNodeList(int num) {
+        dataNodes = new Host[num];
+        for (int i = 0; i < num; i++) {
+            dataNodes[i] = new Host("localhost", 5600+i, 5700+i);
         }
     }
 

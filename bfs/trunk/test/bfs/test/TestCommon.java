@@ -54,12 +54,14 @@ public class TestCommon {
         return ret;
     }
 
+
     protected void killMaster(int index) {
         this.masters.get(index).stop();
     }
 
     protected void shellCreate(String name) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
+        System.out.println("oh boy\n");
         createFile(shell, name);
         shell.shutdown();
     }
@@ -126,12 +128,19 @@ public class TestCommon {
             UpdateException {
         this.datanodes = new LinkedList<DataNode>();
 
+        Conf.setNewDataNodeList(args.length);
+        System.out.println("args.length = " + args.length);
+
         assert (args.length == Conf.getNumDataNodes());
 
-        for (int i = 0; (i < Conf.getNumDataNodes()) && (i < args.length); i++) {
+        //for (int i = 0; (i < Conf.getNumDataNodes()) && (i < args.length); i++) {
+        for (int i = 0; (i < args.length); i++) {
+            System.out.println("ok, i=" + i);
+            System.out.println("make dir " + args[i]);
             new File(args[i]).mkdir();
 
             try {
+                System.out.println("try1\n");
                 File file = new File(args[i] + File.separator + "chunks");
                 for (File f : file.listFiles()) {
                     System.out.println("delete "+f.toString()+"\n");
@@ -143,14 +152,17 @@ public class TestCommon {
                     f.delete();
                 }
             } catch (Exception e) {
-
+                //throw new RuntimeException(e);
+                // do nothing
             }
             try {
+                System.out.println("try2\n");
                 new File(args[i] + File.separator + "chunks").mkdir();
                 new File(args[i] + File.separator + "checksums").mkdir();
             } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-
+            
             DataNode d = new DataNode(i, args[i]);
             System.out.println("new DATANODE " + d.getPort());
             d.start();
