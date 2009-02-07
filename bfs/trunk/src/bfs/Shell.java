@@ -147,8 +147,7 @@ public class Shell {
          */
         for (Integer chunk : chunks) {
             List<String> locations = getChunkLocations(chunk);
-            System.out.println("I would read the chunk here.  but I won't");
-            //readChunk(chunk, locations);
+            readChunk(chunk, locations);
         }
     }
 

@@ -281,19 +281,18 @@ chunks(Master, DataNode, ChunkId, MaxTstamp) :-
     dataNodes(Master, DataNode, MaxTstamp); //,
     //(System.currentTimeMillis() - MaxTstamp) < 10000L;
 
-/* another temporarily disabled cleanup rule
+/*
 delete
 chunks(Master, DataNode, ChunkId, Ts) :-
     chunks(Master, DataNode, ChunkId, Ts),
     clock(_, _, _),
     (System.currentTimeMillis() - Ts) > 10000L;
 */
-
 /**************************/
 // maintenance functions
 
-define(rep_factor, keys(0,1), {String,Integer,Integer});
-rep_factor(Master, ChunkId, count<DataNode>) :-
+define(rep_factor, keys(0,1), {String, Integer, Integer, String});
+rep_factor(Master, ChunkId, count<DataNode>, min<DataNode>) :-
     long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, Ts);
 
@@ -314,15 +313,16 @@ to_delete(Master, DataNode, ChunkId) :-
 
 // reuse the newchunk request dataflow to migrate chunks
 // from one datanode to another
-/*
-request(Master, Id, Source, "NewChunk", FName) :-
-    newReplica(Master, ChunkId
-*/
+candidate_datanode(Master, -1, DnWithReplica, "none", ChunkId, generic<(new ArrayList()).add(DataNode)>) :-
+    newReplica(Master, ChunkId, DnWithReplica),
+    possible_choices(Master, Cnt, DataNode, Id2),
+    notin candidate_datanode(Master, Id, Source, FName, _, _);
 
-define(newReplica, {String, Integer});
+
+define(newReplica, {String, Integer, String});
 watch(newReplica, ae);
-newReplica(Master, ChunkId) :-
-    rep_factor(Master, ChunkId, Cnt),
+newReplica(Master, ChunkId, Dn) :-
+    rep_factor(Master, ChunkId, Cnt, Dn),
     ChunkId > 1,
     long_period(_, _, _),
     Cnt < Conf.getRepFactor();
