@@ -22,12 +22,9 @@ public class DataCommon extends TestCommon {
 	public void test(String fileName, int repFactor, int masters, int datanodes) {
         fName = fileName;
 		try {
-
-            //ArrayList<String> masterList = new ArrayList<String>[masters];
             String masterList[] = new String[masters];
             for (int i = 0; i < masters; i++) {
 			    masterList[i] = "localhost:"+ (5500 + i);
-                System.out.println("master: "+masterList[i]);
             }
 
             String dnList[] = new String[datanodes];
@@ -38,10 +35,8 @@ public class DataCommon extends TestCommon {
             Conf.setRepFactor(repFactor);
             startMany(masterList);
             startManyDataNodes(dnList);
-			System.out.println("done with datanodes\n");
 
 			shellCreate("foo");
-			System.out.println("ready to start shell\n");
 			Shell s = new Shell();
 
 			FileInputStream fis = new FileInputStream(fName);
@@ -54,9 +49,12 @@ public class DataCommon extends TestCommon {
             check_files();
             new File("hunk").delete();
 
+            for (String d : dnList) {
+                cleanup(d);
+            } 
+
             shutdown();
 
-            java.lang.System.out.println("now I am just not terminating\n");
 
         } catch (Exception e) {
             java.lang.System.out.println("something went wrong: "+e);
@@ -71,20 +69,15 @@ public class DataCommon extends TestCommon {
         Hashtable ht = new Hashtable();
         Hashtable nodecnts = new Hashtable();
 
-        System.out.println("datanodes.size = " + this.datanodes.size());
 
         for (int i=1; i <= this.datanodes.size(); i++) {
-            System.out.println("-- i is "+i);
             String str = "td" + i + "/chunks";
             File dir = new File(str);
             
-            System.out.println("umm" + str );
             for (File f : dir.listFiles()) {
-                System.out.println("try "+f.toString());
                 counter(nodecnts, str);
                 counter(ht, f.getName());                
             }
-            System.out.println("yo son\n");
         }
 
         Set<String> set = ht.keySet();
@@ -100,8 +93,6 @@ public class DataCommon extends TestCommon {
 
             System.out.println(key+"\t"+cnt.toString());
         }
-        //assertTrue( chunks == appropriateNumberOfChunks );
-        System.out.println("anc = "+appropriateNumberOfChunks);
         assertEquals(chunks, appropriateNumberOfChunks);
 
         set = nodecnts.keySet();
