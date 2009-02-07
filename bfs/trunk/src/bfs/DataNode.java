@@ -1,6 +1,7 @@
 package bfs;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import bfs.DataServer;
 
@@ -10,7 +11,9 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
+import jol.types.table.Table;
 import jol.types.table.TableName;
+import jol.types.table.Table.Callback;
 
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
@@ -52,6 +55,20 @@ public class DataNode {
     }
 
     public void start() throws JolRuntimeException, UpdateException {
+
+        Callback copyCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    ArrayList args = (ArrayList)t.value(4);  
+                    System.out.println("COPYCOPYCOPYCOPY!\n"); 
+                }   
+            }
+
+        };
         setupFsRoot();
 
         /* Identify the address of the local node */
@@ -69,6 +86,10 @@ public class DataNode {
         this.system.schedule("bfs", tblName, datadir, null);
 
         this.system.start();
+
+        Table table = this.system.catalog().table(new TableName("bfs", "response"));
+        table.register(copyCallback);
+
 
         System.out.println("DataNode @ " + this.port + " (" +
                            Conf.getDataNodeDataPort(this.nodeId) + ") ready!");
