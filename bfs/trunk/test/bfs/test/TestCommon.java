@@ -36,7 +36,6 @@ public class TestCommon {
                 d.shutdown();
             }
         }
-        // shell.shutdown();
         System.out.println("shutdown complete\n");
     }
 
@@ -61,7 +60,6 @@ public class TestCommon {
 
     protected void shellCreate(String name) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
-        System.out.println("oh boy\n");
         createFile(shell, name);
         shell.shutdown();
     }
@@ -98,7 +96,6 @@ public class TestCommon {
             if (!list.contains(item))
                 return false;
 
-            System.out.println("found " + item);
         }
         return true;
     }
@@ -123,45 +120,45 @@ public class TestCommon {
             this.masters.add(m);
         }
     }
+    
+    protected void cleanup(String dir) {
+        File file = new File(dir);
+        if (file.exists()) {
+            try{
+                File chunks = new File(file, "chunks");
+                for (File f : chunks.listFiles()) {
+                    f.delete();
+                }
+                File checksums = new File(file, "checksums");
+                for (File f : checksums.listFiles()) {
+                    f.delete();
+                }
+                chunks.delete();
+                checksums.delete();
+                file.delete();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    protected void prepare(String dir) {
+        cleanup(dir);
+        new File(dir).mkdir();
+        new File(dir + File.separator + "chunks").mkdir();
+        new File(dir + File.separator + "checksums").mkdir();
+    }
 
     protected void startManyDataNodes(String... args) throws JolRuntimeException,
             UpdateException {
         this.datanodes = new LinkedList<DataNode>();
 
         Conf.setNewDataNodeList(args.length);
-        System.out.println("args.length = " + args.length);
 
         assert (args.length == Conf.getNumDataNodes());
 
-        //for (int i = 0; (i < Conf.getNumDataNodes()) && (i < args.length); i++) {
         for (int i = 0; (i < args.length); i++) {
-            System.out.println("ok, i=" + i);
-            System.out.println("make dir " + args[i]);
-            new File(args[i]).mkdir();
-
-            try {
-                System.out.println("try1\n");
-                File file = new File(args[i] + File.separator + "chunks");
-                for (File f : file.listFiles()) {
-                    System.out.println("delete "+f.toString()+"\n");
-                    f.delete();
-                }
-                File file2 = new File(args[i] + File.separator + "checksums");
-                for (File f : file2.listFiles()) {
-                    System.out.println("delete "+f.toString()+"\n");
-                    f.delete();
-                }
-            } catch (Exception e) {
-                //throw new RuntimeException(e);
-                // do nothing
-            }
-            try {
-                System.out.println("try2\n");
-                new File(args[i] + File.separator + "chunks").mkdir();
-                new File(args[i] + File.separator + "checksums").mkdir();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            prepare(args[i]);
             
             DataNode d = new DataNode(i, args[i]);
             System.out.println("new DATANODE " + d.getPort());
