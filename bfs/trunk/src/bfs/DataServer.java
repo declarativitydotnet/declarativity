@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
@@ -192,7 +191,6 @@ public class DataServer extends Thread {
     private String fsRoot;
     private ThreadGroup workers;
     private ServerSocketChannel listener;
-    private ServerSocket serverSocket;
     private boolean inShutdown;
 
     DataServer(int port, String fsRoot) {
@@ -201,11 +199,12 @@ public class DataServer extends Thread {
         this.inShutdown = false;
 
         try {
-            InetSocketAddress listenAddr = new InetSocketAddress(port);
             this.listener = ServerSocketChannel.open();
-            this.serverSocket = this.listener.socket();
-            this.serverSocket.setReuseAddress(true);
-            this.serverSocket.bind(listenAddr);
+            ServerSocket serverSocket = this.listener.socket();
+            serverSocket.setReuseAddress(true);
+
+            InetSocketAddress listenAddr = new InetSocketAddress(port);
+            serverSocket.bind(listenAddr);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -234,6 +233,10 @@ public class DataServer extends Thread {
 			try {
 				if (this.inShutdown) {
 					System.out.println("Got shutdown request");
+					// shutdown() notifies us that we should shutdown by setting
+					// the "inShutdown" field, and then calling interrupt(). If
+					// we're inside accept() at the time, interrupt() auto-closes
+					// the socket; otherwise, we need to do so by hand.
 					if (this.listener.isOpen())
 						this.listener.close();
 					break;
