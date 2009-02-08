@@ -81,7 +81,7 @@ watch(wouldBL,ae);
 public
 wouldBL(Me,Round) :-
   paxos_global::lastTried(Me,Old),
-  multipaxos::accept(Me,I,Round,Decree,Master),
+  multipaxos::notstasis_accept(Me,I,Round,Decree,Master),
   Round > Old,
   Me != Master;
 

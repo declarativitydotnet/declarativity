@@ -49,10 +49,22 @@ public class Master {
 
         this.system = Runtime.create(this.port);
 
-        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
-        this.system.evaluate();
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
 
+        this.system.evaluate();
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
+        this.system.evaluate();
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks.olg"));
+        this.system.evaluate();
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
+        
+        this.system.evaluate();
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/placement.olg"));
+
+        this.system.evaluate();
         setupPaxos();
+
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
         this.system.evaluate();
 
         Callback cb = new Callback() {
@@ -65,7 +77,7 @@ public class Master {
             }
         };
 
-        this.system.catalog().table(new TableName("bfs_global", "file")).register(cb);
+        this.system.catalog().table(new TableName("bfs", "file")).register(cb);
 
         this.system.start();
         System.out.println("Master node @ " + this.port + " ready!");
@@ -82,10 +94,7 @@ public class Master {
         //this.system.install("bfs", ClassLoader.getSystemResource("alive.olg"));
         //this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
 
-        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
-        this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
 
-        //this.system.install("bfs", ClassLoader.getSystemResource("bfs/files.olg"));
         this.system.evaluate();
 
         TupleSet id = new TupleSet();

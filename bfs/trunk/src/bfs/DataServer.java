@@ -71,7 +71,7 @@ public class DataServer extends Thread {
                 doDeleteOperation();
                 break;
             default:
-                throw new IOException("Unrecognized opcode: " + opCode);
+                throw new IOException("Unrecognized opcode: " + opCode + " from " + this.clientAddr) ;
             }
         }
 
@@ -96,6 +96,7 @@ public class DataServer extends Thread {
 
                 // sadly, for the time being,
                 createCRCFile(chunkId, getFileChecksum(newf));
+                System.out.println("OK, out of write.\n");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

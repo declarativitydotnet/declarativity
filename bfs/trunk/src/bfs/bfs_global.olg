@@ -1,9 +1,40 @@
-program bfs_global;
+program bfs;
 
 import java.util.ArrayList;
+
+import bfs.Conf;
 
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean});
 
 // Node, file name, chunk IDs
 define(file, keys(0, 1), {String, String, ArrayList});
+
+//Master, Cnt, DataNode, Id
+define(possible_choices,keys(0,2), {String, Integer, String,Integer});
+
+
+// Node address, Request ID, Request type, Arg
+define(start_request, keys(0, 1), {String, Integer, String, String});
+
+define(request, keys(0, 1), {String, Integer, String, String, String});
+watch(request, ae);
+
+
+// Client node, Request ID, Master node, Success, Results
+define(response, keys(0, 1), {String, Integer, String, Boolean, ArrayList});
+watch(response, ae);
+
+
+// Node, Master node
+watch(master_for_node, ae);
+define(master_for_node, keys(0, 1), {String, String});
+
+
+// The address of the local node
+define(self, keys(0), {String});
+watch(self, ae);
+self(Conf.getSelfAddress());
+
+define(chunkHWM, keys(0, 1), {String,Integer});
+
