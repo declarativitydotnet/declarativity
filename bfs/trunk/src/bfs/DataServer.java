@@ -26,21 +26,25 @@ public class DataServer extends Thread {
      * A DataWorker instance handles a single client connection, and runs in a
      * separate thread from the DataServer.
      */
-    private class DataWorker implements Runnable {
+    private class DataWorker extends Thread {
         private SocketChannel channel;
         private String clientAddr;
         private DataInputStream in;
         private DataOutputStream out;
+        private volatile boolean inShutdown;
 
-        DataWorker(SocketChannel channel) throws IOException {
+        DataWorker(SocketChannel channel, ThreadGroup group, int id) throws IOException {
+        	super(group, "DataWorker-" + id);
             channel.configureBlocking(true);
             this.channel = channel;
             Socket socket = channel.socket();
             this.clientAddr = socket.toString();
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
+            this.inShutdown = false;
         }
 
+        @Override
         public void run() {
             while (true) {
                 try {
@@ -52,9 +56,32 @@ public class DataServer extends Thread {
                         break;
                     }
                 } catch (IOException e) {
+                	if (this.inShutdown)
+                		break;
                     throw new RuntimeException(e);
                 }
             }
+        }
+
+        public void shutdown() {
+        	if (this.inShutdown)
+        		return;
+
+        	this.inShutdown = true;
+        	// XXX: There doesn't appear to be a reasonable way to interrupt a
+			// blocking read with old-style Java I/O (!). Therefore, just close
+			// the socket, and catch/ignore the IOException in run().
+        	try {
+        		this.channel.close();
+        	} catch (IOException e) {
+        		throw new RuntimeException(e);
+        	}
+
+        	try {
+        		join();
+        	} catch (InterruptedException e) {
+        		throw new IllegalStateException("unexpected interrupt", e);
+        	}
         }
 
         private void readCommand() throws IOException {
@@ -191,12 +218,14 @@ public class DataServer extends Thread {
 
     private String fsRoot;
     private ThreadGroup workers;
+    private int nextWorkerId;
     private ServerSocketChannel listener;
-    private boolean inShutdown;
+    private volatile boolean inShutdown;
 
     DataServer(int port, String fsRoot) {
         this.fsRoot = fsRoot;
         this.workers = new ThreadGroup("DataWorkers");
+        this.nextWorkerId = 0;
         this.inShutdown = false;
 
         try {
@@ -215,18 +244,24 @@ public class DataServer extends Thread {
     	if (this.inShutdown)
     		return;
 
-    	// Notify the DataServer thread that it should shutdown
+    	// Notify the DataServer thread that it should shutdown; we stop
+		// accepting new connections at this point
     	this.inShutdown = true;
     	interrupt();
+    	try {
+    		join();
+    	} catch (InterruptedException e) {
+    		throw new IllegalStateException("unexpected interrupt", e);
+    	}
 
-        System.out.println("active workers: " + this.workers.activeCount() + "\n");
+    	// Interrupt each active worker thread and wait for it to exit
         Thread[] threadList = new Thread[this.workers.activeCount()];
         this.workers.enumerate(threadList);
         for (Thread t : threadList) {
-            System.out.println("stop thread " + t.toString() + ")\n");
-            //t.stop();
+        	DataWorker dw = (DataWorker) t;
+        	dw.shutdown();
         }
-       // this.workers.destroy();
+        this.workers.destroy();
     }
 
     public void run() {
@@ -244,9 +279,9 @@ public class DataServer extends Thread {
 				}
 
 				SocketChannel channel = this.listener.accept();
-				DataWorker dw = new DataWorker(channel);
-				Thread t = new Thread(this.workers, dw);
-				t.start();
+				DataWorker dw = new DataWorker(channel, this.workers,
+						                       this.nextWorkerId++);
+				dw.start();
 			} catch (ClosedByInterruptException e) {
 				if (!this.inShutdown)
 					throw new IllegalStateException("unexpected interrupt", e);
