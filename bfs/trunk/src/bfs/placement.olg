@@ -1,0 +1,37 @@
+program bfs;
+
+watch(possible_choices, ae);
+public
+possible_choices(Master, Cnt, DataNode, Id) :-
+    flat_cnt(Master, Top),
+    // SLOW!!
+    //Id := (new Random()).nextInt(1000),
+    Id := -100,
+    Cnt <= Top,
+    chunk_cnt(Master, DataNode, Cnt);
+
+
+define(flat_cnt, keys(0,1), {String, Integer});
+watch(flat_cnt, ae);
+flat_cnt(Master, Cnt) :-
+    flatten(lowest_loaded_cnt(Master, BK)),
+    Cnt := (Integer) BK;
+
+define(lowest_loaded_cnt, keys(0), {String,ValueList});
+lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
+    chunk_cnt(Master, _, Cnt);
+
+define(chunk_cnt, keys(0,1), {String,String,Integer});
+watch(chunk_cnt, ae);
+public
+chunk_cnt(Master, DataNode, count<ChunkId>) :-
+    bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
+
+
+/* cleanups temporarily disabled
+delete
+lowest_loaded_cnt(Master, Cnts) :-
+    lowest_loaded_cnt(Master, Cnts),
+    lowest_loaded_nodes#insert(Master, Cnt, DataNode);
+*/
+

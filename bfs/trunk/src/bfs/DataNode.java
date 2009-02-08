@@ -75,19 +75,19 @@ public class DataNode {
         Conf.setSelfAddress(Conf.getDataNodeAddress(this.nodeId));
 
         this.system = Runtime.create(this.port);
-        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/files.olg"));
+        this.system.install("bfs_heartbeat", ClassLoader.getSystemResource("bfs/files.olg"));
         this.system.evaluate();
 
         /* Identify the data directory */
-        TableName tblName = new TableName("bfs", "datadir");
+        TableName tblName = new TableName("bfs_heartbeat", "datadir");
         TupleSet datadir = new TupleSet(tblName);
         //datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot + File.separator + "chunks"));
         datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot));
-        this.system.schedule("bfs", tblName, datadir, null);
+        this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
         this.system.start();
 
-        Table table = this.system.catalog().table(new TableName("bfs", "response"));
+        Table table = this.system.catalog().table(new TableName("bfs_heartbeat", "response"));
         table.register(copyCallback);
 
 

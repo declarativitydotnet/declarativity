@@ -10,24 +10,16 @@ import bfs.Master;
 import bfs.Shell;
 
 // The address of the local node
-define(self, keys(0), {String});
-self(Conf.getSelfAddress());
+//define(self, keys(0), {String});
+//watch(self, ae);
+//self(Conf.getSelfAddress());
 
-bfs_global::file(Self, "Foo", Chunks) :-
+file(Self, "Foo", Chunks) :-
     self(Self),
     Chunks := new ArrayList(Arrays.asList({1,2,3}));
 
-// Node, Master node
-watch(master_for_node, ae);
-define(master_for_node, keys(0, 1), {String, String});
-
-// Node address, Request ID, Request type, Arg
-define(start_request, keys(0, 1), {String, Integer, String, String});
-
-// Master node, Request ID, Source node, Request type, Arg
-define(request, keys(0, 1), {String, Integer, String, String, String});
-
-watch(request, ae);
+//define(request, keys(0, 1), {String, Integer, String, String, String});
+//watch(request, ae);
 
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
@@ -35,12 +27,17 @@ request(@Master, ReqId, Source, ReqType, Args) :-
     // XXX PA
     start_request(@Source, ReqId, ReqType, Args);
 
-// Client node, Request ID, Master node, Success, Results
-define(response, keys(0, 1), {String, Integer, String, Boolean, ArrayList});
-watch(response, ae);
+response(@Source, Id, Master, true, Result) :-
+    //request(@Master, Id, Source, "NewChunk", FName),
+    // this needs to be tied into a paxos decree to enforce the ordering.
+    bfs_chunks::newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
+    // Hack: add the new chunk id to the end of the result list
+    Result.add(NewChunkId.toString());
 
+/******
 define(chunkSeq, keys(0), {String, Integer});
 watch(chunkSeq, ae);
+
 chunkSeq(Master, Top+1) :-
     self(Master),
     notin chunkSeq(Master,SomeId),
@@ -57,10 +54,11 @@ chunkSeq(Master, I+1) :-
     chunkSeq(Master, I),
     request#insert(Master, Id, Source, "NewChunk", _);
 
+
 response(@Source, Id, Master, true, Result) :-
     //request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
-    newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
+    bfs_chunks::newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
     // Hack: add the new chunk id to the end of the result list
     Result.add(NewChunkId.toString());
 
@@ -70,70 +68,51 @@ watch(newListHolder, ae);
 // We need to clone the list; otherwise the downstream list insert
 // causes a cycle through candidate_datanodes
 newListHolder(Master, Source, Id, NewList, NewChunkId, FName) :-
-    NewList := new ArrayList(List),
+    NewList := List == null ? null : new ArrayList(List),
     candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
     request(Master, Id, Source, "NewChunk", FName);
-
-define(chunk_cnt, keys(0,1), {String,String,Integer});
-chunk_cnt(Master, DataNode, count<ChunkId>) :-
-    chunks(Master, DataNode, ChunkId, _);
-
-define(possible_choices,keys(0,1,2,3), {String, Integer, String,Integer});
-possible_choices(Master, Cnt, DataNode, Id) :-
-    flat_cnt(Master, Cnt),
-    // SLOW!!
-    //Id := (new Random()).nextInt(1000),
-    Id := -100,
-    chunk_cnt(Master, DataNode, Cnt);
-
-
-define(flat_cnt, keys(0,1), {String, Integer});
-flat_cnt(Master, Cnt) :-
-    flatten(lowest_loaded_cnt(Master, BK)),
-    Cnt := (Integer) BK;
-
-define(lowest_loaded_cnt, keys(0), {String,ValueList});
-lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
-    chunk_cnt(Master, _, Cnt);
-
-/* cleanups temporarily disabled
-delete
-lowest_loaded_cnt(Master, Cnts) :-
-    lowest_loaded_cnt(Master, Cnts),
-    lowest_loaded_nodes#insert(Master, Cnt, DataNode);
-*/
 
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ArrayList});
 watch(candidate_datanode, ae);
 
+public
 candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(DataNode)>) :-
     request(Master, Id, Source, "NewChunk", FName),
     chunkSeq(Master,I),
     possible_choices(Master, Cnt, DataNode, Id2),
-    bfs_global::file(Master, FName, _),
+    file(Master, FName, _),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
+
+// reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
+// from one datanode to another
+public
+candidate_datanode(Master, -1, DnWithReplica, "none", ChunkId, generic<(new ArrayList()).add(DataNode)>) :-
+    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica),
+    possible_choices(Master, Cnt, DataNode, Id2),
+    notin candidate_datanode(Master, Id, Source, FName, _, _);
+*****/
 
 delete
 request(Master, Id, Source, "NewChunk", FName) :-
-    newListHolder(Master, Source, Id, List, I, FName);
+    bfs_chunks::newListHolder(Master, Source, Id, List, I, FName);
 
 
 // a "NewChunk" request for a nonexistent file causes an error.
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "NewChunk", FName),
-    notin bfs_global::file(@Master, FName, _);
+    notin file(@Master, FName, _);
 
 
 // If we get a "ChunkList" request for an extant file, send back its
-// chunks
+// bfs_heartbeat::chunks
 // X-
 response(@Source, Id, Master, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FName),
-    bfs_global::file(@Master, FName, Chunks);
+    file(@Master, FName, Chunks);
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "ChunkList", FName),
-    notin bfs_global::file(@Master, FName, _);
+    notin file(@Master, FName, _);
 
 
 // this is an alias of request, for "ChunkLocation" request types, with ChunkId cast as an Integer
@@ -145,7 +124,7 @@ clRequest(Master, ReqId, Source, "ChunkLocations", CId) :-
     CId := Integer.valueOf(ChunkId);
 
 // we need to have a ground-truth HWM for
-define(chunkHWM, keys(0, 1), {String,Integer});
+//define(chunkHWM, keys(0, 1), {String,Integer});
 
 watch(chunkHWM,ae);
 
@@ -156,7 +135,7 @@ define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, String, ArrayList});
 watch(compute_chunk_locs, ae);
 compute_chunk_locs(@Master, ReqId, Source, generic<(new ArrayList()).add(NodeAddr)>) :-
     clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
-    chunks(@Master, NodeAddr, ChunkId, _);
+    bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _);
 
 response(@Source, Id, Master, true, NodeList) :-
     request(@Master, Id, Source, "ChunkLocations", _),
@@ -164,7 +143,7 @@ response(@Source, Id, Master, true, NodeList) :-
 
 response(@Source, ReqId, Master, false, null) :-
     clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
-    notin chunks(@Master, _, ChunkId, _);
+    notin bfs_heartbeat::chunks(@Master, _, ChunkId, _);
 
 
 
@@ -173,13 +152,13 @@ response(@Source, ReqId, Master, false, null) :-
 // X-?
 response(@Source, Id, Master, Success, Chunks) :-
     request(@Master, Id, Source, "Cat", FName),
-    bfs_global::file(@Master, FName, Chunks),
+    file(@Master, FName, Chunks),
     Success := true;
 
 // If the file doesn't exist, return an error message
 response(@Source, Id, Master, Success, Result) :-
     request(@Master, Id, Source, "Cat", FName),
-    notin bfs_global::file(@Master, FName, _),
+    notin file(@Master, FName, _),
     Success := false,
     Result := new ArrayList();//"File does not exist";
 
@@ -192,18 +171,18 @@ watch(create_request_pending, ae);
 // XXX: the use of "#insert" here is a hack
 create_request_pending(@Master, Id, Source, true) :-
     request#insert(@Master, Id, Source, "Create", FName),
-    notin bfs_global::file(@Master, FName, _);
+    notin file(@Master, FName, _);
 
 // If we get a "create" request for a file that exists, we
 // need to wait until we get consensus from Paxos; then we
 // can send back a negative ack
 create_request_pending(@Master, Id, Source, false) :-
     request#insert(@Master, Id, Source, "Create", FName),
-    bfs_global::file(@Master, FName, _);
+    file(@Master, FName, _);
 
 public
 response(@Source, Id, Master, Success, null) :-
-    bfs_global::create_request_done(@Master, Id, Source, Success);
+    create_request_done(@Master, Id, Source, Success);
 
 // If we get an "ls" request, send back the names of all the files in
 // the file system. If the file system is empty, send back an empty
@@ -212,7 +191,7 @@ define(compute_ls, keys(0, 1), {String, Integer, String, ArrayList});
 watch(compute_ls, ae);
 compute_ls(@Master, Id, Source, generic<(new ArrayList()).add(FName)>) :-
     request(@Master, Id, Source, "Ls", _),
-    bfs_global::file(@Master, FName, _);
+    file(@Master, FName, _);
 
 response(@Source, Id, Master, true, FileList) :-
     request(@Master, Id, Source, "Ls", _),
@@ -220,7 +199,7 @@ response(@Source, Id, Master, true, FileList) :-
 
 response(@Source, Id, Master, true, FileList) :-
     request(@Master, Id, Source, "Ls", _),
-    notin bfs_global::file(@Master, _, _),
+    notin file(@Master, _, _),
     FileList := new ArrayList();
 
 define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
@@ -230,11 +209,11 @@ define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 public
 rm_request_pending(@Master, Id, Source, true) :-
     request(@Master, Id, Source, "Rm", FName),
-    bfs_global::file(@Master, FName, _);
+    file(@Master, FName, _);
 
 public
 response(@Source, Id, Master, Success, null) :-
-    bfs_global::rm_request_done(@Master, Id, Source, Success);
+    rm_request_done(@Master, Id, Source, Success);
 
 // If we got an "rm" request and the file doesn't exist, return a
 // negative ack. NB: unlike in the "create" case, we don't need the
@@ -243,99 +222,7 @@ response(@Source, Id, Master, Success, null) :-
 // XXX: we should probably synchronize with Paxos here
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "Rm", FName),
-    notin bfs_global::file(@Master, FName, _);
-
-/*****************************/
-define(sendHeartBeat, keys(0, 1, 2), {String, String,Integer, Long, Long});
-define(dataNodes, keys(0, 1), {String, String, Long});
-//watch(dataNodes, ae);
-//watch(sendHeartBeat, ae);
-timer(clock, physical, 5000, 5000, 1000);
-
-define(ackHeartBeat, keys(0, 1, 2), {String, String, Long});
-
-ackHeartBeat(@Dnode, Master, Id) :-
-    sendHeartBeat(@Master, Dnode, _, _, Id),
-    Id != -1L;
-
-dataNodes(Master, Host, max<Tstamp>) :-
-    sendHeartBeat(Master, Host, _, Tstamp, _);
-
-/* these deletions are needed (until softstate is available)
-   to keep a handle on memory usage.  but until things stabilize,
-   they are disabled. 
-
-delete
-sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
-    sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
-    dataNodes(Master, Host, HighTstamp),
-    HighTstamp > Tstamp;
-*/
-
-// Master node, Data node, BlockId, Timestamp of last
-// update from data node
-define(chunks, keys(0, 1, 2),{String, String, Integer, Long});
-//watch(chunks, aed);
-chunks(Master, DataNode, ChunkId, MaxTstamp) :-
-    sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
-    dataNodes(Master, DataNode, MaxTstamp); //,
-    //(System.currentTimeMillis() - MaxTstamp) < 10000L;
-
-/*
-delete
-chunks(Master, DataNode, ChunkId, Ts) :-
-    chunks(Master, DataNode, ChunkId, Ts),
-    clock(_, _, _),
-    (System.currentTimeMillis() - Ts) > 10000L;
-*/
-/**************************/
-// maintenance functions
-
-define(rep_factor, keys(0,1), {String, Integer, Integer, String});
-rep_factor(Master, ChunkId, count<DataNode>, min<DataNode>) :-
-    long_period(_,_,_),
-    chunks(Master, DataNode, ChunkId, Ts);
-
-define(back_of_list, keys(0,1), {String,Integer,String});
-back_of_list(Master, ChunkId, min<DataNode>) :-
-    long_period(_,_,_),
-    chunks(Master, DataNode, ChunkId, Ts);
-
-timer(long_period, physical, 10000, 100000, 0);
-
-define(to_delete, keys(0,2), {String,String,Integer});
-to_delete(Master, DataNode, ChunkId) :-
-    rep_factor(Master, ChunkId, Cnt),
-    back_of_list(Master, ChunkId, DataNode),
-    ChunkId > 1,
-    long_period(_, _, _),
-    Cnt > Conf.getRepFactor();
-
-// reuse the newchunk request dataflow to migrate chunks
-// from one datanode to another
-candidate_datanode(Master, -1, DnWithReplica, "none", ChunkId, generic<(new ArrayList()).add(DataNode)>) :-
-    newReplica(Master, ChunkId, DnWithReplica),
-    possible_choices(Master, Cnt, DataNode, Id2),
-    notin candidate_datanode(Master, Id, Source, FName, _, _);
+    notin file(@Master, FName, _);
 
 
-define(newReplica, {String, Integer, String});
-watch(newReplica, ae);
-newReplica(Master, ChunkId, Dn) :-
-    rep_factor(Master, ChunkId, Cnt, Dn),
-    ChunkId > 1,
-    long_period(_, _, _),
-    Cnt < Conf.getRepFactor();
 
-// hacky constraint: one message per tick
-define(send_delete, keys(0), {String, Integer, String});
-send_delete(@DataNode,ChunkId,Master) :-
-    to_delete(@Master,DataNode,ChunkId);
-
-// not correct.
-/*
-delete
-chunks(Master, DataNode, ChunkId, MTS) :-
-    chunks(Master, DataNode, ChunkId, MTS),
-    to_delete(Master,DataNode,ChunkId);
-*/

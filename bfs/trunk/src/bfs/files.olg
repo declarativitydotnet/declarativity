@@ -1,4 +1,4 @@
-program bfs;
+program bfs_heartbeat;
 
 import java.lang.System;
 import java.io.File;
@@ -11,7 +11,7 @@ define(chunk, keys(0,1), {String, String, String});
 define(chunkTmp, {String, String});
 define(dir, keys(0,1,2), {String, File, ArrayList});
 
-timer(clock,physical,5000,5000,5000);
+timer(clock,physical,3000,3000,0);
 timer(periodic,logical,1,1,1);
 
 watch(dir,ae);

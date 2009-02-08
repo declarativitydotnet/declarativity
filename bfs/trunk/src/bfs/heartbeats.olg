@@ -1,0 +1,98 @@
+program bfs_heartbeat;
+
+import bfs.Conf;
+
+/*****************************/
+define(sendHeartBeat, keys(0, 1, 2, 3), {String, String,Integer, Long, Long});
+define(dataNodes, keys(0, 1), {String, String, Long});
+//watch(dataNodes, ae);
+//watch(sendHeartBeat, ae);
+timer(clock, physical, 5000, 5000, 1000);
+
+define(ackHeartBeat, keys(0, 1, 2), {String, String, Long});
+
+ackHeartBeat(@Dnode, Master, Id) :-
+    sendHeartBeat(@Master, Dnode, _, _, Id),
+    Id != -1L;
+
+public
+dataNodes(Master, Host, max<Tstamp>) :-
+    sendHeartBeat(Master, Host, _, Tstamp, _);
+
+
+
+/* these deletions are needed (until softstate is available)
+   to keep a handle on memory usage.  but until things stabilize,
+   they are disabled.
+
+delete
+sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
+    sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
+    dataNodes(Master, Host, HighTstamp),
+    HighTstamp > Tstamp;
+*/
+
+// Master node, Data node, BlockId, Timestamp of last
+// update from data node
+define(chunks, keys(0, 1, 2),{String, String, Integer, Long});
+//watch(chunks, ae);
+chunks(Master, DataNode, ChunkId, MaxTstamp) :-
+    sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
+    dataNodes(Master, DataNode, MaxTstamp); //,
+    //(System.currentTimeMillis() - MaxTstamp) < 10000L;
+
+/*
+delete
+chunks(Master, DataNode, ChunkId, Ts) :-
+    chunks(Master, DataNode, ChunkId, Ts),
+    clock(_, _, _),
+    (System.currentTimeMillis() - Ts) > 10000L;
+*/
+
+
+/**************************/
+// maintenance functions
+
+define(rep_factor, keys(0,1), {String, Integer, Integer, String});
+rep_factor(Master, ChunkId, count<DataNode>, min<DataNode>) :-
+    long_period(_,_,_),
+    chunks(Master, DataNode, ChunkId, Ts);
+
+define(back_of_list, keys(0,1), {String,Integer,String});
+back_of_list(Master, ChunkId, min<DataNode>) :-
+    long_period(_,_,_),
+    chunks(Master, DataNode, ChunkId, Ts);
+
+timer(long_period, physical, 10000, 100000, 0);
+
+define(to_delete, keys(0,2), {String,String,Integer});
+to_delete(Master, DataNode, ChunkId) :-
+    rep_factor(Master, ChunkId, Cnt),
+    back_of_list(Master, ChunkId, DataNode),
+    ChunkId > 1,
+    long_period(_, _, _),
+    Cnt > Conf.getRepFactor();
+
+
+
+define(newReplica, {String, Integer, String});
+watch(newReplica, ae);
+newReplica(Master, ChunkId, Dn) :-
+    rep_factor(Master, ChunkId, Cnt, Dn),
+    ChunkId > 1,
+    long_period(_, _, _),
+    Cnt < Conf.getRepFactor();
+
+// hacky constraint: one message per tick
+define(send_delete, keys(0), {String, Integer, String});
+send_delete(@DataNode,ChunkId,Master) :-
+    to_delete(@Master,DataNode,ChunkId);
+
+// not correct.
+/*
+delete
+chunks(Master, DataNode, ChunkId, MTS) :-
+    chunks(Master, DataNode, ChunkId, MTS),
+    to_delete(Master,DataNode,ChunkId);
+*/
+

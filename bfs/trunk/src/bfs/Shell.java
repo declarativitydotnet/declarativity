@@ -87,7 +87,10 @@ public class Shell {
 
         this.system = Runtime.create(Integer.valueOf(port));
 
-        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
+        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
+        this.system.evaluate();
+        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/chunks.olg"));
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
         this.system.evaluate();

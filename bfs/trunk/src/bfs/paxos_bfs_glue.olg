@@ -3,7 +3,7 @@ program glue;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-watch(bfs_global::file,ae);
+watch(bfs::file,ae);
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -24,7 +24,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 
 // an insert op in the log induces a new metadata entry for a file.
 public
-bfs_global::file(Master, FName, Blocks) :-
+bfs::file(Master, FName, Blocks) :-
  // periodic(_,_,_),
   appView#insert(Master,From,Decree,Instance,FName,Op,Id),
   Blocks := new ArrayList(),
@@ -42,14 +42,14 @@ public
 paxos_global::decreeRequest(Master, Decree, From) :-
   paxos_global::id(Master),
   From := Master,
-  bfs::candidate_datanode#insert(Master, Id, Source, FName, I, Stuff),
+  bfs_chunks::candidate_datanode#insert(Master, Id, Source, FName, I, Stuff),
   Decree := FName + ",u," + Id.toString() + "," + I.toString();
 
 
 // add chunks to the file list.
-watch(bfs_global::file, ae);
+watch(bfs::file, ae);
 public
-bfs_global::file(Master,FName,List) :-
+bfs::file(Master,FName,List) :-
     //bfs_global::file(Master,FName,Chunks),
     //appView#insert(Master,From,Decree,Instance,FName,Op,Id,I),
     //Op == "u",
@@ -59,7 +59,7 @@ bfs_global::file(Master,FName,List) :-
 
 define(fileUpdate, keys(0,1), {String,String,ArrayList,Integer} );
 fileUpdate(Master,FName,Chunks,I) :-
-    bfs_global::file(Master,FName,Chunks),
+    bfs::file(Master,FName,Chunks),
     appView#insert(Master,From,Decree,Instance,FName,Op,Id,I),
     Op == "u";
 
@@ -86,12 +86,12 @@ appView(Master,From,Decree,Instance,Name,Op,Id,I) :-
 
 public
 delete
-bfs_global::file(Master, FName, Content) :-
+bfs::file(Master, FName, Content) :-
   canDelete(Master, Id, Source, Status, FName),
-  bfs_global::file(Master, FName, Content);
+  bfs::file(Master, FName, Content);
 
-watch(bfs_global::create_request_done,aeid);
-watch(bfs_global::file,ae);
+watch(bfs::create_request_done,aeid);
+watch(bfs::file,ae);
 
 define(canDelete,keys(),{String,Integer,String,Boolean,String});
 watch(canDelete,ae);
@@ -107,7 +107,7 @@ canDelete(Master, Id, Source, Status, FName) :-
 
 public
 green
-bfs_global::create_request_done(Master, Id, Source, Status) :-
+bfs::create_request_done(Master, Id, Source, Status) :-
   bfs::create_request_pending(Master, Id, Source, Status),
   //bfs::request(Master, Id, Source, "Create", FName),
   //bfs_global::file(Master, FName, _);
@@ -115,7 +115,7 @@ bfs_global::create_request_done(Master, Id, Source, Status) :-
 
 public
 red1
-bfs_global::create_request_done(Master, Id, Source, false) :-
+bfs::create_request_done(Master, Id, Source, false) :-
   bfs::create_request_pending(Master, Id, Source, Status),
   bfs::request(Master, Id, Source, "Create", FName),
   appView(Master,From,Decree,Instance,FName,"i",Id2),
@@ -123,16 +123,16 @@ bfs_global::create_request_done(Master, Id, Source, false) :-
 
 
 public
-bfs_global::rm_request_done(Master, Id, Source, Status) :-
+bfs::rm_request_done(Master, Id, Source, Status) :-
   canDelete(Master, Id, Source, Status, Name);
 
 public
 red
-bfs_global::create_request_done(Master, Id, Source, Status) :-
+bfs::create_request_done(Master, Id, Source, Status) :-
   bfs::create_request_pending(Master, Id, Source, Status),
   Status == false;
 
 public
-bfs_global::rm_request_done(Master, Id, Source, Status) :-
+bfs::rm_request_done(Master, Id, Source, Status) :-
   bfs::rm_request_pending(Master, Id, Source, Status),
   Status == false;

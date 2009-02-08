@@ -88,7 +88,7 @@ public class DataCommon extends TestCommon {
             key = it.next();
             Integer cnt = (Integer) ht.get(key);
 
-            assertTrue(cnt == Conf.getRepFactor());
+            assertEquals((int)cnt, (int)Conf.getRepFactor());
             chunks++;
 
             System.out.println(key+"\t"+cnt.toString());

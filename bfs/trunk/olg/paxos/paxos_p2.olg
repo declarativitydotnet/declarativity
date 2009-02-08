@@ -11,7 +11,7 @@ import jol.core.Runtime;
 define(acceptRequest,keys(0,1),{String,Integer, Integer,String,Integer});
 define(sendBeginRound,keys(0,1,2),{String, Integer,Integer,String,String});
 //define(sendBeginRound,{String, Integer,Integer,String,String});
-define(accept,keys(0,1),{String, Integer,Integer,String,String});
+define(notstasis_accept,keys(0,1),{String, Integer,Integer,String,String});
 define(sendAccept,keys(0,1,4),{String, Integer,Integer,String,String});
 define(decree,keys(0,1),{String, Integer,Integer,String});
 define(success,keys(0,1),{String,Integer, Integer,String,String});
@@ -76,7 +76,7 @@ message to p. (A BeginBallot (b, d) message is ignored if b = nextBal [q].)
 ***************************************************************************************/
 public
 r4_a
-accept(Agent,Instance,Round,Decree,Master) :-
+notstasis_accept(Agent,Instance,Round,Decree,Master) :-
   sendBeginRound(Agent,Instance,Round,Decree,Master),
 	paxos::nextBal(Agent,OldB),
   paxos::instance(Agent,Instance),
@@ -84,12 +84,12 @@ accept(Agent,Instance,Round,Decree,Master) :-
 
 /*
 repair
-accept(Agent,Instance,Round,Decree) :-
+notstasis_accept(Agent,Instance,Round,Decree) :-
   sendBeginRound(Agent,Instance,Round,Decree,Master),
 	nextBal(Agent,OldB),
   instance(Agent,I),
 	Instance < I
-  accept(Agent,Instance,Round,Decree)
+  notstasis_accept(Agent,Instance,Round,Decree)
 */
 
 public
@@ -97,12 +97,12 @@ r4_b
 paxos::prevVote(Agent,Instance,Round,Decree) :- 
   paxos::prevVote(Agent,OI,Old,OD),
 	paxos::lastPromise(Agent,IO2,Round,OldRound,OldDecree),
-	accept#insert(Agent,Instance,Round,Decree),
+	notstasis_accept#insert(Agent,Instance,Round,Decree),
 	Round >= Old;
 
 r4_c	
 sendAccept(@Master,Instance,Round,Decree,Agent) :- 
-  accept(@Agent,Instance,Round,Decree,Master);
+  notstasis_accept(@Agent,Instance,Round,Decree,Master);
 	
 votes
 acceptCnt(Master,Instance,Round,count<Agent>) :- 
@@ -176,7 +176,7 @@ watch(decree,ae);
 watch(acceptCnt,ae);
 watch(sendAccept,ae);
 watch(sendBeginRound,ae);
-watch(accept,ae);
+watch(notstasis_accept,ae);
 watch(success,ae);
 //watch(decreeRequest,ae);
 	
