@@ -66,14 +66,15 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public FileStatus[] listStatus(Path path) throws IOException {
-		List<BFSFileInfo> bfsListing = this.bfs.dirListing(getPathName(path));
+		List<BFSFileInfo> bfsListing = this.bfs.getDirListing(getPathName(path));
 
 		// XXX: ugly. We need to convert the BFS data structure to the Hadoop
 		// file info format manually
 		FileStatus[] result = new FileStatus[bfsListing.size()];
 		int i = 0;
 		for (BFSFileInfo bfsInfo : bfsListing) {
-			FileStatus fStatus = new FileStatus(bfsInfo.getLength(), bfsInfo.isDirectory(),
+			FileStatus fStatus = new FileStatus(bfsInfo.getLength(),
+												bfsInfo.isDirectory(),
 					                            1,    // block replication
 					                            4096, // block size
 					                            0,    // modification time
@@ -93,8 +94,9 @@ public class BoomFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FSDataInputStream open(Path f, int bufferSize) throws IOException {
-		throw new RuntimeException("not yet implemented");
+	public FSDataInputStream open(Path path, int bufferSize) throws IOException {
+		BFSFileInfo fileInfo = this.bfs.getFileInfo(getPathName(path));
+		return new FSDataInputStream(new BFSInputStream(fileInfo, this.bfs));
 	}
 
 	@Override
