@@ -1,9 +1,11 @@
 package org.apache.hadoop.fs.bfs;
 
 import bfs.BFSClient;
+import bfs.BFSFileInfo;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -63,8 +65,26 @@ public class BoomFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FileStatus[] listStatus(Path f) throws IOException {
-		throw new RuntimeException("not yet implemented");
+	public FileStatus[] listStatus(Path path) throws IOException {
+		List<BFSFileInfo> bfsListing = this.bfs.dirListing(getPathName(path));
+
+		// XXX: ugly. We need to convert the BFS data structure to the Hadoop
+		// file info format manually
+		FileStatus[] result = new FileStatus[bfsListing.size()];
+		int i = 0;
+		for (BFSFileInfo bfsInfo : bfsListing) {
+			FileStatus fStatus = new FileStatus(bfsInfo.getLength(), bfsInfo.isDirectory(),
+					                            1,    // block replication
+					                            4096, // block size
+					                            0,    // modification time
+					                            null, // permissions
+					                            null, // owner
+					                            null, // group
+					                            new Path(path, bfsInfo.getName()));
+			result[i++] = fStatus;
+		}
+
+		return result;
 	}
 
 	@Override
