@@ -27,7 +27,8 @@ public class PaxosCommon {
             ME
         };
 
-        public static final Class[] SCHEMA = { String.class // Address
+        public static final Class[] SCHEMA = {
+        	String.class // Address
         };
 
         IdTable(Runtime context) {
@@ -75,8 +76,6 @@ public class PaxosCommon {
     protected JolSystem[] systems;
     protected int[] ports;
     private JolSystem pinger;
-    private JolSystem ponger;
-    private int nextId = 0;
 
     // @Before
 

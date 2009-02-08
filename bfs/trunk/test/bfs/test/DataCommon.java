@@ -5,13 +5,9 @@ import java.io.FileInputStream;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.ArrayList;
 import bfs.test.TestCommon;
 import bfs.Shell;
-import bfs.DataNode;
 import bfs.Conf;
-
-import org.junit.Test;
 
 import static org.junit.Assert.*;
 
@@ -51,14 +47,14 @@ public class DataCommon extends TestCommon {
 
             for (String d : dnList) {
                 cleanup(d);
-            } 
+            }
 
             shutdown();
 
 
         } catch (Exception e) {
-            java.lang.System.out.println("something went wrong: "+e);
-            java.lang.System.exit(1);
+            System.out.println("something went wrong: "+e);
+            System.exit(1);
         }
     }
 
@@ -69,14 +65,13 @@ public class DataCommon extends TestCommon {
         Hashtable ht = new Hashtable();
         Hashtable nodecnts = new Hashtable();
 
-
         for (int i=1; i <= this.datanodes.size(); i++) {
             String str = "td" + i + "/chunks";
             File dir = new File(str);
-            
+
             for (File f : dir.listFiles()) {
                 counter(nodecnts, str);
-                counter(ht, f.getName());                
+                counter(ht, f.getName());
             }
         }
 
@@ -102,10 +97,8 @@ public class DataCommon extends TestCommon {
             Integer cnt = (Integer) nodecnts.get(key);
             System.out.println(key+"\t"+cnt.toString());
         }
-     
-
-        
     }
+
     private void counter(Hashtable h, String s) {
         Integer cnt = (Integer) h.get((Object)s);
         if (cnt == null) {
@@ -113,8 +106,6 @@ public class DataCommon extends TestCommon {
         } else {
             cnt += 1;
         }
-        h.put(s, cnt); 
+        h.put(s, cnt);
     }
-
-
 }
