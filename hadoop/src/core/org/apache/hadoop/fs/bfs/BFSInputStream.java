@@ -4,12 +4,22 @@ import java.io.IOException;
 
 import org.apache.hadoop.fs.FSInputStream;
 
+import bfs.BFSClient;
+import bfs.BFSFileInfo;
+
 public class BFSInputStream extends FSInputStream {
+	private BFSFileInfo fileInfo;
+	private BFSClient bfs;
 	private boolean isClosed;
 	private long position;
 	private long length;
 
-	public BFSInputStream() {
+	public BFSInputStream(BFSFileInfo fileInfo, BFSClient bfs) {
+		if (fileInfo.isDirectory())
+			throw new IllegalArgumentException("can't read from directory");
+
+		this.fileInfo = fileInfo;
+		this.bfs = bfs;
 		this.isClosed = false;
 	}
 
