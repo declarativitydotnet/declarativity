@@ -20,4 +20,9 @@ public class BFSFileInfo {
 	public String getName() {
 		return this.fileName;
 	}
+
+	// TODO
+	public long getLength() {
+		return 0;
+	}
 }
