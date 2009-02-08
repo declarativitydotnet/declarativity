@@ -102,7 +102,7 @@ public class BFSClient {
 	}
 
 	// We ignore the path, for now
-	public List<BFSFileInfo> dirListing(String path) {
+	public List<BFSFileInfo> getDirListing(String path) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -149,6 +149,19 @@ public class BFSClient {
         return result;
 	}
 
+	public BFSFileInfo getFileInfo(String pathName) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public List<Integer> getChunkList(String path) {
+		return null;
+	}
+
+	public List<String> getChunkLocations(int chunkId) {
+		return null;
+	}
+
     private Table registerCallback(Callback callback, String tableName) {
         Table table = this.system.catalog().table(new TableName("bfs", tableName));
         table.register(callback);
@@ -166,7 +179,7 @@ public class BFSClient {
             updateMasterAddr();
         }
 
-        return null;
+        return null; // Timed out
     }
 
     private void updateMasterAddr() {
