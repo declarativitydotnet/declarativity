@@ -8,17 +8,14 @@ import bfs.BFSClient;
 import bfs.BFSFileInfo;
 
 public class BFSInputStream extends FSInputStream {
-	private BFSFileInfo fileInfo;
+	private String path;
 	private BFSClient bfs;
 	private boolean isClosed;
 	private long position;
 	private long length;
 
-	public BFSInputStream(BFSFileInfo fileInfo, BFSClient bfs) {
-		if (fileInfo.isDirectory())
-			throw new IllegalArgumentException("can't read from directory");
-
-		this.fileInfo = fileInfo;
+	public BFSInputStream(String path, BFSClient bfs) {
+		this.path = path;
 		this.bfs = bfs;
 		this.isClosed = false;
 	}
@@ -52,6 +49,14 @@ public class BFSInputStream extends FSInputStream {
 	public int read(byte[] buf, int offset, int len) throws IOException {
 		// TODO Auto-generated method stub
 		return -1;
+	}
+
+	@Override
+	public void close() throws IOException {
+		if (this.isClosed)
+			return;
+
+		this.isClosed = true;
 	}
 
 	/*
