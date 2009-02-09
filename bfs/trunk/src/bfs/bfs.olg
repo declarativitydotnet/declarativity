@@ -1,13 +1,13 @@
 program bfs;
 
-import java.lang.System;
-import java.util.Random;
-import java.util.ArrayList;
-import java.util.Arrays;
-import jol.types.basic.ValueList;
 import bfs.Conf;
 import bfs.Master;
 import bfs.Shell;
+import java.lang.System;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
+import jol.types.basic.ValueList;
 
 file(Self, "Foo", Chunks) :-
     self(Self),
@@ -39,8 +39,7 @@ response(@Source, Id, Master, false, null) :-
 
 
 // If we get a "ChunkList" request for an extant file, send back its
-// bfs_heartbeat::chunks
-// X-
+// chunks
 response(@Source, Id, Master, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FName),
     file(@Master, FName, Chunks);
@@ -57,11 +56,6 @@ define(clRequest, {String, Integer, String, String, Integer});
 clRequest(Master, ReqId, Source, "ChunkLocations", CId) :-
     request(Master, ReqId, Source, "ChunkLocations", ChunkId),
     CId := Integer.valueOf(ChunkId);
-
-// we need to have a ground-truth HWM for
-//define(chunkHWM, keys(0, 1), {String,Integer});
-
-//watch(chunkHWM,ae);
 
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return a list of the nodes holding that chunk. Otherwise, return
@@ -81,10 +75,8 @@ response(@Source, ReqId, Master, false, null) :-
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _);
 
 
-
 // If we get a "cat" request for a file that exists, send back the
 // contents of the file
-// X-?
 response(@Source, Id, Master, Success, Chunks) :-
     request(@Master, Id, Source, "Cat", FName),
     file(@Master, FName, Chunks),
@@ -158,6 +150,5 @@ response(@Source, Id, Master, Success, null) :-
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "Rm", FName),
     notin file(@Master, FName, _);
-
 
 

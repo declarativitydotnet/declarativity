@@ -187,11 +187,10 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        // XXX finish this
-        waitForResponse(Conf.getFileOpTimeout());
+        List<BFSFileInfo> result = (List<BFSFileInfo>) waitForResponse(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
 
-		return null;
+        return result.get(0);
 	}
 
 	public List<Integer> getChunkList(final String path) {
