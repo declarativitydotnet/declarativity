@@ -112,10 +112,10 @@ public class Shell {
         int b = 1;
         while (b != -1) {
             List<String> path = getNewChunk(filename);
-            // this should be a list of candidate datanodes for the chunk 
-            // (the last element is the chunk itself.
+            // this should be a list of candidate datanodes for the chunk.
+            // The last element is the newly-assigned chunk ID.
             if (path.size() < (Conf.getRepFactor() + 1)) {
-                throw new RuntimeException("server sent too few datanodes: "+path.toString());
+                throw new RuntimeException("server sent too few datanodes: " + path.toString());
             }
             String firstAddr = path.remove(0);
             int chunkId = Integer.valueOf(path.remove(path.size() - 1));
@@ -130,7 +130,7 @@ public class Shell {
                     conn.write(buf);
                     nread += b;
                 }
-                System.out.println("exiting inner loop with "+b+" retval and "+nread+" bytes read\n");
+                System.out.println("exiting inner loop with " + b + " retval and " + nread + " bytes read\n");
                 conn.close();
             } catch (Exception e) {
                 throw new RuntimeException(e);
