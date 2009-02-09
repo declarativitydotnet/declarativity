@@ -42,12 +42,12 @@ chunks(Master, DataNode, ChunkId, MaxTstamp) :-
     //(System.currentTimeMillis() - MaxTstamp) < 10000L;
 
 
+/*
 define(actual_chunks, keys(0, 1, 2),{String, String, Integer});
 watch(actual_chunks, ae);
 actual_chunks(Master, DataNode, ChunkId) :- 
     chunks(Master, DataNode, ChunkId, _);
 
-/*
 delete
 chunks(Master, DataNode, ChunkId, Ts) :-
     chunks(Master, DataNode, ChunkId, Ts),
@@ -60,6 +60,7 @@ chunks(Master, DataNode, ChunkId, Ts) :-
 // maintenance functions
 
 define(rep_factor, keys(0,1), {String, Integer, Integer, String});
+watch(rep_factor, ae);
 rep_factor(Master, ChunkId, count<DataNode>, min<DataNode>) :-
     long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, Ts);
