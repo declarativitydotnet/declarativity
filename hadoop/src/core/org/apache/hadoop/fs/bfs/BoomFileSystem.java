@@ -4,6 +4,7 @@ import bfs.BFSClient;
 import bfs.BFSFileInfo;
 import bfs.Conf;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -49,6 +50,9 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public FileStatus getFileStatus(Path path) throws IOException {
 		BFSFileInfo bfsInfo = this.bfs.getFileInfo(getPathName(path));
+		if (bfsInfo == null)
+			throw new FileNotFoundException("File does not exist: " + path);
+
 		FileStatus result = new FileStatus(bfsInfo.getLength(),
 				bfsInfo.isDirectory(),
                 Conf.getRepFactor(), // block replication
