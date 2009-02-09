@@ -3,13 +3,16 @@ program bfs;
 watch(possible_choices, ae);
 public
 possible_choices(Master, Cnt, DataNode, Id) :-
+    chunk_cnt#insert(Master, DataNode, Cnt),
+    Id := -100;
+/*
     flat_cnt(Master, Top),
     // SLOW!!
     //Id := (new Random()).nextInt(1000),
     Id := -100,
     Cnt <= Top,
     chunk_cnt(Master, DataNode, Cnt);
-
+*/
 
 define(flat_cnt, keys(0,1), {String, Integer});
 watch(flat_cnt, ae);
