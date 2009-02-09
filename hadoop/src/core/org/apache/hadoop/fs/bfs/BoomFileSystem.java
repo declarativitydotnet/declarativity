@@ -22,9 +22,10 @@ public class BoomFileSystem extends FileSystem {
 	private Path workingDir = new Path("/");
 
 	@Override
-	public FSDataOutputStream append(Path f, int bufferSize,
+	public FSDataOutputStream append(Path path, int bufferSize,
 			Progressable progress) throws IOException {
-		throw new RuntimeException("not yet implemented");
+		BFSOutputStream bos = new BFSOutputStream(getPathName(path), this.bfs);
+		return new FSDataOutputStream(bos, statistics);
 	}
 
 	@Override
@@ -95,8 +96,7 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public FSDataInputStream open(Path path, int bufferSize) throws IOException {
-		BFSFileInfo fileInfo = this.bfs.getFileInfo(getPathName(path));
-		return new FSDataInputStream(new BFSInputStream(fileInfo, this.bfs));
+		return new FSDataInputStream(new BFSInputStream(getPathName(path), this.bfs));
 	}
 
 	@Override
