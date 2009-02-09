@@ -191,7 +191,10 @@ public class BFSClient {
         List<BFSFileInfo> result = (List<BFSFileInfo>) waitForResponse(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
 
-        return result.get(0);
+        if (result.size() == 0)
+        	return null; // No such file
+        else
+        	return result.get(0);
 	}
 
 	public List<Integer> getChunkList(final String path) {

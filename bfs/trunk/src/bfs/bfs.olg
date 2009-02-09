@@ -1,5 +1,6 @@
 program bfs;
 
+import bfs.BFSFileInfo;
 import bfs.Conf;
 import bfs.Master;
 import bfs.Shell;
