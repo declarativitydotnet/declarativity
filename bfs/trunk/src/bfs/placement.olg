@@ -18,14 +18,20 @@ flat_cnt(Master, Cnt) :-
     Cnt := (Integer) BK;
 
 define(lowest_loaded_cnt, keys(0), {String,ValueList});
+watch(lowest_loaded_cnt, ae);
 lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
     chunk_cnt(Master, _, Cnt);
+
+
 
 define(chunk_cnt, keys(0,1), {String,String,Integer});
 watch(chunk_cnt, ae);
 public
-chunk_cnt(Master, DataNode, count<ChunkId>) :-
+chunk_cnt(Master, DataNode, count<*>) :-
     bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
+
+    
+    
 
 
 /* cleanups temporarily disabled

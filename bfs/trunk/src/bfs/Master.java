@@ -50,12 +50,12 @@ public class Master {
         this.system = Runtime.create(this.port);
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
-
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks.olg"));
         this.system.evaluate();
+
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
         
         this.system.evaluate();

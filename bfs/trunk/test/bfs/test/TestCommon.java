@@ -71,15 +71,21 @@ public class TestCommon {
     }
 
     protected void assertTrue(Boolean b) {
-        /*
-         * weird huh? Assert.assertTrue raises an error without calling the
-         *
-         * @After method, so we never terminate.
-         */
-        if (!b)
-            shutdown();
+        safeAssert("", b);
+    }
+    protected void safeAssert(boolean b) {
+        safeAssert("", new Boolean(b));
+    }
 
-        Assert.assertTrue(b);
+    protected void safeAssert(String s, boolean b) {
+        safeAssert(s, new Boolean(b));
+    }
+    protected void safeAssert(String m, Boolean b) {
+        if (!b) {
+            System.out.println("Failed Assertion: " + m);            
+            shutdown();
+        }
+        Assert.assertTrue(m, b);
     }
 
     protected int lsCnt(Shell shell) throws JolRuntimeException, UpdateException {
