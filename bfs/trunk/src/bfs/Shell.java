@@ -121,7 +121,7 @@ public class Shell {
                 int nread = 0;
                 byte buf[] = new byte[Conf.getBufSize()];
                 while (b != -1 && nread < Conf.getChunkSize()) {
-                    b = s.read(buf,0,Conf.getBufSize());
+                    b = s.read(buf, 0, Conf.getBufSize());
                     conn.write(buf);
                     nread += b;
                 }
@@ -192,7 +192,7 @@ public class Shell {
         return chunkList;
     }
 
-    private List<Integer> getChunkList(final String filename) throws UpdateException,JolRuntimeException {
+    private List<Integer> getChunkList(final String filename) throws UpdateException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
