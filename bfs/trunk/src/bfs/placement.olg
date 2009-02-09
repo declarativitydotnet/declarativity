@@ -8,7 +8,6 @@ possible_choices(Master, Cnt, DataNode, Id) :-
     //Id := (new Random()).nextInt(1000),
     Id := -100,
     Cnt <= Top,
-    bfs_hearbeat::chunks(Master, DataNode, ChunkId,
     chunk_cnt(Master, DataNode, Cnt);
 
 
