@@ -47,8 +47,18 @@ public class BoomFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FileStatus getFileStatus(Path f) throws IOException {
-		throw new RuntimeException("not yet implemented");
+	public FileStatus getFileStatus(Path path) throws IOException {
+		BFSFileInfo bfsInfo = this.bfs.getFileInfo(getPathName(path));
+		FileStatus result = new FileStatus(bfsInfo.getLength(),
+				bfsInfo.isDirectory(),
+                Conf.getRepFactor(), // block replication
+                Conf.getChunkSize(), // block size
+                0,    // modification time
+                null, // permissions
+                null, // owner
+                null, // group
+                new Path(bfsInfo.getName()));
+		return result;
 	}
 
 	@Override
