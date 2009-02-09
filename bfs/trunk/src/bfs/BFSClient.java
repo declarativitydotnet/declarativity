@@ -154,12 +154,89 @@ public class BFSClient {
 		return null;
 	}
 
-	public List<Integer> getChunkList(String path) {
-		return null;
+	public List<Integer> getChunkList(final String path) {
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+                        if (success.booleanValue() == false)
+                            throw new RuntimeException("Failed to get chunk list for " + path);
+
+                        Object chunkList = t.value(4);
+                        responseQueue.put(chunkList);
+                        break;
+                    }
+                }
+            }
+        };
+        Table responseTbl = registerCallback(responseCallback, "response");
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("bfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", path));
+        try {
+        	this.system.schedule("bfs", tblName, req, null);
+        } catch (UpdateException e) {
+        	throw new RuntimeException(e);
+        }
+
+        List<Integer> chunkList = (List<Integer>) waitForResponse(Conf.getListingTimeout());
+        responseTbl.unregister(responseCallback);
+        return chunkList;
 	}
 
-	public List<String> getChunkLocations(int chunkId) {
-		return null;
+	public List<String> getChunkLocations(final int chunkId) {
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+                        if (success.booleanValue() == false)
+                            throw new RuntimeException("Failed to get chunk list for chunk #" + chunkId);
+
+                        Object nodeList = t.value(4);
+                        responseQueue.put(nodeList);
+                        break;
+                    }
+                }
+            }
+        };
+        Table responseTbl = registerCallback(responseCallback, "response");
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("bfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId,
+                          "ChunkLocations", Integer.toString(chunkId)));
+        try {
+        	this.system.schedule("bfs", tblName, req, null);
+        } catch (UpdateException e) {
+        	throw new RuntimeException(e);
+        }
+
+        List<String> nodeList = (List<String>) this.responseQueue.get(); // XXX: timeout?
+        responseTbl.unregister(responseCallback);
+        return nodeList;
 	}
 
     private Table registerCallback(Callback callback, String tableName) {
