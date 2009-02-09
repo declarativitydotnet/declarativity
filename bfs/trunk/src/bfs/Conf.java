@@ -35,13 +35,14 @@ public class Conf {
     private static final long listingTimeout = 5000;
 
     private static final long chunkSize = 102400;
-    //private static final long chunkSize = 1024000;
 
     private static final int bufSize = 102400;
+
 
     private static int replicationFactor = 2;
 
     public static long getChunkSize() {
+        assert(chunkSize >= bufSize);
         return chunkSize;
     }
 

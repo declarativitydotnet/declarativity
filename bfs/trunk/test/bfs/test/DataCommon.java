@@ -20,6 +20,7 @@ import junit.framework.Assert;
 public class DataCommon extends TestCommon {
 
     String fName;
+    String dnList[];
 
 	public void test(String fileName, int repFactor, int masters, int datanodes) {
         fName = fileName;
@@ -29,7 +30,7 @@ public class DataCommon extends TestCommon {
 			    masterList[i] = "localhost:"+ (5500 + i);
             }
 
-            String dnList[] = new String[datanodes];
+            dnList = new String[datanodes];
             for (int i = 0; i < datanodes; i++) {
                 dnList[i] = "td" + (i+1);
             }
@@ -49,19 +50,20 @@ public class DataCommon extends TestCommon {
             assertTrue(shellLs("foo"));
 
             check_files();
-            new File("hunk").delete();
 
-            for (String d : dnList) {
-                cleanup(d);
-            }
-
-            shutdown();
 
 
         } catch (Exception e) {
             System.out.println("something went wrong: "+e);
             System.exit(1);
         }
+    }
+
+    private void cleanup_all() {
+        for (String d : dnList) {
+            cleanup(d);
+        }
+        shutdown();
     }
 
     private long get_checksum(int i, String name) {
