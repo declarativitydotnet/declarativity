@@ -153,8 +153,44 @@ public class BFSClient {
         return result;
 	}
 
-	public BFSFileInfo getFileInfo(String pathName) {
-		// TODO Auto-generated method stub
+	public BFSFileInfo getFileInfo(final String pathName) {
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Object fileInfo = t.value(4);
+                        responseQueue.put(fileInfo);
+                        break;
+                    }
+                }
+            }
+        };
+
+        Table responseTbl = registerCallback(responseCallback, "response");
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("bfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "FileInfo", pathName));
+        try {
+        	this.system.schedule("bfs", tblName, req, null);
+        } catch (UpdateException e) {
+        	throw new RuntimeException(e);
+        }
+
+        // XXX finish this
+        waitForResponse(Conf.getFileOpTimeout());
+        responseTbl.unregister(responseCallback);
+
 		return null;
 	}
 
