@@ -9,17 +9,9 @@ import bfs.Conf;
 import bfs.Master;
 import bfs.Shell;
 
-// The address of the local node
-//define(self, keys(0), {String});
-//watch(self, ae);
-//self(Conf.getSelfAddress());
-
 file(Self, "Foo", Chunks) :-
     self(Self),
     Chunks := new ArrayList(Arrays.asList({1,2,3}));
-
-//define(request, keys(0, 1), {String, Integer, String, String, String});
-//watch(request, ae);
 
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
@@ -27,70 +19,13 @@ request(@Master, ReqId, Source, ReqType, Args) :-
     // XXX PA
     start_request(@Source, ReqId, ReqType, Args);
 
+public
 response(@Source, Id, Master, true, Result) :-
     //request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
     bfs_chunks::newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
     // Hack: add the new chunk id to the end of the result list
     Result.add(NewChunkId.toString());
-
-/******
-define(chunkSeq, keys(0), {String, Integer});
-watch(chunkSeq, ae);
-
-chunkSeq(Master, Top+1) :-
-    self(Master),
-    notin chunkSeq(Master,SomeId),
-    chunkHWM(Master,Top);
-
-
-chunkSeq(Master, 1) :-
-    self(Master),
-    notin chunkSeq(Master,SomeId),
-    notin chunkHWM(Master,Top);
-
-// if we get a "NewChunk" request for a file, create a new chunk id
-chunkSeq(Master, I+1) :-
-    chunkSeq(Master, I),
-    request#insert(Master, Id, Source, "NewChunk", _);
-
-
-response(@Source, Id, Master, true, Result) :-
-    //request(@Master, Id, Source, "NewChunk", FName),
-    // this needs to be tied into a paxos decree to enforce the ordering.
-    bfs_chunks::newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
-    // Hack: add the new chunk id to the end of the result list
-    Result.add(NewChunkId.toString());
-
-define(newListHolder,keys(0,2),{String,String,Integer,ArrayList,Integer,String});
-watch(newListHolder, ae);
-
-// We need to clone the list; otherwise the downstream list insert
-// causes a cycle through candidate_datanodes
-newListHolder(Master, Source, Id, NewList, NewChunkId, FName) :-
-    NewList := List == null ? null : new ArrayList(List),
-    candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
-    request(Master, Id, Source, "NewChunk", FName);
-
-define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ArrayList});
-watch(candidate_datanode, ae);
-
-public
-candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(DataNode)>) :-
-    request(Master, Id, Source, "NewChunk", FName),
-    chunkSeq(Master,I),
-    possible_choices(Master, Cnt, DataNode, Id2),
-    file(Master, FName, _),
-    notin candidate_datanode(Master, Id, Source, FName, _, _);
-
-// reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
-// from one datanode to another
-public
-candidate_datanode(Master, -1, DnWithReplica, "none", ChunkId, generic<(new ArrayList()).add(DataNode)>) :-
-    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica),
-    possible_choices(Master, Cnt, DataNode, Id2),
-    notin candidate_datanode(Master, Id, Source, FName, _, _);
-*****/
 
 delete
 request(Master, Id, Source, "NewChunk", FName) :-

@@ -2,14 +2,20 @@ package bfs.test;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
+
+
 import bfs.test.TestCommon;
 import bfs.Shell;
 import bfs.Conf;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
+import junit.framework.Assert;
+
 
 public class DataCommon extends TestCommon {
 
@@ -58,12 +64,26 @@ public class DataCommon extends TestCommon {
         }
     }
 
+    private long get_checksum(int i, String name) {
+        File csFile = new File("td" + i + "/checksums/" + name + ".cksum");
+        System.out.println("File td" + i + "/checksums/" + name);
+        safeAssert("checksum file exists", csFile.exists());
+        try {
+            BufferedReader input = new BufferedReader(new FileReader(csFile));
+            String csum = input.readLine();
+            return Long.valueOf(csum);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }       
+    }
+
     private void check_files() {
         long len = new File(fName).length();
         long appropriateNumberOfChunks = (len / Conf.getChunkSize()) + 1;
 
         Hashtable ht = new Hashtable();
         Hashtable nodecnts = new Hashtable();
+        Hashtable csums = new Hashtable();
 
         for (int i=1; i <= this.datanodes.size(); i++) {
             String str = "td" + i + "/chunks";
@@ -71,7 +91,16 @@ public class DataCommon extends TestCommon {
 
             for (File f : dir.listFiles()) {
                 counter(nodecnts, str);
-                counter(ht, f.getName());
+                counter(ht, f.getName()); 
+                long csum = get_checksum(i, f.getName());
+                Long oldCsum = (Long)csums.get((Object)f.getName()); 
+                if (oldCsum == null) {
+                    csums.put(f.getName(), new Long(csum));
+                } else {
+                    
+                    System.out.println("csum "+oldCsum+" matches "+csum);
+                    safeAssert("checksums match", (oldCsum.longValue() == csum));
+                }
             }
         }
 
@@ -83,12 +112,12 @@ public class DataCommon extends TestCommon {
             key = it.next();
             Integer cnt = (Integer) ht.get(key);
 
-            assertEquals((int)cnt, (int)Conf.getRepFactor());
+            safeAssert("for chunk "+ key + " with a rep factor of "+Conf.getRepFactor()+", we expected as many replicas, but found "+ cnt,(cnt == Conf.getRepFactor()));
             chunks++;
 
             System.out.println(key+"\t"+cnt.toString());
         }
-        assertEquals(chunks, appropriateNumberOfChunks);
+        safeAssert("expected "+appropriateNumberOfChunks+" chunks given file size, but found "+chunks, ( chunks == appropriateNumberOfChunks));
 
         set = nodecnts.keySet();
         it = set.iterator();

@@ -36,5 +36,5 @@ define(self, keys(0), {String});
 watch(self, ae);
 self(Conf.getSelfAddress());
 
-define(chunkHWM, keys(0, 1), {String,Integer});
 
+define(chunkHWM, keys(0, 1), {String,Integer});

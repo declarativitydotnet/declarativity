@@ -3,33 +3,29 @@ program bfs_chunks;
 define(chunkSeq, keys(0), {String, Integer});
 watch(chunkSeq, ae);
 
+/*
 public
 chunkSeq(Master, Top+1) :-
     bfs::self(Master),
     notin chunkSeq(Master,SomeId),
     bfs::chunkHWM(Master,Top);
+*/
 
-
+timer(per, physical, 1000, 1000, 1000);
 public
 chunkSeq(Master, 1) :-
     bfs::self(Master),
-    notin chunkSeq(Master,SomeId),
-    notin bfs::chunkHWM(Master,Top);
+    per(_, _, _),
+    notin chunkSeq(Master,SomeId);//,
+    //notin bfs::chunkHWM(Master,Top);
 
 // if we get a "NewChunk" request for a file, create a new chunk id
 public
 chunkSeq(Master, I+1) :-
     chunkSeq(Master, I),
-    bfs::request#insert(Master, Id, Source, "NewChunk", _);
+    //bfs::request#insert(Master, Id, Source, "NewChunk", _);
+    newListHolder#insert(Master, Source, Id, _, I, _);
 
-
-public
-bfs::response(@Source, Id, Master, true, Result) :-
-    //request(@Master, Id, Source, "NewChunk", FName),
-    // this needs to be tied into a paxos decree to enforce the ordering.
-    newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
-    // Hack: add the new chunk id to the end of the result list
-    Result.add(NewChunkId.toString());
 
 define(newListHolder,keys(0,2),{String,String,Integer,ArrayList,Integer,String});
 watch(newListHolder, ae);
@@ -41,9 +37,17 @@ newListHolder(Master, Source, Id, NewList, NewChunkId, FName) :-
     candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
     bfs::request(Master, Id, Source, "NewChunk", FName);
 
+/*
+define (baz, {String, Integer});
+watch(baz, ae);
+public
+baz(Master, I) :- 
+    chunkSeq(Master,I),
+    bfs::request(Master, Id, Source, "NewChunk", FName);
+*/
+
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ArrayList});
 watch(candidate_datanode, ae);
-
 public
 candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(DataNode)>) :-
     bfs::request(Master, Id, Source, "NewChunk", FName),
@@ -54,10 +58,11 @@ candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(D
 
 // reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
 // from one datanode to another
+/*
 public
 candidate_datanode(Master, -1, DnWithReplica, "none", ChunkId, generic<(new ArrayList()).add(DataNode)>) :-
     bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica),
     bfs::possible_choices(Master, Cnt, DataNode, Id2),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
-
+*/
 

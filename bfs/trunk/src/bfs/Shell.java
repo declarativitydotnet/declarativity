@@ -112,6 +112,11 @@ public class Shell {
         int b = 1;
         while (b != -1) {
             List<String> path = getNewChunk(filename);
+            // this should be a list of candidate datanodes for the chunk 
+            // (the last element is the chunk itself.
+            if (path.size() < (Conf.getRepFactor() + 1)) {
+                throw new RuntimeException("server sent too few datanodes: "+path.toString());
+            }
             String firstAddr = path.remove(0);
             int chunkId = Integer.valueOf(path.remove(path.size() - 1));
             DataConnection conn = new DataConnection(firstAddr);
