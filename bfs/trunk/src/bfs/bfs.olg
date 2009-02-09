@@ -129,6 +129,21 @@ response(@Source, Id, Master, true, FileList) :-
     notin file(@Master, _, _),
     FileList := new ArrayList();
 
+// If we get a "FileInfo" request for an extant file, send back info
+// describing the file. Otherwise, send back a nack.
+response(@Source, Id, Master, true, Result) :-
+    request(@Master, Id, Source, "FileInfo", FName),
+    file(@Master, FName, _),
+    Info := new BFSFileInfo(FName),
+    Result := new ArrayList(),
+    Result.add(Info);
+
+response(@Source, Id, Master, false, Result) :-
+    request(@Master, Id, Source, "FileInfo", FName),
+    notin file(@Master, FName, _),
+    Result := new ArrayList();
+
+
 define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 
 // If we got an "rm" request and the file exists, remove it and send

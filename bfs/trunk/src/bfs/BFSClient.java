@@ -154,6 +154,7 @@ public class BFSClient {
 	}
 
 	public BFSFileInfo getFileInfo(final String pathName) {
+		System.out.println("getFileInfo() called for \"" + pathName + "\"");
         final int requestId = generateId();
 
         // Register a callback to listen for responses
