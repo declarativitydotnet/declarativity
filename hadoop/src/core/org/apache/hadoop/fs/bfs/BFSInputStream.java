@@ -1,23 +1,35 @@
 package org.apache.hadoop.fs.bfs;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.fs.FSInputStream;
 
 import bfs.BFSClient;
 import bfs.BFSFileInfo;
+import bfs.Conf;
 
 public class BFSInputStream extends FSInputStream {
 	private String path;
 	private BFSClient bfs;
+	private List<Integer> chunkList;
 	private boolean isClosed;
-	private long position;
-	private long length;
 
-	public BFSInputStream(String path, BFSClient bfs) {
+	// Byte-wise offset into the logical file contents
+	private long position;
+
+	// Index into "chunkList" identifying the current chunk we're positioned at.
+	// These fields are updated by updatePosition().
+	private int currentChunkIdx;
+	private int currentChunkOffset;
+	private List<String> chunkLocations;
+
+	public BFSInputStream(String path, BFSClient bfs) throws IOException {
 		this.path = path;
 		this.bfs = bfs;
 		this.isClosed = false;
+		this.chunkList = bfs.getChunkList(path);
+		updatePosition(0);
 	}
 
 	@Override
@@ -26,11 +38,28 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	@Override
-	public void seek(long targetPos) throws IOException {
-		if (targetPos > this.length)
+	public void seek(long newPos) throws IOException {
+		updatePosition(newPos);
+	}
+
+	private void updatePosition(long newPos) throws IOException {
+		if (newPos < 0)
+			throw new IOException("cannot seek to negative position");
+
+		int chunkNum = (int) (newPos / Conf.getChunkSize());
+		int chunkOffset = (int) (newPos % Conf.getChunkSize());
+
+		if (chunkNum > chunkList.size())
 			throw new IOException("cannot seek past end of file");
 
-		this.position = targetPos;
+		if (chunkNum != this.currentChunkIdx || this.chunkLocations == null) {
+			Integer chunkId = this.chunkList.get(chunkNum);
+			this.chunkLocations = bfs.getChunkLocations(chunkId);
+		}
+
+		this.currentChunkIdx = (int) chunkNum;
+		this.currentChunkOffset = (int) chunkOffset;
+		this.position = newPos;
 	}
 
 	@Override

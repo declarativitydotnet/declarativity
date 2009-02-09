@@ -2,6 +2,7 @@ package org.apache.hadoop.fs.bfs;
 
 import bfs.BFSClient;
 import bfs.BFSFileInfo;
+import bfs.Conf;
 
 import java.io.IOException;
 import java.net.URI;
@@ -76,8 +77,8 @@ public class BoomFileSystem extends FileSystem {
 		for (BFSFileInfo bfsInfo : bfsListing) {
 			FileStatus fStatus = new FileStatus(bfsInfo.getLength(),
 												bfsInfo.isDirectory(),
-					                            1,    // block replication
-					                            4096, // block size
+					                            Conf.getRepFactor(), // block replication
+					                            Conf.getChunkSize(), // block size
 					                            0,    // modification time
 					                            null, // permissions
 					                            null, // owner
