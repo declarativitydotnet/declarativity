@@ -160,5 +160,3 @@ response(@Source, Id, Master, Success, null) :-
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "Rm", FName),
     notin file(@Master, FName, _);
-
-
