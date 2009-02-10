@@ -62,7 +62,7 @@ chunks(Master, DataNode, ChunkId, Ts) :-
 define(rep_factor, keys(0,1), {String, Integer, Integer, String});
 watch(rep_factor, ae);
 rep_factor(Master, ChunkId, count<DataNode>, min<DataNode>) :-
-    long_period(_,_,_),
+    //long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, Ts);
 
 define(back_of_list, keys(0,1), {String,Integer,String});
@@ -86,7 +86,7 @@ define(newReplica, {String, Integer, String});
 watch(newReplica, ae);
 newReplica(Master, ChunkId, Dn) :-
     rep_factor(Master, ChunkId, Cnt, Dn),
-    ChunkId > 1,
+    ChunkId > 0,
     long_period(_, _, _),
     Cnt < Conf.getRepFactor();
 
