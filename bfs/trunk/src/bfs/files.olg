@@ -7,66 +7,60 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import jol.core.Runtime;
 
-define(chunk, keys(0,1), {String, String, String});
-define(chunkTmp, {String, String});
-define(dir, keys(0,1,2), {String, File, ArrayList});
-
 timer(clock,physical,3000,3000,0);
 timer(periodic,logical,1,1,1);
 
-watch(dir,ae);
-//watch(chunk,ae);
-//watch(chunkTmp,ae);
-
 // Node address, data directory on host chunk system
-define(datadir, keys(0), {String,String});
-define(checksumdir, keys(0), {String,String});
+define(datadir, keys(0), {String, String});
+define(checksumdir, keys(0), {String, String});
 watch(datadir, ae);
 
-dir(Host,DirObj,DirList) :-
+define(dir, keys(0,1,2), {String, File, ArrayList});
+watch(dir,ae);
+dir(Host, DirObj, DirList) :-
     datadir(Host, Dir),
     DirObj := new File(Dir + File.separator + "chunks"),
     DirList := DirObj.isDirectory() ? new ArrayList(Arrays.asList(DirObj.list())) : new ArrayList(),
-    clock(_,_,_);
+    clock(_, _, _);
 
-define(indx,keys(0),{String,Integer});
-//watch(indx,ae);
+define(indx, keys(0), {String, Integer});
 indx(Host,0) :-
-    dir#insert(Host,Dir,List);
-
-/* cleanup rules disabled
-delete
-chunk(Host,File) :-
-    chunk(Host,File),
-    dir#insert(Host,Dir,List);
-*/
+    dir#insert(Host, Dir, List);
 
 indx(Host, Next) :-
     indx(Host, Old),
     chunkTmp(Host, File),
     Next := Old + 1;
 
-chunkTmp(Host, File) :-
+define(chunkTmp, {String, String});
+chunkTmp(Host, FName) :-
     dir(Host, Dir, List),
     indx(Host, I),
     I < List.size()
-    { B := List.get(I);
-    File := B.toString();};
+    { F := List.get(I);
+      FName := F.toString(); };
 
-watch(chunk, ae);
 // fix me!
 checksumdir(H, D)  :-
     dir(H, FD),
     D := "testdata1/checksums";
 
-chunk(Host, F, Checksum) :-
+define(chunk, keys(0,1), {String, String, String});
+watch(chunk, ae);
+chunk(Host, FName, Checksum) :-
     Checksum := "foo",
-    chunkTmp#insert(Host, F); /*,
+    chunkTmp#insert(Host, FName); /*,
     datadir(Host, Dir),
     CSO := new bfs.ChunkCheckSum();
     Checksum := CSO.checksum();
     */
 
+/* cleanup rules disabled
+delete
+chunk(Host, File) :-
+    chunk(Host, File),
+    dir#insert(Host, Dir, List);
+*/
 
 
 define(heartBeat,keys(0,1,2),{String,String,Integer,Long,Long});
@@ -75,12 +69,12 @@ heartBeat(Host, Master, Chunk, Tstamp, Id) :-
     chunk(Host, File, Checksum),
     Chunk := Integer.valueOf(File),
     masters(Host,Master),
-    clock(_,_,_),
+    clock(_, _, _),
     Tstamp := System.currentTimeMillis(),
     Id := Runtime.idgen();
 
 heartBeat(Host,Master,-1,Tstamp,-1) :-
-    masters(Host,Master),
+    masters(Host, Master),
     clock(_,_,_),
     Tstamp := System.currentTimeMillis(),
     Id := Runtime.idgen();
@@ -88,9 +82,9 @@ heartBeat(Host,Master,-1,Tstamp,-1) :-
 
 define(sendHeartBeat,keys(0,1,2,3),{String,String,Integer,Long,Long});
 //watch(sendHeartBeat,ae);
-sendHeartBeat(@Master,Host,File,Tstamp,Id) :-
-    heartBeat(@Host,Master,File,Tstamp,Id),
-    notin serverKnows(@Host,Master,File,_);
+sendHeartBeat(@Master, Host, File, Tstamp, Id) :-
+    heartBeat(@Host, Master, File, Tstamp, Id),
+    notin serverKnows(@Host, Master, File, _);
 
 define(ackHeartBeat,keys(0,1,2),{String,String,Long});
 //watch(ackHeartBeat,ae);
@@ -107,13 +101,13 @@ define(mindx,keys(0),{String,Integer});
 //watch(mindx,ae);
 //watch(periodic,ae);
 
-mindx(Me,0) :-
-    dir(Me,_),
-    periodic(_,_,_);
+mindx(Me, 0) :-
+    dir(Me, _),
+    periodic(_, _, _);
 
-mindx(Host,I) :-
-    mindx(Host,Old),
-    masters#insert(Host,Master),
+mindx(Host, I) :-
+    mindx(Host, Old),
+    masters#insert(Host, Master),
     Old < Conf.getNumMasters()-1,
     I := Old + 1;
 

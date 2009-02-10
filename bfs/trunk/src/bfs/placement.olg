@@ -26,15 +26,14 @@ lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
     chunk_cnt(Master, _, Cnt);
 
 
-
 define(chunk_cnt, keys(0,1), {String,String,Integer});
 //watch(chunk_cnt, ae);
 public
 chunk_cnt(Master, DataNode, count<*>) :-
-    bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
+    bfs_heartbeat::chunks(Master, DataNode, _, _);
 
-    
-    
+
+
 
 
 /* cleanups temporarily disabled
