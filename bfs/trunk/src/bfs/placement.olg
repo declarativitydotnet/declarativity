@@ -33,9 +33,6 @@ chunk_cnt(Master, DataNode, count<*>) :-
     bfs_heartbeat::chunks(Master, DataNode, _, _);
 
 
-
-
-
 /* cleanups temporarily disabled
 delete
 lowest_loaded_cnt(Master, Cnts) :-
