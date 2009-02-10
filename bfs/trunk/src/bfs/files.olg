@@ -16,7 +16,7 @@ define(checksumdir, keys(0), {String, String});
 watch(datadir, ae);
 
 define(dir, keys(0,1,2), {String, File, ArrayList});
-watch(dir,ae);
+watch(dir, ae);
 dir(Host, DirObj, DirList) :-
     datadir(Host, Dir),
     DirObj := new File(Dir + File.separator + "chunks"),
@@ -24,12 +24,12 @@ dir(Host, DirObj, DirList) :-
     clock(_, _, _);
 
 define(indx, keys(0), {String, Integer});
-indx(Host,0) :-
+indx(Host, 0) :-
     dir#insert(Host, Dir, List);
 
 indx(Host, Next) :-
     indx(Host, Old),
-    chunkTmp(Host, File),
+    chunkTmp(Host, _),
     Next := Old + 1;
 
 define(chunkTmp, {String, String});

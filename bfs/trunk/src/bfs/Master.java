@@ -57,11 +57,10 @@ public class Master {
         this.system.evaluate();
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
-        
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/placement.olg"));
-
         this.system.evaluate();
+
         setupPaxos();
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
@@ -87,13 +86,11 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_global.olg"));
 
         this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_p1.olg"));
-        //this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_pruned2.old"));
         this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_p2.olg"));
         this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_instance.olg"));
 
         //this.system.install("bfs", ClassLoader.getSystemResource("alive.olg"));
         //this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
-
 
         this.system.evaluate();
 

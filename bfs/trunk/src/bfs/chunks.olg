@@ -37,15 +37,6 @@ newListHolder(Master, Source, Id, NewList, NewChunkId, FName) :-
     candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
     bfs::request(Master, Id, Source, "NewChunk", FName);
 
-/*
-define (baz, {String, Integer});
-watch(baz, ae);
-public
-baz(Master, I) :- 
-    chunkSeq(Master,I),
-    bfs::request(Master, Id, Source, "NewChunk", FName);
-*/
-
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ArrayList});
 watch(candidate_datanode, ae);
 public
@@ -65,4 +56,3 @@ candidate_datanode(Master, -1, DnWithReplica, "none", ChunkId, generic<(new Arra
     bfs::possible_choices(Master, Cnt, DataNode, Id2),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
 */
-
