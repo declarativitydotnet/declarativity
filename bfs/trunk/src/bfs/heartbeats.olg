@@ -32,9 +32,9 @@ sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
     HighTstamp > Tstamp;
 */
 
-// Master node, Data node, BlockId, Timestamp of last
+// Master node, Data node, ChunkId, Timestamp of last
 // update from data node
-define(chunks, keys(0, 1, 2),{String, String, Integer, Long});
+define(chunks, keys(0, 1, 2), {String, String, Integer, Long});
 //watch(chunks, ae);
 chunks(Master, DataNode, ChunkId, MaxTstamp) :-
     sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
@@ -45,7 +45,7 @@ chunks(Master, DataNode, ChunkId, MaxTstamp) :-
 /*
 define(actual_chunks, keys(0, 1, 2),{String, String, Integer});
 watch(actual_chunks, ae);
-actual_chunks(Master, DataNode, ChunkId) :- 
+actual_chunks(Master, DataNode, ChunkId) :-
     chunks(Master, DataNode, ChunkId, _);
 
 delete
