@@ -63,11 +63,10 @@ public class DataNode {
             @Override
             public void insertion(TupleSet tuples) {
                 for (Tuple t : tuples) {
-                    ArrayList args = (ArrayList)t.value(4);  
-                    System.out.println("COPYCOPYCOPYCOPY!\n"); 
-                }   
+                    ArrayList args = (ArrayList) t.value(4);
+                    System.out.println("COPYCOPYCOPYCOPY!\n");
+                }
             }
-
         };
         setupFsRoot();
 
