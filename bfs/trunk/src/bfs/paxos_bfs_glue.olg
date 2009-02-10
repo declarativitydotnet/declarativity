@@ -24,13 +24,13 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 
 // an insert op in the log induces a new metadata entry for a file.
 public
-bfs::file(Master, FName, Blocks) :-
+bfs::file(Master, FName, Chunks) :-
  // periodic(_,_,_),
-  appView#insert(Master,From,Decree,Instance,FName,Op,Id),
-  Blocks := new ArrayList(),
+  appView#insert(Master, From, Decree, Instance, FName, Op, Id),
+  Chunks := new ArrayList(),
   Op == "i";
 
-// to ensure that we 
+// to ensure that we
 public
 bfs::chunkHWM(Master, max<I>) :-
     appView(Master, From, Decree, Instance, Fname, Op, I);
