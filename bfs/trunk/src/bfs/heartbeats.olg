@@ -1,15 +1,16 @@
 program bfs_heartbeat;
 
 import bfs.Conf;
+import java.lang.System;
 
 /*****************************/
-define(sendHeartBeat, keys(0, 1, 2, 3), {String, String,Integer, Long, Long});
+define(sendHeartBeat, keys(0, 1, 2), {String, String,Integer, Long, Long});
 define(dataNodes, keys(0, 1), {String, String, Long});
-//watch(dataNodes, ae);
-//watch(sendHeartBeat, ae);
+watch(dataNodes, ae);
+watch(sendHeartBeat, ae);
 timer(clock, physical, 5000, 5000, 1000);
 
-define(ackHeartBeat, keys(0, 1, 2), {String, String, Long});
+define(ackHeartBeat,  {String, String, Long});
 
 ackHeartBeat(@Dnode, Master, Id) :-
     sendHeartBeat(@Master, Dnode, _, _, Id),
@@ -17,37 +18,27 @@ ackHeartBeat(@Dnode, Master, Id) :-
 
 public
 dataNodes(Master, Host, max<Tstamp>) :-
-    sendHeartBeat(Master, Host, _, Tstamp, _);
+    sendHeartBeat#insert(Master, Host, _, Tstamp, _);
 
-
-
-/* these deletions are needed (until softstate is available)
-   to keep a handle on memory usage.  but until things stabilize,
-   they are disabled.
-
+// we need this to ensure we become aware of truant datanodes.
 delete
 sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
     sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
-    dataNodes(Master, Host, HighTstamp),
-    HighTstamp > Tstamp;
-*/
+    (System.currentTimeMillis() - Tstamp) > 10000L;
+
+
 
 // Master node, Data node, ChunkId, Timestamp of last
 // update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Long});
-//watch(chunks, ae);
+watch(chunks, ae);
 chunks(Master, DataNode, ChunkId, MaxTstamp) :-
     sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
-    dataNodes(Master, DataNode, MaxTstamp); //,
-    //(System.currentTimeMillis() - MaxTstamp) < 10000L;
+    clock(_, _, _),
+    dataNodes(Master, DataNode, MaxTstamp); 
 
 
 /*
-define(actual_chunks, keys(0, 1, 2),{String, String, Integer});
-watch(actual_chunks, ae);
-actual_chunks(Master, DataNode, ChunkId) :-
-    chunks(Master, DataNode, ChunkId, _);
-
 delete
 chunks(Master, DataNode, ChunkId, Ts) :-
     chunks(Master, DataNode, ChunkId, Ts),
@@ -59,10 +50,16 @@ chunks(Master, DataNode, ChunkId, Ts) :-
 /**************************/
 // maintenance functions
 
-define(rep_factor, keys(0,1), {String, Integer, Integer, String});
+define(rep_factor, keys(0,1), {String, Integer, Integer});
 watch(rep_factor, ae);
-rep_factor(Master, ChunkId, count<DataNode>, min<DataNode>) :-
-    //long_period(_,_,_),
+rep_factor(Master, ChunkId, count<DataNode>) :-
+    long_period(_,_,_),
+    chunks(Master, DataNode, ChunkId, Ts);
+
+define(representative_datanode, keys(0,1), {String, Integer, String});
+watch(representative_datanode, ae);
+representative_datanode(Master, ChunkId, min<DataNode>) :-
+    long_period(_,_,_),
     chunks(Master, DataNode, ChunkId, Ts);
 
 define(back_of_list, keys(0,1), {String,Integer,String});
@@ -85,8 +82,11 @@ to_delete(Master, DataNode, ChunkId) :-
 define(newReplica, {String, Integer, String});
 watch(newReplica, ae);
 newReplica(Master, ChunkId, Dn) :-
-    rep_factor(Master, ChunkId, Cnt, Dn),
+    rep_factor(Master, ChunkId, Cnt),
+    representative_datanode(Master, ChunkId, Dn),
     ChunkId > 0,
+    // explain this one: why are there zeroes in rep_factor??
+    Cnt != 0,
     long_period(_, _, _),
     Cnt < Conf.getRepFactor();
 

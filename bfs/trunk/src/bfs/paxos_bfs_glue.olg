@@ -30,7 +30,8 @@ bfs::file(Master, FName, Chunks) :-
   Chunks := new ArrayList(),
   Op == "i";
 
-// to ensure that we
+// to ensure that we account for the chunkIds proposed
+// by other masters
 public
 bfs::chunkHWM(Master, max<I>) :-
     appView(Master, From, Decree, Instance, Fname, Op, I);
