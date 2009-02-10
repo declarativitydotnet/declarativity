@@ -55,8 +55,8 @@ public class BoomFileSystem extends FileSystem {
 
 		FileStatus result = new FileStatus(bfsInfo.getLength(),
 				bfsInfo.isDirectory(),
-                Conf.getRepFactor(), // block replication
-                Conf.getChunkSize(), // block size
+                bfsInfo.getReplication(),
+                bfsInfo.getChunkSize(),
                 0,    // modification time
                 null, // permissions
                 null, // owner
@@ -91,8 +91,8 @@ public class BoomFileSystem extends FileSystem {
 		for (BFSFileInfo bfsInfo : bfsListing) {
 			FileStatus fStatus = new FileStatus(bfsInfo.getLength(),
 												bfsInfo.isDirectory(),
-					                            Conf.getRepFactor(), // block replication
-					                            Conf.getChunkSize(), // block size
+					                            bfsInfo.getReplication(),
+					                            bfsInfo.getChunkSize(),
 					                            0,    // modification time
 					                            null, // permissions
 					                            null, // owner
