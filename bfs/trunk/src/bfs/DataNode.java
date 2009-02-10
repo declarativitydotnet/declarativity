@@ -80,7 +80,6 @@ public class DataNode {
         /* Identify the data directory */
         TableName tblName = new TableName("bfs_heartbeat", "datadir");
         TupleSet datadir = new TupleSet(tblName);
-        //datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot + File.separator + "chunks"));
         datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot));
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
