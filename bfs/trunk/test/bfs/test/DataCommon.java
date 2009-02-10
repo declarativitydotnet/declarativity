@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Random;
+import java.util.ArrayList;
 
 
 import bfs.test.TestCommon;
@@ -49,17 +51,13 @@ public class DataCommon extends TestCommon {
 
             assertTrue(shellLs("foo"));
 
-            check_files();
-
-
-
         } catch (Exception e) {
             System.out.println("something went wrong: "+e);
             System.exit(1);
         }
     }
 
-    private void cleanup_all() {
+    protected void cleanup_all() {
         for (String d : dnList) {
             cleanup(d);
         }
@@ -79,7 +77,7 @@ public class DataCommon extends TestCommon {
         }       
     }
 
-    private void check_files() {
+    protected void check_files() {
         long len = new File(fName).length();
         long appropriateNumberOfChunks = (len / Conf.getChunkSize()) + 1;
 
@@ -129,6 +127,7 @@ public class DataCommon extends TestCommon {
             System.out.println(key+"\t"+cnt.toString());
         }
     }
+    
 
     private void counter(Hashtable h, String s) {
         Integer cnt = (Integer) h.get((Object)s);
@@ -139,4 +138,56 @@ public class DataCommon extends TestCommon {
         }
         h.put(s, cnt);
     }
+
+    protected class Victim {
+        String directory;
+        String chunk;
+        int datanodes; 
+
+        public Victim(int dn) {
+            datanodes = dn;
+        }
+        public void pick_victim() {
+            // pick a random directory.
+            Random r = new Random();
+            System.out.println("this.datanodes = " + this.datanodes);
+            if (this.datanodes == 1) {
+                pick_victim("td1"); 
+            } else {
+                int indx = r.nextInt(this.datanodes-1);
+                pick_victim("td" + (indx+1));
+            }
+   
+        }   
+        public void pick_victim(String dir) {
+            // pick a random chunk.
+            String longDir = dir + File.separator + "chunks";
+            File dirObj = new File(longDir);
+            safeAssert("dir exists " + dir, dirObj.exists());
+            File[] fileList = dirObj.listFiles();
+            Random r = new Random();
+            int victim = r.nextInt(fileList.length);
+            String thisChunk = fileList[victim].getName(); 
+            
+            pick_victim(longDir, thisChunk);
+        }
+        public void do_victim() {
+            File victim = new File(directory + File.separator + chunk);
+            safeAssert("victim file ("+ directory + File.separator + chunk  +") exists?", victim.exists());
+            victim.delete();
+        }
+
+        public void pick_victim(String dir, String c) {
+            directory = dir;
+            chunk = c; 
+        } 
+        public String getChunk() {
+            return chunk;
+        }
+        public String getDir() {
+            return directory;
+        }   
+    } 
+
+
 }

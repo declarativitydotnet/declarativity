@@ -8,6 +8,8 @@ public class BFSData1Test extends DataCommon {
 	@Test
     public void test1() {
         test(TEST_FILE, 1, 1, 1);
+        check_files();
+        cleanup_all();
     }
 
 	public static void main(String[] args) throws Exception {

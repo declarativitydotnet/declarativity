@@ -58,6 +58,10 @@ public class TestCommon {
         this.masters.get(index).stop();
     }
 
+    protected void killDataNode(int index) {
+        this.datanodes.get(index).shutdown();
+    }
+
     protected void shellCreate(String name) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
         createFile(shell, name);
