@@ -8,16 +8,10 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Random;
-import java.util.ArrayList;
-
 
 import bfs.test.TestCommon;
 import bfs.Shell;
 import bfs.Conf;
-
-import org.junit.Test;
-import junit.framework.Assert;
-
 
 public class DataCommon extends TestCommon {
 
@@ -74,7 +68,7 @@ public class DataCommon extends TestCommon {
             return Long.valueOf(csum);
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }       
+        }
     }
 
     protected void check_files() {
@@ -91,13 +85,13 @@ public class DataCommon extends TestCommon {
 
             for (File f : dir.listFiles()) {
                 counter(nodecnts, str);
-                counter(ht, f.getName()); 
+                counter(ht, f.getName());
                 long csum = get_checksum(i, f.getName());
-                Long oldCsum = (Long)csums.get((Object)f.getName()); 
+                Long oldCsum = (Long)csums.get((Object)f.getName());
                 if (oldCsum == null) {
                     csums.put(f.getName(), new Long(csum));
                 } else {
-                    
+
                     System.out.println("csum "+oldCsum+" matches "+csum);
                     safeAssert("checksums match", (oldCsum.longValue() == csum));
                 }
@@ -127,7 +121,7 @@ public class DataCommon extends TestCommon {
             System.out.println(key+"\t"+cnt.toString());
         }
     }
-    
+
 
     private void counter(Hashtable h, String s) {
         Integer cnt = (Integer) h.get((Object)s);
@@ -142,7 +136,7 @@ public class DataCommon extends TestCommon {
     protected class Victim {
         String directory;
         String chunk;
-        int datanodes; 
+        int datanodes;
 
         public Victim(int dn) {
             datanodes = dn;
@@ -152,13 +146,13 @@ public class DataCommon extends TestCommon {
             Random r = new Random();
             System.out.println("this.datanodes = " + this.datanodes);
             if (this.datanodes == 1) {
-                pick_victim("td1"); 
+                pick_victim("td1");
             } else {
                 int indx = r.nextInt(this.datanodes-1);
                 pick_victim("td" + (indx+1));
             }
-   
-        }   
+
+        }
         public void pick_victim(String dir) {
             // pick a random chunk.
             String longDir = dir + File.separator + "chunks";
@@ -167,8 +161,8 @@ public class DataCommon extends TestCommon {
             File[] fileList = dirObj.listFiles();
             Random r = new Random();
             int victim = r.nextInt(fileList.length);
-            String thisChunk = fileList[victim].getName(); 
-            
+            String thisChunk = fileList[victim].getName();
+
             pick_victim(longDir, thisChunk);
         }
         public void do_victim() {
@@ -179,15 +173,13 @@ public class DataCommon extends TestCommon {
 
         public void pick_victim(String dir, String c) {
             directory = dir;
-            chunk = c; 
-        } 
+            chunk = c;
+        }
         public String getChunk() {
             return chunk;
         }
         public String getDir() {
             return directory;
-        }   
-    } 
-
-
+        }
+    }
 }
