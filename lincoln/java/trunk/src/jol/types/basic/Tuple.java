@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * A tuple is an ordered list of values. 
+ * A tuple is an ordered list of values.
  * Tuple values must implement the {#link Serializable}
  * interface in order to ship tuples to remote locations.
  */
@@ -49,7 +49,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 	public Object[] toArray() {
 		return values.toArray();
 	}
-	
+
 	/**
 	 * Create a new tuple.
 	 * @param values The values that make up the tuple.
@@ -92,31 +92,31 @@ public class Tuple implements Iterable<Object>, Serializable {
 				out.writeByte(NULL);
 			} else if (o instanceof String) {
 				out.writeByte(STRING);
-				out.writeUTF((String)o);
+				out.writeUTF((String) o);
 			} else if (o instanceof Integer) {
 				out.writeByte(INT);
-				out.writeInt((Integer)o);
+				out.writeInt((Integer) o);
 			} else if (o instanceof Long) {
 				out.writeByte(LONG);
-				out.writeLong((Long)o);
+				out.writeLong((Long) o);
 			} else if (o instanceof Short) {
 				out.writeByte(SHORT);
-				out.writeShort((Short)o);
+				out.writeShort((Short) o);
 			} else if (o instanceof Boolean) {
 				out.writeByte(BOOLEAN);
-				out.writeBoolean((Boolean)o);
+				out.writeBoolean((Boolean) o);
 			} else if (o instanceof Character) {
 				out.writeByte(CHAR);
-				out.writeChar((Character)o);
+				out.writeChar((Character) o);
 			} else if (o instanceof Byte) {
 				out.writeByte(BYTE);
-				out.writeByte((Byte)o);
+				out.writeByte((Byte) o);
 			} else if (o instanceof Float) {
 				out.writeByte(FLOAT);
-				out.writeFloat((Float)o);
+				out.writeFloat((Float) o);
 			} else if (o instanceof Double) {
 				out.writeByte(DOUBLE);
-				out.writeDouble((Double)o);
+				out.writeDouble((Double) o);
 			} else {
 				if (!warned) {
 					System.out.println("sending non-primitive: " + o.getClass().toString());
@@ -180,6 +180,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 			}
 		}
 	}
+
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		// Use serialization routines that are optimized for single tuples.
 		// (This causes the network to use these routines, which doesn't
@@ -205,8 +206,6 @@ public class Tuple implements Iterable<Object>, Serializable {
 		copy.refCount = this.refCount;
 		return copy;
 	}
-//	@Override
-//	public Tuple clone() { throw new UnsupportedOperationException(); }
 
     /**
      * Initialize the transient fields of an empty tuple, or one that has been
