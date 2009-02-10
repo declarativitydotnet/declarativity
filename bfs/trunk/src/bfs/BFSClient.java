@@ -95,7 +95,7 @@ public class BFSClient {
         Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
 
-        if (success == null || success.booleanValue() == false)
+        if (success.booleanValue() == false)
         	return false;
         else
         	return true;
@@ -277,7 +277,7 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        List<String> nodeList = (List<String>) this.responseQueue.get(); // XXX: timeout?
+        List<String> nodeList = (List<String>) waitForResponse(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
         return nodeList;
 	}
@@ -288,18 +288,25 @@ public class BFSClient {
         return table;
     }
 
+    // XXX: this should be rewritten to account for the fact that masters can
+	// die and then resume operation; we should be willing to try to contact
+    // them again.
     private Object waitForResponse(long timeout) {
         while (this.currentMaster < Conf.getNumMasters()) {
             Object result = this.responseQueue.get(timeout);
             if (result != null)
                 return result;
 
-            System.out.println("Master " + this.currentMaster + " timed out. Retry?");
+            System.out.println("Master #" + this.currentMaster +
+            		           "(" + Conf.getMasterAddress(this.currentMaster) +
+            		           ") timed out. Retry?");
             this.currentMaster++;
+            if (this.currentMaster == Conf.getNumMasters())
+            	break;
             updateMasterAddr();
         }
 
-        return null; // Timed out
+        throw new RuntimeException("BFS request timed out");
     }
 
     private void updateMasterAddr() {

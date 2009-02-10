@@ -38,7 +38,6 @@ public class Conf {
 
     private static final int bufSize = 102400;
 
-
     private static int replicationFactor = 2;
 
     public static long getChunkSize() {
