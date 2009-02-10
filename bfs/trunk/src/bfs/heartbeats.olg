@@ -5,17 +5,17 @@ import java.lang.System;
 
 /*****************************/
 define(sendHeartBeat, keys(0, 1, 2), {String, String,Integer, Long, Long});
-define(dataNodes, keys(0, 1), {String, String, Long});
 watch(dataNodes, ae);
 watch(sendHeartBeat, ae);
+
 timer(clock, physical, 5000, 5000, 1000);
 
 define(ackHeartBeat,  {String, String, Long});
-
 ackHeartBeat(@Dnode, Master, Id) :-
     sendHeartBeat(@Master, Dnode, _, _, Id),
     Id != -1L;
 
+define(dataNodes, keys(0, 1), {String, String, Long});
 public
 dataNodes(Master, Host, max<Tstamp>) :-
     sendHeartBeat#insert(Master, Host, _, Tstamp, _);
@@ -33,10 +33,9 @@ sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
 define(chunks, keys(0, 1, 2), {String, String, Integer, Long});
 watch(chunks, ae);
 chunks(Master, DataNode, ChunkId, MaxTstamp) :-
-    sendHeartBeat(Master, DataNode, ChunkId, Tstamp, Id),
+    sendHeartBeat(Master, DataNode, ChunkId, Tstamp, _),
     clock(_, _, _),
-    dataNodes(Master, DataNode, MaxTstamp); 
-
+    dataNodes(Master, DataNode, MaxTstamp);
 
 /*
 delete
@@ -53,19 +52,19 @@ chunks(Master, DataNode, ChunkId, Ts) :-
 define(rep_factor, keys(0,1), {String, Integer, Integer});
 watch(rep_factor, ae);
 rep_factor(Master, ChunkId, count<DataNode>) :-
-    long_period(_,_,_),
-    chunks(Master, DataNode, ChunkId, Ts);
+    long_period(_, _, _),
+    chunks(Master, DataNode, ChunkId, _);
 
 define(representative_datanode, keys(0,1), {String, Integer, String});
 watch(representative_datanode, ae);
 representative_datanode(Master, ChunkId, min<DataNode>) :-
-    long_period(_,_,_),
-    chunks(Master, DataNode, ChunkId, Ts);
+    long_period(_, _, _),
+    chunks(Master, DataNode, ChunkId, _);
 
 define(back_of_list, keys(0,1), {String,Integer,String});
 back_of_list(Master, ChunkId, min<DataNode>) :-
-    long_period(_,_,_),
-    chunks(Master, DataNode, ChunkId, Ts);
+    long_period(_, _, _),
+    chunks(Master, DataNode, ChunkId, _);
 
 timer(long_period, physical, 10000, 100000, 0);
 
@@ -76,7 +75,6 @@ to_delete(Master, DataNode, ChunkId) :-
     ChunkId > 1,
     long_period(_, _, _),
     Cnt > Conf.getRepFactor();
-
 
 
 define(newReplica, {String, Integer, String});
@@ -92,14 +90,14 @@ newReplica(Master, ChunkId, Dn) :-
 
 // hacky constraint: one message per tick
 define(send_delete, keys(0), {String, Integer, String});
-send_delete(@DataNode,ChunkId,Master) :-
-    to_delete(@Master,DataNode,ChunkId);
+send_delete(@DataNode, ChunkId, Master) :-
+    to_delete(@Master, DataNode, ChunkId);
 
 // not correct.
 /*
 delete
 chunks(Master, DataNode, ChunkId, MTS) :-
     chunks(Master, DataNode, ChunkId, MTS),
-    to_delete(Master,DataNode,ChunkId);
+    to_delete(Master, DataNode, ChunkId);
 */
 
