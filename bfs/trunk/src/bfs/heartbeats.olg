@@ -57,7 +57,7 @@ rep_factor(Master, ChunkId, count<DataNode>) :-
 
 define(representative_datanode, keys(0,1), {String, Integer, String});
 watch(representative_datanode, ae);
-representative_datanode(Master, ChunkId, min<DataNode>) :-
+representative_datanode(Master, ChunkId, max<DataNode>) :-
     long_period(_, _, _),
     chunks(Master, DataNode, ChunkId, _);
 
@@ -77,14 +77,15 @@ to_delete(Master, DataNode, ChunkId) :-
     Cnt > Conf.getRepFactor();
 
 
-define(newReplica, {String, Integer, String});
+define(newReplica, keys(0,1), {String, Integer, String});
 watch(newReplica, ae);
 newReplica(Master, ChunkId, Dn) :-
     rep_factor(Master, ChunkId, Cnt),
     representative_datanode(Master, ChunkId, Dn),
     ChunkId > 0,
     // explain this one: why are there zeroes in rep_factor??
-    Cnt != 0,
+    Cnt > 0,
+    Dn != null,
     long_period(_, _, _),
     Cnt < Conf.getRepFactor();
 
