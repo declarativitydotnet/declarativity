@@ -66,24 +66,26 @@ chunk(Host, File) :-
 define(heartBeat,keys(0,1,2),{String,String,Integer,Long,Long});
 //watch(heartBeat,ae);
 heartBeat(Host, Master, Chunk, Tstamp, Id) :-
-    chunk(Host, File, Checksum),
-    Chunk := Integer.valueOf(File),
-    masters(Host,Master),
+    chunk(Host, FName, Checksum),
+    Chunk := Integer.valueOf(FName),
+    masters(Host, Master),
     clock(_, _, _),
     Tstamp := System.currentTimeMillis(),
     Id := Runtime.idgen();
 
-heartBeat(Host,Master,-1,Tstamp,-1) :-
+// Periodically send an HB to notify the masters that this data node
+// is still alive, even if its content hasn't changed
+heartBeat(Host, Master, -1, Tstamp, -1) :-
     masters(Host, Master),
-    clock(_,_,_),
+    clock(_, _, _),
     Tstamp := System.currentTimeMillis(),
     Id := Runtime.idgen();
 
 
 define(sendHeartBeat,keys(0,1,2),{String,String,Integer,Long,Long});
 //watch(sendHeartBeat,ae);
-sendHeartBeat(@Master, Host, File, Tstamp, Id) :-
-    heartBeat(@Host, Master, File, Tstamp, Id),
+sendHeartBeat(@Master, Host, ChunkId, Tstamp, Id) :-
+    heartBeat(@Host, Master, ChunkId, Tstamp, Id),
     notin serverKnows(@Host, Master, File, _);
 
 define(ackHeartBeat,keys(0,1,2),{String,String,Long});
@@ -91,9 +93,9 @@ define(ackHeartBeat,keys(0,1,2),{String,String,Long});
 
 define(serverKnows,keys(0,1,2,3),{String,String,Integer,Long});
 watch(serverKnows,ae);
-serverKnows(Host,Master,File,Id) :-
-    heartBeat(Host,Master,File,Tstamp,Id),
-    ackHeartBeat#insert(Host,Master,Id);
+serverKnows(Host, Master, ChunkId, Id) :-
+    heartBeat(Host, Master, ChunkId, _, Id),
+    ackHeartBeat#insert(Host, Master, Id);
 
 define(masters,keys(0,1),{String,String});
 define(mindx,keys(0),{String,Integer});
@@ -111,13 +113,12 @@ mindx(Host, I) :-
     Old < Conf.getNumMasters()-1,
     I := Old + 1;
 
-masters(Host,Master) :-
-    mindx#insert(Host,I),
+masters(Host, Master) :-
+    mindx#insert(Host, I),
     Master := Conf.getMasterAddress(I);
 
 define(send_delete, keys(0), {String, Integer, String});
 watch(send_delete, ae);
-
 
 // this is already defined in bfs_global.olg, but I don't think we
 // want to install that program at the datanodes... or do we?

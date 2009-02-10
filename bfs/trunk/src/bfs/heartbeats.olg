@@ -27,13 +27,12 @@ sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
     (System.currentTimeMillis() - Tstamp) > 10000L;
 
 
-
 // Master node, Data node, ChunkId, Timestamp of last
 // update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Long});
 watch(chunks, ae);
 chunks(Master, DataNode, ChunkId, MaxTstamp) :-
-    sendHeartBeat(Master, DataNode, ChunkId, Tstamp, _),
+    sendHeartBeat(Master, DataNode, ChunkId, _, _),
     clock(_, _, _),
     dataNodes(Master, DataNode, MaxTstamp);
 
@@ -101,4 +100,3 @@ chunks(Master, DataNode, ChunkId, MTS) :-
     chunks(Master, DataNode, ChunkId, MTS),
     to_delete(Master, DataNode, ChunkId);
 */
-
