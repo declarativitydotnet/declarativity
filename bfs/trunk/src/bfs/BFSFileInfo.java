@@ -21,6 +21,14 @@ public class BFSFileInfo {
 		return this.fileName;
 	}
 
+	public int getReplication() {
+		return Conf.getRepFactor();
+	}
+
+	public long getChunkSize() {
+		return Conf.getChunkSize();
+	}
+
 	// TODO
 	public long getLength() {
 		return 0;
