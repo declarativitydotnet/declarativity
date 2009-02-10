@@ -100,7 +100,7 @@ public class Shell {
     }
 
     public void doAppend(List<String> args) throws UpdateException {
-        this.doAppend(args,System.in);
+        this.doAppend(args, System.in);
     }
 
     public void doAppend(List<String> args, InputStream s) throws UpdateException {
@@ -114,6 +114,8 @@ public class Shell {
             List<String> path = getNewChunk(filename);
             // this should be a list of candidate datanodes for the chunk.
             // The last element is the newly-assigned chunk ID.
+            // XXX: if the first data node in the list is down, we should
+            // retry the write to one of the other data nodes
             if (path.size() < (Conf.getRepFactor() + 1)) {
                 throw new RuntimeException("server sent too few datanodes: " + path.toString());
             }
@@ -125,8 +127,10 @@ public class Shell {
 
                 int nread = 0;
                 byte buf[] = new byte[Conf.getBufSize()];
-                while (b != -1 && nread < Conf.getChunkSize()) {
+                while (nread < Conf.getChunkSize()) {
                     b = s.read(buf, 0, Conf.getBufSize());
+                    if (b == -1)
+                    	break;
                     conn.write(buf);
                     nread += b;
                 }
