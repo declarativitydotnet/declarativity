@@ -6,12 +6,11 @@ import java.util.ArrayList;
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean});
 
-// Node, file name, chunk IDs
+// Node, file name, ordered list of chunk IDs
 define(file, keys(0, 1), {String, String, ArrayList});
 
 // Master, Cnt, DataNode, Id
 define(possible_choices, keys(0,2), {String, Integer, String, Integer});
-
 
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
