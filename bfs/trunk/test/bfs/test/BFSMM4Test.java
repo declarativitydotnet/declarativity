@@ -6,7 +6,7 @@ import org.junit.Test;
 
 public class BFSMM4Test extends TestCommon {
     @Test
-    public void test2() {
+    public void test4() {
         try {
             startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
@@ -38,6 +38,6 @@ public class BFSMM4Test extends TestCommon {
 
     public static void main(String[] args) throws Exception {
         BFSMM4Test t = new BFSMM4Test();
-        t.test2();
+        t.test4();
     }
 }

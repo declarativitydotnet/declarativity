@@ -19,7 +19,7 @@ public class BFSMM5Test extends TestCommon {
     }
 
     @Test
-    public void test4() {
+    public void test5() {
         try {
             startMany("localhost:5500", "localhost:5502", "localhost:5503");
             // startMany("localhost:5500");
@@ -60,6 +60,6 @@ public class BFSMM5Test extends TestCommon {
 
     public static void main(String[] args) throws Exception {
         BFSMM5Test t = new BFSMM5Test();
-        t.test4();
+        t.test5();
     }
 }
