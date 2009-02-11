@@ -20,7 +20,7 @@ watch(dir, ae);
 dir(Host, DirObj, DirList) :-
     datadir(Host, Dir),
     DirObj := new File(Dir + File.separator + "chunks"),
-    DirList := new ArrayList(Arrays.asList(DirObj.listFiles())),
+    DirList := DirObj.isDirectory() ? new ArrayList(Arrays.asList(DirObj.listFiles())) : new ArrayList(),
     clock(_, _, _);
 
 define(indx, keys(0), {String, Integer});
