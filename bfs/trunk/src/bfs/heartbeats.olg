@@ -4,7 +4,7 @@ import bfs.Conf;
 import java.lang.System;
 
 /*****************************/
-define(sendHeartBeat, keys(0, 1, 2), {String, String,Integer, Long, Long});
+define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Long, Long});
 watch(dataNodes, ae);
 watch(sendHeartBeat, ae);
 
