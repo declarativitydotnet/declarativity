@@ -57,8 +57,8 @@ chunk(Host, FName, Checksum) :-
 
 /* cleanup rules disabled
 delete
-chunk(Host, File) :-
-    chunk(Host, File),
+chunk(Host, FName, Checksum) :-
+    chunk(Host, FName, Checksum),
     dir#insert(Host, Dir, List);
 */
 
@@ -86,7 +86,7 @@ define(sendHeartBeat,keys(0,1,2),{String,String,Integer,Long,Long});
 //watch(sendHeartBeat,ae);
 sendHeartBeat(@Master, Host, ChunkId, Tstamp, Id) :-
     heartBeat(@Host, Master, ChunkId, Tstamp, Id),
-    notin serverKnows(@Host, Master, File, _);
+    notin serverKnows(@Host, Master, ChunkId, _);
 
 define(ackHeartBeat,keys(0,1,2),{String,String,Long});
 //watch(ackHeartBeat,ae);
