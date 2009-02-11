@@ -148,7 +148,7 @@ public class BFSClient {
         // so we do the conversion to BFSFileInfo by hand.
         List<BFSFileInfo> result = new ArrayList<BFSFileInfo>();
         for (String fileName : lsContent) {
-        	result.add(new BFSFileInfo(fileName));
+        	result.add(new BFSFileInfo(fileName, null));
         }
 
         return result;

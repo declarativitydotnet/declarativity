@@ -1,16 +1,19 @@
 package bfs;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class BFSFileInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final boolean isDirectory;
 	private final String fileName;
+	private final List<BFSChunkInfo> chunkList;
 
-	public BFSFileInfo(String name) {
+	public BFSFileInfo(String name, List<BFSChunkInfo> chunkList) {
 		this.fileName = name;
 		this.isDirectory = false;
+		this.chunkList = chunkList;
 	}
 
 	public boolean isDirectory() {
