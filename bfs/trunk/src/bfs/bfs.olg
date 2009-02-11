@@ -59,7 +59,7 @@ clRequest(Master, ReqId, Source, "ChunkLocations", CId) :-
 define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, String, ArrayList});
 compute_chunk_locs(@Master, ReqId, Source, generic<(new ArrayList()).add(NodeAddr)>) :-
     clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
-    bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _);
+    bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _, _);
 
 response(@Source, Id, Master, true, NodeList) :-
     request(@Master, Id, Source, "ChunkLocations", _),
@@ -67,7 +67,7 @@ response(@Source, Id, Master, true, NodeList) :-
 
 response(@Source, ReqId, Master, false, null) :-
     clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
-    notin bfs_heartbeat::chunks(@Master, _, ChunkId, _);
+    notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
 
 
 // If we get a "cat" request for a file that exists, send back the
