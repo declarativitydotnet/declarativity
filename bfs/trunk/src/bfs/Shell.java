@@ -137,7 +137,7 @@ public class Shell {
                     conn.write(buf);
                     nread += b;
                 }
-                System.out.println("exiting inner loop with " + b + " retval and " + nread + " bytes read\n");
+                System.out.println("exiting inner loop with " + b + " retval and " + nread + " bytes written");
                 conn.close();
             } catch (Exception e) {
                 throw new RuntimeException(e);
