@@ -20,7 +20,7 @@ watch(dir, ae);
 dir(Host, DirObj, DirList) :-
     datadir(Host, Dir),
     DirObj := new File(Dir + File.separator + "chunks"),
-    DirList := DirObj.isDirectory() ? new ArrayList(Arrays.asList(DirObj.list())) : new ArrayList(),
+    DirList := new ArrayList(Arrays.asList(DirObj.listFiles())),
     clock(_, _, _);
 
 define(indx, keys(0), {String, Integer});
@@ -37,8 +37,8 @@ chunkTmp(Host, FName) :-
     dir(Host, Dir, List),
     indx(Host, I),
     I < List.size()
-    { F := List.get(I);
-      FName := F.toString(); };
+    { F := (File) List.get(I);
+      FName := F.getName(); };
 
 // fix me!
 checksumdir(H, D)  :-
