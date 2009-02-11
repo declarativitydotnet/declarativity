@@ -4,7 +4,7 @@ import bfs.Conf;
 import java.lang.System;
 
 /*****************************/
-define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Long, Long});
+define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
 watch(dataNodes, ae);
 watch(sendHeartBeat, ae);
 
@@ -12,34 +12,34 @@ timer(clock, physical, 5000, 5000, 1000);
 
 define(ackHeartBeat,  {String, String, Long});
 ackHeartBeat(@Dnode, Master, Id) :-
-    sendHeartBeat(@Master, Dnode, _, _, Id),
+    sendHeartBeat(@Master, Dnode, _, _, _, Id),
     Id != -1L;
 
 define(dataNodes, keys(0, 1), {String, String, Long});
 public
 dataNodes(Master, Host, max<Tstamp>) :-
-    sendHeartBeat#insert(Master, Host, _, Tstamp, _);
+    sendHeartBeat#insert(Master, Host, _, _, Tstamp, _);
 
 // we need this to ensure we become aware of truant datanodes.
 delete
-sendHeartBeat(Master, Host, ChunkId, Tstamp, Id) :-
-    sendHeartBeat(Master, Host, ChunkId, Tstamp, Id),
+sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
+    sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id),
     (System.currentTimeMillis() - Tstamp) > 10000L;
 
 
-// Master node, Data node, ChunkId, Timestamp of last
-// update from data node
-define(chunks, keys(0, 1, 2), {String, String, Integer, Long});
+// Master node, Data node, ChunkId, Actual length of chunk, Timestamp
+// of last update from data node
+define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
 watch(chunks, ae);
-chunks(Master, DataNode, ChunkId, MaxTstamp) :-
-    sendHeartBeat(Master, DataNode, ChunkId, _, _),
+chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
+    sendHeartBeat(Master, DataNode, ChunkId, Length, _, _),
     clock(_, _, _),
     dataNodes(Master, DataNode, MaxTstamp);
 
 /*
 delete
-chunks(Master, DataNode, ChunkId, Ts) :-
-    chunks(Master, DataNode, ChunkId, Ts),
+chunks(Master, DataNode, ChunkId, Length, Ts) :-
+    chunks(Master, DataNode, ChunkId, Length, Ts),
     clock(_, _, _),
     (System.currentTimeMillis() - Ts) > 10000L;
 */
@@ -52,18 +52,18 @@ define(rep_factor, keys(0,1), {String, Integer, Integer});
 watch(rep_factor, ae);
 rep_factor(Master, ChunkId, count<DataNode>) :-
     long_period(_, _, _),
-    chunks(Master, DataNode, ChunkId, _);
+    chunks(Master, DataNode, ChunkId, _, _);
 
 define(representative_datanode, keys(0,1), {String, Integer, String});
 watch(representative_datanode, ae);
 representative_datanode(Master, ChunkId, max<DataNode>) :-
     long_period(_, _, _),
-    chunks(Master, DataNode, ChunkId, _);
+    chunks(Master, DataNode, ChunkId, _, _);
 
 define(back_of_list, keys(0,1), {String,Integer,String});
 back_of_list(Master, ChunkId, min<DataNode>) :-
     long_period(_, _, _),
-    chunks(Master, DataNode, ChunkId, _);
+    chunks(Master, DataNode, ChunkId, _, _);
 
 timer(long_period, physical, 10000, 100000, 0);
 
@@ -96,7 +96,7 @@ send_delete(@DataNode, ChunkId, Master) :-
 // not correct.
 /*
 delete
-chunks(Master, DataNode, ChunkId, MTS) :-
-    chunks(Master, DataNode, ChunkId, MTS),
+chunks(Master, DataNode, ChunkId, Length, MTS) :-
+    chunks(Master, DataNode, ChunkId, Length, MTS),
     to_delete(Master, DataNode, ChunkId);
 */
