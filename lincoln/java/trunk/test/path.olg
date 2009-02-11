@@ -74,9 +74,9 @@ computeAll(Source) :-
 	pathStatistics(Source, Destination, MinHops, MaxHops, TopHops);
 	
 watch(pathSet, a);
-import jol.types.basic.ComparableSet;
+import java.util.Set;
 import java.util.ArrayList;
-define(pathSet, {String, ComparableSet});
+define(pathSet, {String, Set});
 pathSet(Source, union<Destination>) :-
 	computeAll(Bla),
 	path(Source, Destination, Hops);
