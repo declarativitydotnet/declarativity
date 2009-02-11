@@ -1,6 +1,7 @@
 package bfs;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -236,7 +237,7 @@ public class BFSClient {
 
         List<Integer> chunkList = (List<Integer>) waitForResponse(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
-        return chunkList;
+        return Collections.unmodifiableList(chunkList);
 	}
 
 	public List<String> getChunkLocations(final int chunkId) {
@@ -279,7 +280,7 @@ public class BFSClient {
 
         List<String> nodeList = (List<String>) waitForResponse(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
-        return nodeList;
+        return Collections.unmodifiableList(nodeList);
 	}
 
     private Table registerCallback(Callback callback, String tableName) {
