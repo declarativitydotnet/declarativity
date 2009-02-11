@@ -28,7 +28,6 @@ delete
 request(Master, Id, Source, "NewChunk", FName) :-
     bfs_chunks::newListHolder(Master, Source, Id, List, I, FName);
 
-
 // a "NewChunk" request for a nonexistent file causes an error.
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "NewChunk", FName),
@@ -68,21 +67,6 @@ response(@Source, Id, Master, true, NodeList) :-
 response(@Source, ReqId, Master, false, null) :-
     clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
-
-
-// If we get a "cat" request for a file that exists, send back the
-// contents of the file
-response(@Source, Id, Master, Success, Chunks) :-
-    request(@Master, Id, Source, "Cat", FName),
-    file(@Master, FName, Chunks),
-    Success := true;
-
-// If the file doesn't exist, return an error message
-response(@Source, Id, Master, Success, Result) :-
-    request(@Master, Id, Source, "Cat", FName),
-    notin file(@Master, FName, _),
-    Success := false,
-    Result := new ArrayList();//"File does not exist";
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 watch(create_request_pending, ae);
@@ -133,10 +117,9 @@ response(@Source, Id, Master, true, Result) :-
     Result := new ArrayList(),
     Result.add(Info);
 
-response(@Source, Id, Master, false, Result) :-
+response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "FileInfo", FName),
-    notin file(@Master, FName, _),
-    Result := new ArrayList();
+    notin file(@Master, FName, _);
 
 
 define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
