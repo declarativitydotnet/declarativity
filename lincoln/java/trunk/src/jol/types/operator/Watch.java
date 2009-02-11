@@ -45,8 +45,8 @@ public class Watch extends Operator {
 	 * Create a new watch operator.
 	 * stderr is used as the print stream.
 	 * @param context The runtime context.
-	 * @param program The program name
-	 * @param rule The rule name
+	 * @param program The program name.
+	 * @param rule The rule name.
 	 * @param name The table name.
 	 * @param modifier The modifier type.
 	 */
@@ -58,8 +58,8 @@ public class Watch extends Operator {
 	 * Create a new watch operator.
 	 * stderr is used as the print stream.
 	 * @param context The runtime context.
-	 * @param program The program name
-	 * @param rule The rule name
+	 * @param program The program name.
+	 * @param rule The rule name.
 	 * @param name The table name.
 	 * @param modifier The modifier type.
 	 * @param stream the print stream.
@@ -73,19 +73,31 @@ public class Watch extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		if (tuples.size() == 0) return tuples;
+		if (tuples.isEmpty()) return tuples;
 
-		String header = "Program " + program + " [CLOCK " + context.clock().current() + "] " +
-				        modifier.toString() + ": " + name;
+		StringBuilder sb = new StringBuilder();
+		sb.append("Program ");
+		sb.append(program);
+		sb.append(" [CLOCK ");
+		sb.append(context.clock().current());
+		sb.append("] ");
+		sb.append(modifier);
+		sb.append(": ");
+		sb.append(name);
 
 		if (this.rule != null) {
-			header += " Rule " + rule;
+			sb.append(" Rule ");
+			sb.append(rule);
 		}
 
-		stream.println(header);
+		sb.append("\n");
 		for (Tuple tuple : tuples) {
-			stream.println("\t" + tuple);
+			sb.append("\t");
+			sb.append(tuple);
+			sb.append("\n");
 		}
+
+		stream.print(sb);
 		return tuples;
 	}
 
@@ -93,5 +105,4 @@ public class Watch extends Operator {
 	public String toString() {
 		return "Watch " + modifier + ": " + name;
 	}
-
 }
