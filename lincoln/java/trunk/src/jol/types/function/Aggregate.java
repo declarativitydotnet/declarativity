@@ -625,7 +625,7 @@ public abstract class Aggregate<C extends Object> {
 
 		@Override
 		public HashSet result() {
-			return this.result;
+			return (HashSet) this.result.clone();
 		}
 
 		@Override
@@ -665,7 +665,7 @@ public abstract class Aggregate<C extends Object> {
 
 		@Override
 		public HashSet result() {
-			return this.result;
+			return (HashSet) this.result.clone();
 		}
 
 		@Override
