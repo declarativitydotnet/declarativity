@@ -569,32 +569,34 @@ public class Driver implements Runnable {
 	}
 
 	public void run() {
-		while (true) {
-			synchronized (this) {
-                /*
-                 * XXX: If we received a shutdown request, we might want to honor
-                 * it before evaluating the next fixpoint (which might take a
-                 * long time). We don't do this right now, since pending
-                 * deletions aren't scheduled atomically with their triggering
-                 * fixpoint.
-                 */
-				try {
+		try {
+			while (!Thread.interrupted()) {
+				synchronized (this) {
+					/*
+					 * XXX: If we received a shutdown request, we might want to honor
+					 * it before evaluating the next fixpoint (which might take a
+					 * long time). We don't do this right now, since pending
+					 * deletions aren't scheduled atomically with their triggering
+					 * fixpoint.
+					 */
 					evaluate();
-				} catch (UpdateException e) {
-					java.lang.System.err.println(e);
-					return;
-				}
 
-				/* Check for new tasks or schedules, if none wait. */
-				while (this.tasks.size() == 0 && schedule.cardinality() == 0) {
-					try {
-						this.wait();
-					} catch (InterruptedException e) {
-					    /* We got a shutdown request */
-					    return;
+					/* Check for new tasks or schedules, if none wait. */
+					while (this.tasks.size() == 0 && schedule.cardinality() == 0) {
+						try {
+							this.wait();
+						} catch (InterruptedException e) {
+							/* We got a shutdown request */
+							return;
+						}
 					}
 				}
 			}
+		} catch (Throwable t) {
+			System.err.println("JOL Driver Error: " + t);
+		}
+		finally {
+			System.err.println("JOL Driver Shutdown.");
 		}
 	}
 

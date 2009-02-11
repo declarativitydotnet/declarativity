@@ -100,6 +100,10 @@ public class Runtime implements JolSystem {
 		this.network    = null;
 		this.thread     = null;
 	}
+	
+	public Object driver() {
+		return this.driver;
+	}
 
 	public void evaluate() throws JolRuntimeException {
 		// XXX might not be a good idea to bypass this check.

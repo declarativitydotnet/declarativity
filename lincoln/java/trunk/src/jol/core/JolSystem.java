@@ -14,6 +14,9 @@ import jol.types.table.Table.Catalog;
  * obtained via the {@link jol.core.Runtime#create(int)} static method.
  */
 public interface JolSystem {
+	
+	public Object driver();
+	
 	/**
 	 * Get the system clock.
 	 * @return The current system (logical) clock

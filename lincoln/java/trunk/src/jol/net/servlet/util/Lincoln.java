@@ -81,7 +81,6 @@ public class Lincoln {
 			 final RuntimeCallback[] teardown) 
 						throws UpdateException, JolRuntimeException {
 		final RuntimeCallback pre = new RuntimeCallback() {
-			@Override
 			public void call(Runtime r) throws UpdateException, JolRuntimeException {
 				for(Logger l : loggers) { l.start(); }
 				for(RuntimeCallback c: setup) { c.call(r); }
@@ -89,7 +88,6 @@ public class Lincoln {
 		};
 
 		final RuntimeCallback post = new RuntimeCallback() {
-			@Override
 			public void call(Runtime r) throws UpdateException,
 			JolRuntimeException {
 				for(Logger l : loggers) { l.stop(); }
@@ -140,7 +138,6 @@ public class Lincoln {
     	public TupleSet insertions() { return insertions; }
     	public TupleSet deletions() { return deletions; }
     	
-    	@Override
 		public void call(Runtime r) throws UpdateException,
 				JolRuntimeException {
 			r.schedule(program, table, insertions, deletions);
