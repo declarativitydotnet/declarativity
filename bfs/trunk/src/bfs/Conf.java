@@ -27,8 +27,8 @@ public class Conf {
 
     private static Host[] dataNodes = new Host[] {
         new Host("localhost", 5600, 5700),
-        new Host("localhost", 5601, 5701),
-        new Host("localhost", 5602, 5702),
+//        new Host("localhost", 5601, 5701),
+//        new Host("localhost", 5602, 5702),
     };
 
     private static final long fileOpTimeout = 20000;
@@ -38,7 +38,7 @@ public class Conf {
 
     private static final int bufSize = 102400;
 
-    private static int replicationFactor = 2;
+    private static int replicationFactor = 1;
 
     public static long getChunkSize() {
         assert(chunkSize >= bufSize);

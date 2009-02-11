@@ -242,7 +242,13 @@ public class Shell {
 
         List<Integer> chunkList = (List<Integer>) spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
-        return Collections.unmodifiableList(chunkList);
+
+        // The server returns the list of chunks in unspecified order; we sort by
+        // ascending chunk ID, on the assumption that this agrees with the correct
+        // order for the chunks in a file
+        List<Integer> sortedChunks = new ArrayList<Integer>(chunkList);
+        Collections.sort(sortedChunks);
+        return sortedChunks;
     }
 
     private Table registerCallback(Callback callback, String tableName) {
@@ -463,7 +469,6 @@ public class Shell {
         responseTbl.unregister(responseCallback);
 
         List<BFSFileInfo> lsContent = (List<BFSFileInfo>) result;
-        Collections.sort(lsContent);
         return Collections.unmodifiableList(lsContent);
     }
 
@@ -508,7 +513,7 @@ public class Shell {
         this.system.schedule("bfs", tblName, req, null);
 
         // Wait for the response
-        Object obj = spinGet(Conf.getFileOpTimeout());
+        spinGet(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
     }
 
