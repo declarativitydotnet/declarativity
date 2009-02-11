@@ -33,7 +33,7 @@ bfs::file(Master, FName) :-
 // by other masters
 public
 bfs::chunkHWM(Master, max<I>) :-
-    appView(Master, From, Decree, Instance, FName, Op, I);
+    appView(Master, _, _, _, _, _, I);
 
 // or, if we are adding a chunk to a file's chunklist, we likewise need to pass it through paxos.
 // (and indeed, should block the requestor, but this is not implemented yet)
@@ -41,7 +41,7 @@ public
 paxos_global::decreeRequest(Master, Decree, From) :-
   paxos_global::id(Master),
   From := Master,
-  bfs_chunks::candidate_datanode#insert(Master, Id, Source, FName, I, Stuff),
+  bfs_chunks::candidate_datanode#insert(Master, Id, _, FName, I, _),
   Decree := FName + ",u," + Id.toString() + "," + I.toString();
 
 
@@ -57,9 +57,9 @@ timer(periodic,physical,3000,3000,3000);
 define(appView,keys(0,1,3,4),{String,String,String,Integer,String,String,Integer,Integer});
 watch(appView,ae);
 public
-appView(Master,From,Decree,Instance,Name,Op,Id,I) :-
+appView(Master, From, Decree, Instance, Name, Op, Id, I) :-
   paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
-  periodic(_,_,_),
+  periodic(_, _, _),
   NVL := Arrays.asList(Decree.split(",")),
   Name := (String) NVL.get(0),
   Op := (String) NVL.get(1),
@@ -87,9 +87,9 @@ watch(canDelete,ae);
 public
 canDelete(Master, Id, Source, Status, FName) :-
   bfs::rm_request_pending(Master, Id, Source, Status),
-  periodic(_,_,_),
+  periodic(_, _, _),
   bfs::request(Master, Id, Source, "Rm", FName),
-  appView(Master, From, Decree, Instance, FName, Op, Id),
+  appView(Master, _, _, _, FName, Op, Id),
   Op == "d";
 
 
@@ -97,22 +97,20 @@ public
 green
 bfs::create_request_done(Master, Id, Source, Status) :-
   bfs::create_request_pending(Master, Id, Source, Status),
-  //bfs::request(Master, Id, Source, "Create", FName),
-  //bfs_global::file(Master, FName);
-  appView(Master,From,Decree,Instance,FName,"i",Id);
+  appView(Master, _, _, _, FName, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, Source, false) :-
-  bfs::create_request_pending(Master, Id, Source, Status),
+  bfs::create_request_pending(Master, Id, Source, _),
   bfs::request(Master, Id, Source, "Create", FName),
-  appView(Master,From,Decree,Instance,FName,"i",Id2),
+  appView(Master, _, _, _, FName, "i", Id2),
   Id != Id2;
 
 
 public
 bfs::rm_request_done(Master, Id, Source, Status) :-
-  canDelete(Master, Id, Source, Status, Name);
+  canDelete(Master, Id, Source, Status, _);
 
 public
 red
