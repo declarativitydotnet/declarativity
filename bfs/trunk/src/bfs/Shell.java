@@ -55,11 +55,11 @@ public class Shell {
         } else if (op.equals("create")) {
             shell.doCreateFile(argList, true);
         } else if (op.equals("ls")) {
-            List<String> list = shell.doListFiles(argList);
+            List<BFSFileInfo> list = shell.doListFiles(argList);
             System.out.println("ls:");
             int i = 1;
-            for (String file : list) {
-                System.out.println("  " + i + ". " + file);
+            for (BFSFileInfo fInfo : list) {
+                System.out.println("  " + i + ". " + fInfo.getName());
                 i++;
             }
         } else if (op.equals("rm")) {
@@ -423,7 +423,7 @@ public class Shell {
         responseTbl.unregister(responseCallback);
     }
 
-    public List<String> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
+    public List<BFSFileInfo> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
         if (!args.isEmpty())
             usage();
 
@@ -456,10 +456,10 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
         this.system.schedule("bfs", tblName, req, null);
 
-        Object obj = spinGet(Conf.getListingTimeout());
+        Object result = spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
 
-        List<String> lsContent = (List<String>) obj;
+        List<BFSFileInfo> lsContent = (List<BFSFileInfo>) result;
         Collections.sort(lsContent);
         return Collections.unmodifiableList(lsContent);
     }
