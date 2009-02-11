@@ -42,33 +42,36 @@ public class Shell {
      */
     public static void main(String[] args) throws Exception {
         Shell shell = new Shell();
-        List<String> argList = new LinkedList<String>(Arrays.asList(args));
 
-        if (argList.size() == 0)
-            shell.usage();
+        try {
+			List<String> argList = new LinkedList<String>(Arrays.asList(args));
 
-        String op = argList.remove(0);
-        if (op.equals("append")) {
-            shell.doAppend(argList);
-        } else if (op.equals("read")) {
-            shell.doRead(argList);
-        } else if (op.equals("create")) {
-            shell.doCreateFile(argList, true);
-        } else if (op.equals("ls")) {
-            List<BFSFileInfo> list = shell.doListFiles(argList);
-            System.out.println("ls:");
-            int i = 1;
-            for (BFSFileInfo fInfo : list) {
-                System.out.println("  " + i + ". " + fInfo.getName());
-                i++;
-            }
-        } else if (op.equals("rm")) {
-            shell.doRemove(argList);
-        } else {
-            shell.usage();
-        }
+			if (argList.size() == 0)
+				shell.usage();
 
-        shell.shutdown();
+			String op = argList.remove(0);
+			if (op.equals("append")) {
+				shell.doAppend(argList);
+			} else if (op.equals("read")) {
+				shell.doRead(argList);
+			} else if (op.equals("create")) {
+				shell.doCreateFile(argList, true);
+			} else if (op.equals("ls")) {
+				List<BFSFileInfo> list = shell.doListFiles(argList);
+				System.out.println("ls:");
+				int i = 1;
+				for (BFSFileInfo fInfo : list) {
+					System.out.println("  " + i + ". " + fInfo.getName());
+					i++;
+				}
+			} else if (op.equals("rm")) {
+				shell.doRemove(argList);
+			} else {
+				shell.usage();
+			}
+		} finally {
+			shell.shutdown();
+		}
     }
 
     public Shell() throws JolRuntimeException, UpdateException {
@@ -118,7 +121,7 @@ public class Shell {
         	// and don't want to mess with JOL-owned data.
             // XXX: if the first data node in the list is down, we should
             // retry the write to one of the other data nodes
-            List<String> path = new ArrayList(getNewChunk(filename));
+            List<String> path = new ArrayList<String>(getNewChunk(filename));
             if (path.size() < (Conf.getRepFactor() + 1))
                 throw new RuntimeException("server sent too few datanodes: " + path.toString());
 
