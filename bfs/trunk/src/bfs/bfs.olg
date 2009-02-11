@@ -31,19 +31,34 @@ request(Master, Id, Source, "NewChunk", FName) :-
 // a "NewChunk" request for a nonexistent file causes an error.
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "NewChunk", FName),
-    notin file(@Master, FName, _);
+    notin file(@Master, FName);
 
 
 // If we get a "ChunkList" request for an extant file, send back its
-// chunks
+// chunks. If the file has no chunks, send back an empty list. Note
+// that because the chunk list is computed by an aggregate, we don't
+// guarantee that it is returned in any particular order; for now,
+// we have clients sort by chunk ID -- this assumes that chunk IDs
+// increase monotonically, and agree with the order of chunks in a file.
 response(@Source, Id, Master, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FName),
-    file(@Master, FName, Chunks);
+    file(@Master, FName),
+    compute_chunk_list(@Master, FName, Chunks);
+
+response(@Source, Id, Master, true, EmptyChunkList) :-
+    request(@Master, Id, Source, "ChunkList", FName),
+    file(@Master, FName),
+    notin fchunk(@Master, _, FName),
+    EmptyChunkList := new ArrayList();
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "ChunkList", FName),
-    notin file(@Master, FName, _);
+    notin file(@Master, FName);
 
+define(compute_chunk_list, keys(0, 1), {String, String, ArrayList});
+public
+compute_chunk_list(Master, FName, generic<(new ArrayList()).add(ChunkId)>) :-
+    fchunk(Master, ChunkId, FName);
 
 // this is an alias of request, for "ChunkLocation" request types, with ChunkId cast as an Integer
 // I was having problems with overlog math on Longs....
@@ -77,14 +92,14 @@ watch(create_request_pending, ae);
 // XXX: the use of "#insert" here is a hack
 create_request_pending(@Master, Id, Source, true) :-
     request#insert(@Master, Id, Source, "Create", FName),
-    notin file(@Master, FName, _);
+    notin file(@Master, FName);
 
 // If we get a "create" request for a file that exists, we
 // need to wait until we get consensus from Paxos; then we
 // can send back a negative ack
 create_request_pending(@Master, Id, Source, false) :-
     request#insert(@Master, Id, Source, "Create", FName),
-    file(@Master, FName, _);
+    file(@Master, FName);
 
 public
 response(@Source, Id, Master, Success, null) :-
@@ -97,7 +112,7 @@ define(compute_ls, keys(0, 1), {String, Integer, String, ArrayList});
 watch(compute_ls, ae);
 compute_ls(@Master, Id, Source, generic<(new ArrayList()).add(FInfo)>) :-
     request(@Master, Id, Source, "Ls", _),
-    file(@Master, FName, _),
+    file(@Master, FName),
     FInfo := new BFSFileInfo(FName, null);
 
 response(@Source, Id, Master, true, FileList) :-
@@ -106,31 +121,30 @@ response(@Source, Id, Master, true, FileList) :-
 
 response(@Source, Id, Master, true, FileList) :-
     request(@Master, Id, Source, "Ls", _),
-    notin file(@Master, _, _),
+    notin file(@Master, _),
     FileList := new ArrayList();
 
 // If we get a "FileInfo" request for an extant file, send back info
 // describing the file. Otherwise, send back a nack.
 response(@Source, Id, Master, true, Result) :-
     request(@Master, Id, Source, "FileInfo", FName),
-    file(@Master, FName, _),
+    file(@Master, FName),
     Info := new BFSFileInfo(FName, null),
     Result := new ArrayList(),
     Result.add(Info);
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "FileInfo", FName),
-    notin file(@Master, FName, _);
+    notin file(@Master, FName);
 
-
-define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 
 // If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
+define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 public
 rm_request_pending(@Master, Id, Source, true) :-
     request(@Master, Id, Source, "Rm", FName),
-    file(@Master, FName, _);
+    file(@Master, FName);
 
 public
 response(@Source, Id, Master, Success, null) :-
@@ -143,4 +157,4 @@ response(@Source, Id, Master, Success, null) :-
 // XXX: we should probably synchronize with Paxos here
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "Rm", FName),
-    notin file(@Master, FName, _);
+    notin file(@Master, FName);

@@ -6,8 +6,14 @@ import java.util.ArrayList;
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean});
 
-// Node, file name, ordered list of chunk IDs
-define(file, keys(0, 1), {String, String, ArrayList});
+// Node, file name
+define(file, keys(0, 1), {String, String});
+
+// Node, chunk ID, file name
+define(fchunk, keys(0, 1), {String, Integer, String});
+
+watch(file, ae);
+watch(fchunk, ae);
 
 // Master, Cnt, DataNode, Id
 define(possible_choices, keys(0,2), {String, Integer, String, Integer});
@@ -15,18 +21,17 @@ define(possible_choices, keys(0,2), {String, Integer, String, Integer});
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
 
+// Master node, Request ID, Client node, Request type, Arg
 define(request, keys(0, 1), {String, Integer, String, String, String});
-watch(request, ae);
+watch(request, aers);
 
-
-// Client node, Request ID, Master node, Success, Results
+// Client node, Request ID, Master node, Success, Result list
 define(response, keys(0, 1), {String, Integer, String, Boolean, ArrayList});
 watch(response, aes);
 
-
 // Node, Master node
-watch(master_for_node, ae);
 define(master_for_node, keys(0, 1), {String, String});
+watch(master_for_node, ae);
 
 
 // The address of the local node
@@ -35,6 +40,4 @@ watch(self, ae);
 self(Conf.getSelfAddress());
 
 
-define(chunkHWM, keys(0, 1), {String,Integer});
-
-
+define(chunkHWM, keys(0, 1), {String, Integer});

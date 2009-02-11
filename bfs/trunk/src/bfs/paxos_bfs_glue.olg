@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 watch(bfs::file,ae);
+watch(bfs::fchunk,ae);
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -24,18 +25,15 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 
 // an insert op in the log induces a new metadata entry for a file.
 public
-bfs::file(Master, FName, Chunks) :-
- // periodic(_,_,_),
-  appView#insert(Master, From, Decree, Instance, FName, Op, Id),
-  Chunks := new ArrayList(),
+bfs::file(Master, FName) :-
+  appView#insert(Master, _, _, _, FName, Op, _, _),
   Op == "i";
 
 // to ensure that we account for the chunkIds proposed
 // by other masters
 public
 bfs::chunkHWM(Master, max<I>) :-
-    appView(Master, From, Decree, Instance, Fname, Op, I);
-
+    appView(Master, From, Decree, Instance, FName, Op, I);
 
 // or, if we are adding a chunk to a file's chunklist, we likewise need to pass it through paxos.
 // (and indeed, should block the requestor, but this is not implemented yet)
@@ -47,27 +45,16 @@ paxos_global::decreeRequest(Master, Decree, From) :-
   Decree := FName + ",u," + Id.toString() + "," + I.toString();
 
 
-// add chunks to the file list.
-watch(bfs::file, ae);
+// Add a new chunk to the file
 public
-bfs::file(Master,FName,List) :-
-    //bfs_global::file(Master,FName,Chunks),
-    //appView#insert(Master,From,Decree,Instance,FName,Op,Id,I),
-    //Op == "u",
-    //C2 := new ValueList(Chunks.toArray()),
-    fileUpdate(Master,FName,List,I),
-    List.add(I);
-
-define(fileUpdate, keys(0,1), {String,String,ArrayList,Integer} );
-fileUpdate(Master,FName,Chunks,I) :-
-    bfs::file(Master,FName,Chunks),
-    appView#insert(Master,From,Decree,Instance,FName,Op,Id,I),
+bfs::fchunk(Master, ChunkId, FName) :-
+    bfs::file(Master, FName),
+    appView#insert(Master, _, _, _, FName, Op, _, ChunkId),
     Op == "u";
 
 timer(periodic,physical,3000,3000,3000);
 
 define(appView,keys(0,1,3,4),{String,String,String,Integer,String,String,Integer,Integer});
-//define(appView, {String,String,String,Integer,String,String,Integer,Integer});
 watch(appView,ae);
 public
 appView(Master,From,Decree,Instance,Name,Op,Id,I) :-
@@ -87,9 +74,9 @@ appView(Master,From,Decree,Instance,Name,Op,Id,I) :-
 
 public
 delete
-bfs::file(Master, FName, Content) :-
-  canDelete(Master, Id, Source, Status, FName),
-  bfs::file(Master, FName, Content);
+bfs::file(Master, FName) :-
+  canDelete(Master, _, _, _, FName),
+  bfs::file(Master, FName);
 
 watch(bfs::create_request_done,aeid);
 watch(bfs::file,ae);
@@ -102,7 +89,7 @@ canDelete(Master, Id, Source, Status, FName) :-
   bfs::rm_request_pending(Master, Id, Source, Status),
   periodic(_,_,_),
   bfs::request(Master, Id, Source, "Rm", FName),
-  appView(Master,From,Decree,Instance,FName,Op,Id),
+  appView(Master, From, Decree, Instance, FName, Op, Id),
   Op == "d";
 
 
@@ -111,7 +98,7 @@ green
 bfs::create_request_done(Master, Id, Source, Status) :-
   bfs::create_request_pending(Master, Id, Source, Status),
   //bfs::request(Master, Id, Source, "Create", FName),
-  //bfs_global::file(Master, FName, _);
+  //bfs_global::file(Master, FName);
   appView(Master,From,Decree,Instance,FName,"i",Id);
 
 public

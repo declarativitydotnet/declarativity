@@ -5,7 +5,6 @@ import java.lang.System;
 
 /*****************************/
 define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
-watch(dataNodes, ae);
 watch(sendHeartBeat, ae);
 
 timer(clock, physical, 5000, 5000, 1000);
@@ -30,7 +29,6 @@ sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
 // of last update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
-watch(chunks, ae);
 chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
     sendHeartBeat(Master, DataNode, ChunkId, Length, _, _),
     clock(_, _, _),
@@ -49,13 +47,11 @@ chunks(Master, DataNode, ChunkId, Length, Ts) :-
 // maintenance functions
 
 define(rep_factor, keys(0,1), {String, Integer, Integer});
-watch(rep_factor, ae);
 rep_factor(Master, ChunkId, count<DataNode>) :-
     long_period(_, _, _),
     chunks(Master, DataNode, ChunkId, _, _);
 
 define(representative_datanode, keys(0,1), {String, Integer, String});
-watch(representative_datanode, ae);
 representative_datanode(Master, ChunkId, max<DataNode>) :-
     long_period(_, _, _),
     chunks(Master, DataNode, ChunkId, _, _);

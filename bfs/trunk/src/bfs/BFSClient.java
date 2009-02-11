@@ -237,7 +237,13 @@ public class BFSClient {
 
         List<Integer> chunkList = (List<Integer>) waitForResponse(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
-        return Collections.unmodifiableList(chunkList);
+
+        // The server returns the list of chunks in unspecified order; we sort by
+        // ascending chunk ID, on the assumption that this agrees with the correct
+        // order for the chunks in a file
+        List<Integer> sortedChunks = new ArrayList<Integer>(chunkList);
+        Collections.sort(sortedChunks);
+        return sortedChunks;
 	}
 
 	public List<String> getChunkLocations(final int chunkId) {
