@@ -3,7 +3,7 @@ package bfs;
 import java.io.Serializable;
 import java.util.List;
 
-public class BFSFileInfo implements Serializable {
+public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	private static final long serialVersionUID = 1L;
 
 	private final boolean isDirectory;
@@ -39,5 +39,21 @@ public class BFSFileInfo implements Serializable {
 	// TODO
 	public long getLength() {
 		return 0;
+	}
+
+	public int compareTo(BFSFileInfo o) {
+		return this.fileName.compareTo(o.fileName);
+	}
+
+	public boolean equals(Object o) {
+		if (!(o instanceof BFSFileInfo))
+			return false;
+
+		BFSFileInfo fInfo = (BFSFileInfo) o;
+		return fInfo.fileName.equals(fInfo.fileName);
+	}
+
+	public int hashCode() {
+		return this.fileName.hashCode();
 	}
 }
