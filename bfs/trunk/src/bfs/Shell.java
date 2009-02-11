@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -111,14 +112,16 @@ public class Shell {
 
         int b = 1;
         while (b != -1) {
-            List<String> path = getNewChunk(filename);
             // this should be a list of candidate datanodes for the chunk.
-            // The last element is the newly-assigned chunk ID.
+            // The last element is the newly-assigned chunk ID. Note that
+        	// we make a copy of the list, since we're going to modify it
+        	// and don't want to mess with JOL-owned data.
             // XXX: if the first data node in the list is down, we should
             // retry the write to one of the other data nodes
-            if (path.size() < (Conf.getRepFactor() + 1)) {
+            List<String> path = new ArrayList(getNewChunk(filename));
+            if (path.size() < (Conf.getRepFactor() + 1))
                 throw new RuntimeException("server sent too few datanodes: " + path.toString());
-            }
+
             String firstAddr = path.remove(0);
             int chunkId = Integer.valueOf(path.remove(path.size() - 1));
             DataConnection conn = new DataConnection(firstAddr);
@@ -198,7 +201,7 @@ public class Shell {
 
         List<String> resultList = (List<String>) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
-        return resultList;
+        return Collections.unmodifiableList(resultList);
     }
 
     private List<Integer> getChunkList(final String filename) throws UpdateException, JolRuntimeException {
@@ -236,7 +239,7 @@ public class Shell {
 
         List<Integer> chunkList = (List<Integer>) spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
-        return chunkList;
+        return Collections.unmodifiableList(chunkList);
     }
 
     private Table registerCallback(Callback callback, String tableName) {
@@ -281,7 +284,7 @@ public class Shell {
 
         List<String> nodeList = (List<String>) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
-        return nodeList;
+        return Collections.unmodifiableList(nodeList);
     }
 
     private void readChunk(Integer chunk, List<String> locations) {
@@ -458,7 +461,7 @@ public class Shell {
 
         List<String> lsContent = (List<String>) obj;
         Collections.sort(lsContent);
-        return lsContent;
+        return Collections.unmodifiableList(lsContent);
     }
 
     public void doRemove(List<String> argList) throws UpdateException, JolRuntimeException {
