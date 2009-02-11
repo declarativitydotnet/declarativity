@@ -95,9 +95,10 @@ response(@Source, Id, Master, Success, null) :-
 // list. Note that we need to do the aggregation in a sub-rule.
 define(compute_ls, keys(0, 1), {String, Integer, String, ArrayList});
 watch(compute_ls, ae);
-compute_ls(@Master, Id, Source, generic<(new ArrayList()).add(FName)>) :-
+compute_ls(@Master, Id, Source, generic<(new ArrayList()).add(FInfo)>) :-
     request(@Master, Id, Source, "Ls", _),
-    file(@Master, FName, _);
+    file(@Master, FName, _),
+    FInfo := new BFSFileInfo(FName, null);
 
 response(@Source, Id, Master, true, FileList) :-
     request(@Master, Id, Source, "Ls", _),

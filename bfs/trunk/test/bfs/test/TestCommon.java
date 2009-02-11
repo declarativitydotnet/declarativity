@@ -12,6 +12,7 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 
+import bfs.BFSFileInfo;
 import bfs.Conf;
 import bfs.DataNode;
 import bfs.Master;
@@ -86,26 +87,33 @@ public class TestCommon {
     }
     protected void safeAssert(String m, Boolean b) {
         if (!b) {
-            System.out.println("Failed Assertion: " + m);            
+            System.out.println("Failed Assertion: " + m);
             shutdown();
         }
         Assert.assertTrue(m, b);
     }
 
     protected int lsCnt(Shell shell) throws JolRuntimeException, UpdateException {
-        List<String> list = lsFile(shell);
+        List<BFSFileInfo> list = lsFile(shell);
         return list.size();
     }
 
     protected Boolean findInLs(Shell shell, String... files) throws JolRuntimeException,
             UpdateException {
-        List<String> list = lsFile(shell);
+        List<BFSFileInfo> listing = lsFile(shell);
 
         // obviously not an efficient way to do this.
         for (String item : files) {
-            if (!list.contains(item))
-                return false;
+        	boolean success = false;
 
+        	for (BFSFileInfo fInfo : listing) {
+        		if (fInfo.getName().equals(item)) {
+        			success = true;
+        			break;
+        		}
+        	}
+        	if (!success)
+        		return false;
         }
         return true;
     }
@@ -130,7 +138,7 @@ public class TestCommon {
             this.masters.add(m);
         }
     }
-    
+
     protected void cleanup(String dir) {
         File file = new File(dir);
         if (file.exists()) {
@@ -169,7 +177,7 @@ public class TestCommon {
 
         for (int i = 0; (i < args.length); i++) {
             prepare(args[i]);
-            
+
             DataNode d = new DataNode(i, args[i]);
             System.out.println("new DATANODE " + d.getPort());
             d.start();
@@ -177,7 +185,7 @@ public class TestCommon {
         }
     }
 
-    protected List<String> lsFile(Shell shell) throws UpdateException,
+    protected List<BFSFileInfo> lsFile(Shell shell) throws UpdateException,
             JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         return shell.doListFiles(argList);
