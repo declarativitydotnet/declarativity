@@ -12,7 +12,6 @@ public class BFSMM2Test extends TestCommon {
 
             shellCreate("foo");
             /* kill one of the masters */
-            // this.masters.get(1).stop();
             this.killMaster(1);
 
             shellCreate("bar");
