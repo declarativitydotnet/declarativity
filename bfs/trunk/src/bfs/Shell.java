@@ -142,7 +142,7 @@ public class Shell {
         }
     }
 
-    private void doRead(List<String> args) throws UpdateException,JolRuntimeException {
+    private void doRead(List<String> args) throws UpdateException, JolRuntimeException {
         if (args.size() != 1)
             usage();
 
@@ -196,9 +196,9 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", filename));
         this.system.schedule("bfs", tblName, req, null);
 
-        List<String> chunkList = (List<String>) this.responseQueue.get(); // XXX: timeout?
+        List<String> resultList = (List<String>) this.responseQueue.get(); // XXX: timeout?
         responseTbl.unregister(responseCallback);
-        return chunkList;
+        return resultList;
     }
 
     private List<Integer> getChunkList(final String filename) throws UpdateException, JolRuntimeException {
