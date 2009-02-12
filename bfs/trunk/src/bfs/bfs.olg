@@ -26,7 +26,7 @@ response(@Source, Id, Master, true, Result) :-
 
 delete
 request(Master, Id, Source, "NewChunk", FName) :-
-    bfs_chunks::newListHolder(Master, Source, Id, List, I, FName);
+    bfs_chunks::newListHolder(Master, Source, Id, _, _, FName);
 
 // a "NewChunk" request for a nonexistent file causes an error.
 response(@Source, Id, Master, false, null) :-
@@ -121,12 +121,10 @@ response(@Source, Id, Master, true, FileList) :-
 
 // If we get a "FileInfo" request for an extant file, send back info
 // describing the file. Otherwise, send back a nack.
-response(@Source, Id, Master, true, Result) :-
+response(@Source, Id, Master, true, FInfo) :-
     request(@Master, Id, Source, "FileInfo", FName),
     file(@Master, FName),
-    Info := new BFSFileInfo(FName, null),
-    Result := new ArrayList(),
-    Result.add(Info);
+    FInfo := new BFSFileInfo(FName, null);
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "FileInfo", FName),
