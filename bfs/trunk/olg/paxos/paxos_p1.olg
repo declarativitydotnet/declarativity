@@ -6,7 +6,6 @@ import java.lang.Integer;
 import java.lang.System;
 import jol.core.Runtime;
 
-timer(periodic,logical,1,1,1);	
 define(storedDecreeRequest,keys(0,1,2,3),{String,String,String,Long});
 define(lastTried,keys(0),{String,Integer});
 define(prevVote,keys(0),{String,Integer,Integer,String});
@@ -24,22 +23,6 @@ define(priestCnt,keys(0),{String,Integer});
 define(tick,keys(0,1),{String,String,Integer});
 
 define(instance,keys(0),{String,Integer});
-
-/*
-watch(storedDecreeRequest,ae);
-watch(quorum,ae);
-watch(maxPrevVoteInstance,ae);
-watch(prepare,aeid);
-watch(lastPromise,ae);
-watch(lastPromiseCnt,ae);
-watch(sendPromise,ae);
-watch(topOfQueue,ae);
-
-watch(sendPrepare,ae);
-watch(lastTried,ae);
-watch(nextBal,ae);
-watch(prevVote,ae);
-*/
 
 /*******************************************************************
 nomenclature mappings between "parliamentary paxos" and "simple paxos"
@@ -147,15 +130,8 @@ nextBal(Agent,Round) :-
 	lastPromise#insert(Agent,Instance,Round,OldRound,Decree),
 	Round > Old;
 
-define(highestInstance,keys(0),{String,Integer});
-
-highestInstance(Agent,max<Instance>) :-
-	prevVote(Agent,Instance,OldRound,OldDecree);
-
 r2_b
 lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :- 
-  // NEW
-  //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
     Round > -1,
 	prevVote(Agent,OI,OldRound,OldDecree),
@@ -171,28 +147,11 @@ maxPrevVoteInstance(Master,max<Instance>) :-
 
 r2_b2
 lastPromise(Agent,Instance,Round,-1,"none",Peer) :- 
-  // NEW
-  //sendPrepare#insert(Agent,Round,Decree,Peer),
   sendPrepare(Agent,Round,Decree,Peer),
     Round > -1,
     maxPrevVoteInstance(Agent,OI),
   Instance > OI,
   instance(Agent,Instance);
-
-define (wouldPromise,{String,Integer,Integer,Integer,String,String});
-watch(wouldPromise,ae);
-timer(ticker,physical,2000,2000,2000);
-
-/*
-wp
-wouldPromise(Agent,Instance,Round,-1,"none",Peer) :- 
-  // NEW
-  //sendPrepare#insert(Agent,Round,Decree,Peer),
-  sendPrepare(Agent,Round,Decree,Peer),
-    ticker(_,_,_),
-  notin prevVote(Agent,Instance2,_,_),
-  instance(Agent,Instance);//,
-*/
 
 r2_c	
 sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-
@@ -200,17 +159,16 @@ sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-
 
 
 /* for quorum handling, aggregates are difficult to avoid... */
-priestCnt(Master,count<*>) :- parliament(Master,Agent);
+priestCnt(Master, count<*>) :- 
+    parliament(Master, Agent);
 
-define(lastPromiseCnt,keys(0,1),{String,Integer,Integer});
-lastPromiseCnt(Master,Round,count<Agent>) :- 
-  // I need an explanation for this one... here's how it begins:
-  // we need lastPromiseCnt later too see if our voters match our quorum.
-  // rows expire from sendPromise (why?) and this protects me from that.
-  sendPromise#insert(Master,Instance,Round,Foo,Bar,Agent);
+define(lastPromiseCnt, keys(0,1), {String, Integer, Integer});
+public
+lastPromiseCnt(Master, Round, count<Agent>) :- 
+  sendPromise(Master,Instance,Round,Foo,Bar,Agent);
 
-maxPrevRound(Master,Instance,max<OldRound>) :- 
-  sendPromise(Master,Instance,Round,OldRound,Decree,Agent);
+maxPrevRound(Master, Instance, max<OldRound>) :- 
+  sendPromise(Master, Instance, Round, OldRound, Decree, Agent);
 	
 /**************************************************************************************
 3.  After receiving a LastVote (b, v) message from every priest in some majority
