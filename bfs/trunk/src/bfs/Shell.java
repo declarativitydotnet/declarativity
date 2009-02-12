@@ -116,7 +116,7 @@ public class Shell {
 
         int b = 1;
         while (b != -1) {
-            // this should be a list of candidate datanodes for the chunk.
+            // This should be a list of candidate datanodes for the chunk.
             // The last element is the newly-assigned chunk ID. Note that
         	// we make a copy of the list, since we're going to modify it
         	// and don't want to mess with JOL-owned data.
