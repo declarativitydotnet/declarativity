@@ -15,9 +15,6 @@ watch(fchunk, ae);
 // Master, Cnt, DataNode, Id
 define(possible_choices, keys(0,2), {String, Integer, String, Integer});
 
-// Node address, Request ID, Request type, Arg
-define(start_request, keys(0, 1), {String, Integer, String, String});
-
 // Master node, Request ID, Client node, Request type, Arg
 define(request, keys(0, 1), {String, Integer, String, String, String});
 watch(request, aers);
