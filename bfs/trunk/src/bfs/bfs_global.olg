@@ -3,9 +3,6 @@ program bfs;
 import bfs.Conf;
 import java.lang.Object;
 
-define(create_request_done, keys(0, 1), {String, Integer, String, Boolean});
-define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean});
-
 // Node, file name
 define(file, keys(0, 1), {String, String});
 
@@ -24,6 +21,9 @@ define(start_request, keys(0, 1), {String, Integer, String, String});
 // Master node, Request ID, Client node, Request type, Arg
 define(request, keys(0, 1), {String, Integer, String, String, String});
 watch(request, aers);
+
+define(create_request_done, keys(0, 1), {String, Integer, String, Boolean});
+define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean});
 
 // Client node, Request ID, Master node, Success, Result (if any). The
 // type of the result depends on the type of request.
