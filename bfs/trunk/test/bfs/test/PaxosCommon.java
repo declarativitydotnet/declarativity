@@ -84,7 +84,7 @@ public class PaxosCommon {
         this.ports = new int[members.length];
         System.out.println("ml is " + members.length);
         for (int i = 0; i < members.length; i++) {
-            this.systems[i] = Runtime.create(members[i]);
+            this.systems[i] = Runtime.create(true, members[i]);
             this.ports[i] = members[i];
         }
         this.pinger = this.systems[0];
