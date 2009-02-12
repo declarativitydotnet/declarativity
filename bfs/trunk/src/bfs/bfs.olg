@@ -70,14 +70,14 @@ clRequest(Master, ReqId, Source, "ChunkLocations", CId) :-
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return a list of the nodes holding that chunk. Otherwise, return
 // an error.
-define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, String, ArrayList});
-compute_chunk_locs(@Master, ReqId, Source, generic<(new ArrayList()).add(NodeAddr)>) :-
-    clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
+define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, ArrayList});
+public
+compute_chunk_locs(@Master, ChunkId, generic<(new ArrayList()).add(NodeAddr)>) :-
     bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _, _);
 
 response(@Source, Id, Master, true, NodeList) :-
-    request(@Master, Id, Source, "ChunkLocations", _),
-    compute_chunk_locs(@Master, Id, Source, NodeList);
+    clRequest(@Master, Id, Source, "ChunkLocations", ChunkId),
+    compute_chunk_locs(@Master, ChunkId, NodeList);
 
 response(@Source, Id, Master, false, null) :-
     clRequest(@Master, Id, Source, "ChunkLocations", ChunkId),
