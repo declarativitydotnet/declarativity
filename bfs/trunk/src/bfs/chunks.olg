@@ -9,8 +9,8 @@ watch(chunkSeq, ae);
 public
 chunkSeq(Master, Top+1) :-
     bfs::self(Master),
-    notin chunkSeq(Master,SomeId),
-    bfs::chunkHWM(Master,Top);
+    notin chunkSeq(Master, SomeId),
+    bfs::chunkHWM(Master, Top);
 */
 
 timer(per, physical, 1000, 1000, 1000);
@@ -18,8 +18,8 @@ public
 chunkSeq(Master, 1) :-
     bfs::self(Master),
     per(_, _, _),
-    notin chunkSeq(Master,SomeId);//,
-    //notin bfs::chunkHWM(Master,Top);
+    notin chunkSeq(Master, SomeId);//,
+    //notin bfs::chunkHWM(Master, Top);
 
 // if we get a "NewChunk" request for a file, create a new chunk id
 public
@@ -44,7 +44,7 @@ watch(candidate_datanode, ae);
 public
 candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(DataNode)>) :-
     bfs::request(Master, Id, Source, "NewChunk", FName),
-    chunkSeq(Master,I),
+    chunkSeq(Master, I),
     bfs::possible_choices(Master, Cnt, DataNode, Id2),
     bfs::file(Master, FName),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
