@@ -14,7 +14,6 @@ import bfs.Shell;
 import bfs.Conf;
 
 public class DataCommon extends TestCommon {
-
     String fName;
     String dnList[];
 
@@ -23,7 +22,7 @@ public class DataCommon extends TestCommon {
 		try {
             String masterList[] = new String[masters];
             for (int i = 0; i < masters; i++) {
-			    masterList[i] = "localhost:"+ (5500 + i);
+			    masterList[i] = "localhost:" + (5500 + i);
             }
 
             dnList = new String[datanodes];
@@ -46,7 +45,7 @@ public class DataCommon extends TestCommon {
             assertTrue(shellLs("foo"));
 
         } catch (Exception e) {
-            System.out.println("something went wrong: "+e);
+            System.out.println("something went wrong: " + e);
             System.exit(1);
         }
     }
@@ -87,12 +86,11 @@ public class DataCommon extends TestCommon {
                 counter(nodecnts, str);
                 counter(ht, f.getName());
                 long csum = get_checksum(i, f.getName());
-                Long oldCsum = (Long)csums.get((Object)f.getName());
+                Long oldCsum = (Long) csums.get((Object)f.getName());
                 if (oldCsum == null) {
                     csums.put(f.getName(), new Long(csum));
                 } else {
-
-                    System.out.println("csum "+oldCsum+" matches "+csum);
+                    System.out.println("csum " + oldCsum + " matches " + csum);
                     safeAssert("checksums match", (oldCsum.longValue() == csum));
                 }
             }
@@ -106,22 +104,21 @@ public class DataCommon extends TestCommon {
             key = it.next();
             Integer cnt = (Integer) ht.get(key);
 
-            safeAssert("for chunk "+ key + " with a rep factor of "+Conf.getRepFactor()+", we expected as many replicas, but found "+ cnt,(cnt == Conf.getRepFactor()));
+            safeAssert("for chunk "+ key + " with a rep factor of " + Conf.getRepFactor() + ", we expected as many replicas, but found "+ cnt, (cnt == Conf.getRepFactor()));
             chunks++;
 
-            System.out.println(key+"\t"+cnt.toString());
+            System.out.println(key + "\t" + cnt.toString());
         }
-        safeAssert("expected "+appropriateNumberOfChunks+" chunks given file size, but found "+chunks, ( chunks == appropriateNumberOfChunks));
+        safeAssert("expected " + appropriateNumberOfChunks + " chunks given file size, but found " + chunks, (chunks == appropriateNumberOfChunks));
 
         set = nodecnts.keySet();
         it = set.iterator();
         while (it.hasNext()) {
             key = it.next();
             Integer cnt = (Integer) nodecnts.get(key);
-            System.out.println(key+"\t"+cnt.toString());
+            System.out.println(key + "\t" + cnt.toString());
         }
     }
-
 
     private void counter(Hashtable h, String s) {
         Integer cnt = (Integer) h.get((Object)s);
@@ -141,8 +138,9 @@ public class DataCommon extends TestCommon {
         public Victim(int dn) {
             datanodes = dn;
         }
+
         public void pick_victim() {
-            // pick a random directory.
+            // pick a random directory
             Random r = new Random();
             System.out.println("this.datanodes = " + this.datanodes);
             if (this.datanodes == 1) {
@@ -151,10 +149,10 @@ public class DataCommon extends TestCommon {
                 int indx = r.nextInt(this.datanodes-1);
                 pick_victim("td" + (indx+1));
             }
-
         }
+
         public void pick_victim(String dir) {
-            // pick a random chunk.
+            // pick a random chunk
             String longDir = dir + File.separator + "chunks";
             File dirObj = new File(longDir);
             safeAssert("dir exists " + dir, dirObj.exists());
@@ -165,6 +163,7 @@ public class DataCommon extends TestCommon {
 
             pick_victim(longDir, thisChunk);
         }
+
         public void do_victim() {
             File victim = new File(directory + File.separator + chunk);
             safeAssert("victim file ("+ directory + File.separator + chunk  +") exists?", victim.exists());
@@ -175,9 +174,11 @@ public class DataCommon extends TestCommon {
             directory = dir;
             chunk = c;
         }
+
         public String getChunk() {
             return chunk;
         }
+
         public String getDir() {
             return directory;
         }
