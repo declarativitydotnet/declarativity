@@ -2,25 +2,27 @@ program bfs_heartbeat;
 
 import bfs.Conf;
 import java.io.File;
+import java.lang.Object;
 import java.lang.System;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import jol.core.Runtime;
 
-timer(clock,physical,3000,3000,0);
-timer(periodic,logical,1,1,1);
+timer(clock, physical, 3000, 3000, 0);
+timer(periodic, logical, 1, 1, 1);
 
 // Node address, data directory on host chunk system
 define(datadir, keys(0), {String, String});
 define(checksumdir, keys(0), {String, String});
 watch(datadir, ae);
 
-define(dir, keys(0,1,2), {String, File, ArrayList});
+define(dir, keys(0,1,2), {String, File, List});
 watch(dir, ae);
 dir(Host, DirObj, DirList) :-
     datadir(Host, Dir),
     DirObj := new File(Dir + File.separator + "chunks"),
-    DirList := DirObj.isDirectory() ? new ArrayList(Arrays.asList(DirObj.listFiles())) : new ArrayList(),
+    DirList := DirObj.isDirectory() ? Arrays.asList(DirObj.listFiles()) : new ArrayList(),
     clock(_, _, _);
 
 define(indx, keys(0), {String, Integer});
@@ -123,6 +125,6 @@ watch(send_delete, ae);
 
 // this is already defined in bfs_global.olg, but I don't think we
 // want to install that program at the datanodes... or do we?
-// Client node, Request ID, Master node, Success, Results
-define(response, keys(0, 1), {String, Integer, String, Boolean, ArrayList});
+// Client node, Request ID, Master node, Success, Result
+define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
 watch(response, ae);
