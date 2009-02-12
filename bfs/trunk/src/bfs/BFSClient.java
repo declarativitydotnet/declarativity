@@ -253,7 +253,7 @@ public class BFSClient {
         return sortedChunks;
 	}
 
-	public List<String> getChunkLocations(final int chunkId) {
+	public Set<String> getChunkLocations(final int chunkId) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -271,8 +271,8 @@ public class BFSClient {
                         if (success.booleanValue() == false)
                             throw new RuntimeException("Failed to get chunk list for chunk #" + chunkId);
 
-                        Object nodeList = t.value(4);
-                        responseQueue.put(nodeList);
+                        Object nodeSet = t.value(4);
+                        responseQueue.put(nodeSet);
                         break;
                     }
                 }
@@ -291,9 +291,9 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        List<String> nodeList = (List<String>) waitForResponse(Conf.getFileOpTimeout());
+        Set<String> nodeSet = (Set<String>) waitForResponse(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
-        return Collections.unmodifiableList(nodeList);
+        return Collections.unmodifiableSet(nodeSet);
 	}
 
     private Table registerCallback(Callback callback, String tableName) {

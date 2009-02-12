@@ -37,7 +37,7 @@ response(@Source, Id, Master, false, null) :-
 
 
 // If we get a "ChunkList" request for an extant file, send back its
-// chunks. If the file has no chunks, send back an empty list. Note
+// chunks. If the file has no chunks, send back an empty set. Note
 // that because the chunk list is computed by an aggregate, we don't
 // guarantee that it is returned in any particular order; for now,
 // we have clients sort by chunk ID -- this assumes that chunk IDs
@@ -63,17 +63,17 @@ compute_chunk_set(Master, FName, set<ChunkId>) :-
     fchunk(Master, ChunkId, FName);
 
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
-// of, return a list of the nodes holding that chunk. Otherwise, return
-// an error.
-define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, ArrayList});
+// of, return the set of nodes that hold that chunk. Otherwise, return an
+// error.
+define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, Set});
 public
-compute_chunk_locs(@Master, ChunkId, generic<(new ArrayList()).add(NodeAddr)>) :-
+compute_chunk_locs(@Master, ChunkId, set<NodeAddr>) :-
     bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _, _);
 
-response(@Source, Id, Master, true, NodeList) :-
+response(@Source, Id, Master, true, NodeSet) :-
     request(@Master, Id, Source, "ChunkLocations", ChunkStr),
     ChunkId := Integer.valueOf(ChunkStr),
-    compute_chunk_locs(@Master, ChunkId, NodeList);
+    compute_chunk_locs(@Master, ChunkId, NodeSet);
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "ChunkLocations", ChunkStr),
