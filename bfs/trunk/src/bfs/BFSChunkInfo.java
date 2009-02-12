@@ -13,11 +13,11 @@ public class BFSChunkInfo implements Serializable {
 		this.length = length;
 	}
 
-	public int getLength() {
-		return this.length;
-	}
-
 	public int getId() {
 		return this.chunkId;
+	}
+
+	public int getLength() {
+		return this.length;
 	}
 }
