@@ -60,13 +60,6 @@ public
 compute_chunk_list(Master, FName, generic<(new ArrayList()).add(ChunkId)>) :-
     fchunk(Master, ChunkId, FName);
 
-// this is an alias of request, for "ChunkLocation" request types, with ChunkId cast as an Integer
-// I was having problems with overlog math on Longs....
-define(clRequest, {String, Integer, String, String, Integer});
-clRequest(Master, ReqId, Source, "ChunkLocations", CId) :-
-    request(Master, ReqId, Source, "ChunkLocations", ChunkId),
-    CId := Integer.valueOf(ChunkId);
-
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return a list of the nodes holding that chunk. Otherwise, return
 // an error.
@@ -76,11 +69,13 @@ compute_chunk_locs(@Master, ChunkId, generic<(new ArrayList()).add(NodeAddr)>) :
     bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _, _);
 
 response(@Source, Id, Master, true, NodeList) :-
-    clRequest(@Master, Id, Source, "ChunkLocations", ChunkId),
+    request(@Master, Id, Source, "ChunkLocations", ChunkStr),
+    ChunkId := Integer.valueOf(ChunkStr),
     compute_chunk_locs(@Master, ChunkId, NodeList);
 
 response(@Source, Id, Master, false, null) :-
-    clRequest(@Master, Id, Source, "ChunkLocations", ChunkId),
+    request(@Master, Id, Source, "ChunkLocations", ChunkStr),
+    ChunkId := Integer.valueOf(ChunkStr),
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean});
