@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
@@ -222,8 +223,8 @@ public class BFSClient {
                         if (success.booleanValue() == false)
                             throw new RuntimeException("Failed to get chunk list for " + path);
 
-                        Object chunkList = t.value(4);
-                        responseQueue.put(chunkList);
+                        Object chunkSet = t.value(4);
+                        responseQueue.put(chunkSet);
                         break;
                     }
                 }
@@ -241,13 +242,13 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        List<Integer> chunkList = (List<Integer>) waitForResponse(Conf.getListingTimeout());
+        Set<Integer> chunkSet = (Set<Integer>) waitForResponse(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
 
-        // The server returns the list of chunks in unspecified order; we sort by
+        // The server returns the set of chunks in unspecified order; we sort by
         // ascending chunk ID, on the assumption that this agrees with the correct
         // order for the chunks in a file
-        List<Integer> sortedChunks = new ArrayList<Integer>(chunkList);
+        List<Integer> sortedChunks = new ArrayList<Integer>(chunkSet);
         Collections.sort(sortedChunks);
         return sortedChunks;
 	}
