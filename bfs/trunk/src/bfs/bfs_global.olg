@@ -1,7 +1,7 @@
 program bfs;
 
 import bfs.Conf;
-import java.util.ArrayList;
+import java.lang.Object;
 
 define(create_request_done, keys(0, 1), {String, Integer, String, Boolean});
 define(rm_request_done, keys(0, 1), {String, Integer, String, Boolean});
@@ -25,8 +25,9 @@ define(start_request, keys(0, 1), {String, Integer, String, String});
 define(request, keys(0, 1), {String, Integer, String, String, String});
 watch(request, aers);
 
-// Client node, Request ID, Master node, Success, Result list
-define(response, keys(0, 1), {String, Integer, String, Boolean, ArrayList});
+// Client node, Request ID, Master node, Success, Result (if any). The
+// type of the result depends on the type of request.
+define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
 watch(response, aes);
 
 // Node, Master node

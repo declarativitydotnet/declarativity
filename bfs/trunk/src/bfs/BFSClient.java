@@ -170,7 +170,13 @@ public class BFSClient {
 
                     if (tupRequestId.intValue() == requestId) {
                         Object fileInfo = t.value(4);
-                        responseQueue.put(fileInfo);
+                        // If the request failed, push an empty list onto the
+                        // result queue, since we can't push a null
+                        List<BFSFileInfo> result = new ArrayList<BFSFileInfo>();
+                        if (fileInfo != null)
+                        	result.add((BFSFileInfo) fileInfo);
+
+                        responseQueue.put(result);
                         break;
                     }
                 }
