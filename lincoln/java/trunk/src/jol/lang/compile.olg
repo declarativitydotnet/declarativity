@@ -1,7 +1,7 @@
 program compile;
 
 import jol.lang.plan.Program;
-import java.lang.Integer;
+import jol.types.table.TableName;
 
 /*******************************************************************/
 /*** Table definitions ***/
@@ -40,23 +40,23 @@ dependency(ProgramName, Head.name(), Body.name()) :-
 	config(ProgramName, Object),
 	rule(ProgramName, Rule),
 	predicate(ProgramName, Rule, 0, _, Head), /* Position == 0 */
-	predicate(ProgramName, Rule, Pos, _, Body), 
+	predicate(ProgramName, Rule, Pos, _, Body),
 	Head.name() != Body.name(), Pos > 0,
 	ProgramName != "compile";
-	
+
 /* Transitive closure over the dependency graph. */
 dependency(ProgramName, Ancestor, Child) :-
 	dependency(ProgramName, Ancestor, Descendant),
 	dependency(ProgramName, Descendant, Child),
 	Ancestor != Child;
-	
+
 /* Initialize all predicates to stratum 0. */
 runtime::priority(ProgramName, Pred.name(), 0) :-
 	config(ProgramName, Object),
 	rule(ProgramName, Rule),
 	predicate(ProgramName, Rule, Pos, Event, Pred),
 	ProgramName != "compile";
-	
+
 runtime::priority(ProgramName, TableName, 0) :-
 	config(ProgramName, Object),
 	fact(ProgramName, TableName, Tuple),
@@ -71,15 +71,15 @@ priorityUpdate(ProgramName, Head, max<Priority>) :-
 	notin dependency(ProgramName, Body, Head),
 	HPriority <= BPriority,
 	Priority := BPriority + 1;
-		
+
 runtime::priority(ProgramName, Pred, Priority) :-
 	priorityUpdate(ProgramName, Pred, Priority);
-	
-	
+
+
 /*******************************************************************/
 /*** Compile uninstall program **/
 import java.lang.Boolean;
-	
+
 define(uninstall, {String, Boolean});
 define(hardUninstall, {String});
 
@@ -88,7 +88,7 @@ program(Program, Owner, Object) :-
 	uninstall(Program, _),
 	program(Program, Owner, Object),
 	Owner != "system";
-	
+
 hardUninstall(Program) :-
 	uninstall(Program, Hard),
 	program(Program, Owner, Object),
@@ -97,23 +97,23 @@ hardUninstall(Program) :-
 delete
 runtime::priority(Program, Pred, Priority) :-
 	hardUninstall(Program),
-	runtime::priority(Program, Pred, Priority);	
+	runtime::priority(Program, Pred, Priority);
 
 delete
 query(Program, Rule, Public, Async, Delete, Event, Input, Output, Object) :-
 	hardUninstall(Program),
 	query(Program, Rule, Public, Async, Delete, Event, Input, Output, Object);
-	
+
 delete
-rule(Program, Rule, Public, Async, Delete, Object) :-	
+rule(Program, Rule, Public, Async, Delete, Object) :-
 	hardUninstall(Program),
 	rule(Program, Rule, Public, Async, Delete, Object);
-	
+
 delete
 predicate(Program, Rule, Position, Event, Object) :-
 	hardUninstall(Program),
 	predicate(Program, Rule, Position, Event, Object);
-	
+
 delete
 selection(Program, Rule, Position, Object) :-
 	hardUninstall(Program),
@@ -128,7 +128,6 @@ delete
 watches(Program, Tablename, Modifier, Operator) :-
 	hardUninstall(Program),
 	watches(Program, Tablename, Modifier, Operator);
-	
-	
-	
-	
+
+
+

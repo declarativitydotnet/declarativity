@@ -1,8 +1,5 @@
 program runtime;
 
-import java.lang.String;
-import java.lang.Integer;
-import java.lang.Long;
 import jol.exec.Query;
 import jol.types.basic.TupleSet;
 import jol.types.basic.Tuple;

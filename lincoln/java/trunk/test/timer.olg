@@ -1,5 +1,7 @@
 program timer;
 
+import jol.core.Runtime;
+
 timer(ltimer, logical, 2, 5, 0);
 timer(ptimer, physical, 2000, 5, 0);
 
@@ -10,11 +12,9 @@ watch(ltimer, a);
 watch(ptimer, a);
 watch(fire, s);
 
-import jol.core.Runtime;
 
 fire(Id, TTL, Delay) :-
 	ltimer(Period, TTL, Delay), Id := Runtime.idgen();
-	
-	
+
 fire(Period, TTL, Delay) :-
 	ptimer(Period, TTL, Delay);
