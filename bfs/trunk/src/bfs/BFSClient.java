@@ -108,7 +108,7 @@ public class BFSClient {
 	}
 
 	// We ignore the path, for now
-	public List<BFSFileInfo> getDirListing(String path) {
+	public Set<BFSFileInfo> getDirListing(String path) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -142,17 +142,9 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        List<String> lsContent = (List<String>) waitForResponse(Conf.getListingTimeout());
+        Set<BFSFileInfo> lsContent = (Set<BFSFileInfo>) waitForResponse(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
-
-        // Currently, we just get a list of file names back from Overlog,
-        // so we do the conversion to BFSFileInfo by hand.
-        List<BFSFileInfo> result = new ArrayList<BFSFileInfo>();
-        for (String fileName : lsContent) {
-        	result.add(new BFSFileInfo(fileName, null));
-        }
-
-        return result;
+        return Collections.unmodifiableSet(lsContent);
 	}
 
 	public BFSFileInfo getFileInfo(final String pathName) {

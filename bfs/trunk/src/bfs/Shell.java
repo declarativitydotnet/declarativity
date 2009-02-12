@@ -58,10 +58,10 @@ public class Shell {
 			} else if (op.equals("create")) {
 				shell.doCreateFile(argList, true);
 			} else if (op.equals("ls")) {
-				List<BFSFileInfo> list = shell.doListFiles(argList);
+				Set<BFSFileInfo> listing = shell.doListFiles(argList);
 				System.out.println("ls:");
 				int i = 1;
-				for (BFSFileInfo fInfo : list) {
+				for (BFSFileInfo fInfo : listing) {
 					System.out.println("  " + i + ". " + fInfo.getName());
 					i++;
 				}
@@ -433,7 +433,7 @@ public class Shell {
         responseTbl.unregister(responseCallback);
     }
 
-    public List<BFSFileInfo> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
+    public Set<BFSFileInfo> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
         if (!args.isEmpty())
             usage();
 
@@ -469,8 +469,8 @@ public class Shell {
         Object result = spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
 
-        List<BFSFileInfo> lsContent = (List<BFSFileInfo>) result;
-        return Collections.unmodifiableList(lsContent);
+        Set<BFSFileInfo> lsContent = (Set<BFSFileInfo>) result;
+        return Collections.unmodifiableSet(lsContent);
     }
 
     public void doRemove(List<String> argList) throws UpdateException, JolRuntimeException {
