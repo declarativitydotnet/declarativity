@@ -83,12 +83,10 @@ public class DataNode {
         datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot));
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
-        this.system.start();
-
         Table table = this.system.catalog().table(new TableName("bfs_heartbeat", "response"));
         table.register(copyCallback);
 
-
+        this.system.start();
         System.out.println("DataNode @ " + this.port + " (" +
                            Conf.getDataNodeDataPort(this.nodeId) + ") ready!");
     }
