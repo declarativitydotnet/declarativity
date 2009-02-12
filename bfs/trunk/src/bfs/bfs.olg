@@ -1,5 +1,6 @@
 program bfs;
 
+import bfs.BFSChunkInfo;
 import bfs.BFSFileInfo;
 import bfs.Conf;
 import bfs.Master;
@@ -57,8 +58,10 @@ response(@Source, Id, Master, false, null) :-
 
 define(compute_chunk_set, keys(0, 1), {String, String, Set});
 public
-compute_chunk_set(Master, FName, set<ChunkId>) :-
-    fchunk(Master, ChunkId, FName);
+compute_chunk_set(Master, FName, set<ChunkInfo>) :-
+    fchunk(Master, ChunkId, FName),
+    bfs_heartbeat::chunks(Master, _, ChunkId, Length, _),
+    ChunkInfo := new BFSChunkInfo(ChunkId, Length);
 
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return the set of nodes that hold that chunk. Otherwise, return an

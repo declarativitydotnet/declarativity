@@ -156,7 +156,7 @@ public class Shell {
         String filename = args.get(0);
 
         /* Ask a master node for the list of chunks */
-        List<Integer> chunks = getChunkList(filename);
+        List<BFSChunkInfo> chunks = getChunkList(filename);
         System.out.println("chunks = " + chunks);
 
         /*
@@ -164,8 +164,8 @@ public class Shell {
          * hold the chunk, and then read the chunk's contents from one or
          * more of those nodes.
          */
-        for (Integer chunk : chunks) {
-            Set<String> locations = getChunkLocations(chunk);
+        for (BFSChunkInfo chunk : chunks) {
+            Set<String> locations = getChunkLocations(chunk.getId());
             readChunk(chunk, locations);
         }
     }
@@ -208,7 +208,7 @@ public class Shell {
         return Collections.unmodifiableList(resultList);
     }
 
-    private List<Integer> getChunkList(final String filename) throws UpdateException, JolRuntimeException {
+    private List<BFSChunkInfo> getChunkList(final String filename) throws UpdateException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -241,13 +241,13 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", filename));
         this.system.schedule("bfs", tblName, req, null);
 
-        Set<Integer> chunkSet = (Set<Integer>) spinGet(Conf.getListingTimeout());
+        Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
 
         // The server returns the list of chunks in unspecified order; we sort by
         // ascending chunk ID, on the assumption that this agrees with the correct
         // order for the chunks in a file
-        List<Integer> sortedChunks = new ArrayList<Integer>(chunkSet);
+        List<BFSChunkInfo> sortedChunks = new ArrayList<BFSChunkInfo>(chunkSet);
         Collections.sort(sortedChunks);
         return sortedChunks;
     }
@@ -297,12 +297,11 @@ public class Shell {
         return Collections.unmodifiableSet(nodeSet);
     }
 
-    private void readChunk(Integer chunk, Set<String> locations) {
+    private void readChunk(BFSChunkInfo chunk, Set<String> locations) {
         for (String loc : locations) {
-            StringBuilder sb = readChunkFromAddress(chunk, loc);
+            String sb = readChunkFromAddress(chunk, loc);
             if (sb != null) {
-                System.out.println("Content of chunk " +
-                                   chunk + ": " + sb);
+                System.out.println("Content of " + chunk + ": " + sb);
                 return;
             }
         }
@@ -310,7 +309,7 @@ public class Shell {
         throw new RuntimeException("Failed to read chunk " + chunk);
     }
 
-    private StringBuilder readChunkFromAddress(Integer chunkId, String addr) {
+    private String readChunkFromAddress(BFSChunkInfo chunk, String addr) {
         try {
             String[] parts = addr.split(":");
             String host = parts[1];
@@ -319,7 +318,7 @@ public class Shell {
             System.out.println("TEST2\n");
             int dataPort = Conf.findDataNodeDataPort(host, controlPort);
 
-            System.out.println("Reading chunk " + chunkId + " from: " + host + ":" + dataPort);
+            System.out.println("Reading " + chunk + " from: " + host + ":" + dataPort);
             SocketAddress sockAddr = new InetSocketAddress(host, dataPort);
             SocketChannel inChannel = SocketChannel.open();
             inChannel.configureBlocking(true);
@@ -330,8 +329,12 @@ public class Shell {
             DataInputStream dis = new DataInputStream(sock.getInputStream());
 
             dos.writeByte(DataProtocol.READ_OPERATION);
-            dos.writeInt(chunkId.intValue());
+            dos.writeInt(chunk.getId());
             int length = dis.readInt();
+            if (length != chunk.getLength())
+            	throw new RuntimeException("expected length " + chunk.getLength() +
+            			                   ", data node copy's length is " +
+            			                   length + ", chunk " + chunk.getId());
 
             // XXX: rewrite this to use FileChannel.transferFrom()
             StringBuilder sb = new StringBuilder();
@@ -348,8 +351,13 @@ public class Shell {
                 buf.rewind();
             }
 
+            if (sb.length() != length)
+            	throw new RuntimeException("unexpected length mismatch: " +
+            			                   "expected " + length + ", got " +
+            			                   sb.length());
+
             sock.close();
-            return sb;
+            return sb.toString();
         } catch (Exception e) {
             System.out.println("Exception reading chunk from " +
                                addr + ": " + e.toString());
