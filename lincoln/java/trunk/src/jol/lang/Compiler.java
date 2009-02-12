@@ -1,5 +1,6 @@
 package jol.lang;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -31,6 +32,7 @@ import jol.types.table.TableName;
 
 import xtc.Constants;
 import xtc.tree.Node;
+import xtc.tree.Printer;
 import xtc.util.Runtime;
 
 /**
@@ -133,13 +135,22 @@ public class Compiler {
 	private Program program;
 
 	private final static Runtime runtime = new Runtime(); 
-
+	
 	/** Create a new driver for Overlog. */
 	public Compiler(jol.core.Runtime context, String owner, URL input) throws JolRuntimeException {
 		this.context = context;
 		this.owner = owner;
 
 		synchronized (runtime) {
+			if (!this.context.debug()) {
+				this.runtime.setErrConsole(new Printer(new ByteArrayOutputStream	()));
+				this.runtime.setConsole(new Printer(new ByteArrayOutputStream()));
+			}
+			else {
+				this.runtime.setErrConsole(new Printer(System.err));
+				this.runtime.setConsole(new Printer(System.out));
+			}
+			
 			Node ast = parse(input);
 			process(ast);
 

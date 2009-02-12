@@ -48,6 +48,8 @@ public class Runtime implements JolSystem {
 		return idgenerator++;
 	}
 
+	private boolean debug;
+	
 	/** The thread that the runtime executes in.
 	 * Created and started in {@link Runtime#create(int)}. */
 	private Thread thread;
@@ -78,9 +80,10 @@ public class Runtime implements JolSystem {
 	private int port;
 
 	/** Creates a new runtime. Called from {@link Runtime#create(int)}. */
-	private Runtime(int port) {
-		this.catalog = Table.initialize(this);
+	private Runtime(boolean debug, int port) {
+		this.debug = debug;
 		this.port = port;
+		this.catalog = Table.initialize(this);
 		Compiler.initialize(this);
 
 		// next line must come after initialization of 'port'
@@ -101,8 +104,12 @@ public class Runtime implements JolSystem {
 		this.thread     = null;
 	}
 	
-	public Object driver() {
+	public Object lock() {
 		return this.driver;
+	}
+	
+	public boolean debug() {
+		return this.debug;
 	}
 
 	public void evaluate() throws JolRuntimeException {
@@ -363,13 +370,17 @@ public class Runtime implements JolSystem {
 			}
 		};
 	}
-
+	
 	public static JolSystem create() throws JolRuntimeException {
-		return create(-1, defaultLoader());
+		return create(false, -1, defaultLoader());
 	}
 
-	public static JolSystem create(int port) throws JolRuntimeException {
-		return create(port, defaultLoader());
+	public static JolSystem create(boolean debug) throws JolRuntimeException {
+		return create(debug, -1, defaultLoader());
+	}
+
+	public static JolSystem create(boolean debug, int port) throws JolRuntimeException {
+		return create(debug, port, defaultLoader());
 	}
 	/**
 	 * Creates a new runtime object that listens on the given network port.
@@ -377,10 +388,10 @@ public class Runtime implements JolSystem {
 	 * @return A new runtime object.
 	 * @throws JolRuntimeException If something went wrong during bootstrap.
 	 */
-	public static JolSystem create(int port, ResourceLoader l) throws JolRuntimeException {
+	public static JolSystem create(boolean debug, int port, ResourceLoader l) throws JolRuntimeException {
 		try {
 			Runtime.loader = l;
-			Runtime runtime = new Runtime(port);
+			Runtime runtime = new Runtime(debug, port);
 			URL runtimeFile = loader.getResource("jol/core/runtime.olg");
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
@@ -404,23 +415,22 @@ public class Runtime implements JolSystem {
 
 	public static void main(String[] args) throws UpdateException, MalformedURLException, NumberFormatException, JolRuntimeException {
 		if (args.length < 1) {
-			System.out.println("Usage: jol.core.Runtime [-d] [-p port] program");
+			System.out.println("Usage: jol.core.Runtime [-d[DEBUGGER]] [-p port] program");
 			System.exit(1);
 		}
 
 		ArrayList<String> arguments = new ArrayList<String>();
 		String debugger = null;
+		boolean debug = false;
 		int port = -1;
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];
 			if (arg.startsWith("-d")) {
+				debug = true;
 				if (arg.length() > "-d".length()) {
 					debugger = arg.substring(1, arg.length());
 					debugger = debugger.trim();
 					System.err.println("DEBUGGER: " + debugger);
-				}
-				else {
-					debugger = args[++i].trim();
 				}
 			}
 			else if (arg.startsWith("-p")) {
@@ -440,7 +450,7 @@ public class Runtime implements JolSystem {
 		args = arguments.toArray(new String[arguments.size()]);
 
 		// Initialize the global Runtime
-		Runtime runtime = (Runtime) Runtime.create(port);
+		Runtime runtime = (Runtime) Runtime.create(debug, port);
 		for (int i = 0; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);
 			runtime.install("user", debugger, url);

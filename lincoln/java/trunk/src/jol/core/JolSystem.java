@@ -15,7 +15,11 @@ import jol.types.table.Table.Catalog;
  */
 public interface JolSystem {
 	
-	public Object driver();
+	/**
+	 * Get the system lock
+	 * @return
+	 */
+	Object lock();
 	
 	/**
 	 * Get the system clock.
