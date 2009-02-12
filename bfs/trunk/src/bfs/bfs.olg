@@ -11,11 +11,15 @@ import java.util.Random;
 import java.util.Set;
 import jol.types.basic.ValueList;
 
+// Node address, Request ID, Request type, Arg
+define(start_request, keys(0, 1), {String, Integer, String, String});
+
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
     master_for_node(@Source, Master),
     // XXX PA
     start_request(@Source, ReqId, ReqType, Args);
+
 
 public
 response(@Source, Id, Master, true, Result) :-
