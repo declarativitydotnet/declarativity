@@ -2,6 +2,7 @@ package org.apache.hadoop.fs.bfs;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.hadoop.fs.FSInputStream;
 
@@ -22,7 +23,7 @@ public class BFSInputStream extends FSInputStream {
 	// These fields are updated by updatePosition().
 	private int currentChunkIdx;
 	private int currentChunkOffset;
-	private List<String> chunkLocations;
+	private Set<String> chunkLocations;
 
 	public BFSInputStream(String path, BFSClient bfs) throws IOException {
 		this.path = path;
@@ -70,6 +71,8 @@ public class BFSInputStream extends FSInputStream {
 
 	@Override
 	public int read() throws IOException {
+		if (this.isClosed)
+			throw new IOException("cannot read from closed file");
 		// TODO Auto-generated method stub
 		return 0;
 	}
