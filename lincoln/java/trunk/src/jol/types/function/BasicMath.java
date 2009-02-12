@@ -77,7 +77,7 @@ public class BasicMath {
 			case DIVIDE: return new Double(lhs.doubleValue() / rhs.doubleValue());
 			case MOD:    return new Double(lhs.doubleValue() % rhs.doubleValue());
 			case POW:    return new Double(java.lang.Math.pow(lhs.doubleValue(),rhs.doubleValue()));
-			default: return null; // TODO LOG THIS ERROR
+			default: throw new JolRuntimeException("UNKNOWN MATH OPERATION " + oper);
 			}
 		}
 
@@ -143,7 +143,7 @@ public class BasicMath {
 			case POW:    return new Integer((int)java.lang.Math.pow(lhs.intValue(),rhs.intValue()));
 			case LSHIFT: return new Integer(lhs.intValue() << rhs.intValue());
 			case RSHIFT: return new Integer(lhs.intValue() >> rhs.intValue());
-			default: return null; // TODO LOG THIS ERROR.
+			default: throw new JolRuntimeException("UNKNOWN MATH OPERATION " + oper);
 			}
 		}
 
@@ -177,7 +177,7 @@ public class BasicMath {
 			case POW:    return new Long((long)java.lang.Math.pow(lhs.longValue(),rhs.longValue()));
 			case LSHIFT: return new Long(lhs.longValue() << rhs.longValue());
 			case RSHIFT: return new Long(lhs.longValue() >> rhs.longValue());
-			default: return null; // TODO LOG THIS ERROR.
+			default: throw new JolRuntimeException("UNKNOWN MATH OPERATION " + oper);
 			}
 		}
 
@@ -211,7 +211,7 @@ public class BasicMath {
 			case POW:    return new Short((short)java.lang.Math.pow(lhs.shortValue(),rhs.shortValue()));
 			case LSHIFT: return new Short((short)(lhs.shortValue() << rhs.shortValue()));
 			case RSHIFT: return new Short((short)(lhs.shortValue() >> rhs.shortValue()));
-			default: return null; // TODO LOG THIS ERROR.
+			default: throw new JolRuntimeException("UNKNOWN MATH OPERATION " + oper);
 			}
 		}
 
@@ -237,19 +237,19 @@ public class BasicMath {
 			Set result = new HashSet();
 
 			switch(oper) {
-			case PLUS:   
+			case PLUS:
 				result.addAll(lhs);
 				result.addAll(rhs);
 				break;
-			case MINUS:  
+			case MINUS:
 				result.addAll(lhs);
 				result.removeAll(rhs);
 				break;
-			case MOD: 
+			case MOD:
 				result.addAll(lhs);
 				result.retainAll(rhs);
 				break;
-			default: return null; // TODO LOG THIS ERROR.
+			default: throw new JolRuntimeException("UNKNOWN SET OPERATION " + oper);
 			}
 			return result;
 		}
@@ -275,7 +275,7 @@ public class BasicMath {
 			String rhs = (String) this.rhs.evaluate(tuple);
 			switch (oper) {
 			case PLUS: return new String(lhs.toString() + rhs.toString());
-			default:   return null; // TODO LOG THIS ERROR.
+			default:   throw new JolRuntimeException("UNKNOWN STRING OPERATION " + oper);
 			}
 		}
 
