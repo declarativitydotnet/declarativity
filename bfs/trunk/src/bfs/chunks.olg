@@ -1,5 +1,7 @@
 program bfs_chunks;
 
+import java.util.ArrayList;
+
 define(chunkSeq, keys(0), {String, Integer});
 watch(chunkSeq, ae);
 
