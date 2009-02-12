@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.hadoop.fs.FSInputStream;
 
+import bfs.BFSChunkInfo;
 import bfs.BFSClient;
 import bfs.BFSFileInfo;
 import bfs.Conf;
@@ -13,7 +14,7 @@ import bfs.Conf;
 public class BFSInputStream extends FSInputStream {
 	private String path;
 	private BFSClient bfs;
-	private List<Integer> chunkList;
+	private List<BFSChunkInfo> chunkList;
 	private boolean isClosed;
 
 	// Byte-wise offset into the logical file contents
@@ -54,8 +55,8 @@ public class BFSInputStream extends FSInputStream {
 			throw new IOException("cannot seek past end of file");
 
 		if (chunkNum != this.currentChunkIdx || this.chunkLocations == null) {
-			Integer chunkId = this.chunkList.get(chunkNum);
-			this.chunkLocations = bfs.getChunkLocations(chunkId);
+			BFSChunkInfo chunk = this.chunkList.get(chunkNum);
+			this.chunkLocations = bfs.getChunkLocations(chunk.getId());
 		}
 
 		this.currentChunkIdx = (int) chunkNum;
