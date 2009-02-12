@@ -165,7 +165,7 @@ public class Shell {
          * more of those nodes.
          */
         for (Integer chunk : chunks) {
-            List<String> locations = getChunkLocations(chunk);
+            Set<String> locations = getChunkLocations(chunk);
             readChunk(chunk, locations);
         }
     }
@@ -258,7 +258,7 @@ public class Shell {
         return table;
     }
 
-    private List<String> getChunkLocations(final Integer chunk) throws UpdateException {
+    private Set<String> getChunkLocations(final Integer chunk) throws UpdateException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -276,8 +276,8 @@ public class Shell {
                         if (success.booleanValue() == false)
                             throw new RuntimeException("Failed to get chunk list for chunk #" + chunk);
 
-                        Object nodeList = t.value(4);
-                        responseQueue.put(nodeList);
+                        Object nodeSet = t.value(4);
+                        responseQueue.put(nodeSet);
                         break;
                     }
                 }
@@ -292,12 +292,12 @@ public class Shell {
                           "ChunkLocations", chunk.toString()));
         this.system.schedule("bfs", tblName, req, null);
 
-        List<String> nodeList = (List<String>) this.responseQueue.get(); // XXX: timeout?
+        Set<String> nodeSet = (Set<String>) spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
-        return Collections.unmodifiableList(nodeList);
+        return Collections.unmodifiableSet(nodeSet);
     }
 
-    private void readChunk(Integer chunk, List<String> locations) {
+    private void readChunk(Integer chunk, Set<String> locations) {
         for (String loc : locations) {
             StringBuilder sb = readChunkFromAddress(chunk, loc);
             if (sb != null) {
