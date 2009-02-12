@@ -87,8 +87,8 @@ public class PingPongTest {
     @Before
     public void setup() throws JolRuntimeException, UpdateException {
         this.systems = new JolSystem[2];
-        this.systems[0] = this.pinger = Runtime.create(PINGER_PORT);
-        this.systems[1] = this.ponger = Runtime.create(PONGER_PORT);
+        this.systems[0] = this.pinger = Runtime.create(true, PINGER_PORT);
+        this.systems[1] = this.ponger = Runtime.create(true, PONGER_PORT);
 
         for (JolSystem s : this.systems)
         {
