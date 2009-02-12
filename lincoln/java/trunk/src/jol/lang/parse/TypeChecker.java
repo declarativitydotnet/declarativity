@@ -76,6 +76,7 @@ public final class TypeChecker extends Visitor {
 	private static final Map<String, Class> NAME_TO_BASETYPE = new HashMap<String, Class>();
 
 	static {
+		// Java primitive types
 		NAME_TO_BASETYPE.put("boolean", Boolean.class);
 		NAME_TO_BASETYPE.put("byte", Byte.class);
 		NAME_TO_BASETYPE.put("string", String.class);
@@ -86,11 +87,24 @@ public final class TypeChecker extends Visitor {
 		NAME_TO_BASETYPE.put("long", Long.class);
 		NAME_TO_BASETYPE.put("short", Short.class);
 		NAME_TO_BASETYPE.put("void", Void.class);
+		// Java wrapper classes for primitive types
+		NAME_TO_BASETYPE.put("Boolean", Boolean.class);
+		NAME_TO_BASETYPE.put("Byte", Byte.class);
+		NAME_TO_BASETYPE.put("String", String.class);
+		NAME_TO_BASETYPE.put("Character", Character.class);
+		NAME_TO_BASETYPE.put("Double", Double.class);
+		NAME_TO_BASETYPE.put("Float", Float.class);
+		NAME_TO_BASETYPE.put("Integer", Integer.class);
+		NAME_TO_BASETYPE.put("Long", Long.class);
+		NAME_TO_BASETYPE.put("Short", Short.class);
+		NAME_TO_BASETYPE.put("Void", Void.class);
 	}
 
 	public static Class type(String name) {
-		return NAME_TO_BASETYPE.containsKey(name) ? NAME_TO_BASETYPE.get(name) : null;
+		return NAME_TO_BASETYPE.get(name);
 	}
+
+	private Map<String, Class> localTypeMap;
 
 	private Long uniqueID;
 
@@ -116,6 +130,7 @@ public final class TypeChecker extends Visitor {
 		this.context = context;
 		this.runtime = runtime;
 		this.program = program;
+		this.localTypeMap = new HashMap<String, Class>();
 	}
 
 	public SymbolTable table() {
@@ -153,6 +168,17 @@ public final class TypeChecker extends Visitor {
 
 	// =========================================================================
 
+	private Class lookupType(String name) {
+		if (this.localTypeMap.containsKey(name))
+			return this.localTypeMap.get(name);
+
+		return TypeChecker.type(name);
+	}
+
+	private void defineType(String name, Class type) {
+		this.localTypeMap.put(name, type);
+	}
+
 	/**
 	 * Find the least upper bound of the two types.
 	 * @param x the first type
@@ -183,8 +209,8 @@ public final class TypeChecker extends Visitor {
 			System.err.println("FATAL COMPILE ERROR: super type check null! subtype " + subType);
 		}
 
-		if (type(superType.getSimpleName()) != null) superType = type(superType.getSimpleName());
-		if (type(subType.getSimpleName()) != null) subType = type(subType.getSimpleName());
+		if (lookupType(superType.getSimpleName()) != null) superType = lookupType(superType.getSimpleName());
+		if (lookupType(subType.getSimpleName()) != null) subType = lookupType(subType.getSimpleName());
 
 		for (Class inter : subType.getInterfaces()) {
 			if (superType == inter || superType.isAssignableFrom(subType)) {
@@ -196,7 +222,7 @@ public final class TypeChecker extends Visitor {
 	}
 
 	private boolean checkInterface(Class type, Class check) {
-		type = type(type.getCanonicalName()) == null ? type : type(type.getCanonicalName());
+		type = lookupType(type.getCanonicalName()) == null ? type : lookupType(type.getCanonicalName());
 		for (Class i : type.getInterfaces()) {
 			if (check == i) return true;
 		}
@@ -266,7 +292,7 @@ public final class TypeChecker extends Visitor {
 			throw new CompileException("Expected class type at import statement!", n);
 		}
 		type = (Class) n.getNode(0).getProperty(Constants.TYPE);
-		NAME_TO_BASETYPE.put(type.getSimpleName(), type);
+		defineType(type.getSimpleName(), type);
 		n.setProperty(Constants.TYPE, type);
 		return Class.class;
 	}
@@ -1409,11 +1435,11 @@ public final class TypeChecker extends Visitor {
 
 		if (type == Variable.class) {
 			Variable var = (Variable) n.getNode(0).getProperty(Constants.TYPE);
-			if (var.type() == null && type(var.name()) != null) {
+			if (var.type() == null && lookupType(var.name()) != null) {
 				runtime.warning("Assuming " + var.name() +
 						        " is not a variable but rather refers to the class type of " +
-						        type(var.name()), n);
-				n.getNode(0).setProperty(Constants.TYPE, type(var.name()));
+						        lookupType(var.name()), n);
+				n.getNode(0).setProperty(Constants.TYPE, lookupType(var.name()));
 				type = Class.class;
 			}
 		}
@@ -1425,8 +1451,8 @@ public final class TypeChecker extends Visitor {
 			}
 			String name = ref.toString() + "." + n.getString(1);
 
-			if (type(name) != null) {
-				type = type(name);
+			if (lookupType(name) != null) {
+				type = lookupType(name);
 				n.setProperty(Constants.TYPE, type);
 				return Class.class;
 			}
@@ -1607,17 +1633,17 @@ public final class TypeChecker extends Visitor {
 		try {
 			Class type  = null;
 			String name = n.getString(0);
-			if (type(name) != null) {
-				type = type(name);
+			if (lookupType(name) != null) {
+				type = lookupType(name);
 				name = type.getCanonicalName();
 			}
 
 			for (Object c : n.getList(1)) {
 				if (type != null) {
 					name  += "$" + c.toString();
-					type = type(name) == null ?
-							Class.forName(name) : type(name);
-					NAME_TO_BASETYPE.put(name, type);
+					type = lookupType(name) == null ?
+							Class.forName(name) : lookupType(name);
+					defineType(name, type);
 				}
 				else {
 					name  += "." + c.toString();
@@ -1641,7 +1667,7 @@ public final class TypeChecker extends Visitor {
 	}
 
 	public Class visitPrimitiveType(final GNode n) {
-		Class type = type(n.getString(0));
+		Class type = lookupType(n.getString(0));
 		n.setProperty(Constants.TYPE, type);
 		return Class.class;
 	}

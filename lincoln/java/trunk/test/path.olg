@@ -1,10 +1,6 @@
 program path;
 
-import java.lang.Object;
-import java.lang.String;
-import java.lang.Integer;
 import jol.core.Runtime;
-
 import jol.types.basic.ValueList;
 
 define(link, keys(0,1), {String, String});
@@ -61,18 +57,18 @@ path(Source, Destination, 1) :- link(Source, Destination);
 
 /* Transitive closure over path, link. */
 transitive
-path(Source, Destination, Hops+1) :- 
+path(Source, Destination, Hops+1) :-
 	path(Source, Intermediate, Hops), link(Intermediate, Destination),
 	links(Count), Hops <= Count;
 
 /* Compute shortest paths. */
 statistics
-pathStatistics(Source, Destination, min<Hops>, max<Hops>, bottomk<Hops, K>) :- 
+pathStatistics(Source, Destination, min<Hops>, max<Hops>, bottomk<Hops, K>) :-
 	path(Source, Destination, Hops), K := 2, K == 2;
-	
+
 computeAll(Source) :-
 	pathStatistics(Source, Destination, MinHops, MaxHops, TopHops);
-	
+
 watch(pathSet, a);
 import java.util.Set;
 import java.util.ArrayList;
@@ -86,11 +82,11 @@ import jol.types.basic.Schema;
 allPaths(Source, generic<(new ValueList()).insert(Destination)>) :-
 	computeAll(Bla),
 	path(Source, Destination, Hops);
-	
+
 flatpaths(Source, Path) :-
 	flatten(allPaths(Source, Paths)),
 	Path := (Integer) Paths;
-	
+
 flatTopPaths(Source, Destination, Hop) :-
 	flatten(pathStatistics(Source, Destination, MinHops, MaxHops, TopHops)),
 	Hop := (Integer) TopHops;
