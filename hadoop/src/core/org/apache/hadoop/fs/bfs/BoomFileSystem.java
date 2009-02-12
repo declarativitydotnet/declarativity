@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -82,7 +83,7 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public FileStatus[] listStatus(Path path) throws IOException {
-		List<BFSFileInfo> bfsListing = this.bfs.getDirListing(getPathName(path));
+		Set<BFSFileInfo> bfsListing = this.bfs.getDirListing(getPathName(path));
 
 		// XXX: ugly. We need to convert the BFS data structure to the Hadoop
 		// file info format manually
