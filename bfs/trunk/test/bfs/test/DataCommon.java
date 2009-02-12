@@ -4,8 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.Random;
 
@@ -74,11 +75,11 @@ public class DataCommon extends TestCommon {
         long len = new File(fName).length();
         long appropriateNumberOfChunks = (len / Conf.getChunkSize()) + 1;
 
-        Hashtable ht = new Hashtable();
-        Hashtable nodecnts = new Hashtable();
-        Hashtable csums = new Hashtable();
+        Map<String, Integer> ht = new HashMap<String, Integer>();
+        Map<String, Integer> nodecnts = new HashMap<String, Integer>();
+        Map<String, Long> csums = new HashMap<String, Long>();
 
-        for (int i=1; i <= this.datanodes.size(); i++) {
+        for (int i = 1; i <= this.datanodes.size(); i++) {
             String str = "td" + i + "/chunks";
             File dir = new File(str);
 
@@ -86,7 +87,7 @@ public class DataCommon extends TestCommon {
                 counter(nodecnts, str);
                 counter(ht, f.getName());
                 long csum = get_checksum(i, f.getName());
-                Long oldCsum = (Long) csums.get((Object)f.getName());
+                Long oldCsum = (Long) csums.get(f.getName());
                 if (oldCsum == null) {
                     csums.put(f.getName(), new Long(csum));
                 } else {
@@ -120,14 +121,15 @@ public class DataCommon extends TestCommon {
         }
     }
 
-    private void counter(Hashtable h, String s) {
-        Integer cnt = (Integer) h.get((Object)s);
-        if (cnt == null) {
+	private void counter(Map<String, Integer> m, String s) {
+        Integer cnt = m.get(s);
+
+        if (cnt == null)
             cnt = new Integer(1);
-        } else {
-            cnt += 1;
-        }
-        h.put(s, cnt);
+        else
+            cnt++;
+
+        m.put(s, cnt);
     }
 
     protected class Victim {
