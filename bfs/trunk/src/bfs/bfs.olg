@@ -79,8 +79,8 @@ response(@Source, Id, Master, true, NodeList) :-
     request(@Master, Id, Source, "ChunkLocations", _),
     compute_chunk_locs(@Master, Id, Source, NodeList);
 
-response(@Source, ReqId, Master, false, null) :-
-    clRequest(@Master, ReqId, Source, "ChunkLocations", ChunkId),
+response(@Source, Id, Master, false, null) :-
+    clRequest(@Master, Id, Source, "ChunkLocations", ChunkId),
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean});
