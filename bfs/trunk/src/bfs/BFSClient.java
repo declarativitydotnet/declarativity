@@ -197,7 +197,7 @@ public class BFSClient {
         	return result.get(0);
 	}
 
-	public List<Integer> getChunkList(final String path) {
+	public List<BFSChunkInfo> getChunkList(final String path) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -234,13 +234,13 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        Set<Integer> chunkSet = (Set<Integer>) waitForResponse(Conf.getListingTimeout());
+        Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) waitForResponse(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
 
         // The server returns the set of chunks in unspecified order; we sort by
         // ascending chunk ID, on the assumption that this agrees with the correct
         // order for the chunks in a file
-        List<Integer> sortedChunks = new ArrayList<Integer>(chunkSet);
+        List<BFSChunkInfo> sortedChunks = new ArrayList<BFSChunkInfo>(chunkSet);
         Collections.sort(sortedChunks);
         return sortedChunks;
 	}
