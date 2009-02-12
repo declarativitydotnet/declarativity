@@ -103,27 +103,27 @@ public class DataServer extends Thread {
         }
 
         private void doWriteOperation() {
-            System.out.println("WRITE OP\n");
+            System.out.println("WRITE OP");
 
             try {
                 int chunkId = readChunkId();
                 List<String> path = readHeaders();
 
                 File newf = createChunkFile(chunkId);
-                System.out.println("Ready to read file in\n");
+                System.out.println("Ready to read file in");
                 FileChannel fc = new FileOutputStream(newf).getChannel();
                 fc.transferFrom(this.channel, 0, Conf.getChunkSize());
                 fc.close();
 
                 // we are not pipelining yet.
                 if (path.size() > 0) {
-                    System.out.println("path size was " + path.size());
+                    System.out.println("Path size was " + path.size());
                     copyToNext(newf, chunkId, path);
                 }
 
                 // sadly, for the time being,
                 createCRCFile(chunkId, getFileChecksum(newf));
-                System.out.println("OK, out of write.\n");
+                System.out.println("OK, finished WRITE_OP");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
