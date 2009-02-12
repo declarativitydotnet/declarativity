@@ -90,7 +90,7 @@ public class Shell {
         /* this shouldn't be a static member at all... */
         Conf.setSelfAddress("tcp:localhost:" + port);
 
-        this.system = Runtime.create(Integer.valueOf(port));
+        this.system = Runtime.create(true, Integer.valueOf(port));
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
