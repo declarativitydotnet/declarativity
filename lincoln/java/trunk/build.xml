@@ -104,7 +104,7 @@
       <fileset dir="examples/" includes="**/*.olg"/>
       <classes dir="${build}" excludes="jol/test/**"/>
       <lib dir="${lib}" includes="xtc.jar"/>
-      <lib dir="${lib}" includes="grappa1_2.jar"/>
+      <lib dir="${lib}" includes="grappa.jar"/>
     </war>
       
   </target>
