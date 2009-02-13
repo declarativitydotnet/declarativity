@@ -57,6 +57,7 @@ import jol.types.table.BasicTable;
 import jol.types.table.EventTable;
 import jol.types.table.Flatten;
 import jol.types.table.Key;
+import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.TimerTable;
@@ -66,6 +67,7 @@ import xtc.tree.Node;
 import xtc.tree.Visitor;
 import xtc.util.SymbolTable;
 
+import stasis.jni.JavaHashtable;
 import stasis.jni.LinearHashNTA;
 
 
@@ -440,9 +442,12 @@ public final class TypeChecker extends Visitor {
 		Class[] schema  = (Class[]) n.getNode(2).getProperty(Constants.TYPE);
 		Table create;
 		if (name.name.startsWith("stasis")) {
-			//create = new JavaHashtable(context, name, key, schema);
 			try {
-				create = new LinearHashNTA(context, name, key, schema);
+				if(StasisTable.foundStasis) {
+					create = new LinearHashNTA(context, name, key, schema);
+				} else {
+					create = new JavaHashtable(context, name, key, schema);
+				}
 			} catch (UpdateException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
