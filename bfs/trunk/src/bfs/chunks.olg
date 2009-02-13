@@ -9,7 +9,7 @@ watch(chunkSeq, ae);
 public
 chunkSeq(Master, Top+1) :-
     bfs::self(Master),
-    notin chunkSeq(Master, SomeId),
+    notin chunkSeq(Master, _),
     bfs::chunkHWM(Master, Top);
 */
 
@@ -18,7 +18,7 @@ public
 chunkSeq(Master, 1) :-
     bfs::self(Master),
     per(_, _, _),
-    notin chunkSeq(Master, SomeId);//,
+    notin chunkSeq(Master, _);//,
     //notin bfs::chunkHWM(Master, Top);
 
 // if we get a "NewChunk" request for a file, create a new chunk id
