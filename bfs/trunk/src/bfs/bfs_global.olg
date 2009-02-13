@@ -4,7 +4,7 @@ import bfs.Conf;
 import java.lang.Object;
 
 // Node, file ID, file name
-define(file, keys(0, 2), {String, Integer, String});
+define(file, keys(0, 1), {String, Integer, String});
 
 // Node, chunk ID, file name
 define(fchunk, keys(0, 1), {String, Integer, String});

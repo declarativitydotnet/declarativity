@@ -1,23 +1,22 @@
 package bfs;
 
 import java.io.Serializable;
-import java.util.List;
 
 public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	private static final long serialVersionUID = 1L;
 
-	private final boolean isDirectory;
+	private final int fileId;
 	private final String fileName;
-	private final List<BFSChunkInfo> chunkList;
+	private final boolean isDirectory;
 
-	public BFSFileInfo(String name, List<BFSChunkInfo> chunkList) {
+	public BFSFileInfo(int fileId, String name) {
+		this.fileId = fileId;
 		this.fileName = name;
 		this.isDirectory = false;
-		this.chunkList = chunkList;
 	}
 
-	public boolean isDirectory() {
-		return this.isDirectory;
+	public int getId() {
+		return this.fileId;
 	}
 
 	public String getPath() {
@@ -26,6 +25,10 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 
 	public String getName() {
 		return this.fileName;
+	}
+
+	public boolean isDirectory() {
+		return this.isDirectory;
 	}
 
 	public int getReplication() {
