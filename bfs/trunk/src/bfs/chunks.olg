@@ -13,6 +13,7 @@ chunkSeq(Master, Top+1) :-
     bfs::chunkHWM(Master, Top);
 */
 
+// XXX: this "timer" is a hack
 timer(per, physical, 1000, 1000, 1000);
 public
 chunkSeq(Master, 1) :-
