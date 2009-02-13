@@ -24,11 +24,13 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     Decree := FName + ",d," + Id.toString();
 
 // an insert op in the log induces a new metadata entry for a file.
+// XXX: file IDs are assigned from a hash of the filename right now;
+// this is obviously broken
 public
 bfs::file(Master, FileId, FName) :-
     appView#insert(Master, _, _, _, FName, Op, _, _),
     Op == "i",
-    FileId := 0;
+    FileId := FName.hashCode();
 
 // to ensure that we account for the chunkIds proposed
 // by other masters
@@ -36,8 +38,9 @@ public
 bfs::chunkHWM(Master, max<I>) :-
     appView(Master, _, _, _, _, _, I);
 
-// or, if we are adding a chunk to a file's chunklist, we likewise need to pass it through paxos.
-// (and indeed, should block the requestor, but this is not implemented yet)
+// or, if we are adding a chunk to a file's chunklist, we likewise need
+// to pass it through paxos. (and indeed, should block the requestor, but
+// this is not implemented yet XXX)
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
