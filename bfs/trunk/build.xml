@@ -79,4 +79,29 @@
       </batchtest>
     </junit>
   </target>
+
+  <!-- XXX: refactor this to reduce duplication -->
+  <target name="data-test" description="run JUnit tests for data path">
+    <mkdir dir="${test-output}"/>
+    <!-- Note that we fork a JVM to run the tests in. This is probably
+         good for robustness reasons; it also seems necessary to
+         prevent JUnit from interferring with our classpath and
+         preventing the loading of OLG files. -->
+    <junit printsummary="yes" fork="yes">
+      <classpath>
+        <pathelement location="${dist}/bfs-test.jar"/>
+        <pathelement location="${dist}/bfs.jar"/>
+        <pathelement location="${lib}/jol.jar"/>
+        <pathelement location="${lib}/junit.jar"/>
+      </classpath>
+
+      <formatter type="plain"/>
+
+      <batchtest todir="${test-output}">
+        <fileset dir="${test}">
+          <include name="**/BFSData*Test.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
 </project>
