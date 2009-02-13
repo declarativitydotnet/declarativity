@@ -137,9 +137,11 @@ public class PaxosCommon {
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
         Callback cb = new Callback() {
+            @Override
             public void deletion(TupleSet tuples) {
             }
 
+            @Override
             public void insertion(TupleSet tuples) {
                 System.out.println("Got insert!");
                 String msg = standardTest(tuples, 0, "foo", "bar", "bas");
@@ -180,9 +182,11 @@ public class PaxosCommon {
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
         Callback cb = new Callback() {
+            @Override
             public void deletion(TupleSet tuples) {
             }
 
+            @Override
             public void insertion(TupleSet tuples) {
                 System.out.println("Got insert!");
                 String msg = standardTest(tuples, 0, "foo", "bar");

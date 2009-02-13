@@ -32,7 +32,7 @@ public class Shell {
     private int currentMaster;
     private JolSystem system;
     private Random rand;
-    private SimpleQueue responseQueue;
+    private SimpleQueue<Object> responseQueue;
 
     /*
      * TODO:
@@ -77,7 +77,7 @@ public class Shell {
 
     public Shell() throws JolRuntimeException, UpdateException {
         this.rand = new Random();
-        this.responseQueue = new SimpleQueue();
+        this.responseQueue = new SimpleQueue<Object>();
         this.currentMaster = 0;
 
         /* Identify the address of the local node */
