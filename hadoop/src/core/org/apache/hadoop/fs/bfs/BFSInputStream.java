@@ -54,29 +54,28 @@ public class BFSInputStream extends FSInputStream {
 		int chunkNum = (int) (newPos / Conf.getChunkSize());
 		int chunkOffset = (int) (newPos % Conf.getChunkSize());
 
-		if (chunkNum > chunkList.size())
+		if (chunkNum > this.chunkList.size())
 			throw new IOException("cannot seek past end of file");
 
-		if (chunkList.isEmpty()) {
-			if (chunkOffset > 0)
-				throw new IOException("cannot seek past end of file");
-
-			this.atEOF = true;
+		int chunkLen;
+		if (this.chunkList.isEmpty()) {
+			chunkLen = 0;
 		} else {
-			if (chunkNum != this.currentChunkIdx || this.chunkLocations == null) {
+			if (chunkNum != this.currentChunkIdx || this.currentChunk == null) {
 				this.currentChunk = this.chunkList.get(chunkNum);
 				this.chunkLocations = bfs.getChunkLocations(this.currentChunk.getId());
 			}
 
-			if (chunkOffset > this.currentChunk.getLength())
-				throw new IOException("cannot seek past end of file");
-
-			if (chunkOffset == this.currentChunk.getLength() &&
-				this.currentChunkIdx == this.chunkList.size())
-				this.atEOF = true;
-			else
-				this.atEOF = false;
+			chunkLen = this.currentChunk.getLength();
 		}
+
+		if (chunkOffset > chunkLen)
+			throw new IOException("cannot seek past end of file");
+
+		if (chunkOffset == chunkLen && chunkNum == this.chunkList.size())
+			this.atEOF = true;
+		else
+			this.atEOF = false;
 
 		this.currentChunkIdx = (int) chunkNum;
 		this.currentChunkOffset = (int) chunkOffset;
