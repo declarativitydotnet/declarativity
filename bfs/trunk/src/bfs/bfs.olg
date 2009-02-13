@@ -113,8 +113,8 @@ define(compute_ls, keys(0, 1), {String, Integer, String, Set});
 watch(compute_ls, ae);
 compute_ls(@Master, Id, Source, set<FInfo>) :-
     request(@Master, Id, Source, "Ls", _),
-    file(@Master, _, FName),
-    FInfo := new BFSFileInfo(FName, null);
+    file(@Master, FileId, FName),
+    FInfo := new BFSFileInfo(FileId, FName);
 
 response(@Source, Id, Master, true, FileSet) :-
     request(@Master, Id, Source, "Ls", _),
@@ -129,8 +129,8 @@ response(@Source, Id, Master, true, FileSet) :-
 // describing the file. Otherwise, send back a nack.
 response(@Source, Id, Master, true, FInfo) :-
     request(@Master, Id, Source, "FileInfo", FName),
-    file(@Master, _, FName),
-    FInfo := new BFSFileInfo(FName, null);
+    file(@Master, FileId, FName),
+    FInfo := new BFSFileInfo(FileId, FName);
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "FileInfo", FName),
