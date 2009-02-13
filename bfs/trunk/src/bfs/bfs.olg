@@ -46,23 +46,23 @@ response(@Source, Id, Master, false, null) :-
 // increase monotonically, and agree with the order of chunks in a file.
 response(@Source, Id, Master, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FName),
-    file(@Master, _, FName),
-    compute_chunk_set(@Master, FName, Chunks);
+    file(@Master, FileId, FName),
+    compute_chunk_set(@Master, FileId, Chunks);
 
 response(@Source, Id, Master, true, EmptyChunks) :-
     request(@Master, Id, Source, "ChunkList", FName),
-    file(@Master, _, FName),
-    notin fchunk(@Master, _, FName),
+    file(@Master, FileId, FName),
+    notin fchunk(@Master, _, FileId),
     EmptyChunks := new HashSet();
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "ChunkList", FName),
     notin file(@Master, _, FName);
 
-define(compute_chunk_set, keys(0, 1), {String, String, Set});
+define(compute_chunk_set, keys(0, 1), {String, Integer, Set});
 public
-compute_chunk_set(Master, FName, set<ChunkInfo>) :-
-    fchunk(Master, ChunkId, FName),
+compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
+    fchunk(Master, ChunkId, FileId),
     bfs_heartbeat::chunks(Master, _, ChunkId, Length, _),
     ChunkInfo := new BFSChunkInfo(ChunkId, Length);
 

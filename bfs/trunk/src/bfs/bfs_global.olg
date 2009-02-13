@@ -6,8 +6,8 @@ import java.lang.Object;
 // Node, file ID, file name
 define(file, keys(0, 1), {String, Integer, String});
 
-// Node, chunk ID, file name
-define(fchunk, keys(0, 1), {String, Integer, String});
+// Node, chunk ID, file ID
+define(fchunk, keys(0, 1), {String, Integer, Integer});
 
 watch(file, ae);
 watch(fchunk, ae);
