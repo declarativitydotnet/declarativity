@@ -8,27 +8,27 @@ watch(bfs::fchunk,ae);
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
-  paxos_global::id(Master),
-  // err
-  From := Master,
-  bfs::create_request_pending(Master, Id, Source, true),
-  bfs::request(Master, Id, Source, "Create", FName),
-  Decree := FName + ",i," + Id.toString();
+    paxos_global::id(Master),
+    // err
+    From := Master,
+    bfs::create_request_pending(Master, Id, Source, true),
+    bfs::request(Master, Id, Source, "Create", FName),
+    Decree := FName + ",i," + Id.toString();
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
-  paxos_global::id(Master),
-  From := Master,
-  bfs::rm_request_pending(Master, Id, Source, true),
-  bfs::request(Master, Id, Source, "Rm", FName),
-  Decree := FName + ",d," + Id.toString();
+    paxos_global::id(Master),
+    From := Master,
+    bfs::rm_request_pending(Master, Id, Source, true),
+    bfs::request(Master, Id, Source, "Rm", FName),
+    Decree := FName + ",d," + Id.toString();
 
 // an insert op in the log induces a new metadata entry for a file.
 public
 bfs::file(Master, FileId, FName) :-
-  appView#insert(Master, _, _, _, FName, Op, _, _),
-  Op == "i",
-  FileId := 0;
+    appView#insert(Master, _, _, _, FName, Op, _, _),
+    Op == "i",
+    FileId := 0;
 
 // to ensure that we account for the chunkIds proposed
 // by other masters
@@ -40,10 +40,10 @@ bfs::chunkHWM(Master, max<I>) :-
 // (and indeed, should block the requestor, but this is not implemented yet)
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
-  paxos_global::id(Master),
-  From := Master,
-  bfs_chunks::candidate_datanode#insert(Master, Id, _, FName, I, _),
-  Decree := FName + ",u," + Id.toString() + "," + I.toString();
+    paxos_global::id(Master),
+    From := Master,
+    bfs_chunks::candidate_datanode#insert(Master, Id, _, FName, I, _),
+    Decree := FName + ",u," + Id.toString() + "," + I.toString();
 
 
 // Add a new chunk to the file
@@ -59,14 +59,14 @@ define(appView,keys(0,1,3,4),{String,String,String,Integer,String,String,Integer
 watch(appView,ae);
 public
 appView(Master, From, Decree, Instance, Name, Op, Id, I) :-
-  paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
-  periodic(_, _, _),
-  NVL := Arrays.asList(Decree.split(",")),
-  Name := (String) NVL.get(0),
-  Op := (String) NVL.get(1),
-  Id := Integer.valueOf((String) NVL.get(2)),
-  I := NVL.size() < 4 ? -1 : Integer.valueOf((String) NVL.get(3));
-  // XXX: array version disabled because of JOL issue
+    paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
+    periodic(_, _, _),
+    NVL := Arrays.asList(Decree.split(",")),
+    Name := (String) NVL.get(0),
+    Op := (String) NVL.get(1),
+    Id := Integer.valueOf((String) NVL.get(2)),
+    I := NVL.size() < 4 ? -1 : Integer.valueOf((String) NVL.get(3));
+// XXX: array version disabled because of JOL issue
 //   NVL := Decree.split(","),
 //   Name := NVL[0],
 //   Op := NVL[1],
@@ -76,8 +76,8 @@ appView(Master, From, Decree, Instance, Name, Op, Id, I) :-
 public
 delete
 bfs::file(Master, FileId, FName) :-
-  canDelete(Master, _, _, _, FName),
-  bfs::file(Master, FileId, FName);
+    canDelete(Master, _, _, _, FName),
+    bfs::file(Master, FileId, FName);
 
 watch(bfs::create_request_done,aeid);
 
@@ -86,39 +86,39 @@ watch(canDelete,ae);
 
 public
 canDelete(Master, Id, Source, Status, FName) :-
-  bfs::rm_request_pending(Master, Id, Source, Status),
-  periodic(_, _, _),
-  bfs::request(Master, Id, Source, "Rm", FName),
-  appView(Master, _, _, _, FName, Op, Id),
-  Op == "d";
+    bfs::rm_request_pending(Master, Id, Source, Status),
+    periodic(_, _, _),
+    bfs::request(Master, Id, Source, "Rm", FName),
+    appView(Master, _, _, _, FName, Op, Id),
+    Op == "d";
 
 
 public
 green
 bfs::create_request_done(Master, Id, Source, Status) :-
-  bfs::create_request_pending(Master, Id, Source, Status),
-  appView(Master, _, _, _, FName, "i", Id);
+    bfs::create_request_pending(Master, Id, Source, Status),
+    appView(Master, _, _, _, FName, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, Source, false) :-
-  bfs::create_request_pending(Master, Id, Source, _),
-  bfs::request(Master, Id, Source, "Create", FName),
-  appView(Master, _, _, _, FName, "i", Id2),
-  Id != Id2;
+    bfs::create_request_pending(Master, Id, Source, _),
+    bfs::request(Master, Id, Source, "Create", FName),
+    appView(Master, _, _, _, FName, "i", Id2),
+    Id != Id2;
 
 
 public
 bfs::rm_request_done(Master, Id, Source, Status) :-
-  canDelete(Master, Id, Source, Status, _);
+    canDelete(Master, Id, Source, Status, _);
 
 public
 red
 bfs::create_request_done(Master, Id, Source, Status) :-
-  bfs::create_request_pending(Master, Id, Source, Status),
-  Status == false;
+    bfs::create_request_pending(Master, Id, Source, Status),
+    Status == false;
 
 public
 bfs::rm_request_done(Master, Id, Source, Status) :-
-  bfs::rm_request_pending(Master, Id, Source, Status),
-  Status == false;
+    bfs::rm_request_pending(Master, Id, Source, Status),
+    Status == false;
