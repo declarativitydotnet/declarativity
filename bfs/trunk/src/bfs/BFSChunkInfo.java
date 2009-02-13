@@ -34,6 +34,7 @@ public class BFSChunkInfo implements Serializable, Comparable<BFSChunkInfo> {
 		return 0;
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof BFSChunkInfo))
 			return false;
@@ -42,10 +43,12 @@ public class BFSChunkInfo implements Serializable, Comparable<BFSChunkInfo> {
 		return (compareTo(other) == 0);
 	}
 
+	@Override
 	public int hashCode() {
 		return this.chunkId ^ this.length;
 	}
 
+	@Override
 	public String toString() {
 		return "Chunk #" + this.chunkId;
 	}

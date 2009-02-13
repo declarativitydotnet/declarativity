@@ -3,11 +3,11 @@ package bfs;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
-public class SimpleQueue {
-	private SynchronousQueue<Object> queue;
+public class SimpleQueue<T> {
+	private SynchronousQueue<T> queue;
 
 	SimpleQueue() {
-		this.queue = new SynchronousQueue<Object>();
+		this.queue = new SynchronousQueue<T>();
 	}
 
 	/**
@@ -17,7 +17,7 @@ public class SimpleQueue {
 	 * @param obj
 	 *            The element to add. Must not be null.
 	 */
-	public void put(Object obj) {
+	public void put(T obj) {
 		try {
 			this.queue.put(obj);
 		} catch (InterruptedException e) {
@@ -34,7 +34,7 @@ public class SimpleQueue {
 	 * @return The former head element, or <code>null</code> if a timeout
 	 *         occurred.
 	 */
-	public Object get(long timeout) {
+	public T get(long timeout) {
 		try {
 			return this.queue.poll(timeout, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
@@ -48,7 +48,7 @@ public class SimpleQueue {
 	 *
 	 * @return The former head element.
 	 */
-	public Object get() {
+	public T get() {
 		try {
 			return this.queue.take();
 		} catch (InterruptedException e) {

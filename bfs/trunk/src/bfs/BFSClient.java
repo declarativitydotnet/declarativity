@@ -23,13 +23,13 @@ import jol.types.table.Table.Callback;
 public class BFSClient {
 	private int currentMaster;
     private Random rand;
-	private SimpleQueue responseQueue;
+	private SimpleQueue<Object> responseQueue;
 	private JolSystem system;
 
 	public BFSClient(int port) {
         this.rand = new Random();
         this.currentMaster = 0;
-        this.responseQueue = new SimpleQueue();
+        this.responseQueue = new SimpleQueue<Object>();
 
 		try {
 	        /* this shouldn't be a static member at all... */

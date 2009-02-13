@@ -48,6 +48,7 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 		return this.fileName.compareTo(o.fileName);
 	}
 
+	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof BFSFileInfo))
 			return false;
@@ -56,6 +57,7 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 		return fInfo.fileName.equals(fInfo.fileName);
 	}
 
+	@Override
 	public int hashCode() {
 		return this.fileName.hashCode();
 	}
