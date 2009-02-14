@@ -123,10 +123,10 @@ public class Shell {
             // XXX: if the first data node in the list is down, we should
             // retry the write to one of the other data nodes
         	BFSNewChunkInfo info = getNewChunk(filename);
-        	if (info.getNodeCandidates().size() < Conf.getRepFactor())
+        	if (info.getCandidateNodes().size() < Conf.getRepFactor())
                 throw new RuntimeException("server sent too few datanodes: " + info);
 
-        	List<String> path = new LinkedList<String>(info.getNodeCandidates());
+        	List<String> path = new LinkedList<String>(info.getCandidateNodes());
         	String firstAddr = path.remove(0);
             DataConnection conn = new DataConnection(firstAddr);
             try {

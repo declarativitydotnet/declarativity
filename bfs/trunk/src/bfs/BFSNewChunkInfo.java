@@ -19,7 +19,7 @@ public class BFSNewChunkInfo implements Serializable {
 		return this.chunkId;
 	}
 
-	public List<String> getNodeCandidates() {
+	public List<String> getCandidateNodes() {
 		return this.nodeAddrs;
 	}
 

@@ -59,6 +59,48 @@ public class BFSClient {
 		;
 	}
 
+	public BFSNewChunkInfo getNewChunk(final String path) {
+        final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+                        if (success.booleanValue() == false)
+                            throw new RuntimeException("Failed to get new chunk for " + path);
+
+                        Object newChunkInfo = t.value(4);
+                        responseQueue.put(newChunkInfo);
+                        break;
+                    }
+                }
+            }
+        };
+        Table responseTbl = registerCallback(responseCallback, "response");
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("bfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", path));
+        try {
+        	this.system.schedule("bfs", tblName, req, null);
+        } catch (UpdateException e) {
+        	throw new RuntimeException(e);
+        }
+
+        BFSNewChunkInfo result = (BFSNewChunkInfo) waitForResponse(Conf.getListingTimeout());
+        responseTbl.unregister(responseCallback);
+        return result;
+	}
+
 	public boolean delete(final String path) {
         final int requestId = generateId();
 
