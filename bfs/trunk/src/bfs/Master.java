@@ -47,7 +47,7 @@ public class Master {
         /* Identify the address of the local node */
         Conf.setSelfAddress(this.address);
 
-        this.system = Runtime.create(true, this.port);
+        this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, this.port);
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
