@@ -142,13 +142,13 @@ public class Compiler {
 		this.owner = owner;
 
 		synchronized (runtime) {
-			if (!this.context.debug()) {
+			if (this.context.output() == null) {
 				this.runtime.setErrConsole(new Printer(new ByteArrayOutputStream	()));
 				this.runtime.setConsole(new Printer(new ByteArrayOutputStream()));
 			}
 			else {
-				this.runtime.setErrConsole(new Printer(System.err));
-				this.runtime.setConsole(new Printer(System.out));
+				this.runtime.setErrConsole(new Printer(this.context.output()));
+				this.runtime.setConsole(new Printer(this.context.output()));
 			}
 			
 			Node ast = parse(input);

@@ -25,6 +25,8 @@ import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
+
+import java.io.PrintStream;
 import java.lang.System;
 
 /**
@@ -38,6 +40,10 @@ import java.lang.System;
  * interact with the OverLog library.
  */
 public class Runtime implements JolSystem {
+	public enum DebugLevel {NONE, COMPILE, WATCH, ALL};
+	
+	private DebugLevel debug;
+	
 	/** Used to grab a quick identifier. */
 	private static Long idgenerator = 0L;
 
@@ -48,7 +54,9 @@ public class Runtime implements JolSystem {
 		return idgenerator++;
 	}
 
-	private boolean debug;
+	/** The output print stream that watches and debug statements
+	 * should be printed. */
+	private PrintStream output;
 	
 	/** The thread that the runtime executes in.
 	 * Created and started in {@link Runtime#create(int)}. */
@@ -80,7 +88,8 @@ public class Runtime implements JolSystem {
 	private int port;
 
 	/** Creates a new runtime. Called from {@link Runtime#create(int)}. */
-	private Runtime(boolean debug, int port) {
+	private Runtime(PrintStream output, DebugLevel debug, int port) {
+		this.output = output;
 		this.debug = debug;
 		this.port = port;
 		this.catalog = Table.initialize(this);
@@ -104,14 +113,24 @@ public class Runtime implements JolSystem {
 		this.thread     = null;
 	}
 	
+	/**
+	 * @return The output print stream.
+	 */
+	public PrintStream output() {
+		return this.output;
+	}
+	
+	/** @return The system lock. */
 	public Object lock() {
 		return this.driver;
 	}
 	
-	public boolean debug() {
+	/** @return The system debug level.
+	 * @see DebugLevel */
+	public DebugLevel debug() {
 		return this.debug;
 	}
-
+	
 	public void evaluate() throws JolRuntimeException {
 		// XXX might not be a good idea to bypass this check.
 		//		if (this.thread.isAlive()) {
@@ -372,26 +391,31 @@ public class Runtime implements JolSystem {
 	}
 	
 	public static JolSystem create() throws JolRuntimeException {
-		return create(false, -1, defaultLoader());
+		return create(DebugLevel.ALL);
 	}
 
-	public static JolSystem create(boolean debug) throws JolRuntimeException {
-		return create(debug, -1, defaultLoader());
+	public static JolSystem create(DebugLevel debug) throws JolRuntimeException {
+		return create(debug, System.err);
 	}
 
-	public static JolSystem create(boolean debug, int port) throws JolRuntimeException {
-		return create(debug, port, defaultLoader());
+	public static JolSystem create(DebugLevel debug, PrintStream output) throws JolRuntimeException {
+		return create(debug, output, -1);
 	}
+	
+	public static JolSystem create(DebugLevel debug, PrintStream output, int port) throws JolRuntimeException {
+		return create(debug, output, port, defaultLoader());
+	}
+	
 	/**
 	 * Creates a new runtime object that listens on the given network port.
 	 * @param port The network port that this runtime listens on.
 	 * @return A new runtime object.
 	 * @throws JolRuntimeException If something went wrong during bootstrap.
 	 */
-	public static JolSystem create(boolean debug, int port, ResourceLoader l) throws JolRuntimeException {
+	public static JolSystem create(DebugLevel debug, PrintStream output, int port, ResourceLoader l) throws JolRuntimeException {
 		try {
 			Runtime.loader = l;
-			Runtime runtime = new Runtime(debug, port);
+			Runtime runtime = new Runtime(output, debug, port);
 			URL runtimeFile = loader.getResource("jol/core/runtime.olg");
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
@@ -450,7 +474,7 @@ public class Runtime implements JolSystem {
 		args = arguments.toArray(new String[arguments.size()]);
 
 		// Initialize the global Runtime
-		Runtime runtime = (Runtime) Runtime.create(debug, port);
+		Runtime runtime = (Runtime) Runtime.create(DebugLevel.ALL, System.err, port);
 		for (int i = 0; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);
 			runtime.install("user", debugger, url);

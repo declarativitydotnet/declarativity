@@ -22,14 +22,18 @@ public class ValueList<T extends Comparable> extends ArrayList<T> implements Com
 		}
 	}
 
-	public int compareTo(ValueList<T> o) {
-		if (size() < o.size()) return -1;
-		if (size() > o.size()) return 1;
-		for (int i = 0; i < size(); i++) {
-			int comp = this.get(i).compareTo(o.get(i));
+	public int compareTo(ValueList<T> other) {
+		for (int i = 0; i < this.size(); i++) {
+			/* If this value list has more elements than the other it
+			 * comes after the other. */
+			if (i == other.size()) return 1;
+			int comp = this.get(i).compareTo(other.get(i));
 			if (comp != 0) return comp;
 		}
-		return 0;
+		/* If sizes match up then lists are equal. Otherwise
+		 * the other value list has more elements and therefore
+		 * this list comes before other. */
+		return this.size() == other.size() ? 0 : -1;
 	}
 
 	/**
