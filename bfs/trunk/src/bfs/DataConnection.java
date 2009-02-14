@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
 import java.util.List;
@@ -43,7 +44,7 @@ public class DataConnection {
         }
     }
 
-    void sendRoutingData(int chunkId, List<String> path) {
+    public void sendRoutingData(int chunkId, List<String> path) {
         try {
             this.dos.writeByte(DataProtocol.WRITE_OPERATION);
             this.dos.writeInt(chunkId);
@@ -67,7 +68,7 @@ public class DataConnection {
         }
     }
 
-    void sendChunkContent(FileChannel src) {
+    public void sendChunkContent(FileChannel src) {
         try {
             src.transferTo(0, Conf.getChunkSize(), this.channel);
         } catch (IOException e) {
@@ -76,7 +77,7 @@ public class DataConnection {
         }
     }
 
-    void write(byte[] buf) {
+    public void write(byte[] buf) {
         try {
             this.dos.write(buf);
         } catch (IOException e) {
@@ -84,7 +85,15 @@ public class DataConnection {
         }
     }
 
-    void close() {
+    public void write(ByteBuffer buf) {
+    	try {
+    		this.channel.write(buf);
+    	} catch (IOException e) {
+    		throw new RuntimeException(e);
+    	}
+    }
+
+    public void close() {
         try {
             this.socket.close();
         } catch (IOException e) {
