@@ -5,7 +5,7 @@ import bfs.test.TestCommon;
 import org.junit.Test;
 
 public class BFSMM3Test extends TestCommon {
-    @Test
+    @Test(timeout=120000)
     public void test3() {
         try {
             startMany("localhost:5500", "localhost:5502", "localhost:5503");

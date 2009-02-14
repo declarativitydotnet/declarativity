@@ -3,7 +3,7 @@ package bfs.test;
 import org.junit.Test;
 
 public class BFSTest extends TestCommon {
-    @Test
+    @Test(timeout=10000)
     public void test1() {
         try {
             startMany("localhost:5505");

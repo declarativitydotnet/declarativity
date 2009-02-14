@@ -5,7 +5,7 @@ import org.junit.Test;
 public class BFSData3Test extends DataCommon {
     private static final String TEST_FILE = "/usr/share/dict/words";
 
-	@Test
+	@Test(timeout=28000)
     public void test1() {
         test(TEST_FILE, 4, 1, 13);
         check_files();
