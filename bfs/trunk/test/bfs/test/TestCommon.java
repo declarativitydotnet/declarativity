@@ -193,7 +193,7 @@ public class TestCommon {
     }
 
     protected void appendFile(Shell shell, String name, InputStream s)
-            throws UpdateException {
+            throws UpdateException, JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         argList.add(name);
         shell.doAppend(argList, s);

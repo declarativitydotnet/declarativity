@@ -104,11 +104,11 @@ public class Shell {
         this.system.start();
     }
 
-    public void doAppend(List<String> args) throws UpdateException {
+    public void doAppend(List<String> args) throws UpdateException, JolRuntimeException {
         this.doAppend(args, System.in);
     }
 
-    public void doAppend(List<String> args, InputStream s) throws UpdateException {
+    public void doAppend(List<String> args, InputStream s) throws UpdateException, JolRuntimeException {
         if (args.size() != 1)
             usage();
 
@@ -122,15 +122,15 @@ public class Shell {
         	// and don't want to mess with JOL-owned data.
             // XXX: if the first data node in the list is down, we should
             // retry the write to one of the other data nodes
-            List<String> path = new ArrayList<String>(getNewChunk(filename));
-            if (path.size() < (Conf.getRepFactor() + 1))
-                throw new RuntimeException("server sent too few datanodes: " + path.toString());
+        	BFSNewChunkInfo info = getNewChunk(filename);
+        	if (info.getNodeCandidates().size() < Conf.getRepFactor())
+                throw new RuntimeException("server sent too few datanodes: " + info);
 
-            String firstAddr = path.remove(0);
-            int chunkId = Integer.valueOf(path.remove(path.size() - 1));
+        	List<String> path = new LinkedList<String>(info.getNodeCandidates());
+        	String firstAddr = path.remove(0);
             DataConnection conn = new DataConnection(firstAddr);
             try {
-                conn.sendRoutingData(chunkId, path);
+                conn.sendRoutingData(info.getChunkId(), path);
 
                 int nread = 0;
                 byte buf[] = new byte[Conf.getBufSize()];
@@ -170,7 +170,7 @@ public class Shell {
         }
     }
 
-    private List<String> getNewChunk(final String filename) throws UpdateException {
+    private BFSNewChunkInfo getNewChunk(final String filename) throws UpdateException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -188,8 +188,8 @@ public class Shell {
                         if (success.booleanValue() == false)
                             throw new RuntimeException("Failed to get new chunk for " + filename);
 
-                        Object chunkList = t.value(4);
-                        responseQueue.put(chunkList);
+                        Object newChunkInfo = t.value(4);
+                        responseQueue.put(newChunkInfo);
                         break;
                     }
                 }
@@ -203,9 +203,9 @@ public class Shell {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", filename));
         this.system.schedule("bfs", tblName, req, null);
 
-        List<String> resultList = (List<String>) this.responseQueue.get(); // XXX: timeout?
+        BFSNewChunkInfo result = (BFSNewChunkInfo) spinGet(Conf.getListingTimeout());
         responseTbl.unregister(responseCallback);
-        return Collections.unmodifiableList(resultList);
+        return result;
     }
 
     private List<BFSChunkInfo> getChunkList(final String filename) throws UpdateException, JolRuntimeException {

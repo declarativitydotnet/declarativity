@@ -2,6 +2,7 @@ program bfs;
 
 import bfs.BFSChunkInfo;
 import bfs.BFSFileInfo;
+import bfs.BFSNewChunkInfo;
 import bfs.Conf;
 import bfs.Master;
 import bfs.Shell;
@@ -24,9 +25,8 @@ public
 response(@Source, Id, Master, true, Result) :-
     //request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
-    bfs_chunks::newListHolder(@Master, Source, Id, Result, NewChunkId, FName),
-    // Hack: add the new chunk id to the end of the result list
-    Result.add(NewChunkId.toString());
+    bfs_chunks::newListHolder(@Master, Source, Id, CandidateNodes, NewChunkId, FName),
+    Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
 delete
 request(Master, Id, Source, "NewChunk", FName) :-
