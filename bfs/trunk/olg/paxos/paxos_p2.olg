@@ -11,10 +11,10 @@ import jol.core.Runtime;
 define(acceptRequest,keys(0,1),{String,Integer, Integer,String,Integer});
 define(sendBeginRound,keys(0,1,2),{String, Integer,Integer,String,String});
 //define(sendBeginRound,{String, Integer,Integer,String,String});
-define(notstasis_accept,keys(0,1),{String, Integer,Integer,String,String});
+define(stasis_accept,keys(0,1),{String, Integer,Integer,String,String});
 define(sendAccept,keys(0,1,4),{String, Integer,Integer,String,String});
 define(decree,keys(0,1),{String, Integer,Integer,String});
-define(success,keys(0,1),{String,Integer, Integer,String,String});
+define(stasis_success,keys(0,1),{String,Integer, Integer,String,String});
 	
 define(acceptCnt,keys(0,1),{String,Integer,Integer,Integer});
 	
@@ -60,7 +60,7 @@ acceptRequest(Master,I,Round,Decree,-2) :-
   paxos::storedDecreeRequest(Master,Decree,From,_),
   paxos::quorum(Master,Round),
   paxos::instance(Master,I),
-  notin success(Master,I,_,_,_),
+  notin stasis_success(Master,I,_,_,_),
   I > 0;
 
 public
@@ -76,7 +76,7 @@ message to p. (A BeginBallot (b, d) message is ignored if b = nextBal [q].)
 ***************************************************************************************/
 public
 r4_a
-notstasis_accept(Agent,Instance,Round,Decree,Master) :-
+stasis_accept(Agent,Instance,Round,Decree,Master) :-
   sendBeginRound(Agent,Instance,Round,Decree,Master),
 	paxos::nextBal(Agent,OldB),
   paxos::instance(Agent,Instance),
@@ -84,25 +84,25 @@ notstasis_accept(Agent,Instance,Round,Decree,Master) :-
 
 /*
 repair
-notstasis_accept(Agent,Instance,Round,Decree) :-
+stasis_accept(Agent,Instance,Round,Decree) :-
   sendBeginRound(Agent,Instance,Round,Decree,Master),
 	nextBal(Agent,OldB),
   instance(Agent,I),
 	Instance < I
-  notstasis_accept(Agent,Instance,Round,Decree)
+  stasis_accept(Agent,Instance,Round,Decree)
 */
 
 public
 r4_b	
 paxos::prevVote(Agent,Instance,Round,Decree) :- 
   paxos::prevVote(Agent,OI,Old,OD),
-	paxos::lastPromise(Agent,IO2,Round,OldRound,OldDecree),
-	notstasis_accept#insert(Agent,Instance,Round,Decree),
+	paxos::stasis_lastPromise(Agent,IO2,Round,OldRound,OldDecree),
+	stasis_accept#insert(Agent,Instance,Round,Decree),
 	Round >= Old;
 
 r4_c	
 sendAccept(@Master,Instance,Round,Decree,Agent) :- 
-  notstasis_accept(@Agent,Instance,Round,Decree,Master);
+  stasis_accept(@Agent,Instance,Round,Decree,Master);
 	
 votes
 acceptCnt(Master,Instance,Round,count<Agent>) :- 
@@ -124,7 +124,7 @@ decree(Master,Instance,Round,Decree) :-
 
 public
 r5_b	
-success(@Agent,Instance,Round,Decree,From) :-
+stasis_success(@Agent,Instance,Round,Decree,From) :-
   decree(@Master,Instance,Round,Decree),
 	paxos::storedDecreeRequest(@Master,Decree,From,_),
 	// we interpret "every" to mean a broadcast.
@@ -132,7 +132,7 @@ success(@Agent,Instance,Round,Decree,From) :-
 
 public
 r5_c
-success(@Agent,Instance,Round,Decree,From) :-
+stasis_success(@Agent,Instance,Round,Decree,From) :-
   decree(@Master,Instance,Round,Decree),
 	// this might be a mistake. 
 	paxos_global::decreeRequestBuffer(@Master,Decree,From),
@@ -144,7 +144,7 @@ success(@Agent,Instance,Round,Decree,From) :-
 // breakout.
 public
 r5_d
-success(Agent,Instance,Round,Decree,From) :-
+stasis_success(Agent,Instance,Round,Decree,From) :-
   paxos::storedDecreeRequest(Agent,Decree,From,_),
   paxos::priestCnt(Agent,1),
   Round := -1,
@@ -155,7 +155,7 @@ success(Agent,Instance,Round,Decree,From) :-
 public
 response
 paxos_global::requestStatus(Master,From,Decree,Instance,"passed") :- 
-  success(Master,Instance,Round,Decree,From);
+  stasis_success(Master,Instance,Round,Decree,From);
 
 
 public
@@ -176,7 +176,7 @@ watch(decree,ae);
 watch(acceptCnt,ae);
 watch(sendAccept,ae);
 watch(sendBeginRound,ae);
-watch(notstasis_accept,ae);
+watch(stasis_accept,ae);
 watch(success,ae);
 //watch(decreeRequest,ae);
 	

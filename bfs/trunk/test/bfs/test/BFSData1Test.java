@@ -13,7 +13,7 @@ public class BFSData1Test extends DataCommon {
     }
 
 	public static void main(String[] args) throws Exception {
-		BFSData1Test t = new BFSData1Test();
+	    BFSData1Test t = new BFSData1Test();
 		t.test1();
 	}
 }
