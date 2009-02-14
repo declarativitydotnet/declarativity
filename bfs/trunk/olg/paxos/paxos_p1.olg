@@ -14,7 +14,7 @@ define(node,keys(0),{String});
 define(parliament,keys(0,1),{String,String});
 define(prepare,keys(0,1),{String,Integer,String});
 define(sendPrepare,keys(0,1,3),{String,Integer,String,String});
-define(lastPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
+define(stasis_lastPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
 define(sendPromise,keys(0,1,2,5),{String,Integer,Integer,Integer,String,String});
 	
 define(maxPrevRound,keys(0),{String,Integer,Integer});
@@ -127,11 +127,11 @@ r2_a
 nextBal(Agent,Round) :-
   nextBal(Agent,Old),
   // same reason as r1_a: I need to see the old version on the rhs.
-	lastPromise#insert(Agent,Instance,Round,OldRound,Decree),
+	stasis_lastPromise#insert(Agent,Instance,Round,OldRound,Decree),
 	Round > Old;
 
 r2_b
-lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :- 
+stasis_lastPromise(Agent,Instance,Round,OldRound,OldDecree,Peer) :- 
   sendPrepare(Agent,Round,Decree,Peer),
     Round > -1,
 	prevVote(Agent,OI,OldRound,OldDecree),
@@ -146,7 +146,7 @@ maxPrevVoteInstance(Master,max<Instance>) :-
   prevVote(Master,Instance,_,_);
 
 r2_b2
-lastPromise(Agent,Instance,Round,-1,"none",Peer) :- 
+stasis_lastPromise(Agent,Instance,Round,-1,"none",Peer) :- 
   sendPrepare(Agent,Round,Decree,Peer),
     Round > -1,
     maxPrevVoteInstance(Agent,OI),
@@ -155,7 +155,7 @@ lastPromise(Agent,Instance,Round,-1,"none",Peer) :-
 
 r2_c	
 sendPromise(@Master,Instance,Round,OldRound,Decree,Agent) :-
-	lastPromise(@Agent,Instance,Round,OldRound,Decree,Master);	
+	stasis_lastPromise(@Agent,Instance,Round,OldRound,Decree,Master);	
 
 
 /* for quorum handling, aggregates are difficult to avoid... */
