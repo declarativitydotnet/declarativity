@@ -25,6 +25,7 @@ public class BFSInputStream extends FSInputStream {
 	private List<BFSChunkInfo> chunkList;
 	private boolean isClosed;
 	private boolean atEOF;
+	private ByteBuffer buf;
 
 	// Byte-wise offset into the logical file contents
 	private long position;
@@ -32,18 +33,16 @@ public class BFSInputStream extends FSInputStream {
 	// Index into "chunkList" identifying the current chunk we're positioned at.
 	// These fields are updated by updatePosition().
 	private int currentChunkIdx;
-	private int currentChunkOffset;
 	private BFSChunkInfo currentChunk;
 	private Set<String> chunkLocations;
-	private ByteBuffer buf;
 
 	public BFSInputStream(String path, BFSClient bfs) throws IOException {
 		this.bfs = bfs;
 		this.path = path;
 		this.isClosed = false;
 		this.atEOF = false;
-		this.chunkList = bfs.getChunkList(path);
 		this.buf = ByteBuffer.allocate(Conf.getChunkSize());
+		this.chunkList = bfs.getChunkList(path);
 		updatePosition(0);
 	}
 
@@ -88,8 +87,7 @@ public class BFSInputStream extends FSInputStream {
 		else
 			this.atEOF = false;
 
-		this.currentChunkIdx = (int) chunkNum;
-		this.currentChunkOffset = (int) chunkOffset;
+		this.currentChunkIdx = chunkNum;
 		this.position = newPos;
 	}
 
