@@ -1,5 +1,6 @@
 package jol.types.operator;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -79,7 +80,11 @@ public class Watch extends Operator {
 			sb.append("\n");
 		}
 
-		this.context.output().print(sb);
+		try {
+			this.context.output().write(sb.toString().getBytes());
+		} catch (IOException e) {
+			throw new JolRuntimeException(e);
+		}
 		return tuples;
 	}
 
