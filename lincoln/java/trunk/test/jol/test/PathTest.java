@@ -46,7 +46,7 @@ public class PathTest {
 
     @Before
     public void setup() throws JolRuntimeException, UpdateException {
-        this.sys = Runtime.create(DebugLevel.ALL, System.err, 5000);
+        this.sys = Runtime.create(Runtime.DEBUG_ALL, System.err, 5000);
         this.sys.catalog().register(new PathTable((Runtime) this.sys));
 
         URL u = ClassLoader.getSystemResource("jol/test/path.olg");

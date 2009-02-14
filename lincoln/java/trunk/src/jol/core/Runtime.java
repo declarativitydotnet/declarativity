@@ -3,6 +3,8 @@ package jol.core;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +28,7 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.System;
 
@@ -40,9 +43,16 @@ import java.lang.System;
  * interact with the OverLog library.
  */
 public class Runtime implements JolSystem {
-	public enum DebugLevel {NONE, COMPILE, WATCH, ALL};
+	public enum DebugLevel {COMPILE, WATCH};
 	
-	private DebugLevel debug;
+	public static final Set<DebugLevel> DEBUG_ALL = new HashSet<DebugLevel>();
+	static {
+		for (DebugLevel level : DebugLevel.values()) {
+			DEBUG_ALL.add(level);
+		}
+	}
+	
+	private Set<DebugLevel> debug;
 	
 	/** Used to grab a quick identifier. */
 	private static Long idgenerator = 0L;
@@ -88,9 +98,9 @@ public class Runtime implements JolSystem {
 	private int port;
 
 	/** Creates a new runtime. Called from {@link Runtime#create(int)}. */
-	private Runtime(PrintStream output, DebugLevel debug, int port) {
+	private Runtime(PrintStream output, int port) {
 		this.output = output;
-		this.debug = debug;
+		this.debug = new HashSet<DebugLevel>();
 		this.port = port;
 		this.catalog = Table.initialize(this);
 		Compiler.initialize(this);
@@ -125,10 +135,18 @@ public class Runtime implements JolSystem {
 		return this.driver;
 	}
 	
-	/** @return The system debug level.
+	/** @return true if debug level is active, false otherwise. 
 	 * @see DebugLevel */
-	public DebugLevel debug() {
-		return this.debug;
+	public boolean debugActive(DebugLevel level) {
+		return this.debug.contains(level);
+	}
+	
+	public void debugAdd(DebugLevel level) {
+		this.debug.add(level);
+	}
+	
+	public void debugRemove(DebugLevel level) {
+		this.debug.remove(level);
 	}
 	
 	public void evaluate() throws JolRuntimeException {
@@ -391,18 +409,18 @@ public class Runtime implements JolSystem {
 	}
 	
 	public static JolSystem create() throws JolRuntimeException {
-		return create(DebugLevel.ALL);
+		return create(null);
 	}
 
-	public static JolSystem create(DebugLevel debug) throws JolRuntimeException {
+	public static JolSystem create(Set<DebugLevel> debug) throws JolRuntimeException {
 		return create(debug, System.err);
 	}
 
-	public static JolSystem create(DebugLevel debug, PrintStream output) throws JolRuntimeException {
+	public static JolSystem create(Set<DebugLevel> debug, PrintStream output) throws JolRuntimeException {
 		return create(debug, output, -1);
 	}
 	
-	public static JolSystem create(DebugLevel debug, PrintStream output, int port) throws JolRuntimeException {
+	public static JolSystem create(Set<DebugLevel> debug, PrintStream output, int port) throws JolRuntimeException {
 		return create(debug, output, port, defaultLoader());
 	}
 	
@@ -412,10 +430,19 @@ public class Runtime implements JolSystem {
 	 * @return A new runtime object.
 	 * @throws JolRuntimeException If something went wrong during bootstrap.
 	 */
-	public static JolSystem create(DebugLevel debug, PrintStream output, int port, ResourceLoader l) throws JolRuntimeException {
+	public static JolSystem create(Set<DebugLevel> debug, PrintStream output, int port, ResourceLoader l) throws JolRuntimeException {
 		try {
 			Runtime.loader = l;
-			Runtime runtime = new Runtime(output, debug, port);
+			Runtime runtime = new Runtime(output, port);
+			if (debug != null && debug.size() > 0) {
+				if (output == null) {
+					throw new JolRuntimeException("Can't have debug values with a null output print stream!");
+				}
+				for (DebugLevel level : debug) {
+					runtime.debugAdd(level);
+				}
+			}
+			
 			URL runtimeFile = loader.getResource("jol/core/runtime.olg");
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
@@ -474,7 +501,7 @@ public class Runtime implements JolSystem {
 		args = arguments.toArray(new String[arguments.size()]);
 
 		// Initialize the global Runtime
-		Runtime runtime = (Runtime) Runtime.create(DebugLevel.ALL, System.err, port);
+		Runtime runtime = (Runtime) Runtime.create(DEBUG_ALL, System.err, port);
 		for (int i = 0; i < args.length; i++) {
 			URL url = new URL("file", "", args[i]);
 			runtime.install("user", debugger, url);

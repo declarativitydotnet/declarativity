@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import jol.core.Runtime;
+import jol.core.Runtime.DebugLevel;
 import jol.exec.BasicQuery;
 import jol.exec.Query;
 import jol.lang.plan.Watch.WatchTable;
@@ -336,10 +337,10 @@ public class Rule extends Clause {
 		
 		WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
 		if (watch.watched(program, event.name(), jol.types.operator.Watch.Modifier.RECEIVE) != null) {
-			operators.add(
-					new jol.types.operator.Watch(context, program, name, event.name(), 
-							                    jol.types.operator.Watch.Modifier.RECEIVE));
-		}
+				operators.add(
+						new jol.types.operator.Watch(context, program, name, event.name(), 
+								jol.types.operator.Watch.Modifier.RECEIVE));
+			}
 		
 		if (event instanceof Function) {
 			operators.add(event.operator(context, event.schema().clone()));
@@ -386,7 +387,7 @@ public class Rule extends Clause {
 		if (watch.watched(program, head.name(), jol.types.operator.Watch.Modifier.SEND) != null) {
 			operators.add(
 					new jol.types.operator.Watch(context, program, name, head.name(), 
-							                    jol.types.operator.Watch.Modifier.SEND));
+							jol.types.operator.Watch.Modifier.SEND));
 		}
 		
 		Variable headLoc  = head.locationVariable();

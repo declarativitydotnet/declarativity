@@ -38,9 +38,6 @@ public class Watch extends Operator {
 	/** The Modifier type of this watch operators. */
 	private Modifier modifier;
 
-	/** The print stream that this watch operators sends to. */
-	private PrintStream stream;
-
 	/**
 	 * Create a new watch operator.
 	 * stderr is used as the print stream.
@@ -51,24 +48,9 @@ public class Watch extends Operator {
 	 * @param modifier The modifier type.
 	 */
 	public Watch(Runtime context, String program, String rule, TableName name, Modifier modifier) {
-		this(context, program, rule, name, modifier, System.err);
-	}
-
-	/**
-	 * Create a new watch operator.
-	 * stderr is used as the print stream.
-	 * @param context The runtime context.
-	 * @param program The program name.
-	 * @param rule The rule name.
-	 * @param name The table name.
-	 * @param modifier The modifier type.
-	 * @param stream the print stream.
-	 */
-	public Watch(Runtime context, String program, String rule, TableName name, Modifier modifier, PrintStream stream) {
 		super(context, program, rule);
 		this.name = name;
 		this.modifier = modifier;
-		this.stream = stream;
 	}
 
 	@Override
@@ -97,7 +79,7 @@ public class Watch extends Operator {
 			sb.append("\n");
 		}
 
-		stream.print(sb);
+		this.context.output().print(sb);
 		return tuples;
 	}
 
