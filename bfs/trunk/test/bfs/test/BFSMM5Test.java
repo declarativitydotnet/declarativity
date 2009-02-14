@@ -18,7 +18,7 @@ public class BFSMM5Test extends TestCommon {
         this.masters.add(m);
     }
 
-    @Test
+    @Test(timeout=60000)
     public void test5() {
         try {
             startMany("localhost:5500", "localhost:5502", "localhost:5503");

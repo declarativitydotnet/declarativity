@@ -7,16 +7,25 @@ RUNTEST = java -cp dist/bfs.jar:lib/junit.jar:lib/jol.jar:dist/bfs-test.jar
 .PHONY: test clean-test
 
 TARGETS=$(shell ls test/bfs/test/ | grep Test\\\.java | perl -pe 's/\.java/.test/g')
+SLOWTARGETS=$(shell ls test/bfs/test/ | grep Test\\\.java | perl -pe 's/\.java/.slowtest/g')
 
 test: ${TARGETS}
+slowtest: ${SLOWTARGETS}
 
 %.test: TESTPREP
+	@echo -n `date`: Running $*
+	@${RUNTEST} org.junit.runner.JUnitCore bfs.test.$* 2> test-output/$*.txt 1>&2 || echo -n '      <---- FAILED'
+	@echo
+
+%.slowtest: TESTPREP
 	@echo -n `date`: Running $*
 	@${RUNTEST} bfs.test.$* 2> test-output/$*.txt 1>&2 || echo -n '      <---- FAILED'
 	@echo
 
+
 TESTPREP: clean-test
 	ant -q -e
+	mkdir -p test-output
 
 clean-test:
 	rm -f test-output/*.txt
