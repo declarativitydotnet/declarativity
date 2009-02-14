@@ -4,6 +4,7 @@ import java.net.URL;
 
 import jol.core.Runtime;
 import jol.core.JolSystem;
+import jol.core.Runtime.DebugLevel;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 
@@ -17,7 +18,7 @@ public abstract class LocalTestBase {
     
     public void setup(String filename) throws JolRuntimeException, UpdateException {
         try { 
-        	sys = Runtime.create(true, 5000);
+        	sys = Runtime.create(DebugLevel.ALL, System.err, 5000);
 
             URL u = ClassLoader.getSystemResource(filename);
             sys.install("unit-test", u);

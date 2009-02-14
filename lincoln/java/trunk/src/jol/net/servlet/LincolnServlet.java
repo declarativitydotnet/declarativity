@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import jol.core.Runtime.DebugLevel;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 
@@ -41,7 +42,7 @@ public class LincolnServlet extends HttpServlet {
 					System.out.println("Creating new instance of " + lincolnProgram);
 					jol.core.Runtime.ResourceLoader l
 					    = jol.core.Runtime.servletLoader(getServletContext());
-					ret = (jol.core.Runtime) jol.core.Runtime.create(false, getLincolnPort(), l);
+					ret = (jol.core.Runtime) jol.core.Runtime.create(DebugLevel.NONE, System.err, getLincolnPort(), l);
 					ret.install("user", l.getResource(getLincolnProgramName()));
 					ret.evaluate(); // Install program arguments.
 					ret.start();

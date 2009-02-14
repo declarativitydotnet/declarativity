@@ -4,6 +4,7 @@ import java.net.URL;
 
 import jol.core.Runtime;
 import jol.core.JolSystem;
+import jol.core.Runtime.DebugLevel;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -45,7 +46,7 @@ public class PathTest {
 
     @Before
     public void setup() throws JolRuntimeException, UpdateException {
-        this.sys = Runtime.create(true, 5000);
+        this.sys = Runtime.create(DebugLevel.ALL, System.err, 5000);
         this.sys.catalog().register(new PathTable((Runtime) this.sys));
 
         URL u = ClassLoader.getSystemResource("jol/test/path.olg");

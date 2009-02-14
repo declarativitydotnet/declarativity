@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import jol.types.table.Key;
+
 /**
  * A tuple is an ordered list of values.
  * Tuple values must implement the {#link Serializable}
@@ -80,6 +82,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 	private final static int BYTE = 8;
 	private final static int FLOAT = 9;
 	private final static int DOUBLE = 10;
+	private final static int KEY = 11;
 
 	private boolean warned = false;
 
@@ -117,6 +120,12 @@ public class Tuple implements Iterable<Object>, Serializable {
 			} else if (o instanceof Double) {
 				out.writeByte(DOUBLE);
 				out.writeDouble((Double) o);
+			} else if (o instanceof Key) {
+				Key key = (Key) o;
+				out.writeInt(key.size());
+				for (Integer i : key) {
+					out.writeInt(i);
+				}
 			} else {
 				if (!warned) {
 					System.out.println("sending non-primitive: " + o.getClass().toString());
@@ -162,6 +171,10 @@ public class Tuple implements Iterable<Object>, Serializable {
 				values.add(in.readFloat());
 			} else if (type == DOUBLE) {
 				values.add(in.readDouble());
+			} else if (type == KEY) {
+				int values = in.readInt();
+				List<Integer> fields = new ArrayList<Integer>(values);
+				while (values-- > 0) fields.add(in.readInt());
 			} else if (type == OBJECT) {
 				int len = in.readInt();
 				byte[] obytes = new byte[len];

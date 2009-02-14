@@ -5,6 +5,7 @@ import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
 import jol.core.JolSystem;
+import jol.core.Runtime.DebugLevel;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -87,8 +88,8 @@ public class PingPongTest {
     @Before
     public void setup() throws JolRuntimeException, UpdateException {
         this.systems = new JolSystem[2];
-        this.systems[0] = this.pinger = Runtime.create(true, PINGER_PORT);
-        this.systems[1] = this.ponger = Runtime.create(true, PONGER_PORT);
+        this.systems[0] = this.pinger = Runtime.create(DebugLevel.ALL, System.err, PINGER_PORT);
+        this.systems[1] = this.ponger = Runtime.create(DebugLevel.ALL, System.err, PONGER_PORT);
 
         for (JolSystem s : this.systems)
         {

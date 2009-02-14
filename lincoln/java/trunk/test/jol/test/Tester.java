@@ -6,6 +6,7 @@ import java.util.Random;
 
 import jol.core.Runtime;
 import jol.core.JolSystem;
+import jol.core.Runtime.DebugLevel;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
@@ -40,7 +41,7 @@ public class Tester {
 
     @Before
     public void setup() throws JolRuntimeException, UpdateException {
-        this.sys = Runtime.create(true, 5000);
+        this.sys = Runtime.create(DebugLevel.ALL, System.err, 5000);
         this.sys.install("test", this.programFile);
         this.sys.evaluate();    // XXX: temporary workaround for runtime bug
     }
@@ -90,7 +91,7 @@ public class Tester {
     	}
     	writer.close();
 
-        JolSystem system = Runtime.create(true, 5000);
+        JolSystem system = Runtime.create(DebugLevel.ALL, System.err, 5000);
         system.install("test", ClassLoader.getSystemResource("jol/test/largedata.olg"));
         system.evaluate();
         system.evaluate();
