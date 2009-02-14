@@ -73,7 +73,7 @@ public class DataNode {
         /* Identify the address of the local node */
         Conf.setSelfAddress(Conf.getDataNodeAddress(this.nodeId));
 
-        this.system = Runtime.create(true, this.port);
+        this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, this.port);
         this.system.install("bfs_heartbeat", ClassLoader.getSystemResource("bfs/files.olg"));
         this.system.evaluate();
 
