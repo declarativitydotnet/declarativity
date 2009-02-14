@@ -28,8 +28,7 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.OutputStream;
 import java.lang.System;
 
 /**
@@ -66,7 +65,7 @@ public class Runtime implements JolSystem {
 
 	/** The output print stream that watches and debug statements
 	 * should be printed. */
-	private PrintStream output;
+	private OutputStream output;
 	
 	/** The thread that the runtime executes in.
 	 * Created and started in {@link Runtime#create(int)}. */
@@ -98,7 +97,7 @@ public class Runtime implements JolSystem {
 	private int port;
 
 	/** Creates a new runtime. Called from {@link Runtime#create(int)}. */
-	private Runtime(PrintStream output, int port) {
+	private Runtime(OutputStream output, int port) {
 		this.output = output;
 		this.debug = new HashSet<DebugLevel>();
 		this.port = port;
@@ -126,7 +125,7 @@ public class Runtime implements JolSystem {
 	/**
 	 * @return The output print stream.
 	 */
-	public PrintStream output() {
+	public OutputStream output() {
 		return this.output;
 	}
 	
@@ -416,11 +415,11 @@ public class Runtime implements JolSystem {
 		return create(debug, System.err);
 	}
 
-	public static JolSystem create(Set<DebugLevel> debug, PrintStream output) throws JolRuntimeException {
+	public static JolSystem create(Set<DebugLevel> debug, OutputStream output) throws JolRuntimeException {
 		return create(debug, output, -1);
 	}
 	
-	public static JolSystem create(Set<DebugLevel> debug, PrintStream output, int port) throws JolRuntimeException {
+	public static JolSystem create(Set<DebugLevel> debug, OutputStream output, int port) throws JolRuntimeException {
 		return create(debug, output, port, defaultLoader());
 	}
 	
@@ -430,7 +429,7 @@ public class Runtime implements JolSystem {
 	 * @return A new runtime object.
 	 * @throws JolRuntimeException If something went wrong during bootstrap.
 	 */
-	public static JolSystem create(Set<DebugLevel> debug, PrintStream output, int port, ResourceLoader l) throws JolRuntimeException {
+	public static JolSystem create(Set<DebugLevel> debug, OutputStream output, int port, ResourceLoader l) throws JolRuntimeException {
 		try {
 			Runtime.loader = l;
 			Runtime runtime = new Runtime(output, port);
