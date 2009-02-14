@@ -35,7 +35,7 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 		return Conf.getRepFactor();
 	}
 
-	public long getChunkSize() {
+	public int getChunkSize() {
 		return Conf.getChunkSize();
 	}
 

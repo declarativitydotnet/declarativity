@@ -34,13 +34,12 @@ public class Conf {
     private static final long fileOpTimeout = 20000;
     private static final long listingTimeout = 5000;
 
-    private static final long chunkSize = 102400;
-
+    private static final int chunkSize = 102400;
     private static final int bufSize = 102400;
 
     private static int replicationFactor = 1;
 
-    public static long getChunkSize() {
+    public static int getChunkSize() {
         assert(chunkSize >= bufSize);
         return chunkSize;
     }
