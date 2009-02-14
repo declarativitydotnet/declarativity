@@ -19,7 +19,7 @@ public class DataConnection {
     private DataOutputStream dos;
     private String remoteAddr;
 
-    DataConnection(String nodeAddr) {
+    public DataConnection(String nodeAddr) {
         setupStream(nodeAddr);
     }
 
