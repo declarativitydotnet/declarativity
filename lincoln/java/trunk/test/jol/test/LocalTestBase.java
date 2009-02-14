@@ -18,7 +18,7 @@ public abstract class LocalTestBase {
     
     public void setup(String filename) throws JolRuntimeException, UpdateException {
         try { 
-        	sys = Runtime.create(DebugLevel.ALL, System.err, 5000);
+        	sys = Runtime.create(Runtime.DEBUG_ALL, System.err, 5000);
 
             URL u = ClassLoader.getSystemResource(filename);
             sys.install("unit-test", u);

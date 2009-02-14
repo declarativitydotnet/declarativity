@@ -9,6 +9,7 @@ import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 import jol.core.Runtime;
+import jol.core.Runtime.DebugLevel;
 
 public class Watch extends Clause {
 	
@@ -23,9 +24,12 @@ public class Watch extends Clause {
 			jol.types.operator.Watch.Modifier.class,   // Modifier
 			jol.types.operator.Watch.class             // Operator
 		};
+		
+		private Runtime context;
 
 		public WatchTable(Runtime context) {
 			super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
+			this.context = context;
 		}
 
 		@Override
@@ -39,14 +43,16 @@ public class Watch extends Clause {
 		}
 		
 		public Operator watched(String program, TableName name, jol.types.operator.Watch.Modifier modifier) {
-			Tuple key = new Tuple(program, name, modifier);
-			try {
-				TupleSet tuples = primary().lookupByKey(primary().key().project(key));
-				if (tuples.size() > 0) {
-					return (Operator) tuples.iterator().next().value(Field.OPERATOR.ordinal());
+			if (this.context.debugActive(DebugLevel.WATCH)) {
+				Tuple key = new Tuple(program, name, modifier);
+				try {
+					TupleSet tuples = primary().lookupByKey(primary().key().project(key));
+					if (tuples.size() > 0) {
+						return (Operator) tuples.iterator().next().value(Field.OPERATOR.ordinal());
+					}
+				} catch (BadKeyException e) {
+					e.printStackTrace();
 				}
-			} catch (BadKeyException e) {
-				e.printStackTrace();
 			}
 			return null;
 		}
