@@ -186,7 +186,7 @@ public class Shell {
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
                         if (success.booleanValue() == false)
-                            throw new RuntimeException("Failed to get chunk list for " + filename);
+                            throw new RuntimeException("Failed to get new chunk for " + filename);
 
                         Object chunkList = t.value(4);
                         responseQueue.put(chunkList);
