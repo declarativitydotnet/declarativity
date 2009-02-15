@@ -55,7 +55,6 @@ public class TestCommon {
         return ret;
     }
 
-
     protected void killMaster(int index) {
         this.masters.get(index).stop();
     }
@@ -143,7 +142,7 @@ public class TestCommon {
     protected void cleanup(String dir) {
         File file = new File(dir);
         if (file.exists()) {
-            try{
+            try {
                 File chunks = new File(file, "chunks");
                 for (File f : chunks.listFiles()) {
                     f.delete();

@@ -8,8 +8,8 @@ public class BFSData1Test extends DataCommon {
 	@Test(timeout=16000)
     public void test1() {
 	    test(TEST_FILE, 1, 1, 1);
-        check_files();
-        cleanup_all();
+        checkFiles();
+        cleanupAll();
     }
 
 	public static void main(String[] args) throws Exception {
