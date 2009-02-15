@@ -1,9 +1,7 @@
 program bfs_chunks;
 
-import java.util.ArrayList;
-import java.util.Set;
-
 import java.lang.System;
+import java.util.Set;
 
 define(chunkSeq, keys(0), {String, Integer});
 //watch(chunkSeq, ae);
@@ -32,17 +30,17 @@ chunkSeq(Master, I+1) :-
     newListHolder#insert(Master, Source, Id, _, I, _);
 
 
-define(newListHolder,keys(0,2),{String,String,Integer,ArrayList,Integer,String});
+define(newListHolder,keys(0,2),{String,String,Integer,Set,Integer,String});
 //watch(newListHolder, ae);
 
-newListHolder(Master, Source, Id, List, NewChunkId, FName) :-
-    candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
+newListHolder(Master, Source, Id, NodeSet, NewChunkId, FName) :-
+    candidate_datanode(Master, Id, Source, FName, NewChunkId, NodeSet),
     bfs::request(Master, Id, Source, "NewChunk", FName);
 
-define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ArrayList});
+define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, Set});
 //watch(candidate_datanode, ae);
 public
-candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(DataNode)>) :-
+candidate_datanode(Master, Id, Source, FName, I, set<DataNode>) :-
     bfs::request(Master, Id, Source, "NewChunk", FName),
     chunkSeq(Master, I),
     bfs::possible_choices(Master, Cnt, DataNode, Id2),

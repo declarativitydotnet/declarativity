@@ -1,8 +1,10 @@
 package bfs;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class BFSNewChunkInfo implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -10,9 +12,10 @@ public class BFSNewChunkInfo implements Serializable {
 	private final int chunkId;
 	private final List<String> nodeAddrs;
 
-	public BFSNewChunkInfo(int chunkId, List<String> nodeAddrs) {
+	public BFSNewChunkInfo(int chunkId, Set<String> nodeAddrs) {
 		this.chunkId = chunkId;
-		this.nodeAddrs = Collections.unmodifiableList(nodeAddrs);
+		List<String> nodeList = new ArrayList<String>(nodeAddrs);
+		this.nodeAddrs = Collections.unmodifiableList(nodeList);
 	}
 
 	public int getChunkId() {
