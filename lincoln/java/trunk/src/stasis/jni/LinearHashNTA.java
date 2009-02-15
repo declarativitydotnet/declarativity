@@ -20,14 +20,8 @@ public class LinearHashNTA extends StasisTable {
     private long[] rid;
 
     protected Tuple registerTable(TableName name, Key key, Class[] type) throws UpdateException {
-		Tuple header = new Tuple();
-		header.append( rid[0]);
-		header.append( rid[1]);
-		header.append( key);
-		header.append( attributeTypes);
-
-		Tuple nameTup = new Tuple();
-		nameTup.append(name);
+		Tuple header = new Tuple(rid[0], rid[1], key, attributeTypes);
+		Tuple nameTup = new Tuple(name);
 
 		Tuple row = catalog.key().reconstruct(nameTup, header);
 		catalog.insert(row);

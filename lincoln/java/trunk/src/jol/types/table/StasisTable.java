@@ -71,16 +71,12 @@ public abstract class StasisTable extends Table {
 	protected static TableName CATALOG_NAME = new TableName("Stasis", "Catalog");
 	protected static Key CATALOG_KEY = new Key(0);
 	protected static Class[] CATALOG_COLTYPES = new Class[] { String.class, Long.class, Long.class};
-	protected static Tuple CATALOG_SCHEMA = new Tuple();
+	protected static Tuple CATALOG_SCHEMA = new Tuple(new Long(1), new Long(1), CATALOG_KEY, CATALOG_COLTYPES);
 	protected static byte[] CATALOG_SCHEMA_BYTES;
 	protected static byte[] CATALOG_NAME_BYTES; 
 	//private static Runtime runtime;
 	
 	static { 
-		CATALOG_SCHEMA.append(new Long(1));
-		CATALOG_SCHEMA.append(new Long(1));
-		CATALOG_SCHEMA.append(CATALOG_KEY);
-		CATALOG_SCHEMA.append(CATALOG_COLTYPES);
 		CATALOG_SCHEMA_BYTES = new StasisSerializer().toBytes(CATALOG_SCHEMA);
 		CATALOG_NAME_BYTES = new StasisSerializer().toBytes(CATALOG_NAME);
 	}
