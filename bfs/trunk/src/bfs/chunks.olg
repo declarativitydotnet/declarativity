@@ -27,7 +27,7 @@ chunkSeq(Master, 1) :-
 public
 chunkSeq(Master, I+1) :-
     chunkSeq(Master, I),
-    newListHolder#insert(Master, Source, Id, _, I, _);
+    newListHolder#insert(Master, _, _, _, I, _);
 
 
 define(newListHolder,keys(0,2),{String,String,Integer,Set,Integer,String});
@@ -40,10 +40,10 @@ newListHolder(Master, Source, Id, NodeSet, NewChunkId, FName) :-
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, Set});
 //watch(candidate_datanode, ae);
 public
-candidate_datanode(Master, Id, Source, FName, I, set<DataNode>) :-
+candidate_datanode(Master, Id, Source, FName, NewChunkId, set<DataNode>) :-
     bfs::request(Master, Id, Source, "NewChunk", FName),
-    chunkSeq(Master, I),
-    bfs::possible_choices(Master, Cnt, DataNode, Id2),
+    chunkSeq(Master, NewChunkId),
+    bfs::possible_choices(Master, Cnt, DataNode, _),
     bfs::file(Master, _, FName),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
 
@@ -54,7 +54,7 @@ watch(chunkMigration, ae);
 public
 chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, set<DataNode>) :-
     bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
-    bfs::possible_choices(Master, Cnt, DataNode, Id2),
+    bfs::possible_choices(Master, Cnt, DataNode, _),
     bfs_heartbeat::representative_datanode(Master, ChunkId, DnWithReplica);
 
 public
