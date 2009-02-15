@@ -32,6 +32,7 @@ public class BFSMM4Test extends TestCommon {
             shutdown();
         } catch (Exception e) {
             System.out.println("something went wrong: " + e);
+            e.printStackTrace();
             System.exit(1);
         }
     }
