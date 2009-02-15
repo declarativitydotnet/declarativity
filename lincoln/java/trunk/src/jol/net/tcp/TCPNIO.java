@@ -168,8 +168,8 @@ public class TCPNIO extends Server {
 
 		public Connection(SocketChannel channel) throws IOException {
 			super("tcp", new IP(channel.socket().getInetAddress(), channel.socket().getPort()));
-			this.rBuffer = ByteBuffer.allocate(4096);
-			this.wBuffer = ByteBuffer.allocate(4096);
+			this.rBuffer = ByteBuffer.allocate(8192);
+			this.wBuffer = ByteBuffer.allocate(8192);
 			this.channel = channel;
 			this.channel.configureBlocking(false);
             this.remoteAddr = channel.socket().toString();
@@ -181,9 +181,9 @@ public class TCPNIO extends Server {
 		public boolean send(Message packet) {
 			try {
 				synchronized (this.wBuffer) {
-					if (!this.channel.isConnected()) {
+					if (!this.channel.isConnected())
 						return false;
-					}
+
 					ByteArrayOutputStream bstream = new ByteArrayOutputStream();
 					ObjectOutputStream ostream = new ObjectOutputStream(bstream);
 					ostream.writeObject(packet);
