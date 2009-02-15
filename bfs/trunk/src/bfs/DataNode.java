@@ -1,10 +1,11 @@
 package bfs;
 
 import java.io.File;
-
-import bfs.DataServer;
-import bfs.DataConnection;
-import bfs.OlgAssertion;
+import java.io.FileInputStream;
+import java.nio.channels.FileChannel;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
@@ -15,12 +16,6 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
-import java.io.FileInputStream;
-import java.nio.channels.FileChannel;
-
-import java.util.Set;
-import java.util.List;
-import java.util.LinkedList;
 
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
