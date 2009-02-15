@@ -7,7 +7,7 @@ public class BFSData4Test extends DataCommon {
 
 	@Test(timeout=24000)
     public void test1() {
-        test(TEST_FILE, 3, 1, 9);
+        test(TEST_FILE, 4, 1, 4);
         //check_files();
 
         /* victimization of individual chunks.  requires deletion deltas, which
@@ -20,12 +20,14 @@ public class BFSData4Test extends DataCommon {
 
         killDataNode(0);
 
+        // all the chunks from this datanode have dropped in 
+  
         try {
-        Thread.sleep(5000);
+          Thread.sleep(20001);
         } catch (Exception e) {
-
+           
         }
-        
+
         //check_files();
         cleanup_all();
     }

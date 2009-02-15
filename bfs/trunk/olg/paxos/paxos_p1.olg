@@ -73,31 +73,31 @@ to b, and sends a NextBallot (b) message to some set of priests.
 
 
 // this works because all leaders are also acceptors.
-lastTried(Agent,max<Round>) :-
-  sendPrepare(Agent,Round,Decree,Master);
+lastTried(Agent, max<Round>) :-
+  sendPrepare(Agent, Round, Decree, Master);
 
 public
-storedDecreeRequest(A,B,C,Id) :- 
+storedDecreeRequest(A, B, C, Id) :- 
   // 4:
-  paxos_global::decreeRequest(A,B,C), 
+  paxos_global::decreeRequest(A, B, C), 
   Id := Runtime.idgen();
 
-define(topOfQueue,keys(0),{String,Long});
+define(topOfQueue, keys(0), {String, Long});
 
-topOfQueue(A,min<Id>) :-
-  storedDecreeRequest(A,B,C,Id);
+topOfQueue(A, min<Id>) :-
+  storedDecreeRequest(A, B, C, Id);
 
 public
 r1_b
-prepare(Agent,Round,Decree) :- 
-	storedDecreeRequest(Agent,Decree,From,Id),
+prepare(Agent, Round, Decree) :- 
+	storedDecreeRequest(Agent, Decree, From, Id),
   // we need the insert here for another reason: to add capacitance to the flip-flop
   // created by r1_a above.  without this insert, which forces the rule to be evaluated
   // once only in the fixpoint, we'll keep adding because of the cycle through lastTried...
-  topOfQueue#insert(Agent,Id),
-	lastTried(WHAT,Old),
+  topOfQueue#insert(Agent, Id),
+	lastTried(Agent, Old),
 	// if we don't already have a quorum 
-  notin quorum(Agent,_),
+  notin quorum(Agent, _),
 	Round := Old + 1;
 
 /* 

@@ -9,6 +9,9 @@ import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
+import bfs.OlgAssertion;
+
+
 public class Master {
     private final String address;
     private final int port;
@@ -49,9 +52,14 @@ public class Master {
 
         this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, this.port);
 
+        OlgAssertion olgAssert = new OlgAssertion(this.system, true);
+
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
+        this.system.evaluate();
+
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks.olg"));
         this.system.evaluate();

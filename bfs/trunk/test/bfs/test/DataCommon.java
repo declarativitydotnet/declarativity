@@ -33,9 +33,12 @@ public class DataCommon extends TestCommon {
 
             Conf.setRepFactor(repFactor);
             startMany(masterList);
+
             startManyDataNodes(dnList);
 
 			shellCreate("foo");
+
+
 			Shell s = new Shell();
 
 			FileInputStream fis = new FileInputStream(fName);
@@ -44,7 +47,6 @@ public class DataCommon extends TestCommon {
 			s.shutdown();
 
             assertTrue(shellLs("foo"));
-
         } catch (Exception e) {
             System.out.println("something went wrong: " + e);
             System.exit(1);

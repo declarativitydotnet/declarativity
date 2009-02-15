@@ -3,11 +3,13 @@ program bfs_heartbeat;
 import bfs.Conf;
 import java.lang.System;
 
+import java.util.Set;
+
 /*****************************/
 define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
-watch(sendHeartBeat, ae);
+//watch(sendHeartBeat, ae);
 
-timer(clock, physical, 5000, 5000, 1000);
+timer(clock, physical, 1000, 1000, infinity);
 
 define(ackHeartBeat,  {String, String, Long});
 ackHeartBeat(@Dnode, Master, Id) :-
@@ -15,50 +17,71 @@ ackHeartBeat(@Dnode, Master, Id) :-
     Id != -1L;
 
 define(dataNodes, keys(0, 1), {String, String, Long});
-public
 dataNodes(Master, Host, max<Tstamp>) :-
-    sendHeartBeat#insert(Master, Host, _, _, Tstamp, _);
+    sendHeartBeat(Master, Host, _, _, Tstamp, _);
+
 
 // we need this to ensure we become aware of truant datanodes.
 delete
 sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
     sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id),
-    (System.currentTimeMillis() - Tstamp) > 10000L;
+    (System.currentTimeMillis() - Tstamp) > Conf.getHeartbeatRetention();
 
 
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
 // of last update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
+//watch(chunks, ae);
+
+define(chunksEvent,  {String, String, Integer, Integer, Long});
 chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
+    clock#insert(),
     sendHeartBeat(Master, DataNode, ChunkId, Length, _, _),
-    clock(_, _, _),
+    (System.currentTimeMillis() - MaxTstamp) < Conf.getHeartbeatRetention(),
     dataNodes(Master, DataNode, MaxTstamp);
 
-/*
 delete
 chunks(Master, DataNode, ChunkId, Length, Ts) :-
     chunks(Master, DataNode, ChunkId, Length, Ts),
-    clock(_, _, _),
-    (System.currentTimeMillis() - Ts) > 10000L;
-*/
+    clock#insert(),
+    (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
+delete
+dataNodes(Master, DataNode, Ts) :-
+    dataNodes(Master, DataNode, Ts),
+    clock#insert(),
+    (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
 /**************************/
 // maintenance functions
 
-define(rep_factor, keys(0,1), {String, Integer, Integer});
+//watch(rep_factor, ae);
+//rep_factor_compute(Master, ChunkId, count<DataNode>) :- 
 rep_factor(Master, ChunkId, count<DataNode>) :-
-    long_period(_, _, _),
     chunks(Master, DataNode, ChunkId, _, _);
 
-define(representative_datanode, keys(0,1), {String, Integer, String});
-representative_datanode(Master, ChunkId, max<DataNode>) :-
-    long_period(_, _, _),
-    chunks(Master, DataNode, ChunkId, _, _);
+
+define(w_rep_factor, {String, Integer, Integer});
+watch(w_rep_factor, a);
+w_rep_factor(M, C, Cnt) :-
+  clock#insert(),
+  rep_factor(M, C, Cnt);
+
+define(rep_factor, keys(0,1), {String, Integer, Integer});
+
+define(representative_datanode, keys(0,1), {String, Integer, String, Long});
+representative_datanode(Master, ChunkId, max<DataNode>, min<Ts>) :-
+    clock#insert(),
+    chunks(Master, DataNode, ChunkId, _, Ts);
+
+define(watch_dataNodes,  {String, String, Long});
+watch(watch_dataNodes, a);
+watch_dataNodes(M, D, T) :-
+  dataNodes(M, D, T),
+  clock#insert();
 
 define(back_of_list, keys(0,1), {String,Integer,String});
 back_of_list(Master, ChunkId, min<DataNode>) :-
-    long_period(_, _, _),
     chunks(Master, DataNode, ChunkId, _, _);
 
 timer(long_period, physical, 10000, 100000, 0);
@@ -67,22 +90,33 @@ define(to_delete, keys(0,2), {String,String,Integer});
 to_delete(Master, DataNode, ChunkId) :-
     rep_factor(Master, ChunkId, Cnt),
     back_of_list(Master, ChunkId, DataNode),
-    ChunkId > 1,
     long_period(_, _, _),
     Cnt > Conf.getRepFactor();
 
-
-define(newReplica, keys(0,1), {String, Integer, String});
+define(newReplicaRequest, keys(0,1,4), {String, Integer, String, Integer, Long});
 watch(newReplica, ae);
-newReplica(Master, ChunkId, Dn) :-
+newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
     rep_factor(Master, ChunkId, Cnt),
+    Time := new Long(System.currentTimeMillis()),
     representative_datanode(Master, ChunkId, Dn),
     ChunkId > 0,
     // explain this one: why are there zeroes in rep_factor??
-    Cnt > 0,
-    Dn != null,
-    long_period(_, _, _),
+    //Cnt > 0,
+    //Dn != null,
+    long_period#insert(_, _, _),
     Cnt < Conf.getRepFactor();
+
+delete 
+newReplicaRequest(Master, ChunkId, Dn, Cnt1, Time) :-
+    newReplicaRequest(Master, ChunkId, Dn, Cnt1, Time),
+    rep_factor#insert(Master, ChunkId, Cnt2),
+    Cnt2 >= Conf.getRepFactor();
+    
+define(newReplica, {String, Integer, String, Integer, Long});
+newReplica(Master, ChunkId, Dn, Cnt, Time) :-
+    newReplicaRequest(Master, ChunkId, Dn, Cnt, Time),
+    clock#insert(),
+    (System.currentTimeMillis() - Time) > 4000L;
 
 // hacky constraint: one message per tick
 define(send_delete, keys(0), {String, Integer, String});
@@ -96,3 +130,4 @@ chunks(Master, DataNode, ChunkId, Length, MTS) :-
     chunks(Master, DataNode, ChunkId, Length, MTS),
     to_delete(Master, DataNode, ChunkId);
 */
+
