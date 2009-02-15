@@ -44,7 +44,7 @@ candidate_datanode(Master, Id, Source, FName, NewChunkId, set<DataNode>) :-
     bfs::request(Master, Id, Source, "NewChunk", FName),
     chunkSeq(Master, NewChunkId),
     bfs::possible_choices(Master, Cnt, DataNode, _),
-    bfs::file(Master, _, FName, false),
+    bfs::file(Master, _, _, FName, false),
     notin candidate_datanode(Master, Id, Source, FName, _, _);
 
 // reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
