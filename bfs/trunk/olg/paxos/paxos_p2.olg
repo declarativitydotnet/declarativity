@@ -150,12 +150,19 @@ stasis_success(Agent,Instance,Round,Decree,From) :-
   Round := -1,
   paxos::instance(Agent,Instance);
 */  
+
+// a periodic event for fire reads on stasis tables at startup.
+timer(stasis_wakeup, logical, 10, 10, 1);
 	
 // any learner can reply to the client, or set-wise, they all can...
 public
 response
 paxos_global::requestStatus(Master,From,Decree,Instance,"passed") :- 
+  // a bare minimum first recovery rewrite
+  stasis_wakeup(), 
   stasis_success(Master,Instance,Round,Decree,From);
+
+
 
 
 public
