@@ -179,19 +179,20 @@ public class TCPNIO extends Server {
 
 		@Override
 		public boolean send(Message packet) {
-			try {
-				synchronized (this.wBuffer) {
-					if (!this.channel.isConnected())
-						return false;
+			if (!this.channel.isConnected())
+				return false;
 
-					ByteArrayOutputStream bstream = new ByteArrayOutputStream();
-					ObjectOutputStream ostream = new ObjectOutputStream(bstream);
-					ostream.writeObject(packet);
+			try {
+				ByteArrayOutputStream bstream = new ByteArrayOutputStream();
+				ObjectOutputStream ostream = new ObjectOutputStream(bstream);
+				ostream.writeObject(packet);
+
+				synchronized (this.wBuffer) {
                     this.wBuffer.clear();
 					this.wBuffer.putInt(bstream.size());
 					this.wBuffer.put(bstream.toByteArray());
 					this.wBuffer.flip();
-					write();
+					writeBuffer();
 				}
 			} catch (IOException e) {
 				return false;
@@ -290,7 +291,7 @@ public class TCPNIO extends Server {
          * will not return until the entire buffer has been written to the
          * socket channel.
          */
-	    private void write() throws IOException {
+	    private void writeBuffer() throws IOException {
 	        int len = this.wBuffer.limit() - this.wBuffer.position();
 	        this.totalWritten += len;
 
