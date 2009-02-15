@@ -15,16 +15,20 @@ import java.util.List;
  * used by both BfsClients and DataNodes.
  */
 public class DataConnection {
+	private List<String> nodePath;
     private SocketChannel channel;
     private Socket socket;
     private DataOutputStream dos;
     private String remoteAddr;
 
-    public DataConnection(String nodeAddr) {
-        setupStream(nodeAddr);
+    public DataConnection(List<String> nodePath) {
+    	this.nodePath = nodePath;
+        setupStream();
     }
 
-    private void setupStream(String addr) {
+    private void setupStream() {
+    	// We connect to the first node in the path
+    	String addr = this.nodePath.get(0);
         String[] parts = addr.split(":");
         String host = parts[1];
         int controlPort = Integer.parseInt(parts[2]);
@@ -44,20 +48,21 @@ public class DataConnection {
         }
     }
 
-    public void sendRoutingData(int chunkId, List<String> path) {
+    public void sendRoutingData(int chunkId) {
         try {
             this.dos.writeByte(DataProtocol.WRITE_OPERATION);
             this.dos.writeInt(chunkId);
 
-            int newSize = path.size();
-            if (newSize > Conf.getRepFactor() - 1) {
-                newSize = Conf.getRepFactor() - 1;
-            }
+            int newSize = this.nodePath.size();
+            if (newSize > Conf.getRepFactor())
+            	newSize = Conf.getRepFactor();
 
-            this.dos.writeInt(newSize);
-            for (int i = 0; i < newSize; i++) {
-                System.out.println("write " + path.get(i));
-                this.dos.writeChars(path.get(i));
+            // We skip the first element of the path, since that's the
+            // node we've already connected to
+            this.dos.writeInt(newSize - 1);
+            for (int i = 1; i < newSize; i++) {
+                System.out.println("write " + this.nodePath.get(i));
+                this.dos.writeChars(this.nodePath.get(i));
                 this.dos.writeChar('|');
             }
             this.dos.writeChar(';');
