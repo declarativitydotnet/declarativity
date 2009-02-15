@@ -247,8 +247,11 @@ public class TCPNIO extends Server {
             } catch (IOException e) {
                 if (e instanceof ClosedChannelException)
                     System.err.println("TCP channel closed: " + this.remoteAddr);
-                else
-                    System.err.println("Unexpected IO exception: " + this.remoteAddr);
+                else {
+                    System.err.println("Unexpected IO exception: " +
+                    		           this.remoteAddr + ", " + e);
+                    e.printStackTrace(System.err);
+                }
 
                 try {
                     TCPNIO.this.manager.connection().unregister(this);
