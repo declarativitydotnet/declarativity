@@ -2,7 +2,7 @@ package bfs.test;
 
 import org.junit.Test;
 
-public class BFSData4Test extends DataCommon {
+public class BFSMigrateTest extends DataCommon {
     private static final String TEST_FILE = "/usr/share/dict/words";
 
 	@Test(timeout=24000)
@@ -33,7 +33,7 @@ public class BFSData4Test extends DataCommon {
     }
 
 	public static void main(String[] args) throws Exception {
-		BFSData4Test t = new BFSData4Test();
+		BFSMigrateTest t = new BFSMigrateTest();
 		t.test1();
 	}
 }
