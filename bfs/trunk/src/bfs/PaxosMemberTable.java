@@ -11,11 +11,13 @@ public class PaxosMemberTable extends ObjectTable {
 	public static final Key PRIMARY_KEY = new Key(0);
 
 	public enum Field {
-        ADDRESS
+        ADDRESS,
+        ID
 	};
 
 	public static final Class<?>[] SCHEMA = {
-        String.class    // Address of self
+        String.class,    // Address of self
+        Integer.class
 	};
 
 	PaxosMemberTable(Runtime context) {

@@ -16,7 +16,8 @@ watch(decreeRequest,ae);
 //watch(reply,ae);
 watch(requestStatus,ae);
 
-define(members,keys(0),{String});
+define(members,keys(0),{String, Integer});
+
 define(id,keys(0),{String});
 watch(members,ae);
 watch(id,ae);

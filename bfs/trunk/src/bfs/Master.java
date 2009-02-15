@@ -109,7 +109,7 @@ public class Master {
         for (int i = 0; i < Conf.getNumMasters(); i++) {
             String addr = Conf.getMasterAddress(i);
             TupleSet member = new TupleSet();
-            member.add(new Tuple(addr));
+            member.add(new Tuple(addr, i));
             this.system.schedule("paxos", PaxosMemberTable.TABLENAME, member, null);
         }
         this.system.evaluate();
