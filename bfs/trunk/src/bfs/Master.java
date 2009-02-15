@@ -9,8 +9,6 @@ import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
-import bfs.OlgAssertion;
-
 
 public class Master {
     private final String address;

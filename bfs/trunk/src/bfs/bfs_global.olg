@@ -2,7 +2,6 @@ program bfs;
 
 import bfs.Conf;
 import java.lang.Object;
-import java.util.Set;
 
 // Node, file ID, parent file ID (or null), file name, is directory?
 define(file, keys(0, 1), {String, Integer, Integer, String, Boolean});

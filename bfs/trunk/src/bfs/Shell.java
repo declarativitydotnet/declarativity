@@ -27,8 +27,6 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
-import bfs.OlgAssertion;
-
 
 public class Shell {
     private int currentMaster;
