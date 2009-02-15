@@ -7,6 +7,7 @@ import java.lang.System;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import jol.core.Runtime;
 
 timer(clock, physical, 3000, 3000, 0);
@@ -15,10 +16,10 @@ timer(periodic, logical, 1, 1, 1);
 // Node address, data directory on host chunk system
 define(datadir, keys(0), {String, String});
 define(checksumdir, keys(0), {String, String});
-watch(datadir, ae);
+//watch(datadir, ae);
 
 define(dir, keys(0,1,2), {String, File, List});
-watch(dir, ae);
+//watch(dir, ae);
 dir(Host, DirObj, DirList) :-
     datadir(Host, Dir),
     DirObj := new File(Dir + File.separator + "chunks"),
@@ -49,7 +50,7 @@ checksumdir(H, D)  :-
     D := "testdata1/checksums";
 
 define(chunk, keys(0,1), {String, String, Integer, String});
-watch(chunk, ae);
+//watch(chunk, ae);
 chunk(Host, FName, FLength, Checksum) :-
     Checksum := "foo",
     chunkTmp#insert(Host, FName, FLength); /*,
@@ -95,7 +96,7 @@ define(ackHeartBeat,keys(0,1,2),{String,String,Long});
 //watch(ackHeartBeat,ae);
 
 define(serverKnows,keys(0,1,2,3),{String,String,Integer,Long});
-watch(serverKnows,ae);
+//watch(serverKnows,ae);
 serverKnows(Host, Master, ChunkId, Id) :-
     heartBeat(Host, Master, ChunkId, _, _, Id),
     ackHeartBeat#insert(Host, Master, Id);
@@ -123,8 +124,7 @@ masters(Host, Master) :-
 define(send_delete, keys(0), {String, Integer, String});
 watch(send_delete, ae);
 
-// this is already defined in bfs_global.olg, but I don't think we
-// want to install that program at the datanodes... or do we?
-// Client node, Request ID, Master node, Success, Result
-define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
-watch(response, ae);
+
+define(send_migrate, {String, String, Integer, Set});
+watch(send_migrate, ae);
+

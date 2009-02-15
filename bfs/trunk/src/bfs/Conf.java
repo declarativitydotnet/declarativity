@@ -37,11 +37,16 @@ public class Conf {
     private static final int chunkSize = 102400;
     private static final int bufSize = 102400;
 
-    private static int replicationFactor = 2;
+    private static final long heartbeatRetention = 4000L;
+
+    private static int replicationFactor = 1;
 
     public static int getChunkSize() {
         assert(chunkSize >= bufSize);
         return chunkSize;
+    }
+    public static long getHeartbeatRetention() {
+        return heartbeatRetention;
     }
 
     public static int getRepFactor() {

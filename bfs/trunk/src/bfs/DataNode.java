@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 
 import bfs.DataServer;
+import bfs.DataConnection;
+import bfs.OlgAssertion;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
@@ -14,6 +16,12 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
+import java.io.FileInputStream;
+import java.nio.channels.FileChannel;
+
+import java.util.Set;
+import java.util.List;
+import java.util.LinkedList;
 
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
@@ -62,9 +70,32 @@ public class DataNode {
 
             @Override
             public void insertion(TupleSet tuples) {
+
+                System.out.println("COPYCOPYCOPYCOPY!\n");
                 for (Tuple t : tuples) {
-                    ArrayList args = (ArrayList) t.value(4);
-                    System.out.println("COPYCOPYCOPYCOPY!\n");
+                    Integer chunkId = (Integer)t.value(2);
+                    Set args = (Set) t.value(3);
+                    List<String> path = new LinkedList<String>(args);
+                    for (int i = 0; i < path.size(); i++) {
+                        //String addr = path.remove(i);
+                        try {
+                            DataConnection conn = new DataConnection(path);
+
+                            String f = fsRoot + File.separator + "chunks" + File.separator + chunkId.toString();
+                            FileChannel fc = new FileInputStream(f).getChannel();
+
+                            conn.sendRoutingData(chunkId);
+                            conn.sendChunkContent(fc);
+
+                            fc.close();
+                        //} catch (java.net.ConnectException e) {
+                        } catch (RuntimeException e) {
+                            // fall through
+                        } catch(Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        
+                    }
                 }
             }
         };
@@ -74,6 +105,11 @@ public class DataNode {
         Conf.setSelfAddress(Conf.getDataNodeAddress(this.nodeId));
 
         this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, this.port);
+
+        OlgAssertion oa = new OlgAssertion(this.system, false);
+
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
+        this.system.evaluate();
         this.system.install("bfs_heartbeat", ClassLoader.getSystemResource("bfs/files.olg"));
         this.system.evaluate();
 
@@ -83,7 +119,10 @@ public class DataNode {
         datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot));
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
-        Table table = this.system.catalog().table(new TableName("bfs_heartbeat", "response"));
+        Table table = this.system.catalog().table(new TableName("bfs_chunks", "send_migrate"));
+        if (table == null) {
+          throw new RuntimeException("send_migrate callback not defined");
+        }
         table.register(copyCallback);
 
         this.system.start();

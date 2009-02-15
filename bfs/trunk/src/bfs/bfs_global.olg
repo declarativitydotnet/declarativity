@@ -2,6 +2,7 @@ program bfs;
 
 import bfs.Conf;
 import java.lang.Object;
+import java.util.Set;
 
 // Node, file ID, file name
 define(file, keys(0, 1), {String, Integer, String});
@@ -39,3 +40,4 @@ self(Conf.getSelfAddress());
 
 
 define(chunkHWM, keys(0, 1), {String, Integer});
+

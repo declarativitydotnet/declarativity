@@ -1,9 +1,12 @@
 program bfs_chunks;
 
 import java.util.ArrayList;
+import java.util.Set;
+
+import java.lang.System;
 
 define(chunkSeq, keys(0), {String, Integer});
-watch(chunkSeq, ae);
+//watch(chunkSeq, ae);
 
 /*
 public
@@ -26,12 +29,11 @@ chunkSeq(Master, 1) :-
 public
 chunkSeq(Master, I+1) :-
     chunkSeq(Master, I),
-    //bfs::request#insert(Master, Id, Source, "NewChunk", _);
     newListHolder#insert(Master, Source, Id, _, I, _);
 
 
 define(newListHolder,keys(0,2),{String,String,Integer,ArrayList,Integer,String});
-watch(newListHolder, ae);
+//watch(newListHolder, ae);
 
 // We need to clone the list; otherwise the downstream list insert
 // causes a cycle through candidate_datanodes
@@ -41,7 +43,7 @@ newListHolder(Master, Source, Id, NewList, NewChunkId, FName) :-
     bfs::request(Master, Id, Source, "NewChunk", FName);
 
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, ArrayList});
-watch(candidate_datanode, ae);
+//watch(candidate_datanode, ae);
 public
 candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(DataNode)>) :-
     bfs::request(Master, Id, Source, "NewChunk", FName),
@@ -52,10 +54,22 @@ candidate_datanode(Master, Id, Source, FName, I, generic<(new ArrayList()).add(D
 
 // reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
 // from one datanode to another
-/*
+define(chunkMigration, keys(0,1,2), {String, String, Integer, Integer, Set});
+watch(chunkMigration, ae);
 public
-candidate_datanode(Master, -1, DnWithReplica, "none", ChunkId, generic<(new ArrayList()).add(DataNode)>) :-
-    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica),
+chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, set<DataNode>) :-
+    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
     bfs::possible_choices(Master, Cnt, DataNode, Id2),
-    notin candidate_datanode(Master, Id, Source, FName, _, _);
-*/
+    bfs_heartbeat::representative_datanode(Master, ChunkId, DnWithReplica);
+
+public
+delete
+bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time) :-
+    bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
+    chunkMigration#insert(Master, DnWithReplica, ChunkId, CurrRepCnt, _); 
+
+watch(send_migrate, ae);
+send_migrate(@DnWithReplica, Master, ChunkId, Dns) :-
+  chunkMigration(@Master, DnWithReplica, ChunkId, CurrRepCnt, Dns);
+
+

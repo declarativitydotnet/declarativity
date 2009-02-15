@@ -27,6 +27,8 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
+import bfs.OlgAssertion;
+
 
 public class Shell {
     private int currentMaster;
@@ -92,7 +94,14 @@ public class Shell {
 
         this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, Integer.valueOf(port));
 
+        OlgAssertion oa = new OlgAssertion(this.system, false);
+
+
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
+        this.system.evaluate();
+
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
+        this.system.evaluate();
         this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
         this.system.evaluate();
         this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/chunks.olg"));
