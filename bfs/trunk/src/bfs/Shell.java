@@ -126,12 +126,9 @@ public class Shell {
         	if (info.getCandidateNodes().size() < Conf.getRepFactor())
                 throw new RuntimeException("server sent too few datanodes: " + info);
 
-        	List<String> path = new LinkedList<String>(info.getCandidateNodes());
-        	String firstAddr = path.remove(0);
-            DataConnection conn = new DataConnection(firstAddr);
+            DataConnection conn = new DataConnection(info.getCandidateNodes());
+            conn.sendRoutingData(info.getChunkId());
             try {
-                conn.sendRoutingData(info.getChunkId(), path);
-
                 int nread = 0;
                 byte buf[] = new byte[Conf.getBufSize()];
                 while (nread < Conf.getChunkSize()) {
@@ -143,7 +140,7 @@ public class Shell {
                 }
                 System.out.println("exiting inner loop with " + b + " retval and " + nread + " bytes written");
                 conn.close();
-            } catch (Exception e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }

@@ -124,40 +124,35 @@ public class DataServer extends Thread {
                 // sadly, for the time being,
                 createCRCFile(chunkId, getFileChecksum(newf));
                 System.out.println("OK, finished WRITE_OP");
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private void doDeleteOperation() {
-            try {
-                int chunkId = readChunkId();
-                File victim = getChunkFile(chunkId);
-                victim.delete();
-            } catch (Exception e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
         private void copyToNext(File f, int chunkId, List<String> path) {
             try {
-                String nextAddr = path.remove(0);
-                DataConnection conn = new DataConnection(nextAddr);
-                conn.sendRoutingData(chunkId, path);
+                DataConnection conn = new DataConnection(path);
+                conn.sendRoutingData(chunkId);
 
                 FileChannel fc = new FileInputStream(f).getChannel();
                 conn.sendChunkContent(fc);
                 fc.close();
                 conn.close();
-            } catch (Exception e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        private void doDeleteOperation() {
+            int chunkId = readChunkId();
+			File victim = getChunkFile(chunkId);
+			victim.delete();
         }
 
         private int readChunkId() {
             try {
                 return this.in.readInt();
-            } catch (Exception e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -195,7 +190,7 @@ public class DataServer extends Thread {
                     ret.add(path[i]);
                 }
                 return ret;
-            } catch (Exception e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -308,7 +303,7 @@ public class DataServer extends Thread {
             // temporary
             fos.write(new Long(checksum).toString().getBytes());
             fos.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -322,7 +317,7 @@ public class DataServer extends Thread {
 
             }
             return check.getChecksum().getValue();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -335,7 +330,7 @@ public class DataServer extends Thread {
             if (!newf.createNewFile()) {
                 throw new RuntimeException("Failed to create fresh file " + filename);
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return newf;
