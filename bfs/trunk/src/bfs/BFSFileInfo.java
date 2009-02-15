@@ -9,10 +9,10 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	private final String fileName;
 	private final boolean isDirectory;
 
-	public BFSFileInfo(int fileId, String name) {
+	public BFSFileInfo(int fileId, String name, boolean isDirectory) {
 		this.fileId = fileId;
 		this.fileName = name;
-		this.isDirectory = false;
+		this.isDirectory = isDirectory;
 	}
 
 	public int getId() {

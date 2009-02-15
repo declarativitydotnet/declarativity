@@ -2,7 +2,6 @@ program bfs_heartbeat;
 
 import bfs.Conf;
 import java.lang.System;
-
 import java.util.Set;
 
 /*****************************/
@@ -56,7 +55,7 @@ dataNodes(Master, DataNode, Ts) :-
 // maintenance functions
 
 //watch(rep_factor, ae);
-//rep_factor_compute(Master, ChunkId, count<DataNode>) :- 
+//rep_factor_compute(Master, ChunkId, count<DataNode>) :-
 rep_factor(Master, ChunkId, count<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
 
@@ -106,12 +105,12 @@ newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
     long_period#insert(_, _, _),
     Cnt < Conf.getRepFactor();
 
-delete 
+delete
 newReplicaRequest(Master, ChunkId, Dn, Cnt1, Time) :-
     newReplicaRequest(Master, ChunkId, Dn, Cnt1, Time),
     rep_factor#insert(Master, ChunkId, Cnt2),
     Cnt2 >= Conf.getRepFactor();
-    
+
 define(newReplica, {String, Integer, String, Integer, Long});
 newReplica(Master, ChunkId, Dn, Cnt, Time) :-
     newReplicaRequest(Master, ChunkId, Dn, Cnt, Time),
