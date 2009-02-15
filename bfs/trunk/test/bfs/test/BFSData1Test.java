@@ -1,7 +1,5 @@
 package bfs.test;
 
-import java.io.File;
-
 import org.junit.Test;
 
 public class BFSData1Test extends DataCommon {
