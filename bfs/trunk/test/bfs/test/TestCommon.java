@@ -162,27 +162,21 @@ public class TestCommon {
     }
 
     protected void prepare(String dir) {
-
         cleanup(dir);
         new File(dir).mkdir();
         new File(dir + File.separator + "chunks").mkdir();
         new File(dir + File.separator + "checksums").mkdir();
-
     }
 
     protected void startManyDataNodes(String... args) throws JolRuntimeException,
             UpdateException {
         this.datanodes = new LinkedList<DataNode>();
 
-
         Conf.setNewDataNodeList(args.length);
-
         assert (args.length == Conf.getNumDataNodes());
 
-        for (int i = 0; (i < args.length); i++) {
-
+        for (int i = 0; i < args.length; i++) {
             prepare(args[i]);
-
             DataNode d = new DataNode(i, args[i]);
             System.out.println("new DATANODE " + d.getPort());
             d.start();

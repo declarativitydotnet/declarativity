@@ -246,7 +246,7 @@ public class PaxosCommon {
             sys.schedule("paxos_global", InMessageTable.TABLENAME, inmessage, null);
             sys.evaluate();
         } catch (Exception e) {
-
+        	e.printStackTrace();
         }
     }
 

@@ -10,7 +10,6 @@ public class BFSData2Test extends DataCommon {
         test(TEST_FILE, 3, 1, 9);
         check_files();
         cleanup_all();
- 
     }
 
 	public static void main(String[] args) throws Exception {
