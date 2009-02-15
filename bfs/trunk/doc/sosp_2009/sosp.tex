@@ -1,10 +1,12 @@
 \documentclass{sig-alternate}
+\usepackage{color}
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 \begin{document}
 \conferenceinfo{SOSP'09}{, October 11--14, 2009, Big Sky, Montana, USA}
 \CopyrightYear{2009}
 %\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
 
-\title{BOOM SOSP Paper (Draft)}
+\title{BOOM: An Experiment in Data-Centric Datacenter Development (Draft)}
 \numberofauthors{3}
 \author{
 \alignauthor
@@ -31,7 +33,40 @@ UC Berkeley
 \keywords{Distributed computing, Datalog}
 
 \section{Introduction}
+Datacenters and Cloud Computing are considered by many to be the next major computing platform.  Like mainframes, workstations, and personal computers before them, datacenters are likely to serve a wide variety of applications over time.  As a result, they demand a programming and runtime environment that is suited to the particulars of the platform, yet flexible enough to enable innovative, unforeseen applications.
 
+To date, many of the programming platforms offered for datacenters have been extensions of familiar environments originally developed to run on individual PC-class machines.  This includes virtualized PCs with a LAN and SAN  (Amazon's EC2), and application-server shells running on multiple independent machines over a shared storage service (Google AppEngine, Microsoft Azure).
+These platforms reduce the management and deployment challenges involved in launching multiple instances of familiar single-node services at a hosting service.  But they do not assist the programmer in handling the fundamental new opportunity and challenge in programming datacenters: harnessing and coordinating large, varying numbers of unpredictable machines.  
+
+One platform that does address these issues is the Hadoop MapReduce framework and its filesystem, HDFS.  Hadoop presents a programming model that exposes  the parallel power of a datacenter to programmers, while managing its unpredictability in a way that seems to be intuitive to most developers.  Hadoop achieves this goal by narrowly targeting data-parallel batch computing.  As such, it is not a broad, general-purpose programming model.  
+
+A good litmus test for a language in a new runtime environment is whether one can implement said environment in the language.  C was developed for UNIX; UNIX is written in C.  A number of Java Virtual Machines have been written in Java, significantly accelerating the development of JVM technology. \jmh{Cite the Jikes RVM webpage, which claims dozens to hundreds of papers written.}  By contrast, none of the offerings mentioned above enables a programmer to easily implement a the infrastructure required to run a programmable datacenter.  In that sense these efforts do not answer the need for a new programming framework for datacenter computing.
+
+\subsection{Data-Centric Programming}
+In this paper we explore a {\em data-centric} approach to datacenter programming.  That is, we focus on a language whose core constructs involve the manipulation of collections of data, rather than the dispatch of a sequence of instructions or events.  As in many data-centric settings, we focus on a {\em declarative} language, i.e. one in which code is expressed in logic formulas.  Declarative programs are amenable to powerful static analyses, and require very few implementation details from a programmer -- leaving the runtime implementation to be optimized and evolved dynamically based on workload, hardware and other runtime parameters.
+
+Declarative, data-centric languages are not new.  But until recently, they were thought to be useful for very few application settings.  As recently as 2003, in an anniversary issue of JACM, Butler Lampson noted -- in response to a challenge in Jim Gray's Turing Lecture -- that declarative languages have indeed proved successful in radically simplifying programming, but only in very few data-centric settings such as relational databases and spreadsheets. But within a few years of that article, as we outline in Section~\ref{sec:relwork}, declarative and data-centric languages began to experience a renaissance in a wide variety of application settings in research, and popularization via the MapReduce paradigm. The renewed interest in declarative and dataflow programming suggests that Lamport's caveat may not be as restrictive as it had seemed at the time.
+
+The main intuition behind our work is that datacenter infrastructure software is by nature data-centric.  Reviewing some of the initial datacenter infrastructure efforts in the literature (e.g., MapReduce~\cite{mapreduce}, GFS~\cite{gfs}, Chubby~\cite{chubby}, Dynamo~\cite{dynamo}), it seemed to us that most of the interesting logic in those systems involves managing {\em state}, {\em sessions}, {\em protocols}, and {\em storage}, rather than intricate, uninterrupted sequences of operations.  We speculated that a high-level data-centric programming language would be well-suited to those tasks, and could significantly simplify the development of this class of infrastructure.  We set out to convince ourselves of this idea in a realistic setting.
+
+\subsection{The BOOM Experiment}
+This paper describes our initial attempt to validate our hypothesis regarding the benefits of data-centric languages for datacenter infrastructure.  We chose to adapt the Overlog language introduced in the P2 system~\cite{p2}, and to use it to develop a realistic stack of datacenter software.  Specifically, we developed a new Java-based runtime environment for Overlog, and used it to implement a system we call {\em BOOM}: an API-compliant, largely declarative reimplementation of the Hadoop MapReduce engine and its HDFS distributed filesystem.  In writing BOOM, we preserved the Java API ``skin'' of Hadoop and HDFS, but replaced their main internals with Overlog, including scheduling, coordination, failover management, \jmh{and so on}.  The Hadoop stack appealed to us for two reasons.   First, unlike a farm of independent web services, the Hadoop and HDFS code entail non-trivial coordination among large numbers of nodes:  scheduling, coordination, data replication, failover, etc.  Second, Hadoop seemed the most realistic platform to put ourselves to the litmus test above: to build a data-centric runtime for the datacenter out of a data-centric language.  Although MapReduce itself is insufficiently expressive for this task, our Overlog syntax subsumes MapReduce and in that sense satisfies our desire.
+
+The bulk of this paper describes the details of implementing and evolving BOOM, and running it on a sizeable cluster at Yahoo!.  Our experience implementing BOOM in Overlog was gratifying both in its relative ease, and in the lessons learned along the way: lessons both in how to quickly design and evolve distributed infrastructure, and in how the ideas behind languages like Overlog might be modified and extended to a new language customized for datacenter programming.
+
+This paper presents the evolution of BOOM from a simple prototype to a very full-featured implementation.  We describe how the software went through a series of major revisions (``revs'') focused on {\em availability, scalability, performance, manageability}, and {\em security}.  In each case, the modifications involved were both simple and relatively isolated from the earlier revisions.  \jmh{Probably we want some mnemonic religious themes here that we carry through the paper. I.e.: ``In each section we reflect on the foo-ness and bar-ness associated with using a data-centric, declarative language.  Candidates include: separation of concerns via separation of data, unification of communication, transient and persistent state, unification of fine-grained monitoring, debugging and assertion checking via metaprogramming.  Also see ``Principles'' at https://lincoln.declarativity.net/trac/wiki/LincolnContributions.}
+
+
+\subsection{Related Work}
+\label{sec:relwork}
+In undertaking this effort, we were emboldened by both the grassroots popularity of the MapReduce dataflow paradigm, and recent research experiences with declarative data-centric languages in various settings including overlay networks~\cite{p2}, three-tier web services~\cite{hilda}, natural language processing~\cite{dyna}, modular robotics~\cite{meld}, video games~\cite{cornellgames}, filesystem metadata analysis~\cite{wiscfsck}, and compiler analysis~\cite{bddbddb}.  The languages used in all these settings are data-centric in the sense that the programmer primarily focuses on batches of data: tables or streams of records, which in some of the cases described above are partitioned across machines in a network.  
+
+Many of the languages described above are {\em declarative}, based on logic programming that specifies outcomes (``what''), not implementations (``how'').  Some -- notably MapReduce, but also SGL~\cite{cornellgames} -- are {\em algebraic} ({\em dataflow}) languages, focusing the programmer's attention on the composition and extension of a small set of operators that produce and consume bulk data types (sets or streams).  \jmh{The following is long and parenthetical, but probably scratches a typical OS person's itch regarding SQL vs. MapReduce, etc.}  Typically there is an equivalence between algebraic and declarative languages; Codd's proof of this equivalence in the relational context formed the foundation of relational databases~\cite{Codd70}. Not surprisingly then, it has been observed that dataflow languages can be optimized without requiring the programmer to think declaratively~\cite{volcano,cornellgames}, and there have been recent commercial integrations of MapReduce and SQL in relational databases~\cite{greenplum,aster}.  So declarative and algebraic dataflow languages are much more similar than different. By contrast, most traditional languages ask programmers to focus mostly on imperative threads of control specifying sequences of instructions, which typically run on a single machine and communicate with other threads via shared channels.
+
+\jmh{LINQ and DryadLINQ.  Erlang.  Lamport's TLS and other largely theoretical ideas.}
+
+\section{Background: Overlog and JOL}
+\jmh{Steal a quick intro from a previous paper.  Mention that it's evolved since SOSP 05 to be more truly declarative.  Brag briefly about metaprogramming of compiler (borrowing Evita Raced) and the actual scheduler and runtime.  Say we don't have space to describe further, but it speaks to the litmus test of the intro: JOL is way smaller than P2.}
 \section{A Naive Analytics Stack}
 Simple implementations of a Map/Reduce workalike, running on top of a
 GFS workalike~\cite{gfs-sosp}.
