@@ -29,7 +29,7 @@ public class BFSMigrateTest extends DataCommon {
         }
 
         //check_files();
-        cleanup_all();
+        cleanupAll();
     }
 
 	public static void main(String[] args) throws Exception {

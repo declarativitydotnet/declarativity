@@ -54,14 +54,14 @@ public class DataCommon extends TestCommon {
         }
     }
 
-    protected void cleanup_all() {
+    protected void cleanupAll() {
         for (String d : dnList) {
             cleanup(d);
         }
         shutdown();
     }
 
-    private long get_checksum(int i, String name) {
+    private long getChecksum(int i, String name) {
         File csFile = new File("td" + i + "/checksums/" + name + ".cksum");
         System.out.println("File td" + i + "/checksums/" + name);
         safeAssert("checksum file exists", csFile.exists());
@@ -74,7 +74,7 @@ public class DataCommon extends TestCommon {
         }
     }
 
-    protected void check_files() {
+    protected void checkFiles() {
         long len = new File(fName).length();
         long appropriateNumberOfChunks = (len / Conf.getChunkSize()) + 1;
 
@@ -89,7 +89,7 @@ public class DataCommon extends TestCommon {
             for (File f : dir.listFiles()) {
                 counter(nodecnts, str);
                 counter(ht, f.getName());
-                long csum = get_checksum(i, f.getName());
+                long csum = getChecksum(i, f.getName());
                 Long oldCsum = (Long) csums.get(f.getName());
                 if (oldCsum == null) {
                     csums.put(f.getName(), new Long(csum));
@@ -144,19 +144,19 @@ public class DataCommon extends TestCommon {
             datanodes = dn;
         }
 
-        public void pick_victim() {
+        public void pickVictim() {
             // pick a random directory
             Random r = new Random();
             System.out.println("this.datanodes = " + this.datanodes);
             if (this.datanodes == 1) {
-                pick_victim("td1");
+                pickVictim("td1");
             } else {
                 int indx = r.nextInt(this.datanodes-1);
-                pick_victim("td" + (indx+1));
+                pickVictim("td" + (indx+1));
             }
         }
 
-        public void pick_victim(String dir) {
+        public void pickVictim(String dir) {
             // pick a random chunk
             String longDir = dir + File.separator + "chunks";
             File dirObj = new File(longDir);
@@ -166,16 +166,16 @@ public class DataCommon extends TestCommon {
             int victim = r.nextInt(fileList.length);
             String thisChunk = fileList[victim].getName();
 
-            pick_victim(longDir, thisChunk);
+            pickVictim(longDir, thisChunk);
         }
 
-        public void do_victim() {
+        public void doVictim() {
             File victim = new File(directory + File.separator + chunk);
             safeAssert("victim file ("+ directory + File.separator + chunk  +") exists?", victim.exists());
             victim.delete();
         }
 
-        public void pick_victim(String dir, String c) {
+        public void pickVictim(String dir, String c) {
             directory = dir;
             chunk = c;
         }
