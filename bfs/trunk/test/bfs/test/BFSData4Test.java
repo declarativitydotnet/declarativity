@@ -21,7 +21,7 @@ public class BFSData4Test extends DataCommon {
         //killDataNode(0);
         
         //check_files();
-        //cleanup_all();
+        cleanup_all();
     }
 
 	public static void main(String[] args) throws Exception {
