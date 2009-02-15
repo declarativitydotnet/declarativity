@@ -18,7 +18,13 @@ public class BFSData4Test extends DataCommon {
         v.do_victim();
         */
 
-        //killDataNode(0);
+        killDataNode(0);
+
+        try {
+        Thread.sleep(5000);
+        } catch (Exception e) {
+
+        }
         
         //check_files();
         cleanup_all();
