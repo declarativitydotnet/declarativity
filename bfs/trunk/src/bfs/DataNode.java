@@ -1,7 +1,6 @@
 package bfs;
 
 import java.io.File;
-import java.util.ArrayList;
 
 import bfs.DataServer;
 import bfs.DataConnection;
@@ -94,7 +93,6 @@ public class DataNode {
                         } catch(Exception e) {
                             throw new RuntimeException(e);
                         }
-                        
                     }
                 }
             }
