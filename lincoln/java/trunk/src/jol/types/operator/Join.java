@@ -93,8 +93,8 @@ public abstract class Join extends Operator {
 
 	private List<Filter> predicateFilters;
 
-	private List<Integer> innerNonJoinPositions;
-
+	private int[] innerNonJoinPositions;
+	private Object[] tupBuf;
 	/**
 	 * Create a new join operator.
 	 * @param context The runtime context.
@@ -105,12 +105,20 @@ public abstract class Join extends Operator {
 	public Join(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate.program(), predicate.rule());
 		Schema innerSchema = predicate.schema();
-		this.innerNonJoinPositions = new ArrayList<Integer>();
+
+		ArrayList<Integer> tmp = new ArrayList<Integer>();
 		for (Variable var : innerSchema.variables()) {
 			if (!input.contains(var)) {
-				this.innerNonJoinPositions.add(innerSchema.position(var.name()));
+				tmp.add(innerSchema.position(var.name()));
 			}
 		}
+		innerNonJoinPositions = new int[tmp.size()];
+		for(int i = 0; i < this.innerNonJoinPositions.length; i++) {
+		    innerNonJoinPositions[i] = tmp.get(i);
+		}
+
+        tupBuf = new Object[input.size() + this.innerNonJoinPositions.length];
+		
 		initFilters(predicate, input);
 	}
 
@@ -207,10 +215,15 @@ public abstract class Join extends Operator {
 	}
 
 	private Tuple join(Tuple outer, Tuple inner) {
-		Tuple result = outer.clone();
-		for (Integer position : this.innerNonJoinPositions) {
-			result.append(inner.value(position));
-		}
-		return result;
+        synchronized (tupBuf) {
+            if(tupBuf.length != outer.size() + this.innerNonJoinPositions.length) { throw new IllegalStateException("bug in join logic!"); }
+    	    for(int i = 0; i < outer.size(); i++) {
+    	        tupBuf[i] = outer.value(i);
+    	    }
+    	    for(int i = 0; i < this.innerNonJoinPositions.length; i++) {
+    	        tupBuf[i+outer.size()] = inner.value(this.innerNonJoinPositions[i]);
+    	    }
+    	    return new Tuple(tupBuf);
+	    }
 	}
 }

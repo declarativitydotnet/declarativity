@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -22,19 +23,14 @@ import jol.types.table.Key;
 public class Tuple implements Iterable<Object>, Serializable {
 	private static final long serialVersionUID = 1L;
 
-	/** An ordered list of tuple values. */
-	protected List<Object> values;
+	/** An array of tuple values. */
+	protected Object[] values;
 
 	/** A tuple refcount. */
 	transient protected long refCount;
 
 	/** Cached hash code value */
-	transient protected int hashCache;
-
-	/** Is the cached hash code value up-to-date? */
-	transient protected boolean hashCacheValid;
-
-	transient protected boolean frozen;
+	transient protected int hashCache = 0;
 
 	/**
 	 * Create a new tuple.
@@ -42,14 +38,11 @@ public class Tuple implements Iterable<Object>, Serializable {
 	 */
 	public Tuple(Object... values) {
 		initialize();
-		this.values = new ArrayList<Object>();
-		for (Object value : values) {
-			this.values.add(value);
-		}
+		this.values = Arrays.copyOf(values,values.length);
 	}
-
+	
 	public Object[] toArray() {
-		return values.toArray();
+		return Arrays.copyOf(values, values.length);
 	}
 
 	/**
@@ -58,7 +51,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 	 */
 	public Tuple(List<Object> values) {
 		initialize();
-		this.values = new ArrayList<Object>(values);
+		this.values = values.toArray();
 	}
 
 	/**
@@ -84,12 +77,12 @@ public class Tuple implements Iterable<Object>, Serializable {
 	private final static int DOUBLE = 10;
 	private final static int KEY = 11;
 
-	private boolean warned = false;
+//	private static boolean warned = false;
 
 	public byte[] toBytes() throws IOException {
 		ByteArrayOutputStream ret = new ByteArrayOutputStream();
 		DataOutputStream out = new DataOutputStream(ret);
-		out.writeShort(values.size());
+		out.writeShort(values.length);
 		for (Object o : values) {
 			if (o == null) {
 				out.writeByte(NULL);
@@ -127,10 +120,10 @@ public class Tuple implements Iterable<Object>, Serializable {
 					out.writeInt(i);
 				}
 			} else {
-				if (!warned) {
-					System.out.println("sending non-primitive: " + o.getClass().toString());
-					warned = true;
-				}
+//				if (!warned) {
+//					System.out.println("sending non-primitive: " + o.getClass().toString());
+//					warned = true;
+//				}
 				out.writeByte(OBJECT);
 				ByteArrayOutputStream subret = new ByteArrayOutputStream();
 				ObjectOutputStream oout = new ObjectOutputStream(subret);
@@ -148,29 +141,29 @@ public class Tuple implements Iterable<Object>, Serializable {
 	public void fromBytes(byte[] bytes) throws IOException {
 		DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
 		short size = in.readShort();
-		values = new ArrayList<Object>(size);
+		values = new Object[size];
 		for (int i = 0; i < size; i++) {
 			int type = in.readByte();
 			if (type == NULL) {
-				values.add(null);
+				values[i] = null;
 			} else if (type == STRING) {
-				values.add(in.readUTF());
+				values[i] = in.readUTF();
 			} else if (type == INT) {
-				values.add(in.readInt());
+				values[i] = in.readInt();
 			} else if (type == LONG) {
-				values.add(in.readLong());
+				values[i] = in.readLong();
 			} else if (type == SHORT) {
-				values.add(in.readShort());
+				values[i] = in.readShort();
 			} else if (type == BOOLEAN) {
-				values.add(in.readBoolean());
+				values[i] = in.readBoolean();
 			} else if (type == CHAR) {
-				values.add(in.readChar());
+				values[i] = in.readChar();
 			} else if (type == BYTE) {
-				values.add(in.readByte());
+				values[i] = in.readByte();
 			} else if (type == FLOAT) {
-				values.add(in.readFloat());
+				values[i] = in.readFloat();
 			} else if (type == DOUBLE) {
-				values.add(in.readDouble());
+				values[i] = in.readDouble();
 			} else if (type == KEY) {
 				int values = in.readInt();
 				List<Integer> fields = new ArrayList<Integer>(values);
@@ -183,7 +176,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 										  new ByteArrayInputStream(obytes));
 
 				try {
-					values.add(oin.readObject());
+					values[i] = oin.readObject();
 				} catch (ClassNotFoundException e) {
 					throw new IOException("Couldn't deserialize object in column " + i +
 										  " of tuple (partial value is: " + toString() + ")");
@@ -217,6 +210,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 	public Tuple clone() {
 		Tuple copy    = new Tuple(this.values);
 		copy.refCount = this.refCount;
+		copy.hashCache = this.hashCache;
 		return copy;
 	}
 
@@ -225,40 +219,17 @@ public class Tuple implements Iterable<Object>, Serializable {
      * freshly deserialized.
      */
 	private void initialize() {
-		this.frozen         = false;
-	    this.hashCacheValid = false;
+	    this.hashCache = 0;
 		this.refCount       = 1;
-	}
-
-	public boolean frozen() {
-		return this.frozen;
-	}
-
-	public void freeze() {
-		this.frozen = true;
-	}
-
-	/**
-	 * Append the tuple value.
-	 * @param value The tuple value.
-	 */
-	public void append(Object value) throws RuntimeException {
-		if (frozen()) {
-			throw new RuntimeException("Operation invalid on frozen tuple!");
-		}
-		else {
-			this.values.add(value);
-			this.hashCacheValid = false;
-		}
 	}
 
 	@Override
 	public String toString() {
 		String value = "<";
-		if (values.size() > 0) {
-			value += values.get(0);
-			for (int i = 1; i < values.size(); i++) {
-				Object element = values.get(i);
+		if (values.length > 0) {
+			value += values[0];
+			for (int i = 1; i < values.length; i++) {
+				Object element = values[i];
 				value += ", " + (element == null ? "null" : element.toString());
 			}
 		}
@@ -270,14 +241,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 	public boolean equals(Object obj) {
 		if (obj instanceof Tuple) {
 			Tuple t = (Tuple) obj;
-			if (size() != t.size()) return false;
-			for (int i = 0; i < size(); i++) {
-				Object me    = this.values.get(i) == null ? "null" : this.values.get(i);
-				Object other = t.values.get(i) == null ? "null" : t.values.get(i);
-				if (!me.equals(other))
-				    return false;
-			}
-			return true;
+			return Arrays.equals(this.values, t.values);
 		}
 		return false;
 	}
@@ -285,28 +249,15 @@ public class Tuple implements Iterable<Object>, Serializable {
 	@Override
 	public int hashCode() {
 	    /* If necessary, recompute the cached hash code */
-	    if (!this.hashCacheValid)
-	        recomputeHashCache();
-
+	    if (hashCache == 0) {
+    	    this.hashCache = Arrays.hashCode(this.values); //h;
+	    }
 	    return this.hashCache;
 	}
 
-    private void recomputeHashCache() {
-        /*
-         * This hash function is based on the advice in "Effective Java" by J.
-         * Bloch, p. 38-39 (Item 8).
-         */
-        int h = 37;
-        for (Object v : this.values)
-            h = (h * 31) + (v == null ? 0 : v.hashCode());
-
-        this.hashCache = h;
-        this.hashCacheValid = true;
-    }
-
 	/** The number of attributes in this tuple. */
 	public int size() {
-		return this.values.size();
+		return this.values.length;
 	}
 
 	/**
@@ -315,7 +266,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 	 * @param field The field position.
 	 */
 	public Object value(int field) {
-		return this.values.get(field);
+		return this.values[field];
 	}
 
 	/**
@@ -355,6 +306,6 @@ public class Tuple implements Iterable<Object>, Serializable {
 	}
 
 	public Iterator<Object> iterator() {
-		return this.values.iterator();
+		return Arrays.asList(this.values).iterator();
 	}
 }

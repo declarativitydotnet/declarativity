@@ -140,11 +140,11 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	private TupleSet result() {
 		TupleSet result = new TupleSet(name());
 		if (this.singleGroupAggregateFunctions != null) {
-			Tuple tuple = new Tuple();
-			for (Aggregate<C> aggregation : this.singleGroupAggregateFunctions) {
-				tuple.append(aggregation.result());
-			}
-			result.add(tuple);
+		    Object[] arry = new Object[this.singleGroupAggregateFunctions.size()];
+		    for(int i = 0; i < arry.length; i++) {
+		        arry[i] = this.singleGroupAggregateFunctions.get(i).result();
+		    }
+		    result.add(new Tuple(arry));
 		} else {
 			for (Tuple group : this.aggregateFunctions.keySet()) {
 				Tuple tuple = result(group.clone());
@@ -158,18 +158,18 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		if (this.aggregateFunctions.containsKey(group)) {
 			Iterator<Aggregate<C>> aValues = this.aggregateFunctions.get(group).iterator();
 			Iterator<Object>      gbValues = group.iterator();
-			Tuple result = new Tuple();
-			for (TupleKey key : this.tupleKey) {
-				switch(key) {
-				case AGGREGATE:
-					result.append(aValues.next().result());
-					break;
-				case GROUP:
-					result.append(gbValues.next());
-					break;
-				}
+			Object arry[] = new Object[this.tupleKey.size()];
+			for (int i = 0; i < arry.length; i++) {
+			    switch(this.tupleKey.get(i)) {
+			    case AGGREGATE:
+			        arry[i] = aValues.next().result();
+			        break;
+			    case GROUP:
+			        arry[i] = gbValues.next();
+			        break;
+			    }
 			}
-			return result;
+            return new Tuple(arry);
 		}
 		return null;
 	}
