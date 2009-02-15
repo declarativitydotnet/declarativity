@@ -27,7 +27,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 // XXX: file IDs are assigned from a hash of the filename right now;
 // this is obviously broken
 public
-bfs::file(Master, FileId, FName, false) :-
+bfs::file(Master, FileId, null, FName, false) :-
     appView#insert(Master, _, _, _, FName, Op, _, _),
     Op == "i",
     FileId := FName.hashCode();
@@ -52,7 +52,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 // Add a new chunk to the file
 public
 bfs::fchunk(Master, ChunkId, FileId) :-
-    bfs::file(Master, FileId, FName, false),
+    bfs::file(Master, FileId, _, FName, false),
     appView#insert(Master, _, _, _, FName, Op, _, ChunkId),
     Op == "u";
 
@@ -78,9 +78,9 @@ appView(Master, From, Decree, Instance, Name, Op, Id, I) :-
 
 public
 delete
-bfs::file(Master, FileId, FName, IsDir) :-
+bfs::file(Master, FileId, FParent, FName, IsDir) :-
     canDelete(Master, _, _, _, FName),
-    bfs::file(Master, FileId, FName, IsDir);
+    bfs::file(Master, FileId, FParent, FName, IsDir);
 
 watch(bfs::create_request_done,aeid);
 
