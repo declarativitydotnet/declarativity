@@ -58,10 +58,8 @@ public class BFSOutputStream extends OutputStream {
 	public void flush() throws IOException {
 		BFSNewChunkInfo info = this.bfs.getNewChunk(this.path);
 
-    	List<String> path = new LinkedList<String>(info.getCandidateNodes());
-    	String firstAddr = path.remove(0);
-        DataConnection conn = new DataConnection(firstAddr);
-        conn.sendRoutingData(info.getChunkId(), path);
+        DataConnection conn = new DataConnection(info.getCandidateNodes());
+        conn.sendRoutingData(info.getChunkId());
         conn.write(this.buf);
         conn.close();
         this.buf.clear();
