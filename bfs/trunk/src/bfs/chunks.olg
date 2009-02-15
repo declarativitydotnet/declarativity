@@ -35,10 +35,7 @@ chunkSeq(Master, I+1) :-
 define(newListHolder,keys(0,2),{String,String,Integer,ArrayList,Integer,String});
 //watch(newListHolder, ae);
 
-// We need to clone the list; otherwise the downstream list insert
-// causes a cycle through candidate_datanodes
-newListHolder(Master, Source, Id, NewList, NewChunkId, FName) :-
-    NewList := List == null ? null : new ArrayList(List),
+newListHolder(Master, Source, Id, List, NewChunkId, FName) :-
     candidate_datanode(Master, Id, Source, FName, NewChunkId, List),
     bfs::request(Master, Id, Source, "NewChunk", FName);
 
@@ -66,10 +63,8 @@ public
 delete
 bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time) :-
     bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
-    chunkMigration#insert(Master, DnWithReplica, ChunkId, CurrRepCnt, _); 
+    chunkMigration#insert(Master, DnWithReplica, ChunkId, CurrRepCnt, _);
 
 watch(send_migrate, ae);
 send_migrate(@DnWithReplica, Master, ChunkId, Dns) :-
   chunkMigration(@Master, DnWithReplica, ChunkId, CurrRepCnt, Dns);
-
-
