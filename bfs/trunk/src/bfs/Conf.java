@@ -35,14 +35,12 @@ public class Conf {
     private static final long listingTimeout = 5000;
 
     private static final int chunkSize = 102400;
-    private static final int bufSize = 102400;
 
     private static final long heartbeatRetention = 4000L;
 
     private static int replicationFactor = 1;
 
     public static int getChunkSize() {
-        assert(chunkSize >= bufSize);
         return chunkSize;
     }
     public static long getHeartbeatRetention() {
@@ -55,10 +53,6 @@ public class Conf {
 
     public static void setRepFactor(int rf) {
         replicationFactor = rf;
-    }
-
-    public static int getBufSize() {
-        return bufSize;
     }
 
     /* NB: This must be called before installing "bfs.olg" */

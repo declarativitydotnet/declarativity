@@ -106,23 +106,24 @@ public class DataServer extends Thread {
             System.out.println("WRITE OP");
 
             try {
-                int chunkId = readChunkId();
+                int chunkId = readInt();
                 List<String> path = readHeaders();
+                int dataLength = readInt();
 
-                File newf = createChunkFile(chunkId);
-                System.out.println("Ready to read file in");
-                FileChannel fc = new FileOutputStream(newf).getChannel();
-                fc.transferFrom(this.channel, 0, Conf.getChunkSize());
+                File chunkFile = createChunkFile(chunkId);
+                System.out.println("Ready to read file in (length = " + dataLength + ")");
+                FileChannel fc = new FileOutputStream(chunkFile).getChannel();
+                fc.transferFrom(this.channel, 0, dataLength);
                 fc.close();
 
                 // we are not pipelining yet.
                 if (path.size() > 0) {
                     System.out.println("Path size was " + path.size());
-                    copyToNext(newf, chunkId, path);
+                    copyToNext(chunkFile, chunkId, path);
                 }
 
                 // sadly, for the time being,
-                createCRCFile(chunkId, getFileChecksum(newf));
+                createCRCFile(chunkId, getFileChecksum(chunkFile));
                 System.out.println("OK, finished WRITE_OP");
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -135,7 +136,7 @@ public class DataServer extends Thread {
                 conn.sendRoutingData(chunkId);
 
                 FileChannel fc = new FileInputStream(f).getChannel();
-                conn.sendChunkContent(fc);
+                conn.write(fc, (int) f.length());
                 fc.close();
                 conn.close();
             } catch (IOException e) {
@@ -144,12 +145,12 @@ public class DataServer extends Thread {
         }
 
         private void doDeleteOperation() {
-            int chunkId = readChunkId();
+            int chunkId = readInt();
 			File victim = getChunkFile(chunkId);
 			victim.delete();
         }
 
-        private int readChunkId() {
+        private int readInt() {
             try {
                 return this.in.readInt();
             } catch (IOException e) {
