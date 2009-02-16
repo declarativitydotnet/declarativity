@@ -23,12 +23,17 @@ public class DataConnection {
 
     public DataConnection(List<String> nodePath) {
     	this.nodePath = nodePath;
-        setupStream();
+        setupStream(0);
     }
 
-    private void setupStream() {
+    public DataConnection(List<String> nodePath, int indx) {
+    	this.nodePath = nodePath;
+        setupStream(indx);
+    }
+
+    private void setupStream(int indx) {
     	// We connect to the first node in the path
-    	String addr = this.nodePath.get(0);
+    	String addr = this.nodePath.get(indx);
         String[] parts = addr.split(":");
         String host = parts[1];
         int controlPort = Integer.parseInt(parts[2]);
@@ -96,6 +101,15 @@ public class DataConnection {
     	} catch (IOException e) {
     		throw new RuntimeException(e);
     	}
+    }
+    public void prunePath() {
+        this.nodePath.remove(0);
+    }
+
+    public void prunePath(int times) {
+        for (int i = 0; i < times; i++) {
+            prunePath();
+        }
     }
 
     public void close() {

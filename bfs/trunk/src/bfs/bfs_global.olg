@@ -15,6 +15,8 @@ watch(fchunk, ae);
 // Master, Cnt, DataNode, Id
 define(possible_choices, keys(0,2), {String, Integer, String, Integer});
 
+define(migration_choices, keys(0,1,2), {String, String, Integer});
+
 // Master node, Request ID, Client node, Request type, Arg
 define(request, keys(0, 1), {String, Integer, String, String, String});
 watch(request, aers);

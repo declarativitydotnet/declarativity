@@ -16,6 +16,13 @@ possible_choices(Master, Cnt, DataNode, Id) :-
     chunk_cnt(Master, DataNode, Cnt);
 */
 
+watch(migration_choices, ae);
+public 
+migration_choices(Master, DataNode, ChunkId) :-
+    bfs_heartbeat::newReplica(Master, ChunkId, _, _, _),  
+    bfs_heartbeat::dataNodes(Master, DataNode, _),
+    notin bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
+
 define(flat_cnt, keys(0,1), {String, Integer});
 //watch(flat_cnt, ae);
 flat_cnt(Master, Cnt) :-

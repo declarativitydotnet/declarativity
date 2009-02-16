@@ -61,7 +61,7 @@ rep_factor(Master, ChunkId, count<DataNode>) :-
 
 
 define(w_rep_factor, {String, Integer, Integer});
-watch(w_rep_factor, a);
+//watch(w_rep_factor, a);
 w_rep_factor(M, C, Cnt) :-
   clock#insert(),
   rep_factor(M, C, Cnt);
@@ -74,7 +74,7 @@ representative_datanode(Master, ChunkId, max<DataNode>, min<Ts>) :-
     chunks(Master, DataNode, ChunkId, _, Ts);
 
 define(watch_dataNodes,  {String, String, Long});
-watch(watch_dataNodes, a);
+//watch(watch_dataNodes, a);
 watch_dataNodes(M, D, T) :-
   dataNodes(M, D, T),
   clock#insert();
@@ -108,14 +108,15 @@ newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
 delete
 newReplicaRequest(Master, ChunkId, Dn, Cnt1, Time) :-
     newReplicaRequest(Master, ChunkId, Dn, Cnt1, Time),
-    rep_factor#insert(Master, ChunkId, Cnt2),
+    clock#insert(),
+    rep_factor(Master, ChunkId, Cnt2),
     Cnt2 >= Conf.getRepFactor();
 
 define(newReplica, {String, Integer, String, Integer, Long});
 newReplica(Master, ChunkId, Dn, Cnt, Time) :-
     newReplicaRequest(Master, ChunkId, Dn, Cnt, Time),
     clock#insert(),
-    (System.currentTimeMillis() - Time) > 4000L;
+    (System.currentTimeMillis() - Time) > 6000L;
 
 // hacky constraint: one message per tick
 define(send_delete, keys(0), {String, Integer, String});
