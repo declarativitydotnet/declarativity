@@ -260,9 +260,9 @@ public class Compiler {
 				}
 			}
 		} catch (CompileException e) {
-			runtime.error(e.getMessage(), e.node());
+			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage(), e.node());
 		} catch (UpdateException e) {
-			runtime.error(e.getMessage());
+			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage());
 		}
 	}
 }
