@@ -64,11 +64,10 @@ public class DataNode {
 
             @Override
             public void insertion(TupleSet tuples) {
-
                 System.out.println("COPYCOPYCOPYCOPY!\n");
                 for (Tuple t : tuples) {
-                    Integer chunkId = (Integer)t.value(2);
-                    Integer currRepCnt = (Integer)t.value(3);
+                    Integer chunkId = (Integer) t.value(2);
+                    Integer currRepCnt = (Integer) t.value(3);
                     Set args = (Set) t.value(4);
                     List<String> path = new LinkedList<String>(args);
 
@@ -80,7 +79,7 @@ public class DataNode {
                                 pathCopy.add(path.get(j));
                             }
                             DataConnection conn = new DataConnection(pathCopy);
-                            System.out.println("send chunk "+chunkId+ " to "+path.get(0));
+                            System.out.println("send chunk " + chunkId + " to " + path.get(0));
 
                             String f = fsRoot + File.separator + "chunks" + File.separator + chunkId.toString();
                             FileChannel fc = new FileInputStream(f).getChannel();
@@ -121,9 +120,6 @@ public class DataNode {
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
         Table table = this.system.catalog().table(new TableName("bfs_chunks", "send_migrate"));
-        if (table == null) {
-          throw new RuntimeException("send_migrate callback not defined");
-        }
         table.register(copyCallback);
 
         this.system.start();
