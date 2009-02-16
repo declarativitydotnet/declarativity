@@ -35,10 +35,9 @@ public class JobState implements Comparable<JobState> {
 	}
 	
 	public JobState(JobID jobid, Set<TaskState> maps, Set<TaskState> reduces) {
-		this.jobid   = jobid;
-		this.state   = Constants.JobState.RUNNING;
-		this.maps    = maps;
-		this.reduces = reduces;
+		this(jobid, Constants.JobState.RUNNING);
+		if (maps != null)    this.maps.addAll(maps);
+		if (reduces != null) this.reduces.addAll(reduces);
 	}
 	
 	@Override
@@ -55,11 +54,7 @@ public class JobState implements Comparable<JobState> {
 	}
 	
 	public String toString() {
-		JobStatus status = status();
-		return this.jobid.toString() + " - " + 
-		       this.state + 
-		       " MapProgress[" + status.mapProgress() + "]," +
-		       " ReduceProgress[" + status.reduceProgress() + "]";
+		return this.state.name();
 	}
 	
 	
@@ -91,6 +86,7 @@ public class JobState implements Comparable<JobState> {
 	}
 	
 	public Constants.JobState state() {
+		status(); // update status
 		return this.state;
 	}
 	
@@ -103,7 +99,7 @@ public class JobState implements Comparable<JobState> {
 		float reduceProgress = 0f;
 		
 		if (this.state == Constants.JobState.RUNNING) {
-			if (maps == null) {
+			if (maps.size() == 1) {
 				mapProgress = 1f;
 			}
 			else {
@@ -113,7 +109,7 @@ public class JobState implements Comparable<JobState> {
 				mapProgress = mapProgress / (float) this.maps.size();
 			}
 			
-			if (reduces == null) {
+			if (reduces.size() == 0) {
 				reduceProgress = 1f;
 			}
 			else {

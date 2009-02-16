@@ -28,7 +28,7 @@ import org.apache.hadoop.mapred.lib.NullOutputFormat;
 import org.apache.hadoop.util.Tool;
 
 public class JobSimulator extends Thread {
-	private class Job extends Configured 
+	private static class Job extends Configured 
 	implements Runnable, Tool, 
 			   Mapper<IntWritable, IntWritable, IntWritable, IntWritable>,  
 			   Reducer<IntWritable, IntWritable, IntWritable, IntWritable>,  
@@ -79,6 +79,7 @@ public class JobSimulator extends Thread {
 		public void map(IntWritable key, IntWritable value,
 				OutputCollector<IntWritable, IntWritable> output,
 				Reporter reporter) throws IOException {
+			System.err.println("MAP EXECUTION");
 		}
 
 		public void close() throws IOException {
@@ -87,6 +88,7 @@ public class JobSimulator extends Thread {
 		public void reduce(IntWritable key, Iterator<IntWritable> values,
 				OutputCollector<IntWritable, IntWritable> output,
 				Reporter reporter) throws IOException {
+			System.err.println("REDUCE EXECUTION");
 		}
 
 		public int getPartition(IntWritable key, IntWritable value, int numPartitions) {
@@ -111,6 +113,7 @@ public class JobSimulator extends Thread {
 	}
 	
 	public void run() {
+		int index = 200;
 		JobConf  conf = new JobConf();
 		try {
 			while (!isInterrupted()) {
@@ -126,9 +129,10 @@ public class JobSimulator extends Thread {
 					String name = "job" + jobs.size();
 					JobPriority[] priorities = JobPriority.values();
 					Job job = new Job(priorities[random.nextInt(priorities.length)],
-							          "job"+jobs.size(), 2, 0, tempPath);
+							          "job"+jobs.size(), 2, 10, tempPath);
 					jobs.add(job);
 					this.executor.execute(job);
+					if (index-- < 0) return;
 				} catch (InterruptedException e) { }
 			}
 		} catch (Throwable t) {

@@ -20,6 +20,10 @@ import org.apache.hadoop.mapred.TaskTrackerAction;
 public final class Function {
 	private final static Random rand = new Random();
 	
+	public static boolean coinFlip() {
+		return rand.nextBoolean();
+	}
+	
 	public static Long priority(Integer category, JobPriority priority, Long timestamp) {
 		return category.longValue() * (priority.ordinal() + timestamp);
 	}
@@ -52,12 +56,16 @@ public final class Function {
 		return new KillJobAction(jobid);
 	}
 	
-	public static ValueList getLocations(JobClient.RawSplit split) {
-		String [] locations = new String[2]; // split.getLocations();
-		for (int i = 0; i < locations.length; i++) {
-			locations[i] = new String("tracker" + (rand.nextInt(5)) + ".localhost");
+	public static ValueList<String> getLocations(JobClient.RawSplit split) {
+		/*
+		String [] locations = split.getLocations();
+		return new ValueList<String>(locations);
+		*/
+		ValueList<String> locations = new ValueList<String>();
+		for (int i = 0; i < 3; i++) {
+			locations.add("tracker" + rand.nextInt(100));
 		}
-		return new ValueList(locations);
+		return locations;
 	}
 	
 	public static Object random(Set<Object> objects) {

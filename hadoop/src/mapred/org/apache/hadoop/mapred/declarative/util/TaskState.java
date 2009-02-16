@@ -58,14 +58,15 @@ public class TaskState implements Comparable<TaskState> {
 	}
 	
 	private TaskState(JobID jobid, TaskID taskid, HashMap<Integer, AttemptState> attempts) {
+		this(jobid, taskid);
 		this.jobid = jobid;
 		this.taskid = taskid;
-		this.attempts = (HashMap<Integer, AttemptState>) attempts.clone();
+		if (attempts != null) this.attempts.putAll(attempts);
 	}
 	
 	@Override
 	public int hashCode() {
-		return (this.jobid.hashCode() + ":" + this.taskid.hashCode()).hashCode();
+		return (this.jobid.toString() + ":" + this.taskid.toString() + ":" + progress()).hashCode();
 	}
 	
 	@Override
@@ -86,14 +87,13 @@ public class TaskState implements Comparable<TaskState> {
 		if (comparison != 0) return comparison;
 		comparison = this.taskid.compareTo(o.taskid);
 		if (comparison != 0) return comparison;
-		if (this.state() != o.state()) return this.state().ordinal() - o.state().ordinal();
+		if (!this.state().equals(o.state())) 
+			return this.state().ordinal() - o.state().ordinal();
 		return Float.compare(this.progress(), o.progress());
 	}
 	
 	public String toString() {
-		return "Task[" + this.taskid + ", " 
-		               + state() + ", " + phase() + 
-		               ", progress = " + progress() + "]";
+		return "[" + state() + ", " + phase() + ", " + progress() + "]";
 	}
 
 	/**

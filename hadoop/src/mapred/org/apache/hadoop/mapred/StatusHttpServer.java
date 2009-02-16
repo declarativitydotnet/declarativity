@@ -159,8 +159,9 @@ public class StatusHttpServer {
    */
   private static String getWebAppsPath() throws IOException {
     URL url = StatusHttpServer.class.getClassLoader().getResource("webapps");
-    if (url == null) 
+    if (url == null) {
       throw new IOException("webapps not found in CLASSPATH"); 
+    }
     return url.toString();
   }
 
