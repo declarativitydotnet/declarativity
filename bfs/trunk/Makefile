@@ -5,7 +5,7 @@ RUNTESTJUNIT = ${RUNTEST} org.junit.runner.JUnitCore
 RUNTESTSTASIS = LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis $(RUNTEST) -Djava.library.path=$(JOL_DIR)/ant-build/stasis/jni
 RUNTESTSTASISJUNIT = ${RUNTESTSTASIS} org.junit.runner.JUnitCore
 RUNTESTSTASISCPU = ${RUNTESTSTASIS} -agentlib:hprof=cpu=times,depth=6 org.junit.runner.JUnitCore
-RUNTESTSTASISHEAP = ${RUNTESTSTASIS} -agentlib:hprof=heap=all,depth=6 org.junit.runner.JUnitCore
+RUNTESTSTASISHEAP = ${RUNTESTSTASIS} -agentlib:hprof=heap=sites,depth=7 org.junit.runner.JUnitCore
 
 .PHONY: TESTPREP
 .PHONY: %.test
