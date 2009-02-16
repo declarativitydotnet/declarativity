@@ -75,7 +75,7 @@ public class DataNode {
                     while (path.size() > 0) {
                         try {
                             // shorten the possible path to the desired # of replicas
-                            List<String> pathCopy = new LinkedList();
+                            List<String> pathCopy = new LinkedList<String>();
                             for (int j=0; j < path.size() && j < (Conf.getRepFactor() - currRepCnt); j++) {
                                 pathCopy.add(path.get(j));
                             }
@@ -89,7 +89,7 @@ public class DataNode {
                             conn.sendChunkContent(fc);
 
                             fc.close();
-                            break; 
+                            break;
                         } catch (RuntimeException e) {
                             // fall through
                             path.remove(0);
