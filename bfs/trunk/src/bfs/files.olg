@@ -13,16 +13,14 @@ import jol.core.Runtime;
 timer(clock, physical, 3000, 3000, 0);
 timer(periodic, logical, 1, 1, 1);
 
-// Node address, data directory on host chunk system
-define(datadir, keys(0), {String, String});
+// Node address, data directory on host file system
+define(datadir, keys(0), {String, File});
 define(checksumdir, keys(0), {String, String});
-//watch(datadir, ae);
 
 define(dir, keys(0,1,2), {String, File, List});
-//watch(dir, ae);
 dir(Host, DirObj, DirList) :-
     datadir(Host, Dir),
-    DirObj := new File(Dir + File.separator + "chunks"),
+    DirObj := new File(Dir, "chunks"),
     DirList := DirObj.isDirectory() ? Arrays.asList(DirObj.listFiles()) : new ArrayList(),
     clock(_, _, _);
 
