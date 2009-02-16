@@ -1,13 +1,16 @@
 package org.apache.hadoop.mapred;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.mapred.declarative.JobTrackerImpl;
+import org.apache.hadoop.mapred.declarative.JobTrackerServer;
 
 import jol.core.JolSystem;
 import jol.types.basic.Tuple;
@@ -38,7 +41,11 @@ public abstract class JobTracker {
 	public static JobTracker startTracker(JobConf conf)
 	throws IOException, InterruptedException {
 		try {
-			JolSystem context = jol.core.Runtime.create();
+			Path outputPath = FileOutputFormat.getOutputPath(conf);
+	        String userLogDir = conf.get("hadoop.job.history.user.location",
+	        		outputPath == null ? "./" : outputPath.toString());
+			JolSystem context = jol.core.Runtime.create(jol.core.Runtime.DEBUG_ALL, 
+					            new FileOutputStream(userLogDir + "/jobtracker_jol.out"));
 			return new JobTrackerImpl(context, conf);
 		} catch (Throwable e) {
 			throw new IOException(e);
@@ -56,6 +63,10 @@ public abstract class JobTracker {
 
 	public final State state() {
 		return this.state;
+	}
+	
+	public long getStartTime() { 
+		return startTime;
 	}
 
 	/**
@@ -93,7 +104,7 @@ public abstract class JobTracker {
 	 * Get the http port.
 	 * @return The http port number.
 	 */
-	public int getInfoPort() { return 0; }
+	public abstract int getInfoPort();
 
 	/**
 	 * Get the JOL system context.
@@ -130,5 +141,23 @@ public abstract class JobTracker {
 	 * @return Number of known task trackers.
 	 */
 	public abstract int getNumResolvedTaskTrackers();
+
+	public abstract int getTotalSubmissions();
+
+	public abstract String getJobTrackerMachine();
+
+	public abstract String getTrackerIdentifier();
+	
+	public abstract TaskStatus getTaskStatus(TaskAttemptID a);
+	
+	public abstract TaskTrackerStatus getTaskTracker(String name);
+	
+	public abstract JobStatus getJobStatus(JobID jobid);
+	
+	public abstract Set<TaskTrackerStatus> taskTrackers();
+	
+	public abstract JobSubmissionProtocol jobInterface();
+	
+	public abstract JobProfile getJobProfile(JobID jobid);
 
 }

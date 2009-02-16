@@ -4,12 +4,18 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import jol.core.JolSystem;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
@@ -21,12 +27,25 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.ipc.Server;
+import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobHistory;
 import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.JobProfile;
 import org.apache.hadoop.mapred.JobStatus;
+import org.apache.hadoop.mapred.JobSubmissionProtocol;
 import org.apache.hadoop.mapred.JobTracker;
+import org.apache.hadoop.mapred.MapTaskStatus;
+import org.apache.hadoop.mapred.ReduceTaskStatus;
 import org.apache.hadoop.mapred.StatusHttpServer;
+import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskReport;
+import org.apache.hadoop.mapred.TaskStatus;
+import org.apache.hadoop.mapred.TaskTrackerStatus;
+import org.apache.hadoop.mapred.TaskStatus.Phase;
+import org.apache.hadoop.mapred.TaskStatus.State;
+import org.apache.hadoop.mapred.declarative.Constants.TaskPhase;
+import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 import org.apache.hadoop.mapred.declarative.table.*;
 import org.apache.hadoop.mapred.declarative.test.JobSimulator;
 import org.apache.hadoop.mapred.declarative.test.TaskTrackerCluster;
@@ -70,6 +89,10 @@ public class JobTrackerImpl extends JobTracker {
 
 	  /** RPC Host name */
 	  private String localMachine;
+	  
+	  // Used to provide an HTML view on Job, Task, and TaskTracker structures
+	  private StatusHttpServer infoServer;
+	  private int infoPort;
 
 	  private DNSToSwitchMapping dnsToSwitchMapping;
 	  private NetworkTopology clusterMap = new NetworkTopology();
@@ -89,7 +112,7 @@ public class JobTrackerImpl extends JobTracker {
 			throw new IOException(e);
 		}
 
-		  // Set ports, start RPC servers, etc.
+		/******************* Set ports, start RPC servers, etc. ***********/
 	    InetSocketAddress addr = getAddress(conf);
 	    this.localMachine = addr.getHostName();
 	    this.port = addr.getPort();
@@ -100,12 +123,45 @@ public class JobTrackerImpl extends JobTracker {
 	    			                handlerCount, false, conf);
 
 		this.server.start();
+	    /***************************************************************/
 
-	    // The rpc/web-server ports can be ephemeral ports...
-	    // ... ensure we have the correct info
+		/*********************** INIT WEB SERVER **********************/
+	    String infoAddr = 
+	    	NetUtils.getServerAddress(conf, "mapred.job.tracker.info.bindAddress",
+	    			"mapred.job.tracker.info.port",
+	    	"mapred.job.tracker.http.address");
+	    InetSocketAddress infoSocAddr = NetUtils.createSocketAddr(infoAddr);
+	    String infoBindAddress = infoSocAddr.getHostName();
+	    int tmpInfoPort = infoSocAddr.getPort();
+	    /*
+	    infoServer = new StatusHttpServer("job", infoBindAddress, tmpInfoPort, 
+	    		tmpInfoPort == 0);
+	    infoServer.setAttribute("job.tracker", this);
+	    // initialize history parameters.
+	    boolean historyInitialized = JobHistory.init(conf, this.localMachine);
+	    String historyLogDir = null;
+	    FileSystem historyFS = null;
+	    if (historyInitialized) {
+	    	historyLogDir = conf.get("hadoop.job.history.location");
+	    	infoServer.setAttribute("historyLogDir", historyLogDir);
+	    	historyFS = new Path(historyLogDir).getFileSystem(conf);
+	    	infoServer.setAttribute("fileSys", historyFS);
+	    }
+	    infoServer.start();
+	    */
+	    /***************************************************************/
+	    
+	    
+	    /******** The rpc/web-server ports can be ephemeral ports... 
+	              ... ensure we have the correct info. ****************/
 	    this.port = server.getListenerAddress().getPort();
 	    this.conf.set("mapred.job.tracker", (this.localMachine + ":" + this.port));
 	    LOG.info("JobTracker up at: " + this.port);
+	    /* this.infoPort = this.infoServer.getPort();
+	    this.conf.set("mapred.job.tracker.http.address", 
+	        infoBindAddress + ":" + this.infoPort); 
+	    LOG.info("JobTracker webserver: " + this.infoServer.getPort());
+	    */
 
 	    while (true) {
 	    	try {
@@ -212,11 +268,6 @@ public class JobTrackerImpl extends JobTracker {
 	}
 
 	@Override
-	public int getTrackerPort() {
-		return this.port;
-	}
-
-	@Override
 	public FileSystem fileSystem() {
 		return this.fs;
 	}
@@ -241,25 +292,145 @@ public class JobTrackerImpl extends JobTracker {
 		return this.systemDir;
 	}
 
-	@Override
-	public TaskReport[] getMapTaskReports(JobID jobId) {
-		TaskReportTable table =
-			(TaskReportTable) this.context.catalog().table(TaskReportTable.TABLENAME);
-		return table.mapReports(jobId);
-	}
-
-	@Override
-	public TaskReport[] getReduceTaskReports(JobID jobId) {
-		TaskReportTable table =
-			(TaskReportTable) this.context.catalog().table(TaskReportTable.TABLENAME);
-		return table.reduceReports(jobId);
-	}
-
-	@Override
-	public int getNumResolvedTaskTrackers() {
-		Table table = this.context.catalog().table(TaskTrackerTable.TABLENAME);
+	  ///////////////////////////////////////////////////////
+	  // Accessors for objects that want info on jobs, tasks,
+	  // trackers, etc.
+	  ///////////////////////////////////////////////////////
+	  @Override
+	  public int getTotalSubmissions() {
+		Table table = this.context.catalog().table(JobTable.TABLENAME);
 		return table.cardinality().intValue();
-	}
+	  }
+	  
+	  @Override
+	  public String getJobTrackerMachine() {
+	    return localMachine;
+	  }
+	  
+	  @Override
+	  public String getTrackerIdentifier() {
+	    return this.identifier;
+	  }
+
+	  @Override
+	  public int getTrackerPort() {
+	    return port;
+	  }
+	  
+	  @Override
+	  public int getInfoPort() {
+	    return infoPort;
+	  }
+	  
+		@Override
+		public TaskReport[] getMapTaskReports(JobID jobId) {
+			TaskReportTable table =
+				(TaskReportTable) this.context.catalog().table(TaskReportTable.TABLENAME);
+			return table.mapReports(jobId);
+		}
+
+		@Override
+		public TaskReport[] getReduceTaskReports(JobID jobId) {
+			TaskReportTable table =
+				(TaskReportTable) this.context.catalog().table(TaskReportTable.TABLENAME);
+			return table.reduceReports(jobId);
+		}
+
+		@Override
+		public int getNumResolvedTaskTrackers() {
+			Table table = this.context.catalog().table(TaskTrackerTable.TABLENAME);
+			return table.cardinality().intValue();
+		}
+		
+		@Override
+		public TaskStatus getTaskStatus(TaskAttemptID a) {
+			try {
+				Table table = this.context.catalog().table(TaskAttemptTable.TABLENAME);
+				TupleSet result = table.primary().lookupByKey(a.getJobID(), a.getTaskID(), a.getId());
+				for (Tuple t : result) {
+					Float progress = (Float) t.value(TaskAttemptTable.Field.PROGRESS.ordinal());
+					TaskState state = (TaskState) t.value(TaskAttemptTable.Field.STATE.ordinal());
+					TaskPhase phase = (TaskPhase) t.value(TaskAttemptTable.Field.PHASE.ordinal());
+					String tracker = (String) t.value(TaskAttemptTable.Field.TRACKER.ordinal());
+					String diag = (String) t.value(TaskAttemptTable.Field.DIAGNOSTICS.ordinal());
+					if (a.isMap()) {
+						return new MapTaskStatus(a, progress, 
+								TaskStatus.State.valueOf(state.toString()), diag,
+								state.toString(), tracker, 
+								TaskStatus.Phase.valueOf(phase.toString()), new Counters());
+					}
+					else {
+						return new ReduceTaskStatus(a, progress, 
+								TaskStatus.State.valueOf(state.toString()), diag,
+								state.toString(), tracker, 
+								TaskStatus.Phase.valueOf(phase.toString()), new Counters());
+					}
+				}
+			} catch (Throwable t) {
+
+			}
+			return null;
+		}
+		
+		@Override
+		public TaskTrackerStatus getTaskTracker(String name) {
+			try {
+				Table table = this.context.catalog().table(TaskTrackerTable.TABLENAME);
+				TupleSet result = table.primary().lookupByKey(name);
+				for (Tuple t : result) {
+					String host = (String) t.value(TaskTrackerTable.Field.HOST.ordinal());
+					Integer port = (Integer) t.value(TaskTrackerTable.Field.HTTP_PORT.ordinal());
+					Integer failures = (Integer) t.value(TaskTrackerTable.Field.FAILURES.ordinal());
+					Integer maxmaps = (Integer) t.value(TaskTrackerTable.Field.MAX_MAP.ordinal());
+					Integer maxred  = (Integer) t.value(TaskTrackerTable.Field.MAX_REDUCE.ordinal());
+					return new TaskTrackerStatus(name, host, 
+	                           port, new ArrayList<TaskStatus>(),
+	                           failures, maxmaps, maxred); 
+				}
+			} catch (Throwable t) {
+
+			}
+			return null;
+			
+		}
+		
+		public JobStatus getJobStatus(JobID jobid) {
+			try {
+			return this.masterInterface.getJobStatus(jobid);
+			} catch (Throwable t) {
+			}
+			return null;
+		}
+		
+		public Set<TaskTrackerStatus> taskTrackers() {
+			Set<TaskTrackerStatus> trackers = new HashSet<TaskTrackerStatus>();
+			Table table = this.context.catalog().table(TaskTrackerTable.TABLENAME);
+			for (Tuple t : table.tuples()) {
+				String name = (String) t.value(TaskTrackerTable.Field.TRACKERNAME.ordinal());
+				String host = (String) t.value(TaskTrackerTable.Field.HOST.ordinal());
+				Integer port = (Integer) t.value(TaskTrackerTable.Field.HTTP_PORT.ordinal());
+				Integer failures = (Integer) t.value(TaskTrackerTable.Field.FAILURES.ordinal());
+				Integer maxmaps = (Integer) t.value(TaskTrackerTable.Field.MAX_MAP.ordinal());
+				Integer maxred  = (Integer) t.value(TaskTrackerTable.Field.MAX_REDUCE.ordinal());
+				trackers.add(new TaskTrackerStatus(name, host,  port, 
+						new ArrayList<TaskStatus>(), failures, maxmaps, maxred)); 
+			}
+			return trackers;
+		}
+		
+		public JobSubmissionProtocol jobInterface() {
+			return this.masterInterface;
+		}
+		
+		public JobProfile getJobProfile(JobID jobid) {
+			try {
+				return this.masterInterface.getJobProfile(jobid);
+			} catch (IOException e) {
+				return null;
+			}
+		}
+		
+
 
 	////////////////////////////////////////////////////////////
 	// main()

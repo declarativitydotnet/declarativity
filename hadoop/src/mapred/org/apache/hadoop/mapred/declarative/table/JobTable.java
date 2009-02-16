@@ -21,7 +21,7 @@ public class JobTable extends ObjectTable {
 	public static final Key PRIMARY_KEY = new Key(0);
 	
 	/** An enumeration of all clock table fields. */
-	public enum Field{JOBID, JOBNAME, JOBFILE, JOBCONF, USER, URL, PRIORITY, SUBMIT_TIME, STATUS};
+	public enum Field{JOBID, JOBNAME, JOBFILE, JOBCONF, USER, URL, PRIORITY, SUBMIT_TIME, FINISH_TIME, STATUS};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
@@ -33,6 +33,7 @@ public class JobTable extends ObjectTable {
 		String.class,       // URL
 		JobPriority.class,  // Priority
 		Long.class,         // Submit time
+		Long.class,         // Finish time
 		JobState.class      // Job status
 	};
 	
@@ -49,6 +50,7 @@ public class JobTable extends ObjectTable {
 				         url, 
 				         conf.getJobPriority(),
 				         java.lang.System.currentTimeMillis(),
+				         0L,
 		                 new JobState(jobid));
 		
 	}
