@@ -25,7 +25,6 @@ public class OlgAssertion {
 
 					System.out.println("EXCEPTION!\n");
 					throw new RuntimeException("assertion failed: " + message);
-
 				}
 			}
 		};

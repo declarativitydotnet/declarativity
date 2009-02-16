@@ -44,7 +44,6 @@ public class DataCommon extends TestCommon {
 		fis.close();
 		s.shutdown();
 		assertTrue(shellLs("foo"));
-
 	}
 
     protected void cleanupAll() {
