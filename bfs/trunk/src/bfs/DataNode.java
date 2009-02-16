@@ -68,12 +68,19 @@ public class DataNode {
                 System.out.println("COPYCOPYCOPYCOPY!\n");
                 for (Tuple t : tuples) {
                     Integer chunkId = (Integer)t.value(2);
-                    Set args = (Set) t.value(3);
+                    Integer currRepCnt = (Integer)t.value(3);
+                    Set args = (Set) t.value(4);
                     List<String> path = new LinkedList<String>(args);
-                    for (int i = 0; i < path.size(); i++) {
-                        //String addr = path.remove(i);
+
+                    while (path.size() > 0) {
                         try {
-                            DataConnection conn = new DataConnection(path);
+                            // shorten the possible path to the desired # of replicas
+                            List<String> pathCopy = new LinkedList();
+                            for (int j=0; j < path.size() && j < (Conf.getRepFactor() - currRepCnt); j++) {
+                                pathCopy.add(path.get(j));
+                            }
+                            DataConnection conn = new DataConnection(pathCopy);
+                            System.out.println("send chunk "+chunkId+ " to "+path.get(0));
 
                             String f = fsRoot + File.separator + "chunks" + File.separator + chunkId.toString();
                             FileChannel fc = new FileInputStream(f).getChannel();
@@ -82,9 +89,10 @@ public class DataNode {
                             conn.sendChunkContent(fc);
 
                             fc.close();
-                        //} catch (java.net.ConnectException e) {
+                            break; 
                         } catch (RuntimeException e) {
                             // fall through
+                            path.remove(0);
                         } catch(Exception e) {
                             throw new RuntimeException(e);
                         }

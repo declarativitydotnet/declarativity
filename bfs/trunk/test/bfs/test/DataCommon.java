@@ -86,6 +86,10 @@ public class DataCommon extends TestCommon {
             String str = "td" + i + "/chunks";
             File dir = new File(str);
 
+            if (!dir.exists()) {
+                continue;
+            }
+            System.out.println("open dir "+i);
             for (File f : dir.listFiles()) {
                 counter(nodecnts, str);
                 counter(ht, f.getName());

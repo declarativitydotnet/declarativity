@@ -7,8 +7,7 @@ public class BFSMigrateTest extends DataCommon {
 
 	@Test(timeout=24000)
     public void test1() {
-        test(TEST_FILE, 4, 1, 4);
-        //check_files();
+        test(TEST_FILE, 3, 1, 6);
 
         /* victimization of individual chunks.  requires deletion deltas, which
            are not yet implemented
@@ -19,6 +18,7 @@ public class BFSMigrateTest extends DataCommon {
         */
 
         killDataNode(0);
+        cleanup("td1");
 
         // all the chunks from this datanode have dropped in 
   
@@ -28,7 +28,7 @@ public class BFSMigrateTest extends DataCommon {
            
         }
 
-        //check_files();
+        checkFiles();
         cleanupAll();
     }
 
