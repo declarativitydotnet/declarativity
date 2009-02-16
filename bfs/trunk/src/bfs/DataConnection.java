@@ -78,18 +78,20 @@ public class DataConnection {
         }
     }
 
-    public void sendChunkContent(FileChannel src) {
+    public void write(FileChannel src, int length) {
         try {
-            src.transferTo(0, Conf.getChunkSize(), this.channel);
+        	this.dos.writeInt(length);
+            src.transferTo(0, length, this.channel);
         } catch (IOException e) {
             throw new RuntimeException("Exception sending chunk content to " +
                                        this.remoteAddr, e);
         }
     }
 
-    public void write(byte[] buf) {
+    public void write(byte[] buf, int len) {
         try {
-            this.dos.write(buf);
+        	this.dos.writeInt(len);
+            this.dos.write(buf, 0, len);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -97,11 +99,13 @@ public class DataConnection {
 
     public void write(ByteBuffer buf) {
     	try {
+    		this.dos.writeInt(buf.remaining());
     		this.channel.write(buf);
     	} catch (IOException e) {
     		throw new RuntimeException(e);
     	}
     }
+
     public void prunePath() {
         this.nodePath.remove(0);
     }

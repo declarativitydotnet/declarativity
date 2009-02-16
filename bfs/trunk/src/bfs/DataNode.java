@@ -68,7 +68,7 @@ public class DataNode {
                 for (Tuple t : tuples) {
                     Integer chunkId = (Integer) t.value(2);
                     Integer currRepCnt = (Integer) t.value(3);
-                    Set args = (Set) t.value(4);
+                    Set<String> args = (Set<String>) t.value(4);
                     List<String> path = new LinkedList<String>(args);
 
                     while (path.size() > 0) {
@@ -78,15 +78,15 @@ public class DataNode {
                             for (int j = 0; j < path.size() && j < (Conf.getRepFactor() - currRepCnt); j++) {
                                 pathCopy.add(path.get(j));
                             }
-                            DataConnection conn = new DataConnection(pathCopy);
                             System.out.println("send chunk " + chunkId + " to " + path.get(0));
 
-                            String f = fsRoot + File.separator + "chunks" + File.separator + chunkId.toString();
-                            FileChannel fc = new FileInputStream(f).getChannel();
-
+                            DataConnection conn = new DataConnection(pathCopy);
                             conn.sendRoutingData(chunkId);
-                            conn.sendChunkContent(fc);
 
+                            File f = new File(fsRoot + File.separator + "chunks" + File.separator + chunkId.toString());
+                            FileChannel fc = new FileInputStream(f).getChannel();
+                            conn.write(fc, (int) f.length());
+                            conn.close();
                             fc.close();
                             break;
                         } catch (RuntimeException e) {

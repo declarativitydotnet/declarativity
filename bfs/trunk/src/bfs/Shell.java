@@ -121,31 +121,26 @@ public class Shell {
 
         String filename = args.get(0);
 
-        int b = 1;
-        while (b != -1) {
-            // This should be a list of candidate datanodes for the chunk.
-            // The last element is the newly-assigned chunk ID. Note that
-        	// we make a copy of the list, since we're going to modify it
-        	// and don't want to mess with JOL-owned data.
-            // XXX: if the first data node in the list is down, we should
-            // retry the write to one of the other data nodes
-        	BFSNewChunkInfo info = getNewChunk(filename);
-        	if (info.getCandidateNodes().size() < Conf.getRepFactor())
-                throw new RuntimeException("server sent too few datanodes: " + info);
-
-            DataConnection conn = new DataConnection(info.getCandidateNodes());
-            conn.sendRoutingData(info.getChunkId());
+        byte buf[] = new byte[Conf.getChunkSize()];
+        while (true) {
             try {
-                int nread = 0;
-                byte buf[] = new byte[Conf.getBufSize()];
-                while (nread < Conf.getChunkSize()) {
-                    b = s.read(buf, 0, Conf.getBufSize());
-                    if (b == -1)
-                    	break;
-                    conn.write(buf);
-                    nread += b;
-                }
-                System.out.println("exiting inner loop with " + b + " retval and " + nread + " bytes written");
+                int nread = s.read(buf);
+                if (nread == -1)
+                	break;
+
+                // This should be a list of candidate datanodes for the chunk.
+                // The last element is the newly-assigned chunk ID. Note that
+            	// we make a copy of the list, since we're going to modify it
+            	// and don't want to mess with JOL-owned data.
+                // XXX: if the first data node in the list is down, we should
+                // retry the write to one of the other data nodes
+            	BFSNewChunkInfo info = getNewChunk(filename);
+            	if (info.getCandidateNodes().size() < Conf.getRepFactor())
+                    throw new RuntimeException("server sent too few datanodes: " + info);
+
+                DataConnection conn = new DataConnection(info.getCandidateNodes());
+                conn.sendRoutingData(info.getChunkId());
+                conn.write(buf, nread);
                 conn.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);
