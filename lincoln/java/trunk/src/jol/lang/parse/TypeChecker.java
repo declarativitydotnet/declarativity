@@ -1480,11 +1480,16 @@ public final class TypeChecker extends Visitor {
 				n.setProperty(Constants.TYPE, new ObjectReference(n, expr, field));
 				return ObjectReference.class;
 			} catch (Exception e) {
-				for (Method method : type.getMethods()) {
-					if (method.getName().equals(name)) {
-						n.setProperty(Constants.TYPE, new UnknownReference(n, expr, null, name));
-						return Reference.class;
+				if (type != null) {
+					for (Method method : type.getMethods()) {
+						if (method.getName().equals(name)) {
+							n.setProperty(Constants.TYPE, new UnknownReference(n, expr, null, name));
+							return Reference.class;
+						}
 					}
+				}
+				else {
+					throw new CompileException("Expression " + expr + " has an unknown type!", n);
 				}
 				throw new CompileException("Expression " + expr + " has type " + type +
 						                   ", which does not contain a field or method " +
