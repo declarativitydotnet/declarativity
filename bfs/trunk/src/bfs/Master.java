@@ -6,8 +6,6 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
-import jol.types.table.TableName;
-import jol.types.table.Table.Callback;
 
 
 public class Master {
@@ -71,19 +69,6 @@ public class Master {
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
         this.system.evaluate();
-
-        Callback cb = new Callback() {
-            @Override
-            public void deletion(TupleSet tuples) {}
-
-            @Override
-            public void insertion(TupleSet tuples) {
-                System.out.println("Got file @ master: " + tuples.toString());
-            }
-        };
-
-        this.system.catalog().table(new TableName("bfs", "file")).register(cb);
-
         this.system.start();
         System.out.println("Master node @ " + this.port + " ready!");
     }
