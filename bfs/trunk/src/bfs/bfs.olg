@@ -37,12 +37,12 @@ delete
 request(Master, Id, Source, "NewChunk", FName) :-
     bfs_chunks::newListHolder(Master, Source, Id, _, _, FName);
 
-// A "NewChunk" request for a nonexistent file causes an error.
+// "NewChunk" for nonexistent file => error
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "NewChunk", FName),
     notin file(@Master, _, _, FName, _);
 
-// A "NewChunk" request for a directory causes an error
+// "NewChunk" for directory => error
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "NewChunk", FName),
     file(@Master, _, _, FName, true);
@@ -65,11 +65,12 @@ response(@Source, Id, Master, true, EmptyChunks) :-
     notin fchunk(@Master, _, FileId),
     EmptyChunks := new HashSet();
 
+// ChunkList for nonexistent file => error
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "ChunkList", FName),
     notin file(@Master, _, _, FName, _);
 
-// A "ChunkList" request for a directory causes an error
+// ChunkList for directory => error
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "ChunkList", FName),
     file(@Master, _, _, FName, true);
