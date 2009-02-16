@@ -18,8 +18,13 @@ import java.lang.Integer;
 import java.lang.Long;
 import java.lang.Enum;
 
+watch(job, a);
+watch(task, a);
+watch(taskAttempt, a);
+
 /*************** Task Tracker Monitor *********************/
 
+/*
 timer(checkTracker, physical, 60000, infinity, 60000);
 
 taskTracker(TrackerName, Host, HttpPort, Constants.TaskTrackerState.FAILED, 
@@ -29,22 +34,44 @@ taskTracker(TrackerName, Host, HttpPort, Constants.TaskTrackerState.FAILED,
 	            MapCount, ReduceCount, MaxMap, MaxReduce),
 	TrackerState == Constants.TaskTrackerState.RUNNING,
 	java.lang.System.currentTimeMillis() - Timestamp > Period;
+	*/
+
+/*************** Clean up *********************/
+
+define(cleanup, {JobID});
+
+cleanup(JobId) :-
+	job(JobId, _, _, _, _, _, _, _, _, JStatus),
+	JStatus.state() == Constants.JobState.SUCCEEDED || 
+	JStatus.state() == Constants.JobState.FAILED;
+	
+delete
+task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
+	cleanup(JobId),
+	task(JobId, TaskId, Type, Partition, Input, MapCount, Status);
+
+delete
+taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish) :-
+	cleanup(JobId),
+    taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish);
+    
+delete
+taskFileLocation(JobId, TaskId, Loc) :-
+	cleanup(JobId), taskFileLocation(JobId, TaskId, Loc);
 
 
 /*************** TASK INIT *********************/
 
-define(initJob,  {JobID, String, String, JobConf, String, String, JobPriority, Long, JobState});
+define(initJob,  {JobID, String, String, JobConf, String, String, JobPriority, Long, Long, JobState});
 define(initTask, {JobID, JobConf, String, TaskID, Constants.TaskType, Integer, FileInput, Integer, TaskState});
 define(taskFile, {JobID, TaskID, ValueList});
 define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 
-watch(job, a);
-watch(task, a);
-job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
-	initJob(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status);
+job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, Status) :-
+	initJob(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, Status);
 
 initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
-	initJob(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status);
+	initJob(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, Status);
 	
 /* Break out of the current fixpoint thread (using 'async') since taskCreate table function
    makes blocking calls to the DFS. */
@@ -58,6 +85,7 @@ taskFile(JobId, TaskId, Locations) :-
 	Type == Constants.TaskType.MAP
 	{ Split := Input.split(); Locations := Function.getLocations(Split); };
 	
+watch(taskFileLocation, a);
 taskFileLocation(JobId, TaskId, Location) :-
 	flatten(taskFile(JobId, TaskId, Locations)),
 	Location := (String) Locations;
@@ -92,23 +120,38 @@ define(killjob,   {JobID, String});
 
 /* Update the job state. */
 updateJobState
-job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
+job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, NewStatus) :-
 	updateJob(JobId), mapTasks(JobId, Maps), reduceTasks(JobId, Reduces),
-	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _),
-	Status := new JobState(JobId, Maps, Reduces);
+	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, OldStatus),
+	OldStatus.state() != Constants.JobState.SUCCEEDED
+	{
+	NewStatus := new JobState(JobId, Maps, Reduces);
+	FinishTime := NewStatus.state() == Constants.JobState.SUCCEEDED ? 
+	              java.lang.System.currentTimeMillis() : 0L;
+	};
 	
 /* Update the job state. */
 updateJobStateNoReduce
-job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
+job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, Status) :-
 	updateJob(JobId), mapTasks(JobId, Maps), notin reduceTasks(JobId, Reduces),
-	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _),
+	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, OldStatus),
+	OldStatus.state() != Constants.JobState.SUCCEEDED
+	{
 	Status := new JobState(JobId, Maps, null);
+	FinishTime := Status.state() == Constants.JobState.SUCCEEDED ? 
+	              java.lang.System.currentTimeMillis() : 0L;
+	};
 
 updateJobStateNoMap
-job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status) :-
+job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, Status) :-
 	updateJob(JobId), notin mapTasks(JobId, Maps), reduceTasks(JobId, Reduces),
-	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _),
+	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, OldStatus),
+	OldStatus.state() != Constants.JobState.SUCCEEDED
+	{
 	Status := new JobState(JobId, null, Reduces);
+	FinishTime := Status.state() == Constants.JobState.SUCCEEDED ? 
+	              java.lang.System.currentTimeMillis() : 0L;
+	};
 	
 updateJob(JobId) :- mapTasks(JobId);
 updateJob(JobId) :- reduceTasks(JobId);
@@ -124,7 +167,7 @@ reduceTasks(JobId, set<Status>) :-
 	
 public
 killjob(JobId, TrackerName) :-
-	job(JobId, _, _, _, _, _, _, _, JobStatus),
+	job(JobId, _, _, _, _, _, _, _, _, JobStatus),
 	taskAttempt(JobId, TaskID, _, _, TaskState, _, _, TrackerName, _, _, _),
 	JobStatus.state()  == Constants.JobState.FAILED,
 	TaskState == Constants.TaskState.RUNNING;

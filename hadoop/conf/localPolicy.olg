@@ -1,8 +1,12 @@
-program localPolicy;
+program policy;
 
-import jol.types.basic.ComparableSet;
+import java.util.Set;
 import jol.types.basic.ValueList;
+import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.util.TaskPriority;
+import org.apache.hadoop.mapred.declarative.util.Function;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
 
 define(candidate, keys(0,1), {JobID, TaskID, Constants.TaskType, String, ValueList});
 define(mapProposal,          {JobID, String, ValueList});
@@ -12,6 +16,7 @@ define(reduceSlots,          {JobID, String, ValueList});
 
 /******************** Task Statistics *******************/
 /* Task Progress stores the min, max, avg progress for a jobs tasks. */
+/*
 define(taskProgress, keys(0,1), {JobID, Constants.TaskType, Float, Float, Float});
 
 public
@@ -19,17 +24,17 @@ taskProgress(JobId, Type, min<Progress>, max<Progress>, avg<Progress>) :-
 	jobtracker::task#insert(JobId, TaskId, Type, _, _, _, Status),
 	Status.state() == Constants.TaskState.RUNNING || Status.state() == Constants.TaskState.SUCCEEDED, 
 	Progress := Status.progress();
+*/
 	
 	
 /******************** Signal to schedule a task *******************/
 
-define(scheduleSelection, {JobID, TaskID, ComparableSet});
+define(scheduleSelection, {JobID, TaskID, Set});
 define(scheduleOption,    {JobID, TaskID, String});
 
 scheduleSelection(JobId, TaskId, set<TrackerName>) :-
 	scheduleOption(JobId, TaskId, TrackerName);
 	
-watch(scheduler::schedule, a);
 scheduler::schedule(JobId, TaskId, TrackerName) :-
 	scheduleSelection(JobId, TaskId, Trackers),
 	TrackerName := (String) Function.random(Trackers);
@@ -82,8 +87,6 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::jobQueue(JobId, JPriority, SubmitTime, Type),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	jobtracker::taskFileLocation(JobId, TaskId, Host),
-	/* foobar(JobId, Threshold),
-	Threshold < SubmitTime - System.currentTimeMillis(), */
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.MAP && Maps > 0,
 	Priority := [1, JPriority, SubmitTime];

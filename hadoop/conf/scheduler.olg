@@ -10,6 +10,8 @@ import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.declarative.util.Function;
 import org.apache.hadoop.mapred.declarative.util.JobState;
 import org.apache.hadoop.mapred.JobPriority;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
 
 
 /*************** Task Attempt Scheduler *********************/
@@ -28,10 +30,10 @@ taskAttempts(JobId, TaskId, count<AttemptId>) :-
 	jobtracker::taskAttempt(JobId, TaskId, AttemptId);
 	
 failedJob
-jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FailStatus) :-
+jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, FailStatus) :-
 	taskAttempts#insert(JobId, TaskId, Attempts), trackerCount(Trackers),
 	jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
-	jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, JobStatus),
+	jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus),
 	TaskStatus.state() == Constants.TaskState.FAILED,
 	JobStatus.state() == Constants.JobState.RUNNING,
 	Attempts > 3 || Attempts > Trackers,
@@ -72,22 +74,21 @@ define(jobFinishedReduceTasks,  keys(0), {JobID, Integer});
 /* Put new jobs in a wait queue in a MAP phase. */
 public
 jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP) :-
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, JStatus),
+	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JStatus),
 	jobMapTasks#insert(JobId, Tasks), Tasks > 0,
 	JStatus.state() == Constants.JobState.PREP;
 	
 
-watch(jobQueue, ae);
 public
 jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, JStatus),
+	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JStatus),
 	jobReduceTasks#insert(JobId, Reduces), Reduces > 0,
 	notin jobMapTasks(JobId, Maps),
 	JStatus.state() == Constants.JobState.PREP;
 	
 public delete
 jobQueue(JobId, Priority, SubmitTime, Phase) :-
-	jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, Status),
+	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, Status),
 	jobQueue(JobId, Priority, SubmitTime, Phase),
 	Status.state() == Constants.JobState.SUCCEEDED || Status.state() == Constants.JobState.FAILED;
 	

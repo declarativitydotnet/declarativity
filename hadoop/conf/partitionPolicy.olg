@@ -1,9 +1,13 @@
 program partitionPolicy;
 
 
-import jol.types.basic.ComparableSet;
+import java.util.Set;
 import jol.types.basic.ValueList;
 import org.apache.hadoop.mapred.declarative.util.TaskPriority;
+import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.util.Function;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
 
 define(candidate, keys(0,1), {JobID, TaskID, Constants.TaskType, String, ValueList});
 define(mapProposal,          {JobID, String, ValueList});
@@ -24,7 +28,7 @@ taskProgress(JobId, Type, min<Progress>, max<Progress>, avg<Progress>) :-
 	
 /******************** Signal to schedule a task *******************/
 
-define(scheduleSelection, {JobID, TaskID, ComparableSet});
+define(scheduleSelection, {JobID, TaskID, Set});
 define(scheduleOption,    {JobID, TaskID, String});
 
 scheduleSelection(JobId, TaskId, set<TrackerName>) :-
@@ -79,13 +83,12 @@ reduceSlots(JobId, TrackerName, limit<TaskId, Reduces>) :-
 /* trackerType(TrackerName, Type); */
 define(trackerType, keys(0), {String, Constants.TaskType});
 
-watch(trackerType, a);
 public
 trackerType(TrackerName, Type) :-
 	jobtracker::taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, MaxMap, MaxReduce),
 	notin trackerType(TrackerName, _),
-	TrackerState != Constants.TaskTrackerState.FAILED,
-    Type := MaxMap >= MaxReduce ? Constants.TaskType.MAP : Constants.TaskType.REDUCE;
+	TrackerState == Constants.TaskTrackerState.INITIAL,
+    Type := Function.coinFlip() ? Constants.TaskType.MAP : Constants.TaskType.REDUCE;
 
 
 /**************************************************************/
