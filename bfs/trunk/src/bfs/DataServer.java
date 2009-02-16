@@ -265,6 +265,7 @@ public class DataServer extends Thread {
 			try {
 				if (this.inShutdown) {
 					System.out.println("Got shutdown request");
+
 					// shutdown() notifies us that we should shutdown by setting
 					// the "inShutdown" field, and then calling interrupt(). If
 					// we're inside accept() at the time, interrupt() auto-closes
