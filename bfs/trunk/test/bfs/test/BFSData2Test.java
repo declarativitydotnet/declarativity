@@ -6,7 +6,7 @@ public class BFSData2Test extends DataCommon {
     private static final String TEST_FILE = "/usr/share/dict/words";
 
 	@Test(timeout=24000)
-    public void test1() {
+    public void test1() throws Exception {
         test(TEST_FILE, 3, 1, 9);
         checkFiles();
         cleanupAll();

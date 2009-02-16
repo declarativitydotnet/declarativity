@@ -4,17 +4,11 @@ import org.junit.Test;
 
 public class BFSTest extends TestCommon {
     @Test(timeout=10000)
-    public void test1() {
-        try {
-            startMany("localhost:5505");
-            shellCreate("foo");
-            shellLs("foo");
-            shutdown();
-        } catch (Exception e) {
-            System.out.println("something went wrong: " + e);
-            e.printStackTrace();
-            System.exit(1);
-        }
+    public void test1() throws Exception {
+        startMany("localhost:5505");
+        shellCreate("foo");
+        shellLs("foo");
+        shutdown();
     }
 
     public static void main(String[] args) throws Exception {

@@ -6,22 +6,17 @@ import org.junit.Test;
 
 public class BFSMM2Test extends TestCommon {
     @Test(timeout=16000)
-    public void test2() {
-        try {
-            startMany("localhost:5500", "localhost:5502", "localhost:5503");
+    public void test2() throws Exception {
+        startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
-            shellCreate("foo");
-            /* kill one of the masters */
-            this.killMaster(1);
+        shellCreate("foo");
+        /* kill one of the masters */
+        this.killMaster(1);
 
-            shellCreate("bar");
-            assertTrue(shellLs("foo", "bar"));
+        shellCreate("bar");
+        assertTrue(shellLs("foo", "bar"));
 
-            shutdown();
-        } catch (Exception e) {
-            System.out.println("something went wrong: " + e);
-            System.exit(1);
-        }
+        shutdown();
     }
 
     public static void main(String[] args) throws Exception {

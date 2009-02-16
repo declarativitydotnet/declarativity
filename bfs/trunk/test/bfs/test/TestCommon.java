@@ -155,7 +155,7 @@ public class TestCommon {
                 checksums.delete();
                 file.delete();
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("couldn't cleanup dir "+dir, e);
             }
         }
     }

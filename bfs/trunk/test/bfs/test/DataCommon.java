@@ -18,41 +18,34 @@ public class DataCommon extends TestCommon {
     String fName;
     String dnList[];
 
-	public void test(String fileName, int repFactor, int masters, int datanodes) {
+	public void test(String fileName, int repFactor, int masters, int datanodes) throws Exception {
         fName = fileName;
-		try {
-            String masterList[] = new String[masters];
-            for (int i = 0; i < masters; i++) {
-			    masterList[i] = "localhost:" + (5500 + i);
-            }
 
-            dnList = new String[datanodes];
-            for (int i = 0; i < datanodes; i++) {
-                dnList[i] = "td" + (i+1);
-            }
-
-            Conf.setRepFactor(repFactor);
-            startMany(masterList);
-
-            startManyDataNodes(dnList);
-
-			shellCreate("foo");
-
-
-			Shell s = new Shell();
-
-			FileInputStream fis = new FileInputStream(fName);
-			appendFile(s, "foo", fis);
-			fis.close();
-			s.shutdown();
-
-            assertTrue(shellLs("foo"));
-        } catch (Exception e) {
-            System.out.println("something went wrong: " + e);
-            e.printStackTrace();
-            System.exit(1);
+        dnList = new String[datanodes];
+        for (int i = 0; i < datanodes; i++) {
+            dnList[i] = "td" + (i+1);
         }
-    }
+
+        String masterList[] = new String[masters];
+        for (int i = 0; i < masters; i++) {
+		    masterList[i] = "localhost:" + (5500 + i);
+        }
+
+        Conf.setRepFactor(repFactor);
+        startMany(masterList);
+
+        startManyDataNodes(dnList);
+
+        shellCreate("foo");
+		Shell s = new Shell();
+
+		FileInputStream fis = new FileInputStream(fName);
+		appendFile(s, "foo", fis);
+		fis.close();
+		s.shutdown();
+		assertTrue(shellLs("foo"));
+
+	}
 
     protected void cleanupAll() {
         for (String d : dnList) {

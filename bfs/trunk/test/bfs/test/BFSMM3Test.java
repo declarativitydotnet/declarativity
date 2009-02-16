@@ -6,27 +6,21 @@ import org.junit.Test;
 
 public class BFSMM3Test extends TestCommon {
     @Test(timeout=120000)
-    public void test3() {
-        try {
-            startMany("localhost:5500", "localhost:5502", "localhost:5503");
+    public void test3() throws Exception {
+        startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
-            shellCreate("foo");
-            /* this time, kill the primary */
-            this.killMaster(0);
+        shellCreate("foo");
+        /* this time, kill the primary */
+        this.killMaster(0);
 
-            /* these ops should timeout to the secondary but eventually work */
-            shellCreate("bar");
-            shellCreate("bas");
+        /* these ops should timeout to the secondary but eventually work */
+        shellCreate("bar");
+        shellCreate("bas");
 
-            assertTrue(shellLs("foo", "bar", "bas"));
+        assertTrue(shellLs("foo", "bar", "bas"));
 
-            System.out.println("OK, good then\n");
-            shutdown();
-        } catch (Exception e) {
-            System.out.println("something went wrong: " + e);
-            e.printStackTrace();
-            System.exit(1);
-        }
+        System.out.println("OK, good then\n");
+        shutdown();
     }
 
     public static void main(String[] args) throws Exception {
