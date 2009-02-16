@@ -350,7 +350,7 @@ public class Shell {
                     throw new IOException("Unexpected EOF from data node");
                 remaining -= nread;
                 byte[] ary = buf.array();
-                for (int i = 0; i < ary.length; i++)
+                for (int i = 0; i < nread; i++)
                     sb.append((char) ary[i]);
                 buf.rewind();
             }
