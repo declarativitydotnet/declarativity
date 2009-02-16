@@ -7,8 +7,6 @@ import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
-import jol.types.exception.JolRuntimeException;
-import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.Table;
@@ -79,7 +77,7 @@ public class PaxosCommon {
 
     // @Before
 
-    public void setup(int... members) throws JolRuntimeException, UpdateException {
+    public void setup(int... members) throws Exception {
         this.systems = new JolSystem[members.length];
         this.ports = new int[members.length];
         System.out.println("ml is " + members.length);
@@ -116,13 +114,13 @@ public class PaxosCommon {
             s.evaluate();
     }
 
-    void myInstall(JolSystem s, String file) {
+    void myInstall(JolSystem s, String file) throws Exception {
         URL u = ClassLoader.getSystemResource(file);
         try {
             s.install("multipaxos", u);
             s.evaluate();
         } catch (Exception e) {
-            System.out.println("install failed for " + file);
+            throw new Exception("install failed for " + file, e);
         }
     }
 
@@ -132,7 +130,7 @@ public class PaxosCommon {
             s.shutdown();
     }
 
-    public void simpleMultiPaxosTest() throws InterruptedException {
+    public void simpleMultiPaxosTest() throws Exception {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
@@ -177,7 +175,7 @@ public class PaxosCommon {
         tab.unregister(cb);
     }
 
-    public void complexMultiPaxosTest() throws InterruptedException {
+    public void complexMultiPaxosTest() throws Exception {
         /* Arrange to block until the callback tells us we're done */
         final SynchronousQueue<String> queue = new SynchronousQueue<String>();
 
@@ -239,15 +237,11 @@ public class PaxosCommon {
         return msg;
     }
 
-    private void sked(JolSystem sys, int port, String message) {
+    private void sked(JolSystem sys, int port, String message) throws Exception {
         TupleSet inmessage = new TupleSet();
         inmessage.add(new Tuple(this.makeAddr(port), message, this.makeAddr(port)));
-        try {
-            sys.schedule("paxos_global", InMessageTable.TABLENAME, inmessage, null);
-            sys.evaluate();
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
+        sys.schedule("paxos_global", InMessageTable.TABLENAME, inmessage, null);
+        sys.evaluate();
     }
 
     protected String makeAddr(int port) {
