@@ -94,21 +94,21 @@ response(@Source, Id, Master, false, null) :-
     ChunkId := Integer.valueOf(ChunkStr),
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
 
-define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean});
+define(create_request_pending, keys(0, 1), {String, Integer, String, String, Boolean});
 watch(create_request_pending, ae);
 
 // If we got a "create" request for a file that didn't exist,
 // we need to wait until we get consensus from Paxos; then we
 // can send back a positive ack.
 // XXX: the use of "#insert" here is a hack
-create_request_pending(@Master, Id, Source, true) :-
+create_request_pending(@Master, Id, Source, FName, true) :-
     request#insert(@Master, Id, Source, "Create", FName),
     notin file(@Master, _, _, FName, _);
 
 // If we get a "create" request for a file that exists, we
 // need to wait until we get consensus from Paxos; then we
 // can send back a negative ack
-create_request_pending(@Master, Id, Source, false) :-
+create_request_pending(@Master, Id, Source, FName, false) :-
     request#insert(@Master, Id, Source, "Create", FName),
     file(@Master, _, _, FName, _);
 
@@ -149,9 +149,9 @@ response(@Source, Id, Master, false, null) :-
 
 // If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
-define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
+define(rm_request_pending, keys(0, 1), {String, Integer, String, String, Boolean});
 public
-rm_request_pending(@Master, Id, Source, true) :-
+rm_request_pending(@Master, Id, Source, FName, true) :-
     request(@Master, Id, Source, "Rm", FName),
     file(@Master, _, _, FName, _);
 
