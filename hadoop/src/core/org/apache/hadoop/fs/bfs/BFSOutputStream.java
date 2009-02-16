@@ -60,6 +60,7 @@ public class BFSOutputStream extends OutputStream {
 
         DataConnection conn = new DataConnection(info.getCandidateNodes());
         conn.sendRoutingData(info.getChunkId());
+        this.buf.flip();
         conn.write(this.buf);
         conn.close();
         this.buf.clear();
