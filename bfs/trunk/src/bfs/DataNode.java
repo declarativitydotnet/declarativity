@@ -40,13 +40,13 @@ public class DataNode {
 
     private int nodeId;
     private int port;
-    private String fsRoot;
+    private File fsRoot;
     private DataServer dserver;
     private JolSystem system;
 
     public DataNode(int nodeId, String fsRoot) {
         this.nodeId = nodeId;
-        this.fsRoot = fsRoot;
+        this.fsRoot = new File(fsRoot);
         this.port = Conf.getDataNodeControlPort(nodeId);
         this.dserver = new DataServer(Conf.getDataNodeDataPort(nodeId), fsRoot);
         this.dserver.start();
@@ -75,7 +75,7 @@ public class DataNode {
                         try {
                             // shorten the possible path to the desired # of replicas
                             List<String> pathCopy = new LinkedList<String>();
-                            for (int j=0; j < path.size() && j < (Conf.getRepFactor() - currRepCnt); j++) {
+                            for (int j = 0; j < path.size() && j < (Conf.getRepFactor() - currRepCnt); j++) {
                                 pathCopy.add(path.get(j));
                             }
                             DataConnection conn = new DataConnection(pathCopy);
@@ -92,13 +92,14 @@ public class DataNode {
                         } catch (RuntimeException e) {
                             // fall through
                             path.remove(0);
-                        } catch(Exception e) {
+                        } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     }
                 }
             }
         };
+
         setupFsRoot();
 
         /* Identify the address of the local node */
@@ -116,7 +117,7 @@ public class DataNode {
         /* Identify the data directory */
         TableName tblName = new TableName("bfs_heartbeat", "datadir");
         TupleSet datadir = new TupleSet(tblName);
-        datadir.add(new Tuple(Conf.getSelfAddress(), fsRoot));
+        datadir.add(new Tuple(Conf.getSelfAddress(), this.fsRoot));
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
         Table table = this.system.catalog().table(new TableName("bfs_chunks", "send_migrate"));
@@ -133,15 +134,20 @@ public class DataNode {
     }
 
     private void setupFsRoot() {
-        File root = new File(fsRoot);
-        if (root.exists()) {
-            if (!root.isDirectory())
-                throw new RuntimeException("FS root is not a directory: " + root);
-        } else {
-            if (!root.mkdir())
-                throw new RuntimeException("Failed to create directory: " + root);
+    	mkdir(this.fsRoot);
+    	mkdir(new File(this.fsRoot, "chunks"));
+    	mkdir(new File(this.fsRoot, "checksums"));
+    }
 
-            System.out.println("Created new root directory: " + root);
-        }
+    private void mkdir(File dir) {
+    	if (dir.exists()) {
+    		if (!dir.isDirectory())
+    			throw new RuntimeException("Path exists, but is not a directory:" + dir);
+    	} else {
+    		if (!dir.mkdir())
+    			throw new RuntimeException("Failed to create directory: " + dir);
+
+    		System.out.println("Created new directory: "+ dir);
+    	}
     }
 }
