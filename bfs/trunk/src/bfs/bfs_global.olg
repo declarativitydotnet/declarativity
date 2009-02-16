@@ -1,7 +1,6 @@
 program bfs;
 
 import bfs.Conf;
-import java.lang.Object;
 
 // Node, file ID, parent file ID (or null), file name, is directory?
 define(file, keys(0, 1), {String, Integer, Integer, String, Boolean});
@@ -23,11 +22,6 @@ watch(request, aers);
 
 define(create_request_done, keys(0, 1), {String, Integer, Boolean});
 define(rm_request_done, keys(0, 1), {String, Integer, Boolean});
-
-// Client node, Request ID, Master node, Success, Result (if any). The
-// type of the result depends on the type of request.
-define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
-watch(response, aes);
 
 // Node, Master node
 define(master_for_node, keys(0, 1), {String, String});

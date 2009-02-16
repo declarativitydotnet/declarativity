@@ -6,6 +6,7 @@ import bfs.BFSNewChunkInfo;
 import bfs.Conf;
 import bfs.Master;
 import bfs.Shell;
+import java.lang.Object;
 import java.lang.System;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +21,10 @@ request(@Master, ReqId, Source, ReqType, Args) :-
     // XXX PA
     start_request(@Source, ReqId, ReqType, Args);
 
+// Client node, Request ID, Master node, Success, Result (if any). The
+// type of the result depends on the type of request.
+define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
+watch(response, aes);
 
 public
 response(@Source, Id, Master, true, Result) :-
