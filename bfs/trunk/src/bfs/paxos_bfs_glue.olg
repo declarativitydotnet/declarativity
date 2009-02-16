@@ -11,16 +11,14 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
     // err
     From := Master,
-    bfs::create_request_pending(Master, Id, Source, true),
-    bfs::request(Master, Id, Source, "Create", FName),
+    bfs::create_request_pending(Master, Id, Source, FName, true),
     Decree := FName + ",i," + Id.toString();
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
     From := Master,
-    bfs::rm_request_pending(Master, Id, Source, true),
-    bfs::request(Master, Id, Source, "Rm", FName),
+    bfs::rm_request_pending(Master, Id, Source, FName, true),
     Decree := FName + ",d," + Id.toString();
 
 // an insert op in the log induces a new metadata entry for a file.
@@ -89,9 +87,8 @@ watch(canDelete,ae);
 
 public
 canDelete(Master, Id, Source, Status, FName) :-
-    bfs::rm_request_pending(Master, Id, Source, Status),
+    bfs::rm_request_pending(Master, Id, Source, FName, Status),
     periodic(_, _, _),
-    bfs::request(Master, Id, Source, "Rm", FName),
     appView(Master, _, _, _, FName, Op, Id),
     Op == "d";
 
@@ -99,14 +96,13 @@ canDelete(Master, Id, Source, Status, FName) :-
 public
 green
 bfs::create_request_done(Master, Id, Source, Status) :-
-    bfs::create_request_pending(Master, Id, Source, Status),
+    bfs::create_request_pending(Master, Id, Source, FName, Status),
     appView(Master, _, _, _, FName, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, Source, false) :-
-    bfs::create_request_pending(Master, Id, Source, _),
-    bfs::request(Master, Id, Source, "Create", FName),
+    bfs::create_request_pending(Master, Id, Source, FName, _),
     appView(Master, _, _, _, FName, "i", Id2),
     Id != Id2;
 
@@ -118,10 +114,10 @@ bfs::rm_request_done(Master, Id, Source, Status) :-
 public
 red
 bfs::create_request_done(Master, Id, Source, Status) :-
-    bfs::create_request_pending(Master, Id, Source, Status),
+    bfs::create_request_pending(Master, Id, Source, _, Status),
     Status == false;
 
 public
 bfs::rm_request_done(Master, Id, Source, Status) :-
-    bfs::rm_request_pending(Master, Id, Source, Status),
+    bfs::rm_request_pending(Master, Id, Source, _, Status),
     Status == false;
