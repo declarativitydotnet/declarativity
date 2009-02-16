@@ -1,9 +1,14 @@
-program filePriority;
+program policy;
 
-import jol.types.basic.ComparableSet;
-import jol.types.basic.ValueList;
-import org.apache.hadoop.mapred.declarative.util.TaskPriority;
 import org.apache.hadoop.mapred.JobPriority;
+import java.util.Set;
+import jol.types.basic.ValueList;
+import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.util.TaskPriority;
+import org.apache.hadoop.mapred.declarative.util.Function;
+import org.apache.hadoop.mapred.declarative.util.FileInput;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
 
 
 define(candidate, keys(0,1), {JobID, TaskID, Constants.TaskType, String, ValueList});
@@ -29,14 +34,14 @@ define(filePriority, keys(0), {FileInput, JobPriority});
 watch(filePriority, a);
 public
 filePriority(File, min<Priority>) :-
-	jobtracker::job(JobID, _, _, _, _, _, Priority, _, _),
+	jobtracker::job(JobID, _, _, _, _, _, Priority, _, _, _),
 	jobtracker::task(JobId, _, Type, _, File, _, _),
 	Type == Constants.TaskType.MAP;
 	
 	
 /******************** Signal to schedule a task *******************/
 
-define(scheduleSelection, {JobID, TaskID, ComparableSet});
+define(scheduleSelection, {JobID, TaskID, Set});
 define(scheduleOption,    {JobID, TaskID, String});
 
 scheduleSelection(JobId, TaskId, set<TrackerName>) :-
@@ -93,8 +98,8 @@ public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	scheduler::jobQueue(JobId, JPriority, SubmitTime, Type),
-	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
-	jobtracker::taskFileLocation(JobId, TaskId, Host),
+	jobtracker::task(JobId, TaskId, Type, _, Input, _, Status),
+	jobtracker::taskFileLocation(JobId, TaskId, TrackerName),
 	filePriority(Input, FilePriority),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.MAP && Maps > 0,
@@ -108,7 +113,7 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.REDUCE && Reduces > 0,
-	Priority := [1, JPriority, SubmitTime];
+	Priority := [1, JPriority, JobPriority.VERY_HIGH, SubmitTime];
 	
 /* Priority 2: Schedule failed tasks. */
 public
@@ -121,6 +126,6 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
     notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _),
     notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.RUNNING, _, _, _, _, _, _),
 	Type == Constants.TaskType.MAP && Maps > 0 || Type == Constants.TaskType.REDUCE && Reduces > 0,
-	Priority := [2, JPriority, SubmitTime];
+	Priority := [2, JPriority, JobPriority.VERY_HIGH, SubmitTime];
 	
 	
