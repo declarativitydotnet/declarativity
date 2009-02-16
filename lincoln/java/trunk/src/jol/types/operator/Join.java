@@ -2,7 +2,6 @@ package jol.types.operator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import jol.core.Runtime;
@@ -89,9 +88,8 @@ public abstract class Join extends Operator {
 	}
 
 	/** A list of join filters, one for each common join attribute. */
-	private List<JoinFilter> joinFilters;
-
-	private List<Filter> predicateFilters;
+	private JoinFilter[] joinFilters;
+	private Filter[] predicateFilters;
 
 	private int[] innerNonJoinPositions;
 	private Object[] tupBuf;
@@ -130,8 +128,8 @@ public abstract class Join extends Operator {
 	 * @throws JolRuntimeException
 	 */
 	private Boolean validate(Tuple outer, Tuple inner) throws JolRuntimeException {
-		for (JoinFilter filter : this.joinFilters) {
-			if (filter.evaluate(outer, inner) == Boolean.FALSE) {
+	    for(int i = 0; i < this.joinFilters.length; i++) {
+			if (joinFilters[i].evaluate(outer, inner) == Boolean.FALSE) {
 				return false;
 			}
 		}
@@ -139,8 +137,8 @@ public abstract class Join extends Operator {
 	}
 
 	private Boolean validate(Tuple inner) throws JolRuntimeException {
-		for (Filter filter : this.predicateFilters) {
-			if (Boolean.FALSE.equals(filter.evaluate(inner))) {
+	    for (int i = 0; i < this.predicateFilters.length; i++) {
+			if (Boolean.FALSE.equals(this.predicateFilters[i].evaluate(inner))) {
 				return false;
 			}
 		}
@@ -157,8 +155,7 @@ public abstract class Join extends Operator {
 	 */
 	private void initFilters(Predicate predicate, Schema input)
 	throws PlannerException {
-		this.predicateFilters = new ArrayList<Filter>();
-		this.joinFilters      = new ArrayList<JoinFilter>();
+		ArrayList<Filter> predicateFiltersScratch = new ArrayList<Filter>();
 
 		Map<String, Integer> positions = new HashMap<String, Integer>();
 		for (int position = 0; position < predicate.arguments().size(); position++ ) {
@@ -167,7 +164,7 @@ public abstract class Join extends Operator {
 				Variable var = (Variable) arg;
 				if (positions.containsKey(var.name())) {
 					Integer prev = positions.get(var.name());
-					predicateFilters.add(
+					predicateFiltersScratch.add(
 							    new Filter(Filter.Operator.EQ,
 								           new TableField(var.type(), prev),
 								           new TableField(var.type(), position)));
@@ -177,21 +174,22 @@ public abstract class Join extends Operator {
 				}
 			}
 			else {
-				predicateFilters.add(
+				predicateFiltersScratch.add(
 						    new Filter(Filter.Operator.EQ,
 						               new TableField(arg.type(), position),
 						               arg.function(predicate.schema())));
 			}
 		}
-
-		this.joinFilters = new ArrayList<JoinFilter>();
+		this.predicateFilters = predicateFiltersScratch.toArray(new Filter[0]);
+		ArrayList<JoinFilter> joinFiltersScratch      = new ArrayList<JoinFilter>();
 		for (Variable var : input.variables()) {
 			if (predicate.schema().contains(var)) {
 				TupleFunction<Object> o = var.function(input);
 				TupleFunction<Object> i = var.function(predicate.schema());
-				this.joinFilters.add(new JoinFilter(o, i));
+				joinFiltersScratch.add(new JoinFilter(o, i));
 			}
 		}
+		this.joinFilters = joinFiltersScratch.toArray(new JoinFilter[0]);
 	}
 
 	/**
