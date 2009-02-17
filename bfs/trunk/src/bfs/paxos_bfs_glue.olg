@@ -6,6 +6,12 @@ import java.util.Arrays;
 watch(bfs::file,ae);
 watch(bfs::fchunk,ae);
 
+// to ensure that we account for the chunkIds proposed
+// by other masters
+public
+bfs::chunkHWM(Master, max<I>) :-
+    appView(Master, _, _, _, _, _, I);
+
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
@@ -23,21 +29,6 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     DirStr := ",f",
     Decree := FName + DirStr + ",d," + Id.toString();
 
-// An insert op in the log induces a new metadata entry for a file.
-// XXX: file IDs are assigned from a hash of the filename right now;
-// this is obviously broken
-public
-bfs::file(Master, FileId, null, FName, IsDir) :-
-    appView#insert(Master, _, _, FName, IsDir, Op, _, _),
-    Op == "i",
-    FileId := FName.hashCode();
-
-// to ensure that we account for the chunkIds proposed
-// by other masters
-public
-bfs::chunkHWM(Master, max<I>) :-
-    appView(Master, _, _, _, _, _, I);
-
 // or, if we are adding a chunk to a file's chunklist, we likewise need
 // to pass it through paxos. (and indeed, should block the requestor, but
 // this is not implemented yet XXX)
@@ -47,14 +38,6 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     From := Master,
     bfs_chunks::candidate_datanode#insert(Master, Id, _, FName, I, _),
     Decree := FName + ",f,u," + Id.toString() + "," + I.toString();
-
-
-// Add a new chunk to the file
-public
-bfs::fchunk(Master, ChunkId, FileId) :-
-    bfs::file(Master, FileId, _, FName, false),
-    appView#insert(Master, _, _, FName, _, Op, _, ChunkId),
-    Op == "u";
 
 timer(periodic,physical,3000,3000,3000);
 
@@ -78,6 +61,23 @@ appView(Master, From, Instance, Name, IsDir, Op, Id, I) :-
 //   Op := NVL[2],
 //   Id := Integer.valueOf(NVL[3]),
 //   I := NVL.length < 5 ? -1 : Integer.valueOf(NVL[4]);
+
+
+// An insert op in the log induces a new metadata entry for a file.
+// XXX: file IDs are assigned from a hash of the filename right now;
+// this is obviously broken
+public
+bfs::file(Master, FileId, null, FName, IsDir) :-
+    appView#insert(Master, _, _, FName, IsDir, Op, _, _),
+    Op == "i",
+    FileId := FName.hashCode();
+
+// Add a new chunk to the file
+public
+bfs::fchunk(Master, ChunkId, FileId) :-
+    bfs::file(Master, FileId, _, FName, false),
+    appView#insert(Master, _, _, FName, _, Op, _, ChunkId),
+    Op == "u";
 
 public
 delete
