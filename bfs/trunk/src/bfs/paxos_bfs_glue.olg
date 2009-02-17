@@ -28,7 +28,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 // this is obviously broken
 public
 bfs::file(Master, FileId, null, FName, IsDir) :-
-    appView#insert(Master, _, _, _, FName, IsDir, Op, _, _),
+    appView#insert(Master, _, _, FName, IsDir, Op, _, _),
     Op == "i",
     FileId := FName.hashCode();
 
@@ -36,7 +36,7 @@ bfs::file(Master, FileId, null, FName, IsDir) :-
 // by other masters
 public
 bfs::chunkHWM(Master, max<I>) :-
-    appView(Master, _, _, _, _, _, _, I);
+    appView(Master, _, _, _, _, _, I);
 
 // or, if we are adding a chunk to a file's chunklist, we likewise need
 // to pass it through paxos. (and indeed, should block the requestor, but
@@ -53,15 +53,15 @@ paxos_global::decreeRequest(Master, Decree, From) :-
 public
 bfs::fchunk(Master, ChunkId, FileId) :-
     bfs::file(Master, FileId, _, FName, false),
-    appView#insert(Master, _, _, _, FName, _, Op, _, ChunkId),
+    appView#insert(Master, _, _, FName, _, Op, _, ChunkId),
     Op == "u";
 
 timer(periodic,physical,3000,3000,3000);
 
-define(appView,keys(0,1,3,4),{String,String,String,Integer,String,Boolean,String,Integer,Integer});
+define(appView,keys(0,1,2,3),{String,String,Integer,String,Boolean,String,Integer,Integer});
 watch(appView,ae);
 public
-appView(Master, From, Decree, Instance, Name, IsDir, Op, Id, I) :-
+appView(Master, From, Instance, Name, IsDir, Op, Id, I) :-
     paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
     periodic(_, _, _),
     NVL := Arrays.asList(Decree.split(",")),
@@ -94,7 +94,7 @@ public
 canDelete(Master, Id, Status, FName) :-
     bfs::rm_request_pending(Master, Id, FName, Status),
     periodic(_, _, _),
-    appView(Master, _, _, _, FName, _, Op, Id),
+    appView(Master, _, _, FName, _, Op, Id),
     Op == "d";
 
 
@@ -102,13 +102,13 @@ public
 green
 bfs::create_request_done(Master, Id, Status) :-
     bfs::create_request_pending(Master, Id, FName, _, Status),
-    appView(Master, _, _, _, FName, _, "i", Id);
+    appView(Master, _, _, FName, _, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, false) :-
     bfs::create_request_pending(Master, Id, FName, _, _),
-    appView(Master, _, _, _, FName, _, "i", Id2),
+    appView(Master, _, _, FName, _, "i", Id2),
     Id != Id2;
 
 
