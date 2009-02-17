@@ -83,7 +83,13 @@ public abstract class Join extends Operator {
 		public Boolean evaluate(Tuple outer, Tuple inner) throws JolRuntimeException {
 			Object lvalue = this.lhs.evaluate(outer);
 			Object rvalue = this.rhs.evaluate(inner);
-			return lvalue.equals(rvalue);
+
+			if (lvalue == rvalue)
+				return true;
+			else if (lvalue == null)
+				return false;
+			else
+				return lvalue.equals(rvalue);
 		}
 	}
 
@@ -93,6 +99,7 @@ public abstract class Join extends Operator {
 
 	private int[] innerNonJoinPositions;
 	private Object[] tupBuf;
+
 	/**
 	 * Create a new join operator.
 	 * @param context The runtime context.
@@ -111,12 +118,12 @@ public abstract class Join extends Operator {
 			}
 		}
 		innerNonJoinPositions = new int[tmp.size()];
-		for(int i = 0; i < this.innerNonJoinPositions.length; i++) {
+		for (int i = 0; i < this.innerNonJoinPositions.length; i++) {
 		    innerNonJoinPositions[i] = tmp.get(i);
 		}
 
         tupBuf = new Object[input.size() + this.innerNonJoinPositions.length];
-		
+
 		initFilters(predicate, input);
 	}
 
@@ -214,11 +221,13 @@ public abstract class Join extends Operator {
 
 	private Tuple join(Tuple outer, Tuple inner) {
         synchronized (tupBuf) {
-            if(tupBuf.length != outer.size() + this.innerNonJoinPositions.length) { throw new IllegalStateException("bug in join logic!"); }
-    	    for(int i = 0; i < outer.size(); i++) {
+            if (tupBuf.length != outer.size() + this.innerNonJoinPositions.length)
+            	throw new IllegalStateException("bug in join logic!");
+
+    	    for (int i = 0; i < outer.size(); i++) {
     	        tupBuf[i] = outer.value(i);
     	    }
-    	    for(int i = 0; i < this.innerNonJoinPositions.length; i++) {
+    	    for (int i = 0; i < this.innerNonJoinPositions.length; i++) {
     	        tupBuf[i+outer.size()] = inner.value(this.innerNonJoinPositions[i]);
     	    }
     	    return new Tuple(tupBuf);
