@@ -64,8 +64,8 @@ public final class Network {
 	 */
 	public final void shutdown() {
 		for (Server server : servers.values()) {
-			server.interrupt();
 			server.cleanup();
+			server.interrupt();
 		}
 		try {
 			this.connection.delete(this.connection.tuples());
