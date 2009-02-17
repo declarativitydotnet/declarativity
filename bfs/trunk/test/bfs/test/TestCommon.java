@@ -41,7 +41,7 @@ public class TestCommon {
         System.out.println("shutdown complete\n");
     }
 
-    protected Boolean shellLs(String... list) throws JolRuntimeException, UpdateException {
+    protected boolean shellLs(String... list) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
         Boolean ret = findInLs(shell, list);
         shell.shutdown();
@@ -98,7 +98,7 @@ public class TestCommon {
         return list.size();
     }
 
-    protected Boolean findInLs(Shell shell, String... files) throws JolRuntimeException,
+    protected boolean findInLs(Shell shell, String... files) throws JolRuntimeException,
             UpdateException {
         Set<BFSFileInfo> listing = lsFile(shell);
 
