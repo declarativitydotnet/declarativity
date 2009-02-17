@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import jol.core.Runtime;
-import jol.core.Runtime.DebugLevel;
 import jol.exec.BasicQuery;
 import jol.exec.Query;
 import jol.lang.plan.Watch.WatchTable;
@@ -28,11 +27,11 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 
 public class Rule extends Clause {
-	
+
 	public static class RuleTable extends ObjectTable {
 		public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "rule");
 		public static final Key PRIMARY_KEY = new Key(0,1);
-		
+
 		public enum Field {PROGRAM, RULENAME, PUBLIC, ASYNC, DELETE, OBJECT};
 		public static final Class[] SCHEMA =  {
 			String.class,             // Program name
@@ -49,7 +48,7 @@ public class Rule extends Clause {
 			Index index = new HashIndex(context, this, programKey, Index.Type.SECONDARY);
 			this.secondary.put(programKey, index);
 		}
-		
+
 		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Rule object = (Rule) tuple.value(Field.OBJECT.ordinal());
@@ -63,33 +62,33 @@ public class Rule extends Clause {
 			object.isDelete  = (java.lang.Boolean) tuple.value(Field.DELETE.ordinal());
 			return super.insert(tuple);
 		}
-		
+
 		@Override
 		protected boolean delete(Tuple tuple) throws UpdateException {
 			return super.delete(tuple);
 		}
 	}
-	
+
 	private String program;
-	
+
 	private String name;
-	
+
 	private java.lang.Boolean isDelete;
-	
+
 	private java.lang.Boolean isPublic;
-	
+
 	private java.lang.Boolean isAsync;
-	
+
 	private Predicate head;
-	
+
 	private List<Term> body;
-	
+
 	private boolean aggregation;
-	
-	
-	public Rule(xtc.tree.Location location, String name, 
+
+
+	public Rule(xtc.tree.Location location, String name,
 			    java.lang.Boolean isPublic, java.lang.Boolean isAsync,
-			    java.lang.Boolean isDelete, 
+			    java.lang.Boolean isDelete,
 			    Predicate head, List<Term> body) {
 		super(location);
 		this.name = name;
@@ -107,11 +106,11 @@ public class Rule extends Clause {
 			}
 		}
 	}
-	
+
 	@Override
 	public String toString() {
-		String value = (isPublic ? "public " : "") + 
-					   (isAsync ? "async " : "") + name + 
+		String value = (isPublic ? "public " : "") +
+					   (isAsync ? "async " : "") + name +
 		               (isDelete ? " delete " : " ") + head + " :- \n";
 		for (int i = 0; i < body.size(); i++) {
 			value += "\t" + body.get(i);
@@ -124,7 +123,7 @@ public class Rule extends Clause {
 		}
 		return value;
 	}
-	
+
 	@Override
 	public int compareTo(Clause o) {
 		if (o instanceof Rule) {
@@ -135,29 +134,29 @@ public class Rule extends Clause {
 		}
 		return -1;
 	}
-	
+
 	public Predicate head() {
 		return this.head;
 	}
-	
+
 	public List<Term> body() {
 		return this.body;
 	}
-	
+
 	@Override
 	public void set(Runtime context, String program) throws UpdateException {
 		this.head.set(context, program, this.name, 0);
 		for (int i = 0; i < this.body.size(); i++) {
 			this.body.get(i).set(context, program, this.name, i+1);
 		}
-		
+
 		context.catalog().table(RuleTable.TABLENAME).force(new Tuple(program, name, isPublic, isAsync, isDelete, this));
 	}
 
 	public List<Query> query(Runtime context) throws PlannerException {
 		/* First search for an event predicate. */
 		Predicate event   = null;
-		
+
 		List<Selection> selections = new ArrayList<Selection>();
 		for (Term term : body) {
 			if (term instanceof Predicate) {
@@ -168,13 +167,13 @@ public class Rule extends Clause {
 				if (table.type() == Table.Type.EVENT ||
 				    pred.event() != Predicate.Event.NONE) {
 					if (event != null) {
-						throw new PlannerException("Multiple event predicates in rule " + name + 
+						throw new PlannerException("Multiple event predicates in rule " + name +
 								                   " location " + pred.location());
 					}
 					/* Plan a query with this event predicate as input. */
 					event = pred;
 				}
-			
+
 				if (event instanceof Function) {
 					event.event(Predicate.Event.INSERT);
 				}
@@ -189,7 +188,7 @@ public class Rule extends Clause {
 			return mviewQuery(context, head, body);
 		}
 	}
-	
+
 	private List<Selection> canonicalize(Predicate pred) {
 		List<Selection> selections        = new ArrayList<Selection>();
 		List<Expression> canonicalization = new ArrayList<Expression>();
@@ -207,7 +206,7 @@ public class Rule extends Clause {
 		pred.arguments(canonicalization);
 		return selections;
 	}
-	
+
 	private List<Query> mviewQuery(Runtime context, Predicate head, List<Term> body) throws PlannerException {
 		List<Query> queries = new ArrayList<Query>();
 		/* Perform delta rewrite. */
@@ -215,16 +214,16 @@ public class Rule extends Clause {
 			if (!(term1 instanceof Predicate) || ((Predicate)term1).notin()) {
 				continue;
 			}
-			
+
 			Predicate delta = (Predicate) term1;
 			queries.addAll(query(context, head, delta, body));
 		}
 		return queries;
 	}
-	
+
 	private List<Query> localize(Runtime context, Predicate head, Predicate event, List<Term> body) throws PlannerException {
 		List<Query> queries = new ArrayList<Query>();
-		
+
 		/* Group all predicate terms by the location variable. */
 		Map<String, List<Term>> groupByLocation = new HashMap<String, List<Term>>();
 		List<Term> remainder = new ArrayList<Term>(); // Remaining terms.
@@ -247,18 +246,18 @@ public class Rule extends Clause {
 				remainder.add(t);
 			}
 		}
-		
+
 		/* Create the set of localized rules. */
-		/* Grab the location variable representing from the event for this 
-		 * rule group. The original event will be the first group. Subsequent 
+		/* Grab the location variable representing from the event for this
+		 * rule group. The original event will be the first group. Subsequent
 		 * groups will be triggered off the intermediate event predicates
-		 * created during the localization process. The final group will 
+		 * created during the localization process. The final group will
 		 * project onto the original head predicate. */
 		while (groupByLocation.size() > 0) {
 			String location           = event.locationVariable().name();
 			Schema intermediateSchema = event.schema();
 			String intermediateName   = new String(this.name + "_intermediate_" + event.name().name);
-		
+
 			/* Get the set of predicates in this location group. */
 			List<Term> intermediateBody = groupByLocation.get(location);
 			groupByLocation.remove(location);
@@ -268,13 +267,13 @@ public class Rule extends Clause {
 					Predicate p = (Predicate) t;
 					intermediateSchema = intermediateSchema.join(p.schema());
 				}
-				
+
 				/* Turn off location variable(s) in intermediate schema. */
 				for (Variable v : intermediateSchema.variables()) {
 					v.loc(false);
 				}
-				
-				/* Locate the next location variable from remaining groups. 
+
+				/* Locate the next location variable from remaining groups.
 				 * The location variable must appear in the schema of the intermediate
 				 * schema (That is we need to know its value). */
 				for (String loc : groupByLocation.keySet()) {
@@ -284,19 +283,19 @@ public class Rule extends Clause {
 						break;
 					}
 				}
-			
+
 				EventTable
-				intermediateEvent = new EventTable(new TableName(this.program, intermediateName), 
+				intermediateEvent = new EventTable(new TableName(this.program, intermediateName),
 					                               intermediateSchema.types());
 				context.catalog().register(intermediateEvent);
 				Predicate intermediate = new Predicate(context, false, intermediateEvent.name(), Predicate.Event.NONE, intermediateSchema);
 				intermediate.program  = event.program();
 				intermediate.rule     = event.rule();
 				intermediate.position = 0;
-				
+
 				/* Create a query with the intermediate as the head predicate. */
 				queries.addAll(query(context, intermediate, event, intermediateBody));
-				
+
 				/* the intermediate predicate will be the event predicate in the next (localized) rule. */
 				event = intermediate;
 			}
@@ -309,11 +308,11 @@ public class Rule extends Clause {
 		return queries;
 	}
 
-	
+
 	private List<Query> query(Runtime context, Predicate head, Predicate event, List<Term> body) throws PlannerException {
 		List<Query>    query     = new ArrayList<Query>();
 		List<Operator> operators = new ArrayList<Operator>();
-		
+
 		Variable loc = event.locationVariable();
 		for (Term t : body) {
 			if (t instanceof Predicate) {
@@ -328,24 +327,24 @@ public class Rule extends Clause {
 				}
 			}
 		}
-		
-		
+
+
 		EventFilter efilter = new EventFilter(context, event);
 		if (efilter.filters() > 0) {
 			operators.add(efilter);
 		}
-		
+
 		WatchTable watch = (WatchTable) context.catalog().table(WatchTable.TABLENAME);
 		if (watch.watched(program, event.name(), jol.types.operator.Watch.Modifier.RECEIVE) != null) {
 				operators.add(
-						new jol.types.operator.Watch(context, program, name, event.name(), 
+						new jol.types.operator.Watch(context, program, name, event.name(),
 								jol.types.operator.Watch.Modifier.RECEIVE));
 			}
-		
+
 		if (event instanceof Function) {
 			operators.add(event.operator(context, event.schema().clone()));
 		}
-		
+
 		Schema schema = event.schema().clone();
 		List<Assignment> assignments = new ArrayList<Assignment>();
 		List<Selection> selections = new ArrayList<Selection>();
@@ -355,7 +354,7 @@ public class Rule extends Clause {
 			else if (term instanceof Selection) selections.add((Selection)term);
 			else if (!term.equals(event)) predicates.add((Predicate) term);
 		}
-		
+
 		for (Predicate p : predicates) {
 			schema = planHelper(context, operators, assignments, selections, schema);
 			Operator oper = p.operator(context, schema);
@@ -363,7 +362,7 @@ public class Rule extends Clause {
 			schema = p.schema(schema);
 		}
 		schema = planHelper(context, operators, assignments, selections, schema);
-		
+
 		if (selections.size() > 0) {
 			StringBuilder sb = new StringBuilder();
 			for (Selection s : selections) {
@@ -371,7 +370,7 @@ public class Rule extends Clause {
 			}
 			throw new PlannerException(sb.toString());
 		}
-		
+
 		/* Plan head predicate assignments last. */
 		for (Iterator<Assignment> iter = assignments.iterator(); iter.hasNext(); ) {
 			Assignment a = iter.next();
@@ -381,28 +380,28 @@ public class Rule extends Clause {
 				schema = a.schema(schema);
 			}
 		}
-		
+
 		operators.add(new Projection(context, head, schema));
-		
+
 		if (watch.watched(program, head.name(), jol.types.operator.Watch.Modifier.SEND) != null) {
 			operators.add(
-					new jol.types.operator.Watch(context, program, name, head.name(), 
+					new jol.types.operator.Watch(context, program, name, head.name(),
 							jol.types.operator.Watch.Modifier.SEND));
 		}
-		
+
 		Variable headLoc  = head.locationVariable();
 		Variable eventLoc = event.locationVariable();
 		if (headLoc != null && eventLoc != null && !headLoc.equals(eventLoc)) {
 			/* Plan remote buffer operator. */
 			operators.add(new RemoteBuffer(context, head, isDelete));
 		}
-		
+
 		query.add(new BasicQuery(context, program, name, isPublic, isAsync, isDelete, event, head, operators));
 		return query;
 	}
-	
-	private Schema planHelper(Runtime context, List<Operator> operators, 
-			                  List<Assignment> assignments, List<Selection> selections, 
+
+	private Schema planHelper(Runtime context, List<Operator> operators,
+			                  List<Assignment> assignments, List<Selection> selections,
 			                  Schema schema) throws PlannerException {
 		List<Term> done = new ArrayList<Term>();
 		for (Iterator<Assignment> iter = assignments.iterator(); iter.hasNext(); ) {
@@ -414,7 +413,7 @@ public class Rule extends Clause {
 				done.add(a);
 			}
 		}
-		
+
 		for (Iterator<Selection> iter = selections.iterator(); iter.hasNext(); ) {
 			Selection s = iter.next();
 			if (schema.variables().containsAll(s.requires())) {
@@ -424,10 +423,10 @@ public class Rule extends Clause {
 				done.add(s);
 			}
 		}
-		
+
 		assignments.removeAll(done);
 		selections.removeAll(done);
-		
+
 		return schema;
 	}
 
