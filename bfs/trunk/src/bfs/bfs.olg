@@ -100,23 +100,33 @@ response(@Source, Id, Master, false, null) :-
     ChunkId := Integer.valueOf(ChunkStr),
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
 
-define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean});
+define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean, Boolean});
 watch(create_request_pending, ae);
 
 // If we got a "create" request for a file that didn't exist,
 // we need to wait until we get consensus from Paxos; then we
 // can send back a positive ack.
 // XXX: the use of "#insert" here is a hack
-create_request_pending(@Master, Id, FName, true) :-
+create_request_pending(@Master, Id, FName, false, true) :-
     request#insert(@Master, Id, _, "Create", FName),
     notin file(@Master, _, _, FName, _);
 
 // If we get a "create" request for a file that exists, we
 // need to wait until we get consensus from Paxos; then we
 // can send back a negative ack
-create_request_pending(@Master, Id, FName, false) :-
+create_request_pending(@Master, Id, FName, false, false) :-
     request#insert(@Master, Id, _, "Create", FName),
     file(@Master, _, _, FName, _);
+
+// Treat "CreateDir" requests in a very similar way to
+// "Create" requests
+create_request_pending(@Master, Id, DirName, true, true) :-
+    request#insert(@Master, Id, _, "CreateDir", DirName),
+    notin file(@Master, _, _, DirName, _);
+
+create_request_pending(@Master, Id, DirName, true, false) :-
+    request#insert(@Master, Id, _, "CreateDir", DirName),
+    file(@Master, _, _, DirName, _);
 
 public
 response(@Source, Id, Master, Success, null) :-
