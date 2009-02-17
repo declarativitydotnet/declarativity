@@ -27,7 +27,7 @@ import java.lang.System;
 /**
  * The main driver loop that executes query objects {@link Query}.
  */
-public class Driver implements Runnable {
+public class Driver extends Thread {
 
 	/**
 	 * A table function that flushes {@link TupleSet} objects to
@@ -506,6 +506,13 @@ public class Driver implements Runnable {
 		/** The name of the table to which the tuples belong. */
 		public TableName name();
 	}
+	
+	public class Shutdown implements Task {
+		public TupleSet deletions() { return null; }
+		public TupleSet insertions() { return null; }
+		public TableName name() {  return null; }
+		public String program() { return "shutdown"; }
+	}
 
 	/** Tasks that the driver needs to execute during the next clock. */
 	private BlockingQueue<Task> taskQueue;
@@ -572,7 +579,7 @@ public class Driver implements Runnable {
 
 	public void run() {
 		try {
-			while (!Thread.interrupted()) {
+			while (!this.isInterrupted()) {
 				/* I only want to block if the schedule table is empty. 
 				 * A non-empty schedule table means I have something todo. */
 				boolean block = schedule.cardinality() == 0;
@@ -588,6 +595,15 @@ public class Driver implements Runnable {
 	
 	void evaluate() throws JolRuntimeException {
 		if (this.taskQueue.size() > 0) evaluate(false);
+	}
+	
+	@Override
+	public void interrupt() {
+		super.interrupt();
+		try {
+			this.taskQueue.clear();
+			this.taskQueue.put(new Shutdown());
+		} catch (InterruptedException e) { }
 	}
 
 	/**
@@ -622,7 +638,11 @@ public class Driver implements Runnable {
 			synchronized (this) {
 				/* Schedule the insertions/deletions */
 				for (Task task : tasks) {
-					if (task.program().equals("runtime")) {
+					if (task instanceof Shutdown) {
+						this.taskQueue.put(task); // Tell the next dude
+						return;
+					}
+					else if (task.program().equals("runtime")) {
 						runtimeTasks.add(task);
 					}
 					else {

@@ -67,10 +67,6 @@ public class Runtime implements JolSystem {
 	 * should be printed. */
 	private OutputStream output;
 	
-	/** The thread that the runtime executes in.
-	 * Created and started in {@link Runtime#create(int)}. */
-	private Thread thread;
-
 	/** The system catalog contain all table references. */
 	private Catalog catalog;
 
@@ -119,7 +115,6 @@ public class Runtime implements JolSystem {
 		this.timer      = new Timer("Timer", true);
 		this.driver     = new Driver(this, schedule, clock, executor);
 		this.network    = null;
-		this.thread     = null;
 	}
 	
 	/**
@@ -173,17 +168,14 @@ public class Runtime implements JolSystem {
 		synchronized (driver) {
 		    this.timer.cancel();
 			this.executor.shutdown();
-			if (this.thread != null) this.thread.interrupt();
+			if (this.driver != null) this.driver.interrupt();
 			if (this.network != null) this.network.shutdown();
 			StasisTable.deinitializeStasis(this);
 		}
 	}
 
 	public void start() {
-		if (this.thread == null) {
-			this.thread = new Thread(driver);
-			this.thread.start();
-		}
+		this.driver.start();
 	}
 
 	/**
