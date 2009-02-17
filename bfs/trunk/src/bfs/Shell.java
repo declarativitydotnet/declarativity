@@ -371,11 +371,7 @@ public class Shell {
         TupleSet master = new TupleSet();
         master.add(new Tuple(Conf.getSelfAddress(),
                              Conf.getMasterAddress(this.currentMaster)));
-        try {
-            this.system.schedule("bfs", MasterTable.TABLENAME, master, null);
-        } catch (UpdateException e) {
-            throw new JolRuntimeException(e);
-        }
+        this.system.schedule("bfs", MasterTable.TABLENAME, master, null);
         this.system.evaluate();
     }
 
