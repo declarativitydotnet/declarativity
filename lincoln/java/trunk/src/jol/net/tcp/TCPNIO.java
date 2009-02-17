@@ -256,7 +256,7 @@ public class TCPNIO extends Server {
                 try {
                     TCPNIO.this.manager.connection().unregister(this);
                     return true;
-                } catch (UpdateException ue) {
+                } catch (JolRuntimeException ue) {
                     throw new RuntimeException(ue);
                 }
             }
@@ -284,7 +284,7 @@ public class TCPNIO extends Server {
                 context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), null);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
-            } catch (UpdateException e) {
+            } catch (JolRuntimeException e) {
                 throw new RuntimeException(e);
             }
         }

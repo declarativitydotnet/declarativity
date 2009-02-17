@@ -26,9 +26,6 @@ public abstract class LocalTestBase {
         } catch(JolRuntimeException e) {
         	e.printStackTrace();
         	throw e;
-        } catch(UpdateException e) {
-        	e.printStackTrace();
-        	throw e;
         }
     }
 

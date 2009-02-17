@@ -95,7 +95,7 @@ public class RemoteBuffer extends Operator {
 			TableName bufferName = context.network().buffer().name();
 			try {
 				context.schedule("network", bufferName, new TupleSet(bufferName, remote), null);
-			} catch (UpdateException e) {
+			} catch (JolRuntimeException e) {
 				e.printStackTrace();
 			}
 		}

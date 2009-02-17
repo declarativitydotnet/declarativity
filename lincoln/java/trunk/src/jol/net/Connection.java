@@ -3,6 +3,7 @@ package jol.net;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
@@ -67,7 +68,7 @@ public class Connection extends ObjectTable {
 		force(new Tuple(channel.protocol(), channel.address(), channel));
 	}
 
-	public void unregister(Channel channel) throws UpdateException {
+	public void unregister(Channel channel) throws JolRuntimeException {
 		try {
 			TupleSet channels = primary().lookupByKey(channel.protocol(), channel.address());
 			this.context.schedule(name().scope, name(), null, channels);

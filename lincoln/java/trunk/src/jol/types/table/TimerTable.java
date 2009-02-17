@@ -7,6 +7,7 @@ import jol.core.Runtime;
 import jol.core.Schedule;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 
 /**
@@ -76,7 +77,7 @@ public class TimerTable extends Table {
 		public void run() {
 			try {
 				this.context.schedule(name.scope, name, timer, null);
-			} catch (UpdateException e) {
+			} catch (JolRuntimeException e) {
 				e.printStackTrace();
 				cancel();
 			}

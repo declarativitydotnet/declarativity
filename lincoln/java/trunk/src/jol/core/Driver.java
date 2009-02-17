@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import jol.exec.Query;
 import jol.lang.plan.Predicate;
@@ -283,8 +285,6 @@ public class Driver implements Runnable {
 					}
 				} catch (JolRuntimeException e) {
 					e.printStackTrace();
-				} catch (UpdateException e) {
-					e.printStackTrace();
 				}
 			}
 		}
@@ -508,7 +508,7 @@ public class Driver implements Runnable {
 	}
 
 	/** Tasks that the driver needs to execute during the next clock. */
-	private List<Task> tasks;
+	private BlockingQueue<Task> taskQueue;
 
 	private boolean debug;
 
@@ -537,7 +537,7 @@ public class Driver implements Runnable {
 	 * @param clock The system clock table.
 	 */
 	public Driver(Runtime context, Schedule schedule, Clock clock, ExecutorService executor) {
-		this.tasks = new ArrayList<Task>();
+		this.taskQueue = new LinkedBlockingQueue<Task>();
 		this.debug = false;
 		this.schedule = schedule;
 		this.clock = clock;
@@ -562,35 +562,21 @@ public class Driver implements Runnable {
 	 * on the next clock tick.
 	 * @param task The task to be added.
 	 */
-	public void task(Task task) {
-		synchronized (this.tasks) {
-			this.tasks.add(task);
+	public void task(Task task) throws JolRuntimeException {
+		try {
+			this.taskQueue.put(task);
+		} catch (InterruptedException e) {
+			throw new JolRuntimeException(e);
 		}
 	}
 
 	public void run() {
 		try {
 			while (!Thread.interrupted()) {
-				synchronized (this) {
-					/*
-					 * XXX: If we received a shutdown request, we might want to honor
-					 * it before evaluating the next fixpoint (which might take a
-					 * long time). We don't do this right now, since pending
-					 * deletions aren't scheduled atomically with their triggering
-					 * fixpoint.
-					 */
-					evaluate();
-
-					/* Check for new tasks or schedules, if none wait. */
-					while (this.tasks.size() == 0 && schedule.cardinality() == 0) {
-						try {
-							this.wait();
-						} catch (InterruptedException e) {
-							/* We got a shutdown request */
-							return;
-						}
-					}
-				}
+				/* I only want to block if the schedule table is empty. 
+				 * A non-empty schedule table means I have something todo. */
+				boolean block = schedule.cardinality() == 0;
+				evaluate(block);
 			}
 		} catch (Throwable t) {
 			System.err.println("JOL Driver Error: " + t);
@@ -598,6 +584,10 @@ public class Driver implements Runnable {
 		finally {
 			System.err.println("JOL Driver Shutdown.");
 		}
+	}
+	
+	void evaluate() throws JolRuntimeException {
+		if (this.taskQueue.size() > 0) evaluate(false);
 	}
 
 	/**
@@ -612,49 +602,69 @@ public class Driver implements Runnable {
 	 * 	}
 	 * @throws UpdateException
 	 */
-	void evaluate() throws UpdateException {
-		if (schedule.cardinality() > 0) {
-			this.logicalTime = schedule.min();
-		}
-		else {
-			this.logicalTime++;
-		}
-
-		List<Task> runtimeTasks = new ArrayList<Task>();
-		synchronized (this.tasks)  {
-		    /* Schedule the insertions/deletions */
-		    for (Task task : this.tasks) {
-				if (task.program().equals("runtime")) {
-					runtimeTasks.add(task);
-				}
-				else {
-					Tuple tuple = new Tuple(this.logicalTime,
-							                task.program(), task.name(),
-					                        task.insertions(), task.deletions());
-					schedule.force(tuple);
+	private void evaluate(boolean block) throws JolRuntimeException {
+		try {
+			List<Task> runtimeTasks = new ArrayList<Task>();
+			List<Task> tasks = new ArrayList<Task>();
+			if (block) {
+				try {
+					Task t = this.taskQueue.take();
+					tasks.add(t);
+					this.taskQueue.drainTo(tasks);
+				} catch (InterruptedException e) {
+					return;
 				}
 			}
-			this.tasks.clear();
-		}
+			else {
+				this.taskQueue.drainTo(tasks);
+			}
 
-		TupleSet time = clock.time(this.logicalTime);
-		if (debug) System.err.println("============================     EVALUATE SCHEDULE     =============================");
-		evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
+			synchronized (this) {
+				/* Schedule the insertions/deletions */
+				for (Task task : tasks) {
+					if (task.program().equals("runtime")) {
+						runtimeTasks.add(task);
+					}
+					else {
+						Tuple tuple = new Tuple(this.logicalTime,
+								task.program(), task.name(),
+								task.insertions(), task.deletions());
+						schedule.force(tuple);
+					}
+				}
 
-		/* Evaluate task queue. */
-		for (Task task : runtimeTasks) {
-			evaluate(this.logicalTime, task.program(), task.name(), task.insertions(), task.deletions());
+				if (schedule.cardinality() > 0) {
+					this.logicalTime = schedule.min();
+				}
+				else if (runtimeTasks.size() > 0){
+					this.logicalTime++;
+				}
+				else return;
+
+				TupleSet time = clock.time(this.logicalTime);
+				if (debug) System.err.println("============================     EVALUATE SCHEDULE     =============================");
+				evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
+
+				/* Evaluate task queue. */
+				for (Task task : runtimeTasks) {
+					evaluate(this.logicalTime, task.program(), task.name(), task.insertions(), task.deletions());
+				}
+				evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
+				StasisTable.commit(this.runtime.context());
+				if (debug) System.err.println("============================ ========================== ============================");
+			}
+		} catch (Throwable t) {
+			throw new JolRuntimeException(t);
 		}
-		evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
-		StasisTable.commit(this.runtime.context());
-		if (debug) System.err.println("============================ ========================== ============================");
 	}
-	public void timestampPrepare() throws UpdateException {
+
+	
+	public void timestampPrepare() throws JolRuntimeException {
 		while (schedule.cardinality() > 0) {
 			evaluate();
 		}
 	}
-	public void timestampEvaluate() throws UpdateException {
+	public void timestampEvaluate() throws JolRuntimeException {
 		do {
 			evaluate();
 		} while (schedule.cardinality() > 0);

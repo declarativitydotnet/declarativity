@@ -145,29 +145,6 @@ public final class TypeChecker extends Visitor {
 		this.uniqueID = 0L;
 	}
 
-	/**
-	 * Analyze the specified translation unit.
-	 *
-	 * @param node The root node.
-	 * @return The corresponding symbol table.
-	 */
-	public Node analyze(Node node) {
-		try {
-			dispatch(node);
-		} catch (Throwable e) {
-			e.printStackTrace();
-			if (e.getCause() instanceof CompileException) {
-				CompileException ce = (CompileException) e.getCause();
-				runtime.error(ce.getMessage(), ce.node());
-			}
-			else {
-				runtime.error(e.getMessage());
-			}
-			System.exit(0);
-		}
-		return node;
-	}
-
 	// =========================================================================
 
 	private Class lookupType(String name) {
