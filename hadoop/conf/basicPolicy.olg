@@ -1,7 +1,13 @@
 program policy;
 
-import org.apache.hadoop.mapred.declarative.util.TaskPriority;
 import java.util.Set;
+import jol.types.basic.ValueList;
+import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.util.TaskPriority;
+import org.apache.hadoop.mapred.declarative.util.Function;
+import org.apache.hadoop.mapred.declarative.util.FileInput;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
 
 define(candidate, keys(0,1), {JobID, TaskID, Constants.TaskType, String, TaskPriority});
 define(mapProposal,          {JobID, String, ValueList});
@@ -80,7 +86,6 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::jobQueue(JobId, JPriority, SubmitTime, Type),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	Status.state() == Constants.TaskState.UNASSIGNED,
-    /* notin jobtracker::taskAttempt(JobId, TaskId, _, _, _, _, _, _, _, _, _), */
 	Type == Constants.TaskType.MAP && Maps > 0 || Type == Constants.TaskType.REDUCE && Reduces > 0,
 	Priority := new TaskPriority(1, JPriority, SubmitTime);
 	
