@@ -165,13 +165,11 @@ public class Runtime implements JolSystem {
 		}
 	}
 	public void shutdown() {
-		synchronized (driver) {
-		    this.timer.cancel();
-			this.executor.shutdown();
-			if (this.driver != null) this.driver.interrupt();
-			if (this.network != null) this.network.shutdown();
-			StasisTable.deinitializeStasis(this);
-		}
+		this.timer.cancel();
+		this.executor.shutdown();
+		if (this.driver != null) this.driver.interrupt();
+		if (this.network != null) this.network.shutdown();
+		StasisTable.deinitializeStasis(this);
 	}
 
 	public void start() {
