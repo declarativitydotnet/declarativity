@@ -6,12 +6,6 @@ import java.util.Arrays;
 watch(bfs::file,ae);
 watch(bfs::fchunk,ae);
 
-// to ensure that we account for the chunkIds proposed
-// by other masters
-public
-bfs::chunkHWM(Master, max<I>) :-
-    appView(Master, _, _, _, _, _, I);
-
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
