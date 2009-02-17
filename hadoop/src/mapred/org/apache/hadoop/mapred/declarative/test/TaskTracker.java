@@ -196,12 +196,14 @@ class TaskTracker extends Thread {
 	
 	private void launch(LaunchTaskAction action) {
 		Task task = action.getTask();
+		/*
 		if (task.isMapTask()) {
 			System.err.println("MAP TASK AT TRACKER " + name() + ".");
 		}
 		else {
 			System.err.println("REDUCE TASK AT TRACKER " + name() + ".");
 		}
+		*/
 		
 		long time = MIN_TASK_TIME + (rand.nextLong() % MAX_TASK_TIME);
 		TaskStatus.State state =   TaskStatus.State.UNASSIGNED;

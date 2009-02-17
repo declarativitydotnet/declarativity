@@ -10,7 +10,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.mapred.declarative.JobTrackerImpl;
-import org.apache.hadoop.mapred.declarative.JobTrackerServer;
 
 import jol.core.JolSystem;
 import jol.types.basic.Tuple;

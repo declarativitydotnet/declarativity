@@ -314,7 +314,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			}
 		} catch (BadKeyException e) {
 			e.printStackTrace();
-		} catch (UpdateException e) {
+		} catch (JolRuntimeException e) {
 			throw new IOException(e);
 		}
 	}
@@ -330,11 +330,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				job = jobTracker.newJob(jobid);
 				context.schedule(JobTracker.PROGRAM, JobTable.INIT,
 						new TupleSet(JobTable.INIT, job), null);
-				try {
-					context.evaluate();
-				} catch (JolRuntimeException e) {
-					throw new IOException(e);
-				}
+				context.evaluate();
+				
 				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
 				return state.status();
 			}
@@ -342,7 +339,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
 				return state.status();
 			}
-		} catch (UpdateException e) {
+		} catch (JolRuntimeException e) {
 			throw new IOException(e);
 		}
 	}
@@ -360,7 +357,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			try {
 				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME,
 						new TupleSet(JobTable.TABLENAME, job), null);
-			} catch (UpdateException e) {
+			} catch (JolRuntimeException e) {
 				throw new IOException(e);
 			}
 		}
@@ -444,7 +441,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 					new Tuple(taskTracker, errorClass, errorMessage));
 		try {
 			context.schedule(JobTracker.PROGRAM, TaskTrackerErrorTable.TABLENAME, insertions, null);
-		} catch (UpdateException e) {
+		} catch (JolRuntimeException e) {
 			e.printStackTrace();
 			throw new IOException(e.toString());
 		}
@@ -523,14 +520,6 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			/* Store the response. */
 			response(trackerName, response, actions);
 			if (debug) {
-				/*
-				try {
-					context.evaluate();
-				}
-				catch (Throwable t) {
-					t.printStackTrace();
-				}
-				 */
 				java.lang.System.err.println("========================= END HEARTBEAT " +
 						responseId + "=========================");
 			}
@@ -556,7 +545,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			if (actions != null && actions.size() > 0) {
 				context.schedule(JobTracker.PROGRAM, TaskTrackerActionTable.TABLENAME, null, actions);
 			}
-		} catch (UpdateException e) {
+		} catch (JolRuntimeException e) {
 			JobTrackerImpl.LOG.fatal("JOL schedule error!", e);
 		}
 	}
@@ -617,7 +606,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @throws UpdateException
 	 */
 	private void updateTasks(TaskTrackerStatus trackerStatus)
-	throws UpdateException {
+	throws JolRuntimeException {
 		String tracker = trackerStatus.getTrackerName();
 		List<TaskStatus> tasks = trackerStatus.getTaskReports();
 		TupleSet attempts = new TupleSet(TaskAttemptTable.TABLENAME);
