@@ -50,8 +50,6 @@ public class BFSClient {
 	        this.system.start();
 		} catch (JolRuntimeException e) {
 			throw new RuntimeException(e);
-		} catch (UpdateException e) {
-			throw new RuntimeException(e);
 		}
 	}
 
@@ -92,7 +90,7 @@ public class BFSClient {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
-        } catch (UpdateException e) {
+        } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
 
@@ -132,7 +130,7 @@ public class BFSClient {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
-        } catch (UpdateException e) {
+        } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
 
@@ -180,7 +178,7 @@ public class BFSClient {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
         try {
         	this.system.schedule("bfs", tblName, req, null);
-        } catch (UpdateException e) {
+        } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
 
@@ -226,7 +224,7 @@ public class BFSClient {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "FileInfo", pathName));
         try {
         	this.system.schedule("bfs", tblName, req, null);
-        } catch (UpdateException e) {
+        } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
 
@@ -272,7 +270,7 @@ public class BFSClient {
         req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
-        } catch (UpdateException e) {
+        } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
 
@@ -321,7 +319,7 @@ public class BFSClient {
                           "ChunkLocations", Integer.toString(chunkId)));
         try {
         	this.system.schedule("bfs", tblName, req, null);
-        } catch (UpdateException e) {
+        } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
 
@@ -364,8 +362,6 @@ public class BFSClient {
         try {
             this.system.schedule("bfs", MasterTable.TABLENAME, master, null);
             this.system.evaluate();
-        } catch (UpdateException e) {
-            throw new RuntimeException(e);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
