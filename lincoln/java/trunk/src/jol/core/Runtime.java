@@ -42,7 +42,7 @@ import java.lang.System;
  * interact with the OverLog library.
  */
 public class Runtime implements JolSystem {
-	public enum DebugLevel {COMPILE, WATCH};
+	public enum DebugLevel {COMPILE, WATCH, RUNTIME};
 	
 	public static final Set<DebugLevel> DEBUG_ALL = new HashSet<DebugLevel>();
 	static {

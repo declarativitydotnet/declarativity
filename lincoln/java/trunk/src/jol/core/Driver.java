@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import jol.core.Runtime.DebugLevel;
 import jol.exec.Query;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Program;
@@ -519,6 +520,8 @@ public class Driver extends Thread {
 
 	private boolean debug;
 
+	private Runtime context;
+	
 	/** The runtime program */
 	private Program runtime;
 
@@ -544,6 +547,7 @@ public class Driver extends Thread {
 	 * @param clock The system clock table.
 	 */
 	public Driver(Runtime context, Schedule schedule, Clock clock, ExecutorService executor) {
+		this.context = context;
 		this.taskQueue = new LinkedBlockingQueue<Task>();
 		this.debug = false;
 		this.schedule = schedule;
@@ -637,6 +641,16 @@ public class Driver extends Thread {
 
 			synchronized (this) {
 				/* Schedule the insertions/deletions */
+				if (schedule.cardinality() == 0 && tasks.size() == 0) {
+					return;
+				}
+				else if (schedule.cardinality() > 0) {
+					this.logicalTime = schedule.min();
+				}
+				else if (tasks.size() > 0){
+					this.logicalTime++;
+				}
+				
 				for (Task task : tasks) {
 					if (task instanceof Shutdown) {
 						this.taskQueue.put(task); // Tell the next dude
@@ -653,16 +667,11 @@ public class Driver extends Thread {
 					}
 				}
 
-				if (schedule.cardinality() > 0) {
-					this.logicalTime = schedule.min();
-				}
-				else if (runtimeTasks.size() > 0){
-					this.logicalTime++;
-				}
-				else return;
-
 				TupleSet time = clock.time(this.logicalTime);
-				if (debug) System.err.println("============================     EVALUATE SCHEDULE     =============================");
+				if (this.context.debugActive(DebugLevel.RUNTIME))  {
+					System.err.println("============================     EVALUATE SCHEDULE [CLOCK " + 
+							            this.logicalTime + "]  =============================");
+				}
 				evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
 
 				/* Evaluate task queue. */
@@ -671,7 +680,9 @@ public class Driver extends Thread {
 				}
 				evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
 				StasisTable.commit(this.runtime.context());
-				if (debug) System.err.println("============================ ========================== ============================");
+				if (this.context.debugActive(DebugLevel.RUNTIME)) { 
+					System.err.println("============================ ========================== ============================");
+				}
 			}
 		} catch (Throwable t) {
 			throw new JolRuntimeException(t);

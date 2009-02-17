@@ -53,8 +53,9 @@ public class AntiIndexJoin extends Join {
 				}
 				else {
 					/* We need to perform the actual join on the *reduced* tuple set. */
-					outerTuples.add(outer);
-					TupleSet join = join(outerTuples, innerTuples);
+					TupleSet outerSet = new TupleSet();
+					outerSet.add(outer);
+					TupleSet join = join(outerSet, innerTuples);
 					if (join.size() == 0) result.add(outer);
 				}
 			}
