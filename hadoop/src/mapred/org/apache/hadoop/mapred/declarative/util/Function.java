@@ -57,15 +57,15 @@ public final class Function {
 	}
 	
 	public static ValueList<String> getLocations(JobClient.RawSplit split) {
-		/*
 		String [] locations = split.getLocations();
 		return new ValueList<String>(locations);
-		*/
+		/*
 		ValueList<String> locations = new ValueList<String>();
 		for (int i = 0; i < 3; i++) {
-			locations.add("tracker" + rand.nextInt(100));
+			locations.add("tracker" + rand.nextInt(100) + ".localhost");
 		}
 		return locations;
+		*/
 	}
 	
 	public static Object random(Set<Object> objects) {

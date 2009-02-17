@@ -17,6 +17,7 @@ import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobPriority;
+import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Partitioner;
@@ -24,7 +25,9 @@ import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
+import org.apache.hadoop.mapred.declarative.JobTrackerImpl;
 import org.apache.hadoop.mapred.lib.NullOutputFormat;
+import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
 
 public class JobSimulator extends Thread {
@@ -137,6 +140,45 @@ public class JobSimulator extends Thread {
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
+		}
+	}
+	
+	////////////////////////////////////////////////////////////
+	// main()
+	////////////////////////////////////////////////////////////
+
+	/**
+	 * Start the JobTracker process.  This is used only for debugging.  As a rule,
+	 * JobTracker should be run as part of the DFS Namenode process.
+	 */
+	public static void main(String argv[])
+	throws IOException, InterruptedException {
+		java.lang.System.err.println("STARTING JOBTRACKER");
+
+		boolean debug   = false;
+		int clusterSize = 0;
+		for (int i = 0; i < argv.length; i++) {
+			if (argv[i].startsWith("-d")) {
+				debug = true;
+				clusterSize = Integer.parseInt(argv[i+1]);
+			}
+		}
+
+		try {
+			JobTrackerImpl tracker = (JobTrackerImpl) JobTracker.startTracker(new JobConf());
+			if (debug) {
+				TaskTrackerCluster cluster =
+					new TaskTrackerCluster(tracker.masterInterface(), clusterSize);
+				JobSimulator simulator = new JobSimulator();
+				simulator.start();
+				tracker.offerService();
+			}
+			else {
+				tracker.offerService();
+			}
+		} catch (Throwable e) {
+			e.printStackTrace();
+			java.lang.System.exit(-1);
 		}
 	}
 }
