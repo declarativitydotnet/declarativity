@@ -599,11 +599,11 @@ public class Driver extends Thread {
 	
 	@Override
 	public void interrupt() {
-		super.interrupt();
 		try {
 			this.taskQueue.clear();
 			this.taskQueue.put(new Shutdown());
 		} catch (InterruptedException e) { }
+		super.interrupt();
 	}
 
 	/**
