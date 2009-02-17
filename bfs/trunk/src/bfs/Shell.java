@@ -56,7 +56,9 @@ public class Shell {
 			} else if (op.equals("read")) {
 				shell.doRead(argList);
 			} else if (op.equals("create")) {
-				shell.doCreateFile(argList);
+				shell.doCreateFile(argList, false);
+			} else if (op.equals("mkdir")) {
+				shell.doCreateFile(argList, true);
 			} else if (op.equals("ls")) {
 				Set<BFSFileInfo> listing = shell.doListFiles(argList);
 				System.out.println("ls:");
@@ -381,7 +383,7 @@ public class Shell {
         return rand.nextInt();
     }
 
-    public void doCreateFile(List<String> args) throws UpdateException, JolRuntimeException {
+    public void doCreateFile(List<String> args, boolean isDir) throws UpdateException, JolRuntimeException {
         if (args.size() != 1)
             usage();
 
@@ -413,15 +415,20 @@ public class Shell {
             }
         };
         Table responseTbl = registerCallback(responseCallback, "response");
+        String commandName;
+        if (isDir)
+        	commandName = "CreateDir";
+        else
+        	commandName = "Create";
 
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Create", filename));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, commandName, filename));
         this.system.schedule("bfs", tblName, req, null);
 
         // Wait for the response
-        Object obj = spinGet(Conf.getFileOpTimeout());
+        spinGet(Conf.getFileOpTimeout());
         responseTbl.unregister(responseCallback);
     }
 
@@ -517,7 +524,7 @@ public class Shell {
             if (result != null)
                 return result;
 
-            System.out.println("master "+this.currentMaster+" timed out.  retry?\n");
+            System.out.println("master " + this.currentMaster + " timed out.  retry?\n");
             this.currentMaster++;
         }
         throw new JolRuntimeException("timed out on all masters");
@@ -529,7 +536,7 @@ public class Shell {
 
     private void usage() {
         System.err.println("Usage: java bfs.Shell op_name args");
-        System.err.println("Where op_name = {append,create,ls,read,rm}");
+        System.err.println("Where op_name = {append,create,ls,mkdir,read,rm}");
 
         shutdown();
         System.exit(0);

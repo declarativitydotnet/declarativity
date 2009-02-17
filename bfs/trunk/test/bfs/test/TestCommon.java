@@ -200,7 +200,7 @@ public class TestCommon {
             JolRuntimeException {
         List<String> argList = new LinkedList<String>();
         argList.add(name);
-        shell.doCreateFile(argList);
+        shell.doCreateFile(argList, false);
     }
 
     protected void rmFile(Shell shell, String name) throws UpdateException,
