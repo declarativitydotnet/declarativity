@@ -1,5 +1,6 @@
 package jol.core;
 
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -8,7 +9,6 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
 
 import javax.servlet.ServletContext;
 
@@ -28,9 +28,6 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Catalog;
 
-import java.io.OutputStream;
-import java.lang.System;
-
 /**
  * The system runtime. Contains a reference to all state in an instance of the
  * OverLog library. A call to the {@link Runtime#create(int)} will create a new
@@ -43,16 +40,16 @@ import java.lang.System;
  */
 public class Runtime implements JolSystem {
 	public enum DebugLevel {COMPILE, WATCH, RUNTIME};
-	
+
 	public static final Set<DebugLevel> DEBUG_ALL = new HashSet<DebugLevel>();
 	static {
 		for (DebugLevel level : DebugLevel.values()) {
 			DEBUG_ALL.add(level);
 		}
 	}
-	
+
 	private Set<DebugLevel> debug;
-	
+
 	/** Used to grab a quick identifier. */
 	private static Long idgenerator = 0L;
 
@@ -66,7 +63,7 @@ public class Runtime implements JolSystem {
 	/** The output print stream that watches and debug statements
 	 * should be printed. */
 	private OutputStream output;
-	
+
 	/** The system catalog contain all table references. */
 	private Catalog catalog;
 
@@ -116,33 +113,33 @@ public class Runtime implements JolSystem {
 		this.driver     = new Driver(this, schedule, clock, executor);
 		this.network    = null;
 	}
-	
+
 	/**
 	 * @return The output print stream.
 	 */
 	public OutputStream output() {
 		return this.output;
 	}
-	
+
 	/** @return The system lock. */
 	public Object lock() {
 		return this.driver;
 	}
-	
-	/** @return true if debug level is active, false otherwise. 
+
+	/** @return true if debug level is active, false otherwise.
 	 * @see DebugLevel */
 	public boolean debugActive(DebugLevel level) {
 		return this.debug.contains(level);
 	}
-	
+
 	public void debugAdd(DebugLevel level) {
 		this.debug.add(level);
 	}
-	
+
 	public void debugRemove(DebugLevel level) {
 		this.debug.remove(level);
 	}
-	
+
 	public void evaluate() throws JolRuntimeException {
 		this.driver.evaluate();
 	}
@@ -366,7 +363,7 @@ public class Runtime implements JolSystem {
 			}
 		};
 	}
-	
+
 	public static JolSystem create() throws JolRuntimeException {
 		return create(null);
 	}
@@ -378,11 +375,11 @@ public class Runtime implements JolSystem {
 	public static JolSystem create(Set<DebugLevel> debug, OutputStream output) throws JolRuntimeException {
 		return create(debug, output, -1);
 	}
-	
+
 	public static JolSystem create(Set<DebugLevel> debug, OutputStream output, int port) throws JolRuntimeException {
 		return create(debug, output, port, defaultLoader());
 	}
-	
+
 	/**
 	 * Creates a new runtime object that listens on the given network port.
 	 * @param port The network port that this runtime listens on.
@@ -401,7 +398,7 @@ public class Runtime implements JolSystem {
 					runtime.debugAdd(level);
 				}
 			}
-			
+
 			URL runtimeFile = loader.getResource("jol/core/runtime.olg");
 			Compiler compiler = new Compiler(runtime, "system", runtimeFile);
 			compiler.program().plan();
