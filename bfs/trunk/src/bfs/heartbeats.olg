@@ -30,7 +30,7 @@ sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
 // of last update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
-//watch(chunks, ae);
+watch(chunks, ae);
 
 define(chunksEvent,  {String, String, Integer, Integer, Long});
 chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-

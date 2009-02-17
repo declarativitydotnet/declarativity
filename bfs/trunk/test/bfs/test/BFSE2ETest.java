@@ -17,9 +17,9 @@ public class BFSE2ETest extends TestCommon {
         startMany("localhost:5505");
         startManyDataNodes("td1", "td2");
 
-        execCommand(EXEC + "bfs.Shell create peter");
-        appendCommand(EXEC + "bfs.Shell append peter");
-        checkRead(EXEC + "bfs.Shell read peter");
+        execCommand(EXEC + "bfs.Shell create /peter");
+        appendCommand(EXEC + "bfs.Shell append /peter");
+        checkRead(EXEC + "bfs.Shell read /peter");
 
         shutdown();
     }

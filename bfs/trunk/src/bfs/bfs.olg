@@ -12,6 +12,22 @@ import java.util.HashSet;
 import java.util.Set;
 import jol.types.basic.ValueList;
 
+watch(file, ae);
+watch(fpath, ae);
+
+// Base case: root directory
+public
+fpath(@Master, FName, FileId) :-
+    file(@Master, FileId, null, FName, true),
+    FName == "/";
+
+public
+fpath(@Master, Path, FileId) :-
+    file(@Master, FileId, FParent, FName, _),
+    fpath(@Master, ParentPath, FParent),
+    PathSep := (ParentPath.equals("/") ? "" : "/"),
+    Path := ParentPath + PathSep + FName;
+
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
 
@@ -26,26 +42,27 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
 watch(response, aes);
 
+// NewChunk: append a new chunk to a file
 public
 response(@Source, Id, Master, true, Result) :-
-    //request(@Master, Id, Source, "NewChunk", FName),
     // this needs to be tied into a paxos decree to enforce the ordering.
-    bfs_chunks::newListHolder(@Master, Source, Id, CandidateNodes, NewChunkId, FName),
+    bfs_chunks::newListHolder(@Master, Source, Id, CandidateNodes, NewChunkId, FPath),
     Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
 delete
-request(Master, Id, Source, "NewChunk", FName) :-
-    bfs_chunks::newListHolder(Master, Source, Id, _, _, FName);
+request(Master, Id, Source, "NewChunk", FPath) :-
+    bfs_chunks::newListHolder(Master, Source, Id, _, _, FPath);
 
 // "NewChunk" for nonexistent file => error
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "NewChunk", FName),
-    notin file(@Master, _, _, FName, _);
+    request(@Master, Id, Source, "NewChunk", FPath),
+    notin fpath(@Master, FPath, _);
 
 // "NewChunk" for directory => error
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "NewChunk", FName),
-    file(@Master, _, _, FName, true);
+    request(@Master, Id, Source, "NewChunk", FPath),
+    fpath(@Master, FPath, FileId),
+    file(@Master, FileId, _, _, true);
 
 
 // If we get a "ChunkList" request for an extant file, send back its
@@ -55,25 +72,28 @@ response(@Source, Id, Master, false, null) :-
 // we have clients sort by chunk ID -- this assumes that chunk IDs
 // increase monotonically, and agree with the order of chunks in a file.
 response(@Source, Id, Master, true, Chunks) :-
-    request(@Master, Id, Source, "ChunkList", FName),
-    file(@Master, FileId, _, FName, false),
+    request(@Master, Id, Source, "ChunkList", FPath),
+    fpath(@Master, FPath, FileId),
+    file(@Master, FileId, _, _, false),
     compute_chunk_set(@Master, FileId, Chunks);
 
 response(@Source, Id, Master, true, EmptyChunks) :-
-    request(@Master, Id, Source, "ChunkList", FName),
-    file(@Master, FileId, _, FName, false),
+    request(@Master, Id, Source, "ChunkList", FPath),
+    fpath(@Master, FPath, FileId),
+    file(@Master, FileId, _, _, false),
     notin fchunk(@Master, _, FileId),
     EmptyChunks := new HashSet();
 
 // ChunkList for nonexistent file => error
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "ChunkList", FName),
-    notin file(@Master, _, _, FName, _);
+    request(@Master, Id, Source, "ChunkList", FPath),
+    notin fpath(@Master, FPath, _);
 
 // ChunkList for directory => error
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "ChunkList", FName),
-    file(@Master, _, _, FName, true);
+    request(@Master, Id, Source, "ChunkList", FPath),
+    fpath(@Master, FPath, FileId),
+    file(@Master, FileId, _, _, true);
 
 define(compute_chunk_set, keys(0, 1), {String, Integer, Set});
 public
@@ -100,33 +120,66 @@ response(@Source, Id, Master, false, null) :-
     ChunkId := Integer.valueOf(ChunkStr),
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
 
-define(create_request_pending, keys(0, 1), {String, Integer, String, Boolean, Boolean});
+// Handle "Create" and "CreateDir" requests
+define(create_request_init, keys(0, 1), {String, Integer, String, Boolean, Integer});
+watch(create_request_init, ae);
+create_request_init(@Master, Id, FullPath, IsDir, LastSlashIdx) :-
+    request#insert(@Master, Id, _, "Create", FullPath),
+    IsDir := false,
+    LastSlashIdx := FullPath.lastIndexOf("/");
+
+create_request_init(@Master, Id, FullPath, IsDir, LastSlashIdx) :-
+    request#insert(@Master, Id, _, "CreateDir", FullPath),
+    IsDir := true,
+    LastSlashIdx := FullPath.lastIndexOf("/");
+
+// If we didn't find a "/", return an error: malformed path
+response(@Source, Id, Master, false, null) :-
+    create_request_init(@Master, Id, _, _, LastSlashIdx),
+    LastSlashIdx == -1,
+    request(@Master, Id, Source, _, _);
+
+// If a file with the same full path already exists => error
+response(@Source, Id, Master, false, null) :-
+    create_request_init#insert(@Master, Id, FullPath, _, _),
+    fpath(@Master, FullPath, _),
+    request(@Master, Id, Source, _, _);
+
+// Parse the request filename into the parent path and the actual
+// file name. We need to do some hackery to account for "/" as the
+// parent path: for all other paths, we want to trim the trailing
+// slash
+define(create_request_parsed, keys(0, 1), {String, Integer, String, String, Boolean});
+watch(create_request_parsed, ae);
+create_request_parsed(@Master, Id, ParentPath, FName, IsDir) :-
+    create_request_init(@Master, Id, FullPath, IsDir, LastSlashIdx),
+    LastSlashIdx >= 0
+    {  Prefix := FullPath.substring(0, LastSlashIdx);
+       ParentPath := (Prefix.equals("") ? "/" : Prefix);
+       FName := FullPath.substring(LastSlashIdx + 1); };
+
+// If the parent doesn't exist => error
+response(@Source, Id, Master, false, null) :-
+    create_request_parsed(@Master, Id, ParentPath, _, _),
+    notin fpath(@Master, ParentPath, _),
+    request(@Master, Id, Source, _, _);
+
+// If the parent is not a directory => error
+response(@Source, Id, Master, false, null) :-
+    create_request_parsed(@Master, Id, ParentPath, _, _),
+    fpath(@Master, ParentPath, ParentId),
+    file(@Master, ParentId, _, _, ParentIsDir),
+    ParentIsDir == false,
+    request(@Master, Id, Source, _, _);
+
+define(create_request_pending, keys(0, 1), {String, Integer, Integer, String, Boolean, Boolean});
 watch(create_request_pending, ae);
 
-// If we got a "create" request for a file that didn't exist,
-// we need to wait until we get consensus from Paxos; then we
-// can send back a positive ack.
-// XXX: the use of "#insert" here is a hack
-create_request_pending(@Master, Id, FName, false, true) :-
-    request#insert(@Master, Id, _, "Create", FName),
-    notin file(@Master, _, _, FName, _);
-
-// If we get a "create" request for a file that exists, we
-// need to wait until we get consensus from Paxos; then we
-// can send back a negative ack
-create_request_pending(@Master, Id, FName, false, false) :-
-    request#insert(@Master, Id, _, "Create", FName),
-    file(@Master, _, _, FName, _);
-
-// Treat "CreateDir" requests in a very similar way to
-// "Create" requests
-create_request_pending(@Master, Id, DirName, true, true) :-
-    request#insert(@Master, Id, _, "CreateDir", DirName),
-    notin file(@Master, _, _, DirName, _);
-
-create_request_pending(@Master, Id, DirName, true, false) :-
-    request#insert(@Master, Id, _, "CreateDir", DirName),
-    file(@Master, _, _, DirName, _);
+// Otherwise, pass the request through Paxos
+create_request_pending(@Master, Id, ParentId, FName, IsDir, true) :-
+    create_request_parsed(@Master, Id, ParentPath, FName, IsDir),
+    fpath(@Master, ParentPath, ParentId),
+    file(@Master, ParentId, _, _, true);
 
 public
 response(@Source, Id, Master, Success, null) :-
@@ -134,34 +187,30 @@ response(@Source, Id, Master, Success, null) :-
     request(@Master, Id, Source, _, _);
 
 // If we get an "ls" request, send back the names of all the files in
-// the file system. If the file system is empty, send back an empty
-// list. Note that we need to do the aggregation in a sub-rule.
+// the file system. Note that we need to do the aggregation in a sub-rule.
 define(compute_ls, keys(0, 1), {String, Integer, String, Set});
 watch(compute_ls, ae);
 compute_ls(@Master, Id, Source, set<FInfo>) :-
     request(@Master, Id, Source, "Ls", _),
-    file(@Master, FileId, _, FName, IsDir),
-    FInfo := new BFSFileInfo(FileId, FName, IsDir);
+    fpath(@Master, FPath, FileId),
+    file(@Master, FileId, _, _, IsDir),
+    FInfo := new BFSFileInfo(FileId, FPath, IsDir);
 
 response(@Source, Id, Master, true, FileSet) :-
     request(@Master, Id, Source, "Ls", _),
     compute_ls(@Master, Id, Source, FileSet);
 
-response(@Source, Id, Master, true, FileSet) :-
-    request(@Master, Id, Source, "Ls", _),
-    notin file(@Master, _, _, _, _),
-    FileSet := new HashSet();
-
 // If we get a "FileInfo" request for an extant file, send back info
 // describing the file. Otherwise, send back a nack.
 response(@Source, Id, Master, true, FInfo) :-
-    request(@Master, Id, Source, "FileInfo", FName),
-    file(@Master, FileId, _, FName, IsDir),
-    FInfo := new BFSFileInfo(FileId, FName, IsDir);
+    request(@Master, Id, Source, "FileInfo", FPath),
+    fpath(@Master, FPath, FileId),
+    file(@Master, FileId, _, _, IsDir),
+    FInfo := new BFSFileInfo(FileId, FPath, IsDir);
 
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "FileInfo", FName),
-    notin file(@Master, _, _, FName, _);
+    request(@Master, Id, Source, "FileInfo", FPath),
+    notin fpath(@Master, FPath, _);
 
 
 // If we got an "rm" request and the file exists, remove it and send
@@ -169,8 +218,9 @@ response(@Source, Id, Master, false, null) :-
 define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
 public
 rm_request_pending(@Master, Id, FName, true) :-
-    request(@Master, Id, _, "Rm", FName),
-    file(@Master, _, _, FName, _);
+    request(@Master, Id, _, "Rm", FPath),
+    fpath(@Master, FPath, FileId),
+    file(@Master, FileId, _, FName, _);
 
 public
 response(@Source, Id, Master, Success, null) :-
@@ -183,5 +233,5 @@ response(@Source, Id, Master, Success, null) :-
 // fixpoint.
 // XXX: we should probably synchronize with Paxos here
 response(@Source, Id, Master, false, null) :-
-    request(@Master, Id, Source, "Rm", FName),
-    notin file(@Master, _, _, FName, _);
+    request#insert(@Master, Id, Source, "Rm", FPath),
+    notin fpath(@Master, FPath, _);

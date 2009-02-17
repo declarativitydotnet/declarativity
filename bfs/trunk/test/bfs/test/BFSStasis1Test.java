@@ -13,8 +13,8 @@ public class BFSStasis1Test extends TestCommon {
 
         startMany("localhost:5509");
 
-        shellCreate("foo");
-        assertTrue(shellLs("foo"));
+        shellCreate("/foo");
+        assertTrue(shellLs("/foo"));
 	    this.killMaster(0);
 
         System.out.println("--------------------------------------------------------------------------------------------------------\n");
@@ -23,7 +23,7 @@ public class BFSStasis1Test extends TestCommon {
 
 	    Thread.sleep(1000);
 
-        assertTrue(shellLs("foo"));
+        assertTrue(shellLs("/foo"));
 	    shutdown();
     }
 

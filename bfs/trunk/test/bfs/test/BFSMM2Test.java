@@ -9,12 +9,12 @@ public class BFSMM2Test extends TestCommon {
     public void test2() throws Exception {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
-        shellCreate("foo");
+        shellCreate("/foo");
         /* kill one of the masters */
         this.killMaster(1);
 
-        shellCreate("bar");
-        assertTrue(shellLs("foo", "bar"));
+        shellCreate("/bar");
+        assertTrue(shellLs("/foo", "/bar"));
 
         shutdown();
     }

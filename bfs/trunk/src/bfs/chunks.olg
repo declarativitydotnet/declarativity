@@ -31,19 +31,20 @@ chunkSeq(Master, I+1) :-
 define(newListHolder,keys(0,2),{String,String,Integer,Set,Integer,String});
 //watch(newListHolder, ae);
 
-newListHolder(Master, Source, Id, NodeSet, NewChunkId, FName) :-
-    candidate_datanode(Master, Id, Source, FName, NewChunkId, NodeSet),
-    bfs::request(Master, Id, Source, "NewChunk", FName);
+newListHolder(Master, Source, Id, NodeSet, NewChunkId, FPath) :-
+    candidate_datanode(Master, Id, Source, FPath, NewChunkId, NodeSet),
+    bfs::request(Master, Id, Source, "NewChunk", FPath);
 
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, Set});
 //watch(candidate_datanode, ae);
 public
-candidate_datanode(Master, Id, Source, FName, NewChunkId, set<DataNode>) :-
-    bfs::request(Master, Id, Source, "NewChunk", FName),
+candidate_datanode(Master, Id, Source, FPath, NewChunkId, set<DataNode>) :-
+    bfs::request(Master, Id, Source, "NewChunk", FPath),
     chunkSeq(Master, NewChunkId),
     bfs::possible_choices(Master, Cnt, DataNode, _),
-    bfs::file(Master, _, _, FName, false),
-    notin candidate_datanode(Master, Id, Source, FName, _, _);
+    bfs::fpath(Master, FPath, FileId),
+    bfs::file(Master, FileId, _, _, false),
+    notin candidate_datanode(Master, Id, Source, FPath, _, _);
 
 // reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
 // from one datanode to another
@@ -51,7 +52,7 @@ define(chunkMigration, keys(0,1,2), {String, String, Integer, Integer, Set});
 watch(chunkMigration, ae);
 public
 chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, set<DataNode>) :-
-    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
+    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, _),
     bfs::migration_choices(Master, DataNode, ChunkId),
     bfs_heartbeat::representative_datanode(Master, ChunkId, DnWithReplica);
 

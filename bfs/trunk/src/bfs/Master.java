@@ -1,11 +1,15 @@
 package bfs;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
+import jol.types.table.TableName;
 
 
 public class Master {
@@ -46,7 +50,9 @@ public class Master {
         /* Identify the address of the local node */
         Conf.setSelfAddress(this.address);
 
-        this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, this.port);
+        Set<Runtime.DebugLevel> debug = new HashSet<Runtime.DebugLevel>();
+        debug.add(Runtime.DebugLevel.WATCH);
+        this.system = Runtime.create(debug, System.err, this.port);
 
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
 
@@ -69,6 +75,22 @@ public class Master {
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
         this.system.evaluate();
+
+        // Hack: insert a bfs::file tuple to represent the root of the file system
+        TupleSet newFile = new TupleSet();
+        String fName = "/";
+        int fileId = fName.hashCode();
+        newFile.add(new Tuple(Conf.getSelfAddress(), fileId, null, fName, true));
+        this.system.schedule("bfs", new TableName("bfs", "file"), newFile, null);
+        this.system.evaluate();
+
+        // Hack: insert a bfs::fpath tuple for the root path, because that is somehow
+        // not automatically inferred
+        TupleSet newPath = new TupleSet();
+        newPath.add(new Tuple(Conf.getSelfAddress(), "/", fileId));
+        this.system.schedule("bfs", new TableName("bfs", "fpath"), newPath, null);
+        this.system.evaluate();
+
         this.system.start();
         System.out.println("Master node @ " + this.port + " ready!");
     }

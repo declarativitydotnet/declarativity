@@ -36,14 +36,14 @@ public class DataCommon extends TestCommon {
 
         startManyDataNodes(dnList);
 
-        shellCreate("foo");
+        shellCreate("/foo");
 		Shell s = new Shell();
 
 		FileInputStream fis = new FileInputStream(fName);
-		appendFile(s, "foo", fis);
+		appendFile(s, "/foo", fis);
 		fis.close();
 		s.shutdown();
-		assertTrue(shellLs("foo"));
+		assertTrue(shellLs("/foo"));
 	}
 
     protected void cleanupAll() {
