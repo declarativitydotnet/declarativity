@@ -75,17 +75,14 @@ public class TestCommon {
         shell.shutdown();
     }
 
-    protected void assertTrue(Boolean b) {
+    protected void assertTrue(boolean b) {
         safeAssert("", b);
     }
     protected void safeAssert(boolean b) {
-        safeAssert("", new Boolean(b));
+        safeAssert("", b);
     }
 
-    protected void safeAssert(String s, boolean b) {
-        safeAssert(s, new Boolean(b));
-    }
-    protected void safeAssert(String m, Boolean b) {
+    protected void safeAssert(String m, boolean b) {
         if (!b) {
             System.out.println("Failed Assertion: " + m);
             shutdown();
