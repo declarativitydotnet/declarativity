@@ -12,7 +12,6 @@ import jol.types.table.Index;
 import jol.types.table.Key;
 
 public class AntiIndexJoin extends Join {
-
 	/** The lookup key used to obtain join matches from the inner relation. */
 	private Key lookupKey;
 
@@ -39,7 +38,7 @@ public class AntiIndexJoin extends Join {
 
 	@Override
 	public String toString() {
-		return "anti nested-loop join";
+		return "anti index join";
 	}
 
 	@Override
@@ -64,5 +63,4 @@ public class AntiIndexJoin extends Join {
 			throw new JolRuntimeException("anti index join failed!", e);
 		}
 	}
-
 }
