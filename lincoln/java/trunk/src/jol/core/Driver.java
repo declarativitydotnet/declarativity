@@ -579,7 +579,7 @@ public class Driver extends Thread {
 
 	public void run() {
 		try {
-			while (!this.isInterrupted()) {
+			while (!super.isInterrupted()) {
 				/* I only want to block if the schedule table is empty. 
 				 * A non-empty schedule table means I have something todo. */
 				boolean block = schedule.cardinality() == 0;
