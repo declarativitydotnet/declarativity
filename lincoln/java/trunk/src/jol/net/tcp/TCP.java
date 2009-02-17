@@ -160,7 +160,7 @@ public class TCP extends Server {
 				} catch (IOException e) {
 					try {
 						TCP.this.manager.connection().unregister(this);
-					} catch (UpdateException e1) {
+					} catch (JolRuntimeException e1) {
 						e1.printStackTrace();
 					}
 					return;

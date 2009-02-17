@@ -149,17 +149,7 @@ public class Runtime implements JolSystem {
 	}
 	
 	public void evaluate() throws JolRuntimeException {
-		// XXX might not be a good idea to bypass this check.
-		//		if (this.thread.isAlive()) {
-		//			throw new JolRuntimeException("ERROR: can't call evaluate when system has been started!");
-		//		}
-		synchronized (driver) {
-			try {
-				this.driver.evaluate();
-			} catch (UpdateException e) {
-				throw new JolRuntimeException(e.toString());
-			}
-		}
+		this.driver.evaluate();
 	}
 	public void evaluateTimestamp(RuntimeCallback pre,
 								 RuntimeCallback post) throws JolRuntimeException, UpdateException {
@@ -278,11 +268,11 @@ public class Runtime implements JolSystem {
 	 * @param owner The owner of the program.
 	 * @param url The location that contains the program text.
 	 */
-	public void install(String owner, URL url) throws UpdateException {
+	public void install(String owner, URL url) throws JolRuntimeException {
 		install(owner, null, url);
 	}
 
-	public void install(String owner, String debugger, URL url) throws UpdateException {
+	public void install(String owner, String debugger, URL url) throws JolRuntimeException {
 		TupleSet compilation = new TupleSet(CompileTable.TABLENAME);
 		compilation.add(new Tuple(null, owner, debugger, url.toString(), null));
 		schedule("runtime", CompileTable.TABLENAME, compilation, null);
@@ -292,7 +282,7 @@ public class Runtime implements JolSystem {
 	 * Uninstall a program.
 	 * @param name The program name.
 	 */
-	public void uninstall(String name) throws UpdateException {
+	public void uninstall(String name) throws JolRuntimeException {
 		TupleSet uninstall = new TupleSet(new TableName("compiler", "uninstall"), new Tuple(name, true));
 		schedule("compile", uninstall.name(), uninstall, null);
 	}
@@ -305,14 +295,14 @@ public class Runtime implements JolSystem {
 	 *  @param deletions The set of tuples to be deleted and deltas executed.
 	 */
 	public void schedule(final String program, final TableName name,
-			final TupleSet insertions, final TupleSet deletions) throws UpdateException {
+			final TupleSet insertions, final TupleSet deletions) throws JolRuntimeException {
 		if (!program.equals("runtime")) {
 			/* Check that the specified program already exists */
 			try {
 				Table programTable = this.catalog().table(ProgramTable.TABLENAME);
 				TupleSet programs = programTable.primary().lookupByKey(program);
 				if (programs == null || programs.isEmpty())
-					throw new UpdateException("Failed to find program: " + program);
+					throw new JolRuntimeException("Failed to find program: " + program);
 			} catch (BadKeyException e) {}
 		}
 
@@ -322,26 +312,6 @@ public class Runtime implements JolSystem {
 			public String    program()    { return program; }
 			public TableName name()       { return name; }
 		});
-
-		/* Non-blocking wake-up call to the driver. */
-        try {
-            this.executor.execute(new Runnable() {
-                public void run() {
-                    synchronized (driver) {
-                        driver.notify();
-                    }
-                }
-            });
-        } catch (RejectedExecutionException e) {
-            /*
-             * We might see this exception if schedule() is called concurrently
-             * with shutdown(). This might occur if a physical timer fires
-             * concurrently with JOL shutdown, for example. If this is the
-             * case, we just ignore the exception.
-             */
-            if (!this.executor.isShutdown())
-                throw e;
-        }
 	}
 
 	public interface RuntimeCallback {
@@ -506,6 +476,7 @@ public class Runtime implements JolSystem {
 			runtime.install("user", debugger, url);
 			runtime.evaluate(); // Install program arguments.
 		}
+		System.err.println("STARTING RUNTIME");
 		runtime.start();
 	}
 }

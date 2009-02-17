@@ -55,14 +55,14 @@ public interface JolSystem {
 	 * @param url The location of the program contents.
 	 * @throws UpdateException compilation/installation problems
 	 */
-	void install(String owner, URL url) throws UpdateException;
+	void install(String owner, URL url) throws JolRuntimeException;
 
 	/**
 	 * Uninstall program.
 	 * @param program Program name
 	 * @throws UpdateException Uninstall problems
 	 */
-	void uninstall(String program) throws UpdateException;
+	void uninstall(String program) throws JolRuntimeException;
 
 	/**
 	 * Schedule a set of tuples to be evaluated by a given program.
@@ -72,9 +72,10 @@ public interface JolSystem {
 	 * @param insertions Set of tuples to insert and evaluate
 	 * @param deletions Set of tuples to delete and evaluate
 	 * @throws UpdateException
+	 * @throws JolRuntimeException 
 	 */
 	void schedule(String program,
 				  TableName name,
 				  TupleSet insertions,
-				  TupleSet deletions) throws UpdateException;
+				  TupleSet deletions) throws JolRuntimeException;
 }

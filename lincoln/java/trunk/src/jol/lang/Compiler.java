@@ -227,7 +227,7 @@ public class Compiler {
 			/* First evaluate all import statements. */
 			for (Node clause : node.getNode(1).<Node> getList(0)) {
 				if (clause.getName().equals("Import")) {
-					typeChecker.analyze(clause);
+					typeChecker.dispatch(clause);
 				}
 			}
 
@@ -236,7 +236,7 @@ public class Compiler {
 				if (clause.getName().equals("Table") ||
 						clause.getName().equals("Event") ||
 						clause.getName().equals("Timer")) {
-					typeChecker.analyze(clause);
+					typeChecker.dispatch(clause);
 				}
 			}
 
@@ -246,7 +246,7 @@ public class Compiler {
 						|| clause.getName().equals("Fact")
 						|| clause.getName().equals("Load")
 						|| clause.getName().equals("Watch")) {
-					typeChecker.analyze(clause);
+					typeChecker.dispatch(clause);
 					if (clause.getName().equals("Watch")) {
 						List watches = (List) clause.getProperty(Constants.TYPE);
 						for (Object watch : watches) {
@@ -261,8 +261,12 @@ public class Compiler {
 			}
 		} catch (CompileException e) {
 			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage(), e.node());
-		} catch (UpdateException e) {
+			System.err.println("Compile error. Exiting.");
+			System.exit(0);
+		} catch (Throwable e) {
 			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage());
+			System.err.println("Compile error. Exiting.");
+			System.exit(0);
 		}
 	}
 }

@@ -53,8 +53,6 @@ public class LincolnServlet extends HttpServlet {
 				return ret;
 			} catch (JolRuntimeException e) {
 				throw new ServletException(e);
-			} catch (UpdateException e) {
-				throw new ServletException(e);
 			} 
 		}
 	}
