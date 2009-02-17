@@ -56,7 +56,7 @@ public class Shell {
 			} else if (op.equals("read")) {
 				shell.doRead(argList);
 			} else if (op.equals("create")) {
-				shell.doCreateFile(argList, true);
+				shell.doCreateFile(argList);
 			} else if (op.equals("ls")) {
 				Set<BFSFileInfo> listing = shell.doListFiles(argList);
 				System.out.println("ls:");
@@ -381,24 +381,9 @@ public class Shell {
         return rand.nextInt();
     }
 
-    public void doCreateFile(List<String> args, boolean fromStdin) throws UpdateException, JolRuntimeException {
+    public void doCreateFile(List<String> args) throws UpdateException, JolRuntimeException {
         if (args.size() != 1)
             usage();
-
-        // XXX: file content isn't used right now
-        StringBuilder sb = new StringBuilder();
-        if (fromStdin && false) {
-            /* Read the contents of the file from stdin */
-            int b;
-            try {
-                while ((b = System.in.read()) != -1)
-                    sb.append((char) b);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            sb.append("foo");
-        }
 
         String filename = args.get(0);
         final int requestId = generateId();
