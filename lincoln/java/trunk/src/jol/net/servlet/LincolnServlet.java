@@ -8,14 +8,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import jol.core.Runtime.DebugLevel;
 import jol.types.exception.JolRuntimeException;
-import jol.types.exception.UpdateException;
 
 public class LincolnServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static HashMap<String, jol.core.Runtime> lincolns = new HashMap<String, jol.core.Runtime>();
-	
+
 	public int getLincolnPort() {
 		return  Integer.parseInt(getServletConfig().getInitParameter("port"));
 	}
@@ -53,7 +51,7 @@ public class LincolnServlet extends HttpServlet {
 				return ret;
 			} catch (JolRuntimeException e) {
 				throw new ServletException(e);
-			} 
+			}
 		}
 	}
     @Override
@@ -63,5 +61,4 @@ public class LincolnServlet extends HttpServlet {
     {
         doGet(request, response);
     }
-
 }
