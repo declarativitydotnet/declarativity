@@ -43,7 +43,7 @@ public class TestCommon {
 
     protected boolean shellLs(String... list) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
-        Boolean ret = findInLs(shell, list);
+        boolean ret = findInLs(shell, list);
         shell.shutdown();
         return ret;
     }
