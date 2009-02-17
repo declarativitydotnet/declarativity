@@ -44,6 +44,8 @@ public class TCPNIO extends Server {
 
 	private List<Connection> newConnections;
 
+	private boolean isDone = false;
+
 	public TCPNIO(Runtime context, Network manager, Integer port) throws IOException, UpdateException, JolRuntimeException {
 		super("TCPNIO Server");
 		this.context = context;
@@ -61,9 +63,9 @@ public class TCPNIO extends Server {
 		this.server.socket().bind(new InetSocketAddress(port));
 		this.server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
-	private boolean done = false;
+
 	public void cleanup() {
-	    this.done = true;
+	    this.isDone = true;
 	    try {
 	        this.server.close();
 	    } catch (IOException e) {
@@ -83,7 +85,7 @@ public class TCPNIO extends Server {
 						key.attach(newConn);
 					}
 					this.newConnections.clear();
-					if(done) {
+					if (isDone) {
 						selector.close();
 						return;
 					}
@@ -135,7 +137,7 @@ public class TCPNIO extends Server {
 			Connection conn = new Connection(channel);
 			register(conn);
 			return conn;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			return null;
 		}
 	}
@@ -168,7 +170,6 @@ public class TCPNIO extends Server {
 		private SocketChannel channel;
         private String remoteAddr;
         private int readState;
-        private int totalWritten;
 
 		public Connection(SocketChannel channel) throws IOException {
 			super("tcp", new IP(channel.socket().getInetAddress(), channel.socket().getPort()));
@@ -178,7 +179,6 @@ public class TCPNIO extends Server {
 			this.channel.configureBlocking(false);
             this.remoteAddr = channel.socket().toString();
             this.readState = READ_DONE;
-            this.totalWritten = 0;
 		}
 
 		@Override
@@ -300,7 +300,6 @@ public class TCPNIO extends Server {
          */
 	    private void writeBuffer() throws IOException {
 	        int len = this.wBuffer.limit() - this.wBuffer.position();
-	        this.totalWritten += len;
 
 	        while (len > 0) {
 	            len -= this.channel.write(this.wBuffer);
