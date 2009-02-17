@@ -10,19 +10,9 @@ import bfs.test.TestCommon;
 import org.junit.Test;
 
 public class BFSMM5Test extends TestCommon {
-
-    private void startOne() throws Exception {
-        this.masters = new LinkedList<Master>();
-        Master m = new Master(0); // XXX
-        m.start();
-        this.masters.add(m);
-    }
-
     @Test(timeout=60000)
     public void test5() throws Exception {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
-        // startMany("localhost:5500");
-        // startOne();
 
         Shell longRun = new Shell();
 
@@ -30,7 +20,7 @@ public class BFSMM5Test extends TestCommon {
         int count = 0;
 
         for (int i = 0; i < 100; i++) {
-            String file = "XACT" + i;
+            String file = "/XACT" + i;
             long now = System.currentTimeMillis();
             createFile(longRun, file);
             agg += (System.currentTimeMillis() - now);
@@ -49,7 +39,7 @@ public class BFSMM5Test extends TestCommon {
         int cnt = shellLsCnt();
         System.out.println("total files in ls: " + cnt);
 
-        assertTrue(shellLs("XACT2", "XACT18", "XACT16", "XACT12", "XACT78", "XACT59"));
+        assertTrue(shellLs("/XACT2", "/XACT18", "/XACT16", "/XACT12", "/XACT78", "/XACT59"));
         shutdown();
     }
 
