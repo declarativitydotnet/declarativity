@@ -61,8 +61,9 @@ public class TCPNIO extends Server {
 		this.server.socket().bind(new InetSocketAddress(port));
 		this.server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
-
+	private boolean done = false;
 	public void cleanup() {
+	    this.done = true;
 	    try {
 	        this.server.close();
 	    } catch (IOException e) {
@@ -75,7 +76,6 @@ public class TCPNIO extends Server {
 		while (true) {
 			try {
 				this.selector.select();
-
 				/* Add any pending new connections to the select set */
 				synchronized (this.newConnections) {
 					for (Connection newConn : this.newConnections) {
@@ -83,6 +83,10 @@ public class TCPNIO extends Server {
 						key.attach(newConn);
 					}
 					this.newConnections.clear();
+					if(done) {
+						selector.close();
+						return;
+					}
 				}
 
 		        /* Iterate over the keys for which events are available */
@@ -301,8 +305,6 @@ public class TCPNIO extends Server {
 	        while (len > 0) {
 	            len -= this.channel.write(this.wBuffer);
 	        }
-
-	        System.out.println("TCPNIO: Wrote " + this.totalWritten + " bytes so far");
 	    }
 	}
 }
