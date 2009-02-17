@@ -99,7 +99,7 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	scheduler::jobQueue(JobId, JPriority, SubmitTime, Type),
 	jobtracker::task(JobId, TaskId, Type, _, Input, _, Status),
-	jobtracker::taskFileLocation(JobId, TaskId, TrackerName),
+	jobtracker::taskFileLocation(JobId, TaskId, Host),
 	filePriority(Input, FilePriority),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.MAP && Maps > 0,
