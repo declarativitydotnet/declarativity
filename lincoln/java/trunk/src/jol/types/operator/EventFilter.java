@@ -48,14 +48,18 @@ public class EventFilter extends Operator {
 			Object fvalue = function.evaluate(tuple);
 			Object tvalue = tuple.value(position);
 
-			return (fvalue == tvalue || fvalue.equals(tvalue));
+			if (fvalue == tvalue)
+				return true;
+			else if (fvalue == null)
+				return false;
+			else
+				return fvalue.equals(tvalue);
 		}
 
 		/** The constant type. */
 		public Class returnType() {
 			return function.returnType();
 		}
-
 	}
 
 	/**
