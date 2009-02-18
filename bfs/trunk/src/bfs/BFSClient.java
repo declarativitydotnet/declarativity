@@ -196,7 +196,6 @@ public class BFSClient {
 		return false;
 	}
 
-	// We ignore the path, for now
 	public Set<BFSFileInfo> getDirListing(String path) {
         final int requestId = generateId();
 
@@ -224,7 +223,7 @@ public class BFSClient {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
         } catch (JolRuntimeException e) {
