@@ -6,7 +6,7 @@ public class BFSData3Test extends DataCommon {
     private static final String TEST_FILE = "/usr/share/dict/words";
 
 	@Test(timeout=28000)
-    public void test1() throws Exception {
+    public void test3() throws Exception {
         test(TEST_FILE, 4, 1, 13);
         checkFiles();
         cleanupAll();
@@ -14,6 +14,6 @@ public class BFSData3Test extends DataCommon {
 
 	public static void main(String[] args) throws Exception {
 		BFSData3Test t = new BFSData3Test();
-		t.test1();
+		t.test3();
 	}
 }
