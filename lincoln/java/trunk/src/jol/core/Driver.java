@@ -547,6 +547,7 @@ public class Driver extends Thread {
 	 * @param clock The system clock table.
 	 */
 	public Driver(Runtime context, Schedule schedule, Clock clock, ExecutorService executor) {
+		super("JolDriver");
 		this.context = context;
 		this.taskQueue = new LinkedBlockingQueue<Task>();
 		this.debug = false;
@@ -629,8 +630,8 @@ public class Driver extends Thread {
 			if (block) {
 				try {
 					Task t = this.taskQueue.take();
-					tasks.add(t);
 					this.taskQueue.drainTo(tasks);
+					tasks.add(t);
 				} catch (InterruptedException e) {
 					return;
 				}
@@ -669,8 +670,8 @@ public class Driver extends Thread {
 
 				TupleSet time = clock.time(this.logicalTime);
 				if (this.context.debugActive(DebugLevel.RUNTIME))  {
-					System.err.println("============================     EVALUATE SCHEDULE [CLOCK " + 
-							            this.logicalTime + "]  =============================");
+					this.context.output().write(("============================     EVALUATE SCHEDULE [CLOCK " + 
+							            this.logicalTime + "]  =============================\n").getBytes());
 				}
 				evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
 
@@ -681,7 +682,7 @@ public class Driver extends Thread {
 				evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
 				StasisTable.commit(this.runtime.context());
 				if (this.context.debugActive(DebugLevel.RUNTIME)) { 
-					System.err.println("============================ ========================== ============================");
+					this.context.output().write("============================ ========================== ============================\n".getBytes());
 				}
 			}
 		} catch (Throwable t) {
