@@ -196,7 +196,7 @@ public class BFSClient {
 		return false;
 	}
 
-	public Set<BFSFileInfo> getDirListing(String path) {
+	public Set<BFSFileInfo> getDirListing(final String path) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -210,6 +210,10 @@ public class BFSClient {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+                        if (success.booleanValue() == false)
+                            throw new RuntimeException("Failed to get directory listing for " + path);
+
                         Object lsContent = t.value(4);
                         responseQueue.put(lsContent);
                         break;

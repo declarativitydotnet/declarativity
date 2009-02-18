@@ -437,7 +437,7 @@ public class Shell {
     	if (args.size() > 1)
     		usage();
 
-    	String path;
+    	final String path;
     	if (args.isEmpty())
     		path = "/";
     	else
@@ -456,6 +456,10 @@ public class Shell {
                     Integer tupRequestId = (Integer) t.value(1);
 
                     if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+                        if (success.booleanValue() == false)
+                            throw new RuntimeException("Failed to get directory listing for " + path);
+
                         Object lsContent = t.value(4);
                         responseQueue.put(lsContent);
                         break;
