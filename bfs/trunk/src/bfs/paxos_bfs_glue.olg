@@ -67,24 +67,24 @@ bfs::fchunk(Master, ChunkId, FileId) :-
     appView#insert(Master, _, _, FPath, _, _, Op, _, ChunkId),
     Op == "u";
 
+// Delete the file
+// XXX: We should use FileId, not FName
 public
 delete
 bfs::file(Master, FileId, FParent, FName, IsDir) :-
-    canDelete(Master, _, _, FName),
+    canDelete(Master, _, FName),
     bfs::file(Master, FileId, FParent, FName, IsDir);
 
 watch(bfs::create_request_done,aeid);
 
-define(canDelete,keys(),{String,Integer,Boolean,String});
+define(canDelete,keys(),{String,Integer,String});
 watch(canDelete,ae);
 
 public
-canDelete(Master, Id, Status, FName) :-
-    bfs::rm_request_pending(Master, Id, FName, Status),
+canDelete(Master, Id, FName) :-
     periodic(_, _, _),
     appView(Master, _, _, FName, _, _, Op, Id),
     Op == "d";
-
 
 public
 green
@@ -101,16 +101,11 @@ bfs::create_request_done(Master, Id, false) :-
 
 
 public
-bfs::rm_request_done(Master, Id, Status) :-
-    canDelete(Master, Id, Status, _);
+bfs::rm_request_done(Master, Id) :-
+    canDelete(Master, Id, _);
 
 public
 red
 bfs::create_request_done(Master, Id, Status) :-
     bfs::create_request_pending(Master, Id, _, _, _, Status),
-    Status == false;
-
-public
-bfs::rm_request_done(Master, Id, Status) :-
-    bfs::rm_request_pending(Master, Id, _, Status),
     Status == false;

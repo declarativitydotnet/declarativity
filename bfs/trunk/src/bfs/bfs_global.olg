@@ -25,7 +25,7 @@ define(request, keys(0, 1), {String, Integer, String, String, String});
 watch(request, aers);
 
 define(create_request_done, keys(0, 1), {String, Integer, Boolean});
-define(rm_request_done, keys(0, 1), {String, Integer, Boolean});
+define(rm_request_done, keys(0, 1), {String, Integer});
 
 // Node, Master node
 define(master_for_node, keys(0, 1), {String, String});
