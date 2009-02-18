@@ -52,8 +52,58 @@ public class BFSClient {
 		}
 	}
 
-	public void createFile() {
-		;
+	public boolean createFile(String pathName) {
+		return doCreate(pathName, false);
+	}
+
+	private boolean doCreate(String pathName, boolean isDir) {
+		final int requestId = generateId();
+
+        // Register a callback to listen for responses
+        Callback responseCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    Integer tupRequestId = (Integer) t.value(1);
+
+                    if (tupRequestId.intValue() == requestId) {
+                        Boolean success = (Boolean) t.value(3);
+
+                        if (success.booleanValue())
+                            System.out.println("Create succeeded.");
+                        else
+                            System.out.println("Create failed.");
+
+                        responseQueue.put(success);
+                        break;
+                    }
+                }
+            }
+        };
+        Table responseTbl = registerCallback(responseCallback, "response");
+        String commandName;
+        if (isDir)
+        	commandName = "CreateDir";
+        else
+        	commandName = "Create";
+
+        // Create and insert the request tuple
+        TableName tblName = new TableName("bfs", "start_request");
+        TupleSet req = new TupleSet(tblName);
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, commandName, pathName));
+        try {
+        	this.system.schedule("bfs", tblName, req, null);
+        } catch (JolRuntimeException e) {
+        	throw new RuntimeException(e);
+        }
+
+        // Wait for the response
+        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout());
+        responseTbl.unregister(responseCallback);
+        return success.booleanValue();
 	}
 
 	public BFSNewChunkInfo getNewChunk(final String path) {
