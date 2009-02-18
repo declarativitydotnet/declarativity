@@ -492,7 +492,7 @@ public class Shell {
         }
     }
 
-    protected void doRemoveFile(final String file) throws UpdateException, JolRuntimeException {
+    protected void doRemoveFile(final String path) throws UpdateException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -507,7 +507,7 @@ public class Shell {
 
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
-                        System.out.println("Remove of file \"" + file + "\": " +
+                        System.out.println("Remove of path \"" + path + "\": " +
                                            (success.booleanValue() ? "succeeded" : "failed"));
                         responseQueue.put(success);
                         break;
@@ -520,7 +520,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", file));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", path));
         this.system.schedule("bfs", tblName, req, null);
 
         // Wait for the response
