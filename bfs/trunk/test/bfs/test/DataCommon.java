@@ -33,17 +33,16 @@ public class DataCommon extends TestCommon {
 
         Conf.setRepFactor(repFactor);
         startMany(masterList);
-
         startManyDataNodes(dnList);
 
-        shellCreate("/foo");
 		Shell s = new Shell();
+        createFile(s, "/foo");
 
 		FileInputStream fis = new FileInputStream(fName);
 		appendFile(s, "/foo", fis);
 		fis.close();
+		assertTrue(findInLs(s, "/foo"));
 		s.shutdown();
-		assertTrue(shellLs("/foo"));
 	}
 
     protected void cleanupAll() {
