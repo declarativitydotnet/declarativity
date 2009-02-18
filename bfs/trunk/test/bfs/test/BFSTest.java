@@ -7,7 +7,7 @@ public class BFSTest extends TestCommon {
     public void test1() throws Exception {
         startMany("localhost:5505");
         shellCreate("/foo");
-        shellLs("/foo");
+        shellLs("/", "foo");
         shutdown();
     }
 

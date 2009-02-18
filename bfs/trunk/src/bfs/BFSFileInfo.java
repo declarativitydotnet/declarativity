@@ -6,12 +6,14 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	private static final long serialVersionUID = 1L;
 
 	private final int fileId;
-	private final String fileName;
+	private final String path;
+	private final String name;
 	private final boolean isDirectory;
 
-	public BFSFileInfo(int fileId, String name, boolean isDirectory) {
+	public BFSFileInfo(int fileId, String path, String name, boolean isDirectory) {
 		this.fileId = fileId;
-		this.fileName = name;
+		this.path = path;
+		this.name = name;
 		this.isDirectory = isDirectory;
 	}
 
@@ -20,11 +22,11 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	}
 
 	public String getPath() {
-		return "/" + this.fileName;
+		return this.path;
 	}
 
 	public String getName() {
-		return this.fileName;
+		return this.name;
 	}
 
 	public boolean isDirectory() {
@@ -45,20 +47,26 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	}
 
 	public int compareTo(BFSFileInfo o) {
-		return this.fileName.compareTo(o.fileName);
+		return this.path.compareTo(o.path);
 	}
 
+	// XXX: should probably consider "isDirectory"
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof BFSFileInfo))
 			return false;
 
 		BFSFileInfo fInfo = (BFSFileInfo) o;
-		return fInfo.fileName.equals(fInfo.fileName);
+		return fInfo.path.equals(fInfo.path);
 	}
 
 	@Override
 	public int hashCode() {
-		return this.fileName.hashCode();
+		return this.path.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return this.path;
 	}
 }

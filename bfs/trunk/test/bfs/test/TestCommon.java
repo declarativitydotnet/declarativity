@@ -41,16 +41,16 @@ public class TestCommon {
         System.out.println("shutdown complete\n");
     }
 
-    protected boolean shellLs(String... list) throws JolRuntimeException, UpdateException {
+    protected boolean shellLs(String dir, String... list) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
-        boolean ret = findInLs(shell, list);
+        boolean ret = findInLs(shell, dir, list);
         shell.shutdown();
         return ret;
     }
 
-    protected int shellLsCnt() throws JolRuntimeException, UpdateException {
+    protected int shellLsCnt(String dir) throws JolRuntimeException, UpdateException {
         Shell shell = new Shell();
-        int ret = lsCnt(shell);
+        int ret = lsCnt(shell, dir);
         shell.shutdown();
         return ret;
     }
@@ -90,14 +90,14 @@ public class TestCommon {
         Assert.assertTrue(m, b);
     }
 
-    protected int lsCnt(Shell shell) throws JolRuntimeException, UpdateException {
-        Set<BFSFileInfo> list = lsFile(shell);
+    protected int lsCnt(Shell shell, String dir) throws JolRuntimeException, UpdateException {
+        Set<BFSFileInfo> list = lsFile(shell, dir);
         return list.size();
     }
 
-    protected boolean findInLs(Shell shell, String... files) throws JolRuntimeException,
+    protected boolean findInLs(Shell shell, String dir, String... files) throws JolRuntimeException,
             UpdateException {
-        Set<BFSFileInfo> listing = lsFile(shell);
+        Set<BFSFileInfo> listing = lsFile(shell, dir);
 
         // obviously not an efficient way to do this.
         for (String item : files) {
@@ -180,9 +180,10 @@ public class TestCommon {
         }
     }
 
-    protected Set<BFSFileInfo> lsFile(Shell shell) throws UpdateException,
+    protected Set<BFSFileInfo> lsFile(Shell shell, String path) throws UpdateException,
             JolRuntimeException {
         List<String> argList = new LinkedList<String>();
+        argList.add(path);
         return shell.doListFiles(argList);
     }
 
@@ -198,6 +199,12 @@ public class TestCommon {
         List<String> argList = new LinkedList<String>();
         argList.add(name);
         shell.doCreateFile(argList, false);
+    }
+
+    protected void createDir(Shell shell, String path) throws UpdateException, JolRuntimeException {
+    	List<String> argList = new LinkedList<String>();
+    	argList.add(path);
+    	shell.doCreateFile(argList, true);
     }
 
     protected void rmFile(Shell shell, String name) throws UpdateException,

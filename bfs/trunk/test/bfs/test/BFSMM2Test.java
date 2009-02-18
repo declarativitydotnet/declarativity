@@ -11,10 +11,10 @@ public class BFSMM2Test extends TestCommon {
 
         shellCreate("/foo");
         /* kill one of the masters */
-        this.killMaster(1);
+        killMaster(1);
 
         shellCreate("/bar");
-        assertTrue(shellLs("/foo", "/bar"));
+        assertTrue(shellLs("/", "foo", "bar"));
 
         shutdown();
     }

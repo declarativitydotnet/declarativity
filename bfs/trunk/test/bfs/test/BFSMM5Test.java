@@ -1,9 +1,6 @@
 package bfs.test;
 
-import java.util.LinkedList;
-
 import bfs.Conf;
-import bfs.Master;
 import bfs.Shell;
 import bfs.test.TestCommon;
 
@@ -36,10 +33,10 @@ public class BFSMM5Test extends TestCommon {
         System.out.println("average time to create metadata on "
                 + Conf.getNumMasters() + " is " + avg);
 
-        int cnt = shellLsCnt();
+        int cnt = shellLsCnt("/");
         System.out.println("total files in ls: " + cnt);
 
-        assertTrue(shellLs("/XACT2", "/XACT18", "/XACT16", "/XACT12", "/XACT78", "/XACT59"));
+        assertTrue(shellLs("/", "XACT2", "XACT18", "XACT16", "XACT12", "XACT78", "XACT59"));
         shutdown();
     }
 

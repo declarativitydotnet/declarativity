@@ -9,18 +9,17 @@ public class BFSMM6Test extends TestCommon {
     public void test() throws Exception {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
-        shellCreate("foo");
+        shellCreate("/foo");
+        shellRm("/foo");
+        safeAssert("foo found??", !shellLs("/", "foo"));
 
-        shellRm("foo");
-        safeAssert("foo found??", !shellLs("foo"));
         /* kill the primary */
-        this.killMaster(0);
-
+        killMaster(0);
 
         /* we need to ensure that the deletion performed on the primary master
            is reflected on the secondary after a master failure
         */
-        safeAssert("foo found2??", !shellLs("foo"));
+        safeAssert("foo found2??", !shellLs("/", "foo"));
 
         shutdown();
     }
