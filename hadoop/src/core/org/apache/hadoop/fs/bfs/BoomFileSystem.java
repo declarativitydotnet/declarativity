@@ -45,13 +45,16 @@ public class BoomFileSystem extends FileSystem {
 	}
 
 	@Override
-	public boolean delete(Path f) throws IOException {
-		return this.bfs.delete(getPathName(f));
+	public boolean delete(Path path) throws IOException {
+		return delete(path, true);
 	}
 
 	@Override
-	public boolean delete(Path f, boolean recursive) throws IOException {
-		throw new RuntimeException("not yet implemented");
+	public boolean delete(Path path, boolean recursive) throws IOException {
+		if (!recursive)
+			throw new RuntimeException("non-recursive delete not implemented");
+
+		return this.bfs.delete(getPathName(path));
 	}
 
 	@Override
@@ -112,7 +115,7 @@ public class BoomFileSystem extends FileSystem {
 	}
 
 	@Override
-	public boolean mkdirs(Path f, FsPermission permission) throws IOException {
+	public boolean mkdirs(Path path, FsPermission permission) throws IOException {
 		throw new RuntimeException("not yet implemented");
 	}
 
