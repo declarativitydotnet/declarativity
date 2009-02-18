@@ -188,17 +188,38 @@ response(@Source, Id, Master, Success, null) :-
 
 // If we get an "ls" request, send back the names of all the files in
 // the file system. Note that we need to do the aggregation in a sub-rule.
-define(compute_ls, keys(0, 1), {String, Integer, String, Set});
-watch(compute_ls, ae);
-compute_ls(@Master, Id, Source, set<FInfo>) :-
-    request(@Master, Id, Source, "Ls", _),
+
+// "ls" for nonexistent path => error
+response(@Source, Id, Master, false, null) :-
+    request(@Master, Id, Source, "Ls", Path),
+    notin fpath(@Master, Path, _);
+
+// "ls" for a non-directory path => error (?)
+response(@Source, Id, Master, false, null) :-
+    request(@Master, Id, Source, "Ls", Path),
+    fpath(@Master, Path, FileId),
+    file(@Master, FileId, _, _, false);
+
+// "ls" for a directory path => return contents of directory
+response(@Source, Id, Master, true, FileSet) :-
+    request(@Master, Id, Source, "Ls", Path),
+    fpath(@Master, Path, FileId),
+    file(@Master, FileId, _, _, true),
+    compute_ls(@Master, FileId, FileSet);
+
+define(compute_ls, keys(0, 1), {String, Integer, Set});
+compute_ls(@Master, ParentFileId, set<FInfo>) :-
+    file(@Master, FileId, ParentFileId, _, IsDir),
     fpath(@Master, FPath, FileId),
-    file(@Master, FileId, _, _, IsDir),
     FInfo := new BFSFileInfo(FileId, FPath, IsDir);
 
-response(@Source, Id, Master, true, FileSet) :-
-    request(@Master, Id, Source, "Ls", _),
-    compute_ls(@Master, Id, Source, FileSet);
+// "ls" for an empty directory => return empty set of files
+response(@Source, Id, Master, true, EmptySet) :-
+    request(@Master, Id, Source, "Ls", Path),
+    fpath(@Master, Path, FileId),
+    // empty directory <=> no files with FileId as parent
+    notin file(@Master, _, FileId, _, _),
+    EmptySet := new HashSet();
 
 // If we get a "FileInfo" request for an extant file, send back info
 // describing the file. Otherwise, send back a nack.

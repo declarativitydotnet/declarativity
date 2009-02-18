@@ -434,8 +434,14 @@ public class Shell {
     }
 
     public Set<BFSFileInfo> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
-        if (!args.isEmpty())
-            usage();
+    	if (args.size() > 1)
+    		usage();
+
+    	String path;
+    	if (args.isEmpty())
+    		path = "/";
+    	else
+    		path = args.get(0);
 
         final int requestId = generateId();
 
@@ -463,7 +469,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", null));
+        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", path));
         this.system.schedule("bfs", tblName, req, null);
 
         Object result = spinGet(Conf.getListingTimeout());
