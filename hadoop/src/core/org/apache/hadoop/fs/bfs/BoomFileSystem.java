@@ -32,10 +32,16 @@ public class BoomFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FSDataOutputStream create(Path f, FsPermission permission,
+	public FSDataOutputStream create(Path path, FsPermission permission,
 			boolean overwrite, int bufferSize, short replication,
 			long blockSize, Progressable progress) throws IOException {
-		throw new RuntimeException("not yet implemented");
+		if (overwrite)
+			throw new RuntimeException("cannot overwrite files");
+
+		if (this.bfs.createFile(getPathName(path)) == false)
+			throw new IOException("failed to create file " + path);
+
+		return append(path, bufferSize, progress);
 	}
 
 	@Override
