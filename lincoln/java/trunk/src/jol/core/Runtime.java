@@ -170,6 +170,7 @@ public class Runtime implements JolSystem {
 	}
 
 	public void start() {
+		this.driver.setDaemon(true);
 		this.driver.start();
 	}
 
