@@ -82,8 +82,7 @@ watch(canDelete,ae);
 
 public
 canDelete(Master, Id, FName) :-
-    periodic(_, _, _),
-    appView(Master, _, _, FName, _, _, Op, Id),
+    appView#insert(Master, _, _, FName, _, _, Op, Id),
     Op == "d";
 
 public
