@@ -33,14 +33,11 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     bfs_chunks::candidate_datanode#insert(Master, Id, _, FPath, I, _),
     Decree := FPath + ",f,u," + Id.toString() + "," + I.toString() + ",-1";
 
-timer(periodic,physical,3000,3000,3000);
-
 define(appView,keys(0,1,2,3),{String,String,Integer,String,Boolean,Integer,String,Integer,Integer});
 watch(appView,ae);
 public
 appView(Master, From, Instance, Name, IsDir, ParentId, Op, Id, I) :-
-    paxos_global::requestStatus(Master, From, Decree, Instance, "passed"),
-    periodic(_, _, _),
+    paxos_global::requestStatus#insert(Master, From, Decree, Instance, "passed"),
     NVL := Arrays.asList(Decree.split(",")),
     Name := (String) NVL.get(0),
     DirStr := (String) NVL.get(1),
