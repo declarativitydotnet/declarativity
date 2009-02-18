@@ -141,11 +141,11 @@ public class DataCommon extends TestCommon {
 
         public void pickVictim() {
             // pick a random directory
-            Random r = new Random();
             System.out.println("this.datanodes = " + this.datanodes);
             if (this.datanodes == 1) {
                 pickVictim("td1");
             } else {
+                Random r = new Random();
                 int indx = r.nextInt(this.datanodes-1);
                 pickVictim("td" + (indx+1));
             }
@@ -166,7 +166,7 @@ public class DataCommon extends TestCommon {
 
         public void doVictim() {
             File victim = new File(directory + File.separator + chunk);
-            safeAssert("victim file ("+ directory + File.separator + chunk  +") exists?", victim.exists());
+            safeAssert("victim file (" + directory + File.separator + chunk  + ") exists?", victim.exists());
             victim.delete();
         }
 
