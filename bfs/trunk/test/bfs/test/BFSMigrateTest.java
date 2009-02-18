@@ -13,19 +13,19 @@ public class BFSMigrateTest extends DataCommon {
            are not yet implemented
         Victim v = new Victim(this.datanodes.size());
         v.pick_victim();
-        System.out.println("victim: dir "+ v.getDir() + ", chunk " + v.getChunk());        
+        System.out.println("victim: dir "+ v.getDir() + ", chunk " + v.getChunk());
         v.do_victim();
         */
 
         killDataNode(0);
         cleanup("td1");
 
-        // all the chunks from this datanode have dropped in 
-  
+        // all the chunks from this datanode have dropped in
+
         try {
           Thread.sleep(20001);
-        } catch (Exception e) {
-           
+        } catch (InterruptedException e) {
+
         }
 
         checkFiles();

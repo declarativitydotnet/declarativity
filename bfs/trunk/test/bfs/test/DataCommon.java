@@ -36,12 +36,13 @@ public class DataCommon extends TestCommon {
         startManyDataNodes(dnList);
 
 		Shell s = new Shell();
-        createFile(s, "/foo");
+		createDir(s, "/xyz");
+        createFile(s, "/xyz/foo");
 
 		FileInputStream fis = new FileInputStream(fName);
-		appendFile(s, "/foo", fis);
+		appendFile(s, "/xyz/foo", fis);
 		fis.close();
-		assertTrue(findInLs(s, "/foo"));
+		assertTrue(findInLs(s, "/xyz", "foo"));
 		s.shutdown();
 	}
 

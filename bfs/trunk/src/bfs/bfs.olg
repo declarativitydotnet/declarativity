@@ -208,10 +208,11 @@ response(@Source, Id, Master, true, FileSet) :-
     compute_ls(@Master, FileId, FileSet);
 
 define(compute_ls, keys(0, 1), {String, Integer, Set});
+public
 compute_ls(@Master, ParentFileId, set<FInfo>) :-
-    file(@Master, FileId, ParentFileId, _, IsDir),
+    file(@Master, FileId, ParentFileId, FName, IsDir),
     fpath(@Master, FPath, FileId),
-    FInfo := new BFSFileInfo(FileId, FPath, IsDir);
+    FInfo := new BFSFileInfo(FileId, FPath, FName, IsDir);
 
 // "ls" for an empty directory => return empty set of files
 response(@Source, Id, Master, true, EmptySet) :-
@@ -226,8 +227,8 @@ response(@Source, Id, Master, true, EmptySet) :-
 response(@Source, Id, Master, true, FInfo) :-
     request(@Master, Id, Source, "FileInfo", FPath),
     fpath(@Master, FPath, FileId),
-    file(@Master, FileId, _, _, IsDir),
-    FInfo := new BFSFileInfo(FileId, FPath, IsDir);
+    file(@Master, FileId, _, FName, IsDir),
+    FInfo := new BFSFileInfo(FileId, FPath, FName, IsDir);
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "FileInfo", FPath),

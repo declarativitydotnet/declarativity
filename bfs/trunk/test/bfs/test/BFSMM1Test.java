@@ -9,7 +9,7 @@ public class BFSMM1Test extends TestCommon {
     public void test1() throws Exception {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
         shellCreate("/foo");
-        assertTrue(shellLs("/foo"));
+        assertTrue(shellLs("/", "foo"));
         shutdown();
     }
 

@@ -22,7 +22,7 @@ public class BFSMM4Test extends TestCommon {
         shellCreate("/foo");
         shellCreate("/bar");
 
-        assertTrue(shellLs("/foo", "/bar"));
+        assertTrue(shellLs("/", "foo", "bar"));
 
         // shellRm("/foo");
 
