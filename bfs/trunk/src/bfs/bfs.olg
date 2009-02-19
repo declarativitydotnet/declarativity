@@ -15,19 +15,6 @@ import jol.types.basic.ValueList;
 watch(file, ae);
 watch(fpath, ae);
 
-// Base case: root directory
-public
-fpath(@Master, FName, FileId) :-
-    file(@Master, FileId, null, FName, true),
-    FName == "/";
-
-public
-fpath(@Master, Path, FileId) :-
-    file(@Master, FileId, FParent, FName, _),
-    fpath(@Master, ParentPath, FParent),
-    PathSep := (ParentPath == "/" ? "" : "/"),
-    Path := ParentPath + PathSep + FName;
-
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
 
