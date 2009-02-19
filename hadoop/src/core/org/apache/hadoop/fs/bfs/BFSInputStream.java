@@ -53,6 +53,9 @@ public class BFSInputStream extends FSInputStream {
 
 	@Override
 	public void seek(long newPos) throws IOException {
+		if (this.isClosed)
+			throw new IOException("cannot seek on closed file");
+
 		updatePosition(newPos);
 	}
 
@@ -60,18 +63,18 @@ public class BFSInputStream extends FSInputStream {
 		if (newPos < 0)
 			throw new IOException("cannot seek to negative position");
 
-		int chunkNum = (int) (newPos / Conf.getChunkSize());
+		int chunkIdx = (int) (newPos / Conf.getChunkSize());
 		int chunkOffset = (int) (newPos % Conf.getChunkSize());
 
-		if (chunkNum > this.chunkList.size())
+		if (chunkIdx > this.chunkList.size())
 			throw new IOException("cannot seek past end of file");
 
 		int chunkLen;
 		if (this.chunkList.isEmpty()) {
 			chunkLen = 0;
 		} else {
-			if (chunkNum != this.currentChunkIdx || this.currentChunk == null) {
-				this.currentChunk = this.chunkList.get(chunkNum);
+			if (chunkIdx != this.currentChunkIdx || this.currentChunk == null) {
+				this.currentChunk = this.chunkList.get(chunkIdx);
 				this.chunkLocations = bfs.getChunkLocations(this.currentChunk.getId());
 				fetchChunkContent();
 			}
@@ -82,12 +85,12 @@ public class BFSInputStream extends FSInputStream {
 		if (chunkOffset > chunkLen)
 			throw new IOException("cannot seek past end of file");
 
-		if (chunkOffset == chunkLen && chunkNum == this.chunkList.size())
+		if (chunkOffset == chunkLen && chunkIdx == this.chunkList.size())
 			this.atEOF = true;
 		else
 			this.atEOF = false;
 
-		this.currentChunkIdx = chunkNum;
+		this.currentChunkIdx = chunkIdx;
 		this.position = newPos;
 	}
 
@@ -153,6 +156,9 @@ public class BFSInputStream extends FSInputStream {
 
 	@Override
 	public boolean seekToNewSource(long targetPos) throws IOException {
+		if (this.isClosed)
+			throw new IOException("cannot seek to new source on closed file");
+
 		// This is a somewhat fraudulent implementation of this API,
 		// but it should be sufficient
 		updatePosition(targetPos);
