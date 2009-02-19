@@ -48,7 +48,7 @@ public class DataNode {
         this.nodeId = nodeId;
         this.fsRoot = new File(fsRoot);
         this.port = Conf.getDataNodeControlPort(nodeId);
-        this.dserver = new DataServer(Conf.getDataNodeDataPort(nodeId), fsRoot);
+        this.dserver = new DataServer(Conf.getDataNodeDataPort(nodeId), this.fsRoot);
         this.dserver.start();
     }
 
