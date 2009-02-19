@@ -212,13 +212,13 @@ public class DataServer extends Thread {
         }
     }
 
-    private String fsRoot;
+    private File fsRoot;
     private ThreadGroup workers;
     private int nextWorkerId;
     private ServerSocketChannel listener;
     private volatile boolean inShutdown;
 
-    DataServer(int port, String fsRoot) {
+    DataServer(int port, File fsRoot) {
         this.fsRoot = fsRoot;
         this.workers = new ThreadGroup("DataWorkers");
         this.nextWorkerId = 0;
