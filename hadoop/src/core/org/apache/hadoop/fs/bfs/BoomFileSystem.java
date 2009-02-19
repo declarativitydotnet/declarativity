@@ -90,9 +90,9 @@ public class BoomFileSystem extends FileSystem {
 										   bfsInfo.getReplication(),
 										   bfsInfo.getChunkSize(),
 										   0,    // modification time
-										   null, // permissions
-										   null, // owner
-										   null, // group
+										   FsPermission.getDefault(),
+										   bfsInfo.getOwner(),
+										   bfsInfo.getGroup(),
 										   new Path(bfsInfo.getPath()));
 		return result;
 	}
@@ -112,9 +112,9 @@ public class BoomFileSystem extends FileSystem {
 					                            bfsInfo.getReplication(),
 					                            bfsInfo.getChunkSize(),
 					                            0,    // modification time
-					                            null, // permissions
-					                            null, // owner
-					                            null, // group
+					                            FsPermission.getDefault(),
+					                            bfsInfo.getOwner(),
+					                            bfsInfo.getGroup(),
 					                            new Path(bfsInfo.getPath()));
 			result[i++] = fStatus;
 		}
