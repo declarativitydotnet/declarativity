@@ -54,14 +54,30 @@ acceptRequest(Master,Instance,Round,Decree,-1) :-
 
 //watch(storedDecreeRequest,aed);
 
+define(topOfQueue_p2, keys(0), {String, Long});
+watch(topOfQueue_p2, ae);
+
+public 
+topOfQueue_p2(A, min<Id>) :-
+  paxos::storedDecreeRequest(A, B, C, Id);
+
+
+watch(acceptRequest, ae);
 public
 r3_d
 acceptRequest(Master,I,Round,Decree,-2) :-
-  paxos::storedDecreeRequest(Master,Decree,From,_),
+  paxos::storedDecreeRequest(Master,Decree,From, Id),
   paxos::quorum(Master,Round),
   paxos::instance(Master,I),
+  topOfQueue_p2(Master, Id),
+  tic#insert(),
+  notin acceptRequest(Master, I, _, _, _),
   notin stasis_success(Master,I,_,_,_),
   I > 0;
+
+timer(tic, physical, 300, 300, infinity);
+
+watch(paxos::topOfQueue, a);
 
 public
 r3_e
@@ -150,6 +166,9 @@ stasis_success(Agent,Instance,Round,Decree,From) :-
   Round := -1,
   paxos::instance(Agent,Instance);
 */  
+
+watch(decree,ae);
+watch(acceptCnt, ae);
 
 // a periodic event for fire reads on stasis tables at startup.
 timer(stasis_wakeup, logical, 10, 10, 1);
