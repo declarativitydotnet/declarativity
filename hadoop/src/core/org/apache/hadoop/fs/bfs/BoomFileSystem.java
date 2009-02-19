@@ -7,6 +7,8 @@ import bfs.Conf;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -116,7 +118,22 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public boolean mkdirs(Path path, FsPermission permission) throws IOException {
-		throw new RuntimeException("not yet implemented");
+		// This command should create all the directories in the given path that
+		// don't already exist (i.e. it should function like "mkdir -p"). Since
+		// BFS requires that we create directories one at a time, we start at
+		// the root path and iterate
+		path = makeAbsolute(path);
+		List<Path> pathHierarchy = new ArrayList<Path>();
+		for (Path p = path; p != null; p = p.getParent()) {
+			pathHierarchy.add(p);
+		}
+		Collections.reverse(pathHierarchy);
+
+		for (Path p : pathHierarchy) {
+			this.bfs.createDir(getPathName(p));
+		}
+
+		return true;
 	}
 
 	@Override
