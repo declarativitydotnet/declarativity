@@ -56,6 +56,10 @@ public class BFSClient {
 		return doCreate(pathName, false);
 	}
 
+	public boolean createDir(String pathName) {
+		return doCreate(pathName, true);
+	}
+
 	private boolean doCreate(String pathName, boolean isDir) {
 		final int requestId = generateId();
 
