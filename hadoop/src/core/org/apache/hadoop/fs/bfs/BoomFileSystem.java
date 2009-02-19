@@ -86,14 +86,14 @@ public class BoomFileSystem extends FileSystem {
 			throw new FileNotFoundException("File does not exist: " + path);
 
 		FileStatus result = new FileStatus(bfsInfo.getLength(),
-				bfsInfo.isDirectory(),
-                bfsInfo.getReplication(),
-                bfsInfo.getChunkSize(),
-                0,    // modification time
-                null, // permissions
-                null, // owner
-                null, // group
-                new Path(bfsInfo.getPath()));
+										   bfsInfo.isDirectory(),
+										   bfsInfo.getReplication(),
+										   bfsInfo.getChunkSize(),
+										   0,    // modification time
+										   null, // permissions
+										   null, // owner
+										   null, // group
+										   new Path(bfsInfo.getPath()));
 		return result;
 	}
 
@@ -115,7 +115,7 @@ public class BoomFileSystem extends FileSystem {
 					                            null, // permissions
 					                            null, // owner
 					                            null, // group
-					                            new Path(path, bfsInfo.getName()));
+					                            new Path(bfsInfo.getPath()));
 			result[i++] = fStatus;
 		}
 
