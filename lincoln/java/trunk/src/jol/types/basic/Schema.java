@@ -50,15 +50,17 @@ public class Schema {
 	 * @param schema The schema to copy.
 	 */
 	private Schema(Schema schema) {
-		this.name = schema.name;
-		this.variables = new ArrayList<Variable>(schema.variables);
+		this(schema.name);
+		this.variables = new ArrayList<Variable>();
+		for(Variable v: schema.variables) {
+			this.variables.add((Variable)v.clone());
+		}
 	}
 
 	@Override
 	public Schema clone() {
 		return new Schema(this);
 	}
-
 	/**
 	 * The table name to which this schema refers.
 	 * @return The table name.
@@ -103,7 +105,9 @@ public class Schema {
 			if (var instanceof DontCare) {
 				sb.append("_");
 			}
-			else {
+			else if(var.loc()) {
+				sb.append("@"+var.name());
+			} else {
 				sb.append(var.name());
 			}
 			sb.append(", ");
