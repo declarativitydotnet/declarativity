@@ -1,14 +1,17 @@
 package bfs;
 
-import java.util.concurrent.SynchronousQueue;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class SimpleQueue<T> {
-	private SynchronousQueue<T> queue;
-
-	SimpleQueue() {
-		this.queue = new SynchronousQueue<T>();
-	}
+	// SynchronousQueue is a queue of one item, which encourages deadlock.
+	private Queue<T> queue = new LinkedList<T>();
+	Lock l = new ReentrantLock();
+	Condition itemReady = l.newCondition();
 
 	/**
 	 * Add a new element to the tail of the queue. Waits an unbounded length of
@@ -17,12 +20,11 @@ public class SimpleQueue<T> {
 	 * @param obj
 	 *            The element to add. Must not be null.
 	 */
-	public void put(T obj) {
-		try {
-			this.queue.put(obj);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
+	synchronized public void put(T obj) {
+    	l.lock();
+    	this.queue.add(obj);
+    	itemReady.signal();
+    	l.unlock();
 	}
 
 	/**
@@ -35,11 +37,25 @@ public class SimpleQueue<T> {
 	 *         occurred.
 	 */
 	public T get(long timeout) {
-		try {
-			return this.queue.poll(timeout, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+		boolean done = false;
+		long expiry = System.currentTimeMillis() + timeout;
+		T ret = null;
+
+		l.lock();
+
+		while(!done) {
+			ret = queue.poll();
+			if(ret != null) { done = true; }
+			else {
+				long wait = expiry - System.currentTimeMillis();
+				if(wait < 0) { done = true; continue; } 
+				try {
+					if(!itemReady.await(wait, TimeUnit.MILLISECONDS)) { done = true; }
+				} catch(InterruptedException e) {}
+			}
 		}
+		l.unlock();
+		return ret;
 	}
 
 	/**
@@ -49,10 +65,23 @@ public class SimpleQueue<T> {
 	 * @return The former head element.
 	 */
 	public T get() {
-		try {
-			return this.queue.take();
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
+		boolean done = false;
+
+		T ret = null;
+
+		l.lock();
+
+		while(!done) {
+			ret = queue.poll();
+			if(ret != null) { 
+				done = true;
+			} else { 
+				try {
+					itemReady.await();
+				} catch (InterruptedException e) { }
+			}
 		}
+		l.unlock();
+		return ret;
 	}
 }
