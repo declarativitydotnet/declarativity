@@ -108,7 +108,7 @@ public class BFSClient {
 
         // Wait for the response
         Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
         return success.booleanValue();
 	}
 
@@ -150,7 +150,7 @@ public class BFSClient {
         }
 
         BFSNewChunkInfo result = (BFSNewChunkInfo) waitForResponse(Conf.getListingTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
         return result;
 	}
 
@@ -190,7 +190,7 @@ public class BFSClient {
         }
 
         Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
 
         if (success.booleanValue() == false)
         	return false;
@@ -241,7 +241,7 @@ public class BFSClient {
         }
 
         Set<BFSFileInfo> lsContent = (Set<BFSFileInfo>) waitForResponse(Conf.getListingTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
         return Collections.unmodifiableSet(lsContent);
 	}
 
@@ -287,7 +287,7 @@ public class BFSClient {
         }
 
         List<BFSFileInfo> result = (List<BFSFileInfo>) waitForResponse(Conf.getFileOpTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
 
         if (result.size() == 0)
         	return null; // No such file
@@ -333,7 +333,7 @@ public class BFSClient {
         }
 
         Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) waitForResponse(Conf.getListingTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
 
         // The server returns the set of chunks in unspecified order; we sort by
         // ascending chunk ID, on the assumption that this agrees with the correct
@@ -382,7 +382,7 @@ public class BFSClient {
         }
 
         Set<String> nodeSet = (Set<String>) waitForResponse(Conf.getFileOpTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
         return Collections.unmodifiableSet(nodeSet);
 	}
 
@@ -391,6 +391,16 @@ public class BFSClient {
         table.register(callback);
         return table;
     }
+
+	private void unregisterCallback(Table table, Callback cb) {
+		table.unregister(cb);
+		// Avoid a potential race condition: if we timeout on waiting for
+		// a response concurrently with the response arriving, we might
+		// add an element to the response queue at the same time that we
+		// throw an exception. This will leave a spurious element in the
+		// response queue, so clear it AFTER we've unregistered the callback.
+		this.responseQueue.clear();
+	}
 
     // XXX: this should be rewritten to account for the fact that masters can
 	// die and then resume operation; we should be willing to try to contact
