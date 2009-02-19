@@ -209,7 +209,7 @@ public class Shell {
         this.system.schedule("bfs", tblName, req, null);
 
         BFSNewChunkInfo result = (BFSNewChunkInfo) spinGet(Conf.getListingTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
         return result;
     }
 
@@ -247,7 +247,7 @@ public class Shell {
         this.system.schedule("bfs", tblName, req, null);
 
         Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) spinGet(Conf.getListingTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
 
         // The server returns the list of chunks in unspecified order; we sort by
         // ascending chunk ID, on the assumption that this agrees with the correct
@@ -262,6 +262,16 @@ public class Shell {
         table.register(callback);
         return table;
     }
+
+	private void unregisterCallback(Table table, Callback cb) {
+		table.unregister(cb);
+		// Avoid a potential race condition: if we timeout on waiting for
+		// a response concurrently with the response arriving, we might
+		// add an element to the response queue at the same time that we
+		// throw an exception. This will leave a spurious element in the
+		// response queue, so clear it AFTER we've unregistered the callback.
+		this.responseQueue.clear();
+	}
 
     private Set<String> getChunkLocations(final Integer chunk) throws UpdateException, JolRuntimeException {
         final int requestId = generateId();
@@ -298,7 +308,7 @@ public class Shell {
         this.system.schedule("bfs", tblName, req, null);
 
         Set<String> nodeSet = (Set<String>) spinGet(Conf.getListingTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
         return Collections.unmodifiableSet(nodeSet);
     }
 
@@ -429,7 +439,7 @@ public class Shell {
 
         // Wait for the response
         spinGet(Conf.getFileOpTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
     }
 
     public Set<BFSFileInfo> doListFiles(List<String> args) throws UpdateException, JolRuntimeException {
@@ -476,7 +486,7 @@ public class Shell {
         this.system.schedule("bfs", tblName, req, null);
 
         Object result = spinGet(Conf.getListingTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
 
         Set<BFSFileInfo> lsContent = (Set<BFSFileInfo>) result;
         return Collections.unmodifiableSet(lsContent);
@@ -524,7 +534,7 @@ public class Shell {
 
         // Wait for the response
         spinGet(Conf.getFileOpTimeout());
-        responseTbl.unregister(responseCallback);
+        unregisterCallback(responseTbl, responseCallback);
     }
 
     private Object spinGet(long timeout) throws JolRuntimeException {

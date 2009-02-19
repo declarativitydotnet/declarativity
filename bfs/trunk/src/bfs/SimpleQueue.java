@@ -55,4 +55,8 @@ public class SimpleQueue<T> {
 			throw new RuntimeException(e);
 		}
 	}
+
+	public void clear() {
+		this.queue.clear();
+	}
 }
