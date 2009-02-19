@@ -72,6 +72,25 @@ bfs::file(Master, FileId, FParent, FName, IsDir) :-
     canDelete(Master, _, FName),
     bfs::file(Master, FileId, FParent, FName, IsDir);
 
+// Use the "file" relation to construct the "fpath" relation. Note
+// that these rules do NOT belong here, but we need them to be in
+// the same program that deletes from bfs::file to workaround a
+// JOL bug.
+
+// Base case: root directory
+public
+bfs::fpath(@Master, FName, FileId) :-
+    bfs::file(@Master, FileId, null, FName, true),
+    FName == "/";
+
+public
+bfs::fpath(@Master, Path, FileId) :-
+    bfs::file(@Master, FileId, FParent, FName, _),
+    bfs::fpath(@Master, ParentPath, FParent),
+    PathSep := (ParentPath == "/" ? "" : "/"),
+    Path := ParentPath + PathSep + FName;
+
+
 watch(bfs::create_request_done,aeid);
 
 define(canDelete,keys(),{String,Integer,String});
