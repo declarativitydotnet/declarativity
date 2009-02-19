@@ -50,7 +50,6 @@ public
 bumpinstance
 paxos::instance(Me,I+1) :-
   paxos::instance(Me,I),
-  /////paxos::storedDecreeRequest(Me,Decree,From,Id),
   // test.
   multipaxos::stasis_success#insert(Me,I,Round,OldDecree,Client);
 
