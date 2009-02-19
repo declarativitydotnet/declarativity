@@ -161,7 +161,13 @@ public class Runtime implements JolSystem {
 			}
 		}
 	}
+	private boolean can_shutdown = false;
 	public void shutdown() {
+		if(!can_shutdown) {
+			System.err.println("FIXME: Runtime.shutdown() called on already-shutdown Runtime.");
+			return;
+		}
+		can_shutdown = false;
 		this.timer.cancel();
 		this.executor.shutdown();
 		if (this.driver != null) this.driver.interrupt();
@@ -170,6 +176,7 @@ public class Runtime implements JolSystem {
 	}
 
 	public void start() {
+		can_shutdown = true;
 		this.driver.start();
 	}
 
