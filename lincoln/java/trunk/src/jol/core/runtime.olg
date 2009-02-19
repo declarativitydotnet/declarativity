@@ -137,7 +137,7 @@ queue(Time, 0, Program, Name, Insertions, Deletions) :-
 /* Clean up queued programs. */
 delete
 schedule(Time, Program, Name, Insertions, Deletions) :-
-	clock#delete(Location, Time),
+	queue(Time, _, Program, Name, Insertions, Deletions),
 	schedule(Time, Program, Name, Insertions, Deletions);
 
 /*******************************************************************/
