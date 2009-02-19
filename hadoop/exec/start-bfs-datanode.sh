@@ -1,6 +1,5 @@
 #!/bin/sh
-# Start a copy of the BFS master node. Right now, we run the BFS
-# master in the foreground.
+# Start a BFS data node. Right now, we run the BFS data node in the foreground.
 
 bin=`dirname "$0"`
 bin=`cd "$bin"; pwd`
@@ -58,5 +57,7 @@ if [ "$HADOOP_CLASSPATH" != "" ]; then
   CLASSPATH=${CLASSPATH}:${HADOOP_CLASSPATH}
 fi
 
-$JAVA -cp "$CLASSPATH" bfs.Master 0
+BFS_DATA_DIR=/tmp/bfs_data
+mkdir $BFS_DATA_DIR
+$JAVA -cp "$CLASSPATH" bfs.DataNode 0 $BFS_DATA_DIR
 
