@@ -58,6 +58,5 @@ if [ "$HADOOP_CLASSPATH" != "" ]; then
 fi
 
 BFS_DATA_DIR=/tmp/bfs_data
-mkdir $BFS_DATA_DIR
 $JAVA -cp "$CLASSPATH" bfs.DataNode 0 $BFS_DATA_DIR
 
