@@ -93,7 +93,7 @@ public class BoomFileSystem extends FileSystem {
                 null, // permissions
                 null, // owner
                 null, // group
-                new Path(bfsInfo.getName()));
+                new Path(bfsInfo.getPath()));
 		return result;
 	}
 
