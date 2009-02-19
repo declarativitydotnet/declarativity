@@ -21,7 +21,7 @@ public abstract class StasisTable extends Table {
 	protected TransactionStatus ts;
 	public StasisTable(Runtime context, TableName name, Key key, Class[] attributeTypes) {
 		super(name, Table.Type.TABLE, key, attributeTypes);
-		synchronized ( xactTable) {
+		synchronized (xactTable) {
 			ts = xactTable.get(context.getPort());
 	
 			nameBytes = s.toBytes(name);
@@ -134,9 +134,24 @@ public abstract class StasisTable extends Table {
 		};
 	}
 
-	
+	final StasisTable thisTable = this;	
 	private Index primary;
-	private Map<Key, Index> secondary = new HashMap<Key, Index>();
+	final private Map<Key, Index> secondary = new HashMap<Key, Index>() {
+        private static final long serialVersionUID = 1L;
+
+		@Override
+        public Index put(Key k, Index i) {
+			int c = 0;
+			System.err.println("rebuilding index of " + name() +"...");
+			
+			for(Tuple t: thisTable.tuples()) {
+				System.err.println("\t" + t);
+				i.insert(t); c++;
+			}
+			System.err.println("   ...done ("+c+" tuples found)");
+			return super.put(k,i);
+		}
+	};
 
 	@Override
 	public Index primary() {
@@ -145,7 +160,6 @@ public abstract class StasisTable extends Table {
 
 	@Override
 	public Map<Key, Index> secondary() {
-		System.out.println("Stasis table: returning transient list of secondary indices:" + secondary.keySet().toString());
 		return secondary;
 	}
 
@@ -155,12 +169,9 @@ public abstract class StasisTable extends Table {
 		public TransactionStatus(long xid) { this.xid = xid; this.dirty = false; }
 	};
 	
-	protected static Map<Integer,TransactionStatus> xactTable 
+	protected static final Map<Integer,TransactionStatus> xactTable 
 		= new HashMap<Integer,TransactionStatus>();
 	
-	// XXX add support for concurrent transactions
-//	protected static long xid;
-//	protected static boolean dirty = false;
 	public static boolean foundStasis = false;
 	
 	public static void initializeStasis(Runtime context) {
