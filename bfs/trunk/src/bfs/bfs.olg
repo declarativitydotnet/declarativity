@@ -135,14 +135,16 @@ response(@Source, Id, Master, false, null) :-
 // Parse the request filename into the parent path and the actual
 // file name. We need to do some hackery to account for "/" as the
 // parent path: for all other paths, we want to trim the trailing
-// slash
+// slash. Note that we also need to apply the inverse of the two
+// error conditions we checked for above.
 define(create_request_parsed, keys(0, 1), {String, Integer, String, String, Boolean});
 watch(create_request_parsed, ae);
 create_request_parsed(@Master, Id, ParentPath, FName, IsDir) :-
     create_request_init(@Master, Id, FullPath, IsDir, LastSlashIdx),
-    LastSlashIdx >= 0
+    LastSlashIdx >= 0,
+    notin fpath(@Master, FullPath, _)
     {  Prefix := FullPath.substring(0, LastSlashIdx);
-       ParentPath := (Prefix.equals("") ? "/" : Prefix);
+       ParentPath := (Prefix == "" ? "/" : Prefix);
        FName := FullPath.substring(LastSlashIdx + 1); };
 
 // If the parent doesn't exist => error
