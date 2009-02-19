@@ -128,7 +128,7 @@ response(@Source, Id, Master, false, null) :-
 
 // If a file with the same full path already exists => error
 response(@Source, Id, Master, false, null) :-
-    create_request_init#insert(@Master, Id, FullPath, _, _),
+    create_request_init(@Master, Id, FullPath, _, _),
     fpath(@Master, FullPath, _),
     request(@Master, Id, Source, _, _);
 
