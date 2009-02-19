@@ -25,7 +25,7 @@ public
 fpath(@Master, Path, FileId) :-
     file(@Master, FileId, FParent, FName, _),
     fpath(@Master, ParentPath, FParent),
-    PathSep := (ParentPath.equals("/") ? "" : "/"),
+    PathSep := (ParentPath == "/" ? "" : "/"),
     Path := ParentPath + PathSep + FName;
 
 // Node address, Request ID, Request type, Arg
