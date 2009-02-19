@@ -100,15 +100,15 @@ public class BFSInputStream extends FSInputStream {
 			try {
 				fetchChunkFromAddr(loc);
 			} catch (IOException e) {
-				continue;
+				continue; // Try another data node
 			}
 
 			// Read chunk successfully
 			return;
 		}
 
-		// Failed to read chunk: all DNs for this chunk are down
-		throw new IOException("failed to read chunk!");
+		// Failed to read chunk: all data nodes for this chunk are down
+		throw new IOException("failed to read chunk: " + this.currentChunk);
 	}
 
 	private void fetchChunkFromAddr(String addr) throws IOException {
