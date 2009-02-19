@@ -58,12 +58,5 @@ if [ "$HADOOP_CLASSPATH" != "" ]; then
   CLASSPATH=${CLASSPATH}:${HADOOP_CLASSPATH}
 fi
 
-export HADOOP_IDENT_STRING=""
-command="bfsmaster"
-export HADOOP_LOGFILE=hadoop-$HADOOP_IDENT_STRING-$command-$HOSTNAME.log
-log=$HADOOP_LOG_DIR/hadoop-$HADOOP_IDENT_STRING-$command-$HOSTNAME.out
-pid=$HADOOP_PID_DIR/hadoop-$HADOOP_IDENT_STRING-$command.pid
-
-$JAVA -cp "$CLASSPATH" bfs.Master 0 > "$log" 2>&1 < /dev/null &
-echo $! > $pid
+$JAVA -cp "$CLASSPATH" bfs.Master 0
 
