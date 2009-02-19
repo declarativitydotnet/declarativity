@@ -507,7 +507,7 @@ public class Driver extends Thread {
 		/** The name of the table to which the tuples belong. */
 		public TableName name();
 	}
-	
+
 	public class Shutdown implements Task {
 		public TupleSet deletions() { return null; }
 		public TupleSet insertions() { return null; }
@@ -518,10 +518,8 @@ public class Driver extends Thread {
 	/** Tasks that the driver needs to execute during the next clock. */
 	private BlockingQueue<Task> taskQueue;
 
-	private boolean debug;
-
 	private Runtime context;
-	
+
 	/** The runtime program */
 	private Program runtime;
 
@@ -550,7 +548,6 @@ public class Driver extends Thread {
 		super("JolDriver");
 		this.context = context;
 		this.taskQueue = new LinkedBlockingQueue<Task>();
-		this.debug = false;
 		this.schedule = schedule;
 		this.clock = clock;
 		this.logicalTime = 0L;
@@ -585,7 +582,7 @@ public class Driver extends Thread {
 	public void run() {
 		try {
 			while (!super.isInterrupted()) {
-				/* I only want to block if the schedule table is empty. 
+				/* I only want to block if the schedule table is empty.
 				 * A non-empty schedule table means I have something todo. */
 				boolean block = schedule.cardinality() == 0;
 				evaluate(block);
@@ -597,11 +594,11 @@ public class Driver extends Thread {
 			System.err.println("JOL Driver Shutdown.");
 		}
 	}
-	
+
 	void evaluate() throws JolRuntimeException {
 		if (this.taskQueue.size() > 0) evaluate(false);
 	}
-	
+
 	@Override
 	public void interrupt() {
 		try {
@@ -651,7 +648,7 @@ public class Driver extends Thread {
 				else if (tasks.size() > 0){
 					this.logicalTime++;
 				}
-				
+
 				for (Task task : tasks) {
 					if (task instanceof Shutdown) {
 						this.taskQueue.put(task); // Tell the next dude
@@ -670,7 +667,7 @@ public class Driver extends Thread {
 
 				TupleSet time = clock.time(this.logicalTime);
 				if (this.context.debugActive(DebugLevel.RUNTIME))  {
-					this.context.output().write(("============================     EVALUATE SCHEDULE [CLOCK " + 
+					this.context.output().write(("============================     EVALUATE SCHEDULE [CLOCK " +
 							            this.logicalTime + "]  =============================\n").getBytes());
 				}
 				evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
@@ -681,7 +678,7 @@ public class Driver extends Thread {
 				}
 				evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
 				StasisTable.commit(this.runtime.context());
-				if (this.context.debugActive(DebugLevel.RUNTIME)) { 
+				if (this.context.debugActive(DebugLevel.RUNTIME)) {
 					this.context.output().write("============================ ========================== ============================\n".getBytes());
 				}
 			}
@@ -690,7 +687,7 @@ public class Driver extends Thread {
 		}
 	}
 
-	
+
 	public void timestampPrepare() throws JolRuntimeException {
 		while (schedule.cardinality() > 0) {
 			evaluate();
