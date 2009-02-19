@@ -12,6 +12,7 @@ import jol.exec.Query;
 import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
+import jol.types.exception.CompileException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.EventFilter;
@@ -254,8 +255,13 @@ public class Rule extends Clause {
 		 * created during the localization process. The final group will
 		 * project onto the original head predicate. */
 		while (groupByLocation.size() > 0) {
+			if(event == null || event.locationVariable() == null) {
+				/// XXX this error message is a hack that tyson wants to fix up.  - RCS
+				throw new PlannerException("Localization failed; disconnected set of body location variables");
+			}
+
 			String location           = event.locationVariable().name();
-			Schema intermediateSchema = event.schema();
+			Schema intermediateSchema = event.schema().clone();
 			String intermediateName   = new String(this.name + "_intermediate_" + event.name().name);
 
 			/* Get the set of predicates in this location group. */
