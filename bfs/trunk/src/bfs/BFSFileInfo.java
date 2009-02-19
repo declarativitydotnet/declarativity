@@ -46,6 +46,16 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 		return 0;
 	}
 
+	// TODO
+	public String getOwner() {
+		return "bfs";
+	}
+
+	// TODO
+	public String getGroup() {
+		return "bfs";
+	}
+
 	public int compareTo(BFSFileInfo o) {
 		return this.path.compareTo(o.path);
 	}
