@@ -2,7 +2,7 @@ package bfs.test;
 
 import org.junit.Test;
 
-public class BFSTest extends TestCommon {
+public class Basic1Test extends TestCommon {
     @Test(timeout=10000)
     public void test1() throws Exception {
         startMany("localhost:5505");
@@ -12,7 +12,7 @@ public class BFSTest extends TestCommon {
     }
 
     public static void main(String[] args) throws Exception {
-        BFSTest t = new BFSTest();
+        Basic1Test t = new Basic1Test();
         t.test1();
     }
 }

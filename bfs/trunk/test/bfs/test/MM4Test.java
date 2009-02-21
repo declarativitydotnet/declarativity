@@ -4,7 +4,7 @@ import bfs.test.TestCommon;
 
 import org.junit.Test;
 
-public class BFSMM4Test extends TestCommon {
+public class MM4Test extends TestCommon {
     @Test(timeout=20000)
     public void test4() throws Exception {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
@@ -32,7 +32,7 @@ public class BFSMM4Test extends TestCommon {
     }
 
     public static void main(String[] args) throws Exception {
-        BFSMM4Test t = new BFSMM4Test();
+        MM4Test t = new MM4Test();
         t.test4();
     }
 }
