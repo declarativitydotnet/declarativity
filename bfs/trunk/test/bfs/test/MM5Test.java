@@ -2,7 +2,6 @@ package bfs.test;
 
 import bfs.Conf;
 import bfs.Shell;
-import bfs.test.TestCommon;
 
 import org.junit.Test;
 

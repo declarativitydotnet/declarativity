@@ -1,7 +1,5 @@
 package bfs.test;
 
-import bfs.test.TestCommon;
-
 import org.junit.Test;
 
 public class MM6Test extends TestCommon {

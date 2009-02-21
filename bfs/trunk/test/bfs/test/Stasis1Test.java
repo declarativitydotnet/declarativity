@@ -1,6 +1,5 @@
 package bfs.test;
 
-import bfs.test.TestCommon;
 import java.io.File;
 
 import org.junit.Test;
