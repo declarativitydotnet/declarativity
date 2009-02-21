@@ -9,7 +9,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-public class BFSE2ETest extends TestCommon {
+public class E2ETest extends TestCommon {
     private final static String EXEC = "java -cp lib/jol.jar:dist/bfs.jar ";
 
     @Test(timeout=12000)
@@ -62,7 +62,7 @@ public class BFSE2ETest extends TestCommon {
     }
 
     public static void main(String[] args) throws Exception {
-        BFSE2ETest t = new BFSE2ETest();
+        E2ETest t = new E2ETest();
         t.test1();
     }
 }

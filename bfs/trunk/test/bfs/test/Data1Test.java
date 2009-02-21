@@ -2,18 +2,18 @@ package bfs.test;
 
 import org.junit.Test;
 
-public class BFSData3Test extends DataCommon {
+public class Data1Test extends DataCommon {
     private static final String TEST_FILE = "/usr/share/dict/words";
 
-	@Test(timeout=28000)
-    public void test3() throws Exception {
-        test(TEST_FILE, 4, 1, 13);
+	@Test(timeout=16000)
+    public void test1() throws Exception {
+	    test(TEST_FILE, 1, 1, 1);
         checkFiles();
         cleanupAll();
     }
 
 	public static void main(String[] args) throws Exception {
-		BFSData3Test t = new BFSData3Test();
-		t.test3();
+	    Data1Test t = new Data1Test();
+		t.test1();
 	}
 }
