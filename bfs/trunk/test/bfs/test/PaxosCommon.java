@@ -7,6 +7,7 @@ import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
+import jol.types.exception.JolRuntimeException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.Table;
@@ -114,13 +115,13 @@ public class PaxosCommon {
             s.evaluate();
     }
 
-    void myInstall(JolSystem s, String file) throws Exception {
+    void myInstall(JolSystem s, String file) {
         URL u = ClassLoader.getSystemResource(file);
         try {
             s.install("multipaxos", u);
             s.evaluate();
-        } catch (Exception e) {
-            throw new Exception("install failed for " + file, e);
+        } catch (JolRuntimeException e) {
+            throw new RuntimeException("install failed for " + file, e);
         }
     }
 
