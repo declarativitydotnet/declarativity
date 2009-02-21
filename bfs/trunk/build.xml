@@ -44,7 +44,7 @@
       </manifest>
     </jar>
   </target>
-  
+
 
   <target name="clean" description="clean up">
     <delete dir="${build}"/>
@@ -99,7 +99,7 @@
 
       <batchtest todir="${test-output}">
         <fileset dir="${test}">
-          <include name="**/BFSData*Test.java"/>
+          <include name="**/Data*Test.java"/>
         </fileset>
       </batchtest>
     </junit>
