@@ -77,7 +77,6 @@ public class Conf {
 
     public static void setNewMasterList(String... args) {
         masterNodes = new Host[args.length];
-        System.out.println("yo yo\n");
         for (int i = 0; i < args.length; i++) {
             String[] parts = args[i].split(":");
             masterNodes[i] = new Host(parts[0], Integer.parseInt(parts[1]));

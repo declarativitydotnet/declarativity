@@ -38,7 +38,7 @@ public class TestCommon {
                 d.shutdown();
             }
         }
-        System.out.println("shutdown complete\n");
+        System.out.println("shutdown complete");
     }
 
     protected boolean shellLs(String dir, String... list) throws JolRuntimeException, UpdateException {
@@ -115,15 +115,6 @@ public class TestCommon {
         return true;
     }
 
-    protected void stopMany() {
-        for (Master sys : this.masters) {
-            sys.stop();
-        }
-        for (DataNode d : this.datanodes) {
-            d.shutdown();
-        }
-    }
-
     protected void startMany(String... args) throws JolRuntimeException, UpdateException {
         this.masters = new LinkedList<Master>();
 
@@ -152,16 +143,9 @@ public class TestCommon {
                 checksums.delete();
                 file.delete();
             } catch (Exception e) {
-                throw new RuntimeException("couldn't cleanup dir "+dir, e);
+                throw new RuntimeException("couldn't cleanup dir " + dir, e);
             }
         }
-    }
-
-    protected void prepare(String dir) {
-        cleanup(dir);
-        new File(dir).mkdir();
-        new File(dir + File.separator + "chunks").mkdir();
-        new File(dir + File.separator + "checksums").mkdir();
     }
 
     protected void startManyDataNodes(String... args) throws JolRuntimeException,
@@ -172,7 +156,7 @@ public class TestCommon {
         assert (args.length == Conf.getNumDataNodes());
 
         for (int i = 0; i < args.length; i++) {
-            prepare(args[i]);
+            cleanup(args[i]);
             DataNode d = new DataNode(i, args[i]);
             System.out.println("new DATANODE " + d.getPort());
             d.start();
@@ -213,8 +197,4 @@ public class TestCommon {
         argList.add(name);
         shell.doRemove(argList);
     }
-    /*
-     * public static void main(String[] args) throws Exception { TestC t = new
-     * BFSMMTest(); t.test1(); t.test2(); t.test3(); }
-     */
 }
