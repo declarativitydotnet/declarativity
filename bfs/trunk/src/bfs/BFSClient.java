@@ -386,6 +386,10 @@ public class BFSClient {
         return Collections.unmodifiableSet(nodeSet);
 	}
 
+	public void shutdown() {
+		this.system.shutdown();
+	}
+
     private Table registerCallback(Callback callback, String tableName) {
         Table table = this.system.catalog().table(new TableName("bfs", tableName));
         table.register(callback);
