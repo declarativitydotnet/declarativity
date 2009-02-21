@@ -69,8 +69,8 @@ acceptRequest(Master,I,Round,Decree,-2) :-
   paxos::storedDecreeRequest(Master,Decree,From, Id),
   paxos::quorum(Master,Round),
   paxos::instance(Master,I),
-  topOfQueue_p2(Master, Id),
-  tic#insert(),
+  topOfQueue_p2#insert(Master, Id),
+  tic(),
   notin acceptRequest(Master, I, _, _, _),
   notin stasis_success(Master,I,_,_,_),
   I > 0;
