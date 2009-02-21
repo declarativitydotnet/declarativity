@@ -9,24 +9,15 @@ public class MM4Test extends TestCommon {
     public void test4() throws Exception {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
-        // shell = new Shell();
-        // createFile(shell, "/foo");
-
         /* kill one of the masters */
         killMaster(1);
 
-        // shell = new Shell();
-        // createFile(shell, "/foo");
-        // createFile(shell, "/bar");
-
         shellCreate("/foo");
         shellCreate("/bar");
-
         assertTrue(shellLs("/", "foo", "bar"));
 
-        // shellRm("/foo");
-
-        // /assertTrue(!shellLs("/foo"));
+        shellRm("/foo");
+        assertTrue(!shellLs("/", "/foo"));
 
         shutdown();
     }
