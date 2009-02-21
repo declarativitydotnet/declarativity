@@ -1,18 +1,17 @@
 package bfs.test;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Random;
+import java.util.Set;
 
-import bfs.test.TestCommon;
-import bfs.Shell;
 import bfs.Conf;
+import bfs.Shell;
 
 public class DataCommon extends TestCommon {
     String fName;
