@@ -25,7 +25,7 @@ public class PaxosCommon {
             ME
         };
 
-        public static final Class[] SCHEMA = {
+        public static final Class<?>[] SCHEMA = {
         	String.class // Address
         };
 
@@ -43,7 +43,7 @@ public class PaxosCommon {
             HIM
         };
 
-        public static final Class[] SCHEMA = {
+        public static final Class<?>[] SCHEMA = {
             String.class // Address
         };
 
@@ -62,7 +62,7 @@ public class PaxosCommon {
             ME, MESSAGE, FROM
         };
 
-        public static final Class[] SCHEMA = { String.class, String.class, String.class };
+        public static final Class<?>[] SCHEMA = { String.class, String.class, String.class };
 
         InMessageTable(Runtime context) {
             super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
