@@ -139,6 +139,10 @@ public class BoomFileSystem extends FileSystem {
 		Collections.reverse(pathHierarchy);
 
 		for (Path p : pathHierarchy) {
+			// We assume that the root directory ("/") always exists
+			if (p.getName() == "/")
+				continue;
+
 			this.bfs.createDir(getPathName(p));
 		}
 
