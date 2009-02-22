@@ -72,6 +72,14 @@ bfs::file(Master, FileId, FParent, FName, IsDir) :-
     canDelete(Master, _, FName),
     bfs::file(Master, FileId, FParent, FName, IsDir);
 
+define(canDelete,keys(),{String,Integer,String});
+watch(canDelete,ae);
+
+public
+canDelete(Master, Id, FName) :-
+    appView#insert(Master, _, _, FName, _, _, Op, Id),
+    Op == "d";
+
 // Use the "file" relation to construct the "fpath" relation. Note
 // that these rules do NOT belong here, but we need them to be in
 // the same program that deletes from bfs::file to workaround a
@@ -92,14 +100,6 @@ bfs::fpath(@Master, Path, FileId) :-
 
 
 watch(bfs::create_request_done,aeid);
-
-define(canDelete,keys(),{String,Integer,String});
-watch(canDelete,ae);
-
-public
-canDelete(Master, Id, FName) :-
-    appView#insert(Master, _, _, FName, _, _, Op, Id),
-    Op == "d";
 
 public
 green
