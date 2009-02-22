@@ -19,12 +19,12 @@ public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
     From := Master,
-    bfs::rm_request_pending(Master, Id, FName, true),
+    bfs::rm_request_pending(Master, Id, FPath),
     DirStr := ",f",
-    Decree := FName + DirStr + ",d," + Id.toString() + ",-1,-1";
+    Decree := FPath + DirStr + ",d," + Id.toString() + ",-1,-1";
 
-// or, if we are adding a chunk to a file's chunklist, we likewise need
-// to pass it through paxos. (and indeed, should block the requestor, but
+// If we are adding a chunk to a file's chunklist, we likewise need to
+// pass it through paxos. (and indeed, should block the requestor, but
 // this is not implemented yet XXX)
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -69,15 +69,16 @@ bfs::fchunk(Master, ChunkId, FileId) :-
 public
 delete
 bfs::file(Master, FileId, FParent, FName, IsDir) :-
-    canDelete(Master, _, FName),
+    canDelete(Master, _, FPath),
+    bfs::fpath(Master, FPath, FileId),
     bfs::file(Master, FileId, FParent, FName, IsDir);
 
 define(canDelete,keys(),{String,Integer,String});
 watch(canDelete,ae);
 
 public
-canDelete(Master, Id, FName) :-
-    appView#insert(Master, _, _, FName, _, _, Op, Id),
+canDelete(Master, Id, FPath) :-
+    appView#insert(Master, _, _, FPath, _, _, Op, Id),
     Op == "d";
 
 // Use the "file" relation to construct the "fpath" relation. Note
@@ -117,7 +118,8 @@ bfs::create_request_done(Master, Id, false) :-
 
 public
 bfs::rm_request_done(Master, Id) :-
-    canDelete(Master, Id, _);
+    bfs::rm_request_pending(Master, Id, FPath),
+    canDelete(Master, Id, FPath);
 
 public
 red
