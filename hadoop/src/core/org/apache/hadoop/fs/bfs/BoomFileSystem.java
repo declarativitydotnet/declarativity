@@ -71,13 +71,13 @@ public class BoomFileSystem extends FileSystem {
 		return delete(path, true);
 	}
 
+	/*
+	 * XXX: we currently ignore "recursive"; we should instead raise an error if
+	 * recursive is false and the target path is a non-empty directory.
+	 */
 	@Override
 	public boolean delete(Path path, boolean recursive) throws IOException {
 		System.out.println("BFS#delete() called for " + path);
-
-		if (!recursive)
-			throw new RuntimeException("non-recursive delete not implemented");
-
 		return this.bfs.delete(getPathName(path));
 	}
 
