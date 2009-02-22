@@ -42,10 +42,13 @@ public class Runtime implements JolSystem {
 	public enum DebugLevel {COMPILE, WATCH, RUNTIME};
 
 	public static final Set<DebugLevel> DEBUG_ALL = new HashSet<DebugLevel>();
+	public static final Set<DebugLevel> DEBUG_WATCH = new HashSet<DebugLevel>();
 	static {
 		for (DebugLevel level : DebugLevel.values()) {
 			DEBUG_ALL.add(level);
 		}
+
+		DEBUG_WATCH.add(DebugLevel.WATCH);
 	}
 
 	private Set<DebugLevel> debug;
