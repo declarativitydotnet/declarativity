@@ -14,13 +14,10 @@ import jol.types.table.Table.Catalog;
  * obtained via the {@link jol.core.Runtime#create(int)} static method.
  */
 public interface JolSystem {
-	
-	/**
-	 * Get the system lock
-	 * @return
-	 */
+
+	/**	Get the system lock. */
 	Object lock();
-	
+
 	/**
 	 * Get the system clock.
 	 * @return The current system (logical) clock
@@ -72,7 +69,7 @@ public interface JolSystem {
 	 * @param insertions Set of tuples to insert and evaluate
 	 * @param deletions Set of tuples to delete and evaluate
 	 * @throws UpdateException
-	 * @throws JolRuntimeException 
+	 * @throws JolRuntimeException
 	 */
 	void schedule(String program,
 				  TableName name,
