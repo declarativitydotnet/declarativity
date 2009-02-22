@@ -105,7 +105,7 @@ public class DataNode {
         /* Identify the address of the local node */
         Conf.setSelfAddress(Conf.getDataNodeAddress(this.nodeId));
 
-        this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, this.port);
+        this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
 
