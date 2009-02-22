@@ -237,12 +237,11 @@ response(@Source, Id, Master, false, null) :-
 
 // If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
-define(rm_request_pending, keys(0, 1), {String, Integer, String, Boolean});
+define(rm_request_pending, keys(0, 1), {String, Integer, String});
 public
-rm_request_pending(@Master, Id, FName, true) :-
+rm_request_pending(@Master, Id, FPath) :-
     request(@Master, Id, _, "Rm", FPath),
-    fpath(@Master, FPath, FileId),
-    file(@Master, FileId, _, FName, _);
+    fpath(@Master, FPath, _);
 
 public
 response(@Source, Id, Master, true, null) :-
