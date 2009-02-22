@@ -49,8 +49,10 @@ public class BoomFileSystem extends FileSystem {
 			boolean overwrite, int bufferSize, short replication,
 			long blockSize, Progressable progress) throws IOException {
 		System.out.println("BFS#create() called for " + path);
+
+		/* XXX: not very efficient/clean, and not atomic either */
 		if (overwrite)
-			throw new RuntimeException("cannot overwrite files");
+			delete(path, false);
 
 		if (this.bfs.createFile(getPathName(path)) == false)
 			throw new IOException("failed to create file " + path);
