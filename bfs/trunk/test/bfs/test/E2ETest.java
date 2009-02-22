@@ -8,7 +8,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -61,6 +60,7 @@ public class E2ETest extends TestCommon {
 			Set<String> locs = bfs.getChunkLocations(chunk.getId());
 			for (String addr : locs) {
 				fetchChunkFromAddr(chunk, addr, readBuf, i * Conf.getChunkSize());
+				// The first DN should be up, so we can stop here
 				break;
 			}
 			i++;
