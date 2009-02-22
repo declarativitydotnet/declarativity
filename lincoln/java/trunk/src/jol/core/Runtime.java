@@ -89,6 +89,8 @@ public class Runtime implements JolSystem {
 
 	private int port;
 
+	private boolean canShutdown = false;
+
 	/** Creates a new runtime. Called from {@link Runtime#create(int)}. */
 	private Runtime(OutputStream output, int port) {
 		this.output = output;
@@ -161,13 +163,13 @@ public class Runtime implements JolSystem {
 			}
 		}
 	}
-	private boolean can_shutdown = false;
+
 	public void shutdown() {
-		if(!can_shutdown) {
+		if (!canShutdown) {
 			System.err.println("FIXME: Runtime.shutdown() called on already-shutdown Runtime.");
 			return;
 		}
-		can_shutdown = false;
+		canShutdown = false;
 		this.timer.cancel();
 		this.executor.shutdown();
 		if (this.driver != null) this.driver.interrupt();
@@ -176,7 +178,7 @@ public class Runtime implements JolSystem {
 	}
 
 	public void start() {
-		can_shutdown = true;
+		canShutdown = true;
 		this.driver.start();
 	}
 
