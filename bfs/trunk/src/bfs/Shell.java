@@ -146,7 +146,7 @@ public class Shell {
 
                 DataConnection conn = new DataConnection(info.getCandidateNodes());
                 conn.sendRoutingData(info.getChunkId());
-                conn.write(buf, nread);
+                conn.write(buf, 0, nread);
                 conn.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);

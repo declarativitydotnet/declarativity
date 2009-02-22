@@ -88,10 +88,10 @@ public class DataConnection {
         }
     }
 
-    public void write(byte[] buf, int len) {
+    public void write(byte[] buf, int offset, int len) {
         try {
         	this.dos.writeInt(len);
-            this.dos.write(buf, 0, len);
+            this.dos.write(buf, offset, len);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
