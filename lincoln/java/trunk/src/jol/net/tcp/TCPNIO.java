@@ -173,8 +173,8 @@ public class TCPNIO extends Server {
 
 		public Connection(SocketChannel channel) throws IOException {
 			super("tcp", new IP(channel.socket().getInetAddress(), channel.socket().getPort()));
-			this.rBuffer = ByteBuffer.allocate(8192);
-			this.wBuffer = ByteBuffer.allocate(8192);
+			this.rBuffer = ByteBuffer.allocate(65536);
+			this.wBuffer = ByteBuffer.allocate(65536);
 			this.channel = channel;
 			this.channel.configureBlocking(false);
             this.remoteAddr = channel.socket().toString();
