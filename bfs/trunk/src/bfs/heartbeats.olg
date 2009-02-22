@@ -54,19 +54,15 @@ dataNodes(Master, DataNode, Ts) :-
 /**************************/
 // maintenance functions
 
-//watch(rep_factor, ae);
-//rep_factor_compute(Master, ChunkId, count<DataNode>) :-
+define(rep_factor, keys(0,1), {String, Integer, Integer});
 rep_factor(Master, ChunkId, count<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
 
-
 define(w_rep_factor, {String, Integer, Integer});
-//watch(w_rep_factor, a);
 w_rep_factor(M, C, Cnt) :-
   clock#insert(),
   rep_factor(M, C, Cnt);
 
-define(rep_factor, keys(0,1), {String, Integer, Integer});
 
 define(representative_datanode, keys(0,1), {String, Integer, String, Long});
 representative_datanode(Master, ChunkId, max<DataNode>, min<Ts>) :-
