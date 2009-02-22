@@ -12,7 +12,6 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -96,9 +95,7 @@ public class Shell {
         /* this shouldn't be a static member at all... */
         Conf.setSelfAddress("tcp:localhost:" + port);
 
-        Set<Runtime.DebugLevel> debug = new HashSet<Runtime.DebugLevel>();
-        debug.add(Runtime.DebugLevel.WATCH);
-        this.system = Runtime.create(debug, System.err, Integer.valueOf(port));
+        this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, Integer.valueOf(port));
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
 

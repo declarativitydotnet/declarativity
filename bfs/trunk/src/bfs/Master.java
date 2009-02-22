@@ -1,8 +1,5 @@
 package bfs;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
@@ -50,9 +47,7 @@ public class Master {
         /* Identify the address of the local node */
         Conf.setSelfAddress(this.address);
 
-        Set<Runtime.DebugLevel> debug = new HashSet<Runtime.DebugLevel>();
-        debug.add(Runtime.DebugLevel.WATCH);
-        this.system = Runtime.create(debug, System.err, this.port);
+        this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
 

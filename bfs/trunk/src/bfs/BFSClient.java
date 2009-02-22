@@ -34,7 +34,7 @@ public class BFSClient {
 	        /* this shouldn't be a static member at all... */
 	        Conf.setSelfAddress("tcp:localhost:" + port);
 
-			this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, port);
+			this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, port);
 
 	        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
 	        this.system.evaluate();
