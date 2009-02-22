@@ -17,8 +17,6 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
-import bfs.Tap;
-
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
         if (args.length != 2)
@@ -111,13 +109,10 @@ public class DataNode {
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
 
-        ///Tap tap = new Tap(this.system, "tcp:localhost:5678");
-
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
         this.system.evaluate();
         this.system.install("bfs_heartbeat", ClassLoader.getSystemResource("bfs/files.olg"));
         this.system.evaluate();
-
 
         /* Identify the data directory */
         TableName tblName = new TableName("bfs_heartbeat", "datadir");
@@ -128,12 +123,7 @@ public class DataNode {
         Table table = this.system.catalog().table(new TableName("bfs_chunks", "send_migrate"));
         table.register(copyCallback);
 
-
-        /* get a tap program */
-        ////tap.do_rewrite("bfs_heartbeat");
         this.system.start();
-    
-        
         System.out.println("DataNode @ " + this.port + " (" +
                            Conf.getDataNodeDataPort(this.nodeId) + ") ready!");
     }
