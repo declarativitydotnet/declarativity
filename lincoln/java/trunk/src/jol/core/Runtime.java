@@ -233,6 +233,7 @@ public class Runtime implements JolSystem {
 			return null;
 		}
 	}
+
 	/**
 	 * Code that wants to install overlog files on the classpath
 	 * should call this method instead of using ClassLoader directly.
@@ -330,6 +331,7 @@ public class Runtime implements JolSystem {
 	public interface ResourceLoader {
 		URL getResource(String filename) throws JolRuntimeException;
 	};
+
 	/**
 	 * Create a resource loader that uses a ServletContext to locate
 	 * resources.
@@ -361,6 +363,7 @@ public class Runtime implements JolSystem {
 			}
 		};
 	}
+
 	public static ResourceLoader defaultLoader() {
 		return new ResourceLoader() {
 			public URL getResource(String arg0) throws JolRuntimeException {
