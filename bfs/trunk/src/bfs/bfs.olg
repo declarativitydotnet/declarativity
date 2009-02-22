@@ -62,7 +62,10 @@ response(@Source, Id, Master, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
     file(@Master, FileId, _, _, false),
+    fchunk_cnt(@Master, FileId, Cnt),
+    Cnt == Chunks.size(),
     compute_chunk_set(@Master, FileId, Chunks);
+
 
 response(@Source, Id, Master, true, EmptyChunks) :-
     request(@Master, Id, Source, "ChunkList", FPath),
@@ -82,12 +85,20 @@ response(@Source, Id, Master, false, null) :-
     fpath(@Master, FPath, FileId),
     file(@Master, FileId, _, _, true);
 
+define(fchunk_cnt, keys(0,1), {String,  Integer, Integer});
+//define(fchunk_cnt, {String,  Integer, Integer});
+public
+fchunk_cnt(Master, FileId, count<ChunkId>) :-
+    fchunk(Master, ChunkId, FileId);
+
 define(compute_chunk_set, keys(0, 1), {String, Integer, Set});
+watch(compute_chunk_set, ae);
 public
 compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
     fchunk(Master, ChunkId, FileId),
-    bfs_heartbeat::chunks(Master, _, ChunkId, Length, _),
+    bfs_heartbeat::chunks#insert(Master, _, ChunkId, Length, _),
     ChunkInfo := new BFSChunkInfo(ChunkId, Length);
+
 
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return the set of nodes that hold that chunk. Otherwise, return an
