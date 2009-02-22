@@ -192,7 +192,6 @@ public abstract class StasisTable extends Table {
 				}
 				TransactionStatus newTs = new TransactionStatus(Stasis.begin());
 				xactTable.put(context.getPort(), newTs);
-				foundStasis = true;
 			}
 		}
 	}

@@ -29,19 +29,25 @@ public class JavaHashtable extends StasisTable {
 	
 	public JavaHashtable(Runtime context, TableName tableName, Key key, Class[] attributeTypes) {
 		super(context,tableName,key,attributeTypes);
-		byte[] name = super.nameBytes;
+
+		int port = context.getPort();
+		TableName n = new TableName(port + ":" + name.scope, name.name);
+
+		byte[] name = s.toBytes(n); //super.nameBytes;
 		byte[] schema = super.schemaBytes;
 		
 		if(catalog == null)
-			initialize(CATALOG_NAME_BYTES, CATALOG_SCHEMA_BYTES);
-		
-		if(catalog.contains(name)) {
-			assert(Arrays.equals(schema, catalog.get(name)));
-		} else {
-			catalog.put(name,schema);
-			tables.put(name,new Hashtable<byte[], byte[]>());
+			new Exception("should not happen!").printStackTrace();
+//			initialize(CATALOG_NAME_BYTES, CATALOG_SCHEMA_BYTES);
+		synchronized(catalog) {
+			if(catalog.contains(name)) {
+				assert(Arrays.equals(schema, catalog.get(name)));
+			} else {
+				catalog.put(name,schema);
+				tables.put(name,new Hashtable<byte[], byte[]>());
+			}
+			this.tbl = tables.get(name);
 		}
-		this.tbl = tables.get(name);
 	}
 
 	@Override
