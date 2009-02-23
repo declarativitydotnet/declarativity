@@ -32,7 +32,7 @@ public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
     From := Master,
-    bfs_chunks::candidate_datanode#insert(Master, Id, _, FPath, I, _),
+    bfs_chunks::candidate_datanode#insert(Master, Id, FPath, I, _),
     Decree := FPath + ",f,u," + Id.toString() + "," + I.toString() + ",-1";
 
 define(appView,keys(0,1,2,3),{String,String,Integer,String,Boolean,Integer,String,Integer,Integer});
