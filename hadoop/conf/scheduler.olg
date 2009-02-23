@@ -30,61 +30,61 @@ taskAttempts(JobId, TaskId, count<AttemptId>) :-
 	jobtracker::taskAttempt(JobId, TaskId, AttemptId);
 	
 failedJob
-jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, FailStatus) :-
+jobtracker::killjob(JobId) :-
 	taskAttempts#insert(JobId, TaskId, Attempts), trackerCount(Trackers),
 	jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
-	jobtracker::job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus),
 	TaskStatus.state() == Constants.TaskState.FAILED,
-	JobStatus.state() == Constants.JobState.RUNNING,
-	Attempts > 3 || Attempts > Trackers,
-	FailStatus := new JobState(JobId, Constants.JobState.FAILED);
+	Attempts > 3 || Attempts > Trackers;
 
 public
-jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L) :-
+jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L, System.currentTimeMillis()) :-
 	schedule(JobId, TaskId, TrackerName),
 	notin taskAttempts(JobId, TaskId, _),
-	State       := Constants.TaskState.RUNNING,
+	State       := Constants.TaskState.UNASSIGNED,
 	Phase       := Constants.TaskPhase.STARTING,
 	AttemptID   := 0;
 
 public
-jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L) :-
+jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L, System.currentTimeMillis()) :-
 	schedule(JobId, TaskId, TrackerName),
 	taskAttempts(JobId, TaskId, Attempts),
-	State       := Constants.TaskState.RUNNING,
+	State       := Constants.TaskState.UNASSIGNED,
 	Phase       := Constants.TaskPhase.STARTING,
 	AttemptID   := Attempts;
 	
 actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
-	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _),
+	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _, _),
 	jobtracker::job(JobId, JobName, JobFile),
 	jobtracker::task(JobId, TaskId, Type, Partition, FileInput, MapCount, _),
 	Action := Type == Constants.TaskType.MAP ? 
 	          Function.launchMap(FileInput.split(), JobFile, TaskId, AttemptID, Partition) :
 	          Function.launchReduce(JobFile, TaskId, AttemptID, Partition, MapCount);
+	          
+watch(jobtracker::taskAttempt, a);
+failedAction
+jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, Constants.TaskState.FAILED, Constants.TaskPhase.STARTING, Diag, TrackerName, null, 0L, 0L, ActionTimestamp) :-
+    trackerSlots(TrackerName, Host, TrackerTimestamp, Maps, Reduces),
+	jobtracker::taskAttempt(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _, ActionTimestamp),
+	jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
+	TaskStatus.state() == Constants.TaskState.UNASSIGNED,
+	TrackerTimestamp - ActionTimestamp > 60000L,
+	Diag := "It's been 60 seconds and the tracker still hasn't started my task.";
  
 /******************** Process Jobs *******************/
-define(jobQueue,                keys(0), {JobID, JobPriority, Long, Constants.TaskType});
-define(jobMapTasks,             keys(0), {JobID, Integer});
-define(jobFinishedMapTasks,     keys(0), {JobID, Integer});
-define(jobReduceTasks,          keys(0), {JobID, Integer});
-define(jobFinishedReduceTasks,  keys(0), {JobID, Integer});
+define(jobQueue,            keys(0), {JobID, JobPriority, Long, Constants.TaskType});
+define(jobFinishedMapTasks, keys(0), {JobID, Integer});
 
 /* Put new jobs in a wait queue in a MAP phase. */
 public
 jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP) :-
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JStatus),
-	jobMapTasks#insert(JobId, Tasks), Tasks > 0,
-	JStatus.state() == Constants.JobState.PREP;
+	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JobStatus),
+	JobStatus.mapCount() > 0, JobStatus.state() == Constants.JobState.PREP;
 	
-
 public
 jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JStatus),
-	jobReduceTasks#insert(JobId, Reduces), Reduces > 0,
-	notin jobMapTasks(JobId, Maps),
-	JStatus.state() == Constants.JobState.PREP;
+	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JobStatus),
+	JobStatus.mapCount() == 0, JobStatus.state() == Constants.JobState.PREP;
 	
 public delete
 jobQueue(JobId, Priority, SubmitTime, Phase) :-
@@ -94,24 +94,14 @@ jobQueue(JobId, Priority, SubmitTime, Phase) :-
 	
 /* Switch to reduce phase when all maps finish. */
 jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
-	jobFinishedMapTasks#insert(JobId, Maps), jobMapTasks(JobId, Maps),
-	jobQueue(JobId, Priority, SubmitTime, Phase),
-	Phase == Constants.TaskType.MAP;
+	jobFinishedMapTasks#insert(JobId, FinishedMapCount), 
+	jobtracker::job(JobId, _, _, _, _, _, _, _, _, JobStatus),
+	jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP),
+	FinishedMapCount == JobStatus.mapCount();
 
 public
-jobReduceTasks(JobId, count<TaskId>) :-
-	jobtracker::task(JobId, TaskId, Type, _, _, _, _),
-	Type == Constants.TaskType.REDUCE;
-	
-	
-public
-jobMapTasks(JobId, count<TaskId>) :-
-	jobtracker::task(JobId, TaskId, Type, _, _, _, _),
-	Type == Constants.TaskType.MAP;
-	
-public
 jobFinishedMapTasks(JobId, count<TaskId>) :-
-	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
+	jobtracker::taskUpdate(JobId, TaskId, Type, Status),
 	Type == Constants.TaskType.MAP, Status.state() == Constants.TaskState.SUCCEEDED;
 	
 
@@ -120,8 +110,5 @@ define(trackerSlots, keys(0), {String, String, Long, Integer, Integer});
 
 public
 trackerSlots(TrackerName, Host, Timestamp, MaxMap - MapCount, MaxReduce - ReduceCount) :-
-	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _, 
-	                        MapCount, ReduceCount, MaxMap, MaxReduce);
-
-	
+	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce);
 	
