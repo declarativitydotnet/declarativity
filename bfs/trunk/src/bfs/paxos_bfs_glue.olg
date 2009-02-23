@@ -78,17 +78,10 @@ bfs::newchunk_request_done(Master, Id, NewChunkId, NodeSet) :-
 public
 delete
 bfs::file(Master, FileId, FParent, FName, IsDir) :-
-    canDelete(Master, _, FPath),
+    appView#insert(Master, _, FPath, _, _, "d", Id),
     bfs::fpath(Master, FPath, FileId),
     bfs::file(Master, FileId, FParent, FName, IsDir);
 
-define(canDelete,keys(),{String,Integer,String});
-watch(canDelete,ae);
-
-public
-canDelete(Master, Id, FPath) :-
-    appView#insert(Master, _, FPath, _, _, Op, Id),
-    Op == "d";
 
 // Use the "file" relation to construct the "fpath" relation. Note
 // that these rules do NOT belong here, but we need them to be in
@@ -160,4 +153,4 @@ bfs::create_request_done(Master, Id, Status) :-
 public
 bfs::rm_request_done(Master, Id) :-
     bfs::rm_request_pending(Master, Id, FPath),
-    canDelete(Master, Id, FPath);
+    appView(Master, _, FPath, _, _, "d", Id);
