@@ -140,14 +140,14 @@ watch(bfs::create_request_done,aeid);
 public
 green
 bfs::create_request_done(Master, Id, Status) :-
-    bfs::create_request_pending(Master, Id, _, FName, _, Status),
-    appView(Master, _, FName, _, _, "i", Id);
+    bfs::create_request_pending(Master, Id, ParentId, FName, _, Status),
+    appView(Master, _, FName, _, ParentId, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, false) :-
-    bfs::create_request_pending(Master, Id, _, FName, _, _),
-    appView(Master, _, FName, _, _, "i", Id2),
+    bfs::create_request_pending(Master, Id, ParentId, FName, _, _),
+    appView(Master, _, FName, _, ParentId, "i", Id2),
     Id != Id2;
 
 public
