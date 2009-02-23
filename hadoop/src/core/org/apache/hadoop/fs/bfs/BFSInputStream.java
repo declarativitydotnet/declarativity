@@ -47,12 +47,12 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	@Override
-	public long getPos() throws IOException {
+	public synchronized long getPos() throws IOException {
 		return this.position;
 	}
 
 	@Override
-	public void seek(long newPos) throws IOException {
+	public synchronized void seek(long newPos) throws IOException {
 		if (this.isClosed)
 			throw new IOException("cannot seek on closed file");
 
@@ -63,15 +63,28 @@ public class BFSInputStream extends FSInputStream {
 		if (newPos < 0)
 			throw new IOException("cannot seek to negative position");
 
-		int chunkIdx = (int) (newPos / Conf.getChunkSize());
-		int chunkOffset = (int) (newPos % Conf.getChunkSize());
+		// Find the chunk index and offset containing the new byte position.
+		// We recompute this from scratch on each call, which might be
+		// expensive for very large files.
+		long bytesLeft = newPos;
+		int chunkIdx = 0;
+		for (BFSChunkInfo chunk : this.chunkList) {
+			if (bytesLeft < chunk.getLength())
+				break;
 
-		if (chunkIdx + 1 > this.chunkList.size())
+			bytesLeft -= chunk.getLength();
+			chunkIdx++;
+		}
+
+		if (bytesLeft > Conf.getChunkSize())
 			throw new IOException("cannot seek past end of file");
+		int chunkOffset = (int) bytesLeft;
 
-		int chunkLen;
-		if (this.chunkList.isEmpty()) {
-			chunkLen = 0;
+		if (chunkIdx == this.chunkList.size() || this.chunkList.isEmpty()) {
+			if (chunkOffset > 0)
+				throw new IOException("cannot seek past end of file");
+
+			this.atEOF = true;
 		} else {
 			if (chunkIdx != this.currentChunkIdx || this.currentChunk == null) {
 				this.currentChunk = this.chunkList.get(chunkIdx);
@@ -79,16 +92,12 @@ public class BFSInputStream extends FSInputStream {
 				fetchChunkContent();
 			}
 
-			chunkLen = this.currentChunk.getLength();
-		}
+			int chunkLen = this.currentChunk.getLength();
+			if (chunkOffset > chunkLen)
+				throw new IOException("cannot seek past end of file");
 
-		if (chunkOffset > chunkLen)
-			throw new IOException("cannot seek past end of file");
-
-		if (chunkOffset == chunkLen && (chunkIdx + 1 == this.chunkList.size()))
-			this.atEOF = true;
-		else
 			this.atEOF = false;
+		}
 
 		this.currentChunkIdx = chunkIdx;
 		this.position = newPos;
@@ -155,7 +164,7 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	@Override
-	public boolean seekToNewSource(long targetPos) throws IOException {
+	public synchronized boolean seekToNewSource(long targetPos) throws IOException {
 		if (this.isClosed)
 			throw new IOException("cannot seek to new source on closed file");
 
@@ -166,7 +175,7 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	@Override
-	public int read() throws IOException {
+	public synchronized int read() throws IOException {
 		byte[] tmpBuf = new byte[1];
 		int result = read(tmpBuf, 0, 1);
 		if (result == -1)
@@ -176,7 +185,7 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	@Override
-	public int read(byte[] clientBuf, int offset, int len) throws IOException {
+	public synchronized int read(byte[] clientBuf, int offset, int len) throws IOException {
 		if (this.isClosed)
 			throw new IOException("cannot read from closed file");
 
@@ -200,7 +209,7 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public synchronized void close() throws IOException {
 		if (this.isClosed)
 			return;
 
