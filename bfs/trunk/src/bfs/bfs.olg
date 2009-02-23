@@ -173,11 +173,11 @@ response(@Source, Id, Master, false, null) :-
     ParentIsDir == false,
     request(@Master, Id, Source, _, _);
 
-define(create_request_pending, keys(0, 1), {String, Integer, Integer, String, Boolean, Boolean});
+define(create_request_pending, keys(0, 1), {String, Integer, Integer, String, Boolean});
 watch(create_request_pending, ae);
 
 // Otherwise, pass the request through Paxos
-create_request_pending(@Master, Id, ParentId, FName, IsDir, true) :-
+create_request_pending(@Master, Id, ParentId, FName, IsDir) :-
     create_request_parsed(@Master, Id, ParentPath, FName, IsDir),
     fpath(@Master, ParentPath, ParentId),
     file(@Master, ParentId, _, _, true);
