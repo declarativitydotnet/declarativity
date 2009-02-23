@@ -5,6 +5,8 @@ import java.util.Arrays;
 
 watch(bfs::file,ae);
 watch(bfs::fchunk,ae);
+watch(bfs::fpath,ae);
+watch(bfs::fsize,ae);
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -98,6 +100,32 @@ bfs::fpath(@Master, Path, FileId) :-
     bfs::fpath(@Master, ParentPath, FParent),
     PathSep := (ParentPath == "/" ? "" : "/"),
     Path := ParentPath + PathSep + FName;
+
+// Directories are considered to have size 0
+public
+bfs::fsize(@Master, FileId, FSize) :-
+    bfs::file(@Master, FileId, _, _, true),
+    FSize := 0L;
+
+// Files with no chunks have size 0
+public
+bfs::fsize(@Master, FileId, FSize) :-
+    bfs::file(@Master, FileId, _, _, false),
+    notin compute_file_size(@Master, FileId, _),
+    FSize := 0L;
+
+public
+bfs::fsize(@Master, FileId, FSize) :-
+    bfs::file(@Master, FileId, _, _, false),
+    compute_file_size(@Master, FileId, FSizeF),
+    FSize := FSizeF.longValue();
+
+define(compute_file_size, keys(0, 1), {String, Integer, Float});
+public
+compute_file_size(@Master, FileId, sum<LongChunkLen>) :-
+    bfs::fchunk(@Master, ChunkId, FileId),
+    bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen, _),
+    LongChunkLen := new Long(ChunkLen.longValue());
 
 
 watch(bfs::create_request_done,aeid);

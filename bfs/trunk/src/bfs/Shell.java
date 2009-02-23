@@ -66,7 +66,10 @@ public class Shell {
 				for (BFSFileInfo fInfo : listing) {
 					System.out.print("  " + i + ". " + fInfo.getName());
 					if (fInfo.isDirectory())
-						System.out.print("\t(d)");
+						System.out.print(" (d)");
+					else
+						System.out.print(" (size = " + fInfo.getLength() + ")");
+
 					System.out.println();
 					i++;
 				}
