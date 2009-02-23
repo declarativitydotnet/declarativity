@@ -6,11 +6,10 @@ import java.util.Set;
 
 /*****************************/
 define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
-//watch(sendHeartBeat, ae);
 
 timer(clock, physical, 1000, 1000, infinity);
 
-define(ackHeartBeat,  {String, String, Long});
+define(ackHeartBeat, {String, String, Long});
 ackHeartBeat(@Dnode, Master, Id) :-
     sendHeartBeat(@Master, Dnode, _, _, _, Id),
     Id != -1L;
@@ -30,7 +29,6 @@ sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
 // of last update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
-watch(chunks, ae);
 
 define(chunksEvent,  {String, String, Integer, Integer, Long});
 chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
