@@ -14,6 +14,7 @@ import jol.types.basic.ValueList;
 
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
+watch(start_request, ae);
 
 watch(request, ae);
 request(@Master, ReqId, Source, ReqType, Args) :-
