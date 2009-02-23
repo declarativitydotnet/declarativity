@@ -40,7 +40,7 @@ public class Tuple implements Iterable<Object>, Serializable {
 		initialize();
 		this.values = Arrays.copyOf(values,values.length);
 	}
-	
+
 	public Object[] toArray() {
 		return Arrays.copyOf(values, values.length);
 	}
@@ -76,8 +76,6 @@ public class Tuple implements Iterable<Object>, Serializable {
 	private final static int FLOAT = 9;
 	private final static int DOUBLE = 10;
 	private final static int KEY = 11;
-
-//	private static boolean warned = false;
 
 	public byte[] toBytes() throws IOException {
 		ByteArrayOutputStream ret = new ByteArrayOutputStream();
@@ -120,10 +118,6 @@ public class Tuple implements Iterable<Object>, Serializable {
 					out.writeInt(i);
 				}
 			} else {
-//				if (!warned) {
-//					System.out.println("sending non-primitive: " + o.getClass().toString());
-//					warned = true;
-//				}
 				out.writeByte(OBJECT);
 				ByteArrayOutputStream subret = new ByteArrayOutputStream();
 				ObjectOutputStream oout = new ObjectOutputStream(subret);
@@ -249,8 +243,8 @@ public class Tuple implements Iterable<Object>, Serializable {
 	@Override
 	public int hashCode() {
 	    /* If necessary, recompute the cached hash code */
-	    if (hashCache == 0) {
-    	    this.hashCache = Arrays.hashCode(this.values); //h;
+	    if (this.hashCache == 0) {
+    	    this.hashCache = Arrays.hashCode(this.values);
 	    }
 	    return this.hashCache;
 	}
