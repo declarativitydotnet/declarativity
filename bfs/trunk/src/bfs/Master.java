@@ -73,9 +73,8 @@ public class Master {
 
         // Hack: insert a bfs::file tuple to represent the root of the file system
         TupleSet newFile = new TupleSet();
-        String fName = "/";
-        int fileId = fName.hashCode();
-        newFile.add(new Tuple(Conf.getSelfAddress(), fileId, null, fName, true));
+        int fileId = -1;  // File IDs assigned by the system start at 0
+        newFile.add(new Tuple(Conf.getSelfAddress(), -1, null, "/", true));
         this.system.schedule("bfs", new TableName("bfs", "file"), newFile, null);
         this.system.evaluate();
 
