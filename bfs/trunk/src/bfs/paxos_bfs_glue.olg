@@ -13,7 +13,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
     // err
     From := Master,
-    bfs::create_request_pending(Master, Id, ParentId, FName, IsDir, true),
+    bfs::create_request_pending(Master, Id, ParentId, FName, IsDir),
     DirStr := (IsDir ? ",d" : ",f"),
     Decree := FName + DirStr + ",i," + Id.toString() + "," + ParentId.toString();
 
@@ -132,23 +132,16 @@ watch(bfs::create_request_done,aeid);
 
 public
 green
-bfs::create_request_done(Master, Id, Status) :-
-    bfs::create_request_pending(Master, Id, ParentId, FName, _, Status),
+bfs::create_request_done(Master, Id, true) :-
+    bfs::create_request_pending(Master, Id, ParentId, FName, _),
     appView(Master, _, FName, _, ParentId, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, false) :-
-    bfs::create_request_pending(Master, Id, ParentId, FName, _, _),
+    bfs::create_request_pending(Master, Id, ParentId, FName, _),
     appView(Master, _, FName, _, ParentId, "i", Id2),
     Id != Id2;
-
-public
-red
-bfs::create_request_done(Master, Id, Status) :-
-    bfs::create_request_pending(Master, Id, _, _, _, Status),
-    Status == false;
-
 
 public
 bfs::rm_request_done(Master, Id) :-
