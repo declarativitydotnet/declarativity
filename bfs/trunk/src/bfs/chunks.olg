@@ -25,15 +25,15 @@ chunkSeq(Master, 1) :-
 public
 chunkSeq(Master, I+1) :-
     chunkSeq(Master, I),
-    newListHolder#insert(Master, _, _, _, I, _);
+    newListHolder#insert(Master, _, _, I, _);
 
 
-define(newListHolder,keys(0,2),{String,String,Integer,Set,Integer,String});
+define(newListHolder,keys(0,1),{String,Integer,Set,Integer,String});
 //watch(newListHolder, ae);
 
-newListHolder(Master, Source, Id, NodeSet, NewChunkId, FPath) :-
-    candidate_datanode(Master, Id, Source, FPath, NewChunkId, NodeSet),
-    bfs::request(Master, Id, Source, "NewChunk", FPath);
+newListHolder(Master, Id, NodeSet, NewChunkId, FPath) :-
+    candidate_datanode(Master, Id, _, FPath, NewChunkId, NodeSet),
+    bfs::request(Master, Id, _, "NewChunk", FPath);
 
 define(candidate_datanode, keys(0, 2), {String, Integer, String, String, Integer, Set});
 //watch(candidate_datanode, ae);
