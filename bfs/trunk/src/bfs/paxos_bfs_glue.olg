@@ -49,14 +49,14 @@ appView(Master, From, Instance, Name, IsDir, ParentId, Op, Id, I) :-
     ParentId := Integer.valueOf((String) NVL.get(5)),
     IsDir := (DirStr.equals("d") ? true : false);
 
-// An insert op in the log induces a new metadata entry for a file.
-// XXX: file IDs are assigned from a hash of the filename right now;
-// this is obviously broken
+// An insert op in the log induces a new metadata entry for a file. We use
+// the Paxos instance # as the file ID, since that will be unique and consistent
+// among all the masters.
 public
 bfs::file(Master, FileId, ParentId, FName, IsDir) :-
-    appView#insert(Master, _, _, FName, IsDir, ParentId, Op, _, _),
+    appView#insert(Master, _, Instance, FName, IsDir, ParentId, Op, _, _),
     Op == "i",
-    FileId := FName.hashCode();
+    FileId := Instance;
 
 // Add a new chunk to the file
 public
