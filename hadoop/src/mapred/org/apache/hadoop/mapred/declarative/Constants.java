@@ -7,7 +7,7 @@ public final class Constants {
 	};
 	
 	public static enum JobState {
-		  RUNNING, SUCCEEDED, FAILED, PREP
+		  PREP, RUNNING, FAILED, SUCCEEDED
 	};
 	
 	public static enum TaskType {

@@ -86,10 +86,25 @@ public class TaskCreate extends Function {
 	      splitFile.close();
 	    }
 	    
-	    int numMapTasks = splits.length;
+	    int numMapTasks = 0;
+	    for (int i = 0; i < splits.length; i++) {
+	    	if (splits[i] != null && splits[i].getLocations().length > 0) {
+	    		numMapTasks++;
+	    	}
+	    }
 	    
-	    for(int i=0; i < numMapTasks; ++i) {
-	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile, i, new FileInput(null, splits[i]), numMapTasks));
+	    if (conf.getNumMapTasks() != splits.length) {
+	    	System.err.println("ERROR: MISMATCH IN MAP COUNT BETWEEN CONF AND SPLIT");
+	    	conf.setNumMapTasks(splits.length);
+	    }
+	    
+	    int mapid = 0;
+	    for(int i=0; i < splits.length; i++) {
+	    	if (splits[i].getLocations().length == 0) {
+	    		System.err.println("ERROR: SPLIT DOES NOT HAVE A LOCATION.");
+	    		continue;
+	    	}
+	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile, mapid++, new FileInput(null, splits[i]), numMapTasks));
 	    }
 	    
 	    //

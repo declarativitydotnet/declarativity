@@ -102,6 +102,8 @@ public class JobTrackerImpl extends JobTracker {
 		this.conf = conf;
 		this.context = context;
 		this.executor = Executors.newCachedThreadPool();
+		
+		context.setPriority(Thread.MAX_PRIORITY);
 
 		/* Install the declarative definitions. */
 		try {
@@ -208,7 +210,7 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new JobTable(context));
 		this.context().catalog().register(new TaskAttemptTable(context));
 		this.context().catalog().register(new TaskCreate(this));
-		// this.context().catalog().register(new AssignTracker(this));
+		this.context().catalog().register(new AssignTracker());
 		this.context().catalog().register(new TaskReportTable(context));
 		this.context().catalog().register(new TaskTable(context));
 		this.context().catalog().register(new TaskTrackerActionTable(context));

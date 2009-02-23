@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.mapred.JobTracker;
+import org.apache.hadoop.mapred.LaunchTaskAction;
+import org.apache.hadoop.mapred.MapTask;
+import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
 
@@ -11,6 +14,7 @@ import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
+import jol.types.exception.UpdateException;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
@@ -43,7 +47,17 @@ public class TaskTrackerActionTable extends ObjectTable {
 		secondary().put(nameKey, index);
 	}
 	
-	public TaskTrackerAction[] actions(String trackerName, TupleSet tuples) {
+	@Override
+	public boolean insert(Tuple t) throws UpdateException {
+		return super.insert(t);
+	}
+	
+	@Override
+	public boolean delete(Tuple t) throws UpdateException {
+		return super.delete(t);
+	}
+	
+	public synchronized TaskTrackerAction[] actions(String trackerName, TupleSet tuples) {
 		List<TaskTrackerAction> actions = new ArrayList<TaskTrackerAction>();
 		try {
 			for (Tuple tuple : secondary().get(this.nameKey).lookupByKey(trackerName)) {

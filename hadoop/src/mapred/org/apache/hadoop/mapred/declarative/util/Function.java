@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jol.types.basic.ValueList;
 
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobPriority;
@@ -31,14 +32,13 @@ public final class Function {
 	public static TaskTrackerAction 
 	              launchMap(JobClient.RawSplit split, String jobFile,
 			                TaskID taskId, int attemptId, int partition) {
-		if (split.getBytes() == null) {
-			System.err.println("SPLIT BYTES IS NULL FOR TASK " + taskId);
-			System.exit(0);
-		}
 		try {
-			return new LaunchTaskAction(
-					new MapTask(jobFile, new TaskAttemptID(taskId, attemptId), partition,
-					            split.getClassName(), split.getBytes()));
+			BytesWritable bw = split.getBytes();
+			if (bw == null) {
+				throw new RuntimeException("Task " + taskId + " has a null valued split!");
+			}
+			MapTask task = new MapTask(jobFile, new TaskAttemptID(taskId, attemptId), partition, split.getClassName(), bw);
+			return new LaunchTaskAction(task);
 		} catch (IOException e) {
 			return null;
 		}

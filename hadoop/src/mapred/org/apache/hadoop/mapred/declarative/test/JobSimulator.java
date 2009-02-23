@@ -24,10 +24,8 @@ import org.apache.hadoop.mapred.Partitioner;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.declarative.JobTrackerImpl;
 import org.apache.hadoop.mapred.lib.NullOutputFormat;
-import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
 
 public class JobSimulator extends Thread {
@@ -54,19 +52,30 @@ public class JobSimulator extends Thread {
 			try {
 				JobConf job = new JobConf();
 				job.setJobPriority(this.priority);
+				job.setMapperClass(Job.class);
+				job.setReducerClass(Job.class);
+			    job.setCombinerClass(Job.class);
+				
+				System.err.println("SETTING MAPS TO " + maps);
 				job.setNumMapTasks(maps);
 				job.setNumReduceTasks(reduces);
-				job.setMapperClass(Job.class);
+				
 				job.setMapOutputKeyClass(IntWritable.class);
 				job.setMapOutputValueClass(IntWritable.class);
-				job.setReducerClass(Job.class);
 				job.setOutputFormat(NullOutputFormat.class);
-				job.setInputFormat(SequenceFileInputFormat.class);
+				
+				// job.setInputFormat(SequenceFileInputFormat.class);
 				job.setSpeculativeExecution(false);
 				job.setJobName(name);
-				FileInputFormat.addInputPath(job, input);
+			    FileInputFormat.setInputPaths(job, input); 
+				// FileInputFormat.addInputPath(job, input);
 
-				RunningJob runner = JobClient.runJob(job);
+				RunningJob runner = null;
+				while (runner == null) {
+					try {
+						runner = JobClient.runJob(job);
+					} catch (Throwable t) {sleep(100);}
+				}
 				while (!runner.isComplete()) {
 					sleep(1000);
 				}
@@ -116,7 +125,7 @@ public class JobSimulator extends Thread {
 	}
 	
 	public void run() {
-		int index = 200;
+		int index = 1;
 		JobConf  conf = new JobConf();
 		try {
 			while (!isInterrupted()) {
@@ -132,10 +141,10 @@ public class JobSimulator extends Thread {
 					String name = "job" + jobs.size();
 					JobPriority[] priorities = JobPriority.values();
 					Job job = new Job(priorities[random.nextInt(priorities.length)],
-							          "job"+jobs.size(), 2, 10, tempPath);
+							          "job"+jobs.size(), 200, 10, tempPath);
 					jobs.add(job);
 					this.executor.execute(job);
-					if (index-- < 0) return;
+					if (index-- <= 0) return;
 				} catch (InterruptedException e) { }
 			}
 		} catch (Throwable t) {

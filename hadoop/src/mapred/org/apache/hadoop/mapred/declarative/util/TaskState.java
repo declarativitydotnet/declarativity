@@ -92,6 +92,14 @@ public class TaskState implements Comparable<TaskState> {
 		return Float.compare(this.progress(), o.progress());
 	}
 	
+	public JobID jobid() {
+		return this.jobid;
+	}
+	
+	public TaskID taskid() {
+		return this.taskid;
+	}
+	
 	public String toString() {
 		return "[" + state() + ", " + phase() + ", " + progress() + "]";
 	}
@@ -107,21 +115,23 @@ public class TaskState implements Comparable<TaskState> {
 	 * @param start The attempt start time
 	 * @param finish The attempt finish time
 	 */
-	public void attempt(Integer attemptID,
-						Float progress, 
-			            Constants.TaskState state, 
-			            Constants.TaskPhase phase, 
-			            Long start, Long finish) {
-		AttemptState attempt = new AttemptState(progress, state, phase, start, finish);
+	public boolean attempt(Integer attemptID,
+						   Float progress, 
+			               Constants.TaskState state, 
+			               Constants.TaskPhase phase, 
+			               Long start, Long finish) {
+		AttemptState newAttempt = new AttemptState(progress, state, phase, start, finish);
+		Constants.TaskState beforeState = state();
 		if (this.attempts.containsKey(attemptID)) {
-			if (this.attempts.get(attemptID).compareTo(attempt) < 0) {
+			if (this.attempts.get(attemptID).compareTo(newAttempt) <= 0) {
 				this.attempts.remove(attemptID);
 			}
 			else {
-				return; // Keep the better one.
+				return false; // Keep the better one.
 			}
 		}
-		this.attempts.put(attemptID, attempt); 
+		this.attempts.put(attemptID, newAttempt); 
+		return state() != beforeState; // I only care when my state changes
 	}
 	
 	/**
@@ -161,6 +171,9 @@ public class TaskState implements Comparable<TaskState> {
 		for (AttemptState state : this.attempts.values()) {
 			if (best == null) {
 				best = state;
+			}
+			else if (best.state == Constants.TaskState.SUCCEEDED) {
+				return best;
 			}
 			else if (state.state == Constants.TaskState.SUCCEEDED ||
 			         best.progress < state.progress) {
