@@ -22,6 +22,19 @@ watch(job, a);
 watch(task, a);
 watch(taskAttempt, a);
 
+/* Action debug rules
+watch(taskTrackerAction, ae);
+define(newAction, {TaskTrackerAction});
+define(allActions, {TaskTrackerAction});
+
+watch(allActions, a);
+public
+newAction(Action) :-
+	taskTrackerAction(_, _, Action);
+
+allActions(Action) :-
+	newAction(_), taskTrackerAction(_,_,Action);
+*/
 /*************** Task Tracker Monitor *********************/
 
 /*
@@ -35,6 +48,31 @@ taskTracker(TrackerName, Host, HttpPort, Constants.TaskTrackerState.FAILED,
 	TrackerState == Constants.TaskTrackerState.RUNNING,
 	java.lang.System.currentTimeMillis() - Timestamp > Period;
 	*/
+	
+define(trackerFilter, {String, Long});
+define(trackerUpdate, keys(0,4), {String, String, Integer, Constants.TaskTrackerState, 
+                                Long, int, int, int, int, int});
+
+trackerFilter(TrackerName, max<Timestamp>) :-
+    trackerUpdate(TrackerName, Host, HttpPort, State, 
+                  Timestamp, Failures,  
+                  MapCount, ReduceCount, 
+                  MaxMap, MaxReduce);
+                  
+delete 
+trackerUpdate(TrackerName, Host, Port, TState, Timestamp, 
+              Failures, MapCount, ReduceCount, MaxMap, MaxReduce) :-
+	trackerFilter(TrackerName, MostRecent),
+	taskTracker(TrackerName, Host, Port, TState, Timestamp, 
+	            Failures, MapCount, ReduceCount, MaxMap, MaxReduce),
+	Timestamp < MostRecent;
+                  
+taskTracker(TrackerName, Host, Port, TState, Timestamp, 
+            Failures, MapCount, ReduceCount, MaxMap, MaxReduce) :-
+	trackerFilter(TrackerName, Timestamp),
+	trackerUpdate(TrackerName, Host, Port, TState, Timestamp, 
+	              Failures, MapCount, ReduceCount, MaxMap, MaxReduce);
+	
 
 /*************** Clean up *********************/
 
@@ -51,9 +89,9 @@ task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
 	task(JobId, TaskId, Type, Partition, Input, MapCount, Status);
 
 delete
-taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish) :-
+taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp) :-
 	cleanup(JobId),
-    taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish);
+    taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp);
     
 delete
 taskFileLocation(JobId, TaskId, Loc) :-
@@ -85,7 +123,6 @@ taskFile(JobId, TaskId, Locations) :-
 	Type == Constants.TaskType.MAP
 	{ Split := Input.split(); Locations := Function.getLocations(Split); };
 	
-watch(taskFileLocation, a);
 taskFileLocation(JobId, TaskId, Location) :-
 	flatten(taskFile(JobId, TaskId, Locations)),
 	Location := (String) Locations;
@@ -112,94 +149,60 @@ networkDistance(Location1, Location2, min<Distance>) :-
 /*************** Job Status Maintenance *********************/
 import java.util.Set;
 	
-define(mapTasks,    keys(0), {JobID, Set});
-define(reduceTasks, keys(0), {JobID, Set});
-define(updateJob, {JobID});
-define(killjob,   {JobID, String});
-
-
 /* Update the job state. */
 updateJobState
-job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, NewStatus) :-
-	updateJob(JobId), mapTasks(JobId, Maps), reduceTasks(JobId, Reduces),
-	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, OldStatus),
-	OldStatus.state() != Constants.JobState.SUCCEEDED
+job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus) :-
+	taskUpdate(JobId, TaskId, Type, TaskStatus),
+	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, JobStatus),
+	JobStatus.task(Type, TaskStatus)
 	{
-	NewStatus := new JobState(JobId, Maps, Reduces);
-	FinishTime := NewStatus.state() == Constants.JobState.SUCCEEDED ? 
+	FinishTime := JobStatus.state() == Constants.JobState.SUCCEEDED ? 
 	              java.lang.System.currentTimeMillis() : 0L;
 	};
 	
-/* Update the job state. */
-updateJobStateNoReduce
-job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, Status) :-
-	updateJob(JobId), mapTasks(JobId, Maps), notin reduceTasks(JobId, Reduces),
-	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, OldStatus),
-	OldStatus.state() != Constants.JobState.SUCCEEDED
+define(killjob, {JobID});
+killJob
+job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus) :-
+	killjob(JobId),
+	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, JobStatus),
+	JobStatus.killjob()
 	{
-	Status := new JobState(JobId, Maps, null);
-	FinishTime := Status.state() == Constants.JobState.SUCCEEDED ? 
+	FinishTime := JobStatus.state() == Constants.JobState.SUCCEEDED ? 
 	              java.lang.System.currentTimeMillis() : 0L;
 	};
+	
 
-updateJobStateNoMap
-job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, Status) :-
-	updateJob(JobId), notin mapTasks(JobId, Maps), reduceTasks(JobId, Reduces),
-	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, OldStatus),
-	OldStatus.state() != Constants.JobState.SUCCEEDED
-	{
-	Status := new JobState(JobId, null, Reduces);
-	FinishTime := Status.state() == Constants.JobState.SUCCEEDED ? 
-	              java.lang.System.currentTimeMillis() : 0L;
-	};
-	
-updateJob(JobId) :- mapTasks(JobId);
-updateJob(JobId) :- reduceTasks(JobId);
-	
-mapTaskStatus
-mapTasks(JobId, set<Status>) :-
-	task(JobId, TaskId, Type, _, _, _, Status),
-	Type == Constants.TaskType.MAP;
-	
-reduceTasks(JobId, set<Status>) :-
-	task(JobId, TaskId, Type, _, _, _, Status),
-	Type == Constants.TaskType.REDUCE;
-	
+define(killJobOnTracker, {JobID, String});
 public
-killjob(JobId, TrackerName) :-
+killJobOnTracker(JobId, TrackerName) :-
 	job(JobId, _, _, _, _, _, _, _, _, JobStatus),
-	taskAttempt(JobId, TaskID, _, _, TaskState, _, _, TrackerName, _, _, _),
+	taskAttempt(JobId, TaskID, _, _, TaskState, _, _, TrackerName, _, _, _, _),
 	JobStatus.state()  == Constants.JobState.FAILED,
 	TaskState == Constants.TaskState.RUNNING;
 	
-actionKillJob
 taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-	
-	killjob(JobId, TrackerName),
+	killJobOnTracker(JobId, TrackerName),
 	Action := Function.killJob(JobId);
 	
     
 /*************** Task Status Maintenance *********************/
 
-define(taskState, {JobID, TaskID, TaskState});
+define(taskUpdate, {JobID, TaskID, Constants.TaskType, TaskState});
 
-taskAttempt(JobID, TaskID, AttemptID, Progress, Constants.TaskState.FAILED, 
-            Phase, Diag, TrackerName, FileLoc, Start, Finish) :-
+taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED, 
+            Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp) :-
 	taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, _, _),
-	taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish),
+	taskAttempt(JobId, TaskId, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp),
 	TrackerState != Constants.TaskTrackerState.RUNNING,
 	TaskState == Constants.TaskState.RUNNING;
 	
 public
-taskState(JobID, TaskID, generic<NewStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish)>) :-
-	taskAttempt(JobID, TaskID, AttemptID, Progress, State, Phase, _, _, _, Start, Finish),
-	task(JobID, TaskID, Type, _, _, _, TaskStatus),
+taskUpdate(JobId, TaskId, Type, TaskStatus) :-
+	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, Timestamp),
+	task(JobID, TaskId, Type, _, _, _, TaskStatus),
+	State != Constants.TaskState.UNASSIGNED,
 	TaskStatus.state() == Constants.TaskState.UNASSIGNED || 
 	TaskStatus.state() == Constants.TaskState.FAILED || 
 	TaskStatus.state() == Constants.TaskState.RUNNING,
-	NewStatus := (TaskState) TaskStatus.clone();
-	
-task(JobID, TaskID, Type, Partition, Input, MapCount, TaskStatus) :-
-	taskState(JobID, TaskID, TaskStatus),
-	task(JobID, TaskID, Type, Partition, Input, MapCount, _);
-	
+	TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
 	
