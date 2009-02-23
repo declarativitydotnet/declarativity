@@ -159,4 +159,8 @@ public class Key implements Comparable<Key>, Iterable<Integer>, Serializable {
 	public Iterator<Integer> iterator() {
 		return attributes.iterator();
 	}
+
+	public boolean contains(Integer position) {
+		return attributes.contains(position);
+	}
 }

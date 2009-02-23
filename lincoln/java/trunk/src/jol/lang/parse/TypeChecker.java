@@ -1,6 +1,7 @@
 package jol.lang.parse;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -52,7 +53,9 @@ import jol.types.basic.Tuple;
 import jol.types.exception.CompileException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
+import jol.types.function.TupleFunction;
 import jol.types.table.Aggregation;
+import jol.types.table.Arg;
 import jol.types.table.BasicTable;
 import jol.types.table.EventTable;
 import jol.types.table.Flatten;
@@ -439,6 +442,46 @@ public final class TypeChecker extends Visitor {
 		n.setProperty(Constants.TYPE, create);
 		return Table.class;
 	}
+	
+	public Class visitStasisTable(final GNode n) {
+		Class type;
+
+		/************** Table Name ******************/
+		type = (Class) dispatch(n.getNode(0));
+		assert(type == TableName.class);
+
+		TableName name = (TableName) n.getNode(0).getProperty(Constants.TYPE);
+		if (name.scope == null) {
+			name.scope = program.name();
+		}
+		else {
+			throw new CompileException("Dot specificed names not allowed in definition statement!", n.getNode(0));
+		}
+
+		/************** Table Primary Key ******************/
+		type = (Class) dispatch(n.getNode(1));
+		Key key  = (Key) n.getNode(1).getProperty(Constants.TYPE);
+
+
+		/************** Table Schema ******************/
+		type = (Class) dispatch(n.getNode(2));
+		Class[] schema  = (Class[]) n.getNode(2).getProperty(Constants.TYPE);
+		Table create;
+		try {
+			if(StasisTable.foundStasis) {
+				create = new LinearHashNTA(context, name, key, schema);
+			} else {
+				create = new JavaHashtable(context, name, key, schema);
+			}
+		} catch (UpdateException e) {
+			throw new CompileException(e.toString(), n);
+		}
+		context.catalog().register(create);
+		this.program.definition(create);
+		n.setProperty(Constants.TYPE, create);
+		return Table.class;
+	}
+
 
 
 	public Class visitEvent(final GNode n) {
@@ -565,7 +608,7 @@ public final class TypeChecker extends Visitor {
 				if (t instanceof Predicate) {
 					Predicate p = (Predicate) t;
 					for (Expression arg : p) {
-						if (arg instanceof Aggregate) {
+						if (arg instanceof Aggregate && !(t instanceof jol.lang.plan.Function)) {
 							throw new CompileException("Body predicate can't contain aggregates!", n);
 						}
 					}
@@ -631,9 +674,6 @@ public final class TypeChecker extends Visitor {
 					}
 					context.catalog().register(table);
 					this.program.definition(table);
-				}
-				else {
-					// TODO: Verify that table aggregate is compatible!
 				}
 
 				Class[] types = table.types();
@@ -743,6 +783,27 @@ public final class TypeChecker extends Visitor {
 				runtime.warning("Flatten input schema does not contain a List!", n);
 			}
 		}
+		else if (name.name.equals(Arg.NAME)) {
+			try {
+				table = new Arg(predicate);
+				Table ptable = context.catalog().table(predicate.name());
+				Class[] types = ptable.types();
+				int position = 0;
+				for (Expression arg : predicate) {
+					if (arg instanceof Aggregate) {
+						Aggregate a = (Aggregate) arg;
+						for (Object v : arg.variables()) {
+							this.table.current().define(((Variable) v).name(), types[position]);
+							predicate.remove(arg);
+							break;
+						}
+					}
+					position++;
+				}
+			} catch (IOException e) {
+				throw new CompileException(e.toString(), n);
+			}
+		}
 		else {
 			table = context.catalog().table(name);
 			if (table == null || table.type() != Table.Type.FUNCTION) {
@@ -842,7 +903,7 @@ public final class TypeChecker extends Visitor {
 					}
 				}
 			}
-
+			
 			if (param instanceof Variable) {
 				Variable var = (Variable) param;
 				var.type(paramType);
@@ -868,17 +929,6 @@ public final class TypeChecker extends Visitor {
 									  "more than one distinct location specifier " +
 									  "in its argument list: @" +
 									  argLocation + ", @" + var.name(), n);
-					}
-				}
-			}
-
-			if (param.variables().size() > 0) {
-				for (Variable var : param.variables()) {
-					if (var.name().equals(AggregateVariable.STAR)) continue;
-					if (!table.current().isDefined(var.name())) {
-						throw new CompileException("Predicate " + name + " contains an argument expression based " +
-									"that depends on variable " + var.name() + ", which is not" +
-									"defined by some left hand side predicate!", n);
 					}
 				}
 			}
@@ -1155,8 +1205,8 @@ public final class TypeChecker extends Visitor {
 		Expression expr = (Expression) n.getNode(1).getProperty(Constants.TYPE);
 
 		if (expr.type() != null && !(subtype(expr.type(), cast) || subtype(cast, expr.type()))) {
-			throw new CompileException("CAST ERROR: Expression " + expr.toString() +
-					      " type " + expr.type() + " is not a supertype of " + cast + ".", n);
+			 runtime.warning("CAST ERROR: Expression " + expr.toString() +
+					         " type " + expr.type() + " is not a supertype of " + cast + ".", n);
 		}
 
 		n.setProperty(Constants.TYPE, new Cast(n, cast, expr));

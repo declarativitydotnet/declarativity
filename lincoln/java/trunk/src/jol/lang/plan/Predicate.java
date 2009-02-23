@@ -171,6 +171,10 @@ public class Predicate extends Term implements Iterable<Expression> {
 	public Expression argument(Integer i) {
 		return this.arguments.get(i);
 	}
+	
+	public void remove(Expression e) {
+		this.arguments.remove(e);
+	}
 
 	public List<Expression> arguments() {
 		return this.arguments;
