@@ -31,12 +31,14 @@ watch(response, ae);
 public
 response(@Source, Id, Master, true, Result) :-
     // this needs to be tied into a paxos decree to enforce the ordering.
-    bfs_chunks::newListHolder(@Master, Source, Id, CandidateNodes, NewChunkId, FPath),
+    request(@Master, Id, Source, "NewChunk", FPath),
+    bfs_chunks::newListHolder(@Master, Id, CandidateNodes, NewChunkId, FPath),
     Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
 delete
 request(Master, Id, Source, "NewChunk", FPath) :-
-    bfs_chunks::newListHolder(Master, Source, Id, _, _, FPath);
+    request(Master, Id, Source, "NewChunk", FPath),
+    bfs_chunks::newListHolder(Master, Id, _, _, FPath);
 
 // "NewChunk" for nonexistent file => error
 response(@Source, Id, Master, false, null) :-
