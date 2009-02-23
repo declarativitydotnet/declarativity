@@ -15,7 +15,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     From := Master,
     bfs::create_request_pending(Master, Id, ParentId, FName, IsDir, true),
     DirStr := (IsDir ? ",d" : ",f"),
-    Decree := FName + DirStr + ",i," + Id.toString() + ",-1," + ParentId.toString();
+    Decree := FName + DirStr + ",i," + Id.toString() + "," + ParentId.toString();
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -23,7 +23,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     From := Master,
     bfs::rm_request_pending(Master, Id, FPath),
     DirStr := ",f",
-    Decree := FPath + DirStr + ",d," + Id.toString() + ",-1,-1";
+    Decree := FPath + DirStr + ",d," + Id.toString() + ",-1";
 
 // If we are adding a chunk to a file's chunklist, we likewise need to
 // pass it through paxos. (and indeed, should block the requestor, but
@@ -33,20 +33,19 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
     From := Master,
     bfs_chunks::candidate_datanode#insert(Master, Id, FPath, _),
-    Decree := FPath + ",f,u," + Id.toString() + ",-1,-1";
+    Decree := FPath + ",f,u," + Id.toString() + ",-1";
 
-define(appView,keys(0,1,2,3),{String,String,Integer,String,Boolean,Integer,String,Integer,Integer});
+define(appView,keys(0,1,2,3),{String,String,Integer,String,Boolean,Integer,String,Integer});
 watch(appView,ae);
 public
-appView(Master, From, Instance, Name, IsDir, ParentId, Op, Id, I) :-
+appView(Master, From, Instance, Name, IsDir, ParentId, Op, Id) :-
     paxos_global::requestStatus#insert(Master, From, Decree, Instance, "passed"),
     NVL := Arrays.asList(Decree.split(",")),
     Name := (String) NVL.get(0),
     DirStr := (String) NVL.get(1),
     Op := (String) NVL.get(2),
     Id := Integer.valueOf((String) NVL.get(3)),
-    I := Integer.valueOf((String) NVL.get(4)),
-    ParentId := Integer.valueOf((String) NVL.get(5)),
+    ParentId := Integer.valueOf((String) NVL.get(4)),
     IsDir := (DirStr.equals("d") ? true : false);
 
 // An insert op in the log induces a new metadata entry for a file. We use
@@ -54,7 +53,7 @@ appView(Master, From, Instance, Name, IsDir, ParentId, Op, Id, I) :-
 // among all the masters.
 public
 bfs::file(Master, FileId, ParentId, FName, IsDir) :-
-    appView#insert(Master, _, Instance, FName, IsDir, ParentId, Op, _, _),
+    appView#insert(Master, _, Instance, FName, IsDir, ParentId, Op, _),
     Op == "i",
     FileId := Instance;
 
@@ -63,14 +62,14 @@ public
 bfs::fchunk(Master, ChunkId, FileId) :-
     bfs::fpath(Master, FPath, FileId),
     bfs::file(Master, FileId, _, _, false),
-    appView#insert(Master, _, Instance, FPath, _, _, Op, _, _),
+    appView#insert(Master, _, Instance, FPath, _, _, Op, _),
     Op == "u",
     ChunkId := Instance;
 
 public
 bfs::newchunk_request_done(Master, Id, NewChunkId, NodeSet) :-
     bfs_chunks::candidate_datanode(Master, Id, _, NodeSet),
-    appView(Master, _, Instance, _, _, _, "u", Id, _),
+    appView(Master, _, Instance, _, _, _, "u", Id),
     NewChunkId := Instance;
 
 
@@ -88,7 +87,7 @@ watch(canDelete,ae);
 
 public
 canDelete(Master, Id, FPath) :-
-    appView#insert(Master, _, _, FPath, _, _, Op, Id, _),
+    appView#insert(Master, _, _, FPath, _, _, Op, Id),
     Op == "d";
 
 // Use the "file" relation to construct the "fpath" relation. Note
@@ -142,23 +141,23 @@ public
 green
 bfs::create_request_done(Master, Id, Status) :-
     bfs::create_request_pending(Master, Id, _, FName, _, Status),
-    appView(Master, _, _, FName, _, _, "i", Id, _);
+    appView(Master, _, _, FName, _, _, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, false) :-
     bfs::create_request_pending(Master, Id, _, FName, _, _),
-    appView(Master, _, _, FName, _, _, "i", Id2, _),
+    appView(Master, _, _, FName, _, _, "i", Id2),
     Id != Id2;
-
-
-public
-bfs::rm_request_done(Master, Id) :-
-    bfs::rm_request_pending(Master, Id, FPath),
-    canDelete(Master, Id, FPath);
 
 public
 red
 bfs::create_request_done(Master, Id, Status) :-
     bfs::create_request_pending(Master, Id, _, _, _, Status),
     Status == false;
+
+
+public
+bfs::rm_request_done(Master, Id) :-
+    bfs::rm_request_pending(Master, Id, FPath),
+    canDelete(Master, Id, FPath);
