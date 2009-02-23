@@ -163,8 +163,6 @@ public class BFSClient {
 
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
-                        System.out.println("Remove of file \"" + path + "\": " +
-                                           (success.booleanValue() ? "succeeded" : "failed"));
                         responseQueue.put(success);
                         break;
                     }
@@ -186,6 +184,8 @@ public class BFSClient {
         Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout());
         unregisterCallback(responseTbl, responseCallback);
 
+        System.out.println("Remove of file \"" + path + "\": " +
+                (success.booleanValue() ? "succeeded" : "failed"));
         if (success.booleanValue() == false)
         	return false;
         else
