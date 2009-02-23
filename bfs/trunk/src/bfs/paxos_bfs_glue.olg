@@ -40,12 +40,12 @@ watch(appView,ae);
 public
 appView(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
     paxos_global::requestStatus#insert(Master, _, Decree, Instance, "passed"),
-    NVL := Arrays.asList(Decree.split(",")),
-    Name := (String) NVL.get(0),
-    DirStr := (String) NVL.get(1),
-    Op := (String) NVL.get(2),
-    Id := Integer.valueOf((String) NVL.get(3)),
-    ParentId := Integer.valueOf((String) NVL.get(4)),
+    NVL := Decree.split(","),
+    Name := NVL[0],
+    DirStr := NVL[1],
+    Op := NVL[2],
+    Id := Integer.valueOf(NVL[3]),
+    ParentId := Integer.valueOf(NVL[4]),
     IsDir := (DirStr.equals("d") ? true : false);
 
 // An insert op in the log induces a new metadata entry for a file. We use
