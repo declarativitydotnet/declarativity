@@ -54,11 +54,11 @@ public class BFSClient {
 		}
 	}
 
-	public boolean createFile(String pathName) {
+	public synchronized boolean createFile(String pathName) {
 		return doCreate(pathName, false);
 	}
 
-	public boolean createDir(String pathName) {
+	public synchronized boolean createDir(String pathName) {
 		return doCreate(pathName, true);
 	}
 
@@ -106,7 +106,7 @@ public class BFSClient {
         return success.booleanValue();
 	}
 
-	public BFSNewChunkInfo getNewChunk(final String path) {
+	public synchronized BFSNewChunkInfo getNewChunk(final String path) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -148,7 +148,7 @@ public class BFSClient {
         return result;
 	}
 
-	public boolean delete(final String path) {
+	public synchronized boolean delete(final String path) {
         final int requestId = generateId();
 
         // Register callback to listen for responses
@@ -192,11 +192,11 @@ public class BFSClient {
         	return true;
 	}
 
-	public boolean rename(String oldPath, String newPath) {
+	public synchronized boolean rename(String oldPath, String newPath) {
 		return false;
 	}
 
-	public Set<BFSFileInfo> getDirListing(final String path) {
+	public synchronized Set<BFSFileInfo> getDirListing(final String path) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -239,7 +239,7 @@ public class BFSClient {
         return Collections.unmodifiableSet(lsContent);
 	}
 
-	public BFSFileInfo getFileInfo(final String pathName) {
+	public synchronized BFSFileInfo getFileInfo(final String pathName) {
 		System.out.println("getFileInfo() called for \"" + pathName + "\"");
         final int requestId = generateId();
 
@@ -289,7 +289,7 @@ public class BFSClient {
         	return result.get(0);
 	}
 
-	public List<BFSChunkInfo> getChunkList(final String path) {
+	public synchronized List<BFSChunkInfo> getChunkList(final String path) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -337,7 +337,7 @@ public class BFSClient {
         return sortedChunks;
 	}
 
-	public Set<String> getChunkLocations(final int chunkId) {
+	public synchronized Set<String> getChunkLocations(final int chunkId) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
