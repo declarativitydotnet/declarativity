@@ -241,7 +241,6 @@ response(@Source, Id, Master, false, null) :-
 // If we got an "rm" request and the file exists, remove it and send
 // back a positive ack.
 define(rm_request_pending, keys(0, 1), {String, Integer, String});
-public
 rm_request_pending(@Master, Id, FPath) :-
     request(@Master, Id, _, "Rm", FPath),
     fpath(@Master, FPath, _);
@@ -255,7 +254,6 @@ response(@Source, Id, Master, true, null) :-
 // negative ack. NB: unlike in the "create" case, we don't need the
 // "#insert" hack, since deletions are postponed the end of the
 // fixpoint.
-// XXX: we should probably synchronize with Paxos here
 response(@Source, Id, Master, false, null) :-
     request#insert(@Master, Id, Source, "Rm", FPath),
     notin fpath(@Master, FPath, _);
