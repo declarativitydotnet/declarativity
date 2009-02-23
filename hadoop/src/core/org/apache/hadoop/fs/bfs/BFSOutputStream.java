@@ -25,14 +25,14 @@ public class BFSOutputStream extends OutputStream {
 	}
 
 	@Override
-	public void write(int b) throws IOException {
+	public synchronized void write(int b) throws IOException {
 		byte[] tmpBuf = new byte[1];
 		tmpBuf[0] = (byte) b;
 		write(tmpBuf, 0, 1);
 	}
 
 	@Override
-	public void write(byte[] clientBuf, int offset, int length) throws IOException {
+	public synchronized void write(byte[] clientBuf, int offset, int length) throws IOException {
 		if (this.isClosed)
 			throw new IOException("cannot write to closed file");
 
@@ -55,7 +55,7 @@ public class BFSOutputStream extends OutputStream {
 	}
 
 	@Override
-	public void flush() throws IOException {
+	public synchronized void flush() throws IOException {
 		BFSNewChunkInfo info = this.bfs.getNewChunk(this.path);
 
         DataConnection conn = new DataConnection(info.getCandidateNodes());
@@ -67,7 +67,7 @@ public class BFSOutputStream extends OutputStream {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public synchronized void close() throws IOException {
 		if (this.isClosed)
 			return;
 
