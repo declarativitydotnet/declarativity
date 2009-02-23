@@ -3,39 +3,14 @@ program bfs_chunks;
 import java.lang.System;
 import java.util.Set;
 
-define(chunkSeq, keys(0), {String, Integer});
-//watch(chunkSeq, ae);
-
-/*
+define(candidate_datanode, keys(0, 1), {String, Integer, String, Set});
 public
-chunkSeq(Master, Top+1) :-
-    bfs::self(Master),
-    notin chunkSeq(Master, _);
-*/
-
-// XXX: this "timer" is a hack
-timer(per, physical, 1000, 1000, 1000);
-public
-chunkSeq(Master, 1) :-
-    bfs::self(Master),
-    per(_, _, _),
-    notin chunkSeq(Master, _);
-
-// if we get a "NewChunk" request for a file, assign a new chunk id
-public
-chunkSeq(Master, ChunkId+1) :-
-    chunkSeq(Master, ChunkId),
-    candidate_datanode#insert(Master, _, _, ChunkId, _);
-
-define(candidate_datanode, keys(0, 1), {String, Integer, String, Integer, Set});
-public
-candidate_datanode(Master, Id, FPath, NewChunkId, set<DataNode>) :-
+candidate_datanode(Master, Id, FPath, set<DataNode>) :-
     bfs::request(Master, Id, _, "NewChunk", FPath),
-    chunkSeq(Master, NewChunkId),
     bfs::possible_choices(Master, _, DataNode, _),
     bfs::fpath(Master, FPath, FileId),
     bfs::file(Master, FileId, _, _, false),
-    notin candidate_datanode(Master, Id, FPath, _, _);
+    notin candidate_datanode(Master, Id, FPath, _);
 
 // reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
 // from one datanode to another

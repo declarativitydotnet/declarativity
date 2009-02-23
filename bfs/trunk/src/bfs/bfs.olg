@@ -27,18 +27,19 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
 watch(response, ae);
 
+define(newchunk_request_done, keys(0, 1), {String, Integer, Integer, Set});
+
 // NewChunk: add a new chunk to the end of a file
 public
 response(@Source, Id, Master, true, Result) :-
-    // this needs to be tied into a paxos decree to enforce the ordering.
     request(@Master, Id, Source, "NewChunk", FPath),
-    bfs_chunks::candidate_datanode(@Master, Id, FPath, NewChunkId, CandidateNodes),
+    newchunk_request_done(@Master, Id, NewChunkId, CandidateNodes),
     Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
 delete
 request(Master, Id, Source, "NewChunk", FPath) :-
     request(Master, Id, Source, "NewChunk", FPath),
-    bfs_chunks::candidate_datanode(Master, Id, FPath, _, _);
+    bfs_chunks::candidate_datanode(Master, Id, FPath, _);
 
 // "NewChunk" for nonexistent file => error
 response(@Source, Id, Master, false, null) :-
