@@ -35,11 +35,11 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     bfs_chunks::candidate_datanode#insert(Master, Id, FPath, _),
     Decree := FPath + ",f,u," + Id.toString() + ",-1";
 
-define(appView,keys(0,1,2,3),{String,String,Integer,String,Boolean,Integer,String,Integer});
+define(appView,keys(0,1,2),{String,Integer,String,Boolean,Integer,String,Integer});
 watch(appView,ae);
 public
-appView(Master, From, Instance, Name, IsDir, ParentId, Op, Id) :-
-    paxos_global::requestStatus#insert(Master, From, Decree, Instance, "passed"),
+appView(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
+    paxos_global::requestStatus#insert(Master, _, Decree, Instance, "passed"),
     NVL := Arrays.asList(Decree.split(",")),
     Name := (String) NVL.get(0),
     DirStr := (String) NVL.get(1),
@@ -53,7 +53,7 @@ appView(Master, From, Instance, Name, IsDir, ParentId, Op, Id) :-
 // among all the masters.
 public
 bfs::file(Master, FileId, ParentId, FName, IsDir) :-
-    appView#insert(Master, _, Instance, FName, IsDir, ParentId, Op, _),
+    appView#insert(Master, Instance, FName, IsDir, ParentId, Op, _),
     Op == "i",
     FileId := Instance;
 
@@ -62,14 +62,14 @@ public
 bfs::fchunk(Master, ChunkId, FileId) :-
     bfs::fpath(Master, FPath, FileId),
     bfs::file(Master, FileId, _, _, false),
-    appView#insert(Master, _, Instance, FPath, _, _, Op, _),
+    appView#insert(Master, Instance, FPath, _, _, Op, _),
     Op == "u",
     ChunkId := Instance;
 
 public
 bfs::newchunk_request_done(Master, Id, NewChunkId, NodeSet) :-
     bfs_chunks::candidate_datanode(Master, Id, _, NodeSet),
-    appView(Master, _, Instance, _, _, _, "u", Id),
+    appView(Master, Instance, _, _, _, "u", Id),
     NewChunkId := Instance;
 
 
@@ -87,7 +87,7 @@ watch(canDelete,ae);
 
 public
 canDelete(Master, Id, FPath) :-
-    appView#insert(Master, _, _, FPath, _, _, Op, Id),
+    appView#insert(Master, _, FPath, _, _, Op, Id),
     Op == "d";
 
 // Use the "file" relation to construct the "fpath" relation. Note
@@ -141,13 +141,13 @@ public
 green
 bfs::create_request_done(Master, Id, Status) :-
     bfs::create_request_pending(Master, Id, _, FName, _, Status),
-    appView(Master, _, _, FName, _, _, "i", Id);
+    appView(Master, _, FName, _, _, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, false) :-
     bfs::create_request_pending(Master, Id, _, FName, _, _),
-    appView(Master, _, _, FName, _, _, "i", Id2),
+    appView(Master, _, FName, _, _, "i", Id2),
     Id != Id2;
 
 public
