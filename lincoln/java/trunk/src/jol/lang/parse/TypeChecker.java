@@ -53,7 +53,6 @@ import jol.types.basic.Tuple;
 import jol.types.exception.CompileException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
-import jol.types.function.TupleFunction;
 import jol.types.table.Aggregation;
 import jol.types.table.Arg;
 import jol.types.table.BasicTable;
@@ -442,7 +441,7 @@ public final class TypeChecker extends Visitor {
 		n.setProperty(Constants.TYPE, create);
 		return Table.class;
 	}
-	
+
 	public Class visitStasisTable(final GNode n) {
 		Class type;
 
@@ -903,7 +902,7 @@ public final class TypeChecker extends Visitor {
 					}
 				}
 			}
-			
+
 			if (param instanceof Variable) {
 				Variable var = (Variable) param;
 				var.type(paramType);
@@ -1178,8 +1177,6 @@ public final class TypeChecker extends Visitor {
 					Comparable.class.getCanonicalName()  +
 					" in order to use in a '" + oper + "' expression.", n);
 		}
-
-
 
 		n.setProperty(Constants.TYPE, new jol.lang.plan.Boolean(n, oper,  lhs,  rhs));
 		return jol.lang.plan.Boolean.class;
@@ -1927,5 +1924,4 @@ public final class TypeChecker extends Visitor {
 		n.setProperty(Constants.TYPE, new Value<Float[]>(n, vector));
 		return Value.class;
 	}
-
 }
