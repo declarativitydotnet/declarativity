@@ -15,6 +15,7 @@ import jol.types.basic.ValueList;
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
 
+watch(request, ae);
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
     master_for_node(@Source, Master),
@@ -26,7 +27,7 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
 watch(response, ae);
 
-// NewChunk: append a new chunk to a file
+// NewChunk: add a new chunk to the end of a file
 public
 response(@Source, Id, Master, true, Result) :-
     // this needs to be tied into a paxos decree to enforce the ordering.
