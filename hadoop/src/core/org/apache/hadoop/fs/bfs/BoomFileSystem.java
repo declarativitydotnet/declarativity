@@ -143,7 +143,9 @@ public class BoomFileSystem extends FileSystem {
 			if (p.getParent() == null)
 				continue;
 
-			this.bfs.createDir(getPathName(p));
+			boolean result = this.bfs.createDir(getPathName(p));
+			if (p.equals(path))
+				System.out.println("Result of mkdirs() on " + path + ": " + result);
 		}
 
 		return true;
