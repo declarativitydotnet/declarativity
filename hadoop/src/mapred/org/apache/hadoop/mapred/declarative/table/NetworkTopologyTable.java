@@ -138,7 +138,7 @@ public class NetworkTopologyTable extends ObjectTable {
 	 * NOTE: non-blocking call.
 	 * @param tracker The tracker status.
 	 */
-	public void resolve(TaskTrackerStatus tracker) {
+	public synchronized void resolve(TaskTrackerStatus tracker) {
 		this.resolver.resolve(tracker);
 	}
 

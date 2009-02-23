@@ -22,11 +22,11 @@ public class TaskAttemptTable extends ObjectTable {
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskAttempt");
 	
 	/** The primary key */
-	public static final Key PRIMARY_KEY = new Key(0,1,2);
+	public static final Key PRIMARY_KEY = new Key(0,1,2,4);
 	
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, TASKID, ATTEMPTID, PROGRESS, STATE, PHASE, 
-		              DIAGNOSTICS, TRACKER, TASKLOCATION, START, FINISH};
+		              DIAGNOSTICS, TRACKER, TASKLOCATION, START, FINISH, TIMESTAMP};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
@@ -40,7 +40,8 @@ public class TaskAttemptTable extends ObjectTable {
 		String.class,   // Tracker name
 		String.class,   // Task file location
 		Long.class,     // Start time
-		Long.class      // Finish time
+		Long.class,     // Finish time
+		Long.class,    // Timestamp (when we got our last update)
 	};
 	
 	public TaskAttemptTable(Runtime context) {
@@ -72,7 +73,8 @@ public class TaskAttemptTable extends ObjectTable {
 				         status.getTaskTracker(), 
 				         httpTaskLogLocation,
 				         status.getStartTime(), 
-				         status.getFinishTime());
+				         status.getFinishTime(),
+				         System.currentTimeMillis());
 	}
 
 }

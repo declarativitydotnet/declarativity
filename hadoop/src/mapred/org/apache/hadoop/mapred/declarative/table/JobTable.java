@@ -51,7 +51,7 @@ public class JobTable extends ObjectTable {
 				         conf.getJobPriority(),
 				         java.lang.System.currentTimeMillis(),
 				         0L,
-		                 new JobState(jobid));
+		                 new JobState(jobid, conf));
 		
 	}
 

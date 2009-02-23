@@ -1,43 +1,44 @@
 package org.apache.hadoop.mapred.declarative.util;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import jol.types.basic.TupleSet;
 
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
+import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.table.TaskTable;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JobState implements Comparable<JobState> {
 	private JobID jobid;
 	
 	private Constants.JobState state;
 
-	private Set<TaskState> maps;
+	private int mapCount;
+	private Map<TaskID, TaskState> maps;
 	
-	private Set<TaskState> reduces;
+	private int reduceCount;
+	private Map<TaskID, TaskState> reduces;
 	
-	public JobState(JobID jobid) {
+	private JobStatus status;
+	
+	
+	public JobState(JobID jobid, JobConf conf) {
 		this.jobid   = jobid;
 		this.state   = Constants.JobState.PREP;
-		this.maps    = new HashSet<TaskState>();
-		this.reduces = new HashSet<TaskState>();
-	}
-	
-	public JobState(JobID jobid, Constants.JobState state) {
-		this.jobid = jobid;
-		this.state = state;
-		this.maps    = new HashSet<TaskState>();
-		this.reduces = new HashSet<TaskState>();
-	}
-	
-	public JobState(JobID jobid, Set<TaskState> maps, Set<TaskState> reduces) {
-		this(jobid, Constants.JobState.RUNNING);
-		if (maps != null)    this.maps.addAll(maps);
-		if (reduces != null) this.reduces.addAll(reduces);
+		this.maps    = new ConcurrentHashMap<TaskID, TaskState>();
+		this.reduces = new ConcurrentHashMap<TaskID, TaskState>();
+		this.mapCount = conf.getNumMapTasks();
+		this.reduceCount = conf.getNumReduceTasks();
+		updateStatus();
 	}
 	
 	@Override
@@ -53,10 +54,10 @@ public class JobState implements Comparable<JobState> {
 		return false;
 	}
 	
+	@Override
 	public String toString() {
 		return this.state.name();
 	}
-	
 	
 	public int compareTo(JobState o) {
 		int comparison = this.jobid.compareTo(o.jobid);
@@ -74,49 +75,82 @@ public class JobState implements Comparable<JobState> {
 		return this.jobid;
 	}
 	
-	public void task(TaskType type, TaskState state) {
-		this.state = Constants.JobState.RUNNING;
+	public int mapCount() {
+		return this.mapCount;
+	}
+	
+	public int reduceCount() {
+		return this.reduceCount;
+	}
+	
+	public boolean task(TaskType type, TaskState state) throws IOException {
+		if (this.state == Constants.JobState.PREP) {
+			this.state = Constants.JobState.RUNNING;
+		}
+		
+		if (!state.jobid().equals(state.jobid())) {
+			throw new IOException("JobState: Task state is not part of this job!");
+		}
+		
+		Constants.JobState beforeState = this.state;
 		if (type == TaskType.MAP) {
-			this.maps.add(state);
+			if (this.maps.containsKey(state.taskid())) {
+				this.maps.remove(state.taskid());
+			}
+			this.maps.put(state.taskid(), state);
 		}
 		else if (type == TaskType.REDUCE) {
-			this.reduces.add(state);
+			if (this.reduces.containsKey(state.taskid())) {
+				this.reduces.remove(state.taskid());
+			}
+			this.reduces.put(state.taskid(), state);
 		}
-		status();
+		updateStatus();
+		return state() != beforeState; 
 	}
 	
 	public Constants.JobState state() {
-		status(); // update status
 		return this.state;
 	}
 	
-	public void state(Constants.JobState state) {
-		this.state = state;
+	public boolean killjob() {
+		if (state() != Constants.JobState.FAILED) {
+			this.state = Constants.JobState.FAILED;
+			updateStatus();
+			return true;
+		}
+		return false;
 	}
 	
 	public synchronized JobStatus status() {
+		return this.status;
+	}
+	
+	private void updateStatus() {
 		float mapProgress    = 0f;
 		float reduceProgress = 0f;
 		
 		if (this.state == Constants.JobState.RUNNING) {
-			if (maps.size() == 1) {
+			if (this.mapCount == 0) {
+				/* No maps so progress is 1. */
 				mapProgress = 1f;
 			}
 			else {
-				for (TaskState map : maps) {
+				for (TaskState map : maps.values()) {
 					mapProgress += map.progress();
 				}
-				mapProgress = mapProgress / (float) this.maps.size();
+				mapProgress = mapProgress / (float) this.mapCount;
 			}
 			
-			if (reduces.size() == 0) {
+			if (this.reduceCount == 0) {
+				/* No reduces so progress is 1. */
 				reduceProgress = 1f;
 			}
 			else {
-				for (TaskState reduce : reduces) {
+				for (TaskState reduce : reduces.values()) {
 					reduceProgress += reduce.progress();
 				}
-				reduceProgress = reduceProgress / (float) this.reduces.size();
+				reduceProgress = reduceProgress / (float) this.reduceCount;
 			}
 		}
 		else if (this.state == Constants.JobState.SUCCEEDED) {
@@ -126,8 +160,16 @@ public class JobState implements Comparable<JobState> {
 		if (mapProgress == 1f && reduceProgress == 1f) {
 			this.state = Constants.JobState.SUCCEEDED;
 		}
-		
-		return new JobStatus(this.jobid, mapProgress, reduceProgress, this.state.ordinal()+1);
+		int jobState = JobStatus.PREP;
+		switch (this.state) {
+		case PREP:      jobState = JobStatus.PREP;     break;
+		case RUNNING:   jobState = JobStatus.RUNNING;  break;
+		case FAILED:    jobState = JobStatus.FAILED;   break;
+		case SUCCEEDED: jobState = JobStatus.SUCCEEDED; break;
+		default:        System.err.println("UNKNOWN JOB STATE " + this.state);
+						jobState = JobStatus.FAILED;
+		}
+		this.status = new JobStatus(this.jobid, mapProgress, reduceProgress, jobState);
 	}
 
 }

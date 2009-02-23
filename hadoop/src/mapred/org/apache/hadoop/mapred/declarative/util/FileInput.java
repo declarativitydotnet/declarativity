@@ -10,6 +10,7 @@ public class FileInput {
 	private JobClient.RawSplit split;
 	
 	public FileInput(Path path, JobClient.RawSplit split) {
+		if (split == null) System.err.println("FILE INPUT WITH NULL SPLIT!");
 		this.path = path;
 		this.split = split;
 	}

@@ -369,8 +369,7 @@ public class TaskTracker
     if (protocol.equals(TaskUmbilicalProtocol.class.getName())) {
       return TaskUmbilicalProtocol.versionID;
     } else {
-      throw new IOException("Unknown protocol for task tracker: " +
-                            protocol);
+      throw new IOException("Unknown protocol for task tracker: " + protocol);
     }
   }
     
@@ -910,6 +909,7 @@ public class TaskTracker
         //verify the buildVersion if justStarted
         if(justStarted){
           String jobTrackerBV = jobClient.getBuildVersion();
+          /*
           if(!VersionInfo.getBuildVersion().equals(jobTrackerBV)) {
             String msg = "Shutting down. Incompatible buildVersion." +
             "\nJobTracker's: " + jobTrackerBV + 
@@ -922,6 +922,7 @@ public class TaskTracker
             }
             return State.DENIED;
           }
+          */
         }
         
         // Send the heartbeat and process the jobtracker's directives

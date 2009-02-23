@@ -3,6 +3,7 @@ package org.apache.hadoop.mapred;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -12,6 +13,7 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.mapred.declarative.JobTrackerImpl;
 
 import jol.core.JolSystem;
+import jol.core.Runtime.DebugLevel;
 import jol.types.basic.Tuple;
 
 /**
@@ -43,8 +45,10 @@ public abstract class JobTracker {
 			Path outputPath = FileOutputFormat.getOutputPath(conf);
 	        String userLogDir = conf.get("hadoop.job.history.user.location",
 	        		outputPath == null ? "./" : outputPath.toString());
-			JolSystem context = jol.core.Runtime.create(jol.core.Runtime.DEBUG_ALL, 
-					            new FileOutputStream(userLogDir + "/jobtracker_jol.out"));
+	        Set<DebugLevel> debugger = new HashSet<DebugLevel>();
+	        debugger.add(DebugLevel.WATCH);
+			JolSystem context = jol.core.Runtime.create(debugger,
+			                    new FileOutputStream(userLogDir + "/jobtracker_jol.out"));
 			return new JobTrackerImpl(context, conf);
 		} catch (Throwable e) {
 			throw new IOException(e);
