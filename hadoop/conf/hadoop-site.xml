@@ -16,10 +16,9 @@
     <name>dfs.replication</name>
     <value>1</value>
   </property>
-<property>
-  <name>hadoop.tmp.dir</name>
-  <value>/tmp</value>
-  <description>A base for other temporary directories.</description>
-</property>
-
+  <property>
+    <name>hadoop.tmp.dir</name>
+    <value>/tmp</value>
+    <description>A base for other temporary directories.</description>
+  </property>
 </configuration>
