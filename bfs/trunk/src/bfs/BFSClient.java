@@ -77,12 +77,6 @@ public class BFSClient {
 
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
-
-                        if (success.booleanValue())
-                            System.out.println("Create succeeded.");
-                        else
-                            System.out.println("Create failed.");
-
                         responseQueue.put(success);
                         break;
                     }
