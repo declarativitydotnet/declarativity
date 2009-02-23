@@ -8,37 +8,35 @@ import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
-import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
-import jol.types.function.TupleFunction;
 
 public class Arg extends Function {
 	public static final String NAME = "arg";
-	
+
 	private String function;
-	
+
 	private Integer position;
 
 	public Arg(Predicate pred) throws IOException {
 		super(NAME + ":" + pred.identifier(), pred.schema().types());
-			this.position = 0;
-			for (Expression e : pred) {
-				if (e instanceof Aggregate) {
-					Aggregate a = (Aggregate) e;
-					if (a.functionName().equals(jol.types.function.Aggregate.MAX)) {
-						this.function = jol.types.function.Aggregate.MAX;
-						break;
-					}
-					else if (a.functionName().equals(jol.types.function.Aggregate.MIN)) {
-						this.function = jol.types.function.Aggregate.MIN;
-						break;
-					}
-					else {
-						throw new IOException("Unsupported arg function " + a.functionName());
-					}
+		this.position = 0;
+		for (Expression e : pred) {
+			if (e instanceof Aggregate) {
+				Aggregate a = (Aggregate) e;
+				if (a.functionName().equals(jol.types.function.Aggregate.MAX)) {
+					this.function = jol.types.function.Aggregate.MAX;
+					break;
 				}
-				this.position++;
+				else if (a.functionName().equals(jol.types.function.Aggregate.MIN)) {
+					this.function = jol.types.function.Aggregate.MIN;
+					break;
+				}
+				else {
+					throw new IOException("Unsupported arg function " + a.functionName());
+				}
 			}
+			this.position++;
+		}
 	}
 
 	@Override
@@ -68,7 +66,7 @@ public class Arg extends Function {
 			throw new UpdateException(t.toString());
 		}
 	}
-	
+
 	private boolean checkForNewBest(Comparable best, Comparable comp) throws JolRuntimeException {
 		if (this.function.equals(jol.types.function.Aggregate.MAX)) {
 			return best.compareTo(comp) < 0;
@@ -78,5 +76,4 @@ public class Arg extends Function {
 		}
 		throw new JolRuntimeException("Arg Table Function Fatal Error");
 	}
-
 }
