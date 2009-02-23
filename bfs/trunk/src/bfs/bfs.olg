@@ -12,9 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 import jol.types.basic.ValueList;
 
-watch(file, ae);
-watch(fpath, ae);
-
 // Node address, Request ID, Request type, Arg
 define(start_request, keys(0, 1), {String, Integer, String, String});
 
@@ -27,7 +24,7 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 // Client node, Request ID, Master node, Success, Result (if any). The
 // type of the result depends on the type of request.
 define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
-watch(response, aes);
+watch(response, ae);
 
 // NewChunk: append a new chunk to a file
 public
@@ -212,7 +209,8 @@ public
 compute_ls(@Master, ParentFileId, set<FInfo>) :-
     file(@Master, FileId, ParentFileId, FName, IsDir),
     fpath(@Master, FPath, FileId),
-    FInfo := new BFSFileInfo(FileId, FPath, FName, IsDir);
+    fsize(@Master, FileId, FLength),
+    FInfo := new BFSFileInfo(FileId, FPath, FName, FLength, IsDir);
 
 // "ls" for an empty directory => return empty set of files
 response(@Source, Id, Master, true, EmptySet) :-
@@ -227,8 +225,9 @@ response(@Source, Id, Master, true, EmptySet) :-
 response(@Source, Id, Master, true, FInfo) :-
     request(@Master, Id, Source, "FileInfo", FPath),
     fpath(@Master, FPath, FileId),
+    fsize(@Master, FileId, FSize),
     file(@Master, FileId, _, FName, IsDir),
-    FInfo := new BFSFileInfo(FileId, FPath, FName, IsDir);
+    FInfo := new BFSFileInfo(FileId, FPath, FName, FSize, IsDir);
 
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "FileInfo", FPath),

@@ -8,12 +8,14 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	private final int fileId;
 	private final String path;
 	private final String name;
+	private final long length;
 	private final boolean isDirectory;
 
-	public BFSFileInfo(int fileId, String path, String name, boolean isDirectory) {
+	public BFSFileInfo(int fileId, String path, String name, Long length, boolean isDirectory) {
 		this.fileId = fileId;
 		this.path = path;
 		this.name = name;
+		this.length = length;
 		this.isDirectory = isDirectory;
 	}
 
@@ -41,9 +43,8 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 		return Conf.getChunkSize();
 	}
 
-	// TODO
 	public long getLength() {
-		return 0;
+		return length;
 	}
 
 	// TODO
@@ -57,22 +58,44 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	}
 
 	public int compareTo(BFSFileInfo o) {
-		return this.path.compareTo(o.path);
+		int result = this.path.compareTo(o.path);
+		if (result != 0)
+			return result;
+
+		if (o.isDirectory && !this.isDirectory)
+			return 1;
+		if (!o.isDirectory && this.isDirectory)
+			return -1;
+		if (o.length > this.length)
+			return 1;
+		if (o.length < this.length)
+			return -1;
+
+		return 0;
 	}
 
-	// XXX: should probably consider "isDirectory"
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof BFSFileInfo))
 			return false;
 
 		BFSFileInfo fInfo = (BFSFileInfo) o;
-		return fInfo.path.equals(fInfo.path);
+
+		if (fInfo.length != this.length)
+			return false;
+		if (fInfo.isDirectory != this.isDirectory)
+			return false;
+		return fInfo.path.equals(this.path);
 	}
 
 	@Override
 	public int hashCode() {
-		return this.path.hashCode();
+		int h = 71;
+		h = (h * 31) + (int) (this.length ^ this.length >>> 32);
+		h = (h * 31) + this.path.hashCode();
+		if (this.isDirectory)
+			h += 73;
+		return h;
 	}
 
 	@Override
