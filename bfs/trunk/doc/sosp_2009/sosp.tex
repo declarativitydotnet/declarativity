@@ -150,6 +150,20 @@ The global semantics that follow depend on the program. Loo proved that programs
 \section{A Naive Analytics Stack}
 Simple implementations of a Map/Reduce workalike, running on top of a
 GFS workalike~\cite{gfs-sosp}.
+\begin{verbatim}
+Tyson notes:
+
+Examined hadoop source code. Here is how we tablized the main datastructures. 
+-Maybe a table that has class/datastructure and reference table in new system (do tonight).
+
+- Talk about the 3 query modules (jobtracker.olg, scheduler.olg, policy.olg).
+Should talk about the API to the policy. How did you use OVerlog to get an
+extensiblity interface.
+
+Think about main event loop to show... might help with notion of APIs. Describe what is behind the defined tables.
+
+Conclude with what was hard what was easy (line counts, including java added/deleted and overlog written). Reflect on the OverLog to Java boundary. 
+\end{verbatim}
 
 \section{Reliability}
 \begin{itemize}
@@ -176,6 +190,16 @@ GFS workalike~\cite{gfs-sosp}.
 \end{itemize}
 
 \section{Performance}
+
+\begin{verbatim}
+Tyson notes:
+
+1. Duty cycle to scheduler logic. (JOL not ready to be in the fastpath)
+1.5: Try to describe how I separated the policy file from the main jobtracker logic to make an extensible policy module.
+2. Talk about different policies. . What changes to the original policy occurred. 
+
+\end{verbatim}
+
 \begin{itemize}
 \item
   Scheduler
