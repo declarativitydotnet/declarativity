@@ -32,7 +32,7 @@ public
 candidate_datanode(Master, Id, FPath, NewChunkId, set<DataNode>) :-
     bfs::request(Master, Id, _, "NewChunk", FPath),
     chunkSeq(Master, NewChunkId),
-    bfs::possible_choices(Master, Cnt, DataNode, _),
+    bfs::possible_choices(Master, _, DataNode, _),
     bfs::fpath(Master, FPath, FileId),
     bfs::file(Master, FileId, _, _, false),
     notin candidate_datanode(Master, Id, FPath, _, _);
