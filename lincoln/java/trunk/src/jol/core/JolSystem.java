@@ -29,6 +29,12 @@ public interface JolSystem {
 
 	/** Start the asynchronous system driver. */
 	void start();
+	
+	/** Indicates the last time a call was made to evaluate. */
+	Long timestamp();
+	
+	/** See {@link Thread#setPriority(int)} */
+	void setPriority(int newPriority);
 
 	/**
 	 * Perform a single fixpoint computation.

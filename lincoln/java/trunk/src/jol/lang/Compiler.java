@@ -234,6 +234,8 @@ public class Compiler {
 			/* Next evaluate all table and event declarations. */
 			for (Node clause : node.getNode(1).<Node> getList(0)) {
 				if (clause.getName().equals("Table") ||
+						clause.getName().equals("AggregationTable") ||
+						clause.getName().equals("StasisTable") ||
 						clause.getName().equals("Event") ||
 						clause.getName().equals("Timer")) {
 					typeChecker.dispatch(clause);
@@ -263,7 +265,7 @@ public class Compiler {
 			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage(), e.node());
 			System.err.println("Compile error. Exiting.");
 			System.exit(0);
-		} catch (Throwable e) {
+		} catch (UpdateException e) {
 			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage());
 			System.err.println("Compile error. Exiting.");
 			System.exit(0);

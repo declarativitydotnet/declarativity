@@ -130,6 +130,14 @@ public class Runtime implements JolSystem {
 	public Object lock() {
 		return this.driver;
 	}
+	
+	public Long timestamp() {
+		return this.driver.timestamp();
+	}
+	
+	public void setPriority(int newPriority) {
+		this.driver.setPriority(newPriority);
+	}
 
 	/** @return true if debug level is active, false otherwise.
 	 * @see DebugLevel */

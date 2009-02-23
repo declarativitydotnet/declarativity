@@ -537,6 +537,9 @@ public class Driver extends Thread {
 
 	/** The flusher table function. */
 	private Flusher flusher;
+	
+	/** The last time that an evaluation occurred. */
+	private Long timestamp;
 
 	/**
 	 * Creates a new driver.
@@ -553,6 +556,7 @@ public class Driver extends Thread {
 		this.logicalTime = 0L;
 		this.evaluator = new Evaluator(context, executor);
 		this.flusher = new Flusher(context);
+		this.timestamp = 0L;
 
 		context.catalog().register(this.evaluator);
 		context.catalog().register(this.flusher);
@@ -564,6 +568,10 @@ public class Driver extends Thread {
 	 */
 	public void runtime(Program runtime) {
 		this.runtime = runtime;
+	}
+	
+	public Long timestamp() {
+		return this.timestamp;
 	}
 
 	/**
@@ -684,6 +692,9 @@ public class Driver extends Thread {
 			}
 		} catch (Throwable t) {
 			throw new JolRuntimeException(t);
+		}
+		finally {
+			this.timestamp = System.currentTimeMillis();
 		}
 	}
 

@@ -82,7 +82,15 @@ watch(checkListComp, a);
 checkListComp(Comp) :-
 	links(Count), Comp := [1, 2] < [1, 3];
 	
+watch(checkArgMin, a);
+watch(checkArgMax, a);
+define(bufferPath, {String, String, Integer});
+define(checkArgMin, {String, String, Integer});
+define(checkArgMax, {String, String, Integer});
 
+bufferPath(Source, Destination, Hops) :- path(Source, Destination, Hops);
+checkArgMax(Source, Destination, Hops) :- arg(bufferPath(Source, Destination, max<Hops>));
+checkArgMin(Source, Destination, Hops) :- arg(bufferPath(Source, Destination, min<Hops>));
 
 import jol.types.basic.Schema;
 allPaths(Source, generic<(new ValueList()).insert(Destination)>) :-

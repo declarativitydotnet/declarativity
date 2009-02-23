@@ -28,6 +28,7 @@ Node Clause =
   / <Load>   Load
   / <Fact>   Fact
   / <Import> Import
+  / <Stasis> StasisTable
   / <Define> Definition
   ;
   
@@ -99,6 +100,12 @@ generic Definition =
             void:",":Symbol Schema void:")":Symbol 
             @Event
   ; 
+  
+generic StasisTable =
+    <Table> void:"stasis":Word 
+            void:"(":Symbol TableName void:",":Symbol
+            Keys void:",":Symbol Schema void:")":Symbol 
+  ;
 
 generic Keys = 
      <Keys>  void:"keys":Word void:"(":Symbol IntegerList void:")":Symbol
