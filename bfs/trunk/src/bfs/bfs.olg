@@ -32,7 +32,7 @@ public
 response(@Source, Id, Master, true, Result) :-
     // this needs to be tied into a paxos decree to enforce the ordering.
     request(@Master, Id, Source, "NewChunk", FPath),
-    bfs_chunks::newListHolder(@Master, Id, CandidateNodes, NewChunkId, FPath),
+    bfs_chunks::newListHolder(@Master, Id, NewChunkId, CandidateNodes, FPath),
     Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
 delete

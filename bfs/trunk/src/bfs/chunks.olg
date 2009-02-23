@@ -23,15 +23,15 @@ chunkSeq(Master, 1) :-
 
 // if we get a "NewChunk" request for a file, create a new chunk id
 public
-chunkSeq(Master, I+1) :-
-    chunkSeq(Master, I),
-    newListHolder#insert(Master, _, _, I, _);
+chunkSeq(Master, ChunkId+1) :-
+    chunkSeq(Master, ChunkId),
+    newListHolder#insert(Master, _, ChunkId, _, _);
 
 
-define(newListHolder,keys(0,1),{String,Integer,Set,Integer,String});
+define(newListHolder,keys(0,1),{String,Integer,Integer,Set,String});
 //watch(newListHolder, ae);
 
-newListHolder(Master, Id, NodeSet, NewChunkId, FPath) :-
+newListHolder(Master, Id, NewChunkId, NodeSet, FPath) :-
     candidate_datanode(Master, Id, _, FPath, NewChunkId, NodeSet),
     bfs::request(Master, Id, _, "NewChunk", FPath);
 
