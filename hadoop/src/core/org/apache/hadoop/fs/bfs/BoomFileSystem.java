@@ -140,7 +140,7 @@ public class BoomFileSystem extends FileSystem {
 
 		for (Path p : pathHierarchy) {
 			// We assume that the root directory ("/") always exists
-			if (p.getName() == "/")
+			if (p.getParent() == null)
 				continue;
 
 			this.bfs.createDir(getPathName(p));
