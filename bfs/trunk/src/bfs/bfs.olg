@@ -67,7 +67,7 @@ response(@Source, Id, Master, true, Chunks) :-
     Cnt == Chunks.size(),
     compute_chunk_set(@Master, FileId, Chunks);
 
-
+// ChunkList for empty file => empty set
 response(@Source, Id, Master, true, EmptyChunks) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
@@ -86,8 +86,7 @@ response(@Source, Id, Master, false, null) :-
     fpath(@Master, FPath, FileId),
     file(@Master, FileId, _, _, true);
 
-define(fchunk_cnt, keys(0,1), {String,  Integer, Integer});
-//define(fchunk_cnt, {String,  Integer, Integer});
+define(fchunk_cnt, keys(0, 1), {String, Integer, Integer});
 public
 fchunk_cnt(Master, FileId, count<ChunkId>) :-
     fchunk(Master, ChunkId, FileId);
