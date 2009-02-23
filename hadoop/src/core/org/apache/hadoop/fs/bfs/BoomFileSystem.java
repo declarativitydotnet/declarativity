@@ -83,6 +83,7 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public FileStatus getFileStatus(Path path) throws IOException {
+		System.out.println("BFS#getFileStatus() called for " + path);
 		BFSFileInfo bfsInfo = this.bfs.getFileInfo(getPathName(path));
 		if (bfsInfo == null)
 			throw new FileNotFoundException("File does not exist: " + path);
