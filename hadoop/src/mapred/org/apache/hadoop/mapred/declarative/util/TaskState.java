@@ -19,7 +19,7 @@ public class TaskState implements Comparable<TaskState> {
 				            Constants.TaskPhase phase, 
 				            Long start, Long finish) {
 			this.progress = state == Constants.TaskState.SUCCEEDED ? 1f : progress;
-			this.state    = state;
+			this.state    = progress >= 1f ? Constants.TaskState.SUCCEEDED : state;
 			this.phase    = phase;
 			this.start    = start;
 			this.finish   = finish;

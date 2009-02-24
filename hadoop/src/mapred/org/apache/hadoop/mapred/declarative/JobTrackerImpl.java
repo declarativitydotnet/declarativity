@@ -103,8 +103,6 @@ public class JobTrackerImpl extends JobTracker {
 		this.context = context;
 		this.executor = Executors.newCachedThreadPool();
 		
-		context.setPriority(Thread.MAX_PRIORITY);
-
 		/* Install the declarative definitions. */
 		try {
 			install((jol.core.Runtime)context, conf);
