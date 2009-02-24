@@ -120,7 +120,7 @@ public class TimerTable extends Table {
 	public TimerTable(Runtime context, TableName name, String type, long period, long ttl, long delay) {
 		super(name, Table.Type.TIMER, null, SCHEMA);
 		this.context = context;
-		this.type    = type.toLowerCase().equals("physical") ? Type.PHYSICAL : Type.LOGICAL;
+		this.type    = type.equalsIgnoreCase("physical") ? Type.PHYSICAL : Type.LOGICAL;
 		this.period  = period;
 		this.ttl     = ttl;
 		this.delay   = delay;
