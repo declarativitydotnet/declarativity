@@ -70,13 +70,13 @@ public class Rule extends Clause {
 		}
 	}
 
-	private String program;
+	public String program;
 
-	private String name;
+	public String name;
 
-	private java.lang.Boolean isDelete;
+	public java.lang.Boolean isDelete;
 
-	private java.lang.Boolean isPublic;
+	public java.lang.Boolean isPublic;
 
 	private java.lang.Boolean isAsync;
 
