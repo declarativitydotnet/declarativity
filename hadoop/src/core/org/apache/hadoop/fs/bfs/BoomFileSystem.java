@@ -10,6 +10,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -30,9 +31,31 @@ public class BoomFileSystem extends FileSystem {
 	public void initialize(URI uri, Configuration conf) throws IOException {
         setConf(conf);
 
-        int clientPort = conf.getInt("fs.bfs.clientPort", 5015);
-        System.out.println("BFS#initialize(): client port = " + clientPort);
-        this.bfs = new BFSClient(clientPort);
+		/**
+		 * XXX: JOL currently requires a fixed local port to bind to. Since
+		 * BoomFileSystem might be instanciated many times on the same machine,
+		 * we can't just pick a single port. For now, randomly pick ports from
+		 * within a range until we find a port we can bind to. There's a race
+		 * between checking for the bind and starting JOL, of course, but the
+		 * whole approach is broken anyway.
+		 */
+        int minPort = conf.getInt("fs.bfs.minPort", 12000);
+        int maxPort = conf.getInt("fs.bfs.maxPort", 32000);
+        if (maxPort <= minPort)
+        	throw new IllegalStateException();
+
+        Random r = new Random();
+        while (true) {
+        	int tryPort = r.nextInt(maxPort - minPort) + minPort;
+        	System.out.println("BFS#initialize(): trying to create JOL @ port " + tryPort);
+        	try {
+        		this.bfs = new BFSClient(tryPort);
+        	} catch (RuntimeException e) {
+        		continue;
+        	}
+        	break;
+        }
+
         this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 	}
 

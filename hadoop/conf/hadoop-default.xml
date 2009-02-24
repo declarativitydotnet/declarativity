@@ -38,7 +38,7 @@
 <property>
   <name>hadoop.job.history.location</name>
   <value></value>
-  <description> If job tracker is static the history files are stored 
+  <description> If job tracker is static the history files are stored
   in this single well known place. If No value is set here, by default,
   it is in the local file system at ${hadoop.log.dir}/history.
   </description>
@@ -47,10 +47,10 @@
 <property>
   <name>hadoop.job.history.user.location</name>
   <value></value>
-  <description> User can specify a location to store the history files of 
-  a particular job. If nothing is specified, the logs are stored in 
+  <description> User can specify a location to store the history files of
+  a particular job. If nothing is specified, the logs are stored in
   output directory. The files are stored in "_logs/history/" in the directory.
-  User can stop logging by giving the value "none". 
+  User can stop logging by giving the value "none".
   </description>
 </property>
 
@@ -74,7 +74,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>io.sort.mb</name>
   <value>100</value>
-  <description>The total amount of buffer memory to use while sorting 
+  <description>The total amount of buffer memory to use while sorting
   files, in megabytes.  By default, gives each merge stream 1MB, which
   should minimize seeks.</description>
 </property>
@@ -105,7 +105,7 @@ creations/deletions), or "all".</description>
   page size (4096 on Intel x86), and it determines how much data is
   buffered during read and write operations.</description>
 </property>
-  
+
 <property>
   <name>io.bytes.per.checksum</name>
   <value>512</value>
@@ -120,7 +120,7 @@ creations/deletions), or "all".</description>
   reading a sequence file, entries are skipped, instead of throwing an
   exception.</description>
 </property>
-  
+
 <property>
   <name>io.map.index.skip</name>
   <value>0</value>
@@ -132,7 +132,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>io.compression.codecs</name>
   <value>org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.GzipCodec</value>
-  <description>A list of the compression codec classes that can be used 
+  <description>A list of the compression codec classes that can be used
                for compression/decompression.</description>
 </property>
 
@@ -228,9 +228,15 @@ creations/deletions), or "all".</description>
 </property>
 
 <property>
-  <name>fs.bfs.clientPort</name>
+  <name>fs.bfs.minPort</name>
   <value>5015</value>
-  <description>TCP port to use for BFS client connections.</description>
+  <description>Minimum in the range of ports to use for BFS connections.</description>
+</property>
+
+<property>
+  <name>fs.bfs.maxPort</name>
+  <value>5015</value>
+  <description>Maximum in the range of ports to use for BFS connections.</description>
 </property>
 
 <property>
@@ -336,11 +342,11 @@ creations/deletions), or "all".</description>
  <property>
   <name>dfs.datanode.dns.interface</name>
   <value>default</value>
-  <description>The name of the Network Interface from which a data node should 
+  <description>The name of the Network Interface from which a data node should
   report its IP address.
   </description>
  </property>
- 
+
 <property>
   <name>dfs.datanode.dns.nameserver</name>
   <value>default</value>
@@ -349,7 +355,7 @@ creations/deletions), or "all".</description>
   NameNode for communication and display purposes.
   </description>
  </property>
- 
+
 <property>
   <name>dfs.replication.considerLoad</name>
   <value>true</value>
@@ -434,7 +440,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>dfs.replication</name>
   <value>3</value>
-  <description>Default block replication. 
+  <description>Default block replication.
   The actual number of replications can be specified when the file is created.
   The default is used if replication is not specified in create time.
   </description>
@@ -443,14 +449,14 @@ creations/deletions), or "all".</description>
 <property>
   <name>dfs.replication.max</name>
   <value>512</value>
-  <description>Maximal block replication. 
+  <description>Maximal block replication.
   </description>
 </property>
 
 <property>
   <name>dfs.replication.min</name>
   <value>1</value>
-  <description>Minimal block replication. 
+  <description>Minimal block replication.
   </description>
 </property>
 
@@ -469,7 +475,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>dfs.client.block.write.retries</name>
   <value>3</value>
-  <description>The number of retries for writing blocks to the data nodes, 
+  <description>The number of retries for writing blocks to the data nodes,
   before we signal failure to the application.
   </description>
 </property>
@@ -501,7 +507,7 @@ creations/deletions), or "all".</description>
   <name>dfs.safemode.threshold.pct</name>
   <value>0.999f</value>
   <description>
-  	Specifies the percentage of blocks that should satisfy 
+  	Specifies the percentage of blocks that should satisfy
   	the minimal replication requirement defined by dfs.replication.min.
   	Values less than or equal to 0 mean not to start in safe mode.
   	Values greater than 1 will make safe mode permanent.
@@ -512,7 +518,7 @@ creations/deletions), or "all".</description>
   <name>dfs.safemode.extension</name>
   <value>30000</value>
   <description>
-  	Determines extension of safe mode in milliseconds 
+  	Determines extension of safe mode in milliseconds
   	after the threshold level is reached.
  	</description>
 </property>
@@ -543,7 +549,7 @@ creations/deletions), or "all".</description>
   not permitted to connect to the namenode.  The full pathname of the
   file must be specified.  If the value is empty, no hosts are
   excluded.</description>
-</property> 
+</property>
 
 <property>
   <name>dfs.max.objects</name>
@@ -584,7 +590,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>fs.s3.maxRetries</name>
   <value>4</value>
-  <description>The maximum number of retries for reading or writing files to S3, 
+  <description>The maximum number of retries for reading or writing files to S3,
   before we signal failure to the application.
   </description>
 </property>
@@ -628,9 +634,9 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.task.tracker.report.address</name>
   <value>127.0.0.1:0</value>
-  <description>The interface and port that task tracker server listens on. 
+  <description>The interface and port that task tracker server listens on.
   Since it is only connected to by the tasks, it uses the local interface.
-  EXPERT ONLY. Should only be changed if your host does not have the loopback 
+  EXPERT ONLY. Should only be changed if your host does not have the loopback
   interface.</description>
 </property>
 
@@ -651,7 +657,7 @@ creations/deletions), or "all".</description>
   to 10GB. This will act as a soft limit on the cache directory for out of band data.
   </description>
 </property>
-            
+
 <property>
   <name>mapred.system.dir</name>
   <value>${hadoop.tmp.dir}/mapred/system</value>
@@ -669,7 +675,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.local.dir.minspacestart</name>
   <value>0</value>
-  <description>If the space in mapred.local.dir drops under this, 
+  <description>If the space in mapred.local.dir drops under this,
   do not ask for more tasks.
   Value in bytes.
   </description>
@@ -678,9 +684,9 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.local.dir.minspacekill</name>
   <value>0</value>
-  <description>If the space in mapred.local.dir drops under this, 
-  	do not ask more tasks until all the current ones have finished and 
-  	cleaned up. Also, to save the rest of the tasks we have running, 
+  <description>If the space in mapred.local.dir drops under this,
+  	do not ask more tasks until all the current ones have finished and
+  	cleaned up. Also, to save the rest of the tasks we have running,
   	kill one of them, to clean up some space. Start with the reduce tasks,
   	then go with the ones that have finished the least.
   	Value in bytes.
@@ -700,7 +706,7 @@ creations/deletions), or "all".</description>
   <value>2</value>
   <description>The default number of map tasks per job.  Typically set
   to a prime several times greater than number of available hosts.
-  Ignored when mapred.job.tracker is "local".  
+  Ignored when mapred.job.tracker is "local".
   </description>
 </property>
 
@@ -742,7 +748,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.reduce.copy.backoff</name>
   <value>300</value>
-  <description>The maximum amount of time (in seconds) a reducer spends on 
+  <description>The maximum amount of time (in seconds) a reducer spends on
   fetching one map output before declaring it as failed.
   </description>
 </property>
@@ -782,29 +788,29 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.child.java.opts</name>
   <value>-Xmx200m</value>
-  <description>Java opts for the task tracker child processes.  
-  The following symbol, if present, will be interpolated: @taskid@ is replaced 
+  <description>Java opts for the task tracker child processes.
+  The following symbol, if present, will be interpolated: @taskid@ is replaced
   by current TaskID. Any other occurrences of '@' will go unchanged.
   For example, to enable verbose gc logging to a file named for the taskid in
   /tmp and to set the heap maximum to be a gigabyte, pass a 'value' of:
         -Xmx1024m -verbose:gc -Xloggc:/tmp/@taskid@.gc
-  
+
   The configuration variable mapred.child.ulimit can be used to control the
-  maximum virtual memory of the child processes. 
+  maximum virtual memory of the child processes.
   </description>
 </property>
 
 <property>
   <name>mapred.child.ulimit</name>
   <value></value>
-  <description>The maximum virtual memory, in KB, of a process launched by the 
-  Map-Reduce framework. This can be used to control both the Mapper/Reducer 
-  tasks and applications using Hadoop Pipes, Hadoop Streaming etc. 
-  By default it is left unspecified to let cluster admins control it via 
+  <description>The maximum virtual memory, in KB, of a process launched by the
+  Map-Reduce framework. This can be used to control both the Mapper/Reducer
+  tasks and applications using Hadoop Pipes, Hadoop Streaming etc.
+  By default it is left unspecified to let cluster admins control it via
   limits.conf and other such relevant mechanisms.
-  
+
   Note: mapred.child.ulimit must be greater than or equal to the -Xmx passed to
-  JavaVM, else the VM might not start. 
+  JavaVM, else the VM might not start.
   </description>
 </property>
 
@@ -823,7 +829,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.inmem.merge.threshold</name>
   <value>1000</value>
-  <description>The threshold, in terms of the number of files 
+  <description>The threshold, in terms of the number of files
   for the in-memory merge process. When we accumulate threshold number of files
   we initiate the in-memory merge and spill to disk. A value of 0 or less than
   0 indicates we want to DON'T have any threshold and instead depend only on
@@ -834,14 +840,14 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.map.tasks.speculative.execution</name>
   <value>true</value>
-  <description>If true, then multiple instances of some map tasks 
+  <description>If true, then multiple instances of some map tasks
                may be executed in parallel.</description>
 </property>
 
 <property>
   <name>mapred.reduce.tasks.speculative.execution</name>
   <value>true</value>
-  <description>If true, then multiple instances of some reduce tasks 
+  <description>If true, then multiple instances of some reduce tasks
                may be executed in parallel.</description>
 </property>
 
@@ -869,7 +875,7 @@ creations/deletions), or "all".</description>
   tracker should report its IP address.
   </description>
  </property>
- 
+
 <property>
   <name>mapred.tasktracker.dns.nameserver</name>
   <value>default</value>
@@ -878,7 +884,7 @@ creations/deletions), or "all".</description>
   the JobTracker for communication and display purposes.
   </description>
  </property>
- 
+
 <property>
   <name>tasktracker.http.threads</name>
   <value>40</value>
@@ -899,13 +905,13 @@ creations/deletions), or "all".</description>
 <property>
   <name>keep.failed.task.files</name>
   <value>false</value>
-  <description>Should the files for failed tasks be kept. This should only be 
+  <description>Should the files for failed tasks be kept. This should only be
                used on jobs that are failing, because the storage is never
                reclaimed. It also prevents the map outputs from being erased
                from the reduce directory as they are consumed.</description>
 </property>
 
-<!-- 
+<!--
   <property>
   <name>keep.task.files.pattern</name>
   <value>.*_m_123456_0</value>
@@ -947,7 +953,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.map.output.compression.codec</name>
   <value>org.apache.hadoop.io.compress.DefaultCodec</value>
-  <description>If the map outputs are compressed, how should they be 
+  <description>If the map outputs are compressed, how should they be
                compressed?
   </description>
 </property>
@@ -955,7 +961,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>io.seqfile.compress.blocksize</name>
   <value>1000000</value>
-  <description>The minimum block size for compression in block compressed 
+  <description>The minimum block size for compression in block compressed
   				SequenceFiles.
   </description>
 </property>
@@ -971,7 +977,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>io.seqfile.sorter.recordlimit</name>
   <value>1000000</value>
-  <description>The limit on number of records to be kept in memory in a spill 
+  <description>The limit on number of records to be kept in memory in a spill
   				in SequenceFiles.Sorter
   </description>
 </property>
@@ -993,7 +999,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>mapred.userlog.retain.hours</name>
   <value>24</value>
-  <description>The maximum time, in hours, for which the user-logs are to be 
+  <description>The maximum time, in hours, for which the user-logs are to be
   				retained.
   </description>
 </property>
@@ -1012,12 +1018,12 @@ creations/deletions), or "all".</description>
   <description>Names a file that contains the list of hosts that
   should be excluded by the jobtracker.  If the value is empty, no
   hosts are excluded.</description>
-</property> 
+</property>
 
 <property>
   <name>mapred.max.tracker.failures</name>
   <value>4</value>
-  <description>The number of task-failures on a tasktracker of a given job 
+  <description>The number of task-failures on a tasktracker of a given job
                after which new tasks of that job aren't assigned to it.
   </description>
 </property>
@@ -1026,8 +1032,8 @@ creations/deletions), or "all".</description>
   <name>jobclient.output.filter</name>
   <value>FAILED</value>
   <description>The filter for controlling the output of the task's userlogs sent
-               to the console of the JobClient. 
-               The permissible options are: NONE, KILLED, FAILED, SUCCEEDED and 
+               to the console of the JobClient.
+               The permissible options are: NONE, KILLED, FAILED, SUCCEEDED and
                ALL.
   </description>
 </property>
@@ -1135,18 +1141,18 @@ creations/deletions), or "all".</description>
 <property>
   <name>ipc.server.tcpnodelay</name>
   <value>false</value>
-  <description>Turn on/off Nagle's algorithm for the TCP socket connection on 
+  <description>Turn on/off Nagle's algorithm for the TCP socket connection on
   the server. Setting to true disables the algorithm and may decrease latency
-  with a cost of more/smaller packets. 
+  with a cost of more/smaller packets.
   </description>
 </property>
 
 <property>
   <name>ipc.client.tcpnodelay</name>
   <value>false</value>
-  <description>Turn on/off Nagle's algorithm for the TCP socket connection on 
+  <description>Turn on/off Nagle's algorithm for the TCP socket connection on
   the client. Setting to true disables the algorithm and may decrease latency
-  with a cost of more/smaller packets. 
+  with a cost of more/smaller packets.
   </description>
 </property>
 
@@ -1184,9 +1190,9 @@ creations/deletions), or "all".</description>
 <property>
   <name>webinterface.private.actions</name>
   <value>false</value>
-  <description> If set to true, the web interfaces of JT and NN may contain 
-                actions, such as kill job, delete file, etc., that should 
-                not be exposed to public. Enable this option if the interfaces 
+  <description> If set to true, the web interfaces of JT and NN may contain
+                actions, such as kill job, delete file, etc., that should
+                not be exposed to public. Enable this option if the interfaces
                 are only reachable by those who have the right authorization.
   </description>
 </property>
@@ -1250,7 +1256,7 @@ creations/deletions), or "all".</description>
 <property>
   <name>topology.script.number.args</name>
   <value>20</value>
-  <description> The max number of args that the script configured with 
+  <description> The max number of args that the script configured with
     topology.script.file.name should be run with. Each arg is an
     IP address.
   </description>
