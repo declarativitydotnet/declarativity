@@ -519,6 +519,8 @@ public final class TypeChecker extends Visitor {
 		}
 
 		String timerType = n.getString(1);
+		if (!timerType.equalsIgnoreCase("physical") && !timerType.equalsIgnoreCase("logical"))
+			throw new CompileException("Unrecognized timer type: " + timerType, n.getNode(1));
 
 		type = (Class) dispatch(n.getNode(2));
 		Value<Integer> period = (Value) n.getNode(2).getProperty(Constants.TYPE);
