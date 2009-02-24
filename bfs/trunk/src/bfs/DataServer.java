@@ -102,27 +102,23 @@ public class DataServer extends Thread {
             }
         }
 
-        private void doWriteOperation() {
-            try {
-                int chunkId = readInt();
-                List<String> path = readHeaders();
-                int dataLength = readInt();
+        private void doWriteOperation() throws IOException {
+        	int chunkId = this.in.readInt();
+        	List<String> path = readHeaders();
+        	int dataLength = this.in.readInt();
 
-                File chunkFile = createChunkFile(chunkId);
-                FileChannel fc = new FileOutputStream(chunkFile).getChannel();
-                fc.transferFrom(this.channel, 0, dataLength);
-                fc.close();
+        	File chunkFile = createChunkFile(chunkId);
+        	FileChannel fc = new FileOutputStream(chunkFile).getChannel();
+        	fc.transferFrom(this.channel, 0, dataLength);
+        	fc.close();
 
-                // we are not pipelining yet.
-                if (path.size() > 0) {
-                    System.out.println("Path size was " + path.size());
-                    copyToNext(chunkFile, chunkId, path);
-                }
+        	// we are not pipelining yet.
+        	if (path.size() > 0) {
+        		System.out.println("Path size was " + path.size());
+        		copyToNext(chunkFile, chunkId, path);
+        	}
 
-                createCRCFile(chunkId, getFileChecksum(chunkFile));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        	createCRCFile(chunkId, getFileChecksum(chunkFile));
         }
 
         private void copyToNext(File f, int chunkId, List<String> path) throws IOException {
@@ -135,22 +131,14 @@ public class DataServer extends Thread {
         	conn.close();
         }
 
-        private void doDeleteOperation() {
-            int chunkId = readInt();
+        private void doDeleteOperation() throws IOException {
+            int chunkId = this.in.readInt();
 			File victim = getChunkFile(chunkId);
 			victim.delete();
         }
 
-        private int readInt() {
-            try {
-                return this.in.readInt();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
         private List<String> readHeaders() throws IOException {
-            // XXX: clean me later
+            // XXX: clean this up later
         	String[] path = null;
         	int sourceRouteListLen = this.in.readInt();
         	if (sourceRouteListLen > 0) {
@@ -274,49 +262,37 @@ public class DataServer extends Thread {
 		}
 	}
 
-    public void createCRCFile(int chunkId, long checksum) {
+    public void createCRCFile(int chunkId, long checksum) throws IOException {
         System.out.println("create file for chunk " + chunkId  + " and checksum " + checksum + "\n");
         String filename = this.fsRoot + File.separator + "checksums" + File.separator
                 + chunkId + ".cksum";
         File newf = new File(filename);
-        try {
-            if (!newf.createNewFile())
-                throw new RuntimeException("Failed to create fresh file " + filename);
+        if (!newf.createNewFile())
+        	throw new RuntimeException("Failed to create fresh file " + filename);
 
-            FileOutputStream fos = new FileOutputStream(newf);
-            // temporary
-            fos.write(new Long(checksum).toString().getBytes());
-            fos.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        FileOutputStream fos = new FileOutputStream(newf);
+        // temporary
+        fos.write(new Long(checksum).toString().getBytes());
+        fos.close();
     }
 
-    private long getFileChecksum(File file) {
-        try {
-            FileInputStream s = new FileInputStream(file);
-            CheckedInputStream check = new CheckedInputStream(s, new CRC32());
-            BufferedInputStream in = new BufferedInputStream(check);
-            while (in.read() != -1) {
+    private long getFileChecksum(File file) throws IOException {
+    	FileInputStream s = new FileInputStream(file);
+    	CheckedInputStream check = new CheckedInputStream(s, new CRC32());
+    	BufferedInputStream in = new BufferedInputStream(check);
+    	while (in.read() != -1) {
 
-            }
-            return check.getChecksum().getValue();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    	}
+    	return check.getChecksum().getValue();
     }
 
-    public File createChunkFile(int chunkId) {
+    public File createChunkFile(int chunkId) throws IOException {
         String filename = this.fsRoot + File.separator + "chunks" + File.separator
                 + chunkId;
         File newf = new File(filename);
-        try {
-            if (!newf.createNewFile()) {
-                throw new RuntimeException("Failed to create fresh file " + filename);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        if (!newf.createNewFile())
+        	throw new RuntimeException("Failed to create fresh file " + filename);
+
         return newf;
     }
 
