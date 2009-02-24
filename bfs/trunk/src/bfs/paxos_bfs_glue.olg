@@ -25,8 +25,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     Decree := FPath + DirStr + ",d," + Id.toString() + ",-1";
 
 // If we are adding a chunk to a file's chunklist, we likewise need to
-// pass it through paxos. (and indeed, should block the requestor, but
-// this is not implemented yet XXX)
+// pass it through Paxos.
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
