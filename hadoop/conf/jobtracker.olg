@@ -22,19 +22,10 @@ watch(job, a);
 watch(task, a);
 watch(taskAttempt, a);
 
-/* Action debug rules
-watch(taskTrackerAction, ae);
-define(newAction, {TaskTrackerAction});
-define(allActions, {TaskTrackerAction});
 
-watch(allActions, a);
-public
-newAction(Action) :-
-	taskTrackerAction(_, _, Action);
+/*************** JobTracker Duty Cycle (PERFORMANCE HACK) *********************/
+timer(dutyCycle, physical, 5000, infinity, 0);
 
-allActions(Action) :-
-	newAction(_), taskTrackerAction(_,_,Action);
-*/
 /*************** Task Tracker Monitor *********************/
 
 /*
@@ -49,31 +40,6 @@ taskTracker(TrackerName, Host, HttpPort, Constants.TaskTrackerState.FAILED,
 	java.lang.System.currentTimeMillis() - Timestamp > Period;
 	*/
 	
-define(trackerFilter, {String, Long});
-define(trackerUpdate, keys(0,4), {String, String, Integer, Constants.TaskTrackerState, 
-                                Long, int, int, int, int, int});
-
-trackerFilter(TrackerName, max<Timestamp>) :-
-    trackerUpdate(TrackerName, Host, HttpPort, State, 
-                  Timestamp, Failures,  
-                  MapCount, ReduceCount, 
-                  MaxMap, MaxReduce);
-                  
-delete 
-trackerUpdate(TrackerName, Host, Port, TState, Timestamp, 
-              Failures, MapCount, ReduceCount, MaxMap, MaxReduce) :-
-	trackerFilter(TrackerName, MostRecent),
-	taskTracker(TrackerName, Host, Port, TState, Timestamp, 
-	            Failures, MapCount, ReduceCount, MaxMap, MaxReduce),
-	Timestamp < MostRecent;
-                  
-taskTracker(TrackerName, Host, Port, TState, Timestamp, 
-            Failures, MapCount, ReduceCount, MaxMap, MaxReduce) :-
-	trackerFilter(TrackerName, Timestamp),
-	trackerUpdate(TrackerName, Host, Port, TState, Timestamp, 
-	              Failures, MapCount, ReduceCount, MaxMap, MaxReduce);
-	
-
 /*************** Clean up *********************/
 
 define(cleanup, {JobID});
@@ -150,7 +116,7 @@ networkDistance(Location1, Location2, min<Distance>) :-
 import java.util.Set;
 	
 /* Update the job state. */
-updateJobState
+public updateJobState
 job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus) :-
 	taskUpdate(JobId, TaskId, Type, TaskStatus),
 	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, JobStatus),
@@ -196,11 +162,10 @@ taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED,
 	TrackerState != Constants.TaskTrackerState.RUNNING,
 	TaskState == Constants.TaskState.RUNNING;
 	
-public
 taskUpdate(JobId, TaskId, Type, TaskStatus) :-
-	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, Timestamp),
+	dutyCycle(), taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, Timestamp),
+	State == Constants.TaskState.SUCCEEDED || State == Constants.TaskState.COMMIT_PENDING || State == Constants.TaskState.FAILED,
 	task(JobID, TaskId, Type, _, _, _, TaskStatus),
-	State != Constants.TaskState.UNASSIGNED,
 	TaskStatus.state() == Constants.TaskState.UNASSIGNED || 
 	TaskStatus.state() == Constants.TaskState.FAILED || 
 	TaskStatus.state() == Constants.TaskState.RUNNING,
