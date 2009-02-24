@@ -7,7 +7,7 @@ import java.util.Set;
 /*****************************/
 define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
 
-timer(clock, physical, 1000, 1000, infinity);
+timer(clock, physical, 1000, infinity, 0);
 
 define(ackHeartBeat, {String, String, Long});
 ackHeartBeat(@Dnode, Master, Id) :-
@@ -77,7 +77,7 @@ define(back_of_list, keys(0,1), {String,Integer,String});
 back_of_list(Master, ChunkId, min<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
 
-timer(long_period, physical, 10000, 100000, 0);
+timer(long_period, physical, 10000, infinity, 0);
 
 define(to_delete, keys(0,2), {String,String,Integer});
 to_delete(Master, DataNode, ChunkId) :-
