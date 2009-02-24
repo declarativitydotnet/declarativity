@@ -17,9 +17,9 @@ possible_choices(Master, Cnt, DataNode, Id) :-
 */
 
 watch(migration_choices, ae);
-public 
+public
 migration_choices(Master, DataNode, ChunkId) :-
-    bfs_heartbeat::newReplica(Master, ChunkId, _, _, _),  
+    bfs_heartbeat::newReplica(Master, ChunkId, _, _, _),
     bfs_heartbeat::dataNodes(Master, DataNode, _),
     notin bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
 
@@ -34,7 +34,7 @@ define(lowest_loaded_cnt, keys(0), {String, ValueList});
 lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
     chunk_cnt(Master, _, Cnt);
 
-timer(clock, physical, 1000,1000, infinity);
+timer(clock, physical, 1000, 1000, infinity);
 
 define(chunk_cnt, keys(0,1), {String,String,Integer});
 //watch(chunk_cnt, ae);
