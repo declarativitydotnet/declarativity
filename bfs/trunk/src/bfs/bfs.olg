@@ -20,7 +20,6 @@ watch(request, ae);
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
     master_for_node(@Source, Master),
-    // XXX PA
     start_request(@Source, ReqId, ReqType, Args);
 
 // Client node, Request ID, Master node, Success, Result (if any). The
