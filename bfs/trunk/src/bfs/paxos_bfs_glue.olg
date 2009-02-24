@@ -11,7 +11,6 @@ watch(bfs::fsize,ae);
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
-    // err
     From := Master,
     bfs::create_request_pending(Master, Id, ParentId, FName, IsDir),
     DirStr := (IsDir ? ",d" : ",f"),
