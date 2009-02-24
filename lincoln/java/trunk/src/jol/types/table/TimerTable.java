@@ -22,9 +22,9 @@ import jol.types.exception.UpdateException;
  * <code>
  * 		timer(<b>Name</b>, <b>Type</b>, <b>Period</b>, <b>TTL</b>, <b>Delay</b>);
  * </code> <br><br>
- * <b>Name:</b> String valued name to which the timer maybe referred in a rule.<br>
+ * <b>Name:</b> String valued name which the timer may be referred to in a rule.<br>
  * <b>Type:</b> The timer type can be either 'logical' or 'physical'.<br>
- * <b>Period:</b> The period at which the timer should trigger named events.<br>
+ * <b>Period:</b> The period at which the timer should fire.<br>
  * <b>TTL:</b> The maximum number of timers that should fire.<br>
  * <b>Delay:</b> The delay that should occur before the timer begins.<br>
  * <br>
