@@ -103,15 +103,12 @@ public class DataServer extends Thread {
         }
 
         private void doWriteOperation() {
-            System.out.println("WRITE OP");
-
             try {
                 int chunkId = readInt();
                 List<String> path = readHeaders();
                 int dataLength = readInt();
 
                 File chunkFile = createChunkFile(chunkId);
-                System.out.println("Ready to read file in (length = " + dataLength + ")");
                 FileChannel fc = new FileOutputStream(chunkFile).getChannel();
                 fc.transferFrom(this.channel, 0, dataLength);
                 fc.close();
@@ -122,26 +119,20 @@ public class DataServer extends Thread {
                     copyToNext(chunkFile, chunkId, path);
                 }
 
-                // sadly, for the time being,
                 createCRCFile(chunkId, getFileChecksum(chunkFile));
-                System.out.println("OK, finished WRITE_OP");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        private void copyToNext(File f, int chunkId, List<String> path) {
-            try {
-                DataConnection conn = new DataConnection(path);
-                conn.sendRoutingData(chunkId);
+        private void copyToNext(File f, int chunkId, List<String> path) throws IOException {
+        	DataConnection conn = new DataConnection(path);
+        	conn.sendRoutingData(chunkId);
 
-                FileChannel fc = new FileInputStream(f).getChannel();
-                conn.write(fc, (int) f.length());
-                fc.close();
-                conn.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        	FileChannel fc = new FileInputStream(f).getChannel();
+        	conn.write(fc, (int) f.length());
+        	fc.close();
+        	conn.close();
         }
 
         private void doDeleteOperation() {
@@ -158,42 +149,33 @@ public class DataServer extends Thread {
             }
         }
 
-        private List<String> readHeaders() {
-            String[] path = null;
-            // clean me later
-            try {
-                int sourceRouteListLen = this.in.readInt();
-                System.out.println("LISTLEN: " + sourceRouteListLen);
-                if (sourceRouteListLen > 0) {
-                    path = new String[sourceRouteListLen + 1];
-                    int i = 0;
-                    path[i] = "";
-                    for (char b = this.in.readChar(); b != ';' && i < sourceRouteListLen; b = this.in.readChar()) {
-                        if (b == '|') {
-                            i++;
-                            path[i] = "";
-                        } else {
-                            path[i] = path[i] + b;
-                        }
-                    }
-                    for (String s : path) {
-                        System.out.println("APTH: " + s);
-                    }
+        private List<String> readHeaders() throws IOException {
+            // XXX: clean me later
+        	String[] path = null;
+        	int sourceRouteListLen = this.in.readInt();
+        	if (sourceRouteListLen > 0) {
+        		path = new String[sourceRouteListLen + 1];
+        		int i = 0;
+        		path[0] = "";
+        		for (char b = this.in.readChar(); b != ';' && i < sourceRouteListLen; b = this.in.readChar()) {
+        			if (b == '|') {
+        				i++;
+        				path[i] = "";
+        			} else {
+        				path[i] = path[i] + b;
+        			}
+        		}
+        	} else {
+        		if (this.in.readChar() != ';') {
+        			throw new RuntimeException("invalid header");
+        		}
+        	}
 
-                } else {
-                    if (this.in.readChar() != ';') {
-                        throw new RuntimeException("invalid header");
-                    }
-                }
-
-                List<String> ret = new LinkedList<String>();
-                for (int i = 0; i < sourceRouteListLen; i++) {
-                    ret.add(path[i]);
-                }
-                return ret;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        	List<String> ret = new LinkedList<String>();
+        	for (int i = 0; i < sourceRouteListLen; i++) {
+        		ret.add(path[i]);
+        	}
+        	return ret;
         }
 
         private void doReadOperation() throws IOException {
@@ -346,7 +328,7 @@ public class DataServer extends Thread {
             throw new RuntimeException("Chunk not found: " + chunkId);
 
         if (!file.isFile())
-            throw new RuntimeException("Chunk file is not a normal file: " + file);
+            throw new RuntimeException("Chunk file is not a regular file: " + file);
 
         return file;
     }
