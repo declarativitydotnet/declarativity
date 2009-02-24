@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 import jol.core.Runtime;
 
-timer(clock, physical, 3000, 3000, 0);
+timer(clock, physical, 3000, infinity, 0);
 
 // Node address, data directory on host file system
 define(datadir, keys(0), {String, File});
