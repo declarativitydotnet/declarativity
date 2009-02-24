@@ -109,7 +109,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 
 	private class JobListener extends jol.types.table.Table.Callback {
 		private Map<JobID, List<TaskCompletionEvent>> completionEvents;
-		
+
 		public JobListener(Map<JobID, List<TaskCompletionEvent>> ce) {
 			this.completionEvents = ce;
 		}
@@ -152,7 +152,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	private HostsFileReader hostsReader;
 
 	private Map<JobID, List<TaskCompletionEvent>> completionEvents;
-	
+
 	private static Long jolTimestamp;
 
 	public JobTrackerServer(JolSystem context, JobTracker jobTracker, JobConf conf) throws IOException {
@@ -275,7 +275,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		}
 
 		if (jobs == null || jobs.size() == 0) {
-			throw new IOException("Unkown job identifier! " + jobid);
+			throw new IOException("Unknown job identifier! " + jobid);
 		}
 		return profile(jobs.iterator().next());
 	}
@@ -286,7 +286,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			TupleSet jobs = table.primary().lookupByKey(jobid);
 			if (jobs == null || jobs.size() == 0) {
 				java.lang.System.err.println("TABLE " + (TupleSet) table.tuples());
-				throw new IOException("Unkown job identifier! " + jobid);
+				throw new IOException("Unknown job identifier! " + jobid);
 			}
 			JobState state = (JobState) jobs.iterator().next().value(JobTable.Field.STATUS.ordinal());
 			return state.status();
@@ -343,7 +343,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				context.schedule(JobTracker.PROGRAM, JobTable.INIT,
 						new TupleSet(JobTable.INIT, job), null);
 				context.evaluate();
-				
+
 				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
 				return state.status();
 			}
@@ -537,13 +537,13 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 					this.jolTimestamp = context.timestamp();
 				}
 				if (System.currentTimeMillis() - this.jolTimestamp > MRConstants.HEARTBEAT_INTERVAL_MIN) {
-					System.err.println("Last JOL evaluation occurred " + 
+					System.err.println("Last JOL evaluation occurred " +
 							(System.currentTimeMillis() - context.timestamp()) + "ms ago!");
 					calljol = true;
 					this.jolTimestamp = System.currentTimeMillis();
 				}
 			}
-			
+
 			if (calljol) {
 				try {
 					context.evaluate();
@@ -552,7 +552,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 					e.printStackTrace();
 				}
 			}
-			
+
 			if (debug) {
 				java.lang.System.err.println("RESPONSE " + response + ", ACTIONS " + actions);
 				java.lang.System.err.println("========================= END HEARTBEAT " +
@@ -578,7 +578,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			}
 
 			/* I know I can just straight delete these tuples since no rules depend on
-			 * the deletion deltas. NOTE: Need these actions to go away but I don't 
+			 * the deletion deltas. NOTE: Need these actions to go away but I don't
 			 * want to call evaluate(). */
 			context.catalog().table(TaskTrackerActionTable.TABLENAME).delete(actions);
 		} catch (Throwable e) {
