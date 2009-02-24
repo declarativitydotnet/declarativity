@@ -229,13 +229,13 @@ creations/deletions), or "all".</description>
 
 <property>
   <name>fs.bfs.minPort</name>
-  <value>5015</value>
+  <value>12000</value>
   <description>Minimum in the range of ports to use for BFS connections.</description>
 </property>
 
 <property>
   <name>fs.bfs.maxPort</name>
-  <value>5015</value>
+  <value>32000</value>
   <description>Maximum in the range of ports to use for BFS connections.</description>
 </property>
 
