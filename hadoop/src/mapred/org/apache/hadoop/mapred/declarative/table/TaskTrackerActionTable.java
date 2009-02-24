@@ -6,8 +6,10 @@ import java.util.List;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.LaunchTaskAction;
 import org.apache.hadoop.mapred.MapTask;
+import org.apache.hadoop.mapred.ReduceTask;
 import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskTrackerAction;
+import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
 
 import jol.core.Runtime;
@@ -57,12 +59,25 @@ public class TaskTrackerActionTable extends ObjectTable {
 		return super.delete(t);
 	}
 	
-	public synchronized TaskTrackerAction[] actions(String trackerName, TupleSet tuples) {
+	public synchronized TaskTrackerAction[] actions(TaskTrackerStatus status, TupleSet tuples) {
 		List<TaskTrackerAction> actions = new ArrayList<TaskTrackerAction>();
+		int maps = status.getMaxMapTasks() - status.countMapTasks();
+		int reduces = status.getMaxReduceTasks() - status.countReduceTasks();
 		try {
-			for (Tuple tuple : secondary().get(this.nameKey).lookupByKey(trackerName)) {
+			for (Tuple tuple : secondary().get(this.nameKey).lookupByKey(status.getTrackerName())) {
 				TaskTrackerAction action = 
 					(TaskTrackerAction) tuple.value(Field.ACTION.ordinal());
+				if (action instanceof LaunchTaskAction) {
+					Task t = ((LaunchTaskAction)action).getTask();
+					if (t instanceof MapTask) {
+						if (maps > 0) maps--;
+						else continue;
+					}
+					else if (t instanceof ReduceTask) {
+						if (reduces > 0) reduces--;
+						else continue;
+					}
+				}
 				actions.add(action);
 				tuples.add(tuple);
 			}

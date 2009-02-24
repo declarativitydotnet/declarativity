@@ -13,7 +13,6 @@ public class TaskTrackerTable extends ObjectTable {
 	
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskTracker");
-	public static final TableName UPDATENAME = new TableName(JobTracker.PROGRAM, "trackerUpdate");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);

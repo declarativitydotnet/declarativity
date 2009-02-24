@@ -22,7 +22,7 @@ public class TaskAttemptTable extends ObjectTable {
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskAttempt");
 	
 	/** The primary key */
-	public static final Key PRIMARY_KEY = new Key(0,1,2,4);
+	public static final Key PRIMARY_KEY = new Key(0,1,2);
 	
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, TASKID, ATTEMPTID, PROGRESS, STATE, PHASE, 
