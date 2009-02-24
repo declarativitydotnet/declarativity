@@ -35,9 +35,7 @@ public class BoomFileSystem extends FileSystem {
 		 * XXX: JOL currently requires a fixed local port to bind to. Since
 		 * BoomFileSystem might be instanciated many times on the same machine,
 		 * we can't just pick a single port. For now, randomly pick ports from
-		 * within a range until we find a port we can bind to. There's a race
-		 * between checking for the bind and starting JOL, of course, but the
-		 * whole approach is broken anyway.
+		 * within a range until we find a port we can bind to.
 		 */
         int minPort = conf.getInt("fs.bfs.minPort", 12000);
         int maxPort = conf.getInt("fs.bfs.maxPort", 32000);
