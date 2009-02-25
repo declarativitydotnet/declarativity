@@ -7,6 +7,8 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -179,6 +181,13 @@ public class DataServer extends Thread {
             int fileSize = (int) blockFile.length();
             out.writeInt(fileSize);
 
+            long cksum = getFileChecksum(blockFile);
+            long expectedCksum = getCRCFromFile(blockId);
+            if (cksum != expectedCksum) {
+                // what should we do? presumably, signal the master to delete the bad chunk
+                throw new RuntimeException("file checksums didn't match\n");
+            }
+
             FileChannel fc = new FileInputStream(blockFile).getChannel();
             long nwrite = fc.transferTo(0, fileSize, this.channel);
             if (nwrite != (long) fileSize)
@@ -275,10 +284,24 @@ public class DataServer extends Thread {
         if (!newf.createNewFile())
         	throw new RuntimeException("Failed to create fresh file " + filename);
 
-        FileOutputStream fos = new FileOutputStream(newf);
-        // temporary
-        fos.write(new Long(checksum).toString().getBytes());
+        DataOutputStream fos = new DataOutputStream(new FileOutputStream(newf));
+        fos.writeLong(checksum);
         fos.close();
+    }
+
+    public long getCRCFromFile(int chunkId) throws IOException {
+        String filename = this.fsRoot + File.separator + "checksums" + File.separator
+                + chunkId + ".cksum";
+        File newf = new File(filename);
+        if (!newf.exists())
+        	throw new RuntimeException("Failed to find checksum "+ filename);
+        
+        DataInputStream dis = new DataInputStream(new FileInputStream(newf));
+        long cLong = dis.readLong();
+        dis.close();
+        
+        return cLong;
+        
     }
 
     private long getFileChecksum(File file) throws IOException {

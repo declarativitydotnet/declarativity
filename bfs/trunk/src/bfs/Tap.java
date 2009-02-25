@@ -27,10 +27,6 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
-//import bfs.TapTable;
-
-/* a work in progress.  need to check it in because my laptop might be about to die.  shouldn't break anything
-*/
 
 public class Tap {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
@@ -174,9 +170,10 @@ public class Tap {
             if (t.getClass() == Predicate.class) {
                 /* new rule */
                 Predicate p = (Predicate) t;
-                List<Expression> l = p.arguments();
+                String newName = conjoin("_", false, "prov", p.name().scope.toString(), p.name().name.toString());
+                List<Expression> l = new LinkedList<Expression>(p.arguments());
                 l.add(new Variable(null, "Provenance", String.class));
-                String mini = p.name().toString() + "(" + 
+                String mini = newName + "(" + 
                     join(l, ", ", false) +
                     ") :-\n\t" +
                     p.toString() + ",\n\t" +
