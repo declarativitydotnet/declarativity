@@ -6,9 +6,9 @@ bin=`cd "$bin"; pwd`
 
 . "$bin"/hadoop-config.sh
 
-# The $CLASSPATH and $JAVA stuff copied from bin/hadoop, which is a
-# bit hacky
-JAVA=$JAVA_HOME/bin/java
+if [ -f "${HADOOP_CONF_DIR}/hadoop-env.sh" ]; then
+  . "${HADOOP_CONF_DIR}/hadoop-env.sh"
+fi
 
 # CLASSPATH initially contains $HADOOP_CONF_DIR
 CLASSPATH="${HADOOP_CONF_DIR}"
