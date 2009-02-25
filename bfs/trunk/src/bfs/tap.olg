@@ -34,6 +34,33 @@ rewriteRule(Program, Rule, Obj) :-
 //timer(per,logical,1,1,1);
 timer(per, physical, 1000, 1000, infinity);
 
+
+define(preds, keys(0,2,3,4), {String, Predicate, String, Integer,String});
+watch(preds,ae);
+public
+preds(Prog, Pred, Pname, Ord, Rule) :-
+    global::predicate(Prog, Rule, Ord, _, Pred),
+    tap(_, Prog),
+    per#insert(),
+    Pname := Pred.name().name.toString();
+
+define(nonheads, keys(0,2), {String, Predicate, String});
+public
+nonheads(Prog, Pred, Pname) :-
+    //per#insert(),
+    preds(Prog, Pred, Pname, Ord, _),
+    Ord > 0;
+
+
+
+define(edb, keys(0,1), {String, Predicate, String});
+watch(edb, a);
+edb(Prog, Pred, Pname) :-
+    nonheads(Prog, Pred, Pname),
+    //per#insert(),
+    notin preds(_, _, Pname, 0, _);
+
+
 /****************** below the fold 
 
 

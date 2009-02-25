@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.DataInputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -57,9 +58,10 @@ public class DataCommon extends TestCommon {
         System.out.println("File td" + i + "/checksums/" + name);
         safeAssert("checksum file exists", csFile.exists());
         try {
-            BufferedReader input = new BufferedReader(new FileReader(csFile));
-            String csum = input.readLine();
-            return Long.valueOf(csum);
+            DataInputStream dis = new DataInputStream(new FileInputStream(csFile));
+            long ck = dis.readLong();
+            dis.close();
+            return ck;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
