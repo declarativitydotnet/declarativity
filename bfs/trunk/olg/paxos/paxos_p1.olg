@@ -182,6 +182,7 @@ BeginBallot (b, d) message to every priest in Q.
 ***************************************************************************************/
 
 define(quorum,keys(0,1),{String,Integer});
+watch(quorum, a);
 r3_a	
 quorum(Master,Round) :- 
   priestCnt(Master,Pcnt),

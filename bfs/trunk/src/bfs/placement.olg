@@ -23,6 +23,7 @@ migration_choices(Master, DataNode, ChunkId) :-
     bfs_heartbeat::dataNodes(Master, DataNode, _),
     notin bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
 
+/*
 define(flat_cnt, keys(0,1), {String, Integer});
 //watch(flat_cnt, ae);
 flat_cnt(Master, Cnt) :-
@@ -33,6 +34,7 @@ define(lowest_loaded_cnt, keys(0), {String, ValueList});
 //watch(lowest_loaded_cnt, ae);
 lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
     chunk_cnt(Master, _, Cnt);
+*/
 
 timer(clock, physical, 1000, infinity, 1000);
 

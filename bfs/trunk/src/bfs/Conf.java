@@ -40,8 +40,13 @@ public class Conf {
 
     private static int replicationFactor = 1;
 
+    private static final boolean tap = false;
+
     public static int getChunkSize() {
         return chunkSize;
+    }
+    public static boolean isTapped() {
+        return tap;
     }
     public static long getHeartbeatRetention() {
         return heartbeatRetention;

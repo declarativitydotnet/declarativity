@@ -50,6 +50,7 @@ public class Master {
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
+        Tap tap = new Tap(this.system, "tcp:localhost:5678");
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
@@ -84,6 +85,13 @@ public class Master {
         newPath.add(new Tuple(Conf.getSelfAddress(), "/", fileId));
         this.system.schedule("bfs", new TableName("bfs", "fpath"), newPath, null);
         this.system.evaluate();
+
+        if (Conf.isTapped()) 
+            tap.do_rewrite("bfs");
+
+        tap.do_rewrite("paxos");
+        tap.do_rewrite("multipaxos");
+
 
         this.system.start();
         System.out.println("Master node @ " + this.port + " ready!");
