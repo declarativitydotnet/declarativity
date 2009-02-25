@@ -14,6 +14,7 @@ import java.util.Set;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
+import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Rule;
 import jol.lang.plan.Term;
@@ -34,7 +35,6 @@ public class Tap {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
         if (args.length != 3)
             usage();
-
 
         Tap n = new Tap(args[0]);
         try {
@@ -88,10 +88,9 @@ public class Tap {
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
-    public static String join (List l, String delim, boolean quotes) {
+    public static String join(List l, String delim, boolean quotes) {
         String ret = "";
         Iterator i = l.iterator();
         while (i.hasNext()) {
@@ -111,13 +110,13 @@ public class Tap {
     }
 
     public static String join(List l) {
-            return join(l, ",", false);
+    	return join(l, ",", false);
     }
 
 
-    public static String sift (List l) {
+    public static String sift(List l) {
         String ret = "";
-        List goods = new LinkedList<String>();
+        List<String> goods = new LinkedList<String>();
 
         for (Object i : l) {
             if (i.getClass() == jol.lang.plan.Assignment.class) {
@@ -150,8 +149,8 @@ public class Tap {
         return head;
 
     }
-    public String conjoin (String delim, boolean quotes, String... arg) {
-        List l = new LinkedList<String>();
+    public String conjoin(String delim, boolean quotes, String... arg) {
+        List<String> l = new LinkedList<String>();
         for (String s : arg) {
             l.add(s);
         }
@@ -175,8 +174,8 @@ public class Tap {
         for (Term t : r.body()) {
             if (t.getClass() == Predicate.class) {
                 /* new rule */
-                Predicate p = (Predicate)t;
-                List l = p.arguments();
+                Predicate p = (Predicate) t;
+                List<Expression> l = p.arguments();
                 //l.add(new Variable());
             }
         }
@@ -267,8 +266,6 @@ public class Tap {
         this.system.evaluate();
         this.system.evaluate();
         this.system.evaluate();
-
-
 
         URL u;
         try {
