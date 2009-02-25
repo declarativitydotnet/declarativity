@@ -128,7 +128,7 @@ public class DataNode {
 
         /* get a tap program */
         if (Conf.isTapped()) {
-            tap.do_rewrite("bfs_heartbeat");
+            tap.doRewrite("bfs_heartbeat");
         }
 
         this.system.start();
