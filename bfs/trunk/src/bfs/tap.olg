@@ -1,0 +1,99 @@
+program tap;
+
+import java.lang.Object;
+import java.lang.String;
+import java.lang.Integer;
+import jol.core.Runtime;
+
+import java.util.ArrayList;
+
+import jol.types.basic.ValueList;
+import jol.lang.plan.Predicate;
+import jol.lang.plan.Watch;
+import jol.lang.plan.Rule;
+import jol.lang.plan.Variable;
+import jol.types.table.TableName;
+import jol.types.table.Table;
+import jol.types.operator.Watch;
+
+timer(tick, physical, 3000, 3000, infinity);
+
+watch(tap, ae);
+define(tap,keys(0,1), {String, String});
+
+
+
+define(rewriteRule, keys(0,1), {String, String, Rule});
+//watch(rewriteRule, ae);
+public
+rewriteRule(Program, Rule, Obj) :- 
+    global::rule(Program, Rule, Public, Async, Delete, Obj),
+    tap(X, Program),
+    per#insert();
+
+//timer(per,logical,1,1,1);
+timer(per, physical, 1000, 1000, infinity);
+
+/****************** below the fold 
+
+
+define(rewrittenHead, keys(0,1,2), {String, String, String, Predicate, Predicate} );
+//watch(rewrittenHead, ae);
+
+public
+rewrittenHead(Program, NewRule, OldRule, NewHead, OldHead) :- 
+    per(),
+    global::predicate(Program, OldRule, Ord, Event, OldHead),
+    OldRule.startsWith("snap_") == false,
+    Ord == 0,
+    Program == "path",
+    // a helper function to add a location variable to a predicate.
+    //NewHead := OlgMonitor.tappedPredicate(OldHead, "tcp:localhost:5000")
+
+    { 
+        NewRule := "snap_" + OldRule; 
+    };
+
+watch(global::catalog, ae);
+
+
+
+
+
+
+
+global::catalog(NewName, Type, Key, Class, NewTab) :-
+  global::catalog(OldName, Type, Key, Class, Obj),
+  rewrittenHead#insert(_, _, _, NewHead, OldHead),
+  OldName == OldHead.name(),
+  NewName := NewHead.name(),
+  NewTab := (Table)OlgMonitor.getTable(NewHead, Obj, NewHead.name());
+
+watch(global::rule, ae);
+global::rule(Program, NewRule, Public, Async, Delete, NewRuleObj) :-
+  global::rule(Program, Rule, Public, Async, Delete, Obj),
+  NewRuleObj := OlgMonitor.getRule(NewHead, Obj, NewRule),
+  rewrittenHead#insert(Program, NewRule, Rule, NewHead, _);
+
+global::predicate(Program, NewRule, Ord, Event, Pred) :-
+  global::predicate(Program, Rule, Ord, Event, Pred),
+  rewrittenHead#insert(Program, NewRule, Rule, _, _),
+  Ord != 0;
+
+global::predicate(Program, NewRule, 0, Event, NewHead) :-
+  rewrittenHead#insert(Program, NewRule, Rule, NewHead,  OldHead),
+  global::predicate(Program, Rule, 0, Event, OldHead);
+
+
+define(planReady, {String});
+watch(planReady,a);
+
+planReady(S) :-
+    global::predicate(Program, Rule, 0),
+    compiler(Program, Owner, Debugger, File, P),
+    clock(),
+    P.plan(),
+    S := "ok";
+
+*/
+
