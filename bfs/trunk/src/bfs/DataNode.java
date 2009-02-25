@@ -19,22 +19,16 @@ import jol.types.table.Table.Callback;
 
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
-        if (args.length != 2)
-            usage();
+    	if (args.length != 1)
+    		usage();
 
-        int dataNodeIdx = Integer.parseInt(args[0]);
-        if (dataNodeIdx < 0 || dataNodeIdx >= Conf.getNumDataNodes()) {
-            System.err.println("Illegal data node index: " + dataNodeIdx);
-            usage();
-        }
-
-        DataNode dn = new DataNode(dataNodeIdx, args[1]);
+    	int nodeIdx = Conf.findSelfIndex(false);
+        DataNode dn = new DataNode(nodeIdx, args[0]);
         dn.start();
     }
 
     private static void usage() {
-        System.err.println("Usage: bfs.DataNode index dir_root");
-        System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumDataNodes() - 1));
+        System.err.println("Usage: bfs.DataNode dir_root");
         System.exit(1);
     }
 
@@ -102,9 +96,6 @@ public class DataNode {
 
         setupFsRoot();
 
-        /* Identify the address of the local node */
-        Conf.setSelfAddress(Conf.getDataNodeAddress(this.nodeId));
-
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
@@ -119,7 +110,7 @@ public class DataNode {
         /* Identify the data directory */
         TableName tblName = new TableName("bfs_heartbeat", "datadir");
         TupleSet datadir = new TupleSet(tblName);
-        datadir.add(new Tuple(Conf.getSelfAddress(), this.fsRoot));
+        datadir.add(new Tuple(Conf.getDataNodeAddress(this.nodeId), this.fsRoot));
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
         Table table = this.system.catalog().table(new TableName("bfs_chunks", "send_migrate"));

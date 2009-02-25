@@ -172,14 +172,14 @@ public class Tap {
                 Predicate p = (Predicate) t;
                 String newName = conjoin("_", false, "prov", p.name().scope.toString(), p.name().name.toString());
                 List<Expression> l = new LinkedList<Expression>(p.arguments());
-                l.add(new Variable(null, "Provenance", String.class));
-                String mini = newName + "(" + 
+                //l.add(new Variable(null, "Provenance", String.class));
+                String mini = newName + "(" +
                     join(l, ", ", false) +
                     ") :-\n\t" +
                     p.toString() + ",\n\t" +
                     "Provenance := \"|\" + Runtime.idgen();\n";
-                      
-                System.out.println("mini is " + mini); 
+
+                System.out.println("mini is " + mini);
             }
         }
         return rewrite;
@@ -262,7 +262,8 @@ public class Tap {
         /* Identify the data directory */
         TableName tblName = new TableName("tap", "tap");
         TupleSet datadir = new TupleSet(tblName);
-        datadir.add(new Tuple(Conf.getSelfAddress(), program));
+        // XXX: hack
+        datadir.add(new Tuple("tcp:localhost:12345", program));
         this.system.schedule("tap", tblName, datadir, null);
 
         Table table = this.system.catalog().table(new TableName("tap", "rewriteRule"));
