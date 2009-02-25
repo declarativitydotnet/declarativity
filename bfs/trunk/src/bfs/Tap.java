@@ -113,9 +113,7 @@ public class Tap {
     	return join(l, ",", false);
     }
 
-
     public static String sift(List l) {
-        String ret = "";
         List<String> goods = new LinkedList<String>();
 
         for (Object i : l) {
@@ -147,8 +145,8 @@ public class Tap {
             "tap_chaff(\"foo\");\n\n";
 
         return head;
-
     }
+
     public String conjoin(String delim, boolean quotes, String... arg) {
         List<String> l = new LinkedList<String>();
         for (String s : arg) {
