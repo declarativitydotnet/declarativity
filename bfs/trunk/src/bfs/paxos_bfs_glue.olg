@@ -120,10 +120,9 @@ bfs::fsize(@Master, FileId, FSize) :-
 
 define(compute_file_size, keys(0, 1), {String, Integer, Float});
 public
-compute_file_size(@Master, FileId, sum<LongChunkLen>) :-
+compute_file_size(@Master, FileId, sum<ChunkLen>) :-
     bfs::fchunk(@Master, ChunkId, FileId),
-    bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen, _),
-    LongChunkLen := new Long(ChunkLen.longValue());
+    bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen, _);
 
 
 watch(bfs::create_request_done,aeid);
