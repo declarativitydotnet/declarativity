@@ -29,10 +29,13 @@ import jol.types.table.Table.Callback;
 
 
 public class Shell {
+	private static final int SHELL_PORT = 5501;
+
     private int currentMaster;
     private JolSystem system;
     private Random rand;
     private SimpleQueue<Object> responseQueue;
+    private String selfAddr;
 
     /*
      * TODO:
@@ -87,18 +90,9 @@ public class Shell {
         this.rand = new Random();
         this.responseQueue = new SimpleQueue<Object>();
         this.currentMaster = 0;
+        this.selfAddr = Conf.findLocalAddress(SHELL_PORT);
 
-        /* Identify the address of the local node */
-        /* this is necessary for current tests, but may not be done this way in the future */
-        String port = System.getenv("PORT");
-        if (port == null) {
-            port = "5501";
-        }
-
-        /* this shouldn't be a static member at all... */
-        Conf.setSelfAddress("tcp:localhost:" + port);
-
-        this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, Integer.valueOf(port));
+        this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, SHELL_PORT);
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
 
@@ -111,6 +105,13 @@ public class Shell {
         this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/chunks.olg"));
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
+        this.system.evaluate();
+
+        /* Identify the address of the local node */
+        TableName tblName = new TableName("bfs", "self");
+        TupleSet self = new TupleSet(tblName);
+        self.add(new Tuple(this.selfAddr));
+        this.system.schedule("bfs", tblName, self, null);
         this.system.evaluate();
 
         scheduleNewMaster();
@@ -205,7 +206,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", filename));
+        req.add(new Tuple(this.selfAddr, requestId, "NewChunk", filename));
         this.system.schedule("bfs", tblName, req, null);
 
         BFSNewChunkInfo result = (BFSNewChunkInfo) spinGet(Conf.getListingTimeout());
@@ -243,7 +244,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", filename));
+        req.add(new Tuple(this.selfAddr, requestId, "ChunkList", filename));
         this.system.schedule("bfs", tblName, req, null);
 
         Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) spinGet(Conf.getListingTimeout());
@@ -303,7 +304,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId,
+        req.add(new Tuple(this.selfAddr, requestId,
                           "ChunkLocations", chunk.toString()));
         this.system.schedule("bfs", tblName, req, null);
 
@@ -383,7 +384,7 @@ public class Shell {
 
     private void scheduleNewMaster() throws JolRuntimeException {
         TupleSet master = new TupleSet();
-        master.add(new Tuple(Conf.getSelfAddress(),
+        master.add(new Tuple(this.selfAddr,
                              Conf.getMasterAddress(this.currentMaster)));
         this.system.schedule("bfs", MasterTable.TABLENAME, master, null);
         this.system.evaluate();
@@ -434,7 +435,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, commandName, filename));
+        req.add(new Tuple(this.selfAddr, requestId, commandName, filename));
         this.system.schedule("bfs", tblName, req, null);
 
         // Wait for the response
@@ -482,7 +483,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", path));
+        req.add(new Tuple(this.selfAddr, requestId, "Ls", path));
         this.system.schedule("bfs", tblName, req, null);
 
         Object result = spinGet(Conf.getListingTimeout());
@@ -529,7 +530,7 @@ public class Shell {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", path));
+        req.add(new Tuple(this.selfAddr, requestId, "Rm", path));
         this.system.schedule("bfs", tblName, req, null);
 
         // Wait for the response

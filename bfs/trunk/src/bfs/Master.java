@@ -15,23 +15,9 @@ public class Master {
     private JolSystem system;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
-        if (args.length != 1)
-            usage();
-
-        int masterIdx = Integer.parseInt(args[0]);
-        if (masterIdx < 0 || masterIdx >= Conf.getNumMasters()) {
-            System.err.println("Illegal master index: " + masterIdx);
-            usage();
-        }
-
-        Master m = new Master(masterIdx);
+        int masterIndex = Conf.findSelfIndex(true);
+        Master m = new Master(masterIndex);
         m.start();
-    }
-
-    private static void usage() {
-        System.err.println("Usage: bfs.Master index");
-        System.err.println("    where 0 <= \"index\" <= " + (Conf.getNumMasters() - 1));
-        System.exit(1);
     }
 
     public Master(int masterIdx) {
@@ -44,9 +30,6 @@ public class Master {
     }
 
     public void start() throws JolRuntimeException, UpdateException {
-        /* Identify the address of the local node */
-        Conf.setSelfAddress(this.address);
-
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
@@ -75,14 +58,14 @@ public class Master {
         // Hack: insert a bfs::file tuple to represent the root of the file system
         TupleSet newFile = new TupleSet();
         int fileId = -1;  // File IDs assigned by the system start at 0
-        newFile.add(new Tuple(Conf.getSelfAddress(), -1, null, "/", true));
+        newFile.add(new Tuple(this.address, -1, null, "/", true));
         this.system.schedule("bfs", new TableName("bfs", "file"), newFile, null);
         this.system.evaluate();
 
         // Hack: insert a bfs::fpath tuple for the root path, because that is somehow
         // not automatically inferred
         TupleSet newPath = new TupleSet();
-        newPath.add(new Tuple(Conf.getSelfAddress(), "/", fileId));
+        newPath.add(new Tuple(this.address, "/", fileId));
         this.system.schedule("bfs", new TableName("bfs", "fpath"), newPath, null);
         this.system.evaluate();
 
@@ -91,7 +74,6 @@ public class Master {
             tap.doRewrite("paxos");
             tap.doRewrite("multipaxos");
         }
-
 
         this.system.start();
         System.out.println("Master node @ " + this.port + " ready!");

@@ -24,16 +24,15 @@ public class BFSClient {
     private Random rand;
 	private SimpleQueue<Object> responseQueue;
 	private JolSystem system;
+	private String selfAddr;
 
 	public BFSClient(int port) {
         this.rand = new Random();
         this.currentMaster = 0;
         this.responseQueue = new SimpleQueue<Object>();
+        this.selfAddr = Conf.findLocalAddress(port);
 
 		try {
-	        /* this shouldn't be a static member at all... */
-	        Conf.setSelfAddress("tcp:localhost:" + port);
-
 			this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, port);
 
 	        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
@@ -45,6 +44,13 @@ public class BFSClient {
             this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/chunks.olg"));
             this.system.evaluate();
 	        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
+	        this.system.evaluate();
+
+	        /* Identify the address of the local node */
+	        TableName tblName = new TableName("bfs", "self");
+	        TupleSet self = new TupleSet(tblName);
+	        self.add(new Tuple(this.selfAddr));
+	        this.system.schedule("bfs", tblName, self, null);
 	        this.system.evaluate();
 
 	        updateMasterAddr();
@@ -93,7 +99,7 @@ public class BFSClient {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, commandName, pathName));
+        req.add(new Tuple(this.selfAddr, requestId, commandName, pathName));
         try {
         	this.system.schedule("bfs", tblName, req, null);
         } catch (JolRuntimeException e) {
@@ -136,7 +142,7 @@ public class BFSClient {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "NewChunk", path));
+        req.add(new Tuple(this.selfAddr, requestId, "NewChunk", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
         } catch (JolRuntimeException e) {
@@ -174,7 +180,7 @@ public class BFSClient {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Rm", path));
+        req.add(new Tuple(this.selfAddr, requestId, "Rm", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
         } catch (JolRuntimeException e) {
@@ -227,7 +233,7 @@ public class BFSClient {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "Ls", path));
+        req.add(new Tuple(this.selfAddr, requestId, "Ls", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
         } catch (JolRuntimeException e) {
@@ -273,7 +279,7 @@ public class BFSClient {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "FileInfo", pathName));
+        req.add(new Tuple(this.selfAddr, requestId, "FileInfo", pathName));
         try {
         	this.system.schedule("bfs", tblName, req, null);
         } catch (JolRuntimeException e) {
@@ -319,7 +325,7 @@ public class BFSClient {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId, "ChunkList", path));
+        req.add(new Tuple(this.selfAddr, requestId, "ChunkList", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
         } catch (JolRuntimeException e) {
@@ -367,7 +373,7 @@ public class BFSClient {
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
         TupleSet req = new TupleSet(tblName);
-        req.add(new Tuple(Conf.getSelfAddress(), requestId,
+        req.add(new Tuple(this.selfAddr, requestId,
                           "ChunkLocations", Integer.toString(chunkId)));
         try {
         	this.system.schedule("bfs", tblName, req, null);
@@ -423,7 +429,7 @@ public class BFSClient {
 
     private void updateMasterAddr() {
         TupleSet master = new TupleSet();
-        master.add(new Tuple(Conf.getSelfAddress(),
+        master.add(new Tuple(this.selfAddr,
                              Conf.getMasterAddress(this.currentMaster)));
         try {
             this.system.schedule("bfs", MasterTable.TABLENAME, master, null);

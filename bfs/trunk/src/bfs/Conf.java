@@ -1,7 +1,18 @@
 package bfs;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Conf {
-    private static String selfAddr = null;
+	public static final int DEFAULT_MASTER_PORT = 8001;
+	public static final int DEFAULT_DN_DATA_PORT = 8002;
+	public static final int DEFAULT_DN_CONTROL_PORT = 8003;
 
     private static class Host {
         public final String name;
@@ -42,6 +53,26 @@ public class Conf {
 
     private static final boolean tap = false;
 
+	static {
+        if (System.getenv("MASTERFILE") != null) {
+        	File mastersFile = new File(System.getenv("MASTERFILE"));
+        	if (mastersFile.exists()) {
+                List<String> masterList = Conf.parseAddressFile(mastersFile);
+                Conf.setMasters(masterList);
+                System.out.println("Installed new master list: " + masterList);
+        	}
+        }
+
+        if (System.getenv("SLAVEFILE") != null) {
+        	File slavesFile = new File(System.getenv("SLAVEFILE"));
+        	if (slavesFile.exists()) {
+                List<String> slaveList = Conf.parseAddressFile(slavesFile);
+                Conf.setDataNodes(slaveList);
+                System.out.println("Installed new data node list: " + slaveList);
+        	}
+        }
+	}
+
     public static int getChunkSize() {
         return chunkSize;
     }
@@ -60,24 +91,29 @@ public class Conf {
         replicationFactor = rf;
     }
 
-    /* NB: This must be called before installing "bfs.olg" */
-    public static void setSelfAddress(String addr) {
-        selfAddr = addr;
-    }
-
-    public static String getSelfAddress() {
-        // XXX: null check disabled because of EC2 for now
-        //if (selfAddress == null)
-        //    throw new IllegalStateException();
-        return selfAddr;
-    }
-
     public static long getFileOpTimeout() {
         return fileOpTimeout;
     }
 
     public static long getListingTimeout() {
         return listingTimeout;
+    }
+
+    public static void setMasters(List<String> masters) {
+    	masterNodes = new Host[masters.size()];
+    	int i = 0;
+    	for (String addr : masters) {
+    		masterNodes[i++] = new Host(addr, DEFAULT_MASTER_PORT);
+    	}
+    }
+
+    public static void setDataNodes(List<String> nodeList) {
+    	dataNodes = new Host[nodeList.size()];
+    	int i = 0;
+    	for (String addr : nodeList) {
+    		dataNodes[i++] = new Host(addr, DEFAULT_DN_CONTROL_PORT,
+    				                  DEFAULT_DN_DATA_PORT);
+    	}
     }
 
     public static void setNewMasterList(String... args) {
@@ -133,5 +169,59 @@ public class Conf {
 
     public static int getNumDataNodes() {
         return dataNodes.length;
+    }
+
+    public static List<String> parseAddressFile(File inFile) {
+    	try {
+			BufferedReader br = new BufferedReader(new FileReader(inFile));
+			List<String> result = new ArrayList<String>();
+			String line;
+			while ((line = br.readLine()) != null) {
+				String trimmedLine = line.trim();
+				if (!trimmedLine.equals(""))
+					result.add(trimmedLine);
+			}
+			return result;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+    }
+
+    public static int findSelfIndex(boolean isMaster) {
+    	Host[] hostAry;
+    	if (isMaster)
+    		hostAry = masterNodes;
+    	else
+    		hostAry = dataNodes;
+
+    	try {
+			InetAddress localHost = InetAddress.getLocalHost();
+			InetAddress[] localAddrs = InetAddress.getAllByName(localHost.getHostName());
+			for (InetAddress addr : localAddrs) {
+				String hostName = addr.getHostName();
+				String ip = addr.getHostAddress();
+
+				for (int i = 0; i < hostAry.length; i++) {
+					System.out.println("Comparing IP " + ip + " and host " +
+							           hostName + " against " + hostAry[i].name);
+					if (hostAry[i].name.equalsIgnoreCase(hostName) ||
+					    hostAry[i].name.equals(ip))
+						return i;
+				}
+			}
+			// Failed to find our local address in the given list
+			throw new RuntimeException("Cannot find local address!");
+		} catch (UnknownHostException e) {
+			throw new RuntimeException(e);
+		}
+    }
+
+    public static String findLocalAddress(int port) {
+    	try {
+			InetAddress localHost = InetAddress.getLocalHost();
+			return "tcp:" + localHost.getHostName() + ":" + port;
+		} catch (UnknownHostException e) {
+			throw new RuntimeException(e);
+		}
     }
 }
