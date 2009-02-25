@@ -1,0 +1,57 @@
+program tap;
+
+import java.lang.Double;
+import java.lang.Float;
+
+
+define(tap_precondition, {String, String, String, Long});
+define(tap_send, keys(0,2,3), {String, String, String, String, Long});
+define(tap_universe, keys(0,1,2), {String, String, String, String});
+define(tap_done, {String});
+
+//watch(tap_precondition, a);
+watch(tap_send, a);
+//watch(tap_universe, a);
+
+
+define(coverage, {String, String, String, Integer});
+
+//watch(coverage, a);
+
+coverage(Prog, Pred, Rule, count<Time>) :-
+    tap_send(Me, Prog, Rule, Pred, Time);
+
+
+define(rule_noncoverage, {String, String, String});
+watch(rule_noncoverage, ae);
+rule_noncoverage(Prog, Pred, Rule) :-
+    tap_universe(Me, Prog, Rule, Pred),
+    tap_done(Me),
+    notin tap_send(Me, Prog, Rule, Pred, _);
+
+
+define(head_noncoverage, {String, String});
+watch(head_noncoverage, ae);
+head_noncoverage(Prog, Pred) :-
+    tap_universe(Me, Prog, _, Pred),
+    tap_done(Me),
+    notin tap_send(Me, Prog, _, Pred, _);
+
+define(total_cnt, keys(0,1), {String, String, Integer});
+total_cnt(Me, Prog, count<Rule>) :-
+    tap_universe(Me, Prog, Rule, _);
+
+define(touched_cnt, keys(0,1), {String, String, Integer});
+//watch(touched_cnt, a);
+touched_cnt(Me, Prog, count<Rule>) :-
+    tap_send(Me, Prog, Rule, _, _);
+
+define(nc_perc, {String, String, Float, Integer, Integer});
+watch(nc_perc, ae);
+nc_perc(Me, Prog, Perc, Tcnt, TC) :-
+    total_cnt(Me, Prog, Tcnt),
+    touched_cnt(Me, Prog, TC),  
+    tap_done(Me),
+    //Perc := Float.cast(TC) / Float.cast(Tcnt);
+    //Perc := new Float(TC) / new Float(Tcnt);
+    Perc := TC.floatValue() / Tcnt.floatValue();

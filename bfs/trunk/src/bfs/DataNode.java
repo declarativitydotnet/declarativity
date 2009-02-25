@@ -109,6 +109,8 @@ public class DataNode {
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
 
+        Tap tap = new Tap(this.system, "tcp:localhost:5678");
+
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
         this.system.evaluate();
         this.system.install("bfs_heartbeat", ClassLoader.getSystemResource("bfs/files.olg"));
@@ -122,6 +124,12 @@ public class DataNode {
 
         Table table = this.system.catalog().table(new TableName("bfs_chunks", "send_migrate"));
         table.register(copyCallback);
+
+
+        /* get a tap program */
+        if (Conf.isTapped()) {
+            tap.do_rewrite("bfs_heartbeat");
+        }
 
         this.system.start();
         System.out.println("DataNode @ " + this.port + " (" +
