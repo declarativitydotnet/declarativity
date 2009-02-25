@@ -112,6 +112,10 @@ public class DataServer extends Thread {
         	fc.transferFrom(this.channel, 0, dataLength);
         	fc.close();
 
+        	if (chunkFile.length() != dataLength)
+        		throw new RuntimeException("Unexpected file length: expected " +
+        				                   dataLength + ", got " + chunkFile.length());
+
         	// we are not pipelining yet.
         	if (path.size() > 0) {
         		System.out.println("Path size was " + path.size());
@@ -119,6 +123,8 @@ public class DataServer extends Thread {
         	}
 
         	createCRCFile(chunkId, getFileChecksum(chunkFile));
+        	System.out.println("Wrote new chunk file: chunk ID " + chunkId +
+        			           ", length = " + dataLength);
         }
 
         private void copyToNext(File f, int chunkId, List<String> path) throws IOException {
@@ -263,7 +269,6 @@ public class DataServer extends Thread {
 	}
 
     public void createCRCFile(int chunkId, long checksum) throws IOException {
-        System.out.println("create file for chunk " + chunkId  + " and checksum " + checksum + "\n");
         String filename = this.fsRoot + File.separator + "checksums" + File.separator
                 + chunkId + ".cksum";
         File newf = new File(filename);
