@@ -38,7 +38,7 @@ public class Tap {
 
         Tap n = new Tap(args[0]);
         try {
-            n.do_rewrite(args[1], args[2]);
+            n.doRewrite(args[1], args[2]);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -206,10 +206,10 @@ public class Tap {
     }
 
     public void do_rewrite(String program) throws JolRuntimeException, UpdateException {
-        do_rewrite(program, null);
+        doRewrite(program, null);
     }
 
-    protected void finalize() throws Throwable {
+    protected void finalize() throws IOException {
         this.watcher.close();
     }
 
@@ -223,7 +223,7 @@ public class Tap {
         }
     }
 
-    public void do_rewrite(String program, String file) throws JolRuntimeException, UpdateException {
+    public void doRewrite(String program, String file) throws JolRuntimeException, UpdateException {
 
         final String mySink = this.sink;
 
