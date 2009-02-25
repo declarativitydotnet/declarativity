@@ -86,11 +86,11 @@ public class Master {
         this.system.schedule("bfs", new TableName("bfs", "fpath"), newPath, null);
         this.system.evaluate();
 
-        if (Conf.isTapped()) 
-            tap.do_rewrite("bfs");
-
-        tap.do_rewrite("paxos");
-        tap.do_rewrite("multipaxos");
+        if (Conf.isTapped()) {
+            tap.doRewrite("bfs");
+            tap.doRewrite("paxos");
+            tap.doRewrite("multipaxos");
+        }
 
 
         this.system.start();

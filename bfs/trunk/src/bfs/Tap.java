@@ -18,6 +18,7 @@ import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Rule;
 import jol.lang.plan.Term;
+import jol.lang.plan.Variable;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -174,7 +175,14 @@ public class Tap {
                 /* new rule */
                 Predicate p = (Predicate) t;
                 List<Expression> l = p.arguments();
-                //l.add(new Variable());
+                l.add(new Variable(null, "Provenance", String.class));
+                String mini = p.name().toString() + "(" + 
+                    join(l, ", ", false) +
+                    ") :-\n\t" +
+                    p.toString() + ",\n\t" +
+                    "Provenance := \"|\" + Runtime.idgen();\n";
+                      
+                System.out.println("mini is " + mini); 
             }
         }
         return rewrite;
@@ -200,10 +208,12 @@ public class Tap {
 
         String rule3Str = "tap_universe(@Sink, " + conjoin(", ", true, rule.program, name, rule.head().name().name) + ") :-\n\ttap_chaff(@Foo),\n" + rfooter();
 
+        String prov = provenance(rule);
+
         return rule1Str + rule2Str + rule3Str;
     }
 
-    public void do_rewrite(String program) throws JolRuntimeException, UpdateException {
+    public void doRewrite(String program) throws JolRuntimeException, UpdateException {
         doRewrite(program, null);
     }
 
