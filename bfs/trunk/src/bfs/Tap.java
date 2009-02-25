@@ -1,22 +1,22 @@
 package bfs;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
-
-import java.nio.channels.FileChannel;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.Iterator;
-import java.util.HashMap;
 import java.util.Map;
-
-
+import java.util.Set;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
+import jol.lang.plan.Predicate;
+import jol.lang.plan.Rule;
+import jol.lang.plan.Term;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -24,22 +24,10 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
-import jol.lang.plan.Rule;
-import jol.lang.plan.Term;
-import jol.lang.plan.Predicate;
-import jol.lang.plan.Expression;
-import jol.lang.plan.Assignment;
-import jol.lang.plan.Value;
-import jol.lang.plan.Variable;
-import jol.lang.Compiler.CompileTable;
-
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.net.MalformedURLException;
 
 //import bfs.TapTable;
 
-/* a work in progress.  need to check it in because my laptop might be about to die.  shouldn't break anything 
+/* a work in progress.  need to check it in because my laptop might be about to die.  shouldn't break anything
 */
 
 public class Tap {
@@ -73,8 +61,8 @@ public class Tap {
     }
 
     public Tap(JolSystem s, String sink) {
-        /* this class is being instantiated 
-           in a running JolSystem; 
+        /* this class is being instantiated
+           in a running JolSystem;
         */
         this.system = s;
         init(sink);
@@ -85,7 +73,7 @@ public class Tap {
         this.rewrittenProgram = "";
         this.defines = new HashMap();
 
-        try { 
+        try {
             File f = new File(sink);
             if (!f.exists()) {
                 f.createNewFile();
@@ -96,11 +84,11 @@ public class Tap {
                 this.watcher = new FileOutputStream(f);
             }
         } catch (FileNotFoundException e) {
-            System.out.println("huh?\n"); 
+            System.out.println("huh?\n");
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
-        
+
     }
 
     public static String join (List l, String delim, boolean quotes) {
@@ -109,7 +97,7 @@ public class Tap {
         while (i.hasNext()) {
             Object current = i.next();
             String nStr = current.toString();
-            if (quotes) 
+            if (quotes)
                 nStr = "\"" + nStr + "\"";
 
             ret += nStr;
@@ -118,14 +106,14 @@ public class Tap {
                 ret += delim;
             }
         }
-        
+
         return ret;
     }
 
     public static String join(List l) {
             return join(l, ",", false);
     }
-   
+
 
     public static String sift (List l) {
         String ret = "";
@@ -133,7 +121,7 @@ public class Tap {
 
         for (Object i : l) {
             if (i.getClass() == jol.lang.plan.Assignment.class) {
-                // we do not care about assignments; they are not preconditions, but 
+                // we do not care about assignments; they are not preconditions, but
                 // merely projection (that often use side-effecting (ie sequences) or
                 // non-deterministic (ie clocks) functions anyway.
 
@@ -151,21 +139,21 @@ public class Tap {
     }
 
     public String header() {
-        String head = "program tap;\n" +       
+        String head = "program tap;\n" +
             "define(tap_precondition, {String, String, String, Long});\n" +
-            "define(tap_send, {String, String, String, String, Long});\n" +  
+            "define(tap_send, {String, String, String, String, Long});\n" +
             "define(tap_universe, {String, String, String, String});\n" +
             "define(tap_chaff, {String});\n" +
             "timer(tic, logical, 1,1,1);\n" +
             "tap_chaff(\"foo\");\n\n";
-                                                    
+
         return head;
-        
+
     }
     public String conjoin (String delim, boolean quotes, String... arg) {
         List l = new LinkedList<String>();
         for (String s : arg) {
-            l.add(s);    
+            l.add(s);
         }
         return join(l, delim, quotes);
     }
@@ -174,8 +162,8 @@ public class Tap {
         String name = (rule.isDelete ? "delete-" : "") + rule.name;
         String body = sift(rule.body());
 
-        String r = 
-            "public tap_precondition(" + conjoin(", ", true, rule.program, name, rule.head().name().name) + ",Ts) :-\n\t" + 
+        String r =
+            "public tap_precondition(" + conjoin(", ", true, rule.program, name, rule.head().name().name) + ",Ts) :-\n\t" +
             conjoin(",\n\t", false, body, "Ts := java.lang.System.currentTimeMillis()", "tic();\n\n");
 
         return r;
@@ -200,7 +188,7 @@ public class Tap {
 
         return foot;
     }
-   
+
     public String rewriter(String rname, Rule rule, String sink) {
         String Head1Name = rule.head().name().name;
         String name = (rule.isDelete ? "delete-" : "") + rule.name;
@@ -233,7 +221,7 @@ public class Tap {
             Map.Entry me = (Map.Entry)i.next();
             String key = (String)me.getKey();
             this.watcher.write(key.getBytes());
-        } 
+        }
     }
 
     public void do_rewrite(String program, String file) throws JolRuntimeException, UpdateException {
@@ -248,21 +236,21 @@ public class Tap {
             @Override
             public void insertion(TupleSet tuples) {
                 for (Tuple t : tuples) {
-                    String program =(String) t.value(0);
-                    String ruleName =(String) t.value(1);
+                    String program = (String) t.value(0);
+                    String ruleName = (String) t.value(1);
                     Rule rule = (Rule) t.value(2);
 
-                    rewrittenProgram += rewriter(ruleName, rule, mySink); 
+                    rewrittenProgram += rewriter(ruleName, rule, mySink);
                 }
             }
         };
 
         this.system.evaluate();
         this.system.install("tap", ClassLoader.getSystemResource("bfs/tap.olg"));
- 
+
         this.system.evaluate();
-    
-        if (file != null) 
+
+        if (file != null)
             this.system.install(program, ClassLoader.getSystemResource(file));
 
 
@@ -279,16 +267,16 @@ public class Tap {
         this.system.evaluate();
         this.system.evaluate();
         this.system.evaluate();
-   
-        
+
+
 
         URL u;
         try {
-            watch(); 
+            watch();
             File tmp = File.createTempFile("tap", "olg");
             /* put our program into a temp file.  wish we didn't have to do this... */
             FileOutputStream fos = new FileOutputStream(tmp);
-            fos.write(rewrittenProgram.getBytes());  
+            fos.write(rewrittenProgram.getBytes());
             fos.close();
             String path = tmp.getAbsolutePath();
             u = new URL("file", "", path);
@@ -296,7 +284,5 @@ public class Tap {
             throw new RuntimeException(e);
         }
         this.system.install("user", u);
-
     }
-
 }
