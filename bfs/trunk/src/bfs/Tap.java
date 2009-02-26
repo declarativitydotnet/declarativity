@@ -258,7 +258,7 @@ public class Tap {
     public String rewriter(String rname, Rule rule, String sink) {
         String Head1Name = rule.head().name().name;
         String name = (rule.isDelete ? "delete-" : "") + rule.name;
-        String head1 = "Ts, \""+ name + "\"";
+        String head1 = "Ts, \"" + name + "\"";
         String body1Str =  "tap_precondition(@" + head1 + ")";
 
         String body = sift(rule.body());
