@@ -34,21 +34,21 @@ test-profile: ${PROFILETARGETS}
 	@echo
 
 %.stasistest: TESTPREP
-	rm -f storefile.txt logfile.txt
+	@rm -f storefile.txt logfile.txt
 	@echo -n `date`: Running [stasis] $*
-	${RUNTESTSTASISJUNIT} bfs.test.$* 2> test-output/$*.stasis.txt 1>&2 || echo -n '      <---- FAILED'
+	@${RUNTESTSTASISJUNIT} bfs.test.$* 2> test-output/$*.stasis.txt 1>&2 || echo -n '      <---- FAILED'
 	@echo
 
 %.cputest: TESTPREP
-	rm -f storefile.txt logfile.txt
+	@rm -f storefile.txt logfile.txt
 	@echo -n `date`: Running [cpu prof] $*
-	${RUNTESTSTASISCPU} bfs.test.$* 2> test-output/$*.stasis.txt 1>&2 || echo -n '      <---- FAILED'
+	@${RUNTESTSTASISCPU} bfs.test.$* 2> test-output/$*.stasis.txt 1>&2 || echo -n '      <---- FAILED'
 	@echo
 
 %.heaptest: TESTPREP
-	rm -f storefile.txt logfile.txt
+	@rm -f storefile.txt logfile.txt
 	@echo -n `date`: Running [heapprof] $*
-	${RUNTESTSTASISHEAP} bfs.test.$* 2> test-output/$*.stasis.txt 1>&2 || echo -n '      <---- FAILED'
+	@${RUNTESTSTASISHEAP} bfs.test.$* 2> test-output/$*.stasis.txt 1>&2 || echo -n '      <---- FAILED'
 	@echo
 
 TESTPREP: clean-test
