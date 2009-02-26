@@ -51,14 +51,10 @@ response(@Source, Id, Master, false, null) :-
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, true);
 
-// Cleanup transient request inferences upon completion
-delete
-request(Master, Id, Source, ReqType, FPath) :-
-    request(Master, Id, Source, ReqType, FPath),
-    response(Source, Id, Master, _, _),
-    ReqType == "NewChunk" || ReqType == "ChunkList" ||
-    ReqType == "ChunkLocations" || ReqType == "FileInfo" ||
-    ReqType == "Ls";
+delete 
+request(Master, Id, Source, "NewChunk", FPath) :- 
+    request(Master, Id, Source, "NewChunk", FPath), 
+    bfs_chunks::candidate_datanode(Master, Id, FPath, _); 
 
 // If we get a "ChunkList" request for an extant file, send back its
 // chunks. If the file has no chunks, send back an empty set. Note
@@ -192,6 +188,12 @@ public
 response(@Source, Id, Master, Success, null) :-
     create_request_done(@Master, Id, Success),
     request(@Master, Id, Source, _, _);
+
+public
+delete
+request(@Master, Id, Source, ReqType, FPath) :-
+    create_request_done(@Master, Id, _),
+    request(@Master, Id, Source, ReqType, FPath);
 
 // If we get an "ls" request, send back the names of all the files in
 // the file system. Note that we need to do the aggregation in a sub-rule.
