@@ -58,5 +58,7 @@ if [ "$HADOOP_CLASSPATH" != "" ]; then
   CLASSPATH=${CLASSPATH}:${HADOOP_CLASSPATH}
 fi
 
-$JAVA -cp "$CLASSPATH" bfs.Master 0
+export MASTERFILE=$HADOOP_CONF_DIR/masters
+export SLAVEFILE=$HADOOP_CONF_DIR/slaves
+$JAVA -cp "$CLASSPATH" bfs.Master
 

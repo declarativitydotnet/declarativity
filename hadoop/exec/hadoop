@@ -260,5 +260,9 @@ if [ "x$JAVA_LIBRARY_PATH" != "x" ]; then
   HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=$JAVA_LIBRARY_PATH"
 fi  
 
+# Tell the BFS code where to find the master and slave files
+export MASTERFILE=$HADOOP_CONF_DIR/masters
+export SLAVEFILE=$HADOOP_CONF_DIR/slaves
+
 # run it
 exec "$JAVA" $JAVA_HEAP_MAX $HADOOP_OPTS -classpath "$CLASSPATH" $CLASS "$@"
