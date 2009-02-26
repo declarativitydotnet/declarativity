@@ -12,7 +12,7 @@ public class TableName implements Comparable<TableName>, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/** The scope of the table. */
-	public String scope;
+	public final String scope;
 
 	/** The string name of this table. */
 	public final String name;
