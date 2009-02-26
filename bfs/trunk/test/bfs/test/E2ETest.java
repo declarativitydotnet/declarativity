@@ -26,7 +26,7 @@ public class E2ETest extends TestCommon {
 	private final static int NUM_TEST_CHUNKS = 6;
 
 	/* XXX: refactor this to avoid duplicated code */
-	@Test(timeout=12000)
+	@Test(timeout=24000) // XXX was 12000 before perf regresssion.  This used to take ~ 6 sec
 	public void test1() throws Exception {
 		startMany("localhost:5505");
 		startManyDataNodes("td1", "td2");

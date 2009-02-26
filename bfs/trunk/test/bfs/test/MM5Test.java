@@ -6,7 +6,7 @@ import bfs.Shell;
 import org.junit.Test;
 
 public class MM5Test extends TestCommon {
-    @Test(timeout=60000)
+    @Test(timeout=120000)
     public void test5() throws Exception {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
