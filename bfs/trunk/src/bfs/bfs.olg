@@ -242,8 +242,9 @@ response(@Source, Id, Master, false, null) :-
     notin fpath(@Master, FPath, _);
 
 
-// If we got an "rm" request and the file exists, remove it and send
-// back a positive ack.
+// If we got an "rm" request and the file exists, go through Paxos.
+// Once we've achieved consensus, remove the file and send back a
+// positive ack.
 define(rm_request_pending, keys(0, 1), {String, Integer, String});
 rm_request_pending(@Master, Id, FPath) :-
     request(@Master, Id, _, "Rm", FPath),
