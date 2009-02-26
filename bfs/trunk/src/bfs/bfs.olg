@@ -40,11 +40,6 @@ response(@Source, Id, Master, true, Result) :-
     newchunk_request_done(@Master, Id, NewChunkId, CandidateNodes),
     Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
-delete
-request(Master, Id, Source, "NewChunk", FPath) :-
-    request(Master, Id, Source, "NewChunk", FPath),
-    bfs_chunks::candidate_datanode(Master, Id, FPath, _);
-
 // "NewChunk" for nonexistent file => error
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "NewChunk", FPath),
@@ -56,6 +51,12 @@ response(@Source, Id, Master, false, null) :-
     fpath(@Master, FPath, FileId),
     file(@Master, FileId, _, _, true);
 
+// Cleanup transient request inferences upon completion
+delete
+request(Master, Id, Source, ReqType, FPath) :-
+    request(Master, Id, Source, ReqType, FPath),
+    response(Source, Id, Master, _, _),
+    ReqType == "NewChunk";
 
 // If we get a "ChunkList" request for an extant file, send back its
 // chunks. If the file has no chunks, send back an empty set. Note
