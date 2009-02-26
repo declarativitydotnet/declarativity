@@ -89,7 +89,6 @@ public class LinearHashNTA extends StasisTable {
 			ts.dirty = true;
 			byte[] oldvalbytes = Stasis.hash_insert(ts.xid, rid, keybytes, valbytes);
 			if(oldvalbytes != null) {
-				//throw new UpdateException("primary key violation");
 				return (!Arrays.equals(valbytes, oldvalbytes));
 			}
 			return oldvalbytes == null;
@@ -106,7 +105,7 @@ public class LinearHashNTA extends StasisTable {
 			throws UpdateException {
 		synchronized (xactTable) {
 			ts.dirty = true;
-			byte[] oldvalbytes = Stasis.hash_remove(-1, rid, keybytes);
+			byte[] oldvalbytes = Stasis.hash_remove(ts.xid, rid, keybytes);
 			if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
 				throw new UpdateException("attempt to remove non-existant tuple");
 			}
@@ -164,7 +163,6 @@ public class LinearHashNTA extends StasisTable {
 			}
 
 			public void remove() {
-//				ts.dirty = true;
 				throw new UnsupportedOperationException("No support for removal via table iterators yet...");
 			}
 
