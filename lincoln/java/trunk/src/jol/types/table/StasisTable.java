@@ -89,8 +89,10 @@ public abstract class StasisTable extends Table {
 			byte[] keybytes = key.project(t).toBytes();
 			byte[] valbytes = key.projectValue(t).toBytes();
 			return remove(keybytes, valbytes);
+		} catch(UpdateException e) {
+			throw new UpdateException("Error deleting tuple " + t + " from " + this, e);
 		} catch(IOException e) {
-			throw new UpdateException("Error serializing tuple", e);
+			throw new UpdateException("Error serializing tuple" + t, e);
 		}
 	}
 
@@ -100,6 +102,8 @@ public abstract class StasisTable extends Table {
 			byte[] keybytes= key.project(t).toBytes();
 			byte[] valbytes = key.projectValue(t).toBytes();
 			return add(keybytes, valbytes);
+		} catch(UpdateException e) {
+			throw new UpdateException("Error inserting tuple " + t + " into " + this, e);
 		} catch(IOException e) {
 			throw new UpdateException("Error serializing tuple", e);
 		}
