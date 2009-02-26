@@ -425,8 +425,8 @@ public final class TypeChecker extends Visitor {
 				if(StasisTable.foundStasis) {
 					create = new LinearHashNTA(context, name, key, schema);
 				} else {
-					create = new JavaHashtable(context, name, key, schema);
-					//create = new BasicTable(context, name, key, schema);
+//					create = new JavaHashtable(context, name, key, schema);
+					create = new BasicTable(context, name, key, schema);
 				}
 			} catch (UpdateException e) {
 				// TODO Auto-generated catch block
