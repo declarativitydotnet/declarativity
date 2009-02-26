@@ -1,7 +1,6 @@
 package bfs;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -42,36 +41,36 @@ public class Tap {
             n.doFinish();
         } else if (arg.startsWith("-r")) {
             System.out.println("ARRR: "+arg);
-            String program = args[1];  
+            String program = args[1];
             String rule = args[2];
             List<String> path = new LinkedList<String>();
             for (int i=3; i < args.length; i++) {
-                System.out.println("put "+args[i]+" on stack\n");
+                System.out.println("put " + args[i] + " on stack");
                 path.add(args[i]);
             }
             Tap n = new Tap(1234);
-            n.doLookup(program, rule, path);        
+            n.doLookup(program, rule, path);
         } else {
             usage();
         }
-   
-        System.out.println("DONE\n");
 
+        System.out.println("DONE\n");
     }
 
     private static void usage() {
         //System.err.println("Usage: bfs.Tap <olg source>, <sink>");yy
         System.err.println("Usage: bfs.Tap <opt>\n where ops is one of:\n\t-l\tlisten, or\n\t-f finish\n");
-
-
         System.exit(1);
     }
 
     public JolSystem system;
-    private String sink;
     public String rewrittenProgram;
+    private String sink;
     private FileOutputStream watcher;
-    private HashMap defines;
+    private Map defines;
+    private List<Rule> ruleList;
+    private Map<String, Predicate> predHash;
+
 
     public Tap(int port) throws JolRuntimeException, UpdateException {
         this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, port);
@@ -89,7 +88,7 @@ public class Tap {
     private void init(String sink) {
         this.sink = sink;
         this.ruleList = new LinkedList<Rule>();
-        this.predHash = new HashMap();
+        this.predHash = new HashMap<String, Predicate>();
         this.rewrittenProgram = "";
         this.defines = new HashMap();
 
@@ -149,7 +148,7 @@ public class Tap {
             } else {
                 String clause = i.toString();
                 String res = clause.replace("BOOLEAN","").replace("MATH","").replace("@","");
-                if (res != "") {
+                if (!res.equals("")) {
                     goods.add(res);
                 }
             }
@@ -159,7 +158,7 @@ public class Tap {
     }
 
     public String header() {
-        
+
         String head = "program tap;\n" +
             "import jol.core.Runtime;\n" +
             "define(tap_precondition, keys(0,1,2,3), {String, String, String, Long, Integer});\n" +
@@ -167,7 +166,7 @@ public class Tap {
             "define(tap_universe, {String, String, String, String, String});\n" +
             "define(tap_chaff, {String});\n" +
             "tap_chaff(\"foo\");\n" +
-            "watch(tap_precondition, a);\n" + 
+            "watch(tap_precondition, a);\n" +
             "tap_send(@Sink, Program, Rule, Head,  Ts, Id) :- \n" +
             "\ttap_precondition(Program, Rule, Head,  @Ts, Id),\n" +
             rfooter();
@@ -182,7 +181,7 @@ public class Tap {
         }
         return join(l, delim, quotes);
     }
-    
+
     public boolean isNetworkRule(Rule r) {
         Variable headLoc = r.head().locationVariable();
         if (headLoc != null) {
@@ -197,9 +196,7 @@ public class Tap {
                         }
                     }
                 }
-            
             }
-             
         }
         return false;
     }
@@ -214,7 +211,7 @@ public class Tap {
             "public tap_precondition(" + conjoin(", ", true, rule.program, name, rule.head().name().name) + ",Ts, count<*>) :-\n\t" +
             conjoin(",\n\t", false, body, "Ts := java.lang.System.currentTimeMillis();\n\n");
 
-        
+
 
         return r;
     }
@@ -222,7 +219,7 @@ public class Tap {
     public void summarize() {
         System.out.println("SUM\n");
         for (Rule r : ruleList) {
-            System.out.println("rule "+r.name);
+            System.out.println("rule " + r.name);
             //provenance(r);
         }
     }
@@ -235,25 +232,22 @@ public class Tap {
                 /* new rule */
                 Predicate p = (Predicate) t;
                 System.out.println("\tlook up " + p.name().name.toString());
-                if (predHash.get(p.name().name.toString()) != null) {
+                if (predHash.containsKey(p.name().name.toString())) {
                     String newName = conjoin("_", false, "prov", p.name().scope.toString(), p.name().name.toString());
                     List<Expression> l = new LinkedList<Expression>(p.arguments());
                     l.add(new Variable(null, "Provenance", String.class));
-                    String mini = newName + "(" + 
+                    String mini = newName + "(" +
                         join(l, ", ", false) +
                         ") :-\n\t" +
                         p.toString() + ",\n\t" +
                         "Provenance := \"|\" + Runtime.idgen();\n";
-                      
-                    System.out.println("mini is " + mini); 
+
+                    System.out.println("mini is " + mini);
                 }
             }
         }
         return rewrite;
     }
-
-    private List<Rule> ruleList;
-    private HashMap predHash;
 
     public String rfooter() {
         String foot = "\tSink := \"" + this.sink + "\";\n";
@@ -295,17 +289,17 @@ public class Tap {
         Set s = this.defines.entrySet();
         Iterator i = s.iterator();
         while (i.hasNext()) {
-            Map.Entry me = (Map.Entry)i.next();
-            String key = (String)me.getKey();
+            Map.Entry me = (Map.Entry) i.next();
+            String key = (String) me.getKey();
             this.watcher.write(key.getBytes());
         }
     }
 
 
     public void provRewriter(String pn, Predicate pred, String type) {
-        System.out.println("pred "+pn+" type "+type);
+        System.out.println("pred " + pn + " type " + type);
 
-        if (type == "E") {
+        if (type.equals("E")) {
             predHash.put(pn, pred);
         }
     }
@@ -328,8 +322,8 @@ public class Tap {
         };
 
         this.system.evaluate();
-       
-        for (String p : path) { 
+
+        for (String p : path) {
             System.out.println("s is "+p);
             this.system.install("tap", ClassLoader.getSystemResource(p));
             this.system.evaluate();
@@ -350,8 +344,6 @@ public class Tap {
         this.system.evaluate();
         this.system.evaluate();
         this.system.evaluate();
-
-
     }
 
     public void doListen() throws JolRuntimeException{
@@ -384,9 +376,8 @@ public class Tap {
         table.register(reportCallback);
 
         this.system.start();
-
     }
-    
+
     public void doFinish() throws JolRuntimeException, InterruptedException {
 
         Callback reportCallback = new Callback() {
@@ -411,8 +402,6 @@ public class Tap {
         Table table = this.system.catalog().table(new TableName("tap", "ptap_done"));
         table.register(reportCallback);
         this.system.start();
-
-
     }
 
     public void doRewrite(String program, String file) throws JolRuntimeException, UpdateException {
@@ -483,7 +472,7 @@ public class Tap {
         this.system.evaluate();
         this.system.evaluate();
 
-       // for (int i=0; i<20001; i++) 
+       // for (int i=0; i<20001; i++)
        //     this.system.evaluate();
 
         //summarize();
