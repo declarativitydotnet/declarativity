@@ -3,7 +3,7 @@ package bfs.test;
 import org.junit.Test;
 
 public class MM4Test extends TestCommon {
-    @Test(timeout=20000)
+    @Test(timeout=40000)
     public void test4() throws Exception {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
 

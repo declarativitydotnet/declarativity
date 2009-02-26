@@ -9,7 +9,7 @@ candidate_datanode(Master, Id, FPath, set<DataNode>) :-
     bfs::request(Master, Id, _, "NewChunk", FPath),
     bfs::possible_choices(Master, _, DataNode, _),
     bfs::fpath(Master, FPath, FileId),
-    bfs::file(Master, FileId, _, _, false),
+    bfs::stasis_file(Master, FileId, _, _, false),
     notin candidate_datanode(Master, Id, FPath, _);
 
 // reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks

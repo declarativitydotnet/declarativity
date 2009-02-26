@@ -197,6 +197,22 @@ paxos::quorum(Master,Round) :-
   Master != Other,
   NewRound > Round;
 
+define(localized_wakeup, keys(0), {String,Integer});
+localized_wakeup(Id, 42) :- multipaxos::stasis_wakeup(), paxos_global::members(Id,_);
+
+/********************************************************************
+ r6 (?) on startup, play "catch-up"
+********************************************************************/
+stasis_success(@Agent,Instance,Round,Decree,From) :-
+   stasis_success(@Peer,Instance,Round,Decree,From),
+   paxos::parliament(@Agent,Peer),
+   localized_wakeup#insert(@Agent,_);
+/* Sync the other way too, just in case we're the only non-failed node with a record of the decree. */
+stasis_success(@Peer,Instance,Round,Decree,From) :-
+   stasis_success(@Agent,Instance,Round,Decree,From),
+   paxos::parliament(@Agent,Peer),
+   localized_wakeup#insert(@Agent,_);
+
 /*
 watch(paxos::instance,ae);
 watch(paxos::sendPrepare,ae);
