@@ -104,12 +104,23 @@ public class LinearHashNTA extends StasisTable {
 	protected boolean remove(byte[] keybytes, byte[] valbytes)
 			throws UpdateException {
 		synchronized (xactTable) {
-			ts.dirty = true;
-			byte[] oldvalbytes = Stasis.hash_remove(ts.xid, rid, keybytes);
+			// 'bug for bug' compatible w/ BasicTable
+			byte[] oldvalbytes = lookup(keybytes);
+			if(oldvalbytes == null || ! Arrays.equals(oldvalbytes, valbytes)) {
+				return false;
+			} else {
+				Stasis.hash_remove(ts.xid, rid, keybytes);
+				ts.dirty = true;
+				return true;
+			}
+			// preferred implementation follows.
+			/*byte[] oldvalbytes = Stasis.hash_remove(ts.xid, rid, keybytes);
 			if(oldvalbytes != null && ! Arrays.equals(valbytes, oldvalbytes)) {
 				throw new UpdateException("attempt to remove non-existant tuple");
 			}
-			return oldvalbytes != null;
+			ts.dirty = true;
+
+			return oldvalbytes != null; */
 		}
 	}
 
