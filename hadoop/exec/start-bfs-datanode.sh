@@ -58,5 +58,10 @@ if [ "$HADOOP_CLASSPATH" != "" ]; then
 fi
 
 BFS_DATA_DIR=/tmp/bfs_data
-$JAVA -cp "$CLASSPATH" bfs.DataNode 0 $BFS_DATA_DIR
+# XXX: for now, we just remove the old data directory on startup
+rm -r $BFS_DATA_DIR
+
+export MASTERFILE=$HADOOP_CONF_DIR/masters
+export SLAVEFILE=$HADOOP_CONF_DIR/slaves
+$JAVA -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR
 
