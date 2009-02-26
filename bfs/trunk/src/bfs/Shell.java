@@ -95,6 +95,7 @@ public class Shell {
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, SHELL_PORT);
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
+        Tap tap = new Tap(this.system, "tcp:localhost:5678");
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
@@ -115,6 +116,13 @@ public class Shell {
         this.system.evaluate();
 
         scheduleNewMaster();
+
+        if (Conf.isTapped()) {
+            tap.doRewrite("bfs");
+            tap.doRewrite("chunks");
+            tap.doRewrite("heartbeats");
+        }
+
         this.system.start();
     }
 
