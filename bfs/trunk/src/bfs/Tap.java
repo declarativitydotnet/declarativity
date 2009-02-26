@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.lang.InterruptedException;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
@@ -29,20 +30,40 @@ import jol.types.table.Table.Callback;
 
 
 public class Tap {
-    public static void main(String[] args) throws JolRuntimeException, UpdateException {
-        if (args.length != 3)
-            usage();
+    public static void main(String[] args) throws JolRuntimeException, UpdateException, InterruptedException {
 
-        Tap n = new Tap(args[0]);
-        try {
-            n.doRewrite(args[1], args[2]);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        String arg = args[0];
+        if (arg.startsWith("-l")) {
+            /* listen mode. */
+            Tap n = new Tap(5678);
+            n.doListen();
+        } else if (arg.startsWith("-f")) {
+            Tap n = new Tap(7654);
+            n.doFinish();
+        } else if (arg.startsWith("-r")) {
+            System.out.println("ARRR: "+arg);
+            String program = args[1];  
+            String rule = args[2];
+            List<String> path = new LinkedList<String>();
+            for (int i=3; i < args.length; i++) {
+                System.out.println("put "+args[i]+" on stack\n");
+                path.add(args[i]);
+            }
+            Tap n = new Tap(1234);
+            n.doLookup(program, rule, path);        
+        } else {
+            usage();
         }
+   
+        System.out.println("DONE\n");
+
     }
 
     private static void usage() {
-        System.err.println("Usage: bfs.Tap <olg source>, <sink>");
+        //System.err.println("Usage: bfs.Tap <olg source>, <sink>");yy
+        System.err.println("Usage: bfs.Tap <opt>\n where ops is one of:\n\t-l\tlisten, or\n\t-f finish\n");
+
+
         System.exit(1);
     }
 
@@ -52,8 +73,8 @@ public class Tap {
     private FileOutputStream watcher;
     private HashMap defines;
 
-    public Tap(String sink) throws JolRuntimeException, UpdateException {
-        this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, 12345);
+    public Tap(int port) throws JolRuntimeException, UpdateException {
+        this.system = Runtime.create(Runtime.DEBUG_ALL, System.err, port);
         init(sink);
     }
 
@@ -67,9 +88,12 @@ public class Tap {
 
     private void init(String sink) {
         this.sink = sink;
+        this.ruleList = new LinkedList<Rule>();
+        this.predHash = new HashMap();
         this.rewrittenProgram = "";
         this.defines = new HashMap();
 
+/*
         try {
             File f = new File(sink);
             if (!f.exists()) {
@@ -85,7 +109,9 @@ public class Tap {
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
+*/
     }
+
 
     public static String join(List l, String delim, boolean quotes) {
         String ret = "";
@@ -133,13 +159,18 @@ public class Tap {
     }
 
     public String header() {
+        
         String head = "program tap;\n" +
-            "define(tap_precondition, {String, String, String, Long});\n" +
-            "define(tap_send, {String, String, String, String, Long});\n" +
-            "define(tap_universe, {String, String, String, String});\n" +
+            "import jol.core.Runtime;\n" +
+            "define(tap_precondition, keys(0,1,2,3), {String, String, String, Long, Integer});\n" +
+            "define(tap_send, {String, String, String, String,  Long, Integer});\n" +
+            "define(tap_universe, {String, String, String, String, String});\n" +
             "define(tap_chaff, {String});\n" +
-            "timer(tic, logical, 1,1,1);\n" +
-            "tap_chaff(\"foo\");\n\n";
+            "tap_chaff(\"foo\");\n" +
+            "watch(tap_precondition, a);\n" + 
+            "tap_send(@Sink, Program, Rule, Head,  Ts, Id) :- \n" +
+            "\ttap_precondition(Program, Rule, Head,  @Ts, Id),\n" +
+            rfooter();
 
         return head;
     }
@@ -151,16 +182,49 @@ public class Tap {
         }
         return join(l, delim, quotes);
     }
+    
+    public boolean isNetworkRule(Rule r) {
+        Variable headLoc = r.head().locationVariable();
+        if (headLoc != null) {
+            for (Term t: r.body()) {
+                if (t.getClass() == Predicate.class) {
+                    Predicate p = (Predicate)t;
+                    Variable pLVar = p.locationVariable();
+                    if (pLVar != null) {
+                        if (pLVar.toString() != headLoc.toString()) {
+                            System.out.println("NETWORK RULE? "+ pLVar.toString() + " != " + headLoc.toString());
+                            return true;
+                        }
+                    }
+                }
+            
+            }
+             
+        }
+        return false;
+    }
 
     public String precondition(Rule rule) {
         String name = (rule.isDelete ? "delete-" : "") + rule.name;
         String body = sift(rule.body());
 
+        /* if this is a network rule, count that separately. */
+
         String r =
-            "public tap_precondition(" + conjoin(", ", true, rule.program, name, rule.head().name().name) + ",Ts) :-\n\t" +
-            conjoin(",\n\t", false, body, "Ts := java.lang.System.currentTimeMillis()", "tic();\n\n");
+            "public tap_precondition(" + conjoin(", ", true, rule.program, name, rule.head().name().name) + ",Ts, count<*>) :-\n\t" +
+            conjoin(",\n\t", false, body, "Ts := java.lang.System.currentTimeMillis();\n\n");
+
+        
 
         return r;
+    }
+
+    public void summarize() {
+        System.out.println("SUM\n");
+        for (Rule r : ruleList) {
+            System.out.println("rule "+r.name);
+            //provenance(r);
+        }
     }
 
     public String provenance(Rule r) {
@@ -170,20 +234,26 @@ public class Tap {
             if (t.getClass() == Predicate.class) {
                 /* new rule */
                 Predicate p = (Predicate) t;
-                String newName = conjoin("_", false, "prov", p.name().scope.toString(), p.name().name.toString());
-                List<Expression> l = new LinkedList<Expression>(p.arguments());
-                //l.add(new Variable(null, "Provenance", String.class));
-                String mini = newName + "(" +
-                    join(l, ", ", false) +
-                    ") :-\n\t" +
-                    p.toString() + ",\n\t" +
-                    "Provenance := \"|\" + Runtime.idgen();\n";
-
-                System.out.println("mini is " + mini);
+                System.out.println("\tlook up " + p.name().name.toString());
+                if (predHash.get(p.name().name.toString()) != null) {
+                    String newName = conjoin("_", false, "prov", p.name().scope.toString(), p.name().name.toString());
+                    List<Expression> l = new LinkedList<Expression>(p.arguments());
+                    l.add(new Variable(null, "Provenance", String.class));
+                    String mini = newName + "(" + 
+                        join(l, ", ", false) +
+                        ") :-\n\t" +
+                        p.toString() + ",\n\t" +
+                        "Provenance := \"|\" + Runtime.idgen();\n";
+                      
+                    System.out.println("mini is " + mini); 
+                }
             }
         }
         return rewrite;
     }
+
+    private List<Rule> ruleList;
+    private HashMap predHash;
 
     public String rfooter() {
         String foot = "\tSink := \"" + this.sink + "\";\n";
@@ -200,12 +270,15 @@ public class Tap {
         String body = sift(rule.body());
 
         String rule1Str = precondition(rule);
-        String rule2Str = "tap_send(@Sink, " + conjoin(", ", true, rule.program, name, rule.head().name().name) + ", Ts) :-\n\t" +
-            "tap_precondition(" + conjoin(",", true, rule.program, name, rule.head().name().name) + " , @Ts),\n" + rfooter();
+        String rule2Str ="";
+        //String rule2Str = "tap_send(@Sink, " + conjoin(", ", true, rule.program, name, rule.head().name().name) + ", Ts) :-\n\t" +
+        //    "tap_precondition(" + conjoin(",", true, rule.program, name, rule.head().name().name) + " , @Ts),\n" + rfooter();
 
-        String rule3Str = "tap_universe(@Sink, " + conjoin(", ", true, rule.program, name, rule.head().name().name) + ") :-\n\ttap_chaff(@Foo),\n" + rfooter();
+        String type = isNetworkRule(rule) ? "N" : "L";
+        String rule3Str = "tap_universe(@Sink, " + conjoin(", ", true, rule.program, name, rule.head().name().name, type ) + ") :-\n\ttap_chaff(@Foo),\n" + rfooter();
 
-        String prov = provenance(rule);
+        //String prov = provenance(rule);
+
 
         return rule1Str + rule2Str + rule3Str;
     }
@@ -228,12 +301,126 @@ public class Tap {
         }
     }
 
+
+    public void provRewriter(String pn, Predicate pred, String type) {
+        System.out.println("pred "+pn+" type "+type);
+
+        if (type == "E") {
+            predHash.put(pn, pred);
+        }
+    }
+
+    public void doLookup(String program, String ruleName, List<String> path) throws JolRuntimeException {
+
+        Callback reportCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    String rName = (String) t.value(0);
+                    Rule r = (Rule) t.value(1);
+                    System.out.println(r.toString());
+
+                }
+            }
+        };
+
+        this.system.evaluate();
+       
+        for (String p : path) { 
+            System.out.println("s is "+p);
+            this.system.install("tap", ClassLoader.getSystemResource(p));
+            this.system.evaluate();
+        }
+
+        TableName tblName = new TableName("tap", "tap");
+        TupleSet tap = new TupleSet(tblName);
+        // XXX: hack
+        tap.add(new Tuple(ruleName, program));
+        this.system.schedule("tap", tblName, tap, null);
+
+        Table table = this.system.catalog().table(new TableName("tap", "query"));
+        table.register(reportCallback);
+
+        //this.system.start();
+
+        this.system.evaluate();
+        this.system.evaluate();
+        this.system.evaluate();
+        this.system.evaluate();
+
+
+    }
+
+    public void doListen() throws JolRuntimeException{
+
+        Callback reportCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    //String program = (String) t.value(0);
+
+                }
+            }
+        };
+
+        this.system.evaluate();
+        this.system.install("tap", ClassLoader.getSystemResource("tap/listen.olg"));
+        this.system.evaluate();
+
+        /* Identify the data directory */
+        //TableName tblName = new TableName("tap", "tap");
+        //TupleSet datadir = new TupleSet(tblName);
+        // XXX: hack
+        //datadir.add(new Tuple("tcp:localhost:12345", program));
+        //this.system.schedule("tap", tblName, datadir, null);
+
+        Table table = this.system.catalog().table(new TableName("tap", "nc_perc"));
+        table.register(reportCallback);
+
+        this.system.start();
+
+    }
+    
+    public void doFinish() throws JolRuntimeException, InterruptedException {
+
+        Callback reportCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                try {
+                    Thread.sleep(2000);
+                } catch(Exception e) {
+                    throw new RuntimeException(e);
+                }
+                //System.exit(1);
+            }
+        };
+
+        this.system.install("tap", ClassLoader.getSystemResource("tap/tap_done.olg"));
+        this.system.evaluate();
+        this.system.evaluate();
+
+        Table table = this.system.catalog().table(new TableName("tap", "ptap_done"));
+        table.register(reportCallback);
+        this.system.start();
+
+
+    }
+
     public void doRewrite(String program, String file) throws JolRuntimeException, UpdateException {
 
         final String mySink = this.sink;
 
         rewrittenProgram = header();
-        Callback copyCallback = new Callback() {
+        Callback preconditionCallback = new Callback() {
             @Override
             public void deletion(TupleSet tuples) {}
 
@@ -245,9 +432,29 @@ public class Tap {
                     Rule rule = (Rule) t.value(2);
 
                     rewrittenProgram += rewriter(ruleName, rule, mySink);
+                    ruleList.add(rule);
                 }
             }
         };
+
+        Callback provenanceCallback = new Callback() {
+            @Override
+            public void deletion(TupleSet tuples) {}
+
+            @Override
+            public void insertion(TupleSet tuples) {
+                for (Tuple t : tuples) {
+                    String program = (String) t.value(0);
+                    Predicate pred = (Predicate) t.value(1);
+                    String predName = (String) t.value(2);
+                    String type = (String) t.value(3);
+
+                    //rewrittenProgram += rewriter(ruleName, rule, mySink);
+                    provRewriter(predName, pred, type);
+                }
+            }
+        };
+
 
         this.system.evaluate();
         this.system.install("tap", ClassLoader.getSystemResource("bfs/tap.olg"));
@@ -266,12 +473,20 @@ public class Tap {
         datadir.add(new Tuple("tcp:localhost:12345", program));
         this.system.schedule("tap", tblName, datadir, null);
 
+        Table t2 = this.system.catalog().table(new TableName("tap", "db"));
+        t2.register(provenanceCallback);
+
         Table table = this.system.catalog().table(new TableName("tap", "rewriteRule"));
-        table.register(copyCallback);
+        table.register(preconditionCallback);
 
         this.system.evaluate();
         this.system.evaluate();
         this.system.evaluate();
+
+       // for (int i=0; i<20001; i++) 
+       //     this.system.evaluate();
+
+        //summarize();
 
         URL u;
         try {

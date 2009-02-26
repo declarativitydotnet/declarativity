@@ -87,7 +87,7 @@ to_delete(Master, DataNode, ChunkId) :-
     Cnt > Conf.getRepFactor();
 
 define(newReplicaRequest, keys(0,1,4), {String, Integer, String, Integer, Long});
-watch(newReplica, ae);
+watch(newReplicaRequest, ae);
 newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
     rep_factor(Master, ChunkId, Cnt),
     Time := new Long(System.currentTimeMillis()),

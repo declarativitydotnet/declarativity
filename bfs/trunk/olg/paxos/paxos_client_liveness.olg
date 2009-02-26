@@ -1,5 +1,8 @@
 program paxos_client_liveness;
 
+import java.lang.System;
+import jol.core.Runtime;
+
 /* the purpose of this program is to encapsulate the liveness component of paxos, so that the module responsible
    for correctness can remain uncluttered.  the basic idea is 
 */

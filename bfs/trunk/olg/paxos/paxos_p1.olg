@@ -61,6 +61,7 @@ parliament(A, B, C) :-
   paxos_global::members(B, C);
 
 watch(parliament, ae);
+watch(prevVote,ae);
 
 public
 sendPrepare(Master,-1,"none",Master) :- paxos_global::id(Master);

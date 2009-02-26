@@ -70,7 +70,10 @@ public class Master {
         this.system.evaluate();
 
         if (Conf.isTapped()) {
+            tap.doRewrite("runtime");
             tap.doRewrite("bfs");
+            tap.doRewrite("bfs_chunks");
+            tap.doRewrite("bfs_heartbeat");
             tap.doRewrite("paxos");
             tap.doRewrite("multipaxos");
         }
@@ -87,7 +90,7 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_instance.olg"));
 
         //this.system.install("bfs", ClassLoader.getSystemResource("alive.olg"));
-        //this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
 
         this.system.evaluate();
 
