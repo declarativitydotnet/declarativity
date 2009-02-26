@@ -59,7 +59,7 @@ public class Master {
         TupleSet newFile = new TupleSet();
         int fileId = -1;  // File IDs assigned by the system start at 0
         newFile.add(new Tuple(this.address, -1, null, "/", true));
-        this.system.schedule("bfs", new TableName("bfs", "file"), newFile, null);
+        this.system.schedule("bfs", new TableName("bfs", "stasis_file"), newFile, null);
         this.system.evaluate();
 
         // Hack: insert a bfs::fpath tuple for the root path, because that is somehow

@@ -3,10 +3,10 @@ program glue;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-watch(bfs::file,ae);
-watch(bfs::fchunk,ae);
+watch(bfs::stasis_file,ae);
+watch(bfs::stasis_fchunk,ae);
 watch(bfs::fpath,ae);
-watch(bfs::fsize,ae);
+watch(bfs::stasis_fsize,ae);
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -50,16 +50,16 @@ appView(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
 // the Paxos instance # as the file ID, since that will be unique and consistent
 // among all the masters.
 public
-bfs::file(Master, FileId, ParentId, FName, IsDir) :-
+bfs::stasis_file(Master, FileId, ParentId, FName, IsDir) :-
     appView#insert(Master, Instance, FName, IsDir, ParentId, Op, _),
     Op == "i",
     FileId := Instance;
 
 // Add a new chunk to the file. Use the Paxos instance # as the chunk ID.
 public
-bfs::fchunk(Master, ChunkId, FileId) :-
+bfs::stasis_fchunk(Master, ChunkId, FileId) :-
     bfs::fpath(Master, FPath, FileId),
-    bfs::file(Master, FileId, _, _, false),
+    bfs::stasis_file(Master, FileId, _, _, false),
     appView#insert(Master, Instance, FPath, _, _, Op, _),
     Op == "u",
     ChunkId := Instance;
@@ -75,10 +75,10 @@ bfs::newchunk_request_done(Master, Id, NewChunkId, NodeSet) :-
 // XXX: We should use FileId, not FPath
 public
 delete
-bfs::file(Master, FileId, FParent, FName, IsDir) :-
+bfs::stasis_file(Master, FileId, FParent, FName, IsDir) :-
     appView#insert(Master, _, FPath, _, _, "d", Id),
     bfs::fpath(Master, FPath, FileId),
-    bfs::file(Master, FileId, FParent, FName, IsDir);
+    bfs::stasis_file(Master, FileId, FParent, FName, IsDir);
 
 
 // Use the "file" relation to construct the "fpath" relation. Note
@@ -89,39 +89,39 @@ bfs::file(Master, FileId, FParent, FName, IsDir) :-
 // Base case: root directory
 public
 bfs::fpath(@Master, FName, FileId) :-
-    bfs::file(@Master, FileId, null, FName, true),
+    bfs::stasis_file(@Master, FileId, null, FName, true),
     FName == "/";
 
 public
 bfs::fpath(@Master, Path, FileId) :-
-    bfs::file(@Master, FileId, FParent, FName, _),
+    bfs::stasis_file(@Master, FileId, FParent, FName, _),
     bfs::fpath(@Master, ParentPath, FParent),
     PathSep := (ParentPath == "/" ? "" : "/"),
     Path := ParentPath + PathSep + FName;
 
 // Directories are considered to have size 0
 public
-bfs::fsize(@Master, FileId, FSize) :-
-    bfs::file(@Master, FileId, _, _, true),
+bfs::stasis_fsize(@Master, FileId, FSize) :-
+    bfs::stasis_file(@Master, FileId, _, _, true),
     FSize := 0L;
 
 // Files with no chunks have size 0
 public
-bfs::fsize(@Master, FileId, FSize) :-
-    bfs::file(@Master, FileId, _, _, false),
-    notin compute_file_size(@Master, FileId, _),
+bfs::stasis_fsize(@Master, FileId, FSize) :-
+    bfs::stasis_file(@Master, FileId, _, _, false),
+    notin stasis_compute_file_size(@Master, FileId, _),
     FSize := 0L;
 
 public
-bfs::fsize(@Master, FileId, FSize) :-
-    bfs::file(@Master, FileId, _, _, false),
-    compute_file_size(@Master, FileId, FSizeF),
+bfs::stasis_fsize(@Master, FileId, FSize) :-
+    bfs::stasis_file(@Master, FileId, _, _, false),
+    stasis_compute_file_size(@Master, FileId, FSizeF),
     FSize := FSizeF.longValue();
 
-define(compute_file_size, keys(0, 1), {String, Integer, Float});
+define(stasis_compute_file_size, keys(0, 1), {String, Integer, Float});
 public
-compute_file_size(@Master, FileId, sum<ChunkLen>) :-
-    bfs::fchunk(@Master, ChunkId, FileId),
+stasis_compute_file_size(@Master, FileId, sum<ChunkLen>) :-
+    bfs::stasis_fchunk(@Master, ChunkId, FileId),
     bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen, _);
 
 

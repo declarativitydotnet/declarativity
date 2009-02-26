@@ -49,7 +49,7 @@ response(@Source, Id, Master, false, null) :-
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "NewChunk", FPath),
     fpath(@Master, FPath, FileId),
-    file(@Master, FileId, _, _, true);
+    stasis_file(@Master, FileId, _, _, true);
 
 // Cleanup transient request inferences upon completion
 delete
@@ -69,17 +69,17 @@ request(Master, Id, Source, ReqType, FPath) :-
 response(@Source, Id, Master, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
-    file(@Master, FileId, _, _, false),
+    stasis_file(@Master, FileId, _, _, false),
     fchunk_cnt(@Master, FileId, Cnt),
     Cnt == Chunks.size(),
-    compute_chunk_set(@Master, FileId, Chunks);
+    stasis_compute_chunk_set(@Master, FileId, Chunks);
 
 // ChunkList for empty file => empty set
 response(@Source, Id, Master, true, EmptyChunks) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
-    file(@Master, FileId, _, _, false),
-    notin fchunk(@Master, _, FileId),
+    stasis_file(@Master, FileId, _, _, false),
+    notin stasis_fchunk(@Master, _, FileId),
     EmptyChunks := new HashSet();
 
 // ChunkList for nonexistent file => error
@@ -91,18 +91,18 @@ response(@Source, Id, Master, false, null) :-
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
-    file(@Master, FileId, _, _, true);
+    stasis_file(@Master, FileId, _, _, true);
 
 define(fchunk_cnt, keys(0, 1), {String, Integer, Integer});
 public
 fchunk_cnt(Master, FileId, count<ChunkId>) :-
-    fchunk(Master, ChunkId, FileId);
+    stasis_fchunk(Master, ChunkId, FileId);
 
-define(compute_chunk_set, keys(0, 1), {String, Integer, Set});
-watch(compute_chunk_set, ae);
+define(stasis_compute_chunk_set, keys(0, 1), {String, Integer, Set});
+watch(stasis_compute_chunk_set, ae);
 public
-compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
-    fchunk(Master, ChunkId, FileId),
+stasis_compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
+    stasis_fchunk(Master, ChunkId, FileId),
     bfs_heartbeat::chunks#insert(Master, _, ChunkId, Length, _),
     ChunkInfo := new BFSChunkInfo(ChunkId, Length);
 
@@ -175,7 +175,7 @@ response(@Source, Id, Master, false, null) :-
 response(@Source, Id, Master, false, null) :-
     create_request_parsed(@Master, Id, ParentPath, _, _),
     fpath(@Master, ParentPath, ParentId),
-    file(@Master, ParentId, _, _, ParentIsDir),
+    stasis_file(@Master, ParentId, _, _, ParentIsDir),
     ParentIsDir == false,
     request(@Master, Id, Source, _, _);
 
@@ -186,7 +186,7 @@ watch(create_request_pending, ae);
 create_request_pending(@Master, Id, ParentId, FName, IsDir) :-
     create_request_parsed(@Master, Id, ParentPath, FName, IsDir),
     fpath(@Master, ParentPath, ParentId),
-    file(@Master, ParentId, _, _, true);
+    stasis_file(@Master, ParentId, _, _, true);
 
 public
 response(@Source, Id, Master, Success, null) :-
@@ -205,21 +205,21 @@ response(@Source, Id, Master, false, null) :-
 response(@Source, Id, Master, false, null) :-
     request(@Master, Id, Source, "Ls", Path),
     fpath(@Master, Path, FileId),
-    file(@Master, FileId, _, _, false);
+    stasis_file(@Master, FileId, _, _, false);
 
 // "ls" for a directory path => return contents of directory
 response(@Source, Id, Master, true, FileSet) :-
     request(@Master, Id, Source, "Ls", Path),
     fpath(@Master, Path, FileId),
-    file(@Master, FileId, _, _, true),
-    compute_ls(@Master, FileId, FileSet);
+    stasis_file(@Master, FileId, _, _, true),
+    stasis_compute_ls(@Master, FileId, FileSet);
 
-define(compute_ls, keys(0, 1), {String, Integer, Set});
+define(stasis_compute_ls, keys(0, 1), {String, Integer, Set});
 public
-compute_ls(@Master, ParentFileId, set<FInfo>) :-
-    file(@Master, FileId, ParentFileId, FName, IsDir),
+stasis_compute_ls(@Master, ParentFileId, set<FInfo>) :-
+    stasis_file(@Master, FileId, ParentFileId, FName, IsDir),
     fpath(@Master, FPath, FileId),
-    fsize(@Master, FileId, FLength),
+    stasis_fsize(@Master, FileId, FLength),
     FInfo := new BFSFileInfo(FileId, FPath, FName, FLength, IsDir);
 
 // "ls" for an empty directory => return empty set of files
@@ -227,7 +227,7 @@ response(@Source, Id, Master, true, EmptySet) :-
     request(@Master, Id, Source, "Ls", Path),
     fpath(@Master, Path, FileId),
     // empty directory <=> no files with FileId as parent
-    notin file(@Master, _, FileId, _, _),
+    notin stasis_file(@Master, _, FileId, _, _),
     EmptySet := new HashSet();
 
 // If we get a "FileInfo" request for an extant file, send back info
@@ -235,8 +235,8 @@ response(@Source, Id, Master, true, EmptySet) :-
 response(@Source, Id, Master, true, FInfo) :-
     request(@Master, Id, Source, "FileInfo", FPath),
     fpath(@Master, FPath, FileId),
-    fsize(@Master, FileId, FSize),
-    file(@Master, FileId, _, FName, IsDir),
+    stasis_fsize(@Master, FileId, FSize),
+    stasis_file(@Master, FileId, _, FName, IsDir),
     FInfo := new BFSFileInfo(FileId, FPath, FName, FSize, IsDir);
 
 response(@Source, Id, Master, false, null) :-

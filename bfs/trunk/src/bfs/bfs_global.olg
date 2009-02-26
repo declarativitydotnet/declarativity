@@ -3,16 +3,17 @@ program bfs;
 import bfs.Conf;
 
 // Node, file ID, parent file ID (or null), file name, is directory?
-define(file, keys(0, 1), {String, Integer, Integer, String, Boolean});
+define(stasis_file, keys(0, 1), {String, Integer, Integer, String, Boolean});
 
 // Node, path name (from root), file ID
+// (derivable from stasis_file, needs to fire events at runtime)
 define(fpath, keys(0, 1, 2), {String, String, Integer});
 
 // Node, file ID, file size
-define(fsize, keys(0, 1), {String, Integer, Long});
+define(stasis_fsize, keys(0, 1), {String, Integer, Long});
 
 // Node, chunk ID, file ID
-define(fchunk, keys(0, 1), {String, Integer, Integer});
+define(stasis_fchunk, keys(0, 1), {String, Integer, Integer});
 
 // Master, Cnt, DataNode, Id
 define(possible_choices, keys(0,2), {String, Integer, String, Integer});
