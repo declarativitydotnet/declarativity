@@ -56,7 +56,9 @@ delete
 request(Master, Id, Source, ReqType, FPath) :-
     request(Master, Id, Source, ReqType, FPath),
     response(Source, Id, Master, _, _),
-    ReqType == "NewChunk" || ReqType == "ChunkList";
+    ReqType == "NewChunk" || ReqType == "ChunkList" ||
+    ReqType == "ChunkLocations" || ReqType == "FileInfo" ||
+    ReqType == "Ls";
 
 // If we get a "ChunkList" request for an extant file, send back its
 // chunks. If the file has no chunks, send back an empty set. Note
