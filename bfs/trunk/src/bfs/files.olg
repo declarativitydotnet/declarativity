@@ -40,20 +40,15 @@ chunkTmp(Host, FName, FLength) :-
       FName := F.getName();
       FLength := Integer.valueOf(Long.valueOf(F.length()).toString()); };
 
-define(chunk, keys(0,1), {String, String, Integer, String});
+define(chunk, keys(0,1), {String, String, Integer});
 //watch(chunk, ae);
-chunk(Host, FName, FLength, Checksum) :-
-    Checksum := "foo",
-    chunkTmp#insert(Host, FName, FLength); /*,
-    datadir(Host, Dir),
-    CSO := new bfs.ChunkCheckSum();
-    Checksum := CSO.checksum();
-    */
+chunk(Host, FName, FLength) :-
+    chunkTmp#insert(Host, FName, FLength);
 
 /* cleanup rules disabled
 delete
-chunk(Host, FName, FLength, Checksum) :-
-    chunk(Host, FName, FLength, Checksum),
+chunk(Host, FName, FLength) :-
+    chunk(Host, FName, FLength),
     dir#insert(Host, Dir, List);
 */
 
@@ -61,7 +56,7 @@ chunk(Host, FName, FLength, Checksum) :-
 define(heartBeat,keys(0,1,2),{String,String,Integer,Integer,Long,Long});
 //watch(heartBeat,ae);
 heartBeat(Host, Master, Chunk, Length, Tstamp, Id) :-
-    chunk(Host, FName, Length, Checksum),
+    chunk(Host, FName, Length),
     Chunk := Integer.valueOf(FName),
     masters(Host, Master),
     clock(_, _, _),
@@ -120,4 +115,3 @@ watch(send_delete, ae);
 
 define(send_migrate, {String, String, Integer, Set});
 watch(send_migrate, ae);
-
