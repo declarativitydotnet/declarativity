@@ -25,7 +25,7 @@ define(query, {String, Rule});
 public
 query(Rule, Obj) :-
     global::rule(Program, Rule, Public, Async, Delete, Obj),
-    tap(Rule, Sink);
+    tap(Rule, Program);
 
 
 define(rewriteRule, keys(0,1), {String, String, Rule});

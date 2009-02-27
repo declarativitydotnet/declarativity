@@ -147,6 +147,7 @@ public class Tap {
                 // we use a separate rewrite to capture the actual projections
             } else {
                 String clause = i.toString();
+                System.out.println("TYPE: "+i.getClass());
                 String res = clause.replace("BOOLEAN","").replace("MATH","").replace("@","");
                 if (!res.equals("")) {
                     goods.add(res);
@@ -304,6 +305,18 @@ public class Tap {
         }
     }
 
+    public String trunc(String s) {
+        /* maybe some day, I'll do it the not stupid way */
+        String paths[] = s.split("/");
+        List<String> l = new LinkedList<String>();
+        for (int i = 1; i < paths.length; i++) {
+            l.add(paths[i]);
+        }
+
+    
+        return join(l, "/", false);
+    }
+
     public void doLookup(String program, String ruleName, List<String> path) throws JolRuntimeException {
 
         Callback reportCallback = new Callback() {
@@ -322,12 +335,13 @@ public class Tap {
         };
 
         this.system.evaluate();
-
-        for (String p : path) {
-            System.out.println("s is "+p);
-            this.system.install("tap", ClassLoader.getSystemResource(p));
+        for (String prog : Conf.corpus) {
+            System.out.println("DO: "+prog);
+            this.system.install("tap", ClassLoader.getSystemResource(prog));
             this.system.evaluate();
-        }
+
+        }        
+
 
         TableName tblName = new TableName("tap", "tap");
         TupleSet tap = new TupleSet(tblName);

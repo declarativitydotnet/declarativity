@@ -53,6 +53,20 @@ public class Conf {
 
     private static final boolean tap = false;
 
+    public static final String[] corpus = new String[] {
+        "paxos/paxos_global.olg",
+        "paxos/paxos_p1.olg",
+        "paxos/paxos_p2.olg",
+        "paxos/paxos_instance.olg",
+        "bfs/bfs_global.olg",
+        "bfs/heartbeats.olg",
+        "bfs/chunks_global.olg",
+        "bfs/chunks.olg",
+        "bfs/bfs.olg",
+        "bfs/placement.olg",
+        "bfs/tap.olg"
+    };
+
 	static {
         if (System.getenv("MASTERFILE") != null) {
         	File mastersFile = new File(System.getenv("MASTERFILE"));

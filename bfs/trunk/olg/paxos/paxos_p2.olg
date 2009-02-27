@@ -9,9 +9,11 @@ import jol.core.Runtime;
 //timer(periodic,logical,1,1,1);
 	
 define(acceptRequest,keys(0,1),{String,Integer, Integer,String,Integer});
-define(sendBeginRound,keys(0,1,2),{String, Integer,Integer,String,String});
-//define(sendBeginRound,{String, Integer,Integer,String,String});
-define(stasis_accept,keys(0,1),{String, Integer,Integer,String,String});
+//define(sendBeginRound,keys(0,1,2),{String, Integer,Integer,String,String});
+define(sendBeginRound,{String, Integer,Integer,String,String});
+//define(stasis_accept,keys(0,1),{String, Integer,Integer,String,String});
+
+define(stasis_accept,{String, Integer,Integer,String,String});
 define(sendAccept,keys(0,1,4),{String, Integer,Integer,String,String});
 define(decree,keys(0,1),{String, Integer,Integer,String});
 define(stasis_success,keys(0,1),{String,Integer, Integer,String,String});
@@ -124,6 +126,15 @@ votes
 acceptCnt(Master,Instance,Round,count<Agent>) :- 
   sendAccept(Master,Instance,Round,Decree,Agent);
 
+clean1
+delete
+sendAccept(Master,Instance,Round,Decree,Agent) :-
+    sendAccept(Master, Instance, Round, Decree, Agent),
+    decree#insert(Master, Instance, Round, Decree);
+
+watch(sendAccept, e);
+    
+
 /**************************************************************************************
 r5. If p has received a Voted (b, q) message from every priest q in Q (the quorum
 for ballot number b), where b = lastTried [p], then he writes d (the decree of
@@ -133,10 +144,13 @@ public
 r5_a	
 decree(Master,Instance,Round,Decree) :- 
   paxos::lastTried(Master,Round),
-	acceptCnt(Master,Instance,Round,Votes),
+	acceptCnt#insert(Master,Instance,Round,Votes),
   paxos::priestCnt(Master,Priests),
   Votes > (Priests / 2), 
 	acceptRequest(Master,Instance,Round,Decree);
+
+
+watch(stasis_success, ae);
 
 /*
 public
@@ -147,7 +161,6 @@ stasis_success(@Agent,Instance,Round,Decree,From) :-
 	// we interpret "every" to mean a broadcast.
 	paxos::parliament(@Master,Agent);
 */
-
 public
 r5_b	
 stasis_success(Agent,Instance,Round,Decree,From) :-
@@ -161,7 +174,6 @@ stasis_success(Master, Instance, Round, Decree, From) :-
     decree(Master,Instance,Round,Decree),
 	paxos::storedDecreeRequest(Master,Decree,From,_);
 
-
 // breakout.
 public
 r5_d
@@ -170,6 +182,7 @@ stasis_success(Agent,Instance,Round,Decree,From) :-
   paxos::priestCnt(Agent,1),
   Round := -1,
   paxos::instance(Agent,Instance);
+
 
 watch(decree,ae);
 watch(acceptCnt, ae);
