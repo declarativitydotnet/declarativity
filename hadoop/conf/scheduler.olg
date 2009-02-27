@@ -44,7 +44,7 @@ jobtracker::taskUpdate(JobId, TaskId, Type, TaskStatus) :-
 
 watch(jobtracker::taskAttempt, a);
 public
-jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L, System.currentTimeMillis()) :-
+jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0f, State, Phase, null, TrackerName, null, 0L, 0L, System.currentTimeMillis(), false) :-
 	schedule(JobId, TaskId, TrackerName),
 	notin taskAttempts(JobId, TaskId, _),
 	State       := Constants.TaskState.RUNNING,
@@ -52,13 +52,16 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, Tracker
 	AttemptID   := 0;
 
 public
-jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, State, Phase, null, TrackerName, null, 0L, 0L, System.currentTimeMillis()) :-
+jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0f, State, Phase, null, TrackerName, null, 0L, 0L, System.currentTimeMillis(), false) :-
 	schedule(JobId, TaskId, TrackerName),
 	taskAttempts(JobId, TaskId, Attempts),
 	State       := Constants.TaskState.RUNNING,
 	Phase       := Constants.TaskPhase.STARTING,
 	AttemptID   := Attempts;
 	
+jobtracker::lookupTask(JobId, Constants.TaskState.RUNNING) :-
+	jobtracker::taskAttempt(JobId, TaskId, AttemptID, _, Constants.TaskState.RUNNING);
+
 actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
 	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _, _),
@@ -68,44 +71,44 @@ jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_T
 	          Function.launchMap(FileInput.split(), JobFile, TaskId, AttemptID, Partition) :
 	          Function.launchReduce(JobFile, TaskId, AttemptID, Partition, MapCount);
 	          
-/*
 watch(jobtracker::taskAttempt, a);
-failedAction
-jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0, Constants.TaskState.FAILED, Constants.TaskPhase.STARTING, Diag, TrackerName, null, 0L, 0L, ActionTimestamp) :-
-    trackerSlots(TrackerName, Host, TrackerTimestamp, Maps, Reduces),
-	jobtracker::taskAttempt(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _, ActionTimestamp),
-	jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
-	TaskStatus.state() == Constants.TaskState.UNASSIGNED,
-	TrackerTimestamp - ActionTimestamp > 60000L,
-	Diag := "It's been 60 seconds and the tracker still hasn't started my task.";
+/*
+public failedStartAction
+jobtracker::taskAttempt(JobId, TaskId, AttemptId, 0f, Constants.TaskState.FAILED, Phase, Diag, TrackerName, null, 0L, 0L, Timestamp, true) :-
+    jobtracker::dutyCycle(),
+    jobtracker::taskAttempt(JobId, TaskId, AttemptId, _, Constants.TaskState.RUNNING, Phase, _, TrackerName, _, _, _, Timestamp, _),
+    jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
+    TaskStatus.state() != Constants.TaskState.SUCCEEDED,
+    System.currentTimeMillis() - Timestamp > 2L * 60L * 1000L,
+    Diag := "It's been 2 minutes and the tracker hasn't reported my task.";
 */
- 
+    
+	          
 /******************** Process Jobs *******************/
-define(jobQueue,            keys(0), {JobID, JobPriority, Long, Constants.TaskType});
 define(jobFinishedMapTasks, keys(0), {JobID, Integer});
 
 /* Put new jobs in a wait queue in a MAP phase. */
 public
-jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP) :-
+jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP) :-
 	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JobStatus),
 	JobStatus.mapCount() > 0, JobStatus.state() == Constants.JobState.PREP;
 	
 public
-jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
+jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
 	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JobStatus),
 	JobStatus.mapCount() == 0, JobStatus.state() == Constants.JobState.PREP;
 	
 public delete
-jobQueue(JobId, Priority, SubmitTime, Phase) :-
+jobtracker::jobQueue(JobId, Priority, SubmitTime, Phase) :-
 	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, Status),
-	jobQueue(JobId, Priority, SubmitTime, Phase),
+	jobtracker::jobQueue(JobId, Priority, SubmitTime, Phase),
 	Status.state() == Constants.JobState.SUCCEEDED || Status.state() == Constants.JobState.FAILED;
 	
 /* Switch to reduce phase when all maps finish. */
-jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
+jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
 	jobFinishedMapTasks#insert(JobId, FinishedMapCount), 
 	jobtracker::job(JobId, _, _, _, _, _, _, _, _, JobStatus),
-	jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP),
+	jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP),
 	FinishedMapCount == JobStatus.mapCount();
 
 public
@@ -120,7 +123,8 @@ define(trackerSlots, keys(0), {String, String, Long, Integer, Integer});
 
 public
 trackerSlots(TrackerName, Host, Timestamp, MaxMap - MapCount, MaxReduce - ReduceCount) :-
-	jobtracker::dutyCycle(), jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce);
+	jobtracker::dutyCycle(), jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
+	!(MapCount >= MaxMap) || !(ReduceCount >= MaxReduce);
 	
 	
 	
