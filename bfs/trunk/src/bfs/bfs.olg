@@ -177,12 +177,12 @@ response(@Source, Id, Master, false, null) :-
     stasis_file(@Master, ParentId, _, _, ParentIsDir),
     ParentIsDir == false;
 
-define(create_request_pending, keys(0, 1), {String, Integer, Integer, String, Boolean});
+define(create_request_pending, keys(0, 1), {String, Integer, String, Integer, String, Boolean});
 watch(create_request_pending, ae);
 
 // Otherwise, pass the request through Paxos
-create_request_pending(@Master, Id, ParentId, FName, IsDir) :-
-    create_request_parsed(@Master, Id, _, ParentPath, FName, IsDir),
+create_request_pending(@Master, Id, Source, ParentId, FName, IsDir) :-
+    create_request_parsed(@Master, Id, Source, ParentPath, FName, IsDir),
     fpath(@Master, ParentPath, ParentId),
     stasis_file(@Master, ParentId, _, _, true);
 
@@ -190,7 +190,7 @@ define(create_request_done, {String, Integer, Boolean});
 public
 response(@Source, Id, Master, Success, null) :-
     create_request_done(@Master, Id, Success),
-    request(@Master, Id, Source, _, _);
+    create_request_pending(@Master, Id, Source, _, _, _);
 
 // If we get an "ls" request, send back the names of all the files in
 // the file system. Note that we need to do the aggregation in a sub-rule.
