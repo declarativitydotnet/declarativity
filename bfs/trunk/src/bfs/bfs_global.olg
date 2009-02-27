@@ -15,9 +15,7 @@ define(stasis_fsize, keys(0, 1), {String, Integer, Long});
 // Node, chunk ID, file ID
 define(stasis_fchunk, keys(0, 1), {String, Integer, Integer});
 
-// Master, Cnt, DataNode, Id
-define(possible_choices, keys(0,2), {String, Integer, String, Integer});
-
+// Master, Cnt, DataNode
 define(migration_choices, keys(0,1,2), {String, String, Integer});
 
 // Master node, Request ID, Client node, Request type, Arg

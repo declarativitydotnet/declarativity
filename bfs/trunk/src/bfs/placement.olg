@@ -1,56 +1,8 @@
 program bfs;
 
-import jol.types.basic.ValueList;
-
-//watch(possible_choices, ae);
-public
-possible_choices(Master, Cnt, DataNode, Id) :-
-    chunk_cnt#insert(Master, DataNode, Cnt),
-    Id := -100;
-/*
-    flat_cnt(Master, Top),
-    // SLOW!!
-    //Id := (new Random()).nextInt(1000),
-    Id := -100,
-    Cnt <= Top,
-    chunk_cnt(Master, DataNode, Cnt);
-*/
-
 watch(migration_choices, ae);
 public
 migration_choices(Master, DataNode, ChunkId) :-
     bfs_heartbeat::newReplica(Master, ChunkId, _, _, _),
     bfs_heartbeat::dataNodes(Master, DataNode, _),
     notin bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
-
-/*
-define(flat_cnt, keys(0,1), {String, Integer});
-//watch(flat_cnt, ae);
-flat_cnt(Master, Cnt) :-
-    flatten(lowest_loaded_cnt(Master, BK)),
-    Cnt := (Integer) BK;
-
-define(lowest_loaded_cnt, keys(0), {String, ValueList});
-//watch(lowest_loaded_cnt, ae);
-lowest_loaded_cnt(Master, bottomk<Cnt, 10>) :-
-    chunk_cnt(Master, _, Cnt);
-*/
-
-timer(clock, physical, 1000, infinity, 1000);
-
-define(chunk_cnt, keys(0,1), {String,String,Integer});
-//watch(chunk_cnt, ae);
-public
-chunk_cnt(Master, DataNode, count<*>) :-
-    clock#insert(),
-    bfs_heartbeat::dataNodes(Master, Datanode, _),
-    bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
-
-
-/* cleanups temporarily disabled
-delete
-lowest_loaded_cnt(Master, Cnts) :-
-    lowest_loaded_cnt(Master, Cnts),
-    lowest_loaded_nodes#insert(Master, Cnt, DataNode);
-*/
-
