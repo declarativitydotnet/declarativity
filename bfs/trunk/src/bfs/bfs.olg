@@ -249,7 +249,7 @@ rm_request_pending(@Master, Id, FPath) :-
     request(@Master, Id, _, "Rm", FPath),
     fpath(@Master, FPath, _);
 
-define(rm_request_done, keys(0, 1), {String, Integer});
+define(rm_request_done, {String, Integer});
 public
 response(@Source, Id, Master, true, null) :-
     rm_request_done(@Master, Id),
