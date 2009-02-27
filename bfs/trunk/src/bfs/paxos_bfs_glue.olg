@@ -33,10 +33,10 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     bfs_chunks::candidate_datanode#insert(Master, Id, FPath, _),
     Decree := FPath + ",f,u," + Id.toString() + ",-1";
 
-define(appView,keys(0,1,2),{String,Integer,String,Boolean,Integer,String,Integer});
-watch(appView,ae);
+define(global_log, keys(0, 1, 2), {String, Integer, String, Boolean, Integer, String, Integer});
+watch(global_log, ae);
 public
-appView(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
+global_log(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
     paxos_global::requestStatus#insert(Master, _, Decree, Instance, "passed"),
     NVL := Decree.split(","),
     Name := NVL[0],
@@ -51,7 +51,7 @@ appView(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
 // among all the masters.
 public
 bfs::stasis_file(Master, FileId, ParentId, FName, IsDir) :-
-    appView#insert(Master, Instance, FName, IsDir, ParentId, Op, _),
+    global_log#insert(Master, Instance, FName, IsDir, ParentId, Op, _),
     Op == "i",
     FileId := Instance;
 
@@ -60,14 +60,14 @@ public
 bfs::stasis_fchunk(Master, ChunkId, FileId) :-
     bfs::fpath(Master, FPath, FileId),
     bfs::stasis_file(Master, FileId, _, _, false),
-    appView#insert(Master, Instance, FPath, _, _, Op, _),
+    global_log#insert(Master, Instance, FPath, _, _, Op, _),
     Op == "u",
     ChunkId := Instance;
 
 public
 bfs::newchunk_request_done(Master, Id, NewChunkId, NodeSet) :-
     bfs_chunks::candidate_datanode(Master, Id, _, NodeSet),
-    appView(Master, Instance, _, _, _, "u", Id),
+    global_log(Master, Instance, _, _, _, "u", Id),
     NewChunkId := Instance;
 
 
@@ -76,7 +76,7 @@ bfs::newchunk_request_done(Master, Id, NewChunkId, NodeSet) :-
 public
 delete
 bfs::stasis_file(Master, FileId, FParent, FName, IsDir) :-
-    appView#insert(Master, _, FPath, _, _, "d", Id),
+    global_log#insert(Master, _, FPath, _, _, "d", Id),
     bfs::fpath(Master, FPath, FileId),
     bfs::stasis_file(Master, FileId, FParent, FName, IsDir);
 
@@ -131,16 +131,16 @@ public
 green
 bfs::create_request_done(Master, Id, true) :-
     bfs::create_request_pending(Master, Id, ParentId, FName, _),
-    appView(Master, _, FName, _, ParentId, "i", Id);
+    global_log(Master, _, FName, _, ParentId, "i", Id);
 
 public
 red1
 bfs::create_request_done(Master, Id, false) :-
     bfs::create_request_pending(Master, Id, ParentId, FName, _),
-    appView(Master, _, FName, _, ParentId, "i", Id2),
+    global_log(Master, _, FName, _, ParentId, "i", Id2),
     Id != Id2;
 
 public
 bfs::rm_request_done(Master, Id) :-
     bfs::rm_request_pending(Master, Id, FPath),
-    appView(Master, _, FPath, _, _, "d", Id);
+    global_log(Master, _, FPath, _, _, "d", Id);
