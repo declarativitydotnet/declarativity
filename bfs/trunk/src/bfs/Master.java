@@ -70,7 +70,6 @@ public class Master {
         this.system.evaluate();
 
         if (Conf.isTapped()) {
-            tap.doRewrite("runtime");
             tap.doRewrite("bfs");
             tap.doRewrite("bfs_chunks");
             tap.doRewrite("bfs_heartbeat");

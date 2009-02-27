@@ -110,7 +110,7 @@ define(newReplica, {String, Integer, String, Integer, Long});
 newReplica(Master, ChunkId, Dn, Cnt, Time) :-
     newReplicaRequest(Master, ChunkId, Dn, Cnt, Time),
     clock#insert(),
-    (System.currentTimeMillis() - Time) > 6000L;
+    (System.currentTimeMillis() - Time) > new Integer(6000).longValue();
 
 // hacky constraint: one message per tick
 define(send_delete, keys(0), {String, Integer, String});
