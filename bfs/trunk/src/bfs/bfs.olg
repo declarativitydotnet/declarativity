@@ -51,7 +51,7 @@ response(@Source, Id, Master, false, null) :-
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, true);
 
-delete 
+delete
 request(Master, Id, Source, "NewChunk", FPath) :- 
     request(Master, Id, Source, "NewChunk", FPath), 
     bfs_chunks::candidate_datanode(Master, Id, FPath, _); 
@@ -244,16 +244,16 @@ response(@Source, Id, Master, false, null) :-
 // If we got an "rm" request and the file exists, go through Paxos.
 // Once we've achieved consensus, remove the file and send back a
 // positive ack.
-define(rm_request_pending, keys(0, 1), {String, Integer, String});
-rm_request_pending(@Master, Id, FPath) :-
-    request(@Master, Id, _, "Rm", FPath),
+define(rm_request_pending, keys(0, 1), {String, Integer, String, String});
+rm_request_pending(@Master, Id, FPath, Source) :-
+    request(@Master, Id, Source, "Rm", FPath),
     fpath(@Master, FPath, _);
 
 define(rm_request_done, {String, Integer});
 public
 response(@Source, Id, Master, true, null) :-
-    rm_request_done(@Master, Id),
-    request(@Master, Id, Source, _, _);
+    rm_request_pending(@Master, Id, _, Source),
+    rm_request_done(@Master, Id);
 
 // If we got an "rm" request and the file doesn't exist, return a
 // negative ack. NB: unlike in the "create" case, we don't need the
