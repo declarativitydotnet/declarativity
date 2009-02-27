@@ -189,12 +189,6 @@ response(@Source, Id, Master, Success, null) :-
     create_request_done(@Master, Id, Success),
     request(@Master, Id, Source, _, _);
 
-public
-delete
-request(@Master, Id, Source, ReqType, FPath) :-
-    create_request_done(@Master, Id, _),
-    request(@Master, Id, Source, ReqType, FPath);
-
 // If we get an "ls" request, send back the names of all the files in
 // the file system. Note that we need to do the aggregation in a sub-rule.
 
