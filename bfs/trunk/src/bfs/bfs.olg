@@ -184,6 +184,7 @@ create_request_pending(@Master, Id, ParentId, FName, IsDir) :-
     fpath(@Master, ParentPath, ParentId),
     stasis_file(@Master, ParentId, _, _, true);
 
+define(create_request_done, {String, Integer, Boolean});
 public
 response(@Source, Id, Master, Success, null) :-
     create_request_done(@Master, Id, Success),
@@ -248,6 +249,7 @@ rm_request_pending(@Master, Id, FPath) :-
     request(@Master, Id, _, "Rm", FPath),
     fpath(@Master, FPath, _);
 
+define(rm_request_done, keys(0, 1), {String, Integer});
 public
 response(@Source, Id, Master, true, null) :-
     rm_request_done(@Master, Id),
