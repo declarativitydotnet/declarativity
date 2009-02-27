@@ -28,7 +28,7 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 
 // Client node, Request ID, Master node, Success, Result (if any). The
 // type of the result depends on the type of request.
-define(response, keys(0, 1), {String, Integer, String, Boolean, Object});
+define(response, {String, Integer, String, Boolean, Object});
 watch(response, ae);
 
 define(newchunk_request_done, keys(0, 1), {String, Integer, Integer, Set});
