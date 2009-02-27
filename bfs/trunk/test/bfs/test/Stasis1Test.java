@@ -5,7 +5,11 @@ import java.io.File;
 import org.junit.Test;
 
 public class Stasis1Test extends TestCommon {
-    @Test
+	/**
+	 * Test single-master stasis setups w/ shutdown
+	 * @throws Exception
+	 */
+    @Test(timeout=36000)
     public void test1() throws Exception {
 	    new File("storefile.txt").delete();
 	    new File("logfile.txt").delete();

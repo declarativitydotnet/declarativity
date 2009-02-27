@@ -4,7 +4,7 @@ import java.io.File;
 
 import org.junit.Test;
 
-public class BFSStasis3Test extends TestCommon {
+public class Stasis2Test extends TestCommon {
 	/**
 	 * Test multi-master stasis setups w/ shutdown, but no catch-up
 	 * @throws Exception
@@ -38,34 +38,18 @@ public class BFSStasis3Test extends TestCommon {
 	    
 	    assertTrue(shellLs("/", "foo"));
 	    assertTrue(shellLs("/", "bar"));
-	    
+
 	    this.killMaster(1);
 
 	    assertTrue(shellLs("/", "foo"));
 	    assertTrue(shellLs("/", "bar"));
 
-	    this.killMaster(2);
-	    
-	    startMany("localhost:5509", "localhost:5510", "localhost:5511");
-	    shellCreate("/baz"); // hopefully this will kick over to the master, and block until it's done catching up.
-	    
-	    assertTrue(shellLs("/", "foo"));
-	    assertTrue(shellLs("/", "bar"));
-	    assertTrue(shellLs("/", "baz"));
-	    
-	    this.killMaster(2);
-	    this.killMaster(1);
-
-	    assertTrue(shellLs("/", "foo"));
-	    assertTrue(shellLs("/", "bar"));
-	    assertTrue(shellLs("/", "baz"));
 	    
 	    shutdown();
     }
 
     public static void main(String[] args) throws Exception {
-        BFSStasis3Test t = new BFSStasis3Test();
+        Stasis2Test t = new Stasis2Test();
         t.test1();
     }
-
 }
