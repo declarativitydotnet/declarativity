@@ -18,12 +18,17 @@ public class TaskState implements Comparable<TaskState> {
 				            Constants.TaskState state, 
 				            Constants.TaskPhase phase, 
 				            Long start, Long finish) {
+			if (state == Constants.TaskState.KILLED) {
+				state = Constants.TaskState.FAILED;
+			}
+			
 			this.progress = state == Constants.TaskState.SUCCEEDED ? 1f : progress;
 			this.state    = progress >= 1f ? Constants.TaskState.SUCCEEDED : state;
 			this.phase    = phase;
 			this.start    = start;
 			this.finish   = finish;
 		}
+		
 		public int compareTo(AttemptState o) {
 			int comparison = 0;
 			/* First compare the State. */
@@ -87,8 +92,8 @@ public class TaskState implements Comparable<TaskState> {
 		if (comparison != 0) return comparison;
 		comparison = this.taskid.compareTo(o.taskid);
 		if (comparison != 0) return comparison;
-		if (!this.state().equals(o.state())) 
-			return this.state().ordinal() - o.state().ordinal();
+		comparison = this.state().compareTo(o.state());
+		if (comparison != 0) return comparison;
 		return Float.compare(this.progress(), o.progress());
 	}
 	
@@ -172,6 +177,10 @@ public class TaskState implements Comparable<TaskState> {
 			if (best == null) {
 				best = state;
 			}
+			else if (best.state == Constants.TaskState.FAILED &&
+					state.state != Constants.TaskState.FAILED) {
+				best = state;
+			}
 			else if (best.state == Constants.TaskState.SUCCEEDED) {
 				return best;
 			}
@@ -181,5 +190,24 @@ public class TaskState implements Comparable<TaskState> {
 			}
 		}
 		return best;
+	}
+	
+	public static void main(String[] args) {
+		TaskState state = new TaskState(new JobID("test", 0), new TaskID("test", 0, true, 0));
+		state.attempt(0, 0.0f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
+		state.attempt(0, 1.0f, Constants.TaskState.SUCCEEDED, Constants.TaskPhase.MAP, 1L, 2L);
+		if (state.state() != Constants.TaskState.SUCCEEDED) {
+			System.err.println("EXPECTED SUCCEEDED 1");
+		}
+		else {
+			System.err.println("COOL 1");
+		}
+		state.attempt(0, 0.0f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
+		if (state.state() != Constants.TaskState.SUCCEEDED) {
+			System.err.println("EXPECTED SUCCEEDED 1");
+		}
+		else {
+			System.err.println("COOL 2");
+		}
 	}
 }

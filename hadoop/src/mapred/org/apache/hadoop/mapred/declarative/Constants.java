@@ -21,7 +21,7 @@ public final class Constants {
 
 	// what state is the task in?
 	public static enum TaskState {
-		FAILED, KILLED, UNASSIGNED, RUNNING, COMMIT_PENDING, SUCCEEDED
+		UNASSIGNED, RUNNING, FAILED, KILLED, COMMIT_PENDING, SUCCEEDED
 	}
 	  
 }

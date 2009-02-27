@@ -212,6 +212,7 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new TaskReportTable(context));
 		this.context().catalog().register(new TaskTable(context));
 		this.context().catalog().register(new TaskTrackerActionTable(context));
+		this.context().catalog().register(new LoadActions(context));
 		this.context().catalog().register(new TaskTrackerErrorTable(context));
 		this.context().catalog().register(new TaskTrackerTable(context));
 		this.context().catalog().register(new NetworkTopologyTable(context, this));
@@ -231,6 +232,14 @@ public class JobTrackerImpl extends JobTracker {
 			ClassLoader.getSystemClassLoader().getResource(POLICY + ".olg");
 		this.context.install("hadoop", policy);
 		this.context.evaluate();
+		
+		if (LOADPOLICY != null) {
+			URL loadPolicy =
+				ClassLoader.getSystemClassLoader().getResource(LOADPOLICY + ".olg");
+			this.context.install("hadoop", loadPolicy);
+			this.context.evaluate();
+		}
+		
 		this.context.start();
 	}
 
@@ -355,15 +364,15 @@ public class JobTrackerImpl extends JobTracker {
 				String diag = (String) t.value(TaskAttemptTable.Field.DIAGNOSTICS.ordinal());
 				if (a.isMap()) {
 					return new MapTaskStatus(a, progress, 
-							TaskStatus.State.valueOf(state.toString()), diag,
+							TaskStatus.State.valueOf(state.name()), diag,
 							state.toString(), tracker, 
-							TaskStatus.Phase.valueOf(phase.toString()), new Counters());
+							TaskStatus.Phase.valueOf(phase.name()), new Counters());
 				}
 				else {
 					return new ReduceTaskStatus(a, progress, 
-							TaskStatus.State.valueOf(state.toString()), diag,
+							TaskStatus.State.valueOf(state.name()), diag,
 							state.toString(), tracker, 
-							TaskStatus.Phase.valueOf(phase.toString()), new Counters());
+							TaskStatus.Phase.valueOf(phase.name()), new Counters());
 				}
 			}
 		} catch (Throwable t) {

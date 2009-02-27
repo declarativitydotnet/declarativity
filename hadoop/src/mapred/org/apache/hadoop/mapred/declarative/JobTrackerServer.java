@@ -30,7 +30,10 @@ import org.apache.hadoop.mapred.JobProfile;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.JobSubmissionProtocol;
 import org.apache.hadoop.mapred.JobTracker;
+import org.apache.hadoop.mapred.LaunchTaskAction;
 import org.apache.hadoop.mapred.MRConstants;
+import org.apache.hadoop.mapred.MapTaskStatus;
+import org.apache.hadoop.mapred.ReduceTaskStatus;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.mapred.ReinitTrackerAction;
@@ -40,10 +43,13 @@ import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.JobHistory.JobInfo;
+import org.apache.hadoop.mapred.TaskStatus.Phase;
+import org.apache.hadoop.mapred.TaskStatus.State;
 import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 import org.apache.hadoop.mapred.declarative.Constants.TaskTrackerState;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.table.JobTable;
+import org.apache.hadoop.mapred.declarative.table.LoadActions;
 import org.apache.hadoop.mapred.declarative.table.NetworkTopologyTable;
 import org.apache.hadoop.mapred.declarative.table.TaskAttemptTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTable;
@@ -179,7 +185,9 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	
 	private Table taskTrackerTable;
 	
-	private Table taskAttemptTable;
+	private TaskAttemptTable taskAttemptTable;
+	
+	private LoadActions loadActions;
 
 	final private List<ScheduleFunctor> scheduleFunctors;
 	
@@ -201,7 +209,14 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		this.trackerActionTable = (TaskTrackerActionTable) context.catalog().table(TaskTrackerActionTable.TABLENAME);
 	    this.jobTable = context.catalog().table(JobTable.TABLENAME);
 	    this.taskTrackerTable = context.catalog().table(TaskTrackerTable.TABLENAME);
-	    this.taskAttemptTable = context.catalog().table(TaskAttemptTable.TABLENAME);
+	    this.taskAttemptTable = (TaskAttemptTable) context.catalog().table(TaskAttemptTable.TABLENAME);
+	    
+	    if (JobTracker.LOADPOLICY != null) {
+	    	this.loadActions = (LoadActions) context.catalog().table(LoadActions.TABLENAME);
+	    }
+	    else {
+	    	this.loadActions = null;
+	    }
 	    
 	    this.scheduleFunctors = new LinkedList<ScheduleFunctor>();
 	    this.scheduleFunctorThread = new Thread(new Runnable() {
@@ -406,7 +421,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
 				return state.status();
 			}
-		} catch (JolRuntimeException e) {
+		} catch (Throwable e) {
+			e.printStackTrace();
 			throw new IOException(e);
 		}
 	}
@@ -568,30 +584,72 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		}
 		finally {
 			/* Store the response. */
-			response(trackerName, response, actions);
-			
 			long dutyCycle = System.currentTimeMillis() - context.timestamp();
-			if (dutyCycle > MRConstants.HEARTBEAT_INTERVAL_MIN) {
+			if (dutyCycle > 4 * MRConstants.HEARTBEAT_INTERVAL_MIN) {
 				response.setHeartbeatInterval(Math.min((int)dutyCycle, MRConstants.HEARTBEAT_INTERVAL_MAX));
+				if (actions.size() == 0 && this.loadActions != null) {
+					heavyLoadActions(status, response, actions);
+				}
+				else {
+					try {
+						if (System.currentTimeMillis() - context.timestamp() > MRConstants.HEARTBEAT_INTERVAL_MAX) {
+							System.err.println("Last JOL evaluation occurred " +
+									(System.currentTimeMillis() - context.timestamp()) + "ms ago!");
+							Thread.sleep(MRConstants.HEARTBEAT_INTERVAL_MIN);
+							response.setHeartbeatInterval(MRConstants.HEARTBEAT_INTERVAL_MIN);
+						}
+					} catch (InterruptedException e) { }
+					
+				}
 			}
 			else {
 				response.setHeartbeatInterval(MRConstants.HEARTBEAT_INTERVAL_MIN);
 			}
 			
-			try {
-				if (System.currentTimeMillis() - context.timestamp() > 2 * MRConstants.HEARTBEAT_INTERVAL_MIN) {
-					System.err.println("Last JOL evaluation occurred " +
-							(System.currentTimeMillis() - context.timestamp()) + "ms ago!");
-					Thread.sleep(MRConstants.HEARTBEAT_INTERVAL_MIN);
-					response.setHeartbeatInterval(MRConstants.HEARTBEAT_INTERVAL_MIN);
-				}
-			} catch (InterruptedException e) { }
-
 			if (debug) {
 				java.lang.System.err.println("RESPONSE " + response + ", ACTIONS " + actions);
 				java.lang.System.err.println("========================= END HEARTBEAT " +
 						responseId + "=========================\n");
 			}
+			response(trackerName, response, actions);
+		}
+	}
+	
+	private void heavyLoadActions(TaskTrackerStatus status, HeartbeatResponse response, TupleSet tuples) {
+		int maps = status.getMaxMapTasks() - status.countMapTasks();
+		int reduces = status.getMaxReduceTasks() - status.countReduceTasks();
+		List<TaskTrackerAction> actions = new ArrayList<TaskTrackerAction>();
+		actions.addAll(this.loadActions.actions(Constants.TaskType.MAP, maps, tuples));
+		actions.addAll(this.loadActions.actions(Constants.TaskType.REDUCE, reduces, tuples));
+		
+		for (TaskTrackerAction a : actions) {
+			LaunchTaskAction la = (LaunchTaskAction) a;
+			TaskStatus taskStatus = null;
+			if (la.getTask().isMapTask()) {
+				taskStatus = new MapTaskStatus(la.getTask().getTaskID(), 0f,
+                    TaskStatus.State.RUNNING, "Heavy Load Action",
+                    TaskStatus.State.RUNNING.name(), status.getTrackerName(),
+                    la.getTask().getPhase(), new Counters());
+			}
+			else {
+				taskStatus = new ReduceTaskStatus(la.getTask().getTaskID(), 0f,
+                    TaskStatus.State.RUNNING, "Heavy Load Action",
+                    TaskStatus.State.RUNNING.name(), status.getTrackerName(),
+                    la.getTask().getPhase(), new Counters());
+			}
+			try {
+				this.taskAttemptTable.force(TaskAttemptTable.tuple(status, taskStatus));
+			} catch (UpdateException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		response.setActions(actions.toArray(new TaskTrackerAction[actions.size()]));
+		try {
+			if (tuples.size() > 0) this.loadActions.delete(tuples);
+		} catch (UpdateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -655,12 +713,6 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 								status.getMaxReduceTasks());
 			taskTrackerTable.force(update);
 
-			/* Schedule task tracker status update. */
-			/*
-			scheduleFunctor(JobTracker.PROGRAM, TaskTrackerTable.TABLENAME,
-					new TupleSet(TaskTrackerTable.TABLENAME, update), null);
-					*/
-
 			/* Schedule updates of all tasks running on this tracker. */
 			updateTasks(status);
 		} catch (Exception e) {
@@ -679,23 +731,19 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		TupleSet attempts = new TupleSet(TaskAttemptTable.TABLENAME);
 		List<TaskStatus> tasks = trackerStatus.getTaskReports();
 		for (TaskStatus taskStatus : tasks) {
+			/* To optimize I ignore RUNNING UPDATES. */
+			TaskStatus.State state = taskStatus.getRunState();
+			if (state.equals(TaskStatus.State.RUNNING)) continue;
 			taskStatus.setTaskTracker(trackerStatus.getTrackerName());
 			attempts.add(TaskAttemptTable.tuple(trackerStatus, taskStatus));
 		}
-		if (attempts.size() > 0) {
-			TupleSet conflicts = new TupleSet(TaskAttemptTable.TABLENAME);
-			try {
-				this.taskAttemptTable.insert(attempts, conflicts);
-				this.taskAttemptTable.delete(conflicts);
-			} catch (UpdateException e) {
-				e.printStackTrace();
-			}
-			
-			/*
-			scheduleFunctor(JobTracker.PROGRAM, TaskAttemptTable.TABLENAME,
-					new TupleSet(TaskTrackerTable.TABLENAME, attempts), null);
-					*/
+		context.schedule(JobTracker.PROGRAM, TaskAttemptTable.TABLENAME, attempts, null);
+		
+		/*
+		if (attempts.size() > 0 && !this.taskAttemptTable.force(attempts)) {
+			System.err.println("ERROR: Could not force task attempt updates! " + attempts);
 		}
+		*/
 	}
 
 	/*********************** Helper routines copied from Hadoop job tracker *********************************/
