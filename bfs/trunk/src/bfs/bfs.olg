@@ -21,6 +21,9 @@ watch(self, ae);
 define(start_request, keys(0, 1), {String, Integer, String, String});
 watch(start_request, ae);
 
+// This rule transfers "start_request" tuples from the client to the
+// appropriate master. To failover to a new master, the client detects
+// a timeout, and then updates the "master_for_node" mapping table.
 define(request, {String, Integer, String, String, String});
 watch(request, ae);
 request(@Master, ReqId, Source, ReqType, Args) :-
@@ -32,32 +35,36 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 // type of the result depends on the type of request.
 define(response, {String, Integer, String, Boolean, Object});
 watch(response, ae);
+response(@Source, Id, Master, Status, Result) :-
+    send_response#insert(@Master, Id, Source, Status, Result);
 
+define(send_response, {String, Integer, String, Boolean, Object});
 
 // NewChunk: add a new chunk to the end of a file
 define(newchunk_request_done, {String, Integer, Integer});
 watch(newchunk_request_done, ae);
 
 define(newchunk_request_pending, keys(0, 1), {String, Integer, String, String});
+watch(newchunk_request_pending, ae);
 newchunk_request_pending(@Master, Id, FPath, Source) :-
     request(@Master, Id, Source, "NewChunk", FPath),
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, false);
 
 public
-response(@Source, Id, Master, true, Result) :-
+send_response(@Master, Id, Source, true, Result) :-
     newchunk_request_pending(@Master, Id, _, Source),
     newchunk_request_done(@Master, Id, NewChunkId),
     bfs_chunks::candidate_datanode(@Master, CandidateNodes),
     Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
 // "NewChunk" for nonexistent file => error
-response(@Source, Id, Master, false, null) :-
+response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "NewChunk", FPath),
     notin fpath(@Master, FPath, _);
 
 // "NewChunk" for directory => error
-response(@Source, Id, Master, false, null) :-
+response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "NewChunk", FPath),
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, true);
@@ -69,7 +76,7 @@ response(@Source, Id, Master, false, null) :-
 // guarantee that it is returned in any particular order; for now,
 // we have clients sort by chunk ID -- this assumes that chunk IDs
 // increase monotonically, and agree with the order of chunks in a file.
-response(@Source, Id, Master, true, Chunks) :-
+send_response(@Master, Id, Source, true, Chunks) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, false),
@@ -78,7 +85,7 @@ response(@Source, Id, Master, true, Chunks) :-
     stasis_compute_chunk_set(@Master, FileId, Chunks);
 
 // ChunkList for empty file => empty set
-response(@Source, Id, Master, true, EmptyChunks) :-
+send_response(@Master, Id, Source, true, EmptyChunks) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, false),
@@ -86,12 +93,12 @@ response(@Source, Id, Master, true, EmptyChunks) :-
     EmptyChunks := new HashSet();
 
 // ChunkList for nonexistent file => error
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     notin fpath(@Master, FPath, _);
 
 // ChunkList for directory => error
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, true);
@@ -118,12 +125,12 @@ public
 compute_chunk_locs(@Master, ChunkId, set<NodeAddr>) :-
     bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _, _);
 
-response(@Source, Id, Master, true, NodeSet) :-
+send_response(@Master, Id, Source, true, NodeSet) :-
     request(@Master, Id, Source, "ChunkLocations", ChunkStr),
     ChunkId := Integer.valueOf(ChunkStr),
     compute_chunk_locs(@Master, ChunkId, NodeSet);
 
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "ChunkLocations", ChunkStr),
     ChunkId := Integer.valueOf(ChunkStr),
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
@@ -132,22 +139,22 @@ response(@Source, Id, Master, false, null) :-
 define(create_request_init, {String, Integer, String, String, Boolean, Integer});
 watch(create_request_init, ae);
 create_request_init(@Master, Id, Source, FullPath, IsDir, LastSlashIdx) :-
-    request#insert(@Master, Id, Source, "Create", FullPath),
+    request(@Master, Id, Source, "Create", FullPath),
     IsDir := false,
     LastSlashIdx := FullPath.lastIndexOf("/");
 
 create_request_init(@Master, Id, Source, FullPath, IsDir, LastSlashIdx) :-
-    request#insert(@Master, Id, Source, "CreateDir", FullPath),
+    request(@Master, Id, Source, "CreateDir", FullPath),
     IsDir := true,
     LastSlashIdx := FullPath.lastIndexOf("/");
 
 // If we didn't find a "/", return an error: malformed path
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     create_request_init(@Master, Id, Source, _, LastSlashIdx),
     LastSlashIdx == -1;
 
 // If a file with the same full path already exists => error
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     create_request_init(@Master, Id, Source, FullPath, _, _),
     fpath(@Master, FullPath, _);
 
@@ -167,12 +174,12 @@ create_request_parsed(@Master, Id, Source, ParentPath, FName, IsDir) :-
        FName := FullPath.substring(LastSlashIdx + 1); };
 
 // If the parent doesn't exist => error
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     create_request_parsed(@Master, Id, Source, ParentPath, _, _),
     notin fpath(@Master, ParentPath, _);
 
 // If the parent is not a directory => error
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     create_request_parsed(@Master, Id, Source, ParentPath, _, _),
     fpath(@Master, ParentPath, ParentId),
     stasis_file(@Master, ParentId, _, _, ParentIsDir),
@@ -189,7 +196,7 @@ create_request_pending(@Master, Id, Source, ParentId, FName, IsDir) :-
 
 define(create_request_done, {String, Integer, Boolean});
 public
-response(@Source, Id, Master, Success, null) :-
+send_response(@Master, Id, Source, Success, null) :-
     create_request_done(@Master, Id, Success),
     create_request_pending(@Master, Id, Source, _, _, _);
 
@@ -197,18 +204,18 @@ response(@Source, Id, Master, Success, null) :-
 // the file system. Note that we need to do the aggregation in a sub-rule.
 
 // "ls" for nonexistent path => error
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "Ls", Path),
     notin fpath(@Master, Path, _);
 
 // "ls" for a non-directory path => error (?)
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "Ls", Path),
     fpath(@Master, Path, FileId),
     stasis_file(@Master, FileId, _, _, false);
 
 // "ls" for a directory path => return contents of directory
-response(@Source, Id, Master, true, FileSet) :-
+send_response(@Master, Id, Source, true, FileSet) :-
     request(@Master, Id, Source, "Ls", Path),
     fpath(@Master, Path, FileId),
     stasis_file(@Master, FileId, _, _, true),
@@ -223,7 +230,7 @@ stasis_compute_ls(@Master, ParentFileId, set<FInfo>) :-
     FInfo := new BFSFileInfo(FileId, FPath, FName, FLength, IsDir);
 
 // "ls" for an empty directory => return empty set of files
-response(@Source, Id, Master, true, EmptySet) :-
+send_response(@Master, Id, Source, true, EmptySet) :-
     request(@Master, Id, Source, "Ls", Path),
     fpath(@Master, Path, FileId),
     // empty directory <=> no files with FileId as parent
@@ -232,14 +239,14 @@ response(@Source, Id, Master, true, EmptySet) :-
 
 // If we get a "FileInfo" request for an extant file, send back info
 // describing the file. Otherwise, send back a nack.
-response(@Source, Id, Master, true, FInfo) :-
+send_response(@Master, Id, Source, true, FInfo) :-
     request(@Master, Id, Source, "FileInfo", FPath),
     fpath(@Master, FPath, FileId),
     stasis_fsize(@Master, FileId, FSize),
     stasis_file(@Master, FileId, _, FName, IsDir),
     FInfo := new BFSFileInfo(FileId, FPath, FName, FSize, IsDir);
 
-response(@Source, Id, Master, false, null) :-
+send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "FileInfo", FPath),
     notin fpath(@Master, FPath, _);
 
@@ -254,7 +261,7 @@ rm_request_pending(@Master, Id, FPath, Source) :-
 
 define(rm_request_done, {String, Integer});
 public
-response(@Source, Id, Master, true, null) :-
+send_response(@Master, Id, Source, true, null) :-
     rm_request_pending(@Master, Id, _, Source),
     rm_request_done(@Master, Id);
 
@@ -262,6 +269,6 @@ response(@Source, Id, Master, true, null) :-
 // negative ack. NB: unlike in the "create" case, we don't need the
 // "#insert" hack, since deletions are postponed the end of the
 // fixpoint.
-response(@Source, Id, Master, false, null) :-
-    request#insert(@Master, Id, Source, "Rm", FPath),
+send_response(@Master, Id, Source, false, null) :-
+    request(@Master, Id, Source, "Rm", FPath),
     notin fpath(@Master, FPath, _);
