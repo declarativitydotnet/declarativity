@@ -12,6 +12,8 @@ import org.apache.hadoop.net.NetUtils;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
@@ -21,12 +23,12 @@ public class TaskAttemptTable extends ObjectTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskAttempt");
 	
-	/** The primary key */
-	public static final Key PRIMARY_KEY = new Key(0,1,2);
+	/** The primary key (JobID, TaskID, AttemptID, State). Need state due to overwrite issues. */
+	public static final Key PRIMARY_KEY = new Key(0,1,2,4);
 	
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, TASKID, ATTEMPTID, PROGRESS, STATE, PHASE, 
-		              DIAGNOSTICS, TRACKER, TASKLOCATION, START, FINISH, TIMESTAMP};
+		              DIAGNOSTICS, TRACKER, TASKLOCATION, START, FINISH, TIMESTAMP, DIRTYBIT};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
@@ -42,11 +44,51 @@ public class TaskAttemptTable extends ObjectTable {
 		Long.class,     // Start time
 		Long.class,     // Finish time
 		Long.class,    // Timestamp (when we got our last update)
+		Boolean.class  // Dirty bit
 	};
 	
 	public TaskAttemptTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 	}
+	
+	@Override
+	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
+		synchronized (this) {
+			return super.insert(tuples, conflicts);
+		}
+	}
+	
+	@Override
+	public TupleSet delete(Iterable<Tuple> tuples) throws UpdateException {
+		synchronized (this) {
+			return super.delete(tuples);
+		}
+	}
+	
+	public boolean force(TupleSet insertions) {
+		synchronized (this) {
+			try {
+				TupleSet conflicts = new TupleSet(TABLENAME);
+				insert(insertions, conflicts);
+				delete(conflicts);
+				return true;
+			} catch (UpdateException e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+	}
+	
+	@Override
+	public void force(Tuple tuple) throws UpdateException {
+		synchronized (this) {
+			TupleSet insertion = new TupleSet(name(), tuple);
+			TupleSet conflicts = new TupleSet(name());
+			insert(insertion, conflicts);
+			delete(conflicts);
+		}
+	}
+	
 	
 	/**
 	 * Routine accepts a task status object from some
@@ -74,7 +116,8 @@ public class TaskAttemptTable extends ObjectTable {
 				         httpTaskLogLocation,
 				         status.getStartTime(), 
 				         status.getFinishTime(),
-				         System.currentTimeMillis());
+				         System.currentTimeMillis(),
+				         true);
 	}
 
 }

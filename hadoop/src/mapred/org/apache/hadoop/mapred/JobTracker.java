@@ -22,9 +22,10 @@ import jol.types.basic.Tuple;
  * All job trackers implement this interface.
  */
 public abstract class JobTracker {
-	public static final String PROGRAM   = "jobtracker";
-	public static final String SCHEDULER = "scheduler";
-	public static final String POLICY    = "policy";
+	public static final String PROGRAM    = "jobtracker";
+	public static final String SCHEDULER  = "scheduler";
+	public static final String POLICY     = "policy";
+	public static final String LOADPOLICY = "loadPolicy";
 
 	public static enum State { INITIALIZING, RUNNING }
 
@@ -49,6 +50,7 @@ public abstract class JobTracker {
 	        debugger.add(DebugLevel.WATCH);
 			JolSystem context = jol.core.Runtime.create(debugger,
 			                    new FileOutputStream(userLogDir + "/jobtracker_jol.out"));
+			context.setPriority(Thread.MAX_PRIORITY);
 			return new JobTrackerImpl(context, conf);
 		} catch (Throwable e) {
 			throw new IOException(e);
