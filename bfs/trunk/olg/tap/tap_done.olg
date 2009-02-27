@@ -1,0 +1,16 @@
+program tap;
+
+define(tap_done, {String});
+
+define(ptap_done, {String, String});
+define(chaff, {String});
+
+chaff("foo");
+
+ptap_done(A, B) :-
+    A := "tcp:localhost:5678",
+    chaff(B);
+
+
+tap_done(@A) :-
+    ptap_done(A, @B);
