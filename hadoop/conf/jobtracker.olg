@@ -22,9 +22,24 @@ watch(job, a);
 watch(task, a);
 watch(taskAttempt, a);
 
+define(jobQueue, keys(0), {JobID, JobPriority, Long, Constants.TaskType});
+
 
 /*************** JobTracker Duty Cycle (PERFORMANCE HACK) *********************/
-timer(dutyCycle, physical, 5000, infinity, 0);
+timer(minDutyCyclePeriod, physical, 5000, infinity, 0);
+define(dutyCycle, {String});
+define(activeJobs, keys(), {Integer});
+
+watch(activeJobs, ae);
+activeJobs(count<JobId>) :-
+	job(JobId, _, _, _, _, _, _, _, FinishTime, _),
+	FinishTime == 0L;
+	
+watch(dutyCycle, a);
+/* Set semantics ensure a single duty cycle per fixpoint. 
+   I could have used a logical clock here but that spin the CPU during idle periods. */
+dutyCycle("Duty Cycle") :- minDutyCyclePeriod(), activeJobs(Count), Count > 0;
+
 
 /*************** Task Tracker Monitor *********************/
 
@@ -55,9 +70,9 @@ task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
 	task(JobId, TaskId, Type, Partition, Input, MapCount, Status);
 
 delete
-taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp) :-
+taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, Dirty) :-
 	cleanup(JobId),
-    taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp);
+    taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, Dirty);
     
 delete
 taskFileLocation(JobId, TaskId, Loc) :-
@@ -142,7 +157,7 @@ define(killJobOnTracker, {JobID, String});
 public
 killJobOnTracker(JobId, TrackerName) :-
 	job(JobId, _, _, _, _, _, _, _, _, JobStatus),
-	taskAttempt(JobId, TaskID, _, _, TaskState, _, _, TrackerName, _, _, _, _),
+	taskAttempt(JobId, TaskID, _, _, TaskState, _, _, TrackerName, _, _, _, _,_),
 	JobStatus.state()  == Constants.JobState.FAILED,
 	TaskState == Constants.TaskState.RUNNING;
 	
@@ -154,20 +169,42 @@ taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-
 /*************** Task Status Maintenance *********************/
 
 define(taskUpdate, {JobID, TaskID, Constants.TaskType, TaskState});
+define(lookupDirtyTaskAttempt, {Boolean});
+define(lookupTask, {JobID, Constants.TaskState});
 
 taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED, 
-            Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp) :-
+            Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, true) :-
 	taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, _, _),
-	taskAttempt(JobId, TaskId, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp),
+	taskAttempt(JobId, TaskId, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp,_),
 	TrackerState != Constants.TaskTrackerState.RUNNING,
 	TaskState == Constants.TaskState.RUNNING;
 	
+lookupTask(JobId, State) :- 
+    dutyCycle(), job(JobId, _, _, _, _, _, _, _, _, JobStatus),
+    jobQueue(JobId, _, _, Type),
+    JobStatus.state() == Constants.JobState.RUNNING
+    {
+      State := Type == Constants.TaskType.MAP ? Constants.TaskState.SUCCEEDED : Constants.TaskState.COMMIT_PENDING;
+    };
+
+/*
+lookupDirtyTaskAttempt(true) :- dutyCycle();
+taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, false) :-
+	lookupDirtyTaskAttempt(Dirty),
+	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
+*/
+
+delete
+taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty) :-
+    taskUpdate(JobId, TaskId, Type, TaskStatus), TaskStatus.state() == Constants.TaskState.SUCCEEDED,
+	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
+
+watch(taskUpdate, a);
+public
 taskUpdate(JobId, TaskId, Type, TaskStatus) :-
-	dutyCycle(), taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, Timestamp),
-	State == Constants.TaskState.SUCCEEDED || State == Constants.TaskState.COMMIT_PENDING || State == Constants.TaskState.FAILED,
+	lookupTask(JobId, State),
+	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, _, _),
 	task(JobID, TaskId, Type, _, _, _, TaskStatus),
-	TaskStatus.state() == Constants.TaskState.UNASSIGNED || 
-	TaskStatus.state() == Constants.TaskState.FAILED || 
-	TaskStatus.state() == Constants.TaskState.RUNNING,
+	TaskStatus.state() != Constants.TaskState.SUCCEEDED,
 	TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
 	

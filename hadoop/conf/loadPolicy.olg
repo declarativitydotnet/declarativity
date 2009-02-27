@@ -1,0 +1,35 @@
+program loadPolicy;
+
+
+import jol.types.basic.ValueList;
+import org.apache.hadoop.mapred.TaskTrackerAction;
+import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.util.Function;
+import org.apache.hadoop.mapred.declarative.util.FileInput;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
+
+define(minPriorityJob, keys(0), {ValueList});
+
+public
+minPriorityJob(min<Priority>) :-
+	jobtracker::job(JobId, _, _, _, _, _, JobPriority, SubmitTime, FinishTime, Status),
+	FinishTime == 0L,
+	Priority := [JobPriority, SubmitTime];
+
+public
+loadActions(TaskId, Type, Action) :-	
+	jobtracker::jobQueue(JobId, JobPriority, SubmitTime, Type),
+	jobtracker::job(JobId, JobName, JobFile),
+	minPriorityJob([JobPriority, SubmitTime]),
+	jobtracker::task(JobId, TaskId, Type, Partition, FileInput, MapCount, TaskStatus),
+	TaskStatus.state() == Constants.TaskState.UNASSIGNED,
+	Action := Type == Constants.TaskType.MAP ? 
+	          Function.launchMap(FileInput.split(), JobFile, TaskId, 0, Partition) :
+	          Function.launchReduce(JobFile, TaskId, 0, Partition, MapCount);
+	          
+/* If I see a taskAttempt I don't need to launch the action anymore. */
+public delete
+loadActions(TaskId, Type, Action) :-
+	jobtracker::taskAttempt(_, TaskId),
+	loadActions(TaskId, Type, Action);
