@@ -21,7 +21,7 @@ define(start_request, keys(0, 1), {String, Integer, String, String});
 watch(start_request, ae);
 
 // Master node, Request ID, Client node, Request type, Arg
-define(request, keys(0, 1), {String, Integer, String, String, String});
+define(request, {String, Integer, String, String, String});
 watch(request, ae);
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
