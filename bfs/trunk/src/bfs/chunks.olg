@@ -3,14 +3,10 @@ program bfs_chunks;
 import java.lang.System;
 import java.util.Set;
 
-define(candidate_datanode, keys(0, 1), {String, Integer, String, Set});
+define(candidate_datanode, keys(0), {String, Set});
 public
-candidate_datanode(Master, Id, FPath, set<DataNode>) :-
-    bfs::request(Master, Id, _, "NewChunk", FPath),
-    bfs::possible_choices(Master, _, DataNode, _),
-    bfs::fpath(Master, FPath, FileId),
-    bfs::stasis_file(Master, FileId, _, _, false),
-    notin candidate_datanode(Master, Id, FPath, _);
+candidate_datanode(Master, set<DataNode>) :-
+    bfs_heartbeat::dataNodes(Master, DataNode, _);
 
 // reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
 // from one datanode to another

@@ -31,13 +31,21 @@ request(@Master, ReqId, Source, ReqType, Args) :-
 define(response, {String, Integer, String, Boolean, Object});
 watch(response, ae);
 
-define(newchunk_request_done, keys(0, 1), {String, Integer, Integer, Set});
 
 // NewChunk: add a new chunk to the end of a file
+define(newchunk_request_done, {String, Integer, Integer});
+
+define(newchunk_request_pending, keys(0, 1), {String, Integer, String, String});
+newchunk_request_pending(@Master, Id, FPath, Source) :-
+    request(@Master, Id, Source, "NewChunk", FPath),
+    fpath(@Master, FPath, FileId),
+    stasis_file(@Master, FileId, _, _, false);
+
 public
 response(@Source, Id, Master, true, Result) :-
-    request(@Master, Id, Source, "NewChunk", FPath),
-    newchunk_request_done(@Master, Id, NewChunkId, CandidateNodes),
+    newchunk_request_pending(@Master, Id, _, Source),
+    newchunk_request_done(@Master, Id, NewChunkId),
+    bfs_chunks::candidate_datanode(@Master, CandidateNodes),
     Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
 // "NewChunk" for nonexistent file => error
@@ -51,10 +59,6 @@ response(@Source, Id, Master, false, null) :-
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, true);
 
-delete
-request(Master, Id, Source, "NewChunk", FPath) :- 
-    request(Master, Id, Source, "NewChunk", FPath), 
-    bfs_chunks::candidate_datanode(Master, Id, FPath, _); 
 
 // If we get a "ChunkList" request for an extant file, send back its
 // chunks. If the file has no chunks, send back an empty set. Note
