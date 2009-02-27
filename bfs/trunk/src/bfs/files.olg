@@ -14,7 +14,6 @@ timer(clock, physical, 3000, infinity, 0);
 
 // Node address, data directory on host file system
 define(datadir, keys(0), {String, File});
-define(checksumdir, keys(0), {String, String});
 
 define(dir, keys(0,1,2), {String, File, List});
 dir(Host, DirObj, DirList) :-
@@ -40,11 +39,6 @@ chunkTmp(Host, FName, FLength) :-
     { F := (File) List.get(I);
       FName := F.getName();
       FLength := Integer.valueOf(Long.valueOf(F.length()).toString()); };
-
-// fix me!
-checksumdir(H, D)  :-
-    dir(H, FD),
-    D := "testdata1/checksums";
 
 define(chunk, keys(0,1), {String, String, Integer, String});
 //watch(chunk, ae);
