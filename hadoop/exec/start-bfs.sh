@@ -1,6 +1,5 @@
 #!/bin/sh
-# Start a copy of the BFS master node. Right now, we run the BFS
-# master in the foreground.
+# Start a copy of the BFS master node on localhost.
 
 bin=`dirname "$0"`
 bin=`cd "$bin"; pwd`
@@ -58,7 +57,22 @@ if [ "$HADOOP_CLASSPATH" != "" ]; then
   CLASSPATH=${CLASSPATH}:${HADOOP_CLASSPATH}
 fi
 
+# get log directory
+if [ "$HADOOP_LOG_DIR" = "" ]; then
+  export HADOOP_LOG_DIR="$HADOOP_HOME/logs"
+  fi
+  mkdir -p "$HADOOP_LOG_DIR"
+
+if [ "$HADOOP_PID_DIR" = "" ]; then
+  HADOOP_PID_DIR=/tmp
+fi
+
+log=$HADOOP_LOG_DIR/hadoop-bfsmaster-`hostname`.out
+pid=$HADOOP_PID_DIR/hadoop-bfsmaster.pid
+
 export MASTERFILE=$HADOOP_CONF_DIR/masters
 export SLAVEFILE=$HADOOP_CONF_DIR/slaves
-$JAVA -cp "$CLASSPATH" bfs.Master
+echo "Starting BFS master, logging to $log"
+nohup $JAVA -cp "$CLASSPATH" bfs.Master > "$log" 2>&1 < /dev/null &
+echo $! > $pid
 

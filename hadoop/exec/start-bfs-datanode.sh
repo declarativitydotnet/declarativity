@@ -1,5 +1,5 @@
 #!/bin/sh
-# Start a BFS data node. Right now, we run the BFS data node in the foreground.
+# Start a BFS data node running on the localhost.
 
 bin=`dirname "$0"`
 bin=`cd "$bin"; pwd`
@@ -57,11 +57,28 @@ if [ "$HADOOP_CLASSPATH" != "" ]; then
   CLASSPATH=${CLASSPATH}:${HADOOP_CLASSPATH}
 fi
 
+# get log directory
+if [ "$HADOOP_LOG_DIR" = "" ]; then
+  export HADOOP_LOG_DIR="$HADOOP_HOME/logs"
+  fi
+  mkdir -p "$HADOOP_LOG_DIR"
+
+if [ "$HADOOP_PID_DIR" = "" ]; then
+  HADOOP_PID_DIR=/tmp
+fi
+
+command=bfsdatanode
+log=$HADOOP_LOG_DIR/hadoop-$command-`hostname`.out
+pid=$HADOOP_PID_DIR/hadoop-$command.pid
+
 BFS_DATA_DIR=/tmp/bfs_data
 # XXX: for now, we just remove the old data directory on startup
+echo "Removing data directory $BFS_DATA_DIR"
 rm -r $BFS_DATA_DIR
 
 export MASTERFILE=$HADOOP_CONF_DIR/masters
 export SLAVEFILE=$HADOOP_CONF_DIR/slaves
-$JAVA -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR
+echo "Starting BFS data node, logging to $log"
+nohup $JAVA -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR > "$log" 2>&1 < /dev/null &
+echo $! > $pid
 
