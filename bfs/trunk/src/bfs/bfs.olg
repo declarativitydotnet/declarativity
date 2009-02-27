@@ -17,7 +17,7 @@ define(self, keys(0), {String});
 watch(self, ae);
 
 // Node address, Request ID, Request type, Arg
-define(start_request, {String, Integer, String, String});
+define(start_request, keys(0, 1), {String, Integer, String, String});
 watch(start_request, ae);
 
 watch(request, ae);
