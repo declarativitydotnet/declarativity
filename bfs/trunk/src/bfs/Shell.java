@@ -339,7 +339,6 @@ public class Shell {
             String host = parts[1];
             int controlPort = Integer.parseInt(parts[2]);
 
-            System.out.println("TEST2\n");
             int dataPort = Conf.findDataNodeDataPort(host, controlPort);
 
             System.out.println("Reading " + chunk + " from: " + host + ":" + dataPort);
