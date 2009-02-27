@@ -18,9 +18,6 @@ define(stasis_fchunk, keys(0, 1), {String, Integer, Integer});
 // Master, Cnt, DataNode
 define(migration_choices, keys(0,1,2), {String, String, Integer});
 
-// Master node, Request ID, Client node, Request type, Arg
-define(request, keys(0, 1), {String, Integer, String, String, String});
-
 // Node, Master node
 define(master_for_node, keys(0, 1), {String, String});
 watch(master_for_node, ae);
