@@ -58,6 +58,11 @@ send_response(@Master, Id, Source, true, Result) :-
     bfs_chunks::candidate_datanode(@Master, CandidateNodes),
     Result := new BFSNewChunkInfo(NewChunkId, CandidateNodes);
 
+delete
+newchunk_request_pending(@Master, Id, FPath, Source) :-
+    newchunk_request_pending(@Master, Id, FPath, Source),
+    send_response#insert(@Master, Id, Source, _, _);
+
 // "NewChunk" for nonexistent file => error
 response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "NewChunk", FPath),
@@ -200,6 +205,11 @@ send_response(@Master, Id, Source, Success, null) :-
     create_request_done(@Master, Id, Success),
     create_request_pending(@Master, Id, Source, _, _, _);
 
+delete
+create_request_pending(@Master, Id, Source, ParentId, FName, IsDir) :-
+    create_request_pending(@Master, Id, Source, ParentId, FName, IsDir),
+    send_response#insert(@Master, Id, Source, _, _);
+
 // If we get an "ls" request, send back the names of all the files in
 // the file system. Note that we need to do the aggregation in a sub-rule.
 
@@ -264,6 +274,11 @@ public
 send_response(@Master, Id, Source, true, null) :-
     rm_request_pending(@Master, Id, _, Source),
     rm_request_done(@Master, Id);
+
+delete
+rm_request_pending(@Master, Id, FPath, Source) :-
+    rm_request_pending(@Master, Id, FPath, Source),
+    send_response#insert(@Master, Id, Source, _, _);
 
 // If we got an "rm" request and the file doesn't exist, return a
 // negative ack. NB: unlike in the "create" case, we don't need the
