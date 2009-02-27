@@ -16,10 +16,12 @@ import jol.types.basic.ValueList;
 define(self, keys(0), {String});
 watch(self, ae);
 
-// Node address, Request ID, Request type, Arg
+// Node address, Request ID, Request type, Arg: populated by Java code
 define(start_request, keys(0, 1), {String, Integer, String, String});
 watch(start_request, ae);
 
+// Master node, Request ID, Client node, Request type, Arg
+define(request, keys(0, 1), {String, Integer, String, String, String});
 watch(request, ae);
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
