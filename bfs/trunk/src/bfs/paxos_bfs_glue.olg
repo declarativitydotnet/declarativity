@@ -33,7 +33,7 @@ paxos_global::decreeRequest(Master, Decree, From) :-
     bfs_chunks::candidate_datanode#insert(Master, Id, FPath, _),
     Decree := FPath + ",f,u," + Id.toString() + ",-1";
 
-define(global_log, keys(0, 1, 2), {String, Integer, String, Boolean, Integer, String, Integer});
+define(global_log, {String, Integer, String, Boolean, Integer, String, Integer});
 watch(global_log, ae);
 public
 global_log(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
