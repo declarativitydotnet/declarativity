@@ -122,7 +122,7 @@ response(@Source, Id, Master, false, null) :-
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
 
 // Handle "Create" and "CreateDir" requests
-define(create_request_init, keys(0, 1), {String, Integer, String, Boolean, Integer});
+define(create_request_init, {String, Integer, String, Boolean, Integer});
 watch(create_request_init, ae);
 create_request_init(@Master, Id, FullPath, IsDir, LastSlashIdx) :-
     request#insert(@Master, Id, _, "Create", FullPath),
@@ -151,7 +151,7 @@ response(@Source, Id, Master, false, null) :-
 // parent path: for all other paths, we want to trim the trailing
 // slash. Note that we also need to apply the inverse of the two
 // error conditions we checked for above.
-define(create_request_parsed, keys(0, 1), {String, Integer, String, String, Boolean});
+define(create_request_parsed, {String, Integer, String, String, Boolean});
 watch(create_request_parsed, ae);
 create_request_parsed(@Master, Id, ParentPath, FName, IsDir) :-
     create_request_init(@Master, Id, FullPath, IsDir, LastSlashIdx),
