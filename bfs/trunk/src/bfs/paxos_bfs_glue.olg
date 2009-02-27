@@ -20,7 +20,7 @@ public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
     From := Master,
-    bfs::rm_request_pending(Master, Id, FPath),
+    bfs::rm_request_pending(Master, Id, FPath, _),
     DirStr := ",f",
     Decree := FPath + DirStr + ",d," + Id.toString() + ",-1";
 
@@ -125,7 +125,7 @@ stasis_compute_file_size(@Master, FileId, sum<ChunkLen>) :-
     bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen, _);
 
 
-watch(bfs::create_request_done,aeid);
+watch(bfs::create_request_done, aeid);
 
 public
 green
@@ -142,5 +142,5 @@ bfs::create_request_done(Master, Id, false) :-
 
 public
 bfs::rm_request_done(Master, Id) :-
-    bfs::rm_request_pending(Master, Id, FPath),
+    bfs::rm_request_pending(Master, Id, FPath, _),
     global_log(Master, _, FPath, _, _, "d", Id);
