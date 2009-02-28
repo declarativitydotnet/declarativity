@@ -1,8 +1,5 @@
 program multipaxos;
 	
-import java.lang.String;
-import java.lang.Integer;
-	
 import java.lang.System;
 import jol.core.Runtime;
 
