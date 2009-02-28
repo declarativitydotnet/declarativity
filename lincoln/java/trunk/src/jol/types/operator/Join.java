@@ -219,6 +219,20 @@ public abstract class Join extends Operator {
 		return result;
 	}
 
+	/**
+	 * Join a single outer tuple with the inner tuples. This is just an
+	 * optimized version of the previous join method for the common case that we
+	 * only have a single outer tuple at a time.
+	 */
+	protected TupleSet join(Tuple outer, Iterable<Tuple> innerTuples) throws JolRuntimeException {
+		TupleSet result = new TupleSet();
+		for (Tuple inner : innerTuples) {
+			if (validate(inner) && validate(outer, inner))
+				result.add(join(outer, inner));
+		}
+		return result;
+	}
+
 	private Tuple join(Tuple outer, Tuple inner) {
         synchronized (tupBuf) {
             if (tupBuf.length != outer.size() + this.innerNonJoinPositions.length)

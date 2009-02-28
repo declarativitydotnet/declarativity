@@ -28,7 +28,7 @@ public class AntiScanJoin extends Join {
 	 * @param context The runtime context.
 	 * @param predicate The (notin) predicate.
 	 * @param input The input schema.
-	 * @throws PlannerException 
+	 * @throws PlannerException
 	 */
 	public AntiScanJoin(Runtime context, Predicate predicate, Schema input) throws PlannerException {
 		super(context, predicate, input);
@@ -39,17 +39,14 @@ public class AntiScanJoin extends Join {
 	public String toString() {
 		return "anti nested-loop join " + table;
 	}
-	
+
 	@Override
 	public TupleSet evaluate(TupleSet outerTuples) throws JolRuntimeException {
 		TupleSet result = new TupleSet();
 		for (Tuple outer : outerTuples) {
-			TupleSet oTuples = new TupleSet();
-			oTuples.add(outer);
-			TupleSet join = join(oTuples, (TupleSet)table.tuples());
+			TupleSet join = join(outer, table.tuples());
 			if (join.size() == 0) result.add(outer);
 		}
 		return result;
 	}
-
 }
