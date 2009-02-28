@@ -89,7 +89,7 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_instance.olg"));
 
         //this.system.install("bfs", ClassLoader.getSystemResource("alive.olg"));
-        this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
+        ////this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
 
         this.system.evaluate();
 
