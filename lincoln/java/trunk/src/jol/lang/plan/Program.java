@@ -121,7 +121,7 @@ public class Program implements Comparable<Program> {
 				 * NOTE: delta rules can produce > 1 query. */
 				for (Query query : rule.query(context)) {
 					Predicate input = query.input();
-					if (!queries.containsKey(query.input().name())) {
+					if (!queries.containsKey(input.name())) {
 						queries.put(input.name(), new HashSet<Query>());
 					}
 					queries.get(input.name()).add(query);
