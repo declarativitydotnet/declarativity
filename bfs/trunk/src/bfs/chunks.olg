@@ -21,8 +21,9 @@ chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, set<DataNode>) :-
 public
 delete
 bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time) :-
-    bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
-    chunkMigration#insert(Master, DnWithReplica, ChunkId, CurrRepCnt, _);
+    //bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
+    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
+    chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, _);
 
 watch(send_migrate, ae);
 send_migrate(@DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
