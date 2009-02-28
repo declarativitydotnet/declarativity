@@ -74,20 +74,38 @@ response(@Master, Id, Source, false, null) :-
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, true);
 
-
-// If we get a "ChunkList" request for an extant file, send back its
-// chunks. If the file has no chunks, send back an empty set. Note
-// that because the chunk list is computed by an aggregate, we don't
-// guarantee that it is returned in any particular order; for now,
-// we have clients sort by chunk ID -- this assumes that chunk IDs
-// increase monotonically, and agree with the order of chunks in a file.
-send_response(@Master, Id, Source, true, Chunks) :-
+// "ChunkList" for an extent file => send back its chunks. There's
+// some ugliness here: we also want to return chunk lengths, since
+// the hadoop stream API depends on chunk lengths to implement
+// positional seeking. However, we get chunk lengths in the HB
+// messages from DataNodes, so it's possible that a chunk exists,
+// but we don't know its length yet. Therefore, we keep the
+// "ChunkList" request pending until we've received HBs for all the
+// chunks we expect to see.
+//
+// Note also that the ChunkList is not returned in any particular
+// order, despite the name. For now, we have clients sort by chunk
+// ID: this assumes that chunk IDs increase monotonically, and
+// agree with the order of chunks in the file.
+define(chunklist_request_pending, keys(0, 1), {String, Integer, String, Integer});
+chunklist_request_pending(@Master, Id, Source, FileId) :-
     request(@Master, Id, Source, "ChunkList", FPath),
     fpath(@Master, FPath, FileId),
     stasis_file(@Master, FileId, _, _, false),
+    stasis_fchunk(@Master, _, FileId);
+
+// XXX: race condition if the file is deleted before this rule fires
+public
+send_response(@Master, Id, Source, true, ChunkSet) :-
+    chunklist_request_pending(@Master, Id, Source, FileId),
+    stasis_compute_chunk_set(@Master, FileId, ChunkSet),
     fchunk_cnt(@Master, FileId, Cnt),
-    Cnt == Chunks.size(),
-    stasis_compute_chunk_set(@Master, FileId, Chunks);
+    Cnt == ChunkSet.size(); // We back the expected # of chunks
+
+delete
+chunklist_request_pending(@Master, Id, Source, FileId) :-
+    chunklist_request_pending(@Master, Id, Source, FileId),
+    send_response#insert(@Master, Id, Source, _, _);
 
 // ChunkList for empty file => empty set
 send_response(@Master, Id, Source, true, EmptyChunks) :-
