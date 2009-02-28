@@ -1,8 +1,5 @@
 program twopc;
 
-import java.lang.String;
-import java.lang.Integer;
-
 define(cantick,{String,String});
 define(prepare,keys(0,2),{String,String,String});
 define(peers,keys(0,1),{String,String});

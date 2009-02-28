@@ -1,8 +1,5 @@
 program synod;
 
-import java.lang.String;
-import java.lang.Integer;
-
 define(decreeRequest,{String,String});
 define(lastTried,keys(0),{String,Integer});
 define(prevVote,keys(0),{String,Integer,String});
