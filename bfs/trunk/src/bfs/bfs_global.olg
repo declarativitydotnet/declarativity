@@ -1,7 +1,5 @@
 program bfs;
 
-import bfs.Conf;
-
 // Node, file ID, parent file ID (or null), file name, is directory?
 define(stasis_file, keys(0, 1), {String, Integer, Integer, String, Boolean});
 
