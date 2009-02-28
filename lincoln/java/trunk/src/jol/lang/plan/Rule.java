@@ -12,7 +12,6 @@ import jol.exec.Query;
 import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
-import jol.types.exception.CompileException;
 import jol.types.exception.PlannerException;
 import jol.types.exception.UpdateException;
 import jol.types.operator.EventFilter;
