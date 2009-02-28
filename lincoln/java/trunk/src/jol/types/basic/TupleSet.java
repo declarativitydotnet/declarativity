@@ -3,11 +3,11 @@ package jol.types.basic;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jol.types.table.TableName;
 
@@ -47,7 +47,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	private TupleSet(TupleSet clone) {
 		this.id = clone.id;
 		this.name = clone.name;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.addAll(clone);
 	}
 
@@ -58,7 +58,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	public TupleSet(TableName name) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	public TupleSet(TableName name, Set<Tuple> tuples) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.addAll(tuples);
 	}
 
@@ -83,7 +83,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	public TupleSet(TableName name, Tuple tuple) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.add(tuple);
 	}
 
@@ -152,9 +152,9 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 		for (Tuple t : tuples)
 			add(t);
 
-		if (this.size() > 1000 && !this.warnedAboutBigTable) {
+		if (this.size() > 20000 && !this.warnedAboutBigTable) {
 			this.warnedAboutBigTable = true;
-			System.err.println("TUPLE SET " + name() + " has exceeded 1000 tuples");
+			System.err.println("TUPLE SET " + name() + " contains " + size() + " tuples");
 		}
 
 		return true;

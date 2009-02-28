@@ -2,11 +2,12 @@ program path;
 
 import jol.core.Runtime;
 import jol.types.basic.ValueList;
+import java.util.List;
 
 define(link, keys(0,1), {String, String});
 define(path, keys(0,1,2), {String, String, Integer});
 define(pathStatistics, keys(0,1), {String, String, Integer, Integer, ValueList});
-define(allPaths, {String, ValueList});
+define(allPaths, {String, List});
 define(flatTopPaths, {String, String, Integer});
 define(flatpaths, {String, Integer});
 define(computeAll, {String});
@@ -93,7 +94,7 @@ checkArgMax(Source, Destination, Hops) :- arg(bufferPath(Source, Destination, ma
 checkArgMin(Source, Destination, Hops) :- arg(bufferPath(Source, Destination, min<Hops>));
 
 import jol.types.basic.Schema;
-allPaths(Source, generic<(new ValueList()).insert(Destination)>) :-
+allPaths(Source, list<Destination>) :-
 	computeAll(Bla),
 	path(Source, Destination, Hops);
 

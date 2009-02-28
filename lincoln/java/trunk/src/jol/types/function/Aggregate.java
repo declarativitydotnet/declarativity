@@ -35,6 +35,7 @@ public abstract class Aggregate<C extends Object> {
 	public static final String SUMSTR   = "sumstr";
 	public static final String TUPLESET = "tupleset";
 	public static final String SET      = "set";
+	public static final String LIST     = "list";
 	public static final String UNION    = "union";
 
 
@@ -77,6 +78,9 @@ public abstract class Aggregate<C extends Object> {
 		else if (SET.equals(aggregate.functionName())) {
 			return new Set(aggregate, input);
 		}
+		else if (LIST.equals(aggregate.functionName())) {
+			return new List(aggregate, input);
+		}
 		else if (UNION.equals(aggregate.functionName())) {
 			return new Union(aggregate, input);
 		}
@@ -112,9 +116,9 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Limit extends Aggregate {
-		private List<Object> values;
+		private java.util.List<Object> values;
 		private TupleSet tuples;
-		private List<Object> result;
+		private java.util.List<Object> result;
 		private TupleFunction<Object> accessor;
 
 		public Limit(jol.lang.plan.Limit aggregate, Schema schema)
@@ -130,20 +134,20 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		@Override
-		public List<Object> result() {
+		public java.util.List<Object> result() {
 			return this.result;
 		}
 
 		@Override
 		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				List result = (List) this.accessor.evaluate(tuple);
+				java.util.List result = (java.util.List) this.accessor.evaluate(tuple);
 				Object value  = (Object) result.get(0);
 				Number kConst = (Number) result.get(1);
 
 				this.values.add(value);
 
-				List<Object> resultValues = new ArrayList<Object>();
+				java.util.List<Object> resultValues = new ArrayList<Object>();
 				int k = kConst.intValue();
 				for (int i = 0; i < k; i++) {
 					if (this.values.size() <= i) break;
@@ -626,6 +630,46 @@ public abstract class Aggregate<C extends Object> {
 		@Override
 		public HashSet result() {
 			return (HashSet) this.result.clone();
+		}
+
+		@Override
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				this.result.add(this.accessor.evaluate(tuple));
+			}
+		}
+
+		@Override
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				this.result.remove(this.accessor.evaluate(tuple));
+			}
+		}
+
+		@Override
+		public int size() {
+			return this.tuples.size();
+		}
+	}
+	
+	public static class List extends Aggregate<ArrayList<Object>> {
+		private TupleSet tuples;
+		private ArrayList result;
+		private TupleFunction<Tuple> accessor;
+
+		public List(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
+			this.accessor = aggregate.function(schema);
+			reset();
+		}
+
+		private void reset() {
+			this.tuples = new TupleSet();
+			this.result = new ArrayList();
+		}
+
+		@Override
+		public ArrayList result() {
+			return (ArrayList) this.result.clone();
 		}
 
 		@Override
