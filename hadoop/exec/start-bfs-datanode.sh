@@ -67,18 +67,5 @@ if [ "$HADOOP_PID_DIR" = "" ]; then
   HADOOP_PID_DIR=/tmp
 fi
 
-command=bfsdatanode
-log=$HADOOP_LOG_DIR/hadoop-$command-`hostname`.out
-pid=$HADOOP_PID_DIR/hadoop-$command.pid
-
-BFS_DATA_DIR=/tmp/bfs_data
-# XXX: for now, we just remove the old data directory on startup
-echo "Removing data directory $BFS_DATA_DIR"
-rm -r $BFS_DATA_DIR
-
-export MASTERFILE=$HADOOP_CONF_DIR/masters
-export SLAVEFILE=$HADOOP_CONF_DIR/slaves
-echo "Starting BFS data node, logging to $log"
-nohup $JAVA -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR > "$log" 2>&1 < /dev/null &
-echo $! > $pid
+"$bin"/hadoop-daemons.sh --config $HADOOP_CONF_DIR start bfsdatanode
 

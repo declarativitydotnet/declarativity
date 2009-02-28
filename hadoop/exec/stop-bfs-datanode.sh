@@ -14,17 +14,5 @@ if [ "$HADOOP_PID_DIR" = "" ]; then
   HADOOP_PID_DIR=/tmp
 fi
 
-command=bfsdatanode
-pid=$HADOOP_PID_DIR/hadoop-$command.pid
-
-if [ -f $pid ]; then
-  if kill -0 `cat $pid` > /dev/null 2>&1; then
-    echo stopping $command
-    kill `cat $pid`
-  else
-    echo no $command to stop
-  fi
-else
-  echo no $command to stop
-fi
+"$bin"/hadoop-daemons.sh --config $HADOOP_CONF_DIR stop bfsdatanode
 

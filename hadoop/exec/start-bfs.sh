@@ -70,9 +70,5 @@ fi
 log=$HADOOP_LOG_DIR/hadoop-bfsmaster-`hostname`.out
 pid=$HADOOP_PID_DIR/hadoop-bfsmaster.pid
 
-export MASTERFILE=$HADOOP_CONF_DIR/masters
-export SLAVEFILE=$HADOOP_CONF_DIR/slaves
-echo "Starting BFS master, logging to $log"
-nohup $JAVA -cp "$CLASSPATH" bfs.Master > "$log" 2>&1 < /dev/null &
-echo $! > $pid
+"$bin"/hadoop-daemons.sh --config $HADOOP_CONF_DIR start bfsmaster
 
