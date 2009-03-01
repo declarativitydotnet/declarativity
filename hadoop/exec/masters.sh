@@ -45,7 +45,8 @@ bin=`cd "$bin"; pwd`
 HOSTLIST="${HADOOP_CONF_DIR}/masters"
 
 for master in `cat "$HOSTLIST"`; do
- ssh $HADOOP_SSH_OPTS $master 2>&1 &
+ ssh $HADOOP_SSH_OPTS $master $"${@// /\\ }" \
+   2>&1 | sed "s/^/$master: /" &
 done
 
 wait
