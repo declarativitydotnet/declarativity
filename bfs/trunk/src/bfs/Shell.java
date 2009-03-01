@@ -99,8 +99,8 @@ public class Shell {
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
-        this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
-        this.system.evaluate();
+        //this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
+        //this.system.evaluate();
         this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
         this.system.evaluate();
         this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/chunks.olg"));
@@ -393,7 +393,7 @@ public class Shell {
         TupleSet master = new TupleSet();
         master.add(new Tuple(this.selfAddr,
                              Conf.getMasterAddress(this.currentMaster)));
-        this.system.schedule("bfs", MasterTable.TABLENAME, master, null);
+        this.system.schedule("bfs_global", MasterTable.TABLENAME, master, null);
         this.system.evaluate();
     }
 

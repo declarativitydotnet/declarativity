@@ -57,14 +57,16 @@ rep_factor(Master, ChunkId, count<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
 
 define(w_rep_factor, {String, Integer, Integer});
+//watch(w_rep_factor, a);
 w_rep_factor(M, C, Cnt) :-
   clock#insert(),
   rep_factor(M, C, Cnt);
 
 
 define(representative_datanode, keys(0,1), {String, Integer, String, Long});
+//watch(representative_datanode, ae);
 representative_datanode(Master, ChunkId, max<DataNode>, min<Ts>) :-
-    clock#insert(),
+    //clock#insert(),
     chunks(Master, DataNode, ChunkId, _, Ts);
 
 define(watch_dataNodes,  {String, String, Long});

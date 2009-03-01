@@ -54,7 +54,7 @@ public class DataCommon extends TestCommon {
     private long getChecksum(int i, String name) {
         File csFile = new File("td" + i + "/checksums/" + name + ".cksum");
         System.out.println("File td" + i + "/checksums/" + name);
-        safeAssert("checksum file exists", csFile.exists());
+        safeAssert("checksum file exists (" + i +"."+ name + ")", csFile.exists());
         try {
             DataInputStream dis = new DataInputStream(new FileInputStream(csFile));
             long ck = dis.readLong();

@@ -123,12 +123,12 @@ votes
 acceptCnt(Master,Instance,Round,count<Agent>) :- 
   sendAccept(Master,Instance,Round,Decree,Agent);
 
+
 clean1
 delete
 sendAccept(Master,Instance,Round,Decree,Agent) :-
     sendAccept(Master, Instance, Round, Decree, Agent),
-    decree#insert(Master, Instance, Round, Decree);
-
+    stasis_success#insert(Master, Instance, Round, Decree);
 watch(sendAccept, e);
     
 
@@ -149,7 +149,6 @@ decree(Master,Instance,Round,Decree) :-
 
 watch(stasis_success, ae);
 
-/*
 public
 r5_b	
 stasis_success(@Agent,Instance,Round,Decree,From) :-
@@ -157,18 +156,19 @@ stasis_success(@Agent,Instance,Round,Decree,From) :-
 	paxos::storedDecreeRequest(@Master,Decree,From,_),
 	// we interpret "every" to mean a broadcast.
 	paxos::parliament(@Master,Agent);
-*/
+
+/*
 public
 r5_b	
 stasis_success(Agent,Instance,Round,Decree,From) :-
-  stasis_accept(Agent, Instance, Round, Decree, From),
+  stasis_accept#insert(Agent, Instance, Round, Decree, From),
   Agent != From;
 
 
 public
 r5_b2
 stasis_success(Master, Instance, Round, Decree, From) :-
-    decree(Master,Instance,Round,Decree),
+    decree#insert(Master,Instance,Round,Decree),
 	paxos::storedDecreeRequest(Master,Decree,From,_);
 
 // breakout.
@@ -179,7 +179,7 @@ stasis_success(Agent,Instance,Round,Decree,From) :-
   paxos::priestCnt(Agent,1),
   Round := -1,
   paxos::instance(Agent,Instance);
-
+*/
 
 watch(decree,ae);
 watch(acceptCnt, ae);

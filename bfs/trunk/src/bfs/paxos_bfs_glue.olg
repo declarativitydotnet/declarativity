@@ -3,10 +3,10 @@ program glue;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-watch(bfs::stasis_file, ae);
-watch(bfs::stasis_fchunk, ae);
-watch(bfs::fpath, ae);
-watch(bfs::stasis_fsize, ae);
+watch(bfs_global::stasis_file, ae);
+watch(bfs_global::stasis_fchunk, ae);
+watch(bfs_global::fpath, ae);
+watch(bfs_global::stasis_fsize, ae);
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -53,16 +53,16 @@ global_log(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
 // Create a new file or directory. We use the Paxos instance # as the file
 // ID, since that will be unique and consistent among all the masters.
 public
-bfs::stasis_file(Master, FileId, ParentId, FName, IsDir) :-
+bfs_global::stasis_file(Master, FileId, ParentId, FName, IsDir) :-
     global_log#insert(Master, Instance, FName, IsDir, ParentId, Op, _),
     Op == "i",
     FileId := Instance;
 
 // Add a new chunk to the file. Use the Paxos instance # as the chunk ID.
 public
-bfs::stasis_fchunk(Master, ChunkId, FileId) :-
-    bfs::fpath(Master, FPath, FileId),
-    bfs::stasis_file(Master, FileId, _, _, false),
+bfs_global::stasis_fchunk(Master, ChunkId, FileId) :-
+    bfs_global::fpath(Master, FPath, FileId),
+    bfs_global::stasis_file(Master, FileId, _, _, false),
     global_log#insert(Master, Instance, FPath, _, _, Op, _),
     Op == "u",
     ChunkId := Instance;
@@ -71,10 +71,10 @@ bfs::stasis_fchunk(Master, ChunkId, FileId) :-
 // XXX: We should use FileId, not FPath
 public
 delete
-bfs::stasis_file(Master, FileId, FParent, FName, IsDir) :-
+bfs_global::stasis_file(Master, FileId, FParent, FName, IsDir) :-
     global_log#insert(Master, _, FPath, _, _, "d", Id),
-    bfs::fpath(Master, FPath, FileId),
-    bfs::stasis_file(Master, FileId, FParent, FName, IsDir);
+    bfs_global::fpath(Master, FPath, FileId),
+    bfs_global::stasis_file(Master, FileId, FParent, FName, IsDir);
 
 // If we're the master node that received the request we just processed,
 // send a response back to the client
@@ -100,44 +100,44 @@ bfs::newchunk_request_done(Master, Id, NewChunkId) :-
     global_log(Master, NewChunkId, FPath, _, _, "u", Id);
 
 
-// Use the "stasis_file" relation to construct the "fpath" relation. Note
+// Use the "bfs_global::stasis_file" relation to construct the "fpath" relation. Note
 // that these rules do NOT belong here, but we need them to be in the
-// same program that deletes from bfs::stasis_file to workaround a JOL bug.
+// same program that deletes from bfs_global::stasis_file to workaround a JOL bug.
 
 // Base case: root directory
 public
-bfs::fpath(@Master, FName, FileId) :-
-    bfs::stasis_file(@Master, FileId, null, FName, true),
+bfs_global::fpath(@Master, FName, FileId) :-
+    bfs_global::stasis_file(@Master, FileId, null, FName, true),
     FName == "/";
 
 public
-bfs::fpath(@Master, Path, FileId) :-
-    bfs::stasis_file(@Master, FileId, FParent, FName, _),
-    bfs::fpath(@Master, ParentPath, FParent),
+bfs_global::fpath(@Master, Path, FileId) :-
+    bfs_global::stasis_file(@Master, FileId, FParent, FName, _),
+    bfs_global::fpath(@Master, ParentPath, FParent),
     PathSep := (ParentPath == "/" ? "" : "/"),
     Path := ParentPath + PathSep + FName;
 
 // Directories are considered to have size 0
 public
-bfs::stasis_fsize(@Master, FileId, FSize) :-
-    bfs::stasis_file(@Master, FileId, _, _, true),
+bfs_global::stasis_fsize(@Master, FileId, FSize) :-
+    bfs_global::stasis_file(@Master, FileId, _, _, true),
     FSize := 0L;
 
 // Files with no chunks have size 0
 public
-bfs::stasis_fsize(@Master, FileId, FSize) :-
-    bfs::stasis_file(@Master, FileId, _, _, false),
+bfs_global::stasis_fsize(@Master, FileId, FSize) :-
+    bfs_global::stasis_file(@Master, FileId, _, _, false),
     notin stasis_compute_file_size(@Master, FileId, _),
     FSize := 0L;
 
 public
-bfs::stasis_fsize(@Master, FileId, FSize) :-
-    bfs::stasis_file(@Master, FileId, _, _, false),
+bfs_global::stasis_fsize(@Master, FileId, FSize) :-
+    bfs_global::stasis_file(@Master, FileId, _, _, false),
     stasis_compute_file_size(@Master, FileId, FSizeF),
     FSize := FSizeF.longValue();
 
 define(stasis_compute_file_size, keys(0, 1), {String, Integer, Float});
 public
 stasis_compute_file_size(@Master, FileId, sum<ChunkLen>) :-
-    bfs::stasis_fchunk(@Master, ChunkId, FileId),
+    bfs_global::stasis_fchunk(@Master, ChunkId, FileId),
     bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen, _);

@@ -113,5 +113,5 @@ define(send_delete, keys(0), {String, Integer, String});
 watch(send_delete, ae);
 
 
-define(send_migrate, {String, String, Integer, Set});
-watch(send_migrate, ae);
+//define(send_migrate, {String, String, Integer, Set});
+//watch(send_migrate, ae);

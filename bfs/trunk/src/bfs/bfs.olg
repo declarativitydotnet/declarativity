@@ -23,12 +23,12 @@ watch(start_request, ae);
 
 // This rule transfers "start_request" tuples from the client to the
 // appropriate master. To failover to a new master, the client detects
-// a timeout, and then updates the "master_for_node" mapping table.
+// a timeout, and then updates the "bfs_global::master_for_node" mapping table.
 define(request, {String, Integer, String, String, String});
 watch(request, ae);
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
-    master_for_node(@Source, Master),
+    bfs_global::master_for_node(@Source, Master),
     start_request(@Source, ReqId, ReqType, Args);
 
 // Client node, Request ID, Master node, Success, Result (if any). The
@@ -48,8 +48,8 @@ define(newchunk_request_pending, keys(0, 1), {String, Integer, String, String});
 watch(newchunk_request_pending, ae);
 newchunk_request_pending(@Master, Id, FPath, Source) :-
     request(@Master, Id, Source, "NewChunk", FPath),
-    fpath(@Master, FPath, FileId),
-    stasis_file(@Master, FileId, _, _, false);
+    bfs_global::fpath(@Master, FPath, FileId),
+    bfs_global::stasis_file(@Master, FileId, _, _, false);
 
 public
 send_response(@Master, Id, Source, true, Result) :-
@@ -66,13 +66,13 @@ newchunk_request_pending(@Master, Id, FPath, Source) :-
 // "NewChunk" for nonexistent file => error
 response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "NewChunk", FPath),
-    notin fpath(@Master, FPath, _);
+    notin bfs_global::fpath(@Master, FPath, _);
 
 // "NewChunk" for directory => error
 response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "NewChunk", FPath),
-    fpath(@Master, FPath, FileId),
-    stasis_file(@Master, FileId, _, _, true);
+    bfs_global::fpath(@Master, FPath, FileId),
+    bfs_global::stasis_file(@Master, FileId, _, _, true);
 
 // "ChunkList" for an extent file => send back its chunks. There's
 // some ugliness here: we also want to return chunk lengths, since
@@ -90,9 +90,9 @@ response(@Master, Id, Source, false, null) :-
 define(chunklist_request_pending, keys(0, 1), {String, Integer, String, Integer});
 chunklist_request_pending(@Master, Id, Source, FileId) :-
     request(@Master, Id, Source, "ChunkList", FPath),
-    fpath(@Master, FPath, FileId),
-    stasis_file(@Master, FileId, _, _, false),
-    stasis_fchunk(@Master, _, FileId);
+    bfs_global::fpath(@Master, FPath, FileId),
+    bfs_global::stasis_file(@Master, FileId, _, _, false),
+    bfs_global::stasis_fchunk(@Master, _, FileId);
 
 // XXX: race condition if the file is deleted before this rule fires
 public
@@ -110,32 +110,32 @@ chunklist_request_pending(@Master, Id, Source, FileId) :-
 // ChunkList for empty file => empty set
 send_response(@Master, Id, Source, true, EmptyChunks) :-
     request(@Master, Id, Source, "ChunkList", FPath),
-    fpath(@Master, FPath, FileId),
-    stasis_file(@Master, FileId, _, _, false),
-    notin stasis_fchunk(@Master, _, FileId),
+    bfs_global::fpath(@Master, FPath, FileId),
+    bfs_global::stasis_file(@Master, FileId, _, _, false),
+    notin bfs_global::stasis_fchunk(@Master, _, FileId),
     EmptyChunks := new HashSet();
 
 // ChunkList for nonexistent file => error
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "ChunkList", FPath),
-    notin fpath(@Master, FPath, _);
+    notin bfs_global::fpath(@Master, FPath, _);
 
 // ChunkList for directory => error
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "ChunkList", FPath),
-    fpath(@Master, FPath, FileId),
-    stasis_file(@Master, FileId, _, _, true);
+    bfs_global::fpath(@Master, FPath, FileId),
+    bfs_global::stasis_file(@Master, FileId, _, _, true);
 
 define(fchunk_cnt, keys(0, 1), {String, Integer, Integer});
 public
 fchunk_cnt(Master, FileId, count<ChunkId>) :-
-    stasis_fchunk(Master, ChunkId, FileId);
+    bfs_global::stasis_fchunk(Master, ChunkId, FileId);
 
 define(stasis_compute_chunk_set, keys(0, 1), {String, Integer, Set});
 watch(stasis_compute_chunk_set, ae);
 public
 stasis_compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
-    stasis_fchunk(Master, ChunkId, FileId),
+    bfs_global::stasis_fchunk(Master, ChunkId, FileId),
     bfs_heartbeat::chunks#insert(Master, _, ChunkId, Length, _),
     ChunkInfo := new BFSChunkInfo(ChunkId, Length);
 
@@ -179,7 +179,7 @@ send_response(@Master, Id, Source, false, null) :-
 // If a file with the same full path already exists => error
 send_response(@Master, Id, Source, false, null) :-
     create_request_init(@Master, Id, Source, FullPath, _, _),
-    fpath(@Master, FullPath, _);
+    bfs_global::fpath(@Master, FullPath, _);
 
 // Parse the request filename into the parent path and the actual
 // file name. We need to do some hackery to account for "/" as the
@@ -191,7 +191,7 @@ watch(create_request_parsed, ae);
 create_request_parsed(@Master, Id, Source, ParentPath, FName, IsDir) :-
     create_request_init(@Master, Id, Source, FullPath, IsDir, LastSlashIdx),
     LastSlashIdx >= 0,
-    notin fpath(@Master, FullPath, _)
+    notin bfs_global::fpath(@Master, FullPath, _)
     {  Prefix := FullPath.substring(0, LastSlashIdx);
        ParentPath := (Prefix == "" ? "/" : Prefix);
        FName := FullPath.substring(LastSlashIdx + 1); };
@@ -199,13 +199,13 @@ create_request_parsed(@Master, Id, Source, ParentPath, FName, IsDir) :-
 // If the parent doesn't exist => error
 send_response(@Master, Id, Source, false, null) :-
     create_request_parsed(@Master, Id, Source, ParentPath, _, _),
-    notin fpath(@Master, ParentPath, _);
+    notin bfs_global::fpath(@Master, ParentPath, _);
 
 // If the parent is not a directory => error
 send_response(@Master, Id, Source, false, null) :-
     create_request_parsed(@Master, Id, Source, ParentPath, _, _),
-    fpath(@Master, ParentPath, ParentId),
-    stasis_file(@Master, ParentId, _, _, ParentIsDir),
+    bfs_global::fpath(@Master, ParentPath, ParentId),
+    bfs_global::stasis_file(@Master, ParentId, _, _, ParentIsDir),
     ParentIsDir == false;
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Integer, String, Boolean});
@@ -214,8 +214,8 @@ watch(create_request_pending, ae);
 // Otherwise, pass the request through Paxos
 create_request_pending(@Master, Id, Source, ParentId, FName, IsDir) :-
     create_request_parsed(@Master, Id, Source, ParentPath, FName, IsDir),
-    fpath(@Master, ParentPath, ParentId),
-    stasis_file(@Master, ParentId, _, _, true);
+    bfs_global::fpath(@Master, ParentPath, ParentId),
+    bfs_global::stasis_file(@Master, ParentId, _, _, true);
 
 define(create_request_done, {String, Integer, Boolean});
 public
@@ -234,49 +234,49 @@ create_request_pending(@Master, Id, Source, ParentId, FName, IsDir) :-
 // "ls" for nonexistent path => error
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "Ls", Path),
-    notin fpath(@Master, Path, _);
+    notin bfs_global::fpath(@Master, Path, _);
 
 // "ls" for a non-directory path => error (?)
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "Ls", Path),
-    fpath(@Master, Path, FileId),
-    stasis_file(@Master, FileId, _, _, false);
+    bfs_global::fpath(@Master, Path, FileId),
+    bfs_global::stasis_file(@Master, FileId, _, _, false);
 
 // "ls" for a directory path => return contents of directory
 send_response(@Master, Id, Source, true, FileSet) :-
     request(@Master, Id, Source, "Ls", Path),
-    fpath(@Master, Path, FileId),
-    stasis_file(@Master, FileId, _, _, true),
+    bfs_global::fpath(@Master, Path, FileId),
+    bfs_global::stasis_file(@Master, FileId, _, _, true),
     stasis_compute_ls(@Master, FileId, FileSet);
 
 define(stasis_compute_ls, keys(0, 1), {String, Integer, Set});
 public
 stasis_compute_ls(@Master, ParentFileId, set<FInfo>) :-
-    stasis_file(@Master, FileId, ParentFileId, FName, IsDir),
-    fpath(@Master, FPath, FileId),
-    stasis_fsize(@Master, FileId, FLength),
+    bfs_global::stasis_file(@Master, FileId, ParentFileId, FName, IsDir),
+    bfs_global::fpath(@Master, FPath, FileId),
+    bfs_global::stasis_fsize(@Master, FileId, FLength),
     FInfo := new BFSFileInfo(FileId, FPath, FName, FLength, IsDir);
 
 // "ls" for an empty directory => return empty set of files
 send_response(@Master, Id, Source, true, EmptySet) :-
     request(@Master, Id, Source, "Ls", Path),
-    fpath(@Master, Path, FileId),
+    bfs_global::fpath(@Master, Path, FileId),
     // empty directory <=> no files with FileId as parent
-    notin stasis_file(@Master, _, FileId, _, _),
+    notin bfs_global::stasis_file(@Master, _, FileId, _, _),
     EmptySet := new HashSet();
 
 // If we get a "FileInfo" request for an extant file, send back info
 // describing the file. Otherwise, send back a nack.
 send_response(@Master, Id, Source, true, FInfo) :-
     request(@Master, Id, Source, "FileInfo", FPath),
-    fpath(@Master, FPath, FileId),
-    stasis_fsize(@Master, FileId, FSize),
-    stasis_file(@Master, FileId, _, FName, IsDir),
+    bfs_global::fpath(@Master, FPath, FileId),
+    bfs_global::stasis_fsize(@Master, FileId, FSize),
+    bfs_global::stasis_file(@Master, FileId, _, FName, IsDir),
     FInfo := new BFSFileInfo(FileId, FPath, FName, FSize, IsDir);
 
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "FileInfo", FPath),
-    notin fpath(@Master, FPath, _);
+    notin bfs_global::fpath(@Master, FPath, _);
 
 
 // If we got an "rm" request and the file exists, go through Paxos.
@@ -285,7 +285,7 @@ send_response(@Master, Id, Source, false, null) :-
 define(rm_request_pending, keys(0, 1), {String, Integer, String, String});
 rm_request_pending(@Master, Id, FPath, Source) :-
     request(@Master, Id, Source, "Rm", FPath),
-    fpath(@Master, FPath, _);
+    bfs_global::fpath(@Master, FPath, _);
 
 define(rm_request_done, {String, Integer});
 public
@@ -304,4 +304,4 @@ rm_request_pending(@Master, Id, FPath, Source) :-
 // fixpoint.
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "Rm", FPath),
-    notin fpath(@Master, FPath, _);
+    notin bfs_global::fpath(@Master, FPath, _);

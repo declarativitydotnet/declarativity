@@ -47,7 +47,7 @@ public class Conf {
 
     private static final int chunkSize = 102400;
 
-    private static final long heartbeatRetention = 8000L;
+    private static final long heartbeatRetention = 4000L;
 
     private static int replicationFactor = 1;
 
