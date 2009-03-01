@@ -46,7 +46,12 @@ watch(flatTopPaths, a);
 // newlink(null, 5000, null) :- newlink(_, 0, _);
 
 watch(links, ae);
-links(count<Link>) :- link(Src, Dst), Link := Src + "->" + Dst;
+links(count<Link>) :- 
+	link(Src, Dst)
+	{
+		Link := Src + "->" + Dst;
+		java.lang.System.err.println("Link " + Link);
+	};
 
 define(test1, {String});
 watch(test1, a);

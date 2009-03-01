@@ -59,7 +59,7 @@ generic Rule =
 generic RuleHead = Predicate;
 	
 generic RuleBody = 
-	  TermList void:"{":Symbol AssignmentList void:"}":Symbol
+	  TermList void:"{":Symbol BodyExtension void:"}":Symbol
 	/ TermList
 	;
 
@@ -72,8 +72,12 @@ Node Term =
   / Selection
   ;
 
-Pair<Node> AssignmentList = 
-	Assignment void:";":Symbol (Assignment void:";":Symbol)* ;
+generic BodyExtension = 
+	  Assignment void:";":Symbol BodyExtension
+	/ Assignment void:";":Symbol
+	/ Expression void:";":Symbol BodyExtension
+	/ Expression void:";":Symbol
+	;
 
 
 //----------------------------   Timer  ---------------------------/

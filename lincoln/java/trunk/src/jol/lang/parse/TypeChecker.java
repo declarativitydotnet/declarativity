@@ -27,6 +27,7 @@ import jol.lang.plan.Expression;
 import jol.lang.plan.Fact;
 import jol.lang.plan.GenericAggregate;
 import jol.lang.plan.IfThenElse;
+import jol.lang.plan.Invoker;
 import jol.lang.plan.Limit;
 import jol.lang.plan.Load;
 import jol.lang.plan.MethodCall;
@@ -740,12 +741,9 @@ public final class TypeChecker extends Visitor {
 		}
 
 		if (n.size() > 1) {
-			for (GNode node : n.<GNode>getList(1)) {
-				Class type = (Class) dispatch(node);
-				Assignment a = (Assignment) node.getProperty(Constants.TYPE);
-				a.head(true); // This is a head assignment.
-				terms.add(a);
-			}
+			Class type = (Class) dispatch(n.getNode(1));
+			List<Term> extensions = (List<Term>) n.getNode(1).getProperty(Constants.TYPE);
+			terms.addAll(extensions);
 		}
 
 		for (GNode node : other) {
@@ -754,6 +752,33 @@ public final class TypeChecker extends Visitor {
 		}
 
 		n.setProperty(Constants.TYPE, terms);
+		return List.class;
+	}
+	
+	public Class visitBodyExtension(final GNode n) {
+		List<Term> extensions = new ArrayList<Term>();
+		Class type = (Class) dispatch(n.getNode(0));
+		if (subtype(Expression.class, type)) {
+			Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
+			System.err.println("ADD BODY EXTENSION " + expr);
+			extensions.add(new Invoker(expr));
+		}
+		else if (subtype(Assignment.class, type)) {
+			Assignment a = (Assignment) n.getNode(0).getProperty(Constants.TYPE);
+			System.err.println("ADD BODY EXTENSION " + a);
+			a.extension(true);
+			extensions.add(a);
+		}
+		else {
+			System.err.println("TypeCHecker VisitBodyExtension: THIS SHOULD NEVER HAPPEN!");
+			System.exit(0);
+		}
+		
+		if (n.size() > 1) {
+			type = (Class) dispatch(n.getNode(1));
+			extensions.addAll((List) n.getNode(1).getProperty(Constants.TYPE));
+		}
+		n.setProperty(Constants.TYPE, extensions);
 		return List.class;
 	}
 

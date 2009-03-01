@@ -69,7 +69,15 @@ public abstract class Term implements Comparable<Term> {
 	
 	public abstract Schema schema(Schema input);
 	
-	public abstract void set(Runtime context, String program, String rule, Integer position) throws UpdateException;
+	public void set(Runtime context, String program, String rule, Integer position) throws UpdateException {
+		this.program  = program;
+		this.rule     = rule;
+		this.position = position;
+	}
 	
 	public abstract Operator operator(Runtime context, Schema input) throws PlannerException;
+
+	public boolean extension() {
+		return false;
+	}
 }

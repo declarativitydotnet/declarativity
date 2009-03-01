@@ -351,11 +351,13 @@ public class Rule extends Clause {
 		}
 
 		Schema schema = event.schema().clone();
+		List<Term>       extensions  = new ArrayList<Term>();
 		List<Assignment> assignments = new ArrayList<Assignment>();
-		List<Selection> selections = new ArrayList<Selection>();
-		List<Predicate> predicates = new ArrayList<Predicate>();
+		List<Selection> selections   = new ArrayList<Selection>();
+		List<Predicate> predicates   = new ArrayList<Predicate>();
 		for (Term term : body) {
-			if (term instanceof Assignment) assignments.add((Assignment)term);
+			if (term.extension()) extensions.add(term);
+			else if (term instanceof Assignment) assignments.add((Assignment)term);
 			else if (term instanceof Selection) selections.add((Selection)term);
 			else if (!term.equals(event)) predicates.add((Predicate) term);
 		}
@@ -368,21 +370,27 @@ public class Rule extends Clause {
 		}
 		schema = planHelper(context, operators, assignments, selections, schema);
 
-		if (selections.size() > 0) {
+		if (selections.size() > 0 || assignments.size() > 0) {
 			StringBuilder sb = new StringBuilder();
 			for (Selection s : selections) {
-				sb.append("Unable to plan assignment " + s + " due to variable dependencies.\n");
+				sb.append("Unable to plan selection " + s + " due to variable dependencies.\n");
+			}
+			for (Assignment a : assignments) {
+				sb.append("Unable to plan assignment " + a + " due to variable dependencies.\n");
 			}
 			throw new PlannerException(sb.toString());
 		}
 
-		/* Plan head predicate assignments last. */
-		for (Iterator<Assignment> iter = assignments.iterator(); iter.hasNext(); ) {
-			Assignment a = iter.next();
-			if (schema.variables().containsAll(a.requires())) {
-				Operator oper = a.operator(context, schema);
+		/* Plan extensions last. */
+		for (Term term : extensions) {
+			if (schema.variables().containsAll(term.requires())) {
+				Operator oper = term.operator(context, schema);
 				operators.add(oper);
-				schema = a.schema(schema);
+				schema = term.schema(schema);
+			}
+			else {
+				throw new PlannerException("Term " + term + " requires variables " + 
+						                    term.requires() + ". Input schema is only " + schema);
 			}
 		}
 
@@ -411,7 +419,7 @@ public class Rule extends Clause {
 		List<Term> done = new ArrayList<Term>();
 		for (Iterator<Assignment> iter = assignments.iterator(); iter.hasNext(); ) {
 			Assignment a = iter.next();
-			if (!a.head() && schema.variables().containsAll(a.requires())) {
+			if (schema.variables().containsAll(a.requires())) {
 				Operator oper = a.operator(context, schema);
 				operators.add(oper);
 				schema = a.schema(schema);
