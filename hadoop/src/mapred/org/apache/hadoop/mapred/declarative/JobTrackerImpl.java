@@ -240,6 +240,13 @@ public class JobTrackerImpl extends JobTracker {
 			this.context.evaluate();
 		}
 		
+		if (SPECULATE != null) {
+			URL speculatePolicy =
+				ClassLoader.getSystemClassLoader().getResource(SPECULATE + ".olg");
+			this.context.install("hadoop", speculatePolicy);
+			this.context.evaluate();
+		}
+		
 		this.context.start();
 	}
 
