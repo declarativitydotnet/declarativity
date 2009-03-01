@@ -8,6 +8,12 @@ bfs_global::migration_choices(Master, DataNode, ChunkId) :-
     cartesian(Master, DataNode, ChunkId),
     notin bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
 
+public
+delete 
+bfs_global::migration_choices(Master, DataNode, ChunkId) :-
+	bfs_global::migration_choices(Master, DataNode, ChunkId),
+    bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
+
 define(cartesian, keys(0,1,2), {String, String, Integer});
 public
 cartesian(Master, DataNode, ChunkId) :-
