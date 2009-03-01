@@ -151,8 +151,16 @@ taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-
 /*************** Task Status Maintenance *********************/
 
 define(taskUpdate, {JobID, TaskID, Constants.TaskType, TaskState});
-define(lookupDirtyTaskAttempt, {Boolean});
-define(lookupTask, {JobID, Constants.TaskState});
+
+public
+task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
+    taskUpdate(JobId, TaskId, _, Status),
+	task(JobId, TaskId, Type, Partition, Input, MapCount, _);
+
+delete
+taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty) :-
+    taskUpdate(JobId, TaskId, Type, TaskStatus), TaskStatus.state() == Constants.TaskState.SUCCEEDED,
+	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
 
 taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED, 
             Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, true) :-
@@ -161,6 +169,30 @@ taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED,
 	TrackerState != Constants.TaskTrackerState.RUNNING,
 	TaskState == Constants.TaskState.RUNNING;
 	
+/*
+define(lookupDirtyTaskAttempt, {Boolean});
+lookupDirtyTaskAttempt(true) :- dutyCycle();
+taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, false) :-
+	lookupDirtyTaskAttempt(Dirty),
+	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
+*/
+
+define(taskAttemptUpdate, {JobID, TaskID, Integer, Constants.TaskState, Constants.TaskPhase, Long, Long, Float});
+taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, Progress) :-
+	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
+
+public
+taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
+	arg(taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, max<Progress>)),
+	task(JobID, TaskId, Type, _, _, _, TaskStatus),
+	TaskStatus.state() != Constants.TaskState.SUCCEEDED 
+	{
+		StatusUpdate := TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
+	};
+
+
+/*
+define(lookupTask, {JobID, Constants.TaskState});
 lookupTask(JobId, State) :- 
     dutyCycle(), job(JobId, _, _, _, _, _, _, _, _, JobStatus),
     jobQueue(JobId, _, _, Type),
@@ -168,23 +200,6 @@ lookupTask(JobId, State) :-
     {
       State := Type == Constants.TaskType.MAP ? Constants.TaskState.SUCCEEDED : Constants.TaskState.COMMIT_PENDING;
     };
-
-/*
-lookupDirtyTaskAttempt(true) :- dutyCycle();
-taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, false) :-
-	lookupDirtyTaskAttempt(Dirty),
-	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
-*/
-
-delete
-taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty) :-
-    taskUpdate(JobId, TaskId, Type, TaskStatus), TaskStatus.state() == Constants.TaskState.SUCCEEDED,
-	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
-
-public
-task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
-    taskUpdate(JobId, TaskId, _, Status),
-	task(JobId, TaskId, Type, Partition, Input, MapCount, _);
 
 taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
 	lookupTask(JobId, State),
@@ -194,4 +209,4 @@ taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
 	{
 		StatusUpdate := TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
 	};
-	
+*/
