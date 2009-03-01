@@ -18,7 +18,7 @@ import org.apache.hadoop.util.StringUtils;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -95,7 +95,7 @@ public class NetworkTopologyTable extends ObjectTable {
 		}
 
 		private void register(String host, String networkLoc) throws JolRuntimeException {
-			TupleSet nodes = new TupleSet(NetworkTopologyTable.TABLENAME);
+			BasicTupleSet nodes = new BasicTupleSet(NetworkTopologyTable.TABLENAME);
 			Node     node  = new NodeBase(host, networkLoc);
 			while (node != null) {
 				nodes.add(NetworkTopologyTable.node(node));

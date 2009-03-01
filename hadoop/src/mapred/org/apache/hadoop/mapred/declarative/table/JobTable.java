@@ -7,12 +7,14 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.declarative.util.JobState;
 
 import jol.core.Runtime;
+import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
+import jol.types.table.BasicTable;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
-public class JobTable extends ObjectTable {
+public class JobTable extends BasicTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "job");
 	public static final TableName INIT = new TableName(JobTracker.PROGRAM, "initJob");
@@ -38,7 +40,7 @@ public class JobTable extends ObjectTable {
 	};
 	
 	public JobTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA, new ConcurrentTupleSet(TABLENAME));
 	}
 	
 	public static Tuple tuple(JobID jobid, String jobFile, JobConf conf, String url) {

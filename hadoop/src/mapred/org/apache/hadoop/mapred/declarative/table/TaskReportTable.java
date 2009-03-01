@@ -11,6 +11,7 @@ import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.basic.ValueList;
 import jol.types.table.HashIndex;

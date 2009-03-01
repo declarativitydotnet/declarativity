@@ -5,6 +5,7 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
 
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 import jol.types.table.Function;
@@ -31,7 +32,7 @@ public class AssignTracker extends Function {
 
 	@Override
 	public TupleSet insert(TupleSet insertions, TupleSet conflicts) throws UpdateException {
-		TupleSet result = new TupleSet();
+		TupleSet result = new BasicTupleSet();
 		Set<TaskID> assigned = new HashSet<TaskID>();
 		for (Tuple tuple : insertions) {
 			String      tracker  = (String) tuple.value(Field.TRACKERNAME.ordinal());
