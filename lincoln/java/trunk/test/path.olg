@@ -50,7 +50,7 @@ links(count<Link>) :-
 	link(Src, Dst)
 	{
 		Link := Src + "->" + Dst;
-		java.lang.System.err.println("Link " + Link);
+		java.lang.System.err.println("Link " + Link + ", 2 + 2 = " + (2 + 2).toString());
 	};
 
 define(test1, {String});
