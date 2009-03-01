@@ -8,6 +8,7 @@ import java.util.TreeMap;
 import jol.lang.plan.GenericAggregate;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.basic.ValueList;
 import jol.types.exception.JolRuntimeException;
@@ -103,7 +104,7 @@ public abstract class Aggregate<C extends Object> {
 			return ValueList.class;
 		}
 		else if (TUPLESET.equals(function)) {
-			return jol.types.basic.TupleSet.class;
+			return jol.types.basic.BasicTupleSet.class;
 		}
 		else if (SET.equals(function) || UNION.equals(function)) {
 			return HashSet.class;
@@ -116,7 +117,7 @@ public abstract class Aggregate<C extends Object> {
 
 	public static class Limit extends Aggregate {
 		private java.util.List<Object> values;
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private java.util.List<Object> result;
 		private TupleFunction<Object> accessor;
 
@@ -127,7 +128,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		private void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.values = new ArrayList<Object>();
 			this.result = null;
 		}
@@ -159,7 +160,7 @@ public abstract class Aggregate<C extends Object> {
 		@Override
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
-				TupleSet tuples = this.tuples;
+				BasicTupleSet tuples = this.tuples;
 				reset();
 				for (Tuple copy : tuples) {
 					insert(copy);
@@ -178,7 +179,7 @@ public abstract class Aggregate<C extends Object> {
 
 		private TreeMap<C, ValueList<C>> values;
 		private Type type;
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private Object result;
 		private TupleFunction<C> accessor;
 
@@ -196,7 +197,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		private void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.values = new TreeMap<C, ValueList<C>>();
 			this.result = null;
 		}
@@ -236,7 +237,7 @@ public abstract class Aggregate<C extends Object> {
 		@Override
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
-				TupleSet tuples = this.tuples;
+				BasicTupleSet tuples = this.tuples;
 				reset();
 				for (Tuple copy : tuples) {
 					insert(copy);
@@ -251,7 +252,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Generic<C> extends Aggregate<Object> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private C result;
 		private GenericAggregate aggregate;
 		private Schema schema;
@@ -263,7 +264,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		private void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.result = null;
 		}
 
@@ -289,7 +290,7 @@ public abstract class Aggregate<C extends Object> {
 		@Override
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
-				TupleSet tuples = this.tuples;
+				BasicTupleSet tuples = this.tuples;
 				reset();
 				for (Tuple copy : tuples) {
 					insert(copy);
@@ -304,7 +305,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Min<C extends Comparable<C>> extends Aggregate<C> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private C result;
 		private TupleFunction<C> accessor;
 
@@ -315,7 +316,7 @@ public abstract class Aggregate<C extends Object> {
 
 		private void reset() {
 			this.result = null;
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 		}
 
 		@Override
@@ -338,7 +339,7 @@ public abstract class Aggregate<C extends Object> {
 			if (this.tuples.remove(tuple)) {
 				C value = accessor.evaluate(tuple);
 				if (this.result.compareTo(value) == 0) {
-					TupleSet tuples = this.tuples;
+					BasicTupleSet tuples = this.tuples;
 					reset();
 					for (Tuple copy : tuples) {
 						insert(copy);
@@ -354,7 +355,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Max<C extends Comparable<C>> extends Aggregate<C> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private C result;
 		private TupleFunction<C> accessor;
 
@@ -365,7 +366,7 @@ public abstract class Aggregate<C extends Object> {
 
 		private void reset() {
 			this.result = null;
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 		}
 
 		@Override
@@ -389,7 +390,7 @@ public abstract class Aggregate<C extends Object> {
 				this.tuples.remove(tuple);
 				C value = accessor.evaluate(tuple);
 				if (this.result.compareTo(value) == 0) {
-					TupleSet tuples = this.tuples;
+					BasicTupleSet tuples = this.tuples;
 					reset();
 					for (Tuple copy : tuples) {
 						insert(copy);
@@ -405,7 +406,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Count extends Aggregate<Integer> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private TupleFunction<Object> accessor;
 
 		public Count(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
@@ -414,7 +415,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		private void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 		}
 
 		@Override
@@ -439,7 +440,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Avg<C extends Comparable<C>> extends Aggregate<Float> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private Float sum;
 		private TupleFunction<C> accessor;
 
@@ -454,7 +455,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		public void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.sum    = 0F;
 		}
 
@@ -481,7 +482,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Sum extends Aggregate<Float> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private Float sum;
 		private TupleFunction<Number> accessor;
 
@@ -496,7 +497,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		public void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.sum    = 0F;
 		}
 
@@ -523,7 +524,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class ConcatString extends Aggregate<String> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private String result;
 		private TupleFunction<String> accessor;
 
@@ -538,7 +539,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		public void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.result = null;
 		}
 
@@ -557,7 +558,7 @@ public abstract class Aggregate<C extends Object> {
 		@Override
 		public void delete(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.remove(tuple)) {
-				TupleSet tuples = this.tuples;
+				BasicTupleSet tuples = this.tuples;
 				reset();
 				for (Tuple copy : tuples) {
 					insert(copy);
@@ -572,8 +573,8 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class TupleCollection extends Aggregate<TupleSet> {
-		private TupleSet tuples;
-		private TupleSet result;
+		private BasicTupleSet tuples;
+		private BasicTupleSet result;
 		private TupleFunction<Tuple> accessor;
 
 		public TupleCollection(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
@@ -582,8 +583,8 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		private void reset() {
-			this.tuples = new TupleSet();
-			this.result = new TupleSet();
+			this.tuples = new BasicTupleSet();
+			this.result = new BasicTupleSet();
 		}
 
 		@Override
@@ -612,7 +613,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Set extends Aggregate<HashSet<Object>> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private HashSet result;
 		private TupleFunction<Tuple> accessor;
 
@@ -622,7 +623,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		private void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.result = new HashSet();
 		}
 
@@ -652,7 +653,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class List extends Aggregate<ArrayList<Object>> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private ArrayList result;
 		private TupleFunction<Tuple> accessor;
 
@@ -662,7 +663,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		private void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.result = new ArrayList();
 		}
 
@@ -692,7 +693,7 @@ public abstract class Aggregate<C extends Object> {
 	}
 
 	public static class Union extends Aggregate<HashSet<Object>> {
-		private TupleSet tuples;
+		private BasicTupleSet tuples;
 		private HashSet result;
 		private TupleFunction<Tuple> accessor;
 
@@ -702,7 +703,7 @@ public abstract class Aggregate<C extends Object> {
 		}
 
 		private void reset() {
-			this.tuples = new TupleSet();
+			this.tuples = new BasicTupleSet();
 			this.result = new HashSet();
 		}
 

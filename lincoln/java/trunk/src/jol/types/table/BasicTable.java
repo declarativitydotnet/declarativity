@@ -2,9 +2,11 @@ package jol.types.table;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 
@@ -36,9 +38,13 @@ public class BasicTable extends Table {
 	 * @param types The type of each attribute (in positional order).
 	 */
 	public BasicTable(Runtime context, TableName name, Key key, Class[] types) {
+		this(context, name, key, types, new BasicTupleSet(name));
+	}
+	
+	public BasicTable(Runtime context, TableName name, Key key, Class[] types, TupleSet tuples) {
 		super(name, Type.TABLE, key, types);
 		this.key = key;
-		this.tuples = new TupleSet(name);
+		this.tuples = tuples;
 		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
 		this.secondary = new HashMap<Key, Index>();
 		
@@ -48,7 +54,7 @@ public class BasicTable extends Table {
 	@Override
 	public Iterable<Tuple> tuples() {
 		try {
-			return (this.tuples == null ? new TupleSet(name()) : this.tuples.clone());
+			return (this.tuples == null ? new BasicTupleSet(name()) : this.tuples.clone());
 		} catch (Exception e) {
 			System.err.println("TABLE " + name() + " ERROR: " + e);
 			e.printStackTrace();

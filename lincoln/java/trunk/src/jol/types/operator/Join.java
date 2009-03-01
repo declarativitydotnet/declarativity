@@ -10,7 +10,7 @@ import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.function.Filter;
@@ -206,9 +206,9 @@ public abstract class Join extends Operator {
 	 * @return Join result.
 	 * @throws JolRuntimeException
 	 */
-	protected TupleSet join(Iterable<Tuple> outerTuples, Iterable<Tuple> innerTuples)
+	protected BasicTupleSet join(Iterable<Tuple> outerTuples, Iterable<Tuple> innerTuples)
 	throws JolRuntimeException {
-		TupleSet result = new TupleSet();
+		BasicTupleSet result = new BasicTupleSet();
 		for (Tuple outer : outerTuples) {
 			for (Tuple inner : innerTuples) {
 				if (validate(inner) && validate(outer, inner)) {
@@ -224,8 +224,8 @@ public abstract class Join extends Operator {
 	 * optimized version of the previous join method for the common case that we
 	 * only have a single outer tuple at a time.
 	 */
-	protected TupleSet join(Tuple outer, Iterable<Tuple> innerTuples) throws JolRuntimeException {
-		TupleSet result = new TupleSet();
+	protected BasicTupleSet join(Tuple outer, Iterable<Tuple> innerTuples) throws JolRuntimeException {
+		BasicTupleSet result = new BasicTupleSet();
 		for (Tuple inner : innerTuples) {
 			if (validate(inner) && validate(outer, inner))
 				result.add(join(outer, inner));

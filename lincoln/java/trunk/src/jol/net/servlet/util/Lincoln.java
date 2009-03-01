@@ -6,6 +6,7 @@ import java.util.List;
 import jol.core.Runtime;
 import jol.core.Runtime.RuntimeCallback;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
@@ -131,8 +132,8 @@ public class Lincoln {
     	public InjectTuples(String program, TableName table) {
     		this.program = program;
     		this.table = table;
-    		this.insertions = new TupleSet();
-    		this.deletions = new TupleSet();
+    		this.insertions = new BasicTupleSet();
+    		this.deletions = new BasicTupleSet();
     	}
 
     	public TupleSet insertions() { return insertions; }

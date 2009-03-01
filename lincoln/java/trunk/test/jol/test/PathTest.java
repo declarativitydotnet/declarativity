@@ -6,7 +6,7 @@ import jol.core.Runtime;
 import jol.core.JolSystem;
 import jol.core.Runtime.DebugLevel;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
@@ -62,7 +62,7 @@ public class PathTest {
     @Test
     public void simplePathTest() throws UpdateException, JolRuntimeException {
         /* Setup the initial links */
-        TupleSet links = new TupleSet();
+        BasicTupleSet links = new BasicTupleSet();
         links.add(new Tuple("1", "2"));
         links.add(new Tuple("2", "3"));
         links.add(new Tuple("3", "4"));

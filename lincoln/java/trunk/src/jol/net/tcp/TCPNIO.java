@@ -25,7 +25,7 @@ import jol.net.Message;
 import jol.net.Network;
 import jol.net.Server;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
@@ -285,7 +285,7 @@ public class TCPNIO extends Server {
                 Message message = (Message) istream.readObject();
                 IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
                 Tuple tuple = new Tuple(address, message);
-                context.schedule("tcp", ReceiveMessage, new TupleSet(ReceiveMessage, tuple), null);
+                context.schedule("tcp", ReceiveMessage, new BasicTupleSet(ReceiveMessage, tuple), null);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             } catch (JolRuntimeException e) {

@@ -19,6 +19,7 @@ import jol.lang.plan.Program;
 import jol.lang.plan.Program.ProgramTable;
 import jol.net.Network;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
@@ -281,7 +282,7 @@ public class Runtime implements JolSystem {
 	}
 
 	public void install(String owner, String debugger, URL url) throws JolRuntimeException {
-		TupleSet compilation = new TupleSet(CompileTable.TABLENAME);
+		TupleSet compilation = new BasicTupleSet(CompileTable.TABLENAME);
 		compilation.add(new Tuple(null, owner, debugger, url.toString(), null));
 		schedule("runtime", CompileTable.TABLENAME, compilation, null);
 	}
@@ -291,7 +292,7 @@ public class Runtime implements JolSystem {
 	 * @param name The program name.
 	 */
 	public void uninstall(String name) throws JolRuntimeException {
-		TupleSet uninstall = new TupleSet(new TableName("compiler", "uninstall"), new Tuple(name, true));
+		TupleSet uninstall = new BasicTupleSet(new TableName("compiler", "uninstall"), new Tuple(name, true));
 		schedule("compile", uninstall.name(), uninstall, null);
 	}
 

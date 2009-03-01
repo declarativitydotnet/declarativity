@@ -6,7 +6,7 @@ import java.util.TimerTask;
 import jol.core.Runtime;
 import jol.core.Schedule;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 
@@ -65,9 +65,9 @@ public class TimerTable extends Table {
 	private static class PhysicalTimer extends TimerTask implements Comparable<PhysicalTimer> {
 	    private Runtime context;
 		private TableName name;
-		private TupleSet timer;
+		private BasicTupleSet timer;
 
-		public PhysicalTimer(Runtime context, TableName name, TupleSet timer) {
+		public PhysicalTimer(Runtime context, TableName name, BasicTupleSet timer) {
 		    this.context = context;
 			this.name  = name;
 			this.timer = timer;
@@ -227,8 +227,8 @@ public class TimerTable extends Table {
 		return timer();
 	}
 
-	private TupleSet timer() {
-		return new TupleSet(name(), new Tuple(this.period, this.ttl, this.delay));
+	private BasicTupleSet timer() {
+		return new BasicTupleSet(name(), new Tuple(this.period, this.ttl, this.delay));
 	}
 
 	private void reset() {

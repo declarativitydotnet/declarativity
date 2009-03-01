@@ -1,6 +1,6 @@
 package jol.net;
 
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.table.TableName;
 
 /**
@@ -18,11 +18,11 @@ public class NetworkMessage extends Message {
 	
 	private TableName name;
 	
-	private TupleSet insertions;
+	private BasicTupleSet insertions;
 	
-	private TupleSet deletions;
+	private BasicTupleSet deletions;
 	
-	public NetworkMessage(String protocol, String program, TableName name, TupleSet insertions, TupleSet deletions) {
+	public NetworkMessage(String protocol, String program, TableName name, BasicTupleSet insertions, BasicTupleSet deletions) {
 		super(ids++, "network");
 		this.protocol   = protocol;
 		this.program    = program;
@@ -60,7 +60,7 @@ public class NetworkMessage extends Message {
 	 * A set of tuple insertions.
 	 * @return A tuple set.
 	 */
-	public TupleSet insertions() {
+	public BasicTupleSet insertions() {
 		return this.insertions;
 	}
 	
@@ -68,7 +68,7 @@ public class NetworkMessage extends Message {
 	 * A set of tuple deletions.
 	 * @return A tuple set.
 	 */
-	public TupleSet deletions() {
+	public BasicTupleSet deletions() {
 		return this.deletions;
 	}
 }

@@ -1,7 +1,7 @@
 package jol.core;
 
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
@@ -59,8 +59,8 @@ public class Clock extends ObjectTable {
 	 * @param time The time value.
 	 * @return A tupleset that can be inserted into the clock table.
 	 */
-	public TupleSet time(Long time) {
-		return new TupleSet(name(), new Tuple(location, time));
+	public BasicTupleSet time(Long time) {
+		return new BasicTupleSet(name(), new Tuple(location, time));
 	}
 	
 	/**

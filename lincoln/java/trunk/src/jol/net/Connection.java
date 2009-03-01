@@ -1,6 +1,7 @@
 package jol.net;
 
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
@@ -32,7 +33,7 @@ public class Connection extends ObjectTable {
 
 	@Override
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-		TupleSet success = new TupleSet(name());
+		TupleSet success = new BasicTupleSet(name());
 		for (Tuple tuple : tuples) {
 			String  protocol = (String) tuple.value(Field.PROTOCOL.ordinal());
 			Address address  = (Address) tuple.value(Field.ADDRESS.ordinal());

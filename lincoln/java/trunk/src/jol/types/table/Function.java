@@ -3,13 +3,14 @@ package jol.types.table;
 import java.util.Map;
 
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 
 /**
  * The table function interface.
  * 
- * Table functions accept {@link TupleSet} arguments and apply some
+ * Table functions accept {@link BasicTupleSet} arguments and apply some
  * function over that set of tuples. A delta set of tuples are returned
  * as the function value. The name of the table function is accessible from
  * a program by applying the table function to a predicate argument. The table

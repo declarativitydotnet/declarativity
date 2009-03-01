@@ -3,21 +3,19 @@ package jol.types.basic;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import jol.types.table.TableName;
 
 
 /**
- * A ConcurrentTupleSet is a TupleSet that is backed with a
- * ConcurrentHashMap, rather than just a normal HashMap. This is
- * mostly just a temporary hack. ~nrc
+ * A tuple set is a set contain for tuples that belong to the same relation.
  */
-public class ConcurrentTupleSet implements TupleSet {
+public class BasicTupleSet implements TupleSet  {
 	private static final long serialVersionUID = 1L;
 
 	private Map<Tuple, Tuple> tuples;
@@ -36,9 +34,9 @@ public class ConcurrentTupleSet implements TupleSet {
 	private boolean refCount = true;
 
 	/**
-	 * Create an empty concurrent tuple set.
+	 * Create an empty tuple set.
 	 */
-	public ConcurrentTupleSet() {
+	public BasicTupleSet() {
 		this((TableName) null);
 	}
 
@@ -46,46 +44,46 @@ public class ConcurrentTupleSet implements TupleSet {
 	 * Copy constructor.
 	 * @param clone The set to copy.
 	 */
-	private ConcurrentTupleSet(TupleSet clone) {
+	private BasicTupleSet(TupleSet clone) {
 		this.id = clone.id();
 		this.name = clone.name();
-		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
+		this.tuples = new HashMap<Tuple, Tuple>();
 		this.addAll(clone);
 	}
 
 	/**
-	 * Empty concurrent tuple set that references a given table name.
+	 * Empty tuple set that references a given table name.
 	 * @param name The table name to reference.
 	 */
-	public ConcurrentTupleSet(TableName name) {
+	public BasicTupleSet(TableName name) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
+		this.tuples = new HashMap<Tuple, Tuple>();
 	}
 
 	/**
-	 * Initialize the concurrent tuple set to contain the passed in tuples
+	 * Initialize the tuple set to contain the passed in tuples
 	 * that reference the given table name.
 	 * @param name The table name.
 	 * @param tuples The tuples to initialize.
 	 */
-	public ConcurrentTupleSet(TableName name, Set<Tuple> tuples) {
+	public BasicTupleSet(TableName name, Set<Tuple> tuples) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
+		this.tuples = new HashMap<Tuple, Tuple>();
 		this.addAll(tuples);
 	}
 
 	/**
-	 * Create a concurrent tuple set referencing the given table name containing
+	 * Create a tuple set referencing the given table name containing
 	 * the single tuple.
 	 * @param name The table name.
 	 * @param tuple A single tuple that will make up this set.
 	 */
-	public ConcurrentTupleSet(TableName name, Tuple tuple) {
+	public BasicTupleSet(TableName name, Tuple tuple) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
+		this.tuples = new HashMap<Tuple, Tuple>();
 		this.add(tuple);
 	}
 
@@ -114,15 +112,15 @@ public class ConcurrentTupleSet implements TupleSet {
 
 	@Override
 	public boolean equals(Object o) {
-		if (o instanceof ConcurrentTupleSet) {
-			return ((ConcurrentTupleSet) o).id == this.id;
+		if (o instanceof BasicTupleSet) {
+			return ((BasicTupleSet) o).id == this.id;
 		}
 		return false;
 	}
 
 	@Override
-	public ConcurrentTupleSet clone() {
-		return new ConcurrentTupleSet(this);
+	public TupleSet clone() {
+		return new BasicTupleSet(this);
 	}
 
 	/**
@@ -156,7 +154,7 @@ public class ConcurrentTupleSet implements TupleSet {
 
 		if (this.size() > 20000 && !this.warnedAboutBigTable) {
 			this.warnedAboutBigTable = true;
-			System.err.println("CTUPLE SET " + name() + " contains " + size() + " tuples");
+			System.err.println("TUPLE SET " + name() + " contains " + size() + " tuples");
 		}
 
 		return true;

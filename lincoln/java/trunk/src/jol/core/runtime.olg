@@ -2,6 +2,7 @@ program runtime;
 
 import jol.exec.Query;
 import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.table.TableName;
 
@@ -171,9 +172,9 @@ config(Time, Program, Debugger, Object) :-
 compileConfig
 schedule(Time, "compile", Tuples.name(), Tuples, null) :-
 	config(Time, Program, _, Object),
-	Tuples := new TupleSet(new TableName("compile", "config"), Object.tuple());
+	Tuples := new BasicTupleSet(new TableName("compile", "config"), Object.tuple());
 
 schedule(Time+1, "grappa", Tuples.name(), Tuples, null) :-
 	config(Time, Program, Debugger, Object),
 	Debugger != null,
-	Tuples := new TupleSet(new TableName("grappa", "debug"), jol.lang.Debugger.tuple(Program, Debugger));
+	Tuples := new BasicTupleSet(new TableName("grappa", "debug"), jol.lang.Debugger.tuple(Program, Debugger));

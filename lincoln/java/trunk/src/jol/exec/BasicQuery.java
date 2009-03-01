@@ -3,6 +3,7 @@ package jol.exec;
 import java.util.List;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.operator.Operator;
@@ -33,7 +34,7 @@ public class BasicQuery extends Query {
 					                     " but got event " + input.name());
 		}
 
-		TupleSet tuples = new TupleSet(input.name());
+		TupleSet tuples = new BasicTupleSet(input.name());
 		for (Tuple tuple : input) {
 			tuple = tuple.clone();
 			tuples.add(tuple);

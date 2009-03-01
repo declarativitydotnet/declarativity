@@ -8,6 +8,7 @@ import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Variable;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -153,7 +154,7 @@ public class EventFilter extends Operator {
 		if (filters.isEmpty())
 			return tuples;
 
-		TupleSet result = new TupleSet(tuples.name());
+		TupleSet result = new BasicTupleSet(tuples.name());
 
 		for (Tuple tuple : tuples) {
 		    boolean valid = true;

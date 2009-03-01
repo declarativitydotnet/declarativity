@@ -4,6 +4,7 @@ import jol.core.Runtime;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
@@ -44,7 +45,7 @@ public class AntiIndexJoin extends Join {
 	@Override
 	public TupleSet evaluate(TupleSet outerTuples) throws JolRuntimeException {
 		try {
-			TupleSet result = new TupleSet();
+			TupleSet result = new BasicTupleSet();
 			for (Tuple outer : outerTuples) {
 				TupleSet innerTuples = this.index.lookupByKey(lookupKey.project(outer));
 				if (innerTuples.size() == 0) {

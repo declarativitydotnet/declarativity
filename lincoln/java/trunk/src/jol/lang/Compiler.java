@@ -21,6 +21,7 @@ import jol.lang.plan.Rule.RuleTable;
 import jol.lang.plan.Selection.SelectionTable;
 import jol.lang.plan.Watch.WatchTable;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.CompileException;
 import jol.types.exception.JolRuntimeException;
@@ -68,7 +69,7 @@ public class Compiler {
 
 		@Override
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-			TupleSet decorated = new TupleSet();
+			TupleSet decorated = new BasicTupleSet();
 			try {
 				for (Tuple t : tuples) {
 					Program program = (Program) t.value(Field.PROGRAM.ordinal());
