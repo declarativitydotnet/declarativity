@@ -1408,7 +1408,9 @@ public final class TypeChecker extends Visitor {
 						throw new CompileException("Undefined expression object: " + object, n);
 					}
 					Method method = null;
-					for (Method m : object.type().getMethods()) {
+					Class t = type(object.type().getName());
+					if (t == null) t = object.type();
+					for (Method m : t.getMethods()) {
 						if (m.getName().equals(reference.toString()) &&
 								typeCoercion(m.getParameterTypes(), types)) {
 							method = m;
@@ -1508,6 +1510,8 @@ public final class TypeChecker extends Visitor {
 				return ObjectReference.class;
 			} catch (Exception e) {
 				if (type != null) {
+					Class t = type(type.getName());
+					if (t != null) type = t;
 					for (Method method : type.getMethods()) {
 						if (method.getName().equals(name)) {
 							n.setProperty(Constants.TYPE, new UnknownReference(n, expr, null, name));
