@@ -760,12 +760,10 @@ public final class TypeChecker extends Visitor {
 		Class type = (Class) dispatch(n.getNode(0));
 		if (subtype(Expression.class, type)) {
 			Expression expr = (Expression) n.getNode(0).getProperty(Constants.TYPE);
-			System.err.println("ADD BODY EXTENSION " + expr);
 			extensions.add(new Invoker(expr));
 		}
 		else if (subtype(Assignment.class, type)) {
 			Assignment a = (Assignment) n.getNode(0).getProperty(Constants.TYPE);
-			System.err.println("ADD BODY EXTENSION " + a);
 			a.extension(true);
 			extensions.add(a);
 		}
