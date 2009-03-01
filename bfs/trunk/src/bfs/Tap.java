@@ -19,6 +19,7 @@ import jol.lang.plan.Predicate;
 import jol.lang.plan.Rule;
 import jol.lang.plan.Term;
 import jol.lang.plan.Variable;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -344,7 +345,7 @@ public class Tap {
 
 
         TableName tblName = new TableName("tap", "tap");
-        TupleSet tap = new TupleSet(tblName);
+        TupleSet tap = new BasicTupleSet(tblName);
         // XXX: hack
         tap.add(new Tuple(ruleName, program));
         this.system.schedule("tap", tblName, tap, null);
@@ -471,7 +472,7 @@ public class Tap {
         this.system.evaluate();
         /* Identify the data directory */
         TableName tblName = new TableName("tap", "tap");
-        TupleSet datadir = new TupleSet(tblName);
+        TupleSet datadir = new BasicTupleSet(tblName);
         // XXX: hack
         datadir.add(new Tuple("tcp:localhost:12345", program));
         this.system.schedule("tap", tblName, datadir, null);

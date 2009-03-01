@@ -2,6 +2,7 @@ package bfs;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -57,7 +58,7 @@ public class Master {
         this.system.evaluate();
 
         // Hack: insert a bfs::file tuple to represent the root of the file system
-        TupleSet newFile = new TupleSet();
+        TupleSet newFile = new BasicTupleSet();
         int fileId = -1;  // File IDs assigned by the system start at 0
         newFile.add(new Tuple(this.address, -1, null, "/", true));
         this.system.schedule("bfs", new TableName("bfs_global", "stasis_file"), newFile, null);
@@ -65,7 +66,7 @@ public class Master {
 
         // Hack: insert a bfs::fpath tuple for the root path, because that is somehow
         // not automatically inferred
-        TupleSet newPath = new TupleSet();
+        TupleSet newPath = new BasicTupleSet();
         newPath.add(new Tuple(this.address, "/", fileId));
         this.system.schedule("bfs", new TableName("bfs_global", "fpath"), newPath, null);
         this.system.evaluate();
@@ -94,13 +95,13 @@ public class Master {
 
         this.system.evaluate();
 
-        TupleSet id = new TupleSet();
+        TupleSet id = new BasicTupleSet();
         id.add(new Tuple(address));
         this.system.schedule("paxos", PaxosIdTable.TABLENAME, id, null);
 
         for (int i = 0; i < Conf.getNumMasters(); i++) {
             String addr = Conf.getMasterAddress(i);
-            TupleSet member = new TupleSet();
+            TupleSet member = new BasicTupleSet();
             member.add(new Tuple(addr, i));
             this.system.schedule("paxos", PaxosMemberTable.TABLENAME, member, null);
         }

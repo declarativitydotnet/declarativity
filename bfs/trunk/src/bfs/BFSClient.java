@@ -8,6 +8,7 @@ import java.util.Set;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -48,7 +49,7 @@ public class BFSClient {
 
 	        /* Identify the address of the local node */
 	        TableName tblName = new TableName("bfs", "self");
-	        TupleSet self = new TupleSet(tblName);
+	        TupleSet self = new BasicTupleSet(tblName);
 	        self.add(new Tuple(this.selfAddr));
 	        this.system.schedule("bfs", tblName, self, null);
 	        this.system.evaluate();
@@ -98,7 +99,7 @@ public class BFSClient {
 
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new TupleSet(tblName);
+        TupleSet req = new BasicTupleSet(tblName);
         req.add(new Tuple(this.selfAddr, requestId, commandName, pathName));
         try {
         	this.system.schedule("bfs", tblName, req, null);
@@ -141,7 +142,7 @@ public class BFSClient {
 
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new TupleSet(tblName);
+        TupleSet req = new BasicTupleSet(tblName);
         req.add(new Tuple(this.selfAddr, requestId, "NewChunk", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
@@ -179,7 +180,7 @@ public class BFSClient {
 
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new TupleSet(tblName);
+        TupleSet req = new BasicTupleSet(tblName);
         req.add(new Tuple(this.selfAddr, requestId, "Rm", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
@@ -232,7 +233,7 @@ public class BFSClient {
 
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new TupleSet(tblName);
+        TupleSet req = new BasicTupleSet(tblName);
         req.add(new Tuple(this.selfAddr, requestId, "Ls", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
@@ -278,7 +279,7 @@ public class BFSClient {
 
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new TupleSet(tblName);
+        TupleSet req = new BasicTupleSet(tblName);
         req.add(new Tuple(this.selfAddr, requestId, "FileInfo", pathName));
         try {
         	this.system.schedule("bfs", tblName, req, null);
@@ -324,7 +325,7 @@ public class BFSClient {
 
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new TupleSet(tblName);
+        TupleSet req = new BasicTupleSet(tblName);
         req.add(new Tuple(this.selfAddr, requestId, "ChunkList", path));
         try {
         	this.system.schedule("bfs", tblName, req, null);
@@ -372,7 +373,7 @@ public class BFSClient {
 
         // Create and insert the request tuple
         TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new TupleSet(tblName);
+        TupleSet req = new BasicTupleSet(tblName);
         req.add(new Tuple(this.selfAddr, requestId,
                           "ChunkLocations", Integer.toString(chunkId)));
         try {
@@ -428,7 +429,7 @@ public class BFSClient {
     }
 
     private void updateMasterAddr() {
-        TupleSet master = new TupleSet();
+        TupleSet master = new BasicTupleSet();
         master.add(new Tuple(this.selfAddr,
                              Conf.getMasterAddress(this.currentMaster)));
         try {
