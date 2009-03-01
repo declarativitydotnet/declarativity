@@ -43,10 +43,8 @@ define(send_response, {String, Integer, String, Boolean, Object});
 
 // NewChunk: add a new chunk to the end of a file
 define(newchunk_request_done, {String, Integer, Integer});
-watch(newchunk_request_done, ae);
 
 define(newchunk_request_pending, keys(0, 1), {String, Integer, String, String});
-watch(newchunk_request_pending, ae);
 newchunk_request_pending(@Master, Id, FPath, Source) :-
     request(@Master, Id, Source, "NewChunk", FPath),
     bfs_global::fpath(@Master, FPath, FileId),
@@ -133,7 +131,6 @@ fchunk_cnt(Master, FileId, count<ChunkId>) :-
     bfs_global::stasis_fchunk(Master, ChunkId, FileId);
 
 define(stasis_compute_chunk_set, keys(0, 1), {String, Integer, Set});
-watch(stasis_compute_chunk_set, ae);
 public
 stasis_compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
     bfs_global::stasis_fchunk(Master, ChunkId, FileId),
@@ -161,7 +158,6 @@ send_response(@Master, Id, Source, false, null) :-
 
 // Handle "Create" and "CreateDir" requests
 define(create_request_init, {String, Integer, String, String, Boolean, Integer});
-watch(create_request_init, ae);
 create_request_init(@Master, Id, Source, FullPath, IsDir, LastSlashIdx) :-
     request(@Master, Id, Source, "Create", FullPath),
     IsDir := false,
@@ -188,7 +184,6 @@ send_response(@Master, Id, Source, false, null) :-
 // slash. Note that we also need to apply the inverse of the two
 // error conditions we checked for above.
 define(create_request_parsed, {String, Integer, String, String, String, Boolean});
-watch(create_request_parsed, ae);
 create_request_parsed(@Master, Id, Source, ParentPath, FName, IsDir) :-
     create_request_init(@Master, Id, Source, FullPath, IsDir, LastSlashIdx),
     LastSlashIdx >= 0,
@@ -210,7 +205,6 @@ send_response(@Master, Id, Source, false, null) :-
     ParentIsDir == false;
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Integer, String, Boolean});
-watch(create_request_pending, ae);
 
 // Otherwise, pass the request through Paxos
 create_request_pending(@Master, Id, Source, ParentId, FName, IsDir) :-
