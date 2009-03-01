@@ -10,5 +10,5 @@ if [ -f "${HADOOP_CONF_DIR}/hadoop-env.sh" ]; then
   . "${HADOOP_CONF_DIR}/hadoop-env.sh"
 fi
 
-"$bin"/hadoop-daemons.sh --config $HADOOP_CONF_DIR start bfsmaster
+"$bin"/hadoop-masters.sh --config $HADOOP_CONF_DIR start bfsmaster
 
