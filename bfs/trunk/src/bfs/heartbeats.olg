@@ -9,14 +9,14 @@ define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Lo
 
 timer(clock, physical, 1000, infinity, 0);
 
-define(ackHeartBeat, {String, String, Long});
+define(ackHeartBeat, keys(0, 1, 2), {String, String, Long});
 ackHeartBeat(@Dnode, Master, Id) :-
     sendHeartBeat(@Master, Dnode, _, _, _, Id),
     Id != -1L;
 
 define(dataNodes, keys(0, 1), {String, String, Long});
-dataNodes(Master, Host, max<Tstamp>) :-
-    sendHeartBeat(Master, Host, _, _, Tstamp, _);
+dataNodes(Master, Addr, max<Tstamp>) :-
+    sendHeartBeat(Master, Addr, _, _, Tstamp, _);
 
 
 // we need this to ensure we become aware of truant datanodes.
