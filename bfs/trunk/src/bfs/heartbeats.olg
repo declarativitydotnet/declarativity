@@ -69,12 +69,6 @@ representative_datanode(Master, ChunkId, max<DataNode>, min<Ts>) :-
     //clock#insert(),
     chunks(Master, DataNode, ChunkId, _, Ts);
 
-define(watch_dataNodes,  {String, String, Long});
-//watch(watch_dataNodes, a);
-watch_dataNodes(M, D, T) :-
-  dataNodes(M, D, T),
-  clock#insert();
-
 define(back_of_list, keys(0,1), {String,Integer,String});
 back_of_list(Master, ChunkId, min<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
