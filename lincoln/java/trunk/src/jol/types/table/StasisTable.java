@@ -7,7 +7,7 @@ import java.util.Map;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import stasis.jni.JavaHashtable;
@@ -41,10 +41,10 @@ public abstract class StasisTable extends Table {
 			}
 
 			@Override
-			public TupleSet lookupByKey(Tuple key) throws BadKeyException {
+			public BasicTupleSet lookupByKey(Tuple key) throws BadKeyException {
 				try {
 					byte[] valbytes = ((StasisTable)table()).lookup(key.toBytes());
-					TupleSet ret = new TupleSet();
+					BasicTupleSet ret = new BasicTupleSet();
 					if(valbytes != null) {
 						Tuple t = key().reconstruct(key, new Tuple(valbytes));
 						ret.add(t);

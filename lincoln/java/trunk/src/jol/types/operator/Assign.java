@@ -3,6 +3,7 @@ package jol.types.operator;
 import jol.core.Runtime;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -47,7 +48,7 @@ public class Assign<C extends Comparable<C> > extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		TupleSet deltas = new TupleSet(tuples.name());
+		TupleSet deltas = new BasicTupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
 			try {
 				Object[] delta = tuple.toArray();

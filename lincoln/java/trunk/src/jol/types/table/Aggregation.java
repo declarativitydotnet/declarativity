@@ -10,6 +10,7 @@ import jol.core.Runtime;
 import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -78,7 +79,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		this.predicate = predicate;
 		this.aggregateFunctions = null;
 		this.singleGroupAggregateFunctions = null;
-		this.aggregateTuples    = new TupleSet(name());
+		this.aggregateTuples    = new BasicTupleSet(name());
 		this.aggregates         = new ArrayList<jol.lang.plan.Aggregate>();
 
 		this.aggregateTuples.refCount(false);
@@ -138,7 +139,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	 * all insert/delete calls.
 	 */
 	private TupleSet result() {
-		TupleSet result = new TupleSet(name());
+		TupleSet result = new BasicTupleSet(name());
 		if (this.singleGroupAggregateFunctions != null) {
 		    Object[] arry = new Object[this.singleGroupAggregateFunctions.size()];
 		    for(int i = 0; i < arry.length; i++) {
@@ -187,7 +188,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	 * become part of the delta set.
 	 */
 	public TupleSet insert(TupleSet insertions, TupleSet deletions) throws UpdateException {
-		TupleSet expirations = new TupleSet();
+		TupleSet expirations = new BasicTupleSet();
 		if (deletions != null && deletions.size() > 0) {
 			TupleSet intersection = deletions.clone();
 			intersection.retainAll(insertions);
@@ -299,8 +300,8 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 			e.printStackTrace();
 		}
 
-		TupleSet delta = new TupleSet(name());
-		delta.addAll(tuples());
+		TupleSet delta = new BasicTupleSet(name());
+		delta.addAll((TupleSet)tuples());
 
 		delta.removeAll(result());  // removed = tuples that don't exist in after.
 		return super.delete(delta); // signal indices that we've removed these tuples.

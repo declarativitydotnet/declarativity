@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
@@ -339,8 +340,8 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException Bad tuple.
 	 */
 	public void force(Tuple tuple) throws UpdateException {
-		TupleSet insertion = new TupleSet(name(), tuple);
-		TupleSet conflicts = new TupleSet(name());
+		TupleSet insertion = new BasicTupleSet(name(), tuple);
+		TupleSet conflicts = new BasicTupleSet(name());
 		insert(insertion, conflicts);
 		delete(conflicts);
 	}
@@ -355,7 +356,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException
 	 **/
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-		TupleSet delta = new TupleSet(name());
+		TupleSet delta = new BasicTupleSet(name());
 		for (Tuple t : tuples) {
 			t = t.clone();
 
@@ -379,7 +380,7 @@ public abstract class Table implements Comparable<Table> {
 				/* Update the indices here so that primary key
 				 * conflicts from within the tupleset will show up
 				 * during this method call.  */
-				TupleSet insertion = new TupleSet(name());
+				TupleSet insertion = new BasicTupleSet(name());
 				insertion.add(t);
 				synchronized (this) {
 				    for (Callback callback : this.callbacks) {
@@ -398,7 +399,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException
 	 **/
 	public TupleSet delete(Iterable<Tuple> tuples) throws UpdateException {
-		TupleSet delta = new TupleSet(name());
+		TupleSet delta = new BasicTupleSet(name());
 
 		for (Tuple t : tuples) {
 			if (delete(t)) {

@@ -1,8 +1,9 @@
 package jol.types.operator;
 
 import jol.types.basic.Schema;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.function.TupleFunction;
@@ -41,7 +42,7 @@ public class Selection extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		TupleSet result = new TupleSet(tuples.name());
+		TupleSet result = new BasicTupleSet(tuples.name());
 		for (Tuple tuple : tuples) {
 			try {
 				if (java.lang.Boolean.TRUE.equals(filter.evaluate(tuple))) {

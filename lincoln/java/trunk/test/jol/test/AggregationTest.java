@@ -1,7 +1,7 @@
 package jol.test;
 
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
@@ -25,7 +25,7 @@ public class AggregationTest extends LocalTestBase {
 	@Test
 	public void countTest() throws Exception {
 		try {
-			TupleSet set = new TupleSet();
+			BasicTupleSet set = new BasicTupleSet();
 	        set.add(new Tuple(1,"a"));
 	        set.add(new Tuple(1,"b"));
 	        set.add(new Tuple(2,"c"));

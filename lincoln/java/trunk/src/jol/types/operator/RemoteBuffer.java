@@ -10,6 +10,7 @@ import jol.net.IP;
 import jol.net.NetworkBuffer;
 import jol.net.NetworkMessage;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
@@ -66,11 +67,11 @@ public class RemoteBuffer extends Operator {
 		if (tuples.isEmpty()) return tuples;
 
 		/* Group tuples by the address attribute: (address, tuple) */
-		Map<String, TupleSet> groupByAddress = new HashMap<String, TupleSet>();
+		Map<String, BasicTupleSet> groupByAddress = new HashMap<String, BasicTupleSet>();
 		for (Tuple tuple : tuples) {
 			String key = (String) this.addressAccessor.evaluate(tuple);
 			if (!groupByAddress.containsKey(key)) {
-				groupByAddress.put(key, new TupleSet(this.predicate.name()));
+				groupByAddress.put(key, new BasicTupleSet(this.predicate.name()));
 			}
 			groupByAddress.get(key).add(tuple);
 		}
@@ -80,8 +81,8 @@ public class RemoteBuffer extends Operator {
 			String location = address.substring(address.indexOf(':') + 1);
 	        Tuple remote = new Tuple("network", "send", new IP(location),
 			        		         new NetworkMessage(protocol, this.program, predicate.name(),
-			         		                      		new TupleSet(predicate.name()),
-			        		        		            new TupleSet(predicate.name())));
+			         		                      		new BasicTupleSet(predicate.name()),
+			        		        		            new BasicTupleSet(predicate.name())));
 
 			NetworkMessage message = (NetworkMessage) remote.value(NetworkBuffer.Field.MESSAGE.ordinal());
 			if (this.deletion) {
@@ -93,13 +94,13 @@ public class RemoteBuffer extends Operator {
 
 			TableName bufferName = context.network().buffer().name();
 			try {
-				context.schedule("network", bufferName, new TupleSet(bufferName, remote), null);
+				context.schedule("network", bufferName, new BasicTupleSet(bufferName, remote), null);
 			} catch (JolRuntimeException e) {
 				e.printStackTrace();
 			}
 		}
 
-		return new TupleSet(this.predicate.name());
+		return new BasicTupleSet(this.predicate.name());
 	}
 
 	public Predicate predicate() {

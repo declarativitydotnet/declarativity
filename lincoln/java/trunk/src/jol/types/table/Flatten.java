@@ -3,6 +3,7 @@ package jol.types.table;
 import java.util.ArrayList;
 import java.util.List;
 
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
@@ -71,8 +72,7 @@ public class Flatten extends Function {
 	}
 
 	@Override
-	public TupleSet insert(TupleSet tuples, TupleSet conflicts)
-			throws UpdateException {
+	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 		if (this.positions.size() == 0) {
 			return tuples;
 		}
@@ -92,7 +92,7 @@ public class Flatten extends Function {
 		}
 		else {
 			/* Flatten along the first position */
-			TupleSet delta = new TupleSet(name());
+			TupleSet delta = new BasicTupleSet(name());
 			int   position = flattenPositions.remove(0);
 			for (Tuple tuple : tuples) {
 				List<Object> list = (List<Object>) tuple.value(position);

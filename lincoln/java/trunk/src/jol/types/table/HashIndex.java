@@ -8,7 +8,7 @@ import java.util.Set;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.BadKeyException;
 
 /**
@@ -22,7 +22,7 @@ import jol.types.exception.BadKeyException;
 public class HashIndex extends Index {
 
 	/** A map containing the set of tuples with the same key. */
-	private Map<Tuple, TupleSet> map;
+	private Map<Tuple, BasicTupleSet> map;
 
 	/**
 	 * Create a new hash index. All tuples currently in
@@ -34,7 +34,7 @@ public class HashIndex extends Index {
 	 */
 	public HashIndex(Runtime context, Table table, Key key, Type type) {
 		super(context, table, key, type, true);
-		this.map = new HashMap<Tuple, TupleSet>();
+		this.map = new HashMap<Tuple, BasicTupleSet>();
 
 		for (Tuple t : table.tuples()) {
 			insert(t);
@@ -53,12 +53,12 @@ public class HashIndex extends Index {
 	@Override
 	protected void insert(Tuple t) {
 		Tuple key = key().project(t);
-		TupleSet tuples = this.map.get(key);
+		BasicTupleSet tuples = this.map.get(key);
 
 		if (tuples != null) {
 		    tuples.add(t);
 		} else {
-			tuples = new TupleSet(table().name());
+			tuples = new BasicTupleSet(table().name());
 			tuples.refCount(false);
 			tuples.add(t);
 			this.map.put(key, tuples);
@@ -66,24 +66,24 @@ public class HashIndex extends Index {
 	}
 
 	@Override
-	public TupleSet lookupByKey(Tuple key) throws BadKeyException {
+	public BasicTupleSet lookupByKey(Tuple key) throws BadKeyException {
 		if (key.size() != key().size() && key().size() > 0) {
 			throw new BadKeyException("Key had wrong number of columns.  " +
 					"Saw: " + key.size() + " expected: " + key().size() + " key: " + key().toString());
 		}
 
-		TupleSet tuples = this.map.get(key);
+		BasicTupleSet tuples = this.map.get(key);
 		if (tuples != null)
 		    return tuples;
 		else
-		    return new TupleSet(table().name());
+		    return new BasicTupleSet(table().name());
 	}
 
 	@Override
 	protected void remove(Tuple t) {
 		Tuple key = key().project(t);
 
-		TupleSet tuples = this.map.get(key);
+		BasicTupleSet tuples = this.map.get(key);
 		if (tuples != null) {
 		    tuples.remove(t);
 
@@ -95,7 +95,7 @@ public class HashIndex extends Index {
 	@Override
 	public Iterator<Tuple> iterator() {
 		Set<Tuple> tuples = new HashSet<Tuple>();
-		for (TupleSet set : this.map.values()) {
+		for (BasicTupleSet set : this.map.values()) {
 			tuples.addAll(set);
 		}
 		return tuples.iterator();

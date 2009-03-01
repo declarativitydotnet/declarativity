@@ -2,6 +2,7 @@ package jol.core;
 
 import java.net.URL;
 
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
@@ -39,7 +40,7 @@ public interface JolSystem {
 	/**
 	 * Perform a single fixpoint computation.
 	 * This call will evaluate to fixpoint previous calls to
-	 * {@link #schedule(String, TableName, TupleSet, TupleSet)},
+	 * {@link #schedule(String, TableName, BasicTupleSet, BasicTupleSet)},
 	 * {@link #install(String, URL)} and {@link #uninstall(String)}
 	 * Calling this method after a call to {@link #start()} is not allowed.
 	 * @throws JolRuntimeException When called post {@link #start()}

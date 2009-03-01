@@ -5,6 +5,7 @@ import java.io.IOException;
 import jol.lang.plan.Aggregate;
 import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -43,7 +44,7 @@ public class Arg extends Function {
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 		try {
 			Comparable best = null;
-			TupleSet result = new TupleSet();
+			TupleSet result = new BasicTupleSet();
 			for (Tuple t : tuples) {
 				if (best == null) {
 					best = (Comparable) t.value(this.position);

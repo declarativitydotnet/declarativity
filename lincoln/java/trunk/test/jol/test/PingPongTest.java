@@ -7,6 +7,7 @@ import jol.core.Runtime;
 import jol.core.JolSystem;
 import jol.core.Runtime.DebugLevel;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
@@ -106,14 +107,14 @@ public class PingPongTest {
         }
 
         /* Tell each runtime about the set of nodes in the cluster */
-        TupleSet nodes = new TupleSet();
+        TupleSet nodes = new BasicTupleSet();
         nodes.add(new Tuple(this.makeAddr(PINGER_PORT)));
         nodes.add(new Tuple(this.makeAddr(PONGER_PORT)));
         for (JolSystem s : this.systems)
             s.schedule("pingpong", NodeTable.TABLENAME, nodes, null);
 
         /* Tell each runtime its own address */
-        TupleSet self = new TupleSet();
+        TupleSet self = new BasicTupleSet();
         self.add(new Tuple(this.makeAddr(PINGER_PORT)));
         this.pinger.schedule("pingpong", SelfTable.TABLENAME, self, null);
 
@@ -168,7 +169,7 @@ public class PingPongTest {
         this.ponger.catalog().table(ping_tbl_name).register(cb);
 
         /* Send a new message from pinger => ponger */
-        TupleSet inmessage = new TupleSet();
+        TupleSet inmessage = new BasicTupleSet();
         inmessage.add(new Tuple(this.getNewId(), 1));
         this.pinger.schedule("pingpong", InMessageTable.TABLENAME, inmessage, null);
 

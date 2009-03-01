@@ -4,6 +4,7 @@ import jol.core.Runtime;
 import jol.lang.plan.Predicate;
 import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
@@ -47,7 +48,7 @@ public class IndexJoin extends Join {
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
 		try {
-			TupleSet result = new TupleSet();
+			TupleSet result = new BasicTupleSet();
 			for (Tuple outer : tuples) {
 				TupleSet innerTuples = this.index.lookupByKey(lookupKey.project(outer));
 				result.addAll(join(outer, innerTuples));

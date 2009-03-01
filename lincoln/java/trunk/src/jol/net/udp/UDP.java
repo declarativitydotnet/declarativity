@@ -15,7 +15,7 @@ import jol.net.IP;
 import jol.net.Message;
 import jol.net.Server;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
@@ -57,7 +57,7 @@ public class UDP extends Server {
 					ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(buf));
 					Message message = (Message) input.readObject();
 					Tuple tuple = new Tuple("receive", new IP(packet.getAddress(), packet.getPort()), message);
-					context.schedule("udp", UDPMessage, new TupleSet(UDPMessage, tuple), null);
+					context.schedule("udp", UDPMessage, new BasicTupleSet(UDPMessage, tuple), null);
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 					System.exit(0);
