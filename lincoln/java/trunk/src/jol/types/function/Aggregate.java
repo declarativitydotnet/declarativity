@@ -2,7 +2,6 @@ package jol.types.function;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeMap;
 
@@ -651,7 +650,7 @@ public abstract class Aggregate<C extends Object> {
 			return this.tuples.size();
 		}
 	}
-	
+
 	public static class List extends Aggregate<ArrayList<Object>> {
 		private TupleSet tuples;
 		private ArrayList result;
