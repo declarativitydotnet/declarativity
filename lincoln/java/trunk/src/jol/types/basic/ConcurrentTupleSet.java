@@ -4,18 +4,20 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jol.types.table.TableName;
 
 
 /**
- * A tuple set is a set contain for tuples that belong to the same relation.
+ * A ConcurrentTupleSet is a TupleSet that is backed with a
+ * ConcurrentHashMap, rather than just a normal HashMap. This is
+ * mostly just a temporary hack. ~nrc
  */
-public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable {
+public class ConcurrentTupleSet implements Set<Tuple>, Comparable<ConcurrentTupleSet>, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private Map<Tuple, Tuple> tuples;
@@ -34,9 +36,9 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	private boolean refCount = true;
 
 	/**
-	 * Create an empty tuple set.
+	 * Create an empty concurrent tuple set.
 	 */
-	public TupleSet() {
+	public ConcurrentTupleSet() {
 		this((TableName) null);
 	}
 
@@ -44,46 +46,46 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	 * Copy constructor.
 	 * @param clone The set to copy.
 	 */
-	private TupleSet(TupleSet clone) {
+	private ConcurrentTupleSet(ConcurrentTupleSet clone) {
 		this.id = clone.id;
 		this.name = clone.name;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.addAll(clone);
 	}
 
 	/**
-	 * Empty tuple set that references a given table name.
+	 * Empty concurrent tuple set that references a given table name.
 	 * @param name The table name to reference.
 	 */
-	public TupleSet(TableName name) {
+	public ConcurrentTupleSet(TableName name) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 	}
 
 	/**
-	 * Initialize the tuple set to contain the passed in tuples
+	 * Initialize the concurrent tuple set to contain the passed in tuples
 	 * that reference the given table name.
 	 * @param name The table name.
 	 * @param tuples The tuples to initialize.
 	 */
-	public TupleSet(TableName name, Set<Tuple> tuples) {
+	public ConcurrentTupleSet(TableName name, Set<Tuple> tuples) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.addAll(tuples);
 	}
 
 	/**
-	 * Create a tuple set referencing the given table name containing
+	 * Create a concurrent tuple set referencing the given table name containing
 	 * the single tuple.
 	 * @param name The table name.
 	 * @param tuple A single tuple that will make up this set.
 	 */
-	public TupleSet(TableName name, Tuple tuple) {
+	public ConcurrentTupleSet(TableName name, Tuple tuple) {
 		this.id = idGen++;
 		this.name = name;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.add(tuple);
 	}
 
@@ -112,15 +114,15 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 
 	@Override
 	public boolean equals(Object o) {
-		if (o instanceof TupleSet) {
-			return ((TupleSet) o).id == this.id;
+		if (o instanceof ConcurrentTupleSet) {
+			return ((ConcurrentTupleSet) o).id == this.id;
 		}
 		return false;
 	}
 
 	@Override
-	public TupleSet clone() {
-		return new TupleSet(this);
+	public ConcurrentTupleSet clone() {
+		return new ConcurrentTupleSet(this);
 	}
 
 	/**
@@ -154,7 +156,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 
 		if (this.size() > 20000 && !this.warnedAboutBigTable) {
 			this.warnedAboutBigTable = true;
-			System.err.println("TUPLE SET " + name() + " contains " + size() + " tuples");
+			System.err.println("CTUPLE SET " + name() + " contains " + size() + " tuples");
 		}
 
 		return true;
@@ -178,7 +180,7 @@ public class TupleSet implements Set<Tuple>, Comparable<TupleSet>, Serializable 
 	 * NOTE: This method does NOT perform set comparison
 	 * (other methods will perform that action {@link #containsAll(Collection)}).
 	 */
-	public int compareTo(TupleSet other) {
+	public int compareTo(ConcurrentTupleSet other) {
 	    if (this.id < other.id)
 	        return -1;
 	    if (this.id > other.id)
