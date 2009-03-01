@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import jol.core.JolSystem;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
@@ -410,23 +411,29 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	/**
 	 * Submit job by scheduling an insertion of the job in the job table.
 	 */
-	public synchronized JobStatus submitJob(JobID jobid) throws IOException {
+	public JobStatus submitJob(JobID jobid) throws IOException {
 		try {
 			Tuple job = lookup(jobid);
 			if (job == null) {
 				/* Create a new job and schedule its insertion into the job table. */
 				job = jobTracker.newJob(jobid);
 				context.schedule(JobTracker.PROGRAM, JobTable.INIT,
-						new TupleSet(JobTable.INIT, job), null);
+						new BasicTupleSet(JobTable.INIT, job), null);
 				context.evaluate();
 
-				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
-				return state.status();
+				JobStatus status = null;
+				for (int i = 0; status == null && i < 5; i++) {
+					try {
+						status = getJobStatus(jobid);
+					}
+					catch (IOException e) {
+						Thread.sleep(MRConstants.HEARTBEAT_INTERVAL_MIN);
+					}
+				}
+				if (status != null) return status;
 			}
-			else {
-				JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
-				return state.status();
-			}
+			JobState state = (JobState) job.value(JobTable.Field.STATUS.ordinal());
+			return state.status();
 		} catch (Throwable e) {
 			e.printStackTrace();
 			throw new IOException(e);
@@ -443,7 +450,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			Object [] values = job.toArray();
 			values[JobTable.Field.PRIORITY.ordinal()] = value;
 			job = new Tuple(values);
-			scheduleFunctor(JobTracker.PROGRAM, JobTable.TABLENAME, new TupleSet(JobTable.TABLENAME, job), null);
+			scheduleFunctor(JobTracker.PROGRAM, JobTable.TABLENAME, new BasicTupleSet(JobTable.TABLENAME, job), null);
 		}
 		else {
 			throw new IOException("Unknown job identifier! " + jobid);
@@ -521,12 +528,12 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			String errorClass,
 			String errorMessage)  throws IOException {
 		TupleSet insertions =
-			new TupleSet(TaskTrackerErrorTable.TABLENAME,
+			new BasicTupleSet(TaskTrackerErrorTable.TABLENAME,
 					new Tuple(taskTracker, errorClass, errorMessage));
 		scheduleFunctor(JobTracker.PROGRAM, TaskTrackerErrorTable.TABLENAME, insertions, null);
 	}
 
-	public synchronized HeartbeatResponse heartbeat(TaskTrackerStatus status,
+	public HeartbeatResponse heartbeat(TaskTrackerStatus status,
 			boolean initialContact,
 			boolean acceptNewTasks,
 			short responseId) throws IOException {
@@ -592,26 +599,13 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		}
 		finally {
 			/* Store the response. */
+			if (actions.size() == 0 && this.loadActions != null) {
+				heavyLoadActions(status, response, actions);
+			}
+			
 			long dutyCycle = System.currentTimeMillis() - context.timestamp();
 			if (dutyCycle > 4 * MRConstants.HEARTBEAT_INTERVAL_MIN) {
-				response.setHeartbeatInterval(Math.min((int)dutyCycle, MRConstants.HEARTBEAT_INTERVAL_MAX));
-				if (actions.size() == 0 && this.loadActions != null) {
-					heavyLoadActions(status, response, actions);
-				}
-				else {
-					try {
-						if (System.currentTimeMillis() - context.timestamp() > MRConstants.HEARTBEAT_INTERVAL_MAX) {
-							System.err.println("Last JOL evaluation occurred " +
-									(System.currentTimeMillis() - context.timestamp()) + "ms ago!");
-							Thread.sleep(MRConstants.HEARTBEAT_INTERVAL_MIN);
-							response.setHeartbeatInterval(MRConstants.HEARTBEAT_INTERVAL_MIN);
-						}
-					} catch (InterruptedException e) { }
-					
-				}
-			}
-			else {
-				response.setHeartbeatInterval(MRConstants.HEARTBEAT_INTERVAL_MIN);
+				response.setHeartbeatInterval((int)dutyCycle);
 			}
 			
 			if (debug) {
@@ -623,7 +617,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		}
 	}
 	
-	private void heavyLoadActions(TaskTrackerStatus status, HeartbeatResponse response, TupleSet tuples) {
+	private synchronized void heavyLoadActions(TaskTrackerStatus status, HeartbeatResponse response, TupleSet tuples) {
 		int maps = status.getMaxMapTasks() - status.countMapTasks();
 		int reduces = status.getMaxReduceTasks() - status.countReduceTasks();
 		List<TaskTrackerAction> actions = new ArrayList<TaskTrackerAction>();
@@ -671,7 +665,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @param actions The actions contained in the response.
 	 * @throws UpdateException
 	 */
-	private void response(String trackerName, HeartbeatResponse response, TupleSet actions) {
+	private synchronized void response(String trackerName, HeartbeatResponse response, TupleSet actions) {
 		try {
 			if (response != null) {
 				heartbeats.put(trackerName, response);
@@ -695,8 +689,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @param status The new status for the task tracker
 	 * @return true success, false failure
 	 */
-	private TupleSet updateTaskTracker(TaskTrackerStatus status, boolean init, HeartbeatResponse response) {
-		TupleSet actions = new TupleSet(TaskTrackerActionTable.TABLENAME);
+	private synchronized TupleSet updateTaskTracker(TaskTrackerStatus status, boolean init, HeartbeatResponse response) {
+		TupleSet actions = new BasicTupleSet(TaskTrackerActionTable.TABLENAME);
 		try {
 			if (init) {
 				NetworkTopologyTable topologyTable =  (NetworkTopologyTable)
@@ -736,7 +730,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @throws UpdateException
 	 */
 	private void updateTasks(TaskTrackerStatus trackerStatus) throws JolRuntimeException {
-		TupleSet attempts = new TupleSet(TaskAttemptTable.TABLENAME);
+		TupleSet attempts = new BasicTupleSet(TaskAttemptTable.TABLENAME);
 		List<TaskStatus> tasks = trackerStatus.getTaskReports();
 		for (TaskStatus taskStatus : tasks) {
 			/* To optimize I ignore RUNNING UPDATES. */

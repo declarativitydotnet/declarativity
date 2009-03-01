@@ -11,14 +11,16 @@ import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 import org.apache.hadoop.net.NetUtils;
 
 import jol.core.Runtime;
+import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
-import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
 import jol.types.exception.UpdateException;
+import jol.types.table.BasicTable;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
-public class TaskAttemptTable extends ObjectTable {
+public class TaskAttemptTable extends BasicTable {
 	
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskAttempt");
@@ -48,47 +50,8 @@ public class TaskAttemptTable extends ObjectTable {
 	};
 	
 	public TaskAttemptTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA, new ConcurrentTupleSet(TABLENAME));
 	}
-	
-	@Override
-	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-		synchronized (this) {
-			return super.insert(tuples, conflicts);
-		}
-	}
-	
-	@Override
-	public TupleSet delete(Iterable<Tuple> tuples) throws UpdateException {
-		synchronized (this) {
-			return super.delete(tuples);
-		}
-	}
-	
-	public boolean force(TupleSet insertions) {
-		synchronized (this) {
-			try {
-				TupleSet conflicts = new TupleSet(TABLENAME);
-				insert(insertions, conflicts);
-				delete(conflicts);
-				return true;
-			} catch (UpdateException e) {
-				e.printStackTrace();
-				return false;
-			}
-		}
-	}
-	
-	@Override
-	public void force(Tuple tuple) throws UpdateException {
-		synchronized (this) {
-			TupleSet insertion = new TupleSet(name(), tuple);
-			TupleSet conflicts = new TupleSet(name());
-			insert(insertion, conflicts);
-			delete(conflicts);
-		}
-	}
-	
 	
 	/**
 	 * Routine accepts a task status object from some

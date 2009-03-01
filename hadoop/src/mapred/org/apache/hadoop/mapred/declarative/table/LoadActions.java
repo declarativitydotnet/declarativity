@@ -18,6 +18,7 @@ import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable.Field;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;

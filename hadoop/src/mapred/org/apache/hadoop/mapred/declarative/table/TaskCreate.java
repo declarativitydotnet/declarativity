@@ -20,6 +20,7 @@ import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 import jol.types.table.Function;
@@ -52,7 +53,7 @@ public class TaskCreate extends Function {
 
 	@Override
 	public TupleSet insert(TupleSet insertions, TupleSet conflicts) throws UpdateException {
-		TupleSet tasks = new TupleSet(name());
+		TupleSet tasks = new BasicTupleSet(name());
 		for (Tuple tuple : insertions) {
 			JobID jobid    = (JobID) tuple.value(Field.JOBID.ordinal());
 			JobConf conf   = (JobConf) tuple.value(Field.JOBCONF.ordinal());
@@ -72,7 +73,7 @@ public class TaskCreate extends Function {
 	}
 	
 	private TupleSet createTasks(JobID jobid, JobConf conf, String jobFile) throws IOException {
-		TupleSet tasks = new TupleSet(name());
+		TupleSet tasks = new BasicTupleSet(name());
 		
 	    Path sysDir = this.jobTracker.systemDir();
 	    FileSystem fs = sysDir.getFileSystem(conf);

@@ -73,7 +73,6 @@ public final class Function {
 	
 	public static Float percentile(Float p, List<Float> values) {
 		Collections.sort(values);
-		System.err.println("PERCENTILE VALUES " + values);
 		int index = (int) (p * values.size());
 		if (index == 0) return null;
 		return values.get(index);
