@@ -52,12 +52,12 @@ public class Assignment extends Term {
 
 	private Expression<?> value;
 	
-	private boolean head;
+	private boolean extension;
 
 	public Assignment(Variable variable, Expression value) {
 		this.variable = (Variable) variable.clone();
 		this.value = value.clone();
-		this.head = false;
+		this.extension = false;
 	}
 	
 	@Override
@@ -70,12 +70,13 @@ public class Assignment extends Term {
 		return value.variables();
 	}
 	
-	public boolean head() {
-		return this.head;
+	@Override
+	public boolean extension() {
+		return this.extension;
 	}
 	
-	public void head(boolean head) {
-		this.head = head;
+	public void extension(boolean extension) {
+		this.extension = extension;
 	}
 
 	public Variable variable() {
