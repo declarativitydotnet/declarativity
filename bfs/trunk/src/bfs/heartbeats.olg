@@ -4,7 +4,6 @@ import bfs.Conf;
 import java.lang.System;
 import java.util.Set;
 
-/*****************************/
 define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
 
 
