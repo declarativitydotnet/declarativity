@@ -69,6 +69,11 @@ public class TaskState implements Comparable<TaskState> {
 		if (attempts != null) this.attempts.putAll(attempts);
 	}
 	
+	private TaskState(TaskState copy) {
+		this(copy.jobid, copy.taskid);
+		this.attempts = (HashMap<Integer, AttemptState>) copy.attempts.clone();
+	}
+	
 	@Override
 	public int hashCode() {
 		return (this.jobid.toString() + ":" + this.taskid.toString() + ":" + progress()).hashCode();
@@ -120,23 +125,24 @@ public class TaskState implements Comparable<TaskState> {
 	 * @param start The attempt start time
 	 * @param finish The attempt finish time
 	 */
-	public boolean attempt(Integer attemptID,
+	public TaskState attempt(Integer attemptID,
 						   Float progress, 
 			               Constants.TaskState state, 
 			               Constants.TaskPhase phase, 
 			               Long start, Long finish) {
-		AttemptState newAttempt = new AttemptState(progress, state, phase, start, finish);
-		Constants.TaskState beforeState = state();
-		if (this.attempts.containsKey(attemptID)) {
-			if (this.attempts.get(attemptID).compareTo(newAttempt) <= 0) {
-				this.attempts.remove(attemptID);
-			}
-			else {
-				return false; // Keep the better one.
-			}
-		}
-		this.attempts.put(attemptID, newAttempt); 
-		return state() != beforeState; // I only care when my state changes
+		TaskState copy = new TaskState(this);
+		AttemptState attempt = new AttemptState(progress, state, phase, start, finish);
+		copy.attempt(attemptID, attempt);
+		return copy;
+	}
+	
+	private void attempt(Integer id, AttemptState attempt) {
+		if (this.attempts.containsKey(id)) {
+			if (this.attempts.get(id).compareTo(attempt) < 0) {
+				this.attempts.remove(id);
+			} else return;
+		} 
+		this.attempts.put(id, attempt); 
 	}
 	
 	/**
