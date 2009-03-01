@@ -40,8 +40,8 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
         this.system.evaluate();
 
-        this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
-        this.system.evaluate();
+        //this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
+        //this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks.olg"));
         this.system.evaluate();
 
@@ -52,6 +52,7 @@ public class Master {
 
         setupPaxos();
 
+	System.out.println("OK THEN\n");
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
         this.system.evaluate();
 
@@ -59,14 +60,14 @@ public class Master {
         TupleSet newFile = new TupleSet();
         int fileId = -1;  // File IDs assigned by the system start at 0
         newFile.add(new Tuple(this.address, -1, null, "/", true));
-        this.system.schedule("bfs", new TableName("bfs", "stasis_file"), newFile, null);
+        this.system.schedule("bfs", new TableName("bfs_global", "stasis_file"), newFile, null);
         this.system.evaluate();
 
         // Hack: insert a bfs::fpath tuple for the root path, because that is somehow
         // not automatically inferred
         TupleSet newPath = new TupleSet();
         newPath.add(new Tuple(this.address, "/", fileId));
-        this.system.schedule("bfs", new TableName("bfs", "fpath"), newPath, null);
+        this.system.schedule("bfs", new TableName("bfs_global", "fpath"), newPath, null);
         this.system.evaluate();
 
         if (Conf.isTapped()) {

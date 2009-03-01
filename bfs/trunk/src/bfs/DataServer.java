@@ -279,8 +279,9 @@ public class DataServer extends Thread {
         String filename = this.fsRoot + File.separator + "checksums" + File.separator
                 + chunkId + ".cksum";
         File newf = new File(filename);
-        if (!newf.createNewFile())
+        if (!newf.createNewFile()) {
         	throw new RuntimeException("Failed to create fresh file " + filename);
+	}
 
         DataOutputStream fos = new DataOutputStream(new FileOutputStream(newf));
         fos.writeLong(checksum);
@@ -315,8 +316,13 @@ public class DataServer extends Thread {
         String filename = this.fsRoot + File.separator + "chunks" + File.separator
                 + chunkId;
         File newf = new File(filename);
-        if (!newf.createNewFile())
+        if (!newf.createNewFile()) {
+		File d = new File(this.fsRoot + File.separator + "chunks");
+		for (String f : d.list()) {
+			System.out.println("\tFILE: "+f);
+		}
         	throw new RuntimeException("Failed to create fresh file " + filename);
+	}
 
         return newf;
     }

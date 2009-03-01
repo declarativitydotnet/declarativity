@@ -1,4 +1,6 @@
-program bfs;
+program bfs_global;
+
+import java.util.Set;
 
 // Node, file ID, parent file ID (or null), file name, is directory?
 define(stasis_file, keys(0, 1), {String, Integer, Integer, String, Boolean});
@@ -19,3 +21,11 @@ define(migration_choices, keys(0,1,2), {String, String, Integer});
 // Node, Master node
 define(master_for_node, keys(0, 1), {String, String});
 watch(master_for_node, ae);
+
+/* chunk stuff */
+
+define(chunkMigration, keys(0,1,2), {String, String, Integer, Integer, Set});
+watch(chunkMigration, ae);
+
+define(send_migrate, {String, String, Integer, Integer, Set});
+

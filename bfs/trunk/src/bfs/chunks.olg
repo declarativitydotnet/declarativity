@@ -15,7 +15,7 @@ watch(chunkMigration, ae);
 public
 chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, set<DataNode>) :-
     bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, _),
-    bfs::migration_choices(Master, DataNode, ChunkId),
+    bfs_global::migration_choices(Master, DataNode, ChunkId),
     bfs_heartbeat::representative_datanode(Master, ChunkId, DnWithReplica);
 
 public
@@ -25,6 +25,8 @@ bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Tim
     bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
     chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, _);
 
-watch(send_migrate, ae);
-send_migrate(@DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
+watch(bfs_global::send_migrate, ae);
+
+public
+bfs_global::send_migrate(@DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
   chunkMigration(@Master, DnWithReplica, ChunkId, CurrRepCnt, Dns);
