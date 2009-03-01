@@ -72,23 +72,23 @@ heartBeat(Host, Master, -1, -1, Tstamp, -1) :-
     Id := Runtime.idgen();
 
 
-define(sendHeartBeat,keys(0,1,2),{String,String,Integer,Integer,Long,Long});
+define(sendHeartBeat, keys(0,1,2), {String, String, Integer, Integer, Long, Long});
 //watch(sendHeartBeat,ae);
 sendHeartBeat(@Master, Host, ChunkId, Length, Tstamp, Id) :-
     heartBeat(@Host, Master, ChunkId, Length, Tstamp, Id),
     notin serverKnows(@Host, Master, ChunkId, _);
 
-define(ackHeartBeat,keys(0,1,2),{String,String,Long});
+define(ackHeartBeat, keys(0,1,2), {String, String, Long});
 //watch(ackHeartBeat,ae);
 
-define(serverKnows,keys(0,1,2,3),{String,String,Integer,Long});
+define(serverKnows, keys(0,1,2,3), {String, String, Integer, Long});
 //watch(serverKnows,ae);
 serverKnows(Host, Master, ChunkId, Id) :-
     heartBeat(Host, Master, ChunkId, _, _, Id),
     ackHeartBeat#insert(Host, Master, Id);
 
-define(masters,keys(0,1),{String,String});
-define(mindx,keys(0),{String,Integer});
+define(masters, keys(0,1), {String, String});
+define(mindx, keys(0), {String, Integer});
 //watch(masters,ae);
 //watch(mindx,ae);
 //watch(periodic,ae);
@@ -115,8 +115,3 @@ watch(send_delete, ae);
 watch(bfs_global::send_migrate, ae);
 define(catch_migrate, {String, String, Integer, Integer, Set});
 watch(catch_migrate, ae);
-//public
-//catch_migrate(A,B,C,D,E) :-
-//	bfs_global::send_migrate(A,B,C,D,E);
-
-

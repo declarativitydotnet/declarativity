@@ -3,8 +3,6 @@ program bfs_placement;
 watch(bfs_global::migration_choices, ae);
 public
 bfs_global::migration_choices(Master, DataNode, ChunkId) :-
-    //bfs_heartbeat::newReplica(Master, ChunkId, _, _, _),
-    //bfs_heartbeat::dataNodes(Master, DataNode, _),
     cartesian(Master, DataNode, ChunkId),
     notin bfs_heartbeat::chunks(Master, DataNode, ChunkId, _);
 
