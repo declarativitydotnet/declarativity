@@ -26,6 +26,7 @@ watch(start_request, ae);
 // a timeout, and then updates the "bfs_global::master_for_node" mapping table.
 define(request, {String, Integer, String, String, String});
 watch(request, ae);
+public
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
     bfs_global::master_for_node(@Source, Master),

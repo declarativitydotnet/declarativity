@@ -114,4 +114,4 @@ watch(send_delete, ae);
 
 
 //define(send_migrate, {String, String, Integer, Set});
-//watch(send_migrate, ae);
+watch(bfs_global::send_migrate, ae);
