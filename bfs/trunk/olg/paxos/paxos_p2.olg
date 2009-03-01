@@ -149,6 +149,7 @@ decree(Master,Instance,Round,Decree) :-
 
 watch(stasis_success, ae);
 
+/*
 public
 r5_b	
 stasis_success(@Agent,Instance,Round,Decree,From) :-
@@ -156,8 +157,7 @@ stasis_success(@Agent,Instance,Round,Decree,From) :-
 	paxos::storedDecreeRequest(@Master,Decree,From,_),
 	// we interpret "every" to mean a broadcast.
 	paxos::parliament(@Master,Agent);
-
-/*
+*/
 public
 r5_b	
 stasis_success(Agent,Instance,Round,Decree,From) :-
@@ -179,7 +179,6 @@ stasis_success(Agent,Instance,Round,Decree,From) :-
   paxos::priestCnt(Agent,1),
   Round := -1,
   paxos::instance(Agent,Instance);
-*/
 
 watch(decree,ae);
 watch(acceptCnt, ae);

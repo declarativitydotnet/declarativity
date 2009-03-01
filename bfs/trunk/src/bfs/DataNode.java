@@ -102,7 +102,7 @@ public class DataNode {
 
         Tap tap = new Tap(this.system, "tcp:localhost:5678");
 
-        this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
         this.system.install("bfs_heartbeat", ClassLoader.getSystemResource("bfs/files.olg"));
         this.system.evaluate();
@@ -113,7 +113,7 @@ public class DataNode {
         datadir.add(new Tuple(Conf.getDataNodeAddress(this.nodeId), this.fsRoot));
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
-        Table table = this.system.catalog().table(new TableName("bfs_chunks", "send_migrate"));
+        Table table = this.system.catalog().table(new TableName("bfs_global", "send_migrate"));
         table.register(copyCallback);
 
 
