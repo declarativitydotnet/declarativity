@@ -9,6 +9,7 @@ import java.util.Set;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -109,7 +110,7 @@ public class DataNode {
 
         /* Identify the data directory */
         TableName tblName = new TableName("bfs_heartbeat", "datadir");
-        TupleSet datadir = new TupleSet(tblName);
+        TupleSet datadir = new BasicTupleSet(tblName);
         datadir.add(new Tuple(Conf.getDataNodeAddress(this.nodeId), this.fsRoot));
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 

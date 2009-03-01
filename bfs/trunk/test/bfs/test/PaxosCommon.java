@@ -5,6 +5,7 @@ import java.util.concurrent.SynchronousQueue;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
+import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -100,12 +101,12 @@ public class PaxosCommon {
             // //myInstall(s, "bfs/test/olg/paxos/paxos_client_liveness.olg");
         }
 
-        TupleSet nodes = new TupleSet();
+        TupleSet nodes = new BasicTupleSet();
         for (int m : members) {
             nodes.add(new Tuple(this.makeAddr(m)));
         }
         for (int i = 0; i < members.length; i++) {
-            TupleSet id = new TupleSet();
+            TupleSet id = new BasicTupleSet();
             id.add(new Tuple(this.makeAddr(members[i])));
             this.systems[i].schedule("paxos_global", IdTable.TABLENAME, id, null);
             this.systems[i].schedule("paxos_global", NodeTable.TABLENAME, nodes, null);
@@ -239,7 +240,7 @@ public class PaxosCommon {
     }
 
     private void sked(JolSystem sys, int port, String message) throws Exception {
-        TupleSet inmessage = new TupleSet();
+        TupleSet inmessage = new BasicTupleSet();
         inmessage.add(new Tuple(this.makeAddr(port), message, this.makeAddr(port)));
         sys.schedule("paxos_global", InMessageTable.TABLENAME, inmessage, null);
         sys.evaluate();
