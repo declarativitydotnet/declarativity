@@ -263,11 +263,17 @@ public class Compiler {
 			}
 		} catch (CompileException e) {
 			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage(), e.node());
-			System.err.println("Compile error. Exiting.");
+			runtime.error("Compile error. Exiting.");
 			System.exit(0);
-		} catch (UpdateException e) {
-			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage());
-			System.err.println("Compile error. Exiting.");
+		} catch (Throwable e) {
+			if (e.getCause() instanceof CompileException) {
+				CompileException ce = (CompileException) e.getCause();
+				runtime.error("Compile Error Program " + this.program.name() + ": " + ce.getMessage(), ce.node());
+			}
+			else {
+				runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage());
+			}
+			runtime.error("Compile error. Exiting.");
 			System.exit(0);
 		}
 	}
