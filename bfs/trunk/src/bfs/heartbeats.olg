@@ -30,7 +30,6 @@ sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
 // of last update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
 
-define(chunksEvent,  {String, String, Integer, Integer, Long});
 chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
     clock#insert(),
     sendHeartBeat(Master, DataNode, ChunkId, Length, _, _),
