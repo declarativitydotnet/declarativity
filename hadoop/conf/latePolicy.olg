@@ -34,13 +34,15 @@ speculativeCap(JobId, MapCap, ReduceCap) :-
 	};
 	
 
+watch(taskProgressRate, a);
 public
 taskProgressRate(JobId, TaskId, Type, ProgressRate) :-
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	Status.start() > 0L, Status.state() != Constants.TaskState.FAILED 
     {
-    	End := Status.finish() > 0L ? Status.finish() : System.currentTimeMillis();
-    	ProgressRate := Status.progress() / (End.floatValue() - Status.start().floatValue()); 
+    	End := Status.finish() > 0L ? Status.finish() : java.lang.System.currentTimeMillis();
+        java.lang.System.err.println("Task progress " + Status.progress().toString() + ", running time " + (End - Status.start()).floatValue().toString());
+    	ProgressRate := Status.progress() / (End - Status.start()).floatValue(); 
     };
 	
 	
@@ -52,15 +54,17 @@ slowTaskThreshold(JobId, Type, Threshold) :-
 	Threshold := Function.percentile(0.25, Rates);
 
 
+watch(trackerTaskProgressRate, a);
 public
 trackerTaskProgressRate(TrackerName, JobId, Type, avg<ProgressRate>) :-
 	jobtracker::task(JobId, TaskId, Type, _, _, _, _),
     jobtracker::taskAttempt(JobId, TaskId, _, Progress, State, _, _, TrackerName, _, Start, Finish, Timestamp, _),
-    Start > 0L,
+    Start > 0L, Start < Timestamp,
     State != Constants.TaskState.FAILED 
     {
     	End := Finish > 0L ? Finish : Timestamp;
-    	ProgressRate := Progress / (End.floatValue() - Start.floatValue()); 
+        java.lang.System.err.println("TASK RUNNING TIME: " + (End - Start).floatValue().toString());
+    	ProgressRate := Progress / (End - Start).floatValue(); 
     };
     
 trackerTaskProgressRates(JobId, Type, list<AvgProgressRate>) :-
@@ -74,6 +78,7 @@ slowNodeThreshold(JobId, Type, Threshold) :-
 
 define(mapTaskAssignment, keys(0,1), {JobID, TaskID, String});
 
+watch(mapTaskAssignment, a);
 public
 mapTaskAssignment(JobId, TaskId, TrackerName) :-
 	jobtracker::taskTracker(TrackerName, Host, _, _, _, _,  _, _, _, _),

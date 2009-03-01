@@ -62,8 +62,10 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0f, State, Phase, null, Tracke
 	Phase       := Constants.TaskPhase.STARTING,
 	AttemptID   := Attempts;
 	
+/*
 jobtracker::lookupTask(JobId, Constants.TaskState.RUNNING) :-
 	jobtracker::taskAttempt(JobId, TaskId, AttemptID, _, Constants.TaskState.RUNNING);
+*/
 
 actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
