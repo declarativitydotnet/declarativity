@@ -53,7 +53,6 @@ public class Master {
 
         setupPaxos();
 
-	System.out.println("OK THEN\n");
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
         this.system.evaluate();
 
