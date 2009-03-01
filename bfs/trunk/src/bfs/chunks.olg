@@ -1,11 +1,12 @@
 program bfs_chunks;
 
 import java.lang.System;
+import java.util.List;
 import java.util.Set;
 
-define(candidate_datanode, keys(0), {String, Set});
+define(candidate_datanode, keys(0), {String, List});
 public
-candidate_datanode(Master, set<DataNode>) :-
+candidate_datanode(Master, list<DataNode>) :-
     bfs_heartbeat::dataNodes(Master, DataNode, _);
 
 // reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
