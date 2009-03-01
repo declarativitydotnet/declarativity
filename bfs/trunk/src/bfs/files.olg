@@ -112,6 +112,11 @@ masters(Host, Master) :-
 define(send_delete, keys(0), {String, Integer, String});
 watch(send_delete, ae);
 
-
-//define(send_migrate, {String, String, Integer, Set});
 watch(bfs_global::send_migrate, ae);
+define(catch_migrate, {String, String, Integer, Integer, Set});
+watch(catch_migrate, ae);
+//public
+//catch_migrate(A,B,C,D,E) :-
+//	bfs_global::send_migrate(A,B,C,D,E);
+
+

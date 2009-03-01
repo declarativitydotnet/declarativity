@@ -9,8 +9,6 @@ public
 candidate_datanode(Master, list<DataNode>) :-
     bfs_heartbeat::dataNodes(Master, DataNode, _);
 
-// reuse the newchunk request dataflow to migrate bfs_heartbeat::chunks
-// from one datanode to another
 define(chunkMigration, keys(0,1,2), {String, String, Integer, Integer, Set});
 watch(chunkMigration, ae);
 public
@@ -22,12 +20,11 @@ chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, set<DataNode>) :-
 public
 delete
 bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time) :-
-    //bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
     bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
     chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, _);
 
 watch(bfs_global::send_migrate, ae);
 
 public
-bfs_global::send_migrate(@DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
-  chunkMigration(@Master, DnWithReplica, ChunkId, CurrRepCnt, Dns);
+bfs_global::send_migrate(DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
+  chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, Dns);

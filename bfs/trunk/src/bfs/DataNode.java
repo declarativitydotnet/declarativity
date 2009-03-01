@@ -113,7 +113,7 @@ public class DataNode {
         datadir.add(new Tuple(Conf.getDataNodeAddress(this.nodeId), this.fsRoot));
         this.system.schedule("bfs_heartbeat", tblName, datadir, null);
 
-        Table table = this.system.catalog().table(new TableName("bfs_global", "send_migrate"));
+        Table table = this.system.catalog().table(new TableName("bfs_heartbeat", "catch_migrate"));
         table.register(copyCallback);
 
 

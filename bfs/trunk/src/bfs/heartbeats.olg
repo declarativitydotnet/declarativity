@@ -7,6 +7,7 @@ import java.util.Set;
 /*****************************/
 define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
 
+
 timer(clock, physical, 1000, infinity, 0);
 
 define(ackHeartBeat, {String, String, Long});
@@ -95,9 +96,6 @@ newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
     Time := new Long(System.currentTimeMillis()),
     representative_datanode(Master, ChunkId, Dn),
     ChunkId > 0,
-    // explain this one: why are there zeroes in rep_factor??
-    //Cnt > 0,
-    //Dn != null,
     long_period#insert(_, _, _),
     Cnt < Conf.getRepFactor();
 
@@ -113,6 +111,13 @@ newReplica(Master, ChunkId, Dn, Cnt, Time) :-
     newReplicaRequest(Master, ChunkId, Dn, Cnt, Time),
     clock#insert(),
     (System.currentTimeMillis() - Time) > new Integer(6000).longValue();
+
+define(catch_migrate, {String, String, Integer, Integer, Set});
+watch(catch_migrate,ae);
+watch(bfs_global::send_migrate, ae);
+public
+catch_migrate(@DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
+	bfs_global::send_migrate(DnWithReplica, @Master, ChunkId, CurrRepCnt, Dns);
 
 // hacky constraint: one message per tick
 define(send_delete, keys(0), {String, Integer, String});
