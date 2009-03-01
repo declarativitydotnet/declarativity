@@ -30,12 +30,10 @@ timer(minDutyCyclePeriod, physical, 5000, infinity, 0);
 define(dutyCycle, {String});
 define(activeJobs, keys(), {Integer});
 
-watch(activeJobs, ae);
 activeJobs(count<JobId>) :-
 	job(JobId, _, _, _, _, _, _, _, FinishTime, _),
 	FinishTime == 0L;
 	
-watch(dutyCycle, a);
 /* Set semantics ensure a single duty cycle per fixpoint. 
    I could have used a logical clock here but that spin the CPU during idle periods. */
 dutyCycle("Duty Cycle") :- minDutyCyclePeriod(), activeJobs(Count), Count > 0;
@@ -104,29 +102,13 @@ taskFile(JobId, TaskId, Locations) :-
 	Type == Constants.TaskType.MAP
 	{ Split := Input.split(); Locations := Function.getLocations(Split); };
 	
+	
+watch(taskFileLocation, a);
 taskFileLocation(JobId, TaskId, Location) :-
 	flatten(taskFile(JobId, TaskId, Locations)),
 	Location := (String) Locations;
 	
 	
-/*************** Network Statistics  *********************/
-
-define(distance, keys(0,1), {String, String, Integer});
-define(networkDistance, keys(0,1), {String, String, Integer});
-
-distance(Host, Host, 0) :-
-	networkTopology(Host, Location, Parent, Level);
-	
-distance(Host, Location, 1) :-
-	networkTopology(Host, Location, Parent, Level);
-	
-networkDistance(Location1, Location2, min<Distance>) :-
-	distance(Location1, Location, Distance1),
-	distance(Location2, Location, Distance2),
-	Location1 != Location2,
-	Distance := Distance1 + Distance2;
-	
-
 /*************** Job Status Maintenance *********************/
 import java.util.Set;
 	
@@ -199,12 +181,17 @@ taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, Tas
     taskUpdate(JobId, TaskId, Type, TaskStatus), TaskStatus.state() == Constants.TaskState.SUCCEEDED,
 	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
 
-watch(taskUpdate, a);
 public
-taskUpdate(JobId, TaskId, Type, TaskStatus) :-
+task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
+    taskUpdate(JobId, TaskId, _, Status),
+	task(JobId, TaskId, Type, Partition, Input, MapCount, _);
+
+taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
 	lookupTask(JobId, State),
 	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, _, _),
 	task(JobID, TaskId, Type, _, _, _, TaskStatus),
-	TaskStatus.state() != Constants.TaskState.SUCCEEDED,
-	TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
+	TaskStatus.state() != Constants.TaskState.SUCCEEDED 
+	{
+		StatusUpdate := TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
+	};
 	

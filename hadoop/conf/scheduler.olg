@@ -36,11 +36,14 @@ jobtracker::killjob(JobId) :-
 	TaskStatus.state() == Constants.TaskState.FAILED,
 	Attempts > 3 || Attempts > Trackers;
 	
-jobtracker::taskUpdate(JobId, TaskId, Type, TaskStatus) :-
+watch(jobtracker::taskUpdate, a);
+jobtracker::taskUpdate(JobId, TaskId, Type, RunningStatus) :-
 	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, Timestamp),
 	State == Constants.TaskState.RUNNING,
-	jobtracker::task(JobID, TaskId, Type, _, _, _, TaskStatus),
-	TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
+	jobtracker::task(JobID, TaskId, Type, _, _, _, TaskStatus) 
+    {
+	    RunningStatus := TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
+    };
 
 watch(jobtracker::taskAttempt, a);
 public
@@ -120,10 +123,21 @@ jobFinishedMapTasks(JobId, count<TaskId>) :-
 /******************** Signal task tracker slots available *******************/
 
 define(trackerSlots, keys(0), {String, String, Long, Integer, Integer});
+define(tasksWaitingForSchedule, keys(0), {Integer});
+
+watch(tasksWaitingForSchedule, a);
+public
+tasksWaitingForSchedule(count<TaskId>) :-
+    jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
+    TaskStatus.state() == Constants.TaskState.UNASSIGNED ||
+    TaskStatus.state() == Constants.TaskState.FAILED;
+	
 
 public
 trackerSlots(TrackerName, Host, Timestamp, MaxMap - MapCount, MaxReduce - ReduceCount) :-
-	jobtracker::dutyCycle(), jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
+	jobtracker::dutyCycle(), 
+	tasksWaitingForSchedule(Count), Count > 0,
+	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
 	!(MapCount >= MaxMap) || !(ReduceCount >= MaxReduce);
 	
 	
