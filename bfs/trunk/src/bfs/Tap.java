@@ -148,7 +148,6 @@ public class Tap {
                 // we use a separate rewrite to capture the actual projections
             } else {
                 String clause = i.toString();
-                System.out.println("TYPE: "+i.getClass());
                 String res = clause.replace("BOOLEAN","").replace("MATH","").replace("@","");
                 if (!res.equals("")) {
                     goods.add(res);
@@ -193,7 +192,6 @@ public class Tap {
                     Variable pLVar = p.locationVariable();
                     if (pLVar != null) {
                         if (pLVar.toString() != headLoc.toString()) {
-                            System.out.println("NETWORK RULE? "+ pLVar.toString() + " != " + headLoc.toString());
                             return true;
                         }
                     }
@@ -219,9 +217,7 @@ public class Tap {
     }
 
     public void summarize() {
-        System.out.println("SUM\n");
         for (Rule r : ruleList) {
-            System.out.println("rule " + r.name);
             //provenance(r);
         }
     }
@@ -233,7 +229,6 @@ public class Tap {
             if (t.getClass() == Predicate.class) {
                 /* new rule */
                 Predicate p = (Predicate) t;
-                System.out.println("\tlook up " + p.name().name.toString());
                 if (predHash.containsKey(p.name().name.toString())) {
                     String newName = conjoin("_", false, "prov", p.name().scope.toString(), p.name().name.toString());
                     List<Expression> l = new LinkedList<Expression>(p.arguments());
@@ -244,7 +239,6 @@ public class Tap {
                         p.toString() + ",\n\t" +
                         "Provenance := \"|\" + Runtime.idgen();\n";
 
-                    System.out.println("mini is " + mini);
                 }
             }
         }
@@ -401,12 +395,13 @@ public class Tap {
 
             @Override
             public void insertion(TupleSet tuples) {
+				System.out.println("YO YO\n");
                 try {
                     Thread.sleep(2000);
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 }
-                //System.exit(1);
+                System.exit(1);
             }
         };
 
