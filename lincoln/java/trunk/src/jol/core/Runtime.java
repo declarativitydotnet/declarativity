@@ -322,6 +322,20 @@ public class Runtime implements JolSystem {
 			public TableName name()       { return name; }
 		});
 	}
+	
+	public void flusher(final TableName name, final TupleSet insertions, final TupleSet deletions) throws JolRuntimeException {
+		/* Check that the specified program already exists */
+		Table table = this.catalog().table(name);
+		if (table == null) throw new JolRuntimeException("Table " + name + "does not exist in catalog!");
+
+		driver.task(new Driver.Task() {
+			public TupleSet  insertions() { return insertions; }
+			public TupleSet  deletions()  { return deletions; }
+			public String    program()    { return "flusher"; }
+			public TableName name()       { return name; }
+		});
+	}
+	
 
 	public interface RuntimeCallback {
 		void call(Runtime r) throws UpdateException, JolRuntimeException;

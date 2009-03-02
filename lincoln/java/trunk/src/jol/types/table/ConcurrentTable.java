@@ -1,23 +1,16 @@
 package jol.types.table;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jol.core.Runtime;
-import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;
+import jol.types.basic.ConcurrentTupleSet;
+import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.UpdateException;
 
-/**
- * A basic table definition.
- *
- * A basic table simply stores the tuples inserted into the table.
- * Deletions remove tuples regardless of how many insertions were
- * done.
- */
-public class BasicTable extends Table {
+public class ConcurrentTable extends Table {
 	/** The primary key. */
 	protected Key key;
 	
@@ -37,12 +30,12 @@ public class BasicTable extends Table {
 	 * @param key The primary key.
 	 * @param types The type of each attribute (in positional order).
 	 */
-	public BasicTable(Runtime context, TableName name, Key key, Class[] types) {
+	public ConcurrentTable(Runtime context, TableName name, Key key, Class[] types) {
 		super(name, Type.TABLE, key, types);
 		this.key = key;
-		this.tuples = new BasicTupleSet(name);
-		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
-		this.secondary = new HashMap<Key, Index>();
+		this.tuples = new ConcurrentTupleSet(name);
+		this.primary = new ConcurrentHashIndex(context, this, key, Index.Type.PRIMARY);
+		this.secondary = new ConcurrentHashMap<Key, Index>();
 		
 		this.tuples.refCount(false);
 	}
@@ -83,4 +76,5 @@ public class BasicTable extends Table {
 	public Long cardinality() {
 		return this.tuples == null ? 0 : (long)this.tuples.size();
 	}
+
 }

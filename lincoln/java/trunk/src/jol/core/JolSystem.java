@@ -82,4 +82,6 @@ public interface JolSystem {
 				  TableName name,
 				  TupleSet insertions,
 				  TupleSet deletions) throws JolRuntimeException;
+	
+	void flusher(TableName name, TupleSet insertions, TupleSet deletions) throws JolRuntimeException;
 }
