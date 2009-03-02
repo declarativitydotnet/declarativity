@@ -339,4 +339,19 @@ public class DataServer extends Thread {
 
         return file;
     }
+
+	public static List<String> dirListing(File dir) {
+		File fDir = new File(dir, "chunks");
+		File cDir = new File(dir, "checksums");
+	
+		List<String> ret = new LinkedList<String>();
+
+		for (String f : fDir.list()) {
+			File csum = new File(cDir, f + ".cksum");
+			if (csum.exists()) {
+				ret.add(f);
+			}	
+		}
+		return ret;
+	}
 }
