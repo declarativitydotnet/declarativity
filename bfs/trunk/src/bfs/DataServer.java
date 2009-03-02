@@ -16,6 +16,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.CRC32;
@@ -344,7 +345,7 @@ public class DataServer extends Thread {
 		File fDir = new File(dir, "chunks");
 		File cDir = new File(dir, "checksums");
 	
-		List<String> ret = new LinkedList<String>();
+		List<String> ret = new ArrayList<String>();
 
 		for (String f : fDir.list()) {
 			File csum = new File(cDir, f + ".cksum");
@@ -352,6 +353,7 @@ public class DataServer extends Thread {
 				ret.add(f);
 			}	
 		}
+
 		return ret;
 	}
 }
