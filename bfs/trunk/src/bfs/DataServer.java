@@ -179,14 +179,14 @@ public class DataServer extends Thread {
 
             // If we don't have the chunk, return failure to the client
             if (blockFile == null) {
-            	out.writeBoolean(false);
+            	this.out.writeBoolean(false);
             	return;
             }
             // Otherwise, return success, then the length + contents
-            out.writeBoolean(true);
+            this.out.writeBoolean(true);
 
             int fileSize = (int) blockFile.length();
-            out.writeInt(fileSize);
+            this.out.writeInt(fileSize);
 
             long cksum = getFileChecksum(blockFile);
             long expectedCksum = getCRCFromFile(blockId);
@@ -341,7 +341,7 @@ public class DataServer extends Thread {
                 + chunkId;
         File file = new File(filename);
         if (!file.exists())
-            throw new RuntimeException("Chunk not found: " + chunkId);
+        	return null;
 
         if (!file.isFile())
             throw new RuntimeException("Chunk file is not a regular file: " + file);
