@@ -1,6 +1,5 @@
 program policy;
 
-import java.lang.String;
 import java.util.Set;
 import jol.types.basic.ValueList;
 import org.apache.hadoop.mapred.declarative.Constants;
@@ -31,7 +30,6 @@ taskProgress(JobId, Type, min<Progress>, max<Progress>, avg<Progress>) :-
 scheduler::schedule(JobId, TaskId, TrackerName) :-
 	scheduleTask(TrackerName, TaskId),
 	jobtracker::task(JobId, TaskId, _, _, _, _, _);
-	
 
 scheduleTask(TrackerName, TaskId) :-
 	assignTracker(mapSlots(TrackerName, Maps, Tasks)),
@@ -46,7 +44,7 @@ scheduleTask(TrackerName, TaskId) :-
 /* Schedule task on tracker from flattened priorities. */
 public
 mapSlots(TrackerName, Maps, set<TaskId>) :-
-	arg(candidate(JobId, TaskId, Type, TrackerName, min<Priority>)),
+	bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	Type == Constants.TaskType.MAP, Maps > 0;
 	
@@ -54,37 +52,37 @@ mapSlots(TrackerName, Maps, set<TaskId>) :-
 	
 public
 reduceSlots(TrackerName, Reduces, set<TaskId>) :-
-	arg(candidate(JobId, TaskId, Type, TrackerName, min<Priority>)),
+	bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	Type == Constants.TaskType.REDUCE, Reduces > 0;
 	
 /**************************************************************/
 
-define(mapTaskAssignment, {JobID, TaskID, Set});
-
-scheduler::schedule(JobId, TaskId, TrackerName) :-
-	mapTaskAssignment(JobId, TaskId, Trackers),
-	TrackerName := (String) Function.random(Trackers);
-
+watch(candidate, a);
 /* Priority 1: Schedule unassigned map tasks. */
 public
-mapTaskAssignment(JobId, TaskId, set<TrackerName>) :-
+candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
-	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
-	jobtracker::taskFileLocation(JobId, TaskId, Host),
-	Status.state() == Constants.TaskState.UNASSIGNED;
+	jobtracker::taskFileLocation(JobId, TaskId, FileLocation),
+	Status.state() == Constants.TaskState.UNASSIGNED,
+	Type == Constants.TaskType.MAP, Maps > 0
+	{
+		LocalFile := Host == FileLocation ? 0 : 1;
+		Priority := [JPriority, SubmitTime, 1, LocalFile];
+	};
 
 /* Priority 1: Schedule unassigned reduce tasks. */
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
-	jobtracker::jobQueue(JobId, JPriority, SubmitTime, _),
+	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.REDUCE, Reduces > 0
 	{
-		Priority := [JPriority, SubmitTime, 1];
+		Priority := [JPriority, SubmitTime, 1, 0];
 	};
 	
 /* Priority 2: Schedule failed map tasks. */
@@ -112,7 +110,6 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _,_,_),
 	Type == Constants.TaskType.REDUCE, Reduces > 0 
 	{
-		Priority := [JPriority, SubmitTime, 2];
+		Priority := [JPriority, SubmitTime, 2, 0];
 	};
-	
 	
