@@ -26,13 +26,22 @@ define(jobQueue, keys(0), {JobID, JobPriority, Long, Constants.TaskType});
 
 
 /*************** JobTracker Duty Cycle (PERFORMANCE HACK) *********************/
-timer(minDutyCyclePeriod, physical, 5000, infinity, 0);
+timer(minDutyCyclePeriod, physical, 2000, infinity, 0);
 define(dutyCycle, {String});
 define(activeJobs, keys(), {Integer});
 define(activeTasks, keys(), {Integer});
+define(failedTasks, keys(0,1), {JobID, TaskID, Constants.TaskType, TaskState});
+define(tasksWaitingForSchedule, keys(0), {Integer});
 
 watch(activeJobs, a);
 watch(activeTasks, a);
+watch(failedTasks, a);
+watch(tasksWaitingForSchedule, a);
+
+tasksWaitingForSchedule(count<TaskId>) :-
+    jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
+    TaskStatus.state() == Constants.TaskState.UNASSIGNED ||
+    TaskStatus.state() == Constants.TaskState.FAILED;
 
 activeJobs(count<JobId>) :-
 	job(JobId, _, _, _, _, _, _, _, FinishTime, _),
@@ -41,6 +50,10 @@ activeJobs(count<JobId>) :-
 activeTasks(count<TaskId>) :-
 	task(JobId, TaskId, Type, Partition, Input, MapCount, Status),
 	Status.state() == Constants.TaskState.RUNNING;
+
+failedTasks(JobId, TaskId, Type, Status) :-
+	task(JobId, TaskId, Type, Partition, Input, MapCount, Status),
+	Status.state() == Constants.TaskState.FAILED;
 	
 /* Set semantics ensure a single duty cycle per fixpoint. 
    I could have used a logical clock here but that spin the CPU during idle periods. */
@@ -247,7 +260,7 @@ taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, Progres
 
 public
 taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
-	taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, Progress),
+	arg(taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, max<Progress>)),
 	task(JobID, TaskId, Type, _, _, _, TaskStatus),
 	TaskStatus.state() != Constants.TaskState.SUCCEEDED 
 	{

@@ -58,14 +58,15 @@ reduceSlots(TrackerName, Reduces, set<TaskId>) :-
 	
 /**************************************************************/
 
-watch(candidate, a);
 /* Priority 1: Schedule unassigned map tasks. */
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
-	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
-	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	jobtracker::taskFileLocation(JobId, TaskId, FileLocation),
+	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
+	jobtracker::task(JobId, TaskId, Type, _, _, MapCount, Status),
+    jobtracker::tasksWaitingForSchedule(WaitingTaskCount),
+    WaitingTaskCount < 500 || Host == FileLocation || Function.coinFlip((3 * Maps).floatValue() / WaitingTaskCount.floatValue()),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.MAP, Maps > 0
 	{
@@ -89,12 +90,10 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+    jobtracker::failedTasks(JobId, TaskId, Type, Status), Status.attempts() < 3, 
 	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
-	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	jobtracker::taskFileLocation(JobId, TaskId, FileLocation),
-	Status.state() == Constants.TaskState.FAILED, Status.attempts() < 3, 
-	notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _,_,_),
-	Type == Constants.TaskType.MAP, Maps > 0 
+	notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _,_,_)
 	{
 		LocalFile := Host == FileLocation ? 0 : 1;
 		Priority := [JPriority, SubmitTime, 2, LocalFile];
@@ -104,11 +103,9 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+    jobtracker::failedTasks(JobId, TaskId, Type, Status), Status.attempts() < 3, 
 	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
-	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
-	Status.state() == Constants.TaskState.FAILED, Status.attempts() < 3, 
-	notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _,_,_),
-	Type == Constants.TaskType.REDUCE, Reduces > 0 
+	notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _,_,_)
 	{
 		Priority := [JPriority, SubmitTime, 2, 0];
 	};

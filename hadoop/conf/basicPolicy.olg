@@ -44,7 +44,7 @@ scheduleTask(TrackerName, TaskId) :-
 /* Schedule task on tracker from flattened priorities. */
 public
 mapSlots(TrackerName, Maps, set<TaskId>) :-
-	bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
+	arg(candidate(JobId, TaskId, Type, TrackerName, min<Priority>)),
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	Type == Constants.TaskType.MAP, Maps > 0;
 	
@@ -52,13 +52,12 @@ mapSlots(TrackerName, Maps, set<TaskId>) :-
 	
 public
 reduceSlots(TrackerName, Reduces, set<TaskId>) :-
-	bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
+	arg(candidate(JobId, TaskId, Type, TrackerName, min<Priority>)),
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	Type == Constants.TaskType.REDUCE, Reduces > 0;
 	
 /**************************************************************/
 
-watch(candidate, a);
 /* Priority 1: Schedule unassigned map tasks. */
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
