@@ -5,8 +5,6 @@ import bfs.DataServer;
 import java.io.File;
 import java.lang.Object;
 import java.lang.System;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import jol.core.Runtime;
@@ -16,15 +14,15 @@ timer(clock, physical, 3000, infinity, 0);
 // Node address, data directory on host file system
 define(datadir, keys(0), {String, File});
 
-define(dir, keys(0,1,2), {String, File, List});
-dir(Host, DirObj, DirList) :-
+define(dir, keys(0,1), {String, List});
+dir(Host, DirList) :-
     datadir(Host, Dir),
 	DirList := DataServer.dirListing(Dir),
     clock(_, _, _);
 
 define(indx, keys(0), {String, Integer});
 indx(Host, 0) :-
-    dir#insert(Host, Dir, List);
+    dir#insert(Host, _);
 
 indx(Host, Next) :-
     indx(Host, Old),
@@ -33,7 +31,7 @@ indx(Host, Next) :-
 
 define(chunkTmp, {String, String, Integer});
 chunkTmp(Host, FName, FLength) :-
-    dir(Host, Dir, List),
+    dir(Host, List),
     indx(Host, I),
     I < List.size()
     { F := (File) List.get(I);
@@ -50,7 +48,7 @@ chunk(Host, FName, FLength) :-
 delete
 chunk(Host, FName, FLength) :-
     chunk(Host, FName, FLength),
-    dir#insert(Host, Dir, List);
+    dir#insert(Host, List);
 */
 
 
