@@ -88,21 +88,12 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptId, 0f, Constants.TaskState.FAILED
 /******************** Signal task tracker slots available *******************/
 
 define(trackerSlots, keys(0), {String, String, Long, Integer, Integer});
-define(tasksWaitingForSchedule, keys(0), {Integer});
-
-watch(tasksWaitingForSchedule, a);
-public
-tasksWaitingForSchedule(count<TaskId>) :-
-    jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
-    TaskStatus.state() == Constants.TaskState.UNASSIGNED ||
-    TaskStatus.state() == Constants.TaskState.FAILED;
-	
 
 watch(trackerSlots, a);
 public
 trackerSlots(TrackerName, Host, Timestamp, 2*(MaxMap - MapCount), 2*(MaxReduce - ReduceCount)) :-
 	jobtracker::dutyCycle(), 
-	tasksWaitingForSchedule(Count), Count > 0,
+	jobtracker::tasksWaitingForSchedule(Count), Count > 0,
 	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
 	MapCount < MaxMap || ReduceCount < MaxReduce;
 	
