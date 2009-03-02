@@ -10,11 +10,12 @@ import jol.core.Runtime;
 import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.table.BasicTable;
+import jol.types.table.ConcurrentTable;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
-public class JobTable extends BasicTable {
+public class JobTable extends ConcurrentTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "job");
 	public static final TableName INIT = new TableName(JobTracker.PROGRAM, "initJob");
@@ -40,7 +41,7 @@ public class JobTable extends BasicTable {
 	};
 	
 	public JobTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, SCHEMA, new ConcurrentTupleSet(TABLENAME));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 	}
 	
 	public static Tuple tuple(JobID jobid, String jobFile, JobConf conf, String url) {
