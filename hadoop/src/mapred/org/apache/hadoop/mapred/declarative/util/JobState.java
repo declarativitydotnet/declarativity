@@ -86,6 +86,10 @@ public class JobState implements Comparable<JobState> {
 		return this.reduceCount;
 	}
 	
+	public void state(Constants.JobState state) {
+		this.state = state;
+	}
+	
 	public boolean task(TaskType type, TaskState state) throws IOException {
 		if (this.state == Constants.JobState.PREP) {
 			this.state = Constants.JobState.RUNNING;

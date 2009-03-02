@@ -16,11 +16,12 @@ import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;
 import jol.types.exception.UpdateException;
 import jol.types.table.BasicTable;
+import jol.types.table.ConcurrentTable;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
-public class TaskAttemptTable extends BasicTable {
+public class TaskAttemptTable extends ConcurrentTable {
 	
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskAttempt");
@@ -50,7 +51,7 @@ public class TaskAttemptTable extends BasicTable {
 	};
 	
 	public TaskAttemptTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, SCHEMA, new ConcurrentTupleSet(TABLENAME));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 	}
 	
 	/**

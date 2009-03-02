@@ -125,7 +125,7 @@ public class JobSimulator extends Thread {
 	}
 	
 	public void run() {
-		int index = 1;
+		int index = 10;
 		JobConf  conf = new JobConf();
 		try {
 			while (!isInterrupted()) {
@@ -141,7 +141,7 @@ public class JobSimulator extends Thread {
 					String name = "job" + jobs.size();
 					JobPriority[] priorities = JobPriority.values();
 					Job job = new Job(priorities[random.nextInt(priorities.length)],
-							          "job"+jobs.size(), 200, 10, tempPath);
+							          "job"+jobs.size(), 10, 10, tempPath);
 					jobs.add(job);
 					this.executor.execute(job);
 					if (index-- <= 0) return;

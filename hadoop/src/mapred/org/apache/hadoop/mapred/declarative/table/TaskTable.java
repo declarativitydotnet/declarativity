@@ -11,15 +11,19 @@ import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.core.Runtime;
 import jol.types.basic.BasicTupleSet;
+import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
+import jol.types.table.BasicTable;
+import jol.types.table.ConcurrentHashIndex;
+import jol.types.table.ConcurrentTable;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
-public class TaskTable extends ObjectTable {
+public class TaskTable extends ConcurrentTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "task");
 
@@ -43,7 +47,7 @@ public class TaskTable extends ObjectTable {
 	public TaskTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		Key typeKey = new Key(Field.TYPE.ordinal());
-		Index index = new HashIndex(context, this, typeKey, Index.Type.SECONDARY);
+		Index index = new ConcurrentHashIndex(context, this, typeKey, Index.Type.SECONDARY);
 		secondary().put(typeKey, index);
 	}
 

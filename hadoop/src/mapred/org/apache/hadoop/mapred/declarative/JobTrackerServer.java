@@ -63,21 +63,6 @@ import org.apache.hadoop.util.VersionInfo;
 
 public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProtocol {
 	
-	private static final int SCHEDULE_CYCLE = MRConstants.HEARTBEAT_INTERVAL_MIN / 2;
-	private static class ScheduleFunctor {
-		public String    program;
-		public TableName tableName;
-		public TupleSet  insertions;
-		public TupleSet  deletions;
-		public ScheduleFunctor(String program, TableName tableName, TupleSet insertions, TupleSet deletions) {
-			this.program = program;
-			this.tableName = tableName;
-			this.insertions = insertions;
-			this.deletions = deletions;
-		}
-	}
-	
-	
 	private static class TaskAttemptListener extends jol.types.table.Table.Callback {
 		private jol.core.Runtime context;
 		private Map<JobID, List<TaskCompletionEvent>> completionEvents;
@@ -192,13 +177,9 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	
 	private Table taskTrackerTable;
 	
-	private TaskAttemptTable taskAttemptTable;
+	private Table taskAttemptTable;
 	
 	private LoadActions loadActions;
-
-	final private List<ScheduleFunctor> scheduleFunctors;
-	
-	private Thread scheduleFunctorThread;
 
 	public JobTrackerServer(JolSystem context, JobTracker jobTracker, JobConf conf) throws IOException {
 		this.context = context;
@@ -216,7 +197,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		this.trackerActionTable = (TaskTrackerActionTable) context.catalog().table(TaskTrackerActionTable.TABLENAME);
 	    this.jobTable = context.catalog().table(JobTable.TABLENAME);
 	    this.taskTrackerTable = context.catalog().table(TaskTrackerTable.TABLENAME);
-	    this.taskAttemptTable = (TaskAttemptTable) context.catalog().table(TaskAttemptTable.TABLENAME);
+	    this.taskAttemptTable = context.catalog().table(TaskAttemptTable.TABLENAME);
 	    
 	    if (JobTracker.LOADPOLICY != null) {
 	    	this.loadActions = (LoadActions) context.catalog().table(LoadActions.TABLENAME);
@@ -224,36 +205,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	    else {
 	    	this.loadActions = null;
 	    }
-	    
-	    this.scheduleFunctors = new LinkedList<ScheduleFunctor>();
-	    this.scheduleFunctorThread = new Thread(new Runnable() {
-			public void run() {
-				while (true) {
-					synchronized (scheduleFunctors) {
-						for (ScheduleFunctor f : scheduleFunctors) {
-							try {
-								JobTrackerServer.this.context.schedule(f.program, f.tableName, f.insertions, f.deletions);
-							} catch (JolRuntimeException e) {
-								e.printStackTrace();
-							}
-						}
-						scheduleFunctors.clear();
-					}
-					try {
-						Thread.sleep(SCHEDULE_CYCLE);
-					} catch (InterruptedException e) { }
-				}
-			}
-	    });
-	    this.scheduleFunctorThread.start();
 	}
 	
-	private void scheduleFunctor(String program, TableName name, TupleSet insertions, TupleSet deletions) {
-		synchronized (this.scheduleFunctors) {
-			this.scheduleFunctors.add(new ScheduleFunctor(program, name, insertions, deletions));
-		}
-	}
-
 	public synchronized JobID getNewJobId() throws IOException {
 		return new JobID(this.jobTracker.identifier(), this.nextJobId++);
 	}
@@ -401,24 +354,25 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 						status.killjob();
 					}
 				}
-				scheduleFunctor(JobTracker.PROGRAM, JobTable.TABLENAME, lookup, null);
+				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, lookup, null);
 			}
-		} catch (BadKeyException e) {
+		} catch (Throwable e) {
 			e.printStackTrace();
+			throw new IOException(e);
 		}
 	}
 
 	/**
 	 * Submit job by scheduling an insertion of the job in the job table.
 	 */
-	public JobStatus submitJob(JobID jobid) throws IOException {
+	public synchronized JobStatus submitJob(JobID jobid) throws IOException {
 		try {
 			Tuple job = lookup(jobid);
 			if (job == null) {
 				/* Create a new job and schedule its insertion into the job table. */
 				job = jobTracker.newJob(jobid);
-				context.schedule(JobTracker.PROGRAM, JobTable.INIT,
-						new BasicTupleSet(JobTable.INIT, job), null);
+				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME,
+						new BasicTupleSet(JobTable.TABLENAME, job), null);
 				context.evaluate();
 
 				JobStatus status = null;
@@ -446,11 +400,15 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	public synchronized void setJobPriority(JobID jobid, String priority) throws IOException {
 		Tuple job = lookup(jobid);
 		if (job != null) {
-			JobPriority value = JobPriority.valueOf(priority);
-			Object [] values = job.toArray();
-			values[JobTable.Field.PRIORITY.ordinal()] = value;
-			job = new Tuple(values);
-			scheduleFunctor(JobTracker.PROGRAM, JobTable.TABLENAME, new BasicTupleSet(JobTable.TABLENAME, job), null);
+			try {
+				JobPriority value = JobPriority.valueOf(priority);
+				Object [] values = job.toArray();
+				values[JobTable.Field.PRIORITY.ordinal()] = value;
+				job = new Tuple(values);
+				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, new BasicTupleSet(JobTable.TABLENAME, job), null);
+			} catch (JolRuntimeException e) {
+				throw new IOException(e);
+			}
 		}
 		else {
 			throw new IOException("Unknown job identifier! " + jobid);
@@ -530,10 +488,14 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		TupleSet insertions =
 			new BasicTupleSet(TaskTrackerErrorTable.TABLENAME,
 					new Tuple(taskTracker, errorClass, errorMessage));
-		scheduleFunctor(JobTracker.PROGRAM, TaskTrackerErrorTable.TABLENAME, insertions, null);
+		try {
+			context.schedule(JobTracker.PROGRAM, TaskTrackerErrorTable.TABLENAME, insertions, null);
+		} catch (JolRuntimeException e) {
+			throw new IOException(e);
+		}
 	}
 
-	public HeartbeatResponse heartbeat(TaskTrackerStatus status,
+	public synchronized HeartbeatResponse heartbeat(TaskTrackerStatus status,
 			boolean initialContact,
 			boolean acceptNewTasks,
 			short responseId) throws IOException {
@@ -599,9 +561,11 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		}
 		finally {
 			/* Store the response. */
+			/*
 			if (actions.size() == 0 && this.loadActions != null) {
 				heavyLoadActions(status, response, actions);
 			}
+			*/
 			
 			long dutyCycle = System.currentTimeMillis() - context.timestamp();
 			if (dutyCycle > 4 * MRConstants.HEARTBEAT_INTERVAL_MIN) {
@@ -624,6 +588,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		actions.addAll(this.loadActions.actions(Constants.TaskType.MAP, maps, tuples));
 		actions.addAll(this.loadActions.actions(Constants.TaskType.REDUCE, reduces, tuples));
 		
+		TupleSet attempts = new BasicTupleSet(TaskAttemptTable.TABLENAME);
 		for (TaskTrackerAction a : actions) {
 			LaunchTaskAction la = (LaunchTaskAction) a;
 			TaskStatus taskStatus = null;
@@ -639,17 +604,19 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
                     TaskStatus.State.RUNNING.name(), status.getTrackerName(),
                     la.getTask().getPhase(), new Counters());
 			}
-			try {
-				this.taskAttemptTable.force(TaskAttemptTable.tuple(status, taskStatus));
-			} catch (UpdateException e) {
-				e.printStackTrace();
-			}
+			attempts.add(TaskAttemptTable.tuple(status, taskStatus));
 		}
 		
 		response.setActions(actions.toArray(new TaskTrackerAction[actions.size()]));
 		try {
-			if (tuples.size() > 0) this.loadActions.delete(tuples);
-		} catch (UpdateException e) {
+			if (tuples.size() > 0) {
+				context.flusher(LoadActions.TABLENAME, null, tuples);
+			}
+			
+			if (attempts.size() > 0) {
+				context.flusher(TaskAttemptTable.TABLENAME, attempts, null);
+			}
+		} catch (JolRuntimeException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -697,10 +664,8 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 						this.context.catalog().table(NetworkTopologyTable.TABLENAME);
 				topologyTable.resolve(status);
 			}
-			else {
-				/* Grab any actions from the action table. */
-				response.setActions(this.trackerActionTable.actions(status, actions));
-			}
+			/* Grab any actions from the action table. */
+			response.setActions(this.trackerActionTable.actions(status, actions));
 
 			Tuple update =
 				new Tuple(status.getTrackerName(),
@@ -713,7 +678,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 								status.countReduceTasks(),
 								status.getMaxMapTasks(),
 								status.getMaxReduceTasks());
-			taskTrackerTable.force(update);
+			this.taskTrackerTable.force(update);
 
 			/* Schedule updates of all tasks running on this tracker. */
 			updateTasks(status);
@@ -729,25 +694,21 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @param tasks
 	 * @throws UpdateException
 	 */
-	private void updateTasks(TaskTrackerStatus trackerStatus) throws JolRuntimeException {
+	private synchronized void updateTasks(TaskTrackerStatus trackerStatus) throws JolRuntimeException {
 		TupleSet attempts = new BasicTupleSet(TaskAttemptTable.TABLENAME);
 		List<TaskStatus> tasks = trackerStatus.getTaskReports();
 		for (TaskStatus taskStatus : tasks) {
-			/* To optimize I ignore RUNNING UPDATES. */
-			/*
-			TaskStatus.State state = taskStatus.getRunState();
-			if (state.equals(TaskStatus.State.RUNNING)) continue;
-			*/
+			Tuple attempt = TaskAttemptTable.tuple(trackerStatus, taskStatus);
 			taskStatus.setTaskTracker(trackerStatus.getTrackerName());
-			attempts.add(TaskAttemptTable.tuple(trackerStatus, taskStatus));
+			try {
+				taskAttemptTable.force(attempt);
+			} catch (UpdateException e) {
+				attempts.add(attempt);
+			}
 		}
-		scheduleFunctor(JobTracker.PROGRAM, TaskAttemptTable.TABLENAME, attempts, null);
-		
-		/*
-		if (attempts.size() > 0 && !this.taskAttemptTable.force(attempts)) {
-			System.err.println("ERROR: Could not force task attempt updates! " + attempts);
+		if (attempts.size() > 0) {
+			context.flusher(TaskAttemptTable.TABLENAME, attempts, null);
 		}
-		*/
 	}
 
 	/*********************** Helper routines copied from Hadoop job tracker *********************************/

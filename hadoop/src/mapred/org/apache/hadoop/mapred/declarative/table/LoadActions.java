@@ -17,11 +17,15 @@ import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable.Field;
 
 import jol.core.Runtime;
+import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
+import jol.types.table.BasicTable;
+import jol.types.table.ConcurrentHashIndex;
+import jol.types.table.ConcurrentTable;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
@@ -29,7 +33,7 @@ import jol.types.table.ObjectTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
 
-public class LoadActions extends ObjectTable {
+public class LoadActions extends ConcurrentTable {
 
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.LOADPOLICY, "loadActions");
@@ -52,7 +56,7 @@ public class LoadActions extends ObjectTable {
 	public LoadActions(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		this.typeKey = new Key(Field.TYPE.ordinal());
-		Index index = new HashIndex(context, this, typeKey, Index.Type.SECONDARY);
+		Index index = new ConcurrentHashIndex(context, this, typeKey, Index.Type.SECONDARY);
 		secondary().put(typeKey, index);
 	}
 	

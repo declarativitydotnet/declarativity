@@ -20,13 +20,15 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import jol.types.table.BasicTable;
+import jol.types.table.ConcurrentHashIndex;
+import jol.types.table.ConcurrentTable;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
-public class TaskTrackerActionTable extends BasicTable {
+public class TaskTrackerActionTable extends ConcurrentTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskTrackerAction");
 	
@@ -46,9 +48,9 @@ public class TaskTrackerActionTable extends BasicTable {
 	private Key nameKey;
 
 	public TaskTrackerActionTable(Runtime context) {
-		super(context, TABLENAME, PRIMARY_KEY, SCHEMA, new ConcurrentTupleSet(TABLENAME));
+		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		this.nameKey = new Key(Field.TRACKERNAME.ordinal());
-		Index index = new HashIndex(context, this, nameKey, Index.Type.SECONDARY);
+		Index index = new ConcurrentHashIndex(context, this, nameKey, Index.Type.SECONDARY);
 		secondary().put(nameKey, index);
 	}
 	

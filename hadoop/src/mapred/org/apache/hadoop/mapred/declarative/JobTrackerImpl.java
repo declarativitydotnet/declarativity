@@ -210,6 +210,7 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new TaskAttemptTable(context));
 		this.context().catalog().register(new TaskCreate(this));
 		this.context().catalog().register(new AssignTracker());
+		this.context().catalog().register(new BestCandidate());
 		this.context().catalog().register(new TaskReportTable(context));
 		this.context().catalog().register(new TaskTable(context));
 		this.context().catalog().register(new TaskTrackerActionTable(context));
