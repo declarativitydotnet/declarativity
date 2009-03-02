@@ -140,6 +140,11 @@ public class BFSInputStream extends FSInputStream {
 
         dos.writeByte(DataProtocol.READ_OPERATION);
         dos.writeInt(this.currentChunk.getId());
+        boolean success = dis.readBoolean();
+        // If this data node didn't have the chunk, try another one.
+        if (success == false)
+        	throw new IOException();
+
         int length = dis.readInt();
         if (length != this.currentChunk.getLength())
         	throw new RuntimeException("expected length " +
