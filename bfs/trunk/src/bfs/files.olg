@@ -78,7 +78,7 @@ sendHeartBeat(@Master, Host, ChunkId, Length, Tstamp, Id) :-
     heartBeat(@Host, Master, ChunkId, Length, Tstamp, Id),
     notin serverKnows(@Host, Master, ChunkId, _);
 
-define(ackHeartBeat, keys(0,1,2), {String, String, Long});
+define(ackHeartBeat, {String, String, Long});
 //watch(ackHeartBeat,ae);
 
 define(serverKnows, keys(0,1,2,3), {String, String, Integer, Long});
