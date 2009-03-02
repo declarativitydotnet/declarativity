@@ -25,7 +25,7 @@ public abstract class JobTracker {
 	public static final String PROGRAM    = "jobtracker";
 	public static final String SCHEDULER  = "scheduler";
 	public static final String POLICY     = "policy";
-	public static final String LOADPOLICY = "loadPolicy";
+	public static final String LOADPOLICY = null; // "loadPolicy";
 	public static final String SPECULATE  = null; //"latePolicy";
 
 	public static enum State { INITIALIZING, RUNNING }

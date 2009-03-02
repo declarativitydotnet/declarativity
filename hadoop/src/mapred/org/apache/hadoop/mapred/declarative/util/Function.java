@@ -24,8 +24,8 @@ import org.apache.hadoop.mapred.TaskTrackerAction;
 public final class Function {
 	private final static Random rand = new Random();
 	
-	public static boolean coinFlip() {
-		return rand.nextBoolean();
+	public static boolean coinFlip(float prob) {
+		return rand.nextFloat() <= prob;
 	}
 	
 	public static Long priority(Integer category, JobPriority priority, Long timestamp) {
