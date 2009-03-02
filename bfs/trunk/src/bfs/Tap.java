@@ -396,12 +396,16 @@ public class Tap {
             @Override
             public void insertion(TupleSet tuples) {
 				System.out.println("YO YO\n");
+				for (Tuple t : tuples) {
+                    //String program = (String) t.value(0);
+                }
+
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(8000);
                 } catch(Exception e) {
                     throw new RuntimeException(e);
                 }
-                System.exit(1);
+                //System.exit(1);
             }
         };
 
@@ -409,7 +413,7 @@ public class Tap {
         this.system.evaluate();
         this.system.evaluate();
 
-        Table table = this.system.catalog().table(new TableName("tap", "ptap_done"));
+        Table table = this.system.catalog().table(new TableName("tap", "networkFires"));
         table.register(reportCallback);
         this.system.start();
     }
