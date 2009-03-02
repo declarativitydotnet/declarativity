@@ -28,17 +28,30 @@ indx(Host, 0) :-
 
 indx(Host, Next) :-
     indx(Host, Old),
-    chunk#insert(Host, _, _),
+    chunkTmp(Host, _, _),
     Next := Old + 1;
 
-define(chunk, keys(0,1), {String, String, Integer});
-chunk(Host, FName, FLength) :-
+define(chunkTmp, {String, String, Integer});
+chunkTmp(Host, FName, FLength) :-
     dir(Host, Dir, List),
     indx(Host, I),
     I < List.size()
     { F := (File) List.get(I);
       FName := F.getName();
       FLength := Integer.valueOf(Long.valueOf(F.length()).toString()); };
+
+define(chunk, keys(0,1), {String, String, Integer});
+//watch(chunk, ae);
+chunk(Host, FName, FLength) :-
+    chunkTmp#insert(Host, FName, FLength);
+
+/* cleanup rules disabled
+delete
+chunk(Host, FName, FLength) :-
+    chunk(Host, FName, FLength),
+    dir#insert(Host, Dir, List);
+*/
+
 
 define(heartBeat,keys(0,1,2),{String,String,Integer,Integer,Long,Long});
 //watch(heartBeat,ae);
@@ -72,7 +85,7 @@ define(serverKnows, keys(0,1,2,3), {String, String, Integer, Long});
 //watch(serverKnows,ae);
 serverKnows(Host, Master, ChunkId, Id) :-
     heartBeat(Host, Master, ChunkId, _, _, Id),
-    ackHeartBeat(Host, Master, Id);
+    ackHeartBeat#insert(Host, Master, Id);
 
 define(masters, keys(0,1), {String, String});
 define(mindx, keys(0), {String, Integer});
