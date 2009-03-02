@@ -54,8 +54,8 @@ public class IndexJoin extends Join {
 				result.addAll(join(outer, innerTuples));
 			}
 			return result;
-		} catch (BadKeyException e) {
-			throw new JolRuntimeException("index join failed!", e);
+		} catch (Throwable t) {
+			throw new JolRuntimeException("Index join failed! Index table " + index.table() + ".", t);
 		}
 	}
 }

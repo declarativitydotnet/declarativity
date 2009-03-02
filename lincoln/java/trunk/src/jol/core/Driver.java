@@ -666,6 +666,16 @@ public class Driver extends Thread {
 					else if (task.program().equals("runtime")) {
 						runtimeTasks.add(task);
 					}
+					else if (task.program().equals("flusher")) {
+						Table table = context.catalog().table(task.name());
+						if (task.insertions() != null) {
+							TupleSet conflicts = new BasicTupleSet();
+							table.insert(task.insertions(), conflicts);
+						}
+						if (task.deletions() != null) {
+							table.delete(task.deletions());
+						}
+					}
 					else {
 						Tuple tuple = new Tuple(this.logicalTime,
 								task.program(), task.name(),
