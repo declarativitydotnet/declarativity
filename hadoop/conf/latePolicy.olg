@@ -98,10 +98,10 @@ policy::candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	notin jobtracker::taskAttempt(JobId, TaskId, _, _, _, _, _, TrackerName, _, _, _,_,_),
 	trackerTaskProgressRate(TrackerName, JobId, Type, NodeProgressRate),
 	slowNodeThreshold(JobId, Type, NodeThreshold),
-	NodeProgressRate > NodeThreshold,
+	NodeProgressRate != null && NodeThreshold != null && NodeProgressRate > NodeThreshold,
 	taskProgressRate(JobId, TaskId, Type, TaskProgressRate),
 	slowTaskThreshold(JobId, Type, TaskThreshold),
-	TaskProgressRate < TaskThreshold
+	TaskProgressRate != null && TaskThreshold != null && TaskProgressRate < TaskThreshold
 	{
 		InvertCompletionEstimate := TaskProgressRate / (1f - TaskStatus.progress());
 		Priority := [JobPriority, JobSubmitTime, 0, InvertCompletionEstimate];
@@ -117,10 +117,10 @@ policy::candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	trackerTaskProgressRate(TrackerName, JobId, Type, NodeProgressRate),
 	notin jobtracker::taskAttempt(JobId, TaskId, _, _, _, _, _, TrackerName, _, _, _,_,_),
 	slowNodeThreshold(JobId, Type, NodeThreshold),
-	NodeProgressRate > NodeThreshold,
+	NodeProgressRate != null && NodeThreshold != null && NodeProgressRate > NodeThreshold,
 	taskProgressRate(JobId, TaskId, Type, TaskProgressRate),
 	slowTaskThreshold(JobId, Type, TaskThreshold),
-	TaskProgressRate < TaskThreshold
+	TaskProgressRate != null && TaskThreshold != null && TaskProgressRate < TaskThreshold
 	{
 		InvertCompletionEstimate := TaskProgressRate / (1f - TaskStatus.progress());
 		Priority := [JobPriority, JobSubmitTime, 0, InvertCompletionEstimate];

@@ -62,11 +62,6 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0f, State, Phase, null, Tracke
 	Phase       := Constants.TaskPhase.STARTING,
 	AttemptID   := Attempts;
 	
-/*
-jobtracker::lookupTask(JobId, Constants.TaskState.RUNNING) :-
-	jobtracker::taskAttempt(JobId, TaskId, AttemptID, _, Constants.TaskState.RUNNING);
-*/
-
 actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
 	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _, _),
@@ -89,38 +84,6 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptId, 0f, Constants.TaskState.FAILED
 */
     
 	          
-/******************** Process Jobs *******************/
-define(jobFinishedMapTasks, keys(0), {JobID, Integer});
-
-/* Put new jobs in a wait queue in a MAP phase. */
-public
-jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP) :-
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JobStatus),
-	JobStatus.mapCount() > 0, JobStatus.state() == Constants.JobState.PREP;
-	
-public
-jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JobStatus),
-	JobStatus.mapCount() == 0, JobStatus.state() == Constants.JobState.PREP;
-	
-public delete
-jobtracker::jobQueue(JobId, Priority, SubmitTime, Phase) :-
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, Status),
-	jobtracker::jobQueue(JobId, Priority, SubmitTime, Phase),
-	Status.state() == Constants.JobState.SUCCEEDED || Status.state() == Constants.JobState.FAILED;
-	
-/* Switch to reduce phase when all maps finish. */
-jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
-	jobFinishedMapTasks#insert(JobId, FinishedMapCount), 
-	jobtracker::job(JobId, _, _, _, _, _, _, _, _, JobStatus),
-	jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP),
-	FinishedMapCount == JobStatus.mapCount();
-
-public
-jobFinishedMapTasks(JobId, count<TaskId>) :-
-	jobtracker::taskUpdate(JobId, TaskId, Type, Status),
-	Type == Constants.TaskType.MAP, Status.state() == Constants.TaskState.SUCCEEDED;
-	
 
 /******************** Signal task tracker slots available *******************/
 
@@ -135,12 +98,13 @@ tasksWaitingForSchedule(count<TaskId>) :-
     TaskStatus.state() == Constants.TaskState.FAILED;
 	
 
+watch(trackerSlots, a);
 public
-trackerSlots(TrackerName, Host, Timestamp, MaxMap - MapCount, MaxReduce - ReduceCount) :-
+trackerSlots(TrackerName, Host, Timestamp, 2*(MaxMap - MapCount), 2*(MaxReduce - ReduceCount)) :-
 	jobtracker::dutyCycle(), 
 	tasksWaitingForSchedule(Count), Count > 0,
 	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
-	!(MapCount >= MaxMap) || !(ReduceCount >= MaxReduce);
+	MapCount < MaxMap || ReduceCount < MaxReduce;
 	
 	
 	
