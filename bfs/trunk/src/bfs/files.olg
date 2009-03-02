@@ -43,7 +43,12 @@ chunkTmp(Host, FName, FLength) :-
 define(chunk, keys(0,1), {String, String, Integer});
 //watch(chunk, ae);
 chunk(Host, FName, FLength) :-
-    chunkTmp#insert(Host, FName, FLength);
+    chunkTmp#insert(Host, FName, FLength),
+	datadir(Host, Dir),
+	CksumDir := new File(Dir, "checksums"),
+	CFile := new File(CksumDir, Fname.append(".cksum")),
+	CFile.exists() == true;
+	
 
 /* cleanup rules disabled
 delete

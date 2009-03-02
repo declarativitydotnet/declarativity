@@ -51,7 +51,7 @@ public class Conf {
 
     private static int replicationFactor = 1;
 
-    private static final boolean tap = false;
+    private static boolean tap = false;
 
     public static final String[] corpus = new String[] {
         "paxos/paxos_global.olg",
@@ -87,6 +87,9 @@ public class Conf {
         }
 	}
 
+	public static void setTap(boolean t) {
+		tap = t;
+	}
     public static int getChunkSize() {
         return chunkSize;
     }
