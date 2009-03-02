@@ -32,6 +32,7 @@ define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
 
 chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
     clock#insert(),
+    ChunkId != -1,
     sendHeartBeat(Master, DataNode, ChunkId, Length, _, _),
     (System.currentTimeMillis() - MaxTstamp) < Conf.getHeartbeatRetention(),
     dataNodes(Master, DataNode, MaxTstamp);
