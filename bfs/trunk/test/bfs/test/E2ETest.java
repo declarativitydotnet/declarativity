@@ -91,6 +91,10 @@ public class E2ETest extends TestCommon {
 
         dos.writeByte(DataProtocol.READ_OPERATION);
         dos.writeInt(chunk.getId());
+        boolean success = dis.readBoolean();
+        if (!success)
+        	throw new IOException("chunk not found on data node");
+
         int length = dis.readInt();
         if (length != chunk.getLength())
         	throw new RuntimeException("expected length " +

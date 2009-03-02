@@ -177,6 +177,14 @@ public class DataServer extends Thread {
             int blockId = this.in.readInt();
             File blockFile = getChunkFile(blockId);
 
+            // If we don't have the chunk, return failure to the client
+            if (blockFile == null) {
+            	out.writeBoolean(false);
+            	return;
+            }
+            // Otherwise, return success, then the length + contents
+            out.writeBoolean(true);
+
             int fileSize = (int) blockFile.length();
             out.writeInt(fileSize);
 
@@ -282,7 +290,7 @@ public class DataServer extends Thread {
         File newf = new File(filename);
         if (!newf.createNewFile()) {
         	throw new RuntimeException("Failed to create fresh file " + filename);
-	}
+        }
 
         DataOutputStream fos = new DataOutputStream(new FileOutputStream(newf));
         fos.writeLong(checksum);
@@ -318,12 +326,12 @@ public class DataServer extends Thread {
                 + chunkId;
         File newf = new File(filename);
         if (!newf.createNewFile()) {
-		File d = new File(this.fsRoot + File.separator + "chunks");
-		for (String f : d.list()) {
-			System.out.println("\tFILE: "+f);
-		}
+        	File d = new File(this.fsRoot + File.separator + "chunks");
+        	for (String f : d.list()) {
+        		System.out.println("\tFILE: " + f);
+        	}
         	throw new RuntimeException("Failed to create fresh file " + filename);
-	}
+        }
 
         return newf;
     }
@@ -344,14 +352,14 @@ public class DataServer extends Thread {
 	public static List<File> dirListing(File dir) {
 		File fDir = new File(dir, "chunks");
 		File cDir = new File(dir, "checksums");
-	
+
 		List<File> ret = new ArrayList<File>();
 
 		for (File f : fDir.listFiles()) {
 			File csum = new File(cDir, f.getName() + ".cksum");
 			if (csum.exists()) {
 				ret.add(f);
-			}	
+			}
 		}
 
 		return ret;
