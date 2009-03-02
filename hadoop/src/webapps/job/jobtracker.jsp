@@ -28,6 +28,7 @@
         out.print("<td><b>Reduce % Complete</b></td>");
         out.print("<td><b>Reduce Total</b></td>");
         out.print("<td><b>Reduces Completed</b></td></tr>\n");
+        /*
         for (Iterator it = jobs.iterator(); it.hasNext(); ) {
           JobInProgress job = (JobInProgress) it.next();
           JobProfile profile = job.getProfile();
@@ -56,6 +57,7 @@
                     desiredReduces + "</td><td> " + completedReduces + 
                     "</td></tr>\n");
         }
+        */
       } else {
         out.print("<tr><td align=\"center\" colspan=\"8\"><i>none</i></td></tr>\n");
       }
@@ -65,7 +67,7 @@
 
   public void generateSummaryTable(JspWriter out,
                                    JobTracker tracker) throws IOException {
-    ClusterStatus status = tracker.getClusterStatus();
+    ClusterStatus status = tracker.jobInterface().getClusterStatus();
     String tasksPerNode = status.getTaskTrackers() > 0 ?
       percentFormat.format(((double)(status.getMaxMapTasks() +
                       status.getMaxReduceTasks())) / status.getTaskTrackers()):
@@ -95,7 +97,7 @@
 <body>
 <h1><%= trackerName %> Hadoop Map/Reduce Administration</h1>
 
-<b>State:</b> <%= tracker.getClusterStatus().getJobTrackerState() %><br>
+<b>State:</b> <%= tracker.jobInterface().getClusterStatus().getJobTrackerState() %><br>
 <b>Started:</b> <%= new Date(tracker.getStartTime())%><br>
 <b>Version:</b> <%= VersionInfo.getVersion()%>,
                 r<%= VersionInfo.getRevision()%><br>
@@ -114,20 +116,20 @@
 
 <h2>Running Jobs</h2>
 <%
-    generateJobTable(out, "Running", tracker.runningJobs(), 30);
+    // generateJobTable(out, "Running", tracker.runningJobs(), 30);
 %>
 <hr>
 
 <h2>Completed Jobs</h2>
 <%
-    generateJobTable(out, "Completed", tracker.completedJobs(), 0);
+    // generateJobTable(out, "Completed", tracker.completedJobs(), 0);
 %>
 
 <hr>
 
 <h2>Failed Jobs</h2>
 <%
-    generateJobTable(out, "Failed", tracker.failedJobs(), 0);
+    // generateJobTable(out, "Failed", tracker.failedJobs(), 0);
 %>
 
 <hr>

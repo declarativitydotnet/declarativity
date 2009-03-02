@@ -24,7 +24,7 @@
                                 String jobId,
                                 String kind,
                                 double completePercent,
-                                TaskInProgress[] tasks
+                                TaskStatus[] tasks
                                ) throws IOException {
     int totalTasks = tasks.length;
     int runningTasks = 0;
@@ -33,16 +33,16 @@
     int failedTaskAttempts = 0;
     int killedTaskAttempts = 0;
     for(int i=0; i < totalTasks; ++i) {
-      TaskInProgress task = tasks[i];
-      if (task.isComplete()) {
-        finishedTasks += 1;
-      } else if (task.isRunning()) {
+      TaskStatus task = tasks[i];
+      if (task.getStateString().equals(TaskStatus.State.RUNNING.toString())) {
         runningTasks += 1;
-      } else if (task.wasKilled()) {
+      } else if (task.getStateString().equals(TaskStatus.State.KILLED.toString())) {
         killedTasks += 1;
+      } else if (task.getStateString().equals(TaskStatus.State.SUCCEEDED.toString())) {
+        finishedTasks += 1;
+      } else if (task.getStateString().equals(TaskStatus.State.FAILED.toString())) {
+    	  failedTaskAttempts += 1;
       }
-      failedTaskAttempts += task.numTaskFailures();
-      killedTaskAttempts += task.numKilledTasks();
     }
     int pendingTasks = totalTasks - runningTasks - killedTasks - finishedTasks; 
     out.print("<tr><th><a href=\"jobtasks.jsp?jobid=" + jobId + 
@@ -118,9 +118,10 @@
         }
     }
     JobID jobIdObj = JobID.forName(jobId);
-    JobInProgress job = (JobInProgress) tracker.getJob(jobIdObj);
+    JobStatus job = (JobStatus) tracker.getJobStatus(jobIdObj);
     
     String action = request.getParameter("action");
+    /*
     if("changeprio".equalsIgnoreCase(action)) {
       tracker.setJobPriority(jobIdObj, 
                              JobPriority.valueOf(request.getParameter("prio")));
@@ -136,6 +137,7 @@
 	      tracker.killJob(jobIdObj);
 	    }
     }
+    */
 %>
 
 <%@page import="org.apache.hadoop.mapred.StatusHttpServer.TaskGraphServlet"%>
@@ -159,10 +161,9 @@
       out.print("<b>Job " + jobId + " not found.</b><br>\n");
       return;
     }
-    JobProfile profile = job.getProfile();
-    JobStatus status = job.getStatus();
+    JobProfile profile = tracker.getJobProfile(jobIdObj);
+    JobStatus status = job; 
     int runState = status.getRunState();
-    int flakyTaskTrackers = job.getNoOfBlackListedTrackers();
     out.print("<b>User:</b> " + profile.getUser() + "<br>\n");
     out.print("<b>Job Name:</b> " + profile.getJobName() + "<br>\n");
     out.print("<b>Job File:</b> <a href=\"jobconf.jsp?jobid=" + jobId + "\">" 
@@ -176,23 +177,22 @@
       if (runState == JobStatus.SUCCEEDED) {
         out.print("<b>Status:</b> Succeeded<br>\n");
         out.print("<b>Started at:</b> " + new Date(job.getStartTime()) + "<br>\n");
-        out.print("<b>Finished at:</b> " + new Date(job.getFinishTime()) +
+        /*
+        out.print("<b>Finished at:</b> " + new Date(status.getFinishTime()) +
                   "<br>\n");
         out.print("<b>Finished in:</b> " + StringUtils.formatTimeDiff(
             job.getFinishTime(), job.getStartTime()) + "<br>\n");
+        */
       } else if (runState == JobStatus.FAILED) {
         out.print("<b>Status:</b> Failed<br>\n");
         out.print("<b>Started at:</b> " + new Date(job.getStartTime()) + "<br>\n");
+        /*
         out.print("<b>Failed at:</b> " + new Date(job.getFinishTime()) +
                   "<br>\n");
         out.print("<b>Failed in:</b> " + StringUtils.formatTimeDiff(
             job.getFinishTime(), job.getStartTime()) + "<br>\n");
+        */
       }
-    }
-    if (flakyTaskTrackers > 0) {
-      out.print("<b>Black-listed TaskTrackers:</b> " + 
-          "<a href=\"jobblacklistedtrackers.jsp?jobid=" + jobId + "\">" +
-          flakyTaskTrackers + "</a><br>\n");
     }
     out.print("<hr>\n");
     out.print("<table border=2 cellpadding=\"5\" cellspacing=\"2\">");
@@ -201,10 +201,12 @@
               "<th>Killed</th>" +
               "<th><a href=\"jobfailures.jsp?jobid=" + jobId + 
               "\">Failed/Killed<br>Task Attempts</a></th></tr>\n");
+    /*
     printTaskSummary(out, jobId, "map", status.mapProgress(), 
                      job.getMapTasks());
     printTaskSummary(out, jobId, "reduce", status.reduceProgress(),
                      job.getReduceTasks());
+    */
     out.print("</table>\n");
     
     %>
@@ -218,10 +220,13 @@
       <th>Total</th>
     </tr>
     <%
+    /*
     Counters mapCounters = job.getMapCounters();
     Counters reduceCounters = job.getReduceCounters();
     Counters totalCounters = job.getCounters();
+    */
     
+    /*
     for (String groupName : totalCounters.getGroupNames()) {
       Counters.Group totalGroup = totalCounters.getGroup(groupName);
       Counters.Group mapGroup = mapCounters.getGroup(groupName);
@@ -252,7 +257,7 @@
         </tr>
         <%
       }
-    }
+    }*/
     %>
     </table>
 
@@ -279,7 +284,7 @@ if("off".equals(session.getAttribute("map.graph"))) { %>
        style="width:100%" type="image/svg+xml" pluginspage="http://www.adobe.com/svg/viewer/install/" />
 <%}%>
 
-<%if(job.getReduceTasks().length > 0) { %>
+<%if(false /*job.getReduceTasks().length > 0*/) { %>
 <hr>Reduce Completion Graph -
 <%if("off".equals(session.getAttribute("reduce.graph"))) { %>
 <a href="/jobdetails.jsp?jobid=<%=jobId%>&refresh=<%=refresh%>&reduce.graph=on" > open </a>
@@ -292,19 +297,21 @@ if("off".equals(session.getAttribute("map.graph"))) { %>
        style="width:100%" type="image/svg+xml" pluginspage="http://www.adobe.com/svg/viewer/install/" />
 <%} }%>
 
-<hr>Change priority from <%=job.getPriority()%> to: 
+<hr>Change priority from to: 
 <%
+/*
   JobPriority jobPrio = job.getPriority();
   for (JobPriority prio : JobPriority.values()) {
     if(jobPrio != prio) {
       %> <a style="margin-left: 5px; margin-right: 5px;" href="jobdetails.jsp?action=changeprio&jobid=<%=jobId%>&prio=<%=prio%>"> <%=prio%> </a> <%
     }
   }
+  */
 %>
 </br>
     
 <% if(JspHelper.conf.getBoolean(PRIVATE_ACTIONS_KEY, false) 
-    	&& runState == JobStatus.RUNNING) { %>
+    	&& false /*runState == JobStatus.RUNNING*/) { %>
 	<br/><a href="jobdetails.jsp?action=confirm&jobid=<%=jobId%>"> Kill this job </a>
 <% } %>
 

@@ -21,12 +21,12 @@
   TaskID tipidObj = TaskID.forName(tipid);
   TaskAttemptID taskidObj = TaskAttemptID.forName(taskid);
   
-  JobInProgress job = (JobInProgress) tracker.getJob(jobidObj);
+  // JobInProgress job = (JobInProgress) tracker.getJob(jobidObj);
   
   Format decimal = new DecimalFormat();
-  Counters counters;
+  Counters counters = null;
   if (taskid == null) {
-    counters = tracker.getTipCounters(tipidObj);
+    // counters = tracker.getTipCounters(tipidObj);
     taskid = tipid; // for page title etc
   }
   else {

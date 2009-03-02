@@ -35,7 +35,7 @@
     TaskID tipidObj = TaskID.forName(tipid);
     TaskAttemptID taskidObj = TaskAttemptID.forName(taskid);
     
-    JobInProgress job = (JobInProgress) tracker.getJob(jobidObj);
+    // JobInProgress job = (JobInProgress) tracker.getJob(jobidObj);
     
     boolean privateActions = JspHelper.conf.getBoolean(PRIVATE_ACTIONS_KEY,
         false);
@@ -50,20 +50,19 @@
           return;
         }
         else if (action.equalsIgnoreCase("kill-task")) {
-          tracker.killTask(taskidObj, false);
+          // tracker.killTask(taskidObj, false);
           //redirect again so that refreshing the page will not attempt to rekill the task
           response.sendRedirect("/taskdetails.jsp?" + "&subaction=kill-task"
               + "&jobid=" + jobid + "&tipid=" + tipid);
         }
         else if (action.equalsIgnoreCase("fail-task")) {
-          tracker.killTask(taskidObj, true);
+          // tracker.killTask(taskidObj, true);
           response.sendRedirect("/taskdetails.jsp?" + "&subaction=fail-task"
               + "&jobid=" + jobid + "&tipid=" + tipid);
         }
       }
     }
-    TaskStatus[] ts = (job != null) ? tracker.getTaskStatuses(tipidObj)
-        : null;
+    TaskStatus[] ts = null; // (job != null) ? tracker.getTaskStatuses(tipidObj) : null;
 %>
 
 <%@page import="org.apache.hadoop.dfs.JspHelper"%>
@@ -108,8 +107,8 @@
       } else {
         taskAttemptTracker = "http://" + taskTracker.getHost() + ":"
           + taskTracker.getHttpPort();
-        out.print("<td><a href=\"" + taskAttemptTracker + "\">"
-          + tracker.getNode(taskTracker.getHost()) + "</a></td>");
+        /* out.print("<td><a href=\"" + taskAttemptTracker + "\">"
+          + tracker.getNode(taskTracker.getHost()) + "</a></td>"); */
         }
         out.print("<td>" + status.getRunState() + "</td>");
         out.print("<td>" + StringUtils.formatPercent(status.getProgress(), 2)
@@ -131,7 +130,7 @@
           .getFinishTime(), status.getStartTime()) + "</td>");
 
         out.print("<td><pre>");
-        String [] failures = tracker.getTaskDiagnostics(status.getTaskID());
+        String [] failures = null; // tracker.getTaskDiagnostics(status.getTaskID());
         if (failures == null) {
           out.print("&nbsp;");
         } else {
@@ -183,10 +182,12 @@
 <h3>Input Split Locations</h3>
 <table border=2 cellpadding="5" cellspacing="2">
 <%
+/*
         for (String split: StringUtils.split(tracker.getTip(
                                          tipidObj).getSplitNodes())) {
           out.println("<tr><td>" + split + "</td></tr>");
         }
+          */
 %>
 </table>
 <%    

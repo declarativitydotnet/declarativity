@@ -26,7 +26,7 @@
 <h2>Job Configuration: JobId - <%=jobId%></h2><br>
 
 <%
-	String jobFilePath = JobTracker.getLocalJobFilePath(JobID.forName(jobId));
+	/* String jobFilePath = JobTracker.getLocalJobFilePath(JobID.forName(jobId));
   FileInputStream jobFile = null;
   try {
     jobFile = new FileInputStream(jobFilePath);
@@ -43,7 +43,7 @@
         jobFile.close(); 
       } catch (IOException e) {}
     }
-  }
+  } */
 %>
 
 <br>
