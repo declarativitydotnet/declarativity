@@ -176,8 +176,7 @@ public class JobSimulator extends Thread {
 		try {
 			JobTrackerImpl tracker = (JobTrackerImpl) JobTracker.startTracker(new JobConf());
 			if (debug) {
-				TaskTrackerCluster cluster =
-					new TaskTrackerCluster(tracker.masterInterface(), clusterSize);
+				TaskTrackerCluster cluster = new TaskTrackerCluster(tracker.conf(), clusterSize);
 				JobSimulator simulator = new JobSimulator();
 				simulator.start();
 				tracker.offerService();

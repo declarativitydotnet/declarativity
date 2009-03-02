@@ -1,5 +1,7 @@
 package org.apache.hadoop.mapred.declarative.test;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -7,8 +9,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.mapred.HeartbeatResponse;
 import org.apache.hadoop.mapred.InterTrackerProtocol;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.KillJobAction;
 import org.apache.hadoop.mapred.LaunchTaskAction;
 import org.apache.hadoop.mapred.MapTask;
@@ -122,24 +127,27 @@ class TaskTracker extends Thread {
 	
 	private short responseId;
 	
-	private long interval;
-	
 	private int maxMapTasks;
 	
 	private int maxReduceTasks;
 	
 	private Set<TaskRunner> runners;
 	
-	public TaskTracker(String name, Executor executor, InterTrackerProtocol master, long interval) {
+	public TaskTracker(JobConf conf, String name, Executor executor) throws IOException {
 		this.name       = name;
 		this.executor   = executor;
-		this.master     = master;
 		this.responseId = 0;
-		this.interval   = interval;
 		this.runners    = new HashSet<TaskRunner>();
 		
-		this.maxMapTasks    = 1 + rand.nextInt(5);
-		this.maxReduceTasks = 1 + rand.nextInt(5);
+	    this.maxMapTasks = conf.getInt("mapred.tasktracker.map.tasks.maximum", 2);
+        this.maxReduceTasks = conf.getInt("mapred.tasktracker.reduce.tasks.maximum", 2);
+		
+		InetSocketAddress jobTrackAddr = JobTracker.getAddress(conf);
+
+	    this.master = (InterTrackerProtocol) 
+	      RPC.waitForProxy(InterTrackerProtocol.class,
+	                       InterTrackerProtocol.versionID, 
+	                       jobTrackAddr, conf);
 	}
 	
 	@Override
@@ -165,6 +173,7 @@ class TaskTracker extends Thread {
 				this.master.heartbeat(status(), true, true, this.responseId);
 			do {
 				process(response);
+				int interval = response.getHeartbeatInterval();
 				sleep(interval);
 				boolean acceptNewTasks = this.runners.size() < 
 				                         this.maxMapTasks + this.maxReduceTasks;
