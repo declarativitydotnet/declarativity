@@ -125,7 +125,7 @@
 
 <br/>
  <%
-    DefaultJobHistoryParser.FailedOnNodesFilter filter = 
+    /* DefaultJobHistoryParser.FailedOnNodesFilter filter = 
                  new DefaultJobHistoryParser.FailedOnNodesFilter();
     JobHistory.parseHistoryFromFS(logFile, filter, fs); 
     Map<String, Set<String>> badNodes = filter.getValues(); 
@@ -187,6 +187,7 @@
 <%	  
       }
     }
+    */
 %>
 </table>
 </center>

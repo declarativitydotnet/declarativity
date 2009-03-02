@@ -16,8 +16,9 @@
 <%!private void printFailedAttempts(JspWriter out,
                                    JobTracker tracker,
                                    JobID jobId,
-                                   TaskInProgress tip,
+                                   TaskStatus tip,
                                    TaskStatus.State failState) throws IOException {
+	/*
     TaskStatus[] statuses = tip.getTaskStatuses();
     TaskID tipId = tip.getTIPId();
     for(int i=0; i < statuses.length; ++i) {
@@ -72,6 +73,7 @@
         out.print("</tr>\n");
        }
     }
+    */
   }
              
   private void printFailures(JspWriter out, 
@@ -79,6 +81,7 @@
                              JobID jobId,
                              String kind, 
                              String cause) throws IOException {
+	  /*
     JobInProgress job = (JobInProgress) tracker.getJob(jobId);
     if (job == null) {
       out.print("<b>Job " + jobId + " not found.</b><br>\n");
@@ -133,6 +136,7 @@
       }
     }
     out.print("</table>\n");
+    */
   }%>
 
 <%

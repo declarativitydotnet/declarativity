@@ -21,14 +21,14 @@
   }
   String type = request.getParameter("type");
   String pagenum = request.getParameter("pagenum");
-  TaskInProgress[] tasks;
+  // TaskInProgress[] tasks;
   String state = request.getParameter("state");
   state = (state!=null) ? state : "all";
   int pnum = Integer.parseInt(pagenum);
   int next_page = pnum+1;
   int numperpage = 2000;
   JobID jobidObj = JobID.forName(jobid);
-  JobInProgress job = (JobInProgress) tracker.getJob(jobidObj);
+  /* JobInProgress job = (JobInProgress) tracker.getJob(jobidObj);
   JobProfile profile = (job != null) ? (job.getProfile()) : null;
   JobStatus status = (job != null) ? (job.getStatus()) : null;
   TaskReport[] reports = null;
@@ -43,6 +43,7 @@
     reports = (job != null) ? tracker.getReduceTaskReports(jobidObj) : null;
     tasks = (job != null) ? job.getReduceTasks() : null;
   }
+  */
 %>
 
 <%@page import="org.apache.hadoop.dfs.JspHelper"%>
@@ -56,11 +57,14 @@
 <a href="jobdetails.jsp?jobid=<%=jobid%>"><%=jobid%></a> on 
 <a href="jobtracker.jsp"><%=trackerName%></a></h1>
 <%
+/*
     if (job == null) {
     out.print("<b>Job " + jobid + " not found.</b><br>\n");
     return;
   }
+*/
   // Filtering the reports if some filter is specified
+  /*
   if (!"all".equals(state)) {
     List<TaskID> filteredReportsTaskIds = new ArrayList<TaskID>();
     List<TaskReport> filteredReports = new ArrayList<TaskReport>();
@@ -135,6 +139,7 @@
                 "<a href=\"jobtasks.jsp?jobid="+ jobid + "&type=" + type +
                 "&pagenum=" + (pnum -1) + "&state=" + state + "\">" + "Prev" + "</a></div>");
   }
+  */
 %>
 
 <hr>

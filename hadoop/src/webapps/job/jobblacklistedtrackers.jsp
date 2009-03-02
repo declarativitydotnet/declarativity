@@ -15,7 +15,8 @@
 %>
 <%!       
   private void printBlackListedTrackers(JspWriter out, 
-                             JobInProgress job) throws IOException {
+                             JobStatus job) throws IOException {
+	/*
     Map<String, Integer> trackerErrors = job.getTaskTrackerErrors();
     out.print("<table border=2 cellpadding=\"5\" cellspacing=\"2\">");
     out.print("<tr><th>TaskTracker</th><th>No. of Failures</th></tr>\n");
@@ -27,6 +28,7 @@
       }
     }
     out.print("</table>\n");
+    */
   }
 %>
 
@@ -37,11 +39,13 @@
   	  return;
     }
     
+    /*
     JobInProgress job = (JobInProgress) tracker.getJob(JobID.forName(jobId));
     if (job == null) {
       out.print("<b>Job " + jobId + " not found.</b><br>\n");
       return;
     }
+    */
 %>
 
 <html>
@@ -51,7 +55,7 @@
 Black-listed task-trackers</h1>
 
 <% 
-    printBlackListedTrackers(out, job); 
+    // printBlackListedTrackers(out, job); 
 %>
 
 <hr>
