@@ -9,7 +9,7 @@ define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Lo
 
 timer(clock, physical, 1000, infinity, 0);
 
-define(ackHeartBeat, keys(0, 1, 2), {String, String, Long});
+define(ackHeartBeat, {String, String, Long});
 ackHeartBeat(@Dnode, Master, Id) :-
     sendHeartBeat(@Master, Dnode, _, _, _, Id),
     Id != -1L;
