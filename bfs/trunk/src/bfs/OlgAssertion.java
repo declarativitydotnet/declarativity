@@ -21,7 +21,7 @@ public class OlgAssertion {
 			@Override
 			public void insertion(TupleSet tuples) {
 				for (Tuple t : tuples) {
-					String message = (String) t.value(0);
+					String message = (String) t.value(1);
 
 					System.out.println("EXCEPTION!\n");
 					throw new RuntimeException("assertion failed: " + message);

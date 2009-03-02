@@ -165,6 +165,7 @@ priestCnt(Master, count<*>) :-
     parliament(Master, Agent);
 
 define(lastPromiseCnt, keys(0,1), {String, Integer, Integer});
+watch(lastPromiseCnt, ae);
 public
 lastPromiseCnt(Master, Round, count<Agent>) :- 
   sendPromise(Master,Instance,Round,Foo,Bar,Agent);

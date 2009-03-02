@@ -69,7 +69,7 @@ acceptRequest(Master,I,Round,Decree,-2) :-
   paxos::quorum(Master,Round),
   paxos::instance(Master,I),
   topOfQueue_p2#insert(Master, Id),
-  tic(),
+  ////tic(),
   notin acceptRequest(Master, I, _, _, _),
   notin stasis_success(Master,I,_,_,_),
   I > 0;
