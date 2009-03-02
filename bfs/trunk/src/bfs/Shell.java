@@ -354,6 +354,10 @@ public class Shell {
 
             dos.writeByte(DataProtocol.READ_OPERATION);
             dos.writeInt(chunk.getId());
+            boolean success = dis.readBoolean();
+            if (success == false)
+            	throw new RuntimeException("chunk not found on data node");
+
             int length = dis.readInt();
             if (length != chunk.getLength())
             	throw new RuntimeException("expected length " + chunk.getLength() +
