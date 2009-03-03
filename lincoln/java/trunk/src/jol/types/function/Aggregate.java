@@ -112,6 +112,9 @@ public abstract class Aggregate<C extends Object> {
 		else if (SUMSTR.equals(function)) {
 			return java.lang.String.class;
 		}
+		else if (LIST.equals(function)) {
+			return ArrayList.class;
+		}
 		return null;
 	}
 
