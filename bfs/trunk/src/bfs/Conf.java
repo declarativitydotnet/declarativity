@@ -43,13 +43,13 @@ public class Conf {
     };
 
     private static final long fileOpTimeout = 20000;
-    private static final long listingTimeout = 10000;
+    private static final long listingTimeout = 20000;
 
     private static final int chunkSize = 256 * 1024;
 
     private static final long heartbeatRetention = 12000L;
 
-    private static int replicationFactor = 1;
+    private static int replicationFactor = 3;
 
     private static boolean tap = false;
 
