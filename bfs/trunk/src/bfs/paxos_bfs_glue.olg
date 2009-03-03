@@ -48,7 +48,7 @@ global_log(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
 // we might not be the master node that originally received the request, so
 // the log record MUST contain enough information to make a commit/abort
 // decision on this operation (s.t. all masters reach the same conclusion,
-// if they apply the set of log records in the same order).
+// if they apply the same set of log records in the same order).
 
 // Create a new file or directory. We use the Paxos instance # as the file
 // ID, since that will be unique and consistent among all the masters.
