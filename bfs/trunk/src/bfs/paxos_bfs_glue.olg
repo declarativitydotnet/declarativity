@@ -117,7 +117,7 @@ bfs_global::fpath(@Master, Path, FileId) :-
     PathSep := (ParentPath == "/" ? "" : "/"),
     Path := ParentPath + PathSep + FName;
 
-// Directories are considered to have size 0
+// For convenience, directories are considered to have size 0
 public
 bfs_global::stasis_fsize(@Master, FileId, FSize) :-
     bfs_global::stasis_file(@Master, FileId, _, _, true),
