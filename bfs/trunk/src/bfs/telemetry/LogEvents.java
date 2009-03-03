@@ -19,7 +19,6 @@ public class LogEvents {
 					try{
 						int curlen = (int)name.length();
 						if(curlen > oldlen) {
-							System.out.println("curlen == " + curlen);
 							char[] buf = new char[(int)curlen - (lastNewline+1)];
 							FileReader in = new FileReader(name);
 							in.skip(lastNewline+1);
@@ -34,7 +33,7 @@ public class LogEvents {
 								BufferedReader r = new BufferedReader(new CharArrayReader(buf, 0, i));
 								String line;
 								while(null != (line = r.readLine())) {
-									System.out.println("Found a line!! " + line + "<---");
+									System.out.println("Line: " + line);
 								}
 							}
 							oldlen = curlen;
