@@ -108,7 +108,7 @@ public class BFSClient {
         }
 
         // Wait for the response
-        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout());
+        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout(), requestId);
         unregisterCallback(responseTbl, responseCallback);
         return success.booleanValue();
 	}
@@ -150,7 +150,7 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        BFSNewChunkInfo result = (BFSNewChunkInfo) waitForResponse(Conf.getListingTimeout());
+        BFSNewChunkInfo result = (BFSNewChunkInfo) waitForResponse(Conf.getListingTimeout(), requestId);
         unregisterCallback(responseTbl, responseCallback);
         return result;
 	}
@@ -188,7 +188,7 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout());
+        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout(), requestId);
         unregisterCallback(responseTbl, responseCallback);
 
         System.out.println("Remove of file \"" + path + "\": " +
@@ -241,7 +241,7 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        Set<BFSFileInfo> lsContent = (Set<BFSFileInfo>) waitForResponse(Conf.getListingTimeout());
+        Set<BFSFileInfo> lsContent = (Set<BFSFileInfo>) waitForResponse(Conf.getListingTimeout(), requestId);
         unregisterCallback(responseTbl, responseCallback);
         return Collections.unmodifiableSet(lsContent);
 	}
@@ -287,7 +287,7 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        List<BFSFileInfo> result = (List<BFSFileInfo>) waitForResponse(Conf.getFileOpTimeout());
+        List<BFSFileInfo> result = (List<BFSFileInfo>) waitForResponse(Conf.getFileOpTimeout(), requestId);
         unregisterCallback(responseTbl, responseCallback);
 
         if (result.size() == 0)
@@ -333,7 +333,7 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) waitForResponse(Conf.getListingTimeout());
+        Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) waitForResponse(Conf.getListingTimeout(), requestId);
         unregisterCallback(responseTbl, responseCallback);
 
         // The server returns the set of chunks in unspecified order; we sort by
@@ -382,7 +382,7 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        Set<String> nodeSet = (Set<String>) waitForResponse(Conf.getFileOpTimeout());
+        Set<String> nodeSet = (Set<String>) waitForResponse(Conf.getFileOpTimeout(), requestId);
         unregisterCallback(responseTbl, responseCallback);
         return Collections.unmodifiableSet(nodeSet);
 	}
@@ -410,7 +410,7 @@ public class BFSClient {
     // XXX: this should be rewritten to account for the fact that masters can
 	// die and then resume operation; we should be willing to try to contact
     // them again.
-    private Object waitForResponse(long timeout) {
+    private Object waitForResponse(long timeout, int requestId) {
         while (this.currentMaster < Conf.getNumMasters()) {
             Object result = this.responseQueue.get(timeout);
             if (result != null)
@@ -425,7 +425,7 @@ public class BFSClient {
             updateMasterAddr();
         }
 
-        throw new RuntimeException("BFS request timed out");
+        throw new RuntimeException("BFS request #" + requestId + " timed out");
     }
 
     private void updateMasterAddr() {
