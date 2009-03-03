@@ -60,7 +60,6 @@ timer(future, logical, 1, 1, 100);
 
 define(db, keys(0,1), {String, Predicate, String, String});
 
-/*
 watch(db, a);
 db(Prog, Pred, Pname, "E") :-
     nonheads(Prog, Pred, Pname),
@@ -76,6 +75,7 @@ db(Prog, Pred, Pname, "I") :-
 //define(rulePred, keys(0,1,4), {String, String, Predicate, Rule, String, String});
 define(rulePred, keys(0,1), {String, String, String, String, Integer, Predicate, Rule});
 
+/*
 watch(rulePred, ae);
 public
 rulePred(Prog, Rule, Pname, Type, Ord, PredObj, RuleObj) :-

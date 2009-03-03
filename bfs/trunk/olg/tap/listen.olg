@@ -3,6 +3,11 @@ program tap;
 import java.lang.Double;
 import java.lang.Float;
 import java.lang.Integer;
+import java.util.ArrayList;
+
+
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 
 
 define(tap_precondition, {String, String, String, Long});

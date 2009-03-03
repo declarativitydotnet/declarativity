@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,8 @@ import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Rule;
 import jol.lang.plan.Term;
+import jol.lang.plan.Aggregate;
+import jol.lang.plan.Assignment;
 import jol.lang.plan.Variable;
 import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
@@ -28,6 +31,7 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
+// abandon all hope, ye who enter here
 
 public class Tap {
     public static void main(String[] args) throws JolRuntimeException, UpdateException, InterruptedException {
@@ -89,27 +93,12 @@ public class Tap {
     private void init(String sink) {
         this.sink = sink;
         this.ruleList = new LinkedList<Rule>();
+		this.responseQueue = new SimpleQueue<Object>();
         this.predHash = new HashMap<String, Predicate>();
+		this.firings = new HashMap<String, Integer>();
         this.rewrittenProgram = "";
         this.defines = new HashMap();
 
-/*
-        try {
-            File f = new File(sink);
-            if (!f.exists()) {
-                f.createNewFile();
-                this.watcher = new FileOutputStream(f);
-                String p = "program tap;\n";
-                this.watcher.write(p.getBytes());
-            } else {
-                this.watcher = new FileOutputStream(f);
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("huh?\n");
-        } catch(IOException e) {
-            throw new RuntimeException(e);
-        }
-*/
     }
 
 
@@ -216,34 +205,154 @@ public class Tap {
         return r;
     }
 
-    public void summarize() {
+	
+    public String summarize() {
+		StringBuilder sb = new StringBuilder();
         for (Rule r : ruleList) {
-            //provenance(r);
+            String prov = provenance(r);
+			//System.out.println("PROV: " + prov);
+			sb.append(prov);
         }
+
+		System.out.println("-------------------------PROGRAM:-------------------------\n");
+
+		String finish = "program provenance;\n" + allDefines() + sb.toString();
+		return finish;
     }
 
+	public String provHead(Predicate p) {
+		return  p.name().scope.toString() + "__" + "prov_" + p.name().name.toString();
+	}
+
+
+	private String makeDefine(List<Expression> args, String name) {
+
+		List<String> schema = new ArrayList<String>();	
+		for (Expression v : args) {
+			if (v.type() != null)
+				schema.add(v.type().toString().replace("class ","").replace("interface ",""));
+		}
+		List<String> keys = new ArrayList<String>(); 
+		for (Integer i=0; i < schema.size(); i++) {
+			keys.add(i.toString());		
+		}
+		String key = "keys(" + join(keys, ",", false) + ")";
+		String define = "define(" + name + ", " + key + ", {" + join(schema, ", ",false) + ", String});\n"; 	
+		String watch = "watch(" + name + ", ae);";
+		return define + watch;
+	}
+
+	private void checkDefine(List<Expression> args, String name) {
+		String define = makeDefine(args, name);
+
+		if (defines.get(name) == null) {
+			defines.put(name, define);
+		}
+	} 
+
+	private String allDefines() {
+        Set s = this.defines.entrySet();
+        Iterator i = s.iterator();
+		StringBuilder sb = new StringBuilder();
+        while (i.hasNext()) {
+            Map.Entry me = (Map.Entry) i.next();
+            String key = (String) me.getKey();
+            String value = (String) me.getValue();
+			sb.append(value + "\n");
+        }
+		return sb.toString();
+	}
+
+	public String nullType(Assignment ass) {
+		Class type = ass.value().type();
+		String res;
+		if (type == String.class) {
+			res = "\"\"";
+		} else if (type == int.class) {
+			res = "-1";
+		} else if (type == Integer.class) {
+			res = "-1";
+		} else if (type == Float.class) {
+			res = "-1.0";
+		} else { 
+			res = "(" + type.toString().replace("class ", "") + ")null";
+		}
+
+		return ass.variable().toString() + " := " + res;
+	}
+
     public String provenance(Rule r) {
-        String rewrite = "";
+
+		List<String> rules = new ArrayList<String>();
+		List<String> body = new ArrayList<String>();
+		List<String> provenances = new ArrayList<String>();
+		int pcnt = 0;
         /* for each element of the rule's body, create a new rule */
         for (Term t : r.body()) {
             if (t.getClass() == Predicate.class) {
                 /* new rule */
                 Predicate p = (Predicate) t;
-                if (predHash.containsKey(p.name().name.toString())) {
-                    String newName = conjoin("_", false, "prov", p.name().scope.toString(), p.name().name.toString());
-                    List<Expression> l = new LinkedList<Expression>(p.arguments());
-                    l.add(new Variable(null, "Provenance", String.class));
-                    String mini = newName + "(" +
-                        join(l, ", ", false) +
-                        ") :-\n\t" +
-                        p.toString() + ",\n\t" +
-                        "Provenance := \"|\" + Runtime.idgen();\n";
 
-                }
-            }
+                String newName = provHead(p);
+				checkDefine(p.arguments(), newName);
+
+                List<Expression> l = new LinkedList<Expression>(p.arguments());
+                List<Expression> lSub = new LinkedList<Expression>(p.arguments());
+				String prov = "Provenance" + (pcnt++);
+				provenances.add(prov);
+                l.add(new Variable(null, prov, String.class));
+				lSub.add(new Variable(null, "Provenance", String.class));
+                if (predHash.containsKey(p.name().name.toString()) && (p.locationVariable() == null)) {
+					// this is an edb predicate. 
+                   	String mini = "public\n" + newName + "(" +
+                       	join(lSub, ", ", false) +
+                       	") :-\n\t" +
+                       	p.toString() + ",\n\t" +
+                       	"Provenance := \"|\" + jol.core.Runtime.idgen().toString();\n";
+					rules.add(mini);
+				}
+				body.add(newName + "(" + join(l, ", ", false) + ")");
+			
+            } else if (t.getClass() == jol.lang.plan.Assignment.class) {
+				Assignment ass = (Assignment)t;
+				body.add(nullType(ass));
+			} else {
+				// skip the assignments; they are not part of the lineage....  
+				body.add(t.toString().replace("BOOLEAN","").replace("MATH","").replace("@",""));
+			}
         }
-        return rewrite;
+		List<Expression> args = headArgs(r.head());
+		checkDefine(args, provHead(r.head()));
+		StringBuilder rewrite = new StringBuilder();
+		rewrite.append("public " + provHead(r.head())+ getHeadArgs(args) + join(body, ",\n\t",false));
+		rewrite.append("\n { Provenance := " + join(provenances, "+", false) + "; };\n");
+		for (String subRule : rules) {
+			System.out.println("mini: "+subRule);
+			rewrite.append(subRule);
+		}
+        return rewrite.toString();
     }
+
+	private List<Expression> headArgs(Predicate head) {
+		List<Expression> newArgs = new ArrayList<Expression>();
+		Map<String, String> stopVars = new HashMap<String, String>();
+		for (Expression e : head.arguments()) {
+			if (e instanceof Aggregate) {
+				Aggregate agg = (Aggregate)e;
+				for (Variable v : agg.variables()) {
+					stopVars.put(v.toString(), v.toString());
+				}
+			}
+			// by convention, agg variables are always tagged on to the end.
+			if (stopVars.get(e.toString()) == null) {
+				newArgs.add(e);
+			}
+		}
+		return newArgs;
+	}
+	private String getHeadArgs(List<Expression> args) {
+		return "(" + join(args, ", ", false) + ", Provenance) :-\n\t";
+	}
 
     public String rfooter() {
         String foot = "\tSink := \"" + this.sink + "\";\n";
@@ -256,19 +365,11 @@ public class Tap {
         String name = (rule.isDelete ? "delete-" : "") + rule.name;
         String head1 = "Ts, \"" + name + "\"";
         String body1Str =  "tap_precondition(@" + head1 + ")";
-
         String body = sift(rule.body());
-
         String rule1Str = precondition(rule);
         String rule2Str ="";
-        //String rule2Str = "tap_send(@Sink, " + conjoin(", ", true, rule.program, name, rule.head().name().name) + ", Ts) :-\n\t" +
-        //    "tap_precondition(" + conjoin(",", true, rule.program, name, rule.head().name().name) + " , @Ts),\n" + rfooter();
-
         String type = isNetworkRule(rule) ? "N" : "L";
         String rule3Str = "tap_universe(@Sink, " + conjoin(", ", true, rule.program, name, rule.head().name().name, type ) + ") :-\n\ttap_chaff(@Foo),\n" + rfooter();
-
-        //String prov = provenance(rule);
-
 
         return rule1Str + rule2Str + rule3Str;
     }
@@ -293,23 +394,9 @@ public class Tap {
 
 
     public void provRewriter(String pn, Predicate pred, String type) {
-        System.out.println("pred " + pn + " type " + type);
-
         if (type.equals("E")) {
             predHash.put(pn, pred);
         }
-    }
-
-    public String trunc(String s) {
-        /* maybe some day, I'll do it the not stupid way */
-        String paths[] = s.split("/");
-        List<String> l = new LinkedList<String>();
-        for (int i = 1; i < paths.length; i++) {
-            l.add(paths[i]);
-        }
-
-    
-        return join(l, "/", false);
     }
 
     public void doLookup(String program, String ruleName, List<String> path) throws JolRuntimeException {
@@ -337,7 +424,6 @@ public class Tap {
 
         }        
 
-
         TableName tblName = new TableName("tap", "tap");
         TupleSet tap = new BasicTupleSet(tblName);
         // XXX: hack
@@ -347,45 +433,32 @@ public class Tap {
         Table table = this.system.catalog().table(new TableName("tap", "query"));
         table.register(reportCallback);
 
-        //this.system.start();
+        this.system.evaluate();
+}
 
-        this.system.evaluate();
-        this.system.evaluate();
-        this.system.evaluate();
-        this.system.evaluate();
-    }
+	public Map<String, Integer> firings;
+
+	public void lReport(String p, String r, String pr, Integer c) {
+		firings.put(p+":"+r+"-"+pr, c);
+	}
+	public Map<String, Integer> getFirings() {
+		return firings;
+	}
 
     public void doListen() throws JolRuntimeException{
 
-        Callback reportCallback = new Callback() {
-            @Override
-            public void deletion(TupleSet tuples) {}
-
-            @Override
-            public void insertion(TupleSet tuples) {
-                for (Tuple t : tuples) {
-                    //String program = (String) t.value(0);
-
-                }
-            }
-        };
-
-        this.system.evaluate();
         this.system.install("tap", ClassLoader.getSystemResource("tap/listen.olg"));
         this.system.evaluate();
 
-        /* Identify the data directory */
-        //TableName tblName = new TableName("tap", "tap");
-        //TupleSet datadir = new TupleSet(tblName);
-        // XXX: hack
-        //datadir.add(new Tuple("tcp:localhost:12345", program));
-        //this.system.schedule("tap", tblName, datadir, null);
-
-        Table table = this.system.catalog().table(new TableName("tap", "nc_perc"));
-        table.register(reportCallback);
 
         this.system.start();
     }
+
+	private SimpleQueue<Object> responseQueue;		
+
+	public void shutdown() {
+		this.system.shutdown();
+	}
 
     public void doFinish() throws JolRuntimeException, InterruptedException {
 
@@ -395,27 +468,34 @@ public class Tap {
 
             @Override
             public void insertion(TupleSet tuples) {
-				System.out.println("YO YO\n");
 				for (Tuple t : tuples) {
-                    //String program = (String) t.value(0);
-                }
+                    String program = (String) t.value(0);
+                    String rule = (String) t.value(1);
+                    String pred = (String) t.value(2);
+					Integer iCnt = (Integer) t.value(3);
+					lReport(program, rule, pred, iCnt);
 
-                try {
-                    Thread.sleep(8000);
-                } catch(Exception e) {
-                    throw new RuntimeException(e);
                 }
-                //System.exit(1);
+				responseQueue.put("foo");
+
             }
         };
+
+        Table table = this.system.catalog().table(new TableName("tap", "networkFires"));
+
+        	table.register(reportCallback);
 
         this.system.install("tap", ClassLoader.getSystemResource("tap/tap_done.olg"));
         this.system.evaluate();
         this.system.evaluate();
 
-        Table table = this.system.catalog().table(new TableName("tap", "networkFires"));
-        table.register(reportCallback);
-        this.system.start();
+		// till we timeout
+		Object o = (Object)new String("foo");
+		while (o != null)		
+			o = responseQueue.get(2000);
+ 
+		System.out.println("GOT\n");	
+
     }
 
     public void doRewrite(String program, String file) throws JolRuntimeException, UpdateException {
@@ -486,24 +566,28 @@ public class Tap {
         this.system.evaluate();
         this.system.evaluate();
 
-       // for (int i=0; i<20001; i++)
-       //     this.system.evaluate();
+        String  provProgram = summarize();
 
-        //summarize();
+		installProgram("tap", rewrittenProgram);
+		installProgram("provenance", provProgram);
+    }
 
+	private void installProgram(String name, String program) {
         URL u;
         try {
-            watch();
-            File tmp = File.createTempFile("tap", "olg");
+            File tmp = File.createTempFile(name, "olg");
             /* put our program into a temp file.  wish we didn't have to do this... */
             FileOutputStream fos = new FileOutputStream(tmp);
-            fos.write(rewrittenProgram.getBytes());
+            fos.write(program.getBytes());
             fos.close();
             String path = tmp.getAbsolutePath();
             u = new URL("file", "", path);
-        } catch (IOException e) {
+
+        	this.system.install("user", u);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        this.system.install("user", u);
-    }
+	}
 }
+
+
