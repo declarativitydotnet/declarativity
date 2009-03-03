@@ -54,8 +54,7 @@ global_log(Master, Instance, Name, IsDir, ParentId, Op, Id) :-
 // ID, since that will be unique and consistent among all the masters.
 public
 bfs_global::stasis_file(Master, FileId, ParentId, FName, IsDir) :-
-    global_log#insert(Master, Instance, FName, IsDir, ParentId, Op, _),
-    Op == "i",
+    global_log#insert(Master, Instance, FName, IsDir, ParentId, "i", _),
     FileId := Instance;
 
 // Add a new chunk to the file. Use the Paxos instance # as the chunk ID.
@@ -63,8 +62,7 @@ public
 bfs_global::stasis_fchunk(Master, ChunkId, FileId) :-
     bfs_global::fpath(Master, FPath, FileId),
     bfs_global::stasis_file(Master, FileId, _, _, false),
-    global_log#insert(Master, Instance, FPath, _, _, Op, _),
-    Op == "u",
+    global_log#insert(Master, Instance, FPath, _, _, "u", _),
     ChunkId := Instance;
 
 // Delete the file
