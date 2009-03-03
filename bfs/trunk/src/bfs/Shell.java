@@ -100,8 +100,6 @@ public class Shell {
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
-        //this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
-        //this.system.evaluate();
         this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
         this.system.evaluate();
         this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/chunks.olg"));
