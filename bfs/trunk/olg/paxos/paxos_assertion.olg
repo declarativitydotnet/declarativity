@@ -2,16 +2,22 @@ program paxos_assertion;
 
 // can't have two different decrees for the same instance
 public
-olg_assertion::die(Agent, "internal inconsistency") :-
+olg_assertion::die(Agent, Message) :-
     multipaxos::stasis_success(Agent,Instance,Round,Decree,From),
     multipaxos::stasis_success(Agent2,Instance,Round2,Decree2,From2),
-    Decree != Decree2;
+    Decree != Decree2
+	{ 
+		Message := "for instance "+ Instance.toString() + ", passed decrees "+Decree+" and "+Decree;
+	};
 
 public
 olg_assertion::die(Agent, "internal inconsistency") :-
     multipaxos::sendAccept(Agent,Instance,Round,Decree,Master),
     multipaxos::sendAccept(Agent2,Instance,Round2,Decree2,Master2),
-    Decree != Decree2;
+    Decree != Decree2
+	{ 
+		Message := "for instance "+ Instance.toString() + ", accepted decrees "+Decree+" and "+Decree;
+	};
 
 
 
