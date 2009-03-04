@@ -292,7 +292,7 @@ public class Runtime implements JolSystem {
 	 * @param name The program name.
 	 */
 	public void uninstall(String name) throws JolRuntimeException {
-		TupleSet uninstall = new BasicTupleSet(new TableName("compiler", "uninstall"), new Tuple(name, true));
+		TupleSet uninstall = new BasicTupleSet(new Tuple(name, true));
 		schedule("compile", new TableName("compiler", "uninstall"), uninstall, null);
 	}
 

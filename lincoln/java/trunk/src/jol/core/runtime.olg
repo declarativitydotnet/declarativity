@@ -173,10 +173,10 @@ compileConfig
 schedule(Time, "compile", TblName, Tuples, null) :-
 	config(Time, Program, _, Object),
 	TblName := new TableName("compile", "config"),
-	Tuples := new BasicTupleSet(TblName, Object.tuple());
+	Tuples := new BasicTupleSet(Object.tuple());
 
 schedule(Time+1, "grappa", TblName, Tuples, null) :-
 	config(Time, Program, Debugger, Object),
 	Debugger != null,
 	TblName := new TableName("grappa", "debug"),
-	Tuples := new BasicTupleSet(TblName, jol.lang.Debugger.tuple(Program, Debugger));
+	Tuples := new BasicTupleSet(jol.lang.Debugger.tuple(Program, Debugger));
