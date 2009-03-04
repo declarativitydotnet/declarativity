@@ -46,7 +46,7 @@ public class LogEvents {
 //											System.err.println("Line: " + line);
 											TupleSet s = new BasicTupleSet();
 											s.add(new Tuple(line));
-											runtime.schedule("bfs_global", tableName, new BasicTupleSet(tableName, s), null);
+											runtime.schedule("bfs_global", tableName, new BasicTupleSet(s), null);
 											runtime.evaluate();
 										}
 									}
