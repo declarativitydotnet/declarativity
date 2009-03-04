@@ -22,7 +22,7 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Function;
 
 public class BestCandidate extends Function {
-	
+
 	private class Candidate {
 		public TupleSet tuples;
 		public Comparable priority;
@@ -34,7 +34,7 @@ public class BestCandidate extends Function {
 
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, TASKID, TYPE, TRACKERNAME, PRIORITY};
-	
+
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
 		JobID.class,               // Job identifier
@@ -43,7 +43,7 @@ public class BestCandidate extends Function {
 		String.class,             // Trackername
 		ValueList.class           // The priority
 	};
-	
+
 	public BestCandidate() {
 		super("bestCandidate", SCHEMA);
 	}
@@ -72,13 +72,13 @@ public class BestCandidate extends Function {
 				bestCandidates.put(trackerName, c);
 			}
 		}
-		
-		TupleSet result = new BasicTupleSet(tuples.name());
+
+		TupleSet result = new BasicTupleSet();
 		for (Candidate best : bestCandidates.values()) {
 			result.addAll(best.tuples);
 		}
 		return result;
 	}
-	
+
 
 }
