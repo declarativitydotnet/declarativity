@@ -153,7 +153,7 @@ facts(Program, Name, tupleset<Tuple>) :-
 
 installFacts
 schedule(Time+1, Program, Name, Facts, null) :-
-	facts(Program, Name, Facts), Facts.name(Name),
+	facts(Program, Name, Facts),
 	clock(Location, Time);
 
 /*******************************************************************/
@@ -170,11 +170,13 @@ config(Time, Program, Debugger, Object) :-
 	Object.plan();
 
 compileConfig
-schedule(Time, "compile", Tuples.name(), Tuples, null) :-
+schedule(Time, "compile", TblName, Tuples, null) :-
 	config(Time, Program, _, Object),
-	Tuples := new BasicTupleSet(new TableName("compile", "config"), Object.tuple());
+	TblName := new TableName("compile", "config"),
+	Tuples := new BasicTupleSet(TblName, Object.tuple());
 
-schedule(Time+1, "grappa", Tuples.name(), Tuples, null) :-
+schedule(Time+1, "grappa", TblName, Tuples, null) :-
 	config(Time, Program, Debugger, Object),
 	Debugger != null,
-	Tuples := new BasicTupleSet(new TableName("grappa", "debug"), jol.lang.Debugger.tuple(Program, Debugger));
+	TblName := new TableName("grappa", "debug"),
+	Tuples := new BasicTupleSet(TblName, jol.lang.Debugger.tuple(Program, Debugger));
