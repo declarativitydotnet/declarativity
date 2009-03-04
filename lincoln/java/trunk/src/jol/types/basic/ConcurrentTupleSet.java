@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jol.types.table.TableName;
-
 
 /**
  * A ConcurrentTupleSet is a TupleSet that is backed with a
@@ -30,9 +28,6 @@ public class ConcurrentTupleSet implements TupleSet {
 	/** Tuple set identifier. */
 	private transient long id;
 
-	/** Table name to which the tuples of this set belong. */
-	private TableName name;
-
 	private transient boolean warnedAboutBigTable = false;
 
 	private transient boolean refCount = true;
@@ -42,7 +37,6 @@ public class ConcurrentTupleSet implements TupleSet {
 	 */
 	public ConcurrentTupleSet() {
 		this.id = idGen++;
-		this.name = null;
 		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 	}
 
@@ -52,19 +46,8 @@ public class ConcurrentTupleSet implements TupleSet {
 	 */
 	private ConcurrentTupleSet(TupleSet clone) {
 		this.id = clone.id();
-		this.name = null;
 		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.addAll(clone);
-	}
-
-	/**
-	 * Empty concurrent tuple set that references a given table name.
-	 * @param name The table name to reference.
-	 */
-	public ConcurrentTupleSet(TableName name) {
-		this.id = idGen++;
-		this.name = name;
-		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 	}
 
 	/**
@@ -73,22 +56,18 @@ public class ConcurrentTupleSet implements TupleSet {
 	 * @param name The table name.
 	 * @param tuples The tuples to initialize.
 	 */
-	public ConcurrentTupleSet(TableName name, Set<Tuple> tuples) {
+	public ConcurrentTupleSet(Set<Tuple> tuples) {
 		this.id = idGen++;
-		this.name = name;
 		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.addAll(tuples);
 	}
 
 	/**
-	 * Create a concurrent tuple set referencing the given table name containing
-	 * the single tuple.
-	 * @param name The table name.
+	 * Create a concurrent tuple set containing a single tuple.
 	 * @param tuple A single tuple that will make up this set.
 	 */
-	public ConcurrentTupleSet(TableName name, Tuple tuple) {
+	public ConcurrentTupleSet(Tuple tuple) {
 		this.id = idGen++;
-		this.name = name;
 		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.add(tuple);
 	}
@@ -99,7 +78,7 @@ public class ConcurrentTupleSet implements TupleSet {
 
 	@Override
 	public String toString() {
-		String tuples = name + "[";
+		String tuples = "[";
 		Iterator<Tuple> iter = this.iterator();
 		while (iter.hasNext()) {
 			tuples += iter.next();
@@ -143,7 +122,7 @@ public class ConcurrentTupleSet implements TupleSet {
 
 		if (this.size() > 20000 && !this.warnedAboutBigTable) {
 			this.warnedAboutBigTable = true;
-			System.err.println("CTUPLE SET " + name + " contains " + size() + " tuples");
+			System.err.println("CTUPLE SET " + id + " contains " + size() + " tuples");
 		}
 
 		return true;

@@ -54,7 +54,7 @@ public class ConcurrentHashIndex extends Index {
 		if (tuples != null) {
 		    tuples.add(t);
 		} else {
-			tuples = new ConcurrentTupleSet(table().name());
+			tuples = new ConcurrentTupleSet();
 			tuples.refCount(false);
 			tuples.add(t);
 			this.map.put(key, tuples);
