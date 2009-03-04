@@ -2,8 +2,6 @@ package jol.types.table;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;

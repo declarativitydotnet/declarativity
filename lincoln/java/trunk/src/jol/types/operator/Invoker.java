@@ -1,9 +1,7 @@
 package jol.types.operator;
 
 import jol.core.Runtime;
-import jol.lang.plan.Expression;
 import jol.types.basic.Tuple;
-import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.function.TupleFunction;

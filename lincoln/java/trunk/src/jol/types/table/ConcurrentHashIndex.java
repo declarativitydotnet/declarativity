@@ -1,6 +1,5 @@
 package jol.types.table;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -13,7 +12,6 @@ import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
-import jol.types.table.Index.Type;
 
 public class ConcurrentHashIndex extends Index {
 

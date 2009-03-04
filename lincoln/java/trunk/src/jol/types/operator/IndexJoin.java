@@ -6,7 +6,6 @@ import jol.types.basic.Schema;
 import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
-import jol.types.exception.BadKeyException;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.PlannerException;
 import jol.types.table.Index;
