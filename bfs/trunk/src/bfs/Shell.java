@@ -108,10 +108,9 @@ public class Shell {
         this.system.evaluate();
 
         /* Identify the address of the local node */
-        TableName tblName = new TableName("bfs", "self");
-        TupleSet self = new BasicTupleSet(tblName);
+        TupleSet self = new BasicTupleSet();
         self.add(new Tuple(this.selfAddr));
-        this.system.schedule("bfs", tblName, self, null);
+        this.system.schedule("bfs", new TableName("bfs", "self"), self, null);
         this.system.evaluate();
 
         scheduleNewMaster();
@@ -211,10 +210,9 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "NewChunk", filename));
-        this.system.schedule("bfs", tblName, req, null);
+        this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
         BFSNewChunkInfo result = (BFSNewChunkInfo) spinGet(Conf.getListingTimeout());
         unregisterCallback(responseTbl, responseCallback);
@@ -249,10 +247,9 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "ChunkList", filename));
-        this.system.schedule("bfs", tblName, req, null);
+        this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
         Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) spinGet(Conf.getListingTimeout());
         unregisterCallback(responseTbl, responseCallback);
@@ -309,11 +306,10 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId,
                           "ChunkLocations", chunk.toString()));
-        this.system.schedule("bfs", tblName, req, null);
+        this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
         Set<String> nodeSet = (Set<String>) spinGet(Conf.getListingTimeout());
         unregisterCallback(responseTbl, responseCallback);
@@ -443,10 +439,9 @@ public class Shell {
         	commandName = "Create";
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, commandName, filename));
-        this.system.schedule("bfs", tblName, req, null);
+        this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
         // Wait for the response
         spinGet(Conf.getFileOpTimeout());
@@ -491,10 +486,9 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "Ls", path));
-        this.system.schedule("bfs", tblName, req, null);
+        this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
         Object result = spinGet(Conf.getListingTimeout());
         unregisterCallback(responseTbl, responseCallback);
@@ -538,10 +532,9 @@ public class Shell {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "Rm", path));
-        this.system.schedule("bfs", tblName, req, null);
+        this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
         // Wait for the response
         spinGet(Conf.getFileOpTimeout());

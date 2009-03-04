@@ -31,20 +31,20 @@ public class LogEvents {
 							in.skip(lastNewline+1);
 							in.read(buf, 0, buf.length);
 							in.close();
-	
+
 							int i = buf.length-1;
 							while(i >= 0 && buf[i] != '\n') { i--; }
 							if(i >= 0 && buf[i] == '\n') lastNewline = lastNewline + 1 + i;
-	
+
 							if(i >= 0) {
 								BufferedReader r = new BufferedReader(new CharArrayReader(buf, 0, i));
 								String line;
 								while(null != (line = r.readLine())) {
-									
+
 									if(runtime != null) {
 										synchronized(runtime) {
 //											System.err.println("Line: " + line);
-											TupleSet s = new BasicTupleSet(tableName);
+											TupleSet s = new BasicTupleSet();
 											s.add(new Tuple(line));
 											runtime.schedule("bfs_global", tableName, new BasicTupleSet(tableName, s), null);
 											runtime.evaluate();
@@ -84,7 +84,7 @@ public class LogEvents {
 	public void shutdown() {
 		logThread.done = true;
 	}
-	public static void main(String [] args) { 
+	public static void main(String [] args) {
 		LogEvents e = new LogEvents(null, new File(args[0]));
 		while (e != null) {
 			try {

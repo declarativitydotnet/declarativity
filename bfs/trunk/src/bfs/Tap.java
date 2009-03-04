@@ -205,7 +205,7 @@ public class Tap {
         return r;
     }
 
-	
+
     public String summarize() {
 		StringBuilder sb = new StringBuilder();
         for (Rule r : ruleList) {
@@ -227,17 +227,17 @@ public class Tap {
 
 	private String makeDefine(List<Expression> args, String name) {
 
-		List<String> schema = new ArrayList<String>();	
+		List<String> schema = new ArrayList<String>();
 		for (Expression v : args) {
 			if (v.type() != null)
 				schema.add(v.type().toString().replace("class ","").replace("interface ",""));
 		}
-		List<String> keys = new ArrayList<String>(); 
+		List<String> keys = new ArrayList<String>();
 		for (Integer i=0; i < schema.size(); i++) {
-			keys.add(i.toString());		
+			keys.add(i.toString());
 		}
 		String key = "keys(" + join(keys, ",", false) + ")";
-		String define = "define(" + name + ", " + key + ", {" + join(schema, ", ",false) + ", String});\n"; 	
+		String define = "define(" + name + ", " + key + ", {" + join(schema, ", ",false) + ", String});\n";
 		String watch = "watch(" + name + ", ae);";
 		return define + watch;
 	}
@@ -248,7 +248,7 @@ public class Tap {
 		if (defines.get(name) == null) {
 			defines.put(name, define);
 		}
-	} 
+	}
 
 	private String allDefines() {
         Set s = this.defines.entrySet();
@@ -274,7 +274,7 @@ public class Tap {
 			res = "-1";
 		} else if (type == Float.class) {
 			res = "-1.0";
-		} else { 
+		} else {
 			res = "(" + type.toString().replace("class ", "") + ")null";
 		}
 
@@ -303,7 +303,7 @@ public class Tap {
                 l.add(new Variable(null, prov, String.class));
 				lSub.add(new Variable(null, "Provenance", String.class));
                 if (predHash.containsKey(p.name().name.toString()) && (p.locationVariable() == null)) {
-					// this is an edb predicate. 
+					// this is an edb predicate.
                    	String mini = "public\n" + newName + "(" +
                        	join(lSub, ", ", false) +
                        	") :-\n\t" +
@@ -312,12 +312,12 @@ public class Tap {
 					rules.add(mini);
 				}
 				body.add(newName + "(" + join(l, ", ", false) + ")");
-			
+
             } else if (t.getClass() == jol.lang.plan.Assignment.class) {
 				Assignment ass = (Assignment)t;
 				body.add(nullType(ass));
 			} else {
-				// skip the assignments; they are not part of the lineage....  
+				// skip the assignments; they are not part of the lineage....
 				body.add(t.toString().replace("BOOLEAN","").replace("MATH","").replace("@",""));
 			}
         }
@@ -422,10 +422,10 @@ public class Tap {
             this.system.install("tap", ClassLoader.getSystemResource(prog));
             this.system.evaluate();
 
-        }        
+        }
 
         TableName tblName = new TableName("tap", "tap");
-        TupleSet tap = new BasicTupleSet(tblName);
+        TupleSet tap = new BasicTupleSet();
         // XXX: hack
         tap.add(new Tuple(ruleName, program));
         this.system.schedule("tap", tblName, tap, null);
@@ -454,7 +454,7 @@ public class Tap {
         this.system.start();
     }
 
-	private SimpleQueue<Object> responseQueue;		
+	private SimpleQueue<Object> responseQueue;
 
 	public void shutdown() {
 		this.system.shutdown();
@@ -491,10 +491,10 @@ public class Tap {
 
 		// till we timeout
 		Object o = (Object)new String("foo");
-		while (o != null)		
+		while (o != null)
 			o = responseQueue.get(2000);
- 
-		System.out.println("GOT\n");	
+
+		System.out.println("GOT\n");
 
     }
 
@@ -551,7 +551,7 @@ public class Tap {
         this.system.evaluate();
         /* Identify the data directory */
         TableName tblName = new TableName("tap", "tap");
-        TupleSet datadir = new BasicTupleSet(tblName);
+        TupleSet datadir = new BasicTupleSet();
         // XXX: hack
         datadir.add(new Tuple("tcp:localhost:12345", program));
         this.system.schedule("tap", tblName, datadir, null);

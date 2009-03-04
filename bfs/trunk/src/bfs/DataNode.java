@@ -109,10 +109,9 @@ public class DataNode {
         this.system.evaluate();
 
         /* Identify the data directory */
-        TableName tblName = new TableName("bfs_heartbeat", "datadir");
-        TupleSet datadir = new BasicTupleSet(tblName);
+        TupleSet datadir = new BasicTupleSet();
         datadir.add(new Tuple(Conf.getDataNodeAddress(this.nodeId), this.fsRoot));
-        this.system.schedule("bfs_heartbeat", tblName, datadir, null);
+        this.system.schedule("bfs_heartbeat", new TableName("bfs_heartbeat", "datadir"), datadir, null);
 
         Table table = this.system.catalog().table(new TableName("bfs_heartbeat", "catch_migrate"));
         table.register(copyCallback);
