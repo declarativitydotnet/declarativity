@@ -11,17 +11,17 @@ public class NetworkMessage extends Message {
 	private static final long serialVersionUID = 1L;
 
 	private static Long ids = 0L;
-	
+
 	private String protocol;
-	
+
 	private String program;
-	
+
 	private TableName name;
-	
+
 	private BasicTupleSet insertions;
-	
+
 	private BasicTupleSet deletions;
-	
+
 	public NetworkMessage(String protocol, String program, TableName name, BasicTupleSet insertions, BasicTupleSet deletions) {
 		super(ids++, "network");
 		this.protocol   = protocol;
@@ -30,7 +30,7 @@ public class NetworkMessage extends Message {
 		this.insertions = insertions;
 		this.deletions  = deletions;
 	}
-	
+
 	/**
 	 * The protocol used to transfer this message.
 	 * @return The protocol name.
@@ -38,7 +38,7 @@ public class NetworkMessage extends Message {
 	public String protocol() {
 		return this.protocol;
 	}
-	
+
 	/**
 	 * The program that issued the network message.
 	 * @return The program name.
@@ -46,7 +46,7 @@ public class NetworkMessage extends Message {
 	public String program() {
 		return this.program;
 	}
-	
+
 	/**
 	 * The name of the table to which the insertion/deletion
 	 * tuples belong.
@@ -55,7 +55,7 @@ public class NetworkMessage extends Message {
 	public TableName name() {
 		return this.name;
 	}
-	
+
 	/**
 	 * A set of tuple insertions.
 	 * @return A tuple set.
@@ -63,7 +63,7 @@ public class NetworkMessage extends Message {
 	public BasicTupleSet insertions() {
 		return this.insertions;
 	}
-	
+
 	/**
 	 * A set of tuple deletions.
 	 * @return A tuple set.
