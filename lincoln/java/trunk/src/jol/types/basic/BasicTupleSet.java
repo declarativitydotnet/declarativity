@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jol.types.table.TableName;
-
 
 /**
  * A tuple set is a set contain for tuples that belong to the same relation.
@@ -28,9 +26,6 @@ public class BasicTupleSet implements TupleSet  {
 	/** Tuple set identifier. */
 	private transient long id;
 
-	/** Table name to which the tuples of this set belong. */
-	private TableName name;
-
 	private transient boolean warnedAboutBigTable = false;
 
 	private transient boolean refCount = true;
@@ -40,7 +35,6 @@ public class BasicTupleSet implements TupleSet  {
 	 */
 	public BasicTupleSet() {
 		this.id = idGen++;
-		this.name = null;
 		this.tuples = new HashMap<Tuple, Tuple>();
 	}
 
@@ -50,7 +44,6 @@ public class BasicTupleSet implements TupleSet  {
 	 */
 	private BasicTupleSet(TupleSet clone) {
 		this.id = clone.id();
-		this.name = null;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.addAll(clone);
 	}
@@ -61,9 +54,8 @@ public class BasicTupleSet implements TupleSet  {
 	 * @param name The table name.
 	 * @param tuples The tuples to initialize.
 	 */
-	public BasicTupleSet(TableName name, Set<Tuple> tuples) {
+	public BasicTupleSet(Set<Tuple> tuples) {
 		this.id = idGen++;
-		this.name = name;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.addAll(tuples);
 	}
@@ -74,7 +66,6 @@ public class BasicTupleSet implements TupleSet  {
 	 */
 	public BasicTupleSet(Tuple tuple) {
 		this.id = idGen++;
-		this.name = null;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.add(tuple);
 	}
@@ -85,7 +76,7 @@ public class BasicTupleSet implements TupleSet  {
 
 	@Override
 	public String toString() {
-		String tuples = name + "[";
+		String tuples = "[";
 		Iterator<Tuple> iter = this.iterator();
 		while (iter.hasNext()) {
 			tuples += iter.next();
@@ -129,7 +120,7 @@ public class BasicTupleSet implements TupleSet  {
 
 		if (this.size() > 20000 && !this.warnedAboutBigTable) {
 			this.warnedAboutBigTable = true;
-			System.err.println("TUPLE SET " + name + " contains " + size() + " tuples");
+			System.err.println("TUPLE SET " + id + " contains " + size() + " tuples");
 		}
 
 		return true;

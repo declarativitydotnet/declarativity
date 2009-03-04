@@ -33,7 +33,7 @@ public class ConcurrentTable extends Table {
 	public ConcurrentTable(Runtime context, TableName name, Key key, Class[] types) {
 		super(name, Type.TABLE, key, types);
 		this.key = key;
-		this.tuples = new ConcurrentTupleSet(name);
+		this.tuples = new ConcurrentTupleSet();
 		this.primary = new ConcurrentHashIndex(context, this, key, Index.Type.PRIMARY);
 		this.secondary = new ConcurrentHashMap<Key, Index>();
 
