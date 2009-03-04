@@ -62,7 +62,7 @@ import org.apache.hadoop.util.HostsFileReader;
 import org.apache.hadoop.util.VersionInfo;
 
 public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProtocol {
-	
+
 	private static class TaskAttemptListener extends jol.types.table.Table.Callback {
 		private jol.core.Runtime context;
 		private Map<JobID, List<TaskCompletionEvent>> completionEvents;
@@ -170,15 +170,15 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	private Map<JobID, List<TaskCompletionEvent>> completionEvents;
 
 	private static Long jolTimestamp;
-	
+
 	private TaskTrackerActionTable trackerActionTable;
-	
+
 	private Table jobTable;
-	
+
 	private Table taskTrackerTable;
-	
+
 	private Table taskAttemptTable;
-	
+
 	private LoadActions loadActions;
 
 	public JobTrackerServer(JolSystem context, JobTracker jobTracker, JobConf conf) throws IOException {
@@ -193,12 +193,12 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 		// Read the hosts/exclude files to restrict access to the jobtracker.
 		this.hostsReader = new HostsFileReader(conf.get("mapred.hosts", ""),
 				conf.get("mapred.hosts.exclude", ""));
-		
+
 		this.trackerActionTable = (TaskTrackerActionTable) context.catalog().table(TaskTrackerActionTable.TABLENAME);
 	    this.jobTable = context.catalog().table(JobTable.TABLENAME);
 	    this.taskTrackerTable = context.catalog().table(TaskTrackerTable.TABLENAME);
 	    this.taskAttemptTable = context.catalog().table(TaskAttemptTable.TABLENAME);
-	    
+
 	    if (JobTracker.LOADPOLICY != null) {
 	    	this.loadActions = (LoadActions) context.catalog().table(LoadActions.TABLENAME);
 	    }
@@ -206,7 +206,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	    	this.loadActions = null;
 	    }
 	}
-	
+
 	public synchronized JobID getNewJobId() throws IOException {
 		return new JobID(this.jobTracker.identifier(), this.nextJobId++);
 	}
@@ -566,12 +566,12 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				heavyLoadActions(status, response, actions);
 			}
 			*/
-			
+
 			long dutyCycle = System.currentTimeMillis() - context.timestamp();
 			if (dutyCycle > 4 * MRConstants.HEARTBEAT_INTERVAL_MIN) {
 				response.setHeartbeatInterval((int)dutyCycle);
 			}
-			
+
 			if (debug) {
 				java.lang.System.err.println("RESPONSE " + response + ", ACTIONS " + actions);
 				java.lang.System.err.println("========================= END HEARTBEAT " +
@@ -580,15 +580,15 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			response(trackerName, response, actions);
 		}
 	}
-	
+
 	private synchronized void heavyLoadActions(TaskTrackerStatus status, HeartbeatResponse response, TupleSet tuples) {
 		int maps = status.getMaxMapTasks() - status.countMapTasks();
 		int reduces = status.getMaxReduceTasks() - status.countReduceTasks();
 		List<TaskTrackerAction> actions = new ArrayList<TaskTrackerAction>();
 		actions.addAll(this.loadActions.actions(Constants.TaskType.MAP, maps, tuples));
 		actions.addAll(this.loadActions.actions(Constants.TaskType.REDUCE, reduces, tuples));
-		
-		TupleSet attempts = new BasicTupleSet(TaskAttemptTable.TABLENAME);
+
+		TupleSet attempts = new BasicTupleSet();
 		for (TaskTrackerAction a : actions) {
 			LaunchTaskAction la = (LaunchTaskAction) a;
 			TaskStatus taskStatus = null;
@@ -606,13 +606,13 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			}
 			attempts.add(TaskAttemptTable.tuple(status, taskStatus));
 		}
-		
+
 		response.setActions(actions.toArray(new TaskTrackerAction[actions.size()]));
 		try {
 			if (tuples.size() > 0) {
 				context.flusher(LoadActions.TABLENAME, null, tuples);
 			}
-			
+
 			if (attempts.size() > 0) {
 				context.flusher(TaskAttemptTable.TABLENAME, attempts, null);
 			}
@@ -657,7 +657,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @return true success, false failure
 	 */
 	private synchronized TupleSet updateTaskTracker(TaskTrackerStatus status, boolean init, HeartbeatResponse response) {
-		TupleSet actions = new BasicTupleSet(TaskTrackerActionTable.TABLENAME);
+		TupleSet actions = new BasicTupleSet();
 		try {
 			if (init) {
 				NetworkTopologyTable topologyTable =  (NetworkTopologyTable)
@@ -695,7 +695,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 	 * @throws UpdateException
 	 */
 	private synchronized void updateTasks(TaskTrackerStatus trackerStatus) throws JolRuntimeException {
-		TupleSet attempts = new BasicTupleSet(TaskAttemptTable.TABLENAME);
+		TupleSet attempts = new BasicTupleSet();
 		List<TaskStatus> tasks = trackerStatus.getTaskReports();
 		for (TaskStatus taskStatus : tasks) {
 			Tuple attempt = TaskAttemptTable.tuple(trackerStatus, taskStatus);

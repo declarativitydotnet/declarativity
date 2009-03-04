@@ -30,7 +30,7 @@ public class TaskCreate extends Function {
 	/** An enumeration of all fields. */
 	public enum Field{JOBID, JOBCONF, JOBFILE, TASKID, TYPE,
 		              PARTITION, FILE_INPUT, MAP_COUNT, STATUS};
-	
+
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
 		JobID.class,     // Job identifier
@@ -43,7 +43,7 @@ public class TaskCreate extends Function {
 		Integer.class,   // Map count
 		TaskState.class // Task status
 	};
-	
+
 	private JobTracker jobTracker;
 
 	public TaskCreate(JobTracker jobTracker) {
@@ -53,14 +53,14 @@ public class TaskCreate extends Function {
 
 	@Override
 	public TupleSet insert(TupleSet insertions, TupleSet conflicts) throws UpdateException {
-		TupleSet tasks = new BasicTupleSet(name());
+		TupleSet tasks = new BasicTupleSet();
 		for (Tuple tuple : insertions) {
 			JobID jobid    = (JobID) tuple.value(Field.JOBID.ordinal());
 			JobConf conf   = (JobConf) tuple.value(Field.JOBCONF.ordinal());
 			String jobFile = (String) tuple.value(Field.JOBFILE.ordinal());
-			
+
 			if (jobid == null || conf == null) {
-				throw new UpdateException("Error: table function " + name() + 
+				throw new UpdateException("Error: table function " + name() +
 						                  " requires valid jobid and jobconf!");
 			}
 			try {
@@ -71,34 +71,34 @@ public class TaskCreate extends Function {
 		}
 		return tasks;
 	}
-	
+
 	private TupleSet createTasks(JobID jobid, JobConf conf, String jobFile) throws IOException {
-		TupleSet tasks = new BasicTupleSet(name());
-		
+		TupleSet tasks = new BasicTupleSet();
+
 	    Path sysDir = this.jobTracker.systemDir();
 	    FileSystem fs = sysDir.getFileSystem(conf);
 	    DataInputStream splitFile = fs.open(new Path(conf.get("mapred.job.split.file")));
 	    Path[] paths = FileInputFormat.getInputPaths(conf);
-	    
+
 	    JobClient.RawSplit[] splits;
 	    try {
 	      splits = JobClient.readSplitFile(splitFile);
 	    } finally {
 	      splitFile.close();
 	    }
-	    
+
 	    int numMapTasks = 0;
 	    for (int i = 0; i < splits.length; i++) {
 	    	if (splits[i] != null && splits[i].getLocations().length > 0) {
 	    		numMapTasks++;
 	    	}
 	    }
-	    
+
 	    if (conf.getNumMapTasks() != splits.length) {
 	    	System.err.println("ERROR: MISMATCH IN MAP COUNT BETWEEN CONF AND SPLIT");
 	    	conf.setNumMapTasks(splits.length);
 	    }
-	    
+
 	    int mapid = 0;
 	    for(int i=0; i < splits.length; i++) {
 	    	if (splits[i].getLocations().length == 0) {
@@ -107,7 +107,7 @@ public class TaskCreate extends Function {
 	    	}
 	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile, mapid++, new FileInput(null, splits[i]), numMapTasks));
 	    }
-	    
+
 	    //
 	    // Create reduce tasks
 	    //
@@ -116,7 +116,7 @@ public class TaskCreate extends Function {
 	    for (int i = 0; i < numReduceTasks; i++) {
 	    	tasks.add(create(jobid, TaskType.REDUCE, conf, jobFile, i, null, numMapTasks));
 	    }
-	    
+
 	    // create job specific temporary directory in output path
 	    Path outputPath = FileOutputFormat.getOutputPath(conf);
 	    if (outputPath != null) {
@@ -129,14 +129,14 @@ public class TaskCreate extends Function {
 
 		return tasks;
 	}
-	
-	private Tuple create(JobID jobid, TaskType type, JobConf conf, String jobFile, 
+
+	private Tuple create(JobID jobid, TaskType type, JobConf conf, String jobFile,
 			             Integer partition, FileInput input, int mapCount) {
 		TaskID taskid = new TaskID(jobid, type == TaskType.MAP, partition);
-		
-		return new Tuple(jobid, conf, jobFile, 
-				         taskid, type, partition, input, 
+
+		return new Tuple(jobid, conf, jobFile,
+				         taskid, type, partition, input,
 				         mapCount, new TaskState(jobid, taskid));
 	}
-	
+
 }
