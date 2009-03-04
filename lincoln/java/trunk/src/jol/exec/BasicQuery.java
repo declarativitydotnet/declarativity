@@ -29,12 +29,7 @@ public class BasicQuery extends Query {
 
 	@Override
 	public TupleSet evaluate(TupleSet input) throws JolRuntimeException {
-		if (!input.name().equals(input().name())) {
-			throw new JolRuntimeException("Query expects event " + input().name() +
-					                     " but got event " + input.name());
-		}
-
-		TupleSet tuples = new BasicTupleSet(input.name());
+		TupleSet tuples = new BasicTupleSet();
 		for (Tuple tuple : input) {
 			tuple = tuple.clone();
 			tuples.add(tuple);

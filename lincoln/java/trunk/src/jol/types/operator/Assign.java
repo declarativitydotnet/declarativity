@@ -48,7 +48,7 @@ public class Assign<C extends Comparable<C> > extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		TupleSet deltas = new BasicTupleSet(tuples.name());
+		TupleSet deltas = new BasicTupleSet();
 		for (Tuple tuple : tuples) {
 			try {
 				Object[] delta = tuple.toArray();

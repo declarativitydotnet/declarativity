@@ -154,7 +154,7 @@ public class EventFilter extends Operator {
 		if (filters.isEmpty())
 			return tuples;
 
-		TupleSet result = new BasicTupleSet(tuples.name());
+		TupleSet result = new BasicTupleSet();
 
 		for (Tuple tuple : tuples) {
 		    boolean valid = true;

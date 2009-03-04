@@ -6,15 +6,12 @@ import java.util.Set;
 import jol.types.table.TableName;
 
 public interface TupleSet extends Set<Tuple>, Comparable<TupleSet>, Serializable {
-	
+
 	public void refCount(boolean count);
-	
+
 	public TupleSet clone();
 
 	public long id();
 
-	public TableName name();
-	
 	public void name(TableName name);
-
 }

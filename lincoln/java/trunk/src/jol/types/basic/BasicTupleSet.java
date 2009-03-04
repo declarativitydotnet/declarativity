@@ -48,7 +48,7 @@ public class BasicTupleSet implements TupleSet  {
 	 */
 	private BasicTupleSet(TupleSet clone) {
 		this.id = clone.id();
-		this.name = clone.name();
+		this.name = null;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.addAll(clone);
 	}
