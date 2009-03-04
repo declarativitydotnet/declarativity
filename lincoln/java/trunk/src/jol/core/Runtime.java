@@ -473,14 +473,16 @@ public class Runtime implements JolSystem {
 			if (arg.startsWith("-d")) {
 				debug = true;
 				if (arg.length() > "-d".length()) {
-					debugger = arg.substring(1, arg.length());
+					debugger = arg.substring(2, arg.length());
 					debugger = debugger.trim();
 					System.err.println("DEBUGGER: " + debugger);
+				} else {
+					debugger = args[++i].trim();
 				}
 			}
 			else if (arg.startsWith("-p")) {
 				if (arg.length() > "-p".length()) {
-					String p = arg.substring(1, arg.length());
+					String p = arg.substring(2, arg.length());
 					port = Integer.parseInt(p.trim());
 				}
 				else {
