@@ -372,7 +372,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				/* Create a new job and schedule its insertion into the job table. */
 				job = jobTracker.newJob(jobid);
 				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME,
-						new BasicTupleSet(JobTable.TABLENAME, job), null);
+						new BasicTupleSet(job), null);
 				context.evaluate();
 
 				JobStatus status = null;
@@ -405,7 +405,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 				Object [] values = job.toArray();
 				values[JobTable.Field.PRIORITY.ordinal()] = value;
 				job = new Tuple(values);
-				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, new BasicTupleSet(JobTable.TABLENAME, job), null);
+				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, new BasicTupleSet(job), null);
 			} catch (JolRuntimeException e) {
 				throw new IOException(e);
 			}
@@ -486,7 +486,7 @@ public class JobTrackerServer implements JobSubmissionProtocol, InterTrackerProt
 			String errorClass,
 			String errorMessage)  throws IOException {
 		TupleSet insertions =
-			new BasicTupleSet(TaskTrackerErrorTable.TABLENAME,
+			new BasicTupleSet(
 					new Tuple(taskTracker, errorClass, errorMessage));
 		try {
 			context.schedule(JobTracker.PROGRAM, TaskTrackerErrorTable.TABLENAME, insertions, null);
