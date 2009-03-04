@@ -1,6 +1,8 @@
 package jol.types.basic;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,14 +26,14 @@ public class BasicTupleSet implements TupleSet  {
 	private static long idGen = 0L;
 
 	/** Tuple set identifier. */
-	private long id;
+	private transient long id;
 
 	/** Table name to which the tuples of this set belong. */
 	private TableName name;
 
-	private boolean warnedAboutBigTable = false;
+	private transient boolean warnedAboutBigTable = false;
 
-	private boolean refCount = true;
+	private transient boolean refCount = true;
 
 	/**
 	 * Create an empty tuple set.
@@ -264,6 +266,23 @@ public class BasicTupleSet implements TupleSet  {
 
 	public <T> T[] toArray(T[] a) {
 		return this.tuples.values().toArray(a);
+	}
+
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+	}
+
+	private void readObject(ObjectInputStream in) throws IOException {
+		try {
+			in.defaultReadObject();
+		} catch (ClassNotFoundException e) {
+			throw new IOException(e);
+		}
+
+		// We need to manually restore transient fields
+		this.id = idGen++;
+		this.warnedAboutBigTable = false;
+		this.refCount = true;
 	}
 }
 
