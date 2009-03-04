@@ -282,7 +282,7 @@ public class Runtime implements JolSystem {
 	}
 
 	public void install(String owner, String debugger, URL url) throws JolRuntimeException {
-		TupleSet compilation = new BasicTupleSet(CompileTable.TABLENAME);
+		TupleSet compilation = new BasicTupleSet();
 		compilation.add(new Tuple(null, owner, debugger, url.toString(), null));
 		schedule("runtime", CompileTable.TABLENAME, compilation, null);
 	}

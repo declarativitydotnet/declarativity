@@ -72,7 +72,7 @@ public class ConcurrentHashIndex extends Index {
 		if (tuples != null)
 		    return tuples;
 		else
-		    return new BasicTupleSet(table().name());
+		    return new BasicTupleSet();
 	}
 
 	@Override

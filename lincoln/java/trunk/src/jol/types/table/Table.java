@@ -341,7 +341,7 @@ public abstract class Table implements Comparable<Table> {
 	 */
 	public void force(Tuple tuple) throws UpdateException {
 		TupleSet insertion = new BasicTupleSet(name(), tuple);
-		TupleSet conflicts = new BasicTupleSet(name());
+		TupleSet conflicts = new BasicTupleSet();
 		insert(insertion, conflicts);
 		delete(conflicts);
 	}
@@ -356,7 +356,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException
 	 **/
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-		TupleSet delta = new BasicTupleSet(name());
+		TupleSet delta = new BasicTupleSet();
 		for (Tuple t : tuples) {
 			t = t.clone();
 
@@ -380,7 +380,7 @@ public abstract class Table implements Comparable<Table> {
 				/* Update the indices here so that primary key
 				 * conflicts from within the tupleset will show up
 				 * during this method call.  */
-				TupleSet insertion = new BasicTupleSet(name());
+				TupleSet insertion = new BasicTupleSet();
 				insertion.add(t);
 				synchronized (this) {
 				    for (Callback callback : this.callbacks) {
@@ -399,7 +399,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException
 	 **/
 	public TupleSet delete(Iterable<Tuple> tuples) throws UpdateException {
-		TupleSet delta = new BasicTupleSet(name());
+		TupleSet delta = new BasicTupleSet();
 
 		for (Tuple t : tuples) {
 			if (delete(t)) {

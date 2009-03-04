@@ -33,7 +33,7 @@ public class Connection extends ObjectTable {
 
 	@Override
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-		TupleSet success = new BasicTupleSet(name());
+		TupleSet success = new BasicTupleSet();
 		for (Tuple tuple : tuples) {
 			String  protocol = (String) tuple.value(Field.PROTOCOL.ordinal());
 			Address address  = (Address) tuple.value(Field.ADDRESS.ordinal());

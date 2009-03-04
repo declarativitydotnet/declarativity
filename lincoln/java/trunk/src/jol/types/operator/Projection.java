@@ -65,7 +65,7 @@ public class Projection extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		TupleSet result = new BasicTupleSet(predicate.name());
+		TupleSet result = new BasicTupleSet();
 		for (Tuple tuple : tuples) {
 			try {
 				List<Object> values = new ArrayList<Object>();
