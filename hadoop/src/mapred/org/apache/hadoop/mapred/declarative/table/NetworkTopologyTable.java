@@ -26,7 +26,7 @@ import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
 public class NetworkTopologyTable extends ObjectTable {
-	private class Resolver extends Thread { 
+	private class Resolver extends Thread {
 		private jol.core.JolSystem context;
 		private DNSToSwitchMapping dnsToSwitchMapping;
 
@@ -95,7 +95,7 @@ public class NetworkTopologyTable extends ObjectTable {
 		}
 
 		private void register(String host, String networkLoc) throws JolRuntimeException {
-			BasicTupleSet nodes = new BasicTupleSet(NetworkTopologyTable.TABLENAME);
+			BasicTupleSet nodes = new BasicTupleSet();
 			Node     node  = new NodeBase(host, networkLoc);
 			while (node != null) {
 				nodes.add(NetworkTopologyTable.node(node));
