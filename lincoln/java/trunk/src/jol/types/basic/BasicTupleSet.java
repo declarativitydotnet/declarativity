@@ -69,14 +69,12 @@ public class BasicTupleSet implements TupleSet  {
 	}
 
 	/**
-	 * Create a tuple set referencing the given table name containing
-	 * the single tuple.
-	 * @param name The table name.
+	 * Create a tuple set containing a single tuple.
 	 * @param tuple A single tuple that will make up this set.
 	 */
-	public BasicTupleSet(TableName name, Tuple tuple) {
+	public BasicTupleSet(Tuple tuple) {
 		this.id = idGen++;
-		this.name = name;
+		this.name = null;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.add(tuple);
 	}

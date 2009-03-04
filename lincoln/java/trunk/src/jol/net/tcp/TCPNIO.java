@@ -285,7 +285,7 @@ public class TCPNIO extends Server {
                 Message message = (Message) istream.readObject();
                 IP address = new IP(this.channel.socket().getInetAddress(), this.channel.socket().getPort());
                 Tuple tuple = new Tuple(address, message);
-                context.schedule("tcp", ReceiveMessage, new BasicTupleSet(ReceiveMessage, tuple), null);
+                context.schedule("tcp", ReceiveMessage, new BasicTupleSet(tuple), null);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             } catch (JolRuntimeException e) {

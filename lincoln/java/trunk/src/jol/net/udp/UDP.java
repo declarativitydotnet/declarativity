@@ -57,7 +57,7 @@ public class UDP extends Server {
 					ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(buf));
 					Message message = (Message) input.readObject();
 					Tuple tuple = new Tuple("receive", new IP(packet.getAddress(), packet.getPort()), message);
-					context.schedule("udp", UDPMessage, new BasicTupleSet(UDPMessage, tuple), null);
+					context.schedule("udp", UDPMessage, new BasicTupleSet(tuple), null);
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
 					System.exit(0);

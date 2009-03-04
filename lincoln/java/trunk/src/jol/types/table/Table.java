@@ -340,7 +340,7 @@ public abstract class Table implements Comparable<Table> {
 	 * @throws UpdateException Bad tuple.
 	 */
 	public void force(Tuple tuple) throws UpdateException {
-		TupleSet insertion = new BasicTupleSet(name(), tuple);
+		TupleSet insertion = new BasicTupleSet(tuple);
 		TupleSet conflicts = new BasicTupleSet();
 		insert(insertion, conflicts);
 		delete(conflicts);

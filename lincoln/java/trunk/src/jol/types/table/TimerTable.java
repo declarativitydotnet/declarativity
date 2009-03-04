@@ -228,7 +228,7 @@ public class TimerTable extends Table {
 	}
 
 	private BasicTupleSet timer() {
-		return new BasicTupleSet(name(), new Tuple(this.period, this.ttl, this.delay));
+		return new BasicTupleSet(new Tuple(this.period, this.ttl, this.delay));
 	}
 
 	private void reset() {

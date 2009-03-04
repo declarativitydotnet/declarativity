@@ -9,7 +9,7 @@ import jol.types.table.TableName;
 import jol.core.Runtime;
 
 /**
- * The system clock. 
+ * The system clock.
  * A single clock tick represents a full fixpoint iteration
  * of all programs currently installed in the Runtime.
  *
@@ -17,22 +17,22 @@ import jol.core.Runtime;
 public class Clock extends ObjectTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName(GLOBALSCOPE, "clock");
-	
+
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);
-	
+
 	/** An enumeration of all clock table fields. */
 	public enum Field{LOCATION, CLOCK};
-	
+
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
 		String.class,  // Location
-		Long.class     // Clock value 
+		Long.class     // Clock value
 	};
-	
+
 	/** The location of this clock */
 	private String location;
-	
+
 	/** The clock value. */
 	private Long clock;
 
@@ -46,38 +46,38 @@ public class Clock extends ObjectTable {
 		this.location = location;
 		this.clock = 0L;
 	}
-	
+
 	/**
 	 * @return The current clock value.
 	 */
 	public Long current() {
 		return this.clock;
 	}
-	
+
 	/**
 	 * Creates a tupleset containing the given time value.
 	 * @param time The time value.
 	 * @return A tupleset that can be inserted into the clock table.
 	 */
 	public BasicTupleSet time(Long time) {
-		return new BasicTupleSet(name(), new Tuple(location, time));
+		return new BasicTupleSet(new Tuple(location, time));
 	}
-	
+
 	/**
 	 * Updates the clock to the time indicated in the tuple.
-	 * @param tuple Contains the new clock value. 
+	 * @param tuple Contains the new clock value.
 	 */
 	@Override
 	public boolean insert(Tuple tuple) throws UpdateException {
 		Long time = (Long) tuple.value(Field.CLOCK.ordinal());
 		if (time < this.clock) {
-			throw new UpdateException("Invalid clock time " +  time + 
+			throw new UpdateException("Invalid clock time " +  time +
 					                  " current clock value = " + this.clock);
 		}
 		this.clock = time;
 		return super.insert(tuple);
 	}
-	
+
 	@Override
 	public boolean delete(Tuple tuple) throws UpdateException {
 		return super.delete(tuple);
