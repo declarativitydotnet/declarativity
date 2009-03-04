@@ -5,13 +5,20 @@ import java.io.CharArrayReader;
 import java.io.File;
 import java.io.FileReader;
 
+import jol.core.JolSystem;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.basic.BasicTupleSet;
+import jol.types.table.TableName;
+
 public class LogEvents {
 	private final File name;
 	private class LogThread extends Thread {
 		public boolean done = false;
 		@Override
-        public void run() { 
-			
+        public void run() {
+//			System.err.println("Started log thread" + this);
+			final TableName tableName =  new TableName("bfs_global", "error_log");
 			int oldlen = 0;
 			int lastNewline = -1;
 			try {
@@ -33,7 +40,16 @@ public class LogEvents {
 								BufferedReader r = new BufferedReader(new CharArrayReader(buf, 0, i));
 								String line;
 								while(null != (line = r.readLine())) {
-									System.out.println("Line: " + line);
+									
+									if(runtime != null) {
+										synchronized(runtime) {
+//											System.err.println("Line: " + line);
+											TupleSet s = new BasicTupleSet(tableName);
+											s.add(new Tuple(line));
+											runtime.schedule("bfs_global", tableName, new BasicTupleSet(tableName, s), null);
+											runtime.evaluate();
+										}
+									}
 								}
 							}
 							oldlen = curlen;
@@ -52,23 +68,24 @@ public class LogEvents {
 				e.printStackTrace();
 			}
 		}
-		public LogThread(File f) {
-			super("Log monitor for " + f);
+		public LogThread() {
+			super("Log monitor for " + name);
 		}
 	}
 	private final LogThread logThread;
-
+	private final JolSystem runtime;
 	final boolean done = false;
-	public LogEvents(File name) {
+	public LogEvents(JolSystem runtime, File name) {
+		this.runtime = runtime;
 		this.name = name;
-		logThread = new LogThread(name);
-		logThread.run();
+		logThread = new LogThread();
+		logThread.start();
 	}
 	public void shutdown() {
 		logThread.done = true;
 	}
 	public static void main(String [] args) { 
-		LogEvents e = new LogEvents(new File(args[0]));
+		LogEvents e = new LogEvents(null, new File(args[0]));
 		while (e != null) {
 			try {
 				Thread.sleep(1000);
