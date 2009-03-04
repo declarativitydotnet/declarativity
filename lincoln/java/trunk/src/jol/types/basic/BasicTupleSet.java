@@ -133,30 +133,13 @@ public class BasicTupleSet implements TupleSet  {
 		return this.id;
 	}
 
-	/**
-	 * The name of the table that the tuples belonging to this set are
-	 * part of.
-	 * @return The table name.
-	 */
-	public TableName name() {
-		return this.name;
-	}
-
-	/**
-	 * Set the table name.
-	 * @param name the table name.
-	 */
-	public void name(TableName name) {
-		this.name = name;
-	}
-
 	public boolean addAll(Iterable<? extends Tuple> tuples) {
 		for (Tuple t : tuples)
 			add(t);
 
 		if (this.size() > 20000 && !this.warnedAboutBigTable) {
 			this.warnedAboutBigTable = true;
-			System.err.println("TUPLE SET " + name() + " contains " + size() + " tuples");
+			System.err.println("TUPLE SET " + name + " contains " + size() + " tuples");
 		}
 
 		return true;
