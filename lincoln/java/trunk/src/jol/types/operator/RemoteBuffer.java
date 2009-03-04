@@ -71,7 +71,7 @@ public class RemoteBuffer extends Operator {
 		for (Tuple tuple : tuples) {
 			String key = (String) this.addressAccessor.evaluate(tuple);
 			if (!groupByAddress.containsKey(key)) {
-				groupByAddress.put(key, new BasicTupleSet(this.predicate.name()));
+				groupByAddress.put(key, new BasicTupleSet());
 			}
 			groupByAddress.get(key).add(tuple);
 		}
@@ -81,8 +81,8 @@ public class RemoteBuffer extends Operator {
 			String location = address.substring(address.indexOf(':') + 1);
 	        Tuple remote = new Tuple("network", "send", new IP(location),
 			        		         new NetworkMessage(protocol, this.program, predicate.name(),
-			         		                      		new BasicTupleSet(predicate.name()),
-			        		        		            new BasicTupleSet(predicate.name())));
+			         		                      		new BasicTupleSet(),
+			        		        		            new BasicTupleSet()));
 
 			NetworkMessage message = (NetworkMessage) remote.value(NetworkBuffer.Field.MESSAGE.ordinal());
 			if (this.deletion) {
@@ -100,7 +100,7 @@ public class RemoteBuffer extends Operator {
 			}
 		}
 
-		return new BasicTupleSet(this.predicate.name());
+		return new BasicTupleSet();
 	}
 
 	public Predicate predicate() {

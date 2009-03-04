@@ -58,7 +58,7 @@ public class HashIndex extends Index {
 		if (tuples != null) {
 		    tuples.add(t);
 		} else {
-			tuples = new BasicTupleSet(table().name());
+			tuples = new BasicTupleSet();
 			tuples.refCount(false);
 			tuples.add(t);
 			this.map.put(key, tuples);
@@ -76,7 +76,7 @@ public class HashIndex extends Index {
 		if (tuples != null)
 		    return tuples;
 		else
-		    return new BasicTupleSet(table().name());
+		    return new BasicTupleSet();
 	}
 
 	@Override

@@ -41,7 +41,9 @@ public class ConcurrentTupleSet implements TupleSet {
 	 * Create an empty concurrent tuple set.
 	 */
 	public ConcurrentTupleSet() {
-		this((TableName) null);
+		this.id = idGen++;
+		this.name = null;
+		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 	}
 
 	/**

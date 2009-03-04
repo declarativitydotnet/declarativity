@@ -50,8 +50,8 @@ public class Driver extends Thread {
 				this.time    = (Long)      tuple.value(Field.TIME.ordinal());
 				this.program = (String)    tuple.value(Field.PROGRAM.ordinal());
 				this.name    = (TableName) tuple.value(Field.TABLENAME.ordinal());
-				this.insertions = new BasicTupleSet(name);
-				this.deletions = new BasicTupleSet(name);
+				this.insertions = new BasicTupleSet();
+				this.deletions = new BasicTupleSet();
 			}
 
 			public void add(Tuple tuple) {
@@ -95,7 +95,7 @@ public class Driver extends Thread {
 				}
 				units.get(unit).add(tuple);
 			}
-			TupleSet aggregate = new BasicTupleSet(name());
+			TupleSet aggregate = new BasicTupleSet();
 			for (ScheduleUnit unit : units.keySet()) {
 				if (unit.insertions.size() > 0 || unit.deletions.size() > 0)
 					aggregate.add(unit.tuple());
@@ -135,7 +135,7 @@ public class Driver extends Thread {
 		 * @throws UpdateException
 		 */
 		TupleSet insert(TupleSet tuples) throws UpdateException {
-			TupleSet delta = new BasicTupleSet(name());
+			TupleSet delta = new BasicTupleSet();
 			for (Tuple tuple : tuples) {
 				Long      time       = (Long)      tuple.value(Evaluator.Field.TIME.ordinal());
 				String    program    = (String)    tuple.value(Evaluator.Field.PROGRAM.ordinal());
@@ -158,7 +158,7 @@ public class Driver extends Thread {
 
 		@Override
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-			TupleSet delta = new BasicTupleSet(name());
+			TupleSet delta = new BasicTupleSet();
 			for (Tuple tuple : aggregate(tuples)) {
 				Long      time       = (Long)      tuple.value(Field.TIME.ordinal());
 				String    program    = (String)    tuple.value(Field.PROGRAM.ordinal());
@@ -175,8 +175,8 @@ public class Driver extends Thread {
 		private Tuple flush(Long time, String program, TableName name,
 				            TupleSet insertions, TupleSet deletions)
 		throws UpdateException {
-			if (insertions == null) insertions = new BasicTupleSet(name);
-			if (deletions == null)  deletions = new BasicTupleSet(name);
+			if (insertions == null) insertions = new BasicTupleSet();
+			if (deletions == null)  deletions = new BasicTupleSet();
 
 			if (time < context.clock().current()) {
 				System.err.println("ERROR: Evaluating schedule tuple with time = " +
@@ -309,7 +309,7 @@ public class Driver extends Thread {
 
 		@Override
 		public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
-			TupleSet delta = new BasicTupleSet(name());
+			TupleSet delta = new BasicTupleSet();
 			for (Tuple tuple : tuples) {
 				Long      time       = (Long)      tuple.value(Field.TIME.ordinal());
 				String    programName= (String)    tuple.value(Field.PROGRAM.ordinal());
@@ -317,7 +317,7 @@ public class Driver extends Thread {
 				TableName name       = (TableName) tuple.value(Field.TABLENAME.ordinal());
 				TupleSet  insertions = (TupleSet)  tuple.value(Field.INSERTIONS.ordinal());
 				TupleSet  deletions  = (TupleSet)  tuple.value(Field.DELETIONS.ordinal());
-				if (deletions == null) deletions = new BasicTupleSet(name);
+				if (deletions == null) deletions = new BasicTupleSet();
 				Program program = context.program(programName);
 
 				if (query == null) {
@@ -452,7 +452,7 @@ public class Driver extends Thread {
 				}
 			}
 
-			TupleSet delta = new BasicTupleSet(name);
+			TupleSet delta = new BasicTupleSet();
 			for (Tuple continuation : continuations.values()) {
 				TupleSet ins  = (TupleSet) continuation.value(Field.INSERTIONS.ordinal());
 				TupleSet dels = (TupleSet) continuation.value(Field.DELETIONS.ordinal());
@@ -478,8 +478,8 @@ public class Driver extends Thread {
 
 			if (!continuations.containsKey(key)) {
 				Tuple tuple = new Tuple(time, program, null, tableName,
-						                new BasicTupleSet(tableName),
-						                new BasicTupleSet(tableName));
+						                new BasicTupleSet(),
+						                new BasicTupleSet());
 				continuations.put(key, tuple);
 			}
 

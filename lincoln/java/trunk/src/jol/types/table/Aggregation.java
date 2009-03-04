@@ -79,7 +79,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		this.predicate = predicate;
 		this.aggregateFunctions = null;
 		this.singleGroupAggregateFunctions = null;
-		this.aggregateTuples    = new BasicTupleSet(name());
+		this.aggregateTuples    = new BasicTupleSet();
 		this.aggregates         = new ArrayList<jol.lang.plan.Aggregate>();
 
 		this.aggregateTuples.refCount(false);
@@ -139,7 +139,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 	 * all insert/delete calls.
 	 */
 	private TupleSet result() {
-		TupleSet result = new BasicTupleSet(name());
+		TupleSet result = new BasicTupleSet();
 		if (this.singleGroupAggregateFunctions != null) {
 		    Object[] arry = new Object[this.singleGroupAggregateFunctions.size()];
 		    for(int i = 0; i < arry.length; i++) {
@@ -300,8 +300,8 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 			e.printStackTrace();
 		}
 
-		TupleSet delta = new BasicTupleSet(name());
-		delta.addAll((TupleSet)tuples());
+		TupleSet delta = new BasicTupleSet();
+		delta.addAll((TupleSet) tuples());
 
 		delta.removeAll(result());  // removed = tuples that don't exist in after.
 		return super.delete(delta); // signal indices that we've removed these tuples.

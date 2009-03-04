@@ -20,16 +20,16 @@ import jol.types.exception.UpdateException;
 public class BasicTable extends Table {
 	/** The primary key. */
 	protected Key key;
-	
+
 	/** The set of tuples stored by this table. */
 	protected TupleSet tuples;
-	
+
 	/** The primary index. */
 	protected Index primary;
-	
+
 	/** All secondary indices. */
 	protected Map<Key, Index> secondary;
-	
+
 	/**
 	 * Create a new basic table.
 	 * @param context The runtime context.
@@ -40,17 +40,17 @@ public class BasicTable extends Table {
 	public BasicTable(Runtime context, TableName name, Key key, Class[] types) {
 		super(name, Type.TABLE, key, types);
 		this.key = key;
-		this.tuples = new BasicTupleSet(name);
+		this.tuples = new BasicTupleSet();
 		this.primary = new HashIndex(context, this, key, Index.Type.PRIMARY);
 		this.secondary = new HashMap<Key, Index>();
-		
+
 		this.tuples.refCount(false);
 	}
-	
+
 	@Override
 	public Iterable<Tuple> tuples() {
 		try {
-			return (this.tuples == null ? new BasicTupleSet(name()) : this.tuples.clone());
+			return (this.tuples == null ? new BasicTupleSet() : this.tuples.clone());
 		} catch (Exception e) {
 			System.err.println("TABLE " + name() + " ERROR: " + e);
 			e.printStackTrace();
@@ -58,12 +58,12 @@ public class BasicTable extends Table {
 		}
 		return null;
 	}
-	
+
 	@Override
 	protected boolean insert(Tuple t) throws UpdateException {
 		return this.tuples.add(t);
 	}
-	
+
 	@Override
 	protected boolean delete(Tuple t) throws UpdateException {
 		return this.tuples.remove(t);

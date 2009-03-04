@@ -92,7 +92,7 @@ public class Flatten extends Function {
 		}
 		else {
 			/* Flatten along the first position */
-			TupleSet delta = new BasicTupleSet(name());
+			TupleSet delta = new BasicTupleSet();
 			int   position = flattenPositions.remove(0);
 			for (Tuple tuple : tuples) {
 				List<Object> list = (List<Object>) tuple.value(position);

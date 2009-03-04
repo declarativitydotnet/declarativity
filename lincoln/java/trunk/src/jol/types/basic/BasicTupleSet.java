@@ -39,7 +39,9 @@ public class BasicTupleSet implements TupleSet  {
 	 * Create an empty tuple set.
 	 */
 	public BasicTupleSet() {
-		this((TableName) null);
+		this.id = idGen++;
+		this.name = null;
+		this.tuples = new HashMap<Tuple, Tuple>();
 	}
 
 	/**
@@ -51,16 +53,6 @@ public class BasicTupleSet implements TupleSet  {
 		this.name = null;
 		this.tuples = new HashMap<Tuple, Tuple>();
 		this.addAll(clone);
-	}
-
-	/**
-	 * Empty tuple set that references a given table name.
-	 * @param name The table name to reference.
-	 */
-	public BasicTupleSet(TableName name) {
-		this.id = idGen++;
-		this.name = name;
-		this.tuples = new HashMap<Tuple, Tuple>();
 	}
 
 	/**
