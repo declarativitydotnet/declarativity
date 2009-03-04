@@ -59,7 +59,7 @@ public class Compiler {
 				String.class, // Program file
 				Program.class // The program object
 		};
-		
+
 		private jol.core.Runtime context;
 
 		public CompileTable(jol.core.Runtime context) {
@@ -73,10 +73,10 @@ public class Compiler {
 			try {
 				for (Tuple t : tuples) {
 					Program program = (Program) t.value(Field.PROGRAM.ordinal());
-					if(program == null) {
+					if (program == null) {
 						String owner = (String) t.value(Field.OWNER.ordinal());
 						String file = (String) t.value(Field.FILE.ordinal());
-		
+
 						URL fileURL = new URL(file);
 						Compiler compiler = new Compiler(context, owner, fileURL);
 
@@ -99,15 +99,15 @@ public class Compiler {
 		}
 		/**
 		 * TODO remove this overridden method, assuming that the exception doesn't get triggered.
-		 * 
+		 *
 		 * This method used to mutate the incoming tuple by setting the PROGRAM and NAME columns.
-		 * Callers relied on this. 
+		 * Callers relied on this.
 		 */
 		@Override
 		protected boolean insert(Tuple tuple) throws UpdateException {
 			Program program = (Program) tuple.value(Field.PROGRAM.ordinal());
 			if (program == null) {
-				UpdateException e 
+				UpdateException e
 					= new UpdateException("someone might be relying on ComplerTable.insert() for side effects. "
 														+ "Call the other insert instead");
 				e.printStackTrace(); // make sure this hits the console in junit land.
@@ -130,13 +130,13 @@ public class Compiler {
 	}
 
 	private jol.core.Runtime context;
-	
+
 	private String owner;
 
 	private Program program;
 
-	private final static Runtime runtime = new Runtime(); 
-	
+	private final static Runtime runtime = new Runtime();
+
 	/** Create a new driver for Overlog. */
 	public Compiler(jol.core.Runtime context, String owner, URL input) throws JolRuntimeException {
 		this.context = context;
@@ -151,7 +151,7 @@ public class Compiler {
 				this.runtime.setErrConsole(new Printer(this.context.output()));
 				this.runtime.setConsole(new Printer(this.context.output()));
 			}
-			
+
 			Node ast = parse(input);
 			process(ast);
 
@@ -169,7 +169,7 @@ public class Compiler {
 			}
 		}
 	}
-	
+
 
 	public Program program() {
 		return this.program;
@@ -203,7 +203,7 @@ public class Compiler {
 		try {
 			char[] buf = new char[512];
 			int n;
-			
+
 			while ((n = isr.read(buf, 0, buf.length)) != -1) {
 				sb.append(buf, 0, n);
 			}
