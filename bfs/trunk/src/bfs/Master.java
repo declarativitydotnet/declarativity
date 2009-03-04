@@ -1,5 +1,8 @@
 package bfs;
 
+import java.io.File;
+
+import bfs.telemetry.LogEvents;
 import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.BasicTupleSet;
@@ -25,11 +28,12 @@ public class Master {
         this.address = Conf.getMasterAddress(masterIdx);
         this.port = Conf.getMasterPort(masterIdx);
     }
-
+    boolean enableLog = true;
     public void stop() {
+    	if(enableLog) logEvents.shutdown();
         this.system.shutdown();
     }
-
+    LogEvents logEvents;
     public void start() throws JolRuntimeException, UpdateException {
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
@@ -79,6 +83,15 @@ public class Master {
         }
 
         this.system.start();
+
+        if(enableLog) {
+            File f = new File("/log/error.log");
+            if(!f.canRead()) f = new File("/var/log/messages");
+            if(!f.canRead()) f = new File("/usr/share/dict/words");
+            
+        	this.logEvents = new LogEvents(this.system, f);
+        }
+        
         System.out.println("Master node @ " + this.port + " ready!");
     }
 

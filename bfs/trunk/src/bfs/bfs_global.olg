@@ -2,6 +2,8 @@ program bfs_global;
 
 import java.util.Set;
 
+define(error_log, {String});
+
 // Node, file ID, parent file ID (or null), file name, is directory?
 define(stasis_file, keys(0, 1), {String, Integer, Integer, String, Boolean});
 
