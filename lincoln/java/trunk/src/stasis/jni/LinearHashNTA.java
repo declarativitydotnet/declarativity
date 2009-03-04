@@ -5,7 +5,6 @@ import java.util.Iterator;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;

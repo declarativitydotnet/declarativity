@@ -5,7 +5,6 @@ import java.util.concurrent.SynchronousQueue;
 
 import jol.core.Runtime;
 import jol.core.JolSystem;
-import jol.core.Runtime.DebugLevel;
 import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;

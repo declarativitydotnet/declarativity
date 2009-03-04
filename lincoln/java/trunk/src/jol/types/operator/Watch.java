@@ -1,7 +1,6 @@
 package jol.types.operator;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 

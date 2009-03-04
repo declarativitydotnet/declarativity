@@ -2,7 +2,6 @@ package jol.types.operator;
 
 import jol.core.Runtime;
 import jol.lang.plan.Predicate;
-import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
