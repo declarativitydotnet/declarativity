@@ -69,6 +69,8 @@ acceptRequest(Master,I,Round,Decree,-2) :-
   paxos::quorum(Master,Round),
   paxos::instance(Master,I),
   topOfQueue_p2#insert(Master, Id),
+  paxos::priestCnt(Master, Pcnt),
+  Pcnt > 1,
   ////tic(),
   notin acceptRequest(Master, I, _, _, _),
   notin stasis_success(Master,I,_,_,_),
@@ -171,16 +173,17 @@ stasis_success(Master, Instance, Round, Decree, From) :-
     decree#insert(Master,Instance,Round,Decree),
 	paxos::storedDecreeRequest(Master,Decree,From,_);
 
-/*
+
 // breakout.
 public
 r5_d
 stasis_success(Agent,Instance,Round,Decree,From) :-
-  paxos::storedDecreeRequest#insert(Agent,Decree,From,_),
+  paxos::storedDecreeRequest(Agent,Decree,From, Id),
   paxos::priestCnt(Agent,1),
   Round := -1,
-  paxos::instance(Agent,Instance);
-*/
+  paxos::instance(Agent,Instance),
+  topOfQueue_p2#insert(Master, Id);
+
 
 watch(decree,ae);
 watch(acceptCnt, ae);

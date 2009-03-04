@@ -100,6 +100,7 @@ prepare(Agent, Round, Decree) :-
 	// if we don't already have a quorum 
   notin quorum(Agent, _),
   priestCnt(Agent, Cnt),
+  Cnt > 1,
 	Round := Old + Cnt;
 
 /* 
