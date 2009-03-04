@@ -50,7 +50,7 @@ public class ConcurrentTupleSet implements TupleSet {
 	 */
 	private ConcurrentTupleSet(TupleSet clone) {
 		this.id = clone.id();
-		this.name = clone.name();
+		this.name = null;
 		this.tuples = new ConcurrentHashMap<Tuple, Tuple>();
 		this.addAll(clone);
 	}

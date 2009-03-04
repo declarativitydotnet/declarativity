@@ -131,11 +131,11 @@ public class Runtime implements JolSystem {
 	public Object lock() {
 		return this.driver;
 	}
-	
+
 	public Long timestamp() {
 		return this.driver.timestamp();
 	}
-	
+
 	public void setPriority(int newPriority) {
 		this.driver.setPriority(newPriority);
 	}
@@ -293,7 +293,7 @@ public class Runtime implements JolSystem {
 	 */
 	public void uninstall(String name) throws JolRuntimeException {
 		TupleSet uninstall = new BasicTupleSet(new TableName("compiler", "uninstall"), new Tuple(name, true));
-		schedule("compile", uninstall.name(), uninstall, null);
+		schedule("compile", new TableName("compiler", "uninstall"), uninstall, null);
 	}
 
 	/**
@@ -322,7 +322,7 @@ public class Runtime implements JolSystem {
 			public TableName name()       { return name; }
 		});
 	}
-	
+
 	public void flusher(final TableName name, final TupleSet insertions, final TupleSet deletions) throws JolRuntimeException {
 		/* Check that the specified program already exists */
 		Table table = this.catalog().table(name);
@@ -335,7 +335,7 @@ public class Runtime implements JolSystem {
 			public TableName name()       { return name; }
 		});
 	}
-	
+
 
 	public interface RuntimeCallback {
 		void call(Runtime r) throws UpdateException, JolRuntimeException;

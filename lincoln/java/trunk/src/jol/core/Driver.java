@@ -377,7 +377,7 @@ public class Driver extends Thread {
 			if (insertions.size() > 0) {
 				if (deletions.size() > 0) {
 					/* We're not going to deal with the deletions yet. */
-					continuation(continuations, time, program.name(), Predicate.Event.DELETE, deletions);
+					continuation(continuations, time, program.name(), name, Predicate.Event.DELETE, deletions);
 				}
 
 				if (query.event() != Predicate.Event.DELETE) {
@@ -408,7 +408,7 @@ public class Driver extends Thread {
 						        eventType = Predicate.Event.INSERT;
 
                             continuation(continuations, time, program.name(),
-                                         eventType, result);
+                            		     query.output().name(), eventType, result);
 						}
 					}
 				}
@@ -441,7 +441,8 @@ public class Driver extends Thread {
 						try {
 							TupleSet result = query.evaluate(deletions);
 							if (result.size() > 0) {
-								continuation(continuations, time, program.name(), resultType, result);
+								continuation(continuations, time, program.name(),
+										     output.name(), resultType, result);
 							}
 						} catch (JolRuntimeException e) {
 							e.printStackTrace();
@@ -467,17 +468,18 @@ public class Driver extends Thread {
 		 * @param continuations Map containing the tuple groups
 		 * @param time Current time.
 		 * @param program Program that evaluated the tuples.
+		 * @param tableName The table name to which the tuples belong.
 		 * @param event Indicates whether the tuples are insertions or deletions.
 		 * @param result The result tuples taken from the output of a query.
 		 */
 		private void continuation(Map<String, Tuple> continuations, Long time,
-				                  String program, Predicate.Event event, TupleSet result) {
-			String key = program + "." + result.name();
+				                  String program, TableName tableName, Predicate.Event event, TupleSet result) {
+			String key = program + "." + tableName;
 
 			if (!continuations.containsKey(key)) {
-				Tuple tuple = new Tuple(time, program, null, result.name(),
-						                new BasicTupleSet(result.name()),
-						                new BasicTupleSet(result.name()));
+				Tuple tuple = new Tuple(time, program, null, tableName,
+						                new BasicTupleSet(tableName),
+						                new BasicTupleSet(tableName));
 				continuations.put(key, tuple);
 			}
 
@@ -538,7 +540,7 @@ public class Driver extends Thread {
 
 	/** The flusher table function. */
 	private Flusher flusher;
-	
+
 	/** The last time that an evaluation occurred. */
 	private Long timestamp;
 
@@ -570,7 +572,7 @@ public class Driver extends Thread {
 	public void runtime(Program runtime) {
 		this.runtime = runtime;
 	}
-	
+
 	public Long timestamp() {
 		return this.timestamp;
 	}
@@ -689,13 +691,13 @@ public class Driver extends Thread {
 					this.context.output().write(("============================     EVALUATE SCHEDULE [CLOCK " +
 							            this.logicalTime + "]  =============================\n").getBytes());
 				}
-				evaluate(this.logicalTime, runtime.name(), time.name(), time, null); // Clock insert current
+				evaluate(this.logicalTime, runtime.name(), clock.name(), time, null); // Clock insert current
 
 				/* Evaluate task queue. */
 				for (Task task : runtimeTasks) {
 					evaluate(this.logicalTime, task.program(), task.name(), task.insertions(), task.deletions());
 				}
-				evaluate(this.logicalTime, runtime.name(), time.name(), null, time); // Clock delete current
+				evaluate(this.logicalTime, runtime.name(), clock.name(), null, time); // Clock delete current
 				StasisTable.commit(this.runtime.context());
 				if (this.context.debugActive(DebugLevel.RUNTIME)) {
 					this.context.output().write("============================ ========================== ============================\n".getBytes());

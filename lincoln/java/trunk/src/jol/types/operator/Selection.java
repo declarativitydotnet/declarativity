@@ -42,7 +42,7 @@ public class Selection extends Operator {
 
 	@Override
 	public TupleSet evaluate(TupleSet tuples) throws JolRuntimeException {
-		TupleSet result = new BasicTupleSet(tuples.name());
+		TupleSet result = new BasicTupleSet();
 		for (Tuple tuple : tuples) {
 			try {
 				if (java.lang.Boolean.TRUE.equals(filter.evaluate(tuple))) {
