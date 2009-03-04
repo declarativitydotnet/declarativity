@@ -171,6 +171,7 @@ stasis_success(Master, Instance, Round, Decree, From) :-
     decree#insert(Master,Instance,Round,Decree),
 	paxos::storedDecreeRequest(Master,Decree,From,_);
 
+/*
 // breakout.
 public
 r5_d
@@ -179,6 +180,7 @@ stasis_success(Agent,Instance,Round,Decree,From) :-
   paxos::priestCnt(Agent,1),
   Round := -1,
   paxos::instance(Agent,Instance);
+*/
 
 watch(decree,ae);
 watch(acceptCnt, ae);
