@@ -46,10 +46,9 @@ public class BFSClient {
 	        this.system.evaluate();
 
 	        /* Identify the address of the local node */
-	        TableName tblName = new TableName("bfs", "self");
-	        TupleSet self = new BasicTupleSet(tblName);
+	        TupleSet self = new BasicTupleSet();
 	        self.add(new Tuple(this.selfAddr));
-	        this.system.schedule("bfs", tblName, self, null);
+	        this.system.schedule("bfs", new TableName("bfs", "self"), self, null);
 	        this.system.evaluate();
 
 	        updateMasterAddr();
@@ -96,11 +95,10 @@ public class BFSClient {
         	commandName = "Create";
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, commandName, pathName));
         try {
-        	this.system.schedule("bfs", tblName, req, null);
+        	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
@@ -139,11 +137,10 @@ public class BFSClient {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "NewChunk", path));
         try {
-        	this.system.schedule("bfs", tblName, req, null);
+        	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
@@ -177,11 +174,10 @@ public class BFSClient {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "Rm", path));
         try {
-        	this.system.schedule("bfs", tblName, req, null);
+        	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
@@ -230,11 +226,10 @@ public class BFSClient {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "Ls", path));
         try {
-        	this.system.schedule("bfs", tblName, req, null);
+        	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
@@ -276,11 +271,10 @@ public class BFSClient {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "FileInfo", pathName));
         try {
-        	this.system.schedule("bfs", tblName, req, null);
+        	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
@@ -322,11 +316,10 @@ public class BFSClient {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "ChunkList", path));
         try {
-        	this.system.schedule("bfs", tblName, req, null);
+        	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
@@ -370,12 +363,11 @@ public class BFSClient {
         Table responseTbl = registerCallback(responseCallback, "response");
 
         // Create and insert the request tuple
-        TableName tblName = new TableName("bfs", "start_request");
-        TupleSet req = new BasicTupleSet(tblName);
+        TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId,
                           "ChunkLocations", Integer.toString(chunkId)));
         try {
-        	this.system.schedule("bfs", tblName, req, null);
+        	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
