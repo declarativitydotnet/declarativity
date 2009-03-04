@@ -66,6 +66,12 @@ public class DataCommon extends TestCommon {
     }
 
     protected void checkFiles() {
+
+		try {	
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
         long len = new File(fName).length();
         long appropriateNumberOfChunks = (len / Conf.getChunkSize()) + 1;
 
