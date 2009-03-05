@@ -90,7 +90,7 @@ define(newReplica, {String, Integer, String, Integer, Long});
 newReplica(Master, ChunkId, Dn, Cnt, Time) :-
     newReplicaRequest(Master, ChunkId, Dn, Cnt, Time),
     clock#insert(),
-    (System.currentTimeMillis() - Time) > new Integer(6000).longValue();
+    (System.currentTimeMillis() - Time) > Conf.getPropagationDelay();
 
 define(catch_migrate, {String, String, Integer, Integer, Set});
 watch(catch_migrate,ae);
