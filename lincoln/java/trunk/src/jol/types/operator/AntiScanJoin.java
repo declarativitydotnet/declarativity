@@ -45,8 +45,8 @@ public class AntiScanJoin extends Join {
 	public TupleSet evaluate(TupleSet outerTuples) throws JolRuntimeException {
 		TupleSet result = new BasicTupleSet();
 		for (Tuple outer : outerTuples) {
-			TupleSet join = join(outer, table.tuples());
-			if (join.size() == 0) result.add(outer);
+			if (checkJoin(outer, table.tuples()) == false)
+				result.add(outer);
 		}
 		return result;
 	}
