@@ -20,9 +20,9 @@ public class Stasis3Test extends TestCommon {
         assertTrue(shellLs("/", "foo"));
 
         // XXX Do not call shutdown(); not handling data nodes yet.
-	    this.killMaster(0);
-	    this.killMaster(1);
-	    this.killMaster(2);
+	    this.killMaster(0,0);
+	    this.killMaster(0,1);
+	    this.killMaster(0,2);
 
         System.out.println("--------------------------------------------------------------------------------------------------------\n");
 
@@ -32,19 +32,19 @@ public class Stasis3Test extends TestCommon {
 
 	    assertTrue(shellLs("/", "foo"));
 
-	    this.killMaster(0);
+	    this.killMaster(0,0);
 
 	    shellCreate("/bar");
 
 	    assertTrue(shellLs("/", "foo"));
 	    assertTrue(shellLs("/", "bar"));
 
-	    this.killMaster(1);
+	    this.killMaster(0,1);
 
 	    assertTrue(shellLs("/", "foo"));
 	    assertTrue(shellLs("/", "bar"));
 
-	    this.killMaster(2);
+	    this.killMaster(0,2);
 
 	    startMany("localhost:5509", "localhost:5510", "localhost:5511");
 	    shellCreate("/baz"); // hopefully this will kick over to the master, and block until it's done catching up.
@@ -53,8 +53,8 @@ public class Stasis3Test extends TestCommon {
 	    assertTrue(shellLs("/", "bar"));
 	    assertTrue(shellLs("/", "baz"));
 
-	    this.killMaster(2);
-	    this.killMaster(1);
+	    this.killMaster(0,2);
+	    this.killMaster(0,1);
 
 	    assertTrue(shellLs("/", "foo"));
 	    assertTrue(shellLs("/", "bar"));

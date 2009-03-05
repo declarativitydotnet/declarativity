@@ -30,10 +30,14 @@ public class Conf {
         }
     }
 
-    private static Host[] masterNodes = new Host[] {
-        new Host("localhost", 5505),
-//        new Host("localhost", 5506),
-//        new Host("localhost", 5507),
+    private static Host[][] masterNodes = new Host[][] {
+    	{
+    		new Host("localhost", 5505),
+    		//        new Host("localhost", 5506),
+    		//        new Host("localhost", 5507),
+    	}, {
+    		new Host("localhost", 6606),
+    	}
     };
 
     private static Host[] dataNodes = new Host[] {
@@ -76,7 +80,7 @@ public class Conf {
         if (System.getenv("MASTERFILE") != null) {
         	File mastersFile = new File(System.getenv("MASTERFILE"));
         	if (mastersFile.exists()) {
-                List<String> masterList = Conf.parseAddressFile(mastersFile);
+                List<List<String>> masterList = Conf.parseAddressFile(mastersFile);
                 Conf.setMasters(masterList);
                 System.out.println("Installed new master list: " + masterList);
         	}
@@ -85,8 +89,9 @@ public class Conf {
         if (System.getenv("SLAVEFILE") != null) {
         	File slavesFile = new File(System.getenv("SLAVEFILE"));
         	if (slavesFile.exists()) {
-                List<String> slaveList = Conf.parseAddressFile(slavesFile);
-                Conf.setDataNodes(slaveList);
+                List<List<String>> slaveList = Conf.parseAddressFile(slavesFile);
+                // don't support partitioning of data nodes; just take first partition from file.
+                Conf.setDataNodes(slaveList.get(0));
                 System.out.println("Installed new data node list: " + slaveList);
         	}
         }
@@ -136,11 +141,15 @@ public class Conf {
         return listingTimeout;
     }
 
-    public static void setMasters(List<String> masters) {
-    	masterNodes = new Host[masters.size()];
-    	int i = 0;
-    	for (String addr : masters) {
-    		masterNodes[i++] = new Host(addr, DEFAULT_MASTER_PORT);
+    public static void setMasters(List<List<String>> partitions) {
+    	int i = 0; int part = 0;
+    	masterNodes = new Host[partitions.size()][];
+    	for(List<String> masters : partitions) {
+    		masterNodes[part] = new Host[masters.size()];
+        	for (String addr : masters) {
+	    		masterNodes[part][i++] = new Host(addr, DEFAULT_MASTER_PORT);
+	    	}
+	    	part++;
     	}
     }
 
@@ -153,11 +162,14 @@ public class Conf {
     	}
     }
 
-    public static void setNewMasterList(String... args) {
-        masterNodes = new Host[args.length];
-        for (int i = 0; i < args.length; i++) {
-            String[] parts = args[i].split(":");
-            masterNodes[i] = new Host(parts[0], Integer.parseInt(parts[1]));
+    public static void setNewMasterList(List<List<String>> partitions) {
+        masterNodes = new Host[partitions.size()][];
+        for(int part = 0; part < partitions.size(); part++) {
+        	masterNodes[part] = new Host[partitions.get(part).size()];
+        	for (int i = 0; i < partitions.get(part).size(); i++) {
+                String[] parts = partitions.get(part).get(i).split(":");
+                masterNodes[part][i] = new Host(parts[0], Integer.parseInt(parts[1]));
+            }
         }
     }
 
@@ -168,17 +180,19 @@ public class Conf {
         }
     }
 
-    public static String getMasterAddress(int idx) {
-        Host h = masterNodes[idx];
+    public static String getMasterAddress(int part, int idx) {
+        Host h = masterNodes[part][idx];
         return "tcp:" + h.name + ":" + h.port;
     }
 
-    public static int getMasterPort(int idx) {
-        return masterNodes[idx].port;
+    public static int getMasterPort(int part, int idx) {
+        return masterNodes[part][idx].port;
     }
-
-    public static int getNumMasters() {
-        return masterNodes.length;
+    public static int getNumPartitions() {
+    	return masterNodes.length;
+    }
+    public static int getNumMasters(int part) {
+        return masterNodes[part].length;
     }
 
     public static String getDataNodeAddress(int idx) {
@@ -208,42 +222,53 @@ public class Conf {
         return dataNodes.length;
     }
 
-    public static List<String> parseAddressFile(File inFile) {
+    public static List<List<String>> parseAddressFile(File inFile) {
     	try {
 			BufferedReader br = new BufferedReader(new FileReader(inFile));
-			List<String> result = new ArrayList<String>();
 			String line;
-			while ((line = br.readLine()) != null) {
-				String trimmedLine = line.trim();
-				if (!trimmedLine.equals(""))
-					result.add(trimmedLine);
+			List<List<String>> ret = new ArrayList<List<String>>();
+			while((line = br.readLine()) != null) {
+				List<String> result = new ArrayList<String>();
+				ret.add(result);
+				boolean done = false;
+				while ((!done) && ((line = br.readLine()) != null)) {
+					String trimmedLine = line.trim();
+					if(trimmedLine.equals("-")) { 
+						done = true; 
+					} else {
+						if (!trimmedLine.equals(""))
+							result.add(trimmedLine);
+					}
+				}
 			}
-			return result;
+			return ret;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
     }
 
-    public static int findSelfIndex(boolean isMaster) {
-    	Host[] hostAry;
+    public static int[] findSelfIndex(boolean isMaster) {
+    	Host[][] hostAry;
     	if (isMaster)
     		hostAry = masterNodes;
-    	else
-    		hostAry = dataNodes;
-
+    	else {
+    		hostAry = new Host[1][];
+    		hostAry[0] = dataNodes;
+    	}
     	try {
 			InetAddress localHost = InetAddress.getLocalHost();
 			InetAddress[] localAddrs = InetAddress.getAllByName(localHost.getHostName());
 			for (InetAddress addr : localAddrs) {
 				String hostName = addr.getHostName();
 				String ip = addr.getHostAddress();
-
 				for (int i = 0; i < hostAry.length; i++) {
-					System.out.println("Comparing IP " + ip + " and host " +
-							           hostName + " against " + hostAry[i].name);
-					if (hostAry[i].name.equalsIgnoreCase(hostName) ||
-					    hostAry[i].name.equals(ip))
-						return i;
+					for (int j = 0; j < hostAry[i].length; j++) {
+						System.out.println("Comparing IP " + ip + " and host " +
+								           hostName + " against " + hostAry[i][j].name);
+						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
+						    hostAry[i][j].name.equals(ip))
+							return new int[] {i, j};
+					}
 				}
 			}
 			// Failed to find our local address in the given list
@@ -260,5 +285,18 @@ public class Conf {
 		} catch (UnknownHostException e) {
 			throw new RuntimeException(e);
 		}
+    }
+	public static int getPartitionFromString(String truncatedMasterName) {
+		int partition =  -1;
+        for(int i = 0; i < Conf.getNumPartitions(); i++) {
+        	for(int j = 0; j < Conf.getNumMasters(i); j++) {
+        		System.out.println(Conf.getMasterAddress(i,j).toString() + " ?= " + truncatedMasterName);
+        		if((Conf.getMasterAddress(i,j)).endsWith(truncatedMasterName)) {
+        			partition = i; break;
+        		}
+        	}
+        	if(partition != -1) { break; }
+        }
+        return partition;
     }
 }

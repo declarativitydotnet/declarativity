@@ -25,8 +25,11 @@ public class DataNode {
     	if (args.length != 1)
     		usage();
 
-    	int nodeIdx = Conf.findSelfIndex(false);
-        DataNode dn = new DataNode(nodeIdx, args[0]);
+    	int[] nodeIdx = Conf.findSelfIndex(false);
+    	if(nodeIdx[0] != 0) {
+    		throw new IllegalStateException("data node partitions not supported!");
+    	}
+        DataNode dn = new DataNode(nodeIdx[1], args[0]);
         dn.start();
     }
 

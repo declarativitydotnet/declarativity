@@ -12,6 +12,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -32,7 +33,7 @@ import jol.types.table.Table.Callback;
 public class Shell {
 	private static final int SHELL_PORT = 5501;
 
-    private int currentMaster;
+    private int currentMaster[];
     private JolSystem system;
     private Random rand;
     private SimpleQueue<Object> responseQueue;
@@ -90,7 +91,7 @@ public class Shell {
     public Shell() throws JolRuntimeException, UpdateException {
         this.rand = new Random();
         this.responseQueue = new SimpleQueue<Object>();
-        this.currentMaster = 0;
+        this.currentMaster = new int[Conf.getNumPartitions()];
         this.selfAddr = Conf.findLocalAddress(SHELL_PORT);
 
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, SHELL_PORT);
@@ -112,8 +113,9 @@ public class Shell {
         self.add(new Tuple(this.selfAddr));
         this.system.schedule("bfs", new TableName("bfs", "self"), self, null);
         this.system.evaluate();
-
-        scheduleNewMaster();
+        for(int i = 0; i < Conf.getNumPartitions(); i++) {
+        	scheduleNewMaster(i);
+        }
 
         if (Conf.getTapSink() != null) {
             tap.doRewrite("bfs");
@@ -177,7 +179,7 @@ public class Shell {
          * more of those nodes.
          */
         for (BFSChunkInfo chunk : chunks) {
-            Set<String> locations = getChunkLocations(chunk.getId());
+            Set<String> locations = getChunkLocations(filename+":"+new Integer(chunk.getId()).toString());
             readChunk(chunk, locations);
         }
     }
@@ -214,7 +216,8 @@ public class Shell {
         req.add(new Tuple(this.selfAddr, requestId, "NewChunk", filename));
         this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
-        BFSNewChunkInfo result = (BFSNewChunkInfo) spinGet(Conf.getListingTimeout());
+        int partition = filename.hashCode() % Conf.getNumPartitions();
+        BFSNewChunkInfo result = (BFSNewChunkInfo) spinGet(partition, Conf.getListingTimeout());
         unregisterCallback(responseTbl, responseCallback);
         return result;
     }
@@ -251,7 +254,8 @@ public class Shell {
         req.add(new Tuple(this.selfAddr, requestId, "ChunkList", filename));
         this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
-        Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) spinGet(Conf.getListingTimeout());
+        int partition = filename.hashCode() % Conf.getNumPartitions();
+        Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) spinGet(partition, Conf.getListingTimeout());
         unregisterCallback(responseTbl, responseCallback);
 
         // The server returns the list of chunks in unspecified order; we sort by
@@ -278,7 +282,7 @@ public class Shell {
 		this.responseQueue.clear();
 	}
 
-    private Set<String> getChunkLocations(final Integer chunk) throws UpdateException, JolRuntimeException {
+    private Set<String> getChunkLocations(final String chunk) throws UpdateException, JolRuntimeException {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -310,8 +314,8 @@ public class Shell {
         req.add(new Tuple(this.selfAddr, requestId,
                           "ChunkLocations", chunk.toString()));
         this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
-
-        Set<String> nodeSet = (Set<String>) spinGet(Conf.getListingTimeout());
+        int partition = chunk.subSequence(0, chunk.indexOf(":")).hashCode() % Conf.getNumPartitions();
+        Set<String> nodeSet = (Set<String>) spinGet(partition, Conf.getListingTimeout());
         unregisterCallback(responseTbl, responseCallback);
         return Collections.unmodifiableSet(nodeSet);
     }
@@ -388,11 +392,11 @@ public class Shell {
         }
     }
 
-    private void scheduleNewMaster() throws JolRuntimeException {
+    private void scheduleNewMaster(int partition) throws JolRuntimeException {
         TupleSet master = new BasicTupleSet();
-        master.add(new Tuple(this.selfAddr,
-                             Conf.getMasterAddress(this.currentMaster)));
-        this.system.schedule("bfs_global", MasterTable.TABLENAME, master, null);
+        master.add(new Tuple(this.selfAddr, partition,
+                             Conf.getMasterAddress(partition, this.currentMaster[partition])));
+        this.system.schedule("bfs_global", new TableName("bfs_global", "master_for_node"), master, null);
         this.system.evaluate();
     }
 
@@ -400,7 +404,7 @@ public class Shell {
         return rand.nextInt();
     }
 
-    public void doCreateFile(List<String> args, boolean isDir) throws UpdateException, JolRuntimeException {
+    public void doCreateFile(List<String> args, final boolean isDir) throws UpdateException, JolRuntimeException {
         if (args.size() != 1)
             usage();
 
@@ -424,9 +428,15 @@ public class Shell {
                             System.out.println("Create succeeded.");
                         else
                             System.out.println("Create failed.");
-
-                        responseQueue.put(success);
-                        break;
+                        if(!isDir) {
+                        	responseQueue.put(success);
+                            break;
+                        } else {
+                        	String masterName =(String) t.value(2);
+                            String truncatedMasterName = masterName.substring(masterName.indexOf(':')+1);
+                            int partition = Conf.getPartitionFromString(truncatedMasterName); 
+                            responseQueue.put(new Tuple(partition, success));
+                        }
                     }
                 }
             }
@@ -444,7 +454,12 @@ public class Shell {
         this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
         // Wait for the response
-        spinGet(Conf.getFileOpTimeout());
+        if(!isDir) { 
+    		int partition = filename.hashCode() % Conf.getNumPartitions();
+        	spinGet(partition, Conf.getFileOpTimeout());
+        } else {
+        	spinGetBroadcast(Conf.getFileOpTimeout());
+        }
         unregisterCallback(responseTbl, responseCallback);
     }
 
@@ -474,10 +489,12 @@ public class Shell {
                         Boolean success = (Boolean) t.value(3);
                         if (success.booleanValue() == false)
                             throw new RuntimeException("Failed to get directory listing for " + path);
-
+                        String masterName =(String) t.value(2);
                         Object lsContent = t.value(4);
-                        responseQueue.put(lsContent);
-                        break;
+                        System.out.println("master: " + masterName + " : " + lsContent);
+                        String truncatedMasterName = masterName.substring(masterName.indexOf(':')+1);
+                        int partition = Conf.getPartitionFromString(truncatedMasterName); 
+                        responseQueue.put(new Tuple(partition, lsContent));
                     }
                 }
             }
@@ -489,12 +506,15 @@ public class Shell {
         TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "Ls", path));
         this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
-
-        Object result = spinGet(Conf.getListingTimeout());
+        Object result = spinGetBroadcast(Conf.getListingTimeout());
         unregisterCallback(responseTbl, responseCallback);
 
-        Set<BFSFileInfo> lsContent = (Set<BFSFileInfo>) result;
-        return Collections.unmodifiableSet(lsContent);
+        Set<Set<BFSFileInfo>> lsContent = (Set<Set<BFSFileInfo>>) result;
+        Set<BFSFileInfo> ret = new HashSet<BFSFileInfo>();
+        for(Set<BFSFileInfo> s : lsContent) {
+        	ret.addAll(s);
+        }
+        return Collections.unmodifiableSet(ret);
     }
 
     public void doRemove(List<String> argList) throws UpdateException, JolRuntimeException {
@@ -536,24 +556,61 @@ public class Shell {
         req.add(new Tuple(this.selfAddr, requestId, "Rm", path));
         this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
 
+        int partition = path.hashCode() % Conf.getNumPartitions();
         // Wait for the response
-        spinGet(Conf.getFileOpTimeout());
+        spinGet(partition, Conf.getFileOpTimeout());
         unregisterCallback(responseTbl, responseCallback);
     }
 
-    private Object spinGet(long timeout) throws JolRuntimeException {
-        while (this.currentMaster < Conf.getNumMasters()) {
-            scheduleNewMaster();
+    private Object spinGet(int partition, long timeout) throws JolRuntimeException {
+        while (this.currentMaster[partition] < Conf.getNumMasters(partition)) {
+            scheduleNewMaster(partition);
             Object result = this.responseQueue.get(timeout);
             if (result != null)
                 return result;
 
             System.out.println("master " + this.currentMaster + " timed out.  retry?\n");
-            this.currentMaster++;
+            this.currentMaster[partition]++;
         }
         throw new JolRuntimeException("timed out on all masters");
     }
-
+    private Set<Object> spinGetBroadcast(long timeout) throws JolRuntimeException {
+    	boolean done = false;
+        Set<Object> ret = new HashSet<Object>();
+		Set<Integer> unseenPartitions = new HashSet<Integer>();
+		Set<Integer> seenPartitions = new HashSet<Integer>();
+		for(int i =0; i < Conf.getNumPartitions(); i++) {
+			unseenPartitions.add(i);
+		}
+    	while (!done) {
+    		long start = System.currentTimeMillis();
+    		Tuple results[] = new Tuple[Conf.getNumPartitions()];
+    		results[0] = (Tuple)this.responseQueue.get(timeout);
+    		for(int i =1 ; i < Conf.getNumPartitions(); i++) {
+    			long now = System.currentTimeMillis();
+    			if((start + timeout) - now > 0)
+    				results[i] = (Tuple)this.responseQueue.get((start + timeout) - now);
+    			else
+    				done = true; break;
+    		}
+    		for(int i =0; i < Conf.getNumPartitions(); i++) {
+    			if(results[i] != null) {
+	    			ret.add(results[i].value(1));
+	    			seenPartitions.add((Integer)results[i].value(0));
+	    			unseenPartitions.remove((Integer)results[i].value(0));
+    			}
+    		}
+    		if(unseenPartitions.size() == 0) { return ret; }
+    		done = true;
+    		for(int i : unseenPartitions) {
+    			this.currentMaster[i]++;
+    			if(this.currentMaster[i] == Conf.getNumMasters(i)) { done = true; break; }
+    			scheduleNewMaster(i);
+    			done = false;
+    		}
+    	}
+    	throw new RuntimeException("BFS broadcast request #??? timed out.  Missing responses from " + unseenPartitions + "got responses from " + seenPartitions);
+    }
     public void shutdown() {
         this.system.shutdown();
     }

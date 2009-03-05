@@ -9,7 +9,7 @@ public class MM3Test extends TestCommon {
 
         shellCreate("/foo");
         /* this time, kill the primary */
-        killMaster(0);
+        killMaster(0,0);
 
         /* these ops should timeout to the secondary but eventually work */
         shellCreate("/bar");

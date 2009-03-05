@@ -2,6 +2,7 @@ package bfs;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -21,7 +22,7 @@ import jol.types.table.Table.Callback;
  * nodes, to obtain metadata, and data nodes, to read and write data.
  */
 public class BFSClient {
-	private int currentMaster;
+	private int[] currentMaster;
     private Random rand;
 	private SimpleQueue<Object> responseQueue;
 	private JolSystem system;
@@ -29,7 +30,7 @@ public class BFSClient {
 
 	public BFSClient(int port) {
         this.rand = new Random();
-        this.currentMaster = 0;
+        this.currentMaster = new int[Conf.getNumPartitions()];
         this.responseQueue = new SimpleQueue<Object>();
         this.selfAddr = Conf.findLocalAddress(port);
 
@@ -50,8 +51,9 @@ public class BFSClient {
 	        self.add(new Tuple(this.selfAddr));
 	        this.system.schedule("bfs", new TableName("bfs", "self"), self, null);
 	        this.system.evaluate();
-
-	        updateMasterAddr();
+	        for(int i =0; i < Conf.getNumPartitions(); i++) {
+	        	updateMasterAddr(i);
+	        }
 	        this.system.start();
 		} catch (JolRuntimeException e) {
 			throw new RuntimeException(e);
@@ -66,7 +68,7 @@ public class BFSClient {
 		return doCreate(pathName, true);
 	}
 
-	private boolean doCreate(String pathName, boolean isDir) {
+	private boolean doCreate(String pathName, final boolean isDir) {
 		final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -81,8 +83,15 @@ public class BFSClient {
 
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
-                        responseQueue.put(success);
-                        break;
+                        if(!isDir) {
+                        	responseQueue.put(success);
+                            break;
+                        } else {
+                        	String masterName =(String) t.value(2);
+                            String truncatedMasterName = masterName.substring(masterName.indexOf(':')+1);
+                        	int partition = Conf.getPartitionFromString(truncatedMasterName);
+                        	responseQueue.put(new Tuple(partition, success));
+                        }
                     }
                 }
             }
@@ -102,11 +111,20 @@ public class BFSClient {
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
-
-        // Wait for the response
-        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout(), requestId);
-        unregisterCallback(responseTbl, responseCallback);
-        return success.booleanValue();
+        if (isDir) {
+        	boolean success = false;
+        	Set<Object> b = waitForBroadcastResponse(Conf.getFileOpTimeout(), requestId);
+        	for(Object bool : b) { success = success || ((Boolean)bool).booleanValue(); }
+	        unregisterCallback(responseTbl, responseCallback);
+	        return success;
+        	
+        } else {
+	        // Wait for the response
+	        int partition = pathName.hashCode() % Conf.getNumPartitions();
+	        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout(), partition, requestId);
+	        unregisterCallback(responseTbl, responseCallback);
+	        return success.booleanValue();
+        }
 	}
 
 	public synchronized BFSNewChunkInfo getNewChunk(final String path) {
@@ -144,8 +162,8 @@ public class BFSClient {
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
-
-        BFSNewChunkInfo result = (BFSNewChunkInfo) waitForResponse(Conf.getListingTimeout(), requestId);
+        int partition = path.hashCode() % Conf.getNumPartitions();
+        BFSNewChunkInfo result = (BFSNewChunkInfo) waitForResponse(Conf.getListingTimeout(), partition, requestId);
         unregisterCallback(responseTbl, responseCallback);
         return result;
 	}
@@ -181,8 +199,8 @@ public class BFSClient {
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
-
-        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout(), requestId);
+        int partition = path.hashCode() % Conf.getNumPartitions();
+        Boolean success = (Boolean) waitForResponse(Conf.getFileOpTimeout(), partition, requestId);
         unregisterCallback(responseTbl, responseCallback);
 
         System.out.println("Remove of file \"" + path + "\": " +
@@ -214,10 +232,12 @@ public class BFSClient {
                         Boolean success = (Boolean) t.value(3);
                         if (success.booleanValue() == false)
                             throw new RuntimeException("Failed to get directory listing for " + path);
-
+                        String masterName =(String) t.value(2);
                         Object lsContent = t.value(4);
-                        responseQueue.put(lsContent);
-                        break;
+                        System.out.println("master: " + masterName + " : " + lsContent);
+                        String truncatedMasterName = masterName.substring(masterName.indexOf(':')+1);
+                        int partition = Conf.getPartitionFromString(truncatedMasterName); 
+                        responseQueue.put(new Tuple(partition, lsContent));
                     }
                 }
             }
@@ -234,9 +254,13 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        Set<BFSFileInfo> lsContent = (Set<BFSFileInfo>) waitForResponse(Conf.getListingTimeout(), requestId);
+        Set<BFSFileInfo> ret = new HashSet<BFSFileInfo>();
+    	Set<Object> lsResponses =  waitForBroadcastResponse(Conf.getListingTimeout(), requestId);
+    	for(Object o : lsResponses) {
+    		ret.addAll((Set<BFSFileInfo>)o);
+    	}
         unregisterCallback(responseTbl, responseCallback);
-        return Collections.unmodifiableSet(lsContent);
+        return Collections.unmodifiableSet(ret);
 	}
 
 	public synchronized BFSFileInfo getFileInfo(final String pathName) {
@@ -278,8 +302,8 @@ public class BFSClient {
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
-
-        List<BFSFileInfo> result = (List<BFSFileInfo>) waitForResponse(Conf.getFileOpTimeout(), requestId);
+        int partition = pathName.hashCode() % Conf.getNumPartitions();
+        List<BFSFileInfo> result = (List<BFSFileInfo>) waitForResponse(Conf.getFileOpTimeout(), partition, requestId);
         unregisterCallback(responseTbl, responseCallback);
 
         if (result.size() == 0)
@@ -323,8 +347,8 @@ public class BFSClient {
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
-
-        Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) waitForResponse(Conf.getListingTimeout(), requestId);
+        int partition = path.hashCode() % Conf.getNumPartitions();
+        Set<BFSChunkInfo> chunkSet = (Set<BFSChunkInfo>) waitForResponse(Conf.getListingTimeout(), partition, requestId);
         unregisterCallback(responseTbl, responseCallback);
 
         // The server returns the set of chunks in unspecified order; we sort by
@@ -335,7 +359,7 @@ public class BFSClient {
         return sortedChunks;
 	}
 
-	public synchronized Set<String> getChunkLocations(final int chunkId) {
+	public synchronized Set<String> getChunkLocations(final String chunkId) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -365,14 +389,15 @@ public class BFSClient {
         // Create and insert the request tuple
         TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId,
-                          "ChunkLocations", Integer.toString(chunkId)));
+                          "ChunkLocations", chunkId));
         try {
         	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
 
-        Set<String> nodeSet = (Set<String>) waitForResponse(Conf.getFileOpTimeout(), requestId);
+        int partition = chunkId.subSequence(0, chunkId.indexOf(":")).hashCode() % Conf.getNumPartitions();
+        Set<String> nodeSet = (Set<String>) waitForResponse(Conf.getFileOpTimeout(), partition, requestId);
         unregisterCallback(responseTbl, responseCallback);
         return Collections.unmodifiableSet(nodeSet);
 	}
@@ -400,30 +425,66 @@ public class BFSClient {
     // XXX: this should be rewritten to account for the fact that masters can
 	// die and then resume operation; we should be willing to try to contact
     // them again.
-    private Object waitForResponse(long timeout, int requestId) {
-        while (this.currentMaster < Conf.getNumMasters()) {
+    private Object waitForResponse(long timeout, int partition, int requestId) {
+        while (this.currentMaster[partition] < Conf.getNumMasters(partition)) {
             Object result = this.responseQueue.get(timeout);
             if (result != null)
                 return result;
 
-            System.out.println("Master #" + this.currentMaster +
-            		           "(" + Conf.getMasterAddress(this.currentMaster) +
+            System.out.println("Master #" + this.currentMaster[partition] +
+            		           "(" + Conf.getMasterAddress(partition, this.currentMaster[partition]) +
             		           ") timed out. Retry?");
-            this.currentMaster++;
-            if (this.currentMaster == Conf.getNumMasters())
+            this.currentMaster[partition]++;
+            if (this.currentMaster[partition] == Conf.getNumMasters(partition))
             	break;
-            updateMasterAddr();
+            updateMasterAddr(partition);
         }
 
-        throw new RuntimeException("BFS request #" + requestId + " timed out");
+        throw new RuntimeException("BFS (partition "+partition+") request #" + requestId + " timed out.");
     }
-
-    private void updateMasterAddr() {
+    private Set<Object> waitForBroadcastResponse(long timeout, int requestid) throws RuntimeException{
+    	boolean done = false;
+        Set<Object> ret = new HashSet<Object>();
+		Set<Integer> unseenPartitions = new HashSet<Integer>();
+		Set<Integer> seenPartitions = new HashSet<Integer>();
+		for(int i =0; i < Conf.getNumPartitions(); i++) {
+			unseenPartitions.add(i);
+		}
+    	while (!done) {
+   		long start = System.currentTimeMillis();
+    		Tuple results[] = new Tuple[Conf.getNumPartitions()];
+    		results[0] = (Tuple)this.responseQueue.get(timeout);
+    		for(int i =1 ; i < Conf.getNumPartitions(); i++) {
+    			long now = System.currentTimeMillis();
+    			if((start + timeout) - now > 0)
+    				results[i] = (Tuple)this.responseQueue.get((start + timeout) - now);
+    			else
+    				done = true; break;
+    		}
+    		for(int i =0; i < Conf.getNumPartitions(); i++) {
+    			if(results[i] != null) {
+	    			ret.add(results[i].value(1));
+	    			seenPartitions.add((Integer)results[i].value(0));
+	    			unseenPartitions.remove((Integer)results[i].value(0));
+    			}
+    		}
+    		if(unseenPartitions.size() == 0) { return ret; }
+    		done = true;
+    		for(int i : unseenPartitions) {
+    			this.currentMaster[i]++;
+    			if(this.currentMaster[i] == Conf.getNumMasters(i)) { done = true; break; }
+    			updateMasterAddr(i);
+    			done = false;
+    		}
+    	}
+    	throw new RuntimeException("BFS broadcast request #" + requestid + " timed out.  Missing responses from " + unseenPartitions + "got responses from " + seenPartitions);
+    }
+    private void updateMasterAddr(int partition) {
         TupleSet master = new BasicTupleSet();
-        master.add(new Tuple(this.selfAddr,
-                             Conf.getMasterAddress(this.currentMaster)));
+        master.add(new Tuple(this.selfAddr, partition,
+                             Conf.getMasterAddress(partition, this.currentMaster[partition])));
         try {
-            this.system.schedule("bfs", MasterTable.TABLENAME, master, null);
+            this.system.schedule("bfs", new TableName("bfs_global", "master_for_node"), master, null);
             this.system.evaluate();
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);

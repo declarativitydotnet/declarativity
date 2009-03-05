@@ -9,7 +9,7 @@ public class MM2Test extends TestCommon {
 
         shellCreate("/foo");
         /* kill one of the masters */
-        killMaster(1);
+        killMaster(0,1);
 
         shellCreate("/bar");
         assertTrue(shellLs("/", "foo", "bar"));

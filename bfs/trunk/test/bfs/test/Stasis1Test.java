@@ -18,7 +18,7 @@ public class Stasis1Test extends TestCommon {
 
         shellCreate("/foo");
         assertTrue(shellLs("/", "foo"));
-	    this.killMaster(0);
+	    this.killMaster(0,0);
 
         System.out.println("--------------------------------------------------------------------------------------------------------\n");
 
