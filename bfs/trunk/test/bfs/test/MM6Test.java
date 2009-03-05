@@ -12,7 +12,7 @@ public class MM6Test extends TestCommon {
 		safeAssert("foo found??", !shellLs("/", "foo"));
 
 		/* kill the primary */
-		killMaster(0);
+		killMaster(0,0);
 
 		/*
 		 * Check that the deletion performed on the primary master is reflected

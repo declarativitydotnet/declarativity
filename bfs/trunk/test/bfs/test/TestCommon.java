@@ -2,6 +2,7 @@ package bfs.test;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,7 @@ import bfs.Master;
 import bfs.Shell;
 
 public class TestCommon {
-    protected List<Master> masters;
+    protected List<List<Master>> partitions;
     protected List<DataNode> datanodes;
     protected Shell shell;
 
@@ -30,8 +31,10 @@ public class TestCommon {
 
     @After
     public void shutdown() {
-        for (Master m : this.masters) {
-            m.stop();
+        for( List<Master> masters: partitions) {
+        	for (Master m : masters) {
+        		m.stop();
+        	}
         }
         if (this.datanodes != null) {
             for (DataNode d : this.datanodes) {
@@ -55,8 +58,8 @@ public class TestCommon {
         return ret;
     }
 
-    protected void killMaster(int index) {
-        this.masters.get(index).stop();
+    protected void killMaster(int partition, int index) {
+        this.partitions.get(partition).get(index).stop();
     }
 
     protected void killDataNode(int index) {
@@ -115,15 +118,41 @@ public class TestCommon {
         return true;
     }
 
+    protected void startManyPartitioned(String[][] args) throws JolRuntimeException, UpdateException {
+	      List<List<String>> a = new ArrayList<List<String>>();
+	      for(int i = 0; i < args.length; i++) {
+	    	  a.add(new LinkedList<String>());
+	    	  for(int j = 0; j < args[i].length; j++) {
+	    		  a.get(i).add(args[i][j]);
+	    	  }
+	      }
+	      Conf.setNewMasterList(a);
+
+	      this.partitions = new ArrayList<List<Master>>();
+	      for(int i = 0; i < Conf.getNumPartitions(); i++) {
+	      	this.partitions.add(new LinkedList<Master>());
+	        for (int j = 0; j < Conf.getNumMasters(i); j++) {
+	            Master m = new Master(i, j);
+	            System.out.println("starting master ("+i+","+j+"): "+ m);
+	            m.start();
+	            this.partitions.get(i).add(m);
+	        }
+	      }
+    }
+    
     protected void startMany(String... args) throws JolRuntimeException, UpdateException {
-        this.masters = new LinkedList<Master>();
-
-        Conf.setNewMasterList(args);
-
-        for (int i = 0; i < Conf.getNumMasters(); i++) {
-            Master m = new Master(i);
-            m.start();
-            this.masters.add(m);
+        this.partitions = new ArrayList<List<Master>>();
+        List<List<String>> a = new ArrayList<List<String>>();
+        a.add(new ArrayList<String>());
+        for(String arg:args) {a.get(0).add(arg); }
+        Conf.setNewMasterList(a);
+        for(int i = 0; i < Conf.getNumPartitions(); i++) {
+        	this.partitions.add(new LinkedList<Master>());
+	        for (int j = 0; j < Conf.getNumMasters(i); j++) {
+	            Master m = new Master(i, j);
+	            m.start();
+	            this.partitions.get(i).add(m);
+	        }
         }
     }
 

@@ -20,9 +20,9 @@ public class Stasis2Test extends TestCommon {
         assertTrue(shellLs("/", "foo"));
         
         // XXX Do not call shutdown(); not handling data nodes yet.
-	    this.killMaster(0);
-	    this.killMaster(1);
-	    this.killMaster(2);
+	    this.killMaster(0,0);
+	    this.killMaster(0,1);
+	    this.killMaster(0,2);
         
         System.out.println("--------------------------------------------------------------------------------------------------------\n");
 
@@ -32,14 +32,14 @@ public class Stasis2Test extends TestCommon {
 	    
 	    assertTrue(shellLs("/", "foo"));
 
-	    this.killMaster(0);
+	    this.killMaster(0,0);
 
 	    shellCreate("/bar");
 	    
 	    assertTrue(shellLs("/", "foo"));
 	    assertTrue(shellLs("/", "bar"));
 
-	    this.killMaster(1);
+	    this.killMaster(0,1);
 
 	    assertTrue(shellLs("/", "foo"));
 	    assertTrue(shellLs("/", "bar"));

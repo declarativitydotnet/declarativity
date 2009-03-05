@@ -30,7 +30,7 @@ public class MM5Test extends TestCommon {
 
         long avg = agg / count;
         System.out.println("average time to create metadata on "
-                + Conf.getNumMasters() + " is " + avg);
+                + Conf.getNumMasters(0) + " is " + avg);
 
         int cnt = shellLsCnt("/");
         System.out.println("total files in ls: " + cnt);

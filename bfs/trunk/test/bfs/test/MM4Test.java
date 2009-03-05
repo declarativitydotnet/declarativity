@@ -8,7 +8,7 @@ public class MM4Test extends TestCommon {
         startMany("localhost:5500", "localhost:5502", "localhost:5503");
 
         /* kill one of the masters */
-        killMaster(1);
+        killMaster(0,1);
 
         shellCreate("/foo");
         shellCreate("/bar");

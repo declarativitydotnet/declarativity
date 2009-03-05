@@ -29,8 +29,27 @@ watch(request, ae);
 public
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
-    bfs_global::master_for_node(@Source, Master),
-    start_request(@Source, ReqId, ReqType, Args);
+    bfs_global::master_for_node(@Source, Partition, Master),
+    start_request(@Source, ReqId, ReqType, Args),
+    ReqType != "ChunkLocations",
+    ReqType != "CreateDir",
+    ReqType != "Ls",
+    Partition :=  Args.hashCode() % Conf.getNumPartitions();
+
+public
+request(@Master, ReqId, Source, ReqType, Args) :-
+    self(@Source),
+    bfs_global::master_for_node(@Source, _, Master),
+    start_request(@Source, ReqId, ReqType, Args),
+    ReqType == "CreateDir" ||
+    ReqType == "Ls";
+
+public
+request(@Master, ReqId, Source, "ChunkLocations", Args) :-
+    self(@Source),
+    bfs_global::master_for_node(@Source, Partition, Master),
+    start_request(@Source, ReqId, "ChunkLocations", Args),
+    Partition := Args.substring(0,Args.indexOf(":")).hashCode() % Conf.getNumPartitions();
 
 // Client node, Request ID, Master node, Success, Result (if any). The
 // type of the result depends on the type of request.
@@ -148,12 +167,12 @@ compute_chunk_locs(@Master, ChunkId, set<NodeAddr>) :-
 
 send_response(@Master, Id, Source, true, NodeSet) :-
     request(@Master, Id, Source, "ChunkLocations", ChunkStr),
-    ChunkId := Integer.valueOf(ChunkStr),
+    ChunkId := Integer.valueOf(ChunkStr.substring(ChunkStr.indexOf(":")+1)),
     compute_chunk_locs(@Master, ChunkId, NodeSet);
 
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "ChunkLocations", ChunkStr),
-    ChunkId := Integer.valueOf(ChunkStr),
+    ChunkId := Integer.valueOf(ChunkStr.substring(ChunkStr.indexOf(":")+1)),
     notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
 
 // Handle "Create" and "CreateDir" requests

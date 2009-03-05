@@ -21,14 +21,14 @@ import bfs.Conf;
 import bfs.DataConnection;
 import bfs.DataProtocol;
 
-public class E2ETest extends TestCommon {
+public class PE2ETest extends TestCommon {
 	private final static String TEST_FILENAME = "/e2e_f1";
 	private final static int NUM_TEST_CHUNKS = 6;
 
 	/* XXX: refactor this to avoid duplicated code */
-	@Test(timeout=24000) // XXX was 12000 before perf regresssion.  This used to take ~ 6 sec
+	@Test(timeout=48000) // XXX was 12000 before perf regresssion.  This used to take ~ 6 sec
 	public void test1() throws Exception {
-		startMany("localhost:5505");
+		startManyPartitioned(new String[][] { {"localhost:5505"}, {"localhost:5506"}, {"localhost:5507"}});
 		startManyDataNodes("td1", "td2");
 
 		BFSClient bfs = new BFSClient(10001);
@@ -116,7 +116,7 @@ public class E2ETest extends TestCommon {
 	}
 
     public static void main(String[] args) throws Exception {
-        E2ETest t = new E2ETest();
+        PE2ETest t = new PE2ETest();
         t.test1();
     }
 }

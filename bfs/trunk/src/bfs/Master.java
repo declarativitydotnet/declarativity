@@ -17,19 +17,21 @@ import bfs.telemetry.Telemetry;
 public class Master {
     private final String address;
     private final int port;
+    private final int partition;
     private JolSystem system;
     private boolean enableLog = false;
     private LogEvents logEvents;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
-        int masterIndex = Conf.findSelfIndex(true);
-        Master m = new Master(masterIndex);
+        int[] masterIndex = Conf.findSelfIndex(true);
+        Master m = new Master(masterIndex[0], masterIndex[1]);
         m.start();
     }
 
-    public Master(int masterIdx) {
-        this.address = Conf.getMasterAddress(masterIdx);
-        this.port = Conf.getMasterPort(masterIdx);
+    public Master(int partition, int masterIdx) {
+    	this.partition = partition;
+        this.address = Conf.getMasterAddress(partition, masterIdx);
+        this.port = Conf.getMasterPort(partition, masterIdx);
     }
 
     public void stop() {
@@ -120,8 +122,8 @@ public class Master {
         id.add(new Tuple(address));
         this.system.schedule("paxos", PaxosIdTable.TABLENAME, id, null);
 
-        for (int i = 0; i < Conf.getNumMasters(); i++) {
-            String addr = Conf.getMasterAddress(i);
+        for (int i = 0; i < Conf.getNumMasters(partition); i++) {
+            String addr = Conf.getMasterAddress(partition, i);
             TupleSet member = new BasicTupleSet();
             member.add(new Tuple(addr, i));
             this.system.schedule("paxos", PaxosMemberTable.TABLENAME, member, null);

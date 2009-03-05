@@ -3,7 +3,7 @@
 RUNTEST = /usr/bin/time java -cp dist/bfs.jar:lib/junit.jar:lib/jol.jar:dist/bfs-test.jar
 RUNTESTJUNIT = ${RUNTEST} org.junit.runner.JUnitCore 
 RUNTESTSTASIS = LD_LIBRARY_PATH=$(STASIS_DIR)/build/src/stasis $(RUNTEST) -Djava.library.path=$(JOL_DIR)/ant-build/stasis/jni
-RUNTESTSTASISJUNIT = ${RUNTESTSTASIS} # org.junit.runner.JUnitCore
+RUNTESTSTASISJUNIT = ${RUNTESTSTASIS} org.junit.runner.JUnitCore
 RUNTESTSTASISCPU = ${RUNTESTSTASIS} -agentlib:hprof=cpu=samples,depth=6 org.junit.runner.JUnitCore
 RUNTESTSTASISHEAP = ${RUNTESTSTASIS} -agentlib:hprof=heap=sites,depth=8 org.junit.runner.JUnitCore
 
@@ -36,7 +36,7 @@ test-profile: ${PROFILETARGETS}
 %.stasistest: TESTPREP
 	@rm -f storefile.txt logfile.txt
 	@echo -n `date`: Running [stasis] $*
-	${RUNTESTSTASISJUNIT} bfs.test.$* 2> test-output/$*.stasis.txt 1>&2 || echo -n '      <---- FAILED'
+	@${RUNTESTSTASISJUNIT} bfs.test.$* 2> test-output/$*.stasis.txt 1>&2 || echo -n '      <---- FAILED'
 	@echo
 
 %.cputest: TESTPREP

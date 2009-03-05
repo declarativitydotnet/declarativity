@@ -21,7 +21,7 @@ define(stasis_fchunk, keys(0, 1), {String, Integer, Integer});
 define(migration_choices, keys(0,1,2), {String, String, Integer});
 
 // Node, Master node
-define(master_for_node, keys(0, 1), {String, String});
+define(master_for_node, keys(0, 1, 2), {String, Integer, String});
 watch(master_for_node, ae);
 
 /* chunk stuff */

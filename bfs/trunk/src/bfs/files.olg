@@ -87,26 +87,33 @@ serverKnows(Host, Master, ChunkId, Id) :-
     ackHeartBeat#insert(Host, Master, Id);
 
 define(masters, keys(0,1), {String, String});
-define(mindx, keys(0), {String, Integer});
+define(mindx, keys(0), {String, Integer, Integer});
 //watch(masters,ae);
 //watch(mindx,ae);
 //watch(periodic,ae);
 
 // XXX: this periodic is a hack
 timer(periodic, logical, 1, 1, 1);
-mindx(Me, 0) :-
+mindx(Me, 0, 0) :-
     dir(Me, _),
     periodic(_, _, _);
 
-mindx(Host, I) :-
-    mindx(Host, Old),
+mindx(Host, P, I) :-
+    mindx(Host, P, Old),
     masters#insert(Host, Master),
-    Old < Conf.getNumMasters()-1,
+    Old < Conf.getNumMasters(P)-1,
     I := Old + 1;
 
+mindx(Host, P, 0) :-
+    mindx(Host, Old, I),
+    masters#insert(Host, Master),
+    Old < Conf.getNumPartitions()-1,
+    I == Conf.getNumMasters(Old)-1,
+    P := Old + 1;
+
 masters(Host, Master) :-
-    mindx#insert(Host, I),
-    Master := Conf.getMasterAddress(I);
+    mindx#insert(Host, P, I),
+    Master := Conf.getMasterAddress(P, I);
 
 define(send_delete, keys(0), {String, Integer, String});
 watch(send_delete, ae);
