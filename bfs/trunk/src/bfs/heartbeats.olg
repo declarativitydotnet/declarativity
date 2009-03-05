@@ -13,15 +13,20 @@ ackHeartBeat(@Dnode, Master, Id) :-
     sendHeartBeat(@Master, Dnode, _, _, _, Id),
     Id != -1L;
 
-define(dataNodes, keys(0, 1), {String, String, Long});
-dataNodes(Master, Addr, max<Tstamp>) :-
-    sendHeartBeat(Master, Addr, _, _, Tstamp, _);
-
 delete
 sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
     sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id),
     (System.currentTimeMillis() - Tstamp) > Conf.getHeartbeatRetention();
 
+define(dataNodes, keys(0, 1), {String, String, Long});
+dataNodes(Master, Addr, max<Tstamp>) :-
+    sendHeartBeat(Master, Addr, _, _, Tstamp, _);
+
+delete
+dataNodes(Master, DataNode, Ts) :-
+    dataNodes(Master, DataNode, Ts),
+    clock#insert(),
+    (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
 // of last update from data node
@@ -36,12 +41,6 @@ chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
 delete
 chunks(Master, DataNode, ChunkId, Length, Ts) :-
     chunks(Master, DataNode, ChunkId, Length, Ts),
-    clock#insert(),
-    (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
-
-delete
-dataNodes(Master, DataNode, Ts) :-
-    dataNodes(Master, DataNode, Ts),
     clock#insert(),
     (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
