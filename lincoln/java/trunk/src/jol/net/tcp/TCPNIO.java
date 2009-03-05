@@ -86,7 +86,7 @@ public class TCPNIO extends Server {
 					}
 					this.newConnections.clear();
 					if (isDone) {
-						selector.close();
+						this.selector.close();
 						return;
 					}
 				}

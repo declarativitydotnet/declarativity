@@ -184,7 +184,14 @@ public class Runtime implements JolSystem {
 		canShutdown = false;
 		this.timer.cancel();
 		this.executor.shutdown();
-		if (this.driver != null) this.driver.interrupt();
+		if (this.driver != null) {
+			this.driver.interrupt();
+			try {
+				this.driver.join();
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		}
 		if (this.network != null) this.network.shutdown();
 		StasisTable.deinitializeStasis(this);
 	}
