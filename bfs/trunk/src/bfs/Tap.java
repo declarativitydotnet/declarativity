@@ -4,25 +4,24 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.lang.InterruptedException;
 
 import jol.core.JolSystem;
 import jol.core.Runtime;
+import jol.lang.plan.Aggregate;
+import jol.lang.plan.Assignment;
 import jol.lang.plan.Expression;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Rule;
 import jol.lang.plan.Term;
-import jol.lang.plan.Aggregate;
-import jol.lang.plan.Assignment;
-import jol.lang.plan.Variable;
 import jol.lang.plan.Value;
+import jol.lang.plan.Variable;
 import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -102,7 +101,6 @@ public class Tap {
 		this.firings = new HashMap<String, Integer>();
         this.rewrittenProgram = "";
         this.defines = new HashMap();
-
     }
 
 
@@ -607,5 +605,3 @@ public class Tap {
         }
 	}
 }
-
-
