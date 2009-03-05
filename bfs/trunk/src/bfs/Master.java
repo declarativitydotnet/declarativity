@@ -19,6 +19,8 @@ public class Master {
     private final String address;
     private final int port;
     private JolSystem system;
+    private boolean enableLog = true;
+    private LogEvents logEvents;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
         int masterIndex = Conf.findSelfIndex(true);
@@ -30,12 +32,13 @@ public class Master {
         this.address = Conf.getMasterAddress(masterIdx);
         this.port = Conf.getMasterPort(masterIdx);
     }
-    boolean enableLog = true;
+
     public void stop() {
-    	if(enableLog) logEvents.shutdown();
+    	if (this.enableLog)
+    		this.logEvents.shutdown();
         this.system.shutdown();
     }
-    LogEvents logEvents;
+
     public void start() throws JolRuntimeException, UpdateException {
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
@@ -91,14 +94,14 @@ public class Master {
 
         this.system.start();
 
-        if(enableLog) {
+        if (enableLog) {
             File f = new File("/log/error.log");
             if(!f.canRead()) f = new File("/var/log/messages");
             if(!f.canRead()) f = new File("/usr/share/dict/words");
-            
+
         	this.logEvents = new LogEvents(this.system, f);
         }
-        
+
         System.out.println("Master node @ " + this.port + " ready!");
     }
 
@@ -112,7 +115,7 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_assertion.olg"));
 
         //this.system.install("bfs", ClassLoader.getSystemResource("alive.olg"));
-        ////this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
+        //this.system.install("bfs", ClassLoader.getSystemResource("paxos/paxos_client_liveness.olg"));
 
         this.system.evaluate();
 
