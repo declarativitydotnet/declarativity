@@ -2,7 +2,6 @@ package bfs;
 
 import java.io.File;
 
-import bfs.telemetry.LogEvents;
 import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.BasicTupleSet;
@@ -11,7 +10,7 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
-
+import bfs.telemetry.LogEvents;
 import bfs.telemetry.Telemetry;
 
 
