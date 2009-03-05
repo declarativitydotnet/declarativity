@@ -17,7 +17,7 @@ define(datadir, keys(0), {String, File});
 define(dir, keys(0,1), {String, List});
 dir(Host, DirList) :-
     datadir(Host, Dir),
-	DirList := DataServer.dirListing(Dir),
+	  DirList := DataServer.dirListing(Dir),
     clock(_, _, _);
 
 define(indx, keys(0), {String, Integer});
@@ -42,7 +42,7 @@ define(chunk, keys(0,1), {String, String, Integer});
 //watch(chunk, ae);
 chunk(Host, FName, FLength) :-
     chunkTmp#insert(Host, FName, FLength);
-	
+
 
 /* cleanup rules disabled
 delete
