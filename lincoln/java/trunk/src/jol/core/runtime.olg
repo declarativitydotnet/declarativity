@@ -62,8 +62,9 @@ evaluation(Time, Program, Name, Insertions, Deletions) :-
 publicEval
 execute(Time, Program2, Query, Name, Insertions, Deletions) :-
 	delta(Time, Program1, Name, Insertions, Deletions),
-	query(Program2, Rule, Public, Async, Delete, Event, Input, Output, Query),
-	Public == true && Input == Name, Program1 != Program2;
+	Public := true,   // hack to encourage JOL to choose an index scan
+	query(Program2, Rule, Public, Async, Delete, Event, Name, Output, Query),
+	Program1 != Program2;
 
 /* Execute on the intended program.
  * NOTE: Passing 'null' as the query signals to the evaluator
