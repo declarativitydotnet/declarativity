@@ -4,10 +4,9 @@ import bfs.Conf;
 import java.lang.System;
 import java.util.Set;
 
-define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
-
-
 timer(clock, physical, 1000, infinity, 0);
+
+define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
 
 define(ackHeartBeat, {String, String, Long});
 ackHeartBeat(@Dnode, Master, Id) :-
@@ -18,8 +17,6 @@ define(dataNodes, keys(0, 1), {String, String, Long});
 dataNodes(Master, Addr, max<Tstamp>) :-
     sendHeartBeat(Master, Addr, _, _, Tstamp, _);
 
-
-// we need this to ensure we become aware of truant datanodes.
 delete
 sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
     sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id),
@@ -29,12 +26,11 @@ sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
 // of last update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
-
 chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
     clock#insert(),
     ChunkId != -1,
     sendHeartBeat(Master, DataNode, ChunkId, Length, _, _),
-    (System.currentTimeMillis() - MaxTstamp) < Conf.getHeartbeatRetention(),
+    (System.currentTimeMillis() - MaxTstamp) <= Conf.getHeartbeatRetention(),
     dataNodes(Master, DataNode, MaxTstamp);
 
 delete
@@ -81,7 +77,6 @@ newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
     rep_factor(Master, ChunkId, Cnt),
     Time := new Long(System.currentTimeMillis()),
     representative_datanode(Master, ChunkId, Dn, _),
-    ChunkId > 0,
     long_period#insert(_, _, _),
     Cnt < Conf.getRepFactor();
 
