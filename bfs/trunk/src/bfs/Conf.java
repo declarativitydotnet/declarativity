@@ -93,7 +93,7 @@ public class Conf {
 	public static String getLogSink() {
 		return logSink;
 	}
-	public void setLogSink(String sink) {
+	public static void setLogSink(String sink) {
 		logSink = sink;
 	}
 

@@ -11,6 +11,8 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
+import bfs.Conf;
+
 public class Telemetry {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
     	if (args.length != 1)
@@ -18,7 +20,7 @@ public class Telemetry {
 
 		JolSystem system = Runtime.create(Runtime.DEBUG_ALL, System.err, 12345);
         Telemetry dn = new Telemetry(system);
-        dn.startSink();
+        dn.startSink(Conf.getLogSink());
 		system.start();
     }
 
@@ -38,7 +40,7 @@ public class Telemetry {
     }
 
 
-    public void startSink() throws JolRuntimeException, UpdateException {
+    public void startSink(String sink) throws JolRuntimeException, UpdateException {
 
         Callback copyCallback = new Callback() {
             @Override
@@ -47,15 +49,23 @@ public class Telemetry {
             @Override
             public void insertion(TupleSet tuples) {
                 for (Tuple t : tuples) {
+                    System.out.println("YO\n");
                     //Integer chunkId = (Integer) t.value(2);
                 }
             }
         };
 
+        
         this.system.install("telemetry", ClassLoader.getSystemResource("telemetry/telemetry.olg"));
+
+        this.system.evaluate();
+        TableName tblName = new TableName("telemetry", "identity");
+        TupleSet ident = new BasicTupleSet();
+		ident.add(new Tuple("non-leaf", sink));
+        this.system.schedule("telemetry", tblName, ident, null);
         this.system.evaluate();
 
-        Table table = this.system.catalog().table(new TableName("telemetry", "sendSink"));
+        Table table = this.system.catalog().table(new TableName("telemetry", "messages"));
         table.register(copyCallback);
 	}
 

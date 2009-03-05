@@ -150,14 +150,18 @@ public class TestCommon {
 
     protected void startManyDataNodes(String... args) throws JolRuntimeException,
             UpdateException {
-        this.datanodes = new LinkedList<DataNode>();
-
         Conf.setNewDataNodeList(args.length);
         assert (args.length == Conf.getNumDataNodes());
+        this.datanodes = new LinkedList<DataNode>();
+        startManyDataNodes(0, args);
+    }
 
-        for (int i = 0; i < args.length; i++) {
-            cleanup(args[i]);
-            DataNode d = new DataNode(i, args[i]);
+    protected void startManyDataNodes(int indx, String... args) throws JolRuntimeException,
+            UpdateException {
+
+        for (int i = indx; i < (args.length + indx); i++) {
+            cleanup(args[i-indx]);
+            DataNode d = new DataNode(i, args[i-indx]);
             System.out.println("new DATANODE " + d.getPort());
             d.start();
             this.datanodes.add(d);

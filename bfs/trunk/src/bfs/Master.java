@@ -48,7 +48,7 @@ public class Master {
 		    Telemetry telemetry = new Telemetry(this.system);
 		    // the table telemetry::cpu_info(RemoteAddress, ThisAddress, User, Sys, Times is now available for querying
 		    // remote nodes must have called startSource(ThisAddress, RemoteAddress)
-		    telemetry.startSink();
+		    telemetry.startSink(Conf.getLogSink());
         }
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
