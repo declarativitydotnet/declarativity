@@ -121,6 +121,7 @@ public class TCPNIO extends Server {
 			} catch (UpdateException e) {
 				e.printStackTrace();
 			}
+			if(isDone) { break; }
 		}
 	}
 
