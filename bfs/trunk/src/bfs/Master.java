@@ -40,7 +40,7 @@ public class Master {
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
-        Tap tap = new Tap(this.system, "tcp:localhost:5678");
+        Tap tap = new Tap(this.system, Conf.getTapSink());
 
 		Telemetry telemetry = new Telemetry(this.system);
 		// the table telemetry::cpu_info(RemoteAddress, ThisAddress, User, Sys, Times is now available for querying
@@ -81,7 +81,7 @@ public class Master {
         this.system.schedule("bfs", new TableName("bfs_global", "fpath"), newPath, null);
         this.system.evaluate();
 
-        if (Conf.isTapped()) {
+        if (Conf.getTapSink() != null) {
             tap.doRewrite("bfs");
             tap.doRewrite("bfs_chunks");
             tap.doRewrite("bfs_heartbeat");

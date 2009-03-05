@@ -43,8 +43,10 @@ public class Tap {
             Tap n = new Tap(5678);
             n.doListen();
         } else if (arg.startsWith("-f")) {
+            // it doesn't matter which port we choose
             Tap n = new Tap(7654);
             n.doFinish();
+            n.shutdown();
         } else if (arg.startsWith("-r")) {
             System.out.println("ARRR: "+arg);
             String program = args[1];
@@ -54,6 +56,7 @@ public class Tap {
                 System.out.println("put " + args[i] + " on stack");
                 path.add(args[i]);
             }
+            // it doesn't matter which port we choose
             Tap n = new Tap(1234);
             n.doLookup(program, rule, path);
         } else {
@@ -155,8 +158,8 @@ public class Tap {
             "define(tap_precondition, keys(0,1,2,3), {String, String, String, Long, Integer});\n" +
             "define(tap_send, {String, String, String, String,  Long, Integer});\n" +
             "define(tap_universe, {String, String, String, String, String});\n" +
-            "define(tap_chaff, {String});\n" +
-            "tap_chaff(\"foo\");\n" +
+            "define(tap_chaff, {String, String});\n" +
+            "tap_chaff(\"foo\", \"" + Conf.getTapSink() + "\");\n" +
             "watch(tap_precondition, a);\n" +
             "tap_send(@Sink, Program, Rule, Head,  Ts, Id) :- \n" +
             "\ttap_precondition(Program, Rule, Head,  @Ts, Id),\n" +
@@ -172,7 +175,6 @@ public class Tap {
         }
         return join(l, delim, quotes);
     }
-
     public boolean isNetworkRule(Rule r) {
         Variable headLoc = r.head().locationVariable();
         if (headLoc != null) {
@@ -493,20 +495,16 @@ public class Tap {
             }
         };
 
+        this.system.install("tap", ClassLoader.getSystemResource("tap/listen.olg"));
+        this.system.evaluate();
+
         Table table = this.system.catalog().table(new TableName("tap", "networkFires"));
 
-        	table.register(reportCallback);
+       	table.register(reportCallback);
 
         this.system.install("tap", ClassLoader.getSystemResource("tap/tap_done.olg"));
-        this.system.evaluate();
-        this.system.evaluate();
 
-		try {
-			Thread.sleep(5000);
-        	this.system.evaluate();
-		}	 catch (InterruptedException e) {
-
-		}
+        this.system.start();
 
 		// till we timeout
 		Object o = (Object)new String("foo");
@@ -514,7 +512,6 @@ public class Tap {
 			o = responseQueue.get(6000);
 			System.out.println("got something...\n");
 		}
-
 		System.out.println("GOT\n");
 
     }

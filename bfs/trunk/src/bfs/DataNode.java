@@ -102,7 +102,7 @@ public class DataNode {
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
-        Tap tap = new Tap(this.system, "tcp:localhost:5678");
+        Tap tap = new Tap(this.system, Conf.getTapSink());
 		Telemetry telemetry = new Telemetry(this.system);
 		if (Conf.getLogSink() != null)
 			telemetry.startSource(Conf.getLogSink(), Conf.findLocalAddress(getPort()));
@@ -122,7 +122,7 @@ public class DataNode {
 
 
         /* get a tap program */
-        if (Conf.isTapped()) {
+        if (Conf.getTapSink() != null) {
             tap.doRewrite("bfs_heartbeat");
         }
 

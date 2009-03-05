@@ -51,7 +51,8 @@ public class Conf {
 
     private static int replicationFactor = 3;
 
-    private static boolean tap = false;
+    private static String tapSink = null;
+    //private static String tapSink = "tcp:localhost:5678";
 
     public static final String[] corpus = new String[] {
         "paxos/paxos_global.olg",
@@ -97,14 +98,14 @@ public class Conf {
 		logSink = sink;
 	}
 
-	public static void setTap(boolean t) {
-		tap = t;
+	public static void setTap(String t) {
+		tapSink = t;
 	}
     public static int getChunkSize() {
         return chunkSize;
     }
-    public static boolean isTapped() {
-        return tap;
+    public static String getTapSink() {
+        return tapSink;
     }
     public static long getHeartbeatRetention() {
         return heartbeatRetention;
