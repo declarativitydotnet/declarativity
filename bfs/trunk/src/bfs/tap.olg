@@ -13,8 +13,6 @@ import jol.types.table.TableName;
 import jol.types.table.Table;
 import jol.types.operator.Watch;
 
-timer(tick, physical, 3000, 3000, infinity);
-
 watch(tap, ae);
 define(tap,keys(0,1), {String, String});
 
@@ -31,11 +29,9 @@ public
 rewriteRule(Program, Rule, Obj) :- 
     global::rule(Program, Rule, Public, Async, Delete, Obj),
     tap(X, Program),
-    //end#insert();
     per#insert();
 
-timer(per, physical, 1000, 1000, infinity);
-//timer(end, logical, 1, 1, 2000);
+timer(per, physical, 1000, infinity, 0);
 
 define(preds, keys(0,2,3,4), {String, Predicate, String, Integer,String});
 //watch(preds,ae);
