@@ -45,10 +45,10 @@ public class DataCommon extends TestCommon {
 	}
 
     protected void cleanupAll() {
+        shutdown();
         for (String d : dnList) {
             cleanup(d);
         }
-        shutdown();
     }
 
     private long getChecksum(int i, String name) {
@@ -66,7 +66,6 @@ public class DataCommon extends TestCommon {
     }
 
     protected void checkFiles() {
-
 		try {	
 			Thread.sleep(3000);
 		} catch (InterruptedException e) {
