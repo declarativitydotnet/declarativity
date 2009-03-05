@@ -1,12 +1,9 @@
 program tap;
 
 import java.lang.Object;
-import java.lang.String;
-import java.lang.Integer;
-import jol.core.Runtime;
-
 import java.util.ArrayList;
 
+import jol.core.Runtime;
 import jol.types.basic.ValueList;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Watch;
