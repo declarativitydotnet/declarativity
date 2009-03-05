@@ -456,10 +456,12 @@ public class BFSClient {
     		results[0] = (Tuple)this.responseQueue.get(timeout);
     		for(int i =1 ; i < Conf.getNumPartitions(); i++) {
     			long now = System.currentTimeMillis();
-    			if((start + timeout) - now > 0)
+    			if((start + timeout) - now > 0) {
     				results[i] = (Tuple)this.responseQueue.get((start + timeout) - now);
-    			else
-    				done = true; break;
+    			} else {
+    				done = true;
+    				break;
+    			}
     		}
     		for(int i =0; i < Conf.getNumPartitions(); i++) {
     			if(results[i] != null) {
