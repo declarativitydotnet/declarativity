@@ -247,4 +247,21 @@ public abstract class Join extends Operator {
     	    return new Tuple(tupBuf);
 	    }
 	}
+
+	/**
+	 * Check whether a given tuple joins against a given set of tuples, without
+	 * actually bothering to compute the join.
+	 *
+	 * @param outer A single input tuple.
+	 * @param innerTuples A set of tuples to join against.
+	 * @return true iff the result of joining "outer" against "innerTuples"
+	 *         would yield one or more result tuples; false otherwise.
+	 */
+	protected boolean checkJoin(Tuple outer, Iterable<Tuple> innerTuples) throws JolRuntimeException {
+		for (Tuple inner : innerTuples) {
+			if (validate(inner) && validate(outer, inner))
+				return true;
+		}
+		return false;
+	}
 }
