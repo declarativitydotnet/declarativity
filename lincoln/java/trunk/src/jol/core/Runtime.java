@@ -94,7 +94,8 @@ public class Runtime implements JolSystem {
 	private int port;
 
 	private boolean canShutdown = false;
-
+	private Object canShutdownMutex = new Object();
+	
 	/** Creates a new runtime. Called from {@link Runtime#create(int)}. */
 	private Runtime(OutputStream output, int port) {
 		this.output = output;
@@ -177,25 +178,27 @@ public class Runtime implements JolSystem {
 	}
 
 	public void shutdown() {
-		if (!canShutdown) {
-			System.err.println("FIXME: Runtime.shutdown() called on already-shutdown Runtime.");
-			return;
-		}
-		canShutdown = false;
-		this.timer.cancel();
-		this.executor.shutdown();
-		if (this.driver != null) {
-			this.driver.interrupt();
-			try {
-				this.driver.join();
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
+		synchronized(canShutdownMutex) {
+			if (!canShutdown) {
+				System.err.println("FIXME: Runtime.shutdown() called on already-shutdown Runtime.");
+				return;
 			}
-		}
-		if (this.network != null) this.network.shutdown();
-		StasisTable.deinitializeStasis(this);
-	}
+			canShutdown = false;
+			this.timer.cancel();
+			this.executor.shutdown();
+			if (this.driver != null) {
+				this.driver.interrupt();
+				try {
+					this.driver.join();
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+			}
+			if (this.network != null) this.network.shutdown();
+			StasisTable.deinitializeStasis(this);
 
+		}
+	}
 	public void start() {
 		canShutdown = true;
 		this.driver.start();
