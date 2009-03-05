@@ -19,7 +19,6 @@ public class Master {
     private final int port;
     private JolSystem system;
     private boolean enableLog = false;
-    private boolean enableTelemetry = false;
     private LogEvents logEvents;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
@@ -45,11 +44,11 @@ public class Master {
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
         Tap tap = new Tap(this.system, Conf.getTapSink());
 
-        if (this.enableTelemetry) {
-        	Telemetry telemetry = new Telemetry(this.system);
-        	// the table telemetry::cpu_info(RemoteAddress, ThisAddress, User, Sys, Times is now available for querying
-        	// remote nodes must have called startSource(ThisAddress, RemoteAddress)
-        	telemetry.startSink();
+        if (Conf.getLogSink() != null) {
+		    Telemetry telemetry = new Telemetry(this.system);
+		    // the table telemetry::cpu_info(RemoteAddress, ThisAddress, User, Sys, Times is now available for querying
+		    // remote nodes must have called startSource(ThisAddress, RemoteAddress)
+		    telemetry.startSink();
         }
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
