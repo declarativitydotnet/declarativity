@@ -49,6 +49,8 @@ public class Conf {
 
     private static final long heartbeatRetention = 12000L;
 
+    private static long propagationDelay = 6000L;
+
     private static int replicationFactor = 3;
 
     private static String tapSink = null;
@@ -89,6 +91,14 @@ public class Conf {
         	}
         }
 	}
+
+    public static long getPropagationDelay() {
+        return propagationDelay;
+    }
+
+    public static void setPropagationDelay(long delay) {
+        propagationDelay = delay;
+    }
 
 	public static String getLogSink() {
 		return logSink;
