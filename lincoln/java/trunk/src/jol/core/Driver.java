@@ -589,11 +589,9 @@ public class Driver extends Thread {
 			throw new JolRuntimeException(e);
 		}
 	}
-	private boolean shuttingdown = false;
 	public void run() {
 		try {
 			while (!super.isInterrupted()) {
-				if(shuttingdown) {  System.err.println("FIXME: shut down code is being wonky!"); break; }
 				/* I only want to block if the schedule table is empty.
 				 * A non-empty schedule table means I have something todo. */
 				boolean block = schedule.cardinality() == 0;
@@ -663,8 +661,7 @@ public class Driver extends Thread {
 
 				for (Task task : tasks) {
 					if (task instanceof Shutdown) {
-						this.shuttingdown = true;
-						this.taskQueue.put(task); // Tell the next dude
+						interrupt();
 						return;
 					}
 					else if (task.program().equals("runtime")) {
