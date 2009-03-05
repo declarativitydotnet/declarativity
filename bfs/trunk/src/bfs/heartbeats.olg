@@ -87,7 +87,7 @@ watch(newReplicaRequest, ae);
 newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
     rep_factor(Master, ChunkId, Cnt),
     Time := new Long(System.currentTimeMillis()),
-    representative_datanode(Master, ChunkId, Dn),
+    representative_datanode(Master, ChunkId, Dn, _),
     ChunkId > 0,
     long_period#insert(_, _, _),
     Cnt < Conf.getRepFactor();
