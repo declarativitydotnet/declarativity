@@ -158,14 +158,17 @@ case $startStop in
       export MASTERFILE=$HADOOP_CONF_DIR/masters
       export SLAVEFILE=$HADOOP_CONF_DIR/slaves
 
+      # Use 1GB for the maximum Java heap size
+      BFS_JAVA_OPTS="-Xmx1000m"
+
       if [ "$command" = "bfsdatanode" ]; then
         BFS_DATA_DIR=/tmp/bfs_data
         # XXX: for now, we just remove the old data directory on startup
         echo "Removing data directory $BFS_DATA_DIR"
         rm -r $BFS_DATA_DIR
-        nohup $JAVA -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR > "$log" 2>&1 < /dev/null &
+        nohup $JAVA $BFS_JAVA_OPTS -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR > "$log" 2>&1 < /dev/null &
       else
-        nohup $JAVA -cp "$CLASSPATH" bfs.Master > "$log" 2>&1 < /dev/null &
+        nohup $JAVA $BFS_HAVA_OPTS -cp "$CLASSPATH" bfs.Master > "$log" 2>&1 < /dev/null &
       fi
     else
       nohup nice -n $HADOOP_NICENESS "$HADOOP_HOME"/bin/hadoop --config $HADOOP_CONF_DIR $command "$@" > "$log" 2>&1 < /dev/null &
