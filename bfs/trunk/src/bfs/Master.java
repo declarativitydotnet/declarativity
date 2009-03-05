@@ -19,7 +19,8 @@ public class Master {
     private final String address;
     private final int port;
     private JolSystem system;
-    private boolean enableLog = true;
+    private boolean enableLog = false;
+    private boolean enableTelemetry = false;
     private LogEvents logEvents;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
@@ -45,10 +46,12 @@ public class Master {
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
         Tap tap = new Tap(this.system, Conf.getTapSink());
 
-		Telemetry telemetry = new Telemetry(this.system);
-		// the table telemetry::cpu_info(RemoteAddress, ThisAddress, User, Sys, Times is now available for querying
-		// remote nodes must have called startSource(ThisAddress, RemoteAddress)
-		telemetry.startSink();
+        if (this.enableTelemetry) {
+        	Telemetry telemetry = new Telemetry(this.system);
+        	// the table telemetry::cpu_info(RemoteAddress, ThisAddress, User, Sys, Times is now available for querying
+        	// remote nodes must have called startSource(ThisAddress, RemoteAddress)
+        	telemetry.startSink();
+        }
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
@@ -94,10 +97,10 @@ public class Master {
 
         this.system.start();
 
-        if (enableLog) {
+        if (this.enableLog) {
             File f = new File("/log/error.log");
-            if(!f.canRead()) f = new File("/var/log/messages");
-            if(!f.canRead()) f = new File("/usr/share/dict/words");
+            if (!f.canRead()) f = new File("/var/log/messages");
+            if (!f.canRead()) f = new File("/usr/share/dict/words");
 
         	this.logEvents = new LogEvents(this.system, f);
         }
