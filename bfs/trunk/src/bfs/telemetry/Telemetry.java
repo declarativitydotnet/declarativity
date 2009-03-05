@@ -1,12 +1,5 @@
 package bfs.telemetry;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.channels.FileChannel;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import jol.core.JolSystem;
 import jol.core.Runtime;
 import jol.types.basic.BasicTupleSet;
@@ -22,7 +15,7 @@ public class Telemetry {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
     	if (args.length != 1)
     		usage();
-	
+
 		JolSystem system = Runtime.create(Runtime.DEBUG_ALL, System.err, 12345);
         Telemetry dn = new Telemetry(system);
         dn.startSink();
@@ -65,7 +58,7 @@ public class Telemetry {
         Table table = this.system.catalog().table(new TableName("telemetry", "sendSink"));
         table.register(copyCallback);
 	}
-	
+
 	public void startSource(String sink, String identifier) throws JolRuntimeException {
 
         this.system.install("telemetry", ClassLoader.getSystemResource("telemetry/telemetry.olg"));
