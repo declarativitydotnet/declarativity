@@ -61,6 +61,12 @@ sendSink(Source, @Sink, Udiff, Sdiff, Tdiff, Time, Interval) :-
 
 
 // if I am a sink, I can define views over sendSink
+
+define(messages,keys(0), {String, Integer});
+watch(messages, a);
+messages(Local, count<*>) :-
+    sendSink(_, Local, U);
+
 define(loads, keys(0,1), {String, String, Float});
 loads(Local, Remote, Load) :-
 	sendSink(Remote, Local, U, S, T, _, _),
