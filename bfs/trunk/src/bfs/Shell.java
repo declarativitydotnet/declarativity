@@ -96,7 +96,7 @@ public class Shell {
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, SHELL_PORT);
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
-        Tap tap = new Tap(this.system, "tcp:localhost:5678");
+        Tap tap = new Tap(this.system, Conf.getTapSink());
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
@@ -115,7 +115,7 @@ public class Shell {
 
         scheduleNewMaster();
 
-        if (Conf.isTapped()) {
+        if (Conf.getTapSink() != null) {
             tap.doRewrite("bfs");
             tap.doRewrite("chunks");
             tap.doRewrite("heartbeats");
