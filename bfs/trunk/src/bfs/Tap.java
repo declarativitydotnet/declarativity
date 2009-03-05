@@ -22,6 +22,7 @@ import jol.lang.plan.Term;
 import jol.lang.plan.Aggregate;
 import jol.lang.plan.Assignment;
 import jol.lang.plan.Variable;
+import jol.lang.plan.Value;
 import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
@@ -231,6 +232,8 @@ public class Tap {
 		for (Expression v : args) {
 			if (v.type() != null)
 				schema.add(v.type().toString().replace("class ","").replace("interface ",""));
+			else
+				schema.add("java.lang.Object");
 		}
 		List<String> keys = new ArrayList<String>();
 		for (Integer i=0; i < schema.size(); i++) {
@@ -351,7 +354,16 @@ public class Tap {
 		return newArgs;
 	}
 	private String getHeadArgs(List<Expression> args) {
-		return "(" + join(args, ", ", false) + ", Provenance) :-\n\t";
+
+		List<String> strArgs = new LinkedList<String>();
+		for (Expression  e : args) {
+			if ((e instanceof Value) && (e.type() == String.class)) {
+				strArgs.add("\"" + e.toString() + "\"");
+			} else {
+				strArgs.add(e.toString());
+			}
+		}
+		return "(" + join(strArgs, ", ", false) + ", Provenance) :-\n\t";
 	}
 
     public String rfooter() {
@@ -489,10 +501,19 @@ public class Tap {
         this.system.evaluate();
         this.system.evaluate();
 
+		try {
+			Thread.sleep(5000);
+        	this.system.evaluate();
+		}	 catch (InterruptedException e) {
+
+		}
+
 		// till we timeout
 		Object o = (Object)new String("foo");
-		while (o != null)
-			o = responseQueue.get(2000);
+		while (o != null) {
+			o = responseQueue.get(6000);
+			System.out.println("got something...\n");
+		}
 
 		System.out.println("GOT\n");
 
@@ -569,7 +590,7 @@ public class Tap {
         String  provProgram = summarize();
 
 		installProgram("tap", rewrittenProgram);
-		installProgram("provenance", provProgram);
+		//installProgram("provenance", provProgram);
     }
 
 	private void installProgram(String name, String program) {

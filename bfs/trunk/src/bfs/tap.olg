@@ -44,7 +44,6 @@ preds(Prog, Pred, Pname, Ord, Rule) :-
 define(nonheads, keys(0,2), {String, Predicate, String});
 public
 nonheads(Prog, Pred, Pname) :-
-    //per#insert(),
     preds(Prog, Pred, Pname, Ord, _),
     Ord > 0;
 

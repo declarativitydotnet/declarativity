@@ -18,6 +18,8 @@ import jol.types.table.Table;
 import jol.types.table.TableName;
 import jol.types.table.Table.Callback;
 
+import bfs.telemetry.Telemetry;
+
 public class DataNode {
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
     	if (args.length != 1)
@@ -100,8 +102,10 @@ public class DataNode {
         this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, this.port);
 
         OlgAssertion oa = new OlgAssertion(this.system, false);
-
         Tap tap = new Tap(this.system, "tcp:localhost:5678");
+		Telemetry telemetry = new Telemetry(this.system);
+		if (Conf.getLogSink() != null)
+			telemetry.startSource(Conf.getLogSink(), Conf.findLocalAddress(getPort()));
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();

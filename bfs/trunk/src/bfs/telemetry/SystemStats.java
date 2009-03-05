@@ -26,6 +26,15 @@ public class SystemStats {
 			this.offset = o; this.name = n;
 		}
 	}
+
+	public int getInt(SystemStatEntry e) {
+		return cols[e.offset].intValue();
+	}
+
+	public float getFloat(SystemStatEntry e) {
+		return cols[e.offset].floatValue();
+	}
+	
 	static final Pattern whiteSpace = Pattern.compile("\\s+");
 	Number cols[];
 	public SystemStats() throws IOException {
@@ -62,6 +71,16 @@ public class SystemStats {
 		}
 		sb.append(">");
 		return sb.toString();
+	}
+
+	public int totalJiffies() {
+		int sum = 0;
+		for (SystemStatEntry e: SystemStatEntry.values()) {
+			if (e.offset < SystemStatEntry.LOAD_1.offset) {
+				sum += cols[e.offset].intValue();
+			}
+		}
+		return sum;
 	}
 	public static void main(String[] arg) {
 		try {

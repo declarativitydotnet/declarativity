@@ -67,6 +67,9 @@ public class Conf {
         "bfs/tap.olg"
     };
 
+	private static String logSink = null;
+	
+
 	static {
         if (System.getenv("MASTERFILE") != null) {
         	File mastersFile = new File(System.getenv("MASTERFILE"));
@@ -85,6 +88,13 @@ public class Conf {
                 System.out.println("Installed new data node list: " + slaveList);
         	}
         }
+	}
+
+	public static String getLogSink() {
+		return logSink;
+	}
+	public void setLogSink(String sink) {
+		logSink = sink;
 	}
 
 	public static void setTap(boolean t) {
