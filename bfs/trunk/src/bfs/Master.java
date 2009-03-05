@@ -55,12 +55,8 @@ public class Master {
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/heartbeats.olg"));
         this.system.evaluate();
-
-        //this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks_global.olg"));
-        //this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/chunks.olg"));
         this.system.evaluate();
-
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs.olg"));
         this.system.evaluate();
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/placement.olg"));

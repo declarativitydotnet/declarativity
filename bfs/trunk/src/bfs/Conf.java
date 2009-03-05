@@ -61,7 +61,6 @@ public class Conf {
         "paxos/paxos_instance.olg",
         "bfs/bfs_global.olg",
         "bfs/heartbeats.olg",
-        "bfs/chunks_global.olg",
         "bfs/chunks.olg",
         "bfs/bfs.olg",
         "bfs/placement.olg",
