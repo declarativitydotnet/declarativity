@@ -17,3 +17,4 @@ public
 cartesian(Master, DataNode, ChunkId) :-
     bfs_heartbeat::newReplica(Master, ChunkId, _, _, _),
     bfs_heartbeat::dataNodes(Master, DataNode, _);
+

@@ -12,6 +12,8 @@ import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
 
+import bfs.telemetry.Telemetry;
+
 
 public class Master {
     private final String address;
@@ -39,6 +41,11 @@ public class Master {
 
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
         Tap tap = new Tap(this.system, "tcp:localhost:5678");
+
+		Telemetry telemetry = new Telemetry(this.system);
+		// the table telemetry::cpu_info(RemoteAddress, ThisAddress, User, Sys, Times is now available for querying
+		// remote nodes must have called startSource(ThisAddress, RemoteAddress)
+		telemetry.startSink();
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
