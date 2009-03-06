@@ -458,7 +458,7 @@ public class Shell {
     		int partition = filename.hashCode() % Conf.getNumPartitions();
         	spinGet(partition, Conf.getFileOpTimeout());
         } else {
-        	spinGetBroadcast(Conf.getFileOpTimeout());
+        	spinGetBroadcast(Conf.getFileOpTimeout(), req);
         }
         unregisterCallback(responseTbl, responseCallback);
     }
@@ -506,7 +506,7 @@ public class Shell {
         TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId, "Ls", path));
         this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
-        Object result = spinGetBroadcast(Conf.getListingTimeout());
+        Set result = spinGetBroadcast(Conf.getListingTimeout(), req);
         unregisterCallback(responseTbl, responseCallback);
 
         Set<Set<BFSFileInfo>> lsContent = (Set<Set<BFSFileInfo>>) result;
@@ -574,7 +574,7 @@ public class Shell {
         }
         throw new JolRuntimeException("timed out on all masters");
     }
-    private Set<Object> spinGetBroadcast(long timeout) throws JolRuntimeException {
+    private Set<Object> spinGetBroadcast(long timeout, TupleSet req) throws JolRuntimeException {
     	boolean done = false;
         Set<Object> ret = new HashSet<Object>();
 		Set<Integer> unseenPartitions = new HashSet<Integer>();
@@ -604,9 +604,12 @@ public class Shell {
     		if(unseenPartitions.size() == 0) { return ret; }
     		done = true;
     		for(int i : unseenPartitions) {
+    			System.out.println("partition " + i + " master " + currentMaster[i] + " timed out");
     			this.currentMaster[i]++;
     			if(this.currentMaster[i] == Conf.getNumMasters(i)) { done = true; break; }
     			scheduleNewMaster(i);
+    			// HACK resubmit request
+    			this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
     			done = false;
     		}
     	}
