@@ -265,9 +265,6 @@ fi
 # XXX: hacky
 export MASTERFILE=$HADOOP_CONF_DIR/masters
 export SLAVEFILE=$HADOOP_CONF_DIR/slaves
-export JOL_DIR=/root/jol/
-export STASIS_DIR=/root/stasis
-export JAVA_DIR=/usr/lib/jvm/java-6-sun
 
 # run it
 exec "$JAVA" $JAVA_HEAP_MAX $HADOOP_OPTS -classpath "$CLASSPATH" $CLASS "$@"
