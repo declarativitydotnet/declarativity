@@ -16,8 +16,8 @@ import jol.net.IP;
 import jol.net.Message;
 import jol.net.Network;
 import jol.net.Server;
-import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;
+import jol.types.basic.Tuple;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
@@ -33,7 +33,7 @@ public class TCP extends Server {
 
 	private ThreadGroup threads;
 
-	private Map<Address, Thread> channels;
+	private Map<Connection, Thread> channels;
 
 	public TCP(Runtime context, Network manager, Integer port) throws IOException, UpdateException, JolRuntimeException {
 		super("TCP Server");
@@ -41,7 +41,8 @@ public class TCP extends Server {
 		this.manager = manager;
 		this.server = new ServerSocket(port);
 		this.threads = new ThreadGroup("TCP");
-		this.channels = new HashMap<Address, Thread>();
+		this.threads.setDaemon(true);
+		this.channels = new HashMap<Connection, Thread>();
 
         // NB: we need to evaluate() here to avoid a race condition: the
         // TCP program must be registered before we accept any connections
@@ -52,30 +53,44 @@ public class TCP extends Server {
 	@Override
 	public void interrupt() {
 		super.interrupt();
-		this.threads.interrupt();
+
+		// Interrupt each thread and wait for it to exit. We've already
+		// closed the ServerSocket, so no new threads can be created
+		for (Map.Entry<Connection, Thread> entry : this.channels.entrySet()) {
+			entry.getValue().interrupt();
+			entry.getKey().close();
+			try {
+				entry.getValue().join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
 		this.threads.destroy();
+		this.channels.clear();
 	}
 
 	@Override
 	public void run() {
 		while (true) {
-			Connection channel = null;
+			Connection conn = null;
 			try {
 				if (this.server.isClosed())
 					break;
 
 				Socket socket = this.server.accept();
-				channel = new Connection(socket);
-				manager.connection().register(channel);
+				conn = new Connection(socket);
+				manager.connection().register(conn);
 
-				Thread thread  = new Thread(this.threads, channel);
+				Thread thread  = new Thread(this.threads, conn);
+				thread.setDaemon(true);
 				thread.start();
-				channels.put(channel.address(), thread);
+				channels.put(conn, thread);
 			} catch (IOException e) {
-				if (channel != null) channel.close();
+				if (conn != null) conn.close();
 				e.printStackTrace();
 			} catch (UpdateException e) {
-				if (channel != null) channel.close();
+				if (conn != null) conn.close();
 				e.printStackTrace();
 			}
 		}
@@ -84,11 +99,11 @@ public class TCP extends Server {
 	@Override
 	public Channel open(Address address) {
 		try {
-			Connection channel = new Connection(address);
-			Thread thread = new Thread(this.threads, channel);
+			Connection conn = new Connection(address);
+			Thread thread = new Thread(this.threads, conn);
 			thread.start();
-			channels.put(channel.address(), thread);
-			return channel;
+			channels.put(conn, thread);
+			return conn;
 		} catch (Exception e) {
 			return null;
 		}
@@ -96,10 +111,10 @@ public class TCP extends Server {
 
 	@Override
 	public void close(Channel channel) {
-		if (channels.containsKey(channel.address())) {
+		if (this.channels.containsKey(channel)) {
 			((Connection) channel).close();
-			channels.get(channel.address()).interrupt();
-			channels.remove(channel.address());
+			this.channels.get(channel).interrupt();
+			this.channels.remove(channel);
 		}
 	}
 
@@ -130,7 +145,7 @@ public class TCP extends Server {
 			super("tcp", new IP(socket.getInetAddress(), socket.getPort()));
 			this.socket = socket;
 			this.oss    = new ObjectOutputStream(this.socket.getOutputStream());
-			this.iss    = new ObjectInputStream(socket.getInputStream());
+			this.iss    = new ObjectInputStream(this.socket.getInputStream());
 		}
 
 		@Override
