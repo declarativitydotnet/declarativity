@@ -169,13 +169,11 @@ case $startStop in
         rm -r $BFS_DATA_DIR
         nohup $JAVA $BFS_JAVA_OPTS -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR > "$log" 2>&1 < /dev/null &
       else
-        export JOL_DIR=/root/jol/
+        export JOL_DIR=/root/jol
         export STASIS_DIR=/root/stasis
         export JAVA_DIR=/usr/lib/jvm/java-6-sun
         export LD_LIBRARY_PATH=/root/stasis/build/src/stasis
-        # Add Stasis JNI .so to Java lib path
-        BFS_JAVA_OPTS="-Djava.library.path=/root/jol/ant-build/stasis/jni $BFS_JAVA_OPTS"
-        nohup $JAVA $BFS_JAVA_OPTS -cp "$CLASSPATH" bfs.Master > "$log" 2>&1 < /dev/null &
+        nohup $JAVA -cp "$CLASSPATH" $BFS_JAVA_OPTS -Djava.library.path=/root/jol/ant-build/stasis/jni bfs.Master > "$log" 2>&1 < /dev/null &
       fi
     else
       nohup nice -n $HADOOP_NICENESS "$HADOOP_HOME"/bin/hadoop --config $HADOOP_CONF_DIR $command "$@" > "$log" 2>&1 < /dev/null &
