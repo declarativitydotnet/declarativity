@@ -5,6 +5,7 @@ import java.lang.System;
 import java.util.Set;
 
 timer(clock, physical, 1000, infinity, 0);
+timer(long_period, physical, 10000, infinity, 0);
 
 define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
 
@@ -60,8 +61,6 @@ representative_datanode(Master, ChunkId, max<DataNode>, min<Ts>) :-
 define(back_of_list, keys(0,1), {String,Integer,String});
 back_of_list(Master, ChunkId, min<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
-
-timer(long_period, physical, 10000, infinity, 0);
 
 define(to_delete, keys(0,2), {String,String,Integer});
 to_delete(Master, DataNode, ChunkId) :-
