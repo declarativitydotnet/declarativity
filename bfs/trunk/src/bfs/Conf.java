@@ -231,7 +231,7 @@ public class Conf {
 				List<String> result = new ArrayList<String>();
 				ret.add(result);
 				boolean done = false;
-				while ((!done) && ((line = br.readLine()) != null)) {
+				do {
 					String trimmedLine = line.trim();
 					if(trimmedLine.equals("-")) { 
 						done = true; 
@@ -239,7 +239,7 @@ public class Conf {
 						if (!trimmedLine.equals(""))
 							result.add(trimmedLine);
 					}
-				}
+				} while ((!done) && ((line = br.readLine()) != null));
 			}
 			return ret;
 		} catch (IOException e) {
