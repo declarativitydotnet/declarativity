@@ -88,7 +88,7 @@ public class BFSInputStream extends FSInputStream {
 		} else {
 			if (chunkIdx != this.currentChunkIdx || this.currentChunk == null) {
 				this.currentChunk = this.chunkList.get(chunkIdx);
-				this.chunkLocations = bfs.getChunkLocations(this.currentChunk.getId());
+				this.chunkLocations = bfs.getChunkLocations(this.path, this.currentChunk.getId());
 				fetchChunkContent();
 			}
 
