@@ -61,8 +61,10 @@ public class TCP extends Server {
 		while (true) {
 			Connection channel = null;
 			try {
-				Socket socket = this.server.accept();
+				if (this.server.isClosed())
+					break;
 
+				Socket socket = this.server.accept();
 				channel = new Connection(socket);
 				manager.connection().register(channel);
 
@@ -95,7 +97,7 @@ public class TCP extends Server {
 	@Override
 	public void close(Channel channel) {
 		if (channels.containsKey(channel.address())) {
-			((Connection)channel).close();
+			((Connection) channel).close();
 			channels.get(channel.address()).interrupt();
 			channels.remove(channel.address());
 		}
@@ -134,9 +136,9 @@ public class TCP extends Server {
 		@Override
 		public boolean send(Message packet) {
 			try {
-				if (this.socket.isClosed()) {
+				if (this.socket.isClosed())
 					return false;
-				}
+
 				this.oss.writeObject(packet);
 			} catch (IOException e) {
 				return false;
@@ -146,12 +148,17 @@ public class TCP extends Server {
 
 		private void close() {
 			try {
-				socket.close();
-			} catch (IOException e) { }
+				this.socket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		public void run() {
-			while(true) {
+			while (true) {
+				if (this.socket.isClosed())
+					break;
+
 				try {
 					Message message = (Message) this.iss.readObject();
 					IP address = new IP(this.socket.getInetAddress(), this.socket.getPort());
