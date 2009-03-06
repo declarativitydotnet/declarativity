@@ -743,7 +743,8 @@ public class Driver extends Thread {
 		TupleSet delete = new BasicTupleSet();
 		insert.add(new Tuple(time, program, null, name, insertions, deletions));
 
-		/* Evaluate until nothing remains. This essentially implements semi-naive evaluation. */
+		/* Evaluate until nothing remains. This essentially implements semi-naive 
+		 * evaluation for a single stratum program. */
 		while (insert.size() > 0 || delete.size() > 0) {
 			TupleSet delta = null;
 			while (insert.size() > 0) {
