@@ -113,7 +113,7 @@ public class BFSClient {
         }
         if (isDir) {
         	boolean success = false;
-        	Set<Object> b = waitForBroadcastResponse(Conf.getFileOpTimeout(), requestId);
+        	Set<Object> b = waitForBroadcastResponse(Conf.getFileOpTimeout(), requestId, req);
 	        unregisterCallback(responseTbl, responseCallback);
         	for (Object bool : b) {
         		success = success || ((Boolean) bool).booleanValue();
@@ -256,7 +256,7 @@ public class BFSClient {
         }
 
         Set<BFSFileInfo> ret = new HashSet<BFSFileInfo>();
-    	Set<Object> lsResponses =  waitForBroadcastResponse(Conf.getListingTimeout(), requestId);
+    	Set<Object> lsResponses =  waitForBroadcastResponse(Conf.getListingTimeout(), requestId, req);
         unregisterCallback(responseTbl, responseCallback);
     	for(Object o : lsResponses) {
     		ret.addAll((Set<BFSFileInfo>) o);
@@ -443,8 +443,7 @@ public class BFSClient {
 
         throw new RuntimeException("BFS (partition "+partition+") request #" + requestId + " timed out.");
     }
-
-    private Set<Object> waitForBroadcastResponse(long timeout, int requestid) throws RuntimeException {
+    private Set<Object> waitForBroadcastResponse(long timeout, int requestid, TupleSet req) throws RuntimeException{
     	boolean done = false;
         Set<Object> ret = new HashSet<Object>();
 		Set<Integer> unseenPartitions = new HashSet<Integer>();
@@ -481,6 +480,10 @@ public class BFSClient {
 				this.currentMaster[i]++;
 				if (this.currentMaster[i] == Conf.getNumMasters(i)) { done = true; break; }
 				updateMasterAddr(i);
+                        	try{
+                	                // HACK resubmit request
+        	                        this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
+	                        } catch (JolRuntimeException e) {e.printStackTrace(); }
 				done = false;
 			}
     	}
@@ -492,7 +495,7 @@ public class BFSClient {
         master.add(new Tuple(this.selfAddr, partition,
                              Conf.getMasterAddress(partition, this.currentMaster[partition])));
         try {
-            this.system.schedule("bfs", new TableName("bfs_global", "master_for_node"), master, null);
+            this.system.schedule("bfs_global", new TableName("bfs_global", "master_for_node"), master, null);
             this.system.evaluate();
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
