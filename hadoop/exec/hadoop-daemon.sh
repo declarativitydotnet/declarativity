@@ -158,9 +158,6 @@ case $startStop in
       # XXX: hacky
       export MASTERFILE=$HADOOP_CONF_DIR/masters
       export SLAVEFILE=$HADOOP_CONF_DIR/slaves
-      export JOL_DIR=/root/jol/
-      export STASIS_DIR=/root/stasis
-      export JAVA_DIR=/usr/lib/jvm/java-6-sun
 
       # Use 1GB for the maximum Java heap size
       BFS_JAVA_OPTS="-Xmx1000m"
@@ -172,6 +169,12 @@ case $startStop in
         rm -r $BFS_DATA_DIR
         nohup $JAVA $BFS_JAVA_OPTS -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR > "$log" 2>&1 < /dev/null &
       else
+        export JOL_DIR=/root/jol/
+        export STASIS_DIR=/root/stasis
+        export JAVA_DIR=/usr/lib/jvm/java-6-sun
+        export LD_LIBRARY_PATH=/root/stasis/build/src/stasis
+        # Add Stasis JNI .so to Java lib path
+        BFS_JAVA_OPTS="-Djava.library.path=/root/jol/ant-build/stasis/jni $BFS_JAVA_OPTS"
         nohup $JAVA $BFS_HAVA_OPTS -cp "$CLASSPATH" bfs.Master > "$log" 2>&1 < /dev/null &
       fi
     else
