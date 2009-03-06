@@ -54,9 +54,9 @@ chunk(Host, FName, FLength) :-
 
 define(heartBeat,keys(0,1,2),{String,String,Integer,Integer,Long,Long});
 //watch(heartBeat,ae);
-heartBeat(Host, Master, Chunk, Length, Tstamp, Id) :-
+heartBeat(Host, Master, ChunkId, Length, Tstamp, Id) :-
     chunk(Host, FName, Length),
-    Chunk := Integer.valueOf(FName),
+    ChunkId := Integer.valueOf(FName),
     masters(Host, Master),
     clock(_, _, _),
     Tstamp := System.currentTimeMillis(),
