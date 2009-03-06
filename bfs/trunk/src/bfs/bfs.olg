@@ -21,6 +21,11 @@ watch(self, ae);
 define(start_request, keys(0, 1), {String, Integer, String, String});
 watch(start_request, ae);
 
+delete
+start_request(@Source, ReqId, ReqType, Args) :-
+    start_request(@Source, ReqId, ReqType, Args),
+    response(@Source, ReqId, _, _, _);
+
 // This rule transfers "start_request" tuples from the client to the
 // appropriate master. To failover to a new master, the client detects
 // a timeout, and then updates the "bfs_global::master_for_node" mapping table.
