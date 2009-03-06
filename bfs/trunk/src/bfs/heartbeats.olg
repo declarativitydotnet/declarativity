@@ -64,25 +64,25 @@ to_delete(Master, ChunkId, DataNode) :-
     long_period(_, _, _),
     Cnt > Conf.getRepFactor();
 
-define(newReplicaRequest, keys(0,1,4), {String, Integer, String, Integer, Long});
+define(newReplicaRequest, keys(0,1,3), {String, Integer, Integer, Long});
 watch(newReplicaRequest, ae);
-newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
+newReplicaRequest(Master, ChunkId, Cnt, Time) :-
     rep_factor(Master, ChunkId, Cnt),
     Time := new Long(System.currentTimeMillis()),
-    representative_datanode(Master, ChunkId, Dn),
     long_period#insert(_, _, _),
     Cnt < Conf.getRepFactor();
 
 delete
-newReplicaRequest(Master, ChunkId, Dn, Cnt1, Time) :-
-    newReplicaRequest(Master, ChunkId, Dn, Cnt1, Time),
+newReplicaRequest(Master, ChunkId, Cnt1, Time) :-
+    newReplicaRequest(Master, ChunkId, Cnt1, Time),
     clock#insert(),
     rep_factor(Master, ChunkId, Cnt2),
     Cnt2 >= Conf.getRepFactor();
 
 define(newReplica, {String, Integer, String, Integer, Long});
 newReplica(Master, ChunkId, Dn, Cnt, Time) :-
-    newReplicaRequest(Master, ChunkId, Dn, Cnt, Time),
+    newReplicaRequest(Master, ChunkId, Cnt, Time),
+    representative_datanode(Master, ChunkId, Dn),
     clock#insert(),
     (System.currentTimeMillis() - Time) > Conf.getPropagationDelay();
 
