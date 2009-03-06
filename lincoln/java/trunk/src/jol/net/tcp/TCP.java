@@ -88,7 +88,9 @@ public class TCP extends Server {
 				channels.put(conn, thread);
 			} catch (IOException e) {
 				if (conn != null) conn.close();
-				e.printStackTrace();
+				if (this.server.isClosed())
+					break;
+				throw new RuntimeException(e);
 			} catch (UpdateException e) {
 				if (conn != null) conn.close();
 				e.printStackTrace();
