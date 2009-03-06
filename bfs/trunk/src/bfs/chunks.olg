@@ -18,8 +18,8 @@ chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, set<DataNode>) :-
 
 public
 delete
-bfs_heartbeat::newReplicaRequest(Master, ChunkId, DnWithReplica, CurrRepCnt, Time) :-
-    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, Time),
+bfs_heartbeat::newReplicaRequest(Master, ChunkId, CurrRepCnt, Time) :-
+    bfs_heartbeat::newReplica(Master, ChunkId, _, CurrRepCnt, Time),
     chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, _);
 
 watch(bfs_global::send_migrate, ae);
