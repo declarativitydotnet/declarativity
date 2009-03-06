@@ -52,11 +52,10 @@ define(rep_factor, keys(0,1), {String, Integer, Integer});
 rep_factor(Master, ChunkId, count<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
 
-define(representative_datanode, keys(0,1), {String, Integer, String, Long});
+define(representative_datanode, keys(0,1), {String, Integer, String});
 //watch(representative_datanode, ae);
-representative_datanode(Master, ChunkId, max<DataNode>, min<Ts>) :-
-    //clock#insert(),
-    chunks(Master, DataNode, ChunkId, _, Ts);
+representative_datanode(Master, ChunkId, max<DataNode>) :-
+    chunks(Master, DataNode, ChunkId, _, _);
 
 define(back_of_list, keys(0,1), {String,Integer,String});
 back_of_list(Master, ChunkId, min<DataNode>) :-
@@ -74,7 +73,7 @@ watch(newReplicaRequest, ae);
 newReplicaRequest(Master, ChunkId, Dn, Cnt, Time) :-
     rep_factor(Master, ChunkId, Cnt),
     Time := new Long(System.currentTimeMillis()),
-    representative_datanode(Master, ChunkId, Dn, _),
+    representative_datanode(Master, ChunkId, Dn),
     long_period#insert(_, _, _),
     Cnt < Conf.getRepFactor();
 
