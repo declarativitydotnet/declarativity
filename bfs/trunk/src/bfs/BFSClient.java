@@ -360,7 +360,7 @@ public class BFSClient {
         return sortedChunks;
 	}
 
-	public synchronized Set<String> getChunkLocations(final String chunkId) {
+	public synchronized Set<String> getChunkLocations(String path, final int chunkId) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
@@ -390,14 +390,14 @@ public class BFSClient {
         // Create and insert the request tuple
         TupleSet req = new BasicTupleSet();
         req.add(new Tuple(this.selfAddr, requestId,
-                          "ChunkLocations", chunkId));
+                          "ChunkLocations", path + ":" + chunkId));
         try {
         	this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
         } catch (JolRuntimeException e) {
         	throw new RuntimeException(e);
         }
 
-        int partition = chunkId.subSequence(0, chunkId.indexOf(":")).hashCode() % Conf.getNumPartitions();
+        int partition = path.hashCode() % Conf.getNumPartitions();
         Set<String> nodeSet = (Set<String>) waitForResponse(Conf.getFileOpTimeout(), partition, requestId);
         unregisterCallback(responseTbl, responseCallback);
         return Collections.unmodifiableSet(nodeSet);
@@ -452,37 +452,37 @@ public class BFSClient {
 		for (int i = 0; i < Conf.getNumPartitions(); i++) {
 			unseenPartitions.add(i);
 		}
-    	while (!done) {
-   		long start = System.currentTimeMillis();
-    		Tuple results[] = new Tuple[Conf.getNumPartitions()];
-    		results[0] = (Tuple)this.responseQueue.get(timeout);
-    		for (int i = 1 ; i < Conf.getNumPartitions(); i++) {
-    			long now = System.currentTimeMillis();
-    			if((start + timeout) - now > 0) {
-    				results[i] = (Tuple)this.responseQueue.get((start + timeout) - now);
-    			} else {
-    				done = true;
-    				break;
-    			}
-    		}
-    		for (int i = 0; i < Conf.getNumPartitions(); i++) {
-    			if (results[i] != null) {
-	    			ret.add(results[i].value(1));
-	    			seenPartitions.add((Integer) results[i].value(0));
-	    			unseenPartitions.remove((Integer) results[i].value(0));
-    			}
-    		}
+		while (!done) {
+			long start = System.currentTimeMillis();
+			Tuple results[] = new Tuple[Conf.getNumPartitions()];
+			results[0] = (Tuple) this.responseQueue.get(timeout);
+			for (int i = 1 ; i < Conf.getNumPartitions(); i++) {
+				long now = System.currentTimeMillis();
+				if ((start + timeout) - now > 0) {
+					results[i] = (Tuple)this.responseQueue.get((start + timeout) - now);
+				} else {
+					done = true;
+					break;
+				}
+			}
+			for (int i = 0; i < Conf.getNumPartitions(); i++) {
+				if (results[i] != null) {
+					ret.add(results[i].value(1));
+					seenPartitions.add((Integer) results[i].value(0));
+					unseenPartitions.remove((Integer) results[i].value(0));
+				}
+			}
 
-    		if (unseenPartitions.size() == 0)
-    			return ret;
+			if (unseenPartitions.size() == 0)
+				return ret;
 
-    		done = true;
-    		for (int i : unseenPartitions) {
-    			this.currentMaster[i]++;
-    			if (this.currentMaster[i] == Conf.getNumMasters(i)) { done = true; break; }
-    			updateMasterAddr(i);
-    			done = false;
-    		}
+			done = true;
+			for (int i : unseenPartitions) {
+				this.currentMaster[i]++;
+				if (this.currentMaster[i] == Conf.getNumMasters(i)) { done = true; break; }
+				updateMasterAddr(i);
+				done = false;
+			}
     	}
     	throw new RuntimeException("BFS broadcast request #" + requestid + " timed out.  Missing responses from " + unseenPartitions + "got responses from " + seenPartitions);
     }
