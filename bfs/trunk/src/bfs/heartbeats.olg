@@ -57,12 +57,12 @@ define(representative_datanode, keys(0,1), {String, Integer, String});
 representative_datanode(Master, ChunkId, max<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
 
-define(back_of_list, keys(0,1), {String,Integer,String});
+define(back_of_list, keys(0,1), {String, Integer, String});
 back_of_list(Master, ChunkId, min<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
 
-define(to_delete, keys(0,2), {String,String,Integer});
-to_delete(Master, DataNode, ChunkId) :-
+define(to_delete, keys(0,1), {String, Integer, String});
+to_delete(Master, ChunkId, DataNode) :-
     rep_factor(Master, ChunkId, Cnt),
     back_of_list(Master, ChunkId, DataNode),
     long_period(_, _, _),
@@ -100,13 +100,13 @@ catch_migrate(@DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
 // hacky constraint: one message per tick
 define(send_delete, keys(0), {String, Integer, String});
 send_delete(@DataNode, ChunkId, Master) :-
-    to_delete(@Master, DataNode, ChunkId);
+    to_delete(@Master, ChunkId, DataNode);
 
 // not correct.
 /*
 delete
 chunks(Master, DataNode, ChunkId, Length, MTS) :-
     chunks(Master, DataNode, ChunkId, Length, MTS),
-    to_delete(Master, DataNode, ChunkId);
+    to_delete(Master, ChunkId, DataNode);
 */
 
