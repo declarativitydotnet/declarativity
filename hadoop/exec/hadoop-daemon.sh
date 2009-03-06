@@ -155,8 +155,12 @@ case $startStop in
         CLASSPATH=${CLASSPATH}:${HADOOP_CLASSPATH}
       fi
 
+      # XXX: hacky
       export MASTERFILE=$HADOOP_CONF_DIR/masters
       export SLAVEFILE=$HADOOP_CONF_DIR/slaves
+      export JOL_DIR=/root/jol/
+      export STASIS_DIR=/root/stasis
+      export JAVA_DIR=/usr/lib/jvm/java-6-sun
 
       # Use 1GB for the maximum Java heap size
       BFS_JAVA_OPTS="-Xmx1000m"
