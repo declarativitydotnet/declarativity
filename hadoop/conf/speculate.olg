@@ -1,0 +1,57 @@
+program speculate;
+
+import java.lang.System;
+import java.util.List;
+import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.util.Function;
+import org.apache.hadoop.mapred.declarative.util.FileInput;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskID;
+
+/******************** Task Statistics *******************/
+define(taskPhaseAverageProgress, keys(0,1), {JobID, Constants.TaskPhase, Float});
+
+watch(taskPhaseAverageProgress, a);
+public
+taskPhaseAverageProgress(JobId, Phase, avg<Progress>) :-
+	jobtracker::task(JobId, TaskId, Type, _, _, _, TaskStatus),
+    Phase := TaskStatus.phase(), Progress := TaskStatus.progress(),
+    Phase != Constants.TaskPhase.STARTING;
+	
+/**************************************************************/
+
+watch(policy::candidate, a);
+/* Speculative map task execution. */
+public
+policy::candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+    jobtracker::job(JobId, _, _, _, _, _, JobPriority, JobSubmitTime, _, JobStatus),
+	jobtracker::task(JobId, TaskId, Type, _, _, _, TaskStatus),
+	Type == Constants.TaskType.MAP, TaskStatus.state() == Constants.TaskState.RUNNING, TaskStatus.attempts() < 2,
+	notin jobtracker::taskAttempt(JobId, TaskId, _, _, _, _, _, TrackerName, _, _, _,_,_),
+    jobtracker::taskAttempt(JobId, TaskId, AttemptId, Progress, State, Phase),
+	jobtracker::taskFileLocation(JobId, TaskId, FileLocation),
+    taskPhaseAverageProgress(JobId, Phase, AvgProgress),
+    java.lang.System.currentTimeMillis() - TaskStatus.start() > 60L * 1000L, /* Started > 1 minute ago */
+    Progress > 0f, Progress < AvgProgress - 0.2f
+	{
+		LocalFile := Host == FileLocation ? 0 : 1;
+		Priority := [JobPriority, JobSubmitTime, 0, Progress, LocalFile];
+	};
+	
+	
+public
+policy::candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
+    jobtracker::job(JobId, _, _, _, _, _, JobPriority, JobSubmitTime, _, JobStatus),
+	jobtracker::task(JobId, TaskId, Type, _, _, _, TaskStatus),
+	Type == Constants.TaskType.REDUCE, TaskStatus.state() == Constants.TaskState.RUNNING, TaskStatus.attempts() < 2,
+	notin jobtracker::taskAttempt(JobId, TaskId, _, _, _, _, _, TrackerName, _, _, _,_,_),
+    jobtracker::taskAttempt(JobId, TaskId, AttemptId, Progress, State, Phase),
+    taskPhaseAverageProgress(JobId, Phase, AvgProgress),
+    java.lang.System.currentTimeMillis() - TaskStatus.start() > 60L * 1000L, /* Started > 1 minute ago */
+    Progress > 0f, Progress < AvgProgress - 0.2f
+	{
+		Priority := [JobPriority, JobSubmitTime, 0, Progress, 0];
+	};
+	
