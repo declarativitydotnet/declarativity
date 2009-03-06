@@ -6,9 +6,7 @@ import jol.core.Runtime;
 //timer(periodic,logical,1,1,1);
 	
 define(acceptRequest,keys(0,1),{String,Integer, Integer,String,Integer});
-//define(sendBeginRound,keys(0,1,2),{String, Integer,Integer,String,String});
 define(sendBeginRound,{String, Integer,Integer,String,String});
-//define(stasis_accept,keys(0,1),{String, Integer,Integer,String,String});
 
 define(stasis_accept,{String, Integer,Integer,String,String});
 define(sendAccept,keys(0,1,4),{String, Integer,Integer,String,String});
@@ -17,8 +15,6 @@ define(stasis_success,keys(0,1),{String,Integer, Integer,String,String});
 	
 define(acceptCnt,keys(0,1),{String,Integer,Integer,Integer});
 	
-define(tick,keys(0,1),{String,String,Integer});
-
 
 /**************************************************************************************
 3.  After receiving a LastVote (b, v) message from every priest in some majority
