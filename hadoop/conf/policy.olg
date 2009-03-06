@@ -9,8 +9,8 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskID;
 
 define(candidate,      {JobID, TaskID, Constants.TaskType, String, ValueList});
-define(mapSlots,       {String, Integer, Set});
-define(reduceSlots,    {String, Integer, Set});
+define(mapSlots,       {String, Integer, ValueList, Constants.TaskType, Set});
+define(reduceSlots,    {String, Integer, ValueList, Constants.TaskType, Set});
 define(scheduleTask,   {String, TaskID});
 
 /******************** Task Statistics *******************/
@@ -32,29 +32,35 @@ scheduler::schedule(JobId, TaskId, TrackerName) :-
 	jobtracker::task(JobId, TaskId, _, _, _, _, _);
 
 scheduleTask(TrackerName, TaskId) :-
-	assignTracker(mapSlots(TrackerName, Maps, Tasks)),
+	assignTracker(mapSlots(TrackerName, Maps, Priority, Type, Tasks)),
 	TaskId := (TaskID) Tasks;
 	
 scheduleTask(TrackerName, TaskId) :-
-	assignTracker(reduceSlots(TrackerName, Reduces, Tasks)),
+	assignTracker(reduceSlots(TrackerName, Reduces, Priority, Type, Tasks)),
 	TaskId := (TaskID) Tasks;
 	
 /******************** Schedule Map Tasks *******************/
 
 /* Schedule task on tracker from flattened priorities. */
 public
-mapSlots(TrackerName, Maps, set<TaskId>) :-
+mapSlots(TrackerName, Maps, Priority, Type, set<TaskId>) :-
 	bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
-	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
-	Type == Constants.TaskType.MAP, Maps > 0;
+	jobtracker::taskTracker(TrackerName, _, _, _, _, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
+	Type == Constants.TaskType.MAP, MaxMap - MapCount > 0
+    {
+        Maps := 2 * (MaxMap - MapCount);
+    };
 	
 /******************** Schedule Reduce Tasks *******************/
 	
 public
-reduceSlots(TrackerName, Reduces, set<TaskId>) :-
+reduceSlots(TrackerName, Reduces, Priority, Type, set<TaskId>) :-
 	bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
-	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
-	Type == Constants.TaskType.REDUCE, Reduces > 0;
+	jobtracker::taskTracker(TrackerName, _, _, _, _, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
+	Type == Constants.TaskType.REDUCE, MaxReduce - ReduceCount > 0
+    {
+        Reduces := 2 * (MaxReduce - ReduceCount);
+    };
 	
 /**************************************************************/
 
@@ -63,7 +69,7 @@ public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	jobtracker::taskFileLocation(JobId, TaskId, FileLocation),
-	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
+    jobtracker::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
 	jobtracker::task(JobId, TaskId, Type, _, _, MapCount, Status),
     jobtracker::tasksWaitingForSchedule(WaitingTaskCount),
     WaitingTaskCount < 500 || Host == FileLocation || Function.coinFlip((3 * Maps).floatValue() / WaitingTaskCount.floatValue()),
@@ -78,7 +84,8 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
-	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
+    jobtracker::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
+    JobStatus.status().mapProgress() > 0f,
 	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.REDUCE, Reduces > 0
@@ -91,7 +98,7 @@ public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
     jobtracker::failedTasks(JobId, TaskId, Type, Status), Status.attempts() < 3, 
-	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
+    jobtracker::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
 	jobtracker::taskFileLocation(JobId, TaskId, FileLocation),
 	notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _,_,_)
 	{
@@ -104,7 +111,7 @@ public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
     jobtracker::failedTasks(JobId, TaskId, Type, Status), Status.attempts() < 3, 
-	jobtracker::jobQueue(JobId, JPriority, SubmitTime, Type),
+    jobtracker::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
 	notin jobtracker::taskAttempt(JobId, TaskId, _, _, Constants.TaskState.FAILED, _, _, TrackerName, _, _, _,_,_)
 	{
 		Priority := [JPriority, SubmitTime, 2, 0];

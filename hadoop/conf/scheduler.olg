@@ -36,13 +36,12 @@ jobtracker::killjob(JobId) :-
 	TaskStatus.state() == Constants.TaskState.FAILED,
 	Attempts > 3 || Attempts > Trackers;
 	
-watch(jobtracker::taskUpdate, a);
-jobtracker::taskUpdate(JobId, TaskId, Type, RunningStatus) :-
+jobtracker::taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
 	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, Timestamp),
-	State == Constants.TaskState.RUNNING,
-	jobtracker::task(JobID, TaskId, Type, _, _, _, TaskStatus) 
+	jobtracker::task(JobId, TaskId, Type, _, _, _, TaskStatus),
+	State == Constants.TaskState.RUNNING
     {
-	    RunningStatus := TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
+		StatusUpdate := TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
     };
 
 watch(jobtracker::taskAttempt, a);
@@ -71,12 +70,13 @@ jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_T
 	          Function.launchMap(FileInput.split(), JobFile, TaskId, AttemptID, Partition) :
 	          Function.launchReduce(JobFile, TaskId, AttemptID, Partition, MapCount);
 	          
-watch(jobtracker::taskAttempt, a);
 /*
 public failedStartAction
 jobtracker::taskAttempt(JobId, TaskId, AttemptId, 0f, Constants.TaskState.FAILED, Phase, Diag, TrackerName, null, 0L, 0L, Timestamp, true) :-
     jobtracker::dutyCycle(),
-    jobtracker::taskAttempt(JobId, TaskId, AttemptId, _, Constants.TaskState.RUNNING, Phase, _, TrackerName, _, _, _, Timestamp, _),
+    State := Constants.TaskState.RUNNING,
+    Phase := Constants.TaskPhase.STARTING,
+    jobtracker::taskAttempt(JobId, TaskId, AttemptId, _, State, Phase, _, TrackerName, _, 0L, 0L, Timestamp, _),
     jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
     TaskStatus.state() != Constants.TaskState.SUCCEEDED,
     System.currentTimeMillis() - Timestamp > 2L * 60L * 1000L,
@@ -87,14 +87,23 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptId, 0f, Constants.TaskState.FAILED
 
 /******************** Signal task tracker slots available *******************/
 
-define(trackerSlots, keys(0), {String, String, Long, Integer, Integer});
+define(trackerSlots, {String, String, Long, Integer, Integer});
+define(lookupDirtyTracker, {Boolean});
+
+public
+lookupDirtyTracker(true) :- jobtracker::dutyCycle();
+
+jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
+                        MapCount, ReduceCount, MaxMap, MaxReduce, false) :-
+    lookupDirtyTracker(Dirty),
+    jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
+                            MapCount, ReduceCount, MaxMap, MaxReduce, Dirty);
+
 
 watch(trackerSlots, a);
-public
 trackerSlots(TrackerName, Host, Timestamp, 2*(MaxMap - MapCount), 2*(MaxReduce - ReduceCount)) :-
-	jobtracker::dutyCycle(), 
-	jobtracker::tasksWaitingForSchedule(Count), Count > 0,
 	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
+	jobtracker::tasksWaitingForSchedule(Count), Count > 0,
 	MapCount < MaxMap || ReduceCount < MaxReduce;
 	
 	

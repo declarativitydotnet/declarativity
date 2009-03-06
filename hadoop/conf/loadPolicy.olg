@@ -19,8 +19,7 @@ minPriorityJob(min<Priority>) :-
 
 public
 loadActions(TaskId, Type, Action) :-	
-	jobtracker::jobQueue(JobId, JobPriority, SubmitTime, Type),
-	jobtracker::job(JobId, JobName, JobFile),
+	jobtracker::job(JobId, JobName, JobFile, _, _, _, JobPriority, SubmitTime),
 	minPriorityJob([JobPriority, SubmitTime]),
 	jobtracker::task(JobId, TaskId, Type, Partition, FileInput, MapCount, TaskStatus),
 	TaskStatus.state() == Constants.TaskState.UNASSIGNED,

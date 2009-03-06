@@ -27,7 +27,8 @@ totalAvailableSlots(sum<MapSlots.floatValue()>, sum<ReduceSlots.floatValue()>) :
 	
 speculativeCap(JobId, MapCap, ReduceCap) :-
 	totalAvailableSlots(Maps, Reduces),
-	jobtracker::jobQueue(JobId, JPriority, JobSubmitTime, Type)
+    jobtracker::job(JobId, _, _, _, _, _, _, _, _, JobStatus),
+    JobStatus.state() == Constants.JobState.RUNNING
 	{
 		MapCap := (Maps * 0.1f).intValue();
 		ReduceCap := (Reduces * 0.1f).intValue();
@@ -49,8 +50,10 @@ taskProgressRate(JobId, TaskId, Type, ProgressRate) :-
 taskProgressRates(JobId, Type, list<ProgressRate>) :-
 	taskProgressRate(JobId, TaskId, Type, ProgressRate);
 	
+watch(slowTaskThreshold, a);
 slowTaskThreshold(JobId, Type, Threshold) :-
 	taskProgressRates(JobId, Type, Rates),
+    Rates != null && Rates.size() >= 4,
 	Threshold := Function.percentile(0.25, Rates);
 
 
@@ -59,42 +62,36 @@ public
 trackerTaskProgressRate(TrackerName, JobId, Type, avg<ProgressRate>) :-
 	jobtracker::task(JobId, TaskId, Type, _, _, _, _),
     jobtracker::taskAttempt(JobId, TaskId, _, Progress, State, _, _, TrackerName, _, Start, Finish, Timestamp, _),
-    Start > 0L, Start < Timestamp,
-    State != Constants.TaskState.FAILED 
+    Start > 0L, Start < Timestamp, State != Constants.TaskState.FAILED 
     {
     	End := Finish > 0L ? Finish : Timestamp;
         java.lang.System.err.println("TASK RUNNING TIME: " + (End - Start).floatValue().toString());
     	ProgressRate := Progress / (End - Start).floatValue(); 
     };
     
+watch(trackerTaskProgressRates, a);
 trackerTaskProgressRates(JobId, Type, list<AvgProgressRate>) :-
 	trackerTaskProgressRate(TrackerName, JobId, Type, AvgProgressRate);
 	
+watch(slowNodeThreshold, a);
 slowNodeThreshold(JobId, Type, Threshold) :-
 	trackerTaskProgressRates(JobId, Type, Rates),
+    Rates != null && Rates.size() >= 4,
 	Threshold := Function.percentile(0.25, Rates);
 	
 /**************************************************************/
 
-define(mapTaskAssignment, keys(0,1), {JobID, TaskID, String});
-
-watch(mapTaskAssignment, a);
-public
-mapTaskAssignment(JobId, TaskId, TrackerName) :-
-	jobtracker::taskTracker(TrackerName, Host, _, _, _, _,  _, _, _, _),
-	jobtracker::task(JobId, TaskId, Type, _, _, _, Status),
-	jobtracker::taskFileLocation(JobId, TaskId, Host),
-	Status.state() == Constants.TaskState.UNASSIGNED;
-	
 watch(policy::candidate, a);
 /* Speculative map task execution. */
 public
 policy::candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	speculativeCap(JobId, MapCap, ReduceCap), MapCap > 0,
-	jobtracker::jobQueue(JobId, JobPriority, JobSubmitTime, Type),
+    jobtracker::job(JobId, _, _, _, _, _, JobPriority, JobSubmitTime, _, JobStatus),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, TaskStatus),
 	Type == Constants.TaskType.MAP, TaskStatus.state() == Constants.TaskState.RUNNING,
-	mapTaskAssignment(JobId, TaskId, TrackerName),
+    TaskStatus.attempts() < 3,
+	jobtracker::taskFileLocation(JobId, TaskId, FileLocation),
 	notin jobtracker::taskAttempt(JobId, TaskId, _, _, _, _, _, TrackerName, _, _, _,_,_),
 	trackerTaskProgressRate(TrackerName, JobId, Type, NodeProgressRate),
 	slowNodeThreshold(JobId, Type, NodeThreshold),
@@ -103,16 +100,18 @@ policy::candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	slowTaskThreshold(JobId, Type, TaskThreshold),
 	TaskProgressRate != null && TaskThreshold != null && TaskProgressRate < TaskThreshold
 	{
+		LocalFile := Host == FileLocation ? 0 : 1;
 		InvertCompletionEstimate := TaskProgressRate / (1f - TaskStatus.progress());
-		Priority := [JobPriority, JobSubmitTime, 0, InvertCompletionEstimate];
+		Priority := [JobPriority, JobSubmitTime, 0, LocalFile, InvertCompletionEstimate];
 	};
 	
 	
 public
 policy::candidate(JobId, TaskId, Type, TrackerName, Priority) :-
+	scheduler::trackerSlots(TrackerName, Host, _, Maps, Reduces),
 	speculativeCap(JobId, MapCap, ReduceCap), ReduceCap > 0,
-	jobtracker::jobQueue(JobId, JobPriority, JobSubmitTime, Type),
 	jobtracker::task(JobId, TaskId, Type, _, _, _, TaskStatus),
+    jobtracker::job(JobId, _, _, _, _, _, JobPriority, JobSubmitTime, _, JobStatus),
 	Type == Constants.TaskType.REDUCE, TaskStatus.state() == Constants.TaskState.RUNNING,
 	trackerTaskProgressRate(TrackerName, JobId, Type, NodeProgressRate),
 	notin jobtracker::taskAttempt(JobId, TaskId, _, _, _, _, _, TrackerName, _, _, _,_,_),
@@ -123,7 +122,7 @@ policy::candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	TaskProgressRate != null && TaskThreshold != null && TaskProgressRate < TaskThreshold
 	{
 		InvertCompletionEstimate := TaskProgressRate / (1f - TaskStatus.progress());
-		Priority := [JobPriority, JobSubmitTime, 0, InvertCompletionEstimate];
+		Priority := [JobPriority, JobSubmitTime, 0, 0, InvertCompletionEstimate];
 	};
 	
 	

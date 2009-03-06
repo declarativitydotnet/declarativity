@@ -22,9 +22,6 @@ watch(job, a);
 watch(task, a);
 watch(taskAttempt, a);
 
-define(jobQueue, keys(0), {JobID, JobPriority, Long, Constants.TaskType});
-
-
 /*************** JobTracker Duty Cycle (PERFORMANCE HACK) *********************/
 timer(minDutyCyclePeriod, physical, 2000, infinity, 0);
 define(dutyCycle, {String});
@@ -33,8 +30,6 @@ define(activeTasks, keys(), {Integer});
 define(failedTasks, keys(0,1), {JobID, TaskID, Constants.TaskType, TaskState});
 define(tasksWaitingForSchedule, keys(0), {Integer});
 
-watch(activeJobs, a);
-watch(activeTasks, a);
 watch(failedTasks, a);
 watch(tasksWaitingForSchedule, a);
 
@@ -58,7 +53,6 @@ failedTasks(JobId, TaskId, Type, Status) :-
 /* Set semantics ensure a single duty cycle per fixpoint. 
    I could have used a logical clock here but that spin the CPU during idle periods. */
 dutyCycle("Duty Cycle") :- minDutyCyclePeriod(), activeJobs(Count), Count > 0;
-watch(dutyCycle, a);
 
 
 /*************** Task Tracker Monitor *********************/
@@ -67,10 +61,10 @@ watch(dutyCycle, a);
 timer(checkTracker, physical, 60000, infinity, 60000);
 
 taskTracker(TrackerName, Host, HttpPort, Constants.TaskTrackerState.FAILED, 
-            Timestamp, Failures, MapCount, ReduceCount, MaxMap, MaxReduce) :-
+            Timestamp, Failures, MapCount, ReduceCount, MaxMap, MaxReduce, true) :-
 	checkTracker(Period, TTL, Delay),
 	taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
-	            MapCount, ReduceCount, MaxMap, MaxReduce),
+	            MapCount, ReduceCount, MaxMap, MaxReduce, Dirty),
 	TrackerState == Constants.TaskTrackerState.RUNNING,
 	java.lang.System.currentTimeMillis() - Timestamp > Period;
 	*/
@@ -107,6 +101,7 @@ define(taskFile, {JobID, TaskID, ValueList});
 define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 
 /******* Admission control *******/
+/*
 initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
 	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus),
 	JobStatus.state() == Constants.JobState.PREP,
@@ -123,38 +118,17 @@ initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
 		JobStatus.state(Constants.JobState.RUNNING); // Update state to running
 	};
 	
-/******************************************************/
-	
-watch(jobtracker::jobQueue, a);
-/* Put new jobs in a wait queue in a MAP phase. */
-jobtracker::jobQueue(JobId, Priority, SubmitTime, Phase) :-
-	initTask(JobId),
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, JobStatus)
+*/
+
+initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
+	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus),
+	JobStatus.state() == Constants.JobState.PREP
 	{
-		Phase := JobStatus.mapCount() > 0 ? Constants.TaskType.MAP : Constants.TaskType.REDUCE;
+		JobStatus.state(Constants.JobState.RUNNING); // Update state to running
 	};
 	
-delete
-jobtracker::jobQueue(JobId, Priority, SubmitTime, Phase) :-
-	jobtracker::job(JobId, _, _, _, _, _, Priority, SubmitTime, _, Status),
-	jobtracker::jobQueue(JobId, Priority, SubmitTime, Phase),
-	Status.state() == Constants.JobState.SUCCEEDED || Status.state() == Constants.JobState.FAILED;
+/******************************************************/
 	
-/* Switch to reduce phase when all maps finish. */
-jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.REDUCE) :-
-	jobFinishedMapTasks#insert(JobId, FinishedMapCount), 
-	jobtracker::job(JobId, _, _, _, _, _, _, _, _, JobStatus),
-	jobtracker::jobQueue(JobId, Priority, SubmitTime, Constants.TaskType.MAP),
-	FinishedMapCount == JobStatus.mapCount();
-
-/******************** Finished Map Count *******************/
-define(jobFinishedMapTasks, keys(0), {JobID, Integer});
-
-jobFinishedMapTasks(JobId, count<TaskId>) :-
-	jobtracker::taskUpdate(JobId, TaskId, Type, Status),
-	Type == Constants.TaskType.MAP, Status.state() == Constants.TaskState.SUCCEEDED;
-	
-
 /********************************/
 	
 /* Break out of the current fixpoint thread (using 'async') since taskCreate table function
@@ -170,7 +144,6 @@ taskFile(JobId, TaskId, Locations) :-
 	{ Split := Input.split(); Locations := Function.getLocations(Split); };
 	
 	
-watch(taskFileLocation, a);
 taskFileLocation(JobId, TaskId, Location) :-
 	flatten(taskFile(JobId, TaskId, Locations)),
 	Location := (String) Locations;
@@ -213,35 +186,40 @@ killJobOnTracker(JobId, TrackerName) :-
 taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-	
 	killJobOnTracker(JobId, TrackerName),
 	Action := Function.killJob(JobId);
+
+taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_TASK, Action) :-	
+    job(JobId, _, _, _, _, _, _, _, _, JobStatus),
+    JobStatus.state() == Constants.JobState.SUCCEEDED,
+	taskAttempt(JobId, TaskId, AttemptId, _, State, _, _, TrackerName, _, _, _, _, _),
+    State == Constants.TaskState.RUNNING
+    {
+        Action := Function.killTask(TaskId, AttemptId);
+    };
 	
     
 /*************** Task Status Maintenance *********************/
 
 define(taskUpdate, {JobID, TaskID, Constants.TaskType, TaskState});
 
-/****** UPDATE TASK STATE ******/
 public
 task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
     taskUpdate(JobId, TaskId, _, Status),
 	task(JobId, TaskId, Type, Partition, Input, MapCount, _);
 	
-/*
-public delete
+delete
 task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
-    taskUpdate(JobId, TaskId, _, NewStatus),
+    dutyCycle(), job(JobId, _, _, _, _, _, _, _, _, JobStatus), JobStatus.status().mapProgress() == 1f,
 	task(JobId, TaskId, Type, Partition, Input, MapCount, Status),
-	NewStatus.state() == Constants.TaskState.SUCCEEDED;
-	*/
+    Type == Constants.TaskType.MAP;
 
 /******* UPDATE TASK ATTEMPT STATE ******/
 delete
 taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty) :-
-    taskUpdate(JobId, TaskId, Type, TaskStatus), TaskStatus.state() == Constants.TaskState.SUCCEEDED,
+    taskUpdate(JobId, TaskId, _, Status), Status.state() == Constants.TaskState.SUCCEEDED,
 	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
 
-taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED, 
-            Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, true) :-
-	taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, _, _),
+taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, true) :-
+	taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, _, _,_),
 	taskAttempt(JobId, TaskId, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp,_),
 	TrackerState != Constants.TaskTrackerState.RUNNING,
 	TaskState == Constants.TaskState.RUNNING;
@@ -250,6 +228,7 @@ taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED,
 /************** GENERATE TASK UPDATES BASED ON TASK ATTEMPT STATE ********/
 define(lookupDirtyTaskAttempt, {Boolean});
 lookupDirtyTaskAttempt(true) :- dutyCycle();
+
 taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, false) :-
 	lookupDirtyTaskAttempt(Dirty),
 	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
@@ -258,9 +237,8 @@ define(taskAttemptUpdate, {JobID, TaskID, Integer, Constants.TaskState, Constant
 taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, Progress) :-
 	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
 
-public
 taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
-	arg(taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, max<Progress>)),
+	taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, Progress),
 	task(JobID, TaskId, Type, _, _, _, TaskStatus),
 	TaskStatus.state() != Constants.TaskState.SUCCEEDED 
 	{
