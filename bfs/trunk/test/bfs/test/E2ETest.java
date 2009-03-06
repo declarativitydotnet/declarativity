@@ -57,7 +57,7 @@ public class E2ETest extends TestCommon {
 		for (BFSChunkInfo chunk : chunkList) {
 			safeAssert(chunk.getLength() == Conf.getChunkSize());
 
-			Set<String> locs = bfs.getChunkLocations(TEST_FILENAME+":"+new Integer(chunk.getId()).toString());
+			Set<String> locs = bfs.getChunkLocations(TEST_FILENAME, chunk.getId());
 			for (String addr : locs) {
 				fetchChunkFromAddr(chunk, addr, readBuf, i * Conf.getChunkSize());
 				// The first DN should be up, so we can stop here
