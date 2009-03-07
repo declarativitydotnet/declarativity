@@ -192,6 +192,11 @@ public class TCPNIO extends Server {
 				ObjectOutputStream ostream = new ObjectOutputStream(bstream);
 				ostream.writeObject(packet);
 
+				if (bstream.size() > this.wBuffer.capacity())
+					throw new RuntimeException("Message exceeds buffer size: " +
+							                   bstream.size() + " > " + this.wBuffer.capacity() +
+							                   ". Message: " + packet.toString());
+
 				synchronized (this.wBuffer) {
                     this.wBuffer.clear();
 					this.wBuffer.putInt(bstream.size());
