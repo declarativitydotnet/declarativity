@@ -51,9 +51,9 @@ public class Conf {
 
     private static final int chunkSize = 256 * 1024;
 
-    private static final long heartbeatRetention = 12000L;
+    private static final long heartbeatRetention = 15000L;
 
-    private static long propagationDelay = 6000L;
+    private static long propagationDelay = 15000L;
 
     private static int replicationFactor = 3;
 
