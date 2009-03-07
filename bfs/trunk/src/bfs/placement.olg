@@ -16,5 +16,4 @@ define(cartesian, keys(0,1,2), {String, String, Integer});
 public
 cartesian(Master, DataNode, ChunkId) :-
     bfs_heartbeat::newReplica(Master, ChunkId, _, _, _),
-    bfs_heartbeat::dataNodes(Master, DataNode, _);
-
+    bfs_heartbeat::datanode(Master, DataNode, _);

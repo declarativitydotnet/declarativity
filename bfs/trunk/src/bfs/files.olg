@@ -71,7 +71,7 @@ heartBeat(Host, Master, -1, -1, Tstamp, -1) :-
     Id := Runtime.idgen();
 
 
-define(sendHeartBeat, keys(0,1,2), {String, String, Integer, Integer, Long, Long});
+define(sendHeartBeat, {String, String, Integer, Integer, Long, Long});
 //watch(sendHeartBeat,ae);
 sendHeartBeat(@Master, Host, ChunkId, Length, Tstamp, Id) :-
     heartBeat(@Host, Master, ChunkId, Length, Tstamp, Id),
