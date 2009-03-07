@@ -13,8 +13,8 @@ import jol.exec.Query;
 import jol.lang.plan.Predicate;
 import jol.lang.plan.Program;
 import jol.lang.plan.Watch.WatchTable;
-import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;
+import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
@@ -24,7 +24,6 @@ import jol.types.table.Aggregation;
 import jol.types.table.StasisTable;
 import jol.types.table.Table;
 import jol.types.table.TableName;
-import java.lang.System;
 
 /**
  * The main driver loop that executes query objects {@link Query}.
@@ -743,7 +742,7 @@ public class Driver extends Thread {
 		TupleSet delete = new BasicTupleSet();
 		insert.add(new Tuple(time, program, null, name, insertions, deletions));
 
-		/* Evaluate until nothing remains. This essentially implements semi-naive 
+		/* Evaluate until nothing remains. This essentially implements semi-naive
 		 * evaluation for a single stratum program. */
 		while (insert.size() > 0 || delete.size() > 0) {
 			TupleSet delta = null;
