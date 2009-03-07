@@ -46,7 +46,7 @@ public class E2EFailTest extends TestCommon {
 			dc.write(testData, i * Conf.getChunkSize(), Conf.getChunkSize());
 			dc.close();
 		}
-		killMaster(0);
+		killMaster(0, 0);
 		/* Pause to let the DNs send HBs back to the master */
 		Thread.sleep(4000);
 
@@ -57,7 +57,7 @@ public class E2EFailTest extends TestCommon {
 		for (BFSChunkInfo chunk : chunkList) {
 			safeAssert(chunk.getLength() == Conf.getChunkSize());
 
-			Set<String> locs = bfs.getChunkLocations(chunk.getId());
+			Set<String> locs = bfs.getChunkLocations(TEST_FILENAME, chunk.getId());
 			for (String addr : locs) {
 				fetchChunkFromAddr(chunk, addr, readBuf, i * Conf.getChunkSize());
 				// The first DN should be up, so we can stop here

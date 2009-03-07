@@ -16,6 +16,7 @@ ackHeartBeat(@Dnode, Master, Id) :-
 
 delete
 sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
+    long_period#insert(),
     sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id),
     (System.currentTimeMillis() - Tstamp) > Conf.getHeartbeatRetention();
 
@@ -26,7 +27,7 @@ dataNodes(Master, Addr, max<Tstamp>) :-
 delete
 dataNodes(Master, DataNode, Ts) :-
     dataNodes(Master, DataNode, Ts),
-    clock#insert(),
+    long_period#insert(),
     (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
