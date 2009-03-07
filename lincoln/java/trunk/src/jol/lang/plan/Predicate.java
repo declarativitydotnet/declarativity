@@ -188,7 +188,8 @@ public class Predicate extends Term implements Iterable<Expression> {
 
 	@Override
 	public String toString() {
-		String value = (notin ? "notin " : "") + name + "(";
+        String ev = (event == Event.NONE) ? "" : "#"  + event.toString().toLowerCase();
+		String value = (notin ? "notin " : "") + name + ev + "(";
 		if (arguments.size() == 0) {
 			return value + ")";
 		}
