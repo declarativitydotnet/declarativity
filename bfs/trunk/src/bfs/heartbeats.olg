@@ -48,7 +48,6 @@ rep_factor(Master, ChunkId, count<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _);
 
 define(representative_datanode, keys(0,1), {String, Integer, String});
-//watch(representative_datanode, ae);
 representative_datanode(Master, ChunkId, max<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _);
 
