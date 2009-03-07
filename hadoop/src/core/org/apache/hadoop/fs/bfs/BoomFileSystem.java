@@ -194,6 +194,12 @@ public class BoomFileSystem extends FileSystem {
 		this.workingDir = makeAbsolute(new_dir);
 	}
 
+	@Override
+	public void close() throws IOException {
+		super.close();
+		this.bfs.shutdown();
+	}
+
 	private String getPathName(Path path) {
 		checkPath(path);
 		String result = makeAbsolute(path).toUri().getPath();
