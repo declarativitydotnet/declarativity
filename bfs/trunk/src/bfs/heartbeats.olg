@@ -27,7 +27,7 @@ dataNodes(Master, Addr, max<Tstamp>) :-
 delete
 dataNodes(Master, DataNode, Ts) :-
     dataNodes(Master, DataNode, Ts),
-    long_period#insert(),
+    //long_period#insert(),
     (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
@@ -43,7 +43,7 @@ chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
 delete
 chunks(Master, DataNode, ChunkId, Length, Ts) :-
     chunks(Master, DataNode, ChunkId, Length, Ts),
-    clock#insert(),
+    long_period#insert(),
     (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
 /**************************/
