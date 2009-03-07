@@ -37,6 +37,9 @@ public class Value<Type> extends Expression {
 			value().equals(Integer.MAX_VALUE)) {
 			return "infinity";
 		}
+        if (type() != null && type() == String.class) {
+            return "\"" + this.value.toString() + "\"";
+        }
 		return this.value == null ? "null" : this.value.toString();
 	}
 
