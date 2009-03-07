@@ -114,7 +114,7 @@ public class DataServer extends Thread {
         	fc.transferFrom(this.channel, 0, dataLength);
         	fc.close();
         	System.out.println("Wrote chunk file " + chunkId + " (length " +
-        			           dataLength + ") in " +
+        			           chunkFile.length() + ") in " +
         			           (System.currentTimeMillis() - startTime) + " msec");
 
         	if (chunkFile.length() != dataLength)
@@ -320,7 +320,8 @@ public class DataServer extends Thread {
     	FileInputStream s = new FileInputStream(file);
     	CheckedInputStream check = new CheckedInputStream(s, new CRC32());
     	BufferedInputStream in = new BufferedInputStream(check);
-    	while (in.read() != -1) {
+    	byte[] tmpBuf = new byte[8192];
+    	while (in.read(tmpBuf, 0, tmpBuf.length) != -1) {
 
     	}
     	return check.getChecksum().getValue();
