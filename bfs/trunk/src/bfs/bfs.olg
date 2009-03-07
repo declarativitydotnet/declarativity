@@ -263,14 +263,15 @@ send_response(@Master, Id, Source, false, null) :-
 
 // "ls" for a directory path => return contents of directory
 send_response(@Master, Id, Source, true, FileSet) :-
-    request(@Master, Id, Source, "Ls", Path),
     bfs_global::fpath(@Master, Path, FileId),
     bfs_global::stasis_file(@Master, FileId, _, _, true),
-    stasis_compute_ls(@Master, FileId, FileSet);
+    compute_ls(@Master, Id, Source, Path, FileId, FileSet);
 
-define(stasis_compute_ls, keys(0, 1), {String, Integer, Set});
+define(compute_ls, {String, Integer, String, String, Integer, Set});
 public
-stasis_compute_ls(@Master, ParentFileId, set<FInfo>) :-
+compute_ls(@Master, ReqId, ReqSource, Path, ParentFileId, set<FInfo>) :-
+    request(@Master, ReqId, ReqSource, "Ls", Path),
+    bfs_global::fpath(@Master, Path, ParentFileId),
     bfs_global::stasis_file(@Master, FileId, ParentFileId, FName, IsDir),
     bfs_global::fpath(@Master, FPath, FileId),
     bfs_global::stasis_fsize(@Master, FileId, FLength),
