@@ -349,6 +349,15 @@ public class DataServer extends Thread {
         return file;
     }
 
+	/**
+	 * This function is periodically invoked by the Overlog code; it returns a
+	 * list of the chunk files stored at this data node. Before returning a
+	 * chunk file, we check that the checksum file for that chunk already
+	 * exists. This avoids a race condition: we don't want to let Overlog-land
+	 * know that a file exists until it has been completely written to disk.
+	 * Since we write the checksum file after we've finished writing the file
+	 * itself, this check avoids the race.
+	 */
 	public static List<File> dirListing(File dir) {
 		File fDir = new File(dir, "chunks");
 		File cDir = new File(dir, "checksums");
