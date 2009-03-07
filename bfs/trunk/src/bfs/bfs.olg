@@ -158,7 +158,7 @@ define(stasis_compute_chunk_set, keys(0, 1), {String, Integer, Set});
 public
 stasis_compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
     bfs_global::stasis_fchunk(Master, ChunkId, FileId),
-    bfs_heartbeat::chunks#insert(Master, _, ChunkId, Length, _),
+    bfs_heartbeat::chunks#insert(Master, _, ChunkId, Length),
     ChunkInfo := new BFSChunkInfo(ChunkId, Length);
 
 
@@ -168,7 +168,7 @@ stasis_compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
 define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, Set});
 public
 compute_chunk_locs(@Master, ChunkId, set<NodeAddr>) :-
-    bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _, _);
+    bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _);
 
 send_response(@Master, Id, Source, true, NodeSet) :-
     request(@Master, Id, Source, "ChunkLocations", ChunkStr),
@@ -178,7 +178,7 @@ send_response(@Master, Id, Source, true, NodeSet) :-
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "ChunkLocations", ChunkStr),
     ChunkId := Integer.valueOf(ChunkStr.substring(ChunkStr.indexOf(":")+1)),
-    notin bfs_heartbeat::chunks(@Master, _, ChunkId, _, _);
+    notin bfs_heartbeat::chunks(@Master, _, ChunkId, _);
 
 // Handle "Create" and "CreateDir" requests
 define(create_request_init, {String, Integer, String, String, Boolean, Integer});

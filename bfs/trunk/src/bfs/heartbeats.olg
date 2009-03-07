@@ -33,25 +33,24 @@ datanode(Master, DataNode, Ts) :-
     long_period#insert(),
     (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
-// Master node, Data node, ChunkId, Actual length of chunk, Timestamp
-// of last update from data node
-define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
-chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
+// Master node, Data node, ChunkId, Actual length of chunk
+define(chunks, keys(0, 1, 2), {String, String, Integer, Integer});
+chunks(Master, DataNode, ChunkId, Length) :-
     ChunkId != -1,
     sendHeartBeat(Master, DataNode, ChunkId, Length, _, _),
-    datanode(Master, DataNode, MaxTstamp);
+    datanode(Master, DataNode, _);
 
 /**************************/
 // maintenance functions
 
 define(rep_factor, keys(0,1), {String, Integer, Integer});
 rep_factor(Master, ChunkId, count<DataNode>) :-
-    chunks(Master, DataNode, ChunkId, _, _);
+    chunks(Master, DataNode, ChunkId, _);
 
 define(representative_datanode, keys(0,1), {String, Integer, String});
 //watch(representative_datanode, ae);
 representative_datanode(Master, ChunkId, max<DataNode>) :-
-    chunks(Master, DataNode, ChunkId, _, _);
+    chunks(Master, DataNode, ChunkId, _);
 
 define(newReplicaRequest, keys(0,1,3), {String, Integer, Integer, Long});
 watch(newReplicaRequest, ae);
