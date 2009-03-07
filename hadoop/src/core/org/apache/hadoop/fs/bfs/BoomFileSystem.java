@@ -196,6 +196,7 @@ public class BoomFileSystem extends FileSystem {
 
 	@Override
 	public void close() throws IOException {
+		System.out.println("BoomFileSystem#close() called");
 		super.close();
 		this.bfs.shutdown();
 	}
