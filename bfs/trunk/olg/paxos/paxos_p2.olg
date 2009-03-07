@@ -3,8 +3,6 @@ program multipaxos;
 import java.lang.System;
 import jol.core.Runtime;
 
-//timer(periodic,logical,1,1,1);
-	
 define(acceptRequest,keys(0,1),{String,Integer, Integer,String,Integer});
 define(sendBeginRound,{String, Integer,Integer,String,String});
 
@@ -28,7 +26,7 @@ public
 r3_b
 acceptRequest(Master,Instance,Round,OldDecree,MaxB) :- 
   paxos::quorum(Master,Round),
-	paxos::maxPrevRound(Master,Instance,MaxB),
+	paxos::maxPrevRound(Master,MaxB),
 	paxos::prepare(Master,Round,Decree),
   paxos::instance(Master,I),
   I >= Instance,
@@ -39,7 +37,7 @@ public
 r3_c	
 acceptRequest(Master,Instance,Round,Decree,-1) :- 
   paxos::quorum(Master,Round),
-	paxos::maxPrevRound(Master,Instance,MaxB),
+	paxos::maxPrevRound(Master,MaxB),
   paxos::instance(Master,Instance),
 	paxos::sendPromise(Master,Instance,Round,MaxB,OldDecree,Agent),
 	MaxB == -1,
@@ -67,7 +65,6 @@ acceptRequest(Master,I,Round,Decree,-2) :-
   topOfQueue_p2#insert(Master, Id),
   paxos::priestCnt(Master, Pcnt),
   Pcnt > 1,
-  ////tic(),
   notin acceptRequest(Master, I, _, _, _),
   notin stasis_success(Master,I,_,_,_),
   I > 0;
