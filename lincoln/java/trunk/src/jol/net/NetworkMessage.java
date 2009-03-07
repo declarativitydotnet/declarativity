@@ -69,4 +69,10 @@ public class NetworkMessage extends Message {
 	public BasicTupleSet deletions() {
 		return this.deletions;
 	}
+
+	@Override
+	public String toString() {
+		return "NetworkMessage: " + protocol + ", table " + this.name +
+		       ", insertions " + this.insertions + ", deletions = " + this.deletions;
+	}
 }
