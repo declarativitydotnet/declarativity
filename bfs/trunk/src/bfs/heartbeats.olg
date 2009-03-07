@@ -58,13 +58,6 @@ define(representative_datanode, keys(0,1), {String, Integer, String});
 representative_datanode(Master, ChunkId, max<DataNode>) :-
     chunks(Master, DataNode, ChunkId, _, _);
 
-define(to_delete, keys(0,1), {String, Integer, String});
-to_delete(Master, ChunkId, DataNode) :-
-    rep_factor(Master, ChunkId, Cnt),
-    representative_datanode(Master, ChunkId, DataNode),
-    long_period(_, _, _),
-    Cnt > Conf.getRepFactor();
-
 define(newReplicaRequest, keys(0,1,3), {String, Integer, Integer, Long});
 watch(newReplicaRequest, ae);
 newReplicaRequest(Master, ChunkId, Cnt, Time) :-
@@ -93,11 +86,6 @@ watch(bfs_global::send_migrate, ae);
 public
 catch_migrate(@DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
 	bfs_global::send_migrate(DnWithReplica, @Master, ChunkId, CurrRepCnt, Dns);
-
-// hacky constraint: one message per tick
-define(send_delete, keys(0), {String, Integer, String});
-send_delete(@DataNode, ChunkId, Master) :-
-    to_delete(@Master, ChunkId, DataNode);
 
 // not correct.
 /*

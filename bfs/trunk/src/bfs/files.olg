@@ -115,9 +115,6 @@ masters(Host, Master) :-
     mindx#insert(Host, P, I),
     Master := Conf.getMasterAddress(P, I);
 
-define(send_delete, keys(0), {String, Integer, String});
-watch(send_delete, ae);
-
 watch(bfs_global::send_migrate, ae);
 define(catch_migrate, {String, String, Integer, Integer, Set});
 watch(catch_migrate, ae);
