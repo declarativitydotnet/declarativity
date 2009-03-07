@@ -108,24 +108,29 @@ public class DataServer extends Thread {
         	List<String> path = readHeaders();
         	int dataLength = this.in.readInt();
 
+        	long startTime = System.currentTimeMillis();
         	File chunkFile = createChunkFile(chunkId);
         	FileChannel fc = new FileOutputStream(chunkFile).getChannel();
         	fc.transferFrom(this.channel, 0, dataLength);
         	fc.close();
+        	System.out.println("Wrote chunk file " + chunkId + " (length " +
+        			           dataLength + ") in " +
+        			           (System.currentTimeMillis() - startTime) + " msec");
 
         	if (chunkFile.length() != dataLength)
         		throw new RuntimeException("Unexpected file length: expected " +
         				                   dataLength + ", got " + chunkFile.length());
+
+        	startTime = System.currentTimeMillis();
+        	createCRCFile(chunkId, getFileChecksum(chunkFile));
+        	System.out.println("Wrote CRC file for " + chunkId + " in " +
+			           (System.currentTimeMillis() - startTime) + " msec");
 
         	// we are not pipelining yet.
         	if (path.size() > 0) {
         		System.out.println("Path size was " + path.size());
         		copyToNext(chunkFile, chunkId, path);
         	}
-
-        	createCRCFile(chunkId, getFileChecksum(chunkFile));
-        	System.out.println("Wrote new chunk file: chunk ID " + chunkId +
-        			           ", length = " + dataLength);
         }
 
         private void copyToNext(File f, int chunkId, List<String> path) throws IOException {
