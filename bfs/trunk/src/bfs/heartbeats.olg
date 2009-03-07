@@ -7,44 +7,39 @@ import java.util.Set;
 timer(clock, physical, 1000, infinity, 0);
 timer(long_period, physical, 10000, infinity, 0);
 
-define(sendHeartBeat, keys(0, 1, 2), {String, String, Integer, Integer, Long, Long});
+define(sendHeartBeat, {String, String, Integer, Integer, Long, Long});
 
 define(ackHeartBeat, {String, String, Long});
 ackHeartBeat(@Dnode, Master, Id) :-
     sendHeartBeat(@Master, Dnode, _, _, _, Id),
     Id != -1L;
 
-delete
-sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id) :-
-    long_period#insert(),
-    sendHeartBeat(Master, Host, ChunkId, Length, Tstamp, Id),
-    (System.currentTimeMillis() - Tstamp) > Conf.getHeartbeatRetention();
-
-define(dataNodes, keys(0, 1), {String, String, Long});
-dataNodes(Master, Addr, max<Tstamp>) :-
+// XXX: Deletion from an aggregate table in JOL is currently not well-supported.
+// Therefore, workaround the problem by storing the output of the agg in another
+// table, and joining against/deleting from the other table. Note that we don't
+// clean up state in the aggregate table when a DataNode times out, but that
+// should only waste a negligible amount of space.
+define(compute_datanode, keys(0, 1), {String, String, Long});
+compute_datanode(Master, Addr, max<Tstamp>) :-
     sendHeartBeat(Master, Addr, _, _, Tstamp, _);
 
+define(datanode, keys(0, 1), {String, String, Long});
+datanode(Master, Addr, Ts) :-
+    compute_datanode(Master, Addr, Ts);
+
 delete
-dataNodes(Master, DataNode, Ts) :-
-    dataNodes(Master, DataNode, Ts),
-    //long_period#insert(),
+datanode(Master, DataNode, Ts) :-
+    datanode(Master, DataNode, Ts),
+    long_period#insert(),
     (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
 
 // Master node, Data node, ChunkId, Actual length of chunk, Timestamp
 // of last update from data node
 define(chunks, keys(0, 1, 2), {String, String, Integer, Integer, Long});
 chunks(Master, DataNode, ChunkId, Length, MaxTstamp) :-
-    clock#insert(),
     ChunkId != -1,
     sendHeartBeat(Master, DataNode, ChunkId, Length, _, _),
-    (System.currentTimeMillis() - MaxTstamp) <= Conf.getHeartbeatRetention(),
-    dataNodes(Master, DataNode, MaxTstamp);
-
-delete
-chunks(Master, DataNode, ChunkId, Length, Ts) :-
-    chunks(Master, DataNode, ChunkId, Length, Ts),
-    long_period#insert(),
-    (System.currentTimeMillis() - Ts) > Conf.getHeartbeatRetention();
+    datanode(Master, DataNode, MaxTstamp);
 
 /**************************/
 // maintenance functions
