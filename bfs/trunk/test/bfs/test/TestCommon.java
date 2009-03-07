@@ -31,7 +31,7 @@ public class TestCommon {
 
     @After
     public void shutdown() {
-        for( List<Master> masters: partitions) {
+        for (List<Master> masters: partitions) {
         	for (Master m : masters) {
         		m.stop();
         	}
@@ -139,7 +139,7 @@ public class TestCommon {
 	        }
 	      }
     }
-    
+
     protected void startMany(String... args) throws JolRuntimeException, UpdateException {
         this.partitions = new ArrayList<List<Master>>();
         List<List<String>> a = new ArrayList<List<String>>();
