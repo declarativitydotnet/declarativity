@@ -126,6 +126,8 @@ public class LinearHashNTA extends StasisTable {
 
 	@Override
 	protected byte[] lookup(byte[] keybytes) {
+	    if(keybytes == null) throw new NullPointerException("keybytes is null!");
+	    if(rid == null) throw new NullPointerException("rid is null!");
 		return Stasis.hash_lookup(-1, rid, keybytes);
 	}
 
