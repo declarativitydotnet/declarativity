@@ -21,7 +21,6 @@ public class MigrateTest extends DataCommon {
         cleanup("td1");
 
         // all the chunks from this datanode have dropped in
-
         try {
           Thread.sleep(20001);
         } catch (InterruptedException e) {
@@ -29,7 +28,6 @@ public class MigrateTest extends DataCommon {
         }
 
         checkFiles();
-
         cleanupAll();
     }
 
