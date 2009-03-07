@@ -164,9 +164,6 @@ case $startStop in
 
       if [ "$command" = "bfsdatanode" ]; then
         BFS_DATA_DIR=/tmp/bfs_data
-        # XXX: for now, we just remove the old data directory on startup
-        echo "Removing data directory $BFS_DATA_DIR"
-        rm -r $BFS_DATA_DIR
         nohup $JAVA $BFS_JAVA_OPTS -cp "$CLASSPATH" bfs.DataNode $BFS_DATA_DIR > "$log" 2>&1 < /dev/null &
       else
         export JOL_DIR=/root/jol
