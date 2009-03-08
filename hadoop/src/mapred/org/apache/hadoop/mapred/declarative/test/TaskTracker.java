@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 
 import org.apache.hadoop.ipc.RPC;
+import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.HeartbeatResponse;
 import org.apache.hadoop.mapred.InterTrackerProtocol;
 import org.apache.hadoop.mapred.JobConf;
@@ -24,6 +25,7 @@ import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
+import org.apache.hadoop.mapred.JobClient.TaskStatusFilter;
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 
@@ -33,7 +35,9 @@ class TaskTracker extends Thread {
 		private TaskTracker tracker;
 		private Task task;
 		private long start;
+		private long finish;
 		private long time;
+		private float progress;
 		private TaskStatus.State state;
 		private TaskStatus.Phase phase;
 		
@@ -46,7 +50,9 @@ class TaskTracker extends Thread {
 			this.tracker = tracker;
 			this.task = task;
 			this.start = 0L;
+			this.finish = 0L;
 			this.time = time;
+			this.progress = 0f;
 			this.state = state;
 			this.phase = (task instanceof MapTask) ?
 				         TaskStatus.Phase.MAP : TaskStatus.Phase.REDUCE;
@@ -72,32 +78,24 @@ class TaskTracker extends Thread {
 			float progress = 0f;
 			if (this.state == TaskStatus.State.RUNNING) {
 				long current = System.currentTimeMillis();
-				if (current - this.start < this.start) {
-					progress = 1f;
-					this.state = TaskStatus.State.SUCCEEDED;
-				}
-				else if (this.start > 0L) {
-					progress = (current - this.start) / (float) this.time;
-				}
+				progress = (current - this.start) / (float) this.time;
+				progress = Math.min(1f, progress);
 			}
 			
 			return status(progress);
 		}
 		
 		private TaskStatus status(float progress) {
-			long finish = this.state == TaskStatus.State.SUCCEEDED ?
-					System.currentTimeMillis() : 0L;
-					
 			TaskStatus status = null;
 			if (task instanceof MapTask) {
 				status = new MapTaskStatus(task.getTaskID(), progress,
 						state, "", state.name(), 
-						tracker.name(), phase, null); 
+						tracker.name(), phase, new Counters()); 
 			}
 			else if (task instanceof ReduceTask) {
 				status = new ReduceTaskStatus(task.getTaskID(), progress,
 						state, "", state.name(), 
-						tracker.name(), phase, null); 
+						tracker.name(), phase, new Counters()); 
 			}
 			else {
 				return null;
@@ -111,12 +109,31 @@ class TaskTracker extends Thread {
 			if (this.state == TaskStatus.State.UNASSIGNED) {
 				this.start = System.currentTimeMillis();
 				this.state = TaskStatus.State.RUNNING;
+				try {
+					if (task instanceof MapTask) {
+						this.phase = TaskStatus.Phase.MAP;
+						Thread.sleep(this.time);
+						this.state = TaskStatus.State.SUCCEEDED;
+					}
+					else {
+						Long phaseTime = time / 3;
+						this.phase = TaskStatus.Phase.SHUFFLE;
+						Thread.sleep(phaseTime);
+						this.phase = TaskStatus.Phase.SORT;
+						Thread.sleep(phaseTime);
+						this.phase = TaskStatus.Phase.REDUCE;
+						Thread.sleep(phaseTime);
+						this.state = TaskStatus.State.COMMIT_PENDING;
+					}
+				} catch (InterruptedException e) {
+					this.state = TaskStatus.State.KILLED;
+				}
 			}
 		}
 	}
 	
-	private static final Long MAX_TASK_TIME = 120011L; // Ensure prime
-	private static final Long MIN_TASK_TIME = 60000L;
+	private static final Long MAX_TASK_TIME = 60000L;
+	private static final Long MIN_TASK_TIME = 20000L;
 	private static final Random rand = new Random();
 	
 	private Executor executor;
@@ -131,17 +148,24 @@ class TaskTracker extends Thread {
 	
 	private int maxReduceTasks;
 	
+	private float slotUtility;
+	
+	private long heartbeatCallDuration;
+	
 	private Set<TaskRunner> runners;
 	
 	public TaskTracker(JobConf conf, String name, Executor executor) throws IOException {
 		this.name       = name;
 		this.executor   = executor;
 		this.responseId = 0;
+		this.heartbeatCallDuration = 0L;
 		this.runners    = new HashSet<TaskRunner>();
 		
 	    this.maxMapTasks = conf.getInt("mapred.tasktracker.map.tasks.maximum", 2);
         this.maxReduceTasks = conf.getInt("mapred.tasktracker.reduce.tasks.maximum", 2);
-		
+        
+        this.slotUtility = 0f;
+        
 		InetSocketAddress jobTrackAddr = JobTracker.getAddress(conf);
 
 	    this.master = (InterTrackerProtocol) 
@@ -167,28 +191,70 @@ class TaskTracker extends Thread {
 		return this.name;
 	}
 	
+	public float slotUtility() {
+		return this.slotUtility;
+	}
+	
+	public long heartbeatCallDuration() {
+		return this.heartbeatCallDuration;
+	}
+	
+	
 	public void run() {
 		try {
+			TaskTrackerStatus status = status();
 			HeartbeatResponse response = 
-				this.master.heartbeat(status(), true, true, this.responseId);
+				this.master.heartbeat(status, true, true, this.responseId);
 			do {
-				process(response);
+				process(response, status);
+				if (this.slotUtility == 0f) {
+					this.slotUtility = slotRate();
+				}
+				else {
+					this.slotUtility = (this.slotUtility / 3f) + ((2f * slotRate()) / 3f);
+				}
+				
 				int interval = response.getHeartbeatInterval();
 				sleep(interval);
 				boolean acceptNewTasks = this.runners.size() < 
 				                         this.maxMapTasks + this.maxReduceTasks;
-			    response = this.master.heartbeat(status(), false, acceptNewTasks, this.responseId);
+				long timestamp = System.currentTimeMillis();
+				status = status();
+				
+				
+			    response = this.master.heartbeat(status, false, acceptNewTasks, this.responseId);
+			    long duration = System.currentTimeMillis() - timestamp;
+			    if (this.heartbeatCallDuration == 0L) {
+			    	this.heartbeatCallDuration = duration;
+			    }
+			    else {
+			    	this.heartbeatCallDuration = (this.heartbeatCallDuration / 3) + ((2 * duration) / 3);
+			    }
 			} while (isInterrupted() == false);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
 	}
 	
-	private void process(HeartbeatResponse response) {
+	private float slotRate() {
+		TaskTrackerStatus status = status();
+		return (float) (status.countMapTasks() + status.countReduceTasks()) /
+			   (float) (status.getMaxMapTasks() + status.getMaxReduceTasks());
+	}
+	
+	private void process(HeartbeatResponse response, TaskTrackerStatus status) {
 		this.responseId = response.getResponseId();
+		if (response.getActions() == null) return;
+		
+		int mapSlots = status.getMaxMapTasks() - status.countMapTasks();
+		int reduceSlots = status.getMaxReduceTasks() - status.countReduceTasks();
+		
 		for (TaskTrackerAction action : response.getActions()) {
 			if (action instanceof LaunchTaskAction) {
-				launch((LaunchTaskAction) action);
+				LaunchTaskAction launch = (LaunchTaskAction) action;
+				if (launch.getTask().isMapTask()) mapSlots--;
+				else reduceSlots--;
+				launch(launch);
 			}
 			else if (action instanceof KillJobAction) {
 				KillJobAction killAction = (KillJobAction) action;
@@ -205,17 +271,8 @@ class TaskTracker extends Thread {
 	
 	private void launch(LaunchTaskAction action) {
 		Task task = action.getTask();
-		/*
-		if (task.isMapTask()) {
-			System.err.println("MAP TASK AT TRACKER " + name() + ".");
-		}
-		else {
-			System.err.println("REDUCE TASK AT TRACKER " + name() + ".");
-		}
-		*/
-		
-		long time = MIN_TASK_TIME + (rand.nextLong() % MAX_TASK_TIME);
-		TaskStatus.State state =   TaskStatus.State.UNASSIGNED;
+		long time = task.isMapTask() ? MIN_TASK_TIME : 2 * MIN_TASK_TIME; //  + Math.abs(rand.nextLong() % MAX_TASK_TIME);
+		TaskStatus.State state = TaskStatus.State.UNASSIGNED;
 		/*(time < (MIN_TASK_TIME + 0.5 * MAX_TASK_TIME)) ?
 				TaskStatus.State.FAILED : TaskStatus.State.UNASSIGNED; */
 		TaskRunner runner = new TaskRunner(this, task, time, state);
@@ -230,7 +287,8 @@ class TaskTracker extends Thread {
 			TaskStatus status = runner.status();
 			reports.add(status);
 			if (status.getRunState() == TaskStatus.State.SUCCEEDED ||
-					status.getRunState() == TaskStatus.State.FAILED) {
+					status.getRunState() == TaskStatus.State.FAILED ||
+					status.getRunState() == TaskStatus.State.KILLED) {
 				done.add(runner);
 			}
 		}
