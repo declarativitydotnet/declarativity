@@ -121,7 +121,7 @@ chunklist_request_pending(@Master, Id, Source, FileId) :-
 public
 send_response(@Master, Id, Source, true, ChunkSet) :-
     chunklist_request_pending(@Master, Id, Source, FileId),
-    stasis_compute_chunk_set(@Master, FileId, ChunkSet),
+    compute_chunk_set(@Master, FileId, ChunkSet),
     fchunk_cnt(@Master, FileId, Cnt),
     Cnt == ChunkSet.size(); // We back the expected # of chunks
 
@@ -154,11 +154,15 @@ public
 fchunk_cnt(Master, FileId, count<ChunkId>) :-
     bfs_global::stasis_fchunk(Master, ChunkId, FileId);
 
-define(stasis_compute_chunk_set, keys(0, 1), {String, Integer, Set});
+define(chunk_kicker,keys(0), {Integer});
+chunk_kicker(0);
+
+define(compute_chunk_set, keys(0, 1), {String, Integer, Set});
 public
-stasis_compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
+compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
     bfs_global::stasis_fchunk(Master, ChunkId, FileId),
-    bfs_heartbeat::chunks#insert(Master, _, ChunkId, Length),
+    bfs_heartbeat::chunks(Master, _, ChunkId, Length),
+    chunk_kicker(_),
     ChunkInfo := new BFSChunkInfo(ChunkId, Length);
 
 
