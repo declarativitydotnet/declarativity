@@ -28,7 +28,7 @@ public class BFSClient {
 	private JolSystem system;
 	private String selfAddr;
 
-	public BFSClient(int port) {
+	public BFSClient(int port, boolean isDaemon) {
         this.rand = new Random();
         this.currentMaster = new int[Conf.getNumPartitions()];
         this.responseQueue = new SimpleQueue<Object>();
@@ -36,6 +36,7 @@ public class BFSClient {
 
 		try {
 			this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, port);
+			this.system.setDaemon(isDaemon);
 
 	        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
 	        this.system.evaluate();
@@ -58,6 +59,10 @@ public class BFSClient {
 		} catch (JolRuntimeException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public BFSClient(int port) {
+		this(port, false);
 	}
 
 	public synchronized boolean createFile(String pathName) {
@@ -443,7 +448,8 @@ public class BFSClient {
 
         throw new RuntimeException("BFS (partition "+partition+") request #" + requestId + " timed out.");
     }
-    private Set<Object> waitForBroadcastResponse(long timeout, int requestid, TupleSet req) throws RuntimeException{
+
+    private Set<Object> waitForBroadcastResponse(long timeout, int requestid, TupleSet req) throws RuntimeException {
     	boolean done = false;
         Set<Object> ret = new HashSet<Object>();
 		Set<Integer> unseenPartitions = new HashSet<Integer>();
