@@ -95,7 +95,7 @@ public class Runtime implements JolSystem {
 
 	private boolean canShutdown = false;
 	private Object canShutdownMutex = new Object();
-	
+
 	/** Creates a new runtime. Called from {@link Runtime#create(int)}. */
 	private Runtime(OutputStream output, int port) {
 		this.output = output;
@@ -139,6 +139,10 @@ public class Runtime implements JolSystem {
 
 	public void setPriority(int newPriority) {
 		this.driver.setPriority(newPriority);
+	}
+
+	public void setDaemon(boolean isDaemon) {
+		this.driver.setDaemon(isDaemon);
 	}
 
 	/** @return true if debug level is active, false otherwise.
@@ -344,7 +348,6 @@ public class Runtime implements JolSystem {
 			public TableName name()       { return name; }
 		});
 	}
-
 
 	public interface RuntimeCallback {
 		void call(Runtime r) throws UpdateException, JolRuntimeException;

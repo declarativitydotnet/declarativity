@@ -30,10 +30,10 @@ public interface JolSystem {
 
 	/** Start the asynchronous system driver. */
 	void start();
-	
+
 	/** Indicates the last time a call was made to evaluate. */
 	Long timestamp();
-	
+
 	/** See {@link Thread#setPriority(int)} */
 	void setPriority(int newPriority);
 
@@ -82,6 +82,12 @@ public interface JolSystem {
 				  TableName name,
 				  TupleSet insertions,
 				  TupleSet deletions) throws JolRuntimeException;
-	
+
 	void flusher(TableName name, TupleSet insertions, TupleSet deletions) throws JolRuntimeException;
+
+	/**
+	 * Control whether the JOL driver thread runs as a daemon thread or not; by
+	 * default, it does not. Can only be invoked before start() has been called.
+	 */
+	void setDaemon(boolean isDaemon);
 }
