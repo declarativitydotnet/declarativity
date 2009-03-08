@@ -169,7 +169,7 @@ compute_chunk_set(Master, FileId, set<ChunkInfo>) :-
 // If we get a "ChunkLocations" request for a chunk that we have knowledge
 // of, return the set of nodes that hold that chunk. Otherwise, return an
 // error.
-define(compute_chunk_locs, keys(0, 1, 2), {String, Integer, Set});
+define(compute_chunk_locs, keys(0, 1), {String, Integer, Set});
 public
 compute_chunk_locs(@Master, ChunkId, set<NodeAddr>) :-
     bfs_heartbeat::chunks(@Master, NodeAddr, ChunkId, _);
