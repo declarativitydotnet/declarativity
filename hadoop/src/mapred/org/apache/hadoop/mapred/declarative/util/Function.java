@@ -14,6 +14,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.KillJobAction;
+import org.apache.hadoop.mapred.KillTaskAction;
 import org.apache.hadoop.mapred.LaunchTaskAction;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.MapTask;
@@ -26,6 +27,12 @@ public final class Function {
 	
 	public static boolean coinFlip(float prob) {
 		return rand.nextFloat() <= prob;
+	}
+	
+	public static Float sumList(List<Float> values) {
+		float result = 0f;
+		for (Float v : values) result += v;
+		return result;
 	}
 	
 	public static Long priority(Integer category, JobPriority priority, Long timestamp) {
@@ -57,6 +64,10 @@ public final class Function {
 	
 	public static TaskTrackerAction killJob(JobID jobid) {
 		return new KillJobAction(jobid);
+	}
+	
+	public static TaskTrackerAction killTask(TaskID taskid, int id) {
+		return new KillTaskAction(new TaskAttemptID(taskid, id));
 	}
 	
 	public static ValueList<String> getLocations(JobClient.RawSplit split) {

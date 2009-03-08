@@ -200,17 +200,19 @@ public class TaskState implements Comparable<TaskState> {
 	
 	public static void main(String[] args) {
 		TaskState state = new TaskState(new JobID("test", 0), new TaskID("test", 0, true, 0));
-		state.attempt(0, 0.0f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
-		state.attempt(0, 1.0f, Constants.TaskState.SUCCEEDED, Constants.TaskPhase.MAP, 1L, 2L);
-		if (state.state() != Constants.TaskState.SUCCEEDED) {
-			System.err.println("EXPECTED SUCCEEDED 1");
+		state = state.attempt(0, 0.5f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
+		TaskState failed = state.attempt(0, 0.0f, Constants.TaskState.FAILED, Constants.TaskPhase.MAP, 1L, 0L);
+		if (failed.state() != Constants.TaskState.FAILED) {
+			System.err.println("EXPECTED FAILED 1 got " + state.state());
 		}
 		else {
 			System.err.println("COOL 1");
 		}
-		state.attempt(0, 0.0f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
+		
+		state = state.attempt(0, 1.0f, Constants.TaskState.SUCCEEDED, Constants.TaskPhase.MAP, 1L, 2L);
+		state = state.attempt(0, 0.0f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
 		if (state.state() != Constants.TaskState.SUCCEEDED) {
-			System.err.println("EXPECTED SUCCEEDED 1");
+			System.err.println("EXPECTED SUCCEEDED 1 got " + state.state());
 		}
 		else {
 			System.err.println("COOL 2");

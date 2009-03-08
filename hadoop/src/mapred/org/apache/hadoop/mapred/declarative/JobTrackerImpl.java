@@ -1,5 +1,6 @@
 package org.apache.hadoop.mapred.declarative;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -214,7 +215,7 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new TaskReportTable(context));
 		this.context().catalog().register(new TaskTable(context));
 		this.context().catalog().register(new TaskTrackerActionTable(context));
-		// this.context().catalog().register(new LoadActions(context));
+		this.context().catalog().register(new LoadActions(context));
 		this.context().catalog().register(new TaskTrackerErrorTable(context));
 		this.context().catalog().register(new TaskTrackerTable(context));
 		this.context().catalog().register(new NetworkTopologyTable(context, this));
@@ -243,10 +244,13 @@ public class JobTrackerImpl extends JobTracker {
 		}
 		
 		if (SPECULATE != null) {
-			URL speculatePolicy =
-				ClassLoader.getSystemClassLoader().getResource(SPECULATE + ".olg");
-			this.context.install("hadoop", speculatePolicy);
-			this.context.evaluate();
+			try {
+				URL speculatePolicy =  ClassLoader.getSystemClassLoader().getResource(SPECULATE + ".olg");
+				this.context.install("hadoop", speculatePolicy);
+				this.context.evaluate();
+			} catch (Throwable t) {
+				System.err.println("No speculation file.");
+			}
 		}
 		
 		this.context.start();

@@ -5,6 +5,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.TaskID;
+import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.Constants;
 import java.util.Map;
@@ -101,18 +102,26 @@ public class JobState implements Comparable<JobState> {
 		
 		Constants.JobState beforeState = this.state;
 		if (type == TaskType.MAP) {
-			if (this.maps.containsKey(state.taskid()) &&
-					this.maps.get(state.taskid()).compareTo(state) <= 0) {
-				this.maps.remove(state.taskid());
+			if (this.maps.containsKey(state.taskid())) {
+				if (this.maps.get(state.taskid()).compareTo(state) <= 0) {
+					this.maps.remove(state.taskid());
+					this.maps.put(state.taskid(), state);
+				}
 			}
-			this.maps.put(state.taskid(), state);
+			else {
+				this.maps.put(state.taskid(), state);
+			}
 		}
 		else if (type == TaskType.REDUCE) {
-			if (this.reduces.containsKey(state.taskid()) &&
-					this.reduces.get(state.taskid()).compareTo(state) <= 0) {
-				this.reduces.remove(state.taskid());
+			if (this.reduces.containsKey(state.taskid())) {
+				if (this.reduces.get(state.taskid()).compareTo(state) <= 0) {
+					this.reduces.remove(state.taskid());
+					this.reduces.put(state.taskid(), state);
+				}
 			}
-			this.reduces.put(state.taskid(), state);
+			else {
+				this.reduces.put(state.taskid(), state);
+			}
 		}
 		updateStatus();
 		return state() != beforeState; 

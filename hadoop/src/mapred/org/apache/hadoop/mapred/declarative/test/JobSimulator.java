@@ -1,6 +1,8 @@
 package org.apache.hadoop.mapred.declarative.test;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
@@ -39,6 +41,7 @@ public class JobSimulator extends Thread {
 		private int reduces;
 		private Path input;
 		private JobPriority priority;
+		private RunningJob runner;
 		
 		public Job(JobPriority priority, String name, int maps, int reduces, Path input) {
 			this.name = name;
@@ -46,6 +49,15 @@ public class JobSimulator extends Thread {
 			this.reduces = reduces;
 			this.input = input;
 			this.priority = priority;
+			this.runner = null;
+		}
+		
+		public boolean isComplete() throws IOException {
+			return this.runner == null || this.runner.isComplete();
+		}
+		
+		public boolean isSuccessful() throws IOException {
+			return this.runner == null || this.runner.isSuccessful();
 		}
 
 		public void run() {
@@ -70,17 +82,14 @@ public class JobSimulator extends Thread {
 			    FileInputFormat.setInputPaths(job, input); 
 				// FileInputFormat.addInputPath(job, input);
 
-				RunningJob runner = null;
 				while (runner == null) {
 					try {
 						runner = JobClient.runJob(job);
 					} catch (Throwable t) {sleep(100);}
 				}
 				while (!runner.isComplete()) {
-					sleep(1000);
+					sleep(5000);
 				}
-				System.err.println("JOB " + name + " completed " + 
-						(runner.isSuccessful() ? "successfully!" : "unsuccessfully!"));
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (InterruptedException e) {
@@ -115,20 +124,36 @@ public class JobSimulator extends Thread {
 		}
 	}
 
+	private TaskTrackerCluster cluster;
+	
 	private Set<Job> jobs;
 	
 	private Executor executor;
 	
-	public JobSimulator() {
+	private int jobCount;
+	
+	private int maps;
+	
+	private int reduces;
+	
+	public JobSimulator(int clusterSize, int jobs, int maps, int reduces) throws IOException {
+		this(clusterSize, jobs, maps, reduces, null, null);
+	}
+	
+	public JobSimulator(int clusterSize, int jobs, int maps, int reduces, OutputStream utilityLog, OutputStream callLog) throws IOException {
+		cluster = new TaskTrackerCluster(new JobConf(), clusterSize, utilityLog, callLog);
+		this.jobCount = jobs;
+		this.maps = maps;
+		this.reduces = reduces;
 		this.jobs = new HashSet<Job>();
 		this.executor = Executors.newCachedThreadPool();
 	}
 	
+	
 	public void run() {
-		int index = 10;
 		JobConf  conf = new JobConf();
 		try {
-			while (!isInterrupted()) {
+			for (int i = 0; i < this.jobCount && !isInterrupted(); i++) {
 				try {
 					sleep(1000);
 					Random random = new Random();
@@ -141,20 +166,44 @@ public class JobSimulator extends Thread {
 					String name = "job" + jobs.size();
 					JobPriority[] priorities = JobPriority.values();
 					Job job = new Job(priorities[random.nextInt(priorities.length)],
-							          "job"+jobs.size(), 10, 10, tempPath);
+							          "job"+jobs.size(), this.maps, this.reduces, tempPath);
 					jobs.add(job);
 					this.executor.execute(job);
-					if (index-- <= 0) return;
 				} catch (InterruptedException e) { }
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
+		}
+		finally {
+			cluster.start();
+			while (jobs.size() > 0) {
+				try { sleep(10000);
+				} catch (InterruptedException e1) { }
+				Set<Job> finished = new HashSet<Job>();
+				for (Job j : jobs) {
+					try {
+						if (j.isComplete()) {
+							finished.add(j);
+						}
+					} catch (IOException e) {
+						finished.add(j);
+					}
+				}
+				jobs.removeAll(finished);
+			}
+			cluster.stop();
+			System.err.println("SIMULATION COMPLETE");
 		}
 	}
 	
 	////////////////////////////////////////////////////////////
 	// main()
 	////////////////////////////////////////////////////////////
+	
+	private static void usage() {
+		System.err.println("java -cp hadoop-core.jar " + JobSimulator.class.getCanonicalName() + 
+				" [-h] [-l logpath] [-m #maps/job] [-r #reduces/job] taskTrackerClusterSize");
+	}
 
 	/**
 	 * Start the JobTracker process.  This is used only for debugging.  As a rule,
@@ -162,27 +211,61 @@ public class JobSimulator extends Thread {
 	 */
 	public static void main(String argv[])
 	throws IOException, InterruptedException {
-		java.lang.System.err.println("STARTING JOBTRACKER");
-
-		boolean debug   = false;
-		int clusterSize = 0;
-		for (int i = 0; i < argv.length; i++) {
-			if (argv[i].startsWith("-d")) {
-				debug = true;
-				clusterSize = Integer.parseInt(argv[i+1]);
-			}
+		java.lang.System.err.print("====================================== ");
+		java.lang.System.err.print("Job Simulator");
+		java.lang.System.err.println(" ======================================");
+		
+		if (argv.length < 1) {
+			usage();
+			System.exit(0);
 		}
 
+		String path = null;
+		int jobs = 10;
+		int maps = 100;
+		int reduces = 100;
+		boolean startJobTracker = false;
+		int clusterSize = 0;
+		for (int i = 0; i < argv.length; i++) {
+			if (argv[i].startsWith("-j")) {
+				startJobTracker = true;
+			}
+			else if (argv[i].startsWith("-l")) {
+				path = argv[++i];
+			}
+			else if (argv[i].startsWith("-h")) {
+				usage();
+				System.exit(0);
+			}
+			else if (argv[i].startsWith("-j")) {
+				jobs = Integer.parseInt(argv[++i]);
+			}
+			else if (argv[i].startsWith("-m")) {
+				maps = Integer.parseInt(argv[++i]);
+			}
+			else if (argv[i].startsWith("-r")) {
+				reduces = Integer.parseInt(argv[++i]);
+			}
+		}
+		clusterSize = Integer.parseInt(argv[argv.length - 1]);
+
 		try {
-			JobTrackerImpl tracker = (JobTrackerImpl) JobTracker.startTracker(new JobConf());
-			if (debug) {
-				TaskTrackerCluster cluster = new TaskTrackerCluster(tracker.conf(), clusterSize);
-				JobSimulator simulator = new JobSimulator();
+			if (startJobTracker) {
+				JobTrackerImpl tracker = (JobTrackerImpl) JobTracker.startTracker(new JobConf());
+				JobSimulator simulator = new JobSimulator(clusterSize, jobs, maps, reduces);
 				simulator.start();
 				tracker.offerService();
 			}
 			else {
-				tracker.offerService();
+				FileOutputStream utilityLog = null;
+				FileOutputStream callLog = null;
+				if (path != null) {
+					callLog = new FileOutputStream(path + "/call.log");
+					utilityLog = new FileOutputStream(path + "/utility.log");
+				}
+				JobSimulator simulator = new JobSimulator(clusterSize, jobs, maps, reduces, utilityLog, callLog);
+				simulator.start();
+				simulator.join();
 			}
 		} catch (Throwable e) {
 			e.printStackTrace();

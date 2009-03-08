@@ -2,10 +2,12 @@ package org.apache.hadoop.mapred.declarative.table;
 
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
+import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.declarative.Constants.TaskTrackerState;
 
 import jol.core.Runtime;
 import jol.types.basic.ConcurrentTupleSet;
+import jol.types.basic.Tuple;
 import jol.types.table.BasicTable;
 import jol.types.table.ConcurrentTable;
 import jol.types.table.Key;
@@ -31,7 +33,8 @@ public class TaskTrackerTable extends ConcurrentTable {
 		MAP_COUNT,
 		REDUCE_COUNT,
 		MAX_MAP, 
-		MAX_REDUCE
+		MAX_REDUCE,
+		DIRTY
 	};
 	
 	/** The table schema types. */
@@ -45,13 +48,27 @@ public class TaskTrackerTable extends ConcurrentTable {
 		Integer.class,          // map tasks
 		Integer.class,          // reduce tasks
 		Integer.class,          // max map tasks
-		Integer.class           // max reduce tasks
+		Integer.class,          // max reduce tasks
+		Boolean.class           // Dirty flag
 	};
 	
 
 	public TaskTrackerTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		// TODO Auto-generated constructor stub
+	}
+	
+	public static Tuple tuple(TaskTrackerStatus status, boolean init) {
+		return new Tuple(status.getTrackerName(), status.getHost(), status.getHttpPort(),
+				         init ? TaskTrackerState.INITIAL : TaskTrackerState.RUNNING,
+						 java.lang.System.currentTimeMillis(),
+						 status.getFailures(),
+						 status.countMapTasks(),
+						 status.countReduceTasks(),
+						 status.getMaxMapTasks(),
+						 status.getMaxReduceTasks(),
+						 true);
+		
 	}
 
 }

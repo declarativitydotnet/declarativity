@@ -76,7 +76,7 @@ public class TaskAttemptTable extends ConcurrentTable {
 				         TaskState.valueOf(status.getRunState().name()), 
 				         TaskPhase.valueOf(status.getPhase().name()),
 				         status.getDiagnosticInfo(), 
-				         status.getTaskTracker(), 
+				         tracker.getTrackerName(), 
 				         httpTaskLogLocation,
 				         status.getStartTime(), 
 				         status.getFinishTime(),

@@ -1,13 +1,20 @@
 package org.apache.hadoop.mapred.declarative.table;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
+import org.apache.hadoop.mapred.KillJobAction;
+import org.apache.hadoop.mapred.KillTaskAction;
 import org.apache.hadoop.mapred.LaunchTaskAction;
 import org.apache.hadoop.mapred.MapTask;
 import org.apache.hadoop.mapred.ReduceTask;
 import org.apache.hadoop.mapred.Task;
+import org.apache.hadoop.mapred.TaskAttemptID;
+import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
@@ -69,12 +76,27 @@ public class TaskTrackerActionTable extends ConcurrentTable {
 		int maps = status.getMaxMapTasks() - status.countMapTasks();
 		int reduces = status.getMaxReduceTasks() - status.countReduceTasks();
 		try {
+			Set<JobID> killjobs = new HashSet<JobID>(); 
+			Set<TaskAttemptID> killtasks = new HashSet<TaskAttemptID>(); 
 			for (Tuple tuple : secondary().get(this.nameKey).lookupByKey(status.getTrackerName())) {
 				TaskTrackerAction action = 
 					(TaskTrackerAction) tuple.value(Field.ACTION.ordinal());
+				if (action instanceof KillJobAction) {
+					killjobs.add(((KillJobAction)action).getJobID());
+				}
+				else if (action instanceof KillTaskAction) {
+					killtasks.add(((KillTaskAction)action).getTaskID());
+				}
+			}
+			
+			for (Tuple tuple : secondary().get(this.nameKey).lookupByKey(status.getTrackerName())) {
+				TaskTrackerAction action =  (TaskTrackerAction) tuple.value(Field.ACTION.ordinal());
 				if (action instanceof LaunchTaskAction) {
 					Task t = ((LaunchTaskAction)action).getTask();
-					if (t instanceof MapTask) {
+					if (killjobs.contains(t.getJobID()) || killtasks.contains(t.getTaskID())) {
+						continue;
+					}
+					else if (t instanceof MapTask) {
 						if (maps > 0) maps--;
 						else continue;
 					}

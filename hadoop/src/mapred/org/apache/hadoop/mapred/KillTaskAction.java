@@ -30,7 +30,7 @@ import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
  * to the {@link org.apache.hadoop.mapred.TaskTracker} to kill a task.
  * 
  */
-class KillTaskAction extends TaskTrackerAction {
+public class KillTaskAction extends TaskTrackerAction {
   TaskAttemptID taskId;
   
   public String toString() {
