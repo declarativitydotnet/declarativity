@@ -27,7 +27,7 @@ trackerCount(count<TrackerName>) :-
 	
 public
 taskAttempts(JobId, TaskId, count<AttemptId>) :-
-	jobtracker::taskAttempt(JobId, TaskId, AttemptId);
+	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptId);
 	
 failedJob
 jobtracker::killjob(JobId) :-
@@ -61,6 +61,7 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0f, State, Phase, null, Tracke
 	Phase       := Constants.TaskPhase.STARTING,
 	AttemptID   := Attempts;
 	
+watch(jobtracker::taskTrackerAction, a);
 actionSchedule
 jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
 	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _, _),
@@ -69,6 +70,31 @@ jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_T
 	Action := Type == Constants.TaskType.MAP ? 
 	          Function.launchMap(FileInput.split(), JobFile, TaskId, AttemptID, Partition) :
 	          Function.launchReduce(JobFile, TaskId, AttemptID, Partition, MapCount);
+
+watch(speculated, a);
+define(speculated, {TaskID, String, String});
+speculated(TaskId, OldTracker, NewTracker) :-
+    jobtracker::taskAttempt(JobId, TaskId, 0, _, _, _, _, OldTracker, _, _, _, _),
+    jobtracker::taskAttempt(JobId, TaskId, 1, _, _, _, _, NewTracker, _, _, _, _);
+
+watch(trackerTaskTypeCount, a);
+define(trackerTaskTypeCount, keys(0,1), {String, Constants.TaskType, Integer});
+trackerTaskTypeCount(TrackerName, Type, count<Type>) :-
+    trackerWorkload(TrackerName, Type, TaskId); 
+
+define(trackerWorkload, keys(0,1), {String, Constants.TaskType, TaskID});
+public
+trackerWorkload(TrackerName, Type, TaskId) :-
+    jobtracker::taskAttempt#insert(JobId, TaskId, _, Progress, Constants.TaskState.RUNNING, _, _, TrackerName, _, _, _, _),
+    Progress < 0.9f, jobtracker::task(JobId, TaskId, Type);
+
+public delete
+trackerWorkload(TrackerName, Type, TaskId) :-
+    jobtracker::taskAttempt(JobId, TaskId, _, Progress, State, _, _, TrackerName, _, _, _, _),
+    trackerWorkload(TrackerName, Type, TaskId),
+    Progress > 0.9f ||
+    State == Constants.TaskState.SUCCEEDED || State == Constants.TaskState.FAILED ||
+    State == Constants.TaskState.COMMIT_PENDING || State == Constants.TaskState.KILLED;
 	          
 /*
 public failedStartAction
@@ -90,6 +116,17 @@ jobtracker::taskAttempt(JobId, TaskId, AttemptId, 0f, Constants.TaskState.FAILED
 define(trackerSlots, {String, String, Long, Integer, Integer});
 define(lookupDirtyTracker, {Boolean});
 
+
+jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
+                        Maps, Reduces, MaxMap, MaxReduce, true) :-
+    trackerTaskTypeCount(TrackerName, Type, Count),
+    jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
+                            MapCount, ReduceCount, MaxMap, MaxReduce, Dirty) 
+    {
+        Maps :=    Type == Constants.TaskType.MAP ? Count : MapCount;
+        Reduces := Type == Constants.TaskType.REDUCE ? Count : ReduceCount;
+    };
+
 public
 lookupDirtyTracker(true) :- jobtracker::dutyCycle();
 
@@ -99,12 +136,12 @@ jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Fa
     jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
                             MapCount, ReduceCount, MaxMap, MaxReduce, Dirty);
 
-
 watch(trackerSlots, a);
-trackerSlots(TrackerName, Host, Timestamp, 2*(MaxMap - MapCount), 2*(MaxReduce - ReduceCount)) :-
+trackerSlots(TrackerName, Host, Timestamp, Maps, Reduces) :-
 	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
 	jobtracker::tasksWaitingForSchedule(Count), Count > 0,
-	MapCount < MaxMap || ReduceCount < MaxReduce;
-	
-	
-	
+	MapCount < MaxMap || ReduceCount < MaxReduce
+    {
+      Maps := MapCount < MaxMap ? MaxMap - MapCount : 0;
+      Reduces := ReduceCount < MaxReduce ? MaxReduce - ReduceCount : 0;
+    };

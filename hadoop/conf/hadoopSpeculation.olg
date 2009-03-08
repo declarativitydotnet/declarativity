@@ -10,10 +10,15 @@ import org.apache.hadoop.mapred.TaskID;
 
 /******************** Task Statistics *******************/
 define(taskPhaseAverageProgress, keys(0,1), {JobID, Constants.TaskPhase, Float});
+define(computeAverage, {JobID, Constants.TaskPhase, Float});
 
 watch(taskPhaseAverageProgress, a);
+taskPhaseAverageProgress(JobId, Phase, AvgProgress) :-
+    computeAverage(JobId, Phase, AvgProgress);
+
 public
-taskPhaseAverageProgress(JobId, Phase, avg<Progress>) :-
+computeAverage(JobId, Phase, avg<Progress>) :-
+    jobtracker::dutyCycle(),
     jobtracker::taskAttempt(JobId, TaskId, AttemptId, Progress, State, Phase),
     Phase != Constants.TaskPhase.STARTING;
 	

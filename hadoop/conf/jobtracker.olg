@@ -183,15 +183,15 @@ killJobOnTracker(JobId, TrackerName) :-
 	JobStatus.state()  == Constants.JobState.FAILED,
 	TaskState == Constants.TaskState.RUNNING;
 	
+watch(taskTrackerAction, a);
 taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-	
 	killJobOnTracker(JobId, TrackerName),
 	Action := Function.killJob(JobId);
 
 taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_TASK, Action) :-	
-    job(JobId, _, _, _, _, _, _, _, _, JobStatus),
-    JobStatus.state() == Constants.JobState.SUCCEEDED,
-	taskAttempt(JobId, TaskId, AttemptId, _, State, _, _, TrackerName, _, _, _, _, _),
-    State == Constants.TaskState.RUNNING
+	job(JobId, _, _, _, _, _, _, _, _, JobStatus), JobStatus.state() == Constants.JobState.SUCCEEDED, // .mapProgress() == 1f,
+	taskAttempt(JobId, TaskId, AttemptId, _, Constants.TaskState.RUNNING, _, _, TrackerName, _, _, _, _, _),
+	notin taskAttempt(JobId, TaskId, AttemptId, _, Constants.TaskState.SUCCEEDED, _, _, _, _, _, _, _, _)
     {
         Action := Function.killTask(TaskId, AttemptId);
     };
