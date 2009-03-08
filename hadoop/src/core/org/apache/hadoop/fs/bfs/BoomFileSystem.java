@@ -47,7 +47,10 @@ public class BoomFileSystem extends FileSystem {
         	int tryPort = r.nextInt(maxPort - minPort) + minPort;
         	System.out.println("BFS#initialize(): trying to create JOL @ port " + tryPort);
         	try {
-        		this.bfs = new BFSClient(tryPort);
+        		// XXX: make the JOL driver thread a daemon thread. This is to
+        		// workaround the apparent fact that the Hadoop task tracker code
+        		// does not always invoke FileSystem#close().
+        		this.bfs = new BFSClient(tryPort, true);
         	} catch (RuntimeException e) {
         		continue;
         	}
