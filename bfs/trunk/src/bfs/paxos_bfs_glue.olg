@@ -125,17 +125,18 @@ bfs_global::stasis_fsize(@Master, FileId, FSize) :-
 public
 bfs_global::stasis_fsize(@Master, FileId, FSize) :-
     bfs_global::stasis_file(@Master, FileId, _, _, false),
-    notin stasis_compute_file_size(@Master, FileId, _),
+    notin compute_file_size(@Master, FileId, _),
     FSize := 0L;
 
 public
 bfs_global::stasis_fsize(@Master, FileId, FSize) :-
     bfs_global::stasis_file(@Master, FileId, _, _, false),
-    stasis_compute_file_size(@Master, FileId, FSizeF),
+    compute_file_size(@Master, FileId, FSizeF),
     FSize := FSizeF.longValue();
 
-define(stasis_compute_file_size, keys(0, 1), {String, Integer, Float});
+define(compute_file_size, keys(0, 1), {String, Integer, Float});
 public
-stasis_compute_file_size(@Master, FileId, sum<ChunkLen>) :-
+compute_file_size(@Master, FileId, sum<ChunkLen>) :-
     bfs_global::stasis_fchunk(@Master, ChunkId, FileId),
-    bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen);
+    bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen),
+    paxos_global::id(@Master);
