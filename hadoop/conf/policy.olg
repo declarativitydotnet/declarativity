@@ -48,7 +48,7 @@ mapSlots(TrackerName, Maps, Priority, Type, set<TaskId>) :-
 	jobtracker::taskTracker(TrackerName, _, _, _, _, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
 	Type == Constants.TaskType.MAP, MaxMap - MapCount > 0
     {
-        Maps := 2 * (MaxMap - MapCount);
+        Maps := MaxMap - MapCount;
     };
 	
 /******************** Schedule Reduce Tasks *******************/
@@ -59,7 +59,7 @@ reduceSlots(TrackerName, Reduces, Priority, Type, set<TaskId>) :-
 	jobtracker::taskTracker(TrackerName, _, _, _, _, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
 	Type == Constants.TaskType.REDUCE, MaxReduce - ReduceCount > 0
     {
-        Reduces := 2 * (MaxReduce - ReduceCount);
+        Reduces := MaxReduce - ReduceCount;
     };
 	
 /**************************************************************/
@@ -72,12 +72,13 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
     jobtracker::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
 	jobtracker::task(JobId, TaskId, Type, _, _, MapCount, Status),
     jobtracker::tasksWaitingForSchedule(WaitingTaskCount),
-    WaitingTaskCount < 500 || Host == FileLocation || Function.coinFlip((3 * Maps).floatValue() / WaitingTaskCount.floatValue()),
+    WaitingTaskCount < 100 || Host == FileLocation || Function.coinFlip((3 * Maps).floatValue() / WaitingTaskCount.floatValue()),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.MAP, Maps > 0
 	{
 		LocalFile := Host == FileLocation ? 0 : 1;
-		Priority := [JPriority, SubmitTime, 1, LocalFile];
+        SlotPref := Maps == 0 ? 2f : 1f / Maps; 
+		Priority := [JPriority, SubmitTime, 1, SlotPref, LocalFile];
 	};
 
 /* Priority 1: Schedule unassigned reduce tasks. */
@@ -90,9 +91,10 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.REDUCE, Reduces > 0
 	{
-		Priority := [JPriority, SubmitTime, 1, 0];
+        SlotPref := Maps == 0 ? 2f : 1f / Maps; 
+		Priority := [JPriority, SubmitTime, 1, SlotPref, 1];
 	};
-	
+
 /* Priority 2: Schedule failed map tasks. */
 public
 candidate(JobId, TaskId, Type, TrackerName, Priority) :-
