@@ -58,7 +58,6 @@ public class BFSChunkInfo implements Serializable, Comparable<BFSChunkInfo> {
         long result = 0;
 
         for (BFSChunkInfo cInfo : chunkSet) {
-            System.out.println("length: " + cInfo.getLength());
             result += cInfo.getLength();
         }
 
