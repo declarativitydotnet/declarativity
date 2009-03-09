@@ -123,7 +123,7 @@ send_response(@Master, Id, Source, true, ChunkSet) :-
     chunklist_request_pending(@Master, Id, Source, FileId),
     compute_chunk_set(@Master, FileId, ChunkSet),
     fchunk_cnt(@Master, FileId, Cnt),
-    Cnt == ChunkSet.size(); // We back the expected # of chunks
+    Cnt == ChunkSet.size(); // We got back the expected # of chunks
 
 delete
 chunklist_request_pending(@Master, Id, Source, FileId) :-
