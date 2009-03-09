@@ -42,6 +42,7 @@ public class BFSInputStream extends FSInputStream {
 		this.atEOF = false;
 		this.buf = ByteBuffer.allocate(Conf.getChunkSize());
 		this.chunkList = bfs.getChunkList(path);
+		System.out.println("BFSInputStream: path = " + path + ", #chunks = " + chunkList.size());
 		updatePosition(0);
 	}
 
@@ -59,6 +60,7 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	private void updatePosition(long newPos) throws IOException {
+		System.out.println("BFSInputStream on " + this.path + ": updatePosition(), oldPos = " + this.position + ", newPos = " + newPos);
 		if (newPos < 0)
 			throw new IOException("cannot seek to negative position");
 
@@ -76,6 +78,7 @@ public class BFSInputStream extends FSInputStream {
 		}
 
 		if (bytesLeft > Conf.getChunkSize()) {
+			System.out.println("BFSInputStream() on " + this.path + ": EOF1");
             this.atEOF = true;
             this.position = newPos;
             this.currentChunkIdx = chunkIdx;
@@ -85,6 +88,7 @@ public class BFSInputStream extends FSInputStream {
 		int chunkOffset = (int) bytesLeft;
 
 		if (chunkIdx == this.chunkList.size() || this.chunkList.isEmpty()) {
+			System.out.println("BFSInputStream() on " + this.path + ": EOF2");
 			this.atEOF = true;
 		} else {
 			if (chunkIdx != this.currentChunkIdx || this.currentChunk == null) {
@@ -95,6 +99,7 @@ public class BFSInputStream extends FSInputStream {
 
 			int chunkLen = this.currentChunk.getLength();
 			if (chunkOffset > chunkLen) {
+				System.out.println("BFSInputStream() on " + this.path + ": EOF3");
                 this.atEOF = true;
             } else {
                 this.buf.position(chunkOffset);
@@ -194,6 +199,7 @@ public class BFSInputStream extends FSInputStream {
 
 	@Override
 	public synchronized int read(byte[] clientBuf, int offset, int len) throws IOException {
+		System.out.println("BFSInputStream: read() on " + this.path + ", eof = " + this.atEOF + ", pos = " + this.position + ", len = " + len + ", chunk Offset = " + this.buf.position());
 		if (this.isClosed)
 			throw new IOException("cannot read from closed file");
 
@@ -213,6 +219,7 @@ public class BFSInputStream extends FSInputStream {
 
 		this.buf.get(clientBuf, offset, len);
 		updatePosition(this.position + len);
+		System.out.println("BFSInputStream: read() on " + this.path + ", result = " + len);
 		return len;
 	}
 
