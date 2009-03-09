@@ -79,6 +79,7 @@ public class BFSInputStream extends FSInputStream {
             this.atEOF = true;
             this.position = newPos;
             this.currentChunkIdx = chunkIdx;
+            return;
         }
 
 		int chunkOffset = (int) bytesLeft;
