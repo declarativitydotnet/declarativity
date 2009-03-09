@@ -2,7 +2,6 @@ package org.apache.hadoop.fs.bfs;
 
 import bfs.BFSClient;
 import bfs.BFSFileInfo;
-import bfs.Conf;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
