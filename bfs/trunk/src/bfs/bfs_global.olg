@@ -11,9 +11,6 @@ define(stasis_file, keys(0, 1), {String, Integer, Integer, String, Boolean});
 // (derivable from stasis_file, needs to fire events at runtime)
 define(fpath, keys(0, 1, 2), {String, String, Integer});
 
-// Node, file ID, file size
-define(stasis_fsize, keys(0, 1), {String, Integer, Long});
-
 // Node, chunk ID, file ID
 define(stasis_fchunk, keys(0, 1), {String, Integer, Integer});
 

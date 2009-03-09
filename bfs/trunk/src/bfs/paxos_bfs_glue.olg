@@ -6,7 +6,6 @@ import java.util.Arrays;
 watch(bfs_global::stasis_file, ae);
 watch(bfs_global::stasis_fchunk, ae);
 watch(bfs_global::fpath, ae);
-watch(bfs_global::stasis_fsize, ae);
 
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
@@ -114,29 +113,3 @@ bfs_global::fpath(@Master, Path, FileId) :-
     bfs_global::fpath(@Master, ParentPath, FParent),
     PathSep := (ParentPath == "/" ? "" : "/"),
     Path := ParentPath + PathSep + FName;
-
-// For convenience, directories are considered to have size 0
-public
-bfs_global::stasis_fsize(@Master, FileId, FSize) :-
-    bfs_global::stasis_file(@Master, FileId, _, _, true),
-    FSize := 0L;
-
-// Files with no chunks have size 0
-public
-bfs_global::stasis_fsize(@Master, FileId, FSize) :-
-    bfs_global::stasis_file(@Master, FileId, _, _, false),
-    notin compute_file_size(@Master, FileId, _),
-    FSize := 0L;
-
-public
-bfs_global::stasis_fsize(@Master, FileId, FSize) :-
-    bfs_global::stasis_file(@Master, FileId, _, _, false),
-    compute_file_size(@Master, FileId, FSizeF),
-    FSize := FSizeF.longValue();
-
-define(compute_file_size, keys(0, 1), {String, Integer, Float});
-public
-compute_file_size(@Master, FileId, sum<ChunkLen>) :-
-    bfs_global::stasis_fchunk(@Master, ChunkId, FileId),
-    bfs_heartbeat::chunks(@Master, _, ChunkId, ChunkLen),
-    paxos_global::id(@Master);
