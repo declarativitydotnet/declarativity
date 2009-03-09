@@ -15,7 +15,6 @@ import org.apache.hadoop.fs.FSInputStream;
 
 import bfs.BFSChunkInfo;
 import bfs.BFSClient;
-import bfs.BFSFileInfo;
 import bfs.Conf;
 import bfs.DataProtocol;
 
@@ -60,8 +59,6 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	private void updatePosition(long newPos) throws IOException {
-        System.out.println("updatePosition(): oldPos = " + this.position + "; newPos = " + newPos);
-
 		if (newPos < 0)
 			throw new IOException("cannot seek to negative position");
 
