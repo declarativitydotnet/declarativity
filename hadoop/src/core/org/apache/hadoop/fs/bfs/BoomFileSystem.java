@@ -179,6 +179,9 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public boolean rename(Path src, Path dst) throws IOException {
 		System.out.println("BFS#rename() called for " + src + " => " + dst);
+		if (getPathName(src).equals(getPathName(dst)))
+			return true;
+
 		return this.bfs.rename(getPathName(src), getPathName(dst));
 	}
 
