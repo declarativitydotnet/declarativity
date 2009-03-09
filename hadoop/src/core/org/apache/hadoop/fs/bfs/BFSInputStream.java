@@ -198,7 +198,7 @@ public class BFSInputStream extends FSInputStream {
 		if (result == -1)
 			return result;
 		else
-			return ((int) tmpBuf[0]) + 128;
+			return tmpBuf[0] & 0xFF;
 	}
 
 	@Override
@@ -223,10 +223,12 @@ public class BFSInputStream extends FSInputStream {
 
 		this.buf.get(clientBuf, offset, len);
 		updatePosition(this.position + len);
+		/*
 		System.out.println("BFSInputStream: read() on " + this.path + ", result = " + len);
 		for (int i = 0; i < len; i++) {
 			System.out.println("read() on " + this.path + ", byte " + i + ": " + clientBuf[i + offset]);
 		}
+		*/
 		return len;
 	}
 

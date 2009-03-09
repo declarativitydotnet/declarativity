@@ -50,10 +50,6 @@ public class BFSOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void write(byte[] clientBuf, int offset, int length) throws IOException {
-		System.out.println("write() on " + this.path);
-		for (int i = 0; i < length; i++) {
-			System.out.println("Byte " + i + ": " + clientBuf[offset + i]);
-		}
 		if (this.isClosed)
 			throw new IOException("cannot write to closed file");
 
