@@ -2,7 +2,6 @@ package org.apache.hadoop.fs.bfs;
 
 import bfs.BFSClient;
 import bfs.BFSFileInfo;
-import bfs.Conf;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -73,6 +72,12 @@ public class BoomFileSystem extends FileSystem {
 			boolean overwrite, int bufferSize, short replication,
 			long blockSize, Progressable progress) throws IOException {
 		System.out.println("BFS#create() called for " + path);
+
+		/*
+		 * XXX: apparently Hadoop expects us to create any missing parent
+		 * directories, similar to "mkdir -p" behavior.
+		 */
+		mkdirs(path.getParent(), null);
 
 		/* XXX: not very efficient/clean, and not atomic either */
 		if (overwrite)
@@ -179,6 +184,9 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public boolean rename(Path src, Path dst) throws IOException {
 		System.out.println("BFS#rename() called for " + src + " => " + dst);
+		if (getPathName(src).equals(getPathName(dst)))
+			return true;
+
 		return this.bfs.rename(getPathName(src), getPathName(dst));
 	}
 
