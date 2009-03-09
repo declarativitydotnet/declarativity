@@ -64,7 +64,6 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	private void updatePosition(long newPos) throws IOException {
-		System.out.println("BFSInputStream on " + this.path + ": updatePosition(), oldPos = " + this.position + ", newPos = " + newPos);
 		if (newPos < 0)
 			throw new IOException("cannot seek to negative position");
 
@@ -226,7 +225,7 @@ public class BFSInputStream extends FSInputStream {
 		updatePosition(this.position + len);
 		System.out.println("BFSInputStream: read() on " + this.path + ", result = " + len);
 		for (int i = 0; i < len; i++) {
-			System.out.println("read(): byte " + i + ": " + clientBuf[i + offset]);
+			System.out.println("read() on " + this.path + ", byte " + i + ": " + clientBuf[i + offset]);
 		}
 		return len;
 	}
