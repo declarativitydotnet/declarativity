@@ -43,6 +43,11 @@ public class BFSInputStream extends FSInputStream {
 		this.atEOF = false;
 		this.buf = ByteBuffer.allocate(Conf.getChunkSize());
 		this.chunkList = bfs.getChunkList(path);
+        long length = 0;
+        for (BFSChunkInfo cInfo : this.chunkList) {
+            length += cInfo.getLength();
+        }
+        System.out.println("BFSInputStream#new(): length = " + length);
 		updatePosition(0);
 	}
 
@@ -60,6 +65,8 @@ public class BFSInputStream extends FSInputStream {
 	}
 
 	private void updatePosition(long newPos) throws IOException {
+        System.out.println("updatePosition(): oldPos = " + this.position + "; newPos = " + newPos);
+
 		if (newPos < 0)
 			throw new IOException("cannot seek to negative position");
 
@@ -76,14 +83,15 @@ public class BFSInputStream extends FSInputStream {
 			chunkIdx++;
 		}
 
-		if (bytesLeft > Conf.getChunkSize())
-			throw new IOException("cannot seek past end of file");
+		if (bytesLeft > Conf.getChunkSize()) {
+            this.atEOF = true;
+            this.position = newPos;
+            this.currentChunkIdx = chunkIdx;
+        }
+
 		int chunkOffset = (int) bytesLeft;
 
 		if (chunkIdx == this.chunkList.size() || this.chunkList.isEmpty()) {
-			if (chunkOffset > 0)
-				throw new IOException("cannot seek past end of file");
-
 			this.atEOF = true;
 		} else {
 			if (chunkIdx != this.currentChunkIdx || this.currentChunk == null) {
@@ -93,10 +101,11 @@ public class BFSInputStream extends FSInputStream {
 			}
 
 			int chunkLen = this.currentChunk.getLength();
-			if (chunkOffset > chunkLen)
-				throw new IOException("cannot seek past end of file");
-
-			this.atEOF = false;
+			if (chunkOffset > chunkLen) {
+                this.atEOF = true;
+            } else {
+			    this.atEOF = false;
+            }
 		}
 
 		this.currentChunkIdx = chunkIdx;
