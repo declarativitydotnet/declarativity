@@ -27,7 +27,7 @@ public class BFSOutputStream extends OutputStream {
 	@Override
 	public synchronized void write(int b) throws IOException {
 		byte[] tmpBuf = new byte[1];
-		tmpBuf[0] = (byte) b;
+		tmpBuf[0] = (byte) (b & 0xFF);
 		write(tmpBuf, 0, 1);
 	}
 
