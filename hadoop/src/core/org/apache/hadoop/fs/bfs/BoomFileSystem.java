@@ -73,12 +73,6 @@ public class BoomFileSystem extends FileSystem {
 			long blockSize, Progressable progress) throws IOException {
 		System.out.println("BFS#create() called for " + path);
 
-		/*
-		 * XXX: apparently Hadoop expects us to create any missing parent
-		 * directories, similar to "mkdir -p" behavior.
-		 */
-		mkdirs(path.getParent(), null);
-
 		/* XXX: not very efficient/clean, and not atomic either */
 		if (overwrite)
 			delete(path, false);
