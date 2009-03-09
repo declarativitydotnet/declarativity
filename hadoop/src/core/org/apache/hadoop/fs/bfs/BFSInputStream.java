@@ -42,7 +42,11 @@ public class BFSInputStream extends FSInputStream {
 		this.atEOF = false;
 		this.buf = ByteBuffer.allocate(Conf.getChunkSize());
 		this.chunkList = bfs.getChunkList(path);
-		System.out.println("BFSInputStream: path = " + path + ", #chunks = " + chunkList.size());
+		long totalLen = 0;
+		for (BFSChunkInfo cInfo : this.chunkList) {
+			totalLen += cInfo.getLength();
+		}
+		System.out.println("BFSInputStream: path = " + path + ", #chunks = " + chunkList.size() + ", totalLen = " + totalLen);
 		updatePosition(0);
 	}
 
@@ -191,10 +195,11 @@ public class BFSInputStream extends FSInputStream {
 	public synchronized int read() throws IOException {
 		byte[] tmpBuf = new byte[1];
 		int result = read(tmpBuf, 0, 1);
+		System.out.println("BFSInputStream: read(singleton) on " + this.path + ", result = " + result + ", tmp[0] = " + (result != -1 ? tmpBuf[0] : ""));
 		if (result == -1)
 			return result;
 		else
-			return (int) tmpBuf[0];
+			return ((int) tmpBuf[0]) + 128;
 	}
 
 	@Override
