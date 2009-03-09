@@ -195,7 +195,7 @@ public class BFSInputStream extends FSInputStream {
 	public synchronized int read() throws IOException {
 		byte[] tmpBuf = new byte[1];
 		int result = read(tmpBuf, 0, 1);
-		System.out.println("BFSInputStream: read(singleton) on " + this.path + ", result = " + result + ", tmp[0] = " + (result != -1 ? tmpBuf[0] : ""));
+		System.out.println("BFSInputStream: read(singleton) on " + this.path + ", result = " + result + ", tmp[0] = " + (result != -1 ? tmpBuf[0] : "") + ", res = " + (result != -1 ? (((int) tmpBuf[0]) + 128) : result));
 		if (result == -1)
 			return result;
 		else
