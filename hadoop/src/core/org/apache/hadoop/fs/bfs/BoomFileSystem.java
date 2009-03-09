@@ -133,15 +133,8 @@ public class BoomFileSystem extends FileSystem {
 		FileStatus[] result = new FileStatus[bfsListing.size()];
 		int i = 0;
 		for (BFSFileInfo bfsInfo : bfsListing) {
-			FileStatus fStatus = new FileStatus(bfsInfo.getLength(),
-												bfsInfo.isDirectory(),
-					                            bfsInfo.getReplication(),
-					                            bfsInfo.getChunkSize(),
-					                            0,    // modification time
-					                            FsPermission.getDefault(),
-					                            bfsInfo.getOwner(),
-					                            bfsInfo.getGroup(),
-					                            new Path(bfsInfo.getPath()));
+			// XXX: terrible hack. "Ls" file sizes are broken right now.
+			FileStatus fStatus = getFileStatus(new Path(bfsInfo.getPath()));
 			result[i++] = fStatus;
 		}
 
