@@ -289,19 +289,42 @@ send_response(@Master, Id, Source, true, EmptySet) :-
     notin bfs_global::stasis_file(@Master, _, FileId, _, _),
     EmptySet := new HashSet();
 
-// If we get a "FileInfo" request for an extant file, send back info
-// describing the file. Otherwise, send back a nack.
+// FileInfo
+define(fileinfo_request_pending, keys(0, 1), {String, Integer, String, Integer});
+// Non-empty file => enqueue request
+fileinfo_request_pending(@Master, Id, Source, FileId) :-
+    request(@Master, Id, Source, "FileInfo", FPath),
+    bfs_global::fpath(@Master, FPath, FileId),
+    bfs_global::stasis_fchunk(@Master, _, FileId);
+
+// Empty file => empty file size
 send_response(@Master, Id, Source, true, FInfo) :-
     request(@Master, Id, Source, "FileInfo", FPath),
     bfs_global::fpath(@Master, FPath, FileId),
-    bfs_global::stasis_fsize(@Master, FileId, FSize),
+    notin bfs_global::stasis_fchunk(@Master, _, FileId),
     bfs_global::stasis_file(@Master, FileId, _, FName, IsDir),
-    FInfo := new BFSFileInfo(FileId, FPath, FName, FSize, IsDir);
+    FInfo := new BFSFileInfo(FileId, FPath, FName, 0L, IsDir);
 
+// No such file => error
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "FileInfo", FPath),
     notin bfs_global::fpath(@Master, FPath, _);
 
+public
+send_response(@Master, Id, Source, true, FInfo) :-
+    fileinfo_request_pending(@Master, Id, Source, FileId),
+    bfs_global::stasis_file(@Master, FileId, _, FName, IsDir),
+    bfs_global::fpath(@Master, FPath, FileId),
+    compute_chunk_set(@Master, FileId, ChunkSet),
+    fchunk_cnt(@Master, FileId, Cnt),
+    Cnt == ChunkSet.size(), // We got back the expected # of chunks
+    FSize := BFSChunkInfo.setSum(ChunkSet),
+    FInfo := new BFSFileInfo(FileId, FPath, FName, FSize, IsDir);
+
+delete
+fileinfo_request_pending(@Master, Id, Source, FileId) :-
+    fileinfo_request_pending(@Master, Id, Source, FileId),
+    send_response#insert(@Master, Id, Source, _, _);
 
 // If we got an "rm" request and the file exists, go through Paxos.
 // Once we've achieved consensus, remove the file and send back a

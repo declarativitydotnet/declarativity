@@ -1,6 +1,7 @@
 package bfs;
 
 import java.io.Serializable;
+import java.util.Set;
 
 public class BFSChunkInfo implements Serializable, Comparable<BFSChunkInfo> {
 	private static final long serialVersionUID = 1L;
@@ -52,4 +53,15 @@ public class BFSChunkInfo implements Serializable, Comparable<BFSChunkInfo> {
 	public String toString() {
 		return "Chunk #" + this.chunkId;
 	}
+
+    public static Long setSum(Set<BFSChunkInfo> chunkSet) {
+        long result = 0;
+
+        for (BFSChunkInfo cInfo : chunkSet) {
+            System.out.println("length: " + cInfo.getLength());
+            result += cInfo.getLength();
+        }
+
+        return result;
+    }
 }
