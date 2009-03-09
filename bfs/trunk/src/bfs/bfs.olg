@@ -278,8 +278,7 @@ compute_ls(@Master, ReqId, ReqSource, Path, ParentFileId, set<FInfo>) :-
     bfs_global::fpath(@Master, Path, ParentFileId),
     bfs_global::stasis_file(@Master, FileId, ParentFileId, FName, IsDir),
     bfs_global::fpath(@Master, FPath, FileId),
-    bfs_global::stasis_fsize(@Master, FileId, FLength),
-    FInfo := new BFSFileInfo(FileId, FPath, FName, FLength, IsDir);
+    FInfo := new BFSFileInfo(FileId, FPath, FName, 0L, IsDir);
 
 // "ls" for an empty directory => return empty set of files
 send_response(@Master, Id, Source, true, EmptySet) :-
