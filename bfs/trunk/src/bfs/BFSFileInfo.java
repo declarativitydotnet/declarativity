@@ -100,6 +100,6 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 
 	@Override
 	public String toString() {
-		return this.path;
+		return this.path + "; length = " + this.length;
 	}
 }
