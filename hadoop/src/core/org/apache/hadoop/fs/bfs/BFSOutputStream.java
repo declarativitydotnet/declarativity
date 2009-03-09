@@ -38,7 +38,7 @@ public class BFSOutputStream extends OutputStream {
 			else
 				toWrite = bytesLeft;
 
-			System.out.println("write(): raw b = " + b + ", low 8 of b = " + (b & 0xFF));
+			System.out.println("write(singleton) on " + this.path + ": raw b = " + b + ", low 8 of b = " + (b & 0xFF) + ", as a byte = " + (byte) (b & 0xFF));
 			this.buf.put((byte) (b & 0xFF));
 			curOffset += toWrite;
 			bytesLeft -= toWrite;
@@ -50,6 +50,10 @@ public class BFSOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void write(byte[] clientBuf, int offset, int length) throws IOException {
+		System.out.println("write() on " + this.path);
+		for (int i = 0; i < length; i++) {
+			System.out.println("Byte " + i + ": " + clientBuf[offset + i]);
+		}
 		if (this.isClosed)
 			throw new IOException("cannot write to closed file");
 
