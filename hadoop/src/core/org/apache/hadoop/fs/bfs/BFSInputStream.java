@@ -43,11 +43,6 @@ public class BFSInputStream extends FSInputStream {
 		this.atEOF = false;
 		this.buf = ByteBuffer.allocate(Conf.getChunkSize());
 		this.chunkList = bfs.getChunkList(path);
-        long length = 0;
-        for (BFSChunkInfo cInfo : this.chunkList) {
-            length += cInfo.getLength();
-        }
-        System.out.println("BFSInputStream#new(): length = " + length);
 		updatePosition(0);
 	}
 
@@ -104,6 +99,7 @@ public class BFSInputStream extends FSInputStream {
 			if (chunkOffset > chunkLen) {
                 this.atEOF = true;
             } else {
+                this.buf.position(chunkOffset);
 			    this.atEOF = false;
             }
 		}
