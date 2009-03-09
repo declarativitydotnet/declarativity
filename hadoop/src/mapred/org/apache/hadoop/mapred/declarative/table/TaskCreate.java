@@ -66,7 +66,7 @@ public class TaskCreate extends Function {
 			try {
 				tasks.addAll(createTasks(jobid, conf, jobFile));
 			} catch (IOException e) {
-				throw new UpdateException(e.toString());
+				throw new UpdateException(e.toString(), e);
 			}
 		}
 		return tasks;
