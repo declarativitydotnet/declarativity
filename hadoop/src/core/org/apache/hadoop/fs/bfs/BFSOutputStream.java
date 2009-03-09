@@ -38,6 +38,7 @@ public class BFSOutputStream extends OutputStream {
 			else
 				toWrite = bytesLeft;
 
+			System.out.println("write(): raw b = " + b + ", low 8 of b = " + (b & 0xFF));
 			this.buf.putInt(b & 0xFF);
 			curOffset += toWrite;
 			bytesLeft -= toWrite;
