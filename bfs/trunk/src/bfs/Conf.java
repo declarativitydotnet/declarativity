@@ -74,7 +74,7 @@ public class Conf {
     };
 
 	private static String logSink = null;
-	
+
 
 	static {
         if (System.getenv("MASTERFILE") != null) {
@@ -233,8 +233,8 @@ public class Conf {
 				boolean done = false;
 				do {
 					String trimmedLine = line.trim();
-					if(trimmedLine.equals("-")) { 
-						done = true; 
+					if(trimmedLine.equals("-")) {
+						done = true;
 					} else {
 						if (!trimmedLine.equals(""))
 							result.add(trimmedLine);
@@ -275,6 +275,37 @@ public class Conf {
 			throw new RuntimeException("Cannot find local address!");
 		} catch (UnknownHostException e) {
 			throw new RuntimeException(e);
+		}
+    }
+
+    public static String findSelfAddress(boolean isMaster) {
+    	Host[][] hostAry;
+    	if (isMaster)
+    		hostAry = masterNodes;
+    	else {
+    		hostAry = new Host[1][];
+    		hostAry[0] = dataNodes;
+    	}
+    	try {
+			InetAddress localHost = InetAddress.getLocalHost();
+			InetAddress[] localAddrs = InetAddress.getAllByName(localHost.getHostName());
+			for (InetAddress addr : localAddrs) {
+				String hostName = addr.getHostName();
+				String ip = addr.getHostAddress();
+				for (int i = 0; i < hostAry.length; i++) {
+					for (int j = 0; j < hostAry[i].length; j++) {
+						System.out.println("Comparing IP " + ip + " and host " +
+								           hostName + " against " + hostAry[i][j].name);
+						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
+						    hostAry[i][j].name.equals(ip))
+							return hostAry[i][j].name + ":" + hostAry[i][j].port;
+					}
+				}
+			}
+
+			return null;
+		} catch (UnknownHostException e) {
+			return null;
 		}
     }
 

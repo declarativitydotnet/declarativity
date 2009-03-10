@@ -27,12 +27,14 @@ public class BFSClient {
 	private SimpleQueue<Object> responseQueue;
 	private JolSystem system;
 	private String selfAddr;
+	private String selfTargetAddr;
 
 	public BFSClient(int port, boolean isDaemon) {
         this.rand = new Random();
         this.currentMaster = new int[Conf.getNumPartitions()];
         this.responseQueue = new SimpleQueue<Object>();
         this.selfAddr = Conf.findLocalAddress(port);
+        this.selfTargetAddr = Conf.findSelfAddress(false);
 
 		try {
 			this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, port);
@@ -171,6 +173,15 @@ public class BFSClient {
         int partition = path.hashCode() % Conf.getNumPartitions();
         BFSNewChunkInfo result = (BFSNewChunkInfo) waitForResponse(Conf.getListingTimeout(), partition, requestId);
         unregisterCallback(responseTbl, responseCallback);
+
+        // Perf hack: if the client is running on a data node, replace the
+        // first element of the list with the local address.
+        if (this.selfTargetAddr != null) {
+        	List<String> newNodeList = new ArrayList<String>(result.getCandidateNodes());
+        	newNodeList.set(0, this.selfTargetAddr);
+        	result = new BFSNewChunkInfo(result.getChunkId(), newNodeList);
+        }
+
         return result;
 	}
 
