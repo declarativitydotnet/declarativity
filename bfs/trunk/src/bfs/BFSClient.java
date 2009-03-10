@@ -27,14 +27,14 @@ public class BFSClient {
 	private SimpleQueue<Object> responseQueue;
 	private JolSystem system;
 	private String selfAddr;
-	private String selfTargetAddr;
+	private String selfTargetControlAddr;
 
 	public BFSClient(int port, boolean isDaemon) {
         this.rand = new Random();
         this.currentMaster = new int[Conf.getNumPartitions()];
         this.responseQueue = new SimpleQueue<Object>();
         this.selfAddr = Conf.findLocalAddress(port);
-        this.selfTargetAddr = Conf.findSelfAddress(false);
+        this.selfTargetControlAddr = Conf.findSelfAddress(false, true);
 
 		try {
 			this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, port);
@@ -68,7 +68,7 @@ public class BFSClient {
 	}
 
 	public String getSelfDataNodeAddr() {
-		return this.selfTargetAddr;
+		return this.selfTargetControlAddr;
 	}
 
 	public synchronized boolean createFile(String pathName) {
@@ -179,10 +179,10 @@ public class BFSClient {
         unregisterCallback(responseTbl, responseCallback);
 
         // Perf hack: if the client is running on a data node, replace the
-        // first element of the list with the local address.
-        if (this.selfTargetAddr != null) {
+        // first element of the list with the local address + control port.
+        if (this.selfTargetControlAddr != null) {
         	List<String> newNodeList = new ArrayList<String>(result.getCandidateNodes());
-        	newNodeList.set(0, this.selfTargetAddr);
+        	newNodeList.set(0, this.selfTargetControlAddr);
         	result = new BFSNewChunkInfo(result.getChunkId(), newNodeList);
         }
 
