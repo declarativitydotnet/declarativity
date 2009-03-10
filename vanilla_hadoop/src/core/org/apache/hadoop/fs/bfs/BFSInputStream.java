@@ -111,10 +111,26 @@ public class BFSInputStream extends FSInputStream {
 	 * "chunkLocations".
 	 */
 	private void fetchChunkContent() throws IOException {
+		String selfAddr = this.bfs.getSelfDataNodeAddr();
+
+		if (selfAddr != null && this.chunkLocations.contains(selfAddr)) {
+			try {
+				fetchChunkFromAddr(selfAddr);
+				return; // Read chunk successfully
+			} catch (IOException e) {
+				System.out.println("Failed to read chunk from " + selfAddr);
+			}
+		}
+
 		for (String loc : this.chunkLocations) {
+			// Already tried to read from the local node
+			if (selfAddr != null && loc.equals(selfAddr))
+				continue;
+
 			try {
 				fetchChunkFromAddr(loc);
 			} catch (IOException e) {
+				System.out.println("Failed to read chunk from " + loc);
 				continue; // Try another data node
 			}
 
@@ -189,7 +205,7 @@ public class BFSInputStream extends FSInputStream {
 		if (result == -1)
 			return result;
 		else
-			return (int) tmpBuf[0];
+			return tmpBuf[0] & 0xFF;
 	}
 
 	@Override
