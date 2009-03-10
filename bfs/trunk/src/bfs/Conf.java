@@ -276,7 +276,7 @@ public class Conf {
 		}
     }
 
-    public static String findSelfAddress(boolean isMaster, boolean isControl) {
+    public static String findSelfAddress(boolean isMaster) {
     	Host[][] hostAry;
     	if (isMaster)
     		hostAry = masterNodes;
@@ -294,14 +294,7 @@ public class Conf {
 					for (int j = 0; j < hostAry[i].length; j++) {
 						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
 						    hostAry[i][j].name.equals(ip)) {
-							int port;
-
-							if (isControl)
-								port = hostAry[i][j].auxPort;
-							else
-								port = hostAry[i][j].port;
-
-							return "tcp:" + hostAry[i][j].name + ":" + port;
+							return "tcp:" + hostAry[i][j].name + ":" + hostAry[i][j].port;
 						}
 					}
 				}

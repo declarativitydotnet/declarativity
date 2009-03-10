@@ -34,7 +34,7 @@ public class BFSClient {
         this.currentMaster = new int[Conf.getNumPartitions()];
         this.responseQueue = new SimpleQueue<Object>();
         this.selfAddr = Conf.findLocalAddress(port);
-        this.selfTargetControlAddr = Conf.findSelfAddress(false, true);
+        this.selfTargetControlAddr = Conf.findSelfAddress(false);
 
 		try {
 			this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, port);
