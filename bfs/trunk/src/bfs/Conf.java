@@ -263,8 +263,6 @@ public class Conf {
 				String ip = addr.getHostAddress();
 				for (int i = 0; i < hostAry.length; i++) {
 					for (int j = 0; j < hostAry[i].length; j++) {
-						System.out.println("Comparing IP " + ip + " and host " +
-								           hostName + " against " + hostAry[i][j].name);
 						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
 						    hostAry[i][j].name.equals(ip))
 							return new int[] {i, j};
@@ -294,8 +292,6 @@ public class Conf {
 				String ip = addr.getHostAddress();
 				for (int i = 0; i < hostAry.length; i++) {
 					for (int j = 0; j < hostAry[i].length; j++) {
-						System.out.println("Comparing IP " + ip + " and host " +
-								           hostName + " against " + hostAry[i][j].name);
 						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
 						    hostAry[i][j].name.equals(ip))
 							return "tcp:" + hostAry[i][j].name + ":" + hostAry[i][j].port;
