@@ -294,7 +294,7 @@ public class Conf {
 					for (int j = 0; j < hostAry[i].length; j++) {
 						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
 						    hostAry[i][j].name.equals(ip))
-							return "tcp:" + hostAry[i][j].name + ":" + hostAry[i][j].port;
+							return "tcp:" + hostAry[i][j].name + ":" + hostAry[i][j].auxPort;
 					}
 				}
 			}
