@@ -298,7 +298,7 @@ public class Conf {
 								           hostName + " against " + hostAry[i][j].name);
 						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
 						    hostAry[i][j].name.equals(ip))
-							return hostAry[i][j].name + ":" + hostAry[i][j].port;
+							return "tcp:" + hostAry[i][j].name + ":" + hostAry[i][j].port;
 					}
 				}
 			}
