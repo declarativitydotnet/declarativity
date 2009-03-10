@@ -26,9 +26,6 @@ public class BFSOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void write(int b) throws IOException {
-		if (this.isClosed)
-			throw new IOException("cannot write to closed file");
-
 		byte[] tmpBuf = new byte[1];
 		tmpBuf[0] = (byte) b;
 		write(tmpBuf, 0, 1);
