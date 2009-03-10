@@ -67,6 +67,10 @@ public class BFSClient {
 		this(port, false);
 	}
 
+	public String getSelfDataNodeAddr() {
+		return this.selfTargetAddr;
+	}
+
 	public synchronized boolean createFile(String pathName) {
 		return doCreate(pathName, false);
 	}
