@@ -11,6 +11,7 @@ import java.lang.System;
 import java.util.HashSet;
 import java.util.Set;
 import jol.types.basic.ValueList;
+import java.lang.Math;
 
 // The address of the local node: populated by Java code on startup
 define(self, keys(0), {String});
@@ -39,7 +40,7 @@ request(@Master, ReqId, Source, ReqType, Args) :-
     ReqType != "ChunkLocations",
     ReqType != "CreateDir",
     ReqType != "Ls",
-    Partition :=  Args.hashCode() % Conf.getNumPartitions();
+    Partition :=  Math.abs(Args.hashCode()) % Conf.getNumPartitions();
 
 public
 request(@Master, ReqId, Source, ReqType, Args) :-
@@ -54,7 +55,7 @@ request(@Master, ReqId, Source, "ChunkLocations", Args) :-
     self(@Source),
     bfs_global::master_for_node(@Source, Partition, Master),
     start_request(@Source, ReqId, "ChunkLocations", Args),
-    Partition := Args.substring(0,Args.indexOf(":")).hashCode() % Conf.getNumPartitions();
+    Partition := Math.abs(Args.substring(0,Args.indexOf(":")).hashCode()) % Conf.getNumPartitions();
 
 // Client node, Request ID, Master node, Success, Result (if any). The
 // type of the result depends on the type of request.
@@ -196,6 +197,7 @@ create_request_init(@Master, Id, Source, FullPath, IsDir, LastSlashIdx) :-
     IsDir := true,
     LastSlashIdx := FullPath.lastIndexOf("/");
 
+
 // If we didn't find a "/", return an error: malformed path
 send_response(@Master, Id, Source, false, null) :-
     create_request_init(@Master, Id, Source, _, LastSlashIdx),
@@ -233,12 +235,15 @@ send_response(@Master, Id, Source, false, null) :-
     ParentIsDir == false;
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Integer, String, Boolean});
+watch(create_request_pending,a);
 
 // Otherwise, pass the request through Paxos
+
 create_request_pending(@Master, Id, Source, ParentId, FName, IsDir) :-
     create_request_parsed(@Master, Id, Source, ParentPath, FName, IsDir),
     bfs_global::fpath(@Master, ParentPath, ParentId),
     bfs_global::stasis_file(@Master, ParentId, _, _, true);
+
 
 define(create_request_done, {String, Integer, Boolean});
 public
