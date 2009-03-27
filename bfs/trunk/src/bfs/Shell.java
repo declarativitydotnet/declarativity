@@ -624,6 +624,6 @@ public class Shell {
         System.err.println("Where op_name = {append,create,ls,mkdir,read,rm}");
 
         shutdown();
-        System.exit(0);
+        System.exit(1);
     }
 }
