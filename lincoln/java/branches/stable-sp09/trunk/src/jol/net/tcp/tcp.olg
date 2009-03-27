@@ -1,0 +1,37 @@
+program tcp;
+
+import jol.net.Network;
+import jol.net.Channel;
+import jol.net.Message;
+import jol.net.Address;
+
+/* Message receive tuples are sent via Java (see TCP.java). */
+define(receive, {Address, Message});
+define(send,    {Address, Message, Channel});
+
+/******* Message send  */
+public
+send(Location, Msg, Connection) :-
+	network::buffer(Protocol, Direction, Location, Msg),
+	network::connection(Protocol, Location, Connection),
+	Protocol == "tcp", Direction == "send";
+
+/* Clean up buffer queue after sending message. */
+delete
+network::buffer(Protocol, Direction, Location, Msg) :-
+	send(Location, Msg, Connection), Connection.send(Msg),
+	network::buffer(Protocol, Direction, Location, Msg),
+	Protocol == "tcp";
+	
+/* Create a tcp connection to the address if !exists. */
+public
+network::connection("tcp", Location, null) :-
+	network::buffer#insert(Protocol, Direction, Location, Msg),
+	Protocol == "tcp",
+	notin network::connection("tcp", Location, _);
+
+
+/******** Receive message */
+network::buffer(Msg.layer(), "receive", Location, Msg) :-
+	receive(Location, Msg);
+	

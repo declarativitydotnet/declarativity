@@ -1,0 +1,38 @@
+program path;
+
+import java.lang.Integer;
+import java.lang.Object;
+import java.lang.String;
+
+import jol.types.basic.ValueList;
+
+define(link, keys(0,1), {String, String});
+define(shortestPath, keys(0,1), {String, String, Integer});
+
+define(allpaths, {String, ValueList});
+define(pathPrinter, {String, ValueList});
+define(computeAll, {String});
+
+/* Initialize all paths with link */
+init
+path(Source, Destination, 1) :- link(Source, Destination);
+
+/* Transitive closure over path, link */
+trans
+path(Source, Destination, Hops+1) :- 
+	path(Source, Intermediate, Hops), link(Intermediate, Destination);
+
+/* Compute shortest paths */
+shortestPath
+shortestPath(Source, Destination, min<Hops>) :- 
+	path(Source, Destination, Hops);
+
+computeAll(Source) :-
+	shortestPath(Source, Destination, Hops);
+
+allpaths(Source, generic<(new ValueList()).insert((Object) Destination)>) :-
+	computeAll(_),
+	path(Source, Destination, Hops);
+
+pathPrinter(Source, Paths) :-
+	allpaths(Source, Paths);

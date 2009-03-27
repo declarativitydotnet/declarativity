@@ -1,0 +1,92 @@
+program election_lelann;
+
+import java.lang.Integer;
+import java.lang.Float;
+import p2.types.table.Index;
+
+define(link,keys(0,1),{String,String});
+define(node,keys(0),{String,Integer});
+define(info,keys(0,1,2),{String,String,Integer});
+define(begin,keys(0),{String,Integer});
+define(relay,keys(0,1),{String,String,Integer});
+define(maxInfo,keys(0),{String,Integer});
+define(leader,keys(0,1),{String,Integer});
+// not a part of the algorithm
+define(messages,keys(0),{String,Integer});
+
+
+// assumption 1: nodes are arranged in a ring
+link("a","b");
+link("b","c");
+link("c","d");
+link("d","e");
+link("e","f");
+link("f","g");
+link("g","h");
+link("h","i");
+link("i","j");
+link("j","k");
+link("k","l");
+link("l","m");
+link("m","a");
+
+// assumption 2: each node has a unique weight or id.  since we are a network
+// graph, we already know nodes are identifiable by their address.  so, we could
+// always define a function f that maps an address to an integer, and use this.
+node("a",100);
+node("b",2);
+node("c",3);
+node("d",4);
+node("e",0);
+node("f",16);
+node("g",23);
+node("h",16346);
+node("i",626);
+node("j",235);
+node("k",1354);
+node("l",55);
+node("m",234);
+
+//watch(info,id);
+//watch(maxInfo,id);
+//watch(relay,id);
+watch(leader,id);
+watch(messages,i);
+
+/* start at some arbitrary node. */
+begin(Node,Nid) :- periodic(Id,1L,1L,1L),node(Node,Nid), Node == "i";
+
+info(@Node,Peer,Nid) :- begin(@Peer,Nid),
+						link(@Peer,Node);
+
+leader(@Node,Nid) :- info(@Node,Peer,Nid), 
+						node(@Node,MyNid),
+						MyNid == Nid;
+				
+leader(@Node,Nid) :- leader(@Me,Nid),
+						link(@Me,Node);				
+				
+/* forward the bigger id */
+info(@Peer,Node,Mnid) :- maxInfo(@Node,Mnid),
+						node(@Node,Nid),
+						Mnid > Nid,
+						link(@Node,Peer);
+
+/* forward my own id */
+info(@Peer,Node,Nid) :- maxInfo(@Node,Maxnid),
+						node(@Node,Nid),
+						link(@Node,Peer),
+						info(@Node,Prev,Mnid),
+						Nid > Maxnid;					
+
+						
+//begin(@Node,Nid) :- info(@Node,Peer,SomeNid),node(@Node,Nid);
+
+maxInfo(@Node,max<Nid>) :- info(@Node,Peer,Nid);
+
+
+
+messages(@Node,count<Nid>) :- info(@Node,_,Nid);
+
+
+
