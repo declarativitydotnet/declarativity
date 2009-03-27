@@ -15,9 +15,8 @@ import jol.types.table.TableName;
 public class LinearHashNTA extends StasisTable {
 	static LinearHashNTA catalog = null;
 
-    protected Tuple header;
-    private long[] rootRid;
-    private long[] rid;
+    protected final Tuple header;
+    private final long[] rid;
 
     protected Tuple registerTable(TableName name, Key key, Class[] type) throws UpdateException {
 		Tuple header = new Tuple(rid[0], rid[1], key, attributeTypes);
@@ -32,7 +31,7 @@ public class LinearHashNTA extends StasisTable {
     protected LinearHashNTA(Runtime context) throws UpdateException {
 		super(context, CATALOG_NAME, CATALOG_KEY, CATALOG_COLTYPES);
 		key = new Key(0);
-		rootRid = Stasis.root_record();
+		long[] rootRid = Stasis.root_record();
 		synchronized (xactTable) {
 			long type = Stasis.record_type(ts.xid, rootRid);
 			if(type == -1) {
