@@ -190,10 +190,10 @@ public class TCP extends Server {
 					return;
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
-					System.exit(0);
+					System.exit(-1);
 				} catch (Exception e) {
 					e.printStackTrace();
-					System.exit(0);
+					System.exit(-1);
 				}
 			}
 		}
