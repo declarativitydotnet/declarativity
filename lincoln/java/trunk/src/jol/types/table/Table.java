@@ -1,5 +1,6 @@
 package jol.types.table;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -358,9 +359,7 @@ public abstract class Table implements Comparable<Table> {
 	public TupleSet insert(TupleSet tuples, TupleSet conflicts) throws UpdateException {
 		TupleSet delta = new BasicTupleSet();
 		for (Tuple t : tuples) {
-			t = t.clone();
-
-			Set<Tuple> oldvals = null;
+			Collection<Tuple> oldvals = null;
 			try {
 				if (conflicts != null && primary() != null) {
 					oldvals = primary().lookupByKey(primary().key().project(t));
@@ -369,7 +368,7 @@ public abstract class Table implements Comparable<Table> {
 				throw new UpdateException("couldn't insert", e);
 			}
 
-			t.refCount(1L); // TODO code review semantics
+			//t.refCount(1L); // TODO code review semantics  RCS changed semantics here.  Now, > 1 refcount gets inserted > 1 time.
 			if (insert(t)) {
 				delta.add(t);
 

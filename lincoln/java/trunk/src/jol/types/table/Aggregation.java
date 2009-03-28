@@ -148,7 +148,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 		    result.add(new Tuple(arry));
 		} else {
 			for (Tuple group : this.aggregateFunctions.keySet()) {
-				Tuple tuple = result(group.clone());
+				Tuple tuple = result(group);
 				result.add(tuple);
 			}
 		}
@@ -220,7 +220,6 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 
 			try {
 				for (Aggregate<C> func : functions) {
-					tuple = tuple.clone();
 					func.insert(tuple); // perform this aggregate
 				}
 			} catch (JolRuntimeException e) {
@@ -256,7 +255,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 
 	@Override
 	public boolean insert(Tuple tuple) throws UpdateException {
-		return this.aggregateTuples.add(tuple.clone());
+		return this.aggregateTuples.add(tuple);
 	}
 
 	/** Should only be called from within this Class.  */
@@ -288,7 +287,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 						for (Aggregate<C> function : functions) {
 							function.delete(tuple);
 							if (function.size() == 0) {
-								expire.add(result(group.clone()));
+								expire.add(result(group));
 								this.aggregateFunctions.remove(group);
 								break; // we're out of tuples for this group.
 							}

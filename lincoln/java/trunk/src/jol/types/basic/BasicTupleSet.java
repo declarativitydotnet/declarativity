@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -18,7 +17,7 @@ import java.util.Set;
 public class BasicTupleSet implements TupleSet  {
 	private static final long serialVersionUID = 1L;
 
-	private Map<Tuple, Tuple> tuples;
+	private Map<Tuple, Long> tuples;
 
 	/** Identifier generator. */
 	private static long idGen = 0L;
@@ -35,7 +34,7 @@ public class BasicTupleSet implements TupleSet  {
 	 */
 	public BasicTupleSet() {
 		this.id = idGen++;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new HashMap<Tuple, Long>();
 	}
 
 	/**
@@ -44,7 +43,7 @@ public class BasicTupleSet implements TupleSet  {
 	 */
 	private BasicTupleSet(TupleSet clone) {
 		this.id = clone.id();
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new HashMap<Tuple, Long>();
 		this.addAll(clone);
 	}
 
@@ -54,9 +53,9 @@ public class BasicTupleSet implements TupleSet  {
 	 * @param name The table name.
 	 * @param tuples The tuples to initialize.
 	 */
-	public BasicTupleSet(Set<Tuple> tuples) {
+	public BasicTupleSet(Collection<Tuple> tuples) {
 		this.id = idGen++;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new HashMap<Tuple, Long>();
 		this.addAll(tuples);
 	}
 
@@ -66,7 +65,7 @@ public class BasicTupleSet implements TupleSet  {
 	 */
 	public BasicTupleSet(Tuple tuple) {
 		this.id = idGen++;
-		this.tuples = new HashMap<Tuple, Tuple>();
+		this.tuples = new HashMap<Tuple, Long>();
 		this.add(tuple);
 	}
 
@@ -127,15 +126,15 @@ public class BasicTupleSet implements TupleSet  {
 	}
 
 	public boolean add(Tuple tuple) {
-		if (tuple == null) return false;
-		else if (tuple.refCount <= 0) return false;
-		else if (this.tuples.containsKey(tuple)) {
-			this.tuples.get(tuple).refCountInc(tuple.refCount());
+		if (tuple == null) {
 			return false;
+		} else if (this.tuples.containsKey(tuple)) {
+			this.tuples.put(tuple, this.tuples.get(tuple) + 1L);
+			return false;
+		} else {
+			this.tuples.put(tuple, 1L);
+			return true;
 		}
-		tuple = tuple.clone();
-		this.tuples.put(tuple, tuple);
-		return true;
 	}
 
 	/**
@@ -182,18 +181,51 @@ public class BasicTupleSet implements TupleSet  {
 	}
 
 	public Iterator<Tuple> iterator() {
-		return this.tuples.values().iterator();
+	    //if(!this.refCount) {
+			return this.tuples.keySet().iterator();
+			/*		} else {
+			return new Iterator<Tuple>() {
+				long count = 0L;
+				Tuple next;
+				Iterator<Tuple> it = tuples.keySet().iterator();
+				@Override
+				public boolean hasNext() {
+					return count != 0 || it.hasNext();
+				}
+
+				@Override
+				public Tuple next() {
+					if(count == 0) {
+						next = it.next();
+						count = tuples.get(next) - 1L;
+						if(count < 0L) { throw new IllegalStateException(); }
+					} else {
+						count--;
+					}
+					return next;
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException("TupleSetIterators are immutable!");
+					
+				}
+				
+			};
+			}*/
 	}
 
 	public boolean remove(Object o) {
 		if (o != null && o instanceof Tuple) {
 			Tuple other = (Tuple) o;
 			if (this.tuples.containsKey(o)) {
-				Tuple t = this.tuples.get(o);
-				t.refCount(t.refCount - other.refCount());
-				if (!this.refCount || t.refCount <= 0L) {
+				Long l = this.tuples.get(o);
+				if((!this.refCount) || l == 1) {
 					this.tuples.remove(o);
 					return true;
+				} else {
+					l--;
+					this.tuples.put(other, l);
 				}
 			}
 		}
@@ -209,7 +241,7 @@ public class BasicTupleSet implements TupleSet  {
 
 	public boolean retainAll(Collection<?> c) {
 		List<Tuple> removal = new ArrayList<Tuple>();
-		for (Tuple t : this.tuples.values()) {
+		for (Tuple t : this.tuples.keySet()) {
 			if (!c.contains(t)) {
 				removal.add(t);
 			}
