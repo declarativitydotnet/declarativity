@@ -185,7 +185,7 @@ public class Compiler {
 			// XXX: proper error handling
 			System.err.println(e.getMessage());
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(-1);
 		}
 		return null;
 	}
@@ -265,7 +265,7 @@ public class Compiler {
 		} catch (CompileException e) {
 			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage(), e.node());
 			runtime.error("Compile error. Exiting.");
-			System.exit(0);
+			System.exit(-1);
 		} catch (Throwable e) {
 			if (e.getCause() instanceof CompileException) {
 				CompileException ce = (CompileException) e.getCause();
@@ -275,7 +275,7 @@ public class Compiler {
 				runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage());
 			}
 			runtime.error("Compile error. Exiting.");
-			System.exit(0);
+			System.exit(-1);
 		}
 	}
 }

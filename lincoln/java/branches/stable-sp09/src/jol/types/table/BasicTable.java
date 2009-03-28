@@ -52,7 +52,7 @@ public class BasicTable extends Table {
 		} catch (Exception e) {
 			System.err.println("TABLE " + name() + " ERROR: " + e);
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(-1);
 		}
 		return null;
 	}

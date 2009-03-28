@@ -769,7 +769,7 @@ public final class TypeChecker extends Visitor {
 		}
 		else {
 			System.err.println("TypeCHecker VisitBodyExtension: THIS SHOULD NEVER HAPPEN!");
-			System.exit(0);
+			System.exit(-1);
 		}
 		
 		if (n.size() > 1) {
