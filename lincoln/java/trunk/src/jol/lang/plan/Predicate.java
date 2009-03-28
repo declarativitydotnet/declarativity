@@ -16,8 +16,6 @@ import jol.types.operator.AntiScanJoin;
 import jol.types.operator.IndexJoin;
 import jol.types.operator.Operator;
 import jol.types.operator.ScanJoin;
-import jol.types.table.ConcurrentHashIndex;
-import jol.types.table.ConcurrentTable;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
@@ -234,12 +232,7 @@ public class Predicate extends Term implements Iterable<Expression> {
 				index = table.secondary().get(indexKey);
 			}
 			else {
-				if (table instanceof ConcurrentTable) {
-					index = new ConcurrentHashIndex(context, table, indexKey, Index.Type.SECONDARY);
-				}
-				else {
-					index = new HashIndex(context, table, indexKey, Index.Type.SECONDARY);
-				}
+				index = new HashIndex(context, table, indexKey, Index.Type.SECONDARY);
 				table.secondary().put(indexKey, index);
 			}
 		}
