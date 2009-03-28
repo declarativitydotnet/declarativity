@@ -60,7 +60,7 @@ public class UDP extends Server {
 					context.schedule("udp", UDPMessage, new BasicTupleSet(tuple), null);
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
-					System.exit(0);
+					System.exit(-1);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

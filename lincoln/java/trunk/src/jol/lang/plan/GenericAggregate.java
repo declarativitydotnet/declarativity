@@ -59,10 +59,10 @@ public class GenericAggregate extends Aggregate {
 					} catch (InvocationTargetException e) {
 						System.err.println(e.getTargetException().getMessage());
 						e.getTargetException().printStackTrace();
-						System.exit(0);
+						System.exit(-1);
 					} catch (Exception e) {
 						System.err.println(e + ": method invocation " + method.toString());
-						System.exit(0);
+						System.exit(-1);
 					}
 					return null;
 				} catch (Exception e) {
