@@ -396,7 +396,7 @@ public class Driver extends Thread {
 							result = query.evaluate(insertions);
 						} catch (JolRuntimeException e) {
 							e.printStackTrace();
-							System.exit(0);
+							System.exit(-1);
 						}
 
 						if (result.size() > 0) {
@@ -445,7 +445,7 @@ public class Driver extends Thread {
 							}
 						} catch (JolRuntimeException e) {
 							e.printStackTrace();
-							System.exit(0);
+							System.exit(-1);
 						}
 					}
 				}

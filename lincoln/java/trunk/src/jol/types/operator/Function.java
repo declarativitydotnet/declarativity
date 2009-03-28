@@ -30,7 +30,7 @@ public class Function extends Operator {
 		this.predicate = predicate;
 		if (this.function == null || this.predicate == null) {
 			System.err.println("TRIED TO CREATE A TABLE FUNCTION WITH NULL ARGUMENTS");
-			System.exit(0);
+			System.exit(-1);
 		}
 	}
 
