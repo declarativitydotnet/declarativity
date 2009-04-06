@@ -10,7 +10,7 @@
 %>
 <%
   TaskTracker tracker = (TaskTracker) application.getAttribute("task.tracker");
-  String trackerName = tracker.getName();
+  String trackerName = "foo"; // tracker.getName();
 %>
 
 <html>
@@ -32,6 +32,7 @@
     <td>Progress</td><td>Errors</td></tr>
 
   <%
+  /*
      Iterator itr = tracker.getRunningTaskStatuses().iterator();
      while (itr.hasNext()) {
        TaskStatus status = (TaskStatus) itr.next();
@@ -42,6 +43,7 @@
        out.print("</td><td><pre>" + status.getDiagnosticInfo() + "</pre></td>");
        out.print("</tr>\n");
      }
+     */
   %>
 </table>
 </center>
@@ -50,10 +52,12 @@
 <table border=2 cellpadding="5" cellspacing="2">
 <tr><td align="center">Task Attempts</td><td>Status</td>
   <%
+  /*
     for(TaskStatus status: tracker.getNonRunningTasks()) {
       out.print("<tr><td>" + status.getTaskID() + "</td>");
       out.print("<td>" + status.getRunState() + "</td></tr>\n");
     }
+  */
   %>
 </table>
 
@@ -65,6 +69,7 @@
     <td>Progress</td><td>Errors</td></tr>
 
   <%
+  /*
      itr = tracker.getTasksFromRunningJobs().iterator();
      while (itr.hasNext()) {
        TaskStatus status = (TaskStatus) itr.next();
@@ -75,6 +80,7 @@
        out.print("</td><td><pre>" + status.getDiagnosticInfo() + "</pre></td>");
        out.print("</tr>\n");
      }
+     */
   %>
 </table>
 </center>
