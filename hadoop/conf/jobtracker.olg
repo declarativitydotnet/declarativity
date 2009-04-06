@@ -1,10 +1,11 @@
-program jobtracker;
+program hadoop;
 
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.TaskTracker;
 
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.util.JobState;
@@ -12,29 +13,40 @@ import org.apache.hadoop.mapred.declarative.util.TaskState;
 import org.apache.hadoop.mapred.declarative.util.Function;
 import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.TaskTrackerAction;
+import org.apache.hadoop.mapred.KillTaskAction;
 
-import jol.types.basic.ValueList;
 import java.lang.Integer;
 import java.lang.Long;
 import java.lang.Enum;
+import java.util.List;
 
 watch(job, a);
 watch(task, a);
 watch(taskAttempt, a);
+watch(taskTrackerAction, s);
 
-/*************** JobTracker Duty Cycle (PERFORMANCE HACK) *********************/
-timer(minDutyCyclePeriod, physical, 2000, infinity, 0);
-define(dutyCycle, {String});
+/*************** TaskTracker Handlers ***********/
+
+public forwardAction
+taskTrackerAction(@TaskTracker, JobTracker, ActionType, Action) :-
+	taskTrackerAction(@JobTracker, TaskTracker, ActionType, Action);
+	
+watch(jobTracker, s);
+define(jobTracker, {String, String, Constants.TrackerState});
+jobTracker(@TaskTracker, JobTracker, Constants.TrackerState.RUNNING) :-
+	taskTracker(@JobTracker, TaskTracker, _, _, Constants.TrackerState.INITIAL);
+
+/*************** JobTracker State *********************/
 define(activeJobs, keys(), {Integer});
 define(activeTasks, keys(), {Integer});
-define(failedTasks, keys(0,1), {JobID, TaskID, Constants.TaskType, TaskState});
+define(failedTaskLocation, keys(0,1), {JobID, TaskID, String});
 define(tasksWaitingForSchedule, keys(0), {Integer});
 
-watch(failedTasks, a);
+watch(failedTaskLocation, a);
 watch(tasksWaitingForSchedule, a);
 
 tasksWaitingForSchedule(count<TaskId>) :-
-    jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
+    task(JobId, TaskId, _, _, _, _, TaskStatus),
     TaskStatus.state() == Constants.TaskState.UNASSIGNED ||
     TaskStatus.state() == Constants.TaskState.FAILED;
 
@@ -46,31 +58,14 @@ activeTasks(count<TaskId>) :-
 	task(JobId, TaskId, Type, Partition, Input, MapCount, Status),
 	Status.state() == Constants.TaskState.RUNNING;
 
-failedTasks(JobId, TaskId, Type, Status) :-
-	task(JobId, TaskId, Type, Partition, Input, MapCount, Status),
-	Status.state() == Constants.TaskState.FAILED;
-	
-/* Set semantics ensure a single duty cycle per fixpoint. 
-   I could have used a logical clock here but that spin the CPU during idle periods. */
-dutyCycle("Duty Cycle") :- minDutyCyclePeriod(), activeJobs(Count), Count > 0;
+failedTaskLocation(JobId, TaskId, TaskTracker) :-
+	hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.FAILED)
+	{
+		JobId  := AttemptId.getJobID();
+		TaskId := AttemptId.getTaskID();
+	};
 
-
-/*************** Task Tracker Monitor *********************/
-
-/*
-timer(checkTracker, physical, 60000, infinity, 60000);
-
-taskTracker(TrackerName, Host, HttpPort, Constants.TaskTrackerState.FAILED, 
-            Timestamp, Failures, MapCount, ReduceCount, MaxMap, MaxReduce, true) :-
-	checkTracker(Period, TTL, Delay),
-	taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
-	            MapCount, ReduceCount, MaxMap, MaxReduce, Dirty),
-	TrackerState == Constants.TaskTrackerState.RUNNING,
-	java.lang.System.currentTimeMillis() - Timestamp > Period;
-	*/
-	
 /*************** Clean up *********************/
-
 
 define(cleanup, {JobID});
 
@@ -85,9 +80,10 @@ task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
 	task(JobId, TaskId, Type, Partition, Input, MapCount, Status);
 
 delete
-taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, Dirty) :-
+hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish) :-
 	cleanup(JobId),
-    taskAttempt(JobID, TaskID, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, Dirty);
+	hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish),
+	AttemptId.getJobID() == JobId;
     
 delete
 taskFileLocation(JobId, TaskId, Loc) :-
@@ -97,28 +93,8 @@ taskFileLocation(JobId, TaskId, Loc) :-
 /*************** TASK INIT *********************/
 
 define(initTask, {JobID, JobConf, String, TaskID, Constants.TaskType, Integer, FileInput, Integer, TaskState});
-define(taskFile, {JobID, TaskID, ValueList});
+define(taskFile, {JobID, TaskID, List});
 define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
-
-/******* Admission control *******/
-/*
-initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
-	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus),
-	JobStatus.state() == Constants.JobState.PREP,
-	activeJobs(JobCount), activeTasks(TaskCount), JobCount <= 1 || TaskCount < 5000
-	{
-		JobStatus.state(Constants.JobState.RUNNING); // Update state to running
-	};
-
-initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
-	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus),
-	JobStatus.state() == Constants.JobState.PREP,
-	notin activeTasks(TaskCount)
-	{
-		JobStatus.state(Constants.JobState.RUNNING); // Update state to running
-	};
-	
-*/
 
 initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
 	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus),
@@ -126,10 +102,6 @@ initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
 	{
 		JobStatus.state(Constants.JobState.RUNNING); // Update state to running
 	};
-	
-/******************************************************/
-	
-/********************************/
 	
 /* Break out of the current fixpoint thread (using 'async') since taskCreate table function
    makes blocking calls to the DFS. */
@@ -148,7 +120,6 @@ taskFileLocation(JobId, TaskId, Location) :-
 	flatten(taskFile(JobId, TaskId, Locations)),
 	Location := (String) Locations;
 	
-	
 /*************** Job Status Maintenance *********************/
 import java.util.Set;
 	
@@ -159,41 +130,28 @@ job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTim
 	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, JobStatus),
 	JobStatus.task(Type, TaskStatus)
 	{
-	FinishTime := JobStatus.state() == Constants.JobState.SUCCEEDED ? 
-	              java.lang.System.currentTimeMillis() : 0L;
+		FinishTime := JobStatus.state() == Constants.JobState.SUCCEEDED ? 
+		              java.lang.System.currentTimeMillis() : 0L;
 	};
 	
 define(killjob, {JobID});
-killJob
+public killJob
 job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus) :-
-	killjob(JobId),
-	job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, JobStatus),
-	JobStatus.killjob()
+	killjob(JobId), job(JobId, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, _, JobStatus)
 	{
-	FinishTime := JobStatus.state() == Constants.JobState.SUCCEEDED ? 
-	              java.lang.System.currentTimeMillis() : 0L;
+		FinishTime := java.lang.System.currentTimeMillis();
+		JobStatus.killjob();
 	};
 	
 
-define(killJobOnTracker, {JobID, String});
 public
-killJobOnTracker(JobId, TrackerName) :-
-	job(JobId, _, _, _, _, _, _, _, _, JobStatus),
-	taskAttempt(JobId, TaskID, _, _, TaskState, _, _, TrackerName, _, _, _, _,_),
-	JobStatus.state()  == Constants.JobState.FAILED,
-	TaskState == Constants.TaskState.RUNNING;
-	
-watch(taskTrackerAction, a);
-taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_JOB, Action) :-	
-	killJobOnTracker(JobId, TrackerName),
-	Action := Function.killJob(JobId);
-
-taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.KILL_TASK, Action) :-	
-	job(JobId, _, _, _, _, _, _, _, _, JobStatus), JobStatus.state() == Constants.JobState.SUCCEEDED, // .mapProgress() == 1f,
-	taskAttempt(JobId, TaskId, AttemptId, _, Constants.TaskState.RUNNING, _, _, TrackerName, _, _, _, _, _),
-	notin taskAttempt(JobId, TaskId, AttemptId, _, Constants.TaskState.SUCCEEDED, _, _, _, _, _, _, _, _)
+hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.KILL_TASK, Action) :-	
+	job(JobId, _, _, _, _, _, _, _, _, JobStatus), 
+	JobStatus.state() == Constants.JobState.KILLED || 
+	JobStatus.state() == Constants.JobState.FAILED,
+	hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING, _, _, _, _)
     {
-        Action := Function.killTask(TaskId, AttemptId);
+        Action := new KillTaskAction(AttemptId);
     };
 	
     
@@ -206,41 +164,29 @@ task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
     taskUpdate(JobId, TaskId, _, Status),
 	task(JobId, TaskId, Type, Partition, Input, MapCount, _);
 	
+/*************** CLEAN UP TASK ATTEMPT STATE ******/
 delete
-task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
-    dutyCycle(), job(JobId, _, _, _, _, _, _, _, _, JobStatus), JobStatus.status().mapProgress() == 1f,
-	task(JobId, TaskId, Type, Partition, Input, MapCount, Status),
-    Type == Constants.TaskType.MAP;
-
-/******* UPDATE TASK ATTEMPT STATE ******/
-delete
-taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty) :-
+hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish) :-
     taskUpdate(JobId, TaskId, _, Status), Status.state() == Constants.TaskState.SUCCEEDED,
-	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
+	hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish),
+	AttemptId.getTaskID() == TaskId;
 
-taskAttempt(JobId, TaskId, AttemptID, Progress, Constants.TaskState.FAILED, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp, true) :-
-	taskTracker(TrackerName, _, _, TrackerState, _, _, _, _, _, _,_),
-	taskAttempt(JobId, TaskId, AttemptID, Progress, TaskState, Phase, Diag, TrackerName, FileLoc, Start, Finish, Timestamp,_),
-	TrackerState != Constants.TaskTrackerState.RUNNING,
-	TaskState == Constants.TaskState.RUNNING;
-	
-	
-/************** GENERATE TASK UPDATES BASED ON TASK ATTEMPT STATE ********/
-define(lookupDirtyTaskAttempt, {Boolean});
-lookupDirtyTaskAttempt(true) :- dutyCycle();
+/************** SEND MAP TASK ATTEMPT STATUS TO REDUCER TASKTRACKERS ****************/
 
-taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, false) :-
-	lookupDirtyTaskAttempt(Dirty),
-	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
+/* Tell reducers where the succeeded maps reside */
+hadoop::taskAttempt(@TaskTracker, JobTracker, Id1, Progress, State, Phase, TaskFileLoc, Start, Finish) :-
+	hadoop::taskAttempt(@JobTracker, _, Id1, Progress, State, Phase, TaskFileLoc, Start, Finish),
+	State == Constants.TaskState.SUCCEEDED, Phase == Constants.TaskPhase.MAP,
+	hadoop::taskAttempt(@JobTracker, TaskTracker, Id2, _, _, _, _, _, _),
+	!Id2.isMap(), Id1.getJobID() == Id2.getJobID();
 
-define(taskAttemptUpdate, {JobID, TaskID, Integer, Constants.TaskState, Constants.TaskPhase, Long, Long, Float});
-taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, Progress) :-
-	taskAttempt(JobId, TaskId, AttemptID, Progress, State, Phase, Diag, Tracker, TaskFileLoc, Start, Finish, Timestamp, Dirty);
+/************** GENERATE TASK UPDATES BASED ON UPDATES TO TASK ATTEMPT STATE ********/
 
+public
 taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
-	taskAttemptUpdate(JobId, TaskId, AttemptID, State, Phase, Start, Finish, Progress),
-	task(JobID, TaskId, Type, _, _, _, TaskStatus),
-	TaskStatus.state() != Constants.TaskState.SUCCEEDED 
+	hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish),
+	task(JobId, TaskId, Type, _, _, _, TaskStatus),
+	TaskId == AttemptId.getTaskID(), TaskStatus.state() != Constants.TaskState.SUCCEEDED 
 	{
-		StatusUpdate := TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
+		StatusUpdate := TaskStatus.attempt(AttemptId, Progress, State, Phase, Start, Finish);
 	};

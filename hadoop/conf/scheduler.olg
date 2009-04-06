@@ -12,6 +12,7 @@ import org.apache.hadoop.mapred.declarative.util.JobState;
 import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskID;
+import org.apache.hadoop.mapred.TaskAttemptID;
 
 
 /*************** Task Attempt Scheduler *********************/
@@ -21,125 +22,62 @@ define(taskAttempts, keys(0,1), {JobID, TaskID, Integer});
 define(schedule,        {JobID, TaskID, String});
 
 public
-trackerCount(count<TrackerName>) :-
-	jobtracker::taskTracker(TrackerName, _, _, TrackerState, Timestamp, _,  _, _, _, _),
-	TrackerState == Constants.TaskTrackerState.RUNNING;
+trackerCount(count<TaskTracker>) :-
+	hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING);
 	
 public
 taskAttempts(JobId, TaskId, count<AttemptId>) :-
-	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptId);
+	hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId)
+	{
+		JobId  := AttemptId.getJobID();
+		TaskId := AttemptId.getTaskID();
+	};
 	
-failedJob
-jobtracker::killjob(JobId) :-
-	taskAttempts#insert(JobId, TaskId, Attempts), trackerCount(Trackers),
-	jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
-	TaskStatus.state() == Constants.TaskState.FAILED,
-	Attempts > 3 || Attempts > Trackers;
-	
-jobtracker::taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
-	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, Progress, State, Phase, _, _, _, Start, Finish, Timestamp),
-	jobtracker::task(JobId, TaskId, Type, _, _, _, TaskStatus),
-	State == Constants.TaskState.RUNNING
-    {
-		StatusUpdate := TaskStatus.attempt(AttemptID, Progress, State, Phase, Start, Finish);
-    };
-
-watch(jobtracker::taskAttempt, a);
+watch(hadoop::taskAttempt, a);
 public
-jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0f, State, Phase, null, TrackerName, null, 0L, 0L, System.currentTimeMillis(), false) :-
-	schedule(JobId, TaskId, TrackerName),
-	notin taskAttempts(JobId, TaskId, _),
-	State       := Constants.TaskState.RUNNING,
-	Phase       := Constants.TaskPhase.STARTING,
-	AttemptID   := 0;
+hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, 0f, State, Phase, FileLocation, System.currentTimeMillis(), 0L) :-
+	schedule(JobId, TaskId, TaskTracker), notin taskAttempts(JobId, TaskId, _),
+	hadoop::taskTracker(JobTracker, TaskTracker, Host, HttpPort, Constants.TrackerState.RUNNING, _, _, _, _, _)
+	{
+		State        := Constants.TaskState.RUNNING;
+		Phase        := Constants.TaskPhase.STARTING;
+		AttemptId    := new TaskAttemptID(TaskId, 0);
+		FileLocation := "http://" + Host + ":" + HttpPort.toString();
+	};
 
 public
-jobtracker::taskAttempt(JobId, TaskId, AttemptID, 0f, State, Phase, null, TrackerName, null, 0L, 0L, System.currentTimeMillis(), false) :-
-	schedule(JobId, TaskId, TrackerName),
-	taskAttempts(JobId, TaskId, Attempts),
-	State       := Constants.TaskState.RUNNING,
-	Phase       := Constants.TaskPhase.STARTING,
-	AttemptID   := Attempts;
+hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, 0f, State, Phase, FileLocation, System.currentTimeMillis(), 0L) :-
+	schedule(JobId, TaskId, TaskTracker), taskAttempts(JobId, TaskId, Attempts),
+	hadoop::taskTracker(JobTracker, TaskTracker, Host, HttpPort,  Constants.TrackerState.RUNNING, _, _, _, _, _)
+	{
+		State        := Constants.TaskState.RUNNING;
+		Phase        := Constants.TaskPhase.STARTING;
+		AttemptId    := new TaskAttemptID(TaskId, Attempts);
+		FileLocation := "http://" + Host + ":" + HttpPort.toString();
+	};
 	
-watch(jobtracker::taskTrackerAction, a);
+watch(hadoop::taskTrackerAction, a);
 actionSchedule
-jobtracker::taskTrackerAction(TrackerName, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
-	jobtracker::taskAttempt#insert(JobId, TaskId, AttemptID, _, _, Constants.TaskPhase.STARTING, _, TrackerName, _, _, _, _),
-	jobtracker::job(JobId, JobName, JobFile),
-	jobtracker::task(JobId, TaskId, Type, Partition, FileInput, MapCount, _),
-	Action := Type == Constants.TaskType.MAP ? 
-	          Function.launchMap(FileInput.split(), JobFile, TaskId, AttemptID, Partition) :
-	          Function.launchReduce(JobFile, TaskId, AttemptID, Partition, MapCount);
-
-watch(speculated, a);
-define(speculated, {TaskID, String, String});
-speculated(TaskId, OldTracker, NewTracker) :-
-    jobtracker::taskAttempt(JobId, TaskId, 0, _, _, _, _, OldTracker, _, _, _, _),
-    jobtracker::taskAttempt(JobId, TaskId, 1, _, _, _, _, NewTracker, _, _, _, _);
-
-watch(trackerTaskTypeCount, a);
-define(trackerTaskTypeCount, keys(0,1), {String, Constants.TaskType, Integer});
-trackerTaskTypeCount(TrackerName, Type, count<Type>) :-
-    trackerWorkload(TrackerName, Type, TaskId); 
-
-define(trackerWorkload, keys(0,1), {String, Constants.TaskType, TaskID});
-public
-trackerWorkload(TrackerName, Type, TaskId) :-
-    jobtracker::taskAttempt#insert(JobId, TaskId, _, Progress, Constants.TaskState.RUNNING, _, _, TrackerName, _, _, _, _),
-    Progress < 0.9f, jobtracker::task(JobId, TaskId, Type);
-
-public delete
-trackerWorkload(TrackerName, Type, TaskId) :-
-    jobtracker::taskAttempt(JobId, TaskId, _, Progress, State, _, _, TrackerName, _, _, _, _),
-    trackerWorkload(TrackerName, Type, TaskId),
-    Progress > 0.9f ||
-    State == Constants.TaskState.SUCCEEDED || State == Constants.TaskState.FAILED ||
-    State == Constants.TaskState.COMMIT_PENDING || State == Constants.TaskState.KILLED;
-	          
-/*
-public failedStartAction
-jobtracker::taskAttempt(JobId, TaskId, AttemptId, 0f, Constants.TaskState.FAILED, Phase, Diag, TrackerName, null, 0L, 0L, Timestamp, true) :-
-    jobtracker::dutyCycle(),
-    State := Constants.TaskState.RUNNING,
-    Phase := Constants.TaskPhase.STARTING,
-    jobtracker::taskAttempt(JobId, TaskId, AttemptId, _, State, Phase, _, TrackerName, _, 0L, 0L, Timestamp, _),
-    jobtracker::task(JobId, TaskId, _, _, _, _, TaskStatus),
-    TaskStatus.state() != Constants.TaskState.SUCCEEDED,
-    System.currentTimeMillis() - Timestamp > 2L * 60L * 1000L,
-    Diag := "It's been 2 minutes and the tracker hasn't reported my task.";
-*/
-    
-	          
+hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
+    hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING, Constants.TaskPhase.STARTING),
+    JobId := AttemptId.getJobID(), TaskId := AttemptId.getTaskID(),
+	hadoop::job(JobId, JobName, JobFile),
+	hadoop::task(JobId, TaskId, Type, Partition, FileInput, MapCount, _)
+	{
+		Action := Type == Constants.TaskType.MAP ? 
+		          Function.launchMap(FileInput.split(), JobFile, AttemptId, Partition) :
+	 	          Function.launchReduce(JobFile, AttemptId, Partition, MapCount);
+	};
 
 /******************** Signal task tracker slots available *******************/
 
-define(trackerSlots, {String, String, Long, Integer, Integer});
-define(lookupDirtyTracker, {Boolean});
-
-
-jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
-                        Maps, Reduces, MaxMap, MaxReduce, true) :-
-    trackerTaskTypeCount(TrackerName, Type, Count),
-    jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
-                            MapCount, ReduceCount, MaxMap, MaxReduce, Dirty) 
-    {
-        Maps :=    Type == Constants.TaskType.MAP ? Count : MapCount;
-        Reduces := Type == Constants.TaskType.REDUCE ? Count : ReduceCount;
-    };
-
-public
-lookupDirtyTracker(true) :- jobtracker::dutyCycle();
-
-jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
-                        MapCount, ReduceCount, MaxMap, MaxReduce, false) :-
-    lookupDirtyTracker(Dirty),
-    jobtracker::taskTracker(TrackerName, Host, HttpPort, TrackerState, Timestamp, Failures, 
-                            MapCount, ReduceCount, MaxMap, MaxReduce, Dirty);
+define(trackerSlots, {String, String, Integer, Integer});
 
 watch(trackerSlots, a);
-trackerSlots(TrackerName, Host, Timestamp, Maps, Reduces) :-
-	jobtracker::taskTracker(TrackerName, Host, _, _, Timestamp, _,  MapCount, ReduceCount, MaxMap, MaxReduce),
-	jobtracker::tasksWaitingForSchedule(Count), Count > 0,
+public
+trackerSlots(TaskTracker, Host, Maps, Reduces) :-
+	hadoop::taskTracker(JobTracker, TaskTracker, Host, HttpPort, State, Failures,  MapCount, ReduceCount, MaxMap, MaxReduce, _),
+	hadoop::tasksWaitingForSchedule(Count), Count > 0,
 	MapCount < MaxMap || ReduceCount < MaxReduce
     {
       Maps := MapCount < MaxMap ? MaxMap - MapCount : 0;
