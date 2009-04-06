@@ -21,6 +21,9 @@ package org.apache.hadoop.mapred;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
@@ -30,9 +33,10 @@ import org.apache.hadoop.io.WritableUtils;
  * to the {@link org.apache.hadoop.mapred.TaskTracker} to take some 'action'. 
  * 
  */
-public abstract class TaskTrackerAction implements Writable {
-  
-  /**
+public abstract class TaskTrackerAction implements Writable, Serializable {
+	private static final long serialVersionUID = 1L;
+
+/**
    * Ennumeration of various 'actions' that the {@link JobTracker}
    * directs the {@link TaskTracker} to perform periodically.
    * 
@@ -101,6 +105,15 @@ public abstract class TaskTrackerAction implements Writable {
    */
   ActionType getActionId() {
     return actionType;
+  }
+  
+  private void writeObject(ObjectOutputStream out) throws IOException  {
+	  write(out);
+  }
+  
+  private void readObject(ObjectInputStream in) 
+  throws IOException, ClassNotFoundException {
+	  readFields(in);
   }
 
   public void write(DataOutput out) throws IOException {

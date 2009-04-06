@@ -7,18 +7,15 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.declarative.util.JobState;
 
 import jol.core.Runtime;
-import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
-import jol.types.table.BasicTable;
 import jol.types.table.ConcurrentTable;
 import jol.types.table.Key;
-import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
 public class JobTable extends ConcurrentTable {
 	/** The table name */
-	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "job");
-	public static final TableName INIT = new TableName(JobTracker.PROGRAM, "initJob");
+	public static final TableName TABLENAME = new TableName("hadoop", "job");
+	public static final TableName INIT = new TableName("hadoop", "initJob");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);

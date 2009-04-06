@@ -23,6 +23,8 @@ import org.apache.hadoop.fs.*;
 import org.apache.hadoop.util.Shell.ShellCommandExecutor;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.filecache.*;
+import org.apache.hadoop.mapred.TaskTrackerImpl.TaskTrackerMetrics;
+import org.apache.hadoop.metrics.Updater;
 import org.apache.hadoop.util.*;
 
 import java.io.*;
@@ -38,7 +40,7 @@ import java.net.URI;
  * separate process in order to isolate the map/reduce system code from bugs in
  * user supplied map and reduce functions.
  */
-abstract class TaskRunner extends Thread {
+public abstract class TaskRunner extends Thread {
   public static final Log LOG =
     LogFactory.getLog("org.apache.hadoop.mapred.TaskRunner");
 
@@ -48,6 +50,10 @@ abstract class TaskRunner extends Thread {
   private TaskTracker tracker;
 
   protected JobConf conf;
+  
+  private Long startTime = 0L;
+  
+  private Long finishTime = 0L;
 
   /** 
    * for cleaning up old map outputs
@@ -61,6 +67,9 @@ abstract class TaskRunner extends Thread {
     this.mapOutputFile = new MapOutputFile(t.getJobID());
     this.mapOutputFile.setConf(conf);
   }
+  
+  public Long startTime() { return this.startTime; }
+  public Long finishTime() { return this.finishTime; }
 
   public Task getTask() { return t; }
   public TaskTracker getTracker() { return tracker; }
@@ -93,6 +102,7 @@ abstract class TaskRunner extends Thread {
   @Override
   public final void run() {
     try {
+    	this.startTime = System.currentTimeMillis();
       
       //before preparing the job localize 
       //all the archives
@@ -435,6 +445,7 @@ abstract class TaskRunner extends Thread {
       }catch(IOException ie){
         LOG.warn("Error releasing caches : Cache files might not have been cleaned up");
       }
+      this.finishTime = System.currentTimeMillis();
       tracker.reportTaskFinished(t.getTaskID());
     }
   }
@@ -450,6 +461,7 @@ abstract class TaskRunner extends Thread {
       shexec = new ShellCommandExecutor(args.toArray(new String[0]), dir, env);
       shexec.execute();
     } catch (IOException ioe) {
+    	ioe.printStackTrace();
       // do nothing
       // error and output are appropriately redirected
     } finally { // handle the exit code
@@ -457,7 +469,9 @@ abstract class TaskRunner extends Thread {
      
       if (!killed && exit_code != 0) {
         if (exit_code == 65) {
-          tracker.getTaskTrackerMetrics().taskFailedPing();
+          Updater u = tracker.getTaskTrackerMetrics();
+          if (u instanceof TaskTrackerMetrics) 
+        	  ((TaskTrackerMetrics)u).taskFailedPing();
         }
         throw new IOException("Task process exit with nonzero status of " +
                               exit_code + ".");

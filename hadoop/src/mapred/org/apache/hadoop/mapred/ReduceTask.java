@@ -23,6 +23,8 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
@@ -178,6 +180,15 @@ public class ReduceTask extends Task {
     conf.setNumMapTasks(numMaps);
   }
 
+  private void writeObject(ObjectOutputStream out) throws IOException {
+	  write(out);
+  }
+  
+  private void readObject(ObjectInputStream in) 
+  throws IOException, ClassNotFoundException {
+	  readFields(in);
+  }
+  
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
@@ -1083,7 +1094,7 @@ public class ReduceTask extends Task {
           mapOutputLoc.getOutputLocation().openConnection();
         InputStream input = getInputStream(connection, DEFAULT_READ_TIMEOUT, 
                                            STALLED_COPY_TIMEOUT);
-
+        
         //We will put a file in memory if it meets certain criteria:
         //1. The size of the (decompressed) file should be less than 25% of 
         //    the total inmem fs

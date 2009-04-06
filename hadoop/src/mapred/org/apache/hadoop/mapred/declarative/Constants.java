@@ -1,13 +1,17 @@
 package org.apache.hadoop.mapred.declarative;
 
+import jol.types.table.TableName;
+
 public final class Constants {
 	
-	public static enum TaskTrackerState {
+	public final static TableName trackerAction = new TableName("hadoop", "trackerAction");
+	
+	public static enum TrackerState {
 		INITIAL, RUNNING, FAILED
 	};
 	
 	public static enum JobState {
-		  PREP, RUNNING, FAILED, SUCCEEDED
+		  PREP, RUNNING, FAILED, SUCCEEDED, KILLED
 	};
 	
 	public static enum TaskType {

@@ -189,38 +189,4 @@ public class JobState implements Comparable<JobState> {
 		}
 		this.status = new JobStatus(this.jobid, mapProgress, reduceProgress, jobState);
 	}
-	
-	public static void main(String[] args) throws IOException {
-		JobID jobid = new JobID("test", 0);
-		TaskID taskid = new TaskID("test", 0, true, 0);
-		
-		JobState jstate = new JobState(jobid, 1, 1);
-		TaskState state = new TaskState(jobid, taskid);
-		state.attempt(0, 0.0f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
-		System.err.println(state);
-		jstate.task(TaskType.MAP, state);
-		
-		state = new TaskState(jobid, taskid);
-		state.attempt(0, 1.0f, Constants.TaskState.SUCCEEDED, Constants.TaskPhase.MAP, 1L, 2L);
-		System.err.println(state);
-		jstate.task(TaskType.MAP, state);
-		if (jstate.state() == Constants.JobState.SUCCEEDED) {
-			System.err.println("EXPECTED NOT SUCCEEDED 1");
-		}
-		else {
-			System.err.println("COOL 1");
-		}
-		
-		state = new TaskState(jobid, taskid);
-		state.attempt(0, 0.0f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
-		System.err.println(state);
-		jstate.task(TaskType.MAP, state);
-		if (jstate.state() == Constants.JobState.SUCCEEDED) {
-			System.err.println("EXPECTED NOT SUCCEEDED 2");
-		}
-		else {
-			System.err.println("COOL 2");
-		}
-	}
-
 }

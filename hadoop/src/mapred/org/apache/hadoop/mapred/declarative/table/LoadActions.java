@@ -36,7 +36,7 @@ import jol.types.table.TableName;
 public class LoadActions extends ConcurrentTable {
 
 	/** The table name */
-	public static final TableName TABLENAME = new TableName(JobTracker.LOADPOLICY, "loadActions");
+	public static final TableName TABLENAME = new TableName("hadoop", "loadActions");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);
