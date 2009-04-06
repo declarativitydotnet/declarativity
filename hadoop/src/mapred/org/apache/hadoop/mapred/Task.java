@@ -21,6 +21,7 @@ package org.apache.hadoop.mapred;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URI;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -56,8 +57,10 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 
 /** Base class for tasks. */
-public abstract class Task implements Writable, Configurable {
-  private static final Log LOG =
+public abstract class Task implements Writable, Serializable, Configurable {
+	private static final long serialVersionUID = 1L;
+	
+	private static final Log LOG =
     LogFactory.getLog("org.apache.hadoop.mapred.TaskRunner");
 
   // Counters used by Task subclasses
@@ -179,7 +182,7 @@ public abstract class Task implements Writable, Configurable {
   ////////////////////////////////////////////
   // Writable methods
   ////////////////////////////////////////////
-
+  
   public void write(DataOutput out) throws IOException {
     Text.writeString(out, jobFile);
     taskId.write(out);
@@ -234,6 +237,10 @@ public abstract class Task implements Writable, Configurable {
     if (FileOutputFormat.getOutputPath(conf) != null) {
       taskOutputPath = getTaskOutputPath(conf);
       FileOutputFormat.setWorkOutputPath(conf, taskOutputPath);
+      System.err.println("Task " + this.taskId + " set task output path to " + taskOutputPath);
+    }
+    else {
+    	System.err.println("Task " + this.taskId + " NO FILE OUTPUT PATH!!");
     }
   }
   

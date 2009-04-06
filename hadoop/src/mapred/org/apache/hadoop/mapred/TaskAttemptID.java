@@ -21,6 +21,7 @@ package org.apache.hadoop.mapred;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * TaskAttemptID represents the immutable and unique identifier for 
@@ -42,8 +43,10 @@ import java.io.IOException;
  * @see JobID
  * @see TaskID
  */
-public class TaskAttemptID extends ID {
+public final class TaskAttemptID extends ID implements Serializable {
+  private static final long serialVersionUID = 1L;
   private static final String ATTEMPT = "attempt";
+  
   private TaskID taskId;
   private static final char UNDERSCORE = '_';
   
@@ -136,6 +139,15 @@ public class TaskAttemptID extends ID {
     this.taskId = TaskID.read(in);
   }
 
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+	  write(out);
+  }
+  
+  private void readObject(java.io.ObjectInputStream in) 
+  throws IOException, ClassNotFoundException {
+	  readFields(in);
+  }
+  
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);

@@ -2,6 +2,7 @@ package org.apache.hadoop.mapred.declarative.table;
 
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
+import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskStatus;
@@ -11,43 +12,34 @@ import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 import org.apache.hadoop.net.NetUtils;
 
 import jol.core.Runtime;
-import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
-import jol.types.basic.BasicTupleSet;
-import jol.types.exception.UpdateException;
-import jol.types.table.BasicTable;
 import jol.types.table.ConcurrentTable;
 import jol.types.table.Key;
-import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
 public class TaskAttemptTable extends ConcurrentTable {
 	
 	/** The table name */
-	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskAttempt");
+	public static final TableName TABLENAME = new TableName("hadoop", "taskAttempt");
 	
 	/** The primary key (JobID, TaskID, AttemptID, State). Need state due to overwrite issues. */
-	public static final Key PRIMARY_KEY = new Key(0,1,2,4);
+	public static final Key PRIMARY_KEY = new Key(2);
 	
 	/** An enumeration of all fields. */
-	public enum Field{JOBID, TASKID, ATTEMPTID, PROGRESS, STATE, PHASE, 
-		              DIAGNOSTICS, TRACKER, TASKLOCATION, START, FINISH, TIMESTAMP, DIRTYBIT};
+	public enum Field{JTLOCATION, TTLOCATION, ATTEMPTID, PROGRESS, STATE, PHASE, 
+		              FILELOCATION, START, FINISH};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
-		JobID.class,    // Job identifier
-		TaskID.class,   // Task identifier
-		Integer.class,  // Task attempt count
-		Float.class,    // Progress
-		TaskState.class, // State
-		TaskPhase.class, // Phase 
-		String.class,   // Diagnostic string,
-		String.class,   // Tracker name
-		String.class,   // Task file location
-		Long.class,     // Start time
-		Long.class,     // Finish time
-		Long.class,    // Timestamp (when we got our last update)
-		Boolean.class  // Dirty bit
+		String.class,        // JT JOL Location
+		String.class,        // TT JOL Location
+		TaskAttemptID.class, // Task attempt count
+		Float.class,         // Progress
+		TaskState.class,     // State
+		TaskPhase.class,     // Phase 
+		String.class,        // File location
+		Long.class,          // Start time
+		Long.class           // Finish time
 	};
 	
 	public TaskAttemptTable(Runtime context) {
@@ -63,25 +55,19 @@ public class TaskAttemptTable extends ConcurrentTable {
 	 */
 	public static Tuple tuple(TaskTrackerStatus tracker, TaskStatus status) {
 		TaskAttemptID attemptid = status.getTaskID();
-		JobID         jobid     = attemptid.getJobID();
-		TaskID        taskid    = attemptid.getTaskID();
 		
         String host = tracker.getHost();
         if (NetUtils.getStaticResolution(tracker.getHost()) != null) {
           host = NetUtils.getStaticResolution(tracker.getHost());
         }
 		String httpTaskLogLocation = "http://" + host +  ":" + tracker.getHttpPort(); 
-		return new Tuple(jobid, taskid, attemptid.getId(), 
+		return new Tuple(null, null, attemptid.getId(), 
 				         status.getProgress(), 
 				         TaskState.valueOf(status.getRunState().name()), 
 				         TaskPhase.valueOf(status.getPhase().name()),
-				         status.getDiagnosticInfo(), 
-				         tracker.getTrackerName(), 
 				         httpTaskLogLocation,
 				         status.getStartTime(), 
-				         status.getFinishTime(),
-				         System.currentTimeMillis(),
-				         true);
+				         status.getFinishTime());
 	}
 
 }

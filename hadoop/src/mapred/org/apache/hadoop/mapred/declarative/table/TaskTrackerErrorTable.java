@@ -9,19 +9,20 @@ import jol.types.table.TableName;
 
 public class TaskTrackerErrorTable extends ObjectTable {
 	/** The table name */
-	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskTrackerError");
+	public static final TableName TABLENAME = new TableName("hadoop", "taskTrackerError");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key();
 	
 	/** An enumeration of all fields. */
-	public enum Field{TRACKERNAME, CLASS, MESSAGE};
+	public enum Field{LOCATION, TRACKERNAME, CLASS, MESSAGE};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
+		String.class,  // JOL Location
 		String.class,  // Tracker name
-		String.class,  // Action type
-		String.class   // Action object
+		String.class,  // Error type
+		String.class   // Error message
 	};
 	
 

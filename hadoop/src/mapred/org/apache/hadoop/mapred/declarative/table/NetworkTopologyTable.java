@@ -7,7 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
-import org.apache.hadoop.mapred.declarative.JobTrackerImpl;
+import org.apache.hadoop.mapred.declarative.master.JobTrackerImpl;
 import org.apache.hadoop.net.DNSToSwitchMapping;
 import org.apache.hadoop.net.NetworkTopology;
 import org.apache.hadoop.net.Node;
@@ -101,14 +101,14 @@ public class NetworkTopologyTable extends ObjectTable {
 				nodes.add(NetworkTopologyTable.node(node));
 				node = node.getParent();
 			}
-			this.context.schedule(JobTracker.PROGRAM,
+			this.context.schedule("hadoop",
 					              NetworkTopologyTable.TABLENAME,
 					              nodes, null);
 		}
 	}
 
 	/** The table name */
-	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "networkTopology");
+	public static final TableName TABLENAME = new TableName("hadoop", "networkTopology");
 
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key(0);

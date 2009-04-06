@@ -41,13 +41,16 @@ public final class Function {
 
 	public static TaskTrackerAction 
 	              launchMap(JobClient.RawSplit split, String jobFile,
-			                TaskID taskId, int attemptId, int partition) {
+			                TaskAttemptID attemptId, int partition) {
 		try {
 			BytesWritable bw = split.getBytes();
 			if (bw == null) {
-				throw new RuntimeException("Task " + taskId + " has a null valued split!");
+				throw new RuntimeException("Task " + attemptId + " has a null valued split!");
 			}
-			MapTask task = new MapTask(jobFile, new TaskAttemptID(taskId, attemptId), partition, split.getClassName(), bw);
+			else if (!attemptId.isMap()) {
+				throw new RuntimeException("Task " + attemptId + " is not a map task!");
+			}
+			MapTask task = new MapTask(jobFile, attemptId, partition, split.getClassName(), bw);
 			return new LaunchTaskAction(task);
 		} catch (IOException e) {
 			return null;
@@ -55,19 +58,12 @@ public final class Function {
 	}
 
 	public static TaskTrackerAction 
-	              launchReduce(String jobFile, TaskID taskId, int attemptId,
+	              launchReduce(String jobFile, TaskAttemptID attemptId,
 			                   int partition, int numMaps) {
-		return new LaunchTaskAction(
-				   new ReduceTask(jobFile, new TaskAttemptID(taskId, attemptId), 
-						          partition, numMaps));
-	}
-	
-	public static TaskTrackerAction killJob(JobID jobid) {
-		return new KillJobAction(jobid);
-	}
-	
-	public static TaskTrackerAction killTask(TaskID taskid, int id) {
-		return new KillTaskAction(new TaskAttemptID(taskid, id));
+		if (attemptId.isMap()) {
+			throw new RuntimeException("Task " + attemptId + " is a map not a reduce!");
+		}
+		return new LaunchTaskAction(new ReduceTask(jobFile, attemptId,  partition, numMaps));
 	}
 	
 	public static ValueList<String> getLocations(JobClient.RawSplit split) {

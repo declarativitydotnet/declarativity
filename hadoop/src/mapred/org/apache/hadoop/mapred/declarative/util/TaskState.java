@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants;
 
@@ -54,15 +55,15 @@ public class TaskState implements Comparable<TaskState> {
 	
 	private TaskID taskid;
 	
-	private HashMap<Integer, AttemptState> attempts;
+	private HashMap<TaskAttemptID, AttemptState> attempts;
 	
 	public TaskState(JobID jobid, TaskID taskid) {
 		this.jobid    = jobid;
 		this.taskid   = taskid;
-		this.attempts = new LinkedHashMap<Integer, AttemptState>();
+		this.attempts = new LinkedHashMap<TaskAttemptID, AttemptState>();
 	}
 	
-	private TaskState(JobID jobid, TaskID taskid, HashMap<Integer, AttemptState> attempts) {
+	private TaskState(JobID jobid, TaskID taskid, HashMap<TaskAttemptID, AttemptState> attempts) {
 		this(jobid, taskid);
 		this.jobid = jobid;
 		this.taskid = taskid;
@@ -71,7 +72,7 @@ public class TaskState implements Comparable<TaskState> {
 	
 	private TaskState(TaskState copy) {
 		this(copy.jobid, copy.taskid);
-		this.attempts = (HashMap<Integer, AttemptState>) copy.attempts.clone();
+		this.attempts = (HashMap<TaskAttemptID, AttemptState>) copy.attempts.clone();
 	}
 	
 	@Override
@@ -125,18 +126,18 @@ public class TaskState implements Comparable<TaskState> {
 	 * @param start The attempt start time
 	 * @param finish The attempt finish time
 	 */
-	public TaskState attempt(Integer attemptID,
-						   Float progress, 
-			               Constants.TaskState state, 
-			               Constants.TaskPhase phase, 
-			               Long start, Long finish) {
+	public TaskState attempt(TaskAttemptID attemptId,
+						     Float progress, 
+			                 Constants.TaskState state, 
+			                 Constants.TaskPhase phase, 
+			                 Long start, Long finish) {
 		TaskState copy = new TaskState(this);
 		AttemptState attempt = new AttemptState(progress, state, phase, start, finish);
-		copy.attempt(attemptID, attempt);
+		copy.attempt(attemptId, attempt);
 		return copy;
 	}
 	
-	private void attempt(Integer id, AttemptState attempt) {
+	private void attempt(TaskAttemptID id, AttemptState attempt) {
 		if (this.attempts.containsKey(id)) {
 			if (this.attempts.get(id).compareTo(attempt) < 0) {
 				this.attempts.remove(id);
@@ -196,26 +197,5 @@ public class TaskState implements Comparable<TaskState> {
 			}
 		}
 		return best;
-	}
-	
-	public static void main(String[] args) {
-		TaskState state = new TaskState(new JobID("test", 0), new TaskID("test", 0, true, 0));
-		state = state.attempt(0, 0.5f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
-		TaskState failed = state.attempt(0, 0.0f, Constants.TaskState.FAILED, Constants.TaskPhase.MAP, 1L, 0L);
-		if (failed.state() != Constants.TaskState.FAILED) {
-			System.err.println("EXPECTED FAILED 1 got " + state.state());
-		}
-		else {
-			System.err.println("COOL 1");
-		}
-		
-		state = state.attempt(0, 1.0f, Constants.TaskState.SUCCEEDED, Constants.TaskPhase.MAP, 1L, 2L);
-		state = state.attempt(0, 0.0f, Constants.TaskState.RUNNING, Constants.TaskPhase.MAP, 1L, 0L);
-		if (state.state() != Constants.TaskState.SUCCEEDED) {
-			System.err.println("EXPECTED SUCCEEDED 1 got " + state.state());
-		}
-		else {
-			System.err.println("COOL 2");
-		}
 	}
 }

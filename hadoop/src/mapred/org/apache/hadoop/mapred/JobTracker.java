@@ -10,7 +10,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.net.NetUtils;
-import org.apache.hadoop.mapred.declarative.JobTrackerImpl;
+import org.apache.hadoop.mapred.declarative.master.JobTrackerImpl;
 
 import jol.core.JolSystem;
 import jol.core.Runtime.DebugLevel;
@@ -22,12 +22,8 @@ import jol.types.basic.Tuple;
  * All job trackers implement this interface.
  */
 public abstract class JobTracker {
-	public static final String PROGRAM    = "jobtracker";
-	public static final String SCHEDULER  = "scheduler";
-	public static final String POLICY     = "policy";
-	public static final String LOADPOLICY = "loadPolicy";
-	public static final String SPECULATE  = "speculate";
-
+	public static final String PROGRAM = "hadoop";
+	
 	public static enum State { INITIALIZING, RUNNING }
 
 	protected State state = State.INITIALIZING;
@@ -35,7 +31,7 @@ public abstract class JobTracker {
 	protected final String identifier;
 
 	protected final long startTime;
-
+	
 	public JobTracker(String identifier) {
 		this.identifier = identifier;
 		this.startTime = java.lang.System.currentTimeMillis();
@@ -49,8 +45,9 @@ public abstract class JobTracker {
 	        		outputPath == null ? "./" : outputPath.toString());
 	        Set<DebugLevel> debugger = new HashSet<DebugLevel>();
 	        debugger.add(DebugLevel.WATCH);
-			JolSystem context = jol.core.Runtime.create(debugger,
-			                    new FileOutputStream(userLogDir + "/jobtracker_jol.out"));
+	        
+	        InetSocketAddress addr = getJolAddress(conf);
+			JolSystem context = jol.core.Runtime.create(jol.core.Runtime.DEBUG_ALL, System.err, addr.getPort());
 			context.setPriority(Thread.MAX_PRIORITY);
 			return new JobTrackerImpl(context, conf);
 		} catch (Throwable e) {
@@ -60,6 +57,11 @@ public abstract class JobTracker {
 
 	public static InetSocketAddress getAddress(Configuration conf) {
 		String address = conf.get("mapred.job.tracker", "localhost:9001");
+		return NetUtils.createSocketAddr(address);
+	}
+	
+	public static InetSocketAddress getJolAddress(Configuration conf) {
+		String address = conf.get("jol.job.tracker", "localhost:9003");
 		return NetUtils.createSocketAddr(address);
 	}
 

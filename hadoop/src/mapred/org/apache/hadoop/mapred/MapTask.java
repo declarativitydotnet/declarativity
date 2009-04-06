@@ -59,7 +59,7 @@ import org.apache.hadoop.util.QuickSort;
 import org.apache.hadoop.util.ReflectionUtils;
 
 /** A Map task. */
-public class MapTask extends Task {
+public final class MapTask extends Task {
   /**
    * The size of each record in the index file for the map-outputs.
    */
@@ -110,13 +110,21 @@ public class MapTask extends Task {
   public TaskRunner createRunner(TaskTracker tracker) {
     return new MapTaskRunner(this, tracker, this.conf);
   }
-
+  
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+	  write(out);
+  }
+  
+  private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+	  readFields(in);
+  }
+  
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
     Text.writeString(out, splitClass);
     if (split != null) split.write(out);
-    split = null;
+    else throw new IOException("SPLIT IS NULL");
   }
   
   @Override

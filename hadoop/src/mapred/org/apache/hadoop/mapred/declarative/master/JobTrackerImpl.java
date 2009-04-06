@@ -1,4 +1,4 @@
-package org.apache.hadoop.mapred.declarative;
+package org.apache.hadoop.mapred.declarative.master;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +21,7 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.Table;
+import jol.types.table.TableName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,6 +47,7 @@ import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.TaskStatus.Phase;
 import org.apache.hadoop.mapred.TaskStatus.State;
+import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.Constants.TaskPhase;
 import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 import org.apache.hadoop.mapred.declarative.table.*;
@@ -59,6 +61,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 
 public class JobTrackerImpl extends JobTracker {
+	private final static String[] programs = {"jobTracker", "scheduler", "policy"};
 
 	/* Some jobs are stored in a local system directory.  We can delete
 	 * the files when we're done with the job. */
@@ -91,7 +94,7 @@ public class JobTrackerImpl extends JobTracker {
 
 	/** RPC Host name */
 	private String localMachine;
-
+	
 	// Used to provide an HTML view on Job, Task, and TaskTracker structures
 	private StatusHttpServer infoServer;
 	private int infoPort;
@@ -127,43 +130,11 @@ public class JobTrackerImpl extends JobTracker {
 		this.server.start();
 		/***************************************************************/
 
-		/*********************** INIT WEB SERVER **********************/
-		String infoAddr = 
-			NetUtils.getServerAddress(conf, "mapred.job.tracker.info.bindAddress",
-					"mapred.job.tracker.info.port",
-			"mapred.job.tracker.http.address");
-		InetSocketAddress infoSocAddr = NetUtils.createSocketAddr(infoAddr);
-		String infoBindAddress = infoSocAddr.getHostName();
-		int tmpInfoPort = infoSocAddr.getPort();
-		/*
-	    infoServer = new StatusHttpServer("job", infoBindAddress, tmpInfoPort, 
-	    		tmpInfoPort == 0);
-	    infoServer.setAttribute("job.tracker", this);
-	    // initialize history parameters.
-	    boolean historyInitialized = JobHistory.init(conf, this.localMachine);
-	    String historyLogDir = null;
-	    FileSystem historyFS = null;
-	    if (historyInitialized) {
-	    	historyLogDir = conf.get("hadoop.job.history.location");
-	    	infoServer.setAttribute("historyLogDir", historyLogDir);
-	    	historyFS = new Path(historyLogDir).getFileSystem(conf);
-	    	infoServer.setAttribute("fileSys", historyFS);
-	    }
-	    infoServer.start();
-		 */
-		/***************************************************************/
-
-
 		/******** The rpc/web-server ports can be ephemeral ports... 
 	              ... ensure we have the correct info. ****************/
 		this.port = server.getListenerAddress().getPort();
 		this.conf.set("mapred.job.tracker", (this.localMachine + ":" + this.port));
 		LOG.info("JobTracker up at: " + this.port);
-		/* this.infoPort = this.infoServer.getPort();
-	    this.conf.set("mapred.job.tracker.http.address", 
-	        infoBindAddress + ":" + this.infoPort); 
-	    LOG.info("JobTracker webserver: " + this.infoServer.getPort());
-		 */
 
 		while (true) {
 			try {
@@ -212,47 +183,19 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new TaskCreate(this));
 		this.context().catalog().register(new AssignTracker());
 		this.context().catalog().register(new BestCandidate());
-		this.context().catalog().register(new TaskReportTable(context));
 		this.context().catalog().register(new TaskTable(context));
 		this.context().catalog().register(new TaskTrackerActionTable(context));
 		this.context().catalog().register(new LoadActions(context));
 		this.context().catalog().register(new TaskTrackerErrorTable(context));
 		this.context().catalog().register(new TaskTrackerTable(context));
 		this.context().catalog().register(new NetworkTopologyTable(context, this));
-
-		URL program =
-			ClassLoader.getSystemClassLoader().getResource(PROGRAM + ".olg");
-
-		this.context.install("hadoop", program);
-		this.context.evaluate();
-
-		URL scheduler =
-			ClassLoader.getSystemClassLoader().getResource(SCHEDULER + ".olg");
-		this.context.install("hadoop", scheduler);
-		this.context.evaluate();
-
-		URL policy =
-			ClassLoader.getSystemClassLoader().getResource(POLICY + ".olg");
-		this.context.install("hadoop", policy);
-		this.context.evaluate();
 		
-		if (LOADPOLICY != null) {
-			URL loadPolicy =
-				ClassLoader.getSystemClassLoader().getResource(LOADPOLICY + ".olg");
-			this.context.install("hadoop", loadPolicy);
+		for (String program : programs) {
+			URL p = ClassLoader.getSystemClassLoader().getResource(program + ".olg");
+			this.context.install("jobTracker", p);
 			this.context.evaluate();
 		}
-		
-		if (SPECULATE != null) {
-			try {
-				URL speculatePolicy =  ClassLoader.getSystemClassLoader().getResource(SPECULATE + ".olg");
-				this.context.install("hadoop", speculatePolicy);
-				this.context.evaluate();
-			} catch (Throwable t) {
-				System.err.println("No speculation file.");
-			}
-		}
-		
+
 		this.context.start();
 	}
 
@@ -346,15 +289,15 @@ public class JobTrackerImpl extends JobTracker {
 
 	@Override
 	public TaskReport[] getMapTaskReports(JobID jobId) {
-		TaskReportTable table =
-			(TaskReportTable) this.context.catalog().table(TaskReportTable.TABLENAME);
+		TaskTable table =
+			(TaskTable) this.context.catalog().table(TaskTable.TABLENAME);
 		return table.mapReports(jobId);
 	}
 
 	@Override
 	public TaskReport[] getReduceTaskReports(JobID jobId) {
-		TaskReportTable table =
-			(TaskReportTable) this.context.catalog().table(TaskReportTable.TABLENAME);
+		TaskTable table =
+			(TaskTable) this.context.catalog().table(TaskTable.TABLENAME);
 		return table.reduceReports(jobId);
 	}
 
@@ -373,17 +316,16 @@ public class JobTrackerImpl extends JobTracker {
 				Float progress = (Float) t.value(TaskAttemptTable.Field.PROGRESS.ordinal());
 				TaskState state = (TaskState) t.value(TaskAttemptTable.Field.STATE.ordinal());
 				TaskPhase phase = (TaskPhase) t.value(TaskAttemptTable.Field.PHASE.ordinal());
-				String tracker = (String) t.value(TaskAttemptTable.Field.TRACKER.ordinal());
-				String diag = (String) t.value(TaskAttemptTable.Field.DIAGNOSTICS.ordinal());
+				String tracker = (String) t.value(TaskAttemptTable.Field.TTLOCATION.ordinal());
 				if (a.isMap()) {
 					return new MapTaskStatus(a, progress, 
-							TaskStatus.State.valueOf(state.name()), diag,
+							TaskStatus.State.valueOf(state.name()), "FIXME",
 							state.toString(), tracker, 
 							TaskStatus.Phase.valueOf(phase.name()), new Counters());
 				}
 				else {
 					return new ReduceTaskStatus(a, progress, 
-							TaskStatus.State.valueOf(state.name()), diag,
+							TaskStatus.State.valueOf(state.name()), "FIXME",
 							state.toString(), tracker, 
 							TaskStatus.Phase.valueOf(phase.name()), new Counters());
 				}
@@ -428,7 +370,7 @@ public class JobTrackerImpl extends JobTracker {
 		Set<TaskTrackerStatus> trackers = new HashSet<TaskTrackerStatus>();
 		Table table = this.context.catalog().table(TaskTrackerTable.TABLENAME);
 		for (Tuple t : table.tuples()) {
-			String name = (String) t.value(TaskTrackerTable.Field.TRACKERNAME.ordinal());
+			String name = (String) t.value(TaskTrackerTable.Field.TTLOCATION.ordinal());
 			String host = (String) t.value(TaskTrackerTable.Field.HOST.ordinal());
 			Integer port = (Integer) t.value(TaskTrackerTable.Field.HTTP_PORT.ordinal());
 			Integer failures = (Integer) t.value(TaskTrackerTable.Field.FAILURES.ordinal());

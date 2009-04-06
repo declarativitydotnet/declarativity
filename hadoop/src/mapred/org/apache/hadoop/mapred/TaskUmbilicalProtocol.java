@@ -26,7 +26,7 @@ import org.apache.hadoop.ipc.VersionedProtocol;
  * parent is a daemon which which polls the central master for a new map or
  * reduce task and runs it as a child process.  All communication between child
  * and parent is via this protocol. */ 
-interface TaskUmbilicalProtocol extends VersionedProtocol {
+public interface TaskUmbilicalProtocol extends VersionedProtocol {
 
   /** 
    * Changed the version to 2, since we have a new method getMapOutputs 

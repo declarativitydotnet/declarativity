@@ -48,6 +48,16 @@ public class LaunchTaskAction extends TaskTrackerAction {
 	public Task getTask() {
 		return task;
 	}
+	
+	private void writeObject(java.io.ObjectOutputStream out) 
+	throws IOException {
+		write(out);
+	}
+	
+	private void readObject(java.io.ObjectInputStream in) 
+	throws IOException, ClassNotFoundException {
+		readFields(in);
+	}
 
 	public void write(DataOutput out) throws IOException {
 		out.writeBoolean(task.isMapTask());

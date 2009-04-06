@@ -37,18 +37,19 @@ import jol.types.table.TableName;
 
 public class TaskTrackerActionTable extends ConcurrentTable {
 	/** The table name */
-	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskTrackerAction");
+	public static final TableName TABLENAME = new TableName("hadoop", "taskTrackerAction");
 	
 	/** The primary key */
 	public static final Key PRIMARY_KEY = new Key();
 	
 	/** An enumeration of all fields. */
-	public enum Field{TRACKERNAME, TYPE, ACTION};
+	public enum Field{LOCATION, TRACKERNAME, TYPE, ACTION};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
-		String.class,   // Tracker name
-		ActionType.class,     // Action type
+		String.class,             // JOL Location
+		String.class,             // TT Name
+		ActionType.class,         // Action type
 		TaskTrackerAction.class   // Action object
 	};
 	
@@ -59,16 +60,6 @@ public class TaskTrackerActionTable extends ConcurrentTable {
 		this.nameKey = new Key(Field.TRACKERNAME.ordinal());
 		Index index = new ConcurrentHashIndex(context, this, nameKey, Index.Type.SECONDARY);
 		secondary().put(nameKey, index);
-	}
-	
-	@Override
-	public boolean insert(Tuple t) throws UpdateException {
-		return super.insert(t);
-	}
-	
-	@Override
-	public boolean delete(Tuple t) throws UpdateException {
-		return super.delete(t);
 	}
 	
 	public synchronized TaskTrackerAction[] actions(TaskTrackerStatus status, TupleSet tuples) {

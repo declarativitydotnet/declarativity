@@ -3,11 +3,12 @@ package org.apache.hadoop.mapred.declarative.table;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
-import org.apache.hadoop.mapred.declarative.Constants.TaskTrackerState;
+import org.apache.hadoop.mapred.declarative.Constants.TrackerState;
 
 import jol.core.Runtime;
 import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
+import jol.types.exception.UpdateException;
 import jol.types.table.BasicTable;
 import jol.types.table.ConcurrentTable;
 import jol.types.table.Key;
@@ -17,39 +18,39 @@ import jol.types.table.TableName;
 public class TaskTrackerTable extends ConcurrentTable {
 	
 	/** The table name */
-	public static final TableName TABLENAME = new TableName(JobTracker.PROGRAM, "taskTracker");
+	public static final TableName TABLENAME = new TableName("hadoop", "taskTracker");
 	
 	/** The primary key */
-	public static final Key PRIMARY_KEY = new Key(0);
+	public static final Key PRIMARY_KEY = new Key(0,1);
 	
 	/** An enumeration of all clock table fields. */
 	public enum Field{
-		TRACKERNAME, 
+		JTLOCATION,
+		TTLOCATION,
 		HOST, 
 		HTTP_PORT, 
 		STATE,
-		TIMESTAMP,
 		FAILURES, 
 		MAP_COUNT,
 		REDUCE_COUNT,
 		MAX_MAP, 
 		MAX_REDUCE,
-		DIRTY
+		TIMESTAMP
 	};
 	
 	/** The table schema types. */
 	public static final Class[] SCHEMA = {
-		String.class,           // Tracker name
-		String.class,           // Tracker host
+		String.class,           // JT Location
+		String.class,           // TT Location
+		String.class,           // TT hostname
 		Integer.class,          // Http port
-		TaskTrackerState.class, // State
-		Long.class,             // Timestamp
+		TrackerState.class,     // State
 		Integer.class,          // Failures
 		Integer.class,          // map tasks
 		Integer.class,          // reduce tasks
 		Integer.class,          // max map tasks
 		Integer.class,          // max reduce tasks
-		Boolean.class           // Dirty flag
+		Long.class              // Timestamp
 	};
 	
 
@@ -59,15 +60,14 @@ public class TaskTrackerTable extends ConcurrentTable {
 	}
 	
 	public static Tuple tuple(TaskTrackerStatus status, boolean init) {
-		return new Tuple(status.getTrackerName(), status.getHost(), status.getHttpPort(),
-				         init ? TaskTrackerState.INITIAL : TaskTrackerState.RUNNING,
-						 java.lang.System.currentTimeMillis(),
+		return new Tuple(null, null,
+				         status.getHost(), status.getHttpPort(),
+				         init ? TrackerState.INITIAL : TrackerState.RUNNING,
 						 status.getFailures(),
 						 status.countMapTasks(),
 						 status.countReduceTasks(),
 						 status.getMaxMapTasks(),
-						 status.getMaxReduceTasks(),
-						 true);
+						 status.getMaxReduceTasks());
 		
 	}
 
