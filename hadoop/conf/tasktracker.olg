@@ -35,7 +35,7 @@ define(configuration, keys(0), {String,     // TaskTracker JOL address
                                 TaskTracker // TaskTracker object
                                 });
                                        
-define(taskRunner, keys(0), {String,        // TaskTracker jol address
+define(taskRunner, keys(2), {String,        // TaskTracker jol address
 	                         String,        // JobTracker jol address
                              TaskAttemptID, // The task attempt identifier
 							 TaskType,      // Type of task
@@ -135,15 +135,22 @@ taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, TaskState.KILLED,
 /**********************************************************************/
 
 watch(statusUpdate, a);
+watch(mapCompletion, a);
 
 taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner) :-
 	statusUpdate(AttemptId, Progress, State, Phase, Diag), 
     taskRunner(TaskTracker, JobTracker, AttemptId, Type, _, _, _, Runner);
 	
+mapCompletion(JobId, AttemptId, State, FileLocation) :-
+	taskAttempt(_, _, AttemptId, _, State, _, FileLocation, _, _),
+	State == TaskState.SUCCEEDED, AttemptId.isMap()
+	{
+		JobId := AttemptId.getJobID();
+	};
+ 
 /******************* Update State @JobTracker *************************/
 
-watch(taskTracker, s);
-watch(jobTracker, a);
+watch(taskAttempt, as);
 
 timer(heartbeatInterval, physical, 10000, infinity, 0);
 define(heartbeat, {String, String, Integer, Integer, Integer});
@@ -165,13 +172,17 @@ taskTracker(@JobTracker, TaskTracker, Host, HttpPort, JobTrackerState, Failures,
 	configuration(@TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT),
 	runningMaps(@TaskTracker, Maps), runningReduces(@TaskTracker, Reduces), taskFailures(@TaskTracker, Failures);
             
-taskAttempt(@JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
-	taskRunner(@TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner), 
-	configuration(@TaskTracker, Host, HttpPort, _, _, TT)
+taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
+	taskRunner#insert(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner), 
+	configuration(TaskTracker, Host, HttpPort, _, _, TT)
 	{
 	    FileLocation := "http://" + Host + ":" + HttpPort.toString();
 		StartTime    := Runner.startTime();
 		FinishTime   := Runner.finishTime();
 	};
 
+taskAttempt(@JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
+	taskAttempt#insert(JobTracker, @TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime),
+	taskRunner(@TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner); 
+	
 /**********************************************************************/

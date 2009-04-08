@@ -15,6 +15,7 @@ import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.KillTaskAction;
 
+import java.lang.System;
 import java.lang.Integer;
 import java.lang.Long;
 import java.lang.Enum;
@@ -67,9 +68,9 @@ failedTaskLocation(JobId, TaskId, TaskTracker) :-
 
 /*************** Clean up *********************/
 
-define(cleanup, {JobID});
+define(cleanup, {JobID, JobState});
 
-cleanup(JobId) :-
+cleanup(JobId, JStatus.state()) :-
 	job(JobId, _, _, _, _, _, _, _, _, JStatus),
 	JStatus.state() == Constants.JobState.SUCCEEDED || 
 	JStatus.state() == Constants.JobState.FAILED;
@@ -89,6 +90,15 @@ delete
 taskFileLocation(JobId, TaskId, Loc) :-
 	cleanup(JobId), taskFileLocation(JobId, TaskId, Loc);
 
+/*** Inform trackers that job is done ***/
+define(forwardTracker, {String, String, JobID, JobState});
+forwardTracker(JobTracker, TaskTracker, JobId, State) :-
+	cleanup(JobId, State),
+    taskAttempt(JobTracker, TaskTracker, AttemptId, _, _, _, _, _, _),
+    AttemptId.getJobID() == JobId;
+    
+jobCompletion(@TaskTracker, JobId, State) :-
+	forwardTracker(@JobTracker, TaskTracker, JobId, State);
 
 /*************** TASK INIT *********************/
 
