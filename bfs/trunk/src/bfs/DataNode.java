@@ -26,7 +26,7 @@ public class DataNode {
     		usage();
 
     	int[] nodeIdx = Conf.findSelfIndex(false);
-    	if(nodeIdx[0] != 0) {
+    	if (nodeIdx[0] != 0) {
     		throw new IllegalStateException("data node partitions not supported!");
     	}
         DataNode dn = new DataNode(nodeIdx[1], args[0]);
@@ -57,7 +57,6 @@ public class DataNode {
     }
 
     public void start() throws JolRuntimeException, UpdateException {
-
         Callback copyCallback = new Callback() {
             @Override
             public void deletion(TupleSet tuples) {}
@@ -108,7 +107,7 @@ public class DataNode {
         Tap tap = new Tap(this.system, Conf.getTapSink());
 		Telemetry telemetry = new Telemetry(this.system);
 		if (Conf.getLogSink() != null) {
-            System.out.println("send telemetry to "+Conf.getLogSink());    
+            System.out.println("send telemetry to "+Conf.getLogSink());
 			telemetry.startSource(Conf.getLogSink(), Conf.findLocalAddress(getPort()));
         }
 
@@ -124,7 +123,6 @@ public class DataNode {
 
         Table table = this.system.catalog().table(new TableName("bfs_heartbeat", "catch_migrate"));
         table.register(copyCallback);
-
 
         /* get a tap program */
         if (Conf.getTapSink() != null) {
