@@ -469,21 +469,6 @@ public abstract class Task implements Writable, Serializable, Configurable {
     taskDone.set(true);
     while (true) {
       try {
-        if (needProgress) {
-          // send a final status report
-          taskStatus.statusUpdate(taskProgress.get(), taskProgress.toString(), 
-                                  counters);
-          try {
-            if (!umbilical.statusUpdate(getTaskID(), taskStatus)) {
-              LOG.warn("Parent died.  Exiting "+taskId);
-              System.exit(66);
-            }
-            taskStatus.clearStatus();
-            needProgress = false;
-          } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();       // interrupt ourself
-          }
-        }
         // Check whether there is any task output
         boolean shouldBePromoted = false;
         try {
