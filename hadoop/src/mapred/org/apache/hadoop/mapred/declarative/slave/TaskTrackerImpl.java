@@ -45,7 +45,10 @@ import org.apache.hadoop.mapred.TaskTracker;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.TaskUmbilicalProtocol;
 import org.apache.hadoop.mapred.declarative.Constants;
+import org.apache.hadoop.mapred.declarative.Constants.JobState;
 import org.apache.hadoop.mapred.declarative.Constants.TaskState;
+import org.apache.hadoop.mapred.declarative.table.JobCompletionTable;
+import org.apache.hadoop.mapred.declarative.table.MapCompletionTable;
 import org.apache.hadoop.mapred.declarative.table.TaskAttemptTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerErrorTable;
@@ -66,16 +69,16 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 	
 	private InetSocketAddress jolAddress;
 
-	private Map<TaskAttemptID, Task> tasks;
+	private Map<TaskAttemptID, TaskRunner> tasks;
 	
-	private Map<TaskAttemptID, ArrayList<TaskCompletionEvent>> mapCompletionEvents;
+	private Map<JobID, ArrayList<TaskCompletionEvent>> mapCompletionEvents;
 	
 	private TaskAttemptTable attemptTable;
 	
 	public TaskTrackerImpl(JobConf conf) throws IOException {
 		super(conf, MapOutputServlet.class);
-		this.tasks = new HashMap<TaskAttemptID, Task>();
-		this.mapCompletionEvents = new HashMap<TaskAttemptID, ArrayList<TaskCompletionEvent>>();
+		this.tasks = new HashMap<TaskAttemptID, TaskRunner>();
+		this.mapCompletionEvents = new HashMap<JobID, ArrayList<TaskCompletionEvent>>();
 		FileSystem fs  = FileSystem.get(conf);
 		this.systemDir = new Path(conf.get("mapred.system.dir", "/tmp/hadoop/mapred/system"));
 		this.systemDir = fs.makeQualified(this.systemDir);
@@ -108,7 +111,11 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		this.jollib.catalog().register(new TaskTrackerTable( (jol.core.Runtime)jollib));
 		this.jollib.catalog().register(new TaskTrackerErrorTable( (jol.core.Runtime)jollib));
 		this.jollib.catalog().register(new TaskTrackerActionTable((jol.core.Runtime)jollib));
-
+		
+		Table jobCompletion = new JobCompletionTable();
+		Table mapCompletion = new MapCompletionTable((jol.core.Runtime)jollib);
+		this.jollib.catalog().register(mapCompletion);
+		this.jollib.catalog().register(jobCompletion);
 		
 		try {
 			for (String program : programs) {
@@ -120,31 +127,40 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 			throw new IOException (e);
 		}
 		
-		Table attempt = this.jollib.catalog().table(TaskAttemptTable.TABLENAME);
-		attempt.register(new Callback() {
-			@Override
+		jobCompletion.register(new Callback() {
 			public void deletion(TupleSet tuples) { }
-
-			@Override
 			public void insertion(TupleSet tuples) {
-				for (Tuple t : tuples) {
-					TaskAttemptID id = (TaskAttemptID) t.value(TaskAttemptTable.Field.ATTEMPTID.ordinal());
-					TaskState  state = (TaskState) t.value(TaskAttemptTable.Field.STATE.ordinal());
-					String   fileLoc = (String) t.value(TaskAttemptTable.Field.FILELOCATION.ordinal());
-					if (id.isMap() && state == TaskState.SUCCEEDED) {
-						for (TaskAttemptID taskID : tasks.keySet()) {
-							if (!taskID.isMap() == taskID.getJobID().equals(id.getJobID())) {
-								if (!mapCompletionEvents.containsKey(taskID)) {
-									mapCompletionEvents.put(taskID, new ArrayList<TaskCompletionEvent>());
-								}
-								int eventID = mapCompletionEvents.get(taskID).size();
-								TaskCompletionEvent event =
-										new TaskCompletionEvent(eventID,
-												id, id.getTaskID().getId(), id.isMap(),
-												TaskCompletionEvent.Status.valueOf(state.name()),
-												fileLoc);
-								mapCompletionEvents.get(taskID).add(event);
+				synchronized (mapCompletionEvents) {
+					for (Tuple t : tuples) {
+						JobID    jobid = (JobID) t.value(JobCompletionTable.Field.JOBID.ordinal());
+						JobState state = (JobState) t.value(JobCompletionTable.Field.STATE.ordinal());
+						mapCompletionEvents.remove(jobid);
+					}
+				}
+			}
+		
+		});
+		
+		mapCompletion.register(new Callback() {
+			public void deletion(TupleSet tuples) { }
+			public void insertion(TupleSet tuples) {
+				synchronized (mapCompletionEvents) {
+					for (Tuple t : tuples) {
+						JobID      jobid = (JobID)         t.value(MapCompletionTable.Field.JOBID.ordinal());
+						TaskAttemptID id = (TaskAttemptID) t.value(MapCompletionTable.Field.ATTEMPTID.ordinal());
+						TaskState  state = (TaskState)     t.value(MapCompletionTable.Field.STATE.ordinal());
+						String   fileLoc = (String)        t.value(MapCompletionTable.Field.FILELOCATION.ordinal());
+
+						if (state == TaskState.SUCCEEDED) {
+							if (!mapCompletionEvents.containsKey(jobid)) {
+								mapCompletionEvents.put(jobid, new ArrayList<TaskCompletionEvent>());
 							}
+							int eventID = mapCompletionEvents.get(jobid).size();
+							TaskCompletionEvent event = new TaskCompletionEvent(eventID,
+									id, id.getTaskID().getId(), id.isMap(),
+									TaskCompletionEvent.Status.valueOf(state.name()),
+									fileLoc);
+							mapCompletionEvents.get(jobid).add(event);
 						}
 					}
 				}
@@ -185,7 +201,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		if (!localize(task)) return null;
 		try {
 			TaskRunner runner = task.createRunner(this);
-			this.tasks.put(task.getTaskID(), task);
+			this.tasks.put(task.getTaskID(), runner);
 			runner.start();
 			return runner;
 		} catch (IOException e) {
@@ -415,14 +431,14 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 	@Override
 	public TaskCompletionEvent[] getMapCompletionEvents(JobID jobId, int fromIndex, int maxLocs) throws IOException {
 		TaskCompletionEvent[] retevents = TaskCompletionEvent.EMPTY_ARRAY;
-		for (TaskAttemptID taskID : mapCompletionEvents.keySet()) {
-			if (taskID.getJobID().equals(jobId)) {
-				ArrayList<TaskCompletionEvent> events = mapCompletionEvents.get(taskID);
+		synchronized(mapCompletionEvents) {
+			if (mapCompletionEvents.containsKey(jobId)) {
+				ArrayList<TaskCompletionEvent> events = mapCompletionEvents.get(jobId);
 				if (events.size() > fromIndex) {
 					int actualMax = Math.min(maxLocs, (events.size() - fromIndex));
 					retevents = 
 						events.subList(fromIndex, actualMax + fromIndex).
-							toArray(new TaskCompletionEvent[actualMax]);
+						toArray(new TaskCompletionEvent[actualMax]);
 				}
 			}
 		}
@@ -432,7 +448,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 	@Override
 	public Task getTask(TaskAttemptID taskid) throws IOException {
 		if (this.tasks.containsKey(taskid)) {
-			return this.tasks.get(taskid);
+			return this.tasks.get(taskid).getTask();
 		}
 		throw new IOException("Unknown task id " + taskid + ".");
 	}
