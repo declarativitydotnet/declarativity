@@ -179,28 +179,29 @@ public class DataServer extends Thread {
         }
 
         private void doReadOperation() throws IOException {
-            int blockId = this.in.readInt();
-            File blockFile = getChunkFile(blockId);
+            int chunkId = this.in.readInt();
+            File chunkFile = getChunkFile(chunkId);
 
             // If we don't have the chunk, return failure to the client
-            if (blockFile == null) {
+            if (chunkFile == null) {
             	this.out.writeBoolean(false);
             	return;
             }
             // Otherwise, return success, then the length + contents
             this.out.writeBoolean(true);
 
-            int fileSize = (int) blockFile.length();
+            int fileSize = (int) chunkFile.length();
             this.out.writeInt(fileSize);
 
-            long cksum = getFileChecksum(blockFile);
-            long expectedCksum = getCRCFromFile(blockId);
+            long cksum = getFileChecksum(chunkFile);
+            long expectedCksum = getCRCFromFile(chunkId);
             if (cksum != expectedCksum) {
-                // what should we do? presumably, signal the master to delete the bad chunk
-                throw new RuntimeException("file checksums didn't match\n");
+                // what should we do? presumably, signal the master to delete
+				// the bad chunk
+                throw new RuntimeException("file checksums didn't match");
             }
 
-            FileChannel fc = new FileInputStream(blockFile).getChannel();
+            FileChannel fc = new FileInputStream(chunkFile).getChannel();
             long nwrite = fc.transferTo(0, fileSize, this.channel);
             if (nwrite != (long) fileSize)
                 throw new RuntimeException("Failed to write expected file "
