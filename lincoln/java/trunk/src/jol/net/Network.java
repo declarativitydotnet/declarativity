@@ -41,6 +41,13 @@ public final class Network {
 		context.catalog().register(this.buffer);
 		context.catalog().register(this.connection);
 	}
+	
+	public int getServerPort(String name) {
+		if (servers.containsKey(name)) {
+			return servers.get(name).getLocalPort();
+		}
+		return -1;
+	}
 
 	/**
 	 * Install network components.

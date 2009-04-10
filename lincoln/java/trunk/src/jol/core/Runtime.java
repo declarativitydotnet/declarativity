@@ -127,9 +127,12 @@ public class Runtime implements JolSystem {
 	public OutputStream output() {
 		return this.output;
 	}
+	
+	public int getServerPort() {
+		return this.network.getServerPort("tcp");
+	}
 
-	/** @return The system lock. */
-	public Object lock() {
+	public Thread driver() {
 		return this.driver;
 	}
 
@@ -458,7 +461,7 @@ public class Runtime implements JolSystem {
 			for (URL file : Compiler.FILES(loader)) {
 				runtime.install("system", file);
 			}
-			if (port > 0) {
+			if (port >= 0) {
 				runtime.network = new Network(runtime);
 				runtime.network.install(port);
 			}

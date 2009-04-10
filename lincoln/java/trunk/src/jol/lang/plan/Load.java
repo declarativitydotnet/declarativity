@@ -1,5 +1,6 @@
 package jol.lang.plan;
 
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -66,7 +67,7 @@ public class Load extends Clause {
 		if (type == String.class) {
 			return value.equals("null") ? null : value.trim();
 		}
-		else if (type == Number.class) {
+		else if (Number.class.isAssignableFrom(type)) {
 			if (type == Integer.class) {
 				return Integer.parseInt(value);
 			}

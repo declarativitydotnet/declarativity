@@ -63,6 +63,10 @@ public class TCPNIO extends Server {
 		this.server.socket().bind(new InetSocketAddress(port));
 		this.server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
+	
+	public int getLocalPort() {
+		return this.server.socket().getLocalPort();
+	}
 
 	public void cleanup() {
 	    this.isDone = true;

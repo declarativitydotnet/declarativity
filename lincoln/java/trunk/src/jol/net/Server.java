@@ -21,4 +21,7 @@ public abstract class Server extends Thread {
 	 * @param channel The channel to close.
 	 */
 	public abstract void close(Channel channel);
+	
+	
+	public abstract int getLocalPort();
 }
