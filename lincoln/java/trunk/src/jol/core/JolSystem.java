@@ -16,9 +16,6 @@ import jol.types.table.Table.Catalog;
  */
 public interface JolSystem {
 
-	/**	Get the system lock. */
-	Object lock();
-
 	/**
 	 * Get the system clock.
 	 * @return The current system (logical) clock
@@ -30,6 +27,18 @@ public interface JolSystem {
 
 	/** Start the asynchronous system driver. */
 	void start();
+	
+	/** Returns the server port. */
+	int getServerPort();
+	
+	/**
+	 * Get the main driver thread object.
+	 * The driver thread is used as the system lock. Synchronizing
+	 * on this object ensures that you will receive a view of the
+	 * data store at fixpoint boundaries.
+	 * @return Main driver thread.
+	 */
+	Thread driver();
 
 	/** Indicates the last time a call was made to evaluate. */
 	Long timestamp();

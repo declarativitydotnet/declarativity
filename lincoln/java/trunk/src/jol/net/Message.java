@@ -17,4 +17,6 @@ public abstract class Message implements Serializable {
 	public String layer() {
 		return this.layer;
 	}
+	
+	public abstract String toString();
 }

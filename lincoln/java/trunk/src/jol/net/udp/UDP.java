@@ -41,6 +41,10 @@ public class UDP extends Server {
 		context.install("system", "jol/net/udp/udp.olg");
 		context.evaluate();
 	}
+	
+	public int getLocalPort() {
+		return this.server.getLocalPort();
+	}
 
 	/**
 	 * Receives UDP packets and adds them to the UDP Buffer table.
