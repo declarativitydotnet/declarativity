@@ -23,6 +23,9 @@ scheduleTask(TrackerName, TaskId) :-
 	assignTracker(mapSlots(TrackerName, Maps, Priority, Type, Tasks)),
 	TaskId := (TaskID) Tasks;
 	
+watch(mapSlots, a);
+watch(scheduleTask, a);
+
 scheduleTask(TaskTracker, TaskId) :-
 	assignTracker(reduceSlots(TaskTracker, Reduces, Priority, Type, Tasks)),
 	TaskId := (TaskID) Tasks;
@@ -33,7 +36,8 @@ scheduleTask(TaskTracker, TaskId) :-
 public
 mapSlots(TaskTracker, Maps, Priority, Type, set<TaskId>) :-
 	bestCandidate(candidate(JobId, TaskId, Type, TaskTracker, Priority)),
-	hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING, _, MapCount, _, MaxMap, _, _),
+	hadoop::trackerWorkload(TaskTracker, MapCount, _),
+	hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING, _, _, _, MaxMap, _, _),
 	Type == Constants.TaskType.MAP, MaxMap - MapCount > 0
     {
         Maps := MaxMap - MapCount;
@@ -44,7 +48,8 @@ mapSlots(TaskTracker, Maps, Priority, Type, set<TaskId>) :-
 public
 reduceSlots(TrackerName, Reduces, Priority, Type, set<TaskId>) :-
 	bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
-	hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING, _, _, ReduceCount, _, MaxReduce, _),
+	hadoop::trackerWorkload(TaskTracker, _, ReduceCount),
+	hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING, _, _, _, _, MaxReduce, _),
 	Type == Constants.TaskType.REDUCE, MaxReduce - ReduceCount > 0
     {
         Reduces := MaxReduce - ReduceCount;

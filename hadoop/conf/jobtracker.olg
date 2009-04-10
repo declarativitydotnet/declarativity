@@ -23,8 +23,7 @@ import java.util.List;
 
 watch(job, a);
 watch(task, a);
-watch(taskAttempt, a);
-watch(taskTrackerAction, s);
+watch(taskTracker, a);
 
 /*************** TaskTracker Handlers ***********/
 
@@ -32,7 +31,6 @@ public forwardAction
 taskTrackerAction(@TaskTracker, JobTracker, ActionType, Action) :-
 	taskTrackerAction(@JobTracker, TaskTracker, ActionType, Action);
 	
-watch(jobTracker, s);
 define(jobTracker, {String, String, Constants.TrackerState});
 jobTracker(@TaskTracker, JobTracker, Constants.TrackerState.RUNNING) :-
 	taskTracker(@JobTracker, TaskTracker, _, _, Constants.TrackerState.INITIAL);
@@ -42,9 +40,6 @@ define(activeJobs, keys(), {Integer});
 define(activeTasks, keys(), {Integer});
 define(failedTaskLocation, keys(0,1), {JobID, TaskID, String});
 define(tasksWaitingForSchedule, keys(0), {Integer});
-
-watch(failedTaskLocation, a);
-watch(tasksWaitingForSchedule, a);
 
 tasksWaitingForSchedule(count<TaskId>) :-
     task(JobId, TaskId, _, _, _, _, TaskStatus),
@@ -73,6 +68,7 @@ define(cleanup, {JobID, JobState});
 cleanup(JobId, JStatus.state()) :-
 	job(JobId, _, _, _, _, _, _, _, _, JStatus),
 	JStatus.state() == Constants.JobState.SUCCEEDED || 
+	JStatus.state() == Constants.JobState.KILLED    || 
 	JStatus.state() == Constants.JobState.FAILED;
 	
 delete
@@ -200,3 +196,36 @@ taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
 	{
 		StatusUpdate := TaskStatus.attempt(AttemptId, Progress, State, Phase, Start, Finish);
 	};
+	
+	
+	
+/************** Keep tracker of task tracker workload status ********/
+define(trackerWorkload,   keys(0), {String, Integer, Integer});
+define(trackerMapWork,    keys(0), {String, Integer});
+define(trackerReduceWork, keys(0), {String, Integer});
+
+watch(trackerWorkload, a);
+/* Initialize tracker workload. But don't erase when tracker goes to running state,
+hence the #insert (basically turn off view maintenance). */
+public
+trackerWorkload(TaskTracker, 0, 0) :-
+	taskTracker#insert(JobTracker, TaskTracker, _, _, Constants.TrackerState.INITIAL);
+	
+trackerWorkload(TaskTracker, Maps, Reduces) :-
+	trackerMapWork(TaskTracker, Maps), trackerReduceWork(TaskTracker, Reduces);
+	
+trackerWorkload(TaskTracker, Maps, 0) :-
+	trackerMapWork(TaskTracker, Maps), notin trackerReduceWork(TaskTracker, Reduces);
+	
+trackerWorkload(TaskTracker, 0, Reduces) :-
+	trackerReduceWork(TaskTracker, Reduces), notin trackerMapWork(TaskTracker, Maps); 
+
+public
+trackerMapWork(TaskTracker, count<AttemptId>) :-
+    taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING),
+    AttemptId.isMap();
+    
+public
+trackerReduceWork(TaskTracker, count<AttemptId>) :-
+    taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING),
+    !AttemptId.isMap();

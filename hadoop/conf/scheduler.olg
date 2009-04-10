@@ -33,7 +33,6 @@ taskAttempts(JobId, TaskId, count<AttemptId>) :-
 		TaskId := AttemptId.getTaskID();
 	};
 	
-watch(hadoop::taskAttempt, a);
 public
 hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, 0f, State, Phase, FileLocation, System.currentTimeMillis(), 0L) :-
 	schedule(JobId, TaskId, TaskTracker), notin taskAttempts(JobId, TaskId, _),
@@ -71,15 +70,16 @@ hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.
 
 /******************** Signal task tracker slots available *******************/
 
-define(trackerSlots, {String, String, Integer, Integer});
-
 watch(trackerSlots, a);
+define(trackerSlots, {String, String, Integer, Integer});
 public
 trackerSlots(TaskTracker, Host, Maps, Reduces) :-
-	hadoop::taskTracker(JobTracker, TaskTracker, Host, HttpPort, State, Failures,  MapCount, ReduceCount, MaxMap, MaxReduce, _),
 	hadoop::tasksWaitingForSchedule(Count), Count > 0,
+	hadoop::trackerWorkload(TaskTracker, MapCount, ReduceCount),
+	hadoop::taskTracker(_, TaskTracker, Host, _, State, _, _, _, MaxMap, MaxReduce, _),
 	MapCount < MaxMap || ReduceCount < MaxReduce
     {
       Maps := MapCount < MaxMap ? MaxMap - MapCount : 0;
       Reduces := ReduceCount < MaxReduce ? MaxReduce - ReduceCount : 0;
     };
+	
