@@ -116,6 +116,7 @@ public class BoomFileSystem extends FileSystem {
 										   bfsInfo.getReplication(),
 										   bfsInfo.getChunkSize(),
 										   0,    // modification time
+										   0,    // access time
 										   FsPermission.getDefault(),
 										   bfsInfo.getOwner(),
 										   bfsInfo.getGroup(),
