@@ -65,10 +65,8 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 	
 	private Path systemDir;
 	
-	private JolSystem jollib;
+	private jol.core.Runtime jollib;
 	
-	private InetSocketAddress jolAddress;
-
 	private Map<TaskAttemptID, TaskRunner> tasks;
 	
 	private Map<JobID, ArrayList<TaskCompletionEvent>> mapCompletionEvents;
@@ -84,22 +82,20 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		this.systemDir = fs.makeQualified(this.systemDir);
 	}
 	
-	public static InetSocketAddress getJolAddress(Configuration conf) {
-		String address = conf.get("jol.task.tracker", "localhost:9002");
-		return NetUtils.createSocketAddr(address);
+	public static int getJolPort(Configuration conf) {
+		return conf.getInt("mapred.jol.port", 9002);
 	}
 	
 	@Override
 	public synchronized void initialize() throws IOException {
 		super.initialize();
-		this.jolAddress = getJolAddress(fConf);
-		
 		if (this.jollib != null) {
 			this.jollib.shutdown();
 		}
 		
 		try {
-			this.jollib = jol.core.Runtime.create(jol.core.Runtime.DEBUG_ALL, System.err, jolAddress.getPort());
+			this.jollib = (jol.core.Runtime)
+				jol.core.Runtime.create(jol.core.Runtime.DEBUG_WATCH, System.err, 0);
 		} catch (JolRuntimeException e) {
 			throw new IOException(e);
 		}
@@ -170,7 +166,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		try {
 			InetSocketAddress jtJolAddr = JobTracker.getJolAddress(this.fConf);
 			String jtJolAddress = "tcp:" + jtJolAddr.getHostName() + ":" + jtJolAddr.getPort();
-			String ttJolAddress = "tcp:" + this.jolAddress.getHostName() + ":" + this.jolAddress.getPort();
+			String ttJolAddress = "tcp:" + this.localHostname + ":" + this.jollib.getServerPort();
 			
 			/* Install configuration state */
 			TupleSet config = new BasicTupleSet();
@@ -186,8 +182,6 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		} catch (JolRuntimeException e) {
 			throw new IOException(e);
 		}
-		
-		this.jollib.start();
 	}
 	
 	public void kill(TaskRunner runner) {
@@ -400,8 +394,17 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		
+		try {
+			initialize();
+			this.jollib.start();
+			this.jollib.driver().join();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			if (this.jollib != null) {
+				this.jollib.shutdown();
+			}
+		}
 	}
 
 	@Override

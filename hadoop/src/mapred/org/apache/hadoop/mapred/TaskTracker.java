@@ -91,8 +91,6 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 	    server.addServlet("taskLog", "/tasklog", TaskLogServlet.class);
 	    server.start();
 	    this.httpPort = server.getPort();
-	    initialize();
-
 	}
 
 	public abstract Updater getTaskTrackerMetrics();
