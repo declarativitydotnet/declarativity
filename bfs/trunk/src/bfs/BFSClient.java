@@ -508,7 +508,7 @@ public class BFSClient {
 				done = false;
 			}
     	}
-    	throw new RuntimeException("BFS broadcast request #" + requestid + " timed out.  Missing responses from " + unseenPartitions + "got responses from " + seenPartitions);
+    	throw new RuntimeException("BFS broadcast request #" + requestid + " timed out.  Missing responses from " + unseenPartitions + ", got responses from " + seenPartitions);
     }
 
     private void updateMasterAddr(int partition) {

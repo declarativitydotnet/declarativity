@@ -613,7 +613,7 @@ public class Shell {
     			done = false;
     		}
     	}
-    	throw new RuntimeException("BFS broadcast request #??? timed out.  Missing responses from " + unseenPartitions + "got responses from " + seenPartitions);
+    	throw new RuntimeException("BFS broadcast request #??? timed out.  Missing responses from " + unseenPartitions + ", got responses from " + seenPartitions);
     }
     public void shutdown() {
         this.system.shutdown();
