@@ -102,7 +102,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		
 		/* Install tables relevant to the task tracker. */
 		this.attemptTable = new TaskAttemptTable((jol.core.Runtime)jollib);
-		this.jollib.catalog().register(this.attemptTable);
+		this.jollib.catalog().register((Table)this.attemptTable);
 		
 		this.jollib.catalog().register(new TaskTrackerTable( (jol.core.Runtime)jollib));
 		this.jollib.catalog().register(new TaskTrackerErrorTable( (jol.core.Runtime)jollib));

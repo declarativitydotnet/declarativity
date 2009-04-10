@@ -16,13 +16,13 @@ import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.basic.ValueList;
 import jol.types.exception.BadKeyException;
-import jol.types.table.ConcurrentHashIndex;
-import jol.types.table.ConcurrentTable;
+import jol.types.table.BasicTable;
+import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
 import jol.types.table.TableName;
 
-public class TaskTable extends ConcurrentTable {
+public class TaskTable extends BasicTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName("hadoop", "task");
 
@@ -46,7 +46,7 @@ public class TaskTable extends ConcurrentTable {
 	public TaskTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		Key typeKey = new Key(Field.TYPE.ordinal());
-		Index index = new ConcurrentHashIndex(context, this, typeKey, Index.Type.SECONDARY);
+		Index index = new HashIndex(context, this, typeKey, Index.Type.SECONDARY);
 		secondary().put(typeKey, index);
 	}
 
