@@ -1,5 +1,6 @@
 program hadoop;
 
+import java.lang.System;
 import org.apache.hadoop.mapred.TaskTracker;
 import org.apache.hadoop.mapred.TaskRunner;
 import org.apache.hadoop.mapred.JobConf;
@@ -54,46 +55,28 @@ define(statusUpdate, {TaskAttemptID, // The task being updated
 
 /*********************** Running task tally ************************/
 
-define(countFailures, {Integer});
-define(countMaps,     {Integer});
-define(countReduces,  {Integer});
+define(trackerWorkload,   keys(0), {String, Integer, Integer});
+define(trackerMapWork,    keys(0), {String, Integer});
+define(trackerReduceWork, keys(0), {String, Integer});
 
-define(taskFailures,   keys(0), {String, Integer});
-define(runningMaps,    keys(0), {String, Integer});
-define(runningReduces, keys(0), {String, Integer});
+watch(trackerWorkload, a);
+trackerWorkload(TaskTracker, 0, 0) :-
+	configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
+	
+trackerWorkload(TaskTracker, Maps, Reduces) :-
+	trackerMapWork(TaskTracker, Maps), trackerReduceWork(TaskTracker, Reduces);
+	
+trackerWorkload(TaskTracker, Maps, 0) :-
+	trackerMapWork(TaskTracker, Maps), notin trackerReduceWork(TaskTracker, Reduces);
+	
+trackerWorkload(TaskTracker, 0, Reduces) :-
+	trackerReduceWork(TaskTracker, Reduces), notin trackerMapWork(TaskTracker, Maps); 
 
-
-/*** Initialize counts ***/
-taskFailures(TaskTracker, 0) :-
-	configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
-	
-runningMaps(TaskTracker, 0) :-
-	configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
-	
-runningReduces(TaskTracker, 0) :-
-	configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
-	
-/*** Count maintenance ***/
-countFailures(count<Id>) :-
-	taskRunner(_, _, Id, _, _, TaskState.FAILED, _, _); 
-	
-taskFailures(TaskTracker, Count) :- 
-    countFailures(Count),
-	configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
-	
-countMaps(count<Id>) :-
-	taskRunner(_, _, Id, TaskType.MAP, _, TaskState.RUNNING, _, _); 
-	
-runningMaps(TaskTracker, Count) :- 
-	countMaps(Count),
-	configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
-	
-countReduces(count<Id>) :-
-	taskRunner(_, _, Id, TaskType.REDUCE, _, TaskState.RUNNING, _, _); 
-	
-runningReduces(TaskTracker, Count) :- 
-    countReduces(Count),
-	configuration(TaskTracker, _, _, _, _, _);
+trackerMapWork(TaskTracker, count<AttemptId>) :-
+	taskRunner(TaskTracker, _, AttemptId, TaskType.MAP, _, TaskState.RUNNING, _, _); 
+    
+trackerReduceWork(TaskTracker, count<AttemptId>) :-
+	taskRunner(TaskTracker, _, AttemptId, TaskType.REDUCE, _, TaskState.RUNNING, _, _); 
 
 /**********************************************************************/
 
@@ -135,7 +118,6 @@ taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, TaskState.KILLED,
 /**********************************************************************/
 
 watch(statusUpdate, a);
-watch(mapCompletion, a);
 
 taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner) :-
 	statusUpdate(AttemptId, Progress, State, Phase, Diag), 
@@ -150,27 +132,34 @@ mapCompletion(JobId, AttemptId, State, FileLocation) :-
  
 /******************* Update State @JobTracker *************************/
 
-watch(taskAttempt, as);
-
 timer(heartbeatInterval, physical, 10000, infinity, 0);
 define(heartbeat, {String, String, Integer, Integer, Integer});
 
 heartbeat(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces) :-
     heartbeatInterval(), configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
    
+watch(taskTracker, s);
 /* Send an update every so often, regardless of current running state. */
 taskTracker(@JobTracker, TaskTracker, Host, HttpPort, JobTrackerState, Failures, 
-                    Maps, Reduces, MaxMaps, MaxReduces, java.lang.System.currentTimeMillis()) :-
+                    Maps, Reduces, MaxMaps, MaxReduces, Timestamp) :-
     heartbeat(@TaskTracker, Host, HttpPort, MaxMaps, MaxReduces), 
     jobTracker(@TaskTracker, JobTracker, JobTrackerState), 
-	runningMaps(@TaskTracker, Maps), runningReduces(@TaskTracker, Reduces), taskFailures(@TaskTracker, Failures);
+    trackerWorkload(@TaskTracker, Maps, Reduces)
+    {
+    	Failures := 0; // todo later
+    	Timestamp := System.currentTimeMillis();
+    };
 	
 /* Send an update when something changes. */
 taskTracker(@JobTracker, TaskTracker, Host, HttpPort, JobTrackerState, Failures, 
-                    Maps, Reduces, MaxMaps, MaxReduces, java.lang.System.currentTimeMillis()) :-
+                    Maps, Reduces, MaxMaps, MaxReduces, Timestamp) :-
 	jobTracker(@TaskTracker, JobTracker, JobTrackerState), 
 	configuration(@TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT),
-	runningMaps(@TaskTracker, Maps), runningReduces(@TaskTracker, Reduces), taskFailures(@TaskTracker, Failures);
+    trackerWorkload(@TaskTracker, Maps, Reduces)
+    {
+    	Failures := 0; // todo later
+    	Timestamp := System.currentTimeMillis();
+    };
             
 taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
 	taskRunner#insert(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner), 
