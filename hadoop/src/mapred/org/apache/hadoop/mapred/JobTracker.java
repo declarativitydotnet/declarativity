@@ -43,11 +43,9 @@ public abstract class JobTracker {
 			Path outputPath = FileOutputFormat.getOutputPath(conf);
 	        String userLogDir = conf.get("hadoop.job.history.user.location",
 	        		outputPath == null ? "./" : outputPath.toString());
-	        Set<DebugLevel> debugger = new HashSet<DebugLevel>();
-	        debugger.add(DebugLevel.WATCH);
 	        
 	        InetSocketAddress addr = getJolAddress(conf);
-			JolSystem context = jol.core.Runtime.create(jol.core.Runtime.DEBUG_ALL, System.err, addr.getPort());
+			JolSystem context = jol.core.Runtime.create(jol.core.Runtime.DEBUG_WATCH, System.err, addr.getPort());
 			context.setPriority(Thread.MAX_PRIORITY);
 			return new JobTrackerImpl(context, conf);
 		} catch (Throwable e) {
@@ -61,8 +59,10 @@ public abstract class JobTracker {
 	}
 	
 	public static InetSocketAddress getJolAddress(Configuration conf) {
-		String address = conf.get("jol.job.tracker", "localhost:9003");
-		return NetUtils.createSocketAddr(address);
+		String address = conf.get("mapred.job.tracker", "localhost:9001");
+		int    jolPort = conf.getInt("mapred.jol.port", 9002);
+		InetSocketAddress jtaddr = NetUtils.createSocketAddr(address);
+		return new InetSocketAddress(jtaddr.getHostName(), jolPort);
 	}
 
 	public final String identifier() {

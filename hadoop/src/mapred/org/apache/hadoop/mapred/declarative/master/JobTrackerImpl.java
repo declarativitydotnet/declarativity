@@ -61,7 +61,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 
 public class JobTrackerImpl extends JobTracker {
-	private final static String[] programs = {"jobTracker", "scheduler", "policy"};
+	private final static String[] programs = {"jobtracker", "scheduler", "policy"};
 
 	/* Some jobs are stored in a local system directory.  We can delete
 	 * the files when we're done with the job. */
