@@ -20,22 +20,19 @@ import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.TaskTrackerAction.ActionType;
 
 import jol.core.Runtime;
-import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.basic.BasicTupleSet;
 import jol.types.basic.TupleSet;
 import jol.types.exception.BadKeyException;
 import jol.types.exception.UpdateException;
 import jol.types.table.BasicTable;
-import jol.types.table.ConcurrentHashIndex;
-import jol.types.table.ConcurrentTable;
 import jol.types.table.HashIndex;
 import jol.types.table.Index;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
-public class TaskTrackerActionTable extends ConcurrentTable {
+public class TaskTrackerActionTable extends BasicTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName("hadoop", "taskTrackerAction");
 	
@@ -58,7 +55,7 @@ public class TaskTrackerActionTable extends ConcurrentTable {
 	public TaskTrackerActionTable(Runtime context) {
 		super(context, TABLENAME, PRIMARY_KEY, SCHEMA);
 		this.nameKey = new Key(Field.TRACKERNAME.ordinal());
-		Index index = new ConcurrentHashIndex(context, this, nameKey, Index.Type.SECONDARY);
+		Index index = new HashIndex(context, this, nameKey, Index.Type.SECONDARY);
 		secondary().put(nameKey, index);
 	}
 	

@@ -6,16 +6,14 @@ import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.declarative.Constants.TrackerState;
 
 import jol.core.Runtime;
-import jol.types.basic.ConcurrentTupleSet;
 import jol.types.basic.Tuple;
 import jol.types.exception.UpdateException;
 import jol.types.table.BasicTable;
-import jol.types.table.ConcurrentTable;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
 
-public class TaskTrackerTable extends ConcurrentTable {
+public class TaskTrackerTable extends BasicTable {
 	
 	/** The table name */
 	public static final TableName TABLENAME = new TableName("hadoop", "taskTracker");

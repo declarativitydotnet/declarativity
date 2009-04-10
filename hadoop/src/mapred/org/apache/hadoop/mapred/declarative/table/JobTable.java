@@ -8,11 +8,11 @@ import org.apache.hadoop.mapred.declarative.util.JobState;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.table.ConcurrentTable;
+import jol.types.table.BasicTable;
 import jol.types.table.Key;
 import jol.types.table.TableName;
 
-public class JobTable extends ConcurrentTable {
+public class JobTable extends BasicTable {
 	/** The table name */
 	public static final TableName TABLENAME = new TableName("hadoop", "job");
 	public static final TableName INIT = new TableName("hadoop", "initJob");

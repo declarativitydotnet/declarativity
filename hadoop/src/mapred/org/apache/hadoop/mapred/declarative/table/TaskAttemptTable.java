@@ -1,10 +1,6 @@
 package org.apache.hadoop.mapred.declarative.table;
 
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.JobTracker;
-import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskAttemptID;
-import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
 import org.apache.hadoop.mapred.declarative.Constants.TaskPhase;
@@ -13,11 +9,11 @@ import org.apache.hadoop.net.NetUtils;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
-import jol.types.table.ConcurrentTable;
+import jol.types.table.BasicTable;
 import jol.types.table.Key;
 import jol.types.table.TableName;
 
-public class TaskAttemptTable extends ConcurrentTable {
+public class TaskAttemptTable extends BasicTable {
 	
 	/** The table name */
 	public static final TableName TABLENAME = new TableName("hadoop", "taskAttempt");
