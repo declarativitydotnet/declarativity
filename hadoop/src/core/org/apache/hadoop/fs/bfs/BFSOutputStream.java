@@ -3,8 +3,6 @@ package org.apache.hadoop.fs.bfs;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.List;
 
 import bfs.BFSClient;
 import bfs.BFSNewChunkInfo;
