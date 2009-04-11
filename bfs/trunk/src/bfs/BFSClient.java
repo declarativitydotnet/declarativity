@@ -251,14 +251,18 @@ public class BFSClient {
 
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
-                        if (success.booleanValue() == false)
-                            throw new RuntimeException("Failed to get directory listing for " + path);
-                        String masterName = (String) t.value(2);
-                        Object lsContent = t.value(4);
-                        System.out.println("master: " + masterName + " : " + lsContent);
-                        String truncatedMasterName = masterName.substring(masterName.indexOf(':')+1);
-                        int partition = Conf.getPartitionFromString(truncatedMasterName);
-                        responseQueue.put(new Tuple(partition, lsContent));
+                        if (success.booleanValue() == false) {
+                        	// XXX: hack. We need a way to return an error back to the
+                        	// caller, so we insert a bogus tuple.
+                        	responseQueue.put(new Tuple(-1, null));
+                        } else {
+                        	String masterName = (String) t.value(2);
+                        	Object lsContent = t.value(4);
+                        	System.out.println("master: " + masterName + " : " + lsContent);
+                        	String truncatedMasterName = masterName.substring(masterName.indexOf(':')+1);
+                        	int partition = Conf.getPartitionFromString(truncatedMasterName);
+                        	responseQueue.put(new Tuple(partition, lsContent));
+                        }
                     }
                 }
             }
@@ -276,8 +280,11 @@ public class BFSClient {
         }
 
         Set<BFSFileInfo> ret = new HashSet<BFSFileInfo>();
-    	Set<Object> lsResponses =  waitForBroadcastResponse(Conf.getListingTimeout(), requestId, req);
+    	Set<Object> lsResponses = waitForBroadcastResponse(Conf.getListingTimeout(), requestId, req);
         unregisterCallback(responseTbl, responseCallback);
+        if (lsResponses == null) // Error
+        	return null;
+
     	for (Object o : lsResponses) {
     		ret.addAll((Set<BFSFileInfo>) o);
     	}
@@ -488,9 +495,14 @@ public class BFSClient {
 			}
 			for (int i = 0; i < Conf.getNumPartitions(); i++) {
 				if (results[i] != null) {
+					Integer partitionId = (Integer) results[i].value(0);
+					// If we got an error response from any master,
+					// return error to the caller
+					if (partitionId.intValue() == -1)
+						return null;
 					ret.add(results[i].value(1));
-					seenPartitions.add((Integer) results[i].value(0));
-					unseenPartitions.remove((Integer) results[i].value(0));
+					seenPartitions.add(partitionId);
+					unseenPartitions.remove(partitionId);
 				}
 			}
 
