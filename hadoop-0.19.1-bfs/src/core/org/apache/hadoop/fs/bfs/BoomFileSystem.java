@@ -128,6 +128,8 @@ public class BoomFileSystem extends FileSystem {
 	public FileStatus[] listStatus(Path path) throws IOException {
 		System.out.println("BFS#listStatus() called for " + path);
 		Set<BFSFileInfo> bfsListing = this.bfs.getDirListing(getPathName(path));
+		if (bfsListing == null)
+			return null;
 
 		// XXX: ugly. We need to convert the BFS data structure to the Hadoop
 		// file info format manually
