@@ -278,7 +278,7 @@ public class BFSClient {
         Set<BFSFileInfo> ret = new HashSet<BFSFileInfo>();
     	Set<Object> lsResponses =  waitForBroadcastResponse(Conf.getListingTimeout(), requestId, req);
         unregisterCallback(responseTbl, responseCallback);
-    	for(Object o : lsResponses) {
+    	for (Object o : lsResponses) {
     		ret.addAll((Set<BFSFileInfo>) o);
     	}
         return Collections.unmodifiableSet(ret);
@@ -461,10 +461,10 @@ public class BFSClient {
             updateMasterAddr(partition);
         }
 
-        throw new RuntimeException("BFS (partition "+partition+") request #" + requestId + " timed out.");
+        throw new RuntimeException("BFS (partition " + partition + ") request #" + requestId + " timed out.");
     }
 
-    private Set<Object> waitForBroadcastResponse(long timeout, int requestid, TupleSet req) throws RuntimeException {
+    private Set<Object> waitForBroadcastResponse(long timeout, int requestId, TupleSet req) throws RuntimeException {
         Set<Object> ret = new HashSet<Object>();
 		Set<Integer> unseenPartitions = new HashSet<Integer>();
 		Set<Integer> seenPartitions = new HashSet<Integer>();
@@ -480,7 +480,7 @@ public class BFSClient {
 			for (int i = 1 ; i < Conf.getNumPartitions(); i++) {
 				long now = System.currentTimeMillis();
 				if ((start + timeout) - now > 0) {
-					results[i] = (Tuple)this.responseQueue.get((start + timeout) - now);
+					results[i] = (Tuple) this.responseQueue.get((start + timeout) - now);
 				} else {
 					done = true;
 					break;
@@ -512,7 +512,7 @@ public class BFSClient {
 				done = false;
 			}
     	}
-    	throw new RuntimeException("BFS broadcast request #" + requestid + " timed out.  Missing responses from " + unseenPartitions + ", got responses from " + seenPartitions);
+    	throw new RuntimeException("BFS broadcast request #" + requestId + " timed out.  Missing responses from " + unseenPartitions + ", got responses from " + seenPartitions);
     }
 
     private void updateMasterAddr(int partition) {
