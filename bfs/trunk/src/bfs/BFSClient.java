@@ -465,13 +465,14 @@ public class BFSClient {
     }
 
     private Set<Object> waitForBroadcastResponse(long timeout, int requestid, TupleSet req) throws RuntimeException {
-    	boolean done = false;
         Set<Object> ret = new HashSet<Object>();
 		Set<Integer> unseenPartitions = new HashSet<Integer>();
 		Set<Integer> seenPartitions = new HashSet<Integer>();
 		for (int i = 0; i < Conf.getNumPartitions(); i++) {
 			unseenPartitions.add(i);
 		}
+
+    	boolean done = false;
 		while (!done) {
 			long start = System.currentTimeMillis();
 			Tuple results[] = new Tuple[Conf.getNumPartitions()];
@@ -501,10 +502,13 @@ public class BFSClient {
 				this.currentMaster[i]++;
 				if (this.currentMaster[i] == Conf.getNumMasters(i)) { done = true; break; }
 				updateMasterAddr(i);
-                        	try{
-                	                // HACK resubmit request
-        	                        this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
-	                        } catch (JolRuntimeException e) {e.printStackTrace(); }
+				try {
+					// HACK resubmit request
+					this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
+				} catch (JolRuntimeException e) {
+					e.printStackTrace();
+					throw new RuntimeException(e);
+				}
 				done = false;
 			}
     	}
