@@ -41,7 +41,7 @@ public class UDP extends Server {
 		context.install("system", "jol/net/udp/udp.olg");
 		context.evaluate();
 	}
-	
+
 	public int getLocalPort() {
 		return this.server.getLocalPort();
 	}
@@ -63,11 +63,11 @@ public class UDP extends Server {
 					Tuple tuple = new Tuple("receive", new IP(packet.getAddress(), packet.getPort()), message);
 					context.schedule("udp", UDPMessage, new BasicTupleSet(tuple), null);
 				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-					System.exit(-1);
+					throw new RuntimeException(e);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 	}

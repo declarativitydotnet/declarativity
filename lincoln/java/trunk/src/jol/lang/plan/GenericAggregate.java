@@ -22,29 +22,29 @@ public class GenericAggregate extends Aggregate {
 	public GenericAggregate(Node node, MethodCall method) {
 		super(node, method, "generic", method.object().type());
 	}
-	
+
 	@Override
 	public GenericAggregate clone() {
 		return new GenericAggregate(node(), this.method);
 	}
-	
+
 	@Override
 	public String toString() {
 		return "generic<" + method.method().getName() + ">";
 	}
-	
+
 	@Override
 	public TupleFunction function(Schema schema) throws PlannerException {
 		return this.method.object().function(schema);
 	}
-	
+
 	public TupleFunction function(final Object instance, Schema schema) throws PlannerException {
 		final List<TupleFunction> argFunctions = new ArrayList<TupleFunction>();
 		final Method method = this.method.method();
 		for (Expression argument : this.method.arguments()) {
 			argFunctions.add(argument.function(schema));
 		}
-		
+
 		return new TupleFunction() {
 			public Object evaluate(Tuple tuple) throws JolRuntimeException {
 				Object[] arguments = new Object[argFunctions.size()];
@@ -59,12 +59,11 @@ public class GenericAggregate extends Aggregate {
 					} catch (InvocationTargetException e) {
 						System.err.println(e.getTargetException().getMessage());
 						e.getTargetException().printStackTrace();
-						System.exit(-1);
+						throw new RuntimeException(e);
 					} catch (Exception e) {
 						System.err.println(e + ": method invocation " + method.toString());
-						System.exit(-1);
+						throw new RuntimeException(e);
 					}
-					return null;
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new JolRuntimeException(e.toString());
@@ -76,5 +75,4 @@ public class GenericAggregate extends Aggregate {
 			}
 		};
 	}
-	
 }

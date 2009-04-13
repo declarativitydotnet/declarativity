@@ -49,7 +49,7 @@ public class TCP extends Server {
 		context.install("system", "jol/net/tcp/tcp.olg");
 		context.evaluate();
 	}
-	
+
 	public int getLocalPort() {
 		return this.server.getLocalPort();
 	}
@@ -193,11 +193,9 @@ public class TCP extends Server {
 					}
 					return;
 				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-					System.exit(-1);
+					throw new RuntimeException(e);
 				} catch (Exception e) {
-					e.printStackTrace();
-					System.exit(-1);
+					throw new RuntimeException(e);
 				}
 			}
 		}

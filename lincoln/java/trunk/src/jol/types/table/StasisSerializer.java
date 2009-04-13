@@ -28,30 +28,27 @@ public class StasisSerializer {
 			serializer.writeObject(o);
 		} catch(IOException e) {
 			e.printStackTrace();
-			System.exit(-1);
+			throw new RuntimeException(e);
 		}
 	}
-	public  byte[] objectBytes() {
+	public byte[] objectBytes() {
 		try {
 			serializer.close(); // does not affect outArray...
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(-1);
+			throw new RuntimeException(e);
 		}
 		byte[] ret = outArray.toByteArray(); // makes copy
 		outArray.reset();  // reset outArray to beginning of stream for next time.
 		try {
 			serializer = new ObjectOutputStream(outArray);
-		} catch(IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(-1);
+			throw new RuntimeException(e);
 		}
-		if(ret == null) {
-			System.out.println("Impossible!!!");
-			System.exit(-1);
+		if (ret == null) {
+			throw new RuntimeException("Impossible!!!");
 		}
 		return ret;
 	}
-
-
 }

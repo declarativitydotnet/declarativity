@@ -66,7 +66,7 @@ public class Program implements Comparable<Program> {
 			context.catalog().table(ProgramTable.TABLENAME).force(new Tuple(name, owner, this));
 		} catch (Throwable e) {
 			e.printStackTrace();
-			System.exit(1);
+			throw new RuntimeException(e);
 		}
 	}
 

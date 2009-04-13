@@ -224,7 +224,7 @@ public class Aggregation<C extends Comparable<C>> extends Table {
 				}
 			} catch (JolRuntimeException e) {
 				e.printStackTrace();
-				System.exit(-1);
+				throw new RuntimeException(e);
 			}
 		}
 
