@@ -29,8 +29,7 @@ public class Function extends Operator {
 		this.function = function;
 		this.predicate = predicate;
 		if (this.function == null || this.predicate == null) {
-			System.err.println("TRIED TO CREATE A TABLE FUNCTION WITH NULL ARGUMENTS");
-			System.exit(-1);
+			throw new RuntimeException("TRIED TO CREATE A TABLE FUNCTION WITH NULL ARGUMENTS");
 		}
 	}
 
@@ -40,7 +39,7 @@ public class Function extends Operator {
 			return this.function.insert(tuples, null);
 		} catch (UpdateException e) {
 			e.printStackTrace();
-			throw new JolRuntimeException(e.toString());
+			throw new JolRuntimeException(e);
 		}
 	}
 
@@ -49,5 +48,4 @@ public class Function extends Operator {
 		return this.function == null || this.predicate == null ?
 				"null" : this.function.name() + "(" + predicate + ")";
 	}
-
 }

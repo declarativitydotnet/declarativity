@@ -183,11 +183,9 @@ public class Compiler {
 			return (Node) parser.value(parser.pProgram(0));
 		} catch (Exception e) {
 			// XXX: proper error handling
-			System.err.println(e.getMessage());
 			e.printStackTrace();
-			System.exit(-1);
+			throw new RuntimeException(e);
 		}
-		return null;
 	}
 
 	/*
@@ -264,8 +262,7 @@ public class Compiler {
 			}
 		} catch (CompileException e) {
 			runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage(), e.node());
-			runtime.error("Compile error. Exiting.");
-			System.exit(-1);
+			throw new RuntimeException("Compile error", e);
 		} catch (Throwable e) {
 			if (e.getCause() instanceof CompileException) {
 				CompileException ce = (CompileException) e.getCause();
@@ -274,8 +271,7 @@ public class Compiler {
 			else {
 				runtime.error("Compile Error Program " + this.program.name() + ": " + e.getMessage());
 			}
-			runtime.error("Compile error. Exiting.");
-			System.exit(-1);
+			throw new RuntimeException("Compile error", e);
 		}
 	}
 }

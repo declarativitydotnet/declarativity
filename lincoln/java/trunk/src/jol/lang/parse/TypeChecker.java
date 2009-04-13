@@ -754,7 +754,7 @@ public final class TypeChecker extends Visitor {
 		n.setProperty(Constants.TYPE, terms);
 		return List.class;
 	}
-	
+
 	public Class visitBodyExtension(final GNode n) {
 		List<Term> extensions = new ArrayList<Term>();
 		Class type = (Class) dispatch(n.getNode(0));
@@ -768,10 +768,9 @@ public final class TypeChecker extends Visitor {
 			extensions.add(a);
 		}
 		else {
-			System.err.println("TypeCHecker VisitBodyExtension: THIS SHOULD NEVER HAPPEN!");
-			System.exit(-1);
+			throw new RuntimeException("TypeCHecker VisitBodyExtension: THIS SHOULD NEVER HAPPEN!");
 		}
-		
+
 		if (n.size() > 1) {
 			type = (Class) dispatch(n.getNode(1));
 			extensions.addAll((List) n.getNode(1).getProperty(Constants.TYPE));

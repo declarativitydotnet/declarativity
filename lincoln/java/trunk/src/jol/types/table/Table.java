@@ -139,12 +139,10 @@ public abstract class Table implements Comparable<Table> {
 			try {
 				TupleSet tuples = primary().lookupByKey(name);
 				return delete(tuples).size() > 0;
-
 			} catch (BadKeyException e) {
 				e.printStackTrace();
-				System.exit(-1);
+				throw new RuntimeException(e);
 			}
-			return false;
 		}
 
 		/**
@@ -163,12 +161,11 @@ public abstract class Table implements Comparable<Table> {
 					return (Table) table.iterator().next().value(Catalog.Field.OBJECT.ordinal());
 				}
 				else if (table.size() > 1) {
-					System.err.println("More than one " + name + " table defined!");
-					System.exit(1);
+					throw new RuntimeException("More than one " + name + " table defined!");
 				}
 			} catch (BadKeyException e) {
-				// TODO Fatal error.
 				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 			return null;
 		}

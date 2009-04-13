@@ -52,9 +52,8 @@ public class BasicTable extends Table {
 		} catch (Exception e) {
 			System.err.println("TABLE " + name() + " ERROR: " + e);
 			e.printStackTrace();
-			System.exit(-1);
+			throw new RuntimeException(e);
 		}
-		return null;
 	}
 
 	@Override
