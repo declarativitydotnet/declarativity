@@ -50,7 +50,8 @@ define(statusUpdate, {TaskAttemptID, // The task being updated
                       Float,         // Its progress
                       TaskState,     // Its state
                       TaskPhase,     // Its phase
-                      String         // Diagnostic info
+                      String,         // Diagnostic info
+                      Long           // Cursor position
                       });
 
 /*********************** Running task tally ************************/
@@ -120,7 +121,7 @@ taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, TaskState.KILLED,
 watch(statusUpdate, a);
 
 taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner) :-
-	statusUpdate(AttemptId, Progress, State, Phase, Diag), 
+	statusUpdate(AttemptId, Progress, State, Phase, Diag, Cursor), 
     taskRunner(TaskTracker, JobTracker, AttemptId, Type, _, _, _, Runner);
 	
 mapCompletion(JobId, AttemptId, State, FileLocation) :-
