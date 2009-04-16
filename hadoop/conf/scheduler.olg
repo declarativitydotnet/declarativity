@@ -55,7 +55,8 @@ hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, 0f, State, Phase, FileLo
 		FileLocation := "http://" + Host + ":" + HttpPort.toString();
 	};
 	
-watch(hadoop::taskTrackerAction, a);
+watch(hadoop::taskAttempt, a);
+watch(hadoop::taskTrackerAction, sa);
 actionSchedule
 hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
     hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING, Constants.TaskPhase.STARTING),
@@ -64,7 +65,7 @@ hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.
 	hadoop::task(JobId, TaskId, Type, Partition, FileInput, MapCount, _)
 	{
 		Action := Type == Constants.TaskType.MAP ? 
-		          Function.launchMap(FileInput.split(), JobFile, AttemptId, Partition) :
+		          Function.launchMap(FileInput, JobFile, AttemptId, Partition) :
 	 	          Function.launchReduce(JobFile, AttemptId, Partition, MapCount);
 	};
 

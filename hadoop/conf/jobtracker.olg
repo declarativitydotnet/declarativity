@@ -11,7 +11,6 @@ import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.util.JobState;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
 import org.apache.hadoop.mapred.declarative.util.Function;
-import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.TaskTrackerAction;
 import org.apache.hadoop.mapred.KillTaskAction;
 
@@ -21,7 +20,7 @@ import java.lang.Long;
 import java.lang.Enum;
 import java.util.List;
 
-watch(job, a);
+watch(job, ae);
 watch(task, a);
 watch(taskTracker, a);
 
@@ -98,7 +97,7 @@ jobCompletion(@TaskTracker, JobId, State) :-
 
 /*************** TASK INIT *********************/
 
-define(initTask, {JobID, JobConf, String, TaskID, Constants.TaskType, Integer, FileInput, Integer, TaskState});
+define(initTask, {JobID, JobConf, String, TaskID, Constants.TaskType, Integer, JobClient.RawSplit, Integer, TaskState});
 define(taskFile, {JobID, TaskID, List});
 define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 
@@ -119,7 +118,7 @@ taskFile(JobId, TaskId, Locations) :-
 	task(JobId, TaskId, Type, _, Input, _, Status),
 	Status.state() == Constants.TaskState.UNASSIGNED,
 	Type == Constants.TaskType.MAP
-	{ Split := Input.split(); Locations := Function.getLocations(Split); };
+	{ Locations := Function.getLocations(Input); };
 	
 	
 taskFileLocation(JobId, TaskId, Location) :-

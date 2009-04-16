@@ -4,7 +4,6 @@ import java.util.Set;
 import jol.types.basic.ValueList;
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.util.Function;
-import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskID;
 
@@ -25,6 +24,7 @@ scheduleTask(TrackerName, TaskId) :-
 	
 watch(mapSlots, a);
 watch(scheduleTask, a);
+watch(scheduler::schedule, a);
 
 scheduleTask(TaskTracker, TaskId) :-
 	assignTracker(reduceSlots(TaskTracker, Reduces, Priority, Type, Tasks)),
