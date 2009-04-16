@@ -65,6 +65,8 @@ public final class MapTask extends Task {
    */
   public static final int MAP_OUTPUT_INDEX_RECORD_LENGTH = 24;
   
+  public TrackedRecordReader recordReader = null;
+  
 
   private BytesWritable split = new BytesWritable();
   private String splitClass;
@@ -138,6 +140,10 @@ public final class MapTask extends Task {
   InputSplit getInputSplit() throws UnsupportedOperationException {
     return instantiatedSplit;
   }
+  
+  public RecordReader getRecordReader() {
+	  return this.recordReader;
+  }
 
   /**
    * This class wraps the user's record reader to update the counters and progress
@@ -173,7 +179,7 @@ public final class MapTask extends Task {
       boolean ret = rawIn.next(key, value);
       if (ret) {
         inputRecordCounter.increment(1);
-        inputByteCounter.increment(getPos() - beforePos);
+        inputByteCounter.increment(Math.abs(getPos() - beforePos));
       }
       return ret;
     }
@@ -226,17 +232,17 @@ public final class MapTask extends Task {
       
     RecordReader rawIn =                  // open input
       job.getInputFormat().getRecordReader(instantiatedSplit, job, reporter);
-    RecordReader in = new TrackedRecordReader(rawIn, getCounters());
+    this.recordReader = new TrackedRecordReader(rawIn, getCounters());
 
     MapRunnable runner =
       (MapRunnable)ReflectionUtils.newInstance(job.getMapRunnerClass(), job);
 
     try {
-      runner.run(in, collector, reporter);      
+      runner.run(this.recordReader, collector, reporter);      
       collector.flush();
     } finally {
       //close
-      in.close();                               // close input
+      this.recordReader.close();                               // close input
       collector.close();
     }
     done(umbilical);

@@ -186,7 +186,6 @@ public class JobTrackerImpl extends JobTracker {
 		this.context().catalog().register(new BestCandidate());
 		this.context().catalog().register(new TaskTable(context));
 		this.context().catalog().register(new TaskTrackerActionTable(context));
-		this.context().catalog().register(new LoadActions(context));
 		this.context().catalog().register(new TaskTrackerErrorTable(context));
 		this.context().catalog().register(new TaskTrackerTable(context));
 		this.context().catalog().register(new NetworkTopologyTable(context, this));

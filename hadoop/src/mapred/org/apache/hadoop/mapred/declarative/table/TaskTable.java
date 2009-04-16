@@ -3,12 +3,12 @@ package org.apache.hadoop.mapred.declarative.table;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
-import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.core.Runtime;
@@ -38,7 +38,7 @@ public class TaskTable extends BasicTable {
 		TaskID.class,    // Task identifier
 		TaskType.class,  // Task type
 		Integer.class,   // Partition number
-		FileInput.class, // Input file
+		JobClient.RawSplit.class, // Input file
 		Integer.class,   // Map count
 		TaskState.class // Task status
 	};

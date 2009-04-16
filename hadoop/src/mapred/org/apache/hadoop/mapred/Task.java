@@ -30,6 +30,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import jol.types.basic.BasicTupleSet;
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+import jol.types.table.TableName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configurable;
@@ -50,6 +55,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile.Writer;
+import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.Progressable;
@@ -316,8 +322,7 @@ public abstract class Task implements Writable, Serializable, Configurable {
               if (sendProgress) {
                 // we need to send progress update
                 updateCounters();
-                taskStatus.statusUpdate(taskProgress.get(), taskProgress.toString(), 
-                        counters);
+                taskStatus.statusUpdate(taskProgress.get(), taskProgress.toString(), counters, Task.this);
                 taskFound = umbilical.statusUpdate(taskId, taskStatus);
                 taskStatus.clearStatus();
               }
@@ -494,14 +499,21 @@ public abstract class Task implements Writable, Serializable, Configurable {
           // To be safe in case of an exception
           shouldBePromoted = true;
         }
-        umbilical.done(taskId, shouldBePromoted);
+        
+		TaskStatus.State state = shouldBePromoted ? 
+				TaskStatus.State.COMMIT_PENDING : TaskStatus.State.SUCCEEDED;
+        updateCounters();
+        taskStatus.statusUpdate(1f, taskProgress.toString(), counters, Task.this);
+        taskStatus.setRunState(state);
+        boolean taskFound = umbilical.statusUpdate(taskId, taskStatus);
+        System.err.println("STATUS DONE " + taskStatus);
         LOG.info("Task '" + getTaskID() + "' done.");
         return;
-      } catch (IOException ie) {
+      } catch (Throwable ie) {
         LOG.warn("Failure signalling completion: " + 
                  StringUtils.stringifyException(ie));
         if (--retries == 0) {
-          throw ie;
+          throw new IOException(ie);
         }
       }
     }

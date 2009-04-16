@@ -3,7 +3,6 @@ package org.apache.hadoop.mapred.declarative.table;
 import java.io.DataInputStream;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -16,7 +15,6 @@ import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.MRConstants;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
-import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.types.basic.Tuple;
@@ -39,7 +37,7 @@ public class TaskCreate extends Function {
 		TaskID.class,    // Task identifier
 		TaskType.class,  // Task type
 		Integer.class,   // Partition number
-		FileInput.class, // Input file
+		JobClient.RawSplit.class, // Input file
 		Integer.class,   // Map count
 		TaskState.class // Task status
 	};
@@ -105,7 +103,7 @@ public class TaskCreate extends Function {
 	    		System.err.println("ERROR: SPLIT DOES NOT HAVE A LOCATION.");
 	    		continue;
 	    	}
-	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile, mapid++, new FileInput(null, splits[i]), numMapTasks));
+	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile, mapid++, splits[i], numMapTasks));
 	    }
 
 	    //
@@ -131,7 +129,7 @@ public class TaskCreate extends Function {
 	}
 
 	private Tuple create(JobID jobid, TaskType type, JobConf conf, String jobFile,
-			             Integer partition, FileInput input, int mapCount) {
+			             Integer partition, JobClient.RawSplit input, int mapCount) {
 		TaskID taskid = new TaskID(jobid, type == TaskType.MAP, partition);
 
 		return new Tuple(jobid, conf, jobFile,

@@ -304,15 +304,6 @@ public class JobClient extends Configured implements MRConstants, Tool  {
     }
     
     /**
-     * Fetch task completion events from jobtracker for this job. 
-     */
-    public synchronized TaskCompletionEvent[] getTaskCompletionEvents(
-                                                                      int startFrom) throws IOException{
-      return jobSubmitClient.getTaskCompletionEvents(
-                                                     getID(), startFrom, 10); 
-    }
-
-    /**
      * Dump stats to screen
      */
     @Override
@@ -334,6 +325,7 @@ public class JobClient extends Configured implements MRConstants, Tool  {
     public Counters getCounters() throws IOException {
       return jobSubmitClient.getJobCounters(getID());
     }
+
   }
 
   JobSubmissionProtocol jobSubmitClient;
@@ -1043,57 +1035,6 @@ public class JobClient extends Configured implements MRConstants, Tool  {
             lastReport = report;
           }
             
-          TaskCompletionEvent[] events = 
-            running.getTaskCompletionEvents(eventCounter); 
-          eventCounter += events.length;
-          for(TaskCompletionEvent event : events){
-            TaskCompletionEvent.Status status = event.getTaskStatus();
-            if (profiling && 
-                (status == TaskCompletionEvent.Status.SUCCEEDED ||
-                 status == TaskCompletionEvent.Status.FAILED) &&
-                (event.isMap ? mapRanges : reduceRanges).
-                   isIncluded(event.idWithinJob())) {
-              downloadProfile(event);
-            }
-            switch(filter){
-            case NONE:
-              break;
-            case SUCCEEDED:
-              if (event.getTaskStatus() == 
-                TaskCompletionEvent.Status.SUCCEEDED){
-                LOG.info(event.toString());
-                displayTaskLogs(event.getTaskAttemptId(), event.getTaskTrackerHttp());
-              }
-              break; 
-            case FAILED:
-              if (event.getTaskStatus() == 
-                TaskCompletionEvent.Status.FAILED){
-                LOG.info(event.toString());
-                // Displaying the task diagnostic information
-                TaskAttemptID taskId = event.getTaskAttemptId();
-                String[] taskDiagnostics = 
-                  jc.jobSubmitClient.getTaskDiagnostics(taskId); 
-                if (taskDiagnostics != null) {
-                  for(String diagnostics : taskDiagnostics){
-                    System.err.println(diagnostics);
-                  }
-                }
-                // Displaying the task logs
-                displayTaskLogs(event.getTaskAttemptId(), event.getTaskTrackerHttp());
-              }
-              break; 
-            case KILLED:
-              if (event.getTaskStatus() == TaskCompletionEvent.Status.KILLED){
-                LOG.info(event.toString());
-              }
-              break; 
-            case ALL:
-              LOG.info(event.toString());
-              displayTaskLogs(event.getTaskAttemptId(), event.getTaskTrackerHttp());
-              break;
-            }
-          }
-          retries = MAX_RETRIES;
         } catch (IOException ie) {
           if (--retries == 0) {
             LOG.warn("Final attempt failed, killing job.");
@@ -1231,8 +1172,6 @@ public class JobClient extends Configured implements MRConstants, Tool  {
       System.err.println(prefix + "[" + cmd + " <job-id>]");
     } else if ("-counter".equals(cmd)) {
       System.err.println(prefix + "[" + cmd + " <job-id> <group-name> <counter-name>]");
-    } else if ("-events".equals(cmd)) {
-      System.err.println(prefix + "[" + cmd + " <job-id> <from-event-#> <#-of-events>]");
     } else if ("-history".equals(cmd)) {
       System.err.println(prefix + "[" + cmd + " <jobOutputDir>]");
     } else if ("-list".equals(cmd)) {
@@ -1273,7 +1212,6 @@ public class JobClient extends Configured implements MRConstants, Tool  {
     boolean getStatus = false;
     boolean getCounter = false;
     boolean killJob = false;
-    boolean listEvents = false;
     boolean viewHistory = false;
     boolean viewAllHistory = false;
     boolean listJobs = false;
@@ -1310,15 +1248,6 @@ public class JobClient extends Configured implements MRConstants, Tool  {
       }
       jobid = argv[1];
       killJob = true;
-    } else if ("-events".equals(cmd)) {
-      if (argv.length != 4) {
-        displayUsage(cmd);
-        return exitCode;
-      }
-      jobid = argv[1];
-      fromEvent = Integer.parseInt(argv[2]);
-      nEvents = Integer.parseInt(argv[3]);
-      listEvents = true;
     } else if ("-history".equals(cmd)) {
       if (argv.length != 2 && !(argv.length == 3 && "all".equals(argv[1]))) {
          displayUsage(cmd);
@@ -1408,9 +1337,6 @@ public class JobClient extends Configured implements MRConstants, Tool  {
       } else if (viewHistory) {
         viewHistory(outputDir, viewAllHistory);
         exitCode = 0;
-      } else if (listEvents) {
-        listEvents(JobID.forName(jobid), fromEvent, nEvents);
-        exitCode = 0;
       } else if (listJobs) {
         listJobs();
         exitCode = 0;
@@ -1447,25 +1373,6 @@ public class JobClient extends Configured implements MRConstants, Tool  {
     historyViewer.print();
   }
   
-  /**
-   * List the events for the given job
-   * @param jobId the job id for the job's events to list
-   * @throws IOException
-   */
-  private void listEvents(JobID jobId, int fromEventId, int numEvents)
-    throws IOException {
-    TaskCompletionEvent[] events = 
-      jobSubmitClient.getTaskCompletionEvents(jobId, fromEventId, numEvents);
-    System.out.println("Task completion events for " + jobId);
-    System.out.println("Number of events (from " + fromEventId + 
-                       ") are: " + events.length);
-    for(TaskCompletionEvent event: events) {
-      System.out.println(event.getTaskStatus() + " " + event.getTaskAttemptId() + " " + 
-                         getTaskLogURL(event.getTaskAttemptId(), 
-                                       event.getTaskTrackerHttp()));
-    }
-  }
-
   /**
    * Dump a list of currently running jobs
    * @throws IOException

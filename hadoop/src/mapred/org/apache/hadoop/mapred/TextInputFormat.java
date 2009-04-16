@@ -47,6 +47,6 @@ public class TextInputFormat extends FileInputFormat<LongWritable, Text>
     throws IOException {
     
     reporter.setStatus(genericSplit.toString());
-    return new LineRecordReader(job, (FileSplit) genericSplit);
+    return new InverseLineRecordReader(job, (FileSplit) genericSplit);
   }
 }

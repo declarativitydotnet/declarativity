@@ -35,6 +35,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.MRConstants;
+import org.apache.hadoop.mapred.MapTask;
 import org.apache.hadoop.mapred.ReduceTask;
 import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskAttemptID;
@@ -62,6 +63,8 @@ import org.apache.hadoop.util.StringUtils;
 public class TaskTrackerImpl extends TaskTracker implements Runnable {
 	private final static String[] programs = {"tasktracker"};
 	private final static String PROGRAM = "hadoop";
+	
+	private final static int ServerPort = 9004;
 	
 	private Path systemDir;
 	
@@ -95,7 +98,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		
 		try {
 			this.jollib = (jol.core.Runtime)
-				jol.core.Runtime.create(jol.core.Runtime.DEBUG_WATCH, System.err, 0);
+				jol.core.Runtime.create(jol.core.Runtime.DEBUG_WATCH, System.err, ServerPort);
 		} catch (JolRuntimeException e) {
 			throw new IOException(e);
 		}
@@ -166,7 +169,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		try {
 			InetSocketAddress jtJolAddr = JobTracker.getJolAddress(this.fConf);
 			String jtJolAddress = "tcp:" + jtJolAddr.getHostName() + ":" + jtJolAddr.getPort();
-			String ttJolAddress = "tcp:" + this.localHostname + ":" + this.jollib.getServerPort();
+			String ttJolAddress = "tcp:" + this.localHostname + ":" + ServerPort; // this.jollib.getServerPort();
 			
 			/* Install configuration state */
 			TupleSet config = new BasicTupleSet();
@@ -397,30 +400,13 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		try {
 			initialize();
 			this.jollib.start();
-			this.jollib.driver().join();
+			((Thread)this.jollib.lock()).join();
 		} catch (Throwable t) {
 			t.printStackTrace();
 		} finally {
 			if (this.jollib != null) {
 				this.jollib.shutdown();
 			}
-		}
-	}
-
-	@Override
-	public void done(TaskAttemptID taskid, boolean shouldBePromoted)
-			throws IOException {
-		Constants.TaskState state = shouldBePromoted ? 
-				Constants.TaskState.COMMIT_PENDING : Constants.TaskState.SUCCEEDED;
-		Constants.TaskPhase phase = taskid.isMap() ?
-				Constants.TaskPhase.MAP : Constants.TaskPhase.REDUCE;
-		
-		TupleSet update = new BasicTupleSet();
-		update.add(new Tuple(taskid, 1.0f, state, phase, "")); 
-		try {
-			this.jollib.schedule(PROGRAM, new TableName(PROGRAM, "statusUpdate"), update, null);
-		} catch (Throwable t) {
-			t.printStackTrace();
 		}
 	}
 
@@ -482,7 +468,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 			update.add(new Tuple(taskId, taskStatus.getProgress(), 
 					    Constants.TaskState.valueOf(taskStatus.getRunState().name()),
 					    Constants.TaskPhase.valueOf(taskStatus.getPhase().name()),
-					    taskStatus.getDiagnosticInfo()));
+					    taskStatus.getDiagnosticInfo(), taskStatus.getCursorPosition()));
 			try {
 				this.jollib.schedule(PROGRAM, new TableName(PROGRAM, "statusUpdate"), update, null);
 			} catch (Throwable t) {
