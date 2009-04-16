@@ -74,13 +74,6 @@ public interface TaskUmbilicalProtocol extends VersionedProtocol {
    */
   boolean ping(TaskAttemptID taskid) throws IOException;
 
-  /** Report that the task is successfully completed.  Failure is assumed if
-   * the task process exits without calling this.
-   * @param taskid task's id
-   * @param shouldBePromoted whether to promote the task's output or not 
-   */
-  void done(TaskAttemptID taskid, boolean shouldBePromoted) throws IOException;
-
   /** Report that a reduce-task couldn't shuffle map-outputs.*/
   void shuffleError(TaskAttemptID taskId, String message) throws IOException;
   

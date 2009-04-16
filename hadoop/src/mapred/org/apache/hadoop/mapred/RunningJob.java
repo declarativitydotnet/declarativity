@@ -117,16 +117,6 @@ public interface RunningJob {
   public void killJob() throws IOException;
     
   /**
-   * Get events indicating completion (success/failure) of component tasks.
-   *  
-   * @param startFrom index to start fetching events from
-   * @return an array of {@link TaskCompletionEvent}s
-   * @throws IOException
-   */
-  public TaskCompletionEvent[] getTaskCompletionEvents(int startFrom) 
-  throws IOException;
-  
-  /**
    * Kill indicated task attempt.
    * 
    * @param taskId the id of the task to be terminated.

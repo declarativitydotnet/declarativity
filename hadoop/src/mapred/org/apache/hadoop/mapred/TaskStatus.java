@@ -57,6 +57,8 @@ public abstract class TaskStatus implements Writable, Cloneable {
   private Counters counters;
   private boolean includeCounters;
   
+  private long cursorPosition;
+  
   public String toString() {
 	  return "[Task " + taskid + ", progress " + this.progress + 
 	         ", runstate " + runState + "]";
@@ -74,10 +76,14 @@ public abstract class TaskStatus implements Writable, Cloneable {
     this.diagnosticInfo = diagnosticInfo;
     this.stateString = stateString;
     this.taskTracker = taskTracker;
+    this.cursorPosition = 0;
     this.phase = phase;
     this.counters = counters;
     this.includeCounters = true;
   }
+  
+  public long getCursorPosition() { return this.cursorPosition; }
+  public void setCursorPosition(long position) { this.cursorPosition = position; }
   
   public TaskAttemptID getTaskID() { return taskid; }
   public abstract boolean getIsMap();
@@ -243,6 +249,19 @@ public abstract class TaskStatus implements Writable, Cloneable {
     setCounters(counters);
   }
   
+  synchronized void statusUpdate(float progress, String state, 
+          Counters counters, Task task) {
+	  statusUpdate(progress, state, counters);
+	  if (task instanceof MapTask) {
+		  MapTask map = (MapTask) task;
+		  if (map.getRecordReader() != null) {
+			  try {
+				setCursorPosition(map.getRecordReader().getPos());
+		  	} catch (IOException e) { }
+		  }
+	  }
+  }
+  
   /**
    * Update the status of the task.
    * 
@@ -291,6 +310,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
   //////////////////////////////////////////////
   public void write(DataOutput out) throws IOException {
     taskid.write(out);
+    out.writeLong(cursorPosition);
     out.writeFloat(progress);
     WritableUtils.writeEnum(out, runState);
     Text.writeString(out, diagnosticInfo);
@@ -306,6 +326,7 @@ public abstract class TaskStatus implements Writable, Cloneable {
 
   public void readFields(DataInput in) throws IOException {
     this.taskid = TaskAttemptID.read(in);
+    this.cursorPosition = in.readLong();
     this.progress = in.readFloat();
     this.runState = WritableUtils.readEnum(in, State.class);
     this.diagnosticInfo = Text.readString(in);

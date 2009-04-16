@@ -125,18 +125,6 @@ public interface JobSubmissionProtocol extends VersionedProtocol {
   public JobStatus[] getAllJobs() throws IOException;
   
   /**
-   * Get task completion events for the jobid, starting from fromEventId. 
-   * Returns empty aray if no events are available. 
-   * @param jobid job id 
-   * @param fromEventId event id to start from.
-   * @param maxEvents the max number of events we want to look at 
-   * @return array of task completion events. 
-   * @throws IOException
-   */
-  public TaskCompletionEvent[] getTaskCompletionEvents(JobID jobid
-      , int fromEventId, int maxEvents) throws IOException;
-    
-  /**
    * Get the diagnostics for a given task in a given job
    * @param taskId the id of the task
    * @return an array of the diagnostic messages

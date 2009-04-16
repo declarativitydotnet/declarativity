@@ -1,18 +1,11 @@
 package org.apache.hadoop.mapred.declarative.table;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.declarative.Constants;
-import org.apache.hadoop.mapred.declarative.Constants.TaskType;
-import org.apache.hadoop.mapred.declarative.table.TaskCreate.Field;
-import org.apache.hadoop.mapred.declarative.util.FileInput;
-import org.apache.hadoop.mapred.declarative.util.TaskState;
 
 import jol.types.basic.BasicTupleSet;
 import jol.types.basic.Tuple;

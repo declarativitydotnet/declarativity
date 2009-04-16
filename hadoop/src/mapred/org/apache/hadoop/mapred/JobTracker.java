@@ -45,7 +45,7 @@ public abstract class JobTracker {
 	        		outputPath == null ? "./" : outputPath.toString());
 	        
 	        InetSocketAddress addr = getJolAddress(conf);
-			JolSystem context = jol.core.Runtime.create(jol.core.Runtime.DEBUG_WATCH, System.err, addr.getPort());
+			JolSystem context = jol.core.Runtime.create(jol.core.Runtime.DEBUG_ALL, System.err, addr.getPort());
 			context.setPriority(Thread.MAX_PRIORITY);
 			return new JobTrackerImpl(context, conf);
 		} catch (Throwable e) {
