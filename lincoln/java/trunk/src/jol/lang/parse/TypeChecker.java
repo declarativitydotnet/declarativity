@@ -768,7 +768,7 @@ public final class TypeChecker extends Visitor {
 			extensions.add(a);
 		}
 		else {
-			throw new RuntimeException("TypeCHecker VisitBodyExtension: THIS SHOULD NEVER HAPPEN!");
+			throw new RuntimeException("TypeChecker VisitBodyExtension: THIS SHOULD NEVER HAPPEN!");
 		}
 
 		if (n.size() > 1) {
