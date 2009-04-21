@@ -108,7 +108,7 @@ public class Compiler {
 			Program program = (Program) tuple.value(Field.PROGRAM.ordinal());
 			if (program == null) {
 				UpdateException e
-					= new UpdateException("someone might be relying on ComplerTable.insert() for side effects. "
+					= new UpdateException("someone might be relying on CompilerTable.insert() for side effects. "
 														+ "Call the other insert instead");
 				e.printStackTrace(); // make sure this hits the console in junit land.
 				throw e;
