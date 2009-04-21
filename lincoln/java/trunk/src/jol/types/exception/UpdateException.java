@@ -7,7 +7,11 @@ public class UpdateException extends Exception {
 		super(msg);
 	}
 
-	public UpdateException(String msg, Exception e) {
-		super(msg, e);
+	public UpdateException(Throwable cause) {
+		super(cause);
+	}
+
+	public UpdateException(String msg, Throwable cause) {
+		super(msg, cause);
 	}
 }
