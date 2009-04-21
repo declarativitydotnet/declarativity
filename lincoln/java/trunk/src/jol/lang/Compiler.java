@@ -91,10 +91,10 @@ public class Compiler {
 			} catch (JolRuntimeException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				throw new UpdateException(e.toString());
+				throw new UpdateException(e);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
-				throw new UpdateException(e.toString());
+				throw new UpdateException(e);
 			}
 		}
 		/**
@@ -129,9 +129,9 @@ public class Compiler {
 		context.catalog().register(new AssignmentTable(context));
 	}
 
-	private jol.core.Runtime context;
+	private final jol.core.Runtime context;
 
-	private String owner;
+	private final String owner;
 
 	private Program program;
 
@@ -144,7 +144,7 @@ public class Compiler {
 
 		synchronized (runtime) {
 			if (this.context.output() == null) {
-				this.runtime.setErrConsole(new Printer(new ByteArrayOutputStream	()));
+				this.runtime.setErrConsole(new Printer(new ByteArrayOutputStream()));
 				this.runtime.setConsole(new Printer(new ByteArrayOutputStream()));
 			}
 			else {
