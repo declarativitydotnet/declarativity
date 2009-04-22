@@ -1,5 +1,6 @@
 package jol.types.operator;
 
+import jol.core.Runtime;
 import jol.types.basic.Tuple;
 import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
@@ -7,7 +8,6 @@ import jol.types.exception.UpdateException;
 import jol.types.table.Key;
 import jol.types.table.ObjectTable;
 import jol.types.table.TableName;
-import jol.core.Runtime;
 
 /**
  * This class represents the interface extended by all
@@ -15,17 +15,16 @@ import jol.core.Runtime;
  *
  * An operator takes a set of tuples as input and produces another
  * set of tuples as output.
- *
  */
 public abstract class Operator implements Comparable<Operator> {
 
 	/** Used to create unique operator identifiers. */
-	private static Long id = new Long(0);
+	private static long id = 0;
 
 	/** Creates a unique operator identifier. */
 	private static String newID() {
-		String identifier = "Operator:" + Operator.id.toString();
-		Operator.id += 1L;
+		String identifier = "Operator:" + Operator.id;
+		Operator.id++;
 		return identifier;
 	}
 
@@ -78,7 +77,7 @@ public abstract class Operator implements Comparable<Operator> {
 	 * The operator will be registered with the operator table during
 	 * this construction.
 	 * @param context The runtime context.
-	 * @param program The program
+	 * @param program The program.
 	 * @param rule The rule.
 	 */
 	public Operator(Runtime context, String program, String rule) {
@@ -121,5 +120,4 @@ public abstract class Operator implements Comparable<Operator> {
 	 * @throws JolRuntimeException
 	 */
 	public abstract TupleSet evaluate(TupleSet tuples) throws JolRuntimeException;
-
 }
