@@ -40,14 +40,13 @@ public abstract class Operator implements Comparable<Operator> {
 		public static final Key PRIMARY_KEY = new Key(2);
 
 		/** Operator fields. */
-		public enum Field {PROGRAM, RULE, ID, SELECTIVITY, OBJECT};
+		public enum Field {PROGRAM, RULE, ID, OBJECT};
 
 		/** Operator field types. */
 		public static final Class[] SCHEMA = {
 			String.class,   // Program name
 			String.class,   // Rule name
 			String.class,   // Operator identifier
-			Float.class,    // Selectivity
 			Operator.class  // Operator object
 		};
 
@@ -87,7 +86,7 @@ public abstract class Operator implements Comparable<Operator> {
 		this.rule = rule;
 		try {
 			Tuple me = new Tuple(OperatorTable.TABLENAME, program, rule,
-							     this.identifier, null, this);
+							     this.identifier, this);
 			context.catalog().table(OperatorTable.TABLENAME).force(me);
 		} catch (UpdateException e) {
 			e.printStackTrace();
