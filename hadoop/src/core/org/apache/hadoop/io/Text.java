@@ -207,6 +207,19 @@ public class Text implements WritableComparable {
     System.arraycopy(utf8, start, bytes, length, len);
     length += len;
   }
+  
+  public void prepend(byte[] utf8, int start, int len) {
+	  if (length > 0) {
+		  byte[] tmp = bytes;
+		  int tmplen = length;
+		  clear();
+		  append(utf8, start, len);
+		  append(tmp, 0, tmplen);
+	  }
+	  else {
+		  append(utf8, start, len);
+	  }
+  }
 
   /**
    * Clear the string to empty.
