@@ -1462,10 +1462,9 @@ public final class TypeChecker extends Visitor {
 						}
 					}
 					if (method == null) {
-						StringBuilder sb = new StringBuilder();
-						sb.append("Undefined static method " + reference.type().getCanonicalName() +
-								  "." + reference.toString() + "(" + typesToString(types) + ")\n");
-						throw new CompileException(sb.toString(), n);
+						String msg = "Undefined static method " + reference.type().getCanonicalName() +
+								  "." + reference.toString() + "(" + typesToString(types) + ")\n";
+						throw new CompileException(msg, n);
 					}
 					n.setProperty(Constants.TYPE, new StaticMethodCall(n, reference.type(), method, arguments));
 					return StaticMethodCall.class;
