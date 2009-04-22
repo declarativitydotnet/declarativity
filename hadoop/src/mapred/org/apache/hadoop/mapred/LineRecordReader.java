@@ -260,6 +260,8 @@ public class LineRecordReader implements RecordReader<LongWritable, Text> {
   public synchronized boolean next(LongWritable key, Text value)
     throws IOException {
 
+	  System.err.println("FILE POSTITION " + getPos());
+	  
     while (pos < end) {
       key.set(pos);
 
