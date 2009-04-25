@@ -38,8 +38,8 @@ public class BFSClient {
 			this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, port);
 			this.system.setDaemon(isDaemon);
 
-			// If we didn't specify an explicit port (-1), use the one that JOL
-			// has bound to.
+			// If we didn't specify an explicit port (i.e. zero), use the one
+			// that JOL has bound to.
 			port = this.system.getServerPort();
 			this.selfAddr = Conf.findLocalAddress(port);
 	        this.selfTargetControlAddr = Conf.findSelfAddress(false);
@@ -72,7 +72,7 @@ public class BFSClient {
 	}
 
 	public BFSClient(boolean isDaemon) {
-		this(-1, isDaemon);
+		this(0, isDaemon);
 	}
 
 	public String getSelfDataNodeAddr() {
