@@ -219,16 +219,18 @@ public class Tuple implements Iterable<Object>, Serializable {
 
 	@Override
 	public String toString() {
-		String value = "<";
+		StringBuilder sb = new StringBuilder();
+		sb.append("<");
 		if (values.length > 0) {
-			value += values[0];
+			sb.append(values[0]);
 			for (int i = 1; i < values.length; i++) {
 				Object element = values[i];
-				value += ", " + (element == null ? "null" : element.toString());
+				sb.append(", ");
+				sb.append(element == null ? "null" : element.toString());
 			}
 		}
-		value += ">";
-		return value;
+		sb.append(">");
+		return sb.toString();
 	}
 
 	@Override
