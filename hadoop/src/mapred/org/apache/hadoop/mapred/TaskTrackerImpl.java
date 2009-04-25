@@ -92,27 +92,27 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 
   private LocalDirAllocator localDirAllocator;
   InetSocketAddress jobTrackAddr;
-    
+
 
   InterTrackerProtocol jobClient;
-    
+
   // last heartbeat response recieved
   short heartbeatResponseId = -1;
 
   /*
    * This is the last 'status' report sent by this tracker to the JobTracker.
-   * 
+   *
    * If the rpc call succeeds, this 'status' is cleared-out by this tracker;
    * indicating that a 'fresh' status report be generated; in the event the
    * rpc calls fails for whatever reason, the previous status report is sent
    * again.
    */
   TaskTrackerStatus status = null;
-    
+
   StatusHttpServer server = null;
-    
+
   volatile boolean shuttingDown = false;
-    
+
   Map<TaskAttemptID, TaskInProgress> tasks = new HashMap<TaskAttemptID, TaskInProgress>();
   /**
    * Map from taskId -> TaskInProgress.
@@ -122,7 +122,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   volatile int mapTotal = 0;
   volatile int reduceTotal = 0;
   boolean justStarted = true;
-    
+
   //dir -> DF
   Map<String, DF> localDirsDf = new HashMap<String, DF>();
   long minSpaceStart = 0;
@@ -148,9 +148,9 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   private volatile int heartbeatInterval = HEARTBEAT_INTERVAL_MIN;
   /**
    * Number of maptask completion events locations to poll for at one time
-   */  
+   */
   private int probe_sample_size = 500;
-    
+
   private ShuffleServerMetrics shuffleServerMetrics;
   /** This class contains the methods that should be used for metrics-reporting
    * the specific metrics for shuffle. The TaskTracker is actually a server for
@@ -164,7 +164,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     private int successOutputs = 0;
     ShuffleServerMetrics(JobConf conf) {
       MetricsContext context = MetricsUtil.getContext("mapred");
-      shuffleMetricsRecord = 
+      shuffleMetricsRecord =
                            MetricsUtil.createRecord(context, "shuffleOutput");
       this.shuffleMetricsRecord.setTag("sessionId", conf.getSessionId());
       context.registerUpdater(this);
@@ -187,16 +187,16 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     public void doUpdates(MetricsContext unused) {
       synchronized (this) {
         if (workerThreads != 0) {
-          shuffleMetricsRecord.setMetric("shuffle_handler_busy_percent", 
+          shuffleMetricsRecord.setMetric("shuffle_handler_busy_percent",
               100*((float)serverHandlerBusy/workerThreads));
         } else {
           shuffleMetricsRecord.setMetric("shuffle_handler_busy_percent", 0);
         }
-        shuffleMetricsRecord.incrMetric("shuffle_output_bytes", 
+        shuffleMetricsRecord.incrMetric("shuffle_output_bytes",
                                         outputBytes);
-        shuffleMetricsRecord.incrMetric("shuffle_failed_outputs", 
+        shuffleMetricsRecord.incrMetric("shuffle_failed_outputs",
                                         failedOutputs);
-        shuffleMetricsRecord.incrMetric("shuffle_success_outputs", 
+        shuffleMetricsRecord.incrMetric("shuffle_success_outputs",
                                         successOutputs);
         outputBytes = 0;
         failedOutputs = 0;
@@ -210,7 +210,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     private int numCompletedTasks = 0;
     private int timedoutTasks = 0;
     private int tasksFailedPing = 0;
-      
+
     TaskTrackerMetrics() {
       JobConf conf = getJobConf();
       String sessionId = conf.getSessionId();
@@ -222,30 +222,30 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       metricsRecord.setTag("sessionId", sessionId);
       context.registerUpdater(this);
     }
-      
+
     synchronized void completeTask() {
       ++numCompletedTasks;
     }
-    
+
     synchronized void timedoutTask() {
       ++timedoutTasks;
     }
-    
+
     synchronized void taskFailedPing() {
       ++tasksFailedPing;
     }
-    
+
     /**
      * Since this object is a registered updater, this method will be called
      * periodically, e.g. every 5 seconds.
-     */  
+     */
     public void doUpdates(MetricsContext unused) {
       synchronized (this) {
         if (metricsRecord != null) {
           metricsRecord.setMetric("maps_running", mapTotal);
           metricsRecord.setMetric("reduces_running", reduceTotal);
           metricsRecord.setMetric("mapTaskSlots", (short)maxCurrentMapTasks);
-          metricsRecord.setMetric("reduceTaskSlots", 
+          metricsRecord.setMetric("reduceTaskSlots",
                                        (short)maxCurrentReduceTasks);
           metricsRecord.incrMetric("tasks_completed", numCompletedTasks);
           metricsRecord.incrMetric("tasks_failed_timeout", timedoutTasks);
@@ -258,23 +258,23 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       metricsRecord.update();
     }
   }
-    
+
   private TaskTrackerMetrics myMetrics = null;
 
   public TaskTrackerMetrics getTaskTrackerMetrics() {
     return myMetrics;
   }
-  
+
   /**
    * A list of tips that should be cleaned up.
    */
-  private BlockingQueue<TaskTrackerAction> tasksToCleanup = 
+  private BlockingQueue<TaskTrackerAction> tasksToCleanup =
     new LinkedBlockingQueue<TaskTrackerAction>();
-    
+
   /**
    * A daemon-thread that pulls tips off the list of things to cleanup.
    */
-  private Thread taskCleanupThread = 
+  private Thread taskCleanupThread =
     new Thread(new Runnable() {
         public void run() {
           while (true) {
@@ -288,7 +288,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
                 synchronized (TaskTrackerImpl.this) {
                   tip = tasks.get(killAction.getTaskID());
                 }
-                LOG.info("Received KillTaskAction for task: " + 
+                LOG.info("Received KillTaskAction for task: " +
                          killAction.getTaskID());
                 purgeTask(tip, false);
               } else {
@@ -301,8 +301,8 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           }
         }
       }, "taskCleanup");
-    
-  private RunningJob addTaskToJob(JobID jobId, 
+
+  private RunningJob addTaskToJob(JobID jobId,
                                   Path localJobFile,
                                   TaskInProgress tip) {
     synchronized (runningJobs) {
@@ -338,7 +338,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   }
 
 
-  public long getProtocolVersion(String protocol, 
+  public long getProtocolVersion(String protocol,
                                  long clientVersion) throws IOException {
     if (protocol.equals(TaskUmbilicalProtocol.class.getName())) {
       return TaskUmbilicalProtocol.versionID;
@@ -346,7 +346,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       throw new IOException("Unknown protocol for task tracker: " + protocol);
     }
   }
-    
+
   /**
    * Do the real constructor work here.  It's in a separate method
    * so we can call it again and "recycle" the object after calling
@@ -368,32 +368,32 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     this.minSpaceKill = this.fConf.getLong("mapred.local.dir.minspacekill", 0L);
     //tweak the probe sample size (make it a function of numCopiers)
     probe_sample_size = this.fConf.getInt("mapred.tasktracker.events.batchsize", 500);
-    
-    
+
+
     this.myMetrics = new TaskTrackerMetrics();
-    
+
     // Clear out temporary files that might be lying around
     DistributedCache.purgeCache(this.fConf);
     cleanupStorage();
     this.justStarted = true;
 
-    this.jobClient = (InterTrackerProtocol) 
+    this.jobClient = (InterTrackerProtocol)
       RPC.waitForProxy(InterTrackerProtocol.class,
-                       InterTrackerProtocol.versionID, 
+                       InterTrackerProtocol.versionID,
                        jobTrackAddr, this.fConf);
-        
+
     // start the thread that will fetch map task completion events
     this.mapEventsFetcher = new MapEventsFetcherThread();
     mapEventsFetcher.setDaemon(true);
     mapEventsFetcher.setName(
-                             "Map-events fetcher for all reduce tasks " + "on " + 
+                             "Map-events fetcher for all reduce tasks " + "on " +
                              taskTrackerName);
     mapEventsFetcher.start();
     this.running = true;
   }
-  
-  /** 
-   * Removes all contents of temporary storage.  Called upon 
+
+  /**
+   * Removes all contents of temporary storage.  Called upon
    * startup, to remove any leftovers from previous run.
    */
   public void cleanupStorage() throws IOException {
@@ -416,11 +416,11 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           for (TaskInProgress tip : rjob.tasks) {
             Task task = tip.getTask();
             if (!task.isMapTask()) {
-              if (((ReduceTask)task).getPhase() == 
+              if (((ReduceTask)task).getPhase() ==
                   TaskStatus.Phase.SHUFFLE) {
                 if (rjob.getFetchStatus() == null) {
                   //this is a new job; we start fetching its map events
-                  f = new FetchStatus(jobId, 
+                  f = new FetchStatus(jobId,
                                       ((ReduceTask)task).getNumMaps());
                   rjob.setFetchStatus(f);
                 }
@@ -433,15 +433,15 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
         }
       }
       //at this point, we have information about for which of
-      //the running jobs do we need to query the jobtracker for map 
+      //the running jobs do we need to query the jobtracker for map
       //outputs (actually map events).
       return fList;
     }
-      
+
     @Override
     public void run() {
       LOG.info("Starting thread: " + getName());
-        
+
       while (true) {
         try {
           List <FetchStatus> fList = null;
@@ -462,7 +462,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           for (FetchStatus f : fList) {
             long currentTime = System.currentTimeMillis();
             try {
-              //the method below will return true when we have not 
+              //the method below will return true when we have not
               //fetched all available events yet
               if (f.fetchMapCompletionEvents(currentTime)) {
                 fetchAgain = true;
@@ -471,7 +471,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
               LOG.warn(
                        "Ignoring exception that fetch for map completion" +
                        " events threw for " + f.jobId + " threw: " +
-                       StringUtils.stringifyException(e)); 
+                       StringUtils.stringifyException(e));
             }
           }
           synchronized (waitingOn) {
@@ -489,38 +489,38 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           LOG.info("Ignoring exception "  + e.getMessage());
         }
       }
-    } 
+    }
   }
 
   private class FetchStatus {
     /** The next event ID that we will start querying the JobTracker from*/
     private IntWritable fromEventId;
-    /** This is the cache of map events for a given job */ 
+    /** This is the cache of map events for a given job */
     private List<TaskCompletionEvent> allMapEvents;
     /** What jobid this fetchstatus object is for*/
     private JobID jobId;
     private long lastFetchTime;
     private boolean fetchAgain;
-     
+
     public FetchStatus(JobID jobId, int numMaps) {
       this.fromEventId = new IntWritable(0);
       this.jobId = jobId;
       this.allMapEvents = new ArrayList<TaskCompletionEvent>(numMaps);
     }
-      
+
     public TaskCompletionEvent[] getMapEvents(int fromId, int max) {
-        
-      TaskCompletionEvent[] mapEvents = 
+
+      TaskCompletionEvent[] mapEvents =
         TaskCompletionEvent.EMPTY_ARRAY;
-      boolean notifyFetcher = false; 
+      boolean notifyFetcher = false;
       synchronized (allMapEvents) {
         if (allMapEvents.size() > fromId) {
           int actualMax = Math.min(max, (allMapEvents.size() - fromId));
-          List <TaskCompletionEvent> eventSublist = 
+          List <TaskCompletionEvent> eventSublist =
             allMapEvents.subList(fromId, actualMax + fromId);
           mapEvents = eventSublist.toArray(mapEvents);
         } else {
-          // Notify Fetcher thread. 
+          // Notify Fetcher thread.
           notifyFetcher = true;
         }
       }
@@ -531,13 +531,13 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       }
       return mapEvents;
     }
-      
+
     public boolean fetchMapCompletionEvents(long currTime) throws IOException {
       if (!fetchAgain && (currTime - lastFetchTime) < heartbeatInterval) {
         return false;
       }
       int currFromEventId = fromEventId.get();
-      List <TaskCompletionEvent> recentMapEvents = 
+      List <TaskCompletionEvent> recentMapEvents =
         queryJobTracker(fromEventId, jobId, jobClient);
       synchronized (allMapEvents) {
         allMapEvents.addAll(recentMapEvents);
@@ -559,7 +559,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   private void localizeJob(TaskInProgress tip) throws IOException {
     Path localJarFile = null;
     Task t = tip.getTask();
-    
+
     JobID jobId = t.getJobID();
     Path jobFile = new Path(t.getJobFile());
     // Get sizes of JobFile and JarFile
@@ -575,13 +575,13 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       jobFileSize = -1;
     }
     Path localJobFile = lDirAlloc.getLocalPathForWrite((getJobCacheSubdir()
-                                    + Path.SEPARATOR + jobId 
+                                    + Path.SEPARATOR + jobId
                                     + Path.SEPARATOR + "job.xml"),
                                     jobFileSize, fConf);
     RunningJob rjob = addTaskToJob(jobId, localJobFile, tip);
     synchronized (rjob) {
       if (!rjob.localized) {
-  
+
         FileSystem localFs = FileSystem.getLocal(fConf);
         // this will happen on a partial execution of localizeJob.
         // Sometimes the job.xml gets copied but copying job.jar
@@ -597,19 +597,19 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
         }
         fs.copyToLocalFile(jobFile, localJobFile);
         JobConf localJobConf = new JobConf(localJobFile);
-        
+
         // create the 'work' directory
-        // job-specific shared directory for use as scratch space 
+        // job-specific shared directory for use as scratch space
         Path workDir = lDirAlloc.getLocalPathForWrite((getJobCacheSubdir()
-                       + Path.SEPARATOR + jobId 
+                       + Path.SEPARATOR + jobId
                        + Path.SEPARATOR + "work"), fConf);
         if (!localFs.mkdirs(workDir)) {
-          throw new IOException("Mkdirs failed to create " 
+          throw new IOException("Mkdirs failed to create "
                       + workDir.toString());
         }
         System.setProperty("job.local.dir", workDir.toString());
         localJobConf.set("job.local.dir", workDir.toString());
-        
+
         // copy Jar file to the local FS and unjar it.
         String jarFile = localJobConf.getJar();
         long jarFileSize = -1;
@@ -622,14 +622,14 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
             jarFileSize = -1;
           }
           // Here we check for and we check five times the size of jarFileSize
-          // to accommodate for unjarring the jar file in work directory 
+          // to accommodate for unjarring the jar file in work directory
           localJarFile = new Path(lDirAlloc.getLocalPathForWrite(
                                      getJobCacheSubdir()
-                                     + Path.SEPARATOR + jobId 
+                                     + Path.SEPARATOR + jobId
                                      + Path.SEPARATOR + "jars",
                                      5 * jarFileSize, fConf), "job.jar");
           if (!localFs.mkdirs(localJarFile.getParent())) {
-            throw new IOException("Mkdirs failed to create jars directory "); 
+            throw new IOException("Mkdirs failed to create jars directory ");
           }
           fs.copyToLocalFile(jarFilePath, localJarFile);
           localJobConf.setJar(localJarFile.toString());
@@ -639,7 +639,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           } finally {
             out.close();
           }
-          // also unjar the job.jar files 
+          // also unjar the job.jar files
           RunJar.unJar(new File(localJarFile.toString()),
                        new File(localJarFile.getParent().toString()));
         }
@@ -648,9 +648,9 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
         rjob.localized = true;
       }
     }
-    launchTaskForJob(tip, new JobConf(rjob.jobFile)); 
+    launchTaskForJob(tip, new JobConf(rjob.jobFile));
   }
-    
+
   private void launchTaskForJob(TaskInProgress tip, JobConf jobConf) throws IOException{
     synchronized (tip) {
       try {
@@ -669,7 +669,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       }
     }
   }
-    
+
   public synchronized void shutdown() throws IOException {
     shuttingDown = true;
     close();
@@ -704,7 +704,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     // in parallel, as RPC servers can take a long
     // time to shutdown.  (They need to wait a full
     // RPC timeout, which might be 10-30 seconds.)
-    new Thread("RPC shutdown") {
+    new Thread("RPC shutdown (task report server)") {
       @Override
       public void run() {
         if (taskReportServer != null) {
@@ -714,14 +714,24 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       }
     }.start();
 
+    new Thread("RPC shutdown (bfs server)") {
+    	@Override
+    	public void run() {
+    		if (bfsServer != null) {
+    			bfsServer.stop();
+    			bfsServer = null;
+    		}
+    	}
+    }.start();
+
     this.running = false;
-        
+
     // Clear local storage
     cleanupStorage();
-        
+
     // Shutdown the fetcher thread
     this.mapEventsFetcher.interrupt();
-    
+
     // shutdown RPC connections
     RPC.stopProxy(jobClient);
   }
@@ -737,9 +747,9 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     maxCurrentReduceTasks = conf.getInt(
                   "mapred.tasktracker.reduce.tasks.maximum", 2);
     this.jobTrackAddr = JobTracker.getAddress(conf);
-    String infoAddr = 
+    String infoAddr =
       NetUtils.getServerAddress(conf,
-                                "tasktracker.http.bindAddress", 
+                                "tasktracker.http.bindAddress",
                                 "tasktracker.http.port",
                                 "mapred.task.tracker.http.address");
     InetSocketAddress infoSocAddr = NetUtils.createSocketAddr(infoAddr);
@@ -774,24 +784,24 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     directoryCleanupThread.setDaemon(true);
     directoryCleanupThread.start();
   }
-  
+
   /**
-   * The connection to the JobTracker, used by the TaskRunner 
+   * The connection to the JobTracker, used by the TaskRunner
    * for locating remote files.
    */
   public InterTrackerProtocol getJobClient() {
     return jobClient;
   }
-        
 
-    
+
+
   /** Queries the job tracker for a set of outputs ready to be copied
    * @param fromEventId the first event ID we want to start from, this is
    * modified by the call to this method
    * @param jobClient the job tracker
    * @return a set of locations to copy outputs from
    * @throws IOException
-   */  
+   */
   private List<TaskCompletionEvent> queryJobTracker(IntWritable fromEventId,
                                                     JobID jobId,
                                                     InterTrackerProtocol jobClient)
@@ -803,7 +813,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
                                                                 probe_sample_size);
     //we are interested in map task completion events only. So store
     //only those
-    List <TaskCompletionEvent> recentMapEvents = 
+    List <TaskCompletionEvent> recentMapEvents =
       new ArrayList<TaskCompletionEvent>();
     for (int i = 0; i < t.length; i++) {
       if (t[i].isMap) {
@@ -841,7 +851,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           /*
           if(!VersionInfo.getBuildVersion().equals(jobTrackerBV)) {
             String msg = "Shutting down. Incompatible buildVersion." +
-            "\nJobTracker's: " + jobTrackerBV + 
+            "\nJobTracker's: " + jobTrackerBV +
             "\nTaskTracker's: "+ VersionInfo.getBuildVersion();
             LOG.error(msg);
             try {
@@ -853,24 +863,24 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           }
           */
         }
-        
+
         // Send the heartbeat and process the jobtracker's directives
         HeartbeatResponse heartbeatResponse = transmitHeartBeat();
         TaskTrackerAction[] actions = heartbeatResponse.getActions();
         if(LOG.isDebugEnabled()) {
-          LOG.debug("Got heartbeatResponse from JobTracker with responseId: " + 
-                    heartbeatResponse.getResponseId() + " and " + 
+          LOG.debug("Got heartbeatResponse from JobTracker with responseId: " +
+                    heartbeatResponse.getResponseId() + " and " +
                     ((actions != null) ? actions.length : 0) + " actions");
         }
         if (reinitTaskTracker(actions)) {
           return State.STALE;
         }
-            
+
         lastHeartbeat = now;
         // resetting heartbeat interval from the response.
         heartbeatInterval = heartbeatResponse.getHeartbeatInterval();
         justStarted = false;
-        if (actions != null){ 
+        if (actions != null){
           for(TaskTrackerAction action: actions) {
             if (action instanceof LaunchTaskAction) {
               startNewTask((LaunchTaskAction) action);
@@ -881,7 +891,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
         }
         markUnresponsiveTasks();
         killOverflowingTasks();
-            
+
         //we've cleaned up, resume normal operation
         if (!acceptNewTasks && isIdle()) {
           acceptNewTasks=true;
@@ -894,7 +904,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           StringUtils.stringifyException(de);
         LOG.error(msg);
         synchronized (this) {
-          jobClient.reportTaskTrackerError(taskTrackerName, 
+          jobClient.reportTaskTrackerError(taskTrackerName,
                                            "DiskErrorException", msg);
         }
         return State.STALE;
@@ -905,7 +915,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           return State.DENIED;
         }
       } catch (Exception except) {
-        String msg = "Caught exception: " + 
+        String msg = "Caught exception: " +
           StringUtils.stringifyException(except);
         LOG.error(msg);
       }
@@ -933,54 +943,54 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       sendCounters = false;
     }
 
-    // 
-    // Check if the last heartbeat got through... 
+    //
+    // Check if the last heartbeat got through...
     // if so then build the heartbeat information for the JobTracker;
     // else resend the previous status information.
     //
     if (status == null) {
       synchronized (this) {
-        status = new TaskTrackerStatus(taskTrackerName, localHostname, 
-                                       httpPort, 
+        status = new TaskTrackerStatus(taskTrackerName, localHostname,
+                                       httpPort,
                                        cloneAndResetRunningTaskStatuses(
-                                         sendCounters), 
-                                       failures, 
+                                         sendCounters),
+                                       failures,
                                        maxCurrentMapTasks,
-                                       maxCurrentReduceTasks); 
+                                       maxCurrentReduceTasks);
       }
     } else {
       LOG.info("Resending 'status' to '" + jobTrackAddr.getHostName() +
                "' with reponseId '" + heartbeatResponseId);
     }
-      
+
     //
     // Check if we should ask for a new Task
     //
     boolean askForNewTask;
     long localMinSpaceStart;
     synchronized (this) {
-      askForNewTask = (mapTotal < maxCurrentMapTasks || 
+      askForNewTask = (mapTotal < maxCurrentMapTasks ||
                        reduceTotal < maxCurrentReduceTasks) &&
-                      acceptNewTasks; 
+                      acceptNewTasks;
       localMinSpaceStart = minSpaceStart;
     }
     if (askForNewTask) {
       checkLocalDirs(fConf.getLocalDirs());
       askForNewTask = enoughFreeSpace(localMinSpaceStart);
     }
-      
+
     //
     // Xmit the heartbeat
     //
-    HeartbeatResponse heartbeatResponse = jobClient.heartbeat(status, 
-                                                              justStarted, askForNewTask, 
+    HeartbeatResponse heartbeatResponse = jobClient.heartbeat(status,
+                                                              justStarted, askForNewTask,
                                                               heartbeatResponseId);
-      
+
     //
     // The heartbeat got through successfully!
     //
     heartbeatResponseId = heartbeatResponse.getResponseId();
-      
+
     synchronized (this) {
       for (TaskStatus taskStatus : status.getTaskReports()) {
         if (taskStatus.getRunState() != TaskStatus.State.RUNNING) {
@@ -997,7 +1007,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           runningTasks.remove(taskStatus.getTaskID());
         }
       }
-      
+
       // Clear transient status information which should only
       // be sent once to the JobTracker
       for (TaskInProgress tip: runningTasks.values()) {
@@ -1006,22 +1016,22 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     }
 
     // Force a rebuild of 'status' on the next iteration
-    status = null;                                
+    status = null;
 
     return heartbeatResponse;
   }
 
   /**
    * Check if the jobtracker directed a 'reset' of the tasktracker.
-   * 
+   *
    * @param actions the directives of the jobtracker for the tasktracker.
-   * @return <code>true</code> if tasktracker is to be reset, 
+   * @return <code>true</code> if tasktracker is to be reset,
    *         <code>false</code> otherwise.
    */
   private boolean reinitTaskTracker(TaskTrackerAction[] actions) {
     if (actions != null) {
       for (TaskTrackerAction action : actions) {
-        if (action.getActionId() == 
+        if (action.getActionId() ==
             TaskTrackerAction.ActionType.REINIT_TRACKER) {
           LOG.info("Recieved RenitTrackerAction from JobTracker");
           return true;
@@ -1030,7 +1040,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     }
     return false;
   }
-    
+
   /**
    * Kill any tasks that have not reported progress in the last X seconds.
    */
@@ -1044,13 +1054,13 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
         if (jobTaskTimeout == 0) {
           continue;
         }
-          
-        // Check if the task has not reported progress for a 
+
+        // Check if the task has not reported progress for a
         // time-period greater than the configured time-out
         long timeSinceLastReport = now - tip.getLastProgressReport();
         if (timeSinceLastReport > jobTaskTimeout && !tip.wasKilled) {
-          String msg = 
-            "Task " + tip.getTask().getTaskID() + " failed to report status for " 
+          String msg =
+            "Task " + tip.getTask().getTaskID() + " failed to report status for "
             + (timeSinceLastReport / 1000) + " seconds. Killing!";
           LOG.info(tip.getTask().getTaskID() + ": " + msg);
           ReflectionUtils.logThreadInfo(LOG, "lost task", 30);
@@ -1074,23 +1084,23 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     synchronized (runningJobs) {
       rjob = runningJobs.get(jobId);
     }
-      
+
     if (rjob == null) {
       LOG.warn("Unknown job " + jobId + " being deleted.");
     } else {
-      synchronized (rjob) {            
-        // Add this tips of this job to queue of tasks to be purged 
+      synchronized (rjob) {
+        // Add this tips of this job to queue of tasks to be purged
         for (TaskInProgress tip : rjob.tasks) {
           tip.jobHasFinished(false);
         }
-        // Delete the job directory for this  
+        // Delete the job directory for this
         // task if the job is done/failed
         if (!rjob.keepJobFiles){
-          directoryCleanupThread.addToQueue(getLocalFiles(fConf, 
-                                   SUBDIR + Path.SEPARATOR + JOBCACHE + 
+          directoryCleanupThread.addToQueue(getLocalFiles(fConf,
+                                   SUBDIR + Path.SEPARATOR + JOBCACHE +
                                    Path.SEPARATOR +  rjob.getJobID()));
         }
-        // Remove this job 
+        // Remove this job
         rjob.tasks.clear();
       }
     }
@@ -1098,21 +1108,21 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     synchronized(runningJobs) {
       runningJobs.remove(jobId);
     }
-  }      
-    
-    
+  }
+
+
   /**
    * Remove the tip and update all relevant state.
-   * 
+   *
    * @param tip {@link TaskInProgress} to be removed.
    * @param wasFailure did the task fail or was it killed?
    */
-  private void purgeTask(TaskInProgress tip, boolean wasFailure) 
+  private void purgeTask(TaskInProgress tip, boolean wasFailure)
   throws IOException {
     if (tip != null) {
       LOG.info("About to purge task: " + tip.getTask().getTaskID());
-        
-      // Remove the task from running jobs, 
+
+      // Remove the task from running jobs,
       // removing the job if it's the last task
       removeTaskFromJob(tip.getTask().getJobID(), tip);
       tip.jobHasFinished(wasFailure);
@@ -1129,10 +1139,10 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   private void killOverflowingTasks() throws IOException {
     long localMinSpaceKill;
     synchronized(this){
-      localMinSpaceKill = minSpaceKill;  
+      localMinSpaceKill = minSpaceKill;
     }
     if (!enoughFreeSpace(localMinSpaceKill)) {
-      acceptNewTasks=false; 
+      acceptNewTasks=false;
       //we give up! do not accept new tasks until
       //all the ones running have finished and they're all cleared up
       synchronized (this) {
@@ -1148,7 +1158,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       }
     }
   }
-    
+
   /**
    * Pick a task to kill to free up space
    * @return the task to kill or null, if one wasn't found
@@ -1159,21 +1169,21 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       TaskInProgress tip = (TaskInProgress) it.next();
       if ((tip.getRunState() == TaskStatus.State.RUNNING) &&
           !tip.wasKilled) {
-                
+
         if (killMe == null) {
           killMe = tip;
 
         } else if (!tip.getTask().isMapTask()) {
           //reduce task, give priority
-          if (killMe.getTask().isMapTask() || 
-              (tip.getTask().getProgress().get() < 
+          if (killMe.getTask().isMapTask() ||
+              (tip.getTask().getProgress().get() <
                killMe.getTask().getProgress().get())) {
 
             killMe = tip;
           }
 
         } else if (killMe.getTask().isMapTask() &&
-                   tip.getTask().getProgress().get() < 
+                   tip.getTask().getProgress().get() <
                    killMe.getTask().getProgress().get()) {
           //map task, only add if the progress is lower
 
@@ -1183,14 +1193,14 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     }
     return killMe;
   }
-    
+
   /**
    * Check if all of the local directories have enough
    * free space
-   * 
-   * If not, do not try to get a new task assigned 
+   *
+   * If not, do not try to get a new task assigned
    * @return
-   * @throws IOException 
+   * @throws IOException
    */
   private boolean enoughFreeSpace(long minSpace) throws IOException {
     if (minSpace == 0) {
@@ -1212,12 +1222,12 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 
     return false;
   }
-  
+
   public synchronized TaskRunner launch(Task task) {
 	  return null;  // Not needed for this class.
   }
 
-    
+
   /**
    * Start a new task.
    * All exceptions are handled locally, so that we don't mess up the
@@ -1240,7 +1250,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     try {
       localizeJob(tip);
     } catch (Throwable e) {
-      String msg = ("Error initializing " + tip.getTask().getTaskID() + 
+      String msg = ("Error initializing " + tip.getTask().getTaskID() +
                     ":\n" + StringUtils.stringifyException(e));
       LOG.warn(msg);
       tip.reportDiagnosticInfo(msg);
@@ -1248,20 +1258,20 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
         tip.kill(true);
       } catch (IOException ie2) {
         LOG.info("Error cleaning up " + tip.getTask().getTaskID() + ":\n" +
-                 StringUtils.stringifyException(ie2));          
+                 StringUtils.stringifyException(ie2));
       }
-        
-      // Careful! 
+
+      // Careful!
       // This might not be an 'Exception' - don't handle 'Error' here!
       if (e instanceof Error) {
         throw ((Error) e);
       }
     }
   }
-    
+
   /**
-   * The server retry loop.  
-   * This while-loop attempts to connect to the JobTracker.  It only 
+   * The server retry loop.
+   * This while-loop attempts to connect to the JobTracker.  It only
    * loops when the old TaskTracker has gone bad (its state is
    * stale somehow) and we need to reinitialize everything.
    */
@@ -1308,7 +1318,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       return;
     }
   }
-    
+
   ///////////////////////////////////////////////////////
   // TaskInProgress maintains all the info for a Task that
   // lives at this TaskTracker.  It maintains the Task object,
@@ -1325,11 +1335,11 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     private JobConf localJobConf;
     private boolean keepFailedTaskFiles;
     private boolean alwaysKeepTaskFiles;
-    private TaskStatus taskStatus; 
+    private TaskStatus taskStatus;
     private long taskTimeout;
     private String debugCommand;
     private boolean shouldPromoteOutput = false;
-        
+
     /**
      */
     public TaskInProgress(Task task, JobConf conf) {
@@ -1337,52 +1347,52 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       this.lastProgressReport = System.currentTimeMillis();
       this.defaultJobConf = conf;
       localJobConf = null;
-      taskStatus = TaskStatus.createTaskStatus(task.isMapTask(), task.getTaskID(), 
-                                               0.0f, 
-                                               TaskStatus.State.UNASSIGNED, 
-                                               diagnosticInfo.toString(), 
-                                               "initializing",  
-                                               getName(), 
+      taskStatus = TaskStatus.createTaskStatus(task.isMapTask(), task.getTaskID(),
+                                               0.0f,
+                                               TaskStatus.State.UNASSIGNED,
+                                               diagnosticInfo.toString(),
+                                               "initializing",
+                                               getName(),
                                                task.isMapTask()? TaskStatus.Phase.MAP:
                                                TaskStatus.Phase.SHUFFLE,
-                                               task.getCounters()); 
+                                               task.getCounters());
       taskTimeout = (10 * 60 * 1000);
     }
-        
+
     private void localizeTask(Task task) throws IOException{
 
-      Path localTaskDir = 
-        lDirAlloc.getLocalPathForWrite((TaskTracker.getJobCacheSubdir() + 
+      Path localTaskDir =
+        lDirAlloc.getLocalPathForWrite((TaskTracker.getJobCacheSubdir() +
                     Path.SEPARATOR + task.getJobID() + Path.SEPARATOR +
                     task.getTaskID()), defaultJobConf );
-      
+
       FileSystem localFs = FileSystem.getLocal(fConf);
       if (!localFs.mkdirs(localTaskDir)) {
-        throw new IOException("Mkdirs failed to create " 
+        throw new IOException("Mkdirs failed to create "
                     + localTaskDir.toString());
       }
 
       // create symlink for ../work if it already doesnt exist
       String workDir = lDirAlloc.getLocalPathToRead(
-                         TaskTracker.getJobCacheSubdir() 
-                         + Path.SEPARATOR + task.getJobID() 
-                         + Path.SEPARATOR  
+                         TaskTracker.getJobCacheSubdir()
+                         + Path.SEPARATOR + task.getJobID()
+                         + Path.SEPARATOR
                          + "work", defaultJobConf).toString();
-      String link = localTaskDir.getParent().toString() 
+      String link = localTaskDir.getParent().toString()
                       + Path.SEPARATOR + "work";
       File flink = new File(link);
       if (!flink.exists())
         FileUtil.symLink(workDir, link);
-      
-      // create the working-directory of the task 
+
+      // create the working-directory of the task
       Path cwd = lDirAlloc.getLocalPathForWrite(
-                         TaskTracker.getJobCacheSubdir() 
-                         + Path.SEPARATOR + task.getJobID() 
+                         TaskTracker.getJobCacheSubdir()
+                         + Path.SEPARATOR + task.getJobID()
                          + Path.SEPARATOR + task.getTaskID()
                          + Path.SEPARATOR + MRConstants.WORKDIR,
                          defaultJobConf);
       if (!localFs.mkdirs(cwd)) {
-        throw new IOException("Mkdirs failed to create " 
+        throw new IOException("Mkdirs failed to create "
                     + cwd.toString());
       }
 
@@ -1390,12 +1400,12 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       task.setJobFile(localTaskFile.toString());
       localJobConf.set("mapred.local.dir",
                        fConf.get("mapred.local.dir"));
-            
+
       localJobConf.set("mapred.task.id", task.getTaskID().toString());
       keepFailedTaskFiles = localJobConf.getKeepFailedTaskFiles();
 
       task.localizeConfiguration(localJobConf);
-      
+
       List<String[]> staticResolutions = NetUtils.getAllStaticResolutions();
       if (staticResolutions != null && staticResolutions.size() > 0) {
         StringBuffer str = new StringBuffer();
@@ -1418,7 +1428,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       task.setConf(localJobConf);
       String keepPattern = localJobConf.getKeepTaskFilesPattern();
       if (keepPattern != null) {
-        alwaysKeepTaskFiles = 
+        alwaysKeepTaskFiles =
           Pattern.matches(keepPattern, task.getTaskID().toString());
       } else {
         alwaysKeepTaskFiles = false;
@@ -1429,7 +1439,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
         debugCommand = localJobConf.getReduceDebugScript();
       }
     }
-        
+
     /**
      */
     public Task getTask() {
@@ -1439,14 +1449,14 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     public synchronized void setJobConf(JobConf lconf){
       this.localJobConf = lconf;
       keepFailedTaskFiles = localJobConf.getKeepFailedTaskFiles();
-      taskTimeout = localJobConf.getLong("mapred.task.timeout", 
+      taskTimeout = localJobConf.getLong("mapred.task.timeout",
                                          10 * 60 * 1000);
     }
-        
+
     public synchronized JobConf getJobConf() {
       return localJobConf;
     }
-        
+
     /**
      */
     public synchronized TaskStatus getStatus() {
@@ -1454,7 +1464,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       if (diagnosticInfo.length() > 0) {
         diagnosticInfo = new StringBuffer();
       }
-      
+
       return taskStatus;
     }
 
@@ -1472,23 +1482,23 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     /**
      * The task is reporting its progress
      */
-    public synchronized void reportProgress(TaskStatus taskStatus) 
+    public synchronized void reportProgress(TaskStatus taskStatus)
     {
-      LOG.info(task.getTaskID() + " " + taskStatus.getProgress() + 
+      LOG.info(task.getTaskID() + " " + taskStatus.getProgress() +
           "% " + taskStatus.getStateString());
-      
-      if (this.done || 
+
+      if (this.done ||
           this.taskStatus.getRunState() != TaskStatus.State.RUNNING) {
-        //make sure we ignore progress messages after a task has 
+        //make sure we ignore progress messages after a task has
         //invoked TaskUmbilicalProtocol.done() or if the task has been
         //KILLED/FAILED
         LOG.info(task.getTaskID() + " Ignoring status-update since " +
-                 ((this.done) ? "task is 'done'" : 
+                 ((this.done) ? "task is 'done'" :
                                 ("runState: " + this.taskStatus.getRunState()))
-                 ); 
+                 );
         return;
       }
-      
+
       this.taskStatus.statusUpdate(taskStatus);
       this.lastProgressReport = System.currentTimeMillis();
     }
@@ -1507,13 +1517,13 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 
     /**
      * The task's configured timeout.
-     * 
+     *
      * @return the task's configured timeout.
      */
     public long getTaskTimeout() {
       return taskTimeout;
     }
-        
+
     /**
      * The task has reported some diagnostic info about its status
      */
@@ -1536,7 +1546,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       this.taskStatus.setProgress(1.0f);
       this.taskStatus.setFinishTime(System.currentTimeMillis());
       this.done = true;
-      
+
       LOG.info("Task " + task.getTaskID() + " is done.");
     }
 
@@ -1580,13 +1590,13 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
               String taskSyslog ="";
               String jobConf = task.getJobFile();
               try {
-                // get task's stdout file 
+                // get task's stdout file
                 taskStdout = FileUtil.makeShellPath(TaskLog.getTaskLogFile
                                   (task.getTaskID(), TaskLog.LogName.STDOUT));
-                // get task's stderr file 
+                // get task's stderr file
                 taskStderr = FileUtil.makeShellPath(TaskLog.getTaskLogFile
                                   (task.getTaskID(), TaskLog.LogName.STDERR));
-                // get task's syslog file 
+                // get task's syslog file
                 taskSyslog = FileUtil.makeShellPath(TaskLog.getTaskLogFile
                                   (task.getTaskID(), TaskLog.LogName.SYSLOG));
               } catch(IOException e){
@@ -1595,8 +1605,8 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
               File workDir = null;
               try {
                 workDir = new File(lDirAlloc.getLocalPathToRead(
-                                     TaskTracker.getJobCacheSubdir() 
-                                     + Path.SEPARATOR + task.getJobID() 
+                                     TaskTracker.getJobCacheSubdir()
+                                     + Path.SEPARATOR + task.getJobID()
                                      + Path.SEPARATOR + task.getTaskID()
                                      + Path.SEPARATOR + MRConstants.WORKDIR,
                                      localJobConf). toString());
@@ -1605,7 +1615,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
                 		 "doesnt exist. Throws expetion " +
                           StringUtils.stringifyException(e));
               }
-              // Build the command  
+              // Build the command
               File stdout = TaskLog.getTaskLogFile(task.getTaskID(),
                                                    TaskLog.LogName.DEBUGOUT);
               // add pipes program as argument if it exists.
@@ -1616,7 +1626,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
             	  program = new URI(executable).getFragment();
             	} catch (URISyntaxException ur) {
             	  LOG.warn("Problem in the URI fragment for pipes executable");
-            	}	  
+            	}
               }
               String [] debug = debugCommand.split(" ");
               Vector<String> vargs = new Vector<String>();
@@ -1656,7 +1666,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           taskStatus.setProgress(0.0f);
         }
         this.taskStatus.setFinishTime(System.currentTimeMillis());
-        needCleanup = (taskStatus.getRunState() == TaskStatus.State.FAILED || 
+        needCleanup = (taskStatus.getRunState() == TaskStatus.State.FAILED ||
                        taskStatus.getRunState() == TaskStatus.State.KILLED);
       }
 
@@ -1675,7 +1685,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       }
 
     }
-  
+
 
     /**
      * Runs the script given in args
@@ -1684,12 +1694,12 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
      * @throws IOException
      */
     public void runScript(List<String> args, File dir) throws IOException {
-      ShellCommandExecutor shexec = 
+      ShellCommandExecutor shexec =
               new ShellCommandExecutor(args.toArray(new String[0]), dir);
       shexec.execute();
       int exitCode = shexec.getExitCode();
       if (exitCode != 0) {
-        throw new IOException("Task debug script exit with nonzero status of " 
+        throw new IOException("Task debug script exit with nonzero status of "
                               + exitCode + ".");
       }
     }
@@ -1699,7 +1709,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
      * if num =-1, all the lines of file are added to the diagnostics.
      * @param file The file from which to collect diagnostics.
      * @param num The number of lines to be sent to diagnostics.
-     * @param tag The tag is printed before the diagnostics are printed. 
+     * @param tag The tag is printed before the diagnostics are printed.
      */
     public void addDiagnostics(String file, int num, String tag) {
       RandomAccessFile rafile = null;
@@ -1727,7 +1737,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
             }
           }
           else if (num == -1) {
-            tail.append(line); 
+            tail.append(line);
             tail.append("\n");
           }
         }
@@ -1754,11 +1764,11 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
          }
       }
     }
-    
+
     /**
      * We no longer need anything from this task, as the job has
      * finished.  If the task is still running, kill it and clean up.
-     * 
+     *
      * @param wasFailure did the task fail, as opposed to was it killed by
      *                   the framework
      */
@@ -1769,7 +1779,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           kill(wasFailure);
         }
       }
-      
+
       // Cleanup on the finished task
       cleanup(true);
     }
@@ -1785,8 +1795,8 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           failures += 1;
         }
         runner.kill();
-        taskStatus.setRunState((wasFailure) ? 
-                                  TaskStatus.State.FAILED : 
+        taskStatus.setRunState((wasFailure) ?
+                                  TaskStatus.State.FAILED :
                                   TaskStatus.State.KILLED);
       } else if (taskStatus.getRunState() == TaskStatus.State.UNASSIGNED) {
         if (wasFailure) {
@@ -1803,13 +1813,13 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
      */
     private synchronized void mapOutputLost(String failure
                                            ) throws IOException {
-      if (taskStatus.getRunState() == TaskStatus.State.COMMIT_PENDING || 
+      if (taskStatus.getRunState() == TaskStatus.State.COMMIT_PENDING ||
           taskStatus.getRunState() == TaskStatus.State.SUCCEEDED) {
         // change status to failure
         LOG.info("Reporting output lost:"+task.getTaskID());
         taskStatus.setRunState(TaskStatus.State.FAILED);
         taskStatus.setProgress(0.0f);
-        reportDiagnosticInfo("Map output lost, rescheduling: " + 
+        reportDiagnosticInfo("Map output lost, rescheduling: " +
                              failure);
         runningTasks.put(task.getTaskID(), this);
         mapTotal++;
@@ -1819,15 +1829,15 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     }
 
     /**
-     * We no longer need anything from this task.  Either the 
+     * We no longer need anything from this task.  Either the
      * controlling job is all done and the files have been copied
      * away, or the task failed and we don't need the remains.
      * Any calls to cleanup should not lock the tip first.
      * cleanup does the right thing- updates tasks in Tasktracker
      * by locking tasktracker first and then locks the tip.
-     * 
+     *
      * if needCleanup is true, the whole task directory is cleaned up.
-     * otherwise the current working directory of the task 
+     * otherwise the current working directory of the task
      * i.e. &lt;taskid&gt;/work is cleaned up.
      */
     void cleanup(boolean needCleanup) throws IOException {
@@ -1839,7 +1849,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
         }
         synchronized (this){
           if (alwaysKeepTaskFiles ||
-              (taskStatus.getRunState() == TaskStatus.State.FAILED && 
+              (taskStatus.getRunState() == TaskStatus.State.FAILED &&
                keepFailedTaskFiles)) {
             return;
           }
@@ -1860,30 +1870,30 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
                            taskDir + Path.SEPARATOR + MRConstants.WORKDIR));
           }
         } catch (Throwable ie) {
-          LOG.info("Error cleaning up task runner: " + 
+          LOG.info("Error cleaning up task runner: " +
                    StringUtils.stringifyException(ie));
         }
       }
     }
-        
+
     @Override
     public boolean equals(Object obj) {
       return (obj instanceof TaskInProgress) &&
         task.getTaskID().equals
         (((TaskInProgress) obj).getTask().getTaskID());
     }
-        
+
     @Override
     public int hashCode() {
       return task.getTaskID().hashCode();
     }
   }
 
-    
+
   // ///////////////////////////////////////////////////////////////
   // TaskUmbilicalProtocol
   /////////////////////////////////////////////////////////////////
-  
+
   @Deprecated
   public Task getTask(String id) throws IOException {
     return getTask(TaskAttemptID.forName(id));
@@ -1902,7 +1912,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   }
 
   @Deprecated
-  public boolean statusUpdate(String taskid, 
+  public boolean statusUpdate(String taskid,
                               TaskStatus status) throws IOException {
     return statusUpdate(TaskAttemptID.forName(taskid), status);
   }
@@ -1910,8 +1920,8 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   /**
    * Called periodically to report Task progress, from 0.0 to 1.0.
    */
-  public synchronized boolean statusUpdate(TaskAttemptID taskid, 
-                                              TaskStatus taskStatus) 
+  public synchronized boolean statusUpdate(TaskAttemptID taskid,
+                                              TaskStatus taskStatus)
   throws IOException {
     TaskInProgress tip = tasks.get(taskid);
     if (tip != null) {
@@ -1924,7 +1934,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   }
 
   @Deprecated
-  public void reportDiagnosticInfo(String taskid, 
+  public void reportDiagnosticInfo(String taskid,
                                    String info) throws IOException {
     reportDiagnosticInfo(TaskAttemptID.forName(taskid), info);
   }
@@ -1933,7 +1943,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
    * Called when the task dies before completion, and we want to report back
    * diagnostic info
    */
-  public synchronized void reportDiagnosticInfo(TaskAttemptID taskid, 
+  public synchronized void reportDiagnosticInfo(TaskAttemptID taskid,
                                                 String info
                                                 ) throws IOException {
     TaskInProgress tip = tasks.get(taskid);
@@ -1962,7 +1972,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   /**
    * The task is done.
    */
-  public synchronized void done(TaskAttemptID taskid, boolean shouldPromote) 
+  public synchronized void done(TaskAttemptID taskid, boolean shouldPromote)
   throws IOException {
     TaskInProgress tip = tasks.get(taskid);
     if (tip != null) {
@@ -1972,16 +1982,16 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     }
   }
 
-  @Deprecated 
+  @Deprecated
   public void shuffleError(String taskid, String msg) throws IOException {
     shuffleError(TaskAttemptID.forName(taskid), msg);
   }
 
-  /** 
+  /**
    * A reduce-task failed to shuffle the map-outputs. Kill the task.
-   */  
-  public synchronized void shuffleError(TaskAttemptID taskId, String message) 
-  throws IOException { 
+   */
+  public synchronized void shuffleError(TaskAttemptID taskId, String message)
+  throws IOException {
     LOG.fatal("Task: " + taskId + " - Killed due to Shuffle Failure: " + message);
     TaskInProgress tip = runningTasks.get(taskId);
     tip.reportDiagnosticInfo("Shuffle Error: " + message);
@@ -1993,10 +2003,10 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     fsError(TaskAttemptID.forName(taskid), msg);
   }
 
-  /** 
+  /**
    * A child task had a local filesystem error. Kill the task.
-   */  
-  public synchronized void fsError(TaskAttemptID taskId, String message) 
+   */
+  public synchronized void fsError(TaskAttemptID taskId, String message)
   throws IOException {
     LOG.fatal("Task: " + taskId + " - Killed due to FSError: " + message);
     TaskInProgress tip = runningTasks.get(taskId);
@@ -2005,7 +2015,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   }
 
   @Deprecated
-  public TaskCompletionEvent[] getMapCompletionEvents(String jobid, int fromid, 
+  public TaskCompletionEvent[] getMapCompletionEvents(String jobid, int fromid,
                                                       int maxlocs
                                                      ) throws IOException {
     return getMapCompletionEvents(JobID.forName(jobid), fromid, maxlocs);
@@ -2013,11 +2023,11 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 
   public TaskCompletionEvent[] getMapCompletionEvents(JobID jobId
       , int fromEventId, int maxLocs) throws IOException {
-      
+
     TaskCompletionEvent[]mapEvents = TaskCompletionEvent.EMPTY_ARRAY;
     RunningJob rjob;
     synchronized (runningJobs) {
-      rjob = runningJobs.get(jobId);          
+      rjob = runningJobs.get(jobId);
       if (rjob != null) {
         synchronized (rjob) {
           FetchStatus f = rjob.getFetchStatus();
@@ -2029,7 +2039,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     }
     return mapEvents;
   }
-    
+
   /////////////////////////////////////////////////////
   //  Called by TaskTracker thread after task process ends
   /////////////////////////////////////////////////////
@@ -2069,12 +2079,12 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       LOG.warn("Unknown child with bad map output: "+taskid+". Ignored.");
     }
   }
-    
+
   /**
    *  The datastructure for initializing a job
    */
   static class RunningJob{
-    private JobID jobid; 
+    private JobID jobid;
     private Path jobFile;
     // keep this for later use
     Set<TaskInProgress> tasks;
@@ -2088,28 +2098,28 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       this.jobFile = jobFile;
       keepJobFiles = false;
     }
-      
+
     Path getJobFile() {
       return jobFile;
     }
-      
+
     JobID getJobID() {
       return jobid;
     }
-      
+
     void setFetchStatus(FetchStatus f) {
       this.f = f;
     }
-      
+
     FetchStatus getFetchStatus() {
       return f;
     }
   }
 
-  /** 
-   * The main() for child processes. 
+  /**
+   * The main() for child processes.
    */
- 
+
 
   /**
    * Get the name for this task tracker.
@@ -2118,7 +2128,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   public String getName() {
     return taskTrackerName;
   }
-    
+
   private synchronized List<TaskStatus> cloneAndResetRunningTaskStatuses(
                                           boolean sendCounters) {
     List<TaskStatus> result = new ArrayList<TaskStatus>(runningTasks.size());
@@ -2135,7 +2145,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     return result;
   }
   /**
-   * Get the list of tasks that will be reported back to the 
+   * Get the list of tasks that will be reported back to the
    * job tracker in the next heartbeat cycle.
    * @return a copy of the list of TaskStatus objects
    */
@@ -2178,14 +2188,14 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
     }
     return result;
   }
-  
+
   /**
    * Get the default job conf for this tracker.
    */
   JobConf getJobConf() {
     return fConf;
   }
-    
+
   /**
    * Is this task tracker idle?
    * @return has this task tracker finished and cleaned up all of its tasks?
@@ -2193,7 +2203,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   public synchronized boolean isIdle() {
     return tasks.isEmpty() && tasksToCleanup.isEmpty();
   }
-    
+
   /**
    * Start the TaskTracker, point toward the indicated JobTracker
    */
@@ -2223,7 +2233,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   public static class MapOutputServlet extends HttpServlet {
     private static final int MAX_BYTES_TO_READ = 64 * 1024;
     @Override
-    public void doGet(HttpServletRequest request, 
+    public void doGet(HttpServletRequest request,
                       HttpServletResponse response
                       ) throws ServletException, IOException {
       String mapId = request.getParameter("map");
@@ -2245,40 +2255,40 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
       OutputStream outStream = null;
       FSDataInputStream indexIn = null;
       FSDataInputStream mapOutputIn = null;
-      
+
       ShuffleServerMetrics shuffleMetrics = (ShuffleServerMetrics)
                                       context.getAttribute("shuffleServerMetrics");
       try {
         shuffleMetrics.serverHandlerBusy();
         outStream = response.getOutputStream();
         JobConf conf = (JobConf) context.getAttribute("conf");
-        LocalDirAllocator lDirAlloc = 
+        LocalDirAllocator lDirAlloc =
           (LocalDirAllocator)context.getAttribute("localDirAllocator");
-        FileSystem fileSys = 
+        FileSystem fileSys =
           (FileSystem) context.getAttribute("local.file.system");
 
         // Index file
         Path indexFileName = lDirAlloc.getLocalPathToRead(
-            TaskTracker.getJobCacheSubdir() + Path.SEPARATOR + 
+            TaskTracker.getJobCacheSubdir() + Path.SEPARATOR +
             jobId + Path.SEPARATOR +
             mapId + "/output" + "/file.out.index", conf);
-        
+
         // Map-output file
         Path mapOutputFileName = lDirAlloc.getLocalPathToRead(
-            TaskTracker.getJobCacheSubdir() + Path.SEPARATOR + 
+            TaskTracker.getJobCacheSubdir() + Path.SEPARATOR +
             jobId + Path.SEPARATOR +
             mapId + "/output" + "/file.out", conf);
 
         /**
          * Read the index file to get the information about where
-         * the map-output for the given reducer is available. 
+         * the map-output for the given reducer is available.
          */
         //open index file
         indexIn = fileSys.open(indexFileName);
 
         //seek to the correct offset for the given reduce
         indexIn.seek(reduce * MapTask.MAP_OUTPUT_INDEX_RECORD_LENGTH);
-          
+
         //read the offset and length of the partition data
         final long startOffset = indexIn.readLong();
         final long rawPartLength = indexIn.readLong();
@@ -2286,31 +2296,31 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 
         indexIn.close();
         indexIn = null;
-          
-        //set the custom "Raw-Map-Output-Length" http header to 
+
+        //set the custom "Raw-Map-Output-Length" http header to
         //the raw (decompressed) length
         response.setHeader(RAW_MAP_OUTPUT_LENGTH, Long.toString(rawPartLength));
 
-        //set the custom "Map-Output-Length" http header to 
+        //set the custom "Map-Output-Length" http header to
         //the actual number of bytes being transferred
-        response.setHeader(MAP_OUTPUT_LENGTH, 
+        response.setHeader(MAP_OUTPUT_LENGTH,
                            Long.toString(partLength));
 
         //use the same buffersize as used for reading the data from disk
         response.setBufferSize(MAX_BYTES_TO_READ);
-        
+
         /**
          * Read the data from the sigle map-output file and
          * send it to the reducer.
          */
         //open the map-output file
         mapOutputIn = fileSys.open(mapOutputFileName);
-        
+
         // TODO: Remove this after a 'fix' for HADOOP-3647
         // The clever trick here to reduce the impact of the extra seek for
         // logging the first key/value lengths is to read the lengths before
         // the second seek for the actual shuffle. The second seek is almost
-        // a no-op since it is very short (go back length of two VInts) and the 
+        // a no-op since it is very short (go back length of two VInts) and the
         // data is almost guaranteed to be in the filesystem's buffers.
         // WARN: This won't work for compressed map-outputs!
         int firstKeyLength = 0;
@@ -2320,14 +2330,14 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           firstKeyLength = WritableUtils.readVInt(mapOutputIn);
           firstValueLength = WritableUtils.readVInt(mapOutputIn);
         }
-        
+
 
         //seek to the correct offset for the reduce
         mapOutputIn.seek(startOffset);
-          
+
         long totalRead = 0;
         int len = mapOutputIn.read(buffer, 0,
-                                   partLength < MAX_BYTES_TO_READ 
+                                   partLength < MAX_BYTES_TO_READ
                                    ? (int)partLength : MAX_BYTES_TO_READ);
         while (len > 0) {
           try {
@@ -2340,20 +2350,20 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
           }
           totalRead += len;
           if (totalRead == partLength) break;
-          len = mapOutputIn.read(buffer, 0, 
+          len = mapOutputIn.read(buffer, 0,
                                  (partLength - totalRead) < MAX_BYTES_TO_READ
                                  ? (int)(partLength - totalRead) : MAX_BYTES_TO_READ);
         }
-        
-        LOG.info("Sent out " + totalRead + " bytes for reduce: " + reduce + 
-                 " from map: " + mapId + " given " + partLength + "/" + 
-                 rawPartLength + " from " + startOffset + " with (" + 
+
+        LOG.info("Sent out " + totalRead + " bytes for reduce: " + reduce +
+                 " from map: " + mapId + " given " + partLength + "/" +
+                 rawPartLength + " from " + startOffset + " with (" +
                  firstKeyLength + ", " + firstValueLength + ")");
       } catch (IOException ie) {
-        TaskTrackerImpl tracker = 
+        TaskTrackerImpl tracker =
           (TaskTrackerImpl) context.getAttribute("task.tracker");
         Log log = (Log) context.getAttribute("log");
-        String errorMsg = ("getMapOutput(" + mapId + "," + reduceId + 
+        String errorMsg = ("getMapOutput(" + mapId + "," + reduceId +
                            ") failed :\n"+
                            StringUtils.stringifyException(ie));
         log.warn(errorMsg);
@@ -2393,7 +2403,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
   private static class CleanupQueue extends Thread {
     private LinkedBlockingQueue<Path> queue = new LinkedBlockingQueue<Path>();
     private JobConf conf;
-    
+
     public CleanupQueue(JobConf conf) throws IOException{
       setName("Directory/File cleanup thread");
       setDaemon(true);
@@ -2429,6 +2439,6 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 @Override
 public void kill(TaskRunner runner) {
 	// TODO Auto-generated method stub
-	
+
 }
 }
