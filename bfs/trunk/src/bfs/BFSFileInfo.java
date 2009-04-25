@@ -1,15 +1,20 @@
 package bfs;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
 
-public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
+import org.apache.hadoop.io.Writable;
+
+public class BFSFileInfo implements Comparable<BFSFileInfo>, Serializable, Writable {
 	private static final long serialVersionUID = 1L;
 
-	private final int fileId;
-	private final String path;
-	private final String name;
-	private final long length;
-	private final boolean isDirectory;
+	private int fileId;
+	private String path;
+	private String name;
+	private long length;
+	private boolean isDirectory;
 
 	public BFSFileInfo(int fileId, String path, String name, Long length, boolean isDirectory) {
 		this.fileId = fileId;
@@ -101,5 +106,23 @@ public class BFSFileInfo implements Serializable, Comparable<BFSFileInfo> {
 	@Override
 	public String toString() {
 		return this.path + "; length = " + this.length;
+	}
+
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		this.fileId = in.readInt();
+		this.name = in.readUTF();
+		this.path = in.readUTF();
+		this.length = in.readLong();
+		this.isDirectory = in.readBoolean();
+	}
+
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeInt(this.fileId);
+		out.writeUTF(this.name);
+		out.writeUTF(this.path);
+		out.writeLong(this.length);
+		out.writeBoolean(this.isDirectory);
 	}
 }

@@ -1,13 +1,18 @@
 package bfs;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Set;
 
-public class BFSChunkInfo implements Serializable, Comparable<BFSChunkInfo> {
+import org.apache.hadoop.io.Writable;
+
+public class BFSChunkInfo implements Comparable<BFSChunkInfo>, Serializable, Writable {
 	private static final long serialVersionUID = 1L;
 
-	private final int chunkId;
-	private final int length;
+	private int chunkId;
+	private int length;
 
 	public BFSChunkInfo(int chunkId, int length) {
 		this.chunkId = chunkId;
@@ -63,4 +68,16 @@ public class BFSChunkInfo implements Serializable, Comparable<BFSChunkInfo> {
 
         return result;
     }
+
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		this.chunkId = in.readInt();
+		this.length = in.readInt();
+	}
+
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeInt(this.chunkId);
+		out.writeInt(this.length);
+	}
 }

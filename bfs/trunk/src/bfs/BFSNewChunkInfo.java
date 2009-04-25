@@ -1,18 +1,23 @@
 package bfs;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class BFSNewChunkInfo implements Serializable {
+import org.apache.hadoop.io.Writable;
+
+public class BFSNewChunkInfo implements Serializable, Writable {
 	private static final long serialVersionUID = 1L;
 
 	private static final Random random = new Random();
 
-	private final int chunkId;
-	private final List<String> nodeAddrs;
+	private int chunkId;
+	private List<String> nodeAddrs;
 
 	public BFSNewChunkInfo(int chunkId, List<String> nodeList) {
 		this.chunkId = chunkId;
@@ -46,5 +51,22 @@ public class BFSNewChunkInfo implements Serializable {
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		this.chunkId = in.readInt();
+		int numAddrs = in.readInt();
+		this.nodeAddrs = new ArrayList<String>(numAddrs);
+		for (int i = 0; i < numAddrs; i++)
+			this.nodeAddrs.add(in.readUTF());
+	}
+
+	@Override
+	public void write(DataOutput out) throws IOException {
+		out.writeInt(this.chunkId);
+		out.writeInt(this.nodeAddrs.size());
+		for (String addr : this.nodeAddrs)
+			out.writeUTF(addr);
 	}
 }
