@@ -146,6 +146,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 		int bfsTmpPort = bfsSocAddr.getPort();
 		this.bfsServer = RPC.getServer(new BFSProtocolServer(), bfsBindAddress,
 									   bfsTmpPort, max, false, this.fConf);
+		this.bfsServer.start();
 		LOG.info("BFSProtocolServer up at: " + this.bfsServer.getListenerAddress());
 	}
 
