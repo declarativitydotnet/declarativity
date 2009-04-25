@@ -528,7 +528,7 @@ public abstract class Aggregate<C extends Object> {
 
 	public static class ConcatString extends Aggregate<String> {
 		private BasicTupleSet tuples;
-		private String result;
+		private StringBuilder buf;
 		private TupleFunction<String> accessor;
 
 		public ConcatString(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
@@ -538,22 +538,26 @@ public abstract class Aggregate<C extends Object> {
 
 		@Override
 		public String result() {
-			return new String(this.result);
+			if (this.buf == null)
+				return null;
+
+			return this.buf.toString();
 		}
 
 		public void reset() {
 			this.tuples = new BasicTupleSet();
-			this.result = null;
+			this.buf = null;
 		}
 
 		@Override
 		public void insert(Tuple tuple) throws JolRuntimeException {
 			if (this.tuples.add(tuple)) {
-				if (this.result == null) {
-					this.result = this.accessor.evaluate(tuple);
+				String str = this.accessor.evaluate(tuple);
+				if (this.buf == null) {
+					this.buf = new StringBuilder(str);
 				}
 				else {
-					this.result += this.accessor.evaluate(tuple);
+					this.buf.append(str);
 				}
 			}
 		}
