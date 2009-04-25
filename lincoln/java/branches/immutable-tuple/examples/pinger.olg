@@ -1,0 +1,29 @@
+program pingpong;  /* ponger.olg */
+
+import jol.core.Runtime;
+import java.lang.System;
+
+timer(timeToPing, physical, 1000, 100, 0);
+
+/* Network messages */
+
+define(doping, {String,String,Long});
+define(dopong, {String,String,Long});
+
+/* Local state for pinger; these tables have an extra timestamp column
+   so pinger.olg can measure RTT. */
+
+define(ping, keys(0,1,2), {String, String, Long, Long});
+define(ack,  keys(0,1,2), {String, String, Long, Long});
+
+define(link, keys(0,1), {String, String});
+link("tcp:localhost:10000", "tcp:localhost:10001");
+
+ping(A, B, Runtime.idgen(), System.currentTimeMillis())
+        :- timeToPing(_,_,_), link(A,B);
+
+doping(@B,A,Id):-ping(@A,B,Id);
+
+ack(A,B,Id,new Long(System.currentTimeMillis())-Ts) :-
+                dopong(A,B,Id), ping(A,B,Id,Ts);
+

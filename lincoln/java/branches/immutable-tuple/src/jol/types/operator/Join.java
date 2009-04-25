@@ -1,0 +1,267 @@
+package jol.types.operator;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import jol.core.Runtime;
+import jol.lang.plan.Expression;
+import jol.lang.plan.Predicate;
+import jol.lang.plan.Variable;
+import jol.types.basic.Schema;
+import jol.types.basic.Tuple;
+import jol.types.basic.BasicTupleSet;
+import jol.types.exception.JolRuntimeException;
+import jol.types.exception.PlannerException;
+import jol.types.function.Filter;
+import jol.types.function.TupleFunction;
+
+/**
+ * The interface to all join operators.
+ */
+public abstract class Join extends Operator {
+
+	/**
+	 * A table function used to extract values from tuples
+	 * taken from a specific {@link jol.types.table.Table} object.
+	 *
+	 */
+	private class TableField implements TupleFunction<Object> {
+		/** The field type. */
+		private Class type;
+		/** The field position within the tuple. */
+		private Integer position;
+		/**
+		 * Create a new TableField.
+		 * @param type The field type.
+		 * @param position The field position.
+		 */
+		public TableField(Class type, Integer position) {
+			this.type = type;
+			this.position = position;
+		}
+		/** Extracts the value from the tuple field position. */
+		public Object evaluate(Tuple tuple) throws JolRuntimeException {
+			return tuple.value(this.position);
+		}
+		/** The type of value returned by {@link #evaluate(Tuple)}. */
+		public Class returnType() {
+			return this.type;
+		}
+	}
+
+
+	/**
+	 * Evaluates a single join attribute.
+	 */
+	private class JoinFilter {
+		/** Left hand side value accessor. */
+		private TupleFunction<Object> lhs;
+
+		/** Right hand side value accessor. */
+		private TupleFunction<Object> rhs;
+
+		/**
+		 * Create a new join filter.
+		 * @param lhs The left hand side accessor.
+		 * @param rhs The right hand side accessor.
+		 */
+		private JoinFilter(TupleFunction<Object> lhs,
+				           TupleFunction<Object> rhs) {
+			this.lhs = lhs;
+			this.rhs = rhs;
+		}
+
+		/**
+		 * Evaluate a tuple from the outer relation and a tuple
+		 * from the inner relation along a single join attribute.
+		 * @param outer Tuple from the outer.
+		 * @param inner Tuple from the inner.
+		 * @return true if join succeeds, false otherwise.
+		 * @throws JolRuntimeException
+		 */
+		public Boolean evaluate(Tuple outer, Tuple inner) throws JolRuntimeException {
+			Object lvalue = this.lhs.evaluate(outer);
+			Object rvalue = this.rhs.evaluate(inner);
+
+			if (lvalue == rvalue)
+				return true;
+			else if (lvalue == null)
+				return false;
+			else
+				return lvalue.equals(rvalue);
+		}
+	}
+
+	/** A list of join filters, one for each common join attribute. */
+	private JoinFilter[] joinFilters;
+	private Filter[] predicateFilters;
+
+	private int[] innerNonJoinPositions;
+	private Object[] tupBuf;
+
+	/**
+	 * Create a new join operator.
+	 * @param context The runtime context.
+	 * @param predicate The predicate representing the table being joined.
+	 * @param input The schema of the input tuples that are to be joined with the (inner) table.
+	 * @throws PlannerException
+	 */
+	public Join(Runtime context, Predicate predicate, Schema input) throws PlannerException {
+		super(context, predicate.program(), predicate.rule());
+		Schema innerSchema = predicate.schema();
+
+		ArrayList<Integer> tmp = new ArrayList<Integer>();
+		for (Variable var : innerSchema.variables()) {
+			if (!input.contains(var)) {
+				tmp.add(innerSchema.position(var.name()));
+			}
+		}
+		innerNonJoinPositions = new int[tmp.size()];
+		for (int i = 0; i < this.innerNonJoinPositions.length; i++) {
+		    innerNonJoinPositions[i] = tmp.get(i);
+		}
+
+        tupBuf = new Object[input.size() + this.innerNonJoinPositions.length];
+
+		initFilters(predicate, input);
+	}
+
+	/**
+	 * Apply all join filters.
+	 * @param outer Tuple from the outer relation.
+	 * @param inner Tuple from the inner relation.
+	 * @return true if all join filters succeed, false otherwise.
+	 * @throws JolRuntimeException
+	 */
+	private Boolean validate(Tuple outer, Tuple inner) throws JolRuntimeException {
+	    for(int i = 0; i < this.joinFilters.length; i++) {
+			if (joinFilters[i].evaluate(outer, inner) == Boolean.FALSE) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private Boolean validate(Tuple inner) throws JolRuntimeException {
+	    for (int i = 0; i < this.predicateFilters.length; i++) {
+			if (Boolean.FALSE.equals(this.predicateFilters[i].evaluate(inner))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Create a list of join filters based on the predicate schema
+	 * and the input tuple schema. A filter will be created for each
+	 * variable that matches between these two schemas.
+	 * @param predicate The predicate that references the inner table.
+	 * @return A list of join filters.
+	 * @throws PlannerException
+	 */
+	private void initFilters(Predicate predicate, Schema input)
+	throws PlannerException {
+		ArrayList<Filter> predicateFiltersScratch = new ArrayList<Filter>();
+
+		Map<String, Integer> positions = new HashMap<String, Integer>();
+		for (int position = 0; position < predicate.arguments().size(); position++ ) {
+			Expression arg = predicate.argument(position);
+			if (arg instanceof Variable) {
+				Variable var = (Variable) arg;
+				if (positions.containsKey(var.name())) {
+					Integer prev = positions.get(var.name());
+					predicateFiltersScratch.add(
+							    new Filter(Filter.Operator.EQ,
+								           new TableField(var.type(), prev),
+								           new TableField(var.type(), position)));
+				}
+				else {
+					positions.put(var.name(), position);
+				}
+			}
+			else {
+				predicateFiltersScratch.add(
+						    new Filter(Filter.Operator.EQ,
+						               new TableField(arg.type(), position),
+						               arg.function(predicate.schema())));
+			}
+		}
+		this.predicateFilters = predicateFiltersScratch.toArray(new Filter[0]);
+		ArrayList<JoinFilter> joinFiltersScratch      = new ArrayList<JoinFilter>();
+		for (Variable var : input.variables()) {
+			if (predicate.schema().contains(var)) {
+				TupleFunction<Object> o = var.function(input);
+				TupleFunction<Object> i = var.function(predicate.schema());
+				joinFiltersScratch.add(new JoinFilter(o, i));
+			}
+		}
+		this.joinFilters = joinFiltersScratch.toArray(new JoinFilter[0]);
+	}
+
+	/**
+	 * Join the outer tuples with the inner tuples.
+	 * @param outerTuples Outer tuples.
+	 * @param innerTuples Inner tuples.
+	 * @return Join result.
+	 * @throws JolRuntimeException
+	 */
+	protected BasicTupleSet join(Iterable<Tuple> outerTuples, Iterable<Tuple> innerTuples)
+	throws JolRuntimeException {
+		BasicTupleSet result = new BasicTupleSet();
+		for (Tuple outer : outerTuples) {
+			for (Tuple inner : innerTuples) {
+				if (validate(inner) && validate(outer, inner)) {
+					result.add(join(outer, inner));
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Join a single outer tuple with the inner tuples. This is just an
+	 * optimized version of the previous join method for the common case that we
+	 * only have a single outer tuple at a time.
+	 */
+	protected BasicTupleSet join(Tuple outer, Iterable<Tuple> innerTuples) throws JolRuntimeException {
+		BasicTupleSet result = new BasicTupleSet();
+		for (Tuple inner : innerTuples) {
+			if (validate(inner) && validate(outer, inner))
+				result.add(join(outer, inner));
+		}
+		return result;
+	}
+
+	private Tuple join(Tuple outer, Tuple inner) {
+        synchronized (tupBuf) {
+            if (tupBuf.length != outer.size() + this.innerNonJoinPositions.length)
+            	throw new IllegalStateException("bug in join logic!");
+
+    	    for (int i = 0; i < outer.size(); i++) {
+    	        tupBuf[i] = outer.value(i);
+    	    }
+    	    for (int i = 0; i < this.innerNonJoinPositions.length; i++) {
+    	        tupBuf[i+outer.size()] = inner.value(this.innerNonJoinPositions[i]);
+    	    }
+    	    return new Tuple(tupBuf);
+	    }
+	}
+
+	/**
+	 * Check whether a given tuple joins against a given set of tuples, without
+	 * actually bothering to compute the join.
+	 *
+	 * @param outer A single input tuple.
+	 * @param innerTuples A set of tuples to join against.
+	 * @return true iff the result of joining "outer" against "innerTuples"
+	 *         would yield one or more result tuples; false otherwise.
+	 */
+	protected boolean checkJoin(Tuple outer, Iterable<Tuple> innerTuples) throws JolRuntimeException {
+		for (Tuple inner : innerTuples) {
+			if (validate(inner) && validate(outer, inner))
+				return true;
+		}
+		return false;
+	}
+}
