@@ -26,6 +26,9 @@ public class Tuple implements Iterable<Object>, Serializable {
 	/** An array of tuple values. */
 	protected Object[] values;
 
+	/** A tuple refcount. */
+	transient protected long refCount;
+
 	/** Cached hash code value */
 	transient protected int hashCache = 0;
 
@@ -199,7 +202,10 @@ public class Tuple implements Iterable<Object>, Serializable {
 
 	@Override
 	public Tuple clone() {
-		throw new UnsupportedOperationException("Tuples are immutable.  Please don't clone them");
+		Tuple copy    = new Tuple(this.values);
+		copy.refCount = this.refCount;
+		copy.hashCache = this.hashCache;
+		return copy;
 	}
 
     /**
@@ -208,6 +214,7 @@ public class Tuple implements Iterable<Object>, Serializable {
      */
 	private void initialize() {
 	    this.hashCache = 0;
+		this.refCount       = 1;
 	}
 
 	@Override
@@ -254,6 +261,42 @@ public class Tuple implements Iterable<Object>, Serializable {
 	 */
 	public Object value(int field) {
 		return this.values[field];
+	}
+
+	/**
+	 * Set the refcount of this tuple.
+	 * @param value The refcount value.
+	 */
+	public void refCount(long value) {
+		this.refCount = value;
+	}
+
+	public long refCountInc() {
+		this.refCount++;
+		return this.refCount;
+	}
+
+	public long refCountInc(long value) {
+		this.refCount += value;
+		return this.refCount;
+	}
+
+	public long refCountDec() {
+		this.refCount--;
+		return this.refCount;
+	}
+
+	public long refCountDec(long value) {
+		this.refCount -= value;
+		return this.refCount;
+	}
+
+	/**
+	 * Get the refcount of this tuple.
+	 * @return The refcount.
+	 */
+	public long refCount() {
+		return this.refCount;
 	}
 
 	public Iterator<Object> iterator() {
