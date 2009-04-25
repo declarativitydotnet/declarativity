@@ -147,7 +147,7 @@ public class BFSClient {
         }
 	}
 
-	public synchronized BFSNewChunkInfo getNewChunk(final String path) {
+	public synchronized BFSNewChunkInfo createNewChunk(final String path) {
         final int requestId = generateId();
 
         // Register a callback to listen for responses
