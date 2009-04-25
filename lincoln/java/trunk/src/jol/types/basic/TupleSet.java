@@ -1,9 +1,9 @@
 package jol.types.basic;
 
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.Set;
 
-public interface TupleSet extends Collection<Tuple>, Comparable<TupleSet>, Serializable {
+public interface TupleSet extends Set<Tuple>, Comparable<TupleSet>, Serializable {
 
 	public void refCount(boolean count);
 

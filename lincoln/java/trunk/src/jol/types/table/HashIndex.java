@@ -1,8 +1,10 @@
 package jol.types.table;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import jol.core.Runtime;
 import jol.types.basic.Tuple;
@@ -92,27 +94,10 @@ public class HashIndex extends Index {
 
 	@Override
 	public Iterator<Tuple> iterator() {
-		return new Iterator<Tuple>() {
-			Iterator<BasicTupleSet> setIt = map.values().iterator();
-			Iterator<Tuple> tupIt;
-			@Override
-			public boolean hasNext() {
-				return (tupIt!=null && tupIt.hasNext()) || setIt.hasNext();
-			}
-
-			@Override
-			public Tuple next() {
-				if(tupIt == null || ! tupIt.hasNext()) {
-					// Note: assumes that setIt.next() isn't empty.
-					tupIt = setIt.next().iterator();
-				}
-				return tupIt.next();
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException("Index iterators do not support remove()!");
-			}
-		};
+		Set<Tuple> tuples = new HashSet<Tuple>();
+		for (BasicTupleSet set : this.map.values()) {
+			tuples.addAll(set);
+		}
+		return tuples.iterator();
 	}
 }
