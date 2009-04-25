@@ -12,6 +12,7 @@ import org.apache.hadoop.fs.FSError;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalDirAllocator;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.bfs.BFSProtocolServer;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.ipc.Server;
 import org.apache.hadoop.mapred.TaskTrackerImpl.MapOutputServlet;
@@ -41,8 +42,8 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 	protected static final String JOBCACHE = "jobcache";
 
 	protected Server taskReportServer = null;
+	protected Server bfsServer = null;
 	protected StatusHttpServer server = null;
-
 
 	protected InetSocketAddress jobTrackAddr;
 	protected InetSocketAddress taskReportAddress;
@@ -56,8 +57,8 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 
 	protected int maxCurrentMapTasks;
 	protected int maxCurrentReduceTasks;
-	
-	protected LocalDirAllocator lDirAlloc = 
+
+	protected LocalDirAllocator lDirAlloc =
           new LocalDirAllocator("mapred.local.dir");
 
 	public TaskTracker(JobConf conf, Class outputServlet) throws IOException {
@@ -66,12 +67,12 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 				"mapred.tasktracker.map.tasks.maximum", 2);
 		maxCurrentReduceTasks = conf.getInt(
 				"mapred.tasktracker.reduce.tasks.maximum", 2);
-		
+
 	    this.jobTrackAddr = JobTracker.getAddress(conf);
 	    System.err.println("JOB TRACKER ADDRESS " + this.jobTrackAddr);
-	    String infoAddr = 
+	    String infoAddr =
 	      NetUtils.getServerAddress(conf,
-	                                "tasktracker.http.bindAddress", 
+	                                "tasktracker.http.bindAddress",
 	                                "tasktracker.http.port",
 	                                "mapred.task.tracker.http.address");
 	    InetSocketAddress infoSocAddr = NetUtils.createSocketAddr(infoAddr);
@@ -113,17 +114,17 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 		fConf.deleteLocalFiles(SUBDIR);
 
 		// bind address
-		String address = 
+		String address =
 			NetUtils.getServerAddress(fConf,
-					"mapred.task.tracker.report.bindAddress", 
-					"mapred.task.tracker.report.port", 
+					"mapred.task.tracker.report.bindAddress",
+					"mapred.task.tracker.report.port",
 			"mapred.task.tracker.report.address");
 		InetSocketAddress socAddr = NetUtils.createSocketAddr(address);
 		String bindAddress = socAddr.getHostName();
 		int tmpPort = socAddr.getPort();
-		
+
 		// RPC initialization
-		int max = maxCurrentMapTasks > maxCurrentReduceTasks ? 
+		int max = maxCurrentMapTasks > maxCurrentReduceTasks ?
 				maxCurrentMapTasks : maxCurrentReduceTasks;
 		this.taskReportServer =
 			RPC.getServer(this, bindAddress, tmpPort, max, false, this.fConf);
@@ -138,10 +139,18 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 		this.taskTrackerName = "tracker_" + localHostname + ":" + taskReportAddress;
 		LOG.info("Starting tracker " + taskTrackerName);
 
+		// Initialize BFS RPC server
+		String bfsAddress = fConf.get("fs.bfs.jolServer.address");
+		InetSocketAddress bfsSocAddr = NetUtils.createSocketAddr(bfsAddress);
+		String bfsBindAddress = bfsSocAddr.getHostName();
+		int bfsTmpPort = bfsSocAddr.getPort();
+		this.bfsServer = RPC.getServer(new BFSProtocolServer(), bfsBindAddress,
+									   bfsTmpPort, max, false, this.fConf);
+		LOG.info("BFSProtocolServer up at: " + this.bfsServer.getListenerAddress());
 	}
-	
+
 	public abstract TaskRunner launch(Task task);
-	
+
 	public abstract void kill(TaskRunner runner);
 
 	/** Return the port at which the tasktracker bound to */
@@ -163,7 +172,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 	 * @param localDirs where the new TaskTracker should keep its local files.
 	 * @throws DiskErrorException if all local directories are not writable
 	 */
-	protected static void checkLocalDirs(String[] localDirs) 
+	protected static void checkLocalDirs(String[] localDirs)
 	throws DiskErrorException {
 		boolean writable = false;
 
@@ -181,7 +190,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 		if (!writable)
 			throw new DiskErrorException(
 			"all local directories are not writable");
-	} 
+	}
 
 
 	public abstract void reportTaskFinished(TaskAttemptID taskid);
@@ -233,8 +242,8 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 				RPC.stopProxy(umbilical);
 				MetricsContext metricsContext = MetricsUtil.getContext("mapred");
 				metricsContext.close();
-				// Shutting down log4j of the child-vm... 
-				// This assumes that on return from Task.run() 
+				// Shutting down log4j of the child-vm...
+				// This assumes that on return from Task.run()
 				// there is no more logging done.
 				LogManager.shutdown();
 			}
