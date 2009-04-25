@@ -33,12 +33,16 @@ public class BFSClient {
         this.rand = new Random();
         this.currentMaster = new int[Conf.getNumPartitions()];
         this.responseQueue = new SimpleQueue<Object>();
-        this.selfAddr = Conf.findLocalAddress(port);
-        this.selfTargetControlAddr = Conf.findSelfAddress(false);
 
 		try {
 			this.system = Runtime.create(Runtime.DEBUG_WATCH, System.err, port);
 			this.system.setDaemon(isDaemon);
+
+			// If we didn't specify an explicit port (-1), use the one that JOL
+			// has bound to.
+			port = this.system.getServerPort();
+			this.selfAddr = Conf.findLocalAddress(port);
+	        this.selfTargetControlAddr = Conf.findSelfAddress(false);
 
 	        this.system.install("bfs_global", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
 	        this.system.evaluate();
@@ -65,6 +69,10 @@ public class BFSClient {
 
 	public BFSClient(int port) {
 		this(port, false);
+	}
+
+	public BFSClient(boolean isDaemon) {
+		this(-1, isDaemon);
 	}
 
 	public String getSelfDataNodeAddr() {
