@@ -30,31 +30,11 @@ public class BoomFileSystem extends FileSystem {
 	public void initialize(URI uri, Configuration conf) throws IOException {
         setConf(conf);
 
-		/**
-		 * XXX: JOL currently requires a fixed local port to bind to. Since
-		 * BoomFileSystem might be instanciated many times on the same machine,
-		 * we can't just pick a single port. For now, randomly pick ports from
-		 * within a range until we find a port we can bind to.
-		 */
-        int minPort = conf.getInt("fs.bfs.minPort", 12000);
-        int maxPort = conf.getInt("fs.bfs.maxPort", 32000);
-        if (maxPort <= minPort)
-        	throw new IllegalStateException();
-
-        Random r = new Random();
-        while (true) {
-        	int tryPort = r.nextInt(maxPort - minPort) + minPort;
-        	System.out.println("BFS#initialize(): trying to create JOL @ port " + tryPort);
-        	try {
-        		// XXX: make the JOL driver thread a daemon thread. This is to
-        		// workaround the apparent fact that the Hadoop task tracker code
-        		// does not always invoke FileSystem#close().
-        		this.bfs = new BFSClient(tryPort, true);
-        	} catch (RuntimeException e) {
-        		continue;
-        	}
-        	break;
-        }
+        // Start JOL on an ephemeral local TCP port
+		// XXX: make the JOL driver thread a daemon thread. This is to
+		// workaround the apparent fact that the Hadoop task tracker code
+		// does not always invoke FileSystem#close().
+		this.bfs = new BFSClient(true);
 
         this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 	}
