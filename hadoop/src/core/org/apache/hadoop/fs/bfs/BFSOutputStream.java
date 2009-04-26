@@ -11,11 +11,11 @@ import bfs.DataConnection;
 
 public class BFSOutputStream extends OutputStream {
 	private String path;
-	private BFSClient bfs;
+	private BFSClientProtocol bfs;
 	private boolean isClosed;
 	private ByteBuffer buf;
 
-	public BFSOutputStream(String path, BFSClient bfs) {
+	public BFSOutputStream(String path, BFSClientProtocol bfs) {
 		this.path = path;
 		this.bfs = bfs;
 		this.isClosed = false;
@@ -54,7 +54,7 @@ public class BFSOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void flush() throws IOException {
-		BFSNewChunkInfo info = this.bfs.getNewChunk(this.path);
+		BFSNewChunkInfo info = this.bfs.createNewChunk(this.path);
 
         DataConnection conn = new DataConnection(info.getCandidateNodes());
         conn.sendRoutingData(info.getChunkId());
