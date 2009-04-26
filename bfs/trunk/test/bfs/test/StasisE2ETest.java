@@ -39,7 +39,7 @@ public class StasisE2ETest extends TestCommon {
 		r.nextBytes(testData);
 
 		for (int i = 0; i < NUM_TEST_CHUNKS; i++) {
-			BFSNewChunkInfo newChunk = bfs.getNewChunk(TEST_FILENAME);
+			BFSNewChunkInfo newChunk = bfs.createNewChunk(TEST_FILENAME);
 
 			DataConnection dc = new DataConnection(newChunk.getCandidateNodes());
 			dc.sendRoutingData(newChunk.getChunkId());
@@ -54,9 +54,9 @@ public class StasisE2ETest extends TestCommon {
 		startMany("localhost:5505");
 		startManyDataNodes("td1", "td2");
 
-		
+
 		Thread.sleep(4000);
-		
+
 		List<BFSChunkInfo> chunkList = bfs.getChunkList(TEST_FILENAME);
 		safeAssert(chunkList.size() == NUM_TEST_CHUNKS);
 		int i = 0;
