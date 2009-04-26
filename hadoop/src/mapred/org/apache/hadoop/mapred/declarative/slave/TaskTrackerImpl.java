@@ -63,9 +63,7 @@ import org.apache.hadoop.util.StringUtils;
 public class TaskTrackerImpl extends TaskTracker implements Runnable {
 	private final static String[] programs = {"tasktracker"};
 	private final static String PROGRAM = "hadoop";
-	
-	private final static int ServerPort = 9004;
-	
+		
 	private Path systemDir;
 	
 	private jol.core.Runtime jollib;
@@ -98,7 +96,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		
 		try {
 			this.jollib = (jol.core.Runtime)
-				jol.core.Runtime.create(jol.core.Runtime.DEBUG_WATCH, System.err, ServerPort);
+				jol.core.Runtime.create(jol.core.Runtime.DEBUG_WATCH, System.err, 0);
 		} catch (JolRuntimeException e) {
 			throw new IOException(e);
 		}
@@ -169,7 +167,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		try {
 			InetSocketAddress jtJolAddr = JobTracker.getJolAddress(this.fConf);
 			String jtJolAddress = "tcp:" + jtJolAddr.getHostName() + ":" + jtJolAddr.getPort();
-			String ttJolAddress = "tcp:" + this.localHostname + ":" + ServerPort; // this.jollib.getServerPort();
+			String ttJolAddress = "tcp:" + this.localHostname + ":" + this.jollib.getServerPort();
 			
 			/* Install configuration state */
 			TupleSet config = new BasicTupleSet();
@@ -400,7 +398,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		try {
 			initialize();
 			this.jollib.start();
-			((Thread)this.jollib.lock()).join();
+			this.jollib.driver().join();
 		} catch (Throwable t) {
 			t.printStackTrace();
 		} finally {
