@@ -10,7 +10,6 @@ import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.declarative.util.JobState;
-import org.apache.hadoop.mapred.declarative.util.FileInput;
 import org.apache.hadoop.mapred.declarative.util.TaskState;
 import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.Constants.TaskPhase;
