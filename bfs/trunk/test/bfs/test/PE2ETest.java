@@ -39,7 +39,7 @@ public class PE2ETest extends TestCommon {
 		r.nextBytes(testData);
 
 		for (int i = 0; i < NUM_TEST_CHUNKS; i++) {
-			BFSNewChunkInfo newChunk = bfs.getNewChunk(TEST_FILENAME);
+			BFSNewChunkInfo newChunk = bfs.createNewChunk(TEST_FILENAME);
 
 			DataConnection dc = new DataConnection(newChunk.getCandidateNodes());
 			dc.sendRoutingData(newChunk.getChunkId());
