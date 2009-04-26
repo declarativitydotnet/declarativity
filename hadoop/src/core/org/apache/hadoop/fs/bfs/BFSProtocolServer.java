@@ -2,6 +2,7 @@ package org.apache.hadoop.fs.bfs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.fs.FileStatus;
@@ -102,19 +103,17 @@ public class BFSProtocolServer implements BFSClientProtocol {
 
 	@Override
 	public BFSChunkInfo[] getChunkList(String path) {
-		// TODO Auto-generated method stub
-		return null;
+		return (BFSChunkInfo[]) this.bfs.getChunkList(path).toArray();
 	}
 
 	@Override
-	public String[] getChunkLocations(String path, int id) {
-		// TODO Auto-generated method stub
-		return null;
+	public String[] getChunkLocations(String path, int chunkId) {
+		return (String[]) this.bfs.getChunkLocations(path, chunkId).toArray();
 	}
 
 	@Override
 	public void shutdown() {
-		// TODO Auto-generated method stub
+		this.bfs.shutdown();
 	}
 
 	@Override

@@ -21,7 +21,7 @@ public interface BFSClientProtocol extends VersionedProtocol {
 	FileStatus[] getDirListing(String pathName) throws IOException;
 	BFSNewChunkInfo createNewChunk(String pathName);
 	BFSChunkInfo[] getChunkList(String path);
-	String[] getChunkLocations(String path, int id);
+	String[] getChunkLocations(String path, int chunkId);
 	String getSelfDataNodeAddr();
 	void shutdown();
 }
