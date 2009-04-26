@@ -22,7 +22,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
-	private BFSClient bfs;
+	private BFSClientProtocol bfs;
     private URI uri;
 	private Path workingDir = new Path("/");
 
@@ -30,12 +30,7 @@ public class BoomFileSystem extends FileSystem {
 	public void initialize(URI uri, Configuration conf) throws IOException {
         setConf(conf);
 
-        // Start JOL on an ephemeral local TCP port
-		// XXX: make the JOL driver thread a daemon thread. This is to
-		// workaround the apparent fact that the Hadoop task tracker code
-		// does not always invoke FileSystem#close().
-		this.bfs = new BFSClient(true);
-
+		this.bfs = new BFSProtocolServer();
         this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 	}
 
@@ -87,40 +82,13 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public FileStatus getFileStatus(Path path) throws IOException {
 		System.out.println("BFS#getFileStatus() called for " + path);
-		BFSFileInfo bfsInfo = this.bfs.getFileInfo(getPathName(path));
-		if (bfsInfo == null)
-			throw new FileNotFoundException("File does not exist: " + path);
-
-		FileStatus result = new FileStatus(bfsInfo.getLength(),
-										   bfsInfo.isDirectory(),
-										   bfsInfo.getReplication(),
-										   bfsInfo.getChunkSize(),
-										   0,    // modification time
-										   FsPermission.getDefault(),
-										   bfsInfo.getOwner(),
-										   bfsInfo.getGroup(),
-										   new Path(bfsInfo.getPath()));
-		return result;
+		return this.bfs.getFileStatus(getPathName(path));
 	}
 
 	@Override
 	public FileStatus[] listStatus(Path path) throws IOException {
 		System.out.println("BFS#listStatus() called for " + path);
-		Set<BFSFileInfo> bfsListing = this.bfs.getDirListing(getPathName(path));
-		if (bfsListing == null)
-			return null;
-
-		// XXX: ugly. We need to convert the BFS data structure to the Hadoop
-		// file info format manually
-		FileStatus[] result = new FileStatus[bfsListing.size()];
-		int i = 0;
-		for (BFSFileInfo bfsInfo : bfsListing) {
-			// XXX: terrible hack. "Ls" file sizes are broken right now.
-			FileStatus fStatus = getFileStatus(new Path(bfsInfo.getPath()));
-			result[i++] = fStatus;
-		}
-
-		return result;
+		return this.bfs.getDirListing(getPathName(path));
 	}
 
 	@Override

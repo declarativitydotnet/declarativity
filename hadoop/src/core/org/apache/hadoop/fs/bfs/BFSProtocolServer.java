@@ -10,13 +10,16 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.ipc.RPC.Server;
 import org.apache.hadoop.mapred.TaskUmbilicalProtocol;
 
+import bfs.BFSChunkInfo;
 import bfs.BFSClient;
 import bfs.BFSFileInfo;
+import bfs.BFSNewChunkInfo;
 
 public class BFSProtocolServer implements BFSClientProtocol {
 	private BFSClient bfs;
 
 	public BFSProtocolServer() {
+        // Start JOL on an ephemeral local TCP port
 		// XXX: make the JOL driver thread a daemon thread. This is to
 		// workaround the apparent fact that the Hadoop task execution code
 		// does not always invoke FileSystem#close(). Not clear that this is
@@ -90,5 +93,32 @@ public class BFSProtocolServer implements BFSClientProtocol {
 	@Override
 	public boolean rename(String oldPath, String newPath) {
 		return this.bfs.rename(oldPath, newPath);
+	}
+
+	@Override
+	public BFSNewChunkInfo createNewChunk(String pathName) {
+		return this.bfs.createNewChunk(pathName);
+	}
+
+	@Override
+	public BFSChunkInfo[] getChunkList(String path) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String[] getChunkLocations(String path, int id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void shutdown() {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public String getSelfDataNodeAddr() {
+		return this.bfs.getSelfDataNodeAddr();
 	}
 }
