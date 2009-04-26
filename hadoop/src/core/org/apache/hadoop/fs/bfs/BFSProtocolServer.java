@@ -103,12 +103,16 @@ public class BFSProtocolServer implements BFSClientProtocol {
 
 	@Override
 	public BFSChunkInfo[] getChunkList(String path) {
-		return (BFSChunkInfo[]) this.bfs.getChunkList(path).toArray();
+		List<BFSChunkInfo> chunkList = this.bfs.getChunkList(path);
+		BFSChunkInfo[] result = new BFSChunkInfo[chunkList.size()];
+		return chunkList.toArray(result);
 	}
 
 	@Override
 	public String[] getChunkLocations(String path, int chunkId) {
-		return (String[]) this.bfs.getChunkLocations(path, chunkId).toArray();
+		Set<String> chunkLocs = this.bfs.getChunkLocations(path, chunkId);
+		String[] result = new String[chunkLocs.size()];
+		return chunkLocs.toArray(result);
 	}
 
 	@Override
