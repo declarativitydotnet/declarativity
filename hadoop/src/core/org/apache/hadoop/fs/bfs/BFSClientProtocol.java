@@ -17,8 +17,8 @@ public interface BFSClientProtocol extends VersionedProtocol {
 	boolean createDir(String pathName);
 	boolean delete(String pathName);
 	boolean rename(String oldPath, String newPath);
-	FileStatus getFileStatus(String pathName) throws IOException;
-	FileStatus[] getDirListing(String pathName) throws IOException;
+	FileStatus getFileStatus(String pathName);
+	FileStatus[] getDirListing(String pathName);
 	BFSNewChunkInfo createNewChunk(String pathName);
 	BFSChunkInfo[] getChunkList(String path);
 	String[] getChunkLocations(String path, int chunkId);
