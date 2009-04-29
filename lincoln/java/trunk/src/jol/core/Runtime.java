@@ -127,7 +127,7 @@ public class Runtime implements JolSystem {
 	public OutputStream output() {
 		return this.output;
 	}
-	
+
 	public int getServerPort() {
 		return this.network.getServerPort("tcp");
 	}
@@ -185,7 +185,7 @@ public class Runtime implements JolSystem {
 	}
 
 	public void shutdown() {
-		synchronized(canShutdownMutex) {
+		synchronized (canShutdownMutex) {
 			if (!canShutdown) {
 				System.err.println("FIXME: Runtime.shutdown() called on already-shutdown Runtime.");
 				return;
@@ -205,6 +205,7 @@ public class Runtime implements JolSystem {
 		if (this.network != null) this.network.shutdown();
 		StasisTable.deinitializeStasis(this);
 	}
+
 	public void start() {
 		canShutdown = true;
 		this.driver.start();
@@ -389,11 +390,11 @@ public class Runtime implements JolSystem {
 				try {
 					// Is living with the classes?
 					URL resource = c.getResource("/WEB-INF/classes/"+file);
-					if(resource == null) {
+					if (resource == null) {
 						// Is it at the root of the WAR?
 					    resource = c.getResource("/"+file);
 					}
-					if(resource == null) {
+					if (resource == null) {
 						throw new JolRuntimeException("Could not load " + file
 									+ " servlet context root is " + c.getRealPath("/"));
 					}
