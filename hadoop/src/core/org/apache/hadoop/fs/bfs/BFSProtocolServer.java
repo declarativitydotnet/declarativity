@@ -2,14 +2,18 @@ package org.apache.hadoop.fs.bfs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.ipc.RPC.Server;
 import org.apache.hadoop.mapred.TaskUmbilicalProtocol;
+import org.apache.hadoop.net.NetUtils;
 
 import bfs.BFSChunkInfo;
 import bfs.BFSClient;
@@ -26,6 +30,25 @@ public class BFSProtocolServer implements BFSClientProtocol {
 		// does not always invoke FileSystem#close(). Not clear that this is
 		// necessary if JOL is running in the TaskTracker...
 		this.bfs = new BFSClient(true);
+	}
+
+	public static BFSClientProtocol getInstance(Configuration conf) {
+		String taskJVM = System.getProperty("hadoop.taskJVM");
+		if (taskJVM == null) {
+			System.out.println("taskJVM is null; creating in-process BFSClientProtocol");
+			return new BFSProtocolServer();
+		} else {
+			System.out.println("taskJVM = " + taskJVM);
+			String bfsAddress = conf.get("fs.bfs.jolServer.address");
+			InetSocketAddress addr = NetUtils.createSocketAddr(bfsAddress);
+			try {
+				return (BFSClientProtocol) RPC.getProxy(BFSClientProtocol.class,
+						                                BFSClientProtocol.versionID,
+						                                addr, conf);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 
 	@Override
@@ -54,7 +77,7 @@ public class BFSProtocolServer implements BFSClientProtocol {
 	}
 
 	@Override
-	public FileStatus[] getDirListing(String pathName) throws IOException {
+	public FileStatus[] getDirListing(String pathName) {
 		Set<BFSFileInfo> bfsListing = this.bfs.getDirListing(pathName);
 		// XXX: illegal per hadoop rpc?
 		if (bfsListing == null)
@@ -74,10 +97,10 @@ public class BFSProtocolServer implements BFSClientProtocol {
 	}
 
 	@Override
-	public FileStatus getFileStatus(String pathName) throws IOException {
+	public FileStatus getFileStatus(String pathName) {
 		BFSFileInfo bfsInfo = this.bfs.getFileInfo(pathName);
 		if (bfsInfo == null)
-			throw new FileNotFoundException("File does not exist: " + pathName);
+			return null;
 
 		// XXX: ugly. Need to convert from BFS struct to Hadoop struct
 		return new FileStatus(bfsInfo.getLength(),

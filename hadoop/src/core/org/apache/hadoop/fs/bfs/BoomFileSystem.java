@@ -23,15 +23,15 @@ import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
 	private BFSClientProtocol bfs;
-    private URI uri;
+	private URI uri;
 	private Path workingDir = new Path("/");
 
 	@Override
 	public void initialize(URI uri, Configuration conf) throws IOException {
-        setConf(conf);
+		setConf(conf);
 
-		this.bfs = new BFSProtocolServer();
-        this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
+		this.bfs = BFSProtocolServer.getInstance(conf);
+		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 	}
 
 	@Override
@@ -82,7 +82,11 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public FileStatus getFileStatus(Path path) throws IOException {
 		System.out.println("BFS#getFileStatus() called for " + path);
-		return this.bfs.getFileStatus(getPathName(path));
+		FileStatus result = this.bfs.getFileStatus(getPathName(path));
+		if (result == null)
+			throw new FileNotFoundException("File not found: " + path);
+
+		return result;
 	}
 
 	@Override
