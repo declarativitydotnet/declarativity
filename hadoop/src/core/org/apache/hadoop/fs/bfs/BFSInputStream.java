@@ -8,14 +8,10 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.sql.Array;
-import java.util.List;
-import java.util.Set;
 
 import org.apache.hadoop.fs.FSInputStream;
 
 import bfs.BFSChunkInfo;
-import bfs.BFSClient;
 import bfs.Conf;
 import bfs.DataProtocol;
 
