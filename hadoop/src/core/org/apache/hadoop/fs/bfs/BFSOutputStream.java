@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-import bfs.BFSClient;
 import bfs.BFSNewChunkInfo;
 import bfs.Conf;
 import bfs.DataConnection;
