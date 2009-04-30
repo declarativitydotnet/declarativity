@@ -19,6 +19,7 @@ public class BFSInputStream extends FSInputStream {
 	private BFSClientProtocol bfs;
 	private String path;
 	private BFSChunkInfo[] chunkList;
+
 	private boolean isClosed;
 	private boolean atEOF;
 	private ByteBuffer buf;

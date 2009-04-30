@@ -90,6 +90,8 @@ public class BFSProtocolServer implements BFSClientProtocol {
 		for (BFSFileInfo bfsInfo : bfsListing) {
 			// XXX: terrible hack. "Ls" file sizes are broken right now.
 			FileStatus fStatus = getFileStatus(bfsInfo.getPath());
+			if (fStatus == null)
+				throw new RuntimeException("race condition in getDirListing()");
 			result[i++] = fStatus;
 		}
 
