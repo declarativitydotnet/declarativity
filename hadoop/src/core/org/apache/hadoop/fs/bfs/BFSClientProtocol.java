@@ -1,8 +1,6 @@
 package org.apache.hadoop.fs.bfs;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.ipc.VersionedProtocol;
@@ -17,11 +15,14 @@ public interface BFSClientProtocol extends VersionedProtocol {
 	boolean createDir(String pathName);
 	boolean delete(String pathName);
 	boolean rename(String oldPath, String newPath);
+
 	FileStatus getFileStatus(String pathName);
 	FileStatus[] getDirListing(String pathName);
-	BFSNewChunkInfo createNewChunk(String pathName);
+
 	BFSChunkInfo[] getChunkList(String path);
 	String[] getChunkLocations(String path, int chunkId);
+	BFSNewChunkInfo createNewChunk(String pathName);
+
 	String getSelfDataNodeAddr();
 	void shutdown();
 }
