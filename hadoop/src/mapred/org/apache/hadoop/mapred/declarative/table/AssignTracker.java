@@ -13,6 +13,7 @@ import jol.types.basic.ValueList;
 import jol.types.exception.UpdateException;
 import jol.types.table.Function;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,8 +28,8 @@ public class AssignTracker extends Function {
 		public Integer slots;
 		public ValueList priority;
 		public TaskType type;
-		public Set<TaskID> tasks;
-		public Assignment(String trackerName, Integer slots, ValueList priority, TaskType type, Set<TaskID> tasks) {
+		public Collection<TaskID> tasks;
+		public Assignment(String trackerName, Integer slots, ValueList priority, TaskType type, Collection<TaskID> tasks) {
 			this.trackerName = trackerName;
 			this.slots = slots;
 			this.priority = priority;
@@ -55,7 +56,7 @@ public class AssignTracker extends Function {
 		Integer.class,   // Slots
 		ValueList.class, // Priority
 		TaskType.class, // Task types
-		Set.class        // Task candidates
+		Collection.class        // Task candidates
 	};
 
 	public AssignTracker() {
@@ -71,7 +72,7 @@ public class AssignTracker extends Function {
 			Integer     slots    = (Integer) tuple.value(Field.SLOTS.ordinal());
 			ValueList   priority = (ValueList) tuple.value(Field.PRIORITY.ordinal());
 			TaskType    type     = (TaskType) tuple.value(Field.TYPE.ordinal());
-			Set<TaskID> tasks    = (Set<TaskID>) tuple.value(Field.TASKS.ordinal());
+			Collection<TaskID> tasks    = (Collection<TaskID>) tuple.value(Field.TASKS.ordinal());
 			assignments.add(new Assignment(tracker, slots, priority, type, tasks));
 		}
 		
@@ -83,7 +84,7 @@ public class AssignTracker extends Function {
 			Assignment assignment = iter.next();
 			String      tracker  = assignment.trackerName;
 			Integer     slots    = assignment.slots;
-			Set<TaskID> tasks    = assignment.tasks;
+			Collection<TaskID> tasks = assignment.tasks;
 			
 			
 			if (assignment.type == TaskType.MAP && trackerMapSlotCount.containsKey(tracker)) {
