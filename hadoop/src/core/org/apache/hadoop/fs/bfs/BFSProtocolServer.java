@@ -1,6 +1,5 @@
 package org.apache.hadoop.fs.bfs;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -11,8 +10,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.ipc.RPC;
-import org.apache.hadoop.ipc.RPC.Server;
-import org.apache.hadoop.mapred.TaskUmbilicalProtocol;
 import org.apache.hadoop.net.NetUtils;
 
 import bfs.BFSChunkInfo;
