@@ -29,6 +29,13 @@ public class BFSProtocolServer implements BFSClientProtocol {
 		this.bfs = new BFSClient(true);
 	}
 
+	/**
+	 * Get a new instance of the BFS client library. If this is invoked inside a
+	 * process that runs tasks, the client library is implemented by talking to
+	 * a JOL instance running in the task tracker; otherwise, the library is
+	 * implemented with an in-process JOL instance. The interface is the same
+	 * regardless.
+	 */
 	public static BFSClientProtocol getInstance(Configuration conf) {
 		String taskJVM = System.getProperty("hadoop.taskJVM");
 		if (taskJVM == null) {
