@@ -8,6 +8,11 @@ import org.apache.hadoop.ipc.VersionedProtocol;
 import bfs.BFSChunkInfo;
 import bfs.BFSNewChunkInfo;
 
+/**
+ * The interface exported by the BFS client library. This interface is designed
+ * so that it can be invoked via the Hadoop RPC mechanism. It is implemented as
+ * a thin skin over the BFSClient API.
+ */
 public interface BFSClientProtocol extends VersionedProtocol {
 	static final long versionID = 9L;
 
