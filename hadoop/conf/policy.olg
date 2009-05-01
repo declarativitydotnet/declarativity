@@ -1,6 +1,7 @@
 program policy;
 
 import java.util.Set;
+import java.util.Collection;
 import jol.types.basic.ValueList;
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.util.Function;
@@ -8,8 +9,8 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskID;
 
 define(candidate,      {JobID, TaskID, Constants.TaskType, String, ValueList});
-define(mapSlots,       {String, Integer, ValueList, Constants.TaskType, Set});
-define(reduceSlots,    {String, Integer, ValueList, Constants.TaskType, Set});
+define(mapSlots,       {String, Integer, ValueList, Constants.TaskType, Collection});
+define(reduceSlots,    {String, Integer, ValueList, Constants.TaskType, Collection});
 define(scheduleTask,   {String, TaskID});
 
 /******************** Signal to schedule a task *******************/
@@ -34,7 +35,7 @@ scheduleTask(TaskTracker, TaskId) :-
 
 /* Schedule task on tracker from flattened priorities. */
 public
-mapSlots(TaskTracker, Maps, Priority, Type, set<TaskId>) :-
+mapSlots(TaskTracker, Maps, Priority, Type, limit<TaskId, MaxMap>) :-
 	bestCandidate(candidate(JobId, TaskId, Type, TaskTracker, Priority)),
 	hadoop::trackerWorkload(TaskTracker, MapCount, _),
 	hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING, _, _, _, MaxMap, _, _),
@@ -46,7 +47,7 @@ mapSlots(TaskTracker, Maps, Priority, Type, set<TaskId>) :-
 /******************** Schedule Reduce Tasks *******************/
 	
 public
-reduceSlots(TrackerName, Reduces, Priority, Type, set<TaskId>) :-
+reduceSlots(TrackerName, Reduces, Priority, Type, limit<TaskId, MaxReduce>) :-
 	bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
 	hadoop::trackerWorkload(TaskTracker, _, ReduceCount),
 	hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING, _, _, _, _, MaxReduce, _),
