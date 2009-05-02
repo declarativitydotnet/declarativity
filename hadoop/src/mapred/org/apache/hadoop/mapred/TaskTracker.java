@@ -12,7 +12,7 @@ import org.apache.hadoop.fs.FSError;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalDirAllocator;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.bfs.BFSClientWrapper;
+import org.apache.hadoop.fs.bfs.BFSProtocolServer;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.ipc.Server;
 import org.apache.hadoop.mapred.TaskTrackerImpl.MapOutputServlet;
@@ -144,7 +144,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 		InetSocketAddress bfsSocAddr = NetUtils.createSocketAddr(bfsAddress);
 		String bfsBindAddress = bfsSocAddr.getHostName();
 		int bfsTmpPort = bfsSocAddr.getPort();
-		this.bfsServer = RPC.getServer(new BFSClientWrapper(), bfsBindAddress,
+		this.bfsServer = RPC.getServer(new BFSProtocolServer(4), bfsBindAddress,
 									   bfsTmpPort, max, false, this.fConf);
 		this.bfsServer.start();
 		LOG.info("BFSProtocolServer up at: " + this.bfsServer.getListenerAddress());
