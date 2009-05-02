@@ -25,7 +25,7 @@ public class BoomFileSystem extends FileSystem {
 	public void initialize(URI uri, Configuration conf) throws IOException {
 		setConf(conf);
 
-		this.bfs = BFSProtocolServer.getInstance(conf);
+		this.bfs = BFSClientWrapper.getInstance(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 	}
 

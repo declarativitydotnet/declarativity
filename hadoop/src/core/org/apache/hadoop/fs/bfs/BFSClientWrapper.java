@@ -17,10 +17,10 @@ import bfs.BFSClient;
 import bfs.BFSFileInfo;
 import bfs.BFSNewChunkInfo;
 
-public class BFSProtocolServer implements BFSClientProtocol {
+public class BFSClientWrapper implements BFSClientProtocol {
 	private BFSClient bfs;
 
-	public BFSProtocolServer() {
+	public BFSClientWrapper() {
         // Start JOL on an ephemeral local TCP port
 		// XXX: make the JOL driver thread a daemon thread. This is to
 		// workaround the apparent fact that the Hadoop task execution code
@@ -40,7 +40,7 @@ public class BFSProtocolServer implements BFSClientProtocol {
 		String taskJVM = System.getProperty("hadoop.taskJVM");
 		if (taskJVM == null) {
 			System.out.println("taskJVM is null; creating in-process BFSClientProtocol");
-			return new BFSProtocolServer();
+			return new BFSClientWrapper();
 		} else {
 			System.out.println("taskJVM = " + taskJVM);
 			String bfsAddress = conf.get("fs.bfs.jolServer.address");
