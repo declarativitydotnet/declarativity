@@ -83,7 +83,6 @@ public class BFSProtocolServer implements BFSClientProtocol {
 	@Override
 	public FileStatus[] getDirListing(String pathName) {
 		Set<BFSFileInfo> bfsListing = this.bfs.getDirListing(pathName);
-		// XXX: illegal per hadoop rpc?
 		if (bfsListing == null)
 			return null;
 
