@@ -56,7 +56,7 @@ public class BFSOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void flush() throws IOException {
-		BFSNewChunkInfo info = this.bfs.getNewChunk(this.path);
+		BFSNewChunkInfo info = this.bfs.createNewChunk(this.path);
 
         DataConnection conn = new DataConnection(info.getCandidateNodes());
         conn.sendRoutingData(info.getChunkId());
