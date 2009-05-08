@@ -1,16 +1,11 @@
 package org.apache.hadoop.fs.bfs;
 
-import bfs.BFSClient;
-import bfs.BFSFileInfo;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -22,41 +17,16 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
 public class BoomFileSystem extends FileSystem {
-	private BFSClient bfs;
-    private URI uri;
+	private BFSClientProtocol bfs;
+	private URI uri;
 	private Path workingDir = new Path("/");
 
 	@Override
 	public void initialize(URI uri, Configuration conf) throws IOException {
-        setConf(conf);
+		setConf(conf);
 
-		/**
-		 * XXX: JOL currently requires a fixed local port to bind to. Since
-		 * BoomFileSystem might be instanciated many times on the same machine,
-		 * we can't just pick a single port. For now, randomly pick ports from
-		 * within a range until we find a port we can bind to.
-		 */
-        int minPort = conf.getInt("fs.bfs.minPort", 12000);
-        int maxPort = conf.getInt("fs.bfs.maxPort", 32000);
-        if (maxPort <= minPort)
-        	throw new IllegalStateException();
-
-        Random r = new Random();
-        while (true) {
-        	int tryPort = r.nextInt(maxPort - minPort) + minPort;
-        	System.out.println("BFS#initialize(): trying to create JOL @ port " + tryPort);
-        	try {
-        		// XXX: make the JOL driver thread a daemon thread. This is to
-        		// workaround the apparent fact that the Hadoop task tracker code
-        		// does not always invoke FileSystem#close().
-        		this.bfs = new BFSClient(tryPort, true);
-        	} catch (RuntimeException e) {
-        		continue;
-        	}
-        	break;
-        }
-
-        this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
+		this.bfs = BFSClientWrapper.getInstance(conf);
+		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 	}
 
 	@Override
@@ -72,12 +42,6 @@ public class BoomFileSystem extends FileSystem {
 			boolean overwrite, int bufferSize, short replication,
 			long blockSize, Progressable progress) throws IOException {
 		System.out.println("BFS#create() called for " + path);
-
-		/*
-		 * XXX: apparently Hadoop expects us to create any missing parent
-		 * directories, similar to "mkdir -p" behavior.
-		 */
-		mkdirs(path.getParent(), null);
 
 		/* XXX: not very efficient/clean, and not atomic either */
 		if (overwrite)
@@ -113,38 +77,17 @@ public class BoomFileSystem extends FileSystem {
 	@Override
 	public FileStatus getFileStatus(Path path) throws IOException {
 		System.out.println("BFS#getFileStatus() called for " + path);
-		BFSFileInfo bfsInfo = this.bfs.getFileInfo(getPathName(path));
-		if (bfsInfo == null)
-			throw new FileNotFoundException("File does not exist: " + path);
+		FileStatus result = this.bfs.getFileStatus(getPathName(path));
+		if (result == null)
+			throw new FileNotFoundException("File not found: " + path);
 
-		FileStatus result = new FileStatus(bfsInfo.getLength(),
-										   bfsInfo.isDirectory(),
-										   bfsInfo.getReplication(),
-										   bfsInfo.getChunkSize(),
-										   0,    // modification time
-										   FsPermission.getDefault(),
-										   bfsInfo.getOwner(),
-										   bfsInfo.getGroup(),
-										   new Path(bfsInfo.getPath()));
 		return result;
 	}
 
 	@Override
 	public FileStatus[] listStatus(Path path) throws IOException {
 		System.out.println("BFS#listStatus() called for " + path);
-		Set<BFSFileInfo> bfsListing = this.bfs.getDirListing(getPathName(path));
-
-		// XXX: ugly. We need to convert the BFS data structure to the Hadoop
-		// file info format manually
-		FileStatus[] result = new FileStatus[bfsListing.size()];
-		int i = 0;
-		for (BFSFileInfo bfsInfo : bfsListing) {
-			// XXX: terrible hack. "Ls" file sizes are broken right now.
-			FileStatus fStatus = getFileStatus(new Path(bfsInfo.getPath()));
-			result[i++] = fStatus;
-		}
-
-		return result;
+		return this.bfs.getDirListing(getPathName(path));
 	}
 
 	@Override
@@ -166,9 +109,7 @@ public class BoomFileSystem extends FileSystem {
 			if (p.getParent() == null)
 				continue;
 
-			boolean result = this.bfs.createDir(getPathName(p));
-			if (p.equals(path))
-				System.out.println("Result of mkdirs() on " + path + ": " + result);
+			this.bfs.createDir(getPathName(p));
 		}
 
 		return true;

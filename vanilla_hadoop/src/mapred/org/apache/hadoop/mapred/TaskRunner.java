@@ -365,6 +365,11 @@ abstract class TaskRunner extends Thread {
         }
       }
 
+      // XXX BFS: We need a way to identify whether we're currently running as
+      // a Task process in the BFS code. Right now, we do it via this hacky
+      // mechanism.
+      vargs.add("-Dhadoop.taskJVM=true");
+
       // Add main class and its arguments 
       vargs.add(TaskTracker.Child.class.getName());  // main of Child
       // pass umbilical address

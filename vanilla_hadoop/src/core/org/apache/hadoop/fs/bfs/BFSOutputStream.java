@@ -3,21 +3,18 @@ package org.apache.hadoop.fs.bfs;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.List;
 
-import bfs.BFSClient;
 import bfs.BFSNewChunkInfo;
 import bfs.Conf;
 import bfs.DataConnection;
 
 public class BFSOutputStream extends OutputStream {
 	private String path;
-	private BFSClient bfs;
+	private BFSClientProtocol bfs;
 	private boolean isClosed;
 	private ByteBuffer buf;
 
-	public BFSOutputStream(String path, BFSClient bfs) {
+	public BFSOutputStream(String path, BFSClientProtocol bfs) {
 		this.path = path;
 		this.bfs = bfs;
 		this.isClosed = false;
