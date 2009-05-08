@@ -240,6 +240,12 @@ creations/deletions), or "all".</description>
 </property>
 
 <property>
+  <name>fs.bfs.jolServer.address</name>
+  <value>localhost:15001</value>
+  <description>Port and address to use for the BFS RPC proxy.</description>
+</property>
+
+<property>
   <name>fs.inmemory.size.mb</name>
   <value>75</value>
   <description>The size of the in-memory filsystem instance in MB</description>

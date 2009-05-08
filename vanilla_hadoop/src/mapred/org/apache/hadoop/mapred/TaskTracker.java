@@ -58,6 +58,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.LocalDirAllocator;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.bfs.BFSProtocolServer;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.ipc.RPC;
@@ -107,6 +108,7 @@ public class TaskTracker
   InetSocketAddress taskReportAddress;
 
   Server taskReportServer = null;
+  Server bfsServer = null;
   InterTrackerProtocol jobClient;
     
   // last heartbeat response recieved
@@ -438,6 +440,16 @@ public class TaskTracker
 
     this.taskTrackerName = "tracker_" + localHostname + ":" + taskReportAddress;
     LOG.info("Starting tracker " + taskTrackerName);
+
+    // Initialize BFS RPC server
+    String bfsAddress = fConf.get("fs.bfs.jolServer.address");
+    InetSocketAddress bfsSocAddr = NetUtils.createSocketAddr(bfsAddress);
+    String bfsBindAddress = bfsSocAddr.getHostName();
+    int bfsTmpPort = bfsSocAddr.getPort();
+    this.bfsServer = RPC.getServer(new BFSProtocolServer(4), bfsBindAddress,
+                                   bfsTmpPort, max, false, this.fConf);
+    this.bfsServer.start();
+    LOG.info("BFSProtocolServer up at: " + this.bfsServer.getListenerAddress());
 
     // Clear out temporary files that might be lying around
     DistributedCache.purgeCache(this.fConf);

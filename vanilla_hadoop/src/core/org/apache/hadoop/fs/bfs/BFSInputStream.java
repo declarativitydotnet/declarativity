@@ -8,20 +8,18 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.List;
-import java.util.Set;
 
 import org.apache.hadoop.fs.FSInputStream;
 
 import bfs.BFSChunkInfo;
-import bfs.BFSClient;
 import bfs.Conf;
 import bfs.DataProtocol;
 
 public class BFSInputStream extends FSInputStream {
-	private BFSClient bfs;
+	private BFSClientProtocol bfs;
 	private String path;
-	private List<BFSChunkInfo> chunkList;
+	private BFSChunkInfo[] chunkList;
+
 	private boolean isClosed;
 	private boolean atEOF;
 	private ByteBuffer buf;
@@ -33,9 +31,9 @@ public class BFSInputStream extends FSInputStream {
 	// These fields are updated by updatePosition().
 	private int currentChunkIdx;
 	private BFSChunkInfo currentChunk;
-	private Set<String> chunkLocations;
+	private String[] chunkLocations;
 
-	public BFSInputStream(String path, BFSClient bfs) throws IOException {
+	public BFSInputStream(String path, BFSClientProtocol bfs) throws IOException {
 		this.bfs = bfs;
 		this.path = path;
 		this.isClosed = false;
@@ -84,11 +82,11 @@ public class BFSInputStream extends FSInputStream {
 
 		int chunkOffset = (int) bytesLeft;
 
-		if (chunkIdx == this.chunkList.size() || this.chunkList.isEmpty()) {
+		if (chunkIdx == this.chunkList.length || this.chunkList.length == 0) {
 			this.atEOF = true;
 		} else {
 			if (chunkIdx != this.currentChunkIdx || this.currentChunk == null) {
-				this.currentChunk = this.chunkList.get(chunkIdx);
+				this.currentChunk = this.chunkList[chunkIdx];
 				this.chunkLocations = bfs.getChunkLocations(this.path, this.currentChunk.getId());
 				fetchChunkContent();
 			}
@@ -113,7 +111,7 @@ public class BFSInputStream extends FSInputStream {
 	private void fetchChunkContent() throws IOException {
 		String selfAddr = this.bfs.getSelfDataNodeAddr();
 
-		if (selfAddr != null && this.chunkLocations.contains(selfAddr)) {
+		if (selfAddr != null && chunkLocContains(selfAddr)) {
 			try {
 				fetchChunkFromAddr(selfAddr);
 				return; // Read chunk successfully
@@ -140,6 +138,15 @@ public class BFSInputStream extends FSInputStream {
 
 		// Failed to read chunk: all data nodes for this chunk are down
 		throw new IOException("failed to read chunk: " + this.currentChunk);
+	}
+
+	private boolean chunkLocContains(String selfAddr) {
+		for (int i = 0; i < this.chunkLocations.length; i++) {
+			if (selfAddr.equals(this.chunkLocations[i]))
+				return true;
+		}
+
+		return false;
 	}
 
 	private void fetchChunkFromAddr(String addr) throws IOException {
