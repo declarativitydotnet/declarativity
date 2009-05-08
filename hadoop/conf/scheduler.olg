@@ -71,16 +71,40 @@ hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.
 
 /******************** Signal task tracker slots available *******************/
 
+define(slotSignal, {String, String, Integer, Integer});
+
+public
+slotSignal(TaskTracker, Host, MaxMap, MaxReduce) :-
+	hadoop::mapsWaitingForSchedule#insert(Count), Count > 0,
+	hadoop::taskTracker(_, TaskTracker, Host, _, State, _, _, _, MaxMap, MaxReduce, _);
+
+public
+slotSignal(TaskTracker, Host, MaxMap, MaxReduce) :-
+	hadoop::reducesWaitingForSchedule#insert(Count), Count > 0,
+	hadoop::taskTracker(_, TaskTracker, Host, _, State, _, _, _, MaxMap, MaxReduce, _);
+
+public
+slotSignal(TaskTracker, Host, MaxMap, MaxReduce) :-
+	hadoop::trackerWorkload#insert(TaskTracker, MapCount, ReduceCount),
+	hadoop::taskTracker(_, TaskTracker, Host, _, State, _, _, _, MaxMap, MaxReduce, _);
+
+
 watch(trackerSlots, a);
 define(trackerSlots, {String, String, Integer, Integer});
-public
-trackerSlots(TaskTracker, Host, Maps, Reduces) :-
-	hadoop::tasksWaitingForSchedule(Count), Count > 0,
+trackerSlots(TaskTracker, Host, Maps, 0) :-
+    slotSignal(TaskTracker, Host, MaxMap, MaxReduce),
+	hadoop::mapsWaitingForSchedule(Count), Count > 0,
 	hadoop::trackerWorkload(TaskTracker, MapCount, ReduceCount),
-	hadoop::taskTracker(_, TaskTracker, Host, _, State, _, _, _, MaxMap, MaxReduce, _),
-	MapCount < MaxMap || ReduceCount < MaxReduce
+	MapCount < MaxMap
     {
       Maps := MapCount < MaxMap ? MaxMap - MapCount : 0;
+    };
+
+trackerSlots(TaskTracker, Host, 0, Reduces) :-
+    slotSignal(TaskTracker, Host, MaxMap, MaxReduce),
+	hadoop::reducesWaitingForSchedule(Count), Count > 0,
+	hadoop::trackerWorkload(TaskTracker, MapCount, ReduceCount),
+	ReduceCount < MaxReduce
+    {
       Reduces := ReduceCount < MaxReduce ? MaxReduce - ReduceCount : 0;
     };
-	
