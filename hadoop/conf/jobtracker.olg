@@ -26,6 +26,8 @@ watch(taskTracker, a);
 
 /*************** TaskTracker Handlers ***********/
 
+watch(taskTrackerAction, s);
+
 public forwardAction
 taskTrackerAction(@TaskTracker, JobTracker, ActionType, Action) :-
 	taskTrackerAction(@JobTracker, TaskTracker, ActionType, Action);
@@ -38,10 +40,17 @@ jobTracker(@TaskTracker, JobTracker, Constants.TrackerState.RUNNING) :-
 define(activeJobs, keys(), {Integer});
 define(activeTasks, keys(), {Integer});
 define(failedTaskLocation, keys(0,1), {JobID, TaskID, String});
-define(tasksWaitingForSchedule, keys(0), {Integer});
+define(mapsWaitingForSchedule, keys(0), {Integer});
+define(reducesWaitingForSchedule, keys(0), {Integer});
 
-tasksWaitingForSchedule(count<TaskId>) :-
-    task(JobId, TaskId, _, _, _, _, TaskStatus),
+reducesWaitingForSchedule(count<TaskId>) :-
+    task(JobId, TaskId, Constants.TaskType.REDUCE, _, _, _, TaskStatus),
+    TaskStatus.state() == Constants.TaskState.UNASSIGNED ||
+    TaskStatus.state() == Constants.TaskState.FAILED;
+
+mapsWaitingForSchedule(count<TaskId>) :-
+    task(JobId, TaskId, Constants.TaskType.MAP, _, _, _, TaskStatus),
+    taskFileLocation(JobId, TaskId, Loc),
     TaskStatus.state() == Constants.TaskState.UNASSIGNED ||
     TaskStatus.state() == Constants.TaskState.FAILED;
 
