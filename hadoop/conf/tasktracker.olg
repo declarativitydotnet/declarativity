@@ -163,6 +163,7 @@ taskTracker(@JobTracker, TaskTracker, Host, HttpPort, JobTrackerState, Failures,
             
 taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
 	taskRunner#insert(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner), 
+	State == TaskState.SUCCEEDED || State == TaskState.COMMIT_PENDING,
 	configuration(TaskTracker, Host, HttpPort, _, _, TT)
 	{
 	    FileLocation := "http://" + Host + ":" + HttpPort.toString();
