@@ -24,6 +24,11 @@ public class BFSNewChunkInfo implements Serializable, Writable {
 		this.nodeAddrs = Collections.unmodifiableList(BFSNewChunkInfo.randomSelection(nodeList, Conf.getRepFactor()));
 	}
 
+	// XXX: Dummy no-arg constructor required by Hadoop's RPC implementation
+	public BFSNewChunkInfo() {
+		;
+	}
+
 	public int getChunkId() {
 		return this.chunkId;
 	}
