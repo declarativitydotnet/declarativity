@@ -87,7 +87,7 @@ public class BFSClient {
 		return doCreate(pathName, true);
 	}
 
-	private boolean doCreate(String pathName, final boolean isDir) {
+	private synchronized boolean doCreate(String pathName, final boolean isDir) {
 		final int requestId = generateId();
 
         // Register a callback to listen for responses

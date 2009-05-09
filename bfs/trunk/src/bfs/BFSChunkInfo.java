@@ -19,6 +19,12 @@ public class BFSChunkInfo implements Comparable<BFSChunkInfo>, Serializable, Wri
 		this.length = length;
 	}
 
+	// XXX: Dummy no-arg constructor required by Hadoop's RPC implementation
+	public BFSChunkInfo() {
+		this.chunkId = -1;
+		this.length = -1;
+	}
+
 	public int getId() {
 		return this.chunkId;
 	}

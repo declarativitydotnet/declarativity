@@ -24,6 +24,11 @@ public class BFSFileInfo implements Comparable<BFSFileInfo>, Serializable, Writa
 		this.isDirectory = isDirectory;
 	}
 
+	// XXX: Dummy no-arg constructor required by Hadoop's RPC implementation
+	public BFSFileInfo() {
+		;
+	}
+
 	public int getId() {
 		return this.fileId;
 	}
