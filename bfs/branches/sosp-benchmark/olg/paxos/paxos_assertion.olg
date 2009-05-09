@@ -1,0 +1,76 @@
+program paxos_assertion;
+
+// can't have two different decrees for the same instance
+public
+olg_assertion::die(Agent, Message) :-
+    multipaxos::stasis_success(Agent,Instance,Round,Decree,From),
+    multipaxos::stasis_success(Agent2,Instance,Round2,Decree2,From2),
+    Decree != Decree2
+	{ 
+		Message := "for instance "+ Instance.toString() + ", passed decrees "+Decree+" and "+Decree;
+	};
+
+public
+olg_assertion::die(Agent, "internal inconsistency") :-
+    multipaxos::sendAccept(Agent,Instance,Round,Decree,Master),
+    multipaxos::sendAccept(Agent2,Instance,Round2,Decree2,Master2),
+    Decree != Decree2
+	{ 
+		Message := "for instance "+ Instance.toString() + ", accepted decrees "+Decree+" and "+Decree;
+	};
+
+
+
+
+// if we have more voters than promisers, we have an imposter
+public
+olg_assertion::die(Master, Message) :-
+    multipaxos::acceptCnt(Master, _, Round, Acnt),
+    paxos::lastPromiseCnt(Master, Round,  Pcnt),
+    Acnt > Pcnt
+    {
+        Message := "impostor: acceptCnt "+Acnt.toString()+" > "+Pcnt.toString()+" promised";
+    };
+
+// ditto for promisers and priests.
+public
+olg_assertion::die(Master, Message) :-
+    paxos::priestCnt(Master, Pcnt),
+    paxos::lastPromiseCnt(Master, _, Lcnt),
+    Lcnt > Pcnt
+    {
+        Message := "impostor: promiseCnt "+Lcnt.toString()+" > "+Pcnt.toString()+" priests";
+    };
+
+// at any given moment, there is a single "next ballot"
+// too strict -- the old and the new.
+/*
+public
+olg_assertion::die(Master, Message) :-
+    paxos::nextBal(Master, Round1),
+    paxos::nextBal(Master, Round2),
+    Round1 != Round2
+    {
+        Message := "too many nextbals: "+Round1.toString()+","+Round2.toString();
+    };
+*/
+
+
+
+// if two different masters send us the same round number,
+// something is wrong.
+public
+olg_assertion::die(Master, "indistinct masters") :-
+    paxos::sendPrepare(Agent, Round, Decree, Master),
+    paxos::sendPrepare(Agent, Round, Decree2, Master2),
+    Master != Master2;
+
+/*
+// every quorum has 2 members.  otherwise, we are a trivial instance
+// of paxos and are not computing quorums at all
+public
+olg_assertion::die(Master, "trival paxos, quorum") :-
+    paxos::quorum(Master, Round),
+    paxos::lastPromiseCnt(Master,Round,Vcnt),
+    Vcnt < 2;
+*/
