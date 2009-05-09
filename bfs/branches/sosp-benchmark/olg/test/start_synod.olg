@@ -1,0 +1,62 @@
+program paxos_global;
+
+import java.lang.System;
+
+
+define(decreeRequest,{String,String,String});
+define(doping,keys(0,1,2),{String,String,String,String});
+//define (reply,keys(0,1),{String,String,String});
+define (reply,{String,Integer,String,String});
+
+timer(periodic,logical,1,1,1);
+
+watch(doping,ad);
+watch(reply,ad);
+watch(word,ad);
+watch(please,ad);
+watch(network::connection,aid);
+
+define(ident,keys(0),{String,String,String,String});
+
+ident(Me,A,P,Program) :- 
+              Me := "tcp:localhost:"+System.getenv("ME"),
+              A := System.getenv("XACT"),
+              P := "tcp:localhost:"+System.getenv("MASTER"),
+              Program := System.getenv("PROGRAM"),
+              periodic(_,_,_);
+
+doping(Lord,Me,Xact,Program) :- ident(Me,Xact,Lord,Program);
+
+
+define(please,keys(0,1,2,3),{String,String,String,Long,String});
+
+please(Lord,Message,Me,Start,Program) :- doping(Lord,Me,Id,Program), 
+                           Message := "XACT" + Id.toString(),
+                           Start := System.currentTimeMillis();
+
+/* DUP! */
+/*
+please(Lord,Message,Me,Start,Program) :-
+                          doping(Lord,Me,Id,Program), 
+                           Message := "XACTfoo",
+                           Start := System.currentTimeMillis();
+*/
+//decreeRequest(@Lord,Message,Me) :- doping(Lord,@Me,Id), Message := "XACT" + Id.toString();
+decreeRequest(@Lord,Message,Me) :- please(Lord,Message,@Me,Start,Program), Program == "paxos" ;
+
+//define(commitReady,{String,String,String});
+//twopc::commitReady(@Lord,Message,Me) :- please(Lord,Message,@Me,Start,Program), Program == "2pc" ;
+
+
+define(word,{String,String,Long});
+
+word(A,B,C) :- reply(Me,I,B,A), 
+          please(_,B,Me,Start),
+          Now := new Long(System.currentTimeMillis()),
+          C := Now - Start; 
+
+//delete
+//network::connection(X,Y,Z) :- reply(Me,B,A), network::connection(X,Y,Z), Y.toString() != "localhost/127.0.0.1:10000";
+
+//delete
+//network::connection(X,Y,Z) :- reply(Me,B,A), network::connection(X,Y,Z); // , Y.toString() == "localhost/127.0.0.1:10000";
