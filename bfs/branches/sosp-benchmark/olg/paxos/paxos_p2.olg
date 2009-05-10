@@ -45,8 +45,6 @@ acceptRequest(Master,Instance,Round,Decree,-1) :-
 	
 // MULTIPAXOS!
 
-//watch(storedDecreeRequest,aed);
-
 define(topOfQueue_p2, keys(0), {String, Long});
 watch(topOfQueue_p2, ae);
 
@@ -70,8 +68,6 @@ acceptRequest(Master,I,Round,Decree,-2) :-
   I > 0;
 
 timer(tic, physical, 300, 300, infinity);
-
-watch(paxos::topOfQueue, a);
 
 public
 r3_e
@@ -219,34 +215,3 @@ stasis_success(@Peer,Instance,Round,Decree,From) :-
    stasis_success(@Agent,Instance,Round,Decree,From),
    paxos::parliament(@Agent,Peer),
    localized_wakeup#insert(@Agent,_);
-
-/*
-watch(paxos::instance,ae);
-watch(paxos::sendPrepare,ae);
-watch(paxos::nextBal,ae);
-watch(paxos::sendPromise,ae);
-watch(decree,ae);
-watch(acceptCnt,ae);
-watch(sendAccept,ae);
-watch(sendBeginRound,ae);
-watch(stasis_accept,ae);
-watch(success,ae);
-//watch(decreeRequest,ae);
-	
-watch(paxos_global::requestStatus,ae);	
-//watch(maxPrevRound,ae);
-watch(acceptRequest,ae);
-//watch(receivedPromise,ae);
-	
-//watch(prevVote,ae);	
-//watch(instance,ae);
-
-//watch(quorum,ae);
-watch(decree,ae);
-watch(sendAccept,ae);
-watch(success,ae);
-
-watch(success,ae);
-watch(paxos::quorum,ae);
-watch(paxos::sendPromise,ae);
-*/

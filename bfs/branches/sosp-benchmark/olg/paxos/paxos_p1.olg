@@ -83,7 +83,6 @@ storedDecreeRequest(A, B, C, Id) :-
   Id := Runtime.idgen();
 
 define(topOfQueue, keys(0), {String, Long});
-watch(topOfQueue, ae);
 
 topOfQueue(A, min<Id>) :-
   storedDecreeRequest(A, B, C, Id);
