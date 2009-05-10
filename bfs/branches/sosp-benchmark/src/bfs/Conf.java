@@ -223,17 +223,17 @@ public class Conf {
     }
 
     public static List<List<String>> parseAddressFile(File inFile) {
-    	try {
+		try {
 			BufferedReader br = new BufferedReader(new FileReader(inFile));
 			String line;
 			List<List<String>> ret = new ArrayList<List<String>>();
-			while((line = br.readLine()) != null) {
+			while ((line = br.readLine()) != null) {
 				List<String> result = new ArrayList<String>();
 				ret.add(result);
 				boolean done = false;
 				do {
 					String trimmedLine = line.trim();
-					if(trimmedLine.equals("-")) {
+					if (trimmedLine.equals("-")) {
 						done = true;
 					} else {
 						if (!trimmedLine.equals(""))
@@ -245,27 +245,30 @@ public class Conf {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-    }
+	}
 
-    public static int[] findSelfIndex(boolean isMaster) {
-    	Host[][] hostAry;
-    	if (isMaster)
-    		hostAry = masterNodes;
-    	else {
-    		hostAry = new Host[1][];
-    		hostAry[0] = dataNodes;
-    	}
-    	try {
+	public static int[] findSelfIndex(boolean isMaster) {
+		Host[][] hostAry;
+		if (isMaster)
+			hostAry = masterNodes;
+		else {
+			hostAry = new Host[1][];
+			hostAry[0] = dataNodes;
+		}
+		try {
 			InetAddress localHost = InetAddress.getLocalHost();
-			InetAddress[] localAddrs = InetAddress.getAllByName(localHost.getHostName());
+			InetAddress[] localAddrs = InetAddress.getAllByName(localHost
+					.getHostName());
 			for (InetAddress addr : localAddrs) {
 				String hostName = addr.getHostName();
+				String fqHostName = addr.getCanonicalHostName();
 				String ip = addr.getHostAddress();
 				for (int i = 0; i < hostAry.length; i++) {
 					for (int j = 0; j < hostAry[i].length; j++) {
 						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
-						    hostAry[i][j].name.equals(ip))
-							return new int[] {i, j};
+							hostAry[i][j].name.equalsIgnoreCase(fqHostName) ||
+							hostAry[i][j].name.equals(ip))
+							return new int[] { i, j };
 					}
 				}
 			}
@@ -274,27 +277,30 @@ public class Conf {
 		} catch (UnknownHostException e) {
 			throw new RuntimeException(e);
 		}
-    }
+	}
 
-    public static String findSelfAddress(boolean isMaster) {
-    	Host[][] hostAry;
-    	if (isMaster)
-    		hostAry = masterNodes;
-    	else {
-    		hostAry = new Host[1][];
-    		hostAry[0] = dataNodes;
-    	}
-    	try {
+	public static String findSelfAddress(boolean isMaster) {
+		Host[][] hostAry;
+		if (isMaster)
+			hostAry = masterNodes;
+		else {
+			hostAry = new Host[1][];
+			hostAry[0] = dataNodes;
+		}
+		try {
 			InetAddress localHost = InetAddress.getLocalHost();
 			InetAddress[] localAddrs = InetAddress.getAllByName(localHost.getHostName());
 			for (InetAddress addr : localAddrs) {
 				String hostName = addr.getHostName();
+				String fqHostName = addr.getCanonicalHostName();
 				String ip = addr.getHostAddress();
 				for (int i = 0; i < hostAry.length; i++) {
 					for (int j = 0; j < hostAry[i].length; j++) {
 						if (hostAry[i][j].name.equalsIgnoreCase(hostName) ||
-						    hostAry[i][j].name.equals(ip)) {
-							return "tcp:" + hostAry[i][j].name + ":" + hostAry[i][j].port;
+							hostAry[i][j].name.equalsIgnoreCase(fqHostName) ||
+							hostAry[i][j].name.equals(ip)) {
+							return "tcp:" + hostAry[i][j].name + ":" +
+								   hostAry[i][j].port;
 						}
 					}
 				}
@@ -304,27 +310,32 @@ public class Conf {
 		} catch (UnknownHostException e) {
 			return null;
 		}
-    }
+	}
 
-    public static String findLocalAddress(int port) {
-    	try {
+	public static String findLocalAddress(int port) {
+		try {
 			InetAddress localHost = InetAddress.getLocalHost();
-			return "tcp:" + localHost.getHostName() + ":" + port;
+			return "tcp:" + localHost.getCanonicalHostName() + ":" + port;
 		} catch (UnknownHostException e) {
 			throw new RuntimeException(e);
 		}
-    }
+	}
+
 	public static int getPartitionFromString(String truncatedMasterName) {
-		int partition =  -1;
-        for(int i = 0; i < Conf.getNumPartitions(); i++) {
-        	for(int j = 0; j < Conf.getNumMasters(i); j++) {
-        		System.out.println(Conf.getMasterAddress(i,j).toString() + " ?= " + truncatedMasterName);
-        		if((Conf.getMasterAddress(i,j)).endsWith(truncatedMasterName)) {
-        			partition = i; break;
-        		}
-        	}
-        	if(partition != -1) { break; }
-        }
-        return partition;
-    }
+		int partition = -1;
+		for (int i = 0; i < Conf.getNumPartitions(); i++) {
+			for (int j = 0; j < Conf.getNumMasters(i); j++) {
+				System.out.println(Conf.getMasterAddress(i, j).toString()
+						+ " ?= " + truncatedMasterName);
+				if ((Conf.getMasterAddress(i, j)).endsWith(truncatedMasterName)) {
+					partition = i;
+					break;
+				}
+			}
+			if (partition != -1) {
+				break;
+			}
+		}
+		return partition;
+	}
 }
