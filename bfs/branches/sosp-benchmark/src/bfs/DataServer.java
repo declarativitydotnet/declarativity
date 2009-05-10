@@ -111,7 +111,15 @@ public class DataServer extends Thread {
         	long startTime = System.currentTimeMillis();
         	File chunkFile = createChunkFile(chunkId);
         	FileChannel fc = new FileOutputStream(chunkFile).getChannel();
-        	fc.transferFrom(this.channel, 0, dataLength);
+        	long offset = 0;
+        	while (true) {
+        		long nread = fc.transferFrom(this.channel, offset, dataLength - offset);
+        		offset += nread;
+        		if (offset == dataLength)
+        			break;
+        		else if (offset > dataLength)
+        			throw new IllegalStateException();
+        	}
         	fc.close();
         	System.out.println("Wrote chunk file " + chunkId + " (length " +
         			           chunkFile.length() + ") in " +
@@ -202,10 +210,15 @@ public class DataServer extends Thread {
             }
 
             FileChannel fc = new FileInputStream(chunkFile).getChannel();
-            long nwrite = fc.transferTo(0, fileSize, this.channel);
-            if (nwrite != (long) fileSize)
-                throw new RuntimeException("Failed to write expected file "
-                        + "size: wrote " + nwrite + ", expected " + fileSize);
+            long offset = 0;
+            while (true) {
+            	long nwrite = fc.transferTo(offset, fileSize - offset, this.channel);
+            	offset += nwrite;
+            	if (offset == fileSize)
+            		break;
+            	else if (offset > fileSize)
+            		throw new IllegalStateException();
+            }
             fc.close();
         }
     }
