@@ -171,7 +171,8 @@ case $startStop in
         export JAVA_DIR=/usr/lib/jvm/java-6-sun
         export LD_LIBRARY_PATH=/root/stasis/build/src/stasis
         # Increase the maximum number of open files; when running large
-        # we often exceed the default open file descriptor limit of 1024
+        # clusters, we often exceed the default open file descriptor
+        # limit of 1024 on Linux
         ulimit -n 65000
         nohup $JAVA -cp "$CLASSPATH" $BFS_JAVA_OPTS -Djava.library.path=/root/jol/ant-build/stasis/jni bfs.Master > "$log" 2>&1 < /dev/null &
       fi
