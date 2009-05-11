@@ -22,7 +22,11 @@ public class BFSInputStream extends FSInputStream {
 
 	private boolean isClosed;
 	private boolean atEOF;
+
+	// Have we fetched the locations and contents of "currentChunk" yet?
+	private boolean haveCurrentChunk;
 	private ByteBuffer buf;
+	private String[] chunkLocations;
 
 	// Byte-wise offset into the logical file contents
 	private long position;
@@ -31,13 +35,13 @@ public class BFSInputStream extends FSInputStream {
 	// These fields are updated by updatePosition().
 	private int currentChunkIdx;
 	private BFSChunkInfo currentChunk;
-	private String[] chunkLocations;
 
 	public BFSInputStream(String path, BFSClientProtocol bfs) throws IOException {
 		this.bfs = bfs;
 		this.path = path;
 		this.isClosed = false;
 		this.atEOF = false;
+		this.haveCurrentChunk = false;
 		this.buf = ByteBuffer.allocate(Conf.getChunkSize());
 		this.chunkList = bfs.getChunkList(path);
 		updatePosition(0);
@@ -87,8 +91,7 @@ public class BFSInputStream extends FSInputStream {
 		} else {
 			if (chunkIdx != this.currentChunkIdx || this.currentChunk == null) {
 				this.currentChunk = this.chunkList[chunkIdx];
-				this.chunkLocations = bfs.getChunkLocations(this.path, this.currentChunk.getId());
-				fetchChunkContent();
+				this.haveCurrentChunk = false;
 			}
 
 			int chunkLen = this.currentChunk.getLength();
@@ -189,7 +192,7 @@ public class BFSInputStream extends FSInputStream {
 
         sock.close();
 
-        // We successfully read a chunk, so prepare the buffer to
+        // We successfully fetched the chunk, so prepare the buffer to
         // be read from
         this.buf.rewind();
 	}
@@ -222,6 +225,12 @@ public class BFSInputStream extends FSInputStream {
 
 		if (this.atEOF)
 			return -1;
+
+		if (!this.haveCurrentChunk) {
+			this.chunkLocations = this.bfs.getChunkLocations(this.path, this.currentChunk.getId());
+			fetchChunkContent();
+			this.haveCurrentChunk = true;
+		}
 
 		// If we get here, there must be some data left to read in
 		// the current chunk
