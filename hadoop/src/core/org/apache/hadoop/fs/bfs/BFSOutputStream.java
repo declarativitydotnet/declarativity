@@ -53,6 +53,10 @@ public class BFSOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void flush() throws IOException {
+		// If the buffer is empty, flush() is a no-op
+		if (this.buf.remaining() == this.buf.capacity())
+			return;
+
 		BFSNewChunkInfo info = this.bfs.createNewChunk(this.path);
 
         DataConnection conn = new DataConnection(info.getCandidateNodes());
