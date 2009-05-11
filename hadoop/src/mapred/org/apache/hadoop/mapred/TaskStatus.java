@@ -243,7 +243,11 @@ public abstract class TaskStatus implements Writable, Cloneable {
    */
   synchronized void statusUpdate(float progress, String state, 
                                  Counters counters) {
-    setRunState(TaskStatus.State.RUNNING);
+	  if (progress == 1.0f) {
+		  if (taskid.isMap()) setRunState(TaskStatus.State.SUCCEEDED);
+		  else setRunState(TaskStatus.State.COMMIT_PENDING);
+	  }
+	  else setRunState(TaskStatus.State.RUNNING);
     setProgress(progress);
     setStateString(state);
     setCounters(counters);
