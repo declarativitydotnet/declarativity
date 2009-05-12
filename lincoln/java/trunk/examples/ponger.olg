@@ -11,4 +11,4 @@ define(pong, keys(0,1,2), {String, String, Long});
 pong(B, A, Id) :- doping(B, A, Id);
 
 /* Triggers network events due to non-matching location specifiers */
-dopong(@A,B,Id) :- pong(@B,A,Id);
+dopong(@A, B, Id) :- pong(@B, A, Id);
