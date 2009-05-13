@@ -206,34 +206,3 @@ taskUpdate(JobId, TaskId, Type, StatusUpdate) :-
 	};
 	
 	
-	
-/************** Keep tracker of task tracker workload status ********/
-define(trackerWorkload,   keys(0), {String, Integer, Integer});
-define(trackerMapWork,    keys(0), {String, Integer});
-define(trackerReduceWork, keys(0), {String, Integer});
-
-watch(trackerWorkload, a);
-/* Initialize tracker workload. But don't erase when tracker goes to running state,
-hence the #insert (basically turn off view maintenance). */
-public
-trackerWorkload(TaskTracker, 0, 0) :-
-	taskTracker#insert(JobTracker, TaskTracker, _, _, Constants.TrackerState.INITIAL);
-	
-trackerWorkload(TaskTracker, Maps, Reduces) :-
-	trackerMapWork(TaskTracker, Maps), trackerReduceWork(TaskTracker, Reduces);
-	
-trackerWorkload(TaskTracker, Maps, 0) :-
-	trackerMapWork(TaskTracker, Maps), notin trackerReduceWork(TaskTracker, Reduces);
-	
-trackerWorkload(TaskTracker, 0, Reduces) :-
-	trackerReduceWork(TaskTracker, Reduces), notin trackerMapWork(TaskTracker, Maps); 
-
-public
-trackerMapWork(TaskTracker, count<AttemptId>) :-
-    taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING),
-    AttemptId.isMap();
-    
-public
-trackerReduceWork(TaskTracker, count<AttemptId>) :-
-    taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING),
-    !AttemptId.isMap();
