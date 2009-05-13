@@ -8,8 +8,10 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
@@ -40,6 +42,7 @@ import org.apache.hadoop.mapred.ReduceTask;
 import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskCompletionEvent;
+import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskRunner;
 import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.mapred.TaskTracker;
@@ -72,12 +75,15 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 	
 	private Map<JobID, ArrayList<TaskCompletionEvent>> mapCompletionEvents;
 	
+	private Map<JobID, Set<TaskID>> mapCompletions;
+	
 	private TaskAttemptTable attemptTable;
 	
 	public TaskTrackerImpl(JobConf conf) throws IOException {
 		super(conf, MapOutputServlet.class);
 		this.tasks = new HashMap<TaskAttemptID, TaskRunner>();
 		this.mapCompletionEvents = new HashMap<JobID, ArrayList<TaskCompletionEvent>>();
+		this.mapCompletions = new HashMap<JobID, Set<TaskID>>();
 		FileSystem fs  = FileSystem.get(conf);
 		this.systemDir = new Path(conf.get("mapred.system.dir", "/tmp/hadoop/mapred/system"));
 		this.systemDir = fs.makeQualified(this.systemDir);
@@ -132,6 +138,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 						JobID    jobid = (JobID) t.value(JobCompletionTable.Field.JOBID.ordinal());
 						JobState state = (JobState) t.value(JobCompletionTable.Field.STATE.ordinal());
 						mapCompletionEvents.remove(jobid);
+						mapCompletions.remove(jobid);
 					}
 				}
 			}
@@ -147,10 +154,16 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 						TaskAttemptID id = (TaskAttemptID) t.value(MapCompletionTable.Field.ATTEMPTID.ordinal());
 						TaskState  state = (TaskState)     t.value(MapCompletionTable.Field.STATE.ordinal());
 						String   fileLoc = (String)        t.value(MapCompletionTable.Field.FILELOCATION.ordinal());
-
+						
+						if (mapCompletions.containsKey(jobid) && 
+								mapCompletions.get(jobid).contains(id.getTaskID())) {
+							continue;
+						}
+						
 						if (state == TaskState.SUCCEEDED) {
 							if (!mapCompletionEvents.containsKey(jobid)) {
 								mapCompletionEvents.put(jobid, new ArrayList<TaskCompletionEvent>());
+								mapCompletions.put(jobid, new HashSet<TaskID>());
 							}
 							int eventID = mapCompletionEvents.get(jobid).size();
 							TaskCompletionEvent event = new TaskCompletionEvent(eventID,
@@ -158,6 +171,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 									TaskCompletionEvent.Status.valueOf(state.name()),
 									fileLoc);
 							mapCompletionEvents.get(jobid).add(event);
+							mapCompletions.get(jobid).add(id.getTaskID());
 						}
 					}
 				}
