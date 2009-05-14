@@ -6,6 +6,7 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobPriority;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.TaskTracker;
+import org.apache.hadoop.mapred.TaskAttemptID;
 
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.util.JobState;
@@ -25,8 +26,6 @@ watch(task, a);
 watch(taskTracker, a);
 
 /*************** TaskTracker Handlers ***********/
-
-watch(taskTrackerAction, s);
 
 public forwardAction
 taskTrackerAction(@TaskTracker, JobTracker, ActionType, Action) :-
@@ -176,23 +175,42 @@ define(taskUpdate, {JobID, TaskID, Constants.TaskType, TaskState});
 public
 task(JobId, TaskId, Type, Partition, Input, MapCount, Status) :-
     taskUpdate(JobId, TaskId, _, Status),
-	task(JobId, TaskId, Type, Partition, Input, MapCount, _);
+    task(JobId, TaskId, Type, Partition, Input, MapCount, _);
 	
-/*************** CLEAN UP TASK ATTEMPT STATE ******/
+/*************** CLEAN UP TASK STATE ******/
 delete
 hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish) :-
-    taskUpdate(JobId, TaskId, _, Status), Status.state() == Constants.TaskState.SUCCEEDED,
-	hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish),
-	AttemptId.getTaskID() == TaskId;
+    cleanup(JobId),
+    hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish),
+    AttemptId.getJobID() == JobId;
+
+delete 
+sendCompletion(JT, TT, MapId) :-
+    cleanup(JobId),
+    sendCompletion(JT, TT, MapId),
+    MapId.getJobID() == JobId;
 
 /************** SEND MAP TASK ATTEMPT STATUS TO REDUCER TASKTRACKERS ****************/
+/* timer(completionCheck, physical, 5000, infinity, 0); */
+define(mapCompletion, {String, String, TaskAttemptID});
+define(sendCompletion, keys(1,2), {String, String, TaskAttemptID});
+
+watch(sendCompletion, a);
+public
+mapCompletion(JobTracker, TaskTracker, MapId) :-
+    hadoop::taskAttempt(JobTracker, _, MapId, Progress, State, Phase, TaskFileLoc, Start, Finish),
+    State == Constants.TaskState.SUCCEEDED, Phase == Constants.TaskPhase.MAP,
+    hadoop::taskAttempt(JobTracker, TaskTracker, ReduceId, _, _, _, _, _, _),
+    !ReduceId.isMap(), MapId.getJobID() == ReduceId.getJobID(),
+    notin sendCompletion(JobTracker, TaskTracker, MapId);
+
+sendCompletion(JobTracker, TaskTracker, MapId) :-
+   mapCompletion(JobTracker, TaskTracker, MapId);
 
 /* Tell reducers where the succeeded maps reside */
-hadoop::taskAttempt(@TaskTracker, JobTracker, Id1, Progress, State, Phase, TaskFileLoc, Start, Finish) :-
-	hadoop::taskAttempt(@JobTracker, _, Id1, Progress, State, Phase, TaskFileLoc, Start, Finish),
-	State == Constants.TaskState.SUCCEEDED, Phase == Constants.TaskPhase.MAP,
-	hadoop::taskAttempt(@JobTracker, TaskTracker, Id2, _, _, _, _, _, _),
-	!Id2.isMap(), Id1.getJobID() == Id2.getJobID();
+hadoop::taskAttempt(@TaskTracker, JobTracker, MapId, Progress, State, Phase, TaskFileLoc, Start, Finish) :-
+        sendCompletion#insert(@JobTracker, TaskTracker, MapId),
+	hadoop::taskAttempt(@JobTracker, _, MapId, Progress, State, Phase, TaskFileLoc, Start, Finish);
 
 /************** GENERATE TASK UPDATES BASED ON UPDATES TO TASK ATTEMPT STATE ********/
 
