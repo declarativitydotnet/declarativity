@@ -36,9 +36,9 @@ define(configuration, keys(0), {String,     // TaskTracker JOL address
                                 });
                                        
 define(taskRunner, keys(2), {String,        // TaskTracker jol address
-	                         String,        // JobTracker jol address
+                             String,        // JobTracker jol address
                              TaskAttemptID, // The task attempt identifier
-							 TaskType,      // Type of task
+                             TaskType,      // Type of task
                              Float,         // Task progress
                              TaskState,     // Task state
                              TaskPhase,     // Task phase
@@ -61,22 +61,22 @@ define(trackerReduceWork, keys(0), {String, Integer});
 
 watch(trackerWorkload, a);
 trackerWorkload(TaskTracker, 0, 0) :-
-	configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
-	
+    configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
+    
 trackerWorkload(TaskTracker, Maps, Reduces) :-
-	trackerMapWork(TaskTracker, Maps), trackerReduceWork(TaskTracker, Reduces);
-	
+    trackerMapWork(TaskTracker, Maps), trackerReduceWork(TaskTracker, Reduces);
+    
 trackerWorkload(TaskTracker, Maps, 0) :-
-	trackerMapWork(TaskTracker, Maps), notin trackerReduceWork(TaskTracker, Reduces);
-	
+    trackerMapWork(TaskTracker, Maps), notin trackerReduceWork(TaskTracker, Reduces);
+    
 trackerWorkload(TaskTracker, 0, Reduces) :-
-	trackerReduceWork(TaskTracker, Reduces), notin trackerMapWork(TaskTracker, Maps); 
+    trackerReduceWork(TaskTracker, Reduces), notin trackerMapWork(TaskTracker, Maps); 
 
 trackerMapWork(TaskTracker, count<AttemptId>) :-
-	taskRunner(TaskTracker, _, AttemptId, TaskType.MAP, _, TaskState.RUNNING, _, _); 
+    taskRunner(TaskTracker, _, AttemptId, TaskType.MAP, _, TaskState.RUNNING, _, _); 
     
 trackerReduceWork(TaskTracker, count<AttemptId>) :-
-	taskRunner(TaskTracker, _, AttemptId, TaskType.REDUCE, _, TaskState.RUNNING, _, _); 
+    taskRunner(TaskTracker, _, AttemptId, TaskType.REDUCE, _, TaskState.RUNNING, _, _); 
 
 /**********************************************************************/
 
@@ -85,60 +85,61 @@ trackerReduceWork(TaskTracker, count<AttemptId>) :-
 watch(taskTrackerAction, a);
 
 taskRunner(TaskTracker, JobTracker, Id, Type, 0.0f, State, Phase, Runner) :-
-	taskTrackerAction(TaskTracker, JobTracker, TaskTrackerAction.ActionType.LAUNCH_TASK, Action),
-	configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT)
-	{
-		Id     := ((LaunchTaskAction) Action).getTask().getTaskID();
-		Type   := ((LaunchTaskAction) Action).getTask().isMapTask() ? TaskType.MAP : TaskType.REDUCE;
-	    State  := TaskState.RUNNING;
-		Phase  := Type == TaskType.MAP ? TaskPhase.MAP : TaskPhase.SHUFFLE;
-		Runner := TT.launch(((LaunchTaskAction) Action).getTask());
-	};
-	
+    taskTrackerAction(TaskTracker, JobTracker, TaskTrackerAction.ActionType.LAUNCH_TASK, Action),
+    configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT)
+    {
+        Id     := ((LaunchTaskAction) Action).getTask().getTaskID();
+        Type   := ((LaunchTaskAction) Action).getTask().isMapTask() ? TaskType.MAP : TaskType.REDUCE;
+        State  := TaskState.RUNNING;
+        Phase  := Type == TaskType.MAP ? TaskPhase.MAP : TaskPhase.SHUFFLE;
+        Runner := TT.launch(((LaunchTaskAction) Action).getTask());
+    };
+    
 taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, TaskState.KILLED, Phase, Runner) :-
-	taskTrackerAction(TaskTracker, JobTracker, TaskTrackerAction.ActionType.KILL_TASK, Action),
-	configuration(TaskTracker, _, _, _, _, TT),
-	taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner),
-	State != TaskState.KILLED,
-	((KillTaskAction) Action).getTaskID() == AttemptId
-	{
-		TT.kill(Runner);
-	}; 
-	
+    taskTrackerAction(TaskTracker, JobTracker, TaskTrackerAction.ActionType.KILL_TASK, Action),
+    configuration(TaskTracker, _, _, _, _, TT),
+    taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner),
+    State != TaskState.KILLED,
+    ((KillTaskAction) Action).getTaskID() == AttemptId
+    {
+        TT.kill(Runner);
+    }; 
+    
 taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, TaskState.KILLED, Phase, Runner) :-
-	taskTrackerAction(TaskTracker, JobTracker, TaskTrackerAction.ActionType.KILL_JOB, Action),
-	configuration(TaskTracker, _, _, _, _, TT),
-	taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner),
-	State != TaskState.KILLED,
-	((KillJobAction) Action).getJobID() == AttemptId.getJobID()
-	{
-		TT.kill(Runner);
-	}; 
-	
+    taskTrackerAction(TaskTracker, JobTracker, TaskTrackerAction.ActionType.KILL_JOB, Action),
+    configuration(TaskTracker, _, _, _, _, TT),
+    taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner),
+    State != TaskState.KILLED,
+    ((KillJobAction) Action).getJobID() == AttemptId.getJobID()
+    {
+        TT.kill(Runner);
+    }; 
+    
 /**********************************************************************/
 
 watch(statusUpdate, a);
+watch(mapCompletion, a);
 
 taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner) :-
-	statusUpdate(AttemptId, Progress, State, Phase, Diag, Cursor), 
+    statusUpdate(AttemptId, Progress, State, Phase, Diag, Cursor), 
+    Progress < 0.9f || Progress == 1.0f,
     taskRunner(TaskTracker, JobTracker, AttemptId, Type, _, _, _, Runner);
-	
+    
 mapCompletion(JobId, AttemptId, State, FileLocation) :-
-	taskAttempt(_, _, AttemptId, _, State, _, FileLocation, _, _),
-	State == TaskState.SUCCEEDED, AttemptId.isMap()
-	{
-		JobId := AttemptId.getJobID();
-	};
+    taskAttempt(_, _, AttemptId, _, State, _, FileLocation, _, _),
+    State == TaskState.SUCCEEDED, AttemptId.isMap()
+    {
+        JobId := AttemptId.getJobID();
+    };
  
 /******************* Update State @JobTracker *************************/
 
-timer(heartbeatInterval, physical, 10000, infinity, 0);
+timer(heartbeatInterval, physical, 5000, infinity, 0);
 define(heartbeat, {String, String, Integer, Integer, Integer});
 
 heartbeat(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces) :-
     heartbeatInterval(), configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
    
-watch(taskTracker, s);
 /* Send an update every so often, regardless of current running state. */
 taskTracker(@JobTracker, TaskTracker, Host, HttpPort, JobTrackerState, Failures, 
                     Maps, Reduces, MaxMaps, MaxReduces, Timestamp) :-
@@ -146,33 +147,21 @@ taskTracker(@JobTracker, TaskTracker, Host, HttpPort, JobTrackerState, Failures,
     jobTracker(@TaskTracker, JobTracker, JobTrackerState), 
     trackerWorkload(@TaskTracker, Maps, Reduces)
     {
-    	Failures := 0; // todo later
-    	Timestamp := System.currentTimeMillis();
+        Failures := 0; // todo later
+        Timestamp := System.currentTimeMillis();
     };
-	
-/* Send an update when something changes. */
-taskTracker(@JobTracker, TaskTracker, Host, HttpPort, JobTrackerState, Failures, 
-                    Maps, Reduces, MaxMaps, MaxReduces, Timestamp) :-
-	jobTracker(@TaskTracker, JobTracker, JobTrackerState), 
-	configuration(@TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT),
-    trackerWorkload(@TaskTracker, Maps, Reduces)
-    {
-    	Failures := 0; // todo later
-    	Timestamp := System.currentTimeMillis();
-    };
-            
+    
 taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
-	taskRunner#insert(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner), 
-	State == TaskState.SUCCEEDED || State == TaskState.COMMIT_PENDING,
-	configuration(TaskTracker, Host, HttpPort, _, _, TT)
-	{
-	    FileLocation := "http://" + Host + ":" + HttpPort.toString();
-		StartTime    := Runner.startTime();
-		FinishTime   := Runner.finishTime();
-	};
+    taskRunner#insert(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner), 
+    configuration(TaskTracker, Host, HttpPort, _, _, TT)
+    {
+        FileLocation := "http://" + Host + ":" + HttpPort.toString();
+        StartTime    := Runner.startTime();
+        FinishTime   := Runner.finishTime();
+    };
 
 taskAttempt(@JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
-	taskAttempt#insert(JobTracker, @TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime),
-	taskRunner(@TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner); 
-	
+    taskAttempt#insert(JobTracker, @TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime),
+    taskRunner(@TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner); 
+    
 /**********************************************************************/
