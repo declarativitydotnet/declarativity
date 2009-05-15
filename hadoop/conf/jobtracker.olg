@@ -23,7 +23,11 @@ import java.util.List;
 
 watch(job, ae);
 watch(task, a);
-watch(taskTracker, a);
+
+
+/*************** TaskTracker Utility ***********/
+define(trackerUtility, keys(0), {String, String, float, float});
+watch(trackerUtility, a);
 
 /*************** TaskTracker Handlers ***********/
 
@@ -195,6 +199,7 @@ sendCompletion(JT, TT, MapId) :-
 define(mapCompletion, {String, String, TaskAttemptID});
 define(sendCompletion, keys(1,2), {String, String, TaskAttemptID});
 
+watch(taskAttempt, a);
 watch(sendCompletion, a);
 public
 mapCompletion(JobTracker, TaskTracker, MapId) :-

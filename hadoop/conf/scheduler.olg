@@ -109,7 +109,6 @@ slotSignal(TaskTracker, Host, MaxMap, MaxReduce) :-
 	trackerWorkload(TaskTracker, MapCount, ReduceCount),
 	hadoop::taskTracker#insert(_, TaskTracker, Host, _, State, _, _, _, MaxMap, MaxReduce, _);
 
-
 watch(trackerSlots, a);
 define(trackerSlots, {String, String, Integer, Integer});
 trackerSlots(TaskTracker, Host, Maps, 0) :-
