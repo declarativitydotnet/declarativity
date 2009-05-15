@@ -20,7 +20,7 @@ import org.apache.hadoop.mapred.MRConstants;
 import org.apache.hadoop.mapred.MapTask;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskTracker;
-import org.apache.hadoop.mapred.TaskTrackerImpl;
+import org.apache.hadoop.mapred.declarative.slave.TaskTrackerImpl;
 import org.apache.hadoop.util.StringUtils;
 
 /**
@@ -157,7 +157,7 @@ public class MapOutputServlet extends HttpServlet implements MRConstants {
                          StringUtils.stringifyException(ie));
       log.warn(errorMsg);
       if (isInputException) {
-        tracker.mapOutputLost(TaskAttemptID.forName(mapId), errorMsg);
+        // tracker.mapOutputLost(TaskAttemptID.forName(mapId), errorMsg);
       }
       response.sendError(HttpServletResponse.SC_GONE, errorMsg);
       throw ie;
