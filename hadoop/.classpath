@@ -7,7 +7,6 @@
 	<classpathentry kind="src" path="src/core"/>
 	<classpathentry kind="src" path="src/hdfs"/>
 	<classpathentry excluding="org/apache/hadoop/mapred/JobTrackerOld.java|org/apache/hadoop/mapred/TaskInProgress.java|org/apache/hadoop/mapred/JobInProgress.java|org/apache/hadoop/mapred/LocalJobRunner.java|org/apache/hadoop/mapred/CompletedJobStatusStore.java|org/apache/hadoop/mapred/declarative/test/MiniMRCluster.java" kind="src" path="src/mapred"/>
-	<classpathentry excluding="org/apache/hadoop/mapred/TestRackAwareTaskPlacement.java|org/apache/hadoop/mapred/TestMultipleLevelCaching.java|org/apache/hadoop/record/|org/apache/hadoop/mapred/TestMRServerPorts.java" kind="src" path="src/test"/>
 	<classpathentry kind="src" path="src/tools"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/commons-cli-2.0-SNAPSHOT.jar"/>
