@@ -27,7 +27,6 @@ watch(task, a);
 
 /*************** TaskTracker Utility ***********/
 define(trackerUtility, keys(0), {String, String, float, float});
-watch(trackerUtility, a);
 
 /*************** TaskTracker Handlers ***********/
 
@@ -189,33 +188,42 @@ hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, 
     AttemptId.getJobID() == JobId;
 
 delete 
-sendCompletion(JT, TT, MapId) :-
+mapCompletion(JT, MapId, TT) :-
     cleanup(JobId),
-    sendCompletion(JT, TT, MapId),
+    mapCompletion(JT, MapId, TT),
+    MapId.getJobID() == JobId;
+
+delete
+sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc) :-
+    cleanup(JobId),
+    sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc),
     MapId.getJobID() == JobId;
 
 /************** SEND MAP TASK ATTEMPT STATUS TO REDUCER TASKTRACKERS ****************/
 /* timer(completionCheck, physical, 5000, infinity, 0); */
-define(mapCompletion, {String, String, TaskAttemptID});
-define(sendCompletion, keys(1,2), {String, String, TaskAttemptID});
+define(mapCompletion, keys(1), {String, TaskAttemptID, String});
+define(sendCompletion, keys(1,2), {String, String, TaskAttemptID, String});
+define(feedReduce, keys(1,2), {String, String, TaskAttemptID});
+
+feedReduce(JobTracker, TaskTracker, ReduceId) :-
+   hadoop::taskAttempt(JobTracker, TaskTracker, ReduceId, _, _, _, _, _, _);
 
 watch(taskAttempt, a);
 watch(sendCompletion, a);
 public
-mapCompletion(JobTracker, TaskTracker, MapId) :-
-    hadoop::taskAttempt(JobTracker, _, MapId, Progress, State, Phase, TaskFileLoc, Start, Finish),
-    State == Constants.TaskState.SUCCEEDED, Phase == Constants.TaskPhase.MAP,
-    hadoop::taskAttempt(JobTracker, TaskTracker, ReduceId, _, _, _, _, _, _),
-    !ReduceId.isMap(), MapId.getJobID() == ReduceId.getJobID(),
-    notin sendCompletion(JobTracker, TaskTracker, MapId);
+mapCompletion(JobTracker, MapId, TaskFileLoc) :-
+    hadoop::taskAttempt#insert(JobTracker, _, MapId, _, State, Phase, TaskFileLoc, _, _),
+    State == Constants.TaskState.SUCCEEDED, Phase == Constants.TaskPhase.MAP;
 
-sendCompletion(JobTracker, TaskTracker, MapId) :-
-   mapCompletion(JobTracker, TaskTracker, MapId);
+public
+sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc) :-
+   mapCompletion(JobTracker, MapId, TaskFileLoc),
+   feedReduce(JobTracker, TaskTracker, ReduceId),
+   !ReduceId.isMap(), MapId.getJobID() == ReduceId.getJobID();
 
 /* Tell reducers where the succeeded maps reside */
-hadoop::taskAttempt(@TaskTracker, JobTracker, MapId, Progress, State, Phase, TaskFileLoc, Start, Finish) :-
-        sendCompletion#insert(@JobTracker, TaskTracker, MapId),
-	hadoop::taskAttempt(@JobTracker, _, MapId, Progress, State, Phase, TaskFileLoc, Start, Finish);
+hadoop::taskAttempt(@TaskTracker, JobTracker, MapId, 1.0f, Constants.TaskState.SUCCEEDED, Constants.TaskPhase.MAP, TaskFileLoc, 0, 0) :-
+        sendCompletion#insert(@JobTracker, TaskTracker, MapId, TaskFileLoc);
 
 /************** GENERATE TASK UPDATES BASED ON UPDATES TO TASK ATTEMPT STATE ********/
 

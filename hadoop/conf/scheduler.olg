@@ -55,8 +55,6 @@ hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, 0f, State, Phase, FileLo
 		FileLocation := "http://" + Host + ":" + HttpPort.toString();
 	};
 	
-watch(hadoop::taskAttempt, a);
-watch(hadoop::taskTrackerAction, sa);
 actionSchedule
 hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.LAUNCH_TASK, Action) :-	
     hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING, Constants.TaskPhase.STARTING),
@@ -74,7 +72,6 @@ define(trackerWorkload,   keys(0), {String, Integer, Integer});
 define(trackerMapWork,    keys(0), {String, Integer});
 define(trackerReduceWork, keys(0), {String, Integer});
 
-watch(trackerWorkload, a);
 /* Initialize tracker workload. But don't erase when tracker goes to running state,
 hence the #insert (basically turn off view maintenance). */
 public
@@ -109,7 +106,6 @@ slotSignal(TaskTracker, Host, MaxMap, MaxReduce) :-
 	trackerWorkload(TaskTracker, MapCount, ReduceCount),
 	hadoop::taskTracker#insert(_, TaskTracker, Host, _, State, _, _, _, MaxMap, MaxReduce, _);
 
-watch(trackerSlots, a);
 define(trackerSlots, {String, String, Integer, Integer});
 trackerSlots(TaskTracker, Host, Maps, 0) :-
     slotSignal(TaskTracker, Host, MaxMap, MaxReduce),

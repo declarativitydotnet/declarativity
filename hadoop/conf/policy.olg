@@ -23,11 +23,6 @@ scheduleTask(TrackerName, TaskId) :-
     assignTracker(mapSlots(TrackerName, Maps, Priority, Type, Tasks)),
     TaskId := (TaskID) Tasks;
     
-watch(candidate, a);
-watch(mapSlots, a);
-watch(scheduleTask, a);
-watch(scheduler::schedule, a);
-
 scheduleTask(TaskTracker, TaskId) :-
     assignTracker(reduceSlots(TaskTracker, Reduces, Priority, Type, Tasks)),
     TaskId := (TaskID) Tasks;
