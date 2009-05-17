@@ -133,6 +133,7 @@ mapCompletion(JobId, AttemptId, State, FileLocation) :-
     };
  
 /**********************************************************************/
+/*
 timer(utilityTimer, physical, 10000, infinity, 0);
 define(trackerUtility, keys(0), {String, String, float, float});
 
@@ -154,6 +155,7 @@ trackerUtility(TaskTracker, JobTracker, MapUtility, ReduceUtility) :-
 
 trackerUtility(TaskTracker, @JobTracker, MU, RU) :-
     trackerUtility(@TaskTracker, JobTracker, MU, RU);
+*/
 
 /******************* Update State @JobTracker *************************/
 
@@ -180,7 +182,7 @@ taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLoca
     {
         FileLocation := "http://" + Host + ":" + HttpPort.toString();
         StartTime    := Runner.startTime();
-        FinishTime   := Runner.finishTime();
+        FinishTime   := Progress == 1.0 ? System.currentTimeMillis() : Runner.finishTime();
     };
 
 taskAttempt(@JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
