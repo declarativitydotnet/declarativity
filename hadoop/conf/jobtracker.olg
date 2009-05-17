@@ -21,9 +21,8 @@ import java.lang.Long;
 import java.lang.Enum;
 import java.util.List;
 
-watch(job, ae);
-watch(task, a);
-
+watch(job, a);
+watch(taskAttempt, a);
 
 /*************** TaskTracker Utility ***********/
 define(trackerUtility, keys(0), {String, String, float, float});
@@ -206,10 +205,8 @@ define(sendCompletion, keys(1,2), {String, String, TaskAttemptID, String});
 define(feedReduce, keys(1,2), {String, String, TaskAttemptID});
 
 feedReduce(JobTracker, TaskTracker, ReduceId) :-
-   hadoop::taskAttempt(JobTracker, TaskTracker, ReduceId, _, _, _, _, _, _);
+   hadoop::taskAttempt#insert(JobTracker, TaskTracker, ReduceId);
 
-watch(taskAttempt, a);
-watch(sendCompletion, a);
 public
 mapCompletion(JobTracker, MapId, TaskFileLoc) :-
     hadoop::taskAttempt#insert(JobTracker, _, MapId, _, State, Phase, TaskFileLoc, _, _),
