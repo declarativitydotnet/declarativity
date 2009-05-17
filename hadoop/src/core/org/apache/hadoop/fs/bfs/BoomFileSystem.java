@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -15,6 +17,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
+
+import bfs.BFSChunkInfo;
+import bfs.Conf;
 
 public class BoomFileSystem extends FileSystem {
 	private BFSClientProtocol bfs;
@@ -144,6 +149,67 @@ public class BoomFileSystem extends FileSystem {
 		System.out.println("BoomFileSystem#close() called");
 		super.close();
 		this.bfs.shutdown();
+	}
+
+	@Override
+	public BlockLocation[] getFileBlockLocations(FileStatus file, long start, long len)
+	throws IOException {
+		String pathName = getPathName(file.getPath());
+		BFSChunkInfo[] chunkList = bfs.getChunkList(pathName);
+
+		int chunkIdx = 0;
+		long chunkOffset = 0;
+		if (start > 0) {
+			for (chunkIdx = 0; chunkIdx < chunkList.length; chunkIdx++) {
+				int chunkLen = chunkList[chunkIdx].getLength();
+
+				if (start < chunkLen)
+					break;
+
+				start -= chunkLen;
+				chunkOffset += chunkLen;
+			}
+
+			// Is the requested "start" pos beyond EOF?
+			if (chunkIdx == chunkList.length)
+				return null;
+		}
+
+		List<BlockLocation> blockLocs = new LinkedList<BlockLocation>();
+		while (true) {
+			BFSChunkInfo chunk = chunkList[chunkIdx];
+
+			// Use BFSChunkInfo to compute BlockLocation
+			String[] chunkLocs = this.bfs.getChunkLocations(pathName, chunk.getId());
+			String[] chunkHosts = new String[chunkLocs.length];
+			String[] chunkEndpoints = new String[chunkLocs.length];
+			for (int i = 0; i < chunkLocs.length; i++) {
+				String[] parts = chunkLocs[i].split(":");
+				String host = parts[1];
+		        int controlPort = Integer.parseInt(parts[2]);
+		        int dataPort = Conf.findDataNodeDataPort(host, controlPort);
+
+		        chunkHosts[i] = host;
+		        chunkEndpoints[i] = host + ":" + dataPort;
+			}
+
+			BlockLocation loc = new BlockLocation(chunkEndpoints, chunkHosts,
+					                              chunkOffset, chunk.getLength());
+			blockLocs.add(loc);
+
+			chunkOffset += chunk.getLength();
+			int chunkLen = chunk.getLength();
+			if (start > 0) {
+				chunkLen -= start;
+				start = 0;
+			}
+			len -= Math.min(len, chunkLen);
+			if (len == 0)
+				break;
+		}
+
+		BlockLocation[] result = new BlockLocation[blockLocs.size()];
+		return blockLocs.toArray(result);
 	}
 
 	private String getPathName(Path path) {
