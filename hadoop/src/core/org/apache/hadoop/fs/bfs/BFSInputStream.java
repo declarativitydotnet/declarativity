@@ -91,6 +91,8 @@ public class BFSInputStream extends FSInputStream {
 		} else {
 			if (chunkIdx != this.currentChunkIdx || this.currentChunk == null) {
 				this.currentChunk = this.chunkList[chunkIdx];
+				// Don't fetch the chunk content yet -- wait until the first
+				// attempt to actually read() from this chunk.
 				this.haveCurrentChunk = false;
 			}
 
