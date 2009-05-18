@@ -62,7 +62,7 @@ candidate(JobId, TaskId, Type, TaskTracker, Priority) :-
     hadoop::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
     hadoop::task(JobId, TaskId, Type, _, _, MapCount, Status),
     Status.state() == Constants.TaskState.UNASSIGNED,
-    Host == FileLocation || Function.coinFlip(0.1f),
+    /* Host == FileLocation || Function.coinFlip(0.1f), */
     Type == Constants.TaskType.MAP, Maps > 0
     {
         LocalFile := Host == FileLocation ? 0 : 1;
