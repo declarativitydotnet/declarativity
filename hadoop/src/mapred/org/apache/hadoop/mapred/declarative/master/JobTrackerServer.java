@@ -215,10 +215,14 @@ public class JobTrackerServer implements JobSubmissionProtocol {
 		try {
 			Tuple job = lookup(jobid);
 			if (job == null) {
+				TupleSet tasks = jobTracker.createTasks(jobid);
+
 				/* Create a new job and schedule its insertion into the job table. */
 				job = jobTracker.newJob(jobid);
-				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME,
-						new BasicTupleSet(job), null);
+				context.schedule(JobTracker.PROGRAM, JobTable.TABLENAME, new BasicTupleSet(job), null);
+				context.evaluate();
+				
+				context.schedule(JobTracker.PROGRAM, TaskTable.TABLENAME, tasks, null);
 				context.evaluate();
 
 				JobStatus status = null;

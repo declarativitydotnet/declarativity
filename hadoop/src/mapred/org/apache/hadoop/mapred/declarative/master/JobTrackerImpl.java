@@ -1,5 +1,6 @@
 package org.apache.hadoop.mapred.declarative.master;
 
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -31,6 +32,9 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.ipc.Server;
 import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobHistory;
 import org.apache.hadoop.mapred.JobID;
@@ -38,10 +42,12 @@ import org.apache.hadoop.mapred.JobProfile;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.JobSubmissionProtocol;
 import org.apache.hadoop.mapred.JobTracker;
+import org.apache.hadoop.mapred.MRConstants;
 import org.apache.hadoop.mapred.MapTaskStatus;
 import org.apache.hadoop.mapred.ReduceTaskStatus;
 import org.apache.hadoop.mapred.StatusHttpServer;
 import org.apache.hadoop.mapred.TaskAttemptID;
+import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.mapred.TaskTrackerStatus;
@@ -50,6 +56,7 @@ import org.apache.hadoop.mapred.TaskStatus.State;
 import org.apache.hadoop.mapred.declarative.Constants;
 import org.apache.hadoop.mapred.declarative.Constants.TaskPhase;
 import org.apache.hadoop.mapred.declarative.Constants.TaskState;
+import org.apache.hadoop.mapred.declarative.Constants.TaskType;
 import org.apache.hadoop.mapred.declarative.table.*;
 import org.apache.hadoop.mapred.declarative.test.JobSimulator;
 import org.apache.hadoop.mapred.declarative.test.TaskTrackerCluster;
@@ -240,7 +247,6 @@ public class JobTrackerImpl extends JobTracker {
 	@Override
 	public Tuple newJob(JobID jobid) throws IOException {
 		Path localJobFile = this.conf.getLocalPath(SUBDIR  +"/"+jobid + ".xml");
-		Path localJarFile = this.conf.getLocalPath(SUBDIR +"/"+ jobid + ".jar");
 		Path jobFile      = new Path(systemDir(), jobid + "/job.xml");
 		fs.copyToLocalFile(jobFile, localJobFile);
 		JobConf jobConf = new JobConf(localJobFile);
@@ -393,6 +399,68 @@ public class JobTrackerImpl extends JobTracker {
 			return null;
 		}
 	}
+	
+	public TupleSet createTasks(JobID jobid) throws IOException {
+		Path jobFile = this.conf.getLocalPath(SUBDIR  +"/"+jobid + ".xml");
+		JobConf conf = new JobConf(jobFile);
+
+		TupleSet tasks = new BasicTupleSet();
+
+	    Path sysDir = systemDir();
+	    FileSystem fs = sysDir.getFileSystem(conf);
+	    DataInputStream splitFile = fs.open(new Path(conf.get("mapred.job.split.file")));
+
+	    JobClient.RawSplit[] splits;
+	    try {
+	      splits = JobClient.readSplitFile(splitFile);
+	    } finally {
+	      splitFile.close();
+	    }
+
+	    if (conf.getNumMapTasks() != splits.length) {
+	    	System.err.println("ERROR: MISMATCH IN MAP COUNT BETWEEN CONF AND SPLIT");
+	    	conf.setNumMapTasks(splits.length);
+	    }
+
+	    int mapid = 0;
+	    for(int i=0; i < splits.length; i++) {
+	    	if (splits[i].getLocations().length == 0) {
+	    		System.err.println("ERROR: SPLIT DOES NOT HAVE A LOCATION.");
+	    		continue;
+	    	}
+	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile.toString(), mapid++, splits[i], conf.getNumMapTasks()));
+	    }
+
+	    //
+	    // Create reduce tasks
+	    //
+	    int numReduceTasks = conf.getNumReduceTasks();
+
+	    for (int i = 0; i < numReduceTasks; i++) {
+	    	tasks.add(create(jobid, TaskType.REDUCE, conf, jobFile.toString(), i, null, conf.getNumMapTasks()));
+	    }
+
+	    // create job specific temporary directory in output path
+	    Path outputPath = FileOutputFormat.getOutputPath(conf);
+	    if (outputPath != null) {
+	      Path tmpDir = new Path(outputPath, MRConstants.TEMP_DIR_NAME);
+	      FileSystem fileSys = tmpDir.getFileSystem(conf);
+	      if (!fileSys.mkdirs(tmpDir)) {
+	        throw new IOException("Mkdirs failed to create " + tmpDir.toString());
+	      }
+	    }
+
+		return tasks;
+	}
+
+	private Tuple create(JobID jobid, TaskType type, JobConf conf, String jobFile,
+			             Integer partition, JobClient.RawSplit input, int mapCount) {
+		TaskID taskid = new TaskID(jobid, type == TaskType.MAP, partition);
+
+		return new Tuple(jobid, conf, jobFile, taskid, type, partition, input, mapCount, 
+				         new org.apache.hadoop.mapred.declarative.util.TaskState(jobid, taskid));
+	}
+
 
 	////////////////////////////////////////////////////////////
 	// main()

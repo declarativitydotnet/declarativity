@@ -15,6 +15,7 @@ import org.apache.hadoop.mapred.declarative.master.JobTrackerImpl;
 import jol.core.JolSystem;
 import jol.core.Runtime.DebugLevel;
 import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
 
 /**
  * The job tracker interface.
@@ -127,6 +128,8 @@ public abstract class JobTracker {
 	 * @throws IOException
 	 */
 	public abstract Tuple newJob(JobID jobid) throws IOException;
+	
+	public abstract TupleSet createTasks(JobID jobid) throws IOException;
 
 	/**
 	 * Get a task report for all known map tasks belonging to
