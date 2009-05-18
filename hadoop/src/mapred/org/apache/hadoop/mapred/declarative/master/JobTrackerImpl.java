@@ -401,12 +401,14 @@ public class JobTrackerImpl extends JobTracker {
 	}
 	
 	public TupleSet createTasks(JobID jobid) throws IOException {
-		Path jobFile = new Path(systemDir(), jobid + "/job.xml");
-		JobConf conf = new JobConf(jobFile);
 		TupleSet tasks = new BasicTupleSet();
+		
+		Path jobFile      = this.conf.getLocalPath(SUBDIR  +"/"+jobid + ".xml");
+		Path localJobFile = new Path(systemDir(), jobid + "/job.xml");
+		JobConf jobConf   = new JobConf(localJobFile);
 
 	    Path sysDir = systemDir();
-	    FileSystem fs = sysDir.getFileSystem(conf);
+	    FileSystem fs = sysDir.getFileSystem(jobConf);
 	    DataInputStream splitFile = fs.open(new Path(conf.get("mapred.job.split.file")));
 
 	    JobClient.RawSplit[] splits;
