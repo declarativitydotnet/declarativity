@@ -429,7 +429,7 @@ public class JobTrackerImpl extends JobTracker {
 	    		System.err.println("ERROR: SPLIT DOES NOT HAVE A LOCATION.");
 	    		continue;
 	    	}
-	      tasks.add(create(jobid, TaskType.MAP, jobConf, dfsJobFile.toString(), mapid++, splits[i], jobConf.getNumMapTasks()));
+	      tasks.add(create(jobid, TaskType.MAP, mapid++, splits[i], jobConf.getNumMapTasks()));
 	    }
 
 	    //
@@ -438,7 +438,7 @@ public class JobTrackerImpl extends JobTracker {
 	    int numReduceTasks = jobConf.getNumReduceTasks();
 
 	    for (int i = 0; i < numReduceTasks; i++) {
-	    	tasks.add(create(jobid, TaskType.REDUCE, jobConf, dfsJobFile.toString(), i, null, jobConf.getNumMapTasks()));
+	    	tasks.add(create(jobid, TaskType.REDUCE, i, null, jobConf.getNumMapTasks()));
 	    }
 
 	    // create job specific temporary directory in output path
@@ -454,11 +454,11 @@ public class JobTrackerImpl extends JobTracker {
 		return tasks;
 	}
 
-	private Tuple create(JobID jobid, TaskType type, JobConf conf, String jobFile,
-			             Integer partition, JobClient.RawSplit input, int mapCount) {
+	private Tuple create(JobID jobid, TaskType type, Integer partition, 
+			JobClient.RawSplit split, int mapCount) {
 		TaskID taskid = new TaskID(jobid, type == TaskType.MAP, partition);
 
-		return new Tuple(jobid, conf, jobFile, taskid, type, partition, input, mapCount, 
+		return new Tuple(jobid, taskid, type, partition, split, mapCount, 
 				         new org.apache.hadoop.mapred.declarative.util.TaskState(jobid, taskid));
 	}
 
