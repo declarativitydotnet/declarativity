@@ -401,9 +401,8 @@ public class JobTrackerImpl extends JobTracker {
 	}
 	
 	public TupleSet createTasks(JobID jobid) throws IOException {
-		Path jobFile = this.conf.getLocalPath(SUBDIR  +"/"+jobid + ".xml");
+		Path jobFile = new Path(systemDir(), jobid + "/job.xml");
 		JobConf conf = new JobConf(jobFile);
-
 		TupleSet tasks = new BasicTupleSet();
 
 	    Path sysDir = systemDir();
