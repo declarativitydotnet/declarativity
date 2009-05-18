@@ -403,13 +403,13 @@ public class JobTrackerImpl extends JobTracker {
 	public TupleSet createTasks(JobID jobid) throws IOException {
 		TupleSet tasks = new BasicTupleSet();
 		
-		Path jobFile      = this.conf.getLocalPath(SUBDIR  +"/"+jobid + ".xml");
-		Path localJobFile = new Path(systemDir(), jobid + "/job.xml");
+		Path dfsJobFile   = new Path(systemDir(), jobid + "/job.xml");
+		Path localJobFile = this.conf.getLocalPath(SUBDIR  +"/"+jobid + ".xml");
 		JobConf jobConf   = new JobConf(localJobFile);
 
 	    Path sysDir = systemDir();
 	    FileSystem fs = sysDir.getFileSystem(jobConf);
-	    DataInputStream splitFile = fs.open(new Path(conf.get("mapred.job.split.file")));
+	    DataInputStream splitFile = fs.open(new Path(jobConf.get("mapred.job.split.file")));
 
 	    JobClient.RawSplit[] splits;
 	    try {
@@ -418,9 +418,9 @@ public class JobTrackerImpl extends JobTracker {
 	      splitFile.close();
 	    }
 
-	    if (conf.getNumMapTasks() != splits.length) {
+	    if (jobConf.getNumMapTasks() != splits.length) {
 	    	System.err.println("ERROR: MISMATCH IN MAP COUNT BETWEEN CONF AND SPLIT");
-	    	conf.setNumMapTasks(splits.length);
+	    	jobConf.setNumMapTasks(splits.length);
 	    }
 
 	    int mapid = 0;
@@ -429,23 +429,23 @@ public class JobTrackerImpl extends JobTracker {
 	    		System.err.println("ERROR: SPLIT DOES NOT HAVE A LOCATION.");
 	    		continue;
 	    	}
-	      tasks.add(create(jobid, TaskType.MAP, conf, jobFile.toString(), mapid++, splits[i], conf.getNumMapTasks()));
+	      tasks.add(create(jobid, TaskType.MAP, jobConf, dfsJobFile.toString(), mapid++, splits[i], jobConf.getNumMapTasks()));
 	    }
 
 	    //
 	    // Create reduce tasks
 	    //
-	    int numReduceTasks = conf.getNumReduceTasks();
+	    int numReduceTasks = jobConf.getNumReduceTasks();
 
 	    for (int i = 0; i < numReduceTasks; i++) {
-	    	tasks.add(create(jobid, TaskType.REDUCE, conf, jobFile.toString(), i, null, conf.getNumMapTasks()));
+	    	tasks.add(create(jobid, TaskType.REDUCE, jobConf, dfsJobFile.toString(), i, null, jobConf.getNumMapTasks()));
 	    }
 
 	    // create job specific temporary directory in output path
-	    Path outputPath = FileOutputFormat.getOutputPath(conf);
+	    Path outputPath = FileOutputFormat.getOutputPath(jobConf);
 	    if (outputPath != null) {
 	      Path tmpDir = new Path(outputPath, MRConstants.TEMP_DIR_NAME);
-	      FileSystem fileSys = tmpDir.getFileSystem(conf);
+	      FileSystem fileSys = tmpDir.getFileSystem(jobConf);
 	      if (!fileSys.mkdirs(tmpDir)) {
 	        throw new IOException("Mkdirs failed to create " + tmpDir.toString());
 	      }
