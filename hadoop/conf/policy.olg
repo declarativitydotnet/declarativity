@@ -69,6 +69,7 @@ candidate(JobId, TaskId, Type, TaskTracker, Priority) :-
         Priority := [JPriority, SubmitTime, 1, LocalFile, Reduces];
     };
 
+
 /* Priority 1: Schedule unassigned reduce tasks. */
 public
 candidate(JobId, TaskId, Type, TaskTracker, Priority) :-
