@@ -21,6 +21,8 @@ define(trackerCount, keys(0),   {Integer});
 define(taskAttempts, keys(0,1), {JobID, TaskID, Integer});
 define(schedule,        {JobID, TaskID, String});
 
+watch(hadoop::taskAttempt, a);
+
 public
 trackerCount(count<TaskTracker>) :-
 	hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING);
