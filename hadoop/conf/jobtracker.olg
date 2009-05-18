@@ -107,23 +107,9 @@ jobCompletion(@TaskTracker, JobId, State) :-
 
 /*************** TASK INIT *********************/
 
-define(initTask, {JobID, JobConf, String, TaskID, Constants.TaskType, Integer, JobClient.RawSplit, Integer, TaskState});
 define(taskFile, {JobID, TaskID, List});
 define(taskFileLocation, keys(0,1), {JobID, TaskID, String});
 
-initTask(JobID, JobConf, JobFile, null, null, null, null, null, null) :-
-	job(JobID, JobName, JobFile, JobConf, User, URL, Priority, SubmitTime, FinishTime, JobStatus),
-	JobStatus.state() == Constants.JobState.PREP
-	{
-		JobStatus.state(Constants.JobState.RUNNING); // Update state to running
-	};
-	
-/* Break out of the current fixpoint thread (using 'async') since taskCreate table function
-   makes blocking calls to the DFS. */
-async initTask
-task(JobID, TaskID, Type, Partition, Input, MapCount, Status) :-
-	taskCreate(initTask(JobID, JobConf, JobFile, TaskID, Type, Partition, Input, MapCount, Status));
-	
 taskFile(JobId, TaskId, Locations) :-
 	task(JobId, TaskId, Type, _, Input, _, Status),
 	Status.state() == Constants.TaskState.UNASSIGNED,
