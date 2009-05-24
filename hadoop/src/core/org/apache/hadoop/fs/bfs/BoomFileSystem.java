@@ -206,6 +206,8 @@ public class BoomFileSystem extends FileSystem {
 			len -= Math.min(len, chunkLen);
 			if (len == 0)
 				break;
+            else
+                chunkIdx++;
 		}
 
 		BlockLocation[] result = new BlockLocation[blockLocs.size()];
