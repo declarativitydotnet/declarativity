@@ -33,7 +33,7 @@ scheduleTask(TaskTracker, TaskId) :-
 public
 mapSlots(TaskTracker, Maps, Priority, Type, limit<TaskId, MaxMap>) :-
     bestCandidate(candidate(JobId, TaskId, Type, TaskTracker, Priority)),
-    scheduler::trackerWorkload(TaskTracker, MapCount, _),
+    scheduler::trackerMapWorkload(TaskTracker, MapCount),
     hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING, _, _, _, MaxMap, _, _),
     Type == Constants.TaskType.MAP, MaxMap - MapCount > 0
     {
@@ -45,7 +45,7 @@ mapSlots(TaskTracker, Maps, Priority, Type, limit<TaskId, MaxMap>) :-
 public
 reduceSlots(TrackerName, Reduces, Priority, Type, limit<TaskId, MaxReduce>) :-
     bestCandidate(candidate(JobId, TaskId, Type, TrackerName, Priority)),
-    scheduler::trackerWorkload(TaskTracker, _, ReduceCount),
+    scheduler::trackerReduceWorkload(TaskTracker, ReduceCount),
     hadoop::taskTracker(JobTracker, TaskTracker, _, _, Constants.TrackerState.RUNNING, _, _, _, _, MaxReduce, _),
     Type == Constants.TaskType.REDUCE, MaxReduce - ReduceCount > 0
     {
@@ -54,19 +54,35 @@ reduceSlots(TrackerName, Reduces, Priority, Type, limit<TaskId, MaxReduce>) :-
     
 /**************************************************************/
 
+define(localCache, keys(), {String, JobID, TaskID});
+
+public
+localCache(Host, JobId, TaskId) :-
+    hadoop::task(JobId, TaskId, Constants.TaskType.MAP, _, _, _, Status),
+    Status.state() == Constants.TaskState.UNASSIGNED,
+    hadoop::taskFileLocation(JobId, TaskId, Host);
+
+
+public 
+candidate(JobId, TaskId, Constants.TaskType.MAP, TaskTracker, Priority) :-
+    scheduler::trackerSlots(TaskTracker, Host, Maps, Reduces),
+    localCache(Host, JobId, TaskId),
+    hadoop::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus)
+    {
+        Priority := [JPriority, SubmitTime, 0, Reduces];
+    };
+
 /* Priority 1: Schedule unassigned map tasks. */
 public
 candidate(JobId, TaskId, Type, TaskTracker, Priority) :-
-    scheduler::trackerSlots(TaskTracker, Host,  Maps, Reduces),
-    hadoop::taskFileLocation(JobId, TaskId, FileLocation),
+    scheduler::trackerSlots(TaskTracker, Host, Maps, Reduces),
+    notin localCache(Host),
     hadoop::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
     hadoop::task(JobId, TaskId, Type, _, _, MapCount, Status),
     Status.state() == Constants.TaskState.UNASSIGNED,
-    /* Host == FileLocation || Function.coinFlip(0.1f), */
     Type == Constants.TaskType.MAP, Maps > 0
     {
-        LocalFile := Host == FileLocation ? 0 : 1;
-        Priority := [JPriority, SubmitTime, 1, LocalFile, Reduces];
+        Priority := [JPriority, SubmitTime, 1, Reduces];
     };
 
 
@@ -80,7 +96,7 @@ candidate(JobId, TaskId, Type, TaskTracker, Priority) :-
     Status.state() == Constants.TaskState.UNASSIGNED,
     Type == Constants.TaskType.REDUCE, Reduces > 0
     {
-        Priority := [JPriority, SubmitTime, 1, 0, Maps];
+        Priority := [JPriority, SubmitTime, 1, Maps];
     };
 
 /* Priority 2: Schedule failed map tasks. */
@@ -94,7 +110,7 @@ candidate(JobId, TaskId, Type, TaskTracker, Priority) :-
     notin hadoop::failedTaskLocation(JobId, TaskId, TaskTracker)
     {
         LocalFile := Host == FileLocation ? 0 : 1;
-        Priority := [JPriority, SubmitTime, 2, LocalFile, 0];
+        Priority := [JPriority, SubmitTime, LocalFile, Reduces];
     };
 
 /* Priority 2: Schedule failed reduce tasks. */
@@ -106,6 +122,6 @@ candidate(JobId, TaskId, Type, TrackerName, Priority) :-
     hadoop::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
     notin hadoop::failedTaskLocation(JobId, TaskId, TaskTracker)
     {
-        Priority := [JPriority, SubmitTime, 2, 0, 0];
+        Priority := [JPriority, SubmitTime, 0, Maps];
     };
     

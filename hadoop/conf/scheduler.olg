@@ -22,6 +22,8 @@ define(taskAttempts, keys(0,1), {JobID, TaskID, Integer});
 define(schedule,        {JobID, TaskID, String});
 
 watch(hadoop::taskAttempt, a);
+watch(trackerMapWorkload, a);
+watch(trackerReduceWorkload, a);
 
 public
 trackerCount(count<TaskTracker>) :-
@@ -70,61 +72,71 @@ hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.
 	};
 
 /************** Keep tracker of task tracker workload status ********/
-define(trackerWorkload,   keys(0), {String, Integer, Integer});
-define(trackerMapWork,    keys(0), {String, Integer});
-define(trackerReduceWork, keys(0), {String, Integer});
+define(trackerMapWorkload,     keys(0), {String, Integer});
+define(trackerReduceWorkload,  keys(0), {String, Integer});
+define(trackerMapWork,         keys(0), {String, Integer});
+define(trackerReduceWork,      keys(0), {String, Integer});
 
 /* Initialize tracker workload. But don't erase when tracker goes to running state,
 hence the #insert (basically turn off view maintenance). */
 public
-trackerWorkload(TaskTracker, 0, 0) :-
+trackerMapWorkload(TaskTracker, 0) :-
 	hadoop::taskTracker#insert(JobTracker, TaskTracker, _, _, Constants.TrackerState.INITIAL);
 	
-trackerWorkload(TaskTracker, Maps, Reduces) :-
-	trackerMapWork(TaskTracker, Maps), trackerReduceWork(TaskTracker, Reduces);
+public
+trackerReduceWorkload(TaskTracker, 0) :-
+	hadoop::taskTracker#insert(JobTracker, TaskTracker, _, _, Constants.TrackerState.INITIAL);
 	
-trackerWorkload(TaskTracker, Maps, 0) :-
-	trackerMapWork(TaskTracker, Maps), notin trackerReduceWork(TaskTracker, Reduces);
-	
-trackerWorkload(TaskTracker, 0, Reduces) :-
-	trackerReduceWork(TaskTracker, Reduces), notin trackerMapWork(TaskTracker, Maps); 
+trackerMapWorkload(TaskTracker, Maps) :-
+    trackerMapWork(TaskTracker, Maps);
+
+trackerReduceWorkload(TaskTracker, Reduces) :-
+    trackerReduceWork(TaskTracker, Reduces);
 
 public
 trackerMapWork(TaskTracker, count<AttemptId>) :-
-    hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING, Phase),
-    Phase != Constants.TaskPhase.STARTING, AttemptId.isMap();
+    hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING),
+    AttemptId.isMap();
     
 public
 trackerReduceWork(TaskTracker, count<AttemptId>) :-
-    hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING, Phase),
-    Phase != Constants.TaskPhase.STARTING, !AttemptId.isMap();
-
+    hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, _, Constants.TaskState.RUNNING),
+    !AttemptId.isMap();
+    
 /******************** Signal task tracker slots available *******************/
-
+define(trackerSlots, {String, String, Integer, Integer});
 define(slotSignal, {String, String, Integer, Integer});
 
 public
 slotSignal(TaskTracker, Host, MaxMap, MaxReduce) :-
-	trackerWorkload(TaskTracker, MapCount, ReduceCount),
-	hadoop::taskTracker#insert(_, TaskTracker, Host, _, State, _, _, _, MaxMap, MaxReduce, _);
+    hadoop::task(JobId, TaskId, _, _, _, _, TaskStatus),
+    TaskStatus.state() != Constants.TaskState.RUNNING,
+	hadoop::taskTracker(JobTracker, TaskTracker, Host, _, Constants.TrackerState.RUNNING, _, _, _, MaxMap, MaxReduce);
+	
+slotSignal(TaskTracker, Host, MaxMap, MaxReduce) :-
+    trackerMapWorkload#insert(TaskTracker),
+	hadoop::taskTracker(JobTracker, TaskTracker, Host, _, Constants.TrackerState.RUNNING, _, _, _, MaxMap, MaxReduce);
+	
+slotSignal(TaskTracker, Host, MaxMap, MaxReduce) :-
+    trackerReduceWorkload#insert(TaskTracker),
+	hadoop::taskTracker(JobTracker, TaskTracker, Host, _, Constants.TrackerState.RUNNING, _, _, _, MaxMap, MaxReduce);
 
-define(trackerSlots, {String, String, Integer, Integer});
 trackerSlots(TaskTracker, Host, Maps, 0) :-
     slotSignal(TaskTracker, Host, MaxMap, MaxReduce),
     hadoop::mapsWaitingForSchedule(Count), Count > 0,
-    trackerWorkload(TaskTracker, MapCount, ReduceCount),
+    trackerMapWorkload(TaskTracker, MapCount),
     MapCount < MaxMap
     {
-      Maps := (MapCount + ReduceCount) < MaxMap ? MaxMap - (MapCount + ReduceCount) : 0;
+      Maps := MapCount < MaxMap ? MaxMap - MapCount : 0;
     };
 
 trackerSlots(TaskTracker, Host, 0, Reduces) :-
     slotSignal(TaskTracker, Host, MaxMap, MaxReduce),
     hadoop::reducesWaitingForSchedule(Count), Count > 0,
-    trackerWorkload(TaskTracker, MapCount, ReduceCount),
+    trackerReduceWorkload(TaskTracker, ReduceCount),
     ReduceCount < MaxReduce
     {
-      Reduces := (MapCount + ReduceCount) < MaxReduce ? MaxReduce - (ReduceCount + MapCount) : 0;
+      Reduces := ReduceCount < MaxReduce ? MaxReduce - ReduceCount : 0;
     };
 
 
