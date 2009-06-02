@@ -410,6 +410,7 @@ public abstract class Aggregate<C extends Object> {
 
 	public static class Count extends Aggregate<Integer> {
 		private BasicTupleSet tuples;
+		private HashSet values;
 		private TupleFunction<Object> accessor;
 
 		public Count(jol.lang.plan.Aggregate aggregate, Schema schema) throws PlannerException {
@@ -419,21 +420,28 @@ public abstract class Aggregate<C extends Object> {
 
 		private void reset() {
 			this.tuples = new BasicTupleSet();
+			this.values = new HashSet();
 		}
 
 		@Override
 		public Integer result() {
-			return size();
+			return this.values.size();
 		}
 
 		@Override
-		public void insert(Tuple tuple) {
-			this.tuples.add(tuple);
+		public void insert(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.add(tuple)) {
+				Object value = this.accessor.evaluate(tuple);
+				if (value != null) this.values.add(value);
+			}
 		}
 
 		@Override
-		public void delete(Tuple tuple) {
-			this.tuples.remove(tuple);
+		public void delete(Tuple tuple) throws JolRuntimeException {
+			if (this.tuples.remove(tuple)) {
+				Object value = this.accessor.evaluate(tuple);
+				if (value != null) this.values.remove(value);
+			}
 		}
 
 		@Override
