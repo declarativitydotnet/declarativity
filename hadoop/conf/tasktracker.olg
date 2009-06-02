@@ -159,7 +159,7 @@ trackerUtility(TaskTracker, @JobTracker, MU, RU) :-
 
 /******************* Update State @JobTracker *************************/
 
-timer(heartbeatInterval, physical, 5000, infinity, 0);
+timer(heartbeatInterval, physical, 10000, infinity, 0);
 define(heartbeat, {String, String, Integer, Integer, Integer});
 
 heartbeat(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces) :-

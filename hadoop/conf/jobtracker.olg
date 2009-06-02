@@ -39,28 +39,28 @@ jobTracker(@TaskTracker, JobTracker, Constants.TrackerState.RUNNING) :-
 	taskTracker(@JobTracker, TaskTracker, _, _, Constants.TrackerState.INITIAL);
 
 /*************** JobTracker State *********************/
-define(activeJobs, keys(), {Integer});
-define(activeTasks, keys(), {Integer});
+define(activeJobs, keys(1), {Integer, String});
+define(activeTasks, keys(1), {Integer, String});
 define(failedTaskLocation, keys(0,1), {JobID, TaskID, String});
-define(mapsWaitingForSchedule, keys(0), {Integer});
-define(reducesWaitingForSchedule, keys(0), {Integer});
+define(mapsWaitingForSchedule, keys(1), {Integer, String});
+define(reducesWaitingForSchedule, keys(1), {Integer, String});
 
-reducesWaitingForSchedule(count<TaskId>) :-
+reducesWaitingForSchedule(count<TaskId>, "reduce count") :-
     task(JobId, TaskId, Constants.TaskType.REDUCE, _, _, _, TaskStatus),
     TaskStatus.state() == Constants.TaskState.UNASSIGNED ||
     TaskStatus.state() == Constants.TaskState.FAILED;
 
-mapsWaitingForSchedule(count<TaskId>) :-
+mapsWaitingForSchedule(count<TaskId>, "map count") :-
     task(JobId, TaskId, Constants.TaskType.MAP, _, _, _, TaskStatus),
     taskFileLocation(JobId, TaskId, Loc),
     TaskStatus.state() == Constants.TaskState.UNASSIGNED ||
     TaskStatus.state() == Constants.TaskState.FAILED;
 
-activeJobs(count<JobId>) :-
+activeJobs(count<JobId>, "active jobs") :-
 	job(JobId, _, _, _, _, _, _, _, FinishTime, _),
 	FinishTime == 0L;
 	
-activeTasks(count<TaskId>) :-
+activeTasks(count<TaskId>, "active tasks") :-
 	task(JobId, TaskId, Type, Partition, Input, MapCount, Status),
 	Status.state() == Constants.TaskState.RUNNING;
 
@@ -95,6 +95,7 @@ hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, 
 delete
 taskFileLocation(JobId, TaskId, Loc) :-
 	cleanup(JobId), taskFileLocation(JobId, TaskId, Loc);
+	
 
 /*** Inform trackers that job is done ***/
 define(forwardTracker, {String, String, JobID, JobState});
