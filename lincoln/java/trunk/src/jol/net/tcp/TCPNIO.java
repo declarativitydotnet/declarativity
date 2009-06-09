@@ -63,7 +63,7 @@ public class TCPNIO extends Server {
 		this.server.socket().bind(new InetSocketAddress(port));
 		this.server.register(this.selector, SelectionKey.OP_ACCEPT);
 	}
-	
+
 	public int getLocalPort() {
 		return this.server.socket().getLocalPort();
 	}
@@ -196,16 +196,12 @@ public class TCPNIO extends Server {
 				ObjectOutputStream ostream = new ObjectOutputStream(bstream);
 				ostream.writeObject(packet);
 
-				if (bstream.size() > this.wBuffer.capacity()) {
-					this.wBuffer = ByteBuffer.allocate(bstream.size());
-/*
-					throw new RuntimeException("Message exceeds buffer size: " +
-							                   bstream.size() + " > " + this.wBuffer.capacity() +
-							                   ". Message: " + packet.toString());
-*/
-                                }
-
 				synchronized (this.wBuffer) {
+					// Enlarge buffer, if necessary. XXX: we never shrink the
+					// buffer back to its initial size
+					if (bstream.size() > this.wBuffer.capacity())
+						this.wBuffer = ByteBuffer.allocate(bstream.size());
+
                     this.wBuffer.clear();
 					this.wBuffer.putInt(bstream.size());
 					this.wBuffer.put(bstream.toByteArray());
@@ -240,7 +236,7 @@ public class TCPNIO extends Server {
                     this.rBuffer.clear();
                     this.rBuffer.limit(LENGTH_WORD_SIZE);
                     this.readState = READ_LENGTH;
-                    /* fallthrough and try to read length */
+                    /* fallthrough and try to read message length */
 
                 case READ_LENGTH:
                     doSocketRead();
@@ -248,9 +244,11 @@ public class TCPNIO extends Server {
                         return false;
 
                     int msgLength = this.rBuffer.getInt(0);
-                    if (msgLength > this.rBuffer.capacity()) {
-			this.rBuffer = ByteBuffer.allocate(msgLength);
-                    }
+                    // Enlarge the read buffer, if necessary. XXX: we never
+                    // shrink the buffer back to its initial size
+                    if (msgLength > this.rBuffer.capacity())
+                    	this.rBuffer = ByteBuffer.allocate(msgLength);
+
                     this.rBuffer.clear();
                     this.rBuffer.limit(msgLength);
                     this.readState = READ_MESSAGE;
