@@ -293,6 +293,9 @@ public class TCPNIO extends Server {
          * Demarshall an already-read message from the input rBuffer, and
          * schedule the message with the TCP program as a {@link
          * TCPNIO#ReceiveMessage} tuple.
+         *
+         * XXX: we could optimize this to do a single schedule() for
+         * multiple messages read from the same connection.
          */
         private void unmarshallMessage() throws IOException {
             try {
