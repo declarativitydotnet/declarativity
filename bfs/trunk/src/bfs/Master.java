@@ -69,6 +69,9 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
         this.system.evaluate();
 
+        //this.system.install("breakpoint", ClassLoader.getSystemResource("tap/bp2.olg"));
+        //this.system.evaluate();
+
         // Hack: insert a bfs::file tuple to represent the root of the file system
         TupleSet newFile = new BasicTupleSet();
         int fileId = -1;  // File IDs assigned by the system start at 0
