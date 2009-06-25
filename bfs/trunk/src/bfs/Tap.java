@@ -139,7 +139,10 @@ public class Tap {
                 // we use a separate rewrite to capture the actual projections
             } else {
                 String clause = i.toString();
-                String res = clause.replace("BOOLEAN","").replace("MATH","").replace("@","");
+                /* hack attack */
+                String res = clause.replace("BOOLEAN","").replace("MATH","").replace("@","").replace(":0","");
+                /* super hack */
+                //if (!res.equals("") && !res.matches("Invoker:")) {
                 if (!res.equals("")) {
                     goods.add(res);
                 }
