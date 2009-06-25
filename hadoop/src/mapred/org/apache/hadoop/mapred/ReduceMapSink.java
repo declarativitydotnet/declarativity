@@ -69,7 +69,7 @@ public class ReduceMapSink {
 	}
 	
 	public String getAddress() {
-		return this.server.socket().getInetAddress().getHostAddress() + 
+		return this.server.socket().getInetAddress().getCanonicalHostName() + 
 		       ":" + this.server.socket().getLocalPort();
 	}
 	
