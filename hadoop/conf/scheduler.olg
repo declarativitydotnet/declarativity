@@ -67,8 +67,8 @@ hadoop::taskTrackerAction(JobTracker, TaskTracker, TaskTrackerAction.ActionType.
 	hadoop::task(JobId, TaskId, Type, Partition, FileInput, MapCount, _)
 	{
 		Action := Type == Constants.TaskType.MAP ? 
-		          Function.launchMap(FileInput, JobFile, AttemptId, Partition) :
-	 	          Function.launchReduce(JobFile, AttemptId, Partition, MapCount);
+		          Function.launchMap(FileInput, JobFile, AttemptId, Partition, true) :
+	 	          Function.launchReduce(JobFile, AttemptId, Partition, MapCount, true);
 	};
 
 /************** Keep tracker of task tracker workload status ********/

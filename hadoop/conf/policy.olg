@@ -91,12 +91,11 @@ public
 candidate(JobId, TaskId, Type, TaskTracker, Priority) :-
     scheduler::trackerSlots(TaskTracker, Host, Maps, Reduces),
     hadoop::job(JobId, _, _, _, _, _, JPriority, SubmitTime, _, JobStatus),
-    JobStatus.status().mapProgress() > 0f,
     hadoop::task(JobId, TaskId, Type, _, _, _, Status),
     Status.state() == Constants.TaskState.UNASSIGNED,
     Type == Constants.TaskType.REDUCE, Reduces > 0
     {
-        Priority := [JPriority, SubmitTime, 1, Maps];
+        Priority := [JPriority, SubmitTime, 0, Maps];
     };
 
 /* Priority 2: Schedule failed map tasks. */

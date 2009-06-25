@@ -186,6 +186,25 @@ sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc) :-
     sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc),
     MapId.getJobID() == JobId;
 
+/************** SEND REDUCE SCHEDULE EVENTS TO MAPPERS ****************/
+define(reduceScheduleEvent, keys(1), {String, TaskID, Integer, String});
+
+reduceSchedule(JobTracker, TaskId, Partition, Address) :-
+	reduceScheduleEvent(JobTracker, TaskId, Partition, Address);
+	
+public
+reduceSchedule(@TaskTracker, ReduceId, Partition, Address) :-
+    hadoop::taskAttempt#insert(@JobTracker, TaskTracker, AttemptId, _, State, Phase, _, _, _),
+    reduceSchedule(@JobTracker, ReduceId, Partition, Address),
+    AttemptId.isMap(), Phase == Constants.TaskPhase.STARTING;
+    
+public
+reduceSchedule(@TaskTracker, ReduceId, Partition, Address) :-
+    hadoop::taskAttempt(@JobTracker, TaskTracker, AttemptId, _, State, Phase, _, _, _),
+    reduceSchedule#insert(@JobTracker, ReduceId, Partition, Address),
+    Phase == Constants.TaskPhase.MAP;
+
+
 /************** SEND MAP TASK ATTEMPT STATUS TO REDUCER TASKTRACKERS ****************/
 /* timer(completionCheck, physical, 5000, infinity, 0); */
 define(mapCompletion, keys(1), {String, TaskAttemptID, String});
