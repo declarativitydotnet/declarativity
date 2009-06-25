@@ -187,6 +187,7 @@ public class JobTrackerImpl extends JobTracker {
 	private void install(jol.core.Runtime context, JobConf conf) throws UpdateException, JolRuntimeException {
 		this.context().catalog().register(new JobTable(context));
 		this.context().catalog().register(new TaskAttemptTable(context));
+		this.context().catalog().register(new ReduceScheduleTable(context));
 		this.context().catalog().register(new TaskCreate(this));
 		this.context().catalog().register(new JobCompletionTable());
 		this.context().catalog().register(new AssignTracker());

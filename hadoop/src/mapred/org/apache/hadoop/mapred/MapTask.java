@@ -72,6 +72,8 @@ public final class MapTask extends Task {
   private String splitClass;
   private InputSplit instantiatedSplit = null;
   private final static int APPROX_HEADER_LENGTH = 150;
+  
+  private Boolean pipeline;
 
   private static final Log LOG = LogFactory.getLog(MapTask.class.getName());
 
@@ -84,11 +86,12 @@ public final class MapTask extends Task {
   }
 
   public MapTask(String jobFile, TaskAttemptID taskId, 
-                 int partition, String splitClass, BytesWritable split
-                 ) throws IOException {
+                 int partition, String splitClass, BytesWritable split, 
+                 Boolean pipeline) throws IOException {
     super(jobFile, taskId, partition);
     this.splitClass = splitClass;
     this.split = split;
+    this.pipeline = pipeline;
   }
 
   @Override
@@ -124,6 +127,7 @@ public final class MapTask extends Task {
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
+    out.writeBoolean(pipeline);
     Text.writeString(out, splitClass);
     if (split != null) split.write(out);
     else throw new IOException("SPLIT IS NULL");
@@ -132,6 +136,7 @@ public final class MapTask extends Task {
   @Override
   public void readFields(DataInput in) throws IOException {
     super.readFields(in);
+    this.pipeline = in.readBoolean();
     splitClass = Text.readString(in);
     split.readFields(in);
   }
@@ -189,63 +194,72 @@ public final class MapTask extends Task {
       return rawIn.getProgress();
     }
   }
-
+  
   @Override
   @SuppressWarnings("unchecked")
   public void run(final JobConf job, final TaskUmbilicalProtocol umbilical)
     throws IOException {
-
-    final Reporter reporter = getReporter(umbilical);
-
-    // start thread that will handle communication with parent
-    startCommunicationThread(umbilical);
-
     int numReduceTasks = conf.getNumReduceTasks();
     LOG.info("numReduceTasks: " + numReduceTasks);
+    final Reporter reporter = getReporter(umbilical);
+    
     MapOutputCollector collector = null;
     if (numReduceTasks > 0) {
-      collector = new MapOutputBuffer(umbilical, job, reporter);
+    	collector = pipeline ? new MapOutputPipe(umbilical, job, reporter, this) :
+                               new MapOutputBuffer(umbilical, job, reporter);
     } else { 
       collector = new DirectMapOutputCollector(umbilical, job, reporter);
     }
-    // reinstantiate the split
-    try {
-      instantiatedSplit = (InputSplit) 
-        ReflectionUtils.newInstance(job.getClassByName(splitClass), job);
-    } catch (ClassNotFoundException exp) {
-      IOException wrap = new IOException("Split class " + splitClass + 
-                                         " not found");
-      wrap.initCause(exp);
-      throw wrap;
-    }
-    DataInputBuffer splitBuffer = new DataInputBuffer();
-    splitBuffer.reset(split.get(), 0, split.getSize());
-    instantiatedSplit.readFields(splitBuffer);
-    
-    // if it is a file split, we can give more details
-    if (instantiatedSplit instanceof FileSplit) {
-      FileSplit fileSplit = (FileSplit) instantiatedSplit;
-      job.set("map.input.file", fileSplit.getPath().toString());
-      job.setLong("map.input.start", fileSplit.getStart());
-      job.setLong("map.input.length", fileSplit.getLength());
-    }
-      
-    RecordReader rawIn =                  // open input
-      job.getInputFormat().getRecordReader(instantiatedSplit, job, reporter);
-    this.recordReader = new TrackedRecordReader(rawIn, getCounters());
+    run(job, umbilical, collector);
+  }
+  
 
-    MapRunnable runner =
-      (MapRunnable)ReflectionUtils.newInstance(job.getMapRunnerClass(), job);
+  @SuppressWarnings("unchecked")
+  private void run(final JobConf job, final TaskUmbilicalProtocol umbilical, MapOutputCollector collector) throws IOException {
 
-    try {
-      runner.run(this.recordReader, collector, reporter);      
-      collector.flush();
-    } finally {
-      //close
-      this.recordReader.close();                               // close input
-      collector.close();
-    }
-    done(umbilical);
+	  final Reporter reporter = getReporter(umbilical);
+
+	  // start thread that will handle communication with parent
+	  startCommunicationThread(umbilical);
+
+	  // reinstantiate the split
+	  try {
+		  instantiatedSplit = (InputSplit) 
+		  ReflectionUtils.newInstance(job.getClassByName(splitClass), job);
+	  } catch (ClassNotFoundException exp) {
+		  IOException wrap = new IOException("Split class " + splitClass + 
+		  " not found");
+		  wrap.initCause(exp);
+		  throw wrap;
+	  }
+	  DataInputBuffer splitBuffer = new DataInputBuffer();
+	  splitBuffer.reset(split.get(), 0, split.getSize());
+	  instantiatedSplit.readFields(splitBuffer);
+
+	  // if it is a file split, we can give more details
+	  if (instantiatedSplit instanceof FileSplit) {
+		  FileSplit fileSplit = (FileSplit) instantiatedSplit;
+		  job.set("map.input.file", fileSplit.getPath().toString());
+		  job.setLong("map.input.start", fileSplit.getStart());
+		  job.setLong("map.input.length", fileSplit.getLength());
+	  }
+
+	  RecordReader rawIn =                  // open input
+		  job.getInputFormat().getRecordReader(instantiatedSplit, job, reporter);
+	  this.recordReader = new TrackedRecordReader(rawIn, getCounters());
+
+	  MapRunnable runner =
+		  (MapRunnable)ReflectionUtils.newInstance(job.getMapRunnerClass(), job);
+
+	  try {
+		  runner.run(this.recordReader, collector, reporter);      
+		  collector.flush();
+	  } finally {
+		  //close
+		  this.recordReader.close();                               // close input
+		  collector.close();
+	  }
+	  done(umbilical);
   }
 
   interface MapOutputCollector<K, V>
@@ -950,7 +964,7 @@ public final class MapTask extends Task {
       }
     }
 
-    protected class MRResultIterator implements RawKeyValueIterator {
+    public class MRResultIterator implements RawKeyValueIterator {
       private final DataInputBuffer keybuf = new DataInputBuffer();
       private final InMemValBytes vbytes = new InMemValBytes();
       private final int end;

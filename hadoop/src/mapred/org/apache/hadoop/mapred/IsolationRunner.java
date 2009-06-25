@@ -20,6 +20,7 @@ package org.apache.hadoop.mapred;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -89,6 +90,21 @@ public class IsolationRunner {
                                                         int fromEventId, int maxLocs) throws IOException {
       return TaskCompletionEvent.EMPTY_ARRAY;
     }
+
+	@Override
+	public ReduceScheduleEvent[] getReduceEvents(JobID jobId)
+			throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void reduceScheduleEvent(ReduceScheduleEvent reduce)
+			throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
   }
   
   private static ClassLoader makeClassLoader(JobConf conf, 
@@ -180,11 +196,11 @@ public class IsolationRunner {
       BytesWritable split = new BytesWritable();
       split.readFields(splitFile);
       splitFile.close();
-      task = new MapTask(jobFilename.toString(), taskId, partition, splitClass, split);
+      task = new MapTask(jobFilename.toString(), taskId, partition, splitClass, split, false);
     } else {
       int numMaps = conf.getNumMapTasks();
       fillInMissingMapOutputs(local, taskId, numMaps, conf);
-      task = new ReduceTask(jobFilename.toString(), taskId, partition, numMaps);
+      task = new ReduceTask(jobFilename.toString(), taskId, partition, numMaps, false);
     }
     task.setConf(conf);
     task.run(conf, new FakeUmbilical());

@@ -19,6 +19,7 @@
 package org.apache.hadoop.mapred;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 
 import org.apache.hadoop.ipc.VersionedProtocol;
 
@@ -90,5 +91,9 @@ public interface TaskUmbilicalProtocol extends VersionedProtocol {
    */
   TaskCompletionEvent[] getMapCompletionEvents(JobID jobId, 
                                                int fromIndex, int maxLocs) throws IOException;
+  
 
+  ReduceScheduleEvent[] getReduceEvents(JobID jobId) throws IOException;
+  
+  void reduceScheduleEvent(ReduceScheduleEvent reduce) throws IOException;
 }
