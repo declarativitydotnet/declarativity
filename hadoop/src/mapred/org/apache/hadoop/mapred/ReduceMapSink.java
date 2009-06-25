@@ -4,6 +4,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -69,8 +70,12 @@ public class ReduceMapSink {
 	}
 	
 	public String getAddress() {
-		return this.server.socket().getInetAddress().getCanonicalHostName() + 
-		       ":" + this.server.socket().getLocalPort();
+		try {
+			return InetAddress.getLocalHost().getCanonicalHostName() +
+			       ":" + this.server.socket().getLocalPort();
+		} catch (UnknownHostException e) {
+			return "localhost:" + this.server.socket().getLocalPort();
+		}
 	}
 	
 	public boolean fetchOutputs() throws IOException {
