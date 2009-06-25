@@ -501,7 +501,7 @@ implements MapOutputCollector<K, V>, IndexedSortable {
 	}
 	
 	private void closePipes() throws IOException {
-		if (pipes == null) {
+		if (pipes != null) {
 			for (Writer pipe : pipes) {
 				pipe.close();
 			}
