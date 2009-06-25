@@ -41,7 +41,7 @@ public final class Function {
 
 	public static TaskTrackerAction 
 	              launchMap(JobClient.RawSplit split, String jobFile,
-			                TaskAttemptID attemptId, int partition) {
+			                TaskAttemptID attemptId, int partition, boolean pipeline) {
 		try {
 			BytesWritable bw = split.getBytes();
 			if (bw == null) {
@@ -50,7 +50,7 @@ public final class Function {
 			else if (!attemptId.isMap()) {
 				throw new RuntimeException("Task " + attemptId + " is not a map task!");
 			}
-			MapTask task = new MapTask(jobFile, attemptId, partition, split.getClassName(), bw);
+			MapTask task = new MapTask(jobFile, attemptId, partition, split.getClassName(), bw, pipeline);
 			return new LaunchTaskAction(task);
 		} catch (IOException e) {
 			return null;
@@ -59,11 +59,11 @@ public final class Function {
 
 	public static TaskTrackerAction 
 	              launchReduce(String jobFile, TaskAttemptID attemptId,
-			                   int partition, int numMaps) {
+			                   int partition, int numMaps, boolean pipeline) {
 		if (attemptId.isMap()) {
 			throw new RuntimeException("Task " + attemptId + " is a map not a reduce!");
 		}
-		return new LaunchTaskAction(new ReduceTask(jobFile, attemptId,  partition, numMaps));
+		return new LaunchTaskAction(new ReduceTask(jobFile, attemptId,  partition, numMaps, pipeline));
 	}
 	
 	public static ValueList<String> getLocations(JobClient.RawSplit split) {

@@ -91,6 +91,7 @@ public class ReduceTask extends Task {
   
   private static final Log LOG = LogFactory.getLog(ReduceTask.class.getName());
   private int numMaps;
+  private boolean pipeline;
   private ReduceCopier reduceCopier;
 
   private CompressionCodec codec;
@@ -143,9 +144,10 @@ public class ReduceTask extends Task {
   }
 
   public ReduceTask(String jobFile, TaskAttemptID taskId,
-                    int partition, int numMaps) {
+                    int partition, int numMaps, boolean pipeline) {
     super(jobFile, taskId, partition);
     this.numMaps = numMaps;
+    this.pipeline = pipeline;
   }
   
   private CompressionCodec initCodec() {
@@ -194,6 +196,7 @@ public class ReduceTask extends Task {
     super.write(out);
 
     out.writeInt(numMaps);                        // write the number of maps
+    out.writeBoolean(pipeline);
   }
 
   @Override
@@ -201,6 +204,7 @@ public class ReduceTask extends Task {
     super.readFields(in);
 
     numMaps = in.readInt();
+    pipeline = in.readBoolean();
   }
   
   // Get the input files for the reducer.
@@ -243,13 +247,69 @@ public class ReduceTask extends Task {
       reporter.progress();
     }
   }
+  
+  private void runPipeline(JobConf job, final TaskUmbilicalProtocol umbilical) throws IOException {
+	  Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
+
+	  // start thread that will handle communication with parent
+	  startCommunicationThread(umbilical);
+
+	  ReduceMapSink sink = new ReduceMapSink(job);
+	  ReduceScheduleEvent rse = new ReduceScheduleEvent(getTaskID().getTaskID(), getPartition(), sink.getAddress());
+	  umbilical.reduceScheduleEvent(rse);
+	  if (!sink.fetchOutputs()) {
+		  throw new IOException(getTaskID() + "The reduce pipeline failed");
+	  }
+
+	  copyPhase.complete();                         // copy is already complete
+
+	  final Reporter reporter = getReporter(umbilical);
+
+	  setPhase(TaskStatus.Phase.REDUCE); 
+
+	  // make output collector
+	  String finalName = getOutputName(getPartition());
+
+	  FileSystem fs = FileSystem.get(job);
+
+	  final RecordWriter out = 
+		  job.getOutputFormat().getRecordWriter(fs, job, finalName, reporter);  
+
+	  OutputCollector collector = new OutputCollector() {
+		  @SuppressWarnings("unchecked")
+		  public void collect(Object key, Object value)
+		  throws IOException {
+			  out.write(key, value);
+			  reduceOutputCounter.increment(1);
+			  // indicate that progress update needs to be sent
+			  reporter.progress();
+		  }
+	  };
+
+	  // apply reduce function
+	  for (ReduceRecordMap.Record record : sink.records()) {
+		  reduceInputKeyCounter.increment(1);
+		  reducer.reduce(record.key(), record.values(), collector, reporter);
+	  }
+
+	  //Clean up: repeated in catch block below
+	  reducer.close();
+	  out.close(reporter);
+	  
+	  
+	  done(umbilical);
+
+  }
 
   @Override
   @SuppressWarnings("unchecked")
   public void run(JobConf job, final TaskUmbilicalProtocol umbilical)
     throws IOException {
-    Reducer reducer = (Reducer)ReflectionUtils.newInstance(
-                                                           job.getReducerClass(), job);
+	  if (pipeline) {
+		  runPipeline(job, umbilical);
+		  return;
+	  }
+    Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 
     // start thread that will handle communication with parent
     startCommunicationThread(umbilical);
@@ -261,11 +321,12 @@ public class ReduceTask extends Task {
 
     boolean isLocal = true;
     if (!job.get("mapred.job.tracker", "local").equals("local")) {
-      reduceCopier = new ReduceCopier(umbilical, job);
-      if (!reduceCopier.fetchOutputs()) {
-        throw new IOException(getTaskID() + "The reduce copier failed");
-      }
-      isLocal = false;
+
+    		reduceCopier = new ReduceCopier(umbilical, job);
+    		if (!reduceCopier.fetchOutputs()) {
+    			throw new IOException(getTaskID() + "The reduce copier failed");
+    		}
+    	isLocal = false;
     }
     copyPhase.complete();                         // copy is already complete
     

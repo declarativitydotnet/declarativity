@@ -23,7 +23,6 @@ import org.apache.hadoop.fs.*;
 import org.apache.hadoop.util.Shell.ShellCommandExecutor;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.filecache.*;
-import org.apache.hadoop.mapred.TaskTrackerImpl.TaskTrackerMetrics;
 import org.apache.hadoop.metrics.Updater;
 import org.apache.hadoop.util.*;
 
@@ -475,8 +474,6 @@ public abstract class TaskRunner extends Thread {
       if (!killed && exit_code != 0) {
         if (exit_code == 65) {
           Updater u = tracker.getTaskTrackerMetrics();
-          if (u instanceof TaskTrackerMetrics) 
-        	  ((TaskTrackerMetrics)u).taskFailedPing();
         }
         throw new IOException("Task process exit with nonzero status of " +
                               exit_code + ".");

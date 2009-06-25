@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
@@ -38,6 +39,7 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.MRConstants;
 import org.apache.hadoop.mapred.MapTask;
+import org.apache.hadoop.mapred.ReduceScheduleEvent;
 import org.apache.hadoop.mapred.ReduceTask;
 import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskAttemptID;
@@ -53,6 +55,7 @@ import org.apache.hadoop.mapred.declarative.Constants.JobState;
 import org.apache.hadoop.mapred.declarative.Constants.TaskState;
 import org.apache.hadoop.mapred.declarative.table.JobCompletionTable;
 import org.apache.hadoop.mapred.declarative.table.MapCompletionTable;
+import org.apache.hadoop.mapred.declarative.table.ReduceScheduleTable;
 import org.apache.hadoop.mapred.declarative.table.TaskAttemptTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerActionTable;
 import org.apache.hadoop.mapred.declarative.table.TaskTrackerErrorTable;
@@ -77,6 +80,8 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 	
 	private Map<JobID, Set<TaskID>> mapCompletions;
 	
+	private Map<JobID, TreeSet<ReduceScheduleEvent>> reduceSchedules;
+	
 	private TaskAttemptTable attemptTable;
 	
 	public TaskTrackerImpl(JobConf conf) throws IOException {
@@ -84,6 +89,7 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		this.tasks = new HashMap<TaskAttemptID, TaskRunner>();
 		this.mapCompletionEvents = new HashMap<JobID, ArrayList<TaskCompletionEvent>>();
 		this.mapCompletions = new HashMap<JobID, Set<TaskID>>();
+		this.reduceSchedules = new HashMap<JobID, TreeSet<ReduceScheduleEvent>>();
 		FileSystem fs  = FileSystem.get(conf);
 		this.systemDir = new Path(conf.get("mapred.system.dir", "/tmp/hadoop/mapred/system"));
 		this.systemDir = fs.makeQualified(this.systemDir);
@@ -115,8 +121,10 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		this.jollib.catalog().register(new TaskTrackerErrorTable( (jol.core.Runtime)jollib));
 		this.jollib.catalog().register(new TaskTrackerActionTable((jol.core.Runtime)jollib));
 		
-		Table jobCompletion = new JobCompletionTable();
-		Table mapCompletion = new MapCompletionTable((jol.core.Runtime)jollib);
+		Table jobCompletion  = new JobCompletionTable();
+		Table mapCompletion  = new MapCompletionTable((jol.core.Runtime)jollib);
+		Table reduceSchedule = new ReduceScheduleTable((jol.core.Runtime)jollib);
+		this.jollib.catalog().register(reduceSchedule);
 		this.jollib.catalog().register(mapCompletion);
 		this.jollib.catalog().register(jobCompletion);
 		
@@ -173,6 +181,24 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 							mapCompletionEvents.get(jobid).add(event);
 							mapCompletions.get(jobid).add(id.getTaskID());
 						}
+					}
+				}
+			}
+		});
+		
+		reduceSchedule.register(new Callback() {
+			public void deletion(TupleSet tuples) { }
+			public void insertion(TupleSet tuples) {
+				synchronized (reduceSchedules) {
+					for (Tuple t : tuples) {
+						TaskID   taskid    = (TaskID)  t.value(ReduceScheduleTable.Field.TASKID.ordinal());
+						Integer  partition = (Integer) t.value(ReduceScheduleTable.Field.PARTITION.ordinal());
+						String   address   = (String)  t.value(ReduceScheduleTable.Field.ADDRESS.ordinal());
+						
+						if (!reduceSchedules.containsKey(taskid.getJobID())) {
+							reduceSchedules.put(taskid.getJobID(), new TreeSet<ReduceScheduleEvent>());
+						}
+						reduceSchedules.get(taskid.getJobID()).add(new ReduceScheduleEvent(taskid, partition, address));
 					}
 				}
 			}
@@ -428,6 +454,28 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	@Override
+	public ReduceScheduleEvent[] getReduceEvents(JobID jobId) throws IOException {
+		synchronized(reduceSchedules) {
+			if (reduceSchedules.containsKey(jobId)) {
+				TreeSet<ReduceScheduleEvent> events = reduceSchedules.get(jobId);
+				return events.toArray(new ReduceScheduleEvent[events.size()]);
+			}
+		}
+		return null;
+	}
+	
+	@Override
+	public void reduceScheduleEvent(ReduceScheduleEvent event) throws IOException {
+		TupleSet ts = new BasicTupleSet();
+		ts.add(new Tuple(null, event.getTaskID(), event.getPartition(), event.getAddress()));
+		try {
+			this.jollib.schedule("hadoop", ReduceScheduleTable.TABLENAME, ts, null);
+		} catch (JolRuntimeException e) {
+			throw new IOException(e);
+		}
+	}
 
 	@Override
 	public TaskCompletionEvent[] getMapCompletionEvents(JobID jobId, int fromIndex, int maxLocs) throws IOException {
@@ -529,7 +577,5 @@ public class TaskTrackerImpl extends TaskTracker implements Runnable {
 			System.exit(-1);
 		}
 	}
-
-
 
 }
