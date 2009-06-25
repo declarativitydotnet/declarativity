@@ -133,29 +133,18 @@ mapCompletion(JobId, AttemptId, State, FileLocation) :-
     };
  
 /**********************************************************************/
-/*
-timer(utilityTimer, physical, 10000, infinity, 0);
-define(trackerUtility, keys(0), {String, String, float, float});
 
-watch(trackerUtility, a);
+define(reduceScheduleEvent, {String, TaskID, Integer, String});
 
-trackerUtility(TaskTracker, JobTracker, 0f, 0f) :-
-    utilityTimer(), configuration(TaskTracker), notin trackerUtility(TaskTracker),
-    jobTracker(TaskTracker, JobTracker, JobTrackerState);
+watch(reduceScheduleEvent, a);
 
-trackerUtility(TaskTracker, JobTracker, MapUtility, ReduceUtility) :-
-    utilityTimer(), trackerUtility(TaskTracker, JobTracker, PMU, PRU),
-    configuration(TaskTracker, _, _, MaxMaps, MaxReduces, _),
-    trackerWorkload(TaskTracker, Maps, Reduces),
-    jobTracker(TaskTracker, JobTracker, _)
-    {
-        MapUtility    := 0.25 * PMU + 0.75 * (Maps.floatValue() / MaxMaps.floatValue());
-        ReduceUtility := 0.25 * PRU + 0.75 * (Reduces.floatValue() / MaxReduces.floatValue());
-    };
+reduceScheduleEvent(TaskTracker, TaskId, Partition, Address) :-
+	reduceSchedule(_, TaskId, Partition, Address),
+    configuration(TaskTracker);
 
-trackerUtility(TaskTracker, @JobTracker, MU, RU) :-
-    trackerUtility(@TaskTracker, JobTracker, MU, RU);
-*/
+reduceScheduleEvent(@JobTracker, TaskId, Partition, Address) :-
+	reduceScheduleEvent(@TaskTracker, TaskId, Partition, Address),
+    jobTracker(@TaskTracker, JobTracker, JobTrackerState); 
 
 /******************* Update State @JobTracker *************************/
 
