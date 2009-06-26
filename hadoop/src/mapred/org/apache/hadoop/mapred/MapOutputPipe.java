@@ -489,7 +489,10 @@ implements MapOutputCollector<K, V>, IndexedSortable {
 		if (pipes == null) {
 			ReduceScheduleEvent[] reduceLocations = umbilical.getReduceEvents(task.getJobID());
 			if (reduceLocations == null) return;
-			else if (reduceLocations.length != partitions) return;
+			else if (reduceLocations.length != partitions) {
+				LOG.info("Do not have all reduce schedule events!");
+				return;
+			}
 			
 			pipes = new Writer[partitions];
 			for (ReduceScheduleEvent reduce : reduceLocations) {

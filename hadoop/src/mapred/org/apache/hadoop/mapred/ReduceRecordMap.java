@@ -1,5 +1,6 @@
 package org.apache.hadoop.mapred;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,9 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.util.ReflectionUtils;
 
 public class ReduceRecordMap implements Iterable<ReduceRecordMap.Record> {
-	public class Record {
+	public static class Record implements OutputCollector {
 		private RawComparator comparator;
 		
 		private Object key;
@@ -45,21 +47,43 @@ public class ReduceRecordMap implements Iterable<ReduceRecordMap.Record> {
 		public Iterator values() {
 			return this.values.iterator();
 		}
+
+		@Override
+		public void collect(Object key, Object value) throws IOException {
+			this.key = key;
+			append(value);
+		}
 	}
+	
+	private JobConf job;
 	
 	private RawComparator keyComparator;
 	
 	private HashMap<Record, Record> records;
 	
-	public ReduceRecordMap(RawComparator keyComparator) {
+	private final Reducer combiner;
+
+	
+	public ReduceRecordMap(JobConf job, RawComparator keyComparator) {
+		this.job = job;
 		this.keyComparator = keyComparator;
 		this.records = new HashMap<Record, Record>();
+		
+		Class<? extends Reducer> combinerClass = job.getCombinerClass();
+		if (combinerClass != null) {
+			combiner = (Reducer)ReflectionUtils.newInstance(combinerClass, job);
+		} else this.combiner = null;
 	}
 	
 	public void add(Object key, Object value) {
 		Record rec = new Record(this.keyComparator, key);
 		if (this.records.containsKey(rec)) {
-			this.records.get(rec).append(value);
+			Record record = this.records.get(rec);
+			record.append(value);
+			if (combiner != null) {
+				Record combined = combine(record);
+				record.values = combined.values;
+			}
 		}
 		else {
 			rec.append(value);
@@ -69,5 +93,16 @@ public class ReduceRecordMap implements Iterable<ReduceRecordMap.Record> {
 	
 	public Iterator<Record> iterator() {
 		return this.records.values().iterator();
+	}
+	
+	
+	private Record combine(Record record) {
+		Record combinedRecord = new Record(record.comparator, record.key);
+		try {
+			combiner.reduce(record.key, record.values(), combinedRecord, null);
+			return combinedRecord;
+		} catch (IOException e) {
+			return record;
+		}
 	}
 }
