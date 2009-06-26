@@ -21,6 +21,7 @@ package org.apache.hadoop.mapred;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.NumberFormat;
 
 /**
@@ -45,8 +46,10 @@ import java.text.NumberFormat;
  * @see JobID
  * @see TaskAttemptID
  */
-public class TaskID extends ID {
-  private static final String TASK = "task";
+public class TaskID extends ID implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+private static final String TASK = "task";
   private static char UNDERSCORE = '_';  
   private static NumberFormat idFormat = NumberFormat.getInstance();
   static {
@@ -140,6 +143,15 @@ public class TaskID extends ID {
   @Override
   public int hashCode() {
     return toStringWOPrefix().toString().hashCode();
+  }
+  
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+	  write(out);
+  }
+  
+  private void readObject(java.io.ObjectInputStream in) 
+  throws IOException, ClassNotFoundException {
+	  readFields(in);
   }
   
   @Override
