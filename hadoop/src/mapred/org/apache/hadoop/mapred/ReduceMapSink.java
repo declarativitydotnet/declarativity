@@ -11,6 +11,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -49,12 +50,12 @@ public class ReduceMapSink {
 	    /** How many mappers? */
 	    this.numMapTasks = conf.getNumMapTasks();
 		this.executor = Executors.newFixedThreadPool(this.numMapTasks);
-		this.connections = new LinkedList<Connection<Object, Object>>();
+		this.connections = Collections.synchronizedList(new LinkedList<Connection<Object, Object>>());
 
 	    
 	    /** How do we compare the Key portion of each record. */
 	    RawComparator comparator = conf.getOutputKeyComparator();
-	    this.records = new ReduceRecordMap(comparator);
+	    this.records = new ReduceRecordMap(conf, comparator);
 	    
 		/** The server socket and selector registration */
 		this.server = ServerSocketChannel.open();
@@ -92,14 +93,6 @@ public class ReduceMapSink {
 				synchronized (this) {
 					try { this.wait();
 					} catch(Exception e) {}
-				}
-				
-				Iterator<Connection<Object, Object>> iter = this.connections.iterator();
-				while (iter.hasNext()) {
-					Connection c = iter.next();
-					if (!c.channel.isOpen()) {
-						iter.remove();
-					}
 				}
 			}
 		} catch (IOException e) {
@@ -168,6 +161,7 @@ public class ReduceMapSink {
 				try {
 					this.channel.close();
 					synchronized(sink) {
+						sink.connections.remove(this);
 						sink.notify();
 					}
 				} catch (IOException e) {
