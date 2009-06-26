@@ -21,6 +21,7 @@ package org.apache.hadoop.mapred;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.NumberFormat;
 
 import org.apache.hadoop.io.Text;
@@ -44,8 +45,10 @@ import org.apache.hadoop.io.Text;
  * @see JobTracker#getNewJobId()
  * @see JobTracker#getStartTime()
  */
-public class JobID extends ID {
-  private static final String JOB = "job";
+public class JobID extends ID implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+private static final String JOB = "job";
   private String jtIdentifier;
   private static char UNDERSCORE = '_';
   
@@ -112,6 +115,15 @@ public class JobID extends ID {
   @Override
   public int hashCode() {
     return toStringWOPrefix().toString().hashCode();
+  }
+  
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+	  write(out);
+  }
+  
+  private void readObject(java.io.ObjectInputStream in) 
+  throws IOException, ClassNotFoundException {
+	  readFields(in);
   }
   
   @Override
