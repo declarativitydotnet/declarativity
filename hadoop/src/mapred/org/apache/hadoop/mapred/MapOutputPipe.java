@@ -489,7 +489,8 @@ implements MapOutputCollector<K, V>, IndexedSortable {
 		if (pipes == null) {
 			ReduceScheduleEvent[] reduceLocations = umbilical.getReduceEvents(task.getJobID());
 			if (reduceLocations == null) return;
-			else if (reduceLocations.length != partitions) throw new IOException("Reduce locations != # partitions");
+			else if (reduceLocations.length != partitions) return;
+			
 			pipes = new Writer[partitions];
 			for (ReduceScheduleEvent reduce : reduceLocations) {
 				Socket socket = new Socket();
@@ -510,7 +511,8 @@ implements MapOutputCollector<K, V>, IndexedSortable {
 
 	private void flushBuffer() throws IOException {
 		openPipes();
-
+		if (pipes == null) return;
+		
 		//approximate the length of the output file to be the length of the
 		//buffer + header lengths for the partitions
 		long size = (bufend >= bufstart
