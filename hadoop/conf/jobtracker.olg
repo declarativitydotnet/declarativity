@@ -187,11 +187,8 @@ sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc) :-
     MapId.getJobID() == JobId;
 
 /************** SEND REDUCE SCHEDULE EVENTS TO MAPPERS ****************/
-define(reduceScheduleEvent, keys(1), {String, TaskID, Integer, String});
+watch(reduceSchedule, a);
 
-reduceSchedule(JobTracker, TaskId, Partition, Address) :-
-	reduceScheduleEvent(JobTracker, TaskId, Partition, Address);
-	
 public
 reduceSchedule(@TaskTracker, ReduceId, Partition, Address) :-
     hadoop::taskAttempt#insert(@JobTracker, TaskTracker, AttemptId, _, State, Phase, _, _, _),
