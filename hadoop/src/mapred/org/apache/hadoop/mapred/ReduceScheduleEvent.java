@@ -5,12 +5,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Comparator;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 
-public class ReduceScheduleEvent implements Writable, Comparator<ReduceScheduleEvent> {
+public class ReduceScheduleEvent implements Writable, Comparable<ReduceScheduleEvent> {
 
 	private TaskID taskid;
 
@@ -46,8 +45,8 @@ public class ReduceScheduleEvent implements Writable, Comparator<ReduceScheduleE
 	}
 	
 	@Override
-	public int compare(ReduceScheduleEvent o1, ReduceScheduleEvent o2) {
-		return o1.partition.compareTo(o2.partition);
+	public int compareTo(ReduceScheduleEvent o) {
+		return partition.compareTo(o.partition);
 	}
 
 	public TaskID getTaskID() {
@@ -86,5 +85,6 @@ public class ReduceScheduleEvent implements Writable, Comparator<ReduceScheduleE
 		this.partition = WritableUtils.readVInt(in);
 		this.address = WritableUtils.readString(in);
 	}
+
 
 }
