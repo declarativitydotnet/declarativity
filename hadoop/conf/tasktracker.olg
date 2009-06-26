@@ -133,17 +133,15 @@ mapCompletion(JobId, AttemptId, State, FileLocation) :-
     };
  
 /**********************************************************************/
+watch(jobTracker, a);
+watch(reduceSchedule, as);
 
-define(reduceScheduleEvent, {String, TaskID, Integer, String});
-
-watch(reduceScheduleEvent, a);
-
-reduceScheduleEvent(TaskTracker, TaskId, Partition, Address) :-
+reduceSchedule(TaskTracker, TaskId, Partition, Address) :-
 	reduceSchedule(_, TaskId, Partition, Address),
     configuration(TaskTracker);
 
-reduceScheduleEvent(@JobTracker, TaskId, Partition, Address) :-
-	reduceScheduleEvent(@TaskTracker, TaskId, Partition, Address),
+reduceSchedule(@JobTracker, TaskId, Partition, Address) :-
+	reduceSchedule(@TaskTracker, TaskId, Partition, Address),
     jobTracker(@TaskTracker, JobTracker, JobTrackerState); 
 
 /******************* Update State @JobTracker *************************/
@@ -174,6 +172,7 @@ taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLoca
         FinishTime   := Progress == 1.0 ? System.currentTimeMillis() : Runner.finishTime();
     };
 
+watch(taskAttempt, s);
 taskAttempt(@JobTracker, TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime) :-
     taskAttempt#insert(JobTracker, @TaskTracker, AttemptId, Progress, State, Phase, FileLocation, StartTime, FinishTime),
     taskRunner(@TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner); 
