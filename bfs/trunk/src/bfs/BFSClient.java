@@ -107,9 +107,10 @@ public class BFSClient {
                             break;
                         } else {
                         	String masterName =(String) t.value(2);
-                            String truncatedMasterName = masterName.substring(masterName.indexOf(':')+1);
-                        	int partition = Conf.getPartitionFromString(truncatedMasterName);
-                        	responseQueue.put(new Tuple(partition, success));
+                        	String sourceName =(String) t.value(0);
+                        	if (masterName.equals(sourceName)) {
+                        		responseQueue.put(success);
+                        	}
                         }
                     }
                 }
@@ -131,13 +132,8 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
         if (isDir) {
-        	boolean success = false;
-        	Set<Object> b = waitForBroadcastResponse(Conf.getFileOpTimeout(), requestId, req);
-	        unregisterCallback(responseTbl, responseCallback);
-        	for (Object bool : b) {
-        		success = success || ((Boolean) bool).booleanValue();
-        	}
-	        return success;
+        	Boolean success = (Boolean) waitForCollectiveResponse(Conf.getFileOpTimeout(), requestId);
+	        return success.booleanValue();
         } else {
 	        // Wait for the response
 	        int partition = pathName.hashCode() % Conf.getNumPartitions();
@@ -260,16 +256,18 @@ public class BFSClient {
                     if (tupRequestId.intValue() == requestId) {
                         Boolean success = (Boolean) t.value(3);
                         if (success.booleanValue() == false) {
-                        	// XXX: hack. We need a way to return an error back to the
-                        	// caller, so we insert a bogus tuple.
-                        	responseQueue.put(new Tuple(-1, null));
+                        	responseQueue.put(null);
                         } else {
+                        	String me = (String)t.value(0);
                         	String masterName = (String) t.value(2);
-                        	Object lsContent = t.value(4);
-                        	System.out.println("master: " + masterName + " : " + lsContent);
-                        	String truncatedMasterName = masterName.substring(masterName.indexOf(':')+1);
-                        	int partition = Conf.getPartitionFromString(truncatedMasterName);
-                        	responseQueue.put(new Tuple(partition, lsContent));
+                        	// the hack here is that we (in overlog) assemble the results
+                        	// and send a response() tuple to ourselves (Self==Master)
+                        	if (me.equals(masterName)) {
+                        		Set lsContent = (Set)t.value(4);
+                        		System.out.println("master: " + masterName + " : " + lsContent);
+                        		// it's going to be a set of sets.
+                        		responseQueue.put(lsContent);
+                        	}
                         }
                     }
                 }
@@ -287,16 +285,18 @@ public class BFSClient {
         	throw new RuntimeException(e);
         }
 
-        Set<BFSFileInfo> ret = new HashSet<BFSFileInfo>();
-    	Set<Object> lsResponses = waitForBroadcastResponse(Conf.getListingTimeout(), requestId, req);
-        unregisterCallback(responseTbl, responseCallback);
+    	Set lsResponses = (Set)waitForCollectiveResponse(Conf.getListingTimeout(), requestId);
+        
+    	Set<BFSFileInfo> bset = new HashSet<BFSFileInfo>();
+    	for (Object o : lsResponses) {
+    		bset.addAll((Set<BFSFileInfo>)o);
+    	}
+    	
+    	unregisterCallback(responseTbl, responseCallback);
         if (lsResponses == null) // Error
         	return null;
 
-    	for (Object o : lsResponses) {
-    		ret.addAll((Set<BFSFileInfo>) o);
-    	}
-        return Collections.unmodifiableSet(ret);
+        return Collections.unmodifiableSet(bset);
 	}
 
 	public synchronized BFSFileInfo getFileInfo(final String pathName) {
@@ -478,62 +478,21 @@ public class BFSClient {
 
         throw new RuntimeException("BFS (partition " + partition + ") request #" + requestId + " timed out.");
     }
-
-    private Set<Object> waitForBroadcastResponse(long timeout, int requestId, TupleSet req) throws RuntimeException {
-        Set<Object> ret = new HashSet<Object>();
-		Set<Integer> unseenPartitions = new HashSet<Integer>();
-		Set<Integer> seenPartitions = new HashSet<Integer>();
-		for (int i = 0; i < Conf.getNumPartitions(); i++) {
-			unseenPartitions.add(i);
-		}
-
-    	boolean done = false;
-		while (!done) {
-			long start = System.currentTimeMillis();
-			Tuple results[] = new Tuple[Conf.getNumPartitions()];
-			results[0] = (Tuple) this.responseQueue.get(timeout);
-			for (int i = 1 ; i < Conf.getNumPartitions(); i++) {
-				long now = System.currentTimeMillis();
-				if ((start + timeout) - now > 0) {
-					results[i] = (Tuple) this.responseQueue.get((start + timeout) - now);
-				} else {
-					done = true;
-					break;
-				}
-			}
-			for (int i = 0; i < Conf.getNumPartitions(); i++) {
-				if (results[i] != null) {
-					Integer partitionId = (Integer) results[i].value(0);
-					// If we got an error response from any master,
-					// return error to the caller
-					if (partitionId.intValue() == -1)
-						return null;
-					ret.add(results[i].value(1));
-					seenPartitions.add(partitionId);
-					unseenPartitions.remove(partitionId);
-				}
-			}
-
-			if (unseenPartitions.size() == 0)
-				return ret;
-
-			done = true;
-			for (int i : unseenPartitions) {
-				this.currentMaster[i]++;
-				if (this.currentMaster[i] == Conf.getNumMasters(i)) { done = true; break; }
-				updateMasterAddr(i);
-				try {
-					// HACK resubmit request
-					this.system.schedule("bfs", new TableName("bfs", "start_request"), req, null);
-				} catch (JolRuntimeException e) {
-					e.printStackTrace();
-					throw new RuntimeException(e);
-				}
-				done = false;
-			}
+    
+    private Object waitForCollectiveResponse(long timeout, int requestId) {
+    	int tries = 0;
+    	// one feels that even the timeout should be pushed down into overlog...
+    	// but it's easier to do here.
+    	while (tries++ < 10) {
+    		Object result = this.responseQueue.get(timeout);
+            if (result != null)
+                return result;
+            
+            System.out.println("mkdir collective timeout.  Retry?");
     	}
-    	throw new RuntimeException("BFS broadcast request #" + requestId + " timed out.  Missing responses from " + unseenPartitions + ", got responses from " + seenPartitions);
-    }
+
+        throw new RuntimeException("mkdir timed out.");
+    }    
 
     private void updateMasterAddr(int partition) {
         TupleSet master = new BasicTupleSet();

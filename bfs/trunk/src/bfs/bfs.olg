@@ -25,7 +25,14 @@ watch(start_request, ae);
 delete
 start_request(@Source, ReqId, ReqType, Args) :-
     start_request(@Source, ReqId, ReqType, Args),
-    response(@Source, ReqId, _, _, _);
+    response(@Source, ReqId, _, _, _),
+    ReqType != "CreateDir" && ReqType != "Ls";
+
+delete
+start_request(@Source, ReqId, ReqType, Args) :-
+    start_request(@Source, ReqId, ReqType, Args),
+    response(@Source, ReqId, Source, _, _),
+    ReqType == "CreateDir" || ReqType == "Ls";
 
 // This rule transfers "start_request" tuples from the client to the
 // appropriate master. To failover to a new master, the client detects
@@ -356,3 +363,30 @@ rm_request_pending(@Master, Id, FPath, Source) :-
 send_response(@Master, Id, Source, false, null) :-
     request(@Master, Id, Source, "Rm", FPath),
     notin bfs_global::fpath(@Master, FPath, _);
+
+// paa.  rethink the partion-broadcast-reponse barrier.
+// in this naive first pass, we make it blocking and un-live
+// in the face of failures. fix later!
+define(masters, keys(0), {String, Integer});
+define(bcast_responses, keys(0,1), {String, Integer, Boolean, Integer, Set});
+
+public
+masters(Source, count<Master>) :-
+    bfs_global::master_for_node(Source, Partition, Master);
+
+public
+bcast_responses(Source, Id, Status, count<Master>, set<Result>) :-
+    response(Source, Id, Master, Status, Result),
+    Source != Master,
+    start_request(Source, Id, Type, _),
+    ((Type == "CreateDir") || (Type == "Ls")); 
+
+// a bit of a hack: saves code though.  rewire "response" so Self==Master
+response(Source, Id, Source, true, Vals) :-
+    bcast_responses(Source, Id, true, Cnt, Vals),
+    masters(Source, Cnt);
+
+delete
+bcast_responses(Source, Id, Status, Cnt, Vals) :-
+    bcast_responses(Source, Id, Status, Cnt, Vals),
+    response(Source, Id, Source, _, _);
