@@ -26,7 +26,7 @@ public class PMetadataTest extends TestCommon {
 		Set<BFSFileInfo> ls = bfs.getDirListing("/foo");
 		System.out.println(ls);
 		safeAssert(ls.size() == 4);
-		
+		shutdown();
 	}
 
     public static void main(String[] args) throws Exception {
