@@ -20,7 +20,7 @@ watch(self, ae);
 // Node address, Request ID, Request type, Arg: populated by Java code
 // to initiate a new request.
 define(start_request, keys(0, 1), {String, Integer, String, String});
-watch(start_request, ae);
+//watch(start_request, ae);
 
 delete
 start_request(@Source, ReqId, ReqType, Args) :-
@@ -38,7 +38,7 @@ start_request(@Source, ReqId, ReqType, Args) :-
 // appropriate master. To failover to a new master, the client detects
 // a timeout, and then updates the "bfs_global::master_for_node" mapping table.
 define(request, {String, Integer, String, String, String});
-watch(request, ae);
+//watch(request, ae);
 public
 request(@Master, ReqId, Source, ReqType, Args) :-
     self(@Source),
@@ -67,7 +67,7 @@ request(@Master, ReqId, Source, "ChunkLocations", Args) :-
 // Client node, Request ID, Master node, Success, Result (if any). The
 // type of the result depends on the type of request.
 define(response, {String, Integer, String, Boolean, Object});
-watch(response, ae);
+//watch(response, ae);
 response(@Source, Id, Master, Status, Result) :-
     send_response#insert(@Master, Id, Source, Status, Result);
 
@@ -242,7 +242,7 @@ send_response(@Master, Id, Source, false, null) :-
     ParentIsDir == false;
 
 define(create_request_pending, keys(0, 1), {String, Integer, String, Integer, String, Boolean});
-watch(create_request_pending,a);
+//watch(create_request_pending,a);
 
 // Otherwise, pass the request through Paxos
 
@@ -385,6 +385,11 @@ bcast_responses(Source, Id, Status, count<Master>, set<Result>) :-
 response(Source, Id, Source, true, Vals) :-
     bcast_responses(Source, Id, true, Cnt, Vals),
     masters(Source, Cnt);
+
+response(Source, Id, Source, false, Vals) :-
+    bcast_responses(Source, Id, false, Cnt, Vals);
+
+
 
 delete
 bcast_responses(Source, Id, Status, Cnt, Vals) :-
