@@ -29,8 +29,8 @@ import org.apache.hadoop.io.WritableUtils;
  * This is used to track task completion events on 
  * job tracker. 
  */
-public class TaskCompletionEvent implements Writable{
-  static public enum Status {FAILED, KILLED, SUCCEEDED, OBSOLETE, TIPFAILED};
+public class TaskScheduleEvent implements Writable{
+  static public enum Status {RUNNING, FAILED, KILLED, SUCCEEDED, OBSOLETE, TIPFAILED};
     
   private int eventId; 
   private String taskTrackerHttp;
@@ -39,17 +39,17 @@ public class TaskCompletionEvent implements Writable{
   Status status; 
   boolean isMap = false;
   private int idWithinJob;
-  public static final TaskCompletionEvent[] EMPTY_ARRAY = 
-    new TaskCompletionEvent[0];
+  public static final TaskScheduleEvent[] EMPTY_ARRAY = 
+    new TaskScheduleEvent[0];
   
   /**
    * Default constructor for Writable.
    *
    */
-  public TaskCompletionEvent(){}
+  public TaskScheduleEvent(){}
   
   @Deprecated
-  public TaskCompletionEvent(int eventId, 
+  public TaskScheduleEvent(int eventId, 
                              String taskId,
                              int idWithinJob,
                              boolean isMap,
@@ -68,7 +68,7 @@ public class TaskCompletionEvent implements Writable{
    * @param status task's status 
    * @param taskTrackerHttp task tracker's host:port for http. 
    */
-  public TaskCompletionEvent(int eventId, 
+  public TaskScheduleEvent(int eventId, 
                              TaskAttemptID taskId,
                              int idWithinJob,
                              boolean isMap,

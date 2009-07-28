@@ -63,7 +63,7 @@ public final class Function {
 		if (attemptId.isMap()) {
 			throw new RuntimeException("Task " + attemptId + " is a map not a reduce!");
 		}
-		return new LaunchTaskAction(new ReduceTask(jobFile, attemptId,  partition, numMaps, pipeline));
+		return new LaunchTaskAction(new ReduceTask(jobFile, attemptId,  partition, numMaps));
 	}
 	
 	public static ValueList<String> getLocations(JobClient.RawSplit split) {

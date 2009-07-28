@@ -45,7 +45,7 @@ import org.apache.hadoop.io.serializer.Serializer;
  * There is a <code>Writer</code> to write out map-outputs in this format and 
  * a <code>Reader</code> to read files of this format.
  */
-class IFile {
+public class IFile {
 
   private static final int EOF_MARKER = -1;
   

@@ -487,7 +487,7 @@ implements MapOutputCollector<K, V>, IndexedSortable {
 	
 	private void openPipes() throws IOException {
 		if (pipes == null) {
-			ReduceScheduleEvent[] reduceLocations = umbilical.getReduceEvents(task.getJobID());
+			ReduceScheduleEvent[] reduceLocations = null; // umbilical.getReduceEvents(task.getJobID());
 			if (reduceLocations == null) return;
 			else if (reduceLocations.length != partitions) {
 				LOG.info("Do not have all reduce schedule events!");

@@ -101,7 +101,7 @@ public interface InterTrackerProtocol extends VersionedProtocol {
    * @return array of task completion events. 
    * @throws IOException
    */
-  TaskCompletionEvent[] getTaskCompletionEvents(JobID jobid, int fromEventId
+  TaskScheduleEvent[] getTaskCompletionEvents(JobID jobid, int fromEventId
       , int maxEvents) throws IOException;
 
   /**

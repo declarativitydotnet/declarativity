@@ -8,6 +8,8 @@ import java.net.InetSocketAddress;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.bufmanager.BufferManager;
+import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.fs.FSError;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalDirAllocator;
@@ -39,6 +41,8 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 	protected static final String CACHEDIR = "archive";
 	protected static final String JOBCACHE = "jobcache";
 
+	protected BufferManager bufManager = null;
+	
 	protected Server taskReportServer = null;
 	protected Server bfsServer = null;
 	protected StatusHttpServer server = null;
@@ -73,6 +77,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 	                                "tasktracker.http.bindAddress",
 	                                "tasktracker.http.port",
 	                                "mapred.task.tracker.http.address");
+	    /*
 	    InetSocketAddress infoSocAddr = NetUtils.createSocketAddr(infoAddr);
 	    String httpBindAddress = infoSocAddr.getHostName();
 	    int httpPort = infoSocAddr.getPort();
@@ -90,6 +95,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 	    server.addServlet("taskLog", "/tasklog", TaskLogServlet.class);
 	    server.start();
 	    this.httpPort = server.getPort();
+	    */
 	}
 
 	public abstract Updater getTaskTrackerMetrics();
@@ -127,7 +133,10 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 		this.taskReportServer =
 			RPC.getServer(this, bindAddress, tmpPort, max, false, this.fConf);
 		this.taskReportServer.start();
-
+		
+		this.bufManager = new BufferManager(this.fConf);
+		this.bufManager.start();
+		
 		// get the assigned address
 		this.taskReportAddress = taskReportServer.getListenerAddress();
 		this.fConf.set("mapred.task.tracker.report.address",
@@ -211,6 +220,12 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 						TaskUmbilicalProtocol.versionID,
 						address,
 						defaultConf);
+			
+			BufferUmbilicalProtocol bufferUmbilical =
+				(BufferUmbilicalProtocol)RPC.getProxy(BufferUmbilicalProtocol.class,
+						BufferUmbilicalProtocol.versionID,
+						BufferManager.getControlAddress(defaultConf),
+						defaultConf);
 
 			Task task = umbilical.getTask(taskid);
 			JobConf job = new JobConf(task.getJobFile());
@@ -225,7 +240,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 			try {
 				// use job-specified working directory
 				FileSystem.get(job).setWorkingDirectory(job.getWorkingDirectory());
-				task.run(job, umbilical);             // run the task
+				task.run(job, umbilical, bufferUmbilical);             // run the task
 			} catch (FSError e) {
 				e.printStackTrace();
 				LOG.fatal("FSError from child", e);

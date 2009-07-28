@@ -76,7 +76,7 @@ public final class TaskAttemptID extends ID implements Serializable {
     this(new TaskID(jtIdentifier, jobId, isMap, taskId), id);
   }
   
-  private TaskAttemptID() { }
+  public TaskAttemptID() { }
   
   /** Returns the {@link JobID} object that this task attempt belongs to */
   public JobID getJobID() {

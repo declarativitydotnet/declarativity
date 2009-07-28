@@ -37,7 +37,6 @@ import jol.types.table.TableName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.dfs.DistributedFileSystem;
@@ -255,7 +254,7 @@ public abstract class Task implements Writable, Serializable, Configurable {
    * child process and is what invokes user-supplied map, reduce, etc. methods.
    * @param umbilical for progress reports
    */
-  public abstract void run(JobConf job, TaskUmbilicalProtocol umbilical, BufferUmbilicalProtocol buffer)
+  public abstract void run(JobConf job, TaskUmbilicalProtocol umbilical)
     throws IOException;
 
 
