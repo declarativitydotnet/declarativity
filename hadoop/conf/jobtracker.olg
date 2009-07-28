@@ -37,6 +37,8 @@ taskTrackerAction(@TaskTracker, JobTracker, ActionType, Action) :-
 define(jobTracker, {String, String, Constants.TrackerState});
 jobTracker(@TaskTracker, JobTracker, Constants.TrackerState.RUNNING) :-
 	taskTracker(@JobTracker, TaskTracker, _, _, Constants.TrackerState.INITIAL);
+	
+watch(taskTracker, i);
 
 /*************** JobTracker State *********************/
 define(activeJobs, keys(1), {Integer, String});
@@ -174,57 +176,42 @@ hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, 
     hadoop::taskAttempt(JobTracker, TaskTracker, AttemptId, Progress, State, Phase, TaskFileLoc, Start, Finish),
     AttemptId.getJobID() == JobId;
 
-delete 
-mapCompletion(JT, MapId, TT) :-
-    cleanup(JobId),
-    mapCompletion(JT, MapId, TT),
-    MapId.getJobID() == JobId;
-
-delete
-sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc) :-
-    cleanup(JobId),
-    sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc),
-    MapId.getJobID() == JobId;
-
-/************** SEND REDUCE SCHEDULE EVENTS TO MAPPERS ****************/
-watch(reduceSchedule, a);
-
-public
-reduceSchedule(@TaskTracker, ReduceId, Partition, Address) :-
-    hadoop::taskAttempt#insert(@JobTracker, TaskTracker, AttemptId, _, State, Phase, _, _, _),
-    reduceSchedule(@JobTracker, ReduceId, Partition, Address),
-    AttemptId.isMap(), Phase == Constants.TaskPhase.STARTING;
-    
-public
-reduceSchedule(@TaskTracker, ReduceId, Partition, Address) :-
-    hadoop::taskAttempt(@JobTracker, TaskTracker, AttemptId, _, State, Phase, _, _, _),
-    reduceSchedule#insert(@JobTracker, ReduceId, Partition, Address),
-    Phase == Constants.TaskPhase.MAP;
-
-
 /************** SEND MAP TASK ATTEMPT STATUS TO REDUCER TASKTRACKERS ****************/
 /* timer(completionCheck, physical, 5000, infinity, 0); */
-define(mapCompletion, keys(1), {String, TaskAttemptID, String});
-define(sendCompletion, keys(1,2), {String, String, TaskAttemptID, String});
-define(feedReduce, keys(1,2), {String, String, TaskAttemptID});
-
-feedReduce(JobTracker, TaskTracker, ReduceId) :-
-   hadoop::taskAttempt#insert(JobTracker, TaskTracker, ReduceId);
+define(mapSchedule,    keys(3),   {String, String, JobID, TaskAttemptID});
+define(reduceSchedule, keys(3),   {String, String, JobID, TaskAttemptID});
+define(sendCompletion, keys(1,2), {String, String, TaskAttemptID});
 
 public
-mapCompletion(JobTracker, MapId, TaskFileLoc) :-
-    hadoop::taskAttempt#insert(JobTracker, _, MapId, _, State, Phase, TaskFileLoc, _, _),
-    State == Constants.TaskState.SUCCEEDED, Phase == Constants.TaskPhase.MAP;
+reduceSchedule(JobTracker, TaskTracker, TaskId.getJobID(), TaskId) :-
+   hadoop::taskAttempt#insert(JobTracker, TaskTracker, TaskId, _, State),
+   State != Constants.TaskState.UNASSIGNED,
+   !TaskId.isMap();
 
 public
-sendCompletion(JobTracker, TaskTracker, MapId, TaskFileLoc) :-
-   mapCompletion(JobTracker, MapId, TaskFileLoc),
-   feedReduce(JobTracker, TaskTracker, ReduceId),
-   !ReduceId.isMap(), MapId.getJobID() == ReduceId.getJobID();
+mapSchedule(JobTracker, TaskTracker, TaskId.getJobID(), TaskId) :-
+    hadoop::taskAttempt#insert(JobTracker, TaskTracker, TaskId, _, State),
+    State != Constants.TaskState.UNASSIGNED,
+    TaskId.isMap();
 
-/* Tell reducers where the succeeded maps reside */
-hadoop::taskAttempt(@TaskTracker, JobTracker, MapId, 1.0f, Constants.TaskState.SUCCEEDED, Constants.TaskPhase.MAP, TaskFileLoc, 0, 0) :-
-        sendCompletion#insert(@JobTracker, TaskTracker, MapId, TaskFileLoc);
+sendCompletion(JobTracker, ReduceTracker, MapId) :-
+   mapSchedule(JobTracker, MapTracker, JobId, MapId),
+   reduceSchedule(JobTracker, ReduceTracker, JobId, ReduceId),
+   MapTracker != ReduceTracker;
+
+/* Tell reducers where the maps reside */
+hadoop::taskAttempt(@ReduceTracker, JobTracker, MapId, Progress, State, Phase, TaskFileLoc, 0, 0) :-
+        sendCompletion#insert(@JobTracker, ReduceTracker, MapId),
+    	hadoop::taskAttempt(@JobTracker, _, MapId, Progress, State, Phase, TaskFileLoc, _, _);
+    	
+/* Cleanup */
+delete
+reduceSchedule(JT, TT, JID, TID) :-
+	cleanup(JID), reduceSchedule(JT, TT, JID, TID);
+	
+delete
+mapSchedule(JT, TT, JID, TID) :-
+	cleanup(JID), mapSchedule(JT, TT, JID, TID);
 
 /************** GENERATE TASK UPDATES BASED ON UPDATES TO TASK ATTEMPT STATE ********/
 

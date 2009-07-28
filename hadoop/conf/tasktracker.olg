@@ -118,32 +118,12 @@ taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, TaskState.KILLED,
 /**********************************************************************/
 
 watch(statusUpdate, a);
-watch(mapCompletion, a);
 
 taskRunner(TaskTracker, JobTracker, AttemptId, Type, Progress, State, Phase, Runner) :-
     statusUpdate(AttemptId, Progress, State, Phase, Diag, Cursor), 
     Progress < 0.9f || Progress == 1.0f,
     taskRunner(TaskTracker, JobTracker, AttemptId, Type, _, _, _, Runner);
     
-mapCompletion(JobId, AttemptId, State, FileLocation) :-
-    taskAttempt(_, _, AttemptId, _, State, _, FileLocation, _, _),
-    State == TaskState.SUCCEEDED, AttemptId.isMap()
-    {
-        JobId := AttemptId.getJobID();
-    };
- 
-/**********************************************************************/
-watch(jobTracker, a);
-watch(reduceSchedule, as);
-
-reduceSchedule(TaskTracker, TaskId, Partition, Address) :-
-	reduceSchedule(_, TaskId, Partition, Address),
-    configuration(TaskTracker);
-
-reduceSchedule(@JobTracker, TaskId, Partition, Address) :-
-	reduceSchedule(@TaskTracker, TaskId, Partition, Address),
-    jobTracker(@TaskTracker, JobTracker, JobTrackerState); 
-
 /******************* Update State @JobTracker *************************/
 
 timer(heartbeatInterval, physical, 10000, infinity, 0);
@@ -152,6 +132,9 @@ define(heartbeat, {String, String, Integer, Integer, Integer});
 heartbeat(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces) :-
     heartbeatInterval(), configuration(TaskTracker, Host, HttpPort, MaxMaps, MaxReduces, TT);
    
+watch(taskTracker, s);
+watch(jobTracker, i);
+
 /* Send an update every so often, regardless of current running state. */
 taskTracker(@JobTracker, TaskTracker, Host, HttpPort, JobTrackerState, Failures, 
                     Maps, Reduces, MaxMaps, MaxReduces, Timestamp) :-
