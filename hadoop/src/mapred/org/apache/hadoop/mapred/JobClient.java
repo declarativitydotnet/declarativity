@@ -966,7 +966,7 @@ public class JobClient extends Configured implements MRConstants, Tool  {
     return jobSubmitClient.jobsToComplete();
   }
 
-  private static void downloadProfile(TaskCompletionEvent e
+  private static void downloadProfile(TaskScheduleEvent e
                                       ) throws IOException  {
     URLConnection connection = 
       new URL(getTaskLogURL(e.getTaskAttemptId(), e.getTaskTrackerHttp()) + 

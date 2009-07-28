@@ -89,11 +89,6 @@ public interface TaskUmbilicalProtocol extends VersionedProtocol {
    * @param maxLocs the max number of locations to fetch
    * @return an array of TaskCompletionEvent
    */
-  TaskCompletionEvent[] getMapCompletionEvents(JobID jobId, 
-                                               int fromIndex, int maxLocs) throws IOException;
-  
+  TaskScheduleEvent[] getMapScheduleEvents(JobID jobId, int fromIndex, int maxLocs) throws IOException;
 
-  ReduceScheduleEvent[] getReduceEvents(JobID jobId) throws IOException;
-  
-  void reduceScheduleEvent(ReduceScheduleEvent reduce) throws IOException;
 }

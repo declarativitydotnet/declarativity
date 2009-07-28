@@ -28,7 +28,7 @@ import org.apache.hadoop.fs.Path;
 /**
  * Manipulate the working area for the transient store for maps and reduces.
  */ 
-class MapOutputFile {
+public class MapOutputFile {
 
   private JobConf conf;
   private String jobDir;
@@ -36,7 +36,7 @@ class MapOutputFile {
   MapOutputFile() {
   }
 
-  MapOutputFile(JobID jobId) {
+  public MapOutputFile(JobID jobId) {
     this.jobDir = TaskTracker.getJobCacheSubdir() + Path.SEPARATOR + jobId;
   }
 
