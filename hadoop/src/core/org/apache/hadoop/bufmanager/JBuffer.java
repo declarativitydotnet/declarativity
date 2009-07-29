@@ -67,6 +67,7 @@ public class JBuffer<K extends Object, V extends Object>
 		
 	    this.localFs = FileSystem.getLocal(job);
 		this.mapOutputFile = new MapOutputFile(bufid.taskid().getJobID());
+		this.mapOutputFile.setConf(job);
 		
 	    this.sorter = (IndexedSorter)
 	        ReflectionUtils.newInstance(
