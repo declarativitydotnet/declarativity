@@ -153,13 +153,11 @@ public class BufferManager extends Thread implements BufferUmbilicalProtocol {
 
 				synchronized(buffers) {
 					if (this.buffers.containsKey(request.bufid())) {
-						System.err.println("EXECUTE REQUEST " + request.bufid());
 						BufferControl buffer = this.buffers.get(request.bufid());
 						request.initialize(buffer, channel.socket());
 						this.executor.execute(request);
 					}
 					else {
-						System.err.println("OUTSTANDING REQUEST " + request.bufid());
 						request.initialize(null, channel.socket());
 						this.outstanding.put(request.bufid(), request);
 					}
@@ -204,7 +202,6 @@ public class BufferManager extends Thread implements BufferUmbilicalProtocol {
 				record.unmarshall(buffer.conf());
 				buffer.add(record);
 				if (buffer.memory() > 10000) {
-					System.err.println("FLUSH BUFFER " + bufid + " SIZE " + buffer.memory());
 					buffer.flush();
 				}
 				return;
