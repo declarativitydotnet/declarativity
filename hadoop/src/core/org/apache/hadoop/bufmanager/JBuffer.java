@@ -21,6 +21,7 @@ import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
+import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.IndexedSorter;
 import org.apache.hadoop.util.QuickSort;
@@ -52,6 +53,8 @@ public class JBuffer<K extends Object, V extends Object>
     protected BufferType type;
     
     protected boolean closed;
+    
+    private int total;
     
 	public JBuffer(JobConf job, BufferID bufid, BufferType type) throws IOException {
 		reset();
@@ -91,6 +94,7 @@ public class JBuffer<K extends Object, V extends Object>
 	private void reset() {
 		this.records = new ArrayList<Record<K, V>>();
 		this.curMemorySize = 0;
+		this.total = 0;
 	}
 	
 	public JobConf conf() {
@@ -121,6 +125,7 @@ public class JBuffer<K extends Object, V extends Object>
 				throw new IOException("Buffer is closed!");
 			}
 			
+			this.total++;
 			this.records.add(record);
 			this.curMemorySize += record.size();
 			
@@ -188,6 +193,7 @@ public class JBuffer<K extends Object, V extends Object>
 	@Override
 	public void close() {
 		synchronized (this) {
+			System.err.println("BUFFER TOTAL RECORDS " + this.total);
 			this.closed = true;
 			for (RecordStream stream : streams) {
 				stream.done(true);
@@ -198,37 +204,39 @@ public class JBuffer<K extends Object, V extends Object>
 	
 	@Override
 	public void flush() throws IOException {
-		sorter.sort(JBuffer.this, 0, this.records.size(), null);
-		
-		// create spill file
-		Path filename = mapOutputFile.getSpillFileForWrite(this.bufid.taskid(), this.spillFiles.size(), curMemorySize);
-		this.spillFiles.add(filename);
-		
-		FSDataOutputStream out = localFs.create(filename);
-		// compression
-		if (job.getCompressMapOutput()) {
-			Class<? extends CompressionCodec> codecClass =
-				job.getMapOutputCompressorClass(DefaultCodec.class);
-			CompressionCodec codec = (CompressionCodec)
-			ReflectionUtils.newInstance(codecClass, job);
-			Compressor compressor = CodecPool.getCompressor(codec);
-			compressor.reset();
-			CompressionOutputStream compressedOut = codec.createOutputStream(out, compressor);
-			out = new FSDataOutputStream(compressedOut,  null);
+		synchronized (this) {
+			sorter.sort(JBuffer.this, 0, this.records.size(), null);
+
+			// create spill file
+			Path filename = mapOutputFile.getSpillFileForWrite(this.bufid.taskid(), this.spillFiles.size(), curMemorySize);
+			this.spillFiles.add(filename);
+
+			FSDataOutputStream out = localFs.create(filename);
+			// compression
+			if (job.getCompressMapOutput()) {
+				Class<? extends CompressionCodec> codecClass =
+					job.getMapOutputCompressorClass(DefaultCodec.class);
+				CompressionCodec codec = (CompressionCodec)
+				ReflectionUtils.newInstance(codecClass, job);
+				Compressor compressor = CodecPool.getCompressor(codec);
+				compressor.reset();
+				CompressionOutputStream compressedOut = codec.createOutputStream(out, compressor);
+				out = new FSDataOutputStream(compressedOut,  null);
+			}
+
+			Iterator<Record<K, V>> iter = null;
+			if (job.getCombinerClass() != null) {
+				iter = new CombineRecordIterator<K, V>(job, new RecordIterator(this.records), this.comparator);
+			} else iter = this.records.iterator();
+
+			while (iter.hasNext()) {
+				Record<K, V> record = iter.next();
+				record.marshall(job);
+				record.write(out);
+			}
+
+			reset();
 		}
-		
-		Iterator<Record<K, V>> iter = null;
-		if (job.getCombinerClass() != null) {
-			iter = new CombineRecordIterator<K, V>(job, new RecordIterator(this.records), this.comparator);
-		} else this.records.iterator();
-		
-		while (iter.hasNext()) {
-			Record<K, V> record = iter.next();
-			record.marshall(job);
-			record.write(out);
-		}
-		
-		reset();
 	}
 	
 	private class RecordMerger<K extends Object, V extends Object> implements Iterator<Record> {
@@ -286,7 +294,7 @@ public class JBuffer<K extends Object, V extends Object>
 			this.cache = new ArrayList<Record>();
 			this.done = false;
 			this.queues = queues;
-			this.current = null;
+			this.current = queues.size() > 0 ? queues.remove(0) : null;
 		}
 		
 		public void add(Record record) {
@@ -306,7 +314,7 @@ public class JBuffer<K extends Object, V extends Object>
 		@Override
 		public boolean hasNext() {
 			synchronized (cache) {
-				if (this.current != null) return true;
+				if (this.current != null && this.current.hasNext()) return true;
 				
 				while (!done && this.cache.size() == 0) {
 					try {
@@ -378,6 +386,61 @@ public class JBuffer<K extends Object, V extends Object>
 		}
 	}
 	
+	private class CombineRecordIterator<K extends Object, V extends Object> implements Iterator<Record<K, V>> {
+
+		private Record.RecordQueue<K, V> records;
+
+		private RawComparator<K> comparator;
+
+		private Reducer combiner;
+
+		public CombineRecordIterator(JobConf job, Record.RecordQueue<K, V> records, RawComparator<K> comparator) {
+			this.records = records;
+			this.comparator = comparator;
+
+			Class<? extends Reducer> combinerClass = job.getCombinerClass();
+			combiner = (Reducer)ReflectionUtils.newInstance(combinerClass, job);
+		}
+
+		@Override
+		public boolean hasNext() {
+			return this.records.hasNext();
+		}
+
+		@Override
+		public Record<K, V> next() {
+			try {
+				return combineNext();
+			} catch (IOException e) {
+				return null;
+			}
+		}
+
+		@Override
+		public void remove() {
+			this.records.remove();
+		}
+
+		private Record<K, V> combineNext() throws IOException {
+			if (!this.records.hasNext()) return null;
+
+			List<V> values = new ArrayList<V>();
+			Record<K, V> next = this.records.remove();
+			values.add(next.value);
+
+			Record<K, V> test = this.records.peek();
+			while (this.records.hasNext() && this.comparator.compare(next.key, test.key) == 0) {
+				values.add(test.value);
+				this.records.remove();
+				test = this.records.peek();
+			}
+
+			Record combined = new Record();
+			combiner.reduce(next.key, values.iterator(), combined, null);
+			return combined;
+		}
+	}
+
 	private static class FSRecordIterator<K extends Object, V extends Object> implements Record.RecordQueue<K, V> {
 		
 		private FSDataInputStream in;
