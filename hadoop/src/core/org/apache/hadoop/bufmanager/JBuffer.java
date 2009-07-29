@@ -1,6 +1,8 @@
 package org.apache.hadoop.bufmanager;
 
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -56,12 +58,20 @@ public class JBuffer<K extends Object, V extends Object>
     
     private int total;
     
+	private Class<? extends CompressionCodec> codecClass;
+    
 	public JBuffer(JobConf job, BufferID bufid, BufferType type) throws IOException {
 		reset();
 		this.job = job;
 		this.bufid = bufid;
 		this.type = type;
 		this.closed = false;
+		
+	    /* Setup the class loader */
+		URL jar = new URL("file", null, job.getJar());
+		URL [] jars = {jar};
+		ClassLoader loader = new URLClassLoader(jars);
+		job.setClassLoader(loader);
 		
 		this.streams = new LinkedList<RecordStream>();
 		
@@ -75,6 +85,8 @@ public class JBuffer<K extends Object, V extends Object>
 	    this.comparator = job.getOutputKeyComparator();
 	    
 	    this.spillFiles = new ArrayList<Path>();
+	    
+
 	}
 	
 	public int hashCode() {
