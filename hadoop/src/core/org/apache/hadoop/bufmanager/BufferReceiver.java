@@ -56,7 +56,7 @@ public class BufferReceiver implements Runnable {
 				record.readFields(in);
 				record.unmarshall(this.buffer.conf());
 				records++;
-				this.buffer.add(record);
+				this.manager.add(buffer.bufid(), record);
 			}
 			System.err.println("BufferReceiver: received " + records + " records.");
 			

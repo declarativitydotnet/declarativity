@@ -31,10 +31,11 @@ import org.apache.hadoop.util.ReflectionUtils;
 public class BufferManager extends Thread implements BufferUmbilicalProtocol {
 	interface BufferControl<K extends Object, V extends Object> extends Buffer<K, V> {
 		/**
-		 * The job configuration that owns this buffer.
-		 * @return JobConf
+		 * Add record to the buffer.
+		 * @param record Record to add.
+		 * @throws IOException If I don't like you
 		 */
-		public JobConf conf();
+		public void add(Record<K, V> record) throws IOException;
 
 		/**
 		 * @return The compression codec that is used to compress/decompress
@@ -59,6 +60,11 @@ public class BufferManager extends Thread implements BufferUmbilicalProtocol {
 		 */
 		public void free();
 		
+		/**
+		 * Close the buffer. No records can be inserted
+		 * when buffer is closed. This also marks the end
+		 * of the buffer for all running stream iterators.
+		 */
 		public void close();
 	}
 
@@ -194,9 +200,13 @@ public class BufferManager extends Thread implements BufferUmbilicalProtocol {
 	public void add(BufferID bufid, Record record) throws IOException {
 		synchronized (buffers) {
 			if (this.buffers.containsKey(bufid)) {
-				Buffer buffer = this.buffers.get(bufid);
+				BufferControl buffer = this.buffers.get(bufid);
 				record.unmarshall(buffer.conf());
 				buffer.add(record);
+				if (buffer.memory() > 10000) {
+					System.err.println("FLUSH BUFFER " + bufid + " SIZE " + buffer.memory());
+					buffer.flush();
+				}
 				return;
 			}
 		}

@@ -14,13 +14,6 @@ public interface Buffer<K extends Object, V extends Object> {
 	public JobConf conf();
 	
 	/**
-	 * Add record to the buffer.
-	 * @param record Record to add.
-	 * @throws IOException If I don't like you
-	 */
-	public void add(Record<K, V> record) throws IOException;
-	
-	/**
 	 * Get an iterator over the records in this buffer.
 	 * If the recards are to be sorted or grouped, then
 	 * this call will block until all records have been
