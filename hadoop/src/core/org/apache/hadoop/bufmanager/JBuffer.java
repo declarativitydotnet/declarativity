@@ -160,7 +160,7 @@ public class JBuffer<K extends Object, V extends Object>
 			queues.add(new RecordIterator(new ArrayList<Record>(this.records)));
 			for (Path file : this.spillFiles) {
 				FSDataInputStream in = localFs.open(file);
-				queues.add(new FSRecordIterator(in));
+				queues.add(new FSRecordIterator(this.job, in));
 			}
 			
 			if (this.type == BufferType.SORTED) {
@@ -235,6 +235,7 @@ public class JBuffer<K extends Object, V extends Object>
 				record.marshall(job);
 				record.write(out);
 			}
+			out.close();
 
 			reset();
 		}
@@ -444,11 +445,14 @@ public class JBuffer<K extends Object, V extends Object>
 
 	private static class FSRecordIterator<K extends Object, V extends Object> implements Record.RecordQueue<K, V> {
 		
+		private JobConf conf;
+		
 		private FSDataInputStream in;
 		
 		private Record current;
 		
-		public FSRecordIterator(FSDataInputStream in) {
+		public FSRecordIterator(JobConf conf, FSDataInputStream in) {
+			this.conf = conf;
 			this.in = in;
 			readNext();
 		}
@@ -474,6 +478,7 @@ public class JBuffer<K extends Object, V extends Object>
 			try {
 				Record<K, V> record = new Record<K, V>();
 				record.readFields(in);
+				record.unmarshall(conf);
 				this.current = record;
 				return true;
 			} catch (IOException e) {
