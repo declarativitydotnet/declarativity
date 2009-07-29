@@ -296,16 +296,12 @@ public class ReduceTask extends Task {
 		
 		// apply reduce function
 		try {
-			System.err.println("GET RECORDS");
 			RecordGroup record = null;
 			while ((record = (RecordGroup) bufferUmbilical.getNextRecord(bufid, getTaskID())) != null) {
-				System.err.println("GOT RECORD");
 				record.unmarshall(this.conf);
-				System.err.println("READ RECORD: " + record);
 				reduceInputKeyCounter.increment(1);
 				reducer.reduce(record.key, record.values.iterator(), collector, reporter);
 			}
-			System.err.println("DONE");
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 			throw ioe;

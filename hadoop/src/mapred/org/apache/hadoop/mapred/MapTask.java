@@ -277,12 +277,15 @@ public final class MapTask extends Task {
 		private Partitioner partitioner;
 
 		private List<BufferID> buffers;
+		
+		private int total;
 
 		public BufferMapOutputCollector(TaskAttemptID taskid, BufferUmbilicalProtocol bufferUmbilical, 
 				String jobFile) throws IOException {
 			this.bufferUmbilical = bufferUmbilical;
 			this.jobFile = jobFile;
 			this.job = new JobConf(jobFile);
+			this.total = 0;
 
 			this.partitioner = (Partitioner)
 			ReflectionUtils.newInstance(job.getPartitionerClass(), job);
@@ -311,6 +314,7 @@ public final class MapTask extends Task {
 			}
 			Record record = new Record<K, V>(key, value);
 			record.marshall(this.job);
+			this.total++;
 			this.bufferUmbilical.add(buffers.get(partition), record);
 		}
 	}
