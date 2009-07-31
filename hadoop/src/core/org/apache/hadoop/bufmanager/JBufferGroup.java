@@ -2,6 +2,7 @@ package org.apache.hadoop.bufmanager;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.concurrent.Executor;
 
 import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.mapred.JobConf;
@@ -9,13 +10,13 @@ import org.apache.hadoop.mapred.JobConf;
 public class JBufferGroup<K extends Object, V extends Object> 
        extends JBuffer<K, V> {
 
-	public JBufferGroup(JobConf job, BufferID bufid) throws IOException {
-		super(job, bufid, BufferType.SORTED);
+	public JBufferGroup(BufferUmbilicalProtocol umbilical, Executor executor, JobConf job, BufferID bufid) throws IOException {
+		super(umbilical, executor, job, bufid, BufferType.SORTED);
 	}
 	
 	@Override
-	public Iterator<Record<K, V>> records() throws IOException {
-		return new RecordGroupIterator(super.records(), this.comparator);
+	public Iterator<Record<K, V>> iterator() throws IOException {
+		return new RecordGroupIterator(super.iterator(), this.job.getOutputKeyComparator());
 	}
 	
 	private static class RecordGroupIterator<K extends Object, V extends Object> 

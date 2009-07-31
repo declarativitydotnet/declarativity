@@ -18,13 +18,15 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputCollector;
 
 public class Record<K extends Object, V extends Object> implements OutputCollector<K, V>, Writable {
-	public interface RecordQueue<K extends Object, V extends Object> {
+	public interface RecordIterator<K extends Object, V extends Object> extends Iterator<Record<K, V>> {
 		public Record<K, V> peek();
 		
-		public Record<K, V> remove();
+		public Record<K, V> next();
 		
 		public boolean hasNext();
 	}
+	
+	public final static Record NULL_RECORD = new Record();
 	
 	protected byte[] keyB = null;
 	protected byte[] valB = null;
@@ -38,6 +40,10 @@ public class Record<K extends Object, V extends Object> implements OutputCollect
     public Record(K key, V value) {
     	this.key   = key;
     	this.value = value;
+    }
+    
+    public boolean isNull() {
+    	return this.key == null;
     }
     
     @Override
@@ -111,6 +117,8 @@ public class Record<K extends Object, V extends Object> implements OutputCollect
 		int keySize = WritableUtils.readVInt(in);
 		int valSize = WritableUtils.readVInt(in);
 		
+		if (keySize < 0) return; // Null record.
+		
 		this.keyB = new byte[keySize];
 		this.valB = new byte[valSize];
 		
@@ -120,7 +128,13 @@ public class Record<K extends Object, V extends Object> implements OutputCollect
 
 	@Override
 	public void write(DataOutput out) throws IOException {
-		if (keyB == null) {
+		if (this.key == null) {
+			/* Null record. (used as a sentinal) */
+			WritableUtils.writeVInt(out, -1);
+			WritableUtils.writeVInt(out, -1);
+			return;
+		}
+		else if (keyB == null) {
 			throw new IOException("Key/Value pair not marshalled!");
 		}
 		
