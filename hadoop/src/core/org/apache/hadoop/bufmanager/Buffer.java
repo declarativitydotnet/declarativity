@@ -1,5 +1,6 @@
 package org.apache.hadoop.bufmanager;
 
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -10,18 +11,16 @@ public interface Buffer<K extends Object, V extends Object> {
 
 	public BufferID bufid();
 	
+	public Iterator<Record<K, V>> iterator() throws IOException;
 	
-	public JobConf conf();
+	public void fetch(BufferID bufid, String source) throws IOException;
 	
-	/**
-	 * Get an iterator over the records in this buffer.
-	 * If the recards are to be sorted or grouped, then
-	 * this call will block until all records have been
-	 * received, which occurs when all open calls have
-	 * been closed. 
-	 * @return An iterator over the records in this buffer.
-	 * @throws IOException If I don't feel like it.
-	 */
-	public Iterator<Record<K, V>> records() throws IOException;
+	public void done(BufferRequest request);
+	
+	public void done(BufferReceiver receiver);
+	
+	public void add(Record record) throws IOException;
+	
+	public void close();
 	
 }

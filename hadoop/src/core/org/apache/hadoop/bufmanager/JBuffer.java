@@ -1,16 +1,25 @@
 package org.apache.hadoop.bufmanager;
 
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.UnknownHostException;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
-import org.apache.hadoop.bufmanager.BufferManager.BufferControl;
-import org.apache.hadoop.bufmanager.Record.RecordQueue;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -20,79 +29,85 @@ import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionOutputStream;
 import org.apache.hadoop.io.compress.Compressor;
+import org.apache.hadoop.io.compress.Decompressor;
 import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
 import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.IndexedSorter;
 import org.apache.hadoop.util.QuickSort;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class JBuffer<K extends Object, V extends Object> 
-    implements BufferManager.BufferControl<K, V>, IndexedSortable {
+public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>, Runnable {
 	
 	protected final JobConf job;
+	
+	private Executor executor;
+	
+	protected BufferUmbilicalProtocol umbilical;
 	
 	protected BufferID bufid;
 	
     protected MapOutputFile mapOutputFile;
 	
-    protected List<RecordStream> streams;
-    
-	protected List<Record<K, V>> records;
+	protected RecordList<K, V> cache;
 	
-    protected final RawComparator<K> comparator;
-    
     protected final FileSystem localFs;
     
-    protected final IndexedSorter sorter;
-
     protected List<Path> spillFiles;
 
     protected long curMemorySize;
     
     protected BufferType type;
     
+    private ServerSocketChannel channel;
+    
+    private InetSocketAddress channelAddress;
+    
     protected boolean closed;
     
-    private int total;
+    private Set<BufferRequest> requests;
     
-	private Class<? extends CompressionCodec> codecClass;
+    private Set<BufferReceiver> receivers;
     
-	public JBuffer(JobConf job, BufferID bufid, BufferType type) throws IOException {
+    private Set<RecordStream> streams;
+    
+	public JBuffer(BufferUmbilicalProtocol umbilical, Executor executor, JobConf job, BufferID bufid, BufferType type) throws IOException {
 		reset();
+		this.umbilical = umbilical;
+		this.executor = executor;
 		this.job = job;
 		this.bufid = bufid;
 		this.type = type;
 		this.closed = false;
 		
+		this.requests = new HashSet<BufferRequest>();
+		this.receivers = new HashSet<BufferReceiver>();
+		this.streams = new HashSet<RecordStream>();
+		
 	    /* Setup the class loader */
+		/*
 		URL jar = new URL("file", null, job.getJar());
 		URL [] jars = {jar};
 		ClassLoader loader = new URLClassLoader(jars);
 		job.setClassLoader(loader);
-		
-		this.streams = new LinkedList<RecordStream>();
+		*/
 		
 	    this.localFs = FileSystem.getLocal(job);
 		this.mapOutputFile = new MapOutputFile(bufid.taskid().getJobID());
 		this.mapOutputFile.setConf(job);
 		
-	    this.sorter = (IndexedSorter)
-	        ReflectionUtils.newInstance(
-	            job.getClass("map.sort.class", QuickSort.class), job);
-	    this.comparator = job.getOutputKeyComparator();
-	    
 	    this.spillFiles = new ArrayList<Path>();
-	    
-
 	}
 	
+	@Override
 	public int hashCode() {
 		return this.bufid.hashCode();
 	}
 	
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof JBuffer) {
 			return this.bufid.equals(((JBuffer)o).bufid);
@@ -105,16 +120,15 @@ public class JBuffer<K extends Object, V extends Object>
 	}
 	
 	private void reset() {
-		this.records = new ArrayList<Record<K, V>>();
+		this.cache = new RecordList<K, V>(conf());
 		this.curMemorySize = 0;
-		this.total = 0;
 	}
 	
 	public JobConf conf() {
 		return this.job;
 	}
 	
-	public CompressionCodec codec() {
+	private CompressionCodec codec() {
 		if (this.job != null && job.getCompressMapOutput()) {
 			Class<? extends CompressionCodec> codecClass =
 				job.getMapOutputCompressorClass(DefaultCodec.class);
@@ -127,23 +141,82 @@ public class JBuffer<K extends Object, V extends Object>
 		return this.curMemorySize;
 	}
 	
-	/**
-	 * Add a record to this buffer.
-	 * @param record The record to add
-	 * @throws IOException 
-	 */
+	@Override
 	public void add(Record record) throws IOException {
 		synchronized (this) {
 			if (closed) {
 				throw new IOException("Buffer is closed!");
 			}
 			
-			this.total++;
-			this.records.add(record);
+			this.cache.add(record);
 			this.curMemorySize += record.size();
 			
 			for (RecordStream stream : streams) {
 				stream.add(record);
+			}
+		}
+	}
+	
+	@Override
+	public void fetch(BufferID bufid, String source) throws IOException {
+		BufferRequest request = new BufferRequest(bufid, source, this.channelAddress);
+		umbilical.request(request);
+	}
+	
+	@Override
+	public void done(BufferRequest request) {
+		synchronized (this) {
+			this.requests.remove(request);
+			this.notifyAll();
+		}
+	}
+
+	@Override
+	public void done(BufferReceiver receiver) {
+		synchronized (this) {
+			this.receivers.remove(receiver);
+			this.notifyAll();
+		}
+	}
+	
+	
+	public void run() {
+		try {
+			String host = InetAddress.getLocalHost().getCanonicalHostName();
+			InetSocketAddress address = new InetSocketAddress(host, 0); 
+			this.channel = ServerSocketChannel.open();
+			this.channel.socket().bind(address);
+			this.channelAddress = new InetSocketAddress(host, this.channel.socket().getLocalPort());
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			return;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		}
+		
+
+		while (true) {
+			try {
+				SocketChannel channel  = this.channel.accept();
+				DataInputStream input  = null;
+				CompressionCodec codec = codec();
+				if (codec != null) {
+					Decompressor decompressor = CodecPool.getDecompressor(codec);
+					decompressor.reset();
+					input = new DataInputStream(codec.createInputStream(channel.socket().getInputStream(), decompressor));
+				}
+				else {
+					input = new DataInputStream(channel.socket().getInputStream());
+				}
+				
+				BufferReceiver receiver = new BufferReceiver(this, input);
+				synchronized (receivers) {
+					receivers.add(receiver);
+				}
+				executor.execute(receiver);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -154,7 +227,7 @@ public class JBuffer<K extends Object, V extends Object>
 	 * @return Record iterator
 	 * @throws IOException 
 	 */
-	public Iterator<Record<K, V>> records() throws IOException {
+	public Iterator<Record<K, V>> iterator() throws IOException {
 		synchronized (this) {
 			while (this.type == BufferType.SORTED && !closed) {
 				try { this.wait();
@@ -163,20 +236,17 @@ public class JBuffer<K extends Object, V extends Object>
 				}
 			}
 			
-			if (this.type == BufferType.SORTED && this.records.size() > 1) {
-				/* Sort in memory copy of the buffer */
-				sorter.sort(JBuffer.this, 0, this.records.size(), null);
-			}
+			RecordList cached = new RecordList(this.cache);
+			List<Record.RecordIterator<K, V>> queues = new ArrayList<Record.RecordIterator<K, V>>();
 			
-			List<Record.RecordQueue<K, V>> queues = new ArrayList<Record.RecordQueue<K, V>>();
-			queues.add(new RecordIterator(new ArrayList<Record>(this.records)));
+			queues.add(cached.iterator());
 			for (Path file : this.spillFiles) {
 				FSDataInputStream in = localFs.open(file);
 				queues.add(new FSRecordIterator(this.job, in));
 			}
 			
 			if (this.type == BufferType.SORTED) {
-				return new RecordMerger(comparator, queues);
+				return new RecordMerger(this.job.getOutputKeyComparator(), queues);
 			}
 			else {
 				RecordStream stream = new RecordStream(queues);
@@ -187,39 +257,56 @@ public class JBuffer<K extends Object, V extends Object>
 	}
 	
 	
-	@Override
-	public int compare(int i, int j) {
-		return comparator.compare(this.records.get(i).key, this.records.get(j).key);
-	}
-
-	@Override
-	public void swap(int i, int j) {
-		Collections.swap(this.records, i, j);
-	}
-
-	
-	@Override
-	public void free() {
-		// TODO
-	}
 	
 	@Override
 	public void close() {
 		synchronized (this) {
-			System.err.println("BUFFER TOTAL RECORDS " + this.total);
 			this.closed = true;
 			for (RecordStream stream : streams) {
 				stream.done(true);
+			}
+			
+			/* Don't close until all requests have been satisfied */
+			while (this.requests.size() > 0) {
+				try {
+					this.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		
 	}
 	
-	@Override
+	public Path getFinalSortedOutput() throws IOException {
+		if (!closed) throw new IOException ("Can't sort and flush until closed!");
+		else if (this.type != BufferType.SORTED) throw new IOException("Not a sorted buffer type!");
+		
+		Path filename = mapOutputFile.getOutputFileForWrite(this.bufid.taskid(), Integer.MAX_VALUE);
+		FSDataOutputStream out = localFs.create(filename);
+		// compression
+		if (job.getCompressMapOutput()) {
+			Class<? extends CompressionCodec> codecClass =
+				job.getMapOutputCompressorClass(DefaultCodec.class);
+			CompressionCodec codec = (CompressionCodec)
+			ReflectionUtils.newInstance(codecClass, job);
+			Compressor compressor = CodecPool.getCompressor(codec);
+			compressor.reset();
+			CompressionOutputStream compressedOut = codec.createOutputStream(out, compressor);
+			out = new FSDataOutputStream(compressedOut,  null);
+		}
+
+		Iterator<Record<K, V>> iterator = iterator();
+		while (iterator.hasNext()) {
+			iterator.next().write(out);
+		}
+		out.close();
+		
+		return filename;
+	}
+	
 	public void flush() throws IOException {
 		synchronized (this) {
-			sorter.sort(JBuffer.this, 0, this.records.size(), null);
-
 			// create spill file
 			Path filename = mapOutputFile.getSpillFileForWrite(this.bufid.taskid(), this.spillFiles.size(), curMemorySize);
 			this.spillFiles.add(filename);
@@ -237,16 +324,7 @@ public class JBuffer<K extends Object, V extends Object>
 				out = new FSDataOutputStream(compressedOut,  null);
 			}
 
-			Iterator<Record<K, V>> iter = null;
-			if (job.getCombinerClass() != null) {
-				iter = new CombineRecordIterator<K, V>(job, new RecordIterator(this.records), this.comparator);
-			} else iter = this.records.iterator();
-
-			while (iter.hasNext()) {
-				Record<K, V> record = iter.next();
-				record.marshall(job);
-				record.write(out);
-			}
+			this.cache.write(out);
 			out.close();
 
 			reset();
@@ -257,32 +335,32 @@ public class JBuffer<K extends Object, V extends Object>
 		
 		private RawComparator<K> comparator;
 		
-		private List<RecordQueue<K, V>> queues;
+		private List<Record.RecordIterator<K, V>> queues;
 		
-		public RecordMerger(RawComparator<K> comparator, List<RecordQueue<K, V>> queues) {
+		public RecordMerger(RawComparator<K> comparator, List<Record.RecordIterator<K, V>> queues) {
 			this.comparator = comparator;
 			this.queues = queues;
 		}
 		
 		@Override
 		public Record next() {
-			RecordQueue<K, V> next = null;
-			for (RecordQueue<K, V> queue : queues) {
+			Record.RecordIterator<K, V> iter = null;
+			for (Record.RecordIterator<K, V> queue : queues) {
 				if (queue.hasNext()) {
-					if (next == null) {
-						next = queue;
+					if (iter == null) {
+						iter = queue;
 					}
-					else if (comparator.compare(queue.peek().key, next.peek().key) < 0) {
-						next = queue;
+					else if (comparator.compare(queue.peek().key, iter.peek().key) < 0) {
+						iter = queue;
 					}
 				}
 			}
-			return next != null ? next.remove() : null;
+			return iter != null ? iter.next() : null;
 		}
 
 		@Override
 		public boolean hasNext() {
-			for (RecordQueue<K, V> queue : queues) {
+			for (Record.RecordIterator<K, V> queue : queues) {
 				if (queue.hasNext()) return true;
 			}
 			return false;
@@ -300,11 +378,11 @@ public class JBuffer<K extends Object, V extends Object>
 		
 		private List<Record> cache;
 		
-		private List<Record.RecordQueue<K, V>> queues;
+		private List<Record.RecordIterator<K, V>> queues;
 		
-		private Record.RecordQueue<K, V> current;
+		private Record.RecordIterator<K, V> current;
 		
-		public RecordStream(List<Record.RecordQueue<K, V>> queues) {
+		public RecordStream(List<Record.RecordIterator<K, V>> queues) {
 			this.cache = new ArrayList<Record>();
 			this.done = false;
 			this.queues = queues;
@@ -351,7 +429,7 @@ public class JBuffer<K extends Object, V extends Object>
 					return record;
 				}
 				else if (this.current != null && this.current.hasNext()) {
-					return this.current.remove();
+					return this.current.next();
 				}
 				else if (this.queues.size() != 0) {
 					this.current = this.queues.remove(0);
@@ -370,133 +448,5 @@ public class JBuffer<K extends Object, V extends Object>
 		}
 		
 	}
-	
-	private static class RecordIterator<K extends Object, V extends Object> implements Record.RecordQueue<K, V> {
-		
-		private Iterator<Record> recordIterator;
-		
-		private Record current;
-		
-		public RecordIterator(List<Record> recordList) {
-			this.recordIterator = recordList.iterator();
-			this.current = recordIterator.hasNext() ? recordIterator.next() : null;
-		}
 
-		@Override
-		public boolean hasNext() {
-			return current != null;
-		}
-
-		@Override
-		public Record<K, V> peek() {
-			return current;
-		}
-
-		@Override
-		public Record<K, V> remove() {
-			Record record = this.current;
-			this.current = recordIterator.hasNext() ? recordIterator.next() : null;
-			return record;
-		}
-	}
-	
-	private class CombineRecordIterator<K extends Object, V extends Object> implements Iterator<Record<K, V>> {
-
-		private Record.RecordQueue<K, V> records;
-
-		private RawComparator<K> comparator;
-
-		private Reducer combiner;
-
-		public CombineRecordIterator(JobConf job, Record.RecordQueue<K, V> records, RawComparator<K> comparator) {
-			this.records = records;
-			this.comparator = comparator;
-
-			Class<? extends Reducer> combinerClass = job.getCombinerClass();
-			combiner = (Reducer)ReflectionUtils.newInstance(combinerClass, job);
-		}
-
-		@Override
-		public boolean hasNext() {
-			return this.records.hasNext();
-		}
-
-		@Override
-		public Record<K, V> next() {
-			try {
-				return combineNext();
-			} catch (IOException e) {
-				return null;
-			}
-		}
-
-		@Override
-		public void remove() {
-			this.records.remove();
-		}
-
-		private Record<K, V> combineNext() throws IOException {
-			if (!this.records.hasNext()) return null;
-
-			List<V> values = new ArrayList<V>();
-			Record<K, V> next = this.records.remove();
-			values.add(next.value);
-
-			Record<K, V> test = this.records.peek();
-			while (this.records.hasNext() && this.comparator.compare(next.key, test.key) == 0) {
-				values.add(test.value);
-				this.records.remove();
-				test = this.records.peek();
-			}
-
-			Record combined = new Record();
-			combiner.reduce(next.key, values.iterator(), combined, null);
-			return combined;
-		}
-	}
-
-	private static class FSRecordIterator<K extends Object, V extends Object> implements Record.RecordQueue<K, V> {
-		
-		private JobConf conf;
-		
-		private FSDataInputStream in;
-		
-		private Record current;
-		
-		public FSRecordIterator(JobConf conf, FSDataInputStream in) {
-			this.conf = conf;
-			this.in = in;
-			readNext();
-		}
-
-		@Override
-		public boolean hasNext() {
-			return this.current != null;
-		}
-
-		@Override
-		public Record<K, V> peek() {
-			return this.current;
-		}
-
-		@Override
-		public Record<K, V> remove() {
-			Record tmp = this.current;
-			readNext();
-			return tmp;
-		}
-		
-		private boolean readNext() {
-			try {
-				Record<K, V> record = new Record<K, V>();
-				record.readFields(in);
-				record.unmarshall(conf);
-				this.current = record;
-				return true;
-			} catch (IOException e) {
-				this.current = null;
-				return false;
-			}
-		}
-	}
 }
