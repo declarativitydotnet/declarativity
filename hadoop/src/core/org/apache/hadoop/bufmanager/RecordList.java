@@ -19,12 +19,16 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class RecordList<K extends Object, V extends Object> implements IndexedSortable, Writable {
 	
-	class RecordIterator implements Record.RecordIterator<K, V> {
+	static class RecordIterator<K extends Object, V extends Object> implements Record.RecordIterator<K, V> {
 
 		private int index;
+		
+		private Vector<Record<K, V>> records;
 
-		public RecordIterator() {
+		public RecordIterator(List<Record<K, V>> records) {
 			this.index = 0;
+			this.records = new Vector<Record<K, V>>();
+			this.records.addAll(records);
 		}
 
 		@Override
@@ -79,15 +83,8 @@ public class RecordList<K extends Object, V extends Object> implements IndexedSo
 		this.conf = conf;
 	}
 	
-	public Record<K, V> peek() {
-		return this.records.size() > 0 ? this.records.get(0) : null;
-	}
-	
-	public Record<K, V> pop() {
-		return this.records.size() > 0 ? this.records.remove(0) : null;
-	}
-	
 	public void sort() {
+		System.err.println("SORTING conf = " + conf);
 		IndexedSorter sorter = (IndexedSorter)
 		ReflectionUtils.newInstance(
 				conf.getClass("map.sort.class", QuickSort.class), conf);
@@ -112,7 +109,7 @@ public class RecordList<K extends Object, V extends Object> implements IndexedSo
 	}
 	
 	public Record.RecordIterator<K, V> iterator() {
-		return new RecordIterator();
+		return new RecordIterator<K, V>(this.records);
 	}
 
 	public void add(Record<K, V> record) throws IOException {

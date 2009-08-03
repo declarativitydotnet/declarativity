@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -40,42 +41,35 @@ import org.apache.hadoop.util.IndexedSorter;
 import org.apache.hadoop.util.QuickSort;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>, Runnable {
+public class JBuffer<K extends Object, V extends Object> extends Thread implements BufferTransfer<K, V> {
 	
 	protected final JobConf job;
 	
-	private Executor executor;
+	protected final Executor executor;
 	
 	protected BufferUmbilicalProtocol umbilical;
 	
 	protected BufferID bufid;
 	
-    protected MapOutputFile mapOutputFile;
+    private MapOutputFile mapOutputFile;
 	
-	protected RecordList<K, V> cache;
+	private RecordList<K, V> cache;
 	
-    protected final FileSystem localFs;
+    private final FileSystem localFs;
     
-    protected List<Path> spillFiles;
+    private List<Path> spillFiles;
 
-    protected long curMemorySize;
+    private long curMemorySize;
     
     protected BufferType type;
-    
-    private ServerSocketChannel channel;
-    
-    private InetSocketAddress channelAddress;
     
     protected boolean closed;
     
     private Set<BufferRequest> requests;
     
-    private Set<BufferReceiver> receivers;
-    
-    private Set<RecordStream> streams;
+    private Set<RecordStream<K, V>> streams;
     
 	public JBuffer(BufferUmbilicalProtocol umbilical, Executor executor, JobConf job, BufferID bufid, BufferType type) throws IOException {
-		reset();
 		this.umbilical = umbilical;
 		this.executor = executor;
 		this.job = job;
@@ -84,8 +78,7 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 		this.closed = false;
 		
 		this.requests = new HashSet<BufferRequest>();
-		this.receivers = new HashSet<BufferReceiver>();
-		this.streams = new HashSet<RecordStream>();
+		this.streams = new HashSet<RecordStream<K, V>>();
 		
 	    /* Setup the class loader */
 		/*
@@ -100,6 +93,8 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 		this.mapOutputFile.setConf(job);
 		
 	    this.spillFiles = new ArrayList<Path>();
+	    
+	    reset();
 	}
 	
 	@Override
@@ -115,6 +110,10 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 		return false;
 	}
 	
+	public BufferType type() {
+		return this.type;
+	}
+	
 	public BufferID bufid() {
 		return this.bufid;
 	}
@@ -128,7 +127,7 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 		return this.job;
 	}
 	
-	private CompressionCodec codec() {
+	protected CompressionCodec codec() {
 		if (this.job != null && job.getCompressMapOutput()) {
 			Class<? extends CompressionCodec> codecClass =
 				job.getMapOutputCompressorClass(DefaultCodec.class);
@@ -142,11 +141,13 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 	}
 	
 	@Override
-	public void add(Record record) throws IOException {
+	public final void add(Record record) throws IOException {
 		synchronized (this) {
 			if (closed) {
 				throw new IOException("Buffer is closed!");
 			}
+			if (record.marshalled()) record.unmarshall(job);
+			else record.marshall(job);
 			
 			this.cache.add(record);
 			this.curMemorySize += record.size();
@@ -158,9 +159,19 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 	}
 	
 	@Override
-	public void fetch(BufferID bufid, String source) throws IOException {
-		BufferRequest request = new BufferRequest(bufid, source, this.channelAddress);
-		umbilical.request(request);
+	public void transfer(BufferID bufid, String source) throws IOException {
+		/* no receivers */
+	}
+	
+	@Override
+	public void cancel(BufferID requestID) throws IOException {
+		synchronized (this) {
+			if (this.bufid.equals(requestID)) {
+				for (BufferRequest request : requests) {
+					request.cancel();
+				}
+			}
+		}
 	}
 	
 	@Override
@@ -173,50 +184,36 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 
 	@Override
 	public void done(BufferReceiver receiver) {
-		synchronized (this) {
-			this.receivers.remove(receiver);
-			this.notifyAll();
-		}
+		/* no receivers */
 	}
 	
 	
+	@Override
 	public void run() {
-		try {
-			String host = InetAddress.getLocalHost().getCanonicalHostName();
-			InetSocketAddress address = new InetSocketAddress(host, 0); 
-			this.channel = ServerSocketChannel.open();
-			this.channel.socket().bind(address);
-			this.channelAddress = new InetSocketAddress(host, this.channel.socket().getLocalPort());
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			return;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-		
-
-		while (true) {
-			try {
-				SocketChannel channel  = this.channel.accept();
-				DataInputStream input  = null;
-				CompressionCodec codec = codec();
-				if (codec != null) {
-					Decompressor decompressor = CodecPool.getDecompressor(codec);
-					decompressor.reset();
-					input = new DataInputStream(codec.createInputStream(channel.socket().getInputStream(), decompressor));
+		if (type() == BufferType.UNSORTED) {
+			while (! closed) {
+				try {
+					BufferRequest request = umbilical.getRequest(bufid());
+					if (request == null) {
+						sleep(100);
+					}
+					else {
+						request.open(this.bufid, this);
+						synchronized (this) {
+							if (! closed) {
+								this.requests.add(request);
+								this.executor.execute(request);
+							}
+							else {
+								request.cancel();
+							}
+						}
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
-				else {
-					input = new DataInputStream(channel.socket().getInputStream());
-				}
-				
-				BufferReceiver receiver = new BufferReceiver(this, input);
-				synchronized (receivers) {
-					receivers.add(receiver);
-				}
-				executor.execute(receiver);
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 	}
@@ -236,10 +233,13 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 				}
 			}
 			
-			RecordList cached = new RecordList(this.cache);
+			if (this.type == BufferType.SORTED) {
+				this.cache.sort();
+			}
+			
 			List<Record.RecordIterator<K, V>> queues = new ArrayList<Record.RecordIterator<K, V>>();
 			
-			queues.add(cached.iterator());
+			queues.add(this.cache.iterator());
 			for (Path file : this.spillFiles) {
 				FSDataInputStream in = localFs.open(file);
 				queues.add(new FSRecordIterator(this.job, in));
@@ -259,7 +259,9 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 	
 	
 	@Override
-	public void close() {
+	public void close() throws IOException {
+		if (closed) return; // already closed
+		
 		synchronized (this) {
 			this.closed = true;
 			for (RecordStream stream : streams) {
@@ -274,43 +276,15 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 					e.printStackTrace();
 				}
 			}
+			this.closed = true;
 		}
-		
 	}
 	
-	public Path getFinalSortedOutput() throws IOException {
-		if (!closed) throw new IOException ("Can't sort and flush until closed!");
-		else if (this.type != BufferType.SORTED) throw new IOException("Not a sorted buffer type!");
-		
-		Path filename = mapOutputFile.getOutputFileForWrite(this.bufid.taskid(), Integer.MAX_VALUE);
-		FSDataOutputStream out = localFs.create(filename);
-		// compression
-		if (job.getCompressMapOutput()) {
-			Class<? extends CompressionCodec> codecClass =
-				job.getMapOutputCompressorClass(DefaultCodec.class);
-			CompressionCodec codec = (CompressionCodec)
-			ReflectionUtils.newInstance(codecClass, job);
-			Compressor compressor = CodecPool.getCompressor(codec);
-			compressor.reset();
-			CompressionOutputStream compressedOut = codec.createOutputStream(out, compressor);
-			out = new FSDataOutputStream(compressedOut,  null);
-		}
-
-		Iterator<Record<K, V>> iterator = iterator();
-		while (iterator.hasNext()) {
-			iterator.next().write(out);
-		}
-		out.close();
-		
-		return filename;
-	}
-	
-	public void flush() throws IOException {
+	public void commit() throws IOException {
 		synchronized (this) {
-			// create spill file
-			Path filename = mapOutputFile.getSpillFileForWrite(this.bufid.taskid(), this.spillFiles.size(), curMemorySize);
-			this.spillFiles.add(filename);
+			if (!closed) throw new IOException ("Can't sort and flush until closed!");
 
+			Path filename = mapOutputFile.getOutputFileForWrite(this.bufid.taskid(), Integer.MAX_VALUE);
 			FSDataOutputStream out = localFs.create(filename);
 			// compression
 			if (job.getCompressMapOutput()) {
@@ -324,6 +298,43 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 				out = new FSDataOutputStream(compressedOut,  null);
 			}
 
+			Iterator<Record<K, V>> iterator = iterator();
+			while (iterator.hasNext()) {
+				iterator.next().write(out);
+			}
+			Record.NULL_RECORD.write(out);
+			out.close();
+
+			this.spillFiles.clear();
+			this.spillFiles.add(filename);
+			
+			this.umbilical.register(bufid, filename.toString());
+		}
+	}
+	
+	public void flush() throws IOException {
+		synchronized (this) {
+			// create spill file
+			Path filename = mapOutputFile.getSpillFileForWrite(this.bufid.taskid(), this.spillFiles.size(), curMemorySize);
+			this.spillFiles.add(filename);
+			
+			FSDataOutputStream out = localFs.create(filename);
+			// compression
+			if (job.getCompressMapOutput()) {
+				Class<? extends CompressionCodec> codecClass =
+					job.getMapOutputCompressorClass(DefaultCodec.class);
+				CompressionCodec codec = (CompressionCodec)
+				ReflectionUtils.newInstance(codecClass, job);
+				Compressor compressor = CodecPool.getCompressor(codec);
+				compressor.reset();
+				CompressionOutputStream compressedOut = codec.createOutputStream(out, compressor);
+				out = new FSDataOutputStream(compressedOut,  null);
+			}
+
+			if (this.type == BufferType.SORTED) {
+				this.cache.sort();
+			}
+			
 			this.cache.write(out);
 			out.close();
 
@@ -429,7 +440,8 @@ public class JBuffer<K extends Object, V extends Object> implements Buffer<K, V>
 					return record;
 				}
 				else if (this.current != null && this.current.hasNext()) {
-					return this.current.next();
+					Record record = this.current.next();
+					return record;
 				}
 				else if (this.queues.size() != 0) {
 					this.current = this.queues.remove(0);
