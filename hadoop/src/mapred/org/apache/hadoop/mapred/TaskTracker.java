@@ -8,7 +8,7 @@ import java.net.InetSocketAddress;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.bufmanager.BufferManager;
+import org.apache.hadoop.bufmanager.BufferController;
 import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.fs.FSError;
 import org.apache.hadoop.fs.FileSystem;
@@ -41,7 +41,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 	protected static final String CACHEDIR = "archive";
 	protected static final String JOBCACHE = "jobcache";
 
-	protected BufferManager bufManager = null;
+	protected BufferController bufManager = null;
 	
 	protected Server taskReportServer = null;
 	protected Server bfsServer = null;
@@ -134,7 +134,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 			RPC.getServer(this, bindAddress, tmpPort, max, false, this.fConf);
 		this.taskReportServer.start();
 		
-		this.bufManager = new BufferManager(this.fConf);
+		this.bufManager = new BufferController(this.fConf);
 		this.bufManager.start();
 		
 		// get the assigned address
@@ -224,7 +224,7 @@ public abstract class TaskTracker implements MRConstants, TaskUmbilicalProtocol 
 			BufferUmbilicalProtocol bufferUmbilical =
 				(BufferUmbilicalProtocol)RPC.getProxy(BufferUmbilicalProtocol.class,
 						BufferUmbilicalProtocol.versionID,
-						BufferManager.getControlAddress(defaultConf),
+						BufferController.getServerAddress(defaultConf),
 						defaultConf);
 
 			Task task = umbilical.getTask(taskid);

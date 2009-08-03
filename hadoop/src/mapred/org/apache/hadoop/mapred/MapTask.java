@@ -34,13 +34,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.bufmanager.Buffer;
 import org.apache.hadoop.bufmanager.BufferID;
 import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
+import org.apache.hadoop.bufmanager.JBuffer;
 import org.apache.hadoop.bufmanager.Record;
+import org.apache.hadoop.bufmanager.Buffer.BufferType;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -209,7 +214,7 @@ public final class MapTask extends Task {
 
 		MapOutputCollector collector = null;
 		if (numReduceTasks > 0) {
-			collector = new BufferMapOutputCollector(this.getTaskID(), bufferUmbilical, this.getJobFile());
+			collector = new BufferMapOutputCollector(this.getTaskID(), bufferUmbilical, this.conf);
 		} else { 
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
 		}
@@ -268,23 +273,17 @@ public final class MapTask extends Task {
 	}
 
 	class BufferMapOutputCollector<K, V> implements MapOutputCollector<K, V> {
-		private BufferUmbilicalProtocol bufferUmbilical;
-
 		private JobConf job;
-
-		private String jobFile;
 
 		private Partitioner partitioner;
 
-		private List<BufferID> buffers;
+		private List<Buffer> buffers;
 		
 		private int total;
 
-		public BufferMapOutputCollector(TaskAttemptID taskid, BufferUmbilicalProtocol bufferUmbilical, 
-				String jobFile) throws IOException {
-			this.bufferUmbilical = bufferUmbilical;
-			this.jobFile = jobFile;
-			this.job = new JobConf(jobFile);
+		public BufferMapOutputCollector(TaskAttemptID taskid, BufferUmbilicalProtocol bufferUmbilical,  JobConf job) 
+		throws IOException {
+			this.job = job;
 			this.total = 0;
 
 			this.partitioner = (Partitioner)
@@ -293,16 +292,21 @@ public final class MapTask extends Task {
 			int numReduceTasks = conf.getNumReduceTasks();
 			LOG.info("numReduceTasks: " + numReduceTasks);
 
-			this.buffers = new ArrayList<BufferID>();
+			Executor executor = Executors.newCachedThreadPool();
+			this.buffers = new ArrayList<Buffer>();
 			for (int i = 0; i < numReduceTasks; i++) {
-				buffers.add(bufferUmbilical.create(taskid, i, jobFile, Buffer.BufferType.UNSORTED));
+				BufferID bufid = new BufferID(taskid, i);
+				JBuffer buf = new JBuffer(bufferUmbilical, executor, job, bufid, Buffer.BufferType.SORTED);
+				buf.start();
+				buffers.add(buf);
 			}
 		}
 
 		@Override
 		public void close() throws IOException {
-			for (BufferID bid : buffers) {
-				bufferUmbilical.close(bid);
+			for (Buffer buffer : buffers) {
+				buffer.close();
+				buffer.commit();
 			}
 		}
 
@@ -313,9 +317,8 @@ public final class MapTask extends Task {
 				throw new IOException("Illegal partition for " + key + " (" + partition + ")");
 			}
 			Record record = new Record<K, V>(key, value);
-			record.marshall(this.job);
 			this.total++;
-			this.bufferUmbilical.add(buffers.get(partition), record);
+			buffers.get(partition).add(record);
 		}
 	}
 

@@ -45,12 +45,17 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.bufmanager.Buffer;
 import org.apache.hadoop.bufmanager.BufferID;
+import org.apache.hadoop.bufmanager.BufferTransfer;
 import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
+import org.apache.hadoop.bufmanager.JBuffer;
+import org.apache.hadoop.bufmanager.JBufferGroup;
+import org.apache.hadoop.bufmanager.Record;
 import org.apache.hadoop.bufmanager.RecordGroup;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ChecksumFileSystem;
@@ -89,14 +94,11 @@ public class ReduceTask extends Task {
 
 		private TaskUmbilicalProtocol trackerUmbilical;
 
-		private BufferUmbilicalProtocol bufferUmbilical;
-
-		private BufferID bufid;
-
-		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, BufferID bufid) {
+		private BufferTransfer buffer;
+		
+		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferTransfer buffer) {
 			this.trackerUmbilical = trackerUmbilical;
-			this.bufferUmbilical = bufferUmbilical;
-			this.bufid = bufid;
+			this.buffer = buffer;
 		}
 
 		public void run() {
@@ -126,7 +128,8 @@ public class ReduceTask extends Task {
 						{
 							TaskAttemptID mapTaskId = event.getTaskAttemptId();
 							if (!mapTasks.contains(mapTaskId)) {
-								bufferUmbilical.cancelFetch(bufid, mapTaskId);
+								BufferID requestID = new BufferID(mapTaskId, this.buffer.bufid().partition());
+								buffer.cancel(requestID);
 								mapTasks.remove(mapTaskId);
 							}
 						}
@@ -143,7 +146,9 @@ public class ReduceTask extends Task {
 							String host = u.getHost();
 							TaskAttemptID mapTaskId = event.getTaskAttemptId();
 							if (!mapTasks.contains(mapTaskId)) {
-								bufferUmbilical.fetch(bufid, mapTaskId, host);
+								BufferID requestID = new BufferID(mapTaskId, this.buffer.bufid().partition());
+								System.err.println("REDUCE REQUESTING BUFFER " + requestID);
+								buffer.transfer(requestID, host);
 								mapTasks.add(mapTaskId);
 							}
 						}
@@ -254,14 +259,17 @@ public class ReduceTask extends Task {
 	public void run(JobConf job, final TaskUmbilicalProtocol umbilical, final BufferUmbilicalProtocol bufferUmbilical)
 	throws IOException {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
-
+		
 		// start thread that will handle communication with parent
 		startCommunicationThread(umbilical);
 
 		final Reporter reporter = getReporter(umbilical); 
+		
+		BufferID bufid = new BufferID(getTaskID(), getPartition());
+		JBufferGroup buffer = new JBufferGroup(bufferUmbilical, Executors.newCachedThreadPool(), job, bufid);
+		buffer.start();
 
-		BufferID bufid = bufferUmbilical.create(getTaskID(), getPartition(), getJobFile(), Buffer.BufferType.GROUPED);
-		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, bufid);
+		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, (BufferTransfer) buffer);
 		fetcher.start();
 
 		try {
@@ -270,8 +278,12 @@ public class ReduceTask extends Task {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		/* This will not close (block) until all fetches finish! */
-		bufferUmbilical.close(bufid);
+		System.err.println("REDUCE CLOSE BUFFER");
+		buffer.close();
+		System.err.println("BUFFER CLOSED");
+		
 
 		setPhase(TaskStatus.Phase.REDUCE); 
 
@@ -296,9 +308,10 @@ public class ReduceTask extends Task {
 		
 		// apply reduce function
 		try {
-			RecordGroup record = null;
-			while ((record = (RecordGroup) bufferUmbilical.getNextRecord(bufid, getTaskID())) != null) {
-				record.unmarshall(this.conf);
+			Iterator<Record> iter = buffer.iterator();
+			while (iter.hasNext()) {
+				RecordGroup record = (RecordGroup) iter.next();
+				System.err.println("REDUCE " + record);
 				reduceInputKeyCounter.increment(1);
 				reducer.reduce(record.key, record.values.iterator(), collector, reporter);
 			}

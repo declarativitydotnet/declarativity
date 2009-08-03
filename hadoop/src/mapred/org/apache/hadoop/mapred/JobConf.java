@@ -106,7 +106,7 @@ import org.apache.hadoop.util.Tool;
 public class JobConf extends Configuration {
   
   private static final Log LOG = LogFactory.getLog(JobConf.class);
-
+  
   /**
    * Construct a map/reduce job configuration.
    */
@@ -158,7 +158,7 @@ public class JobConf extends Configuration {
     super();
     addResource(config);
   }
-
+  
   /**
    * Get the user jar for the map-reduce job.
    * 
