@@ -43,12 +43,12 @@ public class Record<K extends Object, V extends Object> implements OutputCollect
     }
     
     public boolean isNull() {
-    	return this.key == null;
+    	return this.key == null && this.keyB == null;
     }
     
     @Override
     public String toString() {
-    	return this.key + " -> " + this.value;
+    	return isNull() ? "null record" : this.key + " -> " + this.value;
     }
     
     @Override
@@ -60,6 +60,10 @@ public class Record<K extends Object, V extends Object> implements OutputCollect
 	public int size() {
 		return keyB != null && valB != null ?
 				keyB.length + valB.length : 0;
+	}
+	
+	public boolean marshalled() {
+		return this.keyB != null;
 	}
 	
 	public void unmarshall(JobConf conf) throws IOException {

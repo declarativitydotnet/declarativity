@@ -21,6 +21,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -36,6 +38,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferController extends Thread implements BufferUmbilicalProtocol {
 
+    protected final FileSystem localFs;
+    
 	private String hostname;
 	
 	private Configuration conf;
@@ -54,34 +58,36 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	private int controlPort;
 
-	public BufferController(Configuration conf) throws UnknownHostException {
+	public BufferController(Configuration conf) throws IOException {
 		this.conf             = conf;
 		this.requests         = new HashMap<BufferID, List<BufferRequest>>();
 		this.completedBuffers = new HashMap<BufferID, Path>();
 		this.jobBuffers       = new HashMap<JobID, Set<BufferID>>();
 		this.executor         = Executors.newCachedThreadPool();
 		this.hostname         = InetAddress.getLocalHost().getCanonicalHostName();
+	    this.localFs          = FileSystem.getLocal(conf);
+
 	}
 
 	public static InetSocketAddress getControlAddress(Configuration conf) {
 		try {
-			int port = conf.getInt("mapred.buffer.manager.data.port", 9011);
+			int port = conf.getInt("mapred.buffer.manager.data.port", 9021);
 			String address = InetAddress.getLocalHost().getCanonicalHostName();
 			address += ":" + port;
 			return NetUtils.createSocketAddr(address);
 		} catch (Throwable t) {
-			return NetUtils.createSocketAddr("localhost:9011");
+			return NetUtils.createSocketAddr("localhost:9021");
 		}
 	}
 
 	public static InetSocketAddress getServerAddress(Configuration conf) {
 		try {
 			String address = InetAddress.getLocalHost().getCanonicalHostName();
-			int port = conf.getInt("mapred.buffer.manager.control.port", 9010);
+			int port = conf.getInt("mapred.buffer.manager.control.port", 9020);
 			address += ":" + port;
 			return NetUtils.createSocketAddr(address);
 		} catch (Throwable t) {
-			return NetUtils.createSocketAddr("localhost:9010");
+			return NetUtils.createSocketAddr("localhost:9020");
 		}
 	}
 
@@ -110,21 +116,29 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	public BufferRequest getRequest(BufferID bufid) throws IOException {
 		synchronized (this) {
 			if (this.requests.containsKey(bufid) &&
-					this.requests.size() > 0) {
-				return this.requests.get(bufid).get(0);
+					this.requests.get(bufid).size() > 0) {
+				return this.requests.get(bufid).remove(0);
 			}
 			return null;
 		}
 	}
 
 	@Override
-	public void register(BufferID bufid, Path output) throws IOException {
+	public void register(BufferID bufid, String output) throws IOException {
 		synchronized (this) {
-			this.completedBuffers.put(bufid, output);
+			System.err.println("BufferController: register final output " + output);
+			this.completedBuffers.put(bufid, new Path(output));
 			if (!this.jobBuffers.containsKey(bufid.taskid().getJobID())) {
 				this.jobBuffers.put(bufid.taskid().getJobID(), new HashSet<BufferID>());
 			}
 			this.jobBuffers.get(bufid.taskid().getJobID()).add(bufid);
+			
+			if (this.requests.containsKey(bufid)) {
+				for (BufferRequest request : this.requests.get(bufid)) {
+					this.handleCompleteBuffers(request);
+				}
+				this.requests.remove(bufid);
+			}
 		}
 	}
 
@@ -135,12 +149,11 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				register(request); // Request is local!
 			}
 			else {
-
 				Socket socket = null;
 				try {
-					InetSocketAddress src = NetUtils.createSocketAddr(request.source() + ":" + this.controlPort);
+					InetSocketAddress controlSource = NetUtils.createSocketAddr(request.source() + ":" + this.controlPort);
 					socket = new Socket();
-					socket.connect(src);
+					socket.connect(controlSource);
 					DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 					request.write(out);
 					out.flush();
@@ -176,21 +189,28 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		}
 	}
 	
-	private void register(BufferRequest request) {
+	private void register(BufferRequest request) throws IOException {
 		synchronized(this) {
+			if (this.completedBuffers.containsKey(request.bufid())) {
+				handleCompleteBuffers(request);
+				return;
+			}
+			
 			if (!this.requests.containsKey(request.bufid())) {
 				this.requests.put(request.bufid(), new LinkedList<BufferRequest>());
 			}
 			this.requests.get(request.bufid()).add(request);
 		}
-		
-		if (this.completedBuffers.containsKey(request.bufid())) {
-			handleCompleteBuffers();
-		}
+
 	}
 	
-	private void handleCompleteBuffers() {
-		
+	private void handleCompleteBuffers(BufferRequest request) throws IOException {
+		if (this.completedBuffers.containsKey(request.bufid())) {
+			Path file = this.completedBuffers.get(request.bufid());
+			FSDataInputStream fsin = localFs.open(file);
+			request.open(request.bufid(), fsin);
+			this.executor.execute(request);
+		}
 	}
 
 	@Override

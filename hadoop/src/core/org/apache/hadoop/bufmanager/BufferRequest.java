@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Writable;
@@ -30,13 +32,17 @@ import org.apache.hadoop.util.ReflectionUtils;
 public class BufferRequest implements Writable, Runnable {
 	private BufferID bufid;
 	
-	private String source;
+	private String source = null;
 	
-	private InetSocketAddress sink;
+	private InetSocketAddress sink = null;
 	
-	private JobConf conf = null;
+	private BufferTransfer buffer = null;
 	
-	private Buffer buffer = null;
+	private FSDataInputStream fsin = null;
+	
+	private DataOutputStream out = null;
+
+	private boolean open = false;
 	
 	public BufferRequest() {}
 	
@@ -46,9 +52,20 @@ public class BufferRequest implements Writable, Runnable {
 		this.sink   = sink;
 	}
 	
-	public void open(JobConf conf, Buffer buffer) {
-		this.conf = conf;
+	public String toString() {
+		return "request bufid " + bufid + " from " + source + " to " + sink;
+	}
+	
+	public void open(BufferID bufid, BufferTransfer buffer) {
+		this.bufid  = bufid;
 		this.buffer = buffer;
+		this.open   = true;
+	}
+	
+	public void open(BufferID bufid, FSDataInputStream fsin) {
+		this.bufid = bufid;
+		this.fsin = fsin;
+		this.open = true;
 	}
 	
 	public BufferID bufid() {
@@ -67,6 +84,7 @@ public class BufferRequest implements Writable, Runnable {
 	public void readFields(DataInput in) throws IOException {
 		this.bufid = new BufferID();
 		this.bufid.readFields(in);
+		
 		this.source = WritableUtils.readString(in);
 		
 		String sinkHost = WritableUtils.readString(in);
@@ -76,6 +94,9 @@ public class BufferRequest implements Writable, Runnable {
 
 	@Override
 	public void write(DataOutput out) throws IOException {
+		if (this.source == null || this.sink == null)
+			throw new IOException("No source/sink in request!");
+		
 		this.bufid.write(out);
 		WritableUtils.writeString(out, this.source);
 		
@@ -83,6 +104,10 @@ public class BufferRequest implements Writable, Runnable {
 		WritableUtils.writeVInt(out, this.sink.getPort());
 	}
 
+	public void cancel() throws IOException {
+		this.open = false;
+	}
+	
 	@Override
 	public void run() {
 		Socket socket = new Socket();
@@ -92,30 +117,41 @@ public class BufferRequest implements Writable, Runnable {
 			e.printStackTrace();
 			return;
 		}
-		
-		DataOutputStream out = null;
+
 		try {
-			if (conf.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					conf.getMapOutputCompressorClass(DefaultCodec.class);
-				CompressionCodec codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-				Compressor compressor = CodecPool.getCompressor(codec);
-				compressor.reset();
-				OutputStream compressedOut = codec.createOutputStream(socket.getOutputStream(), compressor);
-				out = new DataOutputStream(compressedOut);
-			} else {
-				out = new DataOutputStream(socket.getOutputStream());
-			}
+			out = new DataOutputStream(socket.getOutputStream());
+			if (open) this.bufid.write(out);
 			
-			Iterator<Record> iterator = this.buffer.iterator();
-			while (iterator.hasNext()) {
-				Record record = iterator.next();
-				record.write(out);
+			if (this.fsin != null) {
+				byte [] output = new byte[256];
+				int bytes = 0;
+				while (open && (bytes = this.fsin.read(output)) > 0) {
+					out.write(output, 0, bytes);
+				}
 			}
-			Record.NULL_RECORD.write(out);
+			else {
+				if (this.buffer.conf().getCompressMapOutput()) {
+					Class<? extends CompressionCodec> codecClass =
+						this.buffer.conf().getMapOutputCompressorClass(DefaultCodec.class);
+					CompressionCodec codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, this.buffer.conf());
+					Compressor compressor = CodecPool.getCompressor(codec);
+					compressor.reset();
+					OutputStream compressedOut = codec.createOutputStream(socket.getOutputStream(), compressor);
+					out = new DataOutputStream(compressedOut);
+				} else {
+					out = new DataOutputStream(socket.getOutputStream());
+				}
+
+				Iterator<Record> iterator = this.buffer.iterator();
+				while (open && iterator.hasNext()) {
+					Record record = iterator.next();
+					record.write(out);
+				}
+				if (open) Record.NULL_RECORD.write(out);
+			}
 		} catch (IOException e) { e.printStackTrace(); }
 		finally {
-			this.buffer.done(this);
+			if (this.buffer != null) this.buffer.done(this);
 			try {
 				out.flush();
 				out.close();

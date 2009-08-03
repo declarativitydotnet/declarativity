@@ -16,7 +16,7 @@ public interface BufferUmbilicalProtocol extends VersionedProtocol {
 	 * @param output Register the map output at the given path.
 	 * @throws IOException
 	 */
-	public void register(BufferID bufid, Path output) throws IOException;
+	public void register(BufferID bufid, String output) throws IOException;
 	
 	public void request(BufferRequest request) throws IOException;
 	
