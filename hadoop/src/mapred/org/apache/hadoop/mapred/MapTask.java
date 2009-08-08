@@ -40,12 +40,9 @@ import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.bufmanager.Buffer;
-import org.apache.hadoop.bufmanager.BufferID;
 import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.bufmanager.JBuffer;
-import org.apache.hadoop.bufmanager.Record;
-import org.apache.hadoop.bufmanager.Buffer.BufferType;
+import org.apache.hadoop.bufmanager.MapOutputCollector;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -214,7 +211,7 @@ public final class MapTask extends Task {
 
 		MapOutputCollector collector = null;
 		if (numReduceTasks > 0) {
-			collector = new BufferMapOutputCollector(this.getTaskID(), bufferUmbilical, this.conf);
+			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		} else { 
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
 		}
@@ -253,7 +250,7 @@ public final class MapTask extends Task {
 
 		try {
 			runner.run(this.recordReader, collector, reporter);      
-
+			collector.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw e;
@@ -263,63 +260,6 @@ public final class MapTask extends Task {
 			collector.close();
 		}
 		done(umbilical);
-	}
-
-	interface MapOutputCollector<K, V>
-	extends OutputCollector<K, V> {
-
-		public void close() throws IOException;
-
-	}
-
-	class BufferMapOutputCollector<K, V> implements MapOutputCollector<K, V> {
-		private JobConf job;
-
-		private Partitioner partitioner;
-
-		private List<Buffer> buffers;
-		
-		private int total;
-
-		public BufferMapOutputCollector(TaskAttemptID taskid, BufferUmbilicalProtocol bufferUmbilical,  JobConf job) 
-		throws IOException {
-			this.job = job;
-			this.total = 0;
-
-			this.partitioner = (Partitioner)
-			ReflectionUtils.newInstance(job.getPartitionerClass(), job);
-
-			int numReduceTasks = conf.getNumReduceTasks();
-			LOG.info("numReduceTasks: " + numReduceTasks);
-
-			Executor executor = Executors.newCachedThreadPool();
-			this.buffers = new ArrayList<Buffer>();
-			for (int i = 0; i < numReduceTasks; i++) {
-				BufferID bufid = new BufferID(taskid, i);
-				JBuffer buf = new JBuffer(bufferUmbilical, executor, job, bufid, Buffer.BufferType.SORTED);
-				buf.start();
-				buffers.add(buf);
-			}
-		}
-
-		@Override
-		public void close() throws IOException {
-			for (Buffer buffer : buffers) {
-				buffer.close();
-				buffer.commit();
-			}
-		}
-
-		@Override
-		public void collect(K key, V value) throws IOException {
-			int partition = partitioner.getPartition(key, value, this.buffers.size());
-			if (partition < 0 || partition >= this.buffers.size()) {
-				throw new IOException("Illegal partition for " + key + " (" + partition + ")");
-			}
-			Record record = new Record<K, V>(key, value);
-			this.total++;
-			buffers.get(partition).add(record);
-		}
 	}
 
 	class DirectMapOutputCollector<K, V>

@@ -39,7 +39,7 @@ import org.apache.hadoop.util.PriorityQueue;
 import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.Progressable;
 
-class Merger {  
+public class Merger {  
   private static final Log LOG = LogFactory.getLog(Merger.class);
   
   private static final long PROGRESS_BAR = 10000;
