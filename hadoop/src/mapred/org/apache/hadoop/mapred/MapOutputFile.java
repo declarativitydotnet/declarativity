@@ -33,7 +33,7 @@ public class MapOutputFile {
   private JobConf conf;
   private String jobDir;
   
-  MapOutputFile() {
+  public MapOutputFile() {
   }
 
   public MapOutputFile(JobID jobId) {

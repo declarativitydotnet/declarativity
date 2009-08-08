@@ -49,14 +49,10 @@ import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.bufmanager.Buffer;
-import org.apache.hadoop.bufmanager.BufferID;
-import org.apache.hadoop.bufmanager.BufferTransfer;
+import org.apache.hadoop.bufmanager.BufferRequest;
 import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
-import org.apache.hadoop.bufmanager.JBuffer;
-import org.apache.hadoop.bufmanager.JBufferGroup;
-import org.apache.hadoop.bufmanager.Record;
-import org.apache.hadoop.bufmanager.RecordGroup;
+import org.apache.hadoop.bufmanager.ReduceMapSink;
+import org.apache.hadoop.bufmanager.RecordHashMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ChecksumFileSystem;
 import org.apache.hadoop.fs.FileStatus;
@@ -93,12 +89,15 @@ public class ReduceTask extends Task {
 	private class MapOutputFetcher extends Thread {
 
 		private TaskUmbilicalProtocol trackerUmbilical;
-
-		private BufferTransfer buffer;
 		
-		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferTransfer buffer) {
+		private BufferUmbilicalProtocol bufferUmbilical;
+
+		private ReduceMapSink sink;
+		
+		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, ReduceMapSink sink) {
 			this.trackerUmbilical = trackerUmbilical;
-			this.buffer = buffer;
+			this.bufferUmbilical = bufferUmbilical;
+			this.sink = sink;
 		}
 
 		public void run() {
@@ -128,8 +127,7 @@ public class ReduceTask extends Task {
 						{
 							TaskAttemptID mapTaskId = event.getTaskAttemptId();
 							if (!mapTasks.contains(mapTaskId)) {
-								BufferID requestID = new BufferID(mapTaskId, this.buffer.bufid().partition());
-								buffer.cancel(requestID);
+								sink.cancel(mapTaskId);
 								mapTasks.remove(mapTaskId);
 							}
 						}
@@ -146,9 +144,7 @@ public class ReduceTask extends Task {
 							String host = u.getHost();
 							TaskAttemptID mapTaskId = event.getTaskAttemptId();
 							if (!mapTasks.contains(mapTaskId)) {
-								BufferID requestID = new BufferID(mapTaskId, this.buffer.bufid().partition());
-								System.err.println("REDUCE REQUESTING BUFFER " + requestID);
-								buffer.transfer(requestID, host);
+								bufferUmbilical.request(new BufferRequest(mapTaskId, getPartition(), host, sink.getAddress()));
 								mapTasks.add(mapTaskId);
 							}
 						}
@@ -265,24 +261,15 @@ public class ReduceTask extends Task {
 
 		final Reporter reporter = getReporter(umbilical); 
 		
-		BufferID bufid = new BufferID(getTaskID(), getPartition());
-		JBufferGroup buffer = new JBufferGroup(bufferUmbilical, Executors.newCachedThreadPool(), job, bufid);
-		buffer.start();
-
-		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, (BufferTransfer) buffer);
+		RecordHashMap recordMap = new RecordHashMap(job);
+		ReduceMapSink sink = new ReduceMapSink(job, recordMap);
+		sink.open();
+		
+		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
 		fetcher.start();
 
-		try {
-			fetcher.join();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		/* This will not close (block) until all fetches finish! */
-		System.err.println("REDUCE CLOSE BUFFER");
-		buffer.close();
-		System.err.println("BUFFER CLOSED");
+		sink.block();
 		
 
 		setPhase(TaskStatus.Phase.REDUCE); 
@@ -308,12 +295,12 @@ public class ReduceTask extends Task {
 		
 		// apply reduce function
 		try {
-			Iterator<Record> iter = buffer.iterator();
+			Iterator<RecordHashMap.Record> iter = recordMap.iterator();
 			while (iter.hasNext()) {
-				RecordGroup record = (RecordGroup) iter.next();
+				RecordHashMap.Record record = iter.next();
 				System.err.println("REDUCE " + record);
 				reduceInputKeyCounter.increment(1);
-				reducer.reduce(record.key, record.values.iterator(), collector, reporter);
+				reducer.reduce(record.key(), record.values(), collector, reporter);
 			}
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
