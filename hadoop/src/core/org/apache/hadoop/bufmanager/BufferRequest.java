@@ -13,8 +13,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
@@ -26,50 +29,91 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapOutputFile;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.TaskAttemptID;
+import org.apache.hadoop.mapred.IFile.Writer;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class BufferRequest implements Writable, Runnable {
-	private BufferID bufid;
+public class BufferRequest<K extends Object, V extends Object> implements Writable, Runnable {
+	private TaskAttemptID taskid;
+	
+	private int partition;
 	
 	private String source = null;
 	
 	private InetSocketAddress sink = null;
 	
-	private BufferTransfer buffer = null;
+	private IFile.Writer<K, V> writer = null;
 	
 	private FSDataInputStream fsin = null;
 	
-	private DataOutputStream out = null;
-
+	private long segmentLength = 0;
+	
 	private boolean open = false;
 	
 	public BufferRequest() {}
 	
-	public BufferRequest(BufferID bufid, String source, InetSocketAddress sink) {
-		this.bufid  = bufid;
+	public BufferRequest(TaskAttemptID taskid, int partition, String source, InetSocketAddress sink) {
+		this.taskid    = taskid;
+		this.partition = partition;
 		this.source = source;
 		this.sink   = sink;
 	}
 	
 	public String toString() {
-		return "request bufid " + bufid + " from " + source + " to " + sink;
+		return "request buffer task " + taskid + " partition " + partition + " from " + source + " to " + sink;
 	}
 	
-	public void open(BufferID bufid, BufferTransfer buffer) {
-		this.bufid  = bufid;
-		this.buffer = buffer;
-		this.open   = true;
+	public IFile.Writer<K, V> writer() {
+		return this.writer;
 	}
 	
-	public void open(BufferID bufid, FSDataInputStream fsin) {
-		this.bufid = bufid;
-		this.fsin = fsin;
+	public void open(JobConf conf) throws IOException {
+	    Class<K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+	    Class<V> valClass = (Class<V>)conf.getMapOutputValueClass();
+	    
+	    CompressionCodec codec = null;
+		if (conf.getCompressMapOutput()) {
+			Class<? extends CompressionCodec> codecClass =
+				conf.getMapOutputCompressorClass(DefaultCodec.class);
+			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+		}
+	    
+		Socket socket = new Socket();
+		socket.connect(this.sink);
+
+		FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
+		this.taskid.write(out);
+		out.writeLong(-1);
+		
+		this.writer = new Writer<K, V>(conf, out, keyClass, valClass, codec);
+
 		this.open = true;
 	}
 	
-	public BufferID bufid() {
-		return this.bufid;
+	public void open(Configuration conf, FileSystem localFs) throws IOException {
+		MapOutputFile mapOutputFile = new MapOutputFile();
+		mapOutputFile.setConf(conf);
+		
+		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
+		Path finalIndexFile = mapOutputFile.getOutputIndexFile(this.taskid);
+		
+		FSDataInputStream indexIn = localFs.open(finalIndexFile);
+		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+		long segmentOffset    = indexIn.readLong();
+		long rawSegmentLength = indexIn.readLong();
+		this.segmentLength    = indexIn.readLong();
+		
+		this.fsin = localFs.open(finalOutputFile);
+		this.fsin.seek(segmentOffset);
+		
+		this.open = true;
+	}
+	
+	public TaskAttemptID taskid() {
+		return this.taskid;
 	}
 	
 	public String source() {
@@ -82,8 +126,8 @@ public class BufferRequest implements Writable, Runnable {
 	
 	@Override
 	public void readFields(DataInput in) throws IOException {
-		this.bufid = new BufferID();
-		this.bufid.readFields(in);
+		this.taskid = new TaskAttemptID();
+		this.taskid.readFields(in);
 		
 		this.source = WritableUtils.readString(in);
 		
@@ -97,7 +141,7 @@ public class BufferRequest implements Writable, Runnable {
 		if (this.source == null || this.sink == null)
 			throw new IOException("No source/sink in request!");
 		
-		this.bufid.write(out);
+		this.taskid.write(out);
 		WritableUtils.writeString(out, this.source);
 		
 		WritableUtils.writeString(out, this.sink.getHostName());
@@ -110,48 +154,25 @@ public class BufferRequest implements Writable, Runnable {
 	
 	@Override
 	public void run() {
-		Socket socket = new Socket();
+		
+		DataOutputStream out = null;
 		try {
+			Socket socket = new Socket();
 			socket.connect(this.sink);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
 
-		try {
 			out = new DataOutputStream(socket.getOutputStream());
-			if (open) this.bufid.write(out);
-			
-			if (this.fsin != null) {
-				byte [] output = new byte[256];
-				int bytes = 0;
-				while (open && (bytes = this.fsin.read(output)) > 0) {
-					out.write(output, 0, bytes);
-				}
-			}
-			else {
-				if (this.buffer.conf().getCompressMapOutput()) {
-					Class<? extends CompressionCodec> codecClass =
-						this.buffer.conf().getMapOutputCompressorClass(DefaultCodec.class);
-					CompressionCodec codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, this.buffer.conf());
-					Compressor compressor = CodecPool.getCompressor(codec);
-					compressor.reset();
-					OutputStream compressedOut = codec.createOutputStream(socket.getOutputStream(), compressor);
-					out = new DataOutputStream(compressedOut);
-				} else {
-					out = new DataOutputStream(socket.getOutputStream());
-				}
+			this.taskid.write(out);
+			out.writeLong(this.segmentLength);
 
-				Iterator<Record> iterator = this.buffer.iterator();
-				while (open && iterator.hasNext()) {
-					Record record = iterator.next();
-					record.write(out);
-				}
-				if (open) Record.NULL_RECORD.write(out);
+			byte [] output = new byte[256];
+			long bytes = this.segmentLength;
+			while (open && bytes > 0) {
+				int bytesread = this.fsin.read(output, 0, (bytes < output.length ? (int) bytes : output.length));
+				out.write(output, 0, bytesread);
+				bytes -= bytesread;
 			}
 		} catch (IOException e) { e.printStackTrace(); }
 		finally {
-			if (this.buffer != null) this.buffer.done(this);
 			try {
 				out.flush();
 				out.close();
