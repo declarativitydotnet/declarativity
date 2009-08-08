@@ -46,12 +46,10 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	private Executor executor;
 
-	private Map<BufferID, List<BufferRequest>> requests;
+	private Map<TaskAttemptID, List<BufferRequest>> requests;
 	
-	private Map<BufferID, Path> completedBuffers;
+	private Set<TaskAttemptID> committed;
 	
-	private Map<JobID, Set<BufferID>> jobBuffers;
-
 	private Server server;
 
 	private ServerSocketChannel channel;
@@ -59,13 +57,12 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private int controlPort;
 
 	public BufferController(Configuration conf) throws IOException {
-		this.conf             = conf;
-		this.requests         = new HashMap<BufferID, List<BufferRequest>>();
-		this.completedBuffers = new HashMap<BufferID, Path>();
-		this.jobBuffers       = new HashMap<JobID, Set<BufferID>>();
-		this.executor         = Executors.newCachedThreadPool();
-		this.hostname         = InetAddress.getLocalHost().getCanonicalHostName();
-	    this.localFs          = FileSystem.getLocal(conf);
+		this.conf      = conf;
+		this.requests  = new HashMap<TaskAttemptID, List<BufferRequest>>();
+		this.committed = new HashSet<TaskAttemptID>();
+		this.executor  = Executors.newCachedThreadPool();
+		this.hostname  = InetAddress.getLocalHost().getCanonicalHostName();
+	    this.localFs   = FileSystem.getLocal(conf);
 
 	}
 
@@ -113,31 +110,25 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	}
 	
 	@Override
-	public BufferRequest getRequest(BufferID bufid) throws IOException {
+	public BufferRequest getRequest(TaskAttemptID taskid) throws IOException {
 		synchronized (this) {
-			if (this.requests.containsKey(bufid) &&
-					this.requests.get(bufid).size() > 0) {
-				return this.requests.get(bufid).remove(0);
+			if (this.requests.containsKey(taskid) &&
+					this.requests.get(taskid).size() > 0) {
+				return this.requests.get(taskid).remove(0);
 			}
 			return null;
 		}
 	}
 
 	@Override
-	public void register(BufferID bufid, String output) throws IOException {
+	public void commit(TaskAttemptID taskid) throws IOException {
 		synchronized (this) {
-			System.err.println("BufferController: register final output " + output);
-			this.completedBuffers.put(bufid, new Path(output));
-			if (!this.jobBuffers.containsKey(bufid.taskid().getJobID())) {
-				this.jobBuffers.put(bufid.taskid().getJobID(), new HashSet<BufferID>());
-			}
-			this.jobBuffers.get(bufid.taskid().getJobID()).add(bufid);
+			System.err.println("BufferController: register final output " + taskid);
 			
-			if (this.requests.containsKey(bufid)) {
-				for (BufferRequest request : this.requests.get(bufid)) {
-					this.handleCompleteBuffers(request);
-				}
-				this.requests.remove(bufid);
+			this.committed.add(taskid);
+			
+			if (this.requests.containsKey(taskid)) {
+				handleCompleteBuffers(taskid);
 			}
 		}
 	}
@@ -191,25 +182,25 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	private void register(BufferRequest request) throws IOException {
 		synchronized(this) {
-			if (this.completedBuffers.containsKey(request.bufid())) {
-				handleCompleteBuffers(request);
-				return;
+			if (!this.requests.containsKey(request.taskid())) {
+				this.requests.put(request.taskid(), new LinkedList<BufferRequest>());
 			}
+			this.requests.get(request.taskid()).add(request);
 			
-			if (!this.requests.containsKey(request.bufid())) {
-				this.requests.put(request.bufid(), new LinkedList<BufferRequest>());
+			if (this.committed.contains(request.taskid())) {
+				handleCompleteBuffers(request.taskid());
 			}
-			this.requests.get(request.bufid()).add(request);
 		}
 
 	}
 	
-	private void handleCompleteBuffers(BufferRequest request) throws IOException {
-		if (this.completedBuffers.containsKey(request.bufid())) {
-			Path file = this.completedBuffers.get(request.bufid());
-			FSDataInputStream fsin = localFs.open(file);
-			request.open(request.bufid(), fsin);
-			this.executor.execute(request);
+	private void handleCompleteBuffers(TaskAttemptID taskid) throws IOException {
+		if (this.requests.containsKey(taskid)) {
+			for (BufferRequest request : this.requests.get(taskid)) {
+				request.open(this.conf, this.localFs);
+				this.executor.execute(request);
+			}
+			this.requests.remove(taskid);
 		}
 	}
 

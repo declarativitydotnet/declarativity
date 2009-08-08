@@ -1,464 +1,870 @@
 package org.apache.hadoop.bufmanager;
 
-import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.UnknownHostException;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.NoSuchElementException;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.RawComparator;
-import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionOutputStream;
-import org.apache.hadoop.io.compress.Compressor;
-import org.apache.hadoop.io.compress.Decompressor;
 import org.apache.hadoop.io.compress.DefaultCodec;
+import org.apache.hadoop.io.serializer.SerializationFactory;
+import org.apache.hadoop.io.serializer.Serializer;
+import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
+import org.apache.hadoop.mapred.Merger;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Partitioner;
+import org.apache.hadoop.mapred.RawKeyValueIterator;
 import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TaskAttemptID;
+import org.apache.hadoop.mapred.TaskUmbilicalProtocol;
+import org.apache.hadoop.mapred.IFile.Reader;
+import org.apache.hadoop.mapred.IFile.Writer;
+import org.apache.hadoop.mapred.Merger.Segment;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.IndexedSorter;
+import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.QuickSort;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class JBuffer<K extends Object, V extends Object> extends Thread implements BufferTransfer<K, V> {
-	
-	protected final JobConf job;
-	
-	protected final Executor executor;
-	
-	protected BufferUmbilicalProtocol umbilical;
-	
-	protected BufferID bufid;
-	
-    private MapOutputFile mapOutputFile;
-	
-	private RecordList<K, V> cache;
-	
-    private final FileSystem localFs;
-    
-    private List<Path> spillFiles;
+public class JBuffer<K extends Object, V extends Object>  implements MapOutputCollector<K, V>, IndexedSortable {
 
-    private long curMemorySize;
-    
-    protected BufferType type;
-    
-    protected boolean closed;
-    
-    private Set<BufferRequest> requests;
-    
-    private Set<RecordStream<K, V>> streams;
-    
-	public JBuffer(BufferUmbilicalProtocol umbilical, Executor executor, JobConf job, BufferID bufid, BufferType type) throws IOException {
+	protected static class CombineOutputCollector<K extends Object, V extends Object> 
+	implements OutputCollector<K, V> {
+		private Writer<K, V> writer;
+		public CombineOutputCollector() {
+		}
+		public synchronized void setWriter(Writer<K, V> writer) {
+			this.writer = writer;
+		}
+		public synchronized void collect(K key, V value)
+		throws IOException {
+			writer.append(key, value);
+		}
+	}
+
+	/**
+	 * The size of each record in the index file for the map-outputs.
+	 */
+	public static final int MAP_OUTPUT_INDEX_RECORD_LENGTH = 24;
+
+	private final static int APPROX_HEADER_LENGTH = 150;
+
+	private final BufferUmbilicalProtocol umbilical;
+
+	private final int partitions;
+	private final Partitioner<K, V> partitioner;
+	private final JobConf job;
+	private final TaskAttemptID taskid;
+	private final Reporter reporter;
+	private final Class<K> keyClass;
+	private final Class<V> valClass;
+	private final RawComparator<K> comparator;
+	private final SerializationFactory serializationFactory;
+	private final Serializer<K> keySerializer;
+	private final Serializer<V> valSerializer;
+	private final Class<? extends Reducer> combinerClass;
+	private final CombineOutputCollector<K, V> combineCollector;
+
+	// Compression for map-outputs
+	private CompressionCodec codec = null;
+
+	// k/v accounting
+	private volatile int kvstart = 0;  // marks beginning of spill
+	private volatile int kvend = 0;    // marks beginning of collectable
+	private int kvindex = 0;           // marks end of collected
+	private final int[] kvoffsets;     // indices into kvindices
+	private final int[] kvindices;     // partition, k/v offsets into kvbuffer
+	private volatile int bufstart = 0; // marks beginning of spill
+	private volatile int bufend = 0;   // marks beginning of collectable
+	private volatile int bufvoid = 0;  // marks the point where we should stop
+	// reading at the end of the buffer
+	private int bufindex = 0;          // marks end of collected
+	private int bufmark = 0;           // marks end of record
+	private byte[] kvbuffer;           // main output buffer
+	private static final int PARTITION = 0; // partition offset in acct
+	private static final int KEYSTART = 1;  // key offset in acct
+	private static final int VALSTART = 2;  // val offset in acct
+	private static final int ACCTSIZE = 3;  // total #fields in acct
+	private static final int RECSIZE =
+		(ACCTSIZE + 1) * 4;  // acct bytes per record
+
+	// spill accounting
+	private volatile int numSpills = 0;
+	private volatile Throwable sortSpillException = null;
+	private final int softRecordLimit;
+	private final int softBufferLimit;
+	private final int minSpillsForCombine;
+	private final IndexedSorter sorter;
+	private final Object spillLock = new Object();
+	private final BlockingBuffer bb = new BlockingBuffer();
+
+	private final FileSystem localFs;
+
+	protected MapOutputFile mapOutputFile = new MapOutputFile();
+
+
+	@SuppressWarnings("unchecked")
+	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
 		this.umbilical = umbilical;
-		this.executor = executor;
+		this.taskid = taskid;
 		this.job = job;
-		this.bufid = bufid;
-		this.type = type;
-		this.closed = false;
-		
-		this.requests = new HashSet<BufferRequest>();
-		this.streams = new HashSet<RecordStream<K, V>>();
-		
-	    /* Setup the class loader */
-		/*
-		URL jar = new URL("file", null, job.getJar());
-		URL [] jars = {jar};
-		ClassLoader loader = new URLClassLoader(jars);
-		job.setClassLoader(loader);
-		*/
-		
-	    this.localFs = FileSystem.getLocal(job);
-		this.mapOutputFile = new MapOutputFile(bufid.taskid().getJobID());
+		this.reporter = reporter;
 		this.mapOutputFile.setConf(job);
 		
-	    this.spillFiles = new ArrayList<Path>();
-	    
-	    reset();
-	}
-	
-	@Override
-	public int hashCode() {
-		return this.bufid.hashCode();
-	}
-	
-	@Override
-	public boolean equals(Object o) {
-		if (o instanceof JBuffer) {
-			return this.bufid.equals(((JBuffer)o).bufid);
+		localFs = FileSystem.getLocal(job);
+		partitions = job.getNumReduceTasks();
+		partitioner = (Partitioner)
+		ReflectionUtils.newInstance(job.getPartitionerClass(), job);
+		// sanity checks
+		final float spillper = job.getFloat("io.sort.spill.percent",(float)0.8);
+		final float recper = job.getFloat("io.sort.record.percent",(float)0.05);
+		final int sortmb = job.getInt("io.sort.mb", 100);
+		if (spillper > (float)1.0 || spillper < (float)0.0) {
+			throw new IOException("Invalid \"io.sort.spill.percent\": " + spillper);
 		}
-		return false;
-	}
-	
-	public BufferType type() {
-		return this.type;
-	}
-	
-	public BufferID bufid() {
-		return this.bufid;
-	}
-	
-	private void reset() {
-		this.cache = new RecordList<K, V>(conf());
-		this.curMemorySize = 0;
-	}
-	
-	public JobConf conf() {
-		return this.job;
-	}
-	
-	protected CompressionCodec codec() {
-		if (this.job != null && job.getCompressMapOutput()) {
+		if (recper > (float)1.0 || recper < (float)0.01) {
+			throw new IOException("Invalid \"io.sort.record.percent\": " + recper);
+		}
+		if ((sortmb & 0x7FF) != sortmb) {
+			throw new IOException("Invalid \"io.sort.mb\": " + sortmb);
+		}
+		sorter = (IndexedSorter)
+		ReflectionUtils.newInstance(
+				job.getClass("map.sort.class", QuickSort.class), job);
+		// buffers and accounting
+		int maxMemUsage = sortmb << 20;
+		int recordCapacity = (int)(maxMemUsage * recper);
+		recordCapacity -= recordCapacity % RECSIZE;
+		kvbuffer = new byte[maxMemUsage - recordCapacity];
+		bufvoid = kvbuffer.length;
+		recordCapacity /= RECSIZE;
+		kvoffsets = new int[recordCapacity];
+		kvindices = new int[recordCapacity * ACCTSIZE];
+		softBufferLimit = (int)(kvbuffer.length * spillper);
+		softRecordLimit = (int)(kvoffsets.length * spillper);
+		// k/v serialization
+		comparator = job.getOutputKeyComparator();
+		keyClass = (Class<K>)job.getMapOutputKeyClass();
+		valClass = (Class<V>)job.getMapOutputValueClass();
+		serializationFactory = new SerializationFactory(job);
+		keySerializer = serializationFactory.getSerializer(keyClass);
+		keySerializer.open(bb);
+		valSerializer = serializationFactory.getSerializer(valClass);
+		valSerializer.open(bb);
+
+		// compression
+		if (job.getCompressMapOutput()) {
 			Class<? extends CompressionCodec> codecClass =
 				job.getMapOutputCompressorClass(DefaultCodec.class);
-			return (CompressionCodec) ReflectionUtils.newInstance(codecClass, job);
+			codec = (CompressionCodec)
+			ReflectionUtils.newInstance(codecClass, job);
 		}
-		return null;
+		// combiner
+		combinerClass = job.getCombinerClass();
+		combineCollector = (null != combinerClass)
+		? new CombineOutputCollector()
+		: null;
+		minSpillsForCombine = job.getInt("min.num.spills.for.combine", 3);
 	}
-	
-	public long memory() {
-		return this.curMemorySize;
-	}
-	
-	@Override
-	public final void add(Record record) throws IOException {
-		synchronized (this) {
-			if (closed) {
-				throw new IOException("Buffer is closed!");
-			}
-			if (record.marshalled()) record.unmarshall(job);
-			else record.marshall(job);
-			
-			this.cache.add(record);
-			this.curMemorySize += record.size();
-			
-			for (RecordStream stream : streams) {
-				stream.add(record);
-			}
+
+	@SuppressWarnings("unchecked")
+	public synchronized void collect(K key, V value)
+	throws IOException {
+		reporter.progress();
+		if (key.getClass() != keyClass) {
+			throw new IOException("Type mismatch in key from map: expected "
+					+ keyClass.getName() + ", recieved "
+					+ key.getClass().getName());
 		}
-	}
-	
-	@Override
-	public void transfer(BufferID bufid, String source) throws IOException {
-		/* no receivers */
-	}
-	
-	@Override
-	public void cancel(BufferID requestID) throws IOException {
-		synchronized (this) {
-			if (this.bufid.equals(requestID)) {
-				for (BufferRequest request : requests) {
-					request.cancel();
-				}
-			}
+		if (value.getClass() != valClass) {
+			throw new IOException("Type mismatch in value from map: expected "
+					+ valClass.getName() + ", recieved "
+					+ value.getClass().getName());
 		}
+		if (sortSpillException != null) {
+			throw (IOException)new IOException("Spill failed"
+			).initCause(sortSpillException);
+		}
+		try {
+			// serialize key bytes into buffer
+			int keystart = bufindex;
+			keySerializer.serialize(key);
+			if (bufindex < keystart) {
+				// wrapped the key; reset required
+				bb.reset();
+				keystart = 0;
+			}
+			// serialize value bytes into buffer
+			int valstart = bufindex;
+			valSerializer.serialize(value);
+			int valend = bb.markRecord();
+
+			if (keystart == bufindex) {
+				// if emitted records make no writes, it's possible to wrap
+				// accounting space without notice
+				bb.write(new byte[0], 0, 0);
+			}
+
+			int partition = partitioner.getPartition(key, value, partitions);
+			if (partition < 0 || partition >= partitions) {
+				throw new IOException("Illegal partition for " + key + " (" +
+						partition + ")");
+			}
+
+			// update accounting info
+			int ind = kvindex * ACCTSIZE;
+			kvoffsets[kvindex] = ind;
+			kvindices[ind + PARTITION] = partition;
+			kvindices[ind + KEYSTART] = keystart;
+			kvindices[ind + VALSTART] = valstart;
+			kvindex = (kvindex + 1) % kvoffsets.length;
+		} catch (MapBufferTooSmallException e) {
+			// LOG.info("Record too large for in-memory buffer: " + e.getMessage());
+			spillSingleRecord(key, value);
+			return;
+		}
+
 	}
-	
-	@Override
-	public void done(BufferRequest request) {
-		synchronized (this) {
-			this.requests.remove(request);
-			this.notifyAll();
+
+	/**
+	 * Compare logical range, st i, j MOD offset capacity.
+	 * Compare by partition, then by key.
+	 * @see IndexedSortable#compare
+	 */
+	public int compare(int i, int j) {
+		final int ii = kvoffsets[i % kvoffsets.length];
+		final int ij = kvoffsets[j % kvoffsets.length];
+		// sort by partition
+		if (kvindices[ii + PARTITION] != kvindices[ij + PARTITION]) {
+			return kvindices[ii + PARTITION] - kvindices[ij + PARTITION];
+		}
+		// sort by key
+		return comparator.compare(kvbuffer,
+				kvindices[ii + KEYSTART],
+				kvindices[ii + VALSTART] - kvindices[ii + KEYSTART],
+				kvbuffer,
+				kvindices[ij + KEYSTART],
+				kvindices[ij + VALSTART] - kvindices[ij + KEYSTART]);
+	}
+
+	/**
+	 * Swap logical indices st i, j MOD offset capacity.
+	 * @see IndexedSortable#swap
+	 */
+	public void swap(int i, int j) {
+		i %= kvoffsets.length;
+		j %= kvoffsets.length;
+		int tmp = kvoffsets[i];
+		kvoffsets[i] = kvoffsets[j];
+		kvoffsets[j] = tmp;
+	}
+
+	/**
+	 * Inner class managing the spill of serialized records to disk.
+	 */
+	protected class BlockingBuffer extends DataOutputStream {
+
+		public BlockingBuffer() {
+			this(new Buffer());
+		}
+
+		private BlockingBuffer(OutputStream out) {
+			super(out);
+		}
+
+		/**
+		 * Mark end of record. Note that this is required if the buffer is to
+		 * cut the spill in the proper place.
+		 */
+		public int markRecord() {
+			bufmark = bufindex;
+			return bufindex;
+		}
+
+		/**
+		 * Set position from last mark to end of writable buffer, then rewrite
+		 * the data between last mark and kvindex.
+		 * This handles a special case where the key wraps around the buffer.
+		 * If the key is to be passed to a RawComparator, then it must be
+		 * contiguous in the buffer. This recopies the data in the buffer back
+		 * into itself, but starting at the beginning of the buffer. Note that
+		 * reset() should <b>only</b> be called immediately after detecting
+		 * this condition. To call it at any other time is undefined and would
+		 * likely result in data loss or corruption.
+		 * @see #markRecord()
+		 */
+		protected synchronized void reset() throws IOException {
+			// spillLock unnecessary; If spill wraps, then
+			// bufindex < bufstart < bufend so contention is impossible
+			// a stale value for bufstart does not affect correctness, since
+			// we can only get false negatives that force the more
+			// conservative path
+			int headbytelen = bufvoid - bufmark;
+			bufvoid = bufmark;
+			if (bufindex + headbytelen < bufstart) {
+				System.arraycopy(kvbuffer, 0, kvbuffer, headbytelen, bufindex);
+				System.arraycopy(kvbuffer, bufvoid, kvbuffer, 0, headbytelen);
+				bufindex += headbytelen;
+			} else {
+				byte[] keytmp = new byte[bufindex];
+				System.arraycopy(kvbuffer, 0, keytmp, 0, bufindex);
+				bufindex = 0;
+				out.write(kvbuffer, bufmark, headbytelen);
+				out.write(keytmp);
+			}
 		}
 	}
 
-	@Override
-	public void done(BufferReceiver receiver) {
-		/* no receivers */
-	}
-	
-	
-	@Override
-	public void run() {
-		if (type() == BufferType.UNSORTED) {
-			while (! closed) {
-				try {
-					BufferRequest request = umbilical.getRequest(bufid());
-					if (request == null) {
-						sleep(100);
+	public class Buffer extends OutputStream {
+		private final byte[] scratch = new byte[1];
+
+		@Override
+		public synchronized void write(int v)
+		throws IOException {
+			scratch[0] = (byte)v;
+			write(scratch, 0, 1);
+		}
+
+		/**
+		 * Attempt to write a sequence of bytes to the collection buffer.
+		 * This method will block if the spill thread is running and it
+		 * cannot write.
+		 * @throws MapBufferTooSmallException if record is too large to
+		 *    deserialize into the collection buffer.
+		 */
+		@Override
+		public synchronized void write(byte b[], int off, int len)
+		throws IOException {
+			boolean kvfull = false;
+			boolean buffull = false;
+			boolean wrap = false;
+			synchronized(spillLock) {
+				do {
+					if (sortSpillException != null) {
+						throw (IOException)new IOException("Spill failed"
+						).initCause(sortSpillException);
 					}
-					else {
-						request.open(this.bufid, this);
-						synchronized (this) {
-							if (! closed) {
-								this.requests.add(request);
-								this.executor.execute(request);
+
+					// sufficient accounting space?
+					final int kvnext = (kvindex + 1) % kvoffsets.length;
+					kvfull = kvnext == kvstart;
+					// sufficient buffer space?
+					if (bufstart <= bufend && bufend <= bufindex) {
+						buffull = bufindex + len > bufvoid;
+						wrap = (bufvoid - bufindex) + bufstart > len;
+					} else {
+						// bufindex <= bufstart <= bufend
+						// bufend <= bufindex <= bufstart
+						wrap = false;
+						buffull = bufindex + len > bufstart;
+					}
+
+					if (kvstart == kvend) {
+						// spill thread not running
+						if (kvend != kvindex) {
+							// we have records we can spill
+							final boolean kvsoftlimit = (kvnext > kvend)
+							? kvnext - kvend > softRecordLimit
+									: kvend - kvnext <= kvoffsets.length - softRecordLimit;
+							final boolean bufsoftlimit = (bufindex > bufend)
+							? bufindex - bufend > softBufferLimit
+									: bufend - bufindex < bufvoid - softBufferLimit;
+							if (kvsoftlimit || bufsoftlimit || (buffull && !wrap)) {
+								/*
+                  LOG.info("Spilling map output: buffer full = " + bufsoftlimit+
+                           " and record full = " + kvsoftlimit);
+                  LOG.info("bufstart = " + bufstart + "; bufend = " + bufmark +
+                           "; bufvoid = " + bufvoid);
+                  LOG.info("kvstart = " + kvstart + "; kvend = " + kvindex +
+                           "; length = " + kvoffsets.length);
+								 */
+								kvend = kvindex;
+								bufend = bufmark;
+								// TODO No need to recreate this thread every time
+								SpillThread t = new SpillThread();
+								t.setDaemon(true);
+								t.setName("SpillThread");
+								t.start();
 							}
-							else {
-								request.cancel();
+						} else if (buffull && !wrap) {
+							// We have no buffered records, and this record is too large
+							// to write into kvbuffer. We must spill it directly from
+							// collect
+							final int size = ((bufend <= bufindex)
+									? bufindex - bufend
+											: (bufvoid - bufend) + bufindex) + len;
+							bufstart = bufend = bufindex = bufmark = 0;
+							kvstart = kvend = kvindex = 0;
+							bufvoid = kvbuffer.length;
+							throw new MapBufferTooSmallException(size + " bytes");
+						}
+					}
+
+					if (kvfull || (buffull && !wrap)) {
+						while (kvstart != kvend) {
+							reporter.progress();
+							try {
+								spillLock.wait();
+							} catch (InterruptedException e) {
+								throw (IOException)new IOException(
+										"Buffer interrupted while waiting for the writer"
+								).initCause(e);
 							}
 						}
 					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				} while (kvfull || (buffull && !wrap));
 			}
+			// here, we know that we have sufficient space to write
+			if (buffull) {
+				final int gaplen = bufvoid - bufindex;
+				System.arraycopy(b, off, kvbuffer, bufindex, gaplen);
+				len -= gaplen;
+				off += gaplen;
+				bufindex = 0;
+			}
+			System.arraycopy(b, off, kvbuffer, bufindex, len);
+			bufindex += len;
 		}
 	}
-	
-	/**
-	 * Get an iterator to the records in this buffer.
-	 * @param sorted Sorted order by key?
-	 * @return Record iterator
-	 * @throws IOException 
-	 */
-	public Iterator<Record<K, V>> iterator() throws IOException {
-		synchronized (this) {
-			while (this.type == BufferType.SORTED && !closed) {
-				try { this.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			if (this.type == BufferType.SORTED) {
-				this.cache.sort();
-			}
-			
-			List<Record.RecordIterator<K, V>> queues = new ArrayList<Record.RecordIterator<K, V>>();
-			
-			queues.add(this.cache.iterator());
-			for (Path file : this.spillFiles) {
-				FSDataInputStream in = localFs.open(file);
-				queues.add(new FSRecordIterator(this.job, in));
-			}
-			
-			if (this.type == BufferType.SORTED) {
-				return new RecordMerger(this.job.getOutputKeyComparator(), queues);
-			}
-			else {
-				RecordStream stream = new RecordStream(queues);
-				this.streams.add(stream);
-				return stream;
-			}
-		}
-	}
-	
-	
-	
-	@Override
-	public void close() throws IOException {
-		if (closed) return; // already closed
-		
-		synchronized (this) {
-			this.closed = true;
-			for (RecordStream stream : streams) {
-				stream.done(true);
-			}
-			
-			/* Don't close until all requests have been satisfied */
-			while (this.requests.size() > 0) {
+
+	public synchronized void flush() throws IOException {
+		// LOG.info("Starting flush of map output");
+		synchronized (spillLock) {
+			while (kvstart != kvend) {
 				try {
-					this.wait();
+					reporter.progress();
+					spillLock.wait();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					throw (IOException)new IOException(
+							"Buffer interrupted while waiting for the writer"
+					).initCause(e);
 				}
 			}
-			this.closed = true;
+		}
+		if (sortSpillException != null) {
+			throw (IOException)new IOException("Spill failed"
+			).initCause(sortSpillException);
+		}
+		if (kvend != kvindex) {
+			/*
+        LOG.info("bufstart = " + bufstart + "; bufend = " + bufmark +
+                 "; bufvoid = " + bufvoid);
+        LOG.info("kvstart = " + kvstart + "; kvend = " + kvindex +
+                 "; length = " + kvoffsets.length);
+			 */
+			kvend = kvindex;
+			bufend = bufmark;
+			sortAndSpill();
+		}
+		// release sort buffer before the merge
+		kvbuffer = null;
+		mergeParts();
+		umbilical.commit(this.taskid);
+	}
+
+	public void close() { }
+
+	protected class SpillThread extends Thread {
+
+		@Override
+		public void run() {
+			try {
+				sortAndSpill();
+			} catch (Throwable e) {
+				sortSpillException = e;
+			} finally {
+				synchronized(spillLock) {
+					if (bufend < bufindex && bufindex < bufstart) {
+						bufvoid = kvbuffer.length;
+					}
+					kvstart = kvend;
+					bufstart = bufend;
+					spillLock.notify();
+				}
+			}
 		}
 	}
-	
-	public void commit() throws IOException {
-		synchronized (this) {
-			if (!closed) throw new IOException ("Can't sort and flush until closed!");
 
-			Path filename = mapOutputFile.getOutputFileForWrite(this.bufid.taskid(), Integer.MAX_VALUE);
-			FSDataOutputStream out = localFs.create(filename);
-			// compression
-			if (job.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					job.getMapOutputCompressorClass(DefaultCodec.class);
-				CompressionCodec codec = (CompressionCodec)
-				ReflectionUtils.newInstance(codecClass, job);
-				Compressor compressor = CodecPool.getCompressor(codec);
-				compressor.reset();
-				CompressionOutputStream compressedOut = codec.createOutputStream(out, compressor);
-				out = new FSDataOutputStream(compressedOut,  null);
-			}
-
-			Iterator<Record<K, V>> iterator = iterator();
-			while (iterator.hasNext()) {
-				iterator.next().write(out);
-			}
-			Record.NULL_RECORD.write(out);
-			out.close();
-
-			this.spillFiles.clear();
-			this.spillFiles.add(filename);
-			
-			this.umbilical.register(bufid, filename.toString());
-		}
-	}
-	
-	public void flush() throws IOException {
-		synchronized (this) {
+	private void sortAndSpill() throws IOException {
+		//approximate the length of the output file to be the length of the
+		//buffer + header lengths for the partitions
+		long size = (bufend >= bufstart
+				? bufend - bufstart
+						: (bufvoid - bufend) + bufstart) +
+						partitions * APPROX_HEADER_LENGTH;
+		FSDataOutputStream out = null;
+		FSDataOutputStream indexOut = null;
+		try {
 			// create spill file
-			Path filename = mapOutputFile.getSpillFileForWrite(this.bufid.taskid(), this.spillFiles.size(), curMemorySize);
-			this.spillFiles.add(filename);
-			
-			FSDataOutputStream out = localFs.create(filename);
-			// compression
-			if (job.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					job.getMapOutputCompressorClass(DefaultCodec.class);
-				CompressionCodec codec = (CompressionCodec)
-				ReflectionUtils.newInstance(codecClass, job);
-				Compressor compressor = CodecPool.getCompressor(codec);
-				compressor.reset();
-				CompressionOutputStream compressedOut = codec.createOutputStream(out, compressor);
-				out = new FSDataOutputStream(compressedOut,  null);
-			}
+			Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
+			out = localFs.create(filename);
+			// create spill index
+			Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
+					this.taskid, numSpills,
+					partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			indexOut = localFs.create(indexFilename);
+			final int endPosition = (kvend > kvstart)
+			? kvend
+					: kvoffsets.length + kvend;
+			sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
+			int spindex = kvstart;
+			InMemValBytes value = new InMemValBytes();
+			for (int i = 0; i < partitions; ++i) {
+				IFile.Writer<K, V> writer = null;
+				try {
+					long segmentStart = out.getPos();
+					writer = new Writer<K, V>(job, out, keyClass, valClass, codec);
+					if (null == combinerClass) {
+						// spill directly
+						DataInputBuffer key = new DataInputBuffer();
+						while (spindex < endPosition &&
+								kvindices[kvoffsets[spindex % kvoffsets.length]
+								                    + PARTITION] == i) {
+							final int kvoff = kvoffsets[spindex % kvoffsets.length];
+							getVBytesForOffset(kvoff, value);
+							key.reset(kvbuffer, kvindices[kvoff + KEYSTART],
+									(kvindices[kvoff + VALSTART] - 
+											kvindices[kvoff + KEYSTART]));
+							writer.append(key, value);
+							++spindex;
+						}
+					} else {
+						int spstart = spindex;
+						while (spindex < endPosition &&
+								kvindices[kvoffsets[spindex % kvoffsets.length]
+								                    + PARTITION] == i) {
+							++spindex;
+						}
+						// Note: we would like to avoid the combiner if we've fewer
+						// than some threshold of records for a partition
+						if (spstart != spindex) {
+							combineCollector.setWriter(writer);
+							RawKeyValueIterator kvIter =
+								new MRResultIterator(spstart, spindex);
+							combineAndSpill(kvIter);
+						}
+					}
 
-			if (this.type == BufferType.SORTED) {
-				this.cache.sort();
-			}
-			
-			this.cache.write(out);
-			out.close();
+					// close the writer
+					writer.close();
 
-			reset();
+					// write the index as <offset, raw-length, compressed-length> 
+					writeIndexRecord(indexOut, out, segmentStart, writer);
+					writer = null;
+				} finally {
+					if (null != writer) writer.close();
+				}
+			}
+			// LOG.info("Finished spill " + numSpills);
+			++numSpills;
+		} finally {
+			if (out != null) out.close();
+			if (indexOut != null) indexOut.close();
 		}
 	}
-	
-	private class RecordMerger<K extends Object, V extends Object> implements Iterator<Record> {
-		
-		private RawComparator<K> comparator;
-		
-		private List<Record.RecordIterator<K, V>> queues;
-		
-		public RecordMerger(RawComparator<K> comparator, List<Record.RecordIterator<K, V>> queues) {
-			this.comparator = comparator;
-			this.queues = queues;
-		}
-		
-		@Override
-		public Record next() {
-			Record.RecordIterator<K, V> iter = null;
-			for (Record.RecordIterator<K, V> queue : queues) {
-				if (queue.hasNext()) {
-					if (iter == null) {
-						iter = queue;
+
+	/**
+	 * Handles the degenerate case where serialization fails to fit in
+	 * the in-memory buffer, so we must spill the record from collect
+	 * directly to a spill file. Consider this "losing".
+	 */
+	@SuppressWarnings("unchecked")
+	private void spillSingleRecord(final K key, final V value) 
+	throws IOException {
+		long size = kvbuffer.length + partitions * APPROX_HEADER_LENGTH;
+		FSDataOutputStream out = null;
+		FSDataOutputStream indexOut = null;
+		final int partition = partitioner.getPartition(key, value, partitions);
+		try {
+			// create spill file
+			Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, numSpills, size);
+			out = localFs.create(filename);
+			// create spill index
+			Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
+					this.taskid, numSpills,
+					partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			indexOut = localFs.create(indexFilename);
+			// we don't run the combiner for a single record
+			for (int i = 0; i < partitions; ++i) {
+				IFile.Writer writer = null;
+				try {
+					long segmentStart = out.getPos();
+					// Create a new codec, don't care!
+					writer = new IFile.Writer(job, out, keyClass, valClass, codec);
+
+					if (i == partition) {
+						if (job.getCombineOnceOnly()) {
+							Reducer combiner =
+								(Reducer)ReflectionUtils.newInstance(combinerClass, job);
+							combineCollector.setWriter(writer);
+							combiner.reduce(key, new Iterator<V>() {
+								private boolean done = false;
+								public boolean hasNext() { return !done; }
+								public V next() {
+									if (done)
+										throw new NoSuchElementException();
+									done = true;
+									return value;
+								}
+								public void remove() {
+									throw new UnsupportedOperationException();
+								}
+							}, combineCollector, reporter);
+						} else {
+							final long recordStart = out.getPos();
+							writer.append(key, value);
+						}
 					}
-					else if (comparator.compare(queue.peek().key, iter.peek().key) < 0) {
-						iter = queue;
-					}
+					writer.close();
+
+					// index record
+					writeIndexRecord(indexOut, out, segmentStart, writer);
+				} catch (IOException e) {
+					if (null != writer) writer.close();
+					throw e;
 				}
 			}
-			return iter != null ? iter.next() : null;
+			++numSpills;
+		} finally {
+			if (out != null) out.close();
+			if (indexOut != null) indexOut.close();
 		}
-
-		@Override
-		public boolean hasNext() {
-			for (Record.RecordIterator<K, V> queue : queues) {
-				if (queue.hasNext()) return true;
-			}
-			return false;
-		}
-
-		@Override
-		public void remove() {
-			/* Not supported */
-		}
-
-	}
-	
-	private static class RecordStream<K extends Object, V extends Object> implements Iterator<Record<K, V>> {
-		private boolean done;
-		
-		private List<Record> cache;
-		
-		private List<Record.RecordIterator<K, V>> queues;
-		
-		private Record.RecordIterator<K, V> current;
-		
-		public RecordStream(List<Record.RecordIterator<K, V>> queues) {
-			this.cache = new ArrayList<Record>();
-			this.done = false;
-			this.queues = queues;
-			this.current = queues.size() > 0 ? queues.remove(0) : null;
-		}
-		
-		public void add(Record record) {
-			synchronized (cache) {
-				this.cache.add(record);
-				this.cache.notify();
-			}
-		}
-		
-		public void done(boolean value) {
-			synchronized (cache) {
-				this.done = value;
-				this.cache.notify();
-			}
-		}
-
-		@Override
-		public boolean hasNext() {
-			synchronized (cache) {
-				if (this.current != null && this.current.hasNext()) return true;
-				
-				while (!done && this.cache.size() == 0) {
-					try {
-						this.cache.wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-				return !done || this.cache.size() > 0;
-			}
-		}
-
-		@Override
-		public Record<K, V> next() {
-			/* Drain cache first */
-			synchronized (cache) {
-				if (cache.size() > 0) {
-					Record record = cache.remove(0);
-					return record;
-				}
-				else if (this.current != null && this.current.hasNext()) {
-					Record record = this.current.next();
-					return record;
-				}
-				else if (this.queues.size() != 0) {
-					this.current = this.queues.remove(0);
-					return next();
-				}
-				else {
-					this.current = null;
-				}
-			}
-			return hasNext() ? next() : null;
-		}
-
-		@Override
-		public void remove() {
-			/* Not supported. */
-		}
-		
 	}
 
-}
+	/**
+	 * Given an offset, populate vbytes with the associated set of
+	 * deserialized value bytes. Should only be called during a spill.
+	 */
+	private void getVBytesForOffset(int kvoff, InMemValBytes vbytes) {
+		final int nextindex = (kvoff / ACCTSIZE ==
+			(kvend - 1 + kvoffsets.length) % kvoffsets.length)
+			? bufend
+					: kvindices[(kvoff + ACCTSIZE + KEYSTART) % kvindices.length];
+		int vallen = (nextindex >= kvindices[kvoff + VALSTART])
+		? nextindex - kvindices[kvoff + VALSTART]
+		                        : (bufvoid - kvindices[kvoff + VALSTART]) + nextindex;
+		vbytes.reset(kvbuffer, kvindices[kvoff + VALSTART], vallen);
+	}
+
+	@SuppressWarnings("unchecked")
+	private void combineAndSpill(RawKeyValueIterator kvIter) throws IOException {
+		Reducer combiner =
+			(Reducer)ReflectionUtils.newInstance(combinerClass, job);
+		try {
+			ValuesIterator values = new ValuesIterator(
+					kvIter, comparator, keyClass, valClass, job, reporter);
+			while (values.more()) {
+				combiner.reduce(values.getKey(), values, combineCollector, reporter);
+				values.nextKey();
+				// indicate we're making progress
+				reporter.progress();
+			}
+		} finally {
+			combiner.close();
+		}
+	}
+
+	/**
+	 * Inner class wrapping valuebytes, used for appendRaw.
+	 */
+	protected class InMemValBytes extends DataInputBuffer {
+		private byte[] buffer;
+		private int start;
+		private int length;
+
+		public void reset(byte[] buffer, int start, int length) {
+			this.buffer = buffer;
+			this.start = start;
+			this.length = length;
+
+			if (start + length > bufvoid) {
+				this.buffer = new byte[this.length];
+				final int taillen = bufvoid - start;
+				System.arraycopy(buffer, start, this.buffer, 0, taillen);
+				System.arraycopy(buffer, 0, this.buffer, taillen, length-taillen);
+				this.start = 0;
+			}
+
+			super.reset(this.buffer, this.start, this.length);
+		}
+	}
+
+	protected class MRResultIterator implements RawKeyValueIterator {
+		private final DataInputBuffer keybuf = new DataInputBuffer();
+		private final InMemValBytes vbytes = new InMemValBytes();
+		private final int end;
+		private int current;
+		public MRResultIterator(int start, int end) {
+			this.end = end;
+			current = start - 1;
+		}
+		public boolean next() throws IOException {
+			return ++current < end;
+		}
+		public DataInputBuffer getKey() throws IOException {
+			final int kvoff = kvoffsets[current % kvoffsets.length];
+			keybuf.reset(kvbuffer, kvindices[kvoff + KEYSTART],
+					kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]);
+			return keybuf;
+		}
+		public DataInputBuffer getValue() throws IOException {
+			getVBytesForOffset(kvoffsets[current % kvoffsets.length], vbytes);
+			return vbytes;
+		}
+		public Progress getProgress() {
+			return null;
+		}
+		public void close() { }
+	}
+
+	private void mergeParts() throws IOException {
+		// get the approximate size of the final output/index files
+		long finalOutFileSize = 0;
+		long finalIndexFileSize = 0;
+		Path [] filename = new Path[numSpills];
+		Path [] indexFileName = new Path[numSpills];
+		FileSystem localFs = FileSystem.getLocal(job);
+
+		for(int i = 0; i < numSpills; i++) {
+			filename[i] = mapOutputFile.getSpillFile(this.taskid, i);
+			indexFileName[i] = mapOutputFile.getSpillIndexFile(this.taskid, i);
+			finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
+		}
+
+		if (numSpills == 1) { //the spill is the final output
+			localFs.rename(filename[0], 
+					new Path(filename[0].getParent(), "file.out"));
+			localFs.rename(indexFileName[0], 
+					new Path(indexFileName[0].getParent(),"file.out.index"));
+			return;
+		}
+		//make correction in the length to include the sequence file header
+		//lengths for each partition
+		finalOutFileSize += partitions * APPROX_HEADER_LENGTH;
+
+		finalIndexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
+
+		Path finalOutputFile = mapOutputFile.getOutputFileForWrite(this.taskid, 
+				finalOutFileSize);
+		Path finalIndexFile = mapOutputFile.getOutputIndexFileForWrite(
+				this.taskid, finalIndexFileSize);
+
+		//The output stream for the final single output file
+		FSDataOutputStream finalOut = localFs.create(finalOutputFile, true, 
+				4096);
+
+		//The final index file output stream
+		FSDataOutputStream finalIndexOut = localFs.create(finalIndexFile, true,
+				4096);
+		if (numSpills == 0) {
+			//create dummy files
+			for (int i = 0; i < partitions; i++) {
+				long segmentStart = finalOut.getPos();
+				Writer<K, V> writer = new Writer<K, V>(job, finalOut, 
+						keyClass, valClass, codec);
+				writer.close();
+				writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
+			}
+			finalOut.close();
+			finalIndexOut.close();
+			return;
+		}
+		{
+			for (int parts = 0; parts < partitions; parts++){
+				//create the segments to be merged
+				List<Segment<K, V>> segmentList =
+					new ArrayList<Segment<K, V>>(numSpills);
+				for(int i = 0; i < numSpills; i++) {
+					FSDataInputStream indexIn = localFs.open(indexFileName[i]);
+					indexIn.seek(parts * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+					long segmentOffset = indexIn.readLong();
+					long rawSegmentLength = indexIn.readLong();
+					long segmentLength = indexIn.readLong();
+					indexIn.close();
+					FSDataInputStream in = localFs.open(filename[i]);
+					in.seek(segmentOffset);
+					Segment<K, V> s = 
+						new Segment<K, V>(new Reader<K, V>(job, in, segmentLength, codec),
+								true);
+					segmentList.add(i, s);
+
+				}
+
+				//merge
+				@SuppressWarnings("unchecked")
+				RawKeyValueIterator kvIter = 
+					Merger.merge(job, localFs, 
+							keyClass, valClass,
+							segmentList, job.getInt("io.sort.factor", 100), 
+							new Path(this.taskid.toString()), 
+							job.getOutputKeyComparator(), reporter);
+
+				//write merged output to disk
+				long segmentStart = finalOut.getPos();
+				Writer<K, V> writer = 
+					new Writer<K, V>(job, finalOut, keyClass, valClass, codec);
+				if (null == combinerClass || job.getCombineOnceOnly() ||
+						numSpills < minSpillsForCombine) {
+					Merger.writeFile(kvIter, writer, reporter);
+				} else {
+					combineCollector.setWriter(writer);
+					combineAndSpill(kvIter);
+				}
+
+				//close
+				writer.close();
+
+				//write index record
+				writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
+			}
+			finalOut.close();
+			finalIndexOut.close();
+			//cleanup
+			for(int i = 0; i < numSpills; i++) {
+				localFs.delete(filename[i], true);
+				localFs.delete(indexFileName[i], true);
+			}
+		}
+	}
+
+	private void writeIndexRecord(FSDataOutputStream indexOut, 
+			FSDataOutputStream out, long start, 
+			Writer<K, V> writer) 
+	throws IOException {
+		//when we write the offset/decompressed-length/compressed-length to  
+		//the final index file, we write longs for both compressed and 
+		//decompressed lengths. This helps us to reliably seek directly to 
+		//the offset/length for a partition when we start serving the 
+		//byte-ranges to the reduces. We probably waste some space in the 
+		//file by doing this as opposed to writing VLong but it helps us later on.
+		// index record: <offset, raw-length, compressed-length> 
+		//StringBuffer sb = new StringBuffer();
+		indexOut.writeLong(start);
+		indexOut.writeLong(writer.getRawLength());
+		long segmentLength = out.getPos() - start;
+		indexOut.writeLong(segmentLength);
+	}
+
+	/**
+	 * Exception indicating that the allocated sort buffer is insufficient
+	 * to hold the current record.
+	 */
+	@SuppressWarnings("serial")
+	private static class MapBufferTooSmallException extends IOException {
+		public MapBufferTooSmallException(String s) {
+			super(s);
+		}
+	}
+} // MapOutputBuffer
