@@ -218,7 +218,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		InMemValBytes value = new InMemValBytes();
 		
 		int kvoff = kvoffsets[spindex % kvoffsets.length];
-		System.err.println("KV OFFSET " + kvoff);
 		
 		int tmpvoid = bufvoid;
 		bufvoid = bufmark;
