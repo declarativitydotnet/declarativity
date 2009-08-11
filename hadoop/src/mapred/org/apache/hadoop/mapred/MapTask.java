@@ -239,7 +239,7 @@ public final class MapTask extends Task {
 				}
 			}
 		};
-		requestThread.start();
+		// requestThread.start();
 		
 		// start thread that will handle communication with parent
 		startCommunicationThread(umbilical);
@@ -275,7 +275,7 @@ public final class MapTask extends Task {
 
 		try {
 			runner.run(this.recordReader, collector, reporter);      
-			// collector.flush();
+			collector.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw e;
