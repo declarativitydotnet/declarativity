@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,11 +33,24 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.TaskAttemptID;
+import org.apache.hadoop.mapred.IFile.Reader;
 import org.apache.hadoop.mapred.IFile.Writer;
+import org.apache.hadoop.mapred.Merger.Segment;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class BufferRequest<K extends Object, V extends Object> implements Writable, Runnable {
+public class BufferRequest<K extends Object, V extends Object> implements Comparable<BufferRequest>, Writable {
+	private class MapFile {
+		public FSDataInputStream fsin;
+		public long length;
+		
+		public MapFile(FSDataInputStream fsin, long length) {
+			this.fsin = fsin;
+			this.length = length;
+		}
+		
+	}
+	
 	private TaskAttemptID taskid;
 	
 	private int partition;
@@ -47,30 +61,41 @@ public class BufferRequest<K extends Object, V extends Object> implements Writab
 	
 	private IFile.Writer<K, V> writer = null;
 	
-	private FSDataInputStream fsin = null;
-	
-	private long segmentLength = 0;
+	private List<MapFile> files;
 	
 	private boolean open = false;
 	
-	public BufferRequest() {}
+	private FSDataOutputStream out = null;
+	
+	public BufferRequest() {
+		this.files = new ArrayList<MapFile>();
+	}
 	
 	public BufferRequest(TaskAttemptID taskid, int partition, String source, InetSocketAddress sink) {
 		this.taskid    = taskid;
 		this.partition = partition;
 		this.source = source;
 		this.sink   = sink;
+		this.files = new ArrayList<MapFile>();
 	}
 	
 	public String toString() {
 		return "request buffer task " + taskid + " partition " + partition + " from " + source + " to " + sink;
 	}
 	
-	public IFile.Writer<K, V> writer() {
-		return this.writer;
+	public Integer partition() {
+		return this.partition;
 	}
 	
-	public void open(JobConf conf) throws IOException {
+	public void add(DataInputBuffer key, DataInputBuffer value) throws IOException {
+		synchronized (this) {
+			if (open) {
+				this.writer.append(key, value);
+			}
+		}
+	}
+	
+	public void open(JobConf conf, FileSystem localFs, int numSpills) throws IOException {
 	    Class<K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
 	    Class<V> valClass = (Class<V>)conf.getMapOutputValueClass();
 	    
@@ -81,14 +106,26 @@ public class BufferRequest<K extends Object, V extends Object> implements Writab
 			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
 		}
 	    
-		Socket socket = new Socket();
-		socket.connect(this.sink);
-
-		FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
-		this.taskid.write(out);
-		out.writeLong(-1);
-		
+		this.out = connect(-1);
 		this.writer = new Writer<K, V>(conf, out, keyClass, valClass, codec);
+		
+		MapOutputFile mapOutputFile = new MapOutputFile();
+		mapOutputFile.setConf(conf);
+		for(int i = 0; i < numSpills; i++) {
+			Path outputFile = mapOutputFile.getSpillFile(this.taskid, i);
+			Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, i);
+			
+			FSDataInputStream indexIn = localFs.open(indexFile);
+			indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			
+			long segmentOffset = indexIn.readLong();
+			long rawSegmentLength = indexIn.readLong();
+			long segmentLength = indexIn.readLong();
+			indexIn.close();
+			FSDataInputStream in = localFs.open(outputFile);
+			in.seek(segmentOffset);
+			this.files.add(new MapFile(in, segmentLength));
+		}
 
 		this.open = true;
 	}
@@ -104,12 +141,24 @@ public class BufferRequest<K extends Object, V extends Object> implements Writab
 		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 		long segmentOffset    = indexIn.readLong();
 		long rawSegmentLength = indexIn.readLong();
-		this.segmentLength    = indexIn.readLong();
+		long segmentLength    = indexIn.readLong();
 		
-		this.fsin = localFs.open(finalOutputFile);
-		this.fsin.seek(segmentOffset);
+		FSDataInputStream outIn = localFs.open(finalOutputFile);
+		outIn.seek(segmentOffset);
+		this.files.add(new MapFile(outIn, segmentLength));
+		
+		this.out = connect(segmentLength);
 		
 		this.open = true;
+	}
+	
+	private FSDataOutputStream connect(long length) throws IOException {
+		Socket socket = new Socket();
+		socket.connect(this.sink);
+		FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
+		this.taskid.write(out);
+		out.writeLong(length);
+		return out;
 	}
 	
 	public TaskAttemptID taskid() {
@@ -148,35 +197,47 @@ public class BufferRequest<K extends Object, V extends Object> implements Writab
 		WritableUtils.writeVInt(out, this.sink.getPort());
 	}
 
-	public void cancel() throws IOException {
-		this.open = false;
+	public void close() throws IOException {
+		synchronized (this) {
+			System.err.println("CLOSING BUFFER REQUEST " + this);
+			open = false;
+			if (this.writer != null) {
+				this.writer.close();
+				this.out.close();
+			}
+			else {
+				out.close();
+			}
+		}
 	}
 	
-	@Override
-	public void run() {
-		
-		DataOutputStream out = null;
-		try {
-			Socket socket = new Socket();
-			socket.connect(this.sink);
-
-			out = new DataOutputStream(socket.getOutputStream());
-			this.taskid.write(out);
-			out.writeLong(this.segmentLength);
-
-			byte [] output = new byte[256];
-			long bytes = this.segmentLength;
+	public synchronized void flushBuffer() throws IOException {
+		out.flush();
+	}
+	
+	public synchronized void flushFile() throws IOException {
+		byte [] output = new byte[1500];
+		for (MapFile file : files) {
+			long bytes = file.length;
 			while (open && bytes > 0) {
-				int bytesread = this.fsin.read(output, 0, (bytes < output.length ? (int) bytes : output.length));
-				out.write(output, 0, bytesread);
+				int bytesread = file.fsin.read(output, 0, Math.min((int) bytes, output.length));
+				synchronized (this) {
+					out.write(output, 0, bytesread);
+					System.err.println("FLUSH FILE SENT " + bytesread + " bytes");
+				}
 				bytes -= bytesread;
 			}
-		} catch (IOException e) { e.printStackTrace(); }
-		finally {
-			try {
-				out.flush();
-				out.close();
-			} catch (IOException e) { e.printStackTrace(); }
+		}
+		this.files.clear();
+	}
+
+	@Override
+	public int compareTo(BufferRequest o) {
+		if (this.taskid.compareTo(o.taskid) != 0) {
+			return this.taskid.compareTo(o.taskid);
+		}
+		else {
+			return o.partition - this.partition;
 		}
 	}
 }

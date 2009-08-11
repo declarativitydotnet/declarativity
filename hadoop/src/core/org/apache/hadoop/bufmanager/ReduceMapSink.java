@@ -71,6 +71,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	    
 		/** The server socket and selector registration */
 		this.server = ServerSocketChannel.open();
+		this.server.configureBlocking(true);
 		this.server.socket().bind(new InetSocketAddress(0));
 	}
 	
@@ -89,9 +90,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				try {
 					while (server.isOpen()) {
 						SocketChannel channel = server.accept();
+						channel.configureBlocking(true);
 						DataInputStream input = new DataInputStream(channel.socket().getInputStream());
 						Connection conn = new Connection(input, ReduceMapSink.this, conf);
-						synchronized (connections) {
+						synchronized (this) {
 							connections.put(conn.taskid(), conn);
 						}
 						executor.execute(conn);
@@ -125,19 +127,21 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	}
 	
 	public void cancel(TaskAttemptID taskid) {
-		synchronized (connections) {
+		synchronized (this) {
 			if (this.connections.containsKey(taskid)) {
-				this.connections.get(taskid).cancel();
 				this.connections.remove(taskid);
+				this.connections.get(taskid).close();
 			}
 		}
 	}
 	
 	private void done(Connection connection) {
 		synchronized (this) {
-			this.successful.add(connection.taskid().getTaskID());
-			if (this.successful.size() == numMapTasks) {
-				this.notify();
+			if (this.connections.containsKey(connection.taskid())) {
+				this.successful.add(connection.taskid().getTaskID());
+				if (this.successful.size() == numMapTasks) {
+					this.notify();
+				}
 			}
 		}
 	}
@@ -155,12 +159,14 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	    private Deserializer<V> valDeserializer;
 	    
 		private ReduceMapSink<K, V> sink;
+		private DataInputStream input;
 		
-		private boolean cancel;
+		private boolean open;
 		
 		public Connection(DataInputStream input, ReduceMapSink<K, V> sink, JobConf conf) throws IOException {
+			this.input = input;
 			this.sink = sink;
-			this.cancel = false;
+			this.open = true;
 			
 			/** How do unmarshall the key, value pairs. */
 			Class keyClass = conf.getMapOutputKeyClass();
@@ -180,16 +186,19 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			this.taskid.readFields(input);
 			long size = input.readLong();
 			
-			this.reader = new IFile.Reader<K, V>(conf, input, size, codec);
+			System.err.println("NEW REDUCE CONNECTION FOR BUFFER " + this.taskid + " OF LENGTH " + size);
+			
+			this.reader = new IFile.Reader<K, V>(conf, input, (size < 0 ? Integer.MAX_VALUE : (int) size), codec);
 		}
 		
 		public TaskAttemptID taskid() {
 			return this.taskid;
 		}
 		
-		public void cancel() {
+		public void close() {
 			try {
-				this.cancel = true;
+				System.err.println("CLOSE CONNECTION!!!");
+				this.open = false;
 				this.reader.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -201,23 +210,22 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			try {
 				DataInputBuffer key = new DataInputBuffer();
 				DataInputBuffer value = new DataInputBuffer();
-				while (this.reader.next(key, value)) {
-					this.keyDeserializer.open(key);
-					this.valDeserializer.open(value);
-					K k = this.keyDeserializer.deserialize(null);
-					V v = this.valDeserializer.deserialize(null);
-					this.sink.collect(k, v);
-				}
-				if (!cancel) sink.done(this);
+				System.err.println("AVAILABLE " + input.available());
+					while (open && this.reader.next(key, value)) {
+						this.keyDeserializer.open(key);
+						this.valDeserializer.open(value);
+						K k = this.keyDeserializer.deserialize(null);
+						V v = this.valDeserializer.deserialize(null);
+						System.err.println("READER COLLECT KEY " + k);
+						this.sink.collect(k, v);
+					}
 			} catch (Throwable e) {
+				e.printStackTrace();
 				return;
 			}
 			finally {
-				try {
-					this.reader.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				sink.done(this);
+				close();
 			}
 		}
 	}

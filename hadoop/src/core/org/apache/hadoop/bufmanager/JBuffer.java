@@ -4,9 +4,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -112,8 +118,9 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 
 	private final FileSystem localFs;
 
-	protected MapOutputFile mapOutputFile = new MapOutputFile();
-
+	private MapOutputFile mapOutputFile = new MapOutputFile();
+	
+	private Map<Integer, Set<BufferRequest>> requests;
 
 	@SuppressWarnings("unchecked")
 	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
@@ -122,6 +129,7 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		this.job = job;
 		this.reporter = reporter;
 		this.mapOutputFile.setConf(job);
+		this.requests = new HashMap<Integer, Set<BufferRequest>>();
 		
 		localFs = FileSystem.getLocal(job);
 		partitions = job.getNumReduceTasks();
@@ -178,6 +186,52 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		: null;
 		minSpillsForCombine = job.getInt("min.num.spills.for.combine", 3);
 	}
+	
+	public void register(BufferRequest request) throws IOException {
+		synchronized (spillLock) {
+			request.open(this.job, localFs, numSpills);
+			request.flushFile();
+
+			synchronized (requests) {
+				System.err.println("REQUEST " + request);
+				// Catch the request up with the main memory records
+				if (kvend != kvstart) {
+					int endPosition = (kvend > kvstart) ? kvend : kvoffsets.length + kvend;
+					for (int spindex = kvstart; spindex < endPosition; spindex++) {
+						if (kvindices[kvoffsets[spindex % kvoffsets.length] + PARTITION] == request.partition()) {
+							updateRequest(request, spindex);
+						}
+					}
+				}
+				System.err.println("REQUEST REGISTERED " + request);
+
+				if (!this.requests.containsKey(request.partition())) {
+					this.requests.put(request.partition(), new HashSet<BufferRequest>());
+				}
+				this.requests.get(request.partition()).add(request);
+			}
+		}
+	}
+	
+	private void updateRequest(BufferRequest request, int spindex) throws IOException {
+		DataInputBuffer key = new DataInputBuffer();
+		InMemValBytes value = new InMemValBytes();
+		
+		int kvoff = kvoffsets[spindex % kvoffsets.length];
+		System.err.println("KV OFFSET " + kvoff);
+		
+		int tmpvoid = bufvoid;
+		bufvoid = bufmark;
+		getVBytesForOffset(kvoff, value);
+		bufvoid = tmpvoid;
+		
+		key.reset(kvbuffer, kvindices[kvoff + KEYSTART],
+				(kvindices[kvoff + VALSTART] - 
+						kvindices[kvoff + KEYSTART]));
+		
+		request.add(key, value);
+	}
+	
 
 	@SuppressWarnings("unchecked")
 	public synchronized void collect(K key, V value)
@@ -198,38 +252,48 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 			).initCause(sortSpillException);
 		}
 		try {
-			// serialize key bytes into buffer
-			int keystart = bufindex;
-			keySerializer.serialize(key);
-			if (bufindex < keystart) {
-				// wrapped the key; reset required
-				bb.reset();
-				keystart = 0;
-			}
-			// serialize value bytes into buffer
-			int valstart = bufindex;
-			valSerializer.serialize(value);
-			int valend = bb.markRecord();
+			synchronized (requests) {
+				// serialize key bytes into buffer
+				int keystart = bufindex;
+				keySerializer.serialize(key);
+				if (bufindex < keystart) {
+					// wrapped the key; reset required
+					bb.reset();
+					keystart = 0;
+				}
+				// serialize value bytes into buffer
+				int valstart = bufindex;
+				valSerializer.serialize(value);
+				int valend = bb.markRecord();
 
-			if (keystart == bufindex) {
-				// if emitted records make no writes, it's possible to wrap
-				// accounting space without notice
-				bb.write(new byte[0], 0, 0);
-			}
+				if (keystart == bufindex) {
+					// if emitted records make no writes, it's possible to wrap
+					// accounting space without notice
+					bb.write(new byte[0], 0, 0);
+				}
 
-			int partition = partitioner.getPartition(key, value, partitions);
-			if (partition < 0 || partition >= partitions) {
-				throw new IOException("Illegal partition for " + key + " (" +
-						partition + ")");
-			}
+				int partition = partitioner.getPartition(key, value, partitions);
+				if (partition < 0 || partition >= partitions) {
+					throw new IOException("Illegal partition for " + key + " (" +
+							partition + ")");
+				}
 
-			// update accounting info
-			int ind = kvindex * ACCTSIZE;
-			kvoffsets[kvindex] = ind;
-			kvindices[ind + PARTITION] = partition;
-			kvindices[ind + KEYSTART] = keystart;
-			kvindices[ind + VALSTART] = valstart;
-			kvindex = (kvindex + 1) % kvoffsets.length;
+				int current = kvindex;
+				// update accounting info
+				int ind = kvindex * ACCTSIZE;
+				kvoffsets[kvindex] = ind;
+				kvindices[ind + PARTITION] = partition;
+				kvindices[ind + KEYSTART] = keystart;
+				kvindices[ind + VALSTART] = valstart;
+				kvindex = (kvindex + 1) % kvoffsets.length;
+
+				if (this.requests.containsKey(partition)) {
+					for (BufferRequest request : requests.get(partition)) {
+						updateRequest(request, current);
+					}
+				}
+
+			}
 		} catch (MapBufferTooSmallException e) {
 			// LOG.info("Record too large for in-memory buffer: " + e.getMessage());
 			spillSingleRecord(key, value);
@@ -474,7 +538,27 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		umbilical.commit(this.taskid);
 	}
 
-	public void close() { }
+	public void close() throws IOException { 
+		synchronized (requests) {
+			for (Integer partition : requests.keySet()) {
+				for (BufferRequest request : requests.get(partition)) {
+					request.close();
+				}
+			}
+			this.requests.clear();
+		}
+	}
+	
+	private void flushRequests() throws IOException {
+		synchronized (requests) {
+			for (Integer partition : requests.keySet()) {
+				for (BufferRequest request : requests.get(partition)) {
+					request.flushBuffer();
+				}
+			}
+			this.requests.clear();
+		}
+	}
 
 	protected class SpillThread extends Thread {
 
@@ -486,12 +570,19 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 				sortSpillException = e;
 			} finally {
 				synchronized(spillLock) {
-					if (bufend < bufindex && bufindex < bufstart) {
-						bufvoid = kvbuffer.length;
+					synchronized (requests) {
+						try {
+							flushRequests();
+						} catch (IOException e) {
+							sortSpillException = e;
+						}
+						if (bufend < bufindex && bufindex < bufstart) {
+							bufvoid = kvbuffer.length;
+						}
+						kvstart = kvend;
+						bufstart = bufend;
+						spillLock.notify();
 					}
-					kvstart = kvend;
-					bufstart = bufend;
-					spillLock.notify();
 				}
 			}
 		}
@@ -655,6 +746,7 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		int vallen = (nextindex >= kvindices[kvoff + VALSTART])
 		? nextindex - kvindices[kvoff + VALSTART]
 		                        : (bufvoid - kvindices[kvoff + VALSTART]) + nextindex;
+		System.err.println("V BYTES LENGTH " + vallen);
 		vbytes.reset(kvbuffer, kvindices[kvoff + VALSTART], vallen);
 	}
 
