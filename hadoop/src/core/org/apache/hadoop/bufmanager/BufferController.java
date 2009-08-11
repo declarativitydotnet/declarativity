@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -46,7 +47,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	private Executor executor;
 
-	private Map<TaskAttemptID, List<BufferRequest>> requests;
+	private Map<TaskAttemptID, TreeSet<BufferRequest>> requests;
 	
 	private Set<TaskAttemptID> committed;
 	
@@ -58,7 +59,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	public BufferController(Configuration conf) throws IOException {
 		this.conf      = conf;
-		this.requests  = new HashMap<TaskAttemptID, List<BufferRequest>>();
+		this.requests  = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
 		this.committed = new HashSet<TaskAttemptID>();
 		this.executor  = Executors.newCachedThreadPool();
 		this.hostname  = InetAddress.getLocalHost().getCanonicalHostName();
@@ -114,7 +115,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		synchronized (this) {
 			if (this.requests.containsKey(taskid) &&
 					this.requests.get(taskid).size() > 0) {
-				return this.requests.get(taskid).remove(0);
+				BufferRequest r = this.requests.get(taskid).first();
+				this.requests.get(taskid).remove(r);
+				return r;
 			}
 			return null;
 		}
@@ -183,7 +186,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private void register(BufferRequest request) throws IOException {
 		synchronized(this) {
 			if (!this.requests.containsKey(request.taskid())) {
-				this.requests.put(request.taskid(), new LinkedList<BufferRequest>());
+				this.requests.put(request.taskid(), new TreeSet<BufferRequest>());
 			}
 			this.requests.get(request.taskid()).add(request);
 			
@@ -198,7 +201,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		if (this.requests.containsKey(taskid)) {
 			for (BufferRequest request : this.requests.get(taskid)) {
 				request.open(this.conf, this.localFs);
-				this.executor.execute(request);
+				request.flushFile();
 			}
 			this.requests.remove(taskid);
 		}

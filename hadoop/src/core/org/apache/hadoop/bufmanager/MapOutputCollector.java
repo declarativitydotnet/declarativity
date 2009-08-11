@@ -10,4 +10,5 @@ extends OutputCollector<K, V> {
     
     public void flush() throws IOException;
 
+    public void register(BufferRequest request) throws IOException;
 }
