@@ -298,7 +298,6 @@ public class ReduceTask extends Task {
 			Iterator<RecordHashMap.Record> iter = recordMap.iterator();
 			while (iter.hasNext()) {
 				RecordHashMap.Record record = iter.next();
-				System.err.println("REDUCE " + record);
 				reduceInputKeyCounter.increment(1);
 				reducer.reduce(record.key(), record.values(), collector, reporter);
 			}

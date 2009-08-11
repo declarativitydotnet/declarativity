@@ -106,6 +106,8 @@ public class IFile {
     
     public void close() throws IOException {
       // Close the serializers
+    	System.err.println("CLOSE IFile.Writer");
+    	
       keySerializer.close();
       valueSerializer.close();
 
