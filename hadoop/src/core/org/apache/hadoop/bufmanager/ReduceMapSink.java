@@ -216,7 +216,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						this.valDeserializer.open(value);
 						K k = this.keyDeserializer.deserialize(null);
 						V v = this.valDeserializer.deserialize(null);
-						System.err.println("READER COLLECT KEY " + k);
 						this.sink.collect(k, v);
 					}
 			} catch (Throwable e) {
