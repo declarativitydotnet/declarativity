@@ -51,8 +51,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.bufmanager.BufferRequest;
 import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
+import org.apache.hadoop.bufmanager.JBuffer;
 import org.apache.hadoop.bufmanager.ReduceMapSink;
 import org.apache.hadoop.bufmanager.RecordHashMap;
+import org.apache.hadoop.bufmanager.ValuesIterator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ChecksumFileSystem;
 import org.apache.hadoop.fs.FileStatus;
@@ -261,8 +263,8 @@ public class ReduceTask extends Task {
 
 		final Reporter reporter = getReporter(umbilical); 
 		
-		RecordHashMap recordMap = new RecordHashMap(job);
-		ReduceMapSink sink = new ReduceMapSink(job, recordMap);
+		JBuffer     buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+		ReduceMapSink sink = new ReduceMapSink(job, buffer);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
@@ -271,7 +273,6 @@ public class ReduceTask extends Task {
 		/* This will not close (block) until all fetches finish! */
 		sink.block();
 		
-
 		setPhase(TaskStatus.Phase.REDUCE); 
 
 		// make output collector
@@ -295,12 +296,16 @@ public class ReduceTask extends Task {
 		
 		// apply reduce function
 		try {
-			Iterator<RecordHashMap.Record> iter = recordMap.iterator();
-			while (iter.hasNext()) {
-				RecordHashMap.Record record = iter.next();
-				reduceInputKeyCounter.increment(1);
-				reducer.reduce(record.key(), record.values(), collector, reporter);
-			}
+		      Class keyClass = job.getMapOutputKeyClass();
+		      Class valClass = job.getMapOutputValueClass();
+		      
+		      ValuesIterator values = buffer.iterator();
+		      while (values.more()) {
+		        reducer.reduce(values.getKey(), values, collector, reporter);
+		        values.nextKey();
+		        reporter.progress();
+		      }
+		      
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 			throw ioe;
@@ -311,6 +316,7 @@ public class ReduceTask extends Task {
 			//Clean up: repeated in catch block below
 			try {
 				reducer.close();
+				buffer.close();
 				out.close(reporter);
 			} catch (IOException ignored) {}
 		}
