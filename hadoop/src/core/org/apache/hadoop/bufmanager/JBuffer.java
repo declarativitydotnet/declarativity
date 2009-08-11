@@ -456,6 +456,7 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 								kvend = kvindex;
 								bufend = bufmark;
 								// TODO No need to recreate this thread every time
+								flushRequests();
 								SpillThread t = new SpillThread();
 								t.setDaemon(true);
 								t.setName("SpillThread");
@@ -569,12 +570,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 				sortSpillException = e;
 			} finally {
 				synchronized(spillLock) {
-					synchronized (requests) {
-						try {
-							flushRequests();
-						} catch (IOException e) {
-							sortSpillException = e;
-						}
 						if (bufend < bufindex && bufindex < bufstart) {
 							bufvoid = kvbuffer.length;
 						}
@@ -582,7 +577,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 						bufstart = bufend;
 						spillLock.notify();
 					}
-				}
 			}
 		}
 	}
