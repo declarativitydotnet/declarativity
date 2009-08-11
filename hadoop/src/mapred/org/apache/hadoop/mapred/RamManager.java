@@ -22,7 +22,7 @@ import java.io.InputStream;
 /**
  * <code>RamManager</code> manages a memory pool of a configured limit.
  */
-interface RamManager {
+public interface RamManager {
   /**
    * Reserve memory for data coming through the given input-stream.
    * 

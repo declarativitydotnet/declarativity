@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.bufmanager.BufferRequest;
 import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.bufmanager.JBuffer;
 import org.apache.hadoop.bufmanager.MapOutputCollector;
@@ -72,6 +73,8 @@ public final class MapTask extends Task {
 	public static final int MAP_OUTPUT_INDEX_RECORD_LENGTH = 24;
 
 	public TrackedRecordReader recordReader = null;
+	
+	public MapOutputCollector collector = null;
 
 
 	private BytesWritable split = new BytesWritable();
@@ -209,13 +212,35 @@ public final class MapTask extends Task {
 		LOG.info("numReduceTasks: " + numReduceTasks);
 		final Reporter reporter = getReporter(umbilical);
 
-		MapOutputCollector collector = null;
 		if (numReduceTasks > 0) {
 			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		} else { 
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
 		}
 
+		Thread requestThread = new Thread() {
+			public void run() {
+				while (!isInterrupted()) {
+					try {
+						BufferRequest request = bufferUmbilical.getRequest(getTaskID());
+						if (request != null) {
+							collector.register(request);
+						}
+						else {
+							sleep(100);
+						}
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+		requestThread.start();
+		
 		// start thread that will handle communication with parent
 		startCommunicationThread(umbilical);
 
@@ -250,7 +275,7 @@ public final class MapTask extends Task {
 
 		try {
 			runner.run(this.recordReader, collector, reporter);      
-			collector.flush();
+			// collector.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw e;
@@ -298,6 +323,12 @@ public final class MapTask extends Task {
 			reporter.progress();
 			out.write(key, value);
 			mapOutputRecordCounter.increment(1);
+		}
+
+		@Override
+		public void register(BufferRequest request) throws IOException {
+			// TODO Auto-generated method stub
+			
 		}
 
 	}
