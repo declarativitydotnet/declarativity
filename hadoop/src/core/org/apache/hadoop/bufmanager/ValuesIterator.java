@@ -10,6 +10,7 @@ import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.mapred.RawKeyValueIterator;
 import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
+import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.Progressable;
 
 /** Iterates values while keys match in sorted input. */
@@ -74,7 +75,7 @@ public class ValuesIterator<KEY,VALUE> implements Iterator<VALUE> {
   /// Auxiliary methods
 
   /** Start processing next unique key. */
-  void nextKey() throws IOException {
+  public void nextKey() throws IOException {
     // read until we find a new key
     while (hasNext) { 
       readNextKey();
@@ -89,12 +90,16 @@ public class ValuesIterator<KEY,VALUE> implements Iterator<VALUE> {
   }
 
   /** True iff more keys remain. */
-  boolean more() { 
+  public boolean more() { 
     return more; 
   }
 
+  public Progress getProgress() {
+	  return this.in.getProgress();
+  }
+  
   /** The current key. */
-  KEY getKey() { 
+  public KEY getKey() { 
     return key; 
   }
 

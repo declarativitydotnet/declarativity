@@ -59,7 +59,7 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 			writer.append(key, value);
 		}
 	}
-
+	
 	/**
 	 * The size of each record in the index file for the map-outputs.
 	 */
@@ -121,7 +121,7 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 	private MapOutputFile mapOutputFile = new MapOutputFile();
 	
 	private Map<Integer, Set<BufferRequest>> requests;
-
+	
 	@SuppressWarnings("unchecked")
 	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
 		this.umbilical = umbilical;
@@ -132,7 +132,7 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		this.requests = new HashMap<Integer, Set<BufferRequest>>();
 		
 		localFs = FileSystem.getLocal(job);
-		partitions = job.getNumReduceTasks();
+		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
 		partitioner = (Partitioner)
 		ReflectionUtils.newInstance(job.getPartitionerClass(), job);
 		// sanity checks
@@ -502,6 +502,24 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 			bufindex += len;
 		}
 	}
+	
+	public synchronized ValuesIterator<K, V> iterator() throws IOException {
+		if (this.numSpills == 0) {
+			int endPosition = (kvend > kvstart)
+			? kvend : kvoffsets.length + kvend;
+			sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
+
+			RawKeyValueIterator kvIter =
+				new MRResultIterator(kvstart, endPosition);
+			return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
+		}
+		else {
+			flush();
+			Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
+			RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
+			return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
+		}
+	}
 
 	public synchronized void flush() throws IOException {
 		// LOG.info("Starting flush of map output");
@@ -811,6 +829,42 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 			return null;
 		}
 		public void close() { }
+	}
+	
+	protected class FSMRResultIterator implements RawKeyValueIterator {
+		private IFile.Reader reader;
+		private DataInputBuffer key = new DataInputBuffer();
+		private DataInputBuffer value = new DataInputBuffer();
+		
+		public FSMRResultIterator(FileSystem localFS, Path path) throws IOException {
+			this.reader = new Reader<K, V>(job, localFS, path, codec);
+		}
+
+		@Override
+		public void close() throws IOException {
+			this.reader.close();
+		}
+
+		@Override
+		public DataInputBuffer getKey() throws IOException {
+			return this.key;
+		}
+
+		@Override
+		public Progress getProgress() {
+			return null;
+		}
+
+		@Override
+		public DataInputBuffer getValue() throws IOException {
+			return this.value;
+		}
+
+		@Override
+		public boolean next() throws IOException {
+			return this.reader.next(key, value);
+		}
+		
 	}
 
 	private void mergeParts() throws IOException {
