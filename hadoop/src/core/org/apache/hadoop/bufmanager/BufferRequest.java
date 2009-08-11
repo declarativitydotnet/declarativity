@@ -153,14 +153,19 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	private FSDataOutputStream connect(long length) throws IOException {
-		Socket socket = new Socket();
-		socket.connect(this.sink);
-		FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
-		this.taskid.write(out);
-		out.writeLong(length);
-		return out;
+		try {
+			Socket socket = new Socket();
+			socket.connect(this.sink);
+			FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
+			this.taskid.write(out);
+			out.writeLong(length);
+			return out;
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
+		}
 	}
-	
+
 	public TaskAttemptID taskid() {
 		return this.taskid;
 	}
@@ -223,7 +228,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				int bytesread = file.fsin.read(output, 0, Math.min((int) bytes, output.length));
 				synchronized (this) {
 					out.write(output, 0, bytesread);
-					System.err.println("FLUSH FILE SENT " + bytesread + " bytes");
 				}
 				bytes -= bytesread;
 			}

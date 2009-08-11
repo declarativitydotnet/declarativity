@@ -745,7 +745,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		int vallen = (nextindex >= kvindices[kvoff + VALSTART])
 		? nextindex - kvindices[kvoff + VALSTART]
 		                        : (bufvoid - kvindices[kvoff + VALSTART]) + nextindex;
-		System.err.println("V BYTES LENGTH " + vallen);
 		vbytes.reset(kvbuffer, kvindices[kvoff + VALSTART], vallen);
 	}
 
