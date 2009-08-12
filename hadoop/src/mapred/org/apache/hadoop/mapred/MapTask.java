@@ -239,7 +239,7 @@ public final class MapTask extends Task {
 				}
 			}
 		};
-		// requestThread.start();
+		requestThread.start();
 		
 		// start thread that will handle communication with parent
 		startCommunicationThread(umbilical);
