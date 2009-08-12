@@ -202,6 +202,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			for (BufferRequest request : this.requests.get(taskid)) {
 				request.open(this.conf, this.localFs);
 				request.flushFile();
+				request.close();
 			}
 			this.requests.remove(taskid);
 		}
