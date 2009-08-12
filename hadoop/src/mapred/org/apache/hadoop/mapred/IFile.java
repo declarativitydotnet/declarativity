@@ -334,6 +334,7 @@ public class IFile {
       }
       
       final int recordLength = keyLength + valueLength;
+      System.err.println("READER: RECORD LENGTH " + recordLength);
       
       // Check if we have the raw key/value in the buffer
       if ((dataIn.getLength()-pos) < recordLength) {
