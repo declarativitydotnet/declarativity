@@ -583,8 +583,10 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		@Override
 		public void run() {
 			try {
+				System.err.println("SORT AND SPILL");
 				sortAndSpill();
 			} catch (Throwable e) {
+				e.printStackTrace();
 				sortSpillException = e;
 			} finally {
 				synchronized(spillLock) {
@@ -595,9 +597,11 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 						bufstart = bufend;
 						spillLock.notify();
 					}
+				System.err.println("DONE SORT AND SPILL");
 			}
 		}
 	}
+	
 
 	private void sortAndSpill() throws IOException {
 		//approximate the length of the output file to be the length of the
