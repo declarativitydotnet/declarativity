@@ -193,7 +193,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 			request.flushFile();
 
 			synchronized (requests) {
-				System.err.println("REQUEST " + request);
 				// Catch the request up with the main memory records
 				if (kvend != kvstart) {
 					int endPosition = (kvend > kvstart) ? kvend : kvoffsets.length + kvend;
@@ -203,7 +202,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 						}
 					}
 				}
-				System.err.println("REQUEST REGISTERED " + request);
 
 				if (!this.requests.containsKey(request.partition())) {
 					this.requests.put(request.partition(), new HashSet<BufferRequest>());
@@ -560,7 +558,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		synchronized (requests) {
 			for (Integer partition : requests.keySet()) {
 				for (BufferRequest request : requests.get(partition)) {
-					System.err.println("CLOSE REQUEST " + request);
 					request.close();
 				}
 			}
@@ -584,7 +581,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 		@Override
 		public void run() {
 			try {
-				System.err.println("SORT AND SPILL");
 				sortAndSpill();
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -598,7 +594,6 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 						bufstart = bufend;
 						spillLock.notify();
 					}
-				System.err.println("DONE SORT AND SPILL");
 			}
 		}
 	}
