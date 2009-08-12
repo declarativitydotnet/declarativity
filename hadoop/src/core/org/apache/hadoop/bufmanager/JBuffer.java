@@ -511,6 +511,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 								kvend = kvindex;
 								bufend = bufmark;
 								// TODO No need to recreate this thread every time
+								flushRequests();
 								SpillThread t = new SpillThread();
 								t.setDaemon(true);
 								t.setName("SpillThread");
@@ -577,6 +578,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 	public synchronized void flush() throws IOException {
 		// LOG.info("Starting flush of map output");
+		flushRequests();
 		synchronized (spillLock) {
 			while (kvstart != kvend) {
 				try {
@@ -631,11 +633,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		@Override
 		public void run() {
 			try {
-				int runningRequests = 0;
-				synchronized (requests) {
-					flushRequests();
-					runningRequests = requests.size();
-				}
+				int runningRequests = requests.size();
 				
 				if (persistPipelineRecords || runningRequests < partitions) {
 					sortAndSpill();
