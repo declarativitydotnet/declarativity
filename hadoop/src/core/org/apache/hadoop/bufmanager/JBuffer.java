@@ -133,7 +133,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		this.reporter = reporter;
 		this.mapOutputFile.setConf(job);
 		this.requests = new HashMap<Integer, BufferRequest>();
-		this.persistPipelineRecords = job.getBoolean("io.pipeline.persist", false);
+		this.persistPipelineRecords = taskid.isMap() ? job.getBoolean("io.pipeline.persist", false) : false;
 		
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
