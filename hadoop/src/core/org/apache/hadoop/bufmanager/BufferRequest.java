@@ -206,6 +206,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		synchronized (this) {
 			System.err.println("CLOSING BUFFER REQUEST " + this);
 			open = false;
+			flushBuffer();
 			if (this.writer != null) {
 				this.writer.close();
 				this.out.close();

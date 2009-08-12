@@ -558,8 +558,10 @@ public class JBuffer<K extends Object, V extends Object>  implements MapOutputCo
 
 	public void close() throws IOException { 
 		synchronized (requests) {
+			System.err.println("CLOSE ALL BUFFER REQUESTS");
 			for (Integer partition : requests.keySet()) {
 				for (BufferRequest request : requests.get(partition)) {
+					System.err.println("CLOSE REQUEST " + request);
 					request.close();
 				}
 			}
