@@ -95,6 +95,14 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
+	public void add(K key, V value) throws IOException {
+		synchronized (this) {
+			if (open) {
+				this.writer.append(key, value);
+			}
+		}
+	}
+	
 	public void open(JobConf conf, FileSystem localFs, int numSpills) throws IOException {
 	    Class<K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
 	    Class<V> valClass = (Class<V>)conf.getMapOutputValueClass();
