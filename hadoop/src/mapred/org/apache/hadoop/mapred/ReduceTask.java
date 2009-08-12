@@ -20,70 +20,28 @@ package org.apache.hadoop.mapred;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.URLConnection;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.bufmanager.ReduceOutputCollector;
 import org.apache.hadoop.bufmanager.BufferRequest;
 import org.apache.hadoop.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.bufmanager.JBuffer;
 import org.apache.hadoop.bufmanager.ReduceMapSink;
-import org.apache.hadoop.bufmanager.RecordHashMap;
 import org.apache.hadoop.bufmanager.ValuesIterator;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.ChecksumFileSystem;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocalFileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DataInputBuffer;
-import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.io.IOUtils;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactories;
 import org.apache.hadoop.io.WritableFactory;
-import org.apache.hadoop.io.WritableUtils;
-import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.Decompressor;
-import org.apache.hadoop.io.compress.DefaultCodec;
-import org.apache.hadoop.mapred.IFile.*;
-import org.apache.hadoop.mapred.Merger.Segment;
-import org.apache.hadoop.metrics.MetricsContext;
-import org.apache.hadoop.metrics.MetricsRecord;
-import org.apache.hadoop.metrics.MetricsUtil;
-import org.apache.hadoop.metrics.Updater;
 import org.apache.hadoop.util.Progress;
-import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.hadoop.util.StringUtils;
 
 /** A Reduce task. */
 public class ReduceTask extends Task {
@@ -264,7 +222,7 @@ public class ReduceTask extends Task {
 		final Reporter reporter = getReporter(umbilical); 
 		
 		JBuffer     buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-		ReduceMapSink sink = new ReduceMapSink(job, buffer);
+		ReduceMapSink sink = new ReduceMapSink(job, (ReduceOutputCollector) buffer);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
