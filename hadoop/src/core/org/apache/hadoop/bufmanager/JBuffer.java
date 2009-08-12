@@ -36,8 +36,6 @@ import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskUmbilicalProtocol;
-import org.apache.hadoop.mapred.IFile.Reader;
-import org.apache.hadoop.mapred.IFile.Writer;
 import org.apache.hadoop.mapred.Merger.Segment;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.IndexedSorter;
@@ -49,10 +47,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 	protected static class CombineOutputCollector<K extends Object, V extends Object> 
 	implements OutputCollector<K, V> {
-		private Writer<K, V> writer;
+		private IFile.Writer<K, V> writer;
 		public CombineOutputCollector() {
 		}
-		public synchronized void setWriter(Writer<K, V> writer) {
+		public synchronized void setWriter(IFile.Writer<K, V> writer) {
 			this.writer = writer;
 		}
 		public synchronized void collect(K key, V value)
@@ -691,7 +689,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					IFile.Writer<K, V> writer = null;
 					try {
 						long segmentStart = out.getPos();
-						writer = new Writer<K, V>(job, out, keyClass, valClass, codec);
+						writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
 						if (null == combinerClass) {
 							// spill directly
 							DataInputBuffer key = new DataInputBuffer();
@@ -919,7 +917,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		private DataInputBuffer value = new DataInputBuffer();
 		
 		public FSMRResultIterator(FileSystem localFS, Path path) throws IOException {
-			this.reader = new Reader<K, V>(job, localFS, path, codec);
+			this.reader = new IFile.Reader<K, V>(job, localFS, path, codec);
 		}
 
 		@Override
@@ -992,7 +990,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			//create dummy files
 			for (int i = 0; i < partitions; i++) {
 				long segmentStart = finalOut.getPos();
-				Writer<K, V> writer = new Writer<K, V>(job, finalOut, 
+				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut, 
 						keyClass, valClass, codec);
 				writer.close();
 				writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
@@ -1016,7 +1014,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					FSDataInputStream in = localFs.open(filename[i]);
 					in.seek(segmentOffset);
 					Segment<K, V> s = 
-						new Segment<K, V>(new Reader<K, V>(job, in, segmentLength, codec),
+						new Segment<K, V>(new IFile.Reader<K, V>(job, in, segmentLength, codec),
 								true);
 					segmentList.add(i, s);
 
@@ -1033,8 +1031,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 				//write merged output to disk
 				long segmentStart = finalOut.getPos();
-				Writer<K, V> writer = 
-					new Writer<K, V>(job, finalOut, keyClass, valClass, codec);
+				IFile.Writer<K, V> writer = 
+					new IFile.Writer<K, V>(job, finalOut, keyClass, valClass, codec);
 				if (null == combinerClass || job.getCombineOnceOnly() ||
 						numSpills < minSpillsForCombine) {
 					Merger.writeFile(kvIter, writer, reporter);
@@ -1061,7 +1059,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 	private void writeIndexRecord(FSDataOutputStream indexOut, 
 			FSDataOutputStream out, long start, 
-			Writer<K, V> writer) 
+			IFile.Writer<K, V> writer) 
 	throws IOException {
 		//when we write the offset/decompressed-length/compressed-length to  
 		//the final index file, we write longs for both compressed and 
