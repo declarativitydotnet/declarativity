@@ -51,7 +51,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	
 	private int numMapTasks;
 	
-	private OutputCollector<K, V> collector;
+	private ReduceOutputCollector<K, V> collector;
 	
 	private JobConf conf;
 	
@@ -59,7 +59,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	
 	private Set<TaskID> successful;
 	
-	public ReduceMapSink(JobConf conf, OutputCollector<K, V> collector) throws IOException {
+	public ReduceMapSink(JobConf conf, ReduceOutputCollector<K, V> collector) throws IOException {
 		this.conf = conf;
 		this.collector = collector;
 		
@@ -104,7 +104,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		acceptor.start();
 	}
 	
-	private synchronized void collect(K key, V value) throws IOException {
+	private synchronized void collect(DataInputBuffer key, DataInputBuffer value) throws IOException {
 		this.collector.collect(key, value);
 	}
 	
@@ -152,9 +152,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		
 		private IFile.Reader<K, V> reader;
 		
-	    private Deserializer<K> keyDeserializer;
-	    private Deserializer<V> valDeserializer;
-	    
 		private ReduceMapSink<K, V> sink;
 		private DataInputStream input;
 		
@@ -165,13 +162,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			this.sink = sink;
 			this.open = true;
 			
-			/** How do unmarshall the key, value pairs. */
-			Class keyClass = conf.getMapOutputKeyClass();
-			Class valClass = conf.getMapOutputValueClass();
-		    SerializationFactory serializationFactory = new SerializationFactory(conf);
-		    this.keyDeserializer = serializationFactory.getDeserializer(keyClass);
-		    this.valDeserializer = serializationFactory.getDeserializer(valClass);
-
 			CompressionCodec codec = null;
 			if (conf.getCompressMapOutput()) {
 				Class<? extends CompressionCodec> codecClass =
@@ -208,11 +198,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				DataInputBuffer value = new DataInputBuffer();
 				System.err.println("AVAILABLE " + input.available());
 				while (open && this.reader.next(key, value)) {
-					this.keyDeserializer.open(key);
-					this.valDeserializer.open(value);
-					K k = this.keyDeserializer.deserialize(null);
-					V v = this.valDeserializer.deserialize(null);
-					this.sink.collect(k, v);
+					this.sink.collect(key, value);
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
