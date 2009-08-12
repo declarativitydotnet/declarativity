@@ -98,9 +98,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						}
 						executor.execute(conn);
 					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				} catch (IOException e) { }
 			}
 		};
 		acceptor.start();
@@ -196,7 +194,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		
 		public void close() {
 			try {
-				System.err.println("CLOSE CONNECTION!!!");
 				this.open = false;
 				this.reader.close();
 			} catch (IOException e) {
@@ -210,13 +207,13 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				DataInputBuffer key = new DataInputBuffer();
 				DataInputBuffer value = new DataInputBuffer();
 				System.err.println("AVAILABLE " + input.available());
-					while (open && this.reader.next(key, value)) {
-						this.keyDeserializer.open(key);
-						this.valDeserializer.open(value);
-						K k = this.keyDeserializer.deserialize(null);
-						V v = this.valDeserializer.deserialize(null);
-						this.sink.collect(k, v);
-					}
+				while (open && this.reader.next(key, value)) {
+					this.keyDeserializer.open(key);
+					this.valDeserializer.open(value);
+					K k = this.keyDeserializer.deserialize(null);
+					V v = this.valDeserializer.deserialize(null);
+					this.sink.collect(k, v);
+				}
 			} catch (Throwable e) {
 				e.printStackTrace();
 				return;
