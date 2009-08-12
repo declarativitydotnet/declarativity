@@ -1,0 +1,66 @@
+program path;
+
+import jol.types.basic.ValueList;
+
+define(link, keys(0,1), {String, String});
+define(path, keys(0,1,2), {String, String, Integer});
+define(shortestPath, keys(0,1), {String, String, Integer});
+
+define(allpaths, {String, ValueList});
+define(pathPrinter, {String, ValueList});
+define(computeAll, {String});
+
+/* 1 -> 2 -> 3 -> 4 */
+link("1", "2");
+link("2", "3");
+link("3", "4");
+
+/* Add an extra 2 -> 4 link, to make the shortest path non-trivial */
+link("2", "4");
+
+/* 5 -> 6 -> 7 -> 8 -> 9 */
+link("5", "6");
+link("6", "7");
+link("7", "8");
+link("8", "9");
+
+watch(path, ae);
+watch(shortestPath, ae);
+watch(allpaths, r);
+
+/* Fire a timer 5 seconds following program start time.  The period is
+   set to 0, which means it will only fire once. */
+timer(newlink, physical, 5000, 0, 0);
+timer(removeLink, logical, 1, 1, 5);
+
+watch(newlink, ra);
+
+/* Add the link 9 -> 10 when newlink fires */
+link("9", "10") :- newlink(_, _, _);
+
+/* Initialize all paths with link */
+init
+path(Source, Destination, 1) :- link(Source, Destination);
+
+/* Transitive closure over path, link */
+trans
+path(Source, Destination, Hops+1) :- 
+	path(Source, Intermediate, Hops), link(Intermediate, Destination);
+
+/* Compute shortest paths */
+shortestPath
+shortestPath(Source, Destination, min<Hops>) :- 
+	path(Source, Destination, Hops);
+
+computeAll(Source) :-
+	shortestPath(Source, Destination, Hops);
+
+allpaths(Source, generic<(new ValueList()).insert(Destination)>) :-
+	computeAll(_),
+	path(Source, Destination, Hops);
+
+pathPrinter(Source, Paths) :-
+	allpaths(Source, Paths);
+
+delete link("2", "4") :- removeLink(Period, TTL, Delay);
+
