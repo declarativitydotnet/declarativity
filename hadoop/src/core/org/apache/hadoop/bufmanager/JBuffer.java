@@ -282,7 +282,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			).initCause(sortSpillException);
 		}
 		try {
-			synchronized (requests) {
 				// serialize key bytes into buffer
 				int keystart = bufindex;
 				keySerializer.serialize(key);
@@ -315,7 +314,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				kvindices[ind + KEYSTART] = keystart;
 				kvindices[ind + VALSTART] = valstart;
 				kvindex = (kvindex + 1) % kvoffsets.length;
-			}
 		} catch (MapBufferTooSmallException e) {
 			// LOG.info("Record too large for in-memory buffer: " + e.getMessage());
 			spillSingleRecord(key, value);
@@ -579,6 +577,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	}
 
 	public void close() throws IOException { 
+		System.err.println("NUMBER OF SPILLS " + numSpills);
 		synchronized (requests) {
 			for (BufferRequest request : this.requests.values()) {
 				request.flushBuffer();
