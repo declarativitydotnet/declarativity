@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>hadoop19</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>conf</name>
+			<type>2</type>
+			<location>/Users/tcondie/workspace/hadoop-0.19.2/conf</location>
+		</link>
+		<link>
+			<name>core</name>
+			<type>2</type>
+			<location>/Users/tcondie/workspace/hadoop-0.19.2/src/core</location>
+		</link>
+		<link>
+			<name>hdfs</name>
+			<type>2</type>
+			<location>/Users/tcondie/workspace/hadoop-0.19.2/src/hdfs</location>
+		</link>
+		<link>
+			<name>mapred</name>
+			<type>2</type>
+			<location>/Users/tcondie/workspace/hadoop-0.19.2/src/mapred</location>
+		</link>
+		<link>
+			<name>src</name>
+			<type>2</type>
+			<location>/Users/tcondie/workspace/hadoop-0.19.2/src</location>
+		</link>
+	</linkedResources>
+</projectDescription>
