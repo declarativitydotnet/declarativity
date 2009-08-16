@@ -115,7 +115,6 @@ public class IFile {
       keySerializer.close();
       valueSerializer.close();
 
-      System.err.println("WRITER SEND EOF MARKER");
       // Write EOF_MARKER for key/value length
       WritableUtils.writeVInt(out, EOF_MARKER);
       WritableUtils.writeVInt(out, EOF_MARKER);
