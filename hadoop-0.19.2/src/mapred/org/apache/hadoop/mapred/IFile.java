@@ -115,6 +115,7 @@ public class IFile {
       keySerializer.close();
       valueSerializer.close();
 
+      System.err.println("WRITER SEND EOF MARKER");
       // Write EOF_MARKER for key/value length
       WritableUtils.writeVInt(out, EOF_MARKER);
       WritableUtils.writeVInt(out, EOF_MARKER);
@@ -357,6 +358,7 @@ public class IFile {
       
       // Check for EOF
       if (keyLength == EOF_MARKER && valueLength == EOF_MARKER) {
+    	  System.err.println("READER HIT ENDOF FILE");
         eof = true;
         return false;
       }
