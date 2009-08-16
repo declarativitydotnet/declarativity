@@ -241,6 +241,12 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
+	public void flush() throws IOException {
+		synchronized (this) {
+			this.out.flush();
+		}
+	}
+	
 	public void flushFile() throws IOException {
 		synchronized (this) {
 			byte [] output = new byte[1500];

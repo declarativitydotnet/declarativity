@@ -699,6 +699,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 								combineCollector.reset();
 							}
 						}
+						if (request != null) request.flush();
 
 						// close the writer
 						writer.close();
