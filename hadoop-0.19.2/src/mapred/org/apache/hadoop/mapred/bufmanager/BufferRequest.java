@@ -228,8 +228,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	public void close() throws IOException {
 		synchronized (this) {
 			if (open) {
+				System.err.println("CLOSE BUFFER REQUEST " + this.taskid);
 				open = false;
 				if (this.writer != null) {
+					System.err.println("\tBUFFER REQUEST CLOSE WRITER " + this.taskid);
 					this.writer.close();
 					this.out.close();
 				}
