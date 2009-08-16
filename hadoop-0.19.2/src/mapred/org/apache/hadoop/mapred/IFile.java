@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ChecksumException;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -345,7 +346,11 @@ public class IFile {
       
       // Check if we have enough data to read lengths
       if ((dataIn.getLength() - dataIn.getPosition()) < 2*MAX_VINT_SIZE) {
-        readNextBlock(2*MAX_VINT_SIZE);
+    	  try {
+    		  readNextBlock(2*MAX_VINT_SIZE);
+    	  } catch (ChecksumException e) {
+    		  return false; // This happens over TCP for some reason.
+    	  }
       }
       
       // Read key and value lengths
@@ -357,7 +362,6 @@ public class IFile {
       
       // Check for EOF
       if (keyLength == EOF_MARKER && valueLength == EOF_MARKER) {
-    	  System.err.println("READER HIT ENDOF FILE");
         eof = true;
         return false;
       }
