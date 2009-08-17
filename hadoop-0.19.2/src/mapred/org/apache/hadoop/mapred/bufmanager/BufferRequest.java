@@ -110,7 +110,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
-	public void flushFinal() throws IOException {
+	private void flushFinal() throws IOException {
 		synchronized (this) {
 			if (open) {
 				MapOutputFile mapOutputFile = new MapOutputFile(this.taskid.getJobID());
