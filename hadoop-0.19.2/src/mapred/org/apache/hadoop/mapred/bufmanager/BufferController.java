@@ -74,10 +74,13 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			}
 		}
 		
-		public void maxSpillId(int id) throws IOException {
+		public boolean maxSpillId(int id) throws IOException {
 			synchronized (this) {
-				this.maxSpillId = id;
-				this.notifyAll();
+				if (this.maxSpillId < id && this.curSpillId == this.maxSpillId) {
+					this.maxSpillId++;
+					this.notifyAll();
+				}
+				return false;
 			}
 		}
 
@@ -203,8 +206,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	public boolean pipe(TaskAttemptID taskid, int id, int numReduces) throws IOException {
 		synchronized (this) {
 			if (this.pipelineHandlers.containsKey(taskid)) {
-				this.pipelineHandlers.get(taskid).maxSpillId(id);
-				return true;
+				return this.pipelineHandlers.get(taskid).maxSpillId(id);
 			}
 			else if (this.requests.containsKey(taskid) && this.requests.get(taskid).size() == numReduces) {
 				TreeSet<BufferRequest> requests = this.requests.get(taskid);
@@ -215,9 +217,8 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				
 				PipelineHandler handler = new PipelineHandler(taskid, requests);
 				this.pipelineHandlers.put(taskid, handler);
-				handler.maxSpillId(id);
 				this.executor.execute(handler);
-				return true;
+				return handler.maxSpillId(id);
 			}
 			
 			return false;
@@ -304,7 +305,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		if (this.requests.containsKey(taskid)) {
 			for (BufferRequest request : this.requests.get(taskid)) {
 				request.open(this.conf, this.localFs);
-				this.executor.equals(request);
+				this.executor.execute(request);
 			}
 			this.requests.remove(taskid);
 		}

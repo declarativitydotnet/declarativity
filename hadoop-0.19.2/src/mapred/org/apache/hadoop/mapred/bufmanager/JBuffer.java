@@ -564,10 +564,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		// release sort buffer before the merge
 		kvbuffer = null;
 		mergeParts();
-		umbilical.commit(this.taskid);
 	}
 
 	public void close() throws IOException { 
+		umbilical.commit(this.taskid);
 	}
 	
 	protected class SpillThread extends Thread {
@@ -681,7 +681,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				/* flush should always trail spills by 1 so we have a final output. */
 				final int pipeNum = numSpills - 1;
 				if (umbilical.pipe(this.taskid, pipeNum, this.partitions)) {
-					numFlush = pipeNum;
+					numFlush++;
 				}
 			}
 		}
