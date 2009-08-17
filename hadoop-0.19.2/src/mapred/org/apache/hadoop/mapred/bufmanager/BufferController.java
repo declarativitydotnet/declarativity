@@ -304,8 +304,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		if (this.requests.containsKey(taskid)) {
 			for (BufferRequest request : this.requests.get(taskid)) {
 				request.open(this.conf, this.localFs);
-				request.flushFinal();
-				request.close();
+				this.executor.equals(request);
 			}
 			this.requests.remove(taskid);
 		}

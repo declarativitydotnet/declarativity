@@ -604,7 +604,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		FSDataOutputStream indexOut = null;
 		try {
 			// create spill file
-			System.err.println("SPILL TASKID " + this.taskid);
 			Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
 			out = localFs.create(filename);
 			if (out == null ) throw new IOException("Unable to create spill file " + filename);
