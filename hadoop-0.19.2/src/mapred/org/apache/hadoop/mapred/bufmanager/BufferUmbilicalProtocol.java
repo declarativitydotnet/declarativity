@@ -10,16 +10,10 @@ import org.apache.hadoop.mapred.TaskID;
 public interface BufferUmbilicalProtocol extends VersionedProtocol {
 	long versionID = 0;
 
-	/**
-	 * Add a record to a given output buffer.
-	 * @param bufid The map output buffer identifier.
-	 * @param output Register the map output at the given path.
-	 * @throws IOException
-	 */
 	public void commit(TaskAttemptID taskid) throws IOException;
 	
 	public void request(BufferRequest request) throws IOException;
 	
-	public BufferRequest getRequest(TaskAttemptID taskid) throws IOException;
+	public boolean pipe(TaskAttemptID taskid, int spillId, int numReduces) throws IOException;
 
 }
