@@ -207,7 +207,13 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				return true;
 			}
 			else if (this.requests.containsKey(taskid) && this.requests.get(taskid).size() == numReduces) {
-				PipelineHandler handler = new PipelineHandler(taskid, this.requests.get(taskid));
+				TreeSet<BufferRequest> requests = this.requests.get(taskid);
+				
+				for (BufferRequest request : requests) {
+					request.open(conf, localFs);
+				}
+				
+				PipelineHandler handler = new PipelineHandler(taskid, requests);
 				this.pipelineHandlers.put(taskid, handler);
 				handler.maxSpillId(id);
 				this.executor.execute(handler);

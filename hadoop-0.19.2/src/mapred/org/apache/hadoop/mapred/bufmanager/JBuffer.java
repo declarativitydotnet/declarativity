@@ -676,8 +676,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			
 			if (numSpills > 1) {
 				/* flush should always trail spills by 1 so we have a final output. */
-				if (umbilical.pipe(this.taskid, numSpills - 1, this.partitions)) {
-					numFlush = numSpills - 1;
+				final int pipeNum = numSpills - 1;
+				if (umbilical.pipe(this.taskid, pipeNum, this.partitions)) {
+					numFlush = pipeNum;
 				}
 			}
 		}
