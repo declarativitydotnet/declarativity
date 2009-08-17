@@ -237,29 +237,6 @@ public final class MapTask extends Task {
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
 		}
 
-		Thread requestThread = new Thread() {
-			public void run() {
-				while (!isInterrupted()) {
-					try {
-						BufferRequest request = bufferUmbilical.getRequest(getTaskID());
-						if (request != null) {
-							collector.register(request);
-						}
-						else {
-							sleep(100);
-						}
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-		};
-		requestThread.start();
-		
 		// reinstantiate the split
 		try {
 			instantiatedSplit = (InputSplit) 
@@ -339,12 +316,6 @@ public final class MapTask extends Task {
 			reporter.progress();
 			out.write(key, value);
 			mapOutputRecordCounter.increment(1);
-		}
-
-		@Override
-		public void register(BufferRequest request) throws IOException {
-			// TODO Auto-generated method stub
-			
 		}
 
 	}

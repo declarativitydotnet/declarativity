@@ -47,26 +47,19 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	protected static class CombineOutputCollector<K extends Object, V extends Object> 
 	implements OutputCollector<K, V> {
 		private IFile.Writer<K, V> writer = null;
-		private BufferRequest request = null;
 		public CombineOutputCollector() {
 		}
 		public synchronized void setWriter(IFile.Writer<K, V> writer) {
 			this.writer = writer;
 		}
-		public synchronized void setRequest(BufferRequest request) {
-			this.request = request;
-			
-		}
 		
 		public synchronized void reset() {
 			this.writer = null;
-			this.request = null;
 		}
 		
 		public synchronized void collect(K key, V value)
 		throws IOException {
 			if (writer != null) writer.append(key, value);
-			if (request != null) request.add(key, value);
 		}
 	}
 	
@@ -117,6 +110,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		(ACCTSIZE + 1) * 4;  // acct bytes per record
 
 	// spill accounting
+	private volatile int numFlush = 0;
 	private volatile int numSpills = 0;
 	private volatile Throwable sortSpillException = null;
 	private final int softRecordLimit;
@@ -130,18 +124,12 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 	private MapOutputFile mapOutputFile = null;
 	
-	private Map<Integer, BufferRequest> requests;
-	
-	private boolean persistPipelineRecords;
-	
 	@SuppressWarnings("unchecked")
 	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
 		this.umbilical = umbilical;
 		this.taskid = taskid;
 		this.job = job;
 		this.reporter = reporter;
-		this.requests = new HashMap<Integer, BufferRequest>();
-		this.persistPipelineRecords = taskid.isMap() ? job.getBoolean("io.pipeline.persist", false) : false;
 		this.mapOutputFile = new MapOutputFile(taskid.getJobID());
 		this.mapOutputFile.setConf(job);
 		
@@ -169,10 +157,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		int maxMemUsage = sortmb << 20;
 		
 		if (!taskid.isMap()) {
-			System.err.println("ORGINAL MAX MEM " + maxMemUsage);
 	        float maxInMemCopyUse = job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
 		    maxMemUsage = (int)Math.min(Runtime.getRuntime().maxMemory() * maxInMemCopyUse, Integer.MAX_VALUE);
-			System.err.println("REDUCE MAX MEM " + maxMemUsage);
 		}
 		
 		int recordCapacity = (int)(maxMemUsage * recper);
@@ -207,19 +193,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		? new CombineOutputCollector()
 		: null;
 		minSpillsForCombine = job.getInt("min.num.spills.for.combine", 3);
-	}
-	
-	public void register(BufferRequest request) throws IOException {
-		synchronized (requests) {
-			if (this.requests.containsKey(request.partition())) {
-				throw new IOException("Request already registered for partition " + request.partition());
-			}
-			
-			request.open(this.job, localFs, numSpills);
-			request.flushFile();
-
-			this.requests.put(request.partition(), request);
-		}
 	}
 	
 	/**
@@ -591,13 +564,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	}
 
 	public void close() throws IOException { 
-		System.err.println("NUMBER OF SPILLS " + numSpills);
-		synchronized (requests) {
-			for (BufferRequest request : this.requests.values()) {
-				request.close();
-			}
-			this.requests.clear();
-		}
 	}
 	
 	protected class SpillThread extends Thread {
@@ -624,108 +590,95 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	
 
 	private void sortAndSpill() throws IOException {
-		synchronized (requests) {
-			//approximate the length of the output file to be the length of the
-			//buffer + header lengths for the partitions
-			long size = (bufend >= bufstart
-					? bufend - bufstart
-							: (bufvoid - bufend) + bufstart) +
-							partitions * APPROX_HEADER_LENGTH;
-			FSDataOutputStream out = null;
-			FSDataOutputStream indexOut = null;
-			try {
-				// create spill file
-				System.err.println("SPILL TASKID " + this.taskid);
-				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
-				out = localFs.create(filename);
-				if (out == null ) throw new IOException("Unable to create spill file " + filename);
-				// create spill index
-				Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
-						this.taskid, numSpills,
-						partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-				indexOut = localFs.create(indexFilename);
-				final int endPosition = (kvend > kvstart)
-				? kvend
-						: kvoffsets.length + kvend;
-				sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
-				int spindex = kvstart;
-				InMemValBytes value = new InMemValBytes();
-				for (int i = 0; i < partitions; ++i) {
-					IFile.Writer<K, V> writer = null;
-					BufferRequest request = this.requests.containsKey(i) ? this.requests.get(i) : null;
-					try {
-						long segmentStart = out.getPos();
-						writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
-						if (null == combinerClass) {
-							// spill directly
-							DataInputBuffer key = new DataInputBuffer();
-							while (spindex < endPosition
-									&& kvindices[kvoffsets[spindex
-									                       % kvoffsets.length]
-									                       + PARTITION] == i) {
-								final int kvoff = kvoffsets[spindex
-								                            % kvoffsets.length];
-								getVBytesForOffset(kvoff, value);
-								key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
-										(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
+		//approximate the length of the output file to be the length of the
+		//buffer + header lengths for the partitions
+		long size = (bufend >= bufstart
+				? bufend - bufstart
+						: (bufvoid - bufend) + bufstart) +
+						partitions * APPROX_HEADER_LENGTH;
+		FSDataOutputStream out = null;
+		FSDataOutputStream indexOut = null;
+		try {
+			// create spill file
+			System.err.println("SPILL TASKID " + this.taskid);
+			Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
+			out = localFs.create(filename);
+			if (out == null ) throw new IOException("Unable to create spill file " + filename);
+			// create spill index
+			Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
+					this.taskid, numSpills,
+					partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			indexOut = localFs.create(indexFilename);
+			final int endPosition = (kvend > kvstart)
+			? kvend
+					: kvoffsets.length + kvend;
+			sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
+			int spindex = kvstart;
+			InMemValBytes value = new InMemValBytes();
+			for (int i = 0; i < partitions; ++i) {
+				IFile.Writer<K, V> writer = null;
+				try {
+					long segmentStart = out.getPos();
+					writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
+					if (null == combinerClass) {
+						// spill directly
+						DataInputBuffer key = new DataInputBuffer();
+						while (spindex < endPosition
+								&& kvindices[kvoffsets[spindex
+								                       % kvoffsets.length]
+								                       + PARTITION] == i) {
+							final int kvoff = kvoffsets[spindex
+							                            % kvoffsets.length];
+							getVBytesForOffset(kvoff, value);
+							key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
+									(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-								if (request == null) {
-									writer.append(key, value);
-								}
-								else {
-									request.add(key, value);
-									if (this.persistPipelineRecords) {
-										writer.append(key, value);
-									}
-								}
-								++spindex;
-							}
-						} else {
-							int spstart = spindex;
-							while (spindex < endPosition
-									&& kvindices[kvoffsets[spindex % kvoffsets.length]
-									                       + PARTITION] == i) {
-								++spindex;
-							}
-							// Note: we would like to avoid the combiner if
-							// we've fewer
-							// than some threshold of records for a partition
-							if (spstart != spindex) {
-								if (request == null) {
-									combineCollector.setWriter(writer);
-								}
-								else {
-									combineCollector.setRequest(request);
-									if (this.persistPipelineRecords) {
-										combineCollector.setWriter(writer);
-									}
-								}
-
-								RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
-								combineAndSpill(kvIter);
-								
-								combineCollector.reset();
-							}
+							writer.append(key, value);
+							++spindex;
 						}
-						if (request != null) request.flush();
+					} else {
+						int spstart = spindex;
+						while (spindex < endPosition
+								&& kvindices[kvoffsets[spindex % kvoffsets.length]
+								                       + PARTITION] == i) {
+							++spindex;
+						}
+						// Note: we would like to avoid the combiner if
+						// we've fewer
+						// than some threshold of records for a partition
+						if (spstart != spindex) {
+							combineCollector.setWriter(writer);
 
-						// close the writer
-						writer.close();
+							RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
+							combineAndSpill(kvIter);
 
-						// write the index as <offset, raw-length,
-						// compressed-length>
-						writeIndexRecord(indexOut, out, segmentStart, writer);
-						writer = null;
-					} finally {
-						// if (null != request) request.flushBuffer();
-						if (null != writer) writer.close();
+							combineCollector.reset();
+						}
 					}
+
+					// close the writer
+					writer.close();
+
+					// write the index as <offset, raw-length,
+					// compressed-length>
+					writeIndexRecord(indexOut, out, segmentStart, writer);
+					writer = null;
+				} finally {
+					// if (null != request) request.flushBuffer();
+					if (null != writer) writer.close();
 				}
-				// LOG.info("Finished spill " + numSpills);
-				++numSpills;
-			} finally {
-				if (out != null) out.close();
-				if (indexOut != null) indexOut.close();
+			}
+			// LOG.info("Finished spill " + numSpills);
+			++numSpills;
+		} finally {
+			if (out != null) out.close();
+			if (indexOut != null) indexOut.close();
+			
+			if (numSpills > 1) {
+				/* flush should always trail spills by 1 so we have a final output. */
+				if (umbilical.pipe(this.taskid, numSpills - 1, this.partitions)) {
+					numFlush = numSpills - 1;
+				}
 			}
 		}
 	}
@@ -752,7 +705,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	@SuppressWarnings("unchecked")
 	private void spillSingleRecord(final K key, final V value) 
 	throws IOException {
-		synchronized (requests) {
 			long size = kvbuffer.length + partitions * APPROX_HEADER_LENGTH;
 			FSDataOutputStream out = null;
 			FSDataOutputStream indexOut = null;
@@ -775,9 +727,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						writer = new IFile.Writer(job, out, keyClass, valClass, codec);
 
 						if (i == partition) {
-							BufferRequest request = this.requests.containsKey(partition) ? this.requests.get(partition) : null;
 							writer.append(key, value);
-							if (request != null) request.add(key, value);
 						}
 						writer.close();
 
@@ -793,7 +743,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
 			}
-		}
 	}
 
 	/**
@@ -926,12 +875,12 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		Path [] indexFileName = new Path[numSpills];
 		FileSystem localFs = FileSystem.getLocal(job);
 
-		for(int i = 0; i < numSpills; i++) {
+		for(int i = numFlush; i < numSpills; i++) {
 			filename[i] = mapOutputFile.getSpillFile(this.taskid, i);
 			indexFileName[i] = mapOutputFile.getSpillIndexFile(this.taskid, i);
 			finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
 		}
-
+		
 		if (numSpills == 1) { //the spill is the final output
 			localFs.rename(filename[0], 
 					new Path(filename[0].getParent(), "file.out"));

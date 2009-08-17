@@ -50,7 +50,7 @@ import org.apache.hadoop.io.serializer.Serializer;
  */
 public class IFile {
 
-  private static final int EOF_MARKER = -1;
+  public static final int EOF_MARKER = -1;
   
   /**
    * <code>IFile.Writer</code> to write out intermediate map-outputs. 
