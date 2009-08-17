@@ -99,7 +99,6 @@ public class ReduceTask extends Task {
 						}
 						case RUNNING:
 						{
-							System.err.println("TaskCompletionEvent " + event + " status " + event.getTaskStatus());
 							URI u = URI.create(event.getTaskTrackerHttp());
 							String host = u.getHost();
 							TaskAttemptID mapTaskId = event.getTaskAttemptId();
