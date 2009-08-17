@@ -39,7 +39,7 @@ import org.apache.hadoop.mapred.Merger.Segment;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class BufferRequest<K extends Object, V extends Object> implements Comparable<BufferRequest>, Writable {
+public class BufferRequest<K extends Object, V extends Object> implements Comparable<BufferRequest>, Writable, Runnable {
 	
 	private TaskAttemptID taskid;
 	
@@ -131,6 +131,23 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			}
 			else {
 				throw new IOException("BufferRequest not open!");
+			}
+		}
+	}
+	
+	public void run() {
+		synchronized (this) {
+			try {
+				flushFinal();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			finally {
+				try {
+					close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
