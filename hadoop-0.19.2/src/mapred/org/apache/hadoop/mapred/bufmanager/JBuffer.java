@@ -927,7 +927,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			for (int parts = 0; parts < partitions; parts++){
 				//create the segments to be merged
 				List<Segment<K, V>> segmentList =
-					new ArrayList<Segment<K, V>>(numSpills);
+					new ArrayList<Segment<K, V>>(numSpills - numFlush);
 				for(int i = numFlush; i < numSpills; i++) {
 					FSDataInputStream indexIn = localFs.open(indexFileName[i]);
 					indexIn.seek(parts * MAP_OUTPUT_INDEX_RECORD_LENGTH);
@@ -940,8 +940,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					Segment<K, V> s = 
 						new Segment<K, V>(new IFile.Reader<K, V>(job, in, segmentLength, codec),
 								true);
-					segmentList.add(i, s);
-
+					segmentList.add(s);
 				}
 
 				//merge
@@ -973,7 +972,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			finalOut.close();
 			finalIndexOut.close();
 			//cleanup
-			for(int i = 0; i < numSpills; i++) {
+			for(int i = numFlush; i < numSpills; i++) {
 				localFs.delete(filename[i], true);
 				localFs.delete(indexFileName[i], true);
 			}

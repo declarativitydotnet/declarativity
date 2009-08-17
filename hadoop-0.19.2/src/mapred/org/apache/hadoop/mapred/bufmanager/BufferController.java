@@ -79,6 +79,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				if (this.maxSpillId < id && this.curSpillId == this.maxSpillId) {
 					this.maxSpillId++;
 					this.notifyAll();
+					return true;
 				}
 				return false;
 			}
