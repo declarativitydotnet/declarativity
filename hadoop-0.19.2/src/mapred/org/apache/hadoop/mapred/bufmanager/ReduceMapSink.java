@@ -137,7 +137,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		synchronized (this) {
 			if (this.connections.containsKey(connection.taskid())) {
 				this.successful.add(connection.taskid().getTaskID());
-				System.err.println("SUCCESSFUL CONECTIONS " + this.successful.size());
 				this.notifyAll();
 			}
 		}
@@ -173,8 +172,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			this.taskid.readFields(input);
 			long size = input.readLong();
 			
-			System.err.println("NEW REDUCE CONNECTION FOR BUFFER " + this.taskid + " OF LENGTH " + size);
-			
 			this.reader = new IFile.Reader<K, V>(conf, input, (size < 0 ? Integer.MAX_VALUE : (int) size), codec);
 		}
 		
@@ -196,7 +193,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			try {
 				DataInputBuffer key = new DataInputBuffer();
 				DataInputBuffer value = new DataInputBuffer();
-				System.err.println("AVAILABLE " + input.available());
 				while (open && this.reader.next(key, value)) {
 					this.sink.collect(key, value);
 				}
