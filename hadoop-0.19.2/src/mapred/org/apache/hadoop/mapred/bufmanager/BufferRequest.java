@@ -98,11 +98,11 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				long segmentLength = indexIn.readLong();
 				
 				/* Do we skip the EOF_MARKER? */
-				if (! eof) segmentLength -= (2 * WritableUtils.getVIntSize(IFile.EOF_MARKER));
+				if (! eof) rawSegmentLength -= (2 * WritableUtils.getVIntSize(IFile.EOF_MARKER));
 				
 				dataIn.seek(segmentOffset);
 
-				flushFile(dataIn, segmentLength);
+				flushFile(dataIn, rawSegmentLength);
 			}
 			else {
 				throw new IOException("BufferRequest not open!");
@@ -127,7 +127,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 
 				FSDataInputStream in = localFS.open(finalOutputFile);
 				in.seek(segmentOffset);
-				flushFile(in, segmentLength);
+				flushFile(in, rawSegmentLength);
 			}
 			else {
 				throw new IOException("BufferRequest not open!");

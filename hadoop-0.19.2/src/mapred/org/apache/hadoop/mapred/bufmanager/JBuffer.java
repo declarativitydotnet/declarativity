@@ -124,6 +124,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 	private MapOutputFile mapOutputFile = null;
 	
+	private boolean pipeline;
+	
 	@SuppressWarnings("unchecked")
 	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
 		this.umbilical = umbilical;
@@ -132,6 +134,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		this.reporter = reporter;
 		this.mapOutputFile = new MapOutputFile(taskid.getJobID());
 		this.mapOutputFile.setConf(job);
+		
+		this.pipeline = job.getBoolean("mapred.map.tasks.pipeline.execution", true);
 		
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
@@ -674,7 +678,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			if (out != null) out.close();
 			if (indexOut != null) indexOut.close();
 			
-			if (numSpills > 1) {
+			if (pipeline && numSpills > 1) {
 				/* flush should always trail spills by 1 so we have a final output. */
 				final int pipeNum = numSpills - 1;
 				if (umbilical.pipe(this.taskid, pipeNum, this.partitions)) {
@@ -882,11 +886,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
 		}
 		
-		if (numSpills == 1) { //the spill is the final output
-			localFs.rename(filename[0], 
-					new Path(filename[0].getParent(), "file.out"));
-			localFs.rename(indexFileName[0], 
-					new Path(indexFileName[0].getParent(),"file.out.index"));
+		if (numSpills - numFlush == 1) { //the spill is the final output
+			localFs.rename(filename[numFlush], 
+					new Path(filename[numFlush].getParent(), "file.out"));
+			localFs.rename(indexFileName[numFlush], 
+					new Path(indexFileName[numFlush].getParent(),"file.out.index"));
 			return;
 		}
 		//make correction in the length to include the sequence file header
@@ -925,7 +929,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				//create the segments to be merged
 				List<Segment<K, V>> segmentList =
 					new ArrayList<Segment<K, V>>(numSpills);
-				for(int i = 0; i < numSpills; i++) {
+				for(int i = numFlush; i < numSpills; i++) {
 					FSDataInputStream indexIn = localFs.open(indexFileName[i]);
 					indexIn.seek(parts * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 					long segmentOffset = indexIn.readLong();
