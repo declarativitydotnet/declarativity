@@ -346,11 +346,7 @@ public class IFile {
       
       // Check if we have enough data to read lengths
       if ((dataIn.getLength() - dataIn.getPosition()) < 2*MAX_VINT_SIZE) {
-    	  try {
-    		  readNextBlock(2*MAX_VINT_SIZE);
-    	  } catch (ChecksumException e) {
-    		  return false; // This happens over TCP for some reason.
-    	  }
+    	  readNextBlock(2*MAX_VINT_SIZE);
       }
       
       // Read key and value lengths
