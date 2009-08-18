@@ -164,7 +164,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			}
 			finally {
 				try {
-					close(true);
+					close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -173,19 +173,19 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	
-	public void open(Configuration conf, FileSystem localFs) throws IOException {
+	public void open(Configuration conf, FileSystem localFs, boolean primary) throws IOException {
 		synchronized (this) {
 			if (! open) {
 				this.output = new byte[1500];
 				this.conf = conf;
 				this.localFS = localFs;
-				this.out = connect(-1);
+				this.out = connect(primary);
 				this.open = true;
 			}
 		}
 	}
 	
-	public void open(JobConf conf) throws IOException {
+	public void open(JobConf conf, boolean primary) throws IOException {
 		synchronized (this) {
 			Class<K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
 			Class<V> valClass = (Class<V>)conf.getMapOutputValueClass();
@@ -197,20 +197,20 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
 			}
 
-			this.out = connect(-1);
+			this.out = connect(primary);
 			this.writer = new Writer<K, V>(conf, out, keyClass, valClass, codec);
 
 			this.open = true;
 		}
 	}
 	
-	private FSDataOutputStream connect(long length) throws IOException {
+	private FSDataOutputStream connect(boolean primary) throws IOException {
 		try {
 			Socket socket = new Socket();
 			socket.connect(this.sink);
 			FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
 			this.taskid.write(out);
-			out.writeLong(length);
+			out.writeBoolean(primary);
 			return out;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -254,15 +254,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		WritableUtils.writeVInt(out, this.sink.getPort());
 	}
 
-	public void close(boolean eof) throws IOException {
+	public void close() throws IOException {
 		synchronized (this) {
 			if (open) {
 				open = false;
-				if (eof) {
-					// Write EOF_MARKER for key/value length
-					WritableUtils.writeVInt(out, IFile.EOF_MARKER);
-					WritableUtils.writeVInt(out, IFile.EOF_MARKER);
-				}
 				out.flush();
 				out.close();
 			}
