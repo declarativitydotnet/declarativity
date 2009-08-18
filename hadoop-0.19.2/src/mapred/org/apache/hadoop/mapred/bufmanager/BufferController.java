@@ -115,7 +115,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 						for (BufferRequest request : requests) {
 							request.flush(indexIn, dataIn);
-							request.close(true);
+							request.close();
 						}
 						indexIn.close();
 						dataIn.close();
@@ -215,7 +215,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				TreeSet<BufferRequest> requests = this.requests.get(taskid);
 				
 				for (BufferRequest request : requests) {
-					request.open(conf, localFs);
+					request.open(conf, localFs, true);
 				}
 				
 				PipelineHandler handler = new PipelineHandler(taskid, requests);
@@ -323,7 +323,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private void handleCompleteBuffers(TaskAttemptID taskid) throws IOException {
 		if (this.requests.containsKey(taskid)) {
 			for (BufferRequest request : this.requests.get(taskid)) {
-				request.open(this.conf, this.localFs);
+				request.open(this.conf, this.localFs, true);
 				this.executor.execute(request);
 			}
 			this.requests.remove(taskid);

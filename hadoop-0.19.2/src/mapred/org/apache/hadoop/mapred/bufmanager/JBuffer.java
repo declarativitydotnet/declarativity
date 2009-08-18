@@ -576,12 +576,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	}
 
 	public void close() throws IOException { 
-		boolean eof = numSpills > 0;
-		for (BufferRequest request : this.requests.values()) {
-			request.close(false);
-		}
-		
 		umbilical.commit(this.taskid, numSpills);
+		for (BufferRequest request : this.requests.values()) {
+			request.close();
+		}
 	}
 	
 	
@@ -593,7 +591,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				try {
 					BufferRequest request = null;
 					while ((request = umbilical.getRequest(taskid)) != null) {
-						request.open(job);
+						request.open(job, numSpills == 0);
 						requests.put(request.partition(), request);
 					}
 				} catch (IOException e) {

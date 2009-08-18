@@ -163,6 +163,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		
 		private boolean open;
 		
+		private boolean primary;
+		
 		public Connection(DataInputStream input, ReduceMapSink<K, V> sink, JobConf conf) throws IOException {
 			this.input = input;
 			this.sink = sink;
@@ -177,9 +179,9 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			
 			this.taskid = new TaskAttemptID();
 			this.taskid.readFields(input);
-			long size = input.readLong();
+			this.primary = input.readBoolean();
 			
-			this.reader = new IFile.Reader<K, V>(conf, input, (size < 0 ? Integer.MAX_VALUE : (int) size), codec);
+			this.reader = new IFile.Reader<K, V>(conf, input, Integer.MAX_VALUE, codec);
 		}
 		
 		public TaskAttemptID taskid() {
@@ -203,7 +205,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				while (open && this.reader.next(key, value)) {
 					this.sink.collect(key, value);
 				}
-				sink.done(this);
 			} catch (ChecksumException e) {
 				// Ignore due to TCP close
 			} catch (Throwable e) {
@@ -211,6 +212,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
+				if (primary) sink.done(this);
 				close();
 			}
 		}
