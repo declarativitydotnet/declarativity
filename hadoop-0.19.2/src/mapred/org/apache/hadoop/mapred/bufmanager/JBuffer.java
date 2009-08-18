@@ -588,14 +588,16 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 		@Override
 		public void run() {
-			try {
-				BufferRequest request = null;
-				while ((request = umbilical.getRequest(taskid)) != null) {
-					request.open(job);
-					requests.put(request.partition(), request);
+			if (pipeline) {
+				try {
+					BufferRequest request = null;
+					while ((request = umbilical.getRequest(taskid)) != null) {
+						request.open(job);
+						requests.put(request.partition(), request);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 			
 			
