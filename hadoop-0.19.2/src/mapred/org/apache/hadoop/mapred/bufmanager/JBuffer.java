@@ -125,6 +125,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	private final int minSpillsForCombine;
 	private final IndexedSorter sorter;
 	private final Object spillLock = new Object();
+	private final Object mergeLock = new Object();
 	private final BlockingBuffer bb = new BlockingBuffer();
 
 	private final FileSystem localFs;
@@ -572,7 +573,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		// release sort buffer before the merge
 		kvbuffer = null;
-		if (numSpills > 0) mergeParts();
+		if (numSpills > 0) {
+			mergeParts(false);
+		}
 	}
 
 	public void close() throws IOException { 
@@ -601,7 +604,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			
 			
 			try {
-				sortAndSpill();
+				synchronized (mergeLock) {
+					sortAndSpill();
+				}
 			} catch (Throwable e) {
 				e.printStackTrace();
 				sortSpillException = e;
@@ -614,6 +619,17 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						bufstart = bufend;
 						spillLock.notify();
 					}
+				
+				synchronized (mergeLock) {
+					if (numSpills > 100) {
+						try {
+							mergeParts(true);
+						} catch (IOException e) {
+							e.printStackTrace();
+							sortSpillException = e;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -925,9 +941,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		
 	}
+	
 
-	private void mergeParts() throws IOException {
+	private void mergeParts(boolean spill) throws IOException {
 		// get the approximate size of the final output/index files
+		
 		long finalOutFileSize = 0;
 		long finalIndexFileSize = 0;
 		Path [] filename = new Path[numSpills];
@@ -953,18 +971,23 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 		finalIndexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
 
-		Path finalOutputFile = mapOutputFile.getOutputFileForWrite(this.taskid, 
-				finalOutFileSize);
-		Path finalIndexFile = mapOutputFile.getOutputIndexFileForWrite(
-				this.taskid, finalIndexFileSize);
+		Path outputFile = null;
+		Path indexFile = null;
+		
+		if (spill) {
+			outputFile = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, finalOutFileSize);
+			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, numSpills, finalIndexFileSize);
+		}
+		else {
+			outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
+			indexFile = mapOutputFile.getOutputIndexFileForWrite( this.taskid, finalIndexFileSize);
+		}
 
 		//The output stream for the final single output file
-		FSDataOutputStream finalOut = localFs.create(finalOutputFile, true, 
-				4096);
+		FSDataOutputStream finalOut = localFs.create(outputFile, true,  4096);
 
 		//The final index file output stream
-		FSDataOutputStream finalIndexOut = localFs.create(finalIndexFile, true,
-				4096);
+		FSDataOutputStream finalIndexOut = localFs.create(indexFile, true, 4096);
 		if (numSpills == 0) {
 			//create dummy files
 			for (int i = 0; i < partitions; i++) {
@@ -1030,6 +1053,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			for(int i = numFlush; i < numSpills; i++) {
 				localFs.delete(filename[i], true);
 				localFs.delete(indexFileName[i], true);
+			}
+			
+			if (spill) {
+				numFlush = numSpills;
+				numSpills++;
 			}
 		}
 	}
