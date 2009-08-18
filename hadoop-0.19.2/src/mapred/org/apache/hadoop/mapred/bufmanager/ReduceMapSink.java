@@ -154,6 +154,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		private ReduceMapSink<K, V> sink;
 		private DataInputStream input;
 		
+		private boolean primary;
+		
 		private boolean open;
 		
 		public Connection(DataInputStream input, ReduceMapSink<K, V> sink, JobConf conf) throws IOException {
@@ -170,6 +172,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			
 			this.taskid = new TaskAttemptID();
 			this.taskid.readFields(input);
+			this.primary = input.readBoolean();
 			long size = input.readLong();
 			
 			this.reader = new IFile.Reader<K, V>(conf, input, (size < 0 ? Integer.MAX_VALUE : (int) size), codec);
@@ -201,7 +204,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
-				sink.done(this);
+				if (primary) sink.done(this);
 				close();
 			}
 		}

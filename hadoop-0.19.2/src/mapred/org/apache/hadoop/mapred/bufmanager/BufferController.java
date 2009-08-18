@@ -115,9 +115,11 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 						for (BufferRequest request : requests) {
 							request.flush(indexIn, dataIn, true);
+							request.close();
 						}
 						indexIn.close();
 						dataIn.close();
+						return;
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -238,6 +240,21 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			else if (this.requests.containsKey(taskid)) {
 				handleCompleteBuffers(taskid);
 			}
+		}
+	}
+	
+	@Override
+	public BufferRequest getRequest(TaskAttemptID taskid) throws IOException {
+		synchronized (this) {
+			if (this.requests.containsKey(taskid)) {
+				for (BufferRequest request : this.requests.get(taskid)) {
+					if (request.delivered == false) {
+						request.delivered = true;
+						return request;
+					}
+				}
+			}
+			return null;
 		}
 	}
 
