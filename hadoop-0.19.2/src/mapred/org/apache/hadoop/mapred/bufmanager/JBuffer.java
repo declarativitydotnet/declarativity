@@ -572,15 +572,16 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		// release sort buffer before the merge
 		kvbuffer = null;
-		mergeParts();
+		if (numSpills > 0) mergeParts();
 	}
 
 	public void close() throws IOException { 
+		boolean eof = numSpills > 0;
 		for (BufferRequest request : this.requests.values()) {
-			request.close();
+			request.close(eof);
 		}
 		
-		umbilical.commit(this.taskid);
+		umbilical.commit(this.taskid, numSpills);
 	}
 	
 	
@@ -623,6 +624,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	private void sortAndSpill() throws IOException {
 		//approximate the length of the output file to be the length of the
 		//buffer + header lengths for the partitions
+		boolean spillToDisk = true;
+		if (pipeline && this.requests.size() == partitions) {
+			spillToDisk = false;
+		}
+		
 		long size = (bufend >= bufstart
 				? bufend - bufstart
 						: (bufvoid - bufend) + bufstart) +
@@ -631,14 +637,17 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		FSDataOutputStream indexOut = null;
 		try {
 			// create spill file
-			Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
-			out = localFs.create(filename);
-			if (out == null ) throw new IOException("Unable to create spill file " + filename);
-			// create spill index
-			Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
-					this.taskid, numSpills,
-					partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-			indexOut = localFs.create(indexFilename);
+			if (spillToDisk) {
+				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
+				out = localFs.create(filename);
+				if (out == null ) throw new IOException("Unable to create spill file " + filename);
+				// create spill index
+				Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
+						this.taskid, numSpills,
+						partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+				indexOut = localFs.create(indexFilename);
+			}
+			
 			final int endPosition = (kvend > kvstart)
 			? kvend
 					: kvoffsets.length + kvend;
@@ -650,8 +659,12 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				BufferRequest request = null;
 				try {
 					long segmentStart = out.getPos();
-					writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
+					if (spillToDisk) {
+						writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
+					}
 					request = this.requests.containsKey(i) ? this.requests.get(i) : null;
+					if (! spillToDisk && request == null) throw new IOException("Fatal error: !spillToDisk && ! request");
+					
 					if (null == combinerClass) {
 						// spill directly
 						DataInputBuffer key = new DataInputBuffer();
@@ -698,31 +711,35 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						}
 					}
 
-					// close the writer
-					writer.close();
+					if (spillToDisk) {
+						// close the writer
+						writer.close();
 
-					// write the index as <offset, raw-length,
-					// compressed-length>
-					writeIndexRecord(indexOut, out, segmentStart, writer);
-					writer = null;
+						// write the index as <offset, raw-length,
+						// compressed-length>
+						writeIndexRecord(indexOut, out, segmentStart, writer);
+						writer = null;
+					}
 				} finally {
 					// if (null != request) request.flushBuffer();
 					if (null != writer) writer.close();
 				}
 			}
 			// LOG.info("Finished spill " + numSpills);
-			++numSpills;
+			if (spillToDisk) ++numSpills;
 		} finally {
 			if (out != null) out.close();
 			if (indexOut != null) indexOut.close();
 			
+			/*
 			if (pipeline && numSpills > 1) {
-				/* flush should always trail spills by 1 so we have a final output. */
+				// flush should always trail spills by 1 so we have a final output.
 				final int pipeNum = numSpills - 1;
 				if (umbilical.pipe(this.taskid, pipeNum, this.partitions)) {
 					numFlush++;
 				}
 			}
+			*/
 		}
 	}
 	

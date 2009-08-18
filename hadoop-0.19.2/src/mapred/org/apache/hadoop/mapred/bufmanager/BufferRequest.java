@@ -104,7 +104,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
-	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, boolean eof) throws IOException {
+	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn) throws IOException {
 		synchronized (this) {
 			if (open) {
 				indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
@@ -114,7 +114,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				long segmentLength = indexIn.readLong();
 				
 				/* Do we skip the EOF_MARKER? */
-				if (! eof) rawSegmentLength -= (2 * WritableUtils.getVIntSize(IFile.EOF_MARKER));
+				rawSegmentLength -= (2 * WritableUtils.getVIntSize(IFile.EOF_MARKER));
 				
 				dataIn.seek(segmentOffset);
 
@@ -140,6 +140,9 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				long segmentOffset    = indexIn.readLong();
 				long rawSegmentLength = indexIn.readLong();
 				long segmentLength    = indexIn.readLong();
+				
+				rawSegmentLength -= (2 * WritableUtils.getVIntSize(IFile.EOF_MARKER));
+
 
 				FSDataInputStream in = localFS.open(finalOutputFile);
 				in.seek(segmentOffset);
@@ -151,6 +154,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
+	@Override
 	public void run() {
 		synchronized (this) {
 			try {
@@ -160,7 +164,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			}
 			finally {
 				try {
-					close();
+					close(true);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -175,7 +179,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				this.output = new byte[1500];
 				this.conf = conf;
 				this.localFS = localFs;
-				this.out = connect(-1, true);
+				this.out = connect(-1);
 				this.open = true;
 			}
 		}
@@ -193,20 +197,19 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
 			}
 
-			this.out = connect(-1, false);
+			this.out = connect(-1);
 			this.writer = new Writer<K, V>(conf, out, keyClass, valClass, codec);
 
 			this.open = true;
 		}
 	}
 	
-	private FSDataOutputStream connect(long length, boolean primary) throws IOException {
+	private FSDataOutputStream connect(long length) throws IOException {
 		try {
 			Socket socket = new Socket();
 			socket.connect(this.sink);
 			FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
 			this.taskid.write(out);
-			out.writeBoolean(primary);
 			out.writeLong(length);
 			return out;
 		} catch (IOException e) {
@@ -251,10 +254,15 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		WritableUtils.writeVInt(out, this.sink.getPort());
 	}
 
-	public void close() throws IOException {
+	public void close(boolean eof) throws IOException {
 		synchronized (this) {
 			if (open) {
 				open = false;
+				if (eof) {
+					// Write EOF_MARKER for key/value length
+					WritableUtils.writeVInt(out, IFile.EOF_MARKER);
+					WritableUtils.writeVInt(out, IFile.EOF_MARKER);
+				}
 				out.flush();
 				out.close();
 			}

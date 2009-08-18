@@ -100,7 +100,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						FSDataInputStream dataIn = localFs.open(outputFile);
 
 						for (BufferRequest request : requests) {
-							request.flush(indexIn, dataIn, false);
+							request.flush(indexIn, dataIn);
 						}
 						indexIn.close();
 						dataIn.close();
@@ -114,8 +114,8 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						FSDataInputStream dataIn  = localFs.open(finalOutputFile);
 
 						for (BufferRequest request : requests) {
-							request.flush(indexIn, dataIn, true);
-							request.close();
+							request.flush(indexIn, dataIn);
+							request.close(true);
 						}
 						indexIn.close();
 						dataIn.close();
@@ -229,9 +229,10 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	}
 
 	@Override
-	public void commit(TaskAttemptID taskid) throws IOException {
+	public void commit(TaskAttemptID taskid, int numSpills) throws IOException {
 		synchronized (this) {
 			this.committed.add(taskid);
+			if (numSpills == 0) return;
 			
 			if (this.pipelineHandlers.containsKey(taskid)) {
 				this.pipelineHandlers.get(taskid).close();
