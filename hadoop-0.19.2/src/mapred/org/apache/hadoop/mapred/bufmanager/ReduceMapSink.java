@@ -13,6 +13,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +57,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	
 	private JobConf conf;
 	
-	private Map<TaskAttemptID, Connection> connections;
+	private Map<TaskAttemptID, List<Connection>> connections;
 	
 	private Set<TaskID> successful;
 	
@@ -67,7 +68,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	    /** How many mappers? */
 	    this.numMapTasks = conf.getNumMapTasks();
 		this.executor = Executors.newFixedThreadPool(this.numMapTasks);
-		this.connections = new HashMap<TaskAttemptID, Connection>();
+		this.connections = new HashMap<TaskAttemptID, List<Connection>>();
 		this.successful = new HashSet<TaskID>();
 	    
 		/** The server socket and selector registration */
@@ -95,7 +96,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						DataInputStream input = new DataInputStream(channel.socket().getInputStream());
 						Connection conn = new Connection(input, ReduceMapSink.this, conf);
 						synchronized (this) {
-							connections.put(conn.taskid(), conn);
+							if (!connections.containsKey(conn.taskid())) {
+								connections.put(conn.taskid(), new ArrayList<Connection>());
+							}
+							connections.get(conn.taskid()).add(conn);
 						}
 						executor.execute(conn);
 					}
@@ -128,8 +132,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	public void cancel(TaskAttemptID taskid) {
 		synchronized (this) {
 			if (this.connections.containsKey(taskid)) {
+				for (Connection conn : this.connections.get(taskid)) {
+					conn.close();
+				}
 				this.connections.remove(taskid);
-				this.connections.get(taskid).close();
 			}
 		}
 	}
