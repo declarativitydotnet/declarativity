@@ -658,8 +658,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				IFile.Writer<K, V> writer = null;
 				BufferRequest request = null;
 				try {
-					long segmentStart = out.getPos();
+					long segmentStart = 0;
 					if (spillToDisk) {
+						segmentStart = out.getPos();
 						writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
 					}
 					request = this.requests.containsKey(i) ? this.requests.get(i) : null;
