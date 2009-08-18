@@ -41,6 +41,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferRequest<K extends Object, V extends Object> implements Comparable<BufferRequest>, Writable, Runnable {
 	
+	public boolean delivered = false;
+	
 	private TaskAttemptID taskid;
 	
 	private int partition;
@@ -52,6 +54,8 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	private boolean open = false;
 	
 	private FSDataOutputStream out = null;
+	
+	private IFile.Writer<K, V> writer = null;
 	
 	private Configuration conf = null;
 	
@@ -86,6 +90,18 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	public Integer partition() {
 		return this.partition;
+	}
+	
+	public void append(DataInputBuffer key, DataInputBuffer value) throws IOException {
+		synchronized (this) {
+			if (open) this.writer.append(key, value);
+		}
+	}
+	
+	public void append(K key, V value) throws IOException {
+		synchronized (this) {
+			if (open) this.writer.append(key, value);
+		}
 	}
 	
 	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, boolean eof) throws IOException {
@@ -159,18 +175,38 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				this.output = new byte[1500];
 				this.conf = conf;
 				this.localFS = localFs;
-				this.out = connect(-1);
+				this.out = connect(-1, true);
 				this.open = true;
 			}
 		}
 	}
 	
-	private FSDataOutputStream connect(long length) throws IOException {
+	public void open(JobConf conf) throws IOException {
+		synchronized (this) {
+			Class<K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+			Class<V> valClass = (Class<V>)conf.getMapOutputValueClass();
+
+			CompressionCodec codec = null;
+			if (conf.getCompressMapOutput()) {
+				Class<? extends CompressionCodec> codecClass =
+					conf.getMapOutputCompressorClass(DefaultCodec.class);
+				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+			}
+
+			this.out = connect(-1, false);
+			this.writer = new Writer<K, V>(conf, out, keyClass, valClass, codec);
+
+			this.open = true;
+		}
+	}
+	
+	private FSDataOutputStream connect(long length, boolean primary) throws IOException {
 		try {
 			Socket socket = new Socket();
 			socket.connect(this.sink);
 			FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
 			this.taskid.write(out);
+			out.writeBoolean(primary);
 			out.writeLong(length);
 			return out;
 		} catch (IOException e) {

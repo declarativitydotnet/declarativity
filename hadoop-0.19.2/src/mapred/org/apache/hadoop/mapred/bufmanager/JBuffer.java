@@ -47,19 +47,26 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	protected static class CombineOutputCollector<K extends Object, V extends Object> 
 	implements OutputCollector<K, V> {
 		private IFile.Writer<K, V> writer = null;
+		private BufferRequest request = null;
+		
 		public CombineOutputCollector() {
 		}
 		public synchronized void setWriter(IFile.Writer<K, V> writer) {
 			this.writer = writer;
 		}
+		public synchronized void setRequest(BufferRequest request) {
+			this.request = request;
+		}
 		
 		public synchronized void reset() {
 			this.writer = null;
+			this.request = null;
 		}
 		
 		public synchronized void collect(K key, V value)
 		throws IOException {
 			if (writer != null) writer.append(key, value);
+			if (request != null) request.append(key, value);
 		}
 	}
 	
@@ -125,6 +132,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	private MapOutputFile mapOutputFile = null;
 	
 	private boolean pipeline;
+	
+	private Map<Integer, BufferRequest> requests = new HashMap<Integer, BufferRequest>();
 	
 	@SuppressWarnings("unchecked")
 	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
@@ -567,13 +576,29 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	}
 
 	public void close() throws IOException { 
+		for (BufferRequest request : this.requests.values()) {
+			request.close();
+		}
+		
 		umbilical.commit(this.taskid);
 	}
+	
 	
 	protected class SpillThread extends Thread {
 
 		@Override
 		public void run() {
+			try {
+				BufferRequest request = null;
+				while ((request = umbilical.getRequest(taskid)) != null) {
+					request.open(job);
+					requests.put(request.partition(), request);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			
 			try {
 				sortAndSpill();
 			} catch (Throwable e) {
@@ -620,9 +645,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			InMemValBytes value = new InMemValBytes();
 			for (int i = 0; i < partitions; ++i) {
 				IFile.Writer<K, V> writer = null;
+				BufferRequest request = null;
 				try {
 					long segmentStart = out.getPos();
 					writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
+					request = this.requests.containsKey(i) ? this.requests.get(i) : null;
 					if (null == combinerClass) {
 						// spill directly
 						DataInputBuffer key = new DataInputBuffer();
@@ -636,7 +663,12 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 							key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 									(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-							writer.append(key, value);
+							if (request != null) {
+								request.append(key, value);
+							}
+							else {
+								writer.append(key, value);
+							}
 							++spindex;
 						}
 					} else {
@@ -650,7 +682,12 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						// we've fewer
 						// than some threshold of records for a partition
 						if (spstart != spindex) {
-							combineCollector.setWriter(writer);
+							if (request != null) {
+								combineCollector.setRequest(request);
+							}
+							else {
+								combineCollector.setWriter(writer);
+							}
 
 							RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
 							combineAndSpill(kvIter);
