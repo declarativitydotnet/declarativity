@@ -618,8 +618,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						spillLock.notify();
 					}
 				
-				synchronized (mergeLock) {
-					if (numSpills - numFlush > 20) {
+					if (numSpills - numFlush > 50) {
 						try {
 							mergeParts(true);
 						} catch (IOException e) {
@@ -627,7 +626,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 							sortSpillException = e;
 						}
 					}
-				}
 			}
 		}
 	}
@@ -948,23 +946,33 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	private void mergeParts(boolean spill) throws IOException {
 		// get the approximate size of the final output/index files
 		
+		int start = 0;
+		int end = 0;
+		synchronized (mergeLock) {
+			start = numFlush;
+			end   = numSpills;
+			
+			numFlush = numSpills;
+			numSpills++;
+		}
+		
 		long finalOutFileSize = 0;
 		long finalIndexFileSize = 0;
-		Path [] filename = new Path[numSpills];
-		Path [] indexFileName = new Path[numSpills];
+		Path [] filename = new Path[end];
+		Path [] indexFileName = new Path[end];
 		FileSystem localFs = FileSystem.getLocal(job);
 
-		for(int i = numFlush; i < numSpills; i++) {
+		for(int i = start; i < end; i++) {
 			filename[i] = mapOutputFile.getSpillFile(this.taskid, i);
 			indexFileName[i] = mapOutputFile.getSpillIndexFile(this.taskid, i);
 			finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
 		}
 		
-		if (numSpills - numFlush == 1) { //the spill is the final output
-			localFs.rename(filename[numFlush], 
-					new Path(filename[numFlush].getParent(), "file.out"));
-			localFs.rename(indexFileName[numFlush], 
-					new Path(indexFileName[numFlush].getParent(),"file.out.index"));
+		if (end - start == 1 && ! spill) { //the spill is the final output
+			localFs.rename(filename[start], 
+					new Path(filename[start].getParent(), "file.out"));
+			localFs.rename(indexFileName[start], 
+					new Path(indexFileName[start].getParent(),"file.out.index"));
 			return;
 		}
 		//make correction in the length to include the sequence file header
@@ -977,8 +985,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		Path indexFile = null;
 		
 		if (spill) {
-			outputFile = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, finalOutFileSize);
-			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, this.numSpills, finalIndexFileSize);
+			outputFile = mapOutputFile.getSpillFileForWrite(this.taskid, end, finalOutFileSize);
+			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, end, finalIndexFileSize);
 		}
 		else {
 			outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
@@ -990,7 +998,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 		//The final index file output stream
 		FSDataOutputStream finalIndexOut = localFs.create(indexFile, true, 4096);
-		if (numSpills == 0) {
+		if (start == end && !spill) {
 			//create dummy files
 			for (int i = 0; i < partitions; i++) {
 				long segmentStart = finalOut.getPos();
@@ -1007,8 +1015,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			for (int parts = 0; parts < partitions; parts++){
 				//create the segments to be merged
 				List<Segment<K, V>> segmentList =
-					new ArrayList<Segment<K, V>>(numSpills - numFlush);
-				for(int i = numFlush; i < numSpills; i++) {
+					new ArrayList<Segment<K, V>>(end - start);
+				for(int i = start; i < end; i++) {
 					FSDataInputStream indexIn = localFs.open(indexFileName[i]);
 					indexIn.seek(parts * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 					long segmentOffset = indexIn.readLong();
@@ -1052,14 +1060,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			finalOut.close();
 			finalIndexOut.close();
 			//cleanup
-			for(int i = numFlush; i < numSpills; i++) {
+			for(int i = start; i < end; i++) {
 				localFs.delete(filename[i], true);
 				localFs.delete(indexFileName[i], true);
-			}
-			
-			if (spill) {
-				numFlush = numSpills;
-				numSpills++;
 			}
 		}
 	}
