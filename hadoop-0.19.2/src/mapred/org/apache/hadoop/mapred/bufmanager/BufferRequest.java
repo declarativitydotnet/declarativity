@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -29,6 +30,7 @@ import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile;
+import org.apache.hadoop.mapred.IFileInputStream;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
 import org.apache.hadoop.mapred.OutputCollector;
@@ -111,7 +113,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		long segmentLength    = indexIn.readLong();
 				
 		dataIn.seek(segmentOffset);
-		flushFile(dataIn, segmentLength, false);
+		flushFile(new IFileInputStream(dataIn, segmentLength), segmentLength, false);
 	}
 	
 	private void flushFinal() throws IOException {
@@ -129,7 +131,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 
 		FSDataInputStream in = localFS.open(finalOutputFile);
 		in.seek(segmentOffset);
-		flushFile(in, segmentLength, true);
+		flushFile(new IFileInputStream(in, segmentLength), segmentLength, true);
 	}
 	
 	@Override
@@ -220,7 +222,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
-	private void flushFile(FSDataInputStream in, long length, boolean eof) throws IOException {
+	private void flushFile(InputStream in, long length, boolean eof) throws IOException {
 		synchronized (this) {
 			while (busy) {
 				try { this.wait();
