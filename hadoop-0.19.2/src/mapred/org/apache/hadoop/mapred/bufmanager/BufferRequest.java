@@ -55,13 +55,15 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	private FSDataOutputStream out = null;
 	
-	private IFile.Writer<K, V> writer = null;
-	
 	private Configuration conf = null;
 	
 	private FileSystem localFS = null;
 	
 	private byte[] output = null;
+	
+	private boolean busy = false;
+	
+	private int flushPoint = 0;
 	
 	public BufferRequest() {
 	}
@@ -92,66 +94,42 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		return this.partition;
 	}
 	
-	public void append(DataInputBuffer key, DataInputBuffer value) throws IOException {
-		synchronized (this) {
-			if (open) this.writer.append(key, value);
-		}
+	public boolean busy() {
+		return this.busy;
 	}
 	
-	public void append(K key, V value) throws IOException {
-		synchronized (this) {
-			if (open) this.writer.append(key, value);
-		}
+	public int flushPoint() {
+		return this.flushPoint;
 	}
 	
-	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn) throws IOException {
-		synchronized (this) {
-			if (open) {
-				indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint) throws IOException {
+		this.flushPoint = flushPoint + 1;
+		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
-				long segmentOffset = indexIn.readLong();
-				long rawSegmentLength = indexIn.readLong();
-				long segmentLength = indexIn.readLong();
+		long segmentOffset    = indexIn.readLong();
+		long rawSegmentLength = indexIn.readLong();
+		long segmentLength    = indexIn.readLong();
 				
-				/* Do we skip the EOF_MARKER? */
-				rawSegmentLength -= (2 * WritableUtils.getVIntSize(IFile.EOF_MARKER));
-				
-				dataIn.seek(segmentOffset);
-
-				flushFile(dataIn, rawSegmentLength);
-			}
-			else {
-				throw new IOException("BufferRequest not open!");
-			}
-		}
+		dataIn.seek(segmentOffset);
+		flushFile(dataIn, segmentLength, false);
 	}
 	
 	private void flushFinal() throws IOException {
-		synchronized (this) {
-			if (open) {
-				MapOutputFile mapOutputFile = new MapOutputFile(this.taskid.getJobID());
-				mapOutputFile.setConf(conf);
+		MapOutputFile mapOutputFile = new MapOutputFile(this.taskid.getJobID());
+		mapOutputFile.setConf(conf);
 
-				Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
-				Path finalIndexFile = mapOutputFile.getOutputIndexFile(this.taskid);
+		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
+		Path finalIndexFile = mapOutputFile.getOutputIndexFile(this.taskid);
 
-				FSDataInputStream indexIn = localFS.open(finalIndexFile);
-				indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
-				long segmentOffset    = indexIn.readLong();
-				long rawSegmentLength = indexIn.readLong();
-				long segmentLength    = indexIn.readLong();
-				
-				rawSegmentLength -= (2 * WritableUtils.getVIntSize(IFile.EOF_MARKER));
+		FSDataInputStream indexIn = localFS.open(finalIndexFile);
+		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+		long segmentOffset    = indexIn.readLong();
+		long rawSegmentLength = indexIn.readLong();
+		long segmentLength    = indexIn.readLong();
 
-
-				FSDataInputStream in = localFS.open(finalOutputFile);
-				in.seek(segmentOffset);
-				flushFile(in, rawSegmentLength);
-			}
-			else {
-				throw new IOException("BufferRequest not open!");
-			}
-		}
+		FSDataInputStream in = localFS.open(finalOutputFile);
+		in.seek(segmentOffset);
+		flushFile(in, segmentLength, true);
 	}
 	
 	@Override
@@ -173,44 +151,22 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	
-	public void open(Configuration conf, FileSystem localFs, boolean primary) throws IOException {
+	public void open(Configuration conf) throws IOException {
 		synchronized (this) {
-			if (! open) {
-				this.output = new byte[1500];
-				this.conf = conf;
-				this.localFS = localFs;
-				this.out = connect(primary);
-				this.open = true;
-			}
+			this.output = new byte[1500];
+			this.conf = conf;
+			this.localFS = FileSystem.getLocal(conf);
+			this.out = connect();
+			this.busy = false;
 		}
 	}
 	
-	public void open(JobConf conf, boolean primary) throws IOException {
-		synchronized (this) {
-			Class<K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
-			Class<V> valClass = (Class<V>)conf.getMapOutputValueClass();
-
-			CompressionCodec codec = null;
-			if (conf.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					conf.getMapOutputCompressorClass(DefaultCodec.class);
-				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-			}
-
-			this.out = connect(primary);
-			this.writer = new Writer<K, V>(conf, out, keyClass, valClass, codec);
-
-			this.open = true;
-		}
-	}
-	
-	private FSDataOutputStream connect(boolean primary) throws IOException {
+	private FSDataOutputStream connect() throws IOException {
 		try {
 			Socket socket = new Socket();
 			socket.connect(this.sink);
 			FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
 			this.taskid.write(out);
-			out.writeBoolean(primary);
 			return out;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -264,14 +220,31 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
-	private void flushFile(FSDataInputStream in, long length) throws IOException {
+	private void flushFile(FSDataInputStream in, long length, boolean eof) throws IOException {
 		synchronized (this) {
-			long bytes = length;
-			while (open && bytes > 0) {
-				int bytesread = in.read(output, 0, Math.min((int) bytes, output.length));
-				out.write(output, 0, bytesread);
-				bytes -= bytesread;
+			while (busy) {
+				try { this.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
+			busy = true;
+		}
+		
+		out.writeLong(length);
+		out.writeBoolean(eof);
+			
+		long bytes = length;
+		while (open && bytes > 0) {
+			int bytesread = in.read(output, 0, Math.min((int) bytes, output.length));
+			out.write(output, 0, bytesread);
+			bytes -= bytesread;
+		}
+		
+		
+		synchronized (this) {
+			busy = false;
+			this.notifyAll();
 		}
 	}
 
