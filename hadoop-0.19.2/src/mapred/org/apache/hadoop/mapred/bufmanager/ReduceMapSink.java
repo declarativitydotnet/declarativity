@@ -28,6 +28,9 @@ import java.util.concurrent.Executors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ChecksumException;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -36,6 +39,7 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapOutputFile;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
@@ -46,6 +50,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 public class ReduceMapSink<K extends Object, V extends Object> {
 	
 	private Executor executor;
+	
+	private FileSystem localFs;
 	
 	private Thread acceptor;
 	
@@ -64,6 +70,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	public ReduceMapSink(JobConf conf, ReduceOutputCollector<K, V> collector) throws IOException {
 		this.conf = conf;
 		this.collector = collector;
+		this.localFs = FileSystem.getLocal(conf);
 		
 	    /** How many mappers? */
 	    this.numMapTasks = conf.getNumMapTasks();
@@ -109,8 +116,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		acceptor.start();
 	}
 	
-	private synchronized void collect(DataInputBuffer key, DataInputBuffer value) throws IOException {
-		this.collector.collect(key, value);
+	private ReduceOutputCollector<K, V> buffer() {
+		return this.collector;
 	}
 	
 	public void block() throws IOException {
@@ -156,32 +163,23 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	private class Connection implements Runnable {
 		private TaskAttemptID taskid;
 		
-		private IFile.Reader<K, V> reader;
-		
 		private ReduceMapSink<K, V> sink;
 		private DataInputStream input;
 		
-		private boolean open;
+		private MapOutputFile mapOutputFile;
 		
-		private boolean primary;
+		private boolean open;
 		
 		public Connection(DataInputStream input, ReduceMapSink<K, V> sink, JobConf conf) throws IOException {
 			this.input = input;
 			this.sink = sink;
 			this.open = true;
 			
-			CompressionCodec codec = null;
-			if (conf.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					conf.getMapOutputCompressorClass(DefaultCodec.class);
-				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-			}
-			
 			this.taskid = new TaskAttemptID();
 			this.taskid.readFields(input);
-			this.primary = input.readBoolean();
 			
-			this.reader = new IFile.Reader<K, V>(conf, input, Integer.MAX_VALUE, codec);
+			this.mapOutputFile = new MapOutputFile(this.taskid.getJobID());
+			this.mapOutputFile.setConf(conf);
 		}
 		
 		public TaskAttemptID taskid() {
@@ -191,19 +189,67 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		public void close() {
 			try {
 				this.open = false;
-				this.reader.close();
+				this.input.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
+		
+		private void spill(long size) throws IOException {
+			Path filename = mapOutputFile.getOutputFileForWrite(this.taskid, size);
+			FSDataOutputStream out = localFs.create(filename);
+			if (out == null ) throw new IOException("Unable to create spill file " + filename);
+			
+			byte[] buffer = new byte[Math.min((int)size, 1500)];
+			int total = (int) size;
+			while (total > 0) {
+				int bytes = this.input.read(buffer, 0, Math.min(total, buffer.length));
+				total -= bytes;
+				out.write(buffer);
+			}
+			
+			// create spill index
+			Path indexFilename = mapOutputFile.getOutputIndexFileForWrite(this.taskid, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			FSDataOutputStream indexOut = localFs.create(indexFilename);
+			
+			indexOut.writeLong(0);
+			indexOut.writeLong(size);
+			indexOut.writeLong(size);
+			
+			this.sink.buffer().spill(filename, size, indexFilename);
+		}
 
 		public void run() {
+			boolean done = false;
 			try {
 				DataInputBuffer key = new DataInputBuffer();
 				DataInputBuffer value = new DataInputBuffer();
-				while (open && this.reader.next(key, value)) {
-					this.sink.collect(key, value);
+				
+				CompressionCodec codec = null;
+				if (conf.getCompressMapOutput()) {
+					Class<? extends CompressionCodec> codecClass =
+						conf.getMapOutputCompressorClass(DefaultCodec.class);
+					codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+				}
+				
+				while (true) {
+					long length = this.input.readLong();
+					done = this.input.readBoolean();
+					
+					if (this.sink.buffer().reserve(length)) {
+						IFile.Reader reader = new IFile.Reader<K, V>(conf, input, length, codec);
+						while (open && reader.next(key, value)) {
+							this.sink.buffer().collect(key, value);
+						}
+						this.sink.buffer().unreserve(length);
+					}
+					else {
+						// Spill directory to disk
+						spill(length);
+					}
+					
+					if (done) return;
 				}
 			} catch (ChecksumException e) {
 				// Ignore due to TCP close
@@ -212,7 +258,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
-				if (primary) sink.done(this);
+				if (done) sink.done(this);
 				close();
 			}
 		}

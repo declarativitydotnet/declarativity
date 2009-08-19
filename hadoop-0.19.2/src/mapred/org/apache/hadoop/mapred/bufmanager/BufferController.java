@@ -43,6 +43,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferController extends Thread implements BufferUmbilicalProtocol {
 	
+	/*
 	private class PipelineHandler implements Runnable {
 		private TaskAttemptID taskid;
 		
@@ -129,6 +130,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		}
 
 	}
+	*/
 
     protected final FileSystem localFs;
     
@@ -139,8 +141,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private Executor executor;
 
 	private Map<TaskAttemptID, TreeSet<BufferRequest>> requests;
-	
-	private Map<TaskAttemptID, PipelineHandler> pipelineHandlers;
 	
 	private Set<TaskAttemptID> committed;
 	
@@ -153,7 +153,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	public BufferController(Configuration conf) throws IOException {
 		this.conf      = conf;
 		this.requests  = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
-		this.pipelineHandlers = new HashMap<TaskAttemptID, PipelineHandler>();
 		
 		this.committed = new HashSet<TaskAttemptID>();
 		this.executor  = Executors.newCachedThreadPool();
@@ -206,39 +205,12 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	}
 	
 	@Override
-	public boolean pipe(TaskAttemptID taskid, int id, int numReduces) throws IOException {
-		synchronized (this) {
-			if (this.pipelineHandlers.containsKey(taskid)) {
-				return this.pipelineHandlers.get(taskid).maxSpillId(id);
-			}
-			else if (this.requests.containsKey(taskid) && this.requests.get(taskid).size() == numReduces) {
-				TreeSet<BufferRequest> requests = this.requests.get(taskid);
-				
-				for (BufferRequest request : requests) {
-					request.open(conf, localFs, true);
-				}
-				
-				PipelineHandler handler = new PipelineHandler(taskid, requests);
-				this.pipelineHandlers.put(taskid, handler);
-				this.executor.execute(handler);
-				return handler.maxSpillId(id);
-			}
-			
-			return false;
-		}
-	}
-
-	@Override
 	public void commit(TaskAttemptID taskid, int numSpills) throws IOException {
 		synchronized (this) {
 			this.committed.add(taskid);
 			if (numSpills == 0) return;
 			
-			if (this.pipelineHandlers.containsKey(taskid)) {
-				this.pipelineHandlers.get(taskid).close();
-				this.pipelineHandlers.remove(taskid);
-			}
-			else if (this.requests.containsKey(taskid)) {
+			if (this.requests.containsKey(taskid)) {
 				handleCompleteBuffers(taskid);
 			}
 		}
@@ -323,7 +295,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private void handleCompleteBuffers(TaskAttemptID taskid) throws IOException {
 		if (this.requests.containsKey(taskid)) {
 			for (BufferRequest request : this.requests.get(taskid)) {
-				request.open(this.conf, this.localFs, true);
+				request.open(this.conf);
 				this.executor.execute(request);
 			}
 			this.requests.remove(taskid);

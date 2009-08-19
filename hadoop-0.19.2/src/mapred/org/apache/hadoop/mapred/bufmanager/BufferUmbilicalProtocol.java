@@ -15,7 +15,5 @@ public interface BufferUmbilicalProtocol extends VersionedProtocol {
 	public void request(BufferRequest request) throws IOException;
 	
 	public BufferRequest getRequest(TaskAttemptID taskid) throws IOException;
-	
-	public boolean pipe(TaskAttemptID taskid, int spillId, int numReduces) throws IOException;
 
 }
