@@ -248,6 +248,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					}
 					else {
 						// Spill directory to disk
+						System.err.println("Spill connection " + taskid + " directly to disk");
 						spill(length);
 					}
 					

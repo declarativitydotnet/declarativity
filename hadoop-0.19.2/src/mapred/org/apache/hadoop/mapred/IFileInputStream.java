@@ -29,7 +29,7 @@ import org.apache.hadoop.util.DataChecksum;
  * Used to validate the checksum of files created by {@link IFileOutputStream}. 
  */
 
-class IFileInputStream extends InputStream {
+public class IFileInputStream extends InputStream {
   
   private final InputStream in; //The input stream to be verified for checksum. 
   private final long length; //The total length of the input file
