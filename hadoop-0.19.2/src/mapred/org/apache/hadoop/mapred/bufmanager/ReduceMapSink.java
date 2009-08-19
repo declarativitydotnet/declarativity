@@ -237,6 +237,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					long length = this.input.readLong();
 					done = this.input.readBoolean();
 					
+					System.err.println("Connection " + taskid + " sending " + length + " bytes.");
+					
 					if (this.sink.buffer().reserve(length)) {
 						IFile.Reader reader = new IFile.Reader<K, V>(conf, input, length, codec);
 						while (open && reader.next(key, value)) {
@@ -252,12 +254,14 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					if (done) return;
 				}
 			} catch (ChecksumException e) {
+				System.err.println("CONNECTION CLOSED FROM TASK " + taskid);
 				// Ignore due to TCP close
 			} catch (Throwable e) {
 				e.printStackTrace();
 				return;
 			}
 			finally {
+				if (done) System.err.println("CONNECTION DONE: TASK " + taskid);
 				if (done) sink.done(this);
 				close();
 			}
