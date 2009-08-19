@@ -648,7 +648,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						}
 					}
 
-					if (pipeline) {
+					if (pipeline && numSpills - numFlush > 1) {
 						try {
 							boolean sync = flushRequests();
 							if (sync) {
