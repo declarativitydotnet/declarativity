@@ -31,6 +31,7 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.IFileInputStream;
+import org.apache.hadoop.mapred.IFileOutputStream;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
 import org.apache.hadoop.mapred.OutputCollector;
@@ -222,7 +223,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
-	private void flushFile(InputStream in, long length, boolean eof) throws IOException {
+	private void flushFile(IFileInputStream in, long length, boolean eof) throws IOException {
 		synchronized (this) {
 			while (busy) {
 				try { this.wait();
@@ -233,15 +234,17 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			busy = true;
 		}
 		
+		IFileOutputStream iout = new IFileOutputStream(out);
 		out.writeLong(length);
 		out.writeBoolean(eof);
 			
 		long bytes = length;
 		while (open && bytes > 0) {
 			int bytesread = in.read(output, 0, Math.min((int) bytes, output.length));
-			out.write(output, 0, bytesread);
+			iout.write(output, 0, bytesread);
 			bytes -= bytesread;
 		}
+		iout.close();
 		
 		
 		synchronized (this) {
