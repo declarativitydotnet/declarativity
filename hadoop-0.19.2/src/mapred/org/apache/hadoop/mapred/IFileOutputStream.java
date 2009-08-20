@@ -29,7 +29,7 @@ import org.apache.hadoop.util.DataChecksum;
  * appended to the end of the file on close of the stream.
  * Used for IFiles
  */
-class IFileOutputStream extends FilterOutputStream {
+public class IFileOutputStream extends FilterOutputStream {
   /**
    * The output stream to be checksummed. 
    */
