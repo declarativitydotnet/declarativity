@@ -219,19 +219,15 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					long length = this.input.readLong();
 					done = this.input.readBoolean();
 					
-					System.err.println("Connection " + mapTaskID + " sending " + length + " bytes.");
-					
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					if (this.sink.buffer().reserve(length)) {
 						while (reader.next(key, value)) {
 							this.sink.buffer().collect(key, value);
 						}
 						this.sink.buffer().unreserve(length);
-						System.err.println("Received bytes from " + mapTaskID);
 					}
 					else {
 						// Spill directory to disk
-						System.err.println("Spill connection " + mapTaskID + " directly to disk");
 						Path filename = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, length);
 						FSDataOutputStream out = localFs.create(filename);
 						if (out == null ) throw new IOException("Unable to create spill file " + filename);
@@ -241,8 +237,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							writer.append(key, value);
 						}
 						writer.close();
-						
-						System.err.println("SPILL COMPLETE: register spill files with buffer.");
+						out.close();
 						
 						// create spill index
 						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
@@ -251,6 +246,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						indexOut.writeLong(0);
 						indexOut.writeLong(writer.getRawLength());
 						indexOut.writeLong(out.getPos());
+						indexOut.close();
 						
 						this.sink.buffer().spill(filename, length, indexFilename);
 					}
@@ -258,14 +254,12 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					if (done) return;
 				}
 			} catch (ChecksumException e) {
-				System.err.println("CONNECTION CLOSED FROM TASK " + mapTaskID);
-				// Ignore due to TCP close
+				e.printStackTrace();
 			} catch (Throwable e) {
 				e.printStackTrace();
 				return;
 			}
 			finally {
-				if (done) System.err.println("CONNECTION DONE: TASK " + mapTaskID);
 				if (done) sink.done(this);
 				close();
 			}
