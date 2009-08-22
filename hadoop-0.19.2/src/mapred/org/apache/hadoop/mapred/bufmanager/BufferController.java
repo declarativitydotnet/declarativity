@@ -38,106 +38,16 @@ import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.MapOutputFile;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
+import org.apache.hadoop.mapred.TaskTracker;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferController extends Thread implements BufferUmbilicalProtocol {
 	
-	/*
-	private class PipelineHandler implements Runnable {
-		private TaskAttemptID taskid;
-		
-		private TreeSet<BufferRequest> requests;
-		
-		private MapOutputFile mapOutputFile;
-		
-		private boolean open;
-		
-		private int curSpillId;
-		
-		private int maxSpillId;
-		
-		public PipelineHandler(TaskAttemptID taskid, TreeSet<BufferRequest> requests) {
-			this.taskid = taskid;
-			this.requests = requests;
-			this.open     = true;
-			this.curSpillId = 0;
-			this.maxSpillId = 0;
-			
-			this.mapOutputFile = new MapOutputFile(taskid.getJobID());
-			this.mapOutputFile.setConf(conf);
-		}
-		
-		public void close() {
-			synchronized (this) {
-				this.open = false;
-				this.notifyAll();
-			}
-		}
-		
-		public boolean maxSpillId(int id) throws IOException {
-			synchronized (this) {
-				if (this.maxSpillId < id && this.curSpillId == this.maxSpillId) {
-					this.maxSpillId++;
-					this.notifyAll();
-					return true;
-				}
-				return false;
-			}
-		}
-
-		public void run() {
-			while (true) {
-				synchronized (this) {
-					while (open && curSpillId == maxSpillId) {
-						try { this.wait(); } catch (InterruptedException e) { }
-					}
-				}
-				try {
-					while (this.curSpillId < this.maxSpillId) {
-						Path outputFile = mapOutputFile.getSpillFile(this.taskid, this.curSpillId);
-						Path indexFile  = mapOutputFile.getSpillIndexFile(this.taskid, this.curSpillId);
-						FSDataInputStream indexIn = localFs.open(indexFile);
-						FSDataInputStream dataIn = localFs.open(outputFile);
-
-						for (BufferRequest request : requests) {
-							request.flush(indexIn, dataIn);
-						}
-						indexIn.close();
-						dataIn.close();
-						this.curSpillId++;
-					}
-					
-					if (! open && this.curSpillId == this.maxSpillId) {
-						Path finalIndexFile  = mapOutputFile.getOutputIndexFile(this.taskid);
-						Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
-						FSDataInputStream indexIn = localFs.open(finalIndexFile);
-						FSDataInputStream dataIn  = localFs.open(finalOutputFile);
-
-						for (BufferRequest request : requests) {
-							request.flush(indexIn, dataIn);
-							request.close();
-						}
-						indexIn.close();
-						dataIn.close();
-						return;
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-					close();
-				}
-			}
-		}
-
-	}
-	*/
-
-    protected final FileSystem localFs;
+    private TaskTracker tracker;
     
 	private String hostname;
 	
-	private Configuration conf;
-
 	private Executor executor;
 
 	private Map<TaskAttemptID, TreeSet<BufferRequest>> requests;
@@ -150,15 +60,13 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	private int controlPort;
 
-	public BufferController(Configuration conf) throws IOException {
-		this.conf      = conf;
+	public BufferController(TaskTracker tracker) throws IOException {
+		this.tracker   = tracker;
 		this.requests  = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
 		
 		this.committed = new HashSet<TaskAttemptID>();
 		this.executor  = Executors.newCachedThreadPool();
 		this.hostname  = InetAddress.getLocalHost().getCanonicalHostName();
-	    this.localFs   = FileSystem.getLocal(conf);
-
 	}
 
 	public static InetSocketAddress getControlAddress(Configuration conf) {
@@ -184,10 +92,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	}
 
 	private void initialize() throws IOException {
-		int maxMaps = conf.getInt(
-				"mapred.tasktracker.map.tasks.maximum", 2);
-		int maxReduces = conf.getInt(
-				"mapred.tasktracker.reduce.tasks.maximum", 2);
+		Configuration conf = tracker.conf();
+		int maxMaps = conf.getInt("mapred.tasktracker.map.tasks.maximum", 2);
+		int maxReduces = conf.getInt("mapred.tasktracker.reduce.tasks.maximum", 2);
 
 		InetSocketAddress serverAddress = getServerAddress(conf);
 		this.server = RPC.getServer(this, serverAddress.getHostName(), serverAddress.getPort(), 
@@ -294,8 +201,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	private void handleCompleteBuffers(TaskAttemptID taskid) throws IOException {
 		if (this.requests.containsKey(taskid)) {
+			JobConf job = tracker.getJobConf(taskid);
 			for (BufferRequest request : this.requests.get(taskid)) {
-				request.open(this.conf);
+				request.open(job);
 				this.executor.execute(request);
 			}
 			this.requests.remove(taskid);

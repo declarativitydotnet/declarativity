@@ -236,7 +236,7 @@ public class ReduceTask extends Task {
 
 		
 		JBuffer     buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-		ReduceMapSink sink = new ReduceMapSink(job, (ReduceOutputCollector) buffer);
+		ReduceMapSink sink = new ReduceMapSink(job, getTaskID(), (ReduceOutputCollector) buffer);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);

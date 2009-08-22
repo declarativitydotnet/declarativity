@@ -1033,8 +1033,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			//create dummy files
 			for (int i = 0; i < partitions; i++) {
 				long segmentStart = finalOut.getPos();
-				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut, 
-						keyClass, valClass, codec);
+				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);
 				writer.close();
 				writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
 			}

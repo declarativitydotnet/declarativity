@@ -401,6 +401,10 @@ public class TaskTracker
                             protocol);
     }
   }
+  
+  public Configuration conf() {
+	  return this.fConf;
+  }
     
   /**
    * Do the real constructor work here.  It's in a separate method
@@ -450,7 +454,7 @@ public class TaskTracker
       this.myInstrumentation = new TaskTrackerMetricsInst(this);
     }
     
-	this.bufferController = new BufferController(this.fConf);
+	this.bufferController = new BufferController(this);
 	this.bufferController.start();
 	
     // bind address
@@ -716,6 +720,14 @@ public class TaskTracker
   private LocalDirAllocator lDirAlloc = 
                               new LocalDirAllocator("mapred.local.dir");
 
+  public JobConf getJobConf(TaskAttemptID taskid) throws IOException {
+    Path localJobFile = 
+    	lDirAlloc.getLocalPathToRead(getLocalJobDir(taskid.getJobID().toString()) + 
+    			                     Path.SEPARATOR + "job.xml", fConf);
+    
+    return new JobConf(localJobFile);
+  }
+  
   // intialize the job directory
   private void localizeJob(TaskInProgress tip) throws IOException {
     Path localJarFile = null;

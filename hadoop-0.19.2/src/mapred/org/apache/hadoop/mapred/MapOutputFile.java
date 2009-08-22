@@ -29,8 +29,8 @@ import org.apache.hadoop.fs.Path;
  */ 
 public class MapOutputFile {
 
-  private JobConf conf;
-  private JobID jobId;
+  protected JobConf conf;
+  protected JobID jobId;
   
   public MapOutputFile() {
   }
@@ -39,7 +39,7 @@ public class MapOutputFile {
     this.jobId = jobId;
   }
 
-  private LocalDirAllocator lDirAlloc = 
+  protected LocalDirAllocator lDirAlloc = 
                             new LocalDirAllocator("mapred.local.dir");
   
   /** Return the path to local map output file created earlier
