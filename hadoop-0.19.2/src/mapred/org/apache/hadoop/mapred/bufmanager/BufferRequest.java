@@ -54,15 +54,11 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	private InetSocketAddress sink = null;
 	
-	private boolean open = false;
-	
 	private FSDataOutputStream out = null;
 	
-	private Configuration conf = null;
+	private JobConf conf = null;
 	
 	private FileSystem localFS = null;
-	
-	private byte[] output = null;
 	
 	private boolean busy = false;
 	
@@ -114,7 +110,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		long segmentLength    = indexIn.readLong();
 				
 		dataIn.seek(segmentOffset);
-		flushFile(new IFileInputStream(dataIn, segmentLength), segmentLength, false);
+		flushFile(dataIn, segmentLength, false);
 	}
 	
 	private void flushFinal() throws IOException {
@@ -129,10 +125,13 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		long segmentOffset    = indexIn.readLong();
 		long rawSegmentLength = indexIn.readLong();
 		long segmentLength    = indexIn.readLong();
+		indexIn.close();
 
 		FSDataInputStream in = localFS.open(finalOutputFile);
 		in.seek(segmentOffset);
-		flushFile(new IFileInputStream(in, segmentLength), segmentLength, true);
+		flushFile(in, segmentLength, true);
+		
+		in.close();
 	}
 	
 	@Override
@@ -154,9 +153,8 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	
-	public void open(Configuration conf) throws IOException {
+	public void open(JobConf conf) throws IOException {
 		synchronized (this) {
-			this.output = new byte[1500];
 			this.conf = conf;
 			this.localFS = FileSystem.getLocal(conf);
 			this.out = connect();
@@ -215,15 +213,15 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 
 	public void close() throws IOException {
 		synchronized (this) {
-			if (open) {
-				open = false;
+			if (out != null) {
 				out.flush();
 				out.close();
+				out = null;
 			}
 		}
 	}
 	
-	private void flushFile(IFileInputStream in, long length, boolean eof) throws IOException {
+	private void flushFile(FSDataInputStream in, long length, boolean eof) throws IOException {
 		synchronized (this) {
 			while (busy) {
 				try { this.wait();
@@ -233,23 +231,35 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			}
 			busy = true;
 		}
-		
-		IFileOutputStream iout = new IFileOutputStream(out);
-		out.writeLong(length);
-		out.writeBoolean(eof);
+
+		try {
+			CompressionCodec codec = null;
+			if (conf.getCompressMapOutput()) {
+				Class<? extends CompressionCodec> codecClass =
+					conf.getMapOutputCompressorClass(DefaultCodec.class);
+				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+			}
+			Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+			Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
+
+			out.writeLong(length);
+			out.writeBoolean(eof);
+
+			IFile.Reader reader = new IFile.Reader<K, V>(conf, in, length, codec);
+			IFile.Writer writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
+
+			DataInputBuffer key = new DataInputBuffer();
+			DataInputBuffer value = new DataInputBuffer();
+			while (reader.next(key, value)) {
+				writer.append(key, value);
+			}
+			writer.close();
 			
-		long bytes = length;
-		while (open && bytes > 0) {
-			int bytesread = in.read(output, 0, Math.min((int) bytes, output.length));
-			iout.write(output, 0, bytesread);
-			bytes -= bytesread;
-		}
-		iout.close();
-		
-		
-		synchronized (this) {
-			busy = false;
-			this.notifyAll();
+		} finally {
+			synchronized (this) {
+				busy = false;
+				this.notifyAll();
+			}
 		}
 	}
 

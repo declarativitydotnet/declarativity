@@ -41,6 +41,7 @@ import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.ReduceOutputFile;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.mapred.IFile.Reader;
@@ -63,12 +64,15 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	
 	private JobConf conf;
 	
+	private TaskAttemptID reduceID;
+	
 	private Map<TaskAttemptID, List<Connection>> connections;
 	
 	private Set<TaskID> successful;
 	
-	public ReduceMapSink(JobConf conf, ReduceOutputCollector<K, V> collector) throws IOException {
+	public ReduceMapSink(JobConf conf, TaskAttemptID reduceID, ReduceOutputCollector<K, V> collector) throws IOException {
 		this.conf = conf;
+		this.reduceID = reduceID;
 		this.collector = collector;
 		this.localFs = FileSystem.getLocal(conf);
 		
@@ -103,10 +107,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						DataInputStream input = new DataInputStream(channel.socket().getInputStream());
 						Connection conn = new Connection(input, ReduceMapSink.this, conf);
 						synchronized (this) {
-							if (!connections.containsKey(conn.taskid())) {
-								connections.put(conn.taskid(), new ArrayList<Connection>());
+							if (!connections.containsKey(conn.mapTaskID())) {
+								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
 							}
-							connections.get(conn.taskid()).add(conn);
+							connections.get(conn.mapTaskID()).add(conn);
 						}
 						executor.execute(conn);
 					}
@@ -114,6 +118,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			}
 		};
 		acceptor.start();
+	}
+	
+	public TaskAttemptID reduceID() {
+		return this.reduceID;
 	}
 	
 	private ReduceOutputCollector<K, V> buffer() {
@@ -149,8 +157,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	
 	private void done(Connection connection) {
 		synchronized (this) {
-			if (this.connections.containsKey(connection.taskid())) {
-				this.successful.add(connection.taskid().getTaskID());
+			if (this.connections.containsKey(connection.mapTaskID())) {
+				this.successful.add(connection.mapTaskID().getTaskID());
 				this.notifyAll();
 			}
 		}
@@ -161,34 +169,30 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	/************************************** CONNECTION CLASS **************************************/
 	
 	private class Connection implements Runnable {
-		private TaskAttemptID taskid;
+		private TaskAttemptID mapTaskID;
 		
 		private ReduceMapSink<K, V> sink;
 		private DataInputStream input;
 		
-		private MapOutputFile mapOutputFile;
-		
-		private boolean open;
+		private ReduceOutputFile reduceOutputFile;
 		
 		public Connection(DataInputStream input, ReduceMapSink<K, V> sink, JobConf conf) throws IOException {
 			this.input = input;
 			this.sink = sink;
-			this.open = true;
 			
-			this.taskid = new TaskAttemptID();
-			this.taskid.readFields(input);
+			this.mapTaskID = new TaskAttemptID();
+			this.mapTaskID.readFields(input);
 			
-			this.mapOutputFile = new MapOutputFile(this.taskid.getJobID());
-			this.mapOutputFile.setConf(conf);
+			this.reduceOutputFile = new ReduceOutputFile(reduceID);
+			this.reduceOutputFile.setConf(conf);
 		}
 		
-		public TaskAttemptID taskid() {
-			return this.taskid;
+		public TaskAttemptID mapTaskID() {
+			return this.mapTaskID;
 		}
 		
 		public void close() {
 			try {
-				this.open = false;
 				this.input.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -196,30 +200,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			}
 		}
 		
-		private void spill(long size) throws IOException {
-			Path filename = mapOutputFile.getOutputFileForWrite(this.taskid, size);
-			FSDataOutputStream out = localFs.create(filename);
-			if (out == null ) throw new IOException("Unable to create spill file " + filename);
-			
-			byte[] buffer = new byte[Math.min((int)size, 1500)];
-			int total = (int) size;
-			while (total > 0) {
-				int bytes = this.input.read(buffer, 0, Math.min(total, buffer.length));
-				total -= bytes;
-				out.write(buffer);
-			}
-			
-			// create spill index
-			Path indexFilename = mapOutputFile.getOutputIndexFileForWrite(this.taskid, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
-			FSDataOutputStream indexOut = localFs.create(indexFilename);
-			
-			indexOut.writeLong(0);
-			indexOut.writeLong(size);
-			indexOut.writeLong(size);
-			
-			this.sink.buffer().spill(filename, size, indexFilename);
-		}
-
 		public void run() {
 			boolean done = false;
 			try {
@@ -232,37 +212,60 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						conf.getMapOutputCompressorClass(DefaultCodec.class);
 					codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
 				}
+				Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+				Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
 				
 				while (true) {
 					long length = this.input.readLong();
 					done = this.input.readBoolean();
 					
-					System.err.println("Connection " + taskid + " sending " + length + " bytes.");
+					System.err.println("Connection " + mapTaskID + " sending " + length + " bytes.");
 					
+					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					if (this.sink.buffer().reserve(length)) {
-						IFile.Reader reader = new IFile.Reader<K, V>(conf, input, length, codec);
-						while (open && reader.next(key, value)) {
+						while (reader.next(key, value)) {
 							this.sink.buffer().collect(key, value);
 						}
 						this.sink.buffer().unreserve(length);
+						System.err.println("Received bytes from " + mapTaskID);
 					}
 					else {
 						// Spill directory to disk
-						System.err.println("Spill connection " + taskid + " directly to disk");
-						spill(length);
+						System.err.println("Spill connection " + mapTaskID + " directly to disk");
+						Path filename = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, length);
+						FSDataOutputStream out = localFs.create(filename);
+						if (out == null ) throw new IOException("Unable to create spill file " + filename);
+						
+						IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
+						while (reader.next(key, value)) {
+							writer.append(key, value);
+						}
+						writer.close();
+						
+						System.err.println("SPILL COMPLETE: register spill files with buffer.");
+						
+						// create spill index
+						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+						FSDataOutputStream indexOut = localFs.create(indexFilename);
+						
+						indexOut.writeLong(0);
+						indexOut.writeLong(writer.getRawLength());
+						indexOut.writeLong(out.getPos());
+						
+						this.sink.buffer().spill(filename, length, indexFilename);
 					}
 					
 					if (done) return;
 				}
 			} catch (ChecksumException e) {
-				System.err.println("CONNECTION CLOSED FROM TASK " + taskid);
+				System.err.println("CONNECTION CLOSED FROM TASK " + mapTaskID);
 				// Ignore due to TCP close
 			} catch (Throwable e) {
 				e.printStackTrace();
 				return;
 			}
 			finally {
-				if (done) System.err.println("CONNECTION DONE: TASK " + taskid);
+				if (done) System.err.println("CONNECTION DONE: TASK " + mapTaskID);
 				if (done) sink.done(this);
 				close();
 			}
