@@ -216,7 +216,15 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
 				
 				while (true) {
-					long length = this.input.readLong();
+					long length = 0;
+					
+					try {
+						length = this.input.readLong();
+					}
+					catch (EOFException e) {
+						return; // This is okay.
+					}
+					
 					done = this.input.readBoolean();
 					
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
@@ -260,7 +268,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
-				if (done) sink.done(this);
+				if (done) {
+					System.err.println("Reduce connection done. map = " + this.mapTaskID);
+					sink.done(this);
+				}
 				close();
 			}
 		}
