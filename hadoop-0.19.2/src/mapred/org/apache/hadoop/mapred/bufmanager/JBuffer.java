@@ -591,9 +591,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		// release sort buffer before the merge
 		kvbuffer = null;
 		
-		
-		System.err.println("Map JBuffer: number of spill files = " + (numSpills - numFlush));
-		System.err.println("\tFlush number: " + numSpills);
 		mergeParts(false);
 	}
 
@@ -1041,7 +1038,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		if (start == end) {
 			//create dummy files
 			if (spill) System.err.println("Error: spill file is a dummy!");
-			System.err.println("Final output is a dummy.");
 			for (int i = 0; i < partitions; i++) {
 				long segmentStart = finalOut.getPos();
 				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);
