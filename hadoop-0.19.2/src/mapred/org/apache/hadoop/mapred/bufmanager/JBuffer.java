@@ -980,17 +980,21 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	}
 	
 
-	private void mergeParts(boolean spill) throws IOException {
+	private synchronized void mergeParts(boolean spill) throws IOException {
 		// get the approximate size of the final output/index files
 		
 		int start = 0;
 		int end = 0;
 		synchronized (mergeLock) {
+			if (numFlush == numSpills) {
+				return;
+			}
+			
 			start = numFlush;
 			end   = numSpills;
 			
 			numFlush = numSpills;
-			numSpills++;
+			if (spill) numSpills++;
 		}
 		
 		long finalOutFileSize = 0;
