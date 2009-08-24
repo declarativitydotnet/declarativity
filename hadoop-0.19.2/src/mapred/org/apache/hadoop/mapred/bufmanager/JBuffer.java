@@ -594,13 +594,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		
 		System.err.println("Map JBuffer: number of spill files = " + (numSpills - numFlush));
 		System.err.println("\tFlush number: " + numSpills);
-		if (numSpills - numFlush > 0) {
-			mergeParts(false);
-		}
+		mergeParts(false);
 	}
 
 	public void close() throws IOException { 
-		umbilical.commit(this.taskid, numSpills - numFlush);
+		umbilical.commit(this.taskid);
 	}
 	
 	
@@ -987,7 +985,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		int start = 0;
 		int end = 0;
 		synchronized (mergeLock) {
-			if (numFlush == numSpills) {
+			if (spill && numFlush == numSpills) {
 				return;
 			}
 			
@@ -1040,8 +1038,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 		//The final index file output stream
 		FSDataOutputStream finalIndexOut = localFs.create(indexFile, true, 4096);
-		if (start == end && !spill) {
+		if (start == end) {
 			//create dummy files
+			if (spill) System.err.println("Error: spill file is a dummy!");
+			System.err.println("Final output is a dummy.");
 			for (int i = 0; i < partitions; i++) {
 				long segmentStart = finalOut.getPos();
 				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);

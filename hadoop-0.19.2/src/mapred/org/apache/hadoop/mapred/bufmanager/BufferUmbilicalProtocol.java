@@ -10,7 +10,7 @@ import org.apache.hadoop.mapred.TaskID;
 public interface BufferUmbilicalProtocol extends VersionedProtocol {
 	long versionID = 0;
 
-	public void commit(TaskAttemptID taskid, int spills) throws IOException;
+	public void commit(TaskAttemptID taskid) throws IOException;
 	
 	public void request(BufferRequest request) throws IOException;
 	
