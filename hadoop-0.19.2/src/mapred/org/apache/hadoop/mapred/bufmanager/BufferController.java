@@ -116,6 +116,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		synchronized (this) {
 			this.committed.add(taskid);
 			if (numSpills == 0) return;
+			else if (!taskid.isMap()) return;
 			
 			if (this.requests.containsKey(taskid)) {
 				handleCompleteBuffers(taskid);

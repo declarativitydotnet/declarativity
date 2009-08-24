@@ -639,7 +639,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					}
 				
 				synchronized (requests) {
-					if (numSpills - numFlush > 5) {
+					int spillThreshold = taskid.isMap() ? 5 : 20;
+					if (numSpills - numFlush > spillThreshold) {
 						try {
 							mergeParts(true);
 						} catch (IOException e) {
@@ -648,14 +649,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						}
 					}
 
-					if (pipeline && numSpills - numFlush > 1) {
+					if (pipeline && numFlush < numSpills) {
 						try {
-							boolean sync = flushRequests();
-							if (sync) {
-								/* Bump flush up by one. This bascially causes us
-								 * to forget about the spill files that came before.  */
-								numFlush++; 
-							}
+							numFlush = flushRequests();
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -666,23 +662,33 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 	}
 	
-	private boolean flushRequests() throws IOException {
+	private int flushRequests() throws IOException {
 		int minSpillId = numFlush;
-		boolean spillSync = requests.size() == partitions; // First requirement
 		
 		for (BufferRequest request : requests) {
-			int spillId = minSpillId < request.flushPoint() ? request.flushPoint() : minSpillId;
-			Path outputFile = mapOutputFile.getSpillFile(this.taskid, spillId);
-			Path indexFile  = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
-			FSDataInputStream indexIn = localFs.open(indexFile);
-			FSDataInputStream dataIn = localFs.open(outputFile);
+			if (! request.busy()) {
+				int spillId = minSpillId < request.flushPoint() ? request.flushPoint() : minSpillId;
+				Path outputFile = mapOutputFile.getSpillFile(this.taskid, spillId);
+				Path indexFile  = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
+				FSDataInputStream indexIn = localFs.open(indexFile);
+				FSDataInputStream dataIn = localFs.open(outputFile);
 
-			request.flush(indexIn, dataIn, spillId);
-			indexIn.close();
-			dataIn.close();
-			spillSync = spillSync && spillId == minSpillId; // Second requirement
+				request.flush(indexIn, dataIn, spillId);
+				indexIn.close();
+				dataIn.close();
+			}
 		}
-		return spillSync;
+		
+		if (requests.size() == partitions) {
+			int min = Integer.MAX_VALUE;
+			for (BufferRequest request : requests) {
+				min = Math.min(min, request.flushPoint());
+			}
+			return min; // min flush point.
+		}
+		else {
+			return numFlush;
+		}
 	}
 	
 	public void spill(Path data, long size, Path index) throws IOException {
