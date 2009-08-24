@@ -112,12 +112,12 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	}
 	
 	@Override
-	public void commit(TaskAttemptID taskid, int numSpills) throws IOException {
+	public void commit(TaskAttemptID taskid) throws IOException {
 		synchronized (this) {
 			this.committed.add(taskid);
-			if (numSpills == 0) return;
-			else if (!taskid.isMap()) return;
+			if (!taskid.isMap()) return;
 			
+			System.err.println("Committing task " + taskid);
 			if (this.requests.containsKey(taskid)) {
 				handleCompleteBuffers(taskid);
 			}
@@ -205,6 +205,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			JobConf job = tracker.getJobConf(taskid);
 			for (BufferRequest request : this.requests.get(taskid)) {
 				request.open(job);
+				System.err.println("Send complete buffer " + taskid);
 				this.executor.execute(request);
 			}
 			this.requests.remove(taskid);
