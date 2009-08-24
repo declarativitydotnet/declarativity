@@ -225,8 +225,9 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					catch (EOFException e) {
 						return; // This is okay.
 					}
-					
 					done = this.input.readBoolean();
+					
+					if (length == 0) return;
 					
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					if (this.sink.buffer().reserve(length)) {
