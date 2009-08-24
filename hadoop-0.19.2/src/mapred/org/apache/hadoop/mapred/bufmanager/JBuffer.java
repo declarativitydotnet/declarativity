@@ -570,18 +570,20 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					).initCause(e);
 				}
 			}
+			
+			synchronized (requests) {
+				for (BufferRequest request : this.requests) {
+					request.close();
+				}
+				this.requests.clear();
+			}
 		}
+		
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"
 			).initCause(sortSpillException);
 		}
 		if (kvend != kvindex) {
-			/*
-        LOG.info("bufstart = " + bufstart + "; bufend = " + bufmark +
-                 "; bufvoid = " + bufvoid);
-        LOG.info("kvstart = " + kvstart + "; kvend = " + kvindex +
-                 "; length = " + kvoffsets.length);
-			 */
 			kvend = kvindex;
 			bufend = bufmark;
 			sortAndSpill();
@@ -590,6 +592,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		kvbuffer = null;
 		
 		
+		System.err.println("Map JBuffer: number of spill files = " + (numSpills - numFlush));
+		System.err.println("\tFlush number: " + numSpills);
 		if (numSpills - numFlush > 0) {
 			mergeParts(false);
 		}
@@ -597,9 +601,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 	public void close() throws IOException { 
 		umbilical.commit(this.taskid, numSpills - numFlush);
-		for (BufferRequest request : this.requests) {
-			request.close();
-		}
 	}
 	
 	
