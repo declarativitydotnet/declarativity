@@ -1,5 +1,6 @@
 package org.apache.hadoop.mapred.bufmanager;
 
+import java.io.BufferedOutputStream;
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
@@ -166,7 +167,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		try {
 			Socket socket = new Socket();
 			socket.connect(this.sink);
-			FSDataOutputStream out = new FSDataOutputStream(socket.getOutputStream());
+			FSDataOutputStream out = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			this.taskid.write(out);
 			return out;
 		} catch (IOException e) {
