@@ -231,10 +231,16 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					if (this.sink.buffer().reserve(length)) {
-						while (reader.next(key, value)) {
-							this.sink.buffer().collect(key, value);
+						try {
+							while (reader.next(key, value)) {
+								this.sink.buffer().collect(key, value);
+							}
+						} catch (ChecksumException e) {
+							System.err.println("ReduceMapSink: ChecksumException during spill. eof? " + done);
 						}
-						this.sink.buffer().unreserve(length);
+						finally {
+							this.sink.buffer().unreserve(length);
+						}
 					}
 					else {
 						// Spill directory to disk
@@ -243,11 +249,17 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						if (out == null ) throw new IOException("Unable to create spill file " + filename);
 						
 						IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
-						while (reader.next(key, value)) {
-							writer.append(key, value);
+						try {
+							while (reader.next(key, value)) {
+								writer.append(key, value);
+							}
+						} catch (ChecksumException e) {
+							System.err.println("ReduceMapSink: ChecksumException during spill. eof? " + done);
 						}
-						writer.close();
-						out.close();
+						finally {
+							writer.close();
+							out.close();
+						}
 						
 						// create spill index
 						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
@@ -263,8 +275,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					
 					if (done) return;
 				}
-			} catch (ChecksumException e) {
-				e.printStackTrace();
 			} catch (Throwable e) {
 				e.printStackTrace();
 				return;
