@@ -15,6 +15,8 @@ import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -29,6 +31,7 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
+import org.apache.hadoop.mapred.MapTask;
 import org.apache.hadoop.mapred.Merger;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Partitioner;
@@ -64,6 +67,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			if (writer != null) writer.append(key, value);
 		}
 	}
+	
+	private static final Log LOG = LogFactory.getLog(JBuffer.class.getName());
+
 	
 	/**
 	 * The size of each record in the index file for the map-outputs.
@@ -226,7 +232,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		this.reserve -= bytes;
 		
 		if (this.reserve < 0) {
-			System.err.println("Reserve bytes error: " + this.reserve);
+			LOG.error("Reserve bytes error: " + this.reserve);
 			this.reserve = 0;
 		}
 	}
@@ -603,6 +609,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 		@Override
 		public void run() {
+			long starttime = java.lang.System.currentTimeMillis();
 			if (pipeline) {
 				synchronized (requests) {
 					try {
@@ -618,9 +625,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 			
-			
 			try {
+				long sortstart = java.lang.System.currentTimeMillis();
 				sortAndSpill();
+				LOG.info("SpillThread: sort/spill time " + 
+								((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
 			} catch (Throwable e) {
 				e.printStackTrace();
 				sortSpillException = e;
@@ -632,13 +641,16 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						kvstart = kvend;
 						bufstart = bufend;
 						spillLock.notify();
-					}
+				}
 				
 				synchronized (requests) {
 					int spillThreshold = taskid.isMap() ? 5 : 20;
 					if (numSpills - numFlush > spillThreshold) {
 						try {
+							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
+							LOG.info("SpillThread: merge time " + 
+									((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -647,13 +659,19 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 					if (pipeline && numFlush < numSpills) {
 						try {
+							long flushstart = java.lang.System.currentTimeMillis();
 							numFlush = flushRequests();
+							LOG.info("SpillThread: flush time " + 
+									((System.currentTimeMillis() - flushstart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
 						}
 					}
 				}
+				
+				LOG.info("SpillThread: total spill time " + 
+								((System.currentTimeMillis() - starttime)/1000f) + " secs.");
 			}
 		}
 	}
@@ -1037,7 +1055,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		FSDataOutputStream finalIndexOut = localFs.create(indexFile, true, 4096);
 		if (start == end) {
 			//create dummy files
-			if (spill) System.err.println("Error: spill file is a dummy!");
+			if (spill) LOG.error("Error: spill file is a dummy!");
 			for (int i = 0; i < partitions; i++) {
 				long segmentStart = finalOut.getPos();
 				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);
