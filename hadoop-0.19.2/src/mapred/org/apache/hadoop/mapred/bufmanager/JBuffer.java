@@ -137,6 +137,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	
 	private boolean pipeline;
 	
+	private boolean flushbusy = false;
 	private TreeSet<BufferRequest> requests = new TreeSet<BufferRequest>();
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
 	
@@ -578,6 +579,13 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			}
 			
 			synchronized (requests) {
+				while (flushbusy) {
+					try { requests.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				
 				for (BufferRequest request : this.requests) {
 					request.close();
 				}
@@ -612,15 +620,24 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			long starttime = java.lang.System.currentTimeMillis();
 			if (pipeline) {
 				synchronized (requests) {
-					try {
-						BufferRequest request = null;
-						while ((request = umbilical.getRequest(taskid)) != null) {
-							request.open(job);
-							requests.add(request);
-							requestMap.put(request.partition(), request); // TODO speculation
+					while (flushbusy) {
+						try { requests.wait();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
 						}
-					} catch (IOException e) {
-						e.printStackTrace();
+					}
+					
+					if (requests != null) {
+						try {
+							BufferRequest request = null;
+							while ((request = umbilical.getRequest(taskid)) != null) {
+								request.open(job);
+								requests.add(request);
+								requestMap.put(request.partition(), request); // TODO speculation
+							}
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
@@ -643,35 +660,47 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						spillLock.notify();
 				}
 				
-				synchronized (requests) {
-					int spillThreshold = taskid.isMap() ? 5 : 20;
-					if (numSpills - numFlush > spillThreshold) {
-						try {
-							long mergestart = java.lang.System.currentTimeMillis();
-							mergeParts(true);
-							LOG.info("SpillThread: merge time " + 
+				int spillThreshold = taskid.isMap() ? 5 : 20;
+				if (numSpills - numFlush > spillThreshold) {
+					try {
+						long mergestart = java.lang.System.currentTimeMillis();
+						mergeParts(true);
+						LOG.info("SpillThread: merge time " + 
 									((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
-						} catch (IOException e) {
-							e.printStackTrace();
-							sortSpillException = e;
-						}
-					}
-
-					if (pipeline && numFlush < numSpills) {
-						try {
-							long flushstart = java.lang.System.currentTimeMillis();
-							numFlush = flushRequests();
-							LOG.info("SpillThread: flush time " + 
-									((System.currentTimeMillis() - flushstart)/1000f) + " secs.");
-						} catch (IOException e) {
-							e.printStackTrace();
-							sortSpillException = e;
-						}
+					} catch (IOException e) {
+						e.printStackTrace();
+						sortSpillException = e;
 					}
 				}
 				
-				LOG.info("SpillThread: total spill time " + 
-								((System.currentTimeMillis() - starttime)/1000f) + " secs.");
+				try {
+					synchronized (requests) {
+						if (flushbusy) {
+							return;
+						}
+						else if (pipeline && numFlush < numSpills) {
+							return;
+						}
+						flushbusy = true;
+					}
+					try {
+						long flushstart = java.lang.System.currentTimeMillis();
+						numFlush = flushRequests();
+						LOG.info("SpillThread: flush time " + 
+								((System.currentTimeMillis() - flushstart)/1000f) + " secs.");
+					} catch (IOException e) {
+						e.printStackTrace();
+						sortSpillException = e;
+					} finally {
+						synchronized (requests) {
+							flushbusy = false;
+							requests.notifyAll();
+						}
+					}
+				} finally {
+					LOG.info("SpillThread: total spill time " + 
+							((System.currentTimeMillis() - starttime)/1000f) + " secs.");
+				}
 			}
 		}
 	}
