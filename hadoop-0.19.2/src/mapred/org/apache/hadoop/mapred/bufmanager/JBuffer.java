@@ -675,14 +675,14 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				
 				try {
 					synchronized (requests) {
-						if (flushbusy) {
+						if (!flushbusy && pipeline && numFlush < numSpills) {
+							System.err.println("Flushbusy " + flushbusy + ". numflush " + numFlush + " numSpills " + numSpills);
+							flushbusy = true;
+						} else {
 							return;
 						}
-						else if (pipeline && numFlush < numSpills) {
-							return;
-						}
-						flushbusy = true;
 					}
+					
 					try {
 						long flushstart = java.lang.System.currentTimeMillis();
 						numFlush = flushRequests();
