@@ -627,17 +627,15 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						}
 					}
 					
-					if (requests != null) {
-						try {
-							BufferRequest request = null;
-							while ((request = umbilical.getRequest(taskid)) != null) {
-								request.open(job);
-								requests.add(request);
-								requestMap.put(request.partition(), request); // TODO speculation
-							}
-						} catch (IOException e) {
-							e.printStackTrace();
+					try {
+						BufferRequest request = null;
+						while ((request = umbilical.getRequest(taskid)) != null) {
+							request.open(job);
+							requests.add(request);
+							requestMap.put(request.partition(), request); // TODO speculation
 						}
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
 				}
 			}
