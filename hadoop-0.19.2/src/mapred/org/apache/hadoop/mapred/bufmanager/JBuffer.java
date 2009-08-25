@@ -658,19 +658,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						spillLock.notify();
 				}
 				
-				int spillThreshold = taskid.isMap() ? 5 : 20;
-				if (numSpills - numFlush > spillThreshold) {
-					try {
-						long mergestart = java.lang.System.currentTimeMillis();
-						mergeParts(true);
-						LOG.info("SpillThread: merge time " + 
-									((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
-					} catch (IOException e) {
-						e.printStackTrace();
-						sortSpillException = e;
-					}
-				}
-				
 				try {
 					synchronized (requests) {
 						if (!flushbusy && pipeline && numFlush < numSpills) {
@@ -680,15 +667,29 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 							return;
 						}
 					}
-					
+
 					try {
-						long flushstart = java.lang.System.currentTimeMillis();
-						numFlush = flushRequests();
-						LOG.info("SpillThread: flush time " + 
-								((System.currentTimeMillis() - flushstart)/1000f) + " secs.");
-					} catch (IOException e) {
-						e.printStackTrace();
-						sortSpillException = e;
+						int spillThreshold = taskid.isMap() ? 5 : 20;
+						if (numSpills - numFlush > spillThreshold) {
+							try {
+								long mergestart = java.lang.System.currentTimeMillis();
+								mergeParts(true);
+								LOG.info("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+							} catch (IOException e) {
+								e.printStackTrace();
+								sortSpillException = e;
+								return; // dammit
+							}
+						}
+
+						try {
+							long flushstart = java.lang.System.currentTimeMillis();
+							numFlush = flushRequests();
+							LOG.info("SpillThread: flush time " +  ((System.currentTimeMillis() - flushstart)/1000f) + " secs.");
+						} catch (IOException e) {
+							e.printStackTrace();
+							sortSpillException = e;
+						}
 					} finally {
 						synchronized (requests) {
 							flushbusy = false;
