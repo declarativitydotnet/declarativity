@@ -56,7 +56,7 @@ public class IFile {
    * <code>IFile.Writer</code> to write out intermediate map-outputs. 
    */
   public static class Writer<K extends Object, V extends Object> {
-    FSDataOutputStream out;
+    public FSDataOutputStream out;
     boolean ownOutputStream = false;
     long start = 0;
     FSDataOutputStream rawOut;
