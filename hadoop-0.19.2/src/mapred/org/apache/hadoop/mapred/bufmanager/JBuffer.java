@@ -791,11 +791,13 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 							// we've fewer
 							// than some threshold of records for a partition
 							if (spstart != spindex) {
-								if (writer.out == null) throw new IOException("WRITER OUTPUT IS NULL");
 								combineCollector.setWriter(writer);
 
 								RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
+								if (writer.out == null) throw new IOException("WRITER OUTPUT IS NULL");
+								writer.freeze = true;
 								combineAndSpill(kvIter);
+								writer.freeze = false;
 
 								combineCollector.reset();
 							}
@@ -845,8 +847,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	 * directly to a spill file. Consider this "losing".
 	 */
 	@SuppressWarnings("unchecked")
-	private void spillSingleRecord(final K key, final V value) 
-	throws IOException {
+	private void spillSingleRecord(final K key, final V value)  throws IOException {
 		synchronized (mergeLock) {
 			long size = kvbuffer.length + partitions * APPROX_HEADER_LENGTH;
 			FSDataOutputStream out = null;

@@ -57,6 +57,8 @@ public class IFile {
    */
   public static class Writer<K extends Object, V extends Object> {
     public FSDataOutputStream out;
+    public boolean freeze = false;
+    
     boolean ownOutputStream = false;
     long start = 0;
     FSDataOutputStream rawOut;
@@ -141,6 +143,7 @@ public class IFile {
       if (ownOutputStream) {
         rawOut.close();
       }
+      if (freeze) throw new IOException("Writer frozen!");
       out = null;
     }
 
