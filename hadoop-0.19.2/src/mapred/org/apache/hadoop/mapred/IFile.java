@@ -168,6 +168,7 @@ public class IFile {
                               valueLength + " for " + value);
       }
       
+      if (out == null) throw new IOException("Output stream is null!"); 
       // Write the record out
       WritableUtils.writeVInt(out, keyLength);                  // key length
       WritableUtils.writeVInt(out, valueLength);                // value length
