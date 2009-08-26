@@ -794,17 +794,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 								combineCollector.setWriter(writer);
 
 								RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
-								try {
-									if (writer.out == null) throw new IOException("WRITER OUTPUT IS NULL");
-									writer.freeze = true;
-									combineAndSpill(kvIter);
-								} catch (Throwable t) {
-									t.printStackTrace();
-									throw new IOException(t);
-								}
-								finally {
-									writer.freeze = false;
-								}
+								combineAndSpill(kvIter);
 
 								combineCollector.reset();
 							}
