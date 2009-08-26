@@ -56,8 +56,7 @@ public class IFile {
    * <code>IFile.Writer</code> to write out intermediate map-outputs. 
    */
   public static class Writer<K extends Object, V extends Object> {
-    public FSDataOutputStream out;
-    public boolean freeze = false;
+    private FSDataOutputStream out;
     
     boolean ownOutputStream = false;
     long start = 0;
@@ -113,9 +112,6 @@ public class IFile {
     }
     
     public void close() throws IOException {
-        if (freeze) throw new IOException("Writer frozen!");
-
-
       // Close the serializers
       keySerializer.close();
       valueSerializer.close();
@@ -145,7 +141,7 @@ public class IFile {
       if (ownOutputStream) {
         rawOut.close();
       }
-      out = null;
+      // out = null;
     }
 
     public void append(K key, V value) throws IOException {
