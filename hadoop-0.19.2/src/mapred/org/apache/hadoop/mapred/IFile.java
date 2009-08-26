@@ -141,7 +141,7 @@ public class IFile {
       if (ownOutputStream) {
         rawOut.close();
       }
-      // out = null;
+      out = null;
     }
 
     public void append(K key, V value) throws IOException {
