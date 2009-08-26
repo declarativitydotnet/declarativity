@@ -113,6 +113,8 @@ public class IFile {
     }
     
     public void close() throws IOException {
+        if (freeze) throw new IOException("Writer frozen!");
+
 
       // Close the serializers
       keySerializer.close();
@@ -143,11 +145,12 @@ public class IFile {
       if (ownOutputStream) {
         rawOut.close();
       }
-      if (freeze) throw new IOException("Writer frozen!");
       out = null;
     }
 
     public void append(K key, V value) throws IOException {
+        if (out == null) throw new IOException("Output stream is null!"); 
+
       if (key.getClass() != keyClass)
         throw new IOException("wrong key class: "+ key.getClass()
                               +" is not "+ keyClass);
@@ -171,7 +174,6 @@ public class IFile {
                               valueLength + " for " + value);
       }
       
-      if (out == null) throw new IOException("Output stream is null!"); 
       // Write the record out
       WritableUtils.writeVInt(out, keyLength);                  // key length
       WritableUtils.writeVInt(out, valueLength);                // value length
