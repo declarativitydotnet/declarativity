@@ -794,10 +794,17 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 								combineCollector.setWriter(writer);
 
 								RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
-								if (writer.out == null) throw new IOException("WRITER OUTPUT IS NULL");
-								writer.freeze = true;
-								combineAndSpill(kvIter);
-								writer.freeze = false;
+								try {
+									if (writer.out == null) throw new IOException("WRITER OUTPUT IS NULL");
+									writer.freeze = true;
+									combineAndSpill(kvIter);
+								} catch (Throwable t) {
+									t.printStackTrace();
+									throw new IOException(t);
+								}
+								finally {
+									writer.freeze = false;
+								}
 
 								combineCollector.reset();
 							}
@@ -810,8 +817,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						// compressed-length>
 						writeIndexRecord(indexOut, out, segmentStart, writer);
 						writer = null;
-					} catch (Throwable t) {
-						t.printStackTrace();
 					} finally {
 						// if (null != request) request.flushBuffer();
 						if (null != writer) {
