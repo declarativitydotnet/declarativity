@@ -810,6 +810,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						// compressed-length>
 						writeIndexRecord(indexOut, out, segmentStart, writer);
 						writer = null;
+					} catch (Throwable t) {
+						t.printStackTrace();
 					} finally {
 						// if (null != request) request.flushBuffer();
 						if (null != writer) {
