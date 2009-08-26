@@ -618,27 +618,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		@Override
 		public void run() {
 			long starttime = java.lang.System.currentTimeMillis();
-			if (pipeline) {
-				synchronized (requests) {
-					while (flushbusy) {
-						try { requests.wait();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					
-					try {
-						BufferRequest request = null;
-						while ((request = umbilical.getRequest(taskid)) != null) {
-							request.open(job);
-							requests.add(request);
-							requestMap.put(request.partition(), request); // TODO speculation
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
 			
 			try {
 				long sortstart = java.lang.System.currentTimeMillis();
@@ -661,10 +640,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				try {
 					synchronized (requests) {
 						if (!flushbusy && pipeline && numFlush < numSpills) {
-							System.err.println("Flushbusy " + flushbusy + ". numflush " + numFlush + " numSpills " + numSpills);
 							flushbusy = true;
 						} else {
-							return;
+							return; // someone else is taking care of it.
 						}
 					}
 
@@ -681,9 +659,17 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 								return; // dammit
 							}
 						}
-
+						
 						try {
 							long flushstart = java.lang.System.currentTimeMillis();
+							
+							BufferRequest request = null;
+							while ((request = umbilical.getRequest(taskid)) != null) {
+								request.open(job);
+								requests.add(request);
+								requestMap.put(request.partition(), request); // TODO speculation
+							}
+							
 							numFlush = flushRequests();
 							LOG.info("SpillThread: flush time " +  ((System.currentTimeMillis() - flushstart)/1000f) + " secs.");
 						} catch (IOException e) {
