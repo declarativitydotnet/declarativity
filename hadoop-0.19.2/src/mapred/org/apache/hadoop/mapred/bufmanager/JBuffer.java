@@ -809,7 +809,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						writer = null;
 					} finally {
 						// if (null != request) request.flushBuffer();
-						if (null != writer) writer.close();
+						if (null != writer) {
+							writer.close();
+							writer = null;
+						}
 					}
 				}
 				// LOG.info("Finished spill " + numSpills);
