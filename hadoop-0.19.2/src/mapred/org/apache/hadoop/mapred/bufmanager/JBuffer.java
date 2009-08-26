@@ -791,6 +791,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 							// we've fewer
 							// than some threshold of records for a partition
 							if (spstart != spindex) {
+								if (writer.out == null) throw new IOException("WRITER OUTPUT IS NULL");
 								combineCollector.setWriter(writer);
 
 								RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
