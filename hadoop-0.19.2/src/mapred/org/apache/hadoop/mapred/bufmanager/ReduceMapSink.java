@@ -285,8 +285,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							e.printStackTrace();
 						}
 						finally {
-							// localFs.delete(filename);
-							// localFs.delete(indexFilename);
+							localFs.delete(filename.getParent());
 						}
 					}
 					
