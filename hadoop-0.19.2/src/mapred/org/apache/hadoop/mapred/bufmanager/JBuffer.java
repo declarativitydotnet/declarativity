@@ -70,16 +70,21 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	
 	private class PipelineMergeThread extends Thread {
 		private boolean busy = false;
+		private boolean open = true;
 		
 		public boolean busy() {
 			return this.busy;
 		}
+		
+		public void close() {
+			this.open = false;
+		}
 
 		public void run() {
 			int spillThreshold = taskid.isMap() ? 5 : 20;
-			while (!isInterrupted()) {
+			while (open) {
 				synchronized (this) {
-					while (!isInterrupted() && numFlush == numSpills) {
+					while (open && numFlush == numSpills) {
 						try { this.wait();
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
@@ -87,7 +92,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						}
 					}
 					
-					if (isInterrupted()) return;
+					if (!open) return;
 					busy = true;
 				}
 
@@ -96,7 +101,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
-							LOG.info("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+							LOG.info("PipelinMergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -116,7 +121,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 							}
 
 							numFlush = flushRequests();
-							LOG.info("SpillThread: pipeline time " +  
+							LOG.info("PipelinMergeThread: pipeline time " +  
 									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -634,6 +639,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 	public synchronized void flush() throws IOException {
 		// LOG.info("Starting flush of map output");
+		pipelineThread.close();
 		synchronized (spillLock) {
 			while (kvstart != kvend) {
 				try {
@@ -645,23 +651,21 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					).initCause(e);
 				}
 			}
+		}
 			
-			synchronized (pipelineThread) {
-				pipelineThread.interrupt();
-				pipelineThread.notifyAll();
-				while (pipelineThread.busy()) {
-					try { pipelineThread.wait();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+		synchronized (pipelineThread) {
+			while (pipelineThread.busy()) {
+				try { pipelineThread.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
-				
-				for (BufferRequest request : this.requests) {
-					request.close();
-				}
-				this.requests.clear();
 			}
 		}
+			
+		for (BufferRequest request : this.requests) {
+			request.close();
+		}
+		this.requests.clear();
 		
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"

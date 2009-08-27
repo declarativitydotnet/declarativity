@@ -1,0 +1,16 @@
+Connection attempt_200908220037_0001_m_000000_0 sending 79091 bytes.
+Spill connection attempt_200908220037_0001_m_000000_0 directly to disk
+Connection attempt_200908220037_0001_m_000001_0 sending 91635 bytes.
+Spill connection attempt_200908220037_0001_m_000001_0 directly to disk
+SPILL COMPLETE: register spill files with buffer.
+SPILL COMPLETE: register spill files with buffer.
+CONNECTION DONE: TASK attempt_200908220037_0001_m_000000_0
+CONNECTION DONE: TASK attempt_200908220037_0001_m_000001_0
+java.io.EOFException
+	at java.io.DataInputStream.readFully(DataInputStream.java:180)
+	at java.io.DataInputStream.readLong(DataInputStream.java:399)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.mergeParts(JBuffer.java:1058)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.flush(JBuffer.java:594)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.iterator(JBuffer.java:553)
+	at org.apache.hadoop.mapred.ReduceTask.run(ReduceTask.java:275)
+	at org.apache.hadoop.mapred.Child.main(Child.java:167)
