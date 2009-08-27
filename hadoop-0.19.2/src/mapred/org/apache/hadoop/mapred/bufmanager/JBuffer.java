@@ -77,15 +77,17 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 		public void run() {
 			int spillThreshold = taskid.isMap() ? 5 : 20;
-			while (true) {
+			while (!isInterrupted()) {
 				synchronized (this) {
-					while (numFlush == numSpills) {
+					while (!isInterrupted() && numFlush == numSpills) {
 						try { this.wait();
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
+					
+					if (isInterrupted()) return;
 					busy = true;
 				}
 
@@ -102,7 +104,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						}
 					}
 
-					if (pipeline) {
+					if (pipeline && numFlush < numSpills) {
 						try {
 							long pipelinestart = java.lang.System.currentTimeMillis();
 
@@ -645,6 +647,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			}
 			
 			synchronized (pipelineThread) {
+				pipelineThread.interrupt();
+				pipelineThread.notifyAll();
 				while (pipelineThread.busy()) {
 					try { pipelineThread.wait();
 					} catch (InterruptedException e) {
