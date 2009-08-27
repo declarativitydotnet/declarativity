@@ -244,33 +244,42 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					}
 					else {
 						// Spill directory to disk
-						Path filename = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, length);
-						FSDataOutputStream out = localFs.create(filename);
-						if (out == null ) throw new IOException("Unable to create spill file " + filename);
+						Path filename      = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, length);
+						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+						
+						FSDataOutputStream out      = localFs.create(filename);
+						FSDataOutputStream indexOut = localFs.create(indexFilename);
+						
+						if (out == null || indexOut == null) 
+							throw new IOException("Unable to create spill file " + filename);
 						
 						IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
 						try {
+							/* Copy over the data until done. */
 							while (reader.next(key, value)) {
 								writer.append(key, value);
 							}
-						} catch (ChecksumException e) {
-							System.err.println("ReduceMapSink: ChecksumException during spill. eof? " + done);
-						}
-						finally {
+							
+							/* Write the index file. */
+							indexOut.writeLong(0);
+							indexOut.writeLong(writer.getRawLength());
+							indexOut.writeLong(out.getPos());
+							
+							/* Close everything. */
 							writer.close();
 							out.close();
+							indexOut.close();
+							
+							/* Register the spill file with the buffer. */
+							this.sink.buffer().spill(filename, length, indexFilename);
+						} catch (Throwable e) {
+							System.err.println("ReduceMapSink: error during spill. eof? " + done);
+							e.printStackTrace();
 						}
-						
-						// create spill index
-						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
-						FSDataOutputStream indexOut = localFs.create(indexFilename);
-						
-						indexOut.writeLong(0);
-						indexOut.writeLong(writer.getRawLength());
-						indexOut.writeLong(out.getPos());
-						indexOut.close();
-						
-						this.sink.buffer().spill(filename, length, indexFilename);
+						finally {
+							localFs.delete(filename);
+							localFs.delete(indexFilename);
+						}
 					}
 					
 					if (done) return;
