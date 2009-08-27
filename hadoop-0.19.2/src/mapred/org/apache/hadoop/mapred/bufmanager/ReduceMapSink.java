@@ -259,6 +259,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							while (reader.next(key, value)) {
 								writer.append(key, value);
 							}
+							writer.close();
+							out.close();
 							
 							/* Write the index file. */
 							indexOut.writeLong(0);
@@ -266,8 +268,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							indexOut.writeLong(out.getPos());
 							
 							/* Close everything. */
-							writer.close();
-							out.close();
 							indexOut.flush();
 							indexOut.close();
 							

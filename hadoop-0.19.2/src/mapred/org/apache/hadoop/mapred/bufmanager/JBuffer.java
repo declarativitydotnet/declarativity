@@ -728,16 +728,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			localFs.rename(index, indexFilename);
 			numSpills++;
 		}
-
-		int spillThreshold = taskid.isMap() ? 5 : 10;
-		if (numSpills - numFlush > spillThreshold) {
-			try {
-				mergeParts(true);
-			} catch (IOException e) {
-				e.printStackTrace();
-				sortSpillException = e;
-			}
-		}
 	}
 	
 
