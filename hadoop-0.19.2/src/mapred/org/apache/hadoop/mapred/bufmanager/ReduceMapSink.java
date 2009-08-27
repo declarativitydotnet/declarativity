@@ -271,6 +271,13 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							indexOut.flush();
 							indexOut.close();
 							
+							if (!localFs.exists(filename)) {
+								System.err.println("FUCKING " + filename + " DOESN'T EXIST!");
+							}
+							if (!localFs.exists(indexFilename)) {
+								System.err.println("FUCKING " + indexFilename + " DOESN'T EXIST!");
+							}
+							
 							/* Register the spill file with the buffer. */
 							this.sink.buffer().spill(filename, length, indexFilename);
 						} catch (Throwable e) {
