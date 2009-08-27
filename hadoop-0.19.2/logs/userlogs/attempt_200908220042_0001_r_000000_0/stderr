@@ -1,8 +1,0 @@
-Connection attempt_200908220042_0001_m_000000_0 sending 79091 bytes.
-Spill connection attempt_200908220042_0001_m_000000_0 directly to disk
-Connection attempt_200908220042_0001_m_000001_0 sending 91635 bytes.
-Spill connection attempt_200908220042_0001_m_000001_0 directly to disk
-SPILL COMPLETE: register spill files with buffer.
-SPILL COMPLETE: register spill files with buffer.
-CONNECTION DONE: TASK attempt_200908220042_0001_m_000000_0
-CONNECTION DONE: TASK attempt_200908220042_0001_m_000001_0

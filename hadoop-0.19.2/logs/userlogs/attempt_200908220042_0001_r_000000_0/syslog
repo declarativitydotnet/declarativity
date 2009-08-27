@@ -1,7 +1,0 @@
-2009-08-22 00:43:24,147 INFO org.apache.hadoop.metrics.jvm.JvmMetrics: Initializing JVM Metrics with processName=SHUFFLE, sessionId=
-2009-08-22 00:43:26,451 INFO org.apache.hadoop.mapred.Merger: Merging 2 sorted segments
-2009-08-22 00:43:26,452 INFO org.apache.hadoop.mapred.Merger: Down to the last merge-pass, with 2 segments left of total size: 170718 bytes
-2009-08-22 00:43:27,250 INFO org.apache.hadoop.mapred.TaskRunner: Task:attempt_200908220042_0001_r_000000_0 is done. And is in the process of commiting
-2009-08-22 00:43:28,270 INFO org.apache.hadoop.mapred.TaskRunner: Task attempt_200908220042_0001_r_000000_0 is allowed to commit now
-2009-08-22 00:43:28,331 INFO org.apache.hadoop.mapred.FileOutputCommitter: Saved output of task 'attempt_200908220042_0001_r_000000_0' to hdfs://localhost:9000/wc3
-2009-08-22 00:43:28,341 INFO org.apache.hadoop.mapred.TaskRunner: Task 'attempt_200908220042_0001_r_000000_0' done.
