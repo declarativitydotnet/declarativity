@@ -19,7 +19,7 @@ public class ReduceOutputFile extends MapOutputFile {
 		return lDirAlloc.getLocalPathToRead(TaskTracker.getIntermediateOutputDir(
 				jobId.toString(), reduceID.toString())
 				+ Path.SEPARATOR + mapTaskId.toString()
-				+ "/file.out", conf);
+				+ "file.out", conf);
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class ReduceOutputFile extends MapOutputFile {
 		return lDirAlloc.getLocalPathForWrite(TaskTracker.getIntermediateOutputDir(
 				jobId.toString(), reduceID.toString())
 				+ Path.SEPARATOR + mapTaskId.toString()
-				+ "/file.out", size, conf);
+				+ "file.out", size, conf);
 	}
 
 	@Override
@@ -37,7 +37,7 @@ public class ReduceOutputFile extends MapOutputFile {
 		return lDirAlloc.getLocalPathToRead(TaskTracker.getIntermediateOutputDir(
 				jobId.toString(), reduceID.toString())
 				+ Path.SEPARATOR + mapTaskId.toString()
-				+ "/file.out.index", conf);
+				+ "file.out.index", conf);
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class ReduceOutputFile extends MapOutputFile {
 		return lDirAlloc.getLocalPathForWrite(TaskTracker.getIntermediateOutputDir(
 				jobId.toString(), reduceID.toString())
 				+ Path.SEPARATOR + mapTaskId.toString()
-				+ "/file.out.index", 
+				+ "file.out.index", 
 				size, conf);
 	}
 }
