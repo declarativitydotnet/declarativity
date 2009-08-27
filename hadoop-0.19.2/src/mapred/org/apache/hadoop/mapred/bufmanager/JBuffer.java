@@ -727,6 +727,15 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			localFs.rename(data, filename);
 			localFs.rename(index, indexFilename);
 			numSpills++;
+			
+			int spillThreshold = taskid.isMap() ? 5 : 20;
+			if (numSpills - numFlush > spillThreshold) {
+				// TODO No need to recreate this thread every time
+				SpillThread t = new SpillThread();
+				t.setDaemon(true);
+				t.setName("SpillThread");
+				t.start();
+			}
 		}
 	}
 	
