@@ -723,10 +723,20 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		synchronized (mergeLock) {
 			Path filename      = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
 			Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(this.taskid, numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-			
+
 			localFs.rename(data, filename);
 			localFs.rename(index, indexFilename);
 			numSpills++;
+		}
+
+		int spillThreshold = taskid.isMap() ? 5 : 10;
+		if (numSpills - numFlush > spillThreshold) {
+			try {
+				mergeParts(true);
+			} catch (IOException e) {
+				e.printStackTrace();
+				sortSpillException = e;
+			}
 		}
 	}
 	
