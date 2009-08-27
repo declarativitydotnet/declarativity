@@ -268,6 +268,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							/* Close everything. */
 							writer.close();
 							out.close();
+							indexOut.flush();
 							indexOut.close();
 							
 							/* Register the spill file with the buffer. */
@@ -277,8 +278,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							e.printStackTrace();
 						}
 						finally {
-							localFs.delete(filename);
-							localFs.delete(indexFilename);
+							// localFs.delete(filename);
+							// localFs.delete(indexFilename);
 						}
 					}
 					
