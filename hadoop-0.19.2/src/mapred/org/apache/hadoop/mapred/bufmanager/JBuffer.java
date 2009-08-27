@@ -68,6 +68,69 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 	}
 	
+	private class PipelineMergeThread extends Thread {
+		private boolean busy = false;
+		
+		public boolean busy() {
+			return this.busy;
+		}
+
+		public void run() {
+			int spillThreshold = taskid.isMap() ? 5 : 20;
+			while (true) {
+				synchronized (this) {
+					while (numFlush == numSpills) {
+						try { this.wait();
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					busy = true;
+				}
+
+				try {
+					if (numSpills - numFlush > spillThreshold) {
+						try {
+							long mergestart = java.lang.System.currentTimeMillis();
+							mergeParts(true);
+							LOG.info("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+						} catch (IOException e) {
+							e.printStackTrace();
+							sortSpillException = e;
+							return; // dammit
+						}
+					}
+
+					if (pipeline) {
+						try {
+							long pipelinestart = java.lang.System.currentTimeMillis();
+
+							BufferRequest request = null;
+							while ((request = umbilical.getRequest(taskid)) != null) {
+								request.open(job);
+								requests.add(request);
+								requestMap.put(request.partition(), request); // TODO speculation
+							}
+
+							numFlush = flushRequests();
+							LOG.info("SpillThread: pipeline time " +  
+									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
+						} catch (IOException e) {
+							e.printStackTrace();
+							sortSpillException = e;
+						}
+					}
+				} finally {
+					synchronized (this) {
+						busy = false;
+						this.notifyAll();
+					}
+				}
+			}
+		}
+	}
+	
 	private static final Log LOG = LogFactory.getLog(JBuffer.class.getName());
 
 	
@@ -136,8 +199,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	private MapOutputFile mapOutputFile = null;
 	
 	private boolean pipeline;
+	private PipelineMergeThread pipelineThread;
 	
-	private boolean flushbusy = false;
 	private TreeSet<BufferRequest> requests = new TreeSet<BufferRequest>();
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
 	
@@ -151,6 +214,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		this.mapOutputFile.setConf(job);
 		
 		this.pipeline = job.getBoolean("mapred.map.tasks.pipeline.execution", true);
+		this.pipelineThread = new PipelineMergeThread();
+		this.pipelineThread.start();
+		
 		
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
@@ -578,9 +644,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 			
-			synchronized (requests) {
-				while (flushbusy) {
-					try { requests.wait();
+			synchronized (pipelineThread) {
+				while (pipelineThread.busy()) {
+					try { pipelineThread.wait();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -638,49 +704,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 				
 				try {
-					synchronized (requests) {
-						if (!flushbusy && pipeline && numFlush < numSpills) {
-							flushbusy = true;
-						} else {
-							return; // someone else is taking care of it.
-						}
-					}
-
-					try {
-						int spillThreshold = taskid.isMap() ? 5 : 20;
-						if (numSpills - numFlush > spillThreshold) {
-							try {
-								long mergestart = java.lang.System.currentTimeMillis();
-								mergeParts(true);
-								LOG.info("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
-							} catch (IOException e) {
-								e.printStackTrace();
-								sortSpillException = e;
-								return; // dammit
-							}
-						}
-						
-						try {
-							long flushstart = java.lang.System.currentTimeMillis();
-							
-							BufferRequest request = null;
-							while ((request = umbilical.getRequest(taskid)) != null) {
-								request.open(job);
-								requests.add(request);
-								requestMap.put(request.partition(), request); // TODO speculation
-							}
-							
-							numFlush = flushRequests();
-							LOG.info("SpillThread: flush time " +  ((System.currentTimeMillis() - flushstart)/1000f) + " secs.");
-						} catch (IOException e) {
-							e.printStackTrace();
-							sortSpillException = e;
-						}
-					} finally {
-						synchronized (requests) {
-							flushbusy = false;
-							requests.notifyAll();
-						}
+					synchronized (pipelineThread) {
+						pipelineThread.notifyAll();
 					}
 				} finally {
 					LOG.info("SpillThread: total spill time " + 
