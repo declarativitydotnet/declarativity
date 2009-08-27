@@ -1,0 +1,23 @@
+2009-08-22 00:38:12,155 INFO org.apache.hadoop.metrics.jvm.JvmMetrics: Initializing JVM Metrics with processName=SHUFFLE, sessionId=
+2009-08-22 00:38:14,092 WARN org.apache.hadoop.fs.FSInputChecker: Problem opening checksum file: /tmp/hadoop-tcondie/mapred/local/taskTracker/jobcache/job_200908220037_0001/attempt_200908220037_0001_r_000000_0/output/spill0.out.index.  Ignoring exception: java.io.EOFException
+	at java.io.DataInputStream.readFully(DataInputStream.java:180)
+	at java.io.DataInputStream.readFully(DataInputStream.java:152)
+	at org.apache.hadoop.fs.ChecksumFileSystem$ChecksumFSInputChecker.<init>(ChecksumFileSystem.java:126)
+	at org.apache.hadoop.fs.ChecksumFileSystem.open(ChecksumFileSystem.java:275)
+	at org.apache.hadoop.fs.FileSystem.open(FileSystem.java:359)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.mergeParts(JBuffer.java:1056)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.flush(JBuffer.java:594)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.iterator(JBuffer.java:553)
+	at org.apache.hadoop.mapred.ReduceTask.run(ReduceTask.java:275)
+	at org.apache.hadoop.mapred.Child.main(Child.java:167)
+
+2009-08-22 00:38:14,104 WARN org.apache.hadoop.mapred.TaskTracker: Error running child
+java.io.EOFException
+	at java.io.DataInputStream.readFully(DataInputStream.java:180)
+	at java.io.DataInputStream.readLong(DataInputStream.java:399)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.mergeParts(JBuffer.java:1058)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.flush(JBuffer.java:594)
+	at org.apache.hadoop.mapred.bufmanager.JBuffer.iterator(JBuffer.java:553)
+	at org.apache.hadoop.mapred.ReduceTask.run(ReduceTask.java:275)
+	at org.apache.hadoop.mapred.Child.main(Child.java:167)
+2009-08-22 00:38:14,110 INFO org.apache.hadoop.mapred.TaskRunner: Runnning cleanup for the task
