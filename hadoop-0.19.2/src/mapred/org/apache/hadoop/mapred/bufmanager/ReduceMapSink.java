@@ -277,15 +277,15 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							indexOut.flush();
 							indexOut.close();
 							
-							if (!localFs.exists(filename)) {
-								System.err.println("ERROR: " + filename + " MAGICALLY DISAPPEARED!");
-							}
-							if (!localFs.exists(indexFilename)) {
-								System.err.println("ERROR: " + indexFilename + " MAGICALLY DISAPPEARED!");
-							}
-							
 							/* Register the spill file with the buffer. */
 							this.sink.buffer().spill(filename, length, indexFilename);
+							
+							if (localFs.exists(filename)) {
+								System.err.println("RENAME: " + filename + " still exists!");
+							}
+							if (localFs.exists(indexFilename)) {
+								System.err.println("RENAME: " + indexFilename + " still exists!");
+							}
 						} catch (Throwable e) {
 							System.err.println("ReduceMapSink: error during spill. eof? " + done);
 							localFs.delete(filename);

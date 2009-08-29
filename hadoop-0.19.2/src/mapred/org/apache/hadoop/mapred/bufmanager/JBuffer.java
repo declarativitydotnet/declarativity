@@ -757,8 +757,13 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			Path filename      = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
 			Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(this.taskid, numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
-			localFs.rename(data, filename);
-			localFs.rename(index, indexFilename);
+			if (!localFs.rename(data, filename)) {
+				throw new IOException("JBuffer::spill -- unable to rename " + data + " to " + filename);
+			}
+			if (!localFs.rename(index, indexFilename)) {
+				throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFilename);
+			}
+			
 			numSpills++;
 		}
 	}
