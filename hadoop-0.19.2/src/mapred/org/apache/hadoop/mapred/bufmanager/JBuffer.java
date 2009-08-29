@@ -82,10 +82,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 		public void run() {
 			int mergeThreshold = taskid.isMap() ? 5 : 20;
+			int flushpoint = numFlush;
 			while (open) {
 				synchronized (this) {
 					this.busy = false;
-					while (open && numFlush == numSpills) {
+					while (open && flushpoint == numSpills) {
 						try { this.wait();
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
@@ -110,10 +111,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						}
 					}
 
-					if (pipeline && numFlush < numSpills) {
+					if (pipeline && flushpoint < numSpills) {
 						try {
 							long pipelinestart = java.lang.System.currentTimeMillis();
-							numFlush = flushRequests();
+							flushpoint = flushRequests();
 							LOG.info("PipelinMergeThread: pipeline time " +  
 									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
 						} catch (IOException e) {
@@ -717,7 +718,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	}
 	
 	private int flushRequests() throws IOException {
-		int minSpillId = numFlush;
+		int spillend = numSpills;
 		
 		BufferRequest request = null;
 		while ((request = umbilical.getRequest(taskid)) != null) {
@@ -727,9 +728,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		
 		for (BufferRequest r : requests) {
-			if (! r.busy()) {
-				int spillId = minSpillId < r.flushPoint() ? r.flushPoint() : minSpillId;
-				if (numSpills == spillId) continue;
+			for (int spillId = r.flushPoint(); spillId < spillend; spillId++) {
 				System.err.println("Flush " + r);
 				System.err.println("\tSpillID: "+ spillId + " number of spills " + numSpills);
 				Path outputFile = mapOutputFile.getSpillFile(this.taskid, spillId);
@@ -743,16 +742,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			}
 		}
 		
-		if (requests.size() == partitions) {
-			int min = Integer.MAX_VALUE;
-			for (BufferRequest r : requests) {
-				min = Math.min(min, r.flushPoint());
-			}
-			return min; // min flush point.
+		if (this.requests.size() == partitions) {
+			numFlush = spillend;
 		}
-		else {
-			return numFlush;
-		}
+		
+		return spillend;
 	}
 	
 	public void spill(Path data, long size, Path index) throws IOException {
