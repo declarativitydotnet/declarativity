@@ -113,14 +113,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					if (pipeline && numFlush < numSpills) {
 						try {
 							long pipelinestart = java.lang.System.currentTimeMillis();
-
-							BufferRequest request = null;
-							while ((request = umbilical.getRequest(taskid)) != null) {
-								request.open(job);
-								requests.add(request);
-								requestMap.put(request.partition(), request); // TODO speculation
-							}
-
 							numFlush = flushRequests();
 							LOG.info("PipelinMergeThread: pipeline time " +  
 									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
@@ -727,15 +719,24 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	private int flushRequests() throws IOException {
 		int minSpillId = numFlush;
 		
-		for (BufferRequest request : requests) {
-			if (! request.busy()) {
-				int spillId = minSpillId < request.flushPoint() ? request.flushPoint() : minSpillId;
+		BufferRequest request = null;
+		while ((request = umbilical.getRequest(taskid)) != null) {
+			request.open(job);
+			requests.add(request);
+			requestMap.put(request.partition(), request); // TODO speculation
+		}
+		
+		for (BufferRequest r : requests) {
+			if (! r.busy()) {
+				System.err.println("Flush " + r);
+				int spillId = minSpillId < r.flushPoint() ? r.flushPoint() : minSpillId;
+				System.err.println("SpillID: "+ spillId + " number of spills " + numSpills);
 				Path outputFile = mapOutputFile.getSpillFile(this.taskid, spillId);
 				Path indexFile  = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
 				FSDataInputStream indexIn = localFs.open(indexFile);
 				FSDataInputStream dataIn = localFs.open(outputFile);
 
-				request.flush(indexIn, dataIn, spillId);
+				r.flush(indexIn, dataIn, spillId);
 				indexIn.close();
 				dataIn.close();
 			}
@@ -743,8 +744,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		
 		if (requests.size() == partitions) {
 			int min = Integer.MAX_VALUE;
-			for (BufferRequest request : requests) {
-				min = Math.min(min, request.flushPoint());
+			for (BufferRequest r : requests) {
+				min = Math.min(min, r.flushPoint());
 			}
 			return min; // min flush point.
 		}
