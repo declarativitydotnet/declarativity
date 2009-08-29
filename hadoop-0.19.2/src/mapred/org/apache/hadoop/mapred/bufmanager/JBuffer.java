@@ -84,6 +84,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			int spillThreshold = taskid.isMap() ? 5 : 20;
 			while (open) {
 				synchronized (this) {
+					this.busy = false;
 					while (open && numFlush == numSpills) {
 						try { this.wait();
 						} catch (InterruptedException e) {
