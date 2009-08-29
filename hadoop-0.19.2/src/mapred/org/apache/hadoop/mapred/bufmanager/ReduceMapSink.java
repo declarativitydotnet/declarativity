@@ -247,8 +247,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						Path filename      = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, length);
 						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 						
-						FSDataOutputStream out      = localFs.create(filename);
-						FSDataOutputStream indexOut = localFs.create(indexFilename);
+						FSDataOutputStream out      = localFs.create(filename, false);
+						FSDataOutputStream indexOut = localFs.create(indexFilename, false);
 						if (!localFs.exists(filename)) {
 							System.err.println("Filesystem did not create " + filename + "!");
 						}
@@ -290,11 +290,12 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							this.sink.buffer().spill(filename, length, indexFilename);
 						} catch (Throwable e) {
 							System.err.println("ReduceMapSink: error during spill. eof? " + done);
+							localFs.delete(filename);
+							localFs.delete(indexFilename);
 							e.printStackTrace();
 						}
 						finally {
-							localFs.delete(filename);
-							localFs.delete(indexFilename);
+							System.err.println("\tDone spill files: data " + filename + " index " + indexFilename);
 						}
 					}
 					
