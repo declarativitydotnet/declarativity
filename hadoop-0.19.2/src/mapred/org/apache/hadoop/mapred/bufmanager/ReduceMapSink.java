@@ -247,17 +247,18 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						Path filename      = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, length);
 						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 						
-						FSDataOutputStream out      = localFs.create(filename, false);
-						FSDataOutputStream indexOut = localFs.create(indexFilename, false);
 						while (localFs.exists(filename)) {
-							System.err.println("Error: Filesystem did not create " + filename + "!");
-							Thread.sleep(10);
+							System.err.println("File " + filename + " exists. Waiting....");
+							Thread.sleep(100);
 						}
 						
 						while (localFs.exists(indexFilename)) {
-							System.err.println("Error: Filesystem did not create " + indexFilename + "!");
-							Thread.sleep(10);
+							System.err.println("File " + indexFilename + " exists. Waiting....");
+							Thread.sleep(100);
 						}
+						
+						FSDataOutputStream out      = localFs.create(filename, false);
+						FSDataOutputStream indexOut = localFs.create(indexFilename, false);
 						
 						if (out == null || indexOut == null) 
 							throw new IOException("Unable to create spill file " + filename);
@@ -283,19 +284,19 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							/* Register the spill file with the buffer. */
 							this.sink.buffer().spill(filename, length, indexFilename);
 							
-							if (localFs.exists(filename)) {
-								System.err.println("RENAME: " + filename + " still exists!");
-							}
-							if (localFs.exists(indexFilename)) {
-								System.err.println("RENAME: " + indexFilename + " still exists!");
-							}
 						} catch (Throwable e) {
 							System.err.println("ReduceMapSink: error during spill. eof? " + done);
-							localFs.delete(filename);
-							localFs.delete(indexFilename);
 							e.printStackTrace();
 						}
 						finally {
+							if (localFs.exists(filename)) {
+								System.err.println("Warn: " + filename + " still exists!");
+								localFs.delete(filename);
+							}
+							if (localFs.exists(indexFilename)) {
+								System.err.println("Warn: " + indexFilename + " still exists!");
+								localFs.delete(indexFilename);
+							}
 						}
 					}
 					
