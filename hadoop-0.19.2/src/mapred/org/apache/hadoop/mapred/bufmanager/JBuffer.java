@@ -707,10 +707,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		kvbuffer = null;
 		
 		mergeParts(false);
+		umbilical.commit(this.taskid);
 	}
 
 	public void close() throws IOException { 
-		umbilical.commit(this.taskid);
 	}
 	
 	
