@@ -103,7 +103,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
-							LOG.info("PipelinMergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+							LOG.debug("PipelinMergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -115,7 +115,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						try {
 							long pipelinestart = java.lang.System.currentTimeMillis();
 							flushpoint = flushRequests();
-							LOG.info("PipelinMergeThread: pipeline time " +  
+							LOG.debug("PipelinMergeThread: pipeline time " +  
 									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -723,7 +723,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			try {
 				long sortstart = java.lang.System.currentTimeMillis();
 				sortAndSpill();
-				LOG.info("SpillThread: sort/spill time " + 
+				LOG.debug("SpillThread: sort/spill time " + 
 								((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -743,7 +743,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						pipelineThread.notifyAll();
 					}
 				} finally {
-					LOG.info("SpillThread: total spill time " + 
+					LOG.debug("SpillThread: total spill time " + 
 							((System.currentTimeMillis() - starttime)/1000f) + " secs.");
 				}
 			}
