@@ -61,8 +61,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	private FileSystem localFS = null;
 	
-	private boolean busy = false;
-	
 	private int flushPoint = 0;
 	
 	public BufferRequest() {
@@ -92,10 +90,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	public Integer partition() {
 		return this.partition;
-	}
-	
-	public boolean busy() {
-		return this.busy;
 	}
 	
 	public int flushPoint() {
@@ -159,7 +153,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			this.conf = conf;
 			this.localFS = FileSystem.getLocal(conf);
 			this.out = connect();
-			this.busy = false;
 		}
 	}
 	
@@ -236,45 +229,28 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	private void flushFile(FSDataInputStream in, long length, boolean eof) throws IOException {
-		synchronized (this) {
-			while (busy) {
-				try { this.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-			busy = true;
+		CompressionCodec codec = null;
+		if (conf.getCompressMapOutput()) {
+			Class<? extends CompressionCodec> codecClass =
+				conf.getMapOutputCompressorClass(DefaultCodec.class);
+			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
 		}
+		Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+		Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
 
-		try {
-			CompressionCodec codec = null;
-			if (conf.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					conf.getMapOutputCompressorClass(DefaultCodec.class);
-				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-			}
-			Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
-			Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
+		out.writeLong(length);
+		out.writeBoolean(eof);
 
-			out.writeLong(length);
-			out.writeBoolean(eof);
+		IFile.Reader reader = new IFile.Reader<K, V>(conf, in, length, codec);
+		IFile.Writer writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
 
-			IFile.Reader reader = new IFile.Reader<K, V>(conf, in, length, codec);
-			IFile.Writer writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
-
-			DataInputBuffer key = new DataInputBuffer();
-			DataInputBuffer value = new DataInputBuffer();
-			while (reader.next(key, value)) {
-				writer.append(key, value);
-			}
-			writer.close();
-			
-		} finally {
-			synchronized (this) {
-				busy = false;
-				this.notifyAll();
-			}
+		DataInputBuffer key = new DataInputBuffer();
+		DataInputBuffer value = new DataInputBuffer();
+		while (reader.next(key, value)) {
+			writer.append(key, value);
 		}
+		writer.close();
+
 	}
 
 }
