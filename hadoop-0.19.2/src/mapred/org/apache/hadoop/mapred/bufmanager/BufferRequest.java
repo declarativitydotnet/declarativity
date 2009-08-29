@@ -103,7 +103,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint) throws IOException {
-		this.flushPoint = flushPoint + 1;
+		this.flushPoint = flushPoint;
 		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
 		long segmentOffset    = indexIn.readLong();
