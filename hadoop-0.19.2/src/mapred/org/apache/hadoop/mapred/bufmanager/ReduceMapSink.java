@@ -256,6 +256,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							System.err.println("Filesystem did not create " + indexFilename + "!");
 						}
 						
+						System.err.println("Create spill files: data " + filename + " index " + indexFilename);
+						
 						if (out == null || indexOut == null) 
 							throw new IOException("Unable to create spill file " + filename);
 						
