@@ -249,11 +249,14 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						
 						FSDataOutputStream out      = localFs.create(filename, false);
 						FSDataOutputStream indexOut = localFs.create(indexFilename, false);
-						if (!localFs.exists(filename)) {
+						while (localFs.exists(filename)) {
 							System.err.println("Error: Filesystem did not create " + filename + "!");
+							Thread.sleep(10);
 						}
-						if (!localFs.exists(indexFilename)) {
+						
+						while (localFs.exists(indexFilename)) {
 							System.err.println("Error: Filesystem did not create " + indexFilename + "!");
+							Thread.sleep(10);
 						}
 						
 						if (out == null || indexOut == null) 
