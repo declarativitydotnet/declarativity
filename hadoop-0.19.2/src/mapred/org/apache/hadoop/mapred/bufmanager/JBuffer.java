@@ -728,9 +728,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		
 		for (BufferRequest r : requests) {
 			if (! r.busy()) {
-				System.err.println("Flush " + r);
 				int spillId = minSpillId < r.flushPoint() ? r.flushPoint() : minSpillId;
-				System.err.println("SpillID: "+ spillId + " number of spills " + numSpills);
+				if (numSpills == spillId) continue;
+				System.err.println("Flush " + r);
+				System.err.println("\tSpillID: "+ spillId + " number of spills " + numSpills);
 				Path outputFile = mapOutputFile.getSpillFile(this.taskid, spillId);
 				Path indexFile  = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
 				FSDataInputStream indexIn = localFs.open(indexFile);
