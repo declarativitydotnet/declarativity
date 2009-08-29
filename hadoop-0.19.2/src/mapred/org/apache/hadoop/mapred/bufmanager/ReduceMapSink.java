@@ -249,6 +249,12 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						
 						FSDataOutputStream out      = localFs.create(filename);
 						FSDataOutputStream indexOut = localFs.create(indexFilename);
+						if (!localFs.exists(filename)) {
+							System.err.println("Filesystem did not create " + filename + "!");
+						}
+						if (!localFs.exists(indexFilename)) {
+							System.err.println("Filesystem did not create " + indexFilename + "!");
+						}
 						
 						if (out == null || indexOut == null) 
 							throw new IOException("Unable to create spill file " + filename);
@@ -272,10 +278,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							indexOut.close();
 							
 							if (!localFs.exists(filename)) {
-								System.err.println("FUCKING " + filename + " DOESN'T EXIST!");
+								System.err.println("FUCKING " + filename + " MAGICALLY DISAPPEARED!");
 							}
 							if (!localFs.exists(indexFilename)) {
-								System.err.println("FUCKING " + indexFilename + " DOESN'T EXIST!");
+								System.err.println("FUCKING " + indexFilename + " MAGICALLY DISAPPEARED!");
 							}
 							
 							/* Register the spill file with the buffer. */
