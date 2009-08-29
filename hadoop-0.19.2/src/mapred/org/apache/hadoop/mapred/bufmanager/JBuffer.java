@@ -130,6 +130,39 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 		}
+			
+		private int flushRequests() throws IOException {
+			int spillend = numSpills;
+
+			BufferRequest request = null;
+			while ((request = umbilical.getRequest(taskid)) != null) {
+				request.open(job);
+				requests.add(request);
+				requestMap.put(request.partition(), request); // TODO speculation
+			}
+
+			for (BufferRequest r : requests) {
+				int spillstart = Math.max(r.flushPoint(), numFlush);
+				for (int spillId = spillstart; spillId < spillend; spillId++) {
+					System.err.println("Flush " + r);
+					System.err.println("\tSpillID: "+ spillId + " number of spills " + numSpills);
+					Path outputFile = mapOutputFile.getSpillFile(taskid, spillId);
+					Path indexFile  = mapOutputFile.getSpillIndexFile(taskid, spillId);
+					FSDataInputStream indexIn = localFs.open(indexFile);
+					FSDataInputStream dataIn = localFs.open(outputFile);
+
+					r.flush(indexIn, dataIn, spillId);
+					indexIn.close();
+					dataIn.close();
+				}
+			}
+
+			if (requests.size() == partitions) {
+				numFlush = spillend;
+			}
+
+			return spillend;
+		}
 	}
 	
 	private static final Log LOG = LogFactory.getLog(JBuffer.class.getName());
@@ -717,37 +750,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 	}
 	
-	private int flushRequests() throws IOException {
-		int spillend = numSpills;
-		
-		BufferRequest request = null;
-		while ((request = umbilical.getRequest(taskid)) != null) {
-			request.open(job);
-			requests.add(request);
-			requestMap.put(request.partition(), request); // TODO speculation
-		}
-		
-		for (BufferRequest r : requests) {
-			for (int spillId = r.flushPoint(); spillId < spillend; spillId++) {
-				System.err.println("Flush " + r);
-				System.err.println("\tSpillID: "+ spillId + " number of spills " + numSpills);
-				Path outputFile = mapOutputFile.getSpillFile(this.taskid, spillId);
-				Path indexFile  = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
-				FSDataInputStream indexIn = localFs.open(indexFile);
-				FSDataInputStream dataIn = localFs.open(outputFile);
 
-				r.flush(indexIn, dataIn, spillId);
-				indexIn.close();
-				dataIn.close();
-			}
-		}
-		
-		if (this.requests.size() == partitions) {
-			numFlush = spillend;
-		}
-		
-		return spillend;
-	}
 	
 	public void spill(Path data, long size, Path index) throws IOException {
 		synchronized (mergeLock) {
