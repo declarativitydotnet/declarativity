@@ -205,7 +205,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			JobConf job = tracker.getJobConf(taskid);
 			for (BufferRequest request : this.requests.get(taskid)) {
 				request.open(job);
-				System.err.println("Send complete buffer " + taskid);
+				System.err.println("Send complete buffer " + taskid + " partition " + request.partition() + " to " + request.sink());
 				this.executor.execute(request);
 			}
 			this.requests.remove(taskid);

@@ -81,7 +81,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 
 		public void run() {
-			int spillThreshold = taskid.isMap() ? 5 : 20;
+			int mergeThreshold = taskid.isMap() ? 5 : 20;
 			while (open) {
 				synchronized (this) {
 					this.busy = false;
@@ -98,7 +98,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 
 				try {
-					if (numSpills - numFlush > spillThreshold) {
+					if (numSpills - numFlush > mergeThreshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
