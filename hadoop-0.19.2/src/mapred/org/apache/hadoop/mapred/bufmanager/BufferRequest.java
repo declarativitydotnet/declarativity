@@ -190,11 +190,17 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	@Override
 	public void readFields(DataInput in) throws IOException {
+		/* The taskid */
 		this.taskid = new TaskAttemptID();
 		this.taskid.readFields(in);
 		
+		/* The partition */
+		this.partition = WritableUtils.readVInt(in);
+		
+		/* The address on which the map executes */
 		this.source = WritableUtils.readString(in);
 		
+		/* The address on which the reduce executes */
 		String sinkHost = WritableUtils.readString(in);
 		int    sinkPort = WritableUtils.readVInt(in);
 		this.sink = new InetSocketAddress(sinkHost, sinkPort);
@@ -205,9 +211,16 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		if (this.source == null || this.sink == null)
 			throw new IOException("No source/sink in request!");
 		
+		/* The taskid */
 		this.taskid.write(out);
+		
+		/* The partition */
+		WritableUtils.writeVInt(out, this.partition);
+		
+		/* The address on which the map executes */
 		WritableUtils.writeString(out, this.source);
 		
+		/* The address on which the reduce executes */
 		WritableUtils.writeString(out, this.sink.getHostName());
 		WritableUtils.writeVInt(out, this.sink.getPort());
 	}
