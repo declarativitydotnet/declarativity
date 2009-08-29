@@ -87,7 +87,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	@Override
 	public String toString() {
-		return "request buffer task " + taskid + " partition " + partition + " from " + source + " to " + sink;
+		return "BufferRequest: task " + taskid + " partition " + partition + " from " + source + " to " + sink;
 	}
 	
 	public Integer partition() {
