@@ -782,11 +782,15 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			try {
 				// create spill file
 				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
+				if (localFs.exists(filename)) {
+					throw new IOException("JBuffer::sortAndSpill -- spill file exists! " + filename);
+				}
+				
 				out = localFs.create(filename);
 				if (out == null ) throw new IOException("Unable to create spill file " + filename);
 				// create spill index
 				Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
-						this.taskid, numSpills,
+						this.taskid, this.numSpills,
 						partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 				indexOut = localFs.create(indexFilename);
 
@@ -890,11 +894,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			final int partition = partitioner.getPartition(key, value, partitions);
 			try {
 				// create spill file
-				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, numSpills, size);
+				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
 				out = localFs.create(filename);
 				// create spill index
 				Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
-						this.taskid, numSpills,
+						this.taskid, this.numSpills,
 						partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 				indexOut = localFs.create(indexFilename);
 				// we don't run the combiner for a single record
