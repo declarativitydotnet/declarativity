@@ -760,15 +760,15 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			dataFile  = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
 			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, this.numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 			numSpills++;
+
+			if (!localFs.rename(data, dataFile)) {
+				throw new IOException("JBuffer::spill -- unable to rename " + data + " to " + dataFile);
+			}
+			if (!localFs.rename(index, indexFile)) {
+				throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
+			}
 		}
 
-		if (!localFs.rename(data, dataFile)) {
-			throw new IOException("JBuffer::spill -- unable to rename " + data + " to " + dataFile);
-		}
-		if (!localFs.rename(index, indexFile)) {
-			throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
-		}
-		
 		synchronized (pipelineThread) {
 			pipelineThread.notifyAll();
 		}
@@ -810,7 +810,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					IFile.Writer<K, V> writer = null;
 					BufferRequest request = null;
 					try {
-						long segmentStart = segmentStart = out.getPos();
+						long segmentStart = out.getPos();
 						writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
 
 						if (null == combinerClass) {
@@ -831,8 +831,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						} else {
 							int spstart = spindex;
 							while (spindex < endPosition
-									&& kvindices[kvoffsets[spindex % kvoffsets.length]
-									                       + PARTITION] == i) {
+									&& kvindices[kvoffsets[spindex % kvoffsets.length] + PARTITION] == i) {
 								++spindex;
 							}
 							// Note: we would like to avoid the combiner if
