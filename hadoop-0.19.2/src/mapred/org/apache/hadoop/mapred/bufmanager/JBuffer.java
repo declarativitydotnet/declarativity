@@ -753,18 +753,19 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 	
 	public void spill(Path data, long size, Path index) throws IOException {
+		Path dataFile = null;
+		Path indexFile = null;
 		synchronized (mergeLock) {
-			Path filename      = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
-			Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(this.taskid, numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-
-			if (!localFs.rename(data, filename)) {
-				throw new IOException("JBuffer::spill -- unable to rename " + data + " to " + filename);
-			}
-			if (!localFs.rename(index, indexFilename)) {
-				throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFilename);
-			}
-			
+			dataFile  = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
+			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, this.numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 			numSpills++;
+		}
+
+		if (!localFs.rename(data, dataFile)) {
+			throw new IOException("JBuffer::spill -- unable to rename " + data + " to " + dataFile);
+		}
+		if (!localFs.rename(index, indexFile)) {
+			throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
 		}
 	}
 	
