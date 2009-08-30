@@ -291,11 +291,9 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						finally {
 							if (localFs.exists(filename)) {
 								System.err.println("Warn: " + filename + " still exists!");
-								localFs.delete(filename);
 							}
 							if (localFs.exists(indexFilename)) {
 								System.err.println("Warn: " + indexFilename + " still exists!");
-								localFs.delete(indexFilename);
 							}
 						}
 					}
