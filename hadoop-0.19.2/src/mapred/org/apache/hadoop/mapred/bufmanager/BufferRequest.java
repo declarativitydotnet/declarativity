@@ -229,6 +229,8 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	private void flushFile(FSDataInputStream in, long length, boolean eof) throws IOException {
+		if (length == 0 && !eof) return;
+		
 		CompressionCodec codec = null;
 		if (conf.getCompressMapOutput()) {
 			Class<? extends CompressionCodec> codecClass =
@@ -252,9 +254,11 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 		writer.close();
 		
-		float duration_sec = (System.currentTimeMillis() - starttime) / 1000f;
-		float rate = ((float) length) / duration_sec;
-		System.err.println("FlushFile Rate: " + rate + " bytes/sec.");
+		if (length > 0) {
+			float duration_sec = ((float) (System.currentTimeMillis() - starttime)) / 1000f;
+			float rate = ((float) length) / duration_sec;
+			System.err.println("FlushFile Rate: " + rate + " bytes/sec.");
+		}
 	}
 
 }
