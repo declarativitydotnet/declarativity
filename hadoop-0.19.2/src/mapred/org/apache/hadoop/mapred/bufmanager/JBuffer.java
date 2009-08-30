@@ -97,7 +97,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					if (!open) return;
 					busy = true;
 				}
-
+				
 				try {
 					if (numSpills - numFlush > mergeThreshold) {
 						try {
