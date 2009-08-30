@@ -707,6 +707,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		kvbuffer = null;
 		
 		mergeParts(false);
+		System.err.println("JBuffer commit.");
 		umbilical.commit(this.taskid);
 	}
 
