@@ -768,6 +768,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		if (!localFs.rename(index, indexFile)) {
 			throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
 		}
+		
+		synchronized (pipelineThread) {
+			pipelineThread.notifyAll();
+		}
 	}
 	
 
