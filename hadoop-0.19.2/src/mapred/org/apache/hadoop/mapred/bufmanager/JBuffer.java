@@ -81,7 +81,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 
 		public void run() {
-			int mergeThreshold = taskid.isMap() ? 5 : 20;
+			int mergeThreshold = taskid.isMap() ? 10 : 50;
 			int flushpoint = numFlush;
 			while (open) {
 				synchronized (this) {
