@@ -162,9 +162,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			Socket socket = new Socket();
 			socket.connect(this.sink);
 			FSDataOutputStream out = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-			DataInputStream    in  = new DataInputStream(socket.getInputStream());
 			this.taskid.write(out);
+			out.flush();
 			
+			DataInputStream in = new DataInputStream(socket.getInputStream());
 			System.err.println("BufferRequest: connection read open?");
 			boolean open = in.readBoolean();
 			System.err.println("BufferRequest: connection open.");
