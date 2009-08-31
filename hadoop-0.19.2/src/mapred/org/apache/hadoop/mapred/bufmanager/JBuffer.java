@@ -99,7 +99,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 				
 				try {
-					if (numSpills - numFlush > mergeThreshold) {
+					if (!taskid.isMap() && numSpills - numFlush > mergeThreshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
@@ -1070,127 +1070,127 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			if (spill && numFlush == numSpills) {
 				return;
 			}
-			
+
 			start = numFlush;
 			end   = numSpills;
-			
+
 			numFlush = numSpills;
 			numSpills++;
-		}
-		
-		long finalOutFileSize = 0;
-		long finalIndexFileSize = 0;
-		Path [] filename = new Path[end];
-		Path [] indexFileName = new Path[end];
-		FileSystem localFs = FileSystem.getLocal(job);
 
-		for(int i = start; i < end; i++) {
-			filename[i] = mapOutputFile.getSpillFile(this.taskid, i);
-			indexFileName[i] = mapOutputFile.getSpillIndexFile(this.taskid, i);
-			finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
-		}
-		
-		if (end - start == 1 && !spill) { //the spill is the final output
-			localFs.rename(filename[start], 
-					new Path(filename[start].getParent(), "file.out"));
-			localFs.rename(indexFileName[start], 
-					new Path(indexFileName[start].getParent(),"file.out.index"));
-			return;
-		}
-		//make correction in the length to include the sequence file header
-		//lengths for each partition
-		finalOutFileSize += partitions * APPROX_HEADER_LENGTH;
+			long finalOutFileSize = 0;
+			long finalIndexFileSize = 0;
+			Path [] filename = new Path[end];
+			Path [] indexFileName = new Path[end];
+			FileSystem localFs = FileSystem.getLocal(job);
 
-		finalIndexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
-
-		Path outputFile = null;
-		Path indexFile = null;
-		
-		if (spill) {
-			outputFile = mapOutputFile.getSpillFileForWrite(this.taskid, end, finalOutFileSize);
-			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, end, finalIndexFileSize);
-		}
-		else {
-			outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
-			indexFile = mapOutputFile.getOutputIndexFileForWrite( this.taskid, finalIndexFileSize);
-		}
-
-		//The output stream for the final single output file
-		FSDataOutputStream finalOut = localFs.create(outputFile, false);
-
-		//The final index file output stream
-		FSDataOutputStream finalIndexOut = localFs.create(indexFile, false);
-		if (start == end) {
-			//create dummy files
-			if (spill) LOG.error("Error: spill file is a dummy!");
-			for (int i = 0; i < partitions; i++) {
-				long segmentStart = finalOut.getPos();
-				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);
-				writer.close();
-				writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
-			}
-			finalOut.close();
-			finalIndexOut.close();
-			return;
-		}
-		{
-			for (int parts = 0; parts < partitions; parts++){
-				//create the segments to be merged
-				BufferRequest request = requestMap.containsKey(parts) ? requestMap.get(parts) : null;
-				
-				List<Segment<K, V>> segmentList =
-					new ArrayList<Segment<K, V>>(end - start);
-				for(int i = start; i < end; i++) {
-					if (request != null && i <= request.flushPoint()) {
-						continue; // Request has already sent this spill data.
-					}
-					
-					FSDataInputStream indexIn = localFs.open(indexFileName[i]);
-					indexIn.seek(parts * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-					long segmentOffset = indexIn.readLong();
-					long rawSegmentLength = indexIn.readLong();
-					long segmentLength = indexIn.readLong();
-					indexIn.close();
-					FSDataInputStream in = localFs.open(filename[i]);
-					in.seek(segmentOffset);
-					Segment<K, V> s = 
-						new Segment<K, V>(new IFile.Reader<K, V>(job, in, segmentLength, codec),
-								true);
-					segmentList.add(s);
-				}
-
-				//merge
-				@SuppressWarnings("unchecked")
-				RawKeyValueIterator kvIter = 
-					Merger.merge(job, localFs, 
-							keyClass, valClass,
-							segmentList, job.getInt("io.sort.factor", 100), 
-							new Path(this.taskid.toString()), 
-							job.getOutputKeyComparator(), reporter);
-
-				//write merged output to disk
-				long segmentStart = finalOut.getPos();
-				IFile.Writer<K, V> writer = 
-					new IFile.Writer<K, V>(job, finalOut, keyClass, valClass, codec);
-				if (null == combinerClass || end - start < minSpillsForCombine) {
-					Merger.writeFile(kvIter, writer, reporter, job);
-				} else {
-					combineCollector.setWriter(writer);
-					combineAndSpill(kvIter);
-				}
-
-				//close
-				writer.close();
-
-				//write index record
-				writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
-			}
-			finalOut.close();
-			finalIndexOut.close();
-			//cleanup
 			for(int i = start; i < end; i++) {
-				localFs.delete(filename[i], true);
-				localFs.delete(indexFileName[i], true);
+				filename[i] = mapOutputFile.getSpillFile(this.taskid, i);
+				indexFileName[i] = mapOutputFile.getSpillIndexFile(this.taskid, i);
+				finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
+			}
+
+			if (end - start == 1 && !spill) { //the spill is the final output
+				localFs.rename(filename[start], 
+						new Path(filename[start].getParent(), "file.out"));
+				localFs.rename(indexFileName[start], 
+						new Path(indexFileName[start].getParent(),"file.out.index"));
+				return;
+			}
+			//make correction in the length to include the sequence file header
+			//lengths for each partition
+			finalOutFileSize += partitions * APPROX_HEADER_LENGTH;
+
+			finalIndexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
+
+			Path outputFile = null;
+			Path indexFile = null;
+
+			if (spill) {
+				outputFile = mapOutputFile.getSpillFileForWrite(this.taskid, end, finalOutFileSize);
+				indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, end, finalIndexFileSize);
+			}
+			else {
+				outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
+				indexFile = mapOutputFile.getOutputIndexFileForWrite( this.taskid, finalIndexFileSize);
+			}
+
+			//The output stream for the final single output file
+			FSDataOutputStream finalOut = localFs.create(outputFile, false);
+
+			//The final index file output stream
+			FSDataOutputStream finalIndexOut = localFs.create(indexFile, false);
+			if (start == end) {
+				//create dummy files
+				if (spill) LOG.error("Error: spill file is a dummy!");
+				for (int i = 0; i < partitions; i++) {
+					long segmentStart = finalOut.getPos();
+					IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);
+					writer.close();
+					writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
+				}
+				finalOut.close();
+				finalIndexOut.close();
+				return;
+			}
+			{
+				for (int parts = 0; parts < partitions; parts++){
+					//create the segments to be merged
+					BufferRequest request = requestMap.containsKey(parts) ? requestMap.get(parts) : null;
+
+					List<Segment<K, V>> segmentList =
+						new ArrayList<Segment<K, V>>(end - start);
+					for(int i = start; i < end; i++) {
+						if (request != null && i <= request.flushPoint()) {
+							continue; // Request has already sent this spill data.
+						}
+
+						FSDataInputStream indexIn = localFs.open(indexFileName[i]);
+						indexIn.seek(parts * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+						long segmentOffset = indexIn.readLong();
+						long rawSegmentLength = indexIn.readLong();
+						long segmentLength = indexIn.readLong();
+						indexIn.close();
+						FSDataInputStream in = localFs.open(filename[i]);
+						in.seek(segmentOffset);
+						Segment<K, V> s = 
+							new Segment<K, V>(new IFile.Reader<K, V>(job, in, segmentLength, codec),
+									true);
+						segmentList.add(s);
+					}
+
+					//merge
+					@SuppressWarnings("unchecked")
+					RawKeyValueIterator kvIter = 
+						Merger.merge(job, localFs, 
+								keyClass, valClass,
+								segmentList, job.getInt("io.sort.factor", 100), 
+								new Path(this.taskid.toString()), 
+								job.getOutputKeyComparator(), reporter);
+
+					//write merged output to disk
+					long segmentStart = finalOut.getPos();
+					IFile.Writer<K, V> writer = 
+						new IFile.Writer<K, V>(job, finalOut, keyClass, valClass, codec);
+					if (null == combinerClass || end - start < minSpillsForCombine) {
+						Merger.writeFile(kvIter, writer, reporter, job);
+					} else {
+						combineCollector.setWriter(writer);
+						combineAndSpill(kvIter);
+					}
+
+					//close
+					writer.close();
+
+					//write index record
+					writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
+				}
+				finalOut.close();
+				finalIndexOut.close();
+				//cleanup
+				for(int i = start; i < end; i++) {
+					localFs.delete(filename[i], true);
+					localFs.delete(indexFileName[i], true);
+				}
 			}
 		}
 	}
