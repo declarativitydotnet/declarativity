@@ -1074,7 +1074,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			start = numFlush;
 			end   = numSpills;
 			
-			numFlush = numSpills - 1;
+			numFlush = numSpills;
 			if (spill) numSpills++;
 		}
 		
@@ -1116,10 +1116,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 
 		//The output stream for the final single output file
-		FSDataOutputStream finalOut = localFs.create(outputFile, true,  4096);
+		FSDataOutputStream finalOut = localFs.create(outputFile, false);
 
 		//The final index file output stream
-		FSDataOutputStream finalIndexOut = localFs.create(indexFile, true, 4096);
+		FSDataOutputStream finalIndexOut = localFs.create(indexFile, false);
 		if (start == end) {
 			//create dummy files
 			if (spill) LOG.error("Error: spill file is a dummy!");
@@ -1141,7 +1141,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				List<Segment<K, V>> segmentList =
 					new ArrayList<Segment<K, V>>(end - start);
 				for(int i = start; i < end; i++) {
-					if (request != null && start <= request.flushPoint()) {
+					if (request != null && i <= request.flushPoint()) {
 						continue; // Request has already sent this spill data.
 					}
 					
