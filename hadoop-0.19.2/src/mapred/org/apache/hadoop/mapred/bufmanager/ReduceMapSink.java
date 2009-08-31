@@ -106,12 +106,9 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				try {
 					while (server.isOpen()) {
 						SocketChannel channel = server.accept();
-						System.err.println("New connection at reduce sink.");
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
-						System.err.println("Initialize connection");
 						Connection       conn   = new Connection(input, ReduceMapSink.this, conf);
-						System.err.println("New connection " + conn.mapTaskID);
 						synchronized (this) {
 							if (!connections.containsKey(conn.mapTaskID())) {
 								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
@@ -124,7 +121,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else {
-								System.err.println("Connection is open. sending to map...");
 								output.writeBoolean(true); // Connection open
 								output.flush();
 								System.err.println("\tsent.");
