@@ -84,6 +84,17 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	@Override
+	public boolean equals (Object o) {
+		if (o instanceof BufferRequest) {
+			if (compareTo((BufferRequest) o) == 0) {
+				/* and it's going to the same place */
+				return this.sink.equals(((BufferRequest)o).sink);
+			}
+		}
+		return false;
+	}
+	
+	@Override
 	public String toString() {
 		return "BufferRequest: task " + taskid + " partition " + partition + " from " + source + " to " + sink;
 	}
