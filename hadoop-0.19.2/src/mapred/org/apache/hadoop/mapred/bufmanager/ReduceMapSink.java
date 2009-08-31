@@ -109,6 +109,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						System.err.println("New connection at reduce sink.");
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
+						System.err.println("Initialize connection");
 						Connection       conn   = new Connection(input, ReduceMapSink.this, conf);
 						System.err.println("New connection " + conn.mapTaskID);
 						synchronized (this) {
