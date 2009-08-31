@@ -123,7 +123,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							else {
 								output.writeBoolean(true); // Connection open
 								output.flush();
-								System.err.println("\tsent.");
 								connections.get(conn.mapTaskID()).add(conn);
 								executor.execute(conn);
 							}
