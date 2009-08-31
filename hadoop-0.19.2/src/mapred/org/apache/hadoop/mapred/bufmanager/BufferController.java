@@ -43,8 +43,64 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferController extends Thread implements BufferUmbilicalProtocol {
+	private class RequestHandler extends Thread {
+		
+		public void run() {
+			while (true) {
+				synchronized (committed) {
+					while (committed.size() == 0) {
+						try { committed.wait();
+						} catch (InterruptedException e) { }
+					}
+
+					for (TaskAttemptID taskid : committed) {
+						handle(taskid);
+					}
+				}
+
+				synchronized (requests) {
+					try {
+						if (requests.size() > 0) {
+							requests.wait(100);
+						}
+						else {
+							requests.wait();
+						}
+					} catch (InterruptedException e) {
+
+					}
+				}
+			}
+		}
+		
+		private void handle(TaskAttemptID taskid) {
+			synchronized (requests) {
+				try {
+					List<BufferRequest> handled = new ArrayList<BufferRequest>();
+					if (requests.containsKey(taskid)) {
+						JobConf job = tracker.getJobConf(taskid);
+						for (BufferRequest request : requests.get(taskid)) {
+							if (request.open(job)) {
+								System.err.println("Send complete buffer " + taskid + " partition " + request.partition() + " to " + request.sink());
+								executor.execute(request);
+								handled.add(request);
+							}
+						}
+						requests.remove(handled);
+						if (requests.get(taskid).size() == 0) {
+							requests.remove(taskid);
+						}
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 	
     private TaskTracker tracker;
+    
+    private RequestHandler requestHandler;
     
 	private String hostname;
 	
@@ -62,6 +118,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	public BufferController(TaskTracker tracker) throws IOException {
 		this.tracker   = tracker;
+		this.requestHandler = new RequestHandler();
+		this.requestHandler.start();
+		
 		this.requests  = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
 		
 		this.committed = new HashSet<TaskAttemptID>();
@@ -113,14 +172,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	@Override
 	public void commit(TaskAttemptID taskid) throws IOException {
-		synchronized (this) {
+		synchronized (committed) {
 			this.committed.add(taskid);
-			if (!taskid.isMap()) return;
-			
-			System.err.println("Committing task " + taskid);
-			if (this.requests.containsKey(taskid)) {
-				handleCompleteBuffers(taskid);
-			}
+			this.committed.notifyAll();
 		}
 	}
 	
@@ -187,32 +241,17 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	}
 	
 	private void register(BufferRequest request) throws IOException {
-		synchronized(this) {
+		synchronized(requests) {
 			System.err.println("Register " + request);
 			if (!this.requests.containsKey(request.taskid())) {
 				this.requests.put(request.taskid(), new TreeSet<BufferRequest>());
 			}
 			this.requests.get(request.taskid()).add(request);
-			
-			if (this.committed.contains(request.taskid())) {
-				handleCompleteBuffers(request.taskid());
-			}
+			this.requests.notifyAll();
 		}
 
 	}
 	
-	private void handleCompleteBuffers(TaskAttemptID taskid) throws IOException {
-		if (this.requests.containsKey(taskid)) {
-			JobConf job = tracker.getJobConf(taskid);
-			for (BufferRequest request : this.requests.get(taskid)) {
-				request.open(job);
-				System.err.println("Send complete buffer " + taskid + " partition " + request.partition() + " to " + request.sink());
-				this.executor.execute(request);
-			}
-			this.requests.remove(taskid);
-		}
-	}
-
 	@Override
 	public long getProtocolVersion(String protocol, long clientVersion)
 	throws IOException {

@@ -148,11 +148,12 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	
-	public void open(JobConf conf) throws IOException {
+	public boolean open(JobConf conf) throws IOException {
 		synchronized (this) {
 			this.conf = conf;
 			this.localFS = FileSystem.getLocal(conf);
 			this.out = connect();
+			return out != null;
 		}
 	}
 	
@@ -161,7 +162,14 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			Socket socket = new Socket();
 			socket.connect(this.sink);
 			FSDataOutputStream out = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+			DataInputStream in = new DataInputStream(socket.getInputStream());
 			this.taskid.write(out);
+			
+			boolean open = in.readBoolean();
+			if (!open) {
+				out.close();
+				return null;
+			}
 			return out;
 		} catch (IOException e) {
 			e.printStackTrace();

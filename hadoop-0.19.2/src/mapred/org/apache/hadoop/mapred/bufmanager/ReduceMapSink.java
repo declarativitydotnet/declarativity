@@ -1,6 +1,7 @@
 package org.apache.hadoop.mapred.bufmanager;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -49,6 +50,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 
 public class ReduceMapSink<K extends Object, V extends Object> {
+	
+	private final int MAX_CONNECTIONS = 50;
 	
 	private Executor executor;
 	
@@ -104,13 +107,22 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					while (server.isOpen()) {
 						SocketChannel channel = server.accept();
 						channel.configureBlocking(true);
-						DataInputStream input = new DataInputStream(channel.socket().getInputStream());
-						Connection conn = new Connection(input, ReduceMapSink.this, conf);
+						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
+						DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
+						Connection       conn   = new Connection(input, ReduceMapSink.this, conf);
 						synchronized (this) {
 							if (!connections.containsKey(conn.mapTaskID())) {
 								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
 							}
-							connections.get(conn.mapTaskID()).add(conn);
+							
+							if (connections.get(conn.mapTaskID()).size() > MAX_CONNECTIONS) {
+								output.writeBoolean(false); // Connection not open
+								conn.close();
+							}
+							else {
+								output.writeBoolean(true); // Connection open
+								connections.get(conn.mapTaskID()).add(conn);
+							}
 						}
 						executor.execute(conn);
 					}
