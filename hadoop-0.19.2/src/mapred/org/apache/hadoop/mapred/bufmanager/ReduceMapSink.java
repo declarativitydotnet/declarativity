@@ -110,12 +110,14 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
 						Connection       conn   = new Connection(input, ReduceMapSink.this, conf);
+						System.err.println("New connection " + conn.mapTaskID);
 						synchronized (this) {
 							if (!connections.containsKey(conn.mapTaskID())) {
 								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
 							}
 							
 							if (connections.get(conn.mapTaskID()).size() > MAX_CONNECTIONS) {
+								System.err.println("Too many connections. sending to map...");
 								output.writeBoolean(false); // Connection not open
 								conn.close();
 							}
