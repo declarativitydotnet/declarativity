@@ -1074,7 +1074,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			start = numFlush;
 			end   = numSpills;
 			
-			numFlush = numSpills;
+			numFlush = numSpills - 1;
 			if (spill) numSpills++;
 		}
 		
