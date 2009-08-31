@@ -245,7 +245,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	private void register(BufferRequest request) throws IOException {
 		synchronized(requests) {
-			System.err.println("Register " + request);
 			if (!this.requests.containsKey(request.taskid())) {
 				this.requests.put(request.taskid(), new TreeSet<BufferRequest>());
 			}
