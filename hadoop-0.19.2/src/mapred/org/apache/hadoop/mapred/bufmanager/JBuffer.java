@@ -1076,7 +1076,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			
 			numFlush = numSpills;
 			if (spill) numSpills++;
-		}
 		
 		long finalOutFileSize = 0;
 		long finalIndexFileSize = 0;
@@ -1193,7 +1192,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				localFs.delete(indexFileName[i], true);
 			}
 		}
-		return;
+		}
 	}
 
 	private void writeIndexRecord(FSDataOutputStream indexOut, 
