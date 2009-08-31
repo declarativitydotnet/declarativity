@@ -68,6 +68,66 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 	}
 	
+	
+	private class SpillThread extends Thread {
+		private boolean spill = false;
+
+		public void doSpill() {
+			this.spill = true;
+		}
+		
+		public boolean isSpilling() {
+			return this.spill;
+		}
+		
+		@Override
+		public void run() {
+			while (!isInterrupted()) {
+				synchronized (this) {
+					while (! spill) {
+						try {
+							this.wait();
+						} catch (InterruptedException e) {
+							return;
+						}
+					}
+				}
+				
+				long starttime = java.lang.System.currentTimeMillis();
+
+				try {
+					long sortstart = java.lang.System.currentTimeMillis();
+					sortAndSpill();
+					LOG.debug("SpillThread: sort/spill time " + 
+							((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
+				} catch (Throwable e) {
+					e.printStackTrace();
+					sortSpillException = e;
+				} finally {
+					synchronized(spillLock) {
+						if (bufend < bufindex && bufindex < bufstart) {
+							bufvoid = kvbuffer.length;
+						}
+						kvstart = kvend;
+						bufstart = bufend;
+						spillLock.notify();
+						
+						spill = false;
+					}
+					
+					try {
+						synchronized (pipelineThread) {
+							pipelineThread.notifyAll();
+						}
+					} finally {
+						LOG.debug("SpillThread: total spill time " + 
+								((System.currentTimeMillis() - starttime)/1000f) + " secs.");
+					}
+				}
+			}
+		}
+	}
+	
 	private class PipelineMergeThread extends Thread {
 		private boolean busy = false;
 		private boolean open = true;
@@ -239,6 +299,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	private boolean pipeline;
 	private PipelineMergeThread pipelineThread;
 	
+	private SpillThread spillThread;
+	
 	private TreeSet<BufferRequest> requests = new TreeSet<BufferRequest>();
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
 	
@@ -255,6 +317,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		this.pipelineThread = new PipelineMergeThread();
 		this.pipelineThread.start();
 		
+		this.spillThread = new SpillThread();
+		this.spillThread.start();
 		
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
@@ -604,10 +668,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 								kvend = kvindex;
 								bufend = bufmark;
 								// TODO No need to recreate this thread every time
-								SpillThread t = new SpillThread();
-								t.setDaemon(true);
-								t.setName("SpillThread");
-								t.start();
+								spillThread.doSpill();
 							}
 						} else if (buffull && !wrap) {
 							// We have no buffered records, and this record is too large
@@ -697,6 +758,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			request.close();
 		}
 		this.requests.clear();
+		this.spillThread.interrupt();
 		
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"
@@ -718,44 +780,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	public void close() throws IOException { 
 	}
 	
-	
-	protected class SpillThread extends Thread {
-
-		@Override
-		public void run() {
-			long starttime = java.lang.System.currentTimeMillis();
-			
-			try {
-				long sortstart = java.lang.System.currentTimeMillis();
-				sortAndSpill();
-				LOG.debug("SpillThread: sort/spill time " + 
-								((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
-			} catch (Throwable e) {
-				e.printStackTrace();
-				sortSpillException = e;
-			} finally {
-				synchronized(spillLock) {
-						if (bufend < bufindex && bufindex < bufstart) {
-							bufvoid = kvbuffer.length;
-						}
-						kvstart = kvend;
-						bufstart = bufend;
-						spillLock.notify();
-				}
-				
-				try {
-					synchronized (pipelineThread) {
-						pipelineThread.notifyAll();
-					}
-				} finally {
-					LOG.debug("SpillThread: total spill time " + 
-							((System.currentTimeMillis() - starttime)/1000f) + " secs.");
-				}
-			}
-		}
-	}
-	
-
 	
 	public void spill(Path data, long size, Path index) throws IOException {
 		Path dataFile = null;
