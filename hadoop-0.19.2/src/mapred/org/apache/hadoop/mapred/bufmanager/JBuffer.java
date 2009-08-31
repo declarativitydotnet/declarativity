@@ -796,13 +796,13 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					throw new IOException("JBuffer::sortAndSpill -- spill file exists! " + filename);
 				}
 				
-				out = localFs.create(filename);
+				out = localFs.create(filename, false);
 				if (out == null ) throw new IOException("Unable to create spill file " + filename);
 				// create spill index
 				Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
 						this.taskid, this.numSpills,
 						partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-				indexOut = localFs.create(indexFilename);
+				indexOut = localFs.create(indexFilename, false);
 
 				final int endPosition = (kvend > kvstart)
 				? kvend
