@@ -136,9 +136,13 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 			BufferRequest request = null;
 			while ((request = umbilical.getRequest(taskid)) != null) {
-				request.open(job);
-				requests.add(request);
-				requestMap.put(request.partition(), request); // TODO speculation
+				if (request.open(job)) {
+					requests.add(request);
+					requestMap.put(request.partition(), request); // TODO speculation
+				}
+				else {
+					System.err.println("JBuffer: unable to open request " + request);
+				}
 			}
 
 			for (BufferRequest r : requests) {
