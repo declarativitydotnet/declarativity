@@ -1075,7 +1075,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			end   = numSpills;
 			
 			numFlush = numSpills;
-			if (spill) numSpills++;
+			numSpills++;
+		}
 		
 		long finalOutFileSize = 0;
 		long finalIndexFileSize = 0;
@@ -1089,7 +1090,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
 		}
 		
-		if (end - start == 1 && ! spill) { //the spill is the final output
+		if (end - start == 1 && !spill) { //the spill is the final output
 			localFs.rename(filename[start], 
 					new Path(filename[start].getParent(), "file.out"));
 			localFs.rename(indexFileName[start], 
@@ -1171,7 +1172,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				long segmentStart = finalOut.getPos();
 				IFile.Writer<K, V> writer = 
 					new IFile.Writer<K, V>(job, finalOut, keyClass, valClass, codec);
-				if (null == combinerClass || numSpills < minSpillsForCombine) {
+				if (null == combinerClass || end - start < minSpillsForCombine) {
 					Merger.writeFile(kvIter, writer, reporter, job);
 				} else {
 					combineCollector.setWriter(writer);
@@ -1191,7 +1192,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				localFs.delete(filename[i], true);
 				localFs.delete(indexFileName[i], true);
 			}
-		}
 		}
 	}
 
