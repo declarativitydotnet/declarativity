@@ -320,7 +320,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 			}
 			finally {
 				if (done) {
-					System.err.println("Reduce connection done. map = " + this.mapTaskID);
 					sink.done(this);
 				}
 				close();
