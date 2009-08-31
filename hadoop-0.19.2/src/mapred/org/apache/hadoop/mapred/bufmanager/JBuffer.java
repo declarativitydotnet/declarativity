@@ -73,7 +73,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		private boolean spill = false;
 
 		public void doSpill() {
-			this.spill = true;
+			synchronized (this) {
+				this.spill = true;
+				this.notifyAll();
+			}
 		}
 		
 		public boolean isSpilling() {
@@ -743,6 +746,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					).initCause(e);
 				}
 			}
+			this.spillThread.interrupt();
 		}
 			
 		synchronized (pipelineThread) {
@@ -758,7 +762,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			request.close();
 		}
 		this.requests.clear();
-		this.spillThread.interrupt();
 		
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"
