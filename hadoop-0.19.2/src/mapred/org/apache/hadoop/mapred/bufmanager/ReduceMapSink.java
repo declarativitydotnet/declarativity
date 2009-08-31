@@ -124,6 +124,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 								connections.get(conn.mapTaskID()).add(conn);
 							}
 							output.flush();
+							output.close();
 						}
 						executor.execute(conn);
 					}
