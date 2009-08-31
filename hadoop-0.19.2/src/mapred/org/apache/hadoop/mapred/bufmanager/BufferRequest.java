@@ -150,10 +150,15 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	public boolean open(JobConf conf) throws IOException {
 		synchronized (this) {
-			this.conf = conf;
-			this.localFS = FileSystem.getLocal(conf);
-			this.out = connect();
-			return out != null;
+			try { 
+				this.conf = conf;
+				this.localFS = FileSystem.getLocal(conf);
+				this.out = connect();
+				return out != null;
+			} catch (Throwable e) {
+				e.printStackTrace();
+				return false;
+			}
 		}
 	}
 	
