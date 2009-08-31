@@ -174,7 +174,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		synchronized (this) {
 			if (this.connections.containsKey(connection.mapTaskID())) {
 				this.successful.add(connection.mapTaskID().getTaskID());
-				System.err.println("SUCESSFUL CONNECTIONS " + this.successful.size());
+				this.connections.get(connection.mapTaskID()).remove(connection);
 				this.notifyAll();
 			}
 		}
