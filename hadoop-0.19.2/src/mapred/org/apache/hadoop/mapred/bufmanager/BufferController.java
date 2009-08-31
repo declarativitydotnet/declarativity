@@ -85,6 +85,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 								executor.execute(request);
 								handled.add(request);
 							}
+							else {
+								System.err.println("RequestHandler: can't open request " + request);
+							}
 						}
 						requests.remove(handled);
 						if (requests.get(taskid).size() == 0) {
