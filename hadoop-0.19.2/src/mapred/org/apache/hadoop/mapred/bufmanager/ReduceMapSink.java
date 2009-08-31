@@ -120,8 +120,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else {
+								System.err.println("Connection is open. sending to map...");
 								output.writeBoolean(true); // Connection open
 								output.flush();
+								System.err.println("\tsent.");
 								connections.get(conn.mapTaskID()).add(conn);
 								executor.execute(conn);
 							}
