@@ -106,6 +106,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				try {
 					while (server.isOpen()) {
 						SocketChannel channel = server.accept();
+						System.err.println("New connection at reduce sink.");
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
