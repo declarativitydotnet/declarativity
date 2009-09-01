@@ -169,10 +169,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		}
 	}
 	
-	private void done(Connection connection) {
+	private void done(Connection connection, boolean eof) {
 		synchronized (this) {
 			if (this.connections.containsKey(connection.mapTaskID())) {
-				this.successful.add(connection.mapTaskID().getTaskID());
+				if (eof) this.successful.add(connection.mapTaskID().getTaskID());
 				this.connections.get(connection.mapTaskID()).remove(connection);
 				this.notifyAll();
 			}
@@ -216,7 +216,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		}
 		
 		public void run() {
-			boolean done = false;
+			boolean eof = false;
 			try {
 				DataInputBuffer key = new DataInputBuffer();
 				DataInputBuffer value = new DataInputBuffer();
@@ -232,14 +232,13 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				
 				while (true) {
 					long length = 0;
-					
 					try {
 						length = this.input.readLong();
 					}
 					catch (EOFException e) {
 						return; // This is okay.
 					}
-					done = this.input.readBoolean();
+					eof = this.input.readBoolean();
 					
 					if (length == 0) return;
 					
@@ -250,7 +249,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 								this.sink.buffer().collect(key, value);
 							}
 						} catch (ChecksumException e) {
-							System.err.println("ReduceMapSink: ChecksumException during spill. eof? " + done);
+							System.err.println("ReduceMapSink: ChecksumException during spill. eof? " + eof);
 						}
 						finally {
 							this.sink.buffer().unreserve(length);
@@ -299,7 +298,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							this.sink.buffer().spill(filename, length, indexFilename);
 							
 						} catch (Throwable e) {
-							System.err.println("ReduceMapSink: error during spill. eof? " + done);
+							System.err.println("ReduceMapSink: error during spill. eof? " + eof);
 							e.printStackTrace();
 						}
 						finally {
@@ -312,16 +311,14 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						}
 					}
 					
-					if (done) return;
+					if (eof) return;
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
 				return;
 			}
 			finally {
-				if (done) {
-					sink.done(this);
-				}
+				sink.done(this, eof);
 				close();
 			}
 		}
