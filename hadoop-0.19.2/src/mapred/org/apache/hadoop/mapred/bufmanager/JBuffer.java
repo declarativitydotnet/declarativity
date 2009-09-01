@@ -162,7 +162,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 				
 				try {
-					if (numSpills - numFlush > mergeThreshold) {
+					if (taskid.isMap() == false && numSpills - numFlush > mergeThreshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
