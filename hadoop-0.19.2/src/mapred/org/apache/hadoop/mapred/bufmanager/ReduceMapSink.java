@@ -261,12 +261,12 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 						
 						while (localFs.exists(filename)) {
-							System.err.println("File " + filename + " exists. Waiting....");
+							System.err.println("File " + filename + " exists. EOF? " + eof + ". Waiting....");
 							Thread.sleep(100);
 						}
 						
 						while (localFs.exists(indexFilename)) {
-							System.err.println("File " + indexFilename + " exists. Waiting....");
+							System.err.println("File " + indexFilename + " exists. EOF? " + eof + ". Waiting....");
 							Thread.sleep(100);
 						}
 						
