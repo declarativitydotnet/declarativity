@@ -735,20 +735,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	public synchronized void flush() throws IOException {
 		// LOG.info("Starting flush of map output");
 		pipelineThread.close();
-		synchronized (spillLock) {
-			while (kvstart != kvend) {
-				try {
-					reporter.progress();
-					spillLock.wait();
-				} catch (InterruptedException e) {
-					throw (IOException)new IOException(
-							"Buffer interrupted while waiting for the writer"
-					).initCause(e);
-				}
-			}
-			this.spillThread.interrupt();
-		}
-			
 		synchronized (pipelineThread) {
 			while (pipelineThread.busy()) {
 				try { pipelineThread.wait();
@@ -763,6 +749,20 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		this.requests.clear();
 		
+		synchronized (spillLock) {
+			this.spillThread.interrupt();
+			while (this.spillThread.isSpilling() && kvstart != kvend) {
+				try {
+					reporter.progress();
+					spillLock.wait();
+				} catch (InterruptedException e) {
+					throw (IOException)new IOException(
+							"Buffer interrupted while waiting for the writer"
+					).initCause(e);
+				}
+			}
+		}
+			
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"
 			).initCause(sortSpillException);
