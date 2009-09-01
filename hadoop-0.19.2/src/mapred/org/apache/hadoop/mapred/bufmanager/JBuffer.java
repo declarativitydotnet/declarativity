@@ -218,19 +218,24 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 
-			for (BufferRequest r : requests) {
-				int spillstart = Math.max(r.flushPoint(), numFlush);
-				for (int spillId = spillstart; spillId < spillend; spillId++) {
-					System.err.println("Flush " + r);
-					System.err.println("\tSpillID: "+ spillId + " number of spills " + numSpills);
-					Path outputFile = mapOutputFile.getSpillFile(taskid, spillId);
-					Path indexFile  = mapOutputFile.getSpillIndexFile(taskid, spillId);
-					FSDataInputStream indexIn = localFs.open(indexFile);
-					FSDataInputStream dataIn = localFs.open(outputFile);
-
-					r.flush(indexIn, dataIn, spillId);
-					indexIn.close();
-					dataIn.close();
+			/* Iterate over spill files in order. */
+			for (int spillId = numFlush; spillId < spillend; spillId++) {
+				FSDataInputStream indexIn = null;
+				FSDataInputStream dataIn  = null;
+				for (BufferRequest r : requests) {
+					if (r.flushPoint() < spillId) {
+						if (dataIn == null) {
+							Path outputFile = mapOutputFile.getSpillFile(taskid, spillId);
+							Path indexFile  = mapOutputFile.getSpillIndexFile(taskid, spillId);
+							indexIn = localFs.open(indexFile);
+							dataIn = localFs.open(outputFile);
+						}
+						r.flush(indexIn, dataIn, spillId);
+					}
+				}
+				if (dataIn != null) {
+					indexIn.close(); indexIn = null;
+					dataIn.close();  dataIn = null;
 				}
 			}
 
@@ -785,9 +790,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		// release sort buffer before the merge
 		kvbuffer = null;
 		
+		System.err.println("JBuffer " + taskid + " committing. \n\tFinal merge from " + (numSpills - numFlush) + " spill files.");
 		mergeParts(false);
 		
-		System.err.println("JBuffer commit.");
 		umbilical.commit(this.taskid);
 	}
 
