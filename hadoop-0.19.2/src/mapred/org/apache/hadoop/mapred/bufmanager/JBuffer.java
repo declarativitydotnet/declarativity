@@ -213,9 +213,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					requests.add(request);
 					requestMap.put(request.partition(), request); // TODO speculation
 				}
-				else {
-					System.err.println("JBuffer: unable to open request " + request);
-				}
 			}
 
 			/* Iterate over spill files in order. */

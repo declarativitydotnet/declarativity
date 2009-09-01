@@ -178,7 +178,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				if (eof) {
 					this.successful.add(connection.mapTaskID().getTaskID());
 					this.runningTransfers.remove(connection.mapTaskID());
-					System.err.println("RUNNING TRANSFERS " + runningTransfers.size());
 				}
 				this.connections.get(connection.mapTaskID()).remove(connection);
 				this.notifyAll();
