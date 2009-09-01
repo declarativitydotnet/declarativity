@@ -257,8 +257,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 					}
 					else {
 						// Spill directory to disk
-						Path filename      = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, length);
-						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+						Path filename      = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, eof, length);
+						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, eof, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 						
 						while (localFs.exists(filename)) {
 							System.err.println("File " + filename + " exists. EOF? " + eof + ". Waiting....");
