@@ -119,7 +119,6 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
 							if (runningTransfers.size() > MAX_CONNECTIONS) {
-								System.err.println("Too many connections. sending to map...");
 								output.writeBoolean(false); // Connection not open
 								conn.close();
 							}
@@ -179,6 +178,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 				if (eof) {
 					this.successful.add(connection.mapTaskID().getTaskID());
 					this.runningTransfers.remove(connection.mapTaskID());
+					System.err.println("RUNNING TRANSFERS " + runningTransfers.size());
 				}
 				this.connections.get(connection.mapTaskID()).remove(connection);
 				this.notifyAll();
