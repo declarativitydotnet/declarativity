@@ -51,7 +51,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class ReduceMapSink<K extends Object, V extends Object> {
 	
-	private final int MAX_CONNECTIONS = 50;
+	private final int MAX_CONNECTIONS = 20;
 	
 	private Executor executor;
 	
