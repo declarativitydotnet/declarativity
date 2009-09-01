@@ -776,6 +776,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		kvbuffer = null;
 		
 		mergeParts(false);
+		
 		System.err.println("JBuffer commit.");
 		umbilical.commit(this.taskid);
 	}
@@ -1103,7 +1104,6 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 			numFlush = numSpills;
 			numSpills++;
-		}
 
 			long finalOutFileSize = 0;
 			long finalIndexFileSize = 0;
@@ -1220,6 +1220,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					localFs.delete(indexFileName[i], true);
 				}
 			}
+		}
 	}
 
 	private void writeIndexRecord(FSDataOutputStream indexOut, 
