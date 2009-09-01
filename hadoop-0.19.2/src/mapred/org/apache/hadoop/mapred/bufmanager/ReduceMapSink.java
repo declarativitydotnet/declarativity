@@ -118,7 +118,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
-							if (runningTransfers.size() > MAX_CONNECTIONS) {
+							if (!runningTransfers.contains(conn.mapTaskID()) && runningTransfers.size() > MAX_CONNECTIONS) {
 								output.writeBoolean(false); // Connection not open
 								conn.close();
 							}
