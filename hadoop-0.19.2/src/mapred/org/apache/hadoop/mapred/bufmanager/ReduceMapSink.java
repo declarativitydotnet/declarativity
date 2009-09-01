@@ -71,6 +71,8 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	
 	private Map<TaskAttemptID, List<Connection>> connections;
 	
+	private Set<TaskAttemptID> runningTransfers;
+	
 	private Set<TaskID> successful;
 	
 	public ReduceMapSink(JobConf conf, TaskAttemptID reduceID, ReduceOutputCollector<K, V> collector) throws IOException {
@@ -84,6 +86,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		this.executor = Executors.newFixedThreadPool(this.numMapTasks);
 		this.connections = new HashMap<TaskAttemptID, List<Connection>>();
 		this.successful = new HashSet<TaskID>();
+		this.runningTransfers = new HashSet<TaskAttemptID>();
 	    
 		/** The server socket and selector registration */
 		this.server = ServerSocketChannel.open();
@@ -115,7 +118,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
-							if (connections.get(conn.mapTaskID()).size() > MAX_CONNECTIONS) {
+							if (runningTransfers.size() > MAX_CONNECTIONS) {
 								System.err.println("Too many connections. sending to map...");
 								output.writeBoolean(false); // Connection not open
 								conn.close();
@@ -125,6 +128,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 								output.flush();
 								connections.get(conn.mapTaskID()).add(conn);
 								executor.execute(conn);
+								runningTransfers.add(conn.mapTaskID());
 							}
 						}
 					}
@@ -172,7 +176,10 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	private void done(Connection connection, boolean eof) {
 		synchronized (this) {
 			if (this.connections.containsKey(connection.mapTaskID())) {
-				if (eof) this.successful.add(connection.mapTaskID().getTaskID());
+				if (eof) {
+					this.successful.add(connection.mapTaskID().getTaskID());
+					this.runningTransfers.remove(connection.mapTaskID());
+				}
 				this.connections.get(connection.mapTaskID()).remove(connection);
 				this.notifyAll();
 			}
