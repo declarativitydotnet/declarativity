@@ -71,6 +71,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	
 	private class SpillThread extends Thread {
 		private boolean spill = false;
+		private boolean open = true;
 
 		public void doSpill() {
 			synchronized (this) {
@@ -83,17 +84,26 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			return this.spill;
 		}
 		
+		public void close() {
+			synchronized (this) {
+				this.open = false;
+				this.notifyAll();
+			}
+		}
+		
 		@Override
 		public void run() {
-			while (!isInterrupted()) {
+			while (open) {
 				synchronized (this) {
-					while (! spill) {
+					while (open && ! spill) {
 						try {
 							this.wait();
 						} catch (InterruptedException e) {
 							return;
 						}
 					}
+					
+					if (! open) return;
 				}
 				
 				long starttime = java.lang.System.currentTimeMillis();
@@ -750,7 +760,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		this.requests.clear();
 		
 		synchronized (spillLock) {
-			this.spillThread.interrupt();
+			this.spillThread.close();
 			while (this.spillThread.isSpilling() && kvstart != kvend) {
 				try {
 					reporter.progress();
