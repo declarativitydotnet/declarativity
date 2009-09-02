@@ -290,14 +290,14 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		
 		if (length > 0) {
 			float stoptime = System.currentTimeMillis();
-			float duration_sec = (System.currentTimeMillis() - starttime) / 1000f;
+			float duration_sec = (stoptime - starttime) / 1000f;
 			if (duration_sec > Float.MIN_VALUE) {
 				float rate = ((float) length) / duration_sec;
 				datarate = (0.75f * rate) + (0.25f * datarate);
 				System.err.println("Buffer " + this.taskid + " partition " + partition + ": data rate = " + datarate);
 			}
 			else {
-				System.err.println("Buffer " + this.taskid + " partition " + partition + ": sent " + length + " bytes in " + duration_sec + " seconds.");
+				System.err.println("Buffer " + this.taskid + " partition " + partition + ": sent " + length + " bytes in " + duration_sec + " seconds or " + (starttime - stoptime) + "ms.");
 			}
 		}
 	}
