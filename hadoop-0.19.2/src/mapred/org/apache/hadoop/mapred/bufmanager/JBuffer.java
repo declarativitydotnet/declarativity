@@ -236,6 +236,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 			
+			
+			/* Rate limit the data pipeline. */
 			if (requests.size() > partitions / 3 && numSpills - spillend > 5) {
 				System.err.println("Pipeline running slow!");
 				BufferRequest min = null;
@@ -253,7 +255,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 				
 				if (min != null && max != null && (max.datarate() / min.datarate()) > 10.0) {
-					System.err.println("Pipeline running slow! Min data rate = " + min.datarate() + ". Max data rate = " + max.datarate());
+					System.err.println("Pipeline running slow! Min data rate = " + 
+							            min.datarate() + ". Max data rate = " + max.datarate());
 					min.close();
 					requests.remove(min);
 					requestMap.remove(min.partition());
