@@ -274,7 +274,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
 		Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
 
-		float starttime = System.currentTimeMillis();
+		long starttime = System.currentTimeMillis();
 		out.writeLong(length);
 		out.writeBoolean(eof);
 
@@ -289,7 +289,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		writer.close();
 		
 		if (length > 0) {
-			float stoptime = System.currentTimeMillis();
+			long stoptime = System.currentTimeMillis();
 			float duration_sec = (stoptime - starttime) / 1000f;
 			if (duration_sec > Float.MIN_VALUE) {
 				float rate = ((float) length) / duration_sec;
