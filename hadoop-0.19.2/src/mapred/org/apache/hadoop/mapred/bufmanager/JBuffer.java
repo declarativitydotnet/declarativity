@@ -236,7 +236,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 			
-			if (numSpills - spillend > 5) {
+			if (requests.size() > 5 && numSpills - spillend > 5) {
 				System.err.println("Pipeline running slow!");
 				BufferRequest min = null;
 				for (BufferRequest r : requests) {
