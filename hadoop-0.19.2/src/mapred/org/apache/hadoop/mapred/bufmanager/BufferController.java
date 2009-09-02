@@ -183,7 +183,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	@Override
 	public BufferRequest getRequest(TaskAttemptID taskid) throws IOException {
-		synchronized (this) {
+		synchronized (requests) {
 			if (this.requests.containsKey(taskid)) {
 				for (BufferRequest request : this.requests.get(taskid)) {
 					if (request.delivered == false) {
@@ -198,7 +198,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	@Override
 	public void request(BufferRequest request) throws IOException {
-		synchronized (this) {
+		synchronized (requests) {
 			if (request.source().equals(hostname)) {
 				register(request); // Request is local!
 			}
