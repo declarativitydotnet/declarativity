@@ -240,15 +240,18 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				System.err.println("Pipeline running slow!");
 				BufferRequest min = null;
 				for (BufferRequest r : requests) {
-					if (min == null || r.datarate() < min.datarate()) {
+					if (r.datarate() < Float.MIN_VALUE) continue;
+					else if (min == null || r.datarate() < min.datarate()) {
 						min = r;
 					}
 				}
 				
-				System.err.println("Min data rate = " + min.datarate());
-				min.close();
-				requests.remove(min);
-				requestMap.remove(min.partition());
+				if (min != null) {
+					System.err.println("Min data rate = " + min.datarate());
+					min.close();
+					requests.remove(min);
+					requestMap.remove(min.partition());
+				}
 			}
 
 			if (requests.size() == partitions) {
