@@ -81,7 +81,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			return this.taskid.compareTo(o.taskid);
 		}
 		else {
-			return o.partition - this.partition;
+			return this.partition - o.partition;
 		}
 	}
 	
