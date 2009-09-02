@@ -290,7 +290,8 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			float duration_sec = (System.currentTimeMillis() - starttime) / 1000f;
 			if (duration_sec > Float.MIN_VALUE) {
 				float rate = ((float) length) / duration_sec;
-				datarate = 0.75f * rate + 0.25f * datarate;
+				datarate = (0.75f * rate) + (0.25f * datarate);
+				System.err.println(this.taskid + " data rate = " + datarate);
 			}
 		}
 	}
