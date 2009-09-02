@@ -260,7 +260,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	private void flushFile(FSDataInputStream in, long length, boolean eof) throws IOException {
-		if (length == 0 && !eof) return;
+		if (length == 0 && !eof) {
+			System.err.println("ZERO LENGTH: Buffer " + taskid + " partition " + partition + ".");
+			return;
+		}
 		
 		CompressionCodec codec = null;
 		if (conf.getCompressMapOutput()) {
