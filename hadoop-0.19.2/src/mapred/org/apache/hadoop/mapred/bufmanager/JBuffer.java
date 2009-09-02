@@ -123,7 +123,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						}
 						kvstart = kvend;
 						bufstart = bufend;
-						spillLock.notify();
+						spillLock.notifyAll();
 						
 						spill = false;
 					}
@@ -789,13 +789,14 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		
 		synchronized (spillLock) {
 			this.spillThread.close();
-			while (this.spillThread.isSpilling() && kvstart != kvend) {
+			while (this.spillThread.isSpilling()) {
 				try {
 					reporter.progress();
 					spillLock.wait();
 				} catch (InterruptedException e) {
+					e.printStackTrace();
 					throw (IOException)new IOException(
-							"Buffer interrupted while waiting for the writer"
+							"Buffer " + taskid + " interrupted while waiting for the writer"
 					).initCause(e);
 				}
 			}
