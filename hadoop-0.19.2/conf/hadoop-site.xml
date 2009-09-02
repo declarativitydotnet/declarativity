@@ -14,4 +14,12 @@
   <value>hdfs://localhost:9000</value>
 </property>
 
+<property>
+  <name>mapred.reduce.parallel.copies</name>
+  <value>20</value>
+  <description>The default number of parallel transfers run by reduce
+  during the copy(shuffle) phase.
+  </description>
+</property>
+
 </configuration>
