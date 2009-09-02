@@ -288,15 +288,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		writer.close();
 		
 		if (length > 0) {
-			long stoptime = System.currentTimeMillis();
-			float duration_sec = (float) (stoptime - starttime);
-			if (duration_sec > Float.MIN_VALUE) {
-				float rate = ((float) length) / duration_sec;
-				datarate = (0.75f * rate) + (0.25f * datarate);
-			}
-			else {
-				System.err.println("Buffer " + this.taskid + " partition " + partition + ": sent " + length + " bytes in " + duration_sec + " seconds or " + (starttime - stoptime) + "ms.");
-			}
+			long  stoptime = System.currentTimeMillis();
+			float duration = 1.0f + (stoptime - starttime);
+			float rate = ((float) length) / duration;
+			datarate = (0.75f * rate) + (0.25f * datarate);
 		}
 	}
 
