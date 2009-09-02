@@ -252,7 +252,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					}
 				}
 				
-				if (min != null && max != null) {
+				if (min != null && max != null && (max.datarate() / min.datarate()) > 10.0) {
 					System.err.println("Pipeline running slow! Min data rate = " + min.datarate() + ". Max data rate = " + max.datarate());
 					min.close();
 					requests.remove(min);
