@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,18 +48,16 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		
 		public void run() {
 			while (true) {
-				synchronized (committed) {
+				synchronized (requests) {
 					while (committed.size() == 0) {
-						try { committed.wait();
+						try { requests.wait();
 						} catch (InterruptedException e) { }
 					}
-
+					
 					for (TaskAttemptID taskid : committed) {
 						handle(taskid);
 					}
-				}
-
-				synchronized (requests) {
+					
 					try {
 						if (requests.size() > 0) {
 							requests.wait(1000);
@@ -74,29 +73,27 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		}
 		
 		private void handle(TaskAttemptID taskid) {
-			synchronized (requests) {
-				try {
-					List<BufferRequest> handled = new ArrayList<BufferRequest>();
-					if (requests.containsKey(taskid)) {
-						JobConf job = tracker.getJobConf(taskid);
-						for (BufferRequest request : requests.get(taskid)) {
-							if (request.open(job)) {
-								System.err.println("Send complete buffer " + taskid + " partition " + request.partition() + " to " + request.sink());
-								executor.execute(request);
-								handled.add(request);
-							}
-							else {
-								System.err.println("RequestHandler: can't open request " + request);
-							}
+			try {
+				List<BufferRequest> handled = new ArrayList<BufferRequest>();
+				if (requests.containsKey(taskid)) {
+					JobConf job = tracker.getJobConf(taskid);
+					for (BufferRequest request : requests.get(taskid)) {
+						if (request.open(job)) {
+							System.err.println("Send complete buffer " + taskid + " partition " + request.partition() + " to " + request.sink());
+							executor.execute(request);
+							handled.add(request);
 						}
-						requests.get(taskid).removeAll(handled);
-						if (requests.get(taskid).size() == 0) {
-							requests.remove(taskid);
+						else {
+							System.err.println("RequestHandler: can't open request " + request);
 						}
 					}
-				} catch (IOException e) {
-					e.printStackTrace();
+					requests.get(taskid).removeAll(handled);
+					if (requests.get(taskid).size() == 0) {
+						requests.remove(taskid);
+					}
 				}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -126,7 +123,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		
 		this.requests  = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
 		
-		this.committed = new HashSet<TaskAttemptID>();
+		this.committed = Collections.synchronizedSet(new HashSet<TaskAttemptID>());
 		this.executor  = Executors.newCachedThreadPool();
 		this.hostname  = InetAddress.getLocalHost().getCanonicalHostName();
 	}
@@ -175,9 +172,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	@Override
 	public void commit(TaskAttemptID taskid) throws IOException {
-		synchronized (committed) {
+		synchronized (requests) {
 			this.committed.add(taskid);
-			this.committed.notifyAll();
+			this.requests.notifyAll();
 		}
 	}
 	
