@@ -261,7 +261,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	private void flushFile(FSDataInputStream in, long length, boolean eof) throws IOException {
 		if (length == 0 && !eof) {
-			System.err.println("ZERO LENGTH: Buffer " + taskid + " partition " + partition + ".");
 			return;
 		}
 		
@@ -290,11 +289,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		
 		if (length > 0) {
 			long stoptime = System.currentTimeMillis();
-			float duration_sec = (stoptime - starttime) / 1000f;
+			float duration_sec = (float) (stoptime - starttime);
 			if (duration_sec > Float.MIN_VALUE) {
 				float rate = ((float) length) / duration_sec;
 				datarate = (0.75f * rate) + (0.25f * datarate);
-				System.err.println("Buffer " + this.taskid + " partition " + partition + ": data rate = " + datarate);
 			}
 			else {
 				System.err.println("Buffer " + this.taskid + " partition " + partition + ": sent " + length + " bytes in " + duration_sec + " seconds or " + (starttime - stoptime) + "ms.");
