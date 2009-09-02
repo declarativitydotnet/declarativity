@@ -769,7 +769,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	}
 
 	public synchronized void flush() throws IOException {
-		// LOG.info("Starting flush of map output");
+		System.err.println("Buffer " + taskid + " starting flush of map output");
 		pipelineThread.close();
 		synchronized (pipelineThread) {
 			while (pipelineThread.busy()) {
@@ -779,6 +779,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 		}
+		
+		System.err.println("Buffer " + taskid + " pipeline closed.");
 			
 		for (BufferRequest request : this.requests) {
 			request.close();
@@ -798,6 +800,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 		}
+		
+		System.err.println("Buffer" + taskid + " spill thread closed.");
 			
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"
@@ -811,7 +815,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		// release sort buffer before the merge
 		kvbuffer = null;
 		
-		System.err.println("JBuffer " + taskid + " committing. \n\tFinal merge from " + (numSpills - numFlush) + " spill files.");
+		System.err.println("Buffer " + taskid + " committing. \n\tFinal merge from " + (numSpills - numFlush) + " spill files.");
 		mergeParts(false);
 		
 		umbilical.commit(this.taskid);
