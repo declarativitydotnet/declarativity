@@ -253,6 +253,8 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					}
 				}
 				
+				System.err.println("Pipeline request size = " + requests.size());
+				
 				if (min != null && max != null && min != max) {
 					System.err.println("Min = " + min.datarate() + " Max = " + max.datarate());
 				}
