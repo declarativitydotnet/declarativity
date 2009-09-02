@@ -51,7 +51,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class ReduceMapSink<K extends Object, V extends Object> {
 	
-	private final int MAX_CONNECTIONS = 20;
+	private int maxConnections;
 	
 	private Executor executor;
 	
@@ -80,6 +80,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 		this.reduceID = reduceID;
 		this.collector = collector;
 		this.localFs = FileSystem.getLocal(conf);
+		this.maxConnections = conf.getInt("mapred.reduce.parallel.copies", 20);
 		
 	    /** How many mappers? */
 	    this.numMapTasks = conf.getNumMapTasks();
@@ -118,7 +119,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
-							if (!runningTransfers.contains(conn.mapTaskID()) && runningTransfers.size() > MAX_CONNECTIONS) {
+							if (!runningTransfers.contains(conn.mapTaskID()) && runningTransfers.size() > maxConnections) {
 								output.writeBoolean(false); // Connection not open
 								conn.close();
 							}
