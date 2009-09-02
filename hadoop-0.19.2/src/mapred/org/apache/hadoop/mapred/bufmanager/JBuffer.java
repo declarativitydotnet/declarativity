@@ -239,29 +239,21 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			
 			/* Rate limit the data pipeline. */
 			if (requests.size() > partitions / 2 && numSpills - spillend > 5) {
+				float avgDataRate = 0f;
 				BufferRequest min = null;
-				BufferRequest max = null;
 				for (BufferRequest r : requests) {
 					if (r.datarate() < Float.MIN_VALUE) continue;
 					
+					avgDataRate += r.datarate();
 					if (min == null || r.datarate() < min.datarate()) {
 						min = r;
 					}
-					
-					if (max == null || r.datarate() > max.datarate()) {
-						max = r;
-					}
 				}
+				avgDataRate /= (float) requests.size();
 				
-				/*
-				if (min != null && max != null && min != max) {
-					System.err.println("Min = " + min.datarate() + " Max = " + max.datarate());
-				}
-				*/
-				
-				if (min != null && max != null && (max.datarate() / min.datarate()) > 10.0) {
+				if (min != null && (avgDataRate / min.datarate()) > 10.0) {
 					System.err.println("Pipeline running slow! Min data rate = " + 
-							            min.datarate() + ". Max data rate = " + max.datarate());
+							            min.datarate() + ". Average data rate = " + avgDataRate);
 					min.close();
 					requests.remove(min);
 					requestMap.remove(min.partition());
