@@ -63,6 +63,8 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	private int flushPoint = 0;
 	
+	private float datarate = 0f;
+	
 	public BufferRequest() {
 	}
 	
@@ -105,6 +107,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	public int flushPoint() {
 		return this.flushPoint;
+	}
+	
+	public float datarate() {
+		return this.datarate;
 	}
 	
 	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint) throws IOException {
@@ -282,12 +288,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		if (length > 0) {
 			float stoptime = System.currentTimeMillis();
 			float duration_sec = (System.currentTimeMillis() - starttime) / 1000f;
-			if (duration_sec <= Float.MIN_VALUE) {
-				return;
+			if (duration_sec > Float.MIN_VALUE) {
+				float rate = ((float) length) / duration_sec;
+				datarate = 0.75f * rate + 0.25f * datarate;
 			}
-			
-			float rate = ((float) length) / duration_sec;
-			System.err.println("FlushFile Rate: " + rate + " bytes/sec.");
 		}
 	}
 

@@ -235,6 +235,21 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					dataIn.close();  dataIn = null;
 				}
 			}
+			
+			if (numSpills - spillend > 5) {
+				System.err.println("Pipeline running slow!");
+				BufferRequest min = null;
+				for (BufferRequest r : requests) {
+					if (min == null || r.datarate() < min.datarate()) {
+						min = r;
+					}
+				}
+				
+				System.err.println("Min data rate = " + min.datarate());
+				min.close();
+				requests.remove(min);
+				requestMap.remove(min.partition());
+			}
 
 			if (requests.size() == partitions) {
 				numFlush = spillend;
