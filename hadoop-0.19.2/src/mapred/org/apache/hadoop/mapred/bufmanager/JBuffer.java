@@ -74,10 +74,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		private boolean open = true;
 
 		public void doSpill() {
-			synchronized (this) {
+			synchronized (spillLock) {
 				if (open) {
 					this.spill = true;
-					this.notifyAll();
+					spillLock.notifyAll();
 				}
 			}
 		}
@@ -85,60 +85,65 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		public boolean isSpilling() {
 			return this.spill;
 		}
-		
+
 		public void close() {
-			synchronized (this) {
+			synchronized (spillLock) {
 				this.open = false;
-				this.notifyAll();
+				spillLock.notifyAll();
 			}
 		}
-		
+
 		@Override
 		public void run() {
-			while (open) {
-				synchronized (this) {
-					while (open && ! spill) {
-						try {
-							this.wait(1000);
-						} catch (InterruptedException e) {
-							spill = false;
-							open = false;
-							return;
+			try {
+				while (open) {
+					synchronized (spillLock) {
+						while (open && ! spill) {
+							try {
+								spillLock.wait();
+							} catch (InterruptedException e) {
+								return;
+							}
 						}
 					}
-					
-					if (! open) return;
-				}
-				
-				long starttime = java.lang.System.currentTimeMillis();
 
-				try {
-					long sortstart = java.lang.System.currentTimeMillis();
-					sortAndSpill();
-					LOG.debug("SpillThread: sort/spill time " + 
-							((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
-				} catch (Throwable e) {
-					e.printStackTrace();
-					sortSpillException = e;
-				} finally {
-					synchronized(spillLock) {
-						if (bufend < bufindex && bufindex < bufstart) {
-							bufvoid = kvbuffer.length;
+					if (open) {
+						long starttime = java.lang.System.currentTimeMillis();
+						try {
+							long sortstart = java.lang.System.currentTimeMillis();
+							sortAndSpill();
+							LOG.debug("SpillThread: sort/spill time " + 
+									((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
+						} catch (Throwable e) {
+							e.printStackTrace();
+							sortSpillException = e;
+						} finally {
+							synchronized(spillLock) {
+								if (bufend < bufindex && bufindex < bufstart) {
+									bufvoid = kvbuffer.length;
+								}
+								kvstart = kvend;
+								bufstart = bufend;
+								spill = false;
+								spillLock.notifyAll();
+							}
+
+							try {
+								synchronized (pipelineThread) {
+									pipelineThread.notifyAll();
+								}
+							} finally {
+								LOG.debug("SpillThread: total spill time " + 
+										((System.currentTimeMillis() - starttime)/1000f) + " secs.");
+							}
 						}
-						kvstart = kvend;
-						bufstart = bufend;
-						spill = false;
-						spillLock.notifyAll();
 					}
-					
-					try {
-						synchronized (pipelineThread) {
-							pipelineThread.notifyAll();
-						}
-					} finally {
-						LOG.debug("SpillThread: total spill time " + 
-								((System.currentTimeMillis() - starttime)/1000f) + " secs.");
-					}
+				}
+			} finally {
+				synchronized (spillLock) {
+					open  = false;
+					spill = false;
+					spillLock.notifyAll();
 				}
 			}
 		}
