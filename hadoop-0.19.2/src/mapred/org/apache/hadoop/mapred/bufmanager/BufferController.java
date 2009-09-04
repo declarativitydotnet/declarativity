@@ -57,18 +57,19 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				}
 
 				for (TaskAttemptID taskid : committed) {
-					TreeSet<BufferRequest> handled = null;
+					List<BufferRequest> handleRequests = new ArrayList<BufferRequest>();
 					synchronized (requests) {
 						if (requests.containsKey(taskid)) {
-							handled = new TreeSet<BufferRequest>(requests.get(taskid));
+							handleRequests.addAll(requests.get(taskid));
 						}
 					}
 					
-					if (handled != null && handled.size() > 0) {
-						handle(taskid, handled);
+					if (handleRequests.size() > 0) {
+						handleRequests = handle(taskid, handleRequests);
 						
 						synchronized (requests) {
-							requests.get(taskid).removeAll(handled);
+							System.err.println("HANDLED REQUESTS " + handleRequests);
+							requests.get(taskid).removeAll(handleRequests);
 						}
 					}
 				}
@@ -86,9 +87,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			}
 		}
 		
-		private void handle(TaskAttemptID taskid, TreeSet<BufferRequest> handle) {
+		private List<BufferRequest> handle(TaskAttemptID taskid, List<BufferRequest> handle) {
+			List<BufferRequest> handled = new ArrayList<BufferRequest>();
 			try {
-				List<BufferRequest> handled = new ArrayList<BufferRequest>();
 				JobConf job = tracker.getJobConf(taskid);
 				for (BufferRequest request : handle) {
 					if (request.open(job)) {
@@ -100,10 +101,10 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						System.err.println("RequestHandler: can't open request " + request);
 					}
 				}
-				handle.removeAll(handled);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			return handled;
 		}
 	}
 	
