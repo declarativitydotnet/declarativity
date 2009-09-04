@@ -1292,4 +1292,4 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			super(s);
 		}
 	}
-} // MapOutputBuffer
+}
