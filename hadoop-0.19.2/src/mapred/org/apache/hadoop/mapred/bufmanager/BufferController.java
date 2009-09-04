@@ -49,14 +49,16 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		
 		public void run() {
 			while (true) {
+				List<TaskAttemptID> handleCommitted = new ArrayList<TaskAttemptID>();
 				synchronized (requests) {
 					while (committed.size() == 0) {
 						try { requests.wait();
 						} catch (InterruptedException e) { }
 					}
+					handleCommitted.addAll(committed);
 				}
 
-				for (TaskAttemptID taskid : committed) {
+				for (TaskAttemptID taskid : handleCommitted) {
 					List<BufferRequest> handleRequests = new ArrayList<BufferRequest>();
 					synchronized (requests) {
 						if (requests.containsKey(taskid)) {
@@ -70,6 +72,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						synchronized (requests) {
 							System.err.println("HANDLED REQUESTS " + handleRequests);
 							requests.get(taskid).removeAll(handleRequests);
+							if (requests.get(taskid).size() == 0) {
+								requests.remove(taskid);
+							}
 						}
 					}
 				}
@@ -214,8 +219,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 					InetSocketAddress controlSource = NetUtils.createSocketAddr(request.source() + ":" + this.controlPort);
 					socket = new Socket();
 					for (int i = 0; i < 10; i++) {
-						try {
-						socket.connect(controlSource);
+						try { socket.connect(controlSource);
 						} catch (ConnectException e) {
 							if (i < 10) {
 								try { Thread.sleep(1000);
