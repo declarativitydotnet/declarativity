@@ -197,18 +197,23 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				register(request); // Request is local!
 			}
 			else {
-				Socket socket = null;
+				Socket socket        = null;
+				DataOutputStream out = null;
 				try {
 					InetSocketAddress controlSource = NetUtils.createSocketAddr(request.source() + ":" + this.controlPort);
 					socket = new Socket();
 					socket.connect(controlSource);
-					DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+					out = new DataOutputStream(socket.getOutputStream());
 					request.write(out);
-					out.flush();
-
-				} catch (IOException e) {
-					if (socket != null) socket.close();
-					throw e;
+				}
+				finally {
+					if (out != null) {
+						out.flush();
+						out.close();
+					}
+					else if (socket != null) {
+						socket.close();
+					}
 				}
 			}
 		}
