@@ -106,9 +106,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	private Executor executor;
 
-	private Map<TaskAttemptID, TreeSet<BufferRequest>> requests;
+	private Map<TaskAttemptID, TreeSet<BufferRequest>> requests = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
 	
-	private Set<TaskAttemptID> committed;
+	private Set<TaskAttemptID> committed = Collections.synchronizedSet(new HashSet<TaskAttemptID>());
 	
 	private Server server;
 
@@ -119,11 +119,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	public BufferController(TaskTracker tracker) throws IOException {
 		this.tracker   = tracker;
 		this.requestHandler = new RequestHandler();
-		this.requestHandler.start();
-		
-		this.requests  = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
-		
-		this.committed = Collections.synchronizedSet(new HashSet<TaskAttemptID>());
 		this.executor  = Executors.newCachedThreadPool();
 		this.hostname  = InetAddress.getLocalHost().getCanonicalHostName();
 	}
@@ -160,6 +155,8 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				maxMaps + maxReduces, false, conf);
 		this.server.start();
 
+		this.requestHandler.start();
+		
 		/** The server socket and selector registration */
 		InetSocketAddress controlAddress = getControlAddress(conf);
 		this.controlPort = controlAddress.getPort();
