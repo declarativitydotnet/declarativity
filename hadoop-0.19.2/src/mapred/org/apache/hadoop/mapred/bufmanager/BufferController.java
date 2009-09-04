@@ -63,6 +63,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 							handled = new TreeSet<BufferRequest>(requests.get(taskid));
 						}
 					}
+					
 					if (handled != null && handled.size() > 0) {
 						handle(taskid, handled);
 						
