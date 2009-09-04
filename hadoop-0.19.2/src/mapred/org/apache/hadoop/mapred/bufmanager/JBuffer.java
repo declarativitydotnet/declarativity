@@ -5,15 +5,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,7 +25,6 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapOutputFile;
-import org.apache.hadoop.mapred.MapTask;
 import org.apache.hadoop.mapred.Merger;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Partitioner;
@@ -48,27 +41,27 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class JBuffer<K extends Object, V extends Object>  implements ReduceOutputCollector<K, V>, MapOutputCollector<K, V>, IndexedSortable {
 
-	protected static class CombineOutputCollector<K extends Object, V extends Object> 
+	protected static class CombineOutputCollector<K extends Object, V extends Object>
 	implements OutputCollector<K, V> {
 		private IFile.Writer<K, V> writer = null;
-		
+
 		public CombineOutputCollector() {
 		}
 		public synchronized void setWriter(IFile.Writer<K, V> writer) {
 			this.writer = writer;
 		}
-		
+
 		public synchronized void reset() {
 			this.writer = null;
 		}
-		
+
 		public synchronized void collect(K key, V value)
 		throws IOException {
 			if (writer != null) writer.append(key, value);
 		}
 	}
-	
-	
+
+
 	private class SpillThread extends Thread {
 		private boolean spill = false;
 		private boolean open = true;
@@ -81,7 +74,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 		}
-		
+
 		public boolean isSpilling() {
 			return this.spill;
 		}
@@ -112,7 +105,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						try {
 							long sortstart = java.lang.System.currentTimeMillis();
 							sortAndSpill();
-							LOG.debug("SpillThread: sort/spill time " + 
+							LOG.debug("SpillThread: sort/spill time " +
 									((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
 						} catch (Throwable e) {
 							e.printStackTrace();
@@ -133,7 +126,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 									pipelineThread.notifyAll();
 								}
 							} finally {
-								LOG.debug("SpillThread: total spill time " + 
+								LOG.debug("SpillThread: total spill time " +
 										((System.currentTimeMillis() - starttime)/1000f) + " secs.");
 							}
 						}
@@ -148,15 +141,15 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			}
 		}
 	}
-	
+
 	private class PipelineMergeThread extends Thread {
 		private boolean busy = false;
 		private boolean open = true;
-		
+
 		public boolean busy() {
 			return this.busy;
 		}
-		
+
 		public void close() {
 			this.open = false;
 		}
@@ -174,11 +167,11 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 							e.printStackTrace();
 						}
 					}
-					
+
 					if (!open) return;
 					busy = true;
 				}
-				
+
 				try {
 					if (taskid.isMap() == false && numSpills - numFlush > mergeThreshold) {
 						try {
@@ -196,7 +189,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						try {
 							long pipelinestart = java.lang.System.currentTimeMillis();
 							flushpoint = flushRequests();
-							LOG.debug("PipelinMergeThread: pipeline time " +  
+							LOG.debug("PipelinMergeThread: pipeline time " +
 									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -211,7 +204,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 		}
-			
+
 		private int flushRequests() throws IOException {
 			int spillend = numSpills;
 
@@ -243,24 +236,24 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 					dataIn.close();  dataIn = null;
 				}
 			}
-			
-			
+
+
 			/* Rate limit the data pipeline. */
 			if (requests.size() > partitions / 2 && numSpills - spillend > 5) {
 				float avgDataRate = 0f;
 				BufferRequest min = null;
 				for (BufferRequest r : requests) {
 					if (r.datarate() < Float.MIN_VALUE) continue;
-					
+
 					avgDataRate += r.datarate();
 					if (min == null || r.datarate() < min.datarate()) {
 						min = r;
 					}
 				}
 				avgDataRate /= (float) requests.size();
-				
+
 				if (min != null && (avgDataRate / min.datarate()) > 10.0) {
-					System.err.println("Pipeline running slow! Min data rate = " + 
+					System.err.println("Pipeline running slow! Min data rate = " +
 							            min.datarate() + ". Average data rate = " + avgDataRate);
 					min.close();
 					requests.remove(min);
@@ -275,10 +268,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			return spillend;
 		}
 	}
-	
+
 	private static final Log LOG = LogFactory.getLog(JBuffer.class.getName());
 
-	
+
 	/**
 	 * The size of each record in the index file for the map-outputs.
 	 */
@@ -336,21 +329,21 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 	private final Object spillLock = new Object();
 	private final Object mergeLock = new Object();
 	private final BlockingBuffer bb = new BlockingBuffer();
-	
+
 	private long reserve = 0;
 
 	private final FileSystem localFs;
 
 	private MapOutputFile mapOutputFile = null;
-	
+
 	private boolean pipeline;
 	private PipelineMergeThread pipelineThread;
-	
+
 	private SpillThread spillThread;
-	
+
 	private TreeSet<BufferRequest> requests = new TreeSet<BufferRequest>();
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
-	
+
 	@SuppressWarnings("unchecked")
 	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
 		this.umbilical = umbilical;
@@ -359,14 +352,14 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		this.reporter = reporter;
 		this.mapOutputFile = new MapOutputFile(taskid.getJobID());
 		this.mapOutputFile.setConf(job);
-		
+
 		this.pipeline = job.getBoolean("mapred.map.tasks.pipeline.execution", true);
 		this.pipelineThread = new PipelineMergeThread();
 		this.pipelineThread.start();
-		
+
 		this.spillThread = new SpillThread();
 		this.spillThread.start();
-		
+
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
 		partitioner = (Partitioner)
@@ -389,12 +382,12 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				job.getClass("map.sort.class", QuickSort.class), job);
 		// buffers and accounting
 		int maxMemUsage = sortmb << 20;
-		
+
 		if (!taskid.isMap()) {
 	        float maxInMemCopyUse = job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
 		    maxMemUsage = (int)Math.min(Runtime.getRuntime().maxMemory() * maxInMemCopyUse, Integer.MAX_VALUE);
 		}
-		
+
 		int recordCapacity = (int)(maxMemUsage * recper);
 		recordCapacity -= recordCapacity % RECSIZE;
 		kvbuffer = new byte[maxMemUsage - recordCapacity];
@@ -428,14 +421,14 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		: null;
 		minSpillsForCombine = job.getInt("min.num.spills.for.combine", 3);
 	}
-	
+
 	/**
 	 * @return The number of free bytes.
 	 */
 	public int getBytes() {
 		return ((kvend > kvstart) ? kvend : kvoffsets.length + kvend) - kvstart;
 	}
-	
+
 	public synchronized boolean reserve(long bytes) {
 		if (bytes < getBytes() - this.reserve) {
 			this.reserve += bytes;
@@ -443,10 +436,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		return false;
 	}
-	
+
 	public void unreserve(long bytes) {
 		this.reserve -= bytes;
-		
+
 		if (this.reserve < 0) {
 			LOG.error("Reserve bytes error: " + this.reserve);
 			this.reserve = 0;
@@ -467,7 +460,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		else if (this.partitions > 1) {
 			throw new IOException("Method not for use with more than one partition");
 		}
-		
+
 		try {
 			int keystart = bufindex;
 			bb.write(key.getData(), key.getPosition(), key.getLength() - key.getPosition());
@@ -476,7 +469,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				bb.reset();
 				keystart = 0;
 			}
-			
+
 			// copy value bytes into buffer
 			int valstart = bufindex;
 			bb.write(value.getData(), value.getPosition(), value.getLength() - value.getPosition());
@@ -500,7 +493,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			return;
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public synchronized void collect(K key, V value)
 	throws IOException {
@@ -757,7 +750,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			bufindex += len;
 		}
 	}
-	
+
 	public synchronized ValuesIterator<K, V> iterator() throws IOException {
 		if (this.numSpills == 0) {
 			int endPosition = (kvend > kvstart)
@@ -787,14 +780,14 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 		}
-		
+
 		System.err.println("Buffer " + taskid + " pipeline closed.");
-			
+
 		for (BufferRequest request : this.requests) {
 			request.close();
 		}
 		this.requests.clear();
-		
+
 		synchronized (spillLock) {
 			this.spillThread.close();
 			while (this.spillThread.isSpilling()) {
@@ -808,9 +801,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 			}
 		}
-		
+
 		System.err.println("Buffer" + taskid + " spill thread closed.");
-			
+
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"
 			).initCause(sortSpillException);
@@ -822,17 +815,17 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		// release sort buffer before the merge
 		kvbuffer = null;
-		
+
 		System.err.println("Buffer " + taskid + " committing. \n\tFinal merge from " + (numSpills - numFlush) + " spill files.");
 		mergeParts(false);
-		
+
 		umbilical.commit(this.taskid);
 	}
 
-	public void close() throws IOException { 
+	public void close() throws IOException {
 	}
-	
-	
+
+
 	public void spill(Path data, long size, Path index) throws IOException {
 		Path dataFile = null;
 		Path indexFile = null;
@@ -853,7 +846,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			pipelineThread.notifyAll();
 		}
 	}
-	
+
 
 	private void sortAndSpill() throws IOException {
 		//approximate the length of the output file to be the length of the
@@ -871,7 +864,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				if (localFs.exists(filename)) {
 					throw new IOException("JBuffer::sortAndSpill -- spill file exists! " + filename);
 				}
-				
+
 				out = localFs.create(filename, false);
 				if (out == null ) throw new IOException("Unable to create spill file " + filename);
 				// create spill index
@@ -902,7 +895,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 									                       + PARTITION] == i) {
 								final int kvoff = kvoffsets[spindex % kvoffsets.length];
 								getVBytesForOffset(kvoff, value);
-								key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
+								key.reset(kvbuffer, kvindices[kvoff + KEYSTART],
 										(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
 								writer.append(key, value);
@@ -950,7 +943,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			}
 		}
 	}
-	
+
 	private void spillSingleRecord(final DataInputBuffer key, final DataInputBuffer value)  throws IOException {
 		// TODO this right
 		Class keyClass = job.getMapOutputKeyClass();
@@ -1099,12 +1092,12 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		public void close() { }
 	}
-	
+
 	protected class FSMRResultIterator implements RawKeyValueIterator {
 		private IFile.Reader reader;
 		private DataInputBuffer key = new DataInputBuffer();
 		private DataInputBuffer value = new DataInputBuffer();
-		
+
 		public FSMRResultIterator(FileSystem localFS, Path path) throws IOException {
 			this.reader = new IFile.Reader<K, V>(job, localFS, path, codec);
 		}
@@ -1133,9 +1126,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		public boolean next() throws IOException {
 			return this.reader.next(key, value);
 		}
-		
+
 	}
-	
+
 
 	private synchronized void mergeParts(boolean spill) throws IOException {
 		// get the approximate size of the final output/index files
@@ -1167,9 +1160,9 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			}
 
 			if (end - start == 1 && !spill) { //the spill is the final output
-				localFs.rename(filename[start], 
+				localFs.rename(filename[start],
 						new Path(filename[start].getParent(), "file.out"));
-				localFs.rename(indexFileName[start], 
+				localFs.rename(indexFileName[start],
 						new Path(indexFileName[start].getParent(),"file.out.index"));
 				return;
 			}
@@ -1229,7 +1222,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 						indexIn.close();
 						FSDataInputStream in = localFs.open(filename[i]);
 						in.seek(segmentOffset);
-						Segment<K, V> s = 
+						Segment<K, V> s =
 							new Segment<K, V>(new IFile.Reader<K, V>(job, in, segmentLength, codec),
 									true);
 						segmentList.add(s);
@@ -1237,16 +1230,16 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 
 					//merge
 					@SuppressWarnings("unchecked")
-					RawKeyValueIterator kvIter = 
-						Merger.merge(job, localFs, 
+					RawKeyValueIterator kvIter =
+						Merger.merge(job, localFs,
 								keyClass, valClass,
-								segmentList, job.getInt("io.sort.factor", 100), 
-								new Path(this.taskid.toString()), 
+								segmentList, job.getInt("io.sort.factor", 100),
+								new Path(this.taskid.toString()),
 								job.getOutputKeyComparator(), reporter);
 
 					//write merged output to disk
 					long segmentStart = finalOut.getPos();
-					IFile.Writer<K, V> writer = 
+					IFile.Writer<K, V> writer =
 						new IFile.Writer<K, V>(job, finalOut, keyClass, valClass, codec);
 					if (null == combinerClass || end - start < minSpillsForCombine) {
 						Merger.writeFile(kvIter, writer, reporter, job);
@@ -1271,17 +1264,17 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 			}
 	}
 
-	private void writeIndexRecord(FSDataOutputStream indexOut, 
-			FSDataOutputStream out, long start, 
-			IFile.Writer<K, V> writer) 
+	private void writeIndexRecord(FSDataOutputStream indexOut,
+			FSDataOutputStream out, long start,
+			IFile.Writer<K, V> writer)
 	throws IOException {
-		//when we write the offset/decompressed-length/compressed-length to  
-		//the final index file, we write longs for both compressed and 
-		//decompressed lengths. This helps us to reliably seek directly to 
-		//the offset/length for a partition when we start serving the 
-		//byte-ranges to the reduces. We probably waste some space in the 
+		//when we write the offset/decompressed-length/compressed-length to
+		//the final index file, we write longs for both compressed and
+		//decompressed lengths. This helps us to reliably seek directly to
+		//the offset/length for a partition when we start serving the
+		//byte-ranges to the reduces. We probably waste some space in the
 		//file by doing this as opposed to writing VLong but it helps us later on.
-		// index record: <offset, raw-length, compressed-length> 
+		// index record: <offset, raw-length, compressed-length>
 		//StringBuffer sb = new StringBuffer();
 		indexOut.writeLong(start);
 		indexOut.writeLong(writer.getRawLength());
