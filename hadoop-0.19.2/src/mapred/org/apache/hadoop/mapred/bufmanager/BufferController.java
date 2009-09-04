@@ -70,7 +70,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						handleRequests = handle(taskid, handleRequests);
 						
 						synchronized (requests) {
-							System.err.println("HANDLED REQUESTS " + handleRequests);
 							requests.get(taskid).removeAll(handleRequests);
 							if (requests.get(taskid).size() == 0) {
 								requests.remove(taskid);
