@@ -173,7 +173,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 				}
 
 				try {
-					if (taskid.isMap() == false && numSpills - numFlush > mergeThreshold) {
+					if (false && numSpills - numFlush > mergeThreshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
