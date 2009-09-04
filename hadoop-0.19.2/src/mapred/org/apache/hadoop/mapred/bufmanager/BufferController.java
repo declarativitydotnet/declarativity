@@ -3,6 +3,7 @@ package org.apache.hadoop.mapred.bufmanager;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -115,6 +116,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private ServerSocketChannel channel;
 	
 	private int controlPort;
+	
 
 	public BufferController(TaskTracker tracker) throws IOException {
 		this.tracker   = tracker;
@@ -202,7 +204,19 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				try {
 					InetSocketAddress controlSource = NetUtils.createSocketAddr(request.source() + ":" + this.controlPort);
 					socket = new Socket();
-					socket.connect(controlSource);
+					for (int i = 0; i < 10; i++) {
+						try {
+						socket.connect(controlSource);
+						} catch (ConnectException e) {
+							if (i < 10) {
+								try { Thread.sleep(1000);
+								} catch (InterruptedException e1) { }
+								continue;
+							}
+							throw e;
+						}
+						break;
+					}
 					out = new DataOutputStream(socket.getOutputStream());
 					request.write(out);
 				}
@@ -228,8 +242,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		}
 
 		while (true) {
+			SocketChannel channel = null;
 			try {
-				SocketChannel channel = this.channel.accept();
+				channel = this.channel.accept();
 				BufferRequest request = new BufferRequest();
 				DataInputStream in = new DataInputStream(channel.socket().getInputStream());
 				request.readFields(in);
@@ -238,6 +253,14 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			}
+			finally {
+				try {
+					if (channel != null) channel.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 	}
