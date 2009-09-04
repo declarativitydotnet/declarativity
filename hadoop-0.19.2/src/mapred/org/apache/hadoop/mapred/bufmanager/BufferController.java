@@ -54,11 +54,25 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						try { requests.wait();
 						} catch (InterruptedException e) { }
 					}
-					
-					for (TaskAttemptID taskid : committed) {
-						handle(taskid);
+				}
+
+				for (TaskAttemptID taskid : committed) {
+					TreeSet<BufferRequest> handled = null;
+					synchronized (requests) {
+						if (requests.containsKey(taskid)) {
+							handled = new TreeSet<BufferRequest>(requests.get(taskid));
+						}
 					}
-					
+					if (handled != null && handled.size() > 0) {
+						handle(taskid, handled);
+						
+						synchronized (requests) {
+							requests.get(taskid).removeAll(handled);
+						}
+					}
+				}
+
+				synchronized (requests) {
 					try {
 						if (requests.size() > 0) {
 							requests.wait(1000);
@@ -66,33 +80,26 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						else {
 							requests.wait();
 						}
-					} catch (InterruptedException e) {
-
-					}
+					} catch (InterruptedException e) { }
 				}
 			}
 		}
 		
-		private void handle(TaskAttemptID taskid) {
+		private void handle(TaskAttemptID taskid, TreeSet<BufferRequest> handle) {
 			try {
 				List<BufferRequest> handled = new ArrayList<BufferRequest>();
-				if (requests.containsKey(taskid)) {
-					JobConf job = tracker.getJobConf(taskid);
-					for (BufferRequest request : requests.get(taskid)) {
-						if (request.open(job)) {
-							System.err.println("Send complete buffer " + taskid + " partition " + request.partition() + " to " + request.sink());
-							executor.execute(request);
-							handled.add(request);
-						}
-						else {
-							System.err.println("RequestHandler: can't open request " + request);
-						}
+				JobConf job = tracker.getJobConf(taskid);
+				for (BufferRequest request : handle) {
+					if (request.open(job)) {
+						System.err.println("Send complete buffer " + taskid + " partition " + request.partition() + " to " + request.sink());
+						executor.execute(request);
+						handled.add(request);
 					}
-					requests.get(taskid).removeAll(handled);
-					if (requests.get(taskid).size() == 0) {
-						requests.remove(taskid);
+					else {
+						System.err.println("RequestHandler: can't open request " + request);
 					}
 				}
+				handle.removeAll(handled);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
