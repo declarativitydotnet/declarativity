@@ -117,7 +117,7 @@ public class TopK extends Configured implements Tool {
 			sortJob.setMapperClass(InverseMapper.class);
 			sortJob.setCombinerClass(TopKReduce.class);
 			sortJob.setReducerClass(TopKReduce.class);
-			sortJob.setInt("mapred.mapper.regex", Integer.parseInt(args[2]));
+			sortJob.setInt("mapred.reduce.topk.k", Integer.parseInt(args[2]));
 
 			sortJob.setNumReduceTasks(1);                 // write a single file
 			FileOutputFormat.setOutputPath(sortJob, new Path(args[1]));
