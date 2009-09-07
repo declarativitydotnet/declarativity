@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -25,7 +28,6 @@ import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.hadoop.mapred.lib.InverseMapper;
 import org.apache.hadoop.mapred.lib.LongSumReducer;
-import org.apache.hadoop.mapred.lib.RegexMapper;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -34,6 +36,9 @@ public class TopK extends Configured implements Tool {
 	public static class LongMapper<K> extends MapReduceBase
 	implements Mapper<K, Text, Text, LongWritable> {
 
+	    private final static LongWritable one = new LongWritable(1);
+	    private Text word = new Text();
+	    
 		public void configure(JobConf job) {
 		}
 
@@ -41,8 +46,45 @@ public class TopK extends Configured implements Tool {
 				OutputCollector<Text, LongWritable> output,
 				Reporter reporter)
 		throws IOException {
-			String text = value.toString();
-			output.collect(new Text(text), new LongWritable(1));
+			String line = value.toString();
+		    StringTokenizer itr = new StringTokenizer(line);
+		      
+		    while (itr.hasMoreTokens()) {
+		    	word.set(itr.nextToken());
+		    	output.collect(word, one);
+		    }
+		}
+	}
+
+	/** A {@link Mapper} that extracts text matching a regular expression. */
+	public static class TopKRegexMapper<K> extends MapReduceBase
+	implements Mapper<K, Text, Text, LongWritable> {
+
+		private Pattern pattern;
+		private int group;
+
+		private final static LongWritable one = new LongWritable(1);
+		private Text word = new Text();
+
+		public void configure(JobConf job) {
+			pattern = Pattern.compile(job.get("mapred.mapper.regex"));
+			group = job.getInt("mapred.mapper.regex.group", 0);
+		}
+
+		public void map(K key, Text value,
+				OutputCollector<Text, LongWritable> output,
+				Reporter reporter) throws IOException {
+			String line = value.toString();
+			StringTokenizer itr = new StringTokenizer(line);
+
+			while (itr.hasMoreTokens()) {
+				String next = itr.nextToken();
+				Matcher matcher = pattern.matcher(next);
+				if (matcher.find()) {
+					word.set(next);
+					output.collect(word, one);
+				}
+			}
 		}
 	}
 
@@ -123,7 +165,7 @@ public class TopK extends Configured implements Tool {
 			FileInputFormat.setInputPaths(topkJob, other_args.get(0));
 
 			if (other_args.size() >= 4) {
-				topkJob.setMapperClass(RegexMapper.class);
+				topkJob.setMapperClass(TopKRegexMapper.class);
 				topkJob.set("mapred.mapper.regex", other_args.get(3));
 				if (args.length == 5)
 					topkJob.set("mapred.mapper.regex.group", other_args.get(4));
