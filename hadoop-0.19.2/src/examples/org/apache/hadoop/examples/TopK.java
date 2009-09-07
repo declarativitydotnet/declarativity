@@ -29,7 +29,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class TopK extends Configured implements Tool {
 
-	public class LongMapper<K> extends MapReduceBase
+	public static class LongMapper<K> extends MapReduceBase
 	implements Mapper<K, Text, Text, LongWritable> {
 
 		public void configure(JobConf job) {
@@ -115,6 +115,7 @@ public class TopK extends Configured implements Tool {
 			sortJob.setInputFormat(SequenceFileInputFormat.class);
 
 			sortJob.setMapperClass(InverseMapper.class);
+			sortJob.setCombinerClass(TopKReduce.class);
 			sortJob.setReducerClass(TopKReduce.class);
 			sortJob.setInt("mapred.mapper.regex", Integer.parseInt(args[2]));
 
