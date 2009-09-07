@@ -63,7 +63,7 @@ public class TopK extends Configured implements Tool {
 		public void reduce(LongWritable key, Iterator<Text> values,
 				OutputCollector<LongWritable, Text> output, 
 				Reporter reporter) throws IOException {
-			while (values.hasNext() && k++ < count) {
+			while (values.hasNext() && count++ < k) {
 				output.collect(key, values.next());
 			}
 		}
