@@ -1,7 +1,9 @@
 package org.apache.hadoop.examples;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
@@ -68,11 +70,15 @@ public class TopK extends Configured implements Tool {
 	}
 
 	private TopK() {}                               // singleton
+	
+	private void printUsage() {
+		System.out.println("TopK [-m mappers] [-r reducers] <inDir> <outDir> <K> [<regexpr> [<group>]]");
+		ToolRunner.printGenericCommandUsage(System.out);
+	}
 
 	public int run(String[] args) throws Exception {
 		if (args.length < 3) {
-			System.out.println("TopK <inDir> <outDir> <K> [<regexpr> [<group>]]");
-			ToolRunner.printGenericCommandUsage(System.out);
+			printUsage();
 			return -1;
 		}
 
@@ -86,13 +92,41 @@ public class TopK extends Configured implements Tool {
 
 			topkJob.setJobName("topk-search");
 
-			FileInputFormat.setInputPaths(topkJob, args[0]);
+		    List<String> other_args = new ArrayList<String>();
+		    for(int i=0; i < args.length; ++i) {
+		      try {
+		        if ("-m".equals(args[i])) {
+		          topkJob.setNumMapTasks(Integer.parseInt(args[++i]));
+		        } else if ("-r".equals(args[i])) {
+		          topkJob.setNumReduceTasks(Integer.parseInt(args[++i]));
+		        } else {
+		          other_args.add(args[i]);
+		        }
+		      } catch (NumberFormatException except) {
+		        System.out.println("ERROR: Integer expected instead of " + args[i]);
+		        printUsage();
+		        return -1;
+		      } catch (ArrayIndexOutOfBoundsException except) {
+		        System.out.println("ERROR: Required parameter missing from " +
+		                           args[i-1]);
+		        printUsage();
+		        return -1;
+		      }
+		    }
+		    // Make sure there are exactly 2 parameters left.
+		    if (other_args.size() < 3) {
+		      System.out.println("ERROR: Wrong number of parameters: " +
+		                         other_args.size() + ".");
+		      printUsage(); return -1;
+		    }
+		    
+			FileInputFormat.setInputPaths(topkJob, other_args.get(0));
 
-			if (args.length == 4) {
+			if (other_args.size() >= 4) {
 				topkJob.setMapperClass(RegexMapper.class);
-				topkJob.set("mapred.mapper.regex", args[3]);
+				topkJob.set("mapred.mapper.regex", other_args.get(3));
 				if (args.length == 5)
-					topkJob.set("mapred.mapper.regex.group", args[4]);
+					topkJob.set("mapred.mapper.regex.group", other_args.get(4));
 			}
 			else {
 				topkJob.setMapperClass(LongMapper.class);
@@ -117,10 +151,10 @@ public class TopK extends Configured implements Tool {
 			sortJob.setMapperClass(InverseMapper.class);
 			sortJob.setCombinerClass(TopKReduce.class);
 			sortJob.setReducerClass(TopKReduce.class);
-			sortJob.setInt("mapred.reduce.topk.k", Integer.parseInt(args[2]));
+			sortJob.setInt("mapred.reduce.topk.k", Integer.parseInt(other_args.get(2)));
 
 			sortJob.setNumReduceTasks(1);                 // write a single file
-			FileOutputFormat.setOutputPath(sortJob, new Path(args[1]));
+			FileOutputFormat.setOutputPath(sortJob, new Path(other_args.get(1)));
 			sortJob.setOutputKeyComparatorClass           // sort by decreasing freq
 			(LongWritable.DecreasingComparator.class);
 
