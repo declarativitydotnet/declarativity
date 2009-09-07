@@ -42,6 +42,8 @@ public class ExampleDriver {
                    "An Aggregate based map/reduce program that computes the histogram of the words in the input files.");
       pgd.addClass("grep", Grep.class, 
                    "A map/reduce program that counts the matches of a regex in the input.");
+      pgd.addClass("topk", TopK.class, 
+                   "A map/reduce program that finds the topk matches of a regex in the input.");
       pgd.addClass("randomwriter", RandomWriter.class, 
                    "A map/reduce program that writes 10GB of random data per node.");
       pgd.addClass("randomtextwriter", RandomTextWriter.class, 
