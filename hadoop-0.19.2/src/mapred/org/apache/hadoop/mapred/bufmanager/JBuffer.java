@@ -158,7 +158,10 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		}
 		
 		public void close() {
-			this.open = false;
+			synchronized (this) {
+				this.open = false;
+				this.notifyAll();
+			}
 		}
 
 		public void run() {
@@ -174,12 +177,12 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 							e.printStackTrace();
 						}
 					}
-					
-					if (!open) return;
 					busy = true;
 				}
 				
 				try {
+					if (!open) return;
+					
 					if (taskid.isMap() == false && numSpills - numFlush > mergeThreshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
