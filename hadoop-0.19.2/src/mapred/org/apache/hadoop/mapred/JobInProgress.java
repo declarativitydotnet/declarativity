@@ -161,6 +161,8 @@ class JobInProgress {
   private long inputLength = 0;
   private long maxVirtualMemoryForTask;
   
+  private JobID dependentJobId;
+  
   // Per-job counters
   public static enum Counter { 
     NUM_FAILED_MAPS, 
@@ -221,6 +223,19 @@ class JobInProgress {
     jobFile = new Path(sysDir, jobid + "/job.xml");
     fs.copyToLocalFile(jobFile, localJobFile);
     conf = new JobConf(localJobFile);
+    
+    if (conf.get("mapred.job.pipeline", null) != null) {
+    	dependentJobId = JobID.forName(conf.get("mapred.job.pipeline"));
+    	JobInProgress dependentJob = jobtracker.getJob(dependentJobId);
+    	if (dependentJob == null) {
+    		throw new IOException("Unknown dependent job! " + dependentJobId);
+    	}
+    	conf.setNumMapTasks(dependentJob.numReduceTasks);
+    }
+    else {
+    	dependentJobId = null;
+    }
+    
     this.priority = conf.getJobPriority();
     this.status.setJobPriority(this.priority);
     this.profile = new JobProfile(conf.getUser(), jobid, 
