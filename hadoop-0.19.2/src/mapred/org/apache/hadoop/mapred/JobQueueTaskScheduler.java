@@ -146,6 +146,20 @@ class JobQueueTaskScheduler extends TaskScheduler {
           if (job.getStatus().getRunState() != JobStatus.RUNNING) {
             continue;
           }
+          
+          if (job.getJobConf().get("mapred.job.pipeline", null) != null) {
+        	  JobID dependent = JobID.forName(job.getJobConf().get("mapred.job.pipeline"));
+        	  boolean schedule = false;
+        	  for (JobInProgress prev : jobQueue) {
+        		  if (prev.getJobID().equals(dependent)) {
+        			  if (prev.finishedMaps() == prev.numMapTasks) {
+        				  schedule = true;
+        			  }
+        			  break;
+        		  }
+        	  }
+        	  if (!schedule) continue;
+          }
 
           Task t = job.obtainNewMapTask(taskTracker, numTaskTrackers,
               taskTrackerManager.getNumberOfUniqueHosts());
@@ -182,6 +196,20 @@ class JobQueueTaskScheduler extends TaskScheduler {
           if (job.getStatus().getRunState() != JobStatus.RUNNING ||
               job.numReduceTasks == 0) {
             continue;
+          }
+          
+          if (job.getJobConf().get("mapred.job.pipeline", null) != null) {
+        	  JobID dependent = JobID.forName(job.getJobConf().get("mapred.job.pipeline"));
+        	  boolean schedule = false;
+        	  for (JobInProgress prev : jobQueue) {
+        		  if (prev.getJobID().equals(dependent)) {
+        			  if (prev.finishedReduces() == prev.numReduceTasks) {
+        				  schedule = true;
+        			  }
+        			  break;
+        		  }
+        	  }
+        	  if (!schedule) continue;
           }
 
           Task t = job.obtainNewReduceTask(taskTracker, numTaskTrackers, 

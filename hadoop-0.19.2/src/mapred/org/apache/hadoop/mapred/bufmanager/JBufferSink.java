@@ -49,7 +49,7 @@ import org.apache.hadoop.mapred.IFile.Reader;
 import org.apache.hadoop.util.ReflectionUtils;
 
 
-public class ReduceMapSink<K extends Object, V extends Object> {
+public class JBufferSink<K extends Object, V extends Object> {
 	
 	private int maxConnections;
 	
@@ -75,7 +75,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	
 	private Set<TaskID> successful;
 	
-	public ReduceMapSink(JobConf conf, TaskAttemptID reduceID, ReduceOutputCollector<K, V> collector) throws IOException {
+	public JBufferSink(JobConf conf, TaskAttemptID reduceID, ReduceOutputCollector<K, V> collector) throws IOException {
 		this.conf = conf;
 		this.reduceID = reduceID;
 		this.collector = collector;
@@ -112,7 +112,7 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 						SocketChannel channel = server.accept();
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
-						Connection       conn   = new Connection(input, ReduceMapSink.this, conf);
+						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						synchronized (this) {
 							if (!connections.containsKey(conn.mapTaskID())) {
 								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
@@ -193,12 +193,12 @@ public class ReduceMapSink<K extends Object, V extends Object> {
 	private class Connection implements Runnable {
 		private TaskAttemptID mapTaskID;
 		
-		private ReduceMapSink<K, V> sink;
+		private JBufferSink<K, V> sink;
 		private DataInputStream input;
 		
 		private ReduceOutputFile reduceOutputFile;
 		
-		public Connection(DataInputStream input, ReduceMapSink<K, V> sink, JobConf conf) throws IOException {
+		public Connection(DataInputStream input, JBufferSink<K, V> sink, JobConf conf) throws IOException {
 			this.input = input;
 			this.sink = sink;
 			
