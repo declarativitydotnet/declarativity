@@ -24,6 +24,7 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.hadoop.mapred.lib.InverseMapper;
@@ -123,6 +124,8 @@ public class TopK extends Configured implements Tool {
 			printUsage();
 			return -1;
 		}
+		
+		JobClient client = new JobClient();
 
 		Path tempDir =
 			new Path("topk-temp-"+
@@ -182,7 +185,7 @@ public class TopK extends Configured implements Tool {
 			topkJob.setOutputKeyClass(Text.class);
 			topkJob.setOutputValueClass(LongWritable.class);
 
-			JobClient.runJob(topkJob);
+			RunningJob topkHandle = client.submitJob(topkJob);
 
 			JobConf sortJob = new JobConf(TopK.class);
 			sortJob.setJobName("topk-sort");
@@ -199,6 +202,8 @@ public class TopK extends Configured implements Tool {
 			FileOutputFormat.setOutputPath(sortJob, new Path(other_args.get(1)));
 			sortJob.setOutputKeyComparatorClass           // sort by decreasing freq
 			(LongWritable.DecreasingComparator.class);
+			
+			sortJob.set("mapred.job.pipeline", topkHandle.getJobID());
 
 			JobClient.runJob(sortJob);
 		}
