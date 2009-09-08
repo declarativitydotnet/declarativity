@@ -111,7 +111,7 @@ class JobInProgress {
   // A set of running reduce TIPs
   Set<TaskInProgress> runningReduces;
   
-  Set<TaskAttemptID> announcedRunningMaps = new HashSet<TaskAttemptID>();
+  Set<TaskAttemptID> announcedRunningTasks = new HashSet<TaskAttemptID>();
   
   // A list of cleanup tasks for the map task attempts, to be launched
   List<TaskAttemptID> mapCleanupTasks = new LinkedList<TaskAttemptID>();
@@ -755,7 +755,7 @@ class JobInProgress {
         taskEvent.setTaskRunTime((int)(status.getFinishTime() 
                                        - status.getStartTime()));
         tip.setSuccessEventNumber(taskCompletionEventTracker); 
-      } else if (state == TaskStatus.State.RUNNING && !this.announcedRunningMaps.contains(taskid)) {
+      } else if (state == TaskStatus.State.RUNNING && !this.announcedRunningTasks.contains(taskid)) {
           taskEvent = new TaskCompletionEvent(
                   taskCompletionEventTracker, 
                   taskid,
@@ -766,8 +766,7 @@ class JobInProgress {
                   TaskCompletionEvent.Status.RUNNING,
                   httpTaskLogLocation 
                  );
-          if (taskEvent.isMap == false) taskEvent = null;
-          else this.announcedRunningMaps.add(taskid);
+          this.announcedRunningTasks.add(taskid);
       } else if (state == TaskStatus.State.COMMIT_PENDING) {
         // If it is the first attempt reporting COMMIT_PENDING
         // ask the task to commit.

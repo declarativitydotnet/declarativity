@@ -286,6 +286,13 @@ class LocalJobRunner implements JobSubmissionProtocol {
       return new MapTaskCompletionEventsUpdate(TaskCompletionEvent.EMPTY_ARRAY,
                                                false);
     }
+
+	@Override
+	public ReduceTaskCompletionEventsUpdate getReduceCompletionEvents(
+			JobID reduceJobId, int fromIndex, int maxLocs, TaskAttemptID id)
+			throws IOException {
+	      return new ReduceTaskCompletionEventsUpdate(TaskCompletionEvent.EMPTY_ARRAY, false);
+	}
     
   }
 

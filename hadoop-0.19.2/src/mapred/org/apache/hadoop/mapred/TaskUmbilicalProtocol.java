@@ -147,4 +147,6 @@ interface TaskUmbilicalProtocol extends VersionedProtocol {
                                                        TaskAttemptID id) 
   throws IOException;
 
+  ReduceTaskCompletionEventsUpdate 
+  getReduceCompletionEvents(JobID reduceJobId, int fromIndex, int maxLocs, TaskAttemptID id) throws IOException;
 }

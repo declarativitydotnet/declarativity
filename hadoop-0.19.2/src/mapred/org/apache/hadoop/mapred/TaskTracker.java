@@ -156,6 +156,8 @@ public class TaskTracker
   
   BufferController bufferController = null;
     
+  Map<JobID, List<TaskCompletionEvent>> reduceCompletionEvents = new HashMap<JobID, List<TaskCompletionEvent>>();
+  
   Map<TaskAttemptID, TaskInProgress> tasks = new HashMap<TaskAttemptID, TaskInProgress>();
   /**
    * Map from taskId -> TaskInProgress.
@@ -193,6 +195,7 @@ public class TaskTracker
   private int failures;
   private int finishedCount[] = new int[1];
   private MapEventsFetcherThread mapEventsFetcher;
+  private ReduceEventsFetcherThread reduceEventsFetcher;
   int workerThreads;
   private CleanupQueue directoryCleanupThread;
   volatile JvmManager jvmManager;
@@ -504,6 +507,15 @@ public class TaskTracker
                              "Map-events fetcher for all reduce tasks " + "on " + 
                              taskTrackerName);
     mapEventsFetcher.start();
+    
+    this.reduceEventsFetcher = new ReduceEventsFetcherThread();
+    reduceEventsFetcher.setDaemon(true);
+    reduceEventsFetcher.setName(
+                             "reduce-events fetcher for all maps tasks " + "on " +  taskTrackerName);
+    reduceEventsFetcher.start();
+    
+    
+    
     maxVirtualMemoryForTasks = fConf.
                                   getLong("mapred.tasktracker.tasks.maxmemory",
                                           JobConf.DISABLED_VIRTUAL_MEMORY_LIMIT);
@@ -541,6 +553,34 @@ public class TaskTracker
 
   // Object on wait which MapEventsFetcherThread is going to wait.
   private Object waitingOn = new Object();
+  
+  private class ReduceEventsFetcherThread extends Thread {
+	  public void run() {
+		  while (running) {
+			  synchronized (TaskTracker.this.reduceCompletionEvents) {
+				  while (reduceCompletionEvents.size() == 0) {
+					  try { reduceCompletionEvents.wait(heartbeatInterval);
+					  } catch (InterruptedException e) { }
+				  }
+
+				  IntWritable fromEventId = new IntWritable(0);
+				  for (JobID jobId : reduceCompletionEvents.keySet()) {
+					  try {
+						  fromEventId.set(reduceCompletionEvents.get(jobId).size());
+						  List <TaskCompletionEvent> recentEvents = queryJobTracker(fromEventId, jobId, jobClient);
+						  for (TaskCompletionEvent e : recentEvents) {
+							  if (!e.isMap) {
+								  reduceCompletionEvents.get(jobId).add(e);
+							  }
+						  }
+					  } catch (IOException e) {
+
+					  }
+				  }
+			  }
+		  }
+	  }
+  }
 
   private class MapEventsFetcherThread extends Thread {
 
@@ -698,11 +738,16 @@ public class TaskTracker
       int currFromEventId = 0;
       synchronized (fromEventId) {
         currFromEventId = fromEventId.get();
-        List <TaskCompletionEvent> recentMapEvents = 
+        List <TaskCompletionEvent> recentEvents = 
           queryJobTracker(fromEventId, jobId, jobClient);
         synchronized (allMapEvents) {
-          allMapEvents.addAll(recentMapEvents);
+        	for (TaskCompletionEvent e : recentEvents) {
+        		if (e.isMap) {
+        			allMapEvents.add(e);
+        		}
+        	}
         }
+        
         lastFetchTime = currTime;
         if (fromEventId.get() - currFromEventId >= probe_sample_size) {
           //return true when we have fetched the full payload, indicating
@@ -1361,6 +1406,10 @@ public class TaskTracker
     RunningJob rjob = null;
     synchronized (runningJobs) {
       rjob = runningJobs.get(jobId);
+    }
+    
+    synchronized (this.reduceCompletionEvents) {
+    	this.reduceCompletionEvents.remove(jobId);
     }
       
     if (rjob == null) {
@@ -2630,6 +2679,26 @@ public class TaskTracker
       }
     }
     return new MapTaskCompletionEventsUpdate(mapEvents, false);
+  }
+  
+  public synchronized ReduceTaskCompletionEventsUpdate getReduceCompletionEvents(
+		  JobID reduceJobID, int fromEventId, int maxLocs, TaskAttemptID id) 
+  throws IOException {
+	  TaskCompletionEvent[] reduceEvents = TaskCompletionEvent.EMPTY_ARRAY;
+	  List<TaskCompletionEvent> rjob;
+	  synchronized (reduceCompletionEvents) {
+		  rjob = reduceCompletionEvents.get(reduceJobID);          
+		  if (rjob != null) {
+	          int actualMax = Math.min(maxLocs, (rjob.size() - fromEventId));
+	          List <TaskCompletionEvent> eventSublist =  rjob.subList(fromEventId, actualMax + fromEventId);
+	          reduceEvents = eventSublist.toArray(reduceEvents);
+		  }
+		  else {
+			  reduceCompletionEvents.put(reduceJobID, new ArrayList<TaskCompletionEvent>());
+			  reduceCompletionEvents.notify();
+		  }
+	  }
+	  return new ReduceTaskCompletionEventsUpdate(reduceEvents, false);
   }
     
   /////////////////////////////////////////////////////

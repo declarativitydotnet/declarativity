@@ -37,7 +37,7 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.mapred.bufmanager.BufferRequest;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
-import org.apache.hadoop.mapred.bufmanager.ReduceMapSink;
+import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.ReduceOutputCollector;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
 import org.apache.hadoop.util.Progress;
@@ -52,9 +52,9 @@ public class ReduceTask extends Task {
 		
 		private BufferUmbilicalProtocol bufferUmbilical;
 
-		private ReduceMapSink sink;
+		private JBufferSink sink;
 		
-		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, ReduceMapSink sink) {
+		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, JBufferSink sink) {
 			this.trackerUmbilical = trackerUmbilical;
 			this.bufferUmbilical = bufferUmbilical;
 			this.sink = sink;
@@ -236,7 +236,7 @@ public class ReduceTask extends Task {
 
 		
 		JBuffer     buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-		ReduceMapSink sink = new ReduceMapSink(job, getTaskID(), (ReduceOutputCollector) buffer);
+		JBufferSink sink = new JBufferSink(job, getTaskID(), (ReduceOutputCollector) buffer);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);

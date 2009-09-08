@@ -30,10 +30,13 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,6 +62,8 @@ import org.apache.hadoop.mapred.bufmanager.BufferRequest;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
 import org.apache.hadoop.mapred.bufmanager.MapOutputCollector;
+import org.apache.hadoop.mapred.bufmanager.JBufferSink;
+import org.apache.hadoop.mapred.bufmanager.ReduceOutputCollector;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.IndexedSorter;
 import org.apache.hadoop.util.Progress;
@@ -67,6 +72,71 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 /** A Map task. */
 public final class MapTask extends Task {
+	private class ReduceOutputFetcher extends Thread {
+		
+		private JobID reduceJobId;
+
+		private TaskUmbilicalProtocol trackerUmbilical;
+		
+		private BufferUmbilicalProtocol bufferUmbilical;
+
+		private JBufferSink sink;
+		
+		public ReduceOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, JBufferSink sink, JobID reduceJobId) {
+			this.trackerUmbilical = trackerUmbilical;
+			this.bufferUmbilical = bufferUmbilical;
+			this.sink = sink;
+			this.reduceJobId = reduceJobId;
+		}
+
+		public void run() {
+			int eid = 0;
+			while (true) {
+				try {
+					ReduceTaskCompletionEventsUpdate updates = 
+						trackerUmbilical.getReduceCompletionEvents(reduceJobId, eid, Integer.MAX_VALUE, MapTask.this.getTaskID());
+
+					eid += updates.events.length;
+
+					// Process the TaskCompletionEvents:
+					// 1. Save the SUCCEEDED maps in knownOutputs to fetch the outputs.
+					// 2. Save the OBSOLETE/FAILED/KILLED maps in obsoleteOutputs to stop fetching
+					//    from those maps.
+					// 3. Remove TIPFAILED maps from neededOutputs since we don't need their
+					//    outputs at all.
+					for (TaskCompletionEvent event : updates.events) {
+						switch (event.getTaskStatus()) {
+						case FAILED:
+						case KILLED:
+						case OBSOLETE:
+						case TIPFAILED:
+							return;
+						case SUCCEEDED:
+						case RUNNING:
+						{
+							URI u = URI.create(event.getTaskTrackerHttp());
+							String host = u.getHost();
+							TaskAttemptID reduceTaskId = event.getTaskAttemptId();
+							if (reduceTaskId.equals(reduceTaskId)) {
+								bufferUmbilical.request(new BufferRequest(reduceTaskId, 0, host, sink.getAddress()));
+								return; // done
+							}
+						}
+						break;
+						}
+					}
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) { }
+			}
+		}
+	}
+	
 	/**
 	 * The size of each record in the index file for the map-outputs.
 	 */
@@ -235,6 +305,16 @@ public final class MapTask extends Task {
 			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		} else { 
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
+		}
+		
+		ReduceOutputFetcher rof = null;
+		if (job.get("mapred.job.pipeline", null) != null) {
+			JBuffer inputBuffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+			JBufferSink sink = new JBufferSink(job, getTaskID(), (ReduceOutputCollector) inputBuffer);
+			JobID reduceJobId = JobID.forName(job.get("mapred.job.pipeline"));
+			
+			rof = new ReduceOutputFetcher(umbilical, bufferUmbilical, sink, reduceJobId);
+			rof.start();
 		}
 
 		// reinstantiate the split

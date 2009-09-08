@@ -107,6 +107,13 @@ public class IsolationRunner {
         SortedRanges.Range range) throws IOException {
       LOG.info("Task " + taskid + " reportedNextRecordRange " + range);
     }
+
+	@Override
+	public ReduceTaskCompletionEventsUpdate getReduceCompletionEvents(
+			JobID reduceJobId, int fromIndex, int maxLocs, TaskAttemptID id)
+			throws IOException {
+		return new ReduceTaskCompletionEventsUpdate(TaskCompletionEvent.EMPTY_ARRAY, false);
+	}
   }
   
   private static ClassLoader makeClassLoader(JobConf conf, 
