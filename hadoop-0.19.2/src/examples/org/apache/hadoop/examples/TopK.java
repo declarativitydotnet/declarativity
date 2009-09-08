@@ -125,8 +125,6 @@ public class TopK extends Configured implements Tool {
 			return -1;
 		}
 		
-		JobClient client = new JobClient();
-
 		Path tempDir =
 			new Path("topk-temp-"+
 					Integer.toString(new Random().nextInt(Integer.MAX_VALUE)));
@@ -185,6 +183,7 @@ public class TopK extends Configured implements Tool {
 			topkJob.setOutputKeyClass(Text.class);
 			topkJob.setOutputValueClass(LongWritable.class);
 
+			JobClient  client     = new JobClient(topkJob);
 			RunningJob topkHandle = client.submitJob(topkJob);
 
 			JobConf sortJob = new JobConf(TopK.class);
