@@ -58,6 +58,7 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.IFile.Writer;
 import org.apache.hadoop.mapred.IFile.Reader;
 import org.apache.hadoop.mapred.Merger.Segment;
+import org.apache.hadoop.mapred.TaskCompletionEvent.Status;
 import org.apache.hadoop.mapred.bufmanager.BufferRequest;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
@@ -90,6 +91,7 @@ public final class MapTask extends Task {
 		}
 
 		public void run() {
+			boolean requestSent = false;
 			int eid = 0;
 			while (true) {
 				try {
@@ -112,14 +114,17 @@ public final class MapTask extends Task {
 						case TIPFAILED:
 							return;
 						case SUCCEEDED:
+							if (requestSent) return;
 						case RUNNING:
 						{
 							URI u = URI.create(event.getTaskTrackerHttp());
 							String host = u.getHost();
 							TaskAttemptID reduceTaskId = event.getTaskAttemptId();
 							if (reduceTaskId.equals(reduceTaskId)) {
+								System.err.println("Map " + getTaskID() + " sending buffer request to reducer in job " + reduceTaskId);
 								bufferUmbilical.request(new BufferRequest(reduceTaskId, 0, host, sink.getAddress()));
-								return; // done
+								requestSent = true;
+								if (event.getTaskStatus() == Status.SUCCEEDED) return;
 							}
 						}
 						break;
@@ -298,15 +303,6 @@ public final class MapTask extends Task {
 	      return;
 	    }
 	    
-		int numReduceTasks = conf.getNumReduceTasks();
-		LOG.info("numReduceTasks: " + numReduceTasks);
-	    
-		if (numReduceTasks > 0) {
-			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-		} else { 
-			collector = new DirectMapOutputCollector(umbilical, job, reporter);
-		}
-		
 		ReduceOutputFetcher rof = null;
 		if (job.get("mapred.job.pipeline", null) != null) {
 			JBuffer inputBuffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
@@ -315,6 +311,20 @@ public final class MapTask extends Task {
 			
 			rof = new ReduceOutputFetcher(umbilical, bufferUmbilical, sink, reduceJobId);
 			rof.start();
+			try {
+				rof.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		int numReduceTasks = conf.getNumReduceTasks();
+		LOG.info("numReduceTasks: " + numReduceTasks);
+	    
+		if (numReduceTasks > 0) {
+			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+		} else { 
+			collector = new DirectMapOutputCollector(umbilical, job, reporter);
 		}
 
 		// reinstantiate the split
