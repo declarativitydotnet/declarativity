@@ -48,15 +48,10 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private class RequestHandler extends Thread {
 		
 		public void run() {
+			List<TaskAttemptID> handleCommitted = new ArrayList<TaskAttemptID>();
 			while (true) {
-				List<TaskAttemptID> handleCommitted = new ArrayList<TaskAttemptID>();
-				synchronized (requests) {
-					while (committed.size() == 0) {
-						try { requests.wait();
-						} catch (InterruptedException e) { }
-					}
-					handleCommitted.addAll(committed);
-				}
+				handleCommitted.clear();
+				handleCommitted.addAll(committed);
 
 				for (TaskAttemptID taskid : handleCommitted) {
 					List<BufferRequest> handleRequests = new ArrayList<BufferRequest>();
@@ -97,7 +92,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				JobConf job = tracker.getJobConf(taskid);
 				for (BufferRequest request : handle) {
 					if (request.open(job)) {
-						System.err.println("Send complete buffer " + taskid + " partition " + request.partition() + " to " + request.sink());
 						executor.execute(request);
 						handled.add(request);
 					}
