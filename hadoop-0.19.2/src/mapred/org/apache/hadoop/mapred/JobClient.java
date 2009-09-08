@@ -876,10 +876,10 @@ public class JobClient extends Configured implements MRConstants, Tool  {
   }
 
   static class RawSplit implements Writable {
-    private String splitClass;
+    private String splitClass = "";
     private BytesWritable bytes = new BytesWritable();
-    private String[] locations;
-    long dataLength;
+    private String[] locations = new String[0];
+    long dataLength = 0;
 
     public void setBytes(byte[] data, int offset, int length) {
       bytes.set(data, offset, length);
