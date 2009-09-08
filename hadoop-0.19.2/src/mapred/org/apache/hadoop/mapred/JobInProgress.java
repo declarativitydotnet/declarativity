@@ -387,15 +387,20 @@ class JobInProgress {
 
     Path sysDir = new Path(this.jobtracker.getSystemDir());
     FileSystem fs = sysDir.getFileSystem(conf);
-    DataInputStream splitFile =
-      fs.open(new Path(conf.get("mapred.job.split.file")));
-    JobClient.RawSplit[] splits;
-    try {
-      splits = JobClient.readSplitFile(splitFile);
-    } finally {
-      splitFile.close();
+    JobClient.RawSplit[] splits = null;
+    if (this.dependentJobId != null) {
+    	numMapTasks = conf.getNumMapTasks();
     }
-    numMapTasks = splits.length;
+    else {
+    	DataInputStream splitFile =
+    		fs.open(new Path(conf.get("mapred.job.split.file")));
+    	try {
+    		splits = JobClient.readSplitFile(splitFile);
+    	} finally {
+    		splitFile.close();
+    	}
+    	numMapTasks = splits.length;
+    }
 
 
     // if the number of splits is larger than a configured value
@@ -410,11 +415,19 @@ class JobInProgress {
 
     maps = new TaskInProgress[numMapTasks];
     for(int i=0; i < numMapTasks; ++i) {
-      inputLength += splits[i].getDataLength();
-      maps[i] = new TaskInProgress(jobId, jobFile, 
-                                   splits[i], 
-                                   jobtracker, conf, this, i);
+    	if (splits != null) {
+    		inputLength += splits[i].getDataLength();
+    		maps[i] = new TaskInProgress(jobId, jobFile, 
+    				splits[i], 
+    				jobtracker, conf, this, i);
+    	}
+    	else {
+    		JobClient.RawSplit split = new JobClient.RawSplit();
+    		maps[i] = new TaskInProgress(jobId, jobFile, split, 
+    				jobtracker, conf, this, i);
+    	}
     }
+    
     LOG.info("Input size for job "+ jobId + " = " + inputLength);
     if (numMapTasks > 0) { 
       LOG.info("Split info for job:" + jobId);
