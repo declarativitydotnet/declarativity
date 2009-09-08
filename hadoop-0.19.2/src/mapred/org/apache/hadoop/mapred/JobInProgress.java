@@ -390,6 +390,10 @@ class JobInProgress {
     JobClient.RawSplit[] splits = null;
     if (this.dependentJobId != null) {
     	numMapTasks = conf.getNumMapTasks();
+    	splits = new JobClient.RawSplit[numMapTasks];
+    	for (int i = 0; i < numMapTasks; i++) {
+    		splits[i] = new JobClient.RawSplit();
+    	}
     }
     else {
     	DataInputStream splitFile =
@@ -415,17 +419,9 @@ class JobInProgress {
 
     maps = new TaskInProgress[numMapTasks];
     for(int i=0; i < numMapTasks; ++i) {
-    	if (splits != null) {
-    		inputLength += splits[i].getDataLength();
-    		maps[i] = new TaskInProgress(jobId, jobFile, 
-    				splits[i], 
-    				jobtracker, conf, this, i);
-    	}
-    	else {
-    		JobClient.RawSplit split = new JobClient.RawSplit();
-    		maps[i] = new TaskInProgress(jobId, jobFile, split, 
-    				jobtracker, conf, this, i);
-    	}
+    	inputLength += splits[i].getDataLength();
+    	maps[i] = new TaskInProgress(jobId, jobFile, 
+    			splits[i], jobtracker, conf, this, i);
     }
     
     LOG.info("Input size for job "+ jobId + " = " + inputLength);
