@@ -440,7 +440,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public synchronized boolean reserve(long bytes) {
-		if (bytes < getBytes() - this.reserve) {
+		if (kvbuffer == null) return false;
+		else if (bytes < getBytes() - this.reserve) {
 			this.reserve += bytes;
 			return true;
 		}
@@ -772,7 +773,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
 		}
 		else {
-			flush();
 			Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
 			RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
 			return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
@@ -828,8 +828,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		System.err.println("Buffer " + taskid + " committing. \n\tFinal merge from " + (numSpills - numFlush) + " spill files.");
 		mergeParts(false);
-		
-		umbilical.commit(this.taskid);
 	}
 
 	public void close() {  }

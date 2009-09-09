@@ -265,6 +265,7 @@ public class MapTask extends Task {
 		try {
 			runner.run(this.recordReader, collector, reporter);      
 			collector.flush();
+			bufferUmbilical.commit(getTaskID());
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw e;

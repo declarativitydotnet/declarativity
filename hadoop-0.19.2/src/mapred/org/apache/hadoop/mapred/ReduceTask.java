@@ -131,8 +131,8 @@ public class ReduceTask extends Task {
 	}
 
 	private static final Log LOG = LogFactory.getLog(ReduceTask.class.getName());
-	private int numMaps;
-	private CompressionCodec codec;
+	protected int numMaps;
+	protected CompressionCodec codec;
 
 
 	{ 
@@ -245,6 +245,13 @@ public class ReduceTask extends Task {
 		/* This will not close (block) until all fetches finish! */
 		sink.block();
 		
+		reduce(job, reporter, buffer);
+
+		done(umbilical);
+	}
+	
+	
+	protected void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 
 		// make output collector
@@ -272,6 +279,7 @@ public class ReduceTask extends Task {
 		      Class keyClass = job.getMapOutputKeyClass();
 		      Class valClass = job.getMapOutputValueClass();
 		      
+		      buffer.flush();
 		      ValuesIterator values = buffer.iterator();
 		      while (values.more()) {
 		        reducer.reduce(values.getKey(), values, collector, reporter);
@@ -293,6 +301,5 @@ public class ReduceTask extends Task {
 				out.close(reporter);
 			} catch (IOException ignored) {}
 		}
-		done(umbilical);
 	}
 }
