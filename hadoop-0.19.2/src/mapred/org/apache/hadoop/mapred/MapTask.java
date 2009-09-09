@@ -228,7 +228,7 @@ public class MapTask extends Task {
 		LOG.info("numReduceTasks: " + numReduceTasks);
 	    
 		if (numReduceTasks > 0) {
-			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, null);
 		} else { 
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
 		}

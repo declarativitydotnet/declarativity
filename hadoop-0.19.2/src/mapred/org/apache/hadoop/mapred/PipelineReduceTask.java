@@ -36,22 +36,22 @@ public class PipelineReduceTask extends ReduceTask {
 	public void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
-		JBuffer output = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-
+		buffer.flush();
+		buffer.close();
+		
+		JBuffer output  = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, buffer.buffer());
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 		// apply reduce function
 		try {
-		      Class keyClass = job.getMapOutputKeyClass();
-		      Class valClass = job.getMapOutputValueClass();
-		      
-		      buffer.flush();
-		      ValuesIterator values = buffer.iterator();
-		      while (values.more()) {
-		        reducer.reduce(values.getKey(), values, output, reporter);
-		        values.nextKey();
-		        reporter.progress();
-		      }
-		      
+			Class keyClass = job.getMapOutputKeyClass();
+			Class valClass = job.getMapOutputValueClass();
+
+			ValuesIterator values = buffer.iterator();
+			while (values.more()) {
+				reducer.reduce(values.getKey(), values, output, reporter);
+				values.nextKey();
+				reporter.progress();
+			}
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 			throw ioe;
@@ -60,13 +60,10 @@ public class PipelineReduceTask extends ReduceTask {
 		}
 		finally {
 			//Clean up: repeated in catch block below
-			try {
-				reducer.close();
-				buffer.close();
-			} catch (IOException ignored) {}
+			reducer.close();
+			output.flush();
+			output.close();
+			bufferUmbilical.commit(getTaskID());
 		}
-		
-		bufferUmbilical.commit(getTaskID());
 	}
-	
 }

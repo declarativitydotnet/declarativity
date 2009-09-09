@@ -355,7 +355,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
 	
 	@SuppressWarnings("unchecked")
-	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
+	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter, byte[] buffer) throws IOException {
 		this.umbilical = umbilical;
 		this.taskid = taskid;
 		this.job = job;
@@ -400,7 +400,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		int recordCapacity = (int)(maxMemUsage * recper);
 		recordCapacity -= recordCapacity % RECSIZE;
-		kvbuffer = new byte[maxMemUsage - recordCapacity];
+		kvbuffer = buffer == null ? new byte[maxMemUsage - recordCapacity] : buffer;
 		bufvoid = kvbuffer.length;
 		recordCapacity /= RECSIZE;
 		kvoffsets = new int[recordCapacity];
@@ -430,6 +430,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		? new CombineOutputCollector()
 		: null;
 		minSpillsForCombine = job.getInt("min.num.spills.for.combine", 3);
+	}
+	
+	public byte[] buffer() {
+		return this.kvbuffer;
 	}
 	
 	/**
@@ -823,14 +827,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			bufend = bufmark;
 			sortAndSpill();
 		}
-		// release sort buffer before the merge
-		kvbuffer = null;
 		
 		System.err.println("Buffer " + taskid + " committing. \n\tFinal merge from " + (numSpills - numFlush) + " spill files.");
 		mergeParts(false);
 	}
 
-	public void close() {  }
+	public void close() {  
+		kvbuffer = null;
+	}
 	
 	
 	public void spill(Path data, long size, Path index) throws IOException {
