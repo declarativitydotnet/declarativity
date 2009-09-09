@@ -573,7 +573,6 @@ public class TaskTracker
 						  fromEventId.set(reduceCompletionEvents.get(jobId).size());
 						  List <TaskCompletionEvent> recentEvents = queryJobTracker(fromEventId, jobId, jobClient);
 						  for (TaskCompletionEvent e : recentEvents) {
-							  System.err.println("ReduceEventsFetcherThread: received event " + e);
 							  if (!e.isMap) {
 								  System.err.println("Reduce task event " + e);
 								  reduceCompletionEvents.get(jobId).add(e);
@@ -1018,15 +1017,13 @@ public class TaskTracker
                                                                 probe_sample_size);
     //we are interested in map task completion events only. So store
     //only those
-    List <TaskCompletionEvent> recentMapEvents = 
+    List <TaskCompletionEvent> recentEvents = 
       new ArrayList<TaskCompletionEvent>();
     for (int i = 0; i < t.length; i++) {
-      if (t[i].isMap) {
-        recentMapEvents.add(t[i]);
-      }
+        recentEvents.add(t[i]);
     }
     fromEventId.set(fromEventId.get() + t.length);
-    return recentMapEvents;
+    return recentEvents;
   }
 
   /**

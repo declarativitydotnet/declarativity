@@ -797,7 +797,6 @@ class JobInProgress {
                   TaskCompletionEvent.Status.RUNNING,
                   httpTaskLogLocation 
                  );
-          System.err.println("RUNNING TASK ANNOUNCE " + taskid);
           this.announcedRunningTasks.add(taskid);
       } else if (state == TaskStatus.State.COMMIT_PENDING) {
         // If it is the first attempt reporting COMMIT_PENDING
