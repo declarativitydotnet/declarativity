@@ -61,7 +61,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private ServerSocketChannel server;
 	
-	private int numMapTasks;
+	private int numConnections;
 	
 	private ReduceOutputCollector<K, V> collector;
 	
@@ -75,16 +75,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private Set<TaskID> successful;
 	
-	public JBufferSink(JobConf conf, TaskAttemptID reduceID, ReduceOutputCollector<K, V> collector) throws IOException {
+	public JBufferSink(JobConf conf, TaskAttemptID reduceID, ReduceOutputCollector<K, V> collector, int numConnections) throws IOException {
 		this.conf = conf;
 		this.reduceID = reduceID;
 		this.collector = collector;
 		this.localFs = FileSystem.getLocal(conf);
 		this.maxConnections = conf.getInt("mapred.reduce.parallel.copies", 20);
 		
-	    /** How many mappers? */
-	    this.numMapTasks = conf.getNumMapTasks();
-		this.executor = Executors.newFixedThreadPool(this.numMapTasks);
+	    this.numConnections = numConnections;
+		this.executor = Executors.newCachedThreadPool();
 		this.connections = new HashMap<TaskAttemptID, List<Connection>>();
 		this.successful = new HashSet<TaskID>();
 		this.runningTransfers = new HashSet<TaskAttemptID>();
@@ -149,7 +148,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	public void block() throws IOException {
 		try {
 			synchronized (this) {
-				while (this.successful.size() < numMapTasks) {
+				while (this.successful.size() < numConnections) {
 					try { this.wait();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
