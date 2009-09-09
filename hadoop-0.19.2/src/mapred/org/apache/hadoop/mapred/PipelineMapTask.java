@@ -137,8 +137,17 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		initialize(job, reporter);
 
 	    // check if it is a cleanupJobTask
-	    if (jobCleanup || jobSetup || taskCleanup) {
-	    	throw new IOException("PipelineMapTask: not for use as a setup or cleanup!");
+	    if (jobCleanup) {
+	      runJobCleanupTask(umbilical);
+	      return;
+	    }
+	    if (jobSetup) {
+	      runJobSetupTask(umbilical);
+	      return;
+	    }
+	    if (taskCleanup) {
+	      runTaskCleanupTask(umbilical);
+	      return;
 	    }
 	    
 	    if (job.get("mapred.job.pipeline", null) == null) {
