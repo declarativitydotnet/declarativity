@@ -354,14 +354,22 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
           long retireBefore = now - RETIRE_JOB_INTERVAL;
 
           synchronized (jobs) {
-            for(JobInProgress job: jobs.values()) {
-              if (job.getStatus().getRunState() != JobStatus.RUNNING &&
-                  job.getStatus().getRunState() != JobStatus.PREP &&
-                  (job.getFinishTime() + MIN_TIME_BEFORE_RETIRE < now) &&
-                  (job.getFinishTime()  < retireBefore)) {
-                retiredJobs.add(job);
-              }
-            }
+        	  for(JobInProgress job: jobs.values()) {
+        		  if (job.getStatus().getRunState() != JobStatus.RUNNING &&
+        				  job.getStatus().getRunState() != JobStatus.PREP &&
+        				  (job.getFinishTime() + MIN_TIME_BEFORE_RETIRE < now) &&
+        				  (job.getFinishTime()  < retireBefore)) {
+        			  boolean retire = true;
+        			  for (JobID dependent : job.dependents()) {
+        				  if (jobs.containsKey(dependent) && 
+        						  (jobs.get(dependent).getStatus().getRunState() == JobStatus.RUNNING ||
+        								  jobs.get(dependent).getStatus().getRunState() == JobStatus.PREP)) {
+        					  retire = false;
+        				  }
+        			  }
+        			  if (retire) retiredJobs.add(job);
+        		  }
+        	  }
           }
           if (!retiredJobs.isEmpty()) {
             synchronized (JobTracker.this) {

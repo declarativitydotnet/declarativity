@@ -163,6 +163,8 @@ class JobInProgress {
   
   private JobID dependentJobId;
   
+  private Set<JobID> dependents = new HashSet<JobID>();
+  
   // Per-job counters
   public static enum Counter { 
     NUM_FAILED_MAPS, 
@@ -230,6 +232,7 @@ class JobInProgress {
     	if (dependentJob == null) {
     		throw new IOException("Unknown dependent job! " + dependentJobId);
     	}
+    	dependentJob.dependents.add(jobid); // add me
     	conf.setNumMapTasks(dependentJob.numReduceTasks);
     }
     else {
@@ -287,6 +290,10 @@ class JobInProgress {
         jobMetrics.update();
       }
     }
+  }
+  
+  public Set<JobID> dependents() {
+	  return this.dependents;
   }
     
   /**
@@ -790,6 +797,7 @@ class JobInProgress {
                   TaskCompletionEvent.Status.RUNNING,
                   httpTaskLogLocation 
                  );
+          System.err.println("RUNNING TASK ANNOUNCE " + taskid);
           this.announcedRunningTasks.add(taskid);
       } else if (state == TaskStatus.State.COMMIT_PENDING) {
         // If it is the first attempt reporting COMMIT_PENDING
