@@ -2685,7 +2685,7 @@ public class TaskTracker
   }
   
   public synchronized ReduceTaskCompletionEventsUpdate getReduceCompletionEvents(
-		  JobID reduceJobID, int fromEventId, int maxLocs, TaskAttemptID id) 
+		  JobID reduceJobID, int fromEventId, int maxLocs) 
   throws IOException {
 	  TaskCompletionEvent[] reduceEvents = TaskCompletionEvent.EMPTY_ARRAY;
 	  List<TaskCompletionEvent> rjob;

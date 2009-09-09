@@ -46,7 +46,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			while (true) {
 				try {
 					ReduceTaskCompletionEventsUpdate updates = 
-						trackerUmbilical.getReduceCompletionEvents(reduceTaskId.getJobID(), eid, Integer.MAX_VALUE, getTaskID());
+						trackerUmbilical.getReduceCompletionEvents(reduceTaskId.getJobID(), eid, Integer.MAX_VALUE);
 
 					eid += updates.events.length;
 
@@ -70,7 +70,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 							URI u = URI.create(event.getTaskTrackerHttp());
 							String host = u.getHost();
 							TaskAttemptID reduceAttemptId = event.getTaskAttemptId();
-							if (reduceAttemptId.getTaskID().equals(reduceTaskId)) {
+							if (reduceAttemptId.getTaskID().equals(reduceTaskId) && !requestSent) {
 								System.err.println("Map " + getTaskID() + " sending buffer request to reducer " + reduceAttemptId);
 								bufferUmbilical.request(new BufferRequest(reduceAttemptId, 0, host, sink.getAddress()));
 								requestSent = true;
@@ -178,6 +178,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		JBufferSink sink  = new JBufferSink(job, getTaskID(), this, 1);
 		JobID reduceJobId = JobID.forName(job.get("mapred.job.pipeline"));
 		TaskID reduceTaskId = new TaskID(reduceJobId, false, getTaskID().id);
+		System.err.println("Map task " + getTaskID() + " requesting pipeline from reducer " + reduceTaskId);
 		ReduceOutputFetcher rof = new ReduceOutputFetcher(umbilical, bufferUmbilical, sink, reduceTaskId);
 		
 		synchronized (this) {
