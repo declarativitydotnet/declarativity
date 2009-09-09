@@ -572,10 +572,9 @@ public class TaskTracker
 					  try {
 						  fromEventId.set(reduceCompletionEvents.get(jobId).size());
 						  List <TaskCompletionEvent> recentEvents = queryJobTracker(fromEventId, jobId, jobClient);
-						  System.err.println("From job id " + jobId + " event id " + fromEventId);
 						  for (TaskCompletionEvent e : recentEvents) {
 							  if (!e.isMap) {
-								  System.err.println("\tReduce task event " + e);
+								  System.err.println("Reduce task event " + e);
 								  reduceCompletionEvents.get(jobId).add(e);
 							  }
 						  }
