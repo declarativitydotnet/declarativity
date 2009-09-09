@@ -83,7 +83,11 @@ public class TaskCompletionEvent implements Writable{
    */
   @Deprecated
   public String getTaskId() {
-    return taskId.toString();
+	  StringBuilder sb = new StringBuilder();
+	  sb.append(taskId.toString() + ": ");
+	  sb.append("status = " + this.status);
+	  sb.append(". trackerhttp = " + this.taskTrackerHttp);
+	  return sb.toString();
   }
   
   /**
