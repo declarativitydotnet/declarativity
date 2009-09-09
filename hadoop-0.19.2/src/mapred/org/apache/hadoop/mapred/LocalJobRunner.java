@@ -289,7 +289,7 @@ class LocalJobRunner implements JobSubmissionProtocol {
 
 	@Override
 	public ReduceTaskCompletionEventsUpdate getReduceCompletionEvents(
-			JobID reduceJobId, int fromIndex, int maxLocs, TaskAttemptID id)
+			JobID reduceJobId, int fromIndex, int maxLocs)
 			throws IOException {
 	      return new ReduceTaskCompletionEventsUpdate(TaskCompletionEvent.EMPTY_ARRAY, false);
 	}
