@@ -306,7 +306,7 @@ public final class MapTask extends Task {
 		ReduceOutputFetcher rof = null;
 		if (job.get("mapred.job.pipeline", null) != null) {
 			JBuffer inputBuffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-			JBufferSink sink = new JBufferSink(job, getTaskID(), (ReduceOutputCollector) inputBuffer);
+			JBufferSink sink = new JBufferSink(job, getTaskID(), (ReduceOutputCollector) inputBuffer, 1);
 			JobID reduceJobId = JobID.forName(job.get("mapred.job.pipeline"));
 			
 			rof = new ReduceOutputFetcher(umbilical, bufferUmbilical, sink, reduceJobId);
