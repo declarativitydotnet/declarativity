@@ -894,8 +894,7 @@ class TaskInProgress {
     if (isMapTask()) {
       LOG.debug("attemdpt "+  numTaskFailures   +
           " sending skippedRecords "+failedRanges.getIndicesCount());
-      if (!jobCleanup && !jobSetup && !taskCleanup &&
-    		  conf.get("mapred.job.pipeline", null) != null) {
+      if (conf.get("mapred.job.pipeline", null) != null) {
     	 t = new PipelineMapTask(jobFile, taskid, partition); 
       }
       else {
