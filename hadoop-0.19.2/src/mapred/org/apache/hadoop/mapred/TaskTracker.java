@@ -555,6 +555,7 @@ public class TaskTracker
   private Object waitingOn = new Object();
   
   private class ReduceEventsFetcherThread extends Thread {
+	  Map<JobID, IntWritable> fromEventIds = new HashMap<JobID, IntWritable>();
 	  public void run() {
 		  while (running) {
 			  synchronized (TaskTracker.this.reduceCompletionEvents) {
@@ -563,13 +564,16 @@ public class TaskTracker
 					  } catch (InterruptedException e) { }
 				  }
 
-				  IntWritable fromEventId = new IntWritable(0);
 				  for (JobID jobId : reduceCompletionEvents.keySet()) {
+					  if (!fromEventIds.containsKey(jobId)) {
+						  fromEventIds.put(jobId, new IntWritable(0));
+					  }
+					  IntWritable fromEventId = fromEventIds.get(jobId);
 					  try {
 						  fromEventId.set(reduceCompletionEvents.get(jobId).size());
-						  System.err.println("ReduceEventsFetcherThread: fetch from job " + jobId + " from id " + fromEventId);
 						  List <TaskCompletionEvent> recentEvents = queryJobTracker(fromEventId, jobId, jobClient);
 						  for (TaskCompletionEvent e : recentEvents) {
+							  System.err.println("ReduceEventsFetcherThread: received event " + e);
 							  if (!e.isMap) {
 								  System.err.println("Reduce task event " + e);
 								  reduceCompletionEvents.get(jobId).add(e);
@@ -2696,7 +2700,6 @@ public class TaskTracker
 	          reduceEvents = eventSublist.toArray(reduceEvents);
 		  }
 		  else {
-			  System.err.println("Add reduce completion event for job " + reduceJobID + " from task " + id);
 			  reduceCompletionEvents.put(reduceJobID, new ArrayList<TaskCompletionEvent>());
 			  reduceCompletionEvents.notify();
 		  }
