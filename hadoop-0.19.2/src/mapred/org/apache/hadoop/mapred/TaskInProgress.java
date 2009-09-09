@@ -902,7 +902,12 @@ class TaskInProgress {
     			  rawSplit.getClassName(), rawSplit.getBytes());
       }
     } else {
-      t = new ReduceTask(jobFile, taskid, partition, numMaps);
+    	if (conf.getBoolean("mapred.reduce.pipeline", false)) {
+    		t = new PipelineReduceTask(jobFile, taskid, partition, numMaps);
+    	}
+    	else {
+    		t = new ReduceTask(jobFile, taskid, partition, numMaps);
+    	}
     }
     if (jobCleanup) {
       t.setJobCleanupTask();
