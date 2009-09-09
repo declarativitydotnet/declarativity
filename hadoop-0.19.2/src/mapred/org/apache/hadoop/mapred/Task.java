@@ -378,6 +378,10 @@ abstract class Task implements Writable, Configurable {
   }
   
   public abstract boolean isMapTask();
+  
+  public boolean isPipeline() {
+	  return false;
+  }
 
   public Progress getProgress() { return taskProgress; }
 

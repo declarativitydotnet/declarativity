@@ -895,11 +895,9 @@ class TaskInProgress {
       LOG.debug("attemdpt "+  numTaskFailures   +
           " sending skippedRecords "+failedRanges.getIndicesCount());
       if (conf.get("mapred.job.pipeline", null) != null) {
-    	  System.err.println("Task " + taskid + " is pipelined! Job pipelining " + conf.get("mapred.job.pipeline"));
     	 t = new PipelineMapTask(jobFile, taskid, partition); 
       }
       else {
-    	  System.err.println("Task " + taskid + " is not pipelined.");
     	  t = new MapTask(jobFile, taskid, partition, 
     			  rawSplit.getClassName(), rawSplit.getBytes());
       }

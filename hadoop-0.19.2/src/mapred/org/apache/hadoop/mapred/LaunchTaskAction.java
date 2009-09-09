@@ -29,14 +29,14 @@ import java.io.IOException;
  */
 class LaunchTaskAction extends TaskTrackerAction {
   private Task task;
-
+  
   public LaunchTaskAction() {
     super(ActionType.LAUNCH_TASK);
   }
   
   public LaunchTaskAction(Task task) {
     super(ActionType.LAUNCH_TASK);
-    this.task = task;
+    this.task   = task;
   }
   
   public Task getTask() {
@@ -45,13 +45,15 @@ class LaunchTaskAction extends TaskTrackerAction {
   
   public void write(DataOutput out) throws IOException {
     out.writeBoolean(task.isMapTask());
+    out.writeBoolean(task.isPipeline());
     task.write(out);
   }
   
   public void readFields(DataInput in) throws IOException {
     boolean isMapTask = in.readBoolean();
+    boolean isPipeline = in.readBoolean();
     if (isMapTask) {
-      task = new MapTask();
+      task = isPipeline ? new PipelineMapTask() : new MapTask();
     } else {
       task = new ReduceTask();
     }
