@@ -63,7 +63,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private int numConnections;
 	
-	private ReduceOutputCollector<K, V> collector;
+	private JBufferCollector<K, V> collector;
 	
 	private JobConf conf;
 	
@@ -75,7 +75,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private Set<TaskID> successful;
 	
-	public JBufferSink(JobConf conf, TaskAttemptID reduceID, ReduceOutputCollector<K, V> collector, int numConnections) throws IOException {
+	public JBufferSink(JobConf conf, TaskAttemptID reduceID, JBufferCollector<K, V> collector, int numConnections) throws IOException {
 		this.conf = conf;
 		this.reduceID = reduceID;
 		this.collector = collector;
@@ -141,7 +141,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		return this.reduceID;
 	}
 	
-	private ReduceOutputCollector<K, V> buffer() {
+	private JBufferCollector<K, V> buffer() {
 		return this.collector;
 	}
 	

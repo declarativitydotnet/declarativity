@@ -894,8 +894,14 @@ class TaskInProgress {
     if (isMapTask()) {
       LOG.debug("attemdpt "+  numTaskFailures   +
           " sending skippedRecords "+failedRanges.getIndicesCount());
-      t = new MapTask(jobFile, taskid, partition, 
-          rawSplit.getClassName(), rawSplit.getBytes(), true);
+      if (!jobCleanup && !jobSetup && !taskCleanup &&
+    		  conf.get("mapred.job.pipeline", null) != null) {
+    	 t = new PipelineMapTask(jobFile, taskid, partition); 
+      }
+      else {
+    	  t = new MapTask(jobFile, taskid, partition, 
+    			  rawSplit.getClassName(), rawSplit.getBytes());
+      }
     } else {
       t = new ReduceTask(jobFile, taskid, partition, numMaps);
     }

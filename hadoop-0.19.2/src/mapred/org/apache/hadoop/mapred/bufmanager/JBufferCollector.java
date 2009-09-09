@@ -6,7 +6,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.mapred.OutputCollector;
 
-public interface ReduceOutputCollector<K extends Object, V extends Object>
+public interface JBufferCollector<K extends Object, V extends Object>
 		extends OutputCollector<K, V> {
 	
 	public boolean reserve(long bytes);
@@ -16,4 +16,6 @@ public interface ReduceOutputCollector<K extends Object, V extends Object>
 	public void collect(DataInputBuffer key, DataInputBuffer value) throws IOException;
 	
 	public void spill(Path data, long dataSize, Path index) throws IOException;
+	
+	public void close();
 }

@@ -64,7 +64,7 @@ import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
 import org.apache.hadoop.mapred.bufmanager.MapOutputCollector;
 import org.apache.hadoop.mapred.bufmanager.JBufferSink;
-import org.apache.hadoop.mapred.bufmanager.ReduceOutputCollector;
+import org.apache.hadoop.mapred.bufmanager.JBufferCollector;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.IndexedSorter;
 import org.apache.hadoop.util.Progress;
@@ -72,76 +72,7 @@ import org.apache.hadoop.util.QuickSort;
 import org.apache.hadoop.util.ReflectionUtils;
 
 /** A Map task. */
-public final class MapTask extends Task {
-	private class ReduceOutputFetcher extends Thread {
-		
-		private JobID reduceJobId;
-
-		private TaskUmbilicalProtocol trackerUmbilical;
-		
-		private BufferUmbilicalProtocol bufferUmbilical;
-
-		private JBufferSink sink;
-		
-		public ReduceOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, JBufferSink sink, JobID reduceJobId) {
-			this.trackerUmbilical = trackerUmbilical;
-			this.bufferUmbilical = bufferUmbilical;
-			this.sink = sink;
-			this.reduceJobId = reduceJobId;
-		}
-
-		public void run() {
-			boolean requestSent = false;
-			int eid = 0;
-			while (true) {
-				try {
-					ReduceTaskCompletionEventsUpdate updates = 
-						trackerUmbilical.getReduceCompletionEvents(reduceJobId, eid, Integer.MAX_VALUE, MapTask.this.getTaskID());
-
-					eid += updates.events.length;
-
-					// Process the TaskCompletionEvents:
-					// 1. Save the SUCCEEDED maps in knownOutputs to fetch the outputs.
-					// 2. Save the OBSOLETE/FAILED/KILLED maps in obsoleteOutputs to stop fetching
-					//    from those maps.
-					// 3. Remove TIPFAILED maps from neededOutputs since we don't need their
-					//    outputs at all.
-					for (TaskCompletionEvent event : updates.events) {
-						switch (event.getTaskStatus()) {
-						case FAILED:
-						case KILLED:
-						case OBSOLETE:
-						case TIPFAILED:
-							return;
-						case SUCCEEDED:
-							if (requestSent) return;
-						case RUNNING:
-						{
-							URI u = URI.create(event.getTaskTrackerHttp());
-							String host = u.getHost();
-							TaskAttemptID reduceTaskId = event.getTaskAttemptId();
-							if (reduceTaskId.equals(reduceTaskId)) {
-								System.err.println("Map " + getTaskID() + " sending buffer request to reducer in job " + reduceTaskId);
-								bufferUmbilical.request(new BufferRequest(reduceTaskId, 0, host, sink.getAddress()));
-								requestSent = true;
-								if (event.getTaskStatus() == Status.SUCCEEDED) return;
-							}
-						}
-						break;
-						}
-					}
-				}
-				catch (IOException e) {
-					e.printStackTrace();
-				}
-
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) { }
-			}
-		}
-	}
-	
+public class MapTask extends Task {
 	/**
 	 * The size of each record in the index file for the map-outputs.
 	 */
@@ -157,8 +88,6 @@ public final class MapTask extends Task {
 	private InputSplit instantiatedSplit = null;
 	private final static int APPROX_HEADER_LENGTH = 150;
 
-	private Boolean pipeline;
-
 	private static final Log LOG = LogFactory.getLog(MapTask.class.getName());
 
 	{   // set phase for this task
@@ -170,12 +99,10 @@ public final class MapTask extends Task {
 	}
 
 	public MapTask(String jobFile, TaskAttemptID taskId, 
-			int partition, String splitClass, BytesWritable split, 
-			Boolean pipeline) {
+			int partition, String splitClass, BytesWritable split) {
 		super(jobFile, taskId, partition);
 		this.splitClass = splitClass;
 		this.split = split;
-		this.pipeline = pipeline;
 	}
 
 	@Override
@@ -211,7 +138,6 @@ public final class MapTask extends Task {
 	@Override
 	public void write(DataOutput out) throws IOException {
 		super.write(out);
-		out.writeBoolean(pipeline);
 		Text.writeString(out, splitClass);
 		if (split != null) split.write(out);
 		else throw new IOException("SPLIT IS NULL");
@@ -220,7 +146,6 @@ public final class MapTask extends Task {
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		super.readFields(in);
-		this.pipeline = in.readBoolean();
 		splitClass = Text.readString(in);
 		split.readFields(in);
 	}
@@ -228,10 +153,6 @@ public final class MapTask extends Task {
 	@Override
 	InputSplit getInputSplit() throws UnsupportedOperationException {
 		return instantiatedSplit;
-	}
-
-	public RecordReader getRecordReader() {
-		return this.recordReader;
 	}
 
 	/**
@@ -303,21 +224,6 @@ public final class MapTask extends Task {
 	      return;
 	    }
 	    
-		ReduceOutputFetcher rof = null;
-		if (job.get("mapred.job.pipeline", null) != null) {
-			JBuffer inputBuffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-			JBufferSink sink = new JBufferSink(job, getTaskID(), (ReduceOutputCollector) inputBuffer, 1);
-			JobID reduceJobId = JobID.forName(job.get("mapred.job.pipeline"));
-			
-			rof = new ReduceOutputFetcher(umbilical, bufferUmbilical, sink, reduceJobId);
-			rof.start();
-			try {
-				rof.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
 		int numReduceTasks = conf.getNumReduceTasks();
 		LOG.info("numReduceTasks: " + numReduceTasks);
 	    

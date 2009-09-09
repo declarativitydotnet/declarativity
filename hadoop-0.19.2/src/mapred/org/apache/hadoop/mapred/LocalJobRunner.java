@@ -128,7 +128,7 @@ class LocalJobRunner implements JobSubmissionProtocol {
           MapTask map = new MapTask(file.toString(),  
                                     mapId, i,
                                     splits[i].getClass().getName(),
-                                    split, false);
+                                    split);
           JobConf localConf = new JobConf(job);
           map.setJobFile(localFile.toString());
           map.localizeConfiguration(localConf);
