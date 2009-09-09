@@ -46,7 +46,7 @@ import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.QuickSort;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class JBuffer<K extends Object, V extends Object>  implements ReduceOutputCollector<K, V>, MapOutputCollector<K, V>, IndexedSortable {
+public class JBuffer<K extends Object, V extends Object>  implements JBufferCollector<K, V>, MapOutputCollector<K, V>, IndexedSortable {
 
 	protected static class CombineOutputCollector<K extends Object, V extends Object> 
 	implements OutputCollector<K, V> {
@@ -832,8 +832,7 @@ public class JBuffer<K extends Object, V extends Object>  implements ReduceOutpu
 		umbilical.commit(this.taskid);
 	}
 
-	public void close() throws IOException { 
-	}
+	public void close() {  }
 	
 	
 	public void spill(Path data, long size, Path index) throws IOException {

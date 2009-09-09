@@ -207,7 +207,7 @@ public class IsolationRunner {
       BytesWritable split = new BytesWritable();
       split.readFields(splitFile);
       splitFile.close();
-      task = new MapTask(jobFilename.toString(), taskId, partition, splitClass, split, false);
+      task = new MapTask(jobFilename.toString(), taskId, partition, splitClass, split);
     } else {
       int numMaps = conf.getNumMapTasks();
       fillInMissingMapOutputs(local, taskId, numMaps, conf);
