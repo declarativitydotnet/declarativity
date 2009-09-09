@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/mapred"/>
+	<classpathentry excluding="org/apache/hadoop/mapred/IsolationRunner.java" kind="src" path="src/mapred"/>
 	<classpathentry kind="src" path="src/examples"/>
 	<classpathentry kind="src" path="src/hdfs"/>
 	<classpathentry kind="src" path="src/tools"/>
@@ -64,6 +64,7 @@
 	<classpathentry kind="lib" path="src/contrib/index/lib/lucene-core-2.3.1.jar"/>
 	<classpathentry kind="lib" path="src/contrib/thriftfs/lib/hadoopthriftapi.jar"/>
 	<classpathentry kind="lib" path="src/contrib/thriftfs/lib/libthrift.jar"/>
+	<classpathentry kind="lib" path="src/mapred/org/apache/hadoop/mapred/IsolationRunner.java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/JVM 1.6.0"/>
 	<classpathentry kind="output" path="eclipse"/>
 </classpath>

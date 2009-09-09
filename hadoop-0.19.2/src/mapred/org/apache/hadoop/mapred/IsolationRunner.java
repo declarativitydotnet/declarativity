@@ -200,18 +200,23 @@ public class IsolationRunner {
     
     Task task;
     if (isMap) {
-      Path localSplit = new Path(new Path(jobFilename.toString()).getParent(), 
-                                 "split.dta");
-      DataInputStream splitFile = FileSystem.getLocal(conf).open(localSplit);
-      String splitClass = Text.readString(splitFile);
-      BytesWritable split = new BytesWritable();
-      split.readFields(splitFile);
-      splitFile.close();
-      task = new MapTask(jobFilename.toString(), taskId, partition, splitClass, split);
+    	if (conf.get("mapred.job.pipeline", null) != null) {
+    		task = new PipelineMapTask(jobFilename.toString(), taskId, partition); 
+    	}
+    	else {
+    		Path localSplit = new Path(new Path(jobFilename.toString()).getParent(), 
+    				"split.dta");
+    		DataInputStream splitFile = FileSystem.getLocal(conf).open(localSplit);
+    		String splitClass = Text.readString(splitFile);
+    		BytesWritable split = new BytesWritable();
+    		split.readFields(splitFile);
+    		splitFile.close();
+    		task = new MapTask(jobFilename.toString(), taskId, partition, splitClass, split);
+    	}
     } else {
-      int numMaps = conf.getNumMapTasks();
-      fillInMissingMapOutputs(local, taskId, numMaps, conf);
-      task = new ReduceTask(jobFilename.toString(), taskId, partition, numMaps);
+    	int numMaps = conf.getNumMapTasks();
+    	fillInMissingMapOutputs(local, taskId, numMaps, conf);
+    	task = new ReduceTask(jobFilename.toString(), taskId, partition, numMaps);
     }
     task.setConf(conf);
     task.run(conf, new FakeUmbilical(), null);

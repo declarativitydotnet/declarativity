@@ -112,6 +112,11 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 	
 	@Override
+	public boolean isPipeline() {
+		return true;
+	}
+	
+	@Override
 	public void localizeConfiguration(JobConf conf) throws IOException {
 		super.localizeConfiguration(conf);
 	}

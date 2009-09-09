@@ -42,6 +42,7 @@ class JvmTask implements Writable {
     if (t != null) {
       out.writeBoolean(true);
       out.writeBoolean(t.isMapTask());
+      out.writeBoolean(t.isPipeline());
       t.write(out);
     } else {
       out.writeBoolean(false);
@@ -52,8 +53,9 @@ class JvmTask implements Writable {
     boolean taskComing = in.readBoolean();
     if (taskComing) {
       boolean isMap = in.readBoolean();
+      boolean isPipe = in.readBoolean();
       if (isMap) {
-        t = new MapTask();
+        t = isPipe ? new PipelineMapTask() : new MapTask();
       } else {
         t = new ReduceTask();
       }
