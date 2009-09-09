@@ -182,6 +182,7 @@ public class TopK extends Configured implements Tool {
 			topkJob.setOutputFormat(SequenceFileOutputFormat.class);
 			topkJob.setOutputKeyClass(Text.class);
 			topkJob.setOutputValueClass(LongWritable.class);
+			topkJob.setBoolean("mapred.reduce.pipeline", true);
 
 			JobClient  client     = new JobClient(topkJob);
 			RunningJob topkHandle = client.submitJob(topkJob);
