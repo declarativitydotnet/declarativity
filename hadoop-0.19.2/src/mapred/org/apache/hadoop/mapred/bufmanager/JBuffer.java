@@ -1196,10 +1196,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 
 			//The output stream for the final single output file
-			FSDataOutputStream finalOut = localFs.create(outputFile, false);
+			FSDataOutputStream finalOut = localFs.create(outputFile);
 
 			//The final index file output stream
-			FSDataOutputStream finalIndexOut = localFs.create(indexFile, false);
+			FSDataOutputStream finalIndexOut = localFs.create(indexFile);
 			if (start == end) {
 				//create dummy files
 				if (spill) LOG.error("Error: spill file is a dummy!");
