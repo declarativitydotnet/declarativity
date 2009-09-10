@@ -59,7 +59,6 @@ public class PipelineReduceTask extends ReduceTask {
 			//Clean up: repeated in catch block below
 			reducer.close();
 			buffer.close();
-			buffer.free();
 			TreeSet<BufferRequest> requests = buffer.requests();
 			if (requests.size() > 0) {
 				System.err.println("PipelineReduceTask: " + getTaskID() + " flushed final.");
@@ -71,7 +70,6 @@ public class PipelineReduceTask extends ReduceTask {
 				bufferUmbilical.commit(getTaskID());
 			}
 			
-			buffer.close();
 			buffer.free();
 		}
 	}
