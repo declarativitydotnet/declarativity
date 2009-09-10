@@ -179,6 +179,14 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	@Override
 	public void commit(TaskAttemptID taskid) throws IOException {
 		synchronized (requests) {
+			MapOutputFile mof = new MapOutputFile();
+			Path file = mof.getOutputFile(taskid);
+			FileSystem fs = FileSystem.getLocal(tracker.conf());
+			if (!fs.exists(file)) {
+				System.err.println("Task " + taskid + " committed without a final output -> " + file);
+				throw new IOException("No final output file!");
+			}
+
 			this.committed.add(taskid);
 			this.requests.notifyAll();
 		}
