@@ -192,6 +192,8 @@ public class TopK extends Configured implements Tool {
 
 			FileInputFormat.setInputPaths(sortJob, tempDir);
 			sortJob.setInputFormat(SequenceFileInputFormat.class);
+			sortJob.setInputKeyClass(Text.class);
+			sortJob.setInputValueClass(LongWritable.class);
 
 			sortJob.setMapperClass(InverseMapper.class);
 			// sortJob.setCombinerClass(TopKReduce.class);

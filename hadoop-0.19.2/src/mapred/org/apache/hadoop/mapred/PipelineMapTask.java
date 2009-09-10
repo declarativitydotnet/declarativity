@@ -159,9 +159,11 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	    	throw new IOException("PipelineMapTask: mapred.job.pipeline is not defined!");
 	    }
 	    
+	    Class keyClass = job.getInputKeyClass();
+	    Class valClass = job.getInputValueClass();
 	    SerializationFactory serializationFactory = new SerializationFactory(job);
-	    keyDeserializer = serializationFactory.getDeserializer(Object.class);
-	    valDeserializer = serializationFactory.getDeserializer(Object.class);
+	    keyDeserializer = serializationFactory.getDeserializer(keyClass);
+	    valDeserializer = serializationFactory.getDeserializer(valClass);
 
 	    
 		int numReduceTasks = job.getNumReduceTasks();
