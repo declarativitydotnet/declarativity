@@ -175,7 +175,11 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		
 	    this.mapper = ReflectionUtils.newInstance(job.getMapperClass(), job);
 
+	    /* Kick off a sink for receiving the reducer output. */
 		JBufferSink sink  = new JBufferSink(job, getTaskID(), this, 1);
+		sink.open();
+		
+		/* Start the reduce output fetcher */
 		JobID reduceJobId = JobID.forName(job.get("mapred.job.pipeline"));
 		TaskID reduceTaskId = new TaskID(reduceJobId, false, getTaskID().getTaskID().id);
 		System.err.println("Map task " + getTaskID() + " requesting pipeline from reducer " + reduceTaskId);
