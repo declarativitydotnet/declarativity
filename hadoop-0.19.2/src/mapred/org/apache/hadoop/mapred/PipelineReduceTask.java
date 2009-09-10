@@ -36,16 +36,13 @@ public class PipelineReduceTask extends ReduceTask {
 	public void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
-		buffer.flush();
-		buffer.close();
-		
 		JBuffer output  = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, buffer.buffer());
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
+		
+		buffer.flush();
+		buffer.close();
 		// apply reduce function
 		try {
-			Class keyClass = job.getMapOutputKeyClass();
-			Class valClass = job.getMapOutputValueClass();
-
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, output, reporter);
