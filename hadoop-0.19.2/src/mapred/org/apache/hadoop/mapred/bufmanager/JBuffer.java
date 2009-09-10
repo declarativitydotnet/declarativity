@@ -194,7 +194,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 					}
 
-					if (pipeline && flushpoint < numSpills) {
+					if (pipeline) {
 						try {
 							long pipelinestart = java.lang.System.currentTimeMillis();
 							flushpoint = flushRequests();
@@ -224,6 +224,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					requestMap.put(request.partition(), request); // TODO speculation
 				}
 			}
+			
+			if (numSpills == numFlush) return spillend;
 
 			/* Iterate over spill files in order. */
 			for (int spillId = numFlush; spillId < spillend; spillId++) {
@@ -437,6 +439,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public TreeSet<BufferRequest> requests() {
 		return this.requests;
+	}
+	
+	public void pipeline(boolean value) {
+		this.pipeline = value;
+		if (value == true) {
+			synchronized (pipelineThread) {
+				pipelineThread.notifyAll();
+			}
+		}
+		
 	}
 	
 	/**
