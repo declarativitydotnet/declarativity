@@ -801,7 +801,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	public synchronized void flush() throws IOException {
 		if (numSpills == 0 && bufstart == bufend) return;
 		
-		System.err.println("Buffer " + taskid + " starting flush of map output");
 		pipelineThread.close();
 		synchronized (pipelineThread) {
 			while (pipelineThread.busy()) {
@@ -812,7 +811,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		
-		System.err.println("Buffer " + taskid + " pipeline closed.");
 			
 		synchronized (spillLock) {
 			this.spillThread.close();
@@ -828,7 +826,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		
-		System.err.println("Buffer" + taskid + " spill thread closed.");
 			
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"
