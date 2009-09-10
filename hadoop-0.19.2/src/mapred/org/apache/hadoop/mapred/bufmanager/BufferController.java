@@ -91,13 +91,14 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			try {
 				JobConf job = tracker.getJobConf(taskid);
 				for (BufferRequest request : handle) {
+					System.err.println("BufferControler: handle " + request);
 					if (request.open(job)) {
 						executor.execute(request);
-						System.err.println("BufferController: handle " + request);
+						System.err.println("\tBufferController: handled " + request);
 						handled.add(request);
 					}
 					else {
-						System.err.println("RequestHandler: can't open request " + request);
+						System.err.println("\tRequestHandler: can't open request " + request);
 					}
 				}
 			} catch (IOException e) {
