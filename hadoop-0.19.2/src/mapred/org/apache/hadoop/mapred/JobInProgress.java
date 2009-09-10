@@ -161,9 +161,8 @@ class JobInProgress {
   private long inputLength = 0;
   private long maxVirtualMemoryForTask;
   
-  private JobID dependentJobId;
-  
-  private Set<JobID> dependents = new HashSet<JobID>();
+  private JobID pipeline;
+  private JobID dependent;
   
   // Per-job counters
   public static enum Counter { 
@@ -227,16 +226,16 @@ class JobInProgress {
     conf = new JobConf(localJobFile);
     
     if (conf.get("mapred.job.pipeline", null) != null) {
-    	dependentJobId = JobID.forName(conf.get("mapred.job.pipeline"));
-    	JobInProgress dependentJob = jobtracker.getJob(dependentJobId);
+    	pipeline = JobID.forName(conf.get("mapred.job.pipeline"));
+    	JobInProgress dependentJob = jobtracker.getJob(pipeline);
     	if (dependentJob == null) {
-    		throw new IOException("Unknown dependent job! " + dependentJobId);
+    		throw new IOException("Unknown dependent job! " + pipeline);
     	}
-    	dependentJob.dependents.add(jobid); // add me
     	conf.setNumMapTasks(dependentJob.numReduceTasks);
     }
-    else {
-    	dependentJobId = null;
+    
+    if (conf.get("mapred.job.dependent", null) != null) {
+    	dependent = JobID.forName(conf.get("mapred.job.dependent"));
     }
     
     this.priority = conf.getJobPriority();
@@ -292,12 +291,16 @@ class JobInProgress {
     }
   }
   
-  public Set<JobID> dependents() {
-	  return this.dependents;
+  public JobID dependent() {
+	  return this.dependent;
   }
   
-  public JobID dependent() {
-	  return this.dependentJobId;
+  public void clearDependent() {
+	  this.dependent = null;
+  }
+  
+  public JobID pipeline() {
+	  return this.pipeline;
   }
     
   /**
@@ -399,7 +402,7 @@ class JobInProgress {
     Path sysDir = new Path(this.jobtracker.getSystemDir());
     FileSystem fs = sysDir.getFileSystem(conf);
     JobClient.RawSplit[] splits = null;
-    if (this.dependentJobId != null) {
+    if (this.pipeline != null) {
     	numMapTasks = conf.getNumMapTasks();
     	splits = new JobClient.RawSplit[numMapTasks];
     	for (int i = 0; i < numMapTasks; i++) {

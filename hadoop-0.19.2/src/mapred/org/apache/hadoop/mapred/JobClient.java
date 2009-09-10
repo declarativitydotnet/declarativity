@@ -35,8 +35,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
 
 import javax.security.auth.login.LoginException;
@@ -763,6 +765,31 @@ public class JobClient extends Configured implements MRConstants, Tool  {
     }
   }
   
+  public List<RunningJob> submitJobs(List<JobConf> jobs) 
+  	throws FileNotFoundException, InvalidJobConfException, IOException {
+	  List<JobID>     jobids = new ArrayList<JobID>();
+	  List<RunningJob> rjobs = new ArrayList<RunningJob>();
+	  for (JobConf job : jobs) {
+		  jobids.add(jobSubmitClient.getNewJobId());
+	  }
+	  
+	  for (int i = 0; i < jobs.size(); i++) {
+		  JobConf job = jobs.get(i);
+		  if (i > 0) {
+			job.set("mapred.job.pipeline", jobids.get(i - 1).toString());
+		  }
+		  
+		  if (i < jobs.size() - 1) {
+			job.set("mapred.job.dependent", jobids.get(i + 1).toString());
+			job.setBoolean("mapred.reduce.pipeline", true);
+		  }
+		  rjobs.add(submitJob(job, jobids.get(i)));
+	  }
+	  
+	  return rjobs;
+  }
+  
+  
   /**
    * Submit a job to the MR system.
    * This returns a handle to the {@link RunningJob} which can be used to track
@@ -777,11 +804,17 @@ public class JobClient extends Configured implements MRConstants, Tool  {
    */
   public RunningJob submitJob(JobConf job) throws FileNotFoundException, 
                                   InvalidJobConfException, IOException {
+    JobID jobId = jobSubmitClient.getNewJobId();
+    return submitJob(job, jobId);
+  }
+  
+  private RunningJob submitJob(JobConf job, JobID jobId) throws FileNotFoundException, 
+                                  InvalidJobConfException, IOException {
+  
     /*
      * configure the command line options correctly on the submitting dfs
      */
     
-    JobID jobId = jobSubmitClient.getNewJobId();
     Path submitJobDir = new Path(getSystemDir(), jobId.toString());
     Path submitJarFile = new Path(submitJobDir, "job.jar");
     Path submitSplitFile = new Path(submitJobDir, "job.split");
@@ -1241,6 +1274,117 @@ public class JobClient extends Configured implements MRConstants, Tool  {
       jc.close();
     }
     return running;
+  }
+  
+  public void report(RunningJob running, JobConf job) throws IOException {
+	  JobID jobId = JobID.forName(running.getJobID());
+	    boolean error = true;
+	    String lastReport = null;
+	    final int MAX_RETRIES = 5;
+	    int retries = MAX_RETRIES;
+	    TaskStatusFilter filter;
+	    try {
+	      filter = getTaskOutputFilter(job);
+	    } catch(IllegalArgumentException e) {
+	      LOG.warn("Invalid Output filter : " + e.getMessage() + 
+	               " Valid values are : NONE, FAILED, SUCCEEDED, ALL");
+	      throw e;
+	    }
+	    
+	  try {
+		  LOG.info("Running job: " + jobId);
+		  int eventCounter = 0;
+		  boolean profiling = job.getProfileEnabled();
+		  Configuration.IntegerRanges mapRanges = job.getProfileTaskRange(true);
+		  Configuration.IntegerRanges reduceRanges = job.getProfileTaskRange(false);
+
+		  while (true) {
+			  try {
+				  Thread.sleep(1000);
+			  } catch (InterruptedException e) {}
+			  try {
+				  if (running.isComplete()) {
+					  break;
+				  }
+				  String report = 
+					  (" map " + StringUtils.formatPercent(running.mapProgress(), 0)+
+							  " reduce " + 
+							  StringUtils.formatPercent(running.reduceProgress(), 0));
+				  if (!report.equals(lastReport)) {
+					  LOG.info(report);
+					  lastReport = report;
+				  }
+
+				  TaskCompletionEvent[] events = 
+					  running.getTaskCompletionEvents(eventCounter); 
+				  eventCounter += events.length;
+				  for(TaskCompletionEvent event : events){
+					  TaskCompletionEvent.Status status = event.getTaskStatus();
+					  if (profiling && 
+							  (status == TaskCompletionEvent.Status.SUCCEEDED ||
+									  status == TaskCompletionEvent.Status.FAILED) &&
+									  (event.isMap ? mapRanges : reduceRanges).
+									  isIncluded(event.idWithinJob())) {
+						  downloadProfile(event);
+					  }
+					  switch(filter){
+					  case NONE:
+						  break;
+					  case SUCCEEDED:
+						  if (event.getTaskStatus() == 
+							  TaskCompletionEvent.Status.SUCCEEDED){
+							  LOG.info(event.toString());
+							  displayTaskLogs(event.getTaskAttemptId(), event.getTaskTrackerHttp());
+						  }
+						  break; 
+					  case FAILED:
+						  if (event.getTaskStatus() == 
+							  TaskCompletionEvent.Status.FAILED){
+							  LOG.info(event.toString());
+							  // Displaying the task diagnostic information
+							  TaskAttemptID taskId = event.getTaskAttemptId();
+							  String[] taskDiagnostics = 
+								  jobSubmitClient.getTaskDiagnostics(taskId); 
+							  if (taskDiagnostics != null) {
+								  for(String diagnostics : taskDiagnostics){
+									  System.err.println(diagnostics);
+								  }
+							  }
+							  // Displaying the task logs
+							  displayTaskLogs(event.getTaskAttemptId(), event.getTaskTrackerHttp());
+						  }
+						  break; 
+					  case KILLED:
+						  if (event.getTaskStatus() == TaskCompletionEvent.Status.KILLED){
+							  LOG.info(event.toString());
+						  }
+						  break; 
+					  case ALL:
+						  LOG.info(event.toString());
+						  displayTaskLogs(event.getTaskAttemptId(), event.getTaskTrackerHttp());
+						  break;
+					  }
+				  }
+				  retries = MAX_RETRIES;
+			  } catch (IOException ie) {
+				  if (--retries == 0) {
+					  LOG.warn("Final attempt failed, killing job.");
+				  }
+				  LOG.info("Communication problem with server: " +
+						  StringUtils.stringifyException(ie));
+			  }
+		  }
+		  if (!running.isSuccessful()) {
+			  throw new IOException("Job failed!");
+		  }
+		  LOG.info("Job complete: " + jobId);
+		  running.getCounters().log(LOG);
+		  error = false;
+	  } finally {
+		  if (error && (running != null)) {
+			  running.killJob();
+		  }
+	  }
   }
 
   static String getTaskLogURL(TaskAttemptID taskId, String baseUrl) {

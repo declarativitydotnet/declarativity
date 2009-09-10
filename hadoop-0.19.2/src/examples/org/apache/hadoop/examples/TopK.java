@@ -19,6 +19,7 @@ import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.MapReduceBase;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
@@ -129,10 +130,9 @@ public class TopK extends Configured implements Tool {
 			new Path("topk-temp-"+
 					Integer.toString(new Random().nextInt(Integer.MAX_VALUE)));
 
-		JobConf topkJob = new JobConf(getConf(), TopK.class);
-
 		try {
 
+			JobConf topkJob = new JobConf(getConf(), TopK.class);
 			topkJob.setJobName("topk-search");
 
 		    List<String> other_args = new ArrayList<String>();
@@ -182,10 +182,7 @@ public class TopK extends Configured implements Tool {
 			topkJob.setOutputFormat(SequenceFileOutputFormat.class);
 			topkJob.setOutputKeyClass(Text.class);
 			topkJob.setOutputValueClass(LongWritable.class);
-			topkJob.setBoolean("mapred.reduce.pipeline", true);
 
-			JobClient  client     = new JobClient(topkJob);
-			RunningJob topkHandle = client.submitJob(topkJob);
 
 			JobConf sortJob = new JobConf(TopK.class);
 			sortJob.setJobName("topk-sort");
@@ -205,12 +202,21 @@ public class TopK extends Configured implements Tool {
 			sortJob.setOutputKeyComparatorClass           // sort by decreasing freq
 			(LongWritable.DecreasingComparator.class);
 			
-			sortJob.set("mapred.job.pipeline", topkHandle.getJobID());
-
-			JobClient.runJob(sortJob);
+			JobClient  client  = new JobClient(topkJob);
+			List<JobConf> jobs = new ArrayList<JobConf>();
+			jobs.add(topkJob);
+			jobs.add(sortJob);
+			List<RunningJob> rjobs = client.submitJobs(jobs);
+			
+			for (int i = 0; i < rjobs.size(); i++) {
+				RunningJob rjob = rjobs.get(i);
+				JobConf job = jobs.get(i);
+				client.report(rjob, job);
+			}
+			
+			FileSystem.get(topkJob).delete(tempDir, true);
 		}
 		finally {
-			FileSystem.get(topkJob).delete(tempDir, true);
 		}
 		return 0;
 	}
