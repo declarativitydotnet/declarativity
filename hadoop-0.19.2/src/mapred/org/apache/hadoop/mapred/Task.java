@@ -652,9 +652,11 @@ abstract class Task implements Writable, Configurable {
     }
     taskDone.set(true);
     pingProgressThread.interrupt();
+    /*
     try {
       pingProgressThread.join();
     } catch (InterruptedException ie) {}
+    */
     System.err.println(getTaskID() + " here 1 " + (System.currentTimeMillis() - begin) + " ms.");
     sendLastUpdate(umbilical);
     System.err.println(getTaskID() + " here 2 " + (System.currentTimeMillis() - begin) + " ms.");
