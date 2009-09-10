@@ -244,6 +244,7 @@ public class ReduceTask extends Task {
 
 		/* This will not close (block) until all fetches finish! */
 		sink.block();
+		buffer.flush();
 		
 		long begin = System.currentTimeMillis();
 		reduce(job, reporter, buffer);
@@ -281,7 +282,6 @@ public class ReduceTask extends Task {
 		      Class keyClass = job.getMapOutputKeyClass();
 		      Class valClass = job.getMapOutputValueClass();
 		      
-		      buffer.flush();
 		      ValuesIterator values = buffer.iterator();
 		      while (values.more()) {
 		        reducer.reduce(values.getKey(), values, collector, reporter);

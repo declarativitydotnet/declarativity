@@ -36,16 +36,13 @@ public class PipelineReduceTask extends ReduceTask {
 	public void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
-		JBuffer output  = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, buffer.buffer());
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 		
-		buffer.flush();
-		buffer.close();
 		// apply reduce function
 		try {
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
-				reducer.reduce(values.getKey(), values, output, reporter);
+				reducer.reduce(values.getKey(), values, buffer, reporter);
 				values.nextKey();
 				reporter.progress();
 			}
@@ -58,8 +55,8 @@ public class PipelineReduceTask extends ReduceTask {
 		finally {
 			//Clean up: repeated in catch block below
 			reducer.close();
-			output.flush();
-			output.close();
+			buffer.flush();
+			buffer.close();
 			bufferUmbilical.commit(getTaskID());
 		}
 	}
