@@ -630,7 +630,6 @@ abstract class Task implements Writable, Configurable {
     // check whether the commit is required.
     boolean commitRequired = !isPipeline() && outputCommitter.needsTaskCommit(taskContext);
     if (commitRequired) {
-    	System.err.println("COMMIT REQUIRED!!");
       int retries = MAX_RETRIES;
       setState(TaskStatus.State.COMMIT_PENDING);
       // say the task tracker that task is commit pending
@@ -651,14 +650,14 @@ abstract class Task implements Writable, Configurable {
       //wait for commit approval and commit
       commit(umbilical, outputCommitter);
     }
-    System.err.println(getTaskID() + " here 1 " + (System.currentTimeMillis() - begin) + " ms.");
     taskDone.set(true);
     pingProgressThread.interrupt();
     try {
       pingProgressThread.join();
     } catch (InterruptedException ie) {}
-    System.err.println(getTaskID() + " here 2 " + (System.currentTimeMillis() - begin) + " ms.");
+    System.err.println(getTaskID() + " here 1 " + (System.currentTimeMillis() - begin) + " ms.");
     sendLastUpdate(umbilical);
+    System.err.println(getTaskID() + " here 2 " + (System.currentTimeMillis() - begin) + " ms.");
     //signal the tasktracker that we are done
     sendDone(umbilical);
     System.err.println(getTaskID() + " here 3 " + (System.currentTimeMillis() - begin) + " ms.");
