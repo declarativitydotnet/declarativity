@@ -183,7 +183,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				try {
 					if (!open) return;
 					
-					if (taskid.isMap() == false && numSpills - numFlush > mergeThreshold) {
+					if (false && numSpills - numFlush > mergeThreshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
@@ -195,7 +195,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 					}
 
-					if (pipeline && flushpoint < numSpills) {
+					if (taskid.isMap() && pipeline && flushpoint < numSpills) {
 						try {
 							long pipelinestart = java.lang.System.currentTimeMillis();
 							flushpoint = flushRequests();
