@@ -1204,6 +1204,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (start == end) {
 				//create dummy files
 				if (spill) LOG.error("Error: spill file is a dummy!");
+				System.err.println("JBuffer: buffer " + taskid + " final output is empty.");
 				for (int i = 0; i < partitions; i++) {
 					long segmentStart = finalOut.getPos();
 					IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);
