@@ -76,7 +76,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				synchronized (requests) {
 					try {
 						if (requests.size() > 0) {
-							requests.wait(1000);
+							requests.wait(100);
 						}
 						else {
 							requests.wait();

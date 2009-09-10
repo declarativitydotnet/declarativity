@@ -245,7 +245,9 @@ public class ReduceTask extends Task {
 		/* This will not close (block) until all fetches finish! */
 		sink.block();
 		
+		long begin = System.currentTimeMillis();
 		reduce(job, reporter, buffer);
+		System.err.println("Reduce time = " + (System.currentTimeMillis() - begin) + " ms.");
 
 		done(umbilical);
 	}
