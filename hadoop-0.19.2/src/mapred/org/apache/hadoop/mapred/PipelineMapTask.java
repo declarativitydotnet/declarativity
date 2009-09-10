@@ -188,10 +188,12 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		synchronized (this) {
 			open = true;
 			rof.start();
+			long begin = System.currentTimeMillis();
 			while (open) {
 				try { this.wait();
 				} catch (InterruptedException e) { }
 			}
+			System.err.println("PipelineMapTask: waited for " + (System.currentTimeMillis() - begin) + " ms.");
 			collector.close();
 			bufferUmbilical.commit(getTaskID());
 		}
