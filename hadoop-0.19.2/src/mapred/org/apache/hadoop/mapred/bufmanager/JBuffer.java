@@ -829,6 +829,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		System.err.println("Buffer " + taskid + " committing. \n\tFinal merge from " + (numSpills - numFlush) + " spill files.");
 		mergeParts(false);
+		numSpills = numFlush = 0;
 	}
 
 	public void close() {  
