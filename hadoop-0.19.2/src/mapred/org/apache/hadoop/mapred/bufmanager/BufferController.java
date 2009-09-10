@@ -181,11 +181,15 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		synchronized (requests) {
 			if (!taskid.isMap()) { 
 				MapOutputFile mof = new MapOutputFile(taskid.getJobID());
+				mof.setConf(tracker.getJobConf(taskid));
 				Path file = mof.getOutputFile(taskid);
 				FileSystem fs = FileSystem.getLocal(tracker.conf());
 				if (!fs.exists(file)) {
 					System.err.println("Task " + taskid + " committed without a final output -> " + file);
 					throw new IOException("No final output file!");
+				}
+				else {
+					System.err.println("Task " + taskid + " final output is good. " + file);
 				}
 			}
 
