@@ -1584,6 +1584,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
     // Mark the 'non-running' tasks for pruning
     markCompletedJob(job);
     
+    /*
 	  if (job.dependent() != null) {
 		  return;
 	  }
@@ -1593,6 +1594,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
 			  finalizeJob(pipeline);
 		  }
 	  }
+	  */
 	  
     JobEndNotifier.registerNotification(job.getJobConf(), job.getStatus());
 
