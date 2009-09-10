@@ -359,15 +359,7 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
         				  job.getStatus().getRunState() != JobStatus.PREP &&
         				  (job.getFinishTime() + MIN_TIME_BEFORE_RETIRE < now) &&
         				  (job.getFinishTime()  < retireBefore)) {
-        			  boolean retire = true;
-        			  for (JobID dependent : job.dependents()) {
-        				  if (jobs.containsKey(dependent) && 
-        						  (jobs.get(dependent).getStatus().getRunState() == JobStatus.RUNNING ||
-        								  jobs.get(dependent).getStatus().getRunState() == JobStatus.PREP)) {
-        					  retire = false;
-        				  }
-        			  }
-        			  if (retire) retiredJobs.add(job);
+        			  retiredJobs.add(job);
         		  }
         	  }
           }
@@ -1589,6 +1581,18 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
    * @param job completed job.
    */
   synchronized void finalizeJob(JobInProgress job) {
+	  if (job.dependents().size() > 0) return;
+	  
+	  if (job.dependent() != null) {
+		  JobInProgress dependent = getJob(job.dependent());
+		  if (dependent != null) {
+			  dependent.dependents().remove(job.getJobID());
+			  if (dependent.dependents().size() == 0) {
+				  finalizeJob(dependent);
+			  }
+		  }
+	  }
+	  
     // Mark the 'non-running' tasks for pruning
     markCompletedJob(job);
     

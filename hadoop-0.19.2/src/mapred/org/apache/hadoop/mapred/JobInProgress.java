@@ -295,6 +295,10 @@ class JobInProgress {
   public Set<JobID> dependents() {
 	  return this.dependents;
   }
+  
+  public JobID dependent() {
+	  return this.dependentJobId;
+  }
     
   /**
    * Called when the job is complete
