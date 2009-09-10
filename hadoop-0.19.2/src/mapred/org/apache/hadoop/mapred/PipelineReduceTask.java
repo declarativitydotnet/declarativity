@@ -61,6 +61,7 @@ public class PipelineReduceTask extends ReduceTask {
 			buffer.free();
 			TreeSet<BufferRequest> requests = buffer.requests();
 			if (requests.size() > 0) {
+				System.err.println("PipelineReduceTask: " + getTaskID() + " flushed final.");
 				for (BufferRequest request : requests) {
 					request.flushFinal();
 				}
