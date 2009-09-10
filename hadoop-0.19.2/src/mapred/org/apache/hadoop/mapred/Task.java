@@ -627,7 +627,7 @@ abstract class Task implements Writable, Configurable {
 
     OutputCommitter outputCommitter = conf.getOutputCommitter();
     // check whether the commit is required.
-    boolean commitRequired = outputCommitter.needsTaskCommit(taskContext);
+    boolean commitRequired = !isPipeline() && outputCommitter.needsTaskCommit(taskContext);
     if (commitRequired) {
       int retries = MAX_RETRIES;
       setState(TaskStatus.State.COMMIT_PENDING);
