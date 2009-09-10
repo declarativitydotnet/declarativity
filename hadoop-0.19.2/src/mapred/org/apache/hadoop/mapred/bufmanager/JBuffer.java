@@ -165,7 +165,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 
 		public void run() {
-			int mergeThreshold = taskid.isMap() ? 10 : 100;
 			int flushpoint = numFlush;
 			while (open) {
 				synchronized (this) {
@@ -183,7 +182,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				try {
 					if (!open) return;
 					
-					if (false && numSpills - numFlush > mergeThreshold) {
+					if (!taskid.isMap() && numSpills - numFlush > 100) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true);
