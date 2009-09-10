@@ -1083,9 +1083,9 @@ class JobInProgress {
     
     if (dependent != null) {
     	JobInProgress dependentJob = jobtracker.getJob(dependent);
-    	if (dependentJob == null || 
-    			dependentJob.status.getRunState() == JobStatus.RUNNING ||
-    				dependentJob.status.getRunState() == JobStatus.PREP) {
+    	if (dependentJob != null && 
+    			(dependentJob.status.getRunState() == JobStatus.RUNNING ||
+    				dependentJob.status.getRunState() == JobStatus.PREP)) {
     		return false;
     	}
     }

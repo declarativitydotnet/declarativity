@@ -151,7 +151,8 @@ class JobQueueTaskScheduler extends TaskScheduler {
         	  boolean schedule = false;
         	  for (JobInProgress prev : jobQueue) {
         		  if (prev.getJobID().equals(job.pipeline())) {
-        			  if (prev.finishedMaps() == prev.numMapTasks) {
+        			  if (prev.numMapTasks - prev.finishedMaps() < 
+        					  taskTracker.getMaxMapTasks()) {
         				  schedule = true;
         			  }
         			  break;
@@ -201,7 +202,8 @@ class JobQueueTaskScheduler extends TaskScheduler {
         	  boolean schedule = false;
         	  for (JobInProgress prev : jobQueue) {
         		  if (prev.getJobID().equals(job.pipeline())) {
-        			  if (prev.finishedReduces() == prev.numReduceTasks) {
+        			  if (prev.numReduceTasks - prev.finishedReduces() < 
+        					  taskTracker.getMaxReduceTasks()) {
         				  schedule = true;
         			  }
         			  break;
