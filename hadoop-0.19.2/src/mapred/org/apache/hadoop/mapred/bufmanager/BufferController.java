@@ -179,6 +179,9 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	@Override
 	public void commit(TaskAttemptID taskid) throws IOException {
 		synchronized (requests) {
+			if (!taskid.isMap()) { 
+				System.err.println("Reduce task " + taskid + " committed.");
+			}
 			/*
 			if (!taskid.isMap()) { 
 				MapOutputFile mof = new MapOutputFile(taskid.getJobID());

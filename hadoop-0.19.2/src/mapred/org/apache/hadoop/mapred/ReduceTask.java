@@ -248,9 +248,8 @@ public class ReduceTask extends Task {
 		
 		long begin = System.currentTimeMillis();
 		reduce(job, reporter, buffer);
-		System.err.println("Reduce time = " + (System.currentTimeMillis() - begin) + " ms.");
-
 		done(umbilical);
+		System.err.println("Reduce time = " + (System.currentTimeMillis() - begin) + " ms.");
 	}
 	
 	
