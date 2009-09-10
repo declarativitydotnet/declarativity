@@ -766,6 +766,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public synchronized ValuesIterator<K, V> iterator() throws IOException {
+		/*
 		if (this.numSpills == 0) {
 			int endPosition = (kvend > kvstart)
 			? kvend : kvoffsets.length + kvend;
@@ -775,11 +776,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				new MRResultIterator(kvstart, endPosition);
 			return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
 		}
-		else {
-			Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
-			RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
-			return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
-		}
+		*/
+		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
+		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
+		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
 	}
 
 	public synchronized void flush() throws IOException {
