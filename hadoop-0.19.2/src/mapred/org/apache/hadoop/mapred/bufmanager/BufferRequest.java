@@ -150,7 +150,9 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	public void run() {
 		synchronized (this) {
 			try {
+				long begin = System.currentTimeMillis();
 				flushFinal();
+				System.err.println("FlushFinal took " + (System.currentTimeMillis() - begin) + " ms.");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
