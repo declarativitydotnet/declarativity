@@ -116,7 +116,7 @@ public class TopK extends Configured implements Tool {
 	private TopK() {}                               // singleton
 	
 	private void printUsage() {
-		System.out.println("TopK [-m mappers] [-r reducers] <inDir> <outDir> <K> [<regexpr> [<group>]]");
+		System.out.println("TopK [-p] [-m mappers] [-r reducers] <inDir> <outDir> <K> [<regexpr> [<group>]]");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
 
@@ -131,20 +131,23 @@ public class TopK extends Configured implements Tool {
 					Integer.toString(new Random().nextInt(Integer.MAX_VALUE)));
 
 		try {
+			boolean pipeline = false;
 
-			JobConf topkJob = new JobConf(getConf(), TopK.class);
-			topkJob.setJobName("topk-search");
+			JobConf wordcountJob = new JobConf(getConf(), TopK.class);
+			wordcountJob.setJobName("topk-search");
 
 		    List<String> other_args = new ArrayList<String>();
 		    for(int i=0; i < args.length; ++i) {
 		      try {
-		        if ("-m".equals(args[i])) {
-		          topkJob.setNumMapTasks(Integer.parseInt(args[++i]));
-		        } else if ("-r".equals(args[i])) {
-		          topkJob.setNumReduceTasks(Integer.parseInt(args[++i]));
-		        } else {
-		          other_args.add(args[i]);
-		        }
+		    	  if ("-p".equals(args[i])) {
+		    		  pipeline = true;
+		    	  } else if ("-m".equals(args[i])) {
+		    		  wordcountJob.setNumMapTasks(Integer.parseInt(args[++i]));
+		    	  } else if ("-r".equals(args[i])) {
+		    		  wordcountJob.setNumReduceTasks(Integer.parseInt(args[++i]));
+		    	  } else {
+		    		  other_args.add(args[i]);
+		    	  }
 		      } catch (NumberFormatException except) {
 		        System.out.println("ERROR: Integer expected instead of " + args[i]);
 		        printUsage();
@@ -163,58 +166,61 @@ public class TopK extends Configured implements Tool {
 		      printUsage(); return -1;
 		    }
 		    
-			FileInputFormat.setInputPaths(topkJob, other_args.get(0));
+			FileInputFormat.setInputPaths(wordcountJob, other_args.get(0));
 
 			if (other_args.size() >= 4) {
-				topkJob.setMapperClass(TopKRegexMapper.class);
-				topkJob.set("mapred.mapper.regex", other_args.get(3));
+				wordcountJob.setMapperClass(TopKRegexMapper.class);
+				wordcountJob.set("mapred.mapper.regex", other_args.get(3));
 				if (args.length == 5)
-					topkJob.set("mapred.mapper.regex.group", other_args.get(4));
+					wordcountJob.set("mapred.mapper.regex.group", other_args.get(4));
 			}
 			else {
-				topkJob.setMapperClass(LongMapper.class);
+				wordcountJob.setMapperClass(LongMapper.class);
 			}
 
-			topkJob.setCombinerClass(LongSumReducer.class);
-			topkJob.setReducerClass(LongSumReducer.class);
+			wordcountJob.setCombinerClass(LongSumReducer.class);
+			wordcountJob.setReducerClass(LongSumReducer.class);
 
-			FileOutputFormat.setOutputPath(topkJob, tempDir);
-			topkJob.setOutputFormat(SequenceFileOutputFormat.class);
-			topkJob.setOutputKeyClass(Text.class);
-			topkJob.setOutputValueClass(LongWritable.class);
+			FileOutputFormat.setOutputPath(wordcountJob, tempDir);
+			wordcountJob.setOutputFormat(SequenceFileOutputFormat.class);
+			wordcountJob.setOutputKeyClass(Text.class);
+			wordcountJob.setOutputValueClass(LongWritable.class);
 
 
-			JobConf sortJob = new JobConf(TopK.class);
-			sortJob.setJobName("topk-sort");
+			JobConf topkJob = new JobConf(TopK.class);
+			topkJob.setJobName("topk-sort");
 
-			FileInputFormat.setInputPaths(sortJob, tempDir);
-			sortJob.setInputFormat(SequenceFileInputFormat.class);
-			sortJob.setInputKeyClass(Text.class);
-			sortJob.setInputValueClass(LongWritable.class);
+			FileInputFormat.setInputPaths(topkJob, tempDir);
+			topkJob.setInputFormat(SequenceFileInputFormat.class);
 
-			sortJob.setMapperClass(InverseMapper.class);
-			// sortJob.setCombinerClass(TopKReduce.class);
-			sortJob.setReducerClass(TopKReduce.class);
-			sortJob.setInt("mapred.reduce.topk.k", Integer.parseInt(other_args.get(2)));
+			topkJob.setMapperClass(InverseMapper.class);
+			// topkJob.setCombinerClass(TopKReduce.class);
+			topkJob.setReducerClass(TopKReduce.class);
+			topkJob.setInt("mapred.reduce.topk.k", Integer.parseInt(other_args.get(2)));
 
-			sortJob.setNumReduceTasks(1);                 // write a single file
-			FileOutputFormat.setOutputPath(sortJob, new Path(other_args.get(1)));
-			sortJob.setOutputKeyComparatorClass           // sort by decreasing freq
+			topkJob.setNumReduceTasks(1);                 // write a single file
+			FileOutputFormat.setOutputPath(topkJob, new Path(other_args.get(1)));
+			topkJob.setOutputKeyComparatorClass           // sort by decreasing freq
 			(LongWritable.DecreasingComparator.class);
 			
-			JobClient  client  = new JobClient(topkJob);
-			List<JobConf> jobs = new ArrayList<JobConf>();
-			jobs.add(topkJob);
-			jobs.add(sortJob);
-			List<RunningJob> rjobs = client.submitJobs(jobs);
-			
-			for (int i = 0; i < rjobs.size(); i++) {
-				RunningJob rjob = rjobs.get(i);
-				JobConf job = jobs.get(i);
-				client.report(rjob, job);
+			if (pipeline) {
+				JobClient  client  = new JobClient(wordcountJob);
+				List<JobConf> jobs = new ArrayList<JobConf>();
+				jobs.add(wordcountJob);
+				jobs.add(topkJob);
+				List<RunningJob> rjobs = client.submitJobs(jobs);
+				for (int i = 0; i < rjobs.size(); i++) {
+					RunningJob rjob = rjobs.get(i);
+					JobConf job = jobs.get(i);
+					client.report(rjob, job);
+				}
+			}
+			else {
+				JobClient.runJob(wordcountJob);
+				JobClient.runJob(topkJob);
 			}
 			
-			FileSystem.get(topkJob).delete(tempDir, true);
+			FileSystem.get(wordcountJob).delete(tempDir, true);
 		}
 		finally {
 		}

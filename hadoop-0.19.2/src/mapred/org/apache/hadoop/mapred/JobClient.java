@@ -57,6 +57,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
@@ -777,6 +778,10 @@ public class JobClient extends Configured implements MRConstants, Tool  {
 		  JobConf job = jobs.get(i);
 		  if (i > 0) {
 			job.set("mapred.job.pipeline", jobids.get(i - 1).toString());
+			Class keyClass = jobs.get(i - 1).getOutputKeyClass();
+			Class valClass = jobs.get(i - 1).getOutputValueClass();
+			job.setInputKeyClass(keyClass);
+			job.setInputValueClass(valClass);
 		  }
 		  
 		  if (i < jobs.size() - 1) {
