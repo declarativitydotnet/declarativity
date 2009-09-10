@@ -1,7 +1,9 @@
 package org.apache.hadoop.mapred;
 
 import java.io.IOException;
+import java.util.TreeSet;
 
+import org.apache.hadoop.mapred.bufmanager.BufferRequest;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
@@ -57,7 +59,18 @@ public class PipelineReduceTask extends ReduceTask {
 			reducer.close();
 			buffer.close();
 			buffer.free();
-			bufferUmbilical.commit(getTaskID());
+			TreeSet<BufferRequest> requests = buffer.requests();
+			if (requests.size() > 0) {
+				for (BufferRequest request : requests) {
+					request.flushFinal();
+				}
+			}
+			else {
+				bufferUmbilical.commit(getTaskID());
+			}
+			
+			buffer.close();
+			buffer.free();
 		}
 	}
 }
