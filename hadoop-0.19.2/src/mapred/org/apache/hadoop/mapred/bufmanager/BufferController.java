@@ -179,6 +179,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	@Override
 	public void commit(TaskAttemptID taskid) throws IOException {
 		synchronized (requests) {
+			/*
 			if (!taskid.isMap()) { 
 				MapOutputFile mof = new MapOutputFile(taskid.getJobID());
 				mof.setConf(tracker.getJobConf(taskid));
@@ -192,6 +193,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 					System.err.println("Task " + taskid + " final output is good. " + file);
 				}
 			}
+			*/
 
 			this.committed.add(taskid);
 			this.requests.notifyAll();
