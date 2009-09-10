@@ -1581,21 +1581,19 @@ public class JobTracker implements MRConstants, InterTrackerProtocol,
    * @param job completed job.
    */
   synchronized void finalizeJob(JobInProgress job) {
-	  if (job.dependents().size() > 0) return;
-	  
-	  if (job.dependent() != null) {
-		  JobInProgress dependent = getJob(job.dependent());
-		  if (dependent != null) {
-			  dependent.dependents().remove(job.getJobID());
-			  if (dependent.dependents().size() == 0) {
-				  finalizeJob(dependent);
-			  }
-		  }
-	  }
-	  
     // Mark the 'non-running' tasks for pruning
     markCompletedJob(job);
     
+	  if (job.dependent() != null) {
+		  return;
+	  }
+	  else if (job.pipeline() != null) {
+		  JobInProgress pipeline = getJob(job.pipeline());
+		  if (pipeline != null) {
+			  finalizeJob(pipeline);
+		  }
+	  }
+	  
     JobEndNotifier.registerNotification(job.getJobConf(), job.getStatus());
 
     // start the merge of log files
