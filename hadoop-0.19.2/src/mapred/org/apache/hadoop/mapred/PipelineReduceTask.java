@@ -55,8 +55,8 @@ public class PipelineReduceTask extends ReduceTask {
 		finally {
 			//Clean up: repeated in catch block below
 			reducer.close();
-			buffer.flush();
 			buffer.close();
+			buffer.free();
 			bufferUmbilical.commit(getTaskID());
 		}
 	}

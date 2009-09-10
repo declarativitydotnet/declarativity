@@ -17,5 +17,5 @@ public interface JBufferCollector<K extends Object, V extends Object>
 	
 	public void spill(Path data, long dataSize, Path index) throws IOException;
 	
-	public void close();
+	public void close() throws IOException;
 }

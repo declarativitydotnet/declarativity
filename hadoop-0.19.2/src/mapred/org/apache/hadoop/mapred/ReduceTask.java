@@ -299,7 +299,7 @@ public class ReduceTask extends Task {
 			//Clean up: repeated in catch block below
 			try {
 				reducer.close();
-				buffer.close();
+				buffer.free();
 				out.close(reporter);
 			} catch (IOException ignored) {}
 		}

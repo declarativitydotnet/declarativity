@@ -783,6 +783,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	public synchronized void flush() throws IOException {
+		if (numSpills == 0 && bufstart == bufend) return;
+		
 		System.err.println("Buffer " + taskid + " starting flush of map output");
 		pipelineThread.close();
 		synchronized (pipelineThread) {
@@ -840,10 +842,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
 	}
 
-	public void close() {  
-		kvbuffer = null;
+	public void close() throws IOException {  
+		flush();
 	}
 	
+	public void free() {
+		kvbuffer = null;
+	}
 	
 	public void spill(Path data, long size, Path index) throws IOException {
 		Path dataFile = null;
