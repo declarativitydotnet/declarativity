@@ -538,6 +538,38 @@ public class JobConf extends Configuration {
     setClass("mapred.output.key.class", theClass, Object.class);
   }
 
+  
+  public Class<?> getInputValueClass() {
+    Class<?> retv = getClass("mapred.input.value.class", null, Object.class);
+    if (retv == null) {
+      retv = getOutputValueClass();
+    }
+    return retv;
+  }
+  
+  public void setInputValueClass(Class<?> theClass) {
+    setClass("mapred.input.value.class", theClass, Object.class);
+  }
+  
+  /**
+   * Get the key class for the job input data.
+   * 
+   * @return the key class for the job input data.
+   */
+  public Class<?> getInputKeyClass() {
+    return getClass("mapred.input.key.class",
+                    LongWritable.class, Object.class);
+  }
+  
+  /**
+   * Set the key class for the job input data.
+   * 
+   * @param theClass the key class for the job input data.
+   */
+  public void setInputKeyClass(Class<?> theClass) {
+    setClass("mapred.input.key.class", theClass, Object.class);
+  }
+  
   /**
    * Get the {@link RawComparator} comparator used to compare keys.
    * 
