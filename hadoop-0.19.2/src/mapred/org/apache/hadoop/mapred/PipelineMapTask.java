@@ -168,7 +168,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	    
 		int numReduceTasks = job.getNumReduceTasks();
 		if (numReduceTasks > 0) {
-			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, null);
+			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, job.getBoolean("mapred.map.tasks.pipeline.execution", false));
 		} else { 
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
 		}

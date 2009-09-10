@@ -194,7 +194,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 					}
 
-					if (taskid.isMap() && pipeline && flushpoint < numSpills) {
+					if (pipeline && flushpoint < numSpills) {
 						try {
 							long pipelinestart = java.lang.System.currentTimeMillis();
 							flushpoint = flushRequests();
@@ -354,7 +354,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
 	
 	@SuppressWarnings("unchecked")
-	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter, byte[] buffer) throws IOException {
+	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter, boolean pipeline) throws IOException {
 		this.umbilical = umbilical;
 		this.taskid = taskid;
 		this.job = job;
@@ -362,7 +362,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		this.mapOutputFile = new MapOutputFile(taskid.getJobID());
 		this.mapOutputFile.setConf(job);
 		
-		this.pipeline = job.getBoolean("mapred.map.tasks.pipeline.execution", true);
+		this.pipeline = pipeline;
 		this.pipelineThread = new PipelineMergeThread();
 		this.pipelineThread.start();
 		
@@ -399,7 +399,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		int recordCapacity = (int)(maxMemUsage * recper);
 		recordCapacity -= recordCapacity % RECSIZE;
-		kvbuffer = buffer == null ? new byte[maxMemUsage - recordCapacity] : buffer;
+		kvbuffer = new byte[maxMemUsage - recordCapacity];
 		bufvoid = kvbuffer.length;
 		recordCapacity /= RECSIZE;
 		kvoffsets = new int[recordCapacity];
@@ -433,6 +433,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public byte[] buffer() {
 		return this.kvbuffer;
+	}
+	
+	public TreeSet<BufferRequest> requests() {
+		return this.requests;
 	}
 	
 	/**
@@ -798,11 +802,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		System.err.println("Buffer " + taskid + " pipeline closed.");
 			
-		for (BufferRequest request : this.requests) {
-			request.close();
-		}
-		this.requests.clear();
-		
 		synchronized (spillLock) {
 			this.spillThread.close();
 			while (this.spillThread.isSpilling()) {
@@ -848,6 +847,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public void free() {
 		kvbuffer = null;
+		for (BufferRequest request : requests) {
+			try {
+				request.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		requests.clear();
 	}
 	
 	public void spill(Path data, long size, Path index) throws IOException {
