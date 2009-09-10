@@ -192,6 +192,9 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 				try { this.wait();
 				} catch (InterruptedException e) { }
 			}
+			collector.flush();
+			collector.close();
+			bufferUmbilical.commit(getTaskID());
 		}
 
 		done(umbilical);

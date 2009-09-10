@@ -91,10 +91,8 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			try {
 				JobConf job = tracker.getJobConf(taskid);
 				for (BufferRequest request : handle) {
-					System.err.println("BufferControler: handle " + request);
 					if (request.open(job)) {
 						executor.execute(request);
-						System.err.println("\tBufferController: handled " + request);
 						handled.add(request);
 					}
 					else {
@@ -181,7 +179,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	@Override
 	public void commit(TaskAttemptID taskid) throws IOException {
 		synchronized (requests) {
-			System.err.println("BufferController: commit buffer " + taskid);
 			this.committed.add(taskid);
 			this.requests.notifyAll();
 		}
@@ -276,7 +273,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	private void register(BufferRequest request) throws IOException {
 		synchronized(requests) {
-			System.err.println("BufferController: register " + request);
 			if (!this.requests.containsKey(request.taskid())) {
 				this.requests.put(request.taskid(), new TreeSet<BufferRequest>());
 			}
