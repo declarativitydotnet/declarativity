@@ -264,7 +264,7 @@ public class MapTask extends Task {
 
 		try {
 			runner.run(this.recordReader, collector, reporter);      
-			collector.flush();
+			collector.close();
 			bufferUmbilical.commit(getTaskID());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -272,7 +272,6 @@ public class MapTask extends Task {
 		} finally {
 			//close
 			this.recordReader.close();                               // close input
-			collector.close();
 		}
 		done(umbilical);
 	}

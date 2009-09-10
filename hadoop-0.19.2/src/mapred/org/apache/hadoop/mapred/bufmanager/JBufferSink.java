@@ -180,7 +180,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 					this.runningTransfers.remove(connection.mapTaskID());
 					
 					if (this.successful.size() == numConnections) {
-						collector.close();
+						try {
+							collector.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 				this.connections.get(connection.mapTaskID()).remove(connection);
