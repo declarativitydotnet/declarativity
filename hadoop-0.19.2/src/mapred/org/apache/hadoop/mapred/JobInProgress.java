@@ -1080,6 +1080,16 @@ class JobInProgress {
         status.getRunState() != JobStatus.PREP) {
       return false;
     }
+    
+    if (dependent != null) {
+    	JobInProgress dependentJob = jobtracker.getJob(dependent);
+    	if (dependentJob == null || 
+    			dependentJob.status.getRunState() == JobStatus.RUNNING ||
+    				dependentJob.status.getRunState() == JobStatus.PREP) {
+    		return false;
+    	}
+    }
+    
     // check if cleanup task has been launched already. 
     if (launchedCleanup) {
       return false;
