@@ -2748,7 +2748,7 @@ public class TaskTracker
 		  rjob = runningJobs.get(reduceJobID);          
 		  if (rjob != null) {
 			  synchronized (rjob) {
-				  FetchStatus f = rjob.getMapFetchStatus();
+				  FetchStatus f = rjob.getReduceFetchStatus();
 				  if (f != null) {
 					  reduceEvents = f.getEvents(fromEventId, maxLocs);
 				  }
