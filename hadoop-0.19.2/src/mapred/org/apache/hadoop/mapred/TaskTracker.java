@@ -769,7 +769,6 @@ public class TaskTracker
                 if (f.fetchCompletionEvents(currentTime, false)) {
                   fetchAgain = true;
                 }
-            	System.err.println("Reduce events fetched: " + f.allEvents);
               } catch (Exception e) {
                 LOG.warn(
                          "Ignoring exception that fetch for reduce completion" +
