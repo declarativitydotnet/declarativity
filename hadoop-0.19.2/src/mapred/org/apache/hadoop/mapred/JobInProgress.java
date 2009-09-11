@@ -1081,6 +1081,7 @@ class JobInProgress {
       return false;
     }
     
+    /*
     if (dependent != null) {
     	JobInProgress dependentJob = jobtracker.getJob(dependent);
     	if (dependentJob != null && 
@@ -1089,6 +1090,7 @@ class JobInProgress {
     		return false;
     	}
     }
+    */
     
     // check if cleanup task has been launched already. 
     if (launchedCleanup) {

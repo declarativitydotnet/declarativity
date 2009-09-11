@@ -2562,6 +2562,7 @@ public class TaskTracker
    * Called periodically to report Task progress, from 0.0 to 1.0.
    */
   public synchronized boolean statusUpdate(TaskAttemptID taskid, 
+		  
                                               TaskStatus taskStatus) 
   throws IOException {
     TaskInProgress tip = tasks.get(taskid);
