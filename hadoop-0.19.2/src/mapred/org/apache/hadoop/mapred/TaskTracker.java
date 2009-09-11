@@ -613,12 +613,12 @@ public class TaskTracker
 					  try {
 						  //the method below will return true when we have not 
 						  //fetched all available events yet
-						  if (f.fetchMapCompletionEvents(currentTime)) {
+						  if (f.fetchCompletionEvents(currentTime, false)) {
 							  fetchAgain = true;
 						  }
 					  } catch (Exception e) {
 						  LOG.warn(
-								  "Ignoring exception that fetch for map completion" +
+								  "Ignoring exception that fetch for reduce completion" +
 								  " events threw for " + f.jobId + " threw: " +
 								  StringUtils.stringifyException(e)); 
 					  }
@@ -705,7 +705,7 @@ public class TaskTracker
             try {
               //the method below will return true when we have not 
               //fetched all available events yet
-              if (f.fetchMapCompletionEvents(currentTime)) {
+              if (f.fetchCompletionEvents(currentTime, true)) {
                 fetchAgain = true;
               }
             } catch (Exception e) {
@@ -740,7 +740,7 @@ public class TaskTracker
     /** The next event ID that we will start querying the JobTracker from*/
     private IntWritable fromEventId;
     /** This is the cache of map events for a given job */ 
-    private List<TaskCompletionEvent> allMapEvents;
+    private List<TaskCompletionEvent> allEvents;
     /** What jobid this fetchstatus object is for*/
     private JobID jobId;
     private long lastFetchTime;
@@ -749,21 +749,21 @@ public class TaskTracker
     public FetchStatus(JobID jobId, int numMaps) {
       this.fromEventId = new IntWritable(0);
       this.jobId = jobId;
-      this.allMapEvents = new ArrayList<TaskCompletionEvent>(numMaps);
+      this.allEvents = new ArrayList<TaskCompletionEvent>(numMaps);
     }
       
     /**
      * Check if the number of events that are obtained are more than required.
      * If yes then purge the extra ones.
      */
-    public void purgeMapEvents(int lastKnownIndex) {
+    public void purgeEvents(int lastKnownIndex) {
       // Note that the sync is first on fromEventId and then on allMapEvents
       synchronized (fromEventId) {
-        synchronized (allMapEvents) {
+        synchronized (allEvents) {
           int index = 0;
-          if (allMapEvents.size() > lastKnownIndex) {
+          if (allEvents.size() > lastKnownIndex) {
             fromEventId.set(lastKnownIndex);
-            allMapEvents = allMapEvents.subList(0, lastKnownIndex);
+            allEvents = allEvents.subList(0, lastKnownIndex);
           }
         }
       }
@@ -774,11 +774,11 @@ public class TaskTracker
       TaskCompletionEvent[] events = 
         TaskCompletionEvent.EMPTY_ARRAY;
       boolean notifyFetcher = false; 
-      synchronized (allMapEvents) {
-        if (allMapEvents.size() > fromId) {
-          int actualMax = Math.min(max, (allMapEvents.size() - fromId));
+      synchronized (allEvents) {
+        if (allEvents.size() > fromId) {
+          int actualMax = Math.min(max, (allEvents.size() - fromId));
           List <TaskCompletionEvent> eventSublist = 
-            allMapEvents.subList(fromId, actualMax + fromId);
+            allEvents.subList(fromId, actualMax + fromId);
           events = eventSublist.toArray(events);
         } else {
           // Notify Fetcher thread. 
@@ -793,37 +793,7 @@ public class TaskTracker
       return events;
     }
     
-    public boolean fetchReduceCompletionEvents(long currTime) throws IOException {
-    	if (!fetchAgain && (currTime - lastFetchTime) < heartbeatInterval) {
-    		return false;
-    	}
-    	int currFromEventId = 0;
-    	synchronized (fromEventId) {
-    		currFromEventId = fromEventId.get();
-    		List <TaskCompletionEvent> recentEvents = 
-    			queryJobTracker(fromEventId, jobId, jobClient);
-    		synchronized (allMapEvents) {
-    			for (TaskCompletionEvent e : recentEvents) {
-    				if (!e.isMap) {
-    					allMapEvents.add(e);
-    				}
-    			}
-    		}
-
-    		lastFetchTime = currTime;
-    		if (fromEventId.get() - currFromEventId >= probe_sample_size) {
-    			//return true when we have fetched the full payload, indicating
-    			//that we should fetch again immediately (there might be more to
-    			//fetch
-    			fetchAgain = true;
-    			return true;
-    		}
-    	}
-    	fetchAgain = false;
-    	return false;
-    }
-      
-    public boolean fetchMapCompletionEvents(long currTime) throws IOException {
+    public boolean fetchCompletionEvents(long currTime, boolean isMap) throws IOException {
       if (!fetchAgain && (currTime - lastFetchTime) < heartbeatInterval) {
         return false;
       }
@@ -832,10 +802,10 @@ public class TaskTracker
         currFromEventId = fromEventId.get();
         List <TaskCompletionEvent> recentEvents = 
           queryJobTracker(fromEventId, jobId, jobClient);
-        synchronized (allMapEvents) {
+        synchronized (allEvents) {
         	for (TaskCompletionEvent e : recentEvents) {
-        		if (e.isMap) {
-        			allMapEvents.add(e);
+        		if (e.isMap == isMap) {
+        			allEvents.add(e);
         		}
         	}
         }
@@ -1181,7 +1151,7 @@ public class TaskTracker
                   synchronized (rjob) {
                     FetchStatus f = rjob.getMapFetchStatus();
                     if (f != null) {
-                      f.purgeMapEvents(entry.getValue());
+                      f.purgeEvents(entry.getValue());
                     }
                   }
                 }
