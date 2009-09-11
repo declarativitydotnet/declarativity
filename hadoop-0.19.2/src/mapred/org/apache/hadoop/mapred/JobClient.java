@@ -1308,8 +1308,7 @@ public class JobClient extends Configured implements MRConstants, Tool  {
 				  Thread.sleep(1000);
 			  } catch (InterruptedException e) {}
 			  try {
-				  if (running.isComplete() ||
-						  (running.mapProgress() == 1.0f && running.reduceProgress() == 1.0f)) {
+				  if (running.isComplete()) {
 					  break;
 				  }
 				  String report = 
