@@ -184,7 +184,14 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	private FSDataOutputStream connect() throws IOException {
 		try {
 			Socket socket = new Socket();
-			socket.connect(this.sink);
+			int connectionAttempts = this.conf.getInt("mapred.connection.attempts", Integer.MAX_VALUE);
+			try {
+				for (int i = 0; i < connectionAttempts && !socket.isConnected(); i++) {
+					socket.connect(this.sink);
+				}
+			} catch (java.net.ConnectException e) {
+				System.err.println("BufferRequest: " + e);
+			}
 			FSDataOutputStream out = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			this.taskid.write(out);
 			out.flush();
