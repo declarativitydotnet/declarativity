@@ -424,7 +424,7 @@ abstract class Task implements Writable, Configurable {
                 taskFound = umbilical.statusUpdate(taskId, taskStatus);
                 long duration = System.currentTimeMillis() - begin;
                 if (duration > 1000) {
-                	System.err.println("ERROR status update took " + duration + " ms!");
+                	LOG.debug("Status update took " + duration + " ms!");
                 }
                 taskStatus.clearStatus();
               }
@@ -434,7 +434,7 @@ abstract class Task implements Writable, Configurable {
                 taskFound = umbilical.ping(taskId);
                 long duration = System.currentTimeMillis() - begin;
                 if (duration > 1000) {
-                	System.err.println("ERROR ping took " + duration + " ms!");
+                	LOG.debug("ping took " + duration + " ms!");
                 }
               }
               
@@ -554,7 +554,7 @@ abstract class Task implements Writable, Configurable {
     umbilical.reportNextRecordRange(taskId, range);
     long duration = System.currentTimeMillis() - begin;
     if (duration > 1000) {
-    	System.err.println("ERROR report next record range took " + duration + " ms.");
+    	LOG.debug("report next record range took " + duration + " ms.");
     }
   }
 
@@ -670,12 +670,9 @@ abstract class Task implements Writable, Configurable {
     try {
       pingProgressThread.join();
     } catch (InterruptedException ie) {}
-    System.err.println(getTaskID() + " here 1 " + (System.currentTimeMillis() - begin) + " ms.");
     sendLastUpdate(umbilical);
-    System.err.println(getTaskID() + " here 2 " + (System.currentTimeMillis() - begin) + " ms.");
     //signal the tasktracker that we are done
     sendDone(umbilical);
-    System.err.println(getTaskID() + " here 3 " + (System.currentTimeMillis() - begin) + " ms.");
   }
 
   protected void statusUpdate(TaskUmbilicalProtocol umbilical) 
@@ -690,8 +687,9 @@ abstract class Task implements Writable, Configurable {
         }
         long duration = System.currentTimeMillis() - begin;
         if (duration > 1000) {
-        	System.err.println("ERROR: took " + duration + " ms just to update status!");
+        	LOG.debug("It took " + duration + " ms to update status!");
         }
+        
         taskStatus.clearStatus();
         return;
       } catch (InterruptedException ie) {
@@ -723,7 +721,7 @@ abstract class Task implements Writable, Configurable {
         umbilical.done(getTaskID());
         long duration = System.currentTimeMillis() - begin;
         if (duration > 1000) {
-        	System.err.println("ERROR: took " + duration + " ms just to call done!");
+        	LOG.debug("It took " + duration + " ms just to call done!");
         }
         LOG.info("Task '" + taskId + "' done.");
         return;
