@@ -506,11 +506,13 @@ public class TaskTracker
                              taskTrackerName);
     mapEventsFetcher.start();
     
+    /*
     this.reduceEventsFetcher = new ReduceEventsFetcherThread();
     reduceEventsFetcher.setDaemon(true);
     reduceEventsFetcher.setName(
                              "reduce-events fetcher for all maps tasks " + "on " +  taskTrackerName);
     reduceEventsFetcher.start();
+    */
     
     
     
