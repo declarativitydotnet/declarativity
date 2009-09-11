@@ -558,28 +558,32 @@ public class TaskTracker
 	  Map<JobID, IntWritable> fromEventIds = new HashMap<JobID, IntWritable>();
 	  public void run() {
 		  while (running) {
+			  Set<JobID> jobids = new HashSet<JobID>();
 			  synchronized (TaskTracker.this.reduceCompletionEvents) {
 				  while (reduceCompletionEvents.size() == 0) {
 					  try { reduceCompletionEvents.wait(heartbeatInterval);
 					  } catch (InterruptedException e) { }
 				  }
+				  jobids.clear();
+				  jobids.addAll(reduceCompletionEvents.keySet());
+			  }
 
-				  for (JobID jobId : reduceCompletionEvents.keySet()) {
-					  if (!fromEventIds.containsKey(jobId)) {
-						  fromEventIds.put(jobId, new IntWritable(0));
-					  }
-					  IntWritable fromEventId = fromEventIds.get(jobId);
-					  try {
-						  fromEventId.set(reduceCompletionEvents.get(jobId).size());
-						  List <TaskCompletionEvent> recentEvents = queryJobTracker(fromEventId, jobId, jobClient);
-						  for (TaskCompletionEvent e : recentEvents) {
-							  if (!e.getTaskAttemptId().isMap()) {
-								  reduceCompletionEvents.get(jobId).add(e);
-							  }
+			  for (JobID jobId : jobids) {
+				  if (!fromEventIds.containsKey(jobId)) {
+					  fromEventIds.put(jobId, new IntWritable(0));
+				  }
+				  IntWritable fromEventId = fromEventIds.get(jobId);
+				  try { 
+					  fromEventId.set(reduceCompletionEvents.get(jobId).size());
+					  System.err.println("ReduceEventsFetcherThread: query jobtracker for job " + jobId + " from event " + fromEventId);
+					  List <TaskCompletionEvent> recentEvents = queryJobTracker(fromEventId, jobId, jobClient);
+					  for (TaskCompletionEvent e : recentEvents) {
+						  if (!e.getTaskAttemptId().isMap()) {
+							  reduceCompletionEvents.get(jobId).add(e);
 						  }
-					  } catch (IOException e) {
-
 					  }
+				  } catch (IOException e) {
+
 				  }
 			  }
 		  }
