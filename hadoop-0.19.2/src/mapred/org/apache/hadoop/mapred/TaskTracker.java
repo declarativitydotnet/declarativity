@@ -690,7 +690,7 @@ public class TaskTracker
 				  f = rjob.getReduceFetchStatus();
 				  for (TaskInProgress tip : rjob.tasks) {
 					  Task task = tip.getTask();
-					  if (task.isMapTask()) {
+					  if (task.isMapTask() && task.isPipeline()) {
 						  if (((MapTask)task).getPhase() == TaskStatus.Phase.PIPELINE) {
 							  PipelineMapTask pmt = (PipelineMapTask) task;
 							  TaskID reduceID = pmt.pipelineReduceTask(rjob.jobConf);
@@ -760,9 +760,11 @@ public class TaskTracker
               try {
                 //the method below will return true when we have not 
                 //fetched all available events yet
+            	System.err.println("Fetching reduce events from job " + f.jobId);
                 if (f.fetchCompletionEvents(currentTime, false)) {
                   fetchAgain = true;
                 }
+            	System.err.println("Reduce events fetched: " + f.allEvents);
               } catch (Exception e) {
                 LOG.warn(
                          "Ignoring exception that fetch for reduce completion" +
