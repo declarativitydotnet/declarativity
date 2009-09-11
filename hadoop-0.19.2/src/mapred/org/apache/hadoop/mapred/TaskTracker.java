@@ -2445,7 +2445,7 @@ public class TaskTracker
       TaskAttemptID taskId = task.getTaskID();
       LOG.debug("Cleaning up " + taskId);
 
-      if (task instanceof PipelineReduceTask) return;
+      // if (task instanceof PipelineReduceTask) return;
 
       synchronized (TaskTracker.this) {
         if (needCleanup) {
