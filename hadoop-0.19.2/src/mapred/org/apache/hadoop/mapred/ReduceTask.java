@@ -116,7 +116,7 @@ public class ReduceTask extends Task {
 				}
 
 				try {
-					Thread.sleep(100);
+					Thread.sleep(5000);
 				} catch (InterruptedException e) { }
 			}
 		}

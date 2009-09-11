@@ -63,7 +63,7 @@ import org.apache.hadoop.metrics.util.MetricsTimeVaryingRate;
 public class RPC {
   private static final Log LOG =
     LogFactory.getLog(RPC.class);
-
+  
   private RPC() {}                                  // no public ctor
 
 
