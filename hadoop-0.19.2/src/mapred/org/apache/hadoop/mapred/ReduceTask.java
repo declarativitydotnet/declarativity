@@ -241,6 +241,7 @@ public class ReduceTask extends Task {
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
+		fetcher.setDaemon(true);
 		fetcher.start();
 
 		/* This will not close (block) until all fetches finish! */
