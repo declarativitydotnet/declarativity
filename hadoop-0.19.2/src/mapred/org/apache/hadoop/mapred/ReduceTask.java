@@ -116,7 +116,8 @@ public class ReduceTask extends Task {
 				}
 
 				try {
-					Thread.sleep(5000);
+					int waittime = mapTasks.size() == getNumMaps() ? 60000 : 1000;
+					Thread.sleep(waittime);
 				} catch (InterruptedException e) { }
 			}
 		}
@@ -244,6 +245,7 @@ public class ReduceTask extends Task {
 
 		/* This will not close (block) until all fetches finish! */
 		sink.block();
+		fetcher.stop();
 		buffer.flush();
 		
 		long begin = System.currentTimeMillis();
