@@ -506,11 +506,13 @@ public class TaskTracker
                              taskTrackerName);
     mapEventsFetcher.start();
     
+    /*
     this.reduceEventsFetcher = new ReduceEventsFetcherThread();
     reduceEventsFetcher.setDaemon(true);
     reduceEventsFetcher.setName(
                              "reduce-events fetcher for all maps tasks " + "on " +  taskTrackerName);
     reduceEventsFetcher.start();
+    */
     
     
     maxVirtualMemoryForTasks = fConf.
@@ -678,15 +680,49 @@ public class TaskTracker
       return fList;
     }
     
+	  private List<FetchStatus> mapsInPipeline() {
+		  List <FetchStatus> fList = new ArrayList<FetchStatus>();
+		  for (Map.Entry <JobID, RunningJob> item : runningJobs.entrySet()) {
+			  RunningJob rjob = item.getValue();
+			  JobID jobId = item.getKey();
+			  FetchStatus f;
+			  synchronized (rjob) {
+				  f = rjob.getReduceFetchStatus();
+				  for (TaskInProgress tip : rjob.tasks) {
+					  Task task = tip.getTask();
+					  if (task.isMapTask()) {
+						  if (((MapTask)task).getPhase() == 
+							  TaskStatus.Phase.PIPELINE) {
+							  if (rjob.getReduceFetchStatus() == null) {
+								  //this is a new job; we start fetching its reduce events
+								  f = new FetchStatus(jobId, 1); 
+								  rjob.setReduceFetchStatus(f);
+							  }
+							  f = rjob.getReduceFetchStatus();
+							  fList.add(f);
+							  break; //no need to check any more tasks belonging to this
+						  }
+					  }
+				  }
+			  }
+		  }
+		  //at this point, we have information about for which of
+		  //the running jobs do we need to query the jobtracker for map 
+		  //outputs (actually map events).
+		  return fList;
+	  }
+    
     @Override
     public void run() {
       LOG.info("Starting thread: " + getName());
         
       while (running) {
         try {
-          List <FetchStatus> fList = null;
+          List <FetchStatus> fMapList = null;
+          List <FetchStatus> fReduceList = null;
           synchronized (runningJobs) {
-            while (((fList = reducesInShuffle()).size()) == 0) {
+            while ((fReduceList = reducesInShuffle()).size() == 0 &&
+            		(fMapList = mapsInPipeline()).size() == 0) {
               try {
                 runningJobs.wait();
               } catch (InterruptedException e) {
@@ -699,7 +735,7 @@ public class TaskTracker
           // possibly belonging to different jobs
           boolean fetchAgain = false; //flag signifying whether we want to fetch
                                       //immediately again.
-          for (FetchStatus f : fList) {
+          for (FetchStatus f : fReduceList) {
             long currentTime = System.currentTimeMillis();
             try {
               //the method below will return true when we have not 
@@ -717,6 +753,26 @@ public class TaskTracker
               break;
             }
           }
+          
+          for (FetchStatus f : fMapList) {
+              long currentTime = System.currentTimeMillis();
+              try {
+                //the method below will return true when we have not 
+                //fetched all available events yet
+                if (f.fetchCompletionEvents(currentTime, false)) {
+                  fetchAgain = true;
+                }
+              } catch (Exception e) {
+                LOG.warn(
+                         "Ignoring exception that fetch for reduce completion" +
+                         " events threw for " + f.jobId + " threw: " +
+                         StringUtils.stringifyException(e)); 
+              }
+              if (!running) {
+                break;
+              }
+            }
+          
           synchronized (waitingOn) {
             try {
               int waitTime;
