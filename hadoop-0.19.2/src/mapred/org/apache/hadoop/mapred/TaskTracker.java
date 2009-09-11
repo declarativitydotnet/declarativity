@@ -2673,14 +2673,14 @@ public class TaskTracker
     RunningJob rjob;
     synchronized (runningJobs) {
       rjob = runningJobs.get(jobId);          
-    }
-    if (rjob != null) {
+      if (rjob != null) {
         synchronized (rjob) {
           FetchStatus f = rjob.getFetchStatus();
           if (f != null) {
             mapEvents = f.getMapEvents(fromEventId, maxLocs);
           }
         }
+      }
     }
     return new MapTaskCompletionEventsUpdate(mapEvents, false);
   }
