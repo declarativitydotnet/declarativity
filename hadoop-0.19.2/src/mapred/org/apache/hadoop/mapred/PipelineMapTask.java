@@ -187,6 +187,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		rof.setDaemon(true);
 		
 		synchronized (this) {
+			setPhase(TaskStatus.Phase.PIPELINE); 
 			open = true;
 			rof.start();
 			long begin = System.currentTimeMillis();
@@ -194,6 +195,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 				try { this.wait();
 				} catch (InterruptedException e) { }
 			}
+			setPhase(TaskStatus.Phase.MAP); 
 			System.err.println("PipelineMapTask: waited for " + (System.currentTimeMillis() - begin) + " ms.");
 			collector.close();
 			bufferUmbilical.commit(getTaskID());
