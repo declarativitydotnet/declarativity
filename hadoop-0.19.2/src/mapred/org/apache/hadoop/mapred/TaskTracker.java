@@ -337,7 +337,7 @@ public class TaskTracker
       synchronized (rJob) {
         rJob.tasks.add(tip);
       }
-      runningJobs.notify(); //notify the fetcher thread
+      runningJobs.notifyAll(); //notify the fetcher thread
       return rJob;
     }
   }
