@@ -420,12 +420,22 @@ abstract class Task implements Writable, Configurable {
                 taskStatus.statusUpdate(taskProgress.get(),
                                         taskProgress.toString(), 
                                         counters);
+                long begin = System.currentTimeMillis();
                 taskFound = umbilical.statusUpdate(taskId, taskStatus);
+                long duration = System.currentTimeMillis() - begin;
+                if (duration > 1000) {
+                	System.err.println("ERROR status update took " + duration + " ms!");
+                }
                 taskStatus.clearStatus();
               }
               else {
                 // send ping 
+            	  long begin = System.currentTimeMillis();
                 taskFound = umbilical.ping(taskId);
+                long duration = System.currentTimeMillis() - begin;
+                if (duration > 1000) {
+                	System.err.println("ERROR ping took " + duration + " ms!");
+                }
               }
               
               // if Task Tracker is not aware of our task ID (probably because it died and 
@@ -540,7 +550,12 @@ abstract class Task implements Writable, Configurable {
       new SortedRanges.Range(currentRecStartIndex, len);
     taskStatus.setNextRecordRange(range);
     LOG.debug("sending reportNextRecordRange " + range);
+    long begin = System.currentTimeMillis();
     umbilical.reportNextRecordRange(taskId, range);
+    long duration = System.currentTimeMillis() - begin;
+    if (duration > 1000) {
+    	System.err.println("ERROR report next record range took " + duration + " ms.");
+    }
   }
 
   public void setProgress(float progress) {
@@ -629,7 +644,7 @@ abstract class Task implements Writable, Configurable {
     OutputCommitter outputCommitter = conf.getOutputCommitter();
     // check whether the commit is required.
     boolean commitRequired = outputCommitter.needsTaskCommit(taskContext);
-    if (commitRequired) {
+    if (!isPipeline() && commitRequired) {
       int retries = MAX_RETRIES;
       setState(TaskStatus.State.COMMIT_PENDING);
       // say the task tracker that task is commit pending
