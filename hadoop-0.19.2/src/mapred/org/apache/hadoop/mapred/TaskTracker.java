@@ -691,7 +691,6 @@ public class TaskTracker
 				  for (TaskInProgress tip : rjob.tasks) {
 					  Task task = tip.getTask();
 					  if (task.isMapTask() && task.isPipeline()) {
-						  if (((MapTask)task).getPhase() == TaskStatus.Phase.PIPELINE) {
 							  System.err.println("Map task " + task.getTaskID() + " is in pipeline mode.");
 							  PipelineMapTask pmt = (PipelineMapTask) task;
 							  TaskID reduceID = pmt.pipelineReduceTask(rjob.jobConf);
@@ -703,10 +702,6 @@ public class TaskTracker
 							  f = rjob.getReduceFetchStatus();
 							  fList.add(f);
 							  break; //no need to check any more tasks belonging to this
-						  }
-						  else {
-							  System.err.println("Map task " + task.getTaskID() + " is a pipeline. BUT NOT IN PIPELINE MODE!");
-						  }
 					  }
 				  }
 			  }
