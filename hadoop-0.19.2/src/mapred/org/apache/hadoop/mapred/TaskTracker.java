@@ -2661,8 +2661,8 @@ public class TaskTracker
     purgeTask(tip, true);
   }
 
-  public synchronized MapTaskCompletionEventsUpdate getMapCompletionEvents(
-      JobID jobId, int fromEventId, int maxLocs, TaskAttemptID id) 
+  public MapTaskCompletionEventsUpdate 
+  getMapCompletionEvents(JobID jobId, int fromEventId, int maxLocs, TaskAttemptID id) 
   throws IOException {
     TaskCompletionEvent[]mapEvents = TaskCompletionEvent.EMPTY_ARRAY;
     synchronized (shouldReset) {
@@ -2685,8 +2685,8 @@ public class TaskTracker
     return new MapTaskCompletionEventsUpdate(mapEvents, false);
   }
   
-  public synchronized ReduceTaskCompletionEventsUpdate getReduceCompletionEvents(
-		  JobID reduceJobID, int fromEventId, int maxLocs) 
+  public ReduceTaskCompletionEventsUpdate 
+  getReduceCompletionEvents(JobID reduceJobID, int fromEventId, int maxLocs) 
   throws IOException {
 	  TaskCompletionEvent[] reduceEvents = TaskCompletionEvent.EMPTY_ARRAY;
 	  List<TaskCompletionEvent> rjob;
