@@ -691,11 +691,12 @@ public class TaskTracker
 				  for (TaskInProgress tip : rjob.tasks) {
 					  Task task = tip.getTask();
 					  if (task.isMapTask()) {
-						  if (((MapTask)task).getPhase() == 
-							  TaskStatus.Phase.PIPELINE) {
+						  if (((MapTask)task).getPhase() == TaskStatus.Phase.PIPELINE) {
+							  PipelineMapTask pmt = (PipelineMapTask) task;
+							  TaskID reduceID = pmt.pipelineReduceTask(rjob.jobConf);
 							  if (rjob.getReduceFetchStatus() == null) {
 								  //this is a new job; we start fetching its reduce events
-								  f = new FetchStatus(jobId, 1); 
+								  f = new FetchStatus(reduceID.getJobID(), 1); 
 								  rjob.setReduceFetchStatus(f);
 							  }
 							  f = rjob.getReduceFetchStatus();
@@ -2795,12 +2796,12 @@ public class TaskTracker
   }
   
   public ReduceTaskCompletionEventsUpdate 
-  getReduceCompletionEvents(JobID reduceJobID, int fromEventId, int maxLocs) 
+  getReduceCompletionEvents(JobID jobId, int fromEventId, int maxLocs) 
   throws IOException {
 	  TaskCompletionEvent[] reduceEvents = TaskCompletionEvent.EMPTY_ARRAY;
 	  RunningJob rjob;
 	  synchronized (runningJobs) {
-		  rjob = runningJobs.get(reduceJobID);          
+		  rjob = runningJobs.get(jobId);          
 		  if (rjob != null) {
 			  synchronized (rjob) {
 				  FetchStatus f = rjob.getReduceFetchStatus();

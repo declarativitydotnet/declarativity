@@ -46,7 +46,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			while (true) {
 				try {
 					ReduceTaskCompletionEventsUpdate updates = 
-						trackerUmbilical.getReduceCompletionEvents(reduceTaskId.getJobID(), eid, Integer.MAX_VALUE);
+						trackerUmbilical.getReduceCompletionEvents(getJobID(), eid, Integer.MAX_VALUE);
 
 					eid += updates.events.length;
 
@@ -116,6 +116,11 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		return true;
 	}
 	
+	public TaskID pipelineReduceTask(JobConf job) {
+		JobID reduceJobId = JobID.forName(job.get("mapred.job.pipeline"));
+		return new TaskID(reduceJobId, false, getTaskID().getTaskID().id);
+	}
+	
 	@Override
 	public void localizeConfiguration(JobConf conf) throws IOException {
 		super.localizeConfiguration(conf);
@@ -180,8 +185,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		sink.open();
 		
 		/* Start the reduce output fetcher */
-		JobID reduceJobId = JobID.forName(job.get("mapred.job.pipeline"));
-		TaskID reduceTaskId = new TaskID(reduceJobId, false, getTaskID().getTaskID().id);
+		TaskID reduceTaskId = pipelineReduceTask(job);
 		System.err.println("Map task " + getTaskID() + " requesting pipeline from reducer " + reduceTaskId);
 		ReduceOutputFetcher rof = new ReduceOutputFetcher(umbilical, bufferUmbilical, sink, reduceTaskId);
 		rof.setDaemon(true);
