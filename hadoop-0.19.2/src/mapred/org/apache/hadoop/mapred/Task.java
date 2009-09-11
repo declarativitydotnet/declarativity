@@ -666,11 +666,16 @@ abstract class Task implements Writable, Configurable {
   protected void statusUpdate(TaskUmbilicalProtocol umbilical) 
   throws IOException {
     int retries = MAX_RETRIES;
+    long begin = System.currentTimeMillis();
     while (true) {
       try {
         if (!umbilical.statusUpdate(getTaskID(), taskStatus)) {
           LOG.warn("Parent died.  Exiting "+taskId);
           System.exit(66);
+        }
+        long duration = System.currentTimeMillis() - begin;
+        if (duration > 1000) {
+        	System.err.println("ERROR: took " + duration + " ms just to update status!");
         }
         taskStatus.clearStatus();
         return;
@@ -699,7 +704,12 @@ abstract class Task implements Writable, Configurable {
     int retries = MAX_RETRIES;
     while (true) {
       try {
+    	  long begin = System.currentTimeMillis();
         umbilical.done(getTaskID());
+        long duration = System.currentTimeMillis() - begin;
+        if (duration > 1000) {
+        	System.err.println("ERROR: took " + duration + " ms just to call done!");
+        }
         LOG.info("Task '" + taskId + "' done.");
         return;
       } catch (IOException ie) {
