@@ -691,8 +691,8 @@ public class TaskTracker
 				  for (TaskInProgress tip : rjob.tasks) {
 					  Task task = tip.getTask();
 					  if (task.isMapTask() && task.isPipeline()) {
-						  System.err.println("Map task " + task.getTaskID() + " is a pipeline.");
 						  if (((MapTask)task).getPhase() == TaskStatus.Phase.PIPELINE) {
+							  System.err.println("Map task " + task.getTaskID() + " is in pipeline mode.");
 							  PipelineMapTask pmt = (PipelineMapTask) task;
 							  TaskID reduceID = pmt.pipelineReduceTask(rjob.jobConf);
 							  if (rjob.getReduceFetchStatus() == null) {
@@ -723,7 +723,7 @@ public class TaskTracker
         
       while (running) {
         try {
-          List <FetchStatus> fMapList = reducesInShuffle();
+          List <FetchStatus> fMapList    = reducesInShuffle();
           List <FetchStatus> fReduceList = mapsInPipeline();
           synchronized (runningJobs) {
             while (fReduceList.size() == 0 && fMapList.size() == 0) {
@@ -741,7 +741,7 @@ public class TaskTracker
           // possibly belonging to different jobs
           boolean fetchAgain = false; //flag signifying whether we want to fetch
                                       //immediately again.
-          for (FetchStatus f : fReduceList) {
+          for (FetchStatus f : fMapList) {
             long currentTime = System.currentTimeMillis();
             try {
               //the method below will return true when we have not 
@@ -760,7 +760,7 @@ public class TaskTracker
             }
           }
           
-          for (FetchStatus f : fMapList) {
+          for (FetchStatus f : fReduceList) {
               long currentTime = System.currentTimeMillis();
               try {
                 //the method below will return true when we have not 
