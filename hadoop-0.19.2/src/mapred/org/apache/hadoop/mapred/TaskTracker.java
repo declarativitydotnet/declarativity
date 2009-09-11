@@ -691,6 +691,7 @@ public class TaskTracker
 				  for (TaskInProgress tip : rjob.tasks) {
 					  Task task = tip.getTask();
 					  if (task.isMapTask() && task.isPipeline()) {
+						  System.err.println("Map task " + task.getTaskID() + " is a pipeline.");
 						  if (((MapTask)task).getPhase() == TaskStatus.Phase.PIPELINE) {
 							  PipelineMapTask pmt = (PipelineMapTask) task;
 							  TaskID reduceID = pmt.pipelineReduceTask(rjob.jobConf);
@@ -702,6 +703,9 @@ public class TaskTracker
 							  f = rjob.getReduceFetchStatus();
 							  fList.add(f);
 							  break; //no need to check any more tasks belonging to this
+						  }
+						  else {
+							  System.err.println("Map task " + task.getTaskID() + " is a pipeline. BUT NOT IN PIPELINE MODE!");
 						  }
 					  }
 				  }
@@ -719,13 +723,14 @@ public class TaskTracker
         
       while (running) {
         try {
-          List <FetchStatus> fMapList = null;
-          List <FetchStatus> fReduceList = null;
+          List <FetchStatus> fMapList = reducesInShuffle();
+          List <FetchStatus> fReduceList = mapsInPipeline();
           synchronized (runningJobs) {
-            while ((fReduceList = reducesInShuffle()).size() == 0 &&
-            		(fMapList = mapsInPipeline()).size() == 0) {
+            while (fReduceList.size() == 0 && fMapList.size() == 0) {
               try {
                 runningJobs.wait();
+                fMapList    = reducesInShuffle();
+                fReduceList = mapsInPipeline();
               } catch (InterruptedException e) {
                 LOG.info("Shutting down: " + getName());
                 return;
