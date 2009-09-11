@@ -691,7 +691,6 @@ public class TaskTracker
 				  for (TaskInProgress tip : rjob.tasks) {
 					  Task task = tip.getTask();
 					  if (task.isMapTask() && task.isPipeline()) {
-							  System.err.println("Map task " + task.getTaskID() + " is in pipeline mode.");
 							  PipelineMapTask pmt = (PipelineMapTask) task;
 							  TaskID reduceID = pmt.pipelineReduceTask(rjob.jobConf);
 							  if (rjob.getReduceFetchStatus() == null) {
