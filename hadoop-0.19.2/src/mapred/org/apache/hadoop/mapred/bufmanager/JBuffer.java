@@ -366,9 +366,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		this.pipeline = pipeline;
 		this.pipelineThread = new PipelineMergeThread();
+		this.pipelineThread.setDaemon(true);
 		this.pipelineThread.start();
 		
 		this.spillThread = new SpillThread();
+		this.spillThread.setDaemon(true);
 		this.spillThread.start();
 		
 		localFs = FileSystem.getLocal(job);
