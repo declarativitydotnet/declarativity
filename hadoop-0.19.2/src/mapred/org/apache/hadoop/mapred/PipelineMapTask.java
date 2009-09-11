@@ -113,7 +113,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	
 	@Override
 	public boolean isPipeline() {
-		return true;
+		return !(jobCleanup || jobSetup || taskCleanup);
 	}
 	
 	public TaskID pipelineReduceTask(JobConf job) {
@@ -163,6 +163,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	    if (job.get("mapred.job.pipeline", null) == null) {
 	    	throw new IOException("PipelineMapTask: mapred.job.pipeline is not defined!");
 	    }
+		setPhase(TaskStatus.Phase.PIPELINE); 
+
 	    
 	    Class keyClass = job.getInputKeyClass();
 	    Class valClass = job.getInputValueClass();
@@ -191,7 +193,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		rof.setDaemon(true);
 		
 		synchronized (this) {
-			setPhase(TaskStatus.Phase.PIPELINE); 
 			open = true;
 			rof.start();
 			long begin = System.currentTimeMillis();
