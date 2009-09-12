@@ -4,11 +4,11 @@ import java.lang.System;
 import jol.core.Runtime;
 
 //timer(periodic,logical,1,1,1);
+
+timer(wakeup, logical, 10, 10, 1);
 	
 watch(paxos::instance,ae);
 watch(paxos::nextBal,ae);
-
-
 
 define(sdCnt,keys(0),{String,Integer});
 watch(sdCnt,ae);
@@ -18,7 +18,16 @@ public
 startinstance
 paxos::instance(Me,0) :-
  // paxos::periodic(_,_,_),
-  paxos_global::id(Me);
+  paxos_instance::wakeup(_,_,_),
+  paxos_global::id(Me),
+  notin multipaxos::stasis_success(_,_,_,_,_);
+
+public
+startinstance2
+paxos::instance(Me,max<Instance>+1) :-
+  paxos_instance::wakeup(_,_,_),
+  paxos_global::id(Me),
+  multipaxos::stasis_success(_,Instance,_,_,_);
 
 public
 window
