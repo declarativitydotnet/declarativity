@@ -113,7 +113,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		return this.datarate;
 	}
 	
-	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint) throws IOException {
+	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint, float progress) throws IOException {
 		this.flushPoint = flushPoint;
 		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
@@ -122,7 +122,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		long segmentLength    = indexIn.readLong();
 				
 		dataIn.seek(segmentOffset);
-		flushFile(dataIn, segmentLength, false);
+		flushFile(dataIn, segmentLength, progress);
 	}
 	
 	public void flushFinal() throws IOException {
@@ -141,7 +141,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 
 		FSDataInputStream in = localFS.open(finalOutputFile);
 		in.seek(segmentOffset);
-		flushFile(in, segmentLength, true);
+		flushFile(in, segmentLength, 1.0f);
 		
 		in.close();
 	}
@@ -268,8 +268,8 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
-	private void flushFile(FSDataInputStream in, long length, boolean eof) throws IOException {
-		if (length == 0 && !eof) {
+	private void flushFile(FSDataInputStream in, long length, float progress) throws IOException {
+		if (length == 0 && progress < 1.0f) {
 			return;
 		}
 		
@@ -284,7 +284,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 
 		long starttime = System.currentTimeMillis();
 		out.writeLong(length);
-		out.writeBoolean(eof);
+		out.writeFloat(progress);
 
 		IFile.Reader reader = new IFile.Reader<K, V>(conf, in, length, codec);
 		IFile.Writer writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
