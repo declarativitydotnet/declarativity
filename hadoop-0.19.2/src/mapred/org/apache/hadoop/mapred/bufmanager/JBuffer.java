@@ -250,6 +250,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			
 			
 			/* Rate limit the data pipeline. */
+			/*
 			if (requests.size() > partitions / 2 && numSpills - spillend > 5) {
 				float avgDataRate = 0f;
 				BufferRequest min = null;
@@ -271,6 +272,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					requestMap.remove(min.partition());
 				}
 			}
+			*/
 
 			if (requests.size() == partitions) {
 				numFlush = spillend;
