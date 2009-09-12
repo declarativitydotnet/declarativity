@@ -91,7 +91,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			try {
 				JobConf job = tracker.getJobConf(taskid);
 				for (BufferRequest request : handle) {
-					if (request.open(job)) {
+					if (request.open(job, false)) {
 						executor.execute(request);
 						handled.add(request);
 					}

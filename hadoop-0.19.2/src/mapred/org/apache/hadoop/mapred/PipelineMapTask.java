@@ -253,4 +253,10 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		}
 	}
 
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

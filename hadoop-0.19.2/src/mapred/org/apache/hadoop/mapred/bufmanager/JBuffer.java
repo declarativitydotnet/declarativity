@@ -217,7 +217,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 			BufferRequest request = null;
 			while ((request = umbilical.getRequest(taskid)) != null) {
-				if (request.open(job)) {
+				if (request.open(job, false)) {
 					requests.add(request);
 					requestMap.put(request.partition(), request); // TODO speculation
 				}
@@ -794,6 +794,49 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 	
+	public synchronized boolean snapshotRequest() throws IOException {
+		if (pipeline) throw new IOException("Snapshot not allowed with pipelineing!");
+		BufferRequest request = null;
+		while ((request = umbilical.getRequest(taskid)) != null) {
+			if (request.open(job, true)) {
+				requests.add(request);
+				requestMap.put(request.partition(), request); // TODO speculation
+			}
+		}
+		if (requests.size() == 0) {
+			return false;
+		}
+		
+		int spillId = mergeParts(true);
+		if (spillId < 0) return false;
+		
+		Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
+		Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
+		
+		FSDataInputStream indexIn = localFs.open(indexFile);
+		FSDataInputStream dataIn  = localFs.open(snapFile);
+		for (BufferRequest r : requests) {
+			r.flush(indexIn, dataIn, spillId, progress.get());
+		}
+		
+		return true;
+	}
+	
+	public synchronized ValuesIterator<K, V> snapshotIterator() throws IOException {
+		int spillId = mergeParts(true);
+		if (spillId < 0) return null;
+		
+		Path spillFile = mapOutputFile.getSpillFile(this.taskid, spillId);
+		Path snapFile = new Path(spillFile.getParent(), "snap.out"); 
+		if (localFs.exists(snapFile)) {
+			localFs.delete(snapFile, false);
+		}
+		localFs.copyFromLocalFile(spillFile, snapFile);
+		
+		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, snapFile);
+		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
+	}
+	
 	public synchronized ValuesIterator<K, V> iterator() throws IOException {
 		/*
 		if (this.numSpills == 0) {
@@ -846,7 +889,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		reset();
 	}
 	
-	private void reset() {
+	public void reset() {
 		numSpills = numFlush = 0;
 		bufindex = 0;
 		bufvoid  = kvbuffer.length;
@@ -1180,15 +1223,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 	}
 	
-
-	private synchronized void mergeParts(boolean spill) throws IOException {
+	private synchronized int mergeParts(boolean spill) throws IOException {
 		// get the approximate size of the final output/index files
 
 		int start = 0;
 		int end = 0;
 		synchronized (mergeLock) {
 			if (spill && numSpills - numFlush < 2) {
-				return;
+				return -1;
 			}
 
 			start = numFlush;
@@ -1215,7 +1257,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					new Path(filename[start].getParent(), "file.out"));
 			localFs.rename(indexFileName[start], 
 					new Path(indexFileName[start].getParent(),"file.out.index"));
-			return;
+			return -1;
 		}
 		//make correction in the length to include the sequence file header
 		//lengths for each partition
@@ -1253,7 +1295,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			finalOut.close();
 			finalIndexOut.close();
-			return;
+			return -1;
 		}
 		{
 			for (int parts = 0; parts < partitions; parts++){
@@ -1313,8 +1355,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			for(int i = start; i < end; i++) {
 				localFs.delete(filename[i], true);
 				localFs.delete(indexFileName[i], true);
+				filename[i] = indexFileName[i] = null;
 			}
 		}
+		
+		return spill ? end : -1;
 	}
 
 	private void writeIndexRecord(FSDataOutputStream indexOut, 
