@@ -7,7 +7,7 @@ olg_assertion::die(Agent, Message) :-
     multipaxos::stasis_success(Agent2,Instance,Round2,Decree2,From2),
     Decree != Decree2
 	{ 
-		Message := "for instance "+ Instance.toString() + ", passed decrees "+Decree+" and "+Decree;
+		Message := "for instance "+ Instance.toString() + ", passed decrees "+Decree+" and "+Decree2;
 	};
 
 public
@@ -16,7 +16,7 @@ olg_assertion::die(Agent, "internal inconsistency") :-
     multipaxos::sendAccept(Agent2,Instance,Round2,Decree2,Master2),
     Decree != Decree2
 	{ 
-		Message := "for instance "+ Instance.toString() + ", accepted decrees "+Decree+" and "+Decree;
+		Message := "for instance "+ Instance.toString() + ", accepted decrees "+Decree+" and "+Decree2;
 	};
 
 
