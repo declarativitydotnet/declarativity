@@ -240,7 +240,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 							dataIn = localFs.open(outputFile);
 						}
 						
-						float requestProgress = (spillId / numSpills) * progress.get();
+						float requestProgress = (spillId / (float) numSpills) * progress.get();
+						System.err.println("Buffer progress = " + progress.get() + " -- request progress = " + requestProgress);
 						r.flush(indexIn, dataIn, spillId, requestProgress);
 					}
 				}
