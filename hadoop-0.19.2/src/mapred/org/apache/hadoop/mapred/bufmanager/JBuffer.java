@@ -239,7 +239,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 							indexIn = localFs.open(indexFile);
 							dataIn = localFs.open(outputFile);
 						}
-						r.flush(indexIn, dataIn, spillId);
+						
+						float requestProgress = (spillId / numSpills) * progress.get();
+						r.flush(indexIn, dataIn, spillId, requestProgress);
 					}
 				}
 				if (dataIn != null) {
@@ -283,6 +285,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private static final Log LOG = LogFactory.getLog(JBuffer.class.getName());
 
 	
+    private final Progress progress;
+
 	/**
 	 * The size of each record in the index file for the map-outputs.
 	 */
@@ -363,6 +367,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		this.reporter = reporter;
 		this.mapOutputFile = new MapOutputFile(taskid.getJobID());
 		this.mapOutputFile.setConf(job);
+		
+		this.progress = new Progress();
+		this.progress.set(0f);
 		
 		this.pipeline = pipeline;
 		this.pipelineThread = new PipelineMergeThread();
@@ -450,7 +457,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				pipelineThread.notifyAll();
 			}
 		}
-		
+	}
+	
+	public Progress getProgress() {
+		return this.progress;
 	}
 	
 	/**

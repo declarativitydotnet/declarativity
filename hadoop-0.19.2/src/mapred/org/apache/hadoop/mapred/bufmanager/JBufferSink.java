@@ -6,46 +6,30 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ChecksumException;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
-import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.DefaultCodec;
-import org.apache.hadoop.io.serializer.Deserializer;
-import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapOutputFile;
-import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.ReduceOutputFile;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
-import org.apache.hadoop.mapred.IFile.Reader;
 import org.apache.hadoop.util.ReflectionUtils;
 
 
@@ -172,10 +156,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 	}
 	
-	private void done(Connection connection, boolean eof) {
+	private void done(Connection connection) {
 		synchronized (this) {
 			if (this.connections.containsKey(connection.mapTaskID())) {
-				if (eof) {
+				if (connection.progress() == 1.0f) {
 					this.successful.add(connection.mapTaskID().getTaskID());
 					this.runningTransfers.remove(connection.mapTaskID());
 					
@@ -192,12 +176,26 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		}
 	}
-
 	
+	private void updateProgress() {
+		synchronized (this) {
+			float progress = 0f;
+			for (List<Connection> clist : connections.values()) {
+				float max = 0f;
+				for (Connection c : clist) {
+					max = Math.max(max, c.progress());
+				}
+				progress += max;
+			}
+			collector.getProgress().set(progress / (float) numConnections);
+		}
+	}
 	
 	/************************************** CONNECTION CLASS **************************************/
 	
 	private class Connection implements Runnable {
+		private float progress;
+		
 		private TaskAttemptID mapTaskID;
 		
 		private JBufferSink<K, V> sink;
@@ -208,12 +206,17 @@ public class JBufferSink<K extends Object, V extends Object> {
 		public Connection(DataInputStream input, JBufferSink<K, V> sink, JobConf conf) throws IOException {
 			this.input = input;
 			this.sink = sink;
+			this.progress = 0f;
 			
 			this.mapTaskID = new TaskAttemptID();
 			this.mapTaskID.readFields(input);
 			
 			this.reduceOutputFile = new ReduceOutputFile(reduceID);
 			this.reduceOutputFile.setConf(conf);
+		}
+		
+		public float progress() {
+			return this.progress;
 		}
 		
 		public TaskAttemptID mapTaskID() {
@@ -230,7 +233,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		public void run() {
-			boolean eof = false;
 			try {
 				DataInputBuffer key = new DataInputBuffer();
 				DataInputBuffer value = new DataInputBuffer();
@@ -252,7 +254,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 					catch (EOFException e) {
 						return; // This is okay.
 					}
-					eof = this.input.readBoolean();
+					
+					this.progress = this.input.readFloat();
 					
 					if (length == 0) return;
 					
@@ -263,7 +266,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 								this.sink.buffer().collect(key, value);
 							}
 						} catch (ChecksumException e) {
-							System.err.println("ReduceMapSink: ChecksumException during spill. eof? " + eof);
+							System.err.println("ReduceMapSink: ChecksumException during spill. progress = " + progress);
 						}
 						finally {
 							this.sink.buffer().unreserve(length);
@@ -271,16 +274,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					else {
 						// Spill directory to disk
-						Path filename      = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, eof, length);
-						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, eof, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+						Path filename      = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, progress == 1f, length);
+						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, progress == 1f, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 						
 						while (localFs.exists(filename)) {
-							System.err.println("File " + filename + " exists. EOF? " + eof + ". Waiting....");
+							System.err.println("File " + filename + " exists. Waiting....");
 							Thread.sleep(100);
 						}
 						
 						while (localFs.exists(indexFilename)) {
-							System.err.println("File " + indexFilename + " exists. EOF? " + eof + ". Waiting....");
+							System.err.println("File " + indexFilename + " exists. Waiting....");
 							Thread.sleep(100);
 						}
 						
@@ -312,7 +315,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							this.sink.buffer().spill(filename, length, indexFilename);
 							
 						} catch (Throwable e) {
-							System.err.println("ReduceMapSink: error during spill. eof? " + eof);
+							System.err.println("ReduceMapSink: error during spill. progress = " + progress);
 							e.printStackTrace();
 						}
 						finally {
@@ -325,14 +328,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 					}
 					
-					if (eof) return;
+					sink.updateProgress();
+					if (progress == 1.0f) return;
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
 				return;
 			}
 			finally {
-				sink.done(this, eof);
+				sink.done(this);
 				close();
 			}
 		}

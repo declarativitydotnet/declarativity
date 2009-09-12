@@ -78,11 +78,12 @@ public class MapTask extends Task {
 	 */
 	public static final int MAP_OUTPUT_INDEX_RECORD_LENGTH = 24;
 
-	public TrackedRecordReader recordReader = null;
+	protected TrackedRecordReader recordReader = null;
 	
-	public MapOutputCollector collector = null;
+	protected MapOutputCollector collector = null;
 
-
+	protected JBuffer buffer = null;
+	
 	private BytesWritable split = new BytesWritable();
 	private String splitClass;
 	private InputSplit instantiatedSplit = null;
@@ -199,6 +200,13 @@ public class MapTask extends Task {
 			return rawIn.getProgress();
 		}
 	}
+	
+	public void setProgress(float progress) {
+		super.setProgress(progress);
+		if (this.buffer != null) {
+			this.buffer.getProgress().set(progress);
+		}
+	}
 
 	@Override
 	@SuppressWarnings("unchecked")
@@ -228,7 +236,8 @@ public class MapTask extends Task {
 		LOG.info("numReduceTasks: " + numReduceTasks);
 	    
 		if (numReduceTasks > 0) {
-			collector = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, job.getBoolean("mapred.map.tasks.pipeline.execution", false));
+			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, job.getBoolean("mapred.map.tasks.pipeline.execution", false));
+			collector = this.buffer;
 		} else { 
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
 		}
