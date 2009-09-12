@@ -151,27 +151,29 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	private class PipelineThread extends Thread {
 		private boolean open = false;
+		private boolean busy = false;
 		
 		public void close() {
 			synchronized (this) {
-				while (open) {
-					synchronized (this) {
-						this.interrupt();
-						try { this.wait();
-						} catch (InterruptedException e) { }
-					}
+				open = false;
+				while (busy) {
+					try { this.wait();
+					} catch (InterruptedException e) { }
 				}
+				this.interrupt();
 			}
 		}
 		
 		public void open() {
 			synchronized (this) {
 				if (open) return;
-				else start();
-				
-				while (!open) {
-					try { this.wait();
-					} catch (InterruptedException e) { }
+				else {
+					open = true;
+					start();
+					while (!open) {
+						try { this.wait();
+						} catch (InterruptedException e) { }
+					}
 				}
 			}
 		}
@@ -186,12 +188,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			try {
 				while (!isInterrupted()) {
 					synchronized (this) {
-						while (flushpoint == numSpills) {
+						busy = false;
+						while (open && flushpoint == numSpills) {
 							try { this.wait();
 							} catch (InterruptedException e) {
 								return;
 							}
 						}
+						if (!open) return;
+						busy = true;
 					}
 
 					try {
@@ -206,7 +211,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			} finally {
 				synchronized (this) {
-					open = false;
 					this.notifyAll();
 				}
 			}
