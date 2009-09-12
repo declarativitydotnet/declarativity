@@ -141,8 +141,8 @@ public class ReduceTask extends Task {
 		setPhase(TaskStatus.Phase.SHUFFLE);        // phase to start with 
 	}
 
-	private Progress copyPhase = getProgress().addPhase("copy sort");
-	private Progress reducePhase = getProgress().addPhase("reduce");
+	protected Progress copyPhase = getProgress().addPhase("copy sort");
+	protected Progress reducePhase = getProgress().addPhase("reduce");
 	private Counters.Counter reduceInputKeyCounter = 
 		getCounters().findCounter(Counter.REDUCE_INPUT_GROUPS);
 	private Counters.Counter reduceInputValueCounter = 

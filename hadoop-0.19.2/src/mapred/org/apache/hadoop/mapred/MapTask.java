@@ -203,9 +203,6 @@ public class MapTask extends Task {
 	
 	public void setProgress(float progress) {
 		super.setProgress(progress);
-		if (this.buffer != null) {
-			this.buffer.getProgress().set(progress);
-		}
 	}
 
 	@Override
@@ -237,6 +234,7 @@ public class MapTask extends Task {
 	    
 		if (numReduceTasks > 0) {
 			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, job.getBoolean("mapred.map.tasks.pipeline.execution", false));
+			this.buffer.setProgress(getProgress());
 			collector = this.buffer;
 		} else { 
 			collector = new DirectMapOutputCollector(umbilical, job, reporter);
