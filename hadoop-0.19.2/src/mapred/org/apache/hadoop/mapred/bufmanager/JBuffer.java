@@ -149,67 +149,65 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 	
-	private class PipelineMergeThread extends Thread {
-		private boolean busy = false;
+	private class PipelineThread extends Thread {
 		private boolean open = true;
-		
-		public boolean busy() {
-			return this.busy;
-		}
 		
 		public void close() {
 			synchronized (this) {
-				this.open = false;
-				this.notifyAll();
+				while (open) {
+					synchronized (this) {
+						this.interrupt();
+						try { this.wait();
+						} catch (InterruptedException e) { }
+					}
+				}
 			}
 		}
-
+		
+		public void open() {
+			synchronized (this) {
+				if (open) return;
+				else start();
+				
+				while (!open) {
+					try { this.wait();
+					} catch (InterruptedException e) { }
+				}
+			}
+		}
+		
 		public void run() {
 			int flushpoint = numFlush;
-			while (open) {
-				synchronized (this) {
-					this.busy = false;
-					while (open && flushpoint == numSpills) {
-						try { this.wait();
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					busy = true;
-				}
-				
-				try {
-					if (!open) return;
-					
-					if (!taskid.isMap() && numSpills - numFlush > 100) {
-						try {
-							long mergestart = java.lang.System.currentTimeMillis();
-							mergeParts(true);
-							LOG.debug("PipelinMergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
-						} catch (IOException e) {
-							e.printStackTrace();
-							sortSpillException = e;
-							return; // dammit
+			synchronized (this) {
+				open = true;
+				this.notifyAll();
+			}
+			
+			try {
+				while (!isInterrupted()) {
+					synchronized (this) {
+						while (flushpoint == numSpills) {
+							try { this.wait();
+							} catch (InterruptedException e) {
+								return;
+							}
 						}
 					}
 
-					if (pipeline) {
-						try {
-							long pipelinestart = java.lang.System.currentTimeMillis();
-							flushpoint = flushRequests();
-							LOG.debug("PipelinMergeThread: pipeline time " +  
-									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
-						} catch (IOException e) {
-							e.printStackTrace();
-							sortSpillException = e;
-						}
+					try {
+						long pipelinestart = java.lang.System.currentTimeMillis();
+						flushpoint = flushRequests();
+						LOG.debug("PipelinMergeThread: pipeline time " +  
+								((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
+					} catch (IOException e) {
+						e.printStackTrace();
+						sortSpillException = e;
 					}
-				} finally {
-					synchronized (this) {
-						busy = false;
-						this.notifyAll();
-					}
+				}
+			} finally {
+				synchronized (this) {
+					open = false;
+					this.notifyAll();
 				}
 			}
 		}
@@ -352,7 +350,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private MapOutputFile mapOutputFile = null;
 	
 	private boolean pipeline;
-	private PipelineMergeThread pipelineThread;
+	private PipelineThread pipelineThread;
 	
 	private SpillThread spillThread;
 	
@@ -360,7 +358,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
 	
 	@SuppressWarnings("unchecked")
-	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter, boolean pipeline) throws IOException {
+	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
 		this.umbilical = umbilical;
 		this.taskid = taskid;
 		this.job = job;
@@ -371,10 +369,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		this.progress = new Progress();
 		this.progress.set(0f);
 		
-		this.pipeline = pipeline;
-		this.pipelineThread = new PipelineMergeThread();
+		this.pipelineThread = new PipelineThread();
 		this.pipelineThread.setDaemon(true);
-		this.pipelineThread.start();
 		
 		this.spillThread = new SpillThread();
 		this.spillThread.setDaemon(true);
@@ -450,13 +446,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		return this.requests;
 	}
 	
-	public void pipeline(boolean value) {
-		this.pipeline = value;
-		if (value == true) {
-			synchronized (pipelineThread) {
-				pipelineThread.notifyAll();
-			}
+	public synchronized void pipeline(boolean value) {
+		if (pipeline == false && value == true) {
+			this.pipelineThread.open();
 		}
+		else if (pipeline == true && value == false) {
+			this.pipelineThread.close();
+		}
+		this.pipeline = value;
 	}
 	
 	public Progress getProgress() {
@@ -818,15 +815,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		if (numSpills == 0 && bufstart == bufend) return;
 		
 		pipelineThread.close();
-		synchronized (pipelineThread) {
-			while (pipelineThread.busy()) {
-				try { pipelineThread.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		
 			
 		synchronized (spillLock) {
 			this.spillThread.close();
