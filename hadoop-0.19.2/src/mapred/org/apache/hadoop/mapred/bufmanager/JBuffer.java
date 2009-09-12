@@ -1154,6 +1154,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		private IFile.Reader reader;
 		private DataInputBuffer key = new DataInputBuffer();
 		private DataInputBuffer value = new DataInputBuffer();
+		private Progress progress = new Progress();
 		
 		public FSMRResultIterator(FileSystem localFS, Path path) throws IOException {
 			this.reader = new IFile.Reader<K, V>(job, localFS, path, codec);
@@ -1171,7 +1172,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 		@Override
 		public Progress getProgress() {
-			return null;
+			try {
+				float score = reader.getPosition() / (float) reader.getLength();
+				progress.set(score);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return progress;
 		}
 
 		@Override
