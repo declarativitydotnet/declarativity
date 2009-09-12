@@ -141,8 +141,7 @@ public class ReduceTask extends Task {
 		setPhase(TaskStatus.Phase.SHUFFLE);        // phase to start with 
 	}
 
-	private Progress copyPhase = getProgress().addPhase("copy");
-	private Progress sortPhase  = getProgress().addPhase("sort");
+	private Progress copyPhase = getProgress().addPhase("copy sort");
 	private Progress reducePhase = getProgress().addPhase("reduce");
 	private Counters.Counter reduceInputKeyCounter = 
 		getCounters().findCounter(Counter.REDUCE_INPUT_GROUPS);
@@ -236,7 +235,9 @@ public class ReduceTask extends Task {
 	    }
 
 		
-		JBuffer     buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, false);
+		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, false);
+		buffer.setProgress(copyPhase);
+		
 		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, job.getNumMapTasks());
 		sink.open();
 		
@@ -288,6 +289,8 @@ public class ReduceTask extends Task {
 		      while (values.more()) {
 		        reducer.reduce(values.getKey(), values, collector, reporter);
 		        values.nextKey();
+		        
+		        reducePhase.set(values.getProgress().get());
 		        reporter.progress();
 		      }
 		      
