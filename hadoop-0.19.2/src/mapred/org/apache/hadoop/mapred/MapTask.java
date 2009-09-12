@@ -233,7 +233,10 @@ public class MapTask extends Task {
 		LOG.info("numReduceTasks: " + numReduceTasks);
 	    
 		if (numReduceTasks > 0) {
-			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, job.getBoolean("mapred.map.tasks.pipeline.execution", false));
+			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+			if (job.getBoolean("mapred.map.tasks.pipeline.execution", false)) {
+				this.buffer.pipeline(true);
+			}
 			this.buffer.setProgress(getProgress());
 			collector = this.buffer;
 		} else { 

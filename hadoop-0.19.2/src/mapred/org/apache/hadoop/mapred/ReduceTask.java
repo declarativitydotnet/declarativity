@@ -235,7 +235,7 @@ public class ReduceTask extends Task {
 	    }
 
 		
-		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, false);
+		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		buffer.setProgress(copyPhase);
 		
 		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, job.getNumMapTasks());
