@@ -188,7 +188,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				progress += max;
 			}
 			collector.getProgress().set(progress / (float) numConnections);
-			System.err.println("JBufferSink: progress = " + collector.getProgress().get());
 		}
 	}
 	
