@@ -179,7 +179,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void updateProgress() {
 		synchronized (this) {
-			float progress = 0f;
+			float progress = (float) this.successful.size();
 			for (List<Connection> clist : connections.values()) {
 				float max = 0f;
 				for (Connection c : clist) {
