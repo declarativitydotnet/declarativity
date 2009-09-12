@@ -150,7 +150,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	private class PipelineThread extends Thread {
-		private boolean open = true;
+		private boolean open = false;
 		
 		public void close() {
 			synchronized (this) {
