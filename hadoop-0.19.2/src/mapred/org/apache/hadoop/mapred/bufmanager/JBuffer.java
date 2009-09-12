@@ -285,7 +285,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private static final Log LOG = LogFactory.getLog(JBuffer.class.getName());
 
 	
-    private final Progress progress;
+    private Progress progress;
 
 	/**
 	 * The size of each record in the index file for the map-outputs.
@@ -461,6 +461,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public Progress getProgress() {
 		return this.progress;
+	}
+	
+	public void setProgress(Progress progress) {
+		this.progress = progress;
 	}
 	
 	/**
