@@ -55,6 +55,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private Map<TaskAttemptID, List<Connection>> connections;
 	
+	private List<Connection> snapshotConnections;
+	
 	private Set<TaskAttemptID> runningTransfers;
 	
 	private Set<TaskID> successful;
@@ -71,6 +73,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		this.connections = new HashMap<TaskAttemptID, List<Connection>>();
 		this.successful = new HashSet<TaskID>();
 		this.runningTransfers = new HashSet<TaskAttemptID>();
+		this.snapshotConnections = new ArrayList<Connection>();
 	    
 		/** The server socket and selector registration */
 		this.server = ServerSocketChannel.open();
@@ -97,12 +100,23 @@ public class JBufferSink<K extends Object, V extends Object> {
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						synchronized (this) {
-							if (!connections.containsKey(conn.mapTaskID())) {
+							if (!conn.isSnapshot() && !connections.containsKey(conn.mapTaskID())) {
+								if (snapshotConnections.size() > 0) {
+									collector.reset(); // we will now start collecting the final data.
+									for (Connection snapshot : snapshotConnections) {
+										snapshot.close();
+									}
+									snapshotConnections.clear();
+								}
 								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
-							if (!runningTransfers.contains(conn.mapTaskID()) && runningTransfers.size() > maxConnections) {
+							if (conn.isSnapshot() && connections.containsKey(conn.mapTaskID)) {
+								output.writeBoolean(false); // We've already accepted a non-snapshot connection
+								conn.close();
+							}
+							else if (!runningTransfers.contains(conn.mapTaskID()) && runningTransfers.size() > maxConnections) {
 								output.writeBoolean(false); // Connection not open
 								conn.close();
 							}
@@ -196,6 +210,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 	private class Connection implements Runnable {
 		private float progress;
 		
+		private boolean snapshot;
+		
 		private TaskAttemptID mapTaskID;
 		
 		private JBufferSink<K, V> sink;
@@ -211,12 +227,18 @@ public class JBufferSink<K extends Object, V extends Object> {
 			this.mapTaskID = new TaskAttemptID();
 			this.mapTaskID.readFields(input);
 			
+			this.snapshot = input.readBoolean();
+			
 			this.reduceOutputFile = new ReduceOutputFile(reduceID);
 			this.reduceOutputFile.setConf(conf);
 		}
 		
 		public float progress() {
 			return this.progress;
+		}
+		
+		public boolean isSnapshot() {
+			return this.snapshot;
 		}
 		
 		public TaskAttemptID mapTaskID() {
