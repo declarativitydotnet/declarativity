@@ -249,6 +249,7 @@ public class ReduceTask extends Task {
 		sink.block();
 		fetcher.stop();
 		buffer.flush();
+		copyPhase.complete();
 		
 		long begin = System.currentTimeMillis();
 		reduce(job, reporter, buffer);
@@ -303,6 +304,7 @@ public class ReduceTask extends Task {
 		finally {
 			//Clean up: repeated in catch block below
 			try {
+				reducePhase.complete();
 				reducer.close();
 				buffer.free();
 				out.close(reporter);

@@ -60,6 +60,7 @@ public class PipelineReduceTask extends ReduceTask {
 		}
 		finally {
 			//Clean up: repeated in catch block below
+			reducePhase.complete();
 			reducer.close();
 			buffer.close();
 			TreeSet<BufferRequest> requests = buffer.requests();
