@@ -204,6 +204,7 @@ public class MapTask extends Task {
 	public void setProgress(float progress) {
 		super.setProgress(progress);
 		if (this.buffer != null) {
+			System.err.println("MapTask: Set buffer progress to " + progress);
 			this.buffer.getProgress().set(progress);
 		}
 	}
