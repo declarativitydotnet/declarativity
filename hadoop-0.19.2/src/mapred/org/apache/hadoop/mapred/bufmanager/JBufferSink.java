@@ -173,12 +173,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
+						System.err.println("NEW CONNECTION: is snapshot? " + conn.isSnapshot());
 						synchronized (this) {
 							if (!conn.isSnapshot() && !connections.containsKey(conn.mapTaskID())) {
 								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
 							}
 							
 							if (connections.size() > 0 && snapshotConnections.size() > 0) {
+								System.err.println("FUCK");
 								for (Connection snapshot : snapshotConnections) {
 									snapshot.close();
 								}
@@ -197,11 +199,17 @@ public class JBufferSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else {
+								System.err.println("Open new connection: is snapshot? " + conn.isSnapshot());
 								output.writeBoolean(true); // Connection open
 								output.flush();
 								connections.get(conn.mapTaskID()).add(conn);
 								executor.execute(conn);
-								runningTransfers.add(conn.mapTaskID());
+								if (conn.isSnapshot()) {
+									snapshotConnections.add(conn);
+								}
+								else {
+									runningTransfers.add(conn.mapTaskID());
+								}
 							}
 						}
 					}
