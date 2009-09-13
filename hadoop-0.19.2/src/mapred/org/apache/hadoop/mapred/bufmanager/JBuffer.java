@@ -440,7 +440,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		this.mergeThread = new MergeThread();
 		this.mergeThread.setDaemon(true);
-		this.mergeThread.start();
+		if (!taskid.isMap()) this.mergeThread.start();
 		
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
