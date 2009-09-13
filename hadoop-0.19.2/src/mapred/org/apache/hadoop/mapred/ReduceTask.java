@@ -212,14 +212,14 @@ public class ReduceTask extends Task {
 	}
 	
 	@Override
-	public void snapshots(List<JBufferSink.Snapshot> runs) throws IOException {
-		String finalName = getOutputName(getPartition());
+	public void snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
+		String snapshotName = getSnapshotOutputName(getPartition(), progress);
 		FileSystem fs = FileSystem.get(conf);
 		
-		System.err.println("Reduce: got snapshot " + runs.size() + " runs. Writting to " + finalName);
+		System.err.println("Reduce: got snapshot " + runs.size() + " runs. Writting to " + snapshotName);
 
 		final RecordWriter out = 
-			conf.getOutputFormat().getRecordWriter(fs, conf, finalName, null);  
+			conf.getOutputFormat().getRecordWriter(fs, conf, snapshotName, null);  
 
 		OutputCollector collector = new OutputCollector() {
 			@SuppressWarnings("unchecked")
