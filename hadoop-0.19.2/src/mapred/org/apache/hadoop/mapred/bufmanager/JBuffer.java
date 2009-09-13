@@ -947,7 +947,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
 			}
 		}
-		if (numSpills - numFlush > 100) spillThread.doSpill();
 	}
 	
 
