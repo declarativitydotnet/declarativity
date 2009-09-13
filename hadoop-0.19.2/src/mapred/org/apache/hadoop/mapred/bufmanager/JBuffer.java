@@ -866,6 +866,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public synchronized void snapshot() throws IOException {
 		if (pipeline) throw new IOException("Snapshot not allowed with pipelineing!");
+		
+		System.err.println("JBuffer: start snapshot.");
 		BufferRequest request = null;
 		while ((request = umbilical.getRequest(taskid)) != null) {
 			if (request.open(job, true)) {
@@ -873,7 +875,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				requestMap.put(request.partition(), request); // TODO speculation
 			}
 		}
+		
 		if (requests.size() == 0) {
+			System.err.println("JBuffer: snapshot has not requests!");
 			return;
 		}
 		
