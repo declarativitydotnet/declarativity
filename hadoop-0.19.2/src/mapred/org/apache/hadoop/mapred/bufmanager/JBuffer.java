@@ -128,21 +128,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 								spillLock.notifyAll();
 							}
 							
-							if (!taskid.isMap() && numSpills - numFlush > 100) {
-								try {
-									long mergestart = java.lang.System.currentTimeMillis();
-									mergeParts(true);
-									LOG.debug("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
-								} catch (IOException e) {
-									e.printStackTrace();
-									sortSpillException = e;
-									return; // dammit
-								}
-							}
-
 							try {
 								synchronized (pipelineThread) {
 									pipelineThread.notifyAll();
+								}
+								
+								synchronized (mergeLock) {
+									mergeLock.notifyAll();
 								}
 							} finally {
 								LOG.debug("SpillThread: total spill time " + 
@@ -156,6 +148,60 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					open  = false;
 					spill = false;
 					spillLock.notifyAll();
+				}
+			}
+		}
+	}
+	
+	private class MergeThread extends Thread {
+		private boolean open = true;
+		private boolean busy = false;
+
+		public void close() {
+			synchronized (mergeLock) {
+				open = false;
+				while (busy) {
+					try { mergeLock.wait();
+					} catch (InterruptedException e) { }
+				}
+				this.interrupt();
+			}
+		}
+
+
+		@Override
+		public void run() {
+			try {
+				while (!isInterrupted()) {
+					synchronized (mergeLock) {
+						busy = false;
+						while (open && numSpills - numFlush < 100) {
+							try {
+								mergeLock.wait();
+							} catch (InterruptedException e) {
+								return;
+							}
+						}
+						if (!open) return;
+						busy = true;
+					}
+
+					if (!taskid.isMap() && numSpills - numFlush > 100) {
+						try {
+							long mergestart = java.lang.System.currentTimeMillis();
+							mergeParts(true);
+							LOG.debug("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+						} catch (IOException e) {
+							e.printStackTrace();
+							sortSpillException = e;
+							return; // dammit
+						}
+					}
+				}
+			} finally {
+				synchronized (this) {
+					open  = false;
+					this.notifyAll();
 				}
 			}
 		}
@@ -265,7 +311,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			
 			
 			/* Rate limit the data pipeline. */
-			/*
 			if (requests.size() > partitions / 2 && numSpills - spillend > 5) {
 				float avgDataRate = 0f;
 				BufferRequest min = null;
@@ -287,7 +332,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					requestMap.remove(min.partition());
 				}
 			}
-			*/
 
 			if (requests.size() == partitions) {
 				numFlush = spillend;
@@ -370,6 +414,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private PipelineThread pipelineThread;
 	
 	private SpillThread spillThread;
+	private MergeThread mergeThread;
 	
 	private TreeSet<BufferRequest> requests = new TreeSet<BufferRequest>();
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
@@ -392,6 +437,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		this.spillThread = new SpillThread();
 		this.spillThread.setDaemon(true);
 		this.spillThread.start();
+		
+		this.mergeThread = new MergeThread();
+		this.mergeThread.setDaemon(true);
+		this.mergeThread.start();
 		
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
@@ -875,7 +924,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		if (numSpills == 0 && bufstart == bufend) return;
 		
 		pipelineThread.close();
-			
+		mergeThread.close();
+		
 		synchronized (spillLock) {
 			this.spillThread.close();
 			while (this.spillThread.isSpilling()) {
@@ -889,7 +939,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 		}
-		
 			
 		if (sortSpillException != null) {
 			throw (IOException)new IOException("Spill failed"
@@ -944,6 +993,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (!localFs.rename(index, indexFile)) {
 				throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
 			}
+			
+			mergeLock.notifyAll();
 		}
 	}
 	
