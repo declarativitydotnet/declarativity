@@ -173,14 +173,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
-						System.err.println("NEW CONNECTION: is snapshot? " + conn.isSnapshot());
 						synchronized (this) {
 							if (!conn.isSnapshot() && !connections.containsKey(conn.id())) {
 								connections.put(conn.id(), new ArrayList<Connection>());
 							}
 							
 							if (connections.size() > 0 && snapshotConnections.size() > 0) {
-								System.err.println("FUCK");
 								for (Connection snapshot : snapshotConnections) {
 									snapshot.close();
 								}
@@ -199,17 +197,20 @@ public class JBufferSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else {
-								System.err.println("Open new connection: is snapshot? " + conn.isSnapshot());
 								output.writeBoolean(true); // Connection open
 								output.flush();
-								connections.get(conn.id()).add(conn);
-								executor.execute(conn);
+								
+								/* register connection. */
 								if (conn.isSnapshot()) {
+									// snapshots
 									snapshotConnections.add(conn);
 								}
 								else {
+									// regular
+									connections.get(conn.id()).add(conn);
 									runningTransfers.add(conn.id());
 								}
+								executor.execute(conn);
 							}
 						}
 					}
@@ -339,11 +340,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 			
 			boolean isSnapshot = input.readBoolean();
 			if (isSnapshot) {
-				System.err.println("Create snapshot object.");
 				this.snapshot = 
 					new Snapshot(reduceOutputFile.getOutputSnapFileForWrite(id, 1096), 
 							     reduceOutputFile.getOutputSnapIndexFileForWrite(id, 1096));
-				System.err.println("snapshot object created.");
 			}
 			else {
 				this.snapshot = null;

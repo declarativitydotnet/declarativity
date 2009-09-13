@@ -200,11 +200,9 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			DataInputStream in = new DataInputStream(socket.getInputStream());
 			boolean open = in.readBoolean();
 			if (!open) {
-				System.err.println("NO open reponse");
 				out.close();
 				return null;
 			}
-			System.err.println("YES open reponse");
 			return out;
 		} catch (IOException e) {
 			e.printStackTrace();
