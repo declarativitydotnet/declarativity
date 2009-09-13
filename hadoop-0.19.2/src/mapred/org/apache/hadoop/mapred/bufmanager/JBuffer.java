@@ -110,10 +110,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					if (open) {
 						long starttime = java.lang.System.currentTimeMillis();
 						try {
-							long sortstart = java.lang.System.currentTimeMillis();
-							sortAndSpill();
-							LOG.debug("SpillThread: sort/spill time " + 
-									((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
+							if (kvend != kvindex) {
+								long sortstart = java.lang.System.currentTimeMillis();
+								sortAndSpill();
+								LOG.debug("SpillThread: sort/spill time " + 
+										((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
+							}
 						} catch (Throwable e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -126,6 +128,18 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 								bufstart = bufend;
 								spill = false;
 								spillLock.notifyAll();
+							}
+							
+							if (!taskid.isMap() && numSpills - numFlush > 100) {
+								try {
+									long mergestart = java.lang.System.currentTimeMillis();
+									mergeParts(true);
+									LOG.debug("PipelinMergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+								} catch (IOException e) {
+									e.printStackTrace();
+									sortSpillException = e;
+									return; // dammit
+								}
 							}
 
 							try {
@@ -168,7 +182,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			synchronized (this) {
 				if (open) return;
 				else {
-					open = true;
 					start();
 					while (!open) {
 						try { this.wait();
@@ -933,10 +946,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (!localFs.rename(index, indexFile)) {
 				throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
 			}
-		}
-
-		synchronized (pipelineThread) {
-			pipelineThread.notifyAll();
+			
+			if (numSpills - numFlush > 100) spillThread.doSpill();
 		}
 	}
 	
