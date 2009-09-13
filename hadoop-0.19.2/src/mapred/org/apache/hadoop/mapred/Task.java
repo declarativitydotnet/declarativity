@@ -102,6 +102,10 @@ public abstract class Task implements Writable, Configurable {
     return "part-" + NUMBER_FORMAT.format(partition);
   }
 
+  static synchronized String getSnapshotOutputName(int partition, float progress) {
+    return "snapshot-" + NUMBER_FORMAT.format(progress) + "-" + NUMBER_FORMAT.format(partition);
+  }
+  
   ////////////////////////////////////////////
   // Fields
   ////////////////////////////////////////////
@@ -384,7 +388,7 @@ public abstract class Task implements Writable, Configurable {
 	  return false;
   }
   
-  public void snapshots(List<Snapshot> runs) throws IOException {
+  public void snapshots(List<Snapshot> runs, float progress) throws IOException {
 	  throw new IOException("Task: snapshot not configured!");
   }
 

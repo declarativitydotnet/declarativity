@@ -220,7 +220,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 	
 	@Override
-	public void snapshots(List<JBufferSink.Snapshot> runs) throws IOException {
+	public void snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		for (JBufferSink.Snapshot snapshot : runs) {
 			spill(snapshot.data(), snapshot.length(), snapshot.index());
 		}

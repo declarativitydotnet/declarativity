@@ -299,14 +299,19 @@ public class JBufferSink<K extends Object, V extends Object> {
 						runs.add(conn.snapshot());
 					}
 				}
+				
 				if (runs.size() == snapshotConnections.size()) {
-					try {
-						snapshotTask.snapshots(runs);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					float progress = 0f;
 					for (Snapshot run : runs) {
 						run.fresh = false;
+						progress += run.progress;
+					}
+					progress = progress / (float) numConnections;
+					
+					try {
+						snapshotTask.snapshots(runs, progress);
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
 				}
 			}
@@ -387,7 +392,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					try {
 						length = this.input.readLong();
 					}
-					catch (EOFException e) {
+					catch (Throwable e) {
 						return; // This is okay.
 					}
 					

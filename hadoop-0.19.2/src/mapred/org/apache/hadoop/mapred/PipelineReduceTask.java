@@ -29,7 +29,7 @@ public class PipelineReduceTask extends ReduceTask {
 	}
 	
 	@Override
-	public void snapshots(List<JBufferSink.Snapshot> runs) throws IOException {
+	public void snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		buffer.pipeline(false); // turn pipeline on
 		for (JBufferSink.Snapshot snapshot : runs) {
 			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
