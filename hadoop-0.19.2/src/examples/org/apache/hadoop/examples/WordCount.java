@@ -95,7 +95,7 @@ public class WordCount extends Configured implements Tool {
   }
   
   static int printUsage() {
-    System.out.println("wordcount [-s] [-m <maps>] [-r <reduces>] <input> <output>");
+    System.out.println("wordcount [-s <interval>] [-m <maps>] [-r <reduces>] <input> <output>");
     ToolRunner.printGenericCommandUsage(System.out);
     return -1;
   }
@@ -126,6 +126,7 @@ public class WordCount extends Configured implements Tool {
       try {
         if ("-s".equals(args[i])) {
         	snapshots = true;
+        	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
         } else if ("-m".equals(args[i])) {
           conf.setNumMapTasks(Integer.parseInt(args[++i]));
         } else if ("-r".equals(args[i])) {
