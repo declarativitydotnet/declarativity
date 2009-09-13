@@ -25,6 +25,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -52,7 +53,7 @@ public class ReduceTask extends Task {
 		
 		private BufferUmbilicalProtocol bufferUmbilical;
 
-		private JBufferSink sink;
+		private JBufferSink sink = null;
 		
 		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, JBufferSink sink) {
 			this.trackerUmbilical = trackerUmbilical;
@@ -134,6 +135,8 @@ public class ReduceTask extends Task {
 	private static final Log LOG = LogFactory.getLog(ReduceTask.class.getName());
 	protected int numMaps;
 	protected CompressionCodec codec;
+	protected JBuffer buffer = null;
+
 
 
 	{ 
@@ -207,6 +210,46 @@ public class ReduceTask extends Task {
 
 		numMaps = in.readInt();
 	}
+	
+	@Override
+	public void snapshots(List<JBufferSink.Snapshot> runs) throws IOException {
+		String finalName = getOutputName(getPartition());
+		FileSystem fs = FileSystem.get(conf);
+
+		final RecordWriter out = 
+			conf.getOutputFormat().getRecordWriter(fs, conf, finalName, null);  
+
+		OutputCollector collector = new OutputCollector() {
+			@SuppressWarnings("unchecked")
+			public void collect(Object key, Object value)
+			throws IOException {
+				out.write(key, value);
+			}
+		};
+		
+		for (JBufferSink.Snapshot snapshot : runs) {
+			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
+		}
+		
+		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);
+		// apply reduce function
+		try {
+			buffer.pipeline(false); // turn pipeline on
+			ValuesIterator values = buffer.iterator();
+			while (values.more()) {
+				reducer.reduce(values.getKey(), values, collector, null);
+				values.nextKey();
+			}
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		finally {
+			//Clean up: repeated in catch block below
+			reducer.close();
+			out.close(null);
+		}
+		this.buffer.reset();
+	}
 
 
 	@Override
@@ -263,6 +306,7 @@ public class ReduceTask extends Task {
 	
 	protected void copy(JBuffer buffer, JBufferSink sink) throws IOException {
 		/* This will not close (block) until all fetches finish! */
+		this.buffer = buffer;
 		sink.block();
 		buffer.flush();
 		copyPhase.complete();
