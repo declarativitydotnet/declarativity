@@ -341,8 +341,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 			if (isSnapshot) {
 				System.err.println("Create snapshot object.");
 				this.snapshot = 
-					new Snapshot(reduceOutputFile.getOutputSnapFile(id), 
-							     reduceOutputFile.getOutputSnapIndexFile(id));
+					new Snapshot(reduceOutputFile.getOutputSnapFileForWrite(id, 1096), 
+							     reduceOutputFile.getOutputSnapIndexFileForWrite(id, 1096));
+				System.err.println("snapshot object created.");
 			}
 			else {
 				this.snapshot = null;
