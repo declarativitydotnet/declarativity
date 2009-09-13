@@ -184,13 +184,13 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	private FSDataOutputStream connect(boolean snapshot) throws IOException {
 		try {
 			Socket socket = new Socket();
-			int connectionAttempts = this.conf.getInt("mapred.connection.attempts", Integer.MAX_VALUE);
-			try {
-				for (int i = 0; i < connectionAttempts && !socket.isConnected(); i++) {
+			int connectionAttempts = this.conf.getInt("mapred.connection.attempts", 5);
+			for (int i = 0; i < connectionAttempts && !socket.isConnected(); i++) {
+				try {
 					socket.connect(this.sink);
+				} catch (java.net.ConnectException e) {
+					System.err.println("BufferRequest: " + e);
 				}
-			} catch (java.net.ConnectException e) {
-				System.err.println("BufferRequest: " + e);
 			}
 			FSDataOutputStream out = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			this.taskid.write(out);
@@ -198,11 +198,14 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			out.flush();
 			
 			DataInputStream in = new DataInputStream(socket.getInputStream());
+			System.err.println("Wait for open reponse");
 			boolean open = in.readBoolean();
 			if (!open) {
+				System.err.println("NO open reponse");
 				out.close();
 				return null;
 			}
+			System.err.println("YES open reponse");
 			return out;
 		} catch (IOException e) {
 			e.printStackTrace();
