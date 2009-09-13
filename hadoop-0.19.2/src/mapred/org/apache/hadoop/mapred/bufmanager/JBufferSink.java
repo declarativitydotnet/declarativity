@@ -175,8 +175,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						System.err.println("NEW CONNECTION: is snapshot? " + conn.isSnapshot());
 						synchronized (this) {
-							if (!conn.isSnapshot() && !connections.containsKey(conn.mapTaskID())) {
-								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
+							if (!conn.isSnapshot() && !connections.containsKey(conn.id())) {
+								connections.put(conn.id(), new ArrayList<Connection>());
 							}
 							
 							if (connections.size() > 0 && snapshotConnections.size() > 0) {
@@ -193,7 +193,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 								output.flush();
 								conn.close();
 							}
-							else if (!runningTransfers.contains(conn.mapTaskID()) && runningTransfers.size() > maxConnections) {
+							else if (!runningTransfers.contains(conn.id()) && runningTransfers.size() > maxConnections) {
 								output.writeBoolean(false); // Connection not open
 								output.flush();
 								conn.close();
@@ -202,13 +202,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 								System.err.println("Open new connection: is snapshot? " + conn.isSnapshot());
 								output.writeBoolean(true); // Connection open
 								output.flush();
-								connections.get(conn.mapTaskID()).add(conn);
+								connections.get(conn.id()).add(conn);
 								executor.execute(conn);
 								if (conn.isSnapshot()) {
 									snapshotConnections.add(conn);
 								}
 								else {
-									runningTransfers.add(conn.mapTaskID());
+									runningTransfers.add(conn.id());
 								}
 							}
 						}
@@ -256,10 +256,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void done(Connection connection) {
 		synchronized (this) {
-			if (this.connections.containsKey(connection.mapTaskID())) {
+			if (this.connections.containsKey(connection.id())) {
 				if (connection.progress() == 1.0f) {
-					this.successful.add(connection.mapTaskID().getTaskID());
-					this.runningTransfers.remove(connection.mapTaskID());
+					this.successful.add(connection.id().getTaskID());
+					this.runningTransfers.remove(connection.id());
 					
 					if (this.successful.size() == numConnections) {
 						try {
@@ -269,7 +269,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 					}
 				}
-				this.connections.get(connection.mapTaskID()).remove(connection);
+				this.connections.get(connection.id()).remove(connection);
 				this.notifyAll();
 			}
 		}
@@ -319,7 +319,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private Snapshot snapshot;
 		
-		private TaskAttemptID mapTaskID;
+		private TaskAttemptID id;
 		
 		private JBufferSink<K, V> sink;
 		private DataInputStream input;
@@ -331,17 +331,18 @@ public class JBufferSink<K extends Object, V extends Object> {
 			this.sink = sink;
 			this.progress = 0f;
 			
-			this.mapTaskID = new TaskAttemptID();
-			this.mapTaskID.readFields(input);
+			this.id = new TaskAttemptID();
+			this.id.readFields(input);
 			
 			this.reduceOutputFile = new ReduceOutputFile(reduceID);
 			this.reduceOutputFile.setConf(conf);
 			
 			boolean isSnapshot = input.readBoolean();
 			if (isSnapshot) {
+				System.err.println("Create snapshot object.");
 				this.snapshot = 
-					new Snapshot(reduceOutputFile.getOutputSnapFile(reduceID), 
-							     reduceOutputFile.getOutputSnapIndexFile(reduceID));
+					new Snapshot(reduceOutputFile.getOutputSnapFile(id), 
+							     reduceOutputFile.getOutputSnapIndexFile(id));
 			}
 			else {
 				this.snapshot = null;
@@ -360,8 +361,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 			return this.snapshot;
 		}
 		
-		public TaskAttemptID mapTaskID() {
-			return this.mapTaskID;
+		public TaskAttemptID id() {
+			return this.id;
 		}
 		
 		public void close() {
@@ -420,8 +421,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					else {
 						// Spill directory to disk
-						Path filename      = reduceOutputFile.getOutputFileForWrite(this.mapTaskID, progress == 1f, length);
-						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(this.mapTaskID, progress == 1f, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+						Path filename      = reduceOutputFile.getOutputFileForWrite(id(), progress == 1f, length);
+						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(id(), progress == 1f, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 						
 						while (localFs.exists(filename)) {
 							System.err.println("File " + filename + " exists. Waiting....");
