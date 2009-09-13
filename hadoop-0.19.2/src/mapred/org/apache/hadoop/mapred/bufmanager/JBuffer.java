@@ -134,7 +134,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 								try {
 									long mergestart = java.lang.System.currentTimeMillis();
 									mergeParts(true);
-									LOG.debug("PipelinMergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+									LOG.debug("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 								} catch (IOException e) {
 									e.printStackTrace();
 									sortSpillException = e;
@@ -946,9 +946,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (!localFs.rename(index, indexFile)) {
 				throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
 			}
-			
-			if (numSpills - numFlush > 100) spillThread.doSpill();
 		}
+		if (numSpills - numFlush > 100) spillThread.doSpill();
 	}
 	
 
