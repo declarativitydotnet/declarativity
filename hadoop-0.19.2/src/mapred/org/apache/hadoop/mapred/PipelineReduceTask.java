@@ -1,17 +1,21 @@
 package org.apache.hadoop.mapred;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.TreeSet;
 
 import org.apache.hadoop.mapred.bufmanager.BufferRequest;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
+import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
 import org.apache.hadoop.util.ReflectionUtils;
 
 public class PipelineReduceTask extends ReduceTask {
 	
 	private BufferUmbilicalProtocol bufferUmbilical;
+	
+	private JBuffer buffer = null;
 	
 	public PipelineReduceTask() {
 		super();
@@ -26,6 +30,31 @@ public class PipelineReduceTask extends ReduceTask {
 		return true;
 	}
 	
+	public void snapshot(List<JBufferSink.Snapshot> runs) throws IOException {
+		for (JBufferSink.Snapshot snapshot : runs) {
+			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
+		}
+		
+		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);
+		// apply reduce function
+		try {
+			buffer.pipeline(false); // turn pipeline on
+			ValuesIterator values = buffer.iterator();
+			while (values.more()) {
+				reducer.reduce(values.getKey(), values, buffer, null);
+				values.nextKey();
+			}
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		finally {
+			//Clean up: repeated in catch block below
+			reducer.close();
+		}
+		this.buffer.snapshot();
+		this.buffer.reset();
+	}
+	
 	@Override
 	@SuppressWarnings("unchecked")
 	public void run(JobConf job, final TaskUmbilicalProtocol umbilical, final BufferUmbilicalProtocol bufferUmbilical)
@@ -34,15 +63,18 @@ public class PipelineReduceTask extends ReduceTask {
 		super.run(job, umbilical, bufferUmbilical);
 	}
 	
+	protected void copy(JBuffer buffer, JBufferSink sink) throws IOException {
+		this.buffer = buffer;
+		super.copy(buffer, sink);
+	}
+	
 	@Override
 	public void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
-		
 		// apply reduce function
 		try {
-			buffer.setProgress(reducePhase);
 			buffer.pipeline(true); // turn pipeline on
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
@@ -60,7 +92,6 @@ public class PipelineReduceTask extends ReduceTask {
 		}
 		finally {
 			//Clean up: repeated in catch block below
-			reducePhase.complete();
 			reducer.close();
 			buffer.close();
 			TreeSet<BufferRequest> requests = buffer.requests();
@@ -73,8 +104,6 @@ public class PipelineReduceTask extends ReduceTask {
 			else {
 				bufferUmbilical.commit(getTaskID());
 			}
-			
-			buffer.free();
 		}
 	}
 }

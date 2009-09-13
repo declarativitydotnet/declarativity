@@ -26,8 +26,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 public class MapRunner<K1, V1, K2, V2>
     implements MapRunnable<K1, V1, K2, V2> {
   
-  private Mapper<K1, V1, K2, V2> mapper;
-  private boolean incrProcCount;
+  protected Mapper<K1, V1, K2, V2> mapper;
+  protected boolean incrProcCount;
 
   @SuppressWarnings("unchecked")
   public void configure(JobConf job) {

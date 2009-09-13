@@ -45,4 +45,38 @@ public class ReduceOutputFile extends MapOutputFile {
 				+ (eof ? "_eof_" : "") + "file.out.index", 
 				size, conf);
 	}
+	
+	
+	public Path getOutputSnapFile(TaskAttemptID id)
+	throws IOException {
+		return lDirAlloc.getLocalPathToRead(TaskTracker.getIntermediateOutputDir(
+				jobId.toString(), reduceID.toString())
+				+ Path.SEPARATOR + id.toString()
+				+ "_snapshot_" + "file.out", conf);
+	}
+
+	public Path getOutputSnapFileForWrite(TaskAttemptID id, long size)
+	throws IOException {
+		return lDirAlloc.getLocalPathForWrite(TaskTracker.getIntermediateOutputDir(
+				jobId.toString(), reduceID.toString())
+				+ Path.SEPARATOR + id.toString()
+				+ "_snapshot_" + "file.out", size, conf);
+	}
+
+	public Path getOutputSnapIndexFile(TaskAttemptID id)
+	throws IOException {
+		return lDirAlloc.getLocalPathToRead(TaskTracker.getIntermediateOutputDir(
+				jobId.toString(), reduceID.toString())
+				+ Path.SEPARATOR + id.toString()
+				+ "_snapshot_" + "file.out.index", conf);
+	}
+
+	public Path getOutputSnapIndexFileForWrite(TaskAttemptID id, long size)
+	throws IOException {
+		return lDirAlloc.getLocalPathForWrite(TaskTracker.getIntermediateOutputDir(
+				jobId.toString(), reduceID.toString())
+				+ Path.SEPARATOR + id.toString()
+				+ "_snapshot_"  + "file.out.index", 
+				size, conf);
+	}
 }

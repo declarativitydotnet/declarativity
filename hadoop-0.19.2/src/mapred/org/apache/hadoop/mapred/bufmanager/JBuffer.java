@@ -167,6 +167,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				this.interrupt();
 			}
 		}
+		
+		public boolean isBusy() {
+			return busy;
+		}
 
 
 		@Override
@@ -860,7 +864,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 	
-	public synchronized boolean snapshotRequest() throws IOException {
+	public synchronized void snapshot() throws IOException {
 		if (pipeline) throw new IOException("Snapshot not allowed with pipelineing!");
 		BufferRequest request = null;
 		while ((request = umbilical.getRequest(taskid)) != null) {
@@ -870,11 +874,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		if (requests.size() == 0) {
-			return false;
+			return;
 		}
 		
 		int spillId = mergeParts(true);
-		if (spillId < 0) return false;
+		if (spillId < 0) return;
 		
 		Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
 		Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
@@ -884,23 +888,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		for (BufferRequest r : requests) {
 			r.flush(indexIn, dataIn, spillId, progress.get());
 		}
-		
-		return true;
-	}
-	
-	public synchronized ValuesIterator<K, V> snapshotIterator() throws IOException {
-		int spillId = mergeParts(true);
-		if (spillId < 0) return null;
-		
-		Path spillFile = mapOutputFile.getSpillFile(this.taskid, spillId);
-		Path snapFile = new Path(spillFile.getParent(), "snap.out"); 
-		if (localFs.exists(snapFile)) {
-			localFs.delete(snapFile, false);
-		}
-		localFs.copyFromLocalFile(spillFile, snapFile);
-		
-		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, snapFile);
-		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
 	}
 	
 	public synchronized ValuesIterator<K, V> iterator() throws IOException {
@@ -956,11 +943,28 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public void reset() {
-		numSpills = numFlush = 0;
-		bufindex = 0;
-		bufvoid  = kvbuffer.length;
-		kvstart = kvend = kvindex = 0;  
-		bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
+		synchronized (spillLock) {
+			while (spillThread.isSpilling()) {
+				try {
+					spillLock.wait();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+			synchronized (mergeLock) {
+				while (mergeThread.isBusy()) {
+					try { mergeLock.wait();
+					} catch (InterruptedException e) { }
+				}
+				numSpills = numFlush = 0;
+				bufindex = 0;
+				bufvoid  = kvbuffer.length;
+				kvstart = kvend = kvindex = 0;  
+				bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
+			}
+		}
 	}
 
 	public void close() throws IOException {  
