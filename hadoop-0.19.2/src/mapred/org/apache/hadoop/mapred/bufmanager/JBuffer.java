@@ -867,7 +867,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	public synchronized void snapshot() throws IOException {
 		if (pipeline) throw new IOException("Snapshot not allowed with pipelineing!");
 		
-		System.err.println("JBuffer: start snapshot.");
 		BufferRequest request = null;
 		while ((request = umbilical.getRequest(taskid)) != null) {
 			System.err.println("Got request " + request);
@@ -878,14 +877,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		
 		if (requests.size() == 0) {
-			System.err.println("JBuffer: snapshot has not requests!");
 			return;
 		}
 		
 		int spillId = mergeParts(true);
 		if (spillId < 0) return;
-		
-		System.err.println("JBuffer " + taskid + " performing snapshot.");
 		
 		Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
 		Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
