@@ -30,6 +30,7 @@ public class PipelineReduceTask extends ReduceTask {
 	
 	@Override
 	public void snapshots(List<JBufferSink.Snapshot> runs) throws IOException {
+		buffer.pipeline(false); // turn pipeline on
 		for (JBufferSink.Snapshot snapshot : runs) {
 			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
 		}
@@ -37,7 +38,7 @@ public class PipelineReduceTask extends ReduceTask {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);
 		// apply reduce function
 		try {
-			buffer.pipeline(false); // turn pipeline on
+			buffer.flush();
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, buffer, null);
