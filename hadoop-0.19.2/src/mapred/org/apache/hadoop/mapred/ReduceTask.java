@@ -212,7 +212,7 @@ public class ReduceTask extends Task {
 	}
 	
 	@Override
-	public void snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
+	public boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		String snapshotName = getSnapshotOutputName(getPartition(), progress);
 		FileSystem fs = FileSystem.get(conf);
 		
@@ -254,6 +254,7 @@ public class ReduceTask extends Task {
 		System.err.println("ReduceTask: snapshot done.");
 		this.buffer.reset();
 		System.err.println("ReduceTask: buffer reset.");
+		return true;
 	}
 
 

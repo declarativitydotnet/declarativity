@@ -388,7 +388,7 @@ public abstract class Task implements Writable, Configurable {
 	  return false;
   }
   
-  public void snapshots(List<Snapshot> runs, float progress) throws IOException {
+  public boolean snapshots(List<Snapshot> runs, float progress) throws IOException {
 	  throw new IOException("Task: snapshot not configured!");
   }
 

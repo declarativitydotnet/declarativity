@@ -45,6 +45,7 @@ public class SnapshotMapRunner<K1, V1, K2, V2>
 			  K1 key = input.createKey();
 			  V1 value = input.createValue();
 
+			  boolean doSnapshots = true;
 			  while (input.next(key, value)) {
 				  // map pair to output
 				  mapper.map(key, value, output, reporter);
@@ -53,8 +54,8 @@ public class SnapshotMapRunner<K1, V1, K2, V2>
 							  SkipBadRecords.COUNTER_MAP_PROCESSED_RECORDS, 1);
 				  }
 				  
-				  if (checkInterval(input.getProgress())) {
-					  buffer.snapshot();
+				  if (doSnapshots && checkInterval(input.getProgress())) {
+					  doSnapshots = buffer.snapshot();
 				  }
 			  }
 		  } finally {
