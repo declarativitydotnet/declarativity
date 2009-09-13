@@ -215,6 +215,8 @@ public class ReduceTask extends Task {
 	public void snapshots(List<JBufferSink.Snapshot> runs) throws IOException {
 		String finalName = getOutputName(getPartition());
 		FileSystem fs = FileSystem.get(conf);
+		
+		System.err.println("Reduce: got snapshot " + runs.size() + " runs. Writting to " + finalName);
 
 		final RecordWriter out = 
 			conf.getOutputFormat().getRecordWriter(fs, conf, finalName, null);  
@@ -248,7 +250,9 @@ public class ReduceTask extends Task {
 			reducer.close();
 			out.close(null);
 		}
+		System.err.println("ReduceTask: snapshot done.");
 		this.buffer.reset();
+		System.err.println("ReduceTask: buffer reset.");
 	}
 
 
