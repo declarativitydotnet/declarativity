@@ -5,12 +5,16 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.TaskCompletionEvent.Status;
@@ -214,6 +218,14 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		done(umbilical);
 	}
 	
+	public void snapshot(List<JBufferSink.Snapshot> runs) throws IOException {
+		for (JBufferSink.Snapshot snapshot : runs) {
+			spill(snapshot.data(), snapshot.length(), snapshot.index());
+		}
+		this.buffer.snapshot();
+		this.buffer.reset();
+	}
+	
 	@Override
 	public void collect(DataInputBuffer key, DataInputBuffer value) throws IOException {
 		keyDeserializer.open(key);
@@ -229,8 +241,23 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 
 	@Override
-	public void spill(Path data, long dataSize, Path index) throws IOException {
-		throw new IOException("PipelineMapTask: does not support spill!");
+	public void spill(Path data, long length, Path index) throws IOException {
+		CompressionCodec codec = null;
+		if (conf.getCompressMapOutput()) {
+			Class<? extends CompressionCodec> codecClass =
+				conf.getMapOutputCompressorClass(DefaultCodec.class);
+			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+		}
+		FileSystem fs = FileSystem.getLocal(conf);
+		FSDataInputStream input = fs.open(data);
+		IFile.Reader reader = new IFile.Reader(conf, input, length, codec);
+		DataInputBuffer key = new DataInputBuffer();
+		DataInputBuffer value = new DataInputBuffer();
+		while (reader.next(key, value)) {
+			collect(key, value);
+		}
+		reader.close();
+		input.close();
 	}
 
 	@Override

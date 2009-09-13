@@ -47,6 +47,7 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile.Writer;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
+import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.Progress;
@@ -381,6 +382,10 @@ abstract class Task implements Writable, Configurable {
   
   public boolean isPipeline() {
 	  return false;
+  }
+  
+  public void snapshot(List<JBufferSink.Snapshot> runs) throws IOException {
+	  throw new IOException("Task: snapshot not configured!");
   }
 
   public Progress getProgress() { return taskProgress; }

@@ -285,6 +285,7 @@ public class MapTask extends Task {
 		}
 		done(umbilical);
 	}
+	
 
 	class DirectMapOutputCollector<K, V>
 	implements MapOutputCollector<K, V> {

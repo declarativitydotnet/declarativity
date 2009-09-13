@@ -34,6 +34,68 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 
 public class JBufferSink<K extends Object, V extends Object> {
+	public class Snapshot {
+		private float progress;
+		
+		private Path data;
+		
+		private Path index;
+		
+		private long length;
+		
+		public Snapshot(Path data, Path index) {
+			this.data = data;
+			this.index = index;
+			this.length = 0;
+		}
+		
+		public float progress() {
+			return this.progress;
+		}
+		
+		public Path data() {
+			return this.data;
+		}
+		
+		public Path index() {
+			return this.index;
+		}
+		
+		public long length() {
+			return this.length;
+		}
+		
+		public synchronized void 
+		write(IFile.Reader<K, V> reader, long length, Class<K> keyClass, Class<V> valClass, CompressionCodec codec, float progress) 
+		throws IOException {
+			FSDataOutputStream dataOut  = localFs.create(data);
+			FSDataOutputStream indexOut = localFs.create(index);
+
+			if (dataOut == null || indexOut == null) 
+				throw new IOException("Unable to create snapshot " + data);
+			this.length = length;
+
+			DataInputBuffer key = new DataInputBuffer();
+			DataInputBuffer value = new DataInputBuffer();
+			IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, dataOut,  keyClass, valClass, codec);
+			/* Copy over the data until done. */
+			while (reader.next(key, value)) {
+				writer.append(key, value);
+			}
+			writer.close();
+			dataOut.close();
+
+			/* Write the index file. */
+			indexOut.writeLong(0);
+			indexOut.writeLong(writer.getRawLength());
+			indexOut.writeLong(dataOut.getPos());
+
+			/* Close everything. */
+			indexOut.flush();
+			indexOut.close();
+			this.progress = progress;
+		}
+	}
 	
 	private int maxConnections;
 	
@@ -210,7 +272,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	private class Connection implements Runnable {
 		private float progress;
 		
-		private boolean snapshot;
+		private Snapshot snapshot;
 		
 		private TaskAttemptID mapTaskID;
 		
@@ -227,10 +289,18 @@ public class JBufferSink<K extends Object, V extends Object> {
 			this.mapTaskID = new TaskAttemptID();
 			this.mapTaskID.readFields(input);
 			
-			this.snapshot = input.readBoolean();
-			
 			this.reduceOutputFile = new ReduceOutputFile(reduceID);
 			this.reduceOutputFile.setConf(conf);
+			
+			boolean isSnapshot = input.readBoolean();
+			if (isSnapshot) {
+				this.snapshot = 
+					new Snapshot(reduceOutputFile.getOutputSnapFile(reduceID), 
+							     reduceOutputFile.getOutputSnapIndexFile(reduceID));
+			}
+			else {
+				this.snapshot = null;
+			}
 		}
 		
 		public float progress() {
@@ -238,6 +308,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		public boolean isSnapshot() {
+			return this.snapshot != null;
+		}
+		
+		public Snapshot snapshot() {
 			return this.snapshot;
 		}
 		
@@ -259,12 +333,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				DataInputBuffer key = new DataInputBuffer();
 				DataInputBuffer value = new DataInputBuffer();
 				
-				CompressionCodec codec = null;
-				if (conf.getCompressMapOutput()) {
-					Class<? extends CompressionCodec> codecClass =
-						conf.getMapOutputCompressorClass(DefaultCodec.class);
-					codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-				}
 				Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
 				Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
 				
@@ -281,8 +349,18 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					if (length == 0) return;
 					
+					CompressionCodec codec = null;
+					if (conf.getCompressMapOutput()) {
+						Class<? extends CompressionCodec> codecClass =
+							conf.getMapOutputCompressorClass(DefaultCodec.class);
+						codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+					}
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
-					if (this.sink.buffer().reserve(length)) {
+					
+					if (isSnapshot()) {
+						this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
+					}
+					else if (this.sink.buffer().reserve(length)) {
 						try {
 							while (reader.next(key, value)) {
 								this.sink.buffer().collect(key, value);

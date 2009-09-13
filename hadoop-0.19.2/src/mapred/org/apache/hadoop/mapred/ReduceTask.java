@@ -65,7 +65,7 @@ public class ReduceTask extends Task {
 			Set<TaskAttemptID>  mapTasks = new HashSet<TaskAttemptID>();
 
 			int eid = 0;
-			while (finishedMapTasks.size() < getNumMaps()) {
+			while (!isInterrupted() && finishedMapTasks.size() < getNumMaps()) {
 				try {
 					MapTaskCompletionEventsUpdate updates = 
 						trackerUmbilical.getMapCompletionEvents(getJobID(), eid, Integer.MAX_VALUE, ReduceTask.this.getTaskID());
@@ -118,7 +118,7 @@ public class ReduceTask extends Task {
 				try {
 					int waittime = mapTasks.size() == getNumMaps() ? 60000 : 1000;
 					Thread.sleep(waittime);
-				} catch (InterruptedException e) { }
+				} catch (InterruptedException e) { return; }
 			}
 		}
 	}
@@ -244,17 +244,28 @@ public class ReduceTask extends Task {
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
 		fetcher.setDaemon(true);
 		fetcher.start();
-
-		/* This will not close (block) until all fetches finish! */
-		sink.block();
-		fetcher.stop();
-		buffer.flush();
-		copyPhase.complete();
+		
+		copy(buffer, sink);
+		fetcher.interrupt();
 		
 		long begin = System.currentTimeMillis();
-		reduce(job, reporter, buffer);
+		try {
+			buffer.setProgress(reducePhase);
+			reduce(job, reporter, buffer);
+		} finally {
+			reducePhase.complete();
+			buffer.free();
+		}
+		
 		done(umbilical);
 		System.err.println("Reduce time = " + (System.currentTimeMillis() - begin) + " ms.");
+	}
+	
+	protected void copy(JBuffer buffer, JBufferSink sink) throws IOException {
+		/* This will not close (block) until all fetches finish! */
+		sink.block();
+		buffer.flush();
+		copyPhase.complete();
 	}
 	
 	
@@ -304,9 +315,8 @@ public class ReduceTask extends Task {
 		finally {
 			//Clean up: repeated in catch block below
 			try {
-				reducePhase.complete();
 				reducer.close();
-				buffer.free();
+				buffer.close();
 				out.close(reporter);
 			} catch (IOException ignored) {}
 		}
