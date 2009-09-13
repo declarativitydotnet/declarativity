@@ -870,6 +870,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		System.err.println("JBuffer: start snapshot.");
 		BufferRequest request = null;
 		while ((request = umbilical.getRequest(taskid)) != null) {
+			System.err.println("Got request " + request);
 			if (request.open(job, true)) {
 				requests.add(request);
 				requestMap.put(request.partition(), request); // TODO speculation
