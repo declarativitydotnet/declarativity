@@ -178,15 +178,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 								connections.put(conn.id(), new ArrayList<Connection>());
 							}
 							
-							if (connections.size() > 0 && snapshotConnections.size() > 0) {
-								for (Connection snapshot : snapshotConnections) {
-									snapshot.close();
-								}
-								snapshotConnections.clear();
+							if (connections.size() > 0 && snapshotConnections != null) {
+								closeSnapshots();
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
-							if (conn.isSnapshot() && connections.size() > 0) {
+							if (conn.isSnapshot() && (snapshotConnections == null || connections.size() > 0)) {
 								output.writeBoolean(false); // We've already accepted a non-snapshot connection
 								output.flush();
 								conn.close();
@@ -292,7 +289,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void updateSnapshot(Connection connection) {
 		synchronized (this) {
-			if (snapshotTask != null) {
+			if (snapshotConnections == null) {
+				connection.close();
+			}
+			else if (snapshotTask != null) {
 				List<JBufferSink.Snapshot> runs = new ArrayList<JBufferSink.Snapshot>();
 				for (Connection conn : snapshotConnections) {
 					if (conn.isSnapshot() && conn.snapshot().fresh) {
@@ -309,13 +309,24 @@ public class JBufferSink<K extends Object, V extends Object> {
 					progress = progress / (float) numConnections;
 					
 					try {
-						snapshotTask.snapshots(runs, progress);
+						boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
+						if (!keepSnapshots) {
+							closeSnapshots();
+						}
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
 			}
 		}
+	}
+	
+	private void closeSnapshots() {
+		for (Connection snapshot : snapshotConnections) {
+			snapshot.close();
+		}
+		snapshotConnections.clear();
+		snapshotConnections = null;
 	}
 	
 	/************************************** CONNECTION CLASS **************************************/

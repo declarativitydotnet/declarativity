@@ -864,32 +864,37 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 	
-	public synchronized void snapshot() throws IOException {
+	public synchronized boolean snapshot() throws IOException {
 		if (pipeline) throw new IOException("Snapshot not allowed with pipelineing!");
-		
-		BufferRequest request = null;
-		while ((request = umbilical.getRequest(taskid)) != null) {
-			System.err.println("Got request " + request);
-			if (request.open(job, true)) {
-				requests.add(request);
-				requestMap.put(request.partition(), request); // TODO speculation
+
+		try {
+			BufferRequest request = null;
+			while ((request = umbilical.getRequest(taskid)) != null) {
+				System.err.println("Got request " + request);
+				if (request.open(job, true)) {
+					requests.add(request);
+					requestMap.put(request.partition(), request); // TODO speculation
+				}
 			}
-		}
-		
-		if (requests.size() == 0) {
-			return;
-		}
-		
-		int spillId = mergeParts(true);
-		if (spillId < 0) return;
-		
-		Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
-		Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
-		
-		FSDataInputStream indexIn = localFs.open(indexFile);
-		FSDataInputStream dataIn  = localFs.open(snapFile);
-		for (BufferRequest r : requests) {
-			r.flush(indexIn, dataIn, spillId, progress.get());
+
+			if (requests.size() == 0) {
+				return true;
+			}
+
+			int spillId = mergeParts(true);
+			if (spillId < 0) return true;
+
+			Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
+			Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
+
+			FSDataInputStream indexIn = localFs.open(indexFile);
+			FSDataInputStream dataIn  = localFs.open(snapFile);
+			for (BufferRequest r : requests) {
+				r.flush(indexIn, dataIn, spillId, progress.get());
+			}
+			return true;
+		} catch (Throwable t) {
+			return false; // Turn off snapshots.
 		}
 	}
 	
