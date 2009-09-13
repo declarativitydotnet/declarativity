@@ -175,18 +175,18 @@ public class JBufferSink<K extends Object, V extends Object> {
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						synchronized (this) {
 							if (!conn.isSnapshot() && !connections.containsKey(conn.mapTaskID())) {
-								if (snapshotConnections.size() > 0) {
-									collector.reset(); // we will now start collecting the final data.
-									for (Connection snapshot : snapshotConnections) {
-										snapshot.close();
-									}
-									snapshotConnections.clear();
-								}
 								connections.put(conn.mapTaskID(), new ArrayList<Connection>());
 							}
 							
+							if (connections.size() > 0 && snapshotConnections.size() > 0) {
+								for (Connection snapshot : snapshotConnections) {
+									snapshot.close();
+								}
+								snapshotConnections.clear();
+							}
+							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
-							if (conn.isSnapshot() && connections.containsKey(conn.mapTaskID)) {
+							if (conn.isSnapshot() && connections.size() > 0) {
 								output.writeBoolean(false); // We've already accepted a non-snapshot connection
 								output.flush();
 								conn.close();
