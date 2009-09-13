@@ -15,8 +15,6 @@ public class PipelineReduceTask extends ReduceTask {
 	
 	private BufferUmbilicalProtocol bufferUmbilical;
 	
-	private JBuffer buffer = null;
-	
 	public PipelineReduceTask() {
 		super();
 	}
@@ -30,7 +28,8 @@ public class PipelineReduceTask extends ReduceTask {
 		return true;
 	}
 	
-	public void snapshot(List<JBufferSink.Snapshot> runs) throws IOException {
+	@Override
+	public void snapshots(List<JBufferSink.Snapshot> runs) throws IOException {
 		for (JBufferSink.Snapshot snapshot : runs) {
 			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
 		}

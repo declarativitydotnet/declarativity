@@ -28,6 +28,7 @@ import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.ReduceOutputFile;
+import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -43,10 +44,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private long length;
 		
+		private boolean fresh;
+		
 		public Snapshot(Path data, Path index) {
 			this.data = data;
 			this.index = index;
 			this.length = 0;
+			this.fresh = false;
 		}
 		
 		public float progress() {
@@ -94,6 +98,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			indexOut.flush();
 			indexOut.close();
 			this.progress = progress;
+			this.fresh = true;
 		}
 	}
 	
@@ -123,6 +128,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private Set<TaskID> successful;
 	
+	private Task snapshotTask;
+	
 	public JBufferSink(JobConf conf, TaskAttemptID reduceID, JBufferCollector<K, V> collector, int numConnections) throws IOException {
 		this.conf = conf;
 		this.reduceID = reduceID;
@@ -136,6 +143,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		this.successful = new HashSet<TaskID>();
 		this.runningTransfers = new HashSet<TaskAttemptID>();
 		this.snapshotConnections = new ArrayList<Connection>();
+		this.snapshotTask = null;
 	    
 		/** The server socket and selector registration */
 		this.server = ServerSocketChannel.open();
@@ -150,6 +158,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		} catch (UnknownHostException e) {
 			return new InetSocketAddress("localhost", this.server.socket().getLocalPort());
 		}
+	}
+	
+	public void snapshot(Task task) {
+		this.snapshotTask = task;
 	}
 	
 	public void open() {
@@ -267,6 +279,29 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 	}
 	
+	private void updateSnapshot(Connection connection) {
+		synchronized (this) {
+			if (snapshotTask != null) {
+				List<JBufferSink.Snapshot> runs = new ArrayList<JBufferSink.Snapshot>();
+				for (Connection conn : snapshotConnections) {
+					if (conn.isSnapshot() && conn.snapshot().fresh) {
+						runs.add(conn.snapshot());
+					}
+				}
+				if (runs.size() == snapshotConnections.size()) {
+					try {
+						snapshotTask.snapshots(runs);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					for (Snapshot run : runs) {
+						run.fresh = false;
+					}
+				}
+			}
+		}
+	}
+	
 	/************************************** CONNECTION CLASS **************************************/
 	
 	private class Connection implements Runnable {
@@ -359,6 +394,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					if (isSnapshot()) {
 						this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
+						sink.updateSnapshot(this);
 					}
 					else if (this.sink.buffer().reserve(length)) {
 						try {

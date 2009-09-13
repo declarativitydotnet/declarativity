@@ -47,8 +47,8 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile.Writer;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
-import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
+import org.apache.hadoop.mapred.bufmanager.JBufferSink.Snapshot;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.Progressable;
@@ -56,7 +56,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 
 /** Base class for tasks. */
-abstract class Task implements Writable, Configurable {
+public abstract class Task implements Writable, Configurable {
   private static final Log LOG =
     LogFactory.getLog("org.apache.hadoop.mapred.TaskRunner");
 
@@ -384,7 +384,7 @@ abstract class Task implements Writable, Configurable {
 	  return false;
   }
   
-  public void snapshot(List<JBufferSink.Snapshot> runs) throws IOException {
+  public void snapshots(List<Snapshot> runs) throws IOException {
 	  throw new IOException("Task: snapshot not configured!");
   }
 
