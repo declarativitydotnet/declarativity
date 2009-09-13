@@ -188,10 +188,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
 							if (conn.isSnapshot() && connections.containsKey(conn.mapTaskID)) {
 								output.writeBoolean(false); // We've already accepted a non-snapshot connection
+								output.flush();
 								conn.close();
 							}
 							else if (!runningTransfers.contains(conn.mapTaskID()) && runningTransfers.size() > maxConnections) {
 								output.writeBoolean(false); // Connection not open
+								output.flush();
 								conn.close();
 							}
 							else {
