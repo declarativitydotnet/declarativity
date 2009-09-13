@@ -311,6 +311,7 @@ public class ReduceTask extends Task {
 	protected void copy(JBuffer buffer, JBufferSink sink) throws IOException {
 		/* This will not close (block) until all fetches finish! */
 		this.buffer = buffer;
+		sink.snapshot(this);
 		sink.block();
 		buffer.flush();
 		copyPhase.complete();
