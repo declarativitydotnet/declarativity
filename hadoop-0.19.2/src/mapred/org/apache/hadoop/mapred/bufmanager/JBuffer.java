@@ -110,12 +110,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					if (open) {
 						long starttime = java.lang.System.currentTimeMillis();
 						try {
-							if (kvend != kvindex) {
 								long sortstart = java.lang.System.currentTimeMillis();
 								sortAndSpill();
 								LOG.debug("SpillThread: sort/spill time " + 
 										((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
-							}
 						} catch (Throwable e) {
 							e.printStackTrace();
 							sortSpillException = e;
