@@ -198,7 +198,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			out.flush();
 			
 			DataInputStream in = new DataInputStream(socket.getInputStream());
-			System.err.println("Wait for open reponse");
 			boolean open = in.readBoolean();
 			if (!open) {
 				System.err.println("NO open reponse");
