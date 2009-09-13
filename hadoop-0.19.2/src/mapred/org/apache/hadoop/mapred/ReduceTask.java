@@ -229,6 +229,7 @@ public class ReduceTask extends Task {
 			}
 		};
 		
+		buffer.pipeline(false); // turn pipeline off
 		for (JBufferSink.Snapshot snapshot : runs) {
 			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
 		}
@@ -236,7 +237,7 @@ public class ReduceTask extends Task {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);
 		// apply reduce function
 		try {
-			buffer.pipeline(false); // turn pipeline on
+			buffer.flush();
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, collector, null);
