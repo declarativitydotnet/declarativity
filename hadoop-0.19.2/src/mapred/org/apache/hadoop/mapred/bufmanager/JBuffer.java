@@ -1388,6 +1388,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						new ArrayList<Segment<K, V>>(end - start);
 					for(int i = start; i < end; i++) {
 						if (request != null && i <= request.flushPoint()) {
+							System.err.println("Request " + parts + " already handled spill file " + i);
 							continue; // Request has already sent this spill data.
 						}
 
