@@ -212,7 +212,7 @@ public class ReduceTask extends Task {
 	}
 	
 	@Override
-	public boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
+	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		String snapshotName = getSnapshotOutputName(getPartition(), progress);
 		FileSystem fs = FileSystem.get(conf);
 		
