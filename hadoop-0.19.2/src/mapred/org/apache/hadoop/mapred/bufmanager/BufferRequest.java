@@ -61,7 +61,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	private FileSystem localFS = null;
 	
-	private int flushPoint = 0;
+	private int flushPoint = -1;
 	
 	private float datarate = 0f;
 	
