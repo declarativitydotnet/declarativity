@@ -881,16 +881,18 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true;
 			}
 
-			int spillId = mergeParts(true);
-			if (spillId < 0) return true;
+			synchronized (mergeLock) {
+				int spillId = mergeParts(true);
+				if (spillId < 0) return true;
 
-			Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
-			Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
+				Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
+				Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
 
-			FSDataInputStream indexIn = localFs.open(indexFile);
-			FSDataInputStream dataIn  = localFs.open(snapFile);
-			for (BufferRequest r : requests) {
-				r.flush(indexIn, dataIn, spillId, progress.get());
+				FSDataInputStream indexIn = localFs.open(indexFile);
+				FSDataInputStream dataIn  = localFs.open(snapFile);
+				for (BufferRequest r : requests) {
+					r.flush(indexIn, dataIn, spillId, progress.get());
+				}
 			}
 			return true;
 		} catch (Throwable t) {
