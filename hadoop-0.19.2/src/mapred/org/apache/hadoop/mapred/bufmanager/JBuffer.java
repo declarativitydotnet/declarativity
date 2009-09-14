@@ -1332,8 +1332,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 
-			System.err.println("JBuffer " + taskid + " merge " + (end - start) + " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + ". Output size = " + finalOutFileSize);
-
 			if (end - start == 1 && !spill) { //the spill is the final output
 				localFs.rename(filename[start], 
 						new Path(filename[start].getParent(), "file.out"));
@@ -1428,6 +1426,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 					//close
 					writer.close();
+					
+					System.err.println("JBuffer " + taskid + " merge " + (end - start) + " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
+							". Output size = " + (finalOut.getPos() - segmentStart));
+
 
 					//write index record
 					writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
