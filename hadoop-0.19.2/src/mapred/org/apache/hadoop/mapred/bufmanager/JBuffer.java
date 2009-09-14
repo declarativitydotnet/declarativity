@@ -1315,6 +1315,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			numFlush = numSpills;
 			numSpills++;
 		}
+		
+		System.err.println("JBuffer " + taskid + " merge " + (end - start) + " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end);
 
 		long finalOutFileSize = 0;
 		long finalIndexFileSize = 0;

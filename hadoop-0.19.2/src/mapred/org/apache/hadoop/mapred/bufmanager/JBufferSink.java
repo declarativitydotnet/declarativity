@@ -327,6 +327,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		snapshotConnections.clear();
 		snapshotConnections = null;
+		snapshotTask = null;
 	}
 	
 	/************************************** CONNECTION CLASS **************************************/
