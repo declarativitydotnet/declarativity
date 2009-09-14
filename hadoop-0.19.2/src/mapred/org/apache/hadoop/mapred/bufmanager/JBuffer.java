@@ -891,7 +891,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				FSDataInputStream indexIn = localFs.open(indexFile);
 				FSDataInputStream dataIn  = localFs.open(snapFile);
 				for (BufferRequest r : requests) {
-					r.flush(indexIn, dataIn, spillId, progress.get());
+					r.flush(indexIn, dataIn, -1, progress.get());
 				}
 			}
 			return true;
