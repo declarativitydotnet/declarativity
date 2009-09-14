@@ -1327,6 +1327,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				filename[i] = mapOutputFile.getSpillFile(this.taskid, i);
 				indexFileName[i] = mapOutputFile.getSpillIndexFile(this.taskid, i);
 				finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
+				if (i == start) {
+					System.err.println("Spill file start = " + i + ", size = " + finalOutFileSize);
+				}
 			}
 
 			System.err.println("JBuffer " + taskid + " merge " + (end - start) + " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + ". Output size = " + finalOutFileSize);
