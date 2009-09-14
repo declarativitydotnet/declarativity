@@ -30,7 +30,7 @@ public class PipelineReduceTask extends ReduceTask {
 	
 	@Override
 	public boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
-		buffer.pipeline(false); // turn pipeline on
+		System.err.println("PipelineReduceTask: received snapshots at progress " + progress);
 		buffer.reset();
 		for (JBufferSink.Snapshot snapshot : runs) {
 			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
