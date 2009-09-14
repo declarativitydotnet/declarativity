@@ -1328,7 +1328,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				indexFileName[i] = mapOutputFile.getSpillIndexFile(this.taskid, i);
 				finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
 				if (i == start) {
-					System.err.println("Spill file start = " + i + ", size = " + finalOutFileSize);
+					System.err.println("JBuffer " + taskid + " spill file start = " + i + ", size = " + finalOutFileSize);
 				}
 			}
 
