@@ -95,7 +95,7 @@ public class WordCount extends Configured implements Tool {
   }
   
   static int printUsage() {
-    System.out.println("wordcount [-s <interval>] [-m <maps>] [-r <reduces>] <input> <output>");
+    System.out.println("wordcount [-s <interval>] [-p] [-m <maps>] [-r <reduces>] <input> <output>");
     ToolRunner.printGenericCommandUsage(System.out);
     return -1;
   }
@@ -119,14 +119,15 @@ public class WordCount extends Configured implements Tool {
     conf.setCombinerClass(Reduce.class);
     conf.setReducerClass(Reduce.class);
     
-    boolean snapshots = false;
-    
     List<String> other_args = new ArrayList<String>();
     for(int i=0; i < args.length; ++i) {
       try {
         if ("-s".equals(args[i])) {
-        	snapshots = true;
+        	conf.setMapRunnerClass(SnapshotMapRunner.class);
         	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
+        	conf.setBoolean("mapred.map.tasks.pipeline.execution", false);
+        } else if ("-p".equals(args[i])) {
+        	conf.setBoolean("mapred.map.tasks.pipeline.execution", true);
         } else if ("-m".equals(args[i])) {
           conf.setNumMapTasks(Integer.parseInt(args[++i]));
         } else if ("-r".equals(args[i])) {
@@ -152,10 +153,6 @@ public class WordCount extends Configured implements Tool {
     FileInputFormat.setInputPaths(conf, other_args.get(0));
     FileOutputFormat.setOutputPath(conf, new Path(other_args.get(1)));
     
-    if (snapshots) {
-    	conf.setMapRunnerClass(SnapshotMapRunner.class);
-    }
-        
     JobClient.runJob(conf);
     return 0;
   }

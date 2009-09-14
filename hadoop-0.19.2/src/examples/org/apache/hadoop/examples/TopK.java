@@ -28,6 +28,7 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.SequenceFileOutputFormat;
+import org.apache.hadoop.mapred.SnapshotMapRunner;
 import org.apache.hadoop.mapred.lib.InverseMapper;
 import org.apache.hadoop.mapred.lib.LongSumReducer;
 import org.apache.hadoop.util.Tool;
@@ -116,7 +117,7 @@ public class TopK extends Configured implements Tool {
 	private TopK() {}                               // singleton
 	
 	private void printUsage() {
-		System.out.println("TopK [-p] [-m mappers] [-r reducers] <inDir> <outDir> <K> [<regexpr> [<group>]]");
+		System.out.println("TopK [-s <interval>] [-p] [-m mappers] [-r reducers] <inDir> <outDir> <K> [<regexpr> [<group>]]");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
 
@@ -135,12 +136,25 @@ public class TopK extends Configured implements Tool {
 
 			JobConf wordcountJob = new JobConf(getConf(), TopK.class);
 			wordcountJob.setJobName("topk-search");
+			
+			JobConf topkJob = new JobConf(TopK.class);
+			topkJob.setJobName("topk-sort");
 
 		    List<String> other_args = new ArrayList<String>();
 		    for(int i=0; i < args.length; ++i) {
 		      try {
-		    	  if ("-p".equals(args[i])) {
-		    		  pipeline = true;
+		          if ("-s".equals(args[i])) {
+		        	int interval = Integer.parseInt(args[++i]);
+		          	wordcountJob.setMapRunnerClass(SnapshotMapRunner.class);
+		          	wordcountJob.setInt("mapred.snapshot.interval", interval);
+		          	topkJob.setInt("mapred.snapshot.interval", interval);
+		          	wordcountJob.setBoolean("mapred.map.tasks.pipeline.execution", false);
+		          	topkJob.setBoolean("mapred.map.tasks.pipeline.execution", false);
+		        	pipeline = true;
+		          } else if ("-p".equals(args[i])) {
+		    		pipeline = true;
+		        	wordcountJob.setBoolean("mapred.map.tasks.pipeline.execution", true);
+		          	topkJob.setBoolean("mapred.map.tasks.pipeline.execution", true);
 		    	  } else if ("-m".equals(args[i])) {
 		    		  wordcountJob.setNumMapTasks(Integer.parseInt(args[++i]));
 		    	  } else if ("-r".equals(args[i])) {
@@ -186,9 +200,6 @@ public class TopK extends Configured implements Tool {
 			wordcountJob.setOutputKeyClass(Text.class);
 			wordcountJob.setOutputValueClass(LongWritable.class);
 
-
-			JobConf topkJob = new JobConf(TopK.class);
-			topkJob.setJobName("topk-sort");
 
 			FileInputFormat.setInputPaths(topkJob, tempDir);
 			topkJob.setInputFormat(SequenceFileInputFormat.class);
