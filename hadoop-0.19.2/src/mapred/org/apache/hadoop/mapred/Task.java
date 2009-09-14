@@ -103,7 +103,8 @@ public abstract class Task implements Writable, Configurable {
   }
 
   static synchronized String getSnapshotOutputName(int partition, float progress) {
-    return "snapshot-" + NUMBER_FORMAT.format(progress) + "-" + NUMBER_FORMAT.format(partition);
+	  int id = new Float(progress * 100f).intValue();
+    return "snapshot-" + NUMBER_FORMAT.format(id) + "-" + NUMBER_FORMAT.format(partition);
   }
   
   ////////////////////////////////////////////
