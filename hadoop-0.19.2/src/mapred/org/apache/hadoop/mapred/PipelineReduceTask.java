@@ -35,6 +35,9 @@ public class PipelineReduceTask extends ReduceTask {
 			System.err.println("\tPipelineReduceTask: " + getTaskID() + " can't snapshot right now.");
 			return true;
 		}
+		else {
+			System.err.println("\tPipelineReduceTask: " + getTaskID() + " performing snapshot.");
+		}
 		
 		for (JBufferSink.Snapshot snapshot : runs) {
 			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());

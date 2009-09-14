@@ -421,7 +421,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
 					if (isSnapshot()) {
-						this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
+						try {
+							this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
+						} catch (IOException e) {
+							return;
+						}
 						sink.updateSnapshot(this);
 					}
 					else if (this.sink.buffer().reserve(length)) {

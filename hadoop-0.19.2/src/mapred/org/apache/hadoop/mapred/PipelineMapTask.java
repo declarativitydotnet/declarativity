@@ -90,7 +90,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 				}
 
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) { }
 			}
 		}
