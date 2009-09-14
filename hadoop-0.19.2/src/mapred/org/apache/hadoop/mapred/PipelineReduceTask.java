@@ -31,6 +31,7 @@ public class PipelineReduceTask extends ReduceTask {
 	@Override
 	public boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		buffer.pipeline(false); // turn pipeline on
+		buffer.reset();
 		for (JBufferSink.Snapshot snapshot : runs) {
 			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
 		}
@@ -51,8 +52,8 @@ public class PipelineReduceTask extends ReduceTask {
 			//Clean up: repeated in catch block below
 			reducer.close();
 		}
-		boolean result = this.buffer.snapshot();
-		this.buffer.reset();
+		boolean result = buffer.snapshot();
+		buffer.reset();
 		return result;
 	}
 	
