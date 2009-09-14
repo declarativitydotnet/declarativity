@@ -29,7 +29,7 @@ public class PipelineReduceTask extends ReduceTask {
 	}
 	
 	@Override
-	public boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
+	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		System.err.println("PipelineReduceTask: received snapshots at progress " + progress);
 		buffer.reset();
 		for (JBufferSink.Snapshot snapshot : runs) {
