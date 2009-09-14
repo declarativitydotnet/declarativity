@@ -1316,6 +1316,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 			numFlush = numSpills;
 			numSpills++;
+		}
 
 			long finalOutFileSize = 0;
 			long finalIndexFileSize = 0;
@@ -1443,7 +1444,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					filename[i] = indexFileName[i] = null;
 				}
 			}
-		}
 
 		return spill ? end : -1;
 	}
