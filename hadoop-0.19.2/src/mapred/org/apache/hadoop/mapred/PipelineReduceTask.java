@@ -88,10 +88,11 @@ public class PipelineReduceTask extends ReduceTask {
 			ValuesIterator values = buffer.iterator();
 			System.err.println("PipelineReduceTask: got iterator.");
 			while (values.more()) {
+				System.err.println("reduceops = " + reduceops);
 				reducer.reduce(values.getKey(), values, buffer, reporter);
 				values.nextKey();
 				reduceops++;
-				System.err.println("reduceops = " + reduceops);
+				System.err.println("reduceops = " + reduceops + " progress = " + values.getProgress());
 				
 		        reducePhase.set(values.getProgress().get());
 				reporter.progress();
@@ -116,6 +117,7 @@ public class PipelineReduceTask extends ReduceTask {
 				}
 			}
 			else {
+				System.err.println("PipelineReduceTask: " + getTaskID() + " committing buffer to controller.");
 				bufferUmbilical.commit(getTaskID());
 			}
 			System.err.println("PipelineReduce: DONE");
