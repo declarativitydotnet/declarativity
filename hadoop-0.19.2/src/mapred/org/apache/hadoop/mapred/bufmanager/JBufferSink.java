@@ -306,11 +306,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 				}
 				
-				if (runs.size() == snapshotConnections.size()) {
+				if (runs.size() > snapshotConnections.size() / 3) {
+					runs.clear();
 					float progress = 0f;
-					for (Snapshot run : runs) {
+					for (Connection conn : snapshotConnections) {
+						Snapshot run = conn.snapshot();
 						run.fresh = false;
 						progress += run.progress;
+						runs.add(run);
 					}
 					progress = progress / (float) numConnections;
 					
@@ -465,7 +468,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
 					if (isSnapshot()) {
-						System.err.println("JBufferSink " + reduceID + " snapshot progress = " + progress);
+						LOG.debug("Connection " + id + " new snapshot. progress = " + progress);
 						this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
 						sink.updateSnapshot(this);
 					}
