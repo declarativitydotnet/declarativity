@@ -84,7 +84,9 @@ public class PipelineReduceTask extends ReduceTask {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 		// apply reduce function
 		try {
+			System.err.println("PipelineReduceTask: turn pipelining on.");
 			buffer.pipeline(true); // turn pipeline on
+			System.err.println("PipelineReduceTask: pipelining on.");
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, buffer, reporter);
@@ -102,6 +104,7 @@ public class PipelineReduceTask extends ReduceTask {
 		finally {
 			//Clean up: repeated in catch block below
 			reducer.close();
+			System.err.println("PipelineReduce: close buffer.");
 			buffer.close();
 			TreeSet<BufferRequest> requests = buffer.requests();
 			if (requests.size() > 0) {
@@ -113,6 +116,7 @@ public class PipelineReduceTask extends ReduceTask {
 			else {
 				bufferUmbilical.commit(getTaskID());
 			}
+			System.err.println("PipelineReduce: DONE");
 		}
 	}
 }
