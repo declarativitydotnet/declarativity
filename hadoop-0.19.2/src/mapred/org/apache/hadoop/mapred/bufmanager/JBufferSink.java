@@ -402,6 +402,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		public void close() {
 			synchronized (this) {
 				open = false;
+				while (busy) {
+					try { this.wait();
+					} catch (InterruptedException e) { }
+				}
 				
 				if (this.input == null) return;
 				try {
@@ -413,10 +417,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					this.input = null;
 				}
 				
-				while (busy) {
-					try { this.wait();
-					} catch (InterruptedException e) { }
-				}
+
 			}
 		}
 		
@@ -433,12 +434,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 					synchronized (this) {
 						busy = false;     // not busy
 						this.notifyAll(); // tell everyone
-						try {
-							length = this.input.readLong();
-						}
-						catch (Throwable e) {
-							return; // This is okay.
-						}
+					}
+					try {
+						length = this.input.readLong();
+					}
+					catch (Throwable e) {
+						return; // This is okay.
+					}
+					
+					synchronized (this) {
 						if (!open) return;
 						busy = true; // busy
 					}
