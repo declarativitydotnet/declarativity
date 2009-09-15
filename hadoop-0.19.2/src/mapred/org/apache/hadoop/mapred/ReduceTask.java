@@ -230,7 +230,7 @@ public class ReduceTask extends Task {
 		};
 		
 		for (JBufferSink.Snapshot snapshot : runs) {
-			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
+			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index(), true);
 		}
 		
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);

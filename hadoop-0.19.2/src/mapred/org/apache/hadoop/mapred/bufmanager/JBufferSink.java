@@ -567,7 +567,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							indexOut.close();
 							
 							/* Register the spill file with the buffer. */
-							this.sink.buffer().spill(filename, length, indexFilename);
+							this.sink.buffer().spill(filename, length, indexFilename, false);
 							
 						} catch (Throwable e) {
 							LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
