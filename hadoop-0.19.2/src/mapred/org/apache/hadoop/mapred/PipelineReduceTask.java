@@ -104,15 +104,7 @@ public class PipelineReduceTask extends ReduceTask {
 			//Clean up: repeated in catch block below
 			reducer.close();
 			buffer.close();
-			TreeSet<BufferRequest> requests = buffer.requests();
-			if (requests.size() > 0) {
-				for (BufferRequest request : requests) {
-					request.flushFinal();
-				}
-			}
-			else {
-				bufferUmbilical.commit(getTaskID());
-			}
+			bufferUmbilical.commit(getTaskID());
 		}
 	}
 }
