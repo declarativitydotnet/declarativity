@@ -20,7 +20,7 @@ public interface JBufferCollector<K extends Object, V extends Object>
 	
 	public void close() throws IOException;
 	
-	public void reset() throws IOException;
+	public void reset(boolean restart) throws IOException;
 	
 	public Progress getProgress();
 }

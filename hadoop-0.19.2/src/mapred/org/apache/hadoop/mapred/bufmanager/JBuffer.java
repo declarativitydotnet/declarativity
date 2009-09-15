@@ -947,11 +947,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		reset(false);
 	}
 	
-	public synchronized void reset() throws IOException {
-		reset(true);
-	}
-	
-	private void reset(boolean restart) throws IOException {
+	public synchronized void reset(boolean restart) throws IOException {
 		synchronized (spillLock) {
 			spillThread.close();
 			while (spillThread.isSpilling()) {
@@ -968,22 +964,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				while (mergeThread.isBusy()) {
 					try { mergeLock.wait();
 					} catch (InterruptedException e) { }
-				}
-				
-				/* cleanup spill files */
-				if (numSpills - numFlush > 0) {
-					FileSystem localFs = FileSystem.getLocal(job);
-					for(int i = numFlush; i < numSpills; i++) {
-						Path data = mapOutputFile.getSpillFile(this.taskid, i);
-						Path index = mapOutputFile.getSpillIndexFile(this.taskid, i);
-
-						if (localFs.exists(data)) {
-							localFs.delete(data, true);
-						}
-						if (localFs.exists(index)) {
-							localFs.delete(index, true);
-						}
-					}
 				}
 				
 				/* reset buffer variables. */
