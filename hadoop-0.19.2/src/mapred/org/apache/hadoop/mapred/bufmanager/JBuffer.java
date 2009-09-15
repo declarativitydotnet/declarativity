@@ -950,11 +950,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			sortAndSpill();
 		}
 		
-		System.err.println("Buffer " + taskid + " committing. \n\tFinal merge from " + (numSpills - numFlush) + " spill files.");
 		mergeParts(false);
-		System.err.println("Buffer " + taskid + " done with merge.");
 		reset();
-		System.err.println("Buffer " + taskid + " done with flush.");
 	}
 	
 	public void reset() {
@@ -1035,13 +1032,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					throw new IOException("JBuffer::sortAndSpill -- spill file exists! " + filename);
 				}
 				
-				out = localFs.create(filename);
+				out = localFs.create(filename, false);
 				if (out == null ) throw new IOException("Unable to create spill file " + filename);
 				// create spill index
 				Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
 						this.taskid, this.numSpills,
 						partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-				indexOut = localFs.create(indexFilename);
+				indexOut = localFs.create(indexFilename, false);
 
 				final int endPosition = (kvend > kvstart)
 				? kvend
@@ -1364,10 +1361,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 
 			//The output stream for the final single output file
-			FSDataOutputStream finalOut = localFs.create(outputFile);
+			FSDataOutputStream finalOut = localFs.create(outputFile, !spill);
 
 			//The final index file output stream
-			FSDataOutputStream finalIndexOut = localFs.create(indexFile);
+			FSDataOutputStream finalIndexOut = localFs.create(indexFile, !spill);
 
 			if (start == end) {
 				//create dummy files
