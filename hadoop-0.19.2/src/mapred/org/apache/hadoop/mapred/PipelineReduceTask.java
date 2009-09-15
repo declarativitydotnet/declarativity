@@ -84,11 +84,10 @@ public class PipelineReduceTask extends ReduceTask {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 		// apply reduce function
 		try {
-			buffer.pipeline(true); // turn pipeline on
 			ValuesIterator values = buffer.iterator();
 			System.err.println("PipelineReduceTask: got iterator.");
 			while (values.more()) {
-				System.err.println("PERFORM REDUCE");
+				System.err.println("PERFORM REDUCE on key " + values.getKey());
 				reducer.reduce(values.getKey(), values, buffer, reporter);
 				values.nextKey();
 				
