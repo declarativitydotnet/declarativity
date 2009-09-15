@@ -216,10 +216,11 @@ public class ReduceTask extends Task {
 		String snapshotName = getSnapshotOutputName(getPartition(), progress);
 		FileSystem fs = FileSystem.get(conf);
 		
-		System.err.println("Reduce: got snapshot " + runs.size() + " runs. Writting to " + snapshotName);
+		System.err.println("Reduce: got snapshot " + runs.size() + " runs. Progress = " + progress + " Writting to " + snapshotName);
 
 		final RecordWriter out = 
 			conf.getOutputFormat().getRecordWriter(fs, conf, snapshotName, null);  
+		System.err.println("\tReduce go record writer.");
 
 		OutputCollector collector = new OutputCollector() {
 			@SuppressWarnings("unchecked")
@@ -229,7 +230,6 @@ public class ReduceTask extends Task {
 			}
 		};
 		
-		buffer.pipeline(false); // turn pipeline off
 		for (JBufferSink.Snapshot snapshot : runs) {
 			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
 		}
