@@ -55,7 +55,7 @@ public class SnapshotMapRunner<K1, V1, K2, V2>
 				  }
 				  
 				  if (doSnapshots && checkInterval(input.getProgress())) {
-					  doSnapshots = buffer.snapshot();
+					  doSnapshots = buffer.snapshot(false);
 				  }
 			  }
 		  } finally {
