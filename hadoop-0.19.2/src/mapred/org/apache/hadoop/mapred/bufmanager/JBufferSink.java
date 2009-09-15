@@ -173,6 +173,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
+						System.err.println("JBufferSink: received " + conn);
 						synchronized (this) {
 							if (!conn.isSnapshot() && !connections.containsKey(conn.id())) {
 								connections.put(conn.id(), new ArrayList<Connection>());
@@ -204,7 +205,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 								}
 								else {
 									// regular
-									System.err.println("JBufferSink: new regular connection " + conn);
+									System.err.println("\tJBufferSink: new regular connection " + conn);
 									connections.get(conn.id()).add(conn);
 									runningTransfers.add(conn.id());
 								}
