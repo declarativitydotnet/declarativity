@@ -344,10 +344,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private ReduceOutputFile reduceOutputFile;
 		
+		private boolean busy;
+		private boolean open;
+		
 		public Connection(DataInputStream input, JBufferSink<K, V> sink, JobConf conf) throws IOException {
 			this.input = input;
 			this.sink = sink;
 			this.progress = 0f;
+			this.busy = false;
+			this.open = true;
 			
 			this.id = new TaskAttemptID();
 			this.id.readFields(input);
@@ -381,13 +386,24 @@ public class JBufferSink<K extends Object, V extends Object> {
 		public TaskAttemptID id() {
 			return this.id;
 		}
-		
+
 		public void close() {
-			try {
-				this.input.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			synchronized (this) {
+				open = false;
+				while (busy) {
+					try { this.wait();
+					} catch (InterruptedException e) { }
+				}
+				if (this.input == null) return;
+				
+				try {
+					this.input.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				finally {
+					this.input = null;
+				}
 			}
 		}
 		
@@ -399,13 +415,19 @@ public class JBufferSink<K extends Object, V extends Object> {
 				Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
 				Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
 				
-				while (true) {
+				while (open) {
 					long length = 0;
-					try {
-						length = this.input.readLong();
-					}
-					catch (Throwable e) {
-						return; // This is okay.
+					synchronized (this) {
+						busy = false;     // not busy
+						this.notifyAll(); // tell everyone
+						try {
+							length = this.input.readLong();
+						}
+						catch (Throwable e) {
+							return; // This is okay.
+						}
+						if (!open) return;
+						busy = true; // busy
 					}
 					
 					this.progress = this.input.readFloat();
@@ -421,11 +443,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
 					if (isSnapshot()) {
-						try {
-							this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
-						} catch (IOException e) {
-							return;
-						}
+						this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
 						sink.updateSnapshot(this);
 					}
 					else if (this.sink.buffer().reserve(length)) {
@@ -504,6 +522,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
+				busy = false;
 				sink.done(this);
 				close();
 			}
