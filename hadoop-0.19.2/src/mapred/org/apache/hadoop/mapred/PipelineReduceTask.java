@@ -81,18 +81,19 @@ public class PipelineReduceTask extends ReduceTask {
 	public void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
+		
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 		// apply reduce function
 		try {
 			int reduceops = 0;
 			ValuesIterator values = buffer.iterator();
+			buffer.close();
+			buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+
 			System.err.println("PipelineReduceTask: got iterator.");
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, buffer, reporter);
-				System.err.println("reduceops = " + reduceops);
 				values.nextKey();
-				reduceops++;
-				System.err.println("reduceops = " + reduceops + " progress = " + values.getProgress().get());
 				
 		        reducePhase.set(values.getProgress().get());
 				reporter.progress();
