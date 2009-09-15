@@ -60,9 +60,7 @@ public class PipelineReduceTask extends ReduceTask {
 			//Clean up: repeated in catch block below
 			reducer.close();
 		}
-		boolean result = buffer.snapshot();
-		buffer.reset(true);
-		return result;
+		return buffer.snapshot();
 	}
 	
 	@Override
