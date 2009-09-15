@@ -224,7 +224,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		for (JBufferSink.Snapshot snapshot : runs) {
 			spill(snapshot.data(), snapshot.length(), snapshot.index());
 		}
-		return this.buffer.snapshot();
+		return this.buffer.snapshot(true);
 	}
 	
 	@Override

@@ -871,11 +871,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		return (requests.size() > 0);
 	}
 	
-	public synchronized boolean snapshot() throws IOException {
+	public synchronized boolean snapshot(boolean reset) throws IOException {
 
 		try {
 			synchronized (mergeLock) {
-				if (!canSnapshot()) return true;
+				if (!canSnapshot()) {
+					return true; // pretend i did it.
+				}
 				System.err.println("JBuffer " + taskid + ": performing snapshot now.");
 				int spillId = mergeParts(true);
 				if (spillId < 0) return true;
@@ -888,7 +890,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				for (BufferRequest r : requests) {
 					r.flush(indexIn, dataIn, -1, progress.get());
 				}
-				reset(true);
+				if (reset) reset(true);
 			}
 			return true;
 		} catch (Throwable t) {
