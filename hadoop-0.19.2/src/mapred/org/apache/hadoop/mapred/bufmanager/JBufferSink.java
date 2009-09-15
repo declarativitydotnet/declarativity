@@ -184,9 +184,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 						if (!open) return;
 						LOG.info("SnapshotThread: " + reduceID + " perform snapshot. progress " + progress);
 						boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
-						busy = false; // must be before close snapshots.
 						if (!keepSnapshots) {
-							closeSnapshots();
+							return;
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -195,6 +194,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 			finally {
 				synchronized (snapshotConnections) {
+					open = false;
 					busy = false;
 					snapshotConnections.notifyAll();
 				}
