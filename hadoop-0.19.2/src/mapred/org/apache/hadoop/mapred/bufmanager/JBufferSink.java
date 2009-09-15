@@ -121,6 +121,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		public void close() {
 			open = false;
 			synchronized (snapshotConnections) {
+				snapshotConnections.notifyAll();
 				while (busy) {
 					try {
 						snapshotConnections.wait();
@@ -153,6 +154,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							if (!open) return;
 							try { snapshotConnections.wait();
 							} catch (InterruptedException e) { return; }
+							if (!open) return;
 
 							freshConnections = 0;
 							for (Connection conn : snapshotConnections) {
