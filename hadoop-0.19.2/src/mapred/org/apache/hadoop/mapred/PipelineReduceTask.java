@@ -88,9 +88,8 @@ public class PipelineReduceTask extends ReduceTask {
 		try {
 			ValuesIterator values = buffer.iterator();
 			buffer.reset(true);
-			// buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+			buffer.pipeline(true);
 
-			System.err.println("PipelineReduceTask: got iterator.");
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, buffer, reporter);
 				values.nextKey();
@@ -98,7 +97,6 @@ public class PipelineReduceTask extends ReduceTask {
 		        reducePhase.set(values.getProgress().get());
 				reporter.progress();
 			}
-			System.err.println("PipelineReduceTask: done with reduce.");
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 			throw ioe;
@@ -108,20 +106,16 @@ public class PipelineReduceTask extends ReduceTask {
 		finally {
 			//Clean up: repeated in catch block below
 			reducer.close();
-			System.err.println("PipelineReduce: close buffer.");
 			buffer.close();
 			TreeSet<BufferRequest> requests = buffer.requests();
 			if (requests.size() > 0) {
-				System.err.println("PipelineReduceTask: " + getTaskID() + " flushed final.");
 				for (BufferRequest request : requests) {
 					request.flushFinal();
 				}
 			}
 			else {
-				System.err.println("PipelineReduceTask: " + getTaskID() + " committing buffer to controller.");
 				bufferUmbilical.commit(getTaskID());
 			}
-			System.err.println("PipelineReduce: DONE");
 		}
 	}
 }
