@@ -878,10 +878,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				if (!canSnapshot()) {
 					return true; // pretend i did it.
 				}
-				System.err.println("JBuffer " + taskid + ": performing snapshot now.");
 				int spillId = mergeParts(true);
 				if (spillId < 0) return true;
 
+				System.err.println("JBuffer " + taskid + ": performing snapshot now.");
 				Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
 				Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
 

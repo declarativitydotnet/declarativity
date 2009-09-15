@@ -283,9 +283,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 
 	@Override
-	public void reset(boolean restart) {
-		// TODO Auto-generated method stub
-		
+	public void reset(boolean restart) throws IOException {
+		this.buffer.reset(restart);
 	}
 
 }
