@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -26,6 +28,7 @@ import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.util.ReflectionUtils;
 
 public class PipelineMapTask extends MapTask implements JBufferCollector {
+	  private static final Log LOG = LogFactory.getLog(PipelineMapTask.class.getName());
 	
 	
 	private class ReduceOutputFetcher extends Thread {
@@ -75,7 +78,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 							String host = u.getHost();
 							TaskAttemptID reduceAttemptId = event.getTaskAttemptId();
 							if (reduceAttemptId.getTaskID().equals(reduceTaskId) && !requestSent) {
-								System.err.println("Map " + getTaskID() + " sending buffer request to reducer " + reduceAttemptId);
+								LOG.debug("Map " + getTaskID() + " sending buffer request to reducer " + reduceAttemptId);
 								bufferUmbilical.request(new BufferRequest(reduceAttemptId, 0, host, sink.getAddress()));
 								requestSent = true;
 								if (event.getTaskStatus() == Status.SUCCEEDED) return;
@@ -198,7 +201,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		
 		/* Start the reduce output fetcher */
 		TaskID reduceTaskId = pipelineReduceTask(job);
-		System.err.println("Map task " + getTaskID() + " requesting pipeline from reducer " + reduceTaskId);
 		ReduceOutputFetcher rof = new ReduceOutputFetcher(umbilical, bufferUmbilical, sink, reduceTaskId);
 		rof.setDaemon(true);
 		
@@ -212,7 +214,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			}
 			setPhase(TaskStatus.Phase.MAP); 
 			collector.close();
-			System.err.println("PipelineMapTask: " + getTaskID() + " waited for " + (System.currentTimeMillis() - begin) + " ms.");
+			LOG.info("PipelineMapTask: " + getTaskID() + " waited for " + (System.currentTimeMillis() - begin) + " ms.");
 			bufferUmbilical.commit(getTaskID());
 		}
 
@@ -221,7 +223,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	
 	@Override
 	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
-		System.err.println("PipelineMapTask: perform snapshot at progress " + progress);
 		for (JBufferSink.Snapshot snapshot : runs) {
 			spill(snapshot.data(), snapshot.length(), snapshot.index(), true);
 		}

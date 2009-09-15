@@ -322,7 +322,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				avgDataRate /= (float) requests.size();
 				
 				if (min != null && (avgDataRate / min.datarate()) > 10.0) {
-					System.err.println("Pipeline running slow! Min data rate = " + 
+					LOG.warn("Pipeline running slow! Min data rate = " + 
 							            min.datarate() + ". Average data rate = " + avgDataRate);
 					min.close();
 					requests.remove(min);
@@ -881,7 +881,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				int spillId = mergeParts(true);
 				if (spillId < 0) return true;
 
-				System.err.println("JBuffer " + taskid + ": performing snapshot now.");
 				Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
 				Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
 
@@ -895,7 +894,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					localFs.delete(snapFile, true);
 					localFs.delete(indexFile, true);
 				}
-				System.err.println("JBuffer " + taskid + ": snapshot done.");
 			}
 			return true;
 		} catch (Throwable t) {
@@ -1356,7 +1354,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 
 			if (end - start == 1 && !spill) { //the spill is the final output
-				System.err.println("JBuffer " + taskid + " create final output!");
 				localFs.rename(filename[start], 
 						new Path(filename[start].getParent(), "file.out"));
 				localFs.rename(indexFileName[start], 
@@ -1377,7 +1374,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, end, finalIndexFileSize);
 			}
 			else {
-				System.err.println("JBuffer " + taskid + " create final output!");
 				outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
 				indexFile = mapOutputFile.getOutputIndexFileForWrite( this.taskid, finalIndexFileSize);
 			}
@@ -1391,7 +1387,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (start == end) {
 				//create dummy files
 				if (spill) LOG.error("Error: spill file is a dummy!");
-				System.err.println("JBuffer: buffer " + taskid + " final output is empty.");
 				for (int i = 0; i < partitions; i++) {
 					long segmentStart = finalOut.getPos();
 					IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);
@@ -1453,8 +1448,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					//close
 					writer.close();
 					
-					System.err.println("JBuffer " + taskid + " merge " + (end - start) + " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
-							". Output size = " + (finalOut.getPos() - segmentStart));
+					LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
+							 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
+							 ". Output size = " + (finalOut.getPos() - segmentStart));
 
 
 					//write index record
