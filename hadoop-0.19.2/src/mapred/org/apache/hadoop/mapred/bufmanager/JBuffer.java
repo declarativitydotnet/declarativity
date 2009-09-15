@@ -944,6 +944,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		
 		mergeParts(false);
+		
 		reset();
 	}
 	
@@ -1323,9 +1324,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				filename[i] = mapOutputFile.getSpillFile(this.taskid, i);
 				indexFileName[i] = mapOutputFile.getSpillIndexFile(this.taskid, i);
 				finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
-				if (i == start) {
-					System.err.println("JBuffer " + taskid + " spill file start = " + i + ", size = " + finalOutFileSize);
-				}
 			}
 
 			if (end - start == 1 && !spill) { //the spill is the final output
