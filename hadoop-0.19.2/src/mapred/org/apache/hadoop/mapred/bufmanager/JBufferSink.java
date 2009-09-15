@@ -18,6 +18,8 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.ChecksumException;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -35,6 +37,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 
 public class JBufferSink<K extends Object, V extends Object> {
+	private static final Log LOG = LogFactory.getLog(JBufferSink.class.getName());
+	  
 	public class Snapshot {
 		private float progress;
 		
@@ -173,16 +177,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
-						System.err.println("JBufferSink: received " + conn);
+						LOG.debug("JBufferSink: received " + conn);
 						synchronized (this) {
 							if (!conn.isSnapshot() && !connections.containsKey(conn.id())) {
 								connections.put(conn.id(), new ArrayList<Connection>());
 							}
 							
 							if (connections.size() > 0 && snapshotConnections != null) {
-								System.err.println("\tJBufferSink: " + conn + ". close all snapshots");
+								LOG.debug("\tJBufferSink: " + conn + ". close all snapshots");
 								closeSnapshots();
-								System.err.println("\tJBufferSink: " + conn + ". snapshots closed");
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
@@ -207,7 +210,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 								}
 								else {
 									// regular
-									System.err.println("\tJBufferSink: new regular connection " + conn);
 									connections.get(conn.id()).add(conn);
 									runningTransfers.add(conn.id());
 								}
@@ -472,7 +474,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 								this.sink.buffer().collect(key, value);
 							}
 						} catch (ChecksumException e) {
-							System.err.println("ReduceMapSink: ChecksumException during spill. progress = " + progress);
+							LOG.error("ReduceMapSink: ChecksumException during spill. progress = " + progress);
 						}
 						finally {
 							this.sink.buffer().unreserve(length);
@@ -484,12 +486,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 						Path indexFilename = reduceOutputFile.getOutputIndexFileForWrite(id(), progress == 1f, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 						
 						while (localFs.exists(filename)) {
-							System.err.println("File " + filename + " exists. Waiting....");
+							LOG.warn("File " + filename + " exists. Waiting....");
 							Thread.sleep(100);
 						}
 						
 						while (localFs.exists(indexFilename)) {
-							System.err.println("File " + indexFilename + " exists. Waiting....");
+							LOG.warn("File " + indexFilename + " exists. Waiting....");
 							Thread.sleep(100);
 						}
 						
@@ -521,15 +523,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 							this.sink.buffer().spill(filename, length, indexFilename);
 							
 						} catch (Throwable e) {
-							System.err.println("ReduceMapSink: error during spill. progress = " + progress);
+							LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
 							e.printStackTrace();
 						}
 						finally {
 							if (localFs.exists(filename)) {
-								System.err.println("Warn: " + filename + " still exists!");
+								LOG.warn(filename + " still exists!");
 							}
 							if (localFs.exists(indexFilename)) {
-								System.err.println("Warn: " + indexFilename + " still exists!");
+								LOG.warn(indexFilename + " still exists!");
 							}
 						}
 					}
