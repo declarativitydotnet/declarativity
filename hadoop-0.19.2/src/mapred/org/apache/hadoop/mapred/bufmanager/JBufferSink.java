@@ -106,6 +106,53 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 	}
 	
+	public class SnapshotThread extends Thread {
+		
+		public void snapshot() {
+			synchronized (snapshotConnections) {
+				snapshotConnections.notifyAll();
+			}
+		}
+		
+		public void run() {
+			List<JBufferSink.Snapshot> runs = new ArrayList<JBufferSink.Snapshot>();
+			while (!isInterrupted()) {
+				synchronized (snapshotConnections) {
+					int freshConnections = 0;
+					do {
+						try { snapshotConnections.wait();
+						} catch (InterruptedException e) { return; }
+						
+						freshConnections = 0;
+						for (Connection conn : snapshotConnections) {
+							if (conn.snapshot().fresh) {
+								freshConnections++;
+							}
+						}
+					} while (freshConnections < snapshotConnections.size() / 3);
+
+					float progress = 0f;
+					for (Connection conn : snapshotConnections) {
+						Snapshot run = conn.snapshot();
+						run.fresh = false;
+						progress += run.progress;
+						runs.add(run);
+					}
+					progress = progress / (float) numConnections;
+
+					try {
+						boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
+						if (!keepSnapshots) {
+							closeSnapshots();
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+	
 	private int maxConnections;
 	
 	private Executor executor;
@@ -134,6 +181,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private Task snapshotTask;
 	
+	private SnapshotThread snapshotThread;
+	
 	public JBufferSink(JobConf conf, TaskAttemptID reduceID, JBufferCollector<K, V> collector, int numConnections) throws IOException {
 		this.conf = conf;
 		this.reduceID = reduceID;
@@ -148,7 +197,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		this.runningTransfers = new HashSet<TaskAttemptID>();
 		this.snapshotConnections = new ArrayList<Connection>();
 		this.snapshotTask = null;
-	    
+		this.snapshotThread = new SnapshotThread();
+		this.snapshotThread.setDaemon(true);
+		this.snapshotThread.start();
+		
 		/** The server socket and selector registration */
 		this.server = ServerSocketChannel.open();
 		this.server.configureBlocking(true);
@@ -183,13 +235,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 								connections.put(conn.id(), new ArrayList<Connection>());
 							}
 							
-							if (connections.size() > 0 && snapshotConnections != null) {
+							if (connections.size() > 0 && snapshotConnections.size() > 0) {
 								LOG.debug("\tJBufferSink: " + conn + ". close all snapshots");
 								closeSnapshots();
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
-							if (conn.isSnapshot() && (snapshotConnections == null || connections.size() > 0)) {
+							if (conn.isSnapshot() &&  connections.size() > 0) {
 								output.writeBoolean(false); // We've already accepted a non-snapshot connection
 								output.flush();
 								conn.close();
@@ -295,37 +347,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void updateSnapshot(Connection connection) {
 		synchronized (this) {
-			if (snapshotConnections == null) {
+			if (connections.size() > 0) {
 				connection.close();
 			}
 			else if (snapshotTask != null) {
-				List<JBufferSink.Snapshot> runs = new ArrayList<JBufferSink.Snapshot>();
-				for (Connection conn : snapshotConnections) {
-					if (conn.isSnapshot() && conn.snapshot().fresh) {
-						runs.add(conn.snapshot());
-					}
-				}
-				
-				if (runs.size() > snapshotConnections.size() / 3) {
-					runs.clear();
-					float progress = 0f;
-					for (Connection conn : snapshotConnections) {
-						Snapshot run = conn.snapshot();
-						run.fresh = false;
-						progress += run.progress;
-						runs.add(run);
-					}
-					progress = progress / (float) numConnections;
-					
-					try {
-						boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
-						if (!keepSnapshots) {
-							closeSnapshots();
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
+				this.snapshotThread.snapshot();
 			}
 		}
 	}
@@ -335,7 +361,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			snapshot.close();
 		}
 		snapshotConnections.clear();
-		snapshotConnections = null;
+		snapshotThread.interrupt();
 		snapshotTask = null;
 	}
 	
