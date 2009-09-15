@@ -221,6 +221,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	@Override
 	public void request(BufferRequest request) throws IOException {
 		synchronized (requests) {
+			System.err.println("Register " + request);
 			if (request.source().equals(hostname)) {
 				register(request); // Request is local!
 			}
