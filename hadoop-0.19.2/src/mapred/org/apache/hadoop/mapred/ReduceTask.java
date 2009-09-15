@@ -251,9 +251,7 @@ public class ReduceTask extends Task {
 			reducer.close();
 			out.close(null);
 		}
-		System.err.println("ReduceTask: snapshot done.");
 		this.buffer.reset(true);
-		System.err.println("ReduceTask: buffer reset.");
 		return true;
 	}
 
