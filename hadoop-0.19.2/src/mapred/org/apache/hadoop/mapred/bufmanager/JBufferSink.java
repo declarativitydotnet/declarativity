@@ -402,12 +402,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		public void close() {
 			synchronized (this) {
 				open = false;
-				while (busy) {
-					try { this.wait();
-					} catch (InterruptedException e) { }
-				}
-				if (this.input == null) return;
 				
+				if (this.input == null) return;
 				try {
 					this.input.close();
 				} catch (IOException e) {
@@ -415,6 +411,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 				}
 				finally {
 					this.input = null;
+				}
+				
+				while (busy) {
+					try { this.wait();
+					} catch (InterruptedException e) { }
 				}
 			}
 		}
