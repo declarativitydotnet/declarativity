@@ -85,10 +85,8 @@ public class PipelineReduceTask extends ReduceTask {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 		// apply reduce function
 		try {
-			int reduceops = 0;
 			ValuesIterator values = buffer.iterator();
-			buffer.close();
-			buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+			// buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 
 			System.err.println("PipelineReduceTask: got iterator.");
 			while (values.more()) {

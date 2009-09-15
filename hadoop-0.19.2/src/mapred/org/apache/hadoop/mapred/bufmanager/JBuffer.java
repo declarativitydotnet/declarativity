@@ -1327,6 +1327,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 
 			if (end - start == 1 && !spill) { //the spill is the final output
+				System.err.println("JBuffer " + taskid + " create final output!");
 				localFs.rename(filename[start], 
 						new Path(filename[start].getParent(), "file.out"));
 				localFs.rename(indexFileName[start], 
@@ -1347,6 +1348,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, end, finalIndexFileSize);
 			}
 			else {
+				System.err.println("JBuffer " + taskid + " create final output!");
 				outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
 				indexFile = mapOutputFile.getOutputIndexFileForWrite( this.taskid, finalIndexFileSize);
 			}
