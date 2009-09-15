@@ -276,15 +276,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
+						
 						LOG.debug("JBufferSink: received " + conn);
+						if (!conn.isSnapshot() && snapshotConnections.size() > 0) {
+							LOG.debug("\tJBufferSink: " + conn + ". close all snapshots");
+							closeSnapshots();
+						}
+						
 						synchronized (this) {
 							if (!conn.isSnapshot() && !connections.containsKey(conn.id())) {
 								connections.put(conn.id(), new ArrayList<Connection>());
-							}
-							
-							if (connections.size() > 0 && snapshotConnections.size() > 0) {
-								LOG.debug("\tJBufferSink: " + conn + ". close all snapshots");
-								closeSnapshots();
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
@@ -317,6 +318,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 								executor.execute(conn);
 							}
 						}
+
 					}
 				} catch (IOException e) { }
 			}
