@@ -223,7 +223,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		System.err.println("PipelineMapTask: perform snapshot at progress " + progress);
 		for (JBufferSink.Snapshot snapshot : runs) {
-			spill(snapshot.data(), snapshot.length(), snapshot.index());
+			spill(snapshot.data(), snapshot.length(), snapshot.index(), true);
 		}
 		this.buffer.getProgress().set(progress);
 		return this.buffer.snapshot(true);
