@@ -130,7 +130,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 						freshConnections = 0;
 						for (Connection conn : snapshotConnections) {
-							if (conn.snapshot().fresh) {
+							if (conn.snapshot() != null && conn.snapshot().fresh) {
 								freshConnections++;
 							}
 						}
@@ -139,7 +139,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					progress = 0f;
 					for (Connection conn : snapshotConnections) {
 						Snapshot run = conn.snapshot();
-						if (run.valid()) {
+						if (run != null && run.valid()) {
 							run.fresh = false;
 							progress += run.progress;
 							runs.add(run);
@@ -383,6 +383,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private Snapshot snapshot;
 		
+		private int snapshotRuns;
+		
 		private TaskAttemptID id;
 		
 		private JBufferSink<K, V> sink;
@@ -407,14 +409,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 			this.reduceOutputFile.setConf(conf);
 			
 			boolean isSnapshot = input.readBoolean();
-			if (isSnapshot) {
-				this.snapshot = 
-					new Snapshot(reduceOutputFile.getOutputSnapFileForWrite(id, 1096), 
-							     reduceOutputFile.getOutputSnapIndexFileForWrite(id, 1096));
-			}
-			else {
-				this.snapshot = null;
-			}
+			this.snapshotRuns = isSnapshot ? 0 : -1;
+		}
+		
+		private Snapshot createNewSnapshot() throws IOException {
+			int run = this.snapshotRuns++;
+			return new Snapshot(reduceOutputFile.getOutputSnapFileForWrite(id, run, 1096), 
+						        reduceOutputFile.getOutputSnapIndexFileForWrite(id, run, 1096));
 		}
 		
 		public String toString() {
@@ -430,7 +431,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		public boolean isSnapshot() {
-			return this.snapshot != null;
+			return this.snapshotRuns >= 0;
 		}
 		
 		public Snapshot snapshot() {
@@ -458,8 +459,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				finally {
 					this.input = null;
 				}
-				
-
 			}
 		}
 		
@@ -506,7 +505,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					if (isSnapshot()) {
 						LOG.debug("Connection " + id + " new snapshot. progress = " + progress);
-						this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
+						Snapshot run = createNewSnapshot();
+						run.write(reader, length, keyClass, valClass, codec, progress);
+						this.snapshot = run;
 						sink.updateSnapshot(this);
 					}
 					else if (this.sink.buffer().reserve(length)) {
