@@ -40,7 +40,7 @@ public class PipelineReduceTask extends ReduceTask {
 		}
 		
 		for (JBufferSink.Snapshot snapshot : runs) {
-			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index());
+			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index(), true);
 		}
 		
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);

@@ -1011,7 +1011,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		requests.clear();
 	}
 	
-	public void spill(Path data, long size, Path index) throws IOException {
+	public void spill(Path data, long size, Path index, boolean copy) throws IOException {
 		Path dataFile = null;
 		Path indexFile = null;
 		synchronized (mergeLock) {
@@ -1019,11 +1019,17 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, this.numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 			numSpills++;
 
-			if (!localFs.rename(data, dataFile)) {
-				throw new IOException("JBuffer::spill -- unable to rename " + data + " to " + dataFile);
+			if (copy) {
+				localFs.copyFromLocalFile(data, dataFile);
+				localFs.copyFromLocalFile(index, indexFile);
 			}
-			if (!localFs.rename(index, indexFile)) {
-				throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
+			else {
+				if (!localFs.rename(data, dataFile)) {
+					throw new IOException("JBuffer::spill -- unable to rename " + data + " to " + dataFile);
+				}
+				if (!localFs.rename(index, indexFile)) {
+					throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
+				}
 			}
 			
 			mergeLock.notifyAll();
