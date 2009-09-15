@@ -950,6 +950,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public void reset() {
 		synchronized (spillLock) {
+			spillThread.close();
 			while (spillThread.isSpilling()) {
 				try {
 					spillLock.wait();
@@ -960,6 +961,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 
 			synchronized (mergeLock) {
+				mergeThread.close();
 				while (mergeThread.isBusy()) {
 					try { mergeLock.wait();
 					} catch (InterruptedException e) { }
@@ -969,6 +971,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				bufvoid  = kvbuffer.length;
 				kvstart = kvend = kvindex = 0;  
 				bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
+				
+				spillThread.start();
+				mergeThread.start();
 			}
 		}
 	}
