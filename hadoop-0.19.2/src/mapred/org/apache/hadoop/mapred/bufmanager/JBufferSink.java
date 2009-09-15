@@ -179,6 +179,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 					try {
 						if (!open) return;
+						System.err.println("SnapshotThread: " + reduceID + " perform snapshot at progress " + progress);
 						boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
 						if (!keepSnapshots) {
 							closeSnapshots();
@@ -405,14 +406,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void closeSnapshots() {
 		System.err.println("JBufferSink: " + reduceID + " closing snapshots.");
-		synchronized (snapshotConnections) {
 			for (Connection snapshot : snapshotConnections) {
 				snapshot.close();
 			}
 			snapshotConnections.clear();
 			snapshotThread.close();
 			snapshotTask = null;
-		}
 		System.err.println("JBufferSink: " + reduceID + " snapshots closed.");
 	}
 	
@@ -546,7 +545,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					if (isSnapshot()) {
 						LOG.debug("Connection " + id + " new snapshot. progress = " + progress);
 						Snapshot run = createNewSnapshot();
-						System.err.println("Connection " + id + " create new snapshot " + run);
 						run.write(reader, length, keyClass, valClass, codec, progress);
 						this.snapshot = run;
 						sink.updateSnapshot(this);
