@@ -180,7 +180,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 							}
 							
 							if (connections.size() > 0 && snapshotConnections != null) {
+								System.err.println("\tJBufferSink: " + conn + ". close all snapshots");
 								closeSnapshots();
+								System.err.println("\tJBufferSink: " + conn + ". snapshots closed");
 							}
 							
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
