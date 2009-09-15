@@ -522,9 +522,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
-				busy = false;
-				sink.done(this);
-				close();
+				synchronized (this) {
+					busy = false;
+					sink.done(this);
+					this.notifyAll();
+					if (open) close();
+				}
 			}
 		}
 	}
