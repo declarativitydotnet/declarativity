@@ -944,9 +944,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		
 		mergeParts(false);
+		reset(false);
 	}
 	
 	public synchronized void reset() throws IOException {
+		reset(true);
+	}
+	
+	private void reset(boolean restart) throws IOException {
 		synchronized (spillLock) {
 			spillThread.close();
 			while (spillThread.isSpilling()) {
@@ -964,12 +969,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					try { mergeLock.wait();
 					} catch (InterruptedException e) { }
 				}
-				numSpills = numFlush = 0;
-				bufindex = 0;
-				bufvoid  = kvbuffer.length;
-				kvstart = kvend = kvindex = 0;  
-				bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
 				
+				/* cleanup spill files */
 				if (numSpills - numFlush > 0) {
 					FileSystem localFs = FileSystem.getLocal(job);
 					for(int i = numFlush; i < numSpills; i++) {
@@ -984,13 +985,24 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 					}
 				}
-				this.spillThread = new SpillThread();
-				this.spillThread.setDaemon(true);
-				this.spillThread.start();
 				
-				this.mergeThread = new MergeThread();
-				this.mergeThread.setDaemon(true);
-				if (!taskid.isMap()) this.mergeThread.start();
+				/* reset buffer variables. */
+				numSpills = numFlush = 0;
+				bufindex = 0;
+				bufvoid  = kvbuffer.length;
+				kvstart = kvend = kvindex = 0;  
+				bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
+				
+				if (restart) {
+					/* restart threads. */
+					this.spillThread = new SpillThread();
+					this.spillThread.setDaemon(true);
+					this.spillThread.start();
+
+					this.mergeThread = new MergeThread();
+					this.mergeThread.setDaemon(true);
+					if (!taskid.isMap()) this.mergeThread.start();
+				}
 			}
 		}
 	}

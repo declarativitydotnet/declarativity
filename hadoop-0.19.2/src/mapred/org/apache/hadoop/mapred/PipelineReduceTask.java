@@ -47,6 +47,7 @@ public class PipelineReduceTask extends ReduceTask {
 		// apply reduce function
 		try {
 			buffer.flush();
+			buffer.reset();
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, buffer, null);
