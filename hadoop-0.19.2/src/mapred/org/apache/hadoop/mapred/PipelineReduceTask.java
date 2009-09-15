@@ -60,6 +60,7 @@ public class PipelineReduceTask extends ReduceTask {
 			//Clean up: repeated in catch block below
 			reducer.close();
 		}
+		buffer.getProgress().set(progress);
 		return buffer.snapshot(true);
 	}
 	
