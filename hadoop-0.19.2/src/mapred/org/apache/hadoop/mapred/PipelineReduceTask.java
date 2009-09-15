@@ -47,7 +47,7 @@ public class PipelineReduceTask extends ReduceTask {
 		// apply reduce function
 		try {
 			buffer.flush();
-			buffer.reset();
+			buffer.reset(true);
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, buffer, null);
@@ -61,7 +61,7 @@ public class PipelineReduceTask extends ReduceTask {
 			reducer.close();
 		}
 		boolean result = buffer.snapshot();
-		buffer.reset();
+		buffer.reset(true);
 		return result;
 	}
 	
@@ -87,7 +87,7 @@ public class PipelineReduceTask extends ReduceTask {
 		// apply reduce function
 		try {
 			ValuesIterator values = buffer.iterator();
-			buffer.reset();
+			buffer.reset(true);
 			// buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 
 			System.err.println("PipelineReduceTask: got iterator.");
