@@ -465,6 +465,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
 					if (isSnapshot()) {
+						System.err.println("JBufferSink " + reduceID + " snapshot progress = " + progress);
 						this.snapshot.write(reader, length, keyClass, valClass, codec, progress);
 						sink.updateSnapshot(this);
 					}
