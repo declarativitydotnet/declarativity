@@ -890,7 +890,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				for (BufferRequest r : requests) {
 					r.flush(indexIn, dataIn, -1, progress.get());
 				}
-				if (reset) reset(true);
+				if (reset) {
+					reset(true);
+					localFs.delete(snapFile, true);
+					localFs.delete(indexFile, true);
+				}
 			}
 			return true;
 		} catch (Throwable t) {

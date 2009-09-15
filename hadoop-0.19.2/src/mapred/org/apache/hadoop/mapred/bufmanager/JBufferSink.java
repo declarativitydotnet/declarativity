@@ -432,7 +432,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					this.progress = this.input.readFloat();
 					
-					if (length == 0) return;
+					if (length == 0) {
+						if (progress < 1f) continue;
+						else return;
+					}
 					
 					CompressionCodec codec = null;
 					if (conf.getCompressMapOutput()) {
