@@ -88,11 +88,11 @@ public class PipelineReduceTask extends ReduceTask {
 			ValuesIterator values = buffer.iterator();
 			System.err.println("PipelineReduceTask: got iterator.");
 			while (values.more()) {
-				System.err.println("reduceops = " + reduceops);
 				reducer.reduce(values.getKey(), values, buffer, reporter);
+				System.err.println("reduceops = " + reduceops);
 				values.nextKey();
 				reduceops++;
-				System.err.println("reduceops = " + reduceops + " progress = " + values.getProgress());
+				System.err.println("reduceops = " + reduceops + " progress = " + values.getProgress().get());
 				
 		        reducePhase.set(values.getProgress().get());
 				reporter.progress();
