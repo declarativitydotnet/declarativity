@@ -57,6 +57,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 			this.fresh = false;
 		}
 		
+		public String toString() {
+			return "Snapshot: " + data;
+		}
+		
 		public boolean valid() {
 			return this.length > 0;
 		}
@@ -506,6 +510,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					if (isSnapshot()) {
 						LOG.debug("Connection " + id + " new snapshot. progress = " + progress);
 						Snapshot run = createNewSnapshot();
+						System.err.println("Connection " + id + " create new snapshot " + run);
 						run.write(reader, length, keyClass, valClass, codec, progress);
 						this.snapshot = run;
 						sink.updateSnapshot(this);
