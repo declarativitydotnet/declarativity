@@ -86,6 +86,7 @@ public class PipelineReduceTask extends ReduceTask {
 		// apply reduce function
 		try {
 			ValuesIterator values = buffer.iterator();
+			buffer.reset();
 			// buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 
 			System.err.println("PipelineReduceTask: got iterator.");

@@ -944,11 +944,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		
 		mergeParts(false);
-		
-		reset();
 	}
 	
-	public void reset() {
+	public synchronized void reset() throws IOException {
 		synchronized (spillLock) {
 			spillThread.close();
 			while (spillThread.isSpilling()) {
@@ -972,8 +970,27 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				kvstart = kvend = kvindex = 0;  
 				bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
 				
-				spillThread.start();
-				mergeThread.start();
+				if (numSpills - numFlush > 0) {
+					FileSystem localFs = FileSystem.getLocal(job);
+					for(int i = numFlush; i < numSpills; i++) {
+						Path data = mapOutputFile.getSpillFile(this.taskid, i);
+						Path index = mapOutputFile.getSpillIndexFile(this.taskid, i);
+
+						if (localFs.exists(data)) {
+							localFs.delete(data, true);
+						}
+						if (localFs.exists(index)) {
+							localFs.delete(index, true);
+						}
+					}
+				}
+				this.spillThread = new SpillThread();
+				this.spillThread.setDaemon(true);
+				this.spillThread.start();
+				
+				this.mergeThread = new MergeThread();
+				this.mergeThread.setDaemon(true);
+				if (!taskid.isMap()) this.mergeThread.start();
 			}
 		}
 	}
