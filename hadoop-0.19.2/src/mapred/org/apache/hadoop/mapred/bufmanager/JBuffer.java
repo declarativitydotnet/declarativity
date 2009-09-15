@@ -895,6 +895,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					localFs.delete(snapFile, true);
 					localFs.delete(indexFile, true);
 				}
+				System.err.println("JBuffer " + taskid + ": snapshot done.");
 			}
 			return true;
 		} catch (Throwable t) {
