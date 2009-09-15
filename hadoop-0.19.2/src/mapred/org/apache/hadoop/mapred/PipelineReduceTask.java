@@ -84,10 +84,9 @@ public class PipelineReduceTask extends ReduceTask {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 		// apply reduce function
 		try {
-			System.err.println("PipelineReduceTask: turn pipelining on.");
 			buffer.pipeline(true); // turn pipeline on
-			System.err.println("PipelineReduceTask: pipelining on.");
 			ValuesIterator values = buffer.iterator();
+			System.err.println("PipelineReduceTask: got iterator.");
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, buffer, reporter);
 				values.nextKey();
@@ -95,6 +94,7 @@ public class PipelineReduceTask extends ReduceTask {
 		        reducePhase.set(values.getProgress().get());
 				reporter.progress();
 			}
+			System.err.println("PipelineReduceTask: done with reduce.");
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 			throw ioe;
