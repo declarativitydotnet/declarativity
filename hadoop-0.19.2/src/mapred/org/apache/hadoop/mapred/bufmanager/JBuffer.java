@@ -975,6 +975,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				kvstart = kvend = kvindex = 0;  
 				bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
 				
+				this.progress = new Progress();
+				
 				if (restart) {
 					/* restart threads. */
 					this.spillThread = new SpillThread();
