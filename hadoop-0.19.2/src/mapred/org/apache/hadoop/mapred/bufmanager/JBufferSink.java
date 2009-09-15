@@ -204,6 +204,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 								}
 								else {
 									// regular
+									System.err.println("JBufferSink: new regular connection " + conn);
 									connections.get(conn.id()).add(conn);
 									runningTransfers.add(conn.id());
 								}
@@ -369,6 +370,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 			else {
 				this.snapshot = null;
 			}
+		}
+		
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append("Connection: receiving buffer " + id + ". ");
+			sb.append("Applying to buffer " + reduceID + ". ");
+			sb.append("Snapshot? = " + isSnapshot());
+			return sb.toString();
 		}
 		
 		public float progress() {
