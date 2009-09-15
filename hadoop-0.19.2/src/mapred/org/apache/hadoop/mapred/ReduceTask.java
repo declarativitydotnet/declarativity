@@ -220,7 +220,6 @@ public class ReduceTask extends Task {
 
 		final RecordWriter out = 
 			conf.getOutputFormat().getRecordWriter(fs, conf, snapshotName, null);  
-		System.err.println("\tReduce go record writer.");
 
 		OutputCollector collector = new OutputCollector() {
 			@SuppressWarnings("unchecked")
