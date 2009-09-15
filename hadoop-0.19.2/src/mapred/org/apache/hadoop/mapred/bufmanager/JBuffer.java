@@ -874,9 +874,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	public synchronized boolean snapshot() throws IOException {
 
 		try {
-			if (!canSnapshot()) return true;
-
 			synchronized (mergeLock) {
+				if (!canSnapshot()) return true;
 				System.err.println("JBuffer " + taskid + ": performing snapshot now.");
 				int spillId = mergeParts(true);
 				if (spillId < 0) return true;
