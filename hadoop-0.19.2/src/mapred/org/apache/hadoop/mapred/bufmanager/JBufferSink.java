@@ -57,6 +57,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 			this.fresh = false;
 		}
 		
+		public boolean valid() {
+			return this.length > 0;
+		}
+		
 		public float progress() {
 			return this.progress;
 		}
@@ -81,7 +85,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 			if (dataOut == null || indexOut == null) 
 				throw new IOException("Unable to create snapshot " + data);
-			this.length = length;
 
 			DataInputBuffer key = new DataInputBuffer();
 			DataInputBuffer value = new DataInputBuffer();
@@ -103,6 +106,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			indexOut.close();
 			this.progress = progress;
 			this.fresh = true;
+			this.length = length;
 		}
 	}
 	
@@ -116,13 +120,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		public void run() {
 			List<JBufferSink.Snapshot> runs = new ArrayList<JBufferSink.Snapshot>();
+			float progress = 0f;
 			while (!isInterrupted()) {
 				synchronized (snapshotConnections) {
 					int freshConnections = 0;
 					do {
 						try { snapshotConnections.wait();
 						} catch (InterruptedException e) { return; }
-						
+
 						freshConnections = 0;
 						for (Connection conn : snapshotConnections) {
 							if (conn.snapshot().fresh) {
@@ -131,23 +136,25 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 					} while (freshConnections < snapshotConnections.size() / 3);
 
-					float progress = 0f;
+					progress = 0f;
 					for (Connection conn : snapshotConnections) {
 						Snapshot run = conn.snapshot();
-						run.fresh = false;
-						progress += run.progress;
-						runs.add(run);
+						if (run.valid()) {
+							run.fresh = false;
+							progress += run.progress;
+							runs.add(run);
+						}
 					}
 					progress = progress / (float) numConnections;
+				}
 
-					try {
-						boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
-						if (!keepSnapshots) {
-							closeSnapshots();
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
+				try {
+					boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
+					if (!keepSnapshots) {
+						closeSnapshots();
 					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
 		}
@@ -258,7 +265,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 								/* register connection. */
 								if (conn.isSnapshot()) {
 									// snapshots
-									snapshotConnections.add(conn);
+									synchronized (snapshotConnections) {
+										snapshotConnections.add(conn);
+									}
 								}
 								else {
 									// regular
@@ -357,12 +366,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void closeSnapshots() {
-		for (Connection snapshot : snapshotConnections) {
-			snapshot.close();
+		synchronized (snapshotConnections) {
+			for (Connection snapshot : snapshotConnections) {
+				snapshot.close();
+			}
+			snapshotConnections.clear();
+			snapshotThread.interrupt();
+			snapshotTask = null;
 		}
-		snapshotConnections.clear();
-		snapshotThread.interrupt();
-		snapshotTask = null;
 	}
 	
 	/************************************** CONNECTION CLASS **************************************/
