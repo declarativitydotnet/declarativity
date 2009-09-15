@@ -405,7 +405,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void closeSnapshots() {
-		System.err.println("JBufferSink: " + reduceID + " closing snapshots.");
 		synchronized (snapshotConnections) {
 			for (Connection snapshot : snapshotConnections) {
 				snapshot.close();
@@ -414,7 +413,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		snapshotThread.close();
 		snapshotTask = null;
-		System.err.println("JBufferSink: " + reduceID + " snapshots closed.");
 	}
 	
 	/************************************** CONNECTION CLASS **************************************/
