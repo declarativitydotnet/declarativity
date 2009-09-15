@@ -119,7 +119,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 		private boolean open = true;
 		
 		public void close() {
-			open = false;
+			if (!open) return;
+			else open = false;
+			
 			System.err.println("SnapshotThread: close " + reduceID);
 			synchronized (snapshotConnections) {
 				snapshotConnections.notifyAll();
