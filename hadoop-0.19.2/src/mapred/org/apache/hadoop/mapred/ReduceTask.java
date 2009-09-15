@@ -251,6 +251,7 @@ public class ReduceTask extends Task {
 			out.close(null);
 		}
 		this.buffer.reset(true);
+		System.err.println("Reduce: done with snapshot " + snapshotName);
 		return true;
 	}
 
@@ -313,6 +314,7 @@ public class ReduceTask extends Task {
 		sink.snapshot(this);
 		sink.block();
 		buffer.flush();
+		System.err.println("ReduceTask: copy phase complete.");
 		copyPhase.complete();
 	}
 	
