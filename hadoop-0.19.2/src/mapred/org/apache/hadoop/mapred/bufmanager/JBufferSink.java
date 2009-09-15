@@ -120,6 +120,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		public void close() {
 			open = false;
+			System.err.println("SnapshotThread: close " + reduceID);
 			synchronized (snapshotConnections) {
 				snapshotConnections.notifyAll();
 				while (busy) {
@@ -131,7 +132,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 				}
 			}
-			
+			System.err.println("SnapshotThread: done closing " + reduceID);
 		}
 		
 		public void snapshot() {
