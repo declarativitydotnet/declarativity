@@ -494,9 +494,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 		public void close() {
 			synchronized (this) {
 				open = false;
-				while (busy) {
-					try { this.wait();
-					} catch (InterruptedException e) { }
+				if (!isSnapshot()) {
+					while (busy) {
+						try { this.wait();
+						} catch (InterruptedException e) { }
+					}
 				}
 				
 				if (this.input == null) return;
@@ -527,6 +529,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					try {
 						length = this.input.readLong();
+						this.progress = this.input.readFloat();
 					}
 					catch (Throwable e) {
 						if (!isSnapshot()) LOG.warn("JBufferSink: regular connection exception " + e);
@@ -539,8 +542,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 						busy = true; // busy
 					}
-					
-					this.progress = this.input.readFloat();
 					
 					if (length == 0) {
 						if (progress < 1f) continue;
@@ -558,10 +559,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
 					if (isSnapshot()) {
-						Snapshot run = createNewSnapshot();
-						run.write(reader, length, keyClass, valClass, codec, progress);
-						this.snapshot = run;
-						sink.updateSnapshot(this);
+						try {
+							Snapshot run = createNewSnapshot();
+							run.write(reader, length, keyClass, valClass, codec, progress);
+							this.snapshot = run;
+							sink.updateSnapshot(this);
+						} catch (Throwable t) {
+							return; // don't care
+						}
 					}
 					else if (this.sink.buffer().reserve(length)) {
 						try {
