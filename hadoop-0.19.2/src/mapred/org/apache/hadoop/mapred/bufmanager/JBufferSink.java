@@ -557,6 +557,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
+					System.err.println("JBufferSink: " + reduceID + " getting data.");
 					if (isSnapshot()) {
 						try {
 							Snapshot run = createNewSnapshot();
