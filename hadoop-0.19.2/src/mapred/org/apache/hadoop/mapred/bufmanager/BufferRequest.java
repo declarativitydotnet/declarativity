@@ -143,6 +143,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		in.seek(segmentOffset);
 		flushFile(in, segmentLength, 1.0f);
 		
+		System.err.println("BufferRequest: flushed final buffer " + taskid + " bytes = " + segmentLength);
 		in.close();
 	}
 	
