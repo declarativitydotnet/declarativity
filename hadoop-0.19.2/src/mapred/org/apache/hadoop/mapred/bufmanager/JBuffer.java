@@ -877,6 +877,23 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				if (!canSnapshot()) {
 					return true; // pretend i did it.
 				}
+				
+				if (numFlush == numSpills) {
+					synchronized (spillLock) {
+						spillThread.doSpill();
+						while (kvstart != kvend) {
+							reporter.progress();
+							try {
+								spillLock.wait();
+							} catch (InterruptedException e) {
+								throw (IOException)new IOException(
+										"Buffer interrupted while waiting for the writer"
+								).initCause(e);
+							}
+						}
+					}
+				}
+				
 				int spillId = mergeParts(true);
 				if (spillId < 0) return true;
 
@@ -1333,10 +1350,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		int start = 0;
 		int end = 0;
 		synchronized (mergeLock) {
-			if (spill && numSpills - numFlush < 2) {
-				return -1;
-			}
-
 			start = numFlush;
 			end   = numSpills;
 
@@ -1356,13 +1369,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				finalOutFileSize += localFs.getFileStatus(filename[i]).getLen();
 			}
 
-			if (end - start == 1 && !spill) { //the spill is the final output
-				localFs.rename(filename[start], 
-						new Path(filename[start].getParent(), "file.out"));
-				localFs.rename(indexFileName[start], 
-						new Path(indexFileName[start].getParent(),"file.out.index"));
-				return -1;
-			}
 			//make correction in the length to include the sequence file header
 			//lengths for each partition
 			finalOutFileSize += partitions * APPROX_HEADER_LENGTH;
@@ -1384,6 +1390,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
 					 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
 					 ". Output size = " + finalOutFileSize);
+			if (end - start == 1) { //the spill is the final output
+				localFs.rename(filename[start], outputFile); 
+				localFs.rename(indexFileName[start], indexFile); 
+				return end;
+			}
 
 			//The output stream for the final single output file
 			FSDataOutputStream finalOut = localFs.create(outputFile, !spill);
