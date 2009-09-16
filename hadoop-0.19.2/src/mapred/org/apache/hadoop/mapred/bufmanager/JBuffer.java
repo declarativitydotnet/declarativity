@@ -877,7 +877,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true; // pretend i did it.
 			}
 
-			if (numFlush == numSpills) {
+			if (numSpills == 0) {
 				synchronized (spillLock) {
 					spillThread.doSpill();
 					while (kvstart != kvend) {
