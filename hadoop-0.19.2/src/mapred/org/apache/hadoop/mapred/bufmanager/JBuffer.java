@@ -463,7 +463,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		int maxMemUsage = sortmb << 20;
 		
 		if (!taskid.isMap()) {
-	        float maxInMemCopyUse = job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
+	        float maxInMemCopyUse = 0.4f; // job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
 		    maxMemUsage = (int)Math.min(Runtime.getRuntime().maxMemory() * maxInMemCopyUse, Integer.MAX_VALUE);
 		}
 		
@@ -877,7 +877,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true; // pretend i did it.
 			}
 
-			System.gc();
 			if (numSpills == 0) {
 				synchronized (spillLock) {
 					spillThread.doSpill();
@@ -1022,6 +1021,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 		}
+		System.gc();
 	}
 
 	public void close() throws IOException {  
