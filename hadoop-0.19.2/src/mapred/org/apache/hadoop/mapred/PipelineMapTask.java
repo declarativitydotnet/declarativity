@@ -214,7 +214,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			}
 			setPhase(TaskStatus.Phase.MAP); 
 			collector.close();
-			LOG.info("PipelineMapTask: " + getTaskID() + " waited for " + (System.currentTimeMillis() - begin) + " ms.");
+			System.err.println("PipelineMapTask: " + getTaskID() + " waited for " + (System.currentTimeMillis() - begin) + " ms.");
 			bufferUmbilical.commit(getTaskID());
 		}
 
@@ -286,7 +286,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 
 	@Override
 	public void reset(boolean restart) throws IOException {
-		this.buffer.reset(restart);
 	}
 
 }
