@@ -282,7 +282,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						
-						LOG.debug("JBufferSink: received " + conn);
+						System.err.println("JBufferSink: received " + conn);
 						if (!conn.isSnapshot() && snapshotConnections.size() > 0) {
 							System.err.println("JBufferSink: " + reduceID + " got "+ conn + ". close all snapshots");
 							closeSnapshots();
@@ -323,7 +323,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 								executor.execute(conn);
 							}
 						}
-
 					}
 				} catch (IOException e) { }
 			}
