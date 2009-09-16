@@ -126,6 +126,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			synchronized (snapshotConnections) {
 				snapshotConnections.notifyAll();
 				while (busy) {
+					System.err.println("\tSnapshotThread: close is busy " + reduceID);
 					try {
 						snapshotConnections.wait();
 					} catch (InterruptedException e) {
@@ -282,7 +283,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						
 						LOG.debug("JBufferSink: received " + conn);
 						if (!conn.isSnapshot() && snapshotConnections.size() > 0) {
-							LOG.debug("\tJBufferSink: " + conn + ". close all snapshots");
+							System.err.println("JBufferSink: " + reduceID + " got "+ conn + ". close all snapshots");
 							closeSnapshots();
 						}
 						
