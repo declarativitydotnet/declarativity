@@ -416,9 +416,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 			for (Connection snapshot : snapshotConnections) {
 				snapshot.close();
 			}
+			System.err.println("JBufferSink: " + reduceID + " snapshot connections have been terminated.");
 			snapshotConnections.clear();
 		}
+		
 		snapshotThread.close();
+		System.err.println("JBufferSink: " + reduceID + " snapshot thread terminated.");
 		snapshotTask = null;
 	}
 	
