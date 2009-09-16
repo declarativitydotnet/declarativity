@@ -532,7 +532,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 						this.progress = this.input.readFloat();
 					}
 					catch (Throwable e) {
-						if (!isSnapshot()) LOG.warn("JBufferSink: regular connection exception " + e);
 						return;
 					}
 					
