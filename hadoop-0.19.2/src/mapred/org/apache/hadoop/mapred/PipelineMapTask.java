@@ -110,6 +110,10 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	
 	Deserializer valDeserializer;
 	
+	private Object keyObject = null;
+	
+	private Object valObject = null;
+	
 	public PipelineMapTask() {
 		super();
 	}
@@ -234,9 +238,9 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	public void collect(DataInputBuffer key, DataInputBuffer value) throws IOException {
 		keyDeserializer.open(key);
 		valDeserializer.open(value);
-		Object k = keyDeserializer.deserialize(null);
-		Object v = valDeserializer.deserialize(null);
-		collect(k, v);
+		keyObject = keyDeserializer.deserialize(keyObject);
+		valObject = valDeserializer.deserialize(valObject);
+		collect(keyObject, valObject);
 	}
 
 	@Override
