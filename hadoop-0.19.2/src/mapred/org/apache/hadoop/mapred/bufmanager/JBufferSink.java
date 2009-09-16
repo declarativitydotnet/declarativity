@@ -559,7 +559,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
 					if (isSnapshot()) {
-						LOG.debug("Connection " + id + " new snapshot. progress = " + progress);
+						System.err.println("JBufferSink: connection " + id + " new snapshot. progress = " + progress);
 						Snapshot run = createNewSnapshot();
 						run.write(reader, length, keyClass, valClass, codec, progress);
 						this.snapshot = run;
@@ -567,6 +567,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					else if (this.sink.buffer().reserve(length)) {
 						try {
+							if (progress == 1f) {
+								System.err.println("JBufferSink: applying " + length + " bytes to buffer " + reduceID);
+							}
 							while (reader.next(key, value)) {
 								this.sink.buffer().collect(key, value);
 							}
