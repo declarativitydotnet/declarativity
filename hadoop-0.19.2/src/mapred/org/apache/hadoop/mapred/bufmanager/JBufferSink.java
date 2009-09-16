@@ -282,6 +282,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						
+						System.err.println("JBufferSink: new connection, snapshot? " + conn.isSnapshot() + ", for sink " + reduceID + " from " + conn.id());
 						if (!conn.isSnapshot() && snapshotConnections.size() > 0) {
 							System.err.println("JBufferSink: " + reduceID + " close snapshots.");
 							closeSnapshots();
