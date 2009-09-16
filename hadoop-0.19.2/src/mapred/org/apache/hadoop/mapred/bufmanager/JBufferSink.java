@@ -328,7 +328,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				} catch (IOException e) { }
 			}
 		};
-		acceptor.setPriority(Thread.MAX_PRIORITY);
 		acceptor.start();
 	}
 	
