@@ -464,7 +464,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		if (!taskid.isMap()) {
 	        float maxInMemCopyUse = job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
-		    maxMemUsage = (int)Math.min(Runtime.getRuntime().maxMemory() * maxInMemCopyUse, Integer.MAX_VALUE);
+		    maxMemUsage = (int)Math.min(Runtime.getRuntime().maxMemory() * 0.50f, Integer.MAX_VALUE);
 		}
 		
 		int recordCapacity = (int)(maxMemUsage * recper);
