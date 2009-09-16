@@ -166,6 +166,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 									freshConnections++;
 								}
 							}
+							System.err.println("SnapshotThread: " + reduceID + " fresh connections " + freshConnections);
 						} while (freshConnections < snapshotConnections.size() / 3);
 
 						progress = 0f;
@@ -562,6 +563,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							run.write(reader, length, keyClass, valClass, codec, progress);
 							this.snapshot = run;
 							sink.updateSnapshot(this);
+							System.err.println("JBufferSink: " + reduceID + " got a new snapshot.");
 						} catch (Throwable t) {
 							return; // don't care
 						}
