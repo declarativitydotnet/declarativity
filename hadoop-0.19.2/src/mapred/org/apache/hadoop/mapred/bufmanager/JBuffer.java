@@ -886,6 +886,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				FSDataInputStream indexIn = localFs.open(indexFile);
 				FSDataInputStream dataIn  = localFs.open(snapFile);
 				for (BufferRequest r : requests) {
+					System.err.println("JBuffer: do snapshot request " + r);
 					r.flush(indexIn, dataIn, -1, progress.get());
 				}
 				if (reset) {
