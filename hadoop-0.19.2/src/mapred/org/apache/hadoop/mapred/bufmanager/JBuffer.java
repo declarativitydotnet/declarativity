@@ -873,27 +873,25 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	public synchronized boolean snapshot(boolean reset) throws IOException {
 
 		try {
-			synchronized (mergeLock) {
-				if (!canSnapshot()) {
-					return true; // pretend i did it.
-				}
-				
-				if (numFlush == numSpills) {
-					synchronized (spillLock) {
-						spillThread.doSpill();
-						while (kvstart != kvend) {
-							reporter.progress();
-							try {
-								spillLock.wait();
-							} catch (InterruptedException e) {
-								throw (IOException)new IOException(
-										"Buffer interrupted while waiting for the writer"
-								).initCause(e);
-							}
-						}
+			if (!canSnapshot()) {
+				return true; // pretend i did it.
+			}
+
+			if (numFlush == numSpills) {
+				synchronized (spillLock) {
+					spillThread.doSpill();
+					while (kvstart != kvend) {
+						reporter.progress();
+						try {
+							spillLock.wait();
+						} catch (InterruptedException e) { }
 					}
 				}
-				
+			}
+			
+			synchronized (mergeLock) {
+
+				LOG.info("JBuffer: snapshot merge parts.");
 				int spillId = mergeParts(true);
 				if (spillId < 0) return true;
 
@@ -903,7 +901,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				FSDataInputStream indexIn = localFs.open(indexFile);
 				FSDataInputStream dataIn  = localFs.open(snapFile);
 				for (BufferRequest r : requests) {
-					System.err.println("JBuffer: do snapshot request " + r);
+					LOG.info("JBuffer: do snapshot request " + r);
 					r.flush(indexIn, dataIn, -1, progress.get());
 				}
 				if (reset) {
