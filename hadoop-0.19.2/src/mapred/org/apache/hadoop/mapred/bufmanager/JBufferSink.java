@@ -533,8 +533,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					synchronized (this) {
 						if (!open) {
-							System.err.println("JBufferSink: CONNECTION NOT OPEN FOR BUFFER " + reduceID);
-							System.err.println("\tJBufferSink: LENGTH WAS " + length);
 							return;
 						}
 						busy = true; // busy
@@ -545,7 +543,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					if (length == 0) {
 						if (progress < 1f) continue;
 						else {
-							System.err.println("JBufferSink: LENGTH IS FUCKING ZERO FOR BUFFER " + reduceID);
 							return;
 						}
 					}
@@ -574,7 +571,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 								this.sink.buffer().collect(key, value);
 							}
 						} catch (ChecksumException e) {
-							LOG.error("ReduceMapSink: ChecksumException during spill. progress = " + progress);
+							LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
 						}
 						finally {
 							this.sink.buffer().unreserve(length);
