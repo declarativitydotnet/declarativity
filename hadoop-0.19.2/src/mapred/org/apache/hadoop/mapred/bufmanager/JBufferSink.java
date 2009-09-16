@@ -183,8 +183,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 					try {
 						if (!open) return;
-						LOG.info("SnapshotThread: " + reduceID + " perform snapshot. progress " + progress);
+						System.err.println("SnapshotThread: " + reduceID + " perform snapshot. progress " + progress);
 						boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
+						System.err.println("SnapshotThread: " + reduceID + " done with snapshot. progress " + progress);
 						if (!keepSnapshots) {
 							return;
 						}
