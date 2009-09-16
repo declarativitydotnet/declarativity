@@ -759,7 +759,6 @@ public class TaskTracker
               try {
                 //the method below will return true when we have not 
                 //fetched all available events yet
-            	System.err.println("Fetching reduce events from job " + f.jobId);
                 if (f.fetchCompletionEvents(currentTime, false)) {
                   fetchAgain = true;
                 }
