@@ -893,7 +893,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			synchronized (mergeLock) {
 
 				LOG.info("JBuffer: snapshot merge parts.");
-				int spillId = mergeParts(true);
+				
+				int spillId = -1;
+				if (numSpills - numFlush == 1) {
+					spillId = numFlush;
+				}
+				else {
+					spillId = mergeParts(true);
+				}
 				if (spillId < 0) return true;
 
 				Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
