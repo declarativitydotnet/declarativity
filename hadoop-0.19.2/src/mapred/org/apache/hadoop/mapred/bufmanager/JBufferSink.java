@@ -283,8 +283,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						
 						if (!conn.isSnapshot() && snapshotConnections.size() > 0) {
-							System.err.println("JBufferSink: " + reduceID + " got "+ conn + ". close all snapshots");
+							System.err.println("JBufferSink: " + reduceID + " close snapshots.");
 							closeSnapshots();
+							System.err.println("JBufferSink: " + reduceID + " snapshots closed.");
 						}
 						
 						synchronized (JBufferSink.this) {
