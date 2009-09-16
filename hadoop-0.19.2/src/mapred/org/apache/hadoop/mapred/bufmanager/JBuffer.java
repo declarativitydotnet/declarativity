@@ -1379,6 +1379,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
 				indexFile = mapOutputFile.getOutputIndexFileForWrite( this.taskid, finalIndexFileSize);
 			}
+			
+			LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
+					 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
+					 ". Output size = " + finalOutFileSize);
 
 			//The output stream for the final single output file
 			FSDataOutputStream finalOut = localFs.create(outputFile, !spill);
@@ -1450,11 +1454,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					//close
 					writer.close();
 					
-					LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
-							 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
-							 ". Output size = " + (finalOut.getPos() - segmentStart));
-
-
 					//write index record
 					writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
 				}
