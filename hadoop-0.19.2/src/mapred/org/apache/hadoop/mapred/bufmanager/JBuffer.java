@@ -901,17 +901,20 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				FSDataInputStream indexIn = localFs.open(indexFile);
 				FSDataInputStream dataIn  = localFs.open(snapFile);
 				for (BufferRequest r : requests) {
-					LOG.info("JBuffer: do snapshot request " + r);
+					LOG.info("JBuffer: do snapshot request " + taskid);
 					r.flush(indexIn, dataIn, -1, progress.get());
 				}
+				LOG.info("JBuffer: DONE. snapshot request " + taskid);
 				if (reset) {
 					reset(true);
 					localFs.delete(snapFile, true);
 					localFs.delete(indexFile, true);
 				}
 			}
+			LOG.info("JBuffer: done with snapshot. " + taskid);
 			return true;
 		} catch (Throwable t) {
+			LOG.info("JBuffer: snapshot " + taskid + " interrupted by " + t);
 			return false; // Turn off snapshots.
 		}
 	}
