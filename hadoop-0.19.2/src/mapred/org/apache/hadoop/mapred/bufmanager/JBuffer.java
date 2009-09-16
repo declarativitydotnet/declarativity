@@ -1348,6 +1348,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		int start = 0;
 		int end = 0;
 		synchronized (mergeLock) {
+			if (spill && numSpills == 0) return -1;
 			start = numFlush;
 			end   = numSpills;
 
