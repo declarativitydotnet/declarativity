@@ -290,6 +290,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 
 	@Override
 	public void reset(boolean restart) throws IOException {
+		throw new IOException("PipelineMapTask: reset not supported!");
 		// if (buffer != null) buffer.reset(restart);
 	}
 

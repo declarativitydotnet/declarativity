@@ -919,10 +919,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	public synchronized void flush() throws IOException {
+		/*
 		if (numSpills == 0 && bufstart == bufend) {
 			System.err.println("JBuffer: no flush needed for buffer " + taskid);
 			return;
 		}
+		*/
 		
 		pipelineThread.close();
 		mergeThread.close();
