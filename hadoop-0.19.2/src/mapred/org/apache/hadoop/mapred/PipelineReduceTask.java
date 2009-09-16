@@ -31,6 +31,7 @@ public class PipelineReduceTask extends ReduceTask {
 	@Override
 	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		if (!buffer.canSnapshot()) {
+			System.err.println("PipelineReduceTask: " + getTaskID() + " can't do snapshot yet.");
 			return true;
 		}
 		
@@ -56,6 +57,7 @@ public class PipelineReduceTask extends ReduceTask {
 			reducer.close();
 		}
 		buffer.getProgress().set(progress);
+		System.err.println("PipelineReduceTask: " + getTaskID() + " snapshot.");
 		return buffer.snapshot(true);
 	}
 	
