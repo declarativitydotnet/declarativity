@@ -282,7 +282,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	@Override
 	public void close() throws IOException {
 		synchronized (this) {
-			buffer.flush();
 			open = false;
 			this.notifyAll();
 		}
