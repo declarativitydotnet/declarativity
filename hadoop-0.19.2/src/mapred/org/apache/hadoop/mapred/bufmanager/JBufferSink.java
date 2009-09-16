@@ -288,7 +288,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							closeSnapshots();
 						}
 						
-						synchronized (this) {
+						synchronized (JBufferSink.this) {
 							if (!conn.isSnapshot() && !connections.containsKey(conn.id())) {
 								connections.put(conn.id(), new ArrayList<Connection>());
 							}
