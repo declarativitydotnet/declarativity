@@ -143,7 +143,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		in.seek(segmentOffset);
 		flushFile(in, segmentLength, 1.0f);
 		
-		System.err.println("BufferRequest: flushed final buffer " + taskid + " bytes = " + segmentLength);
 		in.close();
 	}
 	
@@ -153,7 +152,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			try {
 				long begin = System.currentTimeMillis();
 				flushFinal();
-				if (!taskid.isMap()) System.err.println("FlushFinal " + taskid + " took " + (System.currentTimeMillis() - begin) + " ms.");
+				System.err.println("FlushFinal " + taskid + " took " + (System.currentTimeMillis() - begin) + " ms.");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

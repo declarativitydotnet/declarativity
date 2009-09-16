@@ -100,7 +100,6 @@ public class PipelineReduceTask extends ReduceTask {
 			//Clean up: repeated in catch block below
 			reducer.close();
 			buffer.close();
-			System.err.println("PipelineReduceTask: commit buffer " + getTaskID());
 			bufferUmbilical.commit(getTaskID());
 		}
 	}

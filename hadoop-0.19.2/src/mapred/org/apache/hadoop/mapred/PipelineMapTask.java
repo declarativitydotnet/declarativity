@@ -214,7 +214,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			}
 			setPhase(TaskStatus.Phase.MAP); 
 			collector.close();
-			System.err.println("PipelineMapTask: " + getTaskID() + " waited for " + (System.currentTimeMillis() - begin) + " ms.");
 			bufferUmbilical.commit(getTaskID());
 		}
 
@@ -223,7 +222,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	
 	@Override
 	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
-		System.err.println("PipelineMapTask: perform snapshot.");
 		for (JBufferSink.Snapshot snapshot : runs) {
 			spill(snapshot.data(), snapshot.length(), snapshot.index(), true);
 		}

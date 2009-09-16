@@ -282,7 +282,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						
-						System.err.println("JBufferSink: received " + conn);
 						if (!conn.isSnapshot() && snapshotConnections.size() > 0) {
 							System.err.println("JBufferSink: " + reduceID + " got "+ conn + ". close all snapshots");
 							closeSnapshots();
@@ -371,7 +370,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				if (connection.progress() == 1.0f) {
 					this.successful.add(connection.id().getTaskID());
 					this.runningTransfers.remove(connection.id());
-					System.err.println("JBufferSink: " + reduceID + " successful connections = " + this.successful.size());
 					
 					if (this.successful.size() == numConnections) {
 						try {
@@ -527,8 +525,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 						length = this.input.readLong();
 					}
 					catch (Throwable e) {
-						e.printStackTrace();
-						return; // This is okay.
+						if (!isSnapshot()) LOG.warn("JBufferSink: regular connection exception " + e);
+						return;
 					}
 					
 					synchronized (this) {
@@ -556,7 +554,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
 					if (isSnapshot()) {
-						System.err.println("JBufferSink: connection " + id + " new snapshot. progress = " + progress);
 						Snapshot run = createNewSnapshot();
 						run.write(reader, length, keyClass, valClass, codec, progress);
 						this.snapshot = run;
@@ -564,9 +561,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					else if (this.sink.buffer().reserve(length)) {
 						try {
-							if (progress == 1f) {
-								System.err.println("JBufferSink: applying " + length + " bytes to buffer " + reduceID);
-							}
 							while (reader.next(key, value)) {
 								this.sink.buffer().collect(key, value);
 							}

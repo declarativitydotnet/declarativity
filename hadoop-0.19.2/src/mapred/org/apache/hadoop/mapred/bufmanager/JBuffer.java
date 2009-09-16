@@ -861,7 +861,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		if (pipeline) throw new IOException("Snapshot not allowed with pipelineing!");
 		BufferRequest request = null;
 		while ((request = umbilical.getRequest(taskid)) != null) {
-			System.err.println("Got request " + request);
 			if (request.open(job, true)) {
 				requests.add(request);
 				requestMap.put(request.partition(), request); // TODO speculation
@@ -920,7 +919,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 	public synchronized void flush() throws IOException {
 		if (numSpills == 0 && kvend == kvindex) {
-			System.err.println("JBuffer: no flush needed for buffer " + taskid);
+			LOG.warn("JBuffer: no flush needed for buffer " + taskid);
 			return;
 		}
 		
