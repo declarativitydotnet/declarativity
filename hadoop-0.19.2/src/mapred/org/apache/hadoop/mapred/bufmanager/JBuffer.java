@@ -923,7 +923,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			System.err.println("JBuffer: no flush needed for buffer " + taskid);
 			return;
 		}
-		System.err.println("JBuffer: flushing buffer " + taskid);
 		
 		pipelineThread.close();
 		mergeThread.close();
