@@ -273,7 +273,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	public void collect(Object key, Object value) throws IOException {
 		synchronized (this) {
 			if (open) {
-				System.err.println("Collect " + key);
 				mapper.map(key, value, collector, reporter);
 			}
 			else throw new IOException("Unable to collect because PipelineMapTask is closed!");
@@ -283,6 +282,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	@Override
 	public void close() throws IOException {
 		synchronized (this) {
+			buffer.flush();
 			open = false;
 			this.notifyAll();
 		}
@@ -290,7 +290,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 
 	@Override
 	public void reset(boolean restart) throws IOException {
-		if (buffer != null) buffer.reset(restart);
+		// if (buffer != null) buffer.reset(restart);
 	}
 
 }
