@@ -527,11 +527,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 						length = this.input.readLong();
 					}
 					catch (Throwable e) {
+						e.printStackTrace();
 						return; // This is okay.
 					}
 					
 					synchronized (this) {
-						if (!open) return;
+						if (!open) {
+							System.err.println("JBufferSink: CONNECTION NOT OPEN FOR BUFFER " + reduceID);
+							System.err.println("\tJBufferSink: LENGTH WAS " + length);
+							return;
+						}
 						busy = true; // busy
 					}
 					
@@ -539,7 +544,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					if (length == 0) {
 						if (progress < 1f) continue;
-						else return;
+						else {
+							System.err.println("JBufferSink: LENGTH IS FUCKING ZERO FOR BUFFER " + reduceID);
+							return;
+						}
 					}
 					
 					CompressionCodec codec = null;
