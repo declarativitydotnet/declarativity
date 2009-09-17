@@ -880,6 +880,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true; // pretend i did it.
 			}
 
+			float bufferProgress = progress.get();
 			if (reset) {
 				flush();
 				snapFile = mapOutputFile.getOutputFile(this.taskid);
@@ -905,7 +906,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				try {
 					for (BufferRequest r : requests) {
 						LOG.info("JBuffer: do snapshot request " + taskid);
-						r.flush(indexIn, dataIn, -1, progress.get());
+						r.flush(indexIn, dataIn, -1, bufferProgress);
 					}
 				} finally {
 					indexIn.close();
