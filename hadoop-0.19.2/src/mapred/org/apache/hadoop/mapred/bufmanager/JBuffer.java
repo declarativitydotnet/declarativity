@@ -878,55 +878,51 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true; // pretend i did it.
 			}
 
-			synchronized (spillLock) {
-				spillThread.doSpill();
-				while (kvstart != kvend) {
-					reporter.progress();
-					try {
-						spillLock.wait();
-					} catch (InterruptedException e) { }
-				}
-
-				synchronized (mergeLock) {
-					try {
-						LOG.info("JBuffer: snapshot merge parts.");
-
-						int spillId = -1;
-						if (numSpills - numFlush == 1) {
-							spillId = numFlush;
-						}
-						else {
-							spillId = mergeParts(true);
-						}
-						if (spillId < 0) return true;
-						kvbuffer = null;
-
-						Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
-						Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
-
-						FSDataInputStream indexIn = localFs.open(indexFile);
-						FSDataInputStream dataIn  = localFs.open(snapFile);
+			if (numSpills == 0) {
+				synchronized (spillLock) {
+					spillThread.doSpill();
+					while (kvstart != kvend) {
+						reporter.progress();
 						try {
-							for (BufferRequest r : requests) {
-								LOG.info("JBuffer: do snapshot request " + taskid);
-								r.flush(indexIn, dataIn, -1, progress.get());
-							}
-						} finally {
-							indexIn.close();
-							dataIn.close();
-						}
-
-						LOG.info("JBuffer: DONE. snapshot request " + taskid);
-						if (reset) {
-							reset(true);
-							localFs.delete(snapFile, true);
-							localFs.delete(indexFile, true);
-						}
-					} finally {
-						if (kvbuffer == null) {
-							kvbuffer = new byte[kvbufferSize];
-						}
+							spillLock.wait();
+						} catch (InterruptedException e) { }
 					}
+				}
+			}
+			
+			synchronized (mergeLock) {
+
+				LOG.info("JBuffer: snapshot merge parts.");
+				
+				int spillId = -1;
+				if (numSpills - numFlush == 1) {
+					spillId = numFlush;
+				}
+				else {
+					spillId = mergeParts(true);
+				}
+				if (spillId < 0) return true;
+
+				Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
+				Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
+
+				FSDataInputStream indexIn = localFs.open(indexFile);
+				FSDataInputStream dataIn  = localFs.open(snapFile);
+				try {
+					for (BufferRequest r : requests) {
+						LOG.info("JBuffer: do snapshot request " + taskid);
+						r.flush(indexIn, dataIn, -1, progress.get());
+					}
+				} finally {
+					indexIn.close();
+					dataIn.close();
+				}
+				
+				LOG.info("JBuffer: DONE. snapshot request " + taskid);
+				if (reset) {
+					reset(true);
+					localFs.delete(snapFile, true);
+					localFs.delete(indexFile, true);
 				}
 			}
 			LOG.info("JBuffer: done with snapshot. " + taskid);
