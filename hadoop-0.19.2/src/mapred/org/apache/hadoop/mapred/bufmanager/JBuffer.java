@@ -917,7 +917,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			return true;
 		} catch (Throwable t) {
-			t.printStackTrace();
 			LOG.info("JBuffer: snapshot " + taskid + " interrupted by " + t);
 			return false; // Turn off snapshots.
 		}
