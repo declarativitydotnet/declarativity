@@ -290,12 +290,16 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		IFile.Reader reader = new IFile.Reader<K, V>(conf, in, length, codec);
 		IFile.Writer writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
 
-		DataInputBuffer key = new DataInputBuffer();
-		DataInputBuffer value = new DataInputBuffer();
-		while (reader.next(key, value)) {
-			writer.append(key, value);
+		try {
+			DataInputBuffer key = new DataInputBuffer();
+			DataInputBuffer value = new DataInputBuffer();
+			while (reader.next(key, value)) {
+				writer.append(key, value);
+			}
+		} finally {
+			writer.close();
+			reader.close();
 		}
-		writer.close();
 		
 		if (length > 0) {
 			long  stoptime = System.currentTimeMillis();

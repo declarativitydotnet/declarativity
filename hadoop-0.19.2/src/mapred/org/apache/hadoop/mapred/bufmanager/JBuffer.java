@@ -462,10 +462,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		// buffers and accounting
 		int maxMemUsage = sortmb << 20;
 		
-		// if (!taskid.isMap()) {
-	        float maxInMemCopyUse = job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
-		    maxMemUsage = (int)Math.min(Runtime.getRuntime().maxMemory() * maxInMemCopyUse, Integer.MAX_VALUE);
-		// }
+	    float maxInMemCopyUse = job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
+		maxMemUsage = (int)Math.min(Runtime.getRuntime().maxMemory() * maxInMemCopyUse, maxMemUsage);
 		
 		int recordCapacity = (int)(maxMemUsage * recper);
 		recordCapacity -= recordCapacity % RECSIZE;
@@ -907,10 +905,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 				FSDataInputStream indexIn = localFs.open(indexFile);
 				FSDataInputStream dataIn  = localFs.open(snapFile);
-				for (BufferRequest r : requests) {
-					LOG.info("JBuffer: do snapshot request " + taskid);
-					r.flush(indexIn, dataIn, -1, progress.get());
+				try {
+					for (BufferRequest r : requests) {
+						LOG.info("JBuffer: do snapshot request " + taskid);
+						r.flush(indexIn, dataIn, -1, progress.get());
+					}
+				} finally {
+					indexIn.close();
+					dataIn.close();
 				}
+				
 				LOG.info("JBuffer: DONE. snapshot request " + taskid);
 				if (reset) {
 					reset(true);
