@@ -946,6 +946,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	public synchronized void flush() throws IOException {
+		pipelineThread.close();
+		mergeThread.close();
+		spillThread.close();
+		
 		if (numSpills == 0 && kvend == kvindex) {
 			try {
 				Path finalOut = mapOutputFile.getOutputFile(this.taskid);
@@ -958,11 +962,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		
-		pipelineThread.close();
-		mergeThread.close();
-		
 		synchronized (spillLock) {
-			this.spillThread.close();
 			while (this.spillThread.isSpilling()) {
 				try {
 					spillLock.wait();
