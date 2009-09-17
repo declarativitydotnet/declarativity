@@ -298,7 +298,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			}
 		} finally {
 			writer.close();
-			reader.close();
 		}
 		
 		if (length > 0) {
