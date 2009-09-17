@@ -23,9 +23,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
@@ -39,19 +39,15 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RawLocalFileSystem;
 import org.apache.hadoop.fs.kfs.KosmosFileSystem;
 import org.apache.hadoop.fs.s3.S3FileSystem;
-import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.serializer.Deserializer;
-import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.mapred.IFile.Writer;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
-import org.apache.hadoop.mapred.bufmanager.JBufferSink.Snapshot;
+import org.apache.hadoop.mapred.bufmanager.JBufferSink.JBufferRun;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.Progress;
-import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 
@@ -389,12 +385,22 @@ public abstract class Task implements Writable, Configurable {
 	  return false;
   }
   
-  public boolean snapshots(List<Snapshot> runs, float progress) throws IOException {
+  public int getNumberOfInputs() {
+	  return 0;
+  }
+  
+  public boolean snapshots(List<JBufferRun> runs, float progress) throws IOException {
 	  throw new IOException("Task: snapshot not configured!");
   }
 
   public Progress getProgress() { return taskProgress; }
-
+  
+  public void setProgress(float progress) {
+	    taskProgress.set(progress);
+	    // indicate that progress update needs to be sent
+	    setProgressFlag();
+	  }
+  
   InputSplit getInputSplit() throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Input only available on map");
   }
@@ -568,11 +574,7 @@ public abstract class Task implements Writable, Configurable {
     }
   }
 
-  public void setProgress(float progress) {
-    taskProgress.set(progress);
-    // indicate that progress update needs to be sent
-    setProgressFlag();
-  }
+
 
   /**
    * An updater that tracks the last number reported for a given file

@@ -663,7 +663,7 @@ public class TaskTracker
                 if (rjob.getMapFetchStatus() == null) {
                   //this is a new job; we start fetching its map events
                   f = new FetchStatus(jobId, 
-                                      ((ReduceTask)task).getNumMaps());
+                                      ((ReduceTask)task).getNumberOfInputs());
                   rjob.setMapFetchStatus(f);
                 }
                 f = rjob.getMapFetchStatus();
@@ -2553,8 +2553,6 @@ public class TaskTracker
     void cleanup(boolean needCleanup) throws IOException {
       TaskAttemptID taskId = task.getTaskID();
       LOG.debug("Cleaning up " + taskId);
-
-      if (task instanceof PipelineReduceTask) return;
 
       synchronized (TaskTracker.this) {
         if (needCleanup) {

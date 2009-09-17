@@ -57,7 +57,7 @@ class JvmTask implements Writable {
       if (isMap) {
         t = isPipe ? new PipelineMapTask() : new MapTask();
       } else {
-        t = isPipe ? new PipelineReduceTask() : new ReduceTask();
+        t = new ReduceTask();
       }
       t.readFields(in);
     }
