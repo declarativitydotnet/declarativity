@@ -105,7 +105,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						long starttime = java.lang.System.currentTimeMillis();
 						try {
 								long sortstart = java.lang.System.currentTimeMillis();
-								if (kvend != kvindex) {
+								if (kvstart != kvend) {
 									sortAndSpill();
 								}
 								LOG.debug("SpillThread: sort/spill time " + 
@@ -947,7 +947,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	public synchronized void flush() throws IOException {
-		if (numSpills == 0 && kvend == kvindex) {
+		if (numSpills == 0 && kvstart == kvend) {
 			try {
 				Path finalOut = mapOutputFile.getOutputFile(this.taskid);
 				if (localFs.exists(finalOut)) {
