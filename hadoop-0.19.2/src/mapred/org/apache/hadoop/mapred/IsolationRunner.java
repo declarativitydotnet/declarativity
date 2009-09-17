@@ -107,6 +107,13 @@ public class IsolationRunner {
         SortedRanges.Range range) throws IOException {
       LOG.info("Task " + taskid + " reportedNextRecordRange " + range);
     }
+
+	@Override
+	public ReduceTaskCompletionEventsUpdate getReduceCompletionEvents(
+			JobID reduceJobId, int fromIndex, int maxLocs) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
   }
   
   private static ClassLoader makeClassLoader(JobConf conf, 
@@ -200,7 +207,7 @@ public class IsolationRunner {
       BytesWritable split = new BytesWritable();
       split.readFields(splitFile);
       splitFile.close();
-      task = new MapTask(jobFilename.toString(), taskId, partition, splitClass, split, false);
+      task = null; // new MapTask(jobFilename.toString(), taskId, partition, splitClass, split, false);
     } else {
       int numMaps = conf.getNumMapTasks();
       fillInMissingMapOutputs(local, taskId, numMaps, conf);

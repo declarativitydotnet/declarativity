@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="org/apache/hadoop/mapred/IsolationRunner.java" kind="src" path="src/mapred"/>
+	<classpathentry kind="src" path="src/mapred"/>
 	<classpathentry kind="src" path="src/examples"/>
 	<classpathentry kind="src" path="src/hdfs"/>
 	<classpathentry kind="src" path="src/tools"/>
