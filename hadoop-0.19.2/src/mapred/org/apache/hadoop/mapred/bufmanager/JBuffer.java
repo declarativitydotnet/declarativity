@@ -383,6 +383,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private int bufindex = 0;          // marks end of collected
 	private int bufmark = 0;           // marks end of record
 	private byte[] kvbuffer;           // main output buffer
+	private int kvbufferSize = 0;
 	private static final int PARTITION = 0; // partition offset in acct
 	private static final int KEYSTART = 1;  // key offset in acct
 	private static final int VALSTART = 2;  // val offset in acct
@@ -468,7 +469,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		int recordCapacity = (int)(maxMemUsage * recper);
 		recordCapacity -= recordCapacity % RECSIZE;
-		kvbuffer = new byte[maxMemUsage - recordCapacity];
+		kvbufferSize = maxMemUsage - recordCapacity;
+		kvbuffer = new byte[kvbufferSize];
 		bufvoid = kvbuffer.length;
 		recordCapacity /= RECSIZE;
 		kvoffsets = new int[recordCapacity];
@@ -876,51 +878,55 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true; // pretend i did it.
 			}
 
-			if (numSpills == 0) {
-				synchronized (spillLock) {
-					spillThread.doSpill();
-					while (kvstart != kvend) {
-						reporter.progress();
+			synchronized (spillLock) {
+				spillThread.doSpill();
+				while (kvstart != kvend) {
+					reporter.progress();
+					try {
+						spillLock.wait();
+					} catch (InterruptedException e) { }
+				}
+
+				synchronized (mergeLock) {
+					try {
+						LOG.info("JBuffer: snapshot merge parts.");
+
+						int spillId = -1;
+						if (numSpills - numFlush == 1) {
+							spillId = numFlush;
+						}
+						else {
+							spillId = mergeParts(true);
+						}
+						if (spillId < 0) return true;
+						kvbuffer = null;
+
+						Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
+						Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
+
+						FSDataInputStream indexIn = localFs.open(indexFile);
+						FSDataInputStream dataIn  = localFs.open(snapFile);
 						try {
-							spillLock.wait();
-						} catch (InterruptedException e) { }
+							for (BufferRequest r : requests) {
+								LOG.info("JBuffer: do snapshot request " + taskid);
+								r.flush(indexIn, dataIn, -1, progress.get());
+							}
+						} finally {
+							indexIn.close();
+							dataIn.close();
+						}
+
+						LOG.info("JBuffer: DONE. snapshot request " + taskid);
+						if (reset) {
+							reset(true);
+							localFs.delete(snapFile, true);
+							localFs.delete(indexFile, true);
+						}
+					} finally {
+						if (kvbuffer == null) {
+							kvbuffer = new byte[kvbufferSize];
+						}
 					}
-				}
-			}
-			
-			synchronized (mergeLock) {
-
-				LOG.info("JBuffer: snapshot merge parts.");
-				
-				int spillId = -1;
-				if (numSpills - numFlush == 1) {
-					spillId = numFlush;
-				}
-				else {
-					spillId = mergeParts(true);
-				}
-				if (spillId < 0) return true;
-
-				Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
-				Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
-
-				FSDataInputStream indexIn = localFs.open(indexFile);
-				FSDataInputStream dataIn  = localFs.open(snapFile);
-				try {
-					for (BufferRequest r : requests) {
-						LOG.info("JBuffer: do snapshot request " + taskid);
-						r.flush(indexIn, dataIn, -1, progress.get());
-					}
-				} finally {
-					indexIn.close();
-					dataIn.close();
-				}
-				
-				LOG.info("JBuffer: DONE. snapshot request " + taskid);
-				if (reset) {
-					reset(true);
-					localFs.delete(snapFile, true);
-					localFs.delete(indexFile, true);
 				}
 			}
 			LOG.info("JBuffer: done with snapshot. " + taskid);
