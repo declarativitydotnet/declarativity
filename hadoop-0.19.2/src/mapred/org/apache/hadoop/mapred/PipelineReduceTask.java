@@ -57,7 +57,7 @@ public class PipelineReduceTask extends ReduceTask {
 			reducer.close();
 		}
 		buffer.getProgress().set(progress);
-		System.err.println("PipelineReduceTask: " + getTaskID() + " snapshot.");
+		System.err.println("PipelineReduceTask: " + getTaskID() + " snapshot. progress = " + progress);
 		return buffer.snapshot(true);
 	}
 	
