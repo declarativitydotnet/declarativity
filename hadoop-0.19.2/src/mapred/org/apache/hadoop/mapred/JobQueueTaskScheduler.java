@@ -147,7 +147,7 @@ class JobQueueTaskScheduler extends TaskScheduler {
             continue;
           }
           
-          if (job.pipeline() != null) {
+          if (job.pipeline() != null && jobQueue.size() > 2) {
         	  boolean schedule = false;
         	  for (JobInProgress prev : jobQueue) {
         		  if (prev.getJobID().equals(job.pipeline())) {
@@ -198,7 +198,7 @@ class JobQueueTaskScheduler extends TaskScheduler {
             continue;
           }
           
-          if (job.pipeline() != null) {
+          if (job.pipeline() != null && jobQueue.size() > 2) {
         	  boolean schedule = false;
         	  for (JobInProgress prev : jobQueue) {
         		  if (prev.getJobID().equals(job.pipeline())) {
