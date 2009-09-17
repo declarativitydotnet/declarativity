@@ -947,8 +947,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 	public synchronized void flush() throws IOException {
 		if (numSpills == 0 && kvend == kvindex) {
-			LOG.warn("JBuffer: no flush needed for buffer " + taskid);
-			return;
+			try {
+				Path finalOut = mapOutputFile.getOutputFile(this.taskid);
+				if (localFs.exists(finalOut)) {
+					LOG.warn("JBuffer: no flush needed for buffer " + taskid);
+					return;
+				}
+			} catch (IOException e) {
+				/* File must not exist. Need to make it. */
+			}
 		}
 		
 		pipelineThread.close();
