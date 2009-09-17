@@ -880,8 +880,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true; // pretend i did it.
 			}
 
-			LOG.info("JBuffer: snapshot merge parts.");
-
 			if (reset) {
 				flush();
 				snapFile = mapOutputFile.getOutputFile(this.taskid);
@@ -913,10 +911,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					indexIn.close();
 					dataIn.close();
 				}
-
-				LOG.info("JBuffer: DONE. snapshot request " + taskid);
 			}
-			LOG.info("JBuffer: done with snapshot. " + taskid);
 			return true;
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -925,6 +920,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		finally {
 			if (reset) {
+				reset(true);
 				if (snapFile != null) localFs.delete(snapFile, true);
 				if (indexFile != null) localFs.delete(indexFile, true);
 			}
