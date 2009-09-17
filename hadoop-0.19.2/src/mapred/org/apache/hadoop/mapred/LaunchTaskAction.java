@@ -55,7 +55,7 @@ class LaunchTaskAction extends TaskTrackerAction {
     if (isMapTask) {
       task = isPipeline ? new PipelineMapTask() : new MapTask();
     } else {
-      task = isPipeline ? new PipelineReduceTask() : new ReduceTask();
+      task = new ReduceTask();
     }
     task.readFields(in);
   }

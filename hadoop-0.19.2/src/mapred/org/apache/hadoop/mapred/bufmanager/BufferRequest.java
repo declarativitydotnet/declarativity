@@ -167,12 +167,12 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	
-	public boolean open(JobConf conf, boolean snapshot) throws IOException {
+	public boolean open(JobConf conf) throws IOException {
 		synchronized (this) {
 			try { 
 				this.conf = conf;
 				this.localFS = FileSystem.getLocal(conf);
-				this.out = connect(snapshot);
+				this.out = connect();
 				return out != null;
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -181,7 +181,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
-	private FSDataOutputStream connect(boolean snapshot) throws IOException {
+	private FSDataOutputStream connect() throws IOException {
 		try {
 			Socket socket = new Socket();
 			int connectionAttempts = this.conf.getInt("mapred.connection.attempts", 5);
@@ -194,7 +194,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			}
 			FSDataOutputStream out = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			this.taskid.write(out);
-			out.writeBoolean(snapshot);
 			out.flush();
 			
 			DataInputStream in = new DataInputStream(socket.getInputStream());

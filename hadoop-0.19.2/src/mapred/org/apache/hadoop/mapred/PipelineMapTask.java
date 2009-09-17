@@ -199,8 +199,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	    this.mapper = ReflectionUtils.newInstance(job.getMapperClass(), job);
 
 	    /* Kick off a sink for receiving the reducer output. */
-		JBufferSink sink  = new JBufferSink(job, getTaskID(), this, 1);
-		sink.snapshot(this);
+		boolean snapshots = job.getBoolean("mapred.job.snapshots", false);
+		JBufferSink sink  = new JBufferSink(job, getTaskID(), this, this, snapshots);
 		sink.open();
 		
 		/* Start the reduce output fetcher */
@@ -212,7 +212,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			open = true;
 			rof.start();
 			long begin = System.currentTimeMillis();
-			while (open) {
+			while (!sink.complete()) {
 				try { this.wait();
 				} catch (InterruptedException e) { }
 			}
@@ -225,17 +225,17 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 	
 	@Override
-	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
+	public synchronized boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
 		if (buffer.canSnapshot() == false) {
 			return true;
 		}
 		
 		LOG.debug("PipelineMapTask: " + getTaskID() + " perform snapshot. progress = " + progress);
-		for (JBufferSink.Snapshot snapshot : runs) {
-			spill(snapshot.data(), snapshot.length(), snapshot.index(), true);
+		for (JBufferSink.JBufferRun run : runs) {
+			run.spill(buffer);
 		}
 		this.buffer.getProgress().set(progress);
-		return this.buffer.snapshot(true);
+		return this.buffer.snapshot();
 	}
 	
 	@Override
@@ -253,7 +253,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 
 	@Override
-	public void spill(Path data, long length, Path index, boolean copy) throws IOException {
+	public void spill(Path data, Path index, boolean copy) throws IOException {
 		CompressionCodec codec = null;
 		if (conf.getCompressMapOutput()) {
 			Class<? extends CompressionCodec> codecClass =
@@ -261,15 +261,13 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
 		}
 		FileSystem fs = FileSystem.getLocal(conf);
-		FSDataInputStream input = fs.open(data);
-		IFile.Reader reader = new IFile.Reader(conf, input, length, codec);
+		IFile.Reader reader = new IFile.Reader(conf, fs, data, codec);
 		DataInputBuffer key = new DataInputBuffer();
 		DataInputBuffer value = new DataInputBuffer();
 		while (reader.next(key, value)) {
 			collect(key, value);
 		}
 		reader.close();
-		input.close();
 	}
 
 	@Override
@@ -288,10 +286,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 
 	@Override
 	public void close() throws IOException {
-		synchronized (this) {
-			open = false;
-			this.notifyAll();
-		}
 	}
 
 	@Override

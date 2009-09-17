@@ -47,20 +47,20 @@ public class ReduceOutputFile extends MapOutputFile {
 	}
 	
 	
-	public Path getOutputSnapFileForWrite(TaskAttemptID id, int run, long size)
+	public Path getOutputRunFileForWrite(TaskID id, int run, long size)
 	throws IOException {
 		return lDirAlloc.getLocalPathForWrite(TaskTracker.getIntermediateOutputDir(
 				jobId.toString(), reduceID.toString())
 				+ Path.SEPARATOR + id.toString()
-				+ "_snapshot_" + run + "_file.out", size, conf);
+				+ "_run_" + run + "_file.out", size, conf);
 	}
 
-	public Path getOutputSnapIndexFileForWrite(TaskAttemptID id, int run, long size)
+	public Path getOutputRunIndexFileForWrite(TaskID id, int run, long size)
 	throws IOException {
 		return lDirAlloc.getLocalPathForWrite(TaskTracker.getIntermediateOutputDir(
 				jobId.toString(), reduceID.toString())
 				+ Path.SEPARATOR + id.toString()
-				+ "_snapshot_"  + run + "_file.out.index", 
+				+ "_run_"  + run + "_file.out.index", 
 				size, conf);
 	}
 }

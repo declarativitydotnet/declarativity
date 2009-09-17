@@ -31,6 +31,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactories;
 import org.apache.hadoop.io.WritableFactory;
@@ -66,7 +67,7 @@ public class ReduceTask extends Task {
 			Set<TaskAttemptID>  mapTasks = new HashSet<TaskAttemptID>();
 
 			int eid = 0;
-			while (!isInterrupted() && finishedMapTasks.size() < getNumMaps()) {
+			while (!isInterrupted() && finishedMapTasks.size() < getNumberOfInputs()) {
 				try {
 					MapTaskCompletionEventsUpdate updates = 
 						trackerUmbilical.getMapCompletionEvents(getJobID(), eid, Integer.MAX_VALUE, ReduceTask.this.getTaskID());
@@ -117,7 +118,7 @@ public class ReduceTask extends Task {
 				}
 
 				try {
-					int waittime = mapTasks.size() == getNumMaps() ? 60000 : 1000;
+					int waittime = mapTasks.size() == getNumberOfInputs() ? 60000 : 1000;
 					Thread.sleep(waittime);
 				} catch (InterruptedException e) { return; }
 			}
@@ -136,6 +137,7 @@ public class ReduceTask extends Task {
 	protected int numMaps;
 	protected CompressionCodec codec;
 	protected JBuffer buffer = null;
+	private boolean snapshots = false;
 
 
 
@@ -176,8 +178,18 @@ public class ReduceTask extends Task {
 	public boolean isMapTask() {
 		return false;
 	}
+	
+	@Override
+	public boolean isPipeline() {
+		if (!(jobCleanup || jobSetup || taskCleanup)) {
+			return conf != null && 
+				   conf.getBoolean("mapred.job.snapshots", false);
+		}
+		return false;
+	}
 
-	public int getNumMaps() { return numMaps; }
+	@Override
+	public int getNumberOfInputs() { return numMaps; }
 
 	/**
 	 * Localize the given JobConf to be specific for this task.
@@ -212,31 +224,65 @@ public class ReduceTask extends Task {
 	}
 	
 	@Override
-	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
-		String snapshotName = getSnapshotOutputName(getPartition(), progress);
-		FileSystem fs = FileSystem.get(conf);
+	public synchronized boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
+		OutputCollector collector = null;
+		for (JBufferSink.JBufferRun run : runs) {
+			run.spill(buffer);
+		}
+		return snapshot(false);
+	}
+	
+	private boolean snapshot(boolean save) throws IOException {
+		Path data = null;
+		Path index = null;
 		
-		System.err.println("Reduce: got snapshot " + runs.size() + " runs. Progress = " + progress + " Writting to " + snapshotName);
-
-		final RecordWriter out = 
-			conf.getOutputFormat().getRecordWriter(fs, conf, snapshotName, null);  
-
-		OutputCollector collector = new OutputCollector() {
-			@SuppressWarnings("unchecked")
-			public void collect(Object key, Object value)
-			throws IOException {
-				out.write(key, value);
-			}
-		};
-		
-		for (JBufferSink.Snapshot snapshot : runs) {
-			buffer.spill(snapshot.data(), snapshot.length(), snapshot.index(), true);
+		buffer.flush();
+		if (save) {
+			data = mapOutputFile.getOutputFile(getTaskID());
+			index = mapOutputFile.getOutputIndexFile(getTaskID());
+			Path saveData  = new Path(data.getParent(), getTaskID().toString() + "_snapshot.out");
+			Path saveIndex = new Path(index.getParent(), getTaskID().toString() + "_snapshotindex.out");
+			FileSystem localFs = FileSystem.getLocal(conf);
+			localFs.copyFromLocalFile(data, saveData);
+			localFs.copyFromLocalFile(index, saveIndex);
 		}
 		
+		try {
+			if (buffer.canSnapshot()) {
+				buffer.reset(true); // Restart for reduce output.
+				snapshotReduce(buffer);
+				buffer.getProgress().set(getProgress().get());
+				buffer.snapshot(); // Send reduce snapshot result
+			}
+			else {
+				String snapshotName = getSnapshotOutputName(getPartition(), getProgress().get());
+				FileSystem fs = FileSystem.get(conf);
+				final RecordWriter out = 
+					conf.getOutputFormat().getRecordWriter(fs, conf, snapshotName, null);  
+				OutputCollector collector = new OutputCollector() {
+					@SuppressWarnings("unchecked")
+					public void collect(Object key, Object value)
+					throws IOException {
+						out.write(key, value);
+					}
+				};
+				buffer.flush();
+				snapshotReduce(collector);
+			}
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false; // I can recover from this.
+		} finally {
+			buffer.reset(true);
+			if (save) buffer.spill(data, index, false);
+		}
+	}
+	
+	private void snapshotReduce(OutputCollector collector) throws IOException {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);
 		// apply reduce function
 		try {
-			buffer.flush();
 			ValuesIterator values = buffer.iterator();
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, collector, null);
@@ -248,11 +294,16 @@ public class ReduceTask extends Task {
 		finally {
 			//Clean up: repeated in catch block below
 			reducer.close();
-			out.close(null);
 		}
-		this.buffer.reset(true);
-		System.err.println("Reduce: done with snapshot " + snapshotName);
-		return true;
+	}
+	
+	
+	@Override
+	public void setProgress(float progress) {
+		super.setProgress(progress);
+		synchronized (this) {
+			this.notifyAll();
+		}
 	}
 
 
@@ -285,7 +336,8 @@ public class ReduceTask extends Task {
 		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		buffer.setProgress(copyPhase);
 		
-		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, job.getNumMapTasks());
+		this.snapshots = job.getBoolean("mapred.job.snapshots", false);
+		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, snapshots);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
@@ -310,13 +362,19 @@ public class ReduceTask extends Task {
 	
 	protected void copy(JBuffer buffer, JBufferSink sink) throws IOException {
 		this.buffer = buffer;
-		sink.snapshot(this);
-		sink.block(); /* This will not return until all fetches finish! */
+		synchronized (this) {
+			while(!sink.complete()) {
+				if (getProgress().get() > 0) {
+					snapshot(true);
+				}
+				try { this.wait();
+				} catch (InterruptedException e) { }
+			}
+		}
 		buffer.flush();
 		System.err.println("ReduceTask: copy phase complete.");
 		copyPhase.complete();
 	}
-	
 	
 	protected void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
