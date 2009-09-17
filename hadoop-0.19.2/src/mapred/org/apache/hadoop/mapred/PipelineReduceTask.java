@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapred.bufmanager.BufferRequest;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
@@ -12,6 +14,7 @@ import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
 import org.apache.hadoop.util.ReflectionUtils;
 
 public class PipelineReduceTask extends ReduceTask {
+	  private static final Log LOG = LogFactory.getLog(PipelineReduceTask.class.getName());
 	
 	private BufferUmbilicalProtocol bufferUmbilical;
 	
@@ -31,7 +34,6 @@ public class PipelineReduceTask extends ReduceTask {
 	@Override
 	public synchronized boolean snapshots(List<JBufferSink.Snapshot> runs, float progress) throws IOException {
 		if (!buffer.canSnapshot()) {
-			System.err.println("PipelineReduceTask: " + getTaskID() + " can't do snapshot yet.");
 			return true;
 		}
 		
@@ -57,7 +59,7 @@ public class PipelineReduceTask extends ReduceTask {
 			reducer.close();
 		}
 		buffer.getProgress().set(progress);
-		System.err.println("PipelineReduceTask: " + getTaskID() + " snapshot. progress = " + progress);
+		LOG.debug("PipelineReduceTask: " + getTaskID() + " snapshot. progress = " + progress);
 		return buffer.snapshot(true);
 	}
 	

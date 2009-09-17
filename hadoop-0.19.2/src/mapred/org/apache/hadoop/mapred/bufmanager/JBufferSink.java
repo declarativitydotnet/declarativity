@@ -122,11 +122,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 			if (!open) return;
 			else open = false;
 			
-			System.err.println("SnapshotThread: close " + reduceID);
 			synchronized (snapshotConnections) {
 				snapshotConnections.notifyAll();
 				while (busy) {
-					System.err.println("\tSnapshotThread: close is busy " + reduceID);
 					try {
 						snapshotConnections.wait();
 					} catch (InterruptedException e) {
@@ -135,7 +133,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 				}
 			}
-			System.err.println("SnapshotThread: done closing " + reduceID);
 		}
 		
 		public void snapshot() {
@@ -185,7 +182,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 						if (!open) return;
 						LOG.info("SnapshotThread: " + reduceID + " perform snapshot. progress " + progress);
 						boolean keepSnapshots = snapshotTask.snapshots(runs, progress);
-						LOG.info("SnapshotThread: " + reduceID + " done with snapshot. progress " + progress);
 						if (!keepSnapshots) {
 							return;
 						}
@@ -282,11 +278,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						
-						System.err.println("JBufferSink: new connection, snapshot? " + conn.isSnapshot() + ", for sink " + reduceID + " from " + conn.id());
 						if (!conn.isSnapshot() && snapshotConnections.size() > 0) {
-							System.err.println("JBufferSink: " + reduceID + " close snapshots.");
 							closeSnapshots();
-							System.err.println("JBufferSink: " + reduceID + " snapshots closed.");
 						}
 						
 						synchronized (JBufferSink.this) {
@@ -557,14 +550,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 					
-					System.err.println("JBufferSink: " + reduceID + " getting data.");
 					if (isSnapshot()) {
 						try {
 							Snapshot run = createNewSnapshot();
 							run.write(reader, length, keyClass, valClass, codec, progress);
 							this.snapshot = run;
 							sink.updateSnapshot(this);
-							System.err.println("JBufferSink: " + reduceID + " got a new snapshot.");
 						} catch (Throwable t) {
 							return; // don't care
 						}

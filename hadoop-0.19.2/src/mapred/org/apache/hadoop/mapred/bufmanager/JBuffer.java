@@ -1022,7 +1022,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 		}
-		System.gc();
 	}
 
 	public void close() throws IOException {  
