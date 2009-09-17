@@ -873,6 +873,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public synchronized boolean snapshot(boolean reset) throws IOException {
 
+		Path snapFile  = null;
+		Path indexFile = null;
 		try {
 			if (!canSnapshot()) {
 				return true; // pretend i did it.
@@ -892,8 +894,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 				if (spillId < 0) return true;
 
-				Path snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
-				Path indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
+				snapFile = mapOutputFile.getSpillFile(this.taskid, spillId);
+				indexFile = mapOutputFile.getSpillIndexFile(this.taskid, spillId);
 
 				FSDataInputStream indexIn = localFs.open(indexFile);
 				FSDataInputStream dataIn  = localFs.open(snapFile);
@@ -908,11 +910,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 				
 				LOG.info("JBuffer: DONE. snapshot request " + taskid);
-				if (reset) {
-					reset(true);
-					localFs.delete(snapFile, true);
-					localFs.delete(indexFile, true);
-				}
 			}
 			LOG.info("JBuffer: done with snapshot. " + taskid);
 			return true;
@@ -920,6 +917,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			t.printStackTrace();
 			LOG.info("JBuffer: snapshot " + taskid + " interrupted by " + t);
 			return false; // Turn off snapshots.
+		}
+		finally {
+			if (reset) {
+				reset(true);
+				if (snapFile != null) localFs.delete(snapFile, true);
+				if (indexFile != null) localFs.delete(indexFile, true);
+			}
 		}
 	}
 	
