@@ -105,7 +105,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						long starttime = java.lang.System.currentTimeMillis();
 						try {
 								long sortstart = java.lang.System.currentTimeMillis();
-								sortAndSpill();
+								if (kvend != kvindex) {
+									sortAndSpill();
+								}
 								LOG.debug("SpillThread: sort/spill time " + 
 										((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
 						} catch (Throwable e) {
@@ -946,15 +948,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	public synchronized void flush() throws IOException {
-		pipelineThread.close();
-		mergeThread.close();
-		spillThread.close();
-		
 		if (numSpills == 0 && kvend == kvindex) {
 			try {
 				Path finalOut = mapOutputFile.getOutputFile(this.taskid);
 				if (localFs.exists(finalOut)) {
 					LOG.warn("JBuffer: no flush needed for buffer " + taskid);
+					pipelineThread.close();
+					mergeThread.close();
+					spillThread.close();
 					return;
 				}
 			} catch (IOException e) {
@@ -962,7 +963,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		
+		pipelineThread.close();
+		mergeThread.close();
+		
 		synchronized (spillLock) {
+			spillThread.close();
 			while (this.spillThread.isSpilling()) {
 				try {
 					spillLock.wait();
