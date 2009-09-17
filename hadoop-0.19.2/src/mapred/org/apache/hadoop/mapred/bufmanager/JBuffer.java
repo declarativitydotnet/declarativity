@@ -878,19 +878,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true; // pretend i did it.
 			}
 
-			if (numSpills == 0) {
-				synchronized (spillLock) {
-					spillThread.doSpill();
-					while (kvstart != kvend) {
-						reporter.progress();
-						try {
-							spillLock.wait();
-						} catch (InterruptedException e) { }
-					}
-				}
-			}
-			
 			synchronized (mergeLock) {
+				if (numSpills == 0) return true;
 
 				LOG.info("JBuffer: snapshot merge parts.");
 				
