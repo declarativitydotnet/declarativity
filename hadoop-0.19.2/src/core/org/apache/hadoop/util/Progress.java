@@ -26,6 +26,7 @@ import java.util.ArrayList;
  * sub-phases are created by calling {@link #addPhase()}.
  */
 public class Progress {
+	private float[] weights = null;
   private String status = "";
   private float progress;
   private int currentPhase;
@@ -36,6 +37,15 @@ public class Progress {
   /** Creates a new root node. */
   public Progress() {}
 
+  public void setWeight(float[] weights) {
+	  if (weights.length == phases.size()) {
+		  float sum = 0f;
+		  for (int i = 0; i < weights.length; i++) {
+			  sum += weights[i];
+		  }
+		  this.weights = weights;
+	  }
+  }
   /** Adds a named node to the tree. */
   public Progress addPhase(String status) {
     Progress phase = addPhase();
@@ -98,14 +108,23 @@ public class Progress {
 
   /** Computes progress in this node. */
   private synchronized float getInternal() {
-    int phaseCount = phases.size();
-    if (phaseCount != 0) {
-      float subProgress =
-        currentPhase < phaseCount ? phase().getInternal() : 0.0f;
-      return progressPerPhase*(currentPhase + subProgress);
-    } else {
-      return progress;
-    }
+	  int phaseCount = phases.size();
+	  if (phaseCount != 0) {
+		  if (weights != null) {
+			  float weightedProgress = 0f;
+			  for (int i = 0; i < weights.length; i++) {
+				  weightedProgress += (phases.get(i).progress * weights[i]);
+			  }
+			  return weightedProgress;
+		  }
+		  else {
+			  float subProgress =
+				  currentPhase < phaseCount ? phase().getInternal() : 0.0f;
+				  return progressPerPhase*(currentPhase + subProgress);
+		  }
+	  } else {
+		  return progress;
+	  }
   }
 
   public synchronized void setStatus(String status) {

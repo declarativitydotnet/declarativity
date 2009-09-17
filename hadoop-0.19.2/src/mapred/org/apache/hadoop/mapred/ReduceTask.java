@@ -323,6 +323,9 @@ public class ReduceTask extends Task {
 	      runTaskCleanupTask(umbilical);
 	      return;
 	    }
+	    
+	    float [] weights = {0.63f, 0.33f};
+	    getProgress().setWeight(weights);
 
 		
 		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
