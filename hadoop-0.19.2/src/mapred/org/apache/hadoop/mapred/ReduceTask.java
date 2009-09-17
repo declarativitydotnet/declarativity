@@ -299,15 +299,6 @@ public class ReduceTask extends Task {
 	
 	
 	@Override
-	public void setProgress(float progress) {
-		super.setProgress(progress);
-		synchronized (this) {
-			this.notifyAll();
-		}
-	}
-
-
-	@Override
 	@SuppressWarnings("unchecked")
 	public void run(JobConf job, final TaskUmbilicalProtocol umbilical, final BufferUmbilicalProtocol bufferUmbilical)
 	throws IOException {
