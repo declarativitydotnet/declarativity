@@ -138,6 +138,7 @@ public class ReduceTask extends Task {
 	protected CompressionCodec codec;
 	protected JBuffer buffer = null;
 	private boolean snapshots = false;
+	private float snapshotThreshold = 1f;
 
 
 
@@ -328,6 +329,10 @@ public class ReduceTask extends Task {
 		buffer.setProgress(copyPhase);
 		
 		this.snapshots = job.getBoolean("mapred.job.snapshots", false);
+		if (this.snapshots) {
+			int interval = job.getInt("mapred.snapshot.interval", 3);
+			this.snapshotThreshold = 1 / (float) interval;
+		}
 		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, snapshots);
 		sink.open();
 		
@@ -355,7 +360,8 @@ public class ReduceTask extends Task {
 		this.buffer = buffer;
 		synchronized (this) {
 			while(!sink.complete()) {
-				if (getProgress().get() > 0) {
+				if (getProgress().get() > snapshotThreshold) {
+					snapshotThreshold *= 2.0f;
 					snapshot(true);
 				}
 				try { this.wait();
