@@ -236,6 +236,7 @@ public class ReduceTask extends Task {
 	private boolean snapshot(boolean save) throws IOException {
 		Path data = null;
 		Path index = null;
+		float currentProgress = buffer.getProgress().get();
 		
 		buffer.flush();
 		if (save) {
@@ -252,11 +253,11 @@ public class ReduceTask extends Task {
 			if (buffer.canSnapshot()) {
 				buffer.reset(true); // Restart for reduce output.
 				snapshotReduce(buffer);
-				buffer.getProgress().set(getProgress().get());
+				buffer.getProgress().set(currentProgress);
 				buffer.snapshot(); // Send reduce snapshot result
 			}
 			else {
-				String snapshotName = getSnapshotOutputName(getPartition(), getProgress().get());
+				String snapshotName = getSnapshotOutputName(getPartition(), currentProgress);
 				FileSystem fs = FileSystem.get(conf);
 				final RecordWriter out = 
 					conf.getOutputFormat().getRecordWriter(fs, conf, snapshotName, null);  
@@ -269,6 +270,7 @@ public class ReduceTask extends Task {
 				};
 				buffer.flush();
 				snapshotReduce(collector);
+				System.err.println("ReduceTask: snapshot created. file " + snapshotName);
 			}
 			return true;
 		} catch (IOException e) {
@@ -364,7 +366,7 @@ public class ReduceTask extends Task {
 		this.buffer = buffer;
 		synchronized (this) {
 			while(!sink.complete()) {
-				if (getProgress().get() > snapshotThreshold) {
+				if (buffer.getProgress().get() > snapshotThreshold) {
 					snapshotThreshold *= 2.0f;
 					snapshot(true);
 				}
