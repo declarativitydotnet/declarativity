@@ -240,7 +240,7 @@ public class ReduceTask extends Task {
 	private boolean snapshot(boolean save) throws IOException {
 		Path data = null;
 		Path index = null;
-		Progress currentProgress = buffer.getProgress();
+		float currentProgress = buffer.getProgress().get();
 		
 		buffer.flush();
 		if (save) {
@@ -257,11 +257,11 @@ public class ReduceTask extends Task {
 			if (buffer.canSnapshot()) {
 				buffer.reset(true); // Restart for reduce output.
 				reduce(buffer, null, null);
-				buffer.setProgress(currentProgress);
+				buffer.getProgress().set(currentProgress);
 				buffer.snapshot(); // Send reduce snapshot result
 			}
 			else {
-				String snapshotName = getSnapshotOutputName(getPartition(), currentProgress.get());
+				String snapshotName = getSnapshotOutputName(getPartition(), currentProgress);
 				FileSystem fs = FileSystem.get(conf);
 				final RecordWriter out = 
 					conf.getOutputFormat().getRecordWriter(fs, conf, snapshotName, null);  
@@ -282,10 +282,7 @@ public class ReduceTask extends Task {
 			return false; // I can recover from this.
 		} finally {
 			buffer.reset(true);
-			if (save) {
-				buffer.spill(data, index, false);
-				buffer.setProgress(currentProgress);
-			}
+			if (save) buffer.spill(data, index, false);
 		}
 	}
 	
