@@ -274,6 +274,7 @@ public class ReduceTask extends Task {
 				};
 				buffer.flush();
 				reduce(collector, null, null);
+				out.close(null);
 				System.err.println("ReduceTask: snapshot created. file " + snapshotName);
 			}
 			return true;
