@@ -142,7 +142,7 @@ public class ReduceTask extends Task {
 	private boolean reducePipeline = false;
 	
 	private boolean snapshots = false;
-	private float snapshotThreshold = 1f;
+	private float   snapshotThreshold = 1f;
 	private boolean isSnapshotting = false;
 	
 
@@ -340,14 +340,14 @@ public class ReduceTask extends Task {
 		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		buffer.setProgress(copyPhase);
 		
-		mapPipeline    = job.getBoolean("mapred.map.pipeline", false);
-		reducePipeline = job.getBoolean("mapred.reduce.pipeline", false);
-		snapshots      = job.getBoolean("mapred.job.snapshots", false);
-		if (this.snapshots) {
-			int interval = job.getInt("mapred.snapshot.interval", 3);
-			this.snapshotThreshold = 1 / (float) interval;
-		}
-		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, snapshots && !mapPipeline);
+		mapPipeline      = job.getBoolean("mapred.map.pipeline", false);
+		reducePipeline   = job.getBoolean("mapred.reduce.pipeline", false);
+		snapshots        = job.getBoolean("mapred.job.snapshots", false);
+		
+		int snapshotInterval = job.getInt("mapred.snapshot.interval", -1);
+		snapshotThreshold = snapshotInterval < 0 ? 1f : 1 / (float) snapshotInterval;
+		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, 
+				                           snapshots && snapshotInterval < 0);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
@@ -378,7 +378,7 @@ public class ReduceTask extends Task {
 		this.buffer = buffer;
 		synchronized (this) {
 			while(!sink.complete()) {
-				if (mapPipeline && buffer.getProgress().get() > snapshotThreshold) {
+				if (buffer.getProgress().get() > snapshotThreshold) {
 					snapshotThreshold *= 2.0f;
 					isSnapshotting = true;
 					try { snapshot(true);
@@ -433,7 +433,6 @@ public class ReduceTask extends Task {
 				@SuppressWarnings("unchecked")
 				public void collect(Object key, Object value)
 				throws IOException {
-					System.err.println("ReduceOutput (final): key " + key + " value " + value);
 					out.write(key, value);
 					reduceOutputCounter.increment(1);
 					// indicate that progress update needs to be sent
