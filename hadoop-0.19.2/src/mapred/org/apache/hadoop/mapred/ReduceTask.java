@@ -331,12 +331,13 @@ public class ReduceTask extends Task {
 		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		buffer.setProgress(copyPhase);
 		
+		boolean pipeline = job.getBoolean("mapred.map.tasks.pipeline.execution", false);
 		this.snapshots = job.getBoolean("mapred.job.snapshots", false);
 		if (this.snapshots) {
 			int interval = job.getInt("mapred.snapshot.interval", 3);
 			this.snapshotThreshold = 1 / (float) interval;
 		}
-		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, snapshots);
+		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, !pipeline);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
