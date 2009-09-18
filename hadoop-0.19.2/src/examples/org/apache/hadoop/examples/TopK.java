@@ -149,7 +149,7 @@ public class TopK extends Configured implements Tool {
 		          	wordcountJob.setInt("mapred.snapshot.interval", interval);
 		          	topkJob.setInt("mapred.snapshot.interval", interval);
 		          	wordcountJob.setBoolean("mapred.map.tasks.pipeline.execution", true);
-		          	topkJob.setBoolean("mapred.map.tasks.pipeline.execution", true);
+		          	topkJob.setBoolean("mapred.map.tasks.pipeline.execution", false);
 		        	pipeline = true;
 		          } else if ("-p".equals(args[i])) {
 		    		pipeline = true;
