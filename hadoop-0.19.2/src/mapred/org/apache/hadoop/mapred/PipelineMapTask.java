@@ -232,12 +232,12 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 	
 	@Override
-	public synchronized boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
-		if (buffer.canSnapshot() == false) {
-			return true;
-		}
+	public boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
+		synchronized (this) {
+			if (buffer.canSnapshot() == false) {
+				return true;
+			}
 		
-		synchronized (buffer) {
 			isSnapshotting = true;
 			try {
 				LOG.debug("PipelineMapTask: " + getTaskID() + " perform snapshot. progress = " + progress);

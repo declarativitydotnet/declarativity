@@ -235,8 +235,8 @@ public class ReduceTask extends Task {
 	}
 	
 	@Override
-	public synchronized boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
-		synchronized (buffer) {
+	public boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
+		synchronized (this) {
 			this.isSnapshotting = true;
 			try {
 				OutputCollector collector = null;
@@ -373,12 +373,10 @@ public class ReduceTask extends Task {
 			while(!sink.complete()) {
 				if (buffer.getProgress().get() > snapshotThreshold) {
 					snapshotThreshold *= 2.0f;
-					synchronized (buffer) {
-						isSnapshotting = true;
-						try { snapshot(true);
-						} finally {
-							isSnapshotting = false;
-						}
+					isSnapshotting = true;
+					try { snapshot(true);
+					} finally {
+						isSnapshotting = false;
 					}
 				}
 				try { this.wait();
