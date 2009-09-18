@@ -392,6 +392,10 @@ public abstract class Task implements Writable, Configurable {
   public boolean snapshots(List<JBufferRun> runs, float progress) throws IOException {
 	  throw new IOException("Task: snapshot not configured!");
   }
+  
+  public boolean isSnapshotting() {
+	  return false;
+  }
 
   public Progress getProgress() { return taskProgress; }
   

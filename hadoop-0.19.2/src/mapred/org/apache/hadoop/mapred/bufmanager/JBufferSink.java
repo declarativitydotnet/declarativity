@@ -475,6 +475,58 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		}
 		
+		private void 
+		spill(IFile.Reader<K, V> reader, long length, Class<K> keyClass, Class<V> valClass, CompressionCodec codec) 
+		throws IOException {
+			// Spill directory to disk
+			Path filename      = outputFileManager.getOutputFileForWrite(id(), progress == 1f, length);
+			Path indexFilename = outputFileManager.getOutputIndexFileForWrite(id(), progress == 1f, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+
+			FSDataOutputStream out      = localFs.create(filename, false);
+			FSDataOutputStream indexOut = localFs.create(indexFilename, false);
+
+			if (out == null || indexOut == null) 
+				throw new IOException("Unable to create spill file " + filename);
+
+			IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
+			DataInputBuffer key = new DataInputBuffer();
+			DataInputBuffer value = new DataInputBuffer();
+			try {
+				/* Copy over the data until done. */
+				while (reader.next(key, value)) {
+					writer.append(key, value);
+				}
+				writer.close();
+				out.close();
+
+				/* Write the index file. */
+				indexOut.writeLong(0);
+				indexOut.writeLong(writer.getRawLength());
+				indexOut.writeLong(out.getPos());
+
+				/* Close everything. */
+				indexOut.flush();
+				indexOut.close();
+
+				JBufferCollector<K, V> buffer = sink.buffer();
+				/* Register the spill file with the buffer. */
+				synchronized (buffer) {
+					buffer.spill(filename, indexFilename, false);
+				}
+			} catch (Throwable e) {
+				LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
+				e.printStackTrace();
+			}
+			finally {
+				if (localFs.exists(filename)) {
+					LOG.warn(filename + " still exists!");
+				}
+				if (localFs.exists(indexFilename)) {
+					LOG.warn(indexFilename + " still exists!");
+				}
+			}
+		}
+		
 		public void run() {
 			try {
 				DataInputBuffer key = new DataInputBuffer();
@@ -527,61 +579,28 @@ public class JBufferSink<K extends Object, V extends Object> {
 							return; // don't care
 						}
 					} else {
-						if (sink.buffer().reserve(length)) {
-							try {
-								while (reader.next(key, value)) {
-									this.sink.buffer().collect(key, value);
-								}
-							} catch (ChecksumException e) {
-								LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
-							}
-							finally {
-								sink.buffer().unreserve(length);
-							}
-						} else {
-							// Spill directory to disk
-							Path filename      = outputFileManager.getOutputFileForWrite(id(), progress == 1f, length);
-							Path indexFilename = outputFileManager.getOutputIndexFileForWrite(id(), progress == 1f, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
-
-							FSDataOutputStream out      = localFs.create(filename, false);
-							FSDataOutputStream indexOut = localFs.create(indexFilename, false);
-
-							if (out == null || indexOut == null) 
-								throw new IOException("Unable to create spill file " + filename);
-
-							IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
-							try {
-								/* Copy over the data until done. */
-								while (reader.next(key, value)) {
-									writer.append(key, value);
-								}
-								writer.close();
-								out.close();
-
-								/* Write the index file. */
-								indexOut.writeLong(0);
-								indexOut.writeLong(writer.getRawLength());
-								indexOut.writeLong(out.getPos());
-
-								/* Close everything. */
-								indexOut.flush();
-								indexOut.close();
-
-								/* Register the spill file with the buffer. */
-								this.sink.buffer().spill(filename, indexFilename, false);
-
-							} catch (Throwable e) {
-								LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
-								e.printStackTrace();
-							}
-							finally {
-								if (localFs.exists(filename)) {
-									LOG.warn(filename + " still exists!");
-								}
-								if (localFs.exists(indexFilename)) {
-									LOG.warn(indexFilename + " still exists!");
+						if (sink.task.isSnapshotting()) {
+							/* Drain socket while task is snapshotting. */
+							spill(reader, length, keyClass, valClass, codec);
+						} else { 
+							boolean doSpill = true;
+							JBufferCollector<K, V> buffer = sink.buffer();
+							synchronized (buffer) {
+								if (sink.buffer().reserve(length)) {
+									try {
+										while (reader.next(key, value)) {
+											this.sink.buffer().collect(key, value);
+										}
+									} catch (ChecksumException e) {
+										LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
+									}
+									finally {
+										sink.buffer().unreserve(length);
+										doSpill = false;
+									}
 								}
 							}
+							if (doSpill) spill(reader, length, keyClass, valClass, codec);
 						}
 					}
 					
