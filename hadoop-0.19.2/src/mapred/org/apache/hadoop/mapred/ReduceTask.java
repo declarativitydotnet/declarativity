@@ -282,7 +282,10 @@ public class ReduceTask extends Task {
 			return false; // I can recover from this.
 		} finally {
 			buffer.reset(true);
-			if (save) buffer.spill(data, index, false);
+			if (save) {
+				buffer.spill(data, index, false);
+				buffer.setProgress(currentProgress);
+			}
 		}
 	}
 	
