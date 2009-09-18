@@ -378,7 +378,7 @@ public class ReduceTask extends Task {
 		this.buffer = buffer;
 		synchronized (this) {
 			while(!sink.complete()) {
-				if (buffer.getProgress().get() > snapshotThreshold) {
+				if (mapPipeline && buffer.getProgress().get() > snapshotThreshold) {
 					snapshotThreshold *= 2.0f;
 					isSnapshotting = true;
 					try { snapshot(true);
