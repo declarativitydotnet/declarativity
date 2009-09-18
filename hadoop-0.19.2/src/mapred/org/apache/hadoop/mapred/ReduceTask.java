@@ -324,7 +324,7 @@ public class ReduceTask extends Task {
 	      return;
 	    }
 	    
-	    float [] weights = {0.63f, 0.33f};
+	    float [] weights = {0.75f, 0.25f};
 	    getProgress().setWeight(weights);
 
 		
