@@ -159,8 +159,10 @@ public class TopK extends Configured implements Tool {
 		        	pipeline = true;
 		          } else if ("-p".equals(args[i])) {
 		    		pipeline = true;
-		        	wordcountJob.setBoolean("mapred.map.tasks.pipeline.execution", true);
-		          	topkJob.setBoolean("mapred.map.tasks.pipeline.execution", true);
+		          	wordcountJob.setBoolean("mapred.map.pipeline", true);
+		          	wordcountJob.setBoolean("mapred.reduce.pipeline", true);
+		          	topkJob.setBoolean("mapred.map.pipeline", true);
+		          	topkJob.setBoolean("mapred.reduce.pipeline", false);
 		    	  } else if ("-m".equals(args[i])) {
 		    		  wordcountJob.setNumMapTasks(Integer.parseInt(args[++i]));
 		    	  } else if ("-r".equals(args[i])) {
