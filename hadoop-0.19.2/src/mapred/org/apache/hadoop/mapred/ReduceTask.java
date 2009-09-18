@@ -137,6 +137,10 @@ public class ReduceTask extends Task {
 	protected int numMaps;
 	protected CompressionCodec codec;
 	protected JBuffer buffer = null;
+	
+	private boolean mapPipeline = false;
+	private boolean reducePipeline = false;
+	
 	private boolean snapshots = false;
 	private float snapshotThreshold = 1f;
 
@@ -184,7 +188,7 @@ public class ReduceTask extends Task {
 	public boolean isPipeline() {
 		if (!(jobCleanup || jobSetup || taskCleanup)) {
 			return conf != null && 
-				   conf.getBoolean("mapred.job.snapshots", false);
+				   conf.getBoolean("mapred.reduce.pipeline", false);
 		}
 		return false;
 	}
@@ -252,7 +256,7 @@ public class ReduceTask extends Task {
 		try {
 			if (buffer.canSnapshot()) {
 				buffer.reset(true); // Restart for reduce output.
-				snapshotReduce(buffer);
+				reduce(buffer, null, null);
 				buffer.getProgress().set(currentProgress);
 				buffer.snapshot(); // Send reduce snapshot result
 			}
@@ -269,7 +273,7 @@ public class ReduceTask extends Task {
 					}
 				};
 				buffer.flush();
-				snapshotReduce(collector);
+				reduce(collector, null, null);
 				System.err.println("ReduceTask: snapshot created. file " + snapshotName);
 			}
 			return true;
@@ -279,24 +283,6 @@ public class ReduceTask extends Task {
 		} finally {
 			buffer.reset(true);
 			if (save) buffer.spill(data, index, false);
-		}
-	}
-	
-	private void snapshotReduce(OutputCollector collector) throws IOException {
-		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);
-		// apply reduce function
-		try {
-			ValuesIterator values = buffer.iterator();
-			while (values.more()) {
-				reducer.reduce(values.getKey(), values, collector, null);
-				values.nextKey();
-			}
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-		finally {
-			//Clean up: repeated in catch block below
-			reducer.close();
 		}
 	}
 	
@@ -333,13 +319,14 @@ public class ReduceTask extends Task {
 		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		buffer.setProgress(copyPhase);
 		
-		boolean pipeline = job.getBoolean("mapred.map.tasks.pipeline.execution", false);
-		this.snapshots = job.getBoolean("mapred.job.snapshots", false);
+		mapPipeline    = job.getBoolean("mapred.map.pipeline", false);
+		reducePipeline = job.getBoolean("mapred.reduce.pipeline", false);
+		snapshots      = job.getBoolean("mapred.job.snapshots", false);
 		if (this.snapshots) {
 			int interval = job.getInt("mapred.snapshot.interval", 3);
 			this.snapshotThreshold = 1 / (float) interval;
 		}
-		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, !pipeline);
+		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, snapshots && !mapPipeline);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
@@ -355,6 +342,7 @@ public class ReduceTask extends Task {
 			reduce(job, reporter, buffer);
 		} finally {
 			reducePhase.complete();
+			if (reducePipeline) bufferUmbilical.commit(getTaskID());
 			buffer.free();
 		}
 		
@@ -379,60 +367,52 @@ public class ReduceTask extends Task {
 		copyPhase.complete();
 	}
 	
-	protected void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
-		setPhase(TaskStatus.Phase.REDUCE); 
-
-		// make output collector
-		String finalName = getOutputName(getPartition());
-
-		FileSystem fs = FileSystem.get(job);
-
-		final RecordWriter out = 
-			job.getOutputFormat().getRecordWriter(fs, job, finalName, reporter);  
-
-		OutputCollector collector = new OutputCollector() {
-			@SuppressWarnings("unchecked")
-			public void collect(Object key, Object value)
-			throws IOException {
-				out.write(key, value);
-				reduceOutputCounter.increment(1);
-				// indicate that progress update needs to be sent
-				reporter.progress();
-			}
-		};
-		System.err.println("ReduceTask: create final output file " + finalName);
-		
-		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
+	private void reduce(OutputCollector collector, Reporter reporter, Progress progress) throws IOException {
+		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);
 		// apply reduce function
 		try {
-		      Class keyClass = job.getMapOutputKeyClass();
-		      Class valClass = job.getMapOutputValueClass();
-		      int count = 0;
-		      
-		      ValuesIterator values = buffer.iterator();
-		      while (values.more()) {
-		    	  count++;
-		        reducer.reduce(values.getKey(), values, collector, reporter);
-		        values.nextKey();
-		        
-		        reducePhase.set(values.getProgress().get());
-		        reporter.progress();
-		      }
-		      System.err.println("Total record count in final reduce = " + count);
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-			throw ioe;
+			ValuesIterator values = buffer.iterator();
+			while (values.more()) {
+				reducer.reduce(values.getKey(), values, collector, reporter);
+				values.nextKey();
+				
+		        if (progress != null) progress.set(values.getProgress().get());
+		        if (reporter != null) reporter.progress();
+			}
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
 		finally {
 			//Clean up: repeated in catch block below
-			try {
-				reducer.close();
-				buffer.close();
-				out.close(reporter);
-				System.err.println("ReduceTask: finalized output.");
-			} catch (IOException ignored) { ignored.printStackTrace(); }
+			reducer.close();
+		}
+	}
+	
+	private void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
+		setPhase(TaskStatus.Phase.REDUCE); 
+		
+		if (reducePipeline) {
+			reduce(buffer, reporter, reducePhase);
+			buffer.close();
+		}
+		else {
+			// make output collector
+			String finalName = getOutputName(getPartition());
+			FileSystem fs = FileSystem.get(job);
+			final RecordWriter out = job.getOutputFormat().getRecordWriter(fs, job, finalName, reporter);  
+			OutputCollector collector = new OutputCollector() {
+				@SuppressWarnings("unchecked")
+				public void collect(Object key, Object value)
+				throws IOException {
+					out.write(key, value);
+					reduceOutputCounter.increment(1);
+					// indicate that progress update needs to be sent
+					reporter.progress();
+				}
+			};
+			System.err.println("ReduceTask: create final output file " + finalName);
+			reduce(collector, reporter, reducePhase);
+			out.close(reporter);
 		}
 	}
 }
