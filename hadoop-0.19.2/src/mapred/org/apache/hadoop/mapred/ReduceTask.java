@@ -359,7 +359,10 @@ public class ReduceTask extends Task {
 			reduce(job, reporter, buffer);
 		} finally {
 			reducePhase.complete();
-			if (reducePipeline) bufferUmbilical.commit(getTaskID());
+			if (reducePipeline) {
+				System.err.println("Reduce: register buffer " + getTaskID());
+				bufferUmbilical.commit(getTaskID());
+			}
 			buffer.free();
 		}
 		
