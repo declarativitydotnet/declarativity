@@ -384,7 +384,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void updateProgress() {
-		synchronized (this) {
+		synchronized (task) {
 			float progress = (float) this.successful.size();
 			for (List<Connection> clist : connections.values()) {
 				float max = 0f;
@@ -394,6 +394,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				progress += max;
 			}
 			collector.getProgress().set(progress / (float) numConnections);
+			task.notifyAll();
 		}
 	}
 	
@@ -586,7 +587,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					sink.updateProgress();
 					if (progress == 1.0f) return;
-					else if (sink.snapshots) sink.task.notifyAll();
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
