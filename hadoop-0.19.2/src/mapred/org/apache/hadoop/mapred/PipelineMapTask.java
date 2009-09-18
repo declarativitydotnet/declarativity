@@ -114,6 +114,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	
 	private Object valObject = null;
 	
+	private boolean isSnapshotting = false;
+	
 	public PipelineMapTask() {
 		super();
 	}
@@ -125,6 +127,11 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	@Override
 	public boolean isPipeline() {
 		return !(jobCleanup || jobSetup || taskCleanup);
+	}
+	
+	@Override
+	public boolean isSnapshotting() {
+		return this.isSnapshotting;
 	}
 	
 	public TaskID pipelineReduceTask(JobConf job) {
@@ -230,12 +237,19 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			return true;
 		}
 		
-		LOG.debug("PipelineMapTask: " + getTaskID() + " perform snapshot. progress = " + progress);
-		for (JBufferSink.JBufferRun run : runs) {
-			run.spill(buffer);
+		synchronized (buffer) {
+			isSnapshotting = true;
+			try {
+				LOG.debug("PipelineMapTask: " + getTaskID() + " perform snapshot. progress = " + progress);
+				for (JBufferSink.JBufferRun run : runs) {
+					run.spill(buffer);
+				}
+				this.buffer.getProgress().set(progress);
+				return this.buffer.snapshot();
+			} finally {
+				isSnapshotting = false;
+			}
 		}
-		this.buffer.getProgress().set(progress);
-		return this.buffer.snapshot();
 	}
 	
 	@Override

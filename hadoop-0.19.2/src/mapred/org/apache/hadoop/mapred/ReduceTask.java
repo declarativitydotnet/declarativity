@@ -143,7 +143,13 @@ public class ReduceTask extends Task {
 	
 	private boolean snapshots = false;
 	private float snapshotThreshold = 1f;
+	private boolean isSnapshotting = false;
+	
 
+	@Override
+	public boolean isSnapshotting() {
+		return this.isSnapshotting;
+	}
 
 
 	{ 
@@ -230,11 +236,18 @@ public class ReduceTask extends Task {
 	
 	@Override
 	public synchronized boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
-		OutputCollector collector = null;
-		for (JBufferSink.JBufferRun run : runs) {
-			run.spill(buffer);
+		synchronized (buffer) {
+			this.isSnapshotting = true;
+			try {
+				OutputCollector collector = null;
+				for (JBufferSink.JBufferRun run : runs) {
+					run.spill(buffer);
+				}
+				return snapshot(false);
+			} finally {
+				isSnapshotting = false;
+			}
 		}
-		return snapshot(false);
 	}
 	
 	private boolean snapshot(boolean save) throws IOException {
@@ -360,7 +373,13 @@ public class ReduceTask extends Task {
 			while(!sink.complete()) {
 				if (buffer.getProgress().get() > snapshotThreshold) {
 					snapshotThreshold *= 2.0f;
-					snapshot(true);
+					synchronized (buffer) {
+						isSnapshotting = true;
+						try { snapshot(true);
+						} finally {
+							isSnapshotting = false;
+						}
+					}
 				}
 				try { this.wait();
 				} catch (InterruptedException e) { }
