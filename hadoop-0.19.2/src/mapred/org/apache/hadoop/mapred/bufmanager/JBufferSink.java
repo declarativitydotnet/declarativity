@@ -63,7 +63,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		public boolean valid() {
-			return this.snapshot != null;
+			return this.snapshot != null && length > 0;
 		}
 		
 		/**
@@ -76,10 +76,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 		 */
 		public void spill(JBuffer buffer) throws IOException {
 			synchronized (this) {
-				if (snapshot != null && length > 0) {
-					buffer.spill(snapshot, index, true);
-					fresh = false;
+				if (!valid()) {
+					throw new IOException("JBufferRun not valid!");
 				}
+				buffer.spill(snapshot, index, true);
+				fresh = false;
 			}
 		}
 		
