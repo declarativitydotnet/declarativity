@@ -400,22 +400,25 @@ public class ReduceTask extends Task {
 				reporter.progress();
 			}
 		};
+		System.err.println("ReduceTask: create final output file " + finalName);
 		
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(job.getReducerClass(), job);
 		// apply reduce function
 		try {
 		      Class keyClass = job.getMapOutputKeyClass();
 		      Class valClass = job.getMapOutputValueClass();
+		      int count = 0;
 		      
 		      ValuesIterator values = buffer.iterator();
 		      while (values.more()) {
+		    	  count++;
 		        reducer.reduce(values.getKey(), values, collector, reporter);
 		        values.nextKey();
 		        
 		        reducePhase.set(values.getProgress().get());
 		        reporter.progress();
 		      }
-		      
+		      System.err.println("Total record count in final reduce = " + count);
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
 			throw ioe;
@@ -428,7 +431,8 @@ public class ReduceTask extends Task {
 				reducer.close();
 				buffer.close();
 				out.close(reporter);
-			} catch (IOException ignored) {}
+				System.err.println("ReduceTask: finalized output.");
+			} catch (IOException ignored) { ignored.printStackTrace(); }
 		}
 	}
 }
