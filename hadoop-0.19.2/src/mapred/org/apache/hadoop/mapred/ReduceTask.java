@@ -433,6 +433,7 @@ public class ReduceTask extends Task {
 				@SuppressWarnings("unchecked")
 				public void collect(Object key, Object value)
 				throws IOException {
+					System.err.println("ReduceOutput (final): key " + key + " value " + value);
 					out.write(key, value);
 					reduceOutputCounter.increment(1);
 					// indicate that progress update needs to be sent
