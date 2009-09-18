@@ -234,7 +234,7 @@ public class MapTask extends Task {
 	    
 		if (numReduceTasks > 0) {
 			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-			if (job.getBoolean("mapred.map.tasks.pipeline.execution", false)) {
+			if (job.getBoolean("mapred.map.pipeline", false)) {
 				this.buffer.pipeline(true);
 			}
 			this.buffer.setProgress(getProgress());
