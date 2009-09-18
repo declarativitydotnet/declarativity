@@ -78,6 +78,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			synchronized (this) {
 				if (snapshot != null && length > 0) {
 					buffer.spill(snapshot, index, true);
+					fresh = false;
 				}
 			}
 		}
@@ -191,7 +192,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 						progress = 0f;
 						for (JBufferRun run : bufferRuns.values()) {
 							if (run.valid()) {
-								run.fresh = false;
 								progress += run.progress;
 								runs.add(run);
 							}
@@ -204,8 +204,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 					try {
 						if (!open) return;
 						LOG.info("SnapshotThread: " + reduceID + " perform snapshot. progress " + progress);
-						boolean keepSnapshots = task.snapshots(runs, progress);
-						if (!keepSnapshots) {
+						boolean keepSnapshotting = task.snapshots(runs, progress);
+						if (keepSnapshotting == false) {
 							interrupt();
 							return;
 						}

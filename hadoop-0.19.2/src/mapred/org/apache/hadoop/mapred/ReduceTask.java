@@ -236,6 +236,10 @@ public class ReduceTask extends Task {
 	
 	@Override
 	public boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
+		if (reducePipeline && !buffer.canSnapshot()) {
+			return true; // can't do it now but keep trying.
+		}
+		
 		synchronized (this) {
 			this.isSnapshotting = true;
 			try {
@@ -257,23 +261,23 @@ public class ReduceTask extends Task {
 		
 		buffer.flush();
 		if (save) {
-			data = mapOutputFile.getOutputFile(getTaskID());
-			index = mapOutputFile.getOutputIndexFile(getTaskID());
-			Path saveData  = new Path(data.getParent(), getTaskID().toString() + "_snapshot.out");
-			Path saveIndex = new Path(index.getParent(), getTaskID().toString() + "_snapshotindex.out");
+			Path oldData = mapOutputFile.getOutputFile(getTaskID());
+			Path oldIndex = mapOutputFile.getOutputIndexFile(getTaskID());
+			data  = new Path(data.getParent(), getTaskID().toString() + "_snapshot.out");
+			index = new Path(index.getParent(), getTaskID().toString() + "_snapshotindex.out");
 			FileSystem localFs = FileSystem.getLocal(conf);
-			localFs.copyFromLocalFile(data, saveData);
-			localFs.copyFromLocalFile(index, saveIndex);
+			localFs.copyFromLocalFile(oldData, data);
+			localFs.copyFromLocalFile(oldIndex, index);
 		}
 		
 		try {
-			if (buffer.canSnapshot()) {
+			if (reducePipeline && buffer.canSnapshot()) {
 				buffer.reset(true); // Restart for reduce output.
 				reduce(buffer, null, null);
 				buffer.getProgress().set(currentProgress);
 				buffer.snapshot(); // Send reduce snapshot result
 			}
-			else {
+			else if (!reducePipeline) {
 				String snapshotName = getSnapshotOutputName(getPartition(), currentProgress);
 				FileSystem fs = FileSystem.get(conf);
 				final RecordWriter out = 
@@ -293,7 +297,7 @@ public class ReduceTask extends Task {
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
-			return false; // I can recover from this.
+			return true; 
 		} finally {
 			buffer.reset(true);
 			if (save) {
@@ -416,6 +420,7 @@ public class ReduceTask extends Task {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
 		if (reducePipeline) {
+			buffer.reset(true);
 			reduce(buffer, reporter, reducePhase);
 			buffer.close();
 		}
