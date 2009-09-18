@@ -125,6 +125,9 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 	
 	@Override
+	public int getNumberOfInputs() { return 1; }
+	
+	@Override
 	public boolean isPipeline() {
 		return !(jobCleanup || jobSetup || taskCleanup);
 	}
