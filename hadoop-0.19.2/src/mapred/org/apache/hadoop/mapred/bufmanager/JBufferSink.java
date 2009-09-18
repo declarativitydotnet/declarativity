@@ -66,6 +66,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 			return this.snapshot != null;
 		}
 		
+		/**
+		 * Spill the current snapshot to the buffer.
+		 * This method ensures that a consistent snapshot is spilled to
+		 * the buffer. We don't want the next snapshot interfering with
+		 * the buffer spill.
+		 * @param buffer
+		 * @throws IOException
+		 */
 		public void spill(JBuffer buffer) throws IOException {
 			synchronized (this) {
 				if (snapshot != null && length > 0) {
@@ -74,6 +82,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		}
 		
+		/**
+		 * Create a new snapshot.
+		 * @param reader Input data to be sent to the new snapshot.
+		 * @param length Length of the data.
+		 * @param progress Progress of this snapshot.
+		 * @throws IOException
+		 */
 		public void 
 		snapshot(IFile.Reader<K, V> reader, long length, float progress) 
 		throws IOException {
@@ -510,7 +525,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 				JBufferCollector<K, V> buffer = sink.buffer();
 				/* Register the spill file with the buffer. */
-				synchronized (buffer) {
+				synchronized (sink.task) {
 					buffer.spill(filename, indexFilename, false);
 				}
 			} catch (Throwable e) {
@@ -585,7 +600,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						} else { 
 							boolean doSpill = true;
 							JBufferCollector<K, V> buffer = sink.buffer();
-							synchronized (buffer) {
+							synchronized (sink.task) {
 								if (sink.buffer().reserve(length)) {
 									try {
 										while (reader.next(key, value)) {
