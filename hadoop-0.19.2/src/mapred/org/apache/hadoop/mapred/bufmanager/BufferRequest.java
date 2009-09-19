@@ -131,6 +131,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 
 		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
 		Path finalIndexFile = mapOutputFile.getOutputIndexFile(this.taskid);
+		
+		if (!localFS.exists(finalOutputFile)) {
+			throw new IOException("BufferRequest: file does not exist! " + finalOutputFile);
+		}
 
 		FSDataInputStream indexIn = localFS.open(finalIndexFile);
 		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
