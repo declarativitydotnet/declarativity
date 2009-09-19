@@ -1695,6 +1695,8 @@ public class TaskTracker
       if(tip == null)
          return -1;
       
+      if (tip.getTask().isPipeline()) return 0;
+      
       MapOutputFile mapOutputFile = new MapOutputFile();
       mapOutputFile.setJobId(taskId.getJobID());
       mapOutputFile.setConf(conf);
