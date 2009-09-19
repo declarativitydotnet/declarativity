@@ -386,12 +386,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 										LOG.error("JBufferSink: missing buffer runs!");
 									}
 									
-									for (JBufferRun run : bufferRuns.values()) {
-										if (run.progress < 1.0f) {
-											LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
-													  " progress = " + run.progress);
+									synchronized (task) {
+										for (JBufferRun run : bufferRuns.values()) {
+											if (run.progress < 1.0f) {
+												LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
+														" progress = " + run.progress);
+											}
+											run.spill(this.collector);
 										}
-										run.spill(this.collector);
 									}
 								}
 							}
@@ -607,6 +609,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					if (sink.snapshots()) {
 						try {
 							JBufferRun run = sink.getBufferRun(this.id.getTaskID());
+							System.err.println("New snapshot for buffer " + reduceID + " progress " + progress);
 							run.snapshot(reader, length, progress);
 							System.err.println("Created snapshot for buffer " + reduceID + " progress " + progress);
 						} catch (Throwable t) {
