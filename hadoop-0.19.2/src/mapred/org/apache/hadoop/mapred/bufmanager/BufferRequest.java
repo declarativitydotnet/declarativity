@@ -125,7 +125,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		flushFile(dataIn, segmentLength, progress);
 	}
 	
-	public void flushFinal() throws IOException {
+	private void flushFinal() throws IOException {
 		MapOutputFile mapOutputFile = new MapOutputFile(this.taskid.getJobID());
 		mapOutputFile.setConf(conf);
 
