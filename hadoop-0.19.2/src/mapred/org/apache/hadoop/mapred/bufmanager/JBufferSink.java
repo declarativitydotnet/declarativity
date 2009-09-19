@@ -347,13 +347,43 @@ public class JBufferSink<K extends Object, V extends Object> {
 		return this.reduceID;
 	}
 	
-	public void close() {
+	public synchronized void close() {
+		if (this.acceptor == null) return; // Already done.
+		System.err.println("JBufferSink: " + reduceID + " closing.");
 		try {
-			if (this.acceptor != null) acceptor.interrupt();
+			this.acceptor.interrupt();
 			this.server.close();
+			this.acceptor = null;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+
+		try {
+			if (snapshots) {
+				this.snapshotThread.close();
+				System.err.println("JBufferSink " + reduceID + " snapshot thread closed.");
+				synchronized (bufferRuns) {
+					if (bufferRuns.size() != successful.size()) {
+						LOG.error("JBufferSink: missing buffer runs!");
+					}
+
+					synchronized (task) {
+						for (JBufferRun run : bufferRuns.values()) {
+							System.err.println("JBufferSink " + reduceID + " apply run " + run.id);
+							if (run.progress < 1.0f) {
+								LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
+										" progress = " + run.progress);
+							}
+							run.spill(this.collector);
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally {
 		}
 	}
 	
@@ -382,49 +412,23 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void done(Connection connection) {
-		synchronized (this) {
-			TaskID taskid = connection.id().getTaskID();
-			if (this.connections.containsKey(taskid)) {
-				this.connections.get(taskid).remove(connection);
-				if (connection.progress() == 1.0f) {
-					this.successful.add(taskid);
+		try {
+			synchronized (this) {
+				TaskID taskid = connection.id().getTaskID();
+				if (this.connections.containsKey(taskid)) {
+					this.connections.get(taskid).remove(connection);
+					if (connection.progress() == 1.0f) {
+						this.successful.add(taskid);
 
-					for (Connection c : connections.get(taskid)) {
-						c.close();
-					}
-					connections.remove(taskid);
-				}
-				this.notifyAll();
-			}
-		}
-		
-		if (complete()) {
-			System.err.println("JBufferSink: " + reduceID + " done receiving.");
-			try {
-				if (snapshots) {
-					this.snapshotThread.close();
-					System.err.println("JBufferSink " + reduceID + " snapshot thread closed.");
-					synchronized (bufferRuns) {
-						if (bufferRuns.size() != successful.size()) {
-							LOG.error("JBufferSink: missing buffer runs!");
+						for (Connection c : connections.get(taskid)) {
+							c.close();
 						}
-						
-						synchronized (task) {
-							for (JBufferRun run : bufferRuns.values()) {
-								System.err.println("JBufferSink " + reduceID + " apply run " + run.id);
-								if (run.progress < 1.0f) {
-									LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
-											" progress = " + run.progress);
-								}
-								run.spill(this.collector);
-							}
-						}
+						connections.remove(taskid);
 					}
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
-			finally {
+		} finally {
+			if (complete()) {
 				synchronized (task) {
 					task.notifyAll();
 				}
