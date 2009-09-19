@@ -107,7 +107,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				this.snapshot = data;
 				this.index    = index;
 			}
-			snapshotThread.snapshot();
+			// snapshotThread.snapshot();
 		}
 		
 		private void write(IFile.Reader<K, V> in, FSDataOutputStream out, FSDataOutputStream index) throws IOException {
