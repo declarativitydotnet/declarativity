@@ -229,6 +229,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			setPhase(TaskStatus.Phase.MAP); 
 			collector.close();
 			bufferUmbilical.commit(getTaskID());
+			sink.close();
 		}
 
 		done(umbilical);
