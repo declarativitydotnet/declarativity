@@ -1393,6 +1393,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
 					 ". Output size = " + finalOutFileSize);
 			if (end - start == 1) {
+				if (localFs.exists(outputFile)) {
+					localFs.delete(outputFile, true);
+				}
+				if (localFs.exists(indexFile)) {
+					localFs.delete(indexFile, true);
+				}
 				LOG.info("JBuffer: rename " + filename[start] + " to " + outputFile);
 				localFs.rename(filename[start], outputFile); 
 				localFs.rename(indexFileName[start], indexFile); 
