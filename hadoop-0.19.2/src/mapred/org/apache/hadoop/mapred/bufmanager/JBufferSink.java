@@ -98,6 +98,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				runs++;
 				Path data = outputFileManager.getOutputRunFileForWrite(id, runs, 1096);
 				Path index = outputFileManager.getOutputRunIndexFileForWrite(id, runs, 1096);
+				System.err.println("NEW SNAPSHOT FILE " + data);
 				FSDataOutputStream out  = localFs.create(data);
 				FSDataOutputStream idx = localFs.create(index);
 				if (out == null) throw new IOException("Unable to create snapshot " + data);
