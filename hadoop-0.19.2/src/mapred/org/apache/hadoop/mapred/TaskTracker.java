@@ -994,6 +994,7 @@ public class TaskTracker
   public synchronized void shutdown() throws IOException {
     shuttingDown = true;
     close();
+    bufferController.interrupt();
     if (this.server != null) {
       try {
         LOG.info("Shutting down StatusHttpServer");
