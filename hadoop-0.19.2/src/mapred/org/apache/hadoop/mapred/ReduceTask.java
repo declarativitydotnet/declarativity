@@ -371,6 +371,7 @@ public class ReduceTask extends Task {
 				bufferUmbilical.commit(getTaskID());
 			}
 			buffer.free();
+			sink.close();
 		}
 		
 		done(umbilical);
