@@ -236,11 +236,13 @@ public class ReduceTask extends Task {
 	
 	@Override
 	public boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
-		if (reducePipeline && !buffer.canSnapshot()) {
-			return true; // can't do it now but keep trying.
+		float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
+
+		if (progress > maxProgress) {
+			return false; // we're done now.
 		}
-		else if (progress > 0.9f) {
-			return false; // turn off snapshots at the point.
+		else if (reducePipeline && !buffer.canSnapshot()) {
+			return true; // can't do it now but keep trying.
 		}
 		
 		synchronized (this) {
@@ -292,7 +294,6 @@ public class ReduceTask extends Task {
 						out.write(key, value);
 					}
 				};
-				buffer.flush();
 				reduce(collector, null, null);
 				out.close(null);
 				System.err.println("ReduceTask: snapshot created. file " + snapshotName);
