@@ -280,6 +280,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		if (snapshots) {
 			this.snapshotThread = new SnapshotThread();
 			this.snapshotThread.setDaemon(true);
+			this.snapshotThread.setPriority(Thread.MAX_PRIORITY);
 			this.snapshotThread.start();
 		}
 		
@@ -354,7 +355,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 	 */
 	public synchronized void close() {
 		if (this.acceptor == null) return; // Already done.
-		System.err.println("JBufferSink: " + reduceID + " closing.");
 		try {
 			this.acceptor.interrupt();
 			this.server.close();
@@ -365,11 +365,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 
 		try {
-			System.err.println("JBufferSink: " + reduceID + " snapshots? " + snapshots + ".");
 			if (snapshots) {
-				System.err.println("JBufferSink " + reduceID + " closeing snapshot thread.");
 				this.snapshotThread.close();
-				System.err.println("JBufferSink " + reduceID + " snapshot thread closed.");
+				LOG.info("JBufferSink " + reduceID + " snapshot thread closed.");
 				synchronized (bufferRuns) {
 					if (bufferRuns.size() != successful.size()) {
 						LOG.error("JBufferSink: missing buffer runs!");
@@ -377,7 +375,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 					synchronized (task) {
 						for (JBufferRun run : bufferRuns.values()) {
-							System.err.println("JBufferSink " + reduceID + " apply run " + run.id);
+							LOG.info("JBufferSink " + reduceID + " apply run " + run.id);
 							if (run.progress < 1.0f) {
 								LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
 										" progress = " + run.progress);
