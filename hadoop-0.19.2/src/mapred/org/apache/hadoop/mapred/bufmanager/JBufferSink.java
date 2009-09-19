@@ -314,7 +314,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						
-						synchronized (JBufferSink.this) {
+						synchronized (connections) {
 							TaskID taskid = conn.id().getTaskID();
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
 							
@@ -402,7 +402,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	public void cancel(TaskAttemptID attempt) {
-		synchronized (this) {
+		synchronized (connections) {
 			TaskID taskid = attempt.getTaskID();
 			if (this.connections.containsKey(taskid)) {
 				List<Connection> closed = new ArrayList<Connection>();
@@ -419,7 +419,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void done(Connection connection) {
 		try {
-			synchronized (this) {
+			synchronized (connections) {
 				TaskID taskid = connection.id().getTaskID();
 				if (this.connections.containsKey(taskid)) {
 					this.connections.get(taskid).remove(connection);
@@ -443,7 +443,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void updateProgress() {
-		synchronized (task) {
+		synchronized (connections) {
 			float progress = (float) this.successful.size();
 			for (List<Connection> clist : connections.values()) {
 				float max = 0f;
@@ -453,6 +453,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 				progress += max;
 			}
 			collector.getProgress().set(progress / (float) numConnections);
+		}
+		
+		synchronized (task) {
 			task.notifyAll();
 		}
 	}
