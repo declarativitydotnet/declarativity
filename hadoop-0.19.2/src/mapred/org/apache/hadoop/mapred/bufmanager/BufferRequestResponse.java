@@ -9,21 +9,48 @@ import org.apache.hadoop.io.Writable;
 public class BufferRequestResponse implements Writable {
 	
 	/* Buffer request is open. */
-	public boolean open = true;
+	public boolean open;
 	
 	/* Buffer request has been terminated. 
 	 * (e.g., no longer needed). */
-	public boolean terminated = false;
+	public boolean terminated;
 	
 	/* Buffer receiver requests blocking mode. */
-	public boolean blocking = false;
+	public boolean blocking;
 	
 	/* Buffer receiver requests starting
 	 * from this offset. */
-	public long offset = 0;
+	public long offset;
 
-	public BufferRequestResponse() { }
+	public BufferRequestResponse() { reset(); }
 	
+	public void reset() {
+		this.open = false;
+		this.terminated = false;
+		this.blocking = false;
+		this.offset = 0;
+	}
+	
+	public void setBlocking(long offset) {
+		reset();
+		this.open = true;
+		this.blocking = true;
+		this.offset = offset;
+	}
+	
+	public void setOpen() {
+		reset();
+		this.open = true;
+	}
+	
+	public void setRetry() {
+		reset();
+	}
+	
+	public void setTerminated() {
+		reset();
+		terminated = true;
+	}
 	
 	@Override
 	public void readFields(DataInput in) throws IOException {

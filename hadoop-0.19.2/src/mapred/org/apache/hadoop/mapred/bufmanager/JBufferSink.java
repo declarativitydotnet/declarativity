@@ -308,6 +308,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		this.acceptor = new Thread() {
 			public void run() {
 				try {
+					BufferRequestResponse response = new BufferRequestResponse();
 					while (server.isOpen()) {
 						SocketChannel channel = server.accept();
 						channel.configureBlocking(true);
@@ -322,14 +323,21 @@ public class JBufferSink<K extends Object, V extends Object> {
 								connections.put(taskid, new ArrayList<Connection>());
 							}
 							
-							if (complete() || successful.contains(taskid) || 
-									connections.size() > maxConnections) {
-								output.writeBoolean(false); // Deny
+							if (complete() || successful.contains(taskid) ) {
+								response.setTerminated();
+								response.write(output);
+								output.flush();
+								conn.close();
+							}
+							else if (connections.size() > maxConnections) {
+								response.setRetry();
+								response.write(output);
 								output.flush();
 								conn.close();
 							}
 							else {
-								output.writeBoolean(true); // Connection open
+								response.setOpen();
+								response.write(output);
 								output.flush();
 								
 								/* register connection. */
