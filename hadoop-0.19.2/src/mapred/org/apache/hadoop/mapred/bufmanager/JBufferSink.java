@@ -279,7 +279,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		if (snapshots) {
 			this.snapshotThread = new SnapshotThread();
 			this.snapshotThread.setDaemon(true);
-			this.snapshotThread.start();
+			// this.snapshotThread.start();
 		}
 		
 		/** The server socket and selector registration */
