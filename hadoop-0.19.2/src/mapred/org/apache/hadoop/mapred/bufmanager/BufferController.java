@@ -174,6 +174,21 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	}
 	
 	public void free(JobID jobid) {
+		synchronized (requests) {
+			Set<TaskAttemptID> clean = new HashSet<TaskAttemptID>();
+			for (TaskAttemptID taskid : this.requests.keySet()) {
+				if (taskid.getJobID().equals(jobid)) {
+					clean.add(taskid);
+					for (BufferRequest request : this.requests.get(taskid)) {
+						try { request.close();
+						} catch (IOException e) { }
+					}
+				}
+			}
+			for (TaskAttemptID taskid : clean) {
+				this.requests.remove(taskid);
+			}
+		}
 	}
 	
 	@Override

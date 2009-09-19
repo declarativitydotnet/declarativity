@@ -1519,6 +1519,7 @@ public class TaskTracker
    */
   private synchronized void purgeJob(KillJobAction action) throws IOException {
     JobID jobId = action.getJobID();
+    bufferController.free(jobId);
     LOG.info("Received 'KillJobAction' for job: " + jobId);
     RunningJob rjob = null;
     synchronized (runningJobs) {
