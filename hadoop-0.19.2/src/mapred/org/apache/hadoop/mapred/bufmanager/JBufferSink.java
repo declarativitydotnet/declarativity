@@ -107,7 +107,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				this.snapshot = data;
 				this.index    = index;
 			}
-			// snapshotThread.snapshot();
+			snapshotThread.snapshot();
 		}
 		
 		private void write(IFile.Reader<K, V> in, FSDataOutputStream out, FSDataOutputStream index) throws IOException {
@@ -381,6 +381,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 					if (this.successful.size() == numConnections) {
 						System.err.println("JBufferSink: " + reduceID + " done receiving.");
 						try {
+							if (this.acceptor != null) acceptor.interrupt();
+							this.server.close();
+						
 							if (snapshots) {
 								this.snapshotThread.close();
 								System.err.println("JBufferSink " + reduceID + " snapshot thread closed.");
@@ -401,8 +404,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 									}
 								}
 							}
-							if (this.acceptor != null) acceptor.interrupt();
-							this.server.close();
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
