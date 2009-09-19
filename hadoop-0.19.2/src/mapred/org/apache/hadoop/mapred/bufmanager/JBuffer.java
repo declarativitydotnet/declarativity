@@ -921,7 +921,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		*/
 		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
-		System.err.println("Iterator file " + finalOutputFile + ". size = " + localFs.getFileStatus(finalOutputFile).getLen());
 		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
 		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
 	}
@@ -1392,6 +1391,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
 					 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
 					 ". Output size = " + finalOutFileSize);
+			/*
 			if (end - start == 1) {
 				if (localFs.exists(outputFile)) {
 					localFs.delete(outputFile, true);
@@ -1399,11 +1399,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				if (localFs.exists(indexFile)) {
 					localFs.delete(indexFile, true);
 				}
-				LOG.info("JBuffer: rename " + filename[start] + " to " + outputFile);
 				localFs.rename(filename[start], outputFile); 
 				localFs.rename(indexFileName[start], indexFile); 
 				return end;
 			}
+			*/
 
 			//The output stream for the final single output file
 			FSDataOutputStream finalOut = localFs.create(outputFile, !spill);
