@@ -106,6 +106,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				this.progress = progress;
 				this.snapshot = data;
 				this.index    = index;
+				this.fresh    = true;
 			}
 			snapshotThread.snapshot();
 		}
