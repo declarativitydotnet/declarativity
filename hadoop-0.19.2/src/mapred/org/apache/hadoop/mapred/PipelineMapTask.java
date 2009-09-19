@@ -210,6 +210,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 
 	    /* Kick off a sink for receiving the reducer output. */
 		boolean snapshots = job.getBoolean("mapred.job.snapshots", false);
+		System.err.println("PipelineMapTask: DO SNAPSHOTS? " + snapshots);
 		JBufferSink sink  = new JBufferSink(job, getTaskID(), this, this, snapshots);
 		sink.open();
 		
@@ -243,7 +244,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		
 			isSnapshotting = true;
 			try {
-				LOG.debug("PipelineMapTask: " + getTaskID() + " perform snapshot. progress = " + progress);
+				System.err.println("PipelineMapTask: " + getTaskID() + " perform snapshot. progress = " + progress);
 				for (JBufferSink.JBufferRun run : runs) {
 					run.spill(buffer);
 				}
