@@ -277,8 +277,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			int spillend = numSpills;
 
 			BufferRequest request = null;
+			BufferRequestResponse response = new BufferRequestResponse();
 			while ((request = umbilical.getRequest(taskid)) != null) {
-				if (request.open(job)) {
+				response.reset();
+				request.open(job, response);
+				if (response.open) {
 					requests.add(request);
 					requestMap.put(request.partition(), request); // TODO speculation
 				}
@@ -866,8 +869,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	public boolean canSnapshot() throws IOException {
 		if (pipeline) return false;
 		BufferRequest request = null;
+		BufferRequestResponse response = new BufferRequestResponse();
 		while ((request = umbilical.getRequest(taskid)) != null) {
-			if (request.open(job)) {
+			response.reset();
+			request.open(job, response);
+			if (response.open) {
 				requests.add(request);
 				requestMap.put(request.partition(), request); // TODO speculation
 			}

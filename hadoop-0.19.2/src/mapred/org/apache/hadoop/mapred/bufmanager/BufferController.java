@@ -90,10 +90,16 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			List<BufferRequest> handled = new ArrayList<BufferRequest>();
 			try {
 				JobConf job = tracker.getJobConf(taskid);
+				BufferRequestResponse response = new BufferRequestResponse();
 				for (BufferRequest request : handle) {
-					if (request.open(job)) {
+					response.reset();
+					request.open(job, response);
+					if (response.open) { 
 						executor.execute(request);
 						handled.add(request);
+					}
+					else if (response.terminated) {
+						handled.add(request); // throw away
 					}
 					else {
 						System.err.println("\tRequestHandler: can't open request " + request);
