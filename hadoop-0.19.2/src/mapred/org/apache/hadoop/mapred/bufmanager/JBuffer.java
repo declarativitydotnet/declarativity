@@ -301,6 +301,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						
 						float requestProgress = (spillId / (float) numSpills) * progress.get();
 						r.flush(indexIn, dataIn, spillId, requestProgress);
+						if (requestProgress == 1.0f) {
+							umbilical.remove(r); // Request is done
+						}
 					}
 				}
 				if (dataIn != null) {
@@ -892,6 +895,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				for (BufferRequest r : requests) {
 					LOG.info("JBuffer: do snapshot request " + taskid + " progress " + bufferProgress);
 					r.flush(indexIn, dataIn, -1, bufferProgress);
+					if (bufferProgress == 1.0f) {
+						umbilical.remove(r); // Buffer is done.
+					}
 				}
 			} finally {
 				indexIn.close();

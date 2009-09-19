@@ -213,6 +213,12 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			return null;
 		}
 	}
+	
+	public void remove(BufferRequest request) throws IOException {
+		synchronized (requests) {
+			this.requests.get(request.taskid()).remove(request);
+		}
+	}
 
 	@Override
 	public void request(BufferRequest request) throws IOException {
