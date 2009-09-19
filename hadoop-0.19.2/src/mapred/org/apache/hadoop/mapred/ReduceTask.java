@@ -252,17 +252,16 @@ public class ReduceTask extends Task {
 				for (JBufferSink.JBufferRun run : runs) {
 					run.spill(buffer);
 				}
-				return snapshot(false);
+				return snapshot(false, progress);
 			} finally {
 				isSnapshotting = false;
 			}
 		}
 	}
 	
-	private boolean snapshot(boolean save) throws IOException {
+	private boolean snapshot(boolean save, float progress) throws IOException {
 		Path data = null;
 		Path index = null;
-		float currentProgress = buffer.getProgress().get();
 		
 		buffer.flush();
 		if (save) {
@@ -279,11 +278,11 @@ public class ReduceTask extends Task {
 			if (reducePipeline && buffer.canSnapshot()) {
 				buffer.reset(true); // Restart for reduce output.
 				reduce(buffer, null, null);
-				buffer.getProgress().set(currentProgress);
+				buffer.getProgress().set(progress);
 				buffer.snapshot(); // Send reduce snapshot result
 			}
 			else if (!reducePipeline) {
-				String snapshotName = getSnapshotOutputName(getPartition(), currentProgress);
+				String snapshotName = getSnapshotOutputName(getPartition(), progress);
 				FileSystem fs = FileSystem.get(conf);
 				final RecordWriter out = 
 					conf.getOutputFormat().getRecordWriter(fs, conf, snapshotName, null);  
@@ -304,9 +303,9 @@ public class ReduceTask extends Task {
 			return true; 
 		} finally {
 			buffer.reset(true);
+			buffer.setProgress(this.copyPhase);
 			if (save) {
 				buffer.spill(data, index, false);
-				buffer.setProgress(this.copyPhase);
 			}
 		}
 	}
@@ -385,7 +384,7 @@ public class ReduceTask extends Task {
 				if (buffer.getProgress().get() > snapshotThreshold) {
 					snapshotThreshold *= 2.0f;
 					isSnapshotting = true;
-					try { snapshot(true);
+					try { snapshot(true, buffer.getProgress().get());
 					} finally {
 						isSnapshotting = false;
 					}
