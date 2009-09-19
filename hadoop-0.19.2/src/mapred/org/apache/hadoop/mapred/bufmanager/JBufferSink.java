@@ -255,7 +255,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private SnapshotThread snapshotThread;
 	
-	private boolean snapshots;
+	private final boolean snapshots;
 	
 	private ReduceOutputFile outputFileManager;
 	
@@ -347,6 +347,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 		return this.reduceID;
 	}
 	
+	/**
+	 * Close sink.
+	 * No more connections can be made once closed. Method will
+	 * lock the owning task object if snapshots are turned on.
+	 */
 	public synchronized void close() {
 		if (this.acceptor == null) return; // Already done.
 		System.err.println("JBufferSink: " + reduceID + " closing.");
@@ -360,7 +365,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 
 		try {
+			System.err.println("JBufferSink: " + reduceID + " snapshots? " + snapshots + ".");
 			if (snapshots) {
+				System.err.println("JBufferSink " + reduceID + " closeing snapshot thread.");
 				this.snapshotThread.close();
 				System.err.println("JBufferSink " + reduceID + " snapshot thread closed.");
 				synchronized (bufferRuns) {
