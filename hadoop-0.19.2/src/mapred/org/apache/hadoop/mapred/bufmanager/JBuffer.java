@@ -921,6 +921,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		*/
 		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
+		System.err.println("Iterator file size = " + localFs.getFileStatus(finalOutputFile).getLen());
 		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
 		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
 	}
@@ -1392,7 +1393,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
 					 ". Output size = " + finalOutFileSize);
 			if (end - start == 1) {
-				System.err.println("Rename " + filename[start] + " to " + outputFile);
+				LOG.info("JBuffer: rename " + filename[start] + " to " + outputFile);
 				localFs.rename(filename[start], outputFile); 
 				localFs.rename(indexFileName[start], indexFile); 
 				return end;
