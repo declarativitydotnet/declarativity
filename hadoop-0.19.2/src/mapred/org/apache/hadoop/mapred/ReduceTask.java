@@ -363,6 +363,7 @@ public class ReduceTask extends Task {
 		long begin = System.currentTimeMillis();
 		try {
 			buffer.setProgress(reducePhase);
+			sink.close();
 			reduce(job, reporter, buffer);
 		} finally {
 			reducePhase.complete();
@@ -371,7 +372,6 @@ public class ReduceTask extends Task {
 				bufferUmbilical.commit(getTaskID());
 			}
 			buffer.free();
-			sink.close();
 		}
 		
 		done(umbilical);
