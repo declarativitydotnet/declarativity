@@ -378,9 +378,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 					this.successful.add(taskid);
 					
 					if (this.successful.size() == numConnections) {
+						System.err.println("JBufferSink: " + reduceID + " done receiving.");
 						try {
 							if (snapshots) {
 								this.snapshotThread.close();
+								System.err.println("JBufferSink " + reduceID + " snapshot thread closed.");
 								synchronized (bufferRuns) {
 									if (bufferRuns.size() != successful.size()) {
 										LOG.error("JBufferSink: missing buffer runs!");
@@ -388,6 +390,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 									
 									synchronized (task) {
 										for (JBufferRun run : bufferRuns.values()) {
+											System.err.println("JBufferSink " + reduceID + " apply run " + run.id);
 											if (run.progress < 1.0f) {
 												LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
 														" progress = " + run.progress);
