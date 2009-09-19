@@ -921,7 +921,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		*/
 		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
-		System.err.println("Iterator file size = " + localFs.getFileStatus(finalOutputFile).getLen());
+		System.err.println("Iterator file " + finalOutputFile + ". size = " + localFs.getFileStatus(finalOutputFile).getLen());
 		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
 		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
 	}
