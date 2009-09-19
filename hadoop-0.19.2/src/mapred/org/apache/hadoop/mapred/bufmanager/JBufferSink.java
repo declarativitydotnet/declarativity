@@ -632,6 +632,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							return;
 						}
 					}
+					System.err.println("JBufferSink: " + reduceID + " receiving " + length + " bytes. progress = " + progress);
 					
 					CompressionCodec codec = null;
 					if (conf.getCompressMapOutput()) {
