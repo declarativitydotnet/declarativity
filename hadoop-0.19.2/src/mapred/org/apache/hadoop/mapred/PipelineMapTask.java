@@ -255,6 +255,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 				this.buffer.getProgress().set(progress);
 				return this.buffer.snapshot();
 			} finally {
+				buffer.reset(true);
 				isSnapshotting = false;
 			}
 		}
