@@ -375,6 +375,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				this.connections.get(taskid).remove(connection);
 				if (connection.progress() == 1.0f) {
 					this.successful.add(taskid);
+					System.err.println("JBufferSink: " + reduceID + " buffer " + taskid + " received.");
 					
 					if (this.successful.size() == numConnections) {
 						try {
