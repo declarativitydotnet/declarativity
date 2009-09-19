@@ -456,6 +456,7 @@ public class TaskTracker
     }
     
 	this.bufferController = new BufferController(this);
+	this.bufferController.setDaemon(true);
 	this.bufferController.start();
 	
     // bind address
