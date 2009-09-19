@@ -861,7 +861,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public boolean canSnapshot() throws IOException {
-		if (pipeline) throw new IOException("Snapshot not allowed with pipelineing!");
+		if (pipeline) return false;
 		BufferRequest request = null;
 		while ((request = umbilical.getRequest(taskid)) != null) {
 			if (request.open(job)) {
@@ -1391,7 +1391,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
 					 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
 					 ". Output size = " + finalOutFileSize);
-			if (end - start == 1) { //the spill is the final output
+			if (end - start == 1) {
+				System.err.println("Rename " + filename[start] + " to " + outputFile);
 				localFs.rename(filename[start], outputFile); 
 				localFs.rename(indexFileName[start], indexFile); 
 				return end;
