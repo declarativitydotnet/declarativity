@@ -364,6 +364,7 @@ public class ReduceTask extends Task {
 		try {
 			buffer.setProgress(reducePhase);
 			sink.close();
+			buffer.flush();
 			reduce(job, reporter, buffer);
 		} finally {
 			reducePhase.complete();
@@ -394,7 +395,6 @@ public class ReduceTask extends Task {
 				} catch (InterruptedException e) { }
 			}
 		}
-		buffer.flush();
 		System.err.println("ReduceTask: copy phase complete.");
 		copyPhase.complete();
 	}
