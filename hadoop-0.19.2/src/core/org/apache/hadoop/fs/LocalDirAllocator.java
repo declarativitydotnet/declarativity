@@ -378,8 +378,13 @@ public class LocalDirAllocator {
       }
 
       //no path found
+      try {
       throw new DiskErrorException ("Could not find " + pathStr +" in any of" +
       " the configured local directories");
+      } catch (IOException e) {
+    	  e.printStackTrace();
+    	  throw e;
+      }
     }
 
     /** We search through all the configured dirs for the file's existence
