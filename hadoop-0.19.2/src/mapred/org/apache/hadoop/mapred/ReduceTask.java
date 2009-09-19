@@ -239,6 +239,9 @@ public class ReduceTask extends Task {
 		if (reducePipeline && !buffer.canSnapshot()) {
 			return true; // can't do it now but keep trying.
 		}
+		else if (progress > 0.9f) {
+			return false; // turn off snapshots at the point.
+		}
 		
 		synchronized (this) {
 			this.isSnapshotting = true;
