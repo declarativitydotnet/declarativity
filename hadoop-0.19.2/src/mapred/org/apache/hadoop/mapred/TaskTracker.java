@@ -2557,6 +2557,7 @@ public class TaskTracker
       TaskAttemptID taskId = task.getTaskID();
       LOG.debug("Cleaning up " + taskId);
 
+	  if (task.isPipeline()) return;
       synchronized (TaskTracker.this) {
         if (needCleanup) {
           // see if tasks data structure is holding this tip.
