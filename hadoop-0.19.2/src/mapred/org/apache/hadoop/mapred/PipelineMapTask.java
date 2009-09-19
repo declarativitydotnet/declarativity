@@ -238,7 +238,10 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	@Override
 	public boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
 		synchronized (this) {
-			if (buffer.canSnapshot() == false) {
+			if (progress > 0.9f) {
+				return false; // done at this point.
+			}
+			else if (buffer.canSnapshot() == false) {
 				return true;
 			}
 		
