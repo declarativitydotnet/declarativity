@@ -149,11 +149,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 			if (!open) return;
 			else open = false;
 			
-			synchronized (bufferRuns) {
-				bufferRuns.notifyAll();
+			synchronized (this) {
+				this.notifyAll();
 				while (busy) {
 					try {
-						bufferRuns.wait();
+						this.wait();
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -163,24 +163,24 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		public void snapshot() {
-			synchronized (bufferRuns) {
-				bufferRuns.notifyAll();
+			synchronized (this) {
+				this.notifyAll();
 			}
 		}
 		
 		public void run() {
 			float progress = 0f;
 			try {
+				List<JBufferSink.JBufferRun> runs = new ArrayList<JBufferSink.JBufferRun>();
 				while (open) {
-					List<JBufferSink.JBufferRun> runs = new ArrayList<JBufferSink.JBufferRun>();
-					synchronized (bufferRuns) {
+					synchronized (this) {
 						busy = false;
-						bufferRuns.notifyAll();
+						this.notifyAll();
 
 						int freshRuns = 0;
 						do {
 							if (!open) return;
-							try { bufferRuns.wait();
+							try { this.wait();
 							} catch (InterruptedException e) { return; }
 							if (!open) return;
 
@@ -189,7 +189,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 								if (run.fresh) freshRuns++;
 							}
 						} while (freshRuns < bufferRuns.size() / 3);
+						busy = true;
+					}
 
+					synchronized (bufferRuns) {
 						runs.clear();
 						progress = 0f;
 						for (JBufferRun run : bufferRuns.values()) {
@@ -199,8 +202,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 							}
 						}
 						progress = progress / (float) numConnections;
-						
-						busy = true;
 					}
 
 					try {
@@ -217,10 +218,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 				}
 			}
 			finally {
-				synchronized (bufferRuns) {
+				synchronized (this) {
 					open = false;
 					busy = false;
-					bufferRuns.notifyAll();
+					this.notifyAll();
 				}
 			}
 		}
@@ -279,7 +280,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		if (snapshots) {
 			this.snapshotThread = new SnapshotThread();
 			this.snapshotThread.setDaemon(true);
-			// this.snapshotThread.start();
+			this.snapshotThread.start();
 		}
 		
 		/** The server socket and selector registration */
