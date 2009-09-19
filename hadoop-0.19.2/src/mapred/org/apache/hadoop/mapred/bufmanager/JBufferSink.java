@@ -74,7 +74,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		 * @param buffer
 		 * @throws IOException
 		 */
-		public void spill(JBuffer buffer) throws IOException {
+		public void spill(JBufferCollector buffer) throws IOException {
 			synchronized (this) {
 				if (!valid()) {
 					throw new IOException("JBufferRun not valid!");
@@ -107,6 +107,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				this.snapshot = data;
 				this.index    = index;
 			}
+			snapshotThread.snapshot();
 		}
 		
 		private void write(IFile.Reader<K, V> in, FSDataOutputStream out, FSDataOutputStream index) throws IOException {
@@ -375,10 +376,25 @@ public class JBufferSink<K extends Object, V extends Object> {
 				this.connections.get(taskid).remove(connection);
 				if (connection.progress() == 1.0f) {
 					this.successful.add(taskid);
-					System.err.println("JBufferSink: " + reduceID + " buffer " + taskid + " received.");
 					
 					if (this.successful.size() == numConnections) {
 						try {
+							if (snapshots) {
+								this.snapshotThread.close();
+								synchronized (bufferRuns) {
+									if (bufferRuns.size() != successful.size()) {
+										LOG.error("JBufferSink: missing buffer runs!");
+									}
+									
+									for (JBufferRun run : bufferRuns.values()) {
+										if (run.progress < 1.0f) {
+											LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
+													  " progress = " + run.progress);
+										}
+										run.spill(this.collector);
+									}
+								}
+							}
 							if (this.acceptor != null) acceptor.interrupt();
 							this.server.close();
 						} catch (IOException e) {
