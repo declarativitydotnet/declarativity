@@ -592,7 +592,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 						try {
 							JBufferRun run = sink.getBufferRun(this.id.getTaskID());
 							run.snapshot(reader, length, progress);
+							System.err.println("Created snapshot for buffer " + reduceID + " progress " + progress);
 						} catch (Throwable t) {
+							System.err.println("Snapshot interrupted by " + t);
 							return; // don't care
 						}
 					} else {
