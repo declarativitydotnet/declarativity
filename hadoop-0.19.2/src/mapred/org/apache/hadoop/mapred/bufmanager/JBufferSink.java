@@ -320,7 +320,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 								connections.put(taskid, new ArrayList<Connection>());
 							}
 							
-							if (successful.contains(taskid) || connections.size() > maxConnections) {
+							if (complete() || successful.contains(taskid) || 
+									connections.size() > maxConnections) {
 								output.writeBoolean(false); // Deny
 								output.flush();
 								conn.close();
@@ -344,6 +345,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	public TaskAttemptID reduceID() {
 		return this.reduceID;
+	}
+	
+	public void close() {
+		try {
+			if (this.acceptor != null) acceptor.interrupt();
+			this.server.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private JBufferCollector<K, V> buffer() {
@@ -390,9 +401,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		if (complete()) {
 			System.err.println("JBufferSink: " + reduceID + " done receiving.");
 			try {
-				if (this.acceptor != null) acceptor.interrupt();
-				this.server.close();
-			
 				if (snapshots) {
 					this.snapshotThread.close();
 					System.err.println("JBufferSink " + reduceID + " snapshot thread closed.");
