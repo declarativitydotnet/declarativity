@@ -1391,9 +1391,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
 					 " spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
 					 ". Output size = " + finalOutFileSize);
-			/*
 			if (end - start == 1) {
 				if (localFs.exists(outputFile)) {
+					LOG.warn("JBuffer final output file exists.");
 					localFs.delete(outputFile, true);
 				}
 				if (localFs.exists(indexFile)) {
@@ -1403,7 +1403,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				localFs.rename(indexFileName[start], indexFile); 
 				return end;
 			}
-			*/
 
 			//The output stream for the final single output file
 			FSDataOutputStream finalOut = localFs.create(outputFile, !spill);
