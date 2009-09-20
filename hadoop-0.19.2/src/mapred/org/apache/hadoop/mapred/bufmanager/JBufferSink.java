@@ -427,6 +427,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void done(Connection connection) {
 		try {
+			System.err.println("CONNECTION DONE: " + connection);
 			synchronized (connections) {
 				TaskID taskid = connection.id().getTaskID();
 				if (this.connections.containsKey(taskid)) {
@@ -632,7 +633,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 							return;
 						}
 					}
-					System.err.println("JBufferSink: " + reduceID + " receiving " + length + " bytes. progress = " + progress);
 					
 					CompressionCodec codec = null;
 					if (conf.getCompressMapOutput()) {
