@@ -319,10 +319,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 							TaskID taskid = conn.id().getTaskID();
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
 							
-							if (!connections.containsKey(taskid)) {
-								connections.put(taskid, new ArrayList<Connection>());
-							}
-							
 							if (complete() || successful.contains(taskid) ) {
 								response.setTerminated();
 								response.write(output);
@@ -337,6 +333,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else {
+								if (!connections.containsKey(taskid)) {
+									connections.put(taskid, new ArrayList<Connection>());
+								}
+								
 								response.setOpen();
 								response.write(output);
 								output.flush();
