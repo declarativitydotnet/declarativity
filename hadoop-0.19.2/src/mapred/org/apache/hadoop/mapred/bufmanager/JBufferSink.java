@@ -436,6 +436,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 						for (Connection c : connections.get(taskid)) {
 							c.close();
 						}
+					}
+					if (connections.get(taskid).size() == 0) {
 						connections.remove(taskid);
 					}
 				}
