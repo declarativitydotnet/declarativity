@@ -1392,15 +1392,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		int end = 0;
 		int spillid = 0;
 		synchronized (mergeLock) {
-			if (spill && numSpills == 0) return;
 			boundary = Math.min(boundary, numSpills);
 			
 			spillid = numSpills;
 			start = numFlush;
 			end   = boundary;
+			if (spill && end - start < 2) return;
 
 			numFlush = end;
-			numSpills++;
+			if (spill) numSpills++;
 		}
 
 			long finalOutFileSize = 0;
