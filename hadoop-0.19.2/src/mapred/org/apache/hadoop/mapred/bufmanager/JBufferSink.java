@@ -438,6 +438,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 							c.close();
 						}
 						connections.remove(taskid);
+						System.err.println("REMOVING CONNECTIONS " + taskid);
+						System.err.println("\tCONNECTIONS SIZE " + connections.size());
 					}
 				}
 			}
