@@ -97,7 +97,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				BufferRequestResponse response = new BufferRequestResponse();
 				for (BufferRequest request : handle) {
 					response.reset();
-					request.open(job, response);
+					request.open(job, response, false);
 					if (response.open) { 
 						executor.execute(request);
 						handled.add(request);

@@ -295,7 +295,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				BufferRequestResponse response = new BufferRequestResponse();
 				while ((request = umbilical.getRequest(taskid)) != null) {
 					response.reset();
-					request.open(job, response);
+					request.open(job, response, false);
 					if (response.open) {
 						requests.add(request);
 						requestMap.put(request.partition(), request); // TODO speculation
@@ -892,14 +892,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	public boolean canSnapshot() throws IOException {
 		if (pipeline) return false;
 		BufferRequest request = null;
-		BufferRequestResponse response = new BufferRequestResponse();
 		while ((request = umbilical.getRequest(taskid)) != null) {
-			response.reset();
-			request.open(job, response);
-			if (response.open) {
-				requests.add(request);
-				requestMap.put(request.partition(), request); // TODO speculation
-			}
+			requests.add(request);
+			requestMap.put(request.partition(), request); // TODO speculation
 		}
 
 		return (requests.size() > 0);
@@ -921,9 +916,19 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			FSDataInputStream indexIn = localFs.open(indexFile);
 			FSDataInputStream dataIn  = localFs.open(snapFile);
 			try {
+				BufferRequestResponse response = new BufferRequestResponse();
 				for (BufferRequest r : requests) {
+					if (!r.isOpen()) {
+						response.reset();
+						r.open(job, response, true);
+						if (!response.open) {
+							continue;
+						}
+					}
+					
 					LOG.info("JBuffer: do snapshot request " + taskid + " progress " + bufferProgress);
 					r.flush(indexIn, dataIn, -1, bufferProgress);
+					r.close(); // close after snapshot
 					if (bufferProgress == 1.0f) {
 						umbilical.remove(r); // Buffer is done.
 					}

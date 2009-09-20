@@ -336,16 +336,17 @@ public class JBufferSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else {
-								if (!connections.containsKey(taskid)) {
-									connections.put(taskid, new ArrayList<Connection>());
-								}
-								
 								response.setOpen();
 								response.write(output);
 								output.flush();
 								
-								/* register connection. */
-								connections.get(taskid).add(conn);
+								if (!conn.isSnapshot()) {
+									/* register regular connection. */
+									if (!connections.containsKey(taskid)) {
+										connections.put(taskid, new ArrayList<Connection>());
+									}
+									connections.get(taskid).add(conn);
+								}
 								executor.execute(conn);
 							}
 						}
@@ -507,6 +508,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private int minSpillId = -1;
 		
+		private boolean isSnapshot;
+		
 		public Connection(DataInputStream input, JBufferSink<K, V> sink, JobConf conf) throws IOException {
 			this.input = input;
 			this.sink = sink;
@@ -516,7 +519,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 			
 			this.id = new TaskAttemptID();
 			this.id.readFields(input);
+			this.isSnapshot = input.readBoolean();
 			
+		}
+		
+		public boolean isSnapshot() {
+			return this.isSnapshot;
 		}
 		
 		public boolean equals(Object o) {
@@ -666,6 +674,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							JBufferRun run = sink.getBufferRun(this.id.getTaskID());
 							run.snapshot(reader, length, progress);
 							System.err.println("JBufferSink: done snapshot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
+							return;
 						} catch (Throwable t) {
 							System.err.println("Snapshot interrupted by " + t);
 							return; // don't care
@@ -712,7 +721,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			finally {
 				synchronized (this) {
 					busy = false;
-					sink.done(this);
+					if (!isSnapshot()) sink.done(this);
 					this.notifyAll();
 					if (open) close();
 				}
