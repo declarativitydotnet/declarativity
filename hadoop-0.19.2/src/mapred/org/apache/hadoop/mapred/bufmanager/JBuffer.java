@@ -1067,7 +1067,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public void minUnfinishedSpill(int spillid) {
-		this.mergeThread.mergeBoundary(spillid);
+		if (safemode) this.mergeThread.mergeBoundary(spillid);
 	}
 	
 	public int spill(Path data, Path index, boolean copy) throws IOException {

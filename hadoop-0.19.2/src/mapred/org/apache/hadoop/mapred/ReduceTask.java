@@ -386,10 +386,12 @@ public class ReduceTask extends Task {
 				if (buffer.getProgress().get() > snapshotThreshold) {
 					snapshotThreshold *= 2.0f;
 					isSnapshotting = true;
+					LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
 					try { snapshot(true, buffer.getProgress().get());
 					} finally {
 						isSnapshotting = false;
 					}
+					LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 				}
 				try { this.wait();
 				} catch (InterruptedException e) { }
