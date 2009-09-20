@@ -212,7 +212,7 @@ public class TopK extends Configured implements Tool {
 			topkJob.setInputFormat(SequenceFileInputFormat.class);
 
 			topkJob.setMapperClass(InverseMapper.class);
-			// topkJob.setCombinerClass(TopKReduce.class);
+			topkJob.setCombinerClass(TopKReduce.class);
 			topkJob.setReducerClass(TopKReduce.class);
 			topkJob.setInt("mapred.reduce.topk.k", Integer.parseInt(other_args.get(2)));
 
