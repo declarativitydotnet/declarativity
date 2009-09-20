@@ -152,6 +152,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private class MergeThread extends Thread {
 		private boolean open = true;
 		private boolean busy = false;
+		private int mergeBoundary = Integer.MAX_VALUE;
 
 		public void close() {
 			synchronized (mergeLock) {
@@ -161,6 +162,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					} catch (InterruptedException e) { }
 				}
 				this.interrupt();
+			}
+		}
+		
+		public void mergeBoundary(int spillid) {
+			if (mergeBoundary < spillid) {
+				synchronized (mergeLock) {
+					this.mergeBoundary = spillid;
+					this.notifyAll();
+				}
 			}
 		}
 		
@@ -189,7 +199,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					if (!taskid.isMap() && numSpills - numFlush > 100) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
-							mergeParts(true);
+							mergeParts(true, mergeBoundary);
 							LOG.debug("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -211,12 +221,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		private boolean open = false;
 		private boolean busy = false;
 		
-		public void close() {
+		public void close() throws IOException {
 			synchronized (this) {
 				open = false;
 				while (busy) {
 					try { this.wait();
 					} catch (InterruptedException e) { }
+				}
+				if (safemode) {
+					/* all current requests must be satisfied. */
+					flushRequests(true); 
 				}
 				this.interrupt();
 			}
@@ -258,7 +272,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 					try {
 						long pipelinestart = java.lang.System.currentTimeMillis();
-						flushpoint = flushRequests();
+						flushpoint = flushRequests(false);
 						LOG.debug("PipelinMergeThread: pipeline time " +  
 								((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
 					} catch (IOException e) {
@@ -273,17 +287,19 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 			
-		private int flushRequests() throws IOException {
+		private int flushRequests(boolean finalize) throws IOException {
 			int spillend = numSpills;
 
-			BufferRequest request = null;
-			BufferRequestResponse response = new BufferRequestResponse();
-			while ((request = umbilical.getRequest(taskid)) != null) {
-				response.reset();
-				request.open(job, response);
-				if (response.open) {
-					requests.add(request);
-					requestMap.put(request.partition(), request); // TODO speculation
+			if (!finalize) {
+				BufferRequest request = null;
+				BufferRequestResponse response = new BufferRequestResponse();
+				while ((request = umbilical.getRequest(taskid)) != null) {
+					response.reset();
+					request.open(job, response);
+					if (response.open) {
+						requests.add(request);
+						requestMap.put(request.partition(), request); // TODO speculation
+					}
 				}
 			}
 			
@@ -317,25 +333,27 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			
 			
 			/* Rate limit the data pipeline. */
-			if (requests.size() > partitions / 2 && numSpills - spillend > 5) {
-				float avgDataRate = 0f;
-				BufferRequest min = null;
-				for (BufferRequest r : requests) {
-					if (r.datarate() < Float.MIN_VALUE) continue;
-					
-					avgDataRate += r.datarate();
-					if (min == null || r.datarate() < min.datarate()) {
-						min = r;
+			if (!safemode) {
+				if (requests.size() > partitions / 2 && numSpills - spillend > 5) {
+					float avgDataRate = 0f;
+					BufferRequest min = null;
+					for (BufferRequest r : requests) {
+						if (r.datarate() < Float.MIN_VALUE) continue;
+
+						avgDataRate += r.datarate();
+						if (min == null || r.datarate() < min.datarate()) {
+							min = r;
+						}
 					}
-				}
-				avgDataRate /= (float) requests.size();
-				
-				if (min != null && (avgDataRate / min.datarate()) > 10.0) {
-					LOG.warn("Pipeline running slow! Min data rate = " + 
-							            min.datarate() + ". Average data rate = " + avgDataRate);
-					min.close();
-					requests.remove(min);
-					requestMap.remove(min.partition());
+					avgDataRate /= (float) requests.size();
+
+					if (min != null && (avgDataRate / min.datarate()) > 10.0) {
+						LOG.warn("Pipeline running slow! Min data rate = " + 
+								min.datarate() + ". Average data rate = " + avgDataRate);
+						min.close();
+						requests.remove(min);
+						requestMap.remove(min.partition());
+					}
 				}
 			}
 
@@ -418,6 +436,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private MapOutputFile mapOutputFile = null;
 	
 	private boolean pipeline;
+	private boolean safemode;
 	private PipelineThread pipelineThread;
 	
 	private SpillThread spillThread;
@@ -435,6 +454,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		this.mapOutputFile = new MapOutputFile(taskid.getJobID());
 		this.mapOutputFile.setConf(job);
 		
+		this.safemode = job.getBoolean("mapred.safemode", false);
 		this.progress = new Progress();
 		this.progress.set(0f);
 		
@@ -518,9 +538,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		return this.requests;
 	}
 	
-	public synchronized void pipeline(boolean value) {
+	public synchronized void pipeline(boolean value) throws IOException {
 		if (pipeline == false && value == true) {
 			this.pipelineThread.open();
+		}
+		else if (pipeline == true && safemode) {
+			throw new IOException("JBuffer in safemode!");
 		}
 		else if (pipeline == true && value == false) {
 			this.pipelineThread.close();
@@ -943,9 +966,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				Path finalOut = mapOutputFile.getOutputFile(this.taskid);
 				if (localFs.exists(finalOut)) {
 					LOG.warn("JBuffer: no flush needed for buffer " + taskid);
-					pipelineThread.close();
 					mergeThread.close();
 					spillThread.close();
+					pipelineThread.close();
 					return;
 				}
 			} catch (IOException e) {
@@ -953,7 +976,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		
-		pipelineThread.close();
 		mergeThread.close();
 		
 		synchronized (spillLock) {
@@ -980,7 +1002,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			sortAndSpill();
 		}
 		
-		mergeParts(false);
+		pipelineThread.close();
+		
+		mergeParts(false, Integer.MAX_VALUE);
 		reset(false);
 	}
 	
@@ -1042,7 +1066,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		requests.clear();
 	}
 	
-	public void spill(Path data, Path index, boolean copy) throws IOException {
+	public void minUnfinishedSpill(int spillid) {
+		this.mergeThread.mergeBoundary(spillid);
+	}
+	
+	public int spill(Path data, Path index, boolean copy) throws IOException {
 		Path dataFile = null;
 		Path indexFile = null;
 		synchronized (mergeLock) {
@@ -1063,7 +1091,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 			
-			mergeLock.notifyAll();
+			if (!safemode) mergeLock.notifyAll();
+			return numSpills;
 		}
 	}
 	
@@ -1356,17 +1385,21 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 	}
 	
-	private synchronized int mergeParts(boolean spill) throws IOException {
+	private synchronized void mergeParts(boolean spill, int boundary) throws IOException {
 		// get the approximate size of the final output/index files
 
 		int start = 0;
 		int end = 0;
+		int spillid = 0;
 		synchronized (mergeLock) {
-			if (spill && numSpills == 0) return -1;
+			if (spill && numSpills == 0) return;
+			boundary = Math.min(boundary, numSpills);
+			
+			spillid = numSpills;
 			start = numFlush;
-			end   = numSpills;
+			end   = boundary;
 
-			numFlush = numSpills;
+			numFlush = end;
 			numSpills++;
 		}
 
@@ -1392,8 +1425,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			Path indexFile = null;
 
 			if (spill) {
-				outputFile = mapOutputFile.getSpillFileForWrite(this.taskid, end, finalOutFileSize);
-				indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, end, finalIndexFileSize);
+				outputFile = mapOutputFile.getSpillFileForWrite(this.taskid, spillid, finalOutFileSize);
+				indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, spillid, finalIndexFileSize);
 			}
 			else {
 				outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
@@ -1413,7 +1446,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 				localFs.rename(filename[start], outputFile); 
 				localFs.rename(indexFileName[start], indexFile); 
-				return end;
+				return;
 			}
 
 			//The output stream for the final single output file
@@ -1433,7 +1466,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 				finalOut.close();
 				finalIndexOut.close();
-				return -1;
+				return;
 			}
 			{
 				for (int parts = 0; parts < partitions; parts++){
@@ -1443,7 +1476,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					List<Segment<K, V>> segmentList =
 						new ArrayList<Segment<K, V>>(end - start);
 					for(int i = start; i < end; i++) {
-						if (request != null && i <= request.flushPoint()) {
+						if (!safemode && request != null && i <= request.flushPoint()) {
 							LOG.debug("JBuffer flush: pipeline request already took care of partition " 
 									  + parts + " spill file " + i);
 							continue; // Request has already sent this spill data.
@@ -1499,7 +1532,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 
-		return spill ? end : -1;
 	}
 
 	private void writeIndexRecord(FSDataOutputStream indexOut, 

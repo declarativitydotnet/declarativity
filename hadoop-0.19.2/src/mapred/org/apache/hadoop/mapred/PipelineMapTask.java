@@ -277,7 +277,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 
 	@Override
-	public void spill(Path data, Path index, boolean copy) throws IOException {
+	public int spill(Path data, Path index, boolean copy) throws IOException {
 		CompressionCodec codec = null;
 		if (conf.getCompressMapOutput()) {
 			Class<? extends CompressionCodec> codecClass =
@@ -292,6 +292,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			collect(key, value);
 		}
 		reader.close();
+		return -1;
 	}
 
 	@Override
