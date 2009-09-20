@@ -16,7 +16,15 @@ public interface JBufferCollector<K extends Object, V extends Object>
 	
 	public void collect(DataInputBuffer key, DataInputBuffer value) throws IOException;
 	
-	public void spill(Path data, Path index, boolean copy) throws IOException;
+	/**
+	 * Spill the data and index files directly to the buffer. 
+	 * @param data The data file
+	 * @param index The index file
+	 * @param copy If true then copy, else rename.
+	 * @return int representing the spill identifier.
+	 * @throws IOException
+	 */
+	public int spill(Path data, Path index, boolean copy) throws IOException;
 	
 	public void close() throws IOException;
 	

@@ -228,6 +228,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 	}
 	
+	private boolean safemode;
+	
 	private int maxConnections;
 	
 	private Executor executor;
@@ -262,6 +264,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	public JBufferSink(JobConf conf, TaskAttemptID reduceID, JBufferCollector<K, V> collector, Task task, boolean snapshots) throws IOException {
 		this.conf = conf;
+		this.safemode = conf.getBoolean("mapred.safemode", false);
 		this.reduceID = reduceID;
 		this.collector = collector;
 		this.localFs = FileSystem.getLocal(conf);
@@ -440,6 +443,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 						connections.remove(taskid);
 					}
 				}
+				
+				if (safemode && collector instanceof JBuffer) {
+					int minUncommittedSpillId = Integer.MAX_VALUE;
+					for (List<Connection> clist : connections.values()) {
+						for (Connection c : clist) {
+							minUncommittedSpillId = Math.min(minUncommittedSpillId, c.minSpillId);
+						}
+					}
+					((JBuffer)collector).minUnfinishedSpill(minUncommittedSpillId);
+				}
 			}
 		} finally {
 			if (complete()) {
@@ -491,6 +504,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private boolean busy;
 		private boolean open;
+		
+		private int minSpillId = -1;
 		
 		public Connection(DataInputStream input, JBufferSink<K, V> sink, JobConf conf) throws IOException {
 			this.input = input;
@@ -580,9 +595,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 				indexOut.close();
 
 				JBufferCollector<K, V> buffer = sink.buffer();
-				/* Register the spill file with the buffer. */
+				/* Register the spill file with the buffer. 
+				 * Note: we lock the task so that no snapshots can be
+				 * performed during this operation. */
 				synchronized (sink.task) {
-					buffer.spill(filename, indexFilename, false);
+					int spillid = buffer.spill(filename, indexFilename, false);
+					if (minSpillId < 0) minSpillId = spillid;
 				}
 			} catch (Throwable e) {
 				LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
@@ -659,18 +677,24 @@ public class JBufferSink<K extends Object, V extends Object> {
 						} else { 
 							boolean doSpill = true;
 							JBufferCollector<K, V> buffer = sink.buffer();
-							synchronized (sink.task) {
-								if (sink.buffer().reserve(length)) {
-									try {
-										while (reader.next(key, value)) {
-											this.sink.buffer().collect(key, value);
+							if (!safemode || progress == 1.0f) {
+								synchronized (sink.task) {
+									/* Try to add records to the buffer. 
+									 * Note: this means we can't back out the records so
+									 * if we're in safemode this needs to be the final answer.
+									 */
+									if (!safemode && sink.buffer().reserve(length)) {
+										try {
+											while (reader.next(key, value)) {
+												this.sink.buffer().collect(key, value);
+											}
+										} catch (ChecksumException e) {
+											LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
 										}
-									} catch (ChecksumException e) {
-										LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
-									}
-									finally {
-										sink.buffer().unreserve(length);
-										doSpill = false;
+										finally {
+											sink.buffer().unreserve(length);
+											doSpill = false;
+										}
 									}
 								}
 							}
