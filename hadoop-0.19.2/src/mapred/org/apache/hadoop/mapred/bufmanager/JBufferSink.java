@@ -349,7 +349,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				} catch (IOException e) { }
 			}
 		};
-		acceptor.setPriority(Thread.MAX_PRIORITY);
 		acceptor.start();
 	}
 	
@@ -427,7 +426,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void done(Connection connection) {
 		try {
-			System.err.println("CONNECTION DONE: " + connection);
 			synchronized (connections) {
 				TaskID taskid = connection.id().getTaskID();
 				if (this.connections.containsKey(taskid)) {
@@ -444,10 +442,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		} finally {
 			if (complete()) {
+				System.err.println("SINK DONE TELL TASK");
 				synchronized (task) {
 					task.notifyAll();
 				}
 			}
+			System.err.println("CONNECTION DONE: " + connection);
 		}
 	}
 	
