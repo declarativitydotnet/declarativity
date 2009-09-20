@@ -23,6 +23,8 @@ import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -45,8 +47,10 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferController extends Thread implements BufferUmbilicalProtocol {
+	private static final Log LOG = LogFactory.getLog(BufferController.class.getName());
+
+	
 	private class RequestHandler extends Thread {
-		
 		public void run() {
 			List<TaskAttemptID> handleCommitted = new ArrayList<TaskAttemptID>();
 			while (true) {
@@ -76,7 +80,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				synchronized (requests) {
 					try {
 						if (requests.size() > 0) {
-							requests.wait(100);
+							requests.wait(1000);
 						}
 						else {
 							requests.wait();
@@ -99,11 +103,11 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						handled.add(request);
 					}
 					else if (response.terminated) {
-						System.err.println("BUFFER TERMINATED.");
+						LOG.info("BufferController: request terminated by receiver. " + request);
 						handled.add(request); // throw away
 					}
 					else {
-						System.err.println("\tRequestHandler: can't open request " + request);
+						LOG.debug("BufferController: retry request " + request);
 					}
 				}
 			} catch (IOException e) {
