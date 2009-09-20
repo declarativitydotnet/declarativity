@@ -1092,7 +1092,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			
 			if (!safemode) mergeLock.notifyAll();
-			return numSpills;
+			return numSpills - 1;
 		}
 	}
 	
