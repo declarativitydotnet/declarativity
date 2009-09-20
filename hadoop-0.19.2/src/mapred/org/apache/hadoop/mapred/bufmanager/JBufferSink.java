@@ -438,19 +438,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 							c.close();
 						}
 						connections.remove(taskid);
-						System.err.println("REMOVING CONNECTIONS " + taskid);
-						System.err.println("\tCONNECTIONS SIZE " + connections.size());
 					}
 				}
 			}
 		} finally {
 			if (complete()) {
-				System.err.println("SINK DONE TELL TASK");
+				System.err.println("SINK " + reduceID + " DONE TELL TASK");
 				synchronized (task) {
 					task.notifyAll();
 				}
 			}
-			System.err.println("CONNECTION DONE: " + connection);
 		}
 	}
 	
