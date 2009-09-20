@@ -176,31 +176,36 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	
-	public void open(JobConf conf, BufferRequestResponse response) throws IOException {
+	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot) throws IOException {
 		synchronized (this) {
 			try { 
 				this.conf = conf;
 				this.localFS = FileSystem.getLocal(conf);
-				this.out = connect(response);
+				this.out = connect(response, snapshot);
 			} catch (Throwable e) {
 				e.printStackTrace();
 			}
 		}
 	}
 	
-	private FSDataOutputStream connect(BufferRequestResponse response) throws IOException {
+	private FSDataOutputStream connect(BufferRequestResponse response, boolean snapshot) throws IOException {
 		try {
 			Socket socket = new Socket();
-			int connectionAttempts = this.conf.getInt("mapred.connection.attempts", 5);
+			int connectionAttempts = snapshot ? 1 : this.conf.getInt("mapred.connection.attempts", 5);
 			for (int i = 0; i < connectionAttempts && !socket.isConnected(); i++) {
 				try {
 					socket.connect(this.sink);
 				} catch (java.net.ConnectException e) {
 					System.err.println("BufferRequest: " + e);
+					if (i == connectionAttempts) {
+						response.setRetry();
+						return null;
+					}
 				}
 			}
 			FSDataOutputStream out = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			this.taskid.write(out);
+			out.writeBoolean(snapshot);
 			out.flush();
 			
 			DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -272,6 +277,12 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				out.close();
 				out = null;
 			}
+		}
+	}
+	
+	public boolean isOpen() {
+		synchronized (this) {
+			return out != null;
 		}
 	}
 	
