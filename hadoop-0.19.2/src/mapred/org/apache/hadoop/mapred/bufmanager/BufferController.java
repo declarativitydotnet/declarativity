@@ -99,6 +99,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						handled.add(request);
 					}
 					else if (response.terminated) {
+						System.err.println("BUFFER TERMINATED.");
 						handled.add(request); // throw away
 					}
 					else {
