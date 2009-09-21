@@ -383,16 +383,17 @@ public class ReduceTask extends Task {
 		this.buffer = buffer;
 		synchronized (this) {
 			while(!sink.complete()) {
-				if (buffer.getProgress().get() > snapshotThreshold &&
-						buffer.canSnapshot()) {
-					snapshotThreshold *= 2.0f;
-					isSnapshotting = true;
-					LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
-					try { snapshot(true, buffer.getProgress().get());
-					} finally {
-						isSnapshotting = false;
+				if (buffer.getProgress().get() > snapshotThreshold) {
+					if (!reducePipeline || buffer.canSnapshot()) {
+						snapshotThreshold *= 2.0f;
+						isSnapshotting = true;
+						LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
+						try { snapshot(true, buffer.getProgress().get());
+						} finally {
+							isSnapshotting = false;
+						}
+						LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 					}
-					LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 				}
 				try { this.wait();
 				} catch (InterruptedException e) { }
