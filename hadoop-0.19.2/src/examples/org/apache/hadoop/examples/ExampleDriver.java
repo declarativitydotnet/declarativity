@@ -25,28 +25,30 @@ import org.apache.hadoop.examples.terasort.TeraValidate;
 import org.apache.hadoop.util.ProgramDriver;
 
 /**
- * A description of an example program based on its class and a 
+ * A description of an example program based on its class and a
  * human-readable description.
  */
 public class ExampleDriver {
-  
+
   public static void main(String argv[]){
     int exitCode = -1;
     ProgramDriver pgd = new ProgramDriver();
     try {
-      pgd.addClass("wordcount", WordCount.class, 
+      pgd.addClass("wordcount", WordCount.class,
                    "A map/reduce program that counts the words in the input files.");
-      pgd.addClass("aggregatewordcount", AggregateWordCount.class, 
+      pgd.addClass("aggregatewordcount", AggregateWordCount.class,
                    "An Aggregate based map/reduce program that counts the words in the input files.");
-      pgd.addClass("aggregatewordhist", AggregateWordHistogram.class, 
+      pgd.addClass("aggregatewordhist", AggregateWordHistogram.class,
                    "An Aggregate based map/reduce program that computes the histogram of the words in the input files.");
-      pgd.addClass("grep", Grep.class, 
+      pgd.addClass("grep", Grep.class,
                    "A map/reduce program that counts the matches of a regex in the input.");
-      pgd.addClass("topk", TopK.class, 
+      pgd.addClass("topk", TopK.class,
                    "A map/reduce program that finds the topk matches of a regex in the input.");
-      pgd.addClass("randomwriter", RandomWriter.class, 
+      pgd.addClass("topwordcount", TopKWordCount.class,
+    		       "A map/reduce program that finds the top K most-frequent words in the input.");
+      pgd.addClass("randomwriter", RandomWriter.class,
                    "A map/reduce program that writes 10GB of random data per node.");
-      pgd.addClass("randomtextwriter", RandomTextWriter.class, 
+      pgd.addClass("randomtextwriter", RandomTextWriter.class,
       "A map/reduce program that writes 10GB of random textual data per node.");
       pgd.addClass("sort", Sort.class, "A map/reduce program that sorts the data written by the random writer.");
       pgd.addClass("pi", PiEstimator.class, "A map/reduce program that estimates Pi using monte-carlo method.");
@@ -61,15 +63,15 @@ public class ExampleDriver {
       pgd.addClass("terasort", TeraSort.class, "Run the terasort");
       pgd.addClass("teravalidate", TeraValidate.class, "Checking results of terasort");
       pgd.driver(argv);
-      
+
       // Success
       exitCode = 0;
     }
     catch(Throwable e){
       e.printStackTrace();
     }
-    
+
     System.exit(exitCode);
   }
 }
-	
+
