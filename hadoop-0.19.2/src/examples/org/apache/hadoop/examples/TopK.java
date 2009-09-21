@@ -19,7 +19,6 @@ import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.MapReduceBase;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
@@ -40,7 +39,7 @@ public class TopK extends Configured implements Tool {
 
 	    private final static LongWritable one = new LongWritable(1);
 	    private Text word = new Text();
-	    
+
 		public void configure(JobConf job) {
 		}
 
@@ -50,7 +49,7 @@ public class TopK extends Configured implements Tool {
 		throws IOException {
 			String line = value.toString();
 		    StringTokenizer itr = new StringTokenizer(line);
-		      
+
 		    while (itr.hasMoreTokens()) {
 		    	word.set(itr.nextToken());
 		    	output.collect(word, one);
@@ -105,7 +104,7 @@ public class TopK extends Configured implements Tool {
 		}
 
 		public void reduce(LongWritable key, Iterator<Text> values,
-				OutputCollector<LongWritable, Text> output, 
+				OutputCollector<LongWritable, Text> output,
 				Reporter reporter) throws IOException {
 			while (values.hasNext() && count++ < k) {
 				output.collect(key, values.next());
@@ -114,7 +113,7 @@ public class TopK extends Configured implements Tool {
 	}
 
 	private TopK() {}                               // singleton
-	
+
 	private void printUsage() {
 		System.out.println("TopK [-s <interval>] [-p] [-m mappers] [-r reducers] <inDir> <outDir> <K> [<regexpr> [<group>]]");
 		ToolRunner.printGenericCommandUsage(System.out);
@@ -125,7 +124,7 @@ public class TopK extends Configured implements Tool {
 			printUsage();
 			return -1;
 		}
-		
+
 		Path tempDir =
 			new Path("topk-temp-"+
 					Integer.toString(new Random().nextInt(Integer.MAX_VALUE)));
@@ -135,7 +134,7 @@ public class TopK extends Configured implements Tool {
 
 			JobConf wordcountJob = new JobConf(getConf(), TopK.class);
 			wordcountJob.setJobName("topk-search");
-			
+
 			JobConf topkJob = new JobConf(TopK.class);
 			topkJob.setJobName("topk-sort");
 
@@ -148,7 +147,7 @@ public class TopK extends Configured implements Tool {
 		          	wordcountJob.setBoolean("mapred.job.snapshots", true);
 		          	wordcountJob.setInt("mapred.snapshot.interval", interval);
 		          	topkJob.setBoolean("mapred.job.snapshots", true);
-		          	
+
 		          	/* Wordcount will pipeline. */
 		          	wordcountJob.setBoolean("mapred.map.pipeline", true);
 		          	wordcountJob.setBoolean("mapred.reduce.pipeline", true);
@@ -186,7 +185,7 @@ public class TopK extends Configured implements Tool {
 		                         other_args.size() + ".");
 		      printUsage(); return -1;
 		    }
-		    
+
 			FileInputFormat.setInputPaths(wordcountJob, other_args.get(0));
 
 			if (other_args.size() >= 4) {
@@ -220,7 +219,7 @@ public class TopK extends Configured implements Tool {
 			FileOutputFormat.setOutputPath(topkJob, new Path(other_args.get(1)));
 			topkJob.setOutputKeyComparatorClass           // sort by decreasing freq
 			(LongWritable.DecreasingComparator.class);
-			
+
 			if (pipeline) {
 				JobClient  client  = new JobClient(wordcountJob);
 				List<JobConf> jobs = new ArrayList<JobConf>();
@@ -237,7 +236,7 @@ public class TopK extends Configured implements Tool {
 				JobClient.runJob(wordcountJob);
 				JobClient.runJob(topkJob);
 			}
-			
+
 			FileSystem.get(wordcountJob).delete(tempDir, true);
 		}
 		finally {
