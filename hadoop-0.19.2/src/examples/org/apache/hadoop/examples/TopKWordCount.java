@@ -122,6 +122,7 @@ public class TopKWordCount extends Configured implements Tool {
 			}
 
 			for (TopKRecord rec : this.heap) {
+				System.out.println("XXXXXXXXXXXX: sum = " + rec.sum + ", key = " + rec.key);
 				this.target.collect(rec.key, new IntWritable(rec.sum));
 			}
 
