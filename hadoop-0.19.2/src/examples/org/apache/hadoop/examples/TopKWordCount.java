@@ -109,6 +109,7 @@ public class TopKWordCount extends Configured implements Tool {
 			}
 
 			this.heap.clear();
+			this.target = null;
 		}
 	}
 
