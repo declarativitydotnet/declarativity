@@ -723,6 +723,30 @@ class JobInProgress {
     }
     return results;
   }
+  
+  public synchronized void fastUpdateTaskRunningStatus(Task task, TaskTrackerStatus ttStatus) {
+	  String httpTaskLogLocation = null; 
+
+	  String host;
+	  if (NetUtils.getStaticResolution(ttStatus.getHost()) != null) {
+		  host = NetUtils.getStaticResolution(ttStatus.getHost());
+	  } else {
+		  host = ttStatus.getHost();
+	  }
+	  httpTaskLogLocation = "http://" + host + ":" + ttStatus.getHttpPort(); 
+
+	  TaskCompletionEvent taskEvent = new TaskCompletionEvent(
+			  taskCompletionEventTracker++, 
+			  task.getTaskID(),
+			  task.getTaskID().getTaskID().id,
+			  task.isMapTask() &&
+			  !task.isJobCleanupTask() &&
+			  !task.isJobSetupTask(),
+			  TaskCompletionEvent.Status.RUNNING,
+			  httpTaskLogLocation 
+	  );
+	  this.taskCompletionEvents.add(taskEvent);
+  }
 
   ////////////////////////////////////////////////////
   // Status update methods
