@@ -56,10 +56,10 @@ public class TopKWordCount extends Configured implements Tool {
 			Reducer<Text, IntWritable, Text, IntWritable> {
 
 		private static class TopKRecord implements Comparable<TopKRecord> {
-			public Text key;
+			public String key;
 			public int sum;
 
-			public TopKRecord(Text key, int sum) {
+			public TopKRecord(String key, int sum) {
 				this.key = key;
 				this.sum = sum;
 			}
@@ -106,7 +106,7 @@ public class TopKWordCount extends Configured implements Tool {
 				sum += values.next().get();
 			}
 
-			this.heap.add(new TopKRecord(key, sum));
+			this.heap.add(new TopKRecord(key.toString(), sum));
 			if (this.heap.size() >= NUM_OUTPUT_VALS) {
 				TopKRecord removed = this.heap.pollFirst();
 				if (removed == null)
@@ -123,7 +123,7 @@ public class TopKWordCount extends Configured implements Tool {
 
 			for (TopKRecord rec : this.heap) {
 				System.out.println("XXXXXXXXXXXX: sum = " + rec.sum + ", key = " + rec.key);
-				this.target.collect(rec.key, new IntWritable(rec.sum));
+				this.target.collect(new Text(rec.key), new IntWritable(rec.sum));
 			}
 
 			this.heap.clear();
