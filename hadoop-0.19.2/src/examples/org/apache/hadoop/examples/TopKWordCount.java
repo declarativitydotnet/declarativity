@@ -128,8 +128,8 @@ public class TopKWordCount extends Configured implements Tool {
 	 *             When there is communication problems with the job tracker.
 	 */
 	public int run(String[] args) throws Exception {
-		JobConf conf = new JobConf(getConf(), WordCount.class);
-		conf.setJobName("wordcount");
+		JobConf conf = new JobConf(getConf(), TopKWordCount.class);
+		conf.setJobName("topkwordcount");
 
 		// the keys are words (strings)
 		conf.setOutputKeyClass(Text.class);
@@ -181,7 +181,7 @@ public class TopKWordCount extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
-		int res = ToolRunner.run(new Configuration(), new WordCount(), args);
+		int res = ToolRunner.run(new Configuration(), new TopKWordCount(), args);
 		System.exit(res);
 	}
 }
