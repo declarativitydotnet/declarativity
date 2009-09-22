@@ -65,6 +65,23 @@ public class TopKWordCount extends Configured implements Tool {
 			}
 
 			@Override
+			public boolean equals(Object obj) {
+				if (!(obj instanceof TopKRecord))
+					return false;
+
+				TopKRecord other = (TopKRecord) obj;
+				if (other.sum == this.sum && other.key.equals(this.key))
+					return true;
+				else
+					return false;
+			}
+
+			@Override
+			public int hashCode() {
+				return this.key.hashCode() ^ this.sum;
+			}
+
+			@Override
 			public int compareTo(TopKRecord other) {
 				if (this.sum == other.sum)
 					return this.key.compareTo(other.key);
