@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -26,112 +27,160 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class TopKWordCount extends Configured implements Tool {
 
-	  /**
-	   * Counts the words in each line.
-	   * For each line of input, break the line into words and emit them as
-	   * (<b>word</b>, <b>1</b>).
-	   */
-	  public static class MapClass extends MapReduceBase
-	    implements Mapper<LongWritable, Text, Text, IntWritable> {
+	/**
+	 * Counts the words in each line. For each line of input, break the line
+	 * into words and emit them as (<b>word</b>, <b>1</b>).
+	 */
+	public static class MapClass extends MapReduceBase implements
+			Mapper<LongWritable, Text, Text, IntWritable> {
 
-	    private final static IntWritable one = new IntWritable(1);
-	    private Text word = new Text();
+		private final static IntWritable one = new IntWritable(1);
+		private Text word = new Text();
 
-	    public void map(LongWritable key, Text value,
-	                    OutputCollector<Text, IntWritable> output,
-	                    Reporter reporter) throws IOException {
-	      String line = value.toString();
-	      StringTokenizer itr = new StringTokenizer(line);
-	      while (itr.hasMoreTokens()) {
-	        word.set(itr.nextToken());
-	        output.collect(word, one);
-	      }
-	    }
-	  }
+		public void map(LongWritable key, Text value,
+				OutputCollector<Text, IntWritable> output, Reporter reporter)
+				throws IOException {
+			String line = value.toString();
+			StringTokenizer itr = new StringTokenizer(line);
+			while (itr.hasMoreTokens()) {
+				word.set(itr.nextToken());
+				output.collect(word, one);
+			}
+		}
+	}
 
-	  /**
-	   * A reducer class that just emits the sum of the input values.
-	   */
-	  public static class Reduce extends MapReduceBase
-	    implements Reducer<Text, IntWritable, Text, IntWritable> {
+	/**
+	 * A reducer class that just emits the sum of the input values.
+	 */
+	public static class Reduce extends MapReduceBase implements
+			Reducer<Text, IntWritable, Text, IntWritable> {
 
-	    public void reduce(Text key, Iterator<IntWritable> values,
-	                       OutputCollector<Text, IntWritable> output,
-	                       Reporter reporter) throws IOException {
-	      int sum = 0;
-	      while (values.hasNext()) {
-	        sum += values.next().get();
-	      }
-	      output.collect(key, new IntWritable(sum));
-	    }
-	  }
+		private static class TopKRecord implements Comparable<TopKRecord> {
+			public Text key;
+			public int sum;
 
-	  static int printUsage() {
-	    System.out.println("wordcount [-s <interval>] [-p] [-m <maps>] [-r <reduces>] <input> <output>");
-	    ToolRunner.printGenericCommandUsage(System.out);
-	    return -1;
-	  }
+			public TopKRecord(Text key, int sum) {
+				this.key = key;
+				this.sum = sum;
+			}
 
-	  /**
-	   * The main driver for word count map/reduce program.
-	   * Invoke this method to submit the map/reduce job.
-	   * @throws IOException When there is communication problems with the
-	   *                     job tracker.
-	   */
-	  public int run(String[] args) throws Exception {
-	    JobConf conf = new JobConf(getConf(), WordCount.class);
-	    conf.setJobName("wordcount");
+			@Override
+			public int compareTo(TopKRecord other) {
+				if (this.sum == other.sum)
+					return this.key.compareTo(other.key);
 
-	    // the keys are words (strings)
-	    conf.setOutputKeyClass(Text.class);
-	    // the values are counts (ints)
-	    conf.setOutputValueClass(IntWritable.class);
+				return (this.sum < other.sum ? -1 : 1);
+			}
+		}
 
-	    conf.setMapperClass(MapClass.class);
-	    conf.setCombinerClass(Reduce.class);
-	    conf.setReducerClass(Reduce.class);
+		private final int NUM_OUTPUT_VALS = 100;
+		private final TreeSet<TopKRecord> heap = new TreeSet<TopKRecord>();
+		private OutputCollector<Text, IntWritable> target = null;
 
-	    List<String> other_args = new ArrayList<String>();
-	    for(int i=0; i < args.length; ++i) {
-	      try {
-	        if ("-s".equals(args[i])) {
-	        	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
-	        	conf.setBoolean("mapred.job.snapshots", true);
-	        	conf.setBoolean("mapred.map.pipeline", true);
-	        } else if ("-p".equals(args[i])) {
-	        	conf.setBoolean("mapred.map.pipeline", true);
-	        } else if ("-m".equals(args[i])) {
-	          conf.setNumMapTasks(Integer.parseInt(args[++i]));
-	        } else if ("-r".equals(args[i])) {
-	          conf.setNumReduceTasks(Integer.parseInt(args[++i]));
-	        } else {
-	          other_args.add(args[i]);
-	        }
-	      } catch (NumberFormatException except) {
-	        System.out.println("ERROR: Integer expected instead of " + args[i]);
-	        return printUsage();
-	      } catch (ArrayIndexOutOfBoundsException except) {
-	        System.out.println("ERROR: Required parameter missing from " +
-	                           args[i-1]);
-	        return printUsage();
-	      }
-	    }
-	    // Make sure there are exactly 2 parameters left.
-	    if (other_args.size() != 2) {
-	      System.out.println("ERROR: Wrong number of parameters: " +
-	                         other_args.size() + " instead of 2.");
-	      return printUsage();
-	    }
-	    FileInputFormat.setInputPaths(conf, other_args.get(0));
-	    FileOutputFormat.setOutputPath(conf, new Path(other_args.get(1)));
+		public void reduce(Text key, Iterator<IntWritable> values,
+				OutputCollector<Text, IntWritable> output, Reporter reporter)
+				throws IOException {
+			/* On first call, remember the output destination (XXX hack) */
+			if (target == null)
+				target = output;
 
-	    JobClient.runJob(conf);
-	    return 0;
-	  }
+			int sum = 0;
+			while (values.hasNext()) {
+				sum += values.next().get();
+			}
 
+			this.heap.add(new TopKRecord(key, sum));
+			if (this.heap.size() >= NUM_OUTPUT_VALS) {
+				TopKRecord removed = this.heap.pollFirst();
+				if (removed == null)
+					throw new IllegalStateException();
+			}
+		}
 
-	  public static void main(String[] args) throws Exception {
-	    int res = ToolRunner.run(new Configuration(), new WordCount(), args);
-	    System.exit(res);
-	  }
+		@Override
+		public void close() throws IOException {
+			if (this.target == null) {
+				assert(this.heap.size() == 0);
+				return;
+			}
+
+			for (TopKRecord rec : this.heap) {
+				this.target.collect(rec.key, new IntWritable(rec.sum));
+			}
+
+			this.heap.clear();
+		}
+	}
+
+	static int printUsage() {
+		System.out
+				.println("wordcount [-s <interval>] [-p] [-m <maps>] [-r <reduces>] <input> <output>");
+		ToolRunner.printGenericCommandUsage(System.out);
+		return -1;
+	}
+
+	/**
+	 * The main driver for word count map/reduce program. Invoke this method to
+	 * submit the map/reduce job.
+	 *
+	 * @throws IOException
+	 *             When there is communication problems with the job tracker.
+	 */
+	public int run(String[] args) throws Exception {
+		JobConf conf = new JobConf(getConf(), WordCount.class);
+		conf.setJobName("wordcount");
+
+		// the keys are words (strings)
+		conf.setOutputKeyClass(Text.class);
+		// the values are counts (ints)
+		conf.setOutputValueClass(IntWritable.class);
+
+		conf.setMapperClass(MapClass.class);
+		conf.setCombinerClass(Reduce.class);
+		conf.setReducerClass(Reduce.class);
+
+		List<String> other_args = new ArrayList<String>();
+		for (int i = 0; i < args.length; ++i) {
+			try {
+				if ("-s".equals(args[i])) {
+					conf.setInt("mapred.snapshot.interval", Integer
+							.parseInt(args[++i]));
+					conf.setBoolean("mapred.job.snapshots", true);
+					conf.setBoolean("mapred.map.pipeline", true);
+				} else if ("-p".equals(args[i])) {
+					conf.setBoolean("mapred.map.pipeline", true);
+				} else if ("-m".equals(args[i])) {
+					conf.setNumMapTasks(Integer.parseInt(args[++i]));
+				} else if ("-r".equals(args[i])) {
+					conf.setNumReduceTasks(Integer.parseInt(args[++i]));
+				} else {
+					other_args.add(args[i]);
+				}
+			} catch (NumberFormatException except) {
+				System.out.println("ERROR: Integer expected instead of "
+						+ args[i]);
+				return printUsage();
+			} catch (ArrayIndexOutOfBoundsException except) {
+				System.out.println("ERROR: Required parameter missing from "
+						+ args[i - 1]);
+				return printUsage();
+			}
+		}
+		// Make sure there are exactly 2 parameters left.
+		if (other_args.size() != 2) {
+			System.out.println("ERROR: Wrong number of parameters: "
+					+ other_args.size() + " instead of 2.");
+			return printUsage();
+		}
+		FileInputFormat.setInputPaths(conf, other_args.get(0));
+		FileOutputFormat.setOutputPath(conf, new Path(other_args.get(1)));
+
+		JobClient.runJob(conf);
+		return 0;
+	}
+
+	public static void main(String[] args) throws Exception {
+		int res = ToolRunner.run(new Configuration(), new WordCount(), args);
+		System.exit(res);
+	}
 }
