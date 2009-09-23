@@ -208,6 +208,8 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	private Map<TaskAttemptID, TreeSet<BufferRequest>> requests = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
 	
+	private Map<TaskAttemptID, TreeSet<BufferRequest>> totalRequests = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
+	
 	private Set<TaskAttemptID> committed = Collections.synchronizedSet(new HashSet<TaskAttemptID>());
 	
 	private Server server;
@@ -364,6 +366,15 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			if (!this.requests.containsKey(request.taskid())) {
 				this.requests.put(request.taskid(), new TreeSet<BufferRequest>());
 			}
+			if (!this.totalRequests.containsKey(request.taskid())) {
+				this.totalRequests.put(request.taskid(), new TreeSet<BufferRequest>());
+			}
+			
+			this.totalRequests.get(request.taskid()).add(request);
+			if (totalRequests.get(request.taskid()).size() == 5) {
+				System.err.println("BufferController: " + request.taskid() + " total requests received.");
+			}
+			
 			this.requests.get(request.taskid()).add(request);
 			this.requests.notifyAll();
 		}
