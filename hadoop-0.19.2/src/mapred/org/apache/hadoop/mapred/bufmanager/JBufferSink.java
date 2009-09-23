@@ -330,6 +330,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 							}
 							else if (!connections.containsKey(taskid) &&
 									  connections.size() > maxConnections) {
+								System.err.println("JBufferSink: too many connections = " + connections.size() + 
+										" outstanding buffers = " + (numConnections - successful.size()) + " connections");
 								response.setRetry();
 								response.write(output);
 								output.flush();
@@ -444,7 +446,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						connections.remove(taskid);
 						
 						System.err.println("JBufferSink: " + reduceID + " still waiting for " + 
-								           (numConnections - successful.size()) + " to complete.");
+								           (numConnections - successful.size()) + " to complete. complete? " + complete());
 					}
 				}
 				
