@@ -336,8 +336,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else {
-								System.err.println("JBufferSink: " + reduceID + " running connections = " + connections.size() + " outstanding buffers = " + (numConnections - successful.size()) + ".");
-								
 								response.setOpen();
 								response.write(output);
 								output.flush();
@@ -350,6 +348,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 									connections.get(taskid).add(conn);
 								}
 								executor.execute(conn);
+								System.err.println("JBufferSink: " + reduceID + " running connections = " + connections.size() + " outstanding buffers = " + (numConnections - successful.size()) + ".");
 							}
 						}
 					}
