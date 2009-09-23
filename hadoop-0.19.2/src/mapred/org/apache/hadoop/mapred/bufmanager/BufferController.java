@@ -210,6 +210,8 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	
 	private Map<TaskAttemptID, TreeSet<BufferRequest>> totalRequests = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
 	
+	private Set<BufferRequest> requestsMade = new TreeSet<BufferRequest>();
+	
 	private Set<TaskAttemptID> committed = Collections.synchronizedSet(new HashSet<TaskAttemptID>());
 	
 	private Server server;
@@ -319,6 +321,11 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	@Override
 	public void request(BufferRequest request) throws IOException {
+		this.requestsMade.add(request);
+		if (this.requestsMade.size() == 88) {
+			System.err.println("BufferController all requests made.");
+		}
+		
 		synchronized (requests) {
 			if (request.source().equals(hostname)) {
 				register(request); // Request is local.
