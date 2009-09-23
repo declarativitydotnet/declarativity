@@ -291,7 +291,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	public void commit(TaskAttemptID taskid) throws IOException {
 		synchronized (requests) {
 			this.committed.add(taskid);
-			System.err.println("BufferController: task " + taskid + " commit. Oustanding requests = " + requests.get(taskid).size());
 			this.requests.notifyAll();
 		}
 	}
