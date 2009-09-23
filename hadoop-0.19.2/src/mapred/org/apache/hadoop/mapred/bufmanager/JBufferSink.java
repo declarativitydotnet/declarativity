@@ -711,8 +711,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 					}
 					
-					sink.updateProgress();
 					if (progress == 1.0f) return;
+					sink.updateProgress();
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
