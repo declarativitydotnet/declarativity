@@ -99,6 +99,10 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						out.flush();
 						
 						synchronized (transfers) {
+							requestsMade.addAll(handle);
+							if (requestsMade.size() > 80) {
+								System.err.println("BufferController " + requestsMade.size() + " requests made.");
+							}
 							transfers.get(location).removeAll(handle);
 							if (transfers.get(location).size() == 0) {
 								transfers.remove(location);
@@ -321,13 +325,13 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	@Override
 	public void request(BufferRequest request) throws IOException {
-		this.requestsMade.add(request);
-		if (this.requestsMade.size() > 80) {
-			System.err.println("BufferController " + requestsMade.size() + " requests made.");
-		}
 		
 		synchronized (requests) {
 			if (request.source().equals(hostname)) {
+				this.requestsMade.add(request);
+				if (this.requestsMade.size() > 80) {
+					System.err.println("BufferController " + requestsMade.size() + " requests made.");
+				}
 				register(request); // Request is local.
 			}
 			else {
