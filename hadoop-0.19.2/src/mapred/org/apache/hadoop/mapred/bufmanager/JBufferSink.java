@@ -348,7 +348,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 									connections.get(taskid).add(conn);
 								}
 								executor.execute(conn);
-								System.err.println("JBufferSink: " + reduceID + " running connections = " + connections.size() + " outstanding buffers = " + (numConnections - successful.size()) + ".");
 							}
 						}
 					}
@@ -458,7 +457,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		} finally {
 			if (complete()) {
-				System.err.println("JBufferSink: " + reduceID + " done.");
+				LOG.debug("JBufferSink: " + reduceID + " done.");
 				synchronized (task) {
 					task.notifyAll();
 				}
@@ -671,13 +670,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					if (sink.snapshots()) {
 						try {
-							System.err.println("JBufferSink: perform snaphot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
+							LOG.debug("JBufferSink: perform snaphot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
 							JBufferRun run = sink.getBufferRun(this.id.getTaskID());
 							run.snapshot(reader, length, progress);
-							System.err.println("JBufferSink: done snapshot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
 							return;
 						} catch (Throwable t) {
-							System.err.println("Snapshot interrupted by " + t);
+							LOG.warn("Snapshot interrupted by " + t);
 							return; // don't care
 						}
 					} else {
