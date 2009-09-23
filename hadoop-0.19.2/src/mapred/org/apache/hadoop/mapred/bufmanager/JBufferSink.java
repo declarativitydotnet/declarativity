@@ -354,7 +354,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				} catch (IOException e) { }
 			}
 		};
-		acceptor.setPriority(Thread.MAX_PRIORITY);
 		acceptor.start();
 	}
 	
@@ -443,6 +442,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 							c.close();
 						}
 						connections.remove(taskid);
+						
+						System.err.println("JBufferSink: " + reduceID + " still waiting for " + 
+								           (numConnections - successful.size()) + " to complete.");
 					}
 				}
 				

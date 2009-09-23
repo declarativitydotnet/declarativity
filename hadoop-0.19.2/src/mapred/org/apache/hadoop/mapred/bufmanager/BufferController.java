@@ -105,7 +105,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 							}
 						}
 					} catch (IOException e) {
-						LOG.warn("BufferInit: connection issue " + e);
+						LOG.warn("BufferController: connection issue " + e);
 					} finally {
 						try {
 							if (out != null) {
@@ -183,7 +183,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						handled.add(request); // throw away
 					}
 					else {
-						LOG.debug("BufferController: retry request " + request);
+						LOG.info("BufferController: retry request " + request);
 					}
 				}
 			} catch (IOException e) {
