@@ -322,8 +322,8 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	@Override
 	public void request(BufferRequest request) throws IOException {
 		this.requestsMade.add(request);
-		if (this.requestsMade.size() == 88) {
-			System.err.println("BufferController all requests made.");
+		if (this.requestsMade.size() > 80) {
+			System.err.println("BufferController " + requestsMade.size() + " requests made.");
 		}
 		
 		synchronized (requests) {
