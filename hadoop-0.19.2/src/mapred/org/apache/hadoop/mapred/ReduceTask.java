@@ -105,8 +105,13 @@ public class ReduceTask extends Task {
 							String host = u.getHost();
 							TaskAttemptID mapTaskId = event.getTaskAttemptId();
 							if (!mapTasks.contains(mapTaskId)) {
-								bufferUmbilical.request(new BufferRequest(mapTaskId, getPartition(), host, sink.getAddress()));
-								mapTasks.add(mapTaskId);
+								BufferRequest request = new BufferRequest(mapTaskId, getPartition(), host, sink.getAddress());
+								try {
+									bufferUmbilical.request(request);
+									mapTasks.add(mapTaskId);
+								} catch (IOException e) {
+									LOG.warn("BufferUmbilical problem in taking request " + request + ". " + e);
+								}
 							}
 						}
 						break;

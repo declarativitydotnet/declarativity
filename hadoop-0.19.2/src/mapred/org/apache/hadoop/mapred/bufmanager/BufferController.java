@@ -1,5 +1,6 @@
 package org.apache.hadoop.mapred.bufmanager;
 
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -49,6 +50,79 @@ import org.apache.hadoop.util.ReflectionUtils;
 public class BufferController extends Thread implements BufferUmbilicalProtocol {
 	private static final Log LOG = LogFactory.getLog(BufferController.class.getName());
 
+	private class RequestTransfer extends Thread {
+		private Map<InetSocketAddress, Set<BufferRequest>> requests;
+		
+		public RequestTransfer() {
+			this.requests = new HashMap<InetSocketAddress, Set<BufferRequest>>();
+		}
+		
+		public void transfer(BufferRequest request) {
+			synchronized(requests) {
+				InetSocketAddress source = 
+					NetUtils.createSocketAddr(request.source() + ":" + controlPort);
+				if (!requests.containsKey(source)) {
+					requests.put(source, new HashSet<BufferRequest>());
+				}
+				requests.get(source).add(request);
+				requests.notify();
+			}
+		}
+		
+		public void run() {
+			Set<InetSocketAddress> locations = new HashSet<InetSocketAddress>();
+			Set<BufferRequest>     handle    = new HashSet<BufferRequest>();
+			while (!isInterrupted()) {
+				synchronized (requests) {
+					while (requests.size() == 0) {
+						try { requests.wait();
+						} catch (InterruptedException e) { }
+					}
+					locations.clear();
+					locations.addAll(requests.keySet());
+				}
+				
+				for (InetSocketAddress location : locations) {
+					synchronized(requests) {
+						handle.clear();
+						handle.addAll(requests.get(location));
+					}
+					Socket socket = null;
+					DataOutputStream out = null;
+					try {
+						socket = new Socket();
+						socket.connect(location);
+						out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+						for (BufferRequest request : handle) {
+							request.write(out);
+						}
+						out.flush();
+						
+						synchronized (requests) {
+							requests.get(location).removeAll(handle);
+							if (requests.get(location).size() == 0) {
+								requests.remove(location);
+							}
+						}
+					} catch (IOException e) {
+						LOG.warn("BufferInit: connection issue " + e);
+					} finally {
+						try {
+							if (out != null) {
+								out.close();
+							} else if (socket != null) {
+								socket.close();
+							}
+						} catch (Throwable t) {
+							LOG.error(t);
+						}
+					}
+				}
+
+			}
+		}
+
+	};
 	
 	private class RequestHandler extends Thread {
 		public void run() {
@@ -121,6 +195,8 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
     
     private RequestHandler requestHandler;
     
+    private RequestTransfer requestTransfer;
+    
 	private String hostname;
 	
 	private Executor executor;
@@ -139,6 +215,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	public BufferController(TaskTracker tracker) throws IOException {
 		this.tracker   = tracker;
 		this.requestHandler = new RequestHandler();
+		this.requestTransfer    = new RequestTransfer();
 		this.executor  = Executors.newCachedThreadPool();
 		this.hostname  = InetAddress.getLocalHost().getCanonicalHostName();
 	}
@@ -168,7 +245,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private void initialize() throws IOException {
 		Configuration conf = tracker.conf();
 		int maxMaps = conf.getInt("mapred.tasktracker.map.tasks.maximum", 2);
-		int maxReduces = conf.getInt("mapred.tasktracker.reduce.tasks.maximum", 2);
+		int maxReduces = conf.getInt("mapred.tasktracker.reduce.tasks.maximum", 1);
 
 		InetSocketAddress serverAddress = getServerAddress(conf);
 		this.server = RPC.getServer(this, serverAddress.getHostName(), serverAddress.getPort(), 
@@ -176,6 +253,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		this.server.start();
 
 		this.requestHandler.start();
+		this.requestTransfer.start();
 		
 		/** The server socket and selector registration */
 		InetSocketAddress controlAddress = getControlAddress(conf);
@@ -235,38 +313,10 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	public void request(BufferRequest request) throws IOException {
 		synchronized (requests) {
 			if (request.source().equals(hostname)) {
-				register(request); // Request is local!
+				register(request); // Request is local.
 			}
 			else {
-				Socket socket        = null;
-				DataOutputStream out = null;
-				try {
-					InetSocketAddress controlSource = NetUtils.createSocketAddr(request.source() + ":" + this.controlPort);
-					socket = new Socket();
-					for (int i = 0; i < 10; i++) {
-						try { socket.connect(controlSource);
-						} catch (ConnectException e) {
-							if (i < 10) {
-								try { Thread.sleep(1000);
-								} catch (InterruptedException e1) { }
-								continue;
-							}
-							throw e;
-						}
-						break;
-					}
-					out = new DataOutputStream(socket.getOutputStream());
-					request.write(out);
-				}
-				finally {
-					if (out != null) {
-						out.flush();
-						out.close();
-					}
-					else if (socket != null) {
-						socket.close();
-					}
-				}
+				requestTransfer.transfer(request); // request is remote.
 			}
 		}
 	}

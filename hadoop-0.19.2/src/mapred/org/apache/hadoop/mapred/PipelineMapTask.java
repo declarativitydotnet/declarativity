@@ -79,9 +79,14 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 							TaskAttemptID reduceAttemptId = event.getTaskAttemptId();
 							if (reduceAttemptId.getTaskID().equals(reduceTaskId) && !requestSent) {
 								LOG.debug("Map " + getTaskID() + " sending buffer request to reducer " + reduceAttemptId);
-								bufferUmbilical.request(new BufferRequest(reduceAttemptId, 0, host, sink.getAddress()));
-								requestSent = true;
-								if (event.getTaskStatus() == Status.SUCCEEDED) return;
+								BufferRequest request = new BufferRequest(reduceAttemptId, 0, host, sink.getAddress());
+								try {
+									bufferUmbilical.request(request);
+									requestSent = true;
+									if (event.getTaskStatus() == Status.SUCCEEDED) return;
+								} catch (IOException e) {
+									LOG.warn("BufferUmbilical problem in taking request " + request + ". " + e);
+								}
 							}
 						}
 						break;
