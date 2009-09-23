@@ -76,6 +76,12 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	@Override
+	public int hashCode() {
+		String code = taskid.toString() + ":" + partition;
+		return code.hashCode();
+	}
+	
+	@Override
 	public int compareTo(BufferRequest o) {
 		if (this.taskid.compareTo(o.taskid) != 0) {
 			return this.taskid.compareTo(o.taskid);
