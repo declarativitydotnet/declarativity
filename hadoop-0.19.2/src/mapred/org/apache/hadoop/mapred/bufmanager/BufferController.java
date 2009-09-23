@@ -185,7 +185,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 					else {
 						request.connectionAttempts++;
 						if (request.connectionAttempts > 20) {
-							LOG.info("BufferController: retry request " + request + " too many times = " + request.connectionAttempts);
+							LOG.debug("BufferController: retry request " + request + " too many times = " + request.connectionAttempts);
 						}
 					}
 				}
@@ -289,6 +289,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	public void commit(TaskAttemptID taskid) throws IOException {
 		synchronized (requests) {
 			this.committed.add(taskid);
+			System.err.println("BufferController: task " + taskid + " commit. Oustanding requests = " + requests.get(taskid).size());
 			this.requests.notifyAll();
 		}
 	}
