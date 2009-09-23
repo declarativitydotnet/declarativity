@@ -109,7 +109,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 							}
 						}
 					} catch (IOException e) {
-						LOG.warn("BufferController: connection issue " + e);
+						LOG.warn("BufferController: request transfer connection issue " + e);
 					} finally {
 						try {
 							if (out != null) {
