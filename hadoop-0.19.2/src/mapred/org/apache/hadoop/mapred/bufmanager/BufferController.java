@@ -1,5 +1,6 @@
 package org.apache.hadoop.mapred.bufmanager;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -93,16 +94,13 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						socket = new Socket();
 						socket.connect(location);
 						out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+						out.writeInt(handle.size());
 						for (BufferRequest request : handle) {
 							request.write(out);
 						}
 						out.flush();
 						
 						synchronized (transfers) {
-							requestsMade.addAll(handle);
-							if (requestsMade.size() > 80) {
-								System.err.println("BufferController " + requestsMade.size() + " requests made.");
-							}
 							transfers.get(location).removeAll(handle);
 							if (transfers.get(location).size() == 0) {
 								transfers.remove(location);
@@ -213,8 +211,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private Map<TaskAttemptID, TreeSet<BufferRequest>> requests = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
 	
 	private Map<TaskAttemptID, TreeSet<BufferRequest>> totalRequests = new HashMap<TaskAttemptID, TreeSet<BufferRequest>>();
-	
-	private Set<BufferRequest> requestsMade = new TreeSet<BufferRequest>();
 	
 	private Set<TaskAttemptID> committed = Collections.synchronizedSet(new HashSet<TaskAttemptID>());
 	
@@ -328,10 +324,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		
 		synchronized (requests) {
 			if (request.source().equals(hostname)) {
-				this.requestsMade.add(request);
-				if (this.requestsMade.size() > 80) {
-					System.err.println("BufferController " + requestsMade.size() + " requests made.");
-				}
 				register(request); // Request is local.
 			}
 			else {
@@ -349,21 +341,22 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		}
 
 		while (true) {
-			SocketChannel channel = null;
+			SocketChannel connection = null;
 			try {
-				channel = this.channel.accept();
-				BufferRequest request = new BufferRequest();
-				DataInputStream in = new DataInputStream(channel.socket().getInputStream());
-				request.readFields(in);
-				
-				register(request);
+				connection = this.channel.accept();
+				DataInputStream in = new DataInputStream(new BufferedInputStream(connection.socket().getInputStream()));
+				int numRequests = in.readInt();
+				for (int i = 0; i < numRequests; i++) {
+					BufferRequest request = new BufferRequest();
+					request.readFields(in);
+					register(request);
+				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			finally {
 				try {
-					if (channel != null) channel.close();
+					if (connection != null) connection.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
