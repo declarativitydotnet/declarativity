@@ -81,7 +81,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 					locations.clear();
 					locations.addAll(requests.keySet());
 				}
-				System.err.println("BufferTransfer: locations " + locations);
 				
 				for (InetSocketAddress location : locations) {
 					synchronized(requests) {
