@@ -331,13 +331,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 							else if (!connections.containsKey(taskid) &&
 									  connections.size() > maxConnections) {
 								System.err.println("JBufferSink: too many connections = " + connections.size() + 
-										" outstanding buffers = " + (numConnections - successful.size()) + " connections");
+										" outstanding buffers = " + (numConnections - successful.size()) + ".");
 								response.setRetry();
 								response.write(output);
 								output.flush();
 								conn.close();
 							}
 							else {
+								System.err.println("JBufferSink: outstanding buffers = " + (numConnections - successful.size()) + ".");
+								
 								response.setOpen();
 								response.write(output);
 								output.flush();
@@ -444,9 +446,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 							c.close();
 						}
 						connections.remove(taskid);
-						
-						System.err.println("JBufferSink: " + reduceID + " still waiting for " + 
-								           (numConnections - successful.size()) + " to complete. complete? " + complete());
 					}
 				}
 				
@@ -462,7 +461,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		} finally {
 			if (complete()) {
-				System.err.println("SINK " + reduceID + " DONE TELL TASK");
+				System.err.println("JBufferSink: " + reduceID + " done.");
 				synchronized (task) {
 					task.notifyAll();
 				}
