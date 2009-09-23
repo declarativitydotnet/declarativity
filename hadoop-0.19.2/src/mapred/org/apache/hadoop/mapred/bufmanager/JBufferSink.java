@@ -443,6 +443,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 						connections.remove(taskid);
 					}
+					updateProgress();
 				}
 				
 				if (safemode && collector instanceof JBuffer) {

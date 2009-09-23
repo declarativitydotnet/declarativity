@@ -372,7 +372,7 @@ public abstract class Task implements Writable, Configurable {
   /* flag to track whether task is done */
   private AtomicBoolean taskDone = new AtomicBoolean(false);
   // getters and setters for flag
-  private void setProgressFlag() {
+  protected void setProgressFlag() {
     progressFlag.set(true);
   }
   private boolean resetProgressFlag() {

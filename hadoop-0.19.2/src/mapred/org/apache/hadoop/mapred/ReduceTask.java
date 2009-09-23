@@ -260,6 +260,7 @@ public class ReduceTask extends Task {
 				return snapshot(false, progress);
 			} finally {
 				isSnapshotting = false;
+				setProgressFlag();
 			}
 		}
 	}
@@ -388,6 +389,7 @@ public class ReduceTask extends Task {
 		this.buffer = buffer;
 		synchronized (this) {
 			while(!sink.complete()) {
+				setProgressFlag();
 				if (buffer.getProgress().get() > snapshotThreshold) {
 					if (!reducePipeline || buffer.canSnapshot()) {
 						snapshotThreshold *= 2.0f;
