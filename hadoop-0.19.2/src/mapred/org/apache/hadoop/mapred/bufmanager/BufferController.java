@@ -183,7 +183,10 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						handled.add(request); // throw away
 					}
 					else {
-						LOG.info("BufferController: retry request " + request);
+						request.connectionAttempts++;
+						if (request.connectionAttempts > 10) {
+							LOG.info("BufferController: retry request " + request + " too many times = " + request.connectionAttempts);
+						}
 					}
 				}
 			} catch (IOException e) {

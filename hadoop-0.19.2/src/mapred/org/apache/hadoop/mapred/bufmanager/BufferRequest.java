@@ -45,6 +45,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferRequest<K extends Object, V extends Object> implements Comparable<BufferRequest>, Writable, Runnable {
 	
+	public transient int connectionAttempts = 0;
+	
 	public boolean delivered = false;
 	
 	private TaskAttemptID taskid;
