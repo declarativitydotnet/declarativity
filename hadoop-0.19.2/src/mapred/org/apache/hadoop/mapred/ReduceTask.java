@@ -368,9 +368,9 @@ public class ReduceTask extends Task {
 		
 		long begin = System.currentTimeMillis();
 		try {
-			buffer.setProgress(reducePhase);
 			sink.close();
 			buffer.flush();
+			buffer.setProgress(reducePhase);
 			reduce(job, reporter, buffer);
 		} finally {
 			reducePhase.complete();
@@ -408,6 +408,7 @@ public class ReduceTask extends Task {
 		}
 		System.err.println("ReduceTask: copy phase complete.");
 		copyPhase.complete();
+		setProgressFlag();
 	}
 	
 	private void reduce(OutputCollector collector, Reporter reporter, Progress progress) throws IOException {
@@ -421,6 +422,7 @@ public class ReduceTask extends Task {
 				
 		        if (progress != null) progress.set(values.getProgress().get());
 		        if (reporter != null) reporter.progress();
+		        setProgressFlag();
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
