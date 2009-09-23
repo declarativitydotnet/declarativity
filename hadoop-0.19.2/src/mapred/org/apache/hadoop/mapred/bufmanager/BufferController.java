@@ -51,21 +51,21 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 	private static final Log LOG = LogFactory.getLog(BufferController.class.getName());
 
 	private class RequestTransfer extends Thread {
-		private Map<InetSocketAddress, Set<BufferRequest>> requests;
+		private Map<InetSocketAddress, Set<BufferRequest>> transfers;
 		
 		public RequestTransfer() {
-			this.requests = new HashMap<InetSocketAddress, Set<BufferRequest>>();
+			this.transfers = new HashMap<InetSocketAddress, Set<BufferRequest>>();
 		}
 		
 		public void transfer(BufferRequest request) {
-			synchronized(requests) {
+			synchronized(transfers) {
 				InetSocketAddress source = 
 					NetUtils.createSocketAddr(request.source() + ":" + controlPort);
-				if (!requests.containsKey(source)) {
-					requests.put(source, new HashSet<BufferRequest>());
+				if (!transfers.containsKey(source)) {
+					transfers.put(source, new HashSet<BufferRequest>());
 				}
-				requests.get(source).add(request);
-				requests.notify();
+				transfers.get(source).add(request);
+				transfers.notify();
 			}
 		}
 		
@@ -73,19 +73,19 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 			Set<InetSocketAddress> locations = new HashSet<InetSocketAddress>();
 			Set<BufferRequest>     handle    = new HashSet<BufferRequest>();
 			while (!isInterrupted()) {
-				synchronized (requests) {
-					while (requests.size() == 0) {
-						try { requests.wait();
+				synchronized (transfers) {
+					while (transfers.size() == 0) {
+						try { transfers.wait();
 						} catch (InterruptedException e) { }
 					}
 					locations.clear();
-					locations.addAll(requests.keySet());
+					locations.addAll(transfers.keySet());
 				}
 				
 				for (InetSocketAddress location : locations) {
-					synchronized(requests) {
+					synchronized(transfers) {
 						handle.clear();
-						handle.addAll(requests.get(location));
+						handle.addAll(transfers.get(location));
 					}
 					Socket socket = null;
 					DataOutputStream out = null;
@@ -98,10 +98,10 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 						}
 						out.flush();
 						
-						synchronized (requests) {
-							requests.get(location).removeAll(handle);
-							if (requests.get(location).size() == 0) {
-								requests.remove(location);
+						synchronized (transfers) {
+							transfers.get(location).removeAll(handle);
+							if (transfers.get(location).size() == 0) {
+								transfers.remove(location);
 							}
 						}
 					} catch (IOException e) {
