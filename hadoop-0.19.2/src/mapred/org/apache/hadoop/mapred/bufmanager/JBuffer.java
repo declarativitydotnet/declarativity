@@ -157,9 +157,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		private int mergeBoundary = Integer.MAX_VALUE;
 
 		public void close() {
+			open = false;
 			synchronized (mergeLock) {
-				open = false;
 				while (busy) {
+					mergeLock.notifyAll();
 					try { mergeLock.wait();
 					} catch (InterruptedException e) { }
 				}
@@ -170,7 +171,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (mergeBoundary < spillid) {
 				synchronized (mergeLock) {
 					this.mergeBoundary = spillid;
-					this.notifyAll();
+					mergeLock.notifyAll();
 				}
 			}
 		}
@@ -1557,6 +1558,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				localFs.delete(filename.get(i), true);
 				localFs.delete(indexFileName.get(i), true);
 			}
+			LOG.info("Merge parts complete");
 		}
 	}
 
