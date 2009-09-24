@@ -192,7 +192,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						busy = false;
 						while (open && numSpills - numFlush < threshold) {
 							try {
-								LOG.info("MergeThread waiting.");
+								// LOG.info("MergeThread waiting.");
 								mergeLock.wait();
 							} catch (InterruptedException e) {
 								return;
@@ -200,7 +200,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 						if (!open) return;
 						busy = true;
-						LOG.info("MergeThread performing merge.");
+						// LOG.info("MergeThread performing merge.");
 					}
 
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
