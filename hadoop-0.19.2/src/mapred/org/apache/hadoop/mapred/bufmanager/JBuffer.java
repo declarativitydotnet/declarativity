@@ -325,9 +325,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						if (r.isOpen()) {
 							try {
 								r.flush(indexIn, dataIn, spillId, requestProgress);
-							if (requestProgress == 1.0f) {
-								umbilical.remove(r); // Request is done
-							}
+								if (requestProgress == 1.0f) {
+									umbilical.remove(r); // Request is done
+								}
 							} catch (IOException e) {
 								LOG.warn("PipelineThread received following exception " + e);
 								closeRequests.add(r);
