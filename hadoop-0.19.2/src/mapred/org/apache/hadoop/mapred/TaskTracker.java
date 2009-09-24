@@ -1519,7 +1519,6 @@ public class TaskTracker
    */
   private synchronized void purgeJob(KillJobAction action) throws IOException {
     JobID jobId = action.getJobID();
-    bufferController.free(jobId);
     LOG.info("Received 'KillJobAction' for job: " + jobId);
     RunningJob rjob = null;
     synchronized (runningJobs) {
@@ -1541,6 +1540,7 @@ public class TaskTracker
         // Delete the job directory for this  
         // task if the job is done/failed
         if (!rjob.keepJobFiles){
+            // bufferController.free(jobId);
           directoryCleanupThread.addToQueue(fConf, getLocalFiles(fConf, 
             getLocalJobDir(rjob.getJobID().toString())));
         }
