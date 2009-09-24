@@ -318,7 +318,6 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 
 	@Override
 	public void request(BufferRequest request) throws IOException {
-		
 		synchronized (requests) {
 			if (request.source().equals(hostname)) {
 				register(request); // Request is local.
@@ -336,6 +335,7 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		Map<TaskAttemptID, Integer> requestCount = new HashMap<TaskAttemptID, Integer>();
 
 		while (true) {
 			SocketChannel connection = null;
@@ -346,6 +346,20 @@ public class BufferController extends Thread implements BufferUmbilicalProtocol 
 				for (int i = 0; i < numRequests; i++) {
 					BufferRequest request = new BufferRequest();
 					request.readFields(in);
+					
+					if (request.taskid().isMap()) {
+						JobID jobid = request.taskid().getJobID();
+						if (requestCount.containsKey(request.taskid())) {
+							requestCount.put(request.taskid(), requestCount.get(request.taskid()) + 1);
+						}
+						else {
+							requestCount.put(request.taskid(), 1);
+						}
+						JobConf job = tracker.getJobConf(request.taskid());
+						if (requestCount.get(request.taskid()) == job.getNumReduceTasks()) {
+							System.err.println("BufferController: task " + request.taskid() + " received all buffer requests.");
+						}
+					}
 					register(request);
 				}
 			} catch (IOException e) {
