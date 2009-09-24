@@ -218,6 +218,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			} finally {
 				synchronized (mergeLock) {
 					open  = false;
+					busy  = false;
 					mergeLock.notifyAll();
 				}
 			}
