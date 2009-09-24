@@ -556,6 +556,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		return this.requests;
 	}
 	
+	public boolean isMerging() {
+		return this.mergeThread.isBusy();
+	}
+	
 	public synchronized void pipeline(boolean value) throws IOException {
 		if (pipeline == false && value == true) {
 			this.pipelineThread.open();

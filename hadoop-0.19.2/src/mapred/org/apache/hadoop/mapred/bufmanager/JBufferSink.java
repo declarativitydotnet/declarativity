@@ -680,7 +680,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							return; // don't care
 						}
 					} else {
-						if (sink.task.isSnapshotting()) {
+						if (sink.task.isSnapshotting() || sink.task.isMerging()) {
 							/* Drain socket while task is snapshotting. */
 							spill(reader, length, keyClass, valClass, codec);
 						} else { 
