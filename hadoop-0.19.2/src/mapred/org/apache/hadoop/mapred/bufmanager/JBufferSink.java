@@ -683,6 +683,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 						if (sink.task.isSnapshotting() || sink.task.isMerging()) {
 							/* Drain socket while task is snapshotting. */
 							spill(reader, length, keyClass, valClass, codec);
+							if (sink.task.isMerging()) {
+								return; // under heavy load
+							}
 						} else { 
 							boolean doSpill = true;
 							JBufferCollector<K, V> buffer = sink.buffer();
