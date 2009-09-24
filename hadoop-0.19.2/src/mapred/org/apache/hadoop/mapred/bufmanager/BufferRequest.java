@@ -283,10 +283,14 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 
 	public void close() throws IOException {
 		synchronized (this) {
-			if (out != null) {
-				out.flush();
-				out.close();
-				out = null;
+			try {
+				if (out != null) {
+					out.flush();
+					out.close();
+					out = null;
+				}
+			} catch (Throwable t) {
+				/* Ignore. */
 			}
 		}
 	}
