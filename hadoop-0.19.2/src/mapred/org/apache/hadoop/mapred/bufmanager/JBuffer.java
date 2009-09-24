@@ -157,16 +157,17 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		private int mergeBoundary = Integer.MAX_VALUE;
 
 		public void close() {
-			if (!open) LOG.info("Merge thread already closed!");
-			open = false;
-			synchronized (mergeLock) {
-				while (busy) {
-					LOG.info("Can't close MergeThread still busy.");
-					mergeLock.notifyAll();
-					try { mergeLock.wait();
-					} catch (InterruptedException e) { }
+			if (open) {
+				open = false;
+				synchronized (mergeLock) {
+					while (busy) {
+						LOG.info("Can't close MergeThread still busy.");
+						mergeLock.notifyAll();
+						try { mergeLock.wait();
+						} catch (InterruptedException e) { }
+					}
+					LOG.info("MergeThread is closed.");
 				}
-				LOG.info("MergeThread is closed.");
 			}
 		}
 		
