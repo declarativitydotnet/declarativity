@@ -183,7 +183,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public void run() {
 			try {
-				int threshold = 200;
+				int threshold = job.getInt("io.sort.factor", 100);
 				while (!isInterrupted()) {
 					synchronized (mergeLock) {
 						busy = false;
@@ -1436,10 +1436,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			numFlush = end;
 			if (spill) numSpills++;
 		}
-		kvbuffer = null;
-		System.gc();
 
-		try {
 		long finalOutFileSize = 0;
 		long finalIndexFileSize = 0;
 		List<Path> filename = new ArrayList<Path>();
@@ -1547,11 +1544,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				IFile.Writer<K, V> writer = 
 					new IFile.Writer<K, V>(job, finalOut, keyClass, valClass, codec);
 				if (null == combinerClass || end - start < minSpillsForCombine) {
+					LOG.info("Write merge file directly to disk");
 					Merger.writeFile(kvIter, writer, reporter, job);
 				} else {
+					LOG.info("Write merge file with combine to disk");
 					combineCollector.setWriter(writer);
 					combineAndSpill(kvIter);
 				}
+				LOG.info("Write merge file complete");
 
 				//close
 				writer.close();
@@ -1566,9 +1566,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				localFs.delete(filename.get(i), true);
 				localFs.delete(indexFileName.get(i), true);
 			}
-		}
-		} finally {
-			kvbuffer = new byte[kvbufferSize];
 		}
 	}
 
