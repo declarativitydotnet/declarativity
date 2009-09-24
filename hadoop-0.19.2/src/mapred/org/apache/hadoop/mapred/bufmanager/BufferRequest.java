@@ -227,6 +227,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			}
 			return out;
 		} catch (IOException e) {
+			e.printStackTrace();
 			throw e;
 		}
 	}
