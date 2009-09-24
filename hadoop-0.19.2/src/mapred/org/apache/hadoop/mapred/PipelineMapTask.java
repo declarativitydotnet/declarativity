@@ -215,7 +215,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 
 	    /* Kick off a sink for receiving the reducer output. */
 		boolean snapshots = job.getBoolean("mapred.job.snapshots", false);
-		JBufferSink sink  = new JBufferSink(job, getTaskID(), this, this, snapshots);
+		JBufferSink sink  = new JBufferSink(job, reporter, getTaskID(), this, this, snapshots);
 		sink.open();
 		
 		/* Start the reduce output fetcher */

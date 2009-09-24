@@ -56,9 +56,12 @@ public class ReduceTask extends Task {
 
 		private JBufferSink sink = null;
 		
-		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, JBufferSink sink) {
+		private Reporter reporter;
+		
+		public MapOutputFetcher(TaskUmbilicalProtocol trackerUmbilical, BufferUmbilicalProtocol bufferUmbilical, Reporter reporter, JBufferSink sink) {
 			this.trackerUmbilical = trackerUmbilical;
 			this.bufferUmbilical = bufferUmbilical;
+			this.reporter = reporter;
 			this.sink = sink;
 		}
 
@@ -72,6 +75,7 @@ public class ReduceTask extends Task {
 					MapTaskCompletionEventsUpdate updates = 
 						trackerUmbilical.getMapCompletionEvents(getJobID(), eid, Integer.MAX_VALUE, ReduceTask.this.getTaskID());
 
+					reporter.progress();
 					eid += updates.events.length;
 
 					// Process the TaskCompletionEvents:
@@ -360,11 +364,11 @@ public class ReduceTask extends Task {
 		
 		snapshotInterval = 1f / (float) job.getInt("mapred.snapshot.interval", 1);
 		snapshotThreshold = snapshotInterval;
-		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, 
+		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), (JBufferCollector) buffer, this, 
 				                           snapshots && snapshotInterval < 0);
 		sink.open();
 		
-		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, sink);
+		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
 		fetcher.setDaemon(true);
 		fetcher.start();
 		
