@@ -148,6 +148,7 @@ public class ReduceTask extends Task {
 	
 	private boolean snapshots = false;
 	private float   snapshotThreshold = 1f;
+	private float   snapshotInterval  = 1f;
 	private boolean isSnapshotting = false;
 	
 
@@ -357,8 +358,8 @@ public class ReduceTask extends Task {
 		reducePipeline   = job.getBoolean("mapred.reduce.pipeline", false);
 		snapshots        = job.getBoolean("mapred.job.snapshots", false);
 		
-		int snapshotInterval = job.getInt("mapred.snapshot.interval", -1);
-		snapshotThreshold = snapshotInterval < 0 ? 1f : 1 / (float) snapshotInterval;
+		snapshotInterval = 1f / (float) job.getInt("mapred.snapshot.interval", 1);
+		snapshotThreshold = snapshotInterval;
 		JBufferSink sink = new JBufferSink(job, getTaskID(), (JBufferCollector) buffer, this, 
 				                           snapshots && snapshotInterval < 0);
 		sink.open();
@@ -397,17 +398,17 @@ public class ReduceTask extends Task {
 		synchronized (this) {
 			while(!sink.complete()) {
 				setProgressFlag();
-				if (buffer.getProgress().get() > snapshotThreshold) {
-					if (window < Integer.MAX_VALUE) {
-						isSnapshotting = true;
-						LOG.info("ReduceTask: " + getTaskID() + " perform window snapshot. time = " + (System.currentTimeMillis() - starttime) + "ms.");
-						try { snapshot(false, 0f);
-						} finally {
-							isSnapshotting = false;
-						}
+				if (window < Integer.MAX_VALUE) {
+					isSnapshotting = true;
+					LOG.info("ReduceTask: " + getTaskID() + " perform window snapshot. time = " + (System.currentTimeMillis() - starttime) + "ms.");
+					try { snapshot(false, 0f);
+					} finally {
+						isSnapshotting = false;
 					}
-					else if (!reducePipeline || buffer.canSnapshot()) {
-						snapshotThreshold *= 2.0f;
+				}
+				else if (buffer.getProgress().get() > snapshotThreshold) {
+					if (!reducePipeline || buffer.canSnapshot()) {
+						snapshotThreshold += snapshotInterval;
 						isSnapshotting = true;
 						LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
 						try { snapshot(true, buffer.getProgress().get());
