@@ -684,6 +684,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							/* Drain socket while task is snapshotting. */
 							spill(reader, length, keyClass, valClass, codec);
 							if (sink.task.isMerging()) {
+								/* We spilled and the task buffer is still merging! */
 								LOG.info("JBufferSink: buffer under heavly load. Closing connection to task " + id());
 								return; // under heavy load
 							}
