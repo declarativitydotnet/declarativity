@@ -212,9 +212,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					}
 				}
 			} finally {
-				synchronized (this) {
+				synchronized (mergeLock) {
 					open  = false;
-					this.notifyAll();
+					mergeLock.notifyAll();
 				}
 			}
 		}
