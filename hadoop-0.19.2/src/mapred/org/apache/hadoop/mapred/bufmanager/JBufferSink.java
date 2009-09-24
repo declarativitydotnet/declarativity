@@ -509,6 +509,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private int minSpillId = -1;
 		
+		private int mergingSpills = 0;
+		
 		private boolean isSnapshot;
 		
 		public Connection(DataInputStream input, JBufferSink<K, V> sink, JobConf conf) throws IOException {
@@ -684,9 +686,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 							/* Drain socket while task is snapshotting. */
 							spill(reader, length, keyClass, valClass, codec);
 							if (sink.task.isMerging()) {
+								mergingSpills++;
 								/* We spilled and the task buffer is still merging! */
-								LOG.info("JBufferSink: buffer under heavly load. Closing connection to task " + id());
-								return; // under heavy load
+								if (mergingSpills > 2) {
+									LOG.info("JBufferSink: buffer under heavly load. Closing connection to task " + id());
+									return; // under heavy load
+								}
 							}
 						} else { 
 							boolean doSpill = true;
