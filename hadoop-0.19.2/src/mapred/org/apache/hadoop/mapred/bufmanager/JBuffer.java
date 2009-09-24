@@ -191,11 +191,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				int threshold = 2 * job.getInt("io.sort.factor", 100);
 				while (!isInterrupted()) {
 					synchronized (mergeLock) {
-						LOG.info("MergeThread in merge lock.");
 						busy = false;
 						while (open && numSpills - numFlush < threshold) {
 							try {
-								LOG.info("MergeThread waiting.");
 								mergeLock.wait();
 							} catch (InterruptedException e) {
 								return;
@@ -203,7 +201,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 						if (!open) return;
 						busy = true;
-						LOG.info("MergeThread performing merge.");
 					}
 
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
