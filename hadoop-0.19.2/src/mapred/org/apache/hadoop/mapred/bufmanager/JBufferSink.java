@@ -688,12 +688,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 							if (sink.task.isMerging()) {
 								mergingSpills++;
 								/* We spilled and the task buffer is still merging! */
-								if (mergingSpills > 2) {
+								if (mergingSpills > 5) {
 									LOG.info("JBufferSink: buffer under heavly load. Closing connection to task " + id());
 									return; // under heavy load
 								}
 							}
 						} else { 
+							mergingSpills = 0;
 							boolean doSpill = true;
 							JBufferCollector<K, V> buffer = sink.buffer();
 							if (!safemode || progress == 1.0f) {
