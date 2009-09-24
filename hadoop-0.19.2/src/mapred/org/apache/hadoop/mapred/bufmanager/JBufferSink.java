@@ -31,6 +31,7 @@ import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.ReduceOutputFile;
+import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
@@ -228,6 +229,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 	}
 	
+	private Reporter reporter;
+	
 	private boolean safemode;
 	
 	private int maxConnections;
@@ -262,8 +265,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private ReduceOutputFile outputFileManager;
 	
-	public JBufferSink(JobConf conf, TaskAttemptID reduceID, JBufferCollector<K, V> collector, Task task, boolean snapshots) throws IOException {
+	public JBufferSink(JobConf conf, Reporter reporter, TaskAttemptID reduceID, JBufferCollector<K, V> collector, Task task, boolean snapshots) throws IOException {
 		this.conf = conf;
+		this.reporter = reporter;
 		this.safemode = conf.getBoolean("mapred.safemode", false);
 		this.reduceID = reduceID;
 		this.collector = collector;
@@ -317,6 +321,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
+						reporter.progress();
 						
 						synchronized (connections) {
 							TaskID taskid = conn.id().getTaskID();
