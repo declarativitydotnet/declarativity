@@ -1009,8 +1009,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				/* File must not exist. Need to make it. */
 			}
 		}
+		LOG.info("Begin final flush");
 		
 		mergeThread.close();
+		LOG.info("merge thread closed.");
 		
 		synchronized (spillLock) {
 			spillThread.close();
@@ -1038,6 +1040,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		pipelineThread.close();
 		
+		LOG.info("Perform final merge.");
 		mergeParts(false, Integer.MAX_VALUE);
 		reset(false);
 	}
