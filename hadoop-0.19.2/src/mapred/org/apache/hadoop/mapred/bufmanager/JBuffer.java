@@ -183,7 +183,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public void run() {
 			try {
-				int threshold = job.getInt("io.sort.factor", 100);
+				int threshold = 2 * job.getInt("io.sort.factor", 100);
 				while (!isInterrupted()) {
 					synchronized (mergeLock) {
 						busy = false;
