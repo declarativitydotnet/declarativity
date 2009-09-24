@@ -157,6 +157,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		private int mergeBoundary = Integer.MAX_VALUE;
 
 		public void close() {
+			if (!open) LOG.info("Merge thread already closed!");
 			open = false;
 			synchronized (mergeLock) {
 				while (busy) {
@@ -189,10 +190,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				int threshold = 2 * job.getInt("io.sort.factor", 100);
 				while (!isInterrupted()) {
 					synchronized (mergeLock) {
+						LOG.info("MergeThread in merge lock.");
 						busy = false;
 						while (open && numSpills - numFlush < threshold) {
 							try {
-								// LOG.info("MergeThread waiting.");
+								LOG.info("MergeThread waiting.");
 								mergeLock.wait();
 							} catch (InterruptedException e) {
 								return;
@@ -200,14 +202,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 						if (!open) return;
 						busy = true;
-						// LOG.info("MergeThread performing merge.");
+						LOG.info("MergeThread performing merge.");
 					}
 
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true, mergeBoundary);
-							LOG.debug("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+							LOG.info("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
