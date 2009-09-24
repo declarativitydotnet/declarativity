@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
@@ -304,7 +306,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			
 			if (numSpills == numFlush) return spillend;
-
+			
+			Set<BufferRequest> closeRequests = new HashSet<BufferRequest>();
 			/* Iterate over spill files in order. */
 			for (int spillId = numFlush; spillId < spillend; spillId++) {
 				FSDataInputStream indexIn = null;
@@ -319,9 +322,19 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 						
 						float requestProgress = (spillId / (float) numSpills) * progress.get();
-						r.flush(indexIn, dataIn, spillId, requestProgress);
-						if (requestProgress == 1.0f) {
-							umbilical.remove(r); // Request is done
+						if (r.isOpen()) {
+							try {
+								r.flush(indexIn, dataIn, spillId, requestProgress);
+							if (requestProgress == 1.0f) {
+								umbilical.remove(r); // Request is done
+							}
+							} catch (IOException e) {
+								LOG.warn("PipelineThread received following exception " + e);
+								closeRequests.add(r);
+							}
+						}
+						else {
+							closeRequests.add(r);
 						}
 					}
 				}
@@ -351,11 +364,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						LOG.warn("Pipeline running slow! Min data rate = " + 
 								min.datarate() + ". Average data rate = " + avgDataRate);
 						min.close();
-						requests.remove(min);
-						requestMap.remove(min.partition());
+						closeRequests.add(min);
 					}
 				}
 			}
+			
+			for (BufferRequest request : closeRequests) {
+				requests.remove(request);
+				requestMap.remove(request.partition());
+			}
+			
 
 			if (requests.size() == partitions) {
 				numFlush = spillend;
@@ -927,7 +945,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					}
 					
 					LOG.info("JBuffer: do snapshot request " + taskid + " progress " + bufferProgress);
-					r.flush(indexIn, dataIn, -1, bufferProgress);
+					try {
+						r.flush(indexIn, dataIn, -1, bufferProgress);
+					} catch (IOException e) {
+						LOG.warn("JBuffer: snapshot exception "  + e);
+					}
 					r.close(); // close after snapshot
 					if (bufferProgress == 1.0f) {
 						umbilical.remove(r); // Buffer is done.

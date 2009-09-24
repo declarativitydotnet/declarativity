@@ -122,7 +122,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint, float progress) throws IOException {
-		this.flushPoint = flushPoint;
 		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
 		long segmentOffset    = indexIn.readLong();
@@ -130,7 +129,13 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		long segmentLength    = indexIn.readLong();
 				
 		dataIn.seek(segmentOffset);
-		flushFile(dataIn, segmentLength, progress);
+		try {
+			flushFile(dataIn, segmentLength, progress);
+		} catch (IOException e) {
+			close();
+			throw e;
+		}
+		this.flushPoint = flushPoint;
 	}
 	
 	private void flushFinal() throws IOException {
