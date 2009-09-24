@@ -155,6 +155,10 @@ public class ReduceTask extends Task {
 	public boolean isSnapshotting() {
 		return this.isSnapshotting;
 	}
+	
+	public boolean isMerging() {
+		return buffer.isMerging();
+	}
 
 
 	{ 

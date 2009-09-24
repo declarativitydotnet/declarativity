@@ -393,6 +393,10 @@ public abstract class Task implements Writable, Configurable {
 	  throw new IOException("Task: snapshot not configured!");
   }
   
+  public boolean isMerging() {
+	  return false;
+  }
+  
   public boolean isSnapshotting() {
 	  return false;
   }
