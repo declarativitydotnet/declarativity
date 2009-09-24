@@ -184,10 +184,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public void run() {
 			try {
+				int threshold = 200;
 				while (!isInterrupted()) {
 					synchronized (mergeLock) {
 						busy = false;
-						while (open && numSpills - numFlush < 100) {
+						while (open && numSpills - numFlush < threshold) {
 							try {
 								mergeLock.wait();
 							} catch (InterruptedException e) {
@@ -198,7 +199,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						busy = true;
 					}
 
-					if (!taskid.isMap() && numSpills - numFlush > 100) {
+					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true, mergeBoundary);
