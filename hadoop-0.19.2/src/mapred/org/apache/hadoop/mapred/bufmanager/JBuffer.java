@@ -307,7 +307,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			
 			if (numSpills == numFlush) return spillend;
 			
-			Set<BufferRequest> closeRequests = new HashSet<BufferRequest>();
 			/* Iterate over spill files in order. */
 			for (int spillId = numFlush; spillId < spillend; spillId++) {
 				FSDataInputStream indexIn = null;
@@ -330,11 +329,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 								}
 							} catch (IOException e) {
 								LOG.warn("PipelineThread received following exception " + e);
-								closeRequests.add(r);
 							}
-						}
-						else {
-							closeRequests.add(r);
 						}
 					}
 				}
@@ -364,17 +359,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						LOG.warn("Pipeline running slow! Min data rate = " + 
 								min.datarate() + ". Average data rate = " + avgDataRate);
 						min.close();
-						closeRequests.add(min);
 					}
 				}
 			}
 			
-			for (BufferRequest request : closeRequests) {
-				requests.remove(request);
-				requestMap.remove(request.partition());
-			}
-			
-
 			if (requests.size() == partitions) {
 				numFlush = spillend;
 			}
