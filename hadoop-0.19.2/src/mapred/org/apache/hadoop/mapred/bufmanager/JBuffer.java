@@ -163,7 +163,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					try { mergeLock.wait();
 					} catch (InterruptedException e) { }
 				}
-				this.interrupt();
 			}
 		}
 		
