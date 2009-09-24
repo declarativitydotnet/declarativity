@@ -1436,7 +1436,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			numFlush = end;
 			if (spill) numSpills++;
 		}
+		kvbuffer = null;
+		System.gc();
 
+		try {
 		long finalOutFileSize = 0;
 		long finalIndexFileSize = 0;
 		List<Path> filename = new ArrayList<Path>();
@@ -1564,7 +1567,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				localFs.delete(indexFileName.get(i), true);
 			}
 		}
-
+		} finally {
+			kvbuffer = new byte[kvbufferSize];
+		}
 	}
 
 	private void writeIndexRecord(FSDataOutputStream indexOut, 
