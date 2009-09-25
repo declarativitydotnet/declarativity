@@ -230,7 +230,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			long begin = System.currentTimeMillis();
 			while (!sink.complete()) {
 				setProgressFlag();
-				try { this.wait();
+				try { this.wait(60000);
 				} catch (InterruptedException e) { }
 			}
 		}
