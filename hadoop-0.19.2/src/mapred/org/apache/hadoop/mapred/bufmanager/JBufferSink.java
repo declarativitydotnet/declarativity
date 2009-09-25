@@ -453,7 +453,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 						connections.get(taskid).clear();
 					}
-					updateProgress();
+					
 					if (connections.get(taskid).size() == 0) {
 						connections.remove(taskid);
 					}
@@ -493,10 +493,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		synchronized (task) {
-			System.err.println("JBufferSink " + reduceID + " notify task.");
 			task.notifyAll();
 		}
-		reporter.progress();
 	}
 	
 	private JBufferRun getBufferRun(TaskID taskid) {
@@ -519,7 +517,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		private JBufferSink<K, V> sink;
 		private DataInputStream input;
 		
-		private boolean busy;
 		private boolean open;
 		
 		private int minSpillId = -1;
@@ -532,7 +529,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 			this.input = input;
 			this.sink = sink;
 			this.progress = 0f;
-			this.busy = false;
 			this.open = true;
 			
 			this.id = new TaskAttemptID();
@@ -570,11 +566,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		public void close() {
 			synchronized (this) {
 				open = false;
-				while (busy) {
-					try { this.wait();
-					} catch (InterruptedException e) { }
-				}
-				
 				if (this.input == null) return;
 				try {
 					this.input.close();
@@ -652,23 +643,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 				
 				while (open) {
 					long length = 0;
-					synchronized (this) {
-						busy = false;     // not busy
-						this.notifyAll(); // tell everyone
-					}
 					try {
 						length = this.input.readLong();
 						this.progress = this.input.readFloat();
 					}
 					catch (Throwable e) {
 						return;
-					}
-					
-					synchronized (this) {
-						if (!open) {
-							return;
-						}
-						busy = true; // busy
 					}
 					
 					if (length == 0) {
@@ -738,20 +718,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 					}
 					
-					if (progress == 1.0f) return;
 					sink.updateProgress();
+					if (progress == 1.0f) return;
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
 				return;
 			}
 			finally {
-				synchronized (this) {
-					busy = false;
-					if (!isSnapshot()) sink.done(this);
-					this.notifyAll();
-					if (open) close();
-				}
+				if (!isSnapshot()) sink.done(this);
+				if (open) close();
 			}
 		}
 	}
