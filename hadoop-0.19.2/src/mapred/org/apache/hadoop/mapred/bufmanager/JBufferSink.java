@@ -352,11 +352,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 									}
 									connections.get(taskid).add(conn);
 								}
+								System.err.println("JBufferSink " + reduceID + " execute " + conn);
 								executor.execute(conn);
 							}
 						}
 					}
-				} catch (IOException e) { }
+					LOG.info("JBufferSink " + reduceID + " buffer response server closed.");
+				} catch (IOException e) { 
+					e.printStackTrace();
+				}
 			}
 		};
 		acceptor.setPriority(Thread.MAX_PRIORITY);
@@ -489,6 +493,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		synchronized (task) {
+			System.err.println("JBufferSink " + reduceID + " notify task.");
 			task.notifyAll();
 		}
 		reporter.progress();
