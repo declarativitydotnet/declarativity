@@ -334,7 +334,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else if (!connections.containsKey(taskid) &&
-									  connections.size() > maxConnections) {
+									  (connections.size() - successful.size()) > maxConnections) {
 								response.setRetry();
 								response.write(output);
 								output.flush();
@@ -357,9 +357,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 					}
 					LOG.info("JBufferSink " + reduceID + " buffer response server closed.");
-				} catch (IOException e) { 
-					e.printStackTrace();
-				}
+				} catch (IOException e) {  }
 			}
 		};
 		acceptor.setPriority(Thread.MAX_PRIORITY);
@@ -384,6 +382,26 @@ public class JBufferSink<K extends Object, V extends Object> {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		synchronized (connections) {
+			boolean connectionsOpen = true;
+			while (connectionsOpen) {
+				connectionsOpen = false;
+				for (List<Connection> clist : connections.values()) {
+					for (Connection c : clist) {
+						if (c.open) {
+							connectionsOpen = true;
+							break;
+						}
+					}
+					if (connectionsOpen) break;
+				}
+				if (connectionsOpen) {
+					try { connections.wait();
+					} catch (InterruptedException e) { }
+				}
+			}
 		}
 
 		try {
@@ -445,14 +463,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 				if (this.connections.containsKey(taskid)) {
 					if (connection.progress() == 1.0f) {
 						this.successful.add(taskid);
-						/*
-						for (Connection c : connections.get(taskid)) {
-							c.close();
-						}
-						*/
-						connections.remove(taskid);
 					}
 				}
+				this.connections.notifyAll();
 				
 				if (safemode && collector instanceof JBuffer) {
 					int minUncommittedSpillId = Integer.MAX_VALUE;
@@ -477,12 +490,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 	private void updateProgress() {
 		synchronized (connections) {
 			float progress = (float) this.successful.size();
-			for (List<Connection> clist : connections.values()) {
-				float max = 0f;
-				for (Connection c : clist) {
-					max = Math.max(max, c.progress());
+			for (TaskID taskid : connections.keySet()) {
+				if (!this.successful.contains(taskid)) {
+					float max = 0f;
+					for (Connection c : connections.get(taskid)) {
+						max = Math.max(max, c.progress());
+					}
+					progress += max;
 				}
-				progress += max;
 			}
 			collector.getProgress().set(progress / (float) numConnections);
 		}
