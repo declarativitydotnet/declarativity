@@ -361,10 +361,10 @@ public class ReduceTask extends Task {
 		reducePipeline   = job.getBoolean("mapred.reduce.pipeline", false);
 		snapshots        = job.getBoolean("mapred.job.snapshots", false);
 		
-		snapshotInterval = 1f / (float) job.getInt("mapred.snapshot.interval", 1);
+		snapshotInterval = 1f / (1f + (float) job.getInt("mapred.snapshot.interval", 0));
 		snapshotThreshold = snapshotInterval;
 		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), (JBufferCollector) buffer, this, 
-				                           snapshots && snapshotInterval < 0);
+				                           snapshots && snapshotInterval < 1f);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
