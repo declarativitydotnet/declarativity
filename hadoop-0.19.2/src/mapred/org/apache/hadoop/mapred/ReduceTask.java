@@ -350,6 +350,7 @@ public class ReduceTask extends Task {
 	      runTaskCleanupTask(umbilical);
 	      return;
 	    }
+	    LOG.info("Starting reduce task " + getTaskID());
 	    
 	    float [] weights = {0.75f, 0.25f};
 	    getProgress().setWeight(weights);
@@ -364,11 +365,13 @@ public class ReduceTask extends Task {
 		snapshotThreshold = snapshotInterval;
 		inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
 		
+	    LOG.info("Reduce task " + getTaskID() + " starting sink.");
 		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), 
 				                           (JBufferCollector) buffer, 
 				                           this, inputSnapshots);
 		sink.open();
 		
+	    LOG.info("Reduce task " + getTaskID() + " starting map output fetcher.");
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
 		fetcher.setDaemon(true);
 		fetcher.start();
