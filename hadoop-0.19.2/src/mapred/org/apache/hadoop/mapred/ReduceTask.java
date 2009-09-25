@@ -296,7 +296,7 @@ public class ReduceTask extends Task {
 		try {
 			if (reducePipeline && buffer.canSnapshot()) {
 				buffer.reset(true); // Restart for reduce output.
-				reduce(buffer, null, null);
+				reduce(buffer, reporter, null);
 				buffer.getProgress().set(progress);
 				buffer.snapshot(); // Send reduce snapshot result
 			}
