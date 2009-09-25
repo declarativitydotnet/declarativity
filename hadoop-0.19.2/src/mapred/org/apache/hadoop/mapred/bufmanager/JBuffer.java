@@ -946,7 +946,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					
 					LOG.info("JBuffer: do snapshot request " + taskid + " progress " + bufferProgress);
 					try {
-						r.flush(indexIn, dataIn, -1, bufferProgress);
+						r.flush(indexIn, dataIn, bufferProgress);
 					} catch (IOException e) {
 						LOG.warn("JBuffer: snapshot exception "  + e);
 					}
@@ -1540,14 +1540,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				IFile.Writer<K, V> writer = 
 					new IFile.Writer<K, V>(job, finalOut, keyClass, valClass, codec);
 				if (null == combinerClass || end - start < minSpillsForCombine) {
-					LOG.info("Write merge file directly to disk");
 					Merger.writeFile(kvIter, writer, reporter, job);
 				} else {
-					LOG.info("Write merge file with combine to disk");
 					combineCollector.setWriter(writer);
 					combineAndSpill(kvIter);
 				}
-				LOG.info("Write merge file complete");
 
 				//close
 				writer.close();
