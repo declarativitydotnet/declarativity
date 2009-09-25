@@ -343,6 +343,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				writer.append(key, value);
 			}
 		} finally {
+			out.flush();
 			writer.close();
 		}
 		
