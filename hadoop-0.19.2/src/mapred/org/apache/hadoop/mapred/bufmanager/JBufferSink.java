@@ -726,7 +726,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
-				if (!isSnapshot()) sink.done(this);
+				if (!isSnapshot()) {
+					System.err.println("JBufferSink " + reduceID + " closing buffer " + id() + " progress = " + progress);
+					sink.done(this);
+				}
 				if (open) close();
 			}
 		}
