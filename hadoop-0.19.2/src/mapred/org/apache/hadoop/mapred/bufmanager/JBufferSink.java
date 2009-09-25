@@ -321,7 +321,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
-						reporter.progress();
 						
 						synchronized (connections) {
 							TaskID taskid = conn.id().getTaskID();
@@ -487,6 +486,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		synchronized (task) {
 			task.notifyAll();
 		}
+		reporter.progress();
 	}
 	
 	private JBufferRun getBufferRun(TaskID taskid) {
