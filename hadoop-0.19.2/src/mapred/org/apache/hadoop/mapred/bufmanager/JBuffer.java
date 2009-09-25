@@ -283,7 +283,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					try {
 						long pipelinestart = java.lang.System.currentTimeMillis();
 						flushpoint = flushRequests(false);
-						LOG.debug("PipelinMergeThread: pipeline time " +  
+						LOG.info("PipelineThread: pipeline time " +  
 								((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
 					} catch (IOException e) {
 						e.printStackTrace();
