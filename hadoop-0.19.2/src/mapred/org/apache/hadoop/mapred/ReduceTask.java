@@ -270,7 +270,7 @@ public class ReduceTask extends Task {
 				for (JBufferSink.JBufferRun run : runs) {
 					run.spill(buffer);
 				}
-				return snapshot(false, progress);
+				return snapshot(false, progress, null);
 			} finally {
 				isSnapshotting = false;
 				setProgressFlag();
@@ -278,7 +278,7 @@ public class ReduceTask extends Task {
 		}
 	}
 	
-	private boolean snapshot(boolean save, float progress) throws IOException {
+	private boolean snapshot(boolean save, float progress, Reporter reporter) throws IOException {
 		Path data = null;
 		Path index = null;
 		
@@ -312,7 +312,7 @@ public class ReduceTask extends Task {
 						out.write(key, value);
 					}
 				};
-				reduce(collector, null, null);
+				reduce(collector, reporter, null);
 				out.close(null);
 				System.err.println("ReduceTask: snapshot created. file " + snapshotName);
 			}
@@ -377,7 +377,7 @@ public class ReduceTask extends Task {
 		fetcher.setDaemon(true);
 		fetcher.start();
 		
-		copy(buffer, sink);
+		copy(buffer, sink, reporter);
 		fetcher.interrupt();
 		
 		long begin = System.currentTimeMillis();
@@ -399,7 +399,7 @@ public class ReduceTask extends Task {
 		System.err.println("Reduce time = " + (System.currentTimeMillis() - begin) + " ms.");
 	}
 	
-	protected void copy(JBuffer buffer, JBufferSink sink) throws IOException {
+	protected void copy(JBuffer buffer, JBufferSink sink, Reporter reporter) throws IOException {
 		this.buffer = buffer;
 		int window = conf.getInt("mapred.reduce.window", Integer.MAX_VALUE);
 		long starttime = System.currentTimeMillis();
@@ -407,11 +407,11 @@ public class ReduceTask extends Task {
 			LOG.info("ReduceTask " + getTaskID() + ": In copy function.");
 			sink.open();
 			while(!sink.complete()) {
-				setProgressFlag();
+				reporter.progress();
 				if (window < Integer.MAX_VALUE) {
 					isSnapshotting = true;
 					LOG.info("ReduceTask: " + getTaskID() + " perform window snapshot. time = " + (System.currentTimeMillis() - starttime) + "ms.");
-					try { snapshot(false, 0f);
+					try { snapshot(false, 0f, reporter);
 					} catch (IOException e) {
 						LOG.warn("ReduceTask exeception during windowed snapshot. " + e);
 					} finally {
@@ -423,7 +423,7 @@ public class ReduceTask extends Task {
 						snapshotThreshold += snapshotInterval;
 						isSnapshotting = true;
 						LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
-						try { snapshot(true, buffer.getProgress().get());
+						try { snapshot(true, buffer.getProgress().get(), reporter);
 						} catch (IOException e) {
 							LOG.warn("ReduceTask exeception during regular snapshot. " + e);
 						} finally {
