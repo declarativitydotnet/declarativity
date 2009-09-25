@@ -230,8 +230,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		private boolean busy = false;
 		
 		public void close() throws IOException {
+			open = false;
 			synchronized (this) {
-				open = false;
 				while (busy) {
 					try { this.wait();
 					} catch (InterruptedException e) { }
@@ -290,6 +290,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			} finally {
 				synchronized (this) {
+					open = false;
+					busy = false;
 					this.notifyAll();
 				}
 			}
@@ -302,6 +304,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				BufferRequest request = null;
 				BufferRequestResponse response = new BufferRequestResponse();
 				while ((request = umbilical.getRequest(taskid)) != null) {
+					if (!open) return numFlush;
 					response.reset();
 					request.open(job, response, false, 1);
 					if (response.open) {
@@ -318,6 +321,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				FSDataInputStream indexIn = null;
 				FSDataInputStream dataIn  = null;
 				for (BufferRequest r : requests) {
+					if (!open) return spillId;
 					if (r.flushPoint() < spillId) {
 						if (dataIn == null) {
 							Path outputFile = mapOutputFile.getSpillFile(taskid, spillId);
