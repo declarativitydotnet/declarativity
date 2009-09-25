@@ -126,23 +126,25 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint, float progress) throws IOException {
-		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+		synchronized (this) {
+			indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
-		long segmentOffset    = indexIn.readLong();
-		long rawSegmentLength = indexIn.readLong();
-		long segmentLength    = indexIn.readLong();
-				
-		dataIn.seek(segmentOffset);
-		try {
-			flushFile(dataIn, segmentLength, progress);
-		} catch (IOException e) {
-			close();
-			throw e;
+			long segmentOffset    = indexIn.readLong();
+			long rawSegmentLength = indexIn.readLong();
+			long segmentLength    = indexIn.readLong();
+
+			dataIn.seek(segmentOffset);
+			try {
+				flushFile(dataIn, segmentLength, progress);
+			} catch (IOException e) {
+				close();
+				throw e;
+			}
+			this.flushPoint = flushPoint;
 		}
-		this.flushPoint = flushPoint;
 	}
 	
-	private void flushFinal() throws IOException {
+	private synchronized void flushFinal() throws IOException {
 		MapOutputFile mapOutputFile = new MapOutputFile(this.taskid.getJobID());
 		mapOutputFile.setConf(conf);
 
