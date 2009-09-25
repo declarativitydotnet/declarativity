@@ -444,17 +444,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 			synchronized (connections) {
 				TaskID taskid = connection.id().getTaskID();
 				if (this.connections.containsKey(taskid)) {
-					this.connections.get(taskid).remove(connection);
 					if (connection.progress() == 1.0f) {
 						this.successful.add(taskid);
-
 						for (Connection c : connections.get(taskid)) {
 							c.close();
 						}
-						connections.get(taskid).clear();
-					}
-					
-					if (connections.get(taskid).size() == 0) {
 						connections.remove(taskid);
 					}
 				}
