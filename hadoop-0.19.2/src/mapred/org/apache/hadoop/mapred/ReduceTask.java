@@ -354,8 +354,6 @@ public class ReduceTask extends Task {
 	    float [] weights = {0.75f, 0.25f};
 	    getProgress().setWeight(weights);
 
-	    System.err.println("STARTING REDUCE TASK");
-		
 		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
 		buffer.setProgress(copyPhase);
 		
@@ -373,7 +371,6 @@ public class ReduceTask extends Task {
 		fetcher.setDaemon(true);
 		fetcher.start();
 		
-	    System.err.println("REDUCE TASK ENTERING COPY PHASE");
 		copy(buffer, sink);
 		fetcher.interrupt();
 		
@@ -402,6 +399,7 @@ public class ReduceTask extends Task {
 		int window = conf.getInt("mapred.reduce.window", Integer.MAX_VALUE);
 		long starttime = System.currentTimeMillis();
 		synchronized (this) {
+			System.err.println("ReduceTask: In copy function.");
 			while(!sink.complete()) {
 				setProgressFlag();
 				if (window < Integer.MAX_VALUE) {

@@ -188,11 +188,13 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	
 	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot) throws IOException {
+		this.conf = conf;
 		int connectAttempts = snapshot ? 1 : this.conf.getInt("mapred.connection.attempts", 5);
 		open(conf, response, snapshot, connectAttempts);
 	}
 	
 	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot, int connectAttempts) throws IOException {
+		this.conf = conf;
 		this.connectionAttempts = connectAttempts;
 		synchronized (this) {
 			try { 
