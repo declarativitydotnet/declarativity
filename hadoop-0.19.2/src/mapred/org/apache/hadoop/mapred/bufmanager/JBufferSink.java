@@ -457,23 +457,25 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private void done(Connection connection) {
 		try {
-			synchronized (connections) {
-				TaskID taskid = connection.id().getTaskID();
-				if (this.connections.containsKey(taskid)) {
-					if (connection.progress() == 1.0f) {
-						this.successful.add(taskid);
-					}
-				}
-				this.connections.notifyAll();
-				
-				if (safemode && collector instanceof JBuffer) {
-					int minUncommittedSpillId = Integer.MAX_VALUE;
-					for (List<Connection> clist : connections.values()) {
-						for (Connection c : clist) {
-							minUncommittedSpillId = Math.min(minUncommittedSpillId, c.minSpillId);
+			if (!connection.isSnapshot()) {
+				synchronized (connections) {
+					TaskID taskid = connection.id().getTaskID();
+					if (this.connections.containsKey(taskid)) {
+						if (connection.progress() == 1.0f) {
+							this.successful.add(taskid);
 						}
 					}
-					((JBuffer)collector).minUnfinishedSpill(minUncommittedSpillId);
+					this.connections.notifyAll();
+
+					if (safemode && collector instanceof JBuffer) {
+						int minUncommittedSpillId = Integer.MAX_VALUE;
+						for (List<Connection> clist : connections.values()) {
+							for (Connection c : clist) {
+								minUncommittedSpillId = Math.min(minUncommittedSpillId, c.minSpillId);
+							}
+						}
+						((JBuffer)collector).minUnfinishedSpill(minUncommittedSpillId);
+					}
 				}
 			}
 		} finally {
@@ -657,9 +659,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					long length = 0;
 					try {
 						busy = false;
-						if (progress == 1f) {
-							throw new IOException("Connection " + this + " progress is done. but the damn thing wants to get more data.");
-						}
 						length = this.input.readLong();
 						this.progress = this.input.readFloat();
 						busy = true;
@@ -744,11 +743,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 			finally {
 				busy = false;
-				if (!isSnapshot()) {
-					System.err.println("JBufferSink " + reduceID + " closing buffer " + id() + " progress = " + progress);
-					sink.done(this);
-				}
 				if (open) close();
+				sink.done(this);
 			}
 		}
 	}
