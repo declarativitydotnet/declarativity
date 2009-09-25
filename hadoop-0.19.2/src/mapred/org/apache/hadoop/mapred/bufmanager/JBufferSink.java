@@ -657,6 +657,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 					long length = 0;
 					try {
 						busy = false;
+						if (progress == 1f) {
+							throw new IOException("Connection " + this + " progress is done. but the damn thing wants to get more data.");
+						}
 						length = this.input.readLong();
 						this.progress = this.input.readFloat();
 						busy = true;
