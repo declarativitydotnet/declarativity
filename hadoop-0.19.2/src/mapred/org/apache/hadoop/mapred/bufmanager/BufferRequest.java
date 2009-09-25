@@ -197,19 +197,15 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		this.conf = conf;
 		this.connectionAttempts = connectAttempts;
 		synchronized (this) {
-			try { 
-				this.conf = conf;
-				this.localFS = FileSystem.getLocal(conf);
-				this.out = connect(response, snapshot);
-			} catch (Throwable e) {
-				response.setRetry();
-			}
+			this.conf = conf;
+			this.localFS = FileSystem.getLocal(conf);
+			this.out = connect(response, snapshot);
 		}
 	}
 	
-	private FSDataOutputStream connect(BufferRequestResponse response, boolean snapshot) throws IOException {
+	private FSDataOutputStream connect(BufferRequestResponse response, boolean snapshot) {
+		Socket socket = new Socket();
 		try {
-			Socket socket = new Socket();
 			for (int i = 0; i < connectionAttempts && !socket.isConnected(); i++) {
 				try {
 					socket.connect(this.sink);
@@ -233,9 +229,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				return null;
 			}
 			return out;
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw e;
+		} catch (Throwable e) {
+			try { if (!socket.isClosed()) socket.close();
+			} catch (Throwable t) { }
+			return null;
 		}
 	}
 
