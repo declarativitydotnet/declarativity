@@ -113,6 +113,10 @@ public class ReduceTask extends Task {
 								try {
 									bufferUmbilical.request(request);
 									mapTasks.add(mapTaskId);
+									if (mapTasks.size() == getNumberOfInputs()) {
+										LOG.info("ReduceTask " + getTaskID() + " has requested all map buffers. " + 
+												  mapTasks.size() + " map buffers.");
+									}
 								} catch (IOException e) {
 									LOG.warn("BufferUmbilical problem in taking request " + request + ". " + e);
 								}
