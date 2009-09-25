@@ -445,9 +445,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 				if (this.connections.containsKey(taskid)) {
 					if (connection.progress() == 1.0f) {
 						this.successful.add(taskid);
+						/*
 						for (Connection c : connections.get(taskid)) {
 							c.close();
 						}
+						*/
 						connections.remove(taskid);
 					}
 				}
