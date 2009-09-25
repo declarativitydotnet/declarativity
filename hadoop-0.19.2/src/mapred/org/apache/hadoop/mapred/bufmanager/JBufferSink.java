@@ -577,6 +577,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 		public void close() {
 			synchronized (this) {
+				LOG.info("Closing " + this);
 				open = false;
 				if (this.input == null) return;
 				try {
@@ -743,7 +744,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
-				LOG.info("Closing " + this);
 				busy = false;
 				close(); // must be called before done!
 				sink.done(this);
