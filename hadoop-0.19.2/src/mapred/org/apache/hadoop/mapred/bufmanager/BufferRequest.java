@@ -121,6 +121,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		return this.datarate;
 	}
 	
+	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, float progress) throws IOException {
+		flush(indexIn, dataIn, -1, progress);
+	}
+	
 	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint, float progress) throws IOException {
 		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
