@@ -718,6 +718,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 					}
 					
+					
+					System.err.println("JBufferSink " + reduceID + " buffer " + id() + " progress = " + progress);
 					sink.updateProgress();
 					if (progress == 1.0f) return;
 				}
@@ -727,7 +729,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 			finally {
 				if (!isSnapshot()) {
-					System.err.println("JBufferSink " + reduceID + " closing buffer " + id() + " progress = " + progress);
+					System.err.println("JBufferSink CONNECITON CLOSED " + reduceID + " closing buffer " + id() + " progress = " + progress);
 					sink.done(this);
 				}
 				if (open) close();
