@@ -187,18 +187,24 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	
-	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot) throws IOException {
+	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot) {
 		this.conf = conf;
 		int connectAttempts = snapshot ? 1 : this.conf.getInt("mapred.connection.attempts", 5);
 		open(conf, response, snapshot, connectAttempts);
 	}
 	
-	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot, int connectAttempts) throws IOException {
+	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot, int connectAttempts) {
 		this.conf = conf;
 		this.connectionAttempts = connectAttempts;
-		synchronized (this) {
-			this.conf = conf;
+		try {
 			this.localFS = FileSystem.getLocal(conf);
+		} catch (IOException e) {
+			System.err.println("BufferRequest unable to get FileSystem!");
+			this.out = null;
+			return;
+		}
+		
+		synchronized (this) {
 			this.out = connect(response, snapshot);
 		}
 	}
