@@ -391,11 +391,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 				for (List<Connection> clist : connections.values()) {
 					for (Connection c : clist) {
 						if (c.open) {
+							System.err.println("JBufferSink close waiting for connection " + c);
 							connectionsOpen = true;
-							break;
 						}
 					}
-					if (connectionsOpen) break;
 				}
 				if (connectionsOpen) {
 					try { connections.wait();
