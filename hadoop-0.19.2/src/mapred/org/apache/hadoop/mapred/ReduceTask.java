@@ -363,6 +363,7 @@ public class ReduceTask extends Task {
 		
 		snapshotInterval = 1f / (1f + (float) job.getInt("mapred.snapshot.interval", 0));
 		snapshotThreshold = snapshotInterval;
+		System.err.println("ReduceTask: turn on snapshots = " + (snapshots && snapshotInterval < 1f));
 		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), (JBufferCollector) buffer, this, 
 				                           snapshots && snapshotInterval < 1f);
 		sink.open();
