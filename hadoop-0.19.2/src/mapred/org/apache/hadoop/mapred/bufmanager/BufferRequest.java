@@ -125,23 +125,21 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		flush(indexIn, dataIn, -1, progress);
 	}
 	
-	public void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint, float progress) throws IOException {
-		synchronized (this) {
-			indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+	public synchronized void flush(FSDataInputStream indexIn, FSDataInputStream dataIn, int flushPoint, float progress) throws IOException {
+		indexIn.seek(this.partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
-			long segmentOffset    = indexIn.readLong();
-			long rawSegmentLength = indexIn.readLong();
-			long segmentLength    = indexIn.readLong();
+		long segmentOffset    = indexIn.readLong();
+		long rawSegmentLength = indexIn.readLong();
+		long segmentLength    = indexIn.readLong();
 
-			dataIn.seek(segmentOffset);
-			try {
-				flushFile(dataIn, segmentLength, progress);
-			} catch (IOException e) {
-				close();
-				throw e;
-			}
-			this.flushPoint = flushPoint;
+		dataIn.seek(segmentOffset);
+		try {
+			flushFile(dataIn, segmentLength, progress);
+		} catch (IOException e) {
+			close();
+			throw e;
 		}
+		this.flushPoint = flushPoint;
 	}
 	
 	private synchronized void flushFinal() throws IOException {
@@ -176,7 +174,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	@Override
 	public void run() {
-		synchronized (this) {
 			try {
 				flushFinal();
 			} catch (IOException e) {
@@ -189,7 +186,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 					e.printStackTrace();
 				}
 			}
-		}
 	}
 	
 	
@@ -318,42 +314,45 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	}
 	
 	private void flushFile(FSDataInputStream in, long length, float progress) throws IOException {
-		if (length == 0 && progress < 1.0f) {
-			return;
-		}
-		
-		CompressionCodec codec = null;
-		if (conf.getCompressMapOutput()) {
-			Class<? extends CompressionCodec> codecClass =
-				conf.getMapOutputCompressorClass(DefaultCodec.class);
-			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-		}
-		Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
-		Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
-
-		long starttime = System.currentTimeMillis();
-		out.writeLong(length);
-		out.writeFloat(progress);
-
-		IFile.Reader reader = new IFile.Reader<K, V>(conf, in, length, codec);
-		IFile.Writer writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
-
-		try {
-			DataInputBuffer key = new DataInputBuffer();
-			DataInputBuffer value = new DataInputBuffer();
-			while (reader.next(key, value)) {
-				writer.append(key, value);
+		synchronized (this) {
+			if (length == 0 && progress < 1.0f) {
+				return;
 			}
-		} finally {
-			out.flush();
-			writer.close();
-		}
-		
-		if (length > 0) {
-			long  stoptime = System.currentTimeMillis();
-			float duration = 1.0f + (stoptime - starttime);
-			float rate = ((float) length) / duration;
-			datarate = (0.75f * rate) + (0.25f * datarate);
+			else if (!isOpen()) throw new IOException("BufferRequest is closed!");
+
+			CompressionCodec codec = null;
+			if (conf.getCompressMapOutput()) {
+				Class<? extends CompressionCodec> codecClass =
+					conf.getMapOutputCompressorClass(DefaultCodec.class);
+				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+			}
+			Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+			Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
+
+			long starttime = System.currentTimeMillis();
+			out.writeLong(length);
+			out.writeFloat(progress);
+
+			IFile.Reader reader = new IFile.Reader<K, V>(conf, in, length, codec);
+			IFile.Writer writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
+
+			try {
+				DataInputBuffer key = new DataInputBuffer();
+				DataInputBuffer value = new DataInputBuffer();
+				while (reader.next(key, value)) {
+					writer.append(key, value);
+				}
+			} finally {
+				out.flush();
+				writer.close();
+			}
+
+			if (length > 0) {
+				long  stoptime = System.currentTimeMillis();
+				float duration = 1.0f + (stoptime - starttime);
+				float rate = ((float) length) / duration;
+				datarate = (0.75f * rate) + (0.25f * datarate);
+			}
 		}
 	}
 
