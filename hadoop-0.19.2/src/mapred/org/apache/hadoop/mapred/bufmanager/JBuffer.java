@@ -207,7 +207,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
 							mergeParts(true, mergeBoundary);
-							LOG.info("SpillThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+							LOG.info("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -268,6 +268,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				while (!isInterrupted()) {
 					synchronized (this) {
 						busy = false;
+						this.notifyAll();
 						while (open && flushpoint == numSpills) {
 							try { this.wait();
 							} catch (InterruptedException e) {
@@ -378,6 +379,22 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 
 			return spillend;
+		}
+		
+		public boolean forceFlush() throws IOException {
+			if (numFlush < numSpills) {
+				synchronized (this) {
+					while (busy) {
+						try { this.wait();
+						} catch (InterruptedException e) { }
+					}
+					if (numFlush < numSpills) {
+						flushRequests(false);
+					}
+				}
+			}
+			
+			return numFlush == numSpills;
 		}
 	}
 	
@@ -974,18 +991,41 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 	
-	public synchronized ValuesIterator<K, V> iterator() throws IOException {
-		/*
-		if (this.numSpills == 0) {
-			int endPosition = (kvend > kvstart)
+	public boolean forceFlush() throws IOException {
+		synchronized (spillLock) {
+			boolean pipelineCatchup = this.pipelineThread.forceFlush();
+			if (!pipelineCatchup) return false;
+
+			final int endPosition = (kvend > kvstart)
 			? kvend : kvoffsets.length + kvend;
 			sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
+			int spindex = kvstart;
+			InMemValBytes value = new InMemValBytes();
+			for (int i = 0; i < partitions; ++i) {
+				BufferRequest request = this.requestMap.get(i);;
+				try {
+					DataInputBuffer key = new DataInputBuffer();
+					while (spindex < endPosition
+							&& kvindices[kvoffsets[spindex
+							                       % kvoffsets.length]
+							                       + PARTITION] == i) {
+						final int kvoff = kvoffsets[spindex % kvoffsets.length];
+						getVBytesForOffset(kvoff, value);
+						key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
+								(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-			RawKeyValueIterator kvIter =
-				new MRResultIterator(kvstart, endPosition);
-			return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
+						// request.forceFlush(key, value);
+						++spindex;
+					}
+				} finally {
+				}
+			}
 		}
-		*/
+
+		return false;
+	}
+	
+	public synchronized ValuesIterator<K, V> iterator() throws IOException {
 		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
 		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
 		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
@@ -1006,11 +1046,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				/* File must not exist. Need to make it. */
 			}
 		}
+		long timestamp = System.currentTimeMillis();
 		LOG.info("Begin final flush");
 		
 		mergeThread.close();
-		LOG.info("merge thread closed.");
+		LOG.info("merge thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
+		timestamp = System.currentTimeMillis();
 		synchronized (spillLock) {
 			spillThread.close();
 			while (this.spillThread.isSpilling()) {
@@ -1034,11 +1076,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			bufend = bufmark;
 			sortAndSpill();
 		}
+		LOG.info("spill thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
+		timestamp = System.currentTimeMillis();
 		pipelineThread.close();
+		LOG.info("pipeline thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
-		LOG.info("Perform final merge.");
+		timestamp = System.currentTimeMillis();
 		mergeParts(false, Integer.MAX_VALUE);
+		LOG.info("Final merge done. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		reset(false);
 	}
 	
