@@ -728,11 +728,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 									}
 								}
 							}
-							if (doSpill) spill(reader, length, keyClass, valClass, codec);
+							
+							if (doSpill) {
+								spill(reader, length, keyClass, valClass, codec);
+							}
+							sink.updateProgress();
 						}
 					}
 					
-					sink.updateProgress();
 					if (progress == 1.0f) return;
 				}
 			} catch (Throwable e) {
