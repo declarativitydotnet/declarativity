@@ -350,7 +350,6 @@ public class ReduceTask extends Task {
 	      runTaskCleanupTask(umbilical);
 	      return;
 	    }
-	    LOG.info("Starting reduce task " + getTaskID());
 	    
 	    float [] weights = {0.75f, 0.25f};
 	    getProgress().setWeight(weights);
@@ -369,9 +368,7 @@ public class ReduceTask extends Task {
 		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), 
 				                           (JBufferCollector) buffer, 
 				                           this, inputSnapshots);
-		sink.open();
 		
-	    LOG.info("Reduce task " + getTaskID() + " starting map output fetcher.");
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
 		fetcher.setDaemon(true);
 		fetcher.start();
@@ -381,7 +378,6 @@ public class ReduceTask extends Task {
 		
 		long begin = System.currentTimeMillis();
 		try {
-			sink.close();
 			buffer.flush();
 			buffer.setProgress(reducePhase);
 			reduce(job, reporter, buffer);
@@ -405,12 +401,15 @@ public class ReduceTask extends Task {
 		long starttime = System.currentTimeMillis();
 		synchronized (this) {
 			LOG.info("ReduceTask " + getTaskID() + ": In copy function.");
+			sink.open();
 			while(!sink.complete()) {
 				setProgressFlag();
 				if (window < Integer.MAX_VALUE) {
 					isSnapshotting = true;
 					LOG.info("ReduceTask: " + getTaskID() + " perform window snapshot. time = " + (System.currentTimeMillis() - starttime) + "ms.");
 					try { snapshot(false, 0f);
+					} catch (IOException e) {
+						LOG.warn("ReduceTask exeception during windowed snapshot. " + e);
 					} finally {
 						isSnapshotting = false;
 					}
@@ -421,6 +420,8 @@ public class ReduceTask extends Task {
 						isSnapshotting = true;
 						LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
 						try { snapshot(true, buffer.getProgress().get());
+						} catch (IOException e) {
+							LOG.warn("ReduceTask exeception during regular snapshot. " + e);
 						} finally {
 							isSnapshotting = false;
 						}
@@ -430,6 +431,7 @@ public class ReduceTask extends Task {
 				try { this.wait(window);
 				} catch (InterruptedException e) { }
 			}
+			sink.close();
 		}
 		LOG.info("ReduceTask " + getTaskID() + " copy phase completed in " + 
 				 (System.currentTimeMillis() - starttime) + " ms.");
