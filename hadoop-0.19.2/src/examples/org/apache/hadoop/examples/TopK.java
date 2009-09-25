@@ -144,9 +144,8 @@ public class TopK extends Configured implements Tool {
 		          if ("-s".equals(args[i])) {
 		        	int interval = Integer.parseInt(args[++i]);
 		        	/* Jobs will perform snapshots */
-		          	wordcountJob.setBoolean("mapred.job.snapshots", true);
 		          	wordcountJob.setInt("mapred.snapshot.interval", interval);
-		          	topkJob.setBoolean("mapred.job.snapshots", true);
+		          	topkJob.setBoolean("mapred.job.input.snapshots", true);
 
 		          	/* Wordcount will pipeline. */
 		          	wordcountJob.setBoolean("mapred.map.pipeline", true);
