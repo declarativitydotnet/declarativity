@@ -238,6 +238,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		setPhase(TaskStatus.Phase.MAP); 
 		sink.close();                        // This will commit final snapshots, if necessary.
 		collector.close();                   // Perform final flush
+		if (this.buffer != null) this.buffer.free();
 		bufferUmbilical.commit(getTaskID()); // Register final flush.
 
 		done(umbilical);
