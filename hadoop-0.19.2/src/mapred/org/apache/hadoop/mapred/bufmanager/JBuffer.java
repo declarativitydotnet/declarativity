@@ -303,7 +303,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				BufferRequestResponse response = new BufferRequestResponse();
 				while ((request = umbilical.getRequest(taskid)) != null) {
 					response.reset();
-					request.open(job, response, false);
+					request.open(job, response, false, 1);
 					if (response.open) {
 						requests.add(request);
 						requestMap.put(request.partition(), request); // TODO speculation

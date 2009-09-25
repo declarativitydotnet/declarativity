@@ -45,7 +45,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferRequest<K extends Object, V extends Object> implements Comparable<BufferRequest>, Writable, Runnable {
 	
-	public transient int connectionAttempts = 0;
+	public transient int connectionAttempts = 1;
 	
 	public boolean delivered = false;
 	
@@ -188,6 +188,12 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	
 	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot) throws IOException {
+		int connectAttempts = snapshot ? 1 : this.conf.getInt("mapred.connection.attempts", 5);
+		open(conf, response, snapshot, connectAttempts);
+	}
+	
+	public void open(JobConf conf, BufferRequestResponse response, boolean snapshot, int connectAttempts) throws IOException {
+		this.connectionAttempts = connectAttempts;
 		synchronized (this) {
 			try { 
 				this.conf = conf;
@@ -202,11 +208,10 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	private FSDataOutputStream connect(BufferRequestResponse response, boolean snapshot) throws IOException {
 		try {
 			Socket socket = new Socket();
-			int connectionAttempts = snapshot ? 1 : this.conf.getInt("mapred.connection.attempts", 5);
 			for (int i = 0; i < connectionAttempts && !socket.isConnected(); i++) {
 				try {
 					socket.connect(this.sink);
-				} catch (java.net.ConnectException e) {
+				} catch (IOException e) {
 					System.err.println("BufferRequest: " + e);
 					if (i == connectionAttempts) {
 						response.setRetry();
