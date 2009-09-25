@@ -732,8 +732,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 							if (doSpill) {
 								spill(reader, length, keyClass, valClass, codec);
 							}
-							sink.updateProgress();
 						}
+						sink.updateProgress();
 					}
 					
 					if (progress == 1.0f) return;
@@ -743,6 +743,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
+				LOG.info("Closing " + this);
 				busy = false;
 				close(); // must be called before done!
 				sink.done(this);
