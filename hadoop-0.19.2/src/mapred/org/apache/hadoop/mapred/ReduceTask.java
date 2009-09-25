@@ -399,7 +399,7 @@ public class ReduceTask extends Task {
 		int window = conf.getInt("mapred.reduce.window", Integer.MAX_VALUE);
 		long starttime = System.currentTimeMillis();
 		synchronized (this) {
-			System.err.println("ReduceTask: In copy function.");
+			LOG.info("ReduceTask " + getTaskID() + ": In copy function.");
 			while(!sink.complete()) {
 				setProgressFlag();
 				if (window < Integer.MAX_VALUE) {
@@ -426,7 +426,8 @@ public class ReduceTask extends Task {
 				} catch (InterruptedException e) { }
 			}
 		}
-		System.err.println("ReduceTask: copy phase complete.");
+		LOG.info("ReduceTask " + getTaskID() + " copy phase completed in " + 
+				 (System.currentTimeMillis() - starttime) + " ms.");
 		copyPhase.complete();
 		setProgressFlag();
 	}
