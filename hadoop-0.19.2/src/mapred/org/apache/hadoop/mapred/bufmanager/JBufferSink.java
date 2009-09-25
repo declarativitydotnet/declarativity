@@ -391,7 +391,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 				for (List<Connection> clist : connections.values()) {
 					for (Connection c : clist) {
 						if (c.open) {
-							System.err.println("JBufferSink close waiting for connection " + c);
+							LOG.info("JBufferSink " + reduceID + 
+									 ": close waiting for finish of " + c);
 							connectionsOpen = true;
 						}
 					}
@@ -480,10 +481,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		} finally {
 			if (complete()) {
-				LOG.debug("JBufferSink: " + reduceID + " done.");
-				synchronized (task) {
-					task.notifyAll();
-				}
+				updateProgress();
 			}
 		}
 	}
@@ -743,7 +741,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 			finally {
 				busy = false;
-				if (open) close();
+				close(); // must be called before done!
 				sink.done(this);
 			}
 		}

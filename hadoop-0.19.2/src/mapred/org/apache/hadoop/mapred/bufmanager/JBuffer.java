@@ -206,6 +206,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
+							LOG.info("MergeThread start");
 							mergeParts(true, mergeBoundary);
 							LOG.info("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
@@ -944,6 +945,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			return false;
 		}
 
+		LOG.info("JBuffer " + taskid + " performing snaphsot.");
 		Path snapFile = null;
 		Path indexFile = null;
 		try {
@@ -961,6 +963,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						response.reset();
 						r.open(job, response, true);
 						if (!response.open) {
+							LOG.info("JBuffer " + taskid + " could open request " + r);
 							continue;
 						}
 					}
