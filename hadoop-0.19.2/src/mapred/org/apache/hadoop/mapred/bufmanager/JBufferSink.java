@@ -527,6 +527,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		private DataInputStream input;
 		
 		private boolean open;
+		private boolean busy = false;
 		
 		private int minSpillId = -1;
 		
@@ -561,6 +562,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 			StringBuilder sb = new StringBuilder();
 			sb.append("Connection: receiving buffer " + id + ". ");
 			sb.append("Applying to buffer " + reduceID + ". ");
+			sb.append("Progress = " + progress + ". ");
+			sb.append("Busy? = " + busy + ". ");
 			return sb.toString();
 		}
 		
@@ -653,8 +656,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 				while (open) {
 					long length = 0;
 					try {
+						busy = false;
 						length = this.input.readLong();
 						this.progress = this.input.readFloat();
+						busy = true;
 					}
 					catch (Throwable e) {
 						return;
@@ -735,6 +740,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
+				busy = false;
 				if (!isSnapshot()) {
 					System.err.println("JBufferSink " + reduceID + " closing buffer " + id() + " progress = " + progress);
 					sink.done(this);
