@@ -150,9 +150,9 @@ public class ReduceTask extends Task {
 	private boolean mapPipeline = false;
 	private boolean reducePipeline = false;
 	
-	private boolean snapshots = false;
 	private float   snapshotThreshold = 1f;
 	private float   snapshotInterval  = 1f;
+	private boolean inputSnapshots = false;
 	private boolean isSnapshotting = false;
 	
 
@@ -359,13 +359,14 @@ public class ReduceTask extends Task {
 		
 		mapPipeline      = job.getBoolean("mapred.map.pipeline", false);
 		reducePipeline   = job.getBoolean("mapred.reduce.pipeline", false);
-		snapshots        = job.getBoolean("mapred.job.snapshots", false);
 		
 		snapshotInterval = 1f / (1f + (float) job.getInt("mapred.snapshot.interval", 0));
 		snapshotThreshold = snapshotInterval;
-		System.err.println("ReduceTask: turn on snapshots = " + (snapshots && snapshotInterval < 1f));
-		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), (JBufferCollector) buffer, this, 
-				                           snapshots && snapshotInterval < 1f);
+		inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
+		
+		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), 
+				                           (JBufferCollector) buffer, 
+				                           this, inputSnapshots);
 		sink.open();
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
@@ -411,7 +412,7 @@ public class ReduceTask extends Task {
 						isSnapshotting = false;
 					}
 				}
-				else if (buffer.getProgress().get() > snapshotThreshold) {
+				else if (!inputSnapshots && buffer.getProgress().get() > snapshotThreshold) {
 					if (!reducePipeline || buffer.canSnapshot()) {
 						snapshotThreshold += snapshotInterval;
 						isSnapshotting = true;

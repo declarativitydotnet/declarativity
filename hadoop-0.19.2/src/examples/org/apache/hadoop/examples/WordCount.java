@@ -123,7 +123,6 @@ public class WordCount extends Configured implements Tool {
       try {
         if ("-s".equals(args[i])) {
         	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
-        	conf.setBoolean("mapred.job.snapshots", true);
         	conf.setBoolean("mapred.map.pipeline", true);
         } else if ("-p".equals(args[i])) {
         	conf.setBoolean("mapred.map.pipeline", true);
