@@ -480,7 +480,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		this.mergeThread = new MergeThread();
 		this.mergeThread.setDaemon(true);
 		if (!taskid.isMap()) {
-			this.mergeThread.setPriority(Thread.MAX_PRIORITY);
 			this.mergeThread.start();
 		}
 		
