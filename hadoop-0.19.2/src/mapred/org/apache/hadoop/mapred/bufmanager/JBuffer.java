@@ -85,6 +85,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		public void close() {
 			synchronized (spillLock) {
 				this.open = false;
+				while (isSpilling()) {
+					try { spillLock.wait();
+					} catch (InterruptedException e) { }
+				}
 				spillLock.notifyAll();
 			}
 		}
@@ -1040,8 +1044,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				Path finalOut = mapOutputFile.getOutputFile(this.taskid);
 				if (localFs.exists(finalOut)) {
 					LOG.warn("JBuffer: no flush needed for buffer " + taskid);
-					mergeThread.close();
 					spillThread.close();
+					mergeThread.close();
 					pipelineThread.close();
 					return;
 				}
@@ -1052,28 +1056,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		long timestamp = System.currentTimeMillis();
 		LOG.info("Begin final flush");
 		
+		timestamp = System.currentTimeMillis();
 		mergeThread.close();
 		LOG.info("merge thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
 		timestamp = System.currentTimeMillis();
-		synchronized (spillLock) {
-			spillThread.close();
-			while (this.spillThread.isSpilling()) {
-				try {
-					spillLock.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					throw (IOException)new IOException(
-							"Buffer " + taskid + " interrupted while waiting for the writer"
-					).initCause(e);
-				}
-			}
-		}
-			
-		if (sortSpillException != null) {
-			throw (IOException)new IOException("Spill failed"
-			).initCause(sortSpillException);
-		}
+		spillThread.close();
 		if (kvend != kvindex) {
 			kvend = kvindex;
 			bufend = bufmark;
@@ -1092,44 +1080,27 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public synchronized void reset(boolean restart) throws IOException {
-		synchronized (spillLock) {
-			spillThread.close();
-			while (spillThread.isSpilling()) {
-				try {
-					spillLock.wait();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
+		spillThread.close();
+		mergeThread.close();
 
-			synchronized (mergeLock) {
-				mergeThread.close();
-				while (mergeThread.isBusy()) {
-					try { mergeLock.wait();
-					} catch (InterruptedException e) { }
-				}
-				
-				/* reset buffer variables. */
-				numSpills = numFlush = 0;
-				bufindex = 0;
-				bufvoid  = kvbuffer.length;
-				kvstart = kvend = kvindex = 0;  
-				bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
-				
-				this.progress = new Progress();
-				
-				if (restart) {
-					/* restart threads. */
-					this.spillThread = new SpillThread();
-					this.spillThread.setDaemon(true);
-					this.spillThread.start();
+		/* reset buffer variables. */
+		numSpills = numFlush = 0;
+		bufindex = 0;
+		bufvoid  = kvbuffer.length;
+		kvstart = kvend = kvindex = 0;  
+		bufstart = bufend = bufvoid = bufindex = bufmark = 0; 
 
-					this.mergeThread = new MergeThread();
-					this.mergeThread.setDaemon(true);
-					if (!taskid.isMap()) this.mergeThread.start();
-				}
-			}
+		this.progress = new Progress();
+
+		if (restart) {
+			/* restart threads. */
+			this.spillThread = new SpillThread();
+			this.spillThread.setDaemon(true);
+			this.spillThread.start();
+
+			this.mergeThread = new MergeThread();
+			this.mergeThread.setDaemon(true);
+			if (!taskid.isMap()) this.mergeThread.start();
 		}
 	}
 
