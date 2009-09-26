@@ -772,7 +772,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							mergingSpills = 0;
 							boolean doSpill = true;
 							JBufferCollector<K, V> buffer = sink.buffer();
-							if (!safemode || progress == 1.0f) {
+							if (false && (!safemode || progress == 1.0f)) {
 								synchronized (sink.task) {
 									/* Try to add records to the buffer. 
 									 * Note: this means we can't back out the records so
