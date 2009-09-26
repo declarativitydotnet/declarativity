@@ -400,29 +400,33 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 			
 			public void run() {
-				while (!isInterrupted()) {
-					SpillRun run = null;
-					try {
+				try {
+					while (!isInterrupted()) {
+						SpillRun run = null;
 						try {
-							synchronized (this) {
-								busy = false;
-								run = spillQueue.take();
-								busy = true;
+							try {
+								synchronized (this) {
+									busy = false;
+									run = spillQueue.take();
+									busy = true;
+								}
+							} catch (InterruptedException e) {
+								return;
 							}
-						} catch (InterruptedException e) {
-							return;
+
+							/* Register the spill file with the buffer. 
+							 * Note: we lock the task so that no snapshots can be
+							 * performed during this operation. */
+							synchronized (task) {
+								int spillid = collector.spill(run.data, run.index, false);
+								updateProgress();
+							}
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
-						
-						/* Register the spill file with the buffer. 
-						 * Note: we lock the task so that no snapshots can be
-						 * performed during this operation. */
-						synchronized (task) {
-							int spillid = collector.spill(run.data, run.index, false);
-							updateProgress();
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
 					}
+				} finally {
+					LOG.info("JBufferSink " + reduceID + " spill thread exit.");
 				}
 			}
 		};
