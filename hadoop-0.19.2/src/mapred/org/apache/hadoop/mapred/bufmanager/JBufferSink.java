@@ -386,15 +386,17 @@ public class JBufferSink<K extends Object, V extends Object> {
 		acceptor.start();
 		
 		spillThread = new Thread() {
-			List<SpillRun> runs = new ArrayList<SpillRun>();
 			@Override
 			public void interrupt() {
-				drain();
+				while (spillQueue.size() > 0) {
+					drain();
+				}
 				super.interrupt();
 			}
 			
 			private void drain() {
 				synchronized (task) {
+					List<SpillRun> runs = new ArrayList<SpillRun>();
 					spillQueue.drainTo(runs);
 					for (SpillRun run : runs) {
 						System.err.println("JBufferSink spill drain consume " + run.data);
@@ -411,7 +413,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 				try {
 					while (!isInterrupted()) {
 						try {
-							runs.add(spillQueue.take());
+							SpillRun run = spillQueue.take();
+							spillQueue.add(run);
 							drain();
 						} catch (InterruptedException e) {
 							return;
