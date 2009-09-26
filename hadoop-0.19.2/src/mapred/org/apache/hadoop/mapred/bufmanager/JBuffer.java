@@ -210,9 +210,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
-							LOG.debug("MergeThread start");
+							LOG.info("MergeThread start");
 							mergeParts(true, mergeBoundary);
-							LOG.debug("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+							LOG.info("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
