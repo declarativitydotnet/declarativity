@@ -712,14 +712,70 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		}
 		
+		private void service(long length) throws IOException {
+			DataInputBuffer key = new DataInputBuffer();
+			DataInputBuffer value = new DataInputBuffer();
+			
+			Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+			Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
+			
+			CompressionCodec codec = null;
+			if (conf.getCompressMapOutput()) {
+				Class<? extends CompressionCodec> codecClass =
+					conf.getMapOutputCompressorClass(DefaultCodec.class);
+				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+			}
+			IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
+			
+			if (sink.snapshots()) {
+				try {
+					LOG.debug("JBufferSink: perform snaphot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
+					JBufferRun run = sink.getBufferRun(this.id.getTaskID());
+					run.snapshot(reader, length, progress);
+					return;
+				} catch (Throwable t) {
+					LOG.warn("Snapshot interrupted by " + t);
+					return; // don't care
+				}
+			} else {
+				if (sink.task.isSnapshotting() || sink.task.isMerging()) {
+					/* Drain socket while task is snapshotting. */
+					spill(reader, length, keyClass, valClass, codec);
+				} else { 
+					boolean doSpill = true;
+					JBufferCollector<K, V> buffer = sink.buffer();
+					if (!safemode || progress == 1.0f) {
+						synchronized (sink.task) {
+							/* Try to add records to the buffer. 
+							 * Note: this means we can't back out the records so
+							 * if we're in safemode this needs to be the final answer.
+							 */
+							if (!safemode && sink.buffer().reserve(length)) {
+								try {
+									while (reader.next(key, value)) {
+										this.sink.buffer().collect(key, value);
+									}
+								} catch (ChecksumException e) {
+									LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
+								}
+								finally {
+									sink.buffer().unreserve(length);
+									updateProgress();
+									doSpill = false;
+								}
+							}
+						}
+					}
+					
+					if (doSpill) {
+						spill(reader, length, keyClass, valClass, codec);
+					}
+				}
+			}
+		}
+		
 		public void run() {
 			try {
-				DataInputBuffer key = new DataInputBuffer();
-				DataInputBuffer value = new DataInputBuffer();
-				
-				Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
-				Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
-				
 				while (open) {
 					long length = 0;
 					try {
@@ -736,59 +792,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 						if (progress < 1f) continue;
 						else  return;
 					}
-					
-					CompressionCodec codec = null;
-					if (conf.getCompressMapOutput()) {
-						Class<? extends CompressionCodec> codecClass =
-							conf.getMapOutputCompressorClass(DefaultCodec.class);
-						codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-					}
-					IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
-					
-					if (sink.snapshots()) {
-						try {
-							LOG.debug("JBufferSink: perform snaphot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
-							JBufferRun run = sink.getBufferRun(this.id.getTaskID());
-							run.snapshot(reader, length, progress);
-							return;
-						} catch (Throwable t) {
-							LOG.warn("Snapshot interrupted by " + t);
-							return; // don't care
-						}
-					} else {
-						if (sink.task.isSnapshotting() || sink.task.isMerging()) {
-							/* Drain socket while task is snapshotting. */
-							spill(reader, length, keyClass, valClass, codec);
-						} else { 
-							boolean doSpill = true;
-							JBufferCollector<K, V> buffer = sink.buffer();
-							if (!safemode || progress == 1.0f) {
-								synchronized (sink.task) {
-									/* Try to add records to the buffer. 
-									 * Note: this means we can't back out the records so
-									 * if we're in safemode this needs to be the final answer.
-									 */
-									if (!safemode && sink.buffer().reserve(length)) {
-										try {
-											while (reader.next(key, value)) {
-												this.sink.buffer().collect(key, value);
-											}
-										} catch (ChecksumException e) {
-											LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
-										}
-										finally {
-											sink.buffer().unreserve(length);
-											updateProgress();
-											doSpill = false;
-										}
-									}
-								}
-							}
-							
-							if (doSpill) {
-								spill(reader, length, keyClass, valClass, codec);
-							}
-						}
+					else {
+						long timestamp = System.currentTimeMillis();
+						LOG.info("JBufferSink connection " + id + " service length " + 
+								  length + " progress = " + progress);
+						service(length);
+						LOG.info("JBufferSink connection " + id + " service time = " + 
+								  (System.currentTimeMillis() - timestamp));
 					}
 					
 					if (progress == 1.0f) return;
