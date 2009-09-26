@@ -163,12 +163,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		public void close() {
 			if (open) {
 				synchronized (mergeLock) {
+					LOG.info("Closing merge thread.");
 					open = false;
 					mergeLock.notifyAll();
-				}
-				while (busy) {
-					try { Thread.sleep(100);
-					} catch (InterruptedException e) {
+					while (busy) {
+						try { mergeLock.wait();
+						} catch (InterruptedException e) { }
 					}
 				}
 				LOG.debug("MergeThread is closed.");
@@ -1479,6 +1479,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 		finalIndexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
 
+		LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
+				" spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
+				". Output size = " + finalOutFileSize);
+		
 		Path outputFile = null;
 		Path indexFile = null;
 
@@ -1491,9 +1495,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			indexFile = mapOutputFile.getOutputIndexFileForWrite( this.taskid, finalIndexFileSize);
 		}
 
-		LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
-				" spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
-				". Output size = " + finalOutFileSize);
+
 		if (end - start == 1) {
 			if (localFs.exists(outputFile)) {
 				LOG.warn("JBuffer final output file exists.");
