@@ -273,6 +273,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private BlockingQueue<SpillRun> spillQueue;
 	
+	private int spillCount;
+	
 	private Set<TaskID> successful;
 	
 	private Task task;
@@ -295,6 +297,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		this.outputFileManager.setConf(conf);
 		this.bufferRuns = new HashMap<TaskID, JBufferRun>();
 		this.spillQueue = new LinkedBlockingQueue<SpillRun>();
+		this.spillCount = 0;
 		
 		this.task = task;
 	    this.numConnections = task.getNumberOfInputs();
@@ -423,6 +426,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		};
 		spillThread.setDaemon(true);
+		spillThread.setPriority(Thread.MAX_PRIORITY);
 		spillThread.start();
 	}
 	
@@ -493,6 +497,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		finally {
 		}
+	}
+	
+	private synchronized int spillid() {
+		return this.spillCount++;
 	}
 	
 	private void spill(Path data, Path index) {
@@ -661,8 +669,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 		spill(IFile.Reader<K, V> reader, long length, Class<K> keyClass, Class<V> valClass, CompressionCodec codec) 
 		throws IOException {
 			// Spill directory to disk
-			Path filename      = outputFileManager.getOutputFileForWrite(id(), progress == 1f, length);
-			Path indexFilename = outputFileManager.getOutputIndexFileForWrite(id(), progress == 1f, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			int spillid = sink.spillid();
+			Path filename      = outputFileManager.getOutputFileForWrite(id(), spillid, length);
+			Path indexFilename = outputFileManager.getOutputIndexFileForWrite(id(), spillid, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
 			FSDataOutputStream out      = localFs.create(filename, false);
 			FSDataOutputStream indexOut = localFs.create(indexFilename, false);
