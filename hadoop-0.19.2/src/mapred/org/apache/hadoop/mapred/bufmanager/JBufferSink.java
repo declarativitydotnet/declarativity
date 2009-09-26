@@ -407,7 +407,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 							e.printStackTrace();
 						}
 					}
-					updateProgress();
 					LOG.debug("JBufferSink end drain spills. total time = " + 
 							  (System.currentTimeMillis() - timestamp) + " ms.");
 				}
@@ -420,6 +419,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							SpillRun run = spillQueue.take();
 							spillQueue.add(run);
 							drain();
+							updateProgress();
 						} catch (InterruptedException e) {
 							return;
 						}
@@ -766,8 +766,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 								}
 								finally {
 									sink.buffer().unreserve(length);
-									updateProgress();
 									doSpill = false;
+									LOG.debug("JBufferSink: done dumping buffer " + id + ".");
 								}
 							}
 						}
@@ -776,6 +776,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 					if (doSpill) {
 						LOG.debug("JBufferSink: had to spill " + id + ".");
 						spill(reader, length, keyClass, valClass, codec);
+					}
+					else {
+						updateProgress();
 					}
 				}
 			}
