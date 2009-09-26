@@ -788,13 +788,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 											doSpill = false;
 										}
 									}
-									sink.updateProgress();
 								}
 							}
 							
 							if (doSpill) {
 								spill(reader, length, keyClass, valClass, codec);
 							}
+							sink.updateProgress();
 						}
 					}
 					

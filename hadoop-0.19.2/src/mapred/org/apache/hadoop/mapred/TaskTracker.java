@@ -1701,7 +1701,7 @@ public class TaskTracker
       mapOutputFile.setJobId(taskId.getJobID());
       mapOutputFile.setConf(conf);
       
-      Path tmp_output =  mapOutputFile.getOutputFile(taskId);
+      Path tmp_output =  null; // mapOutputFile.getOutputFile(taskId);
       if(tmp_output == null)
         return 0;
       FileSystem localFS = FileSystem.getLocal(conf);
