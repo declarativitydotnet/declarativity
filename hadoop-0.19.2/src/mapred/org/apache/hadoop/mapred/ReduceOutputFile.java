@@ -13,36 +13,20 @@ public class ReduceOutputFile extends MapOutputFile {
 		this.reduceID = reduceID;
 	}
 
-	public Path getOutputFile(TaskAttemptID mapTaskId, boolean eof)
-	throws IOException {
-		return lDirAlloc.getLocalPathToRead(TaskTracker.getIntermediateOutputDir(
-				jobId.toString(), reduceID.toString())
-				+ Path.SEPARATOR + mapTaskId.toString()
-				+ (eof ? "_eof_" : "") + "file.out", conf);
-	}
-
-	public Path getOutputFileForWrite(TaskAttemptID mapTaskId, boolean eof, long size)
+	public Path getOutputFileForWrite(TaskAttemptID mapTaskId, int spillid, long size)
 	throws IOException {
 		return lDirAlloc.getLocalPathForWrite(TaskTracker.getIntermediateOutputDir(
 				jobId.toString(), reduceID.toString())
 				+ Path.SEPARATOR + mapTaskId.toString()
-				+ (eof ? "_eof_" : "") + "file.out", size, conf);
+				+ "_" + spillid + "_" + "file.out", size, conf);
 	}
 
-	public Path getOutputIndexFile(TaskAttemptID mapTaskId, boolean eof)
-	throws IOException {
-		return lDirAlloc.getLocalPathToRead(TaskTracker.getIntermediateOutputDir(
-				jobId.toString(), reduceID.toString())
-				+ Path.SEPARATOR + mapTaskId.toString()
-				+ (eof ? "_eof_" : "") + "file.out.index", conf);
-	}
-
-	public Path getOutputIndexFileForWrite(TaskAttemptID mapTaskId, boolean eof, long size)
+	public Path getOutputIndexFileForWrite(TaskAttemptID mapTaskId, int spillid, long size)
 	throws IOException {
 		return lDirAlloc.getLocalPathForWrite(TaskTracker.getIntermediateOutputDir(
 				jobId.toString(), reduceID.toString())
 				+ Path.SEPARATOR + mapTaskId.toString()
-				+ (eof ? "_eof_" : "") + "file.out.index", 
+				+ "_" + spillid + "_" + "file.out.index", 
 				size, conf);
 	}
 	
