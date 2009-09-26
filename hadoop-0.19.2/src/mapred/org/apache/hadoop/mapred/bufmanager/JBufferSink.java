@@ -389,8 +389,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 			private boolean busy = false;
 			@Override
 			public void interrupt() {
+				LOG.info("Interrupt spill thread.");
 				synchronized (this) {
 					while (busy && spillQueue.size() > 0) {
+						LOG.info("Spill thread busy " + busy + " queue size " + spillQueue.size());
 						try { this.wait();
 						} catch (InterruptedException e) {
 						}
