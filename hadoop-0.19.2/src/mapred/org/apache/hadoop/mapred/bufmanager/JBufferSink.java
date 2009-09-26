@@ -418,6 +418,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						 * performed during this operation. */
 						synchronized (task) {
 							int spillid = collector.spill(run.data, run.index, false);
+							updateProgress();
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -556,9 +557,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 					*/
 				}
 			}
+			updateProgress();
 		} finally {
 			if (complete()) {
-				updateProgress();
+				LOG.info("JBufferSink " + reduceID + " is complete.");
 			}
 		}
 	}
@@ -786,13 +788,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 											doSpill = false;
 										}
 									}
+									sink.updateProgress();
 								}
 							}
 							
 							if (doSpill) {
 								spill(reader, length, keyClass, valClass, codec);
 							}
-							sink.updateProgress();
 						}
 					}
 					
