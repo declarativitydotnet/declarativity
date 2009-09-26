@@ -398,6 +398,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 				synchronized (task) {
 					List<SpillRun> runs = new ArrayList<SpillRun>();
 					spillQueue.drainTo(runs);
+					long timestamp = System.currentTimeMillis();
+					LOG.debug("JBufferSink begin drain spill runs.");
 					for (SpillRun run : runs) {
 						try { 
 							collector.spill(run.data, run.index, false);
@@ -406,6 +408,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 					}
 					updateProgress();
+					LOG.debug("JBufferSink end drain spills. total time = " + 
+							  (System.currentTimeMillis() - timestamp) + " ms.");
 				}
 			}
 			
