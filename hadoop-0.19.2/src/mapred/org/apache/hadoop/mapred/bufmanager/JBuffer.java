@@ -305,6 +305,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			
 		private int flushRequests(boolean finalize) throws IOException {
 			int spillend = numSpills;
+			if (progress.get() == 0) return numFlush;
 
 			if (!finalize) {
 				BufferRequest request = null;
@@ -336,7 +337,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 							dataIn = localFs.open(outputFile);
 						}
 						
-						float requestProgress = (spillId / (float) numSpills) * progress.get();
+						float requestProgress = ((spillId + 1) / (float) numSpills) * progress.get();
 						if (r.isOpen()) {
 							try {
 								r.flush(indexIn, dataIn, spillId, requestProgress);
