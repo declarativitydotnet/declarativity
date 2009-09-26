@@ -419,7 +419,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 							 * performed during this operation. */
 							synchronized (task) {
 								int spillid = collector.spill(run.data, run.index, false);
-								updateProgress();
 							}
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -445,6 +444,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	 * lock the owning task object if snapshots are turned on.
 	 */
 	public synchronized void close() {
+		LOG.info("JBufferSink " + reduceID + " closing.");
 		if (this.acceptor == null) return; // Already done.
 		try {
 			this.acceptor.interrupt();
@@ -561,7 +561,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					*/
 				}
 			}
-			updateProgress();
 		} finally {
 			if (complete()) {
 				LOG.info("JBufferSink " + reduceID + " is complete.");
@@ -706,7 +705,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 				indexOut.close();
 
 				JBufferCollector<K, V> buffer = sink.buffer();
-				sink.spill(filename, indexFilename);
+				if (progress < 1f) {
+					synchronized (sink.task) {
+						sink.buffer().spill(filename, indexFilename, false);
+						updateProgress();
+					}
+				}
+				else {
+					sink.spill(filename, indexFilename);
+				}
 			} catch (Throwable e) {
 				LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
 				e.printStackTrace();
@@ -789,6 +796,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 										}
 										finally {
 											sink.buffer().unreserve(length);
+											updateProgress();
 											doSpill = false;
 										}
 									}
@@ -798,7 +806,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 							if (doSpill) {
 								spill(reader, length, keyClass, valClass, codec);
 							}
-							sink.updateProgress();
 						}
 					}
 					
