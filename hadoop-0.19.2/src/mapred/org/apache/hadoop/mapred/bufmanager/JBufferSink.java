@@ -311,7 +311,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 			LOG.info("JBufferSink: " + reduceID + " start snapshot thread.");
 			this.snapshotThread = new SnapshotThread();
 			this.snapshotThread.setDaemon(true);
-			this.snapshotThread.setPriority(Thread.MAX_PRIORITY);
 			this.snapshotThread.start();
 		}
 		
