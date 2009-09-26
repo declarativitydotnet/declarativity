@@ -399,8 +399,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 					List<SpillRun> runs = new ArrayList<SpillRun>();
 					spillQueue.drainTo(runs);
 					for (SpillRun run : runs) {
-						System.err.println("JBufferSink spill drain consume " + run.data);
-						try { collector.spill(run.data, run.index, false);
+						try { 
+							System.err.println("SpillThread do spill " + run.data);
+							collector.spill(run.data, run.index, false);
+							System.err.println("SpillThread spill done " + run.data);
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
