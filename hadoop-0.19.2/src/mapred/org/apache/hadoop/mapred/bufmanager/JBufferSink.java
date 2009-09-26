@@ -418,6 +418,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							 * Note: we lock the task so that no snapshots can be
 							 * performed during this operation. */
 							synchronized (task) {
+								System.err.println("JBufferSink spill thread consume " + run.data);
 								int spillid = collector.spill(run.data, run.index, false);
 							}
 						} catch (IOException e) {
@@ -508,6 +509,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void spill(Path data, Path index) {
+		System.err.println("JBufferSink spill " + data);
 		spillQueue.add(new SpillRun(data, index));
 	}
 	
@@ -563,6 +565,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		} finally {
 			if (complete()) {
 				LOG.info("JBufferSink " + reduceID + " is complete.");
+				updateProgress();
 			}
 		}
 	}
