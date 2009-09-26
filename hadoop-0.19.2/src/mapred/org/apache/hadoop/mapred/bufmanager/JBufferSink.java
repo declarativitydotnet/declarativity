@@ -535,6 +535,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	private void done(Connection connection) {
 		try {
 			if (!connection.isSnapshot()) {
+				LOG.info("JBufferSink connection done. " + connection);
 				synchronized (connections) {
 					TaskID taskid = connection.id().getTaskID();
 					if (this.connections.containsKey(taskid)) {
