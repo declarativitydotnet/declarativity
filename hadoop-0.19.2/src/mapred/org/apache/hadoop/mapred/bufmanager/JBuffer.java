@@ -165,13 +165,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				synchronized (mergeLock) {
 					open = false;
 					mergeLock.notifyAll();
-					while (busy) {
-						LOG.info("Can't close MergeThread still busy.");
-						try { mergeLock.wait();
-						} catch (InterruptedException e) { }
-					}
-					LOG.debug("MergeThread is closed.");
 				}
+				while (busy) {
+					try { Thread.sleep(100);
+					} catch (InterruptedException e) {
+					}
+				}
+				LOG.debug("MergeThread is closed.");
 			}
 		}
 		
