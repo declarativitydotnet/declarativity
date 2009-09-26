@@ -193,7 +193,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		public void run() {
 			try {
 				int threshold = 2 * job.getInt("io.sort.factor", 100);
-				while (!isInterrupted()) {
+				while (open) {
 					synchronized (mergeLock) {
 						busy = false;
 						while (open && numSpills - numFlush < threshold) {
