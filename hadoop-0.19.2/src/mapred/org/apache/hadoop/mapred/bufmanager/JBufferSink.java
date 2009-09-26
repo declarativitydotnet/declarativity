@@ -16,8 +16,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -229,6 +231,18 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 	}
 	
+	private class SpillRun {
+		Path data;
+		
+		Path index;
+		
+		public SpillRun(Path data, Path index) {
+			this.data = data;
+			this.index = index;
+		}
+		
+	}
+	
 	private Reporter reporter;
 	
 	private boolean safemode;
@@ -255,6 +269,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private Map<TaskID, JBufferRun> bufferRuns;
 	
+	private Thread spillThread;
+	
+	private BlockingQueue<SpillRun> spillQueue;
+	
 	private Set<TaskID> successful;
 	
 	private Task task;
@@ -276,6 +294,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		this.outputFileManager = new ReduceOutputFile(reduceID);
 		this.outputFileManager.setConf(conf);
 		this.bufferRuns = new HashMap<TaskID, JBufferRun>();
+		this.spillQueue = new LinkedBlockingQueue<SpillRun>();
 		
 		this.task = task;
 	    this.numConnections = task.getNumberOfInputs();
@@ -362,6 +381,49 @@ public class JBufferSink<K extends Object, V extends Object> {
 		};
 		acceptor.setPriority(Thread.MAX_PRIORITY);
 		acceptor.start();
+		
+		spillThread = new Thread() {
+			private boolean busy = false;
+			@Override
+			public void interrupt() {
+				synchronized (this) {
+					while (busy && spillQueue.size() > 0) {
+						try { this.wait();
+						} catch (InterruptedException e) {
+						}
+					}
+					super.interrupt();
+				}
+			}
+			
+			public void run() {
+				while (!isInterrupted()) {
+					SpillRun run = null;
+					try {
+						try {
+							synchronized (this) {
+								busy = false;
+								run = spillQueue.take();
+								busy = true;
+							}
+						} catch (InterruptedException e) {
+							return;
+						}
+						
+						/* Register the spill file with the buffer. 
+						 * Note: we lock the task so that no snapshots can be
+						 * performed during this operation. */
+						synchronized (task) {
+							int spillid = collector.spill(run.data, run.index, false);
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		};
+		spillThread.setDaemon(true);
+		spillThread.start();
 	}
 	
 	public TaskAttemptID reduceID() {
@@ -402,6 +464,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					} catch (InterruptedException e) { }
 				}
 			}
+			this.spillThread.interrupt();
 		}
 
 		try {
@@ -430,6 +493,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		finally {
 		}
+	}
+	
+	private void spill(Path data, Path index) {
+		spillQueue.add(new SpillRun(data, index));
 	}
 	
 	private JBufferCollector<K, V> buffer() {
@@ -468,6 +535,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					this.connections.notifyAll();
 
+					/*
 					if (safemode && collector instanceof JBuffer) {
 						int minUncommittedSpillId = Integer.MAX_VALUE;
 						for (List<Connection> clist : connections.values()) {
@@ -477,6 +545,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						}
 						((JBuffer)collector).minUnfinishedSpill(minUncommittedSpillId);
 					}
+					*/
 				}
 			}
 		} finally {
@@ -528,8 +597,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private boolean open;
 		private boolean busy = false;
-		
-		private int minSpillId = -1;
 		
 		private int mergingSpills = 0;
 		
@@ -624,24 +691,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 				indexOut.close();
 
 				JBufferCollector<K, V> buffer = sink.buffer();
-				/* Register the spill file with the buffer. 
-				 * Note: we lock the task so that no snapshots can be
-				 * performed during this operation. */
-				synchronized (sink.task) {
-					int spillid = buffer.spill(filename, indexFilename, false);
-					if (minSpillId < 0) minSpillId = spillid;
-				}
+				sink.spill(filename, indexFilename);
 			} catch (Throwable e) {
 				LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
 				e.printStackTrace();
-			}
-			finally {
-				if (localFs.exists(filename)) {
-					LOG.warn(filename + " still exists!");
-				}
-				if (localFs.exists(indexFilename)) {
-					LOG.warn(indexFilename + " still exists!");
-				}
 			}
 		}
 		
@@ -667,9 +720,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					if (length == 0) {
 						if (progress < 1f) continue;
-						else {
-							return;
-						}
+						else  return;
 					}
 					
 					CompressionCodec codec = null;
@@ -732,8 +783,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 							if (doSpill) {
 								spill(reader, length, keyClass, valClass, codec);
 							}
+							sink.updateProgress();
 						}
-						sink.updateProgress();
 					}
 					
 					if (progress == 1.0f) return;
