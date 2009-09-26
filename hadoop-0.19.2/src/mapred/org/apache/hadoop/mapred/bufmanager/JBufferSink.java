@@ -759,20 +759,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 						if (sink.task.isSnapshotting() || sink.task.isMerging()) {
 							/* Drain socket while task is snapshotting. */
 							spill(reader, length, keyClass, valClass, codec);
-							/*
-							if (sink.task.isMerging()) {
-								mergingSpills++;
-								if (mergingSpills > 5) {
-									LOG.info("JBufferSink: buffer under heavly load. Closing connection to task " + id());
-									return; // under heavy load
-								}
-							}
-							*/
 						} else { 
-							mergingSpills = 0;
 							boolean doSpill = true;
 							JBufferCollector<K, V> buffer = sink.buffer();
-							if (false && (!safemode || progress == 1.0f)) {
+							if (!safemode || progress == 1.0f) {
 								synchronized (sink.task) {
 									/* Try to add records to the buffer. 
 									 * Note: this means we can't back out the records so
