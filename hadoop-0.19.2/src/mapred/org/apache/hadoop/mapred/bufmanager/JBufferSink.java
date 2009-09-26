@@ -743,11 +743,13 @@ public class JBufferSink<K extends Object, V extends Object> {
 			} else {
 				if (sink.task.isSnapshotting() || sink.task.isMerging()) {
 					/* Drain socket while task is snapshotting. */
+					LOG.debug("JBufferSink: call spill for buffer " + id + " due to merging or snapshotting.");
 					spill(reader, length, keyClass, valClass, codec);
 				} else { 
 					boolean doSpill = true;
 					JBufferCollector<K, V> buffer = sink.buffer();
 					if (!safemode || progress == 1.0f) {
+						LOG.debug("JBufferSink: get task lock for " + id + " dump.");
 						synchronized (sink.task) {
 							/* Try to add records to the buffer. 
 							 * Note: this means we can't back out the records so
@@ -771,6 +773,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					
 					if (doSpill) {
+						LOG.debug("JBufferSink: had to spill " + id + ".");
 						spill(reader, length, keyClass, valClass, codec);
 					}
 				}
