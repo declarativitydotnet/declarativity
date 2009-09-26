@@ -286,10 +286,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					}
 
 					try {
-						long pipelinestart = java.lang.System.currentTimeMillis();
-						flushpoint = flushRequests(false);
-						LOG.debug("PipelineThread: pipeline time " +  
-								((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
+						if (progress.get() < 0.75) {
+							long pipelinestart = java.lang.System.currentTimeMillis();
+							flushpoint = flushRequests(false);
+							LOG.debug("PipelineThread: pipeline time " +  
+									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
+						}
 					} catch (IOException e) {
 						e.printStackTrace();
 						sortSpillException = e;
