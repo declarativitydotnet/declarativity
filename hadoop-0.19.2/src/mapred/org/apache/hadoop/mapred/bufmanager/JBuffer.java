@@ -164,13 +164,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (open) {
 				open = false;
 				synchronized (mergeLock) {
-					mergeLock.notifyAll();
 					while (busy) {
 						LOG.info("Can't close MergeThread still busy.");
 						try { mergeLock.wait();
 						} catch (InterruptedException e) { }
 					}
-					LOG.info("MergeThread is closed.");
+					mergeLock.notifyAll();
+					LOG.debug("MergeThread is closed.");
 				}
 			}
 		}
@@ -210,9 +210,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
-							LOG.info("MergeThread start");
+							LOG.debug("MergeThread start");
 							mergeParts(true, mergeBoundary);
-							LOG.info("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+							LOG.debug("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -287,7 +287,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					try {
 						long pipelinestart = java.lang.System.currentTimeMillis();
 						flushpoint = flushRequests(false);
-						LOG.info("PipelineThread: pipeline time " +  
+						LOG.debug("PipelineThread: pipeline time " +  
 								((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -950,7 +950,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			return false;
 		}
 
-		LOG.info("JBuffer " + taskid + " performing snaphsot.");
+		LOG.debug("JBuffer " + taskid + " performing snaphsot.");
 		Path snapFile = null;
 		Path indexFile = null;
 		try {
@@ -968,7 +968,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						response.reset();
 						r.open(job, response, true);
 						if (!response.open) {
-							LOG.info("JBuffer " + taskid + " could open request " + r);
+							LOG.debug("JBuffer " + taskid + " could open request " + r);
 							continue;
 						}
 					}
@@ -1055,11 +1055,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		long timestamp = System.currentTimeMillis();
-		LOG.info("Begin final flush");
+		LOG.debug("Begin final flush");
 		
 		timestamp = System.currentTimeMillis();
 		mergeThread.close();
-		LOG.info("merge thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
+		LOG.debug("merge thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
 		timestamp = System.currentTimeMillis();
 		spillThread.close();
@@ -1068,15 +1068,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			bufend = bufmark;
 			sortAndSpill();
 		}
-		LOG.info("spill thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
+		LOG.debug("spill thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
 		timestamp = System.currentTimeMillis();
 		pipelineThread.close();
-		LOG.info("pipeline thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
+		LOG.debug("pipeline thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
 		timestamp = System.currentTimeMillis();
 		mergeParts(false, Integer.MAX_VALUE);
-		LOG.info("Final merge done. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
+		LOG.debug("Final merge done. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		reset(false);
 	}
 	
@@ -1129,7 +1129,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		Path dataFile = null;
 		Path indexFile = null;
 		synchronized (mergeLock) {
-			LOG.info("begin spill ");
 			dataFile  = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, 1096);
 			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, this.numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 			numSpills++;
@@ -1148,7 +1147,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			
 			if (!safemode) mergeLock.notifyAll();
-			LOG.info("end spill ");
 			return numSpills - 1;
 		}
 	}
@@ -1158,7 +1156,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		//approximate the length of the output file to be the length of the
 		//buffer + header lengths for the partitions
 		synchronized (mergeLock) {
-			LOG.info("begin sort and spill");
 			long size = (bufend >= bufstart
 					? bufend - bufstart
 							: (bufvoid - bufend) + bufstart) +
@@ -1247,7 +1244,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			} finally {
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
-				LOG.info("end sort and spill");
 			}
 		}
 	}
@@ -1451,7 +1447,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		int end = 0;
 		int spillid = 0;
 		synchronized (mergeLock) {
-			LOG.info("begin merge parts");
 			boundary = Math.min(boundary, numSpills);
 
 			spillid = numSpills;
@@ -1462,7 +1457,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			numFlush = end;
 			if (spill) numSpills++;
 		}
-		LOG.info("JBuffer " + taskid + " performing merge.");
 
 		long finalOutFileSize = 0;
 		long finalIndexFileSize = 0;
@@ -1590,7 +1584,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				localFs.delete(filename.get(i), true);
 				localFs.delete(indexFileName.get(i), true);
 			}
-			LOG.info("Merge parts complete");
 		}
 	}
 
