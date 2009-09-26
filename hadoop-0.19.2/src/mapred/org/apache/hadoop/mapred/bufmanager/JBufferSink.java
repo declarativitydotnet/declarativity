@@ -386,42 +386,35 @@ public class JBufferSink<K extends Object, V extends Object> {
 		acceptor.start();
 		
 		spillThread = new Thread() {
+			List<SpillRun> runs = new ArrayList<SpillRun>();
 			@Override
 			public void interrupt() {
+				drain();
+				super.interrupt();
+			}
+			
+			private void drain() {
 				synchronized (task) {
-					List<SpillRun> remaining = new ArrayList<SpillRun>();
-					spillQueue.drainTo(remaining);
-					for (SpillRun run : remaining) {
+					spillQueue.drainTo(runs);
+					for (SpillRun run : runs) {
 						System.err.println("JBufferSink spill drain consume " + run.data);
 						try { collector.spill(run.data, run.index, false);
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
 					}
-					super.interrupt();
+					updateProgress();
 				}
 			}
 			
 			public void run() {
 				try {
 					while (!isInterrupted()) {
-						SpillRun run = null;
 						try {
-							try {
-								run = spillQueue.take();
-							} catch (InterruptedException e) {
-								return;
-							}
-
-							/* Register the spill file with the buffer. 
-							 * Note: we lock the task so that no snapshots can be
-							 * performed during this operation. */
-							synchronized (task) {
-								System.err.println("JBufferSink spill thread consume " + run.data);
-								int spillid = collector.spill(run.data, run.index, false);
-							}
-						} catch (IOException e) {
-							e.printStackTrace();
+							runs.add(spillQueue.take());
+							drain();
+						} catch (InterruptedException e) {
+							return;
 						}
 					}
 				} finally {
@@ -706,17 +699,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 				indexOut.close();
 
 				JBufferCollector<K, V> buffer = sink.buffer();
-				if (progress < 0.5) {
-					/* Do it myself. */
-					synchronized (sink.task) {
-						sink.buffer().spill(filename, indexFilename, false);
-						updateProgress();
-					}
-				}
-				else {
-					/* Don't want to hold up mapper. */
-					sink.spill(filename, indexFilename);
-				}
+				/* Don't want to hold up mapper. */
+				sink.spill(filename, indexFilename);
 			} catch (Throwable e) {
 				LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
 				e.printStackTrace();
