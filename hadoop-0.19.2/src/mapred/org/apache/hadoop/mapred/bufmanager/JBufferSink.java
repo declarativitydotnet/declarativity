@@ -400,9 +400,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					spillQueue.drainTo(runs);
 					for (SpillRun run : runs) {
 						try { 
-							System.err.println("SpillThread do spill " + run.data);
 							collector.spill(run.data, run.index, false);
-							System.err.println("SpillThread spill done " + run.data);
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -794,10 +792,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 					}
 					else {
 						long timestamp = System.currentTimeMillis();
-						LOG.info("JBufferSink connection " + id + " service length " + 
+						LOG.debug("JBufferSink connection " + id + " service length " + 
 								  length + " progress = " + progress);
 						service(length);
-						LOG.info("JBufferSink connection " + id + " service time = " + 
+						LOG.debug("JBufferSink connection " + id + " service time = " + 
 								  (System.currentTimeMillis() - timestamp));
 					}
 					
