@@ -756,6 +756,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							 * if we're in safemode this needs to be the final answer.
 							 */
 							if (!safemode && sink.buffer().reserve(length)) {
+								LOG.debug("JBufferSink: dumping buffer " + id + ".");
 								try {
 									while (reader.next(key, value)) {
 										this.sink.buffer().collect(key, value);
