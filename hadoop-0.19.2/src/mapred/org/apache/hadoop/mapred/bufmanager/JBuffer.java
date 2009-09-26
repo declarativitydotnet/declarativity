@@ -96,6 +96,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public void run() {
 			try {
+				LOG.info("JBuffer: spill thread running.");
 				while (open) {
 					synchronized (spillLock) {
 						while (open && ! spill) {
@@ -194,6 +195,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		public void run() {
 			try {
 				int threshold = 2 * job.getInt("io.sort.factor", 100);
+				LOG.info("JBuffer: merge thread running.");
 				while (open) {
 					synchronized (mergeLock) {
 						busy = false;
@@ -269,6 +271,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			synchronized (this) {
 				open = true;
 				this.notifyAll();
+				LOG.info("JBuffer: pipeline thread running.");
 			}
 			
 			try {
