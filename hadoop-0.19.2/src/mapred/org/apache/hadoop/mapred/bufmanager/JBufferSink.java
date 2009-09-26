@@ -706,13 +706,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 				indexOut.close();
 
 				JBufferCollector<K, V> buffer = sink.buffer();
-				if (progress < 1f) {
+				if (progress < 0.5) {
+					/* Do it myself. */
 					synchronized (sink.task) {
 						sink.buffer().spill(filename, indexFilename, false);
 						updateProgress();
 					}
 				}
 				else {
+					/* Don't want to hold up mapper. */
 					sink.spill(filename, indexFilename);
 				}
 			} catch (Throwable e) {
