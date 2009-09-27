@@ -1221,7 +1221,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				InMemValBytes value = new InMemValBytes();
 				for (int i = 0; i < partitions; ++i) {
 					IFile.Writer<K, V> writer = null;
-					BufferRequest request = null;
 					try {
 						long segmentStart = out.getPos();
 						writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);

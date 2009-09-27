@@ -317,16 +317,17 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		synchronized (this) {
 			if (!isOpen()) throw new IOException("BufferRequest is closed!");
 
-			CompressionCodec codec = null;
-			if (conf.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					conf.getMapOutputCompressorClass(DefaultCodec.class);
-				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-			}
-			Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
-			Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
-
 			if (writer == null) {
+				System.err.println("Request " + this + " create new forced writer.");
+				CompressionCodec codec = null;
+				if (conf.getCompressMapOutput()) {
+					Class<? extends CompressionCodec> codecClass =
+						conf.getMapOutputCompressorClass(DefaultCodec.class);
+					codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+				}
+				Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+				Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
+				
 				out.writeLong(1);
 				out.writeFloat(0.1f);
 				writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
