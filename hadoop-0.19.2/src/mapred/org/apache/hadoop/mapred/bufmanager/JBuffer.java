@@ -113,7 +113,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						try {
 								LOG.debug("SpillThread: begin sort and spill.");
 								long sortstart = java.lang.System.currentTimeMillis();
-								if (kvstart != kvend ) {
+								if (kvstart != kvend && !forceFree()) {
 									sortAndSpill();
 								}
 								LOG.debug("SpillThread: sort/spill time " + 
@@ -1060,7 +1060,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-					writer = request.force(key, value, writer, 2 * size);
+					writer = request.force(key, value, writer, (int) (1.1 * size));
 					++spindex;
 				}
 			} finally {
