@@ -504,7 +504,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 	}
 	
-	private synchronized int spillid() {
+	private int spillid() {
 		return this.spillCount++;
 	}
 	
