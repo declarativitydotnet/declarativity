@@ -402,12 +402,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				return true;
 			} else if (!open && numFlush < numSpills) {
 				synchronized (this) {
-					while (busy) {
-						try { this.wait();
-						} catch (InterruptedException e) { }
-					}
-					if (numFlush < numSpills) {
+					try {
+						open = true;
 						flushRequests(false);
+					} finally {
+						open = false;
 					}
 				}
 			}
