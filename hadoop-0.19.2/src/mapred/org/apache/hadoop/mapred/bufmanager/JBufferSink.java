@@ -712,7 +712,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		}
 		
-		private void service(long length) throws IOException {
+		private void service(long length, boolean force) throws IOException {
 			DataInputBuffer key = new DataInputBuffer();
 			DataInputBuffer value = new DataInputBuffer();
 			
@@ -726,11 +726,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
 			}
 			
-			boolean forced = length < 0;
-			if (forced) length = Integer.MAX_VALUE;
-			IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
+			IFile.Reader<K, V> reader = 
+				new IFile.Reader<K, V>(conf, input, force ? Integer.MAX_VALUE : length, codec);
 			
-			if (forced) {
+			if (force) {
 				LOG.info("JBufferSink forcing " + id + " records to buffer.");
 				synchronized (sink.task) {
 					int records = 0;
@@ -805,8 +804,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 			try {
 				while (open) {
 					long length = 0;
+					boolean force = false;
 					try {
 						busy = false;
+						force = this.input.readBoolean();
 						length = this.input.readLong();
 						this.progress = this.input.readFloat();
 						busy = true;
@@ -815,7 +816,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						return;
 					}
 					
-					if (length == 0) {
+					if (length == 0 && !force) {
 						if (progress < 1f) continue;
 						else  return;
 					}
@@ -823,7 +824,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						long timestamp = System.currentTimeMillis();
 						LOG.debug("JBufferSink connection " + id + " service length " + 
 								  length + " progress = " + progress);
-						service(length);
+						service(length, force);
 						LOG.debug("JBufferSink connection " + id + " service time = " + 
 								  (System.currentTimeMillis() - timestamp));
 					}
