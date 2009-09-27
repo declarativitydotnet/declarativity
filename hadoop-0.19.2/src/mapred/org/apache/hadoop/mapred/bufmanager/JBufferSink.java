@@ -547,6 +547,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 						if (connection.progress() == 1.0f) {
 							this.successful.add(taskid);
 						}
+						else {
+							connections.get(taskid).clear();
+							connections.get(taskid).add(connection);
+						}
 					}
 					this.connections.notifyAll();
 
