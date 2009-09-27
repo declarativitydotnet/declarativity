@@ -403,6 +403,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			} else if (!open && numFlush < numSpills) {
 				synchronized (this) {
 					try {
+						LOG.info("JBuffer PipelineThread FORCE");
 						open = true;
 						flushRequests(false);
 					} finally {
@@ -1074,8 +1075,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					++spindex;
 				}
 			} finally {
-				LOG.info("JBuffer: forced " + records + 
-						 " pipelined records to " + request);
+				LOG.info("JBuffer: forced " + records + " pipelined records to " + request);
 				if (writer != null) writer.close();
 			}
 		}
