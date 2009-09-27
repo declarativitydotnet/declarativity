@@ -1049,8 +1049,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		for (int i = 0; i < partitions; ++i) {
 			BufferRequest request = this.requestMap.get(i);;
 			IFile.Writer<K, V> writer = null;
+			int records = spindex;
 			try {
 				DataInputBuffer key = new DataInputBuffer();
+				
+				while (records < endPosition
+						&& kvindices[kvoffsets[records % kvoffsets.length] + PARTITION] == i) {
+					++records;
+				}
+				records -= spindex;
+				
 				while (spindex < endPosition
 						&& kvindices[kvoffsets[spindex
 						                       % kvoffsets.length]
@@ -1060,11 +1068,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-					writer = request.force(key, value, writer, size + 1000);
+					writer = request.force(key, value, writer, size + (records * 4));
 					++spindex;
 				}
 			} finally {
-				LOG.info("JBuffer: forced " + (spindex - kvstart) + 
+				LOG.info("JBuffer: forced " + records + 
 						 " pipelined records to " + request);
 				if (writer != null) writer.close();
 			}
