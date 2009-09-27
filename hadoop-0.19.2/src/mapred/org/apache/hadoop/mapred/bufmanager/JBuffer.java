@@ -113,7 +113,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						try {
 								LOG.debug("SpillThread: begin sort and spill.");
 								long sortstart = java.lang.System.currentTimeMillis();
-								if (kvstart != kvend && !forceFree()) {
+								if (kvstart != kvend) {
 									sortAndSpill();
 								}
 								LOG.debug("SpillThread: sort/spill time " + 
@@ -597,7 +597,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public synchronized void pipeline(boolean value) throws IOException {
-		/*
 		if (pipeline == false && value == true) {
 			this.pipelineThread.open();
 		}
@@ -608,7 +607,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			this.pipelineThread.close();
 		}
 		this.pipeline = value;
-		*/
 	}
 	
 	public Progress getProgress() {
