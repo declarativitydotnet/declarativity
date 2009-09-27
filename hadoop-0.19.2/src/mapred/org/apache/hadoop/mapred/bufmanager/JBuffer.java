@@ -1031,7 +1031,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 	
-	private synchronized boolean forceFree() throws IOException {
+	private boolean forceFree() throws IOException {
 		if (!pipelineThread.force()) {
 			LOG.info("JBuffer: force unable to catch pipeline thread up.");
 			return false;
