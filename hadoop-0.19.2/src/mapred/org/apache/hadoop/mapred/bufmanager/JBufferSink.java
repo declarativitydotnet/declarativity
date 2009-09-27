@@ -725,9 +725,23 @@ public class JBufferSink<K extends Object, V extends Object> {
 					conf.getMapOutputCompressorClass(DefaultCodec.class);
 				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
 			}
+			
+			boolean forced = length < 0;
+			if (forced) length = Integer.MAX_VALUE;
 			IFile.Reader<K, V> reader = new IFile.Reader<K, V>(conf, input, length, codec);
 			
-			if (sink.snapshots()) {
+			if (forced) {
+				LOG.info("JBufferSink forcing " + id + " records to buffer.");
+				synchronized (sink.task) {
+					int records = 0;
+					while (reader.next(key, value)) {
+						records++;
+						this.sink.buffer().collect(key, value);
+					}
+					LOG.info("JBufferSink forced " + records + " to buffer from " + id);
+				}
+			}
+			else if (sink.snapshots()) {
 				try {
 					LOG.debug("JBufferSink: perform snaphot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
 					JBufferRun run = sink.getBufferRun(this.id.getTaskID());

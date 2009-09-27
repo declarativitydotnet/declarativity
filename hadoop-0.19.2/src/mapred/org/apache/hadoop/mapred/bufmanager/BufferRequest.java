@@ -313,7 +313,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
-	public IFile.Writer<K, V> force(DataInputBuffer key, DataInputBuffer value, IFile.Writer<K, V> writer, long length) throws IOException {
+	public IFile.Writer<K, V> force(DataInputBuffer key, DataInputBuffer value, IFile.Writer<K, V> writer, float progress) throws IOException {
 		synchronized (this) {
 			if (!isOpen()) throw new IOException("BufferRequest is closed!");
 
@@ -328,8 +328,8 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 				Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
 				Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
 				
-				out.writeLong(length);
-				out.writeFloat(0.1f);
+				out.writeLong(-1L);
+				out.writeFloat(progress);
 				writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
 			}
 			writer.append(key, value);
