@@ -1025,8 +1025,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	private synchronized boolean forceFree() throws IOException {
+		LOG.info("JBuffer: force the pipelined data");
 		boolean pipelineCatchup = this.pipelineThread.force();
-		if (!pipelineCatchup) return false;
+		if (!pipelineCatchup) {
+			LOG.info("JBuffer: force unable to catch pipeline thread up.");
+			return false;
+		}
 
 		final int endPosition = (kvend > kvstart)
 		? kvend : kvoffsets.length + kvend;
@@ -1054,6 +1058,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				if (writer != null) writer.close();
 			}
 		}
+		LOG.info("JBuffer: force pipelined data succeeded.");
 		return true;
 	}
 	
