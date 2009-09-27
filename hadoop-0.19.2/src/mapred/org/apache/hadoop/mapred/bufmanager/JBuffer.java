@@ -596,6 +596,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public synchronized void pipeline(boolean value) throws IOException {
+		/*
 		if (pipeline == false && value == true) {
 			this.pipelineThread.open();
 		}
@@ -606,6 +607,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			this.pipelineThread.close();
 		}
 		this.pipeline = value;
+		*/
 	}
 	
 	public Progress getProgress() {
