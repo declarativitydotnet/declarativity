@@ -565,8 +565,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		} finally {
 			if (complete()) {
-				LOG.info("JBufferSink " + reduceID + " is complete.");
 				updateProgress();
+				LOG.info("JBufferSink " + reduceID + " is complete.");
 			}
 		}
 	}
