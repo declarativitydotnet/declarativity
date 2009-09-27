@@ -434,7 +434,9 @@ public class ReduceTask extends Task {
 				}
 				try { this.wait(waittime);
 				} catch (InterruptedException e) { }
+				LOG.info("ReduceTask wakeup");
 			}
+			LOG.info("ReduceTask closing sink.");
 			sink.close();
 		}
 		LOG.info("ReduceTask " + getTaskID() + " copy phase completed in " + 
