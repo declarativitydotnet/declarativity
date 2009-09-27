@@ -761,6 +761,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 										this.sink.buffer().collect(key, value);
 									}
 								} catch (ChecksumException e) {
+									e.printStackTrace();
 									LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
 								} catch (Throwable t) {
 									t.printStackTrace();
