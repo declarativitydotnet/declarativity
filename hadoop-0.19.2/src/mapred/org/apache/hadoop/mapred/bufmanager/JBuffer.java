@@ -210,6 +210,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 						if (!open) return;
 						busy = true;
+						LOG.info("MergeThread is not busy");
 					}
 
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
