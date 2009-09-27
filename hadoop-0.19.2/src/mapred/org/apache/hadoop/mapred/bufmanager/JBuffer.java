@@ -1032,12 +1032,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	private synchronized boolean forceFree() throws IOException {
-		LOG.info("JBuffer: force the pipelined data");
 		if (!pipelineThread.force()) {
 			LOG.info("JBuffer: force unable to catch pipeline thread up.");
 			return false;
 		}
-		pipelineThread.close();
+		LOG.info("JBuffer: force the pipelined data from kvstart = " + kvstart);
 		
 		long size = (bufend >= bufstart
 				? bufend - bufstart
