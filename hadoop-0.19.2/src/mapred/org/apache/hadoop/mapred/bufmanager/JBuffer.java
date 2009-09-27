@@ -1038,6 +1038,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		LOG.info("JBuffer: force the pipelined data from kvstart = " + kvstart);
 		
+		BufferRequestResponse response = new BufferRequestResponse();
+		for (BufferRequest request : requestMap.values()) {
+			if (!request.isOpen()) {
+				request.open(job, response, false);
+				if (!response.open) return false;
+			}
+		}
+		
 		long size = (bufend >= bufstart
 				? bufend - bufstart
 						: (bufvoid - bufend) + bufstart) +
