@@ -754,14 +754,19 @@ public class JBufferSink<K extends Object, V extends Object> {
 							 */
 							if (!safemode && sink.buffer().reserve(length)) {
 								LOG.debug("JBufferSink: dumping buffer " + id + ".");
+								int records = 0;
 								try {
 									while (reader.next(key, value)) {
+										records++;
 										this.sink.buffer().collect(key, value);
 									}
 								} catch (ChecksumException e) {
 									LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
-								}
-								finally {
+								} catch (Throwable t) {
+									t.printStackTrace();
+									LOG.error("JBufferSink: " + t + " during spill. progress = " + progress);
+								} finally {
+									LOG.info("JBufferSink: dumped " + records + " records.");
 									sink.buffer().unreserve(length);
 									doSpill = false;
 									LOG.debug("JBufferSink: done dumping buffer " + id + ".");
