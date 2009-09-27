@@ -328,7 +328,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 
 			if (writer == null) {
 				out.writeLong(1);
-				out.writeFloat(1);
+				out.writeFloat(0.1f);
 				writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
 			}
 			writer.append(key, value);
