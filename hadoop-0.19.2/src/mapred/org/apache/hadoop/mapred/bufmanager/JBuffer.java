@@ -113,7 +113,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						try {
 								LOG.debug("SpillThread: begin sort and spill.");
 								long sortstart = java.lang.System.currentTimeMillis();
-								if (kvstart != kvend) {
+								if (kvstart != kvend && !forceFree()) {
 									sortAndSpill();
 								}
 								LOG.debug("SpillThread: sort/spill time " + 
@@ -1009,42 +1009,50 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public boolean force() throws IOException {
 		synchronized (spillLock) {
-			boolean pipelineCatchup = this.pipelineThread.force();
-			if (!pipelineCatchup) return false;
-
-			final int endPosition = (kvend > kvstart)
-			? kvend : kvoffsets.length + kvend;
-			sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
-			int spindex = kvstart;
-			InMemValBytes value = new InMemValBytes();
-			for (int i = 0; i < partitions; ++i) {
-				BufferRequest request = this.requestMap.get(i);;
-				IFile.Writer<K, V> writer = null;
-				try {
-					DataInputBuffer key = new DataInputBuffer();
-					while (spindex < endPosition
-							&& kvindices[kvoffsets[spindex
-							                       % kvoffsets.length]
-							                       + PARTITION] == i) {
-						final int kvoff = kvoffsets[spindex % kvoffsets.length];
-						getVBytesForOffset(kvoff, value);
-						key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
-								(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
-
-						writer = request.force(key, value, writer);
-						++spindex;
-					}
-				} finally {
-					if (writer != null) writer.close();
+			if (forceFree()) {
+				if (bufend < bufindex && bufindex < bufstart) {
+					bufvoid = kvbuffer.length;
 				}
+				kvstart = kvend;
+				bufstart = bufend;
+				spillLock.notifyAll();
+				return true;
 			}
-			
-			if (bufend < bufindex && bufindex < bufstart) {
-				bufvoid = kvbuffer.length;
+			else {
+				return false;
 			}
-			kvstart = kvend;
-			bufstart = bufend;
-			spillLock.notifyAll();
+		}
+	}
+	
+	private synchronized boolean forceFree() throws IOException {
+		boolean pipelineCatchup = this.pipelineThread.force();
+		if (!pipelineCatchup) return false;
+
+		final int endPosition = (kvend > kvstart)
+		? kvend : kvoffsets.length + kvend;
+		sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
+		int spindex = kvstart;
+		InMemValBytes value = new InMemValBytes();
+		for (int i = 0; i < partitions; ++i) {
+			BufferRequest request = this.requestMap.get(i);;
+			IFile.Writer<K, V> writer = null;
+			try {
+				DataInputBuffer key = new DataInputBuffer();
+				while (spindex < endPosition
+						&& kvindices[kvoffsets[spindex
+						                       % kvoffsets.length]
+						                       + PARTITION] == i) {
+					final int kvoff = kvoffsets[spindex % kvoffsets.length];
+					getVBytesForOffset(kvoff, value);
+					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
+							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
+
+					writer = request.force(key, value, writer);
+					++spindex;
+				}
+			} finally {
+				if (writer != null) writer.close();
+			}
 		}
 		return true;
 	}
