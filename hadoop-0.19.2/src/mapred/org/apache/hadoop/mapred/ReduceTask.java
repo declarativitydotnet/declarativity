@@ -402,12 +402,12 @@ public class ReduceTask extends Task {
 	protected void copy(JBuffer buffer, JBufferSink sink, Reporter reporter) throws IOException {
 		this.buffer = buffer;
 		int window = conf.getInt("mapred.reduce.window", Integer.MAX_VALUE);
+		int waittime = window < Integer.MAX_VALUE ? window : 1000;
 		long starttime = System.currentTimeMillis();
 		synchronized (this) {
 			LOG.info("ReduceTask " + getTaskID() + ": In copy function.");
 			sink.open();
 			while(!sink.complete()) {
-				reporter.progress();
 				if (window < Integer.MAX_VALUE) {
 					isSnapshotting = true;
 					LOG.info("ReduceTask: " + getTaskID() + " perform window snapshot. time = " + (System.currentTimeMillis() - starttime) + "ms.");
@@ -432,10 +432,8 @@ public class ReduceTask extends Task {
 						LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 					}
 				}
-				LOG.debug("ReduceTask sleep");
-				try { this.wait(window);
+				try { this.wait(waittime);
 				} catch (InterruptedException e) { }
-				LOG.debug("ReduceTask wakeup");
 			}
 			sink.close();
 		}
