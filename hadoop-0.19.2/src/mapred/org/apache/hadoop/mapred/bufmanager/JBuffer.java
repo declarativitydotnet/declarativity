@@ -1083,6 +1083,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			} finally {
 				LOG.info("JBuffer: forced " + records + " pipelined records to " + request);
+				if (writer != null) writer.close();
+				request.close();
 			}
 		}
 		LOG.info("JBuffer: force pipelined data succeeded.");

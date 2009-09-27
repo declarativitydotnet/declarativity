@@ -736,7 +736,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					while (reader.next(key, value)) {
 						records++;
 						this.sink.buffer().collect(key, value);
-						if (records == length) break;
 					}
 					LOG.info("JBufferSink forced " + records + " to buffer from " + id);
 				}
