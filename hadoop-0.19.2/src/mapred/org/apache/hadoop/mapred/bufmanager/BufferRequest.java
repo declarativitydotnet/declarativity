@@ -313,6 +313,29 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
+	public IFile.Writer<K, V> force(DataInputBuffer key, DataInputBuffer value, IFile.Writer<K, V> writer) throws IOException {
+		synchronized (this) {
+			if (!isOpen()) throw new IOException("BufferRequest is closed!");
+
+			CompressionCodec codec = null;
+			if (conf.getCompressMapOutput()) {
+				Class<? extends CompressionCodec> codecClass =
+					conf.getMapOutputCompressorClass(DefaultCodec.class);
+				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+			}
+			Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
+			Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
+
+			if (writer == null) {
+				out.writeLong(1);
+				out.writeFloat(1);
+				writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
+			}
+			writer.append(key, value);
+			return writer;
+		}
+	}
+	
 	private void flushFile(FSDataInputStream in, long length, float progress) throws IOException {
 		synchronized (this) {
 			if (length == 0 && progress < 1.0f) {

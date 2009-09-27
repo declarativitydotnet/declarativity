@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -302,7 +303,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		this.task = task;
 	    this.numConnections = task.getNumberOfInputs();
 		this.executor = Executors.newCachedThreadPool();
-		this.connections = new HashMap<TaskID, List<Connection>>();
+		this.connections = new ConcurrentHashMap<TaskID, List<Connection>>();
 		this.successful = new HashSet<TaskID>();
 		
 		this.snapshots = snapshots;
@@ -344,7 +345,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						
-						synchronized (connections) {
 							TaskID taskid = conn.id().getTaskID();
 							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
 							
@@ -368,14 +368,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 								
 								if (!conn.isSnapshot()) {
 									/* register regular connection. */
-									if (!connections.containsKey(taskid)) {
-										connections.put(taskid, new ArrayList<Connection>());
+									synchronized (connections) {
+										if (!connections.containsKey(taskid)) {
+											connections.put(taskid, new ArrayList<Connection>());
+										}
+										connections.get(taskid).add(conn);
 									}
-									connections.get(taskid).add(conn);
 								}
 								executor.execute(conn);
 							}
-						}
 					}
 					LOG.info("JBufferSink " + reduceID + " buffer response server closed.");
 				} catch (IOException e) {  }
@@ -569,20 +570,19 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void updateProgress() {
-		synchronized (connections) {
-			float progress = (float) this.successful.size();
-			for (TaskID taskid : connections.keySet()) {
-				if (!this.successful.contains(taskid)) {
-					float max = 0f;
-					for (Connection c : connections.get(taskid)) {
-						max = Math.max(max, c.progress());
-					}
-					progress += max;
+		Set<TaskID> taskids = new HashSet<TaskID>(connections.keySet());
+		float progress = (float) this.successful.size();
+		for (TaskID taskid : taskids) {
+			if (!this.successful.contains(taskid)) {
+				float max = 0f;
+				for (Connection c : connections.get(taskid)) {
+					max = Math.max(max, c.progress());
 				}
+				progress += max;
 			}
-			collector.getProgress().set(progress / (float) numConnections);
 		}
-		
+		collector.getProgress().set(progress / (float) numConnections);
+
 		synchronized (task) {
 			task.notifyAll();
 		}
