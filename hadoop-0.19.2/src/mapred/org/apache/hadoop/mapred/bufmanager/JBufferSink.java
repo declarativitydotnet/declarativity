@@ -572,8 +572,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void updateProgress() {
-		Set<TaskID> taskids = new HashSet<TaskID>(connections.keySet());
 		float progress = (float) this.successful.size();
+		Set<TaskID> taskids = new HashSet<TaskID>(connections.keySet());
 		for (TaskID taskid : taskids) {
 			if (!this.successful.contains(taskid)) {
 				float max = 0f;
@@ -584,10 +584,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		}
 		collector.getProgress().set(progress / (float) numConnections);
-
-		synchronized (task) {
-			task.notifyAll();
-		}
+		reporter.progress();
 	}
 	
 	private JBufferRun getBufferRun(TaskID taskid) {
