@@ -1,5 +1,7 @@
 package org.apache.hadoop.mapred.bufmanager;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -342,11 +344,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 					while (server.isOpen()) {
 						SocketChannel channel = server.accept();
 						channel.configureBlocking(true);
-						DataInputStream  input  = new DataInputStream(channel.socket().getInputStream());
+						DataInputStream  input  = new DataInputStream(new BufferedInputStream(channel.socket().getInputStream()));
 						Connection       conn   = new Connection(input, JBufferSink.this, conf);
 						
 							TaskID taskid = conn.id().getTaskID();
-							DataOutputStream output = new DataOutputStream(channel.socket().getOutputStream());
+							DataOutputStream output = new DataOutputStream(new BufferedOutputStream(channel.socket().getOutputStream()));
 							
 							if (complete() || successful.contains(taskid) ) {
 								response.setTerminated();
