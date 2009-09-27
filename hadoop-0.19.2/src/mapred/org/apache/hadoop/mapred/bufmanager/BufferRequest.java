@@ -318,7 +318,8 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			if (!isOpen()) throw new IOException("BufferRequest is closed!");
 
 			if (writer == null) {
-				System.err.println("Request " + this + " create new forced writer.");
+				System.err.println("Request " + this + " create new forced writer for " + records + 
+						           " records at progress = " + progress + ".");
 				CompressionCodec codec = null;
 				if (conf.getCompressMapOutput()) {
 					Class<? extends CompressionCodec> codecClass =
