@@ -828,6 +828,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						service(length, force);
 						LOG.debug("JBufferSink connection " + id + " service time = " + 
 								  (System.currentTimeMillis() - timestamp));
+						if (force) return;
 					}
 					
 					if (progress == 1.0f) return;
