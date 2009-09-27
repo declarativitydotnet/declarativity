@@ -412,7 +412,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 			
-			return numFlush == numSpills;
+			return requests.size() == partitions && 
+				   numFlush == numSpills;
 		}
 	}
 	
