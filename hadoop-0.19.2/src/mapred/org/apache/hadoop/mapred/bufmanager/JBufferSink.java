@@ -547,10 +547,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 						if (connection.progress() == 1.0f) {
 							this.successful.add(taskid);
 						}
-						else {
-							connections.get(taskid).clear();
-							connections.get(taskid).add(connection);
-						}
 					}
 					this.connections.notifyAll();
 
@@ -733,7 +729,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 			IFile.Reader<K, V> reader = 
 				new IFile.Reader<K, V>(conf, input, force ? Integer.MAX_VALUE : length, codec);
 			
-			/*
 			if (force) {
 				LOG.info("JBufferSink forcing " + id + " records to buffer.");
 				synchronized (sink.task) {
@@ -745,8 +740,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					LOG.info("JBufferSink forced " + records + " to buffer from " + id);
 				}
 			}
-			*/
-			if (sink.snapshots()) {
+			else if (sink.snapshots()) {
 				try {
 					LOG.debug("JBufferSink: perform snaphot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
 					JBufferRun run = sink.getBufferRun(this.id.getTaskID());
