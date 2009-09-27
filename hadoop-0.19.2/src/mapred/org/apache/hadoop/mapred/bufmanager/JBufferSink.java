@@ -585,6 +585,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		collector.getProgress().set(progress / (float) numConnections);
 		reporter.progress();
+		synchronized (task) {
+			task.notifyAll();
+		}
 	}
 	
 	private JBufferRun getBufferRun(TaskID taskid) {
