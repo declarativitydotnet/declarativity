@@ -1034,6 +1034,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			LOG.info("JBuffer: force unable to catch pipeline thread up.");
 			return false;
 		}
+		
+		long size = (bufend >= bufstart
+				? bufend - bufstart
+						: (bufvoid - bufend) + bufstart) +
+						partitions * APPROX_HEADER_LENGTH;
 
 		final int endPosition = (kvend > kvstart)
 		? kvend : kvoffsets.length + kvend;
@@ -1054,7 +1059,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-					writer = request.force(key, value, writer);
+					writer = request.force(key, value, writer, size);
 					++spindex;
 				}
 			} finally {
