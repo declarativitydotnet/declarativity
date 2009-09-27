@@ -402,6 +402,8 @@ public class ReduceTask extends Task {
 	protected void copy(JBuffer buffer, JBufferSink sink, Reporter reporter) throws IOException {
 		this.buffer = buffer;
 		int window = conf.getInt("mapred.reduce.window", Integer.MAX_VALUE);
+		int waittime = window < Integer.MAX_VALUE ? window : 1000;
+		
 		long starttime = System.currentTimeMillis();
 		synchronized (this) {
 			LOG.info("ReduceTask " + getTaskID() + ": In copy function.");
@@ -431,7 +433,7 @@ public class ReduceTask extends Task {
 						LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 					}
 				}
-				try { this.wait(window);
+				try { this.wait(waittime);
 				} catch (InterruptedException e) { }
 				LOG.info("ReduceTask wakeup");
 			}
