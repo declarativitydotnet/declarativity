@@ -397,10 +397,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		
 		public boolean force() throws IOException {
-			if (requests.size() != partitions) {
-				return false;
-			}
-			else if (!open && numFlush < numSpills) {
+			if (requests.size() == partitions &&
+					numFlush == numSpills) {
+				return true;
+			} else if (!open && numFlush < numSpills) {
 				synchronized (this) {
 					while (busy) {
 						try { this.wait();
