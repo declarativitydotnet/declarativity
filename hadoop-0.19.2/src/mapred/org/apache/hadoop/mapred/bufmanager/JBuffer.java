@@ -1034,6 +1034,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			LOG.info("JBuffer: force unable to catch pipeline thread up.");
 			return false;
 		}
+		pipelineThread.close();
 		
 		long size = (bufend >= bufstart
 				? bufend - bufstart
