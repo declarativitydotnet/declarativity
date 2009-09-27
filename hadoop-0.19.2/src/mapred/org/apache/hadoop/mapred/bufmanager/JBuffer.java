@@ -165,6 +165,18 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		public void close() {
 			if (open) {
 				synchronized (mergeLock) {
+					open = false;
+					if (busy) {
+						try {
+							mergeParts(true, mergeBoundary);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					interrupt();
+				}
+				/*
+				synchronized (mergeLock) {
 					LOG.info("Closing merge thread.");
 					open = false;
 					mergeLock.notifyAll();
@@ -173,6 +185,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						} catch (InterruptedException e) { }
 					}
 				}
+				*/
 				LOG.debug("MergeThread is closed.");
 			}
 		}
