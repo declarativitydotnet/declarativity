@@ -1057,6 +1057,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					++spindex;
 				}
 			} finally {
+				LOG.info("JBuffer: forced " + (spindex - kvstart) + 
+						 " pipelined records to " + request);
 				if (writer != null) writer.close();
 			}
 		}
