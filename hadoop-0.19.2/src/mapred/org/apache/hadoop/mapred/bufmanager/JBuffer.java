@@ -348,6 +348,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						float requestProgress = ((spillId + 1) / (float) numSpills) * progress.get();
 						if (r.isOpen()) {
 							try {
+								LOG.info("JBuffer pipeline spill " + spillId + ". progress " + requestProgress);
 								r.flush(indexIn, dataIn, spillId, requestProgress);
 								if (requestProgress == 1.0f) {
 									umbilical.remove(r); // Request is done
