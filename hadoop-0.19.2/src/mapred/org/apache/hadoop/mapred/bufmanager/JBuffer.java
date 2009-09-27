@@ -396,7 +396,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		
 		public boolean force() throws IOException {
-			if (numFlush < numSpills) {
+			if (requests.size() != partitions) {
+				return false;
+			}
+			else if (numFlush < numSpills) {
 				synchronized (this) {
 					while (busy) {
 						try { this.wait();
@@ -1026,8 +1029,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	private synchronized boolean forceFree() throws IOException {
 		LOG.info("JBuffer: force the pipelined data");
-		boolean pipelineCatchup = this.pipelineThread.force();
-		if (!pipelineCatchup) {
+		if (!pipelineThread.force()) {
 			LOG.info("JBuffer: force unable to catch pipeline thread up.");
 			return false;
 		}
