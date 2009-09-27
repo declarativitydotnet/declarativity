@@ -178,12 +178,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		
 		public void mergeBoundary(int spillid) {
+			/*
 			if (mergeBoundary < spillid) {
 				synchronized (mergeLock) {
 					this.mergeBoundary = spillid;
 					mergeLock.notifyAll();
 				}
 			}
+			*/
 		}
 		
 		public boolean isBusy() {
@@ -1142,6 +1144,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		Path dataFile = null;
 		Path indexFile = null;
 		synchronized (mergeLock) {
+			LOG.info("begin spill");
 			dataFile  = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, 1096);
 			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, this.numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 			numSpills++;
@@ -1160,6 +1163,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			
 			if (!safemode) mergeLock.notifyAll();
+			LOG.info("end spill");
 			return numSpills - 1;
 		}
 	}
@@ -1169,6 +1173,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		//approximate the length of the output file to be the length of the
 		//buffer + header lengths for the partitions
 		synchronized (mergeLock) {
+			LOG.info("begin merge lock");
 			long size = (bufend >= bufstart
 					? bufend - bufstart
 							: (bufvoid - bufend) + bufstart) +
@@ -1257,6 +1262,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			} finally {
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
+				LOG.info("end merge lock");
 			}
 		}
 	}
@@ -1283,6 +1289,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	@SuppressWarnings("unchecked")
 	private void spillSingleRecord(final K key, final V value)  throws IOException {
 		synchronized (mergeLock) {
+			LOG.info("Spill single record begin");
 			long size = kvbuffer.length + partitions * APPROX_HEADER_LENGTH;
 			FSDataOutputStream out = null;
 			FSDataOutputStream indexOut = null;
@@ -1320,6 +1327,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			} finally {
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
+				LOG.info("Spill single record done");
 			}
 		}
 	}
@@ -1460,6 +1468,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		int end = 0;
 		int spillid = 0;
 		synchronized (mergeLock) {
+			LOG.info("Merge parts being");
 			boundary = Math.min(boundary, numSpills);
 
 			spillid = numSpills;
