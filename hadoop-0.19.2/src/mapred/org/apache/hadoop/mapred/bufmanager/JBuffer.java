@@ -400,7 +400,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (requests.size() != partitions) {
 				return false;
 			}
-			else if (open && numFlush < numSpills) {
+			else if (!open && numFlush < numSpills) {
 				synchronized (this) {
 					while (busy) {
 						try { this.wait();
