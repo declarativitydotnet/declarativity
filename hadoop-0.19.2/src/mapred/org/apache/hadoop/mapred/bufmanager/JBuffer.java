@@ -112,7 +112,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						try {
 								LOG.debug("SpillThread: begin sort and spill.");
 								long sortstart = java.lang.System.currentTimeMillis();
-								if (kvstart != kvend && !forceFree()) {
+								if (kvstart != kvend) {
 									sortAndSpill();
 								}
 								LOG.debug("SpillThread: sort/spill time " + 
@@ -1054,36 +1054,64 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		
+		// create spill file
+		Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, 1096);
+		if (localFs.exists(filename)) {
+			throw new IOException("JBuffer::sortAndSpill -- spill file exists! " + filename);
+		}
+		
+		FSDataOutputStream out = localFs.create(filename, false);
+		if (out == null ) throw new IOException("Unable to create spill file " + filename);
+		// create spill index
+		Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
+				this.taskid, this.numSpills,
+				partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+		FSDataOutputStream indexOut = localFs.create(indexFilename, false);
+		
+		
 		final int endPosition = (kvend > kvstart)
 		                        ? kvend : kvoffsets.length + kvend;
 		sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
 		int spindex = kvstart;
-		for (int i = 0; i < partitions; ++i) {
-			BufferRequest request = this.requestMap.get(i);;
-			IFile.Writer<K, V> writer = null;
-			int records = 0;
-			try {
+		try {
+			for (int i = 0; i < partitions; ++i) {
+				BufferRequest request = this.requestMap.get(i);;
+				IFile.Writer<K, V> writer = null;
+				int records = 0;
 				int spstart = spindex;
 				while (spindex < endPosition
 						&& kvindices[kvoffsets[spindex % kvoffsets.length] + PARTITION] == i) {
 					++spindex;
 				}
-				
+				long segmentStart = out.getPos();
+				writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
+
 				if (spstart != spindex) {
 					records = spindex - spstart;
 					RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
 					while (kvIter.next()) {
-						System.err.println("FORCE KEY SIZE " + kvIter.getKey().getLength() + 
-								           " VALUE SIZE " + kvIter.getValue().getLength());
-						writer = request.force(kvIter.getKey(), kvIter.getValue(), 
-								               writer, records, progress.get());
+						writer.append(kvIter.getKey(), kvIter.getValue());
 					}
+
+					// close the writer
+					writer.close();
+
+					// write the index as <offset, raw-length,
+					// compressed-length>
+					writeIndexRecord(indexOut, out, segmentStart, writer);
 				}
-			} finally {
-				LOG.info("JBuffer: forced " + records + " pipelined records to " + request);
-				if (writer != null) writer.close();
-				request.close();
 			}
+			out.close(); indexOut.close();
+			FSDataInputStream in = localFs.open(filename);
+			FSDataInputStream indexIn = localFs.open(indexFilename);
+			
+			for (BufferRequest request : requestMap.values()) {
+				request.flush(in, indexIn, progress.get());
+			}
+			in.close(); indexIn.close();
+		} finally {
+			localFs.delete(filename, true);
+			localFs.delete(indexFilename, true);
 		}
 		LOG.info("JBuffer: force pipelined data succeeded.");
 		return true;

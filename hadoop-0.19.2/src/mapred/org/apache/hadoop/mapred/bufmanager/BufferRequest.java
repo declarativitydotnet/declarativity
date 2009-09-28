@@ -314,6 +314,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		}
 	}
 	
+	/* Doesn't work
 	public IFile.Writer<K, V> force(DataInputBuffer key, DataInputBuffer value, IFile.Writer<K, V> writer, long records, float progress) throws IOException {
 		synchronized (this) {
 			if (!isOpen()) throw new IOException("BufferRequest is closed!");
@@ -339,6 +340,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			return writer;
 		}
 	}
+	*/
 	
 	private void flushFile(FSDataInputStream in, long length, float progress) throws IOException {
 		synchronized (this) {
@@ -357,7 +359,6 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 			Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
 
 			long starttime = System.currentTimeMillis();
-			out.writeBoolean(false);
 			out.writeLong(length);
 			out.writeFloat(progress);
 
