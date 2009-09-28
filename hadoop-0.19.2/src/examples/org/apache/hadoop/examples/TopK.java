@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +14,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.FileInputFormat;
@@ -34,7 +36,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class TopK extends Configured implements Tool {
 
-	public static class LongMapper<K> extends MapReduceBase
+	public static class WordcountMapper<K> extends MapReduceBase
 	implements Mapper<K, Text, Text, LongWritable> {
 
 	    private final static LongWritable one = new LongWritable(1);
@@ -56,36 +58,92 @@ public class TopK extends Configured implements Tool {
 		    }
 		}
 	}
+	
+	/**
+	 * A reducer class that just emits the sum of the input values.
+	 */
+	public static class WordcountReduceFilter extends MapReduceBase implements
+			Reducer<Text, LongWritable, Text, LongWritable> {
 
-	/** A {@link Mapper} that extracts text matching a regular expression. */
-	public static class TopKRegexMapper<K> extends MapReduceBase
-	implements Mapper<K, Text, Text, LongWritable> {
+		private static class TopKRecord implements Comparable<TopKRecord> {
+			public Text key;
+			public long sum;
 
-		private Pattern pattern;
-		private int group;
+			public TopKRecord(Text key, long sum) {
+				this.key = key;
+				this.sum = sum;
+			}
 
-		private final static LongWritable one = new LongWritable(1);
-		private Text word = new Text();
+			@Override
+			public boolean equals(Object obj) {
+				if (!(obj instanceof TopKRecord))
+					return false;
 
-		public void configure(JobConf job) {
-			pattern = Pattern.compile(job.get("mapred.mapper.regex"));
-			group = job.getInt("mapred.mapper.regex.group", 0);
+				TopKRecord other = (TopKRecord) obj;
+				if (other.sum == this.sum && other.key.equals(this.key))
+					return true;
+				else
+					return false;
+			}
+
+			@Override
+			public int hashCode() {
+				return this.key.hashCode() ^ (int) this.sum;
+			}
+
+			@Override
+			public int compareTo(TopKRecord other) {
+				if (this.sum == other.sum)
+					return this.key.compareTo(other.key);
+
+				return (this.sum < other.sum ? -1 : 1);
+			}
 		}
 
-		public void map(K key, Text value,
-				OutputCollector<Text, LongWritable> output,
-				Reporter reporter) throws IOException {
-			String line = value.toString();
-			StringTokenizer itr = new StringTokenizer(line);
+		private final TreeSet<TopKRecord> heap = new TreeSet<TopKRecord>();
+		private OutputCollector<Text, LongWritable> target = null;
+		
+		int k = 0;
 
-			while (itr.hasMoreTokens()) {
-				String next = itr.nextToken();
-				Matcher matcher = pattern.matcher(next);
-				if (matcher.find()) {
-					word.set(next);
-					output.collect(word, one);
-				}
+		@Override
+		public void configure(JobConf job) {
+			k = job.getInt("mapred.reduce.topk.k", 1);
+		}
+
+		public void reduce(Text key, Iterator<LongWritable> values,
+				OutputCollector<Text, LongWritable> output, Reporter reporter)
+				throws IOException {
+			/* On first call, remember the output destination (XXX hack) */
+			if (target == null)
+				target = output;
+
+			int sum = 0;
+			while (values.hasNext()) {
+				sum += values.next().get();
 			}
+
+			// NB: We need to copy the key, because it is overwritten by caller
+			this.heap.add(new TopKRecord(new Text(key), sum));
+			if (this.heap.size() >= k) {
+				TopKRecord removed = this.heap.pollFirst();
+				if (removed == null)
+					throw new IllegalStateException();
+			}
+		}
+
+		@Override
+		public void close() throws IOException {
+			if (this.target == null) {
+				assert(this.heap.size() == 0);
+				return;
+			}
+
+			for (TopKRecord rec : this.heap) {
+				this.target.collect(rec.key, new LongWritable(rec.sum));
+			}
+
+			this.heap.clear();
+			this.target = null;
 		}
 	}
 
@@ -115,7 +173,7 @@ public class TopK extends Configured implements Tool {
 	private TopK() {}                               // singleton
 
 	private void printUsage() {
-		System.out.println("TopK [-s <interval>] [-p] [-m mappers] [-r reducers] <inDir> <outDir> <K> [<regexpr> [<group>]]");
+		System.out.println("TopK [-s <interval>] [-p] [-m mappers] [-r reducers] <inDir> <outDir> <K>");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
 
@@ -133,10 +191,10 @@ public class TopK extends Configured implements Tool {
 			boolean pipeline = false;
 
 			JobConf wordcountJob = new JobConf(getConf(), TopK.class);
-			wordcountJob.setJobName("topk-search");
+			wordcountJob.setJobName("topk-wordcount");
 
-			JobConf topkJob = new JobConf(TopK.class);
-			topkJob.setJobName("topk-sort");
+			JobConf topkJob = new JobConf(getConf(), TopK.class);
+			topkJob.setJobName("topk-select");
 
 		    List<String> other_args = new ArrayList<String>();
 		    for(int i=0; i < args.length; ++i) {
@@ -187,23 +245,15 @@ public class TopK extends Configured implements Tool {
 
 			FileInputFormat.setInputPaths(wordcountJob, other_args.get(0));
 
-			if (other_args.size() >= 4) {
-				wordcountJob.setMapperClass(TopKRegexMapper.class);
-				wordcountJob.set("mapred.mapper.regex", other_args.get(3));
-				if (args.length == 5)
-					wordcountJob.set("mapred.mapper.regex.group", other_args.get(4));
-			}
-			else {
-				wordcountJob.setMapperClass(LongMapper.class);
-			}
-
+			wordcountJob.setMapperClass(WordcountMapper.class);
 			wordcountJob.setCombinerClass(LongSumReducer.class);
-			wordcountJob.setReducerClass(LongSumReducer.class);
+			wordcountJob.setReducerClass(WordcountReduceFilter.class);
 
 			FileOutputFormat.setOutputPath(wordcountJob, tempDir);
 			wordcountJob.setOutputFormat(SequenceFileOutputFormat.class);
 			wordcountJob.setOutputKeyClass(Text.class);
 			wordcountJob.setOutputValueClass(LongWritable.class);
+			wordcountJob.setInt("mapred.reduce.topk.k", Integer.parseInt(other_args.get(2)));
 
 
 			FileInputFormat.setInputPaths(topkJob, tempDir);
