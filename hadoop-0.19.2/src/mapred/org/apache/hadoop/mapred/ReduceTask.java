@@ -282,11 +282,12 @@ public class ReduceTask extends Task {
 		Path data = null;
 		Path index = null;
 		
+		buffer.flush();
+		
 		Path oldData = mapOutputFile.getOutputFile(getTaskID());
 		Path oldIndex = mapOutputFile.getOutputIndexFile(getTaskID());
 		FileSystem localFs = FileSystem.getLocal(conf);
 		
-		buffer.flush();
 		if (save) {
 			data  = new Path(oldData.getParent(), getTaskID().toString() + "_snapshot.out");
 			index = new Path(oldIndex.getParent(), getTaskID().toString() + "_snapshotindex.out");
