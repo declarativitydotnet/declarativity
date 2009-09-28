@@ -746,7 +746,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			kvindices[ind + KEYSTART] = keystart;
 			kvindices[ind + VALSTART] = valstart;
 			kvindex = (kvindex + 1) % kvoffsets.length;
-			LOG.info("JBuffer: contains " + (kvend - kvstart) + " records.");
 		} catch (MapBufferTooSmallException e) {
 			LOG.info("Record too large for in-memory buffer: " + e.getMessage());
 			spillSingleRecord(key, value);
@@ -1020,7 +1019,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public boolean force() throws IOException {
 		synchronized (spillLock) {
-			kvend = kvindex;
+			if (kvend != kvindex) {
+				kvend = kvindex;
+				bufend = bufmark;
+			}
+			
 			if (kvstart == kvend) {
 				LOG.info("JBuffer nothing to force!");
 			} else if (forceFree()) {
