@@ -226,7 +226,7 @@ public class CQ extends Configured implements Tool {
   }
   
   static int printUsage() {
-    System.out.println("cq [-s <interval>] [-p] [-m <maps>] [-r <reduces>] <input> <output>");
+    System.out.println("cq [-w <window>] [-m <maps>] [-r <reduces>] <input> <output>");
     ToolRunner.printGenericCommandUsage(System.out);
     return -1;
   }
@@ -247,19 +247,17 @@ public class CQ extends Configured implements Tool {
     conf.setOutputValueClass(IntWritable.class);
     
     conf.setMapperClass(MapClass.class);        
+    /* DO NOT USE A COMBINER
     conf.setCombinerClass(Reduce.class);
+    */
     conf.setReducerClass(Reduce.class);
     
     List<String> other_args = new ArrayList<String>();
     for(int i=0; i < args.length; ++i) {
       try {
-        if ("-s".equals(args[i])) {
-        	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
-        	conf.setBoolean("mapred.job.snapshots", true);
-        	///conf.setBoolean("mapred.map.pipeline", true);
-            conf.setInt("mapred.reduce.window", 1000);
-        } else if ("-p".equals(args[i])) {
-        	conf.setBoolean("mapred.map.pipeline", true);
+        if ("-w".equals(args[i])) {
+        	conf.setInt("mapred.reduce.window", Integer.parseInt(args[++i]));
+        	conf.setBoolean("mapred.map.pipeline", false);
         } else if ("-m".equals(args[i])) {
           conf.setNumMapTasks(Integer.parseInt(args[++i]));
         } else if ("-r".equals(args[i])) {
