@@ -36,6 +36,8 @@ public class ExampleDriver {
     try {
       pgd.addClass("wordcount", WordCount.class,
                    "A map/reduce program that counts the words in the input files.");
+      pgd.addClass("cq", CQ.class, 
+                   "A continuous telemetry map/reduce program.");
       pgd.addClass("aggregatewordcount", AggregateWordCount.class,
                    "An Aggregate based map/reduce program that counts the words in the input files.");
       pgd.addClass("aggregatewordhist", AggregateWordHistogram.class,
