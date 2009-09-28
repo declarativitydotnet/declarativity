@@ -1250,6 +1250,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 							partitions * APPROX_HEADER_LENGTH;
 			FSDataOutputStream out = null;
 			FSDataOutputStream indexOut = null;
+			System.err.println("\tSORT AND SPILL SIZE " + size);
+			System.err.println("\tBUFFER END " + bufend);
 			try {
 				// create spill file
 				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
