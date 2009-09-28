@@ -1027,20 +1027,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (kvend != kvindex) {
 				kvend = kvindex;
 				bufend = bufmark;
-			}
-			
-			if (kvstart == kvend) {
-				LOG.info("JBuffer nothing to force!");
-			} else if (forceFree()) {
-				if (bufend < bufindex && bufindex < bufstart) {
-					bufvoid = kvbuffer.length;
-				}
-				kvstart = kvend;
-				bufstart = bufend;
-				spillLock.notifyAll();
+				spillThread.doSpill();
 				return true;
 			}
-			return false;
+			else {
+				return false;
+			}
 		}
 	}
 	
