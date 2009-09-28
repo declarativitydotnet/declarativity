@@ -1079,30 +1079,27 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
 		int spindex = kvstart;
 		try {
+			InMemValBytes value = new InMemValBytes();
 			for (int i = 0; i < partitions; ++i) {
 				BufferRequest request = this.requestMap.get(i);;
 				int spstart = spindex;
+
+				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
+				long segmentStart = out.getPos();
+				DataInputBuffer key = new DataInputBuffer();
 				while (spindex < endPosition
 						&& kvindices[kvoffsets[spindex % kvoffsets.length] + PARTITION] == i) {
+					final int kvoff = kvoffsets[spindex % kvoffsets.length];
+					getVBytesForOffset(kvoff, value);
+					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
+							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
+
+					writer.append(key, value);
 					++spindex;
 				}
-				long segmentStart = out.getPos();
-				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
 
-				if (spstart != spindex) {
-					LOG.info("JBuffer write " + (spindex - spstart) + " records.");
-					RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
-					while (kvIter.next()) {
-						writer.append(kvIter.getKey(), kvIter.getValue());
-					}
-
-					// close the writer
-					writer.close();
-
-					// write the index as <offset, raw-length,
-					// compressed-length>
-					writeIndexRecord(indexOut, out, segmentStart, writer);
-				}
+				writer.close();
+				writeIndexRecord(indexOut, out, segmentStart, writer);
 			}
 			out.close(); indexOut.close();
 			FSDataInputStream dataIn = localFs.open(filename);
