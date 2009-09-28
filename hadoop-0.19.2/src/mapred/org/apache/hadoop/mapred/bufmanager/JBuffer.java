@@ -1019,6 +1019,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public boolean force() throws IOException {
 		synchronized (spillLock) {
+			while (spillThread.isSpilling()) {
+				try { spillLock.wait();
+				} catch (InterruptedException e) { }
+			}
+			
 			if (kvend != kvindex) {
 				kvend = kvindex;
 				bufend = bufmark;
