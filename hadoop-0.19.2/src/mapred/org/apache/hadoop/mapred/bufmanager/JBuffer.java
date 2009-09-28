@@ -1288,6 +1288,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 								key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 										(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
+								System.err.println("SORT AND SPILL: KEY SIZE " + (key.getLength() - key.getPosition()) + 
+										           " VALUE SIZE " + (value.getLength() - value.getPosition()));
 								writer.append(key, value);
 								++spindex;
 							}
