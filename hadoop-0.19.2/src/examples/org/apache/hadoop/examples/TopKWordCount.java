@@ -160,7 +160,6 @@ public class TopKWordCount extends Configured implements Tool {
 		conf.setOutputValueClass(IntWritable.class);
 
 		conf.setMapperClass(MapClass.class);
-		conf.setCombinerClass(Reduce.class);
 		conf.setReducerClass(Reduce.class);
 
 		List<String> other_args = new ArrayList<String>();
@@ -169,10 +168,8 @@ public class TopKWordCount extends Configured implements Tool {
 				if ("-s".equals(args[i])) {
 		        	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
 		        	conf.setBoolean("mapred.map.pipeline", true);
-		        	conf.setCombinerClass(null);
 				} else if ("-p".equals(args[i])) {
 					conf.setBoolean("mapred.map.pipeline", true);
-		        	conf.setCombinerClass(null);
 				} else {
 					other_args.add(args[i]);
 				}
