@@ -185,14 +185,22 @@ public class CQ extends Configured implements Tool {
 
           }
           JBuffer jb = (JBuffer) output;
-          jb.force();
+          while (!jb.force()) {
+        	  System.err.println("Can't force yet....");
+        	  reporter.progress();
+        	  try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+          }
           try {
             Thread.sleep(500);
           } catch (Exception e) {
             // bad form, I know
           }
           reporter.progress();
-          
       }
       
       
