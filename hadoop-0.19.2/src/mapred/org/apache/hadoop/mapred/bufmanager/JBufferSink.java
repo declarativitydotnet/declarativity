@@ -712,7 +712,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		}
 		
-		private void service(long length, boolean force) throws IOException {
+		private void service(long length) throws IOException {
 			DataInputBuffer key = new DataInputBuffer();
 			DataInputBuffer value = new DataInputBuffer();
 			
@@ -727,24 +727,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 			
 			IFile.Reader<K, V> reader = 
-				new IFile.Reader<K, V>(conf, input, force ? 2 * length : length, codec);
+				new IFile.Reader<K, V>(conf, input, length, codec);
 			
-			if (force) {
-				LOG.info("JBufferSink forcing " + id + " records to buffer.");
-				synchronized (sink.task) {
-					int records = 0;
-					try {
-						while (reader.next(key, value)) {
-							records++;
-							this.sink.buffer().collect(key, value);
-							if (records == length) break;
-						}
-					} finally {
-						LOG.info("JBufferSink forced " + records + " to buffer from " + id);
-					}
-				}
-			}
-			else if (sink.snapshots()) {
+			if (sink.snapshots()) {
 				try {
 					LOG.debug("JBufferSink: perform snaphot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
 					JBufferRun run = sink.getBufferRun(this.id.getTaskID());
@@ -811,7 +796,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					boolean force = false;
 					try {
 						busy = false;
-						force = this.input.readBoolean();
 						length = this.input.readLong();
 						this.progress = this.input.readFloat();
 						busy = true;
@@ -828,7 +812,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						long timestamp = System.currentTimeMillis();
 						LOG.debug("JBufferSink connection " + id + " service length " + 
 								  length + " progress = " + progress);
-						service(length, force);
+						service(length);
 						LOG.debug("JBufferSink connection " + id + " service time = " + 
 								  (System.currentTimeMillis() - timestamp));
 						if (force) return;
