@@ -1335,6 +1335,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	private void spillSingleRecord(final DataInputBuffer key, final DataInputBuffer value)  throws IOException {
 		// TODO this right
+		System.err.println("SPILL SINGLE RECORD: KEY LENGTH " + (key.getLength() - key.getPosition()) + " VALUE LENGTH " + (value.getLength() - value.getPosition()));
+	
 		Class keyClass = job.getMapOutputKeyClass();
 		Class valClass = job.getMapOutputValueClass();
 	    SerializationFactory serializationFactory = new SerializationFactory(job);
