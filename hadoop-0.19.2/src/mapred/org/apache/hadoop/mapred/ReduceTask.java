@@ -282,13 +282,14 @@ public class ReduceTask extends Task {
 		Path data = null;
 		Path index = null;
 		
-		buffer.flush();
+		buffer.flush(); // create a final output for snapshotting.
 		
 		Path oldData = mapOutputFile.getOutputFile(getTaskID());
 		Path oldIndex = mapOutputFile.getOutputIndexFile(getTaskID());
 		FileSystem localFs = FileSystem.getLocal(conf);
 		
 		if (save) {
+			/* Copy the final output so we can respill it later. */
 			data  = new Path(oldData.getParent(), getTaskID().toString() + "_snapshot.out");
 			index = new Path(oldIndex.getParent(), getTaskID().toString() + "_snapshotindex.out");
 			localFs.copyFromLocalFile(oldData, data);
