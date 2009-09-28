@@ -363,10 +363,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 								conn.close();
 							}
 							else {
-								response.setOpen();
-								response.write(output);
-								output.flush();
-								
 								if (!conn.isSnapshot()) {
 									/* register regular connection. */
 									synchronized (connections) {
@@ -376,7 +372,21 @@ public class JBufferSink<K extends Object, V extends Object> {
 										connections.get(taskid).add(conn);
 									}
 								}
-								executor.execute(conn);
+								try {
+									executor.execute(conn);
+									response.setOpen();
+									response.write(output);
+									output.flush();
+								} catch (Throwable t) {
+									LOG.warn("Received error when trying to execute connection. " + t);
+									synchronized (connections) {
+										connections.get(taskid).remove(conn);
+									}
+									response.setRetry();
+									response.write(output);
+									output.flush();
+									conn.close();
+								}
 							}
 					}
 					LOG.info("JBufferSink " + reduceID + " buffer response server closed.");
