@@ -164,7 +164,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		public void close() {
 			if (open) {
 				synchronized (mergeLock) {
-					LOG.info("Closing merge thread.");
 					open = false;
 					mergeLock.notifyAll();
 					while (busy) {
@@ -209,15 +208,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						}
 						if (!open) return;
 						busy = true;
-						LOG.info("MergeThread is not busy");
 					}
 
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
-							LOG.info("MergeThread start");
 							mergeParts(true, mergeBoundary);
-							LOG.info("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
+							LOG.debug("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -347,7 +344,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						float requestProgress = ((spillId + 1) / (float) numSpills) * progress.get();
 						if (r.isOpen()) {
 							try {
-								LOG.info("JBuffer pipeline spill " + spillId + ". progress " + requestProgress);
 								r.flush(indexIn, dataIn, spillId, requestProgress);
 								if (requestProgress == 1.0f) {
 									umbilical.remove(r); // Request is done
@@ -402,7 +398,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			} else if (!open && numFlush < numSpills) {
 				synchronized (this) {
 					try {
-						LOG.info("JBuffer PipelineThread FORCE");
 						open = true;
 						flushRequests(false);
 					} finally {
@@ -1030,7 +1025,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			
 			if (kvstart == kvend) {
-				LOG.info("JBuffer nothing to force!");
+				LOG.debug("JBuffer nothing to force!");
 			} else if (forceFree()) {
 				if (bufend < bufindex && bufindex < bufstart) {
 					bufvoid = kvbuffer.length;
@@ -1213,7 +1208,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		Path dataFile = null;
 		Path indexFile = null;
 		synchronized (mergeLock) {
-			LOG.info("begin spill");
 			dataFile  = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, 1096);
 			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, this.numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 			numSpills++;
@@ -1232,7 +1226,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			
 			if (!safemode) mergeLock.notifyAll();
-			LOG.info("end spill");
 			return numSpills - 1;
 		}
 	}
@@ -1354,7 +1347,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	@SuppressWarnings("unchecked")
 	private void spillSingleRecord(final K key, final V value)  throws IOException {
 		synchronized (mergeLock) {
-			LOG.info("Spill single record begin");
 			long size = kvbuffer.length + partitions * APPROX_HEADER_LENGTH;
 			FSDataOutputStream out = null;
 			FSDataOutputStream indexOut = null;
@@ -1392,7 +1384,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			} finally {
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
-				LOG.info("Spill single record done");
 			}
 		}
 	}
@@ -1533,7 +1524,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		int end = 0;
 		int spillid = 0;
 		synchronized (mergeLock) {
-			LOG.info("Merge parts being");
 			boundary = Math.min(boundary, numSpills);
 
 			spillid = numSpills;
@@ -1563,7 +1553,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 		finalIndexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
 
-		LOG.info("JBuffer " + taskid + " merge " + (end - start) + 
+		LOG.debug("JBuffer " + taskid + " merge " + (end - start) + 
 				" spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
 				". Output size = " + finalOutFileSize);
 		
