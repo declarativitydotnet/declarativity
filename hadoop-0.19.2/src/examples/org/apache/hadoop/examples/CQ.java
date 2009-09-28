@@ -179,13 +179,12 @@ public class CQ extends Configured implements Tool {
       
       while (true) {
 
-    	  /*
           for (int i = 0; i < 100; i++) {
             word.set(new String("foo"));
             output.collect(word, one);
 
           }
-          */
+          
           JBuffer jb = (JBuffer) output;
           while (!jb.force()) {
         	  System.err.println("Can't force yet....");
