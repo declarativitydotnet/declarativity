@@ -1020,6 +1020,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public boolean force() throws IOException {
 		synchronized (spillLock) {
+			kvend = kvindex;
 			if (kvstart == kvend) {
 				LOG.info("JBuffer nothing to force!");
 			} else if (forceFree()) {
