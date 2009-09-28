@@ -746,8 +746,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			kvindices[ind + KEYSTART] = keystart;
 			kvindices[ind + VALSTART] = valstart;
 			kvindex = (kvindex + 1) % kvoffsets.length;
+			LOG.info("JBuffer: contains " + (kvend - kvstart) + " records.");
 		} catch (MapBufferTooSmallException e) {
-			// LOG.info("Record too large for in-memory buffer: " + e.getMessage());
+			LOG.info("Record too large for in-memory buffer: " + e.getMessage());
 			spillSingleRecord(key, value);
 			return;
 		}
