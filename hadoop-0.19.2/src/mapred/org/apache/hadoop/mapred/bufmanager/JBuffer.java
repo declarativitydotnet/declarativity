@@ -1148,6 +1148,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		timestamp = System.currentTimeMillis();
 		spillThread.close();
 		if (kvend != kvindex) {
+			System.err.println("JBUFFER CALL SORT AND SPILL: bufend = " + bufend + " bufmark = " + bufmark);
 			kvend = kvindex;
 			bufend = bufmark;
 			sortAndSpill();
