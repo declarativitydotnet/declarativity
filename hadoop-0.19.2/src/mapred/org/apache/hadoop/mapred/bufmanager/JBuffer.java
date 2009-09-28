@@ -112,7 +112,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						try {
 								LOG.debug("SpillThread: begin sort and spill.");
 								long sortstart = java.lang.System.currentTimeMillis();
-								if (kvstart != kvend) {
+								if (kvstart != kvend && !forceFree()) {
 									sortAndSpill();
 								}
 								LOG.debug("SpillThread: sort/spill time " + 
@@ -399,7 +399,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (requests.size() == partitions &&
 					numFlush == numSpills) {
 				return true;
-			} else if (false && !open && numFlush < numSpills) {
+			} else if (!open && numFlush < numSpills) {
 				synchronized (this) {
 					try {
 						LOG.info("JBuffer PipelineThread FORCE");
