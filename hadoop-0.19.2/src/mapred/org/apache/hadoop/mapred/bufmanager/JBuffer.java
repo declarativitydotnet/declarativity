@@ -1243,6 +1243,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		//buffer + header lengths for the partitions
 		synchronized (mergeLock) {
 			LOG.info("begin merge lock");
+			System.err.println("BEGIN SORT AND SPILL");
 			long size = (bufend >= bufstart
 					? bufend - bufstart
 							: (bufvoid - bufend) + bufstart) +
@@ -1288,7 +1289,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 								key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 										(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-								System.err.println("SORT AND SPILL: KEY SIZE " + (key.getLength() - key.getPosition()) + 
+								System.err.println("\tSORT AND SPILL: KEY SIZE " + (key.getLength() - key.getPosition()) + 
 										           " VALUE SIZE " + (value.getLength() - value.getPosition()));
 								writer.append(key, value);
 								++spindex;
@@ -1330,6 +1331,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				// LOG.info("Finished spill " + numSpills);
 				++numSpills;
 			} finally {
+				System.err.println("END SORT AND SPILL");
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
 				LOG.info("end merge lock");
