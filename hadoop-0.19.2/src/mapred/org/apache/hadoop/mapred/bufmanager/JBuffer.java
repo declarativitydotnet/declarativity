@@ -1148,7 +1148,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		timestamp = System.currentTimeMillis();
 		spillThread.close();
 		if (kvend != kvindex) {
-			System.err.println("JBUFFER CALL SORT AND SPILL: bufend = " + bufend + " bufmark = " + bufmark);
 			kvend = kvindex;
 			bufend = bufmark;
 			sortAndSpill();
@@ -1243,16 +1242,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		//approximate the length of the output file to be the length of the
 		//buffer + header lengths for the partitions
 		synchronized (mergeLock) {
-			LOG.info("begin merge lock");
-			System.err.println("BEGIN SORT AND SPILL");
 			long size = (bufend >= bufstart
 					? bufend - bufstart
 							: (bufvoid - bufend) + bufstart) +
 							partitions * APPROX_HEADER_LENGTH;
 			FSDataOutputStream out = null;
 			FSDataOutputStream indexOut = null;
-			System.err.println("\tSORT AND SPILL SIZE " + size);
-			System.err.println("\tBUFFER END " + bufend);
 			try {
 				// create spill file
 				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
@@ -1292,8 +1287,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 								key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 										(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-								System.err.println("\tSORT AND SPILL: KEY SIZE " + (key.getLength() - key.getPosition()) + 
-										           " VALUE SIZE " + (value.getLength() - value.getPosition()));
 								writer.append(key, value);
 								++spindex;
 							}
@@ -1324,20 +1317,17 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						writeIndexRecord(indexOut, out, segmentStart, writer);
 						writer = null;
 					} finally {
-						// if (null != request) request.flushBuffer();
 						if (null != writer) {
 							writer.close();
 							writer = null;
 						}
 					}
 				}
-				// LOG.info("Finished spill " + numSpills);
+				LOG.info("Finished spill " + numSpills);
 				++numSpills;
 			} finally {
-				System.err.println("END SORT AND SPILL");
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
-				LOG.info("end merge lock");
 			}
 		}
 	}
