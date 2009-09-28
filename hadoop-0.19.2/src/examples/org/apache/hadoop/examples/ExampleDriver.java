@@ -46,7 +46,7 @@ public class ExampleDriver {
                    "A map/reduce program that counts the matches of a regex in the input.");
       pgd.addClass("topk", TopK.class,
                    "A map/reduce program that finds the topk matches of a regex in the input.");
-      pgd.addClass("topwordcount", TopKWordCount.class,
+      pgd.addClass("topkwordcount", TopKWordCount.class,
     		       "A map/reduce program that finds the top K most-frequent words in the input.");
       pgd.addClass("randomwriter", RandomWriter.class,
                    "A map/reduce program that writes 10GB of random data per node.");
