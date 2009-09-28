@@ -410,6 +410,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						open = false;
 					}
 				}
+			} else if (!open && numFlush == numSpills) {
+				BufferRequest request = null;
+				while ((request = umbilical.getRequest(taskid)) != null) {
+					requests.add(request);
+					requestMap.put(request.partition(), request); // TODO speculation
+				}
 			}
 			
 			return requests.size() == partitions && 
