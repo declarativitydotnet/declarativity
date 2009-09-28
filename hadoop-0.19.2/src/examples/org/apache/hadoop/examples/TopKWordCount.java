@@ -90,9 +90,15 @@ public class TopKWordCount extends Configured implements Tool {
 			}
 		}
 
-		private final int NUM_OUTPUT_VALS = 100;
 		private final TreeSet<TopKRecord> heap = new TreeSet<TopKRecord>();
 		private OutputCollector<Text, IntWritable> target = null;
+		
+		int k = 0;
+
+		@Override
+		public void configure(JobConf job) {
+			k = job.getInt("mapred.reduce.topk.k", 1);
+		}
 
 		public void reduce(Text key, Iterator<IntWritable> values,
 				OutputCollector<Text, IntWritable> output, Reporter reporter)
@@ -108,7 +114,7 @@ public class TopKWordCount extends Configured implements Tool {
 
 			// NB: We need to copy the key, because it is overwritten by caller
 			this.heap.add(new TopKRecord(new Text(key), sum));
-			if (this.heap.size() >= NUM_OUTPUT_VALS) {
+			if (this.heap.size() >= k) {
 				TopKRecord removed = this.heap.pollFirst();
 				if (removed == null)
 					throw new IllegalStateException();
@@ -132,8 +138,7 @@ public class TopKWordCount extends Configured implements Tool {
 	}
 
 	static int printUsage() {
-		System.out
-				.println("wordcount [-s <interval>] [-p] [-m <maps>] [-r <reduces>] <input> <output>");
+		System.out.println("topkwordcount [-s <interval>] [-p] [-m <maps>] [-r <reduces>] <input> <output> K");
 		ToolRunner.printGenericCommandUsage(System.out);
 		return -1;
 	}
@@ -162,12 +167,12 @@ public class TopKWordCount extends Configured implements Tool {
 		for (int i = 0; i < args.length; ++i) {
 			try {
 				if ("-s".equals(args[i])) {
-					conf.setInt("mapred.snapshot.interval", Integer
-							.parseInt(args[++i]));
-					conf.setBoolean("mapred.job.snapshots", true);
-					conf.setBoolean("mapred.map.pipeline", true);
+		        	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
+		        	conf.setBoolean("mapred.map.pipeline", true);
+		        	conf.setCombinerClass(null);
 				} else if ("-p".equals(args[i])) {
 					conf.setBoolean("mapred.map.pipeline", true);
+		        	conf.setCombinerClass(null);
 				} else if ("-m".equals(args[i])) {
 					conf.setNumMapTasks(Integer.parseInt(args[++i]));
 				} else if ("-r".equals(args[i])) {
@@ -186,13 +191,15 @@ public class TopKWordCount extends Configured implements Tool {
 			}
 		}
 		// Make sure there are exactly 2 parameters left.
-		if (other_args.size() != 2) {
+		if (other_args.size() != 3) {
 			System.out.println("ERROR: Wrong number of parameters: "
-					+ other_args.size() + " instead of 2.");
+					+ other_args.size() + " instead of 3.");
 			return printUsage();
 		}
 		FileInputFormat.setInputPaths(conf, other_args.get(0));
 		FileOutputFormat.setOutputPath(conf, new Path(other_args.get(1)));
+		conf.setInt("mapred.reduce.topk.k", Integer.parseInt(other_args.get(2)));
+
 
 		JobClient.runJob(conf);
 		return 0;
