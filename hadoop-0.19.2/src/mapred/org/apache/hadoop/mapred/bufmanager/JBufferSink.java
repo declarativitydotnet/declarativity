@@ -733,12 +733,15 @@ public class JBufferSink<K extends Object, V extends Object> {
 				LOG.info("JBufferSink forcing " + id + " records to buffer.");
 				synchronized (sink.task) {
 					int records = 0;
-					while (reader.next(key, value)) {
-						records++;
-						this.sink.buffer().collect(key, value);
-						if (records == length) break;
+					try {
+						while (reader.next(key, value)) {
+							records++;
+							this.sink.buffer().collect(key, value);
+							if (records == length) break;
+						}
+					} finally {
+						LOG.info("JBufferSink forced " + records + " to buffer from " + id);
 					}
-					LOG.info("JBufferSink forced " + records + " to buffer from " + id);
 				}
 			}
 			else if (sink.snapshots()) {
