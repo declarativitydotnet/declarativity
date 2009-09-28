@@ -282,13 +282,14 @@ public class ReduceTask extends Task {
 		Path data = null;
 		Path index = null;
 		
+		Path oldData = mapOutputFile.getOutputFile(getTaskID());
+		Path oldIndex = mapOutputFile.getOutputIndexFile(getTaskID());
+		FileSystem localFs = FileSystem.getLocal(conf);
+		
 		buffer.flush();
 		if (save) {
-			Path oldData = mapOutputFile.getOutputFile(getTaskID());
-			Path oldIndex = mapOutputFile.getOutputIndexFile(getTaskID());
 			data  = new Path(oldData.getParent(), getTaskID().toString() + "_snapshot.out");
 			index = new Path(oldIndex.getParent(), getTaskID().toString() + "_snapshotindex.out");
-			FileSystem localFs = FileSystem.getLocal(conf);
 			localFs.copyFromLocalFile(oldData, data);
 			localFs.copyFromLocalFile(oldIndex, index);
 		}
@@ -315,6 +316,8 @@ public class ReduceTask extends Task {
 				reduce(collector, reporter, null);
 				out.close(null);
 				LOG.info("ReduceTask: snapshot created. file " + snapshotName);
+				localFs.delete(oldData, true);
+				localFs.delete(oldIndex, true);
 			}
 			return true;
 		} catch (IOException e) {
