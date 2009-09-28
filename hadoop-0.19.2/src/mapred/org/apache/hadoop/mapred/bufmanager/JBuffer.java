@@ -399,7 +399,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (requests.size() == partitions &&
 					numFlush == numSpills) {
 				return true;
-			} else if (!open && numFlush < numSpills) {
+			} else if (false && !open && numFlush < numSpills) {
 				synchronized (this) {
 					try {
 						LOG.info("JBuffer PipelineThread FORCE");
