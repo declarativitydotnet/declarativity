@@ -760,8 +760,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 								try {
 									while (reader.next(key, value)) {
 										records++;
-										System.err.println("KEY LENGTH " + (key.getLength() - key.getPosition()) + " VALUE LENGTH " + (value.getLength() - value.getPosition()));
-
 										this.sink.buffer().collect(key, value);
 									}
 								} catch (ChecksumException e) {

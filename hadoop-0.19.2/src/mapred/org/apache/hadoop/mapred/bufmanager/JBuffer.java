@@ -112,7 +112,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						try {
 								LOG.debug("SpillThread: begin sort and spill.");
 								long sortstart = java.lang.System.currentTimeMillis();
-								if (kvstart != kvend && !forceFree()) {
+								if (kvstart != kvend) {
 									sortAndSpill();
 								}
 								LOG.debug("SpillThread: sort/spill time " + 
@@ -1018,11 +1018,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public boolean force() throws IOException {
-		if (!pipelineThread.force()) {
-			LOG.info("JBuffer: force unable to catch pipeline thread up.");
-			return false;
-		}
-		
 		synchronized (spillLock) {
 			while (spillThread.isSpilling()) {
 				try { spillLock.wait();
@@ -1032,12 +1027,20 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (kvend != kvindex) {
 				kvend = kvindex;
 				bufend = bufmark;
-				spillThread.doSpill();
+			}
+			
+			if (kvstart == kvend) {
+				LOG.info("JBuffer nothing to force!");
+			} else if (forceFree()) {
+				if (bufend < bufindex && bufindex < bufstart) {
+					bufvoid = kvbuffer.length;
+				}
+				kvstart = kvend;
+				bufstart = bufend;
+				spillLock.notifyAll();
 				return true;
 			}
-			else {
-				return false;
-			}
+			return false;
 		}
 	}
 	
@@ -1091,7 +1094,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
-					System.err.println("KEY LENGTH " + (key.getLength() - key.getPosition()) + " VALUE LENGTH " + (value.getLength() - value.getPosition()));
 					writer.append(key, value);
 					++spindex;
 				}
@@ -1335,8 +1337,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	private void spillSingleRecord(final DataInputBuffer key, final DataInputBuffer value)  throws IOException {
 		// TODO this right
-		System.err.println("SPILL SINGLE RECORD: KEY LENGTH " + (key.getLength() - key.getPosition()) + " VALUE LENGTH " + (value.getLength() - value.getPosition()));
-	
 		Class keyClass = job.getMapOutputKeyClass();
 		Class valClass = job.getMapOutputValueClass();
 	    SerializationFactory serializationFactory = new SerializationFactory(job);
