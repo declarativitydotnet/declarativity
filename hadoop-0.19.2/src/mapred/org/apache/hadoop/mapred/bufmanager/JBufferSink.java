@@ -384,6 +384,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				} catch (IOException e) {  }
 			}
 		};
+		acceptor.setDaemon(true);
 		acceptor.start();
 		
 		spillThread = new Thread() {

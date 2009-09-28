@@ -138,7 +138,7 @@ public class TopKWordCount extends Configured implements Tool {
 	}
 
 	static int printUsage() {
-		System.out.println("topkwordcount [-s <interval>] [-p] [-m <maps>] [-r <reduces>] <input> <output> K");
+		System.out.println("topkwordcount [-s <interval>] [-p] <input> <output> K");
 		ToolRunner.printGenericCommandUsage(System.out);
 		return -1;
 	}
@@ -173,10 +173,6 @@ public class TopKWordCount extends Configured implements Tool {
 				} else if ("-p".equals(args[i])) {
 					conf.setBoolean("mapred.map.pipeline", true);
 		        	conf.setCombinerClass(null);
-				} else if ("-m".equals(args[i])) {
-					conf.setNumMapTasks(Integer.parseInt(args[++i]));
-				} else if ("-r".equals(args[i])) {
-					conf.setNumReduceTasks(Integer.parseInt(args[++i]));
 				} else {
 					other_args.add(args[i]);
 				}
