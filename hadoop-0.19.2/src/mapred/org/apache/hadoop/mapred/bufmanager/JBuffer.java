@@ -680,6 +680,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				// accounting space without notice
 				bb.write(new byte[0], 0, 0);
 			}
+			int valend = bb.markRecord();
+
 
 			// update accounting info
 			int ind = kvindex * ACCTSIZE;
@@ -898,14 +900,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 							? bufindex - bufend > softBufferLimit
 									: bufend - bufindex < bufvoid - softBufferLimit;
 							if (kvsoftlimit || bufsoftlimit || (buffull && !wrap)) {
-								/*
-                  LOG.info("Spilling map output: buffer full = " + bufsoftlimit+
-                           " and record full = " + kvsoftlimit);
-                  LOG.info("bufstart = " + bufstart + "; bufend = " + bufmark +
-                           "; bufvoid = " + bufvoid);
-                  LOG.info("kvstart = " + kvstart + "; kvend = " + kvindex +
-                           "; length = " + kvoffsets.length);
-								 */
+								LOG.info("Spilling map output: buffer full = " + bufsoftlimit+
+										" and record full = " + kvsoftlimit);
+								LOG.info("bufstart = " + bufstart + "; bufend = " + bufmark +
+										"; bufvoid = " + bufvoid);
+								LOG.info("kvstart = " + kvstart + "; kvend = " + kvindex +
+										"; length = " + kvoffsets.length);
 								kvend = kvindex;
 								bufend = bufmark;
 								// TODO No need to recreate this thread every time
