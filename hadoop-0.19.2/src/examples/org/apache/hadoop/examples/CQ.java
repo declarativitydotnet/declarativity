@@ -20,11 +20,15 @@ package org.apache.hadoop.examples;
 
 
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -45,6 +49,12 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.mapred.SkipBadRecords;
 
+
+import org.apache.hadoop.mapred.bufmanager.JBuffer;
+
+//import bfs.telemetry.SystemStats;
+//import bfs.telemetry.SystemStats.SystemStatEntry;
+
 /**
  * This is an example Hadoop Map/Reduce application.
  * It reads the text input files, breaks each line into words
@@ -61,6 +71,91 @@ public class CQ extends Configured implements Tool {
    * For each line of input, break the line into words and emit them as
    * (<b>word</b>, <b>1</b>).
    */
+	public static enum SystemStatEntry {
+		USER(0, "normal processes executing in user mode"),
+		NICE(1, "niced processes executing in user mode"),
+		SYSTEM(2, "processes executing in kernel mode"),
+		IDLE(3, "twiddling thumbs"),
+		IOWAIT(4, "waiting for I/O to complete"),
+		IRQ(5, "servicing interrupts"),
+		SOFTIRQ(6, "softirq: servicing softirqs"),
+		STEAL(7, "involuntary wait (usually host virtual machine) time"),
+		GUEST(8, "guest virtual machine time"),
+		LOAD_1(9, "1 minute load average"); /* ,
+		LOAD_5(10, "5 minute load average"),
+		LOAD_15(11, "15 minute load average");
+*/
+		public final int offset;
+		public final String name;
+		private SystemStatEntry(int o, String n) {
+			this.offset = o; this.name = n;
+		}
+	}
+	
+	public static class SystemStats {
+		
+
+		public int getInt(SystemStatEntry e) {
+			return cols[e.offset].intValue();
+		}
+
+		public float getFloat(SystemStatEntry e) {
+			return cols[e.offset].floatValue();
+		}
+		
+		final Pattern whiteSpace = Pattern.compile("\\s+");
+		Number cols[];
+		public SystemStats() throws IOException {
+			File f = new File("/proc/stat");
+			BufferedReader in = new BufferedReader(new FileReader(f));
+			String info = in.readLine();
+			if(!info.startsWith("cpu  ")) { throw new IllegalStateException("Can't parse /proc/stat!"); }
+			info = info.substring(5);
+			String[] tok = whiteSpace.split(info);
+			cols = new Number[tok.length + 3];
+			for(int i = 0; i < tok.length; i++) {
+				try {
+					cols[i] = Long.parseLong(tok[i]);
+				} catch(Exception e) {
+					// deal w/ index out of bound, number format, etc by ignoring them
+				}
+			}
+			in.close();
+			f = new File("/proc/loadavg");
+			in = new BufferedReader(new FileReader(f));
+			info = in.readLine();
+			tok = whiteSpace.split(info);
+			cols[cols.length-3] = Double.parseDouble(tok[0]);
+			cols[cols.length-2] = Double.parseDouble(tok[1]);
+			cols[cols.length-1] = Double.parseDouble(tok[2]);
+		}
+		boolean verbose = true;
+		@Override
+	    public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append("<" + super.toString() + ": ");
+			for(SystemStatEntry e: SystemStatEntry.values()) {
+                System.err.println("offset: "+ e.offset);
+                System.err.println("val: "+cols[e.offset]);
+				sb.append("\n\t(" + e + ", " + cols[e.offset] + ( verbose ? ", " + e.name  : "" )+ ")");
+			}
+			sb.append(">");
+			return sb.toString();
+		}
+
+		public int totalJiffies() {
+			int sum = 0;
+			for (SystemStatEntry e: SystemStatEntry.values()) {
+				if (e.offset < SystemStatEntry.LOAD_1.offset) {
+					sum += cols[e.offset].intValue();
+				}
+			}
+			return sum;
+		}
+		
+	}	
+	
+	
   public static class MapClass extends MapReduceBase
     implements Mapper<LongWritable, Text, Text, IntWritable> {
     
@@ -72,7 +167,7 @@ public class CQ extends Configured implements Tool {
                     Reporter reporter) throws IOException {
       String line = value.toString();
       StringTokenizer itr = new StringTokenizer(line);
-      //int tCnt = itr.countTokens();
+
       int currCnt = 0;
       while (itr.hasMoreTokens()) {
         word.set(itr.nextToken());
@@ -83,15 +178,20 @@ public class CQ extends Configured implements Tool {
       System.err.println("done.\n");
       
       while (true) {
-    	  try {
-    		  reporter.progress();
-    		  Thread.sleep(500);
-    	  } catch (Exception e) {
-    		 
-    	  }
-    	  System.err.println("just sitting there (" + currCnt + ")");
-          word.set(new String("foo"));
-          output.collect(word, one);
+
+          for (int i = 0; i < 100; i++) {
+            word.set(new String("foo"));
+            output.collect(word, one);
+
+          }
+          JBuffer jb = (JBuffer) output;
+          jb.force();
+          try {
+            Thread.sleep(500);
+          } catch (Exception e) {
+            // bad form, I know
+          }
+          reporter.progress();
           
       }
       
@@ -148,7 +248,8 @@ public class CQ extends Configured implements Tool {
         if ("-s".equals(args[i])) {
         	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
         	conf.setBoolean("mapred.job.snapshots", true);
-        	conf.setBoolean("mapred.map.pipeline", true);
+        	///conf.setBoolean("mapred.map.pipeline", true);
+            conf.setInt("mapred.reduce.window", 1000);
         } else if ("-p".equals(args[i])) {
         	conf.setBoolean("mapred.map.pipeline", true);
         } else if ("-m".equals(args[i])) {
