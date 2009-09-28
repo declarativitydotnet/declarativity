@@ -96,7 +96,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public void run() {
 			try {
-				LOG.info("JBuffer: spill thread running.");
 				while (open) {
 					synchronized (spillLock) {
 						while (open && ! spill) {
@@ -1020,7 +1019,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	
 	public boolean force() throws IOException {
 		synchronized (spillLock) {
-			if (forceFree()) {
+			if (kvstart == kvend) {
+				LOG.info("JBuffer nothing to force!");
+			} else if (forceFree()) {
 				if (bufend < bufindex && bufindex < bufstart) {
 					bufvoid = kvbuffer.length;
 				}
@@ -1029,9 +1030,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				spillLock.notifyAll();
 				return true;
 			}
-			else {
-				return false;
-			}
+			return false;
 		}
 	}
 	
