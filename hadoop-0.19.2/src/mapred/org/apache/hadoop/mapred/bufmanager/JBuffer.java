@@ -1018,6 +1018,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public boolean force() throws IOException {
+		if (!pipelineThread.force()) {
+			LOG.info("JBuffer: force unable to catch pipeline thread up.");
+			return false;
+		}
+		
 		synchronized (spillLock) {
 			while (spillThread.isSpilling()) {
 				try { spillLock.wait();
