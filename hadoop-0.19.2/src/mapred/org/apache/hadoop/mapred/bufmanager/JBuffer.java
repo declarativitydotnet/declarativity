@@ -1076,18 +1076,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		try {
 			for (int i = 0; i < partitions; ++i) {
 				BufferRequest request = this.requestMap.get(i);;
-				IFile.Writer<K, V> writer = null;
-				int records = 0;
 				int spstart = spindex;
 				while (spindex < endPosition
 						&& kvindices[kvoffsets[spindex % kvoffsets.length] + PARTITION] == i) {
 					++spindex;
 				}
 				long segmentStart = out.getPos();
-				writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
+				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
 
 				if (spstart != spindex) {
-					records = spindex - spstart;
+					LOG.info("JBuffer write " + (spindex - spstart) + " records.");
 					RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
 					while (kvIter.next()) {
 						writer.append(kvIter.getKey(), kvIter.getValue());
@@ -1102,13 +1100,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 			out.close(); indexOut.close();
-			FSDataInputStream in = localFs.open(filename);
+			FSDataInputStream dataIn = localFs.open(filename);
 			FSDataInputStream indexIn = localFs.open(indexFilename);
 			
 			for (BufferRequest request : requestMap.values()) {
-				request.flush(in, indexIn, progress.get());
+				request.flush(indexIn, dataIn, progress.get());
 			}
-			in.close(); indexIn.close();
+			dataIn.close(); indexIn.close();
 		} finally {
 			localFs.delete(filename, true);
 			localFs.delete(indexFilename, true);
