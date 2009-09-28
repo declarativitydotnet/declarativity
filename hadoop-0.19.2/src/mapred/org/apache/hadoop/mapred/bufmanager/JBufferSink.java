@@ -213,7 +213,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 					try {
 						if (!open) return;
-						LOG.info("SnapshotThread: " + reduceID + " perform snapshot. progress " + progress);
+						LOG.debug("SnapshotThread: " + reduceID + " perform snapshot. progress " + progress);
 						boolean keepSnapshotting = task.snapshots(runs, progress);
 						if (keepSnapshotting == false) {
 							interrupt();
@@ -311,7 +311,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		this.snapshots = snapshots;
 		this.snapshotThread = null;
 		if (snapshots) {
-			LOG.info("JBufferSink: " + reduceID + " start snapshot thread.");
 			this.snapshotThread = new SnapshotThread();
 			this.snapshotThread.setDaemon(true);
 			this.snapshotThread.start();
@@ -445,7 +444,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 	 * lock the owning task object if snapshots are turned on.
 	 */
 	public synchronized void close() {
-		LOG.info("JBufferSink " + reduceID + " closing.");
 		if (this.acceptor == null) return; // Already done.
 		try {
 			this.acceptor.interrupt();
@@ -463,7 +461,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				for (List<Connection> clist : connections.values()) {
 					for (Connection c : clist) {
 						if (c.open) {
-							LOG.info("JBufferSink " + reduceID + 
+							LOG.debug("JBufferSink " + reduceID + 
 									 ": close waiting for finish of " + c);
 							connectionsOpen = true;
 						}
@@ -510,7 +508,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void spill(Path data, Path index) {
-		System.err.println("JBufferSink spill " + data);
 		spillQueue.add(new SpillRun(data, index));
 	}
 	
@@ -541,7 +538,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	private void done(Connection connection) {
 		try {
 			if (!connection.isSnapshot()) {
-				LOG.info("JBufferSink connection done. " + connection);
+				LOG.debug("JBufferSink connection done. " + connection);
 				synchronized (connections) {
 					TaskID taskid = connection.id().getTaskID();
 					if (this.connections.containsKey(taskid)) {
@@ -567,7 +564,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		} finally {
 			if (complete()) {
 				updateProgress();
-				LOG.info("JBufferSink " + reduceID + " is complete.");
+				LOG.debug("JBufferSink " + reduceID + " is complete.");
 			}
 		}
 	}
@@ -770,10 +767,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 									t.printStackTrace();
 									LOG.error("JBufferSink: " + t + " during spill. progress = " + progress);
 								} finally {
-									LOG.info("JBufferSink: dumped " + records + " records.");
+									LOG.debug("JBufferSink: dumped " + records + " records.");
 									sink.buffer().unreserve(length);
 									doSpill = false;
-									LOG.debug("JBufferSink: done dumping buffer " + id + ".");
 								}
 							}
 						}
