@@ -1054,41 +1054,30 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		
-		long size = (bufend >= bufstart
-				? bufend - bufstart
-						: (bufvoid - bufend) + bufstart) +
-						partitions * APPROX_HEADER_LENGTH;
-
 		final int endPosition = (kvend > kvstart)
-		? kvend : kvoffsets.length + kvend;
+		                        ? kvend : kvoffsets.length + kvend;
 		sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
 		int spindex = kvstart;
-		InMemValBytes value = new InMemValBytes();
 		for (int i = 0; i < partitions; ++i) {
 			BufferRequest request = this.requestMap.get(i);;
 			IFile.Writer<K, V> writer = null;
-			int records = spindex;
+			int records = 0;
 			try {
-				DataInputBuffer key = new DataInputBuffer();
-				
-				while (records < endPosition
-						&& kvindices[kvoffsets[records % kvoffsets.length] + PARTITION] == i) {
-					++records;
-				}
-				records -= spindex;
-				
+				int spstart = spindex;
 				while (spindex < endPosition
-						&& kvindices[kvoffsets[spindex
-						                       % kvoffsets.length]
-						                       + PARTITION] == i) {
-					final int kvoff = kvoffsets[spindex % kvoffsets.length];
-					getVBytesForOffset(kvoff, value);
-					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
-							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
-
-					System.err.println("FORCE KEY SIZE " + key.getLength() + " VALUE SIZE " + value.getLength());
-					writer = request.force(key, value, writer, records, progress.get());
+						&& kvindices[kvoffsets[spindex % kvoffsets.length] + PARTITION] == i) {
 					++spindex;
+				}
+				
+				if (spstart != spindex) {
+					records = spindex - spstart;
+					RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
+					while (kvIter.next()) {
+						System.err.println("FORCE KEY SIZE " + kvIter.getKey().getLength() + 
+								           " VALUE SIZE " + kvIter.getValue().getLength());
+						writer = request.force(kvIter.getKey(), kvIter.getValue(), 
+								               writer, records, progress.get());
+					}
 				}
 			} finally {
 				LOG.info("JBuffer: forced " + records + " pipelined records to " + request);
