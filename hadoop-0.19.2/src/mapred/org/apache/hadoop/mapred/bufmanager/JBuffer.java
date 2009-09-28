@@ -1091,6 +1091,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
 							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
 
+					System.err.println("KEY LENGTH " + (key.getLength() - key.getPosition()) + " VALUE LENGTH " + (value.getLength() - value.getPosition()));
 					writer.append(key, value);
 					++spindex;
 				}
