@@ -727,7 +727,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 			
 			IFile.Reader<K, V> reader = 
-				new IFile.Reader<K, V>(conf, input, force ? Integer.MAX_VALUE : length, codec);
+				new IFile.Reader<K, V>(conf, input, force ? 2 * length : length, codec);
 			
 			if (force) {
 				LOG.info("JBufferSink forcing " + id + " records to buffer.");
