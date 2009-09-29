@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
@@ -180,6 +181,9 @@ public class CQ extends Configured implements Tool {
                                 java.net.InetAddress localMachine = java.net.InetAddress.getLocalHost();
                                 String hn = localMachine.getHostName();
 
+                                float su = 0;
+                                float ss = 0;
+                                float st = 0;
                                 while (true) {
                                         SystemStats stat = new SystemStats();
                                         word.set(hn);
@@ -201,6 +205,16 @@ public class CQ extends Configured implements Tool {
                                                 reporter.progress();
                                                 sleep(1000);
                                         }
+                                        // calc load here.
+                                        float u = stat.getFloat(SystemStatEntry.USER);
+                                        float s = stat.getFloat(SystemStatEntry.SYSTEM);
+                                        float j = stat.totalJiffies();
+                                        float l = ((u-su) + (s-su)) / (j-st);
+
+                                        System.err.println("M load: " + l );
+                                        System.err.println("ie, "+u+","+su+" : "+j+","+st);
+                                        su = u; ss = s; st = j;
+            
                                         sleep(5000);
                                 }
 
@@ -217,6 +231,7 @@ public class CQ extends Configured implements Tool {
                 static float suser = 0;
                 static float ssystem = 0;
                 static float stotal = 0;
+                static HashMap state = new HashMap();
                         public void reduce(Text key, Iterator<Text> values,
                                         OutputCollector<Text, IntWritable> output, 
                                         Reporter reporter) throws IOException {
@@ -232,6 +247,8 @@ public class CQ extends Configured implements Tool {
                                         float load = ((user - suser) + (system - ssystem)) / (total - stotal);
                                         System.err.println("load: " + load);
                                         System.err.println("ie, (" + (user-suser) + " + " + (system-ssystem) + ") / "+(total-stotal));
+
+                                        System.err.println("user state change: " + suser + " --> " + user);
                                         suser = user;
                                         ssystem = system;
                                         stotal = total;
