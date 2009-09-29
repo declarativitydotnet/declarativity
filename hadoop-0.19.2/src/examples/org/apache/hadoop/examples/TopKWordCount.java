@@ -22,44 +22,46 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.lib.LongSumReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 public class TopKWordCount extends Configured implements Tool {
 
-	/**
-	 * Counts the words in each line. For each line of input, break the line
-	 * into words and emit them as (<b>word</b>, <b>1</b>).
-	 */
-	public static class MapClass extends MapReduceBase implements
-			Mapper<LongWritable, Text, Text, IntWritable> {
+	public static class Map<K> extends MapReduceBase
+	implements Mapper<K, Text, Text, LongWritable> {
 
-		private final static IntWritable one = new IntWritable(1);
-		private Text word = new Text();
+	    private final static LongWritable one = new LongWritable(1);
+	    private Text word = new Text();
 
-		public void map(LongWritable key, Text value,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
-				throws IOException {
+		public void configure(JobConf job) {
+		}
+
+		public void map(K key, Text value,
+				OutputCollector<Text, LongWritable> output,
+				Reporter reporter)
+		throws IOException {
 			String line = value.toString();
-			StringTokenizer itr = new StringTokenizer(line);
-			while (itr.hasMoreTokens()) {
-				word.set(itr.nextToken());
-				output.collect(word, one);
-			}
+		    StringTokenizer itr = new StringTokenizer(line);
+
+		    while (itr.hasMoreTokens()) {
+		    	word.set(itr.nextToken());
+		    	output.collect(word, one);
+		    }
 		}
 	}
-
+	
 	/**
 	 * A reducer class that just emits the sum of the input values.
 	 */
 	public static class Reduce extends MapReduceBase implements
-			Reducer<Text, IntWritable, Text, IntWritable> {
+			Reducer<Text, LongWritable, Text, LongWritable> {
 
 		private static class TopKRecord implements Comparable<TopKRecord> {
 			public Text key;
-			public int sum;
+			public long sum;
 
-			public TopKRecord(Text key, int sum) {
+			public TopKRecord(Text key, long sum) {
 				this.key = key;
 				this.sum = sum;
 			}
@@ -78,7 +80,7 @@ public class TopKWordCount extends Configured implements Tool {
 
 			@Override
 			public int hashCode() {
-				return this.key.hashCode() ^ this.sum;
+				return this.key.hashCode() ^ (int) this.sum;
 			}
 
 			@Override
@@ -91,7 +93,7 @@ public class TopKWordCount extends Configured implements Tool {
 		}
 
 		private final TreeSet<TopKRecord> heap = new TreeSet<TopKRecord>();
-		private OutputCollector<Text, IntWritable> target = null;
+		private OutputCollector<Text, LongWritable> target = null;
 		
 		int k = 0;
 
@@ -100,8 +102,8 @@ public class TopKWordCount extends Configured implements Tool {
 			k = job.getInt("mapred.reduce.topk.k", 1);
 		}
 
-		public void reduce(Text key, Iterator<IntWritable> values,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
+		public void reduce(Text key, Iterator<LongWritable> values,
+				OutputCollector<Text, LongWritable> output, Reporter reporter)
 				throws IOException {
 			/* On first call, remember the output destination (XXX hack) */
 			if (target == null)
@@ -129,18 +131,18 @@ public class TopKWordCount extends Configured implements Tool {
 			}
 
 			for (TopKRecord rec : this.heap) {
-				this.target.collect(rec.key, new IntWritable(rec.sum));
+				this.target.collect(rec.key, new LongWritable(rec.sum));
 			}
 
 			this.heap.clear();
 			this.target = null;
 		}
 	}
-
-	static int printUsage() {
-		System.out.println("topkwordcount [-s <interval>] [-p] <input> <output> K");
+	
+	private int printUsage() {
+		System.out.println("topkwordcount [-s <interval>] [-p] <inDir> <outDir> <K>");
 		ToolRunner.printGenericCommandUsage(System.out);
-		return -1;
+		return 1;
 	}
 
 	/**
@@ -159,7 +161,8 @@ public class TopKWordCount extends Configured implements Tool {
 		// the values are counts (ints)
 		conf.setOutputValueClass(IntWritable.class);
 
-		conf.setMapperClass(MapClass.class);
+		conf.setMapperClass(Map.class);
+		conf.setCombinerClass(LongSumReducer.class);
 		conf.setReducerClass(Reduce.class);
 
 		List<String> other_args = new ArrayList<String>();
