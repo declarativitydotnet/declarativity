@@ -264,6 +264,7 @@ public class ReduceTask extends Task {
 		}
 		
 		synchronized (this) {
+			LOG.info("ReduceTask: performing snapshot with lock.");
 			this.isSnapshotting = true;
 			try {
 				OutputCollector collector = null;
@@ -272,6 +273,7 @@ public class ReduceTask extends Task {
 				}
 				return snapshot(false, progress, null);
 			} finally {
+				LOG.info("ReduceTask: done performing snapshot with lock.");
 				isSnapshotting = false;
 				setProgressFlag();
 			}
@@ -438,8 +440,10 @@ public class ReduceTask extends Task {
 						LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 					}
 				}
+				LOG.debug("ReduceTask sleep");
 				try { this.wait(waittime);
 				} catch (InterruptedException e) { }
+				LOG.debug("ReduceTask wakeup");
 			}
 			LOG.info("ReduceTask closing sink.");
 			sink.close();
