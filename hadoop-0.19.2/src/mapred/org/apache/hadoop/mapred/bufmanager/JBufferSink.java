@@ -785,6 +785,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 									LOG.debug("JBufferSink: dumped " + records + " records.");
 									sink.buffer().unreserve(length);
 									doSpill = false;
+									updateProgress();
 									sink.task.notifyAll();
 								}
 							}
@@ -797,9 +798,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 					if (doSpill) {
 						LOG.debug("JBufferSink: had to spill " + id + ".");
 						spill(reader, length, keyClass, valClass, codec);
-					}
-					else {
-						updateProgress();
 					}
 				}
 			}
