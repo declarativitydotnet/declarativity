@@ -397,8 +397,11 @@ public class ReduceTask extends Task {
 			setProgressFlag();
 			if (reducePipeline) {
 				if (!buffer.force()) {
-					System.err.println("Reduce: register buffer " + getTaskID());
 					bufferUmbilical.commit(getTaskID());
+					LOG.info("ReduceTask " + getTaskID() + " registered final output to TT." );
+				}
+				else {
+					LOG.info("ReduceTask " + getTaskID() + " was able to force final output.");
 				}
 			}
 			buffer.free();
