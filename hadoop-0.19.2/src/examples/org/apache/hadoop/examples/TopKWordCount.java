@@ -159,7 +159,7 @@ public class TopKWordCount extends Configured implements Tool {
 		// the keys are words (strings)
 		conf.setOutputKeyClass(Text.class);
 		// the values are counts (ints)
-		conf.setOutputValueClass(IntWritable.class);
+		conf.setOutputValueClass(LongWritable.class);
 
 		conf.setMapperClass(Map.class);
 		conf.setCombinerClass(LongSumReducer.class);
