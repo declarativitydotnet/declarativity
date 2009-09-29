@@ -596,7 +596,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		return this.mergeThread.isBusy();
 	}
 	
-	public synchronized void pipeline(boolean value) throws IOException {
+	public void pipeline(boolean value) throws IOException {
 		if (pipeline == false && value == true) {
 			this.pipelineThread.open();
 		}
@@ -1112,7 +1112,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		return true;
 	}
 	
-	public synchronized ValuesIterator<K, V> iterator() throws IOException {
+	public ValuesIterator<K, V> iterator() throws IOException {
 		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
 		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
 		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
