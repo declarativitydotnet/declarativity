@@ -455,6 +455,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	 * lock the owning task object if snapshots are turned on.
 	 */
 	public synchronized void close() {
+		LOG.info("JBufferSink is closing.");
 		if (this.acceptor == null) return; // Already done.
 		try {
 			this.acceptor.interrupt();
@@ -759,6 +760,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					if (!safemode || progress == 1.0f) {
 						LOG.debug("JBufferSink: get task lock for " + id + " dump.");
 						synchronized (sink.task) {
+							LOG.info("JBufferSink: try to reserve " + length + " buffer space for buffer " + id);
 							/* Try to add records to the buffer. 
 							 * Note: this means we can't back out the records so
 							 * if we're in safemode this needs to be the final answer.
@@ -783,6 +785,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 									doSpill = false;
 								}
 							}
+							LOG.info("JBufferSink: unable to reserve buffer space for " + id);
 						}
 					}
 					
