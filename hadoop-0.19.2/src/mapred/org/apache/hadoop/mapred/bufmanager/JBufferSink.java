@@ -785,9 +785,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 									LOG.debug("JBufferSink: dumped " + records + " records.");
 									sink.buffer().unreserve(length);
 									doSpill = false;
+									sink.task.notifyAll();
 								}
 							}
-							LOG.debug("JBufferSink: unable to reserve buffer space for " + id);
+							else {
+								LOG.debug("JBufferSink: unable to reserve buffer space for " + id);
+							}
 						}
 					}
 					
