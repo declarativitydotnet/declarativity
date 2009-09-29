@@ -440,10 +440,8 @@ public class ReduceTask extends Task {
 						LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 					}
 				}
-				LOG.debug("ReduceTask sleep");
 				try { this.wait(waittime);
 				} catch (InterruptedException e) { }
-				LOG.debug("ReduceTask wakeup");
 			}
 			LOG.info("ReduceTask closing sink.");
 			sink.close();
