@@ -224,6 +224,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		ReduceOutputFetcher rof = new ReduceOutputFetcher(umbilical, bufferUmbilical, sink, reduceTaskId);
 		rof.setDaemon(true);
 		
+		long timestamp = System.currentTimeMillis();
 		synchronized (this) {
 			open = true;
 			rof.start();
@@ -234,9 +235,11 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 				} catch (InterruptedException e) { }
 			}
 		}
+		LOG.info("PipelineMapTask: shuffle took " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
 		setPhase(TaskStatus.Phase.MAP); 
-		sink.close();                        // This will commit final snapshots, if necessary.
+		sink.close(); // This will commit final snapshots, if necessary.
+		timestamp = System.currentTimeMillis();
 		if (this.buffer != null) {
 			this.buffer.close();
 			if (!buffer.force()) {
@@ -251,6 +254,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		else {
 			collector.close();                   // Perform final flush
 		}
+		LOG.info("PipelineMapTask: took " + (System.currentTimeMillis() - timestamp) + " ms to finalize final output.");
 
 		done(umbilical);
 	}
