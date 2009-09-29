@@ -27,122 +27,132 @@ import java.util.ArrayList;
  */
 public class Progress {
 	private float[] weights = null;
-  private String status = "";
-  private float progress;
-  private int currentPhase;
-  private ArrayList<Progress> phases = new ArrayList<Progress>();
-  private Progress parent;
-  private float progressPerPhase;
+	private String status = "";
+	private float progress;
+	private int currentPhase;
+	private final ArrayList<Progress> phases = new ArrayList<Progress>();
+	private Progress parent;
+	private float progressPerPhase;
 
-  /** Creates a new root node. */
-  public Progress() {}
+	/** Creates a new root node. */
+	public Progress() {}
 
-  public void setWeight(float[] weights) {
-	  if (weights.length == phases.size()) {
-		  float sum = 0f;
-		  for (int i = 0; i < weights.length; i++) {
-			  sum += weights[i];
-		  }
-		  this.weights = weights;
-	  }
-  }
-  /** Adds a named node to the tree. */
-  public Progress addPhase(String status) {
-    Progress phase = addPhase();
-    phase.setStatus(status);
-    return phase;
-  }
+	public void setWeight(float[] weights) {
+		if (weights.length == phases.size()) {
+			float sum = 0f;
+			for (int i = 0; i < weights.length; i++) {
+				sum += weights[i];
+			}
+			this.weights = weights;
+		}
+	}
+	/** Adds a named node to the tree. */
+	public Progress addPhase(String status) {
+		synchronized (phases) {
+			Progress phase = addPhase();
+			phase.setStatus(status);
+			return phase;
+		}
+	}
 
-  /** Adds a node to the tree. */
-  public synchronized Progress addPhase() {
-    Progress phase = new Progress();
-    phases.add(phase);
-    phase.parent = this;
-    progressPerPhase = 1.0f / (float)phases.size();
-    return phase;
-  }
+	/** Adds a node to the tree. */
+	public Progress addPhase() {
+		synchronized (phases) {
+			Progress phase = new Progress();
+			phases.add(phase);
+			phase.parent = this;
+			progressPerPhase = 1.0f / (float)phases.size();
+			return phase;
+		}
+	}
 
-  /** Called during execution to move to the next phase at this level in the
-   * tree. */
-  public synchronized void startNextPhase() {
-    currentPhase++;
-  }
+	/** Called during execution to move to the next phase at this level in the
+	 * tree. */
+	public void startNextPhase() {
+		currentPhase++;
+	}
 
-  /** Returns the current sub-node executing. */
-  public synchronized Progress phase() {
-    return phases.get(currentPhase);
-  }
+	/** Returns the current sub-node executing. */
+	public Progress phase() {
+		synchronized (phases) {
+			return phases.get(currentPhase);
+		}
+	}
 
-  /** Completes this node, moving the parent node to its next child. */
-  public void complete() {
-    // we have to traverse up to our parent, so be careful about locking.
-    Progress myParent;
-    synchronized(this) {
-      progress = 1.0f;
-      myParent = parent;
-    }
-    if (myParent != null) {
-      // this will synchronize on the parent, so we make sure we release
-      // our lock before getting the parent's, since we're traversing 
-      // against the normal traversal direction used by get() or toString().
-      // We don't need transactional semantics, so we're OK doing this. 
-      myParent.startNextPhase();
-    }
-  }
+	/** Completes this node, moving the parent node to its next child. */
+	public void complete() {
+		synchronized(phases) {
+			// we have to traverse up to our parent, so be careful about locking.
+			Progress myParent;
+			progress = 1.0f;
+			myParent = parent;
+			if (myParent != null) {
+				// this will synchronize on the parent, so we make sure we release
+				// our lock before getting the parent's, since we're traversing 
+				// against the normal traversal direction used by get() or toString().
+				// We don't need transactional semantics, so we're OK doing this. 
+				myParent.startNextPhase();
+			}
+		}
+	}
 
-  /** Called during execution on a leaf node to set its progress. */
-  public synchronized void set(float progress) {
-    this.progress = progress;
-  }
+	/** Called during execution on a leaf node to set its progress. */
+	public void set(float progress) {
+		this.progress = progress;
+	}
 
-  /** Returns the overall progress of the root. */
-  // this method probably does not need to be synchronized as getINternal() is synchronized 
-  // and the node's parent never changes. Still, it doesn't hurt. 
-  public synchronized float get() {
-    Progress node = this;
-    while (node.parent != null) {                 // find the root
-      node = parent;
-    }
-    return node.getInternal();
-  }
+	/** Returns the overall progress of the root. */
+	// this method probably does not need to be synchronized as getINternal() is synchronized 
+	// and the node's parent never changes. Still, it doesn't hurt. 
+	public float get() {
+		synchronized (phases) {
+			Progress node = this;
+			while (node.parent != null) {                 // find the root
+				node = parent;
+			}
+			return node.getInternal();
+		}
+	}
 
-  /** Computes progress in this node. */
-  private synchronized float getInternal() {
-	  int phaseCount = phases.size();
-	  if (phaseCount != 0) {
-		  if (weights != null) {
-			  float weightedProgress = 0f;
-			  for (int i = 0; i < weights.length; i++) {
-				  weightedProgress += (phases.get(i).progress * weights[i]);
-			  }
-			  return weightedProgress;
-		  }
-		  else {
-			  float subProgress =
-				  currentPhase < phaseCount ? phase().getInternal() : 0.0f;
-				  return progressPerPhase*(currentPhase + subProgress);
-		  }
-	  } else {
-		  return progress;
-	  }
-  }
+	/** Computes progress in this node. */
+	private float getInternal() {
+		int phaseCount = phases.size();
+		if (phaseCount != 0) {
+			if (weights != null) {
+				float weightedProgress = 0f;
+				for (int i = 0; i < weights.length; i++) {
+					weightedProgress += (phases.get(i).progress * weights[i]);
+				}
+				return weightedProgress;
+			}
+			else {
+				float subProgress =
+					currentPhase < phaseCount ? phase().getInternal() : 0.0f;
+					return progressPerPhase*(currentPhase + subProgress);
+			}
+		} else {
+			return progress;
+		}
+	}
 
-  public synchronized void setStatus(String status) {
-    this.status = status;
-  }
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
-  public String toString() {
-    StringBuffer result = new StringBuffer();
-    toString(result);
-    return result.toString();
-  }
+	public String toString() {
+		StringBuffer result = new StringBuffer();
+		toString(result);
+		return result.toString();
+	}
 
-  private synchronized void toString(StringBuffer buffer) {
-    buffer.append(status);
-    if (phases.size() != 0 && currentPhase < phases.size()) {
-      buffer.append(" > ");
-      phase().toString(buffer);
-    }
-  }
+	private void toString(StringBuffer buffer) {
+		synchronized (phases) {
+			buffer.append(status);
+			if (phases.size() != 0 && currentPhase < phases.size()) {
+				buffer.append(" > ");
+				phase().toString(buffer);
+			}
+		}
+	}
 
 }
