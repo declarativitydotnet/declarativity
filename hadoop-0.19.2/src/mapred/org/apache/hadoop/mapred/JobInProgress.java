@@ -761,7 +761,7 @@ class JobInProgress {
     boolean wasPending = tip.isOnlyCommitPending();
     TaskAttemptID taskid = status.getTaskID();
     
-    LOG.info("Task " + taskid + " status: state " + status.getRunState() + " progress " + status.getProgress());
+    LOG.debug("Task " + taskid + " status: state " + status.getRunState() + " progress " + status.getProgress());
     if (status.getRunState() == TaskStatus.State.SUCCEEDED || status.getRunState() == TaskStatus.State.COMMIT_PENDING) {
     	LOG.info("Task " + taskid + " duration " + (status.getFinishTime() - status.getStartTime()) + " ms.");
     }
@@ -932,8 +932,7 @@ class JobInProgress {
         }
       }
       LOG.info("JobInProgress " + this.getJobID() +
-    		  " map progress " + this.status.mapProgress() + 
-    		  " reduce progress " + this.status.reduceProgress());
+    		  " map progress " + this.status.mapProgress() + " reduce progress " + this.status.reduceProgress());
     }
   }
 
