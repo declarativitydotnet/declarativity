@@ -132,7 +132,7 @@ public class ReduceTask extends Task {
 
 				try {
 					int waittime = mapTasks.size() == getNumberOfInputs() ? 60000 : 1000;
-					Thread.sleep(waittime);
+					sleep(waittime);
 				} catch (InterruptedException e) { return; }
 			}
 		}
@@ -429,6 +429,7 @@ public class ReduceTask extends Task {
 					}
 				}
 				else if (!inputSnapshots && buffer.getProgress().get() > snapshotThreshold) {
+					LOG.info("ReduceTask checking to see if it's time to do a snapshot");
 					if (!reducePipeline || buffer.canSnapshot()) {
 						snapshotThreshold += snapshotInterval;
 						isSnapshotting = true;
