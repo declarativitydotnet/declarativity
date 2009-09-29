@@ -761,7 +761,10 @@ class JobInProgress {
     boolean wasPending = tip.isOnlyCommitPending();
     TaskAttemptID taskid = status.getTaskID();
     
-    LOG.info("Task " + taskid + " status " + status + " progress " + status.getProgress());
+    LOG.info("Task " + taskid + " status: state " + status.getRunState() + " progress " + status.getProgress());
+    if (status.getRunState() == TaskStatus.State.SUCCEEDED || status.getRunState() == TaskStatus.State.COMMIT_PENDING) {
+    	LOG.info("Task " + taskid + " duration " + (status.getFinishTime() - status.getStartTime()) + " ms.");
+    }
 
     
     // If the TIP is already completed and the task reports as SUCCEEDED then 
