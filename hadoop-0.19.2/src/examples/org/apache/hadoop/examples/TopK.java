@@ -59,6 +59,33 @@ public class TopK extends Configured implements Tool {
 		}
 	}
 	
+	public static class WikiMapper<K> extends MapReduceBase
+	implements Mapper<K, Text, Text, LongWritable> {
+
+	    private final static LongWritable one = new LongWritable(1);
+	    private Text word = new Text();
+
+		public void configure(JobConf job) {
+		}
+
+		public void map(K key, Text value,
+				OutputCollector<Text, LongWritable> output,
+				Reporter reporter)
+		throws IOException {
+			String line = value.toString();
+			int start = line.indexOf("</articles>");
+			if (start >= 0) {
+				line = line.substring(start + "</articles>".length());
+			}
+		    StringTokenizer itr = new StringTokenizer(line);
+
+		    while (itr.hasMoreTokens()) {
+		    	word.set(itr.nextToken());
+		    	output.collect(word, one);
+		    }
+		}
+	}
+	
 	/**
 	 * A reducer class that just emits the sum of the input values.
 	 */
@@ -173,7 +200,7 @@ public class TopK extends Configured implements Tool {
 	private TopK() {}                               // singleton
 
 	private void printUsage() {
-		System.out.println("TopK [-s <interval>] [-p] [-m mappers] [-r reducers] <inDir> <outDir> <K>");
+		System.out.println("TopK [-s interval] [-p] [-m mappers] [-r reducers] [-x <use xml article mapper>] <inDir> <outDir> <K>");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
 
@@ -196,6 +223,7 @@ public class TopK extends Configured implements Tool {
 			JobConf topkJob = new JobConf(getConf(), TopK.class);
 			topkJob.setJobName("topk-select");
 
+			boolean xmlmapper = false;
 		    List<String> other_args = new ArrayList<String>();
 		    for(int i=0; i < args.length; ++i) {
 		      try {
@@ -212,6 +240,8 @@ public class TopK extends Configured implements Tool {
 		          	topkJob.setBoolean("mapred.map.pipeline", true);
 		          	topkJob.setBoolean("mapred.reduce.pipeline", false);
 		        	pipeline = true;
+		          } else if ("-x".equals(args[i])) {
+		        	  xmlmapper = true;
 		          } else if ("-p".equals(args[i])) {
 		    		pipeline = true;
 		          	wordcountJob.setBoolean("mapred.map.pipeline", true);
@@ -245,7 +275,12 @@ public class TopK extends Configured implements Tool {
 
 			FileInputFormat.setInputPaths(wordcountJob, other_args.get(0));
 
-			wordcountJob.setMapperClass(WordcountMapper.class);
+			if (xmlmapper) {
+				wordcountJob.setMapperClass(WikiMapper.class);
+			}
+			else {
+				wordcountJob.setMapperClass(WordcountMapper.class);
+			}
 			wordcountJob.setCombinerClass(LongSumReducer.class);
 			wordcountJob.setReducerClass(WordcountReduceFilter.class);
 
