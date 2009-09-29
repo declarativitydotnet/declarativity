@@ -447,7 +447,6 @@ public abstract class Task implements Writable, Configurable {
                 long begin = System.currentTimeMillis();
                 taskFound = umbilical.statusUpdate(taskId, taskStatus);
                 long duration = System.currentTimeMillis() - begin;
-                LOG.info("Task " + getTaskID() + " status " + taskStatus + " progress " + taskProgress.get());
                 if (duration > 1000) {
                 	LOG.debug("Status update took " + duration + " ms!");
                 }

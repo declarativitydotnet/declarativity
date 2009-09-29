@@ -761,6 +761,9 @@ class JobInProgress {
     boolean wasPending = tip.isOnlyCommitPending();
     TaskAttemptID taskid = status.getTaskID();
     
+    LOG.info("Task " + taskid + " status " + status + " progress " + status.getProgress());
+
+    
     // If the TIP is already completed and the task reports as SUCCEEDED then 
     // mark the task as KILLED.
     // In case of task with no promotion the task tracker will mark the task 
