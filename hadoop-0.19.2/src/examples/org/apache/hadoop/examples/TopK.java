@@ -70,19 +70,18 @@ public class TopK extends Configured implements Tool {
 
 		public void map(K key, Text value,
 				OutputCollector<Text, LongWritable> output,
-				Reporter reporter)
-		throws IOException {
+				Reporter reporter) throws IOException {
 			String line = value.toString();
 			int start = line.indexOf("</articles>");
 			if (start >= 0) {
 				line = line.substring(start + "</articles>".length());
-			}
-		    StringTokenizer itr = new StringTokenizer(line);
+				StringTokenizer itr = new StringTokenizer(line);
 
-		    while (itr.hasMoreTokens()) {
-		    	word.set(itr.nextToken());
-		    	output.collect(word, one);
-		    }
+				while (itr.hasMoreTokens()) {
+					word.set(itr.nextToken());
+					output.collect(word, one);
+				}
+			}
 		}
 	}
 	
