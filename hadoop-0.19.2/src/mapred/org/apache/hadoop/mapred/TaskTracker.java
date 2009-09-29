@@ -1087,7 +1087,7 @@ public class TaskTracker
     server.setAttribute("log", LOG);
     server.setAttribute("localDirAllocator", localDirAllocator);
     server.setAttribute("shuffleServerMetrics", shuffleServerMetrics);
-    server.addInternalServlet("mapOutput", "/mapOutput", MapOutputServlet.class);
+    // server.addInternalServlet("mapOutput", "/mapOutput", MapOutputServlet.class);
     server.addInternalServlet("taskLog", "/tasklog", TaskLogServlet.class);
     server.start();
     this.httpPort = server.getPort();
