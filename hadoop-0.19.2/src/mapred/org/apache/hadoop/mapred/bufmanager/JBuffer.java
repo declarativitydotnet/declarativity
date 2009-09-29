@@ -1018,28 +1018,34 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				try { spillLock.wait();
 				} catch (InterruptedException e) { }
 			}
-			
-			if (kvend != kvindex) {
-				kvend = kvindex;
-				bufend = bufmark;
+
+			Path finalOut = mapOutputFile.getOutputFile(this.taskid);
+			if (localFs.exists(finalOut)) {
+				return forceFree(true);
 			}
-			
-			if (kvstart == kvend) {
-				LOG.debug("JBuffer nothing to force!");
-			} else if (forceFree()) {
-				if (bufend < bufindex && bufindex < bufstart) {
-					bufvoid = kvbuffer.length;
+			else {
+				if (kvend != kvindex) {
+					kvend = kvindex;
+					bufend = bufmark;
 				}
-				kvstart = kvend;
-				bufstart = bufend;
-				spillLock.notifyAll();
-				return true;
+
+				if (kvstart == kvend) {
+					LOG.debug("JBuffer nothing to force!");
+				} else if (forceFree(false)) {
+					if (bufend < bufindex && bufindex < bufstart) {
+						bufvoid = kvbuffer.length;
+					}
+					kvstart = kvend;
+					bufstart = bufend;
+					spillLock.notifyAll();
+					return true;
+				}
+				return false;
 			}
-			return false;
 		}
 	}
 	
-	private boolean forceFree() throws IOException {
+	private boolean forceFree(boolean finalResult) throws IOException {
 		if (!pipelineThread.force()) {
 			LOG.info("JBuffer: force unable to catch pipeline thread up.");
 			return false;
@@ -1052,6 +1058,18 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				request.open(job, response, false);
 				if (!response.open) return false;
 			}
+		}
+		
+		if (finalResult) {
+			try {
+				for (BufferRequest request : requestMap.values()) {
+					request.flushFinal();
+				}
+			} catch (IOException e) {
+				LOG.error("JBuffer force final result failed. " + e);
+				return false;
+			}
+			return true;
 		}
 		
 		// create spill file

@@ -142,7 +142,7 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 		this.flushPoint = flushPoint;
 	}
 	
-	private synchronized void flushFinal() throws IOException {
+	public synchronized void flushFinal() throws IOException {
 		MapOutputFile mapOutputFile = new MapOutputFile(this.taskid.getJobID());
 		mapOutputFile.setConf(conf);
 
