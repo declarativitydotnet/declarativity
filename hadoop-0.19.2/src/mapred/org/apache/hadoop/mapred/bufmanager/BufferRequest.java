@@ -174,18 +174,26 @@ public class BufferRequest<K extends Object, V extends Object> implements Compar
 	
 	@Override
 	public void run() {
+		boolean complete = false;
+		while (!complete) {
 			try {
 				flushFinal();
+				complete = true;
 			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			finally {
-				try {
-					close();
-				} catch (IOException e) {
-					e.printStackTrace();
+				System.err.println("BufferRequest received exception " + e);
+				System.err.println("BufferRequest reconnecting.");
+				BufferRequestResponse response = new BufferRequestResponse();
+				while (response.open == false) {
+					response.reset();
+					open(conf, response, false);
 				}
 			}
+		}
+		try {
+			close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	
