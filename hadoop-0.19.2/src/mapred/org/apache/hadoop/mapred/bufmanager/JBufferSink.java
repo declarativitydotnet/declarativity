@@ -304,7 +304,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		this.task = task;
 	    this.numConnections = task.getNumberOfInputs();
-		this.executor = Executors.newFixedThreadPool(Math.min(maxConnections, numConnections));
+		this.executor = Executors.newFixedThreadPool(Math.min(maxConnections, Math.max(numConnections, 5)));
 		this.connections = new ConcurrentHashMap<TaskID, List<Connection>>();
 		this.successful = new HashSet<TaskID>();
 		
