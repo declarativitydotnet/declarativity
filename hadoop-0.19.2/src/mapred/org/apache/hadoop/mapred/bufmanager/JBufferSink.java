@@ -373,10 +373,11 @@ public class JBufferSink<K extends Object, V extends Object> {
 									}
 								}
 								try {
-									executor.execute(conn);
 									response.setOpen();
 									response.write(output);
 									output.flush();
+									
+									executor.execute(conn);
 								} catch (Throwable t) {
 									LOG.warn("Received error when trying to execute connection. " + t);
 									synchronized (connections) {
