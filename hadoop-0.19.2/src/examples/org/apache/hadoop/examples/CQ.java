@@ -210,8 +210,11 @@ public class CQ extends Configured implements Tool {
                                         float s = stat.getFloat(SystemStatEntry.SYSTEM);
                                         float j = stat.totalJiffies();
                                         float l = ((u-su) + (s-su)) / (j-st);
+                                        float d = ((u) + (s)) / (j);
 
                                         System.err.println("M load: " + l );
+
+                                        System.err.println("M reading: " + d );
                                         System.err.println("ie, "+u+","+su+" : "+j+","+st);
                                         su = u; ss = s; st = j;
             
@@ -221,6 +224,47 @@ public class CQ extends Configured implements Tool {
 
                         }
                 }
+       
+        public class HostState {
+          public int user;
+          public int system;
+          public int jiffies;
+          public long tstamp;
+
+          public HostState() {
+            user = system = jiffies = 0;
+          }
+          public HostState(int u, int s, int t, long ts) {
+            user = u;
+            system = s;
+            jiffies = t;
+            tstamp = ts;
+          }
+        }
+        public class CQState {
+          HashMap<String, ArrayList<HostState>>  m;
+          public CQState() {
+            m = new HashMap<String, ArrayList<HostState>>();
+          }
+          public void add(String host, HostState upd) {
+            ArrayList<HostState> hlist = m.get(host);
+            if (hlist == null) {
+              hlist = new ArrayList<HostState>();
+              m.put(host, hlist);
+            }
+            hlist.add(upd);
+          }
+
+          public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (String k : m.keySet()) {
+              ///System.err.println("key: " + k);
+              sb.append("key: " + k);
+            } 
+            return sb.toString(); 
+          }
+      
+        } 
 
         /**
          * A reducer class that just emits the sum of the input values.
@@ -231,7 +275,9 @@ public class CQ extends Configured implements Tool {
                 static float suser = 0;
                 static float ssystem = 0;
                 static float stotal = 0;
-                static HashMap state = new HashMap();
+                //CQState cqs = new CQState();
+                //CQState cqs;
+                HashMap hm = new HashMap();
                         public void reduce(Text key, Iterator<Text> values,
                                         OutputCollector<Text, IntWritable> output, 
                                         Reporter reporter) throws IOException {
@@ -245,14 +291,23 @@ public class CQ extends Configured implements Tool {
                                         float total = Float.parseFloat(items[10]);
 
                                         float load = ((user - suser) + (system - ssystem)) / (total - stotal);
+
+                                        float reading = ((user) + (system)) / (total);
                                         System.err.println("load: " + load);
+
+                                        System.err.println("reading: " + load);
                                         System.err.println("ie, (" + (user-suser) + " + " + (system-ssystem) + ") / "+(total-stotal));
 
                                         System.err.println("user state change: " + suser + " --> " + user);
+                                        /*
+                                        HostState hs = new HostState(user, system, total, 12345L);
+                                        cqs.add(key.toString(), hs); 
+                                        */
                                         suser = user;
                                         ssystem = system;
                                         stotal = total;
                                 }
+                                //System.err.println("cqs outt: " + cqs.toString());
                         }
                 }
 
