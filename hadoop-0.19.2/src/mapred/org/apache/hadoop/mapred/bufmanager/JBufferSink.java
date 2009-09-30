@@ -397,6 +397,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		};
 		acceptor.setDaemon(true);
+		acceptor.setPriority(Thread.MAX_PRIORITY);
 		acceptor.start();
 		
 		spillThread = new Thread() {
