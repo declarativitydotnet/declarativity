@@ -194,7 +194,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public void run() {
 			try {
-				int threshold = job.getInt("io.sort.factor", 100);
+				int threshold = 100; // job.getInt("io.sort.factor", 100);
 				LOG.info("JBuffer: merge thread running.");
 				while (open) {
 					synchronized (mergeLock) {
