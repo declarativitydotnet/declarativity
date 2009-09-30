@@ -199,7 +199,7 @@ public class TopK extends Configured implements Tool {
 	private TopK() {}                               // singleton
 
 	private void printUsage() {
-		System.out.println("TopK [-s interval] [-p] [-m mappers] [-r reducers] [-x <use xml article mapper>] <inDir> <outDir> <K>");
+		System.out.println("TopK [-s interval] [-pP] [-m mappers] [-r reducers] [-x <use xml article mapper>] <inDir> <outDir> <K>");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
 
@@ -214,7 +214,7 @@ public class TopK extends Configured implements Tool {
 					Integer.toString(new Random().nextInt(Integer.MAX_VALUE)));
 
 		try {
-			boolean pipeline = false;
+			boolean pipelineAll = false;
 
 			JobConf wordcountJob = new JobConf(getConf(), TopK.class);
 			wordcountJob.setJobName("topk-wordcount");
@@ -238,11 +238,14 @@ public class TopK extends Configured implements Tool {
 		          	/* TopK does not pipeline. */
 		          	topkJob.setBoolean("mapred.map.pipeline", true);
 		          	topkJob.setBoolean("mapred.reduce.pipeline", false);
-		        	pipeline = true;
+		        	pipelineAll = true;
 		          } else if ("-x".equals(args[i])) {
 		        	  xmlmapper = true;
 		          } else if ("-p".equals(args[i])) {
-		    		pipeline = true;
+		          	wordcountJob.setBoolean("mapred.map.pipeline", true);
+		          	topkJob.setBoolean("mapred.map.pipeline", true);
+		          } else if ("-P".equals(args[i])) {
+		    		pipelineAll = true;
 		          	wordcountJob.setBoolean("mapred.map.pipeline", true);
 		          	wordcountJob.setBoolean("mapred.reduce.pipeline", true);
 		          	topkJob.setBoolean("mapred.map.pipeline", true);
@@ -281,6 +284,7 @@ public class TopK extends Configured implements Tool {
 				wordcountJob.setMapperClass(WordcountMapper.class);
 			}
 			wordcountJob.setCombinerClass(LongSumReducer.class);
+			// wordcountJob.setReducerClass(LongSumReducer.class);
 			wordcountJob.setReducerClass(WordcountReduceFilter.class);
 
 			FileOutputFormat.setOutputPath(wordcountJob, tempDir);
@@ -303,7 +307,7 @@ public class TopK extends Configured implements Tool {
 			topkJob.setOutputKeyComparatorClass           // sort by decreasing freq
 			(LongWritable.DecreasingComparator.class);
 
-			if (pipeline) {
+			if (pipelineAll) {
 				JobClient  client  = new JobClient(wordcountJob);
 				List<JobConf> jobs = new ArrayList<JobConf>();
 				jobs.add(wordcountJob);
