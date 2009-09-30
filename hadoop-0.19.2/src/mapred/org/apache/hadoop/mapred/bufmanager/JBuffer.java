@@ -363,7 +363,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			
 			/* Rate limit the data pipeline. */
 			if (!safemode) {
-				if (requests.size() > partitions / 2 && numSpills - spillend > 5) {
+				if (requests.size() > partitions / 3 && numSpills - spillend > 5) {
 					float avgDataRate = 0f;
 					BufferRequest min = null;
 					for (BufferRequest r : requests) {
@@ -600,8 +600,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public boolean isMerging() {
-		return this.mergeThread.isBusy() || 
-		       this.spillThread.isSpilling();
+		return this.mergeThread.isBusy();
 	}
 	
 	public void pipeline(boolean value) throws IOException {
