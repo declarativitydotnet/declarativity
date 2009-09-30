@@ -115,10 +115,7 @@ public class WordCount extends Configured implements Tool {
     // the values are counts (ints)
     conf.setOutputValueClass(IntWritable.class);
     
-    conf.setMapperClass(MapClass.class);        
-    conf.setCombinerClass(Reduce.class);
-    conf.setReducerClass(Reduce.class);
-    
+    boolean sort = false;
     List<String> other_args = new ArrayList<String>();
     for(int i=0; i < args.length; ++i) {
       try {
@@ -130,8 +127,7 @@ public class WordCount extends Configured implements Tool {
         } else if ("-m".equals(args[i])) {
           conf.setNumMapTasks(Integer.parseInt(args[++i]));
         } else if ("-S".equals(args[i])) {
-        	conf.setCombinerClass(null);
-        	conf.setReducerClass(IdentityReducer.class);
+        	sort = true;
         } else if ("-r".equals(args[i])) {
           conf.setNumReduceTasks(Integer.parseInt(args[++i]));
         } else {
@@ -154,6 +150,15 @@ public class WordCount extends Configured implements Tool {
     }
     FileInputFormat.setInputPaths(conf, other_args.get(0));
     FileOutputFormat.setOutputPath(conf, new Path(other_args.get(1)));
+    
+    conf.setMapperClass(MapClass.class);        
+    if (sort) {
+        conf.setReducerClass(IdentityReducer.class);
+    }
+    else {
+        conf.setCombinerClass(Reduce.class);
+        conf.setReducerClass(Reduce.class);
+    }
     
     JobClient.runJob(conf);
     return 0;
