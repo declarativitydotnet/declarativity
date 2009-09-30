@@ -175,6 +175,19 @@ public class CQ extends Configured implements Tool {
                             throw new RuntimeException(e);
                           }
                         }
+
+                        public void blockForce(OutputCollector o) {
+                          JBuffer jb = (JBuffer) o;
+                          try {
+                            while (!jb.force()) {
+                              System.err.println("Can't force yet....");
+                              sleep(1000);
+                            }
+                          } catch (IOException e) {
+                            throw new RuntimeException(e);
+
+                          }
+                        }
                         public void map(LongWritable key, Text value, 
                                         OutputCollector<Text, Text> output, 
                                         Reporter reporter) throws IOException {
@@ -183,7 +196,7 @@ public class CQ extends Configured implements Tool {
 
                                 float su = 0;
                                 float ss = 0;
-                                float st = 0;
+                                int st = 0;
                                 while (true) {
                                         SystemStats stat = new SystemStats();
                                         word.set(hn);
@@ -196,54 +209,56 @@ public class CQ extends Configured implements Tool {
                                         // total jiffies go at the end
                                         sb.append(stat.totalJiffies());
                                         Text statList = new Text(sb.toString());
-                                        output.collect(word, statList);
+                                        //output.collect(word, statList);
+                                      
 
-                                        // try to force the buffer
-                                        JBuffer jb = (JBuffer) output;
-                                        while (!jb.force()) {
-                                                System.err.println("Can't force yet....");
-                                                reporter.progress();
-                                                sleep(1000);
-                                        }
                                         // calc load here.
                                         float u = stat.getFloat(SystemStatEntry.USER);
                                         float s = stat.getFloat(SystemStatEntry.SYSTEM);
-                                        float j = stat.totalJiffies();
-                                        float l = ((u-su) + (s-su)) / (j-st);
+                                        int j = stat.totalJiffies();
+                                        float l = ((u-su) + (s-ss)) / (float)(j-st);
                                         float d = ((u) + (s)) / (j);
 
+                                        
+                                        Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st));
+                                        output.collect(word, v);
+                                        blockForce(output);
                                         System.err.println("M load: " + l );
 
-                                        System.err.println("M reading: " + d );
+                                        System.err.println("M readings: " + (u-su) + "," + (s-ss) + "," + (j-st));
                                         System.err.println("ie, "+u+","+su+" : "+j+","+st);
                                         su = u; ss = s; st = j;
-            
-                                        sleep(5000);
+                                        reporter.progress(); 
+                                        sleep(2000);
                                 }
 
 
                         }
                 }
        
-        public class HostState {
-          public int user;
-          public int system;
-          public int jiffies;
+        public static class HostState {
+          public double user;
+          public double system;
+          public double jiffies;
           public long tstamp;
 
           public HostState() {
             user = system = jiffies = 0;
           }
-          public HostState(int u, int s, int t, long ts) {
+          public HostState(double u, double s, double t, long ts) {
             user = u;
             system = s;
             jiffies = t;
             tstamp = ts;
           }
+          public String toString() {
+            return "@" + tstamp + ", user=" + user + ", system=" + system + ", total="+jiffies;
+          }
         }
-        public class CQState {
+        public static class CQState {
           HashMap<String, ArrayList<HostState>>  m;
           public CQState() {
+            System.err.println("constructor for CQState called!\n");
             m = new HashMap<String, ArrayList<HostState>>();
           }
           public void add(String host, HostState upd) {
@@ -254,12 +269,60 @@ public class CQ extends Configured implements Tool {
             }
             hlist.add(upd);
           }
+          public float hostAvg(String host, int interval) {
+            // very expensive prototype implementation....
+            float sum = 0;
+            float cnt = 0;
+            ArrayList<HostState> newList = new ArrayList<HostState>();
+            long now = System.currentTimeMillis();
+            ArrayList<HostState> ha = m.get(host);
+            for (HostState h : ha) {
+              if (now - h.tstamp < (1000 * interval)) {
+                newList.add(h);
+                sum += (h.user + h.system) / h.jiffies;
+                cnt++;
+              }
+            }
+            m.put(host, newList);
+            return sum / cnt;
+          }
+
+
+          public float notHostAvg(String host, int interval) {
+            // very expensive prototype implementation....
+            float sum = 0;
+            float cnt = 0;
+            long now = System.currentTimeMillis();
+
+            for (String h : m.keySet()) {
+              if (h.equals(host)) {
+                continue;
+              }
+              ArrayList<HostState> newList = new ArrayList<HostState>();
+              ArrayList<HostState> ha = m.get(h);
+              for (HostState hs : ha) {
+                if (now - hs.tstamp < (1000 * interval)) {
+                  newList.add(hs);
+                  sum += (hs.user + hs.system) / hs.jiffies;
+                  cnt++;
+                }
+              }
+              m.put(h, newList);
+            }
+            System.err.println("global junk: sum=" + sum + ", cnt=" + cnt);
+            return sum / cnt;
+          }
+
 
           public String toString() {
             StringBuilder sb = new StringBuilder();
             for (String k : m.keySet()) {
               ///System.err.println("key: " + k);
-              sb.append("key: " + k);
+              sb.append("key: " +  k + "\n");
+              ArrayList<HostState> ah = m.get(k);
+              for (HostState s : ah) {
+                sb.append("\t" + s.toString() + "\n");
+              }
             } 
             return sb.toString(); 
           }
@@ -275,9 +338,9 @@ public class CQ extends Configured implements Tool {
                 static float suser = 0;
                 static float ssystem = 0;
                 static float stotal = 0;
-                //CQState cqs = new CQState();
-                //CQState cqs;
-                HashMap hm = new HashMap();
+                static CQState cqs = new CQState();
+                ///HashMap hm = new HashMap();
+
                         public void reduce(Text key, Iterator<Text> values,
                                         OutputCollector<Text, IntWritable> output, 
                                         Reporter reporter) throws IOException {
@@ -286,28 +349,43 @@ public class CQ extends Configured implements Tool {
                                         Text v = values.next();
                                         System.err.println("OK, got output: " + v.toString());
                                         String[] items = v.toString().split(",");
+/*
                                         float user = Float.parseFloat(items[0]);
                                         float system = Float.parseFloat(items[2]);
                                         float total = Float.parseFloat(items[10]);
-
                                         float load = ((user - suser) + (system - ssystem)) / (total - stotal);
+*/
+                                      
+                                        double user = Double.parseDouble(items[0]);
+                                        double system = Double.parseDouble(items[1]);
+                                        double total = Double.parseDouble(items[2]);
+                                        double load = ((user - suser) + (system - ssystem)) / (total - stotal);
 
-                                        float reading = ((user) + (system)) / (total);
-                                        System.err.println("load: " + load);
-
-                                        System.err.println("reading: " + load);
+                                        // it might be a mistake to poll time here.  but at least we don't have
+                                        // to worry about multiple clocks...
+                                        long time = System.currentTimeMillis();
+/*
+                                        int user = Integer.parseInt(items[0]);
+                                        int system = Integer.parseInt(items[2]);
+                                        int total = Integer.parseInt(items[10]);
+*/
+                                        //System.err.println("load: " + load);
+                                        //System.err.println("reading: " + load);
                                         System.err.println("ie, (" + (user-suser) + " + " + (system-ssystem) + ") / "+(total-stotal));
 
                                         System.err.println("user state change: " + suser + " --> " + user);
-                                        /*
-                                        HostState hs = new HostState(user, system, total, 12345L);
+                                        HostState hs = new HostState(user, system, total, time);
                                         cqs.add(key.toString(), hs); 
-                                        */
-                                        suser = user;
-                                        ssystem = system;
-                                        stotal = total;
+
+                                        float avg = cqs.hostAvg(key.toString(), 20);
+                                        float globalAvg = cqs.notHostAvg(key.toString(), 120);
+                                        System.err.println("20 second moving avg: " + avg);
+                                        System.err.println("global 120 second moving avg: " + globalAvg);
+                                        //suser = user;
+                                        //ssystem = system;
+                                        //stotal = total;
                                 }
-                                //System.err.println("cqs outt: " + cqs.toString());
+                                System.err.println("cqs outt: " + cqs.toString());
                         }
                 }
 
