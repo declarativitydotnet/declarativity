@@ -59,6 +59,7 @@ public class Sort<K,V> extends Configured implements Tool {
                        "[-outKey <output key class>] " +
                        "[-outValue <output value class>] " +
                        "[-totalOrder <pcnt> <num samples> <max splits>] " +
+                       "[-p]" + 
                        "<input> <output>");
     ToolRunner.printGenericCommandUsage(System.out);
     return -1;
@@ -100,6 +101,8 @@ public class Sort<K,V> extends Configured implements Tool {
           jobConf.setNumMapTasks(Integer.parseInt(args[++i]));
         } else if ("-r".equals(args[i])) {
           num_reduces = Integer.parseInt(args[++i]);
+        } else if ("-p".equals(args[i])) {
+        	jobConf.setBoolean("mapred.map.pipeline", true);
         } else if ("-inFormat".equals(args[i])) {
           inputFormatClass = 
             Class.forName(args[++i]).asSubclass(InputFormat.class);
