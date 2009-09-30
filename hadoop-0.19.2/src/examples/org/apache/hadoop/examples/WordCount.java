@@ -39,6 +39,7 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.lib.IdentityReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -94,7 +95,7 @@ public class WordCount extends Configured implements Tool {
   }
   
   static int printUsage() {
-    System.out.println("wordcount [-s <interval>] [-p] [-m <maps>] [-r <reduces>] <input> <output>");
+    System.out.println("wordcount [-s interval] [-S <sort>] [-p <pipeline>] [-m maps] [-r reduces] input output");
     ToolRunner.printGenericCommandUsage(System.out);
     return -1;
   }
@@ -128,6 +129,9 @@ public class WordCount extends Configured implements Tool {
         	conf.setBoolean("mapred.map.pipeline", true);
         } else if ("-m".equals(args[i])) {
           conf.setNumMapTasks(Integer.parseInt(args[++i]));
+        } else if ("-S".equals(args[i])) {
+        	conf.setCombinerClass(null);
+        	conf.setReducerClass(IdentityReducer.class);
         } else if ("-r".equals(args[i])) {
           conf.setNumReduceTasks(Integer.parseInt(args[++i]));
         } else {
