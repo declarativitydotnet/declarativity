@@ -931,8 +931,10 @@ class JobInProgress {
                       (progressDelta / reduces.length)));
         }
       }
-      LOG.info("JobInProgress " + this.getJobID() +
-    		  " map progress " + this.status.mapProgress() + " reduce progress " + this.status.reduceProgress());
+      if (this.status.mapProgress() > 0f && this.status.reduceProgress() > 0f) {
+    	  LOG.info("JobInProgress " + this.getJobID() +
+    			  " map progress " + this.status.mapProgress() + " reduce progress " + this.status.reduceProgress());
+      }
     }
   }
 
