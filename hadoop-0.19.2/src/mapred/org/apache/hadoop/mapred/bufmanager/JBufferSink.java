@@ -478,7 +478,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							LOG.debug("JBufferSink " + reduceID + 
 									 ": close waiting for finish of " + c);
 							connectionsOpen = true;
-							c.open = false;
+							c.open = false; // TODO think about this one.
 						}
 					}
 				}
