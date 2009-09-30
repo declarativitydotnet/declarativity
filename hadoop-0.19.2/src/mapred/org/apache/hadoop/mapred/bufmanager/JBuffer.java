@@ -600,7 +600,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 	
 	public boolean isMerging() {
-		return this.mergeThread.isBusy();
+		return this.mergeThread.isBusy() || 
+		       this.spillThread.isSpilling();
 	}
 	
 	public void pipeline(boolean value) throws IOException {
