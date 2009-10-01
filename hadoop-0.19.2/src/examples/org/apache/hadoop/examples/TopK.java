@@ -219,7 +219,8 @@ public class TopK extends Configured implements Tool {
 	private TopK() {}                               // singleton
 
 	private void printUsage() {
-		System.out.println("TopK [-s interval] [-pP] [-m mappers] [-r reducers] [-x <use xml article mapper>] <inDir> <outDir> <K>");
+		System.out.println("TopK [-s interval] [-xpPR] [-m mappers] [-r reducers] <inDir> <outDir> <K>");
+		System.out.println("\t-p intra-job pipelining\n-P inter-job pipelining\n-R do not reduce job 1 output\n-x use xml article mapper");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
 
@@ -234,7 +235,8 @@ public class TopK extends Configured implements Tool {
 					Integer.toString(new Random().nextInt(Integer.MAX_VALUE)));
 
 		try {
-			boolean pipelineAll = false;
+			boolean pipelineJob  = false;
+			boolean reduceOutput = true;
 
 			JobConf wordcountJob = new JobConf(getConf(), TopK.class);
 			wordcountJob.setJobName("topk-wordcount");
@@ -258,18 +260,17 @@ public class TopK extends Configured implements Tool {
 		          	/* TopK does not pipeline. */
 		          	topkJob.setBoolean("mapred.map.pipeline", true);
 		          	topkJob.setBoolean("mapred.reduce.pipeline", false);
-		        	pipelineAll = true;
+		        	pipelineJob = true;
+		          } else if ("-R".equals(args[i])) {
+		        	  reduceOutput = false;
 		          } else if ("-x".equals(args[i])) {
 		        	  xmlmapper = true;
 		          } else if ("-p".equals(args[i])) {
 		          	wordcountJob.setBoolean("mapred.map.pipeline", true);
 		          	topkJob.setBoolean("mapred.map.pipeline", true);
 		          } else if ("-P".equals(args[i])) {
-		    		pipelineAll = true;
-		          	wordcountJob.setBoolean("mapred.map.pipeline", true);
+		    		pipelineJob = true;
 		          	wordcountJob.setBoolean("mapred.reduce.pipeline", true);
-		          	topkJob.setBoolean("mapred.map.pipeline", true);
-		          	topkJob.setBoolean("mapred.reduce.pipeline", false);
 		    	  } else if ("-m".equals(args[i])) {
 		    		  wordcountJob.setNumMapTasks(Integer.parseInt(args[++i]));
 		    	  } else if ("-r".equals(args[i])) {
@@ -304,8 +305,13 @@ public class TopK extends Configured implements Tool {
 				wordcountJob.setMapperClass(WordcountMapper.class);
 			}
 			wordcountJob.setCombinerClass(LongSumReducer.class);
-			// wordcountJob.setReducerClass(LongSumReducer.class);
-			wordcountJob.setReducerClass(WordcountReduceFilter.class);
+			
+			if (reduceOutput) {
+				wordcountJob.setReducerClass(WordcountReduceFilter.class);
+			}
+			else {
+				wordcountJob.setReducerClass(LongSumReducer.class);
+			}
 
 			FileOutputFormat.setOutputPath(wordcountJob, tempDir);
 			wordcountJob.setOutputFormat(SequenceFileOutputFormat.class);
@@ -327,7 +333,7 @@ public class TopK extends Configured implements Tool {
 			topkJob.setOutputKeyComparatorClass           // sort by decreasing freq
 			(LongWritable.DecreasingComparator.class);
 
-			if (pipelineAll) {
+			if (pipelineJob) {
 				JobClient  client  = new JobClient(wordcountJob);
 				List<JobConf> jobs = new ArrayList<JobConf>();
 				jobs.add(wordcountJob);
