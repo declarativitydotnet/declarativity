@@ -122,7 +122,7 @@ public class CQ extends Configured implements Tool {
                         if(!info.startsWith("cpu  ")) { throw new IllegalStateException("Can't parse /proc/stat!"); }
                         info = info.substring(5);
                         String[] tok = whiteSpace.split(info);
-                        cols = new Number[tok.length + 3];
+                        cols = new Number[tok.length + 2];
                         for(int i = 0; i < tok.length; i++) {
                                 try {
                                         cols[i] = Long.parseLong(tok[i]);
@@ -144,7 +144,12 @@ public class CQ extends Configured implements Tool {
                         f = new File("/proc/vmstat");
                         in = new BufferedReader(new FileReader(f));
                         while ((info = in.readLine()) != null) {
-                        
+                            tok = whiteSpace.split(info);
+                            if (tok[0].equals("pswpin")) {
+                                cols[cols.length-2] = Long.parseLong(tok[1]);
+                            } else if (tok[0].equals("pswpout")) {
+                                cols[cols.length-1] = Long.parseLong(tok[1]);
+                            }
                         }
                         
                         in.close();
@@ -214,6 +219,8 @@ public class CQ extends Configured implements Tool {
                                         SystemStats stat = new SystemStats();
                                         word.set(hn);
                                         // I was having a lot of trouble with ArrayWritable...
+
+                                        /*
                                         StringBuilder sb = new StringBuilder();
                                         for (int i=0; i < 10; i++) {
                                           sb.append(stat.getStrByOffset(i));
@@ -224,7 +231,7 @@ public class CQ extends Configured implements Tool {
                                         Text statList = new Text(sb.toString());
                                         //output.collect(word, statList);
                                       
-
+                                        */
                                         // calc load here.
                                         float u = stat.getFloat(SystemStatEntry.USER);
                                         float s = stat.getFloat(SystemStatEntry.SYSTEM);
@@ -410,7 +417,7 @@ public class CQ extends Configured implements Tool {
                                 int sum = 0;
                                 while (values.hasNext()) {
                                         Text v = values.next();
-                                        //System.err.println("OK, got output: " + v.toString());
+                                        System.err.println("OK, got output: " + v.toString());
                                         String[] items = v.toString().split(",");
 /*
                                         float user = Float.parseFloat(items[0]);
