@@ -778,10 +778,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 									}
 								} catch (ChecksumException e) {
 									e.printStackTrace();
-									LOG.error("JBufferSink: ChecksumException during spill. progress = " + progress);
+									LOG.error("JBufferSink: ChecksumException during record dump. progress = " + progress);
 								} catch (Throwable t) {
 									t.printStackTrace();
-									LOG.error("JBufferSink: " + t + " during spill. progress = " + progress);
+									LOG.error("JBufferSink: " + t + " during record dump. progress = " + progress);
 								} finally {
 									LOG.debug("JBufferSink: dumped " + records + " records.");
 									sink.buffer().unreserve(length);
