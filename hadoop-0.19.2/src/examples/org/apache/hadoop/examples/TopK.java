@@ -182,28 +182,30 @@ public class TopK extends Configured implements Tool {
 		int k = 0;
 		int count = 0;
 		static List<List<String>> topklist = new ArrayList<List<String>>();
+		boolean compare = false;
 
 		public void configure(JobConf job) {
 			k = job.getInt("mapred.reduce.topk.k", 1);
 			count = 0;
-			topklist.add(new ArrayList<String>());
+			compare = job.getBoolean("mapred.job.comparelists", false);
+			if (compare) topklist.add(new ArrayList<String>());
 		}
 		
 		public void reduce(LongWritable key, Iterator<Text> values,
 				OutputCollector<LongWritable, Text> output,
 				Reporter reporter) throws IOException {
 			
-			List<String> topk = topklist.get(topklist.size() - 1);
+			List<String> topk = compare ? topklist.get(topklist.size() - 1) : null;
 			while (values.hasNext() && count++ < k) {
 				Text value = values.next();
-				topk.add(value.toString());
+				if (topk != null) topk.add(value.toString());
 				output.collect(key, value);
 			}
 		}
 		
 		@Override
 		public void close() throws IOException {
-			if (topklist.size() <= 1) return;
+			if (!compare || topklist.size() <= 1) return;
 			
 			List<String> topk = topklist.get(topklist.size() - 1);
 			System.err.println("TOPK: compare most recent topk " + topklist.size() + " to previous topks.");
@@ -227,7 +229,7 @@ public class TopK extends Configured implements Tool {
 
 	private void printUsage() {
 		System.out.println("TopK [-s interval] [-xpPR] [-m mappers] [-r reducers] <inDir> <outDir> <K>");
-		System.out.println("\t-p intra-job pipelining\n\t-P inter-job pipelining\n\t-R do not reduce job 1 output\n\t-x use xml article mapper");
+		System.out.println("\t-p intra-job pipelining\n\t-P inter-job pipelining\n\t-R do not reduce job 1 output\n\t-x use xml article mapper\n\t-c compare topk lists");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
 
@@ -270,6 +272,8 @@ public class TopK extends Configured implements Tool {
 		        	pipelineJob = true;
 		          } else if ("-R".equals(args[i])) {
 		        	  reduceOutput = false;
+		          } else if ("-c".equals(args[i])) {
+		        	  topkJob.setBoolean("mapred.job.comparelists", true);
 		          } else if ("-x".equals(args[i])) {
 		        	  xmlmapper = true;
 		          } else if ("-p".equals(args[i])) {
