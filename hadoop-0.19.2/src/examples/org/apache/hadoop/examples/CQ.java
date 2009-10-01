@@ -219,6 +219,15 @@ public class CQ extends Configured implements Tool {
 
                           }
                         }
+                        public void configure(JobConf jc) {
+                          try {
+                          java.net.InetAddress localMachine = java.net.InetAddress.getLocalHost();
+                            String hn = localMachine.getHostName();
+                            System.out.println("CQ mapper started on " + hn);
+                          } catch (java.net.UnknownHostException e) {
+                            throw new RuntimeException(e);
+                          }
+                        }
                         public void map(LongWritable key, Text value, 
                                         OutputCollector<Text, Text> output, 
                                         Reporter reporter) throws IOException {
@@ -261,6 +270,9 @@ public class CQ extends Configured implements Tool {
 
                                         int pagein = stat.getInt(SystemStatEntry.PAGEIN);
                                         int pageout = stat.getInt(SystemStatEntry.PAGEOUT);       
+
+
+                                        System.err.println("swap info: " + (swappedin - in) + " in, "+(swappedout-out) + " out");
                                         
                                         Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (swappedin-in)  + "," + (swappedout-out));
                                         output.collect(word, v);
@@ -287,7 +299,7 @@ public class CQ extends Configured implements Tool {
           public long tstamp;
 
           public float CPUW = 100;
-          public float SW = 1000;
+          public float SW = 10;
           public float PW = (float)0.3;
 
           public HostState() {
@@ -308,6 +320,9 @@ public class CQ extends Configured implements Tool {
             double load = (user + system) / jiffies;
             return (int)(CPUW * load + SW * swaps + PW * pages);
           }
+          public int cpuReading() {
+            return (int) (((user + system) / jiffies) * 100);
+          }
         }
 
         public static class SummaryStats {
@@ -319,6 +334,7 @@ public class CQ extends Configured implements Tool {
             sum = sumsq = cnt = 0;
           }
           void reading(int d) {
+            //System.err.println("READING: " + d);
             sum += d;
             sumsq += d * d;
             cnt++;
@@ -381,7 +397,8 @@ public class CQ extends Configured implements Tool {
               if (now - h.tstamp < (1000 * interval)) {
                 newList.add(h);
                 //ssd.readingPerc((h.user + h.system) / h.jiffies);
-                ssd.reading(h.linearCombo());
+                //ssd.reading(h.linearCombo());
+                ssd.reading(h.cpuReading());
                 //cnt++;
               }
             }
@@ -409,7 +426,9 @@ public class CQ extends Configured implements Tool {
                   sumsq += smallsum * smallsum;
                   cnt++;
 */
-                  ssd.readingPerc((hs.user + hs.system) / hs.jiffies);
+                  ///ssd.readingPerc((hs.user + hs.system) / hs.jiffies);
+                  //ssd.reading(hs.linearCombo());
+                  ssd.reading(hs.cpuReading());
                 }
               }
               m.put(h, newList);
@@ -493,11 +512,16 @@ public class CQ extends Configured implements Tool {
                                 SummaryStats globalStats = cqs.notHostAvg(key.toString(), 120);
                                 System.err.println("20 second moving avg: " + avg);
                                 System.err.println("global 120 second moving avg: " + globalStats.avg() + ", stdev " + globalStats.stdev());
+                                boolean alert = false;
                                 if (avg > (globalStats.avg() + 2 * globalStats.stdev())) {
-                                  System.out.println(key.toString() + "ALERT!!!\n");
+                                  //System.out.println(key.toString() + "ALERT!!!\n");
                                   System.err.println(key.toString() + "ALERT!!!\n");
+                                  alert = true;
                                 }
                                 System.err.println("--------------------------\n");
+
+
+                                System.out.println(System.currentTimeMillis() + "\t" + key.toString() + "\t" + avg + "\t" + globalStats.avg() + "\t" + globalStats.stdev() + "\t" + alert);
             
                         }
                 }
