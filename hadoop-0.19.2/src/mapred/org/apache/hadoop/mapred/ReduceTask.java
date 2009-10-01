@@ -499,6 +499,7 @@ public class ReduceTask extends Task {
 			// make output collector
 			String finalName = getOutputName(getPartition());
 			FileSystem fs = FileSystem.get(job);
+			LOG.info("FS REPLICATION " + fs.getDefaultReplication());
 			final RecordWriter out = job.getOutputFormat().getRecordWriter(fs, job, finalName, reporter);  
 			OutputCollector collector = new OutputCollector() {
 				@SuppressWarnings("unchecked")
