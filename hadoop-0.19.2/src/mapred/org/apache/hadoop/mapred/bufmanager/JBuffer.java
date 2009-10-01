@@ -1027,7 +1027,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 
 			if (localFs.exists(mapOutputFile.finalPath(this.taskid))) {
-				return forceFree(true);
+				long duration = forceFree(true);
+				LOG.info("JBuffer force time = " + duration);
+				return duration >= 0;
 			}
 			else {
 				if (kvend != kvindex) {
@@ -1037,7 +1039,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 				if (kvstart == kvend) {
 					LOG.debug("JBuffer nothing to force!");
-				} else if (forceFree(false)) {
+					return false;
+				} 
+				
+				long duration = forceFree(false);
+				if (duration >= 0) {
+					LOG.info("JBuffer force time = " + duration);
 					if (bufend < bufindex && bufindex < bufstart) {
 						bufvoid = kvbuffer.length;
 					}
@@ -1051,10 +1058,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 	
-	private boolean forceFree(boolean finalResult) throws IOException {
+	private long forceFree(boolean finalResult) throws IOException {
 		if (!pipelineThread.force()) {
 			LOG.info("JBuffer: force unable to catch pipeline thread up.");
-			return false;
+			return -1;
 		}
 		LOG.info("JBuffer: force the pipelined data from kvstart = " + kvstart);
 		
@@ -1062,20 +1069,23 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		for (BufferRequest request : requestMap.values()) {
 			if (!request.isOpen()) {
 				request.open(job, response, false);
-				if (!response.open) return false;
+				if (!response.open) return -1;
 			}
 		}
 		
+		long forcetime = 0L;
 		if (finalResult) {
 			try {
+				forcetime = System.currentTimeMillis();
 				for (BufferRequest request : requestMap.values()) {
 					request.flushFinal();
 				}
+				forcetime = System.currentTimeMillis() - forcetime;
 			} catch (IOException e) {
 				LOG.error("JBuffer force final result failed. " + e);
-				return false;
+				return -1;
 			}
-			return true;
+			return forcetime;
 		}
 		
 		// create spill file
@@ -1124,16 +1134,18 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			FSDataInputStream dataIn = localFs.open(filename);
 			FSDataInputStream indexIn = localFs.open(indexFilename);
 			
+			long starttime = System.currentTimeMillis();
 			for (BufferRequest request : requestMap.values()) {
 				request.flush(indexIn, dataIn, progress.get());
 			}
 			dataIn.close(); indexIn.close();
+			forcetime += System.currentTimeMillis() - starttime;
 		} finally {
 			localFs.delete(filename, true);
 			localFs.delete(indexFilename, true);
 		}
 		LOG.info("JBuffer: force pipelined data succeeded.");
-		return true;
+		return forcetime;
 	}
 	
 	public ValuesIterator<K, V> iterator() throws IOException {
