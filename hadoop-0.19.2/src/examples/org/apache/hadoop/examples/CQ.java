@@ -283,7 +283,7 @@ public class CQ extends Configured implements Tool {
                                         System.err.println("ie, "+u+","+su+" : "+j+","+st);
                                         su = u; ss = s; st = j; in = swappedin; out = swappedout; pin = pagein; pout = pageout;
                                         reporter.progress(); 
-                                        sleep(2000);
+                                        sleep(1000);
                                 }
 
 
@@ -507,7 +507,7 @@ public class CQ extends Configured implements Tool {
 
                                 }
                                 System.err.println("Host "+ key.toString()); 
-                                double avg = cqs.hostAvg(key.toString(), 20);
+                                double avg = cqs.hostAvg(key.toString(), 5);
                                 //double globalAvg = cqs.notHostAvg(key.toString(), 120);
                                 SummaryStats globalStats = cqs.notHostAvg(key.toString(), 120);
                                 System.err.println("20 second moving avg: " + avg);
