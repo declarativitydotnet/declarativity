@@ -186,20 +186,28 @@ public class TopK extends Configured implements Tool {
 		public void configure(JobConf job) {
 			k = job.getInt("mapred.reduce.topk.k", 1);
 			count = 0;
+			topklist.add(new ArrayList<String>());
 		}
-
+		
 		public void reduce(LongWritable key, Iterator<Text> values,
 				OutputCollector<LongWritable, Text> output,
 				Reporter reporter) throws IOException {
-			List<String> topk = new ArrayList<String>();
+			
+			List<String> topk = topklist.get(topklist.size() - 1);
 			while (values.hasNext() && count++ < k) {
 				Text value = values.next();
 				topk.add(value.toString());
 				output.collect(key, value);
 			}
+		}
+		
+		@Override
+		public void close() throws IOException {
+			if (topklist.size() <= 1) return;
 			
-			System.err.println("TOPK: compare current topk " + topklist.size() + " previous lists.");
-			for (int j = topklist.size() - 1; j >= 0; j++) {
+			List<String> topk = topklist.get(topklist.size() - 1);
+			System.err.println("TOPK: compare most recent topk " + topklist.size() + " to previous topks.");
+			for (int j = topklist.size() - 2; j >= 0; j++) {
 				List<String> previous = topklist.get(j);
 				if (previous != null) {
 					for (int i = 0; i < previous.size(); i++) {
@@ -212,7 +220,6 @@ public class TopK extends Configured implements Tool {
 				}
 			}
 			System.err.println("TOPK: end compare");
-			topklist.add(topk);
 		}
 	}
 
