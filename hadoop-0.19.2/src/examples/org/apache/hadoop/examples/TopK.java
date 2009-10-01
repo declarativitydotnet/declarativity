@@ -207,7 +207,7 @@ public class TopK extends Configured implements Tool {
 			
 			List<String> topk = topklist.get(topklist.size() - 1);
 			System.err.println("TOPK: compare most recent topk " + topklist.size() + " to previous topks.");
-			for (int j = topklist.size() - 2; j >= 0; j++) {
+			for (int j = topklist.size() - 2; j >= 0; j--) {
 				List<String> previous = topklist.get(j);
 				if (previous != null) {
 					for (int i = 0; i < previous.size(); i++) {
