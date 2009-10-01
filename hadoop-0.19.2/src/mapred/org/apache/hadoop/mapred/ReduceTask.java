@@ -397,17 +397,17 @@ public class ReduceTask extends Task {
 			reducePhase.complete();
 			setProgressFlag();
 			if (reducePipeline) {
-				this.outputWriteTime = System.currentTimeMillis();
 				if (!buffer.force()) {
 					bufferUmbilical.commit(getTaskID());
 					LOG.info("ReduceTask " + getTaskID() + " registered final output to TT." );
 				}
 				else {
-					outputWriteTime = System.currentTimeMillis() - outputWriteTime;
 					LOG.info("ReduceTask " + getTaskID() + " was able to force final output.");
 				}
 			}
-			LOG.info("ReduceTask output write time = " + outputWriteTime);
+			else {
+				LOG.info("HDFS output write time = " + outputWriteTime);
+			}
 			buffer.free();
 		}
 		
