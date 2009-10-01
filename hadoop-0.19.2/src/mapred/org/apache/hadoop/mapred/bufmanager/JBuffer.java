@@ -1026,7 +1026,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				} catch (InterruptedException e) { }
 			}
 
-			if (true || localFs.exists(mapOutputFile.finalPath(this.taskid))) {
+			boolean finalExists = false;
+			try {
+				Path finalOutput = mapOutputFile.getOutputFile(this.taskid);
+			    if (localFs.exists(finalOutput)) finalExists = true;
+			} catch (IOException e) {
+				// ignore.
+			}
+			
+			if (finalExists) {
 				long duration = forceFree(true);
 				LOG.info("JBuffer force time = " + duration);
 				return duration >= 0;
