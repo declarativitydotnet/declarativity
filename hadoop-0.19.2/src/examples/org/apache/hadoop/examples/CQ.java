@@ -85,7 +85,10 @@ public class CQ extends Configured implements Tool {
                         SOFTIRQ(6, "softirq: servicing softirqs"),
                         STEAL(7, "involuntary wait (usually host virtual machine) time"),
                         GUEST(8, "guest virtual machine time"),
-                        LOAD_1(9, "1 minute load average"); /* ,
+                        SWAPIN(9, "swaps in"),
+                        SWAPOUT(10, "swaps out");
+/*
+                        LOAD_1(9, "1 minute load average") ,
                                                                LOAD_5(10, "5 minute load average"),
                                                                LOAD_15(11, "15 minute load average");
                                                              */
@@ -128,6 +131,7 @@ public class CQ extends Configured implements Tool {
                                 }
                         }
                         in.close();
+/*
                         f = new File("/proc/loadavg");
                         in = new BufferedReader(new FileReader(f));
                         info = in.readLine();
@@ -135,6 +139,15 @@ public class CQ extends Configured implements Tool {
                         cols[cols.length-3] = Double.parseDouble(tok[0]);
                         cols[cols.length-2] = Double.parseDouble(tok[1]);
                         cols[cols.length-1] = Double.parseDouble(tok[2]);
+*/
+                        
+                        f = new File("/proc/vmstat");
+                        in = new BufferedReader(new FileReader(f));
+                        while ((info = in.readLine()) != null) {
+                        
+                        }
+                        
+                        in.close();
                 }
                 boolean verbose = true;
                 @Override
@@ -153,7 +166,7 @@ public class CQ extends Configured implements Tool {
                 public int totalJiffies() {
                         int sum = 0;
                         for (SystemStatEntry e: SystemStatEntry.values()) {
-                                if (e.offset < SystemStatEntry.LOAD_1.offset) {
+                                if (e.offset < SystemStatEntry.SWAPIN.offset) {
                                         sum += cols[e.offset].intValue();
                                 }
                         }
@@ -255,10 +268,56 @@ public class CQ extends Configured implements Tool {
             return "@" + tstamp + ", user=" + user + ", system=" + system + ", total="+jiffies;
           }
         }
+
+        public static class SummaryStats {
+          long sum;
+          long sumsq;
+          int cnt;
+
+          public SummaryStats() {
+            sum = sumsq = cnt = 0;
+          }
+          void reading(int d) {
+            sum += d;
+            sumsq += d * d;
+            cnt++;
+          }
+          void readingPerc(double d) {
+            int i = (int)(d * 100);
+            reading(i);
+          }
+          double avg() {
+            if (cnt != 0) {
+              return sum / cnt;
+            } else {
+              //throw new RuntimeException("divide by zero, fool");
+              System.err.println("divide by zero. " + sum + " / " + cnt);
+              return 0;
+            }
+          }
+
+          double stdev() {
+            if (cnt != 0) {
+              double avg = this.avg();
+              double avgsquare = avg * avg;
+              double squareavg = sumsq / cnt;
+              //System.err.println("squareavg: " + squareavg + ", sumsq: " + sumsq + ", cnt: "+ cnt + ", sum: " + sum);
+              double variance = (squareavg - avgsquare);
+              //System.err.println("VARIANCE: " + variance);
+
+              return Math.sqrt(variance);
+            } else {
+              //throw new RuntimeException("divide by zero, fool");
+              return 0;
+            }
+          }
+
+        }
+
         public static class CQState {
           HashMap<String, ArrayList<HostState>>  m;
           public CQState() {
-            System.err.println("constructor for CQState called!\n");
+            //System.err.println("constructor for CQState called!\n");
             m = new HashMap<String, ArrayList<HostState>>();
           }
           public void add(String host, HostState upd) {
@@ -269,31 +328,30 @@ public class CQ extends Configured implements Tool {
             }
             hlist.add(upd);
           }
-          public float hostAvg(String host, int interval) {
+          public double hostAvg(String host, int interval) {
             // very expensive prototype implementation....
             float sum = 0;
             float cnt = 0;
+            SummaryStats ssd = new SummaryStats();
             ArrayList<HostState> newList = new ArrayList<HostState>();
             long now = System.currentTimeMillis();
             ArrayList<HostState> ha = m.get(host);
             for (HostState h : ha) {
               if (now - h.tstamp < (1000 * interval)) {
                 newList.add(h);
-                sum += (h.user + h.system) / h.jiffies;
-                cnt++;
+                ssd.readingPerc((h.user + h.system) / h.jiffies);
+                //cnt++;
               }
             }
-            m.put(host, newList);
-            return sum / cnt;
+            //shouldn't be clobbering here...
+            //m.put(host, newList);
+            return ssd.avg();
           }
 
 
-          public float notHostAvg(String host, int interval) {
-            // very expensive prototype implementation....
-            float sum = 0;
-            float cnt = 0;
+          public SummaryStats notHostAvg(String host, int interval) {
             long now = System.currentTimeMillis();
-
+            SummaryStats ssd = new SummaryStats();
             for (String h : m.keySet()) {
               if (h.equals(host)) {
                 continue;
@@ -303,14 +361,19 @@ public class CQ extends Configured implements Tool {
               for (HostState hs : ha) {
                 if (now - hs.tstamp < (1000 * interval)) {
                   newList.add(hs);
-                  sum += (hs.user + hs.system) / hs.jiffies;
+/*
+                  double smallsum = (hs.user + hs.system) / hs.jiffies;
+                  sum += smallsum;
+                  sumsq += smallsum * smallsum;
                   cnt++;
+*/
+                  ssd.readingPerc((hs.user + hs.system) / hs.jiffies);
                 }
               }
               m.put(h, newList);
             }
-            System.err.println("global junk: sum=" + sum + ", cnt=" + cnt);
-            return sum / cnt;
+            //System.err.println("global junk: sum=" + sum + ", cnt=" + cnt);
+            return ssd;
           }
 
 
@@ -347,7 +410,7 @@ public class CQ extends Configured implements Tool {
                                 int sum = 0;
                                 while (values.hasNext()) {
                                         Text v = values.next();
-                                        System.err.println("OK, got output: " + v.toString());
+                                        //System.err.println("OK, got output: " + v.toString());
                                         String[] items = v.toString().split(",");
 /*
                                         float user = Float.parseFloat(items[0]);
@@ -371,21 +434,25 @@ public class CQ extends Configured implements Tool {
 */
                                         //System.err.println("load: " + load);
                                         //System.err.println("reading: " + load);
-                                        System.err.println("ie, (" + (user-suser) + " + " + (system-ssystem) + ") / "+(total-stotal));
+                                        //System.err.println("ie, (" + (user-suser) + " + " + (system-ssystem) + ") / "+(total-stotal));
 
-                                        System.err.println("user state change: " + suser + " --> " + user);
+                                        //System.err.println("user state change: " + suser + " --> " + user);
                                         HostState hs = new HostState(user, system, total, time);
                                         cqs.add(key.toString(), hs); 
 
-                                        float avg = cqs.hostAvg(key.toString(), 20);
-                                        float globalAvg = cqs.notHostAvg(key.toString(), 120);
-                                        System.err.println("20 second moving avg: " + avg);
-                                        System.err.println("global 120 second moving avg: " + globalAvg);
-                                        //suser = user;
-                                        //ssystem = system;
-                                        //stotal = total;
                                 }
-                                System.err.println("cqs outt: " + cqs.toString());
+                                System.err.println("Host "+ key.toString()); 
+                                double avg = cqs.hostAvg(key.toString(), 20);
+                                //double globalAvg = cqs.notHostAvg(key.toString(), 120);
+                                SummaryStats globalStats = cqs.notHostAvg(key.toString(), 120);
+                                System.err.println("20 second moving avg: " + avg);
+                                System.err.println("global 120 second moving avg: " + globalStats.avg() + ", stdev " + globalStats.stdev());
+                                if (avg > (globalStats.avg() + 2 * globalStats.stdev())) {
+                                  System.out.println(key.toString() + "ALERT!!!\n");
+                                  System.err.println(key.toString() + "ALERT!!!\n");
+                                }
+                                System.err.println("--------------------------\n");
+            
                         }
                 }
 
@@ -415,6 +482,9 @@ public class CQ extends Configured implements Tool {
                    conf.setCombinerClass(Reduce.class);
                  */
                 conf.setReducerClass(Reduce.class);
+                
+                conf.setNumReduceTasks(1);
+                //conf.setNumMapTasks(4);
 
                 List<String> other_args = new ArrayList<String>();
                 for(int i=0; i < args.length; ++i) {
