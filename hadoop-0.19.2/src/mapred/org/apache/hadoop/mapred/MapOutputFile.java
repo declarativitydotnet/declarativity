@@ -42,6 +42,11 @@ public class MapOutputFile {
   protected LocalDirAllocator lDirAlloc = 
                             new LocalDirAllocator("mapred.local.dir");
   
+  public boolean finalExists(TaskAttemptID mapTaskId) {
+    return lDirAlloc.ifExists(TaskTracker.getIntermediateOutputDir(
+            jobId.toString(), mapTaskId.toString()) + "/file.out", conf);
+  }
+  
   /** Return the path to local map output file created earlier
    * @param mapTaskId a map task id
    */
