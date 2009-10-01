@@ -158,6 +158,7 @@ public class ReduceTask extends Task {
 	private float   snapshotInterval  = 1f;
 	private boolean inputSnapshots = false;
 	private boolean isSnapshotting = false;
+	private long outputWriteTime = 0L;
 	
 
 	@Override
@@ -396,14 +397,17 @@ public class ReduceTask extends Task {
 			reducePhase.complete();
 			setProgressFlag();
 			if (reducePipeline) {
+				this.outputWriteTime = System.currentTimeMillis();
 				if (!buffer.force()) {
 					bufferUmbilical.commit(getTaskID());
 					LOG.info("ReduceTask " + getTaskID() + " registered final output to TT." );
 				}
 				else {
+					outputWriteTime = System.currentTimeMillis() - outputWriteTime;
 					LOG.info("ReduceTask " + getTaskID() + " was able to force final output.");
 				}
 			}
+			LOG.info("ReduceTask output write time = " + outputWriteTime);
 			buffer.free();
 		}
 		
@@ -491,6 +495,7 @@ public class ReduceTask extends Task {
 			buffer.close();
 		}
 		else {
+			this.outputWriteTime = 0L;
 			// make output collector
 			String finalName = getOutputName(getPartition());
 			FileSystem fs = FileSystem.get(job);
@@ -499,7 +504,9 @@ public class ReduceTask extends Task {
 				@SuppressWarnings("unchecked")
 				public void collect(Object key, Object value)
 				throws IOException {
+					long timestamp = System.currentTimeMillis();
 					out.write(key, value);
+					outputWriteTime += (System.currentTimeMillis() - timestamp);
 					reduceOutputCounter.increment(1);
 					// indicate that progress update needs to be sent
 					reporter.progress();
@@ -507,7 +514,9 @@ public class ReduceTask extends Task {
 			};
 			System.err.println("ReduceTask: create final output file " + finalName);
 			reduce(collector, reporter, reducePhase);
+			long timestamp = System.currentTimeMillis();
 			out.close(reporter);
+			outputWriteTime += (System.currentTimeMillis() - timestamp);
 		}
 	}
 }

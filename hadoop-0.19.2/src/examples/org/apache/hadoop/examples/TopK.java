@@ -228,7 +228,7 @@ public class TopK extends Configured implements Tool {
 	private TopK() {}                               // singleton
 
 	private void printUsage() {
-		System.out.println("TopK [-s interval] [-xpPR] [-m mappers] [-r reducers] <inDir> <outDir> <K>");
+		System.out.println("TopK [-s interval] [-xcpPR] [-m mappers] [-r reducers] <inDir> <outDir> <K>");
 		System.out.println("\t-p intra-job pipelining\n\t-P inter-job pipelining\n\t-R do not reduce job 1 output\n\t-x use xml article mapper\n\t-c compare topk lists");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
