@@ -1026,8 +1026,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				} catch (InterruptedException e) { }
 			}
 
-			Path finalOut = mapOutputFile.getOutputFile(this.taskid);
-			if (localFs.exists(finalOut)) {
+			if (mapOutputFile.finalExists(this.taskid)) {
 				return forceFree(true);
 			}
 			else {
