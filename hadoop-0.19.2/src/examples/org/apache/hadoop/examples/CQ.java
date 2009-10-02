@@ -283,7 +283,7 @@ public class CQ extends Configured implements Tool {
                                         System.err.println("ie, "+u+","+su+" : "+j+","+st);
                                         su = u; ss = s; st = j; in = swappedin; out = swappedout; pin = pagein; pout = pageout;
                                         reporter.progress(); 
-                                        sleep(1000);
+                                        sleep(4000);
                                 }
 
 
