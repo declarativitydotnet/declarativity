@@ -21,6 +21,7 @@ package org.apache.hadoop.examples;
 
 
 import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -88,7 +89,8 @@ public class CQ extends Configured implements Tool {
                         PAGEIN(8, "pagein"),
                         PAGEOUT(9, "pageout"),
                         SWAPIN(10, "swaps in"),
-                        SWAPOUT(11, "swaps out");
+                        SWAPOUT(11, "swaps out"),
+                        NET(12, "kbs/s in and out");
 /*
                         LOAD_1(9, "1 minute load average") ,
                                                                LOAD_5(10, "5 minute load average"),
@@ -124,7 +126,7 @@ public class CQ extends Configured implements Tool {
                         if(!info.startsWith("cpu  ")) { throw new IllegalStateException("Can't parse /proc/stat!"); }
                         info = info.substring(5);
                         String[] tok = whiteSpace.split(info);
-                        cols = new Number[tok.length + 4];
+                        cols = new Number[tok.length + 5];
                         for(int i = 0; i < tok.length; i++) {
                                 try {
                                         cols[i] = Long.parseLong(tok[i]);
@@ -148,16 +150,16 @@ public class CQ extends Configured implements Tool {
                         while ((info = in.readLine()) != null) {
                             tok = whiteSpace.split(info);
                             if (tok[0].equals("pgpgin")) {
-                                cols[cols.length-4] = Long.parseLong(tok[1]);
+                                cols[cols.length-5] = Long.parseLong(tok[1]);
                                 vmstats++;
                             } else if (tok[0].equals("pgpgout")) {
-                                cols[cols.length-3] = Long.parseLong(tok[1]);
+                                cols[cols.length-4] = Long.parseLong(tok[1]);
                                 vmstats++;
                             } else if (tok[0].equals("pswpin")) {
-                                cols[cols.length-2] = Long.parseLong(tok[1]);
+                                cols[cols.length-3] = Long.parseLong(tok[1]);
                                 vmstats++;
                             } else if (tok[0].equals("pswpout")) {
-                                cols[cols.length-1] = Long.parseLong(tok[1]);
+                                cols[cols.length-2] = Long.parseLong(tok[1]);
                                 vmstats++;
                             }
                         }
@@ -166,6 +168,26 @@ public class CQ extends Configured implements Tool {
                         }
                         
                         in.close();
+                        Process p = Runtime.getRuntime().exec("/usr/bin/ifstat 1/1 1");
+            
+                        BufferedReader stdInput = new BufferedReader(new 
+                            InputStreamReader(p.getInputStream()));
+
+                        stdInput.readLine();
+                        stdInput.readLine();
+                        String s = stdInput.readLine();
+                        System.err.println("INPUT " + s);
+                        tok = whiteSpace.split(s);
+                        //System.err.println("tok0: *" + tok[1] +"*, tok1 *" + tok[2] +"*"); 
+                        int i = 0;
+                        if (tok[0].equals("")) {
+                          i = 1;
+                        }
+                        double kbs = Double.parseDouble(tok[i]) + Double.parseDouble(tok[i+1]);   
+                        System.err.println("NEt: " + kbs);
+                        cols[cols.length-1] = kbs;  
+                        stdInput.close();
+                                
                 }
                 boolean verbose = true;
                 @Override
@@ -184,7 +206,7 @@ public class CQ extends Configured implements Tool {
                 public int totalJiffies() {
                         int sum = 0;
                         for (SystemStatEntry e: SystemStatEntry.values()) {
-                                if (e.offset < SystemStatEntry.SWAPIN.offset) {
+                                if (e.offset < SystemStatEntry.PAGEIN.offset) {
                                         sum += cols[e.offset].intValue();
                                 }
                         }
@@ -274,7 +296,7 @@ public class CQ extends Configured implements Tool {
 
                                         System.err.println("swap info: " + (swappedin - in) + " in, "+(swappedout-out) + " out");
                                         
-                                        Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (swappedin-in)  + "," + (swappedout-out) + "," + System.currentTimeMillis());
+                                        Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (swappedin-in)  + "," + (swappedout-out) + "," + stat.getFloat(SystemStatEntry.NET) + "," + System.currentTimeMillis());
                                         output.collect(word, v);
                                         blockForce(output);
                                         System.err.println("M load: " + l );
@@ -296,7 +318,9 @@ public class CQ extends Configured implements Tool {
           public double jiffies;
           public int swaps;
           public int pages;
+          public double net;
           public long tstamp;
+  
 
           public float CPUW = 100;
           public float SW = 10;
@@ -305,13 +329,14 @@ public class CQ extends Configured implements Tool {
           public HostState() {
             user = system = jiffies = swaps = pages = 0;
           }
-          public HostState(double u, double s, double t, int pa, int sw, long ts) {
+          public HostState(double u, double s, double t, int pa, int sw, double n, long ts) {
             user = u;
             system = s;
             jiffies = t;
             swaps = sw;
             pages = pa;
             tstamp = ts;
+            net = n;
           }
           public String toString() {
             return "@" + tstamp + ", user=" + user + ", system=" + system + ", total="+jiffies;
@@ -398,7 +423,8 @@ public class CQ extends Configured implements Tool {
                 newList.add(h);
                 //ssd.readingPerc((h.user + h.system) / h.jiffies);
                 //ssd.reading(h.linearCombo());
-                ssd.reading(h.cpuReading());
+               /// ssd.reading(h.cpuReading());
+                ssd.reading((int)h.net);
                 //cnt++;
               }
             }
@@ -482,7 +508,8 @@ public class CQ extends Configured implements Tool {
                                         int pages = Integer.parseInt(items[3]) + Integer.parseInt(items[4]);
 
                                         int swaps = Integer.parseInt(items[5]) + Integer.parseInt(items[6]);
-                                        long maptime = Long.parseLong(items[7]);
+                                        double netkbs = Double.parseDouble(items[7]);
+                                        long maptime = Long.parseLong(items[8]);
                                         double load = ((user - suser) + (system - ssystem)) / (total - stotal);
 
                                         // it might be a mistake to poll time here.  but at least we don't have
@@ -490,7 +517,7 @@ public class CQ extends Configured implements Tool {
                                         long time = System.currentTimeMillis();
 
                                         //System.err.println("user state change: " + suser + " --> " + user);
-                                        HostState hs = new HostState(user, system, total, pages, swaps, time);
+                                        HostState hs = new HostState(user, system, total, pages, swaps, netkbs, time);
                                         cqs.add(key.toString(), hs); 
 
 
