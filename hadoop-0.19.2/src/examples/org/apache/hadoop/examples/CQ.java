@@ -263,23 +263,12 @@ public class CQ extends Configured implements Tool {
                                 int out = 0;
                                 int pin = 0;
                                 int pout = 0;
+                                int iow = 0;
                                 while (true) {
                                         SystemStats stat = new SystemStats();
                                         word.set(hn);
                                         // I was having a lot of trouble with ArrayWritable...
 
-                                        /*
-                                        StringBuilder sb = new StringBuilder();
-                                        for (int i=0; i < 10; i++) {
-                                          sb.append(stat.getStrByOffset(i));
-                                          sb.append(",");
-                                        }
-                                        // total jiffies go at the end
-                                        sb.append(stat.totalJiffies());
-                                        Text statList = new Text(sb.toString());
-                                        //output.collect(word, statList);
-                                      
-                                        */
                                         // calc load here.
                                         float u = stat.getFloat(SystemStatEntry.USER);
                                         float s = stat.getFloat(SystemStatEntry.SYSTEM);
@@ -293,17 +282,18 @@ public class CQ extends Configured implements Tool {
                                         int pagein = stat.getInt(SystemStatEntry.PAGEIN);
                                         int pageout = stat.getInt(SystemStatEntry.PAGEOUT);       
 
+                                        int iowaits = stat.getInt(SystemStatEntry.IOWAIT);
 
                                         System.err.println("swap info: " + (swappedin - in) + " in, "+(swappedout-out) + " out");
                                         
-                                        Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (swappedin-in)  + "," + (swappedout-out) + "," + stat.getFloat(SystemStatEntry.NET) + "," + System.currentTimeMillis());
+                                        Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (swappedin-in)  + "," + (swappedout-out) + "," + stat.getFloat(SystemStatEntry.NET) + "," + (iowaits - iow) + "," + System.currentTimeMillis());
                                         output.collect(word, v);
                                         blockForce(output);
                                         System.err.println("M load: " + l );
 
                                         System.err.println("M readings: " + (u-su) + "," + (s-ss) + "," + (j-st));
                                         System.err.println("ie, "+u+","+su+" : "+j+","+st);
-                                        su = u; ss = s; st = j; in = swappedin; out = swappedout; pin = pagein; pout = pageout;
+                                        su = u; ss = s; st = j; in = swappedin; out = swappedout; pin = pagein; pout = pageout; iow = iowaits;
                                         reporter.progress(); 
                                         sleep(4000);
                                 }
@@ -320,6 +310,7 @@ public class CQ extends Configured implements Tool {
           public int pages;
           public double net;
           public long tstamp;
+          public int iow;
   
 
           public float CPUW = 100;
@@ -329,7 +320,7 @@ public class CQ extends Configured implements Tool {
           public HostState() {
             user = system = jiffies = swaps = pages = 0;
           }
-          public HostState(double u, double s, double t, int pa, int sw, double n, long ts) {
+          public HostState(double u, double s, double t, int pa, int sw, double n, int io, long ts) {
             user = u;
             system = s;
             jiffies = t;
@@ -337,6 +328,7 @@ public class CQ extends Configured implements Tool {
             pages = pa;
             tstamp = ts;
             net = n;
+            iow = io;
           }
           public String toString() {
             return "@" + tstamp + ", user=" + user + ", system=" + system + ", total="+jiffies;
@@ -347,6 +339,9 @@ public class CQ extends Configured implements Tool {
           }
           public int cpuReading() {
             return (int) (((user + system) / jiffies) * 100);
+          }
+          public int ioWaitReading() {
+            return (int) ((iow / jiffies) * 100);
           }
         }
 
@@ -424,7 +419,7 @@ public class CQ extends Configured implements Tool {
                 //ssd.readingPerc((h.user + h.system) / h.jiffies);
                 //ssd.reading(h.linearCombo());
                /// ssd.reading(h.cpuReading());
-                ssd.reading((int)h.net);
+                ssd.reading((int)h.ioWaitReading());
                 //cnt++;
               }
             }
@@ -509,7 +504,8 @@ public class CQ extends Configured implements Tool {
 
                                         int swaps = Integer.parseInt(items[5]) + Integer.parseInt(items[6]);
                                         double netkbs = Double.parseDouble(items[7]);
-                                        long maptime = Long.parseLong(items[8]);
+                                        int iowait = Integer.parseInt(items[8]);
+                                        long maptime = Long.parseLong(items[9]);
                                         double load = ((user - suser) + (system - ssystem)) / (total - stotal);
 
                                         // it might be a mistake to poll time here.  but at least we don't have
@@ -517,7 +513,7 @@ public class CQ extends Configured implements Tool {
                                         long time = System.currentTimeMillis();
 
                                         //System.err.println("user state change: " + suser + " --> " + user);
-                                        HostState hs = new HostState(user, system, total, pages, swaps, netkbs, time);
+                                        HostState hs = new HostState(user, system, total, pages, swaps, netkbs, iowait, time);
                                         cqs.add(key.toString(), hs); 
 
 
