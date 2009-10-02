@@ -1000,6 +1000,7 @@ class JobInProgress {
       LOG.info("Cannot create task split for " + profile.getJobID());
       return null;
     }
+    
         
     int target = findNewMapTask(tts, clusterSize, numUniqueHosts, 
                                 status.mapProgress());
@@ -1687,6 +1688,12 @@ class JobInProgress {
 
     Node node = jobtracker.getNode(tts.getHost());
     Node nodeParentAtMaxLevel = null;
+    
+    if (conf.getBoolean("mapred.job.monitor", false)) {
+    	if (runningMapCache != null && runningMapCache.containsKey(node)) {
+    		return -1;
+    	}
+    }
     
 
     /*
