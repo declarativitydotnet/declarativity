@@ -158,7 +158,6 @@ public class ReduceTask extends Task {
 	private float   snapshotInterval  = 1f;
 	private boolean inputSnapshots = false;
 	private boolean isSnapshotting = false;
-	private long outputWriteTime = 0L;
 	
 
 	@Override
@@ -405,9 +404,6 @@ public class ReduceTask extends Task {
 					LOG.info("ReduceTask " + getTaskID() + " was able to force final output.");
 				}
 			}
-			else {
-				LOG.info("HDFS output write time = " + outputWriteTime);
-			}
 			buffer.free();
 		}
 		
@@ -495,19 +491,15 @@ public class ReduceTask extends Task {
 			buffer.close();
 		}
 		else {
-			this.outputWriteTime = 0L;
 			// make output collector
 			String finalName = getOutputName(getPartition());
 			FileSystem fs = FileSystem.get(job);
-			LOG.info("FS REPLICATION " + fs.getDefaultReplication());
 			final RecordWriter out = job.getOutputFormat().getRecordWriter(fs, job, finalName, reporter);  
 			OutputCollector collector = new OutputCollector() {
 				@SuppressWarnings("unchecked")
 				public void collect(Object key, Object value)
 				throws IOException {
-					long timestamp = System.currentTimeMillis();
 					out.write(key, value);
-					outputWriteTime += (System.currentTimeMillis() - timestamp);
 					reduceOutputCounter.increment(1);
 					// indicate that progress update needs to be sent
 					reporter.progress();
@@ -515,9 +507,7 @@ public class ReduceTask extends Task {
 			};
 			System.err.println("ReduceTask: create final output file " + finalName);
 			reduce(collector, reporter, reducePhase);
-			long timestamp = System.currentTimeMillis();
 			out.close(reporter);
-			outputWriteTime += (System.currentTimeMillis() - timestamp);
 		}
 	}
 }
