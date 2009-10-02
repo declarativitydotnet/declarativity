@@ -423,8 +423,8 @@ public class CQ extends Configured implements Tool {
               if (now - h.tstamp < (1000 * interval)) {
                 newList.add(h);
                 //ssd.readingPerc((h.user + h.system) / h.jiffies);
-                ssd.reading(h.linearCombo());
-                //ssd.reading(h.cpuReading());
+                ///ssd.reading(h.linearCombo());
+                ssd.reading(h.cpuReading());
                 //ssd.reading((int)h.ioWaitReading());
                 //cnt++;
               }
@@ -513,10 +513,12 @@ public class CQ extends Configured implements Tool {
                                         cqs.add(key.toString(), hs); 
 
 
-                         //               double avg = cqs.hostAvg(key.toString(), 5);
-                         //               System.out.println(System.currentTimeMillis() + "\t" + maptime + "\t" + key.toString() + "\t" + avg);
+                                        double avg = cqs.hostAvg(key.toString(), 5);
+                                        System.out.println(System.currentTimeMillis() + "\t" + maptime + "\t" + key.toString() + "\t" + avg);
 
                                 }
+
+/*
                                 System.err.println("Host "+ key.toString()); 
                                 double avg = cqs.hostAvg(key.toString(), 5);
                                 //double globalAvg = cqs.notHostAvg(key.toString(), 120);
@@ -532,7 +534,7 @@ public class CQ extends Configured implements Tool {
                                   }
                                 }
                                 System.err.println("--------------------------\n");
-
+*/
                                 //System.out.println(System.currentTimeMillis() + "\t" + key.toString() + "\t" + avg + "\t" + globalStats.avg() + "\t" + globalStats.stdev() + "\t" + alert);
                         }
                 }
@@ -566,6 +568,8 @@ public class CQ extends Configured implements Tool {
                 
                 conf.setNumReduceTasks(1);
                 //conf.setNumMapTasks(4);
+
+                conf.setBoolean("mapred.job.monitor", true);
 
                 List<String> other_args = new ArrayList<String>();
                 for(int i=0; i < args.length; ++i) {
