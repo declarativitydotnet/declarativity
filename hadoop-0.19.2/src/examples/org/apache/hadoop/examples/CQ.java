@@ -284,9 +284,12 @@ public class CQ extends Configured implements Tool {
 
                                         int iowaits = stat.getInt(SystemStatEntry.IOWAIT);
 
+                                        int sir = (in == 0) ? 0 : swappedin - in;
+                                        int sor = (out == 0) ? 0 : swappedout - out;
+
                                         System.err.println("swap info: " + (swappedin - in) + " in, "+(swappedout-out) + " out");
                                         
-                                        Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (swappedin-in)  + "," + (swappedout-out) + "," + stat.getFloat(SystemStatEntry.NET) + "," + (iowaits - iow) + "," + System.currentTimeMillis());
+                                        Text v = new Text(((u-su) % 100) + "," + ((s-ss)%100) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (sir)  + "," + (sor) + "," + stat.getFloat(SystemStatEntry.NET) + "," + (iowaits - iow) + "," + System.currentTimeMillis());
                                         output.collect(word, v);
                                         blockForce(output);
                                         System.err.println("M load: " + l );
@@ -314,8 +317,10 @@ public class CQ extends Configured implements Tool {
   
 
           public float CPUW = 100;
-          public float SW = 10;
-          public float PW = (float)0.3;
+          public float SW = 1;
+          //public float PW = (float)0.3;
+
+          public float PW = (float)0;
 
           public HostState() {
             user = system = jiffies = swaps = pages = 0;
@@ -365,6 +370,7 @@ public class CQ extends Configured implements Tool {
           }
           double avg() {
             if (cnt != 0) {
+              System.err.println("dividing " + sum + " by "+ cnt);
               return sum / cnt;
             } else {
               //throw new RuntimeException("divide by zero, fool");
@@ -417,9 +423,9 @@ public class CQ extends Configured implements Tool {
               if (now - h.tstamp < (1000 * interval)) {
                 newList.add(h);
                 //ssd.readingPerc((h.user + h.system) / h.jiffies);
-                //ssd.reading(h.linearCombo());
-               /// ssd.reading(h.cpuReading());
-                ssd.reading((int)h.ioWaitReading());
+                ssd.reading(h.linearCombo());
+                //ssd.reading(h.cpuReading());
+                //ssd.reading((int)h.ioWaitReading());
                 //cnt++;
               }
             }
@@ -441,20 +447,11 @@ public class CQ extends Configured implements Tool {
               for (HostState hs : ha) {
                 if (now - hs.tstamp < (1000 * interval)) {
                   newList.add(hs);
-/*
-                  double smallsum = (hs.user + hs.system) / hs.jiffies;
-                  sum += smallsum;
-                  sumsq += smallsum * smallsum;
-                  cnt++;
-*/
-                  ///ssd.readingPerc((hs.user + hs.system) / hs.jiffies);
-                  //ssd.reading(hs.linearCombo());
-                  ssd.reading(hs.cpuReading());
+                  ssd.reading(hs.linearCombo());
                 }
               }
               m.put(h, newList);
             }
-            //System.err.println("global junk: sum=" + sum + ", cnt=" + cnt);
             return ssd;
           }
 
@@ -462,7 +459,6 @@ public class CQ extends Configured implements Tool {
           public String toString() {
             StringBuilder sb = new StringBuilder();
             for (String k : m.keySet()) {
-              ///System.err.println("key: " + k);
               sb.append("key: " +  k + "\n");
               ArrayList<HostState> ah = m.get(k);
               for (HostState s : ah) {
@@ -517,11 +513,10 @@ public class CQ extends Configured implements Tool {
                                         cqs.add(key.toString(), hs); 
 
 
-                                        double avg = cqs.hostAvg(key.toString(), 5);
-                                        System.out.println(System.currentTimeMillis() + "\t" + maptime + "\t" + key.toString() + "\t" + avg);
+                         //               double avg = cqs.hostAvg(key.toString(), 5);
+                         //               System.out.println(System.currentTimeMillis() + "\t" + maptime + "\t" + key.toString() + "\t" + avg);
 
                                 }
-/*
                                 System.err.println("Host "+ key.toString()); 
                                 double avg = cqs.hostAvg(key.toString(), 5);
                                 //double globalAvg = cqs.notHostAvg(key.toString(), 120);
@@ -530,15 +525,15 @@ public class CQ extends Configured implements Tool {
                                 System.err.println("global 120 second moving avg: " + globalStats.avg() + ", stdev " + globalStats.stdev());
                                 boolean alert = false;
                                 if (avg > (globalStats.avg() + 2 * globalStats.stdev())) {
-                                  //System.out.println(key.toString() + "ALERT!!!\n");
-                                  System.err.println(key.toString() + "ALERT!!!\n");
-                                  alert = true;
+                                  if (avg > 10) {
+                                    System.out.println(System.currentTimeMillis() + " " + key.toString() + "ALERT!!!\n");
+                                    System.err.println(key.toString() + "ALERT!!!\n");
+                                    alert = true;
+                                  }
                                 }
                                 System.err.println("--------------------------\n");
 
-
-                                System.out.println(System.currentTimeMillis() + "\t" + key.toString() + "\t" + avg + "\t" + globalStats.avg() + "\t" + globalStats.stdev() + "\t" + alert);
-  */          
+                                //System.out.println(System.currentTimeMillis() + "\t" + key.toString() + "\t" + avg + "\t" + globalStats.avg() + "\t" + globalStats.stdev() + "\t" + alert);
                         }
                 }
 
