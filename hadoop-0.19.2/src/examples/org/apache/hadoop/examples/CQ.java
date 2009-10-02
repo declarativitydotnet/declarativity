@@ -598,6 +598,7 @@ public class CQ extends Configured implements Tool {
                 FileInputFormat.setInputPaths(conf, other_args.get(0));
                 FileOutputFormat.setOutputPath(conf, new Path(other_args.get(1)));
 
+                conf.setBoolean("mapred.job.monitor", true);
                 JobClient.runJob(conf);
                 return 0;
         }
