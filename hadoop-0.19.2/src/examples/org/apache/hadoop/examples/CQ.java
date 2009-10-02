@@ -274,7 +274,7 @@ public class CQ extends Configured implements Tool {
 
                                         System.err.println("swap info: " + (swappedin - in) + " in, "+(swappedout-out) + " out");
                                         
-                                        Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (swappedin-in)  + "," + (swappedout-out));
+                                        Text v = new Text((u-su) + "," + (s-ss) + "," + (j-st) + "," + (pagein-pin) + "," + (pageout-pout) + "," + (swappedin-in)  + "," + (swappedout-out) + "," + System.currentTimeMillis());
                                         output.collect(word, v);
                                         blockForce(output);
                                         System.err.println("M load: " + l );
@@ -468,17 +468,12 @@ public class CQ extends Configured implements Tool {
                         public void reduce(Text key, Iterator<Text> values,
                                         OutputCollector<Text, IntWritable> output, 
                                         Reporter reporter) throws IOException {
+                                System.err.println("REDUCER: " + (int)(System.currentTimeMillis() / 1000));
                                 int sum = 0;
                                 while (values.hasNext()) {
                                         Text v = values.next();
                                         System.err.println("OK, got output: " + v.toString());
                                         String[] items = v.toString().split(",");
-/*
-                                        float user = Float.parseFloat(items[0]);
-                                        float system = Float.parseFloat(items[2]);
-                                        float total = Float.parseFloat(items[10]);
-                                        float load = ((user - suser) + (system - ssystem)) / (total - stotal);
-*/
                                       
                                         double user = Double.parseDouble(items[0]);
                                         double system = Double.parseDouble(items[1]);
@@ -487,25 +482,23 @@ public class CQ extends Configured implements Tool {
                                         int pages = Integer.parseInt(items[3]) + Integer.parseInt(items[4]);
 
                                         int swaps = Integer.parseInt(items[5]) + Integer.parseInt(items[6]);
+                                        long maptime = Long.parseLong(items[7]);
                                         double load = ((user - suser) + (system - ssystem)) / (total - stotal);
 
                                         // it might be a mistake to poll time here.  but at least we don't have
                                         // to worry about multiple clocks...
                                         long time = System.currentTimeMillis();
-/*
-                                        int user = Integer.parseInt(items[0]);
-                                        int system = Integer.parseInt(items[2]);
-                                        int total = Integer.parseInt(items[10]);
-*/
-                                        //System.err.println("load: " + load);
-                                        //System.err.println("reading: " + load);
-                                        //System.err.println("ie, (" + (user-suser) + " + " + (system-ssystem) + ") / "+(total-stotal));
 
                                         //System.err.println("user state change: " + suser + " --> " + user);
                                         HostState hs = new HostState(user, system, total, pages, swaps, time);
                                         cqs.add(key.toString(), hs); 
 
+
+                                        double avg = cqs.hostAvg(key.toString(), 5);
+                                        System.out.println(System.currentTimeMillis() + "\t" + maptime + "\t" + key.toString() + "\t" + avg);
+
                                 }
+/*
                                 System.err.println("Host "+ key.toString()); 
                                 double avg = cqs.hostAvg(key.toString(), 5);
                                 //double globalAvg = cqs.notHostAvg(key.toString(), 120);
@@ -522,7 +515,7 @@ public class CQ extends Configured implements Tool {
 
 
                                 System.out.println(System.currentTimeMillis() + "\t" + key.toString() + "\t" + avg + "\t" + globalStats.avg() + "\t" + globalStats.stdev() + "\t" + alert);
-            
+  */          
                         }
                 }
 
