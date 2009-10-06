@@ -7,7 +7,6 @@ import jol.types.table.TableName;
 
 public class PaxosMemberTable extends ObjectTable {
 //	public static final TableName TABLENAME = new TableName("paxos", "member");
-
 	public static final TableName TABLENAME = new TableName("paxos_global", "members");
 
 	public static final Key PRIMARY_KEY = new Key(0);

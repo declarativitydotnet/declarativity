@@ -64,6 +64,7 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/placement.olg"));
         this.system.evaluate();
 
+        //setupPaxosNetDB();
         setupPaxos();
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
@@ -143,6 +144,8 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/election.olg"));
         this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/prepare.olg"));
         this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/propose.olg"));
+
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/queueing.olg"));
         this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/glue.olg"));
 
         this.system.evaluate();
