@@ -64,8 +64,10 @@ public class Master {
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/placement.olg"));
         this.system.evaluate();
 
-        //setupPaxosNetDB();
         setupPaxos();
+
+
+        //setupPaxosNetDB();
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/paxos_bfs_glue.olg"));
         this.system.evaluate();
@@ -122,6 +124,7 @@ public class Master {
 
         this.system.evaluate();
 
+
         TupleSet id = new BasicTupleSet();
         id.add(new Tuple(address));
         this.system.schedule("paxos", PaxosIdTable.TABLENAME, id, null);
@@ -138,15 +141,14 @@ public class Master {
 
     private void setupPaxosNetDB() throws JolRuntimeException, UpdateException { 
       
-        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/glue1.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/supplementary/glue1.olg"));
 
-        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/ident.olg"));
-        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/election.olg"));
-        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/prepare.olg"));
-        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/propose.olg"));
-
-        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/queueing.olg"));
-        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/glue.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/supplementary/ident.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/core/election.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/core/prepare.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/core/propose.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/supplementary/queueing.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/supplementary/glue.olg"));
 
         this.system.evaluate();
 
