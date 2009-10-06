@@ -132,5 +132,31 @@ public class Master {
             this.system.schedule("paxos", PaxosMemberTable.TABLENAME, member, null);
         }
         this.system.evaluate();
+
+    }
+
+    private void setupPaxosNetDB() throws JolRuntimeException, UpdateException { 
+      
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/glue1.olg"));
+
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/ident.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/election.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/prepare.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/propose.olg"));
+        this.system.install("bfs", ClassLoader.getSystemResource("paxos_netdb/glue.olg"));
+
+        this.system.evaluate();
+
+        TupleSet id = new BasicTupleSet();
+        id.add(new Tuple(address));
+        this.system.schedule("paxos", PaxosIdTable.TABLENAME, id, null);
+
+        for (int i = 0; i < Conf.getNumMasters(partition); i++) {
+            String addr = Conf.getMasterAddress(partition, i);
+            TupleSet member = new BasicTupleSet();
+            member.add(new Tuple(addr, i));
+            this.system.schedule("paxos", PaxosMemberTable.TABLENAME, member, null);
+        }
+        this.system.evaluate();
     }
 }
