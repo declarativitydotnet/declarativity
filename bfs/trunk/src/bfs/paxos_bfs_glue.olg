@@ -7,6 +7,8 @@ watch(bfs_global::stasis_file, ae);
 watch(bfs_global::stasis_fchunk, ae);
 watch(bfs_global::fpath, ae);
 
+watch(paxos_global::decreeRequest, ae);
+
 public
 paxos_global::decreeRequest(Master, Decree, From) :-
     paxos_global::id(Master),
