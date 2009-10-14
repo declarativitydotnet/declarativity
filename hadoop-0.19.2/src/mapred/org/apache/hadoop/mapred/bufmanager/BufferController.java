@@ -393,6 +393,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 			}
 		}
 		
+		public int outputs() {
+			return this.bufferFiles.size() +
+					(this.finalOutput != null ? 1 : 0);
+		}
+		
 		
 		@Override
 		public void run() {
@@ -601,6 +606,17 @@ public class BufferController implements BufferUmbilicalProtocol {
 	}
 	
 	public synchronized void free(JobID jobid) {
+	}
+	
+	public synchronized int outputs(TaskAttemptID owner) throws IOException {
+		if (!fileManagers.containsKey(owner.getJobID())) {
+			return 0;
+		}
+		Map<TaskAttemptID, FileManager> fm_map = fileManagers.get(owner.getJobID());
+		if (!fm_map.containsKey(owner)) {
+			return 0;
+		}
+		return fm_map.get(owner).outputs();
 	}
 	
 	@Override
