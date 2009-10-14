@@ -202,7 +202,7 @@ public class OutputFile implements Writable {
 	}
 	
 	public void open(FileSystem localFs) throws IOException {
-		if (this.dataIn != null) {
+		if (this.dataIn == null) {
 			this.dataIn = localFs.open(data());
 			this.indexIn = localFs.open(index());
 		}
