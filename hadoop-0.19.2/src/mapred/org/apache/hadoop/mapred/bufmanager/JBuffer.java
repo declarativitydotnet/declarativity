@@ -27,7 +27,7 @@ import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapOutputFile;
+import org.apache.hadoop.mapred.FileHandle;
 import org.apache.hadoop.mapred.Merger;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Partitioner;
@@ -42,29 +42,237 @@ import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.QuickSort;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class JBuffer<K extends Object, V extends Object>  implements JBufferCollector<K, V>, MapOutputCollector<K, V>, IndexedSortable {
+public class JBuffer<K extends Object, V extends Object>  implements JBufferCollector<K, V>, IndexedSortable {
 
 	protected static class CombineOutputCollector<K extends Object, V extends Object> 
 	implements OutputCollector<K, V> {
 		private IFile.Writer<K, V> writer = null;
-		
+
 		public CombineOutputCollector() {
 		}
 		public synchronized void setWriter(IFile.Writer<K, V> writer) {
 			this.writer = writer;
 		}
-		
+
 		public synchronized void reset() {
 			this.writer = null;
 		}
-		
+
 		public synchronized void collect(K key, V value)
 		throws IOException {
 			if (writer != null) writer.append(key, value);
 		}
 	}
-	
-	
+
+	private class JBufferMerger {
+
+		private int snapshots;
+
+		public JBufferMerger() throws IOException {
+			this.snapshots = 0;
+		}
+
+		/**
+		 * Create the final output file from all spill files.
+		 * Spill files are not deleted.
+		 * @throws IOException
+		 */
+		public OutputFile mergeFinal() throws IOException {
+			Path[] output = null;
+			int start = 0;
+			int end = 0;
+			synchronized (mergeLock) {
+				start = numFlush;
+				end   = numSpills;
+				numFlush = end;
+			}
+
+			output = merge(start, end, false, false);
+			return  new OutputFile(taskid, 1f, inputFileName, inputStart, inputEnd, 
+					               numSpills, output[0], output[1], true);
+		}
+
+		/**
+		 * Used by the reducer to keep input data files
+		 * from growing too large.
+		 * @throws IOException
+		 */
+		public void mergeSpill() throws IOException {
+			int start = 0;
+			int end = 0;
+			synchronized (mergeLock) {
+				start = numFlush;
+				end   = numSpills;
+				if (end - start == 1) return;
+
+				numFlush = end;
+				numSpills++;
+			}
+			merge(start, end, true, false);
+		}
+
+		/**
+		 * Generate snapshot output file.
+		 * @return The snapshot output file.
+		 * @throws IOException
+		 */
+		public OutputFile mergeSnapshot() throws IOException {
+			Path[] output = null;
+			float currentProgress = 0f;
+			int start = 0;
+			int end = 0;
+			synchronized (mergeLock) {
+				currentProgress = progress.get();
+				start = numFlush;
+				end   = numSpills;
+				numFlush = end;
+			}
+			output = merge(start, end, false, true);
+
+			return new OutputFile(taskid, currentProgress, output[0], output[1]);
+		}
+
+		private Path[] merge(int startSpillId, int endSpillId, boolean respill, boolean snapshot) throws IOException {
+			long dataFileSize = 0;
+			long indexFileSize = 0;
+			List<Path> dataFiles = new ArrayList<Path>();
+			List<Path> indexFiles = new ArrayList<Path>();
+
+			for(int i = startSpillId; i < endSpillId; i++) {
+				dataFiles.add(outputHandle.getSpillFile(taskid, i));
+				indexFiles.add(outputHandle.getSpillIndexFile(taskid, i));
+				dataFileSize += localFs.getFileStatus(dataFiles.get(i - startSpillId)).getLen();
+			}
+
+			//make correction in the length to include the sequence file header
+			//lengths for each partition
+			dataFileSize += partitions * APPROX_HEADER_LENGTH;
+
+			indexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
+
+			LOG.debug("JBuffer " + taskid + " merge " + (endSpillId - startSpillId) + 
+					" spill files. Final? " + (!respill) + ". start = " + startSpillId + 
+					", end = " + endSpillId +  ". Output size = " + dataFileSize);
+
+			Path outputFile = null;
+			Path indexFile = null;
+
+			if (respill) {
+				outputFile = outputHandle.getSpillFileForWrite(taskid, endSpillId, dataFileSize);
+				indexFile = outputHandle.getSpillIndexFileForWrite(taskid, endSpillId, indexFileSize);
+			}
+			else if (snapshot) {
+				int snapshotId = snapshots++;
+				outputFile = outputHandle.getOutputSnapshotFileForWrite(taskid, snapshotId, dataFileSize);
+				indexFile = outputHandle.getOutputSnapshotIndexFileForWrite(taskid, snapshotId, indexFileSize);
+			}
+			else {
+				outputFile = outputHandle.getOutputFileForWrite(taskid,  dataFileSize);
+				indexFile = outputHandle.getOutputIndexFileForWrite(taskid, indexFileSize);
+			}
+			Path[] returnValue = {outputFile, indexFile};
+
+			if (dataFiles.size() == 1) {
+				if (localFs.exists(outputFile)) {
+					LOG.warn("JBuffer final output file exists.");
+					localFs.delete(outputFile, true);
+				}
+				if (localFs.exists(indexFile)) {
+					localFs.delete(indexFile, true);
+				}
+				if (respill) {
+					localFs.rename(dataFiles.get(0), outputFile); 
+					localFs.rename(indexFiles.get(0), indexFile); 
+				}
+				else {
+					localFs.copyFromLocalFile(dataFiles.get(0), outputFile); 
+					localFs.copyFromLocalFile(indexFiles.get(0), indexFile); 
+				}
+				return returnValue;
+			}
+
+			merge(dataFiles, indexFiles, outputFile, indexFile);
+
+			//cleanup
+			if (respill || snapshot) {
+				for(int i = 0; i < dataFiles.size(); i++) {
+					localFs.delete(dataFiles.get(i), true);
+					localFs.delete(indexFiles.get(i), true);
+				}
+			}
+			return returnValue;
+		}
+
+		private void merge(List<Path> dataFiles, List<Path> indexFiles, Path dataOutPath, Path indexOutPath) throws IOException {
+			FSDataOutputStream dataOut = localFs.create(dataOutPath, true);
+			FSDataOutputStream indexOut = localFs.create(indexOutPath, true);
+
+			if (dataFiles.size() == 0) {
+				//create dummy files
+				for (int i = 0; i < partitions; i++) {
+					long segmentStart = dataOut.getPos();
+					IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, dataOut,  keyClass, valClass, codec);
+					writer.close();
+					writeIndexRecord(indexOut, dataOut, segmentStart, writer);
+				}
+				dataOut.close();
+				indexOut.close();
+				return;
+			}
+			{
+				for (int parts = 0; parts < partitions; parts++){
+					//create the segments to be merged
+					BufferRequest request = requestMap.containsKey(parts) ? requestMap.get(parts) : null;
+
+					List<Segment<K, V>> segmentList =
+						new ArrayList<Segment<K, V>>(dataFiles.size());
+					for(int i = 0; i < dataFiles.size(); i++) {
+						FSDataInputStream indexIn = localFs.open(indexFiles.get(i));
+						indexIn.seek(parts * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+						long segmentOffset = indexIn.readLong();
+						long rawSegmentLength = indexIn.readLong();
+						long segmentLength = indexIn.readLong();
+						indexIn.close();
+						FSDataInputStream in = localFs.open(dataFiles.get(i));
+						in.seek(segmentOffset);
+						Segment<K, V> s = 
+							new Segment<K, V>(new IFile.Reader<K, V>(job, in, segmentLength, codec), true);
+						segmentList.add(s);
+					}
+
+					//merge
+					@SuppressWarnings("unchecked")
+					RawKeyValueIterator kvIter = 
+						Merger.merge(job, localFs, 
+								keyClass, valClass,
+								segmentList, job.getInt("io.sort.factor", 100), 
+								new Path(taskid.toString()), 
+								job.getOutputKeyComparator(), reporter);
+
+					//write merged output to disk
+					long segmentStart = dataOut.getPos();
+					IFile.Writer<K, V> writer = 
+						new IFile.Writer<K, V>(job, dataOut, keyClass, valClass, codec);
+					if (null == combinerClass || dataFiles.size() < minSpillsForCombine) {
+						Merger.writeFile(kvIter, writer, reporter, job);
+					} else {
+						combineCollector.setWriter(writer);
+						combineAndSpill(kvIter);
+					}
+
+					//close
+					writer.close();
+
+					//write index record
+					writeIndexRecord(indexOut, dataOut, segmentStart, writer);
+				}
+				dataOut.close();
+				indexOut.close();
+			}
+		}
+
+	}
+
 	private class SpillThread extends Thread {
 		private boolean spill = false;
 		private boolean open = true;
@@ -72,24 +280,50 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		public void doSpill() {
 			synchronized (spillLock) {
 				if (open) {
-					this.spill = true;
+					kvend = kvindex;
+					bufend = bufmark;
+					this.spill = kvstart != kvend;
 					spillLock.notifyAll();
 				}
 			}
 		}
-		
+
 		public boolean isSpilling() {
 			return this.spill;
 		}
 
-		public void close() {
+		public void close() throws IOException {
 			synchronized (spillLock) {
 				this.open = false;
 				while (isSpilling()) {
 					try { spillLock.wait();
 					} catch (InterruptedException e) { }
 				}
+				
+				if (kvstart != kvend) { 
+					kvend = kvindex;
+					bufend = bufmark;
+					spill();
+				}
 				spillLock.notifyAll();
+			}
+		}
+
+		private void spill() throws IOException {
+			if (kvstart != kvend) { 
+				LOG.debug("SpillThread: begin sort and spill.");
+				long sortstart = java.lang.System.currentTimeMillis();
+				float currentProgress = progress.get();
+				int spillNumber = sortAndSpill(); 
+				LOG.debug("SpillThread: sort/spill time " + 
+							((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
+				if (pipeline) {
+					Path data = outputHandle.getSpillFile(taskid, spillNumber);
+					Path index = outputHandle.getSpillIndexFile(taskid, spillNumber);
+					umbilical.output(new OutputFile(taskid, currentProgress, 
+							                        inputFileName, inputStart, inputEnd, 
+							                        spillNumber + 1, data, index, false));
+				}
 			}
 		}
 
@@ -108,15 +342,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					}
 
 					if (open) {
-						long starttime = java.lang.System.currentTimeMillis();
 						try {
-								LOG.debug("SpillThread: begin sort and spill.");
-								long sortstart = java.lang.System.currentTimeMillis();
-								if (kvstart != kvend) {
-									sortAndSpill();
-								}
-								LOG.debug("SpillThread: sort/spill time " + 
-										((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
+							spill();
 						} catch (Throwable e) {
 							e.printStackTrace();
 							sortSpillException = e;
@@ -130,18 +357,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 								spill = false;
 								spillLock.notifyAll();
 							}
-							
-							try {
-								synchronized (pipelineThread) {
-									pipelineThread.notifyAll();
-								}
-								
-								synchronized (mergeLock) {
-									mergeLock.notifyAll();
-								}
-							} finally {
-								LOG.debug("SpillThread: total spill time " + 
-										((System.currentTimeMillis() - starttime)/1000f) + " secs.");
+
+							synchronized (mergeLock) {
+								mergeLock.notifyAll();
 							}
 						}
 					}
@@ -155,11 +373,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 	}
-	
+
 	private class MergeThread extends Thread {
 		private boolean open = true;
 		private boolean busy = false;
-		private int mergeBoundary = Integer.MAX_VALUE;
 
 		public void close() {
 			if (open) {
@@ -174,18 +391,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				LOG.debug("MergeThread is closed.");
 			}
 		}
-		
-		public void mergeBoundary(int spillid) {
-			/*
-			if (mergeBoundary < spillid) {
-				synchronized (mergeLock) {
-					this.mergeBoundary = spillid;
-					mergeLock.notifyAll();
-				}
-			}
-			*/
-		}
-		
+
 		public boolean isBusy() {
 			return busy;
 		}
@@ -213,7 +419,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					if (!taskid.isMap() && numSpills - numFlush >= threshold) {
 						try {
 							long mergestart = java.lang.System.currentTimeMillis();
-							mergeParts(true, mergeBoundary);
+							merger.mergeSpill();
 							LOG.debug("MergeThread: merge time " +  ((System.currentTimeMillis() - mergestart)/1000f) + " secs.");
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -232,202 +438,17 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 	}
-	
-	private class PipelineThread extends Thread {
-		private boolean open = false;
-		private boolean busy = false;
-		
-		public void close() throws IOException {
-			open = false;
-			synchronized (this) {
-				while (busy) {
-					try { this.wait();
-					} catch (InterruptedException e) { }
-				}
-				if (safemode) {
-					/* all current requests must be satisfied. */
-					flushRequests(true); 
-				}
-				this.interrupt();
-			}
-		}
-		
-		public void open() {
-			synchronized (this) {
-				if (open) return;
-				else {
-					start();
-					while (!open) {
-						try { this.wait();
-						} catch (InterruptedException e) { }
-					}
-				}
-			}
-		}
-		
-		public void run() {
-			int flushpoint = numFlush;
-			synchronized (this) {
-				open = true;
-				this.notifyAll();
-				LOG.info("JBuffer: pipeline thread running.");
-			}
-			
-			try {
-				while (!isInterrupted()) {
-					synchronized (this) {
-						busy = false;
-						this.notifyAll();
-						while (open && flushpoint == numSpills) {
-							try { this.wait();
-							} catch (InterruptedException e) {
-								return;
-							}
-						}
-						if (!open) return;
-						busy = true;
-					}
 
-					try {
-						long pipelinestart = java.lang.System.currentTimeMillis();
-						flushpoint = flushRequests(false);
-						LOG.debug("PipelineThread: pipeline time " +  
-									((System.currentTimeMillis() - pipelinestart)/1000f) + " secs.");
-					} catch (IOException e) {
-						e.printStackTrace();
-						sortSpillException = e;
-					}
-				}
-			} finally {
-				synchronized (this) {
-					open = false;
-					busy = false;
-					this.notifyAll();
-				}
-			}
-		}
-			
-		private int flushRequests(boolean finalize) throws IOException {
-			int spillend = numSpills;
-			if (progress.get() == 0) return numFlush;
-
-			if (!finalize) {
-				BufferRequest request = null;
-				BufferRequestResponse response = new BufferRequestResponse();
-				while ((request = umbilical.getRequest(taskid)) != null) {
-					if (!open) return numFlush;
-					response.reset();
-					request.open(job, response, false, 1);
-					if (response.open) {
-						requests.add(request);
-						requestMap.put(request.partition(), request); // TODO speculation
-					}
-				}
-			}
-			
-			if (numSpills == numFlush) return spillend;
-			
-			/* Iterate over spill files in order. */
-			for (int spillId = numFlush; spillId < spillend; spillId++) {
-				FSDataInputStream indexIn = null;
-				FSDataInputStream dataIn  = null;
-				for (BufferRequest r : requests) {
-					if (!open) return spillId;
-					if (r.flushPoint() < spillId) {
-						if (dataIn == null) {
-							Path outputFile = mapOutputFile.getSpillFile(taskid, spillId);
-							Path indexFile  = mapOutputFile.getSpillIndexFile(taskid, spillId);
-							indexIn = localFs.open(indexFile);
-							dataIn = localFs.open(outputFile);
-						}
-						
-						float requestProgress = ((spillId + 1) / (float) numSpills) * progress.get();
-						if (r.isOpen()) {
-							try {
-								r.flush(indexIn, dataIn, spillId, requestProgress);
-								if (requestProgress == 1.0f) {
-									umbilical.remove(r); // Request is done
-								}
-							} catch (IOException e) {
-								LOG.warn("PipelineThread received following exception " + e);
-							}
-						}
-					}
-				}
-				if (dataIn != null) {
-					indexIn.close(); indexIn = null;
-					dataIn.close();  dataIn = null;
-				}
-			}
-			
-			
-			/* Rate limit the data pipeline. */
-			if (!safemode) {
-				if (requests.size() > partitions / 3 && numSpills - spillend > 5) {
-					float avgDataRate = 0f;
-					BufferRequest min = null;
-					for (BufferRequest r : requests) {
-						if (r.datarate() < Float.MIN_VALUE) continue;
-
-						avgDataRate += r.datarate();
-						if (min == null || r.datarate() < min.datarate()) {
-							min = r;
-						}
-					}
-					avgDataRate /= (float) requests.size();
-
-					if (min != null && (avgDataRate / min.datarate()) > 10.0) {
-						LOG.warn("Pipeline running slow! Min data rate = " + 
-								min.datarate() + ". Average data rate = " + avgDataRate);
-						min.close();
-					}
-				}
-			}
-			
-			if (requests.size() == partitions) {
-				numFlush = spillend;
-			}
-
-			return spillend;
-		}
-		
-		public boolean force() throws IOException {
-			if (requests.size() == partitions &&
-					numFlush == numSpills) {
-				return true;
-			} else if (!open && numFlush < numSpills) {
-				synchronized (this) {
-					try {
-						open = true;
-						flushRequests(false);
-					} finally {
-						open = false;
-					}
-				}
-			} else if (!open && numFlush == numSpills) {
-				BufferRequest request = null;
-				while ((request = umbilical.getRequest(taskid)) != null) {
-					requests.add(request);
-					requestMap.put(request.partition(), request); // TODO speculation
-				}
-			}
-			
-			return requests.size() == partitions && 
-				   numFlush == numSpills;
-		}
-	}
-	
 	private static final Log LOG = LogFactory.getLog(JBuffer.class.getName());
 
-	
-    private Progress progress;
+	private Progress progress;
 
 	/**
 	 * The size of each record in the index file for the map-outputs.
 	 */
 	public static final int MAP_OUTPUT_INDEX_RECORD_LENGTH = 24;
 
-	private final static int APPROX_HEADER_LENGTH = 150;
+	public final static int APPROX_HEADER_LENGTH = 150;
 
 	private final BufferUmbilicalProtocol umbilical;
 
@@ -480,50 +501,51 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private final Object spillLock = new Object();
 	private final Object mergeLock = new Object();
 	private final BlockingBuffer bb = new BlockingBuffer();
-	
+
 	private long reserve = 0;
 
 	private final FileSystem localFs;
 
-	private MapOutputFile mapOutputFile = null;
-	
-	private boolean pipeline;
-	private boolean safemode;
-	private PipelineThread pipelineThread;
-	
+	private FileHandle outputHandle = null;
+
 	private SpillThread spillThread;
 	private MergeThread mergeThread;
+	private JBufferMerger merger;
+
+	private boolean pipeline = false;
 	
+	private String inputFileName = null;
+	
+	private long inputStart = 0;
+	
+	private long inputEnd = 0;
+
 	private TreeSet<BufferRequest> requests = new TreeSet<BufferRequest>();
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
-	
+
 	@SuppressWarnings("unchecked")
 	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
 		this.umbilical = umbilical;
 		this.taskid = taskid;
 		this.job = job;
 		this.reporter = reporter;
-		this.mapOutputFile = new MapOutputFile(taskid.getJobID());
-		this.mapOutputFile.setConf(job);
-		
-		this.safemode = job.getBoolean("mapred.safemode", false);
+		this.outputHandle = new FileHandle(taskid.getJobID());
+		this.outputHandle.setConf(job);
+
 		this.progress = new Progress();
 		this.progress.set(0f);
-		
-		this.pipelineThread = new PipelineThread();
-		this.pipelineThread.setDaemon(true);
-		
+
 		this.spillThread = new SpillThread();
 		this.spillThread.setDaemon(true);
 		this.spillThread.start();
-		
+
 		this.mergeThread = new MergeThread();
 		this.mergeThread.setDaemon(true);
 		this.mergeThread.setPriority(Thread.MAX_PRIORITY);
 		if (!taskid.isMap()) {
 			this.mergeThread.start();
 		}
-		
+
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
 		partitioner = (Partitioner)
@@ -546,16 +568,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				job.getClass("map.sort.class", QuickSort.class), job);
 		// buffers and accounting
 		int maxMemUsage = sortmb << 20;
-		
-	    float maxInMemCopyUse = 0.7f;
-	    if (taskid.isMap()) {
-	    	maxInMemCopyUse = job.getFloat("mapred.job.map.buffer.percent", 0.70f);
-	    }
-	    else {
-	    	maxInMemCopyUse = job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
-	    }
+
+		float maxInMemCopyUse = 0.7f;
+		if (taskid.isMap()) {
+			maxInMemCopyUse = job.getFloat("mapred.job.map.buffer.percent", 0.70f);
+		}
+		else {
+			maxInMemCopyUse = job.getFloat("mapred.job.shuffle.input.buffer.percent", 0.70f);
+		}
 		maxMemUsage = (int)Math.min(Runtime.getRuntime().maxMemory() * maxInMemCopyUse, maxMemUsage);
-		
+
 		int recordCapacity = (int)(maxMemUsage * recper);
 		recordCapacity -= recordCapacity % RECSIZE;
 		kvbufferSize = maxMemUsage - recordCapacity;
@@ -590,47 +612,44 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		: null;
 		minSpillsForCombine = job.getInt("min.num.spills.for.combine", 3);
 	}
-	
-	public byte[] buffer() {
-		return this.kvbuffer;
-	}
-	
-	public TreeSet<BufferRequest> requests() {
-		return this.requests;
-	}
-	
-	public boolean isMerging() {
-		return this.mergeThread.isBusy();
-	}
-	
-	public void pipeline(boolean value) throws IOException {
-		if (pipeline == false && value == true) {
-			this.pipelineThread.open();
-		}
-		else if (pipeline == true && safemode) {
-			throw new IOException("JBuffer in safemode!");
-		}
-		else if (pipeline == true && value == false) {
-			this.pipelineThread.close();
-		}
-		this.pipeline = value;
+
+	/**
+	 * Initialize the input file information.
+	 * @param inputFileName Input file name.
+	 * @param inputStart Input start offset.
+	 * @param inputEnd Input end offset.
+	 * @param pipeline true if we pipeline, otherwise only final output is sent.
+	 */
+	public void input(String inputFileName, long inputStart, long inputEnd, boolean pipeline) {
+		this.inputFileName = inputFileName;
+		this.inputStart = inputStart;
+		this.inputEnd = inputEnd;
+		this.pipeline = pipeline;
 	}
 	
 	public Progress getProgress() {
 		return this.progress;
 	}
-	
+
 	public void setProgress(Progress progress) {
 		this.progress = progress;
 	}
-	
+
+	public JobConf getJobConf() {
+		return this.job;
+	}
+
+	public int getNumberOfPartitions() {
+		return this.partitions;
+	}
+
 	/**
 	 * @return The number of free bytes.
 	 */
 	public int getBytes() {
 		return ((kvend > kvstart) ? kvend : kvoffsets.length + kvend) - kvstart;
 	}
-	
+
 	public synchronized boolean reserve(long bytes) {
 		if (kvbuffer == null) return false;
 		else if (kvbufferSize - this.reserve > bytes) {
@@ -639,10 +658,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		return false;
 	}
-	
+
 	public void unreserve(long bytes) {
 		this.reserve -= bytes;
-		
+
 		if (this.reserve < 0) {
 			LOG.error("Reserve bytes error: " + this.reserve);
 			this.reserve = 0;
@@ -663,7 +682,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		else if (this.partitions > 1) {
 			throw new IOException("Method not for use with more than one partition");
 		}
-		
+
 		try {
 			int keystart = bufindex;
 			bb.write(key.getData(), key.getPosition(), key.getLength() - key.getPosition());
@@ -672,7 +691,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				bb.reset();
 				keystart = 0;
 			}
-			
+
 			// copy value bytes into buffer
 			int valstart = bufindex;
 			bb.write(value.getData(), value.getPosition(), value.getLength() - value.getPosition());
@@ -698,7 +717,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			return;
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public synchronized void collect(K key, V value)
 	throws IOException {
@@ -908,8 +927,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 										"; bufvoid = " + bufvoid);
 								LOG.info("kvstart = " + kvstart + "; kvend = " + kvindex +
 										"; length = " + kvoffsets.length);
+								/* already handled in doSpill() call.
 								kvend = kvindex;
 								bufend = bufmark;
+								 */
 								// TODO No need to recreate this thread every time
 								spillThread.doSpill();
 							}
@@ -953,225 +974,32 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			bufindex += len;
 		}
 	}
-	
-	public boolean canSnapshot() throws IOException {
-		if (pipeline) return false;
-		BufferRequest request = null;
-		while ((request = umbilical.getRequest(taskid)) != null) {
-			requests.add(request);
-			requestMap.put(request.partition(), request); // TODO speculation
-		}
 
-		return (requests.size() > 0);
-	}
-	
-	public synchronized boolean snapshot() throws IOException {
-		if (!canSnapshot()) {
-			return false;
-		}
-
+	public synchronized void snapshot() throws IOException {
 		LOG.debug("JBuffer " + taskid + " performing snaphsot.");
-		Path snapFile = null;
-		Path indexFile = null;
-		try {
-			float bufferProgress = progress.get();
-			flush();
-			snapFile = mapOutputFile.getOutputFile(this.taskid);
-			indexFile = mapOutputFile.getOutputIndexFile(this.taskid);
-
-			FSDataInputStream indexIn = localFs.open(indexFile);
-			FSDataInputStream dataIn  = localFs.open(snapFile);
-			try {
-				BufferRequestResponse response = new BufferRequestResponse();
-				for (BufferRequest r : requests) {
-					if (!r.isOpen()) {
-						response.reset();
-						r.open(job, response, true);
-						if (!response.open) {
-							LOG.debug("JBuffer " + taskid + " could open request " + r);
-							continue;
-						}
-					}
-					
-					LOG.info("JBuffer: do snapshot request " + taskid + " progress " + bufferProgress);
-					try {
-						r.flush(indexIn, dataIn, bufferProgress);
-					} catch (IOException e) {
-						LOG.warn("JBuffer: snapshot exception "  + e);
-					}
-					r.close(); // close after snapshot
-					if (bufferProgress == 1.0f) {
-						umbilical.remove(r); // Buffer is done.
-					}
-				}
-			} finally {
-				indexIn.close();
-				dataIn.close();
-			}
-			return true;
-		} catch (Throwable t) {
-			LOG.info("JBuffer: snapshot " + taskid + " interrupted by " + t);
-			return false; // Turn off snapshots.
-		}
-		finally {
-			if (snapFile != null) localFs.delete(snapFile, true);
-			if (indexFile != null) localFs.delete(indexFile, true);
-		}
+		OutputFile outputFile = merger.mergeSnapshot();
+		umbilical.output(outputFile);
 	}
-	
-	public boolean force() throws IOException {
-		synchronized (spillLock) {
-			while (spillThread.isSpilling()) {
-				try { spillLock.wait();
-				} catch (InterruptedException e) { }
-			}
 
-			boolean finalExists = false;
-			try {
-				Path finalOutput = mapOutputFile.getOutputFile(this.taskid);
-			    if (localFs.exists(finalOutput)) finalExists = true;
-			} catch (IOException e) {
-				// ignore.
-			}
-			
-			if (finalExists) {
-				long duration = forceFree(true);
-				LOG.info("JBuffer force time = " + duration);
-				return duration >= 0;
-			}
-			else {
-				if (kvend != kvindex) {
-					kvend = kvindex;
-					bufend = bufmark;
-				}
-
-				if (kvstart == kvend) {
-					LOG.debug("JBuffer nothing to force!");
-					return false;
-				} 
-				
-				long duration = forceFree(false);
-				if (duration >= 0) {
-					LOG.info("JBuffer force time = " + duration);
-					if (bufend < bufindex && bufindex < bufstart) {
-						bufvoid = kvbuffer.length;
-					}
-					kvstart = kvend;
-					bufstart = bufend;
-					spillLock.notifyAll();
-					return true;
-				}
-				return false;
-			}
-		}
+	public void force() {
+		spillThread.doSpill();
 	}
-	
-	private long forceFree(boolean finalResult) throws IOException {
-		if (!pipelineThread.force()) {
-			LOG.info("JBuffer: force unable to catch pipeline thread up.");
-			return -1;
-		}
-		LOG.info("JBuffer: force the pipelined data from kvstart = " + kvstart);
-		
-		BufferRequestResponse response = new BufferRequestResponse();
-		for (BufferRequest request : requestMap.values()) {
-			if (!request.isOpen()) {
-				request.open(job, response, false);
-				if (!response.open) return -1;
-			}
-		}
-		
-		long forcetime = 0L;
-		if (finalResult) {
-			try {
-				forcetime = System.currentTimeMillis();
-				for (BufferRequest request : requestMap.values()) {
-					request.flushFinal();
-				}
-				forcetime = System.currentTimeMillis() - forcetime;
-			} catch (IOException e) {
-				LOG.error("JBuffer force final result failed. " + e);
-				return -1;
-			}
-			return forcetime;
-		}
-		
-		// create spill file
-		Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, 1096);
-		if (localFs.exists(filename)) {
-			throw new IOException("JBuffer::sortAndSpill -- spill file exists! " + filename);
-		}
-		
-		FSDataOutputStream out = localFs.create(filename, false);
-		if (out == null ) throw new IOException("Unable to create spill file " + filename);
-		// create spill index
-		Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
-				this.taskid, this.numSpills,
-				partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-		FSDataOutputStream indexOut = localFs.create(indexFilename, false);
-		
-		
-		final int endPosition = (kvend > kvstart)
-		                        ? kvend : kvoffsets.length + kvend;
-		sorter.sort(JBuffer.this, kvstart, endPosition, reporter);
-		int spindex = kvstart;
-		try {
-			InMemValBytes value = new InMemValBytes();
-			for (int i = 0; i < partitions; ++i) {
-				BufferRequest request = this.requestMap.get(i);;
-				int spstart = spindex;
 
-				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, out, keyClass, valClass, codec);
-				long segmentStart = out.getPos();
-				DataInputBuffer key = new DataInputBuffer();
-				while (spindex < endPosition
-						&& kvindices[kvoffsets[spindex % kvoffsets.length] + PARTITION] == i) {
-					final int kvoff = kvoffsets[spindex % kvoffsets.length];
-					getVBytesForOffset(kvoff, value);
-					key.reset(kvbuffer, kvindices[kvoff + KEYSTART], 
-							(kvindices[kvoff + VALSTART] - kvindices[kvoff + KEYSTART]));
-
-					writer.append(key, value);
-					++spindex;
-				}
-
-				writer.close();
-				writeIndexRecord(indexOut, out, segmentStart, writer);
-			}
-			out.close(); indexOut.close();
-			FSDataInputStream dataIn = localFs.open(filename);
-			FSDataInputStream indexIn = localFs.open(indexFilename);
-			
-			long starttime = System.currentTimeMillis();
-			for (BufferRequest request : requestMap.values()) {
-				request.flush(indexIn, dataIn, progress.get());
-			}
-			dataIn.close(); indexIn.close();
-			forcetime += System.currentTimeMillis() - starttime;
-		} finally {
-			localFs.delete(filename, true);
-			localFs.delete(indexFilename, true);
-		}
-		LOG.info("JBuffer: force pipelined data succeeded.");
-		return forcetime;
-	}
-	
 	public ValuesIterator<K, V> iterator() throws IOException {
-		Path finalOutputFile = mapOutputFile.getOutputFile(this.taskid);
+		Path finalOutputFile = outputHandle.getOutputFile(this.taskid);
 		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
 		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
 	}
 
-	public synchronized void flush() throws IOException {
+	private OutputFile flush() throws IOException {
 		if (numSpills == 0 && kvstart == kvend) {
 			try {
-				Path finalOut = mapOutputFile.getOutputFile(this.taskid);
+				Path finalOut = outputHandle.getOutputFile(this.taskid);
 				if (localFs.exists(finalOut)) {
 					LOG.warn("JBuffer: no flush needed for buffer " + taskid);
 					spillThread.close();
 					mergeThread.close();
-					pipelineThread.close();
-					return;
+					return null;
 				}
 			} catch (IOException e) {
 				/* File must not exist. Need to make it. */
@@ -1179,34 +1007,23 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		long timestamp = System.currentTimeMillis();
 		LOG.debug("Begin final flush");
-		
+
 		timestamp = System.currentTimeMillis();
 		mergeThread.close();
 		LOG.debug("merge thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
-		
+
 		timestamp = System.currentTimeMillis();
 		spillThread.close();
-		if (kvend != kvindex) {
-			kvend = kvindex;
-			bufend = bufmark;
-			sortAndSpill();
-		}
 		LOG.debug("spill thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
-		
+
 		timestamp = System.currentTimeMillis();
-		pipelineThread.close();
-		LOG.debug("pipeline thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
-		
-		timestamp = System.currentTimeMillis();
-		mergeParts(false, Integer.MAX_VALUE);
+		OutputFile finalOut = merger.mergeFinal();
 		LOG.debug("Final merge done. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
 		reset(false);
+		return finalOut;
 	}
-	
-	public synchronized void reset(boolean restart) throws IOException {
-		spillThread.close();
-		mergeThread.close();
 
+	public synchronized void reset(boolean restart) throws IOException {
 		/* reset buffer variables. */
 		numSpills = numFlush = 0;
 		bufindex = 0;
@@ -1217,6 +1034,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		this.progress = new Progress();
 
 		if (restart) {
+			spillThread.close();
+			mergeThread.close();
+
 			/* restart threads. */
 			this.spillThread = new SpillThread();
 			this.spillThread.setDaemon(true);
@@ -1228,39 +1048,37 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 
-	public void close() throws IOException {  
-		flush();
+	public synchronized OutputFile close() throws IOException {  
+		return flush();
 	}
-	
+
 	public void free() {
 		kvbuffer = null;
-		for (BufferRequest request : requests) {
-			try {
-				request.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+	}
+
+	public int newSpillId() throws IOException {
+		synchronized (mergeLock) {
+			return numSpills++;
 		}
-		requests.clear();
 	}
 	
-	public void minUnfinishedSpill(int spillid) {
-		if (safemode) this.mergeThread.mergeBoundary(spillid);
-	}
-	
-	public int spill(Path data, Path index, boolean copy) throws IOException {
+	public void spill(Path data, Path index, SpillOp op) throws IOException {
+		if (op == SpillOp.NOOP) {
+			return;
+		}
+		
 		Path dataFile = null;
 		Path indexFile = null;
 		synchronized (mergeLock) {
-			dataFile  = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, 1096);
-			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, this.numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			dataFile  = outputHandle.getSpillFileForWrite(this.taskid, this.numSpills, 1096);
+			indexFile = outputHandle.getSpillIndexFileForWrite(this.taskid, this.numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 			numSpills++;
 
-			if (copy) {
+			if (op == SpillOp.COPY) {
 				localFs.copyFromLocalFile(data, dataFile);
 				localFs.copyFromLocalFile(index, indexFile);
 			}
-			else {
+			else if (op == SpillOp.RENAME) {
 				if (!localFs.rename(data, dataFile)) {
 					throw new IOException("JBuffer::spill -- unable to rename " + data + " to " + dataFile);
 				}
@@ -1268,14 +1086,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					throw new IOException("JBuffer::spill -- unable to rename " + index + " to " + indexFile);
 				}
 			}
-			
-			if (!safemode) mergeLock.notifyAll();
-			return numSpills - 1;
+
+			mergeLock.notifyAll();
 		}
 	}
-	
 
-	private void sortAndSpill() throws IOException {
+
+	private int sortAndSpill() throws IOException {
 		//approximate the length of the output file to be the length of the
 		//buffer + header lengths for the partitions
 		synchronized (mergeLock) {
@@ -1287,15 +1104,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			FSDataOutputStream indexOut = null;
 			try {
 				// create spill file
-				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
+				Path filename = outputHandle.getSpillFileForWrite(this.taskid, this.numSpills, size);
 				if (localFs.exists(filename)) {
 					throw new IOException("JBuffer::sortAndSpill -- spill file exists! " + filename);
 				}
-				
+
 				out = localFs.create(filename, false);
 				if (out == null ) throw new IOException("Unable to create spill file " + filename);
 				// create spill index
-				Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
+				Path indexFilename = outputHandle.getSpillIndexFileForWrite(
 						this.taskid, this.numSpills,
 						partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 				indexOut = localFs.create(indexFilename, false);
@@ -1361,21 +1178,21 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					}
 				}
 				LOG.info("Finished spill " + numSpills);
-				++numSpills;
+				return numSpills++;
 			} finally {
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
 			}
 		}
 	}
-	
+
 	private void spillSingleRecord(final DataInputBuffer key, final DataInputBuffer value)  throws IOException {
 		// TODO this right
 		Class keyClass = job.getMapOutputKeyClass();
 		Class valClass = job.getMapOutputValueClass();
-	    SerializationFactory serializationFactory = new SerializationFactory(job);
-	    Deserializer<K> keyDeserializer = serializationFactory.getDeserializer(keyClass);
-	    Deserializer<V> valDeserializer = serializationFactory.getDeserializer(valClass);
+		SerializationFactory serializationFactory = new SerializationFactory(job);
+		Deserializer<K> keyDeserializer = serializationFactory.getDeserializer(keyClass);
+		Deserializer<V> valDeserializer = serializationFactory.getDeserializer(valClass);
 		keyDeserializer.open(key);
 		valDeserializer.open(value);
 		K k = keyDeserializer.deserialize(null);
@@ -1397,10 +1214,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			final int partition = partitioner.getPartition(key, value, partitions);
 			try {
 				// create spill file
-				Path filename = mapOutputFile.getSpillFileForWrite(this.taskid, this.numSpills, size);
+				Path filename = outputHandle.getSpillFileForWrite(this.taskid, this.numSpills, size);
 				out = localFs.create(filename);
 				// create spill index
-				Path indexFilename = mapOutputFile.getSpillIndexFileForWrite(
+				Path indexFilename = outputHandle.getSpillIndexFileForWrite(
 						this.taskid, this.numSpills,
 						partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
 				indexOut = localFs.create(indexFilename);
@@ -1517,13 +1334,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		public void close() { }
 	}
-	
+
 	protected class FSMRResultIterator implements RawKeyValueIterator {
 		private IFile.Reader reader;
 		private DataInputBuffer key = new DataInputBuffer();
 		private DataInputBuffer value = new DataInputBuffer();
 		private Progress progress = new Progress();
-		
+
 		public FSMRResultIterator(FileSystem localFS, Path path) throws IOException {
 			this.reader = new IFile.Reader<K, V>(job, localFS, path, codec);
 		}
@@ -1557,156 +1374,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public boolean next() throws IOException {
 			return this.reader.next(key, value);
-		}
-		
-	}
-	
-	private void mergeParts(boolean spill, int boundary) throws IOException {
-		// get the approximate size of the final output/index files
-
-		int start = 0;
-		int end = 0;
-		int spillid = 0;
-		synchronized (mergeLock) {
-			boundary = Math.min(boundary, numSpills);
-
-			spillid = numSpills;
-			start = numFlush;
-			end   = boundary;
-			if (spill && end - start < 2) return;
-
-			numFlush = end;
-			if (spill) numSpills++;
-		}
-
-		long finalOutFileSize = 0;
-		long finalIndexFileSize = 0;
-		List<Path> filename = new ArrayList<Path>();
-		List<Path> indexFileName = new ArrayList<Path>();
-		FileSystem localFs = FileSystem.getLocal(job);
-
-		for(int i = start; i < end; i++) {
-			filename.add(mapOutputFile.getSpillFile(this.taskid, i));
-			indexFileName.add(mapOutputFile.getSpillIndexFile(this.taskid, i));
-			finalOutFileSize += localFs.getFileStatus(filename.get(i - start)).getLen();
-		}
-
-		//make correction in the length to include the sequence file header
-		//lengths for each partition
-		finalOutFileSize += partitions * APPROX_HEADER_LENGTH;
-
-		finalIndexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
-
-		LOG.debug("JBuffer " + taskid + " merge " + (end - start) + 
-				" spill files. Final? " + (!spill) + ". start = " + start + ", end = " + end + 
-				". Output size = " + finalOutFileSize);
-		
-		Path outputFile = null;
-		Path indexFile = null;
-
-		if (spill) {
-			outputFile = mapOutputFile.getSpillFileForWrite(this.taskid, spillid, finalOutFileSize);
-			indexFile = mapOutputFile.getSpillIndexFileForWrite(this.taskid, spillid, finalIndexFileSize);
-		}
-		else {
-			outputFile = mapOutputFile.getOutputFileForWrite(this.taskid,  finalOutFileSize);
-			indexFile = mapOutputFile.getOutputIndexFileForWrite( this.taskid, finalIndexFileSize);
-		}
-
-
-		if (end - start == 1) {
-			if (localFs.exists(outputFile)) {
-				LOG.warn("JBuffer final output file exists.");
-				localFs.delete(outputFile, true);
-			}
-			if (localFs.exists(indexFile)) {
-				localFs.delete(indexFile, true);
-			}
-			localFs.rename(filename.get(0), outputFile); 
-			localFs.rename(indexFileName.get(0), indexFile); 
-			return;
-		}
-
-		//The output stream for the final single output file
-		FSDataOutputStream finalOut = localFs.create(outputFile, !spill);
-
-		//The final index file output stream
-		FSDataOutputStream finalIndexOut = localFs.create(indexFile, !spill);
-
-		if (start == end) {
-			//create dummy files
-			if (spill) LOG.error("Error: spill file is a dummy!");
-			for (int i = 0; i < partitions; i++) {
-				long segmentStart = finalOut.getPos();
-				IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, finalOut,  keyClass, valClass, codec);
-				writer.close();
-				writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
-			}
-			finalOut.close();
-			finalIndexOut.close();
-			return;
-		}
-		{
-			for (int parts = 0; parts < partitions; parts++){
-				//create the segments to be merged
-				BufferRequest request = requestMap.containsKey(parts) ? requestMap.get(parts) : null;
-
-				List<Segment<K, V>> segmentList =
-					new ArrayList<Segment<K, V>>(end - start);
-				for(int i = start; i < end; i++) {
-					if (!safemode && request != null && i <= request.flushPoint()) {
-						LOG.debug("JBuffer flush: pipeline request already took care of partition " 
-								+ parts + " spill file " + i);
-						continue; // Request has already sent this spill data.
-					}
-
-					FSDataInputStream indexIn = localFs.open(indexFileName.get(i - start));
-					indexIn.seek(parts * MAP_OUTPUT_INDEX_RECORD_LENGTH);
-					long segmentOffset = indexIn.readLong();
-					long rawSegmentLength = indexIn.readLong();
-					long segmentLength = indexIn.readLong();
-					indexIn.close();
-					FSDataInputStream in = localFs.open(filename.get(i - start));
-					in.seek(segmentOffset);
-					Segment<K, V> s = 
-						new Segment<K, V>(new IFile.Reader<K, V>(job, in, segmentLength, codec),
-								true);
-					segmentList.add(s);
-				}
-
-				//merge
-				@SuppressWarnings("unchecked")
-				RawKeyValueIterator kvIter = 
-					Merger.merge(job, localFs, 
-							keyClass, valClass,
-							segmentList, job.getInt("io.sort.factor", 100), 
-							new Path(this.taskid.toString()), 
-							job.getOutputKeyComparator(), reporter);
-
-				//write merged output to disk
-				long segmentStart = finalOut.getPos();
-				IFile.Writer<K, V> writer = 
-					new IFile.Writer<K, V>(job, finalOut, keyClass, valClass, codec);
-				if (null == combinerClass || end - start < minSpillsForCombine) {
-					Merger.writeFile(kvIter, writer, reporter, job);
-				} else {
-					combineCollector.setWriter(writer);
-					combineAndSpill(kvIter);
-				}
-
-				//close
-				writer.close();
-
-				//write index record
-				writeIndexRecord(finalIndexOut, finalOut, segmentStart, writer);
-			}
-			finalOut.close();
-			finalIndexOut.close();
-			//cleanup
-			for(int i = 0; i < filename.size(); i++) {
-				localFs.delete(filename.get(i), true);
-				localFs.delete(indexFileName.get(i), true);
-			}
 		}
 	}
 

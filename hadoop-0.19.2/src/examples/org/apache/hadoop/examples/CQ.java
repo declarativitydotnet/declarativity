@@ -231,15 +231,7 @@ public class CQ extends Configured implements Tool {
 
                         public void blockForce(OutputCollector o) {
                           JBuffer jb = (JBuffer) o;
-                          try {
-                            while (!jb.force()) {
-                              System.err.println("Can't force yet....");
-                              sleep(1000);
-                            }
-                          } catch (IOException e) {
-                            throw new RuntimeException(e);
-
-                          }
+                          jb.force();
                         }
                         public void configure(JobConf jc) {
                           try {

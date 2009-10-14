@@ -16,17 +16,18 @@ public interface JBufferCollector<K extends Object, V extends Object>
 	
 	public void collect(DataInputBuffer key, DataInputBuffer value) throws IOException;
 	
+	public enum SpillOp {NOOP, COPY, RENAME};
+
 	/**
 	 * Spill the data and index files directly to the buffer. 
-	 * @param data The data file
-	 * @param index The index file
-	 * @param copy If true then copy, else rename.
-	 * @return int representing the spill identifier.
+	 * @param data The data file.
+	 * @param index The index file.
+	 * @param op The operation to perform.
 	 * @throws IOException
 	 */
-	public int spill(Path data, Path index, boolean copy) throws IOException;
+	public void spill(Path data, Path index, SpillOp op) throws IOException;
 	
-	public void close() throws IOException;
+	public OutputFile close() throws IOException;
 	
 	public void reset(boolean restart) throws IOException;
 	

@@ -41,6 +41,8 @@ import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
 import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.JBufferCollector;
+import org.apache.hadoop.mapred.bufmanager.MapBufferRequest;
+import org.apache.hadoop.mapred.bufmanager.OutputFile;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
 import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -109,7 +111,7 @@ public class ReduceTask extends Task {
 							String host = u.getHost();
 							TaskAttemptID mapTaskId = event.getTaskAttemptId();
 							if (!mapTasks.contains(mapTaskId)) {
-								BufferRequest request = new BufferRequest(mapTaskId, getPartition(), host, sink.getAddress());
+								MapBufferRequest request = new MapBufferRequest(host, getTaskID(), sink.getAddress(), mapTaskId.getJobID(), getPartition());
 								try {
 									bufferUmbilical.request(request);
 									mapTasks.add(mapTaskId);
@@ -165,11 +167,6 @@ public class ReduceTask extends Task {
 		return this.isSnapshotting;
 	}
 	
-	public boolean isMerging() {
-		return buffer.isMerging();
-	}
-
-
 	{ 
 		getProgress().setStatus("reduce"); 
 		setPhase(TaskStatus.Phase.SHUFFLE);        // phase to start with 
@@ -253,14 +250,11 @@ public class ReduceTask extends Task {
 	}
 	
 	@Override
-	public boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
+	public boolean snapshots(List<JBufferSink.JBufferSnapshot> snapshots, float progress) throws IOException {
 		float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
 
 		if (progress > maxProgress) {
-			return false; // we're done now.
-		}
-		else if (reducePipeline && !buffer.canSnapshot()) {
-			return true; // can't do it now but keep trying.
+			return false; 
 		}
 		
 		synchronized (this) {
@@ -268,8 +262,8 @@ public class ReduceTask extends Task {
 			this.isSnapshotting = true;
 			try {
 				OutputCollector collector = null;
-				for (JBufferSink.JBufferRun run : runs) {
-					run.spill(buffer);
+				for (JBufferSink.JBufferSnapshot snapshot : snapshots) {
+					snapshot.spill(buffer);
 				}
 				return snapshot(false, progress, null);
 			} finally {
@@ -281,31 +275,16 @@ public class ReduceTask extends Task {
 	}
 	
 	private boolean snapshot(boolean save, float progress, Reporter reporter) throws IOException {
-		Path data = null;
-		Path index = null;
-		
-		buffer.flush(); // create a final output for snapshotting.
-		
-		Path oldData = mapOutputFile.getOutputFile(getTaskID());
-		Path oldIndex = mapOutputFile.getOutputIndexFile(getTaskID());
+		OutputFile input = buffer.close(); // create a final output for snapshotting.
 		FileSystem localFs = FileSystem.getLocal(conf);
-		
-		if (save) {
-			/* Copy the final output so we can respill it later. */
-			data  = new Path(oldData.getParent(), getTaskID().toString() + "_snapshot.out");
-			index = new Path(oldIndex.getParent(), getTaskID().toString() + "_snapshotindex.out");
-			localFs.copyFromLocalFile(oldData, data);
-			localFs.copyFromLocalFile(oldIndex, index);
-		}
-		
 		try {
-			if (reducePipeline && buffer.canSnapshot()) {
+			if (reducePipeline) {
 				buffer.reset(true); // Restart for reduce output.
 				reduce(buffer, reporter, null);
 				buffer.getProgress().set(progress);
 				buffer.snapshot(); // Send reduce snapshot result
 			}
-			else if (!reducePipeline) {
+			else {
 				String snapshotName = getSnapshotOutputName(getPartition(), progress);
 				FileSystem fs = FileSystem.get(conf);
 				final RecordWriter out = 
@@ -320,8 +299,6 @@ public class ReduceTask extends Task {
 				reduce(collector, reporter, null);
 				out.close(null);
 				LOG.info("ReduceTask: snapshot created. file " + snapshotName);
-				localFs.delete(oldData, true);
-				localFs.delete(oldIndex, true);
 			}
 			return true;
 		} catch (IOException e) {
@@ -331,7 +308,12 @@ public class ReduceTask extends Task {
 			buffer.reset(true);
 			buffer.setProgress(this.copyPhase);
 			if (save) {
-				buffer.spill(data, index, false);
+				buffer.spill(input.data(), input.index(), 
+						     JBufferCollector.SpillOp.RENAME);
+			}
+			else {
+				localFs.delete(input.data(), true);
+				localFs.delete(input.index(), true);
 			}
 		}
 	}
@@ -376,9 +358,7 @@ public class ReduceTask extends Task {
 		inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
 		
 	    LOG.info("Reduce task " + getTaskID() + " starting sink.");
-		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), 
-				                           (JBufferCollector) buffer, 
-				                           this, inputSnapshots);
+		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), buffer, this);
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
 		fetcher.setDaemon(true);
@@ -389,20 +369,14 @@ public class ReduceTask extends Task {
 		
 		long begin = System.currentTimeMillis();
 		try {
-			buffer.flush();
+			buffer.close();
 			buffer.setProgress(reducePhase);
 			reduce(job, reporter, buffer);
 		} finally {
 			reducePhase.complete();
 			setProgressFlag();
 			if (reducePipeline) {
-				if (!buffer.force()) {
-					bufferUmbilical.commit(getTaskID());
-					LOG.info("ReduceTask " + getTaskID() + " registered final output to TT." );
-				}
-				else {
-					LOG.info("ReduceTask " + getTaskID() + " was able to force final output.");
-				}
+				buffer.snapshot();
 			}
 			buffer.free();
 		}
@@ -433,18 +407,16 @@ public class ReduceTask extends Task {
 				}
 				else if (!inputSnapshots && buffer.getProgress().get() > snapshotThreshold) {
 					LOG.info("ReduceTask checking to see if it's time to do a snapshot");
-					if (!reducePipeline || buffer.canSnapshot()) {
-						snapshotThreshold += snapshotInterval;
-						isSnapshotting = true;
-						LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
-						try { snapshot(true, buffer.getProgress().get(), reporter);
-						} catch (IOException e) {
-							LOG.warn("ReduceTask exeception during regular snapshot. " + e);
-						} finally {
-							isSnapshotting = false;
-						}
-						LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
+					snapshotThreshold += snapshotInterval;
+					isSnapshotting = true;
+					LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
+					try { snapshot(true, buffer.getProgress().get(), reporter);
+					} catch (IOException e) {
+						LOG.warn("ReduceTask exeception during regular snapshot. " + e);
+					} finally {
+						isSnapshotting = false;
 					}
+					LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 				}
 				LOG.info("ReduceTask sleep");
 				try { this.wait(waittime);
@@ -488,7 +460,6 @@ public class ReduceTask extends Task {
 		if (reducePipeline) {
 			buffer.reset(true);
 			reduce(buffer, reporter, reducePhase);
-			buffer.close();
 		}
 		else {
 			// make output collector

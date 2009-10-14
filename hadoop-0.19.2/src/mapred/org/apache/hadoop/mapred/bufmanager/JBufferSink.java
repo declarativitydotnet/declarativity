@@ -35,7 +35,7 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.mapred.IFile;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.ReduceOutputFile;
+import org.apache.hadoop.mapred.FileHandle;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskAttemptID;
@@ -46,13 +46,13 @@ import org.apache.hadoop.util.ReflectionUtils;
 public class JBufferSink<K extends Object, V extends Object> {
 	private static final Log LOG = LogFactory.getLog(JBufferSink.class.getName());
 	  
-	public class JBufferRun {
+	public class JBufferSnapshot {
 		public boolean fresh = false;
 		
-		private TaskID id;
+		private TaskID taskid;
 		
-		private Path snapshot = null;
-		private Path index    = null;
+		private Path data  = null;
+		private Path index = null;
 		
 		private long length = 0;
 		
@@ -60,16 +60,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 		
 		private int runs = 0;
 		
-		public JBufferRun(TaskID id) {
-			this.id = id;
+		public JBufferSnapshot(TaskID taskid) {
+			this.taskid = taskid;
 		}
 		
 		public String toString() {
-			return "JBufferRun " + id + ": progress = " + progress;
+			return "JBufferSnapshot " + taskid + ": progress = " + progress;
 		}
 		
 		public boolean valid() {
-			return this.snapshot != null && length > 0;
+			return this.data != null && length > 0;
 		}
 		
 		/**
@@ -85,7 +85,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				if (!valid()) {
 					throw new IOException("JBufferRun not valid!");
 				}
-				buffer.spill(snapshot, index, true);
+				buffer.spill(data, index, JBufferCollector.SpillOp.COPY);
 				fresh = false;
 			}
 		}
@@ -101,18 +101,20 @@ public class JBufferSink<K extends Object, V extends Object> {
 		snapshot(IFile.Reader<K, V> reader, long length, float progress) 
 		throws IOException {
 			synchronized (this) {
-				runs++;
-				Path data = outputFileManager.getOutputRunFileForWrite(id, runs, 1096);
-				Path index = outputFileManager.getOutputRunIndexFileForWrite(id, runs, 1096);
-				FSDataOutputStream out  = localFs.create(data, false);
-				FSDataOutputStream idx = localFs.create(index, false);
-				if (out == null) throw new IOException("Unable to create snapshot " + data);
-				write(reader, out, idx);
-				this.length   = length;
-				this.progress = progress;
-				this.snapshot = data;
-				this.index    = index;
-				this.fresh    = true;
+				if (this.progress < progress) {
+					runs++;
+					Path data = fileHandle.getInputSnapshotFileForWrite(ownerid, taskid, runs, length);
+					Path index = fileHandle.getInputSnapshotIndexFileForWrite(ownerid, taskid, runs, 1096);
+					FSDataOutputStream out  = localFs.create(data, false);
+					FSDataOutputStream idx = localFs.create(index, false);
+					if (out == null) throw new IOException("Unable to create snapshot " + data);
+					write(reader, out, idx);
+					this.length   = length;
+					this.progress = progress;
+					this.data     = data;
+					this.index    = index;
+					this.fresh    = true;
+				}
 			}
 			snapshotThread.snapshot();
 		}
@@ -178,7 +180,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		public void run() {
 			float progress = 0f;
 			try {
-				List<JBufferSink.JBufferRun> runs = new ArrayList<JBufferSink.JBufferRun>();
+				List<JBufferSink.JBufferSnapshot> snapshots = new ArrayList<JBufferSink.JBufferSnapshot>();
 				while (open) {
 					synchronized (this) {
 						busy = false;
@@ -192,29 +194,29 @@ public class JBufferSink<K extends Object, V extends Object> {
 							if (!open) return;
 
 							freshRuns = 0;
-							for (JBufferRun run : bufferRuns.values()) {
-								if (run.fresh) freshRuns++;
+							for (JBufferSnapshot snapshot : inputSnapshots.values()) {
+								if (snapshot.fresh) freshRuns++;
 							}
-						} while (freshRuns < bufferRuns.size() / 3);
+						} while (freshRuns < inputSnapshots.size() / 3);
 						busy = true;
 					}
 
-					synchronized (bufferRuns) {
-						runs.clear();
+					synchronized (inputSnapshots) {
+						snapshots.clear();
 						progress = 0f;
-						for (JBufferRun run : bufferRuns.values()) {
-							if (run.valid()) {
-								progress += run.progress;
-								runs.add(run);
+						for (JBufferSnapshot snapshot : inputSnapshots.values()) {
+							if (snapshot.valid()) {
+								progress += snapshot.progress;
+								snapshots.add(snapshot);
 							}
 						}
-						progress = progress / (float) numConnections;
+						progress = progress / (float) numInputs;
 					}
 
 					try {
 						if (!open) return;
-						LOG.debug("SnapshotThread: " + reduceID + " perform snapshot. progress " + progress);
-						boolean keepSnapshotting = task.snapshots(runs, progress);
+						LOG.debug("SnapshotThread: " + ownerid + " perform snapshot. progress " + progress);
+						boolean keepSnapshotting = task.snapshots(snapshots, progress);
 						if (keepSnapshotting == false) {
 							interrupt();
 							return;
@@ -235,11 +237,17 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private class SpillRun {
+		TaskID taskid;
+		
+		float progress;
+		
 		Path data;
 		
 		Path index;
 		
-		public SpillRun(Path data, Path index) {
+		public SpillRun(TaskID taskid, float progress, Path data, Path index) {
+			this.taskid = taskid;
+			this.progress = progress;
 			this.data = data;
 			this.index = index;
 		}
@@ -248,7 +256,9 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private Reporter reporter;
 	
-	private boolean safemode;
+	private JobConf conf;
+	
+	private TaskAttemptID ownerid;
 	
 	private int maxConnections;
 	
@@ -260,23 +270,19 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private ServerSocketChannel server;
 	
-	private int numConnections;
+	private int numInputs;
 	
 	private JBufferCollector<K, V> collector;
 	
-	private JobConf conf;
+	private Set<Connection> connections;
 	
-	private TaskAttemptID reduceID;
+	private Map<TaskID, Float> inputProgress;
 	
-	private Map<TaskID, List<Connection>> connections;
-	
-	private Map<TaskID, JBufferRun> bufferRuns;
+	private Map<TaskID, JBufferSnapshot> inputSnapshots;
 	
 	private Thread spillThread;
 	
 	private BlockingQueue<SpillRun> spillQueue;
-	
-	private int spillCount;
 	
 	private Set<TaskID> successful;
 	
@@ -284,37 +290,31 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private SnapshotThread snapshotThread;
 	
-	private final boolean snapshots;
+	private FileHandle fileHandle;
 	
-	private ReduceOutputFile outputFileManager;
-	
-	public JBufferSink(JobConf conf, Reporter reporter, TaskAttemptID reduceID, JBufferCollector<K, V> collector, Task task, boolean snapshots) throws IOException {
+	public JBufferSink(JobConf conf, Reporter reporter, TaskAttemptID ownerid, JBufferCollector<K, V> collector, Task task) throws IOException {
 		this.conf = conf;
 		this.reporter = reporter;
-		this.safemode = conf.getBoolean("mapred.safemode", false);
-		this.reduceID = reduceID;
+		this.ownerid = ownerid;
 		this.collector = collector;
 		this.localFs = FileSystem.getLocal(conf);
 		this.maxConnections = conf.getInt("mapred.reduce.parallel.copies", 20);
-		this.outputFileManager = new ReduceOutputFile(reduceID);
-		this.outputFileManager.setConf(conf);
-		this.bufferRuns = new HashMap<TaskID, JBufferRun>();
+		this.fileHandle = new FileHandle();
+		this.fileHandle.setConf(conf);
+		this.inputSnapshots = new HashMap<TaskID, JBufferSnapshot>();
 		this.spillQueue = new LinkedBlockingQueue<SpillRun>();
-		this.spillCount = 0;
 		
 		this.task = task;
-	    this.numConnections = task.getNumberOfInputs();
-		this.executor = Executors.newFixedThreadPool(Math.min(maxConnections, Math.max(numConnections, 5)));
-		this.connections = new ConcurrentHashMap<TaskID, List<Connection>>();
+	    this.numInputs = task.getNumberOfInputs();
+		this.executor = Executors.newFixedThreadPool(Math.min(maxConnections, Math.max(numInputs, 5)));
+		this.connections = new HashSet<Connection>();
 		this.successful = new HashSet<TaskID>();
+		this.inputProgress = new HashMap<TaskID, Float>();
 		
-		this.snapshots = snapshots;
 		this.snapshotThread = null;
-		if (snapshots) {
-			this.snapshotThread = new SnapshotThread();
-			this.snapshotThread.setDaemon(true);
-			this.snapshotThread.start();
-		}
+		this.snapshotThread = new SnapshotThread();
+		this.snapshotThread.setDaemon(true);
+		this.snapshotThread.start();
 		
 		/** The server socket and selector registration */
 		this.server = ServerSocketChannel.open();
@@ -331,10 +331,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 	}
 	
-	public boolean snapshots() {
-		return this.snapshots;
-	}
-	
 	public void open() {
 		this.acceptor = new Thread() {
 			public void run() {
@@ -344,55 +340,41 @@ public class JBufferSink<K extends Object, V extends Object> {
 						SocketChannel channel = server.accept();
 						channel.configureBlocking(true);
 						DataInputStream  input  = new DataInputStream(new BufferedInputStream(channel.socket().getInputStream()));
-						Connection       conn   = new Connection(input, JBufferSink.this, conf);
-						
-							TaskID taskid = conn.id().getTaskID();
-							DataOutputStream output = new DataOutputStream(new BufferedOutputStream(channel.socket().getOutputStream()));
-							
-							if (complete() || successful.contains(taskid) ) {
-								response.setTerminated();
-								response.write(output);
-								output.flush();
-								conn.close();
-							}
-							else if (!connections.containsKey(taskid) &&
-									  (connections.size() - successful.size()) > maxConnections) {
-								response.setRetry();
-								response.write(output);
-								output.flush();
-								conn.close();
-							}
-							else {
-								if (!conn.isSnapshot()) {
-									/* register regular connection. */
-									synchronized (connections) {
-										if (!connections.containsKey(taskid)) {
-											connections.put(taskid, new ArrayList<Connection>());
-										}
-										connections.get(taskid).add(conn);
-									}
-								}
-								
-								synchronized (conn) {
-									try {
-										executor.execute(conn);
-										response.setOpen();
-										response.write(output);
-										output.flush();
-									} catch (Throwable t) {
-										LOG.warn("Received error when trying to execute connection. " + t);
-										synchronized (connections) {
-											connections.get(taskid).remove(conn);
-										}
-										response.setRetry();
-										response.write(output);
-										output.flush();
-										conn.close();
-									}
+						Connection       conn   = new Connection(input, conf);
+
+						DataOutputStream output = new DataOutputStream(new BufferedOutputStream(channel.socket().getOutputStream()));
+
+						if (complete()) {
+							response.setTerminated();
+							response.write(output);
+							output.flush();
+							conn.close();
+						}
+						else if (connections.size() > maxConnections) {
+							response.setRetry();
+							response.write(output);
+							output.flush();
+							conn.close();
+						}
+						else {
+							synchronized (conn) {
+								try {
+									executor.execute(conn);
+									connections.add(conn);
+									response.setOpen();
+									response.write(output);
+									output.flush();
+								} catch (Throwable t) {
+									LOG.warn("Received error when trying to execute connection. " + t);
+									response.setRetry();
+									response.write(output);
+									output.flush();
+									conn.close();
 								}
 							}
+						}
 					}
-					LOG.info("JBufferSink " + reduceID + " buffer response server closed.");
+					LOG.info("JBufferSink " + ownerid + " buffer response server closed.");
 				} catch (IOException e) {  }
 			}
 		};
@@ -416,7 +398,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 					LOG.debug("JBufferSink begin drain spill runs.");
 					for (SpillRun run : runs) {
 						try { 
-							collector.spill(run.data, run.index, false);
+							if (getProgress(run.taskid) < run.progress) {
+								collector.spill(run.data, run.index, JBufferCollector.SpillOp.COPY);
+								updateProgress(run.taskid, run.progress);
+							}
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -433,13 +418,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 							SpillRun run = spillQueue.take();
 							spillQueue.add(run);
 							drain();
-							updateProgress();
 						} catch (InterruptedException e) {
 							return;
 						}
 					}
 				} finally {
-					LOG.info("JBufferSink " + reduceID + " spill thread exit.");
+					LOG.info("JBufferSink " + ownerid + " spill thread exit.");
 				}
 			}
 		};
@@ -447,8 +431,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 		spillThread.start();
 	}
 	
-	public TaskAttemptID reduceID() {
-		return this.reduceID;
+	public TaskAttemptID ownerID() {
+		return this.ownerid;
 	}
 	
 	/**
@@ -467,46 +451,26 @@ public class JBufferSink<K extends Object, V extends Object> {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		synchronized (connections) {
+			// TODO ensure all connections are done.
 			boolean connectionsOpen = true;
-			while (connectionsOpen) {
-				connectionsOpen = false;
-				for (List<Connection> clist : connections.values()) {
-					for (Connection c : clist) {
-						if (c.open) {
-							LOG.debug("JBufferSink " + reduceID + 
-									 ": close waiting for finish of " + c);
-							connectionsOpen = true;
-							c.open = false; // TODO think about this one.
-						}
-					}
-				}
-				if (connectionsOpen) {
-					try { connections.wait(100);
-					} catch (InterruptedException e) { }
-				}
-			}
 			this.spillThread.interrupt();
 		}
 
 		try {
-			if (snapshots) {
-				this.snapshotThread.close();
-				LOG.info("JBufferSink " + reduceID + " snapshot thread closed.");
-				synchronized (bufferRuns) {
-					if (bufferRuns.size() != successful.size()) {
-						LOG.error("JBufferSink: missing buffer runs!");
-					}
-
+			this.snapshotThread.close();
+			LOG.info("JBufferSink " + ownerid + " snapshot thread closed.");
+			synchronized (inputSnapshots) {
+				if (inputSnapshots.size() == successful.size()) {
 					synchronized (task) {
-						for (JBufferRun run : bufferRuns.values()) {
-							LOG.info("JBufferSink " + reduceID + " apply run " + run.id);
-							if (run.progress < 1.0f) {
+						for (JBufferSnapshot snapshot : inputSnapshots.values()) {
+							LOG.info("JBufferSink " + ownerid + " apply run " + snapshot.taskid);
+							if (snapshot.progress < 1.0f) {
 								LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
-										" progress = " + run.progress);
+										" progress = " + snapshot.progress);
 							}
-							run.spill(this.collector);
+							snapshot.spill(this.collector);
 						}
 					}
 				}
@@ -514,16 +478,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		finally {
-		}
 	}
 	
-	private int spillid() {
-		return this.spillCount++;
-	}
-	
-	private void spill(Path data, Path index) {
-		spillQueue.add(new SpillRun(data, index));
+	private void spill(TaskID taskid, float progress, Path data, Path index) {
+		spillQueue.add(new SpillRun(taskid, progress, data, index));
 	}
 	
 	private JBufferCollector<K, V> buffer() {
@@ -531,142 +489,66 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	public boolean complete() {
-		return this.successful.size() == numConnections;
+		return this.successful.size() == numInputs;
 	}
 	
 	public void cancel(TaskAttemptID attempt) {
-		synchronized (connections) {
-			TaskID taskid = attempt.getTaskID();
-			if (this.connections.containsKey(taskid)) {
-				List<Connection> closed = new ArrayList<Connection>();
-				for (Connection conn : this.connections.get(taskid)) {
-					if (conn.id().equals(attempt)) {
-						conn.close();
-						closed.add(conn);
-					}
-				}
-				this.connections.get(taskid).removeAll(closed);
-			}
-		}
+		// TODO 
 	}
 	
 	private void done(Connection connection) {
-		try {
-			if (!connection.isSnapshot()) {
-				LOG.debug("JBufferSink connection done. " + connection);
-				synchronized (connections) {
-					TaskID taskid = connection.id().getTaskID();
-					if (this.connections.containsKey(taskid)) {
-						if (connection.progress() == 1.0f) {
-							this.successful.add(taskid);
-						}
-					}
-					this.connections.notifyAll();
-
-					/*
-					if (safemode && collector instanceof JBuffer) {
-						int minUncommittedSpillId = Integer.MAX_VALUE;
-						for (List<Connection> clist : connections.values()) {
-							for (Connection c : clist) {
-								minUncommittedSpillId = Math.min(minUncommittedSpillId, c.minSpillId);
-							}
-						}
-						((JBuffer)collector).minUnfinishedSpill(minUncommittedSpillId);
-					}
-					*/
-				}
+		connection.close();
+		this.connections.remove(connection);
+	}
+	
+	private float getProgress(TaskID taskid) {
+		return this.inputProgress.containsKey(taskid) ? 
+				this.inputProgress.get(taskid) : 0f;
+	}
+	
+	private void updateProgress(TaskID taskid, float progress) {
+		if (progress == 1f) {
+			this.successful.add(taskid);
+		}
+		if (!this.inputProgress.containsKey(taskid) ||
+				this.inputProgress.get(taskid) < progress) {
+			this.inputProgress.put(taskid, progress);
+			float progressSum = 0f;
+			for (Float f : this.inputProgress.values()) {
+				progressSum += f;
 			}
-		} finally {
-			if (complete()) {
-				updateProgress();
-				LOG.debug("JBufferSink " + reduceID + " is complete.");
-			}
+			
+			collector.getProgress().set(progressSum / (float) numInputs);
+			reporter.progress();
 		}
 	}
 	
-	private void updateProgress() {
-		float progress = (float) this.successful.size();
-		Set<TaskID> taskids = new HashSet<TaskID>(connections.keySet());
-		for (TaskID taskid : taskids) {
-			if (!this.successful.contains(taskid)) {
-				float max = 0f;
-				for (Connection c : connections.get(taskid)) {
-					max = Math.max(max, c.progress());
-				}
-				progress += max;
+	private JBufferSnapshot getBufferRun(TaskID taskid) {
+		synchronized (inputSnapshots) {
+			if (!this.inputSnapshots.containsKey(taskid)) {
+				this.inputSnapshots.put(taskid, new JBufferSnapshot(taskid));
 			}
-		}
-		collector.getProgress().set(progress / (float) numConnections);
-		reporter.progress();
-	}
-	
-	private JBufferRun getBufferRun(TaskID taskid) {
-		synchronized (bufferRuns) {
-			if (!this.bufferRuns.containsKey(taskid)) {
-				this.bufferRuns.put(taskid, 
-						            new JBufferRun(taskid));
-			}
-			return this.bufferRuns.get(taskid);
+			return this.inputSnapshots.get(taskid);
 		}
 	}
 	
 	/************************************** CONNECTION CLASS **************************************/
 	
 	private class Connection implements Runnable {
-		private float progress;
-		
-		private TaskAttemptID id;
-		
-		private JBufferSink<K, V> sink;
 		private DataInputStream input;
 		
 		private boolean open;
-		private boolean busy = false;
+		private boolean busy;
 		
-		private int mergingSpills = 0;
+		private int spills;
 		
-		private boolean isSnapshot;
-		
-		public Connection(DataInputStream input, JBufferSink<K, V> sink, JobConf conf) throws IOException {
+		public Connection(DataInputStream input, JobConf conf) throws IOException {
 			this.input = input;
-			this.sink = sink;
-			this.progress = 0f;
 			this.open = true;
-			
-			this.id = new TaskAttemptID();
-			this.id.readFields(input);
-			this.isSnapshot = input.readBoolean();
-			
+			this.busy = false;
+			this.spills = 0;
 		}
 		
-		public boolean isSnapshot() {
-			return this.isSnapshot;
-		}
-		
-		public boolean equals(Object o) {
-			if (o instanceof JBufferSink.Connection) {
-				return ((Connection)o).id.equals(this.id);
-			}
-			return false;
-		}
-		
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append("Connection: receiving buffer " + id + ". ");
-			sb.append("Applying to buffer " + reduceID + ". ");
-			sb.append("Progress = " + progress + ". ");
-			sb.append("Busy? = " + busy + ". ");
-			return sb.toString();
-		}
-		
-		public float progress() {
-			return this.progress;
-		}
-		
-		public TaskAttemptID id() {
-			return this.id;
-		}
-
 		public void close() {
 			synchronized (this) {
 				open = false;
@@ -683,12 +565,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		private void 
-		spill(IFile.Reader<K, V> reader, long length, Class<K> keyClass, Class<V> valClass, CompressionCodec codec) 
+		spill(TaskID taskid, float progress, IFile.Reader<K, V> reader, long length, Class<K> keyClass, Class<V> valClass, CompressionCodec codec) 
 		throws IOException {
 			// Spill directory to disk
-			int spillid = sink.spillid();
-			Path filename      = outputFileManager.getOutputFileForWrite(id(), spillid, length);
-			Path indexFilename = outputFileManager.getOutputIndexFileForWrite(id(), spillid, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			int spillid = spills++;
+			Path filename      = fileHandle.getInputSpillFileForWrite(ownerid, taskid, spillid, length);
+			Path indexFilename = fileHandle.getInputSpillIndexFileForWrite(ownerid, taskid, spillid, JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
 
 			FSDataOutputStream out      = localFs.create(filename, false);
 			FSDataOutputStream indexOut = localFs.create(indexFilename, false);
@@ -716,16 +598,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 				indexOut.flush();
 				indexOut.close();
 
-				JBufferCollector<K, V> buffer = sink.buffer();
-				/* Don't want to hold up mapper. */
-				sink.spill(filename, indexFilename);
+				JBufferSink.this.spill(taskid, progress, filename, indexFilename);
 			} catch (Throwable e) {
 				LOG.error("JBufferSink: error " + e + " during spill. progress = " + progress);
 				e.printStackTrace();
 			}
 		}
 		
-		private void service(long length) throws IOException {
+		private void service(OutputFile.Header header, long length) throws IOException {
 			DataInputBuffer key = new DataInputBuffer();
 			DataInputBuffer value = new DataInputBuffer();
 			
@@ -742,105 +622,88 @@ public class JBufferSink<K extends Object, V extends Object> {
 			IFile.Reader<K, V> reader = 
 				new IFile.Reader<K, V>(conf, input, length, codec);
 			
-			if (sink.snapshots()) {
+			if (header.type() == OutputFile.Type.SNAPSHOT) {
 				try {
-					LOG.debug("JBufferSink: perform snaphot to buffer " + reduceID + " from buffer " + this.id + " progress = " + progress);
-					JBufferRun run = sink.getBufferRun(this.id.getTaskID());
-					run.snapshot(reader, length, progress);
-					return;
+					LOG.debug("JBufferSink: perform snaphot to buffer " + ownerid + " from buffer " + 
+							header.owner() + " progress = " + header.progress());
+					JBufferSnapshot snapshot = getBufferRun(header.owner().getTaskID());
+					snapshot.snapshot(reader, length, header.progress());
 				} catch (Throwable t) {
 					LOG.warn("Snapshot interrupted by " + t);
-					return; // don't care
 				}
 			} else {
-				if (sink.task.isSnapshotting() || sink.task.isMerging()) {
+				if (task.isSnapshotting() || task.isMerging()) {
 					/* Drain socket while task is snapshotting. */
-					LOG.debug("JBufferSink: call spill for buffer " + id + " due to merging or snapshotting.");
-					spill(reader, length, keyClass, valClass, codec);
+					LOG.debug("JBufferSink: call spill for data " + header.owner() + " due to merging or snapshotting.");
+					spill(header.owner().getTaskID(), header.progress(), reader, length, keyClass, valClass, codec);
 				} else { 
 					boolean doSpill = true;
-					JBufferCollector<K, V> buffer = sink.buffer();
-					if (!safemode || progress == 1.0f) {
-						LOG.debug("JBufferSink: get task lock for " + id + " dump.");
-						synchronized (sink.task) {
-							LOG.debug("JBufferSink: try to reserve " + length + " buffer space for buffer " + id);
+						LOG.debug("JBufferSink: get task lock for " + header.owner() + " dump.");
+						synchronized (task) {
+							LOG.debug("JBufferSink: try to reserve " + length + " buffer space for buffer " + header.owner());
 							/* Try to add records to the buffer. 
 							 * Note: this means we can't back out the records so
 							 * if we're in safemode this needs to be the final answer.
 							 */
-							if (!safemode && sink.buffer().reserve(length)) {
-								LOG.debug("JBufferSink: dumping buffer " + id + ".");
+							if (buffer().reserve(length)) {
+								LOG.debug("JBufferSink: dumping buffer " + header.owner() + ".");
 								int records = 0;
 								try {
 									while (reader.next(key, value)) {
 										records++;
-										this.sink.buffer().collect(key, value);
+										buffer().collect(key, value);
 									}
 								} catch (ChecksumException e) {
 									e.printStackTrace();
-									LOG.error("JBufferSink: ChecksumException during record dump. progress = " + progress);
 								} catch (Throwable t) {
 									t.printStackTrace();
-									LOG.error("JBufferSink: " + t + " during record dump. progress = " + progress);
 								} finally {
 									LOG.debug("JBufferSink: dumped " + records + " records.");
-									sink.buffer().unreserve(length);
+									buffer().unreserve(length);
 									doSpill = false;
-									updateProgress();
-									sink.task.notifyAll();
+									updateProgress(header.owner().getTaskID(), header.progress());
+									task.notifyAll();
 								}
 							}
 							else {
-								LOG.debug("JBufferSink: unable to reserve buffer space for " + id);
+								LOG.debug("JBufferSink: unable to reserve buffer space for " + header.owner());
 							}
 						}
-					}
 					
 					if (doSpill) {
-						LOG.debug("JBufferSink: had to spill " + id + ".");
-						spill(reader, length, keyClass, valClass, codec);
+						LOG.debug("JBufferSink: had to spill " + header.owner() + ".");
+						spill(header.owner().getTaskID(), header.progress(), reader, length, keyClass, valClass, codec);
 					}
 				}
 			}
 		}
 		
 		public void run() {
-			synchronized (this) {
-				if (open == false) {
-					LOG.info("Connection to " + id + " was opened then closed.");
-					return;
-				}
-			}
-			
 			try {
 				while (open) {
 					long length = 0;
-					boolean force = false;
+					OutputFile.Header header = null;
 					try {
 						busy = false;
 						length = this.input.readLong();
-						this.progress = this.input.readFloat();
+						header = OutputFile.Header.readHeader(this.input);
 						busy = true;
 					}
 					catch (Throwable e) {
 						return;
 					}
 					
-					if (length == 0 && !force) {
-						if (progress < 1f) continue;
-						else  return;
+					if (length == 0) {
+						updateProgress(header.owner().getTaskID(), header.progress());
 					}
 					else {
 						long timestamp = System.currentTimeMillis();
-						LOG.debug("JBufferSink connection " + id + " service length " + 
-								  length + " progress = " + progress);
-						service(length);
-						LOG.debug("JBufferSink connection " + id + " service time = " + 
+						LOG.debug("JBufferSink receiving data from task " + header.owner() + 
+								" service length " +  length + " progress = " + header.progress());
+						service(header, length);
+						LOG.debug("JBufferSink data from task " + header.owner() + " service time = " + 
 								  (System.currentTimeMillis() - timestamp));
-						if (force) return;
 					}
-					
-					if (progress == 1.0f) return;
 				}
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -849,7 +712,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			finally {
 				busy = false;
 				close(); // must be called before done!
-				sink.done(this);
+				done(this);
 			}
 		}
 	}

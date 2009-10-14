@@ -58,7 +58,7 @@ class LocalJobRunner implements JobSubmissionProtocol {
 
     private JobStatus status;
     private ArrayList<TaskAttemptID> mapIds = new ArrayList<TaskAttemptID>();
-    private MapOutputFile mapoutputFile;
+    private FileHandle mapoutputFile;
     private JobProfile profile;
     private Path localFile;
     private FileSystem localFs;
@@ -77,7 +77,7 @@ class LocalJobRunner implements JobSubmissionProtocol {
     public Job(JobID jobid, JobConf conf) throws IOException {
       this.file = new Path(getSystemDir(), jobid + "/job.xml");
       this.id = jobid;
-      this.mapoutputFile = new MapOutputFile(jobid);
+      this.mapoutputFile = new FileHandle(jobid);
       this.mapoutputFile.setConf(conf);
 
       this.localFile = new JobConf(conf).getLocalPath(jobDir+id+".xml");

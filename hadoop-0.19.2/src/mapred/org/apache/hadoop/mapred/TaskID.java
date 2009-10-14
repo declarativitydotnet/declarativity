@@ -83,7 +83,7 @@ public class TaskID extends ID {
     this(new JobID(jtIdentifier, jobId), isMap, id);
   }
   
-  private TaskID() { }
+  public TaskID() { }
   
   /** Returns the {@link JobID} object that this tip belongs to */
   public JobID getJobID() {
