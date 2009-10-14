@@ -243,7 +243,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		public synchronized boolean sent(OutputFile buffer) {
 			if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
 				OutputFile lastSent = this.lastSentOutputFile.get(buffer.header().owner().getTaskID());
-				return buffer.header().progress() < lastSent.header().progress();
+				return buffer.header().compareTo(lastSent.header()) <= 0;
 			}
 			return false;
 		}
