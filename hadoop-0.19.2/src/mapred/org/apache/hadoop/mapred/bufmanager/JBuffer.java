@@ -300,6 +300,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 				else if (pipeline) {
 					/* Create a dummy sentinel spill file. */
+					System.err.println("JBuffer: create sentinel spill file for pipelining.");
 					int dataSize = partitions * APPROX_HEADER_LENGTH;
 					Path data = outputHandle.getSpillFileForWrite(taskid, numSpills, dataSize);
 					FSDataOutputStream dataOut = localFs.create(data, false);
