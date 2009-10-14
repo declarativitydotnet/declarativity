@@ -29,6 +29,13 @@ public class OutputFile implements Writable {
 			this.progress = progress;
 		}
 		
+		@Override
+		public String toString() {
+			return "Header: type " + type + 
+			       " owner " + owner + 
+			       " progress " + progress;
+		}
+		
 		public Type type() { return type; }
 		
 		public TaskAttemptID owner() {  return owner;  }
