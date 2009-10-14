@@ -313,14 +313,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (kvstart != kvend) { 
 				LOG.debug("SpillThread: begin sort and spill.");
 				long sortstart = java.lang.System.currentTimeMillis();
-				float currentProgress = progress.get();
 				int spillNumber = sortAndSpill(); 
 				LOG.debug("SpillThread: sort/spill time " + 
 							((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
 				if (pipeline) {
 					Path data = outputHandle.getSpillFile(taskid, spillNumber);
 					Path index = outputHandle.getSpillIndexFile(taskid, spillNumber);
-					umbilical.output(new OutputFile(taskid, currentProgress, 
+					umbilical.output(new OutputFile(taskid, getProgress().get(), 
 							                        inputFileName, inputStart, inputEnd, 
 							                        spillNumber + 1, data, index, false));
 				}
@@ -1050,6 +1049,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	public synchronized OutputFile close() throws IOException {  
+		System.err.println("JBuffer: closed called at progress " + getProgress().get());
 		return flush();
 	}
 
