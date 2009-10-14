@@ -381,7 +381,13 @@ public class BufferController implements BufferUmbilicalProtocol {
 					if (!request.sent(buffer)) {
 						try {
 							System.err.println("Send " + buffer.header() + " to " + request);
-							request.flush(buffer);
+							if (request.open()) {
+								System.err.println("Send " + buffer.header() + " to " + request);
+								request.flush(buffer);
+							}
+							else {
+								System.err.println("Could not open " + request);
+							}
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
