@@ -19,7 +19,7 @@ public class MapBufferRequest extends BufferRequest {
 	}
 	
 	public MapBufferRequest(String sourceHost, TaskAttemptID destTaskId, InetSocketAddress destinationAddress, JobID mapJobId, int mapPartition) {
-		super(Type.MAP, sourceHost, destTaskId, destinationAddress);
+		super(sourceHost, destTaskId, destinationAddress);
 		this.mapJobId = mapJobId;
 		this.mapPartition = mapPartition;
 	}
@@ -45,5 +45,10 @@ public class MapBufferRequest extends BufferRequest {
 	
 	public int partition() {
 		return this.mapPartition;
+	}
+
+	@Override
+	public Type type() {
+		return Type.MAP;
 	}
 }
