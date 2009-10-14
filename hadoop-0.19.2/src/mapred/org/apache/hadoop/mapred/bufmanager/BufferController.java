@@ -549,12 +549,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 	
 	@Override
 	public synchronized void request(MapBufferRequest request) throws IOException {
-		System.err.println("MapBufferRequest: source host " + request.srcHost() + " from (this) host " + hostname);
 		if (request.srcHost().equals(hostname)) {
 			register(request);
 		}
 		else {
-			System.err.println("SOURCE HOST IS REMOTE");
 			requestTransfer.transfer(request); // request is remote.
 		}
 	}
