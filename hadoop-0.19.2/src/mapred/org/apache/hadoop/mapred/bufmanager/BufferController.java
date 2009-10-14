@@ -64,7 +64,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		public void transfer(BufferRequest request) {
 			synchronized(transfers) {
 				InetSocketAddress source = 
-					NetUtils.createSocketAddr(request + ":" + controlPort);
+					NetUtils.createSocketAddr(request.srcHost() + ":" + controlPort);
 				if (!transfers.containsKey(source)) {
 					transfers.put(source, new HashSet<BufferRequest>());
 				}
@@ -110,7 +110,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 							}
 						}
 					} catch (IOException e) {
-						LOG.warn("BufferController: request transfer connection issue " + e);
+						LOG.warn("BufferController: Trying to connect to " + location + "."
+						          + " Request transfer connection issue " + e);
 					} finally {
 						try {
 							if (out != null) {
