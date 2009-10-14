@@ -170,6 +170,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 		
 		@Override
+		public String toString() {
+			return "RequestManager destination " + destination;
+		}
+		
+		@Override
 		public int hashCode() {
 			return this.destination.hashCode();
 		}
@@ -346,6 +351,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		
 		public void add(OutputFile file) {
 			synchronized (this) {
+				System.err.println("FileManager " + taskid + " receive output file " + file.header());
 				if (file.complete()) this.finalOutput = file;
 				else this.bufferFiles.add(file);
 				if (this.requests.size() > 0) {
@@ -373,6 +379,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				for (RequestManager request : this.requests) {
 					if (!request.sent(buffer)) {
 						try {
+							System.err.println("Send " + buffer.header() + " to " + request);
 							request.flush(buffer);
 						} catch (IOException e) {
 							e.printStackTrace();
