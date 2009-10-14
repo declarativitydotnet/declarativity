@@ -209,17 +209,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 			if (dataFiles.size() == 0) {
 				//create dummy files
-				for (int i = 0; i < partitions; i++) {
-					long segmentStart = dataOut.getPos();
-					IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, dataOut,  keyClass, valClass, codec);
-					writer.close();
-					writeIndexRecord(indexOut, dataOut, segmentStart, writer);
-				}
+				writeEmptyOutput(dataOut, indexOut);
 				dataOut.close();
 				indexOut.close();
-				return;
-			}
-			{
+			} else {
 				for (int parts = 0; parts < partitions; parts++){
 					//create the segments to be merged
 					BufferRequest request = requestMap.containsKey(parts) ? requestMap.get(parts) : null;
@@ -304,6 +297,20 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					kvend = kvindex;
 					bufend = bufmark;
 					spill();
+				}
+				else if (pipeline) {
+					/* Create a dummy sentinel spill file. */
+					int dataSize = partitions * APPROX_HEADER_LENGTH;
+					Path data = outputHandle.getSpillFileForWrite(taskid, numSpills, dataSize);
+					FSDataOutputStream dataOut = localFs.create(data, false);
+					Path index = outputHandle.getSpillIndexFileForWrite(
+							taskid, numSpills, partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH);
+					FSDataOutputStream indexOut = localFs.create(index, false);
+					writeEmptyOutput(dataOut, indexOut);
+					dataOut.close(); indexOut.close();
+					umbilical.output(new OutputFile(taskid, 1f, 
+							                        inputFileName, inputStart, inputEnd, 
+							                        numSpills + 1, data, index, false));
 				}
 				spillLock.notifyAll();
 			}
@@ -1092,6 +1099,15 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 
+	private void writeEmptyOutput(FSDataOutputStream dataOut, FSDataOutputStream indexOut) throws IOException {
+		//create dummy output
+		for (int i = 0; i < partitions; i++) {
+			long segmentStart = dataOut.getPos();
+			IFile.Writer<K, V> writer = new IFile.Writer<K, V>(job, dataOut,  keyClass, valClass, codec);
+			writer.close();
+			writeIndexRecord(indexOut, dataOut, segmentStart, writer);
+		}
+	}
 
 	private int sortAndSpill() throws IOException {
 		//approximate the length of the output file to be the length of the
