@@ -65,7 +65,7 @@ public class JobID extends ID {
     this.jtIdentifier = jtIdentifier;
   }
   
-  private JobID() { }
+  public JobID() { }
   
   public String getJtIdentifier() {
     return jtIdentifier;

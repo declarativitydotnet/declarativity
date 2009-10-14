@@ -36,6 +36,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapred.JvmTask;
+import org.apache.hadoop.mapred.bufmanager.OutputFile;
 
 public class IsolationRunner {
   private static final Log LOG = 
@@ -149,7 +150,7 @@ public class IsolationRunner {
         = conf.getMapOutputKeyClass().asSubclass(WritableComparable.class);
     Class<? extends Writable> valueClass
         = conf.getMapOutputValueClass().asSubclass(Writable.class);
-    MapOutputFile namer = new MapOutputFile(taskId.getJobID());
+    FileHandle namer = new FileHandle();
     namer.setConf(conf);
     for(int i=0; i<numMaps; i++) {
       Path f = namer.getInputFile(i, taskId);

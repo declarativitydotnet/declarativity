@@ -456,8 +456,7 @@ public class TaskTracker
     }
     
 	this.bufferController = new BufferController(this);
-	this.bufferController.setDaemon(true);
-	this.bufferController.start();
+	this.bufferController.open();
 	
     // bind address
     String address = 
@@ -883,9 +882,9 @@ public class TaskTracker
   private LocalDirAllocator lDirAlloc = 
                               new LocalDirAllocator("mapred.local.dir");
 
-  public JobConf getJobConf(TaskAttemptID taskid) throws IOException {
+  public JobConf getJobConf(JobID jobid) throws IOException {
     Path localJobFile = 
-    	lDirAlloc.getLocalPathToRead(getLocalJobDir(taskid.getJobID().toString()) + 
+    	lDirAlloc.getLocalPathToRead(getLocalJobDir(jobid.toString()) + 
     			                     Path.SEPARATOR + "job.xml", fConf);
     
     return new JobConf(localJobFile);
@@ -994,7 +993,7 @@ public class TaskTracker
   public synchronized void shutdown() throws IOException {
     shuttingDown = true;
     close();
-    bufferController.interrupt();
+    bufferController.close();
     if (this.server != null) {
       try {
         LOG.info("Shutting down StatusHttpServer");
@@ -1697,7 +1696,7 @@ public class TaskTracker
       
       if (tip.getTask().isPipeline()) return 0;
       
-      MapOutputFile mapOutputFile = new MapOutputFile();
+      FileHandle mapOutputFile = new FileHandle();
       mapOutputFile.setJobId(taskId.getJobID());
       mapOutputFile.setConf(conf);
       

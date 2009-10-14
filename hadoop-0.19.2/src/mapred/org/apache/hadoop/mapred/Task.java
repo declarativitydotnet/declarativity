@@ -45,7 +45,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.IFile.Writer;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
-import org.apache.hadoop.mapred.bufmanager.JBufferSink.JBufferRun;
+import org.apache.hadoop.mapred.bufmanager.JBufferSink.JBufferSnapshot;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -128,7 +128,7 @@ public abstract class Task implements Writable, Configurable {
     skipRanges.skipRangeIterator();
   
   protected JobConf conf;
-  protected MapOutputFile mapOutputFile = new MapOutputFile();
+  protected FileHandle mapOutputFile = new FileHandle();
   protected LocalDirAllocator lDirAlloc;
   private final static int MAX_RETRIES = 10;
   protected JobContext jobContext;
@@ -389,7 +389,7 @@ public abstract class Task implements Writable, Configurable {
 	  return 0;
   }
   
-  public boolean snapshots(List<JBufferRun> runs, float progress) throws IOException {
+  public boolean snapshots(List<JBufferSnapshot> snapshots, float progress) throws IOException {
 	  throw new IOException("Task: snapshot not configured!");
   }
   

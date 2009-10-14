@@ -62,9 +62,9 @@ import org.apache.hadoop.mapred.TaskCompletionEvent.Status;
 import org.apache.hadoop.mapred.bufmanager.BufferRequest;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
-import org.apache.hadoop.mapred.bufmanager.MapOutputCollector;
 import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.JBufferCollector;
+import org.apache.hadoop.mapred.bufmanager.OutputFile;
 import org.apache.hadoop.util.IndexedSortable;
 import org.apache.hadoop.util.IndexedSorter;
 import org.apache.hadoop.util.Progress;
@@ -80,7 +80,7 @@ public class MapTask extends Task {
 
 	protected TrackedRecordReader recordReader = null;
 	
-	protected MapOutputCollector collector = null;
+	protected OutputCollector collector = null;
 
 	protected JBuffer buffer = null;
 	
@@ -234,9 +234,6 @@ public class MapTask extends Task {
 	    
 		if (numReduceTasks > 0) {
 			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-			if (job.getBoolean("mapred.map.pipeline", false)) {
-				this.buffer.pipeline(true);
-			}
 			this.buffer.setProgress(getProgress());
 			collector = this.buffer;
 		} else { 
@@ -263,6 +260,11 @@ public class MapTask extends Task {
 			job.set("map.input.file", fileSplit.getPath().toString());
 			job.setLong("map.input.start", fileSplit.getStart());
 			job.setLong("map.input.length", fileSplit.getLength());
+			if (this.buffer != null) {
+				this.buffer.input(fileSplit.getPath().getName(), 
+						          fileSplit.getStart(), fileSplit.getLength(), 
+						          job.getBoolean("mapred.map.pipeline", false));
+			}
 		}
 
 		RecordReader rawIn =                  // open input
@@ -274,9 +276,14 @@ public class MapTask extends Task {
 
 		try {
 			runner.run(this.recordReader, collector, reporter);      
-			collector.close();
-			this.buffer.free();
-			bufferUmbilical.commit(getTaskID());
+			if (this.buffer != null) {
+				OutputFile finalOut = this.buffer.close();
+				this.buffer.free();
+				bufferUmbilical.output(finalOut);
+			}
+			else {
+				((DirectMapOutputCollector)collector).close();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw e;
@@ -289,7 +296,7 @@ public class MapTask extends Task {
 	
 
 	class DirectMapOutputCollector<K, V>
-	implements MapOutputCollector<K, V> {
+	implements OutputCollector<K, V> {
 
 		private RecordWriter<K, V> out = null;
 
@@ -314,10 +321,6 @@ public class MapTask extends Task {
 			if (this.out != null) {
 				out.close(this.reporter);
 			}
-
-		}
-
-		public void flush() throws IOException {
 		}
 
 		public void collect(K key, V value) throws IOException {

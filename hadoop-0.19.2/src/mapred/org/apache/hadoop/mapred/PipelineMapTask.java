@@ -25,6 +25,8 @@ import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
 import org.apache.hadoop.mapred.bufmanager.JBufferCollector;
 import org.apache.hadoop.mapred.bufmanager.JBufferSink;
+import org.apache.hadoop.mapred.bufmanager.OutputFile;
+import org.apache.hadoop.mapred.bufmanager.ReduceBufferRequest;
 import org.apache.hadoop.util.ReflectionUtils;
 
 public class PipelineMapTask extends MapTask implements JBufferCollector {
@@ -79,7 +81,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 							TaskAttemptID reduceAttemptId = event.getTaskAttemptId();
 							if (reduceAttemptId.getTaskID().equals(reduceTaskId) && !requestSent) {
 								LOG.debug("Map " + getTaskID() + " sending buffer request to reducer " + reduceAttemptId);
-								BufferRequest request = new BufferRequest(reduceAttemptId, 0, host, sink.getAddress());
+								ReduceBufferRequest request = new ReduceBufferRequest(host, getTaskID(), sink.getAddress(), reduceTaskId);
 								try {
 									bufferUmbilical.request(request);
 									requestSent = true;
@@ -202,21 +204,15 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		int numReduceTasks = job.getNumReduceTasks();
 		if (numReduceTasks > 0) {
 			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
-			if (job.getBoolean("mapred.map.tasks.pipeline.execution", false)) {
-				this.buffer.pipeline(true);
-			}
 			this.buffer.setProgress(getProgress());
 			collector = buffer;
 		} else { 
-			collector = new DirectMapOutputCollector(umbilical, job, reporter);
+			throw new IOException("PipelineMaptask has no reduce tasks!");
 		}
 		
 	    this.mapper = ReflectionUtils.newInstance(job.getMapperClass(), job);
 
-	    /* Kick off a sink for receiving the reducer output. */
-		boolean inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
-
-		JBufferSink sink  = new JBufferSink(job, reporter, getTaskID(), this, this, inputSnapshots);
+		JBufferSink sink  = new JBufferSink(job, reporter, getTaskID(), this, this);
 		sink.open();
 		
 		/* Start the reduce output fetcher */
@@ -238,50 +234,37 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		LOG.info("PipelineMapTask: copy input took " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
 		setPhase(TaskStatus.Phase.MAP); 
-		sink.close(); // This will commit final snapshots, if necessary.
+		sink.close(); // This will commit final snapshots.
 		timestamp = System.currentTimeMillis();
-		if (this.buffer != null) {
-			this.buffer.close();
-			if (!buffer.force()) {
-				LOG.info("PipelineMapTask " + getTaskID() + " unable to force buffer.");
-				bufferUmbilical.commit(getTaskID()); // Register final flush.
-			}
-			else {
-				LOG.info("PipelineMapTask " + getTaskID() + " forced buffer.");
-			}
-			this.buffer.free();
-		}
-		else {
-			collector.close();                   // Perform final flush
-		}
+		getProgress().complete();
+		this.buffer.snapshot(); // perform final snapshot.
+		this.buffer.free();
 		LOG.info("PipelineMapTask: took " + (System.currentTimeMillis() - timestamp) + " ms to finalize final output.");
 
 		done(umbilical);
 	}
 	
 	@Override
-	public boolean snapshots(List<JBufferSink.JBufferRun> runs, float progress) throws IOException {
+	public boolean snapshots(List<JBufferSink.JBufferSnapshot> snapshots, float progress) throws IOException {
 		synchronized (this) {
 			float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
 			if (progress > maxProgress) {
 				return false; // done at this point.
 			}
-			else if (buffer.canSnapshot() == false) {
-				return true;
-			}
 		
 			isSnapshotting = true;
 			try {
 				System.err.println("PipelineMapTask: " + getTaskID() + " perform snapshot. progress = " + progress);
-				for (JBufferSink.JBufferRun run : runs) {
-					run.spill(this);
+				for (JBufferSink.JBufferSnapshot snapshot : snapshots) {
+					snapshot.spill(this);
 				}
 				this.buffer.getProgress().set(progress);
-				return this.buffer.snapshot();
+				this.buffer.snapshot();
 			} finally {
 				buffer.reset(true);
 				isSnapshotting = false;
 			}
+			return true;
 		}
 	}
 	
@@ -300,7 +283,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 
 	@Override
-	public int spill(Path data, Path index, boolean copy) throws IOException {
+	public void spill(Path data, Path index, JBufferCollector.SpillOp op) throws IOException {
 		CompressionCodec codec = null;
 		if (conf.getCompressMapOutput()) {
 			Class<? extends CompressionCodec> codecClass =
@@ -315,7 +298,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			collect(key, value);
 		}
 		reader.close();
-		return -1;
 	}
 
 	@Override
@@ -326,14 +308,15 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	public void collect(Object key, Object value) throws IOException {
 		synchronized (this) {
 			if (open) {
-				mapper.map(key, value, collector, reporter);
+				mapper.map(key, value, buffer, reporter);
 			}
 			else throw new IOException("Unable to collect because PipelineMapTask is closed!");
 		}
 	}
 
 	@Override
-	public void close() throws IOException {
+	public OutputFile close() throws IOException {
+		return buffer.close();
 	}
 
 	@Override

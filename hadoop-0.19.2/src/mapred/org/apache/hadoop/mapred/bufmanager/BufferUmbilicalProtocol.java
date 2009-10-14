@@ -9,13 +9,10 @@ import org.apache.hadoop.mapred.TaskID;
 
 public interface BufferUmbilicalProtocol extends VersionedProtocol {
 	long versionID = 0;
-
-	public void commit(TaskAttemptID taskid) throws IOException;
 	
-	public void request(BufferRequest request) throws IOException;
+	public void request(MapBufferRequest request) throws IOException;
 	
-	public BufferRequest getRequest(TaskAttemptID taskid) throws IOException;
+	public void request(ReduceBufferRequest request) throws IOException;
 	
-	public void remove(BufferRequest request) throws IOException;
-
+	public void output(OutputFile buffer) throws IOException;
 }
