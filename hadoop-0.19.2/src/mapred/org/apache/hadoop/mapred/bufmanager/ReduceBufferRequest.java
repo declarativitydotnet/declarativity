@@ -16,7 +16,7 @@ public class ReduceBufferRequest extends BufferRequest {
 	}
 	
 	public ReduceBufferRequest(String sourceHost, TaskAttemptID destTaskId, InetSocketAddress destinationAddress, TaskID reduceTaskId) {
-		super(Type.REDUCE, sourceHost, destTaskId, destinationAddress);
+		super(sourceHost, destTaskId, destinationAddress);
 		this.reduceTaskId = reduceTaskId;
 	}
 	
@@ -40,6 +40,11 @@ public class ReduceBufferRequest extends BufferRequest {
 	@Override
 	public int partition() {
 		return 0;
+	}
+
+	@Override
+	public Type type() {
+		return Type.REDUCE;
 	}
 
 }

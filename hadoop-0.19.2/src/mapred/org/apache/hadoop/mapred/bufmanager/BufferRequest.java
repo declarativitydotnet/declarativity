@@ -13,8 +13,6 @@ import org.apache.hadoop.mapred.TaskID;
 public abstract class BufferRequest implements Writable {
 	public static enum Type{MAP, REDUCE};
 	
-	private Type type;
-	
 	private String srcHost;
 	
 	private TaskAttemptID destTaskId;
@@ -24,12 +22,12 @@ public abstract class BufferRequest implements Writable {
 	public BufferRequest() {
 	}
 	
-	public BufferRequest(Type type, String sourceHost, TaskAttemptID destTaskId, InetSocketAddress destinationAddress) {
-		this.type = type;
+	public BufferRequest(String sourceHost, TaskAttemptID destTaskId, InetSocketAddress destinationAddress) {
 		this.srcHost = sourceHost;
 		this.destTaskId = destTaskId;
 		this.destAddress = destinationAddress;
 	}
+	
 	
 	public static BufferRequest read(DataInput in) throws IOException {
 		Type type = WritableUtils.readEnum(in, Type.class);
@@ -77,9 +75,7 @@ public abstract class BufferRequest implements Writable {
 		WritableUtils.writeVInt(out, destAddress.getPort());
 	}
 	
-	public Type type() {
-		return type;
-	}
+	public abstract Type type();
 	
 	public abstract int partition();
 	
