@@ -341,6 +341,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		
 		public void request(RequestManager request) {
 			synchronized (this) {
+				System.err.println("FileManager " + taskid + " receive " + request);
 				this.requests.add(request);
 				if (this.bufferFiles.size() > 0 || this.finalOutput != null) {
 					this.notify();
