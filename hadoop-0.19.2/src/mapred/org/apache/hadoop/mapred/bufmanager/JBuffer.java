@@ -545,6 +545,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		if (!taskid.isMap()) {
 			this.mergeThread.start();
 		}
+		this.merger = new JBufferMerger();
 
 		localFs = FileSystem.getLocal(job);
 		partitions = taskid.isMap() ? job.getNumReduceTasks() : 1;
