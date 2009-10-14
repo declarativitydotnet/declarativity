@@ -240,6 +240,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 			}
 		}
 		
+		public synchronized boolean sentAny(OutputFile buffer) {
+			return lastSentOutputFile.containsKey(buffer.header().owner().getTaskID());
+		}
+		
 		public synchronized boolean sent(OutputFile buffer) {
 			if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
 				OutputFile lastSent = this.lastSentOutputFile.get(buffer.header().owner().getTaskID());
@@ -249,7 +253,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 		
 		public synchronized void flush(OutputFile buffer) throws IOException {
-			if (sent(buffer)) return;
+			if (sent(buffer)) {
+				System.err.println(this + " already sent buffer " + buffer.header());
+				return;
+			}
 			
 			OutputFile.Header header = buffer.header();
 			buffer.open(localFs);
@@ -301,6 +308,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 	private class FileManager implements Runnable {
 		
 		private boolean open;
+		private boolean busy;
 		
 		private TaskAttemptID taskid;
 		
@@ -319,6 +327,12 @@ public class BufferController implements BufferUmbilicalProtocol {
 			this.finalOutput = null;
 			this.requests = new HashSet<RequestManager>();
 			this.open = true;
+			this.busy = false;
+		}
+		
+		@Override
+		public String toString() {
+			return "FileManager: buffer " + taskid;
 		}
 		
 		@Override
@@ -335,13 +349,23 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 		
 		public void close() {
-			this.open = false;
-			// TODO wait until everything is sent.
+			synchronized (this) {
+				this.open = false;
+				this.notify();
+				
+				/* flush remaining buffers. */
+				while (unsentBuffers()) {
+					flush();
+					try { this.wait(100);
+					} catch (InterruptedException e) { }
+				}
+			}
 		}
 		
-		public void request(RequestManager request) {
+		public void request(RequestManager request) throws IOException {
 			synchronized (this) {
-				System.err.println("FileManager " + taskid + " receive " + request);
+				if (!open) throw new IOException(this + " closed!");
+				LOG.debug(this + " receive " + request);
 				this.requests.add(request);
 				if (this.bufferFiles.size() > 0 || this.finalOutput != null) {
 					this.notify();
@@ -350,9 +374,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 			
 		}
 		
-		public void add(OutputFile file) {
+		public void add(OutputFile file) throws IOException {
 			synchronized (this) {
-				System.err.println("FileManager " + taskid + " receive output file " + file.header());
+				if (!open) throw new IOException(this + " closed!");
+				LOG.debug(this + " receive output file " + file.header());
 				if (file.complete()) this.finalOutput = file;
 				else this.bufferFiles.add(file);
 				if (this.requests.size() > 0) {
@@ -367,26 +392,49 @@ public class BufferController implements BufferUmbilicalProtocol {
 			while (open) {
 				synchronized (this) {
 					while (!unsentBuffers()) {
+						if (!open) return;
 						try { this.wait();
 						} catch (InterruptedException e) { }
 					}
 					flush();
+					if (open && unsentBuffers()) {
+						try { this.wait(1000); // wait a sec.
+						} catch (InterruptedException e) { }
+					}
 				}
 			}
 		}
 		
 		private void flush() {
+			Set<RequestManager> satisfied = new HashSet<RequestManager>();
+			if (this.finalOutput != null) {
+				for (RequestManager request : this.requests) {
+					if (!request.sentAny(this.finalOutput) && request.open()) {
+						try {
+							request.flush(this.finalOutput);
+							satisfied.add(request);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			this.requests.removeAll(satisfied);
+			satisfied.clear();
+			
 			for (OutputFile buffer : this.bufferFiles) {
 				for (RequestManager request : this.requests) {
 					if (!request.sent(buffer)) {
 						try {
-							System.err.println("Send " + buffer.header() + " to " + request);
 							if (request.open()) {
-								System.err.println("Send " + buffer.header() + " to " + request);
+								LOG.debug("Send " + buffer.header() + " to " + request);
 								request.flush(buffer);
+								if (buffer.header().progress() == 1.0f) {
+									satisfied.add(request);
+								}
 							}
 							else {
-								System.err.println("Could not open " + request);
+								LOG.info("Could not open " + request);
 							}
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -394,6 +442,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 					}
 				}
 			}
+			this.requests.removeAll(satisfied);
+			satisfied.clear();
 		}
 		
 		private boolean unsentBuffers() {
@@ -617,7 +667,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 	}
 	
-	private void register(FileManager fm) {
+	private void register(FileManager fm) throws IOException {
 		JobID jobid = fm.taskid.getJobID();
 		if (fm.taskid.isMap()) {
 			if (this.mapRequestManagers.containsKey(jobid)) {
