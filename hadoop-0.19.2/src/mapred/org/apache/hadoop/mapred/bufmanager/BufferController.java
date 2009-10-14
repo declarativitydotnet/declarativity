@@ -447,6 +447,14 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 		
 		private boolean unsentBuffers() {
+			if (this.finalOutput != null) {
+				for (RequestManager request : this.requests) {
+					if (!request.sentAny(this.finalOutput)) {
+						return true;
+					}
+				}
+			}
+			
 			for (OutputFile buffer : this.bufferFiles) {
 				for (RequestManager request : this.requests) {
 					if (!request.sent(buffer)) {
