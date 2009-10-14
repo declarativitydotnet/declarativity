@@ -366,7 +366,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		public void run() {
 			while (open) {
 				synchronized (this) {
-					while (unsentBuffers()) {
+					while (!unsentBuffers()) {
 						try { this.wait();
 						} catch (InterruptedException e) { }
 					}
