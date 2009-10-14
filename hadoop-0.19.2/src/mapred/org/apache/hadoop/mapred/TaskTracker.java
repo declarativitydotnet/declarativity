@@ -455,8 +455,13 @@ public class TaskTracker
       this.myInstrumentation = new TaskTrackerMetricsInst(this);
     }
     
+    try {
 	this.bufferController = new BufferController(this);
 	this.bufferController.open();
+    } catch (IOException t) {
+    	t.printStackTrace();
+    	throw t;
+    }
 	
     // bind address
     String address = 

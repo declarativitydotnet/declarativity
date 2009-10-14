@@ -500,6 +500,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				}
 			}
 		};
+		this.acceptor.setDaemon(true);
 		this.acceptor.start();
 	}
 	
