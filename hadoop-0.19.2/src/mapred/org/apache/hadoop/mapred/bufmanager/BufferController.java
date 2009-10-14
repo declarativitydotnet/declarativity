@@ -99,7 +99,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 						out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 						out.writeInt(handle.size());
 						for (BufferRequest request : handle) {
-							request.write(out);
+							BufferRequest.write(out, request);
 						}
 						out.flush();
 						
