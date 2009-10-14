@@ -209,6 +209,13 @@ public class BufferController implements BufferUmbilicalProtocol {
 			return this.partition;
 		}
 		
+		public void close() throws IOException {
+			if (out != null) {
+				out.close();
+				out = null;
+			}
+		}
+		
 		public boolean open() {
 			if (out != null) return true;
 			else {
@@ -413,6 +420,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 						try {
 							request.flush(this.finalOutput);
 							satisfied.add(request);
+							request.close();
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -431,6 +439,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 								request.flush(buffer);
 								if (buffer.header().progress() == 1.0f) {
 									satisfied.add(request);
+									request.close();
 								}
 							}
 							else {
