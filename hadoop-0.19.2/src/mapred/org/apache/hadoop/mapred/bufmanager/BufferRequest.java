@@ -11,7 +11,7 @@ import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
 
 public abstract class BufferRequest implements Writable {
-	public enum Type{MAP, REDUCE};
+	public static enum Type{MAP, REDUCE};
 	
 	private Type type;
 	
