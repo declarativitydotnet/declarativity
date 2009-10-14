@@ -243,17 +243,18 @@ public class OutputFile implements Writable {
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		this.header = Header.readHeader(in);
+		this.complete = in.readBoolean();
 		
 		String dataStr = WritableUtils.readString(in);
 		String indexStr = WritableUtils.readString(in);
 		this.data = new Path(dataStr);
 		this.index = new Path(indexStr);
-		
 	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
 		Header.writeHeader(out, this.header);
+		out.writeBoolean(this.complete);
 		
 		WritableUtils.writeString(out, this.data.toString());
 		WritableUtils.writeString(out, this.index.toString());
