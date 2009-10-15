@@ -635,6 +635,39 @@ public class BufferController implements BufferUmbilicalProtocol {
 	}
 	
 	public synchronized void free(JobID jobid) {
+		if (this.fileManagers.containsKey(jobid)) {
+			Map<TaskAttemptID, FileManager> fm_map = this.fileManagers.get(jobid);
+			for (FileManager fm : fm_map.values()) {
+				fm.close();
+			}
+			this.fileManagers.remove(jobid);
+		}
+		
+		if (this.mapRequestManagers.containsKey(jobid)) {
+			for (RequestManager rm : this.mapRequestManagers.get(jobid)) {
+				try { rm.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			this.mapRequestManagers.remove(jobid);
+		}
+		
+		Set<TaskID> reduceIds = new HashSet<TaskID>();
+		for (TaskID tid : this.reduceRequestManagers.keySet()) {
+			if (tid.getJobID().equals(jobid)) {
+				reduceIds.add(tid);
+				for (RequestManager rm : this.reduceRequestManagers.get(tid)) {
+					try { rm.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		for (TaskID tid : reduceIds) {
+			this.reduceRequestManagers.remove(tid);
+		}
 	}
 	
 	@Override
