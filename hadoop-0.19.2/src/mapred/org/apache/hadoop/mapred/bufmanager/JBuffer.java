@@ -278,7 +278,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 							"Data reduction = " + reduction);
 				if (pipeline) {
 					float pipestat = umbilical.pipestat(taskid);
-					if (pipestat <= 2.0f) {
+					if (pipestat <= 2.0f && 
+							(reduction * (spills.size() - nextPipelineSpill)) >= 1.0f) {
 						pipeline();
 					}
 					else {
