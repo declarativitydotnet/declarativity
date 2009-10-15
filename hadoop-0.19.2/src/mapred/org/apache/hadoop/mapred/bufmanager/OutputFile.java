@@ -98,8 +98,9 @@ public class OutputFile implements Writable {
 			this.spillNum = spillNum;
 		}
 		
+		@Override
 		public String toString() {
-			return super.toString() + ". SPILL NUMBER " + spillNum;
+			return "FileHeader " + filename + ". spill " + spillNum;
 		}
 		
 		public String filename() { return this.filename; }
