@@ -270,10 +270,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 		private void spill() throws IOException {
 			if (kvstart != kvend) { 
-				LOG.debug("SpillThread: begin sort and spill.");
+				LOG.info("SpillThread: begin sort and spill.");
 				long sortstart = java.lang.System.currentTimeMillis();
 				float reduction = sortAndSpill(); 
-				LOG.debug("SpillThread: sort/spill time " + 
+				LOG.info("SpillThread: sort/spill time " + 
 							((System.currentTimeMillis() - sortstart)/1000f) + " secs. " +
 							"Data reduction = " + reduction);
 				if (pipeline) {
