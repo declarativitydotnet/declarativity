@@ -597,7 +597,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 	public synchronized void free(JobID jobid) {
 	}
 	
-	public synchronized int outputs(TaskAttemptID owner) throws IOException {
+	@Override
+	public synchronized float pipestat(TaskAttemptID owner) throws IOException {
 		if (!fileManagers.containsKey(owner.getJobID())) {
 			return 0;
 		}

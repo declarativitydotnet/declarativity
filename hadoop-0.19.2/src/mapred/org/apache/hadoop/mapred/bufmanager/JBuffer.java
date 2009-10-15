@@ -274,7 +274,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				JBufferFile spill = sortAndSpill(); 
 				LOG.debug("SpillThread: sort/spill time " + 
 							((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
-				if (pipeline && umbilical.outputs(taskid) == 0) {
+				if (pipeline && umbilical.pipestat(taskid) <= 1f) {
 					pipeline();
 				}
 			}
