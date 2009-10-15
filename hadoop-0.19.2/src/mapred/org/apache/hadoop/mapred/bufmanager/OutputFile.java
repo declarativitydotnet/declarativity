@@ -98,6 +98,10 @@ public class OutputFile implements Writable {
 			this.spillNum = spillNum;
 		}
 		
+		public String toString() {
+			return super.toString() + ". SPILL NUMBER " + spillNum;
+		}
+		
 		public String filename() { return this.filename; }
 		public long start() { return this.start; }
 		public long end() { return this.end; }

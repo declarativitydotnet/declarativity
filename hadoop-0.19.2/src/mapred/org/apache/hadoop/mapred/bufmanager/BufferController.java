@@ -440,7 +440,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					if (!request.sent(buffer)) {
 						try {
 							if (request.open()) {
-								LOG.debug("Send " + buffer.header() + " to " + request);
+								LOG.info("Send " + buffer.header() + " to " + request);
 								request.flush(buffer);
 								if (buffer.header().progress() == 1.0f) {
 									satisfied.add(request);
