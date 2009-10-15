@@ -207,44 +207,48 @@ public class BufferController implements BufferUmbilicalProtocol {
 			return this.partition;
 		}
 		
-		public synchronized void close() throws IOException {
-			if (out != null) {
-				out.close();
-				out = null;
-			}
-		}
-		
-		public synchronized boolean open() {
-			if (out != null) return true;
-			else {
-				Socket socket = new Socket();
-				try {
-					try {
-						socket.connect(this.address);
-					} catch (IOException e) {
-						System.err.println("Connection error: " + e);
-						return false;
-					}
-
-					FSDataOutputStream stream = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-
-					BufferRequestResponse response = new BufferRequestResponse();
-					DataInputStream in = new DataInputStream(socket.getInputStream());
-					response.readFields(in);
-					if (!response.open) {
-						stream.close();
-						return false;
-					}
-					out = stream;
-				} catch (Throwable e) {
-					try { if (!socket.isClosed()) socket.close();
-					} catch (Throwable t) { }
-					return false;
+		public void close() throws IOException {
+			synchronized (this) {
+				if (out != null) {
+					out.close();
+					out = null;
 				}
-				return true;
 			}
 		}
-		
+
+		public boolean open() {
+			synchronized (this) {
+				if (out != null) return true;
+				else {
+					Socket socket = new Socket();
+					try {
+						try {
+							socket.connect(this.address);
+						} catch (IOException e) {
+							System.err.println("Connection error: " + e);
+							return false;
+						}
+
+						FSDataOutputStream stream = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+
+						BufferRequestResponse response = new BufferRequestResponse();
+						DataInputStream in = new DataInputStream(socket.getInputStream());
+						response.readFields(in);
+						if (!response.open) {
+							stream.close();
+							return false;
+						}
+						out = stream;
+					} catch (Throwable e) {
+						try { if (!socket.isClosed()) socket.close();
+						} catch (Throwable t) { }
+						return false;
+					}
+					return true;
+				}
+			}
+		}
+
 		public boolean sentAny(OutputFile buffer) {
 			synchronized (this) {
 				return lastSentOutputFile.containsKey(buffer.header().owner().getTaskID());
@@ -278,22 +282,22 @@ public class BufferController implements BufferUmbilicalProtocol {
 		 * @param buffer
 		 * @throws IOException
 		 */
-		public synchronized void flush(OutputFile file) throws IOException {
+		public void flush(OutputFile file) throws IOException {
 			if (sent(file)) {
 				System.err.println(this + " already sent buffer " + file.header());
 				return;
 			}
 			
-			OutputFile.Header header = file.header();
-			file.open(localFs);
-			long length = file.seek(partition);
-			try {
-				flush(out, file.dataInputStream(), length, header);
-			} catch (IOException e) {
-				throw e;
-			}
-			
 			synchronized (this) {
+				OutputFile.Header header = file.header();
+				file.open(localFs);
+				long length = file.seek(partition);
+				try {
+					flush(out, file.dataInputStream(), length, header);
+				} catch (IOException e) {
+					throw e;
+				}
+
 				this.lastSentOutputFile.put(header.owner().getTaskID(), file);
 				if (!this.sentOutputFiles.containsKey(header.owner().getTaskID())) {
 					this.sentOutputFiles.put(header.owner().getTaskID(), new HashSet<OutputFile>());
