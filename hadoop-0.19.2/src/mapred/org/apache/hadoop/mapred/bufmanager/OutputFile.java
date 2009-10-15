@@ -231,13 +231,19 @@ public class OutputFile implements Writable {
 	 * @throws IOException
 	 */
 	public long seek(int partition) throws IOException {
-		indexIn.seek(partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
-		long segmentOffset    = indexIn.readLong();
-		long rawSegmentLength = indexIn.readLong();
-		long segmentLength    = indexIn.readLong();
+		try {
+			indexIn.seek(partition * JBuffer.MAP_OUTPUT_INDEX_RECORD_LENGTH);
+			long segmentOffset    = indexIn.readLong();
+			long rawSegmentLength = indexIn.readLong();
+			long segmentLength    = indexIn.readLong();
 
-		dataIn.seek(segmentOffset);
-		return segmentLength;
+			dataIn.seek(segmentOffset);
+			return segmentLength;
+		}
+		catch (IOException e) {
+			System.err.println("Trouble seeking to partition " + partition + " in file " + this.data);
+			throw e;
+		}
 	}
 	
 	public FSDataInputStream dataInputStream() {
