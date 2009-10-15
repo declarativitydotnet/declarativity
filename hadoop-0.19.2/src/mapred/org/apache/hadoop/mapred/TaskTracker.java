@@ -1539,9 +1539,9 @@ public class TaskTracker
         // Delete the job directory for this  
         // task if the job is done/failed
         if (!rjob.keepJobFiles){
-            // bufferController.free(jobId);
-          directoryCleanupThread.addToQueue(fConf, getLocalFiles(fConf, 
-            getLocalJobDir(rjob.getJobID().toString())));
+        	bufferController.free(jobId);
+        	directoryCleanupThread.addToQueue(fConf, getLocalFiles(fConf, 
+        			getLocalJobDir(rjob.getJobID().toString())));
         }
         // Remove this job 
         rjob.tasks.clear();
