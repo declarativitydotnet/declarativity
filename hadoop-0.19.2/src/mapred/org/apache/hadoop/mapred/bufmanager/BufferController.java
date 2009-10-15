@@ -181,12 +181,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		
 		@Override
 		public int compareTo(RequestManager o) {
-			if (this.destination.compareTo(o.destination) != 0) {
-				return this.destination.compareTo(o.destination);
-			}
-			else {
-				return this.partition - o.partition;
-			}
+			return this.partition - o.partition;
 		}
 		
 		@Override
@@ -666,6 +661,9 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 		else if (!this.mapRequestManagers.get(jobid).contains(manager)) {
 			this.mapRequestManagers.get(jobid).add(manager);
+			if (this.mapRequestManagers.get(jobid).size() > job.getNumReduceTasks()) {
+				System.err.println("MORE REQUEST MANAGERS THAN REDUCES!");
+			}
 		}
 		else manager = null;
 		
