@@ -207,14 +207,14 @@ public class BufferController implements BufferUmbilicalProtocol {
 			return this.partition;
 		}
 		
-		public void close() throws IOException {
+		public synchronized void close() throws IOException {
 			if (out != null) {
 				out.close();
 				out = null;
 			}
 		}
 		
-		public boolean open() {
+		public synchronized boolean open() {
 			if (out != null) return true;
 			else {
 				Socket socket = new Socket();
@@ -245,26 +245,32 @@ public class BufferController implements BufferUmbilicalProtocol {
 			}
 		}
 		
-		public synchronized boolean sentAny(OutputFile buffer) {
-			return lastSentOutputFile.containsKey(buffer.header().owner().getTaskID());
-		}
-		
-		public synchronized boolean sent(OutputFile buffer) {
-			if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
-				OutputFile lastSent = this.lastSentOutputFile.get(buffer.header().owner().getTaskID());
-				return buffer.header().compareTo(lastSent.header()) <= 0;
+		public boolean sentAny(OutputFile buffer) {
+			synchronized (this) {
+				return lastSentOutputFile.containsKey(buffer.header().owner().getTaskID());
 			}
-			return false;
 		}
-		
+
+		public boolean sent(OutputFile buffer) {
+			synchronized (this) {
+				if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
+					OutputFile lastSent = this.lastSentOutputFile.get(buffer.header().owner().getTaskID());
+					return buffer.header().compareTo(lastSent.header()) <= 0;
+				}
+				return false;
+			}
+		}
+
 		/**
 		 * How many output files have been sent from the given task identifier.
 		 * @param taskid The task identifier whose outputs are being shipped.
 		 * @return The number of output files successfully sent.
 		 */
-		public synchronized int sentCount(TaskID taskid) {
-			return this.sentOutputFiles.containsKey(taskid) ? 
-					this.sentOutputFiles.get(taskid).size() : 0;
+		public int sentCount(TaskID taskid) {
+			synchronized (this) {
+				return this.sentOutputFiles.containsKey(taskid) ? 
+						this.sentOutputFiles.get(taskid).size() : 0;
+			}
 		}
 		
 		/**
@@ -286,44 +292,45 @@ public class BufferController implements BufferUmbilicalProtocol {
 			} catch (IOException e) {
 				throw e;
 			}
-			this.lastSentOutputFile.put(header.owner().getTaskID(), file);
-			if (!this.sentOutputFiles.containsKey(header.owner().getTaskID())) {
-				this.sentOutputFiles.put(header.owner().getTaskID(), new HashSet<OutputFile>());
+			
+			synchronized (this) {
+				this.lastSentOutputFile.put(header.owner().getTaskID(), file);
+				if (!this.sentOutputFiles.containsKey(header.owner().getTaskID())) {
+					this.sentOutputFiles.put(header.owner().getTaskID(), new HashSet<OutputFile>());
+				}
+				this.sentOutputFiles.get(header.owner().getTaskID()).add(file);
 			}
-			this.sentOutputFiles.get(header.owner().getTaskID()).add(file);
 		}
 		
 		private void flush(FSDataOutputStream out, FSDataInputStream in, long length, OutputFile.Header header) throws IOException {
-			synchronized (this) {
-				if (length == 0 && header.progress() < 1.0f) {
-					return;
+			if (length == 0 && header.progress() < 1.0f) {
+				return;
+			}
+
+			CompressionCodec codec = null;
+			if (conf.getCompressMapOutput()) {
+				Class<? extends CompressionCodec> codecClass =
+					conf.getMapOutputCompressorClass(DefaultCodec.class);
+				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+			}
+			Class keyClass = (Class)conf.getMapOutputKeyClass();
+			Class valClass = (Class)conf.getMapOutputValueClass();
+
+			out.writeLong(length);
+			OutputFile.Header.writeHeader(out, header);
+
+			IFile.Reader reader = new IFile.Reader(conf, in, length, codec);
+			IFile.Writer writer = new IFile.Writer(conf, out,  keyClass, valClass, codec);
+
+			try {
+				DataInputBuffer key = new DataInputBuffer();
+				DataInputBuffer value = new DataInputBuffer();
+				while (reader.next(key, value)) {
+					writer.append(key, value);
 				}
-
-				CompressionCodec codec = null;
-				if (conf.getCompressMapOutput()) {
-					Class<? extends CompressionCodec> codecClass =
-						conf.getMapOutputCompressorClass(DefaultCodec.class);
-					codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-				}
-				Class keyClass = (Class)conf.getMapOutputKeyClass();
-				Class valClass = (Class)conf.getMapOutputValueClass();
-
-				out.writeLong(length);
-				OutputFile.Header.writeHeader(out, header);
-
-				IFile.Reader reader = new IFile.Reader(conf, in, length, codec);
-				IFile.Writer writer = new IFile.Writer(conf, out,  keyClass, valClass, codec);
-
-				try {
-					DataInputBuffer key = new DataInputBuffer();
-					DataInputBuffer value = new DataInputBuffer();
-					while (reader.next(key, value)) {
-						writer.append(key, value);
-					}
-				} finally {
-					out.flush();
-					writer.close();
-				}
+			} finally {
+				out.flush();
+				writer.close();
 			}
 		}
 
