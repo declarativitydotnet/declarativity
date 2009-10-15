@@ -1214,6 +1214,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 						// write the index as <offset, raw-length,
 						// compressed-length>
+						LOG.info("JBuffer: " + taskid + " spill " + spills.size() + " partition " + i + " segment start " + segmentStart);
 						writeIndexRecord(indexOut, out, segmentStart, writer);
 						writer = null;
 					} finally {
