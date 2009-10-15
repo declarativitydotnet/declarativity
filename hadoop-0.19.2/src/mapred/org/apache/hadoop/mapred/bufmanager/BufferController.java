@@ -388,12 +388,6 @@ public class BufferController implements BufferUmbilicalProtocol {
 			}
 		}
 		
-		public int outputs() {
-			return this.bufferFiles.size() +
-					(this.finalOutput != null ? 1 : 0);
-		}
-		
-		
 		@Override
 		public void run() {
 			while (open) {
@@ -611,7 +605,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		if (!fm_map.containsKey(owner)) {
 			return 0;
 		}
-		return fm_map.get(owner).outputs();
+		return 0;
 	}
 	
 	@Override
