@@ -272,13 +272,20 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			if (kvstart != kvend) { 
 				LOG.debug("SpillThread: begin sort and spill.");
 				long sortstart = java.lang.System.currentTimeMillis();
-				JBufferFile spill = sortAndSpill(); 
+				float reduction = sortAndSpill(); 
 				LOG.debug("SpillThread: sort/spill time " + 
-							((System.currentTimeMillis() - sortstart)/1000f) + " secs.");
+							((System.currentTimeMillis() - sortstart)/1000f) + " secs. " +
+							"Data reduction = " + reduction);
 				if (pipeline) {
 					float pipestat = umbilical.pipestat(taskid);
-					LOG.info("JBuffer " + taskid + " pipeline statistic = " + pipestat);
-					pipeline();
+					if (pipestat <= 2.0f) {
+						pipeline();
+					}
+					else {
+						LOG.info("JBuffer " + taskid + 
+								" hold off on pipelining. " +
+								"Pipeline statistic = " +  pipestat);
+					}
 				}
 			}
 		}
@@ -1142,7 +1149,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 	}
 
-	private JBufferFile sortAndSpill() throws IOException {
+	private float sortAndSpill() throws IOException {
 		//approximate the length of the output file to be the length of the
 		//buffer + header lengths for the partitions
 		synchronized (mergeLock) {
@@ -1230,7 +1237,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				JBufferFile spill = new JBufferFile(filename, indexFilename);
 				spills.add(spill);
 				LOG.info("Finished spill " + spills.size());
-				return spill;
+				return size > 0 ? (float) out.getPos() / (float) size : 0f;
 			} finally {
 				if (out != null) out.close();
 				if (indexOut != null) indexOut.close();
