@@ -300,7 +300,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				JBufferFile spill = spills.get(spills.size() - 1);
 				umbilical.output(new OutputFile(taskid, getProgress().get(), 
 						inputFileName, inputStart, inputEnd, 
-						spills.size(), spill.data, spill.data, false));
+						spills.size(), spill.data, spill.index, false));
 			}
 			else {
 				LOG.info("Merging spills " + nextPipelineSpill + " - " + 
