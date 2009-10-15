@@ -318,6 +318,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 						                        spills.size() + 1, data, index, false));
 			}
 			else if (spills.size() - nextPipelineSpill == 1) {
+				LOG.info("JBuffer " + taskid + " pipeline spill " + (spills.size() - 1) + ".");
 				JBufferFile spill = spills.get(spills.size() - 1);
 				umbilical.output(new OutputFile(taskid, getProgress().get(), 
 						inputFileName, inputStart, inputEnd, 
