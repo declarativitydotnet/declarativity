@@ -293,7 +293,9 @@ public class BufferController implements BufferUmbilicalProtocol {
 				file.open(localFs);
 				long length = file.seek(partition);
 				try {
+					LOG.info("BufferController begin flush.");
 					flush(out, file.dataInputStream(), length, header);
+					LOG.info("BufferController end flush.");
 				} catch (IOException e) {
 					throw e;
 				}
@@ -441,6 +443,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 						try { this.wait();
 						} catch (InterruptedException e) { }
 					}
+
 					flush();
 					if (open && unsentBuffers()) {
 						try { this.wait(1000); // wait a sec.
