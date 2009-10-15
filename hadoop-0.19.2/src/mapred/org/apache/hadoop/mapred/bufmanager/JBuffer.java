@@ -280,7 +280,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					float pipestat = umbilical.pipestat(taskid);
 					if (pipestat <= 2.0f && 
 							(reduction * (spills.size() - nextPipelineSpill)) >= 1.0f) {
+						LOG.info("JBuffer: " + taskid + " call pipeline.");
 						pipeline();
+						LOG.info("JBuffer: " + taskid + " call pipeline done.");
 					}
 					else {
 						LOG.info("JBuffer " + taskid + 
@@ -1247,8 +1249,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					}
 				}
 				JBufferFile spill = new JBufferFile(filename, indexFilename);
-				spills.add(spill);
 				LOG.info("Finished spill " + spills.size());
+				spills.add(spill);
 				return size > 0 ? (float) out.getPos() / (float) size : 0f;
 			} finally {
 				if (out != null) out.close();
