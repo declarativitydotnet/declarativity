@@ -290,6 +290,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 		}
 		
+		/**
+		 * Pipeline whatever data has been spilled. Three cases:
+		 * 1. Nothing spilled. An empty spill file is created and pipelined 
+		 * with a progress of 1f.
+		 * 2. A single spill file. The spill file is sent with the current buffer
+		 * progress attached.
+		 * 3. More than one spill files. The spills are merged into a single spill
+		 * file and sent with the current buffer progress.
+		 * @throws IOException
+		 */
 		private void pipeline() throws IOException {
 			if (spills.size() == nextPipelineSpill) {
 				/* Create a dummy sentinel spill file. */
