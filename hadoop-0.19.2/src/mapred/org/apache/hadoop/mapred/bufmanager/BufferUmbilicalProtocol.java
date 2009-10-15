@@ -15,13 +15,13 @@ public interface BufferUmbilicalProtocol extends VersionedProtocol {
 	public void request(ReduceBufferRequest request) throws IOException;
 	
 	/**
-	 * How many outputs have we received from the given task.
-	 * Note: count includes all intermediate outputs and 
-	 * the compete final output.
-	 * @param owner The taskid sending the output buffers.
+	 * Statistic on how well pipelining is keeping up with the production
+	 * of a task's output.
+	 * @param owner The task producing output.
+	 * @return 
 	 * @throws IOException
 	 */
-	public int outputs(TaskAttemptID owner) throws IOException;
+	public float pipestat(TaskAttemptID owner) throws IOException;
 	
 	public void output(OutputFile buffer) throws IOException;
 }
