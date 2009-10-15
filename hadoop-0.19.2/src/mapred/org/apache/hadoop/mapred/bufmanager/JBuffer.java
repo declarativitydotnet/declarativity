@@ -114,21 +114,22 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 			
-			Path dataFile = outputHandle.getSpillFileForWrite(taskid, spills.size(), dataFileSize);
-			Path indexFile = outputHandle.getSpillIndexFileForWrite(taskid, spills.size(), indexFileSize);
-			JBufferFile newspill = new JBufferFile(dataFile, indexFile);
+			int snapshotId = snapshots++;
+			Path dataFile = outputHandle.getOutputSnapshotFileForWrite(taskid, snapshotId, dataFileSize);
+			Path indexFile = outputHandle.getOutputSnapshotIndexFileForWrite(taskid, snapshotId, indexFileSize);
+			JBufferFile snapshot = new JBufferFile(dataFile, indexFile);
 			
-			merge(mergeSpills, newspill);
+			merge(mergeSpills, snapshot);
 			
 			JBufferFile last = null;
 			for (JBufferFile spill : mergeSpills) {
 				spill.delete();
 				last = spill;
 			}
-			last.rename(newspill);
+			last.rename(snapshot);
 			
 			return new OutputFile(taskid, getProgress().get(), inputFileName, inputStart, inputEnd, 
-					               end, newspill.data, newspill.index, false);
+					               end, last.data, last.index, false);
 		}
 
 		/**
