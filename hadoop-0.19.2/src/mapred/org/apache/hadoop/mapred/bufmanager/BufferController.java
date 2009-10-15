@@ -293,9 +293,9 @@ public class BufferController implements BufferUmbilicalProtocol {
 				file.open(localFs);
 				long length = file.seek(partition);
 				try {
-					LOG.info("BufferController begin flush " + header);
+					LOG.info("RequestManager " + destination + " begin flush " + header);
 					flush(out, file.dataInputStream(), length, header);
-					LOG.info("BufferController end flush " + header);
+					LOG.info("RequestManager " + destination + " end flush " + header);
 				} catch (IOException e) {
 					throw e;
 				}
