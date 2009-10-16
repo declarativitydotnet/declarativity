@@ -294,9 +294,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 			file.open(localFs);
 			long length = file.seek(partition);
 			try {
-				LOG.info("RequestManager " + destination + " begin flush " + header);
-				flush(out, file.dataInputStream(), length, header);
-				LOG.info("RequestManager " + destination + " end flush " + header);
+				synchronized (out) {
+					LOG.info("RequestManager " + destination + " begin flush " + header);
+					flush(out, file.dataInputStream(), length, header);
+					LOG.info("RequestManager " + destination + " end flush " + header);
+				}
 			} catch (IOException e) {
 				throw e;
 			}
@@ -714,7 +716,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 		Map<TaskAttemptID, FileManager> taskFileManager = fileManagers.get(jobid);
 		if (!taskFileManager.containsKey(header.owner())) {
-			LOG.info("BufferController: care new FileManager for task " + header.owner());
+			LOG.info("BufferController: create new FileManager for task " + header.owner());
 			FileManager fm = new FileManager(header.owner());
 			taskFileManager.put(header.owner(), fm);
 			register(fm);
