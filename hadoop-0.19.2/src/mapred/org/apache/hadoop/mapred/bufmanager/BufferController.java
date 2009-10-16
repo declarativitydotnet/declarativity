@@ -210,6 +210,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		public void close() throws IOException {
 			synchronized (this) {
 				if (out != null) {
+					LOG.debug(this + " closing connection.");
 					out.close();
 					out = null;
 				}
@@ -220,6 +221,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			synchronized (this) {
 				if (out != null) return true;
 				else {
+					LOG.debug(this + " opening connection.");
 					Socket socket = new Socket();
 					try {
 						try {
