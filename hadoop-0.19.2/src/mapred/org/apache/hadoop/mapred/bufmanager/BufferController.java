@@ -399,7 +399,12 @@ public class BufferController implements BufferUmbilicalProtocol {
 		public void close() {
 			synchronized (this) {
 				this.open = false;
-				this.notify();
+				while (busy) {
+					try { this.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
 				
 				/* flush remaining buffers. */
 				while (unsentBuffers()) {
@@ -443,11 +448,19 @@ public class BufferController implements BufferUmbilicalProtocol {
 						try { this.wait();
 						} catch (InterruptedException e) { }
 					}
+					busy = true;
+				}
 
+				try {
 					flush();
 					if (open && unsentBuffers()) {
-						try { this.wait(1000); // wait a sec.
+						try { Thread.sleep(1000); // wait a sec.
 						} catch (InterruptedException e) { }
+					}
+				} finally {
+					synchronized (this) {
+						busy = false;
+						this.notifyAll();
 					}
 				}
 			}
