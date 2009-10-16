@@ -490,6 +490,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			
 			for (OutputFile buffer : this.bufferFiles) {
 				for (RequestManager request : this.requests) {
+					LOG.info("FileManager " + taskid + " try to send file " + buffer.header() + " to " + request);
 					if (!request.sent(buffer)) {
 						try {
 							if (request.open()) {
