@@ -440,7 +440,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		public void add(OutputFile file) throws IOException {
 			synchronized (this) {
 				if (!open) throw new IOException(this + " closed!");
-				LOG.debug(this + " receive output file " + file.header());
+				LOG.debug(this + " receive output file " + file.header() + " progress " + file.header().progress());
 				if (file.complete()) this.finalOutput = file;
 				else this.bufferFiles.add(file);
 				if (this.requests.size() > 0) {
