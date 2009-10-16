@@ -259,7 +259,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 
 		public boolean sent(OutputFile buffer) {
 			synchronized (this) {
-				LOG.info("Check if file " + buffer.header() + " has been sent.");
+				LOG.debug("Check if file " + buffer.header() + " has been sent.");
 				boolean sent = false;
 				try {
 					if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
@@ -268,7 +268,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					}
 					return sent;
 				} finally {
-					LOG.info("File " + buffer.header() + " sent? " + sent);
+					LOG.debug("File " + buffer.header() + " progress " + buffer.header().progress() + " sent? " + sent);
 				}
 			}
 		}
