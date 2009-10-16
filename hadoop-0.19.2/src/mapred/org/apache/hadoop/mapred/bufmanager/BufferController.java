@@ -287,19 +287,19 @@ public class BufferController implements BufferUmbilicalProtocol {
 				System.err.println(this + " already sent buffer " + file.header());
 				return;
 			}
-			
-			synchronized (this) {
-				OutputFile.Header header = file.header();
-				file.open(localFs);
-				long length = file.seek(partition);
-				try {
-					LOG.info("RequestManager " + destination + " begin flush " + header);
-					flush(out, file.dataInputStream(), length, header);
-					LOG.info("RequestManager " + destination + " end flush " + header);
-				} catch (IOException e) {
-					throw e;
-				}
 
+			OutputFile.Header header = file.header();
+			file.open(localFs);
+			long length = file.seek(partition);
+			try {
+				LOG.info("RequestManager " + destination + " begin flush " + header);
+				flush(out, file.dataInputStream(), length, header);
+				LOG.info("RequestManager " + destination + " end flush " + header);
+			} catch (IOException e) {
+				throw e;
+			}
+
+			synchronized (this) {
 				this.lastSentOutputFile.put(header.owner().getTaskID(), file);
 				if (!this.sentOutputFiles.containsKey(header.owner().getTaskID())) {
 					this.sentOutputFiles.put(header.owner().getTaskID(), new HashSet<OutputFile>());
@@ -486,6 +486,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			
 			for (OutputFile buffer : this.bufferFiles) {
 				for (RequestManager request : this.requests) {
+					LOG.info("Try sending " + buffer.header() + " to " + request);
 					if (!request.sent(buffer)) {
 						try {
 							if (request.open()) {
