@@ -303,9 +303,9 @@ public class BufferController implements BufferUmbilicalProtocol {
 			long length = file.seek(partition);
 			try {
 				synchronized (out) {
-					LOG.info("RequestManager " + destination + " begin flush " + header);
+					LOG.debug("RequestManager " + destination + " begin flush " + header + " progress " + header.progress());
 					flush(out, file.dataInputStream(), length, header);
-					LOG.info("RequestManager " + destination + " end flush " + header);
+					LOG.debug("RequestManager " + destination + " end flush " + header + " progress " + header.progress());
 				}
 			} catch (IOException e) {
 				throw e;
