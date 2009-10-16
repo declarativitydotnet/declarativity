@@ -493,6 +493,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 							if (request.open()) {
 								LOG.info("FileManager " + taskid + " sending " + buffer.header() + " to " + request);
 								request.flush(buffer);
+								LOG.info("FileManager " + taskid + " done sending " + buffer.header() + " to " + request);
 								if (buffer.header().progress() == 1.0f) {
 									satisfied.add(request);
 									request.close();
@@ -713,6 +714,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 		Map<TaskAttemptID, FileManager> taskFileManager = fileManagers.get(jobid);
 		if (!taskFileManager.containsKey(header.owner())) {
+			LOG.info("BufferController: care new FileManager for task " + header.owner());
 			FileManager fm = new FileManager(header.owner());
 			taskFileManager.put(header.owner(), fm);
 			register(fm);
