@@ -484,7 +484,6 @@ public class BufferController implements BufferUmbilicalProtocol {
 						try {
 							request.flush(this.finalOutput);
 							satisfied.add(request);
-							request.close();
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -506,7 +505,6 @@ public class BufferController implements BufferUmbilicalProtocol {
 								LOG.info("FileManager " + taskid + " done sending " + buffer.header() + " to " + request);
 								if (buffer.header().progress() == 1.0f) {
 									satisfied.add(request);
-									request.close();
 								}
 							}
 							else {
