@@ -284,8 +284,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 		 */
 		public void flush(OutputFile file) throws IOException {
 			if (sent(file)) {
-				System.err.println(this + " already sent buffer " + file.header());
+				LOG.info(this + " already sent buffer " + file.header());
 				return;
+			} else if (!open()) {
+				throw new IOException(toString() + ". Attempt to flush output file when not open.");
 			}
 
 			OutputFile.Header header = file.header();
@@ -486,11 +488,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 			
 			for (OutputFile buffer : this.bufferFiles) {
 				for (RequestManager request : this.requests) {
-					LOG.info("Try sending " + buffer.header() + " to " + request);
 					if (!request.sent(buffer)) {
 						try {
 							if (request.open()) {
-								LOG.info("Send " + buffer.header() + " to " + request);
+								LOG.info("FileManager " + taskid + " sending " + buffer.header() + " to " + request);
 								request.flush(buffer);
 								if (buffer.header().progress() == 1.0f) {
 									satisfied.add(request);
