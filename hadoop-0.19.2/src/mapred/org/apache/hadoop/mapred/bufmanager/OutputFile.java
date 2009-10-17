@@ -238,12 +238,11 @@ public class OutputFile implements Writable {
 			long rawSegmentLength = indexIn.readLong();
 			long segmentLength    = indexIn.readLong();
 
-			System.err.println("Seek to partition " + partition + " at segment offset " + segmentOffset);
 			dataIn.seek(segmentOffset);
 			return segmentLength;
 		}
 		catch (IOException e) {
-			System.err.println("Trouble seeking to partition " + partition + " in file " + this.data);
+			close();
 			throw e;
 		}
 	}
