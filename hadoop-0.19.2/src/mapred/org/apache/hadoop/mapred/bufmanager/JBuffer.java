@@ -691,6 +691,20 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		this.pipeline = pipeline;
 	}
 	
+	/**
+	 * Input file is taken from the given output. This
+	 * is the final output from a reduce shuffle phase.
+	 * @param pipeline
+	 * @throws IOException 
+	 */
+	public void input(OutputFile file, boolean pipeline) throws IOException {
+		long length = localFs.getFileStatus(file.data()).getLen();
+		this.inputFileName = file.data().getName();
+		this.inputStart = 0;
+		this.inputEnd = length;
+		this.pipeline = pipeline;
+	}
+	
 	public Progress getProgress() {
 		return this.progress;
 	}
