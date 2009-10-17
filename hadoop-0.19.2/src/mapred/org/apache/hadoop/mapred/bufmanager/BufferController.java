@@ -13,6 +13,7 @@ import java.net.UnknownHostException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -353,7 +354,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		private TaskAttemptID taskid;
 		
 		/* Intermediate buffer outputs. */
-		private List<OutputFile> bufferFiles;
+		private List<OutputFile> outputs;
 		
 		/* The complete final output for the buffer. */
 		private OutputFile finalOutput;
@@ -363,9 +364,9 @@ public class BufferController implements BufferUmbilicalProtocol {
 		
 		public FileManager(TaskAttemptID taskid) {
 			this.taskid = taskid;
-			this.bufferFiles = new ArrayList<OutputFile>();
+			this.outputs = new ArrayList<OutputFile>();
 			this.finalOutput = null;
-			this.requests = new HashSet<RequestManager>();
+			this.requests = new TreeSet<RequestManager>();
 			this.open = true;
 			this.busy = false;
 		}
@@ -389,14 +390,14 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 		
 		public float pipelineStats() {
-			if (bufferFiles.size() == 0) return 0f;
+			if (outputs.size() == 0) return 0f;
 			float avgSentOutputs = 0f;
 			for (RequestManager rm : requests) {
 				avgSentOutputs += rm.sentCount(taskid.getTaskID());
 			}
 			avgSentOutputs /= (float) requests.size();    // average over all rm's.
 			return avgSentOutputs > 0 ? 
-					(float) bufferFiles.size() / avgSentOutputs : (float) bufferFiles.size();
+					(float) outputs.size() / avgSentOutputs : (float) outputs.size();
 		}
 		
 		public void close() {
@@ -413,7 +414,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				/* flush remaining buffers. */
 				while (unsentBuffers()) {
 					LOG.info(this + " flush remaining output files.");
-					flush();
+					flush(this.outputs, this.requests);
 					try { this.wait(100);
 					} catch (InterruptedException e) { }
 				}
@@ -425,7 +426,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				if (!open) throw new IOException(this + " closed!");
 				LOG.debug(this + " receive " + request);
 				this.requests.add(request);
-				if (this.bufferFiles.size() > 0 || this.finalOutput != null) {
+				if (this.outputs.size() > 0 || this.finalOutput != null) {
 					this.notify();
 				}
 			}
@@ -441,7 +442,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				}
 				else {
 					LOG.debug(this + " received output file " + file.header() + " progress " + file.header().progress());
-					this.bufferFiles.add(file);
+					this.outputs.add(file);
 				}
 				if (this.requests.size() > 0) {
 					this.notifyAll();
@@ -452,6 +453,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 		@Override
 		public void run() {
 			try {
+				List<OutputFile>     outputs  = new ArrayList<OutputFile>();
+				List<RequestManager> requests = new ArrayList<RequestManager>();
 				while (open) {
 					synchronized (this) {
 						while (!unsentBuffers()) {
@@ -461,13 +464,21 @@ public class BufferController implements BufferUmbilicalProtocol {
 							} catch (InterruptedException e) { }
 						}
 						LOG.debug(this + " sending output files.");
+						outputs.addAll(this.outputs);
+						requests.addAll(this.requests);
 						busy = true;
 					}
 
+					Set<RequestManager> complete = null;
 					try {
-						flush();
+						complete = flush(outputs, requests);
 					} finally {
 						synchronized (this) {
+							outputs.clear();
+							requests.clear();
+							if (complete != null) {
+								this.requests.removeAll(complete);
+							}
 							busy = false;
 							this.notifyAll();
 						}
@@ -476,14 +487,14 @@ public class BufferController implements BufferUmbilicalProtocol {
 			} catch (Throwable t) {
 				t.printStackTrace();
 			} finally {
-				LOG.info(this + " exiting. open? " + open);
+				LOG.info(this + " exiting.");
 			}
 		}
 
-		private void flush() {
+		private Set<RequestManager> flush(Collection<OutputFile> outputs, Collection<RequestManager> requests) {
 			Set<RequestManager> satisfied = new HashSet<RequestManager>();
 			if (this.finalOutput != null) {
-				for (RequestManager request : this.requests) {
+				for (RequestManager request : requests) {
 					if (!request.sentAny(this.finalOutput) && request.open()) {
 						try {
 							request.flush(this.finalOutput);
@@ -494,19 +505,17 @@ public class BufferController implements BufferUmbilicalProtocol {
 					}
 				}
 			}
-			this.requests.removeAll(satisfied);
-			satisfied.clear();
 			
-			for (OutputFile buffer : this.bufferFiles) {
-				for (RequestManager request : this.requests) {
-					if (!request.sent(buffer)) {
+			for (OutputFile file : outputs) {
+				for (RequestManager request : requests) {
+					if (!request.sent(file)) {
 						try {
 							if (request.open()) {
-								LOG.info("FileManager " + taskid + " sending " + buffer.header() + 
-										  " progress " + buffer.header().progress() + " to " + request);
-								request.flush(buffer);
-								LOG.info("FileManager " + taskid + " done sending " + buffer.header() + " to " + request);
-								if (buffer.header().progress() == 1.0f) {
+								LOG.info("FileManager " + taskid + " sending " + file.header() + 
+										  " progress " + file.header().progress() + " to " + request);
+								request.flush(file);
+								LOG.info("FileManager " + taskid + " done sending " + file.header() + " to " + request);
+								if (file.header().progress() == 1.0f) {
 									satisfied.add(request);
 								}
 							}
@@ -519,8 +528,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					}
 				}
 			}
-			this.requests.removeAll(satisfied);
-			satisfied.clear();
+			return satisfied;
 		}
 		
 		private boolean unsentBuffers() {
@@ -532,9 +540,9 @@ public class BufferController implements BufferUmbilicalProtocol {
 				}
 			}
 			
-			for (OutputFile buffer : this.bufferFiles) {
+			for (OutputFile file : this.outputs) {
 				for (RequestManager request : this.requests) {
-					if (!request.sent(buffer)) {
+					if (!request.sent(file)) {
 						return true;
 					}
 				}
