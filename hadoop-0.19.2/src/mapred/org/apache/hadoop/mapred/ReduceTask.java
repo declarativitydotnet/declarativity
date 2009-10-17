@@ -370,7 +370,6 @@ public class ReduceTask extends Task {
 		long begin = System.currentTimeMillis();
 		try {
 			OutputFile finalOutput = buffer.close();
-			buffer.setProgress(reducePhase);
 			if (reducePipeline) buffer.input(finalOutput, true);
 			reduce(job, reporter, buffer);
 		} finally {
@@ -458,6 +457,7 @@ public class ReduceTask extends Task {
 		
 		if (reducePipeline) {
 			buffer.reset(true);
+			buffer.setProgress(reducePhase);
 			reduce(buffer, reporter, reducePhase);
 		}
 		else {
