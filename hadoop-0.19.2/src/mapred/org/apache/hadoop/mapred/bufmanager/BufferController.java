@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -168,8 +169,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 			this.partition = request.partition();
 			this.address = request.destAddress();
 			this.out = null;
-			this.lastSentOutputFile = new HashMap<TaskID, OutputFile>();
-			this.sentOutputFiles = new HashMap<TaskID, Set<OutputFile>>();
+			this.lastSentOutputFile = new ConcurrentHashMap<TaskID, OutputFile>();
+			this.sentOutputFiles = new ConcurrentHashMap<TaskID, Set<OutputFile>>();
 		}
 		
 		@Override
@@ -218,58 +219,53 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 
 		public boolean open() {
+			if (out != null) return true;
 			synchronized (this) {
 				if (out != null) return true;
-				else {
-					LOG.debug(this + " opening connection.");
-					Socket socket = new Socket();
+				LOG.debug(this + " opening connection.");
+				Socket socket = new Socket();
+				try {
 					try {
-						try {
-							socket.connect(this.address);
-						} catch (IOException e) {
-							System.err.println("Connection error: " + e);
-							return false;
-						}
-
-						FSDataOutputStream stream = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-
-						BufferRequestResponse response = new BufferRequestResponse();
-						DataInputStream in = new DataInputStream(socket.getInputStream());
-						response.readFields(in);
-						if (!response.open) {
-							stream.close();
-							return false;
-						}
-						out = stream;
-					} catch (Throwable e) {
-						try { if (!socket.isClosed()) socket.close();
-						} catch (Throwable t) { }
+						socket.connect(this.address);
+					} catch (IOException e) {
+						System.err.println("Connection error: " + e);
 						return false;
 					}
-					return true;
+
+					FSDataOutputStream stream = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+
+					BufferRequestResponse response = new BufferRequestResponse();
+					DataInputStream in = new DataInputStream(socket.getInputStream());
+					response.readFields(in);
+					if (!response.open) {
+						stream.close();
+						return false;
+					}
+					out = stream;
+				} catch (Throwable e) {
+					try { if (!socket.isClosed()) socket.close();
+					} catch (Throwable t) { }
+					return false;
 				}
+				return true;
 			}
 		}
 
 		public boolean sentAny(OutputFile buffer) {
-			synchronized (this) {
-				return lastSentOutputFile.containsKey(buffer.header().owner().getTaskID());
-			}
+			return lastSentOutputFile.containsKey(buffer.header().owner().getTaskID());
 		}
 
 		public boolean sent(OutputFile buffer) {
-			synchronized (this) {
-				LOG.debug("Check if file " + buffer.header() + " has been sent.");
-				boolean sent = false;
-				try {
-					if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
-						OutputFile lastSent = this.lastSentOutputFile.get(buffer.header().owner().getTaskID());
-						sent = buffer.header().compareTo(lastSent.header()) <= 0;
-					}
-					return sent;
-				} finally {
-					LOG.debug("File " + buffer.header() + " progress " + buffer.header().progress() + " sent? " + sent);
+			LOG.debug("Check if file " + buffer.header() + " has been sent.");
+			boolean sent = false;
+			try {
+				if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
+					OutputFile lastSent = this.lastSentOutputFile.get(buffer.header().owner().getTaskID());
+					sent = buffer.header().compareTo(lastSent.header()) <= 0;
 				}
+				return sent;
+			} finally {
+				LOG.debug("File " + buffer.header() + " progress " + buffer.header().progress() + " sent? " + sent);
 			}
 		}
 
@@ -279,10 +275,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 		 * @return The number of output files successfully sent.
 		 */
 		public int sentCount(TaskID taskid) {
-			synchronized (this) {
-				return this.sentOutputFiles.containsKey(taskid) ? 
-						this.sentOutputFiles.get(taskid).size() : 0;
-			}
+			return this.sentOutputFiles.containsKey(taskid) ? 
+					this.sentOutputFiles.get(taskid).size() : 0;
 		}
 		
 		/**
@@ -291,18 +285,19 @@ public class BufferController implements BufferUmbilicalProtocol {
 		 * @throws IOException
 		 */
 		public void flush(OutputFile file) throws IOException {
-			if (sent(file)) {
-				LOG.info(this + " already sent buffer " + file.header());
-				return;
-			} else if (!open()) {
+			if (!open()) {
 				throw new IOException(toString() + ". Attempt to flush output file when not open.");
 			}
 
 			OutputFile.Header header = file.header();
-			file.open(localFs);
-			long length = file.seek(partition);
 			try {
 				synchronized (out) {
+					if (sent(file)) {
+						LOG.info(this + " already sent file " + header);
+						return;
+					}
+					file.open(localFs);
+					long length = file.seek(partition);
 					LOG.debug("RequestManager " + destination + " begin flush " + header + " progress " + header.progress());
 					flush(out, file.dataInputStream(), length, header);
 					LOG.debug("RequestManager " + destination + " end flush " + header + " progress " + header.progress());
@@ -311,13 +306,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 				throw e;
 			}
 
-			synchronized (this) {
-				this.lastSentOutputFile.put(header.owner().getTaskID(), file);
-				if (!this.sentOutputFiles.containsKey(header.owner().getTaskID())) {
-					this.sentOutputFiles.put(header.owner().getTaskID(), new HashSet<OutputFile>());
-				}
-				this.sentOutputFiles.get(header.owner().getTaskID()).add(file);
+			this.lastSentOutputFile.put(header.owner().getTaskID(), file);
+			if (!this.sentOutputFiles.containsKey(header.owner().getTaskID())) {
+				this.sentOutputFiles.put(header.owner().getTaskID(), new HashSet<OutputFile>());
 			}
+			this.sentOutputFiles.get(header.owner().getTaskID()).add(file);
 		}
 		
 		private void flush(FSDataOutputStream out, FSDataInputStream in, long length, OutputFile.Header header) throws IOException {
@@ -502,7 +495,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 						try {
 							LOG.info("FileManager " + taskid + " file " + buffer.header() + " needs to be sent to " + request);
 							if (request.open()) {
-								LOG.info("FileManager " + taskid + " sending " + buffer.header() + " to " + request);
+								LOG.info("FileManager " + taskid + " sending " + buffer.header() + 
+										  " progress " + buffer.header().progress() + " to " + request);
 								request.flush(buffer);
 								LOG.info("FileManager " + taskid + " done sending " + buffer.header() + " to " + request);
 								if (buffer.header().progress() == 1.0f) {
