@@ -328,7 +328,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			}
 			else {
 				LOG.info("Merging spills " + nextPipelineSpill + " - " + 
-						(spills.size() - 1) + " before pipelining.");
+						(spills.size() - 1) + " before pipelining. Progress = " + getProgress().get());
 				OutputFile mergedSpill = merger.mergeSpill(nextPipelineSpill, spills.size() - 1);
 				umbilical.output(mergedSpill);
 			}

@@ -437,7 +437,6 @@ public class ReduceTask extends Task {
 				values.nextKey();
 				
 		        if (progress != null) {
-		        	System.err.println("REDUCE PROGRESS " + values.getProgress().get() + " buffer progress " + buffer.getProgress().get());
 		        	progress.set(values.getProgress().get());
 		        }
 		        if (reporter != null) reporter.progress();
