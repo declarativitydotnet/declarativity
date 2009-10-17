@@ -433,9 +433,14 @@ public class BufferController implements BufferUmbilicalProtocol {
 		public void add(OutputFile file) throws IOException {
 			synchronized (this) {
 				if (!open) throw new IOException(this + " closed!");
-				LOG.debug(this + " receive output file " + file.header() + " progress " + file.header().progress());
-				if (file.complete()) this.finalOutput = file;
-				else this.bufferFiles.add(file);
+				if (file.complete()) {
+					LOG.debug(this + " received final output file " + file.header());
+					this.finalOutput = file;
+				}
+				else {
+					LOG.debug(this + " received output file " + file.header() + " progress " + file.header().progress());
+					this.bufferFiles.add(file);
+				}
 				if (this.requests.size() > 0) {
 					this.notify();
 				}
@@ -456,10 +461,6 @@ public class BufferController implements BufferUmbilicalProtocol {
 
 				try {
 					flush();
-					if (open && unsentBuffers()) {
-						try { Thread.sleep(1000); // wait a sec.
-						} catch (InterruptedException e) { }
-					}
 				} finally {
 					synchronized (this) {
 						busy = false;
