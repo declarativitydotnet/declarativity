@@ -473,8 +473,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 						}
 					}
 				}
+			} catch (Throwable t) {
+				t.printStackTrace();
 			} finally {
-				LOG.info(this + " exiting.");
+				LOG.info(this + " exiting. open? " + open);
 			}
 		}
 
