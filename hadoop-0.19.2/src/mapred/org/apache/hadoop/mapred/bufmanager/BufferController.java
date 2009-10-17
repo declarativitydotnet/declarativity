@@ -298,9 +298,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					}
 					file.open(localFs);
 					long length = file.seek(partition);
-					LOG.debug("RequestManager " + destination + " begin flush " + header + " progress " + header.progress());
 					flush(out, file.dataInputStream(), length, header);
-					LOG.debug("RequestManager " + destination + " end flush " + header + " progress " + header.progress());
 				}
 			} catch (IOException e) {
 				throw e;
@@ -490,10 +488,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 			
 			for (OutputFile buffer : this.bufferFiles) {
 				for (RequestManager request : this.requests) {
-					LOG.info("FileManager " + taskid + " try to send file " + buffer.header() + " to " + request);
 					if (!request.sent(buffer)) {
 						try {
-							LOG.info("FileManager " + taskid + " file " + buffer.header() + " needs to be sent to " + request);
 							if (request.open()) {
 								LOG.info("FileManager " + taskid + " sending " + buffer.header() + 
 										  " progress " + buffer.header().progress() + " to " + request);
