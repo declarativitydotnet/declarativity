@@ -257,7 +257,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					kvend = kvindex;
 					bufend = bufmark;
 					spill();
-					if (spills.size() != nextPipelineSpill) {
+					if (pipeline && spills.size() != nextPipelineSpill) {
 						pipeline();
 					}
 				}
