@@ -1083,16 +1083,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		timestamp = System.currentTimeMillis();
 		OutputFile finalOut = merger.mergeFinal();
 		LOG.debug("Final merge done. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
-		reset(false);
 		return finalOut;
 	}
 
 	public synchronized void reset(boolean restart) throws IOException {
-		/* reset buffer variables. */
-		for (JBufferFile spill : spills) {
-			spill.delete();
-		}
-		spills.clear();
 		bufindex = 0;
 		bufvoid  = kvbuffer.length;
 		kvstart = kvend = kvindex = 0;  
@@ -1103,6 +1097,12 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		if (restart) {
 			spillThread.close();
 			mergeThread.close();
+			
+			/* reset buffer variables. */
+			for (JBufferFile spill : spills) {
+				spill.delete();
+			}
+			spills.clear();
 
 			/* restart threads. */
 			this.spillThread = new SpillThread();
@@ -1116,8 +1116,10 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	public synchronized OutputFile close() throws IOException {  
-		System.err.println("JBuffer: closed called at progress " + getProgress().get());
-		return flush();
+		LOG.debug("JBuffer: closed called at progress " + getProgress().get());
+		OutputFile finalOutput = flush();
+		reset(false);
+		return finalOutput;
 	}
 
 	public void free() {
