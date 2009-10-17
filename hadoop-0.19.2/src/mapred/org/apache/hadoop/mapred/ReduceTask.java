@@ -457,7 +457,9 @@ public class ReduceTask extends Task {
 		if (reducePipeline) {
 			buffer.reset(true);
 			buffer.setProgress(reducePhase);
+			LOG.debug("ReduceTask: " + getTaskID() + " start pipelined reduce phase.");
 			reduce(buffer, reporter, reducePhase);
+			LOG.debug("ReduceTask: " + getTaskID() + " done pipelined reduce phase.");
 		}
 		else {
 			// make output collector
