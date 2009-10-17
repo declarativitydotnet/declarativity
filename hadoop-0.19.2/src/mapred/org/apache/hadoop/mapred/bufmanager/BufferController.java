@@ -442,34 +442,40 @@ public class BufferController implements BufferUmbilicalProtocol {
 					this.bufferFiles.add(file);
 				}
 				if (this.requests.size() > 0) {
-					this.notify();
+					this.notifyAll();
 				}
 			}
 		}
 		
 		@Override
 		public void run() {
-			while (open) {
-				synchronized (this) {
-					while (!unsentBuffers()) {
-						if (!open) return;
-						try { this.wait();
-						} catch (InterruptedException e) { }
-					}
-					busy = true;
-				}
-
-				try {
-					flush();
-				} finally {
+			try {
+				while (open) {
 					synchronized (this) {
-						busy = false;
-						this.notifyAll();
+						while (!unsentBuffers()) {
+							if (!open) return;
+							LOG.debug(this + " waiting for more output files.");
+							try { this.wait();
+							} catch (InterruptedException e) { }
+						}
+						LOG.debug(this + " sending output files.");
+						busy = true;
+					}
+
+					try {
+						flush();
+					} finally {
+						synchronized (this) {
+							busy = false;
+							this.notifyAll();
+						}
 					}
 				}
+			} finally {
+				LOG.info(this + " exiting.");
 			}
 		}
-		
+
 		private void flush() {
 			Set<RequestManager> satisfied = new HashSet<RequestManager>();
 			if (this.finalOutput != null) {
