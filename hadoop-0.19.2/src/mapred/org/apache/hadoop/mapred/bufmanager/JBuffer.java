@@ -246,6 +246,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 
 		public void close() throws IOException {
+			if (this.open == false) return;
 			synchronized (spillLock) {
 				this.open = false;
 				while (isSpilling()) {

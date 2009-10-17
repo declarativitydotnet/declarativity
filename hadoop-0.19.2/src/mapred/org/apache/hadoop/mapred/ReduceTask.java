@@ -369,8 +369,6 @@ public class ReduceTask extends Task {
 		
 		long begin = System.currentTimeMillis();
 		try {
-			OutputFile finalOutput = buffer.close();
-			if (reducePipeline) buffer.input(finalOutput, true);
 			reduce(job, reporter, buffer);
 		} finally {
 			reducePhase.complete();
@@ -379,7 +377,7 @@ public class ReduceTask extends Task {
 		}
 		
 		done(umbilical);
-		System.err.println("Reduce time = " + (System.currentTimeMillis() - begin) + " ms.");
+		LOG.info("Reduce task total time = " + (System.currentTimeMillis() - begin) + " ms.");
 	}
 	
 	protected void copy(JBuffer buffer, JBufferSink sink, Reporter reporter) throws IOException {
@@ -454,10 +452,12 @@ public class ReduceTask extends Task {
 	private void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
+		OutputFile finalOutput = buffer.close();
 		if (reducePipeline) {
+			LOG.debug("ReduceTask: " + getTaskID() + " start pipelined reduce phase.");
 			buffer.reset(true);
 			buffer.setProgress(reducePhase);
-			LOG.debug("ReduceTask: " + getTaskID() + " start pipelined reduce phase.");
+			buffer.input(finalOutput, true);
 			reduce(buffer, reporter, reducePhase);
 			LOG.debug("ReduceTask: " + getTaskID() + " done pipelined reduce phase.");
 		}
