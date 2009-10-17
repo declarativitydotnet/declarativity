@@ -409,8 +409,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 					}
 				}
 				
+				LOG.info(this + " closing.");
 				/* flush remaining buffers. */
 				while (unsentBuffers()) {
+					LOG.info(this + " flush remaining output files.");
 					flush();
 					try { this.wait(100);
 					} catch (InterruptedException e) { }
@@ -665,6 +667,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 	}
 	
 	public synchronized void free(JobID jobid) {
+		LOG.info("BufferController freeing job " + jobid);
 		if (this.fileManagers.containsKey(jobid)) {
 			Map<TaskAttemptID, FileManager> fm_map = this.fileManagers.get(jobid);
 			for (FileManager fm : fm_map.values()) {
