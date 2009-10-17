@@ -375,9 +375,6 @@ public class ReduceTask extends Task {
 		} finally {
 			reducePhase.complete();
 			setProgressFlag();
-			if (reducePipeline) {
-				buffer.snapshot();
-			}
 			buffer.free();
 		}
 		
@@ -439,7 +436,10 @@ public class ReduceTask extends Task {
 				reducer.reduce(values.getKey(), values, collector, reporter);
 				values.nextKey();
 				
-		        if (progress != null) progress.set(values.getProgress().get());
+		        if (progress != null) {
+		        	System.err.println("REDUCE PROGRESS " + values.getProgress().get() + " buffer progress " + buffer.getProgress().get());
+		        	progress.set(values.getProgress().get());
+		        }
 		        if (reporter != null) reporter.progress();
 		        setProgressFlag();
 			}
