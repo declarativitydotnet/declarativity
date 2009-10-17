@@ -1071,19 +1071,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	private OutputFile flush() throws IOException {
-		if (spills.size() == 0 && kvstart == kvend) {
-			try {
-				Path finalOut = outputHandle.getOutputFile(this.taskid);
-				if (localFs.exists(finalOut)) {
-					LOG.warn("JBuffer: no flush needed for buffer " + taskid);
-					spillThread.close();
-					mergeThread.close();
-					return null;
-				}
-			} catch (IOException e) {
-				/* File must not exist. Need to make it. */
-			}
-		}
 		long timestamp = System.currentTimeMillis();
 		LOG.debug("Begin final flush");
 
