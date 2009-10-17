@@ -77,7 +77,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		 * Spill files are not deleted.
 		 * @throws IOException
 		 */
-		public OutputFile mergeFinal() throws IOException {
+		public synchronized OutputFile mergeFinal() throws IOException {
 			List<JBufferFile> finalSpills = new ArrayList<JBufferFile>();
 			long finalDataSize = 0;
 			long indexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
@@ -102,7 +102,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		 * from growing too large.
 		 * @throws IOException
 		 */
-		public OutputFile mergeSpill(int start, int end) throws IOException {
+		public synchronized OutputFile mergeSpill(int start, int end) throws IOException {
 			List<JBufferFile> mergeSpills = new ArrayList<JBufferFile>();
 			long dataFileSize = 0;
 			long indexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
@@ -137,7 +137,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		 * @return The snapshot output file.
 		 * @throws IOException
 		 */
-		public OutputFile mergeSnapshot() throws IOException {
+		public synchronized OutputFile mergeSnapshot() throws IOException {
 			List<JBufferFile> mergeSpills = new ArrayList<JBufferFile>();
 			long dataFileSize = 0;
 			long indexFileSize = partitions * MAP_OUTPUT_INDEX_RECORD_LENGTH;
