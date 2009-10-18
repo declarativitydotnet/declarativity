@@ -437,11 +437,13 @@ public class BufferController implements BufferUmbilicalProtocol {
 			synchronized (this) {
 				if (!open) throw new IOException(this + " closed!");
 				if (file.complete()) {
-					LOG.debug(this + " received final output file " + file.header());
+					LOG.debug(this + " received final output file.");
 					this.finalOutput = file;
 				}
 				else {
-					LOG.debug(this + " received output file " + file.header() + " progress " + file.header().progress());
+					if (file.header().progress() == 1.0f) {
+						LOG.debug(this + " received last output file");
+					}
 					this.outputs.add(file);
 				}
 				if (this.requests.size() > 0) {
@@ -497,6 +499,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				for (RequestManager request : requests) {
 					if (!request.sentAny(this.finalOutput) && request.open()) {
 						try {
+							LOG.debug(this + " sending final complete output to task " + request.destination());
 							request.flush(this.finalOutput);
 							satisfied.add(request);
 						} catch (IOException e) {
@@ -511,11 +514,12 @@ public class BufferController implements BufferUmbilicalProtocol {
 					if (!request.sent(file)) {
 						try {
 							if (request.open()) {
-								LOG.info("FileManager " + taskid + " sending " + file.header() + 
-										  " progress " + file.header().progress() + " to " + request);
+								if (file.header().progress() == 1f) {
+									LOG.debug(this + " sending last output file to task " + request.destination());
+								}
 								request.flush(file);
-								LOG.info("FileManager " + taskid + " done sending " + file.header() + " to " + request);
 								if (file.header().progress() == 1.0f) {
+									LOG.info(this + " successfully sent last output file to task " + request.destination());
 									satisfied.add(request);
 								}
 							}
