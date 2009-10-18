@@ -129,7 +129,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				spill.delete();
 				last = spill;
 			}
+			LOG.info("JBufferMerger: intermediate merge snapshot " + snapshot + ".");
 			last.rename(snapshot);
+			LOG.info("JBufferMerger: intermediate merge rename " + last + ".");
 			
 			return new OutputFile(taskid, getProgress().get(), inputFileName, inputStart, inputEnd, 
 					               end, last.data, last.index, false);
