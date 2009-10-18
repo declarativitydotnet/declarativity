@@ -230,9 +230,14 @@ public class CQ extends Configured implements Tool {
                         }
 
                         public void blockForce(OutputCollector o) {
-                          JBuffer jb = (JBuffer) o;
-                          jb.force();
+                        	JBuffer jb = (JBuffer) o;
+                        	try {
+                        		jb.force();
+                        	} catch (IOException e) {
+                        		e.printStackTrace();
+                        	}
                         }
+                        
                         public void configure(JobConf jc) {
                           try {
                           java.net.InetAddress localMachine = java.net.InetAddress.getLocalHost();
