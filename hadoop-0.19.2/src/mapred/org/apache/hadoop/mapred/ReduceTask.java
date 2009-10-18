@@ -429,9 +429,10 @@ public class ReduceTask extends Task {
 		Reducer reducer = (Reducer)ReflectionUtils.newInstance(conf.getReducerClass(), conf);
 		// apply reduce function
 		try {
+			int count = 0;
 			ValuesIterator values = buffer.iterator();
-			LOG.info("Value iterator has values? " + values.more());
 			while (values.more()) {
+				count++;
 				reducer.reduce(values.getKey(), values, collector, reporter);
 				values.nextKey();
 				
@@ -441,6 +442,7 @@ public class ReduceTask extends Task {
 		        if (reporter != null) reporter.progress();
 		        setProgressFlag();
 			}
+			LOG.info("Reducer called on " + count + " records.");
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}

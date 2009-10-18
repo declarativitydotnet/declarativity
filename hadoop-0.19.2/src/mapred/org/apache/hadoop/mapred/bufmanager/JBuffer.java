@@ -236,7 +236,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					kvend = kvindex;
 					bufend = bufmark;
 					this.spill = kvstart != kvend;
-					spillLock.notifyAll();
+					if (this.spill) spillLock.notifyAll();
 				}
 			}
 		}
@@ -254,15 +254,19 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					} catch (InterruptedException e) { }
 				}
 				
+				kvend = kvindex;
+				bufend = bufmark;
 				if (kvstart != kvend) { 
-					kvend = kvindex;
-					bufend = bufmark;
+					/* Perform a spill of what remains in the buffer. */
 					spill();
 					if (pipeline && spills.size() != nextPipelineSpill) {
+						/* Pipeline what remains. */
 						pipeline();
 					}
 				}
 				else if (pipeline) {
+					/* Nothing remains but we're pipelining. 
+					 * So send what remains. */
 					pipeline();
 				}
 				spillLock.notifyAll();
