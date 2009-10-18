@@ -358,7 +358,7 @@ public class ReduceTask extends Task {
 		inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
 		
 	    LOG.info("Reduce task " + getTaskID() + " starting sink.");
-		JBufferSink sink = new JBufferSink(job, reporter, getTaskID(), buffer, this);
+		JBufferSink sink = new JBufferSink(job, reporter, buffer, this);
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
 		fetcher.setDaemon(true);
@@ -430,6 +430,7 @@ public class ReduceTask extends Task {
 		// apply reduce function
 		try {
 			ValuesIterator values = buffer.iterator();
+			LOG.info("Value iterator has values? " + values.more());
 			while (values.more()) {
 				reducer.reduce(values.getKey(), values, collector, reporter);
 				values.nextKey();
@@ -458,7 +459,9 @@ public class ReduceTask extends Task {
 			buffer.reset(true);
 			buffer.setProgress(reducePhase);
 			buffer.input(finalOutput, true);
+			LOG.debug("ReduceTask: " + getTaskID() + " call reducer.");
 			reduce(buffer, reporter, reducePhase);
+			LOG.debug("ReduceTask: " + getTaskID() + " generate final output.");
 			finalOutput = buffer.close();
 			LOG.debug("ReduceTask: " + getTaskID() + " done pipelined reduce phase.");
 		}

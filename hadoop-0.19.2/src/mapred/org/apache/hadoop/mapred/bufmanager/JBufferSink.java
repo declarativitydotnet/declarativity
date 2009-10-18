@@ -292,14 +292,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private FileHandle fileHandle;
 	
-	public JBufferSink(JobConf conf, Reporter reporter, TaskAttemptID ownerid, JBufferCollector<K, V> collector, Task task) throws IOException {
+	public JBufferSink(JobConf conf, Reporter reporter, JBufferCollector<K, V> collector, Task task) throws IOException {
 		this.conf = conf;
 		this.reporter = reporter;
-		this.ownerid = ownerid;
+		this.ownerid = task.getTaskID();
 		this.collector = collector;
 		this.localFs = FileSystem.getLocal(conf);
 		this.maxConnections = conf.getInt("mapred.reduce.parallel.copies", 20);
-		this.fileHandle = new FileHandle();
+		this.fileHandle = new FileHandle(ownerid.getJobID());
 		this.fileHandle.setConf(conf);
 		this.inputSnapshots = new HashMap<TaskID, JBufferSnapshot>();
 		this.spillQueue = new LinkedBlockingQueue<SpillRun>();
