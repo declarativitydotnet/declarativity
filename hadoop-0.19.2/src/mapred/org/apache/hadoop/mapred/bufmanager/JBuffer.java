@@ -234,6 +234,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		private boolean spill = false;
 		private boolean open = true;
 		private int nextPipelineSpill = 0;
+		private boolean pipelineFinal = false;
 
 		public void doSpill() {
 			synchronized (spillLock) {
@@ -285,7 +286,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				LOG.info("SpillThread: sort/spill time " + 
 							((System.currentTimeMillis() - sortstart)/1000f) + " secs. " +
 							"Data reduction = " + reduction);
-				if (pipeline) {
+				if (pipeline && !pipelineFinal) {
 					float pipestat = umbilical.pipestat(taskid);
 					if (pipestat <= 2.0f && 
 							(reduction * (spills.size() - nextPipelineSpill)) >= 1.0f) {
@@ -342,6 +343,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				umbilical.output(mergedSpill);
 			}
 			nextPipelineSpill = spills.size();
+			pipelineFinal = getProgress().get() == 1f;
 		}
 
 		@Override
