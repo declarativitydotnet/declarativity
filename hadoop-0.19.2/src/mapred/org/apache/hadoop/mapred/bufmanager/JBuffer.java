@@ -420,7 +420,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public void run() {
 			try {
-				int threshold = 2 * job.getInt("io.sort.factor", 100);
+				int threshold = 1000; // 2 * job.getInt("io.sort.factor", 100);
 				LOG.info("JBuffer: merge thread running.");
 				while (open) {
 					synchronized (mergeLock) {
