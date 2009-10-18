@@ -240,6 +240,16 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 				}
 			}
 		}
+		
+		public void forceSpill() throws IOException {
+			synchronized (spillLock) {
+				kvend = kvindex;
+				bufend = bufmark;
+				if (kvstart != kvend) { 
+					spill(); // force a spill
+				}
+			}
+		}
 
 		public boolean isSpilling() {
 			return this.spill;
@@ -254,19 +264,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					} catch (InterruptedException e) { }
 				}
 				
-				kvend = kvindex;
-				bufend = bufmark;
-				if (kvstart != kvend) { 
-					/* Perform a spill of what remains in the buffer. */
-					spill();
-					if (pipeline && spills.size() != nextPipelineSpill) {
-						/* Pipeline what remains. */
-						pipeline();
-					}
-				}
-				else if (pipeline) {
-					/* Nothing remains but we're pipelining. 
-					 * So send what remains. */
+				forceSpill(); // flush what remains
+				if (pipeline) {
 					pipeline();
 				}
 				spillLock.notifyAll();
@@ -1059,7 +1058,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	public synchronized void snapshot() throws IOException {
+		if (pipeline) throw new IOException("JBuffer can't snapshot with pipelining turned on.");
 		LOG.debug("JBuffer " + taskid + " performing snaphsot.");
+		spillThread.forceSpill();
 		OutputFile outputFile = merger.mergeSnapshot();
 		umbilical.output(outputFile);
 	}

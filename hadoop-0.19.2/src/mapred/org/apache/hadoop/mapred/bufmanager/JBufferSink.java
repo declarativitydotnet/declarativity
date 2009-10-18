@@ -439,6 +439,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 	 * Close sink.
 	 * No more connections can be made once closed. Method will
 	 * lock the owning task object if snapshots are turned on.
+	 * @return true if the complete snapshot of all input snapshots were
+	 * applied to the buffer.
 	 */
 	public synchronized void close() {
 		LOG.info("JBufferSink is closing.");
