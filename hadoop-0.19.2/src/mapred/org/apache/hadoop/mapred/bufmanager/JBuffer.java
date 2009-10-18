@@ -213,8 +213,9 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					if (null == combinerClass || spills.size() < minSpillsForCombine) {
 						Merger.writeFile(kvIter, writer, reporter, job);
 					} else {
+						CombineOutputCollector combineCollector = new CombineOutputCollector();
 						combineCollector.setWriter(writer);
-						combineAndSpill(kvIter);
+						combineAndSpill(combineCollector, kvIter);
 					}
 
 					//close
@@ -420,7 +421,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		@Override
 		public void run() {
 			try {
-				int threshold = 1000; // 2 * job.getInt("io.sort.factor", 100);
+				int threshold = 2 * job.getInt("io.sort.factor", 100);
 				LOG.info("JBuffer: merge thread running.");
 				while (open) {
 					synchronized (mergeLock) {
@@ -549,7 +550,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private final Serializer<K> keySerializer;
 	private final Serializer<V> valSerializer;
 	private final Class<? extends Reducer> combinerClass;
-	private final CombineOutputCollector<K, V> combineCollector;
 
 	// Compression for map-outputs
 	private CompressionCodec codec = null;
@@ -692,9 +692,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		}
 		// combiner
 		combinerClass = job.getCombinerClass();
-		combineCollector = (null != combinerClass)
-		? new CombineOutputCollector()
-		: null;
 		minSpillsForCombine = job.getInt("min.num.spills.for.combine", 3);
 	}
 
@@ -1250,12 +1247,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 							// we've fewer
 							// than some threshold of records for a partition
 							if (spstart != spindex) {
+								CombineOutputCollector combineCollector = new CombineOutputCollector();
 								combineCollector.setWriter(writer);
 
 								RawKeyValueIterator kvIter = new MRResultIterator(spstart, spindex);
-								combineAndSpill(kvIter);
-
-								combineCollector.reset();
+								combineAndSpill(combineCollector, kvIter);
 							}
 						}
 
@@ -1363,7 +1359,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	}
 
 	@SuppressWarnings("unchecked")
-	private void combineAndSpill(RawKeyValueIterator kvIter) throws IOException {
+	private void combineAndSpill(CombineOutputCollector<K, V> combineCollector, RawKeyValueIterator kvIter) throws IOException {
 		Reducer combiner =
 			(Reducer)ReflectionUtils.newInstance(combinerClass, job);
 		try {
