@@ -88,6 +88,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					finalDataSize += spill.dataSize();
 				}
 			}
+			LOG.info("JBufferMerger: final merge size " + finalDataSize + ". Spill files: " + finalSpills.toString());
 			
 			Path dataFile = outputHandle.getOutputFileForWrite(taskid,  finalDataSize);
 			Path indexFile = outputHandle.getOutputIndexFileForWrite(taskid, indexFileSize);
@@ -465,6 +466,11 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			this.data = data;
 			this.index = index;
 			this.valid = true;
+		}
+		
+		@Override
+		public String toString() {
+			return data.getName();
 		}
 		
 		public void rename(JBufferFile file) throws IOException {
@@ -1065,32 +1071,14 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		umbilical.output(outputFile);
 	}
 
-	public void force() {
-		spillThread.doSpill();
+	public synchronized void force() throws IOException {
+		spillThread.forceSpill();
 	}
 
 	public ValuesIterator<K, V> iterator() throws IOException {
 		Path finalOutputFile = outputHandle.getOutputFile(this.taskid);
 		RawKeyValueIterator kvIter = new FSMRResultIterator(this.localFs, finalOutputFile);
 		return new ValuesIterator<K, V>(kvIter, comparator, keyClass, valClass, job, reporter);
-	}
-
-	private OutputFile flush() throws IOException {
-		long timestamp = System.currentTimeMillis();
-		LOG.debug("Begin final flush");
-
-		timestamp = System.currentTimeMillis();
-		mergeThread.close();
-		LOG.debug("merge thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
-
-		timestamp = System.currentTimeMillis();
-		spillThread.close();
-		LOG.debug("spill thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
-
-		timestamp = System.currentTimeMillis();
-		OutputFile finalOut = merger.mergeFinal();
-		LOG.debug("Final merge done. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
-		return finalOut;
 	}
 
 	public synchronized void reset(boolean restart) throws IOException {
@@ -1129,7 +1117,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		return finalOutput;
 	}
 
-	public void free() {
+	public synchronized void free() {
 		kvbuffer = null;
 	}
 
@@ -1170,6 +1158,24 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			writer.close();
 			writeIndexRecord(indexOut, dataOut, segmentStart, writer);
 		}
+	}
+	
+	private OutputFile flush() throws IOException {
+		long timestamp = System.currentTimeMillis();
+		LOG.debug("Begin final flush");
+
+		timestamp = System.currentTimeMillis();
+		mergeThread.close();
+		LOG.debug("merge thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
+
+		timestamp = System.currentTimeMillis();
+		spillThread.close();
+		LOG.debug("spill thread closed. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
+
+		timestamp = System.currentTimeMillis();
+		OutputFile finalOut = merger.mergeFinal();
+		LOG.debug("Final merge done. total time = " + (System.currentTimeMillis() - timestamp) + " ms.");
+		return finalOut;
 	}
 
 	private float sortAndSpill() throws IOException {
