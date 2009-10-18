@@ -369,7 +369,7 @@ public class ReduceTask extends Task {
 		
 		long begin = System.currentTimeMillis();
 		try {
-			reduce(job, reporter, buffer);
+			reduce(job, reporter, buffer, bufferUmbilical);
 		} finally {
 			reducePhase.complete();
 			setProgressFlag();
@@ -452,23 +452,27 @@ public class ReduceTask extends Task {
 		}
 	}
 	
-	private void reduce(JobConf job, final Reporter reporter, JBuffer buffer) throws IOException {
+	private void reduce(JobConf job, final Reporter reporter, JBuffer buffer, BufferUmbilicalProtocol umbilical) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
 		OutputFile finalOutput = buffer.close();
-		if (reducePipeline) {
+		if (inputSnapshots) {
+			LOG.debug("ReduceTask: " + getTaskID() + " start final snapshot reduce phase.");
+			buffer.reset(true);
+			buffer.setProgress(reducePhase);
+			reduce(buffer, reporter, reducePhase);
+			buffer.snapshot();
+		} else if (reducePipeline) {
 			LOG.debug("ReduceTask: " + getTaskID() + " start pipelined reduce phase.");
 			buffer.reset(true);
 			buffer.setProgress(reducePhase);
 			buffer.input(finalOutput, true);
-			LOG.debug("ReduceTask: " + getTaskID() + " call reducer.");
 			reduce(buffer, reporter, reducePhase);
-			LOG.debug("ReduceTask: " + getTaskID() + " generate final output.");
 			finalOutput = buffer.close();
-			LOG.debug("ReduceTask: " + getTaskID() + " done pipelined reduce phase.");
-		}
-		else {
+			umbilical.output(finalOutput);
+		} else {
 			// make output collector
+			LOG.debug("ReduceTask: " + getTaskID() + " start blocking reduce phase.");
 			String finalName = getOutputName(getPartition());
 			FileSystem fs = FileSystem.get(job);
 			final RecordWriter out = job.getOutputFormat().getRecordWriter(fs, job, finalName, reporter);  

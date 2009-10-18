@@ -210,6 +210,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			throw new IOException("PipelineMaptask has no reduce tasks!");
 		}
 		
+		boolean snapshot = job.getBoolean("mapred.job.input.snapshots", false);
 	    this.mapper = ReflectionUtils.newInstance(job.getMapperClass(), job);
 
 		JBufferSink sink  = new JBufferSink(job, reporter, this, this);
@@ -234,10 +235,15 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		LOG.info("PipelineMapTask: copy input took " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
 		setPhase(TaskStatus.Phase.MAP); 
-		sink.close(); // This will commit final snapshots.
+		sink.close();
 		timestamp = System.currentTimeMillis();
 		getProgress().complete();
-		this.buffer.snapshot(); // perform final snapshot.
+		if (snapshot) {
+			this.buffer.snapshot(); // Perform final snapshot.
+		} else {
+			OutputFile finalOutput = this.buffer.close();
+			bufferUmbilical.output(finalOutput);
+		}
 		this.buffer.free();
 		LOG.info("PipelineMapTask: took " + (System.currentTimeMillis() - timestamp) + " ms to finalize final output.");
 
