@@ -114,6 +114,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 					dataFileSize += spills.get(i).dataSize();
 				}
 			}
+			LOG.info("JBufferMerger: intermediate merge size " + dataFileSize + ". Spill files: " + mergeSpills.toString());
+
 			
 			int snapshotId = snapshots++;
 			Path dataFile = outputHandle.getOutputSnapshotFileForWrite(taskid, snapshotId, dataFileSize);
@@ -470,7 +472,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		
 		@Override
 		public String toString() {
-			return data.getName();
+			return data.getName() + "[" + dataSize() + " bytes]";
 		}
 		
 		public void rename(JBufferFile file) throws IOException {
@@ -494,8 +496,13 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 			localFs.copyFromLocalFile(file.index, this.index);
 		}
 		
-		public long dataSize() throws IOException {
-			return valid ? localFs.getFileStatus(data).getLen() : 0;
+		public long dataSize() {
+			try {
+				return valid ? localFs.getFileStatus(data).getLen() : 0;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return 0;
+			}
 		}
 		
 		public boolean valid() {
