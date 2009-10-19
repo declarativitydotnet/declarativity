@@ -257,17 +257,12 @@ public class BufferController implements BufferUmbilicalProtocol {
 		}
 
 		public boolean sent(OutputFile buffer) {
-			LOG.debug("Check if file " + buffer.header() + " has been sent.");
 			boolean sent = false;
-			try {
-				if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
-					OutputFile lastSent = this.lastSentOutputFile.get(buffer.header().owner().getTaskID());
-					sent = buffer.header().compareTo(lastSent.header()) <= 0;
-				}
-				return sent;
-			} finally {
-				LOG.debug("File " + buffer.header() + " progress " + buffer.header().progress() + " sent? " + sent);
+			if (this.lastSentOutputFile.containsKey(buffer.header().owner().getTaskID())) {
+				OutputFile lastSent = this.lastSentOutputFile.get(buffer.header().owner().getTaskID());
+				sent = buffer.header().compareTo(lastSent.header()) <= 0;
 			}
+			return sent;
 		}
 
 		/**
@@ -461,11 +456,9 @@ public class BufferController implements BufferUmbilicalProtocol {
 					synchronized (this) {
 						while (!unsentBuffers()) {
 							if (!open) return;
-							LOG.debug(this + " waiting for more output files.");
 							try { this.wait();
 							} catch (InterruptedException e) { }
 						}
-						LOG.debug(this + " sending output files.");
 						outputs.addAll(this.outputs);
 						requests.addAll(this.requests);
 						busy = true;
