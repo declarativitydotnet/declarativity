@@ -223,11 +223,12 @@ public class BufferController implements BufferUmbilicalProtocol {
 			if (out != null) return true;
 			synchronized (this) {
 				if (out != null) return true;
-				LOG.debug(this + " opening connection.");
+				LOG.debug(this + " opening connection to " + this.address);
 				Socket socket = new Socket();
 				try {
 					try {
 						socket.connect(this.address);
+						LOG.debug(this + " connection open.");
 					} catch (IOException e) {
 						LOG.warn("Connection error: destination " + destination() + ". "+ e);
 						return false;
