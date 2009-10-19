@@ -422,9 +422,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				if (!open) throw new IOException(this + " closed!");
 				LOG.debug(this + " receive " + request);
 				this.requests.add(request);
-				if (this.outputs.size() > 0 || this.finalOutput != null) {
-					this.notify();
-				}
+				this.notifyAll();
 			}
 			
 		}
@@ -442,9 +440,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					}
 					this.outputs.add(file);
 				}
-				if (this.requests.size() > 0) {
-					this.notifyAll();
-				}
+				this.notifyAll();
 			}
 		}
 		
