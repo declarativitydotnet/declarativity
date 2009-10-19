@@ -230,7 +230,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 						socket.connect(this.address);
 						LOG.debug(this + " connection open.");
 					} catch (IOException e) {
-						LOG.warn("Connection error: destination " + destination() + ". "+ e);
+						LOG.warn("Connection error: " + this + ". "+ e);
 						return false;
 					}
 
