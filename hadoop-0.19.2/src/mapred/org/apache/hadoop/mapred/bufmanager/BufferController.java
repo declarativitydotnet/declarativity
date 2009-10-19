@@ -229,7 +229,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					try {
 						socket.connect(this.address);
 					} catch (IOException e) {
-						System.err.println("Connection error: " + e);
+						System.err.println("Connection error: destination " + destination() + ". "+ e);
 						return false;
 					}
 
