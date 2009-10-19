@@ -55,7 +55,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 public class BufferController implements BufferUmbilicalProtocol {
 	private static final Log LOG = LogFactory.getLog(BufferController.class.getName());
-
+	
 	private class RequestTransfer extends Thread {
 		private Map<InetSocketAddress, Set<BufferRequest>> transfers;
 		
@@ -229,7 +229,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					try {
 						socket.connect(this.address);
 					} catch (IOException e) {
-						System.err.println("Connection error: destination " + destination() + ". "+ e);
+						LOG.warn("Connection error: destination " + destination() + ". "+ e);
 						return false;
 					}
 

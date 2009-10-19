@@ -345,12 +345,14 @@ public class JBufferSink<K extends Object, V extends Object> {
 						DataOutputStream output = new DataOutputStream(new BufferedOutputStream(channel.socket().getOutputStream()));
 
 						if (complete()) {
+							LOG.debug("JBufferSink: " + ownerid + " is complete. Terminating " + channel.socket().getRemoteSocketAddress());
 							response.setTerminated();
 							response.write(output);
 							output.flush();
 							conn.close();
 						}
 						else if (connections.size() > maxConnections) {
+							LOG.debug("JBufferSink: " + ownerid + " max connections reached. Terminating " + channel.socket().getRemoteSocketAddress());
 							response.setRetry();
 							response.write(output);
 							output.flush();
@@ -364,6 +366,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 									response.setOpen();
 									response.write(output);
 									output.flush();
+									LOG.debug("JBufferSink: " + ownerid + " accepted connection " + channel.socket().getRemoteSocketAddress());
 								} catch (Throwable t) {
 									LOG.warn("Received error when trying to execute connection. " + t);
 									response.setRetry();
@@ -454,11 +457,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			e.printStackTrace();
 		}
 
-		synchronized (connections) {
-			// TODO ensure all connections are done.
-			boolean connectionsOpen = true;
-			this.spillThread.interrupt();
-		}
+		this.spillThread.interrupt();
 
 		try {
 			this.snapshotThread.close();
@@ -499,7 +498,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 	}
 	
 	private void done(Connection connection) {
-		connection.close();
 		this.connections.remove(connection);
 	}
 	
@@ -540,14 +538,12 @@ public class JBufferSink<K extends Object, V extends Object> {
 		private DataInputStream input;
 		
 		private boolean open;
-		private boolean busy;
 		
 		private int spills;
 		
 		public Connection(DataInputStream input, JobConf conf) throws IOException {
 			this.input = input;
 			this.open = true;
-			this.busy = false;
 			this.spills = 0;
 		}
 		
@@ -687,10 +683,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 					long length = 0;
 					OutputFile.Header header = null;
 					try {
-						busy = false;
 						length = this.input.readLong();
 						header = OutputFile.Header.readHeader(this.input);
-						busy = true;
 					}
 					catch (Throwable e) {
 						return;
@@ -713,7 +707,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 				return;
 			}
 			finally {
-				busy = false;
 				close(); // must be called before done!
 				done(this);
 			}
