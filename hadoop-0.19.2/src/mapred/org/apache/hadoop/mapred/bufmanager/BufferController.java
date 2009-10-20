@@ -439,6 +439,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 						LOG.debug(this + " received last output file");
 					}
 					this.outputs.add(file);
+					LOG.debug(this + " received " + this.outputs.size() + " outputs.");
 				}
 				this.notifyAll();
 			}
@@ -768,7 +769,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		else if (!this.mapRequestManagers.get(jobid).contains(manager)) {
 			this.mapRequestManagers.get(jobid).add(manager);
 			if (this.mapRequestManagers.get(jobid).size() > job.getNumReduceTasks()) {
-				System.err.println("MORE REQUEST MANAGERS THAN REDUCES!");
+				LOG.error("more request managers than reduces!");
 			}
 		}
 		else manager = null;
