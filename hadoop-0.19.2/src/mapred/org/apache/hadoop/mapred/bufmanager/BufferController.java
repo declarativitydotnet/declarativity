@@ -162,6 +162,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 		
 		private FSDataOutputStream out;
 		
+		private Set<TaskAttemptID> openTasks;
+		
 		public RequestManager(JobConf conf, BufferRequest request) throws IOException {
 			this.conf = conf;
 			this.requestType = request.type();
@@ -172,6 +174,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			this.out = null;
 			this.lastSentOutputFile = new ConcurrentHashMap<TaskID, OutputFile>();
 			this.sentOutputFiles = new ConcurrentHashMap<TaskID, Set<OutputFile>>();
+			this.openTasks = new HashSet<TaskAttemptID>();
 		}
 		
 		@Override
@@ -209,9 +212,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 			return this.partition;
 		}
 		
-		public void close() throws IOException {
+		public void close(TaskAttemptID taskid) throws IOException {
 			synchronized (this) {
-				if (out != null) {
+				this.openTasks.remove(taskid);
+				if (out != null && this.openTasks.size() == 0) {
 					LOG.debug(this + " closing connection.");
 					out.close();
 					out = null;
@@ -219,34 +223,35 @@ public class BufferController implements BufferUmbilicalProtocol {
 			}
 		}
 
-		public boolean open() {
-			if (out != null) return true;
+		public boolean open(TaskAttemptID taskid) {
 			synchronized (this) {
-				if (out != null) return true;
-				Socket socket = new Socket();
-				try {
+				if (out == null) {
+					Socket socket = new Socket();
 					try {
-						socket.connect(this.address);
-					} catch (IOException e) {
-						LOG.warn("Connection error: " + this + ". "+ e);
+						try {
+							socket.connect(this.address);
+						} catch (IOException e) {
+							LOG.warn("Connection error: " + this + ". "+ e);
+							return false;
+						}
+
+						FSDataOutputStream stream = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+
+						BufferRequestResponse response = new BufferRequestResponse();
+						DataInputStream in = new DataInputStream(socket.getInputStream());
+						response.readFields(in);
+						if (!response.open) {
+							stream.close();
+							return false;
+						}
+						out = stream;
+					} catch (Throwable e) {
+						try { if (!socket.isClosed()) socket.close();
+						} catch (Throwable t) { }
 						return false;
 					}
-
-					FSDataOutputStream stream = new FSDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-
-					BufferRequestResponse response = new BufferRequestResponse();
-					DataInputStream in = new DataInputStream(socket.getInputStream());
-					response.readFields(in);
-					if (!response.open) {
-						stream.close();
-						return false;
-					}
-					out = stream;
-				} catch (Throwable e) {
-					try { if (!socket.isClosed()) socket.close();
-					} catch (Throwable t) { }
-					return false;
 				}
+				this.openTasks.add(taskid);
 				return true;
 			}
 		}
@@ -280,7 +285,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		 * @throws IOException
 		 */
 		public void flush(OutputFile file) throws IOException {
-			if (!open()) {
+			if (out == null) {
 				throw new IOException(toString() + ". Attempt to flush output file when not open.");
 			}
 
@@ -488,10 +493,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 			Set<RequestManager> satisfied = new HashSet<RequestManager>();
 			if (this.finalOutput != null) {
 				for (RequestManager request : requests) {
-					if (!request.sentAny(this.finalOutput) && request.open()) {
+					if (!request.sentAny(this.finalOutput) && request.open(taskid)) {
 						try {
 							LOG.debug(this + " sending final complete output to task " + request.destination());
 							request.flush(this.finalOutput);
+							request.close(taskid);
 							satisfied.add(request);
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -504,14 +510,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 				for (RequestManager request : requests) {
 					if (!request.sent(file)) {
 						try {
-							if (request.open()) {
-								if (file.header().progress() == 1f) {
-									LOG.debug(this + " sending last output file to task " + request.destination());
-								}
-								LOG.debug(this + " sending " + file + " to " + request);
+							if (request.open(taskid)) {
 								request.flush(file);
 								if (file.header().progress() == 1.0f) {
-									LOG.info(this + " successfully sent last output file to task " + request.destination());
+									LOG.debug(this + " successfully sent last output file to task " + request.destination());
+									request.close(taskid);
 									satisfied.add(request);
 								}
 							}
@@ -674,6 +677,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 	
 	public synchronized void free(JobID jobid) {
 		LOG.info("BufferController freeing job " + jobid);
+		
+		/* Close all file managers. */
 		if (this.fileManagers.containsKey(jobid)) {
 			Map<TaskAttemptID, FileManager> fm_map = this.fileManagers.get(jobid);
 			for (FileManager fm : fm_map.values()) {
@@ -682,30 +687,20 @@ public class BufferController implements BufferUmbilicalProtocol {
 			this.fileManagers.remove(jobid);
 		}
 		
+		/* blow away map request managers. */
 		if (this.mapRequestManagers.containsKey(jobid)) {
-			for (RequestManager rm : this.mapRequestManagers.get(jobid)) {
-				try { rm.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
 			this.mapRequestManagers.remove(jobid);
 		}
 		
-		Set<TaskID> reduceIds = new HashSet<TaskID>();
-		for (TaskID tid : this.reduceRequestManagers.keySet()) {
-			if (tid.getJobID().equals(jobid)) {
-				reduceIds.add(tid);
-				for (RequestManager rm : this.reduceRequestManagers.get(tid)) {
-					try { rm.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
+		/* blow away reduce request managers. */
+		Set<TaskID> rids = new HashSet<TaskID>();
+		for (TaskID rid : this.reduceRequestManagers.keySet()) {
+			if (rid.getJobID().equals(jobid)) {
+				rids.add(rid);
 			}
 		}
-		for (TaskID tid : reduceIds) {
-			this.reduceRequestManagers.remove(tid);
+		for (TaskID rid : rids) {
+			this.reduceRequestManagers.remove(rid);
 		}
 	}
 	
