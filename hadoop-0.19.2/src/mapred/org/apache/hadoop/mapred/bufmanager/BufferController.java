@@ -408,7 +408,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				
 				LOG.info(this + " closing.");
 				/* flush remaining buffers. */
-				while (unsentBuffers()) {
+				while (somethingToSend()) {
 					LOG.info(this + " flush remaining output files.");
 					flush(this.outputs, this.requests);
 					try { this.wait(100);
@@ -452,11 +452,13 @@ public class BufferController implements BufferUmbilicalProtocol {
 				List<RequestManager> requests = new ArrayList<RequestManager>();
 				while (open) {
 					synchronized (this) {
-						while (!unsentBuffers()) {
+						while (!somethingToSend()) {
 							if (!open) return;
+							LOG.debug(this + " nothing to send.");
 							try { this.wait();
 							} catch (InterruptedException e) { }
 						}
+						LOG.debug(this + " something to send.");
 						outputs.addAll(this.outputs);
 						requests.addAll(this.requests);
 						busy = true;
@@ -527,7 +529,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			return satisfied;
 		}
 		
-		private boolean unsentBuffers() {
+		private boolean somethingToSend() {
 			if (this.finalOutput != null) {
 				for (RequestManager request : this.requests) {
 					if (!request.sentAny(this.finalOutput)) {
