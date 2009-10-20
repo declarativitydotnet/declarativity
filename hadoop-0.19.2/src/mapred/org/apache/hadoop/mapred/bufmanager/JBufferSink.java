@@ -344,6 +344,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 						DataOutputStream output = new DataOutputStream(new BufferedOutputStream(channel.socket().getOutputStream()));
 						response.reset();
+						LOG.debug("JBufferSink " + ownerid + " receive connection " + channel.socket().getReceiveBufferSize());
 
 						if (complete()) {
 							LOG.debug("JBufferSink: " + ownerid + " is complete. Terminating " + channel.socket().getRemoteSocketAddress());
@@ -383,6 +384,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			}
 		};
 		acceptor.setDaemon(true);
+		acceptor.setPriority(Thread.MAX_PRIORITY);
 		acceptor.start();
 		
 		spillThread = new Thread() {
