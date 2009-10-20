@@ -508,6 +508,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 								if (file.header().progress() == 1f) {
 									LOG.debug(this + " sending last output file to task " + request.destination());
 								}
+								LOG.debug(this + " sending " + file + " to " + request);
 								request.flush(file);
 								if (file.header().progress() == 1.0f) {
 									LOG.info(this + " successfully sent last output file to task " + request.destination());
