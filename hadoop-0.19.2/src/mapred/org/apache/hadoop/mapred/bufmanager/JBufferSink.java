@@ -361,21 +361,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 							conn.close();
 						}
 						else {
-							synchronized (conn) {
-								try {
-									executor.execute(conn);
-									connections.add(conn);
-									response.setOpen();
-									response.write(output);
-									output.flush();
-									LOG.debug("JBufferSink: " + ownerid + " accepted connection " + channel.socket().getRemoteSocketAddress());
-								} catch (Throwable t) {
-									LOG.warn("Received error when trying to execute connection. " + t);
-									response.setRetry();
-									response.write(output);
-									output.flush();
-									conn.close();
-								}
+							try {
+								response.setOpen();
+								response.write(output);
+								output.flush();
+								executor.execute(conn);
+								connections.add(conn);
+								LOG.debug("JBufferSink: " + ownerid + " accepted connection " + channel.socket().getRemoteSocketAddress());
+							} catch (Throwable t) {
+								LOG.warn("Received error when trying to execute connection. " + t);
+								conn.close();
 							}
 						}
 					}
