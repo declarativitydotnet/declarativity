@@ -343,6 +343,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 						Connection       conn   = new Connection(input, conf);
 
 						DataOutputStream output = new DataOutputStream(new BufferedOutputStream(channel.socket().getOutputStream()));
+						response.reset();
 
 						if (complete()) {
 							LOG.debug("JBufferSink: " + ownerid + " is complete. Terminating " + channel.socket().getRemoteSocketAddress());
