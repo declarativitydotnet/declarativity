@@ -284,7 +284,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		 * @param buffer
 		 * @throws IOException
 		 */
-		public void flush(OutputFile file) throws IOException {
+		public void send(OutputFile file) throws IOException {
 			if (out == null) {
 				throw new IOException(toString() + ". Attempt to flush output file when not open.");
 			}
@@ -478,7 +478,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 								this.requests.removeAll(complete);
 							}
 							busy = false;
-							this.notifyAll();
+							if (open && somethingToSend()) {
+								this.wait(1000); // wait a second
+							} else {
+								this.notifyAll();
+							}
 						}
 					}
 				}
@@ -496,7 +500,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					if (!request.sentAny(this.finalOutput) && request.open(taskid)) {
 						try {
 							LOG.debug(this + " sending final complete output to task " + request.destination());
-							request.flush(this.finalOutput);
+							request.send(this.finalOutput);
 							request.close(taskid);
 							satisfied.add(request);
 						} catch (IOException e) {
@@ -511,7 +515,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					if (!request.sent(file)) {
 						try {
 							if (request.open(taskid)) {
-								request.flush(file);
+								request.send(file);
 								if (file.header().progress() == 1.0f) {
 									LOG.debug(this + " successfully sent last output file to task " + request.destination());
 									request.close(taskid);
