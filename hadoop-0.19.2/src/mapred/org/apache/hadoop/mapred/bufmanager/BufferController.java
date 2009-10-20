@@ -228,7 +228,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				try {
 					try {
 						socket.connect(this.address);
-						LOG.debug(this + " connection open.");
+						LOG.debug(this + " socket open.");
 					} catch (IOException e) {
 						LOG.warn("Connection error: " + this + ". "+ e);
 						return false;
@@ -249,6 +249,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 					} catch (Throwable t) { }
 					return false;
 				}
+				LOG.debug(this + " connection open.");
 				return true;
 			}
 		}
