@@ -190,6 +190,11 @@ public class OutputFile implements Writable {
 		this.complete = complete;
 	}
 	
+	@Override
+	public String toString() {
+		return header.toString();
+	}
+	
 	public Header header() {
 		return this.header;
 	}
