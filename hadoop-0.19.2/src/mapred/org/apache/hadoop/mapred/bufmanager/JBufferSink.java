@@ -471,6 +471,8 @@ public class JBufferSink<K extends Object, V extends Object> {
 							snapshot.spill(this.collector);
 						}
 					}
+				} else if (inputSnapshots.size() > 0) {
+					LOG.error("JBufferSink " + ownerid + " not all snapshots received!");
 				}
 			}
 		} catch (IOException e) {
