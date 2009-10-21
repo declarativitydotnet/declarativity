@@ -520,6 +520,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 			collector.getProgress().set(progressSum / (float) numInputs);
 			reporter.progress();
 		}
+		
+		synchronized (task) {
+			task.notifyAll();
+		}
 	}
 	
 	private JBufferSnapshot getBufferRun(TaskID taskid) {
@@ -661,7 +665,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 									buffer().unreserve(length);
 									doSpill = false;
 									updateProgress(header.owner().getTaskID(), header.progress());
-									task.notifyAll();
 								}
 							}
 							else {
