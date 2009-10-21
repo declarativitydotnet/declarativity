@@ -255,7 +255,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	public boolean snapshots(List<JBufferSink.JBufferSnapshot> snapshots, float progress) throws IOException {
 		synchronized (this) {
 			float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
-			if (progress > maxProgress) {
+			if (progress > maxProgress || progress == 1f) {
+				LOG.info("Max snapshot progress " + maxProgress);
 				return false; // done at this point.
 			}
 		
