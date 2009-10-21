@@ -385,7 +385,10 @@ public class ReduceTask extends Task {
 	protected void copy(JBuffer buffer, JBufferSink sink, Reporter reporter) throws IOException {
 		this.buffer = buffer;
 		int window = conf.getInt("mapred.reduce.window", Integer.MAX_VALUE);
-		int waittime = window < Integer.MAX_VALUE ? window : 1000;
+		int waittime = 0;
+		if (window < Integer.MAX_VALUE) {
+			waittime = window;
+		}
 		
 		long starttime = System.currentTimeMillis();
 		synchronized (this) {
@@ -458,20 +461,22 @@ public class ReduceTask extends Task {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
 		OutputFile finalOutput = buffer.close();
-		if (inputSnapshots || outputSnapshots) {
-			LOG.debug("ReduceTask: " + getTaskID() + " start final snapshot reduce phase.");
-			buffer.reset(true);
-			buffer.setProgress(reducePhase);
-			reduce(buffer, reporter, reducePhase);
-			buffer.snapshot();
-		} else if (reducePipeline) {
-			LOG.debug("ReduceTask: " + getTaskID() + " start pipelined reduce phase.");
-			buffer.reset(true);
-			buffer.setProgress(reducePhase);
-			buffer.input(finalOutput, true);
-			reduce(buffer, reporter, reducePhase);
-			finalOutput = buffer.close();
-			umbilical.output(finalOutput);
+		if (reducePipeline) {
+			if (inputSnapshots || outputSnapshots) {
+				LOG.debug("ReduceTask: " + getTaskID() + " start final snapshot reduce phase.");
+				buffer.reset(true);
+				buffer.setProgress(reducePhase);
+				reduce(buffer, reporter, reducePhase);
+				buffer.snapshot();
+			} else {
+				LOG.debug("ReduceTask: " + getTaskID() + " start pipelined reduce phase.");
+				buffer.reset(true);
+				buffer.setProgress(reducePhase);
+				buffer.input(finalOutput, true);
+				reduce(buffer, reporter, reducePhase);
+				finalOutput = buffer.close();
+				umbilical.output(finalOutput);
+			}
 		} else {
 			// make output collector
 			LOG.debug("ReduceTask: " + getTaskID() + " start blocking reduce phase.");
