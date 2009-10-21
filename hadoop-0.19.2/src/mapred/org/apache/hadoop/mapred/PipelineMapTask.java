@@ -226,7 +226,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			LOG.info("PipelineMapTask " + getTaskID() + " begin copy phase.");
 			open = true;
 			rof.start();
-			long begin = System.currentTimeMillis();
 			while (!sink.complete()) {
 				setProgressFlag();
 				try { this.wait();

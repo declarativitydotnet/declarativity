@@ -116,7 +116,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					this.fresh    = true;
 				}
 			}
-			snapshotThread.snapshot();
+			snapshotThread.update();
 		}
 		
 		private void write(IFile.Reader<K, V> in, FSDataOutputStream out, FSDataOutputStream index) throws IOException {
@@ -153,34 +153,49 @@ public class JBufferSink<K extends Object, V extends Object> {
 	public class SnapshotThread extends Thread {
 		private boolean busy = false;
 		private boolean open = true;
+		private float lastSnapshotProgress = 0f;
 		
-		public void close() {
+		public void close() throws IOException {
 			if (!open) return;
 			else open = false;
 			
 			synchronized (this) {
 				this.notifyAll();
 				while (busy) {
-					try {
-						this.wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					try { this.wait();
+					} catch (InterruptedException e) { }
 				}
+				if (this.lastSnapshotProgress < 1f) snapshot();
 			}
 		}
 		
-		public void snapshot() {
+		public void update() {
 			synchronized (this) {
 				this.notifyAll();
 			}
 		}
 		
-		public void run() {
+		private boolean snapshot() throws IOException {
+			List<JBufferSink.JBufferSnapshot> snapshots = new ArrayList<JBufferSink.JBufferSnapshot>();
 			float progress = 0f;
+			synchronized (inputSnapshots) {
+				for (JBufferSnapshot snapshot : inputSnapshots.values()) {
+					if (snapshot.valid()) {
+						progress += snapshot.progress;
+						snapshots.add(snapshot);
+					}
+				}
+				progress = progress / (float) numInputs;
+			}
+
+			LOG.debug("SnapshotThread: " + ownerid + " perform snapshot. progress " + progress);
+			boolean keepSnapshotting = task.snapshots(snapshots, progress);
+			this.lastSnapshotProgress = progress;
+			return keepSnapshotting;
+		}
+		
+		public void run() {
 			try {
-				List<JBufferSink.JBufferSnapshot> snapshots = new ArrayList<JBufferSink.JBufferSnapshot>();
 				while (open) {
 					synchronized (this) {
 						busy = false;
@@ -201,34 +216,16 @@ public class JBufferSink<K extends Object, V extends Object> {
 						busy = true;
 					}
 
-					synchronized (inputSnapshots) {
-						snapshots.clear();
-						progress = 0f;
-						for (JBufferSnapshot snapshot : inputSnapshots.values()) {
-							if (snapshot.valid()) {
-								progress += snapshot.progress;
-								snapshots.add(snapshot);
-							}
-						}
-						progress = progress / (float) numInputs;
-					}
-
-					try {
-						if (!open) return;
-						LOG.debug("SnapshotThread: " + ownerid + " perform snapshot. progress " + progress);
-						boolean keepSnapshotting = task.snapshots(snapshots, progress);
-						if (keepSnapshotting == false) {
-							interrupt();
-							return;
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
+					if (snapshot() == false) {
+						interrupt();
+						return;
 					}
 				}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			finally {
 				synchronized (this) {
-					open = false;
 					busy = false;
 					this.notifyAll();
 				}
@@ -458,23 +455,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 
 		try {
 			this.snapshotThread.close();
-			LOG.info("JBufferSink " + ownerid + " snapshot thread closed.");
-			synchronized (inputSnapshots) {
-				if (inputSnapshots.size() == successful.size()) {
-					synchronized (task) {
-						for (JBufferSnapshot snapshot : inputSnapshots.values()) {
-							LOG.info("JBufferSink " + ownerid + " apply run " + snapshot.taskid);
-							if (snapshot.progress < 1.0f) {
-								LOG.error("JBufferSink: final buffer run progress < 1.0f! " +
-										" progress = " + snapshot.progress);
-							}
-							snapshot.spill(this.collector);
-						}
-					}
-				} else if (inputSnapshots.size() > 0) {
-					LOG.error("JBufferSink " + ownerid + " not all snapshots received!");
-				}
-			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
