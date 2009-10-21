@@ -223,6 +223,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		
 		long timestamp = System.currentTimeMillis();
 		synchronized (this) {
+			LOG.info("PipelineMapTask " + getTaskID() + " begin copy phase.");
 			open = true;
 			rof.start();
 			long begin = System.currentTimeMillis();
@@ -231,8 +232,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 				try { this.wait();
 				} catch (InterruptedException e) { }
 			}
+			LOG.info("PipelineMapTask: copy input took " + (System.currentTimeMillis() - timestamp) + " ms.");
 		}
-		LOG.info("PipelineMapTask: copy input took " + (System.currentTimeMillis() - timestamp) + " ms.");
 		
 		setPhase(TaskStatus.Phase.MAP); 
 		sink.close();
