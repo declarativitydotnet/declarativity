@@ -238,10 +238,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		sink.close();
 		timestamp = System.currentTimeMillis();
 		getProgress().complete();
-		if (snapshot) {
-			LOG.info("PipelineMapTask " + getTaskID() + " perform final snapshot.");
-			this.buffer.snapshot(); // Perform final snapshot.
-		} else {
+		if (!snapshot) {
 			OutputFile finalOutput = this.buffer.close();
 			bufferUmbilical.output(finalOutput);
 		}
@@ -255,7 +252,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	public boolean snapshots(List<JBufferSink.JBufferSnapshot> snapshots, float progress) throws IOException {
 		synchronized (this) {
 			float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
-			if (progress > maxProgress || progress == 1f) {
+			if (progress > maxProgress && progress < 1f) {
 				LOG.info("Max snapshot progress " + maxProgress);
 				return false; // done at this point.
 			}
