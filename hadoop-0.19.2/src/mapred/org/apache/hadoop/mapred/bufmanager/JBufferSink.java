@@ -165,7 +165,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 					try { this.wait();
 					} catch (InterruptedException e) { }
 				}
-				if (this.lastSnapshotProgress < 1f) snapshot();
+				if (inputSnapshots.size() == successful.size() &&
+						this.lastSnapshotProgress < 1f) {
+					snapshot();
+				}
 			}
 		}
 		
