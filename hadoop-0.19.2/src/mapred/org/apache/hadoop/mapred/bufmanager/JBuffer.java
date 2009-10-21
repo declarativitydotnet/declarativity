@@ -1073,7 +1073,7 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 	public synchronized void snapshot() throws IOException {
 		if (pipeline) throw new IOException("JBuffer can't snapshot with pipelining turned on.");
-		LOG.debug("JBuffer " + taskid + " performing snaphsot.");
+		LOG.debug("JBuffer " + taskid + " performing snaphsot. progress " + getProgress().get());
 		spillThread.forceSpill();
 		OutputFile outputFile = merger.mergeSnapshot();
 		umbilical.output(outputFile);
