@@ -228,7 +228,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			long begin = System.currentTimeMillis();
 			while (!sink.complete()) {
 				setProgressFlag();
-				try { this.wait(60000);
+				try { this.wait();
 				} catch (InterruptedException e) { }
 			}
 		}
@@ -239,6 +239,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		timestamp = System.currentTimeMillis();
 		getProgress().complete();
 		if (snapshot) {
+			LOG.info("PipelineMapTask " + getTaskID() + " perform final snapshot.");
 			this.buffer.snapshot(); // Perform final snapshot.
 		} else {
 			OutputFile finalOutput = this.buffer.close();
