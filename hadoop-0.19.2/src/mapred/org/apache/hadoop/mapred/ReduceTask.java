@@ -159,6 +159,7 @@ public class ReduceTask extends Task {
 	private float   snapshotThreshold = 1f;
 	private float   snapshotInterval  = 1f;
 	private boolean inputSnapshots = false;
+	private boolean outputSnapshots = false;
 	private boolean isSnapshotting = false;
 	
 
@@ -356,6 +357,7 @@ public class ReduceTask extends Task {
 		snapshotInterval = 1f / (1f + (float) job.getInt("mapred.snapshot.interval", 0));
 		snapshotThreshold = snapshotInterval;
 		inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
+		outputSnapshots = snapshotInterval < 1f;
 		
 	    LOG.info("Reduce task " + getTaskID() + " starting sink.");
 		JBufferSink sink = new JBufferSink(job, reporter, buffer, this);
@@ -456,7 +458,7 @@ public class ReduceTask extends Task {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
 		OutputFile finalOutput = buffer.close();
-		if (inputSnapshots) {
+		if (inputSnapshots || outputSnapshots) {
 			LOG.debug("ReduceTask: " + getTaskID() + " start final snapshot reduce phase.");
 			buffer.reset(true);
 			buffer.setProgress(reducePhase);
