@@ -368,12 +368,18 @@ public class ReduceTask extends Task {
 		
 		copy(buffer, sink, reporter);
 		fetcher.interrupt();
-		sink.close();
 		
 		long begin = System.currentTimeMillis();
 		try {
+			/* The final input snapshot is handled by the sink.close() */
 			if (!inputSnapshots) {
-				reduce(job, reporter, buffer, bufferUmbilical);
+				if (!outputSnapshots) {
+					/* No snapshot. Do a final reduce. */
+					finalReduce(job, reporter, buffer, bufferUmbilical);
+				} else {
+					/* Perform a snapshot using the final result. */
+					snapshot(true, buffer.getProgress().get(), reporter);
+				}
 			}
 		} finally {
 			reducePhase.complete();
@@ -408,7 +414,9 @@ public class ReduceTask extends Task {
 						isSnapshotting = false;
 					}
 				}
-				else if (!inputSnapshots && buffer.getProgress().get() > snapshotThreshold) {
+				else if (!inputSnapshots && 
+						buffer.getProgress().get() > snapshotThreshold && 
+						buffer.getProgress().get() < 1f) {
 					LOG.info("ReduceTask checking to see if it's time to do a snapshot");
 					snapshotThreshold += snapshotInterval;
 					isSnapshotting = true;
@@ -424,11 +432,11 @@ public class ReduceTask extends Task {
 				try { this.wait(waittime);
 				} catch (InterruptedException e) { }
 			}
-			LOG.info("ReduceTask closing sink.");
 			copyPhase.complete();
 			setProgressFlag();
 			LOG.info("ReduceTask " + getTaskID() + " copy phase completed in " + 
 					 (System.currentTimeMillis() - starttime) + " ms.");
+			sink.close();
 		}
 	}
 	
@@ -459,26 +467,18 @@ public class ReduceTask extends Task {
 		}
 	}
 	
-	private void reduce(JobConf job, final Reporter reporter, JBuffer buffer, BufferUmbilicalProtocol umbilical) throws IOException {
+	private void finalReduce(JobConf job, final Reporter reporter, JBuffer buffer, BufferUmbilicalProtocol umbilical) throws IOException {
 		setPhase(TaskStatus.Phase.REDUCE); 
 		
 		OutputFile finalOutput = buffer.close();
 		if (reducePipeline) {
-			if (inputSnapshots || outputSnapshots) {
-				LOG.debug("ReduceTask: " + getTaskID() + " start final snapshot reduce phase.");
-				buffer.reset(true);
-				buffer.setProgress(reducePhase);
-				reduce(buffer, reporter, reducePhase);
-				buffer.snapshot();
-			} else {
-				LOG.debug("ReduceTask: " + getTaskID() + " start pipelined reduce phase.");
-				buffer.reset(true);
-				buffer.setProgress(reducePhase);
-				buffer.input(finalOutput, true);
-				reduce(buffer, reporter, reducePhase);
-				finalOutput = buffer.close();
-				umbilical.output(finalOutput);
-			}
+			LOG.debug("ReduceTask: " + getTaskID() + " start pipelined reduce phase.");
+			buffer.reset(true);
+			buffer.setProgress(reducePhase);
+			buffer.input(finalOutput, true);
+			reduce(buffer, reporter, reducePhase);
+			finalOutput = buffer.close();
+			umbilical.output(finalOutput);
 		} else {
 			// make output collector
 			LOG.debug("ReduceTask: " + getTaskID() + " start blocking reduce phase.");
