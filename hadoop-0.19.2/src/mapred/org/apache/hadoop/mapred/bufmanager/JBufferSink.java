@@ -623,6 +623,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 							header.owner() + " progress = " + header.progress());
 					JBufferSnapshot snapshot = getBufferRun(header.owner().getTaskID());
 					snapshot.snapshot(reader, length, header.progress());
+					updateProgress(header.owner().getTaskID(), header.progress());
 				} catch (Throwable t) {
 					t.printStackTrace();
 					LOG.warn("Snapshot interrupted by " + t);
