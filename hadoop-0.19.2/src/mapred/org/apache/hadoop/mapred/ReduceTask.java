@@ -254,7 +254,7 @@ public class ReduceTask extends Task {
 	public boolean snapshots(List<JBufferSink.JBufferSnapshot> snapshots, float progress) throws IOException {
 		float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
 
-		if (progress > maxProgress) {
+		if (progress > maxProgress && progress < 1f) {
 			return false; 
 		}
 		
@@ -368,10 +368,13 @@ public class ReduceTask extends Task {
 		
 		copy(buffer, sink, reporter);
 		fetcher.interrupt();
+		sink.close();
 		
 		long begin = System.currentTimeMillis();
 		try {
-			reduce(job, reporter, buffer, bufferUmbilical);
+			if (!inputSnapshots) {
+				reduce(job, reporter, buffer, bufferUmbilical);
+			}
 		} finally {
 			reducePhase.complete();
 			setProgressFlag();
@@ -422,12 +425,11 @@ public class ReduceTask extends Task {
 				} catch (InterruptedException e) { }
 			}
 			LOG.info("ReduceTask closing sink.");
-			sink.close();
+			copyPhase.complete();
+			setProgressFlag();
+			LOG.info("ReduceTask " + getTaskID() + " copy phase completed in " + 
+					 (System.currentTimeMillis() - starttime) + " ms.");
 		}
-		LOG.info("ReduceTask " + getTaskID() + " copy phase completed in " + 
-				 (System.currentTimeMillis() - starttime) + " ms.");
-		copyPhase.complete();
-		setProgressFlag();
 	}
 	
 	private void reduce(OutputCollector collector, Reporter reporter, Progress progress) throws IOException {
