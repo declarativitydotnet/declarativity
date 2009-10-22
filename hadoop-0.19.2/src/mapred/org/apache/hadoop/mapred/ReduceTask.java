@@ -43,6 +43,7 @@ import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.JBufferCollector;
 import org.apache.hadoop.mapred.bufmanager.MapBufferRequest;
 import org.apache.hadoop.mapred.bufmanager.OutputFile;
+import org.apache.hadoop.mapred.bufmanager.SnapshotCollector;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
 import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -251,11 +252,11 @@ public class ReduceTask extends Task {
 	}
 	
 	@Override
-	public boolean snapshots(List<JBufferSink.JBufferSnapshot> snapshots, float progress) throws IOException {
+	public void snapshots(List<SnapshotCollector.Snapshot> snapshots, float progress) throws IOException {
 		float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
 
 		if (progress > maxProgress && progress < 1f) {
-			return false; 
+			return;
 		}
 		
 		synchronized (this) {
@@ -263,10 +264,10 @@ public class ReduceTask extends Task {
 			this.isSnapshotting = true;
 			try {
 				OutputCollector collector = null;
-				for (JBufferSink.JBufferSnapshot snapshot : snapshots) {
+				for (SnapshotCollector.Snapshot snapshot : snapshots) {
 					snapshot.spill(buffer);
 				}
-				return snapshot(false, progress, null);
+				snapshot(false, progress, null);
 			} finally {
 				LOG.info("ReduceTask: done performing snapshot with lock.");
 				isSnapshotting = false;
@@ -275,7 +276,7 @@ public class ReduceTask extends Task {
 		}
 	}
 	
-	private boolean snapshot(boolean save, float progress, Reporter reporter) throws IOException {
+	private void snapshot(boolean save, float progress, Reporter reporter) throws IOException {
 		OutputFile input = buffer.close(); // create a final output for snapshotting.
 		FileSystem localFs = FileSystem.getLocal(conf);
 		try {
@@ -301,10 +302,8 @@ public class ReduceTask extends Task {
 				out.close(null);
 				LOG.info("ReduceTask: snapshot created. file " + snapshotName);
 			}
-			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
-			return true; 
 		} finally {
 			buffer.reset(true);
 			buffer.setProgress(this.copyPhase);
@@ -360,7 +359,8 @@ public class ReduceTask extends Task {
 		outputSnapshots = snapshotInterval < 1f;
 		
 	    LOG.info("Reduce task " + getTaskID() + " starting sink.");
-		JBufferSink sink = new JBufferSink(job, reporter, buffer, this);
+	    SnapshotCollector snapshotCollector = inputSnapshots ? new SnapshotCollector(job, this) : null;
+		JBufferSink sink = new JBufferSink(job, reporter, buffer, snapshotCollector, this);
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
 		fetcher.setDaemon(true);
@@ -374,11 +374,15 @@ public class ReduceTask extends Task {
 			/* The final input snapshot is handled by the sink.close() */
 			if (!inputSnapshots) {
 				if (!outputSnapshots) {
-					/* No snapshot. Do a final reduce. */
+					/* Do a final reduce. */
 					finalReduce(job, reporter, buffer, bufferUmbilical);
 				} else {
-					/* Perform a snapshot using the final result. */
-					snapshot(true, buffer.getProgress().get(), reporter);
+					/* Perform a final snapshot. */
+					snapshot(false, buffer.getProgress().get(), reporter);
+				}
+			} else {
+				if (snapshotCollector.snapshot() < 1f) {
+					LOG.error("ReduceTask " + getTaskID() + " final snapshot not complete!");
 				}
 			}
 		} finally {

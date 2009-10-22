@@ -44,8 +44,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.IFile.Writer;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
+import org.apache.hadoop.mapred.bufmanager.SnapshotCollector;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
-import org.apache.hadoop.mapred.bufmanager.JBufferSink.JBufferSnapshot;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -389,7 +389,7 @@ public abstract class Task implements Writable, Configurable {
 	  return 0;
   }
   
-  public boolean snapshots(List<JBufferSnapshot> snapshots, float progress) throws IOException {
+  public void snapshots(List<SnapshotCollector.Snapshot> snapshots, float progress) throws IOException {
 	  throw new IOException("Task: snapshot not configured!");
   }
   

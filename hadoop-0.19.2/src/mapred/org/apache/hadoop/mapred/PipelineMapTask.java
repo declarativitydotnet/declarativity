@@ -27,6 +27,7 @@ import org.apache.hadoop.mapred.bufmanager.JBufferCollector;
 import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.OutputFile;
 import org.apache.hadoop.mapred.bufmanager.ReduceBufferRequest;
+import org.apache.hadoop.mapred.bufmanager.SnapshotCollector;
 import org.apache.hadoop.util.ReflectionUtils;
 
 public class PipelineMapTask extends MapTask implements JBufferCollector {
@@ -213,7 +214,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		boolean snapshot = job.getBoolean("mapred.job.input.snapshots", false);
 	    this.mapper = ReflectionUtils.newInstance(job.getMapperClass(), job);
 
-		JBufferSink sink  = new JBufferSink(job, reporter, this, this);
+	    SnapshotCollector snapshotCollector = snapshot ? new SnapshotCollector(job, this) : null;
+		JBufferSink sink  = new JBufferSink(job, reporter, this, snapshotCollector, this);
 		sink.open();
 		
 		/* Start the reduce output fetcher */
@@ -249,18 +251,18 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 	}
 	
 	@Override
-	public boolean snapshots(List<JBufferSink.JBufferSnapshot> snapshots, float progress) throws IOException {
+	public void snapshots(List<SnapshotCollector.Snapshot> snapshots, float progress) throws IOException {
 		synchronized (this) {
 			float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
 			if (progress > maxProgress && progress < 1f) {
 				LOG.info("Max snapshot progress " + maxProgress);
-				return false; // done at this point.
+				return;
 			}
 		
 			isSnapshotting = true;
 			try {
 				System.err.println("PipelineMapTask: " + getTaskID() + " perform snapshot. progress = " + progress);
-				for (JBufferSink.JBufferSnapshot snapshot : snapshots) {
+				for (SnapshotCollector.Snapshot snapshot : snapshots) {
 					snapshot.spill(this);
 				}
 				this.buffer.getProgress().set(progress);
@@ -269,7 +271,6 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 				buffer.reset(true);
 				isSnapshotting = false;
 			}
-			return true;
 		}
 	}
 	
