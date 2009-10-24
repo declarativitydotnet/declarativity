@@ -261,6 +261,7 @@ public class TopK extends Configured implements Tool {
 		        	float freq = Float.parseFloat(args[++i]);
 		        	/* Jobs will perform snapshots */
 		          	wordcountJob.setFloat("mapred.snapshot.frequency", freq);
+		          	topkJob.setFloat("mapred.snapshot.frequency", freq);
 		          	topkJob.setBoolean("mapred.job.input.snapshots", true);
 
 		          	/* Wordcount will pipeline. */
