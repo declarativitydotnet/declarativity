@@ -236,11 +236,13 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			open = true;
 			rof.start();
 			while (!sink.complete()) {
-				if (inputSnapshots && 
-						sink.snapshotManager().progress() > snapshotThreshold &&
-						sink.snapshotManager().progress() < 1f) {
-					sink.snapshotManager().snapshot();
-					snapshotThreshold += snapshotFreq;
+				if (inputSnapshots) {
+					System.err.println("PipelineMapTask input snapshots. current progress " + sink.snapshotManager().progress() + " threshold " + snapshotThreshold);
+					if (sink.snapshotManager().progress() > snapshotThreshold &&
+							sink.snapshotManager().progress() < 1f) {
+						sink.snapshotManager().snapshot();
+						snapshotThreshold += snapshotFreq;
+					}
 				}
 				try { this.wait();
 				} catch (InterruptedException e) { }

@@ -411,7 +411,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			
 			if (header.type() == OutputFile.Type.SNAPSHOT) {
 				try {
-					LOG.debug("JBufferSink: perform snaphot to buffer " + ownerid + " from buffer " + 
+					LOG.debug("JBufferSink: " + ownerid + " collect snapshot " + 
 							header.owner() + " progress = " + header.progress());
 					snapshot.collect(header.owner().getTaskID(), reader, length, header.progress());
 					updateProgress(header.owner().getTaskID(), header.progress());
