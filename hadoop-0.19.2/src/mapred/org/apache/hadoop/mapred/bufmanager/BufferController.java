@@ -621,6 +621,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 				maxMaps + maxReduces, false, conf);
 		this.server.start();
 
+		this.requestTransfer.setPriority(Thread.MAX_PRIORITY);
 		this.requestTransfer.start();
 		
 		/** The server socket and selector registration */
@@ -662,6 +663,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			}
 		};
 		this.acceptor.setDaemon(true);
+		this.acceptor.setPriority(Thread.MAX_PRIORITY);
 		this.acceptor.start();
 	}
 	
@@ -742,6 +744,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			register(request);
 		}
 		else {
+			LOG.info("BufferController remote reduce request " + request);
 			requestTransfer.transfer(request); // request is remote.
 		}
 	}
