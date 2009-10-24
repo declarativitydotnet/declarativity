@@ -88,7 +88,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 									requestSent = true;
 									if (event.getTaskStatus() == Status.SUCCEEDED) return;
 								} catch (IOException e) {
-									LOG.warn("BufferUmbilical problem in taking request " + request + ". " + e);
+									LOG.warn("BufferUmbilical problem sending request " + request + ". " + e);
 								}
 							}
 						}
@@ -232,15 +232,19 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		
 		long timestamp = System.currentTimeMillis();
 		synchronized (this) {
+			setPhase(TaskStatus.Phase.SHUFFLE); 
+			setProgressFlag();
 			LOG.info("PipelineMapTask " + getTaskID() + " begin copy phase.");
 			open = true;
 			rof.start();
 			while (!sink.complete()) {
 				if (inputSnapshots) {
+					LOG.info("PipelineMapTask snapshot progress " + sink.snapshotManager().progress());
 					if (sink.snapshotManager().progress() > snapshotThreshold &&
 							sink.snapshotManager().progress() < 1f) {
 						sink.snapshotManager().snapshot();
 						snapshotThreshold += snapshotFreq;
+						setProgressFlag();
 					}
 				}
 				try { this.wait();
@@ -253,6 +257,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 		sink.close();
 		timestamp = System.currentTimeMillis();
 		getProgress().complete();
+		setProgressFlag();
+		
 		if (!inputSnapshots) {
 			OutputFile finalOutput = this.buffer.close();
 			bufferUmbilical.output(finalOutput);
