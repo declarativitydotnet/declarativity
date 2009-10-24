@@ -143,6 +143,8 @@ public class SnapshotManager<K extends Object, V extends Object> {
 		this.conf = conf;
 		this.task = task;
 		this.fileHandle = new FileHandle(task.getJobID());;
+		this.fileHandle.setConf(conf);
+		
 		this.snapshots = new HashMap<TaskID, Snapshot>();
 		this.localFs = FileSystem.get(conf);
 		this.progress = 0f;
