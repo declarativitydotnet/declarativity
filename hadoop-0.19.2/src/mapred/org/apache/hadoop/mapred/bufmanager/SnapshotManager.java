@@ -83,6 +83,7 @@ public class SnapshotManager<K extends Object, V extends Object> {
 				FSDataOutputStream out  = localFs.create(data, false);
 				FSDataOutputStream idx = localFs.create(index, false);
 				if (out == null) throw new IOException("Unable to create snapshot " + data);
+				System.err.println("Snapshot data " + data);
 				write(reader, out, idx);
 				this.length   = length;
 				this.progress = progress;
@@ -170,10 +171,10 @@ public class SnapshotManager<K extends Object, V extends Object> {
 			this.progress = 0f;
 			for (SnapshotManager.Snapshot s : this.snapshots.values()) {
 				if (s.valid()) {
-					progress += s.progress;
+					this.progress += s.progress;
 				}
 			}
-			progress = progress / (float) task.getNumberOfInputs();
+			this.progress /= (float) task.getNumberOfInputs();
 		}
 	}
 	
