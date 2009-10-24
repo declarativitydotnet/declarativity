@@ -430,6 +430,7 @@ public class ReduceTask extends Task {
 					}
 				}
 				else if (inputSnapshots) {
+					LOG.info("ReduceTask " + getTaskID() + " snapshot progress " + sink.snapshotManager().progress() + " threshold " + snapshotThreshold);
 					if (sink.snapshotManager().progress() > snapshotThreshold &&
 							sink.snapshotManager().progress() < 1f) {
 						sink.snapshotManager().snapshot();
