@@ -83,8 +83,8 @@ public class SnapshotManager<K extends Object, V extends Object> {
 				FSDataOutputStream out  = localFs.create(data, false);
 				FSDataOutputStream idx = localFs.create(index, false);
 				if (out == null) throw new IOException("Unable to create snapshot " + data);
-				System.err.println("Snapshot data " + data);
 				write(reader, out, idx);
+				LOG.info("Snapshot created. data " + data);
 				this.length   = length;
 				this.progress = progress;
 				this.data     = data;
