@@ -140,7 +140,7 @@ public class TopKWordCount extends Configured implements Tool {
 	}
 	
 	private int printUsage() {
-		System.out.println("topkwordcount [-s <interval>] [-p] <inDir> <outDir> <K>");
+		System.out.println("topkwordcount [-s <frequency>] [-p] <inDir> <outDir> <K>");
 		ToolRunner.printGenericCommandUsage(System.out);
 		return 1;
 	}
@@ -169,7 +169,7 @@ public class TopKWordCount extends Configured implements Tool {
 		for (int i = 0; i < args.length; ++i) {
 			try {
 				if ("-s".equals(args[i])) {
-		        	conf.setInt("mapred.snapshot.interval", Integer.parseInt(args[++i]));
+		        	conf.setFloat("mapred.snapshot.frequency", Float.parseFloat(args[++i]));
 		        	conf.setBoolean("mapred.map.pipeline", true);
 				} else if ("-p".equals(args[i])) {
 					conf.setBoolean("mapred.map.pipeline", true);

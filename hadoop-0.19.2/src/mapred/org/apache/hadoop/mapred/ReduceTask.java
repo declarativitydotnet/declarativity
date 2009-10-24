@@ -159,7 +159,7 @@ public class ReduceTask extends Task {
 	private boolean reducePipeline = false;
 	
 	private float   snapshotThreshold = 1f;
-	private float   snapshotPeriod    = 1f;
+	private float   snapshotFreq    = 1f;
 	private boolean inputSnapshots = false;
 	private boolean outputSnapshots = false;
 	private boolean isSnapshotting = false;
@@ -365,10 +365,10 @@ public class ReduceTask extends Task {
 		mapPipeline      = job.getBoolean("mapred.map.pipeline", false);
 		reducePipeline   = job.getBoolean("mapred.reduce.pipeline", false);
 		
-		snapshotPeriod = job.getFloat("mapred.snapshot.period", 1f);
-		snapshotThreshold = snapshotPeriod;
+		snapshotFreq = job.getFloat("mapred.snapshot.frequency", 1f);
+		snapshotThreshold = snapshotFreq;
 		inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
-		outputSnapshots = snapshotPeriod < 1f;
+		outputSnapshots = snapshotFreq < 1f;
 		
 		JBufferSink sink = new JBufferSink(job, reporter, buffer, inputSnapshots, this, 
 				                           inputKeyClass, inputValClass, codecClass);
@@ -434,12 +434,12 @@ public class ReduceTask extends Task {
 							sink.snapshotManager().progress() < 1f) {
 						sink.snapshotManager().snapshot();
 					}
-					snapshotThreshold += snapshotPeriod;
+					snapshotThreshold += snapshotFreq;
 				}
 				else if (buffer.getProgress().get() > snapshotThreshold && 
 						 buffer.getProgress().get() < 1f) {
 						LOG.info("ReduceTask checking to see if it's time to do a snapshot");
-						snapshotThreshold += snapshotPeriod;
+						snapshotThreshold += snapshotFreq;
 						isSnapshotting = true;
 						LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
 						try { snapshot(true, buffer.getProgress().get(), reporter);

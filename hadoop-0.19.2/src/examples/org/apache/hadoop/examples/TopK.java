@@ -228,7 +228,7 @@ public class TopK extends Configured implements Tool {
 	private TopK() {}                               // singleton
 
 	private void printUsage() {
-		System.out.println("TopK [-s interval] [-xcpPR] [-m mappers] [-r reducers] <inDir> <outDir> <K>");
+		System.out.println("TopK [-s frequency] [-xcpPR] [-m mappers] [-r reducers] <inDir> <outDir> <K>");
 		System.out.println("\t-p intra-job pipelining\n\t-P inter-job pipelining\n\t-R do not reduce job 1 output\n\t-x use xml article mapper\n\t-c compare topk lists");
 		ToolRunner.printGenericCommandUsage(System.out);
 	}
@@ -258,9 +258,9 @@ public class TopK extends Configured implements Tool {
 		    for(int i=0; i < args.length; ++i) {
 		      try {
 		          if ("-s".equals(args[i])) {
-		        	int interval = Integer.parseInt(args[++i]);
+		        	float freq = Float.parseFloat(args[++i]);
 		        	/* Jobs will perform snapshots */
-		          	wordcountJob.setInt("mapred.snapshot.interval", interval);
+		          	wordcountJob.setFloat("mapred.snapshot.frequency", freq);
 		          	topkJob.setBoolean("mapred.job.input.snapshots", true);
 
 		          	/* Wordcount will pipeline. */

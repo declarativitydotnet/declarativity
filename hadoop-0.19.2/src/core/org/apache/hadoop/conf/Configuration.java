@@ -475,6 +475,10 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
       return defaultValue;
     }
   }
+  
+  public void setFloat(String name, float value) {
+    set(name, Float.toString(value));
+  }
 
   /** 
    * Get the value of the <code>name</code> property as a <code>boolean</code>.  
