@@ -738,6 +738,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 	}
 	
 	public synchronized void request(ReduceBufferRequest request) throws IOException {
+		LOG.info("BufferController receive reduce request " + request);
 		if (request.srcHost().equals(hostname)) {
 			register(request);
 		}
