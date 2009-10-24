@@ -147,7 +147,7 @@ public class SnapshotManager<K extends Object, V extends Object> {
 		this.fileHandle.setConf(conf);
 		
 		this.snapshots = new HashMap<TaskID, Snapshot>();
-		this.localFs = FileSystem.get(conf);
+		this.localFs = FileSystem.getLocal(conf);
 		this.progress = 0f;
 		
 		this.inputKeyClass = inputKeyClass;
