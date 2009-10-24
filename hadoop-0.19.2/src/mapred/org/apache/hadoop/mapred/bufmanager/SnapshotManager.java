@@ -21,10 +21,9 @@ import org.apache.hadoop.mapred.Task;
 import org.apache.hadoop.mapred.TaskID;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class SnapshotCollector<K extends Object, V extends Object> implements Runnable {
-	private static final Log LOG = LogFactory.getLog(SnapshotCollector.class.getName());
+public class SnapshotManager<K extends Object, V extends Object> {
+	private static final Log LOG = LogFactory.getLog(SnapshotManager.class.getName());
 
-	
 	public class Snapshot {
 		public boolean fresh = false;
 		
@@ -94,18 +93,9 @@ public class SnapshotCollector<K extends Object, V extends Object> implements Ru
 		}
 		
 		private void write(IFile.Reader<K, V> in, FSDataOutputStream out, FSDataOutputStream index) throws IOException {
-			Class <K> keyClass = (Class<K>)conf.getInputKeyClass();
-			Class <V> valClass = (Class<V>)conf.getInputValueClass();
-			CompressionCodec codec = null;
-			if (conf.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					conf.getMapOutputCompressorClass(DefaultCodec.class);
-				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-			}
-
 			DataInputBuffer key = new DataInputBuffer();
 			DataInputBuffer value = new DataInputBuffer();
-			IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
+			IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  inputKeyClass, inputValClass, codec);
 			/* Copy over the data until done. */
 			while (in.next(key, value)) {
 				writer.append(key, value);
@@ -133,33 +123,36 @@ public class SnapshotCollector<K extends Object, V extends Object> implements Ru
 	
 	private FileHandle fileHandle;
 	
+	private Class<K> inputKeyClass;
+	
+	private Class<V> inputValClass;
+	
+	private CompressionCodec codec;
+	
 	private boolean busy = false;
 	private boolean open = true;
-	private float lastSnapshotProgress = 0f;
 	
 	private Map<TaskID, Snapshot> snapshots;
 	
-	public SnapshotCollector(JobConf conf, Task task) throws IOException {
+	private float progress;
+	
+	public SnapshotManager(JobConf conf, Task task, 
+			               Class<K> inputKeyClass, Class<V> inputValClass, 
+			               Class<? extends CompressionCodec> inputCodecClass) 
+	throws IOException {
 		this.conf = conf;
 		this.task = task;
 		this.fileHandle = new FileHandle(task.getJobID());;
 		this.snapshots = new HashMap<TaskID, Snapshot>();
 		this.localFs = FileSystem.get(conf);
+		this.progress = 0f;
+		
+		this.inputKeyClass = inputKeyClass;
+		this.inputValClass = inputValClass;
+		this.codec = inputCodecClass == null ? null :
+			(CompressionCodec) ReflectionUtils.newInstance(inputCodecClass, conf);
 	}
 
-	
-	public void close() throws IOException {
-		if (!open) return;
-		else open = false;
-		
-		synchronized (this) {
-			this.notifyAll();
-			while (busy) {
-				try { this.wait();
-				} catch (InterruptedException e) { }
-			}
-		}
-	}
 	
 	public void collect(TaskID taskid, IFile.Reader<K, V> reader, long length, float progress) throws IOException {
 		synchronized (this.snapshots) {
@@ -171,59 +164,38 @@ public class SnapshotCollector<K extends Object, V extends Object> implements Ru
 			if (snapshot.progress < progress) {
 				snapshot.snapshot(reader, length, progress);
 			}
+			
+			this.progress = 0f;
+			for (SnapshotManager.Snapshot s : this.snapshots.values()) {
+				if (s.valid()) {
+					progress += s.progress;
+				}
+			}
+			progress = progress / (float) task.getNumberOfInputs();
 		}
 	}
 	
 	public float snapshot() throws IOException {
-		List<SnapshotCollector.Snapshot> snapshots = new ArrayList<SnapshotCollector.Snapshot>();
+		List<SnapshotManager.Snapshot> snapshots = new ArrayList<SnapshotManager.Snapshot>();
 		float progress = 0f;
-		for (SnapshotCollector.Snapshot snapshot : this.snapshots.values()) {
-			if (snapshot.valid()) {
-				progress += snapshot.progress;
-				snapshots.add(snapshot);
+		synchronized (this.snapshots) {
+			for (SnapshotManager.Snapshot snapshot : this.snapshots.values()) {
+				if (snapshot.valid()) {
+					progress += snapshot.progress;
+					snapshots.add(snapshot);
+				}
 			}
+			progress = progress / (float) task.getNumberOfInputs();
 		}
-		progress = progress / (float) task.getNumberOfInputs();
 
 		LOG.debug("SnapshotThread: " + task.getTaskID() + " perform snapshot. progress " + progress);
 		task.snapshots(snapshots, progress);
-		this.lastSnapshotProgress = progress;
 		return progress;
 	}
 	
-	public void run() {
-		try {
-			while (open) {
-				synchronized (this) {
-					busy = false;
-					this.notifyAll();
-
-					int freshRuns = 0;
-					do {
-						if (!open) return;
-						try { this.wait();
-						} catch (InterruptedException e) { return; }
-						if (!open) return;
-
-						freshRuns = 0;
-						for (Snapshot snapshot : snapshots.values()) {
-							if (snapshot.fresh) freshRuns++;
-						}
-					} while (freshRuns < snapshots.size() / 3);
-					busy = true;
-				}
-				try {
-					snapshot();
-				} catch (IOException e) {
-					LOG.info("Snapshot thread terminated. " + e);
-					return; // done snapshoting 
-				}
-			}
-		} finally {
-			synchronized (this) {
-				busy = false;
-				this.notifyAll();
-			}
+	public float progress() {
+		synchronized (this.snapshots) {
+			return this.progress;
 		}
 	}
 }

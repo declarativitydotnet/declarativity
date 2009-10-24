@@ -608,7 +608,8 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 	private Map<Integer, BufferRequest> requestMap = new HashMap<Integer, BufferRequest>();
 
 	@SuppressWarnings("unchecked")
-	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter) throws IOException {
+	public JBuffer(BufferUmbilicalProtocol umbilical, TaskAttemptID taskid, JobConf job, Reporter reporter, 
+			       Class<K> keyClass, Class<V> valClass, Class<? extends CompressionCodec> codecClass) throws IOException {
 		this.umbilical = umbilical;
 		this.taskid = taskid;
 		this.job = job;
@@ -674,21 +675,18 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 		softBufferLimit = (int)(kvbuffer.length * spillper);
 		softRecordLimit = (int)(kvoffsets.length * spillper);
 		// k/v serialization
-		comparator = job.getOutputKeyComparator();
-		keyClass = (Class<K>)job.getMapOutputKeyClass();
-		valClass = (Class<V>)job.getMapOutputValueClass();
-		serializationFactory = new SerializationFactory(job);
-		keySerializer = serializationFactory.getSerializer(keyClass);
-		keySerializer.open(bb);
-		valSerializer = serializationFactory.getSerializer(valClass);
-		valSerializer.open(bb);
+		this.comparator = job.getOutputKeyComparator();
+		this.keyClass = keyClass;
+		this.valClass = valClass;
+		this.serializationFactory = new SerializationFactory(job);
+		this.keySerializer = serializationFactory.getSerializer(keyClass);
+		this.keySerializer.open(bb);
+		this.valSerializer = serializationFactory.getSerializer(valClass);
+		this.valSerializer.open(bb);
 
 		// compression
-		if (job.getCompressMapOutput()) {
-			Class<? extends CompressionCodec> codecClass =
-				job.getMapOutputCompressorClass(DefaultCodec.class);
-			codec = (CompressionCodec)
-			ReflectionUtils.newInstance(codecClass, job);
+		if (codecClass != null) {
+			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, job);
 		}
 		// combiner
 		combinerClass = job.getCombinerClass();
@@ -1283,9 +1281,6 @@ public class JBuffer<K extends Object, V extends Object>  implements JBufferColl
 
 	private void spillSingleRecord(final DataInputBuffer key, final DataInputBuffer value)  throws IOException {
 		// TODO this right
-		Class keyClass = job.getMapOutputKeyClass();
-		Class valClass = job.getMapOutputValueClass();
-		SerializationFactory serializationFactory = new SerializationFactory(job);
 		Deserializer<K> keyDeserializer = serializationFactory.getDeserializer(keyClass);
 		Deserializer<V> valDeserializer = serializationFactory.getDeserializer(valClass);
 		keyDeserializer.open(key);

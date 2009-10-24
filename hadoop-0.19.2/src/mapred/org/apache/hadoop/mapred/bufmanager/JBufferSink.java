@@ -84,7 +84,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private JBufferCollector<K, V> collector;
 	
-	private SnapshotCollector snapshot;
+	private SnapshotManager snapshot;
 	
 	private Set<Connection> connections;
 	
@@ -100,17 +100,37 @@ public class JBufferSink<K extends Object, V extends Object> {
 	
 	private FileHandle fileHandle;
 	
-	public JBufferSink(JobConf conf, Reporter reporter, JBufferCollector<K, V> collector, SnapshotCollector snapshot, Task task) throws IOException {
+	private Class<K> inputKeyClass;
+	
+	private Class<V> inputValClass;
+	
+	private CompressionCodec codec;
+	
+	public JBufferSink(JobConf conf, 
+			           Reporter reporter, 
+			           JBufferCollector<K, V> collector, 
+			           boolean inputSnapshots, 
+			           Task task,
+			           Class<K> inputKeyClass, Class<V> inputValClass,
+			           Class<? extends CompressionCodec> inputCodecClass) 
+	throws IOException {
 		this.conf = conf;
 		this.reporter = reporter;
 		this.ownerid = task.getTaskID();
 		this.collector = collector;
-		this.snapshot = snapshot;
+		this.snapshot = inputSnapshots ? 
+				new SnapshotManager(conf, task, inputKeyClass, inputValClass, inputCodecClass) : null;
 		this.localFs = FileSystem.getLocal(conf);
 		this.maxConnections = conf.getInt("mapred.reduce.parallel.copies", 20);
 		this.fileHandle = new FileHandle(ownerid.getJobID());
 		this.fileHandle.setConf(conf);
 		this.spillQueue = new LinkedBlockingQueue<SpillRun>();
+		
+		this.inputKeyClass = inputKeyClass;
+		this.inputValClass = inputValClass;
+		this.codec = inputCodecClass == null ? null :
+			(CompressionCodec) ReflectionUtils.newInstance(inputCodecClass, conf);
+
 		
 		this.task = task;
 	    this.numInputs = task.getNumberOfInputs();
@@ -132,6 +152,10 @@ public class JBufferSink<K extends Object, V extends Object> {
 		} catch (UnknownHostException e) {
 			return new InetSocketAddress("localhost", this.server.socket().getLocalPort());
 		}
+	}
+	
+	public SnapshotManager snapshotManager() {
+		return this.snapshot;
 	}
 	
 	public void open() {
@@ -232,10 +256,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		};
 		spillThread.setDaemon(true);
 		spillThread.start();
-		
-		if (this.snapshot != null) {
-			executor.execute(this.snapshot);
-		}
 	}
 	
 	public TaskAttemptID ownerID() {
@@ -263,9 +283,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 
 		this.spillThread.interrupt();
-		if (this.snapshot != null) {
-			this.snapshot.close();
-		}
 	}
 	
 	private void spill(TaskID taskid, float progress, Path data, Path index) {
@@ -345,7 +362,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 		}
 		
 		private void 
-		spill(TaskID taskid, float progress, IFile.Reader<K, V> reader, long length, Class<K> keyClass, Class<V> valClass, CompressionCodec codec) 
+		spill(TaskID taskid, float progress, IFile.Reader<K, V> reader, long length) 
 		throws IOException {
 			// Spill directory to disk
 			int spillid = spills++;
@@ -358,7 +375,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 			if (out == null || indexOut == null) 
 				throw new IOException("Unable to create spill file " + filename);
 
-			IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  keyClass, valClass, codec);
+			IFile.Writer<K, V> writer = new IFile.Writer<K, V>(conf, out,  inputKeyClass, inputValClass, codec);
 			DataInputBuffer key = new DataInputBuffer();
 			DataInputBuffer value = new DataInputBuffer();
 			try {
@@ -389,16 +406,6 @@ public class JBufferSink<K extends Object, V extends Object> {
 			DataInputBuffer key = new DataInputBuffer();
 			DataInputBuffer value = new DataInputBuffer();
 			
-			Class <K> keyClass = (Class<K>)conf.getMapOutputKeyClass();
-			Class <V> valClass = (Class<V>)conf.getMapOutputValueClass();
-			
-			CompressionCodec codec = null;
-			if (conf.getCompressMapOutput()) {
-				Class<? extends CompressionCodec> codecClass =
-					conf.getMapOutputCompressorClass(DefaultCodec.class);
-				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-			}
-			
 			IFile.Reader<K, V> reader = 
 				new IFile.Reader<K, V>(conf, input, length, codec);
 			
@@ -416,7 +423,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 				if (task.isSnapshotting() || task.isMerging()) {
 					/* Drain socket while task is snapshotting. */
 					LOG.debug("JBufferSink: call spill for data " + header.owner() + " due to merging or snapshotting.");
-					spill(header.owner().getTaskID(), header.progress(), reader, length, keyClass, valClass, codec);
+					spill(header.owner().getTaskID(), header.progress(), reader, length);
 				} else { 
 					boolean doSpill = true;
 						LOG.debug("JBufferSink: get task lock for " + header.owner() + " dump.");
@@ -452,7 +459,7 @@ public class JBufferSink<K extends Object, V extends Object> {
 					
 					if (doSpill) {
 						LOG.debug("JBufferSink: had to spill " + header.owner() + ".");
-						spill(header.owner().getTaskID(), header.progress(), reader, length, keyClass, valClass, codec);
+						spill(header.owner().getTaskID(), header.progress(), reader, length);
 					}
 				}
 			}

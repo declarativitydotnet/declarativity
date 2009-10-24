@@ -36,6 +36,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableFactories;
 import org.apache.hadoop.io.WritableFactory;
 import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.DefaultCodec;
 import org.apache.hadoop.mapred.bufmanager.BufferRequest;
 import org.apache.hadoop.mapred.bufmanager.BufferUmbilicalProtocol;
 import org.apache.hadoop.mapred.bufmanager.JBuffer;
@@ -43,7 +44,7 @@ import org.apache.hadoop.mapred.bufmanager.JBufferSink;
 import org.apache.hadoop.mapred.bufmanager.JBufferCollector;
 import org.apache.hadoop.mapred.bufmanager.MapBufferRequest;
 import org.apache.hadoop.mapred.bufmanager.OutputFile;
-import org.apache.hadoop.mapred.bufmanager.SnapshotCollector;
+import org.apache.hadoop.mapred.bufmanager.SnapshotManager;
 import org.apache.hadoop.mapred.bufmanager.ValuesIterator;
 import org.apache.hadoop.util.Progress;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -158,7 +159,7 @@ public class ReduceTask extends Task {
 	private boolean reducePipeline = false;
 	
 	private float   snapshotThreshold = 1f;
-	private float   snapshotInterval  = 1f;
+	private float   snapshotPeriod    = 1f;
 	private boolean inputSnapshots = false;
 	private boolean outputSnapshots = false;
 	private boolean isSnapshotting = false;
@@ -252,7 +253,7 @@ public class ReduceTask extends Task {
 	}
 	
 	@Override
-	public void snapshots(List<SnapshotCollector.Snapshot> snapshots, float progress) throws IOException {
+	public void snapshots(List<SnapshotManager.Snapshot> snapshots, float progress) throws IOException {
 		float maxProgress = conf.getFloat("mapred.snapshot.max.progress", 0.9f);
 
 		if (progress > maxProgress && progress < 1f) {
@@ -264,7 +265,7 @@ public class ReduceTask extends Task {
 			this.isSnapshotting = true;
 			try {
 				OutputCollector collector = null;
-				for (SnapshotCollector.Snapshot snapshot : snapshots) {
+				for (SnapshotManager.Snapshot snapshot : snapshots) {
 					snapshot.spill(buffer);
 				}
 				snapshot(false, progress, null);
@@ -346,21 +347,31 @@ public class ReduceTask extends Task {
 	    
 	    float [] weights = {0.75f, 0.25f};
 	    getProgress().setWeight(weights);
+	    
+	    Class inputKeyClass = job.getMapOutputKeyClass();
+	    Class inputValClass = job.getMapOutputValueClass();
+	    
+	    Class outputKeyClass = job.getOutputKeyClass();
+	    Class outputValClass = job.getOutputValueClass();
+		Class<? extends CompressionCodec> codecClass = null;
+		if (job.getCompressMapOutput()) {
+			codecClass = conf.getMapOutputCompressorClass(DefaultCodec.class);
+		}
 
-		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+		JBuffer buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, 
+				                     outputKeyClass, outputValClass, codecClass);
 		buffer.setProgress(copyPhase);
 		
 		mapPipeline      = job.getBoolean("mapred.map.pipeline", false);
 		reducePipeline   = job.getBoolean("mapred.reduce.pipeline", false);
 		
-		snapshotInterval = 1f / (1f + (float) job.getInt("mapred.snapshot.interval", 0));
-		snapshotThreshold = snapshotInterval;
+		snapshotPeriod = job.getFloat("mapred.snapshot.period", 1f);
+		snapshotThreshold = snapshotPeriod;
 		inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
-		outputSnapshots = snapshotInterval < 1f;
+		outputSnapshots = snapshotPeriod < 1f;
 		
-	    LOG.info("Reduce task " + getTaskID() + " starting sink.");
-	    SnapshotCollector snapshotCollector = inputSnapshots ? new SnapshotCollector(job, this) : null;
-		JBufferSink sink = new JBufferSink(job, reporter, buffer, snapshotCollector, this);
+		JBufferSink sink = new JBufferSink(job, reporter, buffer, inputSnapshots, this, 
+				                           inputKeyClass, inputValClass, codecClass);
 		
 		MapOutputFetcher fetcher = new MapOutputFetcher(umbilical, bufferUmbilical, reporter, sink);
 		fetcher.setDaemon(true);
@@ -381,7 +392,7 @@ public class ReduceTask extends Task {
 					snapshot(false, buffer.getProgress().get(), reporter);
 				}
 			} else {
-				if (snapshotCollector.snapshot() < 1f) {
+				if (sink.snapshotManager().snapshot() < 1f) {
 					LOG.error("ReduceTask " + getTaskID() + " final snapshot not complete!");
 				}
 			}
@@ -418,20 +429,26 @@ public class ReduceTask extends Task {
 						isSnapshotting = false;
 					}
 				}
-				else if (!inputSnapshots && 
-						buffer.getProgress().get() > snapshotThreshold && 
-						buffer.getProgress().get() < 1f) {
-					LOG.info("ReduceTask checking to see if it's time to do a snapshot");
-					snapshotThreshold += snapshotInterval;
-					isSnapshotting = true;
-					LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
-					try { snapshot(true, buffer.getProgress().get(), reporter);
-					} catch (IOException e) {
-						LOG.warn("ReduceTask exeception during regular snapshot. " + e);
-					} finally {
-						isSnapshotting = false;
+				else if (inputSnapshots) {
+					if (sink.snapshotManager().progress() > snapshotThreshold &&
+							sink.snapshotManager().progress() < 1f) {
+						sink.snapshotManager().snapshot();
 					}
-					LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
+					snapshotThreshold += snapshotPeriod;
+				}
+				else if (buffer.getProgress().get() > snapshotThreshold && 
+						 buffer.getProgress().get() < 1f) {
+						LOG.info("ReduceTask checking to see if it's time to do a snapshot");
+						snapshotThreshold += snapshotPeriod;
+						isSnapshotting = true;
+						LOG.info("ReduceTask: " + getTaskID() + " perform snapshot. progress " + buffer.getProgress().get());
+						try { snapshot(true, buffer.getProgress().get(), reporter);
+						} catch (IOException e) {
+							LOG.warn("ReduceTask exeception during regular snapshot. " + e);
+						} finally {
+							isSnapshotting = false;
+						}
+						LOG.info("ReduceTask: " + getTaskID() + " done with snapshot. progress " + buffer.getProgress().get());
 				}
 				try { this.wait(waittime);
 				} catch (InterruptedException e) { }
