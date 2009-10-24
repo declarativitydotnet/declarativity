@@ -389,7 +389,7 @@ public class ReduceTask extends Task {
 					finalReduce(job, reporter, buffer, bufferUmbilical);
 				} else {
 					/* Perform a final snapshot. */
-					snapshot(false, buffer.getProgress().get(), reporter);
+					snapshot(false, 1f, reporter);
 				}
 			} else {
 				if (sink.snapshotManager().snapshot() < 1f) {
