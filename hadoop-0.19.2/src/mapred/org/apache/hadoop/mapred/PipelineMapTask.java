@@ -216,8 +216,8 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 			throw new IOException("PipelineMaptask has no reduce tasks!");
 		}
 		
-		float snapshotPeriod = job.getFloat("mapred.snapshot.period", 1f);
-		float snapshotThreshold = snapshotPeriod;
+		float snapshotFreq = job.getFloat("mapred.snapshot.frequency", 1f);
+		float snapshotThreshold = snapshotFreq;
 		boolean inputSnapshots = job.getBoolean("mapred.job.input.snapshots", false);
 		
 	    this.mapper = ReflectionUtils.newInstance(job.getMapperClass(), job);
@@ -240,7 +240,7 @@ public class PipelineMapTask extends MapTask implements JBufferCollector {
 						sink.snapshotManager().progress() > snapshotThreshold &&
 						sink.snapshotManager().progress() < 1f) {
 					sink.snapshotManager().snapshot();
-					snapshotThreshold += snapshotPeriod;
+					snapshotThreshold += snapshotFreq;
 				}
 				try { this.wait();
 				} catch (InterruptedException e) { }
