@@ -25,6 +25,11 @@ public class MapBufferRequest extends BufferRequest {
 	}
 	
 	@Override
+	public String toString() {
+		return mapJobId.toString() + " map partition " + mapPartition;
+	}
+	
+	@Override
 	public void readFields(DataInput in) throws IOException {
 		super.readFields(in);
 		this.mapJobId = new JobID();

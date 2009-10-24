@@ -21,6 +21,11 @@ public class ReduceBufferRequest extends BufferRequest {
 	}
 	
 	@Override
+	public String toString() {
+		return this.reduceTaskId.toString();
+	}
+	
+	@Override
 	public void readFields(DataInput in) throws IOException {
 		super.readFields(in);
 		this.reduceTaskId = new TaskID();

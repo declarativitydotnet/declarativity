@@ -738,7 +738,6 @@ public class BufferController implements BufferUmbilicalProtocol {
 	}
 	
 	public synchronized void request(ReduceBufferRequest request) throws IOException {
-		LOG.info("BufferController receive reduce request " + request);
 		if (request.srcHost().equals(hostname)) {
 			register(request);
 		}
@@ -785,6 +784,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 	}
 	
 	private void register(ReduceBufferRequest request) throws IOException {
+		LOG.info("BufferController register reduce request " + request);
+
 		TaskID taskid = request.reduceTaskId();
 		JobConf job = tracker.getJobConf(taskid.getJobID());
 		RequestManager manager = new RequestManager(job, request);
