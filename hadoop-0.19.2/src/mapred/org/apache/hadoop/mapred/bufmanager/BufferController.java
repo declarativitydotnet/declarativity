@@ -739,6 +739,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 		taskFileManager.get(header.owner()).add(output);
 	}
 	
+	@Override
 	public synchronized void request(ReduceBufferRequest request) throws IOException {
 		if (request.srcHost().equals(hostname)) {
 			register(request);
@@ -799,7 +800,10 @@ public class BufferController implements BufferUmbilicalProtocol {
 		else if (!this.reduceRequestManagers.get(taskid).contains(manager)) {
 			this.reduceRequestManagers.get(taskid).add(manager);
 		}
-		else manager = null;
+		else {
+			LOG.info("BufferController request manager already exists. request " + request);
+			manager = null;
+		}
 		
 		if (manager != null) {
 			if (this.fileManagers.containsKey(taskid.getJobID()) &&
