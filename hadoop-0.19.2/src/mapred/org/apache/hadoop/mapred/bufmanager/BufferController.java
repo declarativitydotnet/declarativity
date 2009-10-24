@@ -809,7 +809,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			if (this.fileManagers.containsKey(taskid.getJobID())) {
 				for (TaskAttemptID attempt : this.fileManagers.get(taskid.getJobID()).keySet()) {
 					if (attempt.getTaskID().equals(taskid)) {
-						FileManager fm = this.fileManagers.get(taskid.getJobID()).get(taskid);
+						FileManager fm = this.fileManagers.get(taskid.getJobID()).get(attempt);
 						fm.request(manager);
 					}
 				}
