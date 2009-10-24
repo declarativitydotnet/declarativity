@@ -745,7 +745,6 @@ public class BufferController implements BufferUmbilicalProtocol {
 			register(request);
 		}
 		else {
-			LOG.info("BufferController remote reduce request " + request);
 			requestTransfer.transfer(request); // request is remote.
 		}
 	}
@@ -788,7 +787,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 	}
 	
 	private void register(ReduceBufferRequest request) throws IOException {
-		LOG.info("BufferController register reduce request " + request);
+		LOG.debug("BufferController register reduce request " + request);
 
 		TaskID taskid = request.reduceTaskId();
 		JobConf job = tracker.getJobConf(taskid.getJobID());
@@ -801,15 +800,19 @@ public class BufferController implements BufferUmbilicalProtocol {
 			this.reduceRequestManagers.get(taskid).add(manager);
 		}
 		else {
-			LOG.info("BufferController " + manager + " already exists. request " + request);
+			LOG.debug("BufferController " + manager + 
+					  " already exists. request " + request);
 			manager = null;
 		}
 		
 		if (manager != null) {
-			if (this.fileManagers.containsKey(taskid.getJobID()) &&
-					this.fileManagers.get(taskid.getJobID()).containsKey(request.reduceTaskId())) {
-				FileManager fm = this.fileManagers.get(taskid.getJobID()).get(request.reduceTaskId());
-				fm.request(manager);
+			if (this.fileManagers.containsKey(taskid.getJobID())) {
+				for (TaskAttemptID attempt : this.fileManagers.get(taskid.getJobID()).keySet()) {
+					if (attempt.getTaskID().equals(taskid)) {
+						FileManager fm = this.fileManagers.get(taskid.getJobID()).get(taskid);
+						fm.request(manager);
+					}
+				}
 			}
 		}
 	}
