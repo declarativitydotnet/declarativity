@@ -430,12 +430,12 @@ public class ReduceTask extends Task {
 					}
 				}
 				else if (inputSnapshots) {
-					LOG.info("ReduceTask " + getTaskID() + " snapshot progress " + sink.snapshotManager().progress() + " threshold " + snapshotThreshold);
 					if (sink.snapshotManager().progress() > snapshotThreshold &&
 							sink.snapshotManager().progress() < 1f) {
+						LOG.info("ReduceTask " + getTaskID() + " snapshot progress " + sink.snapshotManager().progress());
 						sink.snapshotManager().snapshot();
+						snapshotThreshold += snapshotFreq;
 					}
-					snapshotThreshold += snapshotFreq;
 				}
 				else if (buffer.getProgress().get() > snapshotThreshold && 
 						 buffer.getProgress().get() < 1f) {

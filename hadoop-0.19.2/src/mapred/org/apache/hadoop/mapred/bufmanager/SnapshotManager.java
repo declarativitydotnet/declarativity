@@ -84,7 +84,6 @@ public class SnapshotManager<K extends Object, V extends Object> {
 				FSDataOutputStream idx = localFs.create(index, false);
 				if (out == null) throw new IOException("Unable to create snapshot " + data);
 				write(reader, out, idx);
-				LOG.info("Snapshot created. data " + data);
 				this.length   = length;
 				this.progress = progress;
 				this.data     = data;
@@ -129,9 +128,6 @@ public class SnapshotManager<K extends Object, V extends Object> {
 	private Class<V> inputValClass;
 	
 	private CompressionCodec codec;
-	
-	private boolean busy = false;
-	private boolean open = true;
 	
 	private Map<TaskID, Snapshot> snapshots;
 	
