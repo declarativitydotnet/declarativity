@@ -233,7 +233,13 @@ public class MapTask extends Task {
 		LOG.info("numReduceTasks: " + numReduceTasks);
 	    
 		if (numReduceTasks > 0) {
-			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter);
+		    Class keyClass = job.getMapOutputKeyClass();
+		    Class valClass = job.getMapOutputValueClass();
+			Class<? extends CompressionCodec> codecClass = null;
+			if (conf.getCompressMapOutput()) {
+				codecClass = conf.getMapOutputCompressorClass(DefaultCodec.class);
+			}
+			this.buffer = new JBuffer(bufferUmbilical, getTaskID(), job, reporter, keyClass, valClass, codecClass);
 			this.buffer.setProgress(getProgress());
 			collector = this.buffer;
 		} else { 
