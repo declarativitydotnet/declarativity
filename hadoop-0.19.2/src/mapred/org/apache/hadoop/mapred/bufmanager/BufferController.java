@@ -801,7 +801,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 			this.reduceRequestManagers.get(taskid).add(manager);
 		}
 		else {
-			LOG.info("BufferController request manager already exists. request " + request);
+			LOG.info("BufferController " + manager + " already exists. request " + request);
 			manager = null;
 		}
 		
