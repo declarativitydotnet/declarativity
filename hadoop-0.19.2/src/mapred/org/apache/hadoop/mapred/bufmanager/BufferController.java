@@ -742,9 +742,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 	@Override
 	public synchronized void request(ReduceBufferRequest request) throws IOException {
 		if (request.srcHost().equals(hostname)) {
+			LOG.debug("Register " + request);
 			register(request);
 		}
 		else {
+			LOG.debug("Transfer " + request);
 			requestTransfer.transfer(request); // request is remote.
 		}
 	}
@@ -752,9 +754,11 @@ public class BufferController implements BufferUmbilicalProtocol {
 	@Override
 	public synchronized void request(MapBufferRequest request) throws IOException {
 		if (request.srcHost().equals(hostname)) {
+			LOG.debug("Register " + request);
 			register(request);
 		}
 		else {
+			LOG.debug("Transfer " + request);
 			requestTransfer.transfer(request); // request is remote.
 		}
 	}
