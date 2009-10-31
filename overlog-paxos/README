@@ -1,0 +1,23 @@
+The Overlog source code can be found in:
+
+src/olg
+
+Core Paxos comprises two overlog files:
+
+prepare.olg
+propose.olg
+
+Leader election is implemented in:
+
+election.olg
+
+
+For backward-compatibility reasons, we define the relation paxos::parliament (which reflects 
+our view membership) here:
+
+ident.olg
+
+The other files are supplementary, and used to conduct tests:
+
+insertions.olg
+assertions.olg

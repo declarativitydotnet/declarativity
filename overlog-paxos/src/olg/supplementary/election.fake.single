@@ -1,0 +1,39 @@
+program leader;
+
+import java.lang.System;
+
+define(last_attempted, keys(0), {String, Integer});
+define(start, {String});
+
+define(progress_timer_start, keys(0), {Long});
+
+define(last_installed, keys(0), {String, Integer});
+
+define(leader, keys(0, 1), {String, String, Integer});
+
+define(progress_timer, keys(0), {String, Long, Long});
+
+//timer(start2, physical, 4000, 1, 4000);
+//timer(start, physical, 3000, 1, 3000);
+
+watch(leader, ae);
+watch(last_attempted, ae);
+
+public leader("tcp:localhost:7001", "tcp:localhost:7002", 4) :- start#insert(); 
+public leader("tcp:localhost:7000", "tcp:localhost:7002", 4) :- start#insert();
+public leader("tcp:localhost:7002", "tcp:localhost:7002", 4) :- start#insert();
+
+
+public last_attempted("tcp:localhost:7001", 3) :- start#insert();
+public last_attempted("tcp:localhost:7002", 4) :- start#insert();
+public last_attempted("tcp:localhost:7000", 2) :- start#insert();
+
+/*
+public last_attempted("tcp:localhost:7001", 4) :- start#insert();
+public last_attempted("tcp:localhost:7002", 4) :- start#insert();
+public last_attempted("tcp:localhost:7000", 4) :- start#insert();
+*/
+
+public last_installed("tcp:localhost:7001", 4) :- start#insert();
+public last_installed("tcp:localhost:7002", 4) :- start#insert();
+public last_installed("tcp:localhost:7000", 4) :- start#insert();

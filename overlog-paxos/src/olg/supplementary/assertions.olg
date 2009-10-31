@@ -1,0 +1,109 @@
+program assertions;
+
+import java.lang.System;
+
+
+define(printrule, {String});
+
+public
+printrule(A) :-
+    paxos_prepare::global_history#insert(M, S, R, A)
+{
+    //System.out.println("GO(" + M.toString() + ":" + V.toString()+") -- "+S.toString() + " = " + A );
+    System.out.println("GO(" + M.toString() + ":" + R.toString()+") -- "+S.toString() + " = " + A );
+};
+
+
+define(lt, {String});
+
+define(la, {String, String});
+watch(la, ae);
+
+public
+la(M, O) :-
+    paxos_prepare::global_history(M, S, R, A),
+    O := A.toString(),
+    //A.startsWith("smarter");
+    S > 50;
+
+lt("fail") :-
+    la(M, O),
+    paxos_prepare::global_history(M, S, R, A),
+    paxos_prepare::global_history(M, S, R2, A2),
+    A != A2
+{
+    System.out.println("Local Conflict! (" + M.toString() + ":" + S.toString() + " = " + A.toString() + " vs. "+A2.toString() );
+};
+
+define(cen, keys(0,1,2,3,4), {String, String, String, Integer, String});
+
+watch(cen, ae);
+
+cen(@C, O, M, S, A) :-
+    la(@M, O),
+    paxos_prepare::global_history(@M, S, R, A),
+    C := "tcp:localhost:7001";
+
+define(cen_q, keys(0, 1, 2), {String, String, Integer});
+public
+cen_q(@C, L, V) :-
+    paxos_prepare::quorum(@L, V),
+    C := "tcp:localhost:7001";
+
+define(cen_la, keys(0, 1), {String, String, Integer});
+public
+cen_la(@C, L, V) :-
+    leader::last_attempted(@L, V),
+    C := "tcp:localhost:7001";
+
+lt("fail") :-
+    cen_q(C, L, V),
+    cen_q(C, L2, V),
+    L != L2
+{
+    System.out.println("two quorums for the same view "+ V.toString() + " from different hosts " + L.toString()+ ", "+L2.toString());
+};
+
+/*
+lt("fail") :-
+    cen_la(C, L, V),
+    cen_la(C, L2, V),
+    L != L2
+{
+    System.out.println("two last_attempted for the same view "+ V.toString() + " from different hosts " + L.toString()+ ", "+L2.toString());
+};
+
+*/
+
+lt("fail") :-
+    cen(C, O, M, S, A),
+    cen(C, O2, M2, S, A2),
+    M != M2,
+    A != A2
+{
+
+    System.out.println("Distributed Conflict! (" + M.toString() + " vs. " + M2.toString()+") -- " + S.toString() + " = " + A.toString() + " vs. "+A2.toString() );
+};
+
+define(ccnt, keys(0), {String, Integer});
+ccnt(C, count<S>) :-
+    cen(C, _, _, S, _);
+
+lt("succeed") :-
+    ccnt(C, Cnt),
+    Cnt > 199;
+
+define(lx, {String});
+
+lx(X) :-
+    lt(X); // ,
+    //ccnt(C, Cnt),
+   // Cnt > 150; 
+
+lx(A) :-
+    lx(A)
+{
+    System.out.println("EXIT ON "+ A.toString());
+    System.exit(1);
+};
+

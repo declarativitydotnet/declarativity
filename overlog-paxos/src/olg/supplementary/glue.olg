@@ -1,0 +1,28 @@
+program paxos_gluer;
+
+import jol.core.Runtime;
+
+/* glue for BFS */
+
+watch(paxos_global::decreeRequest, ae);
+
+public
+leader::start(X) :-
+  paxos_global::id(X);
+
+
+public
+paxos_prepare::start(X) :-
+  paxos_global::id(X);
+
+
+watch(paxos_propose::q, ae);
+
+public
+queueing::enq(Master, Decree, From, Id) :-
+  paxos_global::decreeRequest(Master, Decree, From),
+  Id := Runtime.idgen();
+
+public
+paxos_global::requestStatus(Master, Client, Decree, Instance, "passed") :-
+  paxos_prepare::global_history(Master, Instance, Client, Decree);

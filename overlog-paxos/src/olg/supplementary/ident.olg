@@ -1,0 +1,33 @@
+program paxos;
+
+define(member, keys(0), {String, Integer});
+define(parliament, keys(0, 1), {String, String, Integer});
+define(self, keys(0), {String});
+
+
+watch(member, ae);
+define(id, keys(0), {String});
+
+self(X) :-
+  paxos_global::id(X);
+
+public
+parliament(Me, Other, Id) :-
+    self(Me),
+    member(Other, Id);
+
+
+watch(parliament, ae);
+
+
+define(priestCnt, keys(0), {String, Integer});
+public
+priestCnt(Me, count<Other>) :-
+    parliament(Me, Other, _);
+
+watch(priestCnt, ae);
+
+
+define(decreeRequest, {String, String, String});
+watch(decreeRequest, ae);
+
