@@ -1,0 +1,188 @@
+program paxos_prepare;
+
+import java.lang.System;
+
+// inserted into from the calling program.
+define(start, keys(0), {String});
+
+/**** local_aru block ******/
+/*
+    ARU, or "all received upto", holds the value of the next globally ordered
+    update we are ready to propose or write.  It should be initialized from
+    stable storage: below, we initialize it to zero because we have none.
+
+    When we successfully update our global history, we may increment the ARU.
+    we do this via an aggregation to force a stratification boundary.
+*/
+
+define(local_aru, keys(0), {
+  String, // host
+  Integer // local ARU value
+});
+
+public
+local_aru(Me, 0) :-
+    paxos::self(Me),
+    start(),
+    notin global_history(Me, _, _, _);
+
+/**************************/
+
+/*
+ * When a node wins leader election, multicast a prepare message to
+ * the Paxos group containing the new view number and our local ARU.
+ * The common wisdom says that the prepare phase of Paxos enforces
+ * all the safety guarantees: an unreliable leader can at worst impact
+ * liveness.  This is not true in this implementation, because the 
+ * leader election module produces our View number.  The following 
+ * safety constraints must hold over leader::leader(_, _, View):
+ *  1. it must be unique to this host.
+ *  2. it must be monotonically increasing.
+ */
+
+define(prepare, {
+  String,  // Agent
+  String,  // Master
+  Integer, // View Number
+  Integer  // ARU
+});
+
+public
+prepare(@Him, Me, View, Aru) :-
+    leader::leader(@Me, Leader, View),
+    paxos::parliament(@Me, Him),
+    local_aru(@Me, Aru),
+    Leader == Me;
+
+/**** datalist block *********************/
+/*
+ * When it receives a prepare message, an agent responds with a
+ * prepare_ok message. This must contain:
+ *      1. Any globally ordered updates with SeqNo > the ARU in the prepare message
+ *      2. Any proposed values the agent has accepted, for previous views, 
+ *         for which the same inequality holds.
+ *
+ * We eschew nested types, and combine the relevant attributes from the prepare
+ * message with both lists above.
+ */
+define(datalist, keys(0, 1, 2), {
+  String,   // Agent
+  String,   // Master
+  Integer,  // View Number
+  Integer,  // ARU requested
+  Integer,  // Sequence Number
+  String,   // Update
+  String    // Type (Bottom, Ordered, Proposed)
+});
+
+datalist(Agent, Master, View, Aru, SeqNo, Update, Type) :-
+    global_history(Agent, SeqNo, _, Update),
+    datalist(Agent, Master, View, Aru, -1, _, "Bottom"),
+    SeqNo >= Aru,
+    Type := "Ordered";
+
+public
+datalist(Agent, Master, View, Aru, SeqNo, Update, Type) :-
+    accept(Agent, M, OldView, SeqNo, Update),
+    datalist(Agent, Master, View, Aru, -1, _, "Bottom"),
+    SeqNo >= Aru,
+    Type := "Proposed";
+
+// if SeqNo < Aru, we ignore the preoposal
+
+// Rather than using explicit negation, we insert a dummy
+// tuple into datalist to represent "nothing".
+datalist(Agent, Master, View, Aru, -1, "none", "Bottom") :-
+    prepare(Agent, Master, View, Aru),
+    leader::last_installed(Agent, LastView),
+    LastView == View;
+
+define(datalist_length, keys(0, 1), {
+  String,   // Agent
+  Integer,  // ARU
+  Integer   // count of datalist values
+});
+
+datalist_length(Agent, Aru, count<SeqNo>) :-
+    datalist(Agent, _, _, Aru, SeqNo, _, _);
+/*********************************************/
+
+
+
+/******* prepare_oklist block ****************/
+define(prepare_oklist, keys(0, 1, 2, 4, 5, 6), {
+  String,   // Master
+  Integer,  // View number
+  Integer,  // Sequence number
+  String,   // Update
+  String,   // Type
+  Integer,  // Datalist length
+  String    // Agent
+});
+
+prepare_oklist(@Master, View, SeqNo, Update, Type, Len, Agent) :-
+    datalist_length(@Agent, Aru, Len),
+    datalist(@Agent, Master, View, Aru, SeqNo, Update, Type);
+
+
+delete
+prepare_oklist(Master, View, SeqNo, Update, Type, Len, Agent) :-
+    prepare_oklist(Master, View, SeqNo, Update, Type, Len, Agent),
+    global_history(Master, SeqNo, _, Update);
+
+define(prepare_oklist_cnt, keys(0, 1, 2), {
+  String,   // Master
+  Integer,  // View number
+  String,   // Agent
+  Integer,  // Datalist length
+  Integer   // Count
+});
+
+prepare_oklist_cnt(Master, View, Agent, Len, count<SeqNo>) :-
+    prepare_oklist(Master, View, SeqNo, _, Type, Len, Agent);
+
+define(prepare_ok_cnt, keys(0, 1), {
+  String,   // Master
+  Integer,  // View number
+  Integer   // Agent Count
+});
+
+// only count agents who have sent prepare_ok messages towards
+// the quorum if we're received the whole set of messages from
+// that agent.
+prepare_ok_cnt(Master, View, count<Agent>) :-
+    prepare_oklist_cnt(Master, View, Agent, Cnt, Cnt2),
+    Cnt == Cnt2;
+/********************************************/
+
+
+define(quorum, keys(0, 1), {
+  String,   // Master
+  Integer   // View
+});
+
+quorum(Master, View) :-
+    paxos::priestCnt(Master, PCnt),
+    leader::leader(Master, Leader, View),
+    Master == Leader,
+    prepare_ok_cnt(Master, View, RCnt),
+    RCnt > (PCnt / 2);
+
+define(accept, keys(0, 1), {
+  String,   // Agent
+  String,   // Master
+  Integer,  // View number
+  Integer,  // Sequence number
+  String    // Update
+});
+
+define(global_history, keys(0, 1), {
+  String,   // Master
+  Integer,  // Sequence number
+  String,   // Requestor
+  String    // Update
+});
+
+global_history(Agent, SeqNo, Requestor, Update) :-
+    prepare_oklist(Agent, View, SeqNo, Update, "Ordered", _, Requestor),
+    notin global_history(Agent, SeqNo);

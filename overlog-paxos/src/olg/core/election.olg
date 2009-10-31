@@ -1,0 +1,170 @@
+program leader;
+
+import java.lang.System;
+
+define(progress_timer_start, keys(0), {Long});
+progress_timer_start(1000L);
+
+define(last_installed, keys(0), {String, Integer});
+define(my_start, {String, Integer});
+
+timer(seconds, physical, 1000, infinity, 0);
+
+define(start, keys(0), {String});
+
+public
+my_start(Me, Id) :-
+    start(),
+    paxos::parliament(Me, Him, Id),
+    Me == Him;
+
+/*********** progress_timer block **************/
+define(progress_timer, keys(0), {String, Long, Long});
+
+public
+progress_timer(Me, -1, Duration) :-
+    my_start(Me, _),
+    progress_timer_start(Duration);
+
+progress_timer(Me, Start, NewDuration) :-
+    preinstall(Me, _),
+    progress_timer(Me, _, Duration),
+    Start := System.currentTimeMillis()
+{
+    NewDuration := Duration * 2;
+    //System.out.println("\tDouble progress timer to " + NewDuration.toString());
+};
+
+progress_timer(Me, Start, StartDur) :-
+    progress_timer(Me, _, Duration),
+    progress_timer_start(StartDur),
+    do_election(Me, _, _),
+    Start := System.currentTimeMillis();
+/*********** END progress_timer block **************/
+
+/*********** do_election block **************/
+define(do_election, {String, Integer, String});
+
+public
+do_election(Me, Id, Me) :-
+    my_start(Me, Id);
+
+/* safety-critical logic is (perhaps inappropriately) 
+   defined here: do_election carries with it the new View number.
+*/
+do_election(Me, Id, Me) :-
+    progress_timer(Me, Start, Duration),
+    seconds#insert(),
+    last_attempted(Me, Last),
+    paxos::priestCnt(Me, Cnt),
+    Id := Last + Cnt,
+    Start != -1,
+    (System.currentTimeMillis() - Start) > Duration;
+
+
+/* if progress timer isn't set, and View > Last */
+do_election(Me, View, Originator) :-
+    view_change(Me, View, Other, Originator),
+    last_attempted(Me, Last),
+    Me != Other,
+    View > Last;
+    /* the progress_timer rule doesn't seem to work.  relaxing it; may 
+       cause livelock issues
+    progress_timer(Me, _, StartDuration),
+    progress_timer_start(StartDuration);
+    */
+
+
+/*********** END do_election block **************/
+
+
+/*********** last_attempted block **************/
+define(last_attempted, keys(0), {String, Integer});
+
+/* define start states! */
+public
+last_attempted(Me, Id) :-
+    my_start(Me, Id);
+
+// I think that with bug Z out of the way, we can make this jump
+last_attempted(Me, Id) :-
+    do_election(Me, Id, Me2),
+    last_attempted(Me, OldId),
+    paxos::priestCnt(Me, Cnt),
+    Me == Me2,
+    OldId < Id
+{
+	New := OldId + Cnt;
+	//System.out.println(Me.toString() + " = " + Me2.toString() + " -- OUCH: " + OldId.toString() + " to "+ New.toString());
+};
+
+/*********** END last_attempted block **************/
+
+
+/*********** view_change block **************/
+define(view_change, keys(0, 1, 2), {String, Integer, String, String});
+view_change(@Other, Id, Me, Originator) :-
+    do_election(@Me, Id, Originator),
+    paxos::parliament(@Me, Other, _);
+
+
+define(vc_cnt, keys(0, 1), {String, Integer, Integer});
+vc_cnt(Me, View, count<Other>) :-
+    view_change(Me, View, Other, _);
+
+delete
+view_change(Me, Id, Other, Orig) :-
+    view_change(Me, Id, Other, Orig),
+    vc_proof(Me, Id, Other2);
+
+/*********** END view_change block **************/
+define(preinstall, {String, Integer});
+preinstall(Me, View) :-
+    vc_cnt(Me, View, Cnt),
+    paxos::priestCnt(Me, Total),
+    Cnt > (Total / 2);
+
+// paa hack
+define(leader, keys(0, 1), {String, String, Integer});
+leader(Me, Originator, View) :-
+    preinstall(Me, View),
+    view_change(Me, View, _, Originator);
+
+delete
+leader(Me, Leader, View) :-
+    leader(Me, Leader, View),
+    bump_vc_proof(Me, NV),
+    NV > View;
+
+public
+last_installed(Me, -1) :-
+    my_start(Me, _);
+
+last_installed(Me, View) :-
+    last_installed(Me, OldView),
+    leader#insert(Me, _, View),
+    View >= OldView;
+
+/** PROOF MESSAGE STUFF ***/
+timer(proof_timer, physical, 2000, infinity, 0);
+define(proof_doping, {String, Integer, String});
+
+proof_doping(Me, View, Other) :-
+    proof_timer#insert(),
+    paxos::parliament(Me, Other),
+    last_installed(Me, View);
+   
+define(vc_proof, {String, Integer, String});
+vc_proof(@Other, View, Me) :-
+    proof_doping(@Me, View, Other);
+
+define(bump_vc_proof, {String, Integer});
+bump_vc_proof(Me, View) :-
+    vc_proof(Me, View, Other),
+    last_installed(Me, LastI),
+    View > LastI;
+
+bump_vc_proof(Me, View) :-
+    vc_proof(Me, View, Other),
+    notin last_installed(Me, _);
+

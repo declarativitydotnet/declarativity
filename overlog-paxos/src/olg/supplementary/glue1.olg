@@ -1,0 +1,17 @@
+program paxos_global;
+
+import jol.core.Runtime;
+
+/* glue for BFS */
+
+define(decreeRequest, keys(0, 1, 2), {String, String, String});
+
+// this PK could hide bugs in lower layers...
+define(requestStatus, keys(0, 3), {String, String, String, Integer, String});
+
+
+define(id, keys(0), {String});
+
+
+watch(id, ae);
+watch(decreeRequest, ae);

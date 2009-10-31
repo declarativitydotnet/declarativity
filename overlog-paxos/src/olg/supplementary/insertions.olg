@@ -1,0 +1,103 @@
+program insertions;
+
+import java.lang.System;
+
+watch(paxos_propose::send_propose, ae);
+
+//timer(beta, physical, 100, 1, 0);
+//timer(gamma, physical, 200, 1, 0);
+timer(alpha, logical, 10, 1, 10);
+timer(beta, logical, 500, 1, 500);
+timer(gamma, logical, 800, 1, 800);
+timer(delta, logical, 1400, 1, 1400);
+
+// accept: we'll say that 7001 has accepted a decree, "peter", for SeqNo 0.
+paxos_prepare::accept("tcp:localhost:7001", "tcp:localhost:7701", 1, 0, "peter") :- beta();
+paxos_prepare::accept("tcp:localhost:7000", "tcp:localhost:7701", 1, 0, "peter") :- beta();
+
+
+define(doping, {String});
+public
+doping(X) :- beta#insert(), paxos::self(X);
+
+
+// debug
+
+define(foo, {String});
+
+foo(X) :-
+	paxos::self(X),
+	beta#insert()
+{
+	Now := new Long(System.currentTimeMillis());
+	System.out.println(X.toString() + " BETA @"+ Now.toString());
+};
+
+foo(X) :-
+	paxos::self(X),
+	delta#insert()
+{
+	Now := new Long(System.currentTimeMillis());
+	System.out.println(X.toString() + "DELTA  @"+ Now.toString());
+
+};
+
+foo(X) :-
+	paxos::self(X),
+	gamma#insert()
+{
+	Now := new Long(System.currentTimeMillis());
+	System.out.println(X.toString() + "GAMMA  @"+ Now.toString());
+
+};
+
+
+// two additional decree requests have been submitted and enqueued.
+paxos_propose::q(X, Decree, "tcp:localhost:7701", 1234L) :- doping(X), Decree := "onward "+X; // , X == "tcp:localhost:7701";
+paxos_propose::q(X, Decree, "tcp:localhost:10000", 1235L) :- doping(X), Decree := "smarter than a speeding bullet" + X; //, X == "tcp:localhost:7000";
+
+define(pro, keys(0), {String, Integer});
+
+pro(X, 0) :-
+	beta(), paxos::self(X);
+
+pro(X, I+1) :-
+    pro(X, I),
+    t#insert();
+
+timer(t, physical, 200, 200, 0); 
+//timer(te, physical, 8000, 1, 8000);
+paxos_propose::q(X, Decree, "tcp:localhost:10000", Time) :-
+    pro(X, I),
+    I < 1000,
+    Time := new Long(System.currentTimeMillis()),
+    Decree := "and you don't stop " + X + " - " + I.toString();
+    
+
+
+watch(paxos_propose::q, ae);
+
+paxos_prepare::start("GO") :- gamma();
+
+public
+leader::start("GO") :- delta();
+
+
+watch(paxos::parliament, ae);
+watch(paxos::member, ae);
+
+
+/***************************/
+
+
+define(printrule, {String});
+public
+printrule(A) :-
+    paxos_prepare::global_history#insert(M, S, R, A)
+{
+    //System.out.println("GO(" + M.toString() + ":" + V.toString()+") -- "+S.toString() + " = " + A );
+    System.out.println("GO(" + M.toString() + ":" + R.toString()+") -- "+S.toString() + " = " + A );
+};
+
+
+
