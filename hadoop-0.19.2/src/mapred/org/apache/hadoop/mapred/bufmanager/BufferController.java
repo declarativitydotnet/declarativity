@@ -105,6 +105,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 							LOG.debug("Sent request " + request + " to " + location);
 						}
 						out.flush();
+						out.close();
+						out = null;
 						
 						synchronized (transfers) {
 							transfers.get(location).removeAll(handle);
