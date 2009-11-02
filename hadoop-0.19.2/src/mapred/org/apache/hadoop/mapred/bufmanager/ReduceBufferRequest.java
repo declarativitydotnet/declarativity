@@ -5,6 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
 
@@ -46,12 +47,14 @@ public class ReduceBufferRequest extends BufferRequest {
 		super.readFields(in);
 		this.reduceTaskId = new TaskID();
 		this.reduceTaskId.readFields(in);
+		this.code = WritableUtils.readString(in);
 	}
 
 	@Override
 	public void write(DataOutput out) throws IOException {
 		super.write(out);
 		this.reduceTaskId.write(out);
+		WritableUtils.writeString(out, this.code);
 	}
 	
 	public TaskID reduceTaskId() {
