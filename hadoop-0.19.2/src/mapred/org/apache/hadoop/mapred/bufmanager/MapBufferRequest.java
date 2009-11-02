@@ -5,6 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapred.TaskID;
@@ -15,6 +16,8 @@ public class MapBufferRequest extends BufferRequest {
 	
 	private int mapPartition;
 	
+	private String code;
+	
 	public MapBufferRequest() {
 	}
 	
@@ -22,6 +25,19 @@ public class MapBufferRequest extends BufferRequest {
 		super(sourceHost, destTaskId, destinationAddress);
 		this.mapJobId = mapJobId;
 		this.mapPartition = mapPartition;
+		this.code = sourceHost + ":" + destTaskId + ":" + mapJobId + ":" + mapPartition;
+	}
+	
+	@Override
+	public int hashCode() {
+		return code.hashCode();
+	}
+	
+	public boolean equals(Object o) {
+		if (o instanceof MapBufferRequest) {
+			return this.code.equals(((MapBufferRequest)o).code);
+		}
+		return false;
 	}
 	
 	@Override
@@ -35,6 +51,7 @@ public class MapBufferRequest extends BufferRequest {
 		this.mapJobId = new JobID();
 		this.mapJobId.readFields(in);
 		this.mapPartition = in.readInt();
+		this.code = WritableUtils.readString(in);
 	}
 
 	@Override
@@ -42,6 +59,7 @@ public class MapBufferRequest extends BufferRequest {
 		super.write(out);
 		this.mapJobId.write(out);
 		out.writeInt(this.mapPartition);
+		WritableUtils.writeString(out, this.code);
 	}
 	
 	public JobID mapJobId() {
