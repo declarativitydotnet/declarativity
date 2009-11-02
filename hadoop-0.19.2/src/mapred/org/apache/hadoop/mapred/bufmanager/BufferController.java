@@ -101,8 +101,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 						out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 						out.writeInt(handle.size());
 						for (BufferRequest request : handle) {
-							LOG.debug("Sending request " + request + " to " + location);
 							BufferRequest.write(out, request);
+							LOG.debug("Sent request " + request + " to " + location);
 						}
 						out.flush();
 						
