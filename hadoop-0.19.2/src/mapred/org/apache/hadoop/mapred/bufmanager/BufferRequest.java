@@ -13,11 +13,11 @@ import org.apache.hadoop.mapred.TaskID;
 public abstract class BufferRequest implements Writable {
 	public static enum Type{MAP, REDUCE};
 	
-	private String srcHost;
+	protected String srcHost;
 	
-	private TaskAttemptID destTaskId;
+	protected TaskAttemptID destTaskId;
 	
-	private InetSocketAddress destAddress;
+	protected InetSocketAddress destAddress;
 	
 	public BufferRequest() {
 	}
