@@ -12,12 +12,28 @@ public class ReduceBufferRequest extends BufferRequest {
 	
 	private TaskID reduceTaskId;
 	
+	private String code;
+	
 	public ReduceBufferRequest() {
 	}
 	
-	public ReduceBufferRequest(String sourceHost, TaskAttemptID destTaskId, InetSocketAddress destinationAddress, TaskID reduceTaskId) {
-		super(sourceHost, destTaskId, destinationAddress);
+	public ReduceBufferRequest(String sourceHost, TaskAttemptID mapTaskId, InetSocketAddress destinationAddress, TaskID reduceTaskId) {
+		super(sourceHost, mapTaskId, destinationAddress);
 		this.reduceTaskId = reduceTaskId;
+		
+		this.code = sourceHost + ":" + mapTaskId + ":" + reduceTaskId;
+	}
+	
+	@Override
+	public int hashCode() {
+		return code.hashCode();
+	}
+	
+	public boolean equals(Object o) {
+		if (o instanceof ReduceBufferRequest) {
+			return this.code.equals(((ReduceBufferRequest)o).code);
+		}
+		return false;
 	}
 	
 	@Override
