@@ -642,6 +642,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 								request((MapBufferRequest) request);
 							}
 							else {
+								LOG.debug("BufferController accept " + request);
 								request((ReduceBufferRequest) request);
 							}
 						}
