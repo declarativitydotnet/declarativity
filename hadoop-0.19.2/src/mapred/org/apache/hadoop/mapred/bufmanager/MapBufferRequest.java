@@ -26,7 +26,7 @@ public class MapBufferRequest extends BufferRequest {
 	
 	@Override
 	public String toString() {
-		return mapJobId.toString() + " map partition " + mapPartition;
+		return destination() + " requesting map buffers from job " + mapJobId.toString() + " partition " + mapPartition;
 	}
 	
 	@Override

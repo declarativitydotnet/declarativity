@@ -479,11 +479,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 								this.requests.removeAll(complete);
 							}
 							busy = false;
-							if (open && somethingToSend()) {
-								this.wait(1000); // wait a second
-							} else {
-								this.notifyAll();
-							}
+							this.notifyAll();
 						}
 					}
 				}

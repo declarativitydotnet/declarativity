@@ -22,7 +22,7 @@ public class ReduceBufferRequest extends BufferRequest {
 	
 	@Override
 	public String toString() {
-		return this.reduceTaskId.toString();
+		return destination() + " requesting buffer from reduce " + this.reduceTaskId.toString();
 	}
 	
 	@Override
