@@ -146,8 +146,6 @@ public class BufferController implements BufferUmbilicalProtocol {
 	private class RequestManager implements Comparable<RequestManager> {
 		private BufferRequest.Type requestType;
 		
-		private FileSystem localFs;
-		
 		private JobConf conf;
 		
 		/* The destination task identifier. */
@@ -170,7 +168,6 @@ public class BufferController implements BufferUmbilicalProtocol {
 		public RequestManager(JobConf conf, BufferRequest request) throws IOException {
 			this.conf = conf;
 			this.requestType = request.type();
-			this.localFs = FileSystem.getLocal(conf);
 			this.destination = request.destination();
 			this.partition = request.partition();
 			this.address = request.destAddress();
@@ -555,6 +552,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 	
     private TaskTracker tracker;
     
+    private FileSystem localFs;
+    
     private Thread acceptor;
     
     private RequestTransfer requestTransfer;
@@ -580,6 +579,7 @@ public class BufferController implements BufferUmbilicalProtocol {
 
 	public BufferController(TaskTracker tracker) throws IOException {
 		this.tracker   = tracker;
+		this.localFs   = FileSystem.getLocal(tracker.conf());
 		this.requestTransfer = new RequestTransfer();
 		this.executor  = Executors.newCachedThreadPool();
 		this.mapRequestManagers  = new HashMap<JobID, Set<RequestManager>>();
