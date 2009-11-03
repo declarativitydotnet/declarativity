@@ -776,10 +776,13 @@ public class BufferController implements BufferUmbilicalProtocol {
 		else if (!this.mapRequestManagers.get(jobid).contains(manager)) {
 			this.mapRequestManagers.get(jobid).add(manager);
 			if (this.mapRequestManagers.get(jobid).size() > job.getNumReduceTasks()) {
-				LOG.error("more request managers than reduces!");
+				LOG.warn("more request managers than reduces!");
 			}
 		}
-		else manager = null;
+		else {
+			LOG.debug("BufferController: request manager already exists." + request);
+			manager = null;
+		}
 		
 		if (manager != null) {
 			if (this.fileManagers.containsKey(jobid)) {
