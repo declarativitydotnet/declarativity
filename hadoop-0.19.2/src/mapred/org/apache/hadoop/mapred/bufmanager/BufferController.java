@@ -296,7 +296,8 @@ public class BufferController implements BufferUmbilicalProtocol {
 						LOG.info(this + " already sent file " + header);
 						return;
 					}
-					file.open(localFs);
+					
+					file.open(localFs); // TODO synchronized?
 					long length = file.seek(partition);
 					flush(out, file.dataInputStream(), length, header);
 				}
