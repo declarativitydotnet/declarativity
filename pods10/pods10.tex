@@ -113,6 +113,25 @@ $
 
 \subsubsection{State Change}
 
+it appears that under this interpretation a database is an atomic (due to the adjacent timestamps)
+pair of events with a deletion of the old value and assertion of the new, e.g.
+
+$
+del\_likes(peter, swimming)@456; \\
+likes(peter, hiking)@457;
+$
+
+\subsubsection{Sequences}
+
+$
+seq(Agent, S + 1)@N+1 \leftarrow \\
+  seq(Agent, S)@N, \\
+  event(Agent)@N; \\
+  \\
+seq(Agent, S)@N+1 \leftarrow \\
+seq(Agent, S)@N, \\
+\lnot event(Agent)@N;
+$
 
 \subsection{Semantics}
 \subsubsection{Chain of fixpoints interpretation}
