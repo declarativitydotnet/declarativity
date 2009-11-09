@@ -164,8 +164,6 @@ some theorem about distributed programs :)
 
 \subsection{Space is simply time}
 
-
-
 Dedalus programs can model many classes of distributed systems.  Take the (distributed) program
 
 $
@@ -200,6 +198,12 @@ As a middle ground, we might wish to enforce a constraint that $r(\_) > 0$.  Doi
 \end{figure}
 
 
+\subsection{All sequence inputs are derived from time}
+
+Input queues are simply a mapping between the ordering domain of the queue tuples and the time relation.  Naturally, this mapping
+is infinite also and cannot be expressed as EDB.  But we can instead constructively state the rules that define how the mapping 
+tracks the progress of the time relation.
+
 \subsection{Dedalus Programs can be efficiently implemented}
 
 :)
@@ -208,7 +212,7 @@ As a middle ground, we might wish to enforce a constraint that $r(\_) > 0$.  Doi
 
 \subsubsection{Time is infinite but punctuated}
 
-and indeed, so are any input streams.  we may dequeue as many events as we like from a given stream by creating a mapping
+and indeed, so are any input streams.  we may dequeue as many events as we like from a given stream by using the mapping
 between the elements in the queue and the time relation.  in the simplest case this mapping would be from the ordering domain 
 of the queue to the time domain, but we can establish more complicated data-dependent mappings by including other attributes 
 (e.g. we could implement QoS by including the address in the mapping and dequeueing a different number of items per host
