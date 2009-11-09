@@ -1,0 +1,239 @@
+%%\documentclass[preprint,10pt]{sigplanconf}
+%%\documentclass[10pt]{journal}
+%%\documentclass[preprint, 10pt]{sigplanconf}
+
+
+
+\documentclass{acm_proc_article-sp-sigmod09}
+
+%%\usepackage{amsthm}
+
+
+\usepackage{color}
+\usepackage{times}
+%%\usepackage{url}
+%%\usepackage{graphicx}
+%%\usepackage{boxedminipage}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+%%\usepackage{verbatim}
+%%\usepackage{latexsym}
+\usepackage{amsmath, amssymb}
+%%\usepackage{amsthm}
+
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+
+
+\begin{document}
+%
+% --- Author Metadata here ---
+\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
+%\setpagenumber{50}
+%\CopyrightYear{2002} % Allows default copyright year (2002) to be over-ridden - IF NEED BE.
+%\crdata{0-12345-67-8/90/01}  % Allows default copyright data (X-XXXXX-XX-X/XX/XX) to be over-ridden.
+% --- End of Author Metadata ---
+
+\title{Dedalus\titlenote{\small
+Dedalus is intended as a precursor language for \textbf{Bloom}, a high-level language for programming distributed systems that
+will replace Overlog in the \textbf{BOOM} project.  
+As such, it is derived from the character Stephen Dedalus in James Joyce's \emph{Ulysses}, whose dense and precise chapters 
+precede those of the novel's hero, Leopold Bloom.  The character Dedalus, in turn, was partly derived from Daedalus, the greatest
+of the Greek engineers and father of Icarus.  Unlike Overlog, which flew too close to the sun, Dedalus remains firmly grounded.
+}: 
+Datalog in Space and Time} 
+%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
+%
+% You need the command \numberofauthors to handle the "boxing"
+% and alignment of the authors under the title, and to add
+% a section for authors number 4 through n.
+
+\numberofauthors{5}
+
+\author{Peter Alvaro, Neil Conway, Tyson Condie, Joseph M. Hellerstein, David Meiers}
+%%\author{Neil Conway}
+
+\maketitle
+
+\begin{abstract}
+foo
+\end{abstract}
+
+\section{Introduction}
+
+\subsection{Datalog}
+
+\subsubsection{The basics}  
+
+\subsubsection{Negation and stratification}
+
+\subsubsection{Local stratification}
+
+\subsubsection{Choice}
+
+\subsection{Motivation: Distributed Systems}
+
+Datalog is static.  What does Datalog even \emph{mean} extended in time?
+
+Overlog pretended there was no time; we used the ``chain of fixpoints" model and treated the database as overwritable storage. 
+
+\section{Dedalus}
+
+By reifying time as data, we are able to reason about time in our logic.  some useful things fall out of this right away: persistence is now programatic rather than a separate type, ditto key constraints.  event creation vs. effect ambiguities are resolved.
+
+Perhaps more importantly, the infinite sequence of abstract time gives us a way to reason about ordering, which is particularly difficult in a set-oriented language like Datalog.  The ordering over any program inputs (e.g. message queues) can be represented as a mapping between the ordering domain of the input and the time relation.
+
+\subsection{Syntax}
+\subsubsection{Events}
+\begin{verbatim}
+likes(peter, swimming)@123;
+\end{verbatim}
+
+\subsubsection{Persistence}
+
+\begin{verbatim}
+likes(Person, Activity)@N+1 :-
+  likes(Person, Activity)@N,
+  notin del_likes(Person, Activity)@N;
+\end{verbatim}
+
+or does this look better?
+
+$
+likes(Person, Activity)@N+1 \leftarrow \\
+  \quad \quad likes(Person, Activity)@N, \\
+  \lnot~del\_likes(Person, Activity)@N;
+$
+
+\subsubsection{State Change}
+
+
+\subsection{Semantics}
+\subsubsection{Chain of fixpoints interpretation}
+\subsubsection{Instantaneous time interpretation}
+
+\subsection{Examples}
+
+\section{Equivalences}
+
+\subsection{Dedalus is Datalog if we project out time}
+
+\subsubsection{Theorem 1}
+
+%%\begin{theorem}
+\newtheorem{foo}{bar bas bat}
+every local Dedalus program P with only deductive rules is equivalent to a Datalog program P'.
+%%\end{theorem}
+
+\subsubsection{Theorem 2}
+
+every local Dedalus program P with deductive and inductive rules and trace T is equivalent to a Datalog program P' with an EDB T'.
+
+\subsubsection{Theorem 3}
+
+some theorem about distributed programs :)
+
+\subsection{Dedalus programs are stratifiable if the equivalent Datalog program is stratifiable}
+
+\subsubsection{Theorem 4}
+
+\subsection{Space is simply time}
+
+
+
+Dedalus programs can model many classes of distributed systems.  Take the (distributed) program
+
+$
+ping(@A, B)@N + r(A, B) \leftarrow \\
+init(A, B)@N; \\
+\\
+pong(@B, A)@N + r(A, B) \leftarrow \\
+ping(@A, B)
+$
+
+We may regard  \emph{r()} as a function over the attributes occurring in the body of the rule.  The implementation or \emph{r()} is provided by
+the model.  For example:
+
+\subsubsection{Synchronous Systems}
+
+r(\_) = 1 for all \_.  Computation proceeds in rounds.
+
+\subsubsection{Asynchronous Systems}
+
+The return value of r may be any arbitrary integer, positive or negative, including a NULL integer indicating an infinite value.
+
+\subsubsection{Lamport Clocks}
+
+As a middle ground, we might wish to enforce a constraint that $r(\_) > 0$.  Doing so would entail implementing a \emph{Lamport Clock}.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.75\linewidth]{dedalus-time.pdf}
+  \label{fig:dedalus-time}
+  \caption{Time moves forward in three ways: across strata, to the next fixpoint, and to some future fixpoint.}
+\vspace{-8pt}
+\end{figure}
+
+
+\subsection{Dedalus Programs can be efficiently implemented}
+
+:)
+
+\subsubsection{Local stratification on time}
+
+\subsubsection{Time is infinite but punctuated}
+
+and indeed, so are any input streams.  we may dequeue as many events as we like from a given stream by creating a mapping
+between the elements in the queue and the time relation.  in the simplest case this mapping would be from the ordering domain 
+of the queue to the time domain, but we can establish more complicated data-dependent mappings by including other attributes 
+(e.g. we could implement QoS by including the address in the mapping and dequeueing a different number of items per host
+per time unit).
+
+\subsection{Dedalus Programs are storage-optimal}
+
+:)
+
+\subsubsection{We need only store the event tuple with max(Timestamp) for each projection of the other columns to query the present time}
+
+
+\subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}
+
+\section{Correctness properties}
+
+\subsection{Safety}
+
+we need merely to show the base case, in which an invariant is established (in fact, this should \emph{always} be a valid 
+initial state, or the safety property isn't guaranteed to always hold), the existence of an inductive rule that ensures that every 
+subsequent step maintains the invariant, and the absence of any rule that can break the induction by deducing a del\_* rule.
+
+\subsection{Liveness}
+
+We cannot state a liveness property as an assertion, because doing so would involve quantifying over time,
+and time is an infinite sequence.  Instead, we must prove liveness properties, expressed as temporal logic
+formulae, given the rules of the program and any given safety properties as axioms.
+
+In many cases it will be possible to show that attempts to achieve liveness properties will occur infinitely often, and that
+these attempts have a nonzero probability of success.  We'd like to do better than this and provide realistic guarantees...
+
+\subsubsection{Deadlock}
+
+
+
+\subsubsection{Livelock}
+
+\subsection{Examples}
+
+\section{Future Work}
+
+%%\bibliographystyle{abbrvnat}
+%%\bibliography{eurosys}
+
+%%\input{appendix}
+
+\end{document}
