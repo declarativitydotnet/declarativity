@@ -22,6 +22,8 @@
 \usepackage{amsmath, amssymb}
 %%\usepackage{amsthm}
 
+\usepackage{alltt}
+
 
 \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 \newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
@@ -151,41 +153,35 @@ likes(peter, swimming)@123;
 
 \subsubsection{Persistence}
 
-\begin{verbatim}
-likes(Person, Activity)@N+1 :-
-  likes(Person, Activity)@N,
-  notin del_likes(Person, Activity)@N;
-\end{verbatim}
 
-or does this look better?
 
-$
-likes(Person, Activity)@N+1 \leftarrow \\
-  \quad \quad likes(Person, Activity)@N, \\
-  \lnot~del\_likes(Person, Activity)@N;
-$
+\begin{alltt}
+likes(Person, Activity)@N+1 \(\leftarrow\)
+  likes(Person, Activity)@N, 
+  \(\lnot\)del\_likes(Person, Activity)@N;
+\end{alltt}
 
 \subsubsection{State Change}
 
 it appears that under this interpretation a database is an atomic (due to the adjacent timestamps)
 pair of events with a deletion of the old value and assertion of the new, e.g.
 
-$
-del\_likes(peter, swimming)@456; \\
+\begin{alltt}
+del\_likes(peter, swimming)@456; 
 likes(peter, hiking)@457;
-$
+\end{alltt}
 
 \subsubsection{Sequences}
 
-$
-seq(Agent, S + 1)@N+1 \leftarrow \\
-  seq(Agent, S)@N, \\
-  event(Agent)@N; \\
-  \\
-seq(Agent, S)@N+1 \leftarrow \\
-seq(Agent, S)@N, \\
-\lnot event(Agent)@N;
-$
+\begin{alltt}
+seq(Agent, S + 1)@N+1 \(\leftarrow\)
+  seq(Agent, S)@N, 
+  event(Agent)@N; 
+  
+seq(Agent, S)@N+1 \(\leftarrow\) 
+  seq(Agent, S)@N, 
+  \(\lnot\) event(Agent)@N;
+\end{alltt}
 
 \subsection{Semantics}
 \subsubsection{Chain of fixpoints interpretation}
@@ -200,20 +196,66 @@ $
 
 \subsection{Dedalus is Datalog if we project out time}
 
-\subsubsection{Theorem 1}
+\subsubsection{Local, Deductive Dedalus}
 
-%%\begin{theorem}
-\newtheorem{foo}{bar bas bat}
 every local Dedalus program P with only deductive rules is equivalent to a Datalog program P'.
 %%\end{theorem}
 
-\subsubsection{Theorem 2}
+\subsubsection{L}
 
 every local Dedalus program P with deductive and inductive rules and trace T is equivalent to a Datalog program P' with an EDB T'.
 
 \subsubsection{Theorem 3}
 
 some theorem about distributed programs :)
+
+\subsection{All sequence inputs are derived from time}
+
+Input queues are simply a mapping between the ordering domain of the queue tuples and the time relation.  Naturally, this mapping
+is infinite also and cannot be expressed as EDB.  But we can instead constructively state the rules that define how the mapping 
+tracks the progress of the time relation.
+
+Take a relation $q$ defined as:
+
+$q(A, B, \underline{O})$
+
+The relation is persistent, and therefore is associate with the following rule:
+
+\begin{alltt}
+q(A, B, O)@N+1 \(\leftarrow\)
+  q(A, B, O)@N, 
+  \(\lnot\)del\_q(A, B, O)@N;
+\end{alltt}
+
+In this example, the ordering domain $O$ is already given in the schema.  Like time, this queue may be viewed as an infinite stream.
+To enforce an ordering on how we dequeue from the relation, we define a mapping between the ordering domain and the logical clock
+time.  This mapping is likewise infinite and therefore may not be given as EDB.  However, we may express how to continually generate 
+the mapping via a set of rules.
+
+\subsubsection{Example 1: a FIFO queue}
+
+\begin{alltt}
+sel\_q(N, O)@N \(\leftarrow\)
+  max\_q(O)@N;
+
+max\_q(max<O>)@N \(\leftarrow\)
+  q(\_, \_, O)@N;
+
+del\_q(A, B, O)@N \(\leftarrow\)
+  deq\_q(N, O)@N,
+  q(A, B, O)@N;
+\end{alltt}
+
+\subsubsection{Example 2: per-host FIFOs}
+
+\begin{alltt}
+sel\_q(N, O)@N \(\leftarrow\)
+  max\_q(_, O)@N; 
+
+max\_q(A, max<O>)@N \(\leftarrow\)
+q(A, \_, O)@N;
+\end{alltt}
+
 
 \subsection{Dedalus Programs are storage-optimal}
 
@@ -225,19 +267,21 @@ some theorem about distributed programs :)
 \subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}
 
 
+
+
 \section{Distributed Systems}
 
 \subsection{Space is simply time}
 
 Dedalus programs can model many classes of distributed systems.  Take the (distributed) program
 
-$
-ping(@A, B)@N + r(A, B) \leftarrow \\
-init(A, B)@N; \\
-\\
-pong(@B, A)@N + r(A, B) \leftarrow \\
-ping(@A, B)
-$
+\begin{alltt}
+ping(@A, B)@N + r(A, B) \(\leftarrow\)
+  init(A, B)@N; 
+
+pong(@B, A)@N + r(A, B) \(\leftarrow\)
+  ping(@A, B)
+\end{alltt}
 
 We may regard  \emph{r()} as a function over the attributes occurring in the body of the rule.  The implementation or \emph{r()} is provided by
 the model.  For example:
@@ -263,11 +307,6 @@ As a middle ground, we might wish to enforce a constraint that $r(\_) > 0$.  Doi
 \end{figure}
 
 
-\subsection{All sequence inputs are derived from time}
-
-Input queues are simply a mapping between the ordering domain of the queue tuples and the time relation.  Naturally, this mapping
-is infinite also and cannot be expressed as EDB.  But we can instead constructively state the rules that define how the mapping 
-tracks the progress of the time relation.
 
 \subsection{Dedalus Programs can be efficiently implemented}
 
