@@ -1,0 +1,160 @@
+
+\section{Examples}
+
+\subsection{Heartbeat Cache Management}
+
+\begin{Dedalus}
+hb_cache(Me, Node, Tstamp)@N :-
+    hb(Me, Node)@N,
+    Tstamp := time();
+
+hb_cache(Me, Node, Tstamp)@N+1 :-
+    hb_cache(Me, Node, Tstamp)@N,
+    notin del_hb_cache(Me, Node, Tstamp)@N;
+
+del_hb_cache(Me, Node, Tstamp)@N :-
+    hb_cache(Me, Node, Tstamp)@N, 
+    duty_cycle_timer()@N,
+    time() - Tstamp > 5000L;
+\end{Dedalus}
+
+\subsection{Semaphores}
+
+\begin{Dedalus}
+// could wait a long time; the queue must be persisted.
+want_p(User)@N+1 :-
+    want_p(User)@N,
+    notin del_want_p(User)@N;
+
+// could use min<>...
+p(choose<User>)@N :-
+    sem(X)@N,
+    want_p(User)@N,
+    X > 0;
+
+sem(X-1)@N+1 :-
+    sem(X)@N,
+    p(User)@N;
+
+del_want_p(User)@N :-
+    p(User)@N;
+ 
+sem(X+1)@N+1 :-
+    sem(X)@N,
+    v(User)@N;
+\end{Dedalus}
+
+\subsection{Two-Phase Commit}
+
+\begin{Dedalus}
+//(peers is materialized)
+peers(@Commander, Peer)@N+1 :-
+    peers(@Commander, Peer)@N;
+
+// we could materialize peer_cnt, but it's cheap to compute
+peer_cnt(@Commander, count<Peer>)@N :-
+  peers(@Commander, Peer)@N;
+
+// we need to talk explicitly about whether we're materializing vote, and carrying out deductions over it, or 
+// treating it as an event, and naively counting.  we can 
+
+vote(Commander, Xact, Peer, Vote)@N+1 :-
+    vote(Commander, Xact, Peer, Vote)@N,
+    notin del_vote(Commander, Xact, Peer, Vote)@N;
+
+yes_cnt(@Commander, Xact, count<Peer>)@N :-
+  vote(@Commander, Xact, Peer, Vote)@N,
+  Vote == "yes";
+
+/* Prepare => Commit if unanimous */
+transaction(@Commander, Xact, "commit")@N+1 :-
+  peer_cnt(@Commander, NumPeers)@N,
+  yes_cnt(@Commander, Xact, NumYes)@N,
+  transaction(@Commander, Xact, State)@N,
+  NumPeers == NumYes, State == "prepare";
+
+/* Prepare => Abort if any "no" votes */
+transaction(@Commander, Xact, "abort")@N+1 :-
+  vote(@Commander, Xact, _, Vote)@N,
+  transaction(@Commander, Xact, State)@N,
+  Vote == "no", State == "prepare";
+
+/* All peers know transaction state */
+transaction(@Peer, Xact, State)@N+M :-
+  peers(@Commander, Peer)@N,
+  transaction(@Commander, Xact, State)@N;
+\end{Dedalus}
+
+\section{Translating Overlog to Dedalus}
+
+\begin{figure}[t]
+\begin{tabular}{ll} \hline
+%%Rule Pattern & Idiom & Prepare & Propose & Election \\ \hline \hline
+$p@X$ & The EDB predicate indicating the initial ground. \\
+$co\_p@N$ & The carryover ground for p. \\
+$ri\_p@N$ & The reckless inflationary predicate for p. \\
+$del\_p@N$ & Deduced deletions for p. \\
+$i\_p@N$ & The ``final", consistent IDB predicate for p. \\ \hline
+\end{tabular}
+\caption{Special Predicates.}
+\label{fig:overlogtab}
+\end{figure}
+
+
+A table in Overlog can be described by the tuple
+
+$T(n, A, K)$
+
+where $n$ is the table name, $A$ is an ordered list of attribute types, and $K$ is a set of indices into $A$, which together defined the primary key of the relation.
+If $K \neq \emptyset$, then the table is \emph{materialized}.
+
+\subsection{Rewrite Algorithm}
+
+Given an Overlog program P and a set of table definitions, each given as $T(n, A, K)$, output a doughface program P' containing all the statements in the numbered lines below:
+
+\begin{Dedalus} \small
+For every predicate n in P with table definition {n, A, K}
+  1.) ri_n@N :- e_n@N
+  if K is nonempty, divide the indices of A into two 
+  disjoint sets X and Y s.t. 
+    \(X = alphabet(K)\)
+    \(Z = alphabet(indices(A))\)
+    \(Y = Z - X\)
+      (where alphabet() is a function mapping a list of 
+      integers to a list of uppercase letters.)
+    1a.) \(i_n(Z)@N \leftarrow ri_n(Z)@N, choose((X), (Y));\)
+    2a.) \(pk_n(X)@N :- \leftarrow_n(Z)@N;\)
+    3a.) \(i_n(Z)@N \leftarrow co_n@N, \lnot pk_n@N;\)
+    4a.) \(co_n@N+1 \leftarrow i_n@N, \lnot del_n@N;\)
+  otherwise
+    1b.) \(i_n@N \leftarrow co_n@N;\)
+    2b.) \(i_n@N \leftarrow ri_n@N;\)
+  2.)  Perform the consistent IDB rewrite on P:
+    - for all predicates that are mutually recursive with \(n\), 
+      replace all occurrences of \(p\) with \(ri_n\);
+    - for all predicates stratified above n, replace all 
+      occurrences of n with \(i\_n\).
+ 
+\end{Dedalus}
+
+The algorithm above takes the following steps:
+\begin{itemize}
+\item (1) Ensure that all events are projected into the inflationary IDB.
+\item (1a) After completing evaluation on the stratum for $ri\_n$, choose a subset (only proper if there are key violations) S of $ri\_n$ such that
+each assignment of values to the key attributes X only occurs once in S
+the values of the non-key attributes Y are functionally dependent on X
+\item (2a) Project out the key columns.
+\item (3a) Project any facts induced from the previous timestep into the consistent IDB $i\_n$ for the current timestep, provided their key columns X do not appear in the key projection $pk\_n$.
+\item (4a) Induce into the next timestep any consistent IDB tuples from the current timestep, provided we have not deduced their deletion in this timestep.
+\end{itemize}
+
+This rewrite ensures that the semantics associated with materialization and key constraint maintenance in the Overlog program are precisely mimicked in the doughface translation. In particular, this means that:
+
+\begin{enumerate}
+\item If there are any keys defined on the table, tuples persist, once inserted, until they are deleted. This is captured by (3a).
+\item In the event of a key conflict,
+\begin{enumerate}
+	\item If a tuple carried over from a previous timestep conflicts with a new tuple, the old one is not included in the new consistent IDB (3a).
+	\item If there are multiple conflicting new tuples, one of them is chosen arbitrarily (1a).
+\end{enumerate}
+\end{enumerate}
