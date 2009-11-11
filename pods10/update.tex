@@ -121,6 +121,17 @@ $Q$ & Set of query timestamps \\ \hline
 
 \subsubsection{Naive Deductive Implementation}
 
+To evaluate a schedule consisting of inserts, updates and queries, the naive deductive implementation must,
+at a minimum,
+\begin{enumerate}
+\item Write every event once.  We may think of this as sequential log appends.  An update entails two writes: one for the deletion
+and one for the insertion of the new tuple.
+\item Read the entire log at least once.
+\item For each query, perform the necessary number of inductive steps to determine if relevant predicates hold at query time.
+On the surface, this would appear to be the interval between the ground fact time and the query time, if that interval is unbroken
+by a deletion predicate.
+\end{enumerate}
+
 $(|S|+2|U|)s + (|S|+2|U|)r + (\displaystyle\sum_{i=0}^{|Q|-1} \displaystyle\sum_{j=0}^{|T|-1} Q_{i} - T_{j})d$
 
 \subsubsection{Naive Overwriteable Storage Implementation}
