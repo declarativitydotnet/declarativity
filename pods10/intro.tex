@@ -1,0 +1,26 @@
+\section{Introduction}
+
+Traditional database systems are based on declarative query languages that specify transformations as dataflows over an updatable store.
+Such query languages are either not expressive enough to capture common programming constructs, or are at best awkward to
+use in this fashion.  The family of logic-based database languages, of which Datalog is the progenitor, represent highly
+expressive programming languages that produce similar dataflow representations.  Datalog is purely deductive: a program specifies the rules
+by which the IDB relations or \emph{views} are populated based on the EDB or static database, which is never updated.
+Recent programming language research has explored the use of Datalog-based languages for expressing distributed systems.  Because distributed
+systems are not static, but move through successive states as time elapses, these efforts were forced to introduce dynamic data storage (e.g. update and
+deletion) to the Datalog model.  These earlier efforts were plagued, however, with ambiguities about how and when state changes occur and when 
+they may be visible, putting a heavy burden on the programmer to ensure atomicity of updates over time.
+
+In this work, we present a formal model of Datalog augmented with time extensions.  By reifying time as data an introducing it into the logic, these 
+extensions will eliminate existing ambiguities, ensure atomicity of updates and make it possible to express system invariants that 
+can guarantee liveness properties, a key challenge in building distributed systems.
+
+
+\subsection{Datalog}
+
+\subsubsection{The basics}  
+
+\subsubsection{Negation and stratification}
+
+\subsubsection{Local stratification}
+
+\subsubsection{Choice}

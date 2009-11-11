@@ -1,0 +1,89 @@
+%%\documentclass[preprint,10pt]{sigplanconf}
+%%\documentclass[10pt]{journal}
+%%\documentclass[preprint, 10pt]{sigplanconf}
+
+
+
+\documentclass{acm_proc_article-sp-sigmod09}
+
+%%\usepackage{amsthm}
+
+
+\usepackage{color}
+\usepackage{times}
+%%\usepackage{url}
+%%\usepackage{graphicx}
+%%\usepackage{boxedminipage}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+%%\usepackage{verbatim}
+%%\usepackage{latexsym}
+\usepackage{amsmath, amssymb}
+%%\usepackage{amsthm}
+
+\usepackage{alltt}
+
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\wrm}[1]{{\textcolor{BurntOrange}{#1 -- wrm}}}
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+%dedalus environment for code
+\newenvironment{Dedalus}{
+\vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
+\begin{alltt}\fontsize{9pt}{9pt}\selectfont}
+{\end{alltt}\end{minipage}\vspace{0.5em}}
+
+\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
+
+\begin{document}
+%
+% --- Author Metadata here ---
+\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
+%\setpagenumber{50}
+%\CopyrightYear{2002} % Allows default copyright year (2002) to be over-ridden - IF NEED BE.
+%\crdata{0-12345-67-8/90/01}  % Allows default copyright data (X-XXXXX-XX-X/XX/XX) to be over-ridden.
+% --- End of Author Metadata ---
+
+\title{Dedalus\titlenote{\small
+Dedalus is intended as a precursor language for \textbf{Bloom}, a high-level language for programming distributed systems that
+will replace Overlog in the \textbf{BOOM} project~\cite{boom-techr}.  
+As such, it is derived from the character Stephen Dedalus in James Joyce's \emph{Ulysses}, whose dense and precise chapters 
+precede those of the novel's hero, Leopold Bloom.  The character Dedalus, in turn, was partly derived from Daedalus, the greatest
+of the Greek engineers and father of Icarus.  Unlike Overlog, which flew too close to the sun, Dedalus remains firmly grounded.
+}: 
+Datalog in Space and Time} 
+%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
+%
+% You need the command \numberofauthors to handle the "boxing"
+% and alignment of the authors under the title, and to add
+% a section for authors number 4 through n.
+
+\numberofauthors{5}
+
+\author{Peter Alvaro, Neil Conway, William R. Marczak, Joseph M. Hellerstein, David Maier}
+%%\author{Neil Conway}
+
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+
+\input{intro}
+\input{motivation}
+\input{dedalus}
+\input{update}
+\input{distributed}
+\input{correctness}
+\input{future}
+
+\bibliographystyle{abbrvnat}
+\bibliography{pods}
+
+%%\input{appendix}
+
+\end{document}
