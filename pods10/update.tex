@@ -38,11 +38,7 @@ Input queues are simply a mapping between the ordering domain of the queue tuple
 is infinite also and cannot be expressed as EDB.  But we can instead constructively state the rules that define how the mapping 
 tracks the progress of the time relation.
 
-Take a relation $q$ defined as:
-
-$q(A, B, \underline{O})$
-
-The relation is persistent, and therefore is associate with the following rule:
+Take a persistent relation q, associated with the following rule:
 
 \begin{Dedalus}
 q(A, B, O)@N+1 \(\leftarrow\)
