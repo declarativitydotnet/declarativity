@@ -40,28 +40,70 @@ their consequences will become visible. Such rules, called message rules, allow 
 are likely to have different clock values, and messages may be lost or delayed arbitrarily.
 
 \subsubsection{Events}
-\begin{Dedalus}
-likes(peter, swimming)@123;
-\end{Dedalus}
+
+An event in Dedalus corresponds to a Datalog fact.  It is a bodyless head clause with all constant terms in the form
+
+
+$p(C_{1},C_{2},[...],C_{n})@I;$
+
+
+where the elements of C are constants of any type and I is an integer constant.
+
+Events provide ground for any logical inferences given by the deductive rules of the program, and may provide ground for inferences at 
+future time steps via inductive rules.
 
 \subsubsection{Persistence}
 
+Events are only true at a single timestep.  It might seem that we could express a persistent predicate as a Datalog fact with a free variable 
+for the time suffix.  The tuple would then be universally quantified over time:
+
+\begin{Dedalus}
+p(A, B)@N;
+\end{Dedalus}
+
+But clearly, because this must be interpreted as a rule head with an unbound variable, it produces an unsafe rule.  Instead, persistence is
+expressed by an inductive rule that projects a tuple into the next timestep:
+
+\begin{Dedalus}
+p(A, B)@N+1 \(\leftarrow\)
+  p(A, B)@N, 
+  \(\lnot\)del\_p(A, B)@N;
+\end{Dedalus}
+
+The second subgoal allows us to model overwriteable storage: without it, a tuple will be trivially true at every future timestep if it becomes true
+at any timestep.  Consider the following trace of events:
+
+\begin{Dedalus}
+p(1,2)@101;
+p(1,3)@102;
+p(1,?)@200;
+del_p(1,2)@300;
+p(1,?)@301;
+\end{Dedalus}
+
+It is easy to see that the results of the two queries are:
 
 
 \begin{Dedalus}
-likes(Person, Activity)@N+1 \(\leftarrow\)
-  likes(Person, Activity)@N, 
-  \(\lnot\)del\_likes(Person, Activity)@N;
+p(1,2)@200;
+p(1,3)@200;
+p(1,3)@301;
 \end{Dedalus}
 
 \subsubsection{State Change}
 
-it appears that under this interpretation a database is an atomic (due to the adjacent timestamps)
-pair of events with a deletion of the old value and assertion of the new, e.g.
+Under this interpretation, a database update is an atomic (due to the adjacent timestamps)
+pair of events with a deletion of the old value and assertion of the new, in the form:
+
+$p(C_{1},C_{2},[...],C_{n})@I;$
+\\
+$del\_p(C_{1},C_{2},[...],C_{n})@I+1;$
+
+For example:
 
 \begin{Dedalus}
-del\_likes(peter, swimming)@456; 
-likes(peter, hiking)@457;
+del\_p(1,2)@300; 
+p(1, 4)@301;
 \end{Dedalus}
 
 \subsubsection{Sequences}
@@ -77,5 +119,5 @@ seq(Agent, S)@N+1 \(\leftarrow\)
 \end{Dedalus}
 
 \subsection{Semantics}
-\subsubsection{Chain of fixpoints interpretation}
-\subsubsection{Instantaneous time interpretation}
+\subsection{Post-hoc Interpretation}
+\subsection{Continuous Interpretation}
