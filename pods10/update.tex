@@ -76,6 +76,7 @@ max\_q(A, max<O>)@N \(\leftarrow\)
 $d$ & Cost of a deductive step \\
 $s$ & Cost of storing a tuple \\
 $r$ & Cost of reading a tuple \\ 
+$t$ & Number of tuple derivations from deductive rules \\ 
 \hline
 $S$ & Set of tuples inserted \\
 $U$ & Set of tuples updated \\
@@ -101,10 +102,13 @@ On the surface, this would appear to be the interval between the ground fact tim
 by a deletion predicate.
 \end{enumerate}
 
-$(|S|+2|U|)s + (|S|+2|U|)r + (\displaystyle\sum_{i=0}^{|Q|-1} \displaystyle\sum_{j=0}^{|T|-1} Q_{i} - T_{j})d$
+$(|S|+2|U|)s + (|S|+2|U|)r + t + (\displaystyle\sum_{i=0}^{|Q|-1} \displaystyle\sum_{j=0}^{|T|-1} Q_{i} - T_{j})d$
 
 \subsubsection{Naive Overwriteable Storage Implementation}
 
-$|S| + 2|U|$
+In this case, every update entails a read and then a write.
+
+$|S|s + |U|s + |U|r + t$
+
 
 %%\subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}
