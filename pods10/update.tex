@@ -50,6 +50,24 @@ q(A, B, O)@N+1 \(\leftarrow\)
 \end{Dedalus}
 
 In this example, the ordering domain $O$ is already given in the schema.  Like time, this queue may be viewed as an infinite stream.
+To interact with a queue, we should be able to atomically dequeue an element in any timestep.  That is to say, in a given fixpoint computation,
+we should be able to take an element from the queue such that in the next timestep that element is no longer there, regardless of the
+underlying queue discipline.  Let's assume for a moment the existence of two helper predicates for operations on \emph{q}: \emph{sel\_q} and
+\emph{deq\_q}.  
+
+
+\begin{alltt}
+begin_work(A, B, O) \(\leftarrow\)
+  q(A, B, O)@N,
+  event(A)@N, 
+  sel_q(O)@N;
+  
+  
+deq_q(O) \(\leftarrow\) 
+  begin_work(_, _, O);
+\end{alltt}
+
+
 To enforce an ordering on how we dequeue from the relation, we define a mapping between the ordering domain and the logical clock
 time.  This mapping is likewise infinite and therefore may not be given as EDB.  However, we may express how to continually generate 
 the mapping via a set of rules.
@@ -57,33 +75,59 @@ the mapping via a set of rules.
 \subsubsection{Example 1: a FIFO queue}
 
 \begin{Dedalus}
-sel\_q(N, O)@N \(\leftarrow\)
+sel\_q(O)@N \(\leftarrow\)
   max\_q(O)@N;
 
 max\_q(max<O>)@N \(\leftarrow\)
   q(\_, \_, O)@N;
 
 del\_q(A, B, O)@N \(\leftarrow\)
-  deq\_q(N, O)@N,
+  deq\_q(O)@N,
   q(A, B, O)@N;
 \end{Dedalus}
 
 \subsubsection{Example 2: per-host FIFOs}
 
 \begin{Dedalus}
-sel\_q(N, O)@N \(\leftarrow\)
+sel\_q(O)@N \(\leftarrow\)
   max\_q(_, O)@N; 
 
 max\_q(A, max<O>)@N \(\leftarrow\)
-q(A, \_, O)@N;
+  q(A, \_, O)@N;
 \end{Dedalus}
 
 
-\subsection{Dedalus Programs are storage-optimal}
+\subsection{Persistent Storage Implementations}
 
 :)
 
-\subsubsection{We need only store the event tuple with max(Timestamp) for each projection of the other columns to query the present time}
+%%\subsubsection{We need only store the event tuple with max(Timestamp) for each projection of the other columns to query the present time}
+\subsubsection{Cost Model}
+
+\begin{figure}[t]
+\begin{tabular}{ll} \hline
+%%Rule Pattern & Idiom & Prepare & Propose & Election \\ \hline \hline
+$d$ & Cost of a deductive step \\
+$s$ & Cost of storing a tuple \\
+$r$ & Cost of reading a tuple \\ 
+\hline
+$S$ & Set of tuples inserted \\
+$U$ & Set of tuples updated \\
+$P$ & Set of stored tuples, with time projected out \\ 
+$T$ & Set of stored tuple timestamps \\ 
+$Q$ & Set of query timestamps \\ \hline 
+\end{tabular}
+\caption{Cost model.}
+\label{fig:breakdown}
+\end{figure}
 
 
-\subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}
+\subsubsection{Naive Deductive Implementation}
+
+$(|S|+2|U|)s + (|S|+2|U|)r + (\displaystyle\sum_{i=0}^{|Q|-1} \displaystyle\sum_{j=0}^{|T|-1} Q_{i} - T_{j})d$
+
+\subsubsection{Naive Overwriteable Storage Implementation}
+
+$|S| + 2|U|$
+
+%%\subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}
