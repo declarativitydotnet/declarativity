@@ -1,0 +1,81 @@
+\section{Dedalus}
+
+By reifying time as data, we are able to reason about time in our logic.  some useful things fall out of this right away: persistence is now programatic rather than a separate type, ditto key constraints.  event creation vs. effect ambiguities are resolved.
+
+Perhaps more importantly, the infinite sequence of abstract time gives us a way to reason about ordering, which is particularly difficult in a set-oriented language like Datalog.  The ordering over any program inputs (e.g. message queues) can be represented as a mapping between the ordering domain of the input and the time relation.
+
+\subsection{Syntax}
+
+A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix. Time suffixes take one of the forms:
+
+\begin{enumerate}
+\item $N$
+\item $N + 1$
+\item $N + r(A_{1}, A_{2}, [...], A_{n})$
+\item an integer
+\end{enumerate}
+
+A Dedalus predicate therefore has the following form:
+
+$p(A_{1}, A_{2}, [...], A_{n})@S$
+
+The predicate p() is a truth-valued function over its arguments $A_{1} - A_{n}$, which may be of any type, and S, which is an integer expression 
+referring to the logical clock time at which the predicate holds, taking one of the three suffix forms above. Facts and rules in Dedalus are 
+defined just as in Datalog, with the additional restrictions:
+
+\begin{itemize}
+\item Every body predicate may only have the suffix $N$.
+\item A head predicate may have any suffix except a constant integer.
+\item A fact must be posited with a constant integer for S, or the special function now().
+\end{itemize}
+Rules with the head suffix $N$ are called \emph{deductive} or atemporal rules, and describe all the logical consequences of facts in a given 
+timestep. Deductive rules may be interpreted as pure Datalog rules by dropping the suffixes, treating all facts that are true in the current 
+timestep as Datalog EDB, and running the rules to fixpoint.
+
+Rules with the head suffix $N + 1$ are called \emph{inductive} temporal rules, and describe the relationship between facts in the current timestep 
+and their consequences in the immediate next timestep. Inductive rules allow us to atomically capture change in time, and to model persistent state.
+
+Rules with the head suffix $N+r(_)$ are also temporal rules, but unlike inductive rules, they carry no guarantee as to in which timestep, if any, 
+their consequences will become visible. Such rules, called message rules, allow us to model network messages between nodes: the nodes 
+are likely to have different clock values, and messages may be lost or delayed arbitrarily.
+
+\subsubsection{Events}
+\begin{Dedalus}
+likes(peter, swimming)@123;
+\end{Dedalus}
+
+\subsubsection{Persistence}
+
+
+
+\begin{Dedalus}
+likes(Person, Activity)@N+1 \(\leftarrow\)
+  likes(Person, Activity)@N, 
+  \(\lnot\)del\_likes(Person, Activity)@N;
+\end{Dedalus}
+
+\subsubsection{State Change}
+
+it appears that under this interpretation a database is an atomic (due to the adjacent timestamps)
+pair of events with a deletion of the old value and assertion of the new, e.g.
+
+\begin{Dedalus}
+del\_likes(peter, swimming)@456; 
+likes(peter, hiking)@457;
+\end{Dedalus}
+
+\subsubsection{Sequences}
+
+\begin{Dedalus}
+seq(Agent, S + 1)@N+1 \(\leftarrow\)
+  seq(Agent, S)@N, 
+  event(Agent)@N; 
+  
+seq(Agent, S)@N+1 \(\leftarrow\) 
+  seq(Agent, S)@N, 
+  \(\lnot\) event(Agent)@N;
+\end{Dedalus}
+
+\subsection{Semantics}
+\subsubsection{Chain of fixpoints interpretation}
+\subsubsection{Instantaneous time interpretation}
