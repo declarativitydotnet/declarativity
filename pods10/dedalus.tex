@@ -119,5 +119,87 @@ seq(Agent, S)@N+1 \(\leftarrow\)
 \end{Dedalus}
 
 \subsection{Semantics}
-\subsection{Post-hoc Interpretation}
-\subsection{Continuous Interpretation}
+
+
+\subsubsection{Static Interpretation}
+\newtheorem{theorem}{Theorem}
+
+\begin{theorem}
+Every Dedalus program P with only deductive rules is equivalent to a Datalog program P'.
+\end{theorem}
+
+\begin{proof}
+All rules in such a program will be in the form (shown propositionally for simplicity): 
+
+%%\begin{Dedalus}
+$p@N \leftarrow b_{1}@N, b_{2}@N, [...], b_{n}@N$
+%%\end{Dedalus}
+
+Where p is a head predicate and the $b$s are body predicates.  Note that all time suffixes are 
+the same.
+
+Because the time suffix is outside the scope of Datalog, a Datalog fact in the form:
+
+$q(A_{1}, A_{2}, [...], A_{n});$
+
+may be interpreted (equivalently) as persistently true (hence quantified over all logical times $N$) or instantaneously
+true at some N.  If we follow the first interpretation, we have 
+
+$q(A_{1}, A_{2}, [...], A_{n})@N;$
+
+The variable N is now universally quantified in the program and in the EDB.  We may eliminate all occurrences of the time suffix N
+in rules and facts, and are left with a Datalog program and EDB.
+
+If we follow the second interpretation, the fact is true at some N, so we are given a ground event.  We extend every predicate in 
+the program to contain an extra attribute that contains the time suffix value, and move the expression into the predicate as shown below:
+
+$q(A_{1}, A_{2}, [...], A_{n})@N;$\\
+$\rightarrow$\\
+$q(A_{1}, A_{2}, [...], A_{n}, N);$
+
+The resulting program and EDB are Datalog, and correspond to the intended semantics for the original Dedalus program.
+
+\end{proof}
+
+
+\subsubsection{Post-hoc Interpretation}
+
+
+\begin{theorem}
+Every Dedalus program P with deductive and inductive rules and trace T is equivalent to a Datalog program P' with an EDB T'.
+\end{theorem}
+
+\begin{proof}
+
+Extend every predicate to include a final integer attribute as shown above, and drop the body suffixes.  To each rule with an 
+inductive head, add the subgoal 
+
+$successor(N, S)$
+
+To each other subgoal, set the new attribute to the variable N.  For the head, set it to S.  Rewrite the event trace in the same fashion, 
+moving the event times from the suffix into the final attribute as shown above.
+
+Populate the successor relation in the following way:
+Define the (2nd order) predicate event\_times() s.t. it contains the union of the time attributes from the EDB of rewritten events; i.e.
+
+$\displaystyle\bigcup_{i}^n \pi_{Time}EDB_{i}$
+
+\begin{Dedalus}
+smax(max<N>) :- event\_times(N);
+smin(min<N>) :- event\_times(N);
+
+successor(N, N + 1) :- smin(N);
+
+successor(S, S + 1) :- 
+    successor(N, S),
+    smax(M),
+    N <= M;
+\end{Dedalus}
+
+This gives us everything we need to simulate the history of evaluation of the program P using the program P'' and a Datalog interpreter.
+
+\end{proof}
+
+\subsubsection{Continuous Interpretation}
+
+Of course, we are interested in the dynamic and infinite case~\ref{fig:dedalus-time}.
