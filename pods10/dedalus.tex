@@ -6,7 +6,12 @@ Perhaps more importantly, the infinite sequence of abstract time gives us a way 
 
 \subsection{Syntax}
 
-A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix. Time suffixes take one of the forms:
+A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix.  A Dedalus predicate has the following form:
+
+$p(A_{1}, A_{2}, [...], A_{n})@S$
+
+The predicate p() is a truth-valued function over its arguments $A_{1} - A_{n}$, which may be of any type, and S, which is an integer expression 
+referring to the logical clock time at which the predicate holds, taking one of the following three suffix forms:
 
 \begin{enumerate}
 \item $N$
@@ -15,12 +20,7 @@ A Dedalus program is a Datalog program in which every predicate is annotated wit
 \item an integer
 \end{enumerate}
 
-A Dedalus predicate therefore has the following form:
-
-$p(A_{1}, A_{2}, [...], A_{n})@S$
-
-The predicate p() is a truth-valued function over its arguments $A_{1} - A_{n}$, which may be of any type, and S, which is an integer expression 
-referring to the logical clock time at which the predicate holds, taking one of the three suffix forms above. Facts and rules in Dedalus are 
+Facts and rules in Dedalus are 
 defined just as in Datalog, with the additional restrictions:
 
 \begin{itemize}
@@ -202,4 +202,10 @@ This gives us everything we need to simulate the history of evaluation of the pr
 
 \subsubsection{Continuous Interpretation}
 
-Of course, we are interested in the dynamic and infinite case~\ref{fig:dedalus-time}.
+Of course, we are interested in the dynamic and infinite case (\ref{fig:dedalus-time}).
+
+
+\subsection{Dedalus programs are stratifiable if the equivalent Datalog program is stratifiable}
+
+\subsubsection{Theorem 0}
+
