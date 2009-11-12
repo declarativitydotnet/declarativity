@@ -174,6 +174,24 @@ The resulting program and EDB are Datalog, and correspond to the intended semant
 
 \subsubsection{Post-hoc Interpretation}
 
+Consider a relation \emph{successor} defined in the following way.
+Define first a (2nd order) predicate called \emph{event\_time} 
+that contains the union of the time attributes from the EDB of events; i.e.
+
+$event\_time(N) \leftarrow \displaystyle\bigcup_{i}^n \pi_{Time}EDB_{i}$
+
+\begin{Dedalus}
+smax(max<N>) \(\leftarrow\) event\_time(N);
+smin(min<N>) \(\leftarrow\) event\_time(N);
+
+successor(N, N + 1) \(\leftarrow\) smin(N);
+
+successor(S, S + 1) \(\leftarrow\) 
+    successor(N, S),
+    smax(M),
+    N <= M;
+\end{Dedalus}
+
 
 \begin{theorem}
 Every Dedalus program P with deductive and inductive rules and trace T is equivalent to a Datalog program P' with an EDB T'.
@@ -181,7 +199,7 @@ Every Dedalus program P with deductive and inductive rules and trace T is equiva
 
 \begin{proof}
 
-Extend every predicate to include a final integer attribute as shown above, and drop the body suffixes.  To each rule with an 
+Extend every predicate to include a final integer attribute as shown in Theorem 1, and drop the body suffixes.  To each rule with an 
 inductive head, add the subgoal 
 
 $successor(N, S)$
@@ -189,32 +207,40 @@ $successor(N, S)$
 To each other subgoal, set the new attribute to the variable N.  For the head, set it to S.  Rewrite the event trace in the same fashion, 
 moving the event times from the suffix into the final attribute as shown above.
 
-Populate the successor relation in the following way:
-Define the (2nd order) predicate event\_times() s.t. it contains the union of the time attributes from the EDB of rewritten events; i.e.
-
-$\displaystyle\bigcup_{i}^n \pi_{Time}EDB_{i}$
-
-\begin{Dedalus}
-smax(max<N>) :- event\_times(N);
-smin(min<N>) :- event\_times(N);
-
-successor(N, N + 1) :- smin(N);
-
-successor(S, S + 1) :- 
-    successor(N, S),
-    smax(M),
-    N <= M;
-\end{Dedalus}
 
 This gives us everything we need to simulate the history of evaluation of the program P using the program P'' and a Datalog interpreter.
 
 \end{proof}
 
+Note, however, that we need arithmetic functions to populate the successor relation.
+
 \subsubsection{Continuous Interpretation}
 
 Of course, we are interested in the dynamic and infinite case (\ref{fig:dedalus-time}).
 Probably what we want to show is that the IDB database at any timestep of a continuous evaluation is a subset
-of the post-hoc interpretation database: specifically, a partition of it on the time attribute.
+of the post-hoc interpretation database: specifically, a partition of it on the time attribute.  (unfortunately, presumably
+negation in programs can make this not so.)  therefore a constructive interpretation of the infinite sequence of time is permissible:
+at each step of computation, we are given ground, a set of rules that tell us what is known now, and a counter value that increments
+at each step.  this counter represents the single partition (a single row) of the infinite, totally ordered successor relation.
+in some sense, we could argue that this is the only counter construct that needs to be available to the language.
+
+Here we have simply:
+
+\begin{Dedalus}
+now()@N+1  \(\leftarrow\)
+    smax(N),
+    now()@N;
+
+prev(N)@N+1  \(\leftarrow\)
+    now()@N;
+
+panic()  \(\leftarrow\)
+    now()@N,
+    prev(M),
+    M != (N + 1);
+\end{Dedalus}
+
+At any given timestep, we are only given a single \emph{successor} tuple: 
 
 \subsection{Dedalus programs are stratifiable if the equivalent Datalog program is stratifiable}
 
