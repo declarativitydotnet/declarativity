@@ -214,6 +214,13 @@ This gives us everything we need to simulate the history of evaluation of the pr
 
 Note, however, that we need arithmetic functions to populate the successor relation.
 
+\begin{theorem}
+something about 'for any Dedalus program P and trace T, we may simulate its evaluation with a Datalog program P' and an EDB T'.  this program
+will probably not produce side-effects (ie messages) at the same times as the original program, but the evaluation will otherwise be identical.'
+\end{theorem}
+
+introduce the $r()$ function, how we can model it using choice, and why it needs the entire successor relation to work properly.
+
 
 
 \subsubsection{Continuous Interpretation}
@@ -226,7 +233,8 @@ at each step of computation, we are given ground, a set of rules that tell us wh
 at each step.  this counter represents the single partition (a single row) of the infinite, totally ordered successor relation.
 in some sense, we could argue that this is the only counter construct that needs to be available to the language.
 
-Here we have simply:
+To evaluate programs under the continuous interpretation, we define a special view called \emph{now} which contains the current 
+time value.
 
 \begin{Dedalus}
 now()@N+1  \(\leftarrow\)
@@ -242,9 +250,40 @@ panic()  \(\leftarrow\)
     M != (N + 1);
 \end{Dedalus}
 
-At any given timestep, we are only given a single \emph{successor} tuple: 
+Every rule in a continuous Dedalus program can be considered to be rewritten to include a predicate
 
-\subsection{Dedalus programs are stratifiable if the equivalent Datalog program is stratifiable}
+$now()@N$
 
-\subsubsection{Theorem 0}
+such that $N$ unifies with the time variables in all predicates including \emph{successor}.  This constrains the evaluation of all deductive 
+rules to a single partition (really, a single value) of \emph{successor}, and all inductive rules to consider only this and the successor partition.
 
+\subsubsection{Persistence and Stratifiability}
+
+
+The difficulty with the continuous interpretation is that we must consider the \emph{successor} relation as infinite, which clearly leads
+to unsafe programs.  To make matters worse, many useful programs that mutate state will be unstratifiable, because \emph{del\_p} predicate
+will be defined negatively in terms of the positive \emph{p} predicate.  For example, take the program below in which \emph{insert\_p}
+and \emph{delete\_p} are external events:
+
+\begin{Dedalus}
+p(A, B, T)@N+1 \(\leftarrow\)
+  p(A, B, T)@N,
+  \(\lnot\)del\_p(A, B, T)@N;
+  
+  
+p(A, B, T)@N \(\leftarrow\)
+  insert\_p(A, B, T)@N;
+  
+del_p(A, B, T)@N \(\leftarrow\)
+  p(A, B, T)@N,
+  delete\_p(T)@N;
+\end{Dedalus}
+
+This reasonable program is unstratifiable because $p > del\_p \land del\_p > p$.  
+
+We sidestep these difficulties in two ways:
+
+\begin{enumerate}
+\item By joining \emph{now}, we only consider one finite partition (really, one value) of \emph{successor} in a given fixpoint.
+\item Any finite partition of \emph{successor}, including any that we may consider in the post-hoc interpretation, is locally stratified. 
+\end{enumerate}
