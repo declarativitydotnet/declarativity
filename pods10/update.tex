@@ -23,14 +23,14 @@ underlying queue discipline.  Let's assume for a moment the existence of two hel
 
 
 \begin{alltt}
-begin_work(A, B, O) \(\leftarrow\)
+begin_work(A, B, O)@N \(\leftarrow\)
   q(A, B, O)@N,
   event(A)@N, 
   sel_q(O)@N;
   
   
-deq_q(O) \(\leftarrow\) 
-  begin_work(_, _, O);
+deq_q(O)@N \(\leftarrow\) 
+  begin_work(_, _, O)@N;
 \end{alltt}
 
 
