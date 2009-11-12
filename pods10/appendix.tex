@@ -47,16 +47,20 @@ sem(X+1)@N+1 :-
 \subsection{Two-Phase Commit}
 
 \begin{Dedalus}
+\small
 //(peers is materialized)
 peers(@Commander, Peer)@N+1 :-
     peers(@Commander, Peer)@N;
 
-// we could materialize peer_cnt, but it's cheap to compute
+// we could materialize peer_cnt, but it's 
+cheap to compute
 peer_cnt(@Commander, count<Peer>)@N :-
   peers(@Commander, Peer)@N;
 
-// we need to talk explicitly about whether we're materializing vote, and carrying out deductions over it, or 
-// treating it as an event, and naively counting.  we can 
+// we need to talk explicitly about 
+// whether we're materializing vote, and carrying 
+// out deductions over it, or treating it as an event, 
+// and naively counting.  we can 
 
 vote(Commander, Xact, Peer, Vote)@N+1 :-
     vote(Commander, Xact, Peer, Vote)@N,

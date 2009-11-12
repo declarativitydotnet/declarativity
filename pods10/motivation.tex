@@ -1,11 +1,31 @@
-\section{Motivation}
+\section{Related Work}
 
 \subsection{Updatable State}
 
+Many deductive database systems, including LDL~\cite{ldl} and Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates using an
+assignment primitive.  In contrast, languages proposed by Cleary and Liu.~\cite{deductiveupdates, starlog, harmful} retain a purely logical 
+interpretation by admitting temporal extensions into their syntax and interpreting assignment or update as a composite operation
+across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the latter approach, but differ in several significant ways.
+First, we model persistence explicitly in our language, so that like updates, it is specified as a composite operation across timesteps.
+Partly as a result of this, we are able to enforce stricter constraints on the allowable time suffixes in rules: a program may only specify what deductions are visible
+in the current timestep, the immediate next timestep, and \emph{some} future timestep, as opposed to the free use of intervals allowed in rules in Liu et al.
 
 
 \subsection{Distributed Systems}
 
-Datalog is static.  What does Datalog even \emph{mean} extended in time?
+Significant recent work~\cite{boon, p2, loo-sigmod06, boom-techr} has focused on applying deductive database languages extended with networking 
+primitives to the problem of specifying and implementing network protocols and general distributed systems.  Implementing distributed systems entails 
+a data store that changes over time, so any useful implementation of such a language addresses the updatable state issue in some manner. 
+Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
+straightforward Datalog, and evaluation proceeds in three phases:
 
-Overlog pretended there was no time; we used the ``chain of fixpoints" model and treated the database as overwritable storage. 
+\begin{enumerate}
+\item Input from the external world, including network messages, clock interrupts and host language calls, is collected.
+\item Time is frozen, the union of the local store and the batch of events is taken as EDB, and the program is run to fixpoint.
+\item The deductions which cause external effects, including messages, writes back to the store, and host language callbacks are dealt with.  
+\end{enumerate}
+
+The case of writes back to the store is complicated: the declarative language gives no hints as to how to and when deletions and updates
+are visible.  Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
+\emph{event creation vs. effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
+the augmented Overlog programs.

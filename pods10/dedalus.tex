@@ -58,19 +58,29 @@ Events are only true at a single timestep.  It might seem that we could express 
 for the time suffix.  The tuple would then be universally quantified over time:
 
 \begin{Dedalus}
-p(A, B)@N;
+p(a, b)@N;
 \end{Dedalus}
 
 But clearly, because this must be interpreted as a rule head with an unbound variable, it produces an unsafe rule.  Instead, persistence is
 expressed by an inductive rule that projects a tuple into the next timestep:
 
 \begin{Dedalus}
-p(A, B)@N+1 \(\leftarrow\)
-  p(A, B)@N, 
-  \(\lnot\)del\_p(A, B)@N;
+p(a, b)@N+1 \(\leftarrow\)
+  p(a, b)@N, 
+  \(\lnot\) del\_p(a, b)@N;
 \end{Dedalus}
 
-The second subgoal allows us to model overwriteable storage: without it, a tuple will be trivially true at every future timestep if it becomes true
+This rule, in term, may be viewed as informally equivalent to a rule in which the inductive step is driven by an 
+explicit successor relation, and in which the time suffixes are attributes of their respective predicates:
+
+\begin{Dedalus}
+p(a, b, S) \(\leftarrow\)
+  p(a, b, N),
+  successor(N, S), 
+  \(\lnot\) del\_p(a, b, N);
+\end{Dedalus}
+
+The final subgoal /emph{del\_p} allows us to model overwriteable storage: without it, a tuple will be trivially true at every future timestep if it becomes true
 at any timestep.  Consider the following trace of events:
 
 \begin{Dedalus}

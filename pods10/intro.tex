@@ -17,10 +17,8 @@ can guarantee liveness properties, a key challenge in building distributed syste
 
 \subsection{Datalog}
 
-\subsubsection{The basics}  
-
-\subsubsection{Negation and stratification}
-
-\subsubsection{Local stratification}
-
-\subsubsection{Choice}
+We take as our foundation language an augmented version of $\lnot$Datalog~\cite{ullmanbook} with both scalar and aggregate function symbols.  
+In general, we will be interested in the classes of statically stratifiable and locally stratifiable programs~\cite{prz}.
+An exception is our use of the \emph{choice} construct~\cite{greedychoice, eventchoice} to nondeterministically select an element from a set.
+We will require this construct both to simulate the nondeterminacy in message delay, and to emulate the semantics of key maintenance in 
+prior deductive update models like Overlog~\cite{boon}.
