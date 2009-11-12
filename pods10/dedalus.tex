@@ -70,7 +70,7 @@ p(a, b)@N+1 \(\leftarrow\)
   \(\lnot\) del\_p(a, b)@N;
 \end{Dedalus}
 
-This rule, in term, may be viewed as informally equivalent to a rule in which the inductive step is driven by an 
+This rule, in turn, may be viewed as informally equivalent to a rule in which the inductive step is driven by an 
 explicit successor relation, and in which the time suffixes are attributes of their respective predicates:
 
 \begin{Dedalus}
@@ -213,7 +213,8 @@ This gives us everything we need to simulate the history of evaluation of the pr
 \subsubsection{Continuous Interpretation}
 
 Of course, we are interested in the dynamic and infinite case (\ref{fig:dedalus-time}).
-
+Probably what we want to show is that the IDB database at any timestep of a continuous evaluation is a subset
+of the post-hoc interpretation database: specifically, a partition of it on the time attribute.
 
 \subsection{Dedalus programs are stratifiable if the equivalent Datalog program is stratifiable}
 
