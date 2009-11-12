@@ -178,7 +178,7 @@ Consider a relation \emph{successor} defined in the following way.
 Define first a (2nd order) predicate called \emph{event\_time} 
 that contains the union of the time attributes from the EDB of events; i.e.
 
-$event\_time(N) \leftarrow \displaystyle\bigcup_{i}^n \pi_{Time}EDB_{i}$
+$event\_time(Time) \leftarrow \displaystyle\bigcup_{i}^n \pi_{Time}EDB_{i}$
 
 \begin{Dedalus}
 smax(max<N>) \(\leftarrow\) event\_time(N);
@@ -213,6 +213,8 @@ This gives us everything we need to simulate the history of evaluation of the pr
 \end{proof}
 
 Note, however, that we need arithmetic functions to populate the successor relation.
+
+
 
 \subsubsection{Continuous Interpretation}
 
