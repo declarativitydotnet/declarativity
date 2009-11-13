@@ -26,6 +26,9 @@ straightforward Datalog, and evaluation proceeds in three phases:
 \end{enumerate}
 
 The case of writes back to the store is complicated: the declarative language gives no hints as to how to and when deletions and updates
-are visible.  Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
+are visible.  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain monotonicity properties (i.e. programs without negation or fact deletion)
+are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
+\emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
+Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
 \emph{event creation vs. effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
 the augmented Overlog programs.
