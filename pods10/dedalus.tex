@@ -39,9 +39,14 @@ timestep as Datalog EDB, and running the rules to fixpoint.
 Rules with the head suffix $N + 1$ are called \emph{inductive} temporal rules, and describe the relationship between facts in the current timestep 
 and their consequences in the immediate next timestep. Inductive rules allow us to atomically capture change in time, and to model persistent state.
 
-Rules with the head suffix $N+r(_)$ are also temporal rules, but unlike inductive rules, they carry no guarantee as to in which timestep, if any, 
+Rules with the head suffix $N+r(\_)$ are also temporal rules, but unlike inductive rules, they carry no guarantee as to in which timestep, if any, 
 their consequences will become visible. Such rules, called message rules, allow us to model network messages between nodes: the nodes 
 are likely to have different clock values, and messages may be lost or delayed arbitrarily.
+
+\newdef{definition}{Definition}
+\begin{definition}
+I am a definition.
+\end{definition}
 
 \subsubsection{Events}
 
@@ -85,7 +90,7 @@ p(a, b, S) \(\leftarrow\)
 \end{Dedalus}
 
 The final subgoal \emph{del\_p} allows us to model overwriteable storage: without it, a tuple will be trivially true at every future timestep if it becomes true
-at any timestep.  Instead, the \emph{del_p} event, true only at a single timestep, breaks the induction.
+at any timestep.  Instead, the \emph{del\_p} event, true only at a single timestep, breaks the induction.
 
 Consider the following trace of events:
 
@@ -122,7 +127,26 @@ del\_p(1,2)@300;
 p(1, 4)@301;
 \end{Dedalus}
 
+Or more generally, an update can be described by a pair of rules that, in effect, describe a
+constraint that holds between values in two adjacent timesteps:
+
+\begin{Dedalus}
+p(A, B)@N+1 \(\leftarrow\)
+  update_p(A, B)@N;
+  p(A, _)@N;
+  
+del_p(A, C)@N \(\leftarrow\)
+  p(A, C)@N,
+  update_p(A, _)@N;
+  
+\end{Dedalus}
+
 \subsubsection{Sequences}
+
+Database sequences, objects that retain a counter value and sometimes increment it, may be
+represented with a pair of two inductive rules.  One increments the current counter value when the
+trigger event is true, while the other persists the current value of the sequence only when the event is 
+not true.
 
 \begin{Dedalus}
 seq(Agent, S + 1)@N+1 \(\leftarrow\)
@@ -134,10 +158,98 @@ seq(Agent, S)@N+1 \(\leftarrow\)
   \(\lnot\) event(Agent)@N;
 \end{Dedalus}
 
+\subsubsection{Queues}
+%%any tuple sent via a message rule is not sent to the indicated head p but to the builtin (as del\_p)
+%%m\_p.  
+
+\paa{it is here (at the m\_p relation) that is is assigned a timestamp which is consistent with r() at the sender, but which
+is really "now" (how do we talk about this, having banished now?)}
+
+
+
+
+Consider a relation that contains input from the external world, e.g. messages or tuple insertions from the host language.  
+Having defined persistence as induction over time, we can define \emph{external} inputs as any sources of tuples 
+that are not produced by an inductive rule.  This corresponds precisely to the concept of events that we have already
+defined.
+
+It will often be necessary to interpose some queueing discipline between an external table as defined above and any
+rules that read from them.  For instance, if the tuples represent non-idempotent commands, it may be necessary to dequeue
+the tuples in some data-dependent order, and to run the program to fixpoint before considering new tuples.  Consider a binary
+predicate \emph{balance\_update} that contains updates to a bank account and an integer indicating the order in which they
+should be executed.  If deductive rules are directly associated with \emph{balance\_update}, we must ensure at minimum that
+the rules cleanly handle cases is which multiple events occur in a single fixpoint.  Instead, we can ensure ordered delivery 
+of tuples to a program via a subprogram that defines a queueing discipline.
+
+In the program below, we define a table \emph{m\_p} that we use as a queue to feed \emph{p}.  
+
+
+\begin{Dedalus}
+m\_p(A, B)@N+1 \(\leftarrow\)
+  m\_p(A, B)@N,
+  notin del\_m\_p(A, B)@N;
+
+omin(A, min<B>)@N \(\leftarrow\)
+  m\_p(A, B)@N;
+
+p(A, B)@N+1 \(\leftarrow\)
+  m\_p(A, B)@N,
+  omin(B)@N;
+
+del\_m\_p(A, B)@N \(\leftarrow\)
+  m\_p(A, B)@N,
+  omin(B)@N;
+\end{Dedalus}
+
+that's it!
+
+observation: queues are just another example of programmatic interaction with time, not a language feature.
+
+there is still an operational element here: the assignment of the timestamps as tuples are inserted.  this is basically the 
+evaluation of the r() function.
+
+\subsubsection{Lamport Clocks}
+
+Implementing a Lamport Clock~\cite{timeclocks} is a special case of a queueing discipline as defined above.
+Consider a predicate{m\_p} as defined above, but with an extra integer attribute that contains the logical transmission
+time of the sender (via a message rule) of a given tuple.  For example, the sender's rule will look like: 
+
+\begin{Dedalus}
+m\_p(A, B, N)@N + r(A, B, N) \(\leftarrow\)
+  send\_p(A, B)@N;
+\end{Dedalus}
+
+Note that the time suffix is projected into the last attribute of \emph{m\_p}.  The queueing discipline that implements a
+Lamport clock is then:
+
+\begin{Dedalus}
+
+m\_p(A, B, C)@N+1 \(\leftarrow\)
+  m\_p(A, B, C)@N,
+  \(\lnot\) del\_m\_p(A, B, C)@N;
+
+omin(A, min<C>)@N \(\leftarrow\)
+  m\_p(A, B, C)@N;
+
+lmin(min<C>)@N \(\leftarrow\)
+  m\_p(_, _, C);
+
+p(A, B, C)@N+1 :-
+  m\_p(A, B, C)@N,
+  omin(B)@N,
+  lmax(L)@N,
+  N > L;
+
+del\_m\_p(A, B)@N :-
+  m\_p(A, B)@N,
+  omax(B)@N;
+  
+\end{Dedalus}
+
 \subsection{Semantics}
 
 
-\subsubsection{Static Interpretation}
+\subsubsection{Static Evaluation}
 \newtheorem{theorem}{Theorem}
 
 \begin{theorem}
@@ -178,7 +290,7 @@ The resulting program and EDB are Datalog, and correspond to the intended semant
 \end{proof}
 
 
-\subsubsection{Post-hoc Interpretation}
+\subsubsection{Post-hoc Evaluation}
 
 Consider a relation \emph{successor} defined in the following way.
 Define first a (2nd order) predicate called \emph{event\_time} 
@@ -229,7 +341,7 @@ introduce the $r()$ function, how we can model it using choice, and why it needs
 
 
 
-\subsubsection{Continuous Interpretation}
+\subsubsection{Continuous Evaluation}
 
 Of course, we are interested in the dynamic and infinite case (\ref{fig:dedalus-time}).
 Probably what we want to show is that the IDB database at any timestep of a continuous evaluation is a subset
