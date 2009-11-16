@@ -119,6 +119,16 @@ A \emph{minimal trace} is a projection of a trace that excludes any events cause
 to a normal form in which the trace starts with event time 1, respects the ordering of the original trace, as leaves no gaps in the sequence.
 \end{definition}
 
+A trace has only one minimal trace, but an infinite number of infinite traces have the same minimal trace: the minimal trace thus forms an 
+equivalence class among traces.  The minimal trace of the trace instance given above is:
+
+\begin{Dedalus}
+p(1,2)@1;
+p(1,3)@2;
+p(1,?)@3;
+del_p(1,2)@4;
+p(1,?)5;
+\end{Dedalus}
 
 
 \subsubsection{State Change}
