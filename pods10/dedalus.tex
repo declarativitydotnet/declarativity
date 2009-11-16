@@ -113,14 +113,32 @@ p(1,3)@200;
 p(1,3)@301;
 \end{Dedalus}
 
+In the trace above, we omitted as uninteresting those events that were implied by the 
+inductive rules show above, such as:
+
+\begin{Dedalus}
+p(1,2)@200;
+p(1,3)@200;
+p(1,2)@201;
+p(1,3)@201;
+p(1,2)@202;
+p(1,3)@202;
+[...]
+\end{Dedalus}
+
+
 
 \begin{definition}
-A \emph{minimal trace} is a projection of a trace that excludes any events caused by inductive rules, and transforms the event times
+A \emph{minimal trace} is a subset of a trace that excludes any events caused by inductive rules.
+\end{definition}
+
+\begin{definition}
+A \emph{reduced trace} is a projection of a minimal trace in which all event times are transformed
 to a normal form in which the trace starts with event time 1, respects the ordering of the original trace, as leaves no gaps in the sequence.
 \end{definition}
 
-A trace has only one minimal trace, but an infinite number of infinite traces have the same minimal trace: the minimal trace thus forms an 
-equivalence class among traces.  The minimal trace of the trace instance given above is:
+A trace has only one reduced trace, but an infinite number of infinite traces have the same reduced trace: the reduced trace thus forms an 
+equivalence class among traces.  Not all reduced traces are finite.  The reduced trace of the trace instance given above is:
 
 \begin{Dedalus}
 p(1,2)@1;
@@ -129,6 +147,17 @@ p(1,?)@3;
 del_p(1,2)@4;
 p(1,?)5;
 \end{Dedalus}
+
+Some other things that we may want to say about reduced traces (although probably not here) are:
+\begin{enumerate}
+\item if a particular property holds of a given trace, can we say that it holds of its reduced trace?
+\item a reduced trace represents a \emph{disentanglement} of a series of events and the local clock that existed in the original trace.
+\item we'd expect reduced traces of asynchronous systems to be fairly simple, and we'd expect to frequently find equivalences.
+The complexity added by clocks -- which are external events like messages -- is illustrated by the complexity of traces including
+clock events. 
+\item 
+
+\end{enumerate}
 
 
 \subsubsection{State Change}
