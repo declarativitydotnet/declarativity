@@ -3,7 +3,7 @@
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.5\linewidth]{localstrat_rgg.pdf}
+  \includegraphics[width=0.75\linewidth]{localstrat_rgg.pdf}
   \label{fig:lstrat}
   \caption{Mutable persistence is locally stratified on time}
 \vspace{-8pt}
@@ -104,6 +104,9 @@ introduce the $r()$ function, how we can model it using choice, and why it needs
 
 \subsubsection{Continuous Evaluation}
 
+
+\paa{this whole section is broken now.  not sure how to talk about continuous evaluation without \emph{now}}
+
 Of course, we are interested in the dynamic and infinite case (\ref{fig:dedalus-time}).
 Probably what we want to show is that the IDB database at any timestep of a continuous evaluation is a subset
 of the post-hoc interpretation database: specifically, a partition of it on the time attribute.  (unfortunately, presumably
@@ -111,6 +114,7 @@ negation in programs can make this not so.)  therefore a constructive interpreta
 at each step of computation, we are given ground, a set of rules that tell us what is known now, and a counter value that increments
 at each step.  this counter represents the single partition (a single row) of the infinite, totally ordered successor relation.
 in some sense, we could argue that this is the only counter construct that needs to be available to the language.
+
 
 To evaluate programs under the continuous interpretation, we define a special view called \emph{now} which contains the current 
 time value.
@@ -157,11 +161,13 @@ del_p(A, B, T)@N \(\leftarrow\)
   delete\_p(T)@N;
 \end{Dedalus}
 
-This reasonable program is unstratifiable because $p > del\_p \land del\_p > p$.  
+This reasonable program is unstratifiable because $p \succ del\_p \land del\_p \succ p$.  But because the successor relation is constrained
+such that $\forall A,B (successor(A, B) \rightarrow B > A)$, any such program is locally stratified on \emph{successor} (see \ref{fig:lstrat}).  Informally,
+we have $p_{n+1} \succ del\_p_{n} \succ p_{n}$.
 
-We sidestep these difficulties in two ways:
+%%We sidestep these difficulties in two ways:
 
-\begin{enumerate}
-\item By joining \emph{now}, we only consider one finite partition (really, one value) of \emph{successor} in a given fixpoint.
-\item Any finite partition of \emph{successor}, including any that we may consider in the post-hoc interpretation, is locally stratified. 
-\end{enumerate}
+%%\begin{enumerate}
+%%\item By joining \emph{now}, we only consider one finite partition (really, one value) of \emph{successor} in a given fixpoint.
+%%\item Any finite partition of \emph{successor}, including any that we may consider in the post-hoc interpretation, is locally stratified. 
+%%\end{enumerate}
