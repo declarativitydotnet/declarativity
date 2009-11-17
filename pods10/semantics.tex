@@ -25,9 +25,7 @@ $p@N \leftarrow b_{1}@N, b_{2}@N, [...], b_{n}@N$
 %%\end{Dedalus}
 
 Where p is a head predicate and the $b$s are body predicates.  Note that all time suffixes are 
-the same.
-
-Because the time suffix is outside the scope of Datalog, a Datalog fact in the form:
+the same.  Because the time suffix is outside the scope of Datalog, a Datalog fact in the form:
 
 $q(A_{1}, A_{2}, [...], A_{n});$
 
@@ -55,9 +53,9 @@ The resulting program and EDB are Datalog, and correspond to the intended semant
 
 Consider a relation \emph{successor} defined in the following way.
 Define first a (2nd order) predicate called \emph{event\_time} 
-that contains the union of the time attributes from the EDB of events; i.e.
+that contains the union of the time attributes from the trace of events; i.e.
 
-$event\_time(Time) \leftarrow \displaystyle\bigcup_{i}^n \pi_{Time}EDB_{i}$
+$event\_time(Time) \leftarrow \displaystyle\bigcup_{i}^n \pi_{Time}Trace_{i}$
 
 \begin{Dedalus}
 smax(max<N>) \(\leftarrow\) event\_time(N);
@@ -78,13 +76,15 @@ Every Dedalus program P with deductive and inductive rules and trace T is equiva
 
 \begin{proof}
 
-Extend every predicate to include a final integer attribute as shown in Theorem 1, and drop the body suffixes.  To each rule with an 
-inductive head, add the subgoal 
+Extend every predicate to include a final integer attribute as shown in Theorem 1, and drop the body suffixes.  To each rule 
+with an inductive head, add the subgoal 
 
 $successor(N, S)$
 
-To each other subgoal, set the new attribute to the variable N.  For the head, set it to S.  Rewrite the event trace in the same fashion, 
-moving the event times from the suffix into the final attribute as shown above.
+To each other subgoal, set the new attribute to the variable \textbf{N}.  For the head, set it to \textbf{S}.  
+
+For each non-inductive rule, set the final attribute to \textbf{N} in all cases.  Rewrite the event trace in the same fashion, 
+moving the event times from the suffix into the final attribute as shown above, converting each event in T to a fact in T'.
 
 
 This gives us everything we need to simulate the history of evaluation of the program P using the program P'' and a Datalog interpreter.
@@ -93,12 +93,25 @@ This gives us everything we need to simulate the history of evaluation of the pr
 
 Note, however, that we need arithmetic functions to populate the successor relation.
 
-\begin{theorem}
-something about 'for any Dedalus program P and trace T, we may simulate its evaluation with a Datalog program P' and an EDB T'.  this program
-will probably not produce side-effects (ie messages) at the same times as the original program, but the evaluation will otherwise be identical.'
-\end{theorem}
+\newtheorem{conjecture}{Conjecture}
+\begin{conjecture}
+For any Dedalus program P and trace T, we may simulate its evaluation with a Datalog program P' and an EDB T'.  This program
+is unlikely to produce side-effects (ie messages) at the same times as the original program, but the evaluation will otherwise be identical.
+\end{conjecture}
 
-introduce the $r()$ function, how we can model it using choice, and why it needs the entire successor relation to work properly.
+We must extend the technique used in the previous proofs to accommodate the case of message temporal rules (with the suffix $N+r(\_)$.
+To each such rule, further add the subgoal:
+
+$choose((\_), (S))$
+
+The \emph{choice} construct~\cite{eventchoice, greedychoice} departs from stratified $\lnot$Datalog to capture the nondeterministic selection
+of set elements.  The \emph{choose} predicate above is shorthand for an unstratifiable subprogram for which as many stable models
+exist as (in this case) rows in the \emph{successor} table, and chooses one at random.  Hence, any successor value is admissible, as is the
+special value \{-1, -1\}, which must be added to the \emph{successor} relation to represent an infinite delay.
+
+In this way, we may simulate the evaluation of the random delay function $r$ at the sender.
+
+%%introduce the $r()$ function, how we can model it using choice, and why it needs the entire successor relation to work properly.
 
 
 
