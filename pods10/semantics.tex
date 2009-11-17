@@ -1,13 +1,6 @@
 \subsection{Semantics}
 
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.75\linewidth]{localstrat_rgg.pdf}
-  \label{fig:lstrat}
-  \caption{Mutable persistence is locally stratified on time}
-\vspace{-8pt}
-\end{figure}
 
 
 \subsubsection{Static Evaluation}
@@ -154,6 +147,14 @@ rules to a single partition (really, a single value) of \emph{successor}, and al
 
 \subsubsection{Persistence and Stratifiability}
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.75\linewidth]{localstrat_rgg.pdf}
+  \label{fig:lstrat}
+  \caption{Mutable persistence is locally stratified on time}
+\vspace{-8pt}
+\end{figure}
+
 
 The difficulty with the continuous interpretation is that we must consider the \emph{successor} relation as infinite, which clearly leads
 to unsafe programs.  To make matters worse, many useful programs that mutate state will be unstratifiable, because \emph{del\_p} predicate
@@ -161,14 +162,16 @@ will be defined negatively in terms of the positive \emph{p} predicate.  For exa
 and \emph{delete\_p} are external events:
 
 \begin{Dedalus}
+r1
 p(A, B, T)@N+1 \(\leftarrow\)
   p(A, B, T)@N,
   \(\lnot\)del\_p(A, B, T)@N;
   
-  
+r2
 p(A, B, T)@N \(\leftarrow\)
   insert\_p(A, B, T)@N;
-  
+
+r3  
 del_p(A, B, T)@N \(\leftarrow\)
   p(A, B, T)@N,
   delete\_p(T)@N;
