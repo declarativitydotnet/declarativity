@@ -4,6 +4,7 @@
 \subsection{Heartbeat Cache Management}
 
 \begin{Dedalus}
+\small
 hb_cache(Me, Node, Tstamp)@N :-
     hb(Me, Node)@N,
     Tstamp := time();
@@ -21,7 +22,9 @@ del_hb_cache(Me, Node, Tstamp)@N :-
 \subsection{Semaphores}
 
 \begin{Dedalus}
-// could wait a long time; the queue must be persisted.
+\small
+// could wait a long time; the queue must 
+be persisted.
 want_p(User)@N+1 :-
     want_p(User)@N,
     notin del_want_p(User)@N;
@@ -89,6 +92,73 @@ transaction(@Peer, Xact, State)@N+M :-
   transaction(@Commander, Xact, State)@N;
 \end{Dedalus}
 
+\section{Timed Concurrent Constraint Programming}
+
+ 
+Saraswat et al.~\cite{tccp, tdccp} propose a Timed Concurrent Constraint Programming for reactive systems.
+
+
+\begin{conjecture}
+TCCP and Dedalus are interderivable
+\end{conjecture}
+
+\subsection{The Yale Shooting Problem in TCCP}
+
+\begin{quote}
+The scenario to be modeled is this: a gun is loaded at time T=2. It is fired at Fred at time T=4 Meanwhile,
+it is possible that the gun may have been subject to various other acts: for example, it 
+may have become unloaded. Various other ``common-sense" facts are known: for instance,
+guns once loaded do not spontaneously become unloaded, if a loaded gun is fired at a 
+live person, and the gun is functioning normally, then the person may cease to be live,
+etc.
+
+In a setting such as this, it is crucial that a gun be deemed to be loaded at present only if 
+it was loaded at some time in the past, and not unloaded at any time since then, including 
+the present. Similarly, for success, the gun should be fired in the direction of the perceived 
+current position of the target, not the known past position of the target. Even one-step 
+delays introduced due to the modeling framework can invalidate the representation.
+\end{quote}
+
+The TCCP solution follows:
+
+\begin{Dedalus}
+always (if occurs(load) 
+  then do always loaded 
+    watching(occurs(shoot) \(\lor\) occurs(unload))).
+		
+		
+do always alive watching death.
+always if (occurs(shoot), loaded) then death.
+always if occurs(shoot) then \(\lnot\)loaded. 
+always if occurs(unload) then  \(\lnot\)loaded.
+always if death then always dead.
+\end{Dedalus}
+
+\subsection{The Yale Shooting Problem in Dedalus}
+
+\begin{Dedalus}
+loaded(X)@N+1 \(\leftarrow\)
+  loaded(X)@N,
+  \(\lnot\)shoot(X),
+  \(\lnot\)unload(X);
+  
+loaded(X)@N :-
+   load(X)@N;
+   
+alive(X)@N+1 :-
+  alive(X)@N,
+  \(\lnot\)dead(X)@N;
+  
+dead(X)@N :-
+  loaded(G)@N,
+  shoot(G, X)@N;
+
+dead(X)@N+1 :-
+  dead(X)@N;
+
+\end{Dedalus}
+
+
 \section{Translating Overlog to Dedalus}
 
 \begin{figure}[t]
@@ -117,15 +187,16 @@ If $K \neq \emptyset$, then the table is \emph{materialized}.
 Given an Overlog program P and a set of table definitions, each given as $T(n, A, K)$, output a doughface program P' containing all the statements in the numbered lines below:
 
 \begin{Dedalus} \small
-For every predicate n in P with table definition {n, A, K}
+For every predicate n in P with table definition 
+{n, A, K}
   1.) ri_n@N :- e_n@N
   if K is nonempty, divide the indices of A into two 
   disjoint sets X and Y s.t. 
     \(X = alphabet(K)\)
     \(Z = alphabet(indices(A))\)
     \(Y = Z - X\)
-      (where alphabet() is a function mapping a list of 
-      integers to a list of uppercase letters.)
+      (where alphabet() is a function mapping a 
+      list of integers to a list of uppercase letters.)
     1a.) \(i_n(Z)@N \leftarrow ri_n(Z)@N, choose((X), (Y));\)
     2a.) \(pk_n(X)@N :- \leftarrow_n(Z)@N;\)
     3a.) \(i_n(Z)@N \leftarrow co_n@N, \lnot pk_n@N;\)
@@ -134,10 +205,11 @@ For every predicate n in P with table definition {n, A, K}
     1b.) \(i_n@N \leftarrow co_n@N;\)
     2b.) \(i_n@N \leftarrow ri_n@N;\)
   2.)  Perform the consistent IDB rewrite on P:
-    - for all predicates that are mutually recursive with \(n\), 
+    - for all predicates that are mutually 
+    recursive with \(n\), 
       replace all occurrences of \(p\) with \(ri_n\);
-    - for all predicates stratified above n, replace all 
-      occurrences of n with \(i\_n\).
+    - for all predicates stratified above n, 
+      replace all occurrences of n with \(i\_n\).
  
 \end{Dedalus}
 

@@ -219,7 +219,7 @@ is really "now" (how do we talk about this, having banished now?)}
 
 Consider a relation that contains input from the external world, e.g. messages or tuple insertions from the host language.  
 Having defined persistence as induction over time, we can define \emph{external} inputs as any sources of tuples 
-that are not produced by an inductive rule.  This corresponds precisely to the concept of events that we have already
+that are not produced by an inductive rule.  This corresponds precisely to the concept of minimal traces that we have already
 defined.
 
 It will often be necessary to interpose some queueing discipline between an external table as defined above and any
@@ -230,7 +230,10 @@ should be executed.  If deductive rules are directly associated with \emph{balan
 the rules cleanly handle cases is which multiple events occur in a single fixpoint.  Instead, we can ensure ordered delivery 
 of tuples to a program via a subprogram that defines a queueing discipline.
 
-In the program below, we define a table \emph{m\_p} that we use as a queue to feed \emph{p}.  
+In the program below, we define a table \emph{m\_p} that we use as a queue to feed \emph{p}.  The queue must persist across
+timesteps because it may take an unknown number of timesteps to drain it.  At each fixpoint, for each value of \textbf{A}, a single
+tuple is projected into \emph{p} and atomically deleted from \emph{m\_p}, changing the value of the aggregate calculated at the
+subsequent step:
 
 
 \begin{Dedalus}
@@ -243,19 +246,26 @@ omin(A, min<B>)@N \(\leftarrow\)
 
 p(A, B)@N+1 \(\leftarrow\)
   m\_p(A, B)@N,
-  omin(B)@N;
+  omin(A, B)@N;
 
 del\_m\_p(A, B)@N \(\leftarrow\)
   m\_p(A, B)@N,
-  omin(B)@N;
+  omin(A, B)@N;
 \end{Dedalus}
 
-that's it!
+Under such a discipline, deductive rules that are predicated on \emph{p} are constrained to consider only one tuple per fixpoint
+per value of the variable \textbf{A}.  For example, if \textbf{A} contains the source address of a message and \textbf{B} is the ordering
+domain of messages for a given host, this code fragment
+expresses a per-host FIFO discipline.  To enforce a global FIFO ordering over \emph{p}, we may redefine \emph{omin} and any 
+dependent rules to exclude the \textbf{A} atttribute.
 
-observation: queues are just another example of programmatic interaction with time, not a language feature.
+As this example demonstrates, queues are not a language feature or a detail of the runtime system, but are themselves Dedalus programs
+characterized by programmatic interaction with time.
 
-there is still an operational element here: the assignment of the timestamps as tuples are inserted.  this is basically the 
-evaluation of the r() function.
+
+\paa{there is still an operational element here: the assignment of the timestamps as tuples are inserted.  this is basically the 
+evaluation of the r() function.}
+
 
 \subsubsection{Lamport Clocks}
 
@@ -268,7 +278,8 @@ m\_p(A, B, N)@N + r(A, B, N) \(\leftarrow\)
   send\_p(A, B)@N;
 \end{Dedalus}
 
-Note that the time suffix is projected into the last attribute of \emph{m\_p}.  The queueing discipline that implements a
+Note that the time suffix is projected into the last attribute of \emph{m\_p}.  This establishes an \emph{entanglement} between
+the sender's local clock and the program dataflow.  The queueing discipline that implements a
 Lamport clock is then:
 
 \begin{Dedalus}
