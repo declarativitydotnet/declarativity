@@ -89,7 +89,7 @@ Note, however, that we need arithmetic functions to populate the successor relat
 \newtheorem{conjecture}{Conjecture}
 \begin{conjecture}
 For any Dedalus program P and trace T, we may simulate its evaluation with a Datalog program P' and an EDB T'.  This program
-is unlikely to produce side-effects (ie messages) at the same times as the original program, but the evaluation will otherwise be identical.
+is unlikely to produce side-effects (ie messages) at the same times as the original program, but the evaluation will otherwise be identical \wrm{are we talking Overlog or Datalog here?  Datalog can't send messages}.
 \end{conjecture}
 
 We must extend the technique used in the previous proofs to accommodate the case of message temporal rules (with the suffix $N+r(\_)$.
@@ -97,12 +97,14 @@ To each such rule, further add the subgoal:
 
 $choose((\_), (S))$
 
+\wrm{I don't get this, by underscore you mean a free variable, right?  Don't you need to bind the variable in r() to S?}
+
 The \emph{choice} construct~\cite{eventchoice, greedychoice} departs from stratified $\lnot$Datalog to capture the nondeterministic selection
 of set elements.  The \emph{choose} predicate above is shorthand for an unstratifiable subprogram for which as many stable models
-exist as (in this case) rows in the \emph{successor} table, and chooses one at random.  Hence, any successor value is admissible, as is the
+exist as (in this case) rows in the \emph{successor} table, and chooses one at random \wrm{choice is not necessarily random, right?  an evaluation engine could choose amont multiple stable models using some deterministic means.  but we model choice as nondeterministic.}.  Hence, any successor value is admissible, as is the
 special value \{-1, -1\}, which must be added to the \emph{successor} relation to represent an infinite delay.
 
-In this way, we may simulate the evaluation of the random delay function $r$ at the sender.
+In this way, we may simulate the evaluation of the random delay function $r$ at the sender. \wrm{I don't get how this choice works with a finite successor relation.  What if we derive an event at the maximum time?  Isn't there a risk that evaluation will stop due to the end of time, without evaluating the rest of our program?  Also, in the distributed case we require the receiver to derive a timestamp.  Why the dissymmetry of the sender deriving a timestamp here?  Additionally, why would you want to simulate delay with the choice construct?  Trivially, one could satisfy r() by being completely deterministic, such as deriving at the next timestep.  For a performance simulation, maybe you'd want some statistical model of network delay to use as an aid in choosing some appropriate time.}
 
 %%introduce the $r()$ function, how we can model it using choice, and why it needs the entire successor relation to work properly.
 
