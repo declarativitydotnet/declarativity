@@ -9,7 +9,7 @@
 %%\usepackage{amsthm}
 
 
-\usepackage{color}
+\usepackage[usenames, dvipsnames]{color}
 \usepackage{times}
 %%\usepackage{url}
 %%\usepackage{graphicx}
@@ -31,7 +31,7 @@
 \newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
 \newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
 \newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
-\newcommand{\wrm}[1]{{\textcolor{BurntOrange}{#1 -- wrm}}}
+\newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
 \newcommand{\smallurl}[1]{{\small \url{#1}}}
 
 %dedalus environment for code
@@ -79,6 +79,7 @@ why does anyone care?
 \begin{itemize}
 \item Dedalus is not a new formalism, but an application of an existing formalism (under certain constraints) to new application domains.
 \item Dedalus moves many tricky issues for updatable and distributed deductive databases (including table persistence, update, key constraints, and message delay and loss) from ambiguous type systems and operational semantics into the language itself, giving a logical interpretation for each.
+\wrm{This paragraph basically says we're presenting an approach to resolving ambiguities in Overlog through logic rather than Operational semantics as proposed in the max planck paper, right?}
 \item Moreover, dedalus exposes the minimum necessary language constructs to capture those temporal details that affect program semantics.  This has
 implications both for implementing and locally modeling distributed systems.
 \end{itemize}

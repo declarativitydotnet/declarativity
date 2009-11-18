@@ -6,6 +6,10 @@
 \subsection{Persistent Storage Implementations}
 
 \paa{help!}
+\wrm{this section seems very operational, so i'm not quite sure how it fits in with the notion of minimal or reduced traces.  i've tried to put some stuff in
+nevertheless.}
+
+\wrm{i'm also not quite sure what simplifying assumptions to make here.  there was some talk about assuming hash table lookups for equi-joins.  i'm not quite sure what to do for range queries.}
 
 %%\subsubsection{We need only store the event tuple with max(Timestamp) for each projection of the other columns to query the present time}
 \subsubsection{Cost Model}
@@ -31,24 +35,57 @@ $Q$ & Set of query timestamps \\ \hline
 
 \subsubsection{Naive Deductive Implementation}
 
-To evaluate a schedule consisting of inserts, updates and queries, the naive deductive implementation must,
-at a minimum,
+To evaluate a schedule consisting of inserts, updates and queries \wrm{I still
+have no idea what a ``query'' is or precisely why we want queries.  Is this
+just a device to force a fixpoint on a specific predicate in the deductive
+model, and relax absolute ordering (e.g.  between two queries, in equivalent
+traces, events may occur in different order as long as the result of the query
+(modulo time) is the same?)  What aspect of distributed systems do queries try
+to model? I'm not sure how queries figure in to the deductive vs overwritable
+storage implementations, but I'm assuming that the deductive implementation
+recomputes the entire program for each query, where as the overwritable
+implmentation persists it between queries.  This really doesn't seem all that
+compelling though...}, a naive deductive implementation would:
+
 \begin{enumerate}
-\item Write every event once.  We may think of this as sequential log appends.  An update entails two writes: one for the deletion
-and one for the insertion of the new tuple.
-\item Read the entire log at least once.
-\item For each query, perform the necessary number of inductive steps to determine if relevant predicates hold at query time.
-On the surface, this would appear to be the interval between the ground fact time and the query time, if that interval is unbroken
-by a deletion predicate.
+
+\item Add all inserts, deletions, and updates to the EDB.  We can make
+the simplifying assumption that all EDB predicates are indexed by some hash of
+their key attributes \wrm{although how do we support range queries?}.  Note that
+an update consists of both an insertion and a deletion.  Assuming that
+insertion of a fact into the EDB is $w$, then the cost of this
+step is $(|S|+2|U|)w$.
+
+\item For a query about predicate $P$, in local stratum $M$ (corresponding with
+timestep $M$), we must evaluate all predicates in $P$'s predicate dependency
+graph in strata $1$ through $M$.  An evaluation of a base predicate $P$
+consists of evaluating all rules that reference $P$ in the head \wrm{or doing
+some voodoo like the LDL paper (or was it glue/nail?) where queries cause the
+rules to be rewritten for greater efficiency}, and may involve polynomially
+many derivations in the size of the EDB up to time $S$.  Evaluating a rule
+consists of execution any query plan that encodes the logical meaning of the
+rule.  \wrm{do we want to dive into query plans here and talk about the cost of
+a particular derivation?}  As a simplifying assumption, we assume the cost of a
+derivation is some fixed value $d$.  In reality, the cost depends on the
+particular query plan selected.  \wrm{not sure what the best way to express
+this in a formula is.}
+
 \end{enumerate}
 
-$(|S|+2|U|)s + (|S|+2|U|)r + t + (\displaystyle\sum_{i=0}^{|Q|-1} \displaystyle\sum_{j=0}^{|T|-1} Q_{i} - T_{j})d$
+%$(|S|+2|U|)s + (|S|+2|U|)r + t + (\displaystyle\sum_{i=0}^{|Q|-1} \displaystyle\sum_{j=0}^{|T|-1} Q_{i} - T_{j})d$
 
 \subsubsection{Naive Overwriteable Storage Implementation}
 
-In this case, every update entails a read and then a write.
-
-$|S|s + |U|s + |U|r + t$
+An overwritable storage implementation could enable lower execution latency by
+storing data computed for an earlier query for use in future queries.
+Executing a query about predicate $P$ at time $M$ would consist of evaluating
+each predicate $Q$ in $P$'s predicate dependency graph from stratum $Q_N+1$
+through stratum $M$ -- where $Q_N$ is the timestamp of the last query that
+required computation of predicate $Q$ -- using all IDB results from stratum
+$Q_N$ computed at time $Q_N$ as the EDB for stratum $Q_N+1$.  \wrm{is this too
+complicated?}  This is in contrast to the naive deductive model, which would
+require computation from stratum 1, but would not require persisting the IDB 
+of the most recently computed stratum for each predicate. \wrm{todo: formula?}
 
 
 %%\subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}
