@@ -32,3 +32,11 @@ are equivalent (specifically, eventually consistent) when evaluated globally (vi
 Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
 \emph{event creation vs. effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
 the augmented Overlog programs.
+
+\paa{more relwork notes}
+
+U-Datalog~\cite{udatalog-neg} addresses updates using syntax annotations that establish different interpretations for the set of updated 
+relations and the IDB.  Lamport's TLA+~\cite{tla} is a language for specifying concurrent systems in terms of constraints over valuations of
+state, and temporal logic that describes admissible transitions.  The notion of \emph{state predicates} being distinguishable from \emph{actions}
+in that they are ``invariant under stuttering" is similar to our declarative definition of table persistence.  Timed Concurrent Constraint Programming
+(TCCP)~\cite{tccp, tdccp} 
