@@ -1,24 +1,39 @@
 \section{Introduction}
 
-Traditional database systems are based on declarative query languages that specify transformations as dataflows over an updatable store.
-Such query languages are either not expressive enough to capture common programming constructs, or are at best awkward to
-use in this fashion.  The family of logic-based database languages, of which Datalog is the progenitor, represent
-expressive programming languages that produce similar dataflow representations.  Datalog is purely deductive: a program specifies the rules
-by which the IDB relations or \emph{views} are populated based on the EDB or static database, which is never updated.
-Recent programming language research has explored the use of Datalog-based languages for expressing distributed systems.  Because distributed
-systems are not static, but move through successive states as time elapses, these efforts were forced to introduce dynamic data storage (e.g. update and
-deletion) to the Datalog model.  These earlier efforts were plagued, however, with ambiguities about how and when state changes occur and when 
-they may be visible, putting a heavy burden on the programmer to ensure atomicity of updates over time.
+Traditional database systems are based on declarative query languages that
+specify transformations as dataflows over an updatable store.  Such query
+languages are either not expressive enough to capture common programming
+constructs \wrm{like what?}, or are at best awkward to use in this fashion.
+\wrm{todo: transition that explains Datalog's birth from these languages... I
+don't know enough to write it} The family of logic-based database languages, of
+which Datalog is the progenitor, represent expressive programming languages
+that produce similar dataflow representations.  Datalog is purely deductive: a
+program specifies the rules by which the derived IDB relations (or
+\emph{views}) are populated based on the EDB (or static database), which is
+never updated.  Recent programming language research has explored the use of
+Datalog-based languages for expressing distributed systems.  Because the state
+of any complex system evolves with its execution, these efforts were forced to
+extend the Datalog model by admitting updates, additions and deletions of the
+EDB.  Unfortunately, these previous attempts were plagued with ambiguities
+about how and when state changes occur and become visible, putting a heavy
+burden on the programmer to ensure even simple properties, such as atomicity of
+updates over time.
 
-In this work, we present a formal model of Datalog augmented with time extensions.  By reifying time as data an introducing it into the logic, these 
-extensions will eliminate existing ambiguities, ensure atomicity of updates and make it possible to express system invariants that 
-can guarantee liveness properties, a key challenge in building distributed systems.
-
+In contrast to reasoning about state change procdurally, Dedalus observes
+that this concept is intuitively expressed as invariants over {\em time}.  In
+this work, we present a formal model of Datalog augmented with time extensions.
+By reifying time as data an introducing it into the logic, Dedalus eliminates
+previous ambiguities, ensures atomicity of updates and makes it possible to
+express system invariants that can guarantee liveness properties, a key
+challenge in building distributed systems.
 
 \subsection{Datalog}
 
-We take as our foundation language an augmented version of $\lnot$Datalog~\cite{ullmanbook} with both scalar and aggregate function symbols.  
-In general, we will be interested in the classes of statically stratifiable and locally stratifiable programs~\cite{prz}.
-An exception is our use of the \emph{choice} construct~\cite{greedychoice, eventchoice} to nondeterministically select an element from a set.
-We will require this construct both to simulate the nondeterminacy in message delay, and to emulate the semantics of key maintenance in 
-prior deductive update models like Overlog~\cite{boon}.
+We take as our foundation language an augmented version of \linebreak
+$\lnot$Datalog~\cite{ullmanbook} with both scalar and aggregate function
+symbols.  In general, we are interested in the classes of statically
+stratifiable and locally stratifiable programs~\cite{prz}.  An exception is our
+use of the \emph{choice} construct~\cite{greedychoice, eventchoice} to model
+nondeterministic selection of an element from a set.  We use this construct to
+model both the nondeterminism of message delay, and the semantics of key
+maintenance in prior deductive update models like Overlog~\cite{boon}.

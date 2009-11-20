@@ -4,9 +4,12 @@ By reifying time as data, we are able to reason about time in our logic.  some u
 
 Perhaps more importantly, the infinite sequence of abstract time gives us a way to reason about ordering, which is particularly difficult in a set-oriented language like Datalog.  The ordering over any program inputs (e.g. message queues) can be represented as a mapping between the ordering domain of the input and the time relation.
 
-We consider an infinite Herbrand universe of constants \emph{C}, in which $C_{1}, C_{2}, [...], C_{n}$ are representations of individual constants,
-and an infinite universe of variable symbols \emph{A} which may take on the values of any constants.   We also consider the ordered set
-of positive integers \emph{S}, representing possible time values.
+We consider an infinite Herbrand universe of constants \emph{C}, in which
+$C_{1}, C_{2}, [...], C_{n}$ are representations of individual constants, and
+an infinite universe of variable symbols \emph{A} which may take on the values
+of any constants.   We also consider the set of positive integers $\mathbb{Z}$,
+which represents the set of possible times, its obvious total order
+\dedalus{successor} and a symbol that represents ``never''.
 
 \subsection{Syntax}
 
@@ -15,44 +18,54 @@ A Dedalus program is a Datalog program in which every predicate is annotated wit
 $p(A_{1}, A_{2}, [...], A_{n})@S$
 
 The predicate p() is a truth-valued function over its arguments $A_{1} - A_{n}$, which may be of any type, and S, which is an integer expression 
-referring to the logical clock time at which the predicate holds, taking one of the following three suffix forms:
+referring to the logical clock time at which the predicate holds, taking one of the following four suffix forms:
 
 \begin{enumerate}
 \item $N$
 \item $N + 1$
-\item $r(A_{1}, A_{2}, [...], A_{n}, N)$
+\item $r(N, A_{1}, A_{2}, [...], A_{n})$
 \item an integer
 \end{enumerate}
 
-\wrm{wait, it's not really N + r(), right?  it's something like receiver\_N + r(), because logical clocks at different nodes may be arbitrarily different, and run at arbitrarily different speeds, right?  (i.e. each node has a different mapping of ``real time'' to logical time).  
-
-a bad operational way to evaluate this would be to have the receiver send its value of receiver\_N.  however, any request to the receiver to send receiver\_N sent within the dedalus model is also a message subject to network delay.  thus, there's a ``time bootstrapping'' problem here that needs to be solved somehow.  introducing a top-down component to the evaluation, such as enabling nodes to pull from each other could solve this, and some now() function could also solve this.
-
-a less bad operational way to evaluate this would be to have the sender trivially evaluate r() to always be 1 -- allowing the network delay to introduce nondeterminism -- and allowing the receiver to fill in receiver\_N.  this still runs in to a similar problem with assigning time.}
-
-The arguments to the function $r$ are variables from the rule body, and thus attributes of subgoals.  Facts and rules in Dedalus are 
+The subset of body variables that appear in the head atom, as well as the time,
+comprise the arguments to $r$.  Facts and rules in Dedalus are 
 defined just as in Datalog, with the additional restrictions:
 
 \begin{itemize}
 \item Every body predicate may only have the suffix $N$.
 \item A head predicate may have any suffix except a constant integer.
-\item A fact must be posited with a constant integer for S, or the special function now().
+\item A fact must be posited at a constant time.
 \end{itemize}
-Rules with the head suffix $N$ are called \emph{deductive} or atemporal rules, and describe all the logical consequences of facts in a given 
-timestep. Deductive rules may be interpreted as pure Datalog rules by dropping the suffixes, treating all facts that are true in the current 
-timestep as Datalog EDB, and running the rules to fixpoint.
 
-Rules with the head suffix $N + 1$ are called \emph{inductive} temporal rules, and describe the relationship between facts in the current timestep 
-and their consequences in the immediate next timestep. Inductive rules allow us to atomically capture change in time, and to model persistent state.
+Rules with the head suffix $N$ are called \emph{deductive} or atemporal rules,
+and describe all the logical consequences of facts in a given timestep.  The
+set of deductive rules in a given timestep $T$ may be interpreted as a pure
+Datalog program, by ignoring the suffixes, and treating all facts that are true
+at $T$ as the Datalog EDB.
 
-Rules with the head suffix $r(\_)$ are also temporal rules, but unlike inductive rules, they carry no guarantee as to in which timestep, if any, 
-their consequences will become visible. Such rules, called message rules, allow us to model network messages between nodes: the nodes 
-are likely to have different clock values, and messages may be lost or delayed arbitrarily.
+Rules with the head suffix $N + 1$ are called \emph{inductive} temporal rules,
+and describe invariants across a timestep (the relationship between facts in
+the current timestep and their consequences in the immediate next timestep).
+Inductive rules allow us to atomically capture change in time, and to model
+persistent state.
+
+Rules with the head suffix $r(\_)$ are also temporal rules, but unlike
+inductive rules, they carry no guarantee as to in which timestep their
+consequences will be visible~\footnote{In fact, a fact derived in such a rule
+may be visible at a timestep previous to its antecedents.} Such rules, called
+{\em message rules}, allow us to model the delay associated with network
+messages between nodes: the nodes are likely to have different clock values,
+and messages may be lost or delayed arbitrarily in transit.
 
 
 \subsubsection{Events}
 
-An \emph{event} in Dedalus corresponds to a Datalog fact.  It is a bodyless head clause with all constant terms in the form
+Previous distributed variants of Datalog introduced {\em events}, intuitively
+facts that are instantaneously true.  Because these languages have no explicit
+language-level notion of time, reasoning about events requires a programmer to
+think operationally in terms of the evaluation of the language.  In Dedalus,
+an event corresponds to a Datalog fact.  It is a bodyless head clause with all 
+constant terms in the form
 
 
 $p(C_{1},C_{2},[...],C_{n})@I;$
@@ -62,8 +75,6 @@ where the elements of C are constants of any type and I is an integer constant.
 
 Events provide ground for any logical inferences given by the deductive rules of the program, and may provide ground for inferences at 
 future time steps via inductive rules.
-
-
 
 \subsubsection{Persistence}
 
@@ -93,10 +104,10 @@ p(a, b, S) \(\leftarrow\)
   \(\lnot\) del\_p(a, b, N);
 \end{Dedalus}
 
-The final subgoal \emph{del\_p} allows us to model overwriteable storage: without it, a tuple will be trivially true at every future timestep if it becomes true
+The final negated subgoal \emph{del\_p} allows us to model overwriteable storage: without it, a tuple will be trivially true at every future timestep if it becomes true
 at any timestep.  Instead, the \emph{del\_p} event, true only at a single timestep, breaks the induction.
 
-Consider the following trace of events:
+Consider the following {\em trace} of events:
 
 \begin{Dedalus}
 p(1,2)@101;
@@ -114,7 +125,6 @@ p(1,2)@200;
 p(1,3)@200;
 p(1,3)@301;
 \end{Dedalus}
-
 
 \subsubsection{Traces}
 
@@ -147,7 +157,7 @@ A \emph{reduced trace} is a projection of a minimal trace in which all event tim
 to a normal form in which the trace starts with event time 1, respects the ordering of the original trace, as leaves no gaps in the sequence.
 \end{definition}
 
-A trace has only one reduced trace, but an infinite number of infinite traces have the same reduced trace: the reduced trace thus forms an 
+A finite trace has only one reduced trace, but an infinite number of infinite traces have the same reduced trace: the reduced trace thus forms an 
 equivalence class among traces.  Not all reduced traces are finite.  The reduced trace of the trace instance given above is:
 
 \begin{Dedalus}
@@ -177,12 +187,13 @@ doesn't fire on the other machine, given the same input.
 
 \subsubsection{State Change}
 
-Under this interpretation, a database update is an atomic (due to the adjacent timestamps)
-pair of events with a deletion of the old value and assertion of the new, in the form:
+In Dedalus, a database update is an atomic (due to the adjacent timestamps)
+pair of events with a deletion of the old value and assertion of the new, in
+the form:
 
-$p(C_{1},C_{2},[...],C_{n})@I;$
+$p(C_{1},C_{2},[...],C_{n})@I+1;$
 \\
-$del\_p(C_{1},C_{2},[...],C_{n})@I+1;$
+$del\_p(C_{1},C_{2},[...],C_{n})@I;$
 
 For example:
 
@@ -191,8 +202,10 @@ del\_p(1,2)@300;
 p(1, 4)@301;
 \end{Dedalus}
 
-Or more generally, an update can be described by a pair of rules that, in effect, describe a
-constraint that holds between values in two adjacent timesteps:
+More generally, an update can be described by a pair of rules that, in effect,
+describe an invariant that holds between values in two adjacent timesteps.
+For example, an update to the second column of the predicate \dedalus{p} is
+expressed as:
 
 \begin{Dedalus}
 p(A, B)@N+1 \(\leftarrow\)
@@ -207,8 +220,8 @@ del_p(A, C)@N \(\leftarrow\)
 
 \subsubsection{Sequences}
 
-Database sequences, objects that retain a counter value and sometimes increment it, may be
-represented with a pair of two inductive rules.  One increments the current counter value when the
+Database sequences, objects that retain and increment a counter value, can be
+represented with a pair of inductive rules.  One increments the current counter value when the
 trigger event is true, while the other persists the current value of the sequence only when the event is 
 not true.
 
