@@ -20,7 +20,7 @@ referring to the logical clock time at which the predicate holds, taking one of 
 \begin{enumerate}
 \item $N$
 \item $N + 1$
-\item $N + r(A_{1}, A_{2}, [...], A_{n})$
+\item $r(A_{1}, A_{2}, [...], A_{n}, N)$
 \item an integer
 \end{enumerate}
 
@@ -45,7 +45,7 @@ timestep as Datalog EDB, and running the rules to fixpoint.
 Rules with the head suffix $N + 1$ are called \emph{inductive} temporal rules, and describe the relationship between facts in the current timestep 
 and their consequences in the immediate next timestep. Inductive rules allow us to atomically capture change in time, and to model persistent state.
 
-Rules with the head suffix $N+r(\_)$ are also temporal rules, but unlike inductive rules, they carry no guarantee as to in which timestep, if any, 
+Rules with the head suffix $r(\_)$ are also temporal rules, but unlike inductive rules, they carry no guarantee as to in which timestep, if any, 
 their consequences will become visible. Such rules, called message rules, allow us to model network messages between nodes: the nodes 
 are likely to have different clock values, and messages may be lost or delayed arbitrarily.
 
@@ -158,13 +158,18 @@ del_p(1,2)@4;
 p(1,?)5;
 \end{Dedalus}
 
-Some other things that we may want to say about reduced traces (although probably not here) are:
+
+\paa{notes:}
+
+Some other things that we may want to say about traces (although probably not here) are:
 \begin{enumerate}
-\item if a particular property holds of a given trace, can we say that it holds of its reduced trace?
 \item a reduced trace represents a \emph{disentanglement} of a series of events and the local clock that existed in the original trace.
-\item we'd expect reduced traces of asynchronous systems to be fairly simple, and we'd expect to frequently find equivalences.
-The complexity added by clocks -- which are external events like messages -- is illustrated by the complexity of traces including
-clock events. 
+\item we'd expect minimal traces of asynchronous systems to be fairly simple, and we'd expect to frequently find equivalences.
+The complexity added by physical clocks -- which are external events like messages -- is illustrated by the complexity of traces including
+clock events.  it is easy to show that we \emph{must} include clock events in a trace, because without them explicitly in the input data, two
+replays of the trace may have different results.  consider two machines running the trace, one with a slow clock.  it fires a timeout that 
+doesn't fire on the other machine, given the same input.
+\item if a particular property holds of a given trace, can we say that it holds of its minimal and reduced traces?
 \item 
 
 \end{enumerate}
@@ -280,7 +285,7 @@ Consider a predicate{m\_p} as defined above, but with an extra integer attribute
 time of the sender (via a message rule) of a given tuple.  For example, the sender's rule will look like: 
 
 \begin{Dedalus}
-m\_p(A, B, N)@N + r(A, B, N) \(\leftarrow\)
+m\_p(A, B, N)@r(A, B, N) \(\leftarrow\)
   send\_p(A, B)@N;
 \end{Dedalus}
 
