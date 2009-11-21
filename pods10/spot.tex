@@ -1,0 +1,191 @@
+\documentclass{acm_proc_article-sp-sigmod09}
+
+%%\usepackage{amsthm}
+
+
+\usepackage[usenames, dvipsnames]{color}
+\usepackage{times}
+%%\usepackage{url}
+%%\usepackage{graphicx}
+%%\usepackage{boxedminipage}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{url}
+%%\usepackage{verbatim}
+%%\usepackage{latexsym}
+\usepackage{amsmath, amssymb}
+%%\usepackage{amsthm}
+
+\usepackage{alltt}
+\usepackage{appendix}
+
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+%dedalus environment for code
+\newenvironment{Dedalus}{
+\vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
+\begin{alltt}\fontsize{9pt}{9pt}\selectfont}
+{\end{alltt}\end{minipage}\vspace{0.5em}}
+
+\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
+
+
+\begin{document}
+
+\section{dedalus spec}
+
+We consider an infinite universe of constants \emph{C}, in which
+$C_{1}, C_{2}, [...], C_{n}$ are representations of individual constants, and
+an infinite universe of variable symbols \emph{A} which may take on the values
+of any constants.   We also consider the set of positive integers $\mathbb{Z}$,
+which represents the set of possible times, its obvious total order
+\dedalus{successor} and a symbol that represents ``never''.
+
+\subsection{Syntax}
+
+A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix.  A Dedalus predicate has the following form:
+
+$p(A_{1}, A_{2}, [...], A_{n})@S$
+
+The predicate p() is a truth-valued function over its arguments $A_{1} - A_{n}$, which may be of any type, and S, which is an integer expression 
+referring to the logical clock time at which the predicate holds, taking one of the following four suffix forms:
+
+\begin{enumerate}
+\item $N$
+\item $N + 1$
+\item $r(N, A_{1}, A_{2}, [...], A_{n})$
+\item an integer
+\end{enumerate}
+
+The subset of body variables that appear in the head atom, as well as the time,
+comprise the arguments to $r$.  Facts and rules in Dedalus are 
+defined just as in Datalog, with the additional restrictions:
+
+\begin{itemize}
+\item Every body predicate may only have the suffix $N$.
+\item A head predicate may have any suffix except a constant integer.
+\item A fact must be posited at a constant time.
+\end{itemize}
+
+Rules with the head suffix $N$ are called \emph{deductive} or atemporal rules,
+and describe all the logical consequences of facts in a given timestep.  The
+set of deductive rules in a given timestep $T$ may be interpreted as a pure
+Datalog program, by ignoring the suffixes, and treating all facts that are true
+at $T$ as the Datalog EDB.
+
+Rules with the head suffix $N + 1$ are called \emph{inductive} temporal rules,
+and describe invariants across a timestep (the relationship between facts in
+the current timestep and their consequences in the immediate next timestep).
+Inductive rules allow us to atomically capture change in time, and to model
+persistent state.
+
+Rules with the head suffix $r(\_)$ are also temporal rules, but unlike
+inductive rules, they carry no guarantee as to in which timestep their
+consequences will be visible~\footnote{In fact, a fact derived in such a rule
+may be visible at a timestep previous to its antecedents.} Such rules, called
+{\em message rules}, allow us to model the delay associated with network
+messages between nodes: the nodes are likely to have different clock values,
+and messages may be lost or delayed arbitrarily in transit.
+
+
+\subsubsection{Events}
+
+Previous distributed variants of Datalog introduced {\em events}, intuitively
+facts that are instantaneously true.  Because these languages have no explicit
+language-level notion of time, reasoning about events requires a programmer to
+think operationally in terms of the evaluation of the language.  In Dedalus,
+an event corresponds to a Datalog fact.  It is a bodyless head clause with all 
+constant terms in the form
+
+
+$p(C_{1},C_{2},[...],C_{n})@I;$
+
+
+where the elements of C are constants of any type and I is an integer constant.
+
+Events provide ground for any logical inferences given by the deductive rules of the program, and may provide ground for inferences at 
+future time steps via inductive rules.
+
+
+\subsubsection{Traces}
+
+\newdef{definition}{Definition}
+\begin{definition}
+A \emph{trace} is a set of events.
+\end{definition}
+
+\begin{definition}
+A \emph{minimal trace} is a subset of a trace that excludes any events caused by inductive rules.
+\end{definition}
+
+\begin{definition}
+A \emph{reduced trace} is a projection of a minimal trace in which all event times are transformed
+to a normal form in which the trace starts with event time 1, respects the ordering of the original trace, as leaves no gaps in the sequence.
+\end{definition}
+
+A finite trace has only one reduced trace, but an infinite number of infinite traces have the same reduced trace: the reduced trace thus forms an 
+equivalence class among traces.  Not all reduced traces are finite.
+
+\subsubsection{Persistence}
+
+A fact that, once true, remains true, could in principle be expressed by universal quantification over time;
+
+%%\begin{Dedalus}
+$p(C_1,C_{2},[...],C_{n})@N;$
+%%\end{Dedalus}
+
+Leaving $N$ as a free variable would permit any substitution, but this rule is unsafe, and permits no deletion or replacement 
+of the tuple via logic.  Instead, the Dedalus template for persistence is:
+
+%%\begin{Dedalus}
+$p(A_{1}, A_{2}, [...], A_{n})@N+1 \leftarrow \\
+  p(A_{1}, A_{2}, [...], A_{n})@N, \\
+  \lnot del\_p(A_{1}, A_{2}, [...], A_{n})@N;
+  $
+%%\end{Dedalus}
+
+\subsection{Translation to Datalog}
+
+It would appear from the time suffix syntax above that we will require $\lnot$Datalog with arithmetic functions, but this is not the case if we assume
+(equivalently) the existence of a binary relation \emph{successor} that is infinite in size (but perhaps constructively defined) and expresses the 
+successor function of Peano Arithmetic.  The rewrite of a Datalog program P to a $\lnot$Datalog program P' proceeds as follows.
+
+\begin{enumerate}
+\item For every predicate p of arity n in P, create a predicate p' of arity n+1 in P', such that the last column of p' is an integer type.
+\item For every rule r in P, create an identical rule r' in P'.  For every predicate p in r',  
+\begin{enumerate}
+	\item If the time suffix is the variable $N$, drop the suffix and rewrite p such that its last attribute contains the variable N.
+	\item If the time suffix is $N+1$ or $r(A_{1}, A_{2},[...], A_{n},N)$ (note that this will only be true for the head), drop the suffix
+	and rewrite p such that its last attribute contains the variable $S$.
+\end{enumerate}
+\item Add to r' the subgoal $successor(N, S)$.
+\item If the head of r' had the time suffix  $r(A_{1}, A_{2},[...], A_{n},N)$, add the subgoal $choose((\_), (S))$ to r'.
+
+\end{enumerate}
+
+\newtheorem{lemma}{Lemma}
+\begin{lemma}
+If a Dedalus program with negation is stratified, so is the equivalent $\lnot$Datalog program.
+\end{lemma}
+
+\begin{lemma}
+If, after removing all temporal rules, a Dedalus program is stratified, the equivalent $\lnot$Datalog program to the original
+is stratified or modularly stratified.
+\end{lemma}
+
+ Because the successor relation is constrained
+such that $\forall A,B (successor(A, B) \rightarrow B > A)$, any such program is locally stratified on \emph{successor} (see \ref{fig:lstrat}).  Informally,
+we have $p_{n+1} \succ del\_p_{n} \succ p_{n}$.
+
+
+\end{document}
+
+
+
