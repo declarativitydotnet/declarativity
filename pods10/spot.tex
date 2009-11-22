@@ -39,7 +39,7 @@
 
 \begin{document}
 
-\section{dedalus spec}
+
 
 We consider an infinite universe of constants \emph{C}, in which
 $C_{1}, C_{2}, [...], C_{n}$ are representations of individual constants, and
@@ -48,7 +48,7 @@ of any constants.   We also consider the set of positive integers $\mathbb{Z}$,
 which represents the set of possible times, its obvious total order
 \dedalus{successor} and a symbol that represents ``never''.
 
-\subsection{Syntax}
+\section{Syntax}
 
 A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix.  A Dedalus predicate has the following form:
 
@@ -95,7 +95,7 @@ messages between nodes: the nodes are likely to have different clock values,
 and messages may be lost or delayed arbitrarily in transit.
 
 
-\subsubsection{Events}
+\subsection{Events}
 
 Previous distributed variants of Datalog introduced {\em events}, intuitively
 facts that are instantaneously true.  Because these languages have no explicit
@@ -114,16 +114,27 @@ Events provide ground for any logical inferences given by the deductive rules of
 future time steps via inductive rules.
 
 
-\subsubsection{Traces}
+\subsection{Traces}
 
 \newdef{definition}{Definition}
 \begin{definition}
 A \emph{trace} is a set of events.
 \end{definition}
 
+Just as Dedalus events roughly correspond to Datalog facts, a Dedalus \emph{trace} corresponds to a Datalog EDB.
+Evaluation of a trace of events may produce more events.
+
 \begin{definition}
-A \emph{minimal trace} is a subset of a trace that excludes any events caused by inductive rules.
+A \emph{complete trace} C for a program P is a trace that includes all events entailed by P given C.
 \end{definition}
+
+A complete trace is a model for $P \cup C$.
+
+\begin{definition}
+A \emph{minimal trace} is a subset of a complete trace that excludes any events caused by inductive rules.
+\end{definition}
+
+A \emph{minimal trace} is a minimal model for $P \cup C$.
 
 \begin{definition}
 A \emph{reduced trace} is a projection of a minimal trace in which all event times are transformed
@@ -133,7 +144,7 @@ to a normal form in which the trace starts with event time 1, respects the order
 A finite trace has only one reduced trace, but an infinite number of infinite traces have the same reduced trace: the reduced trace thus forms an 
 equivalence class among traces.  Not all reduced traces are finite.
 
-\subsubsection{Persistence}
+\subsection{Persistence}
 
 A fact that, once true, remains true, could in principle be expressed by universal quantification over time;
 
@@ -151,7 +162,32 @@ $p(A_{1}, A_{2}, [...], A_{n})@N+1 \leftarrow \\
   $
 %%\end{Dedalus}
 
-\subsection{Translation to Datalog}
+\subsection{State Update}
+
+In Dedalus, a database update is an atomic (due to the adjacent timestamps)
+pair of events with a deletion of the old value and assertion of the new, in
+the form:
+
+$p(C_{1},C_{2},[...],C_{n})@I+1;$
+\\
+$del\_p(C_{1},C_{2},[...],C_{n})@I;$
+
+More generally, an update can be described by a pair of rules that, in effect,
+describe an invariant that holds between values in two adjacent timesteps.
+For example, an update to the second column of the predicate \dedalus{p} is
+expressed as:
+
+\begin{Dedalus}
+p(A, B)@N+1 \(\leftarrow\)
+  update_p(A, B)@N;
+  p(A, _)@N;
+  
+del_p(A, C)@N \(\leftarrow\)
+  p(A, C)@N,
+  update_p(A, _)@N;
+\end{Dedalus}
+
+\section{Translation to Datalog}
 
 It would appear from the time suffix syntax above that we will require $\lnot$Datalog with arithmetic functions, but this is not the case if we assume
 (equivalently) the existence of a binary relation \emph{successor} that is infinite in size (but perhaps constructively defined) and expresses the 
@@ -181,9 +217,14 @@ is stratified or modularly stratified.
 \end{lemma}
 
  Because the successor relation is constrained
-such that $\forall A,B (successor(A, B) \rightarrow B > A)$, any such program is locally stratified on \emph{successor} (see \ref{fig:lstrat}).  Informally,
+such that 
+
+$\forall A,B (successor(A, B) \rightarrow B > A)$, 
+
+any such program is locally stratified on \emph{successor} (see \ref{fig:lstrat}).  Informally,
 we have $p_{n+1} \succ del\_p_{n} \succ p_{n}$.
 
+\section{Cost Model}
 
 \end{document}
 
