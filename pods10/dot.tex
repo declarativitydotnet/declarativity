@@ -70,7 +70,9 @@ integer type \wrm{we really want an inclusion constraint not just in the set of 
 as the \emph{time suffix}.  Facts are defined just as in Datalog, thus a fact
 will have a constant integer value for its time suffix: e.g.
 
+
 $p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z}$
+
 
 For every EDB relation $r$ in a program P, we add to P two relations $r\_pos$ and $r\_neg$ with the same types, and a rule of the form \wrm{is this fundamental to the language, or is it just a rewrite that we do for operational purposes}:
 
@@ -80,10 +82,13 @@ That is, for every EDB predicate $r$ there is an IDB predicate $r\_pos$ that con
 We further restrict all rules in P to refer only to IDB predicates, and to reference $r\_neg$ for any relation $r$ only 
 in the head of a rule, and never in the body.  
 
+
+
 We further consider only \emph{well-formed} rules defined as follows.  Every
 subgoal of a rule's body is required to use a common variable, perhaps
 represented by symbol $N$, for its time suffix.  $N$ must not be otherwise
 constrained (e.g. it must not occur in the rule body except as a time suffix).
+
 
 The head of a well-formed rule similarly contains a time suffix $S$, which must
 be constrained in exactly one of three ways:
@@ -110,10 +115,28 @@ to both come from this relation.}
 
 \end{enumerate}
 
-We collectively refer to the latter two types of rules as {\em temporal} rules,
-as their deductions span two different timesteps.
 
-\subsection{}
+\subsection{Abbreviated Syntax and Intuition}
 
+Dedalus comprises the subset of Datalog defined above, along with some syntactic sugar.  All well-formed body predicates have a 
+variable $N$ unbound in the rest of the rule: we may therefore omit this attribute from the syntax.  The inclusion of the \emph{successor}
+and \emph{choice} predicates is functionally determined by the rule type (inductive or asynchronous), so we omit also these predicates
+from the body.  The rule type is then indicated by a special suffix of the rule head, in the form:
+
+$r(A_{1},A_{2},[...],A_{n})@S$
+
+Where $S$ is one of the following:
+\begin{enumerate}
+\item \emph{now}: a deductive rule, in which all predicates share the same time suffix.
+\item \emph{next}: an inductive rule, in which \emph{successor} is included as described above, and the time suffix of the head predicate
+is the successor of those of the body predicates. 
+\item \emph{async}: an asynchronous rule, in which the time suffix of the head predicate is chosen nondeterministically from the \emph{successor} 
+relation.
+\end{enumerate}
+
+Finally, we define the following shorthand for referring to the special IDB relations defined above.  Recall that for every EDB predicate $r$
+we have a uniquely defined pair of IDB predicates $r\_pos$ and $r\_neg$.  In a Dedalus program, we use $r$ as shorthand for $r\_pos$ 
+(recall that the true EDB predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand for $r\_neg$.
+%%A deductive rule as defined above will hold for any assignment of a constant integer to the $N$-value in the suffix of each predicate.
 
 \end{document}
