@@ -49,11 +49,13 @@ which represents the set of possible times, its obvious total order
 \dedalus{successor} and a symbol that represents ``never''.
 
 \section{Syntax}
+\jmh{I wonder if it wouldn't be better to do a totally syntactic definition of Dedalus as a restricted subclass of Datalog+stratification+successor, with some convenience notation that falls out of the restrictions.  It would ensure that we don't skip steps, and allow us to fall back on proofs about Datalog without being sloppy.  The intro paragraph before is only halfway formal and might be better off with a firm basis in citeable Datalog papers.}
 
-A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix.  A Dedalus predicate has the following form:
+A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix.  \jmh{Already some slop ... you want to define it via Datalog+strat+succ.  You could start by using Datalog notation but requiring the last attribute of each predicate to range over $\mathbb{Z}$, and then introduce the @-sign notation.}  A Dedalus predicate has the following form:
 
 $p(A_{1}, A_{2}, [...], A_{n})@S$
 
+\jmh{In this paragraph you mix definition with intuition .. or model with interpretation or something.  Time is just a column.}
 The predicate p() is a truth-valued function over its arguments $A_{1} - A_{n}$, which may be of any type, and S, which is an integer expression 
 referring to the logical clock time at which the predicate holds, taking one of the following four suffix forms:
 
@@ -81,7 +83,7 @@ Datalog program, by ignoring the suffixes, and treating all facts that are true
 at $T$ as the Datalog EDB.
 
 Rules with the head suffix $N + 1$ are called \emph{inductive} temporal rules,
-and describe invariants across a timestep (the relationship between facts in
+and describe invariants \jmh{need not be invariants ... could introduce new deductions that ``vary''} across a timestep (the relationship between facts in
 the current timestep and their consequences in the immediate next timestep).
 Inductive rules allow us to atomically capture change in time, and to model
 persistent state.
@@ -92,11 +94,11 @@ consequences will be visible~\footnote{In fact, a fact derived in such a rule
 may be visible at a timestep previous to its antecedents.} Such rules, called
 {\em message rules}, allow us to model the delay associated with network
 messages between nodes: the nodes are likely to have different clock values,
-and messages may be lost or delayed arbitrarily in transit.
+and messages may be lost or delayed arbitrarily in transit.  \jmh{Note that $r$ ranges over all the attributes of the head, and hence each head tuple can have a different value for $r$.}
 
 
 \subsection{Events}
-
+\jmh{You should have no recourse to Overlog's sordid history here.  Stay formal and definitional.}
 Previous distributed variants of Datalog introduced {\em events}, intuitively
 facts that are instantaneously true.  Because these languages have no explicit
 language-level notion of time, reasoning about events requires a programmer to
@@ -122,11 +124,12 @@ A \emph{trace} is a set of events.
 \end{definition}
 
 Just as Dedalus events roughly correspond to Datalog facts, a Dedalus \emph{trace} corresponds to a Datalog EDB.
-Evaluation of a trace of events may produce more events.
+Evaluation of a trace of events may produce more events.  \jmh{No!  Events are EDB, we never produce more.  We need a rewriting to refer to ``derived events'' which are IDB.  You could dispense with this when introducing Dedalus notation above, if you want to, by having a kind of ``MDB'' which is the Modifiable Database or some such.  It's really IDB, but some of it (e.g. th del rules) is special, and you might like to mask it from the syntax.}
 
 \begin{definition}
 A \emph{complete trace} C for a program P is a trace that includes all events entailed by P given C.
 \end{definition}
+\jmh{I don't quit know what to make of entailed events as EDB.  And you need to deal with the determinism or non-determinism of $r$ here somehow.}
 
 A complete trace is a model for $P \cup C$.
 
@@ -134,18 +137,26 @@ A complete trace is a model for $P \cup C$.
 A \emph{minimal trace} is a subset of a complete trace that excludes any events caused by inductive rules.
 \end{definition}
 
+\jmh{You will have to more formally define inductive rules. Are they really just trivial inductions on a single table?  Something more general?  I think you'll need to be careful here.}
+
 A \emph{minimal trace} is a minimal model for $P \cup C$.
+\jmh{It's not even clear to me that a minimal trace is a model, much less a minimal model.  This requires proof.}
+
 
 \begin{definition}
-A \emph{reduced trace} is a projection of a minimal trace in which all event times are transformed
+A \emph{reduced trace} is a projection \jmh{not the right word} of a minimal trace in which all event times are transformed
 to a normal form in which the trace starts with event time 1, respects the ordering of the original trace, as leaves no gaps in the sequence.
 \end{definition}
+
+\jmh{You need to be more explicit here.  I'd carefully define an explicit reduction rewriting procedure, call the result a reduced trace, and prove whatever you want to be true of the output of that rewriting.}
 
 A finite trace has only one reduced trace, but an infinite number of infinite traces have the same reduced trace: the reduced trace thus forms an 
 equivalence class among traces.  Not all reduced traces are finite.
 
-\subsection{Persistence}
+\jmh{All this amounts to little lemmas that require proof, no?}
 
+\subsection{Persistence}
+\jmh{Why introduce this notation that is illegal in Datalog?}
 A fact that, once true, remains true, could in principle be expressed by universal quantification over time;
 
 %%\begin{Dedalus}
@@ -162,6 +173,8 @@ $p(A_{1}, A_{2}, [...], A_{n})@N+1 \leftarrow \\
   $
 %%\end{Dedalus}
 
+\jmh{You need a second-order symbol-generator (was that what Maier called a Slalom function?) instead of $del\_p$.  Meanwhile, the motivation fo the del relation is unclear here.  Why not start with an ``append-only'' persistence, and then move to ``updatable'' persistence in the next subsection.}
+
 \subsection{State Update}
 
 In Dedalus, a database update is an atomic (due to the adjacent timestamps)
@@ -171,6 +184,8 @@ the form:
 $p(C_{1},C_{2},[...],C_{n})@I+1;$
 \\
 $del\_p(C_{1},C_{2},[...],C_{n})@I;$
+
+\jmh{``Atomicity'' has no meaning in logic syntax.  Don't use it to introduce things, use it instead to describe things.  If you really want to use it formally you'll want to lean on Lynch or somebody for a definition.}
 
 More generally, an update can be described by a pair of rules that, in effect,
 describe an invariant that holds between values in two adjacent timesteps.
@@ -195,7 +210,7 @@ del_p(A, C)@N \(\leftarrow\)
 
 It would appear from the time suffix syntax above that we will require $\lnot$Datalog with arithmetic functions, but this is not the case if we assume
 (equivalently) the existence of a binary relation \emph{successor} that is infinite in size (but perhaps constructively defined) and expresses the 
-successor function of Peano Arithmetic.  The rewrite of a Datalog program P to a $\lnot$Datalog program P' proceeds as follows.
+successor function of Peano Arithmetic.  The rewrite of a Datalog \jmh{Dedalus?} program P to a $\lnot$Datalog program P' proceeds as follows.
 
 \begin{enumerate}
 \item For every predicate p of arity n in P, create a predicate p' of arity n+1 in P', such that the last column of p' is an integer type.
@@ -209,11 +224,13 @@ successor function of Peano Arithmetic.  The rewrite of a Datalog program P to a
 \item If the head of r' had the time suffix  $r(A_{1}, A_{2},[...], A_{n},N)$, add the subgoal $choose((\_), (S))$ to r'.
 
 \end{enumerate}
+\jmh{You're missing the case of the head $@N+1$, right?}
 
 \newtheorem{lemma}{Lemma}
 \begin{lemma}
 If a Dedalus program with negation is stratified, so is the equivalent $\lnot$Datalog program.
 \end{lemma}
+\jmh{You would need a definition of stratification for Dedalus before stating this lemma.}
 
 \begin{lemma}
 If, after removing all temporal rules, a Dedalus program is stratified, the equivalent $\lnot$Datalog program to the original
@@ -232,9 +249,8 @@ is permitted in Dedalus programs, so long as the recursion involves a temporal o
 In fact, this corresponds to a very common unstratifiable programming idiom: \emph{do something
 if you have not already done it}.
 
+\jmh{As Rusty pointed out, you cannot allow $r$ to deliver msgs in the past or you will break this rule.  And to make this transitive across the network it's easies to respect Lamport clocks. (Otherwise you need to find another way to rule out cycles in time).}
+
 \section{Cost Model}
 
 \end{document}
-
-
-
