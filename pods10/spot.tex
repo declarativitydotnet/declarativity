@@ -187,6 +187,10 @@ del_p(A, C)@N \(\leftarrow\)
   update_p(A, _)@N;
 \end{Dedalus}
 
+\subsection{Asynchrony}
+
+
+
 \section{Translation to Datalog}
 
 It would appear from the time suffix syntax above that we will require $\lnot$Datalog with arithmetic functions, but this is not the case if we assume
@@ -221,8 +225,12 @@ such that
 
 $\forall A,B (successor(A, B) \rightarrow B > A)$, 
 
-any such program is locally stratified on \emph{successor} (see \ref{fig:lstrat}).  Informally,
-we have $p_{n+1} \succ del\_p_{n} \succ p_{n}$.
+any such program is locally stratified on \emph{successor} (see \ref{fig:lstrat}).  
+%%Informally, we have $p_{n+1} \succ del\_p_{n} \succ p_{n}$.  
+The corollary is that recursion through negation
+is permitted in Dedalus programs, so long as the recursion involves a temporal or message rule.
+In fact, this corresponds to a very common unstratifiable programming idiom: \emph{do something
+if you have not already done it}.
 
 \section{Cost Model}
 
