@@ -1,0 +1,108 @@
+\documentclass{acm_proc_article-sp-sigmod09}
+
+%%\usepackage{amsthm}
+
+
+\usepackage[usenames, dvipsnames]{color}
+\usepackage{times}
+%%\usepackage{url}
+%%\usepackage{graphicx}
+%%\usepackage{boxedminipage}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{url}
+%%\usepackage{verbatim}
+%%\usepackage{latexsym}
+\usepackage{amsmath, amssymb}
+%%\usepackage{amsthm}
+
+\usepackage{alltt}
+\usepackage{appendix}
+
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+%dedalus environment for code
+\newenvironment{Dedalus}{
+\vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
+\begin{alltt}\fontsize{9pt}{9pt}\selectfont}
+{\end{alltt}\end{minipage}\vspace{0.5em}}
+
+\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
+
+
+\begin{document}
+
+
+We take as our foundation language an augmented version of \linebreak
+$\lnot$Datalog~\cite{ullmanbook} with aggregate function
+symbols.  In general, we are interested in the classes of statically
+stratifiable and locally stratifiable programs~\cite{prz}.  An exception is our
+use of the \emph{choice} construct~\cite{greedychoice, eventchoice} to model
+nondeterministic selection of an element from a set.  We use this construct to
+model both the nondeterminism of message delay, and the semantics of key
+maintenance in prior deductive update models like Overlog~\cite{boon}.
+
+We consider an infinite universe of constants \emph{C}, in which
+$C_{1}, C_{2}, [...], C_{n}$ are representations of individual constants, and
+an infinite universe of variable symbols \emph{A} which may take on the values
+of any constants.   We also consider the set of positive integers $\mathbb{Z}$,
+which represents the set of possible times, its obvious total order
+\dedalus{successor} and a symbol that represents ``never''.
+
+\section{Syntactic Restrictions}
+%%\jmh{I wonder if it wouldn't be better to do a totally syntactic definition of Dedalus as a restricted subclass of Datalog+stratification+successor, with some convenience %%notation that falls out of the restrictions.  It would ensure that we don't skip steps, and allow us to fall back on proofs about Datalog without being sloppy.  The intro %%paragraph before is only halfway formal and might be better off with a firm basis in citeable Datalog papers.}
+
+%%A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix.  \jmh{Already some slop ... you want to define it via Datalog+strat
+%%+succ.  You could start by using Datalog notation but requiring the last attribute of each predicate to range over $\mathbb{Z}$, and then introduce the @-sign notation.}  
+%%A Dedalus predicate has the following form:
+
+%%$p(A_{1}, A_{2}, [...], A_{n})@S$
+
+We make the restriction that the final attribute of every predicate be of an integer type.  We will refer to this final attribute, common to all
+predicates, as the \emph{time suffix}.  Facts are then defined just as in
+Datalog: a fact will have a constant integer value for its time suffix: e.g.
+
+$p(C_{1},C_{2},[...],C_{n}, i) |  i \in Z$
+
+For every EDB relation $r$ in a program P, we add to P two relations $r\_pos$ and $r\_neg$ with the same types, and a rule in the form:
+
+$p\_pos(A_1, A_2, [...], A_n) \leftarrow p(A_1, A_2, [...], A_n);$
+
+That is, for every EDB predicate $r$ there is an IDB predicate $r\_pos$ that contains at least the contents of $r$.
+We further restrict all rules in P to refer only to IDB predicates, and to reference $r\_neg$ for any relation $r$ only 
+in the head of a rule, and never in the body.  
+
+We further consider only \emph{well-formed} rules defined as follows.  Every subgoal of every rule body is 
+required to use a free variable $N$ for its time suffix.  $N$ must not occur elsewhere in the rule body
+except as a time suffix.
+
+The head of each rule is required to have one of two time suffix variables: $N$ or $S$.  A well-formed rule is said to be \emph{deductive} or atemporal
+if the time suffix of its head is the variable $N$ matching the time suffixes in the body.  If the time suffix is the variable $S$, the rule is
+\emph{temporal} and additional subgoals must be added to make the rule well-formed.  Temporal rules may further be divided into two
+classes: \emph{inductive} rules in which the time suffix of the head goal is strictly one greater than those of the body, and \emph{asynchronous}
+rules in which the time suffix of the head is independent of those of the body.  An Inductive rule is well-formed if it has a well-formed body, 
+the variable $S$ in the time suffix of the head predicate and a subgoal 
+
+$successor(N, S)$
+
+in the body, where $N$ is the variable symbol used in the time suffixes of the body predicates, and $S$ is the symbol used in the time suffix
+in the head.  An atemporal rule is well-formed if it has a well-formed body, the variable $S$ in the time suffix of the head predicate and the subgoals
+
+$successor(_, S), \\
+choose((\_), (S))$
+
+in the body, where $S$ is the symbol from the head predicate.  The \emph{choose} subgoal indicates that the $S$ value projected
+into the head of the rule will be some arbitrary $S$-value of \emph{successor}.
+
+
+\subsection{}
+
+
+\end{document}
