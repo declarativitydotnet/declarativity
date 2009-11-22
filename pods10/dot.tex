@@ -65,42 +65,53 @@ which represents the set of possible times, its obvious total order
 
 %%$p(A_{1}, A_{2}, [...], A_{n})@S$
 
-We make the restriction that the final attribute of every predicate be of an integer type.  We will refer to this final attribute, common to all
-predicates, as the \emph{time suffix}.  Facts are then defined just as in
-Datalog: a fact will have a constant integer value for its time suffix: e.g.
+We make the restriction that the final attribute of every predicate be of an
+integer type \wrm{we really want an inclusion constraint not just in the set of integers, but in the set of all possible times, in case time is finite}.  We will refer to this final attribute, common to all predicates,
+as the \emph{time suffix}.  Facts are defined just as in Datalog, thus a fact
+will have a constant integer value for its time suffix: e.g.
 
-$p(C_{1},C_{2},[...],C_{n}, i) |  i \in Z$
+$p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z}$
 
-For every EDB relation $r$ in a program P, we add to P two relations $r\_pos$ and $r\_neg$ with the same types, and a rule in the form:
+For every EDB relation $r$ in a program P, we add to P two relations $r\_pos$ and $r\_neg$ with the same types, and a rule of the form \wrm{is this fundamental to the language, or is it just a rewrite that we do for operational purposes}:
 
-$p\_pos(A_1, A_2, [...], A_n) \leftarrow p(A_1, A_2, [...], A_n);$
+$r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
 
 That is, for every EDB predicate $r$ there is an IDB predicate $r\_pos$ that contains at least the contents of $r$.
 We further restrict all rules in P to refer only to IDB predicates, and to reference $r\_neg$ for any relation $r$ only 
 in the head of a rule, and never in the body.  
 
-We further consider only \emph{well-formed} rules defined as follows.  Every subgoal of every rule body is 
-required to use a free variable $N$ for its time suffix.  $N$ must not occur elsewhere in the rule body
-except as a time suffix.
+We further consider only \emph{well-formed} rules defined as follows.  Every
+subgoal of a rule's body is required to use a common variable, perhaps
+represented by symbol $N$, for its time suffix.  $N$ must not be otherwise
+constrained (e.g. it must not occur in the rule body except as a time suffix).
 
-The head of each rule is required to have one of two time suffix variables: $N$ or $S$.  A well-formed rule is said to be \emph{deductive} or atemporal
-if the time suffix of its head is the variable $N$ matching the time suffixes in the body.  If the time suffix is the variable $S$, the rule is
-\emph{temporal} and additional subgoals must be added to make the rule well-formed.  Temporal rules may further be divided into two
-classes: \emph{inductive} rules in which the time suffix of the head goal is strictly one greater than those of the body, and \emph{asynchronous}
-rules in which the time suffix of the head is independent of those of the body.  An Inductive rule is well-formed if it has a well-formed body, 
-the variable $S$ in the time suffix of the head predicate and a subgoal 
+The head of a well-formed rule similarly contains a time suffix $S$, which must
+be constrained in exactly one of three ways:
 
-$successor(N, S)$
+\begin{enumerate}
 
-in the body, where $N$ is the variable symbol used in the time suffixes of the body predicates, and $S$ is the symbol used in the time suffix
-in the head.  An atemporal rule is well-formed if it has a well-formed body, the variable $S$ in the time suffix of the head predicate and the subgoals
+\item The rule is said to be \emph{deductive} or {\em atemporal} if $S$ is
+bound to the value of $N$.  That is, the body contains a subgoal of the form:
+\dedalus{S := N}.
 
-$successor(_, S), \\
-choose((\_), (S))$
+\item The rule is said to be {\em inductive} if $S$ is the successor
+of $N$.  That is, the body contains a subgoal of the form:
+\dedalus{successor(N, S)}.
 
-in the body, where $S$ is the symbol from the head predicate.  The \emph{choose} subgoal indicates that the $S$ value projected
-into the head of the rule will be some arbitrary $S$-value of \emph{successor}.
+\item The rule is said to be {\em asynchronous} if $S$ is unrelated to the
+value of $N$ in the body.  We express this independence by adding two subgoals
+to the body: \dedalus{successor(\_, S), choose((\_), (S))}.  The
+\dedalus{choice} subgoal ensures that the $S$ value projected into the head of
+the rule is some arbitrary $S$-value of \emph{successor}. \wrm{Why can't we
+select the initial time?  What we should do instead is have some unary relation
+time(T) that captures all possible times, and choose from this relation
+instead.  We can assume an inclusion constraint forcing successor's arguments
+to both come from this relation.}
 
+\end{enumerate}
+
+We collectively refer to the latter two types of rules as {\em temporal} rules,
+as their deductions span two different timesteps.
 
 \subsection{}
 
