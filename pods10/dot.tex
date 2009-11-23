@@ -147,23 +147,21 @@ where $CI$ is an integer constant.
 
 \newdef{definition}{Definition} \begin{definition}
 %
-A Dedalus program is a set of Dedalus rules, partitioned by location.
+A {\em Dedalus program} is a set of Dedalus rules, partitioned by location.
 %
 \end{definition}
 
 \newdef{definition}{Definition} \begin{definition} 
 %
 An \emph{extensional} relation in a Dedalus program is a relation that does not
-appear in the head of any rule in the program.  The extensional database or EDB
-is the set of facts in extensional relations.
+appear in the head of any rule in the program.
 %
 \end{definition}
 
 \newdef{definition}{Definition} \begin{definition}
 %
 A \emph{modifiable} relation in a Dedalus program is a relation that appears in
-the head of one or more asynchronous rules in the program.  The modifiable
-database or MDB is the set of facts in modifiable relations.
+the head of one or more asynchronous rules in the program.
 %
 \end{definition}
 
@@ -171,10 +169,12 @@ database or MDB is the set of facts in modifiable relations.
 %
 An \emph{intensional} relation in a Dedalus program is a relation that appears
 in the head of one or more deductive or atemporal rules in the program, and
-appears in no asynchronous rules in the program.  The intensional database or
-IDB is the set of facts in intensional relations.
+appears in no asynchronous rules in the program.
 %
 \end{definition}
+
+We refer to the sets of facts in extensional, modifiable, and intensional
+predicates respectively as the EDB, MDB, and IDB.
 
 The EDB, MDB, and IDB are all pairwise disjoint.  Intuitively, the distinction
 between the MDB and IDB is that the MDB is determined nondeterministically from
@@ -192,8 +192,8 @@ $r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
 $r$ there is an IDB predicate $r\_pos$ that contains at least the contents of
 $r$.  We further restrict all rules in P to refer only to IDB and MDB
 predicates, and to reference $r\_neg$ for any relation $r$ only in the head of
-a rule, and never in the body \wrm{then, how do we write inductive rules?}.  In
-a Dedalus program, we use $r$ as shorthand for $r\_pos$ (as the true EDB
+a rule, and never in the body \wrm{then, how do we write persistence rules?}.
+In a Dedalus program, we use $r$ as shorthand for $r\_pos$ (as the true EDB
 predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand
 for $r\_neg$.
 
@@ -203,7 +203,7 @@ An \emph{event} in Dedalus is an EDB fact.
 %
 \end{definition}
 
-Since an EDB fact may not appear in a rule's head, events come from sources
+Since an EDB relation may not appear in a rule's head, events come from sources
 external to the Dedalus program, and serve as ground for the distributed
 computaion.
 
