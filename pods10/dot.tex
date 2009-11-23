@@ -323,6 +323,54 @@ therefore locally stratified.  All locally stratified Datalog programs have a un
 
 \paa{I don't think we can show that programs with async rules are locally stratifiable, actually}
 
+
+
+\section{Traces}
+
+Consider a non-empty EDB E, an empty MBD M and IDB I and a program P.  Evaluating P against E may cause 
+ground atoms to appear in M and I.
+
+\begin{definition}
+A \emph{trace} is any set of ground atoms from the EDB, MDB or IDB of a Dedalus program evaluation.
+\end{definition}
+
+\begin{definition}
+A \emph{complete trace} is the union of the given EDB, and the given IDB and MDB.  
+\end{definition}
+
+\begin{lemma}
+A complete trace of a program P and EDB E is a minimal model for that program and EDB.
+\end{lemma}
+
+If we evaluate E given P, and P is stratifiable, the resulting set of ground atoms is a minimal model.
+In our case, however, successor causes our EDB to be infinite, so the minimal model of any Dedalus program 
+with temporal rules is potentially infinite.  \paa{but we'd like to show that a weaker property holds: that for any value $N$
+in the \emph{successor} relation, the resulting program has a minimal model.}
+
+\begin{definition}
+A \emph{minimal trace} is a subset of a complete trace that excludes any IDB ground atoms derived through an inductive
+rule.
+\end{definition}
+
+A minimal trace is equivalent to the complete trace of which is is a subset: the latter may be derived from the former by repeated
+applications of inductive rules.  A minimal trace records the nondeterminism caused by the delay or reordering of async rules, and
+is equivalent to the original program execution.
+
+\begin{definition}
+A \emph{reduced trace} is a minimal trace with normalized time suffixes starting with 0 and increasing by 1 at each step.
+\end{definition}
+
+show a (trivial) procedure for reduction and make some claims about equivalences without entanglement.
+
+\begin{definition}
+A \emph{event trace} is a Dedalus EDB.
+\end{definition}
+
+An event trace and program P may be used to generate a new IDB and MDB.  The MDB is virtually certain to differ from that of another
+execution, while the IDB may differ, depending on its dependency on the MDB.  The union of these three databases is of course a
+mimimal model, but probably not the same minimal model from another execution.  \paa{but can we say that it will often be true that if we project 
+out the time attribute from every predicate, the minimal models will be the same? it won't always be true...}
+
 \section{Cost Model}
  
 
