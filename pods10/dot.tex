@@ -20,6 +20,8 @@
 \usepackage{alltt}
 \usepackage{appendix}
 
+\usepackage{txfonts}
+\newcommand{\Tau}{\mathcal{T}}
 
 \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 \newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
@@ -40,21 +42,28 @@
 \begin{document}
 
 
-We take as our foundation language an augmented version of \linebreak
+We take as our foundation 
+%language 
+an augmented version of \linebreak
 $\lnot$Datalog~\cite{ullmanbook} with aggregate function
-symbols.  In general, we are interested in the classes of statically
-stratifiable and locally stratifiable programs~\cite{prz}.  An exception is our
+symbols akin to those of SQL (min, max, avg, stdev, count).  In general, we are interested in the classes of statically
+stratifiable and locally stratifiable programs~\cite{prz}.  In addition, we admit the
 use of the \emph{choice} construct~\cite{greedychoice, eventchoice} to model
-nondeterministic selection of an element from a set.  We use this construct to
+nondeterministic selection of an element from a set.  
+\jmh{save the next sentence for later.  stay pure here.}
+In \dedalus, we will use this construct to
 model both the nondeterminism of message delay, and the semantics of key
 maintenance in prior deductive update models like Overlog~\cite{boon}.
 
-We consider an infinite universe of constants \emph{C}, in which
-$C_{1}, C_{2}, [...], C_{n}$ are representations of individual constants, and
-an infinite universe of variable symbols \emph{A} which may take on the values
-of any constants.   We also consider the set of positive integers $\mathbb{Z}$,
-which represents the set of possible times, its obvious total order
-\dedalus{successor} and a symbol that represents ``never''.
+\jmh{Can't we borrow this from somebody else rather than define it ourselves?  ``As in Ullman, et al [FOO] we represent...''}
+As a matter of notation, we refer to an infinite universe of constants \emph{C}, in which
+$C_{1}, C_{2}, \ldots$ are representations of individual constants, and
+an infinite universe of variable symbols $A = A_1, A_2, \ldots$, and a distinguished variable $\Tau$.
+% which may take on the values
+% of any constants.   
+We also make use of the set of positive integers $\mathbb{Z}$,
+(which we will use to represent possible times), along with its natural total order
+\dedalus{successor($A_i, A_j$)} and a distinguished constant symbol $\perp$ that we will use to represent ``never''.
 
 \section{Syntactic Restrictions}
 %%\jmh{I wonder if it wouldn't be better to do a totally syntactic definition of Dedalus as a restricted subclass of Datalog+stratification+successor, with some convenience %%notation that falls out of the restrictions.  It would ensure that we don't skip steps, and allow us to fall back on proofs about Datalog without being sloppy.  The intro %%paragraph before is only halfway formal and might be better off with a firm basis in citeable Datalog papers.}
@@ -64,76 +73,80 @@ which represents the set of possible times, its obvious total order
 %%A Dedalus predicate has the following form:
 
 %%$p(A_{1}, A_{2}, [...], A_{n})@S$
+We will define \dedalus as a restricted sublanguage of the augmented version of $\lnot$Datalog defined above, with some notational shortcuts that fall out naturally.
 
-We make the restriction that the final attribute of every predicate be of an
-integer type \wrm{we really want an inclusion constraint not just in the set of integers, but in the set of all possible times, in case time is finite}.  We will refer to this final attribute, common to all predicates,
-as the \emph{time suffix}.  Facts are defined just as in Datalog, thus a fact
+Our first restriction is on the admissible schemata of our language. We  require that the final attribute of every \dedalus predicate range over the set $\mathbb{Z}$.  In a typical interpretation, \dedalus programs will use this final attribute to connote ``timestamps'', so we refer to this attribute at the \emph{time suffix} of the corresponding predicate.  \wrm{we really want an inclusion constraint not just in the set of integers, but in the set of all possible times, in case time is finite}.  \jmh{I disagree, actually.  EDB facts can be sprinkled throughout time without restriction, and the rule syntax below provides the restrictions you want.  you're hinting at the reduction stuff below, but we can rewrite to that.}  
+
+Facts are defined just as in Datalog, thus a fact
 will have a constant integer value for its time suffix: e.g.
 
 
 $p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z}$
 
-
-We further consider only \emph{well-formed} rules defined as follows.  Every
-subgoal of a rule's body is required to use a common variable, perhaps
-represented by symbol $N$, for its time suffix.  $N$ must not be otherwise
+Our second restriction is on rules.  A {\em well-formed }\dedalus rule is a Datalog rule that adheres to the following constraints on body and head.  
+In the rule body, every
+subgoal is required to use the distinguished variable $\Tau$ as its time suffix.  
+\jmh{I would not introduce the following constraint -- can't we have rules that fire at a particular timestep?  It may slightly complicate your reductions later, but it seems manageable.}
+$\Tau$ must not be otherwise
 constrained (e.g. it must not occur in the rule body except as a time suffix).
-
-
 The head of a well-formed rule similarly contains a time suffix $S$, which must
-be constrained in exactly one of three ways:
+be constrained in exactly one of the following three ways:
 
 \begin{enumerate}
 
-\item The rule is said to be \emph{deductive} or {\em atemporal} if $S$ is
-bound to the value of $N$.  That is, the body contains a subgoal of the form:
-\dedalus{S := N}.
+\item The rule is said to be \emph{deductive} if $S$ is
+bound to the value $\Tau$.  That is, the body contains a subgoal of the form:
+\dedalus{S = $\Tau$}.
 
 \item The rule is said to be {\em inductive} if $S$ is the successor
-of $N$.  That is, the body contains a subgoal of the form:
-\dedalus{successor(N, S)}.
+of $\Tau$.  That is, the body contains a subgoal of the form:
+\dedalus{successor($\Tau$, S)}.
 
-\item The rule is said to be {\em asynchronous} if $S$ is unrelated to the
-value of $N$ in the body.  We express this independence by adding two subgoals
-to the body: \dedalus{successor(\_, S), choose((\_), (S))}.  The
-\dedalus{choice} subgoal ensures that the $S$ value projected into the head of
-the rule is some arbitrary $S$-value of \emph{successor}. \wrm{Why can't we
+\item The rule is said to be {\em asynchronous} if $S$ results from a non-deterministic choice function, which may be independent of $\Tau$.  We express this by adding two subgoals
+to the body: \dedalus{successor(\_, $\Tau$), choose((\_), ($\Tau$))}.  The
+\dedalus{choice} subgoal ensures that the $\Tau$ value projected into the head of
+the rule is some arbitrary $\Tau$-value of \emph{successor}. \wrm{Why can't we
 select the initial time?  What we should do instead is have some unary relation
 time(T) that captures all possible times, and choose from this relation
 instead.  We can assume an inclusion constraint forcing successor's arguments
-to both come from this relation.}
+to both come from this relation.}  \jmh{Good point.  OTOH I suspect we'll have to forbid messages into the past, in which case this will be fine (and succinct).}  \jmh{Actually, we should be able to express delays that are a function of attributes -- e.g. a sender-receiver pair may be input to a real-world delay distribution, as might be the time.}
 
 \end{enumerate}
 
-We collectively refer to the latter two types of rules as {\em temporal} rules,
-as their derivations may exist in a distinct timestep from that of their
-inputs.
+\jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``Dedalus is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
 
-\subsection{Abbreviated Syntax and Intuition}
+\subsection{Abbreviated Syntax and Temporal Interpretation}
+We have been careful to define Dedalus as a syntactic subset of a natural variant of Datalog; this allows us to take advantage of Datalog's well-known semantics and the rich literature on the language.  
 
-Dedalus comprises the subset of Datalog defined above, along with some syntactic sugar.  The body predicates of all well-formed rules have a 
-variable $N$ in the time suffix unbound in the rest of the rule: we may therefore omit this attribute from the syntax.  The inclusion of the \emph{successor}
-and \emph{choice} predicates is functionally determined by the rule type (inductive or asynchronous), so we omit also these predicates
-from the body.  The rule type is then indicated by a special suffix of the rule head, in the form:
+However Dedalus programs are intended to capture naturally temporal semantics.  For example, a fact with some constant $C_i$ in its time suffix can be thought of as a fact that is true ``at time $C_i$''.  Deductive rules can be seen as {\em atemporal} statements: they range over all values of the time suffix, and express deductions that are ``always'' valid.
+Inductive and asynchronous rules are {\em temporal}:
+their consequents are defined to be true ``at a different time'' than their antecedents. 
+
+To simplify Dedalus notation for this typical interpretation,  we introduce some natural syntactic ``sugar'' as follows:  
+
+\begin{itemize}
+	\item {\em Time-suffix notation:}  The final, time-suffix attribute of each predicate is placed after the predicate's right parenthesis, separated by the symbol `@'.   For example, the predicate $r(A_{1}, \ldots, A_{n}, S)$ is rewritten as $r(A_{1}, \ldots, A_{n})@S$.
+	\item {\em Implicit time-suffixes in body predicates:} Since all body predicates of a well-formed rule have a free variable $\Tau$ in the time suffix, we omit the time suffix from body predicates and treat it as implicit. 
+	\item {\em Temporal head annotation:} The inclusion of the \emph{successor}
+and \emph{choice} predicates in the body is promoted to a keyword in the time suffix of the head predicate, in the form:
 
 $r(A_{1},A_{2},[...],A_{n})@S$
 
-Where $S$ is one of the following:
+where $S$ is one of the following:
 \begin{enumerate}
-\item \emph{now}: a deductive rule, in which all predicates share the same time suffix.
-\item \emph{next}: an inductive rule, in which \emph{successor} is included as described above, and the time suffix of the head predicate
-is the successor of those of the body predicates. 
-\item \emph{async}: an asynchronous rule, in which the time suffix of the head predicate is chosen nondeterministically from the \emph{successor} 
-relation.
+\item \emph{now}: a deductive rule, in which all predicates implicitly share the same time suffix $\Tau$.
+\item \emph{next}: an inductive rule, in which the \emph{successor($\Tau$, S)} predicate is implicitly included in the body as described above, and $S$ is implicitly the time suffix of the head
+\item \emph{async}: an asynchronous rule, in which the time suffix of the head predicate is implicitly chosen nondeterministically via choice as described above.
 \end{enumerate}
+\end{itemize}
 
-
-A Datalog fact is simply a rule head with an empty body and all ground terms for its attributes.  To accommodate this in the abbreviated syntax,
-we allow a fourth suffix for the special case of empty bodies: a constant integer indicating the time at which the fact is true.  A Dedalus fact thus has the form:
-
-$r(C_1, C_2, [...], C_n)@CI$
-
-where $CI$ is an integer constant.
+% \jmh{the following is redundant and can be omitted}
+% Dedalus facts are just datalog facts that conform to the schema constraint:  rule heads with empty bodies, and ground terms for all attributes including the time suffix.  To accommodate this in our notation,
+% we allow a fourth suffix for the special case of empty bodies: a constant integer.  A Dedalus fact thus has the form:
+% 
+% $r(C_1, C_2, [...], C_n)@CI$
+% 
+% where $CI$ is an integer constant.
 
 
 %Finally, we define the following shorthand for referring to the special IDB relations defined above.  Recall that for every EDB predicate $r$
@@ -168,29 +181,32 @@ the head of one or more asynchronous rules in the program.
  \begin{definition}
 %
 An \emph{intensional} relation in a Dedalus program is a relation that appears
-in the head of one or more deductive or atemporal rules in the program, and
-appears in no head of an asynchronous rule in the program.
+in the head of one or more atemporal rules in the program, but never in the head of a temporal rule.
 %
 \end{definition}
 
 We refer to the sets of facts in extensional, modifiable, and intensional
 predicates respectively as the EDB, MDB, and IDB.
 
+\jmh{introduction of the MDB doesn't seem useful, actually.  I'd drop this, and if you need to define a ``mutable'' relation as one that participates in the head of a temporal rule, you can do so as needed.}
 The EDB, MDB, and IDB are all pairwise disjoint.  Intuitively, the distinction
 between the MDB and IDB is that the MDB is determined nondeterministically from
 the IDB, EDB and MDB, while the IDB is determined deterministically from the
-IDB, EDB and MDB.  Thus, given an EDB, and a distributed system, all IDB
+IDB, EDB and MDB.  Thus, given an EDB, and a distributed system, \jmh{a what??  distribution is not part of the language description!} all IDB
 predicates that do not transitively depend on MDB predicates can be evaluated
-deterministically.
+deterministically.  \jmh{The only reason to worry about the MDB being non-deterministic is @sync, which you didn't in fact need to introduce yet.  Again, I don't see this discussion being useful.}
 
+\jmh{The following needs to be part of the Datalog-oriented definition of what Dedalus is, in the previous section.  This section is supposed to be syntactic sugar and mental interpretation only.  Moreover, you don't ``introduce'' these predicates; the use of these predicates in this stylized manner is part of the constraints of a ``well-formed'' Dedalus program.}
 For every EDB relation $r$ in a program $P$, we add to $P$ two relations
-$r\_pos$ and $r\_neg$ with the same types, and a rule of the form:
+$r\_pos$ and $r\_neg$ with the same schema as $r$, and a rule of the form:
 
 $r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
 
 \wrm{Are we missing the time suffixes here?} That is, for every EDB predicate
 $r$ there is an IDB predicate $r\_pos$ that contains at least the contents of
-$r$.  We further restrict all rules in P to refer only to IDB and MDB
+$r$.  
+\jmh{Why not say that you restrict the language so that the only reference to EDB predicates are in the definition of $r\_pos$ and $r\_neg$.}
+We further restrict all rules in P to refer only to IDB and MDB
 predicates, and to reference $r\_neg$ for any relation $r$ only in the head of
 a rule, and never in the body \wrm{then, how do we write persistence rules?}.
 In a Dedalus program, we use $r$ as shorthand for $r\_pos$ (as the true EDB
@@ -204,13 +220,17 @@ An \emph{event} in Dedalus is an EDB fact.
 %
 \end{definition}
 
+\jmh{Isn't the following simply a restatement of Datalog's use of EDB?}
 Since an extensional relation may not appear in a rule's head, events come from
 sources external to the Dedalus program, and serve as ground for the
-distributed computaion.
+distributed computaion.  \jmh{remove mention of distribution or computation.  Logic is all syntax!}
 
 %\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
 \subsection{Simple Persistence}
+\jmh{I think the flavor of this section is to map familiar notions from state manipulation to purely logical syntactic constructs grounded in Datalog.  You should motivate at a high level why one would want to do such a thing.  The discussion below is then, in effect, a set of ``design patterns'' or ``typical uses''.  You might want to highlight the logical invariants that emerge from these Dedalus statements and assert that they capture the semantic intent of state manipulation.}
 
+
+\jmh{Your definition is not self-contained, it makes reference to prose.  The prose is not crisp even as prose -- I don't know what ``later'' means, especially given that you said that @sync could produce any time.}
 A fact in predicate $p$ at time $T$ may provide ground for deductive rules
 at time $T$, as well as ground for deductive rules in later timesteps,
 provided there exists a rule of the form:
@@ -280,6 +300,10 @@ program.  Every Datalog program has a unique minimal model. \wrm{cite?  or the
 audience knows this}
 %
 \end{proof}
+
+\jmh{Oops, you forgot that this model is countably infinite due to infinite time. So I could add countably many random consistent facts and have an equally ``small'' model. You will need a more refined definition of safety and minimality that accounts for time.}
+
+\jmh{I'm going to stop commenting here since you'll need some more machinery to continue.}
 
 We define syntactic stratification of a Dedalus program the same way it is
 defined for a Datalog program:
