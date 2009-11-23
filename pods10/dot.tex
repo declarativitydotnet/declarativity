@@ -259,7 +259,70 @@ $del\_p(D_{1},D_{2},[...],D_{n})@i$
 
 with $C, D \in \textbf{C}$ and with some $D_{i} \neq C_{i} | i < n$.
 
+\section{Stratifiability of Dedalus Programs}
 
+\newtheorem{lemma}{Lemma}
+\begin{lemma}
+All Dedalus programs without negation have a unique minimal model.
+\end{lemma}
+
+\begin{proof}
+A Dedalus program without negation is a Datalog program without negation: all such programs have a
+unique minimal model.
+\end{proof}
+
+We define syntactic stratification of a Dedalus program in the usual way: 
+
+\begin{definition}
+A Dedalus program is \emph{syntactically stratifiable} if there exists no cycle with a negative edge in a dependency graph of the program's predicates.
+\end{definition}
+
+Such a program may be divided into strongly connected components that are evaluated in the reverse order of the depends-on
+relation.
+
+\begin{lemma}
+A syntactically stratifiable Dedalus program has a unique minimal model.
+\end{lemma}
+
+\begin{proof}
+We need to show that converting a Dedalus program to Datalog will not introduce any cycles with negation.  To do so, we would need to either
+introduce a cycle where there wasn't one before, or to introduce negation to an existing cycle.  Our rewrite to Datalog adds an attribute
+to every predicate, and in some cases adds the predicates \emph{successor} and \emph{choose}.  These built-in predicates may not appear 
+in the head of any rule, so we cannot have introduced a cycle.  Nor did we negate any subgoals.  The resulting Datalog program is therefore
+stratifiable.  All stratifiable Datalog programs have a unique minimal model.
+\end{proof}
+
+
+\begin{definition}
+A \emph{deductive reduction} of a Dedalus program P is a Dedalus program P' in which only the deductive rules from P occur.
+\end{definition}
+
+\begin{definition}
+A Dedalus program is \emph{temporally stratifiable} if there exists no cycle with a negative edge in a dependency graph of
+its deductive reduction.
+\end{definition}
+
+%%\newtheorem{theorem}{Theorem}
+\begin{lemma}
+Any temporally stratifiable Dedalus program without asynchronous rules has a unique minimal model
+\end{lemma}
+\begin{proof}
+We will first consider the case of programs with only deductive and inductive rules.  We know that there is no recursion
+through negation in the deductive rules alone, because in that case the Dedalus program would not be temporally 
+stratifiable.  So every cycle through negation must at some point pass through an inductive rule, in which the time suffix $S$ in
+the head $p$ is strictly one greater than the suffix $N$ in all the predicates of the body.  At least one of these body predicates is mutually recursive
+with $p$, because $p$ is a node in a dependency cycle.  Any true ground atom in any such predicate $r$
+was derived either via a series of deductive rules derived from $p$ or via an inductive rule referencing $p$.  In the former case, we can
+easily see that all of the deductive rules were derived from ground atoms with a time suffix $N < S$.  In the latter, the ground is clearly at 
+least $M < N$.  In either case, it is not possible for a cycle to exist among the ground atoms, such that a derived atom depends negatively upon itself.
+The program is therefore locally stratified.  All locally stratified Datalog programs have a unique minimal model.
+
+
+\end{proof}
+
+\paa{I don't think we can show that programs with async rules are locally stratifiable, actually}
+
+\section{Cost Model}
  
 
 \end{document}
