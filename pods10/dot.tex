@@ -74,16 +74,6 @@ will have a constant integer value for its time suffix: e.g.
 $p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z}$
 
 
-For every EDB relation $r$ in a program P, we add to P two relations $r\_pos$ and $r\_neg$ with the same types, and a rule of the form \wrm{is this fundamental to the language, or is it just a rewrite that we do for operational purposes}:
-
-$r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
-
-That is, for every EDB predicate $r$ there is an IDB predicate $r\_pos$ that contains at least the contents of $r$.
-We further restrict all rules in P to refer only to IDB predicates, and to reference $r\_neg$ for any relation $r$ only 
-in the head of a rule, and never in the body.  
-
-
-
 We further consider only \emph{well-formed} rules defined as follows.  Every
 subgoal of a rule's body is required to use a common variable, perhaps
 represented by symbol $N$, for its time suffix.  $N$ must not be otherwise
@@ -145,20 +135,79 @@ $r(C_1, C_2, [...], C_n)@CI$
 
 where $CI$ is an integer constant.
 
-Finally, we define the following shorthand for referring to the special IDB relations defined above.  Recall that for every EDB predicate $r$
-we have a uniquely defined pair of IDB predicates $r\_pos$ and $r\_neg$.  In a Dedalus program, we use $r$ as shorthand for $r\_pos$ 
-(recall that the true EDB predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand for $r\_neg$.
+
+%Finally, we define the following shorthand for referring to the special IDB relations defined above.  Recall that for every EDB predicate $r$
+%we have a uniquely defined pair of IDB predicates $r\_pos$ and $r\_neg$.  In a Dedalus program, we use $r$ as shorthand for $r\_pos$ 
+%(recall that the true EDB predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand for $r\_neg$.
 %%A deductive rule as defined above will hold for any assignment of a constant integer to the $N$-value in the suffix of each predicate.
 
 \subsection{Events}
 
-\newdef{definition}{Definition}
-\begin{definition}
-An \emph{event} is an Dedalus EDB fact. 
+\wrm{bunch of random definitions}
+
+\newdef{definition}{Definition} \begin{definition}
+%
+A Dedalus program is a set of Dedalus rules, partitioned by location.
+%
 \end{definition}
 
-Due to our restriction on Dedalus programs to reference only IDB relations, a Dedalus program cannot create events.
-\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
+\newdef{definition}{Definition} \begin{definition} 
+%
+An \emph{extensional} relation in a Dedalus program is a relation that does not
+appear in any rule's head in the program.  The extensional database or EDB is
+the set of facts in extensional relations.
+%
+\end{definition}
+
+\newdef{definition}{Definition} \begin{definition}
+%
+A \emph{modifiable} relation in a Dedalus program is a relation that appears in
+the head of one or more asynchronous rules in the program.  The modifiable
+database or MDB is the set of facts in modifiable relations.
+%
+\end{definition}
+
+\newdef{definition}{Definition} \begin{definition}
+%
+An \emph{intensional} relation in a Dedalus program is a relation that appears
+in the head of one or more deductive or atemporal rules in the program, and
+appears in no asynchronous rules in the program.  The intensional database or
+IDB is the set of facts in intensional relations.
+%
+\end{definition}
+
+The EDB, MDB, and IDB are all pairwise disjoint.  Intuitively, the distinction
+between the MDB and IDB is that the MDB is determined nondeterministically from
+the IDB, EDB and MDB, while the IDB is determined deterministically from the
+IDB, EDB and MDB.  Thus, given an EDB, and a distributed system, all IDB
+predicates that do not transitively depend on MDB predicates can be evaluated
+deterministically.
+
+For every EDB relation $r$ in a program $P$, we add to $P$ two relations
+$r\_pos$ and $r\_neg$ with the same types, and a rule of the form:
+
+$r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
+
+That is, for every EDB predicate $r$ there is an IDB predicate $r\_pos$ that
+contains at least the contents of $r$.  We further restrict all rules in P to
+refer only to IDB and MDB predicates, and to reference $r\_neg$ for any relation $r$
+only in the head of a rule, and never in the body \wrm{then, how do we write
+inductive rules?}.  In a Dedalus program, we use $r$ as shorthand for $r\_pos$
+(as the true EDB predicate $r$ cannot be referenced by any rules) and
+$delete$ $r$ as shorthand for $r\_neg$.
+
+\newdef{definition}{Definition} \begin{definition}
+%
+An \emph{event} in Dedalus is an EDB fact.
+%
+\end{definition}
+
+Due to our restriction on Dedalus programs to reference only IDB relations, a
+Dedalus program cannot derive new events.  Thus, EDB facts come from sources
+external to the Dedalus program, and serve as ground for the distributed
+computaion.
+
+%\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
 \subsection{Simple Persistence}
 
 append-only first
