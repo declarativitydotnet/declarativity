@@ -145,27 +145,31 @@ where $CI$ is an integer constant.
 
 \wrm{bunch of random definitions}
 
-\newdef{definition}{Definition} \begin{definition}
+\newdef{definition}{Definition}
+ \begin{definition}
 %
 A {\em Dedalus program} is a set of Dedalus rules, partitioned by location.
 %
 \end{definition}
 
-\newdef{definition}{Definition} \begin{definition} 
+%%\newdef{definition}{Definition} 
+\begin{definition} 
 %
 An \emph{extensional} relation in a Dedalus program is a relation that does not
 appear in the head of any rule in the program.
 %
 \end{definition}
 
-\newdef{definition}{Definition} \begin{definition}
+%%\newdef{definition}{Definition} 
+\begin{definition}
 %
 A \emph{modifiable} relation in a Dedalus program is a relation that appears in
 the head of one or more asynchronous rules in the program.
 %
 \end{definition}
 
-\newdef{definition}{Definition} \begin{definition}
+%%\newdef{definition}{Definition}
+ \begin{definition}
 %
 An \emph{intensional} relation in a Dedalus program is a relation that appears
 in the head of one or more deductive or atemporal rules in the program, and
@@ -197,7 +201,8 @@ In a Dedalus program, we use $r$ as shorthand for $r\_pos$ (as the true EDB
 predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand
 for $r\_neg$.
 
-\newdef{definition}{Definition} \begin{definition}
+%%\newdef{definition}{Definition} 
+\begin{definition}
 %
 An \emph{event} in Dedalus is an EDB fact.
 %
@@ -210,10 +215,42 @@ computaion.
 %\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
 \subsection{Simple Persistence}
 
-append-only first
+A fact for a predice $p$ may provide ground for deductive rules for which the other body predicates have 
+tuples that have the same constant value for the time suffix.  It may also provide 
+ground for deductive rules whose body predicates have tuples in higher timesteps, provided 
+that an inductive persistence rule exists for $p$ in the form 
+
+$p_pos(A_1,A_2,[...],A_n)@next \leftarrow 
+p_pos(A_1,A_2,[...],A_n);$
+
+If we are given a fact 
+
+$p(C_1, C_2,[...],C_n)@i |   i \in \mathbb{Z}$
+
+
+and the basic persistence rule above, we know that the ground atom
+
+$p\_pos(C_1, C_2,[...],C_n)@j | j \in \mathbb{Z}$
+
+will also be true, if $j >= i$.
 
 \subsection{Mutable State}
 
-introduce del\_p.
+The tuple defined above is true for all $j > i$ no matter what other deductions may occur.  It will be more useful
+to allow the deletion or modification of tuples across time (as defined by the \emph{successor} relation).  An
+event for the special predicate \emph{p\_neg} breaks the induction defined by the persistence rule:
+
+$p\_pos(A_1,A_2,[...],A_n)@next \leftarrow \\
+p\_pos(A_1,A_2,[...],A_n), \\
+\lnot p\_neg(A_1,A_2,[...],A_n);
+$
+
+If, at any $k$, we have a fact $p\_neg(C_1,C_2,[...],C_n)@k$ with $k \in \mathbb{Z}$,  then in $k$
+we do not induce any ground atom $p\_pos(C_1,C_2,[...],C_n)@k+1$ from any ground atom
+$p\_pos(C_1,C_2,[...],C_n)@k$.  So also are all inductions for any $l > k$.
+
+
+
+ 
 
 \end{document}
