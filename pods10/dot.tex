@@ -121,8 +121,8 @@ inputs.
 
 \subsection{Abbreviated Syntax and Intuition}
 
-Dedalus comprises the subset of Datalog defined above, along with some syntactic sugar.  All well-formed body predicates have a 
-variable $N$ unbound in the rest of the rule: we may therefore omit this attribute from the syntax.  The inclusion of the \emph{successor}
+Dedalus comprises the subset of Datalog defined above, along with some syntactic sugar.  The body predicates of all well-formed rule have a 
+variable $N$ in the time suffix unbound in the rest of the rule: we may therefore omit this attribute from the syntax.  The inclusion of the \emph{successor}
 and \emph{choice} predicates is functionally determined by the rule type (inductive or asynchronous), so we omit also these predicates
 from the body.  The rule type is then indicated by a special suffix of the rule head, in the form:
 
@@ -137,9 +137,34 @@ is the successor of those of the body predicates.
 relation.
 \end{enumerate}
 
+
+A Datalog fact is simply a rule head with an empty body and all ground terms for its attributes.  To accommodate this in the abbreviated syntax,
+we allow a fourth suffix for the special case of empty bodies: a constant integer indicating the time at which the fact is true.  A Dedalus fact thus has the form:
+
+$r(C_1, C_2, [...], C_n)@CI$
+
+where $CI$ is an integer constant.
+
 Finally, we define the following shorthand for referring to the special IDB relations defined above.  Recall that for every EDB predicate $r$
 we have a uniquely defined pair of IDB predicates $r\_pos$ and $r\_neg$.  In a Dedalus program, we use $r$ as shorthand for $r\_pos$ 
 (recall that the true EDB predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand for $r\_neg$.
 %%A deductive rule as defined above will hold for any assignment of a constant integer to the $N$-value in the suffix of each predicate.
+
+\subsection{Events}
+
+\newdef{definition}{Definition}
+\begin{definition}
+An \emph{event} is an Dedalus EDB fact. 
+\end{definition}
+
+Due to our restriction on Dedalus programs to reference only IDB relations, a Dedalus program cannot create events.
+\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
+\subsection{Simple Persistence}
+
+append-only first
+
+\subsection{Mutable State}
+
+introduce del\_p.
 
 \end{document}
