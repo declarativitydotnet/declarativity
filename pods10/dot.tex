@@ -315,7 +315,8 @@ with $p$, because $p$ is a node in a dependency cycle.  Any true ground atom in 
 was derived either via a series of deductive rules derived from $p$ or via an inductive rule referencing $p$.  In the former case, we can
 easily see that all of the deductive rules were derived from ground atoms with a time suffix $N < S$.  In the latter, the ground is clearly at 
 least $M < N$.  In either case, it is not possible for a cycle to exist among the ground atoms, such that a derived atom depends negatively upon itself.
-The program is therefore locally stratified.  All locally stratified Datalog programs have a unique minimal model.
+We may therefore eliminate this node from the cycle.  We proceed in this fashion until there are no cycles with negation in the graph: the program is 
+therefore locally stratified.  All locally stratified Datalog programs have a unique minimal model.
 
 
 \end{proof}
