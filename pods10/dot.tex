@@ -173,7 +173,7 @@ the head of one or more asynchronous rules in the program.
 %
 An \emph{intensional} relation in a Dedalus program is a relation that appears
 in the head of one or more deductive or atemporal rules in the program, and
-appears in no asynchronous rules in the program.
+appears in no head of an asynchronous rule in the program.
 %
 \end{definition}
 
@@ -215,132 +215,225 @@ computaion.
 %\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
 \subsection{Simple Persistence}
 
-A fact for a predice $p$ may provide ground for deductive rules for which the other body predicates have 
-tuples that have the same constant value for the time suffix.  It may also provide 
-ground for deductive rules whose body predicates have tuples in higher timesteps, provided 
-that an inductive persistence rule exists for $p$ in the form 
+A fact in predicate $p$ at time $T$ may provide ground for deductive rules
+at time $T$, as well as ground for deductive rules in later timesteps,
+provided there exists a rule of the form:
 
 $p_pos(A_1,A_2,[...],A_n)@next \leftarrow 
 p_pos(A_1,A_2,[...],A_n);$
 
-If we are given a fact 
+\begin{definition}
+%
+A rule of the above form is known as a {\em simple persistence rule}.
+%
+\end{definition}
 
-$p(C_1, C_2,[...],C_n)@i |   i \in \mathbb{Z}$
-
-
-and the basic persistence rule above, we know that the ground atom
-
-$p\_pos(C_1, C_2,[...],C_n)@j | j \in \mathbb{Z}$
-
-will also be true, if $j >= i$.
+A simple inductive persistence rule ensures that a $p$ fact true at time $i$ will
+be true $\forall j \in \mathbb{Z} | j >= i$.
 
 \subsection{Mutable State}
 
-The tuple defined above is true for all $j > i$ no matter what other deductions may occur.  It will be more useful
-to allow the deletion or modification of tuples across time (as defined by the \emph{successor} relation).  An
-event for the special predicate \emph{p\_neg} breaks the induction defined by the persistence rule:
+To model deletions and updates of a fact, it is useful to break the induction
+in a simple persistence rule.  Adding a {\em p\_neg} subgoal to the body of a
+simple persistence rule accomplishes this:
 
 $p\_pos(A_1,A_2,[...],A_n)@next \leftarrow \\
 p\_pos(A_1,A_2,[...],A_n), \\
 \lnot p\_neg(A_1,A_2,[...],A_n);
 $
 
-If, at any $k$, we have a fact $p\_neg(C_1,C_2,[...],C_n)@k$ with $k \in \mathbb{Z}$,  then in $k$
-we do not induce any ground atom $p\_pos(C_1,C_2,[...],C_n)@k+1$ from any ground atom
-$p\_pos(C_1,C_2,[...],C_n)@k$.  Nor are any inductions done for any $l > k$ due to this rule.
+\begin{definition}
+%
+A rule of the above form is known as a {\em mutable persistence rule}.
+%
+\end{definition}
 
-A database update is an atomic (due to the adjacent timestamps)
-pair of events with a deletion of the old value and assertion of the new, in
-the form:
+If, at any time $k$, we have a fact $p\_neg(C_1,C_2,[...],C_n)@k$, then we do
+not deduce a $p\_pos(C_1,C_2,[...],C_n)@k+1$ fact.  By induction, we do not
+deduce a $p\_pos(C_1,C_2,[...],C_n)@l$ for any $l > k$, unless this $p_pos$
+fact is re-derived at some timestep $l > k$ by another rule.
 
-$p(C_{1},C_{2},[...],C_{n})@i+1$
-\\
-$del\_p(D_{1},D_{2},[...],D_{n})@i$
+\begin{definition}
+%
+For some time $i$, an {\em update} is any pair of facts:
 
-with $C, D \in \textbf{C}$ and with some $D_{i} \neq C_{i} | i < n$.
+$p\_neg(C_{1},C_{2},[...],C_{n})@i$ \\ $p\_pos(D_{1},D_{2},[...],D_{n})@i+1$
+%
+\end{definition}
+
+Intuitively, an update represents replacing an old value of a tuple with a
+newer value.  We say the update is {\em atomic across timesteps}, meaning that
+the old value ceases to exist at the same timestep in which the new value
+exists -- timestep $i+1$ in the above definition.
 
 \section{Stratifiability of Dedalus Programs}
 
-\newtheorem{lemma}{Lemma}
+\newtheorem{lemma}{Lemma} 
+
+\begin{lemma} 
+%
+A Dedalus program without negation, aggregation, and choice has a unique
+minimal model.
+%
+\end{lemma}
+
+\begin{proof} 
+%
+A Dedalus program without negation, aggregation, and choice is a pure Datalog
+program.  Every Datalog program has a unique minimal model. \wrm{cite?  or the
+audience knows this}
+%
+\end{proof}
+
+We define syntactic stratification of a Dedalus program the same way it is
+defined for a Datalog program:
+
+\begin{definition}
+%
+A Dedalus program without choice is \emph{syntactically stratifiable} if there
+exists no cycle with a negative edge or an aggregation edge in the program's
+predicate dependency graph.
+%
+\end{definition}
+
+We evaluate such a program by evaluating each strongly connected component of
+its predicate dependency graph under a closed-world assumption.  We may
+evaluate in any order returned by a topological sort on the predicate
+dependency graph with each strongly connected component collapsed to a single
+node. \wrm{XXX: is this right?}
+
+\begin{definition}
+%
+A {\em Dedalus instance} $(P,E)$ is a Dedalus program $P$ along with an EDB
+$E$.
+%
+\end{definition}
+
 \begin{lemma}
-All Dedalus programs without negation have a unique minimal model.
+%
+A syntactically stratifiable Dedalus instance without choice has a unique
+minimal model.  That is, there exists a function $D$ from syntactically
+stratifiable Dedalus instances without choice to their minimal models.
+%
 \end{lemma}
 
 \begin{proof}
-A Dedalus program without negation is a Datalog program without negation: all such programs have a
-unique minimal model.
+%
+We know that there exists a function $B$ from syntactically stratifiable
+Datalog instances to their minimal models.  Earlier, we introduced \wrm{XXX:
+where?} a bijection \wrm{XXX: probably not a bijection} $A$ from the set of
+Dedalus instances without choice to the set of Datalog instances, and a
+bijection $C$ between minimal models of Datalog instances and minimal models of
+Dedalus instances without choice.  We will show that $D = C \circ B \circ A$.
+
+Thus, we need only prove that the codomain of $A$ restricted to the set of
+syntactically stratifiable Dedalus instances without choice is a subset of
+syntactically stratifiable Datalog instance.  We will show this by proving that
+$M$ does not add any negated cycles to the instance's predicate dependency
+graph.
+
+Since $M$ does not add any rules to the instance, and may introduce only the
+non-negated EDB {\em successor} relation to the body of an existing rule, it
+does not add any new cycles to, or add negation to any existing cycles in the
+instance's predicate dependency graph.
+%
 \end{proof}
 
-We define syntactic stratification of a Dedalus program in the usual way: 
-
 \begin{definition}
-A Dedalus program is \emph{syntactically stratifiable} if there exists no cycle with a negative edge in a dependency graph of the program's predicates.
+%
+\wrm{Def of locally stratifiable}
+%
 \end{definition}
 
-Such a program may be divided into strongly connected components that are evaluated in the reverse order of the depends-on
-relation.
-
 \begin{lemma}
-A syntactically stratifiable Dedalus program has a unique minimal model.
+%
+A locally stratifiable Dedalus instance without choice has a unique
+minimal model.  That is, there exists a function $E$ from locally
+stratifiable Dedalus instances without choice to their minimal models.
+%
 \end{lemma}
 
 \begin{proof}
-We need to show that converting a Dedalus program to Datalog will not introduce any cycles with negation.  To do so, we would need to either
-introduce a cycle where there wasn't one before, or to introduce negation to an existing cycle.  Our rewrite to Datalog adds an attribute
-to every predicate, and in some cases adds the predicates \emph{successor} and \emph{choose}.  These built-in predicates may not appear 
-in the head of any rule, so we cannot have introduced a cycle.  Nor did we negate any subgoals.  The resulting Datalog program is therefore
-stratifiable.  All stratifiable Datalog programs have a unique minimal model.
+%
+\wrm{TODO}
+%
 \end{proof}
 
 
 \begin{definition}
-A \emph{deductive reduction} of a Dedalus program P is a Dedalus program P' in which only the deductive rules from P occur.
+%
+A \emph{deductive reduction} of a Dedalus program $P$ is the subset of $P$
+consisting of exactly those deductive rules in $P$.
+%
 \end{definition}
 
-\begin{definition}
-A Dedalus program is \emph{temporally stratifiable} if there exists no cycle with a negative edge in a dependency graph of
-its deductive reduction.
+\begin{definition} 
+%
+A Dedalus program is \emph{temporally stratifiable} if its deductive
+reduction is syntactically stratifiable.
+%
 \end{definition}
 
 %%\newtheorem{theorem}{Theorem}
 \begin{lemma}
-Any temporally stratifiable Dedalus program without asynchronous rules has a unique minimal model
-\end{lemma}
+%
+Any temporally stratifiable Dedalus instance $P$ without asynchronous rules has
+a unique minimal model
+%
+\end{lemma} 
+
 \begin{proof}
-We will first consider the case of programs with only deductive and inductive rules.  We know that there is no recursion
-through negation in the deductive rules alone, because in that case the Dedalus program would not be temporally 
-stratifiable.  So every cycle through negation must at some point pass through an inductive rule, in which the time suffix $S$ in
-the head $p$ is strictly one greater than the suffix $N$ in all the predicates of the body.  At least one of these body predicates is mutually recursive
-with $p$, because $p$ is a node in a dependency cycle.  Any true ground atom in any such predicate $r$
-was derived either via a series of deductive rules derived from $p$ or via an inductive rule referencing $p$.  In the former case, we can
-easily see that all of the deductive rules were derived from ground atoms with a time suffix $N < S$.  In the latter, the ground is clearly at 
-least $M < N$.  In either case, it is not possible for a cycle to exist among the ground atoms, such that a derived atom depends negatively upon itself.
-We may therefore eliminate this node from the cycle.  We proceed in this fashion until there are no cycles with negation in the graph: the program is 
-therefore locally stratified.  All locally stratified Datalog programs have a unique minimal model.
+%
+\bf{Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
+deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
+thus it has a unique minimal model.
 
-
+\bf{Case 2:} $P$ consists of only deductive and inductive rules.  Assume $P$
+does not have a unique minimal model.  This implies that $P$ is not
+syntactically stratifiable, thus there must exist some cycle through at least
+one predicate $q$ involving a negation or aggregation edge in $P$'s predicate
+dependency graph, and furthermore this cycle must include at least one
+inductive rule.  Since an inductive rule has a time suffix $S := N+1$, where
+$N$ is the timestamp of its body, and $P$'s deductive reduction is
+syntactically stratifiable, we know that the aggregate or negation of $q$ must
+always occur in a strictly earlier or later timestamp than that of the positive
+$q$ atom.  Since the timestep in the cycle increases monotonically with each
+iteration, $q$ will never, in practice, depend on a negation or aggregate of
+itself.  Thus, $P$ is locally stratifiable, and by Lemma XXX above, $P$ has a
+unique minimal model.  This contradicts our assumption that $P$ does not have a
+unique minimal model.  Thus, $P$ has a unique minimal model.
+%
 \end{proof}
 
 \paa{I don't think we can show that programs with async rules are locally stratifiable, actually}
-
-
+\wrm{Why not?  What if we have that "causality constraint" we were talking about?}
 
 \section{Traces}
 
-Consider a non-empty EDB E, an empty MBD M and IDB I and a program P.  Evaluating P against E may cause 
-ground atoms to appear in M and I.
+\wrm{I don't know what you mean by ground atoms, so I changed "ground atom" to fact}
+
+%Consider a non-empty EDB $E$, an empty MBD $M$ and IDB $I$ and a program $P$.  Evaluating $P$ against $E$ may derive facts in $M$ and $I$.
+
+%\begin{definition}
+%A \emph{trace} is any set of facts from the EDB, MDB or IDB of a Dedalus program evaluation.
+%\end{definition}
+
+%\wrm{lol, why do we need the notion of an incomplete trace?}
 
 \begin{definition}
-A \emph{trace} is any set of ground atoms from the EDB, MDB or IDB of a Dedalus program evaluation.
-\end{definition}
-
-\begin{definition}
-A \emph{complete trace} is the union of the given EDB, and the given IDB and MDB.  
+%
+A \emph{complete trace} of an evaluation of a Dedalus instance is the union of
+the given EDB with the derived IDB and MDB.
+%
 \end{definition}
 
 \begin{lemma}
-A complete trace of a program P and EDB E is a minimal model for that program and EDB.
+%
+A complete trace of a Dedalus instance $(P,E)$ is its unique minimal model.
+%
 \end{lemma}
+
+\wrm{===stopped here due to wanting some sleep.  i'll look at this again tomorrow===}
 
 If we evaluate E given P, and P is stratifiable, the resulting set of ground atoms is a minimal model.
 In our case, however, successor causes our EDB to be infinite, so the minimal model of any Dedalus program 
