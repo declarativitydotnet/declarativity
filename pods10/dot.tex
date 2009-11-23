@@ -111,7 +111,7 @@ inputs.
 
 \subsection{Abbreviated Syntax and Intuition}
 
-Dedalus comprises the subset of Datalog defined above, along with some syntactic sugar.  The body predicates of all well-formed rule have a 
+Dedalus comprises the subset of Datalog defined above, along with some syntactic sugar.  The body predicates of all well-formed rules have a 
 variable $N$ in the time suffix unbound in the rest of the rule: we may therefore omit this attribute from the syntax.  The inclusion of the \emph{successor}
 and \emph{choice} predicates is functionally determined by the rule type (inductive or asynchronous), so we omit also these predicates
 from the body.  The rule type is then indicated by a special suffix of the rule head, in the form:
@@ -143,16 +143,14 @@ where $CI$ is an integer constant.
 
 \subsection{Events}
 
-\wrm{bunch of random definitions}
-
 \newdef{definition}{Definition}
- \begin{definition}
+
+\begin{definition}
 %
-A {\em Dedalus program} is a set of Dedalus rules, partitioned by location.
+A {\em Dedalus program} is a set of Dedalus rules.
 %
 \end{definition}
 
-%%\newdef{definition}{Definition} 
 \begin{definition} 
 %
 An \emph{extensional} relation in a Dedalus program is a relation that does not
@@ -160,7 +158,6 @@ appear in the head of any rule in the program.
 %
 \end{definition}
 
-%%\newdef{definition}{Definition} 
 \begin{definition}
 %
 A \emph{modifiable} relation in a Dedalus program is a relation that appears in
@@ -168,7 +165,6 @@ the head of one or more asynchronous rules in the program.
 %
 \end{definition}
 
-%%\newdef{definition}{Definition}
  \begin{definition}
 %
 An \emph{intensional} relation in a Dedalus program is a relation that appears
@@ -208,9 +204,9 @@ An \emph{event} in Dedalus is an EDB fact.
 %
 \end{definition}
 
-Since an EDB relation may not appear in a rule's head, events come from sources
-external to the Dedalus program, and serve as ground for the distributed
-computaion.
+Since an extensional relation may not appear in a rule's head, events come from
+sources external to the Dedalus program, and serve as ground for the
+distributed computaion.
 
 %\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
 \subsection{Simple Persistence}
@@ -228,8 +224,8 @@ A rule of the above form is known as a {\em simple persistence rule}.
 %
 \end{definition}
 
-A simple inductive persistence rule ensures that a $p$ fact true at time $i$ will
-be true $\forall j \in \mathbb{Z} | j >= i$.
+A simple persistence rule ensures that a $p$ fact true at time $i$ will be true
+$\forall j \in \mathbb{Z} | j >= i$.
 
 \subsection{Mutable State}
 
