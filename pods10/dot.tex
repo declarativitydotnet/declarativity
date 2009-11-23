@@ -407,13 +407,15 @@ unique minimal model.  Thus, $P$ has a unique minimal model.
 \section{Traces}
 
 \wrm{I don't know what you mean by ground atoms, so I changed "ground atom" to fact}
+\paa{a ground atom is  a predicate with all ground terms.  a fact is precisely an EDB ground atom.}
 
 %Consider a non-empty EDB $E$, an empty MBD $M$ and IDB $I$ and a program $P$.  Evaluating $P$ against $E$ may derive facts in $M$ and $I$.
 
-%\begin{definition}
-%A \emph{trace} is any set of facts from the EDB, MDB or IDB of a Dedalus program evaluation.
-%\end{definition}
+\begin{definition}
+A \emph{trace} is any set of facts from the EDB, MDB or IDB of a Dedalus program evaluation.
+\end{definition}
 
+Any trace for a Dedalus instance $(P,E)$ is an interpretation of $(P,E)$.
 %\wrm{lol, why do we need the notion of an incomplete trace?}
 
 \begin{definition}
@@ -442,8 +444,14 @@ rule.
 \end{definition}
 
 A minimal trace is equivalent to the complete trace of which is is a subset: the latter may be derived from the former by repeated
-applications of inductive rules.  A minimal trace records the nondeterminism caused by the delay or reordering of async rules, and
-is equivalent to the original program execution.
+applications of inductive rules.  However, a given a Dedalus instance $(P, E)$ and a minimal trace T (where $E \subset T$), a fixpoint
+computation will most likely \emph{not} yield a minimal model, because new tuples may be added to the MDB that represent a component 
+of a different minimal model, and because these may affect the IDB.  The set of ground atoms $EDB \cup MDB_{old} \cup IDB_{new}$
+\emph{may} may be a minimal model, iff $IDB_{new} = IDB_{old}$.  \paa{actually I am not sure if that is true}.  
+$(EDB \cup MDB_{old} \cup IDB_{new} \cup IDB_{old})$ is certain to be a model, but is only minimal if $IDB_{new} \subset IDB_{old}$.
+
+A minimal trace records the nondeterminism caused by the delay or reordering of async rules, and
+is equivalent to the original program execution.  
 
 \begin{definition}
 A \emph{reduced trace} is a minimal trace with normalized time suffixes starting with 0 and increasing by 1 at each step.
