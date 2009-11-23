@@ -247,8 +247,17 @@ $
 
 If, at any $k$, we have a fact $p\_neg(C_1,C_2,[...],C_n)@k$ with $k \in \mathbb{Z}$,  then in $k$
 we do not induce any ground atom $p\_pos(C_1,C_2,[...],C_n)@k+1$ from any ground atom
-$p\_pos(C_1,C_2,[...],C_n)@k$.  So also are all inductions for any $l > k$.
+$p\_pos(C_1,C_2,[...],C_n)@k$.  Nor are any inductions done for any $l > k$ due to this rule.
 
+A database update is an atomic (due to the adjacent timestamps)
+pair of events with a deletion of the old value and assertion of the new, in
+the form:
+
+$p(C_{1},C_{2},[...],C_{n})@i+1$
+\\
+$del\_p(D_{1},D_{2},[...],D_{n})@i$
+
+with $C, D \in \textbf{C}$ and with some $D_{i} \neq C_{i} | i < n$.
 
 
  
