@@ -35,17 +35,7 @@ $Q$ & Set of query timestamps \\ \hline
 
 \subsubsection{Naive Deductive Implementation}
 
-To evaluate a schedule consisting of inserts, updates and queries \wrm{I still
-have no idea what a ``query'' is or precisely why we want queries.  Is this
-just a device to force a fixpoint on a specific predicate in the deductive
-model, and relax absolute ordering (e.g.  between two queries, in equivalent
-traces, events may occur in different order as long as the result of the query
-(modulo time) is the same?)  What aspect of distributed systems do queries try
-to model? I'm not sure how queries figure in to the deductive vs overwritable
-storage implementations, but I'm assuming that the deductive implementation
-recomputes the entire program for each query, where as the overwritable
-implmentation persists it between queries.  This really doesn't seem all that
-compelling though...}, a naive deductive implementation would:
+To evaluate a schedule consisting of inserts, updates and queries, a naive deductive implementation would:
 
 \begin{enumerate}
 
@@ -58,17 +48,18 @@ step is $(|S|+2|U|)w$.
 
 \item For a query about predicate $P$, in local stratum $M$ (corresponding with
 timestep $M$), we must evaluate all predicates in $P$'s predicate dependency
-graph in strata $1$ through $M$.  An evaluation of a base predicate $P$
-consists of evaluating all rules that reference $P$ in the head \wrm{or doing
-some voodoo like the LDL paper (or was it glue/nail?) where queries cause the
-rules to be rewritten for greater efficiency}, and may involve polynomially
-many derivations in the size of the EDB up to time $S$.  Evaluating a rule
-consists of execution any query plan that encodes the logical meaning of the
-rule.  \wrm{do we want to dive into query plans here and talk about the cost of
-a particular derivation?}  As a simplifying assumption, we assume the cost of a
-derivation is some fixed value $d$.  In reality, the cost depends on the
-particular query plan selected.  \wrm{not sure what the best way to express
-this in a formula is.}
+graph in strata $1$ through $M$.  
+%A bottom-up evaluation of a predicate $P$ consists of evaluating all rules
+%that reference $P$ in the head, and may involve polynomially many derivations
+%in the size of the EDB up to time $M$.
+A naive query plan for execution of a rule would consist of taking the cross
+product of all body relations, selecting the subset that matches the body
+conditions, and projecting this subset onto the head predicate to derive new
+head tuples.  Assume each rule not in any recursion has an associated
+selectivity $s_r$ and cost per each tuple in the join result $d_r$.  Each
+recursion will proceed for $n_r$ steps, and 
+
+
 
 \end{enumerate}
 
