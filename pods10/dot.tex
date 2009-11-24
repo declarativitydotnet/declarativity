@@ -115,6 +115,69 @@ to both come from this relation.}  \jmh{Good point.  OTOH I suspect we'll have t
 
 \jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``Dedalus is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
 
+\wrm{begin misplaced definitions}
+
+Each relation in a Dedalus program is of exactly one of the three kinds:
+
+\newdef{definition}{Definition}
+
+%\begin{definition}
+%
+%A {\em Dedalus program} is a set of Dedalus rules.
+%
+%\end{definition}
+
+\begin{definition}
+%
+An \emph{extensional} relation in a Dedalus program is a relation that does not
+appear in the head of any rule in the program.
+%
+\end{definition}
+
+ \begin{definition}
+ %
+ An \emph{intensional} relation in a Dedalus program is a relation that appears
+ in the head of one or more atemporal rules in the program, but never in the head of a temporal rule.
+ %
+ \end{definition}
+
+ \begin{definition}
+ %
+ A \emph{nondeterministic} relation in a Dedalus program is a relation that appears in
+ the head of one or more asynchronous rules in the program.
+ %
+ \end{definition}
+
+ We refer to the sets of facts in extensional, intensional, and nondeterministic
+ predicates respectively as the EDB, IDB, and NDB.
+
+ %\jmh{introduction of the MDB doesn't seem useful, actually.  I'd drop this, and if you need to define a ``mutable'' relation as one that participates in the head of a temporal rule, you can do so as needed.}
+ The EDB, IDB, and NDB are all pairwise disjoint.  Intuitively, the distinction
+ between the NDB and IDB is that the NDB is determined nondeterministically from
+ the EDB, IDB and NDB, while the IDB is determined deterministically from the
+ EDB, IDB and NDB.  Thus, given a Dedalus instance, all IDB
+ predicates that do not transitively depend on NDB predicates can be evaluated
+ deterministically.  \jmh{The only reason to worry about the MDB being non-deterministic is @sync, which you didn't in fact need to introduce yet.  Again, I don't see this discussion being useful.}
+
+
+
+For a relation $r$ in a program $P$, we add to $P$ two relations
+$r\_pos$ and $r\_neg$ with the same schema as $r$, and a rule of the form:
+
+$r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
+
+That is, for every EDB predicate
+$r$ there is an IDB predicate $r\_pos$ that contains at least the contents of
+$r$.
+\jmh{Why not say that you restrict the language so that the only reference to EDB predicates are in the definition of $r\_pos$ and $r\_neg$.}
+We further restrict all rules in P to refer only to IDB and MDB
+predicates, and to reference $r\_neg$ for any relation $r$ only in the head of
+a rule, and never in the body \wrm{then, how do we write persistence rules?}.
+In a Dedalus program, we use $r$ as shorthand for $r\_pos$ (as the true EDB
+predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand
+for $r\_neg$.
+
+
 \subsection{Abbreviated Syntax and Temporal Interpretation}
 We have been careful to define Dedalus as a syntactic subset of a natural variant of Datalog; this allows us to take advantage of Datalog's well-known semantics and the rich literature on the language.  
 
@@ -156,63 +219,6 @@ where $S$ is one of the following:
 
 \subsection{Events}
 
-\newdef{definition}{Definition}
-
-\begin{definition}
-%
-A {\em Dedalus program} is a set of Dedalus rules.
-%
-\end{definition}
-
-\begin{definition} 
-%
-An \emph{extensional} relation in a Dedalus program is a relation that does not
-appear in the head of any rule in the program.
-%
-\end{definition}
-
-\begin{definition}
-%
-A \emph{modifiable} relation in a Dedalus program is a relation that appears in
-the head of one or more asynchronous rules in the program.
-%
-\end{definition}
-
- \begin{definition}
-%
-An \emph{intensional} relation in a Dedalus program is a relation that appears
-in the head of one or more atemporal rules in the program, but never in the head of a temporal rule.
-%
-\end{definition}
-
-We refer to the sets of facts in extensional, modifiable, and intensional
-predicates respectively as the EDB, MDB, and IDB.
-
-\jmh{introduction of the MDB doesn't seem useful, actually.  I'd drop this, and if you need to define a ``mutable'' relation as one that participates in the head of a temporal rule, you can do so as needed.}
-The EDB, MDB, and IDB are all pairwise disjoint.  Intuitively, the distinction
-between the MDB and IDB is that the MDB is determined nondeterministically from
-the IDB, EDB and MDB, while the IDB is determined deterministically from the
-IDB, EDB and MDB.  Thus, given an EDB, and a distributed system, \jmh{a what??  distribution is not part of the language description!} all IDB
-predicates that do not transitively depend on MDB predicates can be evaluated
-deterministically.  \jmh{The only reason to worry about the MDB being non-deterministic is @sync, which you didn't in fact need to introduce yet.  Again, I don't see this discussion being useful.}
-
-\jmh{The following needs to be part of the Datalog-oriented definition of what Dedalus is, in the previous section.  This section is supposed to be syntactic sugar and mental interpretation only.  Moreover, you don't ``introduce'' these predicates; the use of these predicates in this stylized manner is part of the constraints of a ``well-formed'' Dedalus program.}
-For every EDB relation $r$ in a program $P$, we add to $P$ two relations
-$r\_pos$ and $r\_neg$ with the same schema as $r$, and a rule of the form:
-
-$r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
-
-\wrm{Are we missing the time suffixes here?} That is, for every EDB predicate
-$r$ there is an IDB predicate $r\_pos$ that contains at least the contents of
-$r$.  
-\jmh{Why not say that you restrict the language so that the only reference to EDB predicates are in the definition of $r\_pos$ and $r\_neg$.}
-We further restrict all rules in P to refer only to IDB and MDB
-predicates, and to reference $r\_neg$ for any relation $r$ only in the head of
-a rule, and never in the body \wrm{then, how do we write persistence rules?}.
-In a Dedalus program, we use $r$ as shorthand for $r\_pos$ (as the true EDB
-predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand
-for $r\_neg$.
-
 %%\newdef{definition}{Definition} 
 \begin{definition}
 %
@@ -222,8 +228,7 @@ An \emph{event} in Dedalus is an EDB fact.
 
 \jmh{Isn't the following simply a restatement of Datalog's use of EDB?}
 Since an extensional relation may not appear in a rule's head, events come from
-sources external to the Dedalus program, and serve as ground for the
-distributed computaion.  \jmh{remove mention of distribution or computation.  Logic is all syntax!}
+sources external to the evaluation of the Dedalus instance.
 
 %\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
 \section{Stratifiability of Dedalus Programs}
@@ -309,19 +314,19 @@ instance's predicate dependency graph.
 %
 \end{definition}
 
-\begin{lemma}
+%\begin{lemma}
 %
-A locally stratifiable Dedalus instance without choice has a unique
-minimal model.  That is, there exists a function $E$ from locally
-stratifiable Dedalus instances without choice to their minimal models.
+%A locally stratifiable Dedalus instance without choice has a unique
+%minimal model.  That is, there exists a function $E$ from locally
+%stratifiable Dedalus instances without choice to their minimal models.
 %
-\end{lemma}
+%\end{lemma}
 
-\begin{proof}
+%\begin{proof}
 %
-\wrm{TODO}
+%\wrm{TODO}
 %
-\end{proof}
+%\end{proof}
 
 
 \begin{definition}
@@ -352,6 +357,7 @@ a unique minimal model
 deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
 thus it has a unique minimal model.
 
+\wrm{need to fix this case}
 \bf{Case 2:} $P$ consists of only deductive and inductive rules.  Assume $P$
 does not have a unique minimal model.  This implies that $P$ is not
 syntactically stratifiable, thus there must exist some cycle through at least
@@ -399,12 +405,18 @@ A complete trace of a Dedalus instance $(P,E)$ is its unique minimal model.
 %
 \end{lemma}
 
-\wrm{===stopped here due to wanting some sleep.  i'll look at this again tomorrow===}
+%\begin{lemma}
+%%
+%For any bound on $successor$, a complete trace of a Dedalus instance $(P,E)$ has a unique minimal model.
+%%
+%\end{lemma}
 
 If we evaluate E given P, and P is stratifiable, the resulting set of ground atoms is a minimal model.
 In our case, however, successor causes our EDB to be infinite, so the minimal model of any Dedalus program 
 with temporal rules is potentially infinite.  \paa{but we'd like to show that a weaker property holds: that for any value $N$
 in the \emph{successor} relation, the resulting program has a minimal model.}
+\wrm{we either already showed this, or our theorems above are wrong.}
+
 
 \begin{definition}
 A \emph{minimal trace} is a subset of a complete trace that excludes any IDB ground atoms derived through an inductive
