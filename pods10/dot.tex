@@ -462,7 +462,8 @@ p\_pos(A_1,A_2,[...],A_n);$
 %%\end{definition}
 
 A simple persistence rule having the above form ensures that a $p$ fact true at time $i$ will be true
-$\forall j \in \mathbb{Z} | j >= i$.
+$\forall j \in \mathbb{Z} | j >= i$.  This rule is informally equivalent to the temporal logic assertion
+$\forall A \in p\_pos( p\_pos(A) \to \Box p\_pos(A))$.
 
 \subsection{Mutable State}
 
