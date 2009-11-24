@@ -226,62 +226,6 @@ sources external to the Dedalus program, and serve as ground for the
 distributed computaion.  \jmh{remove mention of distribution or computation.  Logic is all syntax!}
 
 %\paa{careful.  messages to myself? if they are given, \emph{when} are they given?}
-\subsection{Simple Persistence}
-\jmh{I think the flavor of this section is to map familiar notions from state manipulation to purely logical syntactic constructs grounded in Datalog.  You should motivate at a high level why one would want to do such a thing.  The discussion below is then, in effect, a set of ``design patterns'' or ``typical uses''.  You might want to highlight the logical invariants that emerge from these Dedalus statements and assert that they capture the semantic intent of state manipulation.}
-
-
-\jmh{Your definition is not self-contained, it makes reference to prose.  The prose is not crisp even as prose -- I don't know what ``later'' means, especially given that you said that @sync could produce any time.}
-A fact in predicate $p$ at time $T$ may provide ground for deductive rules
-at time $T$, as well as ground for deductive rules in later timesteps,
-provided there exists a rule of the form:
-
-$p_pos(A_1,A_2,[...],A_n)@next \leftarrow 
-p_pos(A_1,A_2,[...],A_n);$
-
-\begin{definition}
-%
-A rule of the above form is known as a {\em simple persistence rule}.
-%
-\end{definition}
-
-A simple persistence rule ensures that a $p$ fact true at time $i$ will be true
-$\forall j \in \mathbb{Z} | j >= i$.
-
-\subsection{Mutable State}
-
-To model deletions and updates of a fact, it is useful to break the induction
-in a simple persistence rule.  Adding a {\em p\_neg} subgoal to the body of a
-simple persistence rule accomplishes this:
-
-$p\_pos(A_1,A_2,[...],A_n)@next \leftarrow \\
-p\_pos(A_1,A_2,[...],A_n), \\
-\lnot p\_neg(A_1,A_2,[...],A_n);
-$
-
-\begin{definition}
-%
-A rule of the above form is known as a {\em mutable persistence rule}.
-%
-\end{definition}
-
-If, at any time $k$, we have a fact $p\_neg(C_1,C_2,[...],C_n)@k$, then we do
-not deduce a $p\_pos(C_1,C_2,[...],C_n)@k+1$ fact.  By induction, we do not
-deduce a $p\_pos(C_1,C_2,[...],C_n)@l$ for any $l > k$, unless this $p_pos$
-fact is re-derived at some timestep $l > k$ by another rule.
-
-\begin{definition}
-%
-For some time $i$, an {\em update} is any pair of facts:
-
-$p\_neg(C_{1},C_{2},[...],C_{n})@i$ \\ $p\_pos(D_{1},D_{2},[...],D_{n})@i+1$
-%
-\end{definition}
-
-Intuitively, an update represents replacing an old value of a tuple with a
-newer value.  We say the update is {\em atomic across timesteps}, meaning that
-the old value ceases to exist at the same timestep in which the new value
-exists -- timestep $i+1$ in the above definition.
-
 \section{Stratifiability of Dedalus Programs}
 
 \newtheorem{lemma}{Lemma} 
@@ -494,5 +438,99 @@ out the time attribute from every predicate, the minimal models will be the same
 
 \section{Cost Model}
  
+ \section{Language Constructs}
+\subsection{Simple Persistence}
+\jmh{I think the flavor of this section is to map familiar notions from state manipulation to purely logical syntactic constructs grounded in Datalog.  You should motivate at a high level why one would want to do such a thing.  The discussion below is then, in effect, a set of ``design patterns'' or ``typical uses''.  You might want to highlight the logical invariants that emerge from these Dedalus statements and assert that they capture the semantic intent of state manipulation.}
+
+
+%%\jmh{Your definition is not self-contained, it makes reference to prose.  The prose is not crisp even as prose -- I don't know what ``later'' means, especially given that you said that @sync could produce any time.}
+
+The intuition behind the \emph{successor} relation is that it models the passage of (logical) time.  Without specifying how and when each stratum
+of \emph{successor} is evaluated, we can see that the syntactic restrictions of Dedalus ensure that we cannot move backwards infinitely often (specifically,
+we may only move backwards via \emph{choice}, and every call to \emph{choice} may move us forward.  \paa{save for later, pretend there is no async?}).
+
+
+A fact in predicate $p$ at time $\Tau$ may provide ground for deductive rules
+at time $\Tau$, as well as ground for deductive rules in timesteps greater than $\Tau$,
+provided there exists a rule of the form:
+
+$p\_pos(A_1,A_2,[...],A_n)@next \leftarrow 
+p\_pos(A_1,A_2,[...],A_n);$
+
+%%\begin{definition}
+%%A rule of the above form is known as a {\em simple persistence rule}.
+%%\end{definition}
+
+A simple persistence rule having the above form ensures that a $p$ fact true at time $i$ will be true
+$\forall j \in \mathbb{Z} | j >= i$.
+
+\subsection{Mutable State}
+
+To model deletions and updates of a fact, it is useful to break the induction
+in a simple persistence rule.  Adding a {\em p\_neg} subgoal to the body of a
+simple persistence rule accomplishes this:
+
+$p\_pos(A_1,A_2,[...],A_n)@next \leftarrow \\
+p\_pos(A_1,A_2,[...],A_n), \\
+\lnot p\_neg(A_1,A_2,[...],A_n);
+$
+
+%%\begin{definition}
+%
+%%A rule of the above form is known as a {\em mutable persistence rule}.
+%
+%%\end{definition}
+
+If, at any time $k$, we have a fact $p\_neg(C_1,C_2,[...],C_n)@k$, then we do
+not deduce a $p\_pos(C_1,C_2,[...],C_n)@k+1$ fact.  By induction, we do not
+deduce a $p\_pos(C_1,C_2,[...],C_n)@l$ for any $l > k$, unless this $p_pos$
+fact is re-derived at some timestep $l > k$ by another rule.  This corresponds to 
+the intuition that a persistent fact is true, once stated, is true until it is withdrawn.  
+
+\newtheorem{example}{Example}
+\begin{example}
+Consider the following Dedalus program and {\em trace} of events:
+
+\begin{Dedalus}
+p_pos(A, B) \(\leftarrow\)
+  p(A, B);
+
+p_pos(A, B)@next \(\leftarrow\) 
+  p_pos(A, B),
+  \(\lnot\) p_neg(A, B);
+
+p(1,2)@101;
+p(1,3)@102;
+p(1,?)@200;
+delete p(1,2)@300;
+p(1,?)@301;
+\end{Dedalus}
+
+It is easy to see that the results of the two queries are:
+
+
+\begin{Dedalus}
+p(1,2)@200;
+p(1,3)@200;
+p(1,3)@301;
+\end{Dedalus}
+
+\end{example}
+
+%%\begin{definition}
+%
+For some time $\Tau$, an {\em update} is any pair of facts:
+
+$p\_neg(C_{1},C_{2},[...],C_{n})@\Tau$ \\ $p\_pos(D_{1},D_{2},[...],D_{n})@\Tau+1$
+%
+%%\end{definition}
+
+Intuitively, an update represents replacing an old value of a tuple with a
+newer value.  We say the update is {\em atomic across timesteps}, meaning that
+the old value ceases to exist at the same timestep in which the new value
+exists -- timestep $\Tau+1$ in the above definition.
+
+
+
 
 \end{document}
