@@ -50,12 +50,12 @@ symbols akin to those of SQL (min, max, avg, stdev, count).  In general, we are 
 stratifiable and locally stratifiable programs~\cite{prz}.  In addition, we admit the
 use of the \emph{choice} construct~\cite{greedychoice, eventchoice} to model
 nondeterministic selection of an element from a set.  
-\jmh{save the next sentence for later.  stay pure here.}
-In \dedalus, we will use this construct to
-model both the nondeterminism of message delay, and the semantics of key
-maintenance in prior deductive update models like Overlog~\cite{boon}.
+%%\jmh{save the next sentence for later.  stay pure here.}
+%%In \dedalus, we will use this construct to
+%%model both the nondeterminism of message delay, and the semantics of key
+%%maintenance in prior deductive update models like Overlog~\cite{boon}.
 
-\jmh{Can't we borrow this from somebody else rather than define it ourselves?  ``As in Ullman, et al [FOO] we represent...''}
+%%\jmh{Can't we borrow this from somebody else rather than define it ourselves?  ``As in Ullman, et al [FOO] we represent...''}
 As a matter of notation, we refer to an infinite universe of constants \emph{C}, in which
 $C_{1}, C_{2}, \ldots$ are representations of individual constants, and
 an infinite universe of variable symbols $A = A_1, A_2, \ldots$, and a distinguished variable $\Tau$.
@@ -83,10 +83,21 @@ will have a constant integer value for its time suffix: e.g.
 
 $p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z}$
 
-Our second restriction is on rules.  A {\em well-formed }\dedalus rule is a Datalog rule that adheres to the following constraints on body and head.  
+Our second and third restrictions are on rules.  
+No EDB predicates may ever be referenced by rules; instead, for every EDB relation $r$ we define relations $r\_pos$ 
+and $r\_neg$ with the same schema, and add a rule of the form:
+
+$r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
+
+That is, for every EDB predicate
+$r$ there is an IDB predicate $r\_pos$ that contains at least the contents of $r$.  We further restrict the
+language to refer only to the EDB in distinguished rules such at that above; otherwise all rules must refer 
+only to IDB predicates.
+A {\em well-formed }\dedalus rule is a Datalog rule that adheres to the following constraints on body and head.  
+
 In the rule body, every
 subgoal is required to use the distinguished variable $\Tau$ as its time suffix.  
-\jmh{I would not introduce the following constraint -- can't we have rules that fire at a particular timestep?  It may slightly complicate your reductions later, but it seems manageable.}
+%%\jmh{I would not introduce the following constraint -- can't we have rules that fire at a particular timestep?  It may slightly complicate your reductions later, but it seems manageable.}
 $\Tau$ must not be otherwise
 constrained (e.g. it must not occur in the rule body except as a time suffix).
 The head of a well-formed rule similarly contains a time suffix $S$, which must
@@ -113,7 +124,7 @@ to both come from this relation.}  \jmh{Good point.  OTOH I suspect we'll have t
 
 \end{enumerate}
 
-\jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``Dedalus is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
+%%\jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``Dedalus is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
 
 \wrm{begin misplaced definitions}
 
@@ -161,21 +172,6 @@ appear in the head of any rule in the program.
 
 
 
-For a relation $r$ in a program $P$, we add to $P$ two relations
-$r\_pos$ and $r\_neg$ with the same schema as $r$, and a rule of the form:
-
-$r\_pos(A_1, A_2, [...], A_n) \leftarrow r(A_1, A_2, [...], A_n);$
-
-That is, for every EDB predicate
-$r$ there is an IDB predicate $r\_pos$ that contains at least the contents of
-$r$.
-\jmh{Why not say that you restrict the language so that the only reference to EDB predicates are in the definition of $r\_pos$ and $r\_neg$.}
-We further restrict all rules in P to refer only to IDB and MDB
-predicates, and to reference $r\_neg$ for any relation $r$ only in the head of
-a rule, and never in the body \wrm{then, how do we write persistence rules?}.
-In a Dedalus program, we use $r$ as shorthand for $r\_pos$ (as the true EDB
-predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand
-for $r\_neg$.
 
 
 \subsection{Abbreviated Syntax and Temporal Interpretation}
@@ -448,6 +444,8 @@ execution, while the IDB may differ, depending on its dependency on the MDB.  Th
 minimal model, but probably not the same minimal model from another execution.  \paa{but can we say that it will often be true that if we project 
 out the time attribute from every predicate, the minimal models will be the same? it won't always be true...}
 
+
+
 \section{Cost Model}
  
  \section{Language Constructs}
@@ -545,11 +543,70 @@ exists -- timestep $\Tau+1$ in the above definition.
 
 \subsection{Sequences}
 
+Database sequences, objects that retain and increment a counter value, can be
+represented with a pair of inductive rules.  One increments the current counter value when the
+trigger event is true, while the other persists the current value of the sequence only when the event is 
+not true.  For example:
+
+\begin{Dedalus}
+seq(Agent, X + 1)@next \(\leftarrow\)
+  seq(Agent, X), 
+  event(Agent) 
+  
+seq(Agent, X)@next \(\leftarrow\) 
+  seq(Agent, X, 
+  \(\lnot\) event(Agent);
+\end{Dedalus}
+
+
 
 \section{Distribution}
 
 
 \subsection{Queues}
+
+%%Consider a trace of events to a 
+Consider a binary predicate \emph{balance\_update} whose attributes are a string indicating the user, a floating point number
+indicating the new balance and an integer indicating the order in which the updates were issued, according to some 
+external clock or sequence.  
+
+In this trace, all of the time suffixes are the same, e.g.
+
+\begin{Dedalus}
+balance\_update("bob", 100.00, 2355)@123;
+balance\_update("bob", 75.00, 2358)@123;
+balance\_update("alice", 0.00, 2377)@123;
+balance\_update("bob", 10.00, 2455)@123;
+\end{Dedalus}
+
+Depending on the program that implements the balance update, several behaviors are possible.  We can see that in spite of their
+coincidence in logical time, these events need to be processed in a data-dependent order, rather than as a set.  In-order tuple 
+processing is difficult to express in Datalog generally, in part because the language has so notion of order of evaluation, except
+the implicit ordering implied by stratification.
+
+In the program below, we define a table \emph{m\_balance\_update} that we use as a queue to feed \emph{balance\_update}.  The queue must persist across
+timesteps because it may take an unknown number of timesteps to drain it.  At each fixpoint, for each value of \textbf{A}, a single
+tuple is projected into \emph{balance\_update} and atomically deleted from \emph{m\_balance\_update}, changing the value of the aggregate calculated at the
+subsequent step:
+
+
+\begin{Dedalus}
+
+m\_balance\_update(A, B, C)@next \(\leftarrow\)
+  m\_balance\_update(A, B, C),
+  notin del\_m\_p(A, B, C);
+
+omin(A, min<C>) \(\leftarrow\)
+  m\_balance_update(A, _, C);
+
+p(A, B, C)@next \(\leftarrow\)
+  m\_balance\_update(A, B, C),
+  omin(A, C);
+
+del\_m\_balance\_update(A, B, C) \(\leftarrow\)
+  m\_balance\_update(A, B, C),
+  omin(A, C);
+\end{Dedalus}
 
 \subsection{Lamport Clocks}
 
