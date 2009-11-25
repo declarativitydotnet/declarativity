@@ -59,7 +59,7 @@ If, at any time $k$, we have a fact $p\_neg(C_1,C_2,[...],C_n)@k$, then we do
 not deduce a $p\_pos(C_1,C_2,[...],C_n)@k+1$ fact.  By induction, we do not
 deduce a $p\_pos(C_1,C_2,[...],C_n)@l$ for any $l > k$, unless this $p_pos$
 fact is re-derived at some timestep $l > k$ by another rule.  This corresponds to 
-the intuition that a persistent fact is true, once stated, is true until it is withdrawn.  
+the intuition that a persistent fact, once stated, is true until it is withdrawn.  
 
 %%\newtheorem{example}{Example}
 \begin{example}
@@ -129,7 +129,7 @@ seq(Agent, X)@next \(\leftarrow\)
 \subsection{Queues}
 
 %%Consider a trace of events to a 
-Consider a binary predicate \emph{balance\_update} whose attributes are a string indicating the user, a floating point number
+Consider a predicate \emph{balance\_update} whose attributes are a string indicating the user, a floating point number
 indicating the new balance and an integer indicating the order in which the updates were issued, according to some 
 external clock or sequence.  
 
