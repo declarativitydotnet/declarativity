@@ -9,8 +9,8 @@ $\forall A,B (successor(A, B) \rightarrow B > A) \land \forall A \exists B (succ
 This implies that successor is infinite (as we'd expect time to be).  This is problematic because it leads to unsafe programs.
 
 \newtheorem{example}{Example}
-%%\begin{example}
-Assume that successor is infinite.  Consider the program and EDB below.
+\begin{example}
+Consider the program and EDB below.
 
 \begin{Dedalus}
 r1
@@ -22,18 +22,25 @@ p_pos(A, B)  \(\leftarrow\)
   p(A, B);
   
 p(1, 2)@123;
-delete p(1, 2)@456;
-p(?, ?)@789;
   
 \end{Dedalus}
 
 The single ground fact will, due to \emph{r1}, cause as many deductions as there are tuples in the successor relation.
-But these are in some sense \emph{void deductions}, because they are functionally determined based on the EDB.
+
+\end{example}
+
+But if \emph{successor} is infinite, many of mthese are in some sense \emph{void deductions}, functionally determined based on the EDB.
 The EDB determines a window over successor that is relevant to any computation that must be performed.  It is easy
-to see that in this example, we need only consider a successor relation that contains values that range from 123 - 789.
+to see that in this example, we need only consider a successor relation that contains a single tuple \{123, 124\}.
 
+Consider the given EDB extended with two more facts:
 
-%%\end{example}
+\begin{Dedalus}
+delete p(1, 2)@456;
+p(?, ?)@789;
+\end{Dedalus}
+
+Evaluating this program and EDB will require a \emph{successor} relation with values that range from 123 - 789.
 
 \begin{definition}
 A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which the EDB is given, \emph{successor} is derived from it
