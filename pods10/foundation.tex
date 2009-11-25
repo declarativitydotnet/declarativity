@@ -143,7 +143,8 @@ their consequents are defined to be true ``at a different time'' than their ante
 To simplify Dedalus notation for this typical interpretation,  we introduce some natural syntactic ``sugar'' as follows:  
 
 \begin{itemize}
-	\item {\em Time-suffix notation:}  The final, time-suffix attribute of each predicate is placed after the predicate's right parenthesis, separated by the symbol `@'.   For example, the predicate $r(A_{1}, \ldots, A_{n}, S)$ is rewritten as $r(A_{1}, \ldots, A_{n})@S$.
+	\item {\em Time-suffix notation:}  The final, time-suffix attribute of each predicate is placed after the predicate's right parenthesis, separated by the symbol `@'.   For example, the predicate \\
+	$r(A_{1}, \ldots, A_{n}, S)$ is rewritten as $r(A_{1}, \ldots, A_{n})@S$.
 	\item {\em Implicit time-suffixes in body predicates:} Since all body predicates of a well-formed rule have a free variable $\Tau$ in the time suffix, we omit the time suffix from body predicates and treat it as implicit. 
 	\item {\em Temporal head annotation:} The inclusion of the \emph{successor}
 and \emph{choice} predicates in the body is promoted to a keyword in the time suffix of the head predicate, in the form:
