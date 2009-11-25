@@ -157,7 +157,7 @@ subsequent step:
 
 m\_balance\_update(A, B, C)@next \(\leftarrow\)
   m\_balance\_update(A, B, C),
-  notin del\_m\_p(A, B, C);
+  notin del\_m\_balance\_update(A, B, C);
 
 omin(A, min<C>) \(\leftarrow\)
   m\_balance_update(A, _, C);
@@ -170,6 +170,10 @@ del\_m\_balance\_update(A, B, C) \(\leftarrow\)
   m\_balance\_update(A, B, C),
   omin(A, C);
 \end{Dedalus}
+
+Under such a queueing discipline, deductive rules that are predicated on \emph{balance\_update} are constrained to consider only one tuple per fixpoint
+per value of the variable \textbf{A}, thus implementing a per-user FIFO discipline.  To enforce a global FIFO ordering over \emph{balance\_update}, 
+we may redefine \emph{omin} and any dependent rules to exclude the \textbf{A} atttribute.
 
 A queue establishes a mapping between the local clock and the ordering domain of the input relation. By doing so, we are able to take
 advantage of the natural ordering enforced by stratification over time, to enforce an ordering property over our input that is otherwise 

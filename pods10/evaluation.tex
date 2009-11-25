@@ -2,11 +2,11 @@
 
 Consider the \emph{successor} relation described above.  According to our intuitive interpretation, this relation models
 the passage of time, in order to establish a temporal order among ground atoms.  More formally, we expect of a successor
-relation $S$ that
+relation that
 
 $\forall A,B (successor(A, B) \rightarrow B > A) \land \forall A \exists B (successor(A, B))$
 
-This implies that successor is infinite (as we'd expect time to be).  This is problematic because it leads to unsafe programs.
+This implies that successor is infinite (as we'd expect time to be), and is problematic because it leads to unsafe programs.
 
 \newtheorem{example}{Example}
 \begin{example}
@@ -25,13 +25,14 @@ p(1, 2)@123;
   
 \end{Dedalus}
 
-The single ground fact will, due to \emph{r1}, cause as many deductions as there are tuples in the successor relation.
+The single ground fact will, due to \emph{r1}, cause as many deductions as there are tuples in the \emph{successor} relation.
+Clearly, if the relation is infinite this program in unsafe.
 
 \end{example}
 
 But if \emph{successor} is infinite, many of these are in some sense \emph{void deductions}, functionally determined based on the EDB.
-The EDB determines a window over successor that is relevant to any computation that must be performed.  It is easy
-to see that in this example, we need only consider a successor relation that contains a single tuple \{123, 124\}.
+In effect,  and EDB that is given in its totality determines a window over successor that is relevant to any computation that must be performed.  
+It is easy to see that in this example, we need only consider a successor relation that contains a single tuple \{123, 124\}.
 
 Consider the given EDB extended with two more facts:
 
@@ -43,17 +44,18 @@ p(?, ?)@789;
 Evaluating this program and EDB will require a \emph{successor} relation with values that range from 123 - 789.
 
 \begin{definition}
-A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which an EDB prefix is given, \emph{successor} is derived from it
+A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which an EDB is given, \emph{successor} is derived from it
 as part of a fixpoint computation.
 \end{definition}
 
-In a post-hoc evaluation, we may use the given EDB to populate the successor relation in the following way:
-
+In a post-hoc evaluation, we may use the given EDB to populate the successor relation in the following way.
 Define first a second order predicate called \emph{event\_time} 
 that contains the union of the time attributes from the EDB prefix. Let \emph{Trace} be the set of $n$ EDB predicates.  
 Then \emph{event\_time} is defined as
 
 $event\_time(\Tau) \leftarrow \displaystyle\bigcup_{i}^n \pi_{\Tau}Trace_{i}$
+
+We populate \emph{successor} with a negation-free Datalog program with arithmetic and aggregate functions, as shown below.
 
 \begin{Dedalus}
 smax(max<N>) \(\leftarrow\) event\_time(N);
@@ -68,7 +70,7 @@ successor(S, S + 1) \(\leftarrow\)
 \end{Dedalus}
 
 In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
-fixpoint computation.  
+fixpoint computation.  The complete program is safe if the EDB is finite.
 
 \subsection{EDB Prefixes}
 \paa{notes follow}
@@ -79,7 +81,8 @@ In general, an EDB can itself be infinite.
 A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of events whose timestamp is greater than or equal to $n$.
 \end{definition}
 
-If the EDB is finite, $\alpha_{n}$ = $\Gamma$.  We also have:
+If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}$ = $\Gamma$.  Because each prefix is strictly larger than
+all prefixes with lower indices, we also have:
 
 $\forall \alpha_{i}, \alpha_{j} \in \Gamma ((i < j) \to (\alpha_{i} \subset \alpha_{j}))$.
 
