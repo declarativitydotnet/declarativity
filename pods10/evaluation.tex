@@ -36,15 +36,17 @@ to see that in this example, we need only consider a successor relation that con
 %%\end{example}
 
 \begin{definition}
-A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which the EDB is given, and \emph{successor} is derived from it.
+A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which the EDB is given, \emph{successor} is derived from it
+as part of a fixpoint computation.
 \end{definition}
 
 In a post-hoc evaluation, we may use the given EDB to populate the successor relation in the following way:
 
 Define first a second order predicate called \emph{event\_time} 
-that contains the union of the time attributes from the trace of events; i.e.
+that contains the union of the time attributes from the trace of events. Let \emph{Trace} be the set of $n$ EDB predicates.  
+Then \emph{event\_time} is defined as
 
-$event\_time(Time) \leftarrow \displaystyle\bigcup_{i}^n \pi_{Time}Trace_{i}$
+$event\_time(\Tau) \leftarrow \displaystyle\bigcup_{i}^n \pi_{\Tau}Trace_{i}$
 
 \begin{Dedalus}
 smax(max<N>) \(\leftarrow\) event\_time(N);
@@ -57,3 +59,6 @@ successor(S, S + 1) \(\leftarrow\)
     smax(M),
     N <= M;
 \end{Dedalus}
+
+In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
+fixpoint computation.  
