@@ -32,7 +32,9 @@ We also make use of the set of positive integers $\mathbb{Z}$,
 %%$p(A_{1}, A_{2}, [...], A_{n})@S$
 We will define \dedalus as a restricted sublanguage of the augmented version of $\lnot$Datalog defined above, with some notational shortcuts that fall out naturally.
 
-Our first restriction is on the admissible schemata of our language. We  require that the final attribute of every \dedalus predicate range over the set $\mathbb{Z}$.  In a typical interpretation, \dedalus programs will use this final attribute to connote ``timestamps'', so we refer to this attribute at the \emph{time suffix} of the corresponding predicate.  \wrm{we really want an inclusion constraint not just in the set of integers, but in the set of all possible times, in case time is finite}.  \jmh{I disagree, actually.  EDB facts can be sprinkled throughout time without restriction, and the rule syntax below provides the restrictions you want.  you're hinting at the reduction stuff below, but we can rewrite to that.}  
+Our first restriction is on the admissible schemata of our language. We  require that the final attribute of every \dedalus predicate range over the set $\mathbb{Z}$.  In a typical interpretation, \dedalus programs will use this final attribute to connote ``timestamps'', so we refer to this attribute at the \emph{time suffix} of the corresponding predicate.  
+
+%%\wrm{we really want an inclusion constraint not just in the set of integers, but in the set of all possible times, in case time is finite}.  \jmh{I disagree, actually.  EDB facts can be sprinkled throughout time without restriction, and the rule syntax below provides the restrictions you want.  you're hinting at the reduction stuff below, but we can rewrite to that.}  
 
 Facts are defined just as in Datalog, thus a fact
 will have a constant integer value for its time suffix: e.g.

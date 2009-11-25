@@ -29,7 +29,7 @@ The single ground fact will, due to \emph{r1}, cause as many deductions as there
 
 \end{example}
 
-But if \emph{successor} is infinite, many of mthese are in some sense \emph{void deductions}, functionally determined based on the EDB.
+But if \emph{successor} is infinite, many of these are in some sense \emph{void deductions}, functionally determined based on the EDB.
 The EDB determines a window over successor that is relevant to any computation that must be performed.  It is easy
 to see that in this example, we need only consider a successor relation that contains a single tuple \{123, 124\}.
 
@@ -43,14 +43,14 @@ p(?, ?)@789;
 Evaluating this program and EDB will require a \emph{successor} relation with values that range from 123 - 789.
 
 \begin{definition}
-A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which the EDB is given, \emph{successor} is derived from it
+A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which an EDB prefix is given, \emph{successor} is derived from it
 as part of a fixpoint computation.
 \end{definition}
 
 In a post-hoc evaluation, we may use the given EDB to populate the successor relation in the following way:
 
 Define first a second order predicate called \emph{event\_time} 
-that contains the union of the time attributes from the trace of events. Let \emph{Trace} be the set of $n$ EDB predicates.  
+that contains the union of the time attributes from the EDB prefix. Let \emph{Trace} be the set of $n$ EDB predicates.  
 Then \emph{event\_time} is defined as
 
 $event\_time(\Tau) \leftarrow \displaystyle\bigcup_{i}^n \pi_{\Tau}Trace_{i}$
@@ -69,25 +69,60 @@ successor(S, S + 1) \(\leftarrow\)
 
 In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
 fixpoint computation.  
+
+\subsection{EDB Prefixes}
 \paa{notes follow}
 
+In general, an EDB can itself be infinite. 
 
-define a trace as a list of events ordered by time.  then the property we want to prove is about prefix computations.  take a function FP that returns an IDB.  We'll use 
-the notation $\Gamma$ to indicate a trace, and $\alpha_{1} \ldots \alpha_{n}$ to indicate prefixes of  $Gamma$. $\alpha_{n} = \Gamma$, and since every
-$\alpha$ is an increasing subset of the EDB, we have 
+\begin{definition}
+A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of events whose timestamp is greater than or equal to $n$.
+\end{definition}
+
+If the EDB is finite, $\alpha_{n}$ = $\Gamma$.  We also have:
 
 $\forall \alpha_{i}, \alpha_{j} \in \Gamma ((i < j) \to (\alpha_{i} \subset \alpha_{j}))$.
 
+Consider a function $FP$ from $Program, EDB \mapsto IDB$ that represents the \emph{fixpoint} computation carried out by a datalog interpreter.
 We would like to show that 
 
-$FP(\alpha_{k}) =  \displaystyle \bigcup_{i=0}^{k} FP(\alpha_{i})$ for any $k$.  
+$FP(P, \alpha_{k}) =  \displaystyle \bigcup_{i=0}^{k} FP(P, \alpha_{i})$ for any $k$.  
 
 this could (with some work) lead to an inductive proof
-that an infinite model is minimal.
+that an infinite model is minimal.  we could prove the (weaker?) property that
+the infinite series of models of increasing finite prefixes of an EDB are all 
+minimal if one of them is.
 
+below is just a sketch of a proof:
 
-%%   FP(alpha_{k} \union FP(alpha_{k-1} \union
+\begin{proof}
 
-if we have this, then we have:
+Inductive step:
 
-Any posthoc evaluation is equivalent to any 
+if we assume that some program P and finite prefix $\alpha_n$ of a trace $\Gamma$ produce a minimal model, 
+then it follows that a prefix $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
+
+Assume the contrary: there is some program P, prefix $\alpha_i$ and prefix $\alpha_j$  s.t. $\alpha_j$ follows $\alpha_i$, $I_1$ = FP($\alpha_i$) is a minimal model 
+and $I_2$ = FP($\alpha_j \cup I_1$) is not.  
+
+then in $I_2$ there exists a ground atom that is not in $\alpha_j$ (and hence not in $\alpha_i$), and is not entailed by P given $\alpha_j$.  
+such a ground atom must then either be:
+
+\begin{enumerate}
+\item contained in $I_1$, hence entailed by P given $\alpha_i$.
+\item entailed by P given some IDB atom in $I_1$.
+\end{enumerate}
+
+In the first case, in principle is it possible for an atom X to exist in $I_1$ and not in $I_2$, if for example it depended negatively via a 
+rule r on a predicate q, and a q fact (Y) exists in  $\alpha_j$ that didn't exist in  $\alpha_i$.  However, for this to occur, because a ground atom 
+in I1 cannot depend upon a ground atom from the "future", that event q would need to have occurred at some time less than 
+or equal to the to timestamp of atom X.  but this is not possible, because our trace is ordered in timestamp order.  hence the 
+first case leads to contradiction.
+
+in the second case, there is some ground atom Y in I1 upon which X depends.  Y is not in FP( $\alpha_j$), because if it were, X would 
+be part of the single minimal model.  if Y is not in FP( $\alpha_j$), it too is not part of a minimal model for P given  $\alpha_j$!  if it is in the minimal 
+model for FP($\alpha_i$) but not FP( $\alpha_j$), there must be a fact in  $\alpha_j$ upon which an atom in FP($\alpha_i$) depended negatively.  by the same 
+argument as above, such a fact could not be in  $\alpha_j$, because new facts in  $\alpha_j$ have timestamps strictly higher than those in  $\alpha_i$.
+\end{proof}
+
+Even without providing a basis, we may say
