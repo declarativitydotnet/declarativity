@@ -33,10 +33,12 @@ predicate dependency graph.
 %
 \end{definition}
 
-We evaluate such a program by evaluating each strongly connected component of
-its predicate dependency graph under a closed-world assumption.  We may
-evaluate in any order returned by a topological sort on the predicate
-dependency graph with each strongly connected component collapsed to a single
+%%We evaluate such a program by evaluating each strongly connected component of
+%%its predicate dependency graph under a closed-world assumption.  
+
+We may
+evaluate such a program in any order returned by a topological sort on the predicate
+dependency graph, with each strongly connected component collapsed to a single
 node. \wrm{XXX: is this right?}
 
 \begin{definition}
@@ -67,7 +69,7 @@ Thus, we need only prove that the codomain of $A$ restricted to the set of
 syntactically stratifiable Dedalus instances without choice is a subset of
 syntactically stratifiable Datalog instance.  We will show this by proving that
 $M$ does not add any negated cycles to the instance's predicate dependency
-graph.
+graph.  \paa{huh?  what is M?}
 
 Since $M$ does not add any rules to the instance, and may introduce only the
 non-negated EDB {\em successor} relation to the body of an existing rule, it
@@ -78,7 +80,10 @@ instance's predicate dependency graph.
 
 \begin{definition}
 %
-\wrm{Def of locally stratifiable}
+%%\wrm{Def of locally stratifiable}
+A $\lnot$Datalog program and EDB is \emph{locally stratifiable} if, after instantiating the rules
+given the EDB, there exists no cycle with a negation or aggregation edge in the dependency 
+graph of instantiated ground atoms.
 %
 \end{definition}
 
