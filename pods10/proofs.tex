@@ -1,0 +1,220 @@
+
+\section{Stratifiability of Dedalus Programs}
+
+\newtheorem{lemma}{Lemma} 
+
+\begin{lemma} 
+%
+A Dedalus program without negation, aggregation, and choice has a unique
+minimal model.
+%
+\end{lemma}
+
+\begin{proof} 
+%
+A Dedalus program without negation, aggregation, and choice is a pure Datalog
+program.  Every Datalog program has a unique minimal model. \wrm{cite?  or the
+audience knows this}
+%
+\end{proof}
+
+\jmh{Oops, you forgot that this model is countably infinite due to infinite time. So I could add countably many random consistent facts and have an equally ``small'' model. You will need a more refined definition of safety and minimality that accounts for time.}
+
+\jmh{I'm going to stop commenting here since you'll need some more machinery to continue.}
+
+We define syntactic stratification of a Dedalus program the same way it is
+defined for a Datalog program:
+
+\begin{definition}
+%
+A Dedalus program without choice is \emph{syntactically stratifiable} if there
+exists no cycle with a negative edge or an aggregation edge in the program's
+predicate dependency graph.
+%
+\end{definition}
+
+We evaluate such a program by evaluating each strongly connected component of
+its predicate dependency graph under a closed-world assumption.  We may
+evaluate in any order returned by a topological sort on the predicate
+dependency graph with each strongly connected component collapsed to a single
+node. \wrm{XXX: is this right?}
+
+\begin{definition}
+%
+A {\em Dedalus instance} $(P,E)$ is a Dedalus program $P$ along with an EDB
+$E$.
+%
+\end{definition}
+
+\begin{lemma}
+%
+A syntactically stratifiable Dedalus instance without choice has a unique
+minimal model.  That is, there exists a function $D$ from syntactically
+stratifiable Dedalus instances without choice to their minimal models.
+%
+\end{lemma}
+
+\begin{proof}
+%
+We know that there exists a function $B$ from syntactically stratifiable
+Datalog instances to their minimal models.  Earlier, we introduced \wrm{XXX:
+where?} a bijection \wrm{XXX: probably not a bijection} $A$ from the set of
+Dedalus instances without choice to the set of Datalog instances, and a
+bijection $C$ between minimal models of Datalog instances and minimal models of
+Dedalus instances without choice.  We will show that $D = C \circ B \circ A$.
+
+Thus, we need only prove that the codomain of $A$ restricted to the set of
+syntactically stratifiable Dedalus instances without choice is a subset of
+syntactically stratifiable Datalog instance.  We will show this by proving that
+$M$ does not add any negated cycles to the instance's predicate dependency
+graph.
+
+Since $M$ does not add any rules to the instance, and may introduce only the
+non-negated EDB {\em successor} relation to the body of an existing rule, it
+does not add any new cycles to, or add negation to any existing cycles in the
+instance's predicate dependency graph.
+%
+\end{proof}
+
+\begin{definition}
+%
+\wrm{Def of locally stratifiable}
+%
+\end{definition}
+
+%\begin{lemma}
+%
+%A locally stratifiable Dedalus instance without choice has a unique
+%minimal model.  That is, there exists a function $E$ from locally
+%stratifiable Dedalus instances without choice to their minimal models.
+%
+%\end{lemma}
+
+%\begin{proof}
+%
+%\wrm{TODO}
+%
+%\end{proof}
+
+
+\begin{definition}
+%
+A \emph{deductive reduction} of a Dedalus program $P$ is the subset of $P$
+consisting of exactly those deductive rules in $P$.
+%
+\end{definition}
+
+\begin{definition} 
+%
+A Dedalus program is \emph{temporally stratifiable} if its deductive
+reduction is syntactically stratifiable.
+%
+\end{definition}
+
+%%\newtheorem{theorem}{Theorem}
+\begin{lemma}
+%
+Any temporally stratifiable Dedalus instance $P$ without asynchronous rules has
+a unique minimal model
+%
+\end{lemma} 
+
+\begin{proof}
+%
+\bf{Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
+deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
+thus it has a unique minimal model.
+
+\wrm{need to fix this case}
+\bf{Case 2:} $P$ consists of only deductive and inductive rules.  Assume $P$
+does not have a unique minimal model.  This implies that $P$ is not
+syntactically stratifiable, thus there must exist some cycle through at least
+one predicate $q$ involving a negation or aggregation edge in $P$'s predicate
+dependency graph, and furthermore this cycle must include at least one
+inductive rule.  Since an inductive rule has a time suffix $S := N+1$, where
+$N$ is the timestamp of its body, and $P$'s deductive reduction is
+syntactically stratifiable, we know that the aggregate or negation of $q$ must
+always occur in a strictly earlier or later timestamp than that of the positive
+$q$ atom.  Since the timestep in the cycle increases monotonically with each
+iteration, $q$ will never, in practice, depend on a negation or aggregate of
+itself.  Thus, $P$ is locally stratifiable, and by Lemma XXX above, $P$ has a
+unique minimal model.  This contradicts our assumption that $P$ does not have a
+unique minimal model.  Thus, $P$ has a unique minimal model.
+%
+\end{proof}
+
+\paa{I don't think we can show that programs with async rules are locally stratifiable, actually}
+\wrm{Why not?  What if we have that "causality constraint" we were talking about?}
+
+\section{Traces}
+
+\wrm{I don't know what you mean by ground atoms, so I changed "ground atom" to fact}
+\paa{a ground atom is  a predicate with all ground terms.  a fact is precisely an EDB ground atom.}
+
+%Consider a non-empty EDB $E$, an empty MBD $M$ and IDB $I$ and a program $P$.  Evaluating $P$ against $E$ may derive facts in $M$ and $I$.
+
+\begin{definition}
+A \emph{trace} is any set of facts from the EDB, MDB or IDB of a Dedalus program evaluation.
+\end{definition}
+
+Any trace for a Dedalus instance $(P,E)$ is an interpretation of $(P,E)$.
+%\wrm{lol, why do we need the notion of an incomplete trace?}
+
+\begin{definition}
+%
+A \emph{complete trace} of an evaluation of a Dedalus instance is the union of
+the given EDB with the derived IDB and MDB.
+%
+\end{definition}
+
+\begin{lemma}
+%
+A complete trace of a Dedalus instance $(P,E)$ is its unique minimal model.
+%
+\end{lemma}
+
+%\begin{lemma}
+%%
+%For any bound on $successor$, a complete trace of a Dedalus instance $(P,E)$ has a unique minimal model.
+%%
+%\end{lemma}
+
+If we evaluate E given P, and P is stratifiable, the resulting set of ground atoms is a minimal model.
+In our case, however, successor causes our EDB to be infinite, so the minimal model of any Dedalus program 
+with temporal rules is potentially infinite.  \paa{but we'd like to show that a weaker property holds: that for any value $N$
+in the \emph{successor} relation, the resulting program has a minimal model.}
+\wrm{we either already showed this, or our theorems above are wrong.}
+
+
+\begin{definition}
+A \emph{minimal trace} is a subset of a complete trace that excludes any IDB ground atoms derived through an inductive
+rule.
+\end{definition}
+
+A minimal trace is equivalent to the complete trace of which is is a subset: the latter may be derived from the former by repeated
+applications of inductive rules.  However, a given a Dedalus instance $(P, E)$ and a minimal trace T (where $E \subset T$), a fixpoint
+computation will most likely \emph{not} yield a minimal model, because new tuples may be added to the MDB that represent a component 
+of a different minimal model, and because these may affect the IDB.  The set of ground atoms $EDB \cup MDB_{old} \cup IDB_{new}$
+\emph{may} may be a minimal model, iff $IDB_{new} = IDB_{old}$.  \paa{actually I am not sure if that is true}.  
+$(EDB \cup MDB_{old} \cup IDB_{new} \cup IDB_{old})$ is certain to be a model, but is only minimal if $IDB_{new} \subset IDB_{old}$.
+
+A minimal trace records the nondeterminism caused by the delay or reordering of async rules, and
+is equivalent to the original program execution.  
+
+\begin{definition}
+A \emph{reduced trace} is a minimal trace with normalized time suffixes starting with 0 and increasing by 1 at each step.
+\end{definition}
+
+show a (trivial) procedure for reduction and make some claims about equivalences without entanglement.
+
+\begin{definition}
+A \emph{event trace} is a Dedalus EDB.
+\end{definition}
+
+An event trace and program P may be used to generate a new IDB and MDB.  The MDB is virtually certain to differ from that of another
+execution, while the IDB may differ, depending on its dependency on the MDB.  The union of these three databases is of course a
+minimal model, but probably not the same minimal model from another execution.  \paa{but can we say that it will often be true that if we project 
+out the time attribute from every predicate, the minimal models will be the same? it won't always be true...}
+
+
+
