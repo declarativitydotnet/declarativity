@@ -69,3 +69,25 @@ successor(S, S + 1) \(\leftarrow\)
 
 In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
 fixpoint computation.  
+\paa{notes follow}
+
+
+define a trace as a list of events ordered by time.  then the property we want to prove is about prefix computations.  take a function FP that returns an IDB.  We'll use 
+the notation $\Gamma$ to indicate a trace, and $\alpha_{1} \ldots \alpha_{n}$ to indicate prefixes of  $Gamma$. $\alpha_{n} = \Gamma$, and since every
+$\alpha$ is an increasing subset of the EDB, we have 
+
+$\forall \alpha_{i}, \alpha_{j} \in \Gamma ((i < j) \to (\alpha_{i} \subset \alpha_{j}))$.
+
+We would like to show that 
+
+$FP(\alpha_{k}) =  \displaystyle \bigcup_{i=0}^{k} FP(\alpha_{i})$ for any $k$.  
+
+this could (with some work) lead to an inductive proof
+that an infinite model is minimal.
+
+
+%%   FP(alpha_{k} \union FP(alpha_{k-1} \union
+
+if we have this, then we have:
+
+Any posthoc evaluation is equivalent to any 
