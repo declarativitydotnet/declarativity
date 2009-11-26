@@ -13,14 +13,14 @@ minimal model.
 \begin{proof} 
 %
 A Dedalus program without negation, aggregation, and choice is a pure Datalog
-program.  Every Datalog program has a unique minimal model. \wrm{cite?  or the
-audience knows this}
+program.  Every Datalog program has a unique minimal model. 
+%%\wrm{cite?  or the audience knows this}
 %
 \end{proof}
 
-\jmh{Oops, you forgot that this model is countably infinite due to infinite time. So I could add countably many random consistent facts and have an equally ``small'' model. You will need a more refined definition of safety and minimality that accounts for time.}
+%%\jmh{Oops, you forgot that this model is countably infinite due to infinite time. So I could add countably many random consistent facts and have an equally ``small'' model. You will need a more refined definition of safety and minimality that accounts for time.}
 
-\jmh{I'm going to stop commenting here since you'll need some more machinery to continue.}
+%%\jmh{I'm going to stop commenting here since you'll need some more machinery to continue.}
 
 We define syntactic stratification of a Dedalus program the same way it is
 defined for a Datalog program:
@@ -39,7 +39,8 @@ predicate dependency graph.
 We may
 evaluate such a program in any order returned by a topological sort on the predicate
 dependency graph, with each strongly connected component collapsed to a single
-node. \wrm{XXX: is this right?}
+node. 
+%%\wrm{XXX: is this right?}
 
 \begin{definition}
 %
@@ -80,12 +81,21 @@ instance's predicate dependency graph.
 
 \begin{definition}
 %
-%%\wrm{Def of locally stratifiable}
 A $\lnot$Datalog program and EDB is \emph{locally stratifiable} if, after instantiating the rules
-given the EDB, there exists no cycle with a negation or aggregation edge in the dependency 
-graph of instantiated ground atoms.
+given the Herbrand saturation of the program and EDB, there exists no cycle with a negation 
+or aggregation edge in the dependency graph of instantiated ground atoms.
 %
 \end{definition}
+
+
+We take the definition below from Ross~\cite{modular, ross-syntactic}.
+\begin{definition}
+%
+A $\lnot$Datalog program and EDB is \emph{modularly stratifiable} if, and only if its mutally recursive 
+components are locally stratified once all instantiated rules with a false subgoal that is defined in a 
+``lower" component are removed.
+\end{definition}
+
 
 %\begin{lemma}
 %
@@ -120,7 +130,7 @@ reduction is syntactically stratifiable.
 \begin{lemma}
 %
 Any temporally stratifiable Dedalus instance $P$ without asynchronous rules has
-a unique minimal model
+a unique minimal model.
 %
 \end{lemma} 
 
