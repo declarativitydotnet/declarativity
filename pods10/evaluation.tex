@@ -10,7 +10,7 @@ This implies that successor is infinite (as we'd expect time to be), and is prob
 
 \newtheorem{example}{Example}
 \begin{example}
-Consider the program and EDB below.
+Consider the Dedalus program and EDB below.
 
 \begin{Dedalus}
 r1
@@ -44,7 +44,7 @@ p(?, ?)@789;
 Evaluating this program and EDB will require a \emph{successor} relation with values that range from 123 - 789.
 
 \begin{definition}
-A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which an EDB is given, \emph{successor} is derived from it
+A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which an EDB is given, and \emph{successor} is derived from it
 as part of a fixpoint computation.
 \end{definition}
 
@@ -75,10 +75,11 @@ fixpoint computation.  The complete program is safe if the EDB is finite.
 \subsection{EDB Prefixes}
 \paa{notes follow}
 
-In general, an EDB can itself be infinite. 
+In general, however, an EDB can itself be infinite, and will lead to unsafe evaluations even when \emph{successor} is derived from it
+as in a post-hoc evaluation.
 
 \begin{definition}
-A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of events whose timestamp is greater than or equal to $n$.
+A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is greater than or equal to $n$.
 \end{definition}
 
 If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}$ = $\Gamma$.  Because each prefix is strictly larger than
