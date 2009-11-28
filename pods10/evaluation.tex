@@ -83,14 +83,20 @@ A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ 
 \end{definition}
 
 If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}$ = $\Gamma$.  Because each prefix is strictly larger than
-all prefixes with lower indices, we also have:
+all prefixes with lower indices, we also have the monotonicity property
 
-$\forall \alpha_{i}, \alpha_{j} \in \Gamma ((i < j) \to (\alpha_{i} \subset \alpha_{j}))$.
+\begin{equation}
+\forall \alpha_{i}, \alpha_{j} \in \Gamma ((i < j) \to (\alpha_{i} \subset \alpha_{j}))
+\end{equation}
 
 Consider a function $FP$ from $Program, EDB \mapsto IDB$ that represents the \emph{fixpoint} computation carried out by a datalog interpreter.
 We would like to show that 
 
-$FP(P, \alpha_{k}) =  \displaystyle \bigcup_{i=0}^{k} FP(P, \alpha_{i})$ for any $k$.  
+\begin{equation}
+\forall k \in \Gamma (FP(P, \alpha_{k}) =  \displaystyle \bigcup_{i=0}^{k} FP(P, \alpha_{i}))
+\end{equation}
+
+for any $k$. 
 
 this could (with some work) lead to an inductive proof
 that an infinite model is minimal.  we could prove the (weaker?) property that
