@@ -167,7 +167,7 @@ unique minimal model.  Thus, $P$ has a unique minimal model.
 of the draft.  We've established the notion of finite prefixes of a (possibly infinite) EDB.  A trace is basically just
 an interpretation (a set of ground atoms) -- by calling it a ``trace" we're connoting a post-hoc interpretation.
 A trace that is just EDB is sufficient, given a program, to augment the trace with IDB and MDB atoms such that
-the resulting trace is a model.  For a program with no async rules, the EDB of input is sufficient to recreate the
+the resulting trace is a model (by simply running a fixpoint computation).  For a program with no async rules, the EDB of input is sufficient to recreate the
 program execution exactly -- that is to say, to reproduce the single minimal model of the program given the EDB.
 It is \emph{not} sufficient to recreate the execution of a program with async rules: intuitively, we'd need to include in 
 the trace the complete MDB, for every entry in it potentially corresponds to one of many possible minimal models.
