@@ -165,7 +165,9 @@ where $S$ is one of the following:
 \begin{enumerate}
 \item \emph{now}: a deductive rule, in which all predicates implicitly share the same time suffix $\Tau$.
 \item \emph{next}: an inductive rule, in which the \emph{successor($\Tau$, S)} predicate is implicitly included in the body as described above, and $S$ is implicitly the time suffix of the head
-\item \emph{async}: an asynchronous rule, in which the time suffix of the head predicate is implicitly chosen nondeterministically via choice as described above.
+\item \emph{async}: an asynchronous rule, in which the time suffix of the head predicate will occur some time after the time suffix of the body predicate, or never.
+%in which the time suffix of the head predicate is implicitly chosen nondeterministically via choice as described above.
+%wrm: chosen via choice is too operational.
 \end{enumerate}
 \end{itemize}
 
