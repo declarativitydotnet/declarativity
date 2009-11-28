@@ -69,10 +69,11 @@ Dedalus instances without choice.  We will show that $D = C \circ B \circ A$.
 Thus, we need only prove that the codomain of $A$ restricted to the set of
 syntactically stratifiable Dedalus instances without choice is a subset of
 syntactically stratifiable Datalog instance.  We will show this by proving that
-$M$ does not add any negated cycles to the instance's predicate dependency
-graph.  \paa{huh?  what is M?}
+$A$ does not add any negated cycles to the instance's predicate dependency
+graph.  
+%\paa{huh?  what is M?}
 
-Since $M$ does not add any rules to the instance, and may introduce only the
+Since $A$ does not add any rules to the instance, and may introduce only the
 non-negated EDB {\em successor} relation to the body of an existing rule, it
 does not add any new cycles to, or add negation to any existing cycles in the
 instance's predicate dependency graph.
@@ -173,9 +174,6 @@ It is \emph{not} sufficient to recreate the execution of a program with async ru
 the trace the complete MDB, for every entry in it potentially corresponds to one of many possible minimal models.
 perhaps we just want to show that there is a method (drop the async rules and run a fixpoint computation to generate
 the IDB from MDB and EDB) to regenerate a "complete trace" (ie minimal model) from EDB $\cup$ MDB}
-
-\wrm{I don't know what you mean by ground atoms, so I changed "ground atom" to fact}
-\paa{a ground atom is  a predicate with all ground terms.  a fact is precisely an EDB ground atom.}
 
 %Consider a non-empty EDB $E$, an empty MBD $M$ and IDB $I$ and a program $P$.  Evaluating $P$ against $E$ may derive facts in $M$ and $I$.
 
