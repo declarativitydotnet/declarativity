@@ -144,9 +144,9 @@ If $I_2 \neq I_3$, it must be the case that either there exists a ground atom in
 $I_3$ and not in $I_2$.  
 
 Take the former case first.  This means there is an atom $A$ that is entailed by P given $FP(\alpha_{j} \cup FP(\alpha_{i}))$
-but not entailed by P given $\alpha_{j}$, so it must be in $I_1$.   The only circumstances under which an atom in some
-$I_1$ would not occur in the IDB $FP(\alpha{j})$ with $I_1 \subseteq \alpha_{j}$ is if there is a fact $B$ in $\alpha_{j}$ 
-corresponding to a negated subgoal in a rule $r$ in P upon which A depends.  However, for this to occur, because a ground atom 
+but not entailed by P given $\alpha_{j}$, so it must be in $I_1$.   The only circumstances under which an atom in
+$I_1$ would not occur in the IDB $FP(\alpha_{j})$ is if there is a fact $B$ in $\alpha_{j}$ 
+corresponding to a negated subgoal in a rule $r$ in P upon which $A$ depends.  However, for this to occur, because a ground atom 
 in $I_1$ cannot depend upon a ground atom from the ``future", that fact $B$ would need to have occurred at some time less than 
 or equal to the to timestamp of atom $A$.  But this is not possible, because all timestamps in $\alpha_{j}$ that are not in any $\alpha_{k} | k<j$
 are strictly higher than any timestamps in $\alpha_{k}$.  Hence the first case leads to contradiction.
