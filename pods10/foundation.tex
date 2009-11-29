@@ -1,4 +1,6 @@
 
+
+\section{Dedalus}
 We take as our foundation 
 %language 
 an augmented version of \linebreak
@@ -22,7 +24,7 @@ We also make use of the set of positive integers $\mathbb{Z}$,
 (which we will use to represent possible times), along with its natural total order
 \dedalus{successor($A_i, A_j$)} and a distinguished constant symbol $\perp$ that we will use to represent ``never''.
 
-\section{Syntactic Restrictions}
+\subsection{Syntactic Restrictions}
 %%\jmh{I wonder if it wouldn't be better to do a totally syntactic definition of Dedalus as a restricted subclass of Datalog+stratification+successor, with some convenience %%notation that falls out of the restrictions.  It would ensure that we don't skip steps, and allow us to fall back on proofs about Datalog without being sloppy.  The intro %%paragraph before is only halfway formal and might be better off with a firm basis in citeable Datalog papers.}
 
 %%A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix.  \jmh{Already some slop ... you want to define it via Datalog+strat
@@ -82,6 +84,10 @@ instead.  We can assume an inclusion constraint forcing successor's arguments
 to both come from this relation.}  \jmh{Good point.  OTOH I suspect we'll have to forbid messages into the past, in which case this will be fine (and succinct).}  \jmh{Actually, we should be able to express delays that are a function of attributes -- e.g. a sender-receiver pair may be input to a real-world delay distribution, as might be the time.}
 
 \end{enumerate}
+
+\paa{shouldn't we have an example here?}
+
+\subsection{Extensional, Intensional and Nondeterministic Databases}
 
 %%\jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``Dedalus is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
 

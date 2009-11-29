@@ -1,7 +1,7 @@
 
 \section{Stratifiability of Dedalus Programs}
 
-\newtheorem{lemma}{Lemma} 
+
 
 \begin{lemma} 
 %
@@ -79,6 +79,18 @@ does not add any new cycles to, or add negation to any existing cycles in the
 instance's predicate dependency graph.
 %
 \end{proof}
+
+Many programs are not syntactically stratifiable.  
+
+%%\begin{example}
+%%Consider a predicate \emph{print} that corresponds to a print queue.  The program below
+%%states that if there is a message \{A, B\}, then there 
+%%\begin{Dedalus}
+%%print(A, B) \(\leftarrow\)
+%%  message(A, B),
+%%  \(\lnot\)print(A, B);
+%%\end{Dedalus}
+%%\end{example}
 
 \begin{definition}
 %
