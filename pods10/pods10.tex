@@ -65,9 +65,8 @@
 \maketitle
 
 \begin{abstract}
-We present \textbf{Dedalus}, a syntactic subset of Datalog~\cite{ullmanbook} with negation, aggregate functions and choice.
-Every Dedalus relation is extended with an integer attribute that intuitively represents the logical time at which a given tuple
-holds.  We propose a sugared syntax in which rule head annotations indicate whether their conclusions hold at the same time as their
+We present \textbf{Dedalus}, a syntactic subset of Datalog~\cite{ullmanbook} with negation, aggregate functions and choice.  Dedalus extends Datalog with a
+notion of time -- every Dedalus relation has an integer attribute that intuitively represents when a given tuple is true.  We propose a sugared syntax in which rule head annotations indicate whether their conclusions hold at the same time as their
 premises, in the immediate next timestep, or at some unknown timestep.  
 We introduce the notion of \emph{temporal stratification}, a syntactically-checkable property of Dedalus programs
 similar to stratification, and show that the class of temporally stratifiable programs in Dedalus corresponds

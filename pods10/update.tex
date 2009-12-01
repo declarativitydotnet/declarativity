@@ -1,82 +1,90 @@
 \section{Implications for State Update}
 %%\newdef{definition}{Definition}
 
+\subsection{Cost Model}
 
+\wrm{hard to do this section without a definition of the continuous interpretation}
 
-\subsection{Persistent Storage Implementations}
+In the continuous interpretation of a Dedalus program, it is in general only
+useful to remember facts at a single timestamp in a predicate.  Two ways to
+approach this issue are to either always persist the ``latest'' version, or
+continuously re-derive the latest version.  These are represented in the naive
+deductive and overwriteable storage implementations below.
 
-\paa{help!}
-\wrm{this section seems very operational, so i'm not quite sure how it fits in with the notion of minimal or reduced traces.  i've tried to put some stuff in
-nevertheless.}
-
-\wrm{i'm also not quite sure what simplifying assumptions to make here.  there was some talk about assuming hash table lookups for equi-joins.  i'm not quite sure what to do for range queries.}
-
-%%\subsubsection{We need only store the event tuple with max(Timestamp) for each projection of the other columns to query the present time}
-\subsubsection{Cost Model}
-
-\begin{figure}[t]
-\begin{tabular}{ll} \hline
+%\begin{figure}[t]
+%\begin{tabular}{ll} \hline
 %%Rule Pattern & Idiom & Prepare & Propose & Election \\ \hline \hline
-$d$ & Cost of a deductive step \\
-$s$ & Cost of storing a tuple \\
-$r$ & Cost of reading a tuple \\ 
-$t$ & Number of tuple derivations from deductive rules \\ 
-\hline
-$S$ & Set of tuples inserted \\
-$U$ & Set of tuples updated \\
-$P$ & Set of stored tuples, with time projected out \\ 
-$T$ & Set of stored tuple timestamps \\ 
-$Q$ & Set of query timestamps \\ \hline 
-\end{tabular}
-\caption{Cost model.}
-\label{fig:breakdown}
-\end{figure}
+%$d$ & Cost of a deductive step \\
+%$s$ & Cost of storing a tuple \\
+%$r$ & Cost of reading a tuple \\ 
+%$t$ & Number of tuple derivations from deductive rules \\ 
+%\hline
+%$S$ & Set of tuples inserted \\
+%$U$ & Set of tuples updated \\
+%$P$ & Set of stored tuples, with time projected out \\ 
+%$T$ & Set of stored tuple timestamps \\ 
+%$Q$ & Set of query timestamps \\ \hline 
+%\end{tabular}
+%\caption{Cost model.}
+%\label{fig:breakdown}
+%\end{figure}
 
 
 \subsubsection{Naive Deductive Implementation}
 
-To evaluate a schedule consisting of inserts, updates and queries, a naive deductive implementation would:
+To evaluate a trace consisting of $S$ inserts and $U$ updates, a naive
+deductive implementation would:
 
 \begin{enumerate}
 
-\item Add all inserts, deletions, and updates to the EDB.  We can make
-the simplifying assumption that all EDB predicates are indexed by some hash of
-their key attributes \wrm{although how do we support range queries?}.  Note that
-an update consists of both an insertion and a deletion.  Assuming that
-insertion of a fact into the EDB is $w$, then the cost of this
-step is $(|S|+2|U|)w$.
+\item Add all inserts, deletions, and updates to the EDB.  
+%We make the simplifying assumption that all EDB predicates are indexed by some
+%hash of their key attributes.
+Note that an update consists of both an insertion and a deletion.  Assuming
+that inserting a fact into the EDB has some cost $w$ independent of the
+characteristics of the predicate (e.g. all predicates store their facts in hash
+tables), then the cost of this step is $(S+2U)w$.
 
-\item For a query about predicate $P$, in local stratum $M$ (corresponding with
-timestep $M$), we must evaluate all predicates in $P$'s predicate dependency
-graph in strata $1$ through $M$.  
+\item For every predicate $P$, at time $M$, we must evaluate all predicates in
+$P$'s predicate dependency graph at time $1$ through $M$.  
 %A bottom-up evaluation of a predicate $P$ consists of evaluating all rules
 %that reference $P$ in the head, and may involve polynomially many derivations
 %in the size of the EDB up to time $M$.
 A naive query plan for execution of a rule would consist of taking the cross
 product of all body relations, selecting the subset that matches the body
 conditions, and projecting this subset onto the head predicate to derive new
-head tuples.  Assume each rule not in any recursion has an associated
-selectivity $s_r$ and cost per each tuple in the join result $d_r$.  Each
-recursion will proceed for $n_r$ steps, and 
-
-
+head tuples.  Assume each rule has an associated
+selectivity $s_r$ and cost per each tuple in the join result $d_r$.  If a rule
+is part of a recursion, it will be executed for $n_r$ steps.  The cost
+of this evaluation is $M \cdot \sum_{r} n_r \cdot s_r \cdot d_r$.
 
 \end{enumerate}
+
+In summary, the total execution cost is:
+
+\[ (S+2U)w + M \cdot \sum_{r : P \in r.head} n_r \cdot s_r \cdot d_r  \]
+
+Since we only need persist the EDB, the total storage cost is equal to the size
+of the EDB.
 
 %$(|S|+2|U|)s + (|S|+2|U|)r + t + (\displaystyle\sum_{i=0}^{|Q|-1} \displaystyle\sum_{j=0}^{|T|-1} Q_{i} - T_{j})d$
 
 \subsubsection{Naive Overwriteable Storage Implementation}
 
-An overwritable storage implementation could enable lower execution latency by
-storing data computed for an earlier query for use in future queries.
-Executing a query about predicate $P$ at time $M$ would consist of evaluating
-each predicate $Q$ in $P$'s predicate dependency graph from stratum $Q_N+1$
-through stratum $M$ -- where $Q_N$ is the timestamp of the last query that
-required computation of predicate $Q$ -- using all IDB results from stratum
-$Q_N$ computed at time $Q_N$ as the EDB for stratum $Q_N+1$.  \wrm{is this too
-complicated?}  This is in contrast to the naive deductive model, which would
-require computation from stratum 1, but would not require persisting the IDB 
-of the most recently computed stratum for each predicate. \wrm{todo: formula?}
+An overwritable storage implementation may enable lower execution latency by
+storing the most recent version of a tuple.  For a predicate $P$ at time $M$,
+we would need to evaluate each predicate $Q$ in $P$'s predicate dependency
+graph from timestamp $Q_N+1$ through timestamp $M$ -- where $Q_N$ is the
+timestamp of the last stored tuple of predicate $Q$. This is in contrast to the
+naive deductive model, which would require computation from timestamp 1, but
+would not require persisting the IDB of the most recently computed stratum for
+each predicate.
 
+In summary, the total execution cost is:
+
+\[ (S+2U)w + \sum_{r} (M - Q_{r.head}) n_r \cdot s_r \cdot d_r  \]
+
+The total storage cost is the IDB of each predicate at its most recent
+timestamp.
 
 %%\subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}
