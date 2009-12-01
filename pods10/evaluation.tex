@@ -1,23 +1,28 @@
 \section{Evaluation models}
 
 Consider the \emph{successor} relation described above.  According to our intuitive interpretation, this relation models
-the passage of time, in order to establish a temporal order among ground atoms.  \wrm{we're ignoring entanglement here} Two properties we expect of {\em successor} are:
+the passage of time, in order to establish a temporal order among ground atoms.  \wrm{we're ignoring entanglement here}
 
-\begin{itemize}
+Recall that {\em successor} is the standard strict total order on $\mathbb{N}$,
+and is thus an infinite relation.  Clearly, a naive interpretation of time can
+lead to unsafe programs:
 
-\item $\forall A,B \in \mathbb{Z} : successor(A, B) \Rightarrow B > A$ (i.e. whenever $successor(A,B)$ is true, then $B > A$)
+%%No reason to re-define a strict total order here...
+%\begin{itemize}
 
-\item $\forall A \in \mathbb{Z} : \exists! B \in \mathbb{Z} : successor(A,B)$ (i.e. every integer has a successor)
+%\item $\forall A,B \in \mathbb{Z} : successor(A, B) \Rightarrow B > A$ (i.e. whenever $successor(A,B)$ is true, then $B > A$)
 
-\end{itemize}
+%\item $\forall A \in \mathbb{Z} : \exists! B \in \mathbb{Z} : successor(A,B)$ (i.e. every integer has a successor)
 
-\wrm{we'd expect a lot more properties of successor than the ones you mentioned.  so instead of trying to think of them all, i just narrowed down what you wrote.}
+%\end{itemize}
 
-This implies that successor is infinite (as we'd expect time to be), and is problematic because it leads to unsafe programs.
+%\wrm{we'd expect a lot more properties of successor than the ones you mentioned.  so instead of trying to think of them all, i just narrowed down what you wrote.}
+
+%This implies that successor is infinite (as we'd expect time to be), and is problematic because it leads to unsafe programs.
 
 \newtheorem{example}{Example}
 \begin{example}
-Consider the Dedalus program and EDB below.  \wrm{move EDB definition before this?}
+Consider the Dedalus instance below.
 
 \begin{Dedalus}
 r1
@@ -32,37 +37,46 @@ p(1, 2)@123;
   
 \end{Dedalus}
 
-The single ground fact will, due to \emph{r1}, cause as many deductions as there are tuples in the \emph{successor} relation.
-Clearly, if the relation is infinite this program in unsafe.
+The single ground fact will, due to \emph{r1}, cause one deduction for each
+tuple in {\em successor}.  Since {\em successor} is infinite, the program is
+unsafe.
 
 \end{example}
 
-But if \emph{successor} is infinite, many of these deductions may be \emph{void}in some sense, i.e. functionally determined based on the EDB. \wrm{is functionally determined a real term?}
-In effect, an EDB that is given in its totality determines a window over successor that is relevant to any computation that must be performed.  \wrm{what about NDB?}
-It is easy to see that in this example, we need only consider a successor relation that contains a single tuple \{123, 124\}.
+However, we observe that all of these deductions are uninteresting, as they are
+deterministically related to the EDB.  To avoid performing such deductions, we
+restrict {\em successor} to range over the subset of $\mathbb{N}$ consisting of
+the consecutive natural numbers between the minimum and maximum timestamp
+specified in the (finite) EDB ($\{123, 124\}$ in this example) \wrm{this is without NDB right?}.  If we extended the EDB with the additional facts:
 
-Consider the given EDB extended with two more facts:
+%But if \emph{successor} is infinite, many of these deductions may be \emph{void}in some sense, i.e. functionally determined based on the EDB. \wrm{is functionally determined a real term?}
+%In effect, an EDB that is given in its totality determines a window over successor that is relevant to any computation that must be performed.  \wrm{what about NDB?}
+%It is easy to see that in this example, we need only consider a successor relation that contains a single tuple \{123, 124\}.
 
 \begin{Dedalus}
 delete p(1, 2)@456;
-p(?, ?)@789;
+p(?, ?)@789; \wrm{we're still doing queries?}
 \end{Dedalus}
 
-Evaluating this program and EDB will require a \emph{successor} relation with values that range from 123 - 789.
+Evaluating the Dedalus instance would require \emph{successor} to range over the
+subset of consecutive natural numbers $[123, 790]$.
 
 \begin{definition}
-A \emph{post-hoc} evaluation is an evaluation of a Dedalus program in which an EDB is given, and \emph{successor} is derived from it
-as part of a fixpoint computation.
+A \emph{post-hoc} evaluation is an evaluation of a Dedalus instance where
+{\em successor} ranges over the finite subset of $\mathbb{N}$ described above.
 \end{definition}
 
-In a post-hoc evaluation, we may use the given EDB to populate the successor relation in the following way.
-Define first a second order predicate called \emph{event\_time}
-that contains the union of the time attributes from the EDB prefix. Let \emph{Trace} be the set of $n$ EDB predicates.  
-Then \emph{event\_time} is defined as
+In a post-hoc evaluation, we can derive {\em successor} from the EDB as part of
+the fixpoint computation.  We first define a predicate \emph{event\_time} that
+contains the union of the time attributes from the EDB:
 
-$event\_time(\Tau) \leftarrow \displaystyle\bigcup_{i}^n \pi_{\Tau}Trace_{i}$
+$event\_time(\Tau) \leftarrow \displaystyle\bigvee_{p \in EDB} p([...], \Tau)$
 
-We populate \emph{successor} with a negation-free Datalog program with arithmetic and aggregate functions, as shown below.
+\wrm{I wasn't a fan of expressing a query plan in a Datalog rule...  But we can
+talk about this}
+
+We then populate \emph{successor} with Dedalus program shown below:
+%with arithmetic and aggregate functions, as shown below.
 
 \begin{Dedalus}
 smax(max<N>) \(\leftarrow\) event\_time(N);
@@ -76,14 +90,20 @@ successor(S, S + 1) \(\leftarrow\)
     N <= M;
 \end{Dedalus}
 
-In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
-fixpoint computation.  The complete program is safe if the EDB is finite.
+\wrm{Not sure what the point of this is...}
+Since {\em successor} is finite in a post-hoc evaluation, we may evaluate the
+entire Dedalus instance in a single fixpoint.
+
+%In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
+%fixpoint computation.  The complete program is safe if the EDB is finite.
 
 \subsection{EDB Prefixes}
 \paa{notes follow}
 
 In general, however, an EDB can itself be infinite, and will lead to unsafe evaluations even when \emph{successor} is derived from it
 as in a post-hoc evaluation.
+\wrm{huh?  it can't be infinite.  an infinite EDB makes the program unsafe,
+regardless of this time thing.}
 
 \begin{definition}
 A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is less than or equal to $n$.
@@ -93,7 +113,7 @@ If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}
 prefixes with lower indices, we also have the monotonicity property
 
 \begin{equation}
-\forall \alpha_{i}, \alpha_{j} \in \Gamma ((i < j) \to (\alpha_{i} \subseteq \alpha_{j}))
+\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \alpha_{j})
 \end{equation}
 
 \paa{to your point, bill, I switched the lemma and proof below to one of IDB equivalence in the posthoc vs. continual interpretation
@@ -102,15 +122,21 @@ that we could include in the next section after introducing minimal models, stra
 
 
 \newtheorem{lemma}{Lemma} 
+
 \begin{lemma}
-
-Consider a function $FP$ from $Program, EDB \mapsto IDB$ that represents the \emph{fixpoint} computation carried out by a datalog interpreter,
-a program $P$, EDB $\Gamma$, and a set $\Lambda$ of indices into the prefixes $\alpha_{n}$ of $\Gamma$.
-
+%
+Let $F$ be the set of all finite subsets of possible facts. \wrm{need to be
+more precise.}  Let $P$ be the set of all finite subsets of possible rules.
+Let $FP : P \times F \mapsto F$ be the function representing the
+\emph{fixpoint} computation carried out by a datalog interpreter.  Consider
+a program $p$ with EDB $\gamma$, and a set $\lambda \subset \mathbb{N}$.  Then,
 
 \begin{equation}
-\forall k \in \Lambda (FP(P, \alpha_{k}) =  \displaystyle \bigcup_{i=0}^{k} FP(P, \alpha_{i}))
+\forall k \in \lambda : FP(p, \alpha_{k}) =  \displaystyle \bigcup_{i=0}^{k} FP(p, \alpha_{i})
 \end{equation}
+
+\wrm{what's the deal with lambda??  i'm just ignoring it in the proof below}
+
 \end{lemma}
 %%for any $k$. 
 
@@ -126,22 +152,20 @@ a program $P$, EDB $\Gamma$, and a set $\Lambda$ of indices into the prefixes $\
 %%if we assume that some program P and finite prefix $\alpha_n$ of a trace $\Gamma$ produce a minimal model, 
 %%then it follows that a prefix $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
 
-Assume the contrary, that there is some program P, prefix $\alpha_i$ and prefix $\alpha_j$  such that:
+Assume the contrary, that is for some prefixes $\alpha_i$ and $\alpha_{i+1}$:
 
-%%$\alpha_j$ follows $\alpha_i$, 
-$j = i + 1$
+$FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) \neq FP_p(\alpha_{i+1})$
 
-$I_1 = FP(\alpha_i)$
+This means that there exists at least one intensional ground atom $A$ that is
+only in one of the sets.
 
-$I_2 = FP(\alpha_j \cup I_1)$
+{\bf Case 1:} $\exists A \in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) : A \not\in FP_p(\alpha_{i+1}).$
 
-$I_3 = FP(\alpha_j)$
+\wrm{I started working on this proof and then I stopped, because I don't see how
+it matches the above lemma... we can discuss tomorrow}
 
-$I_2 \neq I_3$
-
-
-If $I_2 \neq I_3$, it must be the case that either there exists a ground atom in $I_2$ that is not in $I_3$, or that is in
-$I_3$ and not in $I_2$.  
+%If $I_2 \neq I_3$, it must be the case that either there exists a ground atom in $I_2$ that is not in $I_3$, or that is in
+%$I_3$ and not in $I_2$.  
 
 Take the former case first.  This means there is an atom $A$ that is entailed by P given $FP(\alpha_{j} \cup FP(\alpha_{i}))$
 but not entailed by P given $\alpha_{j}$, so it must be in $I_1$.   The only circumstances under which an atom in

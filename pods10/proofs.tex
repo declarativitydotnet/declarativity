@@ -25,7 +25,6 @@ minimal model.
 %
 A Dedalus program without negation, aggregation, and choice is a pure Datalog
 program.  Every Datalog program has a unique minimal model. 
-%%\wrm{cite?  or the audience knows this}
 %
 \end{proof}
 
@@ -47,18 +46,9 @@ predicate dependency graph.
 %%We evaluate such a program by evaluating each strongly connected component of
 %%its predicate dependency graph under a closed-world assumption.  
 
-We may
-evaluate such a program in any order returned by a topological sort on the predicate
-dependency graph, with each strongly connected component collapsed to a single
-node. 
-%%\wrm{XXX: is this right?}
-
-\begin{definition}
-%
-A {\em Dedalus instance} $(P,E)$ is a Dedalus program $P$ along with an EDB
-$E$.
-%
-\end{definition}
+We may evaluate such a program in any order returned by a topological sort on
+the predicate dependency graph, with each strongly connected component
+collapsed to a single node.
 
 \begin{lemma}
 %
@@ -71,23 +61,19 @@ stratifiable Dedalus instances without choice to their minimal models.
 \begin{proof}
 %
 We know that there exists a function $B$ from syntactically stratifiable
-Datalog instances to their minimal models.  Earlier, we introduced \wrm{XXX:
-where?} a bijection \wrm{XXX: probably not a bijection} $A$ from the set of
-Dedalus instances without choice to the set of Datalog instances, and a
+Datalog instances to their minimal models \wrm{cite?}.  Earlier, we introduced
+\wrm{XXX: where?} a bijection \wrm{XXX: probably not a bijection} $A$ from the
+set of Dedalus instances without choice to the set of Datalog instances, and a
 bijection $C$ between minimal models of Datalog instances and minimal models of
 Dedalus instances without choice.  We will show that $D = C \circ B \circ A$.
 
-Thus, we need only prove that the codomain of $A$ restricted to the set of
-syntactically stratifiable Dedalus instances without choice is a subset of
-syntactically stratifiable Datalog instance.  We will show this by proving that
-$A$ does not add any negated cycles to the instance's predicate dependency
-graph.  
-%\paa{huh?  what is M?}
-
-Since $A$ does not add any rules to the instance, and may introduce only the
-non-negated EDB {\em successor} relation to the body of an existing rule, it
-does not add any new cycles to, or add negation to any existing cycles in the
-instance's predicate dependency graph.
+Thus, we need only prove that the restriction of $A$ to syntactically
+stratifiable Dedalus instances without choice maps to a subset of syntactically
+stratifiable Datalog instances.  But this is clear, as $A$ does not add any
+rules to the instance, and may introduce only the non-negated EDB {\em
+successor} relation to the body of an existing rule.  Thus, $A$ cannot
+introduce any new cycle or add negation to any existing cycle in the instance's
+predicate dependency graph.
 %
 \end{proof}
 
@@ -108,6 +94,7 @@ Many programs are not syntactically stratifiable.
 A $\lnot$Datalog program and EDB is \emph{locally stratifiable} if, after instantiating the rules
 given the Herbrand saturation of the program and EDB, there exists no cycle with a negation 
 or aggregation edge in the dependency graph of instantiated ground atoms.
+\wrm{is our audience going to know what a 'herbrand saturation' is?}
 %
 \end{definition}
 
@@ -160,25 +147,29 @@ a unique minimal model.
 
 \begin{proof}
 %
-\bf{Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
+{\bf Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
 deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
 thus it has a unique minimal model.
 
-\wrm{need to fix this case}
-\bf{Case 2:} $P$ consists of only deductive and inductive rules.  Assume $P$
-does not have a unique minimal model.  This implies that $P$ is not
-syntactically stratifiable, thus there must exist some cycle through at least
-one predicate $q$ involving a negation or aggregation edge in $P$'s predicate
-dependency graph, and furthermore this cycle must include at least one
-inductive rule.  Since an inductive rule has a time suffix $S := N+1$, where
-$N$ is the timestamp of its body, and $P$'s deductive reduction is
-syntactically stratifiable, we know that the aggregate or negation of $q$ must
-always occur in a strictly earlier or later timestamp than that of the positive
-$q$ atom.  Since the timestep in the cycle increases monotonically with each
-iteration, $q$ will never, in practice, depend on a negation or aggregate of
-itself.  Thus, $P$ is locally stratifiable, and by Lemma XXX above, $P$ has a
-unique minimal model.  This contradicts our assumption that $P$ does not have a
-unique minimal model.  Thus, $P$ has a unique minimal model.
+{\bf Case 2:} $P$ consists of both deductive and inductive rules.  We will show
+that the mapping $A$ restricted to the set of tempoally stratifiable Dedalus
+instances maps to a subset of modularly stratifiable Datalog instances.
+
+Assume that $A$ takes $P$ to a non-modularly stratifiable Datalog instance.
+\wrm{todo: understand modular stratification.}
+%does not have a unique minimal model.  This implies that $P$ is not
+%syntactically stratifiable, thus there must exist some cycle through at least
+%one predicate $q$ involving a negation or aggregation edge in $P$'s predicate
+%dependency graph, and furthermore this cycle must include at least one
+%inductive rule.  Since an inductive rule has a time suffix $S := N+1$, where
+%$N$ is the timestamp of its body, and $P$'s deductive reduction is
+%syntactically stratifiable, we know that the aggregate or negation of $q$ must
+%always occur in a strictly earlier or later timestamp than that of the positive
+%$q$ atom.  Since the timestep in the cycle increases monotonically with each
+%iteration, $q$ will never, in practice, depend on a negation or aggregate of
+%itself.  Thus, $P$ is locally stratifiable, and by Lemma XXX above, $P$ has a
+%unique minimal model.  This contradicts our assumption that $P$ does not have a
+%unique minimal model.  Thus, $P$ has a unique minimal model.
 %
 \end{proof}
 
@@ -238,7 +229,7 @@ A \emph{minimal trace} is a subset of a complete trace that excludes any IDB gro
 rule.
 \end{definition}
 
-A minimal trace is equivalent to the complete trace of which is is a subset: the latter may be derived from the former by repeated
+A minimal trace of a Dedalus program $P$ is equivalent to the complete trace of which is is a subset -- the latter may be derived from the former by repeated
 applications of inductive rules.  However, a given a Dedalus instance $(P, E)$ and a minimal trace T (where $E \subset T$), a fixpoint
 computation will most likely \emph{not} yield a minimal model, because new tuples may be added to the MDB that represent a component 
 of a different minimal model, and because these may affect the IDB.  The set of ground atoms $EDB \cup MDB_{old} \cup IDB_{new}$
