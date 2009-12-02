@@ -1,4 +1,17 @@
-\section{Evaluation models}
+\section{Temporal Safety}
+
+A $\lnot$Datalog program is safe if it produces a finite model, and hence has a finite execution.  Safety is achieved through the following
+constraints:
+
+\begin{enumerate}
+\item No functions are allowed.
+\item Rules are \emph{range restricted}, in that all attributes of the head goal appear in a non-negated body subgoal.
+\item The EDB is finite.
+\end{enumerate}
+
+Hence any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand universe} of
+all constant symbols in the program and EDB, and the set of all possible assignments of constants to predicate attributes
+is itself finite.  
 
 Consider the \emph{successor} relation described above.  According to our intuitive interpretation, this relation models
 the passage of time, in order to establish a temporal order among ground atoms.  \wrm{we're ignoring entanglement here}
