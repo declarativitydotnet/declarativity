@@ -10,8 +10,8 @@ constraints:
 \end{enumerate}
 
 Any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand universe} of
-all constant symbols in the program and EDB, and the set of all possible assignments of constants to predicate attributes
-is itself finite. 
+all constant symbols in the program and EDB.  The set of all possible assignments of these constants to predicate attributes,
+representing every possible interpretation, is itself finite. 
 
 Consider the \emph{successor} relation described above.  According to our intuitive interpretation, this relation models
 the passage of time, in order to establish a temporal order among ground atoms.  \wrm{we're ignoring entanglement here}
@@ -86,7 +86,9 @@ our definition of 'temporal safety' has more to do with convergence or quiescenc
 unsafe rules "always change".
 
 unsafe deductive rules change infinitely within a single fixpoint. 
+
 safe inductive rules change only the timestamp of the predicates they define
+
 an inductive rule is unsafe if it entails an infinite number of changes.  this can only happen if all subgoals are inductive,
 because event predicates are not true infinitely often for any finite EDB.
 
@@ -225,29 +227,4 @@ are strictly higher than any timestamps in $\alpha_{k}$.  Hence the first case l
 As for the second case...
 
 \end{proof}
-
-\textbf{Old proof} (to be removed):
-\begin{proof}
-then in $I_2$ there exists a ground atom that is not in $\alpha_j$ 
-\wrm{don't get this.  do you think we should define minimal model and fixpoint before this?}  
-(and hence not in $\alpha_i$), and is not entailed by P given $\alpha_j$.  
-such a ground atom must then either be:
-
-\begin{enumerate}
-\item contained in $I_1$, hence entailed by P given $\alpha_i$.
-\item entailed by P given some IDB atom in $I_1$.
-\end{enumerate}
-
-In the first case, in principle is it possible for an atom X to exist in $I_1$ and not in $I_2$, if for example it depended negatively via a 
-rule r on a predicate q, and a q fact (Y) exists in  $\alpha_j$ that didn't exist in  $\alpha_i$.  However, for this to occur, because a ground atom 
-in I1 cannot depend upon a ground atom from the "future", that event q would need to have occurred at some time less than 
-or equal to the to timestamp of atom X.  but this is not possible, because our trace is ordered in timestamp order.  hence the 
-first case leads to contradiction.
-
-in the second case, there is some ground atom Y in I1 upon which X depends.  Y is not in FP( $\alpha_j$), because if it were, X would 
-be part of the single minimal model.  if Y is not in FP( $\alpha_j$), it too is not part of a minimal model for P given  $\alpha_j$!  if it is in the minimal 
-model for FP($\alpha_i$) but not FP( $\alpha_j$), there must be a fact in  $\alpha_j$ upon which an atom in FP($\alpha_i$) depended negatively.  by the same 
-argument as above, such a fact could not be in  $\alpha_j$, because new facts in  $\alpha_j$ have timestamps strictly higher than those in  $\alpha_i$.
-\end{proof}
-
 

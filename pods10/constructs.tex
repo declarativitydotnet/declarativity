@@ -123,7 +123,7 @@ seq(Agent, X)@next \(\leftarrow\)
 
 
 
-\section{Distribution}
+\section{Ordering and Asynchrony}
 
 
 \subsection{Queues}
@@ -180,6 +180,46 @@ advantage of the natural ordering enforced by stratification over time, to enfor
 very difficult to express in a logic language.
 
 \subsection{Lamport Clocks}
+
+Implementing a Lamport Clock~\cite{timeclocks} is a special case of a queueing discipline as defined above.
+Consider a predicate{m\_balance\_update} as defined above, but with an extra integer attribute that contains the logical transmission
+time of the sender (via a message rule) of a given tuple.  For example, the sender's rule will look like: 
+
+\paa{damn it!  we've sugared out N from the syntax!! now what?}
+
+\begin{Dedalus}
+m\_balance\_update(A, B, N)@async(N) \(\leftarrow\)
+  send\_p(A, B);
+\end{Dedalus}
+
+Note that the time suffix is projected into the last attribute of \emph{m\_p}.  This establishes an \emph{entanglement} between
+the sender's local clock and the program dataflow.  The queueing discipline that implements a
+Lamport clock is then:
+
+\begin{Dedalus}
+
+m\_balance\_update(A, B, C)@next \(\leftarrow\)
+  m\_balance\_update(A, B, C)@N,
+  \(\lnot\) del\_m\_balance\_update(A, B, C)@N;
+
+omin(A, min<C>)@N \(\leftarrow\)
+  m\_balance\_update(A, B, C)@N;
+
+lmin(min<C>)@N \(\leftarrow\)
+  m\_balance\_update(_, _, C);
+
+p(A, B, C)@N+1 :-
+  m\_balance\_update(A, B, C)@N,
+  omin(B)@N,
+  lmax(L)@N,
+  N > L;
+
+del\_m\_balance\_update(A, B)@N :-
+  m\_balance\_update(A, B)@N,
+  omax(B)@N;
+  
+\end{Dedalus}
+
 
 
 \subsection{Trace Entanglement}
