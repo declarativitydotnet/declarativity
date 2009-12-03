@@ -1,17 +1,22 @@
 \section{Safety in Dedalus}
 
-A $\lnot$Datalog program is safe if it produces a finite model, and hence has a finite execution.  Safety is achieved through the following
-constraints:
+A Datalog program is safe if it produces a finite model, and hence has a finite
+execution.  Safety is traditionally achieved through the following constraints:
 
 \begin{enumerate}
-\item No functions are allowed.
-\item Rules are \emph{range restricted}, in that all attributes of the head goal appear in a non-negated body subgoal.
+%
+\item No functions are allowed. \wrm{this isn't a constraint.}
+%
+\item Variables are \emph{range restricted}: all attributes of the head goal
+appear in a non-negated body subgoal.
+%
 \item The EDB is finite.
+%
 \end{enumerate}
 
 Any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand universe} of
 all constant symbols in the program and EDB.  The set of all possible assignments of these constants to predicate attributes,
-representing every possible interpretation, is itself finite. 
+representing every possible interpretation, is itself finite. \wrm{what is a "possible assignment"?  possible given the rules of the program?}
 
 \subsection{Temporal Safety}
 
@@ -66,10 +71,11 @@ intuitively to the Datalog notion of unsafe programs, we introduce the concept o
 \emph{temporal safety}.
 
 \begin{definition}
-An IDB predicate $e$ in a program P is called an \emph{event predicate} if there exist
-in P no rules with $e$ in their head.
+An intensional predicate $e$ in a program P is called an \emph{event predicate} if there exist
+in P no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
 \end{definition}
 
+\wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
 \begin{definition}
 
 A rule is temporally safe if:
@@ -82,12 +88,13 @@ assignment of variables and constants to attributes.
 \end{enumerate}
 \end{definition}
 
-
-A Dedalus program is temporally safe if all its rules are temporally safe. Intuitively, a temporally safe 
-program is one which, in the absence of stimuli from the EDB, quiesces.  A temporally unsafe program
-changes infinitely, even given a finite EDB.  Note that the Dedalus program above is temporally safe
-because \emph{r1} corresponds to the second rule of the definition, and \emph{r2} corresponds to the
-first.  Atoms deduced by the inducive rule \emph{r1} differ from existing atoms only in their time suffix.
+A Dedalus program is temporally safe if all its rules are temporally safe.
+Intuitively, a temporally safe program quiesces given a finite EDB.  A
+temporally unsafe program changes infinitely, even given a finite EDB.  Note
+that the Dedalus program above is temporally safe because \emph{r1} corresponds
+to the second rule of the definition, and \emph{r2} corresponds to the first.
+Atoms deduced by the inducive rule \emph{r1} differ from existing atoms only in
+their time suffix.
 
 \begin{example}
 
@@ -105,32 +112,34 @@ The head variable B could range over an infinite set of constants.
 
 
 \begin{Dedalus}
-flip_flop(A, B)@next  \(\leftarrow\)
-    flip_flop(A, B)
-    \(\lnot\)flip_flop_neg(A, B);
+flip\_flop(A, B)@next  \(\leftarrow\)
+    flip\_flop(A, B)
+    \(\lnot\)ff_neg(A, B);
 
 p(Y)@next  \(\leftarrow\)
     p(X),
     ff(X, Y);
 
-
-ff(0, 1)@1;
-ff(1, 0)@1;
+flip\_flop(0, 1)@1;
+flip\_flop(1, 0)@1;
 p(0)@2;
-
 \end{Dedalus}
 
-
-This is an example of temporally unsafe induction.  Even though there are no function symbols and all rules are range-restricted,
-this program entails infinite oscillations in the \emph{p} predicate.  The first rule, a basic mutable persistent rule for \emph{flip\_flop}, is
-temporally safe, but the second rule is not because the \emph{p} predicate occurs in the head with a different variable binding than in 
-the body, and because there are no positive event predicates in the body. 
+In the above program, the first rule -- a basic mutable persistent rule for
+\emph{flip\_flop} -- is temporally safe.  The second rule is an example of
+temporally unsafe induction.  Even though it contains no function symbols, and
+all variables are range-restricted, it entails infinite oscillation of
+the \emph{p} predicate.
+because the \emph{p} predicate occurs in the head with
+a different variable binding than in the body, and because there are no
+positive event predicates in the body.  \wrm{this makes me a bit uncomfortable.
+we've defined a conservative test for temporal safety.  so if something fails
+the test, it's not necessariliy temporally unsafe.}
 
 \end{example}
 
 
-An inductive rule cannot cause infinite isolation if it has a positive event predicate in its body, because event predicates
-are by definition not true infinitely often.
+An inductive rule cannot cause infinite oscillation if it has a positive event predicate in its body, because we are assuming a finite EDB.
 
 %%However, we observe that all of these deductions are uninteresting, as they are
 %%deterministically related to the EDB.  To avoid performing such deductions, we
@@ -188,7 +197,7 @@ are by definition not true infinitely often.
 
 \subsection{EDB Prefixes}
 
-In general, however, an EDB can itself be infinite, and will lead to unsafe evaluations even when \emph{successor} is derived from it
+In general, however, an EDB can itself be infinite, and may lead to unsafe evaluations even when \emph{successor} is derived from it
 as in a post-hoc evaluation.
 
 \begin{definition}
@@ -215,8 +224,6 @@ Let $P$ be the set of all finite subsets of possible rules.
 Let $FP : P \times F \mapsto F$ be the function representing the
 \emph{fixpoint} computation carried out by a datalog interpreter.  That is, $FP_p$ takes an EDB to its corresponding IDB.
 \end{definition}
-
-\newtheorem{lemma}{Lemma} 
 
 \begin{lemma}
 %

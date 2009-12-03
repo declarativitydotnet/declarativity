@@ -1,15 +1,27 @@
 \section{Dedalus}
 
-By reifying time as data, we are able to reason about time in our logic.  some useful things fall out of this right away: persistence is now programatic rather than a separate type, ditto key constraints.  event creation vs. effect ambiguities are resolved.
+By reifying time as data in Dedalus, we can naturally express several important
+language concepts, such as persistence, key constraints, and atomicity.
+%Persistence is existence over time, key constraints are unique existence over
+%time, atomicity is multiple deductions occuring at the same time.
 
-Perhaps more importantly, the infinite sequence of abstract time gives us a way to reason about ordering, which is particularly difficult in a set-oriented language like Datalog.  The ordering over any program inputs (e.g. message queues) can be represented as a mapping between the ordering domain of the input and the time relation.
+Perhaps more importantly, 
+%the infinite sequence of abstract
+time gives us a way to reason about ordering, which is particularly difficult
+in a set-oriented language like Datalog.  For example, the ordering over any
+program inputs (e.g. message queues) can be represented as a mapping between
+the ordering domain of the input and the time relation.
 
-We consider an infinite Herbrand universe of constants \emph{C}, in which
-$C_{1}, C_{2}, [...], C_{n}$ are representations of individual constants, and
-an infinite universe of variable symbols \emph{A} which may take on the values
-of any constants.   We also consider the set of positive integers $\mathbb{Z}$,
-which represents the set of possible times, its obvious total order
-\dedalus{successor} and a symbol that represents ``never''.
+We consider a countably infinite Herbrand universe of constants \emph{C}, in
+which $C_{1}, C_{2}, [...], C_{n}$ are representations of individual constants,
+and a countably infinite universe of variable symbols \emph{A} which may take
+on the values of any constants.  \wrm{is this somehow different from regular
+Datalog?} 
+%
+We represent time in Dedalus by the union of set of integers $\mathbb{Z}$, with
+a special element $\infty$ that represents ``never''.  We consider the standard
+strict total order $<$, with the additional rule that $\forall i \in
+\mathbb{Z}: i < \infty$.  We call this order \dedalus{successor}.
 
 \subsection{Syntax}
 

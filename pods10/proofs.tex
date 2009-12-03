@@ -59,21 +59,22 @@ stratifiable Dedalus instances without choice to their minimal models.
 \end{lemma}
 
 \begin{proof}
+\wrm{todo: insert statement that this is obvious}
 %
-We know that there exists a function $B$ from syntactically stratifiable
-Datalog instances to their minimal models \wrm{cite?}.  Earlier, we introduced
-\wrm{XXX: where?} a bijection \wrm{XXX: probably not a bijection} $A$ from the
-set of Dedalus instances without choice to the set of Datalog instances, and a
-bijection $C$ between minimal models of Datalog instances and minimal models of
-Dedalus instances without choice.  We will show that $D = C \circ B \circ A$.
+%We know that there exists a function $B$ from syntactically stratifiable
+%Datalog instances to their minimal models \wrm{cite?}.  Earlier, we introduced
+%\wrm{XXX: where?} a bijection \wrm{XXX: probably not a bijection} $A$ from the
+%set of Dedalus instances without choice to the set of Datalog instances, and a
+%bijection $C$ between minimal models of Datalog instances and minimal models of
+%Dedalus instances without choice.  We will show that $D = C \circ B \circ A$.
 
-Thus, we need only prove that the restriction of $A$ to syntactically
-stratifiable Dedalus instances without choice maps to a subset of syntactically
-stratifiable Datalog instances.  But this is clear, as $A$ does not add any
-rules to the instance, and may introduce only the non-negated EDB {\em
-successor} relation to the body of an existing rule.  Thus, $A$ cannot
-introduce any new cycle or add negation to any existing cycle in the instance's
-predicate dependency graph.
+%Thus, we need only prove that the restriction of $A$ to syntactically
+%stratifiable Dedalus instances without choice maps to a subset of syntactically
+%stratifiable Datalog instances.  But this is clear, as $A$ does not add any
+%rules to the instance, and may introduce only the non-negated EDB {\em
+%successor} relation to the body of an existing rule.  Thus, $A$ cannot
+%introduce any new cycle or add negation to any existing cycle in the instance's
+%predicate dependency graph.
 %
 \end{proof}
 
