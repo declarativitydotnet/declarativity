@@ -91,8 +91,6 @@ to both come from this relation.}  \jmh{Good point.  OTOH I suspect we'll have t
 
 %%\jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``Dedalus is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
 
-\wrm{begin misplaced definitions}
-
 Each relation in a Dedalus program is of exactly one of the three kinds:
 
 \newdef{definition}{Definition}
@@ -140,9 +138,9 @@ appear in the head of any rule in the program.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=1\linewidth]{edbidbmdb.pdf}
-  \label{fig:edbidbmdb}
-  \caption{Derivations across time in IDB and MDB relations.}
+  \includegraphics[width=0.75\linewidth]{dedalus-time.pdf}
+  \label{fig:dedalus-time}
+  \caption{Time moves forward in three ways: across strata, to the next fixpoint, and to some future fixpoint.}
 \vspace{-8pt}
 \end{figure}
 
