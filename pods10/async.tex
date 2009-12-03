@@ -157,39 +157,48 @@ time of the sender (via a message rule) of a given tuple.  For example, the send
 \paa{damn it!  we've sugared out N from the syntax!! now what?}
 
 \begin{Dedalus}
+entangle
 m\_balance\_update(A, B, N)@async(N) \(\leftarrow\)
   send\_p(A, B);
 \end{Dedalus}
 
-Note that the time suffix is projected into the last attribute of \emph{m\_p}.  This establishes an \emph{entanglement} between
+Note that in the rule named \emph{entangle}, the time suffix is projected into the last attribute of \emph{m\_p}.  
+This establishes an \emph{entanglement} between
 the sender's local clock and the program dataflow.  The queueing discipline that implements a
 Lamport clock is then:
 
 \begin{Dedalus}
 
 m\_balance\_update(A, B, C)@next \(\leftarrow\)
-  m\_balance\_update(A, B, C)@N,
-  \(\lnot\) del\_m\_balance\_update(A, B, C)@N;
+  m\_balance\_update(A, B, C),
+  \(\lnot\) del\_m\_balance\_update(A, B, C);
 
-omin(A, min<C>)@N \(\leftarrow\)
-  m\_balance\_update(A, B, C)@N;
+omin(A, min<C>) \(\leftarrow\)
+  m\_balance\_update(A, _, C);
 
-lmin(min<C>)@N \(\leftarrow\)
+lmax(max<C>) \(\leftarrow\)
   m\_balance\_update(_, _, C);
 
-p(A, B, C)@N+1 :-
+disentangle
+balance_update(A, B)next \(\leftarrow\)
   m\_balance\_update(A, B, C)@N,
-  omin(B)@N,
+  omin(A, C)@N,
   lmax(L)@N,
   N > L;
 
-del\_m\_balance\_update(A, B)@N :-
-  m\_balance\_update(A, B)@N,
-  omax(B)@N;
+del\_m\_balance\_update(A, B) :-
+  m\_balance\_update(A, B),
+  omax(B);
   
 \end{Dedalus}
 
-
+Note that the rule named \emph{disentangle} references the data elements $C$ and $L$, both of which
+contain timestamps, and induces a \emph{balance\_update} tuple with timestamp $N+1$ only when $N > L$,
+the highest of the timestamps in its message queue.  Under the distributed systems model of Lamport clocks, 
+we expect the tuples in the message queue to  be from other hosts with independent clocks, sending messages 
+over a medium that can delay or reorder them arbitrarily.  In order to make the necessary comparison between local
+and remote clocks, it is necessary to reference the time suffix variable directly, rather than omitting it as we have done 
+in all other Dedalus examples.
 
 \subsection{Trace Entanglement}
 
