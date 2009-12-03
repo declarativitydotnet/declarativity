@@ -77,15 +77,41 @@ of $\Tau$.  That is, the body contains a subgoal of the form:
 \item The rule is said to be {\em asynchronous} if $S$ results from a non-deterministic choice function, which may be independent of $\Tau$.  We express this by adding two subgoals
 to the body: \dedalus{successor(\_, $\Tau$), choose((\_), ($\Tau$))}.  The
 \dedalus{choice} subgoal ensures that the $\Tau$ value projected into the head of
-the rule is some arbitrary $\Tau$-value of \emph{successor}. \wrm{Why can't we
-select the initial time?  What we should do instead is have some unary relation
-time(T) that captures all possible times, and choose from this relation
-instead.  We can assume an inclusion constraint forcing successor's arguments
-to both come from this relation.}  \jmh{Good point.  OTOH I suspect we'll have to forbid messages into the past, in which case this will be fine (and succinct).}  \jmh{Actually, we should be able to express delays that are a function of attributes -- e.g. a sender-receiver pair may be input to a real-world delay distribution, as might be the time.}
+the rule is some arbitrary $\Tau$-value of \emph{successor}. 
+
+%%\wrm{Why can't we
+%%select the initial time?  What we should do instead is have some unary relation
+%%time(T) that captures all possible times, and choose from this relation
+%%instead.  We can assume an inclusion constraint forcing successor's arguments
+%%to both come from this relation.}  \jmh{Good point.  OTOH I suspect we'll have to forbid messages into the past, in which case this will be fine (and succinct).}  \jmh{Actually, we should be able to express delays that are a function of attributes -- e.g. a sender-receiver pair may be input to a real-world delay distribution, as might be the time.}
 
 \end{enumerate}
 
-\paa{shouldn't we have an example here?}
+\newtheorem{example}{Example}
+\begin{example}
+
+The following three rules are well-formed examples of each of the three classes listed above:
+
+\begin{Dedalus}
+deductive
+p(A, B, S) \(\leftarrow\)
+  e(A, B, \(\Tau\)),
+  S = \(\Tau\);
+
+inductive 
+q(A, B, S) \(\leftarrow\)
+  e(A, B, \(\Tau\)),
+  successor(\(\Tau\), S);
+
+asynchronous
+r(A, B, S) \(\leftarrow\)
+  e(A, B, \(\Tau\)),
+  successor(N, S),
+  choose((_), (S));
+  
+\end{Dedalus}
+\end{example}
+
 
 \subsection{Extensional, Intensional and Nondeterministic Databases}
 
@@ -175,6 +201,27 @@ N is a variable, corresponding to the time suffix $\Tau$ of all predicates in th
 %wrm: chosen via choice is too operational.
 \end{enumerate}
 \end{itemize}
+
+\begin{example}
+
+The following are the sugared version of the rules listed previously:
+
+\begin{Dedalus}
+deductive
+p(A, B) \(\leftarrow\)
+  e(A, B);
+  
+inductive 
+q(A, B)@next \(\leftarrow\)
+  e(A, B);
+  
+asynchronous
+r(A, B)@async \(\leftarrow\)
+  e(A, B);
+    
+\end{Dedalus}
+\end{example}
+
 
 % \jmh{the following is redundant and can be omitted}
 % Dedalus facts are just datalog facts that conform to the schema constraint:  rule heads with empty bodies, and ground terms for all attributes including the time suffix.  To accommodate this in our notation,

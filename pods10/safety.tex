@@ -34,7 +34,7 @@ lead to unsafe programs:
 
 %This implies that successor is infinite (as we'd expect time to be), and is problematic because it leads to unsafe programs.
 
-\newtheorem{example}{Example}
+
 \begin{example}
 Consider the Dedalus instance below.
 
@@ -128,6 +128,9 @@ the body, and because there are no positive event predicates in the body.
 
 \end{example}
 
+
+An inductive rule cannot cause infinite isolation if it has a positive event predicate in its body, because event predicates
+are by definition not true infinitely often.
 
 %%However, we observe that all of these deductions are uninteresting, as they are
 %%deterministically related to the EDB.  To avoid performing such deductions, we
