@@ -199,31 +199,28 @@ prefixes with lower indices, we also have the monotonicity property
 \forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \alpha_{j})
 \end{equation}
 
-\paa{to your point, bill, I switched the lemma and proof below to one of IDB equivalence in the posthoc vs. continual interpretation
-rather than an inductive proof that every model in the series is minimal.  there is probably a very similar proof of the latter
-that we could include in the next section after introducing minimal models, stratification etc}
+%\paa{to your point, bill, I switched the lemma and proof below to one of IDB equivalence in the posthoc vs. continual interpretation
+%rather than an inductive proof that every model in the series is minimal.  there is probably a very similar proof of the latter
+%that we could include in the next section after introducing minimal models, stratification etc}
 
 
-\newtheorem{lemma}{Lemma} 
-
-\begin{lemma}
-%
+\begin{definition}
 Let $F$ be the set of all finite subsets of possible facts. \wrm{need to be
 more precise.}  
 \paa{I think this is the power set of the herbrand base...}
 Let $P$ be the set of all finite subsets of possible rules.
 Let $FP : P \times F \mapsto F$ be the function representing the
-\emph{fixpoint} computation carried out by a datalog interpreter.  Consider
-a program $p$ with EDB $\gamma$, and a set $\lambda \subset \mathbb{N}$.  Then,
+\emph{fixpoint} computation carried out by a datalog interpreter.  That is, $FP_p$ takes an EDB to its corresponding IDB.
+\end{definition}
 
-\begin{equation}
-\forall k \in \lambda : FP(p, \alpha_{k}) =  \displaystyle \bigcup_{i=0}^{k} FP(p, \alpha_{i})
-\end{equation}
+\newtheorem{lemma}{Lemma} 
 
-\wrm{what's the deal with lambda??  i'm just ignoring it in the proof below}
-
+\begin{lemma}
+%
+Let $i \in \mathbb{N}$.  Then, $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) =
+FP_p(\alpha_{i+1})$.
+%
 \end{lemma}
-%%for any $k$. 
 
 %%this could (with some work) lead to an inductive proof
 %%that an infinite model is minimal.  we could prove the (weaker?) property that
@@ -237,30 +234,42 @@ a program $p$ with EDB $\gamma$, and a set $\lambda \subset \mathbb{N}$.  Then,
 %%if we assume that some program P and finite prefix $\alpha_n$ of a trace $\Gamma$ produce a minimal model, 
 %%then it follows that a prefix $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
 
-Assume the contrary, that is for some prefixes $\alpha_i$ and $\alpha_{i+1}$:
+by contradiction. Assume $\exists i \in \mathbb{N}$ such that:
 
 $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) \neq FP_p(\alpha_{i+1})$
 
-This means that there exists at least one intensional ground atom $A$ that is
-only in one of the sets.
-
 {\bf Case 1:} $\exists A \in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) : A \not\in FP_p(\alpha_{i+1}).$
 
-\wrm{I started working on this proof and then I stopped, because I don't see how
-it matches the above lemma... we can discuss tomorrow}
+This implies that $A$ is transitively dependent on facts in $\alpha_{i+1} \cup
+FP_p(\alpha_i)$.  However, if $A$ is transitively dependent only on facts in
+$\alpha_{i+1}$, then $A$ would be in $FP_p(\alpha_{i+1})$.  Thus, $A$ must be
+transitively dependent on some facts in $FP_p(\alpha_{i})$.  But $\alpha_{i}
+\subset \alpha_{i+1}$, so this implies that $A$ is transitively dependent on
+some fact in $\alpha_{i+1}$, which means $A \in FP_p(\alpha_{i+1})$.  This
+contradicts our assumption, thus no such $A$ may exist.
+
+{\bf Case 2:} $\exists A \in FP_p(\alpha_{i+1}) : A \not\in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)).$
+
+This implies that $A$ is transitively dependent on $\alpha_{i+1}$.  In order
+for $A \not\in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i))$, we need $A$ to depend
+negatively on an atom $B \in FP_p(\alpha_i)$.  But $B$ transitively depends on
+an fact $C \in \alpha_i$.  $C \in \alpha_{i+1}$ by definition (if $B$ is
+extensional, then $C=B$), so $B \in FP_p(\alpha_{i+1})$, so $a \not\in
+FP_p(\alpha_{i+1})$.  This contradicts our assumption, thus no such $A$ may
+exist.
 
 %If $I_2 \neq I_3$, it must be the case that either there exists a ground atom in $I_2$ that is not in $I_3$, or that is in
 %$I_3$ and not in $I_2$.  
 
-Take the former case first.  This means there is an atom $A$ that is entailed by P given $FP(\alpha_{j} \cup FP(\alpha_{i}))$
-but not entailed by P given $\alpha_{j}$, so it must be in $I_1$.   The only circumstances under which an atom in
-$I_1$ would not occur in the IDB $FP(\alpha_{j})$ is if there is a fact $B$ in $\alpha_{j}$ 
-corresponding to a negated subgoal in a rule $r$ in P upon which $A$ depends.  However, for this to occur, because a ground atom 
-in $I_1$ cannot depend upon a ground atom from the ``future", that fact $B$ would need to have occurred at some time less than 
-or equal to the to timestamp of atom $A$.  But this is not possible, because all timestamps in $\alpha_{j}$ that are not in any $\alpha_{k} | k<j$
-are strictly higher than any timestamps in $\alpha_{k}$.  Hence the first case leads to contradiction.
+%Take the former case first.  This means there is an atom $A$ that is entailed by P given $FP(\alpha_{j} \cup FP(\alpha_{i}))$
+%but not entailed by P given $\alpha_{j}$, so it must be in $I_1$.   The only circumstances under which an atom in
+%$I_1$ would not occur in the IDB $FP(\alpha_{j})$ is if there is a fact $B$ in $\alpha_{j}$ 
+%corresponding to a negated subgoal in a rule $r$ in P upon which $A$ depends.  However, for this to occur, because a ground atom 
+%in $I_1$ cannot depend upon a ground atom from the ``future", that fact $B$ would need to have occurred at some time less than 
+%or equal to the to timestamp of atom $A$.  But this is not possible, because all timestamps in $\alpha_{j}$ that are not in any $\alpha_{k} | k<j$
+%are strictly higher than any timestamps in $\alpha_{k}$.  Hence the first case leads to contradiction.
 
-As for the second case...
+%As for the second case...
 
 \end{proof}
 
