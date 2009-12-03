@@ -1,4 +1,4 @@
-\section{Temporal Safety}
+\section{Safety in Dedalus}
 
 A $\lnot$Datalog program is safe if it produces a finite model, and hence has a finite execution.  Safety is achieved through the following
 constraints:
@@ -12,6 +12,8 @@ constraints:
 Any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand universe} of
 all constant symbols in the program and EDB.  The set of all possible assignments of these constants to predicate attributes,
 representing every possible interpretation, is itself finite. 
+
+\subsection{Temporal Safety}
 
 Consider the \emph{successor} relation described above.  According to our intuitive interpretation, this relation models
 the passage of time, in order to establish a temporal order among ground atoms.  \wrm{we're ignoring entanglement here}
@@ -42,6 +44,7 @@ p_pos(A, B)@next \(\leftarrow\)
   p_pos(A, B),
   \(\lnot\)p_neg(A, B);
   
+r2  
 p_pos(A, B)  \(\leftarrow\)
   p(A, B);
   
@@ -79,11 +82,55 @@ assignment of variables and constants to attributes.
 \end{enumerate}
 \end{definition}
 
-\paa{notes}
 
-our definition of 'temporal safety' has more to do with convergence or quiescence.  
-(of course if we consider storage the motivation becomes more clear).  
-unsafe rules "always change".
+A Dedalus program is temporally safe if all its rules are temporally safe. Intuitively, a temporally safe 
+program is one which, in the absence of stimuli from the EDB, quiesces.  A temporally unsafe program
+changes infinitely, even given a finite EDB.  Note that the Dedalus program above is temporally safe
+because \emph{r1} corresponds to the second rule of the definition, and \emph{r2} corresponds to the
+first.
+
+\begin{example}
+
+\begin{Dedalus}
+p(A, B) \(\leftarrow\)
+  q(A);
+\end{Dedalus}
+
+The program above has a temporally unsafe deductive rule that corresponds to an unsafe rule in Datalog: it is not range-restricted.  
+The head variable B could range over an infinite set of constants.
+\end{example}
+
+
+\begin{example}
+
+
+\begin{Dedalus}
+flip_flop(A, B)@next  \(\leftarrow\)
+    flip_flop(A, B)
+    \(\lnot\)flip_flop_neg(A, B);
+
+p(Y)@next  \(\leftarrow\)
+    p(X),
+    ff(X, Y);
+
+
+ff(0, 1)@1;
+ff(1, 0)@1;
+p(0)@2;
+
+\end{Dedalus}
+
+
+This is an example of temporally unsafe induction.  Even though there are no function symbols and all rules are range-restricted,
+this program entails infinite oscillations in the \emph{p} predicate.  The first rule, a basic mutable persistent rule for \emph{flip\_flop}, is
+temporally safe, but the second rule is not because the \emph{p} predicate occurs in the head with a different variable binding than in 
+the body, and because there are no positive event predicates in the body. 
+
+\end{example}
+
+%%our definition of 'temporal safety' has more to do with convergence or quiescence.  
+%%(of course if we consider storage the motivation becomes more clear).  
+%%unsafe rules "always change".
 
 unsafe deductive rules change infinitely within a single fixpoint. 
 
@@ -147,12 +194,9 @@ because event predicates are not true infinitely often for any finite EDB.
 %fixpoint computation.  The complete program is safe if the EDB is finite.
 
 \subsection{EDB Prefixes}
-\paa{notes follow}
 
 In general, however, an EDB can itself be infinite, and will lead to unsafe evaluations even when \emph{successor} is derived from it
 as in a post-hoc evaluation.
-\wrm{huh?  it can't be infinite.  an infinite EDB makes the program unsafe,
-regardless of this time thing.}
 
 \begin{definition}
 A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is less than or equal to $n$.
@@ -175,7 +219,9 @@ that we could include in the next section after introducing minimal models, stra
 \begin{lemma}
 %
 Let $F$ be the set of all finite subsets of possible facts. \wrm{need to be
-more precise.}  Let $P$ be the set of all finite subsets of possible rules.
+more precise.}  
+\paa{I think this is the power set of the herbrand base...}
+Let $P$ be the set of all finite subsets of possible rules.
 Let $FP : P \times F \mapsto F$ be the function representing the
 \emph{fixpoint} computation carried out by a datalog interpreter.  Consider
 a program $p$ with EDB $\gamma$, and a set $\lambda \subset \mathbb{N}$.  Then,
