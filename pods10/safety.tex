@@ -87,7 +87,7 @@ A Dedalus program is temporally safe if all its rules are temporally safe. Intui
 program is one which, in the absence of stimuli from the EDB, quiesces.  A temporally unsafe program
 changes infinitely, even given a finite EDB.  Note that the Dedalus program above is temporally safe
 because \emph{r1} corresponds to the second rule of the definition, and \emph{r2} corresponds to the
-first.
+first.  Atoms deduced by the inducive rule \emph{r1} differ from existing atoms only in their time suffix.
 
 \begin{example}
 
@@ -128,16 +128,6 @@ the body, and because there are no positive event predicates in the body.
 
 \end{example}
 
-%%our definition of 'temporal safety' has more to do with convergence or quiescence.  
-%%(of course if we consider storage the motivation becomes more clear).  
-%%unsafe rules "always change".
-
-unsafe deductive rules change infinitely within a single fixpoint. 
-
-safe inductive rules change only the timestamp of the predicates they define
-
-an inductive rule is unsafe if it entails an infinite number of changes.  this can only happen if all subgoals are inductive,
-because event predicates are not true infinitely often for any finite EDB.
 
 %%However, we observe that all of these deductions are uninteresting, as they are
 %%deterministically related to the EDB.  To avoid performing such deductions, we
