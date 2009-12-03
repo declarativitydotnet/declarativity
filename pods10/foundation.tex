@@ -89,9 +89,9 @@ of $\Tau$.  That is, the body contains a subgoal of the form:
 
 \item The rule is said to be {\em asynchronous} if the relation of $S$ and
 $\Tau$ is modeled the non-deterministic choice construct.  An asynchronous rule
-has the following subgoals in its body: \dedalus{successor(\_, $\Tau$),
-choose((\_), ($\Tau$))}.  The choice subgoal expresses that the rule head may
-be derived at any tisme value that appears in the \dedalus{successor} relation.
+has the following subgoals in its body: \dedalus{successor(\_,S),
+choose((\_), (S))}.  The choice subgoal expresses that the rule head may
+be derived at any time value that appears in the \dedalus{successor} relation.
 
 %%\wrm{Why can't we
 %%select the initial time?  What we should do instead is have some unary relation
@@ -202,7 +202,7 @@ suffix, we omit the time suffix from body predicates and treat it as implicit.
 \wrm{it's not a free variable unless there's only one body atom, right?  otherwise
 it's restricted because it appears in multiple atoms.}
 %
-\item {\em Temporal head annotation:} A temporal rules contains an identifier
+\item {\em Temporal head annotation:} A temporal rule contains an identifier
 attached to the head predicate that indicates whether the rule is inductive or
 asynchronous.  The keyword stands in for the {\em successor} and {\em choice}
 predicates in the body.  Thus, a head predicate in a temporal rule is of the 
@@ -214,15 +214,13 @@ where $S$ is one of the following:
 %
 \begin{enumerate}
 %
-\item \emph{next}: an inductive rule, in which the \dedalus{successor($\Tau$,
-S)} predicate is implicitly included in the body as described above, and $S$ is
-implicitly the time suffix of the head
+\item \emph{next} implies the rule is inductive, and stands in for
+\dedalus{successor($\Tau$,S)} in the body.
 %
-\item \emph{async(N)}: an asynchronous rule, in which the time suffix of the
-head predicate will occur some time after the time suffix of the body
-predicate, or never.  N is a variable, corresponding to the time suffix $\Tau$
-of all predicates in the rule body and optionally referenced in the head.
-\wrm{this seems ugly to me}
+\item \emph{async(N)} implies the rule is asynchronous, and stands in for
+\dedalus{successor(\_, S), choose((\_), (S))} in the body.  N is a variable,
+corresponding to the time suffix $\Tau$ of all predicates in the rule body and
+optionally referenced in the head.  \wrm{this seems ugly to me}
 %
 \end{enumerate}
 %
