@@ -15,7 +15,9 @@ appear in a non-negated body subgoal.
 \end{enumerate}
 
 Any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand universe} of
-all constant symbols in the program and EDB.  The set of all possible assignments of these constants to predicate attributes,
+all constant symbols in the program and EDB.~\nrc{Don't know what this
+  means, but I suspect it is fancy-pants language for no good reason.}
+The set of all possible assignments of these constants to predicate attributes,
 representing every possible interpretation, is itself finite. \wrm{what is a "possible assignment"?  possible given the rules of the program?}
 
 \subsection{Temporal Safety}
@@ -71,8 +73,8 @@ intuitively to the Datalog notion of unsafe programs, we introduce the concept o
 \emph{temporal safety}.
 
 \begin{definition}
-An intensional predicate $e$ in a program P is called an \emph{event predicate} if there exist
-in P no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
+An intensional predicate $e$ in a program $P$ is called an \emph{event predicate} if there exist
+in $P$ no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
 \end{definition}
 
 \wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
@@ -104,7 +106,8 @@ p(A, B) \(\leftarrow\)
 \end{Dedalus}
 
 The program above has a temporally unsafe deductive rule that corresponds to an unsafe rule in Datalog: it is not range-restricted.  
-The head variable B could range over an infinite set of constants.
+The head variable $B$ could range over an infinite set of constants.
+
 \end{example}
 
 
