@@ -1,4 +1,5 @@
-\section{\lang} We take as our foundation an augmented version of \linebreak
+\section{\lang}
+We take as our foundation an augmented version of
 $\lnot$Datalog~\cite{ullmanbook} with aggregate function symbols akin to those
 of SQL (min, max, avg, stdev, count).  Henceforth, we will refer to this
 language as ``Datalog.'' In general, we are interested in the classes of
@@ -31,13 +32,13 @@ total order $<$, with the additional rule that $\forall i \in \mathbb{Z}: i <
 %%A Dedalus predicate has the following form:
 
 %%$p(A_{1}, A_{2}, [...], A_{n})@S$
-We will define \lang as a restricted sublanguage of Datalog.  Specifically,
-we restrict the admissible schemata, and the form of rules.
+\lang is a restricted sublanguage of Datalog.  Specifically, we
+restrict the admissible schemata and the form of rules.
 
 \noindent{\bf Schema: }We require that the final attribute of every \lang
 predicate range over the set $\mathbb{Z} \cup \perp$.  In a typical
 interpretation, \lang programs will use this final attribute to connote a
-``timestamp'', so we refer to this attribute at the \emph{time suffix} of the
+``timestamp'', so we refer to this attribute as the \emph{time suffix} of the
 corresponding predicate.  Any fact in a \lang predicate must specify a
 constant time suffix, i.e. a member of the set $\mathbb{Z} \cup \perp$.
 
@@ -65,7 +66,8 @@ of the following form:
 
 That is, for every extensional predicate $r$ there is an IDB predicate \dedalus{r\_pos} that
 contains at least the contents of $r$.  No well-formed \lang rule may reference
-an extensional predicate -- except for rules of the above form.
+an extensional predicate -- except for rules of the above
+form.~\nrc{r\_neg is never defined.}
 
 In a well-formed \lang rule, every subgoal is required to use the
 distinguished variable $\Tau$ as its time suffix, and $\Tau$ must not be
@@ -78,15 +80,15 @@ three ways:
 \begin{enumerate}
 
 \item The rule is said to be \emph{deductive} if $S$ is
-bound to the value $\Tau$.  That is, the body contains a subgoal of the form:
+bound to the value $\Tau$.  That is, the body contains the subgoal
 \dedalus{S = $\Tau$}.
 
 \item The rule is said to be {\em inductive} if $S$ is the successor
-of $\Tau$.  That is, the body contains a subgoal of the form:
+of $\Tau$.  That is, the body contains the subgoal
 \dedalus{successor($\Tau$, S)}.
 
 \item The rule is said to be {\em asynchronous} if the relation of $S$ and
-$\Tau$ is modeled the non-deterministic choice construct.  An asynchronous rule
+$\Tau$ is modeled with the non-deterministic choice construct.  An asynchronous rule
 has the following subgoals in its body: \dedalus{successor(\_,S),
 choose((\_), (S))}.  The choice subgoal expresses that the rule head may
 be derived at any time value that appears in the \dedalus{successor} relation.
@@ -129,20 +131,23 @@ r(A, B, S) \(\leftarrow\)
 \subsection{Extensional, Intensional and Nondeterministic Databases}
 
 %%\jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``Dedalus is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
-
-Each relation in a \lang program is of exactly one of the three kinds:
+\nrc{Title is too long: EDB, IDB, and NDB instead?}
+In a \lang program, there are three kinds of relations:
 extensional, {\em intensional} or {\em nondeterministic}.
 
+\nrc{We define the term ``extensional predicate'' before, but not
+  ``extensional relation''.}
 \begin{definition}
 %
-An \emph{intensional} relation in a \lang program is a relation that appears
+An \emph{intensional} relation is a relation that appears
 in the head of one or more atemporal or inductive rules in the program, but
-never in the head of an asynchronous rule.
+never in the head of an asynchronous rule.~\nrc{``atemporal'' rules
+  have not been defined.}
 %
 \end{definition}
 \begin{definition}
 %
-A \emph{nondeterministic} relation in a \lang program is a relation that
+A \emph{nondeterministic} relation is a relation that
 appears in the head of one or more asynchronous rules in the program.
 %
 \end{definition}
@@ -153,7 +158,7 @@ predicates respectively as the IDB, and NDB.
 %and if you need to define a ``mutable'' relation as one that participates in
 %the head of a temporal rule, you can do so as needed.}
 The EDB, IDB, and NDB are all pairwise disjoint.  Intuitively, the distinction
-between the NDB and IDB is that the NDB is determined nondeterministically from
+between the NDB and IDB is that the NDB is determined nondeterministically~\nrc{clumsy} from
 the EDB, IDB and NDB, while the IDB is determined deterministically from the
 EDB, IDB and NDB.  Thus, given a \lang instance, all IDB predicates that do
 not transitively depend on NDB predicates can be evaluated deterministically.
@@ -172,7 +177,10 @@ interchangeably, for reasons which will soon become clear.
 
 
 \subsection{Abbreviated Syntax and Temporal Interpretation}
-We have been careful to define \lang as a syntactic subset of a natural variant of Datalog; this allows us to take advantage of Datalog's well-known semantics and the rich literature on the language.  
+We have been careful to define \lang as a syntactic subset of a
+natural variant of Datalog; this allows us to take advantage of
+Datalog's well-known semantics and the rich literature on the
+language.
 
 However \lang programs are intended to capture 
 %naturally
@@ -180,7 +188,7 @@ temporal semantics.  For example, a fact with some constant $C_i$ in its time
 suffix can be thought of as a fact that is true ``at time $C_i$''.  Deductive
 rules can be seen as {\em atemporal} statements: they range over all values of
 the time suffix, and express deductions that are ``always'' valid.  Inductive
-and asynchronous rules are {\em temporal} -- their consequents are defined to
+and asynchronous rules are {\em temporal} --- their consequents are defined to
 be true ``at a different time'' than their antecedents. 
 
 To simplify \lang notation for this typical interpretation,  we introduce
@@ -216,7 +224,7 @@ where $S$ is one of the following:
 \dedalus{successor($\Tau$,S)} in the body.
 %
 \item \emph{async(N)} implies the rule is asynchronous, and stands in for
-\dedalus{successor(\_, S), choose((\_), (S))} in the body.  N is a variable,
+\dedalus{successor(\_, S), choose((\_), (S))} in the body.  $N$ is a variable,
 corresponding to the time suffix $\Tau$ of all predicates in the rule body and
 optionally referenced in the head.  \wrm{this seems ugly to me}
 %
