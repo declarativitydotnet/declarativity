@@ -125,6 +125,8 @@ q(A, B, S) \(\leftarrow\)
 
 
 \subsection{Abbreviated Syntax and Temporal Interpretation}
+\label{sec:abbrvsyntax}
+
 We have been careful to define \slang as a syntactic subset of a
 natural variant of Datalog; this allows us to take advantage of
 Datalog's well-known semantics and the rich literature on the
@@ -169,7 +171,7 @@ where $S$ is one of the following:
 \begin{enumerate}
 %
 \item \emph{next} implies the rule is inductive, and stands in for
-\dedalus{successor($\Tau$,S)} in the body.
+\linebreak\dedalus{successor($\Tau$,S)} in the body.
 %
 \item \emph{async(N)} implies the rule is asynchronous, and stands in for
 \dedalus{successor(\_, S), choose((\_), (S))} in the body.  $N$ is a variable,

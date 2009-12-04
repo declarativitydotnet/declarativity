@@ -32,6 +32,8 @@
 
 \def\slang{synchronous Dedalus\xspace}
 \def\lang{Dedalus\xspace}
+%\def\synclang{{Dedalus\ensuremath{_{\mathit{SYNC}}}}\xspace}
+\def\synclang{{Dedalus\ensuremath{_{\large 0}}}\xspace}
 
 %dedalus environment for code
 
@@ -70,27 +72,29 @@
 \begin{abstract} 
 %
 Recent programming language research has explored the use of Datalog-based
-languages for expressing distributed systems as a set of
-logical invariants~\nrc{Cite?}.  Because the state of any such system evolves with its
-execution, these efforts extended the Datalog model by admitting updates, key
-constraints, persistence and events.  These extralogical~\nrc{What
-  does ``extralogical'' mean?} additions
-force programmers to think operationally, increase the complexity of the
-language, and in some cases have ambiguous semantics.  We argue
-that the missing component from these previous languages is a notion of {\em
-time}.  In this paper we present {\bf \lang}, a foundation language for
-programming and reasoning about distributed systems.  \lang is a syntactic
-subset of Datalog~\cite{ullmanbook} with negation, aggregate functions and
-choice, and admits an explicit representation of time into the logic language.
-Thus, \lang allows concepts like persistence, updateable state, key
-constraints, and message delay/loss to be described in a purely declarative fashion.  This
+languages for expressing a distributed system as a set of logical
+invariants~\cite{loo-sigmod06,boom-techr}.  Because the state of any such
+system evolves with its execution, these efforts extended the Datalog model by
+admitting updates, key constraints, persistence and events.  These
+extralogical~\nrc{What does ``extralogical'' mean?} \wrm{fair point -- I was
+trying to express that the concepts of updates, etc. were not expressed as
+logic in these previous efforts -- e.g.  the ``materialize'' directive.}
+additions force programmers to think operationally, increase the complexity of
+the language, and in some cases have ambiguous semantics.  We argue that the
+missing component from these previous languages is a notion of {\em time}.  In
+this paper we present {\bf \lang}, a foundation language for programming and
+reasoning about distributed systems.  \lang is a syntactic subset of
+Datalog~\cite{ullmanbook} with negation, aggregate functions and choice, and
+admits an explicit representation of time into the logic language.  Thus, \lang
+allows concepts like persistence, updateable state, key constraints, and
+message delay/loss to be described in a purely declarative fashion.  This
 allows us to express distributed systems whose state evolves over time in a
 high-level language with an unambiguous, model-theoretic semantics.
-%Dedalus extends Datalog with a notion of time --- every Dedalus relation has an
-%integer attribute that intuitively represents when a given tuple is true.  We
-%propose a sugared syntax in which rule head annotations indicate whether their
-%conclusions hold at the same time as their premises, in the immediate next
-%timestep, or at some unknown timestep.
+%Dedalus extends Datalog with a notion of time --- every Dedalus relation has
+%an integer attribute that intuitively represents when a given tuple is true.
+%We propose a sugared syntax in which rule head annotations indicate whether
+%their conclusions hold at the same time as their premises, in the immediate
+%next timestep, or at some unknown timestep.
 We further introduce the notion of \emph{temporal stratification}, a
 syntactically-checkable property of \lang programs similar to stratification,
 and show that the class of temporally stratifiable programs in \lang
