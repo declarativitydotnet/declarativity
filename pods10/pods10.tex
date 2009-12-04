@@ -69,29 +69,30 @@
 \begin{abstract} 
 %
 Recent programming language research has explored the use of Datalog-based
-languages for expressing complex distributed systems as compact and intuitive
-logical invariants.  Because the state of any such system evolves with its
+languages for expressing distributed systems as a set of
+logical invariants~\nrc{Cite?}.  Because the state of any such system evolves with its
 execution, these efforts extended the Datalog model by admitting updates, key
-constraints, as well as persistence and events.  These extralogical additions
+constraints, persistence and events.  These extralogical~\nrc{What
+  does ``extralogical'' mean?} additions
 force programmers to think operationally, increase the complexity of the
-language and runtime, and in some cases have ambiguous semantics.  We argue
+language, and in some cases have ambiguous semantics.  We argue
 that the missing component from these previous languages is a notion of {\em
 time}.  In this paper we present {\bf \lang}, a foundation language for
 programming and reasoning about distributed systems.  \lang is a syntactic
 subset of Datalog~\cite{ullmanbook} with negation, aggregate functions and
 choice, and admits an explicit representation of time into the logic language.
-Thus, \lang captures practical details like persistence, updatable state, key
-constraints, and message delay/loss in a purely declarative fashion.  This
+Thus, \lang allows concepts like persistence, updateable state, key
+constraints, and message delay/loss to be described in a purely declarative fashion.  This
 allows us to express distributed systems whose state evolves over time in a
 high-level language with an unambiguous, model-theoretic semantics.
-%Dedalus extends Datalog with a notion of time -- every Dedalus relation has an
+%Dedalus extends Datalog with a notion of time --- every Dedalus relation has an
 %integer attribute that intuitively represents when a given tuple is true.  We
 %propose a sugared syntax in which rule head annotations indicate whether their
 %conclusions hold at the same time as their premises, in the immediate next
 %timestep, or at some unknown timestep.
 We further introduce the notion of \emph{temporal stratification}, a
-syntactically-checkable property of Dedalus programs similar to stratification,
-and show that the class of temporally stratifiable programs in Dedalus
+syntactically-checkable property of \lang programs similar to stratification,
+and show that the class of temporally stratifiable programs in \lang
 corresponds to the class of modularly stratified~\cite{modular,ross-syntactic}
 programs in Datalog.
 %
