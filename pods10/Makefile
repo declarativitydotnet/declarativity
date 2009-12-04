@@ -2,8 +2,7 @@
 #
 # Makefile for LaTeX docs
 #
-# $Id: 
-#
+###########################################################
 
 .SUFFIXES:
 .SUFFIXES: .ps .dvi .tex
@@ -16,8 +15,6 @@ all: pdf
 eps: fig obj
 
 PAPER=pods10
-
-#PAPER=vldb_sample
 
 LATEX=pdflatex
 
@@ -61,8 +58,6 @@ figs:
 	if egrep Rerun $*.log ; then $(LATEX) $* ; fi
 	if egrep Rerun $*.log ; then $(LATEX) $* ; fi
 	if egrep Rerun $*.log ; then $(LATEX) $* ; fi
-	#dvips -t letter -z -Ppdf -G0 -D600 main.dvi -o main.ps
-	#ps2pdf main.ps main.pdf
 
 	$(RM) *.aux *.log *.bbl *.blg *.toc
 
