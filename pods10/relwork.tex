@@ -1,9 +1,9 @@
 \section{Related Work}
 
-\subsection{Updatable State}
+\subsection{Updateable State}
 
 Many deductive database systems, including LDL~\cite{ldl} and Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates using an
-assignment primitive.  In contrast, languages proposed by Cleary and Liu.~\cite{deductiveupdates, starlog, harmful} retain a purely logical 
+assignment primitive.  In contrast, languages proposed by Cleary and Liu~\cite{deductiveupdates, starlog, harmful} retain a purely logical 
 interpretation by admitting temporal extensions into their syntax and interpreting assignment or update as a composite operation
 across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the latter approach, but differ in several significant ways.
 First, we model persistence explicitly in our language, so that like updates, it is specified as a composite operation across timesteps.
@@ -14,7 +14,7 @@ in the current timestep, the immediate next timestep, and \emph{some} future tim
 \subsection{Distributed Systems}
 
 Significant recent work~\cite{boon, p2, loo-sigmod06, boom-techr} has focused on applying deductive database languages extended with networking 
-primitives to the problem of specifying and implementing network protocols and general distributed systems.  Implementing distributed systems entails 
+primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
 a data store that changes over time, so any useful implementation of such a language addresses the updatable state issue in some manner. 
 Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
 straightforward Datalog, and evaluation proceeds in three phases:
@@ -26,7 +26,7 @@ straightforward Datalog, and evaluation proceeds in three phases:
 \end{enumerate}
 
 The case of writes back to the store is complicated: the declarative language gives no hints as to how to and when deletions and updates
-are visible.  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain monotonicity properties (i.e. programs without negation or fact deletion)
+should be made visible.  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain monotonicity properties (i.e.\ programs without negation or fact deletion)
 are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
 \emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
 Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
