@@ -16,14 +16,14 @@ evaluated" in a lower module.)  since modularly stratified programs have a uniqu
 
 \begin{lemma} 
 %
-A Dedalus program without negation, aggregation, and choice has a unique
+A \slang program without negation and aggregation has a unique
 minimal model.
 %
 \end{lemma}
 
 \begin{proof} 
 %
-A Dedalus program without negation, aggregation, and choice is a pure Datalog
+A \slang program without negation and aggregation is a pure Datalog
 program.  Every Datalog program has a unique minimal model. 
 %
 \end{proof}
@@ -32,12 +32,12 @@ program.  Every Datalog program has a unique minimal model.
 
 %%\jmh{I'm going to stop commenting here since you'll need some more machinery to continue.}
 
-We define syntactic stratification of a Dedalus program the same way it is
+We define syntactic stratification of a \slang program the same way it is
 defined for a Datalog program:
 
 \begin{definition}
 %
-A Dedalus program without choice is \emph{syntactically stratifiable} if there
+A \slang is \emph{syntactically stratifiable} if there
 exists no cycle with a negative edge or an aggregation edge in the program's
 predicate dependency graph.
 %
@@ -50,8 +50,8 @@ We may evaluate such a program in any order returned by a topological sort on
 the predicate dependency graph, with each strongly connected component
 collapsed to a single node.
 
-Since our translation from \lang to Datalog does not introduce any cycles or
-negation to a program, a syntactically stratified \synclang instance has a
+Since our translation from \slang to Datalog does not introduce any cycles or
+negation to a program, a syntactically stratified \slang instance has a
 unique minimal model, as any Datalog instance without choice has a unique
 minimal model. 
 
@@ -84,7 +84,7 @@ minimal model.
 %\end{proof}
 
 However, many programs we are interested in expressing are not syntactically
-stratifiable.  Fortunately, \lang has a syntactically-checkable notion of
+stratifiable.  Fortunately, \slang has a syntactically-checkable notion of
 {\em temporal stratifiability} that maps to a subset of {\em modularly
 stratifiable} Datalog programs.
 
@@ -136,14 +136,14 @@ element depends negatively on itself.
 
 \begin{definition}
 %
-A \emph{deductive reduction} of a Dedalus program $P$ is the subset of $P$
+A \emph{deductive reduction} of a \lang program $P$ is the subset of $P$
 consisting of exactly those deductive rules in $P$.
 %
 \end{definition}
 
 \begin{definition} 
 %
-A Dedalus program is \emph{temporally stratifiable} if its deductive
+A \lang program is \emph{temporally stratifiable} if its deductive
 reduction is syntactically stratifiable.
 %
 \end{definition}
@@ -151,7 +151,7 @@ reduction is syntactically stratifiable.
 %%\newtheorem{theorem}{Theorem}
 \begin{lemma}
 %
-Any temporally stratifiable \synclang instance $P$ has a unique minimal model.
+Any temporally stratifiable \slang instance $P$ has a unique minimal model.
 %
 \end{lemma} 
 
@@ -162,13 +162,12 @@ deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
 thus it has a unique minimal model.
 
 {\bf Case 2:} $P$ consists of both deductive and inductive rules.
-
 Assume that $P$ does not have a unique minimal model.  This implies that $P$ is
 not syntactically stratifiable.  Thus, there must exist some cycle through at
 least one predicate $q$ involving negation or aggregation.  Furthermore, this
 cycle must involve an inductive rule, as $P$ is temporally stratified.
 
-We convert our \synclang program to Datalog using the transformation from
+We convert our \slang program to Datalog using the transformation from
 Section~\ref{sec:abbrvsyntax}, which does not introduce any additional cycles
 or negation.  Since the time suffix in the head of an inductive rule is
 strictly greater than the time suffix of its body, no EDB fact may depend
