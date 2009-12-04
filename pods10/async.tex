@@ -1,5 +1,90 @@
 \section{Ordering and Asynchrony}
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.75\linewidth]{dedalus-time.pdf}
+  \label{fig:dedalus-time}
+  \caption{Time moves forward in three ways: across strata, to the next fixpoint, and to some future fixpoint.}
+\vspace{-8pt}
+\end{figure}
+
+Until now we have restricted our discussion to deterministic and function-free \lang.  In this section
+we relax these restrictions to consider certain aggregate functions, simple arithmetic and the \emph{choice} construct.  
+
+
+\subsection{Aggregate Functions}
+
+We will consider only the class of \emph{exemplary} aggregate functions~\cite{tag}, whose return value
+is taken from among the input values, and the \emph{count} aggregate, which is expressible using arithmetic.  
+We allow an exemplary or count aggregate function $\rho$ to appear in the head of a deductive rule
+in the form:
+
+\dedalus{p($A_1 \ldots A_n, \rho(A_{n+1}), \ldots \rho(A_{n+m}$) \(\leftarrow\) 
+  $q_1(A_1 \ldots A_n), \ldots q_n(A_1 \ldots A_n$);}
+
+These functions we allow will not affect the expressivity of the language, but will simplify our discussion of 
+ordering.  We note that the \emph{min} function, which we use in examples in the subsequent sections,
+is expressible using $\lnot$Datalog.
+
+\begin{example}
+The query below selects, for each distinct value of the first column of $p$, the minimum 
+value of the second column.
+
+\begin{Dedalus}
+min_p(A, min<B>) \(\leftarrow\)
+  p(A, B);
+\end{Dedalus}
+
+The $\lnot$Datalog query below is equivalent:
+
+\begin{Dedalus}
+
+tmp(A, B)  \(\leftarrow\)
+  p(A, B),
+  p(A, C),
+  B > C;
+  
+min_p(A, B) \(\leftarrow\)
+  p(A, B),
+  \(\lnot\)tmp(A, B);
+
+\end{Dedalus}
+\end{example}
+
+%%\dedalus{r\_pos($A_1$, $A_2$, [...], $A_n$, }
+
+%%$\rho$($A_{n+1}$)}
+
+%%$\rho$($A_{n+2}$), [...] $\rho$($A_{n+m}$)) \(\leftarrow\) r($A_1$, $A_2$, [...], $A_n$);}
+
+
+
+\subsection{Choice}
+
+
+
+\subsection{Asynchronous Rules}
+
+A rule is said to be {\em asynchronous} if the relation of $S$ and
+$\Tau$ is modeled with the non-deterministic choice construct.  An asynchronous rule
+has the following subgoals in its body: \dedalus{successor(\_,S),
+choose((\_), (S))}.  The choice subgoal expresses that the rule head may
+be derived at any time value that appears in the \dedalus{successor} relation.
+
+
+\begin{Dedalus}
+asynchronous
+r(A, B, S) \(\leftarrow\)
+  e(A, B, \(\Tau\)),
+  successor(N, S),
+  choose((A, B, N), (S));
+\end{Dedalus}
+
+\begin{Dedalus}
+asynchronous
+r(A, B)@async \(\leftarrow\) \wrm{inconsistency.  are we doing async(N)?}
+  e(A, B);
+\end{Dedalus}
 
 
 
