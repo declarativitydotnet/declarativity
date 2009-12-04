@@ -50,16 +50,21 @@ We may evaluate such a program in any order returned by a topological sort on
 the predicate dependency graph, with each strongly connected component
 collapsed to a single node.
 
-\begin{lemma}
-%
-A syntactically stratifiable Dedalus instance without choice has a unique
-minimal model.  That is, there exists a function $D$ from syntactically
-stratifiable Dedalus instances without choice to their minimal models.
-%
-\end{lemma}
+Since our translation from \lang to Datalog does not introduce any cycles or
+negation to a program, a syntactically stratified \synclang instance has a
+unique minimal model, as any Datalog instance without choice has a unique
+minimal model. 
 
-\begin{proof}
-\wrm{todo: insert statement that this is obvious}
+%\begin{lemma}
+%
+%A syntactically stratifiable Dedalus instance without choice has a unique
+%minimal model.  That is, there exists a function $D$ from syntactically
+%stratifiable Dedalus instances without choice to their minimal models.
+%
+%\end{lemma}
+
+%\begin{proof}
+%\wrm{todo: insert statement that this is obvious}
 %
 %We know that there exists a function $B$ from syntactically stratifiable
 %Datalog instances to their minimal models \wrm{cite?}.  Earlier, we introduced
@@ -76,9 +81,15 @@ stratifiable Dedalus instances without choice to their minimal models.
 %introduce any new cycle or add negation to any existing cycle in the instance's
 %predicate dependency graph.
 %
-\end{proof}
+%\end{proof}
 
-Many programs are not syntactically stratifiable.  
+However, many programs we are interested in expressing are not syntactically
+stratifiable.  Fortunately, \lang has a syntactically-checkable notion of
+{\em temporal stratifiability} that maps to a subset of {\em modularly
+stratifiable} Datalog programs.
+
+Intuitively, a Datalog instance is {\em modularly stratifiable} if no EDB
+element depends negatively on itself.
 
 %%\begin{example}
 %%Consider a predicate \emph{print} that corresponds to a print queue.  The program below
@@ -90,24 +101,23 @@ Many programs are not syntactically stratifiable.
 %%\end{Dedalus}
 %%\end{example}
 
-\begin{definition}
+%Peter said we might not need these formal definitions.  Experimenting without
+%\begin{definition}
 %
-A $\lnot$Datalog program and EDB is \emph{locally stratifiable} if, after instantiating the rules
-given the Herbrand saturation of the program and EDB, there exists no cycle with a negation 
-or aggregation edge in the dependency graph of instantiated ground atoms.
-\wrm{is our audience going to know what a 'herbrand saturation' is?}
+%A Datalog program and EDB is \emph{locally stratifiable} if, after
+%instantiating the rules given the Herbrand saturation of the program and EDB,
+%there exists no cycle with a negation or aggregation edge in the dependency
+%graph of instantiated ground atoms.
 %
-\end{definition}
+%\end{definition}
 
-
-We take the definition below from Ross~\cite{modular, ross-syntactic}.
-\begin{definition}
+%We take the definition below from Ross~\cite{modular, ross-syntactic}.
+%\begin{definition}
 %
-A $\lnot$Datalog program and EDB is \emph{modularly stratifiable} if, and only if its mutally recursive 
-components are locally stratified once all instantiated rules with a false subgoal that is defined in a 
-``lower" component are removed.
-\end{definition}
-
+%A Datalog instance is \emph{modularly stratifiable} if, and only if its
+%mutally recursive components are locally stratified once all instantiated rules
+%with a false subgoal that is defined in a ``lower" component are removed.
+%\end{definition}
 
 %\begin{lemma}
 %
@@ -141,8 +151,7 @@ reduction is syntactically stratifiable.
 %%\newtheorem{theorem}{Theorem}
 \begin{lemma}
 %
-Any temporally stratifiable Dedalus instance $P$ without asynchronous rules has
-a unique minimal model.
+Any temporally stratifiable \synclang instance $P$ has a unique minimal model.
 %
 \end{lemma} 
 
@@ -152,12 +161,20 @@ a unique minimal model.
 deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
 thus it has a unique minimal model.
 
-{\bf Case 2:} $P$ consists of both deductive and inductive rules.  We will show
-that the mapping $A$ restricted to the set of tempoally stratifiable Dedalus
-instances maps to a subset of modularly stratifiable Datalog instances.
+{\bf Case 2:} $P$ consists of both deductive and inductive rules.
 
-Assume that $A$ takes $P$ to a non-modularly stratifiable Datalog instance.
-\wrm{todo: understand modular stratification.}
+Assume that $P$ does not have a unique minimal model.  This implies that $P$ is
+not syntactically stratifiable.  Thus, there must exist some cycle through at
+least one predicate $q$ involving negation or aggregation.  Furthermore, this
+cycle must involve an inductive rule, as $P$ is temporally stratified.
+
+We convert our \synclang program to Datalog using the transformation from
+Section~\ref{sec:abbrvsyntax}, which does not introduce any additional cycles
+or negation.  Since the time suffix in the head of an inductive rule is
+strictly greater than the time suffix of its body, no EDB fact may depend
+negatively on itself -- it may only depend negatively on EDB in the previous
+timestep.
+
 %does not have a unique minimal model.  This implies that $P$ is not
 %syntactically stratifiable, thus there must exist some cycle through at least
 %one predicate $q$ involving a negation or aggregation edge in $P$'s predicate

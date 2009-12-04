@@ -27,7 +27,7 @@ representing every possible interpretation, is itself finite. \wrm{what is a "po
 
 Consider the \emph{successor} relation described above.  According to our intuitive interpretation, this relation models
 the passage of time, in order to establish a temporal order among ground atoms.  \wrm{we're ignoring entanglement here}
-Recall that {\em successor} is the standard strict total order on $\mathbb{N}$,
+Recall that {\em successor} is the standard strict total order on $\mathbb{Z}$,
 and is thus an infinite relation.  Clearly, a naive interpretation of time can
 lead to unsafe programs:
 
@@ -149,7 +149,7 @@ An inductive rule cannot cause infinite oscillation if it has a positive event p
 
 %%However, we observe that all of these deductions are uninteresting, as they are
 %%deterministically related to the EDB.  To avoid performing such deductions, we
-%%restrict {\em successor} to range over the subset of $\mathbb{N}$ consisting of
+%%restrict {\em successor} to range over the subset of $\mathbb{Z}$ consisting of
 %%the consecutive natural numbers between the minimum and maximum timestamp
 %%specified in the (finite) EDB ($\{123, 124\}$ in this example) \wrm{this is without NDB right?}.  If we extended the EDB with the additional facts:
 
@@ -167,7 +167,7 @@ An inductive rule cannot cause infinite oscillation if it has a positive event p
 
 %%\begin{definition}
 %%A \emph{post-hoc} evaluation is an evaluation of a Dedalus instance where
-%%{\em successor} ranges over the finite subset of $\mathbb{N}$ described above.
+%%{\em successor} ranges over the finite subset of $\mathbb{Z}$ described above.
 %%\end{definition}
 
 %%In a post-hoc evaluation, we can derive {\em successor} from the EDB as part of
@@ -234,7 +234,7 @@ Let $FP : P \times F \mapsto F$ be the function representing the
 
 \begin{lemma}
 %
-Let $i \in \mathbb{N}$.  Then, $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) =
+Let $i \in \mathbb{Z}$.  Then, $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) =
 FP_p(\alpha_{i+1})$.
 %
 \end{lemma}
@@ -251,7 +251,7 @@ FP_p(\alpha_{i+1})$.
 %%if we assume that some program P and finite prefix $\alpha_n$ of a trace $\Gamma$ produce a minimal model, 
 %%then it follows that a prefix $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
 
-by contradiction. Assume $\exists i \in \mathbb{N}$ such that:
+by contradiction. Assume $\exists i \in \mathbb{Z}$ such that:
 
 $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) \neq FP_p(\alpha_{i+1})$
 
