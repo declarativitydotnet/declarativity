@@ -20,6 +20,9 @@ all constant symbols in the program and EDB.~\nrc{Don't know what this
 The set of all possible assignments of these constants to predicate attributes,
 representing every possible interpretation, is itself finite. \wrm{what is a "possible assignment"?  possible given the rules of the program?}
 
+\nrc{Seems like there ought to be more here. Why do I care about the
+  preceding text? What does it have to do with the following text?}
+
 \subsection{Temporal Safety}
 
 Consider the \emph{successor} relation described above.  According to our intuitive interpretation, this relation models
@@ -116,7 +119,7 @@ The head variable $B$ could range over an infinite set of constants.
 
 \begin{Dedalus}
 flip\_flop(A, B)@next  \(\leftarrow\)
-    flip\_flop(A, B)
+    flip\_flop(A, B),
     \(\lnot\)ff_neg(A, B);
 
 p(Y)@next  \(\leftarrow\)
