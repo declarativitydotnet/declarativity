@@ -9,9 +9,11 @@
 
 The intuition behind the \emph{successor} relation is that it models the passage of (logical) time.  
 We may say that ground atoms with lower timestamps occurred ``before" atoms with higher ones.
-Without specifying how and when each stratum
-of \emph{successor} is evaluated, we can see that the syntactic restrictions of Dedalus ensure that we cannot move backwards infinitely often (specifically,
-we may only move backwards via \emph{choice}, and every call to \emph{choice} may move us forward.  \paa{save for later, pretend there is no async?}).
+%%Without specifying how and when each stratum
+%%of \emph{successor} is evaluated, we can see that the syntactic restrictions of Dedalus ensure that 
+%%we cannot move backwards infinitely often (specifically,
+%%we may only move backwards via \emph{choice}, and every call to \emph{choice} may move us forward.  \paa{save for later, pretend there is no async?}).
+%%we may only move forward in time.
 The constraints we imposed on Dedalus rules restrict how deductions may be made with respect to time.  First, rules may only refer to ground atoms that
 are true at the same time.  Second, rules may specify deductions that occur concurrently with their ground facts, in the next timestep, or at some
 unspecified time: therefore inductions may be specified in one direction only.
