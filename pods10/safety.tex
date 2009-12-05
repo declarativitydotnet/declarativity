@@ -14,14 +14,22 @@ appear in a non-negated body subgoal.
 %
 \end{enumerate}
 
-Any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand universe} of
-all constant symbols in the program and EDB.~\nrc{Don't know what this
-  means, but I suspect it is fancy-pants language for no good reason.}
+Any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand Universe},
+consisting of all constant symbols in the program and EDB.
+%%~\nrc{Don't know what this means, but I suspect it is fancy-pants language for no good reason.}
+%%\paa{ignoring this provocative comment.
 The set of all possible assignments of these constants to predicate attributes,
-representing every possible interpretation, is itself finite. \wrm{what is a "possible assignment"?  possible given the rules of the program?}
+representing every possible interpretation, is itself finite. 
+\wrm{what is a "possible assignment"?  possible given the rules of the program?}
 
 \nrc{Seems like there ought to be more here. Why do I care about the
   preceding text? What does it have to do with the following text?}
+  
+  
+\paa{the idea is: safe=finite.  herbrand universe=finite, so any instantiation of predicates with constants is finite.
+every possible interpretation (set of atoms) of a LP comes from this instantition.  so any possible interpretation is finite.
+a model is an interpretation in which all heads are true when the body is true.  all models are finite.  the minimal model
+is clearly finite.}
 
 \subsection{Temporal Safety}
 
@@ -68,30 +76,53 @@ unsafe.
 
 \end{example}
 
-However, we observe that all of these deductions are uninteresting, as they are
-derived deterministically from a finite EDB, and because the tuple changes at 
-each deduction only in its time attribute.  To distinguish between programs that 
-produce these infinite \emph{void inductions} and those that correspond 
-intuitively to the Datalog notion of unsafe programs, we introduce the concept of
-\emph{temporal safety}.
+However, observe that each of these deductions produces a tuple that changes  
+only in its time attribute.  We we find it useful to distinguish between programs that,
+given a finite EDB, reach a state at which the only deductions that continue to occur
+are those in which only the time attribute of tuples change.
 
 \begin{definition}
-An intensional predicate $e$ in a program $P$ is called an \emph{event predicate} if there exist
-in $P$ no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
+A \emph{stable derivation} is a derivation of a tuple $\gamma'$ in a predicate $p$ with
+timestamp $\Tau$ from a tuple $\gamma$ in $p$ with timestamp $\Tau-1$, such that
+$\gamma$ differs from $\gamma'$ only in the timestamp.
 \end{definition}
 
-\wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
-\begin{definition}
+%%To distinguish between programs that 
+%%produce these infinite \emph{void inductions} and those that correspond 
+%%intuitively to the Datalog notion of unsafe programs, we introduce the concept of
+%%\emph{temporal safety}.
 
-A rule is temporally safe if:
+%%\begin{definition}
+%%An intensional predicate $e$ in a program $P$ is called an \emph{event predicate} if there exist
+%%in $P$ no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
+%%\end{definition}
+
+We call an execution \emph{quiescent} if it reaches a point at which all derivations are stable derivations.
+
+\begin{definition}
+Given a finite EDB, a program is \emph{temporally safe} if it reaches a quiescent state after a finite 
+number of deductions.
+\end{definition}
+%%\wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
+%%\begin{definition}
+
+\begin{definition}
+Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$, 
+an intensional predicate $e$ in a program $P$ is called an \emph{atemporal predicate} 
+if for every predicate $p$ for which $e \succ^{*} p$, $p$ appears in no inductive rules.
+\end{definition}
+
+%%A rule is temporally safe if:
+We propose the following conservative test for temporal safety.  A rule is guaranteed to be temporally safe if:
 
 \begin{enumerate}
 \item It is a deductive rule that is function-free and range-restricted.
-\item It is an inductive rule in which the head predicate occurs also in the body with the same 
-assignment of variables and constants to attributes.
-\item It is an inductive rule that has at least one event predicate as a positive subgoal in the body.
+\item It is an inductive rule in which the head predicate occurs also in the body with the same variable 
+bindings.
+%%occurs also in the body with the same assignment of variables and constants to attributes.
+\item It is an inductive rule that has at least one atemporal predicate as a positive subgoal in the body.
 \end{enumerate}
-\end{definition}
+
 
 A Dedalus program is temporally safe if all its rules are temporally safe.
 Intuitively, a temporally safe program quiesces given a finite EDB.  A
@@ -138,9 +169,10 @@ all variables are range-restricted, it entails infinite oscillation of
 the \emph{p} predicate.
 because the \emph{p} predicate occurs in the head with
 a different variable binding than in the body, and because there are no
-positive event predicates in the body.  \wrm{this makes me a bit uncomfortable.
-we've defined a conservative test for temporal safety.  so if something fails
-the test, it's not necessariliy temporally unsafe.}
+positive event predicates in the body.  
+%%\wrm{this makes me a bit uncomfortable.
+%%we've defined a conservative test for temporal safety.  so if something fails
+%%the test, it's not necessariliy temporally unsafe.}
 
 \end{example}
 
