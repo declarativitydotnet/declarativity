@@ -1,8 +1,8 @@
 \section{Cost Model}
 
 %%\newdef{definition}{Definition}
-Lemma~\ref{lem:cost} expresses that we can trade computation cost for storage 
-cost in evaluation of a Dedalus program. 
+Lemma~\ref{lem:costmodel} expresses that we can trade computation cost for
+storage cost in evaluation of a \slang program. 
 
 %In the continuous interpretation of a Dedalus program, it is in general only
 %useful to remember facts at a single timestamp in a predicate.  Two ways to
@@ -29,62 +29,79 @@ cost in evaluation of a Dedalus program.
 %\end{figure}
 
 
-\subsubsection{Naive Deductive Implementation}
+%\subsubsection{Naive Deductive Implementation}
 
-To evaluate a trace consisting of $S$ inserts and $U$ updates, a naive
-deductive implementation would:
+%To evaluate a trace consisting of $S$ inserts and $U$ updates, a naive
+%deductive implementation would:
 
-\begin{enumerate}
-
-\item Add all inserts, deletions, and updates to the EDB.  
-\paa{we can't talk about ``adding" to the EDB; the EDB just is.  you're talking about writing to a store?}
-%We make the simplifying assumption that all EDB predicates are indexed by some
-%hash of their key attributes.
-Note that an update consists of both an insertion and a deletion.  Assuming
-that inserting a fact into the EDB has some cost $w$ independent of the
-characteristics of the predicate (e.g. all predicates store their facts in hash
-tables), then the cost of this step is $(S+2U)w$.
-
-\item For every predicate $P$, at time $M$, we must evaluate all predicates in
-$P$'s predicate dependency graph at time $1$ through $M$.  
+%\begin{enumerate}
+%
+%\item
+%
+%\item
+{\bf Naive Deductive Implementation: } We must evaluate every rule at time $1$
+through $M$.  This implies persistent storage cost of $|\alpha_M|$, e.g. the
+entire prefix up through $M$.
 %A bottom-up evaluation of a predicate $P$ consists of evaluating all rules
 %that reference $P$ in the head, and may involve polynomially many derivations
 %in the size of the EDB up to time $M$.
-A naive query plan for execution of a rule would consist of taking the cross
-product of all body relations, selecting the subset that matches the body
-conditions, and projecting this subset onto the head predicate to derive new
-head tuples.  Assume each rule has an associated
-selectivity $s_r$ and cost per each tuple in the join result $d_r$.  If a rule
-is part of a recursion, it will be executed for $n_r$ steps.  The cost
-of this evaluation is $M \cdot \sum_{r} n_r \cdot s_r \cdot d_r$.
+A naive query plan for execution of a rule $R$ would take the cross product of
+all body relations, $CP_R$, select the subset that matches the body conditions,
+and project this subset onto the head predicate.  Assume each rule $R$ has an
+associated selectivity from the cross product $s_R$, cost per each tuple in the
+cross product $d_R$, and cost per each tuple in the subset selected from the
+cross product $p_R$.  Each recursion is executed for a certain number of steps
+steps.  This step has temporary storage and execution cost of:
+%
+\[ \sum_{t=0}^M \sum_{R} |CP_{(R,t)}|(p_{(R,t)} \cdot s_{(R,t)} + \cdot
+d_{(R,t)}) \]
+%
+%\end{enumerate}
 
-\end{enumerate}
+%In summary, the total execution cost is:
 
-In summary, the total execution cost is:
+%\[ (S+2U)w + M \cdot \sum_{r : P \in r.head} n_r \cdot s_r \cdot d_r  \]
 
-\[ (S+2U)w + M \cdot \sum_{r : P \in r.head} n_r \cdot s_r \cdot d_r  \]
-
-Since we only need persist the EDB, the total storage cost is equal to the size
-of the EDB.
+%Since we only need persist the EDB, the total storage cost is equal to the size
+%of the EDB.
 
 %$(|S|+2|U|)s + (|S|+2|U|)r + t + (\displaystyle\sum_{i=0}^{|Q|-1} \displaystyle\sum_{j=0}^{|T|-1} Q_{i} - T_{j})d$
 
-\subsubsection{Naive Overwriteable Storage Implementation}
+%\subsubsection{Naive Overwriteable Storage Implementation}
 
-An overwritable storage implementation may enable lower execution latency by
-storing the most recent version of a tuple.  For a predicate $P$ at time $M$,
-we would need to evaluate each predicate $Q$ in $P$'s predicate dependency
-graph from timestamp $Q_N+1$ through timestamp $M$ -- where $Q_N$ is the
-timestamp of the last stored tuple of predicate $Q$. This is in contrast to the
-naive deductive model, which would require computation from timestamp 1, but
-would not require persisting the IDB of the most recently computed stratum for
-each predicate.
+%To evaluate a trace consisting of $S$ inserts and $U$ updates, a naive
+%deductive implementation would:
 
-In summary, the total execution cost is:
+%\begin{enumerate}
+%
+%\item
+%Add all $I$ inserts, $D$ deletions, and $U$ updates to a log.  Note that
+%an update consists of both an insertion and a deletion.  Assuming that
+%inserting a fact into the EDB has some cost $w$ independent of the
+%characteristics of the predicate (e.g. all predicates store their facts in hash
+%tables), then this step has temporary storage and computation cost $(I+D+2U)w$.
 
-\[ (S+2U)w + \sum_{r} (M - Q_{r.head}) n_r \cdot s_r \cdot d_r  \]
+{\bf Naive Overwriteable Storage Implementation: }An overwritable storage
+implementation may trade some storage for better execution latency by storing
+the most recent version of all predicates.  This implies persistent storage
+cost of:
+%
+\[ |FP(\alpha_{M-1})| + |\alpha_M \cap \alpha_{M-1}| \]
 
-The total storage cost is the IDB of each predicate at its most recent
-timestamp.
+We would need to evaluate every rule $R$ at timestamp $M$.  This entails
+temporary storage and execution cost of:
+%
+\[ \sum_{R} |CP_{(R,M)}|(p_{(R,M)} \cdot s_{(R,M)} + d_{(R,M)}) \]
+%This is in contrast to the
+%naive deductive model, which would require computation from timestamp 1, but
+%would not require persisting the IDB of the most recently computed stratum for
+%each predicate.
+
+%In summary, the total execution cost is:
+
+%\[ (S+2U)w + \sum_{r} (M - Q_{r.head}) n_r \cdot s_r \cdot d_r  \]
+
+%The total storage cost is the IDB of each predicate at its most recent
+%timestamp.
 
 %%\subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}

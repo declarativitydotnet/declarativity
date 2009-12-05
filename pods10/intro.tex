@@ -8,16 +8,15 @@ constructs \wrm{like what?}, or are at best awkward to use in this fashion.
 don't know enough to write it} The family of logic-based database languages, of
 which Datalog is the progenitor, represent expressive programming languages
 that produce similar dataflow representations.  Datalog is purely deductive: a
-program specifies the rules by which the derived IDB relations (or
-\emph{views}) are populated based on the EDB (or static database), which is
-never updated.  Recent programming language research has explored the use of
-Datalog-based languages for expressing distributed systems.  Because the state
-of any complex system evolves with its execution, these efforts were forced to
-extend the Datalog model by admitting updates, additions and deletions of the
-EDB.  Unfortunately, these previous attempts were plagued with ambiguities
-about how and when state changes occur and become visible, putting a heavy
-burden on the programmer to ensure even simple properties, such as atomicity of
-updates over time.
+program specifies the rules by which the derived relations are populated based
+on a static database, which is never updated.  Recent programming language
+research has explored the use of Datalog-based languages for expressing
+distributed systems.  Because the state of any complex system evolves with its
+execution, these efforts were forced to extend the Datalog model by admitting
+updates, additions and deletions of the EDB.  Unfortunately, these previous
+attempts were plagued with ambiguities about how and when state changes occur
+and become visible, putting a heavy burden on the programmer to ensure even
+simple properties, such as atomicity of updates over time.
 
 In contrast to reasoning about state change procdurally, Dedalus observes
 that this concept is intuitively expressed as invariants over {\em time}.  In
