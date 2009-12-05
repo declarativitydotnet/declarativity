@@ -7,16 +7,21 @@
 
 %%\jmh{Your definition is not self-contained, it makes reference to prose.  The prose is not crisp even as prose -- I don't know what ``later'' means, especially given that you said that @sync could produce any time.}
 
-The intuition behind the \emph{successor} relation is that it models the passage of (logical) time.  
-We may say that ground atoms with lower timestamps occurred ``before" atoms with higher ones.
+The intuition behind the \emph{successor} relation is that it models the
+passage of (logical) time.  We say that ground atoms with lower timestamps
+occur ``before" atoms with higher ones.
 %%Without specifying how and when each stratum
 %%of \emph{successor} is evaluated, we can see that the syntactic restrictions of Dedalus ensure that 
 %%we cannot move backwards infinitely often (specifically,
 %%we may only move backwards via \emph{choice}, and every call to \emph{choice} may move us forward.  \paa{save for later, pretend there is no async?}).
 %%we may only move forward in time.
-The constraints we imposed on Dedalus rules restrict how deductions may be made with respect to time.  First, rules may only refer to ground atoms that
-are true at the same time.  Second, rules may specify deductions that occur concurrently with their ground facts, in the next timestep, or at some
-unspecified time: therefore inductions may be specified in one direction only.
+The constraints we imposed on \slang rules restrict how deductions may be made
+with respect to time.  First, rules may only refer to a single timestep in
+their body, they cannot {\em join across timesteps}.  Second, rules may specify
+deductions that occur concurrently with their ground facts or in the next
+timestep -- we rule out induction ``backwards'' in time.
+%, or at some unspecified time: 
+%therefore inductions may only be specified in one direction only.
 
 This gives us an intuitive and unambiguous way to declaratively express persistence and state changes.  In this section, we 
 give examples of language constructs that capture motifs such as persistent relations, deletion and update, sequences
@@ -26,23 +31,30 @@ and queues.
 
 A fact in predicate $p$ at time $\Tau$ may provide ground for deductive rules
 at time $\Tau$, as well as ground for deductive rules in timesteps greater than $\Tau$,
-provided there exists a rule of the form:
+provided there exists a {\em simple persistence rule} -- a rule of the form:
 
-$p\_pos(A_1,A_2,[...],A_n)@next \leftarrow 
-p\_pos(A_1,A_2,[...],A_n);$
+\dedalus{p\_pos($A_1$,$A_2$,[...],$A_n$)@next $\leftarrow$
+p\_pos($A_1$,$A_2$,[...],$A_n$);}
 
 %%\begin{definition}
 %%A rule of the above form is known as a {\em simple persistence rule}.
 %%\end{definition}
 
-A simple persistence rule having the above form ensures that a $p$ fact true at time $i$ will be true
-$\forall j \in \mathbb{Z} | j >= i$.  This rule is informally equivalent to the temporal logic assertion
+A simple persistence rule ensures that a $p$ fact true at time $i$ will be true
+$\forall j \in \mathbb{Z} : j >= i$.  This rule is informally equivalent to the
+temporal logic assertion
 
-$\forall A_1 \ldots A_n \in p\_pos( p\_pos(A_1 \ldots A_n) \to \Box p\_pos(A_1 \ldots A_n))$.
+$\forall A_1 \ldots A_n \in p\_pos : p\_pos(A_1 \ldots A_n) \to \Box p\_pos(A_1
+\ldots A_n)$.
+
+\wrm{is there a point to this formula?  can't we just say ``a simple persistence
+rule naturally encapsulates the ``always'' operator from temporal logic.  maybe
+this should even be a footnote unless we're going to make a bigger deal about
+Dedalus and temporal logics?}
 
 \subsection{Mutable State}
 
-To model deletions and updates of a fact, it is useful to break the induction
+To model deletions and updates of a fact, it is necessary to break the induction
 in a simple persistence rule.  Adding a {\em p\_neg} subgoal to the body of a
 simple persistence rule accomplishes this:
 
@@ -57,71 +69,56 @@ $
 %
 %%\end{definition}
 
-If, at any time $k$, we have a fact $p\_neg(C_1,C_2,[...],C_n)@k$, then we do
-not deduce a $p\_pos(C_1,C_2,[...],C_n)@k+1$ fact.  By induction, we do not
-deduce a $p\_pos(C_1,C_2,[...],C_n)@l$ for any $l > k$, unless this $p_pos$
-fact is re-derived at some timestep $l > k$ by another rule.  This corresponds to 
-the intuition that a persistent fact, once stated, is true until it is withdrawn.  
+If, at any time $k$, we have a fact
+\dedalus{p\_neg($C_1$,$C_2$,[...],$C_n$)@k}, then we do not deduce a
+\dedalus{p\_pos($C_1$,$C_2$,[...],$C_n$)@k+1} fact.  By induction, we do not
+deduce a \dedalus{p\_pos($C_1$,$C_2$,[...],$C_n$)@l} for any $l > k$, unless
+this \dedalus{p\_pos} fact is re-derived at some timestep $l > k$ by another
+rule.  This corresponds to the intuition that a persistent fact, once stated,
+is true until it is retracted.  
 
 %%\newtheorem{example}{Example}
 \begin{example}
 Consider the following Dedalus program and {\em trace} of events:
 
 \begin{Dedalus}
-p_pos(A, B) \(\leftarrow\)
-  p(A, B);
+p_pos(A, B) \(\leftarrow\) p(A, B);
 
-p_pos(A, B)@next \(\leftarrow\) 
-  p_pos(A, B),
-  \(\lnot\) p_neg(A, B);
+p_pos(A, B)@next \(\leftarrow\) p_pos(A, B),\(\lnot\) p_neg(A, B);
 
 p(1,2)@101;
 p(1,3)@102;
-p(1,?)@200;
 delete p(1,2)@300;
-p(1,?)@301;
 \end{Dedalus}
 
-It is easy to see that the results of the two queries are:
-
-
-\begin{Dedalus}
-p(1,2)@200;
-p(1,3)@200;
-p(1,3)@301;
-\end{Dedalus}
-
+It is easy to see that the following are true: \dedalus{p(1,2)@200},
+\dedalus{p(1,3)@200}, \dedalus{p(1,3)@300}.  However, \dedalus{p(1,2)@300} is
+false because it was deleted at timestep \dedalus{300}.
 \end{example}
 
 %%\begin{definition}
 %
 For some time $\Tau$, an {\em update} is any pair of facts:
 
-$p\_neg(C_{1},C_{2},[...],C_{n})@\Tau$ \\ $p\_pos(D_{1},D_{2},[...],D_{n})@\Tau+1$
+\dedalus{p\_neg($C_1$,$C_2$,[...],$C_n$)@$\Tau$}
+\dedalus{p\_pos($D_1$,$D_2$,[...],$D_n$)@$\Tau+1$}
 %
 %%\end{definition}
 
 Intuitively, an update represents replacing an old value of a tuple with a
 newer value.  We say the update is {\em atomic across timesteps}, meaning that
 the old value ceases to exist at the same timestep in which the new value
-exists -- timestep $\Tau+1$ in the above definition.
+is derived -- timestep $\Tau+1$ in the above definition.
 
 \subsection{Sequences}
 
-Database sequences, objects that retain and increment a counter value, can be
-represented with a pair of inductive rules.  One increments the current counter value when the
-trigger event is true, while the other persists the current value of the sequence only when the event is 
-not true.  For example:
+One may represent a database sequence -- an object that retains and increments a counter value -- with a pair of inductive rules.  One rule increments the current counter value when some condition is true, while the other persists the value of the sequence when the condition is false.  For example:
 
 \begin{Dedalus}
-seq(Agent, X + 1)@next \(\leftarrow\)
-  seq(Agent, X), 
-  event(Agent) 
+seq(Agent, X + 1)@next \(\leftarrow\) seq(Agent, X), event(Agent);
   
-seq(Agent, X)@next \(\leftarrow\) 
-  seq(Agent, X, 
-  \(\lnot\) event(Agent);
+seq(Agent, X)@next \(\leftarrow\) seq(Agent, X), \(\lnot\) event(Agent);
 \end{Dedalus}
 
-We need to admit arithmetic functions into our language to express such a sequence, but the pair of rules 
-above remains temporally safe.
+We must admit arithmetic functions into our language to express such a
+sequence, but the pair of rules above remains temporally safe.

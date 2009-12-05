@@ -1,4 +1,4 @@
-\section{Safety in Synchronous Dedalus}
+\section{Safety in \large \bf \slang}
 
 A Datalog program is safe if it produces a finite model, and hence has a finite
 execution.  Safety is traditionally achieved through the following constraints:
@@ -17,7 +17,8 @@ appear in a non-negated body subgoal.
 Any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand Universe},
 consisting of all constant symbols in the program and EDB.
 %%~\nrc{Don't know what this means, but I suspect it is fancy-pants language for no good reason.}
-%%\paa{ignoring this provocative comment.
+%%\paa{ignoring this provocative comment.}
+%%\wrm{lol.}
 The set of all possible assignments of these constants to predicate attributes,
 representing every possible interpretation, is itself finite. 
 \wrm{what is a "possible assignment"?  possible given the rules of the program?}
@@ -33,11 +34,15 @@ is clearly finite.}
 
 \subsection{Temporal Safety}
 
-Consider the \emph{successor} relation described above.  According to our intuitive interpretation, this relation models
-the passage of time, in order to establish a temporal order among ground atoms.  \wrm{we're ignoring entanglement here}
-Recall that {\em successor} is the standard strict total order on $\mathbb{Z}$,
-and is thus an infinite relation.  Clearly, a naive interpretation of time can
-lead to unsafe programs:
+Consider the \dedalus{successor} relation described above.  According to our
+intuitive interpretation, this relation models the passage of time, in order to
+establish a temporal order among ground atoms.  \wrm{we're ignoring
+entanglement here}
+%Recall that {\em successor} is the standard strict total order on
+%$\mathbb{Z}$, lol, don't know how I accidentally wrote the above incorrect
+%sentence all over the paper
+Recall that \dedalus{successor} is an infinite relation.  Clearly, a naive
+interpretation of time can lead to unsafe programs:
 
 %%No reason to re-define a strict total order here...
 %\begin{itemize}
@@ -54,17 +59,14 @@ lead to unsafe programs:
 
 
 \begin{example}
-Consider the Dedalus instance below.
+Consider the \slang instance below.
 
 \begin{Dedalus}
 r1
-p_pos(A, B)@next \(\leftarrow\)
-  p_pos(A, B),
-  \(\lnot\)p_neg(A, B);
+p_pos(A, B)@next \(\leftarrow\) p_pos(A, B), \(\lnot\)p_neg(A, B);
   
 r2  
-p_pos(A, B)  \(\leftarrow\)
-  p(A, B);
+p_pos(A, B)  \(\leftarrow\) p(A, B);
   
 p(1, 2)@123;
   
@@ -124,10 +126,10 @@ bindings.
 \end{enumerate}
 
 
-A Dedalus program is temporally safe if all its rules are temporally safe.
+A \slang program is temporally safe if all its rules are temporally safe.
 Intuitively, a temporally safe program quiesces given a finite EDB.  A
 temporally unsafe program changes infinitely, even given a finite EDB.  Note
-that the Dedalus program above is temporally safe because \emph{r1} corresponds
+that the \slang program above is temporally safe because \emph{r1} corresponds
 to the second rule of the definition, and \emph{r2} corresponds to the first.
 Atoms deduced by the inducive rule \emph{r1} differ from existing atoms only in
 their time suffix.
@@ -135,8 +137,7 @@ their time suffix.
 \begin{example}
 
 \begin{Dedalus}
-p(A, B) \(\leftarrow\)
-  q(A);
+p(A, B) \(\leftarrow\) q(A);
 \end{Dedalus}
 
 The program above has a temporally unsafe deductive rule that corresponds to an unsafe rule in Datalog: it is not range-restricted.  
@@ -149,13 +150,9 @@ The head variable $B$ could range over an infinite set of constants.
 
 
 \begin{Dedalus}
-flip\_flop(A, B)@next  \(\leftarrow\)
-    flip\_flop(A, B),
-    \(\lnot\)ff_neg(A, B);
+flip\_flop(A, B)@next \(\leftarrow\) flip\_flop(A, B);
 
-p(Y)@next  \(\leftarrow\)
-    p(X),
-    ff(X, Y);
+p(Y)@next \(\leftarrow\) p(X), flip\_flop(X, Y);
 
 flip\_flop(0, 1)@1;
 flip\_flop(1, 0)@1;
@@ -265,6 +262,7 @@ Let $FP : P \times F \mapsto F$ be the function representing the
 
 
 \begin{lemma}
+\label{lem:costmodel}
 %
 Let $i \in \mathbb{Z}$.  Then, $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) =
 FP_p(\alpha_{i+1})$.

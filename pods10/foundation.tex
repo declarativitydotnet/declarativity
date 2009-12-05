@@ -1,15 +1,15 @@
-\section{\lang}
+\section{\large \bf \slang}
 %%We take as our foundation an augmented version of
 %%$\lnot$Datalog~\cite{ullmanbook} with aggregate function symbols akin to those
 %%of SQL (min, max, avg, stdev, count).  Henceforth, we will refer to this
 %%language as ``Datalog.'' 
-We take as our foundation the language $\lnot$Datalog~\cite{ullmanbook},
-which we will henceforth refer to as ``Datalog."
-In general, we are interested in the classes of
-statically stratifiable, locally stratifiable~\cite{prz} and modularly stratifiable~\cite{modular}
-programs.  In
-addition, we admit the use of the \emph{choice} construct~\cite{greedychoice,
-eventchoice} to model nondeterministic selection of an element from a set.  
+We take as our foundation the language $\lnot$Datalog~\cite{ullmanbook}, which
+we will henceforth refer to as ``Datalog." In general, we are interested in the
+classes of statically stratifiable 
+%,locally stratifiable~\cite{prz} 
+and modularly stratifiable~\cite{modular} programs.  In addition, we use
+the\emph{choice} construct~\cite{greedychoice, eventchoice} to model
+nondeterministic selection of an element from a set.  
 %%\jmh{save the next sentence for later.  stay pure here.}
 %%In \dedalus, we will use this construct to
 %%model both the nondeterminism of message delay, and the semantics of key
@@ -22,24 +22,28 @@ constants, and a countably infinite universe of variable symbols $A = A_1, A_2,
 \ldots$, and a distinguished variable $\Tau$. \wrm{is this any different from
 regular Datalog?}
 % which may take on the values of any constants.   
-We represent time in \lang by the union of set of integers $\mathbb{Z}$, with a
-special element $\perp$ that means ``never''.  We consider the standard strict
-total order $<$, with the additional rule that $\forall i \in \mathbb{Z}: i <
-\perp$.  We call this order \dedalus{successor}.
+We represent time in \slang by the union of set of integers $\mathbb{Z}$, with
+a special element $\perp$ that means ``never''.  We consider the standard
+strict total order $<$, with the additional rule that $\forall i \in
+\mathbb{Z}: i < \perp$.  We define the \dedalus{successor} relation, whhere
+\dedalus{successor(i,j)} means that \dedalus{j} is the least element that is
+greater than \dedalus{i}. \wrm{we have a problem here, we need $\perp$ to be in
+the successor relation somehow.  maybe \dedalus{successor($\perp$,$\perp$)}.}
 
 
 \subsection{Syntactic Restrictions}
+\label{sec:syntaxrestrictions}
 
 %%$p(A_{1}, A_{2}, [...], A_{n})@S$
-\lang is a restricted sublanguage of Datalog.  Specifically, we
+\slang is a restricted sublanguage of Datalog.  Specifically, we
 restrict the admissible schemata and the form of rules.
 
-\noindent{\bf Schema: }We require that the final attribute of every \lang
-predicate range over the set $\mathbb{Z} \cup \perp$.  In a typical
+\noindent{\bf Schema: }We require that the final attribute of every \slang
+predicate range over the set $\mathbb{Z}\,\,\cup\!\perp$.  In a typical
 interpretation, \slang programs will use this final attribute to connote a
 ``timestamp'', so we refer to this attribute as the \emph{time suffix} of the
-corresponding predicate.  Any fact in a \lang predicate must specify a
-constant time suffix, i.e. a member of the set $\mathbb{Z} \cup \perp$.
+corresponding predicate.  Any fact in a \slang predicate must specify a
+constant time suffix, i.e. a member of the set $\mathbb{Z}\,\,\cup\!\perp$.
 
 \noindent{\bf Rules: }We restrict the bindings of the time suffixes, and
 disallow {\em extensional} predicates in most rules.
@@ -50,25 +54,25 @@ disallow {\em extensional} predicates in most rules.
 
 \begin{definition}
 %
-An \emph{extensional} predicate in a \lang program is a predicate
+An \emph{extensional} predicate in a \slang program is a predicate
 that does not appear in the head of any rule in the program.  
 %
 \end{definition}
 
 %\wrm{we really want an inclusion constraint not just in the set of integers, but in the set of all possible times, in case time is finite}.  \jmh{I disagree, actually.  EDB facts can be sprinkled throughout time without restriction, and the rule syntax below provides the restrictions you want.  you're hinting at the reduction stuff below, but we can rewrite to that.}  
 
-For every extensional predicate $r$ in a \lang program $P$, we add to $P$ two
+For every extensional predicate $r$ in a \slang program $P$, we add to $P$ two
 predicates \dedalus{r\_pos} and \dedalus{r\_neg} with the same schema as $r$, as well as a rule
 of the following form:
 
 \dedalus{r\_pos($A_1$, $A_2$, [...], $A_n$) \(\leftarrow\) r($A_1$, $A_2$, [...], $A_n$);}
 
 That is, for every extensional predicate $r$ there is an IDB predicate \dedalus{r\_pos} that
-contains at least the contents of $r$.  No well-formed \lang rule may reference
+contains at least the contents of $r$.  No well-formed \slang rule may reference
 an extensional predicate -- except for rules of the above
-form.
+form. \wrm{serious problem here -- remove or rewrite}
 
-In a well-formed \lang rule, every subgoal is required to use the
+In a well-formed \slang rule, every subgoal is required to use the
 distinguished variable $\Tau$ as its time suffix, and $\Tau$ must not be
 further restricted.  A well-formed \slang rule must also have a time suffix
 $S$ in its head, which must be constrained in exactly one of the following
@@ -98,7 +102,7 @@ of $\Tau$.  That is, the body contains the subgoal
 
 \end{enumerate}
 
-For now, we'll confine our discussion to programs in \slang. 
+%For now, we'll confine our discussion to programs in \slang. 
 
 \begin{example}
 
@@ -107,14 +111,10 @@ listed above:
 
 \begin{Dedalus}
 deductive
-p(A, B, S) \(\leftarrow\)
-  e(A, B, \(\Tau\)),
-  S = \(\Tau\);
+p(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), S = \(\Tau\);
 
 inductive 
-q(A, B, S) \(\leftarrow\)
-  e(A, B, \(\Tau\)),
-  successor(\(\Tau\), S);
+q(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), successor(\(\Tau\), S);
 
 \end{Dedalus}
 %%asynchronous
@@ -178,9 +178,8 @@ where $S$
 %%is one of the followin
 may be the string \emph{@next}, which implies that the rule is inductive
 and stands in for \dedalus{successor($\Tau$,S)} in the body.
-Later when we consider a less restricted variant of \lang, we will consider 
-another rule type.
-
+Later when we consider \lang -- a superset of \slang -- we will introduce
+another kind of rule.
 
 %
 %\begin{enumerate}
@@ -205,14 +204,10 @@ The following are the sugared version of the rules listed previously:
 
 \begin{Dedalus}
 deductive
-p(A, B) \(\leftarrow\)
-  e(A, B);
+p(A, B) \(\leftarrow\) e(A, B);
   
 inductive 
-q(A, B)@next \(\leftarrow\)
-  e(A, B);
-  
-    
+q(A, B)@next \(\leftarrow\) e(A, B);
 \end{Dedalus}
 
 
