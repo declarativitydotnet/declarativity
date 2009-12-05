@@ -10,7 +10,9 @@
 
 Until now we have restricted our discussion to deterministic and function-free \lang.  In this section
 we relax these restrictions to consider certain aggregate functions, simple arithmetic and the \emph{choice} construct.  
-
+This will allow us to express programs that establish or enforce an ordering over inputs, and to reason about
+the nondeterminacy caused by communication over unreliable networks that may delay, lose or reorder the
+results of logical deductions.
 
 \subsection{Aggregate Functions}
 
@@ -66,24 +68,39 @@ min_p(A, B) \(\leftarrow\)
 
 \subsection{Asynchronous Rules}
 
+Recall our use of the distinguished variables $\Tau$ and $S$ in our discussion of \slang,
+representing the time suffixes occuring respectively in the body and head of a rule.
+
 A rule is said to be {\em asynchronous} if the relation of $S$ and
 $\Tau$ is modeled with the non-deterministic choice construct.  An asynchronous rule
 has the following subgoals in its body: \dedalus{successor(\_,S),
-choose((\_), (S))}.  The choice subgoal expresses that the rule head may
+choose(($\Theta$), (S))}, where $\Theta$ is a vector containing all variables appearing in the
+rule body.  The choice subgoal expresses that the rule head may
 be derived at any time value that appears in the \dedalus{successor} relation.
 
+The rule below is a well-formed asynchronous \lang rule.
 
 \begin{Dedalus}
 asynchronous
 r(A, B, S) \(\leftarrow\)
   e(A, B, \(\Tau\)),
-  successor(N, S),
-  choose((A, B, N), (S));
+  successor(_, S),
+  choose((A, B), (S));
 \end{Dedalus}
+
+
+We admit a new temporal head annotation to sugar the rule above.
+The identifier \emph{async} implies the rule is asynchronous, and stands in for
+\dedalus{successor(\_, S), choose(($\Theta$), (S))} in the body.  
+%%$N$ is a variable,
+%%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
+%%optionally referenced in the head.  
+For example:
+
 
 \begin{Dedalus}
 asynchronous
-r(A, B)@async \(\leftarrow\) \wrm{inconsistency.  are we doing async(N)?}
+r(A, B)@async \(\leftarrow\) 
   e(A, B);
 \end{Dedalus}
 
@@ -162,8 +179,8 @@ time of the sender (via a message rule) of a given tuple.  For example, the send
 
 \begin{Dedalus}
 entangle
-m\_balance\_update(A, B, N)@async(N) \(\leftarrow\)
-  send\_p(A, B);
+m\_balance\_update(A, B, N)@async \(\leftarrow\)
+  send\_p(A, B)@N;
 \end{Dedalus}
 
 Note that in the rule named \emph{entangle}, the time suffix is projected into the last attribute of \emph{m\_p}.  

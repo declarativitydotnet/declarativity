@@ -1,18 +1,18 @@
 
 \section{Stratifiability of Dedalus Programs}
 
-\paa{notes}
+%%\paa{notes}
 
-this section has become cluttered, but for me the main results are the following:
+%%this section has become cluttered, but for me the main results are the following:
 
-\begin{enumerate}
-\item Negation-, aggregation- and choice-free Dedalus programs have a unique minimal model (pure Datalog)
-\item stratifiable Dedalus programs have a unique minimal model (again, Datalog, but we need to show that the restrictions and syntactic transformations
-cannot introduce a cycle or add a negative edge to an existing cycle.)
-\item \emph{temporally stratified} Dedalus programs (w/o choice) force any cycles with negation to involve an inductive edge, forcing an ordering on the evaluation.
-we can show that in all such cases, the corresponding datalog program is modularly stratified (insofar as \emph{successor} is considered to be ``completely
-evaluated" in a lower module.)  since modularly stratified programs have a unique stable model, so do any temporally stratified Dedalus programs.
-\end{enumerate}
+%%\begin{enumerate}
+%%\item Negation-, aggregation- and choice-free Dedalus programs have a unique minimal model (pure Datalog)
+%%\item stratifiable Dedalus programs have a unique minimal model (again, Datalog, but we need to show that the restrictions and syntactic transformations
+%%cannot introduce a cycle or add a negative edge to an existing cycle.)
+%%\item \emph{temporally stratified} Dedalus programs (w/o choice) force any cycles with negation to involve an inductive edge, forcing an ordering on the evaluation.
+%%we can show that in all such cases, the corresponding datalog program is modularly stratified (insofar as \emph{successor} is considered to be ``completely
+%%evaluated" in a lower module.)  since modularly stratified programs have a unique stable model, so do any temporally stratified Dedalus programs.
+%%\end{enumerate}
 
 \begin{lemma} 
 %
@@ -190,6 +190,6 @@ timestep.
 %
 \end{proof}
 
-\paa{I don't think we can show that programs with async rules are locally stratifiable, actually}
-\wrm{Why not?  What if we have that "causality constraint" we were talking about?}
+%%\paa{I don't think we can show that programs with async rules are locally stratifiable, actually}
+%%\wrm{Why not?  What if we have that "causality constraint" we were talking about?}
 
