@@ -78,23 +78,20 @@ systems proved hard to model in Datalog.  First, deductions in these systems
 may be arbitrarily delayed, dropped, or re-ordered by the unreliable network
 links they must traverse.  Second, the state of any such system evolves with
 its execution.  Previous efforts addressed the former by assuming ordered and
-reliable delivery, and the latter by extending the Datalog model to admit
-updates, key constraints, persistence and events.  These extralogical~\nrc{What
-does ``extralogical'' mean?} \wrm{fair point -- I was trying to express that
-the concepts of updates, etc. were not expressed as logic in these previous
-efforts -- e.g.  the ``materialize'' directive.} additions and hidden network
-nondeterminism force programmers to think operationally, increase the
-complexity of the language, and in some cases have ambiguous semantics.  We
-argue that the missing component from these previous languages is a notion of
-{\em time}.  In this paper we present {\bf \lang}, a foundation language for
-programming and reasoning about distributed systems.  \lang is a syntactic
-subset of Datalog~\cite{ullmanbook} with negation, aggregate functions and
-choice, and admits an explicit representation of time into the logic language.
-Thus, \lang allows concepts like persistence, updateable state, key
-constraints, and message delay/loss to be described in a purely declarative
-fashion.  This allows us to express distributed systems whose state evolves
-over time in a high-level language with an unambiguous, model-theoretic
-semantics.
+reliable delivery while ignoring delay, and the latter by extending the Datalog
+model to admit updates, key constraints, persistence and events.  These
+additions have a semantics outside normal Datalog -- in some cases, they have
+ambiguous semantics -- and they increase the complexity of the language while
+forcing programmers to think operationally.  We argue that the missing component
+from these previous languages is a notion of {\em time}.  In this paper we
+present {\bf \lang}, a foundation language for programming and reasoning about
+distributed systems.  \lang is a syntactic subset of Datalog~\cite{ullmanbook}
+with negation, aggregate functions and choice, and admits an explicit
+representation of time into the logic language.  Thus, \lang allows concepts
+like persistence, updateable state, key constraints, and message delay/loss to
+be described in a purely declarative fashion.  This allows us to express
+distributed systems whose state evolves over time in a high-level language with
+an unambiguous, model-theoretic semantics.
 %Dedalus extends Datalog with a notion of time --- every Dedalus relation has
 %an integer attribute that intuitively represents when a given tuple is true.
 %We propose a sugared syntax in which rule head annotations indicate whether
