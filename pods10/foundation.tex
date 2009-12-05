@@ -1,9 +1,13 @@
 \section{\lang}
-We take as our foundation an augmented version of
-$\lnot$Datalog~\cite{ullmanbook} with aggregate function symbols akin to those
-of SQL (min, max, avg, stdev, count).  Henceforth, we will refer to this
-language as ``Datalog.'' In general, we are interested in the classes of
-statically stratifiable and locally stratifiable programs~\cite{prz}.  In
+%%We take as our foundation an augmented version of
+%%$\lnot$Datalog~\cite{ullmanbook} with aggregate function symbols akin to those
+%%of SQL (min, max, avg, stdev, count).  Henceforth, we will refer to this
+%%language as ``Datalog.'' 
+We take as our foundation the language $\lnot$Datalog~\cite{ullmanbook},
+which we will henceforth refer to as ``Datalog."
+In general, we are interested in the classes of
+statically stratifiable, locally stratifiable~\cite{prz} and modularly stratifiable~\cite{modular}
+programs.  In
 addition, we admit the use of the \emph{choice} construct~\cite{greedychoice,
 eventchoice} to model nondeterministic selection of an element from a set.  
 %%\jmh{save the next sentence for later.  stay pure here.}
