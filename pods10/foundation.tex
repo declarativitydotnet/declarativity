@@ -159,30 +159,41 @@ suffix, we omit the time suffix from body predicates and treat it as implicit.
 it's restricted because it appears in multiple atoms.}
 %
 \item {\em Temporal head annotation:} A temporal rule contains an identifier
-attached to the head predicate that indicates whether the rule is inductive or
-asynchronous.  The keyword stands in for the {\em successor} and {\em choice}
-predicates in the body.  Thus, a head predicate in a temporal rule is of the 
-form:
+attached to the head predicate that indicates 
+%%whether the rule is inductive or
+%%asynchronous.  
+the type of the rule. 
+The keyword stands in for the inclusion of hidden predicates in the rule body.
+%%and {\em choice}
+%%predicate in the body.  
+Thus, a head predicate in a \slang temporal rule is of the form:
 
-\dedalus{r($A_1$,$A_2$,[...],$A_n$)@S}
+\dedalus{r($A_1$,$A_2$,[...],$A_n$)S}
 
-where $S$ is one of the following:
+where $S$ 
+%%is one of the followin
+may be the string \emph{@next}, which implies that the rule is inductive
+and stands in for \dedalus{successor($\Tau$,S)} in the body.
+Later when we consider a less restricted variant of \lang, we will consider 
+another rule type.
+
+
 %
-\begin{enumerate}
+%\begin{enumerate}
 %
-\item \emph{next} implies the rule is inductive, and stands in for
-\linebreak\dedalus{successor($\Tau$,S)} in the body.
+%item \emph{next} implies the rule is inductive, and stands in for
+%\linebreak\dedalus{successor($\Tau$,S)} in the body.
 %
-\item \emph{async(N)} implies the rule is asynchronous, and stands in for
-\dedalus{successor(\_, S), choose((\_), (S))} in the body.  $N$ is a variable,
-corresponding to the time suffix $\Tau$ of all predicates in the rule body and
-optionally referenced in the head.  \wrm{this seems ugly to me}
+%\item \emph{async(N)} implies the rule is asynchronous, and stands in for
+%\dedalus{successor(\_, S), choose((\_), (S))} in the body.  $N$ is a variable,
+%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
+%optionally referenced in the head.  \wrm{this seems ugly to me}
 %
-\end{enumerate}
+%\end{enumerate}
 %
 \end{itemize}
 
-\wrm{the before stuff might be a bit to verbose and repetitive.}
+%\wrm{the before stuff might be a bit to verbose and repetitive.}
 
 \begin{example}
 
