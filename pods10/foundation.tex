@@ -71,6 +71,7 @@ That is, for every extensional predicate $r$ there is an IDB predicate \dedalus{
 contains at least the contents of $r$.  No well-formed \slang rule may reference
 an extensional predicate -- except for rules of the above
 form. \wrm{serious problem here -- remove or rewrite}
+\paa{what's the issue?  I've defined 'atemporal predicates' in section 2 without having to reference EDB, so I thought we were ok.}
 
 In a well-formed \slang rule, every subgoal is required to use the
 distinguished variable $\Tau$ as its time suffix, and $\Tau$ must not be
@@ -157,10 +158,10 @@ some natural syntactic ``sugar'' as follows:
 %rewritten as $r(A_{1}, \ldots, A_{n})@S$.
 %
 \item {\em Implicit time-suffixes in body predicates:} Since all body
-predicates of a well-formed rule have a free variable $\Tau$ in the time
+predicates of a well-formed rule have a variable $\Tau$ in the time
 suffix, we omit the time suffix from body predicates and treat it as implicit.
-\wrm{it's not a free variable unless there's only one body atom, right?  otherwise
-it's restricted because it appears in multiple atoms.}
+%%\wrm{it's not a free variable unless there's only one body atom, right?  otherwise
+%%it's restricted because it appears in multiple atoms.}
 %
 \item {\em Temporal head annotation:} A temporal rule contains an identifier
 attached to the head predicate that indicates 

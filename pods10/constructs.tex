@@ -51,7 +51,8 @@ $\forall A_1 \ldots A_n \in p\_pos : p\_pos(A_1 \ldots A_n) \to \Box p\_pos(A_1
 rule naturally encapsulates the ``always'' operator from temporal logic.  maybe
 this should even be a footnote unless we're going to make a bigger deal about
 Dedalus and temporal logics?}
-
+\paa{umm, I just thought it was interesting.  feel free to strike it, footnote it, convert 
+it to plain english, etc}
 \subsection{Mutable State}
 
 To model deletions and updates of a fact, it is necessary to break the induction
@@ -110,15 +111,3 @@ newer value.  We say the update is {\em atomic across timesteps}, meaning that
 the old value ceases to exist at the same timestep in which the new value
 is derived -- timestep $\Tau+1$ in the above definition.
 
-\subsection{Sequences}
-
-One may represent a database sequence -- an object that retains and increments a counter value -- with a pair of inductive rules.  One rule increments the current counter value when some condition is true, while the other persists the value of the sequence when the condition is false.  For example:
-
-\begin{Dedalus}
-seq(Agent, X + 1)@next \(\leftarrow\) seq(Agent, X), event(Agent);
-  
-seq(Agent, X)@next \(\leftarrow\) seq(Agent, X), \(\lnot\) event(Agent);
-\end{Dedalus}
-
-We must admit arithmetic functions into our language to express such a
-sequence, but the pair of rules above remains temporally safe.
