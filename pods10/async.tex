@@ -27,6 +27,7 @@ in the head of a deductive rule of the form:
   $q_1(A_1 \ldots A_n), \ldots q_n(A_1 \ldots A_n$);}
 
 \wrm{so you're saying that we can apply an aggregate multiple times in a single rule, but we can only have one kind of aggregate per rule?}
+\paa{no, my notation is just broken.  how should we write it?  this also implies that the aggregates must follow the other attributes, which is too strict too}
 
 These functions do not affect the expressivity of the language; we admit them
 tosimplify our discussion of ordering.  We note that the \emph{min} function,
@@ -48,6 +49,21 @@ notmin_p(A, B) \(\leftarrow\) p(A, B), p(A, C), B > C;
 min_p(A, B) \(\leftarrow\) p(A, B), \(\lnot\)notmin_p(A, B);
 \end{Dedalus}
 \end{example}
+
+
+\subsection{Sequences}
+
+One may represent a database sequence -- an object that retains and increments a counter value -- with a pair of inductive rules.  One rule increments the current counter value when some condition is true, while the other persists the value of the sequence when the condition is false.  For example:
+
+\begin{Dedalus}
+seq(Agent, X + 1)@next \(\leftarrow\) seq(Agent, X), event(Agent);
+  
+seq(Agent, X)@next \(\leftarrow\) seq(Agent, X), \(\lnot\) event(Agent);
+\end{Dedalus}
+
+We must admit arithmetic functions into our language to express such a
+sequence, but the pair of rules above remains temporally safe.
+
 
 %%\dedalus{r\_pos($A_1$, $A_2$, [...], $A_n$, }
 
@@ -106,13 +122,6 @@ r(A, B)@async \(\leftarrow\)
 
 
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=1\linewidth]{edbidbmdb.pdf}
-  \label{fig:edbidbmdb}
-  \caption{Derivations across time in IDB and MDB relations.}
-\vspace{-8pt}
-\end{figure}
 
 
 
