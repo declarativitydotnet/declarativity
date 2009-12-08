@@ -1,6 +1,6 @@
 \section{Safety in \large \bf \slang}
 
-A Datalog program is safe if it produces a finite minimal model, and hence has
+A Datalog program is safe if it admits a finite minimal model, and hence has
 a finite execution.  Safety in logic programming is traditionally achieved
 through the following constraints:
 
@@ -144,7 +144,7 @@ guaranteed to be temporally safe if:
 \item It is a deductive rule that is function-free and range-restricted, or
 %
 \item It is an inductive rule in which the head predicate occurs also in the
-body with the same variable bindings, or
+body with the same variable bindings for all attributes but the time suffix, or
 %%occurs also in the body with the same assignment of variables and constants to attributes.
 %
 \item It is an inductive rule that has at least one atemporal predicate as a
