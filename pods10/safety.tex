@@ -16,7 +16,7 @@ appear in a non-negated body subgoal.
 \end{enumerate}
 
 These constraints ensure that the Herbrand Universe is finite: any atom that
-may be deduced by a program may take its attributes only from the Herbrand
+may be deduced by a safe program may take its attributes only from the Herbrand
 Universe consisting of all constant symbols in the program and EDB.
 %%~\nrc{Don't know what this means, but I suspect it is fancy-pants language for no good reason.}
 %%\paa{ignoring this provocative comment.}
@@ -46,6 +46,7 @@ establish a temporal order among ground atoms.
 The \dedalus{successor} relation complicates our discussion of safety, as it
 introduces the countably infinite set $\mathbb{Z}$ to our Herbrand Universe.
 Clearly, a naive interpretation of time can lead to unsafe programs:
+\wrm{BROKEN: Need to fix this Herbrand business -- it's not countably infinite.}
 
 %Consider the \dedalus{successor} relation described above.  According to our
 %intuitive interpretation, this relation models the passage of time, in order to
@@ -96,6 +97,8 @@ only in its time suffix.  We we find it useful to distinguish from unsafe
 programs those programs that, given a finite EDB, eventually derive only tuples
 that change in their time suffixes.
 
+\wrm{Define 'derivation'.  Joe sez: "Here I think you just need an appropriate reference for derivation trees, along with some simple intuition.  I believe the right ref is "Constraints and Redundancy in Datalog", Levy/Sagiv, PODS 92."}
+
 \begin{definition}
 %
 A \emph{stable derivation} is a fact $\gamma'$ with time suffix $\Tau$ derived
@@ -115,7 +118,7 @@ $\gamma'$ only in its time suffix.
 %%\end{definition}
 
 We call a \slang instance is \emph{quiescent} if after some time $\Tau$, all
-derivations are always stable.
+derivations are henceforth stable.
 
 \begin{definition}
 %
@@ -144,7 +147,8 @@ guaranteed to be temporally safe if:
 \item It is a deductive rule that is function-free and range-restricted, or
 %
 \item It is an inductive rule in which the head predicate occurs also in the
-body with the same variable bindings for all attributes but the time suffix, or
+body with the same variable bindings for all attributes save the time suffix,
+or
 %%occurs also in the body with the same assignment of variables and constants to attributes.
 %
 \item It is an inductive rule that has at least one atemporal predicate as a
@@ -258,13 +262,14 @@ all variables are range-restricted, it entails infinite oscillation of the
 %In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
 %fixpoint computation.  The complete program is safe if the EDB is finite.
 
-\subsection{EDB Prefixes}
+\subsection{EDB Preambles}
 
-A \slang instance may receive arbitrarily many external input tuples over the
-course of its execution, but a sensible implementation should not wait
-arbitrarily long before performing deductions.  In this section we introduce
-the notion of EDB preambles, and prove an equivalence between two types of
-evaluation.
+\wrm{buggy text here, come up with motivation that doesn't involve implementation}
+%A \slang instance may receive arbitrarily many external input tuples over the
+%course of its execution, but should not wait
+%arbitrarily long before performing deductions.  In this section we introduce
+%the notion of EDB preambles, and prove an equivalence between two types of
+%evaluation.
 
 %In general, the EDB of a \slang instance may be infinite, and may lead to unsafe evaluations even when \emph{successor} is derived from it
 %as in a post-hoc evaluation.

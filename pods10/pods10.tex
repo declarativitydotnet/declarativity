@@ -102,18 +102,18 @@ the language or its interpretation respectively, and forcing programmers to
 think operationally.  We argue that the missing component from these previous
 languages is a notion of {\em time}.  In this paper we present {\bf \lang}, a
 foundation language for programming and reasoning about distributed systems.
-\lang is a syntactic subset of Datalog~\cite{ullmanbook} with negation,
-aggregate functions and choice, and admits an explicit representation of time
-into the logic language.  Thus, \lang allows concepts such as persistence,
-updateable state, key constraints, and message delay and loss to be described
-in a purely declarative fashion.  This capability allows us to express
-distributed systems whose state evolves over time in a high-level language with
-an unambiguous, model-theoretic semantics.
+\lang reduces to of Datalog~\cite{ullmanbook} with negation, aggregate
+functions and choice, and admits an explicit representation of time into the
+logic language.  Thus, \lang allows concepts such as persistence, updateable
+state, key constraints, and message delay and loss to be described in a purely
+declarative fashion.  This capability allows us to express distributed systems
+whose state evolves over time in a high-level language with an unambiguous,
+model-theoretic semantics.
 %\lang extends Datalog with a notion of time --- every \lang relation has an
 %integer attribute that intuitively represents when a given tuple is true.  We
-%propose a sugared syntax in which rule head annotations indicate whether their
-%conclusions hold at the same time as their premises, in the immediate next
-%timestep, or at some unknown timestep.
+%propose a sugared syntax in which rule head annotations indicate whether
+%their conclusions hold at the same time as their premises, in the immediate
+%next timestep, or at some unknown timestep.
 We further introduce the notion of \emph{temporal stratification}, a
 syntactically checkable property of \lang programs similar to stratification,
 and show that the class of temporally stratifiable programs in \lang

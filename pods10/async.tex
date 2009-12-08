@@ -72,26 +72,33 @@ sequence, but the pair of rules above remains temporally safe.
 
 \subsection{Choice}
 
+\wrm{Dave Maier says to define/give an example of choice.  Should we?}
+
 \subsection{Asynchronous Rules}
 
-Recall our use of the distinguished variables $\Tau$ and $S$ to represent the
-time suffixes respectively in the body and head of a rule
-(Section~\ref{sec:syntaxrestrictions}).
-%in our discussion of \slang, representing the time suffixes occuring
-%respectively in the body and head of a rule.
+In order to deal with nondeterminism introduced by distribution, we admit a
+third type of rule, called an {\em asynchronous} rule.  A rule is asynchronous
+if the 
+%Recall our use of the distinguished variables $\Tau$ and $S$ to represent the
+%time suffixes respectively in the body and head of a rule
+%(Section~\ref{sec:syntaxrestrictions}).  in our discussion of \slang,
+%representing the time suffixes occuring respectively in the body and head of a
+%rule.
+relation between the head time suffix $S$ and the body time suffix $\Tau$ is
+unknown.  Furthermore, $S$, but not $\Tau$, may take on the special value
+$\perp$ which means ``never.''  Derivation at $\perp$ indicates that the
+deduction is ``lost,'' as time suffixes in rule bodies do not range over
+$\perp$.
 
-We call a rule {\em asynchronous} if the relation between $S$ and $\Tau$ is
-unknown.  We model this nondeterminism with the choice construct.
+We model network nondeterminism using the \dedalus{choice} construct to choose
+from a value in the special \dedalus{time} predicate.  \dedalus{time(t)} is
+true if $t \in \mathbb{Z} \cup \perp$. An asynchronous rule has the following
+subgoals in its body: \dedalus{time(S), choose(($\Theta$), (S))}, where
+$\Theta$ is a vector containing all variables appearing in the rule body,
+including $\Tau$.  The choice subgoal expresses that the rule head may be
+derived at any value of \dedalus{time}.
+%time value that appears in the \dedalus{successor} relation.
 
-An asynchronous rule has the following subgoals in its body:
-\dedalus{successor(\_,S), choose(($\Theta$), (S))}, where $\Theta$ is a vector
-containing all variables appearing in the rule body, including $\Tau$.  The
-choice subgoal expresses that the rule head may be derived in any time suffix.
-%time value
-%that appears in the \dedalus{successor} relation.
-
-\wrm{this is a bit of a cop out i think, shouldn't we give an actual form
-rather than an example?}
 \begin{example}
 A well-formed asynchronous \lang rule.
 
@@ -116,11 +123,6 @@ asynchronous
 r(A, B)@async \(\leftarrow\) 
   e(A, B);
 \end{Dedalus}
-
-
-
-
-
 
 \subsection{Queues}
 
@@ -155,9 +157,9 @@ In the program below, we define a table \dedalus{m\_balance\_update} that
 serves as a queue to feed \dedalus{balance\_update}.  The queue must persist
 across timesteps because it may take multiple timesteps to drain it.  At each
 fixpoint, for each value of \textbf{A}, a single tuple is projected into
-\dedalus{balance\_update} and atomically deleted from
-\dedalus{m\_balance\_update}, changing the value of the aggregate calculated at
-the subsequent step: \wrm{as opposed to non-atomic deletion? what's that?}
+\dedalus{balance\_update} and deleted (atomic with the projection) from
+\dedalus{m\_balance\_update}, changing the value of the aggregate calculated
+at the subsequent step:
 
 \begin{Dedalus}
 
@@ -187,8 +189,6 @@ atttribute.
 A queue establishes a mapping between the local clock and the ordering domain of the input relation. By doing so, we are able to take
 advantage of the natural ordering enforced by stratification over time, to enforce an ordering property over our input that is otherwise 
 very difficult to express in a logic language.
-
-\wrm{===stopped reading here===}
 
 \subsection{Lamport Clocks}
 
