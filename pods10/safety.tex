@@ -180,7 +180,9 @@ may only be triggered finitely often.
 
 \paa{maybe this is too greedy.  rule 1 above defines "pointwise safety" or classical datalog-type safety.  
 if all deductive rules respect rule 1, we are pointwise finite.  the other two rules describe temporal safety
-as such}
+as such.  that is to say: any deductive rule that is range-restricted and function-free is pointwise safe (deductive rules do
+not reference the infinite relation \emph{successor}.  pointwise safe <=> safe in datalog) further, any pointwise safe rule is temporally safe.  
+also, rules that are (2,3) are temporally safe.}
 
 A \slang program is temporally safe if all its rules are temporally safe.
 Intuitively, a temporally safe program quiesces given a finite EDB, while a
