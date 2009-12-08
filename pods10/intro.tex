@@ -1,4 +1,23 @@
 \section{Introduction}
+%Our research is motivated by two hard problems in distributed systems.  First,
+
+
+%Distributing any system introduces nondeterminism.  For example, one may
+%distribute a computation over many inexpensive, but unreliable, commodity
+%machines (e.g. RAID).  The status of internet links and widely distributed
+%nodes is inherently more unreliable than multiple cores on a single die, or
+%multiple CPUs in a single computer.  
+
+%We present {\bf \lang}, a foundation language for programming and
+%reasoning about distributed systems.  
+
+%We correct deficiencies in earlier attempts, and introduce a compelling notion
+%of non-determinism in the language.  We specifically use non-determinism to
+%reason about {\em when} a deduction becomes visible, including the possibility
+%that the deduction will never be visible.  Programmers can constrain this
+%non-determinism by using well-studied techniques in distributed systems, such as
+%Lamport Clocks 
+
 
 Traditional database systems are based on declarative query languages that
 specify transformations as dataflows over an updatable store.  Such query
@@ -18,21 +37,10 @@ attempts were plagued with ambiguities about how and when state changes occur
 and become visible, putting a heavy burden on the programmer to ensure even
 simple properties, such as atomicity of updates over time.
 
-In contrast to reasoning about state change procdurally, Dedalus observes
+In contrast to reasoning about state change procdurally, \lang observes
 that this concept is intuitively expressed as invariants over {\em time}.  In
 this work, we present a formal model of Datalog augmented with time extensions.
-By reifying time as data an introducing it into the logic, Dedalus eliminates
+By reifying time as data an introducing it into the logic, \lang eliminates
 previous ambiguities, ensures atomicity of updates and makes it possible to
 express system invariants that can guarantee liveness properties, a key
 challenge in building distributed systems.
-
-\subsection{Datalog}
-
-We take as our foundation language an augmented version of \linebreak
-$\lnot$Datalog~\cite{ullmanbook} with both scalar and aggregate function
-symbols.  In general, we are interested in the classes of statically
-stratifiable and locally stratifiable programs~\cite{prz}.  An exception is our
-use of the \emph{choice} construct~\cite{greedychoice, eventchoice} to model
-nondeterministic selection of an element from a set.  We use this construct to
-model both the nondeterminism of message delay, and the semantics of key
-maintenance in prior deductive update models like Overlog~\cite{boon}.

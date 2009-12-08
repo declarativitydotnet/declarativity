@@ -3,7 +3,7 @@
 \subsection{Updateable State}
 
 Many deductive database systems, including LDL~\cite{ldl} and Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates using an
-assignment primitive.  In contrast, languages proposed by Cleary and Liu~\cite{deductiveupdates, starlog, harmful} retain a purely logical 
+assignment primitive.  In contrast, languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog} retain a purely logical 
 interpretation by admitting temporal extensions into their syntax and interpreting assignment or update as a composite operation
 across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the latter approach, but differ in several significant ways.
 First, we model persistence explicitly in our language, so that like updates, it is specified as a composite operation across timesteps.
@@ -13,7 +13,7 @@ in the current timestep, the immediate next timestep, and \emph{some} future tim
 
 \subsection{Distributed Systems}
 
-Significant recent work~\cite{boon, p2, loo-sigmod06, boom-techr} has focused on applying deductive database languages extended with networking 
+Significant recent work~\cite{boom-techr,boon, p2, loo-sigmod06} has focused on applying deductive database languages extended with networking 
 primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
 a data store that changes over time, so any useful implementation of such a language addresses the updatable state issue in some manner. 
 Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
@@ -41,4 +41,4 @@ state, and temporal logic that describes admissible transitions.  The notion of 
 in that they are ``invariant under stuttering" is similar to our declarative definition of table persistence.  
 %%Timed Concurrent Constraint Programming(TCCP)~\cite{tccp, tdccp} 
 
-Further background: \cite{tccp,tdccp,prz, constructivism}
+Further background: \cite{constructivism,prz,tdccp,tccp}

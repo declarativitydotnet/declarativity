@@ -2,7 +2,7 @@
 
 \subsection{Kinds of Relations}
     
-%%\jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``Dedalus is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
+%%\jmh{Ack ... deductive rules are unsafe, and technically Datalog-neg forbids them due to the free variable in the head.  So you will need to expand your language to include an acceptable notion of per-timestep safety (as Maier suggested), at which point it's not a subset of Datalog-neg.  Would be nice to be able to say ``\lang is a subset of (Datalog + \{set of addons\})'' but that would require defining the acceptable saftey before defining timestamps (which are a restriction).}
 %\nrc{Title is too long: EDB, IDB, and NDB instead?}
 In a \lang program, there are three kinds of relations:
 extensional, {\em intensional} or {\em nondeterministic}.
@@ -43,14 +43,14 @@ interchangeably, for reasons which will soon become clear.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=1\linewidth]{edbidbmdb.pdf}
+  \includegraphics[width=1\linewidth]{figures/edbidbmdb.pdf}
   \label{fig:edbidbmdb}
   \caption{Derivations across time in IDB and MDB relations.}
 \vspace{-8pt}
 \end{figure}
 
 \paa{this section (its placement \emph{and} content) is somewhat problematic given the current structure
-of the draft.  We've established the notion of finite prefixes of a (possibly infinite) EDB.  A trace is basically just
+of the draft.  We've established the notion of finite preambles of a (possibly infinite) EDB.  A trace is basically just
 an interpretation (a set of ground atoms) -- by calling it a ``trace" we're connoting a post-hoc interpretation.
 A trace that is just EDB is sufficient, given a program, to augment the trace with IDB and MDB atoms such that
 the resulting trace is a model (by simply running a fixpoint computation).  For a program with no async rules, the EDB of input is sufficient to recreate the
@@ -63,33 +63,33 @@ the IDB from MDB and EDB) to regenerate a "complete trace" (ie minimal model) fr
 %Consider a non-empty EDB $E$, an empty MBD $M$ and IDB $I$ and a program $P$.  Evaluating $P$ against $E$ may derive facts in $M$ and $I$.
 
 \begin{definition}
-A \emph{trace} is any set of facts from the EDB, MDB or IDB of a Dedalus program evaluation.
+A \emph{trace} is any set of facts from the EDB, NDB or IDB of a \lang program evaluation.
 \end{definition}
 
-Any trace for a Dedalus instance $(P,E)$ is an interpretation of $(P,E)$.
+Any trace for a \lang instance $(P,E)$ is an interpretation of $(P,E)$.
 %\wrm{lol, why do we need the notion of an incomplete trace?}
 
 \begin{definition}
 %
-A \emph{complete trace} of an evaluation of a Dedalus instance is the union of
+A \emph{complete trace} of an evaluation of a \lang instance is the union of
 the given EDB with the derived IDB and MDB.
 %
 \end{definition}
 
 \begin{lemma}
 %
-A complete trace of a Dedalus instance $(P,E)$ is its unique minimal model.
+A complete trace of a \lang instance $(P,E)$ is its unique minimal model.
 %
 \end{lemma}
 
 %\begin{lemma}
 %%
-%For any bound on $successor$, a complete trace of a Dedalus instance $(P,E)$ has a unique minimal model.
+%For any bound on $successor$, a complete trace of a \lang  instance $(P,E)$ has a unique minimal model.
 %%
 %\end{lemma}
 
 If we evaluate E given P, and P is stratifiable, the resulting set of ground atoms is a minimal model.
-In our case, however, successor causes our EDB to be infinite, so the minimal model of any Dedalus program 
+In our case, however, successor causes our EDB to be infinite, so the minimal model of any \lang program 
 with temporal rules is potentially infinite.  \paa{but we'd like to show that a weaker property holds: that for any value $N$
 in the \emph{successor} relation, the resulting program has a minimal model.}
 \wrm{we either already showed this, or our theorems above are wrong.}
@@ -100,8 +100,8 @@ A \emph{minimal trace} is a subset of a complete trace that excludes any IDB gro
 rule.
 \end{definition}
 
-A minimal trace of a Dedalus program $P$ is equivalent to the complete trace of which is is a subset -- the latter may be derived from the former by repeated
-applications of inductive rules.  However, a given a Dedalus instance $(P, E)$ and a minimal trace T (where $E \subset T$), a fixpoint
+A minimal trace of a \lang program $P$ is equivalent to the complete trace of which is is a subset -- the latter may be derived from the former by repeated
+applications of inductive rules.  However, a given a \lang instance $(P, E)$ and a minimal trace T (where $E \subset T$), a fixpoint
 computation will most likely \emph{not} yield a minimal model, because new tuples may be added to the MDB that represent a component 
 of a different minimal model, and because these may affect the IDB.  The set of ground atoms $EDB \cup MDB_{old} \cup IDB_{new}$
 \emph{may} may be a minimal model, iff $IDB_{new} = IDB_{old}$.  \paa{actually I am not sure if that is true}.  
@@ -117,7 +117,7 @@ A \emph{reduced trace} is a minimal trace with normalized time suffixes starting
 show a (trivial) procedure for reduction and make some claims about equivalences without entanglement.
 
 \begin{definition}
-A \emph{event trace} is a Dedalus EDB.
+A \emph{event trace} is a \lang EDB.
 \end{definition}
 
 An event trace and program P may be used to generate a new IDB and MDB.  The MDB is virtually certain to differ from that of another

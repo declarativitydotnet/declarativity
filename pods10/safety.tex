@@ -73,7 +73,7 @@ Clearly, a naive interpretation of time can lead to unsafe programs:
 
 \begin{example}
 %
-A \slang instance that is unsafe due to an unbroken induction over time.
+A temporally safe \slang instance.
 
 \begin{Dedalus}
 r1
@@ -158,8 +158,8 @@ Intuitively, a temporally safe program quiesces given a finite EDB.  A
 temporally unsafe program changes infinitely, even given a finite EDB.  Note
 that the \slang program above is temporally safe because \emph{r1} corresponds
 to the second rule of the definition, and \emph{r2} corresponds to the first
-\wrm{which?}.  Atoms deduced by the inducive rule \emph{r1} differ from
-existing atoms only in their time suffix.
+Atoms deduced by the inducive rule \emph{r1} differ from existing atoms only in
+their time suffix.
 
 \begin{example}
 A \slang instance with a temporally unsafe deductive rule.
@@ -174,8 +174,9 @@ could range over an infinite set of constants.
 \end{example}
 
 
-\begin{example}
-A \slang instance that is unsafe due to infinite oscillation.
+\begin{example} 
+%
+A \slang instance that is temporally unsafe due to infinite oscillation.
 
 \begin{Dedalus}
 flip\_flop(A, B)@next \(\leftarrow\) flip\_flop(A, B);
@@ -218,11 +219,11 @@ all variables are range-restricted, it entails infinite oscillation of the
 %%p(?, ?)@789; \wrm{we're still doing queries?}
 %%\end{Dedalus}
 
-%%Evaluating the Dedalus instance would require \emph{successor} to range over the
+%%Evaluating the \lang instance would require \emph{successor} to range over the
 %%subset of consecutive natural numbers $[123, 790]$.
 
 %%\begin{definition}
-%%A \emph{post-hoc} evaluation is an evaluation of a Dedalus instance where
+%%A \emph{post-hoc} evaluation is an evaluation of a \lang instance where
 %%{\em successor} ranges over the finite subset of $\mathbb{Z}$ described above.
 %%\end{definition}
 
@@ -235,7 +236,7 @@ all variables are range-restricted, it entails infinite oscillation of the
 %%\wrm{I wasn't a fan of expressing a query plan in a Datalog rule...  But we can
 %%talk about this}
 
-%%We then populate \emph{successor} with Dedalus program shown below:
+%%We then populate \emph{successor} with \lang program shown below:
 %with arithmetic and aggregate functions, as shown below.
 
 %%\begin{Dedalus}
@@ -252,7 +253,7 @@ all variables are range-restricted, it entails infinite oscillation of the
 
 %%\wrm{Not sure what the point of this is...}
 %%Since {\em successor} is finite in a post-hoc evaluation, we may evaluate the
-%%ntire Dedalus instance in a single fixpoint.
+%%ntire \lang instance in a single fixpoint.
 
 %In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
 %fixpoint computation.  The complete program is safe if the EDB is finite.
@@ -262,18 +263,18 @@ all variables are range-restricted, it entails infinite oscillation of the
 A \slang instance may receive arbitrarily many external input tuples over the
 course of its execution, but a sensible implementation should not wait
 arbitrarily long before performing deductions.  In this section we introduce
-the notion of EDB prefixes, and prove an equivalence between two types of
+the notion of EDB preambles, and prove an equivalence between two types of
 evaluation.
 
 %In general, the EDB of a \slang instance may be infinite, and may lead to unsafe evaluations even when \emph{successor} is derived from it
 %as in a post-hoc evaluation.
 
 \begin{definition}
-A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is less than or equal to $n$.
+A \emph{preamble} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is less than or equal to $n$.
 \end{definition}
 
-If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}$ = $\Gamma$.  Because each prefix is a superset of all 
-prefixes with lower indices, we have the monotonicity property:
+If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}$ = $\Gamma$.  Because each preamble is a superset of all 
+preamble with lower indices, we have the monotonicity property:
 
 $\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \alpha_{j})$
 
@@ -283,12 +284,12 @@ $\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \
 
 
 \begin{definition}
-Let $F$ be the set of all finite subsets of possible facts. \wrm{need to be
-more precise.}  
-\paa{I think this is the power set of the herbrand base...}
-Let $P$ be the set of all finite subsets of possible rules.
-Let $FP : P \times F \mapsto F$ be the function representing the
-\emph{fixpoint} computation carried out by a datalog interpreter.  That is, $FP_p$ takes an EDB to its corresponding IDB.
+%
+Let $F$ be the set of all finite subsets of possible facts.  Let $P$ be the set
+of all finite subsets of possible rules.  Let $FP : P \times F \mapsto F$ be
+the function representing the \emph{fixpoint} computation carried out by a
+datalog interpreter.  That is, $FP_p$ takes an EDB to its corresponding IDB.
+%
 \end{definition}
 
 
@@ -302,15 +303,15 @@ FP_p(\alpha_{i+1})$.
 
 %%this could (with some work) lead to an inductive proof
 %%that an infinite model is minimal.  we could prove the (weaker?) property that
-%%the infinite series of models of increasing finite prefixes of an EDB are all 
+%%the infinite series of models of increasing finite preambles of an EDB are all 
 %%minimal if one of them is.
 
 \begin{proof}
 
 %%Inductive step:
 
-%%if we assume that some program P and finite prefix $\alpha_n$ of a trace $\Gamma$ produce a minimal model, 
-%%then it follows that a prefix $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
+%%if we assume that some program P and finite preamble $\alpha_n$ of a trace $\Gamma$ produce a minimal model, 
+%%then it follows that a preamble $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
 
 by contradiction. Assume $\exists i \in \mathbb{Z}$ such that:
 $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) \neq FP_p(\alpha_{i+1})$
