@@ -1,17 +1,17 @@
 
-\section{Stratifiability of Dedalus Programs}
+\section{Stratification in {\large{\bf\slang}}}
 
 %%\paa{notes}
 
 %%this section has become cluttered, but for me the main results are the following:
 
 %%\begin{enumerate}
-%%\item Negation-, aggregation- and choice-free Dedalus programs have a unique minimal model (pure Datalog)
-%%\item stratifiable Dedalus programs have a unique minimal model (again, Datalog, but we need to show that the restrictions and syntactic transformations
+%%\item Negation-, aggregation- and choice-free \lang programs have a unique minimal model (pure Datalog)
+%%\item stratifiable \lang programs have a unique minimal model (again, Datalog, but we need to show that the restrictions and syntactic transformations
 %%cannot introduce a cycle or add a negative edge to an existing cycle.)
-%%\item \emph{temporally stratified} Dedalus programs (w/o choice) force any cycles with negation to involve an inductive edge, forcing an ordering on the evaluation.
+%%\item \emph{temporally stratified} \lang programs (w/o choice) force any cycles with negation to involve an inductive edge, forcing an ordering on the evaluation.
 %%we can show that in all such cases, the corresponding datalog program is modularly stratified (insofar as \emph{successor} is considered to be ``completely
-%%evaluated" in a lower module.)  since modularly stratified programs have a unique stable model, so do any temporally stratified Dedalus programs.
+%%evaluated" in a lower module.)  since modularly stratified programs have a unique stable model, so do any temporally stratified \lang programs.
 %%\end{enumerate}
 
 \begin{lemma} 
@@ -57,9 +57,9 @@ minimal model.
 
 %\begin{lemma}
 %
-%A syntactically stratifiable Dedalus instance without choice has a unique
+%A syntactically stratifiable \lang instance without choice has a unique
 %minimal model.  That is, there exists a function $D$ from syntactically
-%stratifiable Dedalus instances without choice to their minimal models.
+%stratifiable \lang instances without choice to their minimal models.
 %
 %\end{lemma}
 
@@ -69,12 +69,12 @@ minimal model.
 %We know that there exists a function $B$ from syntactically stratifiable
 %Datalog instances to their minimal models \wrm{cite?}.  Earlier, we introduced
 %\wrm{XXX: where?} a bijection \wrm{XXX: probably not a bijection} $A$ from the
-%set of Dedalus instances without choice to the set of Datalog instances, and a
+%set of \lang instances without choice to the set of Datalog instances, and a
 %bijection $C$ between minimal models of Datalog instances and minimal models of
-%Dedalus instances without choice.  We will show that $D = C \circ B \circ A$.
+%\lang instances without choice.  We will show that $D = C \circ B \circ A$.
 
 %Thus, we need only prove that the restriction of $A$ to syntactically
-%stratifiable Dedalus instances without choice maps to a subset of syntactically
+%stratifiable \lang instances without choice maps to a subset of syntactically
 %stratifiable Datalog instances.  But this is clear, as $A$ does not add any
 %rules to the instance, and may introduce only the non-negated EDB {\em
 %successor} relation to the body of an existing rule.  Thus, $A$ cannot
@@ -84,7 +84,7 @@ minimal model.
 %\end{proof}
 
 However, many programs we are interested in expressing are not syntactically
-stratifiable.  Fortunately, \slang has a syntactically-checkable notion of
+stratifiable.  Fortunately, \slang has a syntactically checkable notion of
 {\em temporal stratifiability} that maps to a subset of {\em modularly
 stratifiable} Datalog programs.
 
@@ -121,9 +121,9 @@ element depends negatively on itself.
 
 %\begin{lemma}
 %
-%A locally stratifiable Dedalus instance without choice has a unique
+%A locally stratifiable \lang instance without choice has a unique
 %minimal model.  That is, there exists a function $E$ from locally
-%stratifiable Dedalus instances without choice to their minimal models.
+%stratifiable \lang instances without choice to their minimal models.
 %
 %\end{lemma}
 
@@ -193,7 +193,7 @@ timestep.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.75\linewidth]{dedalus_classes.pdf}
+  \includegraphics[width=0.75\linewidth]{figures/dedalus_classes.pdf}
   \label{fig:dedalus-classes}
   \caption{Stratifiablility classes.  $A \to B$ means that every program in A is in B.}
 \vspace{-8pt}

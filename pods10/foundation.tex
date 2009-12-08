@@ -1,25 +1,3 @@
-\section{Introduction}
-%Our research is motivated by two hard problems in distributed systems.  First,
-
-
-%Distributing any system introduces nondeterminism.  For example, one may
-%distribute a computation over many inexpensive, but unreliable, commodity
-%machines (e.g. RAID).  The status of internet links and widely distributed
-%nodes is inherently more unreliable than multiple cores on a single die, or
-%multiple CPUs in a single computer.  
-
-%We present {\bf \lang{Dedalus}}, a foundation language for programming and
-%reasoning about distributed systems.  
-
-%We correct deficiencies in earlier attempts, and introduce a compelling notion
-%of non-determinism in the language.  We specifically use non-determinism to
-%reason about {\em when} a deduction becomes visible, including the possibility
-%that the deduction will never be visible.  Programmers can constrain this
-%non-determinism by using well-studied techniques in distributed systems, such as
-%Lamport Clocks 
-
-
-
 \section{\large \bf \slang}
 %%We take as our foundation an augmented version of
 %%$\lnot$Datalog~\cite{ullmanbook} with aggregate function symbols akin to those
@@ -39,14 +17,18 @@ nondeterministic selection of an element from a set.
 
 %%\jmh{Can't we borrow this from somebody else rather than define it ourselves?  ``As in Ullman, et al [FOO] we represent...''}
 As a matter of notation, we refer to a countably infinite universe of constants
-\emph{\textbf{C}}, in which $C_{1}, C_{2}, \ldots$ are representations of individual
-constants -- and a countably infinite universe of variable symbols $\textbf{A} = A_1,
-A_2, \ldots$, and a distinguished variable $\Tau$.
+$\Consts$, in which $C_{1}, C_{2}, \ldots$ are representations of individual
+constants -- and a countably infinite universe of variable symbols $\Vars = A_1,
+A_2, \ldots$.
+%, and a distinguished variable $\Tau$.
 % which may take on the values of any constants.   
-We represent time in \slang by the set of integers $\mathbb{Z}$ We consider the
-standard strict total order $<$. We define the \dedalus{successor} relation,
-where \dedalus{successor(i,j)} means that \dedalus{j} is the least element that
-is greater than \dedalus{i}.
+We represent time in \slang by the set of integers $\mathbb{Z}$, and consider
+a possibly infinite relation \dedalus{successor}, where \dedalus{successor(i,j)}
+iff $j = i + 1$.
+%We consider the
+%standard strict total order $<$. We define the \dedalus{successor} relation,
+%where \dedalus{successor(i,j)} means that \dedalus{j} is the least element that
+%is greater than \dedalus{i}.
 
 
 \subsection{Syntactic Restrictions}
@@ -78,18 +60,18 @@ $P$ two predicates \dedalus{r\_pos} and \dedalus{r\_neg} with the same schema
 as \dedalus{r}.  \dedalus{r\_neg} is a convenience predicate that will later
 use to enable updates.  We define \dedalus{r\_pos} using the following rule:
 
-\dedalus{r\_pos($A_1$, $A_2$, [...], $A_n$) \(\leftarrow\) r($A_1$, $A_2$,
-[...], $A_n$);}
+\dedalus{r\_pos($A_1$,$A_2$,[...],$A_n$) \(\leftarrow\)
+r($A_1$,$A_2$,[...],$A_n$);}
 
 That is, for every extensional predicate \dedalus{r} there is an intensional
 predicate \dedalus{r\_pos} that contains at least the contents of \dedalus{r}.
 Intuitively, this rule allows extensional to serve as ground for
 \dedalus{r\_pos}, while enabling other rules to derive \dedalus{r\_pos} facts.
-Except for a rule of the above form, no well-formed \slang rule may reference
+Except for a rule of the form above, no well-formed \slang rule may reference
 an extensional predicate.
 
-In a well-formed \slang rule, every subgoal is required to use the
-distinguished variable $\Tau$ as its time suffix, and $\Tau$ must not be
+In a well-formed \slang rule, every subgoal uses an existential variable
+$\Tau$ as its time suffix, and $\Tau$ must not be
 further restricted.  A well-formed \slang rule must also have a time suffix
 \dedalus{S} in its head, which must be constrained in exactly one of the
 following two ways:
@@ -150,16 +132,15 @@ semantics and the rich literature on the language.
 
 However \slang programs are intended to capture 
 %naturally
-temporal semantics.  For example, a fact with some constant $\Tau$ in its time
-suffix can be thought of as a fact that is true ``at time $\Tau$''.  Deductive
+temporal semantics.  For example, a fact with some constant $C$ in its time
+suffix can be thought of as a fact that is true ``at time $C$''.  Deductive
 rules can be seen as {\em atemporal} statements: they range over all values of
 the time suffix, and express deductions that are ``always'' valid.  Inductive
 and asynchronous rules are {\em temporal} --- their consequents are defined to
 be true ``at a different time'' than their antecedents. 
 
 To simplify \slang notation for this typical interpretation,  we introduce
-some natural syntactic ``sugar'' as follows:  \wrm{this might be more than sugar
-in that it prevents entanglement}
+some natural syntactic ``sugar'' as follows:
 
 \begin{itemize}
 %
@@ -170,8 +151,9 @@ in that it prevents entanglement}
 %A_{n})@S$.
 %
 \item {\em Implicit time-suffixes in body predicates:} Since all body
-predicates of a well-formed rule have a variable $\Tau$ in the time suffix, we
-omit the time suffix from body predicates and treat it as implicit.
+predicates of a well-formed rule have an existential variable $\Tau$ in the
+time suffix, we optionally omit the time suffix from body predicates and treat
+it as implicit.
 %%\wrm{it's not a free variable unless there's only one body atom, right?  otherwise
 %%it's restricted because it appears in multiple atoms.}
 %
@@ -220,8 +202,8 @@ q(A, B)@next \(\leftarrow\) e(A, B);
 
 
 % \jmh{the following is redundant and can be omitted}
-% Dedalus facts are just datalog facts that conform to the schema constraint:  rule heads with empty bodies, and ground terms for all attributes including the time suffix.  To accommodate this in our notation,
-% we allow a fourth suffix for the special case of empty bodies: a constant integer.  A Dedalus fact thus has the form:
+% \lang facts are just datalog facts that conform to the schema constraint:  rule heads with empty bodies, and ground terms for all attributes including the time suffix.  To accommodate this in our notation,
+% we allow a fourth suffix for the special case of empty bodies: a constant integer.  A \lang fact thus has the form:
 % 
 % $r(C_1, C_2, [...], C_n)@CI$
 % 
@@ -229,7 +211,8 @@ q(A, B)@next \(\leftarrow\) e(A, B);
 
 
 %Finally, we define the following shorthand for referring to the special IDB relations defined above.  Recall that for every EDB predicate $r$
-%we have a uniquely defined pair of IDB predicates $r\_pos$ and $r\_neg$.  In a Dedalus program, we use $r$ as shorthand for $r\_pos$ 
+%we have a uniquely defined pair of IDB predicates $r\_pos$ and $r\_neg$.  In a \lang program, we use $r$ as shorthand for $r\_pos$ 
+
 %(recall that the true EDB predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand for $r\_neg$.
 %%A deductive rule as defined above will hold for any assignment of a constant integer to the $N$-value in the suffix of each predicate.
 
@@ -238,11 +221,11 @@ q(A, B)@next \(\leftarrow\) e(A, B);
 %%\newdef{definition}{Definition} 
 %%\begin{definition}
 %
-%%An \emph{event} in Dedalus is an EDB fact.
+%%An \emph{event} in \lang is an EDB fact.
 %
 %%\end{definition}
 
 %%\jmh{Isn't the following simply a restatement of Datalog's use of EDB?}
 %%Since an extensional relation may not appear in a rule's head, events come from
-%%sources external to the evaluation of the Dedalus instance.
+%%sources external to the evaluation of the \lang instance.
 

@@ -2,7 +2,7 @@
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.75\linewidth]{dedalus-time.pdf}
+  \includegraphics[width=0.75\linewidth]{figures/dedalus-time.pdf}
   \label{fig:dedalus-time}
   \caption{Time moves forward in three ways: across strata, to the next fixpoint, and to some future fixpoint.}
 \vspace{-8pt}
@@ -23,11 +23,8 @@ of its domain -- and the \emph{count} aggregate, which is expressible using
 arithmetic.  We allow an exemplary or count aggregate function $\rho$ to appear
 in the head of a deductive rule of the form:
 
-\dedalus{p($A_1 \ldots A_n, \rho(A_{n+1}), \ldots \rho(A_{n+m}$) \(\leftarrow\) 
-  $q_1(A_1 \ldots A_n), \ldots q_n(A_1 \ldots A_n$);}
-
-\wrm{so you're saying that we can apply an aggregate multiple times in a single rule, but we can only have one kind of aggregate per rule?}
-\paa{no, my notation is just broken.  how should we write it?  this also implies that the aggregates must follow the other attributes, which is too strict too}
+\dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
+\linebreak\dedalus{   \(q_1\)(\(A_1\), \(\ldots\), \(A_n\)), \(\ldots\), \(q_n\)(\(A_1\), \(\ldots\), \(A_n\));}
 
 These functions do not affect the expressivity of the language; we admit them
 tosimplify our discussion of ordering.  We note that the \emph{min} function,
@@ -243,7 +240,7 @@ the highest of the timestamps in its message queue.  Under the distributed syste
 we expect the tuples in the message queue to  be from other hosts with independent clocks, sending messages 
 over a medium that can delay or reorder them arbitrarily.  In order to make the necessary comparison between local
 and remote clocks, it is necessary to reference the time suffix variable directly, rather than omitting it as we have done 
-in all other Dedalus examples.
+in all other \lang examples.
 
 \subsection{Trace Entanglement}
 

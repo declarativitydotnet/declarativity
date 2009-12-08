@@ -2,7 +2,7 @@
 
 %%\jmh{I think the flavor of this section is to map familiar notions from state manipulation to purely logical syntactic constructs grounded in Datalog.  You should motivate 
 %%at a high level why one would want to do such a thing.  The discussion below is then, in effect, a set of ``design patterns'' or ``typical uses''.  You might want to highlight 
-%%the logical invariants that emerge from these Dedalus statements and assert that they capture the semantic intent of state manipulation.}
+%%the logical invariants that emerge from these \lang statements and assert that they capture the semantic intent of state manipulation.}
 
 
 %%\jmh{Your definition is not self-contained, it makes reference to prose.  The prose is not crisp even as prose -- I don't know what ``later'' means, especially given that you said that @sync could produce any time.}
@@ -11,7 +11,7 @@ The intuition behind the \emph{successor} relation is that it models the
 passage of (logical) time.  We say that ground atoms with lower timestamps
 occur ``before" atoms with higher ones.
 %%Without specifying how and when each stratum
-%%of \emph{successor} is evaluated, we can see that the syntactic restrictions of Dedalus ensure that 
+%%of \emph{successor} is evaluated, we can see that the syntactic restrictions of \lang ensure that 
 %%we cannot move backwards infinitely often (specifically,
 %%we may only move backwards via \emph{choice}, and every call to \emph{choice} may move us forward.  \paa{save for later, pretend there is no async?}).
 %%we may only move forward in time.
@@ -41,18 +41,23 @@ p\_pos($A_1$,$A_2$,[...],$A_n$);}
 %%\end{definition}
 
 A simple persistence rule ensures that a $p$ fact true at time $i$ will be true
-$\forall j \in \mathbb{Z} : j >= i$.  This rule is informally equivalent to the
-temporal logic assertion
+$\forall j \in \mathbb{Z} : j >= i$.  It is interesting to note that we can
+express this rule using a temporal logic assertion that makes use of the $\Box$
+or ``henceforth'' operator:
 
-$\forall A_1 \ldots A_n \in p\_pos : p\_pos(A_1 \ldots A_n) \to \Box p\_pos(A_1
-\ldots A_n)$.
+$\forall A_1, \ldots, A_n \in C : p\_pos(A_1, \ldots, A_n) \to \Box p\_pos(A_1,
+\ldots, A_n)$.
 
-\wrm{is there a point to this formula?  can't we just say ``a simple persistence
-rule naturally encapsulates the ``always'' operator from temporal logic.  maybe
-this should even be a footnote unless we're going to make a bigger deal about
-Dedalus and temporal logics?}
-\paa{umm, I just thought it was interesting.  feel free to strike it, footnote it, convert 
-it to plain english, etc}
+This assertion states that for any constants $A_1, \ldots, A_n$ in the Herbrand
+Universe, $p\_pos(A_1, \ldots, A_n)$ implies that henceforth, \linebreak
+$p\_pos(A_1, \ldots, A_n)$ will be true.
+
+%\wrm{is there a point to this formula?  can't we just say ``a simple persistence
+%rule naturally encapsulates the ``always'' operator from temporal logic.  maybe
+%this should even be a footnote unless we're going to make a bigger deal about
+%\lang and temporal logics?}
+%\paa{umm, I just thought it was interesting.  feel free to strike it, footnote it, convert 
+%it to plain english, etc}
 \subsection{Mutable State}
 
 To model deletions and updates of a fact, it is necessary to break the induction
@@ -80,7 +85,7 @@ is true until it is retracted.
 
 %%\newtheorem{example}{Example}
 \begin{example}
-Consider the following Dedalus program and {\em trace} of events:
+Consider the following \lang program and {\em trace} of events:
 
 \begin{Dedalus}
 p_pos(A, B) \(\leftarrow\) p(A, B);
@@ -101,7 +106,7 @@ false because it was deleted at timestep \dedalus{300}.
 %
 For some time $\Tau$, an {\em update} is any pair of facts:
 
-\dedalus{p\_neg($C_1$,$C_2$,[...],$C_n$)@$\Tau$}
+\dedalus{p\_neg($C_1$,$C_2$,[...],$C_n$)@$\Tau$} \linebreak
 \dedalus{p\_pos($D_1$,$D_2$,[...],$D_n$)@$\Tau+1$}
 %
 %%\end{definition}

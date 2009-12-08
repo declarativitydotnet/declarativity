@@ -1,4 +1,6 @@
 \documentclass{acm_proc_article-sp-sigmod09}
+%\documentclass{sig-alternate}
+%\documentclass{sig-alt-full}
 
 \usepackage[usenames, dvipsnames]{color}
 \usepackage{times}
@@ -18,6 +20,8 @@
 
 \usepackage{txfonts}
 \newcommand{\Tau}{\mathcal{T}}
+\newcommand{\Consts}{\mathcal{C}}
+\newcommand{\Vars}{\mathcal{A}}
 
 \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 \newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
@@ -48,15 +52,13 @@
 \begin{document}
 
 \conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
-\title{Dedalus:
-%%\lang
-%%\titlenote{\small
-%%Dedalus is intended as a precursor language for \textbf{Bloom}, a high-level language for programming distributed systems that
-%%will replace Overlog in the \textbf{BOOM} project~\cite{boom-techr}.  
-%%As such, it is derived from the character Stephen Dedalus in James Joyce's \emph{Ulysses}, whose dense and precise chapters 
-%%precede those of the novel's hero, Leopold Bloom.  The character Dedalus, in turn, was partly derived from Daedalus, the greatest
-%%of the Greek engineers and father of Icarus.  Unlike Overlog, which flew too close to the sun, Dedalus remains firmly grounded.
-%%} 
+\title{{\huge{\bf\lang}}\titlenote{\small
+\lang is intended as a precursor language for \textbf{Bloom}, a high-level language for programming distributed systems that
+will replace Overlog in the \textbf{BOOM} project~\cite{boom-techr}.  
+As such, it is derived from the character Stephen Dedalus in James Joyce's \emph{Ulysses}, whose dense and precise chapters 
+precede those of the novel's hero, Leopold Bloom.  The character Dedalus, in turn, was partly derived from Daedalus, the greatest
+of the Greek engineers and father of Icarus.  Unlike Overlog, which flew too close to the sun, Dedalus remains firmly grounded.
+}:
 Datalog in Time and Space} 
 %%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
 %
@@ -66,7 +68,21 @@ Datalog in Time and Space}
 
 \numberofauthors{6}
 
-\author{Peter Alvaro, Neil Conway, William R. Marczak, Joseph M. Hellerstein, Rastislav Bod\'{i}k, David Maier}
+\author{
+%
+Peter Alvaro$^\dagger$ \quad William R. Marczak$^\dagger$ \quad Neil
+Conway$^\dagger$ \quad Joseph M. Hellerstein$^\dagger$ \quad \\
+%
+Rastislav Bod\'{i}k$^\dagger$ \quad David Maier$^\ddagger$\\\\
+%
+\fontsize{10}{10}\selectfont\itshape 
+%\vspace{0.05in}
+$^\dagger$University of California-Berkeley \quad $^\ddagger$Portland State
+University\\\\ \fontsize{9}{9}\selectfont\ttfamily\upshape
+%
+\{palvaro,wrm,nrc,hellerstein,bodik\}@cs.berkeley.edu \quad maier@cs.pdx.edu
+%
+}
 
 \maketitle
 
@@ -90,23 +106,23 @@ foundation language for programming and reasoning about distributed systems.
 aggregate functions and choice, and admits an explicit representation of time
 into the logic language.  Thus, \lang allows concepts such as persistence,
 updateable state, key constraints, and message delay and loss to be described
-in a purely declarative fashion.  These allow us to express distributed systems
-whose state evolves over time in a high-level language with an unambiguous,
-model-theoretic semantics.
-%Dedalus extends Datalog with a notion of time --- every Dedalus relation has
-%an integer attribute that intuitively represents when a given tuple is true.
-%We propose a sugared syntax in which rule head annotations indicate whether
-%their conclusions hold at the same time as their premises, in the immediate
-%next timestep, or at some unknown timestep.
+in a purely declarative fashion.  This capability allows us to express
+distributed systems whose state evolves over time in a high-level language with
+an unambiguous, model-theoretic semantics.
+%\lang extends Datalog with a notion of time --- every \lang relation has an
+%integer attribute that intuitively represents when a given tuple is true.  We
+%propose a sugared syntax in which rule head annotations indicate whether their
+%conclusions hold at the same time as their premises, in the immediate next
+%timestep, or at some unknown timestep.
 We further introduce the notion of \emph{temporal stratification}, a
-syntactically-checkable property of \lang programs similar to stratification,
+syntactically checkable property of \lang programs similar to stratification,
 and show that the class of temporally stratifiable programs in \lang
-corresponds to the class of modularly stratified~\cite{modular,ross-syntactic}
+corresponds to the class of modularly stratified~\cite{ross-syntactic,modular}
 programs in Datalog.
 %
 \end{abstract}
 
-
+\input{intro}
 \input{foundation}
 \input{safety}
 \input{proofs}
@@ -115,6 +131,7 @@ programs in Datalog.
 \input{async}
 \input{broadcast}
 \input{relwork}
+\input{future}
 \bibliographystyle{abbrv}
 \bibliography{pods}
 

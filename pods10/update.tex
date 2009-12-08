@@ -4,7 +4,7 @@
 Lemma~\ref{lem:costmodel} expresses that we can trade computation cost for
 storage cost in evaluation of a \slang program. 
 
-%In the continuous interpretation of a Dedalus program, it is in general only
+%In the continuous interpretation of a \slang program, it is in general only
 %useful to remember facts at a single timestamp in a predicate.  Two ways to
 %approach this issue are to either always persist the ``latest'' version, or
 %continuously re-derive the latest version.  These are represented in the naive
@@ -41,7 +41,7 @@ storage cost in evaluation of a \slang program.
 %\item
 {\bf Naive Deductive Implementation: } We must evaluate every rule at time $1$
 through $M$.  This implies persistent storage cost of $|\alpha_M|$, e.g. the
-entire prefix up through $M$.
+entire preamble up through $M$.
 %A bottom-up evaluation of a predicate $P$ consists of evaluating all rules
 %that reference $P$ in the head, and may involve polynomially many derivations
 %in the size of the EDB up to time $M$.
