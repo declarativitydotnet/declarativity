@@ -1,11 +1,12 @@
 \section{Safety in \large \bf \slang}
 
-A Datalog program is safe if it produces a finite model, and hence has a finite
-execution.  Safety is traditionally achieved through the following constraints:
+A Datalog program is safe if it produces a finite minimal model, and hence has
+a finite execution.  Safety in logic programming is traditionally achieved
+through the following constraints:
 
 \begin{enumerate}
 %
-\item No functions are allowed. \wrm{but Datalog doesn't have any functions}
+\item No functions are allowed.
 %
 \item Variables are \emph{range restricted}: all attributes of the head goal
 appear in a non-negated body subgoal.
@@ -14,35 +15,47 @@ appear in a non-negated body subgoal.
 %
 \end{enumerate}
 
-Any atom that may be deduced by a program may take its attributes only from the \emph{Herbrand Universe},
-consisting of all constant symbols in the program and EDB.
+These constraints ensure that the Herbrand Universe is finite: any atom that
+may be deduced by a program may take its attributes only from the Herbrand
+Universe consisting of all constant symbols in the program and EDB.
 %%~\nrc{Don't know what this means, but I suspect it is fancy-pants language for no good reason.}
 %%\paa{ignoring this provocative comment.}
 %%\wrm{lol.}
-The set of all possible assignments of these constants to predicate attributes,
-representing every possible interpretation, is itself finite. 
-\wrm{what is a "possible assignment"?  possible given the rules of the program?}
+In fact, the set of all possible assignments of these constants to predicate
+attributes, representing every possible interpretation, is itself finite. 
 
-\nrc{Seems like there ought to be more here. Why do I care about the
-  preceding text? What does it have to do with the following text?}
+%\nrc{Seems like there ought to be more here. Why do I care about the
+%  preceding text? What does it have to do with the following text?}
+
+%Since the Herbrand Universe is finite, any instantiation of predicates with
+%constants is finite.  Every possible interpretation (set of ground atoms) of
+%a logic program comes from this finite instantiation, so any possible
+%interpretation is finite
   
-  
-\paa{the idea is: safe=finite.  herbrand universe=finite, so any instantiation of predicates with constants is finite.
-every possible interpretation (set of atoms) of a LP comes from this instantition.  so any possible interpretation is finite.
-a model is an interpretation in which all heads are true when the body is true.  all models are finite.  the minimal model
-is clearly finite.}
+%\paa{the idea is: safe=finite.  herbrand universe=finite, so any instantiation of predicates with constants is finite.
+%every possible interpretation (set of atoms) of a LP comes from this instantition.  so any possible interpretation is finite.
+%a model is an interpretation in which all heads are true when the body is true.  all models are finite.  the minimal model
+%is clearly finite.}
 
 \subsection{Temporal Safety}
 
 Consider the \dedalus{successor} relation described above.  According to our
 intuitive interpretation, this relation models the passage of time, in order to
 establish a temporal order among ground atoms. 
+
+The \dedalus{successor} relation complicates our discussion of safety, as it
+introduces the countably infinite set $\mathbb{Z}$ to our Herbrand Universe.
+Clearly, a naive interpretation of time can lead to unsafe programs:
+
+%Consider the \dedalus{successor} relation described above.  According to our
+%intuitive interpretation, this relation models the passage of time, in order to
+%establish a temporal order among ground atoms. 
 %%\wrm{we're ignoring entanglement here}
 %Recall that {\em successor} is the standard strict total order on
 %$\mathbb{Z}$, lol, don't know how I accidentally wrote the above incorrect
 %sentence all over the paper
-Recall that \dedalus{successor} is an infinite relation.  Clearly, a naive
-interpretation of time can lead to unsafe programs:
+%Recall that \dedalus{successor} is an infinite relation.  Clearly, a naive
+%interpretation of time can lead to unsafe programs:
 
 %%No reason to re-define a strict total order here...
 %\begin{itemize}
@@ -59,7 +72,8 @@ interpretation of time can lead to unsafe programs:
 
 
 \begin{example}
-Consider the \slang instance below.
+%
+A \slang instance that is unsafe due to an unbroken induction over time.
 
 \begin{Dedalus}
 r1
@@ -68,25 +82,26 @@ p_pos(A, B)@next \(\leftarrow\) p_pos(A, B), \(\lnot\)p_neg(A, B);
 r2  
 p_pos(A, B)  \(\leftarrow\) p(A, B);
   
-p(1, 2)@123;
-  
+p(1, 2)@123;  
 \end{Dedalus}
 
-The single ground fact will, due to \emph{r1}, cause one deduction for each
-tuple in {\em successor}.  Since {\em successor} is infinite, the program is
-unsafe.  
-
+The single ground fact will, due to \dedalus{r1}, cause one deduction for each
+tuple in \dedalus{successor}.  Since \dedalus{successor} is infinite, the
+program is unsafe. 
+%
 \end{example}
 
-However, observe that each of these deductions produces a tuple that changes  
-only in its time attribute.  We we find it useful to distinguish between programs that,
-given a finite EDB, reach a state at which the only deductions that continue to occur
-are those in which only the time attribute of tuples change.
+However, observe that each of these deductions produces a tuple that changes
+only in its time suffix.  We we find it useful to distinguish from unsafe
+programs those programs that, given a finite EDB, eventually derive only tuples
+that change in their time suffixes.
 
 \begin{definition}
-A \emph{stable derivation} is a derivation of a tuple $\gamma'$ in a predicate $p$ with
-timestamp $\Tau$ from a tuple $\gamma$ in $p$ with timestamp $\Tau-1$, such that
-$\gamma$ differs from $\gamma'$ only in the timestamp.
+%
+A \emph{stable derivation} is a fact $\gamma'$ with time suffix $\Tau$ derived
+from a fact $\gamma$ with time suffix $\Tau-1$, such that $\gamma$ differs from
+$\gamma'$ only in its time suffix.
+%
 \end{definition}
 
 %%To distinguish between programs that 
@@ -99,56 +114,68 @@ $\gamma$ differs from $\gamma'$ only in the timestamp.
 %%in $P$ no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
 %%\end{definition}
 
-We call an execution \emph{quiescent} if it reaches a point at which all derivations are stable derivations.
+We call a \slang instance is \emph{quiescent} if after some time $\Tau$, all
+derivations are always stable.
 
 \begin{definition}
-Given a finite EDB, a program is \emph{temporally safe} if it reaches a quiescent state after a finite 
-number of deductions.
+%
+A \slang instance with finite EDB is \emph{temporally safe} if it reaches
+quiescent state after a finite number of deductions.
+%
 \end{definition}
 %%\wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
 %%\begin{definition}
 
 \begin{definition}
-Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$, 
-an intensional predicate $e$ in a program $P$ is called an \emph{atemporal predicate} 
-if for every predicate $p$ for which $e \succ^{*} p$, $p$ appears in no inductive rules.
+%
+Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
+an intensional predicate $e$ in a program $P$ is called an \emph{atemporal
+predicate} if for every predicate $p$ for which $e \succ^{*} p$, $p$ appears in
+no inductive rules.
+%
 \end{definition}
 
 %%A rule is temporally safe if:
-We propose the following conservative test for temporal safety.  A rule is guaranteed to be temporally safe if:
+We propose the following conservative test for temporal safety.  A rule is
+guaranteed to be temporally safe if:
 
 \begin{enumerate}
-\item It is a deductive rule that is function-free and range-restricted.
-\item It is an inductive rule in which the head predicate occurs also in the body with the same variable 
-bindings.
+%
+\item It is a deductive rule that is function-free and range-restricted, or
+%
+\item It is an inductive rule in which the head predicate occurs also in the
+body with the same variable bindings, or
 %%occurs also in the body with the same assignment of variables and constants to attributes.
-\item It is an inductive rule that has at least one atemporal predicate as a positive subgoal in the body.
+%
+\item It is an inductive rule that has at least one atemporal predicate as a
+positive subgoal in the body.  Since the EDB is finite, this inductive rule
+may only be triggered finitely often.
+%
 \end{enumerate}
-
 
 A \slang program is temporally safe if all its rules are temporally safe.
 Intuitively, a temporally safe program quiesces given a finite EDB.  A
 temporally unsafe program changes infinitely, even given a finite EDB.  Note
 that the \slang program above is temporally safe because \emph{r1} corresponds
-to the second rule of the definition, and \emph{r2} corresponds to the first.
-Atoms deduced by the inducive rule \emph{r1} differ from existing atoms only in
-their time suffix.
+to the second rule of the definition, and \emph{r2} corresponds to the first
+\wrm{which?}.  Atoms deduced by the inducive rule \emph{r1} differ from
+existing atoms only in their time suffix.
 
 \begin{example}
+A \slang instance with a temporally unsafe deductive rule.
 
 \begin{Dedalus}
 p(A, B) \(\leftarrow\) q(A);
 \end{Dedalus}
 
-The program above has a temporally unsafe deductive rule that corresponds to an unsafe rule in Datalog: it is not range-restricted.  
-The head variable $B$ could range over an infinite set of constants.
-
+The program above has a temporally unsafe deductive rule that corresponds to an
+unsafe rule in Datalog: it is not range-restricted.  The head variable $B$
+could range over an infinite set of constants.
 \end{example}
 
 
 \begin{example}
- %%\linebreak
-
+A \slang instance that is unsafe due to infinite oscillation.
 
 \begin{Dedalus}
 flip\_flop(A, B)@next \(\leftarrow\) flip\_flop(A, B);
@@ -160,22 +187,21 @@ flip\_flop(1, 0)@1;
 p(0)@2;
 \end{Dedalus}
 
-In the above program, the first rule -- a basic mutable persistent rule for
+In the above program, the first rule -- a simple persistence rule for
 \emph{flip\_flop} -- is temporally safe.  The second rule is an example of
 temporally unsafe induction.  Even though it contains no function symbols, and
-all variables are range-restricted, it entails infinite oscillation of
-the \emph{p} predicate.
-because the \emph{p} predicate occurs in the head with
-a different variable binding than in the body, and because there are no
-positive event predicates in the body.  
+all variables are range-restricted, it entails infinite oscillation of the
+\emph{p} predicate.  
+%because the \emph{p} predicate occurs in the head with a
+%different variable binding than in the body, and because there are no positive
+%event predicates in the body.  
 %%\wrm{this makes me a bit uncomfortable.
 %%we've defined a conservative test for temporal safety.  so if something fails
 %%the test, it's not necessariliy temporally unsafe.}
-
 \end{example}
 
 
-An inductive rule cannot cause infinite oscillation if it has a positive event predicate in its body, because we are assuming a finite EDB.
+%An inductive rule cannot cause infinite oscillation if it has a positive event predicate in its body, because we are assuming a finite EDB.
 
 %%However, we observe that all of these deductions are uninteresting, as they are
 %%deterministically related to the EDB.  To avoid performing such deductions, we
@@ -233,19 +259,23 @@ An inductive rule cannot cause infinite oscillation if it has a positive event p
 
 \subsection{EDB Prefixes}
 
-In general, however, an EDB can itself be infinite, and may lead to unsafe evaluations even when \emph{successor} is derived from it
-as in a post-hoc evaluation.
+A \slang instance may receive arbitrarily many external input tuples over the
+course of its execution, but a sensible implementation should not wait
+arbitrarily long before performing deductions.  In this section we introduce
+the notion of EDB prefixes, and prove an equivalence between two types of
+evaluation.
+
+%In general, the EDB of a \slang instance may be infinite, and may lead to unsafe evaluations even when \emph{successor} is derived from it
+%as in a post-hoc evaluation.
 
 \begin{definition}
 A \emph{prefix} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is less than or equal to $n$.
 \end{definition}
 
 If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}$ = $\Gamma$.  Because each prefix is a superset of all 
-prefixes with lower indices, we also have the monotonicity property
+prefixes with lower indices, we have the monotonicity property:
 
-\begin{equation}
-\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \alpha_{j})
-\end{equation}
+$\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \alpha_{j})$
 
 %\paa{to your point, bill, I switched the lemma and proof below to one of IDB equivalence in the posthoc vs. continual interpretation
 %rather than an inductive proof that every model in the series is minimal.  there is probably a very similar proof of the latter
@@ -283,7 +313,6 @@ FP_p(\alpha_{i+1})$.
 %%then it follows that a prefix $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
 
 by contradiction. Assume $\exists i \in \mathbb{Z}$ such that:
-
 $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) \neq FP_p(\alpha_{i+1})$
 
 {\bf Case 1:} $\exists A \in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) : A \not\in FP_p(\alpha_{i+1}).$
@@ -305,10 +334,8 @@ an fact $C \in \alpha_i$.  $C \in \alpha_{i+1}$ by definition (if $B$ is
 extensional, then $C=B$), so $B \in FP_p(\alpha_{i+1})$, so $a \not\in
 FP_p(\alpha_{i+1})$.  This contradicts our assumption, thus no such $A$ may
 exist.
-
 %If $I_2 \neq I_3$, it must be the case that either there exists a ground atom in $I_2$ that is not in $I_3$, or that is in
 %$I_3$ and not in $I_2$.  
-
 %Take the former case first.  This means there is an atom $A$ that is entailed by P given $FP(\alpha_{j} \cup FP(\alpha_{i}))$
 %but not entailed by P given $\alpha_{j}$, so it must be in $I_1$.   The only circumstances under which an atom in
 %$I_1$ would not occur in the IDB $FP(\alpha_{j})$ is if there is a fact $B$ in $\alpha_{j}$ 
@@ -316,8 +343,6 @@ exist.
 %in $I_1$ cannot depend upon a ground atom from the ``future", that fact $B$ would need to have occurred at some time less than 
 %or equal to the to timestamp of atom $A$.  But this is not possible, because all timestamps in $\alpha_{j}$ that are not in any $\alpha_{k} | k<j$
 %are strictly higher than any timestamps in $\alpha_{k}$.  Hence the first case leads to contradiction.
-
 %As for the second case...
-
 \end{proof}
 
