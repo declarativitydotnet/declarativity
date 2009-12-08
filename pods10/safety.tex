@@ -178,6 +178,10 @@ may only be triggered finitely often.
 %
 \end{enumerate}
 
+\paa{maybe this is too greedy.  rule 1 above defines "pointwise safety" or classical datalog-type safety.  
+if all deductive rules respect rule 1, we are pointwise finite.  the other two rules describe temporal safety
+as such}
+
 A \slang program is temporally safe if all its rules are temporally safe.
 Intuitively, a temporally safe program quiesces given a finite EDB, while a
 temporally unsafe program changes infinitely.  Note

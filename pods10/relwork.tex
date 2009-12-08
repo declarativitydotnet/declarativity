@@ -32,7 +32,7 @@ straightforward Datalog, and evaluation proceeds in three phases:
 \item The deductions which cause external effects, including messages, writes back to the store, and host language callbacks are dealt with.  
 \end{enumerate}
 
-Unfortuately, the declarative language gives no hints as to how to and when deletions and updates
+Unfortunately, the declarative language gives no hints as to how to and when deletions and updates
 should be made visible, so the third step is a black box.  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain 
 monotonicity properties (i.e.\ programs without negation or fact deletion)
 are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
