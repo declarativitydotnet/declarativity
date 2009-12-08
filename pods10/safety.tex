@@ -98,17 +98,34 @@ program is unsafe.
 However, observe that each of these deductions produces a tuple that changes
 only in its time suffix.  We we find it useful to distinguish from unsafe
 programs those programs that, given a finite EDB, eventually derive only tuples
-that change in their time suffixes.
+that change in their time suffixes.  
+Consider a \emph{derivation tree} as defined by Levy et al~\cite{levy}.  
+\paa{he's halevy now.  should it be halevy et al?  or is that confusing?  I blame alon.}
+According to their definition,
+two goal nodes $g_1$ and $g_2$ are \emph{identical} if they have the same predicate symbol and, in each argument
+position, the same variables.  Two nodes are \emph{equivalent} if there exists a one-to-one mapping
+$\phi$ from $V(g_1) \to V(g_2)$ such that $\phi(g_1) = g_2$.
 
-\wrm{Define 'derivation'.  Joe sez: "Here I think you just need an appropriate reference for derivation trees, along with some simple intuition.  I believe the right ref is "Constraints and Redundancy in Datalog", Levy/Sagiv, PODS 92."}
+
+%%\wrm{Define 'derivation'.  Joe sez: "Here I think you just need an appropriate reference for derivation trees, along with some simple intuition.  I believe the right ref is %%"Constraints and Redundancy in Datalog", Levy/Sagiv, PODS 92."}
+
+\begin{definition}
+
+
+An \emph{inference} is a single step in a derivation, corresponding to a goal node, its child rule node, and the child goal
+nodes of this rule node.  
+\end{definition}
 
 \begin{definition}
 %
-A \emph{stable derivation} is a fact $\gamma'$ with time suffix $\Tau$ derived
-from a fact $\gamma$ with time suffix $\Tau-1$, such that $\gamma$ differs from
+A \emph{stable inference} has a goal $\gamma'$ with time suffix $\Tau$ derived
+from a child goal $\gamma$ with time suffix $\Tau-1$, such that $\gamma$ differs from
 $\gamma'$ only in its time suffix.
 %
 \end{definition}
+
+In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
+minus $\Tau$.
 
 %%To distinguish between programs that 
 %%produce these infinite \emph{void inductions} and those that correspond 
@@ -121,13 +138,13 @@ $\gamma'$ only in its time suffix.
 %%\end{definition}
 
 We call a \slang instance is \emph{quiescent} if after some time $\Tau$, all
-derivations are henceforth \wrm{bill to insert proof/argument that you get
+inferences are henceforth \wrm{bill to insert proof/argument that you get
 ``henceforth'' from a single state where the program is quiescent} stable.
 
 \begin{definition}
 %
 A \slang instance with finite EDB is \emph{temporally safe} if it reaches
-quiescent state after a finite number of deductions.
+quiescent state after a finite number of inferences.
 %
 \end{definition}
 %%\wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
@@ -162,8 +179,8 @@ may only be triggered finitely often.
 \end{enumerate}
 
 A \slang program is temporally safe if all its rules are temporally safe.
-Intuitively, a temporally safe program quiesces given a finite EDB.  A
-temporally unsafe program changes infinitely, even given a finite EDB.  Note
+Intuitively, a temporally safe program quiesces given a finite EDB, while a
+temporally unsafe program changes infinitely.  Note
 that the \slang program above is temporally safe because \emph{r1} corresponds
 to the second rule of the definition, and \emph{r2} corresponds to the first
 Atoms deduced by the inducive rule \emph{r1} differ from existing atoms only in
