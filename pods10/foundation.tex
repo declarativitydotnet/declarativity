@@ -114,11 +114,18 @@ well-known semantics and the rich literature on the language.
 However \slang programs are intended to capture 
 %naturally
 temporal semantics.  For example, a fact with some constant $C$ in its time
-suffix can be thought of as a fact that is true ``at time $C$''.  Deductive
-rules can be seen as {\em atemporal} statements: they range over all values of
-the time suffix, and express deductions that are ``always'' valid.  Inductive
-and asynchronous rules are {\em temporal} --- their consequents are defined to
+suffix can be thought of as a fact that is true ``at time $C$''.  
+%%Deductive
+%%rules can be seen as {\em atemporal} statements: they range over all values of
+%%the time suffix, and express deductions that are ``always'' valid. 
+Deductive rules can be seen as {\em pointwise} statements: their deductions hold for 
+predicates agreeing in the time suffix and describe what is true ``at any time" given 
+what is known at that time.
+ Inductive %%and asynchronous 
+ rules are {\em temporal} --- their consequents are defined to
 be true ``at a different time'' than their antecedents. 
+
+
 
 To simplify \slang notation for this typical interpretation,  we introduce
 some natural syntactic ``sugar'' as follows:
