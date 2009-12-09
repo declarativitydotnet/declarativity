@@ -94,8 +94,8 @@ stratifiable.  Fortunately, \slang has a syntactically checkable notion of
 {\em temporal stratifiability} that maps to a subset of {\em modularly
 stratifiable}~\cite{modular} Datalog programs.
 
-Intuitively, a Datalog instance is modularly stratifiable if no EDB
-element depends negatively on itself.
+%Intuitively, a Datalog instance is modularly stratifiable if no EDB
+%element depends negatively on itself.
 
 %%\begin{example}
 %%Consider a predicate \emph{print} that corresponds to a print queue.  The program below
@@ -176,11 +176,12 @@ Furthermore, this
 cycle must involve an inductive rule, as $P$ is temporally stratified.
 
 We convert our \slang program to a Datalog program $P'$ using the
-transformation from Section~\ref{sec:abbrvsyntax}, which does not introduce
-any additional cycles or negation.  Since the time suffix in the head of an
+transformation from Section~\ref{sec:abbrvsyntax}, which does not introduce any
+additional cycles or negation.  Since the time suffix in the head of an
 inductive rule is strictly greater than the time suffix of its body, no atom
-may depend negatively on itself -- it may only depend negatively on atoms
-in the previous timestep.  Thus, $P'$ is modularly stratified over time.
+may depend negatively on itself -- it may only depend negatively on atoms in
+the previous timestep.  Thus, $P'$ is modularly stratified over time, using the
+definition of modular stratification according to Ross \etal~\cite{modular}.
 %
 %does not have a unique minimal model.  This implies that $P$ is not
 %syntactically stratifiable, thus there must exist some cycle through at least
@@ -188,8 +189,8 @@ in the previous timestep.  Thus, $P'$ is modularly stratified over time.
 %dependency graph, and furthermore this cycle must include at least one
 %inductive rule.  Since an inductive rule has a time suffix $S := N+1$, where
 %$N$ is the timestamp of its body, and $P$'s deductive reduction is
-%syntactically stratifiable, we know that the aggregate or negation of $q$
-%must always occur in a strictly earlier or later timestamp than that of the
+%syntactically stratifiable, we know that the aggregate or negation of $q$ must
+%always occur in a strictly earlier or later timestamp than that of the
 %positive $q$ atom.  Since the timestep in the cycle increases monotonically
 %with each iteration, $q$ will never, in practice, depend on a negation or
 %aggregate of itself.  Thus, $P$ is locally stratifiable, and by Lemma XXX
