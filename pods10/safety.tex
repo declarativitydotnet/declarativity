@@ -165,6 +165,12 @@ minus $\Tau$.\wrm{$<$/dont really get whats going on$>$}.
 We call a \slang instance is \emph{quiescent at time $T$} if the set of all 
 tuples true at time $T$ is equal to the set of all facts true at time $T-1$.
 
+
+\paa{well, there are some problems with this.  first, facts are only in the EDB, you mean atom,
+second, this is never true because of the time suffix (unless you mean to have defined ``fact''
+precisely as $\pi_\xi(p)$ for any predicate p.)  what I was trying to do was define quiescence in terms
+of inference; a quiescent DB is one for which all inferences are stable.}
+
 \begin{observation}
 %
 A \slang instance quiescent at time $T$ will be quiescent until the next EDB
