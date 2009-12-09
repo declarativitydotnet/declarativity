@@ -156,7 +156,7 @@ quiescent state after a finite number of inferences.
 \begin{definition}
 %
 Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
-an intensional predicate $e$ in a program $P$ is called an \emph{atemporal
+an intensional predicate $e$ in a program $P$ is called a \emph{pointwise
 predicate} if for every predicate $p$ for which $e \succ^{*} p$, $p$ appears in
 no inductive rules.
 %
@@ -175,7 +175,7 @@ body with the same variable bindings for all attributes save the time suffix,
 or
 %%occurs also in the body with the same assignment of variables and constants to attributes.
 %
-\item It is an inductive rule that has at least one atemporal predicate as a
+\item It is an inductive rule that has at least one pointwise predicate as a
 positive subgoal in the body.  Since the EDB is finite, this inductive rule
 may only be triggered finitely often.
 %
