@@ -28,7 +28,7 @@ minimal model.
 A \slang program without negation 
 %%and aggregation 
 is a pure Datalog
-program.  Every Datalog program has a unique minimal model. 
+program.  Every pure Datalog program has a unique minimal model. 
 %
 \end{proof}
 
@@ -142,7 +142,7 @@ element depends negatively on itself.
 
 \begin{definition}
 %
-A \emph{deductive reduction} of a \slang program $P$ is the subset of $P$
+The \emph{deductive reduction} of a \slang program $P$ is the subset of $P$
 consisting of exactly those deductive rules in $P$.
 %
 \end{definition}
@@ -178,8 +178,8 @@ cycle must involve an inductive rule, as $P$ is temporally stratified.
 We convert our \slang program to a Datalog program $P'$ using the
 transformation from Section~\ref{sec:abbrvsyntax}, which does not introduce
 any additional cycles or negation.  Since the time suffix in the head of an
-inductive rule is strictly greater than the time suffix of its body, no EDB
-fact may depend negatively on itself -- it may only depend negatively on EDB
+inductive rule is strictly greater than the time suffix of its body, no atom
+may depend negatively on itself -- it may only depend negatively on atoms
 in the previous timestep.  Thus, $P'$ is modularly stratified over time.
 %
 %does not have a unique minimal model.  This implies that $P$ is not
