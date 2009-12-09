@@ -16,14 +16,18 @@
 
 \begin{lemma} 
 %
-A \slang program without negation and aggregation has a unique
+A \slang program without negation 
+%%and aggregation 
+has a unique
 minimal model.
 %
 \end{lemma}
 
 \begin{proof} 
 %
-A \slang program without negation and aggregation is a pure Datalog
+A \slang program without negation 
+%%and aggregation 
+is a pure Datalog
 program.  Every Datalog program has a unique minimal model. 
 %
 \end{proof}
@@ -38,7 +42,9 @@ defined for a Datalog program:
 \begin{definition}
 %
 A \slang is \emph{syntactically stratifiable} if there
-exists no cycle with a negative edge or an aggregation edge in the program's
+exists no cycle with a negative edge 
+%%or an aggregation edge 
+in the program's
 predicate dependency graph.
 %
 \end{definition}
@@ -164,7 +170,9 @@ thus it has a unique minimal model.
 {\bf Case 2:} $P$ consists of both deductive and inductive rules.
 Assume that $P$ does not have a unique minimal model.  This implies that $P$ is
 not syntactically stratifiable.  Thus, there must exist some cycle through at
-least one predicate $q$ involving negation or aggregation.  Furthermore, this
+least one predicate $q$ involving negation.
+%%or aggregation.  
+Furthermore, this
 cycle must involve an inductive rule, as $P$ is temporally stratified.
 
 We convert our \slang program to a Datalog program $P'$ using the
