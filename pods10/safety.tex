@@ -16,8 +16,8 @@ appear in a non-negated body subgoal.
 \end{enumerate}
 
 These constraints ensure that the Herbrand Universe is finite: any atom that
-may be deduced by a safe program may take its attributes only from the Herbrand
-Universe consisting of all constant symbols in the program and EDB.
+may be deduced by a safe program may take its attributes only from the 
+set of all constant symbols appearing in the program and EDB.
 %%~\nrc{Don't know what this means, but I suspect it is fancy-pants language for no good reason.}
 %%\paa{ignoring this provocative comment.}
 %%\wrm{lol.}
@@ -42,7 +42,16 @@ attributes, representing every possible interpretation, is itself finite.
 \wrm{show some examples before restricting to temporal safety!!  maybe even
 show that some unsafe programs have safe equivalents.}
 
-Consider the \dedalus{successor} relation described above.  According to our
+A \slang program containing only deductive rules is informally equivalent to a 
+Datalog program in which all predicates have no time suffix.  If all the rules in such
+a program are function-free and range-restricted, then clearly all evaluations will
+be safe.
+
+\begin{definition}
+A \slang rule is \emph{pointwise safe} if it is function-free and range-restricted.
+\end{definition}
+
+Inductive rules are not safe.  Consider the \dedalus{successor} relation described above.  According to our
 intuitive interpretation, this relation models the passage of time, in order to
 establish a temporal order among ground atoms. 
 
@@ -114,13 +123,21 @@ name and the same values for all attributes but time}
 
 \begin{definition}
 
-
 An \emph{inference} is a single step in a derivation, corresponding to a goal node, its child rule node, and the child goal
 nodes of this rule node.  
 \end{definition}
 
+\paa{or... ditch all this stuff about derivations, define an 'inference' as a single deduction of an atom from established atoms;
+ie the single evaluation of a rule, and proceed from here with the definitions}
+
+\textbf{alternate derivation-free definition:}
 \begin{definition}
-%
+An \emph{inference} is the deduction of an atom from established atoms via the application of a rule.
+\end{definition}
+
+
+
+\begin{definition}
 A \emph{stable inference} has a goal $\gamma'$ with time suffix $\Tau$ derived
 from a child goal $\gamma$ with time suffix $\Tau-1$, such that $\gamma$ differs from
 $\gamma'$ only in its time suffix.
@@ -168,7 +185,7 @@ guaranteed to be temporally safe if:
 
 \begin{enumerate}
 %
-\item It is a deductive rule that is function-free and range-restricted, or
+\item It is pointwise safe, or
 %
 \item It is an inductive rule in which the head predicate occurs also in the
 body with the same variable bindings for all attributes save the time suffix,
@@ -181,11 +198,11 @@ may only be triggered finitely often.
 %
 \end{enumerate}
 
-\paa{maybe this is too greedy.  rule 1 above defines "pointwise safety" or classical datalog-type safety.  
-if all deductive rules respect rule 1, we are pointwise finite.  the other two rules describe temporal safety
-as such.  that is to say: any deductive rule that is range-restricted and function-free is pointwise safe (deductive rules do
-not reference the infinite relation \emph{successor}.  pointwise safe <=> safe in datalog) further, any pointwise safe rule is temporally safe.  
-also, rules that are (2,3) are temporally safe.}
+%%\paa{maybe this is too greedy.  rule 1 above defines "pointwise safety" or classical datalog-type safety.  
+%%if all deductive rules respect rule 1, we are pointwise finite.  the other two rules describe temporal safety
+%%as such.  that is to say: any deductive rule that is range-restricted and function-free is pointwise safe (deductive rules do
+%%not reference the infinite relation \emph{successor}.  pointwise safe <=> safe in datalog) further, any pointwise safe rule is temporally safe.  
+%%also, rules that are (2,3) are temporally safe.}
 
 A \slang program is temporally safe if all its rules are temporally safe.
 Intuitively, a temporally safe program quiesces given a finite EDB, while a
@@ -235,6 +252,8 @@ all variables are range-restricted, it entails infinite oscillation of the
 %%the test, it's not necessariliy temporally unsafe.}
 \end{example}
 
+%%By providing a conservative syntactic check for temporal safety, we ensure that \slang
+%%programs have 
 
 %An inductive rule cannot cause infinite oscillation if it has a positive event predicate in its body, because we are assuming a finite EDB.
 
